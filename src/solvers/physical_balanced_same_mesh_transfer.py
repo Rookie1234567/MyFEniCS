@@ -10,6 +10,7 @@ materialise a global transfer matrix or use a numerical allgather.
 from __future__ import annotations
 
 from collections.abc import MutableMapping
+from contextlib import contextmanager
 from dataclasses import dataclass
 from itertools import pairwise
 from time import perf_counter
@@ -26,6 +27,7 @@ from petsc4py import PETSc
 SAME_MESH_TRANSFER_PAIRS = ((6, 4),)
 ROW_CONSISTENCY_LIMIT = 1.0e-11
 _TASK041_SCHUR_SPEED_V2_PROFILE = "task041_schur_speed_v2"
+_TRANSFER_VARIANTS = {"legacy": 0, "optimized": 1}
 _OWNER_RESOLUTION_CHUNK_ROWS = 4096
 _TRANSFER_TIMING_NAMES = (
     "local_candidate_generation_seconds",
@@ -581,6 +583,13 @@ class SameMeshHcurlOwnerTransfer:
         if optimization_profile not in {None, _TASK041_SCHUR_SPEED_V2_PROFILE}:
             raise ValueError("unsupported same-mesh transfer optimization profile")
         self._optimization_profile = optimization_profile
+        self._execution_variant = (
+            "optimized"
+            if optimization_profile == _TASK041_SCHUR_SPEED_V2_PROFILE
+            else "legacy"
+        )
+        self._variant_context_active = False
+        self._apply_in_progress = False
         self._destroyed = False
         self._last_apply_facts: dict[str, object] = {}
         self.fine_ranges = _owner_ranges(fine_space.dofmap.index_map, self.comm)
@@ -695,16 +704,39 @@ class SameMeshHcurlOwnerTransfer:
                 "fine_owned_cells": owned_cell_count,
                 "algebraic_slave_storage": "owned fine/coarse slaves zero",
                 "optimization_profile": optimization_profile,
+                "default_execution_variant": self._execution_variant,
                 "owner_resolution": (
                     "numpy_batched"
-                    if optimization_profile == _TASK041_SCHUR_SPEED_V2_PROFILE
+                    if self._execution_variant == "optimized"
                     else "legacy_python"
                 ),
                 "adjoint_cell_apply": (
                     "conjugate_transpose_identity"
-                    if optimization_profile == _TASK041_SCHUR_SPEED_V2_PROFILE
+                    if self._execution_variant == "optimized"
                     else "explicit_conjugate_transpose"
                 ),
+                "variant_bindings": {
+                    "source_module": __name__,
+                    "legacy": {
+                        "owner_resolution": (
+                            f"{__name__}._resolve_owner_candidates"
+                        ),
+                        "cell_adjoint": (
+                            f"{__name__}.SameMeshHcurlOwnerTransfer."
+                            "_apply_adjoint_into_impl"
+                        ),
+                        "adjoint_kernel": "explicit_matrix_conjugate_transpose",
+                    },
+                    "optimized": {
+                        "owner_resolution": (
+                            f"{__name__}._resolve_owner_candidates_batched"
+                        ),
+                        "cell_adjoint": (
+                            f"{__name__}._apply_conjugate_transpose_vector"
+                        ),
+                        "adjoint_kernel": "conjugate_transpose_identity",
+                    },
+                },
             }
         )
 
@@ -715,6 +747,43 @@ class SameMeshHcurlOwnerTransfer:
     @property
     def last_apply_facts(self) -> dict[str, object]:
         return dict(self._last_apply_facts)
+
+    @property
+    def execution_variant(self) -> str:
+        return self._execution_variant
+
+    @contextmanager
+    def variant_context(self, variant: str):
+        """Temporarily select one kernel variant on this live adapter.
+
+        Every rank must enter this context with the same variant.  The one
+        small ``Allreduce`` is used only for an explicit override; ordinary
+        profile-selected applies remain on their existing path.  The context
+        must cover the complete apply/KSP operation and restores the prior
+        selection when the operation returns or raises.
+        """
+
+        self._require_live()
+        if variant not in _TRANSFER_VARIANTS:
+            raise ValueError("same-mesh transfer variant must be legacy or optimized")
+        if self._apply_in_progress:
+            raise RuntimeError("same-mesh transfer variant cannot change during apply")
+        if self._variant_context_active:
+            raise RuntimeError("same-mesh transfer variant cannot change while active")
+        code = int(_TRANSFER_VARIANTS[variant])
+        local_codes = np.asarray((code, -code), dtype=np.int32)
+        global_codes = np.empty(2, dtype=np.int32)
+        self.comm.Allreduce(local_codes, global_codes, op=MPI.MIN)
+        if int(global_codes[0]) != -int(global_codes[1]):
+            raise RuntimeError("same-mesh transfer variant differs across ranks")
+        previous = self._execution_variant
+        self._execution_variant = variant
+        self._variant_context_active = True
+        try:
+            yield self
+        finally:
+            self._execution_variant = previous
+            self._variant_context_active = False
 
     def _require_live(self) -> None:
         if self._destroyed:
@@ -769,6 +838,22 @@ class SameMeshHcurlOwnerTransfer:
         timing: MutableMapping[str, float] | None = None,
     ) -> None:
         self._require_live()
+        if self._apply_in_progress:
+            raise RuntimeError("same-mesh owner transfer apply is already in progress")
+        self._apply_in_progress = True
+        try:
+            self._apply_primal_into_impl(source, target, timing=timing)
+        finally:
+            self._apply_in_progress = False
+
+    def _apply_primal_into_impl(
+        self,
+        source: Any,
+        target: Any,
+        *,
+        timing: MutableMapping[str, float] | None = None,
+    ) -> None:
+        self._require_live()
         self._require_algebraic(source, self._coarse_slaves)
         self._require_vector(target, self.fine_space.dofmap.index_map)
         started = perf_counter()
@@ -796,7 +881,7 @@ class SameMeshHcurlOwnerTransfer:
         try:
             resolver = (
                 _resolve_owner_candidates_batched
-                if self._optimization_profile == _TASK041_SCHUR_SPEED_V2_PROFILE
+                if self._execution_variant == "optimized"
                 else _resolve_owner_candidates
             )
             owned_ids, owned_values, defect, packet_size = resolver(
@@ -841,6 +926,17 @@ class SameMeshHcurlOwnerTransfer:
             "fine_owned_slaves_zero": True,
             "phase_application": "finalized_floquet_mpc_once",
             "optimization_profile": self._optimization_profile,
+            "execution_variant": self._execution_variant,
+            "owner_resolution": (
+                "numpy_batched"
+                if self._execution_variant == "optimized"
+                else "legacy_python"
+            ),
+            "execution_variant_source": (
+                "explicit_context"
+                if self._variant_context_active
+                else "profile_default"
+            ),
         }
         if timing is not None:
             self._last_apply_facts["timing"] = dict(timing)
@@ -875,6 +971,22 @@ class SameMeshHcurlOwnerTransfer:
         timing: MutableMapping[str, float] | None = None,
     ) -> None:
         self._require_live()
+        if self._apply_in_progress:
+            raise RuntimeError("same-mesh owner transfer apply is already in progress")
+        self._apply_in_progress = True
+        try:
+            self._apply_adjoint_into_impl(source, target, timing=timing)
+        finally:
+            self._apply_in_progress = False
+
+    def _apply_adjoint_into_impl(
+        self,
+        source: Any,
+        target: Any,
+        *,
+        timing: MutableMapping[str, float] | None = None,
+    ) -> None:
+        self._require_live()
         self._require_algebraic(source, self._fine_slaves)
         self._require_vector(source, self.fine_space.dofmap.index_map)
         self._require_vector(target, self.coarse_space.dofmap.index_map)
@@ -895,7 +1007,7 @@ class SameMeshHcurlOwnerTransfer:
                     dtype=np.complex128,
                 )
                 masked_values = values * record["authority"]
-                if self._optimization_profile == _TASK041_SCHUR_SPEED_V2_PROFILE:
+                if self._execution_variant == "optimized":
                     contribution = _apply_conjugate_transpose_vector(
                         record["matrix"], masked_values
                     )
@@ -959,6 +1071,17 @@ class SameMeshHcurlOwnerTransfer:
             "coarse_dual_reduction": "C^H_once",
             "phase_application": "fine_dual_homogenize_then_coarse_C^H_once",
             "optimization_profile": self._optimization_profile,
+            "execution_variant": self._execution_variant,
+            "adjoint_cell_apply": (
+                "conjugate_transpose_identity"
+                if self._execution_variant == "optimized"
+                else "explicit_conjugate_transpose"
+            ),
+            "execution_variant_source": (
+                "explicit_context"
+                if self._variant_context_active
+                else "profile_default"
+            ),
         }
         if timing is not None:
             self._last_apply_facts["timing"] = dict(timing)

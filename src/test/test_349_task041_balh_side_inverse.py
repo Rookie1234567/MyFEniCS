@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from types import SimpleNamespace
 
 import numpy as np
@@ -87,9 +88,35 @@ class _IdentityCondensed:
 
 
 class _IdentityTransfer:
-    def __init__(self) -> None:
+    def __init__(self, default_variant: str = "legacy") -> None:
         self.apply_count = 0
         self.destroy_count = 0
+        self._execution_variant = default_variant
+        self._variant_context_active = False
+        self.on_apply = None
+
+    @property
+    def execution_variant(self) -> str:
+        return self._execution_variant
+
+    @contextmanager
+    def variant_context(self, variant: str):
+        if variant not in {"legacy", "optimized"}:
+            raise ValueError("test transfer variant must be legacy or optimized")
+        if self._variant_context_active:
+            raise RuntimeError("test transfer variant cannot change while active")
+        previous = self._execution_variant
+        self._execution_variant = variant
+        self._variant_context_active = True
+        try:
+            yield self
+        finally:
+            self._execution_variant = previous
+            self._variant_context_active = False
+
+    def _before_apply(self) -> None:
+        if self.on_apply is not None:
+            self.on_apply()
 
     @staticmethod
     def _copy(source: PETSc.Vec) -> PETSc.Vec:
@@ -104,6 +131,7 @@ class _IdentityTransfer:
         timing: dict[str, float] | None = None,
     ) -> PETSc.Vec:
         self.apply_count += 1
+        self._before_apply()
         if timing is not None:
             timing.update(
                 {
@@ -123,6 +151,7 @@ class _IdentityTransfer:
         timing: dict[str, float] | None = None,
     ) -> PETSc.Vec:
         self.apply_count += 1
+        self._before_apply()
         if timing is not None:
             timing.update(
                 {
@@ -374,6 +403,7 @@ def _build_fixture(
     audit_callback=None,
     p4_factor=None,
     detailed_timing: bool = False,
+    record_iteration_history: bool = False,
 ) -> tuple[SideBalancedInverse, dict[str, object]]:
     operator, operator_context = _scale_matrix(size, 2.0)
     condensed = _IdentityCondensed(size)
@@ -396,6 +426,7 @@ def _build_fixture(
         checkpoint_callback=checkpoint_callback,
         audit_callback=audit_callback,
         detailed_timing=detailed_timing,
+        record_iteration_history=record_iteration_history,
     )
     return inverse, {
         "operator": operator,
@@ -470,7 +501,13 @@ def _install_stub_side_builders(monkeypatch, captured):
         *,
         optimization_profile=None,
     ):
-        transfer = _IdentityTransfer()
+        transfer = _IdentityTransfer(
+            default_variant=(
+                "optimized"
+                if optimization_profile == "task041_schur_speed_v2"
+                else "legacy"
+            )
+        )
         captured["transfer"] = transfer
         captured["optimization_profile"] = optimization_profile
         return transfer
@@ -553,6 +590,11 @@ def test_side_inverse_builder_default_callback_skips_inventory(
         assert captured["p4_callback"] is None
         assert captured["h6_callback"] is None
         assert captured["optimization_profile"] == optimization_profile
+        assert captured["transfer"].execution_variant == (
+            "optimized"
+            if optimization_profile == "task041_schur_speed_v2"
+            else "legacy"
+        )
         assert inventory_calls == []
     finally:
         if inverse is not None:
@@ -594,6 +636,153 @@ def test_side_inverse_builder_callback_failure_cleans_owned_only(
             assert captured["h6"].destroy_count == 1
     finally:
         b.destroy()
+        operator.destroy()
+
+
+def test_side_inverse_variant_context_rejects_switch_during_apply_and_restores():
+    inverse, owned = _build_fixture()
+    operator = owned["operator"]
+    operator_context = owned["operator_context"]
+    transfer = owned["transfer"]
+    factor = owned["p4_factor"]
+    ksp = inverse._ksp
+    source = _new_vector(operator, np.asarray([1.0 + 0.2j, -0.4 + 0.7j]))
+    target = operator.createVecLeft()
+    output = operator.createVecLeft()
+    factor_solves = factor.solve_count
+
+    def switch_during_apply() -> None:
+        with inverse.variant_context("optimized"):
+            pass
+
+    transfer.on_apply = switch_during_apply
+    try:
+        assert inverse._ksp.getInitialGuessNonzero() is False
+        with pytest.raises(RuntimeError, match="cannot change during apply"):
+            inverse.apply(source, target)
+        assert inverse._variant_context_active is False
+        assert inverse._active_variant is None
+        assert transfer.execution_variant == "legacy"
+        assert inverse.diagnostics["last_apply"]["execution_variant"] == "legacy"
+
+        with pytest.raises(RuntimeError, match="sentinel variant failure"), inverse.variant_context(
+            "optimized"
+        ):
+            assert transfer.execution_variant == "optimized"
+            raise RuntimeError("sentinel variant failure")
+        assert inverse._variant_context_active is False
+        assert inverse._active_variant is None
+        assert transfer.execution_variant == "legacy"
+
+        transfer.on_apply = None
+        source_before = np.asarray(
+            source.getArray(readonly=True), dtype=np.complex128
+        ).copy()
+        for variant in ("legacy", "optimized", "legacy"):
+            target.set(PETSc.ScalarType(3.0 - 0.5j))
+            with inverse.variant_context(variant):
+                assert inverse._ksp.getInitialGuessNonzero() is False
+                inverse.apply(source, target)
+                last_apply = inverse.diagnostics["last_apply"]
+                assert last_apply["execution_variant"] == variant
+                assert last_apply["explicit_true_target_reached"] is True
+                assert last_apply["relative_residual"] <= inverse._rtol
+            assert transfer.execution_variant == "legacy"
+            assert inverse._active_variant is None
+            np.testing.assert_allclose(
+                target.getArray(readonly=True),
+                0.5 * source.getArray(readonly=True),
+                atol=1.0e-12,
+                rtol=1.0e-12,
+            )
+            np.testing.assert_array_equal(
+                source.getArray(readonly=True), source_before
+            )
+
+        assert inverse._p4_factor is factor
+        assert inverse._ksp is ksp
+        assert factor.solve_count > factor_solves
+        assert inverse.diagnostics["p4_factor_created_count"] == 1
+        assert inverse.diagnostics["nested_ksp_created_count"] == 1
+        assert transfer.destroy_count == 0
+        assert operator_context.destroyed is False
+        inverse.destroy()
+        operator.mult(source, output)
+        np.testing.assert_allclose(
+            output.getArray(readonly=True),
+            2.0 * source.getArray(readonly=True),
+        )
+        assert operator_context.destroyed is False
+        assert inverse.diagnostics["last_apply"]["execution_variant"] == "legacy"
+    finally:
+        output.destroy()
+        target.destroy()
+        source.destroy()
+        inverse.destroy()
+        operator.destroy()
+
+
+def test_side_inverse_live_ksp_contract_and_bounded_history():
+    inverse, owned = _build_fixture(record_iteration_history=True)
+    operator = owned["operator"]
+    source = _new_vector(operator, np.asarray([1.0 + 0.2j, -0.4 + 0.7j]))
+    target = operator.createVecLeft()
+    try:
+        contract = inverse._ksp_contract_audit()
+        assert contract["pass"] is True
+        assert contract["actual"]["restart"] == 32
+        inverse._ksp.setGMRESRestart(17)
+        try:
+            changed_contract = inverse._ksp_contract_audit()
+            assert changed_contract["actual"]["restart"] == 17
+        finally:
+            inverse._ksp.setGMRESRestart(32)
+        restored_contract = inverse._ksp_contract_audit()
+        assert restored_contract["actual"]["restart"] == 32
+        assert contract["actual"]["pc_side"] == int(PETSc.PC.Side.RIGHT)
+        assert contract["actual"]["norm_type"] == int(
+            PETSc.KSP.NormType.UNPRECONDITIONED
+        )
+        assert contract["actual"]["initial_guess_nonzero"] is False
+
+        inverse.apply(source, target)
+        audit = inverse.diagnostics["last_apply"]
+        assert audit["ksp_contract"]["collective_pass"] is True
+        assert audit["ksp_contract"]["actual"]["pc_side"] == int(
+            PETSc.PC.Side.RIGHT
+        )
+        assert audit["ksp_contract"]["actual"]["norm_type"] == int(
+            PETSc.KSP.NormType.UNPRECONDITIONED
+        )
+        assert audit["ksp_contract"]["actual"]["initial_guess_nonzero"] is False
+        history = audit["iteration_history"]
+        assert isinstance(history, list)
+        assert history
+        assert all(
+            isinstance(item.get("reported_residual"), (int, float))
+            and np.isfinite(item["reported_residual"])
+            for item in history
+        )
+        assert len(history) <= 129
+        assert audit["iterations"] <= 128
+
+        first_history_length = len(history)
+        inverse.apply(source, target)
+        second_audit = inverse.diagnostics["last_apply"]
+        second_history = second_audit["iteration_history"]
+        assert second_history
+        assert len(second_history) == first_history_length
+        assert second_history[0]["iteration"] == 0
+        assert all(
+            isinstance(item.get("reported_residual"), (int, float))
+            and np.isfinite(item["reported_residual"])
+            for item in second_history
+        )
+        assert len(second_history) <= 129
+    finally:
+        target.destroy()
+        source.destroy()
+        inverse.destroy()
         operator.destroy()
 
 

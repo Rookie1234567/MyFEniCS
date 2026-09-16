@@ -13,6 +13,13 @@ from dolfinx.la.petsc import create_vector
 from mpi4py import MPI
 from petsc4py import PETSc
 
+from benchmarks.task041_exact_side_workflow import (
+    _task041_communicator_identity,
+    _task041_held_petsc_identity,
+    _task041_mpc_layout_metadata,
+    _task041_space_layout_metadata,
+    _task041_stream_array_metadata,
+)
 from src.common.config_3d import SimulationConfig3D
 from src.constraints.floquet_3d import build_double_floquet_mpc
 from src.solvers.hcurl_assembly_time_condensation import (
@@ -113,6 +120,48 @@ def _fill_algebraic_vector(
     local = vector.getArray()
     local[np.asarray(owned_slaves, dtype=np.int64)] = 0.0
     vector.assemble()
+
+
+def _assert_layout_api_helpers(
+    transfer,
+    fine_space,
+    coarse_space,
+    fine_mpc,
+    coarse_mpc,
+    mesh_obj,
+    petsc_vector,
+    expected_comm_size: int,
+) -> None:
+    fine_layout = _task041_space_layout_metadata(
+        "transfer.fine_space", fine_space
+    )
+    coarse_layout = _task041_space_layout_metadata(
+        "transfer.coarse_space", coarse_space
+    )
+    fine_mpc_layout = _task041_mpc_layout_metadata(
+        "fine_floquet.mpc", fine_mpc
+    )
+    coarse_mpc_layout = _task041_mpc_layout_metadata(
+        "coarse_floquet.mpc", coarse_mpc
+    )
+    geometry_layout = _task041_stream_array_metadata(
+        "mesh.geometry.x", np.asarray(mesh_obj.geometry.x)
+    )
+    geometry_dofmap_layout = _task041_stream_array_metadata(
+        "mesh.geometry.dofmap", np.asarray(mesh_obj.geometry.dofmap)
+    )
+    communicator = _task041_communicator_identity(
+        "transfer.comm", transfer.comm
+    )
+    vector_identity = _task041_held_petsc_identity("probe", petsc_vector)
+    assert fine_layout["dofmap"]["map"]["hash_status"].startswith("measured")
+    assert coarse_layout["dofmap"]["map"]["hash_status"].startswith("measured")
+    assert fine_mpc_layout["slaves"]["hash_status"].startswith("measured")
+    assert coarse_mpc_layout["slaves"]["hash_status"].startswith("measured")
+    assert geometry_layout["hash_status"].startswith("measured")
+    assert geometry_dofmap_layout["hash_status"].startswith("measured")
+    assert communicator["size"] == expected_comm_size
+    assert vector_identity["petsc_handle"] > 0
 
 
 class _SerialReduction:
@@ -317,6 +366,16 @@ def test_task041_h1b_empty_owner_range_is_supported_on_one_cell_mesh(
     coarse_difference = None
     fine_difference = None
     try:
+        _assert_layout_api_helpers(
+            owner,
+            fine_space,
+            coarse_space,
+            fine_floquet.mpc,
+            coarse_floquet.mpc,
+            box,
+            coarse,
+            expected_comm_size=2,
+        )
         coarse_slaves = np.asarray(owner._coarse_slaves, dtype=np.int64)
         fine_slaves = np.asarray(owner._fine_slaves, dtype=np.int64)
         _fill_algebraic_vector(coarse, coarse_slaves, 0.75)
@@ -652,27 +711,60 @@ def test_task041_h1b_complex_adjoint_helper_matches_explicit_matrix_adjoint() ->
 )
 def test_task041_h1b_v2_owner_and_adjoint_match_legacy_with_alternation(
     small_fe_fixture,
+    monkeypatch,
 ) -> None:
     data = small_fe_fixture
-    legacy_owner = data["owner"]
-    optimized_owner = build_same_mesh_hcurl_owner_transfer(
+    import src.solvers.physical_balanced_same_mesh_transfer as transfer_module
+
+    kernel_calls = {
+        "legacy_owner": 0,
+        "batched_owner": 0,
+        "conjugate_transpose_identity": 0,
+    }
+
+    legacy_resolver = transfer_module._resolve_owner_candidates
+    batched_resolver = transfer_module._resolve_owner_candidates_batched
+    conjugate_transpose = transfer_module._apply_conjugate_transpose_vector
+
+    def traced_legacy(*args, **kwargs):
+        kernel_calls["legacy_owner"] += 1
+        return legacy_resolver(*args, **kwargs)
+
+    def traced_batched(*args, **kwargs):
+        kernel_calls["batched_owner"] += 1
+        return batched_resolver(*args, **kwargs)
+
+    def traced_conjugate_transpose(*args, **kwargs):
+        kernel_calls["conjugate_transpose_identity"] += 1
+        return conjugate_transpose(*args, **kwargs)
+
+    monkeypatch.setattr(transfer_module, "_resolve_owner_candidates", traced_legacy)
+    monkeypatch.setattr(
+        transfer_module, "_resolve_owner_candidates_batched", traced_batched
+    )
+    monkeypatch.setattr(
+        transfer_module,
+        "_apply_conjugate_transpose_vector",
+        traced_conjugate_transpose,
+    )
+    owner = build_same_mesh_hcurl_owner_transfer(
         data["fine_space"],
         data["fine_floquet"],
         data["coarse_space"],
         data["coarse_floquet"],
         optimization_profile="task041_schur_speed_v2",
     )
-    assert legacy_owner.audit["optimization_profile"] is None
-    assert optimized_owner.audit["optimization_profile"] == "task041_schur_speed_v2"
-    assert optimized_owner.audit["owner_resolution"] == "numpy_batched"
-    assert optimized_owner.audit["adjoint_cell_apply"] == (
+    assert owner.audit["optimization_profile"] == "task041_schur_speed_v2"
+    assert owner.audit["default_execution_variant"] == "optimized"
+    assert owner.audit["owner_resolution"] == "numpy_batched"
+    assert owner.audit["adjoint_cell_apply"] == (
         "conjugate_transpose_identity"
     )
 
     coarse_space = data["coarse_space"]
     fine_space = data["fine_space"]
-    coarse_slaves = np.asarray(legacy_owner._coarse_slaves, dtype=np.int64)
-    fine_slaves = np.asarray(legacy_owner._fine_slaves, dtype=np.int64)
+    coarse_slaves = np.asarray(owner._coarse_slaves, dtype=np.int64)
+    fine_slaves = np.asarray(owner._fine_slaves, dtype=np.int64)
     q1 = create_vector(
         [(coarse_space.dofmap.index_map, int(coarse_space.dofmap.index_map_bs))]
     )
@@ -685,6 +777,16 @@ def test_task041_h1b_v2_owner_and_adjoint_match_legacy_with_alternation(
     p_difference = None
     ph_difference = None
     try:
+        _assert_layout_api_helpers(
+            owner,
+            fine_space,
+            coarse_space,
+            data["fine_floquet"].mpc,
+            data["coarse_floquet"].mpc,
+            data["box"],
+            q1,
+            expected_comm_size=MPI.COMM_WORLD.size,
+        )
         _fill_algebraic_vector(q1, coarse_slaves, 2.5)
         _fill_algebraic_vector(q2, coarse_slaves, -1.25)
         _fill_algebraic_vector(fine_probe1, fine_slaves, 4.0)
@@ -694,26 +796,87 @@ def test_task041_h1b_v2_owner_and_adjoint_match_legacy_with_alternation(
             fine_probe1.getArray(readonly=True), dtype=np.complex128
         ).copy()
 
-        legacy_p = legacy_owner.apply_primal(q1)
-        optimized_p = optimized_owner.apply_primal(q1)
-        optimized_p2 = optimized_owner.apply_primal(q2)
-        optimized_p_repeat = optimized_owner.apply_primal(q1)
-        legacy_ph = legacy_owner.apply_adjoint(fine_probe1)
-        optimized_ph = optimized_owner.apply_adjoint(fine_probe1)
-        optimized_ph2 = optimized_owner.apply_adjoint(fine_probe2)
-        optimized_ph_repeat = optimized_owner.apply_adjoint(fine_probe1)
+        with owner.variant_context("legacy"):
+            legacy_p = owner.apply_primal(q1)
+            legacy_p_facts = owner.last_apply_facts
+            legacy_ph = owner.apply_adjoint(fine_probe1)
+            legacy_ph_facts = owner.last_apply_facts
+        legacy_counts = dict(kernel_calls)
+        assert legacy_counts["legacy_owner"] > 0
+        assert legacy_counts["batched_owner"] == 0
+        assert legacy_counts["conjugate_transpose_identity"] == 0
+        with (
+            pytest.raises(RuntimeError, match="cannot change while active"),
+            owner.variant_context("legacy"),
+            owner.variant_context("optimized"),
+        ):
+            pass
+        with owner.variant_context("optimized"):
+            optimized_p = owner.apply_primal(q1)
+            optimized_p2 = owner.apply_primal(q2)
+            optimized_ph = owner.apply_adjoint(fine_probe1)
+            optimized_ph2 = owner.apply_adjoint(fine_probe2)
+        optimized_counts = dict(kernel_calls)
+        assert optimized_counts["legacy_owner"] == legacy_counts["legacy_owner"]
+        assert optimized_counts["batched_owner"] > legacy_counts["batched_owner"]
+        if owner._records:
+            assert optimized_counts["conjugate_transpose_identity"] > (
+                legacy_counts["conjugate_transpose_identity"]
+            )
+        else:
+            assert (
+                optimized_counts["conjugate_transpose_identity"]
+                == legacy_counts["conjugate_transpose_identity"]
+            )
+        with owner.variant_context("legacy"):
+            legacy_p_repeat = owner.apply_primal(q1)
+            legacy_ph_repeat = owner.apply_adjoint(fine_probe1)
+        legacy_repeat_counts = dict(kernel_calls)
+        assert legacy_repeat_counts["legacy_owner"] > optimized_counts["legacy_owner"]
+        assert legacy_repeat_counts["batched_owner"] == optimized_counts["batched_owner"]
+        assert (
+            legacy_repeat_counts["conjugate_transpose_identity"]
+            == optimized_counts["conjugate_transpose_identity"]
+        )
+        with owner.variant_context("optimized"):
+            optimized_p_repeat = owner.apply_primal(q1)
+            optimized_ph_repeat = owner.apply_adjoint(fine_probe1)
+        final_kernel_counts = dict(kernel_calls)
+        assert final_kernel_counts["legacy_owner"] == legacy_repeat_counts["legacy_owner"]
+        assert final_kernel_counts["batched_owner"] > optimized_counts["batched_owner"]
+        if owner._records:
+            assert final_kernel_counts["conjugate_transpose_identity"] > (
+                optimized_counts["conjugate_transpose_identity"]
+            )
+        else:
+            assert (
+                final_kernel_counts["conjugate_transpose_identity"]
+                == optimized_counts["conjugate_transpose_identity"]
+            )
         outputs.extend(
             (
                 legacy_p,
                 optimized_p,
                 optimized_p2,
+                legacy_p_repeat,
                 optimized_p_repeat,
                 legacy_ph,
                 optimized_ph,
                 optimized_ph2,
+                legacy_ph_repeat,
                 optimized_ph_repeat,
             )
         )
+        assert legacy_p_facts["execution_variant"] == "legacy"
+        assert legacy_p_facts["owner_resolution"] == "legacy_python"
+        assert legacy_p_facts["execution_variant_source"] == "explicit_context"
+        assert legacy_ph_facts["execution_variant"] == "legacy"
+        assert legacy_ph_facts["adjoint_cell_apply"] == (
+            "explicit_conjugate_transpose"
+        )
+        assert owner._variant_context_active is False
+        assert owner.last_apply_facts["execution_variant"] == "optimized"
+        assert owner.execution_variant == "optimized"
 
         np.testing.assert_allclose(
             optimized_p.getArray(readonly=True),
@@ -773,6 +936,18 @@ def test_task041_h1b_v2_owner_and_adjoint_match_legacy_with_alternation(
             atol=1.0e-11,
             rtol=1.0e-11,
         )
+        np.testing.assert_allclose(
+            legacy_p.getArray(readonly=True),
+            legacy_p_repeat.getArray(readonly=True),
+            atol=1.0e-11,
+            rtol=1.0e-11,
+        )
+        np.testing.assert_allclose(
+            legacy_ph.getArray(readonly=True),
+            legacy_ph_repeat.getArray(readonly=True),
+            atol=1.0e-11,
+            rtol=1.0e-11,
+        )
         assert not np.allclose(
             optimized_p.getArray(readonly=True), optimized_p2.getArray(readonly=True)
         )
@@ -797,7 +972,7 @@ def test_task041_h1b_v2_owner_and_adjoint_match_legacy_with_alternation(
             p_difference.destroy()
         if ph_difference is not None:
             ph_difference.destroy()
-        optimized_owner.destroy()
+        owner.destroy()
 
 
 @pytest.mark.skipif(

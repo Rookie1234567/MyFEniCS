@@ -56,6 +56,7 @@ TASK041_SCHUR_SPEED_V2_LEDGER_NAME = (
 )
 TASK041_REPRESENTATIVE_RHS_SCOPE = "representative_rhs"
 TASK041_SEQUENTIAL_COMPONENT_SCHEDULE = "sequential_component"
+TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE = "common_layout_equivalence"
 TASK041_REPRESENTATIVE_RHS_SCHEMA = "task041.representative_rhs_manifest.v1"
 TASK041_REPRESENTATIVE_RHS_COUNT = 8
 TASK041_REPRESENTATIVE_RHS_MODE_COUNT = 480
@@ -76,6 +77,7 @@ def task041_schur_speed_v2_contract(
     *,
     scope: str | None = None,
     side_setup_schedule: str | None = None,
+    comparison_mode: str | None = None,
 ) -> dict[str, Any]:
     """Return the explicit S1/S2/S3/S4 budget contract for one candidate."""
 
@@ -94,6 +96,19 @@ def task041_schur_speed_v2_contract(
     ):
         raise ValueError(
             "sequential_component requires the representative_rhs scope"
+        )
+    if comparison_mode not in {None, TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE}:
+        raise ValueError(
+            f"unsupported Task041 comparison mode: {comparison_mode!r}"
+        )
+    if comparison_mode is not None and (
+        model_id != TASK041_BALH_5NM_CANDIDATE_MODEL_ID
+        or scope != TASK041_REPRESENTATIVE_RHS_SCOPE
+        or side_setup_schedule != TASK041_SEQUENTIAL_COMPONENT_SCHEDULE
+    ):
+        raise ValueError(
+            "common_layout_equivalence requires the 5 nm representative_rhs "
+            "sequential_component contract"
         )
     try:
         memory_cap = int(_TASK041_SCHUR_SPEED_V2_MEMORY_CAPS[str(model_id)])
@@ -115,6 +130,7 @@ def task041_schur_speed_v2_contract(
         "model_id": str(model_id),
         "scope": scope or "formal_consumer",
         "side_setup_schedule": side_setup_schedule,
+        "comparison_mode": comparison_mode,
         "budget_group": active_budget_group,
         "memory_cap_bytes": memory_cap,
         "memory_cap_source": "review_report_v2_section_5_explicit_cap",
@@ -436,6 +452,7 @@ def _mpi8_command(
     performance_profile: str | None = None,
     task041_rhs_probe_manifest: str | Path | None = None,
     side_setup_schedule: str | None = None,
+    comparison_mode: str | None = None,
 ) -> list[str]:
     command = [
         "mpiexec",
@@ -444,7 +461,11 @@ def _mpi8_command(
         "--bind-to",
         "cpu-list:ordered",
         "--cpu-list",
-        "0-7",
+        (
+            "1-8"
+            if comparison_mode == TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE
+            else "0-7"
+        ),
         "--report-bindings",
         str(python_executable),
         "-m",
@@ -504,6 +525,16 @@ def _mpi8_command(
                 "side setup schedule is limited to the BAL_H candidate worker"
             )
         command.extend(["--task041-side-setup-schedule", side_setup_schedule])
+    if comparison_mode is not None:
+        if (
+            module != "benchmarks.task041_balh_workflow"
+            or phase != TASK041_BALH_CANDIDATE_PHASE
+            or comparison_mode != TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE
+        ):
+            raise ValueError(
+                "comparison mode is limited to the BAL_H candidate worker"
+            )
+        command.extend(["--task041-comparison-mode", comparison_mode])
     return command
 
 
@@ -580,6 +611,7 @@ def build_task041_balh_candidate_consumer_command(
     performance_profile: str | None = None,
     task041_rhs_probe_manifest: str | Path | None = None,
     side_setup_schedule: str | None = None,
+    comparison_mode: str | None = None,
 ) -> list[str]:
     normalized = specification.as_jsonable()
     if task041_balh_route(str(normalized["model_id"])) != "balh":
@@ -604,10 +636,11 @@ def build_task041_balh_candidate_consumer_command(
                 else None
             ),
             side_setup_schedule=side_setup_schedule,
+            comparison_mode=comparison_mode,
         )
-    elif side_setup_schedule is not None:
+    elif side_setup_schedule is not None or comparison_mode is not None:
         raise ValueError(
-            "side setup schedule requires task041_schur_speed_v2"
+            "Task041 comparison options require task041_schur_speed_v2"
         )
     if task041_rhs_probe_manifest is not None:
         if (
@@ -637,6 +670,7 @@ def build_task041_balh_candidate_consumer_command(
         performance_profile=performance_profile,
         task041_rhs_probe_manifest=task041_rhs_probe_manifest,
         side_setup_schedule=side_setup_schedule,
+        comparison_mode=comparison_mode,
     )
 
 
@@ -1035,6 +1069,10 @@ def _parser() -> argparse.ArgumentParser:
         "--task041-side-setup-schedule",
         choices=(TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,),
     )
+    parser.add_argument(
+        "--task041-comparison-mode",
+        choices=(TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE,),
+    )
     time_control = parser.add_mutually_exclusive_group()
     time_control.add_argument(
         "--task041-performance-profile",
@@ -1065,6 +1103,7 @@ def main(argv: Sequence[str] | None = None) -> dict[str, Any]:
         performance_profile=args.task041_performance_profile,
         task041_rhs_probe_manifest=args.task041_rhs_probe,
         side_setup_schedule=args.task041_side_setup_schedule,
+        comparison_mode=args.task041_comparison_mode,
     )
 
 
@@ -1078,6 +1117,7 @@ __all__ = [
     "TASK041_BALH_EXACT_CONSUMER_SCHEMA",
     "TASK041_BALH_MODE_PREP_PHASE",
     "TASK041_BALH_MODE_PREP_PROFILE",
+    "TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE",
     "TASK041_REPRESENTATIVE_RHS_COUNT",
     "TASK041_REPRESENTATIVE_RHS_MODE_COUNT",
     "TASK041_REPRESENTATIVE_RHS_SCOPE",

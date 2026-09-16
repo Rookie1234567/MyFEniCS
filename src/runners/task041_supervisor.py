@@ -200,6 +200,7 @@ def _load_task041_supervision_record(
     scope: str,
     representative_rhs_probe: Mapping[str, Any] | None,
     side_setup_schedule: str | None = None,
+    comparison_mode: str | None = None,
 ) -> dict[str, Any]:
     path = Path(record_path)
     if not path.is_absolute():
@@ -229,6 +230,8 @@ def _load_task041_supervision_record(
     }
     if side_setup_schedule is not None:
         expected["side_setup_schedule"] = side_setup_schedule
+    if comparison_mode is not None:
+        expected["comparison_mode"] = comparison_mode
     if isinstance(payload.get("parent_pid"), bool) or not isinstance(
         payload.get("parent_pid"), int
     ):
@@ -269,6 +272,7 @@ def _load_task041_supervision_record(
         "scope": scope,
         "representative_rhs_probe": representative_rhs_probe,
         "side_setup_schedule": side_setup_schedule,
+        "comparison_mode": comparison_mode,
         "parent_pid": parent_pid,
         "invocation_id": expected["invocation_id"],
         "ledger_path": str(Path(ledger_value).resolve()),
@@ -1871,31 +1875,32 @@ def _rank_pid_affinity_artifact(phase_root: Path) -> dict[str, Any]:
     }
 
 
-def _validate_representative_rhs_result(
-    consumer_root: Path,
+def _task041_representative_immutable_binding(
     summary: Mapping[str, Any],
-    binding: Mapping[str, Any],
-    *,
-    process_group_gone: bool | None,
-    expected_side_setup_schedule: str | None = None,
+    binding: Mapping[str, Any] | None,
 ) -> dict[str, Any]:
-    """Independently validate the fixed finite-response worker evidence."""
+    """Validate the fixed probe/source/packet contract shared by both checkers."""
 
     from benchmarks.task041_balh_workflow import (
         _TASK041_REPRESENTATIVE_RHS_EXPECTED,
         TASK041_REPRESENTATIVE_RHS_COUNT,
         TASK041_REPRESENTATIVE_RHS_SCOPE,
-        TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
     )
 
     failures: list[str] = []
     checks: dict[str, Any] = {}
-    expected_entries = binding.get("entries")
+    expected_entries = binding.get("entries") if isinstance(binding, Mapping) else None
     expected_by_ordinal: dict[int, Mapping[str, Any]] = {}
-    if isinstance(expected_entries, list):
+    if not isinstance(expected_entries, list):
+        failures.append("fixed_probe_binding_mismatch")
+        expected_entries = []
+    else:
         for entry in expected_entries:
-            if isinstance(entry, Mapping) and isinstance(entry.get("ordinal"), int):
-                expected_by_ordinal[int(entry["ordinal"])] = entry
+            ordinal = entry.get("ordinal") if isinstance(entry, Mapping) else None
+            if type(ordinal) is not int or ordinal in expected_by_ordinal:
+                failures.append("fixed_probe_binding_mismatch")
+                continue
+            expected_by_ordinal[ordinal] = entry
     expected_signature = (
         tuple(
             (
@@ -1908,14 +1913,16 @@ def _validate_representative_rhs_result(
             for entry in expected_entries
             if isinstance(entry, Mapping)
         )
-        if isinstance(expected_entries, list)
+        if expected_entries
         and all(isinstance(entry, Mapping) for entry in expected_entries)
         else ()
     )
-    budget = binding.get("budget")
+    budget = binding.get("budget") if isinstance(binding, Mapping) else None
     checks["fixed_binding"] = bool(
-        binding.get("scope") == TASK041_REPRESENTATIVE_RHS_SCOPE
-        and len(expected_by_ordinal) == TASK041_REPRESENTATIVE_RHS_COUNT
+        isinstance(binding, Mapping)
+        and binding.get("scope") == TASK041_REPRESENTATIVE_RHS_SCOPE
+        and len(expected_entries) == TASK041_REPRESENTATIVE_RHS_COUNT
+        and set(expected_by_ordinal) == set(range(TASK041_REPRESENTATIVE_RHS_COUNT))
         and expected_signature == _TASK041_REPRESENTATIVE_RHS_EXPECTED
         and isinstance(budget, Mapping)
         and budget.get("group") == "shared_S0_S1_S3"
@@ -1923,8 +1930,8 @@ def _validate_representative_rhs_result(
     if not checks["fixed_binding"]:
         failures.append("fixed_probe_binding_mismatch")
 
-    manifest_path = binding.get("path")
-    manifest_sha = binding.get("sha256")
+    manifest_path = binding.get("path") if isinstance(binding, Mapping) else None
+    manifest_sha = binding.get("sha256") if isinstance(binding, Mapping) else None
     if isinstance(manifest_path, str) and _valid_sha(manifest_sha, 64):
         try:
             checks["probe_manifest_hash"] = (
@@ -1938,7 +1945,7 @@ def _validate_representative_rhs_result(
     if not checks["probe_manifest_hash"]:
         failures.append("probe_manifest_hash_mismatch")
 
-    source_audit = binding.get("source_audit")
+    source_audit = binding.get("source_audit") if isinstance(binding, Mapping) else None
     if isinstance(source_audit, Mapping):
         source_path = source_audit.get("rhs_audit_path")
         source_sha = source_audit.get("rhs_audit_sha256")
@@ -1960,15 +1967,17 @@ def _validate_representative_rhs_result(
     probe_summary = summary.get("representative_rhs_probe")
     checks["summary_probe_binding"] = bool(
         isinstance(probe_summary, Mapping)
-        and probe_summary.get("path") == binding.get("path")
-        and probe_summary.get("sha256") == binding.get("sha256")
+        and probe_summary.get("path") == manifest_path
+        and probe_summary.get("sha256") == manifest_sha
         and probe_summary.get("scope") == TASK041_REPRESENTATIVE_RHS_SCOPE
         and probe_summary.get("budget_group") == "shared_S0_S1_S3"
     )
     if not checks["summary_probe_binding"]:
         failures.append("summary_probe_binding_mismatch")
 
-    packet_binding = binding.get("packet_binding")
+    packet_binding = (
+        binding.get("packet_binding") if isinstance(binding, Mapping) else None
+    )
     packet_summary = summary.get("packet")
     expected_packet_sha = (
         packet_binding.get("packet_manifest_sha256")
@@ -1997,15 +2006,16 @@ def _validate_representative_rhs_result(
     )
     if not checks["source_and_packet_identity"]:
         failures.append("source_or_packet_identity_mismatch")
-    if isinstance(expected_identity_path, str) and _valid_sha(
-        packet_binding.get("packet_identity_sha256") if isinstance(packet_binding, Mapping) else None,
-        64,
-    ):
+    packet_identity_sha = (
+        packet_binding.get("packet_identity_sha256")
+        if isinstance(packet_binding, Mapping)
+        else None
+    )
+    if isinstance(expected_identity_path, str) and _valid_sha(packet_identity_sha, 64):
         try:
             checks["packet_identity_hash"] = (
                 Path(expected_identity_path).is_file()
-                and _sha256_file(Path(expected_identity_path))
-                == packet_binding["packet_identity_sha256"]
+                and _sha256_file(Path(expected_identity_path)) == packet_identity_sha
             )
         except OSError:
             checks["packet_identity_hash"] = False
@@ -2013,6 +2023,42 @@ def _validate_representative_rhs_result(
         checks["packet_identity_hash"] = False
     if not checks["packet_identity_hash"]:
         failures.append("packet_identity_hash_mismatch")
+
+    return {
+        "checks": checks,
+        "failures": failures,
+        "expected_entries": expected_entries,
+        "expected_by_ordinal": expected_by_ordinal,
+        "expected_signature": expected_signature,
+        "packet_binding": packet_binding,
+        "expected_packet_sha": expected_packet_sha,
+        "expected_identity_path": expected_identity_path,
+    }
+
+
+def _validate_representative_rhs_result(
+    consumer_root: Path,
+    summary: Mapping[str, Any],
+    binding: Mapping[str, Any],
+    *,
+    process_group_gone: bool | None,
+    expected_side_setup_schedule: str | None = None,
+) -> dict[str, Any]:
+    """Independently validate the fixed finite-response worker evidence."""
+
+    from benchmarks.task041_balh_workflow import (
+        TASK041_REPRESENTATIVE_RHS_COUNT,
+        TASK041_REPRESENTATIVE_RHS_SCOPE,
+        TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+    )
+
+    binding_evidence = _task041_representative_immutable_binding(
+        summary, binding
+    )
+    failures = list(binding_evidence["failures"])
+    checks = dict(binding_evidence["checks"])
+    expected_by_ordinal = binding_evidence["expected_by_ordinal"]
+    expected_packet_sha = binding_evidence["expected_packet_sha"]
 
     raw_path = consumer_root / "numerical_output" / "representative_rhs_audits.jsonl"
     raw_by_ordinal: dict[int, tuple[Mapping[str, Any], Mapping[str, Any]]] = {}
@@ -2427,414 +2473,39 @@ def _validate_representative_rhs_result(
         and all(value == 0 for value in after_nested.values())
     )
     if sequential_schedule:
-        side_setup = (
-            setup.get("side_setup") if isinstance(setup, Mapping) else None
-        )
-        summary_boundaries = (
-            side_setup.get("lifecycle_boundaries")
-            if isinstance(side_setup, Mapping)
-            else None
-        )
-        expected_boundary_events = [
-            (side, event)
-            for side in ("bottom", "top")
-            for event in ("before_build", "ready", "before_release", "released")
-        ]
-        marker_lifecycle: list[dict[str, Any]] = []
-        marker_identity: list[dict[str, Any]] = []
-        marker_cleanup: list[dict[str, Any]] = []
-        marker_errors: list[str] = []
-        marker_path = consumer_root / "markers.jsonl"
-        if not marker_path.is_file():
-            marker_errors.append("markers_missing")
-        else:
-            try:
-                with marker_path.open(encoding="utf-8") as stream:
-                    for line_number, line in enumerate(stream, 1):
-                        if not line.strip():
-                            continue
-                        try:
-                            marker = json.loads(line)
-                        except json.JSONDecodeError:
-                            marker_errors.append(
-                                f"marker_line_{line_number}_invalid_json"
-                            )
-                            continue
-                        if not isinstance(marker, Mapping):
-                            marker_errors.append(
-                                f"marker_line_{line_number}_not_object"
-                            )
-                            continue
-                        detail = marker.get("detail")
-                        if not isinstance(detail, Mapping):
-                            continue
-                        stage = marker.get("stage")
-                        boundary = detail.get("lifecycle_boundary")
-                        if isinstance(boundary, Mapping) and (
-                            detail.get("substage") == "side_lifecycle"
-                            or stage
-                            in {
-                                "bottom_factor_ready",
-                                "top_factor_ready",
-                                "bottom_construction_cleanup",
-                                "top_construction_cleanup",
-                            }
-                        ):
-                            marker_lifecycle.append(
-                                {
-                                    "boundary": dict(boundary),
-                                    "line_number": line_number,
-                                    "wall_seconds": marker.get("wall_seconds"),
-                                }
-                            )
-                        if detail.get("substage") == "global_identity":
-                            check = detail.get("identity_check")
-                            if isinstance(check, Mapping):
-                                marker_identity.append(
-                                {
-                                    "check": dict(check),
-                                    "line_number": line_number,
-                                    "wall_seconds": marker.get("wall_seconds"),
-                                }
-                                )
-                        if stage in {
-                            "bottom_construction_cleanup",
-                            "top_construction_cleanup",
-                        }:
-                            diagnostics = detail.get("diagnostics")
-                            if isinstance(diagnostics, Mapping):
-                                marker_cleanup.append(
-                                    {
-                                        "side": detail.get("side")
-                                        or str(stage).split("_", 1)[0],
-                                        "diagnostics": dict(diagnostics),
-                                    }
-                                )
-            except OSError as exc:
-                marker_errors.append(f"markers_read_error:{type(exc).__name__}")
-
-        def boundary_live_counts(
-            boundary: Mapping[str, Any],
-        ) -> dict[str, Any] | None:
-            live = boundary.get("live")
-            by_side = live.get("by_side") if isinstance(live, Mapping) else None
-            if not isinstance(by_side, Mapping):
-                return None
-            p4 = 0
-            nested = 0
-            live_sides = 0
-            for values in by_side.values():
-                if not isinstance(values, Mapping):
-                    return None
-                p4_value = values.get("p4_factor_count")
-                nested_value = values.get("nested_iterative_ksp_count")
-                if (
-                    type(p4_value) is not int
-                    or p4_value < 0
-                    or type(nested_value) is not int
-                    or nested_value < 0
-                ):
-                    return None
-                p4 += p4_value
-                nested += nested_value
-                live_sides += int(p4_value > 0 or nested_value > 0)
-            return {
-                "by_side": by_side,
-                "p4_factor": p4,
-                "nested_iterative_ksp": nested,
-                "live_side_count": live_sides,
-                "component_count": p4 + nested,
-            }
-
-        raw_boundaries = [row["boundary"] for row in marker_lifecycle]
-        raw_boundary_events = [
-            (boundary.get("side"), boundary.get("event"))
-            for boundary in raw_boundaries
-        ]
-        boundary_times = [row.get("wall_seconds") for row in marker_lifecycle]
-        boundary_time_pass = bool(
-            len(boundary_times) == 8
-            and all(
-                isinstance(value, (int, float))
-                and not isinstance(value, bool)
-                and math.isfinite(float(value))
-                and float(value) >= 0.0
-                for value in boundary_times
-            )
-            and all(
-                float(left) <= float(right)
-                for left, right in pairwise(boundary_times)
-            )
-        )
-        raw_created = {
-            "side_inverse": 0,
-            "p4_factor": 0,
-            "nested_iterative_ksp": 0,
-        }
-        raw_peaks = {
-            "side_inverse": 0,
-            "p4_factor": 0,
-            "nested_iterative_ksp": 0,
-            "component": 0,
-        }
-        boundary_counts_pass = len(raw_boundaries) == 8
-        for boundary in raw_boundaries:
-            counts = boundary_live_counts(boundary)
-            if counts is None:
-                boundary_counts_pass = False
-                continue
-            live = boundary.get("live")
-            if (
-                not isinstance(live, Mapping)
-                or live.get("live_side_count") != counts["live_side_count"]
-                or live.get("live_component_counts")
-                != {
-                    "p4_factor": counts["p4_factor"],
-                    "nested_iterative_ksp": counts["nested_iterative_ksp"],
-                }
-                or live.get("live_component_count_sum") != counts["component_count"]
-            ):
-                boundary_counts_pass = False
-            raw_peaks["side_inverse"] = max(
-                raw_peaks["side_inverse"], counts["live_side_count"]
-            )
-            raw_peaks["p4_factor"] = max(
-                raw_peaks["p4_factor"], counts["p4_factor"]
-            )
-            raw_peaks["nested_iterative_ksp"] = max(
-                raw_peaks["nested_iterative_ksp"],
-                counts["nested_iterative_ksp"],
-            )
-            raw_peaks["component"] = max(
-                raw_peaks["component"], counts["component_count"]
-            )
-            event = boundary.get("event")
-            if event == "ready":
-                created = boundary.get("created_at_boundary")
-                if (
-                    not isinstance(created, Mapping)
-                    or any(
-                        type(created.get(name)) is not int
-                        or created.get(name) != 1
-                        for name in (
-                            "side_inverse",
-                            "p4_factor",
-                            "nested_iterative_ksp",
-                        )
-                    )
-                ):
-                    boundary_counts_pass = False
-                else:
-                    for name in raw_created:
-                        raw_created[name] += created[name]
-            if event in {"before_build", "released"} and (
-                counts["live_side_count"] != 0
-                or counts["component_count"] != 0
-            ):
-                boundary_counts_pass = False
-            if event in {"ready", "before_release"} and (
-                counts["live_side_count"] != 1
-                or counts["p4_factor"] != 1
-                or counts["nested_iterative_ksp"] != 1
-                or len(counts["by_side"]) != 1
-                or set(counts["by_side"]) != {boundary.get("side")}
-            ):
-                boundary_counts_pass = False
-
-        expected_identity_labels = [
-            f"{side}_{event}"
-            for side in ("bottom", "top")
-            for event in (
-                "before_build",
-                "after_admission",
-                "before_release",
-                "after_release",
-            )
-        ]
-
-        def identity_values_pass(check: Any) -> bool:
-            if not isinstance(check, Mapping) or check.get("pass") is not True:
-                return False
-            for name in (
-                "action_relative",
-                "rhs_relative",
-                "source_unchanged_relative",
-            ):
-                value = check.get(name)
-                if (
-                    not isinstance(value, (int, float))
-                    or isinstance(value, bool)
-                    or not math.isfinite(float(value))
-                    or not 0.0 <= float(value) <= 1.0e-12
-                ):
-                    return False
-            return True
-
-        summary_identity = (
-            side_setup.get("global_identity_checks")
-            if isinstance(side_setup, Mapping)
-            else None
-        )
-        raw_identity_labels = [
-            row["check"].get("label") for row in marker_identity
-        ]
-        identity_values_and_order_pass = bool(
-            len(marker_identity) == 8
-            and raw_identity_labels == expected_identity_labels
-            and all(
-                identity_values_pass(row["check"]) for row in marker_identity
-            )
-            and isinstance(summary_identity, Mapping)
-            and set(summary_identity) == set(expected_identity_labels)
-            and all(
-                summary_identity.get(label)
-                == marker_identity[index]["check"]
-                for index, label in enumerate(expected_identity_labels)
-            )
-        )
-        lifecycle_lines = {
-            (row["boundary"].get("side"), row["boundary"].get("event")): row[
-                "line_number"
-            ]
-            for row in marker_lifecycle
-        }
-        identity_lines = {
-            row["check"].get("label"): row["line_number"]
-            for row in marker_identity
-        }
-        identity_lifecycle_order_pass = True
-        for side in ("bottom", "top"):
-            lifecycle_before_build = lifecycle_lines.get((side, "before_build"))
-            lifecycle_ready = lifecycle_lines.get((side, "ready"))
-            lifecycle_before_release = lifecycle_lines.get(
-                (side, "before_release")
-            )
-            lifecycle_released = lifecycle_lines.get((side, "released"))
-            identity_before_build = identity_lines.get(f"{side}_before_build")
-            identity_after_admission = identity_lines.get(
-                f"{side}_after_admission"
-            )
-            identity_before_release = identity_lines.get(
-                f"{side}_before_release"
-            )
-            identity_after_release = identity_lines.get(f"{side}_after_release")
-            if not all(
-                isinstance(value, int)
-                for value in (
-                    lifecycle_before_build,
-                    lifecycle_ready,
-                    lifecycle_before_release,
-                    lifecycle_released,
-                    identity_before_build,
-                    identity_after_admission,
-                    identity_before_release,
-                    identity_after_release,
-                )
-            ):
-                identity_lifecycle_order_pass = False
-                continue
-            identity_lifecycle_order_pass = (
-                identity_lifecycle_order_pass
-                and identity_before_build < lifecycle_before_build
-                and lifecycle_before_build < lifecycle_ready
-                and lifecycle_ready < identity_after_admission
-                and identity_after_admission < identity_before_release
-                and identity_before_release < lifecycle_before_release
-                and lifecycle_released < identity_after_release
-            )
-        def summary_counts_match(payload: Any) -> bool:
-            if not isinstance(payload, Mapping):
-                return False
-            return (
-                payload.get("p4_factor_created_total")
-                == raw_created["p4_factor"]
-                and payload.get("nested_iterative_ksp_created_total")
-                == raw_created["nested_iterative_ksp"]
-                and payload.get("total_created") == raw_created["side_inverse"]
-                and payload.get("p4_factor_simultaneously_live_peak")
-                == raw_peaks["p4_factor"]
-                and payload.get("nested_iterative_ksp_simultaneously_live_peak")
-                == raw_peaks["nested_iterative_ksp"]
-                and payload.get("simultaneously_live_peak")
-                == raw_peaks["side_inverse"]
-                and payload.get("simultaneously_live_component_peak")
-                == raw_peaks["component"]
-            )
-
-        summary_counts_pass = bool(
-            summary_counts_match(side_setup)
-            and summary_counts_match(setup_inventory)
-        )
-        cleanup_order = [row.get("side") for row in marker_cleanup]
-        summary_after = (
-            setup.get("side_diagnostics_after_destroy")
-            if isinstance(setup, Mapping)
-            else None
-        )
-        cleanup_values_pass = bool(
-            len(marker_cleanup) == 2
-            and cleanup_order == ["bottom", "top"]
-            and isinstance(summary_after, Mapping)
-            and set(summary_after) == {"bottom", "top"}
-            and all(
-                isinstance(row.get("diagnostics"), Mapping)
-                and row["diagnostics"].get("destroyed") is True
-                and type(row["diagnostics"].get("p4_factor_count")) is int
-                and row["diagnostics"].get("p4_factor_count") == 0
-                and type(
-                    row["diagnostics"].get("nested_iterative_ksp_count")
-                )
-                is int
-                and row["diagnostics"].get("nested_iterative_ksp_count") == 0
-                and summary_after.get(row.get("side"))
-                == row["diagnostics"]
-                for row in marker_cleanup
-            )
+        sequential_evidence = _task041_sequential_lifecycle_evidence(
+            consumer_root,
+            setup if isinstance(setup, Mapping) else None,
+            expected_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
         )
         checks["sequential_markers"] = {
-            "path": str(marker_path),
-            "errors": marker_errors,
-            "lifecycle_count": len(marker_lifecycle),
-            "identity_count": len(marker_identity),
-            "cleanup_count": len(marker_cleanup),
-            "lifecycle_time_order": boundary_time_pass,
-            "lifecycle_counts": boundary_counts_pass,
-            "created": raw_created,
-            "peaks": raw_peaks,
-            "identity_values_and_order": identity_values_and_order_pass,
-            "identity_lifecycle_order": identity_lifecycle_order_pass,
-            "summary_counts": summary_counts_pass,
-            "cleanup_values": cleanup_values_pass,
+            "path": sequential_evidence["path"],
+            "errors": sequential_evidence["errors"],
+            "lifecycle_count": len(sequential_evidence["boundaries"]),
+            "identity_count": len(sequential_evidence["identities"]),
+            "cleanup_count": len(sequential_evidence["cleanup"]),
+            "lifecycle_time_order": sequential_evidence["boundary_time_pass"],
+            "lifecycle_counts": sequential_evidence["boundary_counts_pass"],
+            "created": sequential_evidence["created"],
+            "peaks": sequential_evidence["peaks"],
+            "identity_values_and_order": (
+                sequential_evidence["identity_values_pass"]
+                and sequential_evidence["identity_order_pass"]
+            ),
+            "identity_lifecycle_order": sequential_evidence[
+                "identity_order_pass"
+            ],
+            "summary_counts": sequential_evidence["summary_counts_pass"],
+            "cleanup_values": sequential_evidence["cleanup_pass"],
         }
-        checks["sequential_lifecycle"] = bool(
-            not marker_errors
-            and raw_boundary_events == expected_boundary_events
-            and isinstance(summary_boundaries, list)
-            and raw_boundaries == summary_boundaries
-            and boundary_time_pass
-            and boundary_counts_pass
-            and identity_lifecycle_order_pass
-            and summary_counts_pass
-            and raw_created
-            == {
-                "side_inverse": 2,
-                "p4_factor": 2,
-                "nested_iterative_ksp": 2,
-            }
-            and raw_peaks
-            == {
-                "side_inverse": 1,
-                "p4_factor": 1,
-                "nested_iterative_ksp": 1,
-                "component": 2,
-            }
-            and identity_values_and_order_pass
-            and cleanup_values_pass
-            and isinstance(side_setup, Mapping)
-            and side_setup.get("side_setup_schedule")
-            == TASK041_SEQUENTIAL_COMPONENT_SCHEDULE
-            and side_setup.get("order") == ["bottom", "top"]
-        )
+        checks["sequential_lifecycle"] = sequential_evidence["pass"] is True
+        if not checks["sequential_lifecycle"]:
+            failures.extend(
+                f"sequential_lifecycle:{error}"
+                for error in sequential_evidence.get(
+                    "errors", ["lifecycle_invalid"]
+                )
+            )
         checks["component_inventory"] = bool(
             common_inventory
             and isinstance(matrix, Mapping)
@@ -2885,12 +2556,2219 @@ def _validate_representative_rhs_result(
     }
 
 
+def _task041_sequential_lifecycle_evidence(
+    consumer_root: Path,
+    setup: Mapping[str, Any] | None,
+    *,
+    expected_schedule: str,
+) -> dict[str, Any]:
+    """Read the fixed sequential lifecycle evidence shared by component modes."""
+
+    errors: list[str] = []
+    marker_path = consumer_root / "markers.jsonl"
+    lifecycle: list[dict[str, Any]] = []
+    identities: list[dict[str, Any]] = []
+    cleanup: list[dict[str, Any]] = []
+    if not marker_path.is_file():
+        errors.append("markers_missing")
+    else:
+        try:
+            with marker_path.open(encoding="utf-8") as stream:
+                for line_number, line in enumerate(stream, 1):
+                    if not line.strip():
+                        continue
+                    try:
+                        marker = json.loads(line)
+                    except json.JSONDecodeError:
+                        errors.append(f"marker_line_{line_number}_invalid_json")
+                        continue
+                    if not isinstance(marker, Mapping):
+                        errors.append(f"marker_line_{line_number}_not_object")
+                        continue
+                    detail = marker.get("detail")
+                    if not isinstance(detail, Mapping):
+                        continue
+                    stage = marker.get("stage")
+                    boundary = detail.get("lifecycle_boundary")
+                    if isinstance(boundary, Mapping) and (
+                        detail.get("substage") == "side_lifecycle"
+                        or stage
+                        in {
+                            "bottom_factor_ready",
+                            "top_factor_ready",
+                            "bottom_construction_cleanup",
+                            "top_construction_cleanup",
+                        }
+                    ):
+                        lifecycle.append(
+                            {
+                                "boundary": dict(boundary),
+                                "line_number": line_number,
+                                "wall_seconds": marker.get("wall_seconds"),
+                            }
+                        )
+                    if detail.get("substage") == "global_identity":
+                        identity = detail.get("identity_check")
+                        if isinstance(identity, Mapping):
+                            identities.append(
+                                {
+                                    "check": dict(identity),
+                                    "line_number": line_number,
+                                }
+                            )
+                    if stage in {
+                        "bottom_construction_cleanup",
+                        "top_construction_cleanup",
+                    }:
+                        diagnostics = detail.get("diagnostics")
+                        if isinstance(diagnostics, Mapping):
+                            cleanup.append(
+                                {
+                                    "side": detail.get("side")
+                                    or str(stage).split("_", 1)[0],
+                                    "diagnostics": dict(diagnostics),
+                                    "line_number": line_number,
+                                }
+                            )
+        except OSError as exc:
+            errors.append(f"markers_read_{type(exc).__name__}")
+
+    expected_boundaries = [
+        (side, event)
+        for side in ("bottom", "top")
+        for event in ("before_build", "ready", "before_release", "released")
+    ]
+    boundaries = [row["boundary"] for row in lifecycle]
+    boundary_keys = [(row.get("side"), row.get("event")) for row in boundaries]
+
+    def live_counts(boundary: Mapping[str, Any]) -> dict[str, Any] | None:
+        live = boundary.get("live")
+        by_side = live.get("by_side") if isinstance(live, Mapping) else None
+        if not isinstance(by_side, Mapping):
+            return None
+        p4 = 0
+        nested = 0
+        live_side_count = 0
+        for side, values in by_side.items():
+            if not isinstance(side, str) or not isinstance(values, Mapping):
+                return None
+            p4_value = values.get("p4_factor_count")
+            nested_value = values.get("nested_iterative_ksp_count")
+            if (
+                type(p4_value) is not int
+                or p4_value < 0
+                or type(nested_value) is not int
+                or nested_value < 0
+            ):
+                return None
+            p4 += p4_value
+            nested += nested_value
+            live_side_count += int(p4_value > 0 or nested_value > 0)
+        return {
+            "by_side": by_side,
+            "live_side_count": live_side_count,
+            "p4_factor": p4,
+            "nested_iterative_ksp": nested,
+            "component": p4 + nested,
+        }
+
+    raw_created = {
+        "side_inverse": 0,
+        "p4_factor": 0,
+        "nested_iterative_ksp": 0,
+    }
+    raw_peaks = {
+        "side_inverse": 0,
+        "p4_factor": 0,
+        "nested_iterative_ksp": 0,
+        "component": 0,
+    }
+    boundary_counts_pass = len(boundaries) == len(expected_boundaries)
+    boundary_time_values = [row.get("wall_seconds") for row in lifecycle]
+    boundary_time_pass = bool(
+        len(boundary_time_values) == 8
+        and all(
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and math.isfinite(float(value))
+            and float(value) >= 0.0
+            for value in boundary_time_values
+        )
+        and all(
+            float(left) <= float(right)
+            for left, right in pairwise(boundary_time_values)
+        )
+    )
+    if not boundary_time_pass:
+        errors.append("lifecycle_time_order")
+    for boundary in boundaries:
+        counts = live_counts(boundary)
+        if counts is None:
+            boundary_counts_pass = False
+            continue
+        live = boundary.get("live")
+        if (
+            not isinstance(live, Mapping)
+            or live.get("live_side_count") != counts["live_side_count"]
+            or live.get("live_component_counts")
+            != {
+                "p4_factor": counts["p4_factor"],
+                "nested_iterative_ksp": counts["nested_iterative_ksp"],
+            }
+            or live.get("live_component_count_sum") != counts["component"]
+        ):
+            boundary_counts_pass = False
+        raw_peaks["side_inverse"] = max(
+            raw_peaks["side_inverse"], counts["live_side_count"]
+        )
+        raw_peaks["p4_factor"] = max(
+            raw_peaks["p4_factor"], counts["p4_factor"]
+        )
+        raw_peaks["nested_iterative_ksp"] = max(
+            raw_peaks["nested_iterative_ksp"], counts["nested_iterative_ksp"]
+        )
+        raw_peaks["component"] = max(raw_peaks["component"], counts["component"])
+        event = boundary.get("event")
+        if event == "ready":
+            created = boundary.get("created_at_boundary")
+            if not isinstance(created, Mapping) or any(
+                type(created.get(name)) is not int or created.get(name) != 1
+                for name in raw_created
+            ):
+                boundary_counts_pass = False
+            else:
+                for name in raw_created:
+                    raw_created[name] += created[name]
+        if event in {"before_build", "released"} and (
+            counts["live_side_count"] != 0 or counts["component"] != 0
+        ):
+            boundary_counts_pass = False
+        if event in {"ready", "before_release"} and (
+            counts["live_side_count"] != 1
+            or counts["p4_factor"] != 1
+            or counts["nested_iterative_ksp"] != 1
+            or len(counts["by_side"]) != 1
+            or set(counts["by_side"]) != {boundary.get("side")}
+        ):
+            boundary_counts_pass = False
+    if not boundary_counts_pass:
+        errors.append("lifecycle_counts")
+
+    expected_identity_labels = [
+        f"{side}_{event}"
+        for side in ("bottom", "top")
+        for event in (
+            "before_build",
+            "after_admission",
+            "before_release",
+            "after_release",
+        )
+    ]
+
+    def identity_values_pass(value: Any) -> bool:
+        if not isinstance(value, Mapping) or value.get("pass") is not True:
+            return False
+        for name in (
+            "action_relative",
+            "rhs_relative",
+            "source_unchanged_relative",
+        ):
+            item = value.get(name)
+            if (
+                not isinstance(item, (int, float))
+                or isinstance(item, bool)
+                or not math.isfinite(float(item))
+                or float(item) < 0.0
+                or float(item) > 1.0e-12
+            ):
+                return False
+        return True
+
+    identity_labels = [row["check"].get("label") for row in identities]
+    side_setup = setup.get("side_setup") if isinstance(setup, Mapping) else None
+    summary_identity = (
+        side_setup.get("global_identity_checks")
+        if isinstance(side_setup, Mapping)
+        else None
+    )
+    identity_values_passed = bool(
+        len(identities) == 8
+        and identity_labels == expected_identity_labels
+        and all(identity_values_pass(row["check"]) for row in identities)
+        and isinstance(summary_identity, Mapping)
+        and set(summary_identity) == set(expected_identity_labels)
+        and all(
+            summary_identity.get(label) == identities[index]["check"]
+            for index, label in enumerate(expected_identity_labels)
+        )
+    )
+    if not identity_values_passed:
+        errors.append("global_identity_values")
+
+    lifecycle_lines = {
+        (row["boundary"].get("side"), row["boundary"].get("event")): row[
+            "line_number"
+        ]
+        for row in lifecycle
+    }
+    identity_lines = {
+        row["check"].get("label"): row["line_number"] for row in identities
+    }
+    identity_order_pass = True
+    for side in ("bottom", "top"):
+        ordered = (
+            identity_lines.get(f"{side}_before_build"),
+            lifecycle_lines.get((side, "before_build")),
+            lifecycle_lines.get((side, "ready")),
+            identity_lines.get(f"{side}_after_admission"),
+            identity_lines.get(f"{side}_before_release"),
+            lifecycle_lines.get((side, "before_release")),
+            lifecycle_lines.get((side, "released")),
+            identity_lines.get(f"{side}_after_release"),
+        )
+        if not all(type(value) is int for value in ordered) or not all(
+            left < right for left, right in pairwise(ordered)
+        ):
+            identity_order_pass = False
+    if not identity_order_pass:
+        errors.append("global_identity_lifecycle_order")
+
+    summary_boundaries = (
+        side_setup.get("lifecycle_boundaries")
+        if isinstance(side_setup, Mapping)
+        else None
+    )
+    summary_after = (
+        setup.get("side_diagnostics_after_destroy")
+        if isinstance(setup, Mapping)
+        else None
+    )
+    cleanup_sides = [row.get("side") for row in cleanup]
+    cleanup_pass = bool(
+        len(cleanup) == 2
+        and cleanup_sides == ["bottom", "top"]
+        and isinstance(summary_after, Mapping)
+        and set(summary_after) == {"bottom", "top"}
+        and all(
+            isinstance(row.get("diagnostics"), Mapping)
+            and row["diagnostics"].get("destroyed") is True
+            and type(row["diagnostics"].get("p4_factor_count")) is int
+            and row["diagnostics"].get("p4_factor_count") == 0
+            and type(row["diagnostics"].get("nested_iterative_ksp_count")) is int
+            and row["diagnostics"].get("nested_iterative_ksp_count") == 0
+            and summary_after.get(row["side"]) == row["diagnostics"]
+            for row in cleanup
+        )
+    )
+    if not cleanup_pass:
+        errors.append("side_cleanup_evidence")
+    summary_count_payloads = [side_setup]
+    if isinstance(setup, Mapping):
+        summary_count_payloads.append(setup.get("candidate_inventory"))
+
+    def summary_counts_match(value: Any) -> bool:
+        return isinstance(value, Mapping) and all(
+            value.get(field) == expected
+            for field, expected in (
+                ("p4_factor_created_total", raw_created["p4_factor"]),
+                (
+                    "nested_iterative_ksp_created_total",
+                    raw_created["nested_iterative_ksp"],
+                ),
+                ("total_created", raw_created["side_inverse"]),
+                ("p4_factor_simultaneously_live_peak", raw_peaks["p4_factor"]),
+                (
+                    "nested_iterative_ksp_simultaneously_live_peak",
+                    raw_peaks["nested_iterative_ksp"],
+                ),
+                ("simultaneously_live_peak", raw_peaks["side_inverse"]),
+                ("simultaneously_live_component_peak", raw_peaks["component"]),
+            )
+        )
+
+    summary_counts_pass = all(
+        summary_counts_match(payload) for payload in summary_count_payloads
+    )
+    if not summary_counts_pass:
+        errors.append("lifecycle_summary_counts")
+    lifecycle_pass = bool(
+        not errors
+        and boundary_keys == expected_boundaries
+        and isinstance(summary_boundaries, list)
+        and boundaries == summary_boundaries
+        and raw_created
+        == {
+            "side_inverse": 2,
+            "p4_factor": 2,
+            "nested_iterative_ksp": 2,
+        }
+        and raw_peaks
+        == {
+            "side_inverse": 1,
+            "p4_factor": 1,
+            "nested_iterative_ksp": 1,
+            "component": 2,
+        }
+        and isinstance(side_setup, Mapping)
+        and side_setup.get("side_setup_schedule") == expected_schedule
+        and side_setup.get("order") == ["bottom", "top"]
+    )
+    if not lifecycle_pass and "lifecycle_order" not in errors:
+        errors.append("sequential_lifecycle_contract")
+    return {
+        "pass": lifecycle_pass,
+        "path": str(marker_path),
+        "errors": errors,
+        "boundaries": boundaries,
+        "boundary_keys": boundary_keys,
+        "boundary_time_pass": boundary_time_pass,
+        "boundary_counts_pass": boundary_counts_pass,
+        "identities": identities,
+        "identity_values_pass": identity_values_passed,
+        "identity_order_pass": identity_order_pass,
+        "cleanup": cleanup,
+        "cleanup_pass": cleanup_pass,
+        "created": raw_created,
+        "peaks": raw_peaks,
+        "summary_counts_pass": summary_counts_pass,
+    }
+
+
+def _validate_common_layout_equivalence_result(
+    consumer_root: Path,
+    summary: Mapping[str, Any],
+    binding: Mapping[str, Any] | None,
+    *,
+    expected_side_setup_schedule: str | None,
+) -> dict[str, Any]:
+    """Validate common-layout evidence without trusting worker summary flags."""
+
+    import numpy as np
+
+    from benchmarks.task041_balh_workflow import (
+        _TASK041_REPRESENTATIVE_RHS_EXPECTED,
+        TASK041_REPRESENTATIVE_RHS_COUNT,
+        TASK041_REPRESENTATIVE_RHS_SCOPE,
+        TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+    )
+
+    categories: dict[str, list[str]] = {
+        "PAIRING_SETUP_FAILURE": [],
+        "NUMERICAL_GATE_FAIL": [],
+        "ACTION_EQUIVALENCE_FAIL": [],
+        "RESPONSE_SENSITIVITY_UNRESOLVED": [],
+    }
+    checks: dict[str, Any] = {}
+
+    def add(category: str, message: str) -> None:
+        categories[category].append(message)
+
+    def numeric(value: Any) -> bool:
+        return (
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and math.isfinite(float(value))
+        )
+
+    def nonnegative(value: Any) -> bool:
+        return numeric(value) and float(value) >= 0.0
+
+    def same_number(left: Any, right: Any) -> bool:
+        if not numeric(left) or not numeric(right):
+            return False
+        left_value = float(left)
+        right_value = float(right)
+        if left_value == right_value:
+            return True
+        scale = max(abs(left_value), abs(right_value))
+        return scale > 0.0 and abs(left_value - right_value) / scale <= 1.0e-12
+
+    def strict_ratio(numerator: float, denominator: float) -> float | None:
+        if (
+            not math.isfinite(numerator)
+            or not math.isfinite(denominator)
+            or numerator < 0.0
+            or denominator < 0.0
+        ):
+            return None
+        if denominator == 0.0:
+            return 0.0 if numerator == 0.0 else None
+        return numerator / denominator
+
+    def array_sha(array: Any) -> str:
+        value = np.asarray(array)
+        if value.size == 0:
+            return hashlib.sha256(b"").hexdigest()
+        digest = hashlib.sha256()
+        if value.flags.c_contiguous:
+            view = memoryview(value).cast("B")
+            try:
+                digest.update(view)
+            finally:
+                view.release()
+        else:
+            iterator = np.nditer(
+                value,
+                flags=["external_loop", "buffered"],
+                op_flags=["readonly"],
+                buffersize=8192,
+            )
+            for chunk in iterator:
+                digest.update(np.asarray(chunk).tobytes(order="C"))
+        return digest.hexdigest()
+
+    common = summary.get("common_layout_equivalence")
+    common_map = common if isinstance(common, Mapping) else None
+    if common_map is None:
+        add("PAIRING_SETUP_FAILURE", "common_layout_equivalence_missing")
+
+    binding_evidence = _task041_representative_immutable_binding(
+        summary, binding
+    )
+    for failure in binding_evidence["failures"]:
+        add("PAIRING_SETUP_FAILURE", f"immutable:{failure}")
+    expected_entries = binding_evidence["expected_entries"]
+    expected_by_ordinal = binding_evidence["expected_by_ordinal"]
+    expected_signature = binding_evidence["expected_signature"]
+    packet_binding = binding_evidence["packet_binding"]
+    expected_packet_sha = binding_evidence["expected_packet_sha"]
+    binding_ok = bool(
+        expected_side_setup_schedule == TASK041_SEQUENTIAL_COMPONENT_SCHEDULE
+        and isinstance(binding, Mapping)
+        and binding.get("scope") == TASK041_REPRESENTATIVE_RHS_SCOPE
+        and binding.get("comparison_mode") in (None, "common_layout_equivalence")
+        and isinstance(expected_entries, list)
+        and len(expected_entries) == TASK041_REPRESENTATIVE_RHS_COUNT
+        and expected_signature == _TASK041_REPRESENTATIVE_RHS_EXPECTED
+    )
+    checks["mode_binding"] = binding_ok
+    if not binding_ok:
+        add("PAIRING_SETUP_FAILURE", "mode_or_manifest_binding")
+
+    source_manifest = (
+        common_map.get("source_manifest") if common_map is not None else None
+    )
+    source_binding_ok = bool(
+        binding_evidence["checks"]["probe_manifest_hash"]
+        and isinstance(source_manifest, Mapping)
+        and isinstance(binding, Mapping)
+        and source_manifest.get("path") == binding.get("path")
+        and source_manifest.get("sha256") == binding.get("sha256")
+        and source_manifest.get("scope") == TASK041_REPRESENTATIVE_RHS_SCOPE
+    )
+    checks["source_manifest"] = source_binding_ok
+    if not source_binding_ok:
+        add("PAIRING_SETUP_FAILURE", "source_manifest_binding")
+
+    summary_packet = summary.get("packet")
+    packet_binding_ok = bool(
+        binding_evidence["checks"]["source_and_packet_identity"]
+        and isinstance(packet_binding, Mapping)
+        and _valid_sha(expected_packet_sha, 64)
+        and isinstance(summary_packet, Mapping)
+        and summary_packet.get("manifest_sha256") == expected_packet_sha
+        and common_map is not None
+        and common_map.get("packet_binding") == packet_binding
+    )
+    checks["packet_binding"] = packet_binding_ok
+    if not packet_binding_ok:
+        add("PAIRING_SETUP_FAILURE", "producer_packet_binding")
+
+    variant_binding = (
+        summary.get("setup", {}).get("variant_binding")
+        if isinstance(summary.get("setup"), Mapping)
+        else None
+    )
+    expected_variant_binding = {
+        "source_module": "src.solvers.physical_balanced_same_mesh_transfer",
+        "variants": {
+            "legacy": {
+                "owner_resolution": (
+                    "src.solvers.physical_balanced_same_mesh_transfer."
+                    "_resolve_owner_candidates"
+                ),
+                "cell_adjoint": (
+                    "src.solvers.physical_balanced_same_mesh_transfer."
+                    "SameMeshHcurlOwnerTransfer._apply_adjoint_into_impl"
+                ),
+                "adjoint_kernel": "explicit_matrix_conjugate_transpose",
+            },
+            "optimized": {
+                "owner_resolution": (
+                    "src.solvers.physical_balanced_same_mesh_transfer."
+                    "_resolve_owner_candidates_batched"
+                ),
+                "cell_adjoint": (
+                    "src.solvers.physical_balanced_same_mesh_transfer."
+                    "_apply_conjugate_transpose_vector"
+                ),
+                "adjoint_kernel": "conjugate_transpose_identity",
+            },
+        },
+    }
+    variant_binding_pass = True
+    if not isinstance(variant_binding, Mapping):
+        variant_binding_pass = False
+    else:
+        for side in ("bottom", "top"):
+            record = variant_binding.get(side)
+            if not isinstance(record, Mapping):
+                variant_binding_pass = False
+                add("PAIRING_SETUP_FAILURE", f"{side}_variant_binding_missing")
+                continue
+            if (
+                record.get("source_module")
+                != expected_variant_binding["source_module"]
+                or record.get("source_sha") != summary.get("source_sha")
+                or record.get("variants") != expected_variant_binding["variants"]
+            ):
+                variant_binding_pass = False
+                add("PAIRING_SETUP_FAILURE", f"{side}_variant_binding_mismatch")
+    checks["variant_binding"] = variant_binding_pass
+
+    pair_path = consumer_root / "numerical_output" / (
+        "common_layout_equivalence_pairs.jsonl"
+    )
+    pairs: dict[int, Mapping[str, Any]] = {}
+    if pair_path.is_file():
+        try:
+            with pair_path.open(encoding="utf-8") as stream:
+                for line_number, line in enumerate(stream, 1):
+                    if not line.strip():
+                        continue
+                    try:
+                        row = json.loads(line)
+                    except json.JSONDecodeError:
+                        add(
+                            "PAIRING_SETUP_FAILURE",
+                            f"pair_line_{line_number}_invalid_json",
+                        )
+                        continue
+                    if not isinstance(row, Mapping) or type(row.get("ordinal")) is not int:
+                        add(
+                            "PAIRING_SETUP_FAILURE",
+                            f"pair_line_{line_number}_record",
+                        )
+                        continue
+                    ordinal = int(row["ordinal"])
+                    if ordinal not in expected_by_ordinal:
+                        add(
+                            "PAIRING_SETUP_FAILURE",
+                            f"pair_ordinal_{ordinal}_unknown",
+                        )
+                    elif ordinal in pairs:
+                        add(
+                            "PAIRING_SETUP_FAILURE",
+                            f"pair_ordinal_{ordinal}_duplicated",
+                        )
+                    else:
+                        pairs[ordinal] = row
+        except OSError as exc:
+            add("PAIRING_SETUP_FAILURE", f"pair_read_{type(exc).__name__}")
+    else:
+        add("PAIRING_SETUP_FAILURE", "pair_records_missing")
+    for ordinal in expected_by_ordinal:
+        if ordinal not in pairs:
+            add("PAIRING_SETUP_FAILURE", f"pair_ordinal_{ordinal}_missing")
+    checks["pair_records"] = {
+        "path": str(pair_path),
+        "count": len(pairs),
+        "expected": TASK041_REPRESENTATIVE_RHS_COUNT,
+    }
+
+    def metadata_array(value: Any, label: str) -> bool:
+        if not isinstance(value, Mapping):
+            add("PAIRING_SETUP_FAILURE", f"{label}_metadata_missing")
+            return False
+        if not isinstance(value.get("name"), str):
+            add("PAIRING_SETUP_FAILURE", f"{label}_name")
+            return False
+        if not _valid_sha(value.get("sha256"), 64):
+            add("PAIRING_SETUP_FAILURE", f"{label}_sha")
+            return False
+        if not isinstance(value.get("hash_status"), str) or not value[
+            "hash_status"
+        ].startswith("measured"):
+            add("PAIRING_SETUP_FAILURE", f"{label}_hash_not_measured")
+            return False
+        shape = value.get("shape")
+        nbytes = value.get("nbytes")
+        return_value = (
+            isinstance(shape, list)
+            and all(type(item) is int and item >= 0 for item in shape)
+            and type(nbytes) is int
+            and nbytes >= 0
+        )
+        if not return_value:
+            add("PAIRING_SETUP_FAILURE", f"{label}_shape_or_bytes")
+        return return_value
+
+    required_held_objects = (
+        "side_A",
+        "side_inverse",
+        "p4_factor",
+        "research_factor",
+        "p4_matrix",
+        "p4_factor_ksp",
+        "p4_factor_matrix",
+        "nested_ksp",
+        "h6",
+        "h6_matrix",
+        "mesh",
+        "side_system",
+    )
+
+    def held_object(value: Any, label: str) -> bool:
+        if not isinstance(value, Mapping):
+            add("PAIRING_SETUP_FAILURE", f"{label}_held_object_missing")
+            return False
+        if label.endswith("p4_factor_ksp") and value.get("live") is False:
+            # factor_only_storage deliberately destroys this KSP and retains
+            # the factor matrix.  Validate that explicit terminal record
+            # before the generic live-object identity requirement below.
+            if (
+                value.get("reason") != "factor_only_storage"
+                or value.get("python_id") is not None
+                or value.get("handle") is not None
+                or value.get("petsc_handle") is not None
+                or value.get("cpp_object") is not None
+            ):
+                add("PAIRING_SETUP_FAILURE", f"{label}_not_live")
+                return False
+            return True
+        if label.endswith("p4_factor_matrix") and value.get("live") is False:
+            # A factor-only run is valid only when the retained factor matrix
+            # is still represented by its real PETSc identity.  The writer
+            # omits ``live`` for a live PETSc object; an explicit false record
+            # is therefore a failed retention claim, not a fallback state.
+            add("PAIRING_SETUP_FAILURE", f"{label}_not_live")
+            return False
+        if not isinstance(value.get("kind"), str):
+            add("PAIRING_SETUP_FAILURE", f"{label}_held_object_kind")
+            return False
+        if not any(
+            key in value and value.get(key) is not None
+            for key in ("python_id", "petsc_handle", "handle", "cpp_object")
+        ):
+            add("PAIRING_SETUP_FAILURE", f"{label}_held_object_identity")
+            return False
+        if label.endswith("p4_factor_ksp") and value.get("live") not in (
+            None,
+            True,
+        ):
+            add("PAIRING_SETUP_FAILURE", f"{label}_live_unknown")
+            return False
+        if label.endswith("nested_ksp") and (
+            value.get("live") is False
+            or not any(
+                key in value and value.get(key) is not None
+                for key in ("petsc_handle", "handle", "cpp_object")
+            )
+        ):
+            add("PAIRING_SETUP_FAILURE", f"{label}_handle_missing")
+            return False
+        return True
+
+    def communicator(value: Any, label: str, expected_rank: int) -> bool:
+        if not isinstance(value, Mapping):
+            add("PAIRING_SETUP_FAILURE", f"{label}_communicator_missing")
+            return False
+        valid = all(
+            type(value.get(field)) is int and int(value[field]) >= 0
+            for field in ("rank", "size", "fortran_handle")
+        )
+        valid = valid and value.get("rank") == expected_rank and value.get("size") == 8
+        if not valid:
+            add("PAIRING_SETUP_FAILURE", f"{label}_communicator_shape")
+        return valid
+
+    def validate_layout(side: str) -> dict[str, Any] | None:
+        path = layout_root / f"{side}_layout.json"
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            add("PAIRING_SETUP_FAILURE", f"{side}_layout_read")
+            return None
+        if not isinstance(payload, Mapping):
+            add("PAIRING_SETUP_FAILURE", f"{side}_layout_record")
+            return None
+        by_rank = payload.get("by_rank")
+        instance = payload.get("layout_instance_id")
+        audit_identity_path = (
+            consumer_root / "numerical_output" / "common_layout_equivalence_audits.jsonl"
+        ).resolve()
+        expected_instance = hashlib.sha256(
+            f"{audit_identity_path}|{side}|task041.common_layout_equivalence.layout.v1".encode()
+        ).hexdigest()
+        valid = (
+            payload.get("schema")
+            == "task041.common_layout_equivalence.layout.v1"
+            and payload.get("side") == side
+            and payload.get("comm_size") == 8
+            and isinstance(instance, str)
+            and bool(instance)
+            and isinstance(by_rank, list)
+            and len(by_rank) == 8
+            and all(isinstance(row, Mapping) for row in by_rank)
+            and [row.get("rank") for row in by_rank] == list(range(8))
+            and _valid_sha(payload.get("layout_identity_sha256"), 64)
+            and instance == expected_instance
+        )
+        if valid:
+            try:
+                canonical = json.dumps(
+                    by_rank, sort_keys=True, separators=(",", ":")
+                ).encode("utf-8")
+                valid = hashlib.sha256(canonical).hexdigest() == payload[
+                    "layout_identity_sha256"
+                ]
+            except (TypeError, ValueError):
+                valid = False
+        if not valid:
+            add("PAIRING_SETUP_FAILURE", f"{side}_layout_shape_or_canonical_sha")
+        required = (
+            "communicator",
+            "communicators",
+            "ownership_range",
+            "ownership",
+            "held_objects",
+            "dofmaps",
+            "mesh_layout",
+            "mpc_layout",
+            "layout_arrays",
+            "transfer_identity",
+            "operator_identity",
+        )
+        if isinstance(by_rank, list):
+            for row_number, row in enumerate(by_rank):
+                if not isinstance(row, Mapping):
+                    continue
+                row_valid = True
+                row_instance = row.get("layout_instance_id")
+                if row_instance != instance:
+                    add("PAIRING_SETUP_FAILURE", f"{side}_rank_{row_number}_instance")
+                    row_valid = False
+                for field in required:
+                    if field not in row:
+                        add(
+                            "PAIRING_SETUP_FAILURE",
+                            f"{side}_rank_{row_number}_{field}_missing",
+                        )
+                        row_valid = False
+                row_valid = communicator(
+                    row.get("communicator"),
+                    f"{side}_rank_{row_number}_outer",
+                    row_number,
+                ) and row_valid
+                communicators = row.get("communicators")
+                if isinstance(communicators, Mapping):
+                    for name in ("outer", "transfer", "side_operator", "inverse"):
+                        row_valid = communicator(
+                            communicators.get(name),
+                            f"{side}_rank_{row_number}_{name}",
+                            row_number,
+                        ) and row_valid
+                    compare = communicators.get("compare")
+                    if not isinstance(compare, Mapping) or set(compare) != {
+                        "outer_transfer",
+                        "transfer_side_operator",
+                        "side_operator_inverse",
+                    } or any(
+                        type(value) is not int or value not in (0, 1)
+                        for value in compare.values()
+                    ):
+                        add(
+                            "PAIRING_SETUP_FAILURE",
+                            f"{side}_rank_{row_number}_communicator_compare",
+                        )
+                        row_valid = False
+                else:
+                    add(
+                        "PAIRING_SETUP_FAILURE",
+                        f"{side}_rank_{row_number}_communicators",
+                    )
+                    row_valid = False
+                held = row.get("held_objects")
+                if isinstance(held, Mapping):
+                    for name in required_held_objects:
+                        row_valid = held_object(
+                            held.get(name),
+                            f"{side}_rank_{row_number}_{name}",
+                        ) and row_valid
+                else:
+                    row_valid = False
+                mesh_layout = row.get("mesh_layout")
+                if isinstance(mesh_layout, Mapping):
+                    for name in (
+                        "geometry",
+                        "geometry_dofmap",
+                        "cell_permutation_info",
+                    ):
+                        row_valid = metadata_array(
+                            mesh_layout.get(name),
+                            f"{side}_rank_{row_number}_{name}",
+                        ) and row_valid
+                else:
+                    add(
+                        "PAIRING_SETUP_FAILURE",
+                        f"{side}_rank_{row_number}_mesh_layout",
+                    )
+                    row_valid = False
+                mpc_layout = row.get("mpc_layout")
+                if isinstance(mpc_layout, Mapping):
+                    for mpc_name in ("fine", "coarse"):
+                        mpc = mpc_layout.get(mpc_name)
+                        if not isinstance(mpc, Mapping):
+                            add(
+                                "PAIRING_SETUP_FAILURE",
+                                f"{side}_rank_{row_number}_{mpc_name}_mpc",
+                            )
+                            row_valid = False
+                            continue
+                        for name in ("slaves", "coefficients", "offsets"):
+                            row_valid = metadata_array(
+                                mpc.get(name),
+                                f"{side}_rank_{row_number}_{mpc_name}_{name}",
+                            ) and row_valid
+                        if not _valid_sha(mpc.get("masters_links_sha256"), 64):
+                            add(
+                                "PAIRING_SETUP_FAILURE",
+                                f"{side}_rank_{row_number}_{mpc_name}_masters",
+                            )
+                            row_valid = False
+                else:
+                    add(
+                        "PAIRING_SETUP_FAILURE",
+                        f"{side}_rank_{row_number}_mpc_layout",
+                    )
+                    row_valid = False
+                layout_arrays = row.get("layout_arrays")
+                if not isinstance(layout_arrays, list) or not layout_arrays:
+                    add(
+                        "PAIRING_SETUP_FAILURE",
+                        f"{side}_rank_{row_number}_layout_arrays",
+                    )
+                    row_valid = False
+                else:
+                    for index, array in enumerate(layout_arrays):
+                        row_valid = metadata_array(
+                            array,
+                            f"{side}_rank_{row_number}_layout_array_{index}",
+                        ) and row_valid
+                if not isinstance(row.get("transfer_identity"), Mapping):
+                    add(
+                        "PAIRING_SETUP_FAILURE",
+                        f"{side}_rank_{row_number}_transfer_identity",
+                    )
+                    row_valid = False
+                elif "owner_row_authority" not in row["transfer_identity"]:
+                    add(
+                        "PAIRING_SETUP_FAILURE",
+                        f"{side}_rank_{row_number}_owner_row_authority",
+                    )
+                    row_valid = False
+                if not isinstance(row.get("operator_identity"), Mapping):
+                    add(
+                        "PAIRING_SETUP_FAILURE",
+                        f"{side}_rank_{row_number}_operator_identity",
+                    )
+                    row_valid = False
+                if not isinstance(row.get("ownership"), Mapping) or not isinstance(
+                    row.get("dofmaps"), Mapping
+                ):
+                    add(
+                        "PAIRING_SETUP_FAILURE",
+                        f"{side}_rank_{row_number}_ownership_or_dofmaps",
+                    )
+                    row_valid = False
+                if not row_valid:
+                    valid = False
+        if not valid:
+            return None
+        return dict(payload)
+
+    layout_root = consumer_root / "numerical_output" / "common_layout_equivalence"
+    layouts: dict[str, Mapping[str, Any]] = {}
+    for side in ("bottom", "top"):
+        payload = validate_layout(side)
+        if payload is not None:
+            layouts[side] = payload
+    checks["layout_files"] = {
+        side: {
+            "path": str(layout_root / f"{side}_layout.json"),
+            "layout_identity_sha256": payload.get("layout_identity_sha256"),
+            "layout_instance_id": payload.get("layout_instance_id"),
+        }
+        for side, payload in layouts.items()
+    }
+
+    audit_path = consumer_root / "numerical_output" / (
+        "common_layout_equivalence_audits.jsonl"
+    )
+    raw_audits: dict[tuple[int, str], tuple[Mapping[str, Any], Mapping[str, Any], int]] = {}
+    if audit_path.is_file():
+        try:
+            with audit_path.open(encoding="utf-8") as stream:
+                for line_number, line in enumerate(stream, 1):
+                    if not line.strip():
+                        continue
+                    try:
+                        row = json.loads(line)
+                    except json.JSONDecodeError:
+                        add(
+                            "PAIRING_SETUP_FAILURE",
+                            f"audit_line_{line_number}_invalid_json",
+                        )
+                        continue
+                    if not isinstance(row, Mapping) or not isinstance(
+                        row.get("audit"), Mapping
+                    ):
+                        add(
+                            "PAIRING_SETUP_FAILURE",
+                            f"audit_line_{line_number}_record",
+                        )
+                        continue
+                    audit = row["audit"]
+                    ordinal = audit.get("representative_ordinal")
+                    variant = audit.get("comparison_variant")
+                    if type(ordinal) is not int or variant not in {
+                        "legacy",
+                        "optimized",
+                    }:
+                        add(
+                            "PAIRING_SETUP_FAILURE",
+                            f"audit_line_{line_number}_key",
+                        )
+                        continue
+                    key = (int(ordinal), str(variant))
+                    if ordinal not in expected_by_ordinal:
+                        add("PAIRING_SETUP_FAILURE", f"audit_{key}_unknown")
+                    elif key in raw_audits:
+                        add("PAIRING_SETUP_FAILURE", f"audit_{key}_duplicated")
+                    else:
+                        raw_audits[key] = (row, audit, line_number)
+        except OSError as exc:
+            add("PAIRING_SETUP_FAILURE", f"audit_read_{type(exc).__name__}")
+    else:
+        add("PAIRING_SETUP_FAILURE", "common_audits_missing")
+    expected_audit_keys = {
+        (ordinal, variant)
+        for ordinal in expected_by_ordinal
+        for variant in ("legacy", "optimized")
+    }
+    for key in expected_audit_keys - set(raw_audits):
+        add("PAIRING_SETUP_FAILURE", f"audit_{key}_missing")
+    if set(raw_audits) != expected_audit_keys:
+        add("PAIRING_SETUP_FAILURE", "audit_key_set")
+    checks["audits"] = {
+        "path": str(audit_path),
+        "count": len(raw_audits),
+        "expected": 16,
+    }
+
+    def check_ksp_contract(audit: Mapping[str, Any], label: str) -> bool:
+        contract = audit.get("ksp_contract")
+        if not isinstance(contract, Mapping):
+            add("PAIRING_SETUP_FAILURE", f"{label}_ksp_contract_missing")
+            return False
+        if contract.get("collective_pass") is not True:
+            add("NUMERICAL_GATE_FAIL", f"{label}_ksp_collective")
+        actual = contract.get("actual")
+        if not isinstance(actual, Mapping):
+            add("PAIRING_SETUP_FAILURE", f"{label}_ksp_actual_missing")
+            return False
+        expected_actual = {
+            "type": "fgmres",
+            "pc_type": "python",
+            "pc_side_label": "RIGHT",
+            "norm_type_label": "UNPRECONDITIONED",
+            "restart": 32,
+            "rtol": 1.0e-2,
+            "atol": 0.0,
+            "max_it": 128,
+            "initial_guess_nonzero": False,
+        }
+        for field, expected in expected_actual.items():
+            actual_value = actual.get(field)
+            if field in {"rtol", "atol"}:
+                equal = same_number(actual_value, expected)
+            else:
+                equal = actual_value == expected
+            if not equal:
+                add("NUMERICAL_GATE_FAIL", f"{label}_ksp_{field}")
+        for field in ("pc_side", "norm_type"):
+            if type(actual.get(field)) is not int:
+                add("NUMERICAL_GATE_FAIL", f"{label}_ksp_{field}_enum")
+            expected_value = (
+                contract.get("expected", {}).get(field)
+                if isinstance(contract.get("expected"), Mapping)
+                else None
+            )
+            if type(expected_value) is not int or actual.get(field) != expected_value:
+                add("NUMERICAL_GATE_FAIL", f"{label}_ksp_{field}_value")
+        recorded_checks = contract.get("checks")
+        if not isinstance(recorded_checks, Mapping):
+            add("PAIRING_SETUP_FAILURE", f"{label}_ksp_checks_missing")
+        else:
+            recorded_fields = (
+                "type",
+                "pc_type",
+                "pc_side",
+                "norm_type",
+                "restart",
+                "rtol",
+                "atol",
+                "max_it",
+                "initial_guess_nonzero",
+            )
+            for field in recorded_fields:
+                if recorded_checks.get(field) is not True:
+                    add("NUMERICAL_GATE_FAIL", f"{label}_ksp_check_{field}")
+        history = audit.get("iteration_history")
+        if not isinstance(history, list) or len(history) > 129:
+            add("PAIRING_SETUP_FAILURE", f"{label}_history_missing_or_long")
+        elif any(
+            not isinstance(item, Mapping)
+            or type(item.get("iteration")) is not int
+            or item["iteration"] < 0
+            or item["iteration"] > 128
+            for item in history
+        ):
+            add("NUMERICAL_GATE_FAIL", f"{label}_history_iteration")
+        else:
+            for index, item in enumerate(history):
+                reported = item.get("reported_residual")
+                if isinstance(reported, str):
+                    if reported not in {"nan", "inf", "-inf"}:
+                        add(
+                            "PAIRING_SETUP_FAILURE",
+                            f"{label}_history_{index}_residual_type",
+                        )
+                    else:
+                        add(
+                            "NUMERICAL_GATE_FAIL",
+                            f"{label}_history_{index}_nonfinite",
+                        )
+                elif not numeric(reported) or float(reported) < 0.0:
+                    add(
+                        "NUMERICAL_GATE_FAIL",
+                        f"{label}_history_{index}_residual",
+                    )
+        return True
+
+    def check_raw_audit(
+        ordinal: int,
+        variant: str,
+        entry: Mapping[str, Any],
+        row: Mapping[str, Any],
+        audit: Mapping[str, Any],
+    ) -> None:
+        label = f"ordinal_{ordinal}_{variant}"
+        if row.get("phase") != "common_layout_equivalence":
+            add("PAIRING_SETUP_FAILURE", f"{label}_phase")
+        if row.get("side") != entry.get("side"):
+            add("PAIRING_SETUP_FAILURE", f"{label}_side")
+        for field, expected in (
+            ("representative_ordinal", ordinal),
+            ("source_audit_index", entry.get("audit_index")),
+            ("formal_column", entry.get("formal_column")),
+            ("branch_ordinal", entry.get("branch_ordinal")),
+            ("comparison_variant", variant),
+            ("execution_variant", variant),
+        ):
+            if audit.get(field) != expected:
+                add("PAIRING_SETUP_FAILURE", f"{label}_{field}")
+        required = (
+            "status",
+            "reason",
+            "iterations",
+            "ksp_positive",
+            "explicit_true_target_reached",
+            "rhs_norm",
+            "residual_norm",
+            "relative_residual",
+            "ksp_rtol",
+            "ksp_max_it",
+            "ksp_contract",
+            "iteration_history",
+        )
+        missing = [field for field in required if field not in audit]
+        for field in missing:
+            add("PAIRING_SETUP_FAILURE", f"{label}_{field}_missing")
+        check_ksp_contract(audit, label)
+        rhs_norm = audit.get("rhs_norm")
+        residual_norm = audit.get("residual_norm")
+        raw_relative = audit.get("relative_residual")
+        if not nonnegative(rhs_norm):
+            add("NUMERICAL_GATE_FAIL", f"{label}_rhs_norm")
+        if not nonnegative(residual_norm):
+            add("NUMERICAL_GATE_FAIL", f"{label}_residual_norm")
+        if not nonnegative(raw_relative):
+            add("NUMERICAL_GATE_FAIL", f"{label}_relative_residual")
+        if nonnegative(rhs_norm) and nonnegative(residual_norm):
+            recomputed = strict_ratio(float(residual_norm), float(rhs_norm))
+            if recomputed is None or recomputed > 1.0e-2:
+                add("NUMERICAL_GATE_FAIL", f"{label}_recomputed_residual_gate")
+            elif not same_number(raw_relative, recomputed):
+                add("NUMERICAL_GATE_FAIL", f"{label}_relative_residual_mismatch")
+        if not same_number(audit.get("ksp_rtol"), 1.0e-2):
+            add("NUMERICAL_GATE_FAIL", f"{label}_rtol")
+        if audit.get("ksp_max_it") != 128:
+            add("NUMERICAL_GATE_FAIL", f"{label}_max_it")
+        iterations = audit.get("iterations")
+        if type(iterations) is not int or iterations < 0 or iterations > 128:
+            add("NUMERICAL_GATE_FAIL", f"{label}_iterations")
+        if rhs_norm == 0.0:
+            zero_ok = (
+                audit.get("status") == "ZERO_RHS_EXACT"
+                and audit.get("reason") is None
+                and audit.get("ksp_positive") is False
+                and audit.get("explicit_true_target_reached") is True
+                and iterations == 0
+            )
+            if not zero_ok:
+                add("NUMERICAL_GATE_FAIL", f"{label}_zero_rhs_contract")
+        else:
+            nonzero_ok = (
+                audit.get("status") == "KSP_CONVERGED"
+                and type(audit.get("reason")) is int
+                and audit.get("reason") > 0
+                and audit.get("ksp_positive") is True
+                and audit.get("explicit_true_target_reached") is True
+            )
+            if not nonzero_ok:
+                add("NUMERICAL_GATE_FAIL", f"{label}_solve_status")
+        counts = audit.get("counts")
+        delta = counts.get("delta") if isinstance(counts, Mapping) else None
+        for field in ("pc", "Q", "H6", "A6", "P", "PH_audit", "p4_backsolve"):
+            value = delta.get(field) if isinstance(delta, Mapping) else None
+            if type(value) is not int or value < 0:
+                add("PAIRING_SETUP_FAILURE", f"{label}_count_{field}")
+            elif rhs_norm != 0.0 and value <= 0:
+                add("NUMERICAL_GATE_FAIL", f"{label}_count_{field}_zero")
+        if row.get("status") != audit.get("status") or row.get("reason") != audit.get(
+            "reason"
+        ):
+            add("PAIRING_SETUP_FAILURE", f"{label}_row_summary_mismatch")
+
+    for ordinal, entry in expected_by_ordinal.items():
+        for variant in ("legacy", "optimized"):
+            raw = raw_audits.get((ordinal, variant))
+            if raw is not None:
+                check_raw_audit(ordinal, variant, entry, raw[0], raw[1])
+
+    def check_c3_facts(value: Mapping[str, Any], label: str) -> bool:
+        facts_ok = True
+        input_hashes = value.get("input_hashes")
+        if not isinstance(input_hashes, Mapping):
+            add("PAIRING_SETUP_FAILURE", f"{label}_input_hashes")
+            return False
+        for variant in ("legacy", "optimized"):
+            record = input_hashes.get(variant)
+            facts = record.get("last_action_facts") if isinstance(record, Mapping) else None
+            if not isinstance(facts, Mapping):
+                add("PAIRING_SETUP_FAILURE", f"{label}_{variant}_last_action_facts")
+                facts_ok = False
+                continue
+            coupling = facts.get("coupling_last_apply_facts")
+            balance = (
+                coupling.get("initial", {}).get("balance")
+                if isinstance(coupling, Mapping)
+                and isinstance(coupling.get("initial"), Mapping)
+                else None
+            )
+            if not isinstance(balance, Mapping):
+                add("PAIRING_SETUP_FAILURE", f"{label}_{variant}_balance_facts")
+                facts_ok = False
+            else:
+                balance_norm = balance.get("norm")
+                operation_scale = balance.get("operation_scale")
+                balance_relative = balance.get("relative")
+                balance_limit = balance.get("limit")
+                recomputed_balance = (
+                    float(balance_norm)
+                    / max(float(operation_scale), np.finfo(float).tiny)
+                    if nonnegative(balance_norm) and nonnegative(operation_scale)
+                    else None
+                )
+                balance_ok = bool(
+                    recomputed_balance is not None
+                    and math.isfinite(recomputed_balance)
+                    and nonnegative(balance_relative)
+                    and same_number(balance_limit, 1.0e-8)
+                    and same_number(balance_relative, recomputed_balance)
+                    and recomputed_balance <= 1.0e-8
+                )
+                if not balance_ok:
+                    add("NUMERICAL_GATE_FAIL", f"{label}_{variant}_balance_gate")
+                    facts_ok = False
+            p4_solve = facts.get("p4_last_solve")
+            if not isinstance(p4_solve, Mapping):
+                add("PAIRING_SETUP_FAILURE", f"{label}_{variant}_p4_facts")
+                facts_ok = False
+                continue
+            rhs_norm = p4_solve.get("rhs_norm")
+            residual_norm = p4_solve.get("residual_norm")
+            physical_residual_norm = p4_solve.get("physical_residual_norm")
+            tolerance = p4_solve.get("residual_tolerance")
+            relative = p4_solve.get("relative_residual")
+            physical_relative = p4_solve.get("physical_relative_residual")
+            backsolve_count = p4_solve.get("backsolve_count")
+            refinement_count = p4_solve.get("refinement_count")
+            same_factor_refinement = p4_solve.get("same_factor_refinement")
+            recomputed = (
+                strict_ratio(float(residual_norm), float(rhs_norm))
+                if nonnegative(rhs_norm) and nonnegative(residual_norm)
+                else None
+            )
+            backsolve_ok = bool(
+                type(backsolve_count) is int
+                and 1 <= backsolve_count <= 3
+                and type(refinement_count) is int
+                and 0 <= refinement_count <= 2
+                and backsolve_count == refinement_count + 1
+                and same_factor_refinement is (backsolve_count > 1)
+            )
+            p4_ok = bool(
+                p4_solve.get("status") == "passed"
+                and nonnegative(rhs_norm)
+                and nonnegative(residual_norm)
+                and nonnegative(physical_residual_norm)
+                and same_number(residual_norm, physical_residual_norm)
+                and nonnegative(tolerance)
+                and same_number(tolerance, 1.0e-10)
+                and recomputed is not None
+                and nonnegative(relative)
+                and nonnegative(physical_relative)
+                and same_number(relative, recomputed)
+                and same_number(physical_relative, recomputed)
+                and recomputed <= 1.0e-10
+                and backsolve_ok
+            )
+            if not p4_ok:
+                add("NUMERICAL_GATE_FAIL", f"{label}_{variant}_p4_gate")
+                facts_ok = False
+        return facts_ok
+
+    def check_c3_action(
+        side: str,
+        group: str,
+        value: Any,
+    ) -> None:
+        label = f"{side}_{group}"
+        if not isinstance(value, Mapping):
+            add("PAIRING_SETUP_FAILURE", f"{label}_missing")
+            return
+        threshold = 1.0e-8 if group == "PC" else 1.0e-11
+        if not same_number(value.get("threshold"), threshold):
+            add("PAIRING_SETUP_FAILURE", f"{label}_threshold")
+        absolute = value.get("absolute")
+        legacy_norm = value.get("legacy_norm")
+        optimized_norm = value.get("optimized_norm")
+        if not nonnegative(absolute) or not nonnegative(legacy_norm) or not nonnegative(
+            optimized_norm
+        ):
+            add("NUMERICAL_GATE_FAIL", f"{label}_norm")
+        else:
+            relative = strict_ratio(
+                float(absolute),
+                max(float(legacy_norm), float(optimized_norm)),
+            )
+            if relative is None:
+                add("NUMERICAL_GATE_FAIL", f"{label}_zero_denominator")
+            elif not same_number(value.get("relative"), relative):
+                add("NUMERICAL_GATE_FAIL", f"{label}_relative_recompute")
+            elif relative > threshold:
+                add("ACTION_EQUIVALENCE_FAIL", f"{label}_relative_gate")
+        if value.get("finite") is not True:
+            add("NUMERICAL_GATE_FAIL", f"{label}_finite")
+        if value.get("input_unchanged") is not True:
+            add("PAIRING_SETUP_FAILURE", f"{label}_input_changed")
+        facts_ok = check_c3_facts(value, label) if group == "PC" else True
+        independently_pass = bool(
+            value.get("finite") is True
+            and value.get("input_unchanged") is True
+            and facts_ok
+            and nonnegative(absolute)
+            and nonnegative(legacy_norm)
+            and nonnegative(optimized_norm)
+            and strict_ratio(
+                float(absolute),
+                max(float(legacy_norm), float(optimized_norm)),
+            )
+            is not None
+            and strict_ratio(
+                float(absolute),
+                max(float(legacy_norm), float(optimized_norm)),
+            )
+            <= threshold
+        )
+        if value.get("pass") is not independently_pass:
+            add("PAIRING_SETUP_FAILURE", f"{label}_pass_summary")
+        input_hashes = value.get("input_hashes")
+        if not isinstance(input_hashes, Mapping):
+            add("PAIRING_SETUP_FAILURE", f"{label}_input_hashes")
+        else:
+            for variant in ("legacy", "optimized"):
+                record = input_hashes.get(variant)
+                if not isinstance(record, Mapping):
+                    add("PAIRING_SETUP_FAILURE", f"{label}_{variant}_input_hashes")
+                    continue
+                before = record.get("before")
+                after = record.get("after")
+                if (
+                    not isinstance(before, Mapping)
+                    or not isinstance(after, Mapping)
+                    or record.get("unchanged") is not True
+                    or before != after
+                ):
+                    add(
+                        "PAIRING_SETUP_FAILURE",
+                        f"{label}_{variant}_input_unchanged",
+                    )
+
+    setup = summary.get("setup")
+    setup_map = setup if isinstance(setup, Mapping) else None
+    admission = (
+        setup_map.get("admission_audit") if setup_map is not None else None
+    )
+    admission_map = admission if isinstance(admission, Mapping) else None
+    sides = admission_map.get("sides") if admission_map is not None else None
+    if not isinstance(sides, Mapping) or set(sides) != {"bottom", "top"}:
+        add("PAIRING_SETUP_FAILURE", "admission_sides")
+    else:
+        for side in ("bottom", "top"):
+            side_admission = sides.get(side)
+            if not isinstance(side_admission, Mapping):
+                add("PAIRING_SETUP_FAILURE", f"{side}_admission_missing")
+                continue
+            original = side_admission.get("admission")
+            if not isinstance(original, Mapping) or original.get("pass") is not True:
+                add("NUMERICAL_GATE_FAIL", f"{side}_admission_gate")
+            side_pc = side_admission.get("balanced_pc")
+            if not isinstance(side_pc, Mapping):
+                add("PAIRING_SETUP_FAILURE", f"{side}_balanced_pc_missing")
+            else:
+                for group in ("P", "PH", "PC"):
+                    check_c3_action(side, group, side_pc.get(group))
+    lifecycle = _task041_sequential_lifecycle_evidence(
+        consumer_root,
+        setup_map,
+        expected_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+    )
+    checks["sequential_lifecycle"] = lifecycle
+    if lifecycle.get("pass") is not True:
+        for error in lifecycle.get("errors", ["lifecycle_invalid"]):
+            add("PAIRING_SETUP_FAILURE", f"lifecycle:{error}")
+
+    global_identity = (
+        admission_map.get("global_operator_identity")
+        if admission_map is not None
+        else None
+    )
+    raw_identity_checks = {
+        row["check"].get("label"): row["check"]
+        for row in lifecycle.get("identities", [])
+        if isinstance(row, Mapping)
+        and isinstance(row.get("check"), Mapping)
+        and isinstance(row["check"].get("label"), str)
+    }
+    recorded_identity_checks = (
+        global_identity.get("checks")
+        if isinstance(global_identity, Mapping)
+        else None
+    )
+    identity_contract_ok = bool(
+        isinstance(global_identity, Mapping)
+        and isinstance(recorded_identity_checks, Mapping)
+        and set(recorded_identity_checks) == set(raw_identity_checks)
+        and all(
+            recorded_identity_checks.get(label) == check
+            for label, check in raw_identity_checks.items()
+        )
+        and global_identity.get("threshold") == 1.0e-12
+        and global_identity.get("pass") is True
+        and lifecycle.get("identity_values_pass") is True
+    )
+    if not identity_contract_ok:
+        add("NUMERICAL_GATE_FAIL", "global_identity_raw_checks")
+    checks["global_identity"] = {
+        "recorded": global_identity,
+        "raw_check_count": len(raw_identity_checks),
+        "pass": identity_contract_ok,
+    }
+
+    matrix = summary.get("matrix_inventory")
+    after_p4 = matrix.get("p4_factor_count_after_cleanup") if isinstance(
+        matrix, Mapping
+    ) else None
+    after_nested = (
+        matrix.get("nested_iterative_ksp_count_after_cleanup")
+        if isinstance(matrix, Mapping)
+        else None
+    )
+    matrix_ok = bool(
+        isinstance(matrix, Mapping)
+        and matrix.get("qep_calls") == 0
+        and matrix.get("consumer_qep_required") is False
+        and matrix.get("p6_factor_count") == 0
+        and matrix.get("global_direct_factor_count") == 0
+        and isinstance(after_p4, Mapping)
+        and set(after_p4) == {"bottom", "top"}
+        and all(type(value) is int and value == 0 for value in after_p4.values())
+        and isinstance(after_nested, Mapping)
+        and set(after_nested) == {"bottom", "top"}
+        and all(
+            type(value) is int and value == 0 for value in after_nested.values()
+        )
+    )
+    checks["matrix_cleanup"] = matrix_ok
+    if not matrix_ok:
+        add("PAIRING_SETUP_FAILURE", "matrix_or_component_cleanup")
+    candidate_inventory = (
+        setup_map.get("candidate_inventory") if setup_map is not None else None
+    )
+    candidate_ok = bool(
+        isinstance(candidate_inventory, Mapping)
+        and candidate_inventory.get("p6_factor_count") == 0
+        and candidate_inventory.get("global_direct_factor_count") == 0
+        and candidate_inventory.get("modal_block") == "representative_rhs_only"
+        and candidate_inventory.get("approximate_preconditioner_only") is True
+    )
+    if not candidate_ok:
+        add("PAIRING_SETUP_FAILURE", "common_candidate_inventory")
+
+    def read_packet_metadata(
+        label: str,
+        artifact: Any,
+        expected_identity: Mapping[str, Any],
+        rank_records: Any = None,
+    ) -> dict[str, Any] | None:
+        ok = True
+
+        def bad(reason: str) -> None:
+            nonlocal ok
+            ok = False
+            add("PAIRING_SETUP_FAILURE", f"{label}:{reason}")
+
+        if not isinstance(artifact, Mapping):
+            bad("artifact_missing")
+            return None
+        manifest_value = artifact.get("manifest")
+        expected_manifest_sha = artifact.get("manifest_sha256")
+        if not isinstance(manifest_value, str) or not _valid_sha(
+            expected_manifest_sha, 64
+        ):
+            bad("manifest_reference")
+            return None
+        manifest_path = Path(manifest_value)
+        try:
+            manifest_bytes = manifest_path.read_bytes()
+            manifest = json.loads(manifest_bytes)
+        except (OSError, json.JSONDecodeError):
+            bad("manifest_read")
+            return None
+        if not isinstance(manifest, Mapping):
+            bad("manifest_record")
+            return None
+        actual_manifest_sha = hashlib.sha256(manifest_bytes).hexdigest()
+        if actual_manifest_sha != expected_manifest_sha:
+            bad("manifest_hash")
+        identity = manifest.get("identity")
+        identity_sha = manifest.get("identity_sha256")
+        try:
+            identity_bytes = json.dumps(
+                identity, sort_keys=True, separators=(",", ":")
+            ).encode("utf-8")
+            actual_identity_sha = hashlib.sha256(identity_bytes).hexdigest()
+        except (TypeError, ValueError):
+            actual_identity_sha = None
+        if (
+            not isinstance(identity, Mapping)
+            or identity != dict(expected_identity)
+            or not _valid_sha(identity_sha, 64)
+            or actual_identity_sha != identity_sha
+            or identity_sha != artifact.get("identity_sha256")
+        ):
+            bad("identity")
+        if artifact.get("schema") not in (None, manifest.get("schema")):
+            bad("artifact_schema")
+        shards = manifest.get("shards")
+        shard_by_rank: dict[int, Mapping[str, Any]] = {}
+        if not isinstance(shards, list) or len(shards) != 8:
+            bad("shard_count")
+        else:
+            for row in shards:
+                rank = row.get("rank") if isinstance(row, Mapping) else None
+                if type(rank) is not int or rank in shard_by_rank:
+                    bad("shard_ranks")
+                    continue
+                shard_by_rank[rank] = row
+        if set(shard_by_rank) != set(range(8)):
+            bad("shard_rank_set")
+        if (
+            manifest.get("schema") != "myfenics.full3d.pre_recovery_packet.v1"
+            or manifest.get("rank_count") != 8
+        ):
+            bad("packet_schema")
+        expected_start = 0
+        shard_meta: dict[int, dict[str, Any]] = {}
+        for rank in range(8):
+            shard = shard_by_rank.get(rank)
+            if shard is None:
+                continue
+            ownership = shard.get("ownership_range")
+            size = shard.get("size")
+            if (
+                not isinstance(ownership, list)
+                or len(ownership) != 2
+                or any(type(value) is not int for value in ownership)
+                or type(size) is not int
+                or size < 0
+            ):
+                bad(f"rank_{rank}_ownership")
+                continue
+            start, end = (int(value) for value in ownership)
+            if start != expected_start or end < start or end - start != size:
+                bad(f"rank_{rank}_ownership_contiguity")
+            expected_start = end
+            shard_path_value = shard.get("path")
+            shard_path = (
+                manifest_path.parent / shard_path_value
+                if isinstance(shard_path_value, str)
+                else None
+            )
+            if (
+                shard_path is None
+                or Path(shard_path_value).is_absolute()
+                or ".." in Path(shard_path_value).parts
+                or not _valid_sha(shard.get("sha256"), 64)
+                or not shard_path.is_file()
+            ):
+                bad(f"rank_{rank}_shard_metadata")
+                continue
+            try:
+                if _sha256_file(shard_path) != shard["sha256"]:
+                    bad(f"rank_{rank}_shard_hash")
+            except OSError:
+                bad(f"rank_{rank}_shard_read")
+            shard_meta[rank] = {
+                "ownership": (start, end),
+                "size": size,
+                "path": shard_path,
+                "path_value": shard_path_value,
+                "sha256": shard["sha256"],
+            }
+        if type(manifest.get("global_size")) is not int or expected_start != int(
+            manifest.get("global_size", -1)
+        ):
+            bad("global_size")
+        rank_record_by_rank: dict[int, Mapping[str, Any]] = {}
+        if rank_records is not None:
+            if not isinstance(rank_records, list) or len(rank_records) != 8:
+                bad("rank_records_count")
+            else:
+                for record in rank_records:
+                    rank = record.get("rank") if isinstance(record, Mapping) else None
+                    if type(rank) is not int or rank in rank_record_by_rank:
+                        bad("rank_records_ranks")
+                        continue
+                    rank_record_by_rank[rank] = record
+                if set(rank_record_by_rank) != set(range(8)):
+                    bad("rank_records_rank_set")
+                for rank in range(8):
+                    record = rank_record_by_rank.get(rank)
+                    shard = shard_meta.get(rank)
+                    if record is None or shard is None:
+                        continue
+                    if (
+                        record.get("ownership_range") != list(shard["ownership"])
+                        or record.get("local_size") != shard["size"]
+                        or record.get("packet_shard_path") != shard["path_value"]
+                        or record.get("packet_shard_sha256") != shard["sha256"]
+                        or record.get("response_packet_manifest_sha256")
+                        != actual_manifest_sha
+                        or record.get("packet_manifest_sha256")
+                        != expected_identity.get("packet_manifest_sha256")
+                        or record.get("dtype") != "complex128"
+                        or record.get("rhs_unchanged") is not True
+                        or not _valid_sha(record.get("owned_rhs_sha256"), 64)
+                        or not _valid_sha(record.get("owned_response_sha256"), 64)
+                        or not _valid_sha(record.get("rhs_before_sha256"), 64)
+                        or not _valid_sha(record.get("rhs_after_sha256"), 64)
+                        or record.get("rhs_before_sha256")
+                        != record.get("rhs_after_sha256")
+                    ):
+                        bad(f"rank_{rank}_record_binding")
+        if not ok:
+            return {
+                "ok": False,
+                "manifest": manifest,
+                "shards": shard_meta,
+                "rank_records": rank_record_by_rank,
+            }
+        return {
+            "ok": True,
+            "manifest": manifest,
+            "shards": shard_meta,
+            "rank_records": rank_record_by_rank,
+        }
+
+    def read_rank_arrays(
+        packet: Mapping[str, Any],
+        rank: int,
+        label: str,
+    ) -> tuple[Any, Any] | None:
+        shard = packet["shards"].get(rank)
+        if not isinstance(shard, Mapping):
+            add("PAIRING_SETUP_FAILURE", f"{label}_rank_{rank}_metadata")
+            return None
+        try:
+            with np.load(shard["path"], allow_pickle=False) as arrays:
+                if set(arrays.files) != {"solution", "rhs"}:
+                    add("PAIRING_SETUP_FAILURE", f"{label}_rank_{rank}_keys")
+                    return None
+                solution = np.asarray(arrays["solution"])
+                rhs = np.asarray(arrays["rhs"])
+                if (
+                    solution.ndim != 1
+                    or rhs.ndim != 1
+                    or solution.shape != rhs.shape
+                    or solution.dtype != np.dtype("complex128")
+                    or rhs.dtype != np.dtype("complex128")
+                    or solution.size != shard["size"]
+                    or not np.isfinite(solution).all()
+                    or not np.isfinite(rhs).all()
+                ):
+                    add("PAIRING_SETUP_FAILURE", f"{label}_rank_{rank}_arrays")
+                    return None
+                record = packet["rank_records"].get(rank)
+                if record is not None and (
+                    array_sha(rhs) != record["owned_rhs_sha256"]
+                    or array_sha(solution) != record["owned_response_sha256"]
+                    or array_sha(rhs) != record["rhs_before_sha256"]
+                    or array_sha(rhs) != record["rhs_after_sha256"]
+                ):
+                    add("PAIRING_SETUP_FAILURE", f"{label}_rank_{rank}_array_hash")
+                    return None
+                return solution, rhs
+        except (OSError, KeyError, ValueError, EOFError):
+            add("PAIRING_SETUP_FAILURE", f"{label}_rank_{rank}_read")
+            return None
+
+    def compare_reported_number(
+        comparison: Mapping[str, Any],
+        field: str,
+        value: float | None,
+    ) -> None:
+        if value is None or not same_number(comparison.get(field), value):
+            add("RESPONSE_SENSITIVITY_UNRESOLVED", f"{field}_reported_mismatch")
+
+    computed_pairs: list[dict[str, Any]] = []
+    for ordinal, entry in expected_by_ordinal.items():
+        pair = pairs.get(ordinal)
+        if pair is None:
+            continue
+        side = entry.get("side")
+        layout = layouts.get(side)
+        pair_identity_ok = True
+        instance = layout.get("layout_instance_id") if layout else None
+        layout_sha = layout.get("layout_identity_sha256") if layout else None
+        if (
+            pair.get("side") != side
+            or pair.get("scope") != TASK041_REPRESENTATIVE_RHS_SCOPE
+            or pair.get("comparison_mode") != "common_layout_equivalence"
+            or pair.get("pairing_scope") != "same_live_layout"
+            or pair.get("run_layout_epoch") != instance
+            or pair.get("layout_instance_id") != instance
+            or pair.get("layout_identity_sha256") != layout_sha
+        ):
+            pair_identity_ok = False
+            add("PAIRING_SETUP_FAILURE", f"ordinal_{ordinal}_pair_identity")
+        for layout_field in ("before_layout", "after_layout"):
+            value = pair.get(layout_field)
+            if (
+                not isinstance(value, Mapping)
+                or value.get("layout_identity_sha256") != layout_sha
+            ):
+                pair_identity_ok = False
+                add("PAIRING_SETUP_FAILURE", f"ordinal_{ordinal}_{layout_field}")
+        expected_first = "legacy" if ordinal % 2 == 0 else "optimized"
+        expected_order = [
+            expected_first,
+            "optimized" if expected_first == "legacy" else "legacy",
+        ]
+        if pair.get("variant_order") != expected_order:
+            pair_identity_ok = False
+            add("PAIRING_SETUP_FAILURE", f"ordinal_{ordinal}_variant_order")
+        variants = pair.get("variants")
+        if not isinstance(variants, Mapping) or set(variants) != {
+            "legacy",
+            "optimized",
+        }:
+            pair_identity_ok = False
+            add("PAIRING_SETUP_FAILURE", f"ordinal_{ordinal}_variants")
+        if not pair_identity_ok:
+            continue
+
+        base_identity = {
+            "schema": "task041.common_layout_equivalence.response_identity.v1",
+            "scope": TASK041_REPRESENTATIVE_RHS_SCOPE,
+            "comparison_mode": "common_layout_equivalence",
+            "pairing_scope": "same_live_layout",
+            "run_layout_epoch": instance,
+            "layout_instance_id": instance,
+            "source_sha": summary.get("source_sha"),
+            "probe_manifest_sha256": binding.get("sha256")
+            if isinstance(binding, Mapping)
+            else None,
+            "packet_manifest_sha256": expected_packet_sha,
+            "layout_identity_sha256": layout_sha,
+            "ordinal": ordinal,
+            "side": side,
+            "formal_column": entry.get("formal_column"),
+            "branch_ordinal": entry.get("branch_ordinal"),
+        }
+        variant_metadata: dict[str, dict[str, Any]] = {}
+        variant_ok = True
+        for variant in ("legacy", "optimized"):
+            record = variants[variant]
+            if not isinstance(record, Mapping):
+                add("PAIRING_SETUP_FAILURE", f"ordinal_{ordinal}_{variant}_record")
+                variant_ok = False
+                continue
+            variant_identity = dict(base_identity)
+            variant_identity["variant"] = variant
+            metadata = read_packet_metadata(
+                f"ordinal_{ordinal}_{variant}",
+                record.get("artifact"),
+                variant_identity,
+                record.get("rank_shards"),
+            )
+            if metadata is None or metadata.get("ok") is not True:
+                variant_ok = False
+            else:
+                variant_metadata[variant] = metadata
+        comparison = pair.get("comparison")
+        if (
+            not isinstance(comparison, Mapping)
+            or not isinstance(comparison.get("diagnostic_packets"), Mapping)
+            or set(comparison["diagnostic_packets"])
+            != {"response_and_action", "residual_pair"}
+        ):
+            add("PAIRING_SETUP_FAILURE", f"ordinal_{ordinal}_diagnostic_packet_keys")
+            variant_ok = False
+        if not variant_ok:
+            continue
+
+        diagnostic_identity = {
+            key: value
+            for key, value in base_identity.items()
+            if key != "schema"
+        }
+        diagnostics = comparison["diagnostic_packets"]
+        action_packet = read_packet_metadata(
+            f"ordinal_{ordinal}_action_delta",
+            diagnostics.get("response_and_action"),
+            {
+                "schema": "task041.common_layout_equivalence.comparison_diagnostic.v1",
+                **diagnostic_identity,
+                "kind": "response_and_action_delta",
+            },
+        )
+        residual_packet = read_packet_metadata(
+            f"ordinal_{ordinal}_residual_pair",
+            diagnostics.get("residual_pair"),
+            {
+                "schema": "task041.common_layout_equivalence.comparison_diagnostic.v1",
+                **diagnostic_identity,
+                "kind": "legacy_and_optimized_residual",
+            },
+        )
+        if (
+            action_packet is None
+            or residual_packet is None
+            or action_packet.get("ok") is not True
+            or residual_packet.get("ok") is not True
+        ):
+            continue
+
+        legacy_meta = variant_metadata["legacy"]
+        optimized_meta = variant_metadata["optimized"]
+        arrays_ok = True
+        rhs_sq = old_sq = new_sq = delta_sq = 0.0
+        for rank in range(8):
+            old_values = read_rank_arrays(
+                legacy_meta, rank, f"ordinal_{ordinal}_legacy"
+            )
+            new_values = read_rank_arrays(
+                optimized_meta, rank, f"ordinal_{ordinal}_optimized"
+            )
+            if old_values is None or new_values is None:
+                arrays_ok = False
+                continue
+            old_solution, old_rhs = old_values
+            new_solution, new_rhs = new_values
+            if (
+                legacy_meta["shards"][rank]["ownership"]
+                != optimized_meta["shards"][rank]["ownership"]
+                or not np.array_equal(old_rhs, new_rhs)
+            ):
+                add("PAIRING_SETUP_FAILURE", f"ordinal_{ordinal}_rank_{rank}_rhs_layout")
+                arrays_ok = False
+            rhs_sq += float(np.vdot(old_rhs, old_rhs).real)
+            old_sq += float(np.vdot(old_solution, old_solution).real)
+            new_sq += float(np.vdot(new_solution, new_solution).real)
+            delta = new_solution - old_solution
+            delta_sq += float(np.vdot(delta, delta).real)
+            del delta, old_solution, old_rhs, new_solution, new_rhs
+        if not arrays_ok:
+            continue
+
+        action_sq = residual_old_sq = residual_new_sq = residual_diff_sq = 0.0
+        for rank in range(8):
+            old_values = read_rank_arrays(
+                legacy_meta, rank, f"ordinal_{ordinal}_legacy_action"
+            )
+            new_values = read_rank_arrays(
+                optimized_meta, rank, f"ordinal_{ordinal}_optimized_action"
+            )
+            action_values = read_rank_arrays(
+                action_packet, rank, f"ordinal_{ordinal}_action"
+            )
+            if old_values is None or new_values is None or action_values is None:
+                arrays_ok = False
+                continue
+            old_solution, old_rhs = old_values
+            new_solution, new_rhs = new_values
+            action_solution, action_rhs = action_values
+            if (
+                not np.array_equal(action_solution, new_solution - old_solution)
+                or not np.array_equal(old_rhs, new_rhs)
+                or legacy_meta["shards"][rank]["ownership"]
+                != action_packet["shards"][rank]["ownership"]
+            ):
+                add("PAIRING_SETUP_FAILURE", f"ordinal_{ordinal}_rank_{rank}_action")
+                arrays_ok = False
+            action_sq += float(np.vdot(action_rhs, action_rhs).real)
+            del (
+                old_solution,
+                old_rhs,
+                new_solution,
+                new_rhs,
+                action_solution,
+                action_rhs,
+            )
+        if not arrays_ok:
+            continue
+
+        for rank in range(8):
+            residual_values = read_rank_arrays(
+                residual_packet, rank, f"ordinal_{ordinal}_residual"
+            )
+            if residual_values is None:
+                arrays_ok = False
+                continue
+            legacy_residual, optimized_residual = residual_values
+            if (
+                residual_packet["shards"][rank]["ownership"]
+                != legacy_meta["shards"][rank]["ownership"]
+            ):
+                add("PAIRING_SETUP_FAILURE", f"ordinal_{ordinal}_rank_{rank}_residual")
+                arrays_ok = False
+            residual_difference = optimized_residual - legacy_residual
+            residual_old_sq += float(np.vdot(legacy_residual, legacy_residual).real)
+            residual_new_sq += float(
+                np.vdot(optimized_residual, optimized_residual).real
+            )
+            residual_diff_sq += float(
+                np.vdot(residual_difference, residual_difference).real
+            )
+            del (
+                legacy_residual,
+                optimized_residual,
+                residual_difference,
+            )
+        if not arrays_ok:
+            continue
+
+        rhs_norm = math.sqrt(rhs_sq)
+        legacy_norm = math.sqrt(old_sq)
+        optimized_norm = math.sqrt(new_sq)
+        delta_norm = math.sqrt(delta_sq)
+        action_norm = math.sqrt(action_sq)
+        e_x = strict_ratio(delta_norm, max(legacy_norm, optimized_norm))
+        e_A = strict_ratio(action_norm, rhs_norm)
+        legacy_residual_norm = math.sqrt(residual_old_sq)
+        optimized_residual_norm = math.sqrt(residual_new_sq)
+        residual_difference_norm = math.sqrt(residual_diff_sq)
+        residual_denominator = max(legacy_residual_norm, optimized_residual_norm)
+        residual_difference_relative = strict_ratio(
+            residual_difference_norm,
+            residual_denominator,
+        )
+        for variant in ("legacy", "optimized"):
+            raw = raw_audits.get((ordinal, variant))
+            if raw is None:
+                continue
+            audit = raw[1]
+            if not same_number(audit.get("rhs_norm"), rhs_norm):
+                add(
+                    "NUMERICAL_GATE_FAIL",
+                    f"ordinal_{ordinal}_{variant}_rhs_norm_packet_mismatch",
+                )
+            raw_residual = audit.get("residual_norm")
+            packet_residual = (
+                legacy_residual_norm
+                if variant == "legacy"
+                else optimized_residual_norm
+            )
+            if not same_number(raw_residual, packet_residual):
+                add(
+                    "NUMERICAL_GATE_FAIL",
+                    f"ordinal_{ordinal}_{variant}_residual_packet_mismatch",
+                )
+            recomputed = strict_ratio(packet_residual, rhs_norm)
+            if recomputed is None or recomputed > 1.0e-2:
+                add(
+                    "NUMERICAL_GATE_FAIL",
+                    f"ordinal_{ordinal}_{variant}_packet_residual_gate",
+                )
+            if not same_number(audit.get("relative_residual"), recomputed):
+                add(
+                    "NUMERICAL_GATE_FAIL",
+                    f"ordinal_{ordinal}_{variant}_packet_relative_mismatch",
+                )
+
+        if (
+            not numeric(e_x)
+            or not numeric(e_A)
+            or e_x > 1.0e-8
+            or e_A > 1.0e-8
+        ):
+            add("RESPONSE_SENSITIVITY_UNRESOLVED", f"ordinal_{ordinal}_response_gate")
+        if not isinstance(comparison, Mapping):
+            add("RESPONSE_SENSITIVITY_UNRESOLVED", f"ordinal_{ordinal}_comparison")
+        else:
+            if not same_number(comparison.get("threshold_e_x"), 1.0e-8):
+                add("PAIRING_SETUP_FAILURE", f"ordinal_{ordinal}_threshold_e_x")
+            if not same_number(comparison.get("threshold_e_A"), 1.0e-8):
+                add("PAIRING_SETUP_FAILURE", f"ordinal_{ordinal}_threshold_e_A")
+            compare_reported_number(comparison, "e_x_absolute", delta_norm)
+            compare_reported_number(comparison, "e_x", e_x)
+            compare_reported_number(comparison, "e_A_absolute", action_norm)
+            compare_reported_number(comparison, "e_A", e_A)
+            compare_reported_number(comparison, "rhs_norm", rhs_norm)
+            response_norms = comparison.get("response_norms")
+            if not isinstance(response_norms, Mapping):
+                add("RESPONSE_SENSITIVITY_UNRESOLVED", f"ordinal_{ordinal}_response_norms")
+            else:
+                compare_reported_number(response_norms, "legacy", legacy_norm)
+                compare_reported_number(response_norms, "optimized", optimized_norm)
+                compare_reported_number(
+                    response_norms,
+                    "denominator",
+                    max(legacy_norm, optimized_norm),
+                )
+            residual_norms = comparison.get("residual_norms")
+            if not isinstance(residual_norms, Mapping):
+                add("RESPONSE_SENSITIVITY_UNRESOLVED", f"ordinal_{ordinal}_residual_norms")
+            else:
+                compare_reported_number(
+                    residual_norms, "legacy", legacy_residual_norm
+                )
+                compare_reported_number(
+                    residual_norms, "optimized", optimized_residual_norm
+                )
+                compare_reported_number(
+                    residual_norms,
+                    "denominator",
+                    residual_denominator,
+                )
+            compare_reported_number(
+                comparison,
+                "residual_difference_norm",
+                residual_difference_norm,
+            )
+            compare_reported_number(
+                comparison,
+                "residual_difference_relative",
+                residual_difference_relative,
+            )
+            independent_pass = bool(
+                numeric(e_x)
+                and numeric(e_A)
+                and e_x <= 1.0e-8
+                and e_A <= 1.0e-8
+            )
+            if comparison.get("finite") is not True:
+                add("RESPONSE_SENSITIVITY_UNRESOLVED", f"ordinal_{ordinal}_finite")
+            if comparison.get("pass") is not independent_pass:
+                add("RESPONSE_SENSITIVITY_UNRESOLVED", f"ordinal_{ordinal}_pass")
+            if comparison.get("operator_scope") != "side_A":
+                add("PAIRING_SETUP_FAILURE", f"ordinal_{ordinal}_operator_scope")
+
+        pair_audits = pair.get("audits")
+        if not isinstance(pair_audits, Mapping):
+            add("PAIRING_SETUP_FAILURE", f"ordinal_{ordinal}_audits")
+        else:
+            for variant in ("legacy", "optimized"):
+                raw = raw_audits.get((ordinal, variant))
+                recorded = pair_audits.get(variant)
+                if raw is None or not isinstance(recorded, Mapping):
+                    add("PAIRING_SETUP_FAILURE", f"ordinal_{ordinal}_{variant}_audit_binding")
+                    continue
+                for field in (
+                    "status",
+                    "reason",
+                    "iterations",
+                    "rhs_norm",
+                    "residual_norm",
+                    "relative_residual",
+                    "execution_variant",
+                    "representative_ordinal",
+                    "source_audit_index",
+                    "formal_column",
+                    "branch_ordinal",
+                ):
+                    if recorded.get(field) != raw[1].get(field):
+                        add(
+                            "PAIRING_SETUP_FAILURE",
+                            f"ordinal_{ordinal}_{variant}_{field}_binding",
+                        )
+                variant_record = pair["variants"].get(variant)
+                if not isinstance(variant_record, Mapping) or not isinstance(
+                    variant_record.get("audit"), Mapping
+                ):
+                    add(
+                        "PAIRING_SETUP_FAILURE",
+                        f"ordinal_{ordinal}_{variant}_variant_audit",
+                    )
+                elif variant_record["audit"] != recorded:
+                    add(
+                        "PAIRING_SETUP_FAILURE",
+                        f"ordinal_{ordinal}_{variant}_variant_audit_binding",
+                    )
+
+        computed_pairs.append(
+            {
+                "ordinal": ordinal,
+                "side": side,
+                "rhs_norm": rhs_norm,
+                "legacy_response_norm": legacy_norm,
+                "optimized_response_norm": optimized_norm,
+                "e_x_absolute": delta_norm,
+                "e_x": e_x,
+                "e_A_absolute": action_norm,
+                "e_A": e_A,
+                "legacy_residual_norm": legacy_residual_norm,
+                "optimized_residual_norm": optimized_residual_norm,
+                "residual_difference_norm": residual_difference_norm,
+                "residual_difference_relative": residual_difference_relative,
+            }
+        )
+
+    summary_entries = common_map.get("entries") if common_map is not None else None
+    summary_by_ordinal: dict[int, Mapping[str, Any]] = {}
+    if not isinstance(summary_entries, list) or len(summary_entries) != 8:
+        add("PAIRING_SETUP_FAILURE", "summary_common_entries")
+    elif all(isinstance(item, Mapping) for item in summary_entries):
+        for record in summary_entries:
+            ordinal = record.get("ordinal")
+            if type(ordinal) is not int or ordinal in summary_by_ordinal:
+                add("PAIRING_SETUP_FAILURE", "summary_entry_key")
+            else:
+                summary_by_ordinal[ordinal] = record
+    else:
+        add("PAIRING_SETUP_FAILURE", "summary_entry_record")
+    for ordinal, pair in pairs.items():
+        record = summary_by_ordinal.get(ordinal)
+        if record is None:
+            add("PAIRING_SETUP_FAILURE", f"summary_ordinal_{ordinal}_missing")
+            continue
+        for field in (
+            "side",
+            "branch",
+            "audit_index",
+            "formal_column",
+            "branch_ordinal",
+            "status",
+            "scope",
+            "comparison_mode",
+            "pairing_scope",
+            "run_layout_epoch",
+            "layout_instance_id",
+            "layout_identity_sha256",
+        ):
+            if record.get(field) != pair.get(field):
+                add("PAIRING_SETUP_FAILURE", f"summary_ordinal_{ordinal}_{field}")
+        if set(record.get("variants", {})) != {"legacy", "optimized"}:
+            add("PAIRING_SETUP_FAILURE", f"summary_ordinal_{ordinal}_variants")
+
+    checks["summary_entries"] = {
+        "count": len(summary_by_ordinal),
+        "expected": TASK041_REPRESENTATIVE_RHS_COUNT,
+    }
+    checks["computed_pairs"] = computed_pairs
+    checks["category_failures"] = categories
+    checks["schedule"] = bool(
+        common_map is not None
+        and common_map.get("scope") == TASK041_REPRESENTATIVE_RHS_SCOPE
+        and common_map.get("comparison_mode") == "common_layout_equivalence"
+        and common_map.get("pairing_scope") == "same_live_layout"
+        and expected_side_setup_schedule == TASK041_SEQUENTIAL_COMPONENT_SCHEDULE
+    )
+    if not checks["schedule"]:
+        add("PAIRING_SETUP_FAILURE", "common_scope_binding")
+    if common_map is not None and (
+        common_map.get("status") != "completed"
+        or common_map.get("expected_count") != 8
+        or common_map.get("completed_count") != 8
+        or common_map.get("apply_count") != 16
+    ):
+        add("PAIRING_SETUP_FAILURE", "common_completion_counts")
+
+    failures = [
+        f"{category}:{reason}"
+        for category in (
+            "PAIRING_SETUP_FAILURE",
+            "NUMERICAL_GATE_FAIL",
+            "ACTION_EQUIVALENCE_FAIL",
+            "RESPONSE_SENSITIVITY_UNRESOLVED",
+        )
+        for reason in categories[category]
+    ]
+    classification = next(
+        (
+            category
+            for category in (
+                "PAIRING_SETUP_FAILURE",
+                "NUMERICAL_GATE_FAIL",
+                "ACTION_EQUIVALENCE_FAIL",
+                "RESPONSE_SENSITIVITY_UNRESOLVED",
+            )
+            if categories[category]
+        ),
+        None,
+    )
+    checks["category_failures"] = categories
+    return {
+        "pass": not any(categories.values()),
+        "scope": TASK041_REPRESENTATIVE_RHS_SCOPE,
+        "comparison_mode": "common_layout_equivalence",
+        "failure_classification": classification,
+        "checks": checks,
+        "category_failures": categories,
+        "failures": failures,
+    }
+
 def _consumer_result(
     consumer_root: Path,
     *,
     process_group_gone: bool | None = None,
     representative_rhs_binding: Mapping[str, Any] | None = None,
     expected_side_setup_schedule: str | None = None,
+    expected_comparison_mode: str | None = None,
 ) -> dict[str, Any]:
     summary_path = consumer_root / "consumer_summary.json"
     if not summary_path.is_file():
@@ -2912,7 +4790,21 @@ def _consumer_result(
     lifecycle = summary.get("lifecycle")
     gates = summary.get("gates")
     worker_classification = summary.get("classification")
-    representative_scope = representative_rhs_binding is not None
+    common_scope = expected_comparison_mode == "common_layout_equivalence"
+    common_failure_classes = {
+        "PAIRING_SETUP_FAILURE",
+        "NUMERICAL_GATE_FAIL",
+        "ACTION_EQUIVALENCE_FAIL",
+        "RESPONSE_SENSITIVITY_UNRESOLVED",
+    }
+    worker_common_failure = bool(
+        common_scope
+        and isinstance(worker_classification, str)
+        and worker_classification in common_failure_classes
+    )
+    representative_scope = (
+        representative_rhs_binding is not None and not common_scope
+    )
     representative_validation = (
         _validate_representative_rhs_result(
             consumer_root,
@@ -2921,7 +4813,17 @@ def _consumer_result(
             process_group_gone=process_group_gone,
             expected_side_setup_schedule=expected_side_setup_schedule,
         )
-        if representative_rhs_binding is not None
+        if representative_rhs_binding is not None and not common_scope
+        else None
+    )
+    common_validation = (
+        _validate_common_layout_equivalence_result(
+            consumer_root,
+            summary,
+            representative_rhs_binding,
+            expected_side_setup_schedule=expected_side_setup_schedule,
+        )
+        if common_scope and not worker_common_failure
         else None
     )
     balh_consumer = str(summary.get("schema", "")).startswith(
@@ -2943,7 +4845,9 @@ def _consumer_result(
         and lifecycle.get("rss_marker_emitted") is True
     )
     lifecycle_gate = (
-        representative_lifecycle_gate if representative_scope else regular_lifecycle_gate
+        representative_lifecycle_gate
+        if representative_scope or common_scope
+        else regular_lifecycle_gate
     )
     marker_gate = isinstance(observed, list) and "final_cleanup_complete" in observed
     representative_complete = bool(
@@ -2958,6 +4862,7 @@ def _consumer_result(
     )
     regular_complete = bool(
         not representative_scope
+        and not common_scope
         and worker_classification == "TASK041_CONSUMER_PASS"
         and summary.get("status") == "task041_consumer_completed"
         and isinstance(gates, Mapping)
@@ -2966,9 +4871,29 @@ def _consumer_result(
         and process_group_gone is True
         and marker_gate
     )
-    complete = representative_complete or regular_complete
+    common_complete = bool(
+        common_scope
+        and worker_classification == "COMMON_LAYOUT_EQUIVALENCE_PASS"
+        and summary.get("status") == "task041_common_layout_equivalence_completed"
+        and common_validation is not None
+        and common_validation.get("pass") is True
+        and isinstance(gates, Mapping)
+        and gates.get("pass") is False
+        and lifecycle_gate
+        and process_group_gone is True
+        and marker_gate
+    )
+    complete = representative_complete or common_complete or regular_complete
     if complete:
         classification = "worker_exit0"
+    elif worker_common_failure:
+        classification = str(worker_classification)
+    elif common_scope:
+        classification = (
+            common_validation.get("failure_classification")
+            if isinstance(common_validation, Mapping)
+            else None
+        ) or worker_classification or "PAIRING_SETUP_FAILURE"
     elif representative_scope:
         classification = "task041_representative_rhs_validation_failure"
     elif worker_classification != "TASK041_CONSUMER_PASS":
@@ -2987,6 +4912,7 @@ def _consumer_result(
         "classification": classification,
         "worker_classification": worker_classification,
         "status": summary.get("status"),
+        "failure_evidence": summary.get("failure_evidence"),
         "summary_artifact": summary_artifact,
         "summary_path": summary_artifact["path"],
         "summary_sha256": summary_artifact["sha256"],
@@ -3000,8 +4926,13 @@ def _consumer_result(
         "process_group_gone": process_group_gone,
         "lifecycle_gate": lifecycle_gate,
         "representative_validation": representative_validation,
+        "common_validation": common_validation,
         "completion_scope": (
-            "representative_rhs" if representative_complete else "formal"
+            "representative_rhs"
+            if common_scope
+            else "representative_rhs"
+            if representative_complete
+            else "formal"
         ),
     }
 
@@ -3279,6 +5210,7 @@ def run_task041_public_supervisor(
     task041_supervision_record: str | Path | None = None,
     task041_rhs_probe_manifest: str | Path | None = None,
     task041_side_setup_schedule: str | None = None,
+    task041_comparison_mode: str | None = None,
 ) -> dict[str, Any]:
     """Run one Task041 consumer, optionally reusing a completed BAL_H producer."""
 
@@ -3443,6 +5375,7 @@ def run_task041_public_supervisor(
                         else None
                     ),
                     side_setup_schedule=task041_side_setup_schedule,
+                    comparison_mode=task041_comparison_mode,
                 )
             except ValueError as exc:
                 raise Task041SupervisorError(
@@ -3459,9 +5392,12 @@ def run_task041_public_supervisor(
             compute_wall_phase_limit_seconds = float(
                 performance_contract["active_consumer_budget_seconds"]
             )
-        elif task041_side_setup_schedule is not None:
+        elif (
+            task041_side_setup_schedule is not None
+            or task041_comparison_mode is not None
+        ):
             raise Task041SupervisorError(
-                "side setup schedule requires task041_schur_speed_v2",
+                "Task041 comparison options require task041_schur_speed_v2",
                 classification="task041_identity_failure",
                 stage="performance_profile",
             )
@@ -3534,6 +5470,7 @@ def run_task041_public_supervisor(
                 side_setup_schedule=performance_contract.get(
                     "side_setup_schedule"
                 ),
+                comparison_mode=performance_contract.get("comparison_mode"),
             )
             if compute_wall_ledger_path is not None and Path(
                 compute_wall_ledger_path
@@ -3604,6 +5541,10 @@ def run_task041_public_supervisor(
             if performance_contract.get("side_setup_schedule") is not None:
                 result["side_setup_schedule"] = performance_contract[
                     "side_setup_schedule"
+                ]
+            if performance_contract.get("comparison_mode") is not None:
+                result["comparison_mode"] = performance_contract[
+                    "comparison_mode"
                 ]
         if balh:
             if compute_wall_ledger_path is None:
@@ -4100,6 +6041,11 @@ def run_task041_public_supervisor(
                         if performance_contract is not None
                         else None
                     ),
+                    comparison_mode=(
+                        performance_contract.get("comparison_mode")
+                        if performance_contract is not None
+                        else None
+                    ),
                 )
             else:
                 consumer_command = producer_command_module["balh_exact_consumer"](
@@ -4243,6 +6189,11 @@ def run_task041_public_supervisor(
                         if performance_contract is not None
                         else None
                     ),
+                    expected_comparison_mode=(
+                        performance_contract.get("comparison_mode")
+                        if performance_contract is not None
+                        else None
+                    ),
                     **(
                         {"representative_rhs_binding": representative_rhs_binding}
                         if representative_rhs_binding is not None
@@ -4297,6 +6248,11 @@ def run_task041_public_supervisor(
                 process_group_gone=consumer_result.get("process_group_gone") is True,
                 expected_side_setup_schedule=(
                     performance_contract.get("side_setup_schedule")
+                    if performance_contract is not None
+                    else None
+                ),
+                expected_comparison_mode=(
+                    performance_contract.get("comparison_mode")
                     if performance_contract is not None
                     else None
                 ),

@@ -11,6 +11,7 @@ remain borrowed.
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
+from contextlib import contextmanager
 from time import perf_counter
 from typing import Any
 
@@ -116,6 +117,55 @@ _DETAIL_TIMING_SEMANTICS = {
 }
 # Native PETSc names the task's DIVERGED_ITS budget result DIVERGED_MAX_IT.
 _DIVERGED_ITS = int(PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT)
+
+_GMRES_RESTART_LIBRARY: Any | None = None
+_GMRES_RESTART_FUNCTION: Any | None = None
+
+
+def _live_gmres_restart(ksp: PETSc.KSP) -> int:
+    """Read FGMRES restart from the loaded PETSc implementation.
+
+    petsc4py 3.19 exposes ``setGMRESRestart`` but not its matching getter.
+    The opt-in contract audit therefore calls the exact PETSc symbol through
+    the already loaded petsc4py extension; ordinary solves never initialize
+    this narrow audit-only path.
+    """
+
+    import ctypes
+
+    global _GMRES_RESTART_FUNCTION, _GMRES_RESTART_LIBRARY
+    if _GMRES_RESTART_FUNCTION is None:
+        if np.dtype(PETSc.IntType) != np.dtype(np.int32):
+            raise RuntimeError(
+                "KSPGMRESGetRestart requires the qualified PetscInt=int32 ABI"
+            )
+        try:
+            library = ctypes.CDLL(PETSc.__file__)
+            function = library.KSPGMRESGetRestart
+        except (AttributeError, OSError) as exc:
+            raise RuntimeError(
+                "loaded PETSc extension has no KSPGMRESGetRestart symbol"
+            ) from exc
+        function.argtypes = [
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.c_int32),
+        ]
+        function.restype = ctypes.c_int
+        _GMRES_RESTART_LIBRARY = library
+        _GMRES_RESTART_FUNCTION = function
+
+    restart = ctypes.c_int32()
+    error_code = int(
+        _GMRES_RESTART_FUNCTION(
+            ctypes.c_void_p(int(ksp.handle)),
+            ctypes.byref(restart),
+        )
+    )
+    if error_code != 0:
+        raise RuntimeError(
+            f"KSPGMRESGetRestart failed with PetscErrorCode={error_code}"
+        )
+    return int(restart.value)
 
 
 def _owner_transfer_inventory(owner_transfer: Any) -> dict[str, Any]:
@@ -284,6 +334,7 @@ class SideBalancedInverse:
         checkpoint_callback: Callable[[], None] | None = None,
         audit_callback: Callable[[dict[str, Any]], None] | None = None,
         detailed_timing: bool = False,
+        record_iteration_history: bool = False,
     ) -> None:
         _validate_ksp_pair(max_it, rtol)
         operator = side_system.A
@@ -311,6 +362,13 @@ class SideBalancedInverse:
         self._rtol = float(rtol)
         self._detailed_timing = bool(detailed_timing)
         self._destroyed = False
+        self._variant_context_active = False
+        self._active_variant: str | None = None
+        self._apply_in_progress = False
+        self._record_iteration_history = bool(record_iteration_history)
+        self._iteration_history: list[dict[str, Any]] | None = (
+            [] if self._record_iteration_history else None
+        )
         self._p4_factor_created_count = 1
         self._p4_factor_destroy_count = 0
         self._nested_ksp_created_count = 1
@@ -393,12 +451,114 @@ class SideBalancedInverse:
             raise RuntimeError("BAL_H side inverse has been destroyed")
         return self._operator
 
+    @contextmanager
+    def variant_context(self, variant: str):
+        """Temporarily select a transfer variant for one complete side apply."""
+
+        if self._destroyed or self._owner_transfer is None:
+            raise RuntimeError("BAL_H side inverse has been destroyed")
+        if self._apply_in_progress:
+            raise RuntimeError("BAL_H execution variant cannot change during apply")
+        if self._variant_context_active:
+            raise RuntimeError("BAL_H execution variant cannot change while active")
+        previous = self._active_variant
+        self._active_variant = variant
+        self._variant_context_active = True
+        try:
+            with self._owner_transfer.variant_context(variant):
+                yield self
+        finally:
+            self._active_variant = previous
+            self._variant_context_active = False
+
+    def _ksp_contract_audit(self) -> dict[str, Any]:
+        """Read the live PETSc KSP settings used by an opt-in comparison."""
+
+        ksp = self._ksp
+        if ksp is None:
+            raise RuntimeError("BAL_H side KSP is not live")
+        pc = ksp.getPC()
+        rtol, atol, divtol, max_it = ksp.getTolerances()
+        restart = _live_gmres_restart(ksp)
+        pc_side = ksp.getPCSide()
+        norm_type = ksp.getNormType()
+        actual = {
+            "type": str(ksp.getType()),
+            "pc_type": str(pc.getType()),
+            "pc_side": int(pc_side),
+            "pc_side_label": (
+                "RIGHT" if pc_side == PETSc.PC.Side.RIGHT else str(pc_side)
+            ),
+            "norm_type": int(norm_type),
+            "norm_type_label": (
+                "UNPRECONDITIONED"
+                if norm_type == PETSc.KSP.NormType.UNPRECONDITIONED
+                else str(norm_type)
+            ),
+            "restart": int(restart),
+            "rtol": float(rtol),
+            "atol": float(atol),
+            "divtol": float(divtol),
+            "max_it": int(max_it),
+            "initial_guess_nonzero": bool(ksp.getInitialGuessNonzero()),
+        }
+        expected = {
+            "type": "fgmres",
+            "pc_type": "python",
+            "pc_side": int(PETSc.PC.Side.RIGHT),
+            "pc_side_label": "RIGHT",
+            "norm_type": int(PETSc.KSP.NormType.UNPRECONDITIONED),
+            "norm_type_label": "UNPRECONDITIONED",
+            "restart": 32,
+            "rtol": self._rtol,
+            "atol": 0.0,
+            "max_it": self._max_it,
+            "initial_guess_nonzero": False,
+        }
+        checks = {
+            "type": actual["type"].lower() == expected["type"],
+            "pc_type": actual["pc_type"].lower() == expected["pc_type"],
+            "pc_side": pc_side == PETSc.PC.Side.RIGHT,
+            "norm_type": norm_type == PETSc.KSP.NormType.UNPRECONDITIONED,
+            "restart": actual["restart"] == expected["restart"],
+            "rtol": actual["rtol"] == expected["rtol"],
+            "atol": actual["atol"] == expected["atol"],
+            "max_it": actual["max_it"] == expected["max_it"],
+            "initial_guess_nonzero": (
+                actual["initial_guess_nonzero"]
+                == expected["initial_guess_nonzero"]
+            ),
+        }
+        return {
+            "source": "live_petsc_getters_before_opt_in_apply",
+            "actual": actual,
+            "expected": expected,
+            "checks": checks,
+            "pass": all(checks.values()),
+        }
+
     def _monitor(
         self,
         _ksp: PETSc.KSP,
         _iteration: int,
         _reported_residual: float,
     ) -> None:
+        if self._iteration_history is not None and len(self._iteration_history) < 129:
+            residual = float(_reported_residual)
+            if np.isnan(residual):
+                recorded_residual: float | str = "nan"
+            elif np.isposinf(residual):
+                recorded_residual = "inf"
+            elif np.isneginf(residual):
+                recorded_residual = "-inf"
+            else:
+                recorded_residual = residual
+            self._iteration_history.append(
+                {
+                    "iteration": int(_iteration),
+                    "reported_residual": recorded_residual,
+                }
+            )
         self._checkpoint()
 
     def _checkpoint(self) -> None:
@@ -1219,9 +1379,23 @@ class SideBalancedInverse:
         return result
 
     def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        if self._apply_in_progress:
+            raise RuntimeError("BAL_H side inverse apply is already in progress")
+        self._apply_in_progress = True
+        try:
+            self._apply_impl(source, target)
+        finally:
+            self._apply_in_progress = False
+
+    def _apply_impl(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
         """Apply the side inverse into ``target`` and record one RHS audit."""
 
-        if self._destroyed or self._operator is None or self._ksp is None:
+        if (
+            self._destroyed
+            or self._operator is None
+            or self._ksp is None
+            or self._owner_transfer is None
+        ):
             raise RuntimeError("BAL_H side inverse has been destroyed")
         if _same_handle(source, target):
             raise ValueError("BAL_H side inverse does not allow source/target aliasing")
@@ -1231,6 +1405,8 @@ class SideBalancedInverse:
             raise ValueError("BAL_H side inverse target has the wrong size")
         target.set(0.0)
         self._apply_count += 1
+        if self._iteration_history is not None:
+            self._iteration_history.clear()
         before = self._count_snapshot()
         started = perf_counter()
         self._rhs_operation_seconds = {
@@ -1256,7 +1432,41 @@ class SideBalancedInverse:
             "residual_norm": "not_measured",
             "relative_residual": "not_measured",
         }
+        ksp_contract: dict[str, Any] | None = None
+        execution_variant = self._active_variant
+        if execution_variant is None:
+            execution_variant = self._owner_transfer.execution_variant
         try:
+            if self._record_iteration_history:
+                try:
+                    ksp_contract = self._ksp_contract_audit()
+                except Exception as contract_error:  # noqa: BLE001 - turn getter failure into collective audit
+                    ksp_contract = {
+                        "source": "live_petsc_getters_before_opt_in_apply",
+                        "pass": False,
+                        "error": {
+                            "type": type(contract_error).__name__,
+                            "message": str(contract_error),
+                        },
+                    }
+                collective_contract_pass = bool(
+                    self._comm.allreduce(
+                        ksp_contract.get("pass") is True,
+                        op=MPI.LAND,
+                    )
+                )
+                if not collective_contract_pass:
+                    ksp_contract["collective_pass"] = False
+                    ksp_contract["rank_summaries"] = self._comm.allgather(
+                        {
+                            "rank": int(self._comm.Get_rank()),
+                            "contract": ksp_contract,
+                        }
+                    )
+                    raise RuntimeError(
+                        "BAL_H live KSP contract does not match on every rank"
+                    )
+                ksp_contract["collective_pass"] = True
             rhs_norm = float(source.norm())
             if not np.isfinite(rhs_norm):
                 raise RuntimeError("BAL_H side RHS norm is non-finite")
@@ -1295,12 +1505,23 @@ class SideBalancedInverse:
                 "ksp_rtol": self._rtol,
                 "ksp_max_it": self._max_it,
                 "elapsed_seconds": elapsed,
+                "execution_variant": execution_variant,
                 "operation_seconds": operation_timing,
                 "counts": {
                     "delta": self._count_delta(before, after),
                     "cumulative": after,
                 },
                 **residual_audit,
+                **(
+                    {"ksp_contract": ksp_contract}
+                    if ksp_contract is not None
+                    else {}
+                ),
+                **(
+                    {"iteration_history": list(self._iteration_history)}
+                    if self._iteration_history is not None
+                    else {}
+                ),
             }
         except BaseException as exc:
             if solve_started and self._ksp is not None:
@@ -1324,6 +1545,7 @@ class SideBalancedInverse:
                 "ksp_rtol": self._rtol,
                 "ksp_max_it": self._max_it,
                 "elapsed_seconds": elapsed,
+                "execution_variant": execution_variant,
                 "operation_seconds": operation_timing,
                 "exception_type": type(exc).__name__,
                 "exception": str(exc),
@@ -1332,6 +1554,16 @@ class SideBalancedInverse:
                     "cumulative": after,
                 },
                 **residual_audit,
+                **(
+                    {"ksp_contract": ksp_contract}
+                    if ksp_contract is not None
+                    else {}
+                ),
+                **(
+                    {"iteration_history": list(self._iteration_history)}
+                    if self._iteration_history is not None
+                    else {}
+                ),
             }
             if self._last_coupling_failure is not None:
                 record.update(dict(self._last_coupling_failure))
@@ -1425,6 +1657,7 @@ class SideBalancedInverse:
             "ksp_rtol": self._rtol,
             "ksp_max_it": self._max_it,
             "detailed_timing": self._detailed_timing,
+            "iteration_history_enabled": self._record_iteration_history,
             "preconditioner": "J BAL_H JH",
             "apply_count": int(self._apply_count),
             "total_iterations": int(self._total_iterations),
@@ -1515,6 +1748,7 @@ def build_side_balanced_inverse(
     checkpoint_callback: Callable[[], None] | None = None,
     audit_callback: Callable[[dict[str, Any]], None] | None = None,
     detailed_timing: bool = False,
+    record_iteration_history: bool = False,
     lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
     performance_profile: str | None = None,
 ) -> SideBalancedInverse:
@@ -1595,6 +1829,7 @@ def build_side_balanced_inverse(
             checkpoint_callback=checkpoint_callback,
             audit_callback=audit_callback,
             detailed_timing=detailed_timing,
+            record_iteration_history=record_iteration_history,
         )
         full_action = None
         p4_factor = None

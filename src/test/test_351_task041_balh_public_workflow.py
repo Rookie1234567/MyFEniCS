@@ -5,10 +5,12 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import math
 import subprocess
 import sys
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 from benchmarks import task041_balh_workflow
@@ -23,7 +25,11 @@ from benchmarks.task041_balh_workflow import (
     task041_schur_speed_v2_contract,
     validate_balh_producer_packet,
 )
-from benchmarks.task041_exact_side_workflow import _task041_case_contract
+from benchmarks.task041_exact_side_workflow import (
+    _task041_case_contract,
+    _task041_common_failure_details,
+    _task041_stream_array_metadata,
+)
 from scripts import run_case
 from src.io.execution_plan import (
     TASK041_PUBLIC_SUPERVISOR_ADAPTER,
@@ -36,10 +42,13 @@ from src.io.input_validation import load_and_resolve, task041_balh_profile_error
 from src.io.resolved_config import resolved_config_sha256
 from src.runners import task041_supervisor as supervisor
 from src.runners.task041_supervisor import (
+    _validate_common_layout_equivalence_result,
     _validate_representative_rhs_result,
     _validate_specification,
     run_task041_public_supervisor,
 )
+from src.solvers.physical_balanced_coupling import BalancedConstraintRejected
+from src.solvers.physical_balanced_side_inverse import P4PhysicalResidualGateError
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 BALH_INPUTS = sorted(
@@ -326,6 +335,152 @@ def test_task041_sequential_component_opt_in_is_bound_and_formal_rejected(
             TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
         ]
     ) == 2
+
+
+def test_task041_common_layout_mode_binds_fixed_scope_and_cpu_range(
+    tmp_path: Path, monkeypatch
+):
+    candidate_path = (
+        REPOSITORY_ROOT
+        / "input/official/task041/side_balh/5nm_p6h4_m480_mpi8_balh.dat"
+    )
+    candidate = _specification(candidate_path)
+    probe_manifest = (
+        REPOSITORY_ROOT
+        / "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/records/"
+        "task041_representative_rhs_v1.json"
+    )
+    legacy_descriptor = (
+        REPOSITORY_ROOT
+        / "results/task041_side_balh_component_audit/"
+        "task041_h3b_legacy_native_packet_descriptor.json"
+    )
+    captured: list[dict[str, object]] = []
+
+    def fake_launch(_specification, **kwargs):
+        captured.append(kwargs)
+        return {"result_classification": "worker_exit0"}
+
+    monkeypatch.setattr(
+        "src.runners.task038_launcher.launch_specification", fake_launch
+    )
+    argv = [
+        str(candidate_path),
+        "--legacy-native-packet-descriptor",
+        str(legacy_descriptor),
+        "--task041-performance-profile",
+        TASK041_SCHUR_SPEED_V2_PROFILE,
+        "--task041-rhs-probe",
+        str(probe_manifest),
+        "--task041-side-setup-schedule",
+        TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        "--task041-comparison-mode",
+        task041_balh_workflow.TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE,
+    ]
+    assert run_case.main(argv) == 0
+    assert captured[-1]["task041_comparison_mode"] == (
+        task041_balh_workflow.TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE
+    )
+
+    command = build_task041_balh_candidate_consumer_command(
+        str(Path(sys.executable)),
+        candidate,
+        tmp_path / "packet_manifest.json",
+        tmp_path / "packet_identity.json",
+        "b" * 64,
+        tmp_path / "worker",
+        "c" * 40,
+        "a" * 40,
+        performance_profile=TASK041_SCHUR_SPEED_V2_PROFILE,
+        task041_rhs_probe_manifest=probe_manifest,
+        side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        comparison_mode=task041_balh_workflow.TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE,
+    )
+    assert command[command.index("--cpu-list") + 1] == "1-8"
+    worker_args = command[command.index("--worker") :]
+    parsed = task041_balh_workflow._parser().parse_args(worker_args)
+    assert parsed.task041_comparison_mode == (
+        task041_balh_workflow.TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE
+    )
+    assert parsed.task041_side_setup_schedule == (
+        TASK041_SEQUENTIAL_COMPONENT_SCHEDULE
+    )
+    contract = task041_schur_speed_v2_contract(
+        str(candidate.identity["model_id"]),
+        scope=TASK041_REPRESENTATIVE_RHS_SCOPE,
+        side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        comparison_mode=task041_balh_workflow.TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE,
+    )
+    assert contract["scope"] == TASK041_REPRESENTATIVE_RHS_SCOPE
+    assert contract["comparison_mode"] == (
+        task041_balh_workflow.TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE
+    )
+    assert contract["budget_group"] == "shared_S0_S1_S3"
+
+
+class _CommonFailureInverse:
+    _last_coupling_failure = None
+
+
+@pytest.mark.parametrize(
+    ("exception", "expected_evidence"),
+    (
+        (
+            P4PhysicalResidualGateError(
+                {"residual_norm": 2.0e-2, "residual_tolerance": 1.0e-10}
+            ),
+            "p4_solve_audit",
+        ),
+        (
+            BalancedConstraintRejected(
+                {"norm": 2.0e-8, "operation_scale": 1.0, "limit": 1.0e-8}
+            ),
+            "balance_audit",
+        ),
+    ),
+    ids=("real-p4-gate", "real-balance-gate"),
+)
+def test_task041_common_failure_class_keeps_real_gate_audit(
+    exception: BaseException, expected_evidence: str
+):
+    classification, evidence = _task041_common_failure_details(
+        exception, _CommonFailureInverse()
+    )
+    assert classification == "NUMERICAL_GATE_FAIL"
+    assert evidence[expected_evidence]
+    assert evidence["cause"]["exception_type"] == type(exception).__name__
+
+
+def test_task041_common_failure_without_real_gate_cause_is_setup_failure():
+    classification, evidence = _task041_common_failure_details(
+        RuntimeError("live KSP contract mismatch"), _CommonFailureInverse()
+    )
+    assert classification == "PAIRING_SETUP_FAILURE"
+    assert evidence["cause"]["exception"] == "live KSP contract mismatch"
+
+
+@pytest.mark.parametrize("shape", [(0,), (0, 5)])
+def test_task041_layout_stream_hash_measures_empty_arrays(shape):
+    value = np.empty(shape, dtype=np.complex128)
+    metadata = _task041_stream_array_metadata("empty", value)
+    assert metadata["shape"] == list(shape)
+    assert metadata["nbytes"] == 0
+    assert metadata["storage_nbytes"] == 0
+    assert metadata["hash_status"] == "measured_empty"
+    assert metadata["sha256"] == hashlib.sha256(b"").hexdigest()
+
+
+def test_task041_layout_stream_hash_measures_strided_empty_view():
+    value = np.empty((2, 3, 4), dtype=np.complex128)[:0, :, ::-1]
+    assert value.size == 0
+    assert value.strides[-1] < 0
+    metadata = _task041_stream_array_metadata("strided_empty", value)
+    assert metadata["shape"] == [0, 3, 4]
+    assert metadata["dtype"] == "complex128"
+    assert metadata["nbytes"] == 0
+    assert metadata["storage_nbytes"] == 0
+    assert metadata["hash_status"] == "measured_empty"
+    assert metadata["sha256"] == hashlib.sha256(b"").hexdigest()
 
 
 def test_task041_balh_module_help_executes_public_worker_entrypoint():
@@ -1331,6 +1486,881 @@ def _add_sequential_lifecycle_fixture(
         ]
     }
     return marker_path
+
+
+def _common_layout_metadata(rank: int, name: str, shape: list[int]) -> dict[str, object]:
+    payload = f"common-layout:{rank}:{name}".encode()
+    return {
+        "name": name,
+        "sha256": hashlib.sha256(payload).hexdigest(),
+        "hash_status": "measured",
+        "shape": shape,
+        "nbytes": 8 * max(1, int(np.prod(shape, dtype=int))),
+    }
+
+
+def _common_held_object(kind: str, handle: int) -> dict[str, object]:
+    return {"kind": kind, "handle": handle}
+
+
+def _write_common_packet(
+    root: Path,
+    label: str,
+    identity: dict[str, object],
+    rank_arrays: list[tuple[np.ndarray, np.ndarray]],
+    *,
+    with_rank_records: bool,
+) -> tuple[dict[str, object], list[dict[str, object]]]:
+    packet_dir = root / "common_packets" / label
+    packet_dir.mkdir(parents=True)
+    identity_sha = hashlib.sha256(
+        json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    shards = []
+    rank_records = []
+    for rank, (solution, rhs) in enumerate(rank_arrays):
+        solution = np.asarray(solution, dtype=np.complex128)
+        rhs = np.asarray(rhs, dtype=np.complex128)
+        shard_path = packet_dir / f"rank{rank:04d}.npz"
+        np.savez(shard_path, solution=solution, rhs=rhs)
+        shard_sha = hashlib.sha256(shard_path.read_bytes()).hexdigest()
+        shards.append(
+            {
+                "rank": rank,
+                "path": shard_path.name,
+                "size": int(solution.size),
+                "ownership_range": [rank, rank + int(solution.size)],
+                "sha256": shard_sha,
+            }
+        )
+        rank_records.append(
+            {
+                "rank": rank,
+                "ownership_range": [rank, rank + int(solution.size)],
+                "local_size": int(solution.size),
+                "dtype": "complex128",
+                "owned_rhs_sha256": hashlib.sha256(
+                    memoryview(rhs).cast("B")
+                ).hexdigest(),
+                "owned_response_sha256": hashlib.sha256(
+                    memoryview(solution).cast("B")
+                ).hexdigest(),
+                "packet_manifest_sha256": identity["packet_manifest_sha256"],
+                "packet_shard_path": shard_path.name,
+                "packet_shard_sha256": shard_sha,
+                "rhs_before_sha256": hashlib.sha256(
+                    memoryview(rhs).cast("B")
+                ).hexdigest(),
+                "rhs_after_sha256": hashlib.sha256(
+                    memoryview(rhs).cast("B")
+                ).hexdigest(),
+                "rhs_unchanged": True,
+            }
+        )
+    manifest_path = packet_dir / "manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "schema": "myfenics.full3d.pre_recovery_packet.v1",
+                "identity": identity,
+                "identity_sha256": identity_sha,
+                "rank_count": 8,
+                "global_size": 8,
+                "shards": shards,
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    manifest_sha = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+    if with_rank_records:
+        for record in rank_records:
+            record["response_packet_manifest_sha256"] = manifest_sha
+    artifact = {
+        "manifest": str(manifest_path),
+        "manifest_sha256": manifest_sha,
+        "identity_sha256": identity_sha,
+    }
+    return artifact, rank_records if with_rank_records else []
+
+
+def _write_common_layout_fixture(tmp_path: Path, mode: str = "normal"):
+    root, summary, binding, _raw_path = _write_representative_result_fixture(tmp_path)
+    _add_sequential_lifecycle_fixture(root, summary)
+    setup = summary["setup"]
+    assert isinstance(setup, dict)
+    setup["candidate_inventory"].update(
+        {
+            "p6_factor_count": 0,
+            "global_direct_factor_count": 0,
+            "modal_block": "representative_rhs_only",
+            "approximate_preconditioner_only": True,
+        }
+    )
+    setup["variant_binding"] = {
+        "bottom": {
+            "source_module": "src.solvers.physical_balanced_same_mesh_transfer",
+            "source_sha": summary["source_sha"],
+            "variants": {
+                "legacy": {
+                    "owner_resolution": (
+                        "src.solvers.physical_balanced_same_mesh_transfer."
+                        "_resolve_owner_candidates"
+                    ),
+                    "cell_adjoint": (
+                        "src.solvers.physical_balanced_same_mesh_transfer."
+                        "SameMeshHcurlOwnerTransfer._apply_adjoint_into_impl"
+                    ),
+                    "adjoint_kernel": "explicit_matrix_conjugate_transpose",
+                },
+                "optimized": {
+                    "owner_resolution": (
+                        "src.solvers.physical_balanced_same_mesh_transfer."
+                        "_resolve_owner_candidates_batched"
+                    ),
+                    "cell_adjoint": (
+                        "src.solvers.physical_balanced_same_mesh_transfer."
+                        "_apply_conjugate_transpose_vector"
+                    ),
+                    "adjoint_kernel": "conjugate_transpose_identity",
+                },
+            },
+        },
+        "top": {},
+    }
+    setup["variant_binding"]["top"] = copy.deepcopy(
+        setup["variant_binding"]["bottom"]
+    )
+
+    identity_checks = setup["side_setup"]["global_identity_checks"]
+    setup["admission_audit"]["global_operator_identity"] = {
+        "threshold": 1.0e-12,
+        "pass": True,
+        "checks": copy.deepcopy(identity_checks),
+    }
+
+    def c3_input_facts():
+        facts = {
+            "coupling_last_apply_facts": {
+                "initial": {
+                    "balance": {
+                        "norm": 0.0,
+                        "operation_scale": 1.0,
+                        "relative": 0.0,
+                        "limit": 1.0e-8,
+                    }
+                }
+            },
+            "p4_last_solve": {
+                "status": "passed",
+                "rhs_norm": 1.0,
+                "residual_norm": 1.0e-12,
+                "physical_residual_norm": 1.0e-12,
+                "residual_tolerance": 1.0e-10,
+                "relative_residual": 1.0e-12,
+                "physical_relative_residual": 1.0e-12,
+                "backsolve_count": 1,
+                "refinement_count": 0,
+                "same_factor_refinement": False,
+            },
+        }
+        return {
+            "before": {"rhs": "b", "p4_source": "p4"},
+            "after": {"rhs": "b", "p4_source": "p4"},
+            "unchanged": True,
+            "last_action_facts": facts,
+        }
+
+    sides = {}
+    for side in ("bottom", "top"):
+        input_hashes = {
+            "legacy": c3_input_facts(),
+            "optimized": c3_input_facts(),
+        }
+        sides[side] = {
+            "admission": {"pass": True},
+            "balanced_pc": {
+                "P": {
+                    "threshold": 1.0e-11,
+                    "absolute": 0.0,
+                    "legacy_norm": 1.0,
+                    "optimized_norm": 1.0,
+                    "relative": 0.0,
+                    "finite": True,
+                    "input_unchanged": True,
+                    "input_hashes": copy.deepcopy(input_hashes),
+                    "pass": True,
+                },
+                "PH": {
+                    "threshold": 1.0e-11,
+                    "absolute": 0.0,
+                    "legacy_norm": 1.0,
+                    "optimized_norm": 1.0,
+                    "relative": 0.0,
+                    "finite": True,
+                    "input_unchanged": True,
+                    "input_hashes": copy.deepcopy(input_hashes),
+                    "pass": True,
+                },
+                "PC": {
+                    "threshold": 1.0e-8,
+                    "absolute": 0.0,
+                    "legacy_norm": 1.0,
+                    "optimized_norm": 1.0,
+                    "relative": 0.0,
+                    "finite": True,
+                    "input_unchanged": True,
+                    "input_hashes": input_hashes,
+                    "pass": True,
+                },
+            },
+        }
+    setup["admission_audit"]["sides"] = sides
+
+    audit_path = root / "numerical_output" / "common_layout_equivalence_audits.jsonl"
+    expected_entries = binding["entries"]
+    audit_rows = []
+    values = {}
+    for entry in expected_entries:
+        ordinal = entry["ordinal"]
+        value = 0.0 if mode == "zero" else 1.0e-36 if mode.startswith("tiny") else 1.0
+        rhs = np.array([complex(value)], dtype=np.complex128)
+        legacy = rhs.copy()
+        optimized = (
+            rhs * (1.0 + 1.0e-6) if mode == "tiny_sensitivity" else rhs.copy()
+        )
+        legacy_residual = rhs - legacy
+        optimized_residual = rhs - optimized
+        values[ordinal] = (legacy, optimized, rhs)
+        rhs_norm = math.sqrt(8.0) * value
+        zero = value == 0.0
+        audit_counts = {
+            name: (0 if zero else 1)
+            for name in ("pc", "Q", "H6", "A6", "P", "PH_audit", "p4_backsolve")
+        }
+        audit = {
+            "representative_ordinal": ordinal,
+            "source_audit_index": entry["audit_index"],
+            "formal_column": entry["formal_column"],
+            "branch_ordinal": entry["branch_ordinal"],
+            "comparison_variant": "legacy",
+            "execution_variant": "legacy",
+            "status": "ZERO_RHS_EXACT" if zero else "KSP_CONVERGED",
+            "reason": None if zero else 2,
+            "iterations": 0 if zero else 1,
+            "ksp_positive": not zero,
+            "explicit_true_target_reached": True,
+            "rhs_norm": rhs_norm,
+            "residual_norm": 0.0,
+            "relative_residual": 0.0,
+            "ksp_rtol": 1.0e-2,
+            "ksp_max_it": 128,
+            "ksp_contract": {
+                "collective_pass": True,
+                "actual": {
+                    "type": "fgmres",
+                    "pc_type": "python",
+                    "pc_side": 1,
+                    "pc_side_label": "RIGHT",
+                    "norm_type": 2,
+                    "norm_type_label": "UNPRECONDITIONED",
+                    "restart": 32,
+                    "rtol": 1.0e-2,
+                    "atol": 0.0,
+                    "max_it": 128,
+                    "initial_guess_nonzero": False,
+                },
+                "expected": {"pc_side": 1, "norm_type": 2},
+                "checks": {
+                    field: True
+                    for field in (
+                        "type",
+                        "pc_type",
+                        "pc_side",
+                        "norm_type",
+                        "restart",
+                        "rtol",
+                        "atol",
+                        "max_it",
+                        "initial_guess_nonzero",
+                    )
+                },
+            },
+            "iteration_history": [] if zero else [{"iteration": 1, "reported_residual": 0.0}],
+            "counts": {"delta": audit_counts},
+        }
+        for variant in ("legacy", "optimized"):
+            variant_audit = copy.deepcopy(audit)
+            variant_audit["comparison_variant"] = variant
+            variant_audit["execution_variant"] = variant
+            residual = (
+                legacy_residual if variant == "legacy" else optimized_residual
+            )
+            residual_norm = math.sqrt(
+                float(8.0 * np.vdot(residual, residual).real)
+            )
+            variant_audit["residual_norm"] = residual_norm
+            variant_audit["relative_residual"] = (
+                0.0 if rhs_norm == 0.0 else residual_norm / rhs_norm
+            )
+            audit_rows.append(
+                {
+                    "phase": "common_layout_equivalence",
+                    "side": entry["side"],
+                    "status": variant_audit["status"],
+                    "reason": variant_audit["reason"],
+                    "audit": variant_audit,
+                }
+            )
+    audit_path.write_text(
+        "".join(json.dumps(row, sort_keys=True) + "\n" for row in audit_rows),
+        encoding="utf-8",
+    )
+
+    layout_payloads = {}
+    for side in ("bottom", "top"):
+        instance = hashlib.sha256(
+            f"{audit_path.resolve()}|{side}|task041.common_layout_equivalence.layout.v1".encode()
+        ).hexdigest()
+        by_rank = []
+        for rank in range(8):
+            arrays = {
+                name: _common_layout_metadata(rank, name, [1])
+                for name in ("geometry", "geometry_dofmap", "cell_permutation_info")
+            }
+            mpc = {
+                name: _common_layout_metadata(rank, f"fine_{name}", [1])
+                for name in ("slaves", "coefficients", "offsets")
+            }
+            coarse_mpc = {
+                name: _common_layout_metadata(rank, f"coarse_{name}", [1])
+                for name in ("slaves", "coefficients", "offsets")
+            }
+            held = {
+                "side_A": _common_held_object("side_operator", 500 + rank),
+                "side_inverse": _common_held_object("side_inverse", 600 + rank),
+                "p4_factor": _common_held_object("p4_factor", 700 + rank),
+                "research_factor": _common_held_object("research_factor", 800 + rank),
+                "p4_matrix": _common_held_object("p4_matrix", 900 + rank),
+                "p4_factor_ksp": {
+                    "live": False,
+                    "reason": "factor_only_storage",
+                    "python_id": None,
+                    "handle": None,
+                    "petsc_handle": None,
+                    "cpp_object": None,
+                },
+                "p4_factor_matrix": _common_held_object("factor_matrix", 1000 + rank),
+                "nested_ksp": {"kind": "nested_ksp", "handle": 1100 + rank, "live": True},
+                "h6": _common_held_object("h6", 1200 + rank),
+                "h6_matrix": _common_held_object("h6_matrix", 1300 + rank),
+                "mesh": _common_held_object("mesh", 1400 + rank),
+                "side_system": _common_held_object("side_system", 1500 + rank),
+            }
+            comm = {
+                "rank": rank,
+                "size": 8,
+                "fortran_handle": 100 + rank,
+            }
+            by_rank.append(
+                {
+                    "rank": rank,
+                    "layout_instance_id": instance,
+                    "communicator": comm,
+                    "communicators": {
+                        "outer": comm.copy(),
+                        "transfer": comm.copy(),
+                        "side_operator": comm.copy(),
+                        "inverse": comm.copy(),
+                        "compare": {
+                            "outer_transfer": 1,
+                            "transfer_side_operator": 1,
+                            "side_operator_inverse": 1,
+                        },
+                    },
+                    "ownership_range": [rank, rank + 1],
+                    "ownership": {"start": rank, "end": rank + 1},
+                    "dofmaps": {"fine": {"rank": rank}, "coarse": {"rank": rank}},
+                    "held_objects": held,
+                    "mesh_layout": arrays,
+                    "mpc_layout": {
+                        "fine": {
+                            **mpc,
+                            "masters_links_sha256": hashlib.sha256(
+                                f"fine-masters:{rank}".encode()
+                            ).hexdigest(),
+                        },
+                        "coarse": {
+                            **coarse_mpc,
+                            "masters_links_sha256": hashlib.sha256(
+                                f"coarse-masters:{rank}".encode()
+                            ).hexdigest(),
+                        },
+                    },
+                    "layout_arrays": [
+                        _common_layout_metadata(rank, "owned_active_original_dofs", [1])
+                    ],
+                    "transfer_identity": {
+                        "owner_row_authority": hashlib.sha256(
+                            f"owner-row:{side}:{rank}".encode()
+                        ).hexdigest()
+                    },
+                    "operator_identity": {"kind": "side_A", "handle": 1600 + rank},
+                }
+            )
+        layout_sha = hashlib.sha256(
+            json.dumps(by_rank, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        payload = {
+            "schema": "task041.common_layout_equivalence.layout.v1",
+            "side": side,
+            "comm_size": 8,
+            "layout_instance_id": instance,
+            "layout_identity_sha256": layout_sha,
+            "by_rank": by_rank,
+        }
+        layout_path = root / "numerical_output" / "common_layout_equivalence" / f"{side}_layout.json"
+        layout_path.parent.mkdir(parents=True, exist_ok=True)
+        layout_path.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+        layout_payloads[side] = (instance, layout_sha, layout_path)
+
+    pairs = []
+    for entry in expected_entries:
+        ordinal = entry["ordinal"]
+        side = entry["side"]
+        instance, layout_sha, layout_path = layout_payloads[side]
+        legacy, optimized, rhs = values[ordinal]
+        base_identity = {
+            "schema": "task041.common_layout_equivalence.response_identity.v1",
+            "scope": TASK041_REPRESENTATIVE_RHS_SCOPE,
+            "comparison_mode": "common_layout_equivalence",
+            "pairing_scope": "same_live_layout",
+            "run_layout_epoch": instance,
+            "layout_instance_id": instance,
+            "source_sha": summary["source_sha"],
+            "probe_manifest_sha256": binding["sha256"],
+            "packet_manifest_sha256": binding["packet_binding"]["packet_manifest_sha256"],
+            "layout_identity_sha256": layout_sha,
+            "ordinal": ordinal,
+            "side": side,
+            "formal_column": entry["formal_column"],
+            "branch_ordinal": entry["branch_ordinal"],
+        }
+        artifacts = {}
+        rank_records = {}
+        for variant, solution in (("legacy", legacy), ("optimized", optimized)):
+            identity = {**base_identity, "variant": variant}
+            artifact, records = _write_common_packet(
+                root,
+                f"{ordinal}_{variant}_response",
+                identity,
+                [(solution, rhs) for _rank in range(8)],
+                with_rank_records=True,
+            )
+            artifacts[variant] = artifact
+            rank_records[variant] = records
+        delta = optimized - legacy
+        legacy_residual = rhs - legacy
+        optimized_residual = rhs - optimized
+        action_identity = {
+            "schema": "task041.common_layout_equivalence.comparison_diagnostic.v1",
+            **{key: value for key, value in base_identity.items() if key != "schema"},
+            "kind": "response_and_action_delta",
+        }
+        residual_identity = {
+            "schema": "task041.common_layout_equivalence.comparison_diagnostic.v1",
+            **{key: value for key, value in base_identity.items() if key != "schema"},
+            "kind": "legacy_and_optimized_residual",
+        }
+        action_artifact, _ = _write_common_packet(
+            root,
+            f"{ordinal}_action",
+            action_identity,
+            [(delta, delta) for _rank in range(8)],
+            with_rank_records=False,
+        )
+        residual_artifact, _ = _write_common_packet(
+            root,
+            f"{ordinal}_residual",
+            residual_identity,
+            [
+                (legacy_residual, optimized_residual)
+                for _rank in range(8)
+            ],
+            with_rank_records=False,
+        )
+        rhs_norm = math.sqrt(float(8.0 * np.vdot(rhs, rhs).real))
+        legacy_norm = math.sqrt(float(8.0 * np.vdot(legacy, legacy).real))
+        optimized_norm = math.sqrt(float(8.0 * np.vdot(optimized, optimized).real))
+        delta_norm = math.sqrt(float(8.0 * np.vdot(delta, delta).real))
+        legacy_residual_norm = math.sqrt(
+            float(8.0 * np.vdot(legacy_residual, legacy_residual).real)
+        )
+        optimized_residual_norm = math.sqrt(
+            float(8.0 * np.vdot(optimized_residual, optimized_residual).real)
+        )
+        residual_difference = optimized_residual - legacy_residual
+        residual_difference_norm = math.sqrt(
+            float(8.0 * np.vdot(residual_difference, residual_difference).real)
+        )
+        residual_difference_relative = (
+            0.0
+            if max(legacy_residual_norm, optimized_residual_norm) == 0.0
+            else residual_difference_norm
+            / max(legacy_residual_norm, optimized_residual_norm)
+        )
+        e_x = 0.0 if max(legacy_norm, optimized_norm) == 0.0 else delta_norm / max(legacy_norm, optimized_norm)
+        e_a = 0.0 if rhs_norm == 0.0 else delta_norm / rhs_norm
+        comparison = {
+            "operator_scope": "side_A",
+            "threshold_e_x": 1.0e-8,
+            "threshold_e_A": 1.0e-8,
+            "e_x_absolute": delta_norm,
+            "e_x": e_x,
+            "e_A_absolute": delta_norm,
+            "e_A": e_a,
+            "rhs_norm": rhs_norm,
+            "response_norms": {
+                "legacy": legacy_norm,
+                "optimized": optimized_norm,
+                "denominator": max(legacy_norm, optimized_norm),
+            },
+            "residual_norms": {
+                "legacy": legacy_residual_norm,
+                "optimized": optimized_residual_norm,
+                "denominator": max(legacy_residual_norm, optimized_residual_norm),
+            },
+            "residual_difference_norm": residual_difference_norm,
+            "residual_difference_relative": residual_difference_relative,
+            "finite": True,
+            "input_unchanged": True,
+            "pass": e_x <= 1.0e-8 and e_a <= 1.0e-8,
+            "diagnostic_packets": {
+                "response_and_action": action_artifact,
+                "residual_pair": residual_artifact,
+            },
+        }
+        audits = {}
+        for row in audit_rows:
+            audit = row["audit"]
+            if audit["representative_ordinal"] == ordinal:
+                audits[audit["comparison_variant"]] = audit
+        first_variant = "legacy" if ordinal % 2 == 0 else "optimized"
+        pair = {
+            **{key: entry[key] for key in ("ordinal", "side", "branch", "audit_index", "formal_column", "branch_ordinal")},
+            "status": "completed",
+            "scope": TASK041_REPRESENTATIVE_RHS_SCOPE,
+            "comparison_mode": "common_layout_equivalence",
+            "pairing_scope": "same_live_layout",
+            "run_layout_epoch": instance,
+            "layout_instance_id": instance,
+            "layout_identity_sha256": layout_sha,
+            "before_layout": {"path": str(layout_path), "layout_identity_sha256": layout_sha},
+            "after_layout": {"path": str(layout_path), "layout_identity_sha256": layout_sha},
+            "variant_order": [
+                first_variant,
+                "optimized" if first_variant == "legacy" else "legacy",
+            ],
+            "variants": {
+                variant: {
+                    "artifact": artifacts[variant],
+                    "rank_shards": rank_records[variant],
+                    "audit": audits[variant],
+                }
+                for variant in ("legacy", "optimized")
+            },
+            "audits": audits,
+            "comparison": comparison,
+        }
+        pairs.append(pair)
+
+    pair_path = root / "numerical_output" / "common_layout_equivalence_pairs.jsonl"
+    pair_path.write_text(
+        "".join(json.dumps(pair, sort_keys=True) + "\n" for pair in pairs),
+        encoding="utf-8",
+    )
+    summary["scope"] = TASK041_REPRESENTATIVE_RHS_SCOPE
+    summary["comparison_mode"] = "common_layout_equivalence"
+    summary["status"] = "task041_common_layout_equivalence_completed"
+    summary["classification"] = "COMMON_LAYOUT_EQUIVALENCE_PASS"
+    summary["packet"] = {
+        "manifest_sha256": binding["packet_binding"]["packet_manifest_sha256"],
+        "identity": binding["packet_binding"]["packet_identity"],
+    }
+    summary["common_layout_equivalence"] = {
+        "scope": TASK041_REPRESENTATIVE_RHS_SCOPE,
+        "comparison_mode": "common_layout_equivalence",
+        "pairing_scope": "same_live_layout",
+        "status": "completed",
+        "expected_count": 8,
+        "completed_count": 8,
+        "apply_count": 16,
+        "source_manifest": {
+            "path": binding["path"],
+            "sha256": binding["sha256"],
+            "scope": TASK041_REPRESENTATIVE_RHS_SCOPE,
+        },
+        "packet_binding": copy.deepcopy(binding["packet_binding"]),
+        "entries": [
+            {
+                **{key: pair[key] for key in ("ordinal", "side", "branch", "audit_index", "formal_column", "branch_ordinal", "status", "scope", "comparison_mode", "pairing_scope", "run_layout_epoch", "layout_instance_id", "layout_identity_sha256")},
+                "variants": {"legacy": {}, "optimized": {}},
+            }
+            for pair in pairs
+        ],
+    }
+    (root / "consumer_summary.json").write_text(
+        json.dumps(summary, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    return root, summary, binding
+
+
+def test_common_layout_equivalence_artifact_positive_and_recomputes(tmp_path):
+    root, summary, binding = _write_common_layout_fixture(tmp_path)
+    result = _validate_common_layout_equivalence_result(
+        root,
+        summary,
+        binding,
+        expected_side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+    )
+    assert result["pass"] is True
+    assert result["scope"] == TASK041_REPRESENTATIVE_RHS_SCOPE
+    assert result["checks"]["pair_records"] == {
+        "path": str(root / "numerical_output" / "common_layout_equivalence_pairs.jsonl"),
+        "count": 8,
+        "expected": 8,
+    }
+    computed = result["checks"]["computed_pairs"]
+    assert len(computed) == 8
+    assert all(pair["e_x"] == 0.0 and pair["e_A"] == 0.0 for pair in computed)
+    assert all(
+        pair["legacy_residual_norm"] <= pair["rhs_norm"] * 1.0e-2
+        and pair["optimized_residual_norm"] <= pair["rhs_norm"] * 1.0e-2
+        for pair in computed
+    )
+
+
+@pytest.mark.parametrize("mode", ["tiny", "zero"])
+def test_common_layout_equivalence_artifact_healthy_small_rhs(tmp_path, mode):
+    root, summary, binding = _write_common_layout_fixture(tmp_path, mode)
+    result = _validate_common_layout_equivalence_result(
+        root,
+        summary,
+        binding,
+        expected_side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+    )
+    assert result["pass"] is True
+    assert all(
+        pair["e_x"] == 0.0 and pair["e_A"] == 0.0
+        for pair in result["checks"]["computed_pairs"]
+    )
+
+
+def _common_pairs_rows(root: Path) -> list[dict[str, object]]:
+    path = root / "numerical_output" / "common_layout_equivalence_pairs.jsonl"
+    return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+
+
+def _rewrite_common_pairs(root: Path, rows: list[dict[str, object]]) -> None:
+    path = root / "numerical_output" / "common_layout_equivalence_pairs.jsonl"
+    path.write_text(
+        "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+
+
+def _rewrite_common_audits(root: Path, rows: list[dict[str, object]]) -> None:
+    path = root / "numerical_output" / "common_layout_equivalence_audits.jsonl"
+    path.write_text(
+        "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+
+
+def _replace_common_rank_rhs(pair: dict[str, object], rank: int) -> None:
+    record = pair["variants"]["optimized"]["rank_shards"][rank]
+    artifact = pair["variants"]["optimized"]["artifact"]
+    manifest_path = Path(artifact["manifest"])
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    shard = manifest["shards"][rank]
+    shard_path = manifest_path.parent / shard["path"]
+    with np.load(shard_path, allow_pickle=False) as arrays:
+        solution = np.asarray(arrays["solution"], dtype=np.complex128)
+    changed_rhs = np.array([2.0 + 0.0j], dtype=np.complex128)
+    np.savez(shard_path, solution=solution, rhs=changed_rhs)
+    shard["sha256"] = hashlib.sha256(shard_path.read_bytes()).hexdigest()
+    manifest_path.write_text(json.dumps(manifest, sort_keys=True) + "\n", encoding="utf-8")
+    manifest_sha = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+    shard_sha = shard["sha256"]
+    artifact["manifest_sha256"] = manifest_sha
+    rhs_sha = hashlib.sha256(memoryview(changed_rhs).cast("B")).hexdigest()
+    for rank_record in pair["variants"]["optimized"]["rank_shards"]:
+        rank_record["response_packet_manifest_sha256"] = manifest_sha
+    record = pair["variants"]["optimized"]["rank_shards"][rank]
+    record["owned_rhs_sha256"] = rhs_sha
+    record["rhs_before_sha256"] = rhs_sha
+    record["rhs_after_sha256"] = rhs_sha
+    record["packet_shard_sha256"] = shard_sha
+
+
+def _rewrite_common_packet_arrays(
+    artifact: dict[str, object],
+    rank_arrays: list[tuple[np.ndarray, np.ndarray]],
+    rank_records: list[dict[str, object]] | None,
+) -> None:
+    manifest_path = Path(artifact["manifest"])
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    for rank, (solution, rhs) in enumerate(rank_arrays):
+        shard = manifest["shards"][rank]
+        shard_path = manifest_path.parent / shard["path"]
+        solution = np.asarray(solution, dtype=np.complex128)
+        rhs = np.asarray(rhs, dtype=np.complex128)
+        np.savez(shard_path, solution=solution, rhs=rhs)
+        shard["sha256"] = hashlib.sha256(shard_path.read_bytes()).hexdigest()
+        shard["size"] = int(solution.size)
+        shard["ownership_range"] = [rank, rank + int(solution.size)]
+        if rank_records is not None:
+            record = rank_records[rank]
+            rhs_sha = hashlib.sha256(memoryview(rhs).cast("B")).hexdigest()
+            solution_sha = hashlib.sha256(
+                memoryview(solution).cast("B")
+            ).hexdigest()
+            record["owned_rhs_sha256"] = rhs_sha
+            record["owned_response_sha256"] = solution_sha
+            record["rhs_before_sha256"] = rhs_sha
+            record["rhs_after_sha256"] = rhs_sha
+            record["packet_shard_sha256"] = shard["sha256"]
+    manifest_path.write_text(
+        json.dumps(manifest, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    manifest_sha = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+    artifact["manifest_sha256"] = manifest_sha
+    if rank_records is not None:
+        for record in rank_records:
+            record["response_packet_manifest_sha256"] = manifest_sha
+
+
+@pytest.mark.parametrize(
+    "mutation,expected_category",
+    [
+        ("layout", "PAIRING_SETUP_FAILURE"),
+        ("rhs", "PAIRING_SETUP_FAILURE"),
+        ("missing_variant", "PAIRING_SETUP_FAILURE"),
+        ("duplicate_variant", "PAIRING_SETUP_FAILURE"),
+        ("residual", "NUMERICAL_GATE_FAIL"),
+        ("action", "ACTION_EQUIVALENCE_FAIL"),
+    ],
+)
+def test_common_layout_equivalence_artifact_rejects_contract_mutations(
+    tmp_path, mutation, expected_category
+):
+    root, summary, binding = _write_common_layout_fixture(tmp_path)
+    if mutation == "layout":
+        path = root / "numerical_output" / "common_layout_equivalence" / "bottom_layout.json"
+        payload = json.loads(path.read_text())
+        payload["by_rank"][0]["layout_arrays"][0]["sha256"] = "f" * 64
+        path.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+    elif mutation == "rhs":
+        rows = _common_pairs_rows(root)
+        _replace_common_rank_rhs(rows[0], 0)
+        _rewrite_common_pairs(root, rows)
+    elif mutation == "missing_variant":
+        rows = _common_pairs_rows(root)
+        del rows[0]["variants"]["optimized"]
+        _rewrite_common_pairs(root, rows)
+    elif mutation == "duplicate_variant":
+        audit_path = root / "numerical_output" / "common_layout_equivalence_audits.jsonl"
+        rows = [json.loads(line) for line in audit_path.read_text().splitlines()]
+        rows.append(copy.deepcopy(rows[0]))
+        _rewrite_common_audits(root, rows)
+    elif mutation == "residual":
+        pair_rows = _common_pairs_rows(root)
+        pair = pair_rows[0]
+        response_artifacts = {
+            variant: pair["variants"][variant]["artifact"]
+            for variant in ("legacy", "optimized")
+        }
+        with np.load(
+            Path(response_artifacts["legacy"]["manifest"])
+            .parent
+            / "rank0000.npz",
+            allow_pickle=False,
+        ) as arrays:
+            rhs = np.asarray(arrays["rhs"], dtype=np.complex128)
+        failed_solution = 0.9 * rhs
+        for variant in ("legacy", "optimized"):
+            _rewrite_common_packet_arrays(
+                response_artifacts[variant],
+                [(failed_solution, rhs) for _rank in range(8)],
+                pair["variants"][variant]["rank_shards"],
+            )
+        residual_artifact = pair["comparison"]["diagnostic_packets"][
+            "residual_pair"
+        ]
+        failed_residual = 0.1 * rhs
+        _rewrite_common_packet_arrays(
+            residual_artifact,
+            [(failed_residual, failed_residual) for _rank in range(8)],
+            None,
+        )
+        rhs_norm = math.sqrt(float(8.0 * np.vdot(rhs, rhs).real))
+        failed_residual_norm = 0.1 * rhs_norm
+        for variant in ("legacy", "optimized"):
+            for audit in (
+                pair["audits"][variant],
+                pair["variants"][variant]["audit"],
+            ):
+                audit["residual_norm"] = failed_residual_norm
+                audit["relative_residual"] = 0.1
+        audit_path = root / "numerical_output" / "common_layout_equivalence_audits.jsonl"
+        rows = [json.loads(line) for line in audit_path.read_text().splitlines()]
+        for row in rows:
+            audit = row.get("audit", {})
+            if audit.get("representative_ordinal") == 0:
+                audit["residual_norm"] = failed_residual_norm
+                audit["relative_residual"] = 0.1
+        _rewrite_common_audits(root, rows)
+        comparison = pair["comparison"]
+        comparison["response_norms"]["legacy"] = 0.9 * rhs_norm
+        comparison["response_norms"]["optimized"] = 0.9 * rhs_norm
+        comparison["residual_norms"]["legacy"] = failed_residual_norm
+        comparison["residual_norms"]["optimized"] = failed_residual_norm
+        comparison["residual_norms"]["denominator"] = failed_residual_norm
+        comparison["residual_difference_norm"] = 0.0
+        comparison["residual_difference_relative"] = 0.0
+        _rewrite_common_pairs(root, pair_rows)
+    elif mutation == "action":
+        action = summary["setup"]["admission_audit"]["sides"]["bottom"]["balanced_pc"]["P"]
+        action["absolute"] = 2.0e-11
+        action["relative"] = 2.0e-11
+        action["pass"] = False
+    result = _validate_common_layout_equivalence_result(
+        root,
+        summary,
+        binding,
+        expected_side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+    )
+    assert result["pass"] is False
+    assert result["failure_classification"] == expected_category
+    assert result["category_failures"][expected_category]
+    if mutation == "rhs":
+        assert any("rhs_layout" in failure for failure in result["failures"])
+
+
+def test_common_layout_equivalence_tiny_response_sensitivity_is_not_floored(tmp_path):
+    root, summary, binding = _write_common_layout_fixture(tmp_path, "tiny_sensitivity")
+    result = _validate_common_layout_equivalence_result(
+        root,
+        summary,
+        binding,
+        expected_side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+    )
+    assert result["pass"] is False
+    assert result["failure_classification"] == "RESPONSE_SENSITIVITY_UNRESOLVED"
+    assert any(
+        pair["e_x"] > 1.0e-8 for pair in result["checks"]["computed_pairs"]
+    )
 
 
 @pytest.mark.parametrize(

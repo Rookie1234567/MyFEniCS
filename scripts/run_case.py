@@ -61,6 +61,11 @@ def _parser() -> argparse.ArgumentParser:
         choices=("sequential_component",),
         help="use the reviewed sequential representative-side setup schedule",
     )
+    parser.add_argument(
+        "--task041-comparison-mode",
+        choices=("common_layout_equivalence",),
+        help="opt into the reviewed common-layout representative comparison",
+    )
     return parser
 
 
@@ -106,12 +111,16 @@ def main(argv: list[str] | None = None) -> int:
                         else None
                     ),
                     side_setup_schedule=args.task041_side_setup_schedule,
+                    comparison_mode=args.task041_comparison_mode,
                 )
             except ValueError as exc:
                 raise InputError(str(exc)) from exc
-        elif args.task041_side_setup_schedule is not None:
+        elif (
+            args.task041_side_setup_schedule is not None
+            or args.task041_comparison_mode is not None
+        ):
             raise InputError(
-                "--task041-side-setup-schedule requires task041_schur_speed_v2"
+                "Task041 comparison options require task041_schur_speed_v2"
             )
         if args.task041_supervision_record is not None:
             if args.task041_performance_profile != "task041_schur_speed_v2":
@@ -159,6 +168,7 @@ def main(argv: list[str] | None = None) -> int:
             task041_supervision_record=args.task041_supervision_record,
             task041_rhs_probe_manifest=args.task041_rhs_probe,
             task041_side_setup_schedule=args.task041_side_setup_schedule,
+            task041_comparison_mode=args.task041_comparison_mode,
         )
         print(json.dumps(result, sort_keys=True, separators=(",", ":")))
         return 0 if result["result_classification"] == "worker_exit0" else 3

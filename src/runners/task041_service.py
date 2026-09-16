@@ -21,6 +21,7 @@ from typing import Any
 
 from benchmarks.task034_wsl_resources import resource_authority_sample
 from benchmarks.task041_balh_workflow import (
+    TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE,
     TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
     task041_schur_speed_v2_contract,
 )
@@ -126,6 +127,30 @@ def _side_setup_schedule_binding(
     ):
         raise Task041ServiceError(
             "public command side setup schedule does not match service config"
+        )
+    return configured
+
+
+def _comparison_mode_binding(
+    command: list[str], configured: str | None
+) -> str | None:
+    flag = "--task041-comparison-mode"
+    positions = [index for index, value in enumerate(command) if value == flag]
+    if configured not in {None, TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE}:
+        raise Task041ServiceError("unsupported Task041 comparison mode in service config")
+    if configured is None:
+        if positions:
+            raise Task041ServiceError(
+                "service config does not bind the public comparison mode"
+            )
+        return None
+    if (
+        len(positions) != 1
+        or positions[0] + 1 >= len(command)
+        or command[positions[0] + 1] != configured
+    ):
+        raise Task041ServiceError(
+            "public command comparison mode does not match service config"
         )
     return configured
 
@@ -251,10 +276,14 @@ def run_service_parent(config_path: str | Path) -> dict[str, Any]:
     side_setup_schedule = _side_setup_schedule_binding(
         list(config["public_command"]), config.get("side_setup_schedule")
     )
+    comparison_mode = _comparison_mode_binding(
+        list(config["public_command"]), config.get("comparison_mode")
+    )
     contract = task041_schur_speed_v2_contract(
         str(config["model_id"]),
         scope=config.get("scope"),
         side_setup_schedule=side_setup_schedule,
+        comparison_mode=comparison_mode,
     )
     phase_limits = dict(
         task041_balh_phase_limits_for_model(str(config["model_id"]), "consumer")
@@ -291,6 +320,7 @@ def run_service_parent(config_path: str | Path) -> dict[str, Any]:
         "profile_id": PROFILE,
         "scope": contract["scope"],
         "side_setup_schedule": contract["side_setup_schedule"],
+        "comparison_mode": contract["comparison_mode"],
         "representative_rhs_probe": probe_binding,
         "ledger_owner": LEDGER_OWNER,
         "service_identity": dict(identity),
@@ -532,10 +562,14 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
     side_setup_schedule = _side_setup_schedule_binding(
         list(config["public_command"]), config.get("side_setup_schedule")
     )
+    comparison_mode = _comparison_mode_binding(
+        list(config["public_command"]), config.get("comparison_mode")
+    )
     contract = task041_schur_speed_v2_contract(
         str(config["model_id"]),
         scope=config.get("scope"),
         side_setup_schedule=side_setup_schedule,
+        comparison_mode=comparison_mode,
     )
     probe_binding = _representative_rhs_probe_binding(
         list(config["public_command"]), contract["scope"]
@@ -611,6 +645,7 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
             "profile_id": PROFILE,
             "scope": contract["scope"],
             "side_setup_schedule": contract["side_setup_schedule"],
+            "comparison_mode": contract["comparison_mode"],
             "representative_rhs_probe": probe_binding,
             "ledger_owner": LEDGER_OWNER,
         }

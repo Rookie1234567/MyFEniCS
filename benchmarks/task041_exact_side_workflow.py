@@ -161,6 +161,243 @@ class Task041ModePrepError(RuntimeError):
     """A fail-closed identity or mode-preparation error."""
 
 
+def _task041_stream_array_metadata(name: str, value: Any) -> dict[str, Any]:
+    """Hash one already-exposed array without materialising a second copy."""
+
+    if not isinstance(value, np.ndarray):
+        raise TypeError(f"layout array {name} is not an exposed NumPy array")
+    array = value
+    if array.dtype.hasobject:
+        raise TypeError(f"layout array {name} has object dtype")
+    digest = hashlib.sha256()
+    if array.size == 0:
+        # NumPy marks many zero-length strided views contiguous even when a
+        # byte cast would be an invalid/meaningless path.  The empty payload
+        # is still a measured value with a stable digest.
+        hash_status = "measured_empty"
+    elif array.flags.c_contiguous:
+        view = memoryview(array).cast("B")
+        try:
+            for start in range(0, view.nbytes, 1 << 20):
+                digest.update(view[start : start + (1 << 20)])
+        finally:
+            view.release()
+        hash_status = "measured_contiguous"
+    else:
+        iterator = np.nditer(
+            array,
+            flags=["external_loop", "buffered"],
+            op_flags=["readonly"],
+            buffersize=8192,
+        )
+        for chunk in iterator:
+            digest.update(np.asarray(chunk).tobytes(order="C"))
+        hash_status = "measured_chunked_noncontiguous"
+    return {
+        "name": name,
+        "shape": [int(item) for item in array.shape],
+        "dtype": str(array.dtype),
+        "nbytes": int(array.size * array.dtype.itemsize),
+        "storage_nbytes": int(array.nbytes),
+        "sha256": digest.hexdigest(),
+        "hash_status": hash_status,
+        "storage": "rank_local_existing_array",
+    }
+
+
+def _task041_held_object_metadata(name: str, value: Any) -> dict[str, Any]:
+    """Record identity for one already-held Python/C++ wrapper."""
+
+    if value is None:
+        raise TypeError(f"required held object {name} is missing")
+    record = {
+        "name": name,
+        "kind": type(value).__name__,
+        "python_id": id(value),
+    }
+    cpp_object = getattr(value, "_cpp_object", None)
+    if cpp_object is not None:
+        record["cpp_object"] = {
+            "kind": type(cpp_object).__name__,
+            "python_id": id(cpp_object),
+        }
+    return record
+
+
+def _task041_held_petsc_identity(name: str, value: Any) -> dict[str, Any]:
+    """Record a real petsc4py handle without reading matrix contents."""
+
+    if value is None:
+        raise TypeError(f"required held PETSc object {name} is missing")
+    handle = value.handle
+    if handle is None:
+        raise TypeError(f"required PETSc handle {name} is unavailable")
+    return {
+        "name": name,
+        "kind": type(value).__name__,
+        "python_id": id(value),
+        "petsc_handle": int(handle),
+    }
+
+
+def _task041_communicator_identity(name: str, communicator: Any) -> dict[str, Any]:
+    """Read rank, size, and the actual MPI communicator handle."""
+
+    return {
+        "name": name,
+        "rank": int(communicator.Get_rank()),
+        "size": int(communicator.Get_size()),
+        "fortran_handle": int(communicator.py2f()),
+    }
+
+
+def _task041_mpc_layout_metadata(name: str, mpc: Any) -> dict[str, Any]:
+    """Hash the exposed MPC arrays and each owned master's link array."""
+
+    if mpc is None:
+        raise TypeError(f"required MPC {name} is missing")
+    coefficients, offsets = mpc.coefficients()
+    slaves = np.asarray(mpc.slaves)
+    links_digest = hashlib.sha256()
+    link_count = 0
+    for slave in slaves:
+        links = np.asarray(mpc.masters.links(int(slave)))
+        metadata = _task041_stream_array_metadata(
+            f"{name}.masters[{int(slave)}]", links
+        )
+        links_digest.update(
+            f"{int(slave)}:{metadata['shape']}:{metadata['dtype']}:{metadata['sha256']}".encode()
+        )
+        link_count += int(links.size)
+    return {
+        "name": name,
+        "slaves": _task041_stream_array_metadata(f"{name}.slaves", slaves),
+        "coefficients": _task041_stream_array_metadata(
+            f"{name}.coefficients", np.asarray(coefficients)
+        ),
+        "offsets": _task041_stream_array_metadata(
+            f"{name}.offsets", np.asarray(offsets)
+        ),
+        "masters_links_sha256": links_digest.hexdigest(),
+        "master_link_count": link_count,
+        "master_links_status": "measured_per_owned_slave",
+    }
+
+
+def _task041_transfer_records_metadata(transfer: Any) -> dict[str, Any]:
+    """Hash the existing rank-local transfer records without retaining arrays."""
+
+    digest = hashlib.sha256()
+    field_names = (
+        "fine_local",
+        "fine_global",
+        "coarse_local",
+        "coarse_global",
+        "authority",
+    )
+    for index, record in enumerate(transfer._records):
+        for name in field_names:
+            metadata = _task041_stream_array_metadata(
+                f"transfer.records[{index}].{name}", record[name]
+            )
+            digest.update(
+                f"{index}:{name}:{metadata['shape']}:{metadata['dtype']}:{metadata['sha256']}".encode()
+            )
+    return {
+        "record_count": len(transfer._records),
+        "fields": list(field_names),
+        "sha256": digest.hexdigest(),
+        "status": "measured_streaming_rank_local",
+    }
+
+
+def _task041_space_layout_metadata(name: str, space: Any) -> dict[str, Any]:
+    """Capture the actual FunctionSpace/cpp-dofmap and owned map bytes."""
+
+    if space is None:
+        raise TypeError(f"required function space {name} is missing")
+    cpp_space = space._cpp_object
+    cpp_dofmap = cpp_space.dofmap
+    dofmap_map = np.asarray(cpp_dofmap.map())
+    dofmap = space.dofmap
+    index_map = dofmap.index_map
+    return {
+        "space": {
+            **_task041_held_object_metadata(name, space),
+            "cpp_kind": type(cpp_space).__name__,
+            "cpp_python_id": id(cpp_space),
+        },
+        "dofmap": {
+            "backend_kind": type(cpp_dofmap).__name__,
+            "map": _task041_stream_array_metadata(
+                f"{name}.dofmap.list", dofmap_map
+            ),
+            "global_size": int(index_map.size_global),
+            "local_size": int(index_map.size_local),
+            "num_ghosts": int(index_map.num_ghosts),
+            "block_size": int(dofmap.index_map_bs),
+        },
+    }
+
+
+def _task041_common_failure_details(
+    exception: BaseException,
+    inverse: Any,
+) -> tuple[str, dict[str, Any]]:
+    """Keep the original C3 cause while assigning the common-mode class."""
+
+    from src.solvers.physical_balanced_coupling import BalancedConstraintRejected
+    from src.solvers.physical_balanced_side_inverse import (
+        P4PhysicalResidualGateError,
+    )
+
+    cause = {
+        "exception_type": type(exception).__name__,
+        "exception": str(exception),
+    }
+    if isinstance(exception, P4PhysicalResidualGateError):
+        return "NUMERICAL_GATE_FAIL", {
+            "cause": cause,
+            "p4_solve_audit": dict(exception.audit),
+        }
+    if isinstance(exception, BalancedConstraintRejected):
+        return "NUMERICAL_GATE_FAIL", {
+            "cause": cause,
+            "balance_audit": dict(exception.facts),
+        }
+    coupling_failure = inverse._last_coupling_failure
+    if coupling_failure is not None:
+        failure = dict(coupling_failure)
+        classification = failure.get("failure_classification")
+        if classification in {
+            "P4_PHYSICAL_RESIDUAL_GATE",
+            "BALANCED_CONSTRAINT_REJECTED",
+        }:
+            return "NUMERICAL_GATE_FAIL", {
+                "cause": cause,
+                "coupling_failure": failure,
+            }
+        return "PAIRING_SETUP_FAILURE", {
+            "cause": cause,
+            "coupling_failure": failure,
+        }
+    classification = getattr(exception, "failure_classification", None)
+    evidence = getattr(exception, "failure_evidence", None)
+    if classification in {
+        "PAIRING_SETUP_FAILURE",
+        "NUMERICAL_GATE_FAIL",
+        "ACTION_EQUIVALENCE_FAIL",
+        "RESPONSE_SENSITIVITY_UNRESOLVED",
+    }:
+        return classification, {
+            "cause": cause,
+            "failure_evidence": (
+                dict(evidence) if isinstance(evidence, Mapping) else {}
+            ),
+        }
+    return "PAIRING_SETUP_FAILURE", {"cause": cause}
+
+
 def _jsonable(value: Any) -> Any:
     if isinstance(value, Mapping):
         return {str(key): _jsonable(item) for key, item in value.items()}
@@ -1788,11 +2025,13 @@ def _run_task041_balh_candidate_setup(
     representative_rhs_contract: Mapping[str, Any] | None = None,
     side_setup_schedule: str | None = None,
     performance_profile: str | None = None,
+    comparison_mode: str | None = None,
 ) -> dict[str, Any]:
     """Build the finite-response BAL_H Schur and run the shared formal path."""
 
     from benchmarks.run_task037b_hybrid_iterative import collective_heap_cleanup
     from benchmarks.task041_balh_workflow import (
+        TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE,
         TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
     )
     from src.solvers.hybrid_fem_modal_augmented_direct import (
@@ -1805,8 +2044,9 @@ def _run_task041_balh_candidate_setup(
         create_hybrid_assembled_block_action,
     )
     from src.solvers.hybrid_fem_modal_schur_direct import modal_coupling_action
-    from src.solvers.physical_balanced_side_inverse import (
-        build_side_balanced_inverse,
+    from src.solvers.physical_balanced_side_inverse import build_side_balanced_inverse
+    from src.solvers.physical_balanced_trace_bridge import (
+        inject_active_residual_to_full_p6,
     )
 
     side_inverses: dict[str, Any] = {}
@@ -1821,6 +2061,11 @@ def _run_task041_balh_candidate_setup(
     representative_context: dict[str, Mapping[str, Any] | None] = {
         "bottom": None,
         "top": None,
+    }
+    layout_evidence_by_side: dict[str, dict[str, Any]] = {}
+    common_layout_rechecks: dict[str, list[dict[str, Any]]] = {
+        "bottom": [],
+        "top": [],
     }
     probe_active = {"bottom": True, "top": True}
     context = None
@@ -1843,6 +2088,16 @@ def _run_task041_balh_candidate_setup(
         "nested_iterative_ksp": 0,
         "owned_component": 0,
     }
+    common_first_rhs_by_side: dict[str, PETSc.Vec | None] = {
+        "bottom": None,
+        "top": None,
+    }
+    common_first_entry_by_side: dict[str, Mapping[str, Any] | None] = {
+        "bottom": None,
+        "top": None,
+    }
+    variant_bindings_by_side: dict[str, dict[str, Any]] = {}
+    layout_instance_ids: dict[str, str] = {}
     context_inventory_before: dict[str, Any] | None = None
     audit_path = Path(audit_path)
     audit_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1859,7 +2114,10 @@ def _run_task041_balh_candidate_setup(
             index = audit_indices[side]
             audit_indices[side] += 1
             recorded_audit = dict(audit)
-            if audit_phase[side] == "representative_rhs":
+            if audit_phase[side] in {
+                "representative_rhs",
+                "common_layout_equivalence",
+            }:
                 context = representative_context[side]
                 if context is not None:
                     recorded_audit.update(context)
@@ -2081,6 +2339,9 @@ def _run_task041_balh_candidate_setup(
             rtol=1.0e-2,
             audit_callback=audit_callback(side),
             detailed_timing=detailed_timing,
+            record_iteration_history=(
+                comparison_mode == TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE
+            ),
             performance_profile=performance_profile,
             lifecycle_callback=(
                 side_lifecycle_callback(side)
@@ -2090,6 +2351,14 @@ def _run_task041_balh_candidate_setup(
             ),
         )
         side_inverses[side] = inverse
+        if comparison_mode == TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE:
+            layout_instance_id = shared_layout_instance_id(side)
+            layout_evidence_by_side[side] = capture_layout(
+                side,
+                inverse,
+                write=True,
+                layout_instance_id=layout_instance_id,
+            )
         side_diagnostics_before[side] = dict(inverse.diagnostics)
         lifecycle_boundary = None
         if side_setup_schedule == TASK041_SEQUENTIAL_COMPONENT_SCHEDULE:
@@ -2147,6 +2416,888 @@ def _run_task041_balh_candidate_setup(
             return float(difference.norm())
         finally:
             difference.destroy()
+
+    def _raise_common_error(
+        message: str,
+        classification: str,
+        evidence: Mapping[str, Any] | None = None,
+    ) -> None:
+        error = Task041ModePrepError(message)
+        error.failure_classification = classification
+        if evidence is not None:
+            error.failure_evidence = dict(evidence)
+        raise error
+
+    def _common_failure_details(
+        exception: BaseException,
+        inverse: Any,
+    ) -> tuple[str, dict[str, Any]]:
+        return _task041_common_failure_details(exception, inverse)
+
+    def shared_layout_instance_id(side: str) -> str:
+        existing = layout_instance_ids.get(side)
+        if existing is not None:
+            return existing
+        candidate = None
+        if comm.rank == 0:
+            seed = (
+                f"{audit_path.resolve()}|{side}|"
+                "task041.common_layout_equivalence.layout.v1"
+            )
+            candidate = hashlib.sha256(seed.encode("utf-8")).hexdigest()
+        candidate = comm.bcast(candidate, root=0)
+        if not isinstance(candidate, str) or not candidate:
+            raise Task041ModePrepError(
+                f"common-layout {side} instance id was not broadcast"
+            )
+        layout_instance_ids[side] = candidate
+        return candidate
+
+    def variant_binding(side: str, transfer: Any) -> dict[str, Any]:
+        raw = transfer.audit.get("variant_bindings")
+        if not isinstance(raw, Mapping):
+            raise Task041ModePrepError(
+                f"common-layout {side} has no transfer variant binding"
+            )
+        source_module = raw.get("source_module")
+        if source_module != transfer.__class__.__module__:
+            raise Task041ModePrepError(
+                f"common-layout {side} variant source module is not live transfer"
+            )
+        variants = {
+            name: raw.get(name)
+            for name in ("legacy", "optimized")
+        }
+        if any(not isinstance(value, Mapping) for value in variants.values()):
+            raise Task041ModePrepError(
+                f"common-layout {side} variant function binding is incomplete"
+            )
+        source_sha = (
+            identity.get("source_sha")
+            if isinstance(identity, Mapping)
+            else None
+        )
+        if not isinstance(source_sha, str) or len(source_sha) != 40:
+            raise Task041ModePrepError(
+                f"common-layout {side} runtime source identity is missing"
+            )
+        return {
+            "source_module": str(source_module),
+            "source_sha": source_sha,
+            "variants": {
+                name: dict(value) for name, value in variants.items()
+            },
+        }
+
+    def capture_layout(
+        side: str,
+        inverse: Any,
+        *,
+        write: bool,
+        layout_instance_id: str | None = None,
+    ) -> dict[str, Any]:
+        local: dict[str, Any] | None = None
+        local_error: str | None = None
+
+        try:
+            transfer = inverse._owner_transfer
+            if (
+                comparison_mode == TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE
+                and side not in variant_bindings_by_side
+            ):
+                variant_bindings_by_side[side] = variant_binding(side, transfer)
+            condensed = inverse._condensed
+            side_system = getattr(setup, side)
+            operator = inverse.operator
+            diagnostics = inverse.diagnostics
+            fine_space = transfer.fine_space
+            coarse_space = transfer.coarse_space
+            side_space = side_system.V
+            mesh = fine_space.mesh
+            topology = mesh.topology
+            topology.create_entity_permutations()
+            fine_index_map = fine_space.dofmap.index_map
+            coarse_index_map = coarse_space.dofmap.index_map
+            outer_communicator = {
+                "rank": int(comm.rank),
+                "size": int(comm.size),
+                "fortran_handle": int(comm.py2f()),
+            }
+            transfer_comm = transfer.comm
+            side_operator_comm = operator.getComm().tompi4py()
+            inverse_comm = inverse._comm
+
+            communicators = {
+                "outer": outer_communicator,
+                "transfer": _task041_communicator_identity(
+                    "transfer.comm", transfer_comm
+                ),
+                "side_operator": _task041_communicator_identity(
+                    "side.A.getComm().tompi4py()", side_operator_comm
+                ),
+                "inverse": _task041_communicator_identity(
+                    "inverse._comm", inverse_comm
+                ),
+                "compare": {
+                    "outer_transfer": int(
+                        MPI.Comm.Compare(comm, transfer_comm)
+                    ),
+                    "transfer_side_operator": int(
+                        MPI.Comm.Compare(transfer_comm, side_operator_comm)
+                    ),
+                    "side_operator_inverse": int(
+                        MPI.Comm.Compare(side_operator_comm, inverse_comm)
+                    ),
+                },
+            }
+            fine_ownership = [
+                list(map(int, item)) for item in transfer.fine_ranges
+            ]
+            coarse_ownership = [
+                list(map(int, item)) for item in transfer.coarse_ranges
+            ]
+            spaces = {
+                "side_p6": _task041_space_layout_metadata(
+                    "side_system.V", side_space
+                ),
+                "transfer_fine_p6": _task041_space_layout_metadata(
+                    "transfer.fine_space", fine_space
+                ),
+                "transfer_coarse_p4": _task041_space_layout_metadata(
+                    "transfer.coarse_space", coarse_space
+                ),
+            }
+            p4 = inverse._p4_factor
+            p4_factor = p4.factor
+            factor_ksp = p4_factor.ksp
+            p4_factor_ksp = (
+                _task041_held_petsc_identity("p4.factor.ksp", factor_ksp)
+                if factor_ksp is not None
+                else {
+                    "name": "p4.factor.ksp",
+                    "kind": "PETSc.KSP",
+                    "live": False,
+                    "handle": None,
+                    "reason": "factor_only_storage",
+                }
+            )
+            factor_matrix = p4_factor.factor_matrix
+            local = {
+                "rank": int(comm.rank),
+                "layout_instance_id": (
+                    layout_instance_id or layout_instance_ids.get(side)
+                ),
+                "ownership_range": [
+                    int(value) for value in operator.getOwnershipRange()
+                ],
+                "operator_global_shape": [
+                    int(value) for value in operator.getSize()
+                ],
+                "operator_identity": _task041_held_petsc_identity(
+                    "side.A", operator
+                ),
+                "communicator": outer_communicator,
+                "communicators": communicators,
+                "ownership": {
+                    "operator": [
+                        int(value) for value in operator.getOwnershipRange()
+                    ],
+                    "fine": fine_ownership,
+                    "coarse": coarse_ownership,
+                    "side_A_global_size": int(operator.getSize()[0]),
+                },
+                "held_objects": {
+                    "side_A": _task041_held_petsc_identity("side.A", operator),
+                    "side_inverse": _task041_held_object_metadata(
+                        "side_inverse", inverse
+                    ),
+                    "full_action": _task041_held_object_metadata(
+                        "adapter.full_action", inverse._full_action
+                    ),
+                    "p4_physical_action": _task041_held_object_metadata(
+                        "p4.physical_action", p4.physical_action
+                    ),
+                    "p4_factor": _task041_held_object_metadata("p4_factor", p4),
+                    "research_factor": _task041_held_object_metadata(
+                        "p4.factor", p4_factor
+                    ),
+                    "p4_matrix": _task041_held_petsc_identity(
+                        "p4.matrix", p4.matrix
+                    ),
+                    "p4_factor_ksp": p4_factor_ksp,
+                    "p4_factor_matrix": (
+                        _task041_held_petsc_identity(
+                            "p4.factor.factor_matrix", factor_matrix
+                        )
+                        if factor_matrix is not None
+                        else {
+                            "name": "p4.factor.factor_matrix",
+                            "kind": "PETSc.Mat",
+                            "live": False,
+                            "handle": None,
+                        }
+                    ),
+                    "nested_ksp": _task041_held_petsc_identity(
+                        "adapter.nested_ksp", inverse._ksp
+                    ),
+                    "h6": _task041_held_object_metadata(
+                        "adapter.h6", inverse._h6
+                    ),
+                    "h6_matrix": _task041_held_petsc_identity(
+                        "adapter.h6.matrix", inverse._h6.matrix
+                    ),
+                    "mesh": _task041_held_object_metadata("mesh", mesh),
+                    "side_system": _task041_held_object_metadata(
+                        "side_system", side_system
+                    ),
+                },
+                "live_diagnostics": {
+                    "side_inverse_live": int(not diagnostics["destroyed"]),
+                    "side_inverse_destroyed": bool(diagnostics["destroyed"]),
+                    "p4_factor_count": int(diagnostics["p4_factor_count"]),
+                    "nested_iterative_ksp_count": int(
+                        diagnostics["nested_iterative_ksp_count"]
+                    ),
+                    "p4_factor_created_count": int(
+                        diagnostics["p4_factor_created_count"]
+                    ),
+                    "nested_ksp_created_count": int(
+                        diagnostics["nested_ksp_created_count"]
+                    ),
+                },
+                "transfer_identity": {
+                    "schema": transfer.audit["schema"],
+                    "fine_global_rows": transfer.audit["fine_global_rows"],
+                    "coarse_global_rows": transfer.audit["coarse_global_rows"],
+                    "fine_owned_cells": transfer.audit["fine_owned_cells"],
+                    "owner_row_authority": transfer.audit["owner_row_authority"],
+                    "fine_space_degree": int(
+                        fine_space.element.basix_element.degree
+                    ),
+                    "coarse_space_degree": int(
+                        coarse_space.element.basix_element.degree
+                    ),
+                },
+                "variant_binding": variant_bindings_by_side.get(side),
+                "dofmaps": {
+                    "fine": {
+                        "global_size": int(fine_index_map.size_global),
+                        "local_size": int(fine_index_map.size_local),
+                        "num_ghosts": int(fine_index_map.num_ghosts),
+                        "block_size": int(fine_space.dofmap.index_map_bs),
+                    },
+                    "coarse": {
+                        "global_size": int(coarse_index_map.size_global),
+                        "local_size": int(coarse_index_map.size_local),
+                        "num_ghosts": int(coarse_index_map.num_ghosts),
+                        "block_size": int(coarse_space.dofmap.index_map_bs),
+                    },
+                    "spaces": spaces,
+                    "cell_records": _task041_transfer_records_metadata(transfer),
+                },
+                "mesh_layout": {
+                    "geometry": _task041_stream_array_metadata(
+                        "mesh.geometry.x", np.asarray(mesh.geometry.x)
+                    ),
+                    "geometry_dofmap": _task041_stream_array_metadata(
+                        "mesh.geometry.dofmap", np.asarray(mesh.geometry.dofmap)
+                    ),
+                    "cell_permutation_info": _task041_stream_array_metadata(
+                        "mesh.topology.cell_permutation_info",
+                        np.asarray(topology.get_cell_permutation_info()),
+                    ),
+                    "topology_dimension": int(topology.dim),
+                },
+                "mpc_layout": {
+                    "objects": {
+                        "fine": _task041_held_object_metadata(
+                            "fine_floquet.mpc", transfer.fine_floquet.mpc
+                        ),
+                        "coarse": _task041_held_object_metadata(
+                            "coarse_floquet.mpc", transfer.coarse_floquet.mpc
+                        ),
+                    },
+                    "communicator_source": (
+                        "MPC communicator is not directly exposed; use the captured "
+                        "fine/coarse space and mesh association with transfer.comm"
+                    ),
+                    "fine": _task041_mpc_layout_metadata(
+                        "fine_floquet.mpc", transfer.fine_floquet.mpc
+                    ),
+                    "coarse": _task041_mpc_layout_metadata(
+                        "coarse_floquet.mpc", transfer.coarse_floquet.mpc
+                    ),
+                },
+                "layout_arrays": [
+                    _task041_stream_array_metadata(
+                        "fine_owned_slaves", transfer._fine_slaves
+                    ),
+                    _task041_stream_array_metadata(
+                        "coarse_owned_slaves", transfer._coarse_slaves
+                    ),
+                    _task041_stream_array_metadata(
+                        "owned_active_original_dofs",
+                        condensed.trace_constraints.owned_active_original_dofs,
+                    ),
+                    _task041_stream_array_metadata(
+                        "coarse_mpc_slaves", transfer._coarse_mpc_slaves
+                    ),
+                    _task041_stream_array_metadata(
+                        "dual_flat_slaves", transfer._dual_flat_slaves
+                    ),
+                    _task041_stream_array_metadata(
+                        "dual_flat_masters", transfer._dual_flat_masters
+                    ),
+                    _task041_stream_array_metadata(
+                        "dual_conjugated_coefficients",
+                        transfer._dual_conjugated_coefficients,
+                    ),
+                ],
+                "transfer_communicator": communicators["transfer"],
+            }
+        except Exception as exc:  # noqa: BLE001 - synchronize all rank evidence
+            local_error = f"{type(exc).__name__}: {exc}"
+        gathered = comm.allgather({"local": local, "error": local_error})
+        errors = [
+            f"rank_{rank}:{row['error']}"
+            for rank, row in enumerate(gathered)
+            if row.get("error") is not None
+        ]
+        if errors:
+            failure = {"side": side, "errors": errors}
+            failure_evidence.setdefault("common_layout_equivalence", {})[
+                side
+            ] = failure
+            _raise_common_error(
+                f"common-layout {side} evidence is incomplete",
+                "PAIRING_SETUP_FAILURE",
+                failure,
+            )
+        by_rank = sorted(
+            [row["local"] for row in gathered], key=lambda row: int(row["rank"])
+        )
+        canonical = json.dumps(
+            _jsonable(by_rank), sort_keys=True, separators=(",", ":")
+        ).encode("utf-8")
+        payload = {
+            "schema": "task041.common_layout_equivalence.layout.v1",
+            "side": side,
+            "comm_size": int(comm.size),
+            "layout_instance_id": (
+                layout_instance_id or layout_instance_ids.get(side)
+            ),
+            "layout_identity_sha256": hashlib.sha256(canonical).hexdigest(),
+            "by_rank": by_rank,
+            "ownership_semantics": "rank-local existing PETSc ownership; no full-vector gather",
+        }
+        if write:
+            layout_root = audit_path.with_name("common_layout_equivalence")
+            if comm.rank == 0:
+                layout_root.mkdir(parents=True, exist_ok=True)
+            comm.Barrier()
+            _write_rank0_json(
+                layout_root / f"{side}_layout.json",
+                payload,
+                comm,
+            )
+        return payload
+
+    def common_vector_inventory(
+        vectors: Mapping[str, PETSc.Vec],
+    ) -> list[dict[str, Any]]:
+        inventory = []
+        for name, vector in vectors.items():
+            values = np.asarray(vector.getArray(readonly=True))
+            inventory.append(
+                {
+                    "name": name,
+                    "owned_entries": int(values.size),
+                    "dtype": str(values.dtype),
+                    "payload_bytes": int(values.size * values.dtype.itemsize),
+                    "payload_status": "derived",
+                    "scope": "rank_local_PETSc_Vec_owned_view",
+                    "native_workspace_bytes": "unknown",
+                }
+            )
+        return inventory
+
+    def common_stage_marker(
+        event: str,
+        entry_value: Mapping[str, Any],
+        *,
+        group: str,
+        variant: str | None = None,
+        vectors: Mapping[str, PETSc.Vec] | None = None,
+        **detail: Any,
+    ) -> None:
+        marker_callback(
+            "system_setup_stage",
+            {
+                "side": str(entry_value["side"]),
+                "substage": "common_layout_equivalence",
+                "group": group,
+                "event": event,
+                "ordinal": int(entry_value["ordinal"]),
+                "audit_index": int(entry_value["audit_index"]),
+                "formal_column": int(entry_value["formal_column"]),
+                "variant": variant,
+                "clock": "CLOCK_MONOTONIC",
+                "workflow_started_monotonic_seconds": (
+                    workflow_started_monotonic
+                ),
+                "payload_inventory": common_vector_inventory(vectors or {}),
+                **detail,
+            },
+        )
+
+    def common_pc_action_check(
+        side: str,
+        inverse: Any,
+        rhs: PETSc.Vec,
+        entry: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        owner = inverse._owner_transfer
+        p4_source: PETSc.Vec | None = None
+        full_rhs: PETSc.Vec | None = None
+
+        def owned_sha(name: str, vector: PETSc.Vec) -> str:
+            array = np.asarray(vector.getArray(readonly=True))
+            return str(_task041_stream_array_metadata(name, array)["sha256"])
+
+        def input_hashes(
+            stage: str, vectors: Mapping[str, PETSc.Vec]
+        ) -> dict[str, str]:
+            return {
+                name: owned_sha(f"{side}.{stage}.{name}", vector)
+                for name, vector in vectors.items()
+            }
+
+        def persist_c3_failure(
+            entry_value: Mapping[str, Any],
+            classification: str,
+            evidence: Mapping[str, Any],
+        ) -> None:
+            payload = {
+                "schema": "task041.common_layout_equivalence.c3_failure.v1",
+                "side": side,
+                "entry": {
+                    "ordinal": int(entry_value["ordinal"]),
+                    "audit_index": int(entry_value["audit_index"]),
+                    "formal_column": int(entry_value["formal_column"]),
+                },
+                "failure_classification": classification,
+                "evidence": _jsonable(dict(evidence)),
+            }
+            failure_evidence.setdefault(
+                "common_layout_equivalence", {}
+            ).setdefault("c3", []).append(payload)
+            if comm.rank == 0:
+                with audit_path.with_name(
+                    "common_layout_equivalence_c3_failures.jsonl"
+                ).open("a", encoding="utf-8") as stream:
+                    stream.write(
+                        json.dumps(_jsonable(payload), sort_keys=True) + "\n"
+                    )
+                    stream.flush()
+            comm.Barrier()
+
+        def last_action_facts() -> dict[str, Any]:
+            return {
+                "coupling_last_apply_facts": _jsonable(
+                    dict(inverse._coupling.last_apply_facts)
+                ),
+                "p4_last_solve": _jsonable(
+                    dict(inverse._p4_factor.diagnostics["last_solve"])
+                ),
+                "scope": "last_C3_action_only",
+            }
+
+        def apply_pc() -> PETSc.Vec:
+            target = inverse.operator.createVecLeft()
+            try:
+                inverse._apply_balanced_pc(rhs, target)
+                return target
+            except BaseException:
+                target.destroy()
+                raise
+
+        def apply_variant(
+            group: str,
+            variant: str,
+            apply_action: Callable[[], PETSc.Vec],
+            inputs: Mapping[str, PETSc.Vec],
+        ) -> tuple[
+            PETSc.Vec,
+            dict[str, str],
+            dict[str, str],
+            bool,
+            dict[str, Any] | None,
+        ]:
+            before = input_hashes(f"{group}.{variant}.before", inputs)
+            common_stage_marker(
+                "variant_apply_begin",
+                entry,
+                group=f"C3_{group}",
+                variant=variant,
+                vectors=inputs,
+            )
+            output: PETSc.Vec | None = None
+            local_error: dict[str, Any] | None = None
+            try:
+                with inverse.variant_context(variant):
+                    output = apply_action()
+            except Exception as exc:  # noqa: BLE001 - preserve rank-local apply cause
+                classification, failure_details = _common_failure_details(
+                    exc, inverse
+                )
+                local_error = {
+                    "type": type(exc).__name__,
+                    "message": str(exc),
+                    "classification": classification,
+                    **failure_details,
+                }
+            any_failed = bool(
+                comm.allreduce(local_error is not None, op=MPI.LOR)
+            )
+            errors_by_rank = comm.allgather(local_error)
+            if any_failed:
+                classification = (
+                    "NUMERICAL_GATE_FAIL"
+                    if any(
+                        isinstance(error, Mapping)
+                        and error.get("classification") == "NUMERICAL_GATE_FAIL"
+                        for error in errors_by_rank
+                    )
+                    else "PAIRING_SETUP_FAILURE"
+                )
+                evidence = {
+                    "group": group,
+                    "variant": variant,
+                    "errors_by_rank": errors_by_rank,
+                    "input_before": before,
+                }
+                if output is not None:
+                    output.destroy()
+                common_stage_marker(
+                    "variant_apply_end",
+                    entry,
+                    group=f"C3_{group}",
+                    variant=variant,
+                    vectors=inputs,
+                    status="failed",
+                    failure_classification=classification,
+                )
+                persist_c3_failure(entry, classification, evidence)
+                _raise_common_error(
+                    f"C3 {side} {group}/{variant} apply failed",
+                    classification,
+                    evidence,
+                )
+            action_facts: dict[str, Any] | None = None
+            facts_error: dict[str, Any] | None = None
+            if group == "PC":
+                try:
+                    action_facts = last_action_facts()
+                except Exception as exc:  # noqa: BLE001 - preserve live getter cause
+                    facts_error = {
+                        "type": type(exc).__name__,
+                        "message": str(exc),
+                        "classification": "PAIRING_SETUP_FAILURE",
+                    }
+            facts_failed = bool(
+                comm.allreduce(facts_error is not None, op=MPI.LOR)
+            )
+            if facts_failed:
+                facts_by_rank = comm.allgather(facts_error)
+                evidence = {
+                    "group": group,
+                    "variant": variant,
+                    "errors_by_rank": facts_by_rank,
+                    "input_before": before,
+                }
+                if output is not None:
+                    output.destroy()
+                common_stage_marker(
+                    "variant_apply_end",
+                    entry,
+                    group=f"C3_{group}",
+                    variant=variant,
+                    vectors=inputs,
+                    status="failed",
+                    failure_classification="PAIRING_SETUP_FAILURE",
+                )
+                persist_c3_failure(entry, "PAIRING_SETUP_FAILURE", evidence)
+                _raise_common_error(
+                    f"C3 {side} {group}/{variant} facts are incomplete",
+                    "PAIRING_SETUP_FAILURE",
+                    evidence,
+                )
+            if output is None:
+                _raise_common_error(
+                    f"C3 {side} {group}/{variant} returned no output",
+                    "PAIRING_SETUP_FAILURE",
+                )
+            after = input_hashes(f"{group}.{variant}.after", inputs)
+            unchanged = bool(
+                comm.allreduce(
+                    all(before[key] == after[key] for key in before),
+                    op=MPI.LAND,
+                )
+            )
+            common_stage_marker(
+                "variant_apply_end",
+                entry,
+                group=f"C3_{group}",
+                variant=variant,
+                vectors={**inputs, "output": output},
+                status="measured" if unchanged else "input_changed",
+                input_unchanged=unchanged,
+            )
+            if not unchanged:
+                evidence = {
+                    "group": group,
+                    "variant": variant,
+                    "input_before": before,
+                    "input_after": after,
+                    "input_unchanged": unchanged,
+                    "audit": dict(inverse.diagnostics.get("last_apply", {})),
+                }
+                output.destroy()
+                persist_c3_failure(entry, "PAIRING_SETUP_FAILURE", evidence)
+                _raise_common_error(
+                    f"C3 {side} {group}/{variant} changed its input",
+                    "PAIRING_SETUP_FAILURE",
+                    evidence,
+                )
+            return output, before, after, unchanged, action_facts
+
+        def action_pair(
+            name: str,
+            apply_action: Callable[[], PETSc.Vec],
+            threshold: float,
+            inputs: Mapping[str, PETSc.Vec],
+        ) -> dict[str, Any]:
+            legacy_output: PETSc.Vec | None = None
+            optimized_output: PETSc.Vec | None = None
+            input_records: dict[str, dict[str, Any]] = {}
+            group_status = "failed"
+            common_stage_marker(
+                "begin",
+                entry,
+                group=f"C3_{name}",
+                vectors=inputs,
+            )
+            try:
+                (
+                    legacy_output,
+                    legacy_before,
+                    legacy_after,
+                    legacy_unchanged,
+                    legacy_facts,
+                ) = apply_variant(
+                    name, "legacy", apply_action, inputs
+                )
+                input_records["legacy"] = {
+                    "before": legacy_before,
+                    "after": legacy_after,
+                    "unchanged": legacy_unchanged,
+                    **(
+                        {"last_action_facts": legacy_facts}
+                        if legacy_facts is not None
+                        else {}
+                    ),
+                }
+                (
+                    optimized_output,
+                    optimized_before,
+                    optimized_after,
+                    optimized_unchanged,
+                    optimized_facts,
+                ) = apply_variant(
+                    name, "optimized", apply_action, inputs
+                )
+                input_records["optimized"] = {
+                    "before": optimized_before,
+                    "after": optimized_after,
+                    "unchanged": optimized_unchanged,
+                    **(
+                        {"last_action_facts": optimized_facts}
+                        if optimized_facts is not None
+                        else {}
+                    ),
+                }
+                difference = vector_difference_norm(
+                    legacy_output, optimized_output
+                )
+                legacy_norm = float(legacy_output.norm())
+                optimized_norm = float(optimized_output.norm())
+                denominator = max(legacy_norm, optimized_norm)
+                relative = (
+                    difference / denominator
+                    if denominator > 0.0
+                    else (0.0 if difference == 0.0 else None)
+                )
+                local_finite = bool(
+                    np.isfinite(difference)
+                    and np.isfinite(legacy_norm)
+                    and np.isfinite(optimized_norm)
+                    and np.all(
+                        np.isfinite(legacy_output.getArray(readonly=True))
+                    )
+                    and np.all(
+                        np.isfinite(optimized_output.getArray(readonly=True))
+                    )
+                )
+                finite = bool(comm.allreduce(local_finite, op=MPI.LAND))
+                result = {
+                    "name": name,
+                    "absolute": float(difference),
+                    "relative": relative,
+                    "legacy_norm": legacy_norm,
+                    "optimized_norm": optimized_norm,
+                    "threshold": threshold,
+                    "input_hashes": input_records,
+                    "input_unchanged": bool(
+                        all(
+                            record["unchanged"]
+                            for record in input_records.values()
+                        )
+                    ),
+                    "finite": finite,
+                }
+                local_pass = bool(
+                    finite
+                    and relative is not None
+                    and relative <= threshold
+                    and all(
+                        record["unchanged"]
+                        for record in input_records.values()
+                    )
+                )
+                pass_value = bool(comm.allreduce(local_pass, op=MPI.LAND))
+                result["pass"] = pass_value
+                if not pass_value:
+                    classification = (
+                        "NUMERICAL_GATE_FAIL"
+                        if not finite
+                        else "ACTION_EQUIVALENCE_FAIL"
+                    )
+                    evidence = {
+                        "group": name,
+                        "result": result,
+                        "input_records": input_records,
+                    }
+                    persist_c3_failure(entry, classification, evidence)
+                    _raise_common_error(
+                        f"C3 {side} {name} action comparison failed",
+                        classification,
+                        evidence,
+                    )
+                group_status = "passed"
+                return result
+            finally:
+                if optimized_output is not None:
+                    optimized_output.destroy()
+                if legacy_output is not None:
+                    legacy_output.destroy()
+                common_stage_marker(
+                    "end",
+                    entry,
+                    group=f"C3_{name}",
+                    status=group_status,
+                    vectors={},
+                )
+
+        try:
+            p4_source = inverse._p4_factor.physical_action.matrix.createVecRight()
+            first, last = (
+                int(value) for value in p4_source.getOwnershipRange()
+            )
+            ids = np.arange(first, last, dtype=np.int64)
+            p4_source.getArray()[:] = (
+                0.125
+                + 0.00390625 * (ids % 17)
+                + 1j * (0.0625 + 0.001953125 * (ids % 19))
+            ).astype(PETSc.ScalarType)
+            p4_source.getArray()[owner._coarse_slaves] = 0.0
+            del ids
+            p4_source.assemble()
+            p_result = action_pair(
+                "P",
+                lambda: owner.apply_primal(p4_source),
+                1.0e-11,
+                {"rhs": rhs, "p4_source": p4_source},
+            )
+            p4_source.destroy()
+            p4_source = None
+            full_rhs = inverse._full_action.matrix.createVecRight()
+            inject_active_residual_to_full_p6(
+                inverse._condensed, rhs, full_rhs
+            )
+            ph_result = action_pair(
+                "PH",
+                lambda: owner.apply_adjoint(full_rhs),
+                1.0e-11,
+                {"rhs": rhs, "full_rhs": full_rhs},
+            )
+            full_rhs.destroy()
+            full_rhs = None
+            pc_result = action_pair(
+                "PC",
+                apply_pc,
+                1.0e-8,
+                {"rhs": rhs},
+            )
+            input_unchanged = bool(
+                comm.allreduce(
+                    bool(
+                        p_result["input_unchanged"]
+                        and ph_result["input_unchanged"]
+                        and pc_result["input_unchanged"]
+                    ),
+                    op=MPI.LAND,
+                )
+            )
+            finite = bool(
+                comm.allreduce(
+                    np.all(np.isfinite(rhs.getArray(readonly=True))),
+                    op=MPI.LAND,
+                )
+            )
+            pass_value = bool(
+                finite
+                and input_unchanged
+                and p_result["pass"] is True
+                and ph_result["pass"] is True
+                and pc_result["pass"] is True
+            )
+            return {
+                "side": side,
+                "entry": {
+                    "ordinal": int(entry["ordinal"]),
+                    "audit_index": int(entry["audit_index"]),
+                    "formal_column": int(entry["formal_column"]),
+                },
+                "rhs_source": "first_real_modal_rhs",
+                "variants": ["legacy", "optimized"],
+                "P": p_result,
+                "PH": ph_result,
+                "PC": pc_result,
+                "input_hashes": {
+                    "P": p_result["input_hashes"],
+                    "PH": ph_result["input_hashes"],
+                    "PC": pc_result["input_hashes"],
+                },
+                "rhs_unchanged": input_unchanged,
+                "finite": finite,
+                "pass": pass_value,
+                "solve": "direct_P_PH_and_BAL_H_PC_actions_no_KSPSolve",
+            }
+        finally:
+            if full_rhs is not None:
+                full_rhs.destroy()
+            if p4_source is not None:
+                p4_source.destroy()
 
     def probe_side(side: str, inverse: Any, system: Any) -> None:
         mode_count = int(setup.coupling.mode_count_per_direction)
@@ -2443,6 +3594,11 @@ def _run_task041_balh_candidate_setup(
         global_source_before = None
         global_action_before = None
         global_rhs_before = None
+        for side, rhs in common_first_rhs_by_side.items():
+            if rhs is not None:
+                rhs.destroy()
+                common_first_rhs_by_side[side] = None
+            common_first_entry_by_side[side] = None
         for side, inverse in side_inverses.items():
             inverse.destroy()
             side_diagnostics_after[side] = dict(inverse.diagnostics)
@@ -2524,7 +3680,30 @@ def _run_task041_balh_candidate_setup(
         }
 
     def admit_side(side: str) -> Mapping[str, Any]:
-        audit = side_inverses[side].admission_audit(identity=identity)
+        inverse = side_inverses[side]
+        if comparison_mode == TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE:
+            first_rhs = common_first_rhs_by_side[side]
+            first_entry = common_first_entry_by_side[side]
+            if first_rhs is None or first_entry is None:
+                raise Task041ModePrepError(
+                    f"common-layout {side} first real RHS is missing"
+                )
+            audit = dict(inverse.admission_audit(identity=identity))
+            pc_audit = common_pc_action_check(
+                side, inverse, first_rhs, first_entry
+            )
+            audit = {
+                "schema": "task041.common_layout_equivalence.admission.v1",
+                "side": side,
+                "admission": audit,
+                "balanced_pc": pc_audit,
+                "pass": bool(
+                    audit.get("pass") is True
+                    and pc_audit.get("pass") is True
+                ),
+            }
+        else:
+            audit = inverse.admission_audit(identity=identity)
         admission_audits[side] = audit
         partial_payload = {
             "schema": "task041.h1g2b2b.candidate_side_admission.v1",
@@ -2688,7 +3867,11 @@ def _run_task041_balh_candidate_setup(
         return record
 
     def representative_apply_gate(
-        entry: Mapping[str, Any], audit: Mapping[str, Any]
+        entry: Mapping[str, Any],
+        audit: Mapping[str, Any],
+        *,
+        evidence_name: str = "representative_rhs",
+        failure_classification_prefix: str = "REPRESENTATIVE_RHS",
     ) -> None:
         failures: list[str] = []
         reason = audit.get("reason")
@@ -2806,11 +3989,6 @@ def _run_task041_balh_candidate_setup(
                 "entry": dict(entry),
                 "audit": _jsonable(dict(audit)),
                 "failures": failures,
-                "failure_classification": (
-                    "REPRESENTATIVE_RHS_NUMERICAL_GATE"
-                    if numerical_gate_failure
-                    else "REPRESENTATIVE_RHS_CONTRACT_FAILURE"
-                ),
                 "key": {
                     "ordinal": int(entry["ordinal"]),
                     "side": str(entry["side"]),
@@ -2833,13 +4011,29 @@ def _run_task041_balh_candidate_setup(
                     "recomputed_relative_residual": 1.0e-2,
                 },
             }
-            failure_evidence.setdefault("representative_rhs", {})[
+            if failure_classification_prefix == "COMMON_LAYOUT_EQUIVALENCE":
+                classification = (
+                    "NUMERICAL_GATE_FAIL"
+                    if numerical_gate_failure
+                    else "PAIRING_SETUP_FAILURE"
+                )
+            else:
+                classification = (
+                    f"{failure_classification_prefix}_NUMERICAL_GATE"
+                    if numerical_gate_failure
+                    else f"{failure_classification_prefix}_CONTRACT_FAILURE"
+                )
+            evidence["failure_classification"] = classification
+            failure_evidence.setdefault(evidence_name, {})[
                 str(entry["ordinal"])
             ] = evidence
-            raise Task041ModePrepError(
+            error = Task041ModePrepError(
                 "representative RHS apply gate failed for "
                 f"ordinal {entry['ordinal']}: {', '.join(failures)}"
             )
+            error.failure_classification = classification
+            error.failure_evidence = dict(evidence)
+            raise error
 
     def run_representative_rhs_probe(
         entries_override: Sequence[Mapping[str, Any]] | None = None,
@@ -3027,12 +4221,952 @@ def _run_task041_balh_candidate_setup(
             "full_formal": "not_run",
         }
 
+    def write_common_variant_packet(
+        entry: Mapping[str, Any],
+        variant: str,
+        response: PETSc.Vec,
+        rhs: PETSc.Vec,
+        apply_audit: Mapping[str, Any],
+        layout_sha: str,
+        layout_epoch: str,
+        rhs_before_sha: str,
+        rhs_after_sha: str,
+        rhs_unchanged: bool,
+        *,
+        diagnostic_only: bool = False,
+    ) -> dict[str, Any]:
+        side = str(entry["side"])
+        ordinal = int(entry["ordinal"])
+        branch = str(entry["branch"])
+        ownership = tuple(int(value) for value in response.getOwnershipRange())
+        response_array = np.asarray(response.getArray(readonly=True))
+        rhs_array = np.asarray(rhs.getArray(readonly=True))
+        response_view = memoryview(response_array).cast("B")
+        rhs_view = memoryview(rhs_array).cast("B")
+        try:
+            response_sha256 = hashlib.sha256(response_view).hexdigest()
+            rhs_sha256 = hashlib.sha256(rhs_view).hexdigest()
+        finally:
+            rhs_view.release()
+            response_view.release()
+        shard_directory = (
+            audit_path.parent
+            / "common_layout_equivalence"
+            / f"{ordinal:02d}_{side}_{branch}"
+            / variant
+        )
+        packet = write_packet(
+            shard_directory,
+            response_array,
+            rhs_array,
+            identity={
+                "schema": "task041.common_layout_equivalence.response_identity.v1",
+                "scope": "representative_rhs",
+                "comparison_mode": "common_layout_equivalence",
+                "pairing_scope": "same_live_layout",
+                "run_layout_epoch": layout_epoch,
+                "layout_instance_id": layout_epoch,
+                "source_sha": identity["source_sha"],
+                "probe_manifest_sha256": representative_rhs_contract["sha256"],
+                "packet_manifest_sha256": representative_rhs_contract[
+                    "packet_binding"
+                ]["packet_manifest_sha256"],
+                "layout_identity_sha256": layout_sha,
+                "ordinal": ordinal,
+                "side": side,
+                "formal_column": int(entry["formal_column"]),
+                "branch_ordinal": int(entry["branch_ordinal"]),
+                "variant": variant,
+            },
+            metadata={
+                "scope": "representative_rhs",
+                "comparison_mode": "common_layout_equivalence",
+                "pairing_scope": "same_live_layout",
+                "run_layout_epoch": layout_epoch,
+                "layout_instance_id": layout_epoch,
+                "entry": dict(entry),
+                "variant": variant,
+                "source_function": (
+                    "src/solvers/hybrid_fem_modal_schur_direct.py:"
+                    "modal_coupling_action"
+                ),
+                "rhs_array_name": "rhs",
+                "response_array_name": "solution",
+                "dtype": str(response_array.dtype),
+                "owned_rhs_sha256": rhs_sha256,
+                "owned_response_sha256": response_sha256,
+                "layout_identity_sha256": layout_sha,
+                "apply_audit": _jsonable(dict(apply_audit)),
+                "diagnostic_only": bool(diagnostic_only),
+            },
+            ownership_range=ownership,
+            comm=comm,
+            allow_nonfinite_diagnostic=diagnostic_only,
+        )
+        packet["diagnostic_only"] = bool(diagnostic_only)
+        response_manifest_path = Path(packet["manifest"])
+        response_manifest = json.loads(
+            response_manifest_path.read_text(encoding="utf-8")
+        )
+        response_shard = next(
+            shard
+            for shard in response_manifest["shards"]
+            if int(shard["rank"]) == int(comm.rank)
+        )
+        local_record = {
+            "rank": int(comm.rank),
+            "ownership_range": list(ownership),
+            "local_size": int(response.getLocalSize()),
+            "dtype": str(response_array.dtype),
+            "owned_rhs_sha256": rhs_sha256,
+            "owned_response_sha256": response_sha256,
+            "rhs_before_sha256": rhs_before_sha,
+            "rhs_after_sha256": rhs_after_sha,
+            "rhs_unchanged": bool(rhs_unchanged),
+            "packet_manifest_sha256": representative_rhs_contract[
+                "packet_binding"
+            ]["packet_manifest_sha256"],
+            "packet_shard_path": response_shard["path"],
+            "packet_shard_sha256": response_shard["sha256"],
+            "response_packet_manifest_sha256": packet["manifest_sha256"],
+        }
+        rank_records = comm.gather(local_record, root=0)
+        return {
+            "variant": variant,
+            "artifact": packet,
+            "rank_shards": (
+                sorted(rank_records or [], key=lambda row: int(row["rank"]))
+                if comm.rank == 0
+                else None
+            ),
+        }
+
+    def compare_common_responses(
+        side_operator: PETSc.Mat,
+        rhs: PETSc.Vec,
+        legacy_response: PETSc.Vec,
+        optimized_response: PETSc.Vec,
+        *,
+        diagnostic_directory: Path,
+        diagnostic_identity: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        delta = optimized_response.duplicate()
+        a_delta = side_operator.createVecLeft()
+        try:
+            optimized_response.copy(delta)
+            delta.axpy(PETSc.ScalarType(-1.0), legacy_response)
+            delta_norm = float(delta.norm())
+            legacy_norm = float(legacy_response.norm())
+            optimized_norm = float(optimized_response.norm())
+            rhs_norm = float(rhs.norm())
+            side_operator.mult(delta, a_delta)
+            a_delta_norm = float(a_delta.norm())
+            delta_metadata = _task041_stream_array_metadata(
+                "common_layout_equivalence.response_delta",
+                np.asarray(delta.getArray(readonly=True)),
+            )
+            action_delta_metadata = _task041_stream_array_metadata(
+                "common_layout_equivalence.action_delta",
+                np.asarray(a_delta.getArray(readonly=True)),
+            )
+            x_denominator = max(legacy_norm, optimized_norm)
+            e_x = (
+                delta_norm / x_denominator
+                if x_denominator > 0.0
+                else (0.0 if delta_norm == 0.0 else None)
+            )
+            e_A = (
+                a_delta_norm / rhs_norm
+                if rhs_norm > 0.0
+                else (0.0 if a_delta_norm == 0.0 else None)
+            )
+            finite = bool(
+                np.isfinite(
+                    [
+                        delta_norm,
+                        legacy_norm,
+                        optimized_norm,
+                        rhs_norm,
+                        a_delta_norm,
+                    ]
+                ).all()
+                and (e_x is None or np.isfinite(e_x))
+                and (e_A is None or np.isfinite(e_A))
+                and np.all(
+                    np.isfinite(delta.getArray(readonly=True))
+                )
+                and np.all(
+                    np.isfinite(a_delta.getArray(readonly=True))
+                )
+            )
+            finite = bool(comm.allreduce(finite, op=MPI.LAND))
+            zero_solution_denominator = x_denominator == 0.0
+            zero_rhs_denominator = rhs_norm == 0.0
+            action_packet = write_packet(
+                diagnostic_directory / "action_delta",
+                np.asarray(delta.getArray(readonly=True)),
+                np.asarray(a_delta.getArray(readonly=True)),
+                identity={
+                    **dict(diagnostic_identity),
+                    "schema": (
+                        "task041.common_layout_equivalence."
+                        "comparison_diagnostic.v1"
+                    ),
+                    "kind": "response_and_action_delta",
+                },
+                metadata={
+                    "solution_array_name": "response_delta",
+                    "rhs_array_name": "action_delta",
+                    "action_difference_definition": "A_s.mult(response_delta)",
+                    "response_delta": delta_metadata,
+                    "action_delta": action_delta_metadata,
+                },
+                ownership_range=tuple(
+                    int(value) for value in delta.getOwnershipRange()
+                ),
+                comm=comm,
+                allow_nonfinite_diagnostic=True,
+            )
+            side_operator.mult(legacy_response, a_delta)
+            rhs.copy(delta)
+            delta.axpy(PETSc.ScalarType(-1.0), a_delta)
+            legacy_residual_norm = float(delta.norm())
+            side_operator.mult(optimized_response, a_delta)
+            a_delta.scale(PETSc.ScalarType(-1.0))
+            a_delta.axpy(PETSc.ScalarType(1.0), rhs)
+            optimized_residual_norm = float(a_delta.norm())
+            residual_finite = bool(
+                np.isfinite(legacy_residual_norm)
+                and np.isfinite(optimized_residual_norm)
+                and np.all(np.isfinite(delta.getArray(readonly=True)))
+                and np.all(np.isfinite(a_delta.getArray(readonly=True)))
+            )
+            finite = bool(
+                comm.allreduce(finite and residual_finite, op=MPI.LAND)
+            )
+            residual_packet = write_packet(
+                diagnostic_directory / "residual_pair",
+                np.asarray(delta.getArray(readonly=True)),
+                np.asarray(a_delta.getArray(readonly=True)),
+                identity={
+                    **dict(diagnostic_identity),
+                    "schema": (
+                        "task041.common_layout_equivalence."
+                        "comparison_diagnostic.v1"
+                    ),
+                    "kind": "legacy_and_optimized_residual",
+                },
+                metadata={
+                    "solution_array_name": "legacy_residual",
+                    "rhs_array_name": "optimized_residual",
+                    "definition": {
+                        "legacy": "b-side_A.mult(legacy_response)",
+                        "optimized": "b-side_A.mult(optimized_response)",
+                    },
+                    "legacy_residual_norm": legacy_residual_norm,
+                    "optimized_residual_norm": optimized_residual_norm,
+                },
+                ownership_range=tuple(
+                    int(value) for value in delta.getOwnershipRange()
+                ),
+                comm=comm,
+                allow_nonfinite_diagnostic=True,
+            )
+            # The residual pair is already closed on disk.  Only now reuse the
+            # second scratch vector for the independently measured difference;
+            # it is not the negated action difference from the first packet.
+            a_delta.axpy(PETSc.ScalarType(-1.0), delta)
+            residual_difference_norm = float(a_delta.norm())
+            residual_denominator = max(
+                legacy_residual_norm, optimized_residual_norm
+            )
+            residual_relative = (
+                residual_difference_norm / residual_denominator
+                if residual_denominator > 0.0
+                else (
+                    0.0 if residual_difference_norm == 0.0 else None
+                )
+            )
+            residual_difference_finite = bool(
+                np.isfinite(residual_difference_norm)
+                and np.all(np.isfinite(a_delta.getArray(readonly=True)))
+            )
+            finite = bool(
+                comm.allreduce(
+                    finite and residual_difference_finite,
+                    op=MPI.LAND,
+                )
+            )
+            local_pass = bool(
+                finite
+                and e_x is not None
+                and e_A is not None
+                and e_x <= 1.0e-8
+                and e_A <= 1.0e-8
+            )
+            pass_value = bool(comm.allreduce(local_pass, op=MPI.LAND))
+            return {
+                "operator_scope": "side_A",
+                "delta_definition": "optimized_response - legacy_response",
+                "e_x_absolute": delta_norm,
+                "e_x": e_x,
+                "e_A_absolute": a_delta_norm,
+                "e_A": e_A,
+                "response_norms": {
+                    "legacy": legacy_norm,
+                    "optimized": optimized_norm,
+                    "denominator": x_denominator,
+                },
+                "rhs_norm": rhs_norm,
+                "zero_solution_denominator": zero_solution_denominator,
+                "zero_rhs_denominator": zero_rhs_denominator,
+                "a_delta_definition": "side_A.mult(delta, scratch)",
+                "diagnostic_arrays": {
+                    "response_delta": delta_metadata,
+                    "action_delta": action_delta_metadata,
+                    "storage": {
+                        "response_and_action": action_packet,
+                        "residual_pair": residual_packet,
+                    },
+                },
+                "residual_norms": {
+                    "legacy": legacy_residual_norm,
+                    "optimized": optimized_residual_norm,
+                    "denominator": residual_denominator,
+                },
+                "residual_difference_norm": residual_difference_norm,
+                "residual_difference_relative": residual_relative,
+                "residual_difference_definition": (
+                    "r_optimized-r_legacy, computed from two saved residuals"
+                ),
+                "diagnostic_packets": {
+                    "response_and_action": action_packet,
+                    "residual_pair": residual_packet,
+                },
+                "threshold_e_x": 1.0e-8,
+                "threshold_e_A": 1.0e-8,
+                "finite": finite,
+                "pass": pass_value,
+            }
+        finally:
+            a_delta.destroy()
+            delta.destroy()
+
+    def run_common_layout_equivalence_probe(
+        entries_override: Sequence[Mapping[str, Any]],
+        side: str,
+    ) -> dict[str, Any]:
+        if representative_rhs_contract is None:
+            raise RuntimeError("common-layout comparison requires the RHS contract")
+        entries = list(entries_override)
+        if len(entries) != 4:
+            raise Task041ModePrepError(
+                f"common_layout_equivalence requires four {side} entries"
+            )
+        initial_layout = layout_evidence_by_side.get(side)
+        if not isinstance(initial_layout, Mapping):
+            raise Task041ModePrepError(f"common-layout {side} layout is missing")
+        records: list[dict[str, Any]] = []
+        mode_count = int(setup.coupling.mode_count_per_direction)
+        layout_epoch = initial_layout.get("layout_instance_id")
+        if not isinstance(layout_epoch, str) or not layout_epoch:
+            _raise_common_error(
+                f"common-layout {side} has no shared layout instance id",
+                "PAIRING_SETUP_FAILURE",
+            )
+
+        def owned_rhs_sha(rhs: PETSc.Vec, stage: str) -> str:
+            array = np.asarray(rhs.getArray(readonly=True))
+            return str(
+                _task041_stream_array_metadata(f"{side}.{stage}.rhs", array)["sha256"]
+            )
+
+        def persist_pair(record: Mapping[str, Any]) -> None:
+            if comm.rank != 0:
+                return
+            path = audit_path.with_name(
+                "common_layout_equivalence_pairs.jsonl"
+            )
+            with path.open("a", encoding="utf-8") as stream:
+                json.dump(
+                    _jsonable(dict(record)),
+                    stream,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+                stream.write("\n")
+
+        for entry in entries:
+            ordinal = int(entry["ordinal"])
+            formal_column = int(entry["formal_column"])
+            before_layout: Mapping[str, Any] | None = None
+            after_layout: Mapping[str, Any] | None = None
+            rhs: PETSc.Vec | None = None
+            first_response: PETSc.Vec | None = None
+            second_response: PETSc.Vec | None = None
+            variant_records: dict[str, dict[str, Any]] = {}
+            audits: dict[str, Mapping[str, Any]] = {}
+            persisted = False
+            diagnostic_started = False
+            diagnostic_finished = False
+            active_variant: str | None = None
+            variant_finished = True
+            try:
+                common_stage_marker(
+                    "pair_begin",
+                    entry,
+                    group="PAIR",
+                )
+                before_layout = capture_layout(
+                    side, side_inverses[side], write=False
+                )
+                common_stage_marker(
+                    "layout_before",
+                    entry,
+                    group="PAIR",
+                    layout_identity_sha256=before_layout[
+                        "layout_identity_sha256"
+                    ],
+                )
+                if (
+                    before_layout["layout_identity_sha256"]
+                    != initial_layout["layout_identity_sha256"]
+                ):
+                    _raise_common_error(
+                        f"common-layout {side} changed before ordinal {ordinal}",
+                        "PAIRING_SETUP_FAILURE",
+                        {
+                            "side": side,
+                            "ordinal": ordinal,
+                            "before_layout": before_layout,
+                            "initial_layout_sha256": initial_layout[
+                                "layout_identity_sha256"
+                            ],
+                        },
+                    )
+                if ordinal == int(entries[0]["ordinal"]):
+                    rhs = common_first_rhs_by_side[side]
+                    if rhs is None:
+                        _raise_common_error(
+                            f"common-layout {side} first RHS is missing",
+                            "PAIRING_SETUP_FAILURE",
+                        )
+                else:
+                    modal = np.zeros(2 * mode_count, dtype=PETSc.ScalarType)
+                    modal[formal_column] = PETSc.ScalarType(1.0)
+                    rhs = modal_coupling_action(side, setup.coupling, modal)
+                first_response = getattr(setup, side).A.createVecLeft()
+                second_response = getattr(setup, side).A.createVecLeft()
+                first_variant = "legacy" if ordinal % 2 == 0 else "optimized"
+                second_variant = (
+                    "optimized" if first_variant == "legacy" else "legacy"
+                )
+                rhs_before_sha = owned_rhs_sha(rhs, "before_apply")
+                for variant, response in (
+                    (first_variant, first_response),
+                    (second_variant, second_response),
+                ):
+                    active_variant = variant
+                    variant_finished = False
+                    variant_rhs_before_sha = owned_rhs_sha(
+                        rhs, f"before_{variant}"
+                    )
+                    common_stage_marker(
+                        "variant_apply_begin",
+                        entry,
+                        group="VARIANT_APPLY",
+                        variant=variant,
+                        vectors={"rhs": rhs, "response": response},
+                        rhs_before_sha256=variant_rhs_before_sha,
+                    )
+                    audit_start = len(representative_records[side])
+                    audit_phase[side] = "common_layout_equivalence"
+                    representative_context[side] = {
+                        "comparison_mode": "common_layout_equivalence",
+                        "comparison_variant": variant,
+                        "representative_ordinal": ordinal,
+                        "source_audit_index": int(entry["audit_index"]),
+                        "formal_column": formal_column,
+                        "branch_ordinal": int(entry["branch_ordinal"]),
+                    }
+                    try:
+                        with side_inverses[side].variant_context(variant):
+                            side_inverses[side].apply(rhs, response)
+                    except BaseException as exc:
+                        classification, failure_details = _common_failure_details(
+                            exc, side_inverses[side]
+                        )
+                        failed_audit = (
+                            dict(representative_records[side][-1])
+                            if len(representative_records[side])
+                            > audit_start
+                            else None
+                        )
+                        failure_evidence = dict(failure_details)
+                        failure_evidence["audit"] = _jsonable(failed_audit)
+                        rhs_after_sha: str | None = None
+                        rhs_unchanged = False
+                        if rhs is not None:
+                            try:
+                                rhs_after_sha = owned_rhs_sha(
+                                    rhs, f"failure_after_{variant}"
+                                )
+                                rhs_unchanged = bool(
+                                    comm.allreduce(
+                                        rhs_after_sha == rhs_before_sha,
+                                        op=MPI.LAND,
+                                    )
+                                )
+                            except Exception as hash_error:  # noqa: BLE001 - keep partial evidence
+                                failure_evidence["rhs_hash_error"] = {
+                                    "type": type(hash_error).__name__,
+                                    "message": str(hash_error),
+                                }
+                        apply_record = (
+                            failed_audit
+                            if isinstance(failed_audit, Mapping)
+                            else {
+                                "status": "failed",
+                                "failure_classification": classification,
+                                "error": failure_evidence["cause"],
+                            }
+                        )
+                        variant_records[variant] = {
+                            "variant": variant,
+                            "status": "failed",
+                            "failure_classification": classification,
+                            "rhs_before_sha256": variant_rhs_before_sha,
+                            "rhs_after_sha256": rhs_after_sha,
+                            "rhs_unchanged": rhs_unchanged,
+                            "error": {
+                                "type": type(exc).__name__,
+                                "message": str(exc),
+                            },
+                            "audit": _jsonable(failed_audit),
+                            "failure_evidence": _jsonable(failure_evidence),
+                        }
+                        try:
+                            variant_records[variant]["diagnostic_packet"] = (
+                                write_common_variant_packet(
+                                    entry,
+                                    variant,
+                                    response,
+                                    rhs,
+                                    apply_record,
+                                    str(before_layout["layout_identity_sha256"]),
+                                    layout_epoch,
+                                    variant_rhs_before_sha,
+                                    rhs_after_sha or "",
+                                    rhs_unchanged,
+                                    diagnostic_only=True,
+                                )
+                            )
+                        except Exception as packet_error:  # noqa: BLE001 - keep partial evidence
+                            variant_records[variant]["diagnostic_packet_error"] = {
+                                "type": type(packet_error).__name__,
+                                "message": str(packet_error),
+                            }
+                            failure_evidence["diagnostic_packet_error"] = {
+                                "type": type(packet_error).__name__,
+                                "message": str(packet_error),
+                            }
+                        exc.failure_classification = classification
+                        exc.failure_evidence = failure_evidence
+                        common_stage_marker(
+                            "variant_apply_end",
+                            entry,
+                            group="VARIANT_APPLY",
+                            variant=variant,
+                            vectors={"rhs": rhs, "response": response},
+                            status="failed",
+                            error_type=type(exc).__name__,
+                            failure_classification=classification,
+                        )
+                        variant_finished = True
+                        raise
+                    if len(representative_records[side]) != audit_start + 1:
+                        raise Task041ModePrepError(
+                            f"common RHS {ordinal}/{variant} did not receive one apply audit"
+                        )
+                    rhs_after_sha = owned_rhs_sha(rhs, f"after_{variant}")
+                    rhs_unchanged = bool(
+                        comm.allreduce(
+                            rhs_after_sha == rhs_before_sha,
+                            op=MPI.LAND,
+                        )
+                    )
+                    audit = dict(representative_records[side][-1])
+                    audits[variant] = audit
+                    variant_records[variant] = {
+                        "variant": variant,
+                        "status": "applied",
+                        "rhs_before_sha256": variant_rhs_before_sha,
+                        "rhs_after_sha256": rhs_after_sha,
+                        "rhs_unchanged": rhs_unchanged,
+                        "audit": _jsonable(audit),
+                    }
+                    try:
+                        representative_apply_gate(
+                            entry,
+                            audit,
+                            evidence_name="common_layout_equivalence",
+                            failure_classification_prefix=(
+                                "COMMON_LAYOUT_EQUIVALENCE"
+                            ),
+                        )
+                    except Task041ModePrepError as exc:
+                        classification, failure_details = _common_failure_details(
+                            exc, side_inverses[side]
+                        )
+                        failure_packet_evidence = dict(failure_details)
+                        failure_packet_evidence["audit"] = _jsonable(audit)
+                        variant_records[variant].update(
+                            {
+                                "status": "failed",
+                                "failure_classification": classification,
+                                "failure_evidence": _jsonable(
+                                    failure_packet_evidence
+                                ),
+                            }
+                        )
+                        try:
+                            variant_records[variant]["diagnostic_packet"] = (
+                                write_common_variant_packet(
+                                    entry,
+                                    variant,
+                                    response,
+                                    rhs,
+                                    audit,
+                                    str(before_layout["layout_identity_sha256"]),
+                                    layout_epoch,
+                                    variant_rhs_before_sha,
+                                    rhs_after_sha,
+                                    rhs_unchanged,
+                                    diagnostic_only=True,
+                                )
+                            )
+                        except Exception as packet_error:  # noqa: BLE001 - keep partial evidence
+                            variant_records[variant]["diagnostic_packet_error"] = {
+                                "type": type(packet_error).__name__,
+                                "message": str(packet_error),
+                            }
+                            failure_packet_evidence["diagnostic_packet_error"] = {
+                                "type": type(packet_error).__name__,
+                                "message": str(packet_error),
+                            }
+                        exc.failure_classification = classification
+                        exc.failure_evidence = failure_packet_evidence
+                        raise
+                    if not rhs_unchanged:
+                        variant_records[variant]["status"] = "failed"
+                        variant_records[variant][
+                            "failure_classification"
+                        ] = "PAIRING_SETUP_FAILURE"
+                        _raise_common_error(
+                            f"common RHS {ordinal}/{variant} changed during apply",
+                            "PAIRING_SETUP_FAILURE",
+                            {
+                                "side": side,
+                                "ordinal": ordinal,
+                                "variant": variant,
+                                "rhs_before_sha256": rhs_before_sha,
+                                "rhs_after_sha256": rhs_after_sha,
+                            },
+                        )
+                    variant_records[variant].update(
+                        write_common_variant_packet(
+                            entry,
+                            variant,
+                            response,
+                            rhs,
+                            audit,
+                            str(before_layout["layout_identity_sha256"]),
+                            layout_epoch,
+                            variant_rhs_before_sha,
+                            rhs_after_sha,
+                            rhs_unchanged,
+                        )
+                    )
+                    common_stage_marker(
+                        "variant_apply_end",
+                        entry,
+                        group="VARIANT_APPLY",
+                        variant=variant,
+                        vectors={"rhs": rhs, "response": response},
+                        status="measured",
+                        rhs_before_sha256=variant_rhs_before_sha,
+                        rhs_after_sha256=rhs_after_sha,
+                        rhs_unchanged=rhs_unchanged,
+                    )
+                    variant_finished = True
+                after_layout = capture_layout(
+                    side, side_inverses[side], write=False
+                )
+                common_stage_marker(
+                    "layout_after",
+                    entry,
+                    group="PAIR",
+                    layout_identity_sha256=after_layout[
+                        "layout_identity_sha256"
+                    ],
+                )
+                layout_pass = (
+                    after_layout["layout_identity_sha256"]
+                    == before_layout["layout_identity_sha256"]
+                )
+                common_layout_rechecks[side].append(
+                    {
+                        "ordinal": ordinal,
+                        "before_layout_identity_sha256": before_layout[
+                            "layout_identity_sha256"
+                        ],
+                        "after_layout_identity_sha256": after_layout[
+                            "layout_identity_sha256"
+                        ],
+                        "pass": layout_pass,
+                    }
+                )
+                if not layout_pass:
+                    raise Task041ModePrepError(
+                        f"common-layout {side} layout changed at ordinal {ordinal}"
+                    )
+                legacy_response = (
+                    first_response
+                    if first_variant == "legacy"
+                    else second_response
+                )
+                optimized_response = (
+                    first_response
+                    if first_variant == "optimized"
+                    else second_response
+                )
+                common_stage_marker(
+                    "diagnostic_begin",
+                    entry,
+                    group="PAIR_DIAGNOSTIC",
+                    vectors={
+                        "rhs": rhs,
+                        "legacy_response": legacy_response,
+                        "optimized_response": optimized_response,
+                    },
+                )
+                diagnostic_started = True
+                comparison = compare_common_responses(
+                    side_inverses[side].operator,
+                    rhs,
+                    legacy_response,
+                    optimized_response,
+                    diagnostic_directory=(
+                        audit_path.parent
+                        / "common_layout_equivalence"
+                        / f"{ordinal:02d}_{side}_{entry['branch']}"
+                        / "comparison"
+                    ),
+                    diagnostic_identity={
+                        "scope": "representative_rhs",
+                        "comparison_mode": "common_layout_equivalence",
+                        "pairing_scope": "same_live_layout",
+                        "run_layout_epoch": layout_epoch,
+                        "layout_instance_id": layout_epoch,
+                        "source_sha": identity["source_sha"],
+                        "probe_manifest_sha256": representative_rhs_contract[
+                            "sha256"
+                        ],
+                        "packet_manifest_sha256": representative_rhs_contract[
+                            "packet_binding"
+                        ]["packet_manifest_sha256"],
+                        "layout_identity_sha256": before_layout[
+                            "layout_identity_sha256"
+                        ],
+                        "ordinal": ordinal,
+                        "side": side,
+                        "formal_column": formal_column,
+                        "branch_ordinal": int(entry["branch_ordinal"]),
+                    },
+                )
+                common_stage_marker(
+                    "diagnostic_save_end",
+                    entry,
+                    group="PAIR_DIAGNOSTIC",
+                    vectors={"rhs": rhs},
+                    status="measured",
+                    diagnostic_packets=comparison.get("diagnostic_packets"),
+                )
+                diagnostic_finished = True
+                record = {
+                    "ordinal": ordinal,
+                    "side": side,
+                    "branch": str(entry["branch"]),
+                    "audit_index": int(entry["audit_index"]),
+                    "formal_column": formal_column,
+                    "branch_ordinal": int(entry["branch_ordinal"]),
+                    "status": "completed",
+                    "first_variant": first_variant,
+                    "variant_order": [first_variant, second_variant],
+                    "audits": _jsonable(audits),
+                    "variants": variant_records,
+                    "comparison": comparison,
+                    "scope": "representative_rhs",
+                    "comparison_mode": "common_layout_equivalence",
+                    "pairing_scope": "same_live_layout",
+                    "run_layout_epoch": layout_epoch,
+                    "layout_instance_id": layout_epoch,
+                    "layout_identity_sha256": before_layout[
+                        "layout_identity_sha256"
+                    ],
+                    "before_layout": {
+                        "layout_identity_sha256": before_layout[
+                            "layout_identity_sha256"
+                        ]
+                    },
+                    "after_layout": {
+                        "layout_identity_sha256": after_layout[
+                            "layout_identity_sha256"
+                        ]
+                    },
+                    "rhs_before_sha256": rhs_before_sha,
+                }
+                if comparison["pass"] is not True:
+                    record["status"] = "failed"
+                    record["failure_classification"] = (
+                        "RESPONSE_SENSITIVITY_UNRESOLVED"
+                    )
+                    persist_pair(record)
+                    persisted = True
+                    _raise_common_error(
+                        f"common-layout response equivalence failed at ordinal {ordinal}",
+                        "RESPONSE_SENSITIVITY_UNRESOLVED",
+                        record,
+                    )
+                persist_pair(record)
+                persisted = True
+                records.append(record)
+                marker_callback(
+                    "system_setup_stage",
+                    {
+                        "name": "common_layout_equivalence",
+                        "side": side,
+                        "ordinal": ordinal,
+                        "variant_order": [first_variant, second_variant],
+                        "comparison": comparison,
+                    },
+                )
+            except BaseException as exc:
+                if active_variant is not None and not variant_finished:
+                    common_stage_marker(
+                        "variant_apply_end",
+                        entry,
+                        group="VARIANT_APPLY",
+                        variant=active_variant,
+                        status="failed",
+                        error_type=type(exc).__name__,
+                    )
+                if diagnostic_started and not diagnostic_finished:
+                    common_stage_marker(
+                        "diagnostic_end",
+                        entry,
+                        group="PAIR_DIAGNOSTIC",
+                        status="failed",
+                        error_type=type(exc).__name__,
+                    )
+                if not persisted:
+                    partial = {
+                        "ordinal": ordinal,
+                        "side": side,
+                        "status": "failed",
+                        "failure_classification": getattr(
+                            exc,
+                            "failure_classification",
+                            "PAIRING_SETUP_FAILURE",
+                        ),
+                        "error": f"{type(exc).__name__}: {exc}",
+                        "failure_evidence": _jsonable(
+                            getattr(exc, "failure_evidence", {})
+                        ),
+                        "run_layout_epoch": layout_epoch,
+                        "layout_instance_id": layout_epoch,
+                        "before_layout": (
+                            None
+                            if before_layout is None
+                            else {
+                                "layout_identity_sha256": before_layout[
+                                    "layout_identity_sha256"
+                                ]
+                            }
+                        ),
+                        "after_layout": (
+                            None
+                            if after_layout is None
+                            else {
+                                "layout_identity_sha256": after_layout[
+                                    "layout_identity_sha256"
+                                ]
+                            }
+                        ),
+                        "audits": _jsonable(audits),
+                        "variants": _jsonable(variant_records),
+                    }
+                    if rhs is not None:
+                        partial["rhs_current_sha256"] = owned_rhs_sha(
+                            rhs, "failure_current"
+                        )
+                    persist_pair(partial)
+                raise
+            finally:
+                common_stage_marker(
+                    "pair_end",
+                    entry,
+                    group="PAIR",
+                    status="persisted" if persisted else "failed",
+                )
+                representative_context[side] = None
+                if first_response is not None:
+                    first_response.destroy()
+                if second_response is not None:
+                    second_response.destroy()
+                if rhs is not None:
+                    if common_first_rhs_by_side[side] is rhs:
+                        common_first_rhs_by_side[side] = None
+                        common_first_entry_by_side[side] = None
+                    rhs.destroy()
+        return {
+            "scope": "representative_rhs",
+            "comparison_mode": "common_layout_equivalence",
+            "pairing_scope": "same_live_layout",
+            "run_layout_epoch": layout_epoch,
+            "layout_instance_id": layout_epoch,
+            "status": "completed",
+            "expected_count": len(entries),
+            "completed_count": len(records),
+            "apply_count": 2 * len(records),
+            "entries": records,
+            "source_manifest": {
+                "path": representative_rhs_contract["path"],
+                "sha256": representative_rhs_contract["sha256"],
+                "scope": representative_rhs_contract["scope"],
+            },
+            "source_audit": dict(representative_rhs_contract["source_audit"]),
+            "packet_binding": dict(representative_rhs_contract["packet_binding"]),
+            "layout": {
+                "layout_instance_id": layout_epoch,
+                "identity_sha256": initial_layout["layout_identity_sha256"],
+                "path": str(
+                    audit_path.with_name("common_layout_equivalence")
+                    / f"{side}_layout.json"
+                ),
+                "rechecks": list(common_layout_rechecks[side]),
+            },
+            "full_formal": {"status": "not_run", "reason": "comparison_mode"},
+            "variant_binding": dict(variant_bindings_by_side[side]),
+        }
+
     def representative_setup_result(
         representative: Mapping[str, Any],
         admission_payload: Mapping[str, Any],
         cleanup: Mapping[str, Any],
         *,
         schedule_summary: Mapping[str, Any] | None = None,
+        comparison_mode: str | None = None,
     ) -> dict[str, Any]:
         after_diagnostics = {
             side: dict(diagnostics)
@@ -3087,19 +5221,36 @@ def _run_task041_balh_candidate_setup(
                     "component_cleanup_pass": cleanup.get("component_cleanup_pass"),
                 }
             )
+        common_mode = comparison_mode == TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE
         result = {
-            "schema": "task041.side_balh.representative_rhs_setup.v1",
-            "status": "representative_rhs_completed",
+            "schema": (
+                "task041.side_balh.common_layout_equivalence_setup.v1"
+                if common_mode
+                else "task041.side_balh.representative_rhs_setup.v1"
+            ),
+            "status": (
+                "common_layout_equivalence_completed"
+                if common_mode
+                else "representative_rhs_completed"
+            ),
             "qualification_scope": qualification_scope,
             "qualification_method": (
                 "task041_balh_side_inverse_response_fgmres32"
             ),
-            "qualification": "diagnostic_component_only",
+            "qualification": (
+                "comparison_only" if common_mode else "diagnostic_component_only"
+            ),
             "admission_audit": dict(admission_payload),
-            "representative_rhs": {
-                **dict(representative),
-                "cleanup": dict(cleanup),
-            },
+            "representative_rhs": (
+                None
+                if common_mode
+                else {**dict(representative), "cleanup": dict(cleanup)}
+            ),
+            "common_layout_equivalence": (
+                {**dict(representative), "cleanup": dict(cleanup)}
+                if common_mode
+                else None
+            ),
             "cost_probe": {
                 "status": "not_run",
                 "reason": "representative_rhs_scope",
@@ -3111,6 +5262,14 @@ def _run_task041_balh_candidate_setup(
             },
             "side_diagnostics_after_destroy": after_diagnostics,
             "candidate_inventory": candidate_inventory,
+            "variant_binding": (
+                {
+                    side: dict(value)
+                    for side, value in variant_bindings_by_side.items()
+                }
+                if common_mode
+                else None
+            ),
             "modal_schur": {
                 "status": "not_run",
                 "reason": "representative_rhs_scope",
@@ -3131,6 +5290,8 @@ def _run_task041_balh_candidate_setup(
                 "side_setup_schedule"
             ]
             result["side_setup"] = dict(schedule_summary)
+        if common_mode:
+            result["comparison_mode"] = comparison_mode
         return result
 
     try:
@@ -3207,9 +5368,26 @@ def _run_task041_balh_candidate_setup(
                         )
                     ),
                 }
+                if comparison_mode == TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE:
+                    first_entry = entries_by_side[side][0]
+                    modal = np.zeros(
+                        2 * int(setup.coupling.mode_count_per_direction),
+                        dtype=PETSc.ScalarType,
+                    )
+                    modal[int(first_entry["formal_column"])] = PETSc.ScalarType(1.0)
+                    common_first_rhs_by_side[side] = modal_coupling_action(
+                        side, setup.coupling, modal
+                    )
+                    common_first_entry_by_side[side] = first_entry
                 admit_side(side)
                 require_global_identity(f"{side}_after_admission")
-                side_result = run_representative_rhs_probe(entries_by_side[side])
+                side_result = (
+                    run_common_layout_equivalence_probe(
+                        entries_by_side[side], side
+                    )
+                    if comparison_mode == TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE
+                    else run_representative_rhs_probe(entries_by_side[side])
+                )
                 if side_result["completed_count"] != len(entries_by_side[side]):
                     raise Task041ModePrepError(
                         f"sequential_component {side} probe is incomplete"
@@ -3343,6 +5521,7 @@ def _run_task041_balh_candidate_setup(
                 admission_payload,
                 cleanup,
                 schedule_summary=schedule_summary,
+                comparison_mode=comparison_mode,
             )
 
         for side, system in (("bottom", setup.bottom), ("top", setup.top)):
@@ -3594,6 +5773,7 @@ def run_task041_consumer(
     performance_profile: str | None = None,
     task041_rhs_probe_manifest: str | Path | None = None,
     side_setup_schedule: str | None = None,
+    comparison_mode: str | None = None,
 ) -> dict[str, Any]:
     """Consume one fresh Task041 packet through an exact or BAL_H side path."""
 
@@ -3636,9 +5816,12 @@ def run_task041_consumer(
             )
     performance_contract = None
     representative_rhs_contract: Mapping[str, Any] | None = None
-    if side_setup_schedule is not None and performance_profile is None:
+    if (
+        (side_setup_schedule is not None or comparison_mode is not None)
+        and performance_profile is None
+    ):
         raise Task041ModePrepError(
-            "side setup schedule requires task041_schur_speed_v2"
+            "Task041 comparison options require task041_schur_speed_v2"
         )
     if performance_profile is not None:
         if not candidate or not contract["balh"]:
@@ -3667,6 +5850,7 @@ def run_task041_consumer(
                     else None
                 ),
                 side_setup_schedule=side_setup_schedule,
+                comparison_mode=comparison_mode,
             )
         except ValueError as exc:
             raise Task041ModePrepError(str(exc)) from exc
@@ -3692,6 +5876,10 @@ def run_task041_consumer(
                 raise Task041ModePrepError(
                     "representative RHS scope does not match the V2 budget contract"
                 )
+        elif comparison_mode is not None:
+            raise Task041ModePrepError(
+                "common_layout_equivalence requires the representative RHS manifest"
+            )
         effective_limits = dict(contract["limits"])
         effective_limits.update(
             {
@@ -3720,7 +5908,9 @@ def run_task041_consumer(
     started = time.monotonic()
     candidate_audit_path = root / "numerical_output" / (
         "representative_rhs_audits.jsonl"
-        if representative_rhs_contract is not None
+        if representative_rhs_contract is not None and comparison_mode is None
+        else "common_layout_equivalence_audits.jsonl"
+        if comparison_mode is not None
         else "balh_side_rhs_audits.jsonl"
     )
     result: dict[str, Any] = {
@@ -3761,6 +5951,8 @@ def run_task041_consumer(
         result["performance_profile"] = performance_contract
         if side_setup_schedule is not None:
             result["side_setup_schedule"] = side_setup_schedule
+        if comparison_mode is not None:
+            result["comparison_mode"] = comparison_mode
     if representative_rhs_contract is not None:
         result["representative_rhs_probe"] = {
             "path": representative_rhs_contract["path"],
@@ -4345,6 +6537,7 @@ def run_task041_consumer(
                 detailed_timing=performance_contract is not None,
                 representative_rhs_contract=representative_rhs_contract,
                 side_setup_schedule=side_setup_schedule,
+                comparison_mode=comparison_mode,
                 performance_profile=(
                     performance_contract["profile_id"]
                     if performance_contract is not None
@@ -4380,7 +6573,12 @@ def run_task041_consumer(
         if not isinstance(formal_result, Mapping):
             raise Task041ModePrepError("Task041 consumer did not return full-formal result")
         if representative_rhs_contract is not None:
-            representative = setup_result.get("representative_rhs")
+            component_key = (
+                "common_layout_equivalence"
+                if comparison_mode == "common_layout_equivalence"
+                else "representative_rhs"
+            )
+            representative = setup_result.get(component_key)
             candidate_inventory = setup_result.get("candidate_inventory")
             if not isinstance(representative, Mapping) or not isinstance(
                 candidate_inventory, Mapping
@@ -4390,10 +6588,14 @@ def run_task041_consumer(
                 )
             result["setup"] = _jsonable(setup_result)
             result["formal"] = _jsonable(formal_result)
-            result["representative_rhs"] = _jsonable(representative)
+            result[component_key] = _jsonable(representative)
             result["gates"] = {
                 "pass": False,
-                "status": "not_run_representative_rhs_scope",
+                "status": (
+                    "not_run_common_layout_equivalence_mode"
+                    if comparison_mode == "common_layout_equivalence"
+                    else "not_run_representative_rhs_scope"
+                ),
                 "full_formal": "not_run",
                 "official_rta": "not_run",
             }
@@ -4453,12 +6655,20 @@ def run_task041_consumer(
                 ),
             }
             result["setup_cost_probe"] = setup_result.get("cost_probe")
-            result["status"] = "task041_representative_rhs_completed"
-            result["classification"] = "TASK041_REPRESENTATIVE_RHS_COMPLETED"
+            result["status"] = (
+                "task041_common_layout_equivalence_completed"
+                if comparison_mode == "common_layout_equivalence"
+                else "task041_representative_rhs_completed"
+            )
+            result["classification"] = (
+                "COMMON_LAYOUT_EQUIVALENCE_PASS"
+                if comparison_mode == "common_layout_equivalence"
+                else "TASK041_REPRESENTATIVE_RHS_COMPLETED"
+            )
             emit(
                 "official_outputs_written",
                 {
-                    "scope": "representative_rhs",
+                    "scope": component_key,
                     "status": result["status"],
                     "official_rta": result["official_rta"],
                 },
@@ -4584,28 +6794,66 @@ def run_task041_consumer(
             )
     except Exception as exc:  # noqa: BLE001 - preserve worker failure evidence
         error = exc
-        result["status"] = "IMPLEMENTATION_FAILURE"
-        result["classification"] = (
-            "TASK041_CONSUMER_STAGE_FAILURE"
-            if current_stage
-            in {
-                "system_setup",
-                "factor_setup",
-                "recovery_physics",
-                "outer_solve_objects_cleanup",
-            }
-            else "IMPLEMENTATION_FAILURE"
-        )
+        classified_failure = getattr(exc, "failure_classification", None)
+        if isinstance(classified_failure, str) and classified_failure in {
+            "PAIRING_SETUP_FAILURE",
+            "ACTION_EQUIVALENCE_FAIL",
+            "NUMERICAL_GATE_FAIL",
+            "RESPONSE_SENSITIVITY_UNRESOLVED",
+        }:
+            result["status"] = (
+                "task041_common_layout_equivalence_failed"
+                if comparison_mode == "common_layout_equivalence"
+                else "task041_representative_rhs_failed"
+            )
+            result["classification"] = classified_failure
+            failure_payload = getattr(exc, "failure_evidence", None)
+            if isinstance(failure_payload, Mapping):
+                result["failure_evidence"] = _jsonable(
+                    dict(failure_payload)
+                )
+        else:
+            result["status"] = "IMPLEMENTATION_FAILURE"
+            result["classification"] = (
+                "TASK041_CONSUMER_STAGE_FAILURE"
+                if current_stage
+                in {
+                    "system_setup",
+                    "factor_setup",
+                    "recovery_physics",
+                    "outer_solve_objects_cleanup",
+                }
+                else "IMPLEMENTATION_FAILURE"
+            )
         result["failure_stage"] = current_stage
         result["error"] = {
             "type": type(exc).__name__,
             "message": str(exc),
             "stage": current_stage,
         }
+        preserve_common_failure = (
+            comparison_mode == "common_layout_equivalence"
+            and result.get("classification")
+            in {
+                "PAIRING_SETUP_FAILURE",
+                "NUMERICAL_GATE_FAIL",
+                "ACTION_EQUIVALENCE_FAIL",
+                "RESPONSE_SENSITIVITY_UNRESOLVED",
+            }
+        )
         if candidate and candidate_failure_evidence:
-            result["failure_evidence"] = {
+            candidate_evidence = {
                 "side_rhs_audits": _jsonable(candidate_failure_evidence),
             }
+            if preserve_common_failure and isinstance(
+                result.get("failure_evidence"), Mapping
+            ):
+                result["failure_evidence"] = {
+                    **dict(result["failure_evidence"]),
+                    **candidate_evidence,
+                }
+            else:
+                result["failure_evidence"] = candidate_evidence
             representative_rhs_failures = candidate_failure_evidence.get(
                 "representative_rhs"
             )
@@ -4620,7 +6868,7 @@ def run_task041_consumer(
                 if isinstance(representative_rhs_failures, Mapping)
                 else {}
             )
-            if representative_gate_evidence:
+            if representative_gate_evidence and not preserve_common_failure:
                 result["representative_rhs_gate"] = _jsonable(
                     representative_gate_evidence
                 )
@@ -4635,7 +6883,8 @@ def run_task041_consumer(
                 for audit in candidate_failure_evidence.values()
             }
             if (
-                not representative_gate_evidence
+                not preserve_common_failure
+                and not representative_gate_evidence
                 and "P4_PHYSICAL_RESIDUAL_GATE" in failure_classes
             ):
                 result["status"] = "task041_consumer_p4_gate_failure"
@@ -4643,7 +6892,8 @@ def run_task041_consumer(
                     "TASK041_CONSUMER_P4_PHYSICAL_RESIDUAL_GATE"
                 )
             elif (
-                not representative_gate_evidence
+                not preserve_common_failure
+                and not representative_gate_evidence
                 and "BALANCED_CONSTRAINT_REJECTED" in failure_classes
             ):
                 result["status"] = "task041_consumer_balanced_constraint_failure"
@@ -4660,11 +6910,20 @@ def run_task041_consumer(
                 and cost_payload.get("status") == "SETUP_COST_BLOCKED"
             ):
                 result["setup_cost_probe"] = _jsonable(cost_payload)
-                result["failure_evidence"] = {
-                    "cost_probe": _jsonable(cost_payload),
-                }
-                result["status"] = "SETUP_COST_BLOCKED"
-                result["classification"] = "TASK041_CONSUMER_SETUP_COST_BLOCKED"
+                cost_evidence = {"cost_probe": _jsonable(cost_payload)}
+                if preserve_common_failure and isinstance(
+                    result.get("failure_evidence"), Mapping
+                ):
+                    result["failure_evidence"] = {
+                        **dict(result["failure_evidence"]),
+                        **cost_evidence,
+                    }
+                else:
+                    result["failure_evidence"] = cost_evidence
+                    result["status"] = "SETUP_COST_BLOCKED"
+                    result["classification"] = (
+                        "TASK041_CONSUMER_SETUP_COST_BLOCKED"
+                    )
     finally:
         current_stage = "final_cleanup"
         try:

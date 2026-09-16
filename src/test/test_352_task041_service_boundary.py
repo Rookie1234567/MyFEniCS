@@ -238,6 +238,51 @@ def test_service_probe_binding_is_fixed_to_scope(tmp_path):
         service._representative_rhs_probe_binding(command, "formal_consumer")
 
 
+@pytest.mark.parametrize(
+    "classification",
+    [
+        "PAIRING_SETUP_FAILURE",
+        "NUMERICAL_GATE_FAIL",
+        "ACTION_EQUIVALENCE_FAIL",
+        "RESPONSE_SENSITIVITY_UNRESOLVED",
+    ],
+)
+def test_consumer_result_preserves_common_partial_failure(classification, tmp_path):
+    root = tmp_path / "consumer"
+    root.mkdir()
+    supervisor._write_json(
+        root / "consumer_summary.json",
+        {
+            "schema": "task041.side_balh.common_layout_equivalence.v1",
+            "status": "task041_common_layout_equivalence_failed",
+            "classification": classification,
+            "failure_evidence": {
+                "ordinal": 0,
+                "cause": "preserved partial evidence",
+            },
+            "markers": {"observed": []},
+            "lifecycle": {
+                "setup_released": False,
+                "rss_marker_emitted": True,
+            },
+            "gates": {"pass": False},
+        },
+    )
+
+    result = supervisor._consumer_result(
+        root,
+        process_group_gone=False,
+        expected_side_setup_schedule="sequential_component",
+        expected_comparison_mode="common_layout_equivalence",
+    )
+
+    assert result["complete"] is False
+    assert result["classification"] == classification
+    assert result["worker_classification"] == classification
+    assert result["completion_scope"] == "representative_rhs"
+    assert result["failure_evidence"]["ordinal"] == 0
+
+
 def test_parent_writes_loader_identity_and_forwards_v2_limits(monkeypatch, tmp_path):
     config_path, config = _write_config(tmp_path)
     identity = _identity()
