@@ -7,9 +7,12 @@ C1–C3、MPI8 主响应 `0/16`、响应 pairs `0/8`，以及 layout/P/PH/PC/res
 `not_run`。本阶段没有运行 pytest、MPI、PDE、service 或 ABI 数值栈探针，也没有新的 RSS/
 speedup 数据；这不改变历史 R1/R2 测试和旧负结果。最终只做了 `python -m json.tool`
 与 `git diff --check`，均 exit `0`，父侧 `CLOCK_MONOTONIC` wall=`0.063355920 s`；
-账本一次追加后 used=`11145.708812196894 s`、shared remaining=`10454.291187803106 s`，
-ledger SHA=`c1c0ef6ab626f3c53b9d252abc43037b341ec73f53cdc93b86fc8626bc338dad`，原始记录见
+账本前次静态核对后又补记四次此前遗漏的失败：按 `tool_reported_command_duration` 一次
+追加 `0.180794456 s`；当前 used=`11145.889606652894 s`、shared remaining=`10454.110393347106 s`，
+ledger SHA=`1473ad466c95a05bf4f4c186864d03f3304f58b904873a9ae6ecca08a7535953`，原始记录见
 [`v4a0_final_json_diff_check.json`](../../../results/task041_side_balh_component_audit/v4a0_preparation_20260916_b5d0a39e/v4a0_final_json_diff_check.json)。
+此前四次静态失败的 execution id、UTC、exit1、duration 和原始原因保留在 compact
+`documentation_checks`；两次最终静态命令仍为通过记录，不把四次失败合称为测试失败。
 
 | 证据 | 入口 |
 |---|---|

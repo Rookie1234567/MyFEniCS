@@ -36,11 +36,13 @@ Task041 的测试、MPI、PDE 或 service。V4 的 C1–C3、16 次主响应和 
 
 唯一 V2 账本仍为
 `../../results/task041_side_balh_component_audit/task041_schur_speed_v2_s1a_3890cdd2/task041_schur_speed_v2_compute_wall_ledger.json`，
-当前 `used_compute_wall_seconds=11145.708812196894`，shared 桶剩余
-`10454.291187803106 s`，batch 上限 `201600 s`，S2/S4 均为 `0`；账本 SHA256 为
-`c1c0ef6ab626f3c53b9d252abc43037b341ec73f53cdc93b86fc8626bc338dad`。本轮一次追加
-`0.099701023 s`，其中可追溯的静态核对为此前 `0.036345103 s` 与最终两命令核对
-`0.063355920 s`；阅读、等待和编辑时间未计入计算成本。
+当前 `used_compute_wall_seconds=11145.889606652894`，shared 桶剩余
+`10454.110393347106 s`，batch 上限 `201600 s`，S2/S4 均为 `0`；账本 SHA256 为
+`1473ad466c95a05bf4f4c186864d03f3304f58b904873a9ae6ecca08a7535953`。本次对四次
+先前遗漏的静态失败按 `tool_reported_command_duration` 一次追加 `0.180794456 s`；
+上一次静态核对已按 `0.099701023 s` 计入，阅读、等待和编辑时间未计入计算成本。
+四次失败（其中两次直接发现文档 hash 错误）及其公开 execution id、UTC、exit1 和原始
+原因均保存在 compact 的 `documentation_checks` 中；它们不是 PDE/数值失败。
 
 ## 2. V4 要验证什么
 

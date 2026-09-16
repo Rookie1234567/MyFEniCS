@@ -20,8 +20,9 @@
 [V4 说明](common_layout_equivalence_v4.md)。本轮不填 runroot，不把旧分侧峰值或旧 apply wall
 冒充 V4 测量；旧 H3 的 `RESOURCE_COMPARISON_INCONCLUSIVE` 继续单列。最终两项文档静态
 命令 exit `0`、父侧 `CLOCK_MONOTONIC` wall `0.063355920 s`，账本一次追加后为
-`11145.708812196894 s`，shared remaining `10454.291187803106 s`，ledger SHA256
-`c1c0ef6ab626f3c53b9d252abc43037b341ec73f53cdc93b86fc8626bc338dad`；原始记录见
+`11145.889606652894 s`，shared remaining `10454.110393347106 s`，ledger SHA256
+`1473ad466c95a05bf4f4c186864d03f3304f58b904873a9ae6ecca08a7535953`；四次此前遗漏的失败
+按 `tool_reported_command_duration` 补记 `0.180794456 s`，原始记录见
 [`v4a0_final_json_diff_check.json`](../../../results/task041_side_balh_component_audit/v4a0_preparation_20260916_b5d0a39e/v4a0_final_json_diff_check.json)。
 
 ## S5a：S1f fixed-eight baseline 的资源受控停止（2026-09-15）
