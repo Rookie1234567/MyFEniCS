@@ -2005,6 +2005,28 @@ def _task041_consumer_authority_gate(
     return gates
 
 
+def _merge_representative_parts(
+    representative_parts: Sequence[Mapping[str, Any]],
+    representative_entries: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Merge per-side representative results without changing formal output."""
+
+    representative = dict(representative_parts[0])
+    entries = [
+        entry
+        for part in representative_parts
+        for entry in part["entries"]
+    ]
+    representative["entries"] = entries
+    representative["expected_count"] = len(representative_entries)
+    representative["completed_count"] = len(entries)
+    if representative.get("comparison_mode") == "common_layout_equivalence":
+        representative["apply_count"] = sum(
+            part["apply_count"] for part in representative_parts
+        )
+    return representative
+
+
 def _run_task041_balh_candidate_setup(
     setup: Any,
     layout: Any,
@@ -5443,14 +5465,9 @@ def _run_task041_balh_candidate_setup(
                 raise Task041ModePrepError(
                     "sequential_component admission audit failed"
                 )
-            representative = dict(representative_parts[0])
-            representative["entries"] = [
-                entry
-                for part in representative_parts
-                for entry in part["entries"]
-            ]
-            representative["expected_count"] = len(representative_entries)
-            representative["completed_count"] = len(representative["entries"])
+            representative = _merge_representative_parts(
+                representative_parts, representative_entries
+            )
             p4_live = {
                 side: int(
                     record["live_at_build"]["p4_factor_count"]

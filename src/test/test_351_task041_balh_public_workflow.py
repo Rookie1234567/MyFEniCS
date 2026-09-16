@@ -26,6 +26,7 @@ from benchmarks.task041_balh_workflow import (
     validate_balh_producer_packet,
 )
 from benchmarks.task041_exact_side_workflow import (
+    _merge_representative_parts,
     _task041_case_contract,
     _task041_common_failure_details,
     _task041_stream_array_metadata,
@@ -2088,28 +2089,37 @@ def _write_common_layout_fixture(tmp_path: Path, mode: str = "normal"):
         "manifest_sha256": binding["packet_binding"]["packet_manifest_sha256"],
         "identity": binding["packet_binding"]["packet_identity"],
     }
-    summary["common_layout_equivalence"] = {
-        "scope": TASK041_REPRESENTATIVE_RHS_SCOPE,
-        "comparison_mode": "common_layout_equivalence",
-        "pairing_scope": "same_live_layout",
-        "status": "completed",
-        "expected_count": 8,
-        "completed_count": 8,
-        "apply_count": 16,
-        "source_manifest": {
-            "path": binding["path"],
-            "sha256": binding["sha256"],
-            "scope": TASK041_REPRESENTATIVE_RHS_SCOPE,
-        },
-        "packet_binding": copy.deepcopy(binding["packet_binding"]),
-        "entries": [
+    summary_entries = [
+        {
+            **{key: pair[key] for key in ("ordinal", "side", "branch", "audit_index", "formal_column", "branch_ordinal", "status", "scope", "comparison_mode", "pairing_scope", "run_layout_epoch", "layout_instance_id", "layout_identity_sha256")},
+            "variants": {"legacy": {}, "optimized": {}},
+        }
+        for pair in pairs
+    ]
+    common_parts = []
+    for side in ("bottom", "top"):
+        side_entries = [
+            entry for entry in summary_entries if entry["side"] == side
+        ]
+        common_parts.append(
             {
-                **{key: pair[key] for key in ("ordinal", "side", "branch", "audit_index", "formal_column", "branch_ordinal", "status", "scope", "comparison_mode", "pairing_scope", "run_layout_epoch", "layout_instance_id", "layout_identity_sha256")},
-                "variants": {"legacy": {}, "optimized": {}},
+                "scope": TASK041_REPRESENTATIVE_RHS_SCOPE,
+                "comparison_mode": "common_layout_equivalence",
+                "pairing_scope": "same_live_layout",
+                "status": "completed",
+                "source_manifest": {
+                    "path": binding["path"],
+                    "sha256": binding["sha256"],
+                    "scope": TASK041_REPRESENTATIVE_RHS_SCOPE,
+                },
+                "packet_binding": copy.deepcopy(binding["packet_binding"]),
+                "entries": side_entries,
+                "apply_count": 2 * len(side_entries),
             }
-            for pair in pairs
-        ],
-    }
+        )
+    summary["common_layout_equivalence"] = _merge_representative_parts(
+        common_parts, expected_entries
+    )
     (root / "consumer_summary.json").write_text(
         json.dumps(summary, sort_keys=True) + "\n", encoding="utf-8"
     )
@@ -2139,6 +2149,32 @@ def test_common_layout_equivalence_artifact_positive_and_recomputes(tmp_path):
         and pair["optimized_residual_norm"] <= pair["rhs_norm"] * 1.0e-2
         for pair in computed
     )
+
+
+@pytest.mark.parametrize("common_mode", [True, False])
+def test_common_layout_side_results_merge_apply_count(common_mode):
+    entries = [{"ordinal": ordinal} for ordinal in range(8)]
+    parts = []
+    for side_entries in (entries[:4], entries[4:]):
+        part = {"entries": side_entries}
+        if common_mode:
+            part.update(
+                {
+                    "comparison_mode": "common_layout_equivalence",
+                    "apply_count": 8,
+                }
+            )
+        parts.append(part)
+
+    merged = _merge_representative_parts(parts, entries)
+
+    assert [entry["ordinal"] for entry in merged["entries"]] == list(range(8))
+    assert merged["expected_count"] == 8
+    assert merged["completed_count"] == 8
+    if common_mode:
+        assert merged["apply_count"] == 16
+    else:
+        assert "apply_count" not in merged
 
 
 @pytest.mark.parametrize("mode", ["tiny", "zero"])
@@ -2248,6 +2284,7 @@ def _rewrite_common_packet_arrays(
         ("rhs", "PAIRING_SETUP_FAILURE"),
         ("missing_variant", "PAIRING_SETUP_FAILURE"),
         ("duplicate_variant", "PAIRING_SETUP_FAILURE"),
+        ("wrong_apply_count", "PAIRING_SETUP_FAILURE"),
         ("residual", "NUMERICAL_GATE_FAIL"),
         ("action", "ACTION_EQUIVALENCE_FAIL"),
     ],
@@ -2274,6 +2311,8 @@ def test_common_layout_equivalence_artifact_rejects_contract_mutations(
         rows = [json.loads(line) for line in audit_path.read_text().splitlines()]
         rows.append(copy.deepcopy(rows[0]))
         _rewrite_common_audits(root, rows)
+    elif mutation == "wrong_apply_count":
+        summary["common_layout_equivalence"]["apply_count"] = 8
     elif mutation == "residual":
         pair_rows = _common_pairs_rows(root)
         pair = pair_rows[0]
