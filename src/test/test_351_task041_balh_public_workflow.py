@@ -148,6 +148,57 @@ def test_task041_2nm_balh_case_uses_low_level_profile_without_v2_contract(tmp_pa
 
 
 @pytest.mark.parametrize(
+    ("size", "rank", "size_marker", "rank_marker"),
+    (
+        (1, 0, None, None),
+        (2, 0, None, None),
+        (1, 1, None, None),
+        (1, 0, "1", None),
+    ),
+    ids=("native-ok", "wrong-size", "wrong-rank", "outer-ompi"),
+)
+def test_task041_2nm_native_outer_identity_is_registered_and_fail_closed(
+    monkeypatch, size, rank, size_marker, rank_marker
+):
+    monkeypatch.setattr(supervisor, "_outer_mpi_size", lambda: size)
+    monkeypatch.setattr(supervisor, "_outer_mpi_rank", lambda: rank)
+    if size_marker is None:
+        monkeypatch.delenv("OMPI_COMM_WORLD_SIZE", raising=False)
+    else:
+        monkeypatch.setenv("OMPI_COMM_WORLD_SIZE", size_marker)
+    if rank_marker is None:
+        monkeypatch.delenv("OMPI_COMM_WORLD_RANK", raising=False)
+    else:
+        monkeypatch.setenv("OMPI_COMM_WORLD_RANK", rank_marker)
+
+    if size == 1 and rank == 0 and size_marker is None and rank_marker is None:
+        identity = supervisor._outer_mpi_launch_identity(
+            registered_model_id=TASK041_BALH_2NM_CANDIDATE_MODEL_ID
+        )
+        assert identity["native_public_singleton"] is True
+        assert identity["launched_via_mpiexec"] is False
+    else:
+        with pytest.raises(supervisor.Task041SupervisorError) as error:
+            supervisor._outer_mpi_launch_identity(
+                registered_model_id=TASK041_BALH_2NM_CANDIDATE_MODEL_ID
+            )
+        assert error.value.classification == "task041_identity_failure"
+        assert error.value.stage == "outer_mpi_identity"
+
+
+def test_task041_legacy_native_without_outer_mpi_is_rejected(monkeypatch):
+    monkeypatch.setattr(supervisor, "_outer_mpi_size", lambda: 1)
+    monkeypatch.setattr(supervisor, "_outer_mpi_rank", lambda: 0)
+    monkeypatch.delenv("OMPI_COMM_WORLD_SIZE", raising=False)
+    monkeypatch.delenv("OMPI_COMM_WORLD_RANK", raising=False)
+
+    with pytest.raises(supervisor.Task041SupervisorError) as error:
+        supervisor._outer_mpi_launch_identity()
+    assert error.value.classification == "task041_identity_failure"
+    assert error.value.stage == "outer_mpi_identity"
+
+
+@pytest.mark.parametrize(
     ("section", "key", "value"),
     (
         ("materials", "n_substrate", (0.99880148307, 0.000213688648)),
@@ -934,15 +985,21 @@ def test_task041_balh_public_fresh_phases_share_cumulative_budget(
         }
 
     monkeypatch.setattr(supervisor, "_run_phase", fake_run_phase)
-    monkeypatch.setattr(
-        supervisor,
-        "_outer_mpi_launch_identity",
-        lambda: {
-            "mpi_size": 1,
-            "mpi_rank": 0,
-            "markers": {"OMPI_COMM_WORLD_SIZE": "1", "OMPI_COMM_WORLD_RANK": "0"},
-        },
-    )
+    if registered_case:
+        monkeypatch.setattr(supervisor, "_outer_mpi_size", lambda: 1)
+        monkeypatch.setattr(supervisor, "_outer_mpi_rank", lambda: 0)
+        monkeypatch.delenv("OMPI_COMM_WORLD_SIZE", raising=False)
+        monkeypatch.delenv("OMPI_COMM_WORLD_RANK", raising=False)
+    else:
+        monkeypatch.setattr(
+            supervisor,
+            "_outer_mpi_launch_identity",
+            lambda: {
+                "mpi_size": 1,
+                "mpi_rank": 0,
+                "markers": {"OMPI_COMM_WORLD_SIZE": "1", "OMPI_COMM_WORLD_RANK": "0"},
+            },
+        )
     monkeypatch.setattr(
         supervisor,
         "_git_identity",

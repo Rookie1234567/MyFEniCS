@@ -1611,6 +1611,8 @@ def _outer_mpi_rank() -> int:
 
 def _outer_mpi_launch_identity(
     performance_profile: str | None = None,
+    *,
+    registered_model_id: str | None = None,
 ) -> dict[str, Any]:
     size = _outer_mpi_size()
     rank = _outer_mpi_rank()
@@ -1618,7 +1620,21 @@ def _outer_mpi_launch_identity(
         "OMPI_COMM_WORLD_SIZE": os.environ.get("OMPI_COMM_WORLD_SIZE"),
         "OMPI_COMM_WORLD_RANK": os.environ.get("OMPI_COMM_WORLD_RANK"),
     }
-    if performance_profile is not None:
+    if registered_model_id is not None:
+        if registered_model_id != TASK041_BALH_2NM_MODEL_ID:
+            raise Task041SupervisorError(
+                "native public singleton is limited to the registered 2 nm case",
+                classification="task041_identity_failure",
+                stage="outer_mpi_identity",
+            )
+        if performance_profile is not None:
+            raise Task041SupervisorError(
+                "registered 2 nm native singleton cannot use a high-level performance profile",
+                classification="task041_identity_failure",
+                stage="outer_mpi_identity",
+            )
+        native_singleton = True
+    elif performance_profile is not None:
         from benchmarks.task041_balh_workflow import (
             TASK041_SCHUR_SPEED_V2_PROFILE,
         )
@@ -1629,6 +1645,10 @@ def _outer_mpi_launch_identity(
                 classification="task041_identity_failure",
                 stage="outer_mpi_identity",
             )
+        native_singleton = True
+    else:
+        native_singleton = False
+    if native_singleton:
         failures: list[str] = []
         if size != TASK041_MPI_SIZE:
             failures.append(f"MPI.COMM_WORLD.size must be 1, got {size}")
@@ -5427,13 +5447,16 @@ def run_task041_public_supervisor(
                 classification="task041_identity_failure",
                 stage="source_identity",
             )
-        outer_mpi_identity = (
-            _outer_mpi_launch_identity(performance_profile)
-            if performance_profile is not None
-            else _outer_mpi_launch_identity()
-        )
-        outer_mpi_size = outer_mpi_identity["mpi_size"]
         identity = _validate_specification(specification, repository_root)
+        if identity["model_id"] == TASK041_BALH_2NM_MODEL_ID:
+            outer_mpi_identity = _outer_mpi_launch_identity(
+                registered_model_id=TASK041_BALH_2NM_MODEL_ID
+            )
+        elif performance_profile is not None:
+            outer_mpi_identity = _outer_mpi_launch_identity(performance_profile)
+        else:
+            outer_mpi_identity = _outer_mpi_launch_identity()
+        outer_mpi_size = outer_mpi_identity["mpi_size"]
         expected_diagnostic_output = task041_balh_diagnostic_output_enabled(
             str(identity["model_id"])
         )
