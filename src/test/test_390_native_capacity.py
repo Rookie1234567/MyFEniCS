@@ -20,6 +20,60 @@ REFERENCE_INPUT = Path('input/task39extra_para_workstation_capacity/original_13p
 FIVE_NM_INPUT = Path('input/task39extra_para_workstation_capacity/original_5nm_si_p6h4_native.dat')
 TWO_NM_INPUT = Path('input/task39extra_para_workstation_capacity/original_2nm_si_p6h1p5_native.dat')
 TWO_NM_H2_INPUT = Path('input/task39extra_para_workstation_capacity/original_2nm_si_p6h2_native.dat')
+MEASURED_INPUT = Path('input/task39extra_para_workstation_capacity/original_2nm_si_p6h1p5_measured.dat')
+
+
+def test_measured_2nm_profile_is_explicit_and_keeps_original_physics(monkeypatch):
+    from benchmarks.subreaper_watchdog import memory_envelope
+    original = load_and_resolve(TWO_NM_INPUT)
+    measured = load_and_resolve(MEASURED_INPUT)
+    assert measured.physical_model_sha256 == original.physical_model_sha256
+    assert measured.input_sha256 != original.input_sha256
+    profile = profile_facts(measured.solver['preconditioner'])
+    old = profile_facts(original.solver['preconditioner'])
+    for key in ('outer', 'balanced', 'intermediate', 'fine_auxiliary', 'structural_calls'):
+        assert profile[key] == old[key]
+    assert 'reference_memory_admission' not in old['resources']
+    assert profile['resources']['reference_memory_admission'] == 'measured_rss'
+    assert profile['resources']['absolute_cap_bytes'] == 1_537_500_000_000
+    monkeypatch.setenv('PHYSICAL_NATIVE_CAPACITY', measured.solver['preconditioner'])
+    monkeypatch.delenv('PHYSICAL_NATIVE_NODE_CAP_BYTES', raising=False)
+    monkeypatch.setattr('benchmarks.subreaper_watchdog.wsl_memory_snapshot',
+        lambda: dict(mem_total_bytes=2*1024**4, mem_available_bytes=2*1024**4))
+    monkeypatch.setattr('benchmarks.subreaper_watchdog.current_cgroup_path', lambda: None)
+    envelope = memory_envelope()
+    assert envelope['launch_cap_bytes'] == 1_537_500_000_000
+    assert envelope['reserve_bytes'] >= 256*1024**3
+
+
+def test_watchdog_stops_on_real_allocated_memory_and_clears_children(tmp_path):
+    directory, proof = tmp_path/'run', tmp_path/'pid'
+    worker = (
+        'import os,time,pathlib; '
+        f'pathlib.Path({str(proof)!r}).write_text(str(os.getpid())); '
+        'payload=bytearray(320*1024**2); time.sleep(60)')
+    monitor = f'''
+import sys,json
+from pathlib import Path
+import benchmarks.subreaper_watchdog as watchdog
+original_envelope = watchdog.memory_envelope
+def small_test_cap():
+    envelope = original_envelope()
+    envelope.update(launch_cap_bytes=256*1024**2, planning_cap_bytes=256*1024**2)
+    return envelope
+watchdog.memory_envelope = small_test_cap
+result = watchdog.supervise([sys.executable, '-c', {worker!r}], Path({str(directory)!r}),
+    wall_seconds=20, interval=.05, hard_stop_immediate=True)
+print(json.dumps(result))
+'''
+    process = subprocess.run([sys.executable, '-c', monitor], capture_output=True, text=True)
+    assert process.returncode == 0, process.stdout + process.stderr
+    summary = json.loads((directory/'summary.json').read_text())
+    assert summary['classification'] == 'RESOURCE_CONTROLLED_STOP'
+    assert summary['sampled_process_tree_rss_peak_bytes'] >= 256*1024**2
+    assert summary['descendants_cleared'] and not summary['remaining_child_pids']
+    assert 'first_SIGKILL' in summary and 'first_SIGTERM' not in summary
+    assert not Path('/proc/'+proof.read_text()).exists()
 
 
 def test_native_matched_reference_is_explicit_and_hash_bound():

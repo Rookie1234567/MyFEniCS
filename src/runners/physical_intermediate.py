@@ -252,6 +252,8 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         envelope = memory_envelope()
         if contract.get('native_capacity'):
             facts['planning_cap_bytes'] = envelope['planning_cap_bytes']
+            facts['reference_memory_admission'] = contract['resources'].get(
+                'reference_memory_admission', 'predicted_peak')
         facts['launch_cap_bytes'] = min(cap, facts['rss_bytes'] +
             envelope['effective_available_bytes']-envelope['reserve_bytes'])
         if (not facts['all_status_readable'] or facts['rss_bytes'] >= cap

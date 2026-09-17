@@ -34,3 +34,9 @@ checker no-deadline 修复提交为 `d64398cb1fecd90867071688dca94e501235cf7a`�
 | recipe/document JSON validation | PASS：记录JSON可解析、build recipe与新launcher存在、`bash -n` activation通过 | 临时 `/tmp/task39extra-pord64` 构建目录不入Git |
 | 新 PORD64 launcher Ruff | PASS：`ruff check scripts/task39extra_2nm_h1p5_pord64_launch.py` | 仅 launcher 静态检查 |
 | 既有文档合同轻检查 | **15 passed**：`.venv/bin/python -m pytest -q src/test/test_26_documentation_contract.py` | 不含 FE/MPI/全库回归 |
+
+## 2026-09-18 实测内存重启验证
+
+44 passed in 240.32s (0:04:00)。包含真实MUMPS小矩阵越过大预测值、实测内存分配超限清场、原p4和native/subreaper回归。ABI为PORD64、complex128/int64，原PETSc库hash不变。启动器完整Ruff、受影响模块严重错误规则及compileall、diff whitespace检查通过；未运行全库或CI。详细命令和日志hash见 [compact](records/2nm_h1p5_measured_retry_v1.json)。
+
+文档检查为20 passed、1 failed。唯一失败来自基线已引用但HEAD及磁盘均缺失的 `docs/task038_extra_full3d_iterative_0p7nm/outcomes/memory_first_small_v2_checker.json`；不是本轮新增路径，不伪造缺失历史证据。本轮表格Markdown和任务文档合同通过。

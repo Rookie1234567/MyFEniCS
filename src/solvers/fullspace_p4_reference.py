@@ -13,6 +13,10 @@ class ReferenceResourceBlocked(RuntimeError):
 
 def reference_budget(sample, raw_info, future_bytes, *, marker=lambda *_: None):
     """Engineering forecast, never a measured factor or strict upper bound."""
+    admission = sample.get('reference_memory_admission', 'predicted_peak')
+    if admission not in ('predicted_peak', 'measured_rss'):
+        raise ValueError(f'unknown reference memory admission: {admission}')
+    measured = admission == 'measured_rss'
     estimate_mb = int(raw_info['infog']['16'])
     if estimate_mb <= 0:
         raise ReferenceResourceBlocked('nonpositive/unavailable MUMPS estimate')
@@ -21,12 +25,15 @@ def reference_budget(sample, raw_info, future_bytes, *, marker=lambda *_: None):
     facts = dict(post_symbolic_rss_bytes=int(sample['rss_bytes']),
         symbolic_factor_estimate_padded_bytes=estimate, factor_prediction_multiplier=2,
         future_workspace_bytes=int(future_bytes), engineering_buffer_bytes=1024**3,
-        predicted_peak_bytes=predicted, launch_cap_bytes=min(int(sample['launch_cap_bytes']),
+        predicted_peak_bytes=predicted,
+        memory_admission=admission, predicted_peak_is_diagnostic_only=measured,
+        launch_cap_bytes=int(sample['launch_cap_bytes']) if measured else min(
+            int(sample['launch_cap_bytes']),
             int(sample.get('planning_cap_bytes', sample['launch_cap_bytes']))),
         classification='predicted_engineering_budget_not_upper_bound')
     marker('reference_budget_evaluated', dict(facts, numeric_called=False))
     if (not sample['all_status_readable'] or sample['swap_bytes'] != 0 or
-            predicted >= facts['launch_cap_bytes']):
+            (int(sample['rss_bytes']) if measured else predicted) >= facts['launch_cap_bytes']):
         raise ReferenceResourceBlocked(str(facts))
     return facts
 
@@ -164,9 +171,12 @@ class PhysicalP4Reference:
                                                       numeric_called=False))
             self.audit['budget'] = reference_budget(resources, raw, future, marker=marker)
             marker('reference_numeric_preflight', self.audit['budget'])
-            allowance = int((self.audit['budget']['launch_cap_bytes']-
-                self.audit['budget']['post_symbolic_rss_bytes']-future-1024**3)//1_000_000)
-            self.factor.set_memory_limit_mb(allowance)
+            if self.audit['budget']['memory_admission'] != 'measured_rss':
+                allowance = int((self.audit['budget']['launch_cap_bytes']-
+                    self.audit['budget']['post_symbolic_rss_bytes']-future-1024**3)//1_000_000)
+                self.factor.set_memory_limit_mb(allowance)
+            # In measured mode the independent parent enforces whole-tree RSS;
+            # do not impose another MUMPS limit derived from future allocations.
             self.factor.numeric(matrix)
             self.audit.update(numeric_calls=1, numeric_raw=self.factor.info((22,29)))
             sample()

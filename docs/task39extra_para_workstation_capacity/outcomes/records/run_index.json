@@ -77,7 +77,7 @@
       "input_sha256": "773b5f3ac5f3636a31209b2150c0de9109899514805db13008d35f942281ecf8",
       "physical_model_sha256": "96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d",
       "iterations": 698,
-      "true_residual": 9.986638454029182e-7,
+      "true_residual": 9.986638454029182e-07,
       "R": 0.7331834812424759,
       "T": 0.00022243948430485038,
       "A_balance": 0.26659407927321926,
@@ -117,7 +117,12 @@
       "source_sha": "9da01fb0402bc5f7da1cdaf4cc543bb53162deea",
       "input_sha256": "34f33b30463f52fd594797a4104423797c9cae44f4569ffd128037121d6c0d5f",
       "physical_model_sha256": "fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef",
-      "infog": {"1": -9999, "2": 4, "7": 4, "16": 0},
+      "infog": {
+        "1": -9999,
+        "2": 4,
+        "7": 4,
+        "16": 0
+      },
       "numeric_called": false,
       "resource_qualification": "WATCHDOG_COMPLETE_ALL_READABLE_SWAP0_DESCENDANTS_CLEARED",
       "formal_retry": "PENDING_REVIEW"
@@ -133,8 +138,18 @@
       "infog7": 4,
       "relative_true_residual": 2.922259846318588e-11,
       "formal_retry": "NOT_STARTED"
+    },
+    {
+      "stage": "2NM_H1P5_FORMAL",
+      "attempt": 3,
+      "run_id": "20260915T210201.504107Z",
+      "record": "2nm_h1p5_measured_retry_v1.json",
+      "status": "REFERENCE_RESOURCE_BLOCKED_PREDICTED_PEAK",
+      "source_sha": "2cc58bb4a76e88a35c41243f420331252a5a23eb",
+      "numeric_called": false,
+      "rss_peak_bytes": 277716156416
     }
   ],
   "R2_S5_S3_S2_G": "R2_UNRESOLVED_5NM_OWN_PASS_REFERENCE_LIMITED_RESOURCE_UNQUALIFIED_2NM_H1P5_PORD64_COMPONENT_ONLY_3NM_LOCKED",
-  "next_gate": "2NM_H1P5_FORMAL_RETRY_REVIEW_AFTER_PORD64_COMPONENT"
+  "next_gate": "USER_AUTHORIZED_MEASURED_RSS_RETRY_1537P5_DECIMAL_GB"
 }

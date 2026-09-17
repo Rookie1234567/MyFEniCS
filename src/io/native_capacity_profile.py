@@ -9,6 +9,7 @@ NATIVE_CASES = {
     'balanced_h6_p4_native_5nm': (5.0, (4.0, 3.0), None, None, None),
     'balanced_h6_p4_native_3nm': (3.0, (2.5, 2.0), 21600, 172800, 259200),
     'balanced_h6_p4_native_2nm': (2.0, (1.5, 2.0), None, None, None),
+    'balanced_h6_p4_native_2nm_measured': (2.0, (1.5,), None, None, None),
 }
 NATIVE_PROFILES = tuple(NATIVE_CASES)
 NATIVE_TIME_LIMIT_MODES = {
@@ -16,6 +17,7 @@ NATIVE_TIME_LIMIT_MODES = {
     'balanced_h6_p4_native_5nm': 'none',
     'balanced_h6_p4_native_3nm': 'bounded',
     'balanced_h6_p4_native_2nm': 'none',
+    'balanced_h6_p4_native_2nm_measured': 'none',
 }
 NATIVE_NONE_TIME_PROFILES = frozenset(
     identity for identity, mode in NATIVE_TIME_LIMIT_MODES.items() if mode == 'none'
@@ -84,6 +86,19 @@ def native_profile_facts(identity):
         'solve_seconds': solve,
         'workflow_seconds': workflow,
     }
+    if identity == 'balanced_h6_p4_native_2nm_measured':
+        # User instruction 2026-09-18: measure the whole job, do not stop on
+        # a predicted factor/workspace peak. GB here means 10**9 bytes.
+        facts['resources'].update(
+            absolute_cap_bytes=1_537_500_000_000,
+            reference_memory_admission='measured_rss',
+        )
+        facts['campaign_authorization']['memory_override'] = {
+            'source': 'user_execution_instruction_2026-09-18',
+            'whole_process_tree_rss_cap_bytes': 1_537_500_000_000,
+            'predicted_peak_is_diagnostic_only': True,
+            'system_reserve_and_zero_swap_retained': True,
+        }
     if user_material is not None:
         facts['campaign_authorization']['user_material'] = user_material
         if wavelength == 5.0:

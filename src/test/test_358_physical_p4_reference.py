@@ -8,6 +8,7 @@ from petsc4py import PETSc
 from mpi4py import MPI
 from src.solvers.fullspace_p4_reference import (
     augment_physical_volume, PhysicalP4Reference, ReferenceResourceBlocked, build_reference_matrix,
+    reference_budget,
 )
 
 
@@ -59,6 +60,60 @@ def test_reference_dat_is_opt_in_and_physics_unchanged():
     assert reference.input_sha256 != original.input_sha256
     assert reference.as_jsonable()['derived']['physical_intermediate_profile'] == profile_facts(REFERENCE_PROFILE)
     assert profile_facts(REFERENCE_PROFILE)['outer'] == profile_facts()['outer']
+
+
+def test_measured_admission_reaches_real_mumps_numeric_despite_large_forecast():
+    from src.solvers.fullspace_v17_p3_oracle import _MumpsFactor
+
+    class LargeForecastFactor(_MumpsFactor):
+        def info(self, *args, **kwargs):
+            info = super().info(*args, **kwargs)
+            # Reproduce the stopped run's forecast without a large allocation.
+            info['infog']['16'] = 1_222_577
+            return info
+
+        def set_memory_limit_mb(self, megabytes):
+            raise AssertionError('measured mode must not install a forecast-derived MUMPS limit')
+
+    a = np.array([[3, 1j], [.2, 2]], complex)
+    mat = matrix(a)
+    factor = b = x = None
+    resources = dict(rss_bytes=1_000_000, launch_cap_bytes=1024**3,
+                     planning_cap_bytes=500_000, all_status_readable=True,
+                     swap_bytes=0, reference_memory_admission='measured_rss')
+    try:
+        factor = PhysicalP4Reference(mat, None, [], fine_rows=2,
+            sample=lambda: resources, marker=lambda *_: None, factor_factory=LargeForecastFactor)
+        budget = factor.audit['budget']
+        assert budget['predicted_peak_bytes'] > budget['launch_cap_bytes']
+        assert budget['launch_cap_bytes'] == resources['launch_cap_bytes']
+        assert budget['predicted_peak_is_diagnostic_only']
+        assert factor.audit['numeric_calls'] == 1
+        assert factor.factor.symbolic_memory_settings()['icntl']['23'] == 0
+        b, x = mat.createVecRight(), mat.createVecRight()
+        b.array[:] = [1j, 2+1j]
+        factor.factor.solve_repeated(b, x)
+        assert np.linalg.norm(a @ x.array - b.array) / np.linalg.norm(b.array) < 1e-12
+    finally:
+        if x is not None: x.destroy()
+        if b is not None: b.destroy()
+        if factor is not None: factor.destroy()
+        mat.destroy()
+
+
+@pytest.mark.parametrize('override', [
+    {'rss_bytes': 1_537_500_000_000},
+    {'rss_bytes': 1_537_500_000_001},
+    {'swap_bytes': 4096},
+    {'all_status_readable': False},
+])
+def test_measured_admission_keeps_real_resource_stops(override):
+    resources = dict(rss_bytes=222_001_508_352, launch_cap_bytes=1_537_500_000_000,
+                     all_status_readable=True, swap_bytes=0,
+                     reference_memory_admission='measured_rss')
+    resources.update(override)
+    with pytest.raises(ReferenceResourceBlocked):
+        reference_budget(resources, {'infog': {'16': 1_222_577}}, 48_545_448_448)
 
 
 def test_reference_release_and_pc_provenance():

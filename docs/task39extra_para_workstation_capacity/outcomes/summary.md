@@ -1,5 +1,18 @@
 # 原生迁移与容量任务：本轮执行结果
 
+## 最新状态：2026-09-18 按实测内存重启
+
+| 项目 | 当前事实 |
+|---|---|
+| 2 nm h1.5 PORD64 run `20260915T210201.504107Z` | symbolic成功；预测峰2716.777 GB超过原门限1537.541 GB而停止；实测采样峰277.716 GB，swap0；没有numeric/outer/RTA |
+| 用户新授权 | 一次新h1.5运行，以整个任务实测RSS达到1537.5十进制GB作为停止条件；预测只记录；系统reserve、swap和监控检查保留 |
+| 实现 | 独立measured输入/profile；新profile不设置预测扣减的ICNTL(23)上限；旧profile保持原行为 |
+| 资格和运行身份 | [Response V3](../response_v3.md)、[本轮compact](records/2nm_h1p5_measured_retry_v1.json)；提交时尚未启动，实际启动身份见ignored `benchmarks/artifacts/native_capacity/measured_retry_20260918/launch_check.json` |
+| 后续监督 | 独立watchdog持续执行；按用户要求停止主动查询/通知，由用户按需询问 |
+
+以下为历史记录；不以旧文档的“待启动”状态覆盖上述终态和本次授权。
+
+
 | 范围 / 阶段 | 状态 | 主要证据 |
 |---|---|---|
 | R0 native环境与隔离 | NATIVE_ENVIRONMENT_PASS | [环境与硬件](environment_and_migration.md)、[ABI](records/native_abi.json) |

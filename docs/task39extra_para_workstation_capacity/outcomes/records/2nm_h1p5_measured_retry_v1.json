@@ -1,0 +1,158 @@
+{
+  "schema": "native-capacity.measured-memory-retry.v1",
+  "authorization": {
+    "date": "2026-09-18",
+    "rss_cap_bytes": 1537500000000,
+    "gb_unit": "decimal 10**9 bytes",
+    "prediction_diagnostic_only": true,
+    "system_reserve_and_swap_retained": true,
+    "notification_policy": "user_requests_status; no proactive polling or chat observer"
+  },
+  "previous_run": {
+    "directory": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/original_2nm_si_p6h1p5_balanced_h6_p4_native__full3d_iterative__mpi1__Mna/20260915T210201.504107Z",
+    "source_sha": "2cc58bb4a76e88a35c41243f420331252a5a23eb",
+    "status": "REFERENCE_RESOURCE_BLOCKED",
+    "exit_status": 4,
+    "elapsed_seconds": 133624.287237586,
+    "rss_peak_bytes": 277716156416,
+    "swap_peak_bytes": 0,
+    "descendants_cleared": true,
+    "end_clock": {
+      "monotonic": 1749502.688744075,
+      "boottime": 1749502.688745996,
+      "utc_ns": 1789639745748407071
+    },
+    "symbolic": {
+      "diagnostic_only": true,
+      "numeric_calls": 0,
+      "solve_calls": 0,
+      "solver_identity": "exact_augmented_A4_reference",
+      "symbolic_calls": 1,
+      "symbolic_raw": {
+        "infog": {
+          "1": 0,
+          "10": 0,
+          "11": 0,
+          "12": 0,
+          "13": 0,
+          "14": 0,
+          "15": 0,
+          "16": 1222577,
+          "17": 1222577,
+          "18": 0,
+          "19": 0,
+          "2": 0,
+          "20": -57958,
+          "22": 0,
+          "29": 0,
+          "3": -57958,
+          "4": 106135018,
+          "5": 45220,
+          "6": 81675,
+          "7": 4,
+          "8": 100,
+          "9": 0
+        },
+        "rinfog": {
+          "1": 1100362818940466.0,
+          "10": 0.0,
+          "11": 0.0,
+          "12": 0.0,
+          "13": 0.0,
+          "14": 0.0,
+          "15": 927331.612928,
+          "16": 0.0,
+          "17": 20025.390606,
+          "18": 20025.388229,
+          "19": 0.0,
+          "2": 0.0,
+          "20": 0.0,
+          "3": 0.0,
+          "4": 0.0,
+          "5": 0.0,
+          "6": 0.0,
+          "7": 0.0,
+          "8": 0.0,
+          "9": 0.0
+        }
+      }
+    },
+    "budget": {
+      "classification": "predicted_engineering_budget_not_upper_bound",
+      "engineering_buffer_bytes": 1073741824,
+      "factor_prediction_multiplier": 2,
+      "future_workspace_bytes": 48545448448,
+      "launch_cap_bytes": 1537541295924,
+      "numeric_called": false,
+      "post_symbolic_rss_bytes": 222001508352,
+      "predicted_peak_bytes": 2716776698624,
+      "symbolic_factor_estimate_padded_bytes": 1222578000000
+    },
+    "official_result": null,
+    "artifacts_sha256": {
+      "run_summary.json": "bbad81541fb7063c94010211d0d2b6d93e9398e00f4eb62de1c8af1e163d77a3",
+      "watchdog/summary.json": "3139855784ce9e35419ce49596e6cadb620b13990e3df46a6fdbd4adbbf58624",
+      "physical_intermediate_summary.json": "8e1f19870abc9009217b933e5ea27f2bb10d322c6408d459420e3e6f2f643ca0",
+      "stages.jsonl": "14071546ef8e36d888262150be9c7124ec3dda0a7d030ee2a3868959a24b12b6",
+      "watchdog/worker.log": "664e9f7083d702fd851da650a15a0ee6a9bb525337548819103768ebff3f6121"
+    }
+  },
+  "retry_preparation": {
+    "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+    "scalar": "complex128",
+    "integer": "int64",
+    "pord_bits": 64,
+    "petsc_library": "/tmp/task39extra-pord64/petsc/lib/libpetsc.so.3.19.6",
+    "petsc_sha256": "cf7fdfff5ce3b4d4ca3037eed646c21f07268483e9bd69bafef637b0e507f79d",
+    "module_paths": {
+      "petsc4py": "/tmp/task39extra-pord64/petsc/lib/petsc4py/__init__.py",
+      "dolfinx": "/tmp/task39extra_para_int64_stack/prefix/dolfinx-python/dolfinx/__init__.py",
+      "dolfinx_mpc": "/tmp/task39extra_para_int64_stack/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py",
+      "mpi4py": "/usr/lib/python3/dist-packages/mpi4py/__init__.py",
+      "slepc4py": "/usr/lib/slepc/lib/python3/dist-packages/slepc4py/__init__.py",
+      "src": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/src/__init__.py"
+    },
+    "physical_sha256": "fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef",
+    "input_sha256": "1f54c3429625eefcdc65e4ec7dec356a8475e4249fe179d1f2957381701fb76b",
+    "profile": "balanced_h6_p4_native_2nm_measured",
+    "envelope": {
+      "mem_total_bytes": 2163100413952,
+      "mem_available_bytes": 2011729670144,
+      "effective_total_bytes": 2163100413952,
+      "effective_available_bytes": 2011729670144,
+      "reserve_bytes": 324465062092,
+      "launch_cap_bytes": 1537500000000,
+      "planning_cap_bytes": 1537500000000,
+      "cgroup_limits": []
+    },
+    "threads": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1"
+    },
+    "petsc_options": {}
+  },
+  "tests": {
+    "command": "python -m pytest -q src/test/test_358_physical_p4_reference.py src/test/test_390_native_capacity.py src/test/test_354_subreaper_watchdog.py --durations=5",
+    "summary": "44 passed in 240.32s (0:04:00)",
+    "log": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/benchmarks/artifacts/native_capacity/measured_retry_20260918/pytest.log",
+    "sha256": "926fb637116d74a72e50d5a4ebb4a0a6e696cf4bfaf42c5f20f6df12271d5ae2",
+    "full_repository_tests": "not_run",
+    "ci": "not_run",
+    "initial_probe_error": "mumps_pord_intsize missing; corrected to exported mumps_pord_intsize_; no PDE started"
+  },
+  "formal_launch": "not_run_at_source_commit; consult ignored launch_check.json after launch",
+  "launch_check_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/benchmarks/artifacts/native_capacity/measured_retry_20260918/launch_check.json",
+  "input": "input/task39extra_para_workstation_capacity/original_2nm_si_p6h1p5_measured.dat",
+  "base_sha": "2cc58bb4a76e88a35c41243f420331252a5a23eb",
+  "documentation_checks": {
+    "passed": 20,
+    "failed": 1,
+    "reason": "pre-existing missing Task038-extra evidence path",
+    "missing_path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/memory_first_small_v2_checker.json",
+    "reference_present_in_base_registry": true,
+    "missing_in_base_commit": true,
+    "base_sha": "2cc58bb4a76e88a35c41243f420331252a5a23eb"
+  }
+}
