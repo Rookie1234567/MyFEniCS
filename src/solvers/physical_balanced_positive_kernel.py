@@ -138,6 +138,32 @@ def accumulate_basis_energy(
         )
 
 
+def _cell_jacobians(
+    geometry_derivatives: np.ndarray,
+    coordinates: np.ndarray,
+) -> np.ndarray:
+    """Compute geometry Jacobians after removing translation-only coordinates."""
+
+    coordinates = np.asarray(coordinates, dtype=np.float64)
+    local_coordinates = coordinates - coordinates[0]
+    return np.einsum("aqi,ib->qba", geometry_derivatives, local_coordinates)
+
+
+def _validate_affine_cell_jacobians(
+    jacobians: np.ndarray,
+) -> tuple[np.ndarray, float]:
+    """Validate affine, positively oriented cell Jacobians."""
+
+    jacobian = jacobians[0]
+    scale = max(float(np.max(np.abs(jacobian))), np.finfo(float).tiny)
+    if np.max(np.abs(jacobians - jacobian)) > 128 * np.finfo(float).eps * scale:
+        raise NotImplementedError("BAL_H requires affine geometry")
+    determinant = float(np.linalg.det(jacobian))
+    if not np.isfinite(determinant) or determinant <= 0.0:
+        raise ValueError("BAL_H requires positive finite cell Jacobians")
+    return jacobian, determinant
+
+
 class ReferenceCellBasis:
     """Reference quadrature and oriented N1curl basis tables."""
 
@@ -254,16 +280,8 @@ class PositiveCellBasis(ReferenceCellBasis):
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, tuple[float, float]]:
         mesh = self.space.mesh
         coordinates = mesh.geometry.x[mesh.geometry.dofmap[cell]]
-        jacobians = np.einsum(
-            "aqi,ib->qba", self.geometry_derivatives, coordinates
-        )
-        jacobian = jacobians[0]
-        scale = max(float(np.max(np.abs(jacobian))), np.finfo(float).tiny)
-        if np.max(np.abs(jacobians - jacobian)) > 128 * np.finfo(float).eps * scale:
-            raise NotImplementedError("BAL_H requires affine geometry")
-        determinant = float(np.linalg.det(jacobian))
-        if not np.isfinite(determinant) or determinant <= 0.0:
-            raise ValueError("BAL_H requires positive finite cell Jacobians")
+        jacobians = _cell_jacobians(self.geometry_derivatives, coordinates)
+        jacobian, determinant = _validate_affine_cell_jacobians(jacobians)
         values = np.ascontiguousarray(self.values @ np.linalg.inv(jacobian))
         curls = np.ascontiguousarray(self.curls @ jacobian.T / determinant)
         if self.space.element.needs_dof_transformations:
@@ -397,16 +415,10 @@ class IsotropicPartialAssembly:
         self.metrics = np.empty((self.cell_count, 2, 3, 3), dtype=np.float64)
         for cell in range(self.cell_count):
             coordinates = mesh.geometry.x[mesh.geometry.dofmap[cell]]
-            jacobians = np.einsum(
-                "aqi,ib->qba", self.basis.geometry_derivatives, coordinates
+            jacobians = _cell_jacobians(
+                self.basis.geometry_derivatives, coordinates
             )
-            jacobian = jacobians[0]
-            scale = max(float(np.max(np.abs(jacobian))), np.finfo(float).tiny)
-            if np.max(np.abs(jacobians - jacobian)) > 128 * np.finfo(float).eps * scale:
-                raise NotImplementedError("BAL_H requires affine geometry")
-            determinant = float(np.linalg.det(jacobian))
-            if not np.isfinite(determinant) or determinant <= 0.0:
-                raise ValueError("BAL_H requires positive finite cell Jacobians")
+            jacobian, determinant = _validate_affine_cell_jacobians(jacobians)
             inverse = np.linalg.inv(jacobian)
             self.metrics[cell, 0] = inverse @ inverse.T * determinant
             self.metrics[cell, 1] = jacobian.T @ jacobian / determinant

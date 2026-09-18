@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from types import SimpleNamespace
 
+import basix
 import dolfinx_mpc
 import numpy as np
 import pytest
@@ -16,6 +17,7 @@ from petsc4py import PETSc
 
 from src.common.config_3d import SimulationConfig3D
 from src.constraints.floquet_3d import build_double_floquet_mpc
+from src.geometry.mesh_builder_3d import _structured_hexa_mesh
 from src.solvers.physical_balanced_h6 import (
     build_balanced_h6,
     build_fixed_random_seed,
@@ -24,6 +26,9 @@ from src.solvers.physical_balanced_h6 import (
 from src.solvers.physical_balanced_mpc_action import FullspaceMpcFormAction
 from src.solvers.physical_balanced_positive_kernel import (
     IsotropicPartialAssembly,
+    PositiveCellBasis,
+    _cell_jacobians,
+    _validate_affine_cell_jacobians,
     build_quadrature_positive_diagonal,
     same_mesh_positive_form,
 )
@@ -202,6 +207,156 @@ def _closed_form_chebyshev(
         second_action.destroy()
         work.destroy()
         polynomial.destroy()
+
+
+def test_task041_affine_geometry_validation_is_translation_stable() -> None:
+    box = mesh.create_unit_cube(
+        MPI.COMM_SELF,
+        1,
+        1,
+        1,
+        cell_type=mesh.CellType.hexahedron,
+        ghost_mode=mesh.GhostMode.shared_facet,
+    )
+    coordinates = np.asarray(
+        box.geometry.x[box.geometry.dofmap[0]], dtype=np.float64
+    )
+    translated = coordinates + np.asarray([1.0e9, -2.0e9, 3.0e9])
+    geometry_element = basix.create_element(
+        basix.ElementFamily.P,
+        basix.CellType.hexahedron,
+        1,
+        basix.LagrangeVariant.equispaced,
+    )
+    points, _ = basix.make_quadrature(basix.CellType.hexahedron, 2)
+    derivatives = geometry_element.tabulate(1, points)[1:, :, :, 0]
+
+    jacobians = _cell_jacobians(derivatives, translated)
+    jacobian, determinant = _validate_affine_cell_jacobians(jacobians)
+    np.testing.assert_allclose(jacobian, np.eye(3), rtol=0.0, atol=1.0e-14)
+    assert determinant > 0.0
+
+    non_affine = translated.copy()
+    non_affine[6, 2] += 0.125
+    with pytest.raises(NotImplementedError, match="affine geometry"):
+        _validate_affine_cell_jacobians(
+            _cell_jacobians(derivatives, non_affine)
+        )
+
+    reflected = translated.copy()
+    reflected[:, 0] = 1.0e9 - (reflected[:, 0] - 1.0e9)
+    with pytest.raises(ValueError, match="positive finite"):
+        _validate_affine_cell_jacobians(
+            _cell_jacobians(derivatives, reflected)
+        )
+
+
+    zero_jacobians = np.zeros_like(jacobians)
+    with pytest.raises(ValueError, match="positive finite"):
+        _validate_affine_cell_jacobians(zero_jacobians)
+    nonfinite_jacobians = jacobians.copy()
+    nonfinite_jacobians[0, 0, 0] = np.nan
+    with pytest.raises(ValueError, match="positive finite"):
+        _validate_affine_cell_jacobians(nonfinite_jacobians)
+
+
+def test_task041_positive_cell_basis_handles_top_translation_and_rejects_nonaffine():
+    x_values = np.asarray([0.0, 1.5], dtype=default_real_type)
+    y_values = np.asarray([0.0, 25.0 / 17.0], dtype=default_real_type)
+    top_z_values = np.asarray([111.0, 112.5], dtype=default_real_type)
+    reference_z_values = np.asarray([0.0, 1.5], dtype=default_real_type)
+
+    def make_basis(z_values):
+        local_mesh = _structured_hexa_mesh(
+            MPI.COMM_SELF, x_values, y_values, z_values
+        )
+        space = fem.functionspace(
+            local_mesh,
+            element(
+                "N1curl",
+                local_mesh.basix_cell(),
+                6,
+                dtype=default_real_type,
+            ),
+        )
+        coefficient_space = fem.functionspace(local_mesh, ("DG", 0))
+        mu = fem.Function(coefficient_space)
+        mass = fem.Function(coefficient_space)
+        mu.x.array[:] = 2.0
+        mass.x.array[:] = 3.0
+        basis = PositiveCellBasis(space, mu, mass, action_rule=False)
+        local_mesh.topology.create_entity_permutations()
+        permutation = int(local_mesh.topology.get_cell_permutation_info()[0])
+        return local_mesh, space, mu, mass, basis, permutation
+
+    (
+        reference_mesh,
+        reference_space,
+        reference_mu,
+        reference_mass,
+        reference_basis,
+        reference_permutation,
+    ) = make_basis(reference_z_values)
+    (
+        top_mesh,
+        top_space,
+        top_mu,
+        top_mass,
+        top_basis,
+        top_permutation,
+    ) = make_basis(top_z_values)
+    try:
+        top_coordinates = np.asarray(
+            top_mesh.geometry.x[top_mesh.geometry.dofmap[0]], dtype=np.float64
+        )
+        assert np.min(top_coordinates[:, 2]) == 111.0
+        assert np.max(top_coordinates[:, 2]) == 112.5
+        assert np.max(top_coordinates[:, 0]) == 1.5
+        assert np.max(top_coordinates[:, 1]) == 25.0 / 17.0
+
+        reference_values, reference_curls, reference_weights, reference_coefficients = (
+            reference_basis.cell(0, reference_permutation)
+        )
+        top_values, top_curls, top_weights, top_coefficients = top_basis.cell(
+            0, top_permutation
+        )
+        np.testing.assert_allclose(top_values, reference_values, rtol=1.0e-13, atol=1.0e-13)
+        np.testing.assert_allclose(top_curls, reference_curls, rtol=1.0e-13, atol=1.0e-13)
+        np.testing.assert_allclose(top_weights, reference_weights, rtol=1.0e-13, atol=1.0e-13)
+        assert top_coefficients == reference_coefficients == (2.0, 3.0)
+
+        reference_packed = IsotropicPartialAssembly(
+            reference_space,
+            reference_mu,
+            reference_mass,
+            contiguous_work=True,
+        )
+        top_packed = IsotropicPartialAssembly(
+            top_space,
+            top_mu,
+            top_mass,
+            contiguous_work=True,
+        )
+        np.testing.assert_allclose(
+            top_packed.metrics,
+            reference_packed.metrics,
+            rtol=1.0e-13,
+            atol=1.0e-13,
+        )
+
+        top_cell_dofs = np.asarray(top_mesh.geometry.dofmap[0], dtype=np.int64)
+        top_mesh.geometry.x[top_cell_dofs[6], 2] += 0.125
+        with pytest.raises(NotImplementedError, match="affine geometry"):
+            top_basis.cell(0, top_permutation)
+        with pytest.raises(NotImplementedError, match="affine geometry"):
+            IsotropicPartialAssembly(
+                top_space,
+                top_mu,
+                top_mass,
+                contiguous_work=True,
+            )
+    finally:
+        del top_basis, reference_basis, top_mesh, reference_mesh
 
 
 @pytest.fixture(scope="module")
