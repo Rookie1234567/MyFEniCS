@@ -227,3 +227,11 @@ research-only、do-not-merge 依赖组说明，负结果文档/compact 保留，
 
 <!-- r4b-final-metadata -->
 最终 compact：[task041_setup_recovery_v3.json](records/task041_setup_recovery_v3.json)，153382 B，SHA256 `7f5d84e6a2a9a6809d9438bbb6e9444a4ffead9d6272728b394d3346401852df`；R4b 仅完成文档检查，未新增计算。
+
+## 2026-09-18：BAL-H 几何谓词修复与 D1e 准备（Response V6）
+
+旧 D1d 在 top side 几何构造阶段因绝对坐标差的浮点抵消误判 affine，触发 `BAL_H requires affine geometry`；该失败不是 solver、内存、swap 或 MPI 失败。修复提交 `8ad30732a2753b902f5722c6e7c7647365ab0744` 已推送：两条几何使用路径均先减首节点坐标再 contraction，保留 `128*eps*scale` 与有限正 determinant 门。
+
+修复后的 native serial targeted test 为 3 passed，MPI2 为每 rank 3 passed；Ruff check、compileall、diff check 通过，format check 未通过且本轮未扩大 format-only 改动。源码/测试身份和重建复现脚本均记录在 D1e evidence index；旧 D1d 记录保留且不宣称 solver pass。D1e 继续使用 fresh QEP、2nm/p6/h1.5/M1200/MPI8/CPU1--8/math threads1、旧 D1c ledger continuity 和新的实测内存/swap 门。
+
+截至该版，D1e 未 dispatch，fresh QEP 未启动；文档提交后需以最终 source SHA 更新配置、重新做一次 fresh preflight，再按条件批准的精确 argv 单次启动。CPU23 邻项目的真实 worker `402163`/父 `402153` 仅允许在 CPU23、`VmSwap=0`，属于受保护独立作业。
