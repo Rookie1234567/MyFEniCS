@@ -1,0 +1,238 @@
+{
+  "schema": "task039extra.v22.dual-condensed-capacity.compact.v1",
+  "record_id": "review_v22_original_b_capacity_trial",
+  "stage": "Z3_ORIGINAL_H7P5",
+  "status": "B_NUMERIC_COMPLETED_CONTINUATION_CAPACITY_CONTROLLED_STOP",
+  "official_result": false,
+  "authority": "CAPACITY_EVIDENCE_VALID_AUTHORITY_LIMITED",
+  "source_identity": {
+    "formal_run_source_sha": "57d1f601119900a52b7aa574fd4df557cfe0aa6c",
+    "base_sha": "644423fb0901579e89675610789bf4d5aad93761",
+    "checker_fix_path": "benchmarks/check_dual_condensed_robustness_v21.py",
+    "checker_fix_worktree_file_sha256": "3a4ab15fb39789689aa1d00cdaf21b51478d57b810fb78ec5fd3344426c52ce4",
+    "checker_fix_commit_sha": "cf9f2346c400612e41926e0b21b7946e9a5e6715",
+    "checker_tracked_record": "docs/task039_extra_physical_multilevel/outcomes/records/dual_condensed_capacity_v22_checker.json",
+    "checker_tracked_record_sha256": "96febe318344b0ae13d64a0840d4ef47944e4258b85a700b2bbb94d416b75cc7",
+    "identity_note": "The formal run is bound to 57d1f60; the checker-only fix is committed separately at cf9f234 and does not replace the formal run source."
+  },
+  "run_identity": {
+    "profile": "physical_p6_trace_p4_condensed_capacity_v22",
+    "input": "input/task39extra/v22_b_capacity_original_h7p5.dat",
+    "input_sha256": "10ce9badc8da126ccbd2585d24f4d5ceb395ed4a14ac9fa6e29cf95bc4899705",
+    "physical_model_sha256": "d8c5abb837adda92ea86e257cff9e2ff01ccf466879b08a2cde9a071e1d1d036",
+    "resolved_config_sha256": "4cc7fdc15789f57ade656f0a8ab8eb0f489ffb3c44d774b72580fab3550a4906",
+    "run_manifest_sha256": "33d37e7ca02684b9ba22e72769ed975e4394d3a70736478241032addb8f853f4",
+    "run_root": "results/euv_grazing1_phi0/task39extra_v22_b_capacity_original_h7p5__full3d_iterative__mpi1__Mna/20260919T174436.599741Z",
+    "time_policy": "observe_only",
+    "mpi_size": 1
+  },
+  "numeric_vs_solve": {
+    "native_infog1": 0,
+    "numeric_call_returned": true,
+    "numeric_completed": true,
+    "numeric_seconds": 217.1021214370012,
+    "factor_solve_calls_at_factorization": 0,
+    "actual_factor_entries_infog9": 221594144,
+    "actual_factor_entries_infog29": 221594144,
+    "p4_matrix_nz_allocated": 45403840,
+    "p4_matrix_nz_used": 32320342,
+    "outer_solve": "not_run",
+    "residual": "not_run",
+    "full_field_packet": "not_saved",
+    "meaning": "INFOG1=0 and native numeric completion do not imply the complete B solve or physical pass; continuation was stopped before H6/p6/outer solve."
+  },
+  "capacity_and_resources": {
+    "caps_bytes": {
+      "tree": 8589934592,
+      "inventory": 6442450944,
+      "workspace_pool": 1073741824
+    },
+    "predicted_numeric": {
+      "frozen_icntl23_mb": 4687,
+      "requested_icntl23_mb": 4687,
+      "readback_icntl23_mb": 4687,
+      "old_v11_infog16_mb": 5060,
+      "old_v11_infog17_mb": 5060,
+      "old_v11_request_mb": 10131,
+      "numeric_raw_headroom_bytes": 4687335424,
+      "numeric_safe_factor_bytes": 4687335423,
+      "future_inventory_bytes": 763172216,
+      "future_workspace_peak_bytes": 1070871176,
+      "continuation_max_allocated_bytes": 3857054344
+    },
+    "native_upper_bounds_bytes": {
+      "infog19_mb": 4687,
+      "infog22_mb": 4326,
+      "allocated": 4688000000,
+      "used": 4327000000,
+      "allocated_excess_over_continuation_ceiling": 830945656
+    },
+    "actual_resources_bytes": {
+      "watchdog_process_tree_rss_peak": 6913208320,
+      "watchdog_process_tree_pss_peak": 6879968256,
+      "numeric_observer_rss": 6913241088,
+      "numeric_observer_inventory": 1136131046,
+      "numeric_observer_workspace_live": 67108864,
+      "swap_peak": 0,
+      "numeric_observer_inventory_scope": "callback-time inventory before factor registration; not a complete post-numeric resident inventory; native factor allocated upper is separate"
+    },
+    "stop_reason": "frozen continuation allocated ceiling, not RSS tree-cap exhaustion and not a MUMPS -9/-19 failure",
+    "mumps_capacity_failure": false,
+    "used_did_not_bypass_allocated_gate": true,
+    "watchdog_stage_aggregation": {
+      "workflow": {
+        "sample_count": 1890,
+        "rss_peak_bytes": 6913208320,
+        "pss_peak_bytes": 6879968256,
+        "duration_basis": "watchdog top-level stage; all rows are workflow rows, so phase timing is taken from worker_phase.phase_started_clock.monotonic"
+      },
+      "phase_sequence": ["preflight", "setup", "assembly", "factor", "cleanup"],
+      "worker_phase_samples_with_named_phase": 1886,
+      "workflow_rows_without_named_worker_phase": 4,
+      "worker_phase_aggregation": {
+        "preflight": {
+          "sample_count": 18,
+          "phase_started_monotonic": 12034.46641306,
+          "duration_seconds": 4.546213274001275,
+          "duration_basis": "next phase_started_clock.monotonic",
+          "rss_peak_bytes": 428781568,
+          "pss_peak_bytes": 396898304
+        },
+        "setup": {
+          "sample_count": 924,
+          "phase_started_monotonic": 12039.012626334,
+          "duration_seconds": 238.1087810299996,
+          "duration_basis": "next phase_started_clock.monotonic",
+          "rss_peak_bytes": 3325509632,
+          "pss_peak_bytes": 3288349696
+        },
+        "assembly": {
+          "sample_count": 110,
+          "phase_started_monotonic": 12277.121407364,
+          "duration_seconds": 28.39934371599884,
+          "duration_basis": "next phase_started_clock.monotonic",
+          "rss_peak_bytes": 2377670656,
+          "pss_peak_bytes": 2344448000
+        },
+        "factor": {
+          "sample_count": 818,
+          "phase_started_monotonic": 12305.52075108,
+          "duration_seconds": 217.8001403520011,
+          "duration_basis": "next phase_started_clock.monotonic",
+          "rss_peak_bytes": 6913208320,
+          "pss_peak_bytes": 6879968256
+        },
+        "cleanup": {
+          "sample_count": 16,
+          "phase_started_monotonic": 12523.320891432,
+          "duration_seconds": 4.046380408999539,
+          "duration_basis": "last watchdog sample parent_clock.monotonic=12527.367271841; includes process-exit cleanup",
+          "rss_peak_bytes": 6880735232,
+          "pss_peak_bytes": 6847495168
+        }
+      },
+      "compiler_descendant_filtered": {
+        "sample_count": 300,
+        "phase": "setup",
+        "rss_peak_bytes": 3325509632,
+        "pss_peak_bytes": 3288349696,
+        "scope": "watchdog workflow samples with compiler_descendant_count>0; not an all-process compiler RSS measurement"
+      }
+    }
+  },
+  "raw_classifications": {
+    "worker_summary": {
+      "status": "CONTROLLED_STOP",
+      "result_classification": "RESOURCE_CONTROLLED_STOP"
+    },
+    "parent_run_summary": {
+      "status": "finished",
+      "result_classification": "WORKER_FAILED",
+      "exit_status": 4
+    },
+    "independent_checker_after_fix": {
+      "status": "PASS",
+      "classification": "CAPACITY_EVIDENCE_VALID_AUTHORITY_LIMITED",
+      "physics_status": "UNKNOWN_CONTROLLED_RESOURCE_STOP",
+      "evidence_valid": true,
+      "full_numerical_pass": false,
+      "stage_pass": false,
+      "official_result": false
+    }
+  },
+  "identity_and_unknowns": {
+    "matrix_before_sha256": "857bc8bb5f04b28a55283fb960a2b695e1078983e55ff151687780de5dab8ee0",
+    "matrix_after": null,
+    "matrix_after_status": "pending_post_factor_hash; gate stopped before fresh after hash",
+    "A6": "not_run_in_this_B_trial; historical A evidence remains separate",
+    "physical_outputs": "not_run",
+    "full_B": "not_run",
+    "C": "not_run",
+    "history_note": "No missing post-factor hash, residual, field, A6 or physical result is converted to zero or PASS."
+  },
+  "time_accounting": {
+    "numeric_factor_seconds": 217.1021214370012,
+    "full_workflow_monotonic_seconds": 493.84353463599837,
+    "v22_ledger_elapsed_seconds": 538.0163161130178,
+    "old_v21_predecessor_ledger_elapsed_seconds": 1884.4679552510706,
+    "known_v21_plus_v22_ledger_elapsed_seconds": 2422.4842713640884,
+    "engineering_time_seconds": "unknown; not independently measured",
+    "time_semantics": "Formal setup is included in the full workflow and V22 ledger. Only external engineering repair and checker time is separate; it was not independently measured and is unknown. The known V21+V22 ledger sum is not monotonic time or all-history time."
+  },
+  "jit": {
+    "policy_selected": "v21_reuse_all_qualified",
+    "compiler_events": 11,
+    "cache_hits": 0,
+    "cache_misses": 11,
+    "compiler_elapsed_seconds": 101.78435976599758,
+    "hardlinked_eligible_files": 60,
+    "eligible_bytes": 780416846,
+    "source_cache_untouched": true,
+    "cost_note": "Reuse was selected but not achieved in the recorded FFCX events; the compilation cost is retained, not hidden. No more specific cache-key miss cause was saved.",
+    "time_note": "Compiler elapsed is nested in the full workflow and must not be added to total time."
+  },
+  "cleanup": {
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "global_swap_delta_pages": {"pswpin_pages": 0, "pswpout_pages": 0},
+    "swap_used_bytes": 0
+  },
+  "checker_history": {
+    "initial_output_preserved_separately": false,
+    "initial_failures": ["continuation_gate_recomputed", "controlled_stop_classification"],
+    "initial_output_note": "The initial checker JSON was overwritten by the corrected rerun; no synthetic original snapshot or hash is claimed.",
+    "producer_field_fix": "v22_continuation_allocated_gate_failed.facts.native_used_upper_bytes",
+    "checker_output_sha256": "96febe318344b0ae13d64a0840d4ef47944e4258b85a700b2bbb94d416b75cc7",
+    "targeted_tests": "src/test/test_task39extra_v22_checker.py: 6 passed",
+    "compile_and_diffcheck": "compileall passed; git diff --check passed"
+  },
+  "ledger": {
+    "batch_identity": "review_v22_original_b_capacity_trial",
+    "sha256": "0363e2230192dd3815653643852192e12cbeb666056d0b786b38f6edeb8f45b9",
+    "fresh_worker_count": 1,
+    "attempt_count": 1,
+    "active_attempt": null,
+    "predecessor_v21_sha256": "4448834859fd65e0ffe3d485b7d5d91a24d258e9970045daa28f90b88f10571f",
+    "old_v21_ledger_unchanged": true
+  },
+  "raw_evidence_index": {
+    "run_manifest": {"path": "results/euv_grazing1_phi0/task39extra_v22_b_capacity_original_h7p5__full3d_iterative__mpi1__Mna/20260919T174436.599741Z/run_manifest.json", "sha256": "33d37e7ca02684b9ba22e72769ed975e4394d3a70736478241032addb8f853f4"},
+    "run_summary": {"path": "results/euv_grazing1_phi0/task39extra_v22_b_capacity_original_h7p5__full3d_iterative__mpi1__Mna/20260919T174436.599741Z/run_summary.json", "sha256": "355b7e12e4a9a6de7e394394a8f85a5e64acc63c0086157a15e9ae8bc8a5d7f9"},
+    "worker_summary": {"path": "results/euv_grazing1_phi0/task39extra_v22_b_capacity_original_h7p5__full3d_iterative__mpi1__Mna/20260919T174436.599741Z/physical_dual_condensed_capacity_v22_summary.json", "sha256": "f00b5b439045b6e7ba903904ca5afddc5e5f379ebc6f0b4d142618e5bcdacd90"},
+    "native_facts": {"path": "results/euv_grazing1_phi0/task39extra_v22_b_capacity_original_h7p5__full3d_iterative__mpi1__Mna/20260919T174436.599741Z/v22_numeric_native_facts.json", "sha256": "f24682e8b994ce02980a3fcd835e41153111c9fbdedbed4274c24283af690e78"},
+    "numeric_observation": {"path": "results/euv_grazing1_phi0/task39extra_v22_b_capacity_original_h7p5__full3d_iterative__mpi1__Mna/20260919T174436.599741Z/v22_numeric_observation.json", "sha256": "c75635370a18fb9918206d9e9a8687809417d85cf5ecac9f8ca07a51e307364f"},
+    "capacity_context": {"path": "results/euv_grazing1_phi0/task39extra_v22_b_capacity_original_h7p5__full3d_iterative__mpi1__Mna/20260919T174436.599741Z/v22_capacity_context.json", "sha256": "81cd6518f3c480ba7ee45f4d9a87b046d9300519ef64566879626da7d7d29d13"},
+    "events": {"path": "results/euv_grazing1_phi0/task39extra_v22_b_capacity_original_h7p5__full3d_iterative__mpi1__Mna/20260919T174436.599741Z/v22_events.jsonl", "sha256": "46b11e6658f7fc541d91fa69c296753886c9c2579cba8531209beee06fedbb58"},
+    "worker_resources": {"path": "results/euv_grazing1_phi0/task39extra_v22_b_capacity_original_h7p5__full3d_iterative__mpi1__Mna/20260919T174436.599741Z/v22_worker_resources.jsonl", "sha256": "1e17fb596bafe36ca3b939353b851e98268e6853e15dc8ef630e22e620cd3886"},
+    "watchdog_resources": {"path": "results/euv_grazing1_phi0/task39extra_v22_b_capacity_original_h7p5__full3d_iterative__mpi1__Mna/20260919T174436.599741Z/watchdog/resources.jsonl", "sha256": "acb005785862ced370470579e9bdb907bf1a32e6409c49b2515141697300000d"},
+    "v22_ledger": {"path": "benchmarks/artifacts/task39extra/dual_condensed_capacity_v22/review_v22_original_b_capacity_trial/shared_workflow_ledger.json", "sha256": "0363e2230192dd3815653643852192e12cbeb666056d0b786b38f6edeb8f45b9"},
+    "tracked_checker_copy": {"path": "docs/task039_extra_physical_multilevel/outcomes/records/dual_condensed_capacity_v22_checker.json", "sha256": "96febe318344b0ae13d64a0840d4ef47944e4258b85a700b2bbb94d416b75cc7"}
+  },
+  "scope": {
+    "A_run": false,
+    "C_run": false,
+    "replay": false,
+    "raw_evidence_rewritten": false,
+    "response_v23_and_incremental_summary": "AWAITING_CHATGPT_REVIEW; no merge; no new PDE"
+  }
+}

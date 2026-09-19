@@ -1,3 +1,15 @@
+## V23 增量：一次 original-B 容量试验（待 ChatGPT 审阅）
+
+| 项目 | 本批事实 |
+|---|---|
+| 范围与身份 | 新增独立 V22 profile、冻结有限额度，并完成一次 `Z3_ORIGINAL_H7P5` original B；formal source=`57d1f601119900a52b7aa574fd4df557cfe0aa6c`，checker 修复=`cf9f2346c400612e41926e0b21b7946e9a5e6715` |
+| 数值与停止 | `INFOG(1)=0`、实际因子条目=`221594144`；numeric 成功不等于完整求解通过，因 allocated continuation ceiling 受控停止（不是 RSS 超限或 MUMPS `-9/-19`） |
+| 三层分类 | worker=`CONTROLLED_STOP/RESOURCE_CONTROLLED_STOP`；parent=`WORKER_FAILED`；独立 checker=`CAPACITY_EVIDENCE_VALID_AUTHORITY_LIMITED`，physics/official result 未通过 |
+| 资源与时间 | tree RSS peak=`6913208320 B`，swap=`0`、清场完成；numeric=`217.1021214370012 s`，full workflow=`493.84353463599837 s`，V22 ledger=`538.0163161130178 s`，已知 V21+V22 ledger=`2422.4842713640884 s`；setup 已含在正式 workflow/ledger，外部修复与 checker 时间 unknown |
+| 边界 | A6、outer residual、完整 B/物理场、C 未运行；JIT `11 miss/0 hit`，编译 elapsed=`101.78435976599758 s`，嵌套于全流程 |
+
+机器可读入口：[V23 response](../response_v23.md)、[V22 compact](records/dual_condensed_capacity_v22_compact.json)、[V22 decision](records/dual_condensed_capacity_v22_decision.json)、[tracked checker evidence](records/dual_condensed_capacity_v22_checker.json)。阶段 RSS/单调时差、compiler-descendant 筛选和 raw SHA 索引在 compact；正式状态为 `AWAITING_CHATGPT_REVIEW`、`no merge`、`no new PDE`。
+
 # Task39extra 当前汇总：Review V21 / Response V22 Z5 四模型收口
 
 Z5 是一个聚合账本，不是一次新的 PDE 重跑：O10 只读复用，A 完成正式非可分 h10，B 在 h7.5 全局 p4 trace 因子的 symbolic-after/numeric-before 容量 Gate 前受控停止，C 因 B 的适用前置条件失败而未启动。Z1 base=`f9e16c21b936673b5a2dadcf52d2c344e61aabe8`；B formal run source/current pre-Z5 HEAD=`f8d0fbf3da48fd3cbe5cc3a226dbff3feb1d9b48`；A formal solver source=`863ec3bcd7eead867795284db11fc39e758a6f08`。ordinary default 不变，master merge 未批准。

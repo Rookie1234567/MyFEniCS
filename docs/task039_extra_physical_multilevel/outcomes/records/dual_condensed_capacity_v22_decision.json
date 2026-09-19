@@ -1,0 +1,45 @@
+{
+  "schema": "task039extra.v22.dual-condensed-capacity.decision.v1",
+  "decision_id": "review_v22_original_b_capacity_trial_closeout",
+  "status": "AWAITING_CHATGPT_REVIEW",
+  "source": {
+    "formal_run_source_sha": "57d1f601119900a52b7aa574fd4df557cfe0aa6c",
+    "checker_fix_commit_sha": "cf9f2346c400612e41926e0b21b7946e9a5e6715",
+    "checker_fix_file": "benchmarks/check_dual_condensed_robustness_v21.py",
+    "checker_fix_file_sha256": "3a4ab15fb39789689aa1d00cdaf21b51478d57b810fb78ec5fd3344426c52ce4",
+    "formal_run_source_unchanged": true
+  },
+  "decision": {
+    "formal_B_result": "CAPACITY_EVIDENCE_VALID_AUTHORITY_LIMITED",
+    "official_result": false,
+    "numeric_interpretation": "native numeric factor call completed with INFOG1=0; this is not a complete solve or physical pass",
+    "stop_interpretation": "continuation stopped because allocated upper 4688000000 B exceeded frozen ceiling 3857054344 B",
+    "not_rss_stop": true,
+    "not_mumps_failure": true,
+    "physical_pass": false,
+    "master_merge": "NO_MERGE",
+    "new_pde": false
+  },
+  "raw_layer_preservation": {
+    "worker": "CONTROLLED_STOP / RESOURCE_CONTROLLED_STOP",
+    "parent": "finished / WORKER_FAILED / exit_status=4",
+    "checker": "CAPACITY_EVIDENCE_VALID_AUTHORITY_LIMITED",
+    "old_v21_ledger_sha256": "4448834859fd65e0ffe3d485b7d5d91a24d258e9970045daa28f90b88f10571f",
+    "old_history_changed": false
+  },
+  "not_run_or_unknown": [
+    "A6 for this B trial",
+    "post-factor matrix identity hash",
+    "outer KSP and residual",
+    "H6/p6/full B field packet and physics",
+    "C trial"
+  ],
+  "evidence": {
+    "compact": "docs/task039_extra_physical_multilevel/outcomes/records/dual_condensed_capacity_v22_compact.json",
+    "result_ready": "benchmarks/artifacts/task39extra/b_capacity_v22/root_engineering/luna_b_result_ready.json",
+    "checker": "docs/task039_extra_physical_multilevel/outcomes/records/dual_condensed_capacity_v22_checker.json",
+    "checker_sha256": "96febe318344b0ae13d64a0840d4ef47944e4258b85a700b2bbb94d416b75cc7",
+    "targeted_checker_tests": "6 passed; no expanded suite"
+  },
+  "next_action": "Await ChatGPT review; do not merge, rerun PDE, raise caps, alter raw evidence, or create a new platform."
+}
