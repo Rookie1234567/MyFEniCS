@@ -95,7 +95,7 @@ def _capacity_run(tmp_path: Path):
             "timestamp_ns": 5,
             "facts": {
                 "allocated_upper_bytes": (allocated_mb + 1) * 1_000_000,
-                "used_upper_bytes": (used_mb + 1) * 1_000_000,
+                "native_used_upper_bytes": (used_mb + 1) * 1_000_000,
                 "continuation_max_allocated_bytes": budget[
                     "continuation_max_allocated_bytes"
                 ],
@@ -234,6 +234,13 @@ def test_v22_capacity_wrapper_accepts_dynamic_cap_and_keeps_physics_unknown(tmp_
     assert result["capacity_evidence"]["native_used_upper_bytes"] < result[
         "capacity_evidence"
     ]["native_allocated_upper_bytes"]
+    assert result["capacity_evidence"]["checks"][
+        "continuation_gate_recomputed"
+    ] is True
+    assert result["capacity_evidence"]["checks"][
+        "controlled_stop_classification"
+    ] is True
+    assert result["capacity_evidence"]["capacity_stop_evidence"] is True
 
 
 def test_v22_capacity_checker_rejects_request_readback_tamper_against_budget(tmp_path):

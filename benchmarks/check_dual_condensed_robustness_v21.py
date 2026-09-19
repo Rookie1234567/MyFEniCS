@@ -1445,7 +1445,7 @@ def _v22_capacity_evidence_facts(
                     )
                     == continuation_limit
                     and continuation_gate_rows[0].get("facts", {}).get(
-                        "used_upper_bytes"
+                        "native_used_upper_bytes"
                     )
                     == (int(infog.get("22", -1)) + 1) * 1_000_000
                     and str(summary.get("status")) == "CONTROLLED_STOP"
