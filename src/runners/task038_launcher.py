@@ -310,6 +310,20 @@ def _dual_condensed_robustness_v21_shared_ledger_path(repo_root: Path) -> Path:
     )
 
 
+def _dual_condensed_capacity_v22_shared_ledger_path(repo_root: Path) -> Path:
+    """Return the independent, single-original-B V22 capacity ledger."""
+
+    return (
+        repo_root
+        / "benchmarks"
+        / "artifacts"
+        / "task39extra"
+        / "dual_condensed_capacity_v22"
+        / "review_v22_original_b_capacity_trial"
+        / "shared_workflow_ledger.json"
+    )
+
+
 def _validate_v17_t2_prerequisite(ledger: Mapping[str, Any]) -> dict[str, Any]:
     """Require a settled, hash-bound T1 checker decision before T2 launch."""
 
@@ -1058,6 +1072,11 @@ def _reserve_blr_stage_from_ledger(
     replay = False
     replay_evidence = None
     if attempts:
+        if bug_replay_limit == 0:
+            raise InputError(
+                f"{error_prefix} BLR stage {stage} permits one attempt; "
+                "automatic and bug replay are disabled"
+            )
         if len(attempts) >= bug_replay_limit + 1:
             raise InputError(f"{error_prefix} BLR stage {stage} has exhausted its one repair replay")
         previous = attempts[-1]
@@ -1708,6 +1727,146 @@ V21_PREDECESSOR_V20_LEDGER_SHA256 = (
 )
 V21_CHECKER_SCHEMA = "task039extra.v21.authority-checker.v1"
 V21_CHECKER_FILENAME = "v21_checker_result.json"
+V22_BATCH_IDENTITY = "review_v22_original_b_capacity_trial"
+V22_STAGE = "Z3_ORIGINAL_H7P5"
+V22_LEDGER_SCHEMA = "task039extra.v22.shared-workflow-ledger.v1"
+V22_SUMMARY_FILENAME = "physical_dual_condensed_capacity_v22_summary.json"
+V22_PREDECESSOR_V21_LEDGER_SHA256 = (
+    "4448834859fd65e0ffe3d485b7d5d91a24d258e9970045daa28f90b88f10571f"
+)
+
+
+def _read_only_v21_ledger_reference(repo_root: Path) -> dict[str, Any]:
+    """Capture the complete V21 ledger as immutable V22 predecessor evidence."""
+
+    predecessor_path = _dual_condensed_robustness_v21_shared_ledger_path(repo_root)
+    try:
+        predecessor_bytes = predecessor_path.read_bytes()
+        predecessor = json.loads(predecessor_bytes.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise InputError("V22 requires the readable accepted V21 ledger") from exc
+    if predecessor.get("batch_identity") != "review_v21_dual_condensed_geometry_h7p5":
+        raise InputError("V22 predecessor V21 ledger identity changed")
+    predecessor_sha = hashlib.sha256(predecessor_bytes).hexdigest()
+    if predecessor_sha != V22_PREDECESSOR_V21_LEDGER_SHA256:
+        raise InputError("V22 predecessor V21 ledger hash changed")
+
+    unknown_elapsed_attempts: list[dict[str, Any]] = []
+    stages = predecessor.get("stages", {})
+    if isinstance(stages, Mapping):
+        for historical_stage, stage_record in stages.items():
+            if not isinstance(stage_record, Mapping):
+                continue
+            attempts = stage_record.get("attempts", [])
+            if not isinstance(attempts, list):
+                continue
+            for attempt_index, attempt in enumerate(attempts):
+                if not isinstance(attempt, Mapping):
+                    continue
+                if (
+                    attempt.get("actual_elapsed_seconds") is None
+                    and attempt.get("settled_seconds") is None
+                ):
+                    unknown_elapsed_attempts.append(
+                        {
+                            "stage": str(historical_stage),
+                            "attempt_index": int(attempt_index),
+                            "status": attempt.get("status"),
+                            "reserved_seconds": attempt.get("reserved_seconds"),
+                        }
+                    )
+
+    return {
+        "read_only": True,
+        "required_for_new_budget": False,
+        "path": str(predecessor_path),
+        "sha256": predecessor_sha,
+        "bytes": len(predecessor_bytes),
+        "batch_identity": predecessor.get("batch_identity"),
+        "schema": predecessor.get("schema"),
+        "measured_elapsed_seconds": predecessor.get("elapsed_seconds"),
+        "effective_budget_snapshot": read_v14_effective_budget(predecessor),
+        "policy_debits": deepcopy(predecessor.get("policy_debits", [])),
+        "unknown_elapsed_attempts": unknown_elapsed_attempts,
+        "unknown_elapsed_is_not_new_measurement": True,
+        "known_costs_and_unknowns_preserved": True,
+        # Keep every V21 stage, source attempt, policy debit, and nested V20
+        # history available without making it part of the fresh V22 budget.
+        "historical_ledger_snapshot": deepcopy(predecessor),
+    }
+
+
+def _reserve_v22_shared_budget(
+    repo_root: Path,
+    run_directory: Path,
+    *,
+    source_sha: str,
+    stage: str,
+    stage_budget: Mapping[str, Any],
+    workflow_clock_start: Mapping[str, Any],
+    time_policy: str = V14_TIME_POLICY_ENFORCE,
+) -> dict[str, Any]:
+    """Reserve the one original-B V22 capacity attempt, with no replay."""
+
+    if stage != V22_STAGE or time_policy != V14_TIME_POLICY_OBSERVE_ONLY:
+        raise InputError("V22 permits only Z3_ORIGINAL_H7P5 with observe_only")
+    repo_root = Path(repo_root).resolve()
+    path = _dual_condensed_capacity_v22_shared_ledger_path(repo_root)
+    predecessor = _read_only_v21_ledger_reference(repo_root)
+    predecessors = {"v21": predecessor}
+    prerequisite = {
+        "original_only": True,
+        "allowed_stage": V22_STAGE,
+        "cross_case_recycling": False,
+        "automatic_replay": False,
+        "bug_replay": False,
+        "predecessor_v21_ledger": predecessor,
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        try:
+            ledger = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise InputError("V22 shared ledger cannot be read") from exc
+        if (
+            ledger.get("schema") != V22_LEDGER_SCHEMA
+            or ledger.get("batch_identity") != V22_BATCH_IDENTITY
+            or ledger.get("predecessors") != predecessors
+            or ledger.get("allowed_stages") != [V22_STAGE]
+            or ledger.get("cross_case_recycling") is not False
+        ):
+            raise InputError("V22 ledger or read-only V21 predecessor changed")
+    else:
+        ledger = {
+            "schema": V22_LEDGER_SCHEMA,
+            "batch_identity": V22_BATCH_IDENTITY,
+            "total_budget_seconds": V14_SHARED_WORKFLOW_SECONDS,
+            "elapsed_seconds": 0.0,
+            "conservative_allowance_seconds": 0.0,
+            "policy_debits": [],
+            "fresh_worker_count": 0,
+            "source_attempts": [],
+            "stages": {},
+            "unique_bug_replay_count": 0,
+            "replay_policy": "one original B attempt; no automatic or bug replay",
+            "allowed_stages": [V22_STAGE],
+            "cross_case_recycling": False,
+            "predecessors": predecessors,
+        }
+    return _reserve_blr_stage_from_ledger(
+        path,
+        ledger,
+        stage=stage,
+        run_directory=run_directory,
+        source_sha=source_sha,
+        stage_budget=stage_budget,
+        workflow_clock_start=workflow_clock_start,
+        time_policy=time_policy,
+        error_prefix="V22",
+        summary_filename=V22_SUMMARY_FILENAME,
+        prerequisite=prerequisite,
+        bug_replay_limit=0,
+    )
 
 
 def _reserve_v20_shared_budget(
@@ -2392,6 +2551,7 @@ def launch_specification(
         DUAL_CELL_CONDENSED_PROFILE,
         LOWMEM_DUAL_CELL_CONDENSED_PROFILE,
         ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE,
+        CAPACITY_DUAL_CELL_CONDENSED_PROFILE,
         profile_facts,
     )
     from src.io.physical_balanced_profile import BALANCED_PROFILES, BOUNDED_PROFILES
@@ -2406,10 +2566,12 @@ def launch_specification(
     dual_condensed_profile = specification.solver.get('preconditioner') == DUAL_CELL_CONDENSED_PROFILE
     lowmem_v20_profile = specification.solver.get('preconditioner') == LOWMEM_DUAL_CELL_CONDENSED_PROFILE
     robustness_v21_profile = specification.solver.get('preconditioner') == ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE
+    capacity_v22_profile = specification.solver.get('preconditioner') == CAPACITY_DUAL_CELL_CONDENSED_PROFILE
     cell_condensed_profile = specification.solver.get('preconditioner') in {
         CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE,
         DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE,
         ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE,
+        CAPACITY_DUAL_CELL_CONDENSED_PROFILE,
     }
     cell_stage = str(specification.solver.get('stage', ''))
     if cell_condensed_profile:
@@ -2511,6 +2673,14 @@ def launch_specification(
             Path(__file__).resolve().parents[2], run_directory,
             source_sha=source, stage=str(specification.solver['stage']),
             stage_budget=blr_stage_budget, workflow_clock_start=full_clock.start,
+            time_policy=v14_time_policy,
+        )
+    elif capacity_v22_profile and physical_candidate:
+        run_directory = _timestamp_directory(specification, timestamp)
+        v14_lease = _reserve_v22_shared_budget(
+            Path(__file__).resolve().parents[2], run_directory,
+            source_sha=source, stage=cell_stage,
+            stage_budget=cell_stage_budget, workflow_clock_start=full_clock.start,
             time_policy=v14_time_policy,
         )
     elif robustness_v21_profile and physical_candidate:
@@ -2860,11 +3030,14 @@ __all__ = [
     "_reserve_v19_shared_budget",
     "_reserve_v20_shared_budget",
     "_reserve_v21_shared_budget",
+    "_reserve_v22_shared_budget",
     "_validate_v21_checker_prerequisites",
     "V21_PREDECESSOR_V20_LEDGER_SHA256",
+    "V22_PREDECESSOR_V21_LEDGER_SHA256",
     "_dual_condensed_v19_shared_ledger_path",
     "_dual_condensed_lowmem_v20_shared_ledger_path",
     "_dual_condensed_robustness_v21_shared_ledger_path",
+    "_dual_condensed_capacity_v22_shared_ledger_path",
     "_cell_condensed_v18_shared_ledger_path",
     "_validate_v17_t2_prerequisite",
     "_validate_v18_prerequisite",

@@ -127,6 +127,7 @@ def main(argv: list[str] | None = None) -> int:
                 'physical_p6_trace_p4_condensed_balh_v19',
                 'physical_p6_trace_p4_condensed_lowmem_v20',
                 'physical_p6_trace_p4_condensed_robustness_v21',
+                'physical_p6_trace_p4_condensed_capacity_v22',
             }
         ):
             raise InputError(

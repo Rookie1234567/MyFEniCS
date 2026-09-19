@@ -46,6 +46,45 @@ def run_full3d_iterative(
         return run_physical_dual_cell_condensed_robustness_v21(
             resolved_payload, Path(run_directory), source_sha=_kwargs["source_sha"]
         )
+    if resolved_payload.get("solver", {}).get("preconditioner") == "physical_p6_trace_p4_condensed_capacity_v22":
+        from .physical_dual_cell_condensed_lowmem_v20 import (
+            _run_physical_dual_cell_condensed_lowmem,
+        )
+        from src.io.physical_intermediate_profile import (
+            CAPACITY_DUAL_CELL_CONDENSED_PROFILE,
+        )
+
+        return _run_physical_dual_cell_condensed_lowmem(
+            resolved_payload,
+            Path(run_directory),
+            source_sha=_kwargs["source_sha"],
+            profile_identity=CAPACITY_DUAL_CELL_CONDENSED_PROFILE,
+            allowed_stages=("Z3_ORIGINAL_H7P5",),
+            batch_identity="review_v22_original_b_capacity_trial",
+            evidence_prefix="v22",
+            summary_schema="task039extra.v22.worker-summary.v1",
+            summary_filename="physical_dual_condensed_capacity_v22_summary.json",
+            derive_live_space_identity=True,
+            rhs_identity_policy="case_bound_physical_rhs",
+            restore_summary_schema=True,
+            reuse_qualified_jit=True,
+            write_ordered_mode_manifest=True,
+            write_geometry_audit=True,
+            save_complete_field_packet=True,
+            capacity_trial=True,
+            reference_mode_by_stage={"Z3_ORIGINAL_H7P5": "authority_limited"},
+            predecessor_by_stage={
+                "Z3_ORIGINAL_H7P5": {
+                    "accepted_v21_route": (
+                        "physical_p6_trace_p4_condensed_robustness_v21"
+                    ),
+                    "cross_case_recycling": False,
+                    "original_only": True,
+                    "independent_batch": True,
+                }
+            },
+            notch_by_stage={"Z3_ORIGINAL_H7P5": False},
+        )
     if resolved_payload.get("solver", {}).get("preconditioner") == "physical_p4_blr_bal_h_v16":
         from .physical_p4_blr_v16 import run_physical_p4_blr_v16
 

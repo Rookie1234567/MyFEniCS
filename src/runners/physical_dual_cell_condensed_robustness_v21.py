@@ -35,6 +35,10 @@ def run_physical_dual_cell_condensed_robustness_v21(
         derive_live_space_identity=True,
         rhs_identity_policy="case_bound_physical_rhs",
         restore_summary_schema=True,
+        reuse_qualified_jit=True,
+        write_ordered_mode_manifest=True,
+        write_geometry_audit=True,
+        save_complete_field_packet=True,
         reference_mode_by_stage={
             "Z2_NOTCH_H10": "required",
             "Z3_ORIGINAL_H7P5": "authority_limited",

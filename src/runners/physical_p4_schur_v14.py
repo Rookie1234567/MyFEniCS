@@ -763,8 +763,17 @@ class _V14Runtime:
             },
         )
 
-    def sample(self, label: str | None = None) -> dict[str, Any]:
-        if self.stop_requested:
+    def sample(
+        self, label: str | None = None, *, enforce: bool = True
+    ) -> dict[str, Any]:
+        """Record one live resource sample, optionally without raising a gate.
+
+        The V22 numeric observer uses ``enforce=False`` only after it has
+        durably saved native factor facts.  All historical callers retain the
+        enforcing default.
+        """
+
+        if enforce and self.stop_requested:
             raise V14ResourceStop("parent requested a V14 worker stop")
         if self._pc_clock is not None:
             from .workflow_timebase import clock_sample
@@ -802,7 +811,7 @@ class _V14Runtime:
             }
         )
         _append_jsonl(self.resources_path, value)
-        if (
+        if enforce and (
             not value["all_status_readable"]
             or int(value["swap_bytes"]) != 0
             or int(envelope["effective_available_bytes"]) < int(envelope["reserve_bytes"])
@@ -1413,6 +1422,51 @@ def _sparse_payload_bytes(matrix_info: Mapping[str, Any], rows: int) -> int:
     return (int(rows) + 1) * np.dtype(PETSc.IntType).itemsize + nnz * (
         np.dtype(PETSc.IntType).itemsize + np.dtype(PETSc.ScalarType).itemsize
     )
+
+
+def _v14_balanced_h6_setup_facts(common: Mapping[str, Any]) -> dict[str, int | str]:
+    """Expose the qualified H6 setup estimate without building H6 twice."""
+
+    n6 = int(common["fine"]["dtn_action"].carrier.global_rows)
+    n4 = int(common["p4"]["dtn_action"].carrier.global_rows)
+    component_actions = common["fine"]["volume_action"].component_actions
+    component_payload = sum(
+        int(action.audit["retained_numeric_payload_local_bytes"])
+        for action in component_actions.values()
+    )
+    setup_estimate = 2 * component_payload + 12 * n6 * 16
+    return {
+        "n6": n6,
+        "n4": n4,
+        "component_payload_bytes": int(component_payload),
+        "setup_estimate_bytes": int(setup_estimate),
+        "setup_estimate_formula": "2*component_payload+12*n6*16",
+    }
+
+
+def _v14_balanced_apply_workspace_bytes(
+    n6: int,
+    n4: int,
+    kernel_temporary_bytes: int,
+    *,
+    fine_vector_count: int = 40,
+    coarse_vector_count: int = 12,
+) -> int:
+    """Use the existing BAL workspace formula for a live-size estimate."""
+
+    return int(
+        int(fine_vector_count) * int(n6) * 16
+        + int(coarse_vector_count) * int(n4) * 16
+        + int(kernel_temporary_bytes)
+    )
+
+
+def _v14_outer_krylov_workspace_bytes(
+    retained_rows: int, *, restart: int = 32
+) -> int:
+    """Return the existing outer FGMRES vector-pool payload."""
+
+    return max(1, (2 * (int(restart) + 1) + 8) * int(retained_rows) * 16)
 
 
 def _mumps_memory_observation(facts: Mapping[str, Any]) -> dict[str, Any]:
@@ -3818,16 +3872,13 @@ def _v14_balanced_adapter(runtime, common, fint, *, capture_vectors=False):
     from src.solvers.physical_interface_balanced import InterfaceBalancedCoupling
     from src.solvers.physical_light_setup import build_light_h6_setup
 
-    n6 = int(common["fine"]["dtn_action"].carrier.global_rows)
-    n4 = int(common["p4"]["dtn_action"].carrier.global_rows)
+    h6_setup = _v14_balanced_h6_setup_facts(common)
+    n6 = int(h6_setup["n6"])
+    n4 = int(h6_setup["n4"])
     # Same-degree positive setup uses the already-qualified H6 constructor.
     # The two existing physical component payloads and twelve fine vectors
     # provide a construction estimate; measured RSS remains independent.
-    component_payload = sum(
-        int(action.audit["retained_numeric_payload_local_bytes"])
-        for action in common["fine"]["volume_action"].component_actions.values()
-    )
-    setup_estimate = 2 * component_payload + 12 * n6 * 16
+    setup_estimate = int(h6_setup["setup_estimate_bytes"])
     runtime.check_inventory_projected("v14_h6_setup", setup_estimate)
     runtime.check_projected("v14_h6_setup", setup_estimate, workspace_bytes=64 << 20)
     runtime.marker("v14_h6_setup_preallocation", {
@@ -3887,7 +3938,13 @@ def _v14_balanced_adapter(runtime, common, fint, *, capture_vectors=False):
         fine_vectors = 64 if capture_vectors else 40
         coarse_vectors = 16 if capture_vectors else 12
         kernel_temp = int(positive["light_facts"]["kernel"]["temporary_budget_bytes"])
-        pc_workspace = fine_vectors * n6 * 16 + coarse_vectors * n4 * 16 + kernel_temp
+        pc_workspace = _v14_balanced_apply_workspace_bytes(
+            n6,
+            n4,
+            kernel_temp,
+            fine_vector_count=fine_vectors,
+            coarse_vector_count=coarse_vectors,
+        )
         runtime.reserve_workspace("v14_balanced_apply", pc_workspace)
         live_workspaces.add("v14_balanced_apply")
         runtime.marker("v14_balanced_workspace", {
@@ -6877,12 +6934,9 @@ def _v14_q4_q5_fullspace(
             outer_active = True
             solve_clock = ClockBudget(clock_sample(), policy=CONSERVATIVE_REALTIME)
             restart = 32
-            krylov_vector_count = 2 * (restart + 1) + 8
-            outer_workspace_bytes = max(
-                1,
-                krylov_vector_count
-                * int((rhs if outer_adapter is None else outer_adapter.rhs).getLocalSize())
-                * np.dtype(np.complex128).itemsize,
+            outer_workspace_bytes = _v14_outer_krylov_workspace_bytes(
+                int((rhs if outer_adapter is None else outer_adapter.rhs).getLocalSize()),
+                restart=restart,
             )
             runtime.reserve_workspace(outer_workspace_label, outer_workspace_bytes)
             outer_workspace_live = True

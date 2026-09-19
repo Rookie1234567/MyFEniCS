@@ -379,6 +379,100 @@ def test_actual_retained_adapter_release_clears_owner_refs_and_repeats_safely(
     error_adapter.destroy()
 
 
+def test_v20_entry_passes_legacy_complete_packet_contract_to_real_outer_factory(
+    tmp_path, monkeypatch
+):
+    """The reviewed V20 entry must resolve its old default before adapter creation."""
+
+    from src.io.physical_intermediate_profile import profile_facts
+    from src.runners import physical_dual_cell_condensed_lowmem_v20 as worker
+    from src.runners import physical_p4_cell_condensed_v18 as p4_worker
+    from src.runners import physical_p4_schur_v14 as v14_worker
+    from src.runners import physical_retained_outer_adapter as retained_worker
+
+    class FakeRuntime:
+        time_policy = "observe_only"
+        shared_budget = {}
+        contract = {"resources": {}}
+        source_sha = "s" * 40
+
+        def __init__(self):
+            self.directory = Path(tmp_path)
+
+        def sample(self, _label):
+            return {}
+
+        def marker(self, _name, _facts=None):
+            return None
+
+        def set_phase(self, _phase):
+            return None
+
+    runtime = FakeRuntime()
+    captured = {}
+    payload = {
+        "solver": {
+            "preconditioner": LOWMEM_DUAL_CELL_CONDENSED_PROFILE,
+            "stage": "Y3_ORIGINAL",
+        },
+        "derived": {
+            "physical_intermediate_profile": profile_facts(
+                LOWMEM_DUAL_CELL_CONDENSED_PROFILE
+            )
+        },
+    }
+
+    monkeypatch.setattr(v14_worker, "_V14Runtime", lambda *args, **kwargs: runtime)
+    monkeypatch.setattr(v14_worker, "_abi_facts", lambda: {})
+    monkeypatch.setattr(v14_worker, "_repo_root", lambda: Path(tmp_path))
+    monkeypatch.setattr(v14_worker, "_build_common", lambda *args, **kwargs: {})
+    monkeypatch.setattr(v14_worker, "_destroy_common", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        v14_worker, "_v14_known_preallocation_gate", lambda *args, **kwargs: None
+    )
+    monkeypatch.setattr(
+        v14_worker,
+        "_v14_q4_q5_fullspace",
+        lambda runtime_, common_, resolved_, **kwargs: (
+            kwargs["outer_adapter_factory"](
+                runtime_, common_, resolved_, None, None
+            ),
+            {"stage_pass": False},
+        )[1],
+    )
+    monkeypatch.setattr(
+        retained_worker,
+        "prepare_dual_condensed_forms",
+        lambda *args, **kwargs: (
+            {"p4_condensation": object(), "p6_condensation": object()},
+            {"jit_options": {}},
+        ),
+    )
+
+    def fake_outer_factory(*args, **kwargs):
+        captured.update(kwargs)
+        return object()
+
+    monkeypatch.setattr(retained_worker, "build_retained_outer_adapter", fake_outer_factory)
+    monkeypatch.setattr(
+        p4_worker,
+        "cell_condensed_stack",
+        lambda *args, **kwargs: pytest.fail("V20 mock must not enter p4 stack"),
+    )
+    monkeypatch.setattr(
+        "src.io.input_validation.simulation_config_3d_from_normalized",
+        lambda _payload: object(),
+    )
+
+    result = worker.run_physical_dual_cell_condensed_lowmem_v20(
+        payload, tmp_path, source_sha="s" * 40
+    )
+
+    assert result["passed"] is False
+    assert captured["save_complete_field_packet"] is True
+    assert captured["evidence_prefix"] == "v20"
+
+
 def test_prepare_dual_condensed_forms_real_small_common_has_nine_official_kernels(
     tmp_path,
 ):

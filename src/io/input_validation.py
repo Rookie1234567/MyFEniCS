@@ -563,6 +563,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "physical_p6_trace_p4_condensed_balh_v19",
                 "physical_p6_trace_p4_condensed_lowmem_v20",
                 "physical_p6_trace_p4_condensed_robustness_v21",
+                "physical_p6_trace_p4_condensed_capacity_v22",
             }:
                 raise _error(
                     "solver.preconditioner",
@@ -905,6 +906,45 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     from src.geometry.v21_frozen_plan import validate_v21_input
 
                     validate_v21_input(stage, geometry, discretization)
+                except (OSError, TypeError, ValueError, KeyError) as exc:
+                    raise _error("geometry/discretization", str(exc)) from exc
+            elif preconditioner == "physical_p6_trace_p4_condensed_capacity_v22":
+                for section, key, actual, expected in (
+                    ("solver", "stage", solver.get("stage"), "Z3_ORIGINAL_H7P5"),
+                    ("solver", "restart", solver["restart"], 32),
+                    ("solver", "max_iterations", solver["max_iterations"], 2048),
+                    ("solver", "outer_restart", solver.get("outer_restart"), 0),
+                    (
+                        "solver",
+                        "memory_policy",
+                        solver.get("memory_policy"),
+                        "CAPACITY_CONTROLLED_LOCAL_MUMPS_V22",
+                    ),
+                    ("execution", "mpi_size", execution["mpi_size"], 1),
+                    ("execution", "timeout_seconds", execution["timeout_seconds"], 43200),
+                    ("execution", "require_zero_swap", execution["require_zero_swap"], True),
+                    ("discretization", "nedelec_degree", discretization["nedelec_degree"], 6),
+                    ("discretization", "mesh_target_nm", discretization["mesh_target_nm"], 7.5),
+                ):
+                    if actual != expected:
+                        raise _error(
+                            f"{section}.{key}",
+                            f"{preconditioner} fixes {key}={expected}",
+                        )
+                if geometry.get("model_variant") != "original":
+                    raise _error(
+                        "geometry.model_variant",
+                        "physical_p6_trace_p4_condensed_capacity_v22 requires the original B model",
+                    )
+                if geometry.get("cell_notch") is not None:
+                    raise _error(
+                        "geometry.cell_notch",
+                        "physical_p6_trace_p4_condensed_capacity_v22 does not allow a notch",
+                    )
+                try:
+                    from src.geometry.v21_frozen_plan import validate_v21_input
+
+                    validate_v21_input("Z3_ORIGINAL_H7P5", geometry, discretization)
                 except (OSError, TypeError, ValueError, KeyError) as exc:
                     raise _error("geometry/discretization", str(exc)) from exc
             elif preconditioner in (
@@ -1867,9 +1907,10 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
         "nedelec_trace_degree_resolved": trace_degree_resolved,
         "floquet_constraint_mode_requested": floquet_mode,
     }
-    if config["solver"].get("preconditioner") == (
-        "physical_p6_trace_p4_condensed_robustness_v21"
-    ):
+    if config["solver"].get("preconditioner") in {
+        "physical_p6_trace_p4_condensed_robustness_v21",
+        "physical_p6_trace_p4_condensed_capacity_v22",
+    }:
         # V21 deliberately keeps the matched Z2 physical-model hash
         # compatible with the existing V5 notch reference.  The omitted
         # metadata are nevertheless bound below by independent semantic
@@ -2002,9 +2043,10 @@ def resolve_loaded_input(loaded: LoadedInput) -> RunSpecification:
     # material/operator identity.  Omitting it keeps Z2 compatible with the
     # existing matched V5 notch reference; the complete resolved input and
     # plan hash still bind the new run independently.
-    if normalized["solver"].get("preconditioner") == (
-        "physical_p6_trace_p4_condensed_robustness_v21"
-    ):
+    if normalized["solver"].get("preconditioner") in {
+        "physical_p6_trace_p4_condensed_robustness_v21",
+        "physical_p6_trace_p4_condensed_capacity_v22",
+    }:
         for key in ("model_variant", "geometry_identity"):
             physical["geometry"].pop(key, None)
         for key in (

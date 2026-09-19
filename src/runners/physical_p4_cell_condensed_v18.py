@@ -233,6 +233,10 @@ def cell_condensed_stack(
     compiled_form: Any | None = None,
     compiled_form_holder: dict[str, Any] | None = None,
     matrix_lifecycle_policy: str = "LEGACY_RETAIN_THROUGH_POSTPROCESS",
+    factor_memory_request_builder=None,
+    factor_numeric_observer=None,
+    factor_post_numeric_gate=None,
+    capacity_metadata_callback=None,
 ):
     """Build and own the V18 condensed matrix/factor for one stage.
 
@@ -350,6 +354,30 @@ def cell_condensed_stack(
         mapping_arrays.extend(a for pair in condensed.trace_constraints.expansion_by_original.values()
                               for a in pair)
         mapping_bytes = sum(a.nbytes for a in {id(a): a for a in mapping_arrays}.values())
+        if capacity_metadata_callback is not None:
+            capacity_metadata_callback(
+                {
+                    "p4_port_terms_count": int(len(port_terms)),
+                    "p4_port_terms_Bi_bytes": int(
+                        sum(term.Bi.nbytes for term in port_terms.values())
+                    ),
+                    "xiB_payload_estimate_bytes": int(
+                        sum(term.Bi.nbytes for term in port_terms.values())
+                    ),
+                    "p4_port_terms_payload_bytes": int(port_bytes),
+                    "p4_mapping_bytes": int(mapping_bytes),
+                    "p4_local_dimension": int(condensed.build_audit["local_tensor_dimension"]),
+                    "p4_interior_dimension": int(condensed.build_audit["local_interior_dimension"]),
+                    "p4_trace_dimension": int(condensed.build_audit["local_trace_dimension"]),
+                    "p4_raw_class_count": int(
+                        condensed.build_audit["raw_tensor_class_count_global_unique"]
+                    ),
+                    "p4_oriented_class_count": int(
+                        condensed.build_audit["oriented_schur_class_count_sum"]
+                    ),
+                    "source": "live_assembled_p4_port_terms_and_condensation_metadata",
+                }
+            )
         runtime.reserve_inventory(
             matrix_inventory_label,
             {
@@ -385,6 +413,26 @@ def cell_condensed_stack(
         pre_numeric_gate, post_numeric_gate = _factor_gates(
             runtime, matrix_already_reserved=True
         )
+
+        if factor_post_numeric_gate is not None:
+            default_post_numeric_gate = post_numeric_gate
+
+            def post_numeric_gate(facts):
+                factor_post_numeric_gate(facts)
+                default_post_numeric_gate(facts)
+
+        def numeric_observer(observation):
+            if factor_numeric_observer is None:
+                return
+            enriched = dict(observation)
+            # The setup identity is already the known CSR content identity.
+            # Reuse it for the durable pre-gate observer; the normal
+            # post-factor check below performs the one necessary fresh hash.
+            enriched["matrix_identity_before_factor"] = dict(matrix_before)
+            enriched["matrix_identity_after_factor"] = None
+            enriched["matrix_identity_after_factor_status"] = "pending_post_factor_hash"
+            factor_numeric_observer(enriched)
+
         factor, factor_facts = _prepare_factor(
             condensed.matrix,
             checked_factor_factory,
@@ -393,6 +441,10 @@ def cell_condensed_stack(
             marker=lambda name, facts: _runtime_marker(runtime, name, facts),
             pre_numeric_gate=pre_numeric_gate,
             post_numeric_gate=post_numeric_gate,
+            memory_request_builder=factor_memory_request_builder,
+            numeric_observer=(
+                numeric_observer if factor_numeric_observer is not None else None
+            ),
         )
         matrix_after = petsc_csr_content_identity(condensed.matrix)
         if matrix_after != matrix_before:
@@ -624,6 +676,9 @@ def cell_condensed_stack_factory(
     compiled_form: Any | None = None,
     compiled_form_holder: dict[str, Any] | None = None,
     matrix_lifecycle_policy: str = "LEGACY_RETAIN_THROUGH_POSTPROCESS",
+    factor_memory_request_builder=None,
+    factor_numeric_observer=None,
+    factor_post_numeric_gate=None,
 ):
     """Return the small factory consumed by the existing V14 outer helper."""
 
@@ -637,6 +692,9 @@ def cell_condensed_stack_factory(
             compiled_form=compiled_form,
             compiled_form_holder=compiled_form_holder,
             matrix_lifecycle_policy=matrix_lifecycle_policy,
+            factor_memory_request_builder=factor_memory_request_builder,
+            factor_numeric_observer=factor_numeric_observer,
+            factor_post_numeric_gate=factor_post_numeric_gate,
         )
 
     return factory

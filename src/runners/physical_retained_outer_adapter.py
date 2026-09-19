@@ -23,6 +23,14 @@ def _array_identity(value):
             "sha256": hashlib.sha256(memoryview(array).cast("B") if array.size else b"").hexdigest()}
 
 
+def _retained_outer_scratch_workspace_bytes(
+    full_rows: int, retained_rows: int
+) -> int:
+    """Return the existing p6 full-scratch payload estimate."""
+
+    return int(24 * int(full_rows) * 16 + 10 * int(retained_rows) * 16)
+
+
 def derive_condensed_space_identity(function_space, mpc, *, appended_rows: int):
     """Derive the expected retained-space layout from the live FE/MPC objects.
 
@@ -47,12 +55,21 @@ def derive_condensed_space_identity(function_space, mpc, *, appended_rows: int):
     if interior_positions.size == 0:
         raise ValueError("live V21 retained space has no cell-interior DoFs")
     local_interiors = []
+    local_dimensions = set()
     for cell in range(owned_cells):
         local = np.asarray(dofmap.cell_dofs(cell), dtype=np.int32)
+        local_dimensions.add(int(local.size))
         original = np.asarray(
             dofmap.index_map.local_to_global(local), dtype=np.int64
         )
         local_interiors.append(original[interior_positions])
+    if len(local_dimensions) != 1:
+        raise ValueError("live V21 cell-local dimensions are not uniform")
+    local_tensor_dimension = next(iter(local_dimensions))
+    local_interior_dimension = int(interior_positions.size)
+    local_trace_dimension = int(local_tensor_dimension - local_interior_dimension)
+    if local_trace_dimension <= 0:
+        raise ValueError("live V21 cell-local trace dimension is not positive")
     full_rows = int(index_map.size_global * dofmap.index_map_bs)
     all_interiors = (
         np.concatenate(local_interiors)
@@ -72,6 +89,9 @@ def derive_condensed_space_identity(function_space, mpc, *, appended_rows: int):
     )
     if np.unique(slave_rows).size != slave_rows.size:
         raise ValueError("live V21 MPC slave rows are duplicated")
+    slave_master_entry_count = 0
+    for local_slave in owned_slaves:
+        slave_master_entry_count += int(len(mpc.masters.links(int(local_slave))))
     interior_set = set(int(value) for value in all_interiors)
     slave_set = set(int(value) for value in slave_rows)
     if interior_set.intersection(slave_set):
@@ -112,9 +132,13 @@ def derive_condensed_space_identity(function_space, mpc, *, appended_rows: int):
         "trace_rows": int(trace_rows),
         "active_rows": active_rows,
         "slave_rows": int(len(slave_rows)),
+        "slave_master_entry_count": int(slave_master_entry_count),
         "interior_rows": interior_rows,
         "appended_rows": appended_rows,
         "owned_cell_count": owned_cells,
+        "local_tensor_dimension": int(local_tensor_dimension),
+        "local_interior_dimension": int(local_interior_dimension),
+        "local_trace_dimension": int(local_trace_dimension),
         "local_interior_dof_count": int(all_interiors.size),
         "cell_interior_dofs_sha256": digest((all_interiors,)),
         "slave_rows_sha256": digest((slave_rows,)),
@@ -282,6 +306,7 @@ class RetainedOuterAdapter:
         expected_space_counts=(173802, 51192, 113400, 80),
         expected_space_facts=None,
         rhs_identity_policy="fixed_historical_contract",
+        save_complete_field_packet=None,
     ):
         self.runtime, self.common, self.resolved = runtime, common, resolved
         self.full_rhs, self.bal_h = full_rhs, apply_pc
@@ -290,6 +315,11 @@ class RetainedOuterAdapter:
         self.compiled_form = compiled_form
         self.identity_cache_mode = str(identity_cache_mode)
         self.evidence_prefix = str(evidence_prefix)
+        self.save_complete_field_packet = (
+            self.evidence_prefix in {"v20", "v21"}
+            if save_complete_field_packet is None
+            else bool(save_complete_field_packet)
+        )
         self.expected_space_counts = (
             None
             if expected_space_counts is None
@@ -445,7 +475,9 @@ class RetainedOuterAdapter:
         runtime.release_workspace(f"{prefix}_p6_setup")
         # Simultaneous full scratch, residual packet arrays, bridge outputs,
         # and the fixed three-vector setup fixture; the Krylov pool is separate.
-        scratch_bytes = 24 * int(self.full_rhs.getLocalSize()) * 16 + 10 * self.action.reduced_size * 16
+        scratch_bytes = _retained_outer_scratch_workspace_bytes(
+            int(self.full_rhs.getLocalSize()), self.action.reduced_size
+        )
         runtime.reserve_workspace(f"{prefix}_p6_full_scratch", scratch_bytes)
         self.full_source, self.full_target = self.full_rhs.duplicate(), self.full_rhs.duplicate()
         self.rhs = self.action.create_reduced_rhs_vector()
@@ -673,7 +705,7 @@ class RetainedOuterAdapter:
                 "facts": result["final_evaluation"],
                 "residuals": self.last_evaluation,
             }
-            if self.evidence_prefix in {"v20", "v21"}:
+            if self.save_complete_field_packet:
                 from src.solvers.fullspace_physical_intermediate_runtime import (
                     owned_slave_indices,
                 )
@@ -694,9 +726,13 @@ class RetainedOuterAdapter:
                 )
             self._packet("x2_retained_final", final_packet)
             self._final_packet_saved = True
-            if self.evidence_prefix in {"v20", "v21"}:
+            if self.save_complete_field_packet:
                 self.runtime.marker(
-                    "v20_complete_field_packet_saved",
+                    (
+                        "v20_complete_field_packet_saved"
+                        if self.evidence_prefix in {"v20", "v21"}
+                        else f"{self.evidence_prefix}_complete_field_packet_saved"
+                    ),
                     {
                         "packet": "x2_retained_final.json",
                         "retained_y_saved": True,

@@ -2781,6 +2781,9 @@ def _prepare_factor(
     inventory_components: Mapping[str, int]
     | Callable[[Mapping[str, Any]], Mapping[str, int]]
     | None = None,
+    memory_request_builder: Callable[[Mapping[str, Any], Any], Mapping[str, Any]]
+    | None = None,
+    numeric_observer: Callable[[Mapping[str, Any]], None] | None = None,
 ) -> tuple[Any, dict[str, Any]]:
     def sample() -> dict[str, Any] | None:
         return dict(resource_sample()) if resource_sample is not None else None
@@ -2806,6 +2809,12 @@ def _prepare_factor(
         "physical_p4_cell_condensed_blr_v18",
     }
     info_indices = (9, 22, 29, 35, 36, 37) if blr_memory_mode else (22, 29)
+    # The opt-in observer receives the complete native record used by the
+    # reviewed factor evidence, including the extended INFOG(29/35/36/37)
+    # fields.  The historical path still queries only ``info_indices``.
+    observer_info_indices = tuple(
+        dict.fromkeys((*info_indices, 9, 19, 22, 29, 35, 36, 37))
+    )
     matrix_facts = {
         "label": label,
         "rows": int(matrix.getSize()[0]),
@@ -2833,6 +2842,22 @@ def _prepare_factor(
                 "symbolic_resource": sample(),
             },
         )
+        if memory_request_builder is not None:
+            # Only the explicitly opted-in caller may replace the V11 request.
+            # Keep the old request as prediction evidence, not backend input.
+            legacy_request = memory_request
+            memory_request = dict(memory_request_builder({
+                **matrix_facts,
+                "symbolic_raw": symbolic_raw,
+                "symbolic_memory_settings": settings,
+                "symbolic_seconds": symbolic_seconds,
+                "symbolic_resource": sample(),
+                "legacy_v11_memory_request": legacy_request,
+            }, factor))
+            requested = memory_request.get("requested_memory_limit_mb")
+            if type(requested) is not int or requested <= 0:
+                raise ValueError("explicit MUMPS quota must be positive decimal MB")
+            memory_request["legacy_v11_memory_request"] = legacy_request
         set_memory_limit(memory_request["requested_memory_limit_mb"])
         get_memory_limit = getattr(factor, "get_icntl", None)
         if not callable(get_memory_limit):
@@ -2874,9 +2899,53 @@ def _prepare_factor(
             symbolic_facts,
         )
         numeric_started = time.perf_counter()
-        factor.numeric(matrix)
+        try:
+            factor.numeric(matrix)
+        except BaseException as error:
+            if numeric_observer is not None:
+                failure_raw = None
+                info_error = None
+                try:
+                    failure_raw = factor.info(observer_info_indices)
+                except BaseException as query_error:
+                    info_error = f"{type(query_error).__name__}: {query_error}"
+                observation = {
+                    **symbolic_facts,
+                    "numeric_completed": False,
+                    "numeric_seconds": time.perf_counter() - numeric_started,
+                    "numeric_raw": failure_raw,
+                    "numeric_info_error": info_error,
+                    "numeric_exception": f"{type(error).__name__}: {error}",
+                    "factor_solve_calls_at_factorization": int(
+                        getattr(factor, "solve_calls", 0)
+                    ),
+                }
+                numeric_observer(observation)
+                emit("schur_factor_numeric_failed", observation)
+            raise
         numeric_seconds = time.perf_counter() - numeric_started
-        numeric_raw = factor.info(info_indices)
+        numeric_raw = factor.info(
+            observer_info_indices if numeric_observer is not None else info_indices
+        )
+        if numeric_observer is not None:
+            error_code = numeric_raw["infog"].get("1")
+            observation = {
+                **symbolic_facts,
+                "numeric_call_returned": True,
+                "numeric_completed": type(error_code) is int and error_code >= 0,
+                "numeric_seconds": numeric_seconds,
+                "numeric_raw": numeric_raw,
+                "matrix_info_after_factor": matrix.getInfo(),
+                "factor_solve_calls_at_factorization": int(
+                    getattr(factor, "solve_calls", 0)
+                ),
+            }
+            # The caller atomically saves backend facts and a read-only RSS
+            # observation BEFORE runtime.sample/post gates can stop the run.
+            numeric_observer(observation)
+            emit("schur_factor_numeric_observed", observation)
+            if type(error_code) is not int or error_code < 0:
+                raise RuntimeError(f"MUMPS numeric INFOG(1)={error_code}")
         facts = {
             "label": label,
             "rows": int(matrix.getSize()[0]),

@@ -238,6 +238,10 @@ def test_v21_worker_enables_schema_restore_without_touching_v20_default(monkeypa
     )
     assert captured["restore_summary_schema"] is True
     assert captured["summary_schema"] == "task039extra.v21.worker-summary.v1"
+    assert captured["reuse_qualified_jit"] is True
+    assert captured["write_ordered_mode_manifest"] is True
+    assert captured["write_geometry_audit"] is True
+    assert captured["save_complete_field_packet"] is True
 
 
 def test_saved_a_release_alias_keeps_raw_label_and_passes_release_contract():

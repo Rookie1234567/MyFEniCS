@@ -27,12 +27,13 @@ CELL_CONDENSED_BLR_PROFILE = "physical_p4_cell_condensed_blr_v18"
 DUAL_CELL_CONDENSED_PROFILE = "physical_p6_trace_p4_condensed_balh_v19"
 LOWMEM_DUAL_CELL_CONDENSED_PROFILE = "physical_p6_trace_p4_condensed_lowmem_v20"
 ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE = "physical_p6_trace_p4_condensed_robustness_v21"
+CAPACITY_DUAL_CELL_CONDENSED_PROFILE = "physical_p6_trace_p4_condensed_capacity_v22"
 P4_BLR_TRADEOFF_THRESHOLDS = {
     "T1_BLR_CONTROL": 1.0e-3,
     "T2_BLR_CONTROL": 1.0e-4,
 }
 
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
 
 
 def p4_blr_tradeoff_threshold(stage: str) -> float:
@@ -47,6 +48,51 @@ def p4_blr_tradeoff_threshold(stage: str) -> float:
 
 
 def profile_facts(identity=PROFILE) -> dict:
+    if identity == CAPACITY_DUAL_CELL_CONDENSED_PROFILE:
+        # V22 is a single, opt-in capacity trial for the already reviewed
+        # original B.  It inherits the V21 numerical/lifecycle route and
+        # changes only the profile identity, finite factor-quota policy, and
+        # independent batch accounting.
+        facts = profile_facts(ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE)
+        facts.update(
+            identity=identity,
+            scope="review_v22_original_b_capacity_trial",
+            qualification=(
+                "opt_in; one Z3 original B capacity trial only; same 990-cell "
+                "h7.5 grid, p6/p4 route and modes; observe_only"
+            ),
+            memory_policy="CAPACITY_CONTROLLED_LOCAL_MUMPS_V22",
+        )
+        facts["resources"]["stage_budgets"] = {
+            "Z3_ORIGINAL_H7P5": {"workflow_seconds": 43200, "solve_seconds": 43200}
+        }
+        facts["resources"]["inventory_memory_cap_bytes_by_stage"] = {
+            "Z3_ORIGINAL_H7P5": 6 * 1024**3
+        }
+        facts["gates"].update(
+            reference_authority={"Z3_ORIGINAL_H7P5": "AUTHORITY_LIMITED"},
+            capacity_trial=True,
+            old_v11_prediction_only=True,
+            native_allocated_is_continuation_gate=True,
+            original_b_only=True,
+            old_profiles_unchanged=True,
+        )
+        facts["capacity_trial"] = {
+            "numeric_policy": "measured_live_scopes_then_finite_icntl23",
+            "legacy_symbolic_request_is_prediction_only": True,
+            "future_objects_must_be_declared_before_numeric": [
+                "p6_retained_local_caches_and_maps",
+                "p4_port_recovery_and_xib",
+                "bal_h_workspace",
+                "p6_setup_workspace",
+                "full_field_scratch_and_fgmres32_pool",
+            ],
+            "native_allocation_field": "INFOG(19)",
+            "native_used_field": "INFOG(22)",
+            "workspace_scope": "simultaneous_declared_components_sum",
+            "no_retry_or_backend_change": True,
+        }
+        return facts
     if identity == ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE:
         # V21 keeps the accepted V20 numerical/lifecycle route and changes
         # only the explicit geometry cases, batch identity, and reference

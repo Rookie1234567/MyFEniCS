@@ -34,6 +34,97 @@ from scipy import sparse
 from scipy.linalg import LinAlgWarning, lu_factor, lu_solve
 
 
+def assembly_time_condensation_capacity_facts(
+    *,
+    dimension: int,
+    interior_dimension: int,
+    trace_dimension: int,
+    raw_class_count: int,
+    oriented_class_count: int,
+    identity_class_count: int,
+    retain_local_schur: bool,
+    scalar_bytes: int,
+    index_bytes: int,
+    real_bytes: int,
+) -> dict[str, int | bool | str]:
+    """Return the existing class-shape allocation formulas.
+
+    The assembly builder uses these same formulas for its preallocation gate.
+    V22 may bind the formula to the already-qualified B class dimensions
+    before the p6 action is constructed; it must not grow a second metadata
+    collector or substitute global vector lengths for local class shapes.
+    """
+
+    dimensions = {
+        "dimension": dimension,
+        "interior_dimension": interior_dimension,
+        "trace_dimension": trace_dimension,
+        "raw_class_count": raw_class_count,
+        "oriented_class_count": oriented_class_count,
+        "identity_class_count": identity_class_count,
+        "scalar_bytes": scalar_bytes,
+        "index_bytes": index_bytes,
+        "real_bytes": real_bytes,
+    }
+    if any(type(value) is not int or value < 0 for value in dimensions.values()):
+        raise ValueError("condensation capacity dimensions must be non-negative integers")
+    if dimension <= 0 or interior_dimension <= 0 or trace_dimension <= 0:
+        raise ValueError("condensation class dimensions must be positive")
+    if oriented_class_count == 0:
+        raise ValueError("condensation capacity requires an oriented class")
+    full_tensor_bytes = dimension * dimension * scalar_bytes
+    schur_bytes = trace_dimension * trace_dimension * scalar_bytes
+    retained_per_oriented_class = (
+        interior_dimension * interior_dimension * scalar_bytes
+        + interior_dimension * index_bytes
+        + 2 * interior_dimension * trace_dimension * scalar_bytes
+        + (schur_bytes if retain_local_schur else 0)
+    )
+    identity_cache_bytes_upper = (
+        identity_class_count
+        * interior_dimension
+        * interior_dimension
+        * real_bytes
+    )
+    raw_cache_bytes_upper = raw_class_count * full_tensor_bytes
+    oriented_tensor_bytes_upper = oriented_class_count * full_tensor_bytes
+    schur_cache_bytes_upper = oriented_class_count * schur_bytes
+    local_working_bytes_upper = (
+        3 * full_tensor_bytes
+        + interior_dimension * interior_dimension * scalar_bytes
+        + interior_dimension * index_bytes
+        + 2 * interior_dimension * trace_dimension * scalar_bytes
+        + 2 * schur_bytes
+    )
+    retained_schur_term = "t*t*s" if retain_local_schur else "0"
+    return {
+        "full_tensor_bytes": full_tensor_bytes,
+        "schur_bytes": schur_bytes,
+        "retained_per_oriented_class_bytes": retained_per_oriented_class,
+        "identity_cache_bytes_upper": identity_cache_bytes_upper,
+        "retained_numeric_bytes_upper": (
+            oriented_class_count * retained_per_oriented_class
+            + identity_cache_bytes_upper
+        ),
+        "raw_cache_bytes_upper": raw_cache_bytes_upper,
+        "oriented_tensor_bytes_upper": oriented_tensor_bytes_upper,
+        "schur_cache_bytes_upper": schur_cache_bytes_upper,
+        "local_working_bytes_upper": local_working_bytes_upper,
+        "workspace_bytes_upper": (
+            raw_cache_bytes_upper
+            + oriented_tensor_bytes_upper
+            + schur_cache_bytes_upper
+            + local_working_bytes_upper
+        ),
+        "retain_local_schur": bool(retain_local_schur),
+        "formula": (
+            "retained=o*(i*i*s+i*index+2*i*t*s+"
+            f"{retained_schur_term})+{identity_class_count}*i*i*real; "
+            "workspace=r*F+o*F+o*T+(3*F+i*i*s+i*index+2*i*t*s+2*T)"
+        ),
+    }
+
+
 def _idx(values) -> np.ndarray:
     if isinstance(values, np.ndarray):
         return np.asarray(values, dtype=PETSc.IntType)
@@ -1415,49 +1506,39 @@ def build_unconstrained_assembly_time_condensation(
         scalar_bytes = int(np.dtype(np.complex128).itemsize)
         real_bytes = int(np.dtype(np.float64).itemsize)
         index_bytes = int(np.dtype(PETSc.IntType).itemsize)
-        full_tensor_bytes = int(dimension * dimension * scalar_bytes)
         interior_dimension = int(len(interior_positions))
         trace_dimension = int(len(trace_positions))
-        schur_bytes = int(trace_dimension * trace_dimension * scalar_bytes)
-        retained_per_oriented_class = int(
-            interior_dimension * interior_dimension * scalar_bytes
-            + interior_dimension * index_bytes
-            + interior_dimension * trace_dimension * scalar_bytes
-            + trace_dimension * interior_dimension * scalar_bytes
-            + (
-                schur_bytes
-                if retain_local_schur_for_matrix_free
-                else 0
-            )
-        )
         identity_class_count = (
             1 if share_identity_cache and global_oriented_classes else len(global_oriented_classes)
         )
-        identity_cache_bytes_upper = int(
-            identity_class_count * interior_dimension * interior_dimension * real_bytes
-        )
-        retained_numeric_bytes_upper = int(
-            len(global_oriented_classes) * retained_per_oriented_class
-            + identity_cache_bytes_upper
-        )
-        raw_cache_bytes_upper = int(len(global_raw_classes) * full_tensor_bytes)
-        oriented_tensor_bytes_upper = int(
-            len(global_oriented_classes) * full_tensor_bytes
-        )
-        schur_cache_bytes_upper = int(
-            len(global_oriented_classes) * schur_bytes
+        condensation_capacity = assembly_time_condensation_capacity_facts(
+            dimension=int(dimension),
+            interior_dimension=interior_dimension,
+            trace_dimension=trace_dimension,
+            raw_class_count=len(global_raw_classes),
+            oriented_class_count=len(global_oriented_classes),
+            identity_class_count=identity_class_count,
+            retain_local_schur=retain_local_schur_for_matrix_free,
+            scalar_bytes=scalar_bytes,
+            index_bytes=index_bytes,
+            real_bytes=real_bytes,
         )
         # One oriented tensor is transformed at a time.  The block extracts
         # are copies, while the retained LU/recovery arrays are accounted for
         # separately above.  The two Schur terms cover the sparse constrained
         # product's output and one transient product buffer.
+        retained_numeric_bytes_upper = int(
+            condensation_capacity["retained_numeric_bytes_upper"]
+        )
+        raw_cache_bytes_upper = int(condensation_capacity["raw_cache_bytes_upper"])
+        oriented_tensor_bytes_upper = int(
+            condensation_capacity["oriented_tensor_bytes_upper"]
+        )
+        schur_cache_bytes_upper = int(
+            condensation_capacity["schur_cache_bytes_upper"]
+        )
         local_working_bytes_upper = int(
-            2 * full_tensor_bytes
-            + full_tensor_bytes
-            + interior_dimension * interior_dimension * scalar_bytes
-            + interior_dimension * index_bytes
-            + 2 * interior_dimension * trace_dimension * scalar_bytes
-            + 2 * schur_bytes
+            condensation_capacity["local_working_bytes_upper"]
         )
         allocation_gate(
             "cell_tensor_working_set",
