@@ -15,6 +15,66 @@
     "qualification": "CPU1_NOT_QUALIFIED",
     "meaning": "preserved historical state before the user-installed fixed NOPASSWD read-only commands"
   },
+  "r1b_correction": {
+    "neighbor_cpu23": "socket0/NUMA-node0; the active neighbor is not described as node1",
+    "overlap": {
+      "status": "confirmed",
+      "evidence": "CPU23 Busy>90% in 600/600 prior turbostat rows, mean Busy 99.744%; neighbor started before retry1",
+      "neighbor_memory_node_distribution": "not_measured_for_retry1",
+      "causal_interpretation": "concurrent-neighbor confound only; no causal attribution"
+    },
+    "numa_maps_scope": "retry1 worker source/target pages were observed at startup only; full-run migration was not measured",
+    "cross_socket_candidates": [
+      {"cpu_set": "25-32", "cpu_socket": 1, "cpu_numa_node": 1, "first_touch_node": 0, "status": "not_run", "purpose": "remote node0-memory access contrast"},
+      {"cpu_set": "1-8", "cpu_socket": 0, "cpu_numa_node": 0, "first_touch_node": 1, "status": "not_run", "purpose": "reverse remote-memory access contrast"}
+    ]
+  },
+  "r1c_current": {
+    "status": "BLOCKED_BY_ACTIVE_HEAVY_JOB",
+    "qualification": "CPU1_NOT_QUALIFIED; no R2 admission",
+    "captured_utc": "2026-09-20T11:16:57Z",
+    "execution_source_sha": "3a469609c277aa9c2ebf74eceaf1d7cb7f8a9a16",
+    "permission_state": "reopened; fixed read-only commands succeeded; no system files or hardware registers were written",
+    "active_neighbor": {
+      "pids": [1931283, 1931357, 1931360, 1933516],
+      "identity": "Maxwell3D-Lab/task39extra_para_workstation_capacity, Task038 original_5nm_si_p6h4_dual_condensed_v3.dat, source 16cd8d2f00f27cec3d6de8056c61d668bf7ee7a9",
+      "placement": "parent/observer CPU9; mpiexec/worker CPU23=socket0/NUMA-node0",
+      "worker_current_numa_snapshot": {"pid": 1931360, "captured_utc": "2026-09-20T11:17:03.466058459Z", "N1_pages": 753633, "N0_pages": 6175, "N1_fraction": 0.991872946850, "scope": "current snapshot only; RSS not reported by this raw file"},
+      "parent_current_numa_snapshot": {"pid": 1931283, "N1_pages": 3505, "N0_pages": 6578, "scope": "current snapshot only"},
+      "memory_node_causality": "node1 placement of the worker is observed now, but its effect on retry1 is not proven"
+    },
+    "fixed_readonly_commands": {
+      "setpci_2042": {"returncode": 0, "path": "results/task041_review_v5_cpu_numa_condensed_speed/r1c_readonly_20260920/r1c_setpci_raw_20260920T111657Z.txt", "sha256": "a9879d04bd85812981593c26af0d18499a047a60b6524f8029fb213d7321d72c"},
+      "setpci_2046": {"returncode": 0, "same_output_path_as_setpci_2042": true},
+      "setpci_204a": {"returncode": 0, "same_output_path_as_setpci_2042": true},
+      "dmidecode_type17": {"returncode": 0, "path": "results/task041_review_v5_cpu_numa_condensed_speed/r1c_readonly_20260920/r1c_dmidecode_type17_raw_20260920T111657Z.txt", "sha256": "400f05f4d23fee51d07058e9372b2f317ccf6220c4fdd056d3b4b5418a0744b7"},
+      "bmc_sensor_list": {"returncode": 0, "path": "results/task041_review_v5_cpu_numa_condensed_speed/r1c_readonly_20260920/r1c_bmc_sensor_raw_20260920T111657Z.txt", "sha256": "0d33d03cb0d22dc93a11edfb5e956680ac4fed10ee2d4c592ff10c7c9eb19dd2"},
+      "bmc_sel_elist": {"returncode": 0, "path": "results/task041_review_v5_cpu_numa_condensed_speed/r1c_readonly_20260920/r1c_bmc_sel_raw_20260920T111657Z.txt", "sha256": "bf2332b398b6bff052ed36e1614e284fffcb0d61d9f03f6484eb034203a74364"},
+      "neighbor_proc_snapshot": {"returncode": 0, "path": "results/task041_review_v5_cpu_numa_condensed_speed/r1c_readonly_20260920/r1c_neighbor_raw_20260920T111657Z.txt", "sha256": "d99dc29c5439d08f9d3e65e9bc080ed2bdedb683192a7ed7986ed055fb4b18f3"}
+    },
+    "raw_hash_and_numa_recheck": {"performed_in_activated_native_python": true, "all_five_raw_sha256_equal": true, "worker_counts_recomputed_from_saved_raw": "pid1931360 N1=753633, N0=6175, fraction=0.991872946850"},
+    "pci_socket_node_mapping": {
+      "observed": "3a:* -> socket0/node0 and ae:* -> socket1/node1 via sysfs numa_node/lspci; 2042=IMC, 2046/204a=LMS channel devices",
+      "bmc_label_mapping": "not_proven; DMI slot labels and PCI BDF/channel labels are retained separately",
+      "socket_symmetry": "108/120/124/130/134/190/192 raw patterns are symmetric by device across sockets; 150/154 vary by channel/BDF and are not treated as a socket mismatch"
+    },
+    "register_reading": {
+      "temp_output_selection": "all observed @108 values have bit29=0; record only the PCODE_TEMP_OUTPUT selection, not pure-estimate/config-error semantics",
+      "threshold_fields": "@120=00645d52 corresponds to the observed 82/93/100C threshold tuple; @124 and mux/config fields are retained as raw values, not converted into a current throttle claim",
+      "thermal_bandwidth_limit_fields": "@130/@134 are dimm_temp_thrt_lmt bandwidth-limit fields; retained per device/channel; symmetry alone does not establish equal thermal behavior",
+      "dimm_temp_sticky_fields": "@150/@154 are DIMM_TEMP plus sticky-event fields; their channel-specific values are not treated as current thermal throttling or proof of a past 100C event",
+      "thrt_pwr_dimm_fields": "@190/@192 are thrt_pwr_dimm; observed 0fff has bit15=0 and is not treated as a current throttle event",
+      "write_policy": "no register-write or power-limit change was attempted"
+    },
+    "dmi_type17": {"observed": "16 Micron 128GB DDR4 DIMMs, common part 144ASQ16G72LSZ-2S9E1, speed 2933 MT/s, configured 2934 MT/s; P1/P2 Node0/Node1 channel labels symmetric", "edac_capacity_warning": "DMI inventory is not silently equated with the prior incomplete EDAC capacity view"},
+    "bmc_edac_policy": {"current_bmc": "sensor rc0; current DIMM readings max P2-DIMME1=72C and P2-DIMMD1=70C, statuses ok, 80/85/90C thresholds", "sel": "historical processor/DIMM threshold events retained; not time-aligned to retry1", "edac": "mc0..mc3 CE=0 and UE=0", "cpufreq": "both policies intel_cpufreq/schedutil 1.0-3.9GHz", "representative_thermal_throttle_counts": "zero", "numa_policy": "numa_balancing=1; THP=madvise; CPU pressure zero at capture"},
+    "root_cause_candidates": [
+      {"candidate": "active neighbor competing for node1 memory service while running on CPU23/socket0", "strength": "strong current confound; saved 11:17:03Z worker snapshot is N1=99.1872946850%", "status": "not sufficient to explain retry1 uniquely"},
+      {"candidate": "NUMA migration/placement or memory-service asymmetry", "strength": "plausible; only start placement was recorded for retry1", "status": "unresolved"},
+      {"candidate": "DIMM/IMC thermal or platform throttling", "strength": "possible but current BMC/EDAC/core throttle snapshot shows no active gate", "status": "unresolved; PCODE selection and sticky bits are not proof"}
+    ],
+    "minimal_safe_followup": "keep R2 blocked and do not signal/migrate the neighbor; after an exclusive window, use the two recorded cross-socket remote-memory placements with start/end NUMA evidence and the existing BMC/thermal/EDAC gates. No BIOS, power-limit, fan, register-write, or permission expansion is recommended from this evidence."
+  },
   "topology": {
     "cpu_model": "Intel(R) Xeon(R) Platinum 8260 CPU @ 2.40GHz",
     "logical_cpus": 48,
@@ -73,7 +133,7 @@
     "a CPU1 hardware qualification PASS",
     "R2 or any Task041 PDE/MPI qualification"
   ],
-  "interpretation": "the one authorized matched-load batch completed with clean worker/NUMA/resource gates, but socket1 throughput fell sharply after window 1 while Busy/BzyMHz stayed high; this is a limited negative performance diagnostic, not a core-frequency-throttle finding or a Task041 qualification",
+  "interpretation": "retry1 recorded startup affinity/first-touch observations only; the confirmed concurrent CPU23/socket0/node0 neighbor and current node1 placement are confound evidence, not a resolved cause. Socket1 throughput fell sharply while Busy/BzyMHz stayed high; R1c therefore remains BLOCKED_BY_ACTIVE_HEAVY_JOB and CPU1 is not qualified",
   "matched_load": {
     "driver": {
       "pid": 1941048,
