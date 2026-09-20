@@ -1,0 +1,67 @@
+{
+  "schema": "task041.review_v5.r0_stop_and_packet.v1",
+  "review_sha": "83d84899c401df38dfe8ebc0ea1c56f0914887df",
+  "running_source_sha": "bde0686891af10bb489e4b1cb14500791cb50351",
+  "canonical_head_after_review_fast_forward": "566accb7eb326d89a37f5c8f540a3e3f67856a69",
+  "captured_utc": "2026-09-20T09:29:55.481477Z",
+  "captured_cst": "2026-09-20T17:29:55.481477+08:00",
+  "unit": "task041-d1e-2nm-p6h1p5-m1200-mpi8.service",
+  "invocation": "1cf5e34338754dbfa80df487b322c72c",
+  "terminal": {
+    "active_state": "failed",
+    "result": "exit-code",
+    "exec_main_status": 3,
+    "main_pid": 0,
+    "cgroup_empty": true,
+    "classification": "IMPLEMENTATION_FAILURE",
+    "controlled_stop": false,
+    "signal_sent": false
+  },
+  "runroot": "/home/fenics/Projects/MyFEniCS/results/task041_2nm_balh_hybrid_iterative_p6h1p5_m1200_mpi8/task041_2nm_p6h1p5_m1200_mpi8_balh__hybrid_iterative__mpi8__M1200/20260918T095546.139183Z",
+  "input_sha256": "0edd17344454939cb2cd439b5221f6d08f03c42b9f36b083469e63f667e75e57",
+  "physical_model_sha256": "537056f184c8be19a4688c7e4cc1fef883141b9dbab7380c1df2efc5a3b465fc",
+  "resolved_config_sha256": "10835c84bc3c6f6fdbb5630a48a84a538fa87bd621346f068942cb5cdcc9f6b4",
+  "producer_packet": {
+    "manifest_sha256": "7ef2ecc5587f79a123e44cacfe347356d13b36336948ade1672787c6430163d2",
+    "declared_rank_count": 8,
+    "declared_shard_files": 32,
+    "streamed_shard_files": 32,
+    "streamed_shard_bytes": 4841245696,
+    "sha_mismatch_count": 0,
+    "arrays_loaded": false,
+    "audit_path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/producer_reuse_audit.json",
+    "audit_sha256": "c455e018fdda53b8e4e0c2727a2ace283b74718babbbd4cfbefa2259c8a94887"
+  },
+  "reuse_boundary": {
+    "public_metadata_validator": "prior_rc0_pass_reused",
+    "public_metadata_validator_evidence": {
+      "path": "/home/fenics/Projects/MyFEniCS/results/task041_side_balh_component_audit/d1e_preparation_20260918_8ad30732/d1e_2nm_p6h1p5_m1200_mpi8_supervision/d3a_producer_packet_validator_20260920.log",
+      "sha256": "991a49001396b95ad7317148f56c3b05a815f2ff3963c995d6335768e29674b2",
+      "result": "rc0/pass; producer_resource_qualified=true; in-process validator only"
+    },
+    "prior_d3a_terminal_record": {
+      "path": "/home/fenics/Projects/MyFEniCS/docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_d3a_terminal_20260920.json",
+      "sha256": "47ab5fa2c4d27501c52bd42adadd1ef829bf71052b32538d535c24316e86398e",
+      "classification": "IMPLEMENTATION_FAILURE",
+      "repeat_gate": {
+        "description": "two-sided composite modal Schur sampled_first versus sampled_second repeat consistency",
+        "absolute": "2.637750e-04",
+        "reference_norm": "5.957499e+00",
+        "relative": "4.427612e-05",
+        "max_column_relative_error": "1.169058e-04",
+        "limit": "1.000000e-10",
+        "printed_precision": "stdout .6e; full precision unavailable",
+        "side_root_cause": "unlocalized; both composite samples include bottom and top"
+      },
+      "terminal_state_unchanged": true
+    },
+    "future_consumer_abi_input_compatibility": "must_check",
+    "p4_factor_checkpoint": false,
+    "schur_checkpoint": false,
+    "native_workspace_checkpoint": false
+  },
+  "evidence": {
+    "r0_compact": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/task041_v5_stop_and_packet.json",
+    "r1_index": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_host_index.json"
+  }
+}
