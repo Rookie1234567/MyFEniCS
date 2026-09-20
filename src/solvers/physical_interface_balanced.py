@@ -97,6 +97,7 @@ class InterfaceBalancedCoupling:
         self.p4_action, self.transfer, self.fint = p4_action, transfer, fint
         self.coarse_calls = []
         self.native_A4_count = 0
+        self.native_A4_seconds = 0.0
         self.successful_logical_apply_count = 0
         self._pc_apply_sequence = 0
         self._logical_call_sequence = 0
@@ -244,6 +245,7 @@ class InterfaceBalancedCoupling:
         repair_records = []
         port_total = None
         native_actions = 0
+        native_A4_seconds = 0.0
         extra_solves = 0
         try:
             begin_logical = getattr(self.fint, 'begin_logical_apply', None)
@@ -268,7 +270,13 @@ class InterfaceBalancedCoupling:
                 )
             self.native_A4_count += 1
             native_actions += 1
-            applied = self.p4_action(correction)
+            native_started = time.perf_counter()
+            try:
+                applied = self.p4_action(correction)
+            finally:
+                elapsed = time.perf_counter() - native_started
+                native_A4_seconds += elapsed
+                self.native_A4_seconds += elapsed
             if not np.isfinite(_array_view(applied)).all():
                 self._reject_nonfinite(
                     logical_call=logical_call, phase='native_applied', g=g,
@@ -344,7 +352,13 @@ class InterfaceBalancedCoupling:
                     # public native count wrong.
                     self.native_A4_count += 1
                     native_actions += 1
-                    delta_applied = self.p4_action(correction)
+                    native_started = time.perf_counter()
+                    try:
+                        delta_applied = self.p4_action(correction)
+                    finally:
+                        elapsed = time.perf_counter() - native_started
+                        native_A4_seconds += elapsed
+                        self.native_A4_seconds += elapsed
                     if not np.isfinite(_array_view(delta_applied)).all():
                         self._reject_nonfinite(
                             logical_call=logical_call,
@@ -443,6 +457,7 @@ class InterfaceBalancedCoupling:
                 'native_A4_relative_residual': float(relative),
                 'fint_and_native_A4_seconds': time.perf_counter() - started,
                 'native_A4_actions': int(native_actions),
+                'native_A4_seconds': float(native_A4_seconds),
                 'p4_logical_apply_count': 1,
                 'p4_mat_solve_count': repair['actual_mat_solve_count'],
                 'repair': repair,

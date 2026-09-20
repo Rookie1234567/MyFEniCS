@@ -400,6 +400,12 @@ class P4CellCondensedInverse:
         self.owns_condensed = bool(owns_condensed); self.owns_factor = bool(owns_factor)
         self.retain_through_postprocess_v18 = bool(retain_through_postprocess_v18)
         self.solve_count = 0; self.destroyed = False; self.last_port_solution = np.empty(0, dtype=np.complex128); self.last_audit = {}
+        self.timing_cumulative = {
+            "reduce_seconds": 0.0,
+            "solve_seconds": 0.0,
+            "recover_seconds": 0.0,
+            "elapsed_seconds": 0.0,
+        }
         self.matrix_identity = petsc_csr_content_identity(condensed.matrix)
         active = {int(value) for value in condensed.trace_constraints.owned_active_original_dofs}
         self._slave_original = np.asarray([int(value) for value in condensed.owned_trace_original_dofs if int(value) not in active], dtype=PETSc.IntType)
@@ -478,6 +484,9 @@ class P4CellCondensedInverse:
             "input_is_mpc_dual_storage": True,
             "duplicate_C_H_applied": False,
             "factor_solve_call_delta": 0,
+            "reduce_seconds": 0.0,
+            "solve_seconds": 0.0,
+            "recover_seconds": 0.0,
             "input_finite": None,
             "solution_finite": None,
             "output_finite": None,
@@ -511,14 +520,18 @@ class P4CellCondensedInverse:
                     }
                 )
                 return result
+            reduce_started = perf_counter()
             reduced_rhs = self._reduce_storage_rhs(rhs)
+            audit["reduce_seconds"] = float(perf_counter() - reduce_started)
             reduced_values = np.asarray(reduced_rhs.getArray(readonly=True))
             if not np.isfinite(reduced_values).all():
                 raise FloatingPointError(
                     "reduced native p4 RHS contains non-finite values"
                 )
             # Nonzero native g always takes exactly one global MatSolve.
+            solve_started = perf_counter()
             solution = self._solve_once(reduced_rhs)
+            audit["solve_seconds"] = float(perf_counter() - solve_started)
             solution_values = np.asarray(solution.getArray(readonly=True))
             solution_finite = bool(np.isfinite(solution_values).all())
             audit["solution_finite"] = solution_finite
@@ -542,6 +555,7 @@ class P4CellCondensedInverse:
                 dtype=np.complex128,
             ).copy()
             recovered_rows = 0
+            recover_started = perf_counter()
             for index, cell in enumerate(self.condensed.cell_recovery_maps):
                 local_trace = np.empty(len(cell.trace_original_dofs), dtype=np.complex128)
                 for row, original in enumerate(cell.trace_original_dofs):
@@ -559,6 +573,7 @@ class P4CellCondensedInverse:
                     )
                 result.setValues(rows, np.asarray(values, dtype=PETSc.ScalarType), addv=PETSc.InsertMode.INSERT_VALUES); recovered_rows += len(rows)
             result.assemble()
+            audit["recover_seconds"] = float(perf_counter() - recover_started)
             output_values = np.asarray(result.getArray(readonly=True))
             output_finite = bool(np.isfinite(output_values).all())
             audit["output_finite"] = output_finite
@@ -592,6 +607,9 @@ class P4CellCondensedInverse:
             raise
         finally:
             audit["elapsed_seconds"] = float(perf_counter() - started)
+            for key in self.timing_cumulative:
+                self.timing_cumulative[key] += float(audit[key])
+            audit["timing_cumulative"] = dict(self.timing_cumulative)
             self.last_audit = dict(audit)
             if solution is not None:
                 solution.destroy()

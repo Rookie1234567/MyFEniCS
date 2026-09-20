@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from types import MappingProxyType
+import time
 from typing import Any
 
 from petsc4py import PETSc
@@ -144,6 +145,7 @@ class FullspacePhysicalAction:
         self._dtn_action = dtn_action
         self._owns_dtn = owns_dtn
         self._apply_count = 0
+        self._operation_seconds = {"dtn": 0.0, "volume": 0.0, "total": 0.0}
         self._destroyed = False
 
     def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
@@ -157,10 +159,19 @@ class FullspacePhysicalAction:
 
         if self._destroyed:
             raise RuntimeError("full physical action has been destroyed")
+        started = time.perf_counter()
+        dtn_started = started
         self._dtn_action.apply(source, target)
+        dtn_seconds = time.perf_counter() - dtn_started
+        volume_started = time.perf_counter()
         volume_result = self._volume_action.apply(source)
+        volume_seconds = time.perf_counter() - volume_started
         target.axpy(PETSc.ScalarType(1.0), volume_result)
         self._apply_count += 1
+        total_seconds = time.perf_counter() - started
+        self._operation_seconds["dtn"] += dtn_seconds
+        self._operation_seconds["volume"] += volume_seconds
+        self._operation_seconds["total"] += total_seconds
 
     def compose_physical_rhs(
         self,
@@ -197,6 +208,7 @@ class FullspacePhysicalAction:
                 "global_schur_materialized": False,
                 "ksp_created": False,
                 "numeric_allgather": False,
+                "operation_seconds_cumulative": dict(self._operation_seconds),
                 "apply_count": int(self._apply_count),
             }
         )

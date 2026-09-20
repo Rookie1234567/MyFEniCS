@@ -1086,7 +1086,12 @@ def _v14_known_preallocation_gate(
 
 
 def _build_common(
-    runtime: _V14Runtime, cfg: Any, *, prebuilt_levels: dict[str, Any] | None = None
+    runtime: _V14Runtime,
+    cfg: Any,
+    *,
+    prebuilt_levels: dict[str, Any] | None = None,
+    optimized_owner_apply: bool = False,
+    fixed_serial_owner_route: bool = False,
 ) -> dict[str, Any]:
     from mpi4py import MPI
     from src.solvers.fullspace_physical_intermediate_runtime import (
@@ -1139,6 +1144,8 @@ def _build_common(
         levels["spaces"][4],
         levels["floquets"][4],
         local_transfer=local_transfer,
+        optimized_owner_apply=optimized_owner_apply,
+        fixed_serial_owner_route=fixed_serial_owner_route,
     )
     runtime.marker("v14_p64_transfer_complete", dict(transfer=transfer.audit))
     metric = LosslessFEMetric(
@@ -1202,6 +1209,23 @@ def _build_common(
         ),
         "p64_owner_plan_bytes": required_int(
             routing_costs, "plan_bytes", "P64 transfer routing audit"
+        ),
+        "p64_owner_apply_extra_bytes": int(
+            required_int(
+                transfer_audit,
+                "owner_operator_adjoint_extra_bytes",
+                "P64 transfer audit",
+            )
+            + required_int(
+                transfer_audit,
+                "owner_candidate_packet_bytes",
+                "P64 transfer audit",
+            )
+            + required_int(
+                transfer_audit,
+                "owner_transfer_batch_scratch_bytes",
+                "P64 transfer audit",
+            )
         ),
         "p64_work_vector_bytes": int(
             16
@@ -3985,6 +4009,8 @@ def _v14_balanced_adapter(
     repair_vector_sink=None,
     repair_vector_capture=None,
     logical_apply_hook=None,
+    pc_fine_action_factory=None,
+    packed_power10=False,
 ):
     """Own H6 and its audit buffers; borrow the existing fixed interface stack."""
 
@@ -4010,18 +4036,26 @@ def _v14_balanced_adapter(
         "basis": "two same-degree physical component payloads plus twelve fine vectors",
     })
     positive = pc = None
+    pc_fine_action = common["fine"]["physical_action"]
+    pc_fine_action_bundle = None
+    pc_fine_inventory_live = False
     live_workspaces = set()
     inventory_live = False
     cleaned = False
 
     def cleanup_balanced_objects() -> None:
-        nonlocal cleaned, pc, positive
+        nonlocal cleaned, pc, positive, pc_fine_action_bundle
+        nonlocal pc_fine_inventory_live
         if cleaned:
             return
         cleaned = True
         if pc is not None:
             pc.destroy()
             pc = None
+        if pc_fine_action_bundle is not None:
+            pc_fine_action_bundle["physical_action"].destroy()
+            pc_fine_action_bundle.clear()
+            pc_fine_action_bundle = None
         if positive is not None:
             h6 = positive.pop("h6", None)
             shell = positive.pop("p6_shell", None)
@@ -4034,6 +4068,8 @@ def _v14_balanced_adapter(
         for label in live_workspaces:
             runtime.release_workspace(label)
         live_workspaces.clear()
+        if pc_fine_inventory_live:
+            runtime.release_inventory("v24_pc_a6_candidate")
         if inventory_live:
             runtime.release_inventory("v14_h6")
         runtime._deferred_balanced_cleanup = None
@@ -4041,7 +4077,12 @@ def _v14_balanced_adapter(
     try:
         runtime.reserve_workspace("v14_h6_build", 64 << 20)
         live_workspaces.add("v14_h6_build")
-        positive = build_light_h6_setup(common["levels"], common["cfg"], runtime.marker)
+        positive = build_light_h6_setup(
+            common["levels"],
+            common["cfg"],
+            runtime.marker,
+            packed_power10=packed_power10,
+        )
         h6, shell = positive["h6"], positive["p6_shell"]
         transfer = AlgebraicOwnerTransfer(common["transfer"])
         components = dict(shell.action.audit["retained_numeric_payload_components"])
@@ -4055,11 +4096,54 @@ def _v14_balanced_adapter(
         inventory_live = True
         runtime.release_workspace("v14_h6_build")
         live_workspaces.remove("v14_h6_build")
+        if pc_fine_action_factory is not None:
+            pc_fine_action_bundle = pc_fine_action_factory(common)
+            if not isinstance(pc_fine_action_bundle, dict):
+                raise TypeError("PC fine action factory must return an action bundle")
+            pc_fine_action = pc_fine_action_bundle["physical_action"]
+            candidate_facts = pc_fine_action_bundle["facts"]
+            if not isinstance(candidate_facts, dict):
+                raise TypeError("PC fine action facts must be a mapping")
+            candidate_components = {
+                "material_function_array_bytes": int(
+                    candidate_facts["material_function_array_bytes"]
+                )
+            }
+            for index, audit in enumerate(candidate_facts["component_audits"]):
+                if not isinstance(audit, dict):
+                    raise TypeError("PC fine component audit must be a mapping")
+                components = audit["retained_numeric_payload_components"]
+                if not isinstance(components, Mapping):
+                    raise ValueError("PC fine component payload audit is missing")
+                for name, amount in components.items():
+                    candidate_components[f"component_{index}_{name}"] = int(amount)
+            runtime.reserve_inventory(
+                "v24_pc_a6_candidate", candidate_components, check_rss=False
+            )
+            pc_fine_inventory_live = True
+            candidate_kernel_temporary_bytes = max(
+                int(kernel["temporary_budget_bytes"])
+                for kernel in candidate_facts["kernels"]
+            )
+            runtime.marker(
+                "v24_pc_a6_candidate_ready",
+                {
+                    "candidate": candidate_facts,
+                    "inventory_components": candidate_components,
+                    "native_a6_authority": "common.fine.physical_action",
+                    "dtn_ownership": "borrowed_common_fine_dtn_action",
+                },
+            )
+        else:
+            candidate_kernel_temporary_bytes = 0
         # Fine work vectors, retained audit copies, p4 residual copies and
         # H6's bounded packed-kernel temporaries share the existing 1 GiB pool.
         fine_vectors = 64 if capture_vectors else 40
         coarse_vectors = 16 if capture_vectors else 12
-        kernel_temp = int(positive["light_facts"]["kernel"]["temporary_budget_bytes"])
+        h6_kernel_temporary_bytes = int(
+            positive["light_facts"]["kernel"]["temporary_budget_bytes"]
+        )
+        kernel_temp = max(h6_kernel_temporary_bytes, candidate_kernel_temporary_bytes)
         pc_workspace = _v14_balanced_apply_workspace_bytes(
             n6,
             n4,
@@ -4091,6 +4175,8 @@ def _v14_balanced_adapter(
         runtime.marker("v14_balanced_workspace", {
             "fine_vector_upper_count": fine_vectors,
             "coarse_vector_upper_count": coarse_vectors,
+            "h6_kernel_temporary_bytes": h6_kernel_temporary_bytes,
+            "pc_a6_kernel_temporary_bytes": candidate_kernel_temporary_bytes,
             "kernel_temporary_bytes": kernel_temp,
             "ordinary_balanced_workspace_bytes": pc_workspace,
             "v24_prefix_workspace": prefix_workspace_facts,
@@ -4105,7 +4191,7 @@ def _v14_balanced_adapter(
             "scope": "new PC/ledger/capture vectors; outer Krylov storage accounted separately",
         })
         pc = InterfaceBalancedCoupling(
-            lambda x: apply_owned(common["fine"]["physical_action"], x),
+            lambda x: apply_owned(pc_fine_action, x),
             lambda x: apply_owned(common["p4"]["physical_action"], x),
             transfer, fint, h6.apply,
             save=lambda name, facts: _save_packet(
@@ -6461,6 +6547,9 @@ def _v14_q4_q5_fullspace(
     p4_repair_vector_capture=None,
     p4_logical_apply_hook=None,
     p4_stack_ready_hook=None,
+    pc_fine_action_factory=None,
+    packed_power10=False,
+    formal_release_timing=False,
 ) -> dict[str, Any]:
     """Run one fresh p6 outer solve with the live interface BAL_H stack.
 
@@ -6572,6 +6661,7 @@ def _v14_q4_q5_fullspace(
     post_release_residual_packet = None
     post_release_relative = None
     release_facts: dict[str, Any] | None = None
+    release_timing_facts: dict[str, Any] | None = None
     solve_result: dict[str, Any] | None = None
     solve_clock: ClockBudget | None = None
     checkpoint_records: list[dict[str, Any]] = []
@@ -7118,6 +7208,75 @@ def _v14_q4_q5_fullspace(
                 )
             return facts
 
+        def formal_release_timing_facts() -> dict[str, Any]:
+            """Snapshot cumulative V24 costs before release destroys owners."""
+
+            if pc is None or positive is None:
+                raise RuntimeError("V24 release timing requested without live PC")
+            fint = stack["fint"]
+            inverse = getattr(fint, "inverse", None)
+            timing = getattr(inverse, "timing_cumulative", None)
+            if not isinstance(timing, Mapping):
+                raise RuntimeError("V24 p4 cumulative timing is unavailable")
+            fine_audit = dict(common["fine"]["physical_action"].audit)
+            p4_audit = dict(common["p4"]["physical_action"].audit)
+            routing = dict(getattr(common["transfer"], "routing_costs", {}))
+            return {
+                "schema": "task039extra.v24.formal-release-timing.v1",
+                "release_boundary": "before_v20_preconditioner_release",
+                "native_A6": {
+                    "apply_count": int(fine_audit["apply_count"]),
+                    "operation_seconds_cumulative": dict(
+                        fine_audit["operation_seconds_cumulative"]
+                    ),
+                },
+                "native_A4": {
+                    "action_count": int(pc.native_A4_count),
+                    "seconds_cumulative": float(pc.native_A4_seconds),
+                    "operator_action": {
+                        "apply_count": int(p4_audit["apply_count"]),
+                        "operation_seconds_cumulative": dict(
+                            p4_audit["operation_seconds_cumulative"]
+                        ),
+                    },
+                },
+                "owner_P_PH": {
+                    "route": routing["route"],
+                    "primal_count": int(routing["primal_count"]),
+                    "adjoint_count": int(routing["adjoint_count"]),
+                    "primal_seconds": float(routing["primal_seconds"]),
+                    "adjoint_seconds": float(routing["adjoint_seconds"]),
+                    "route_seconds": float(routing["route_seconds"]),
+                },
+                "BAL_H": {
+                    "counts": dict(pc.balanced.total_counts),
+                    "operation_seconds_cumulative": dict(
+                        pc.balanced.total_operation_seconds
+                    ),
+                    "ledger": {
+                        "A_count": int(pc.ledger.A_count),
+                        "PH_count": int(pc.ledger.PH_count),
+                        "A_seconds": float(pc.ledger.A_seconds),
+                        "PH_seconds": float(pc.ledger.PH_seconds),
+                    },
+                },
+                "p4": {
+                    **{
+                        key: float(timing[key])
+                        for key in (
+                            "reduce_seconds",
+                            "solve_seconds",
+                            "recover_seconds",
+                            "elapsed_seconds",
+                        )
+                    },
+                    "physical_f4_call_count": int(fint.apply_count),
+                    "logical_p4_call_count": int(fint.logical_apply_count),
+                    "actual_mat_solve_count": int(inverse.solve_count),
+                },
+                "h6_apply_count": int(positive["h6"].apply_count),
+            }
+
         with _v14_balanced_adapter(
             runtime,
             common,
@@ -7127,6 +7286,8 @@ def _v14_q4_q5_fullspace(
             repair_vector_sink=p4_repair_vector_sink,
             repair_vector_capture=p4_repair_vector_capture,
             logical_apply_hook=p4_logical_apply_hook,
+            pc_fine_action_factory=pc_fine_action_factory,
+            packed_power10=packed_power10,
         ) as (pc, positive):
             if outer_adapter_factory is not None:
                 # X1 checks and its one PC call share the actual X2 objects.
@@ -7286,6 +7447,12 @@ def _v14_q4_q5_fullspace(
             },
         )
         if release_after_final_residual:
+            if formal_release_timing:
+                release_timing_facts = formal_release_timing_facts()
+                runtime.marker(
+                    "v24_formal_release_timing_before_release",
+                    release_timing_facts,
+                )
             release_result = _run_v20_release_after_final_residual(
                 runtime,
                 common,
@@ -7410,6 +7577,7 @@ def _v14_q4_q5_fullspace(
             "post_release_explicit_relative_residual": post_release_relative,
             "release_after_final_residual": bool(release_after_final_residual),
             "release_facts": release_facts,
+            "formal_release_timing": release_timing_facts,
             "history": history_facts,
             "stop_state": dict(stop_state),
             "reference_evaluation": {

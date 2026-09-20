@@ -1069,6 +1069,9 @@ def _run_physical_dual_cell_condensed_lowmem(
         expected_space_facts = None
         p6_pre_facts = None
         cfg = simulation_config_3d_from_normalized(resolved_payload)
+        # The packed A6 action remains a separately qualified research helper,
+        # but the formal V24 route keeps the native A6 authority and H6 setup.
+        pc_fine_action_factory = None
         if derive_live_space_identity:
             from mpi4py import MPI
             from src.solvers.fullspace_dtn_action import build_dynamic_mode_inventory
@@ -1143,8 +1146,14 @@ def _run_physical_dual_cell_condensed_lowmem(
                     "strict_upper_bound": False,
                 },
             )
+        v24_owner_apply = profile == LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE
+        packed_power10 = False
         common = _build_common(
-            runtime, cfg, prebuilt_levels=prebuilt_levels
+            runtime,
+            cfg,
+            prebuilt_levels=prebuilt_levels,
+            optimized_owner_apply=v24_owner_apply,
+            fixed_serial_owner_route=v24_owner_apply,
         )
         # The common builder now owns the FE/MPC levels.  Dropping this outer
         # alias avoids a duplicate mesh graph during form/condensation setup.
@@ -1586,6 +1595,9 @@ def _run_physical_dual_cell_condensed_lowmem(
                 p4_repair_vector_sink=repair_sink,
                 p4_repair_vector_capture=repair_vector_capture,
                 p4_logical_apply_hook=logical_apply_hook,
+                pc_fine_action_factory=pc_fine_action_factory,
+                packed_power10=packed_power10,
+                formal_release_timing=v24_owner_apply,
                 p4_stack_ready_hook=(
                     (lambda stack: prefix_stack.update(value=stack))
                     if p4_prefix_target_sequence is not None

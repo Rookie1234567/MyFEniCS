@@ -142,6 +142,146 @@ def test_nonaffine_geometry_and_nonpositive_material_rejected():
         IsotropicPartialAssembly(space, mu, mass)
 
 
+def test_packed_physical_action_helper_borrows_dtn_and_cleans_volume():
+    """Exercise the V24 PC-only packed action on a real tiny FE/MPC fixture."""
+
+    from petsc4py import PETSc
+
+    from src.solvers.common_3d_forms import _build_physical_volume_terms
+    from src.solvers.fullspace_dtn_action import (
+        FullspaceDtnAction,
+        FullspaceDtnCarrier,
+        FullspaceDtnModeFunctional,
+    )
+    from src.solvers.fullspace_physical_action import (
+        FullspacePhysicalAction,
+        FullspaceSplitVolumeAction,
+    )
+    from src.solvers.physical_equivalent_fast import build_packed_physical_action
+
+    domain = mesh.create_unit_cube(
+        MPI.COMM_SELF, 1, 1, 1, cell_type=mesh.CellType.hexahedron
+    )
+    space = fem.functionspace(domain, ("N1curl", 2))
+    mpc = dolfinx_mpc.MultiPointConstraint(space)
+    mpc.add_constraint(
+        space,
+        np.array([0], np.int32),
+        np.array([1, 2], np.int64),
+        np.array([0.25 + 0.5j, -0.1 + 0.2j]),
+        np.array([0, 0], np.int32),
+        np.array([0, 2], np.int32),
+    )
+    mpc.finalize()
+    space = mpc.function_space
+    tags = mesh.meshtags(
+        domain,
+        3,
+        np.array([0], dtype=np.int32),
+        np.array([1], dtype=np.int32),
+    )
+    cfg = SimpleNamespace(
+        tags=SimpleNamespace(air=1, substrate=2, grating=3),
+        mu_r=0.8,
+        k0=1.0,
+        eps_r=2.0 + 0.3j,
+        substrate_index=np.sqrt(0.4 - 0.2j),
+        grating_index=1.0 + 0.0j,
+    )
+    trial, test = ufl.TrialFunction(space), ufl.TestFunction(space)
+    curl_form, mass_form = _build_physical_volume_terms(
+        cfg,
+        trial,
+        test,
+        ufl.Measure("dx", domain=domain, subdomain_data=tags),
+    )
+    native_volume = FullspaceSplitVolumeAction(
+        curl_form, mass_form, space, mpc=mpc
+    )
+    identity = {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 0,
+        "side": "top",
+        "m": 0,
+        "n": 0,
+        "polarization": "s",
+        "alpha": 0.0 + 0.0j,
+        "gamma": 1.0 + 0.0j,
+        "beta": 1.0 + 0.0j,
+        "k_vector": (0.0 + 0.0j, 0.0 + 0.0j, 1.0 + 0.0j),
+        "e_vector": (1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j),
+        "h_vector": (0.0 + 0.0j, 1.0 + 0.0j, 0.0 + 0.0j),
+        "refractive_index": 1.0 + 0.0j,
+        "vertical_sign": 1,
+        "electric_tangential_norm_sq": 1.0,
+        "power_per_unit_amplitude": 1.0,
+        "propagating": True,
+        "rayleigh_warning": False,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1.0e-8,
+        "projection_denominator": 1.0,
+        "traction_vector": (1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j),
+    }
+    empty_rows = np.empty(0, dtype=PETSc.IntType)
+    empty_values = np.empty(0, dtype=np.complex128)
+    carrier = FullspaceDtnCarrier(
+        [
+            FullspaceDtnModeFunctional(
+                mode_key=(0, "top", 0, 0, "s"),
+                coupling_rows=empty_rows,
+                coupling_values=empty_values,
+                projection_rows=empty_rows,
+                projection_values=empty_values,
+                normalization_h=1.0,
+                mode_identity=identity,
+            )
+        ],
+        global_rows=int(space.dofmap.index_map.size_global),
+        ownership_range=(0, int(space.dofmap.index_map.size_local)),
+        comm=MPI.COMM_SELF,
+    )
+    dtn = FullspaceDtnAction(carrier, comm=MPI.COMM_SELF)
+    native = FullspacePhysicalAction(native_volume, dtn, owns_dtn=False)
+    common = {
+        "levels": {
+            "floquets": {6: SimpleNamespace(mpc=mpc)},
+            "mesh_data": SimpleNamespace(cell_tags=tags),
+        },
+        "fine": {"volume_action": native_volume, "dtn_action": dtn},
+    }
+    packed = build_packed_physical_action(common, cfg, contiguous_work=True)
+    source = native_volume.component_actions["curl"].matrix.createVecRight()
+    target = source.duplicate()
+    try:
+        rng = np.random.default_rng(36206)
+        source.array[:] = rng.normal(size=source.getLocalSize()) + 1j * rng.normal(
+            size=source.getLocalSize()
+        )
+        source_before = source.array.copy()
+        native.apply(source, target)
+        expected = target.array.copy()
+        packed["physical_action"].apply(source, target)
+        observed = target.array.copy()
+        relative = np.linalg.norm(observed - expected) / max(
+            np.linalg.norm(expected), np.finfo(float).tiny
+        )
+        assert relative <= 1.0e-11
+        np.testing.assert_array_equal(source.array, source_before)
+        packed["physical_action"].apply(source, target)
+        np.testing.assert_array_equal(target.array, observed)
+        assert packed["facts"]["native_a6_independent"] is True
+        assert packed["facts"]["dtn_borrowed"] is True
+    finally:
+        packed["physical_action"].destroy()
+        # The candidate owns only its packed volume; the borrowed DtN remains
+        # usable until the independent native owner releases it.
+        assert dtn.matrix.getType()
+        native.destroy()
+        dtn.destroy()
+        source.destroy()
+        target.destroy()
+
+
 def test_large_coordinate_affine_geometry_is_translation_invariant_for_both_consumers():
     def build(shift):
         domain = mesh.create_unit_cube(

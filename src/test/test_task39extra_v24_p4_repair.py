@@ -196,6 +196,7 @@ def test_default_path_is_one_logical_call_without_capture_attribute_error():
         assert all(call["repair"]["extra_solve_count"] == 0 for call in pc.coarse_calls)
         assert all(call["p4_mat_solve_count"] == 1 for call in pc.coarse_calls)
         assert pc.native_A4_count == 2
+        assert pc.native_A4_seconds > 0.0
         assert fint.apply_count == 2
         assert fint.logical_apply_count == 2
     finally:

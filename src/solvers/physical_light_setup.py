@@ -10,11 +10,13 @@ from .fullspace_lor_edge_geometric_mg_global import FixedChebyshevJacobiPETSc
 from .fullspace_lor_native_hx_fixture import build_frozen_fullspace_primal_source
 
 
-def build_light_h6_setup(levels, cfg, marker):
-    return build_light_level_setup(levels, cfg, marker, degree=6)
+def build_light_h6_setup(levels, cfg, marker, *, packed_power10=False):
+    return build_light_level_setup(
+        levels, cfg, marker, degree=6, packed_power10=packed_power10
+    )
 
 
-def build_light_level_setup(levels, cfg, marker, *, degree):
+def build_light_level_setup(levels, cfg, marker, *, degree, packed_power10=False):
     if degree not in (4, 6):
         raise ValueError('physical pilot smoother supports p6/p4 only')
     space, floquet = levels['spaces'][degree], levels['floquets'][degree]
@@ -27,19 +29,38 @@ def build_light_level_setup(levels, cfg, marker, *, degree):
         diagonal = build_quadrature_positive_diagonal(space, mu, mass, floquet.mpc)
         shell = SameMeshP6MatrixFreeShell(action, diagonal)
         action = diagonal = None
+        if packed_power10:
+            packed = FullspaceMpcFormAction(
+                form,
+                space,
+                mpc=floquet.mpc,
+                local_kernel=IsotropicPartialAssembly(
+                    floquet.mpc.function_space, mu, mass, contiguous_work=True
+                ),
+            )
+            original = shell.action
+            shell.action = packed
+            original.destroy()
         seed, _ = build_frozen_fullspace_primal_source(space, floquet, cfg, 'random')
         try:
             seed_sha = hashlib.sha256(seed.array.tobytes()).hexdigest()
             smoother = FixedChebyshevJacobiPETSc(shell.matrix, power_seed=seed)
         finally:
             seed.destroy()
-        # The original FFCx action determines the frozen power10 window.
-        # Only subsequent H6 applications use the qualified packed kernel.
-        fast = FullspaceMpcFormAction(form, space, mpc=floquet.mpc,
-            local_kernel=IsotropicPartialAssembly(floquet.mpc.function_space, mu, mass, contiguous_work=True))
-        original = shell.action
-        shell.action = fast
-        original.destroy()
+        if not packed_power10:
+            # The original FFCx action determines the frozen power10 window.
+            # Only subsequent H6 applications use the qualified packed kernel.
+            packed = FullspaceMpcFormAction(
+                form,
+                space,
+                mpc=floquet.mpc,
+                local_kernel=IsotropicPartialAssembly(
+                    floquet.mpc.function_space, mu, mass, contiguous_work=True
+                ),
+            )
+            original = shell.action
+            shell.action = packed
+            original.destroy()
         facts = dict(schema='physical-intermediate.light-h6-setup.v1', shared_mesh_levels=[6, 4],
             positive_p3_p1_constructed=False, positive_factor_count=0, h6_degree=3,
             calls_per_PC=dict(H6=2, S6=0, B6=4, positive_p3=0, positive_p1=0),
@@ -47,8 +68,13 @@ def build_light_level_setup(levels, cfg, marker, *, degree):
             diagonal_sha256=hashlib.sha256(shell.diagonal.array.tobytes()).hexdigest(),
             inverse_sqrt_diagonal_sha256=hashlib.sha256(smoother._inv_sqrt.array.tobytes()).hexdigest(),
             power_history=list(smoother.power_history), lambda_lo=smoother.lambda_lo, lambda_hi=smoother.lambda_hi,
+            lambda_power10=smoother.lambda_power10,
             power_matrix_mult_count=smoother.power_matrix_mult_count,
-            kernel=dict(fast._local_kernel.audit))
+            power10_action_backend=(
+                'packed_partial_assembly' if packed_power10 else 'native_ffcx'
+            ),
+            packed_power10_opt_in=bool(packed_power10),
+            kernel=dict(shell.action._local_kernel.audit))
         if degree != 6:
             facts.update(schema='physical-recursive.h4-setup.v1', level=degree, shared_mesh_levels=[6, 4, 2],
                 calls_per_PC=dict(H4=1, B4_positive=2), h4_degree=3)

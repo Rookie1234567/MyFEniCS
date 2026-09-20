@@ -27,6 +27,7 @@ from .fullspace_same_mesh_hcurl_pmg import (
 
 
 ROW_CONSISTENCY_LIMIT = 1.0e-11
+OWNER_TRANSFER_BATCH_SIZE = 8
 OWNER_RUNTIME_SCHEMA = "task038.same_mesh_hcurl_owner_transfer.v1"
 SAME_MESH_OWNER_TRANSFER_PAIRS = ((3, 1), (6, 3))
 SAME_MESH_EXTENDED_OWNER_TRANSFER_PAIRS = (
@@ -223,6 +224,22 @@ def _finite_global(array: np.ndarray, comm: Any) -> bool:
     return bool(comm.allreduce(local, op=MPI.MIN))
 
 
+def _owner_operator_matrix(matrix: Any, shape: tuple[int, int]) -> np.ndarray:
+    """Return one immutable local P matrix without changing its numeric kind."""
+
+    array = np.asarray(matrix)
+    if array.ndim != 2 or tuple(int(value) for value in array.shape) != tuple(shape):
+        raise ValueError("explicit owner cell matrix has an unexpected shape")
+    if not np.isfinite(array).all():
+        raise ValueError("invalid explicit owner cell matrix")
+    if np.iscomplexobj(array):
+        result = np.ascontiguousarray(array, dtype=np.complex128)
+    else:
+        result = np.ascontiguousarray(np.real(array), dtype=np.float64)
+    result.setflags(write=False)
+    return result
+
+
 def _mpc_constraint_residual(field: Any, floquet: Any) -> float:
     mpc = floquet.mpc
     values = np.asarray(field.x.array, dtype=np.complex128)
@@ -370,7 +387,10 @@ class SameMeshHcurlOwnerTransfer:
         coarse_space: Any,
         coarse_floquet: Any,
         local_transfer: SameMeshHcurlTransfer,
-        *, cell_matrix_provider=None, fixed_serial_owner_route=False,
+        *,
+        cell_matrix_provider=None,
+        fixed_serial_owner_route=False,
+        optimized_owner_apply=False,
     ) -> None:
         pair = (_space_degree(fine_space), _space_degree(coarse_space))
         if pair not in SAME_MESH_EXTENDED_OWNER_TRANSFER_PAIRS:
@@ -397,6 +417,7 @@ class SameMeshHcurlOwnerTransfer:
         if fixed_serial_owner_route and int(self.comm.size) != 1:
             raise ValueError("fixed owner routing requires MPI1")
         self.local_transfer = local_transfer
+        self._optimized_owner_apply = bool(optimized_owner_apply)
         self._destroyed = False
         self._last_apply_facts: dict[str, object] = {}
 
@@ -434,6 +455,10 @@ class SameMeshHcurlOwnerTransfer:
             ): local_transfer
         }
         records: list[dict[str, Any]] = []
+        operator_lookup: dict[tuple[Any, ...], int] = {}
+        operator_primal: list[np.ndarray] = []
+        operator_adjoint: list[np.ndarray] = []
+        operator_record_indices: dict[int, list[int]] = {}
         authority: dict[int, tuple[int, int]] = {}
         coarse_seen: set[int] = set()
         nontrivial = 0
@@ -449,11 +474,61 @@ class SameMeshHcurlOwnerTransfer:
                     coarse_cell_info=coarse_info,
                     fine_cell_info=fine_info,
                 )
-            matrix = cache[key].matrix
-            if cell_matrix_provider is not None:
-                matrix = np.asarray(cell_matrix_provider(cell, fine_info, matrix), dtype=np.complex128)
-                if matrix.shape != cache[key].matrix.shape or not np.isfinite(matrix).all():
-                    raise ValueError("invalid explicit owner cell matrix")
+            base_matrix = cache[key].matrix
+            if self._optimized_owner_apply:
+                if cell_matrix_provider is None:
+                    operator_key: tuple[Any, ...] = ("base", key)
+                    operator_id = operator_lookup.get(operator_key)
+                    if operator_id is None:
+                        matrix = _owner_operator_matrix(
+                            base_matrix, base_matrix.shape
+                        )
+                else:
+                    raw_matrix = cell_matrix_provider(
+                        cell, fine_info, base_matrix
+                    )
+                    matrix = _owner_operator_matrix(raw_matrix, base_matrix.shape)
+                    # A provider may return different matrices for cells with
+                    # the same orientation.  Contents, not cell_info, define reuse.
+                    digest = sha256()
+                    digest.update(matrix.dtype.str.encode("ascii"))
+                    digest.update(
+                        np.asarray(matrix.shape, dtype=np.int64).tobytes()
+                    )
+                    digest.update(matrix.view(np.uint8))
+                    operator_key = ("provider", digest.hexdigest())
+                    operator_id = operator_lookup.get(operator_key)
+                if operator_id is None:
+                    operator_id = len(operator_primal)
+                    operator_lookup[operator_key] = operator_id
+                    operator_primal.append(matrix)
+                    if np.iscomplexobj(matrix) and np.any(
+                        np.imag(matrix) != 0.0
+                    ):
+                        adjoint_matrix = np.ascontiguousarray(
+                            matrix.conj().T, dtype=np.complex128
+                        )
+                        adjoint_matrix.setflags(write=False)
+                    else:
+                        # An exact real operator needs no conjugate copy.
+                        adjoint_matrix = matrix.T
+                        adjoint_matrix.setflags(write=False)
+                    operator_adjoint.append(adjoint_matrix)
+                else:
+                    # Reuse the first normalized object for equal provider content.
+                    matrix = operator_primal[operator_id]
+            else:
+                matrix = base_matrix
+                if cell_matrix_provider is not None:
+                    matrix = np.asarray(
+                        cell_matrix_provider(cell, fine_info, base_matrix),
+                        dtype=np.complex128,
+                    )
+                    if (
+                        matrix.shape != base_matrix.shape
+                        or not np.isfinite(matrix).all()
+                    ):
+                        raise ValueError("invalid explicit owner cell matrix")
             fine_local, fine_global = _cell_global_dofs(fine_space, cell)
             coarse_local, coarse_global = _cell_global_dofs(coarse_space, cell)
             if cache[key].matrix.shape != (fine_global.size, coarse_global.size):
@@ -468,24 +543,30 @@ class SameMeshHcurlOwnerTransfer:
                 for global_id, owner in zip(coarse_global, coarse_owners)
                 if int(owner) == int(self.comm.rank)
             )
-            records.append(
-                {
-                    "fine_local": fine_local,
-                    "fine_global": fine_global.astype(np.uint64, copy=False),
-                    "coarse_local": coarse_local,
-                    "coarse_global": coarse_global.astype(np.uint64, copy=False),
-                    "matrix": matrix,
-                    "authority": np.asarray(
-                        [
-                            authority.get(int(global_id)) == (cell, position)
-                            and int(fine_owners[position]) == int(self.comm.rank)
-                            for position, global_id in enumerate(fine_global)
-                        ],
-                        dtype=bool,
-                    ),
-                    "cell_info": key,
-                }
-            )
+            record = {
+                "fine_local": fine_local,
+                "fine_global": fine_global.astype(np.uint64, copy=False),
+                "coarse_local": coarse_local,
+                "coarse_global": coarse_global.astype(np.uint64, copy=False),
+                "matrix": matrix,
+                "authority": np.asarray(
+                    [
+                        authority.get(int(global_id)) == (cell, position)
+                        and int(fine_owners[position]) == int(self.comm.rank)
+                        for position, global_id in enumerate(fine_global)
+                    ],
+                    dtype=bool,
+                ),
+                "cell_info": key,
+            }
+            if self._optimized_owner_apply:
+                record["adjoint_matrix"] = operator_adjoint[operator_id]
+                record["operator_id"] = int(operator_id)
+            records.append(record)
+            if self._optimized_owner_apply:
+                operator_record_indices.setdefault(int(operator_id), []).append(
+                    len(records) - 1
+                )
         fine_expected = set(
             range(
                 int(self.fine_ranges[self.comm.rank][0]),
@@ -504,15 +585,121 @@ class SameMeshHcurlOwnerTransfer:
             raise ValueError("coarse owner columns do not have local cell coverage")
         self._records = tuple(records)
         plan_start = perf_counter()
+        if self._optimized_owner_apply:
+            candidate_size = int(sum(record["fine_global"].size for record in records))
+            candidate_ids = np.empty(candidate_size, dtype=np.uint64)
+            packet_cursor = 0
+            for record in records:
+                size = int(record["fine_global"].size)
+                packet_slice = slice(packet_cursor, packet_cursor + size)
+                candidate_ids[packet_slice] = record["fine_global"]
+                record["packet_slice"] = packet_slice
+                record["fine_global"] = candidate_ids[packet_slice]
+                packet_cursor += size
+            candidate_ids.setflags(write=False)
+            serial_ids = candidate_ids
+        else:
+            candidate_size = 0
+            candidate_ids = None
+            serial_ids = (
+                np.concatenate([record["fine_global"] for record in records])
+                if fixed_serial_owner_route
+                else None
+            )
         self._serial_owner_plan = (
-            _fixed_serial_owner_plan(np.concatenate([r["fine_global"] for r in records]), self.fine_ranges, self.comm)
+            _fixed_serial_owner_plan(serial_ids, self.fine_ranges, self.comm)
             if fixed_serial_owner_route else None
         )
+        self._candidate_ids = candidate_ids
+        self._candidate_values = (
+            np.empty(candidate_size, dtype=np.complex128)
+            if self._optimized_owner_apply
+            else None
+        )
+        self._operator_cache = tuple(operator_primal)
+        self._adjoint_cache = tuple(operator_adjoint)
+        self._operator_groups = (
+            tuple(
+                (
+                    tuple(operator_record_indices[operator_id]),
+                    operator_primal[operator_id],
+                    operator_adjoint[operator_id],
+                )
+                for operator_id in range(len(operator_primal))
+            )
+            if self._optimized_owner_apply
+            else ()
+        )
+        if self._optimized_owner_apply:
+            max_coarse_width = max(
+                (int(record["coarse_local"].size) for record in records), default=0
+            )
+            max_fine_width = max(
+                (int(record["fine_local"].size) for record in records), default=0
+            )
+            self._owner_transfer_batch_size = min(
+                OWNER_TRANSFER_BATCH_SIZE, max(1, len(records))
+            )
+            self._owner_transfer_batch_width = max(
+                max_coarse_width, max_fine_width, 1
+            )
+            self._owner_transfer_batch_input = np.empty(
+                (
+                    self._owner_transfer_batch_size,
+                    self._owner_transfer_batch_width,
+                ),
+                dtype=np.complex128,
+            )
+            self._owner_transfer_batch_output = np.empty_like(
+                self._owner_transfer_batch_input
+            )
+            operator_primal_bytes = int(
+                sum(array.nbytes for array in operator_primal)
+            )
+            operator_adjoint_bytes = int(
+                sum(array.nbytes for array in operator_adjoint)
+            )
+            operator_adjoint_extra_bytes = int(
+                sum(
+                    0
+                    if np.shares_memory(primal, adjoint)
+                    else adjoint.nbytes
+                    for primal, adjoint in zip(operator_primal, operator_adjoint)
+                )
+            )
+            batch_scratch_bytes = int(
+                self._owner_transfer_batch_input.nbytes
+                + self._owner_transfer_batch_output.nbytes
+            )
+        else:
+            self._owner_transfer_batch_size = 0
+            self._owner_transfer_batch_width = 0
+            self._owner_transfer_batch_input = None
+            self._owner_transfer_batch_output = None
+            operator_primal_bytes = 0
+            operator_adjoint_bytes = 0
+            operator_adjoint_extra_bytes = 0
+            batch_scratch_bytes = 0
         self.routing_costs = dict(
             route="fixed_serial" if fixed_serial_owner_route else "alltoallv",
             qualification="MPI1 opt-in; MPI2 not qualified" if fixed_serial_owner_route else "existing owner route",
             plan_bytes=sum(a.nbytes for a in self._serial_owner_plan) if self._serial_owner_plan else 0,
             plan_setup_seconds=perf_counter()-plan_start,
+            optimized_owner_apply=self._optimized_owner_apply,
+            candidate_packet_bytes=(
+                0
+                if not self._optimized_owner_apply
+                else int(candidate_ids.nbytes + self._candidate_values.nbytes)
+            ),
+            operator_cache_count=len(operator_primal),
+            operator_primal_bytes=operator_primal_bytes,
+            operator_adjoint_bytes=operator_adjoint_bytes,
+            operator_adjoint_extra_bytes=operator_adjoint_extra_bytes,
+            batch_size=self._owner_transfer_batch_size,
+            batch_width=self._owner_transfer_batch_width,
+            batch_scratch_bytes=batch_scratch_bytes,
+            primal_operator_batches=0,
+            adjoint_operator_batches=0,
             primal_count=0, adjoint_count=0, primal_seconds=0., adjoint_seconds=0., route_seconds=0.,
         )
         self._map_cache = tuple(cache.items())
@@ -600,6 +787,30 @@ class SameMeshHcurlOwnerTransfer:
                 "local_cache_array_bytes": int(
                     sum(int(transfer.matrix.nbytes) for transfer in cache.values())
                 ),
+                "owner_operator_cache_key": (
+                    "base_cell_orientation"
+                    if cell_matrix_provider is None
+                    else "provider_dtype_shape_content"
+                ),
+                "owner_operator_cache_count": len(operator_primal),
+                "owner_operator_primal_real_count": int(
+                    sum(not np.iscomplexobj(array) for array in operator_primal)
+                ),
+                "owner_operator_primal_bytes": operator_primal_bytes,
+                "owner_operator_adjoint_bytes": operator_adjoint_bytes,
+                "owner_operator_adjoint_extra_bytes": operator_adjoint_extra_bytes,
+                "owner_operator_cache_bytes": int(
+                    operator_primal_bytes + operator_adjoint_extra_bytes
+                ),
+                "owner_candidate_packet_bytes": int(
+                    0
+                    if not self._optimized_owner_apply
+                    else candidate_ids.nbytes + self._candidate_values.nbytes
+                ),
+                "owner_apply_optimization": self._optimized_owner_apply,
+                "owner_transfer_batch_size": self._owner_transfer_batch_size,
+                "owner_transfer_batch_width": self._owner_transfer_batch_width,
+                "owner_transfer_batch_scratch_bytes": batch_scratch_bytes,
                 "nontrivial_cell_permutation_count_local": nontrivial,
                 "nontrivial_cell_permutation_present_global": nontrivial_present,
                 "canonical_global_digest": canonical_digest,
@@ -661,16 +872,46 @@ class SameMeshHcurlOwnerTransfer:
         self._finalize_primal(field, floquet)
 
     def _candidate_packet(self) -> tuple[np.ndarray, np.ndarray]:
-        ids: list[np.ndarray] = []
-        values: list[np.ndarray] = []
-        for record in self._records:
-            local_values = np.asarray(
-                self._coarse_work.x.array[record["coarse_local"]],
-                dtype=np.complex128,
-            )
-            ids.append(record["fine_global"])
-            values.append(record["matrix"] @ local_values)
-        return np.concatenate(ids), np.concatenate(values)
+        if not self._optimized_owner_apply:
+            ids: list[np.ndarray] = []
+            values: list[np.ndarray] = []
+            for record in self._records:
+                local_values = np.asarray(
+                    self._coarse_work.x.array[record["coarse_local"]],
+                    dtype=np.complex128,
+                )
+                ids.append(record["fine_global"])
+                values.append(record["matrix"] @ local_values)
+            return np.concatenate(ids), np.concatenate(values)
+        source = self._coarse_work.x.array
+        batch_input = self._owner_transfer_batch_input
+        batch_output = self._owner_transfer_batch_output
+        for records, matrix, _adjoint in self._operator_groups:
+            coarse_width = int(matrix.shape[1])
+            fine_width = int(matrix.shape[0])
+            for start in range(0, len(records), self._owner_transfer_batch_size):
+                selected = records[start : start + self._owner_transfer_batch_size]
+                count = len(selected)
+                for row, record_index in enumerate(selected):
+                    np.take(
+                        source,
+                        self._records[record_index]["coarse_local"],
+                        out=batch_input[row, :coarse_width],
+                    )
+                np.matmul(
+                    batch_input[:count, :coarse_width],
+                    matrix.T,
+                    out=batch_output[:count, :fine_width],
+                )
+                for row, record_index in enumerate(selected):
+                    np.copyto(
+                        self._candidate_values[
+                            self._records[record_index]["packet_slice"]
+                        ],
+                        batch_output[row, :fine_width],
+                    )
+                self.routing_costs["primal_operator_batches"] += 1
+        return self._candidate_ids, self._candidate_values
 
     def apply_primal_into(self, source: Any, target: Any) -> None:
         started = perf_counter()
@@ -740,19 +981,57 @@ class SameMeshHcurlOwnerTransfer:
         self.fine_floquet.mpc.homogenize(self._fine_work)
         self._fine_work.x.scatter_forward()
         self._coarse_work.x.array[:] = 0.0
-        for record in self._records:
-            values = np.asarray(
-                self._fine_work.x.array[record["fine_local"]],
-                dtype=np.complex128,
-            )
-            contribution = record["matrix"].conj().T @ (
-                values * record["authority"]
-            )
-            np.add.at(
-                self._coarse_work.x.array,
-                record["coarse_local"],
-                contribution,
-            )
+        if not self._optimized_owner_apply:
+            for record in self._records:
+                values = np.asarray(
+                    self._fine_work.x.array[record["fine_local"]],
+                    dtype=np.complex128,
+                )
+                contribution = record["matrix"].conj().T @ (
+                    values * record["authority"]
+                )
+                np.add.at(
+                    self._coarse_work.x.array,
+                    record["coarse_local"],
+                    contribution,
+                )
+        else:
+            source = self._fine_work.x.array
+            batch_input = self._owner_transfer_batch_input
+            batch_output = self._owner_transfer_batch_output
+            for records, _matrix, adjoint_matrix in self._operator_groups:
+                fine_width = int(adjoint_matrix.shape[1])
+                coarse_width = int(adjoint_matrix.shape[0])
+                for start in range(0, len(records), self._owner_transfer_batch_size):
+                    selected = records[
+                        start : start + self._owner_transfer_batch_size
+                    ]
+                    count = len(selected)
+                    for row, record_index in enumerate(selected):
+                        record = self._records[record_index]
+                        np.take(
+                            source,
+                            record["fine_local"],
+                            out=batch_input[row, :fine_width],
+                        )
+                        np.multiply(
+                            batch_input[row, :fine_width],
+                            record["authority"],
+                            out=batch_input[row, :fine_width],
+                        )
+                    np.matmul(
+                        batch_input[:count, :fine_width],
+                        adjoint_matrix.T,
+                        out=batch_output[:count, :coarse_width],
+                    )
+                    for row, record_index in enumerate(selected):
+                        record = self._records[record_index]
+                        np.add.at(
+                            self._coarse_work.x.array,
+                            record["coarse_local"],
+                            batch_output[row, :coarse_width],
+                        )
+                    self.routing_costs["adjoint_operator_batches"] += 1
         if self._dual_flat_slaves.size:
             np.take(
                 self._coarse_work.x.array,
@@ -813,8 +1092,15 @@ class SameMeshHcurlOwnerTransfer:
         self._coarse_work = None
         self._fine_work = None
         self._records = ()
+        self._candidate_ids = np.empty(0, dtype=np.uint64)
+        self._candidate_values = np.empty(0, dtype=np.complex128)
         self._serial_owner_plan = None
         self._map_cache = ()
+        self._operator_cache = ()
+        self._adjoint_cache = ()
+        self._operator_groups = ()
+        self._owner_transfer_batch_input = np.empty((0, 0), dtype=np.complex128)
+        self._owner_transfer_batch_output = np.empty((0, 0), dtype=np.complex128)
         self._authority = {}
         self._coarse_slaves = np.empty(0, dtype=np.int32)
         self._dual_flat_slaves = np.empty(0, dtype=np.int32)
@@ -836,6 +1122,9 @@ def build_same_mesh_hcurl_owner_transfer(
     coarse_floquet: Any,
     *,
     local_transfer: SameMeshHcurlTransfer | None = None,
+    cell_matrix_provider=None,
+    fixed_serial_owner_route: bool = False,
+    optimized_owner_apply: bool = False,
 ) -> SameMeshHcurlOwnerTransfer:
     """Build one owner-local same-mesh adapter without a global transfer."""
 
@@ -850,11 +1139,15 @@ def build_same_mesh_hcurl_owner_transfer(
         coarse_space,
         coarse_floquet,
         local_transfer,
+        cell_matrix_provider=cell_matrix_provider,
+        fixed_serial_owner_route=fixed_serial_owner_route,
+        optimized_owner_apply=optimized_owner_apply,
     )
 
 
 __all__ = [
     "OWNER_RUNTIME_SCHEMA",
+    "OWNER_TRANSFER_BATCH_SIZE",
     "ROW_CONSISTENCY_LIMIT",
     "SAME_MESH_OWNER_TRANSFER_PAIRS",
     "SAME_MESH_EXTENDED_OWNER_TRANSFER_PAIRS",

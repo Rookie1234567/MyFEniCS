@@ -232,12 +232,23 @@ def test_real_ffcx_system_uses_one_factor_solve_and_recovers_interiors():
     original = rhs.getArray(readonly=True).copy()
     result = inverse.apply(rhs)
     assert factor.calls == inverse.solve_count == 1
+    first_timing = dict(inverse.timing_cumulative)
+    assert first_timing["solve_seconds"] > 0.0
     np.testing.assert_array_equal(rhs.getArray(readonly=True), original)
     residual = full.createVecLeft(); full.mult(result, residual); residual.axpy(PETSc.ScalarType(-1), rhs)
     assert residual.norm() / max(rhs.norm(), 1e-30) < 2e-11
+    second = inverse.apply(rhs)
+    second_audit = dict(inverse.last_audit)
+    second_timing = dict(inverse.timing_cumulative)
+    for key in inverse.timing_cumulative:
+        assert second_timing[key] == pytest.approx(
+            first_timing[key] + second_audit[key]
+        )
     zero = rhs.duplicate(); zero.set(PETSc.ScalarType(0)); zero.assemble(); zero_result = inverse.apply(zero)
-    assert factor.calls == 1 and zero_result.norm() == 0
-    inverse.destroy(); assert factor.destroyed
+    assert factor.calls == 2 and zero_result.norm() == 0
+    assert inverse.timing_cumulative["elapsed_seconds"] >= second_timing["elapsed_seconds"]
+    assert inverse.last_audit["timing_cumulative"] == inverse.timing_cumulative
+    second.destroy(); inverse.destroy(); assert factor.destroyed
     with pytest.raises(RuntimeError, match="destroyed"):
         inverse.apply(rhs)
     zero_result.destroy(); zero.destroy(); residual.destroy(); result.destroy(); rhs.destroy(); full.destroy(); condensed.destroy()
