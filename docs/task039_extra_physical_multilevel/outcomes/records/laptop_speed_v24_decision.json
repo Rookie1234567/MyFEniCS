@@ -1,5 +1,5 @@
 {
-  "schema": "task039extra.v24.decision-record.v1",
+  "schema": "task039extra.v24.decision-record.v2",
   "source_sha": "b480178314efdf434c5f7405f2ab356ff9137c17",
   "input_sha256": "2ba2508861e02c2f1a9dbda433702c977eb0371cdb986350245e3caf15eb6928",
   "formal_run_root": "results/euv_grazing1_phi0/task39extra_v24_laptop_speed_original_h7p5__full3d_iterative__mpi1__Mna/20260920T111003.508765Z",
@@ -33,11 +33,15 @@
     "MEMORY_NONINCREASE": {
       "status": "OBSERVED_BELOW_REFERENCE_NOT_GENERAL_PROOF",
       "reference_rss_peak_bytes": 7387607040,
-      "formal_rss_peak_bytes": 7336173568,
-      "delta_bytes": -51433472,
-      "formal_pss_peak_bytes": 7303877632,
+      "formal_rss_peak_bytes": 7339319296,
+      "delta_bytes": -48287744,
+      "reference_pss_peak_bytes": 7355427840,
+      "formal_pss_peak_bytes": 7307023360,
+      "pss_delta_bytes": -48404480,
       "formal_swap_peak_bytes": 0,
-      "comparison_note": "Single-core formal route versus prior reference; does not qualify multi-core memory neutrality"
+      "formal_watchdog_samples": 16998,
+      "formal_watchdog_resources_sha256": "0b220a16d4cb096ea6a00a808e1a76b547bee42867b5152044f04e1e5e6a4e79",
+      "comparison_note": "Full process-tree watchdog authority versus prior reference; does not qualify multi-core memory neutrality"
     },
     "MULTICORE_ADOPTION": {
       "status": "NOT_ADOPTED",
@@ -51,5 +55,10 @@
     "docs/task039_extra_physical_multilevel/outcomes/summary_v24.md",
     "V23 58/59 evidence and historical negative classifications"
   ],
-  "master_merge_approved": false
+  "master_merge_approved": false,
+  "independent_offline_audit": {
+    "path": "results/euv_grazing1_phi0/task39extra_v24_laptop_speed_original_h7p5__full3d_iterative__mpi1__Mna/20260920T111003.508765Z/v24_independent_offline_audit_v2.json",
+    "sha256": "58ca321b21a01ac60a57beaf1699c9f76f17f0b92a8f2af7a565fbc96c0b32ef",
+    "passed": true
+  }
 }

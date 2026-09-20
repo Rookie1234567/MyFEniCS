@@ -2454,11 +2454,17 @@
         "full_workflow_monotonic_seconds": 4579.015917060999
       },
       "resources": {
-        "process_tree_rss_peak_bytes": 7336173568,
-        "process_tree_pss_peak_bytes": 7303877632,
+        "process_tree_rss_peak_bytes": 7339319296,
+        "process_tree_pss_peak_bytes": 7307023360,
         "swap_peak_bytes": 0,
-        "sample_count": 1141,
-        "descendants_cleared": true
+        "sample_count": 16998,
+        "resource_sha256": "0b220a16d4cb096ea6a00a808e1a76b547bee42867b5152044f04e1e5e6a4e79",
+        "watchdog_summary_sha256": "4a73bd0c392416486c7a6b03afab9b7190eb37722a0ad543341b67e5fb820fb6",
+        "descendants_cleared": true,
+        "worker_snapshot_non_authority": {
+          "sample_count": 1142,
+          "sha256": "185cc5d39631385c9373073185b3c2552cf76672bba6161c30cdfce49eddc63a"
+        }
       },
       "terminal": {
         "systemd_ActiveState": "inactive",

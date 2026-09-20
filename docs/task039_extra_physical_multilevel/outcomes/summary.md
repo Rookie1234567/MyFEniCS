@@ -7,12 +7,28 @@
 | 模型/身份 | original p6/h7.5，`[9,5,22]`、990 cells、80 modes、MPI1；source=`b480178314efdf434c5f7405f2ab356ff9137c17` |
 | 结果 | `DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED`；126 iterations；explicit/post-release residual=`9.283164961979326e-7` |
 | 官方物理量 | R/T/A/`A_volume`=`0.36509755370062585/0.013016803347759889/0.6218856429516143/0.6218856421339044`；`R00_total=0.3650608628870489` |
-| 资源 | RSS/PSS=`7336173568/7303877632 B`；swap=`0`；watchdog `COMPLETED`；descendants cleared |
+| 资源 | 正式连续 watchdog process-tree RSS/PSS=`7339319296/7307023360 B`；16998 samples；swap=`0`；watchdog `COMPLETED`；descendants cleared |
 | 时间 | full workflow=`4579.015917060999 s`，相对旧 `5581.178597819002 s` 为 `1.218859837771x`；端到端比较，不作 kernel-only attribution |
 | 线程 | single-core selected；2/4-thread memory-neutral qualification `NOT_RUN`，不写成采用 |
 | authority | 无匹配 h7.5 independent reference；不宣称 continuum convergence |
 
 P1 的 bounded same-factor repair 已单独记录；P5 交付入口为 [response V25](../response_v25.md)、[V24 outcome](laptop_speed_v24.md)、[compact](records/laptop_speed_v24_compact.json)、[decision](records/laptop_speed_v24_decision.json)、[selective manifest V24](selective_merge_manifest_v24.md)。正式 raw output、residual、watchdog 和 resource logs 仍在 ignored run root。
+
+### V24-1 P5 独立核对与资源口径
+
+| 核对项 | 结果与边界 |
+|---|---|
+| raw-field offline checker | `passed=true`；audit SHA=`58ca321b21a01ac60a57beaf1699c9f76f17f0b92a8f2af7a565fbc96c0b32ef`；checker SHA=`c4205d929f4add3f4ca0dd58ca6f736cb749e7ff941786ecf00856f30cbaaebf`；不创建 solver、不启动 PDE/factor/component |
+| 身份 | `input_original.dat`=`2ba250…eb6928`；resolved=`3e4a07…7c4587`；physical=`d8c5ab…1d036`；RHS vector=`b85dde…87824`；final/post/official packet identity一致；旧 B matrix/map/80-mode identity一致 |
+| A4/PC | 127 boundaries、254 logical calls、254 raw+1 correction、255 physical solves；`BAL_H` 两 coarse calls，`inner_ksp=false`，`max_it=2048`，`restart=32`；formal `time_policy=observe_only`、未启用时间终止；抽样 closure relative 最大 `4.309333201200774e-11` |
+| FE same-discrete | L2/scaled-curl relative=`1.8744734231920724e-14/1.351616670038343e-13`，由 artifact absolute/reference 重算，限值 `1e-4`；不是新 PDE |
+| formal resource authority | resources SHA=`0b220a16d4cb096ea6a00a808e1a76b547bee42867b5152044f04e1e5e6a4e79`；RSS/PSS=`7339319296/7307023360 B`；global swap delta 0；worker `1142` sample 只作非权威旁证 |
+| 时间/阶段 | KSP true monotonic=`3716.1522563079925 s`（不使用 solver.elapsed=`4064.2847061239304 s`）；factor INFOG19/22=`4687/4326 MB`；JIT `11 hit/0 miss`；唯一 correction boundary elapsed=`2.602906637999695 s`，裸 interface=`0.9039880140044261 s` |
+| 成本 | formal workflow=`4579.015917060999 s`；formal ledger=`4995.987698561707 s`；prefix watchdog=`863.445624881002 s`；full-PC component watchdog=`811.4285155539983 s`；各账本不相加 |
+
+FE 指标工程 wrapper 的首次记录是 `TIMEBASE_INCONSISTENCY`（49.30150357799721 s，RSS `1280192512 B`，swap0，清场）；成功记录为 `24.127236970991362 s`、RSS `559112192 B`，但使用 `LEGACY_STATIC_MEMORY_ENVELOPE + time_policy=enforce`，不是正式物理资源策略。两份记录和 SHA 均保留，首次受控停止不改判成数值失败。
+
+组件边界也分开记录：P1 source=`72115b6655c3d6ab5f9c3f74ba746e8eb184efb2`；owner manifest tracked diff=`7dd69e7541657d2fe48e1a5893f285b65cca0f68020cc1cb5976afe310cad468`、owner script=`160124274e648a70c25d4bef7eca4a64925f210df5fc672f8d30a5666a407bbd`、first-attempt 实际文件=`aa26c3d8df57464b4348b32f0aeebbcd7e1eb2c05c3d51bd361ab70e7ab0c92d`（旧 manifest 中陈旧 `75bfb...` 冲突保留）；full-PC dirty diff=`0a6fe7f6ee4d99aa9cffbed079586321a8159d94046063eb80db2cff5fa6d08d`、script=`4ec5bcc1bfae4bd9320c4a8cd28d5707769f6601afdc848c72ef29090b306adb`。owner 首次 P/PH 为 baseline `4.10675620699476/0.7427930510020815 s`、candidate `0.3230319220019737/0.3155690860003233 s`；三次 warm 样本中位 P/PH 为 baseline `4.218087512999773/0.7719355450026342 s`、candidate `0.32633427099790424/0.2924728030047845 s`。full-PC candidate 是 owner+packed-A6+packed-power10 组合，不是最终 owner-only 直接配对；其 setup/apply=`206.372522398/53.11041180999018 s`，baseline=`136.53963406301045/52.3144450539985 s`，采用判断为负/不归因稳定加速。正式路线仍 owner-only/native A6/old native H6，未把组件整体提速写成 formal 结论。
 
 ## V24 增量：V23 original-B fresh 与登记 bug replay 完成，但保留在线 p4 A4 数值负结果
 

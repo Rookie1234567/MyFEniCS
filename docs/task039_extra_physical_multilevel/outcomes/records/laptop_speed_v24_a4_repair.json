@@ -6,6 +6,8 @@
   "scope": "The A4 return-quality repair is qualified as a bounded same-factor extra solve; it is not a claim of a unique floating-point root cause.",
   "prefix_evidence": {
     "run_root": "results/euv_grazing1_phi0/task39extra_v24_p4_prefix_original_h7p5__full3d_iterative__mpi1__Mna/20260920T081515.830696Z",
+    "source_sha": "72115b6655c3d6ab5f9c3f74ba746e8eb184efb2",
+    "input_sha256": "944adaf49af47b4e2b631bf36ca2aba5d44595b900171672502177292fbd2702",
     "worker_summary_sha256": "96c94affc4d95a6f847edf25b46ee6bd03872391f83dcc93154b1e217e3d0487",
     "watchdog_summary_sha256": "eab07ec6d5f397369bc8554cf02f9f034c2971411715fc6049b2f7d69c546b57",
     "classification": "P4_PREFIX_CAPTURED_CONTROLLED_STOP",
@@ -28,6 +30,18 @@
     "post_release_explicit_relative_residual": 9.283164961979326e-7,
     "post_release_residual_gate": true,
     "repair_state_is_preserved_in_final_summary": true
+  },
+  "formal_raw_packet_audit": {
+    "boundary_records": 127,
+    "logical_calls": 254,
+    "raw_packets": 254,
+    "correction_packets": 1,
+    "physical_mat_solve_records": 255,
+    "correction_logical_call": 3,
+    "correction_phase": "correction_1",
+    "original_raw_g_denominator_used_for_final_rho": true,
+    "epsilon_closure": true,
+    "independent_audit_sha256": "58ca321b21a01ac60a57beaf1699c9f76f17f0b92a8f2af7a565fbc96c0b32ef"
   },
   "interpretation": "The prefix proves the bounded repair removes the observed PC2 A4 return-quality miss. The full run independently passes its explicit residual and post-release gates; it does not prove that every possible A4 failure has a single identified cause."
 }

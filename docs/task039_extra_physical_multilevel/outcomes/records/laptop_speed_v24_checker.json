@@ -1,7 +1,9 @@
 {
-  "schema": "task039extra.v24.checker-record.v1",
+  "schema": "task039extra.v24.checker-record.v2",
   "checker_type": "raw_field_recompute_record",
   "execution_status": "DERIVED_FROM_FORMAL_RAW_SUMMARY",
+  "checker_script": "benchmarks/check_laptop_speed_v24.py",
+  "checker_script_sha256": "c4205d929f4add3f4ca0dd58ca6f736cb749e7ff941786ecf00856f30cbaaebf",
   "source_sha": "b480178314efdf434c5f7405f2ab356ff9137c17",
   "input_sha256": "2ba2508861e02c2f1a9dbda433702c977eb0371cdb986350245e3caf15eb6928",
   "formal_summary": "results/euv_grazing1_phi0/task39extra_v24_laptop_speed_original_h7p5__full3d_iterative__mpi1__Mna/20260920T111003.508765Z/physical_dual_condensed_laptop_speed_v24_summary.json",
@@ -17,6 +19,14 @@
     "energy_closure": true,
     "modal_power_closure": true,
     "identity": true,
+    "input_original_hash": true,
+    "residual_packet_identity": true,
+    "old_matrix_and_80_mode_identity": true,
+    "rhs_storage_identity": true,
+    "a4_raw_denominator_recompute": true,
+    "a4_epsilon_closure": true,
+    "pc_127_boundary_contract": true,
+    "pc_254_logical_255_physical": true,
     "resource_available": true,
     "watchdog_completed": true,
     "zero_swap": true
@@ -32,5 +42,21 @@
     "old_v23_58_59_records_unchanged": true,
     "old_authority_limited_and_negative_records_unchanged": true,
     "checker_does_not_replace_raw_artifacts": true
+  },
+  "independent_offline_audit": {
+    "path": "results/euv_grazing1_phi0/task39extra_v24_laptop_speed_original_h7p5__full3d_iterative__mpi1__Mna/20260920T111003.508765Z/v24_independent_offline_audit_v2.json",
+    "sha256": "58ca321b21a01ac60a57beaf1699c9f76f17f0b92a8f2af7a565fbc96c0b32ef",
+    "passed": true,
+    "scope": "offline raw-field checker; no solver creation, PDE, factor, or component rerun"
+  },
+  "fe_metric_regression": {
+    "status": "AVAILABLE",
+    "artifact_sha256": "37dcc93c5747cb31db49c8e858ba2cc8c139fbe7e42ebe9db3d95d46b29fe782",
+    "L2_relative": 1.8744734231920724e-14,
+    "scaled_curl_relative": 1.351616670038343e-13,
+    "limit": 1.0e-4,
+    "ratios_recomputed_from_artifact": true,
+    "completed_watchdog_sha256": "95f72e4b7ba873ab099b653bb6c304f32892c44dd1f18b0438c87d7bc585ef5b",
+    "first_timebase_inconsistency_watchdog_sha256": "e21070092b8748ae6ec7655dbea07186207c2e3fb528013bacc5400e7450499f"
   }
 }

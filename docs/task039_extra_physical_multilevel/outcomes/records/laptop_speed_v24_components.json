@@ -1,7 +1,27 @@
 {
-  "schema": "task039extra.v24.component-record.v1",
+  "schema": "task039extra.v24.component-record.v2",
   "status": "QUALIFIED_ROUTE_WITHDRAWALS_EXPLICIT",
   "source_sha": "b480178314efdf434c5f7405f2ab356ff9137c17",
+  "source_provenance": {
+    "formal_source_sha": "b480178314efdf434c5f7405f2ab356ff9137c17",
+    "owner_component": {
+      "base_clean_source_sha": "72115b6655c3d6ab5f9c3f74ba746e8eb184efb2",
+      "manifest_tracked_diff_sha256": "7dd69e7541657d2fe48e1a5893f285b65cca0f68020cc1cb5976afe310cad468",
+      "manifest_component_script_sha256": "160124274e648a70c25d4bef7eca4a64925f210df5fc672f8d30a5666a407bbd",
+      "corrected_record_sha256": "c0ca195d83b12d22629e8b767a90d7e2e7bc9ec11263880e7e87fe71bdfd9068",
+      "first_attempt_actual_file_sha256": "aa26c3d8df57464b4348b32f0aeebbcd7e1eb2c05c3d51bd361ab70e7ab0c92d",
+      "manifest_recorded_first_attempt_sha256": "75bfbdb3cf30052ee7af23f2a19a554aa9a946c64b1f1b4c20c525f5f23c29dd",
+      "first_attempt_hash_conflict": "The historical manifest records 75bfb..., while the actual first-attempt file and its files_sha256 binding are aa26c3...; the historical manifest is preserved unchanged."
+    },
+    "full_pc_component": {
+      "base_clean_source_sha": "72115b6655c3d6ab5f9c3f74ba746e8eb184efb2",
+      "tracked_diff_sha256": "0a6fe7f6ee4d99aa9cffbed079586321a8159d94046063eb80db2cff5fa6d08d",
+      "component_script_sha256": "4ec5bcc1bfae4bd9320c4a8cd28d5707769f6601afdc848c72ef29090b306adb",
+      "watchdog_launcher_sha256": "90f707ed1a00d1cc75dc4fa630ff8e6a7af7a9ba21ce1686eef944ef06d644fc",
+      "route": "candidate owner plus packed A6 and packed power10; not formal authority"
+    },
+    "source_state": "development_worktrees; base SHA is parent qualification identity only"
+  },
   "formal_route": {
     "owner_optimized_apply": true,
     "fixed_serial_owner_route": true,
@@ -34,10 +54,66 @@
     "watchdog_swap_peak_bytes": 0,
     "formal_pde_replacement": false
   },
+  "performance_evidence": {
+    "owner_three_warm_samples_seconds": {
+      "baseline_primal": [4.076690424000844, 4.614804473996628, 4.218087512999773],
+      "baseline_adjoint": [0.9509982930030674, 0.7719355450026342, 0.5650092189971474],
+      "candidate_primal": [0.3273096650009393, 0.3128799359983532, 0.32633427099790424],
+      "candidate_adjoint": [0.2736715840001125, 0.3293146989963134, 0.2924728030047845]
+    },
+    "owner_three_warm_medians_seconds": {
+      "baseline_primal": 4.218087512999773,
+      "baseline_adjoint": 0.7719355450026342,
+      "candidate_primal": 0.32633427099790424,
+      "candidate_adjoint": 0.2924728030047845
+    },
+    "owner_first_call_seconds": {
+      "baseline_primal": 4.10675620699476,
+      "baseline_adjoint": 0.7427930510020815,
+      "candidate_primal": 0.3230319220019737,
+      "candidate_adjoint": 0.3155690860003233
+    },
+    "full_pc_component_composition": {
+      "candidate": "owner plus packed A6 plus packed power10",
+      "baseline_setup_seconds": 136.53963406301045,
+      "baseline_apply_seconds": 52.3144450539985,
+      "candidate_setup_seconds": 206.372522398,
+      "candidate_apply_seconds": 53.11041180999018,
+      "first_matsolve_baseline_seconds": 7.08038,
+      "first_matsolve_candidate_seconds": 0.83364,
+      "soft_pc_seconds": 25.0,
+      "hard_pc_seconds": 30.0,
+      "time_policy": "observe_only",
+      "soft_hard_metadata_only": true,
+      "direct_owner_only_pairing": false,
+      "interpretation": "This is not a direct owner-only pairing. Candidate setup was slower and apply was slightly slower; the first MatSolve differs with cold/warm drift, so no stable speedup is claimed."
+    }
+  },
   "withdrawn_or_not_adopted": {
     "packed_a6": "RESEARCH_ONLY_NOT_FORMAL_AUTHORITY",
     "packed_power10": "NOT_FORMAL_AUTHORITY",
     "conditional_2_or_4_threads": "NOT_RUN_NO_MEMORY_NEUTRALITY_PASS"
+  },
+  "costs_and_boundaries": {
+    "p4_prefix_watchdog_seconds": 863.445624881002,
+    "p4_prefix_watchdog_summary_sha256": "eab07ec6d5f397369bc8554cf02f9f034c2971411715fc6049b2f7d69c546b57",
+    "full_pc_component_watchdog_seconds": 811.4285155539983,
+    "full_pc_component_watchdog_summary_sha256": "1baf928e3c83cf8d429c291b3937364396458eed9e4281397effc441f49fa4f9",
+    "formal_full_workflow_seconds": 4579.015917060999,
+    "formal_ledger_seconds": 4995.987698561707,
+    "completed_fe_metric_wrapper_seconds": 24.127236970991362,
+    "completed_fe_metric_wrapper_rss_peak_bytes": 559112192,
+    "completed_fe_metric_wrapper_watchdog_summary_sha256": "95f72e4b7ba873ab099b653bb6c304f32892c44dd1f18b0438c87d7bc585ef5b",
+    "costs_are_separate": true,
+    "formal_workflow_not_attributed_entirely_to_owner_component": true
+  },
+  "metric_engineering_negative": {
+    "first_watchdog_classification": "TIMEBASE_INCONSISTENCY",
+    "first_watchdog_elapsed_seconds": 49.30150357799721,
+    "first_watchdog_rss_peak_bytes": 1280192512,
+    "first_watchdog_swap_peak_bytes": 0,
+    "completed_wrapper_strategy": "LEGACY_STATIC_MEMORY_ENVELOPE + time_policy=enforce; no successful timebase guard record",
+    "formal_resource_authority_unchanged": true
   },
   "boundary": "Component equivalence supports the selected owner route and full-PC compatibility. It does not turn component evidence into a continuum-convergence claim or a multi-core qualification."
 }

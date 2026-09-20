@@ -1,5 +1,5 @@
 {
-  "schema": "task039extra.v24.laptop-speed-compact.v1",
+  "schema": "task039extra.v24.laptop-speed-compact.v2",
   "run_id": "task39extra_v24_laptop_speed_original_h7p5",
   "profile": "physical_p6_trace_p4_condensed_laptop_speed_v24",
   "stage": "Z3_ORIGINAL_H7P5",
@@ -45,12 +45,28 @@
   "resources": {
     "full_workflow_seconds": 4579.015917060999,
     "watchdog_seconds": 4578.8921036949905,
-    "rss_peak_bytes": 7336173568,
-    "pss_peak_bytes": 7303877632,
+    "rss_peak_bytes": 7339319296,
+    "pss_peak_bytes": 7307023360,
     "swap_peak_bytes": 0,
     "zero_swap": true,
-    "resource_samples": 1141,
-    "resource_sha256": "5a57a694e77653332bde9f332f0fd10b69dd462787d738a9bb02c17a031d2b04"
+    "resource_samples": 16998,
+    "resource_sha256": "0b220a16d4cb096ea6a00a808e1a76b547bee42867b5152044f04e1e5e6a4e79",
+    "watchdog_summary_sha256": "4a73bd0c392416486c7a6b03afab9b7190eb37722a0ad543341b67e5fb820fb6",
+    "watchdog_classification": "COMPLETED",
+    "descendants_cleared": true,
+    "global_swap_delta": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 0
+    },
+    "global_swap_sample_max_observed": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 0
+    },
+    "vanished_pids_observed": [373722],
+    "worker_snapshot_non_authority": {
+      "sample_count": 1142,
+      "sha256": "185cc5d39631385c9373073185b3c2552cf76672bba6161c30cdfce49eddc63a"
+    }
   },
   "timing": {
     "p4_logical_calls": 254,
@@ -62,7 +78,142 @@
     "owner_adjoint_count": 258,
     "owner_route": "fixed_serial"
   },
+  "ksp_comparison": {
+    "formal_v24_true_ksp_seconds": 3716.1522563079925,
+    "old_v23_true_ksp_seconds": 4737.310983555995,
+    "formal_v24_iterations": 126,
+    "old_v23_iterations": 126,
+    "formal_v24_seconds_per_iteration": 29.493271875460258,
+    "old_v23_seconds_per_iteration": 37.59770621869837,
+    "solver_elapsed_seconds_not_used_as_ksp": 4064.2847061239304
+  },
+  "stage_resource_windows": {
+    "jit_form_preparation": {
+      "sample_count": 2,
+      "rss_peak_bytes": 952000512,
+      "pss_peak_bytes": 919705600
+    },
+    "symbolic_factor": {
+      "sample_count": 2,
+      "rss_peak_bytes": 2347122688,
+      "pss_peak_bytes": 2314843136
+    },
+    "numeric_factor": {
+      "sample_count": 814,
+      "rss_peak_bytes": 6494089216,
+      "pss_peak_bytes": 6461809664
+    },
+    "factor_total": {
+      "sample_count": 816,
+      "rss_peak_bytes": 6494089216,
+      "pss_peak_bytes": 6461809664
+    },
+    "outer_solve_plus_final_native_check": {
+      "sample_count": 13866,
+      "rss_peak_bytes": 7339319296,
+      "pss_peak_bytes": 7307023360
+    },
+    "release_and_post_release": {
+      "sample_count": 95,
+      "rss_peak_bytes": 7333027840,
+      "pss_peak_bytes": 7299683328
+    },
+    "post_release_output": {
+      "sample_count": 61,
+      "rss_peak_bytes": 7325888512,
+      "pss_peak_bytes": 7293612032
+    },
+    "pure_ksp_window": null,
+    "pure_ksp_peak_unknown_reason": "No exact KSP-end timestamp was saved; the outer window includes the final native check."
+  },
+  "backend_timing": {
+    "jit_cache_hits": 11,
+    "jit_cache_misses": 0,
+    "factor_symbolic_seconds": 0.5657629839988658,
+    "factor_numeric_seconds": 216.7832953909965,
+    "full_setup_seconds": null,
+    "full_setup_unknown_reason": "No exact boundary was saved that isolates all setup work.",
+    "native_factor_allocated_mb": 4687,
+    "native_factor_used_mb": 4326,
+    "correction_boundary_elapsed_seconds": 2.602906637999695,
+    "correction_interface_elapsed_seconds": 0.9039880140044261
+  },
   "reference_comparison": "NOT_ATTEMPTED_REFERENCE_UNAVAILABLE",
+  "identity": {
+    "input_original_sha256": "2ba2508861e02c2f1a9dbda433702c977eb0371cdb986350245e3caf15eb6928",
+    "resolved_config_file_sha256": "3e4a072525a5f853a12ee78b2f2b120f8478ba008c1fa4a623c5dd2ce97c4587",
+    "rhs_archive_sha256": "9c6d9f1251437db65f74f534586f038ceb9027d99b88866922b13da5e0e05f9f",
+    "rhs_storage_vector_sha256": "b85dde2599428906be4ffd2f2200438f3011e57358d20a541679b3ab50687824",
+    "old_v23_input_original_sha256": "01a5be1a5c3f8db114a5f40d8546ef678d56743339b885543d2658c648b47913",
+    "old_v23_resolved_config_sha256": "993a90300ff7054a9ad4ea8999d53aa90f00b80e2591d8fd7d7cdca3224ff823",
+    "rhs_shape_dtype": [667152, "complex128"],
+    "rhs_vector_equal_old_v23": true,
+    "packet_identity_consistent": true,
+    "old_matrix_and_80_mode_identity": true
+  },
+  "pc_boundary": {
+    "boundary_records": 127,
+    "logical_calls": 254,
+    "physical_factor_solve_calls": 255,
+    "coarse_calls_per_apply": 2,
+    "route": "BAL_H",
+    "inner_ksp": false,
+    "max_it": 2048,
+    "restart": 32,
+    "soft_pc_seconds": 25.0,
+    "hard_pc_seconds": 30.0,
+    "time_policy": "observe_only",
+    "time_gate_evaluated": false,
+    "time_termination_enabled": false,
+    "sampled_closure_relative_max": 4.309333201200774e-11,
+    "sampled_closure_limit": 1.0e-8,
+    "pass": true
+  },
+  "component_engineering": {
+    "owner_base_clean_source_sha": "72115b6655c3d6ab5f9c3f74ba746e8eb184efb2",
+    "owner_manifest_tracked_diff_sha256": "7dd69e7541657d2fe48e1a5893f285b65cca0f68020cc1cb5976afe310cad468",
+    "owner_component_script_sha256": "160124274e648a70c25d4bef7eca4a64925f210df5fc672f8d30a5666a407bbd",
+    "full_pc_tracked_diff_sha256": "0a6fe7f6ee4d99aa9cffbed079586321a8159d94046063eb80db2cff5fa6d08d",
+    "full_pc_component_script_sha256": "4ec5bcc1bfae4bd9320c4a8cd28d5707769f6601afdc848c72ef29090b306adb",
+    "full_pc_soft_pc_seconds": 25.0,
+    "full_pc_hard_pc_seconds": 30.0,
+    "full_pc_time_policy": "observe_only",
+    "full_pc_soft_hard_are_historical_metadata_only": true,
+    "full_pc_formal_authority": false,
+    "owner_first_call_seconds": {
+      "baseline_primal": 4.10675620699476,
+      "baseline_adjoint": 0.7427930510020815,
+      "candidate_primal": 0.3230319220019737,
+      "candidate_adjoint": 0.3155690860003233
+    },
+    "owner_three_warm_medians_seconds": {
+      "baseline_primal": 4.218087512999773,
+      "baseline_adjoint": 0.7719355450026342,
+      "candidate_primal": 0.32633427099790424,
+      "candidate_adjoint": 0.2924728030047845
+    },
+    "full_pc_direct_owner_only_pairing": false
+  },
+  "fe_metric": {
+    "status": "AVAILABLE",
+    "artifact_sha256": "37dcc93c5747cb31db49c8e858ba2cc8c139fbe7e42ebe9db3d95d46b29fe782",
+    "postprocess_script_sha256": "0c5bb6b6e436e484efac07d3ec11fca7b5d0669aaf0ee425474327a4a1388fc6",
+    "L2_relative": 1.8744734231920724e-14,
+    "scaled_curl_relative": 1.351616670038343e-13,
+    "limit": 1.0e-4,
+    "metric_pass_recomputed": true,
+    "completed_watchdog_summary_sha256": "95f72e4b7ba873ab099b653bb6c304f32892c44dd1f18b0438c87d7bc585ef5b",
+    "first_timebase_inconsistency_summary_sha256": "e21070092b8748ae6ec7655dbea07186207c2e3fb528013bacc5400e7450499f",
+    "first_timebase_inconsistency_elapsed_seconds": 49.30150357799721,
+    "first_timebase_inconsistency_rss_peak_bytes": 1280192512,
+    "strategy_deviation": "completed engineering wrapper used LEGACY_STATIC_MEMORY_ENVELOPE and time_policy=enforce; not formal physical resource authority"
+  },
+  "independent_offline_audit": {
+    "path": "results/euv_grazing1_phi0/task39extra_v24_laptop_speed_original_h7p5__full3d_iterative__mpi1__Mna/20260920T111003.508765Z/v24_independent_offline_audit_v2.json",
+    "sha256": "58ca321b21a01ac60a57beaf1699c9f76f17f0b92a8f2af7a565fbc96c0b32ef",
+    "checker_script_sha256": "c4205d929f4add3f4ca0dd58ca6f736cb749e7ff941786ecf00856f30cbaaebf",
+    "passed": true
+  },
   "artifact_hashes": {
     "summary": "130df607096fac3852a9226f30dc815232dddd568bceb59f13a4e2eb26bbe9b7",
     "official_output": "23e0d26278caf783599b57e659c69a3c13ff941f58124cf9115b5c1db842b5da",

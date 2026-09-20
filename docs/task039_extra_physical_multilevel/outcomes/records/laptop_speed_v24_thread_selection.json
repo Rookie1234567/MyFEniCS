@@ -38,9 +38,16 @@
     "run_root": "results/euv_grazing1_phi0/task39extra_v24_laptop_speed_original_h7p5__full3d_iterative__mpi1__Mna/20260920T111003.508765Z",
     "summary": "results/euv_grazing1_phi0/task39extra_v24_laptop_speed_original_h7p5__full3d_iterative__mpi1__Mna/20260920T111003.508765Z/physical_dual_condensed_laptop_speed_v24_summary.json",
     "resolved_config": "results/euv_grazing1_phi0/task39extra_v24_laptop_speed_original_h7p5__full3d_iterative__mpi1__Mna/20260920T111003.508765Z/resolved_config.json",
-    "rss_peak_bytes": 7336173568,
-    "pss_peak_bytes": 7303877632,
+    "rss_peak_bytes": 7339319296,
+    "pss_peak_bytes": 7307023360,
     "swap_peak_bytes": 0,
+    "watchdog_samples": 16998,
+    "watchdog_resources_sha256": "0b220a16d4cb096ea6a00a808e1a76b547bee42867b5152044f04e1e5e6a4e79",
+    "watchdog_summary_sha256": "4a73bd0c392416486c7a6b03afab9b7190eb37722a0ad543341b67e5fb820fb6",
+    "global_swap_delta": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 0
+    },
     "official_result": true,
     "route": "fixed_serial",
     "no_qualified_2_or_4_thread_evidence": true

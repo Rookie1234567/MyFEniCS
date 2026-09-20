@@ -17,8 +17,10 @@ V24 在同一 `990-cell` original p6/h7.5 模型上完成了唯一一次正式 B
 | profile / stage | `physical_p6_trace_p4_condensed_laptop_speed_v24` / `Z3_ORIGINAL_H7P5` |
 | source SHA | `b480178314efdf434c5f7405f2ab356ff9137c17` |
 | 输入 SHA | `2ba2508861e02c2f1a9dbda433702c977eb0371cdb986350245e3caf15eb6928` |
+| input_original.dat SHA | `2ba2508861e02c2f1a9dbda433702c977eb0371cdb986350245e3caf15eb6928` |
 | physical model SHA | `d8c5abb837adda92ea86e257cff9e2ff01ccf466879b08a2cde9a071e1d1d036` |
 | resolved config SHA | `3e4a072525a5f853a12ee78b2f2b120f8478ba008c1fa4a623c5dd2ce97c4587`，14647 bytes |
+| RHS storage | archive `9c6d9f1251437db65f74f534586f038ceb9027d99b88866922b13da5e0e05f9f`；array bytes `b85dde2599428906be4ffd2f2200438f3011e57358d20a541679b3ab50687824` |
 | mesh / modes | `[9,5,22]`，990 cells，80 DtN modes |
 | MPI / threads | MPI1；OMP、OpenBLAS、MKL、NumExpr 和 MUMPS 均为 1 |
 | outer solver | FGMRES32，max2048，retained zero start，80-mode port included |
@@ -36,7 +38,7 @@ V24 在同一 `990-cell` original p6/h7.5 模型上完成了唯一一次正式 B
 | `PHYSICS_CONSISTENCY` | PASS | field/power/channel/identity/energy/modal closure 等正式检查均为 true |
 | `AUTHORITY_LIMITED` | PASS with limitation | `NOT_ATTEMPTED_REFERENCE_UNAVAILABLE`；不宣称 continuum convergence |
 | `SPEEDUP` | MEASURED | 完整 workflow `4579.015917060999 s`（76.32 min），V23 baseline `5581.178597819002 s`（93.02 min），端到端比值 `1.218859837771` |
-| `MEMORY_NONINCREASE` | observed below prior reference | RSS `7336173568 B`，比旧参考 `7387607040 B` 少 `51433472 B`；这是单核路线对照，不是多核内存中性证明 |
+| `MEMORY_NONINCREASE` | observed below prior reference | 正式连续 watchdog process-tree RSS/PSS=`7339319296/7307023360 B`，相对旧参考 RSS 少 `48287744 B`；这是单核路线对照，不是多核内存中性证明 |
 | `MULTICORE_ADOPTION` | NOT ADOPTED | 没有运行或通过 2/4-thread memory-neutral 资格试验；正式结果保持 MPI1/单线程 |
 
 ## 数值与物理结果
@@ -78,15 +80,29 @@ V24 在同一 `990-cell` original p6/h7.5 模型上完成了唯一一次正式 B
 |---|---:|
 | full workflow | `4579.015917060999 s` |
 | watchdog monotonic | `4578.8921036949905 s` |
-| solver elapsed | `4064.2847061239304 s` |
+| true KSP monotonic / old V23 KSP | `3716.1522563079925 / 4737.310983555995 s`；两场均126步，`29.493271875460258 / 37.59770621869837 s/step` |
+| solver elapsed | `4064.2847061239304 s`；不作为 KSP 时间 |
+| factor symbolic / numeric | `0.5657629839988658 / 216.7832953909965 s`；full setup 精确边界 `unknown` |
 | p4 logical / physical MatSolve | `254 / 255` |
 | p4 reduce / solve / recover / total | `72.99329236106132 / 87.17264209411223 / 69.50814429990714 / 230.02264079889574 s` |
 | native A4 / native A6 apply count | `255 / 283` |
 | native A4 / native A6 cumulative total | `426.09123840702523 / 1637.1402389939758 s` |
 | owner primal / adjoint | `255 / 258` calls；`74.13890026698937 / 65.49211706320057 s` |
-| process-tree RSS / PSS peak | `7336173568 / 7303877632 B` |
+| process-tree RSS / PSS peak | `7339319296 / 7307023360 B` |
 | swap peak | `0 B` |
-| resource samples | `1141` |
+| watchdog resource samples | `16998`；resources SHA `0b220a16d4cb096ea6a00a808e1a76b547bee42867b5152044f04e1e5e6a4e79` |
+| watchdog summary | `COMPLETED`；summary SHA `4a73bd0c392416486c7a6b03afab9b7190eb37722a0ad543341b67e5fb820fb6`；descendants cleared；global swap delta 0 |
+| worker snapshot | `1142` samples，SHA `185cc5d39631385c9373073185b3c2552cf76672bba6161c30cdfce49eddc63a`；只作非权威旁证 |
+
+正式 watchdog 中曾观测到 `vanished_pids=[373722]`，但该样本同时保持状态/PSS 可读、unreadable 为空，且终态 leader=0、后代清空；这是采样时正常退出竞态，不作为失败门槛。global swap 只按 watchdog summary 的 delta 判定，不把系统累计计数的起点值当作新门槛。
+
+## PC 边界、离线 checker 与 FE 回归
+
+PC 记录绑定 `127` 个 boundary、`254` 个 logical call、`255` 个实际 factor solve；每个 boundary 有两次 `BAL_H` coarse call，`inner_ksp=false`、`max_it=2048`、`restart=32`、soft/hard PC 时间为 `25/30 s`。本轮 formal PC 的 `time_policy=observe_only`，未启用时间终止；这两个值只作记录和边界核对。保存的抽样闭合按 `closure_norm / operation_scale` 重算，最大 `4.309333201200774e-11`，限值 `1e-8`。A4 的 raw JSON 为 `254` 个 raw 加 `1` 个 `correction_1`，最终 rho 始终以原始 raw `g` 为分母。
+
+独立离线 checker 从 raw fields 重算显式 residual、A4 rho、身份、PC 约束、channel/field/功率和旧 B 同离散回归；结果 `passed=true`，audit SHA 为 `58ca321b21a01ac60a57beaf1699c9f76f17f0b92a8f2af7a565fbc96c0b32ef`，checker 脚本 SHA 为 `c4205d929f4add3f4ca0dd58ca6f736cb749e7ff941786ecf00856f30cbaaebf`。旧 V23 只作为同离散回归输入，不覆盖其历史 `58/59` 负结果。
+
+保存场上的同离散 FE 指标后处理为工程证据，不是新 PDE：L2 相对差 `1.8744734231920724e-14`，scaled-curl 相对差 `1.351616670038343e-13`，均由 artifact 的 absolute/reference 重新计算且低于 `1e-4`。成功 wrapper 使用 `LEGACY_STATIC_MEMORY_ENVELOPE + time_policy=enforce`，不是正式物理 watchdog 策略。首次 wrapper 以 `TIMEBASE_INCONSISTENCY` 受控停止（49.30150357799721 s，RSS `1280192512 B`，swap0，清场），该负记录保留，不能改判为数值失败。
 
 正式服务为 `inactive/dead`，systemd result `success`，exec status `0`；watchdog 为 `COMPLETED`，后代清场为 true。没有 OOM kill、残留 formal MPI/worker 或 swap 活动。
 
@@ -95,6 +111,8 @@ V24 在同一 `990-cell` original p6/h7.5 模型上完成了唯一一次正式 B
 - 正式 summary：[physical_dual_condensed_laptop_speed_v24_summary.json](../../../results/euv_grazing1_phi0/task39extra_v24_laptop_speed_original_h7p5__full3d_iterative__mpi1__Mna/20260920T111003.508765Z/physical_dual_condensed_laptop_speed_v24_summary.json)
 - official output：[z3_output.json](../../../results/euv_grazing1_phi0/task39extra_v24_laptop_speed_original_h7p5__full3d_iterative__mpi1__Mna/20260920T111003.508765Z/official_output/z3_output.json)
 - watchdog：[summary.json](../../../results/euv_grazing1_phi0/task39extra_v24_laptop_speed_original_h7p5__full3d_iterative__mpi1__Mna/20260920T111003.508765Z/watchdog/summary.json)
+- independent offline audit：[v24_independent_offline_audit_v2.json](../../../results/euv_grazing1_phi0/task39extra_v24_laptop_speed_original_h7p5__full3d_iterative__mpi1__Mna/20260920T111003.508765Z/v24_independent_offline_audit_v2.json)
+- same-discrete FE metric artifact：[v24_same_discrete_fe_metrics.json](../../../results/euv_grazing1_phi0/task39extra_v24_laptop_speed_original_h7p5__full3d_iterative__mpi1__Mna/20260920T111003.508765Z/engineering/v24_same_discrete_fe_metrics.json)
 - 机器可读 compact：[laptop_speed_v24_compact.json](records/laptop_speed_v24_compact.json)
 - A4 repair：[laptop_speed_v24_a4_repair.json](records/laptop_speed_v24_a4_repair.json)
 - route/components：[laptop_speed_v24_components.json](records/laptop_speed_v24_components.json)

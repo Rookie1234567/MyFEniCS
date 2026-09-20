@@ -6,7 +6,12 @@
 | V24 solver gate | **PASS** | 126 iterations；explicit final/post-release residual=`9.283164961979326e-7`；门槛 `1e-6` |
 | V24 physical checks | **PASS** | field/channel/power/energy/modal/identity/post-release checks all true；官方功率来自 DtN port modal amplitudes |
 | V24 authority | **LIMITED** | 没有匹配 h7.5 reference；不作 continuum-convergence claim |
-| V24 formal resources | **AVAILABLE** | RSS/PSS=`7336173568/7303877632 B`；zero swap；1141 worker resource samples |
+| V24 formal resources | **AVAILABLE** | formal watchdog RSS/PSS=`7339319296/7307023360 B`；zero process-tree swap；16998 samples；resources SHA=`0b220a16d4cb096ea6a00a808e1a76b547bee42867b5152044f04e1e5e6a4e79`；worker `1142` samples仅非权威旁证 |
+| V24 offline checker / audit | **PASS** | checker targeted pure-data suite=`8 passed in 0.19s`；独立 raw-field audit `passed=true`，SHA=`58ca321b21a01ac60a57beaf1699c9f76f17f0b92a8f2af7a565fbc96c0b32ef`；py_compile通过；不启动 solver/PDE |
+| V24 saved-field FE metrics | **AVAILABLE / PASS** | L2=`1.8744734231920724e-14`、scaled-curl=`1.351616670038343e-13`，限值 `1e-4`；artifact SHA=`37dcc93c5747cb31db49c8e858ba2cc8c139fbe7e42ebe9db3d95d46b29fe782`；由 absolute/reference 重算，不是新 PDE |
+| V24 FE metric wrapper boundary | **COMPLETED with strategy deviation** | 成功 wrapper `24.127236970991362 s`、RSS=`559112192 B`；首次 wrapper `TIMEBASE_INCONSISTENCY`=`49.30150357799721 s`、RSS=`1280192512 B`、swap0；两者均清场；成功记录使用 legacy static memory envelope + `time_policy=enforce`，不是 formal resource authority |
+| V24 solver/factor/timing evidence | **PASS / measured** | KSP true monotonic=`3716.1522563079925 s`；factor INFOG19/22=`4687/4326 MB`；JIT=`11 hit/0 miss`；correction boundary=`2.602906637999695 s`，bare interface=`0.9039880140044261 s`；无精确 KSP-end resource timestamp，不伪造 pure-KSP RSS window |
+| V24 component boundary | **QUALIFIED BUT NOT FORMAL SPEED CLAIM** | owner 首次 P/PH baseline=`4.10675620699476/0.7427930510020815 s`、candidate=`0.3230319220019737/0.3155690860003233 s`；三次 warm 中位 baseline=`4.218087512999773/0.7719355450026342 s`、candidate=`0.32633427099790424/0.2924728030047845 s`；full-PC 是 owner+packed-A6+packed-power10 组合而非 owner-only 直接配对，setup/apply=`206.372522398/53.11041180999018 s` vs baseline=`136.53963406301045/52.3144450539985 s`；soft/hard `25/30 s` 是 `observe_only` 历史 metadata；组件结果不替代正式 PDE |
 | V24 relevant pre-formal focused suite | **104 passed, 1 skipped** | source route/owner/profile/solver contracts；qualified activation；skip 为未用 MPI fixture |
 | V24 timing/release suite | **50 passed** | timing marker、旧 release 生命周期与 V24 接线；不含新 PDE |
 | compile / diff check | **PASS / PASS** | Python compileall 与 `git diff --check`；Ruff 未安装，未声称 Ruff/CI |
