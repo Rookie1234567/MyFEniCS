@@ -270,7 +270,7 @@ def _v24_p4_prefix_diagnostic_payload(
                 "global_mat_solve_count_delta": 0,
                 "local_lu_recovery_passes": 2,
             },
-            "arrays": arrays,
+            "diagnostic_vectors": arrays,
         }
     finally:
         if condensed_residual is not None:

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import numpy as np
 import pytest
 
@@ -350,6 +352,34 @@ def test_targeted_capture_keeps_raw_vectors_even_when_native_gate_passes():
     finally:
         pc.destroy()
         source.destroy()
+
+
+def test_prefix_diagnostic_packet_preserves_named_vectors_and_writer_array_map(tmp_path):
+    from src.runners.physical_diagnosis_worker import save_packet
+
+    names = (
+        "native_A4_residual",
+        "native_volume_top_residual",
+        "augmented_top_residual",
+        "port_residual",
+    )
+    vectors = {
+        name: np.asarray([index + 1j * (index + 1)], dtype=np.complex128)
+        for index, name in enumerate(names)
+    }
+    save_packet(
+        tmp_path,
+        "v24_prefix_diagnostic",
+        {"schema": "task039extra.v24.p4-prefix-diagnostic.v1", "diagnostic_vectors": vectors},
+    )
+    record = json.loads((tmp_path / "v24_prefix_diagnostic.json").read_text())
+    assert set(record["diagnostic_vectors"]) == set(names)
+    assert set(record["arrays"]) == {"path", "sha256"}
+    with np.load(tmp_path / "v24_prefix_diagnostic.npz", allow_pickle=False) as packet:
+        for name in names:
+            descriptor = record["diagnostic_vectors"][name]
+            assert descriptor["array_key"] in packet.files
+            np.testing.assert_array_equal(packet[descriptor["array_key"]], vectors[name])
 
 
 def test_bounded_repair_preserves_negative_after_two_extra_solves():
