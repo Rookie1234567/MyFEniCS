@@ -565,6 +565,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "physical_p6_trace_p4_condensed_robustness_v21",
                 "physical_p6_trace_p4_condensed_capacity_v22",
                 "physical_p6_trace_p4_condensed_physical_memory_v23",
+                "physical_p6_trace_p4_condensed_laptop_speed_v24",
             }:
                 raise _error(
                     "solver.preconditioner",
@@ -948,7 +949,10 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     validate_v21_input("Z3_ORIGINAL_H7P5", geometry, discretization)
                 except (OSError, TypeError, ValueError, KeyError) as exc:
                     raise _error("geometry/discretization", str(exc)) from exc
-            elif preconditioner == "physical_p6_trace_p4_condensed_physical_memory_v23":
+            elif preconditioner in (
+                "physical_p6_trace_p4_condensed_physical_memory_v23",
+                "physical_p6_trace_p4_condensed_laptop_speed_v24",
+            ):
                 for section, key, actual, expected in (
                     ("solver", "stage", solver.get("stage"), "Z3_ORIGINAL_H7P5"),
                     ("solver", "restart", solver["restart"], 32),
@@ -1951,6 +1955,7 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
         "physical_p6_trace_p4_condensed_robustness_v21",
         "physical_p6_trace_p4_condensed_capacity_v22",
         "physical_p6_trace_p4_condensed_physical_memory_v23",
+        "physical_p6_trace_p4_condensed_laptop_speed_v24",
     }:
         # V21 deliberately keeps the matched Z2 physical-model hash
         # compatible with the existing V5 notch reference.  The omitted
@@ -2088,6 +2093,7 @@ def resolve_loaded_input(loaded: LoadedInput) -> RunSpecification:
         "physical_p6_trace_p4_condensed_robustness_v21",
         "physical_p6_trace_p4_condensed_capacity_v22",
         "physical_p6_trace_p4_condensed_physical_memory_v23",
+        "physical_p6_trace_p4_condensed_laptop_speed_v24",
     }:
         for key in ("model_variant", "geometry_identity"):
             physical["geometry"].pop(key, None)

@@ -338,6 +338,28 @@ def _dual_condensed_physical_memory_v23_shared_ledger_path(repo_root: Path) -> P
     )
 
 
+def _dual_condensed_laptop_speed_v24_shared_ledger_path(
+    repo_root: Path, *, prefix: bool = False
+) -> Path:
+    """Return an independent V24 ledger, optionally for the bounded prefix."""
+
+    batch = "dual_condensed_laptop_speed_v24_prefix" if prefix else "dual_condensed_laptop_speed_v24"
+    review = (
+        "review_v22_laptop_speed_after_a4_fix_p4_prefix"
+        if prefix
+        else "review_v22_laptop_speed_after_a4_fix"
+    )
+    return (
+        repo_root
+        / "benchmarks"
+        / "artifacts"
+        / "task39extra"
+        / batch
+        / review
+        / "shared_workflow_ledger.json"
+    )
+
+
 def _validate_v17_t2_prerequisite(ledger: Mapping[str, Any]) -> dict[str, Any]:
     """Require a settled, hash-bound T1 checker decision before T2 launch."""
 
@@ -1755,6 +1777,14 @@ V23_SUMMARY_FILENAME = "physical_dual_condensed_physical_memory_v23_summary.json
 V23_PREDECESSOR_V22_LEDGER_SHA256 = (
     "0363e2230192dd3815653643852192e12cbeb666056d0b786b38f6edeb8f45b9"
 )
+V24_BATCH_IDENTITY = "review_v22_laptop_speed_after_a4_fix"
+V24_PREFIX_BATCH_IDENTITY = "review_v22_laptop_speed_after_a4_fix_p4_prefix"
+V24_STAGE = "Z3_ORIGINAL_H7P5"
+V24_LEDGER_SCHEMA = "task039extra.v24.shared-workflow-ledger.v1"
+V24_SUMMARY_FILENAME = "physical_dual_condensed_laptop_speed_v24_summary.json"
+V24_PREDECESSOR_V23_LEDGER_SHA256 = (
+    "06edc2d575577b857bb7ceb9a3d2eba13efd9e64058014c7e43549aae9634c2c"
+)
 
 
 def _read_only_v21_ledger_reference(repo_root: Path) -> dict[str, Any]:
@@ -2016,6 +2046,147 @@ def _reserve_v23_shared_budget(
         summary_filename=V23_SUMMARY_FILENAME,
         prerequisite=prerequisite,
         bug_replay_limit=1,
+    )
+
+
+def _read_only_v23_ledger_reference(repo_root: Path) -> dict[str, Any]:
+    """Bind V24 to the settled V23 history without reusing its lease."""
+
+    predecessor_path = _dual_condensed_physical_memory_v23_shared_ledger_path(repo_root)
+    try:
+        predecessor_bytes = predecessor_path.read_bytes()
+        predecessor = json.loads(predecessor_bytes.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise InputError("V24 requires the readable settled V23 ledger") from exc
+    predecessor_sha = hashlib.sha256(predecessor_bytes).hexdigest()
+    if (
+        predecessor_sha != V24_PREDECESSOR_V23_LEDGER_SHA256
+        or predecessor.get("batch_identity") != V23_BATCH_IDENTITY
+    ):
+        raise InputError("V24 predecessor V23 ledger identity or hash changed")
+    attempts = predecessor.get("stages", {}).get(V23_STAGE, {}).get("attempts", [])
+    if not isinstance(attempts, list) or not attempts:
+        raise InputError("V24 predecessor V23 ledger has no settled Z3 attempt")
+    historical_attempt = attempts[-1]
+    historical_run_directory = Path(
+        str(historical_attempt.get("run_directory", ""))
+    ).resolve()
+    historical_summary_path = historical_run_directory / "run_summary.json"
+    try:
+        historical_summary_bytes = historical_summary_path.read_bytes()
+        historical_summary = json.loads(
+            historical_summary_bytes.decode("utf-8")
+        )
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise InputError("V24 requires the settled V23 worker summary") from exc
+    historical_monotonic = historical_summary.get(
+        "full_workflow_monotonic_seconds"
+    )
+    if not isinstance(historical_monotonic, (int, float)):
+        raise InputError("V24 V23 predecessor summary lacks monotonic elapsed time")
+    return {
+        "read_only": True,
+        "required_for_new_budget": False,
+        "path": str(predecessor_path),
+        "sha256": predecessor_sha,
+        "batch_identity": predecessor.get("batch_identity"),
+        "schema": predecessor.get("schema"),
+        "ledger_elapsed_seconds": predecessor.get("elapsed_seconds"),
+        "ledger_elapsed_semantics": "conservative_realtime_policy_budget_seconds",
+        "historical_run_directory": str(historical_run_directory),
+        "historical_summary_path": str(historical_summary_path),
+        "historical_full_workflow_monotonic_seconds": float(historical_monotonic),
+        "historical_elapsed_semantics": "run_summary.full_workflow_monotonic_seconds",
+        "effective_budget_snapshot": read_v14_effective_budget(predecessor),
+        "policy_debits": deepcopy(predecessor.get("policy_debits", [])),
+        "unknown_elapsed_is_not_new_measurement": True,
+        "known_costs_and_negative_results_preserved": True,
+        "historical_ledger_snapshot": deepcopy(predecessor),
+    }
+
+
+def _reserve_v24_shared_budget(
+    repo_root: Path,
+    run_directory: Path,
+    *,
+    source_sha: str,
+    stage: str,
+    stage_budget: Mapping[str, Any],
+    workflow_clock_start: Mapping[str, Any],
+    time_policy: str = V14_TIME_POLICY_ENFORCE,
+    prefix: bool = False,
+) -> dict[str, Any]:
+    """Reserve one independent V24 formal or bounded-prefix attempt."""
+
+    if stage != V24_STAGE or time_policy != V14_TIME_POLICY_OBSERVE_ONLY:
+        raise InputError("V24 permits only Z3_ORIGINAL_H7P5 with observe_only")
+    repo_root = Path(repo_root).resolve()
+    path = _dual_condensed_laptop_speed_v24_shared_ledger_path(
+        repo_root, prefix=prefix
+    )
+    predecessor = _read_only_v23_ledger_reference(repo_root)
+    batch_identity = (
+        V24_PREFIX_BATCH_IDENTITY if prefix else V24_BATCH_IDENTITY
+    )
+    predecessors = {"v23": predecessor}
+    prerequisite = {
+        "original_only": True,
+        "allowed_stage": V24_STAGE,
+        "cross_case_recycling": False,
+        "automatic_replay": False,
+        "fresh_factor_allowed": True,
+        "bounded_p4_repair": True,
+        "p4_prefix_target_sequence": 3 if prefix else None,
+        "predecessor_v23_ledger": predecessor,
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        try:
+            ledger = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise InputError("V24 shared ledger cannot be read") from exc
+        if (
+            ledger.get("schema") != V24_LEDGER_SCHEMA
+            or ledger.get("batch_identity") != batch_identity
+            or ledger.get("predecessors") != predecessors
+            or ledger.get("allowed_stages") != [V24_STAGE]
+            or ledger.get("cross_case_recycling") is not False
+        ):
+            raise InputError("V24 ledger or read-only V23 predecessor changed")
+    else:
+        ledger = {
+            "schema": V24_LEDGER_SCHEMA,
+            "batch_identity": batch_identity,
+            "total_budget_seconds": V14_SHARED_WORKFLOW_SECONDS,
+            "elapsed_seconds": 0.0,
+            "conservative_allowance_seconds": 0.0,
+            "policy_debits": [],
+            "fresh_worker_count": 0,
+            "source_attempts": [],
+            "stages": {},
+            "unique_bug_replay_count": 0,
+            "replay_policy": (
+                "one fresh original V24 attempt; formal route may use one "
+                "explicit hash-bound implementation-bug replay; no automatic "
+                "numerical or resource retry"
+            ),
+            "allowed_stages": [V24_STAGE],
+            "cross_case_recycling": False,
+            "predecessors": predecessors,
+        }
+    return _reserve_blr_stage_from_ledger(
+        path,
+        ledger,
+        stage=stage,
+        run_directory=run_directory,
+        source_sha=source_sha,
+        stage_budget=stage_budget,
+        workflow_clock_start=workflow_clock_start,
+        time_policy=time_policy,
+        error_prefix="V24",
+        summary_filename=V24_SUMMARY_FILENAME,
+        prerequisite=prerequisite,
+        bug_replay_limit=0 if prefix else 1,
     )
 
 
@@ -2678,6 +2849,7 @@ def launch_specification(
     poll_interval: float = 0.25,
     pc_profile: dict | None = None,
     v14_time_policy: str = V14_TIME_POLICY_ENFORCE,
+    v24_p4_prefix_target: int | None = None,
 ) -> dict[str, Any]:
     """Launch one resolved input or fail closed before numerical execution."""
 
@@ -2703,6 +2875,7 @@ def launch_specification(
         ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE,
         CAPACITY_DUAL_CELL_CONDENSED_PROFILE,
         PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE,
+        LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE,
         profile_facts,
     )
     from src.io.physical_balanced_profile import BALANCED_PROFILES, BOUNDED_PROFILES
@@ -2719,12 +2892,23 @@ def launch_specification(
     robustness_v21_profile = specification.solver.get('preconditioner') == ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE
     capacity_v22_profile = specification.solver.get('preconditioner') == CAPACITY_DUAL_CELL_CONDENSED_PROFILE
     physical_memory_v23_profile = specification.solver.get('preconditioner') == PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE
+    v24_profile = specification.solver.get('preconditioner') == LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE
+    if v24_p4_prefix_target is not None:
+        try:
+            v24_p4_prefix_target = int(v24_p4_prefix_target)
+        except (TypeError, ValueError) as exc:
+            raise InputError("V24 p4 prefix target must be an integer") from exc
+        if not v24_profile or v24_p4_prefix_target != 3:
+            raise InputError(
+                "V24 p4 prefix target is only supported as total logical p4 sequence 3"
+            )
     cell_condensed_profile = specification.solver.get('preconditioner') in {
         CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE,
         DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE,
         ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE,
         CAPACITY_DUAL_CELL_CONDENSED_PROFILE,
         PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE,
+        LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE,
     }
     cell_stage = str(specification.solver.get('stage', ''))
     if cell_condensed_profile:
@@ -2836,6 +3020,15 @@ def launch_specification(
             stage_budget=cell_stage_budget, workflow_clock_start=full_clock.start,
             time_policy=v14_time_policy,
         )
+    elif v24_profile and physical_candidate:
+        run_directory = _timestamp_directory(specification, timestamp)
+        v14_lease = _reserve_v24_shared_budget(
+            Path(__file__).resolve().parents[2], run_directory,
+            source_sha=source, stage=cell_stage,
+            stage_budget=cell_stage_budget, workflow_clock_start=full_clock.start,
+            time_policy=v14_time_policy,
+            prefix=v24_p4_prefix_target is not None,
+        )
     elif physical_memory_v23_profile and physical_candidate:
         run_directory = _timestamp_directory(specification, timestamp)
         v14_lease = _reserve_v23_shared_budget(
@@ -2904,6 +3097,12 @@ def launch_specification(
                     "v14_time_policy": v14_time_policy,
                     "v14_time_gate": v14_time_policy_facts(v14_time_policy),
                 }
+            )
+            _write_json(run_directory / "run_manifest.json", manifest)
+        if v24_p4_prefix_target is not None:
+            manifest["v24_p4_prefix_target_sequence"] = int(v24_p4_prefix_target)
+            manifest["v24_p4_prefix_stop_semantics"] = (
+                "after_target_logical_repair_before_next_coarse"
             )
             _write_json(run_directory / "run_manifest.json", manifest)
         if pc_profile is not None:
@@ -2994,7 +3193,7 @@ def launch_specification(
                             timebase_policy='conservative_realtime',
                             time_policy=v14_time_policy,
                         )
-                        if physical_memory_v23_profile:
+                        if physical_memory_v23_profile or v24_profile:
                             watchdog_kwargs.update(
                                 memory_policy=physical_resources[
                                     'watchdog_memory_policy'
@@ -3048,6 +3247,14 @@ def launch_specification(
                                 v14_lease['attempt_index']
                             ),
                         )
+                        watchdog_kwargs['worker_environment'] = watchdog_environment
+                    if v24_p4_prefix_target is not None:
+                        watchdog_environment = dict(
+                            watchdog_kwargs.get('worker_environment', {})
+                        )
+                        watchdog_environment[
+                            'TASK39EXTRA_V24_P4_PREFIX_TARGET'
+                        ] = str(v24_p4_prefix_target)
                         watchdog_kwargs['worker_environment'] = watchdog_environment
                     wall_budget = (
                         min(
@@ -3124,7 +3331,7 @@ def launch_specification(
                                     'watchdog_memory_policy'
                                 ]
                             }
-                            if physical_memory_v23_profile
+                            if physical_memory_v23_profile or v24_profile
                             else {}
                         ),
                         'wall_reference_seconds': watchdog_wall_seconds,

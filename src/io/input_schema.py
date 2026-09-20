@@ -1007,6 +1007,7 @@ FIELD_SPECS: Final = (
             "physical_p6_trace_p4_condensed_robustness_v21",
             "physical_p6_trace_p4_condensed_capacity_v22",
             "physical_p6_trace_p4_condensed_physical_memory_v23",
+            "physical_p6_trace_p4_condensed_laptop_speed_v24",
             "hybrid_block_ldu_ilu0_dtn_woodbury",
         ),
         constraints=("only reviewed iterative identities are public",),

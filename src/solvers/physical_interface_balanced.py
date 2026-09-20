@@ -92,7 +92,8 @@ class InterfaceBalancedCoupling:
     def __init__(self, fine_action, p4_action, transfer, fint, h6, *, save,
                  checkpoint=lambda: None, capture_vectors=False,
                  repair_policy: P4ResidualRepairPolicy | Mapping[str, Any] | None = None,
-                 repair_vector_sink=None):
+                 repair_vector_sink=None, repair_vector_capture=None,
+                 logical_apply_hook=None):
         self.p4_action, self.transfer, self.fint = p4_action, transfer, fint
         self.coarse_calls = []
         self.native_A4_count = 0
@@ -101,6 +102,8 @@ class InterfaceBalancedCoupling:
         self._logical_call_sequence = 0
         self.repair_policy = _repair_policy(repair_policy)
         self.repair_vector_sink = repair_vector_sink
+        self.repair_vector_capture = repair_vector_capture
+        self.logical_apply_hook = logical_apply_hook
         self.capture_vectors = bool(capture_vectors)
         self._last_repair_vectors = []
         self._destroyed = False
@@ -163,7 +166,11 @@ class InterfaceBalancedCoupling:
 
     def _repair_snapshot(self, *, logical_call, phase, g, correction, port,
                          applied, residual, relative, interface):
-        if self.repair_vector_sink is None and not self.capture_vectors:
+        if (
+            self.repair_vector_sink is None
+            and not self.capture_vectors
+            and self.repair_vector_capture is None
+        ):
             return
         scalar = {
             'schema': 'task039extra.v24.p4-repair-vector.v1',
@@ -179,10 +186,13 @@ class InterfaceBalancedCoupling:
             'native_A4_relative_residual': float(relative),
             'interface_facts': deepcopy(interface),
         }
+        capture_selected = False
+        if self.repair_vector_capture is not None:
+            capture_selected = bool(self.repair_vector_capture(scalar))
         # A normal formal call only emits scalar accounting.  The first raw
         # vector becomes durable only when it actually crosses the native
         # threshold; correction snapshots are necessarily full packets.
-        full_packet = self.capture_vectors or (
+        full_packet = self.capture_vectors or capture_selected or (
             self.repair_vector_sink is not None
             and (
                 phase != 'raw'
@@ -201,7 +211,7 @@ class InterfaceBalancedCoupling:
                     native_A4_residual=_array_copy(residual),
                 )
             self.repair_vector_sink(payload)
-        if self.capture_vectors:
+        if self.capture_vectors or capture_selected:
             self._last_repair_vectors.append({
                 **scalar,
                 'g': _array_copy(g),
@@ -449,6 +459,15 @@ class InterfaceBalancedCoupling:
             facts['p4_logical_apply_sequence'] = int(logical_call_sequence)
             facts['p4_pc_apply_sequence'] = int(self._pc_apply_sequence)
             self.coarse_calls.append(facts)
+            if self.logical_apply_hook is not None:
+                try:
+                    self.logical_apply_hook(
+                        facts,
+                        tuple(self._last_repair_vectors),
+                    )
+                except BaseException:
+                    output.destroy()
+                    raise
             return output
         finally:
             for vector in (residual, applied, correction, g):
@@ -520,6 +539,8 @@ class InterfaceBalancedCoupling:
         self.transfer = None
         self.fint = None
         self.repair_vector_sink = None
+        self.repair_vector_capture = None
+        self.logical_apply_hook = None
         self._last_repair_vectors = []
 
 

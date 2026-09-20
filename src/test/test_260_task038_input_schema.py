@@ -153,10 +153,13 @@ def test_schema_identity_sections_and_unique_whitelist():
         "physical_p4_blr_tradeoff_v17",
             "physical_p4_cell_condensed_exact_v18",
             "physical_p4_cell_condensed_blr_v18",
-            "physical_p6_trace_p4_condensed_balh_v19",
-            "physical_p6_trace_p4_condensed_lowmem_v20",
-            "physical_p6_trace_p4_condensed_robustness_v21",
-            "hybrid_block_ldu_ilu0_dtn_woodbury",
+                "physical_p6_trace_p4_condensed_balh_v19",
+                "physical_p6_trace_p4_condensed_lowmem_v20",
+                "physical_p6_trace_p4_condensed_robustness_v21",
+                "physical_p6_trace_p4_condensed_capacity_v22",
+                "physical_p6_trace_p4_condensed_physical_memory_v23",
+                "physical_p6_trace_p4_condensed_laptop_speed_v24",
+                "hybrid_block_ldu_ilu0_dtn_woodbury",
     )
     for key in (
         "geometry.period_y_nm",

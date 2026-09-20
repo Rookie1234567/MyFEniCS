@@ -154,8 +154,11 @@ def _pc(
     fine_action=None,
     p4_action=None,
     h6=None,
+    transfer=None,
+    logical_apply_hook=None,
 ):
-    transfer = _IdentityTransfer()
+    if transfer is None:
+        transfer = _IdentityTransfer()
     if fine_action is None:
         fine_action = lambda value: _copy(value)
     if p4_action is None:
@@ -172,6 +175,7 @@ def _pc(
         capture_vectors=capture_vectors,
         repair_policy=policy,
         repair_vector_sink=sink,
+        logical_apply_hook=logical_apply_hook,
     )
 
 
@@ -267,6 +271,82 @@ def test_logical_count_accumulates_across_pc_applications_but_records_recent_cal
         assert facts["p4_logical_apply_count"] == 4
         assert facts["p4_recent_logical_apply_count"] == 2
         assert [row["p4_logical_apply_sequence"] for row in facts["p4_call_records"]] == [3, 4]
+    finally:
+        pc.destroy()
+        source.destroy()
+
+
+def test_prefix_stop_hook_stops_after_total_logical_three_and_destroys_output():
+    from src.runners.physical_dual_cell_condensed_lowmem_v20 import V24P4PrefixStop
+
+    class _TrackingTransfer(_IdentityTransfer):
+        def __init__(self):
+            self.primal_outputs = []
+
+        def apply_primal(self, value):
+            result = _copy(value)
+            self.primal_outputs.append(result)
+            return result
+
+    transfer = _TrackingTransfer()
+    hook_facts = []
+
+    def stop_after_target(facts, _repair_vectors):
+        hook_facts.append(dict(facts))
+        if facts["p4_logical_apply_sequence"] == 3:
+            raise V24P4PrefixStop(
+                {"target_logical_call_sequence": 3, "stop_point": "test"}
+            )
+
+    fint = _SequenceFint()
+    pc = _pc(
+        fint,
+        policy=P4ResidualRepairPolicy(enabled=True, max_extra_solves=2),
+        transfer=transfer,
+        logical_apply_hook=stop_after_target,
+    )
+    source = _vec([1.0 + 0.5j, -2.0j])
+    try:
+        first = pc.apply(source)
+        first.destroy()
+        with pytest.raises(V24P4PrefixStop, match="before the next coarse"):
+            pc.apply(source)
+        assert [item["p4_logical_apply_sequence"] for item in hook_facts] == [1, 2, 3]
+        assert hook_facts[-1]["p4_logical_apply_cumulative_count"] == 3
+        assert pc.successful_logical_apply_count == 3
+        assert fint.logical_apply_count == 3
+        assert len(pc.coarse_calls) == 1
+        assert transfer.primal_outputs[-1].handle == 0
+    finally:
+        pc.destroy()
+        source.destroy()
+
+
+def test_targeted_capture_keeps_raw_vectors_even_when_native_gate_passes():
+    captured = []
+    fint = _SequenceFint()
+    pc = _pc(
+        fint,
+        policy=P4ResidualRepairPolicy(enabled=True, max_extra_solves=2),
+        sink=captured.append,
+    )
+    pc.repair_vector_capture = lambda facts: (
+        facts["logical_call_sequence"] == 1 and facts["phase"] == "raw"
+    )
+    source = _vec([0.0, 0.0])
+    try:
+        result = pc.apply(source)
+        result.destroy()
+        selected = next(
+            item
+            for item in captured
+            if item["logical_call_sequence"] == 1 and item["phase"] == "raw"
+        )
+        assert "g" in selected and "correction" in selected
+        assert any(
+            item["logical_call_sequence"] == 1 and item["phase"] == "raw"
+            for item in pc.last_apply_vectors["p4_repair_calls"]
+        )
     finally:
         pc.destroy()
         source.destroy()

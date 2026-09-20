@@ -18,6 +18,7 @@ from pathlib import Path
 import numpy as np
 
 from src.io.physical_intermediate_profile import (
+    LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE,
     LOWMEM_DUAL_CELL_CONDENSED_PROFILE,
     profile_facts,
 )
@@ -36,6 +37,254 @@ _V22_BOUND_B_IDENTITY = {
     "surface_cells_per_side": 45,
 }
 _V22_BALANCED_KERNEL_TEMPORARY_BYTES = 1813760
+
+
+class V24P4PrefixStop(RuntimeError):
+    """Controlled stop after a repaired logical p4 prefix packet."""
+
+    def __init__(self, facts):
+        self.facts = dict(facts)
+        super().__init__(
+            "V24 p4 prefix captured after repair and before the next coarse call"
+        )
+
+
+def _v24_p4_prefix_diagnostic_payload(
+    common, stack, facts, *, phase
+):
+    """Build one bounded V24 p4 packet from an already-live factor stack.
+
+    The packet intentionally reuses the current condensed matrix, local LU
+    recovery maps, and action objects.  It performs no global MatSolve, factor
+    construction, or full native matrix allocation.  Keeping this small
+    helper outside the worker closure lets the existing V18 real-cell fixture
+    exercise the same recovery and repeat-action contract as the prefix run.
+    """
+
+    from petsc4py import PETSc
+
+    from .physical_p4_cell_condensed_v18 import _native_residual_packet
+    from .physical_p4_schur_v14 import _storage_rhs
+
+    started = time.perf_counter()
+    alpha = facts.get("alpha")
+    if alpha is None:
+        raise ValueError("V24 p4 prefix packet is missing the live port solution")
+    alpha = np.asarray(alpha, dtype=np.complex128)
+    rhs = solution = None
+    reduced_rhs = reduced_solution = condensed_applied = None
+    condensed_residual = None
+    try:
+        rhs = _storage_rhs(
+            common["levels"]["spaces"][4],
+            np.asarray(facts["g"], dtype=np.complex128),
+        )
+        solution = _storage_rhs(
+            common["levels"]["spaces"][4],
+            np.asarray(facts["correction"], dtype=np.complex128),
+        )
+        native_facts, identity, arrays = _native_residual_packet(
+            common, rhs, solution, alpha
+        )
+        if stack is None:
+            raise RuntimeError("V24 p4 prefix stack is not available")
+        inverse = stack.get("inverse")
+        condensed = getattr(inverse, "condensed", None)
+        if inverse is None or condensed is None or condensed.matrix is None:
+            raise RuntimeError("V24 p4 prefix condensed inverse is unavailable")
+        if alpha.shape != (int(condensed.appended_rows),):
+            raise ValueError("V24 p4 prefix port solution has the wrong shape")
+
+        # Reuse the live condensed matrix and the existing local LU recovery
+        # maps.  This is a matrix action only: no global MatSolve, new factor,
+        # or full native A4 matrix is created.
+        reduced_rhs = inverse._reduce_storage_rhs(rhs)
+        reduced_solution = condensed.create_augmented_vector()
+        reduced_solution.set(0)
+        active = np.asarray(
+            condensed.trace_constraints.owned_active_original_dofs,
+            dtype=PETSc.IntType,
+        )
+        active_values = np.asarray(
+            solution.getValues(active), dtype=np.complex128
+        )
+        reduced_values = reduced_solution.getArray()
+        owned_active = int(condensed.owned_active_rows)
+        owned_appended = int(condensed.owned_appended_rows)
+        if active_values.shape != (owned_active,) or owned_appended != alpha.size:
+            raise ValueError("V24 p4 prefix condensed vector layout changed")
+        reduced_values[:owned_active] = active_values
+        reduced_values[owned_active:] = alpha
+        condensed_applied = condensed.matrix.createVecLeft()
+        condensed.matrix.mult(reduced_solution, condensed_applied)
+        condensed_residual = reduced_rhs.copy()
+        condensed_residual.axpy(-1.0, condensed_applied)
+        condensed_rhs_norm = float(reduced_rhs.norm())
+        condensed_residual_norm = float(condensed_residual.norm())
+        condensed_relative = condensed_residual_norm / max(
+            condensed_rhs_norm, np.finfo(float).tiny
+        )
+
+        from src.solvers.hcurl_assembly_time_condensation import (
+            recover_owned_cell_interiors,
+        )
+
+        recovered = recover_owned_cell_interiors(
+            condensed, active_values, full_rhs=rhs
+        )
+        recovery_difference_norm = 0.0
+        recovered_norm = 0.0
+        interior_indices = []
+        for cell_index, (rows, expected) in enumerate(recovered):
+            rows = np.asarray(rows, dtype=PETSc.IntType)
+            _bi, _di, ports = inverse._port_data(
+                cell_index, condensed.cell_recovery_maps[cell_index]
+            )
+            if len(ports):
+                expected = expected - inverse._xiB_by_cell[cell_index] @ alpha[
+                    ports
+                ]
+            actual = np.asarray(solution.getValues(rows), dtype=np.complex128)
+            difference = actual - np.asarray(expected, dtype=np.complex128)
+            recovery_difference_norm += float(np.vdot(difference, difference).real)
+            recovered_norm += float(np.vdot(expected, expected).real)
+            interior_indices.append(rows)
+        recovery_difference_norm = float(np.sqrt(recovery_difference_norm))
+        recovered_norm = float(np.sqrt(recovered_norm))
+        interior_indices = (
+            np.concatenate(interior_indices)
+            if interior_indices
+            else np.empty(0, dtype=PETSc.IntType)
+        )
+        volume_residual = np.asarray(
+            arrays["native_volume_top_residual"], dtype=np.complex128
+        )
+        augmented_top_residual = np.asarray(
+            arrays["augmented_top_residual"], dtype=np.complex128
+        )
+        internal_residual = augmented_top_residual[interior_indices]
+        internal_residual_norm = float(np.linalg.norm(internal_residual))
+        internal_rhs = np.asarray(
+            rhs.getValues(interior_indices), dtype=np.complex128
+        )
+        internal_rhs_norm = float(np.linalg.norm(internal_rhs))
+
+        component_norms = {}
+        component_actions = common["p4"]["volume_action"].component_actions
+        for name, action in component_actions.items():
+            output = action.apply(solution)
+            norm = float(output.norm())
+            component_norms[str(name)] = {
+                "absolute_norm": norm,
+                "relative_to_rhs": norm
+                / max(float(rhs.norm()), np.finfo(float).tiny),
+            }
+        carrier = common["p4"]["dtn_action"].carrier
+        port_action = np.asarray(
+            [
+                np.dot(
+                    entry.projection_values,
+                    solution.getArray(readonly=True)[entry.projection_rows],
+                )
+                for entry in carrier.entries
+            ],
+            dtype=np.complex128,
+        )
+        port_normalization_action = np.asarray(
+            [
+                entry.normalization_h * alpha[index]
+                for index, entry in enumerate(carrier.entries)
+            ],
+            dtype=np.complex128,
+        )
+        # These two vectors are the FE-space port actions.  They are kept
+        # separate from the compact D*c/H*alpha carrier vectors below.
+        fe_port_action = volume_residual - augmented_top_residual
+        original_port_action = (
+            np.asarray(arrays["native_action"], dtype=np.complex128)
+            - np.asarray(facts["g"], dtype=np.complex128)
+            + volume_residual
+        )
+
+        return {
+            "schema": "task039extra.v24.p4-prefix-diagnostic.v1",
+            "phase": str(phase),
+            "logical_call_sequence": int(facts.get("logical_call_sequence", 0)),
+            "pc_apply_sequence": int(facts.get("pc_apply_sequence", 0)),
+            "native_residual": native_facts,
+            "augmented_residual_identity": identity,
+            "condensed_matrix_residual": {
+                "absolute_norm": condensed_residual_norm,
+                "rhs_norm": condensed_rhs_norm,
+                "relative": float(condensed_relative),
+                "matrix_identity": dict(inverse.matrix_identity),
+                "global_mat_solve_count_delta": 0,
+            },
+            "internal_recovery": {
+                "recovery_difference_norm": recovery_difference_norm,
+                "recovered_solution_norm": recovered_norm,
+                "recovery_difference_relative": recovery_difference_norm
+                / max(recovered_norm, np.finfo(float).tiny),
+                "augmented_top_internal_residual_norm": internal_residual_norm,
+                "volume_internal_rhs_norm": internal_rhs_norm,
+                "augmented_top_internal_residual_relative": internal_residual_norm
+                / max(internal_rhs_norm, np.finfo(float).tiny),
+                "cell_count": len(recovered),
+                "interior_row_count": int(interior_indices.size),
+            },
+            "component_action_norms": component_norms,
+            "port_action_norms": {
+                "FE_B_alpha_absolute_norm": float(np.linalg.norm(fe_port_action)),
+                "original_DtN_action_absolute_norm": float(
+                    np.linalg.norm(original_port_action)
+                ),
+                "FE_B_alpha_relative_to_rhs": float(
+                    np.linalg.norm(fe_port_action)
+                )
+                / max(float(rhs.norm()), np.finfo(float).tiny),
+                "original_DtN_action_relative_to_rhs": float(
+                    np.linalg.norm(original_port_action)
+                )
+                / max(float(rhs.norm()), np.finfo(float).tiny),
+                "projection_D_c_absolute_norm": float(np.linalg.norm(port_action)),
+                "normalization_H_alpha_absolute_norm": float(
+                    np.linalg.norm(port_normalization_action)
+                ),
+                "projection_D_c_relative_to_rhs": float(np.linalg.norm(port_action))
+                / max(float(rhs.norm()), np.finfo(float).tiny),
+                "normalization_H_alpha_relative_to_rhs": float(
+                    np.linalg.norm(port_normalization_action)
+                )
+                / max(float(rhs.norm()), np.finfo(float).tiny),
+            },
+            "port_closure": {
+                "absolute_norm": float(native_facts["port_residual_norm"]),
+                "relative": float(native_facts["port_relative"]),
+                "port_solution_norm": float(np.linalg.norm(alpha)),
+            },
+            "diagnostic_runtime": {
+                "elapsed_seconds": time.perf_counter() - started,
+                "native_action_evaluations": 2,
+                "component_action_evaluations": len(component_norms),
+                "condensed_matrix_mult_count": 1,
+                "global_mat_solve_count_delta": 0,
+                "local_lu_recovery_passes": 2,
+            },
+            "arrays": arrays,
+        }
+    finally:
+        if condensed_residual is not None:
+            condensed_residual.destroy()
+        if condensed_applied is not None:
+            condensed_applied.destroy()
+        if reduced_solution is not None:
+            reduced_solution.destroy()
+        if reduced_rhs is not None:
+            reduced_rhs.destroy()
+        if solution is not None:
+            solution.destroy()
+        if rhs is not None:
+            rhs.destroy()
 
 
 def _v22_direct_term_payload_upper_bound(
@@ -691,6 +940,10 @@ def _run_physical_dual_cell_condensed_lowmem(
     capacity_trial=False,
     capacity_context=None,
     capacity_policy="CAPACITY_CONTROLLED_LOCAL_MUMPS_V22",
+    p4_repair_policy=None,
+    p4_repair_vector_sink=None,
+    p4_repair_vector_capture=None,
+    p4_prefix_target_sequence=None,
 ):
     """Run one parameterized dual-condensed robustness stage."""
 
@@ -721,6 +974,7 @@ def _run_physical_dual_cell_condensed_lowmem(
         _repo_root,
         _v14_known_preallocation_gate,
         _v14_q4_q5_fullspace,
+        _save_packet,
         _write_json,
     )
     from .physical_retained_outer_adapter import (
@@ -733,6 +987,21 @@ def _run_physical_dual_cell_condensed_lowmem(
     profile = str(resolved_payload["solver"]["preconditioner"])
     stage = str(resolved_payload["solver"]["stage"])
     contract = profile_facts(profile)
+    if p4_repair_policy is None:
+        p4_repair_policy = contract.get("p4_repair_policy")
+    if p4_repair_policy is not None and not isinstance(p4_repair_policy, Mapping):
+        raise TypeError("p4_repair_policy must be a mapping or None")
+    if p4_prefix_target_sequence is not None:
+        try:
+            p4_prefix_target_sequence = int(p4_prefix_target_sequence)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("p4 prefix target sequence must be an integer") from exc
+        if p4_prefix_target_sequence != 3:
+            raise ValueError("V24 prefix target sequence is fixed at total logical p4 3")
+        if profile != LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE:
+            raise ValueError("p4 prefix capture requires the V24 laptop-speed profile")
+        if p4_repair_policy is None:
+            raise ValueError("V24 prefix capture requires bounded p4 repair")
     allowed_stages = tuple(str(value) for value in allowed_stages)
     reference_mode_by_stage = dict(reference_mode_by_stage or {})
     notch_by_stage = dict(notch_by_stage or {})
@@ -759,6 +1028,13 @@ def _run_physical_dual_cell_condensed_lowmem(
     factor_numeric_observer = None
     factor_post_numeric_gate = None
     native_observation_state: dict[str, object] = {"saved": False}
+    prefix_state: dict[str, object] = {
+        "target_sequence": p4_prefix_target_sequence,
+        "raw_packet_path": None,
+        "raw_diagnostic_packet_path": None,
+        "final_packet_path": None,
+        "target_completed": False,
+    }
     try:
         if profile != profile_identity or stage not in allowed_stages:
             raise ValueError(
@@ -1053,6 +1329,237 @@ def _run_physical_dual_cell_condensed_lowmem(
             p6_holder["form"] = None
             return adapter
 
+        repair_sink = p4_repair_vector_sink
+        repair_vector_capture = p4_repair_vector_capture
+        logical_apply_hook = None
+        prefix_stack = {"value": None}
+
+        def prefix_diagnostic_payload(facts, *, phase):
+            return _v24_p4_prefix_diagnostic_payload(
+                common, prefix_stack["value"], facts, phase=phase
+            )
+
+        if p4_prefix_target_sequence is not None:
+            target_sequence = int(p4_prefix_target_sequence)
+
+            def repair_vector_capture(scalar):
+                selected = int(scalar.get("logical_call_sequence", 0)) == target_sequence
+                if p4_repair_vector_capture is not None:
+                    selected = bool(p4_repair_vector_capture(scalar)) or selected
+                return selected
+
+        if p4_repair_policy is not None and (
+            repair_sink is None or p4_prefix_target_sequence is not None
+        ):
+            external_repair_sink = repair_sink
+
+            def repair_sink(facts):
+                sequence = int(facts.get("logical_call_sequence", 0))
+                pc_sequence = int(facts.get("pc_apply_sequence", 0))
+                phase = str(facts.get("phase", "unknown"))
+                name = (
+                    f"{evidence_prefix}_p4_repair_pc{pc_sequence:06d}_"
+                    f"logical{sequence:06d}_{phase}"
+                )
+                packet_path = None
+                if external_repair_sink is None or (
+                    p4_prefix_target_sequence is not None
+                    and sequence == int(p4_prefix_target_sequence)
+                    and phase == "raw"
+                ):
+                    packet_path = _save_packet(
+                        runtime.directory / "inexact_balance",
+                        name,
+                        facts,
+                        runtime=runtime,
+                    )
+                if (
+                    p4_prefix_target_sequence is not None
+                    and sequence == int(p4_prefix_target_sequence)
+                    and phase == "raw"
+                ):
+                    if facts.get("alpha") is None:
+                        raise ValueError(
+                            "V24 p4 prefix packet is missing the live port solution"
+                        )
+                    diagnostic_name = (
+                        f"{evidence_prefix}_p4_prefix_logical"
+                        f"{sequence:06d}_bare_raw_diagnostic"
+                    )
+                    diagnostic_payload = prefix_diagnostic_payload(
+                        facts, phase="raw_before_same_factor_repair"
+                    )
+                    diagnostic_payload.update(
+                        {
+                            "stage": str(stage),
+                            "raw_repair_packet": packet_path,
+                            "factor_refinement": "not_hidden; ICNTL10=0",
+                        }
+                    )
+                    _save_packet(
+                        runtime.directory / "inexact_balance",
+                        diagnostic_name,
+                        diagnostic_payload,
+                        runtime=runtime,
+                    )
+                    prefix_state.update(
+                        raw_packet_path=str(
+                            runtime.directory / "inexact_balance" / f"{name}.json"
+                        ),
+                        raw_diagnostic_packet_path=str(
+                            runtime.directory
+                            / "inexact_balance"
+                            / f"{diagnostic_name}.json"
+                        ),
+                    )
+                    runtime.marker(
+                        "v24_p4_prefix_bare_raw_diagnostic_complete",
+                        {
+                            "logical_call_sequence": sequence,
+                            "raw_packet_path": prefix_state["raw_packet_path"],
+                            "diagnostic_packet_path": prefix_state[
+                                "raw_diagnostic_packet_path"
+                            ],
+                            "native_residual": diagnostic_payload["native_residual"],
+                            "augmented_residual_identity": diagnostic_payload[
+                                "augmented_residual_identity"
+                            ],
+                            "diagnostic_runtime": diagnostic_payload[
+                                "diagnostic_runtime"
+                            ],
+                        },
+                    )
+                    if diagnostic_payload["augmented_residual_identity"].get(
+                        "passed"
+                    ) is not True:
+                        raise ValueError(
+                            "V24 bare raw native/augmented residual identity failed"
+                        )
+                if external_repair_sink is not None:
+                    external_repair_sink(facts)
+
+        if p4_prefix_target_sequence is not None:
+            target_sequence = int(p4_prefix_target_sequence)
+
+            def logical_apply_hook(facts, repair_vectors):
+                sequence = int(facts.get("p4_logical_apply_sequence", 0))
+                if sequence != target_sequence:
+                    return
+                selected_vectors = tuple(
+                    vector
+                    for vector in repair_vectors
+                    if int(vector.get("logical_call_sequence", 0)) == target_sequence
+                )
+                if not selected_vectors:
+                    raise RuntimeError(
+                        "V24 target logical p4 completed without captured vectors"
+                    )
+                final_vector = selected_vectors[-1]
+                final_diagnostic_name = (
+                    f"{evidence_prefix}_p4_prefix_logical"
+                    f"{sequence:06d}_final_diagnostic"
+                )
+                final_diagnostic = prefix_diagnostic_payload(
+                    final_vector, phase="final_after_same_factor_repair"
+                )
+                final_diagnostic.update(
+                    {
+                        "stage": str(stage),
+                        "raw_packet_path": prefix_state["raw_packet_path"],
+                        "raw_diagnostic_packet_path": prefix_state[
+                            "raw_diagnostic_packet_path"
+                        ],
+                        "factor_refinement": facts.get("repair"),
+                    }
+                )
+                _save_packet(
+                    runtime.directory / "inexact_balance",
+                    final_diagnostic_name,
+                    final_diagnostic,
+                    runtime=runtime,
+                )
+                if final_diagnostic["augmented_residual_identity"].get(
+                    "passed"
+                ) is not True:
+                    raise ValueError(
+                        "V24 final native/augmented residual identity failed"
+                    )
+                final_name = (
+                    f"{evidence_prefix}_p4_prefix_logical"
+                    f"{sequence:06d}_final_after_repair"
+                )
+                final_packet = _save_packet(
+                    runtime.directory / "inexact_balance",
+                    final_name,
+                    {
+                        "schema": "task039extra.v24.p4-prefix-final.v1",
+                        "stage": str(stage),
+                        "logical_call_sequence": sequence,
+                        "pc_apply_sequence": int(
+                            facts.get("p4_pc_apply_sequence", 0)
+                        ),
+                        "stop_point": (
+                            "after_target_logical_repair_before_next_coarse"
+                        ),
+                        "logical_call_facts": facts,
+                        "repair_vectors": selected_vectors,
+                        "raw_packet_path": prefix_state["raw_packet_path"],
+                        "raw_diagnostic_packet_path": prefix_state[
+                            "raw_diagnostic_packet_path"
+                        ],
+                        "final_diagnostic_packet_path": str(
+                            runtime.directory
+                            / "inexact_balance"
+                            / f"{final_diagnostic_name}.json"
+                        ),
+                        "factor_refinement": facts.get("repair"),
+                    },
+                    runtime=runtime,
+                )
+                prefix_state.update(
+                    final_packet_path=str(
+                        runtime.directory
+                        / "inexact_balance"
+                        / f"{final_name}.json"
+                    ),
+                    target_completed=True,
+                )
+                stop_facts = {
+                    "schema": "task039extra.v24.p4-prefix-controlled-stop.v1",
+                    "stage": str(stage),
+                    "target_logical_call_sequence": sequence,
+                    "target_pc_apply_sequence": int(
+                        facts.get("p4_pc_apply_sequence", 0)
+                    ),
+                    "stop_point": "after_target_logical_repair_before_next_coarse",
+                    "raw_packet_path": prefix_state["raw_packet_path"],
+                    "raw_diagnostic_packet_path": prefix_state[
+                        "raw_diagnostic_packet_path"
+                    ],
+                    "final_packet_path": prefix_state["final_packet_path"],
+                    "final_diagnostic_packet_path": str(
+                        runtime.directory
+                        / "inexact_balance"
+                        / f"{final_diagnostic_name}.json"
+                    ),
+                    "initial_native_relative": facts["repair"][
+                        "initial_relative_residual"
+                    ],
+                    "final_native_relative": facts["repair"][
+                        "final_relative_residual"
+                    ],
+                    "extra_solve_count": facts["repair"]["extra_solve_count"],
+                    "actual_mat_solve_count": facts["repair"][
+                        "actual_mat_solve_count"
+                    ],
+                    "successful_logical_p4_cumulative_count": facts[
+                        "p4_logical_apply_cumulative_count"
+                    ],
+                    "repair_vector_count": len(selected_vectors),
+                    "icntl10": 0,
+                }
+                raise V24P4PrefixStop(stop_facts)
+
         summary.update(
             _v14_q4_q5_fullspace(
                 runtime,
@@ -1075,7 +1582,24 @@ def _run_physical_dual_cell_condensed_lowmem(
                 official_jit_options=prepared_facts["jit_options"],
                 reference_mode=reference_mode_by_stage.get(stage, "required"),
                 notch_override=notch_by_stage.get(stage),
+                p4_repair_policy=p4_repair_policy,
+                p4_repair_vector_sink=repair_sink,
+                p4_repair_vector_capture=repair_vector_capture,
+                p4_logical_apply_hook=logical_apply_hook,
+                p4_stack_ready_hook=(
+                    (lambda stack: prefix_stack.update(value=stack))
+                    if p4_prefix_target_sequence is not None
+                    else None
+                ),
             )
+        )
+    except V24P4PrefixStop as exc:
+        summary.update(
+            status="CONTROLLED_STOP",
+            stage_pass=False,
+            result_classification="P4_PREFIX_CAPTURED_CONTROLLED_STOP",
+            error=str(exc),
+            p4_prefix=exc.facts,
         )
     except V20ReleaseGateStop as exc:
         summary.update(

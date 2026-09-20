@@ -19,6 +19,9 @@ from src.solvers.hcurl_assembly_time_condensation import (
 from src.solvers.hcurl_cell_static_condensation import owned_hcurl_cell_interior_dofs
 from src.solvers import p4_cell_condensed_inverse as core
 from src.solvers.fullspace_v17_p3_oracle import _MumpsFactor
+from src.runners.physical_dual_cell_condensed_lowmem_v20 import (
+    _v24_p4_prefix_diagnostic_payload,
+)
 
 
 class Factor:
@@ -121,6 +124,7 @@ def test_actual_adapter_complex_mpc_nonzero_interior_ports_and_new_rhs():
     ) for j in range(2))
     carrier = SimpleNamespace(entries=entries, global_rows=n, ownership_range=(0, n))
     inverse = factor = None
+    volume_action = None
     vectors = []
     try:
         terms = core.assemble_condensed_ports(condensed, carrier)
@@ -150,19 +154,85 @@ def test_actual_adapter_complex_mpc_nonzero_interior_ports_and_new_rhs():
         inverse = core.P4CellCondensedInverse(
             condensed, factor, port_terms=terms, owns_factor=True, owns_condensed=True,
         )
+        class _ReusableMatrixAction:
+            def __init__(self, matrix):
+                self.matrix = np.asarray(matrix, dtype=np.complex128)
+                self.output = None
+                self.calls = 0
+                self.component_actions = {"volume": self}
+
+            def apply(self, source):
+                if self.output is None:
+                    self.output = source.duplicate()
+                self.output.array[:] = self.matrix @ source.array
+                self.output.assemble()
+                self.calls += 1
+                return self.output
+
+            def destroy(self):
+                if self.output is not None:
+                    self.output.destroy()
+                    self.output = None
+
+        class _TargetMatrixAction:
+            def __init__(self, matrix):
+                self.matrix = np.asarray(matrix, dtype=np.complex128)
+
+            def apply(self, source, target):
+                target.array[:] = self.matrix @ source.array
+                target.assemble()
+
+        volume_action = _ReusableMatrixAction(V)
+        physical_action = _TargetMatrixAction(V + B @ np.linalg.solve(H, D))
+        diagnostic_common = {
+            "levels": {"spaces": {4: space}},
+            "p4": {
+                "volume_action": volume_action,
+                "physical_action": physical_action,
+                "dtn_action": SimpleNamespace(carrier=carrier),
+            },
+        }
         local_lu_identity = {key: (id(lu[0]), id(lu[1])) for key, lu in condensed.interior_lu_by_class.items()}
         # The sole dense full-system oracle is confined to this two-cell test.
         rhs1 = rng.normal(size=n) + 1j * rng.normal(size=n)
         rhs2 = rng.normal(size=n) + 1j * rng.normal(size=n)
         rhs1[slave] = rhs2[slave] = 0
         solutions = []
-        for values in [rhs1, rhs2, rhs1, rhs1 + 1j * rhs2, rhs2 - rhs1]:
+        for loop_index, values in enumerate([rhs1, rhs2, rhs1, rhs1 + 1j * rhs2, rhs2 - rhs1]):
             rhs = full.createVecRight()
             rhs.array[:] = values
             vectors.append(rhs)
             result = inverse.apply(rhs)
             vectors.append(result)
             solutions.append(result.array.copy())
+            if loop_index == 0:
+                diagnostic_facts = {
+                    "g": values.copy(),
+                    "correction": result.array.copy(),
+                    "alpha": inverse.last_port_solution.copy(),
+                    "logical_call_sequence": 3,
+                    "pc_apply_sequence": 1,
+                }
+                factor_calls_before_diagnostic = factor.calls
+                diagnostic = _v24_p4_prefix_diagnostic_payload(
+                    diagnostic_common,
+                    {"inverse": inverse},
+                    diagnostic_facts,
+                    phase="v18_fixture_first",
+                )
+                repeated_diagnostic = _v24_p4_prefix_diagnostic_payload(
+                    diagnostic_common,
+                    {"inverse": inverse},
+                    diagnostic_facts,
+                    phase="v18_fixture_repeat",
+                )
+                for packet in (diagnostic, repeated_diagnostic):
+                    assert packet["augmented_residual_identity"]["passed"] is True
+                    assert packet["internal_recovery"]["recovery_difference_norm"] <= 1.0e-10
+                    assert packet["port_action_norms"]["FE_B_alpha_absolute_norm"] > 0.0
+                    assert packet["diagnostic_runtime"]["global_mat_solve_count_delta"] == 0
+                assert factor.calls == factor_calls_before_diagnostic
+                assert volume_action.calls == 4
             expected = np.linalg.solve(augmented, np.r_[values, np.zeros(2)])
             np.testing.assert_array_equal(rhs.array, values)
             assert result.array[slave] == 0
@@ -209,6 +279,8 @@ def test_actual_adapter_complex_mpc_nonzero_interior_ports_and_new_rhs():
     finally:
         for vector in vectors:
             vector.destroy()
+        if volume_action is not None:
+            volume_action.destroy()
         if inverse is not None:
             inverse.destroy()
         elif factor is not None:

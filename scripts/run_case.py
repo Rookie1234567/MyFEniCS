@@ -91,6 +91,12 @@ def _parser() -> argparse.ArgumentParser:
         help='reviewed V14/V16/V17/V18 timing policy; observe_only keeps finite timing evidence without deadline termination',
     )
     parser.add_argument(
+        '--v24-p4-prefix-target',
+        type=int,
+        choices=(3,),
+        help='V24-only bounded diagnostic stop after total logical p4 sequence 3',
+    )
+    parser.add_argument(
         '--r0-evidence', type=Path, metavar='ACCEPTED_R0_JSON',
         help='fixed accepted R0 record required by --recover-v15-q0-eio-once',
     )
@@ -129,6 +135,7 @@ def main(argv: list[str] | None = None) -> int:
                 'physical_p6_trace_p4_condensed_robustness_v21',
                 'physical_p6_trace_p4_condensed_capacity_v22',
                 'physical_p6_trace_p4_condensed_physical_memory_v23',
+                'physical_p6_trace_p4_condensed_laptop_speed_v24',
             }
         ):
             raise InputError(
@@ -313,7 +320,9 @@ def main(argv: list[str] | None = None) -> int:
             if args.profile_budget_ledger is not None:
                 raise InputError('--profile-budget-ledger requires --physical-pc-profile')
             result = launch_specification(
-                specification, v14_time_policy=args.v14_time_policy
+                specification,
+                v14_time_policy=args.v14_time_policy,
+                v24_p4_prefix_target=args.v24_p4_prefix_target,
             )
         print(json.dumps(result, sort_keys=True, separators=(",", ":")))
         return 0 if result["result_classification"] == "worker_exit0" else 3

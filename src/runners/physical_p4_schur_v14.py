@@ -1503,6 +1503,75 @@ def _v14_balanced_apply_workspace_bytes(
     )
 
 
+def _v24_p4_prefix_workspace_facts(
+    n4: int,
+    ntrace: int,
+    nport: int,
+    *,
+    scalar_bytes: int,
+    index_bytes: int,
+) -> dict[str, Any]:
+    """Bound the extra V24 prefix snapshots and diagnostic copies.
+
+    The ordinary BAL_H estimate remains unchanged.  This separate declaration
+    covers the opt-in target packet only: one raw plus at most two same-factor
+    correction snapshots, followed by one raw or final diagnostic at a time.
+    ``ntrace`` is the live condensed full-trace row count and bounds each
+    reduced vector without claiming an RSS upper bound.
+    """
+
+    n4 = int(n4)
+    ntrace = int(ntrace)
+    nport = int(nport)
+    scalar_bytes = int(scalar_bytes)
+    index_bytes = int(index_bytes)
+    if min(n4, ntrace, nport, scalar_bytes, index_bytes) <= 0:
+        raise ValueError("V24 prefix workspace dimensions must be positive")
+
+    snapshot_count = 3  # raw plus at most two bounded same-factor repairs
+    snapshot_field_vectors = 4  # g, correction, native action, native residual
+    snapshot_vectors = snapshot_count * (snapshot_field_vectors * n4 + nport)
+    snapshot_copy_bytes = snapshot_vectors * scalar_bytes
+
+    diagnostic_count = 2  # raw and final packets are not assumed to overlap
+    diagnostic_n4_vectors = 9  # owned rhs/solution, arrays, and recovery copies
+    diagnostic_trace_vectors = 4  # reduced rhs/solution/action/residual
+    diagnostic_port_vectors = 2  # D*c and H*alpha
+    diagnostic_vector_bytes = diagnostic_count * (
+        diagnostic_n4_vectors * n4
+        + diagnostic_trace_vectors * (ntrace + nport)
+        + diagnostic_port_vectors * nport
+    ) * scalar_bytes
+    diagnostic_index_bytes = diagnostic_count * (
+        2 * n4 + 2 * (ntrace + nport)
+    ) * index_bytes
+    return {
+        "n4_storage_rows": n4,
+        "ntrace_full_rows": ntrace,
+        "nport_rows": nport,
+        "scalar_bytes": scalar_bytes,
+        "index_bytes": index_bytes,
+        "snapshot_count": snapshot_count,
+        "snapshot_field_vector_count": snapshot_field_vectors,
+        "snapshot_vector_count": snapshot_vectors,
+        "snapshot_copy_bytes": int(snapshot_copy_bytes),
+        "diagnostic_count": diagnostic_count,
+        "diagnostic_n4_vector_count": diagnostic_n4_vectors,
+        "diagnostic_trace_vector_count": diagnostic_trace_vectors,
+        "diagnostic_port_vector_count": diagnostic_port_vectors,
+        "diagnostic_vector_bytes": int(diagnostic_vector_bytes),
+        "diagnostic_index_bytes": int(diagnostic_index_bytes),
+        "workspace_upper_bytes": int(
+            snapshot_copy_bytes + diagnostic_vector_bytes + diagnostic_index_bytes
+        ),
+        "classification": "derived_conservative_prefix_payload_not_rss_bound",
+        "formula": (
+            "3*(4*N4+Nport)*scalar + 2*(9*N4+4*(Ntrace+Nport)"
+            "+2*Nport)*scalar + 2*(2*N4+2*(Ntrace+Nport))*index"
+        ),
+    }
+
+
 def _v14_outer_krylov_workspace_bytes(
     retained_rows: int, *, restart: int = 32
 ) -> int:
@@ -3914,6 +3983,8 @@ def _v14_balanced_adapter(
     capture_vectors=False,
     repair_policy=None,
     repair_vector_sink=None,
+    repair_vector_capture=None,
+    logical_apply_hook=None,
 ):
     """Own H6 and its audit buffers; borrow the existing fixed interface stack."""
 
@@ -3921,6 +3992,7 @@ def _v14_balanced_adapter(
     from src.solvers.fullspace_physical_intermediate_runtime import AlgebraicOwnerTransfer
     from src.solvers.physical_interface_balanced import InterfaceBalancedCoupling
     from src.solvers.physical_light_setup import build_light_h6_setup
+    from petsc4py import PETSc
 
     h6_setup = _v14_balanced_h6_setup_facts(common)
     n6 = int(h6_setup["n6"])
@@ -3995,13 +4067,41 @@ def _v14_balanced_adapter(
             fine_vector_count=fine_vectors,
             coarse_vector_count=coarse_vectors,
         )
+        prefix_workspace_facts = None
         runtime.reserve_workspace("v14_balanced_apply", pc_workspace)
         live_workspaces.add("v14_balanced_apply")
+        if logical_apply_hook is not None:
+            condensed = fint.inverse.condensed
+            if condensed is None:
+                raise RuntimeError(
+                    "V24 prefix workspace requires the live condensed p4 system"
+                )
+            prefix_workspace_facts = _v24_p4_prefix_workspace_facts(
+                n4,
+                int(condensed.trace_rows),
+                int(condensed.appended_rows),
+                scalar_bytes=np.dtype(PETSc.ScalarType).itemsize,
+                index_bytes=np.dtype(PETSc.IntType).itemsize,
+            )
+            runtime.reserve_workspace(
+                "v24_p4_prefix_diagnostic",
+                prefix_workspace_facts["workspace_upper_bytes"],
+            )
+            live_workspaces.add("v24_p4_prefix_diagnostic")
         runtime.marker("v14_balanced_workspace", {
             "fine_vector_upper_count": fine_vectors,
             "coarse_vector_upper_count": coarse_vectors,
             "kernel_temporary_bytes": kernel_temp,
-            "workspace_upper_bytes": pc_workspace,
+            "ordinary_balanced_workspace_bytes": pc_workspace,
+            "v24_prefix_workspace": prefix_workspace_facts,
+            "workspace_upper_bytes": int(
+                pc_workspace
+                + (
+                    prefix_workspace_facts["workspace_upper_bytes"]
+                    if prefix_workspace_facts is not None
+                    else 0
+                )
+            ),
             "scope": "new PC/ledger/capture vectors; outer Krylov storage accounted separately",
         })
         pc = InterfaceBalancedCoupling(
@@ -4014,6 +4114,8 @@ def _v14_balanced_adapter(
             capture_vectors=capture_vectors,
             repair_policy=repair_policy,
             repair_vector_sink=repair_vector_sink,
+            repair_vector_capture=repair_vector_capture,
+            logical_apply_hook=logical_apply_hook,
         )
         runtime.sample("v14_balanced_adapter_ready")
         yield pc, positive
@@ -6356,6 +6458,9 @@ def _v14_q4_q5_fullspace(
     notch_override: bool | None = None,
     p4_repair_policy=None,
     p4_repair_vector_sink=None,
+    p4_repair_vector_capture=None,
+    p4_logical_apply_hook=None,
+    p4_stack_ready_hook=None,
 ) -> dict[str, Any]:
     """Run one fresh p6 outer solve with the live interface BAL_H stack.
 
@@ -6927,6 +7032,8 @@ def _v14_q4_q5_fullspace(
         )
     )
     with owned_p6_vectors(), stack_context as stack:
+        if p4_stack_ready_hook is not None:
+            p4_stack_ready_hook(stack)
         if stack.get("operator_identity") is not None:
             identity = dict(stack["operator_identity"])
             operator_sha256 = str(stack["operator_identity_sha256"])
@@ -7018,6 +7125,8 @@ def _v14_q4_q5_fullspace(
             capture_vectors=False,
             repair_policy=p4_repair_policy,
             repair_vector_sink=p4_repair_vector_sink,
+            repair_vector_capture=p4_repair_vector_capture,
+            logical_apply_hook=p4_logical_apply_hook,
         ) as (pc, positive):
             if outer_adapter_factory is not None:
                 # X1 checks and its one PC call share the actual X2 objects.

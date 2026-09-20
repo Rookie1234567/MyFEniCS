@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -126,6 +127,67 @@ def run_full3d_iterative(
                 }
             },
             notch_by_stage={"Z3_ORIGINAL_H7P5": False},
+        )
+    if resolved_payload.get("solver", {}).get("preconditioner") == "physical_p6_trace_p4_condensed_laptop_speed_v24":
+        from .physical_dual_cell_condensed_lowmem_v20 import (
+            _run_physical_dual_cell_condensed_lowmem,
+        )
+        from src.io.physical_intermediate_profile import (
+            LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE,
+            PHYSICAL_MEMORY_POLICY_V23,
+        )
+
+        prefix_target = os.environ.get("TASK39EXTRA_V24_P4_PREFIX_TARGET")
+        if prefix_target is not None:
+            try:
+                prefix_target = int(prefix_target)
+            except ValueError as exc:
+                raise ValueError(
+                    "TASK39EXTRA_V24_P4_PREFIX_TARGET must be an integer"
+                ) from exc
+            if prefix_target != 3:
+                raise ValueError(
+                    "TASK39EXTRA_V24_P4_PREFIX_TARGET must equal 3"
+                )
+        prefix_mode = prefix_target is not None
+        return _run_physical_dual_cell_condensed_lowmem(
+            resolved_payload,
+            Path(run_directory),
+            source_sha=_kwargs["source_sha"],
+            profile_identity=LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE,
+            allowed_stages=("Z3_ORIGINAL_H7P5",),
+            batch_identity=(
+                "review_v22_laptop_speed_after_a4_fix_p4_prefix"
+                if prefix_mode
+                else "review_v22_laptop_speed_after_a4_fix"
+            ),
+            evidence_prefix="v24prefix" if prefix_mode else "v24",
+            summary_schema="task039extra.v24.worker-summary.v1",
+            summary_filename="physical_dual_condensed_laptop_speed_v24_summary.json",
+            derive_live_space_identity=True,
+            rhs_identity_policy="case_bound_physical_rhs",
+            restore_summary_schema=True,
+            reuse_qualified_jit=True,
+            write_ordered_mode_manifest=True,
+            write_geometry_audit=True,
+            save_complete_field_packet=True,
+            capacity_trial=True,
+            capacity_policy=PHYSICAL_MEMORY_POLICY_V23,
+            reference_mode_by_stage={"Z3_ORIGINAL_H7P5": "authority_limited"},
+            predecessor_by_stage={
+                "Z3_ORIGINAL_H7P5": {
+                    "accepted_v23_route": (
+                        "physical_p6_trace_p4_condensed_physical_memory_v23"
+                    ),
+                    "cross_case_recycling": False,
+                    "original_only": True,
+                    "independent_batch": True,
+                    "fresh_factor_allowed": True,
+                    "bounded_p4_repair": True,
+                }
+            },
+            notch_by_stage={"Z3_ORIGINAL_H7P5": False},
+            p4_prefix_target_sequence=prefix_target,
         )
     if resolved_payload.get("solver", {}).get("preconditioner") == "physical_p4_blr_bal_h_v16":
         from .physical_p4_blr_v16 import run_physical_p4_blr_v16

@@ -31,6 +31,9 @@ CAPACITY_DUAL_CELL_CONDENSED_PROFILE = "physical_p6_trace_p4_condensed_capacity_
 PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE = (
     "physical_p6_trace_p4_condensed_physical_memory_v23"
 )
+LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE = (
+    "physical_p6_trace_p4_condensed_laptop_speed_v24"
+)
 PHYSICAL_MEMORY_POLICY_V23 = "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23"
 V23_QUALIFIED_JIT_CACHE_SOURCE = (
     "results/euv_grazing1_phi0/"
@@ -46,7 +49,7 @@ P4_BLR_TRADEOFF_THRESHOLDS = {
     "T2_BLR_CONTROL": 1.0e-4,
 }
 
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE, LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
 
 
 def p4_blr_tradeoff_threshold(stage: str) -> float:
@@ -61,6 +64,40 @@ def p4_blr_tradeoff_threshold(stage: str) -> float:
 
 
 def profile_facts(identity=PROFILE) -> dict:
+    if identity == LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE:
+        # V24 keeps the measured V23 physical-memory/lifecycle route and
+        # changes only the opt-in same-factor p4 return-quality contract.
+        # The repair is bounded and explicitly counted; old profiles do not
+        # inherit it.
+        facts = profile_facts(PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE)
+        facts.update(
+            identity=identity,
+            scope="review_v22_laptop_speed_after_a4_fix",
+            qualification=(
+                "opt_in; one fresh Z3 original B trial only; same 990-cell "
+                "h7.5 p6/p4 route and modes; bounded same-factor p4 repair; "
+                "observe_only"
+            ),
+        )
+        facts["p4_repair_policy"] = {
+            "enabled": True,
+            "residual_limit": 1.0e-10,
+            "max_extra_solves": 2,
+            "factor_refinement": "explicit_same_factor_F4_residual_correction",
+            "mumps_icntl_10": 0,
+            "logical_count_semantics": (
+                "one_successful_logical_p4_per_coarse_call; physical_MatSolve "
+                "count includes bounded corrections"
+            ),
+        }
+        facts["gates"].update(
+            p4_return_quality="every successful logical p4 native rho <= 1e-10",
+            p4_extra_solve_limit=2,
+            p4_logical_count_is_cumulative=True,
+            p4_recent_call_records=True,
+            old_profiles_unchanged=True,
+        )
+        return facts
     if identity == PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE:
         # V23 is an explicitly authorized replacement for the one-shot V22
         # capacity gate.  It keeps the reviewed numerical/lifecycle route,
