@@ -1,0 +1,113 @@
+{
+  "schema": "task39extra.2nm_h1p5.measured-terminal-snapshot.v1",
+  "snapshot": {
+    "status": "FINISHED",
+    "classification": "GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED",
+    "as_of_utc_approx": "2026-09-20T04:47:15.335Z",
+    "source_scope": "Small terminal summaries, final stage marker, and guard status/events only; no full resources aggregation or large artifact copy."
+  },
+  "run_identity": {
+    "run_id": "20260918T035017.294454Z",
+    "source_sha": "41caf5141493ad6c5d6c518a64ee74fda8d7a7db",
+    "input_sha256": "1f54c3429625eefcdc65e4ec7dec356a8475e4249fe179d1f2957381701fb76b",
+    "physical_model_sha256": "fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef",
+    "exit_status": -9,
+    "workflow_seconds": 176218.08645174815,
+    "time_limit_mode": "none",
+    "descendants_cleared": true,
+    "root": {"pid": 402109, "start_ticks": 181317305},
+    "mpi": {"pid": 402153, "start_ticks": 181317425},
+    "worker": {"pid": 402163, "start_ticks": 181317436}
+  },
+  "original_watchdog": {
+    "stop_reason": "GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED",
+    "stop_timestamp_ns": 1789879597111199295,
+    "stop_utc_approx": "2026-09-20T04:46:37.111Z",
+    "first_sigkill_timestamp_ns": 1789879597111222290,
+    "signal_scope": "whole child tree",
+    "global_swap": {
+      "baseline_pswpin_pages": 0,
+      "baseline_pswpout_pages": 2,
+      "end_pswpin_pages": 0,
+      "end_pswpout_pages": 73,
+      "delta_pswpin_pages": 0,
+      "delta_pswpout_pages": 71,
+      "scope": "global diagnostic; attribution to this job unresolved"
+    },
+    "job_swap_bytes_peak": 0,
+    "job_swap_activity": "UNRESOLVED_global_activity_cannot_be_attributed",
+    "tree_rss_peak_bytes": 635625377792,
+    "tree_swap_peak_bytes": 0,
+    "cap_bytes": 1537500000000,
+    "leader_exit_code": -9,
+    "resource_samples": 343140,
+    "terminal_resource_sample": {
+      "timestamp_ns": 1789879597109654044,
+      "rss_bytes": 635625377792,
+      "swap_bytes": 0,
+      "global_pswpin_pages": 0,
+      "global_pswpout_pages": 73,
+      "mem_available_bytes": 836791996416,
+      "reserve_bytes": 324465062092,
+      "page_size_bytes": 4096,
+      "global_baseline": {"pswpin_pages": 0, "pswpout_pages": 2},
+      "global_delta_pages": {"pswpin_pages": 0, "pswpout_pages": 71},
+      "global_delta_bytes": 290816,
+      "global_delta_kib": 284
+    },
+    "not_oom_evidence": "At this sample MemAvailable exceeded reserve and tree RSS/swap did not show local swap; this does not attribute global paging to any process."
+  },
+  "measured_1300gb_guard": {
+    "pid": 1549434,
+    "start_ticks": 197061667,
+    "limit_bytes": 1300000000000,
+    "attachment_peak_rss_bytes": 640141377536,
+    "last_sample_swap_bytes": 0,
+    "status": "stopped",
+    "reason": "monitoring_failed",
+    "sample_error": "RuntimeError('RSS unreadable for process 402163')",
+    "sample_timestamp_ns": 1789879597002518173,
+    "trigger_timestamp_ns": 1789879597356428288,
+    "trigger_utc_approx": "2026-09-20T04:46:37.356Z",
+    "trigger_after_original_watchdog_stop_seconds": 0.245228993,
+    "remaining_descendants_after_cleanup": [],
+    "scope": "guard attachment only; separate from original watchdog tree peak"
+  },
+  "system_context_not_causal": {
+    "vm_swappiness": 60,
+    "zone_reclaim_mode": 0,
+    "note": "Current read-only settings only; not evidence of the historical trigger."
+  },
+  "stage_and_gate_state": {
+    "last_stage_marker": "reference_numeric_preflight",
+    "last_stage_monotonic": 1970197.321944984,
+    "numeric_complete_marker": false,
+    "outer_started": false,
+    "official_rta": "NOT_RUN",
+    "full_true_residual": "NOT_AVAILABLE",
+    "numerical_or_physical_gate": "NOT_ASSESSED",
+    "negative_result_boundary": "No OOM or numerical nonconvergence claim; run stopped by unresolved global swap attribution."
+  },
+  "source_file_sha256": {
+    "run_summary_json": "3af95f689c06d654994cf268cff0fde274603834325e9ea9381ecbcca222e854",
+    "watchdog_summary_json": "ec2416c722cfe8cb79b54a38be31a3c0f13320f040f94316e55d6a15dc3ed080",
+    "stages_jsonl": "f6baa2db169fd07258a26095cf71149bf07f51ee9d50d3f1eaa28ab213429f81",
+    "guard_status_json": "e727b2cac95ce7a81a9b7b5b5ef8bd7931ad324923e137ae004ec9858e479c4d",
+    "guard_events_jsonl": "20e5d2649fe63d420ba1b5bf9446456078a38a22d2b3fde8101d9f1108e39c67"
+  },
+  "preservation": {
+    "running_snapshot_unchanged": true,
+    "automatic_retry": false,
+    "h2_started": false,
+    "source_or_gate_modified": false
+  },
+  "future_avoidance_proposal_not_applied": {
+    "proposal": "Use a task-scoped cgroup v2 with memory.swap.max=0, task memory.swap.current/events, and retain the existing RSS/reserve Gate; treat host-global swap counters as diagnostic policy rather than job attribution.",
+    "status": "REVIEW_ONLY_NOT_APPLIED",
+    "scope_conflict": "Current global_swap_stop stops on any host-global counter increment, which conflicts with shared-workstation attribution.",
+    "kernel_references": [
+      "https://docs.kernel.org/admin-guide/cgroup-v2.html",
+      "https://docs.kernel.org/admin-guide/sysctl/vm.html"
+    ]
+  }
+}

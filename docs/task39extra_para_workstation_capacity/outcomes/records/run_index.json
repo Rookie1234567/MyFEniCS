@@ -153,8 +153,9 @@
       "stage": "2NM_H1P5_FORMAL",
       "attempt": 4,
       "run_id": "20260918T035017.294454Z",
-      "record": "2nm_h1p5_measured_running_snapshot_v1.json",
-      "status": "RUNNING_P4_NUMERIC_RESOURCE_GUARDED",
+      "record": "2nm_h1p5_measured_terminal_snapshot_v1.json",
+      "pre_terminal_record": "2nm_h1p5_measured_running_snapshot_v1.json",
+      "status": "GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED_EXIT_MINUS9",
       "source_sha": "41caf5141493ad6c5d6c518a64ee74fda8d7a7db",
       "input_sha256": "1f54c3429625eefcdc65e4ec7dec356a8475e4249fe179d1f2957381701fb76b",
       "physical_model_sha256": "fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef",
@@ -168,12 +169,18 @@
       "augmented_nnz": 4899800920,
       "last_marker": "reference_numeric_preflight",
       "symbolic_status": "COMPLETED_FACTS_OBSERVED",
-      "numeric_status": "IN_PROGRESS",
+      "numeric_status": "NOT_COMPLETED_STOPPED_BY_RESOURCE_ATTRIBUTION_GATE",
       "outer_status": "NOT_STARTED",
       "official_rta": "NOT_RUN",
-      "resource_qualification": "MEASURED_RSS_GUARD_RUNNING_NOT_TERMINAL",
-      "latest_rss_bytes": 477900079104,
+      "resource_qualification": "GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED_NOT_OOM",
+      "watchdog_tree_rss_peak_bytes": 635625377792,
+      "guard_attachment_rss_peak_bytes": 640141377536,
+      "watchdog_global_pswpout_delta_pages": 71,
+      "watchdog_tree_swap_peak_bytes": 0,
       "guard_limit_bytes": 1300000000000,
+      "guard_status": "STOPPED_MONITORING_FAILED_AFTER_ORIGINAL_STOP",
+      "guard_trigger_after_original_stop_seconds": 0.245228993,
+      "exit_status": -9,
       "swap_bytes": 0,
       "pid_identity": {
         "root": {"pid": 402109, "start_ticks": 181317305},
@@ -183,6 +190,6 @@
       }
     }
   ],
-  "R2_S5_S3_S2_G": "R2_UNRESOLVED_5NM_OWN_PASS_REFERENCE_LIMITED_RESOURCE_UNQUALIFIED_2NM_H1P5_NUMERIC_IN_PROGRESS_3NM_LOCKED",
-  "next_gate": "2NM_H1P5_P4_NUMERIC_AND_OUTER_GATES_PENDING"
+  "R2_S5_S3_S2_G": "R2_UNRESOLVED_5NM_OWN_PASS_REFERENCE_LIMITED_RESOURCE_UNQUALIFIED_2NM_H1P5_TERMINAL_GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED_3NM_LOCKED",
+  "next_gate": "2NM_H1P5_TERMINAL_REVIEW_NO_AUTO_RETRY"
 }

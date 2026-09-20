@@ -2818,3 +2818,9 @@ V15 formal artifact v1/v2 pre-F2 execution failures 在用户明确次数授权�
 run `20260918T035017.294454Z`、source `41caf5141493ad6c5d6c518a64ee74fda8d7a7db` 正在 p4/MUMPS numeric；symbolic facts 已实际记录为 `INFOG1=0`、`INFOG7=4`、`INFOG16=1222577`、`RINFOG1=1100362818940466`，numeric/outer/RTA 尚未取得结果。末次整树 RSS=`477900079104 B`、swap=0；独立1300 GB measured guard仍运行，完整阶段峰值未从大资源日志聚合。54332 cells、p6 35594790 rows、p4 augmented 10608132 rows/4899800920 NNZ、3904 modes（3902 propagating）。
 
 该记录不把末次RSS当全程峰、不把诊断 predicted peak 当严格上界，也不把 5 nm 的600通道套到本次3904 modes。阶段/身份/小资源证据见 [2 nm running compact](task39extra_para_workstation_capacity/outcomes/records/2nm_h1p5_measured_running_snapshot_v1.json) 和 [Response V4](task39extra_para_workstation_capacity/response_v4.md)；历史失败、5 nm资源监督缺口及未完成 Gate 仍按原记录保留。
+
+### 终态补记：global swap attribution Gate
+
+该 run 随后以 `exit=-9` 结束，原 watchdog 分类为 `GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED`：全局 `pswpout` 从 `2` 到 `73` 页，delta=`71` 页（page size 4096 B，即284 KiB）；同一 stop sample 的整树 RSS=`635625377792 B`、任务树 swap=`0`、MemAvailable=`836791996416 B`、reserve=`324465062092 B`。这不是 OOM、全机 RAM 耗尽或数值不收敛证据；无 numeric complete、outer 或 RTA。
+
+1300GB measured guard 另记 attachment peak=`640141377536 B`，后以 worker RSS unreadable/`monitoring_failed` 停止，触发晚于原 watchdog stop约`0.245228993 s`，不作为最初原因。详见 [终态 compact](task39extra_para_workstation_capacity/outcomes/records/2nm_h1p5_measured_terminal_snapshot_v1.json)；不自动重跑。后续 cgroup v2 swap隔离只作建议，不在本轮修改系统或 Gate。

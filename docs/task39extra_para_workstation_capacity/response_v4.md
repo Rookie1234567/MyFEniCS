@@ -1,5 +1,15 @@
 # Task39extra 执行归档 V4：2 nm h1.5 实测内存运行快照
 
+## 终态补记：原 watchdog 与 1300 GB guard 分开记账
+
+本 run 后续终态为 `exit=-9`、`GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED`。原 watchdog 在全局 `pswpout` 从基线 `2` 页变为 `73` 页时触发，delta=`71` 页；stop sample 同期整树 RSS=`635625377792 B`、任务树 swap=`0`，`MemAvailable=836791996416 B`、reserve=`324465062092 B`，因此不写成 OOM 或全机 RAM 耗尽，也不能把全局换页归因给本任务。page size=`4096 B`，71页=`290816 B`=`284 KiB`。停止时仍无 `reference_numeric_complete`，未进入 outer，未运行 RTA。
+
+独立 1300 GB measured guard 的 attachment peak 是 `640141377536 B`，高于原 watchdog 树峰但仍低于 `1300000000000 B`；它在原 watchdog stop 约 `0.245228993 s` 后因 `monitoring_failed`、worker RSS unreadable 而停止。该 guard 事件不是最初 global-swap stop 原因，两个采样器必须分开引用。原 `RUNNING` 正文和 compact 保留为终止前快照；终态小证据见 [`2nm_h1p5_measured_terminal_snapshot_v1.json`](outcomes/records/2nm_h1p5_measured_terminal_snapshot_v1.json)。
+
+当前原规则对任一全机 swap 计数增量即停止，与共享工作站归因范围存在冲突。cgroup v2 `memory.swap.max=0`、任务级 `memory.swap.current/events` 加原 RSS/reserve Gate 仅是后续审核建议，本次未修改系统、Gate 或代码；参考 [cgroup v2 文档](https://docs.kernel.org/admin-guide/cgroup-v2.html) 和 [vm sysctl 文档](https://docs.kernel.org/admin-guide/sysctl/vm.html)。
+
+以下正文是终止前 `2026-09-20 01:35 UTC` 的运行中快照，保留其原始口径。
+
 > 快照时间：2026-09-20 01:35:10 UTC。以下只归档小型身份、阶段 marker、末次资源样本和 guard 状态；没有扫描或复制数 GB 的 `resources.jsonl`，阶段峰值未从完整资源日志聚合。
 
 ## 当前结论

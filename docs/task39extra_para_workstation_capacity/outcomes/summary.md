@@ -1,6 +1,22 @@
 # 原生迁移与容量任务：本轮执行结果
 
-## 最新状态：2026-09-20 01:35 UTC，2 nm h1.5 RUNNING
+## 终态：2026-09-20 04:47 UTC，2 nm h1.5 stopped by global-swap attribution Gate
+
+| 项目 | 终态事实 |
+|---|---|
+| run / source | `20260918T035017.294454Z` / `41caf5141493ad6c5d6c518a64ee74fda8d7a7db` |
+| 终态 | `exit=-9`、`GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED`、`descendants_cleared=true` |
+| 原 watchdog stop | global `pswpout` `2→73`，delta `71` 页；任务树 swap peak `0`；整树 RSS peak `635625377792 B` |
+| 内存边界 | stop sample 的 `MemAvailable=836791996416 B`、reserve=`324465062092 B`；未形成全机 RAM 耗尽证据 |
+| numeric / outer / RTA | 无 `reference_numeric_complete`；未进入 outer；RTA 未运行 |
+| 1300 GB guard | 独立 attachment peak=`640141377536 B`，后因 `monitoring_failed`/worker RSS unreadable 停止；不是原始换页 stop 原因 |
+| compact | [2 nm h1.5 terminal snapshot](records/2nm_h1p5_measured_terminal_snapshot_v1.json) |
+
+71 页按宿主 page size `4096 B` 为 `290816 B`（284 KiB）。原规则对任一全机 swap 计数增量即停止；在共享工作站上只能记为全局诊断归因未决，不能归因到本任务，也不称 OOM 或数值不收敛。未来 cgroup v2、`memory.swap.max=0`、任务级 `memory.swap.current/events` 方案仅作后续审核建议，本次未实施。
+
+以下为终止前的 RUNNING 快照，原内容保留，不替代上述终态。
+
+## 终止前快照：2026-09-20 01:35 UTC，2 nm h1.5 RUNNING
 
 | 项目 | 当前事实 |
 |---|---|
