@@ -1,8 +1,28 @@
 # Task041 outcomes summary
 
+> **2026-09-20 D2a 运行中状态纠正（as-of 01:19:51.480911341Z / 09:19:51 CST）**：下列旧段仍是历史登记，不再代表当前最新运行状态。D1e 已实际启动并仍在运行；producer QEP 已完整落盘，consumer 尚未完成 full solve，formal Schur `0/4800`，outer solver `not_started`/outer response `0`（分母不适用），RTA `not_run`。当前不是终态，`systemd Result=success` 不是 solver PASS。
+
+模型是钨（W）、2nm、p6/h1.5、M1200、MPI8×1；Schur 是供外层迭代使用的模态耦合预条件矩阵。当前两侧各 8 列各算两遍的重复性计划共 32 次，已有 21/32 个样本，正式 Schur 仍为 `0/4800`，不是 21 项 formal 进度。
+
+## 2026-09-20：Task041 D2a / D1e 运行中
+
+| 项目 | 当前事实 |
+|---|---|
+| source / unit | `bde0686891af10bb489e4b1cb14500791cb50351` / `task041-d1e-2nm-p6h1p5-m1200-mpi8.service` |
+| host身份 | Invocation `1cf5e34338754dbfa80df487b322c72c`，MainPID `571560`；CPU1–8，数学线程1 |
+| producer | QEP mode-prep wall `29501.598348574014 s`，packet ready，scope released |
+| formal Schur / outer | formal Schur `0/4800`；outer FGMRES `not_started`、outer response `0`（分母不适用） |
+| 21 modal样本 | bottom13 / top8；固定均值外推 `133.57896112787233 days`，仅 derived sample arithmetic，不是 ETA |
+| modal数值审计 | 21行均 `reason=2`、`explicit_true_target_reached=true`；最大 `relative_residual=0.009981656767193032 <= 0.01`，不等于最终全局残差 |
+| memory as-of | process-tree RSS `642483105792 B`；cgroup current/peak `647585968128/647695921152 B`；不是完整运行峰值 |
+| producer reuse | packet/hash 已核验；缺 public `supervisor_summary.json`，consumer-only reuse 尚未 qualified |
+| 状态边界 | 不停止、不重启、不发 signal；无 full solve/RTA/official qualification |
+
+报告与记录：[Response V7](../response_v7.md)、[D2a hash-bound record](records/task041_d2a_progress_20260920.json)、[2nm progress](2nm_d1e_progress_20260920.md)、[D1e evidence index](../../../results/task041_side_balh_component_audit/d1e_preparation_20260918_8ad30732/d1e_evidence_index.json)。
+
 ## C2d：共同布局离线复核收口（2026-09-16）
 
-本节是当前最新状态。C2c 没有启动新计算，而是对已有 C2 raw 运行做了最小摘要纠正：
+本节为 2026-09-16 历史快照。C2c 没有启动新计算，而是对已有 C2 raw 运行做了最小摘要纠正：
 raw 已有两侧各 4 对、每场 8 项，共 8 对/16 主响应；合并摘要把 `apply_count` 写成
 `8`，派生视图仅改为 raw 重算的 `16`。因此离线 checker 可判定同布局响应等价通过，但
 原 service 的 `PAIRING_SETUP_FAILURE` / `service_boundary_failure`、systemd exit3、旧

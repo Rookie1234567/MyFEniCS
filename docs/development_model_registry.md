@@ -1,5 +1,15 @@
 # 开发阶段研究对象与计算结果总账
 
+## 2026-09-20：Task041 2nm D1e 运行中登记（D2a）
+
+| 模型/阶段 | 当前结果 | 资格边界与证据 |
+|---|---|---|
+| 钨（W）2nm p6/h1.5 M1200 BAL_H hybrid iterative，MPI8×1 CPU1–8 | producer QEP packet 已保存；consumer 正在 modal/Schur 候选阶段；formal Schur `0/4800`，outer FGMRES `not_started`、outer response `0`（分母不适用），RTA `not_run` | 非终态，不能称 solver PASS、RTA 完成或容量资格；21/32 只是两侧重复样本；[Response V7](task041_mpi1_shortwave_hybrid_capacity/response_v7.md)、[D2a record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_d2a_progress_20260920.json) |
+
+QEP packet 的 32 个声明 shard 已流式核验，manifest SHA 为
+`7ef2ecc5587f79a123e44cacfe347356d13b36336948ade1672787c6430163d2`。公共
+consumer-only reuse 仍缺运行中的 `supervisor_summary.json`，不能把 producer 完成等同为可无条件续算；旧 C2/V4 及旧资源负结果保持历史语义。
+
 ## 2026-09-16：Task041 C2d 共同布局离线复核
 
 Task041 C2 已有一场共同布局组件运行，C2d 仅将 raw 已确认的 `16` 次主响应回填到

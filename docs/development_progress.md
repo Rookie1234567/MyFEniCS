@@ -1,5 +1,21 @@
 # 项目开发进度：Task000–Task040
 
+## 2026-09-20：Task041 D2a / D1e 运行中（as-of 01:19:51.480911341Z）
+
+Task041 的模型是钨（W）、2nm、p6/h1.5、M1200、MPI8×1；Schur 是供外层迭代使用的模态耦合预条件矩阵。2nm D1e 已实际运行，不能再沿用旧的“尚未启动”表述。producer QEP 已完整写入
+selected-mode packet；consumer 仍在 modal/Schur 候选阶段，formal Schur response `0/4800`，outer
+FGMRES `not_started`、outer response `0`（分母不适用），RTA `not_run`，因此没有数值 PASS 或完整容量资格。21 个小 RHS modal
+样本（bottom13/top8）给出的固定均值外推为 `133.57896112787233 days`，仅为 derived
+sample arithmetic，不是 ETA；21/32 是重复样本，不是 formal 进度，21 行均 `reason=2`、
+`explicit_true_target_reached=true`，最大 `relative_residual=0.009981656767193032 <= 0.01`，但不等于最终全局残差。当前 process-tree RSS / cgroup memory.current 分别为
+`642483105792/647585968128 B` 的冻结括号值，非完整运行峰值。
+
+运行 source 为 `bde0686891af10bb489e4b1cb14500791cb50351`；报告文件在 detached worktree，
+不改变运行 checkout。详细身份、packet hash、memory tail binding 与 reuse 前置条件见
+[Task041 Response V7](task041_mpi1_shortwave_hybrid_capacity/response_v7.md) 和
+[D2a record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_d2a_progress_20260920.json)。
+旧 C2/V4 段落继续作为历史保留。
+
 ## 2026-09-16：Task041 C2d 共同布局离线复核收口
 
 Task041 的 C2 已完成一次共同布局组件运行；C2d 没有重启或重算，而是修正既有摘要的

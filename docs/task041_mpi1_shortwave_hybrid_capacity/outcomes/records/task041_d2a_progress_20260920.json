@@ -1,0 +1,275 @@
+{
+  "schema": "task041.d2a.progress.v1",
+  "observed_utc": "2026-09-20T01:19:51.480911341Z",
+  "observed_cst": "2026-09-20T09:19:51.482977410+08:00",
+  "scope": "read_only_d2a_running_report",
+  "observation_window": {
+    "host_snapshot_window_utc": "2026-09-20T01:17:00Z/2026-09-20T01:25:00Z",
+    "host_snapshot_window_cst": "2026-09-20T09:17:00+08:00/2026-09-20T09:25:00+08:00",
+    "report_as_of_utc": "2026-09-20T01:19:51.480911341Z",
+    "memory_sample_elapsed_seconds_is_separate": true,
+    "no_followup_sampling_or_full_memory_rescan": true
+  },
+  "source_identity": {
+    "running_source_sha": "bde0686891af10bb489e4b1cb14500791cb50351",
+    "canonical_checkout": "/home/fenics/Projects/MyFEniCS",
+    "canonical_branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
+    "canonical_head_at_observation": "bde0686891af10bb489e4b1cb14500791cb50351",
+    "canonical_clean_at_observation": true,
+    "report_worktree": "/tmp/task041-d2a-doc-review-20260920",
+    "report_worktree_mode": "detached_at_running_source",
+    "report_artifacts_are_not_runtime_source": true
+  },
+  "d1e": {
+    "unit": "task041-d1e-2nm-p6h1p5-m1200-mpi8.service",
+    "invocation_id": "1cf5e34338754dbfa80df487b322c72c",
+    "main_pid": 571560,
+    "main_pid_starttime_ticks": 183510226,
+    "main_pid_started_local": "Fri Sep 18 17:55:45 2026",
+    "active_state": "active",
+    "sub_state": "running",
+    "systemd_result": "success",
+    "systemd_result_is_not_solver_pass": true,
+    "cpu_affinity": "1-8",
+    "control_group": "/user.slice/user-1000.slice/user@1000.service/app.slice/task041-d1e-2nm-p6h1p5-m1200-mpi8.service",
+    "public_runroot": "/home/fenics/Projects/MyFEniCS/results/task041_2nm_balh_hybrid_iterative_p6h1p5_m1200_mpi8/task041_2nm_p6h1p5_m1200_mpi8_balh__hybrid_iterative__mpi8__M1200/20260918T095546.139183Z",
+    "service_root": "/home/fenics/Projects/MyFEniCS/results/task041_side_balh_component_audit/d1e_preparation_20260918_8ad30732/d1e_2nm_p6h1p5_m1200_mpi8_supervision",
+    "config_sha256": "faffcbe218c0ed53117dd3451f8d6bb82d8b5e7bcc440539f8dcc5e8fbf9270c",
+    "source_sha": "bde0686891af10bb489e4b1cb14500791cb50351",
+    "run_summary_status": "launching",
+    "run_summary_result_classification": "not_run",
+    "run_summary_phase_results_present": false,
+    "rank_math_threads": 1,
+    "rank_affinity": {
+      "producer": {"0": 1, "1": 2, "2": 3, "3": 4, "4": 5, "5": 6, "6": 7, "7": 8},
+      "consumer": {"0": 1, "1": 2, "2": 3, "3": 4, "4": 5, "5": 6, "6": 7, "7": 8}
+    },
+    "consumer_rank_pids": {"0": 782947, "1": 782948, "2": 782949, "3": 782950, "4": 782951, "5": 782952, "6": 782953, "7": 782954},
+    "consumer_rank_started_local": "Sat Sep 19 02:07:31 2026",
+    "outer_mpi_identity": {
+      "launcher": "native_python_singleton",
+      "mpi_size": 1,
+      "ompi_rank": null,
+      "ompi_size": null,
+      "math_thread_controls_all_one": true
+    }
+  },
+  "protected_neighbor": {
+    "observation_only": true,
+    "worktree": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity",
+    "parent": {"pid": 402109, "started_local": "Fri Sep 18 11:50:16 2026", "cpu": 9},
+    "mpiexec": {"pid": 402153, "started_local": "Fri Sep 18 11:50:17 2026", "cpu": 23},
+    "worker": {"pid": 402163, "started_local": "Fri Sep 18 11:50:17 2026", "cpu": 23},
+    "guard": {"pid": 1549434, "started_local": "Sun Sep 20 07:34:19 2026", "cpu": 9},
+    "action": "no_signal_no_rebind_no_count_as_task041"
+  },
+  "phase_counters": {
+    "producer_qep": {
+      "status": "saved_packet",
+      "mode_prep_classification": "TASK041_MODE_PREP_PACKET_READY",
+      "producer_scope_released": true,
+      "max_rank_total_seconds": 29500.000315021956,
+      "mode_prep_wall_seconds": 29501.598348574014,
+      "requested_modes_per_direction": 1200,
+      "qep_candidate_modes_per_direction": 2400,
+      "selected_modes_per_direction": 1200,
+      "formal_consumer_qep_calls": 0
+    },
+    "probe": {
+      "candidate_setup_actual_probe_call_count": 8,
+      "probe_records": 8,
+      "nonzero_probe_records": 7,
+      "exact_zero_probe_records": 1,
+      "raw_rhs_audit_jsonl_rows": 29,
+      "raw_rhs_audit_rows_by_side": {"bottom": 17, "top": 12}
+    },
+    "controller_sample_snapshot": {
+      "sample_count": 21,
+      "by_side": {"bottom": 13, "top": 8},
+      "source": "latest_main_controller_read_only_snapshot",
+      "not_a_formal_rhs_count": true
+    },
+    "formal_consumer": {
+      "completed_responses": 0,
+      "planned_responses": 4800,
+      "official_rta": "not_run",
+      "current_run_is_not_terminal": true
+    },
+    "service_supervision": {
+      "unit_active": true,
+      "phase_results": "not_yet_written",
+      "worker_process_group_gone": false,
+      "finalizer": "not_run"
+    },
+    "outer_solver": {
+      "status": "not_started",
+      "completed_responses": 0,
+      "response_denominator": "not_applicable"
+    }
+  },
+  "probe_costs": {
+    "cost_field_semantics": "rank0 audit record; Q/A6/H6 values are max_rank_accumulated_seconds and are not summed as a critical path",
+    "bottom": {
+      "probe_count": 4,
+      "nonzero_count": 3,
+      "exact_zero_count": 1,
+      "nonzero_elapsed_sum_seconds": 4058.838335659122,
+      "nonzero_elapsed_mean_seconds": 1352.946111886374,
+      "nonzero_iterations_sum": 39,
+      "nonzero_iterations_mean": 13.0,
+      "q_seconds_sum": 2310.044099464314,
+      "a6_seconds_sum": 1308.4949905567337,
+      "h6_seconds_sum": 312.3297518698964
+    },
+    "top": {
+      "probe_count": 4,
+      "nonzero_count": 4,
+      "exact_zero_count": 0,
+      "nonzero_elapsed_sum_seconds": 11062.840764752124,
+      "nonzero_elapsed_mean_seconds": 2765.710191188031,
+      "nonzero_iterations_sum": 104,
+      "nonzero_iterations_mean": 26.0,
+      "q_seconds_sum": 6413.172176223015,
+      "a6_seconds_sum": 3534.618220687611,
+      "h6_seconds_sum": 789.0695233670995
+    },
+    "modal_schur_from_rhs_audits": {
+      "source_phase": "modal_schur",
+      "source_rows": 21,
+      "source_rows_by_side": {"bottom": 13, "top": 8},
+      "source_file_bytes": 63009,
+      "source_file_sha256": "6ad01110ab9335f953c1064903e846fa3298d6ca7090a1f5341998dd13b2179c",
+      "bottom": {
+        "count": 13,
+        "iteration_sum": 273,
+        "iteration_range": [9, 51],
+        "elapsed_sum_seconds": 27977.90938461572,
+        "elapsed_mean_seconds": 2152.1468757396706,
+        "elapsed_range_seconds": [899.4712390978821, 5227.512858337024],
+        "rank0_per_rank_accumulated_seconds_sum": {"Q": 15991.318321351893, "A6": 8700.545055122348, "H6": 2183.074874829501}
+      },
+      "top": {
+        "count": 8,
+        "iteration_sum": 197,
+        "iteration_range": [11, 56],
+        "elapsed_sum_seconds": 21253.56579890987,
+        "elapsed_mean_seconds": 2656.6957248637336,
+        "elapsed_range_seconds": [1155.1779964989983, 6149.74191578012],
+        "rank0_per_rank_accumulated_seconds_sum": {"Q": 12403.696700270288, "A6": 6339.517980669392, "H6": 1763.276744133792}
+      },
+      "modal_numeric_audit": {
+        "all_reason": 2,
+        "all_explicit_true_target_reached": true,
+        "max_relative_residual": 0.009981656767193032,
+        "threshold": 0.01,
+        "is_final_global_residual": false
+      },
+      "fixed_sample_side_mean_times_2400_seconds": 11541222.24144817,
+      "fixed_sample_side_mean_times_2400_days": 133.57896112787233,
+      "interpretation": "sum(bottom_mean, top_mean)*2400; fixed modal sample arithmetic only, not an ETA or full-consumer forecast"
+    },
+    "fixed_sample_extrapolations": {
+      "controller_21_sample_extrapolation_days": 133.57896112787233,
+      "controller_21_sample_extrapolation_formula": "(27977.90938461572/13 + 21253.56579890987/8)*2400/86400",
+      "eight_probe_derived_central_seconds": 9950673.628227763,
+      "eight_probe_derived_central_days": 115.17,
+      "interpretation": "nonrepresentative fixed-sample arithmetic, not an ETA or capacity qualification; batch_size_32 is batching, not 32-way parallel solves"
+    }
+  },
+  "memory_snapshot": {
+    "sample_source": "tail of service memory_stages.jsonl; latest synchronized process-tree sample",
+    "sample_elapsed_seconds": 142181.0448487869,
+    "process_tree_rss_bytes": 642483105792,
+    "process_tree_pid_count": 12,
+    "dedicated_cgroup_current_bytes": 647585968128,
+    "dedicated_cgroup_kernel_peak_bytes": 647695921152,
+    "dedicated_cgroup_swap_bytes": 0,
+    "process_tree_swap_bytes": 0,
+    "global_swap_used_bytes": 8192,
+    "global_swap_used_delta_bytes": 0,
+    "global_pswpin_delta_pages": 0,
+    "global_pswpout_delta_pages": 0,
+    "host_memavailable_bytes_at_sample": 1018492968960,
+    "runtime_reserve_contract_bytes": 412316860416,
+    "hard_rss_contract_bytes": 1759218604442,
+    "warning_rss_contract_bytes": 1539316278886,
+    "pss_bytes": null,
+    "uss_bytes": null,
+    "peak_semantics": "latest bracket only; no full raw-memory rescan and no final peak claim",
+    "sample_elapsed_as_of": "142181.0448487869 seconds; not the wall-clock instant of the 01:19 report snapshot",
+    "raw_tail_line_binding": {
+      "source_file": "results/task041_side_balh_component_audit/d1e_preparation_20260918_8ad30732/d1e_2nm_p6h1p5_m1200_mpi8_supervision/memory_stages.jsonl",
+      "sample_elapsed_seconds": 142181.0448487869,
+      "byte_offset": 1257553500,
+      "line_bytes": 3535,
+      "line_sha256": "7e96bb667fbff3e391540a3f066a65e412c436cad6f8c3daad33fe72d690e619",
+      "fields_bound": ["authority_kind", "process_tree_rss_bytes", "cgroup_memory_current_bytes", "cgroup_memory_peak_bytes", "process_tree_swap_bytes", "global_swap_used_bytes", "host_memavailable_bytes", "phase"],
+      "capture_method": "bounded_seek_to_existing_elapsed_record; raw line only, no full-file hash",
+      "growth_log_is_not_called_final_hash": true
+    }
+  },
+  "packet": {
+    "packet_root": "/home/fenics/Projects/MyFEniCS/results/task041_2nm_balh_hybrid_iterative_p6h1p5_m1200_mpi8/task041_2nm_p6h1p5_m1200_mpi8_balh__hybrid_iterative__mpi8__M1200/20260918T095546.139183Z/producer/selected_mode_packet",
+    "manifest_sha256": "7ef2ecc5587f79a123e44cacfe347356d13b36336948ade1672787c6430163d2",
+    "manifest_bytes": 1477835,
+    "manifest_declared_rank_count": 8,
+    "manifest_declared_shard_entries": 32,
+    "stream_verified_missing": 0,
+    "stream_verified_byte_mismatches": 0,
+    "stream_verified_sha_mismatches": 0,
+    "stream_verified_shard_bytes": 4841245696,
+    "packet_directory_file_count": 33,
+    "packet_directory_bytes": 4842723531,
+    "selected_mode_manifest_sha256": "4bb930587c4b1fbe37d3061520beb7281030c5d28e28974a17529d68b2672b86",
+    "packet_identity_sha256": "171ef1ca91ce72d3ca2a7ca61d7ab2f5be4759934656e7730afd757d3ab49d17",
+    "mode_prep_summary_sha256": "5810f19d2834c122e16c178ad1346c10e8288aa3ade565bf26ea73006c252be2",
+    "producer_summary_sha256": "138db58ad98f0f32910a31788dd510852aee5d63a4f7a81c1446c46d353bcb26",
+    "qep_workspace_persisted": false,
+    "persisted_scope": "selected_mode_packet_only; QEP intermediate workspace not persisted",
+    "source_binding": {
+      "producer_source_sha": "bde0686891af10bb489e4b1cb14500791cb50351",
+      "consumer_source_sha": "bde0686891af10bb489e4b1cb14500791cb50351",
+      "same_sha_required_for_future_reuse": false,
+      "future_reuse_requires_separate_source_physical_layout_abi_bindings": true
+    },
+    "input_sha256": "0edd17344454939cb2cd439b5221f6d08f03c42b9f36b083469e63f667e75e57",
+    "physical_sha256": "537056f184c8be19a4688c7e4cc1fef883141b9dbab7380c1df2efc5a3b465fc",
+    "resolved_sha256": "10835c84bc3c6f6fdbb5630a48a84a538fa87bd621346f068942cb5cdcc9f6b4",
+    "supervisor_summary_path": "/home/fenics/Projects/MyFEniCS/results/task041_2nm_balh_hybrid_iterative_p6h1p5_m1200_mpi8/task041_2nm_p6h1p5_m1200_mpi8_balh__hybrid_iterative__mpi8__M1200/20260918T095546.139183Z/supervisor_summary.json",
+    "supervisor_summary_present": false
+  },
+  "reuse_contract": {
+    "public_cli_option": "--producer-packet-root",
+    "public_cli_source": "scripts/run_case.py:28-30",
+    "validator": "benchmarks/task041_balh_workflow.py::validate_balh_producer_packet",
+    "validator_requires_public_supervisor_summary": true,
+    "current_reuse_qualification": "not_qualified_missing_public_supervisor_summary",
+    "consumer_destroy_path": "benchmarks/task039_v4_selected_mode_packet.py:979-986 destroys owned vectors only; consume path releases in-memory packet references at 1039-1046",
+    "disk_packet_delete_observed_in_checked_consumer_path": false,
+    "future_prerequisites": [
+      "allow the existing supervisor/finalizer to write a complete public supervisor_summary and lifecycle/resource phase evidence",
+      "preserve the producer runroot and verify source/input/physical/resolved/model/MPI identity plus manifest and shard hashes",
+      "require process-group/lifecycle and cleanup evidence before invoking the public producer-packet-root validator",
+      "reuse only through the existing public validator; do not fabricate supervisor_summary or claim arbitrary forced termination is reusable"
+    ]
+  },
+  "evidence_files": {
+    "d1e_evidence_index": "results/task041_side_balh_component_audit/d1e_preparation_20260918_8ad30732/d1e_evidence_index.json",
+    "d1e_dispatch_evidence": "results/task041_side_balh_component_audit/d1e_preparation_20260918_8ad30732/d1e_dispatch_evidence.json",
+    "d1e_fresh_preflight": "results/task041_side_balh_component_audit/d1e_preparation_20260918_8ad30732/d1e_fresh_host_preflight.json",
+    "d1e_compute_ledger": "results/task041_side_balh_component_audit/d1c_preparation_20260917_8d47747d/task041_2nm_balh_hybrid_iterative_p6h1p5_m1200_mpi8_compute_wall_ledger.json",
+    "d1e_compute_ledger_sha256": "8ca07c736dff535233dc5630ad2b177f7008981afb6cdaa9320bd0eb8d5891e5",
+    "rhs_audit": "results/task041_2nm_balh_hybrid_iterative_p6h1p5_m1200_mpi8/task041_2nm_p6h1p5_m1200_mpi8_balh__hybrid_iterative__mpi8__M1200/20260918T095546.139183Z/consumer/numerical_output/balh_side_rhs_audits.jsonl",
+    "candidate_setup_cost": "results/task041_2nm_balh_hybrid_iterative_p6h1p5_m1200_mpi8/task041_2nm_p6h1p5_m1200_mpi8_balh__hybrid_iterative__mpi8__M1200/20260918T095546.139183Z/consumer/numerical_output/candidate_setup_cost.json",
+    "service_memory_authority": "results/task041_side_balh_component_audit/d1e_preparation_20260918_8ad30732/d1e_2nm_p6h1p5_m1200_mpi8_supervision/memory_stages.jsonl"
+  },
+  "execution_status": {
+    "d1e_is_running": true,
+    "d1e_is_terminal": false,
+    "full_consumer_solve": "not_complete",
+    "rta": "not_run",
+    "tests_run_in_d2a": false,
+    "signals_sent_in_d2a": false,
+    "approximate_schur_started_in_d2a": false
+  }
+}
