@@ -1,6 +1,17 @@
-# Task041 Response V8：D3a 2nm D1e 终态与 producer packet 边界
+# Task041 Response V8：D3a 终态与 Review V5 R0/R1d 收口
 
-本报告只记录已自然触发 repeat Gate 终止的旧 D1e 及 producer metadata 复用核验，为 Review V5 R0 提供已有终态证据；不是 V5 整轮完成回应。R1–R6 均 `not_run`；实际分类保留 `IMPLEMENTATION_FAILURE`，不记人工受控停止。
+本报告保留 D3a 的自然终止证据，并补记 Review V5 的 R0 完成与唯一 R1d-B 匹配负载。D3a 的实际分类仍为 `IMPLEMENTATION_FAILURE`，不记人工受控停止；R1d-B 的 driver 虽 rc0，但 CPU1 性能准入失败。R2–R6、R3 p4 草稿测试和新 PDE/MPI/QEP 均 `not_run`。
+
+## Review V5 当前状态：R0 已完成，R1d-B 复现负项
+
+R1d-B 使用固定 driver SHA `37bea39b72656f2c8e0ce3bb293bbfc8ff41d7a17fa28fd1fc0cedf90976a584`，在无检测到新 heavy 的独占窗口中完成低负载、socket0/node0 CPU1–8 和 socket1/node1 CPU25–32 三个 60 秒窗口。两侧启动与 near-end NUMA 观察均为 `8/8` local；16 个 worker 和 turbostat 的 600 个采样帧均自然退出，父侧 `CLOCK_MONOTONIC` wall 为 `630.795106023 s`，driver rc0。
+
+| R1d-B | 三窗总吞吐（GB/s） | iterations sum | 结论 |
+|---|---:|---:|---|
+| CPU0/socket0/node0 | `32.173939890 / 32.183022717 / 32.190473984` | `28771 / 28774 / 28779` | 稳定约 `32.18` |
+| CPU1/socket1/node1 | `33.263204952 / 28.338248830 / 9.265976385` | `29745 / 25343 / 8283` | 第三窗相对首窗下降约 `72.14%`，`CPU1_NOT_QUALIFIED_SOCKET1_THROUGHPUT_COLLAPSE` |
+
+活跃 turbostat 样本保持约 `3.6 GHz`，CoreThr=0；BMC DIMM 峰为 socket0 `64°C`、socket1 `78°C`（80°C 观察线，状态 ok）。因此不能称核心降频已修复，也不能判定硬件损坏或 DRAM 热限流。R2 继续 blocked；精确 raw、清场和唯一 ledger 追加见 [R1d-B compact](outcomes/cpu_numa_condensed_speed_v5.md) 与 [`task041_v5_cpu_numa.json`](outcomes/records/task041_v5_cpu_numa.json)。
 
 ## 结论先行
 

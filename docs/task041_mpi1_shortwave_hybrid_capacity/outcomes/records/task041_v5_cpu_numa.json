@@ -222,7 +222,92 @@
     "resource_gate": {"path": "results/task041_review_v5_cpu_numa_condensed_speed/r1_matched_load_20260920_retry1/resource_gate.log", "sha256": "7de1f75149926bdb281de9a40794afc8ef64ccf74850fbc813040fffeb15f64e"},
     "turbostat_600": {"path": "results/task041_review_v5_cpu_numa_condensed_speed/r1_matched_load_20260920_retry1/turbostat_600.stdout.log", "sha256": "195b98587d491486d8c46a0d5d91195eb16208d339ebe6ed28e8d0686c60bba7"},
     "post_load_bmc": {"path": "results/task041_review_v5_cpu_numa_condensed_speed/r1_matched_load_20260920_retry1/post_load_bmc_sensor.list", "sha256": "41971c55d8a1cb332a170351e4388264f8ed123c7b62bc3924506925507e1495"},
-    "r1_load_ledger": {"path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_load_ledger_20260920.json", "sha256": "0ccfc62aec0a165193d6320b7194840da810ef0af26ff300c7a7cf96291df6f1", "charged_seconds": 803.973349829, "basis": "retry0 conservative no-residual bound + retry1 quantized process interval; no nested worker/turbostat charge"},
+    "r1_load_ledger": {"path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_load_ledger_20260920.json", "sha256": "0ccfc62aec0a165193d6320b7194840da810ef0af26ff300c7a7cf96291df6f1", "charged_seconds": 803.973349829, "basis": "historical as-of before the R1d-B append: retry0 conservative no-residual bound + retry1 quantized process interval; no nested worker/turbostat charge", "current": false},
+    "latest_r1_load_ledger": {"path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_load_ledger_20260920.json", "sha256": "69aa9738e83d3d9d042124ef3a71e92df3489d6461c3d32a4465c64092ab0508", "charged_seconds": 1434.768455852, "basis": "current after one R1d-B top-level parent wall append; old 0ccfc62... hash retained only as historical_as_of", "current": true},
     "kernel_edac_policy": {"path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_kernel_edac_policy_20260920.txt", "sha256": "7be93cb20c58226999dd72049691ef6aa8249b5c413416895c5cd82b3a050442"}
+  },
+  "r1d_b": {
+    "captured_utc": "2026-09-20T13:33:25.642281784Z",
+    "status": "CPU1_MATCHED_LOAD_COMPLETED_LIMITED",
+    "qualification": "CPU1_NOT_QUALIFIED_SOCKET1_THROUGHPUT_COLLAPSE",
+    "execution_source_sha": "280ba824053989a639a69e620c6e44d1bc31dfc5",
+    "driver": {
+      "runroot": "results/task041_review_v5_cpu_numa_condensed_speed/r1d_load_20260920/run_20260920T131433.133791839Z",
+      "script": "results/task041_review_v5_cpu_numa_condensed_speed/r1d_load_20260920/r1d_matched_load_3x60.sh",
+      "script_sha256": "37bea39b72656f2c8e0ce3bb293bbfc8ff41d7a17fa28fd1fc0cedf90976a584",
+      "pid": 2051231,
+      "starttime_ticks": 201983013,
+      "sid": 2051231,
+      "start_utc": "2026-09-20T13:14:33.179410647Z",
+      "end_utc": "2026-09-20T13:25:03.994581030Z",
+      "parent_clock_monotonic_wall_seconds": 630.795106023,
+      "returncode": 0,
+      "cleanup_check": "results/task041_review_v5_cpu_numa_condensed_speed/r1d_load_20260920/run_20260920T131433.133791839Z/r1d_cleanup_check.txt",
+      "cleanup_check_sha256": "00bf74741e2e99ec1a4159fa1915dd31b6f752950f83efd1a4521335e2029898",
+      "cleanup_method": "exact saved PID /proc absence check for driver, turbostat sudo/process, low-load worker, and 16 phase workers",
+      "legacy_comm_filter_limitation": "the earlier zero-line comm filter was auxiliary only and could not prove bash/python identities had exited"
+    },
+    "phases": {
+      "low_load": {"cpu": 1, "node": 0, "windows": "1/1", "returncode": 0},
+      "socket0_node0": {"os_cpus": "1-8", "workers": 8, "windows": "3/3 each", "returncode": 0, "numa_start_local": "8/8", "numa_near_end_local": "8/8"},
+      "socket1_node1": {"os_cpus": "25-32", "workers": 8, "windows": "3/3 each", "returncode": 0, "numa_start_local": "8/8", "numa_near_end_local": "8/8"}
+    },
+    "window_sum_bytes_per_second": {
+      "socket0_node0": [32173939889.571262, 32183022717.17365, 32190473984.44664],
+      "socket1_node1": [33263204951.80741, 28338248830.390217, 9265976385.213554]
+    },
+    "window_sum_gb_per_second_decimal": {
+      "socket0_node0": [32.173939889571265, 32.18302271717365, 32.19047398444664],
+      "socket1_node1": [33.26320495180741, 28.338248830390217, 9.265976385213554]
+    },
+    "window_iterations_sum": {
+      "socket0_node0": [28771, 28774, 28779],
+      "socket1_node1": [29745, 25343, 8283]
+    },
+      "socket1_window3_drop_percent_from_window1": 72.14346483257299,
+    "worker_completion": "16/16 workers rc0; every worker completed 3/3 windows; math threads=1",
+    "turbostat": {
+      "path": "results/task041_review_v5_cpu_numa_condensed_speed/r1d_load_20260920/run_20260920T131433.133791839Z/turbostat_600.stdout.log",
+      "sample_frames": 600,
+      "active_sample_filter": "Busy >=95%; no exact per-window timestamp alignment",
+      "socket0": {"busy_samples": 1409, "mean_bzy_mhz": 3596.151171, "core_temp_max_c": 51, "core_throttle_max": 0},
+      "socket1": {"busy_samples": 1392, "mean_bzy_mhz": 3597.654454, "core_temp_max_c": 52, "core_throttle_max": 0}
+    },
+    "hardware": {
+      "sample_count": 21,
+      "setpci_device_ids": ["2042", "2046", "204a"],
+      "setpci_sensor_temperature_gate_all_rc0": true,
+      "socket0_max_dimm_c": 64,
+      "socket1_max_dimm_c": 78,
+      "dimm_observation_limit_c": 80,
+      "sel_before_after_sha_equal": true,
+      "sticky_fields_not_interpreted_as_current_throttle": true
+    },
+    "resources": {
+      "resource_sample_count": 364,
+      "mem_available_min_bytes": 2115000832000,
+      "swap_used_bytes": 299008,
+      "pswpin_first_last": [0, 0],
+      "pswpout_first_last": [73, 73],
+      "new_global_swap_delta_bytes": 0,
+      "job_swap": "not_measured",
+      "cgroup_swap": "not_measured"
+    },
+    "current_host_readonly_snapshot": {
+      "captured_utc": "2026-09-20T13:29:02Z",
+      "resctrl": "not mounted; /sys/fs/resctrl empty",
+      "edac": "mc0..mc3 ce_count=0 and ue_count=0 at this snapshot",
+      "scope": "current post-run snapshot only; not evidence that no MCE/EDAC event occurred during the full batch"
+    },
+    "interpretation": "The driver completed and the CPU0/node0 phase stayed near 32.18 GB/s, but CPU1/node1 fell from 33.26320495180741 to 9.265976385213554 GB/s in the same local-NUMA contract. Busy frequency stayed about 3.6 GHz with core-throttle counters zero; DIMM observation peaked at 78 C and gates remained ok. This reproduces a socket1 memory/platform throughput anomaly without proving hardware damage, DRAM thermal throttling, or a unique root cause.",
+    "r2_status": "blocked",
+    "r3_status": "not_run",
+    "summary_path": "results/task041_review_v5_cpu_numa_condensed_speed/r1d_load_20260920/run_20260920T131433.133791839Z/r1d_result_summary.json",
+    "summary_sha256": "b118353510dfb813ab4bee2ea6f93ee23ad56de23e437fb6fd218d7fd23f5bab",
+    "ledger": {
+      "path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_load_ledger_20260920.json",
+      "charged_seconds_after_append": 1434.768455852,
+      "sha256_after_append": "69aa9738e83d3d9d042124ef3a71e92df3489d6461c3d32a4465c64092ab0508"
+    }
   }
 }

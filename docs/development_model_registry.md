@@ -1,5 +1,13 @@
 # 开发阶段研究对象与计算结果总账
 
+## 2026-09-20：Task041 Review V5 R1d-B 匹配负载负结果（当前）
+
+| 模型/阶段 | 当前结果 | 资格边界与证据 |
+|---|---|---|
+| Task041工作站CPU/NUMA内存复制诊断（服务于2nm计划，非物理模型） | driver `rc0`；CPU0/socket0 三窗约 `32.18 / 32.18 / 32.19 GB/s`，CPU1/socket1 `33.2632 / 28.3382 / 9.2660 GB/s`，第三窗约降 `72.14%`；两侧 start/near-end NUMA `8/8` local | `CPU1_NOT_QUALIFIED_SOCKET1_THROUGHPUT_COLLAPSE`；活跃约3.6GHz且 CoreThr=0，DIMM峰64/78°C、状态ok，不能判定硬件损坏或DRAM热限流；R2 blocked；[R1d-B outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/cpu_numa_condensed_speed_v5.md)、[compact](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v5_cpu_numa.json) |
+
+R1d-B 是一次诊断负载，不是 Task041 PDE/MPI/QEP 或 solver qualification。父侧 wall 为 `630.795106023 s`，16 个 worker 均完成三窗；R2–R6、R3 p4 草稿测试和新负载均 `not_run`。原 D1e、C2、V4 负结果与 producer packet 登记继续保留。
+
 ## 2026-09-20：Task041 2nm D1e 终态登记（D3a）
 
 | 模型/阶段 | 当前结果 | 资格边界与证据 |

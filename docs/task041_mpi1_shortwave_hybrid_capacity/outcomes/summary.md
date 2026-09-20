@@ -1,5 +1,16 @@
 # Task041 outcomes summary
 
+> **2026-09-20 Review V5 R1d-B 当前状态（as-of 2026-09-20T13:33:25.642281784Z）**：R0 终态证据已整理；R1d-B 唯一一次匹配负载已完成，driver `rc=0` 不等于 CPU1 通过。CPU0/socket0/node0 三窗为 `32.173939890 / 32.183022717 / 32.190473984 GB/s`；CPU1/socket1/node1 为 `33.263204952 / 28.338248830 / 9.265976385 GB/s`，第三窗相对首窗下降约 `72.14%`。两侧启动/near-end NUMA 均 `8/8` local，活跃频率约 `3.6 GHz`、CoreThr=0；DIMM 观测峰 socket0/1 为 `64/78°C`，状态 ok。分类为 `CPU1_NOT_QUALIFIED_SOCKET1_THROUGHPUT_COLLAPSE`，根因未闭合；R2–R6、R3、PDE/MPI/QEP 和新负载均 `not_run`。详见 [R1d-B outcome](cpu_numa_condensed_speed_v5.md)、[R1d-B compact](records/task041_v5_cpu_numa.json)。
+
+| R1d-B 项目 | 实际证据 |
+|---|---|
+| 父侧运行 | `2026-09-20T13:14:33.179410647Z`–`13:25:03.994581030Z`，parent `CLOCK_MONOTONIC` wall `630.795106023 s`，driver rc0 |
+| worker | 16/16 rc0；各 3/3 窗口完成；CPU1–8/node0 与 CPU25–32/node1 各 8/8 local first-touch/near-end 观察 |
+| 资源/热 | 364 resource samples；MemAvailable 最低 `2115000832000 B`；new global swap delta `0`；DIMM 峰 `64/78°C`，无 thermal/resource stop |
+| 账本 | V5 唯一 ledger after `1434.768455852 s`，SHA `69aa9738e83d3d9d042124ef3a71e92df3489d6461c3d32a4465c64092ab0508`；只计一次顶层父 wall |
+
+清场使用保存的精确 PID 列表逐项检查，20/20 driver、telemetry、low-load 和 phase worker PID 已从 `/proc` 消失；此前按 `comm` 的零行过滤只作辅助，不能单独证明 bash/python 进程退出。当前 resctrl 未挂载、mc0..mc3 CE/UE 为0仅是终态只读快照，不外推全程。
+
 > **2026-09-20 D3a 终态（as-of 2026-09-20T07:49:33.807349Z / 15:49:33.807349 CST）**：D1e 已结束，不能继续沿用下方 D2a 的“运行中”作为当前状态。producer QEP packet 已保存；consumer 在两侧合成 modal Schur 重复一致性门失败，原始分类 `IMPLEMENTATION_FAILURE`，finalizer 为 `failed/service_boundary_failure`。这不是 OOM、超时、外部 kill 或投影误差结论。40 行=8 probe+32 modal，bottom/top 各16；formal Schur `0/4800`，outer FGMRES `not_started`/0，RTA/full field `not_run`。本段只记录已自然终止的旧 D1e 与 producer metadata 复用核验，作为 Review V5 R0 的已有终态证据；R1–R6 均 `not_run`，不记人工受控停止。详见 [Response V8](../response_v8.md)、[D3a terminal record](records/task041_d3a_terminal_20260920.json) 和 [2nm terminal summary](2nm_d1e_terminal_20260920.md)。
 
 | D3a 终态项 | 实际值 |

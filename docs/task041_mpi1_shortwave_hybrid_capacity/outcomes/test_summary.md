@@ -1,5 +1,11 @@
 # Test and evidence summary
 
+## Review V5 R1d-B：有界匹配负载（非测试）
+
+本批不是 pytest、PDE 或 MPI 测试，而是一次获准的 CPU/NUMA 诊断负载。driver 使用固定脚本 SHA `37bea39b72656f2c8e0ce3bb293bbfc8ff41d7a17fa28fd1fc0cedf90976a584`，父侧 `CLOCK_MONOTONIC` wall `630.795106023 s`、rc0；16/16 worker 各完成 3×60 s。CPU0/socket0/node0 三窗总吞吐为 `32.173939890 / 32.183022717 / 32.190473984 GB/s`，CPU1/socket1/node1 为 `33.263204952 / 28.338248830 / 9.265976385 GB/s`，第三窗相对首窗约降 `72.14%`，故 `CPU1_NOT_QUALIFIED_SOCKET1_THROUGHPUT_COLLAPSE`，不能写成 driver 成功即硬件通过。
+
+启动/near-end NUMA 均为两侧各 `8/8` local；活跃 turbostat 为约 `3.6 GHz`、CoreThr=0，DIMM 峰为 `64/78°C`、状态 ok。R2–R6、R3 p4 草稿测试和新负载均 `not_run`。完整 raw JSONL、21 个硬件 raw、600 个 turbostat 采样帧、资源 Gate、PID 清场和 ledger 绑定见 [R1d-B compact](records/task041_v5_cpu_numa.json) 与 [R1d-B outcome](cpu_numa_condensed_speed_v5.md)；不把本诊断混入既有 pytest 通过数。
+
 ## C2d：C2 raw 的离线 checker 复核
 
 C2d 没有重新运行 service、MPI、PDE 或 pytest；它只复核已有 C2 raw，并对摘要中的
