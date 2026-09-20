@@ -1,0 +1,168 @@
+{
+  "schema": "task041.review_v5.r1_cpu_numa_compact.v1",
+  "captured_utc": "2026-09-20T10:00:47.352894072Z",
+  "captured_utc_kind": "initial_host_snapshot_before_R1_load",
+  "compact_generated_utc": "2026-09-20T10:38:30.002493533Z",
+  "compact_generated_cst": "2026-09-20T18:38:30.002493533+08:00",
+  "matched_load_completed_utc": "2026-09-20T10:28:50.791503293Z",
+  "matched_load_completed_cst": "2026-09-20T18:28:50.791503293+08:00",
+  "status": "CPU1_MATCHED_LOAD_COMPLETED_LIMITED",
+  "qualification": "CPU1_NOT_QUALIFIED_R2_BLOCKED_BY_SOCKET1_THROUGHPUT_ANOMALY",
+  "canonical_source_sha": "95f645c95a4b9405c62b6799748e2b51749b609c",
+  "historical_d1e_source_sha": "bde0686891af10bb489e4b1cb14500791cb50351",
+  "historical_r1_blocker": {
+    "status": "CPU1_TELEMETRY_PERMISSION_BLOCKED",
+    "qualification": "CPU1_NOT_QUALIFIED",
+    "meaning": "preserved historical state before the user-installed fixed NOPASSWD read-only commands"
+  },
+  "topology": {
+    "cpu_model": "Intel(R) Xeon(R) Platinum 8260 CPU @ 2.40GHz",
+    "logical_cpus": 48,
+    "packages": 2,
+    "numa_nodes": 2,
+    "node0_cpus": "0-23",
+    "node1_cpus": "24-47",
+    "cpu1": {"package": 0, "core_id": 1, "node": 0},
+    "mapping_source": "cpu*/topology/core_id, physical_package_id, numactl --hardware, hwmon coretemp Package id labels"
+  },
+  "thermal_frequency_snapshot": {
+    "hwmon_devices": 7,
+    "temperature_channels": 54,
+    "thermal_zones": 3,
+    "thermal_throttle_cpu_directories": 48,
+    "thermal_throttle_counts": "zero in snapshot; not a sustained-load result",
+    "coretemp_device_limits": "max/crit 94000/104000 mC as exposed by device; no universal TCASE/Junction threshold applied",
+    "powercap_rapl_zones": 5,
+    "frequency_policy": "intel_cpufreq/schedutil, 1000000-3900000 kHz policy; busy frequency not measured"
+  },
+  "permission_probes": {
+    "path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_permission_probe.json",
+    "sha256": "582a549b253d1a0d6941a8c1718e9a78e5a653573869451fc23b4c7ae8715107",
+    "turbostat_1s_rc": 0,
+    "turbostat_1s": {
+      "aggregate_busy_percent": 2.76,
+      "aggregate_bzy_mhz": 1471,
+      "aggregate_core_temp_c": 35,
+      "aggregate_package_temp_c": 36,
+      "aggregate_package_watt": 78.33,
+      "aggregate_ram_watt": 69.70,
+      "cpu1_busy_percent": 3.71,
+      "cpu1_bzy_mhz": 2216,
+      "cpu1_core_temp_c": 32
+    },
+    "ipmitool_install_rc": 0,
+    "ipmitool_sensor_list_rc": 0,
+    "ipmitool_sel_elist_rc": 0,
+    "bmc_current_examples": "CPU1 35C, CPU2 36C, PCH 35C, System 26C, VRMCpu1 39C, VRMCpu2 41C, P2-DIMME1 50C; sensor status ok",
+    "bmc_sel": "readable; historical processor throttled and DIMM threshold events present; not a current-load failure",
+    "old_unprivileged_probe": {
+      "turbostat_sudo_noninteractive_rc": 1,
+      "perf_stat_rc": 1,
+      "meaning": "historical blocker retained; not used to close the reopened permission state"
+    },
+    "msr": "fixed turbostat command readable; no separate arbitrary root probe performed"
+  },
+  "resource_history": {
+    "old_global_swap_negative_bytes": 299008,
+    "meaning": "retained historical negative result; future fresh baseline required",
+    "job_or_new_global_swap_test": "not_run"
+  },
+  "not_measured": [
+    "8+0 versus 4+4 comparison",
+    "a root-cause attribution for the socket1 throughput collapse",
+    "a CPU1 hardware qualification PASS",
+    "R2 or any Task041 PDE/MPI qualification"
+  ],
+  "interpretation": "the one authorized matched-load batch completed with clean worker/NUMA/resource gates, but socket1 throughput fell sharply after window 1 while Busy/BzyMHz stayed high; this is a limited negative performance diagnostic, not a core-frequency-throttle finding or a Task041 qualification",
+  "matched_load": {
+    "driver": {
+      "pid": 1941048,
+      "starttime_ticks": 200925843,
+      "start_utc": "2026-09-20T10:18:21.522436731Z",
+      "end_utc": "2026-09-20T10:28:50.791503293Z",
+      "returncode": 0,
+      "parent_monotonic_wall_seconds": null,
+      "utc_derived_wall_seconds": 629.269066562,
+      "process_runtime_interval_seconds": 629.317114081,
+      "process_runtime_basis": "starttime_ticks=200925843, CLK_TCK=100, end monotonic_ns=2009887747114081; start quantization approximately +/-0.01s",
+      "outer_budget_seconds": 1800,
+      "log": "results/task041_review_v5_cpu_numa_condensed_speed/r1_matched_load_20260920_retry1/driver.combined.log"
+    },
+    "worker_contract": "low-load CPU1/node0 10s, then one fixed first-touch allocation per one-thread PID; socket0/node0 CPUs1-8 and socket1/node1 CPUs25-32, three shared 60s windows; no rerun",
+    "window_sum_bytes_per_second": {
+      "socket0_node0": [31666040978.149925, 31570263413.143867, 31250112979.594849],
+      "socket1_node1": [32643461642.735004, 14288280067.67857, 8767613758.158968]
+    },
+    "socket1_relative_to_window1": [1.0, 0.437737, 0.268604],
+    "worker_completion": "low-load 1/1; socket0 8/8 with 3/3 windows each; socket1 8/8 with 3/3 windows each; every worker rc=0, Threads=1, requested OS affinity and local first-touch checks recorded",
+    "resource_gate": {
+      "resource_sample_count": 391,
+      "mem_available_min_bytes": 2112594825216,
+      "mem_available_max_bytes": 2113810104320,
+      "swap_used_bytes": 299008,
+      "pswpin_first_last": [0, 0],
+      "pswpout_first_last": [73, 73],
+      "hwmon_alarm_count": 0,
+      "thermal_throttle_count": 0,
+      "max_resource_sample_gap_seconds": 189.832533596,
+      "global_swap_delta_measured_bytes": 0,
+      "job_swap": "not_measured",
+      "cgroup_swap": "not_measured",
+      "gate_result": "host-level sampled checks caused no stop; job/cgroup swap was not independently measured, so this is not a full resource qualification"
+    },
+    "turbostat_loaded_diagnostic": {
+      "path": "results/task041_review_v5_cpu_numa_condensed_speed/r1_matched_load_20260920_retry1/turbostat_600.stdout.log",
+      "sample_rows_per_worker_cpu": 600,
+      "socket1_busy_gt90_rows_per_cpu": 174,
+      "socket1_bzy_mhz_busy_gt90_range": [3596.511494, 3596.626437],
+      "socket1_core_temp_max_c": 54,
+      "socket1_core_throttle_max": 0,
+      "socket1_interpretation": "high Busy/BzyMHz without core-throttle indication; controller cross-check saw IPC/LLCMRPS and package/memory power fall with later windows, so memory/platform supply or interference remains unresolved"
+    },
+    "bmc": {
+      "midpoint": "socket0 and socket1 fixed sensor/SEL samples completed during their 90s midpoint; socket1 midpoint P2-DIMME1 reached 78C, status ok",
+      "post_load_capture": "post-load evidence after the socket1 window had ended; custom capture began 2026-09-20T10:27:33.986272420Z, about 112.99s after the socket1 PHASE_END monotonic marker and before the 600s monitor ended; it is not a peak-time sample",
+      "post_load_examples_c": {"P2-DIMME1": 77, "P2-DIMMD1": 74, "P2-DIMMB1": 68},
+      "thermal_gate": "no non-ok BMC status observed; 80C DIMM line remains an observation boundary, not a passed qualification"
+    },
+    "classification": "CPU1_NOT_QUALIFIED_SOCKET1_MEMORY_OR_PLATFORM_PERFORMANCE_ANOMALY; not core frequency throttling, not a numerical/PDE failure",
+    "previous_attempt": {
+      "path": "results/task041_review_v5_cpu_numa_condensed_speed/r1_matched_load_20260920/driver.stdout.log",
+      "returncode": 141,
+      "meaning": "preserved SIGPIPE-compatible interrupted attempt; not attributed to an established controller abort",
+      "rerun_policy": "the complete matched batch was run once in retry1; no performance-seeking rerun"
+    },
+    "worker_jsonl_sha256": {
+      "low_load_cpu1": "6b56ac2014faca5793ab1b20ca8b94207174e83809f31d581b9d33e8d12c7ed0",
+      "socket0_cpu1": "bc24a9bd196b60075804dddfeaea1f25180031ccee2584d74a685a0be444b5a4",
+      "socket0_cpu2": "76485301ec45f5cf30f1c91cc9d546a3b1aae105349fc04422ffdb7ab6907fa8",
+      "socket0_cpu3": "00a1748570d12c03bf828ab84ab07a7e0473a8c68670f1c3c281074de96a6026",
+      "socket0_cpu4": "a28f7a989ded1ada9a1f404d2def3cf275d8ee48fe2d3fd34ca457ef0760856c",
+      "socket0_cpu5": "03354819c235aafe474cc2a6d5258a5e1e418792d7afdbb3ae0d1ce032598bed",
+      "socket0_cpu6": "770df9df60154aed34a4673f2cb1e910df4cfeaf5d01e61212971e99a2bf5e01",
+      "socket0_cpu7": "948b54ce5a55fe083cc7d962774e7e70b460bbd6a1a754bc665527ce335aae2a",
+      "socket0_cpu8": "c4d85e2b0a553015bca14c2c4e7b72abb6c76cabdfa45512fca755f7177adbde",
+      "socket1_cpu25": "e97f1a7ab76a5ce81bf9aa6f2b847e93edc4652e9d099b06c2200a1c523ffbb2",
+      "socket1_cpu26": "a3d519ca1f79335963f442727a338eb36df2836e163ac66c6b9e484779223977",
+      "socket1_cpu27": "cc7c1f011bfb0d91958d58910bf7ae92db28e8732890962994836a42e214c96c",
+      "socket1_cpu28": "cae9805233259a6f1b355e4dd6f2476b203739a1ffd420e287b17e3dddbfacba",
+      "socket1_cpu29": "1ec49cd922badeaf0f07ba56ad6fef1023c2f02e8f3991dc1ee67c50364162ff",
+      "socket1_cpu30": "44285a5af763578951e12a2ea59f994f25d1ff94b5e6affab86d6273a9d240f8",
+      "socket1_cpu31": "ccbf0452cf64c728c1798b469253182bbb4b02e0806d26c01914f5fc5eb549ab",
+      "socket1_cpu32": "0e4c2af97a9d95d61a55418d6c843fa6e02d8c548c17da7d151ff510f9826e9b"
+    }
+  },
+  "evidence": {
+    "host_index": {"path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_host_index.json", "sha256": "a0751b79b74e09926cfbb5071a92662dc555d850d47176d3a3fa3d951eb42c6c"},
+    "host_raw": {"path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_host_snapshot_raw_20260920.txt", "sha256": "4e8fe2a1190fe271b096cd4055a26a9f740047ff4f4dbeee45045bb5cbf6e741"},
+    "hwmon_raw": {"path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_hwmon_thermal_powercap_raw_20260920.json", "sha256": "3d5eadc4c29ebef6697f27ac215aec7cdca253834190ca40602a8787147ad42f"},
+    "matched_load_driver": {"path": "results/task041_review_v5_cpu_numa_condensed_speed/r1_matched_load_20260920_retry1/driver.combined.log", "sha256": "89663c577fc366eaaf4250d28043d7a337f057f93ad500bdec39f82f2f41ac62"},
+    "matched_load_worker": {"path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_fixed_first_touch_worker.py", "sha256": "7ce2dd8ff6f71cf4e9b9c13a156e1f0f0b15b38af010ac0b2b04881ec3ce0ad9"},
+    "matched_load_driver_script": {"path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_matched_load_3x60.sh", "sha256": "0e3cb1c4988ce1c699994b5a56b5dea586abb0f646eb745cedbde80cba188b34"},
+    "resource_gate": {"path": "results/task041_review_v5_cpu_numa_condensed_speed/r1_matched_load_20260920_retry1/resource_gate.log", "sha256": "7de1f75149926bdb281de9a40794afc8ef64ccf74850fbc813040fffeb15f64e"},
+    "turbostat_600": {"path": "results/task041_review_v5_cpu_numa_condensed_speed/r1_matched_load_20260920_retry1/turbostat_600.stdout.log", "sha256": "195b98587d491486d8c46a0d5d91195eb16208d339ebe6ed28e8d0686c60bba7"},
+    "post_load_bmc": {"path": "results/task041_review_v5_cpu_numa_condensed_speed/r1_matched_load_20260920_retry1/post_load_bmc_sensor.list", "sha256": "41971c55d8a1cb332a170351e4388264f8ed123c7b62bc3924506925507e1495"},
+    "r1_load_ledger": {"path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_load_ledger_20260920.json", "sha256": "0ccfc62aec0a165193d6320b7194840da810ef0af26ff300c7a7cf96291df6f1", "charged_seconds": 803.973349829, "basis": "retry0 conservative no-residual bound + retry1 quantized process interval; no nested worker/turbostat charge"},
+    "kernel_edac_policy": {"path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_kernel_edac_policy_20260920.txt", "sha256": "7be93cb20c58226999dd72049691ef6aa8249b5c413416895c5cd82b3a050442"}
+  }
+}
