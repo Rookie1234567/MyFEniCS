@@ -98,7 +98,18 @@ class CellCondensedFintAdapter:
 
     def __init__(self, inverse: Any) -> None:
         self.inverse = inverse
+        # ``apply_count`` is deliberately the number of physical F4 adapter
+        # calls, including repair RHS calls.  A logical BAL_H coarse call is
+        # tracked separately by ``logical_apply_count``.
         self.apply_count = 0
+        self.logical_apply_attempt_count = 0
+        self.logical_apply_count = 0
+
+    def begin_logical_apply(self) -> None:
+        self.logical_apply_attempt_count += 1
+
+    def complete_logical_apply(self) -> None:
+        self.logical_apply_count += 1
 
     def apply_with_facts(self, rhs: Any, *, port_rhs: Any | None = None):
         if port_rhs is not None:
@@ -114,12 +125,33 @@ class CellCondensedFintAdapter:
             {
                 "adapter_schema": "task039extra.v18.cell-condensed-fint.v1",
                 "apply_count": int(self.apply_count),
+                "apply_count_semantics": "physical_F4_calls_including_repairs",
+                "logical_apply_count": int(self.logical_apply_count),
+                "logical_apply_attempt_count": int(
+                    self.logical_apply_attempt_count
+                ),
                 "factor_solve_count": int(self.inverse.solve_count),
+                "factor_solve_call_delta": int(
+                    facts.get("factor_solve_call_delta") or 0
+                ),
                 "matrix_identity": dict(self.inverse.matrix_identity),
                 "port_rhs_policy": "zero_only",
+                "port_solution_norm": float(
+                    np.linalg.norm(self.inverse.last_port_solution)
+                ),
             }
         )
         return correction, facts
+
+    @property
+    def last_port_solution(self):
+        return self.inverse.last_port_solution
+
+    @last_port_solution.setter
+    def last_port_solution(self, value):
+        self.inverse.last_port_solution = np.asarray(
+            value, dtype=np.complex128
+        ).copy()
 
     def destroy(self) -> None:
         self.inverse.destroy()

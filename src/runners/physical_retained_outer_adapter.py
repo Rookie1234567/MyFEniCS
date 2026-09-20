@@ -307,6 +307,7 @@ class RetainedOuterAdapter:
         expected_space_facts=None,
         rhs_identity_policy="fixed_historical_contract",
         save_complete_field_packet=None,
+        p4_count_policy="legacy_one_mat_solve_per_logical",
     ):
         self.runtime, self.common, self.resolved = runtime, common, resolved
         self.full_rhs, self.bal_h = full_rhs, apply_pc
@@ -329,6 +330,12 @@ class RetainedOuterAdapter:
             None if expected_space_facts is None else dict(expected_space_facts)
         )
         self.rhs_identity_policy = str(rhs_identity_policy)
+        self.p4_count_policy = str(p4_count_policy)
+        if self.p4_count_policy not in {
+            "legacy_one_mat_solve_per_logical",
+            "bounded_repair_v24",
+        }:
+            raise ValueError(f"unsupported p4 count policy: {self.p4_count_policy}")
         if self.rhs_identity_policy not in {
             "fixed_historical_contract",
             "case_bound_physical_rhs",
@@ -611,14 +618,56 @@ class RetainedOuterAdapter:
             pc_before = self.pc_counts()
             output = self._pc(inputs)
             pc_after = self.pc_counts()
-            pc_delta = {key: value - pc_before[key] for key, value in pc_after.items()}
+            pc_delta = {}
+            for key, value in pc_after.items():
+                before_value = pc_before.get(key)
+                if isinstance(value, (int, float, np.integer, np.floating)) and isinstance(
+                    before_value, (int, float, np.integer, np.floating)
+                ):
+                    pc_delta[key] = value - before_value
+                else:
+                    pc_delta[key] = value
             self._packet("x1_pc_count_check", {
                 "before": pc_before, "after": pc_after, "delta": pc_delta,
                 "input": inputs.array_r.copy(), "output": output.array_r.copy(),
                 "source_sha": self.runtime.source_sha,
+                "p4_count_policy": self.p4_count_policy,
             })
-            if pc_delta != {"bal_h": 1, "p4_mat_solve": 2, "h6": 1}:
-                raise ValueError(f"X1 bridge violated fixed action count: {pc_delta}")
+            if self.p4_count_policy == "legacy_one_mat_solve_per_logical":
+                if pc_delta != {"bal_h": 1, "p4_mat_solve": 2, "h6": 1}:
+                    raise ValueError(f"X1 bridge violated fixed action count: {pc_delta}")
+            else:
+                records = pc_after.get("p4_call_records")
+                if not isinstance(records, (list, tuple)) or len(records) != 2:
+                    raise ValueError(
+                        "V24 X1 bridge did not expose two successful logical p4 calls"
+                    )
+                solve_counts = []
+                for index, record in enumerate(records, 1):
+                    if not isinstance(record, dict):
+                        raise ValueError("V24 p4 count record is not a mapping")
+                    if record.get("p4_logical_apply_count") != 1:
+                        raise ValueError(
+                            f"V24 p4 logical count changed for coarse call {index}"
+                        )
+                    repair = record.get("repair")
+                    if not isinstance(repair, dict):
+                        raise ValueError("V24 p4 repair ledger is missing")
+                    extra = int(repair.get("extra_solve_count", -1))
+                    mat_solve = record.get("p4_mat_solve_count")
+                    if not 0 <= extra <= 2 or not isinstance(mat_solve, int):
+                        raise ValueError("V24 p4 solve count is outside the bounded contract")
+                    if mat_solve == 0 and extra != 0:
+                        raise ValueError("V24 zero-RHS p4 call used a repair solve")
+                    if mat_solve != 0 and mat_solve != 1 + extra:
+                        raise ValueError("V24 p4 MatSolve count does not match repair count")
+                    solve_counts.append(mat_solve)
+                if pc_delta.get("bal_h") != 1 or pc_delta.get("h6") != 1:
+                    raise ValueError(f"V24 bridge changed BAL_H/H6 count: {pc_delta}")
+                if pc_delta.get("p4_mat_solve") != sum(solve_counts):
+                    raise ValueError(
+                        f"V24 p4 aggregate MatSolve count is inconsistent: {pc_delta} vs {solve_counts}"
+                    )
             if output.getSize() != inputs.getSize() or not np.isfinite(output.array_r).all():
                 raise ValueError("X1 bridge changed size or returned nonfinite data")
             self.checks = {"status": "PASS", "fixed_vector_count": 3, "vectors": rows,
@@ -639,6 +688,7 @@ class RetainedOuterAdapter:
                            "setup_pc_input": inputs.array_r.copy(), "setup_pc_output": output.array_r.copy(),
                            "counts_before_pc": before, "counts_after_pc": dict(self.count),
                            "setup_pc_counts": pc_delta, "setup_pc_cumulative": pc_after,
+                           "p4_count_policy": self.p4_count_policy,
                            "setup_seconds": perf_counter() - started,
                            "single_pc_reduction_gate": False}
             self._packet("x1_setup_checks", self.checks)

@@ -3906,7 +3906,15 @@ def _q3_local_setup_prediction(
 
 
 @contextmanager
-def _v14_balanced_adapter(runtime, common, fint, *, capture_vectors=False):
+def _v14_balanced_adapter(
+    runtime,
+    common,
+    fint,
+    *,
+    capture_vectors=False,
+    repair_policy=None,
+    repair_vector_sink=None,
+):
     """Own H6 and its audit buffers; borrow the existing fixed interface stack."""
 
     from src.solvers.fullspace_physical_intermediate import apply_owned
@@ -4004,6 +4012,8 @@ def _v14_balanced_adapter(runtime, common, fint, *, capture_vectors=False):
                 runtime.directory / "inexact_balance", name, facts, runtime=runtime),
             checkpoint=lambda: runtime.sample("v14_balanced_checkpoint"),
             capture_vectors=capture_vectors,
+            repair_policy=repair_policy,
+            repair_vector_sink=repair_vector_sink,
         )
         runtime.sample("v14_balanced_adapter_ready")
         yield pc, positive
@@ -6300,6 +6310,37 @@ def _run_v20_release_after_final_residual(
     }
 
 
+def _p4_repair_enabled(policy) -> bool:
+    if policy is None:
+        return False
+    if isinstance(policy, Mapping):
+        return bool(policy.get("enabled", False))
+    return bool(getattr(policy, "enabled", False))
+
+
+def _pc_count_facts(pc, stack, positive, repair_policy):
+    facts = {
+        "bal_h": int(pc.apply_count),
+        "p4_mat_solve": int(stack["inverse"].solve_count),
+        "h6": int(positive["h6"].apply_count),
+    }
+    if _p4_repair_enabled(repair_policy):
+        facts.update(
+            {
+                # ``coarse_calls`` is intentionally reset for every PC
+                # application.  The cumulative counter is incremented only
+                # after the native A4 gate and is therefore the source of
+                # truth for a later X2/reporting query.
+                "p4_logical_apply_count": int(
+                    pc.successful_logical_apply_count
+                ),
+                "p4_recent_logical_apply_count": int(len(pc.coarse_calls)),
+                "p4_call_records": [dict(record) for record in pc.coarse_calls],
+            }
+        )
+    return facts
+
+
 def _v14_q4_q5_fullspace(
     runtime: _V14Runtime,
     common: dict[str, Any],
@@ -6313,6 +6354,8 @@ def _v14_q4_q5_fullspace(
     official_jit_options: Mapping[str, Any] | None = None,
     reference_mode: str = "required",
     notch_override: bool | None = None,
+    p4_repair_policy=None,
+    p4_repair_vector_sink=None,
 ) -> dict[str, Any]:
     """Run one fresh p6 outer solve with the live interface BAL_H stack.
 
@@ -6928,7 +6971,7 @@ def _v14_q4_q5_fullspace(
             if pc is None:
                 return {}
             balanced = pc.balanced
-            return {
+            facts = {
                 "apply_count": int(pc.apply_count),
                 "native_A4_action_count": int(pc.native_A4_count),
                 "total_counts": dict(balanced.total_counts),
@@ -6950,22 +6993,57 @@ def _v14_q4_q5_fullspace(
                 else {},
                 "boundary_records": list(pc_boundary_records),
             }
+            fint = stack.get("fint")
+            if fint is not None and hasattr(fint, "apply_count"):
+                facts.update(
+                    {
+                        "p4_f4_apply_count": int(fint.apply_count),
+                        "p4_f4_apply_count_semantics": (
+                            "physical_F4_calls_including_repairs"
+                        ),
+                        "p4_logical_apply_count": int(
+                            getattr(fint, "logical_apply_count", 0)
+                        ),
+                        "p4_logical_apply_attempt_count": int(
+                            getattr(fint, "logical_apply_attempt_count", 0)
+                        ),
+                    }
+                )
+            return facts
 
         with _v14_balanced_adapter(
-            runtime, common, stack["fint"], capture_vectors=False
+            runtime,
+            common,
+            stack["fint"],
+            capture_vectors=False,
+            repair_policy=p4_repair_policy,
+            repair_vector_sink=p4_repair_vector_sink,
         ) as (pc, positive):
             if outer_adapter_factory is not None:
                 # X1 checks and its one PC call share the actual X2 objects.
                 # This setup is outside the solve clock but inside workflow
                 # time; the adapter stays alive through final field output.
+                outer_factory_kwargs = {
+                    "p4_identity_sha256": operator_sha256,
+                    "pc_counts": lambda: _pc_count_facts(
+                        pc,
+                        stack,
+                        positive,
+                        p4_repair_policy,
+                    ),
+                }
+                # The new count contract is opt-in.  Legacy factories in
+                # older profiles are intentionally not required to accept the
+                # V24-only keyword.
+                if _p4_repair_enabled(p4_repair_policy):
+                    outer_factory_kwargs["p4_count_policy"] = "bounded_repair_v24"
                 outer_adapter = outer_adapter_factory(
-                    runtime, common, resolved_payload, rhs, apply_pc,
-                    p4_identity_sha256=operator_sha256,
-                    pc_counts=lambda: {
-                        "bal_h": int(pc.apply_count),
-                        "p4_mat_solve": int(stack["inverse"].solve_count),
-                        "h6": int(positive["h6"].apply_count),
-                    },
+                    runtime,
+                    common,
+                    resolved_payload,
+                    rhs,
+                    apply_pc,
+                    **outer_factory_kwargs,
                 )
                 outer_adapter.setup_checks()
                 identity = {**identity, "retained_p6": outer_adapter.identity,
