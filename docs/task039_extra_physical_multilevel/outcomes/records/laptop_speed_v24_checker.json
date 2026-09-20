@@ -1,0 +1,36 @@
+{
+  "schema": "task039extra.v24.checker-record.v1",
+  "checker_type": "raw_field_recompute_record",
+  "execution_status": "DERIVED_FROM_FORMAL_RAW_SUMMARY",
+  "source_sha": "b480178314efdf434c5f7405f2ab356ff9137c17",
+  "input_sha256": "2ba2508861e02c2f1a9dbda433702c977eb0371cdb986350245e3caf15eb6928",
+  "formal_summary": "results/euv_grazing1_phi0/task39extra_v24_laptop_speed_original_h7p5__full3d_iterative__mpi1__Mna/20260920T111003.508765Z/physical_dual_condensed_laptop_speed_v24_summary.json",
+  "raw_fields_recomputed": {
+    "official_result": true,
+    "stage_pass": true,
+    "solver_status": "TRUE_RESIDUAL_PASS",
+    "explicit_residual_below_1e-6": true,
+    "post_release_residual_gate": true,
+    "field_finite": true,
+    "power_finite": true,
+    "channel_passivity": true,
+    "energy_closure": true,
+    "modal_power_closure": true,
+    "identity": true,
+    "resource_available": true,
+    "watchdog_completed": true,
+    "zero_swap": true
+  },
+  "authority_result": "PASS_WITH_AUTHORITY_LIMITATION",
+  "authority_limitation": "No matched h7.5 independent reference was available; the sampled reference archive was not used for operator or initial guess and no continuum-convergence claim is made.",
+  "closure_values": {
+    "A_minus_A_volume": 8.177098997919074e-10,
+    "R_plus_T_minus_modal": 8.673617379884035e-18,
+    "R_plus_T_plus_A_volume_minus_one": 8.177098997919074e-10
+  },
+  "preservation": {
+    "old_v23_58_59_records_unchanged": true,
+    "old_authority_limited_and_negative_records_unchanged": true,
+    "checker_does_not_replace_raw_artifacts": true
+  }
+}

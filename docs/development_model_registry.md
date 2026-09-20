@@ -1,3 +1,11 @@
+# Task39extra 当前模型登记：Review V22 / Response V25 V24 original h7.5 formal
+
+| Model ID | profile / source / input | 模型与方法 | 正式结果 | 资源与时间 | 资格边界 |
+|---|---|---|---|---|---|
+| `task39extra_v24_laptop_speed_original_h7p5` | `physical_p6_trace_p4_condensed_laptop_speed_v24`；source=`b480178314efdf434c5f7405f2ab356ff9137c17`；input SHA=`2ba250…eb6928` | original p6/h7.5、990 cells、80 modes、retained FGMRES32、p4 condensed exact factor、MPI1 single-core | **DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED**；126 steps；explicit/post-release=`9.283164961979326e-7`；R/T/A=`0.36509755370062585/0.013016803347759889/0.6218856429516143` | RSS/PSS=`7336173568/7303877632 B`；swap0；workflow=`4579.015917060999 s`；watchdog COMPLETED | no matched h7.5 reference；no continuum claim；2/4 threads not run/adopted；old V23 58/59 preserved |
+
+V24 的 A4 return-quality repair、owner/full-PC component、thread choice 和 raw-field checker 分别见 `outcomes/records/laptop_speed_v24_*.json`。这一登记是当前 formal authority-limited discrete result，不升级旧历史结果，也不改变 ordinary default 或 master merge 状态。
+
 # Task39extra 当前模型登记：Review V21 / Response V22 Z5 四模型聚合
 
 | Model ID | profile / source / input | 模型与方法 | 正式结果 | 资源与时间 | 资格边界 |

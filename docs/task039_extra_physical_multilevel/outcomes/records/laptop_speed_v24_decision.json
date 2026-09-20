@@ -1,0 +1,55 @@
+{
+  "schema": "task039extra.v24.decision-record.v1",
+  "source_sha": "b480178314efdf434c5f7405f2ab356ff9137c17",
+  "input_sha256": "2ba2508861e02c2f1a9dbda433702c977eb0371cdb986350245e3caf15eb6928",
+  "formal_run_root": "results/euv_grazing1_phi0/task39extra_v24_laptop_speed_original_h7p5__full3d_iterative__mpi1__Mna/20260920T111003.508765Z",
+  "decision": "QUALIFIED_DISCRETE_AUTHORITY_LIMITED_SINGLE_CORE",
+  "dimensions": {
+    "A4_RETURN_QUALITY": {
+      "status": "PASS_BOUNDED_REPAIR",
+      "evidence": "laptop_speed_v24_a4_repair.json"
+    },
+    "DISCRETE_SOLVE": {
+      "status": "PASS",
+      "evidence": "laptop_speed_v24_compact.json#/solver"
+    },
+    "PHYSICS_CONSISTENCY": {
+      "status": "PASS",
+      "evidence": "laptop_speed_v24_checker.json#/raw_fields_recomputed"
+    },
+    "AUTHORITY_LIMITED": {
+      "status": "PASS_WITH_LIMITATION",
+      "reason": "No matched h7.5 independent reference; no continuum claim"
+    },
+    "SPEEDUP": {
+      "status": "MEASURED",
+      "baseline_seconds": 5581.178597819002,
+      "formal_seconds": 4579.015917060999,
+      "speedup_ratio": 1.218859837771,
+      "saving_seconds": 1002.162680758003,
+      "saving_minutes": 16.702711345967,
+      "comparison_note": "End-to-end observed workflow comparison; not a kernel-only attribution"
+    },
+    "MEMORY_NONINCREASE": {
+      "status": "OBSERVED_BELOW_REFERENCE_NOT_GENERAL_PROOF",
+      "reference_rss_peak_bytes": 7387607040,
+      "formal_rss_peak_bytes": 7336173568,
+      "delta_bytes": -51433472,
+      "formal_pss_peak_bytes": 7303877632,
+      "formal_swap_peak_bytes": 0,
+      "comparison_note": "Single-core formal route versus prior reference; does not qualify multi-core memory neutrality"
+    },
+    "MULTICORE_ADOPTION": {
+      "status": "NOT_ADOPTED",
+      "reason": "No qualified 2/4-thread memory-neutral evidence was run",
+      "mpi_size": 1,
+      "thread_count": 1
+    }
+  },
+  "old_records_preserved": [
+    "docs/task039_extra_physical_multilevel/response_v24.md",
+    "docs/task039_extra_physical_multilevel/outcomes/summary_v24.md",
+    "V23 58/59 evidence and historical negative classifications"
+  ],
+  "master_merge_approved": false
+}

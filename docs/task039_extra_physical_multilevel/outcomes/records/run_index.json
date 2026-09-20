@@ -1,6 +1,6 @@
 {
   "schema": "task39extra.run-index.v1",
-  "scope": "Review V21 / Response V22 Z5 aggregate: O10 read-only baseline, A nonseparable h10 matched-reference pass, B original h7.5 resource-controlled stop before numeric factor, C not run; all older evidence and unknown policy history retained",
+  "scope": "Review V22 / Response V25 aggregate: V24 original h7.5 formal discrete solve and consistency pass with authority limitation; all older evidence and unknown policy history retained",
   "units": {
     "time": "s",
     "memory": "B"
@@ -2430,6 +2430,61 @@
         "B_checker",
         "C_Z4_notch_h7p5"
       ]
+    },
+    {
+      "id": "V24_Z3_original_h7p5_laptop_speed_formal",
+      "source_sha": "b480178314efdf434c5f7405f2ab356ff9137c17",
+      "stage": "Z3_ORIGINAL_H7P5",
+      "raw_root": "results/euv_grazing1_phi0/task39extra_v24_laptop_speed_original_h7p5__full3d_iterative__mpi1__Mna/20260920T111003.508765Z",
+      "status": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+      "official_result": true,
+      "profile": "physical_p6_trace_p4_condensed_laptop_speed_v24",
+      "input": "input/task39extra/v24_laptop_speed_original_h7p5.dat",
+      "input_sha256": "2ba2508861e02c2f1a9dbda433702c977eb0371cdb986350245e3caf15eb6928",
+      "physical_model_sha256": "d8c5abb837adda92ea86e257cff9e2ff01ccf466879b08a2cde9a071e1d1d036",
+      "resolved_config_sha256": "3e4a072525a5f853a12ee78b2f2b120f8478ba008c1fa4a623c5dd2ce97c4587",
+      "parent_classification": "COMPLETED",
+      "worker_classification": "Z3_ORIGINAL_H7P5_AUTHORITY_LIMITED_PASS",
+      "worker_exit_status": 0,
+      "solver": {
+        "iterations": 126,
+        "retained_global_size": 199340,
+        "explicit_relative_residual": 9.283164961979326e-7,
+        "post_release_explicit_relative_residual": 9.283164961979326e-7,
+        "full_workflow_monotonic_seconds": 4579.015917060999
+      },
+      "resources": {
+        "process_tree_rss_peak_bytes": 7336173568,
+        "process_tree_pss_peak_bytes": 7303877632,
+        "swap_peak_bytes": 0,
+        "sample_count": 1141,
+        "descendants_cleared": true
+      },
+      "terminal": {
+        "systemd_ActiveState": "inactive",
+        "systemd_SubState": "dead",
+        "systemd_Result": "success",
+        "systemd_ExecMainStatus": 0,
+        "watchdog_classification": "COMPLETED"
+      },
+      "evidence": {
+        "summary": "results/euv_grazing1_phi0/task39extra_v24_laptop_speed_original_h7p5__full3d_iterative__mpi1__Mna/20260920T111003.508765Z/physical_dual_condensed_laptop_speed_v24_summary.json",
+        "official_output": "results/euv_grazing1_phi0/task39extra_v24_laptop_speed_original_h7p5__full3d_iterative__mpi1__Mna/20260920T111003.508765Z/official_output/z3_output.json",
+        "watchdog": "results/euv_grazing1_phi0/task39extra_v24_laptop_speed_original_h7p5__full3d_iterative__mpi1__Mna/20260920T111003.508765Z/watchdog/summary.json",
+        "compact": "docs/task039_extra_physical_multilevel/outcomes/records/laptop_speed_v24_compact.json",
+        "checker": "docs/task039_extra_physical_multilevel/outcomes/records/laptop_speed_v24_checker.json",
+        "decision": "docs/task039_extra_physical_multilevel/outcomes/records/laptop_speed_v24_decision.json",
+        "outcome": "docs/task039_extra_physical_multilevel/outcomes/laptop_speed_v24.md",
+        "response": "docs/task039_extra_physical_multilevel/response_v25.md",
+        "selective_merge": "docs/task039_extra_physical_multilevel/outcomes/selective_merge_manifest_v24.md"
+      },
+      "not_run": [
+        "matched_h7p5_reference",
+        "continuum_convergence",
+        "qualified_2_thread_formal",
+        "qualified_4_thread_formal",
+        "C_Z4_notch_h7p5"
+      ]
     }
   ],
   "limitations": [
@@ -4514,7 +4569,7 @@
     "status": "COMPLETED_ORIGINAL_THEN_SUPERSEDED_BY_USER_STOP",
     "previous_bug_replay_count": 1
   },
-  "current_scope": "Review V21 / Response V22 Z5: A nonseparable h10 PASS, B h7.5 capacity-policy stop before numeric factor, C not_run_by_review_condition; O10 reused read-only; no new PC or PDE replay.",
+  "current_scope": "Review V22 / Response V25: V24 original h7.5 formal B completed with discrete/physical consistency pass, no matched reference, single-core only; old V23 negative and authority-limited records retained.",
   "review_v21_dual_condensed_geometry_h7p5": {
     "base_sha": "f9e16c21b936673b5a2dadcf52d2c344e61aabe8",
     "current_pre_z5_head": "f8d0fbf3da48fd3cbe5cc3a226dbff3feb1d9b48",

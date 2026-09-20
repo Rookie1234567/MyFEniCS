@@ -1,3 +1,9 @@
+# Task39extra 当前进展：Review V22 / Response V25 V24 formal B 已完成
+
+V24 在唯一一次 original p6/h7.5 formal B 中得到 `DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED`：126 iterations，explicit/post-release residual=`9.283164961979326e-7`，官方 R/T/A=`0.36509755370062585/0.013016803347759889/0.6218856429516143`，full workflow=`4579.015917060999 s`，RSS/PSS=`7336173568/7303877632 B`，swap=0。P1 bounded repair、V24 compact/checker/decision、thread selection 和 selective merge boundary 已同步；没有匹配 h7.5 reference，不作 continuum claim；2/4-thread 未资格化；master merge 未批准。
+
+入口：[Response V25](task039_extra_physical_multilevel/response_v25.md)、[V24 outcome](task039_extra_physical_multilevel/outcomes/laptop_speed_v24.md)、[compact](task039_extra_physical_multilevel/outcomes/records/laptop_speed_v24_compact.json)、[test summary](task039_extra_physical_multilevel/outcomes/test_summary.md)。
+
 # Task39extra 当前进展：Review V21 / Response V22 Z5 已完成证据收口
 
 Z5 汇总 O10/A/B/C 四个模型状态：O10 是只读 V20 original baseline；A 的非可分 h10 正式场通过；B 的原始 h7.5 场在全局 p4 trace 因子 symbolic-after/numeric-before 容量 Gate 前受控停止；C 因 B 的适用资源前置条件失败未启动。没有新增 PDE、没有补造 checker 通过，也没有改变 ordinary default。

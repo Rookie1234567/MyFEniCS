@@ -1,3 +1,22 @@
+# Review V22 / Response V25：V24 formal B 测试与边界
+
+| 验证 | 实际结果 | 证据/边界 |
+|---|---|---|
+| V24 formal service | **exit 0 / watchdog COMPLETED** | MPI1、single-core；systemd inactive/dead；descendants cleared；swap peak 0 |
+| V24 solver gate | **PASS** | 126 iterations；explicit final/post-release residual=`9.283164961979326e-7`；门槛 `1e-6` |
+| V24 physical checks | **PASS** | field/channel/power/energy/modal/identity/post-release checks all true；官方功率来自 DtN port modal amplitudes |
+| V24 authority | **LIMITED** | 没有匹配 h7.5 reference；不作 continuum-convergence claim |
+| V24 formal resources | **AVAILABLE** | RSS/PSS=`7336173568/7303877632 B`；zero swap；1141 worker resource samples |
+| V24 relevant pre-formal focused suite | **104 passed, 1 skipped** | source route/owner/profile/solver contracts；qualified activation；skip 为未用 MPI fixture |
+| V24 timing/release suite | **50 passed** | timing marker、旧 release 生命周期与 V24 接线；不含新 PDE |
+| compile / diff check | **PASS / PASS** | Python compileall 与 `git diff --check`；Ruff 未安装，未声称 Ruff/CI |
+| docs-only 收口合同 | **21 passed in 0.14s** | `test_26_documentation_contract.py`、`test_183_development_model_registry_markdown.py`、`test_development_model_registry_contract.py` |
+| PETSc/MPI post-doc rerun probe | **not_repeated_environment_blocker** | 当前受限 shell 的直接 MPI import 命中已知 PMIx socket restriction；没有启动 PDE，也不改判同 source 的既有 qualified code tests 或正式 service |
+| 2/4-thread qualification | **not_run** | 没有 memory-neutral 正证据，正式保持 single-core |
+| full repository pytest / CI | **not_run / not_run** | 只陈述本地 targeted tests，不声称 CI |
+
+测试集合不相加冒充单一覆盖率；正式 PDE 证据与工程测试分开记录。旧 V23 `58/59`、旧失败和 authority limitation 保持原样。
+
 # Review V21 / Response V22：Z5 证据、测试与 formal 边界
 
 Z5 汇总阶段只读取已保存原始记录，没有额外 PDE；本批 Z2/Z3 已分别启动 A、B，C 未运行。测试集合保持分离：Z1 preformal engineering qualification=`99 passed`；A 更正 repair path=`49 passed`；A checker/recheck=`65/65` checks；不能把三者相加。B checker=`not_run`，因为 B 没有终态 residual 或 physical fields。

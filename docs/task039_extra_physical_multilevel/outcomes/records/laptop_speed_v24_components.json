@@ -1,0 +1,43 @@
+{
+  "schema": "task039extra.v24.component-record.v1",
+  "status": "QUALIFIED_ROUTE_WITHDRAWALS_EXPLICIT",
+  "source_sha": "b480178314efdf434c5f7405f2ab356ff9137c17",
+  "formal_route": {
+    "owner_optimized_apply": true,
+    "fixed_serial_owner_route": true,
+    "pc_fine_action_factory": null,
+    "packed_power10": false,
+    "native_a6_authority": true,
+    "h6_setup": "old_native_ffcx_power10_setup",
+    "mpi_size": 1
+  },
+  "owner_component": {
+    "status": "QUALIFIED_OWNER_COMPONENT",
+    "evidence": "benchmarks/artifacts/task39extra/b_capacity_v22/root_engineering/components/v24_owner_990_component_corrected.json",
+    "cells": 990,
+    "primal_relative_difference": 0.0,
+    "adjoint_relative_difference": 2.7649555150996624e-17,
+    "work_identity_relative_error": 9.079545115244605e-14,
+    "shared_row_defect": 9.713407672867936e-13,
+    "coarse_slave_storage_max": 0.0,
+    "candidate_packet_bytes": 20956320,
+    "batch_scratch_bytes": 225792,
+    "memory_neutrality": "UNKNOWN_ALLOCATOR_HIGH_WATER"
+  },
+  "full_pc_component": {
+    "status": "QUALIFIED_FULL_PC_COMPONENT",
+    "evidence": "benchmarks/artifacts/task39extra/b_capacity_v22/root_engineering/components/v24_full_pc_990_component_real_v2/worker/v24_full_pc_990_component.json",
+    "output_relative_difference": 1.0408644797125614e-14,
+    "h6_power_history_relative_difference": 1.1866957505452545e-15,
+    "spectral_window_relative_difference": 3.0316161046511627e-16,
+    "watchdog_rss_peak_bytes": 6651629568,
+    "watchdog_swap_peak_bytes": 0,
+    "formal_pde_replacement": false
+  },
+  "withdrawn_or_not_adopted": {
+    "packed_a6": "RESEARCH_ONLY_NOT_FORMAL_AUTHORITY",
+    "packed_power10": "NOT_FORMAL_AUTHORITY",
+    "conditional_2_or_4_threads": "NOT_RUN_NO_MEMORY_NEUTRALITY_PASS"
+  },
+  "boundary": "Component equivalence supports the selected owner route and full-PC compatibility. It does not turn component evidence into a continuum-convergence claim or a multi-core qualification."
+}

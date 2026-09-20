@@ -1,3 +1,19 @@
+## V24-1 正式 B：laptop-speed discrete pass，authority limited
+
+本节记录 Review V22 唯一一次正式 B；下方原有 V24/V23 历史段落保持原样，不把旧 `58/59` 改写成通过。
+
+| 项目 | V24 正式事实 |
+|---|---|
+| 模型/身份 | original p6/h7.5，`[9,5,22]`、990 cells、80 modes、MPI1；source=`b480178314efdf434c5f7405f2ab356ff9137c17` |
+| 结果 | `DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED`；126 iterations；explicit/post-release residual=`9.283164961979326e-7` |
+| 官方物理量 | R/T/A/`A_volume`=`0.36509755370062585/0.013016803347759889/0.6218856429516143/0.6218856421339044`；`R00_total=0.3650608628870489` |
+| 资源 | RSS/PSS=`7336173568/7303877632 B`；swap=`0`；watchdog `COMPLETED`；descendants cleared |
+| 时间 | full workflow=`4579.015917060999 s`，相对旧 `5581.178597819002 s` 为 `1.218859837771x`；端到端比较，不作 kernel-only attribution |
+| 线程 | single-core selected；2/4-thread memory-neutral qualification `NOT_RUN`，不写成采用 |
+| authority | 无匹配 h7.5 independent reference；不宣称 continuum convergence |
+
+P1 的 bounded same-factor repair 已单独记录；P5 交付入口为 [response V25](../response_v25.md)、[V24 outcome](laptop_speed_v24.md)、[compact](records/laptop_speed_v24_compact.json)、[decision](records/laptop_speed_v24_decision.json)、[selective manifest V24](selective_merge_manifest_v24.md)。正式 raw output、residual、watchdog 和 resource logs 仍在 ignored run root。
+
 ## V24 增量：V23 original-B fresh 与登记 bug replay 完成，但保留在线 p4 A4 数值负结果
 
 | 项目 | 本批事实 |
