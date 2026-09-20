@@ -1,0 +1,294 @@
+{
+  "schema": "task039extra.v23.dual-condensed-physical-memory.compact.v1",
+  "status": "COMPLETED_WITH_NUMERICAL_GATE_NEGATIVE",
+  "review_state": "AWAITING_CHATGPT_REVIEW",
+  "formal_source_sha": "d3596ac31bdabc2bb9233963adea3e91ddc2f220",
+  "base_sha": "8700e65c68b57455586df41f37484d37397dda92",
+  "metadata_commit_sha": null,
+  "metadata_commit_identity": "identified_by_containing_git_commit",
+  "branch": "task39extra",
+  "scope": {
+    "profile": "physical_p6_trace_p4_condensed_physical_memory_v23",
+    "stage": "Z3_ORIGINAL_H7P5",
+    "input": "input/task39extra/v23_b_physical_memory_original_h7p5.dat",
+    "run_root": "results/euv_grazing1_phi0/task39extra_v23_b_physical_memory_original_h7p5__full3d_iterative__mpi1__Mna/20260920T004707.275665Z",
+    "service": "myfenics-case-20260920T004707-182739.service",
+    "mpi": 1,
+    "time_policy": "observe_only",
+    "same_model_scope": "one V23 fresh run plus one registered hash-bound implementation-bug replay on 990-cell original B; after computation only evidence was整理; no added PDE, no C/new notch/new PC"
+  },
+  "first_screen": {
+    "O10": {
+      "status": "HISTORICAL_PASS",
+      "iterations": 112,
+      "a6": 9.730817853580463e-7,
+      "monotonic_seconds": 1479.1772295139963,
+      "rss_peak_bytes": 2831749120,
+      "fresh_pde": false
+    },
+    "A": {
+      "status": "MATCHED_REFERENCE_PASS",
+      "stage": "Z2_NOTCH_H10",
+      "iterations": 146,
+      "a6": 9.756517234802322e-7,
+      "monotonic_seconds": 1648.8478095369937,
+      "rss_peak_bytes": 2297982976,
+      "historical_read_only": true
+    },
+    "B": {
+      "status": "SOLVE_COMPLETED_CHECKER_NEGATIVE",
+      "iterations": 126,
+      "a6_before_release": 9.2831649554582e-7,
+      "a6_after_release": 9.2831649554582e-7,
+      "worker": "Z3_ORIGINAL_H7P5_AUTHORITY_LIMITED_PASS",
+      "parent": "worker_exit0 / watchdog COMPLETED",
+      "checker": "V23_FULL_PHYSICAL_CHECK_FAIL; 58/59",
+      "authority": "AUTHORITY_LIMITED"
+    },
+    "C": {
+      "status": "NOT_RUN_BY_SCOPE",
+      "reason": "no automatic C/notch/new-PC continuation"
+    }
+  },
+  "numerical": {
+    "ksp": {
+      "create_count": 1,
+      "solve_count": 1,
+      "destroy_count": 1,
+      "restart": 32,
+      "max_it": 2048,
+      "reported_seconds": 4737.310983555995,
+      "iterations": 126,
+      "zero_initial_guess": true
+    },
+    "calls": {
+      "bal_h": 127,
+      "h6": 127,
+      "p4_native_a4": 254
+    },
+    "native_rhs": {
+      "native_rhs_norm": 1.4293543003082507,
+      "internal_rhs_norm": null,
+      "internal_rhs_norm_status": "not_separately_recorded",
+      "rhs_is_mpc_dual": true,
+      "sha256": "b85dde2599428906be4ffd2f2200438f3011e57358d20a541679b3ab50687824"
+    },
+    "native_infog": {
+      "INFOG1": 0,
+      "INFOG9": 221594144,
+      "INFOG19_allocated_mb": 4687,
+      "INFOG22_used_mb": 4326,
+      "INFOG29": 221594144,
+      "ICNTL23_request_mb": 4687,
+      "ICNTL23_readback_mb": 4687
+    },
+    "internal_residual_relative": 9.740172739041228e-18,
+    "port_closure_relative": 6.625683353415977e-16,
+    "online_native_a4": {
+      "formula": "rho=eps_norm/max(rhs_norm,tiny); finite, nonnegative and rho<=1e-10",
+      "total": 254,
+      "passed": 253,
+      "failed": 1,
+      "failed_call": {
+        "pc_sequence": 2,
+        "call": 1,
+        "rhs_norm": 0.800839353350057,
+        "absolute_residual": 2.3120761610371854e-10,
+        "relative": 2.8870661155266027e-10,
+        "limit": 1e-10
+      },
+      "remaining_relative_min": 9.620111350780948e-14,
+      "remaining_relative_max": 7.506926815015694e-11,
+      "threshold_changed": false
+    }
+  },
+  "physics": {
+    "official_port_metrics": {
+      "R": 0.3650975537006217,
+      "T": 0.013016803347759965,
+      "A": 0.6218856429516183,
+      "A_volume": 0.6218856421339087
+    },
+    "diffraction_metrics": {
+      "R": 0.3650930787441348,
+      "T": 2.805791694699459e-05,
+      "A": 0.6348788633389182
+    },
+    "R00": {
+      "s": 0.3650608628870448,
+      "p": 3.427344920479581e-25,
+      "total": 0.3650608628870448
+    },
+    "channels": {
+      "expected": 80,
+      "checked": 80,
+      "finite_amplitudes": true,
+      "finite_powers": true,
+      "outgoing_fields_match": true,
+      "passivity": true
+    },
+    "energy": {
+      "A_port_balance_minus_A_volume": 8.177095667250001e-10,
+      "R_plus_T_plus_A_volume_minus_one": -8.177096777473025e-10,
+      "R_plus_T_plus_A_volume_minus_one_abs": 8.177096777473025e-10
+    },
+    "field": {
+      "electric_finite": true,
+      "magnetic_finite": true,
+      "auxiliary_finite": true,
+      "power_finite": true,
+      "curl_postprocess_success": true,
+      "max_abs_E": 0.8303744002152752,
+      "max_abs_H": 0.0022039468031068983
+    }
+  },
+  "identity": {
+    "space": {
+      "full_rows": 667152,
+      "active_rows": 199260,
+      "interior_rows": 445500,
+      "appended_ports": 80,
+      "slave_rows": 22392,
+      "slave_master_entry_count": 22392,
+      "p6_native_map_sha256": "54647a99c97786af88364d6e3f8c6c1d3c7893bbf79afc2888a63cf47be6c06e"
+    },
+    "matrix": {
+      "shape": [84680, 84680],
+      "dtype": "complex128",
+      "nnz": 32320342,
+      "before_factor": {
+        "csr_sha256": "857bc8bb5f04b28a55283fb960a2b695e1078983e55ff151687780de5dab8ee0",
+        "mapping_sha256": "bed2794532a40630632e06637cfda5a7bb52a06a7209824d5344085b6fa2cb1d",
+        "values_sha256": "cf081185f6950ebb2c704e0426e02bb0687ef7ae47faf34115d729c8eb832b34"
+      },
+      "after_factor_lifecycle": {
+        "csr_sha256": "857bc8bb5f04b28a55283fb960a2b695e1078983e55ff151687780de5dab8ee0",
+        "mapping_sha256": "bed2794532a40630632e06637cfda5a7bb52a06a7209824d5344085b6fa2cb1d",
+        "values_sha256": "cf081185f6950ebb2c704e0426e02bb0687ef7ae47faf34115d729c8eb832b34"
+      },
+      "before_release": {
+        "csr_sha256": "857bc8bb5f04b28a55283fb960a2b695e1078983e55ff151687780de5dab8ee0",
+        "mapping_sha256": "bed2794532a40630632e06637cfda5a7bb52a06a7209824d5344085b6fa2cb1d",
+        "values_sha256": "cf081185f6950ebb2c704e0426e02bb0687ef7ae47faf34115d729c8eb832b34"
+      },
+      "lifecycle_hashes_equal": true,
+      "native_numeric_after_status": "pending_post_factor_hash"
+    },
+    "p6_cache": {
+      "unique_numpy_bytes": 450893192,
+      "array_content_sha256": "75e587d4a3775dfd2624392672a1e3b8b5eab39b6d949ea789e500aa4e97b8f9",
+      "payload_is_not_rss": true
+    }
+  },
+  "resource": {
+    "policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+    "watchdog_write_reserve_bytes": 134217728,
+    "rss_peak_bytes": 7387607040,
+    "pss_peak_bytes": 7355427840,
+    "swap_peak_bytes": 0,
+    "descendants_cleared": true,
+    "native_allocated_mb": 4687,
+    "native_allocated_upper_bytes": 4688000000,
+    "native_used_mb": 4326,
+    "native_used_upper_bytes": 4327000000,
+    "p6_cache_bytes": 450893192,
+    "phase_aggregation": {
+      "basis": "watchdog resources.jsonl worker_phase; phase_started_clock.monotonic; cleanup uses last parent_clock.monotonic",
+      "compile": {
+        "compiler_descendant_samples": 0,
+        "peak_rss_bytes": null,
+        "duration_seconds": null,
+        "scope": "all 11 JIT modules hit; no compiler descendant sample"
+      },
+      "preflight": {"samples": 17, "duration_seconds": 4.312584284998593, "rss_peak_bytes": 427556864, "pss_peak_bytes": 394137600},
+      "setup": {"samples": 165, "duration_seconds": 42.23196291399654, "rss_peak_bytes": 977985536, "pss_peak_bytes": 945806336},
+      "assembly": {"samples": 110, "duration_seconds": 28.53227231799974, "rss_peak_bytes": 1802055680, "pss_peak_bytes": 1769876480},
+      "factor": {
+        "samples": 2489,
+        "duration_seconds": 674.3087902290063,
+        "rss_peak_bytes": 6969712640,
+        "pss_peak_bytes": 6936216576,
+        "scope": "includes numeric and H6/p6 setup until solve phase; not pure MUMPS numeric"
+      },
+      "iteration_solve": {
+        "samples": 17490,
+        "duration_seconds": 4810.633934284,
+        "rss_peak_bytes": 7387607040,
+        "pss_peak_bytes": 7355427840,
+        "watchdog_start_monotonic": 36022.142617438,
+        "scope": "includes setup PC",
+        "formal_solve_start_monotonic": 36064.707110545,
+        "ksp_reported_seconds": 4737.310983555995
+      },
+      "postprocess_evaluation": {"samples": 60, "duration_seconds": 16.41873642199789, "rss_peak_bytes": 7377305600, "pss_peak_bytes": 7343802368},
+      "cleanup": {"samples": 15, "duration_seconds": 4.046380408999539, "rss_peak_bytes": 7377305600, "pss_peak_bytes": 7343802368, "duration_basis": "last watchdog sample parent_clock.monotonic", "last_parent_clock_monotonic": 40853.102622218}
+    }
+  },
+  "jit_and_comparison": {
+    "v23_jit": {"modules": 11, "cache_hits": 11, "cache_misses": 0, "event_elapsed_seconds": 0.007869868008128833},
+    "old_v22_cold_jit": {"modules": 11, "cache_hits": 0, "cache_misses": 11, "event_elapsed_seconds": 101.78435976599758},
+    "jit_time_nested_in_workflow": true,
+    "cpu_attribution": "not inferred",
+    "O10_vs_B": {
+      "O10_iterations": 112,
+      "B_iterations": 126,
+      "iterations_ratio_B_over_O10": 1.125,
+      "O10_ksp_seconds": 1151.635034,
+      "B_ksp_seconds": 4737.310983555995,
+      "O10_seconds_per_step_approx": 10.28246,
+      "B_seconds_per_step_approx": 37.597706,
+      "O10_rss_peak_bytes": 2831749120,
+      "B_rss_peak_bytes": 7387607040,
+      "rss_delta_bytes": 4555857920,
+      "rss_ratio_B_over_O10": 2.60885,
+      "O10_scope": "historical run includes its p6 target cache miss and compile peak; not rerun and not attributed to CPU",
+      "B_scope": "V23 qualified cache was 11 hit/0 miss"
+    }
+  },
+  "cost": {
+    "v21_ledger_seconds": 1884.4679552510706,
+    "v22_ledger_seconds": 538.0163161130178,
+    "v21_plus_v22_known_seconds": 2422.4842713640884,
+    "v23_first_failure_measured_seconds": 379.43654483499995,
+    "v23_first_failure_policy_ledger_seconds": 414.7711851870877,
+    "v23_replay_measured_monotonic_seconds": 5581.178597819002,
+    "v23_replay_policy_workflow_seconds": 6079.400587860001,
+    "v23_replay_settled_ledger_seconds": 6079.411901537711,
+    "engineering_time_seconds": null,
+    "engineering_time_status": "unknown"
+  },
+  "validation": {
+    "geometry_fix_tests": "16 passed",
+    "resource_runtime_launcher_callback_tests": "33 passed",
+    "saved_data_checker": "58/59; one original online_native_A4 numerical failure",
+    "new_tests_after_replay": false,
+    "old_qualification_rerun": false,
+    "new_pde_after_replay": false,
+    "checker_modified": false,
+    "ruff_or_ci": "not run / not claimed"
+  },
+  "evidence_index": {
+    "first_failure_summary": {"path": "results/euv_grazing1_phi0/task39extra_v23_b_physical_memory_original_h7p5__full3d_iterative__mpi1__Mna/20260920T002041.565863Z/physical_dual_condensed_physical_memory_v23_summary.json", "sha256": "232100c1a28f8e931ffc74cde809cf4c92257f1959616e78ac195abad346f3e4"},
+    "bug_replay_registration": {"path": "results/euv_grazing1_phi0/task39extra_v23_b_physical_memory_original_h7p5__full3d_iterative__mpi1__Mna/20260920T002041.565863Z/implementation_bug_replay.json", "sha256": "68dd84834c05ab600af98bc0d597845633c9cf5e12584df8da1ca32f3d6d4755"},
+    "v23_settled_ledger": {"path": "benchmarks/artifacts/task39extra/dual_condensed_physical_memory_v23/review_v23_original_b_physical_memory_trial/shared_workflow_ledger.json", "sha256": "06edc2d575577b857bb7ceb9a3d2eba13efd9e64058014c7e43549aae9634c2c"},
+    "v22_ledger": {"path": "benchmarks/artifacts/task39extra/dual_condensed_capacity_v22/review_v22_original_b_capacity_trial/shared_workflow_ledger.json", "sha256": "0363e2230192dd3815653643852192e12cbeb666056d0b786b38f6edeb8f45b9"},
+    "v21_ledger": {"path": "benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/review_v21_dual_condensed_geometry_h7p5/shared_workflow_ledger.json", "sha256": "4448834859fd65e0ffe3d485b7d5d91a24d258e9970045daa28f90b88f10571f"},
+    "user_authorization_v23": {"path": "docs/task039_extra_physical_multilevel/user_authorization_v23_physical_memory.md", "sha256": "4d2d89f076e8b2acae665d28e94ed34251c92ce2e706cf9e50449ab14c3cc326"},
+    "run_manifest": {"path": "results/euv_grazing1_phi0/task39extra_v23_b_physical_memory_original_h7p5__full3d_iterative__mpi1__Mna/20260920T004707.275665Z/run_manifest.json", "sha256": "36cf0b31710ff876b694c158314aea918b9f3247ffbc5a38dbab91bfe714c249"},
+    "worker_summary": {"path": "results/euv_grazing1_phi0/task39extra_v23_b_physical_memory_original_h7p5__full3d_iterative__mpi1__Mna/20260920T004707.275665Z/physical_dual_condensed_physical_memory_v23_summary.json", "sha256": "c345be8239a3d490bbdb00bb84bf62355758bd79e510f6e49ed275f881749040"},
+    "checker": {"path": "results/euv_grazing1_phi0/task39extra_v23_b_physical_memory_original_h7p5__full3d_iterative__mpi1__Mna/20260920T004707.275665Z/v23_checker_result.json", "sha256": "a875ba4e494b517e542c7f49690d814de610f7fc369887072dbff84697076f71"},
+    "numeric_native_facts": {"path": "results/euv_grazing1_phi0/task39extra_v23_b_physical_memory_original_h7p5__full3d_iterative__mpi1__Mna/20260920T004707.275665Z/v23_numeric_native_facts.json", "sha256": "c8dff77271ab895393a9be2f52648204781d8c56bfa5932f6693b12533296c78"},
+    "events": {"path": "results/euv_grazing1_phi0/task39extra_v23_b_physical_memory_original_h7p5__full3d_iterative__mpi1__Mna/20260920T004707.275665Z/v23_events.jsonl", "sha256": "fb53376ed09a5693fa5e867e3a3a5fb2dfb6c6057d79ae7996da51e702ff4242"},
+    "worker_resources": {"path": "results/euv_grazing1_phi0/task39extra_v23_b_physical_memory_original_h7p5__full3d_iterative__mpi1__Mna/20260920T004707.275665Z/v23_worker_resources.jsonl", "sha256": "923fa5ecad5295c48bd02c9e0dfdba3452e6fd9cb74d0051971860fe030995be"},
+    "watchdog_resources": {"path": "results/euv_grazing1_phi0/task39extra_v23_b_physical_memory_original_h7p5__full3d_iterative__mpi1__Mna/20260920T004707.275665Z/watchdog/resources.jsonl", "sha256": "3acdead3666c6a8db3da9ad8131a753bab094f5c247f78a1bf913cc530750d8c"},
+    "final_residual": {"path": "results/euv_grazing1_phi0/task39extra_v23_b_physical_memory_original_h7p5__full3d_iterative__mpi1__Mna/20260920T004707.275665Z/final_residual/z3_final.json", "sha256": "9a635e3e3921f8b114a10aef6801b280d630e966636211f45503ea7f219eb028"},
+    "post_release_residual": {"path": "results/euv_grazing1_phi0/task39extra_v23_b_physical_memory_original_h7p5__full3d_iterative__mpi1__Mna/20260920T004707.275665Z/post_release_final_residual/z3_post_release_final.json", "sha256": "bd28333d9541c1bdaa726f89e0edd12c632e0c071ea0c2b4049f49ee6c6c8766"},
+    "p6_cache_identity": {"path": "results/euv_grazing1_phi0/task39extra_v23_b_physical_memory_original_h7p5__full3d_iterative__mpi1__Mna/20260920T004707.275665Z/v23_x1_p6_cache_identity.json", "sha256": "7f371f014c4a9da2adf6978ca1e6ae654b4e931a3335cd812a591b27fd4a09a9"}
+  },
+  "boundaries": [
+    "overall checker is not PASS",
+    "no matched same-discrete reference",
+    "C, new notch, new PC and new PDE are not authorized by this record",
+    "large fields, matrices, factors and timelines remain ignored raw artifacts"
+  ]
+}

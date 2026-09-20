@@ -1,3 +1,21 @@
+## V24 增量：V23 original-B fresh 与登记 bug replay 完成，但保留在线 p4 A4 数值负结果
+
+| 项目 | 本批事实 |
+|---|---|
+| 范围 | 同一 `990-cell original B` 完成一次 V23 fresh 及一次登记的 hash-bound implementation-bug replay；计算结束后仅整理证据，未追加 PDE；没有 C、new notch 或 new PC |
+| 状态 | B 求解完成 `126` 步，独立 A6（释放前后）=`9.2831649554582e-7`；总体不是 PASS |
+| checker | `58/59` 通过；唯一失败为原 `online_native_A4`：PC2 首次调用 `rho=2.8870661155266027e-10 > 1e-10` |
+| worker/parent/checker | worker=`Z3_ORIGINAL_H7P5_AUTHORITY_LIMITED_PASS`；parent=`worker_exit0/COMPLETED`；checker=`V23_FULL_PHYSICAL_CHECK_FAIL` |
+| 物理输出 | `R/T/A/A_volume=0.3650975537006217/0.013016803347759965/0.6218856429516183/0.6218856421339087`；`R00_s/p/total=0.3650608628870448/3.427344920479581e-25/0.3650608628870448`；80/80 通道、场/旋度 finite、能量闭合适用项通过 |
+| 资源 | RSS=`7387607040 B`；native allocated=`4687 MB`、upper=`4688000000 B`；used=`4326 MB`、upper=`4327000000 B`；p6 cache payload=`450893192 B`，不等同 RSS；swap=`0`、清场 true |
+| 时间与对照 | B KSP=`4737.310983555995 s`/126步，O10 KSP=`1151.635034 s`/112步；单步约`10.28246→37.597706 s`，RSS比约`2.60885`；O10自身含p6 target cache miss/compile峰，冷暖JIT分开 |
+| native/backend | `INFOG(1)=0`；`INFOG(9)=INFOG(29)=221594144`；`ICNTL(23)=4687 MB`且readback=`4687 MB`；allocated/used与p6 payload分列 |
+| V23策略 | 真实 RSS、MemAvailable/cgroup 压力和 zero-swap/清场裁决，仅保留`128 MiB` watchdog/write证据余量；不沿用旧固定6/8GiB或3.857GB续算阻断；[授权记录](../user_authorization_v23_physical_memory.md) |
+| 身份 | formal source=`d3596ac31bdabc2bb9233963adea3e91ddc2f220`；base=`8700e65c68b57455586df41f37484d37397dda92`；metadata commit SHA=`null`，由 containing commit 识别；旧109文件/27 profile不变 |
+| 决策 | `AWAITING_CHATGPT_REVIEW`、`NOT_FULL_PASS`、`NO_MERGE`；下一研究对象只能另行批准的 PC2 A4 数值缺陷审查，禁止擅自跑 C/notch/new PC |
+
+正式增量入口：[response V24](../response_v24.md)、[V23 compact](records/dual_condensed_physical_memory_v23_compact.json)、[V23 decision](records/dual_condensed_physical_memory_v23_decision.json)、[V23 checker](records/dual_condensed_physical_memory_v23_checker.json)、[V24 detailed summary](summary_v24.md)。旧内容从下一行起保持原样。
+
 ## V23 增量：一次 original-B 容量试验（待 ChatGPT 审阅）
 
 | 项目 | 本批事实 |

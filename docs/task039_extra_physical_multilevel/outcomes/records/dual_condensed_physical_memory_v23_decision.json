@@ -1,0 +1,65 @@
+{
+  "schema": "task039extra.v23.dual-condensed-physical-memory.decision.v1",
+  "decision_id": "review_v23_original_b_physical_memory_replay_closeout",
+  "status": "AWAITING_CHATGPT_REVIEW",
+  "overall_result": "NOT_FULL_PASS",
+  "source": {
+    "formal_source_sha": "d3596ac31bdabc2bb9233963adea3e91ddc2f220",
+    "base_sha": "8700e65c68b57455586df41f37484d37397dda92",
+    "metadata_commit_sha": null,
+    "metadata_commit_identity": "identified_by_containing_git_commit",
+    "branch": "task39extra",
+    "old_109_files_unchanged": true,
+    "old_27_profiles_unchanged": true
+  },
+  "supported_by_saved_evidence": [
+    "one V23 fresh run and one registered hash-bound implementation-bug replay were completed on the same 990-cell original-B scope; evidence was整理 after computation and no PDE was added",
+    "independent A6 before and after release are 9.2831649554582e-7",
+    "80-channel field and power packets are complete and finite",
+    "R/T/A/A_volume and energy closure are recorded",
+    "native original-A6 RHS norm 1.4293543003082507 and MPC-dual identity are recorded; internal RHS norm is not separately recorded",
+    "one KSP lifecycle, 127 BAL_H, 127 H6 and 254 p4 calls are recorded",
+    "dynamic physical-memory samples, zero swap and descendant cleanup are valid; V23 retains only a 128 MiB watchdog/write evidence reserve",
+    "old V21/V22 costs, first implementation-bug failure and replay costs remain preserved"
+  ],
+  "not_supported_by_saved_evidence": [
+    "overall checker PASS",
+    "all online p4 A4 calls pass: PC2 first call has rho 2.8870661155266027e-10 > 1e-10",
+    "matched same-discrete reference qualification",
+    "new C or notch result",
+    "new PC or production-default qualification"
+  ],
+  "layers": {
+    "worker": "Z3_ORIGINAL_H7P5_AUTHORITY_LIMITED_PASS",
+    "parent": "worker_exit0 / watchdog COMPLETED",
+    "checker": "V23_FULL_PHYSICAL_CHECK_FAIL; 58/59"
+  },
+  "costs_seconds": {
+    "v21_ledger": 1884.4679552510706,
+    "v22_ledger": 538.0163161130178,
+    "v21_plus_v22_known": 2422.4842713640884,
+    "v23_first_failure_measured": 379.43654483499995,
+    "v23_first_failure_policy_ledger": 414.7711851870877,
+    "v23_replay_measured_monotonic": 5581.178597819002,
+    "v23_replay_policy_workflow": 6079.400587860001,
+    "v23_replay_settled_ledger": 6079.411901537711,
+    "engineering_time": null
+  },
+  "next_research_object": {
+    "proposal": "same-B/source audit and repair of PC2 first online p4 A4 numerical defect",
+    "must_preserve": ["rho<=1e-10", "same physical model and identity", "negative evidence"],
+    "requires_new_approval": true,
+    "prohibited_without_explicit_approval": ["C", "new notch run", "new PC", "cap increase", "automatic replay"]
+  },
+  "merge_boundary": {
+    "master_merge": "NO_MERGE",
+    "new_pde": false,
+    "wait_for_chatgpt_review": true
+  },
+  "evidence": {
+    "compact": "docs/task039_extra_physical_multilevel/outcomes/records/dual_condensed_physical_memory_v23_compact.json",
+    "checker": "docs/task039_extra_physical_multilevel/outcomes/records/dual_condensed_physical_memory_v23_checker.json",
+    "response": "docs/task039_extra_physical_multilevel/response_v24.md",
+    "summary": "docs/task039_extra_physical_multilevel/outcomes/summary_v24.md"
+  }
+}
