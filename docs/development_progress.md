@@ -2812,3 +2812,9 @@ V15 formal artifact v1/v2 pre-F2 execution failures 在用户明确次数授权�
 性能诊断把主要装配开销定位到FFCx内核的跨行访问与寄存器spill。保持每个矩阵元素求和顺序、按行遍历后，真实单元CSR装配约3.6倍；合并12个独立系数循环使p6/p4 curl单元作用约2/1.4倍，真实FE逐位等价。PSS降频保留RSS/swap高频监督，并修复已有worker身份失败分类；这些是执行成本改进，不是新PC。释放后RSS只下降4MiB，表明仍需测量allocator/对象保留，不能伪造生命周期压缩成效。
 
 当前交付fail / PERFORMANCE_CONTROLLED_STOP。性能修复有小测试证据但没有优化后完整R1；任务书§11禁止把性能失败当bug再抽签，额外正式验证需明确授权，原screen/数值/物理Gate继续保持。所有正负结果及依赖分组见[summary](task39extra_para_workstation_capacity/outcomes/summary.md)，细节见[response_v1](task39extra_para_workstation_capacity/response_v1.md)；未merge master。
+
+## Task39extra 2026-09-20：2 nm h1.5 实测内存运行快照
+
+run `20260918T035017.294454Z`、source `41caf5141493ad6c5d6c518a64ee74fda8d7a7db` 正在 p4/MUMPS numeric；symbolic facts 已实际记录为 `INFOG1=0`、`INFOG7=4`、`INFOG16=1222577`、`RINFOG1=1100362818940466`，numeric/outer/RTA 尚未取得结果。末次整树 RSS=`477900079104 B`、swap=0；独立1300 GB measured guard仍运行，完整阶段峰值未从大资源日志聚合。54332 cells、p6 35594790 rows、p4 augmented 10608132 rows/4899800920 NNZ、3904 modes（3902 propagating）。
+
+该记录不把末次RSS当全程峰、不把诊断 predicted peak 当严格上界，也不把 5 nm 的600通道套到本次3904 modes。阶段/身份/小资源证据见 [2 nm running compact](task39extra_para_workstation_capacity/outcomes/records/2nm_h1p5_measured_running_snapshot_v1.json) 和 [Response V4](task39extra_para_workstation_capacity/response_v4.md)；历史失败、5 nm资源监督缺口及未完成 Gate 仍按原记录保留。

@@ -1523,6 +1523,7 @@ S6 优化只省掉取得对角项时不需要的计算；A2R 用额外矩阵及�
 |---|---|---|---|
 | `native_2nm_h1p5_pord64_attempt3` | symbolic INFOG(1)=0；133624.287 s；同期RSS采样峰277716156416 B，swap0，已清场 | 原预测2716776698624 B超过1537541295924 B门限 | `REFERENCE_RESOURCE_BLOCKED`；numeric/outer未运行，无R/T/A；[compact](task39extra_para_workstation_capacity/outcomes/records/2nm_h1p5_measured_retry_v1.json) |
 | `native_2nm_h1p5_measured_retry` | 尚未取得新数值结果 | 用户授权按实测整树RSS达到1537500000000 B停止；预测不拦截，保留reserve/swap | 提交时为启动准备；实际run身份见本任务ignored launch_check.json；[Response V3](task39extra_para_workstation_capacity/response_v3.md) |
+| `native_2nm_h1p5_measured_retry_current` | source `41caf5141493ad6c5d6c518a64ee74fda8d7a7db`；run `20260918T035017.294454Z`；54332 cells、p6 35594790、p4 10604228、augmented 10608132、augmented NNZ 4899800920；3904 modes/3902 propagating | symbolic facts `INFOG1=0, INFOG7=4, INFOG16=1222577, RINFOG1=1100362818940466`；p4 numeric 进行中，末次RSS `477900079104 B`、swap0；1300 GB guard attachment peak 同值 | `RUNNING; NOT_NUMERIC_OR_PHYSICS_QUALIFIED`；outer/RTA未运行，阶段峰值未完整聚合；[compact](task39extra_para_workstation_capacity/outcomes/records/2nm_h1p5_measured_running_snapshot_v1.json)、[Response V4](task39extra_para_workstation_capacity/response_v4.md) |
 
 # 4. 今后新增模型的登记模板
 

@@ -1,6 +1,23 @@
 # 原生迁移与容量任务：本轮执行结果
 
-## 最新状态：2026-09-18 按实测内存重启
+## 最新状态：2026-09-20 01:35 UTC，2 nm h1.5 RUNNING
+
+| 项目 | 当前事实 |
+|---|---|
+| run / source | `20260918T035017.294454Z` / `41caf5141493ad6c5d6c518a64ee74fda8d7a7db` |
+| input / physical | `1f54c3429625eefcdc65e4ec7dec356a8475e4249fe179d1f2957381701fb76b` / `fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef` |
+| 当前阶段 | `reference_numeric_preflight` marker 后；按现场事实正在 p4/MUMPS numeric，尚无 numeric complete marker |
+| symbolic | `INFOG1=0`、`INFOG7=4`、`INFOG16=1222577`、`RINFOG1=1100362818940466`；symbolic 1 次已完成 |
+| numeric / outer / RTA | numeric 未完成；outer 未开始；RTA 未运行 |
+| 最新资源 | RSS `477900079104 B`（约477.900 GB十进制）、swap `0`、global pswp `0/2`基线；阶段峰值未从完整 resources 聚合 |
+| 监督 | 原1537.5 GB watchdog + 独立1300 GB measured-RSS guard；guard当前未触发 |
+| compact | [2 nm h1.5 running snapshot](records/2nm_h1p5_measured_running_snapshot_v1.json)；详见 [Response V4](../response_v4.md) |
+
+该表是运行中快照，不替代终态或数值/物理 Gate。root/MPI/worker为三个进程；worker内部观测3个OS线程，数学库配置1。`stages.jsonl` SHA256=`f6baa2db169fd07258a26095cf71149bf07f51ee9d50d3f1eaa28ab213429f81`，`run_manifest.json` SHA256=`c2d05d59fdeaae5194cd635ec58fa79d8889a7c3d6183233a1e4e90257f28fe4`。
+
+以下旧节保持为历史记录，不覆盖当前 RUNNING 快照。
+
+## 上一阶段历史：2026-09-18 按实测内存重启准备
 
 | 项目 | 当前事实 |
 |---|---|
