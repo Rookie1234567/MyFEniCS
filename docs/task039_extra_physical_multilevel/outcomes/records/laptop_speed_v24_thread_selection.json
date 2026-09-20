@@ -1,0 +1,36 @@
+{
+  "schema": "task039extra.v24.thread-selection.v1",
+  "profile": "physical_p6_trace_p4_condensed_laptop_speed_v24",
+  "stage": "Z3_ORIGINAL_H7P5",
+  "source_sha": null,
+  "source_sha_status": "bind_to_final_formal_run_manifest",
+  "resolved": {
+    "input_sha256": "2ba2508861e02c2f1a9dbda433702c977eb0371cdb986350245e3caf15eb6928",
+    "physical_model_sha256": "d8c5abb837adda92ea86e257cff9e2ff01ccf466879b08a2cde9a071e1d1d036",
+    "resolved_config_sha256": "3e4a072525a5f853a12ee78b2f2b120f8478ba008c1fa4a623c5dd2ce97c4587",
+    "resolved_config_bytes": 14647,
+    "mpi_size": 1
+  },
+  "selected": {
+    "owner_optimized_apply": true,
+    "fixed_serial_owner_route": true,
+    "pc_fine_action_factory": null,
+    "packed_power10": false,
+    "native_a6_authority": true,
+    "h6_setup": "old_native_ffcx_power10_setup",
+    "mumps_threads": 1,
+    "blas_threads": 1,
+    "environment": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1"
+    }
+  },
+  "decision": {
+    "status": "SINGLE_CORE_SELECTED",
+    "reason": "No 2/4-thread memory-neutrality positive evidence was run; unrun is not pass.",
+    "multi_thread_status": "NOT_RUN",
+    "old_profiles_unchanged": true
+  }
+}

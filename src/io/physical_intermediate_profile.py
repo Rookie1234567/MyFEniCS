@@ -90,6 +90,47 @@ def profile_facts(identity=PROFILE) -> dict:
                 "count includes bounded corrections"
             ),
         }
+        facts["route_selection"] = {
+            "owner_optimized_apply": True,
+            "fixed_serial_owner_route": True,
+            "owner_route": "fixed_serial",
+            "pc_fine_action_factory": None,
+            "packed_power10": False,
+            "native_a6_authority": True,
+            "h6_setup": "old_native_ffcx_power10_setup",
+            "h6_apply": "existing_packed_kernel",
+            "old_profiles_unchanged": True,
+        }
+        facts["thread_selection"] = {
+            "status": "SELECTED_SINGLE_CORE",
+            "mpi_ranks": 1,
+            "mumps_threads": 1,
+            "blas_threads": 1,
+            "environment_variables": {
+                "OMP_NUM_THREADS": "1",
+                "OPENBLAS_NUM_THREADS": "1",
+                "MKL_NUM_THREADS": "1",
+                "NUMEXPR_NUM_THREADS": "1",
+            },
+            "multi_thread_evidence": (
+                "not_run; no 2/4-thread memory-neutrality positive evidence"
+            ),
+            "not_run_is_not_pass": True,
+        }
+        facts["formal_release_timing"] = {
+            "schema": "task039extra.v24.formal-release-timing.v1",
+            "scope": "V24 opt-in only; snapshot before preconditioner release",
+            "fields": [
+                "native_A6",
+                "native_A4",
+                "owner_P_PH",
+                "BAL_H",
+                "p4.reduce_seconds",
+                "p4.solve_seconds",
+                "p4.recover_seconds",
+                "p4.elapsed_seconds",
+            ],
+        }
         facts["gates"].update(
             p4_return_quality="every successful logical p4 native rho <= 1e-10",
             p4_extra_solve_limit=2,
