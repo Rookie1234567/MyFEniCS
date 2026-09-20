@@ -14,6 +14,7 @@ from typing import Any
 
 
 _DECIMAL_MB = 1_000_000
+_PHYSICAL_MEMORY_POLICY_V23 = "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23"
 
 
 def _nonnegative_int(value: Any, name: str) -> int:
@@ -55,13 +56,15 @@ def _workspace_phase_bytes(
 def capacity_budget_v22(
     *,
     launch_cap_bytes: int,
-    inventory_cap_bytes: int,
+    inventory_cap_bytes: int | None,
     current_tree_rss_bytes: int,
     current_inventory_bytes: int,
     future_inventory_components: Mapping[str, int],
     future_workspace_phases: Mapping[str, Mapping[str, int]],
     numeric_untouched_pool_bytes: int,
-    workspace_pool_cap_bytes: int,
+    workspace_pool_cap_bytes: int | None,
+    memory_policy: str = "CAPACITY_CONTROLLED_LOCAL_MUMPS_V22",
+    backend_quota_mb: int = 4687,
 ) -> dict[str, Any]:
     """Freeze one bounded numeric ICNTL(23) package.
 
@@ -75,6 +78,79 @@ def capacity_budget_v22(
     """
 
     launch_cap_bytes = _nonnegative_int(launch_cap_bytes, "launch_cap_bytes")
+    if memory_policy == _PHYSICAL_MEMORY_POLICY_V23:
+        if inventory_cap_bytes is not None or workspace_pool_cap_bytes is not None:
+            raise ValueError(
+                "V23 physical-pressure budget must not receive static inventory/workspace caps"
+            )
+        backend_quota_mb = _nonnegative_int(backend_quota_mb, "backend_quota_mb")
+        current_tree_rss_bytes = _nonnegative_int(
+            current_tree_rss_bytes, "current_tree_rss_bytes"
+        )
+        current_inventory_bytes = _nonnegative_int(
+            current_inventory_bytes, "current_inventory_bytes"
+        )
+        future_inventory = _component_bytes(
+            future_inventory_components, "future_inventory_components"
+        )
+        future_workspace, future_workspace_phase_totals, future_workspace_peak_bytes = (
+            _workspace_phase_bytes(future_workspace_phases)
+        )
+        physical_headroom_bytes = launch_cap_bytes - current_tree_rss_bytes
+        safe_headroom_bytes = physical_headroom_bytes - 1
+        icntl23_mb = min(backend_quota_mb, max(0, safe_headroom_bytes // _DECIMAL_MB))
+        status = "capacity_available" if icntl23_mb >= 1 else "capacity_unavailable"
+        return {
+            "schema": "task039extra.v23.mumps-capacity-budget.v1",
+            "policy": _PHYSICAL_MEMORY_POLICY_V23,
+            "status": status,
+            "reason": (
+                "bounded native quota fits current physical headroom; future estimates "
+                "are recorded and continuation is gated by live pressure"
+                if status == "capacity_available"
+                else "current physical headroom is below the minimum native quota"
+            ),
+            "limiting_scope": ("current_physical_headroom",),
+            "unit": "bytes; ICNTL(23) uses decimal_MB",
+            "launch_cap_bytes": launch_cap_bytes,
+            "inventory_cap_bytes": None,
+            "current_tree_rss_bytes": current_tree_rss_bytes,
+            "current_inventory_bytes": current_inventory_bytes,
+            "future_inventory_components": future_inventory,
+            "future_inventory_bytes": int(sum(future_inventory.values())),
+            "future_workspace_phases": future_workspace,
+            "future_workspace_phase_totals": future_workspace_phase_totals,
+            "future_workspace_peak_bytes": future_workspace_peak_bytes,
+            "workspace_scope_valid": None,
+            "numeric_untouched_pool_bytes": 0,
+            "workspace_pool_cap_bytes": None,
+            "physical_headroom_bytes": physical_headroom_bytes,
+            "numeric_inventory_headroom_bytes": None,
+            "numeric_tree_headroom_bytes": physical_headroom_bytes,
+            "numeric_raw_headroom_bytes": physical_headroom_bytes,
+            "numeric_safe_factor_bytes": safe_headroom_bytes,
+            "continuation_inventory_headroom_bytes": None,
+            "continuation_tree_headroom_bytes": None,
+            "continuation_max_allocated_bytes": None,
+            "continuation_status": "deferred_to_live_physical_pressure",
+            "physical_pressure_gate": True,
+            "minimum_icntl23_mb": 1,
+            "backend_quota_mb": backend_quota_mb,
+            "icntl23_mb": int(icntl23_mb),
+            "formula": (
+                "ICNTL23=min(previous_native_success_quota, "
+                "floor((current_dynamic_cap-current_tree_rss-1)/1e6)); "
+                "continuation uses a fresh postnumeric physical-pressure sample"
+            ),
+            "workspace_staging": (
+                "future phase peaks are evidence only; no untouched workspace pool "
+                "is added to a hard continuation gate"
+            ),
+        }
+    if memory_policy != "CAPACITY_CONTROLLED_LOCAL_MUMPS_V22":
+        raise ValueError(f"unsupported capacity budget policy: {memory_policy!r}")
+    if inventory_cap_bytes is None or workspace_pool_cap_bytes is None:
+        raise ValueError("V22 static capacity budget requires inventory and workspace caps")
     inventory_cap_bytes = _nonnegative_int(inventory_cap_bytes, "inventory_cap_bytes")
     current_tree_rss_bytes = _nonnegative_int(
         current_tree_rss_bytes, "current_tree_rss_bytes"

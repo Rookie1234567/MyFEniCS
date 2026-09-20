@@ -611,3 +611,170 @@ def test_v22_production_callbacks_bind_final_80_and_gate_allocated_before_destro
         )
     finally:
         matrix.destroy()
+
+
+class _V23PhysicalPressureRuntime:
+    """Small runtime double exercising the production callback sequence."""
+
+    memory_policy = "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23"
+    inventory_cap = None
+    workspace_cap = None
+    inventory_used_bytes = 1 << 30
+    workspace_live_bytes = 0
+
+    def __init__(self, directory, *, stop_on_pressure=False):
+        self.directory = directory
+        self.stop_on_pressure = bool(stop_on_pressure)
+        self.events = []
+        self.samples = []
+
+    def sample(self, label, *, enforce=False):
+        self.samples.append((label, bool(enforce)))
+        if self.stop_on_pressure and enforce and "continuation_physical_pressure" in label:
+            from src.runners.physical_p4_schur_v14 import V14ResourceStop
+
+            raise V14ResourceStop("synthetic MemAvailable physical-pressure stop")
+        return {
+            "launch_cap_bytes": 12 * (1 << 30),
+            "rss_bytes": 1 << 30,
+            "memory_envelope": {
+                "effective_available_bytes": 12 * (1 << 30),
+                "reserve_bytes": 128 << 20,
+            },
+        }
+
+    def marker(self, name, facts=None):
+        if name == "v23_numeric_observed_before_post_gate":
+            assert (self.directory / "v23_numeric_native_facts.json").exists()
+        self.events.append((name, facts))
+
+    def check_inventory_projected(self, _label, _bytes):
+        pytest.fail("V23 must not use the static inventory continuation gate")
+
+
+@pytest.mark.parametrize("stop_on_pressure", [False, True])
+def test_v23_production_callbacks_use_live_pressure_after_numeric(
+    tmp_path, stop_on_pressure
+):
+    """Exercise builder -> native observer -> continuation gate as one chain."""
+
+    from src.runners.physical_p4_schur_v14 import V14ResourceStop, _write_json
+
+    common, cfg, p6_facts, p4_metadata = _v22_context_fixture()
+    runtime = _V23PhysicalPressureRuntime(
+        tmp_path, stop_on_pressure=stop_on_pressure
+    )
+    summary = {"status": "STARTED"}
+    native_state = {"saved": False}
+    memory_request_builder, observer, continuation_gate = _v22_capacity_callbacks(
+        runtime=runtime,
+        common=common,
+        cfg=cfg,
+        final_space_facts=p6_facts,
+        p4_metadata=p4_metadata,
+        directory=tmp_path,
+        source_sha="s" * 40,
+        summary=summary,
+        native_observation_state=native_state,
+        write_json=_write_json,
+        memory_policy="PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+        native_quota_mb=4687,
+        evidence_prefix="v23",
+    )
+
+    matrix = PETSc.Mat().createAIJ((1, 1), nnz=1, comm=PETSc.COMM_SELF)
+    matrix.setValue(0, 0, 1.0 + 0.0j)
+    matrix.assemble()
+    holder = {}
+
+    def factory(value):
+        def assert_native_saved():
+            assert (tmp_path / "v23_numeric_native_facts.json").exists()
+
+        holder["factor"] = _NativeQuotaFactor(
+            value,
+            raise_from_numeric=False,
+            events=[],
+            numeric_code=0,
+            allocated_mb=5000,
+            used_mb=100,
+            destroy_assertion=assert_native_saved,
+        )
+        return holder["factor"]
+
+    try:
+        if stop_on_pressure:
+            with pytest.raises(V14ResourceStop, match="physical-pressure"):
+                _prepare_factor(
+                    matrix,
+                    factory,
+                    label="v23-production-callbacks",
+                    resource_sample=lambda: runtime.sample("factor_resource"),
+                    memory_request_builder=memory_request_builder,
+                    numeric_observer=observer,
+                    post_numeric_gate=continuation_gate,
+                )
+        else:
+            factor, _factor_facts = _prepare_factor(
+                matrix,
+                factory,
+                label="v23-production-callbacks",
+                resource_sample=lambda: runtime.sample("factor_resource"),
+                memory_request_builder=memory_request_builder,
+                numeric_observer=observer,
+                post_numeric_gate=continuation_gate,
+            )
+            factor.destroy()
+        factor = holder["factor"]
+        assert factor.numeric_calls == 1
+        assert factor.memory_limit == 4687
+        assert native_state["saved"] is True
+        assert (tmp_path / "v23_numeric_native_facts.json").exists()
+        assert any(
+            name == "v23_continuation_native_observed" for name, _ in runtime.events
+        )
+        assert not any(
+            "allocated_gate_failed" in name for name, _ in runtime.events
+        )
+        if stop_on_pressure:
+            assert any(
+                name == "v23_continuation_physical_pressure_gate_failed"
+                for name, _ in runtime.events
+            )
+        else:
+            assert any(
+                name == "v23_continuation_physical_pressure_gate"
+                for name, _ in runtime.events
+            )
+    finally:
+        matrix.destroy()
+
+
+def test_v23_watchdog_policy_drops_legacy_static_caps_without_changing_defaults(monkeypatch):
+    from benchmarks import subreaper_watchdog
+
+    monkeypatch.setattr(
+        subreaper_watchdog,
+        "wsl_memory_snapshot",
+        lambda: {
+            "mem_total_bytes": 32 << 30,
+            "mem_available_bytes": 20 << 30,
+        },
+    )
+    monkeypatch.setattr(subreaper_watchdog, "current_cgroup_path", lambda: None)
+    legacy = subreaper_watchdog.memory_envelope()
+    physical = subreaper_watchdog.memory_envelope(
+        "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23"
+    )
+    assert legacy["reserve_bytes"] == max(4 << 30, int(0.15 * (32 << 30)))
+    assert legacy["launch_cap_bytes"] <= 12_000_000_000
+    assert physical["reserve_bytes"] == 128 << 20
+    assert physical["launch_cap_bytes"] == (20 << 30) - (128 << 20)
+    assert physical["static_tree_cap_bytes"] is None
+    assert subreaper_watchdog.runtime_tree_cap(
+        8 << 30,
+        1 << 30,
+        physical,
+        memory_policy="PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+    ) == physical["launch_cap_bytes"] + (1 << 30)
+    assert subreaper_watchdog.runtime_tree_cap(8 << 30, 1 << 30, legacy) == 8 << 30

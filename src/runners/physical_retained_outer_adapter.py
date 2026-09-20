@@ -883,7 +883,17 @@ def _v20_form_cache(runtime, *, cache_policy="v20_exclude_old_family"):
 
     from dolfinx import jit
 
-    source = Path(jit.get_options()["cache_dir"]).expanduser().resolve()
+    qualified_source = os.environ.get("PHYSICAL_QUALIFIED_JIT_CACHE_SOURCE")
+    if qualified_source:
+        source = Path(qualified_source).expanduser().resolve()
+        if not source.is_dir():
+            raise FileNotFoundError(
+                f"qualified JIT cache source does not exist: {source}"
+            )
+        source_binding = "explicit_qualified_formal_root"
+    else:
+        source = Path(jit.get_options()["cache_dir"]).expanduser().resolve()
+        source_binding = "activation_jit_cache"
     target = (Path(runtime.directory) / "v20_jit_cache" / "fenics").resolve()
     target.mkdir(parents=True, exist_ok=True)
     copied = hardlinked = copied_bytes = excluded = excluded_bytes = 0
@@ -929,6 +939,15 @@ def _v20_form_cache(runtime, *, cache_policy="v20_exclude_old_family"):
     return target, {
         "cache_policy": cache_policy,
         "source_cache_dir": str(source),
+        "source_cache_binding": source_binding,
+        "qualified_source_origin": os.environ.get(
+            "PHYSICAL_QUALIFIED_JIT_CACHE_ORIGIN"
+        ),
+        "qualified_expected_compiler_event_count": (
+            int(os.environ["PHYSICAL_QUALIFIED_JIT_EXPECTED_COMPILER_EVENTS"])
+            if os.environ.get("PHYSICAL_QUALIFIED_JIT_EXPECTED_COMPILER_EVENTS")
+            else None
+        ),
         "formal_cache_dir": str(target),
         "same_compiler_options": ["-O2", "-g0"],
         "hardlinked_eligible_files": hardlinked,

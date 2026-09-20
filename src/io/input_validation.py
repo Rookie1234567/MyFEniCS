@@ -564,6 +564,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "physical_p6_trace_p4_condensed_lowmem_v20",
                 "physical_p6_trace_p4_condensed_robustness_v21",
                 "physical_p6_trace_p4_condensed_capacity_v22",
+                "physical_p6_trace_p4_condensed_physical_memory_v23",
             }:
                 raise _error(
                     "solver.preconditioner",
@@ -940,6 +941,45 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     raise _error(
                         "geometry.cell_notch",
                         "physical_p6_trace_p4_condensed_capacity_v22 does not allow a notch",
+                    )
+                try:
+                    from src.geometry.v21_frozen_plan import validate_v21_input
+
+                    validate_v21_input("Z3_ORIGINAL_H7P5", geometry, discretization)
+                except (OSError, TypeError, ValueError, KeyError) as exc:
+                    raise _error("geometry/discretization", str(exc)) from exc
+            elif preconditioner == "physical_p6_trace_p4_condensed_physical_memory_v23":
+                for section, key, actual, expected in (
+                    ("solver", "stage", solver.get("stage"), "Z3_ORIGINAL_H7P5"),
+                    ("solver", "restart", solver["restart"], 32),
+                    ("solver", "max_iterations", solver["max_iterations"], 2048),
+                    ("solver", "outer_restart", solver.get("outer_restart"), 0),
+                    (
+                        "solver",
+                        "memory_policy",
+                        solver.get("memory_policy"),
+                        "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+                    ),
+                    ("execution", "mpi_size", execution["mpi_size"], 1),
+                    ("execution", "timeout_seconds", execution["timeout_seconds"], 43200),
+                    ("execution", "require_zero_swap", execution["require_zero_swap"], True),
+                    ("discretization", "nedelec_degree", discretization["nedelec_degree"], 6),
+                    ("discretization", "mesh_target_nm", discretization["mesh_target_nm"], 7.5),
+                ):
+                    if actual != expected:
+                        raise _error(
+                            f"{section}.{key}",
+                            f"{preconditioner} fixes {key}={expected}",
+                        )
+                if geometry.get("model_variant") != "original":
+                    raise _error(
+                        "geometry.model_variant",
+                        "physical_p6_trace_p4_condensed_physical_memory_v23 requires the original B model",
+                    )
+                if geometry.get("cell_notch") is not None:
+                    raise _error(
+                        "geometry.cell_notch",
+                        "physical_p6_trace_p4_condensed_physical_memory_v23 does not allow a notch",
                     )
                 try:
                     from src.geometry.v21_frozen_plan import validate_v21_input
@@ -1910,6 +1950,7 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
     if config["solver"].get("preconditioner") in {
         "physical_p6_trace_p4_condensed_robustness_v21",
         "physical_p6_trace_p4_condensed_capacity_v22",
+        "physical_p6_trace_p4_condensed_physical_memory_v23",
     }:
         # V21 deliberately keeps the matched Z2 physical-model hash
         # compatible with the existing V5 notch reference.  The omitted
@@ -2046,6 +2087,7 @@ def resolve_loaded_input(loaded: LoadedInput) -> RunSpecification:
     if normalized["solver"].get("preconditioner") in {
         "physical_p6_trace_p4_condensed_robustness_v21",
         "physical_p6_trace_p4_condensed_capacity_v22",
+        "physical_p6_trace_p4_condensed_physical_memory_v23",
     }:
         for key in ("model_variant", "geometry_identity"):
             physical["geometry"].pop(key, None)

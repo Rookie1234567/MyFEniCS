@@ -324,6 +324,20 @@ def _dual_condensed_capacity_v22_shared_ledger_path(repo_root: Path) -> Path:
     )
 
 
+def _dual_condensed_physical_memory_v23_shared_ledger_path(repo_root: Path) -> Path:
+    """Return the independent V23 physical-memory-pressure ledger."""
+
+    return (
+        repo_root
+        / "benchmarks"
+        / "artifacts"
+        / "task39extra"
+        / "dual_condensed_physical_memory_v23"
+        / "review_v23_original_b_physical_memory_trial"
+        / "shared_workflow_ledger.json"
+    )
+
+
 def _validate_v17_t2_prerequisite(ledger: Mapping[str, Any]) -> dict[str, Any]:
     """Require a settled, hash-bound T1 checker decision before T2 launch."""
 
@@ -1734,6 +1748,13 @@ V22_SUMMARY_FILENAME = "physical_dual_condensed_capacity_v22_summary.json"
 V22_PREDECESSOR_V21_LEDGER_SHA256 = (
     "4448834859fd65e0ffe3d485b7d5d91a24d258e9970045daa28f90b88f10571f"
 )
+V23_BATCH_IDENTITY = "review_v23_original_b_physical_memory_trial"
+V23_STAGE = "Z3_ORIGINAL_H7P5"
+V23_LEDGER_SCHEMA = "task039extra.v23.shared-workflow-ledger.v1"
+V23_SUMMARY_FILENAME = "physical_dual_condensed_physical_memory_v23_summary.json"
+V23_PREDECESSOR_V22_LEDGER_SHA256 = (
+    "0363e2230192dd3815653643852192e12cbeb666056d0b786b38f6edeb8f45b9"
+)
 
 
 def _read_only_v21_ledger_reference(repo_root: Path) -> dict[str, Any]:
@@ -1866,6 +1887,135 @@ def _reserve_v22_shared_budget(
         summary_filename=V22_SUMMARY_FILENAME,
         prerequisite=prerequisite,
         bug_replay_limit=0,
+    )
+
+
+def _read_only_v22_ledger_reference(repo_root: Path) -> dict[str, Any]:
+    """Bind the V23 ledger to the settled V22 history without reusing its lease."""
+
+    predecessor_path = _dual_condensed_capacity_v22_shared_ledger_path(repo_root)
+    try:
+        predecessor_bytes = predecessor_path.read_bytes()
+        predecessor = json.loads(predecessor_bytes.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise InputError("V23 requires the readable accepted V22 ledger") from exc
+    predecessor_sha = hashlib.sha256(predecessor_bytes).hexdigest()
+    if predecessor_sha != V23_PREDECESSOR_V22_LEDGER_SHA256:
+        raise InputError("V23 predecessor V22 ledger hash changed")
+    if predecessor.get("batch_identity") != V22_BATCH_IDENTITY:
+        raise InputError("V23 predecessor V22 ledger identity changed")
+    unknown_elapsed_attempts: list[dict[str, Any]] = []
+    for historical_stage, stage_record in predecessor.get("stages", {}).items():
+        if not isinstance(stage_record, Mapping):
+            continue
+        for attempt_index, attempt in enumerate(stage_record.get("attempts", [])):
+            if not isinstance(attempt, Mapping):
+                continue
+            if (
+                attempt.get("actual_elapsed_seconds") is None
+                and attempt.get("settled_seconds") is None
+            ):
+                unknown_elapsed_attempts.append(
+                    {
+                        "stage": str(historical_stage),
+                        "attempt_index": int(attempt_index),
+                        "status": attempt.get("status"),
+                        "reserved_seconds": attempt.get("reserved_seconds"),
+                    }
+                )
+    return {
+        "read_only": True,
+        "required_for_new_budget": False,
+        "path": str(predecessor_path),
+        "sha256": predecessor_sha,
+        "bytes": len(predecessor_bytes),
+        "batch_identity": predecessor.get("batch_identity"),
+        "schema": predecessor.get("schema"),
+        "measured_elapsed_seconds": predecessor.get("elapsed_seconds"),
+        "effective_budget_snapshot": read_v14_effective_budget(predecessor),
+        "policy_debits": deepcopy(predecessor.get("policy_debits", [])),
+        "unknown_elapsed_attempts": unknown_elapsed_attempts,
+        "unknown_elapsed_is_not_new_measurement": True,
+        "known_costs_and_negative_results_preserved": True,
+        "historical_ledger_snapshot": deepcopy(predecessor),
+    }
+
+
+def _reserve_v23_shared_budget(
+    repo_root: Path,
+    run_directory: Path,
+    *,
+    source_sha: str,
+    stage: str,
+    stage_budget: Mapping[str, Any],
+    workflow_clock_start: Mapping[str, Any],
+    time_policy: str = V14_TIME_POLICY_ENFORCE,
+) -> dict[str, Any]:
+    """Reserve one V23 B attempt, retaining the existing explicit bug replay."""
+
+    if stage != V23_STAGE or time_policy != V14_TIME_POLICY_OBSERVE_ONLY:
+        raise InputError("V23 permits only Z3_ORIGINAL_H7P5 with observe_only")
+    repo_root = Path(repo_root).resolve()
+    path = _dual_condensed_physical_memory_v23_shared_ledger_path(repo_root)
+    predecessor = _read_only_v22_ledger_reference(repo_root)
+    predecessors = {"v22": predecessor}
+    prerequisite = {
+        "original_only": True,
+        "allowed_stage": V23_STAGE,
+        "cross_case_recycling": False,
+        "automatic_replay": False,
+        "implementation_bug_replay": "existing_explicit_hash_bound_replay_only",
+        "fresh_factor_allowed": True,
+        "physical_memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+        "predecessor_v22_ledger": predecessor,
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        try:
+            ledger = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise InputError("V23 shared ledger cannot be read") from exc
+        if (
+            ledger.get("schema") != V23_LEDGER_SCHEMA
+            or ledger.get("batch_identity") != V23_BATCH_IDENTITY
+            or ledger.get("predecessors") != predecessors
+            or ledger.get("allowed_stages") != [V23_STAGE]
+            or ledger.get("cross_case_recycling") is not False
+        ):
+            raise InputError("V23 ledger or read-only V22 predecessor changed")
+    else:
+        ledger = {
+            "schema": V23_LEDGER_SCHEMA,
+            "batch_identity": V23_BATCH_IDENTITY,
+            "total_budget_seconds": V14_SHARED_WORKFLOW_SECONDS,
+            "elapsed_seconds": 0.0,
+            "conservative_allowance_seconds": 0.0,
+            "policy_debits": [],
+            "fresh_worker_count": 0,
+            "source_attempts": [],
+            "stages": {},
+            "unique_bug_replay_count": 0,
+            "replay_policy": (
+                "one fresh original B attempt; existing explicit implementation-bug "
+                "replay may be registered once; no automatic or numerical retry"
+            ),
+            "allowed_stages": [V23_STAGE],
+            "cross_case_recycling": False,
+            "predecessors": predecessors,
+        }
+    return _reserve_blr_stage_from_ledger(
+        path,
+        ledger,
+        stage=stage,
+        run_directory=run_directory,
+        source_sha=source_sha,
+        stage_budget=stage_budget,
+        workflow_clock_start=workflow_clock_start,
+        time_policy=time_policy,
+        error_prefix="V23",
+        summary_filename=V23_SUMMARY_FILENAME,
+        prerequisite=prerequisite,
+        bug_replay_limit=1,
     )
 
 
@@ -2552,6 +2702,7 @@ def launch_specification(
         LOWMEM_DUAL_CELL_CONDENSED_PROFILE,
         ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE,
         CAPACITY_DUAL_CELL_CONDENSED_PROFILE,
+        PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE,
         profile_facts,
     )
     from src.io.physical_balanced_profile import BALANCED_PROFILES, BOUNDED_PROFILES
@@ -2567,11 +2718,13 @@ def launch_specification(
     lowmem_v20_profile = specification.solver.get('preconditioner') == LOWMEM_DUAL_CELL_CONDENSED_PROFILE
     robustness_v21_profile = specification.solver.get('preconditioner') == ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE
     capacity_v22_profile = specification.solver.get('preconditioner') == CAPACITY_DUAL_CELL_CONDENSED_PROFILE
+    physical_memory_v23_profile = specification.solver.get('preconditioner') == PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE
     cell_condensed_profile = specification.solver.get('preconditioner') in {
         CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE,
         DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE,
         ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE,
         CAPACITY_DUAL_CELL_CONDENSED_PROFILE,
+        PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE,
     }
     cell_stage = str(specification.solver.get('stage', ''))
     if cell_condensed_profile:
@@ -2678,6 +2831,14 @@ def launch_specification(
     elif capacity_v22_profile and physical_candidate:
         run_directory = _timestamp_directory(specification, timestamp)
         v14_lease = _reserve_v22_shared_budget(
+            Path(__file__).resolve().parents[2], run_directory,
+            source_sha=source, stage=cell_stage,
+            stage_budget=cell_stage_budget, workflow_clock_start=full_clock.start,
+            time_policy=v14_time_policy,
+        )
+    elif physical_memory_v23_profile and physical_candidate:
+        run_directory = _timestamp_directory(specification, timestamp)
+        v14_lease = _reserve_v23_shared_budget(
             Path(__file__).resolve().parents[2], run_directory,
             source_sha=source, stage=cell_stage,
             stage_budget=cell_stage_budget, workflow_clock_start=full_clock.start,
@@ -2831,9 +2992,48 @@ def launch_specification(
                             cooperative_performance_stop=False,
                             timebase_guard=True,
                             timebase_policy='conservative_realtime',
-                            tree_cap_bytes=int(physical_resources['tree_cap_bytes']),
                             time_policy=v14_time_policy,
                         )
+                        if physical_memory_v23_profile:
+                            watchdog_kwargs.update(
+                                memory_policy=physical_resources[
+                                    'watchdog_memory_policy'
+                                ],
+                                worker_environment={
+                                    **watchdog_kwargs.get('worker_environment', {}),
+                                    'PHYSICAL_WATCHDOG_MEMORY_POLICY': physical_resources[
+                                        'watchdog_memory_policy'
+                                    ],
+                                    'PHYSICAL_QUALIFIED_JIT_CACHE_SOURCE': physical_resources[
+                                        'qualified_jit_cache_source'
+                                    ]
+                                    if Path(
+                                        str(physical_resources[
+                                            'qualified_jit_cache_source'
+                                        ])
+                                    ).is_absolute()
+                                    else str(
+                                        (
+                                            Path(__file__).resolve().parents[2]
+                                            / physical_resources[
+                                                'qualified_jit_cache_source'
+                                            ]
+                                        ).resolve()
+                                    ),
+                                    'PHYSICAL_QUALIFIED_JIT_CACHE_ORIGIN': physical_resources[
+                                        'qualified_jit_cache_origin'
+                                    ],
+                                    'PHYSICAL_QUALIFIED_JIT_EXPECTED_COMPILER_EVENTS': str(
+                                        physical_resources[
+                                            'qualified_jit_expected_compiler_event_count'
+                                        ]
+                                    ),
+                                },
+                            )
+                        else:
+                            watchdog_kwargs['tree_cap_bytes'] = int(
+                                physical_resources['tree_cap_bytes']
+                            )
                         if schur_v14:
                             watchdog_kwargs['active_pc_seconds'] = float(
                                 physical_resources['pc_hard_seconds']
@@ -2913,9 +3113,18 @@ def launch_specification(
                         'launch_envelope': authority['launch_envelope'], 'warning_fraction': 0.85,
                         'workflow_seconds': workflow_limit, 'solve_seconds': None if pc_profile is not None else solve_limit,
                         'scope': authority['memory_scope'], 'legacy_resource_fields_enforced': False,
-                        **(
+                            **(
                             v14_time_policy_facts(v14_time_policy)
                             if schur_v14 or blr_profile or cell_condensed_profile
+                            else {}
+                        ),
+                        **(
+                            {
+                                'memory_policy': physical_resources[
+                                    'watchdog_memory_policy'
+                                ]
+                            }
+                            if physical_memory_v23_profile
                             else {}
                         ),
                         'wall_reference_seconds': watchdog_wall_seconds,
@@ -3031,13 +3240,16 @@ __all__ = [
     "_reserve_v20_shared_budget",
     "_reserve_v21_shared_budget",
     "_reserve_v22_shared_budget",
+    "_reserve_v23_shared_budget",
     "_validate_v21_checker_prerequisites",
     "V21_PREDECESSOR_V20_LEDGER_SHA256",
     "V22_PREDECESSOR_V21_LEDGER_SHA256",
+    "V23_PREDECESSOR_V22_LEDGER_SHA256",
     "_dual_condensed_v19_shared_ledger_path",
     "_dual_condensed_lowmem_v20_shared_ledger_path",
     "_dual_condensed_robustness_v21_shared_ledger_path",
     "_dual_condensed_capacity_v22_shared_ledger_path",
+    "_dual_condensed_physical_memory_v23_shared_ledger_path",
     "_cell_condensed_v18_shared_ledger_path",
     "_validate_v17_t2_prerequisite",
     "_validate_v18_prerequisite",

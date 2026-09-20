@@ -315,16 +315,40 @@ class _V14Runtime:
             os.environ.get("PHYSICAL_WATCHDOG_PHASE_PATH", directory / "workflow_phase.json")
         )
         self.parent_pid = int(os.environ.get("PHYSICAL_WATCHDOG_PARENT_PID", "-1"))
-        self.parent_cap = int(
-            os.environ.get(
-                "PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES",
-                contract["resources"]["tree_cap_bytes"],
+        resources = contract["resources"]
+        from benchmarks.subreaper_watchdog import (
+            LEGACY_MEMORY_POLICY,
+            PHYSICAL_MEMORY_PRESSURE_POLICY,
+        )
+
+        self.memory_policy = str(
+            resources.get("watchdog_memory_policy", LEGACY_MEMORY_POLICY)
+        )
+        worker_policy = os.environ.get(
+            "PHYSICAL_WATCHDOG_MEMORY_POLICY", self.memory_policy
+        )
+        if worker_policy != self.memory_policy:
+            raise RuntimeError(
+                "worker/watchdog memory policy differs from resolved contract"
             )
+        self.physical_memory_pressure = (
+            self.memory_policy == PHYSICAL_MEMORY_PRESSURE_POLICY
         )
-        self.inventory_cap = contract["resources"]["inventory_memory_cap_bytes_by_stage"].get(stage)
-        self.workspace_cap = int(
-            contract["resources"]["shared_temp_workspace_cap_bytes"]
-        )
+        if self.physical_memory_pressure:
+            self.parent_cap = None
+            self.inventory_cap = None
+            self.workspace_cap = None
+        else:
+            self.parent_cap = int(
+                os.environ.get(
+                    "PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES",
+                    resources["tree_cap_bytes"],
+                )
+            )
+            self.inventory_cap = resources[
+                "inventory_memory_cap_bytes_by_stage"
+            ].get(stage)
+            self.workspace_cap = int(resources["shared_temp_workspace_cap_bytes"])
         self.stop_requested = False
         self.pc_soft_stop_requested = False
         self._pc_clock = None
@@ -525,7 +549,7 @@ class _V14Runtime:
         self.check_workspace_projected(key, amount)
         self.check_projected(key, 0, workspace_bytes=amount)
         projected = self.workspace_live_bytes + amount
-        if projected > self.workspace_cap:
+        if self.workspace_cap is not None and projected > self.workspace_cap:
             raise V14ResourceStop(
                 f"V14 shared temporary workspace exceeds cap: {key} {projected}>{self.workspace_cap}"
             )
@@ -551,7 +575,7 @@ class _V14Runtime:
             "gate": "independent_shared_temporary_workspace_cap",
         }
         self.marker("v14_projected_workspace_gate", facts)
-        if projected > self.workspace_cap:
+        if self.workspace_cap is not None and projected > self.workspace_cap:
             raise V14ResourceStop(f"V14 projected workspace exceeds cap: {facts}")
         return facts
 
@@ -596,8 +620,10 @@ class _V14Runtime:
         if allocation < 0 or workspace < 0:
             raise ValueError("V14 projected allocation cannot be negative")
         workspace_live = int(self.workspace_live_bytes)
-        untouched_workspace = max(
-            0, self.workspace_cap - workspace_live - workspace
+        untouched_workspace = (
+            max(0, self.workspace_cap - workspace_live - workspace)
+            if self.workspace_cap is not None
+            else 0
         )
         # The current RSS sample already contains any workspace that has
         # materialized.  The still-unmaterialized part of the single shared
@@ -621,7 +647,9 @@ class _V14Runtime:
             "projected_rss_bytes": projected_rss,
             "launch_cap_bytes": int(resource["launch_cap_bytes"]),
             "gate": (
-                "rss_includes_live_workspace_plus_new_workspace_plus_"
+                "live_physical_pressure_sample_only"
+                if self.physical_memory_pressure
+                else "rss_includes_live_workspace_plus_new_workspace_plus_"
                 "untouched_shared_workspace_reserve"
             ),
             "survival_assumption": (
@@ -630,7 +658,10 @@ class _V14Runtime:
             ),
         }
         self.marker("v14_projected_allocation_gate", facts)
-        if projected_rss >= int(resource["launch_cap_bytes"]):
+        if (
+            not self.physical_memory_pressure
+            and projected_rss >= int(resource["launch_cap_bytes"])
+        ):
             raise V14ResourceStop(f"V14 projected resident allocation exceeds cap: {facts}")
         return facts
 
@@ -787,13 +818,13 @@ class _V14Runtime:
         from benchmarks.task038_full3d_jit_staging import process_tree_snapshot
 
         value = process_tree_snapshot(self.parent_pid, self._phase, None)
-        envelope = memory_envelope()
+        envelope = memory_envelope(self.memory_policy)
         dynamic_cap = (
             int(value["rss_bytes"])
             + int(envelope["effective_available_bytes"])
             - int(envelope["reserve_bytes"])
         )
-        cap = min(self.parent_cap, dynamic_cap)
+        cap = dynamic_cap if self.physical_memory_pressure else min(self.parent_cap, dynamic_cap)
         value.update(
             {
                 "label": label,
@@ -805,8 +836,16 @@ class _V14Runtime:
                 "inventory_peak_bytes": self.inventory_peak_bytes,
                 "workspace_live_bytes": self.workspace_live_bytes,
                 "workspace_peak_bytes": self.workspace_peak_bytes,
-                "cap_policy": "min(parent_tree_cap,current_tree_rss+available-reserve)",
-                "inventory_policy": "independent_live_matrix_factor_coupling_workspace_sum",
+                "cap_policy": (
+                    "current_tree_rss+available-reserve; no startup/static cap"
+                    if self.physical_memory_pressure
+                    else "min(parent_tree_cap,current_tree_rss+available-reserve)"
+                ),
+                "inventory_policy": (
+                    "record_only_under_physical_memory_pressure"
+                    if self.physical_memory_pressure
+                    else "independent_live_matrix_factor_coupling_workspace_sum"
+                ),
                 **self.time_policy_facts,
             }
         )
@@ -820,7 +859,10 @@ class _V14Runtime:
                 self.inventory_cap is not None
                 and self.inventory_used_bytes > int(self.inventory_cap)
             )
-            or self.workspace_live_bytes > self.workspace_cap
+            or (
+                self.workspace_cap is not None
+                and self.workspace_live_bytes > self.workspace_cap
+            )
         ):
             raise V14ResourceStop(f"V14 {self.stage} resource gate failed: {value}")
         return value
@@ -5971,13 +6013,22 @@ def _v14_resource_facts(runtime: _V14Runtime) -> dict[str, Any]:
                 frozen_cap = getattr(runtime, "inventory_cap", None)
                 if frozen_cap is not None:
                     cap = int(frozen_cap) if cap is None else min(int(cap), int(frozen_cap))
+                rss_limit = (
+                    int(row["launch_cap_bytes"])
+                    if getattr(runtime, "physical_memory_pressure", False)
+                    else min(int(row["launch_cap_bytes"]), 8 << 30)
+                )
+                workspace_value = int(row["workspace_live_bytes"])
+                workspace_cap = getattr(runtime, "workspace_cap", None)
                 checks = {
                     "readable": row["all_status_readable"] is True,
                     "zero_swap": swap == 0,
-                    "rss": 0 <= rss < min(int(row["launch_cap_bytes"]), 8 << 30),
+                    "rss": 0 <= rss < rss_limit,
                     "reserve": int(envelope["effective_available_bytes"]) >= int(envelope["reserve_bytes"]),
                     "inventory": 0 <= int(row["inventory_used_bytes"]) and (cap is None or int(row["inventory_used_bytes"]) <= int(cap)),
-                    "workspace": 0 <= int(row["workspace_live_bytes"]) <= runtime.workspace_cap,
+                    "workspace": 0 <= workspace_value and (
+                        workspace_cap is None or workspace_value <= workspace_cap
+                    ),
                 }
                 facts["zero_swap"] &= checks["zero_swap"]
                 facts["all_status_readable"] &= checks["readable"]

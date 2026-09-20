@@ -28,12 +28,25 @@ DUAL_CELL_CONDENSED_PROFILE = "physical_p6_trace_p4_condensed_balh_v19"
 LOWMEM_DUAL_CELL_CONDENSED_PROFILE = "physical_p6_trace_p4_condensed_lowmem_v20"
 ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE = "physical_p6_trace_p4_condensed_robustness_v21"
 CAPACITY_DUAL_CELL_CONDENSED_PROFILE = "physical_p6_trace_p4_condensed_capacity_v22"
+PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE = (
+    "physical_p6_trace_p4_condensed_physical_memory_v23"
+)
+PHYSICAL_MEMORY_POLICY_V23 = "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23"
+V23_QUALIFIED_JIT_CACHE_SOURCE = (
+    "results/euv_grazing1_phi0/"
+    "task39extra_v22_b_capacity_original_h7p5__full3d_iterative__mpi1__Mna/"
+    "20260919T174436.599741Z/v20_jit_cache/fenics"
+)
+V23_QUALIFIED_JIT_CACHE_ORIGIN = (
+    "V22 formal run cache root; 11 observed compiler modules"
+)
+V23_QUALIFIED_JIT_EXPECTED_COMPILER_EVENTS = 11
 P4_BLR_TRADEOFF_THRESHOLDS = {
     "T1_BLR_CONTROL": 1.0e-3,
     "T2_BLR_CONTROL": 1.0e-4,
 }
 
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
 
 
 def p4_blr_tradeoff_threshold(stage: str) -> float:
@@ -48,6 +61,65 @@ def p4_blr_tradeoff_threshold(stage: str) -> float:
 
 
 def profile_facts(identity=PROFILE) -> dict:
+    if identity == PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE:
+        # V23 is an explicitly authorized replacement for the one-shot V22
+        # capacity gate.  It keeps the reviewed numerical/lifecycle route,
+        # but resource admission is based on live physical pressure rather
+        # than the historical static inventory/tree/workspace ceilings.
+        facts = profile_facts(CAPACITY_DUAL_CELL_CONDENSED_PROFILE)
+        facts.update(
+            identity=identity,
+            scope="review_v23_original_b_physical_memory_trial",
+            qualification=(
+                "opt_in; one fresh Z3 original B trial only; same 990-cell "
+                "h7.5 p6/p4 route and modes; observe_only; physical pressure "
+                "policy replaces V22 static capacity ceilings"
+            ),
+            memory_policy=PHYSICAL_MEMORY_POLICY_V23,
+        )
+        resources = facts["resources"]
+        resources.update(
+            watchdog_memory_policy=PHYSICAL_MEMORY_POLICY_V23,
+            qualified_jit_cache_source=V23_QUALIFIED_JIT_CACHE_SOURCE,
+            qualified_jit_cache_origin=V23_QUALIFIED_JIT_CACHE_ORIGIN,
+            qualified_jit_expected_compiler_event_count=(
+                V23_QUALIFIED_JIT_EXPECTED_COMPILER_EVENTS
+            ),
+            physical_memory_evidence_reserve_bytes=128 * 1024**2,
+            inventory_memory_cap_bytes_by_stage={},
+            shared_temp_workspace_cap_bytes=None,
+            tree_cap_bytes=None,
+            dynamic_launch_cap_formula=(
+                "effective_available_bytes-physical_memory_evidence_reserve_bytes; "
+                "no static tree cap"
+            ),
+            reserve_formula=(
+                "128MiB watchdog/evidence-write reserve only; no 4GiB or "
+                "15-percent system reserve"
+            ),
+            static_capacity_gates_disabled=True,
+            future_object_estimates="recorded_only_until_live_physical_pressure_sample",
+        )
+        facts["gates"].update(
+            reference_authority={"Z3_ORIGINAL_H7P5": "AUTHORITY_LIMITED"},
+            capacity_trial=True,
+            physical_memory_pressure_policy=True,
+            native_allocated_is_continuation_gate=False,
+            continuation_gate="post_numeric_live_physical_pressure_only",
+            future_estimates_are_not_exhaustion=True,
+            old_profiles_unchanged=True,
+        )
+        facts["capacity_trial"] = {
+            "numeric_policy": "bounded_native_quota_then_live_physical_pressure",
+            "numeric_backend_quota_mb": 4687,
+            "quota_is_capped_by_current_physical_headroom": True,
+            "legacy_static_inventory_tree_workspace_gates": "record_only",
+            "continuation_policy": "postnumeric RSS and MemAvailable pressure sample",
+            "future_objects_remain_measured_or_derived_evidence": True,
+            "no_automatic_or_numerical_retry": True,
+            "implementation_bug_replay": "existing_explicit_hash_bound_replay_only",
+        }
+        return facts
     if identity == CAPACITY_DUAL_CELL_CONDENSED_PROFILE:
         # V22 is a single, opt-in capacity trial for the already reviewed
         # original B.  It inherits the V21 numerical/lifecycle route and

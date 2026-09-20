@@ -98,6 +98,7 @@ def v22_capacity_context(
     cfg=None,
     p6_space_facts: Mapping[str, object],
     p4_metadata: Mapping[str, object],
+    evidence_prefix: str = "v22",
 ) -> dict:
     """Derive the fixed-B future ledger from live common/class metadata.
 
@@ -287,7 +288,7 @@ def v22_capacity_context(
     outer_krylov = _v14_outer_krylov_workspace_bytes(retained_rows, restart=32)
     solve_workspace = bal_workspace + p6_scratch + outer_krylov
     return {
-        "schema": "task039extra.v22.capacity-context.v2",
+        "schema": f"task039extra.{evidence_prefix}.capacity-context.v2",
         "classification": "derived_pre_numeric_payload_estimates_live_RSS_separate",
         "identity": {
             "n6": n6,
@@ -409,7 +410,9 @@ def v22_capacity_context(
     }
 
 
-def _v22_mumps_capacity_failure(native_state: Mapping[str, object]):
+def _v22_mumps_capacity_failure(
+    native_state: Mapping[str, object], *, evidence_prefix: str = "v22"
+):
     """Recognize only explicit native MUMPS numeric capacity codes."""
 
     if native_state.get("saved") is not True:
@@ -424,7 +427,7 @@ def _v22_mumps_capacity_failure(native_state: Mapping[str, object]):
     return {
         "native_error_code_infog1": int(code),
         "native_infog": dict(infog),
-        "evidence": "v22_numeric_native_facts.json",
+        "evidence": f"{evidence_prefix}_numeric_native_facts.json",
         "retry": False,
     }
 
@@ -441,6 +444,9 @@ def _v22_capacity_callbacks(
     summary: dict[str, object],
     native_observation_state: dict[str, object],
     write_json,
+    memory_policy: str = "CAPACITY_CONTROLLED_LOCAL_MUMPS_V22",
+    native_quota_mb: int = 4687,
+    evidence_prefix: str = "v22",
 ):
     """Build the production V22 factor callbacks from final live facts.
 
@@ -464,25 +470,28 @@ def _v22_capacity_callbacks(
     )
     from src.solvers.mumps_capacity_budget_v22 import capacity_budget_v22
 
+    physical_pressure = memory_policy == "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23"
+
     def build_capacity_request(policy_facts, _factor):
         resource = policy_facts.get("symbolic_resource")
         if not isinstance(resource, Mapping):
             raise RuntimeError("V22 symbolic resource sample is missing")
         inventory_cap = runtime.inventory_cap
-        if inventory_cap is None:
+        if inventory_cap is None and not physical_pressure:
             raise RuntimeError("V22 requires a finite inventory cap")
         capacity_context = v22_capacity_context(
             common,
             cfg=cfg,
             p6_space_facts=final_space_facts,
             p4_metadata=p4_metadata,
+            evidence_prefix=evidence_prefix,
         )
         # This is frozen before any post-numeric RSS or allocated-memory gate.
-        write_json(directory / "v22_capacity_context.json", capacity_context)
+        write_json(directory / f"{evidence_prefix}_capacity_context.json", capacity_context)
         summary["capacity_trial"] = dict(capacity_context)
         budget = capacity_budget_v22(
             launch_cap_bytes=int(resource["launch_cap_bytes"]),
-            inventory_cap_bytes=int(inventory_cap),
+            inventory_cap_bytes=(None if physical_pressure else int(inventory_cap)),
             current_tree_rss_bytes=int(resource["rss_bytes"]),
             current_inventory_bytes=int(runtime.inventory_used_bytes),
             future_inventory_components=dict(
@@ -491,22 +500,34 @@ def _v22_capacity_callbacks(
             future_workspace_phases=dict(
                 capacity_context["future_workspace_phases"]
             ),
-            numeric_untouched_pool_bytes=max(
-                0,
-                int(runtime.workspace_cap) - int(runtime.workspace_live_bytes),
+            numeric_untouched_pool_bytes=(
+                0
+                if physical_pressure
+                else max(
+                    0,
+                    int(runtime.workspace_cap) - int(runtime.workspace_live_bytes),
+                )
             ),
-            workspace_pool_cap_bytes=int(runtime.workspace_cap),
+            workspace_pool_cap_bytes=(
+                None if physical_pressure else int(runtime.workspace_cap)
+            ),
+            memory_policy=memory_policy,
+            backend_quota_mb=native_quota_mb,
         )
-        budget["workspace_pool_source"] = "runtime.workspace_cap"
+        budget["workspace_pool_source"] = (
+            "not_a_hard_gate_under_physical_memory_pressure"
+            if physical_pressure
+            else "runtime.workspace_cap"
+        )
         budget["capacity_context_schema"] = capacity_context["schema"]
-        runtime.marker("v22_capacity_pre_numeric_frozen", budget)
+        runtime.marker(f"{evidence_prefix}_capacity_pre_numeric_frozen", budget)
         if budget["status"] != "capacity_available":
             raise V14ResourceStop(
                 "V22 capacity unavailable before numeric: "
                 + json.dumps(budget, sort_keys=True)
             )
         return {
-            "policy": "CAPACITY_CONTROLLED_LOCAL_MUMPS_V22",
+            "policy": memory_policy,
             "requested_memory_limit_mb": int(budget["icntl23_mb"]),
             "capacity_budget": budget,
         }
@@ -517,7 +538,7 @@ def _v22_capacity_callbacks(
         infog = raw.get("infog", {}) if isinstance(raw, Mapping) else {}
         native = dict(infog) if isinstance(infog, Mapping) else {}
         native_record = {
-            "schema": "task039extra.v22.native-factor-observation.v1",
+            "schema": f"task039extra.{evidence_prefix}.native-factor-observation.v1",
             "source_sha": source_sha,
             "saved_at_utc_ns": time.time_ns(),
             "observation": dict(record),
@@ -531,14 +552,14 @@ def _v22_capacity_callbacks(
                 "pending_post_factor_hash",
             ),
         }
-        write_json(directory / "v22_numeric_native_facts.json", native_record)
+        write_json(directory / f"{evidence_prefix}_numeric_native_facts.json", native_record)
         native_observation_state.update(
             {"saved": True, "numeric_raw": raw, "native_infog": native}
         )
         record["native_infog"] = native
         try:
             record["numeric_resource_observer"] = runtime.sample(
-                "v22_numeric_observer", enforce=False
+                f"{evidence_prefix}_numeric_observer", enforce=False
             )
         except Exception as sample_error:
             record["numeric_resource_observer"] = {
@@ -548,16 +569,59 @@ def _v22_capacity_callbacks(
                     "message": str(sample_error),
                 },
             }
-        write_json(directory / "v22_numeric_observation.json", record)
-        runtime.marker("v22_numeric_observed_before_post_gate", record)
+        write_json(directory / f"{evidence_prefix}_numeric_observation.json", record)
+        runtime.marker(f"{evidence_prefix}_numeric_observed_before_post_gate", record)
 
     def continuation_gate(facts):
         budget = facts["memory_request"]["capacity_budget"]
         native = _mumps_memory_observation(facts)
         allocated = int(native["infog19_allocated_bytes_upper"])
+        used = int(native["infog22_used_bytes_upper"])
+        if physical_pressure:
+            observed = {
+                "allocated_upper_bytes": allocated,
+                "used_upper_bytes": used,
+                "continuation_max_allocated_bytes": None,
+                "future_inventory_bytes": int(budget["future_inventory_bytes"]),
+                "future_workspace_peak_bytes": int(
+                    budget["future_workspace_peak_bytes"]
+                ),
+                "gate": "live_physical_pressure_after_numeric",
+                "allocated_is_observation_not_hard_ceiling": True,
+            }
+            runtime.marker(f"{evidence_prefix}_continuation_native_observed", observed)
+            try:
+                resource = runtime.sample(
+                    f"{evidence_prefix}_continuation_physical_pressure_gate",
+                    enforce=True,
+                )
+            except V14ResourceStop as exc:
+                runtime.marker(
+                    f"{evidence_prefix}_continuation_physical_pressure_gate_failed",
+                    {
+                        **observed,
+                        "error": str(exc),
+                    },
+                )
+                raise
+            future_inventory = int(budget["future_inventory_bytes"])
+            observed.update(
+                {
+                    "rss_bytes": int(resource["rss_bytes"]),
+                    "effective_available_bytes": int(
+                        resource["memory_envelope"]["effective_available_bytes"]
+                    ),
+                    "launch_cap_bytes": int(resource["launch_cap_bytes"]),
+                    "projected_tree_bytes": int(resource["rss_bytes"])
+                    + future_inventory,
+                    "projected_tree_is_evidence_only": True,
+                }
+            )
+            runtime.marker(f"{evidence_prefix}_continuation_physical_pressure_gate", observed)
+            return
         if allocated > int(budget["continuation_max_allocated_bytes"]):
             runtime.marker(
-                "v22_continuation_allocated_gate_failed",
+                f"{evidence_prefix}_continuation_allocated_gate_failed",
                 {
                     "allocated_upper_bytes": allocated,
                     "continuation_max_allocated_bytes": budget[
@@ -577,7 +641,7 @@ def _v22_capacity_callbacks(
         runtime.check_inventory_projected(
             str(facts.get("label")), sum(components.values()) + future_inventory
         )
-        resource = runtime.sample("v22_continuation_resource_gate", enforce=True)
+        resource = runtime.sample(f"{evidence_prefix}_continuation_resource_gate", enforce=True)
         projected_tree = (
             int(resource["rss_bytes"])
             + future_inventory
@@ -593,10 +657,10 @@ def _v22_capacity_callbacks(
             "launch_cap_bytes": int(resource["launch_cap_bytes"]),
             "gate": "native_allocated_then_live_tree_before_post_numeric_gate",
         }
-        runtime.marker("v22_continuation_capacity_gate", gate_facts)
+        runtime.marker(f"{evidence_prefix}_continuation_capacity_gate", gate_facts)
         if projected_tree >= int(resource["launch_cap_bytes"]):
             raise V14ResourceStop(
-                "V22 continuation projected tree reaches launch cap"
+                f"{evidence_prefix} continuation projected tree reaches launch cap"
             )
 
     return build_capacity_request, observe_numeric, continuation_gate
@@ -626,6 +690,7 @@ def _run_physical_dual_cell_condensed_lowmem(
     save_complete_field_packet=None,
     capacity_trial=False,
     capacity_context=None,
+    capacity_policy="CAPACITY_CONTROLLED_LOCAL_MUMPS_V22",
 ):
     """Run one parameterized dual-condensed robustness stage."""
 
@@ -943,6 +1008,9 @@ def _run_physical_dual_cell_condensed_lowmem(
                 summary=summary,
                 native_observation_state=native_observation_state,
                 write_json=_write_json,
+                memory_policy=capacity_policy,
+                native_quota_mb=4687,
+                evidence_prefix=evidence_prefix,
             )
 
         def stack_factory(runtime_, common_, resolved_, *, stage):
@@ -1033,7 +1101,9 @@ def _run_physical_dual_cell_condensed_lowmem(
         )
     except Exception as exc:
         native_capacity_failure = (
-            _v22_mumps_capacity_failure(native_observation_state)
+            _v22_mumps_capacity_failure(
+                native_observation_state, evidence_prefix=evidence_prefix
+            )
             if capacity_trial
             else None
         )

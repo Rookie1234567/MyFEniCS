@@ -29,8 +29,17 @@ from src.runners.physical_v14_budget import (
     v14_time_policy_facts,
 )
 
+LEGACY_MEMORY_POLICY = "LEGACY_STATIC_MEMORY_ENVELOPE"
+PHYSICAL_MEMORY_PRESSURE_POLICY = "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23"
+PHYSICAL_MEMORY_EVIDENCE_RESERVE_BYTES = 128 * 1024**2
 
-def memory_envelope() -> dict:
+
+def memory_envelope(memory_policy: str = LEGACY_MEMORY_POLICY) -> dict:
+    if memory_policy not in {
+        LEGACY_MEMORY_POLICY,
+        PHYSICAL_MEMORY_PRESSURE_POLICY,
+    }:
+        raise ValueError(f"unsupported watchdog memory policy: {memory_policy!r}")
     memory = wsl_memory_snapshot()
     total, available = memory["mem_total_bytes"], memory["mem_available_bytes"]
     if total is None or available is None:
@@ -49,10 +58,25 @@ def memory_envelope() -> dict:
         if path == Path('/sys/fs/cgroup'):
             break
         path = path.parent
-    reserve = max(4 * 1024**3, int(.15 * total))
+    if memory_policy == PHYSICAL_MEMORY_PRESSURE_POLICY:
+        reserve = PHYSICAL_MEMORY_EVIDENCE_RESERVE_BYTES
+        launch_cap = available - reserve
+        reserve_reason = (
+            "small watchdog/evidence-write reserve; no legacy 4GiB or "
+            "15-percent reserve"
+        )
+        static_tree_cap = None
+    else:
+        reserve = max(4 * 1024**3, int(.15 * total))
+        launch_cap = min(12_000_000_000, available - reserve)
+        reserve_reason = "legacy max(4GiB,0.15*effective_total) reserve"
+        static_tree_cap = 12_000_000_000
     return {**memory, 'effective_total_bytes': total,
             'effective_available_bytes': available, 'reserve_bytes': reserve,
-            'launch_cap_bytes': min(12_000_000_000, available - reserve),
+            'launch_cap_bytes': launch_cap,
+            'memory_policy': memory_policy,
+            'reserve_reason': reserve_reason,
+            'static_tree_cap_bytes': static_tree_cap,
             'cgroup_limits': ancestors}
 
 
@@ -147,7 +171,8 @@ def stop_signal(reason, *, hard_stop_immediate, elapsed, grace_seconds):
 
 
 def runtime_tree_cap(start_cap_bytes: int, process_tree_rss_bytes: int,
-                     envelope: dict, *, explicit_tree_cap_bytes: int | None = None) -> int:
+                     envelope: dict, *, explicit_tree_cap_bytes: int | None = None,
+                     memory_policy: str = LEGACY_MEMORY_POLICY) -> int:
     """Return a non-increasing runtime cap without double-counting RSS.
 
     ``memory_envelope()['launch_cap_bytes']`` is free memory after the
@@ -155,13 +180,20 @@ def runtime_tree_cap(start_cap_bytes: int, process_tree_rss_bytes: int,
     Adding the two gives the current total-capacity estimate; comparing RSS
     directly with free memory would subtract the current job a second time.
     """
-    start_cap = int(start_cap_bytes)
+    if memory_policy not in {
+        LEGACY_MEMORY_POLICY,
+        PHYSICAL_MEMORY_PRESSURE_POLICY,
+    }:
+        raise ValueError(f"unsupported watchdog memory policy: {memory_policy!r}")
     current_capacity = (
         int(process_tree_rss_bytes)
         + int(envelope['effective_available_bytes'])
         - int(envelope['reserve_bytes'])
     )
-    limits = [start_cap, current_capacity]
+    if memory_policy == PHYSICAL_MEMORY_PRESSURE_POLICY:
+        # V23 must not turn the startup sample into a permanent ceiling.
+        return current_capacity
+    limits = [int(start_cap_bytes), current_capacity]
     if explicit_tree_cap_bytes is not None:
         limits.append(int(explicit_tree_cap_bytes))
     return min(limits)
@@ -177,12 +209,18 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
               stop_on_global_swap: bool = False,
               tree_cap_bytes: int | None = None,
               active_pc_seconds: float | None = None,
-              time_policy: str = V14_TIME_POLICY_ENFORCE) -> dict:
+              time_policy: str = V14_TIME_POLICY_ENFORCE,
+              memory_policy: str = LEGACY_MEMORY_POLICY) -> dict:
     """Supervise one command, with an explicit workflow wall budget."""
     try:
         time_policy = normalize_v14_time_policy(time_policy)
     except ValueError as exc:
         raise ValueError(str(exc)) from exc
+    if memory_policy not in {
+        LEGACY_MEMORY_POLICY,
+        PHYSICAL_MEMORY_PRESSURE_POLICY,
+    }:
+        raise ValueError(f"unsupported watchdog memory policy: {memory_policy!r}")
     if not command or any(
         not math.isfinite(float(value)) or float(value) <= 0.0
         for value in (wall_seconds, interval, grace_seconds)
@@ -194,6 +232,10 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
         raise ValueError('solve_seconds must be finite and positive when supplied')
     if tree_cap_bytes is not None and int(tree_cap_bytes) <= 0:
         raise ValueError('tree_cap_bytes must be positive when supplied')
+    if memory_policy == PHYSICAL_MEMORY_PRESSURE_POLICY and tree_cap_bytes is not None:
+        raise ValueError(
+            'physical memory pressure policy cannot receive a frozen tree_cap_bytes'
+        )
     if active_pc_seconds is not None and (
             not 0 < float(active_pc_seconds) < float('inf') or
             phase_path is None or not timebase_guard or not hard_stop_immediate):
@@ -208,9 +250,13 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
     if _children():
         raise RuntimeError('watchdog must be a dedicated parent with no existing children')
     directory.mkdir(parents=True, exist_ok=False)
-    envelope = memory_envelope()
+    envelope = memory_envelope(memory_policy)
     dynamic_cap = int(envelope['launch_cap_bytes'])
-    cap = min(dynamic_cap, int(tree_cap_bytes)) if tree_cap_bytes is not None else dynamic_cap
+    cap = (
+        min(dynamic_cap, int(tree_cap_bytes))
+        if tree_cap_bytes is not None
+        else dynamic_cap
+    )
     if tree_cap_bytes is not None:
         envelope = {
             **envelope,
@@ -247,6 +293,7 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                        timebase_policy=timebase_policy, timebase_policy_version=POLICY_VERSION)
     summary.update(
         v14_time_policy_facts(time_policy),
+        memory_policy=memory_policy,
         time_reference_seconds={
             'workflow': float(wall_seconds),
             'solve': None if solve_seconds is None else float(solve_seconds),
@@ -276,7 +323,7 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                 observed.update(children)
                 stage = 'resource_sample'
                 sample = process_tree_snapshot(os.getpid(), 'workflow', exit_code)
-                current = memory_envelope()
+                current = memory_envelope(memory_policy)
                 elapsed = time.monotonic() - started
                 phase = json.loads(phase_path.read_text()) if phase_path is not None and phase_path.exists() else {}
                 solve_observed = None
@@ -344,16 +391,22 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                 pc_time_exceeded = pc_time_exceeded or bool(
                     pc_gate is not None and pc_gate["exceeded"]
                 )
-                current_cap = (
-                    runtime_tree_cap(
+                if memory_policy == PHYSICAL_MEMORY_PRESSURE_POLICY:
+                    current_cap = runtime_tree_cap(
+                        cap,
+                        int(sample['rss_bytes']),
+                        current,
+                        memory_policy=memory_policy,
+                    )
+                elif tree_cap_bytes is not None:
+                    current_cap = runtime_tree_cap(
                         cap,
                         int(sample['rss_bytes']),
                         current,
                         explicit_tree_cap_bytes=tree_cap_bytes,
                     )
-                    if tree_cap_bytes is not None
-                    else cap
-                )
+                else:
+                    current_cap = cap
                 if not sample['all_status_readable']:
                     reason = 'MONITORING_FAILED'
                 else:
@@ -382,6 +435,7 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                                'worker_phase': phase,
                                'launch_cap_bytes': current_cap,
                                'watchdog_tree_cap_bytes': tree_cap_bytes,
+                               'memory_policy': memory_policy,
                                'warning': peak_rss >= .85 * cap,
                                'live_or_unreaped_children': sorted(children),
                                'time_policy': time_policy,
@@ -483,6 +537,7 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                                   all(value == 0 for value in swap_delta.values()) else
                                   'UNRESOLVED_global_activity_cannot_be_attributed'),
             'launch_envelope': envelope, 'samples': samples,
+            'memory_policy': memory_policy,
             'elapsed_seconds': time.monotonic() - started,
             'cache_metadata_stamp': cache_stamp,
             'source_state': source_state if source_state is not None else 'development_worktree; not formal PDE provenance',

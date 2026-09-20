@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from copy import deepcopy
 from pathlib import Path
 
@@ -24,6 +25,146 @@ def _write_jsonl(path: Path, rows):
         "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows),
         encoding="utf-8",
     )
+
+
+def _production_v23_worker_sample(monkeypatch, tmp_path: Path, available: int):
+    """Obtain a worker row through the production _V14Runtime.sample path."""
+
+    from benchmarks import subreaper_watchdog
+    import benchmarks.task038_full3d_jit_staging as staging
+    from src.runners.physical_p4_schur_v14 import _V14Runtime
+
+    runtime = object.__new__(_V14Runtime)
+    runtime.parent_pid = os.getppid()
+    runtime._phase = "factor"
+    runtime._pc_clock = None
+    runtime.memory_policy = checker.V23_MEMORY_POLICY
+    runtime.physical_memory_pressure = True
+    runtime.parent_cap = None
+    runtime.inventory_cap = None
+    runtime.workspace_cap = None
+    runtime.inventory_used_bytes = 123
+    runtime.inventory_peak_bytes = 456
+    runtime.workspace_live_bytes = 7
+    runtime.workspace_peak_bytes = 8
+    runtime.time_policy_facts = {
+        "time_policy": "observe_only",
+        "time_gate_evaluated": False,
+        "time_gate_action": "observe_only",
+    }
+    runtime.resources_path = tmp_path / "v23_worker_resources.jsonl"
+    monkeypatch.setattr(
+        staging,
+        "process_tree_snapshot",
+        lambda *_args: {
+            "rss_bytes": 256 * (1 << 20),
+            "pss_bytes": 128 * (1 << 20),
+            "all_status_readable": True,
+            "pss_all_readable": True,
+            "swap_bytes": 0,
+        },
+    )
+    monkeypatch.setattr(
+        subreaper_watchdog,
+        "memory_envelope",
+        lambda policy: {
+            "memory_policy": policy,
+            "effective_available_bytes": available,
+            "reserve_bytes": checker.V23_MEMORY_RESERVE_BYTES,
+            "cgroup_limits": [],
+        },
+    )
+    return runtime.sample("v23_checker_fixture", enforce=False)
+
+
+def test_v23_resource_facts_use_runtime_sample_and_separate_pressure(monkeypatch, tmp_path):
+    row = _production_v23_worker_sample(monkeypatch, tmp_path, 2 * (1 << 30))
+    assert "memory_policy" not in row
+    normal = checker._v23_sample_facts(row)
+    assert normal["passed"] is True
+    assert normal["actual_pressure"] is False
+
+    pressured = _production_v23_worker_sample(
+        monkeypatch, tmp_path, checker.V23_MEMORY_RESERVE_BYTES // 2
+    )
+    pressure_facts = checker._v23_sample_facts(pressured)
+    assert pressure_facts["passed"] is True
+    assert pressure_facts["actual_pressure"] is True
+    pressured["memory_envelope"]["memory_policy"] = "FAKE_POLICY"
+    assert checker._v23_sample_facts(pressured)["passed"] is False
+
+
+def test_v23_resource_facts_require_per_sample_global_swap_baseline(monkeypatch, tmp_path):
+    row = _production_v23_worker_sample(monkeypatch, tmp_path, 2 * (1 << 30))
+    watchdog_row = dict(row)
+    watchdog_row.update(
+        {
+            "memory_policy": checker.V23_MEMORY_POLICY,
+            "watchdog_tree_cap_bytes": None,
+            "global_swap_pages": {"pswpin_pages": 0, "pswpout_pages": 0},
+        }
+    )
+    (tmp_path / "watchdog").mkdir()
+    _write_jsonl(tmp_path / "watchdog/resources.jsonl", [watchdog_row])
+    _write_jsonl(tmp_path / "v23_worker_resources.jsonl", [row])
+    _write_json(
+        tmp_path / "run_summary.json",
+        {
+            "resource_authority": {
+                "memory_policy": checker.V23_MEMORY_POLICY,
+                "launch_envelope": {
+                    "memory_policy": checker.V23_MEMORY_POLICY,
+                    "reserve_bytes": checker.V23_MEMORY_RESERVE_BYTES,
+                    "static_tree_cap_bytes": None,
+                },
+                "global_swap_activity": {
+                    "baseline": {"pswpin_pages": 0, "pswpout_pages": 0},
+                    "end": {"pswpin_pages": 0, "pswpout_pages": 0},
+                },
+                "descendants_cleared": True,
+                "remaining_child_pids": [],
+            },
+            "time_policy": "observe_only",
+            "time_gate_evaluated": False,
+        },
+    )
+    facts = checker._v23_physical_memory_resource_facts(tmp_path)
+    assert facts["record_valid"] is True
+    assert facts["success_resource_passed"] is True
+    watchdog_row["global_swap_pages"]["pswpout_pages"] = 1
+    _write_jsonl(tmp_path / "watchdog/resources.jsonl", [watchdog_row])
+    assert checker._v23_physical_memory_resource_facts(tmp_path)["record_valid"] is False
+
+
+def test_v23_check_run_uses_shared_capacity_wrapper(monkeypatch, tmp_path):
+    run = tmp_path / "v23-wrapper"
+    run.mkdir()
+    _write_json(
+        run / checker.V23_SUMMARY_FILENAME,
+        {
+            "schema": checker.V23_SUMMARY_SCHEMA,
+            "profile": checker.V23_PROFILE,
+            "stage": checker.V23_STAGE,
+            "source_sha": SOURCE_SHA,
+            "result_classification": "WORKER_FAILED",
+        },
+    )
+    monkeypatch.setattr(
+        checker,
+        "_v23_physical_memory_evidence_facts",
+        lambda *_args, **_kwargs: {
+            "passed": True,
+            "capacity_stop_evidence": False,
+            "checks": {},
+        },
+    )
+    result = checker.check_run(
+        run, expected_source_sha=SOURCE_SHA, profile="v23"
+    )
+    assert result["schema"] == checker.V23_CHECKER_SCHEMA
+    assert result["evidence_valid"] is True
+    assert result["full_numerical_pass"] is False
+    assert result["official_result"] is False
 
 
 def _capacity_run(tmp_path: Path):

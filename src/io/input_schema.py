@@ -1006,6 +1006,7 @@ FIELD_SPECS: Final = (
             "physical_p6_trace_p4_condensed_lowmem_v20",
             "physical_p6_trace_p4_condensed_robustness_v21",
             "physical_p6_trace_p4_condensed_capacity_v22",
+            "physical_p6_trace_p4_condensed_physical_memory_v23",
             "hybrid_block_ldu_ilu0_dtn_woodbury",
         ),
         constraints=("only reviewed iterative identities are public",),
@@ -1023,6 +1024,7 @@ FIELD_SPECS: Final = (
             "LEGACY_LOCAL_MUMPS_MEMORY_POLICY",
             "SYMBOLIC_SIZED_LOCAL_MUMPS_V11",
             "CAPACITY_CONTROLLED_LOCAL_MUMPS_V22",
+            "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
         ),
         constraints=(
             "V11 profile fixes SYMBOLIC_SIZED_LOCAL_MUMPS_V11; legacy remains the default",

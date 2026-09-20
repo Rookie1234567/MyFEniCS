@@ -41,20 +41,34 @@ from src.runners.physical_p4_schur_v14 import _v14_physical_checks
 
 CHECKER_SCHEMA = "task039extra.v21.authority-checker.v1"
 V22_CHECKER_SCHEMA = "task039extra.v22.authority-checker.v1"
+V23_CHECKER_SCHEMA = "task039extra.v23.authority-checker.v1"
 PASS_CLASSIFICATION = "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED"
 MODE_SHA = "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
 V21_PROFILE = "physical_p6_trace_p4_condensed_robustness_v21"
 V22_PROFILE = "physical_p6_trace_p4_condensed_capacity_v22"
+V23_PROFILE = "physical_p6_trace_p4_condensed_physical_memory_v23"
 V21_SUMMARY_SCHEMA = "task039extra.v21.worker-summary.v1"
 V22_SUMMARY_SCHEMA = "task039extra.v22.worker-summary.v1"
+V23_SUMMARY_SCHEMA = "task039extra.v23.worker-summary.v1"
 V22_SUMMARY_FILENAME = "physical_dual_condensed_capacity_v22_summary.json"
+V23_SUMMARY_FILENAME = "physical_dual_condensed_physical_memory_v23_summary.json"
 V22_EVIDENCE_PREFIX = "v22"
+V23_EVIDENCE_PREFIX = "v23"
 V22_STAGE = "Z3_ORIGINAL_H7P5"
+V23_STAGE = "Z3_ORIGINAL_H7P5"
 V22_BATCH_IDENTITY = "review_v22_original_b_capacity_trial"
+V23_BATCH_IDENTITY = "review_v23_original_b_physical_memory_trial"
 V22_LEDGER_SCHEMA = "task039extra.v22.shared-workflow-ledger.v1"
+V23_LEDGER_SCHEMA = "task039extra.v23.shared-workflow-ledger.v1"
 V22_PREDECESSOR_V21_LEDGER_SHA256 = (
     "4448834859fd65e0ffe3d485b7d5d91a24d258e9970045daa28f90b88f10571f"
 )
+V23_PREDECESSOR_V22_LEDGER_SHA256 = (
+    "0363e2230192dd3815653643852192e12cbeb666056d0b786b38f6edeb8f45b9"
+)
+V23_MEMORY_POLICY = "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23"
+V23_MEMORY_RESERVE_BYTES = 128 * 1024**2
+V23_BACKEND_QUOTA_MB = 4687
 V20_P6_INVENTORY_LABEL = "v20_p6_local_caches"
 V21_P6_INVENTORY_LABEL = "v21_p6_local_caches"
 HISTORICAL_V21_Z2_SOURCE_SHA = "863ec3bcd7eead867795284db11fc39e758a6f08"
@@ -86,7 +100,24 @@ def _checker_contract(profile: str) -> dict[str, Any]:
             "stage_set": {V22_STAGE},
             "checker_schema": V22_CHECKER_SCHEMA,
             "failure_classification": "V22_CHECKER_FAIL",
+            "full_physical_failure_classification": "V22_FULL_PHYSICAL_CHECK_FAIL",
+            "capacity_limited_classification": "CAPACITY_EVIDENCE_VALID_AUTHORITY_LIMITED",
             "historical_schema_compatibility": False,
+        }
+    if profile == "v23":
+        return {
+            "name": "v23",
+            "profile": V23_PROFILE,
+            "summary_schema": V23_SUMMARY_SCHEMA,
+            "summary_filename": V23_SUMMARY_FILENAME,
+            "evidence_prefix": V23_EVIDENCE_PREFIX,
+            "stage_set": {V23_STAGE},
+            "checker_schema": V23_CHECKER_SCHEMA,
+            "failure_classification": "V23_CHECKER_FAIL",
+            "full_physical_failure_classification": "V23_FULL_PHYSICAL_CHECK_FAIL",
+            "capacity_limited_classification": "V23_CAPACITY_EVIDENCE_VALID_AUTHORITY_LIMITED",
+            "historical_schema_compatibility": False,
+            "resource_policy": "physical_memory_pressure_v23",
         }
     raise ValueError(f"unsupported dual-condensed checker profile: {profile}")
 
@@ -1632,6 +1663,526 @@ def _v22_capacity_evidence_facts(
     return facts
 
 
+def _v23_sample_facts(
+    row: Mapping[str, Any], *, watchdog: bool = False
+) -> dict[str, Any]:
+    """Check one producer-shaped V23 sample without imposing V22 caps."""
+
+    envelope = row.get("memory_envelope")
+    checks = {
+        "envelope": isinstance(envelope, Mapping),
+        "policy": isinstance(envelope, Mapping)
+        and envelope.get("memory_policy") == V23_MEMORY_POLICY,
+        "reserve": isinstance(envelope, Mapping)
+        and envelope.get("reserve_bytes") == V23_MEMORY_RESERVE_BYTES,
+        "available": isinstance(envelope, Mapping)
+        and type(envelope.get("effective_available_bytes")) is int
+        and envelope.get("effective_available_bytes") >= 0,
+        "rss": type(row.get("rss_bytes")) is int and row.get("rss_bytes") >= 0,
+        "swap": type(row.get("swap_bytes")) is int and row.get("swap_bytes") >= 0,
+        "cap": type(row.get("launch_cap_bytes")) is int,
+        "readable": row.get("all_status_readable") is True
+        and row.get("pss_all_readable") is True,
+        "time": row.get("time_policy") == "observe_only"
+        and row.get("time_gate_evaluated") is False,
+    }
+    if isinstance(envelope, Mapping) and checks["available"] and checks["reserve"]:
+        checks["dynamic_cap"] = row.get("launch_cap_bytes") == (
+            int(row["rss_bytes"])
+            + int(envelope["effective_available_bytes"])
+            - int(envelope["reserve_bytes"])
+        )
+    else:
+        checks["dynamic_cap"] = False
+    limits = envelope.get("cgroup_limits") if isinstance(envelope, Mapping) else None
+    checks["cgroup_limits"] = isinstance(limits, list) and all(
+        isinstance(item, Mapping)
+        and type(item.get("limit_bytes")) is int
+        and item["limit_bytes"] > 0
+        and type(item.get("current_bytes")) is int
+        and item["current_bytes"] >= 0
+        for item in limits
+    )
+    if watchdog:
+        checks["top_policy"] = row.get("memory_policy") == V23_MEMORY_POLICY
+        checks["watchdog_cap"] = row.get("watchdog_tree_cap_bytes") is None
+        pages = row.get("global_swap_pages")
+        checks["global_swap"] = isinstance(pages, Mapping) and all(
+            type(pages.get(key)) is int and pages[key] >= 0
+            for key in ("pswpin_pages", "pswpout_pages")
+        )
+    else:
+        checks["worker_cap"] = row.get("parent_tree_cap_bytes") is None
+        checks["worker_policy_location"] = "memory_policy" not in row or row.get(
+            "memory_policy"
+        ) == V23_MEMORY_POLICY
+    actual_pressure = bool(
+        checks["dynamic_cap"]
+        and (
+            int(envelope["effective_available_bytes"]) <= int(envelope["reserve_bytes"])
+            or int(row["rss_bytes"]) >= int(row["launch_cap_bytes"])
+            or int(row["swap_bytes"]) != 0
+        )
+    ) if isinstance(envelope, Mapping) and checks["rss"] and checks["swap"] else False
+    return {
+        "passed": all(checks.values()),
+        "checks": checks,
+        "actual_pressure": actual_pressure,
+        "rss_bytes": row.get("rss_bytes"),
+        "launch_cap_bytes": row.get("launch_cap_bytes"),
+        "effective_available_bytes": envelope.get("effective_available_bytes")
+        if isinstance(envelope, Mapping)
+        else None,
+        "reserve_bytes": envelope.get("reserve_bytes")
+        if isinstance(envelope, Mapping)
+        else None,
+    }
+
+
+def _v23_physical_memory_resource_facts(
+    run_directory: Path, *, samples: list[Mapping[str, Any]] | None = None
+) -> dict[str, Any]:
+    """Validate V23's live physical-pressure evidence and cleanup only."""
+
+    samples = (
+        list(samples)
+        if samples is not None
+        else _jsonl(run_directory / "watchdog/resources.jsonl")
+    )
+    worker = _jsonl(run_directory / f"{V23_EVIDENCE_PREFIX}_worker_resources.jsonl")
+    run_summary = _json(run_directory / "run_summary.json")
+    authority = run_summary["resource_authority"]
+    launch_envelope = authority["launch_envelope"]
+    global_swap = authority["global_swap_activity"]
+    baseline = global_swap["baseline"]
+    end = global_swap["end"]
+    swap_keys = ("pswpin_pages", "pswpout_pages")
+    watchdog = [_v23_sample_facts(row, watchdog=True) for row in samples]
+    workers = [_v23_sample_facts(row) for row in worker]
+    global_counters_match = all(
+        isinstance(row.get("global_swap_pages"), Mapping)
+        and all(row["global_swap_pages"].get(key) == baseline.get(key) for key in swap_keys)
+        for row in samples
+    )
+    checks = {
+        "policy": authority.get("memory_policy") == V23_MEMORY_POLICY
+        and launch_envelope.get("memory_policy") == V23_MEMORY_POLICY
+        and launch_envelope.get("reserve_bytes") == V23_MEMORY_RESERVE_BYTES
+        and launch_envelope.get("static_tree_cap_bytes") is None,
+        "watchdog_samples": bool(watchdog) and all(fact["passed"] for fact in watchdog),
+        "worker_samples": bool(workers) and all(fact["passed"] for fact in workers),
+        "zero_swap": all(row.get("swap_bytes") == 0 for row in samples + worker)
+        and all(
+            type(baseline.get(key)) is int
+            and type(end.get(key)) is int
+            and end[key] == baseline[key]
+            for key in swap_keys
+        )
+        and global_counters_match,
+        "cleanup": authority.get("descendants_cleared") is True
+        and authority.get("remaining_child_pids") == [],
+        "observe_only": run_summary.get("time_policy") == "observe_only"
+        and run_summary.get("time_gate_evaluated") is False,
+    }
+    pressure_stop_evidence = any(
+        fact["passed"] and fact["actual_pressure"] for fact in watchdog + workers
+    )
+    record_valid = all(checks.values())
+    failure_indices = [
+        index
+        for index, fact in enumerate(watchdog + workers)
+        if fact["passed"] is not True
+    ]
+    pressure_indices = [
+        index
+        for index, fact in enumerate(watchdog + workers)
+        if fact["passed"] and fact["actual_pressure"]
+    ]
+    available_values = [
+        int(fact["effective_available_bytes"])
+        for fact in watchdog + workers
+        if type(fact.get("effective_available_bytes")) is int
+    ]
+    return {
+        "scope": "continuous_parent_process_tree_dynamic_physical_pressure",
+        "passed": record_valid and not pressure_stop_evidence,
+        "record_valid": record_valid,
+        "success_resource_passed": record_valid and not pressure_stop_evidence,
+        "checks": checks,
+        "watchdog_sample_count": len(samples),
+        "worker_sample_count": len(worker),
+        "pressure_stop_evidence": pressure_stop_evidence,
+        "failure_indices": failure_indices,
+        "pressure_indices": pressure_indices,
+        "peak_rss_bytes": max(
+            [int(row["rss_bytes"]) for row in samples + worker if type(row.get("rss_bytes")) is int]
+            or [0]
+        ),
+        "minimum_effective_available_bytes": min(available_values) if available_values else None,
+        "raw_files": {
+            "watchdog": str(run_directory / "watchdog/resources.jsonl"),
+            "worker": str(run_directory / f"{V23_EVIDENCE_PREFIX}_worker_resources.jsonl"),
+        },
+        "raw_sha256": {
+            "watchdog": _sha256(run_directory / "watchdog/resources.jsonl"),
+            "worker": _sha256(
+                run_directory / f"{V23_EVIDENCE_PREFIX}_worker_resources.jsonl"
+            ),
+        },
+        "launch_envelope": launch_envelope,
+    }
+
+
+def _v23_physical_memory_evidence_facts(
+    run_directory: str | Path,
+    summary: Mapping[str, Any],
+    *,
+    expected_source_sha: str | None = None,
+    ledger_path: str | Path | None = None,
+) -> dict[str, Any]:
+    """Check only the V23 dynamic-pressure/native/ledger increment."""
+
+    from src.solvers.mumps_capacity_budget_v22 import capacity_budget_v22
+
+    directory = Path(run_directory).resolve()
+    events = _jsonl(directory / f"{V23_EVIDENCE_PREFIX}_events.jsonl")
+    worker_rows = _jsonl(
+        directory / f"{V23_EVIDENCE_PREFIX}_worker_resources.jsonl"
+    )
+    budget_rows = [
+        row for row in events
+        if row.get("event") == "v23_capacity_pre_numeric_frozen"
+    ]
+    symbolic_rows = [
+        row for row in events
+        if row.get("event") == "schur_factor_symbolic_complete"
+    ]
+    budget = (
+        budget_rows[0].get("facts", {})
+        if len(budget_rows) == 1
+        and isinstance(budget_rows[0].get("facts"), Mapping)
+        else {}
+    )
+    checks = {
+        "source": False, "context": False, "budget_sample": False,
+        "budget_recomputed": False, "budget_policy": False,
+        "resource_evidence": False, "native_record": False,
+        "native_infog": False, "matrix_before_csr": False,
+        "matrix_after_pending": False, "quota_readback_controls": False,
+        "native_observed_before_gate": False, "continuation_sample": False,
+        "ledger_identity": False, "ledger_attempt_settled": False,
+        "controlled_stop_classification": False,
+    }
+    native: Mapping[str, Any] = {}
+    capacity_stop_evidence = False
+    native_allocated_upper = None
+    native_used_upper = None
+    try:
+        source_sha = str(summary.get("source_sha", ""))
+        checks["source"] = (
+            len(source_sha) == 40
+            and source_sha == source_sha.lower()
+            and all(character in "0123456789abcdef" for character in source_sha)
+            and (expected_source_sha is None or source_sha == expected_source_sha)
+        )
+        context = _json(directory / "v23_capacity_context.json")
+        components = context["future_inventory_components"]
+        phases = context["future_workspace_phases"]
+        checks["context"] = (
+            context.get("schema") == "task039extra.v23.capacity-context.v2"
+            and isinstance(components, Mapping)
+            and isinstance(phases, Mapping)
+        )
+        resource = _v23_physical_memory_resource_facts(directory)
+        checks["resource_evidence"] = resource["record_valid"] is True
+
+        if (
+            checks["context"]
+            and len(symbolic_rows) == len(budget_rows) == 1
+            and type(symbolic_rows[0].get("timestamp_ns")) is int
+            and type(budget_rows[0].get("timestamp_ns")) is int
+        ):
+            frozen = [
+                row for row in worker_rows
+                if type(row.get("timestamp_ns")) is int
+                and symbolic_rows[0]["timestamp_ns"] < row["timestamp_ns"]
+                <= budget_rows[0]["timestamp_ns"]
+            ]
+            frozen = max(frozen, key=lambda row: row["timestamp_ns"]) if frozen else {}
+            checks["budget_sample"] = (
+                frozen.get("launch_cap_bytes") == budget.get("launch_cap_bytes")
+                and frozen.get("rss_bytes") == budget.get("current_tree_rss_bytes")
+                and frozen.get("inventory_used_bytes")
+                == budget.get("current_inventory_bytes")
+            )
+            recalculated = capacity_budget_v22(
+                launch_cap_bytes=int(budget["launch_cap_bytes"]),
+                inventory_cap_bytes=None,
+                current_tree_rss_bytes=int(budget["current_tree_rss_bytes"]),
+                current_inventory_bytes=int(budget["current_inventory_bytes"]),
+                future_inventory_components=components,
+                future_workspace_phases=phases,
+                numeric_untouched_pool_bytes=0,
+                workspace_pool_cap_bytes=None,
+                memory_policy=V23_MEMORY_POLICY,
+                backend_quota_mb=V23_BACKEND_QUOTA_MB,
+            )
+            checks["budget_recomputed"] = all(
+                recalculated.get(key) == budget.get(key)
+                for key in (
+                    "schema", "policy", "status", "launch_cap_bytes",
+                    "current_tree_rss_bytes", "current_inventory_bytes",
+                    "numeric_untouched_pool_bytes", "workspace_pool_cap_bytes",
+                    "continuation_max_allocated_bytes", "continuation_status",
+                    "backend_quota_mb", "icntl23_mb",
+                )
+            )
+            checks["budget_policy"] = (
+                budget.get("policy") == V23_MEMORY_POLICY
+                and budget.get("backend_quota_mb") == V23_BACKEND_QUOTA_MB
+                and budget.get("inventory_cap_bytes") is None
+                and budget.get("workspace_pool_cap_bytes") is None
+                and budget.get("continuation_max_allocated_bytes") is None
+                and budget.get("capacity_context_schema")
+                == "task039extra.v23.capacity-context.v2"
+            )
+
+        native_path = directory / f"{V23_EVIDENCE_PREFIX}_numeric_native_facts.json"
+        native_required = budget.get("status") == "capacity_available"
+        if native_path.is_file():
+            native = _json(native_path)
+            observation = native.get("observation", {})
+            raw = observation.get("numeric_raw", {})
+            infog = raw.get("infog") if isinstance(raw, Mapping) else None
+            checks["native_record"] = (
+                native.get("schema")
+                == "task039extra.v23.native-factor-observation.v1"
+                and native.get("source_sha") == source_sha
+            )
+            checks["native_infog"] = (
+                isinstance(infog, Mapping)
+                and all(key in infog for key in ("1", "2", "9", "19", "22", "29"))
+                and native.get("native_infog") == dict(infog)
+            )
+            before = native.get("matrix_identity_before_factor")
+            checks["matrix_before_csr"] = (
+                isinstance(before, Mapping)
+                and isinstance(before.get("csr_sha256"), str)
+                and len(before["csr_sha256"]) == 64
+                and before == observation.get("matrix_identity_before_factor")
+            )
+            checks["matrix_after_pending"] = (
+                native.get("matrix_identity_after_factor") is None
+                and native.get("matrix_identity_after_factor_status")
+                in {"pending_post_factor_hash", "not_run", "unknown"}
+            )
+            before_icntl = observation.get(
+                "symbolic_memory_settings", {}
+            ).get("icntl")
+            after_icntl = observation.get(
+                "symbolic_memory_settings_after_memory_limit", {}
+            ).get("icntl")
+            unchanged = (
+                isinstance(before_icntl, Mapping)
+                and isinstance(after_icntl, Mapping)
+                and all(
+                    before_icntl.get(key) == after_icntl.get(key)
+                    for key in set(before_icntl) | set(after_icntl)
+                    if key != "23"
+                )
+            )
+            request = observation.get("memory_request", {})
+            requested = request.get("requested_memory_limit_mb")
+            checks["quota_readback_controls"] = (
+                type(requested) is int and requested > 0
+                and request.get("policy") == V23_MEMORY_POLICY
+                and requested == budget.get("icntl23_mb")
+                and observation.get("icntl23_readback_mb") == requested
+                and unchanged
+            )
+        else:
+            checks.update(
+                {
+                    "native_record": not native_required,
+                    "native_infog": not native_required,
+                    "matrix_before_csr": not native_required,
+                    "matrix_after_pending": not native_required,
+                    "quota_readback_controls": not native_required,
+                }
+            )
+
+        gates = [
+            row for row in events
+            if row.get("event") in {
+                "v23_continuation_physical_pressure_gate",
+                "v23_continuation_physical_pressure_gate_failed",
+            }
+        ]
+        observed = [
+            row for row in events
+            if row.get("event") == "v23_numeric_observed_before_post_gate"
+        ]
+        checks["native_observed_before_gate"] = (
+            not native_path.is_file()
+            or len(observed) == 1
+            and all(
+                observed[0].get("timestamp_ns", -1)
+                <= row.get("timestamp_ns", -1)
+                for row in gates
+            )
+        )
+        infog = native.get("native_infog", {})
+        native_code = infog.get("1") if isinstance(infog, Mapping) else None
+        if isinstance(infog, Mapping) and type(infog.get("19")) is int:
+            native_allocated_upper = (int(infog["19"]) + 1) * 1_000_000
+            if type(infog.get("22")) is int:
+                native_used_upper = (int(infog["22"]) + 1) * 1_000_000
+
+        def bound(event: Mapping[str, Any]) -> list[dict[str, Any]]:
+            return [
+                _v23_sample_facts(row)
+                for row in worker_rows
+                if row.get("label") == "v23_continuation_physical_pressure_gate"
+                and row.get("timestamp_ns", -1) <= event.get("timestamp_ns", -1)
+            ]
+
+        controlled_resource = (
+            summary.get("status") == "CONTROLLED_STOP"
+            and summary.get("result_classification") == "RESOURCE_CONTROLLED_STOP"
+        )
+        if native_code in {-9, -19}:
+            checks["continuation_sample"] = (
+                not gates
+                and summary.get("status") == "CONTROLLED_STOP"
+                and summary.get("result_classification")
+                == "MUMPS_CAPACITY_CONTROLLED_STOP"
+            )
+            capacity_stop_evidence = checks["continuation_sample"]
+        elif type(native_code) is int and native_code >= 0:
+            success = [
+                row for row in gates
+                if row.get("event")
+                == "v23_continuation_physical_pressure_gate"
+            ]
+            failed = [
+                row for row in gates
+                if row.get("event")
+                == "v23_continuation_physical_pressure_gate_failed"
+            ]
+            if len(success) == 1 and not failed:
+                facts = success[0].get("facts", {})
+                samples = bound(success[0])
+                projected = (
+                    facts.get("rss_bytes") + facts.get("future_inventory_bytes")
+                    if type(facts.get("rss_bytes")) is int
+                    and type(facts.get("future_inventory_bytes")) is int
+                    else None
+                )
+                checks["continuation_sample"] = (
+                    facts.get("allocated_upper_bytes") == native_allocated_upper
+                    and facts.get("used_upper_bytes") == native_used_upper
+                    and facts.get("continuation_max_allocated_bytes") is None
+                    and facts.get("allocated_is_observation_not_hard_ceiling") is True
+                    and facts.get("gate") == "live_physical_pressure_after_numeric"
+                    and facts.get("projected_tree_bytes") == projected
+                    and len(samples) == 1
+                    and samples[0]["passed"]
+                    and not samples[0]["actual_pressure"]
+                )
+            elif len(failed) == 1 and not success:
+                facts = failed[0].get("facts", {})
+                samples = bound(failed[0])
+                checks["continuation_sample"] = (
+                    facts.get("allocated_upper_bytes") == native_allocated_upper
+                    and facts.get("used_upper_bytes") == native_used_upper
+                    and facts.get("continuation_max_allocated_bytes") is None
+                    and len(
+                        [sample for sample in samples
+                         if sample["passed"] and sample["actual_pressure"]]
+                    ) == 1
+                )
+                capacity_stop_evidence = (
+                    checks["continuation_sample"] and controlled_resource
+                )
+        elif not native_path.is_file() and budget.get("status") == "capacity_unavailable":
+            checks["continuation_sample"] = True
+            capacity_stop_evidence = (
+                controlled_resource
+                and resource["pressure_stop_evidence"] is True
+            )
+        if (
+            not capacity_stop_evidence
+            and controlled_resource
+            and resource["record_valid"] is True
+            and resource["pressure_stop_evidence"] is True
+        ):
+            capacity_stop_evidence = True
+        checks["controlled_stop_classification"] = (
+            capacity_stop_evidence
+            or (
+                not controlled_resource
+                and summary.get("result_classification")
+                != "MUMPS_CAPACITY_CONTROLLED_STOP"
+            )
+        )
+
+        if ledger_path is None:
+            ledger_path = (
+                Path(__file__).resolve().parents[1]
+                / "benchmarks/artifacts/task39extra/dual_condensed_physical_memory_v23"
+                / "review_v23_original_b_physical_memory_trial/shared_workflow_ledger.json"
+            )
+        ledger = _json(Path(ledger_path).resolve())
+        stage_record = ledger.get("stages", {}).get(V23_STAGE, {})
+        attempts = stage_record.get("attempts", [])
+        replay_count = ledger.get("unique_bug_replay_count")
+        predecessor = ledger.get("predecessors", {}).get("v22", {})
+        matching = [
+            attempt for attempt in attempts
+            if isinstance(attempt, Mapping)
+            and Path(str(attempt.get("run_directory", ""))).resolve() == directory
+            and attempt.get("source_sha") == source_sha
+        ]
+        checks["ledger_identity"] = (
+            ledger.get("schema") == V23_LEDGER_SCHEMA
+            and ledger.get("batch_identity") == V23_BATCH_IDENTITY
+            and ledger.get("allowed_stages") == [V23_STAGE]
+            and ledger.get("cross_case_recycling") is False
+            and isinstance(predecessor, Mapping)
+            and predecessor.get("sha256") == V23_PREDECESSOR_V22_LEDGER_SHA256
+        )
+        checks["ledger_attempt_settled"] = (
+            len(ledger.get("stages", {})) == 1
+            and stage_record.get("active_attempt") is None
+            and len(matching) == 1
+            and type(replay_count) is int
+            and 0 <= replay_count <= 1
+            and len(attempts) == 1 + replay_count
+            and ledger.get("fresh_worker_count") == len(attempts)
+            and len(ledger.get("source_attempts", [])) == len(attempts)
+        )
+        facts = {
+            "status": "CHECKED",
+            "checks": checks,
+            "budget": budget,
+            "native": native,
+            "resource": resource,
+            "ledger_path": str(Path(ledger_path).resolve()),
+            "native_required": native_required,
+            "native_allocated_upper_bytes": native_allocated_upper,
+            "native_used_upper_bytes": native_used_upper,
+            "capacity_stop_evidence": bool(capacity_stop_evidence),
+            "pressure_stop_evidence": resource["pressure_stop_evidence"],
+        }
+    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        facts = {
+            "status": "FAILED_TO_READ_OR_VALIDATE",
+            "checks": checks,
+            "error": {"type": type(exc).__name__, "message": str(exc)},
+            "capacity_stop_evidence": False,
+        }
+    facts["passed"] = all(checks.values())
+    return facts
 def _check_full_run(
     run_directory: str | Path,
     *,
@@ -1943,9 +2494,14 @@ def _check_full_run(
         aliased_events = _alias_v21_events(
             events, stage=stage, evidence_prefix=evidence_prefix
         )
-        resources = resource_facts(
-            run_directory, fullspace=True, prefix=evidence_prefix
-        )
+        if contract.get("resource_policy") == "physical_memory_pressure_v23":
+            resources = _v23_physical_memory_resource_facts(
+                run_directory, samples=samples
+            )
+        else:
+            resources = resource_facts(
+                run_directory, fullspace=True, prefix=evidence_prefix
+            )
         phases = phase_resource_facts(samples, aliased_events)
         jit = _jit_preparation_facts_v21(aliased_events, samples)
         cache = _cache_description_facts_v21(
@@ -2053,10 +2609,13 @@ def _check_v22_capacity_run(
     *,
     expected_source_sha: str | None = None,
     ledger_path: str | Path | None = None,
+    contract: Mapping[str, Any] | None = None,
+    evidence_evaluator: Any | None = None,
 ) -> dict[str, Any]:
-    """Check V22 capacity evidence and conditionally reuse the full checker."""
+    """Run one explicit capacity contract through the shared V22 wrapper."""
 
-    contract = _checker_contract("v22")
+    contract = dict(contract or _checker_contract("v22"))
+    evidence_evaluator = evidence_evaluator or _v22_capacity_evidence_facts
     directory = Path(run_directory).resolve()
     summary_path = directory / str(contract["summary_filename"])
     summary_bytes = summary_path.read_bytes()
@@ -2067,11 +2626,13 @@ def _check_v22_capacity_run(
         summary,
         source_sha=source_sha,
         stage=stage,
-        expected_schema=V22_SUMMARY_SCHEMA,
-        expected_profile=V22_PROFILE,
-        allow_historical_compatibility=False,
+        expected_schema=str(contract["summary_schema"]),
+        expected_profile=str(contract["profile"]),
+        allow_historical_compatibility=bool(
+            contract.get("historical_schema_compatibility", False)
+        ),
     )
-    capacity = _v22_capacity_evidence_facts(
+    capacity = evidence_evaluator(
         directory,
         summary,
         expected_source_sha=expected_source_sha,
@@ -2099,7 +2660,9 @@ def _check_v22_capacity_run(
             expected_source_sha=expected_source_sha,
             contract=contract,
         )
-    capacity_valid = bool(capacity.get("passed"))
+    capacity_valid = bool(capacity.get("passed")) and (
+        contract.get("name") != "v23" or schema_facts.get("passed") is True
+    )
     full_physical_valid = bool(
         full_result is not None and full_result.get("evidence_valid") is True
     )
@@ -2111,10 +2674,20 @@ def _check_v22_capacity_run(
         classification = str(full_result.get("classification", PASS_CLASSIFICATION))
         physics_status = "PASS"
     elif complete_field:
-        classification = "V22_FULL_PHYSICAL_CHECK_FAIL"
+        classification = str(
+            contract.get(
+                "full_physical_failure_classification",
+                f"{str(contract['name']).upper()}_FULL_PHYSICAL_CHECK_FAIL",
+            )
+        )
         physics_status = "FAIL"
     elif evidence_valid and capacity.get("capacity_stop_evidence") is True:
-        classification = "CAPACITY_EVIDENCE_VALID_AUTHORITY_LIMITED"
+        classification = str(
+            contract.get(
+                "capacity_limited_classification",
+                f"{str(contract['name']).upper()}_CAPACITY_EVIDENCE_VALID_AUTHORITY_LIMITED",
+            )
+        )
         physics_status = "UNKNOWN_CONTROLLED_RESOURCE_STOP"
     else:
         classification = str(summary.get("result_classification", "V22_CHECKER_FAIL"))
@@ -2122,10 +2695,15 @@ def _check_v22_capacity_run(
     errors = [] if evidence_valid else [
         key for key, value in capacity.get("checks", {}).items() if value is not True
     ]
+    if contract.get("name") == "v23" and not schema_facts.get("passed"):
+        errors.append("summary_schema")
     if full_result is not None and full_result.get("evidence_valid") is not True:
         errors.extend(f"full.{key}" for key in full_result.get("errors", []))
+    wrapper_checks = dict(capacity.get("checks", {}))
+    if contract.get("name") == "v23":
+        wrapper_checks["summary_schema"] = schema_facts.get("passed") is True
     return {
-        "schema": V22_CHECKER_SCHEMA,
+        "schema": contract["checker_schema"],
         "status": "PASS" if evidence_valid else "FAIL",
         "evidence_valid": evidence_valid,
         "full_numerical_pass": full_numerical_pass,
@@ -2145,7 +2723,7 @@ def _check_v22_capacity_run(
         "complete_field_packet": complete_field,
         "field_packet_path": str(packet_path) if packet_path.exists() else None,
         "full_physical_check": full_result,
-        "checks": dict(capacity.get("checks", {})),
+        "checks": wrapper_checks,
         "errors": errors,
         "unknown_numerical_result_is_not_pass": not full_numerical_pass,
     }
@@ -2166,6 +2744,23 @@ def check_v22_run(
     )
 
 
+def check_v23_run(
+    run_directory: str | Path,
+    *,
+    expected_source_sha: str | None = None,
+    ledger_path: str | Path | None = None,
+) -> dict[str, Any]:
+    """Thin V23 wrapper using the shared capacity/full-physics flow."""
+
+    return _check_v22_capacity_run(
+        run_directory,
+        expected_source_sha=expected_source_sha,
+        ledger_path=ledger_path,
+        contract=_checker_contract("v23"),
+        evidence_evaluator=_v23_physical_memory_evidence_facts,
+    )
+
+
 def check_run(
     run_directory: str | Path,
     *,
@@ -2177,6 +2772,12 @@ def check_run(
 
     if profile == "v22":
         return check_v22_run(
+            run_directory,
+            expected_source_sha=expected_source_sha,
+            ledger_path=ledger_path,
+        )
+    if profile == "v23":
+        return check_v23_run(
             run_directory,
             expected_source_sha=expected_source_sha,
             ledger_path=ledger_path,
@@ -2194,7 +2795,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("run_directory", type=Path)
     parser.add_argument("--expected-source-sha")
-    parser.add_argument("--profile", choices=("v21", "v22"), default="v21")
+    parser.add_argument("--profile", choices=("v21", "v22", "v23"), default="v21")
     parser.add_argument("--ledger", type=Path)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
@@ -2208,7 +2809,11 @@ def main() -> int:
     except Exception as exc:  # checker boundary must emit a result, not crash
         result = {
             "schema": (
-                V22_CHECKER_SCHEMA if args.profile == "v22" else CHECKER_SCHEMA
+                V22_CHECKER_SCHEMA
+                if args.profile == "v22"
+                else V23_CHECKER_SCHEMA
+                if args.profile == "v23"
+                else CHECKER_SCHEMA
             ),
             "status": "FAIL",
             "evidence_valid": False,
@@ -2216,7 +2821,14 @@ def main() -> int:
         }
     output = args.output or (
         args.run_directory
-        / ("v22_checker_result.json" if args.profile == "v22" else "v21_checker_result.json")
+        /
+        (
+            "v22_checker_result.json"
+            if args.profile == "v22"
+            else "v23_checker_result.json"
+            if args.profile == "v23"
+            else "v21_checker_result.json"
+        )
     )
     output.write_text(
         json.dumps(result, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
@@ -2233,18 +2845,29 @@ if __name__ == "__main__":
 __all__ = [
     "CHECKER_SCHEMA",
     "V22_CHECKER_SCHEMA",
+    "V23_CHECKER_SCHEMA",
     "V21_PROFILE",
     "V22_PROFILE",
+    "V23_PROFILE",
     "V21_SUMMARY_SCHEMA",
     "V22_SUMMARY_SCHEMA",
+    "V23_SUMMARY_SCHEMA",
     "V22_SUMMARY_FILENAME",
+    "V23_SUMMARY_FILENAME",
     "V22_STAGE",
+    "V23_STAGE",
     "V22_BATCH_IDENTITY",
+    "V23_BATCH_IDENTITY",
     "V22_LEDGER_SCHEMA",
+    "V23_LEDGER_SCHEMA",
     "V22_PREDECESSOR_V21_LEDGER_SHA256",
+    "V23_PREDECESSOR_V22_LEDGER_SHA256",
+    "V23_MEMORY_POLICY",
+    "V23_MEMORY_RESERVE_BYTES",
     "MODE_SHA",
     "check_run",
     "check_v22_run",
+    "check_v23_run",
     "main",
     "_alias_v21_events",
     "_cache_description_facts_v21",
@@ -2255,5 +2878,7 @@ __all__ = [
     "_mode_identity_facts_v21",
     "_summary_schema_facts",
     "_v22_capacity_evidence_facts",
+    "_v23_physical_memory_evidence_facts",
+    "_v23_physical_memory_resource_facts",
     "_v21_release_timeline_facts",
 ]
