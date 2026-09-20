@@ -9,7 +9,9 @@ import numpy as np
 import ufl
 from dolfinx import fem
 
-from .fullspace_quadrature_diagonal import PositiveCellBasis, ReferenceCellBasis
+from .fullspace_quadrature_diagonal import (
+    PositiveCellBasis, ReferenceCellBasis, _affine_cell_jacobian,
+)
 
 
 class IsotropicPartialAssembly:
@@ -54,14 +56,8 @@ class IsotropicPartialAssembly:
         self.metrics = np.empty((self.cell_count, 2, 3, 3))
         for cell in range(self.cell_count):
             x = mesh.geometry.x[mesh.geometry.dofmap[cell]]
-            jacobians = np.einsum('aqi,ib->qba', self.basis.geometry_derivatives, x)
-            jacobian = jacobians[0]
-            scale = max(float(np.max(np.abs(jacobian))), np.finfo(float).tiny)
-            if np.max(np.abs(jacobians-jacobian)) > 128*np.finfo(float).eps*scale:
-                raise NotImplementedError("only affine geometry is qualified")
+            jacobian = _affine_cell_jacobian(self.basis.geometry_derivatives, x)
             determinant = float(np.linalg.det(jacobian))
-            if not np.isfinite(determinant) or determinant <= 0:
-                raise ValueError("positive finite Jacobian required")
             inv = np.linalg.inv(jacobian)
             self.metrics[cell, 0] = inv @ inv.T * determinant
             self.metrics[cell, 1] = jacobian.T @ jacobian / determinant

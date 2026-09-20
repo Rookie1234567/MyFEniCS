@@ -13,6 +13,7 @@ import ufl
 
 from src.solvers.fullspace_mpc_action import FullspaceMpcFormAction
 from src.solvers.fullspace_partial_assembly import IsotropicPartialAssembly
+from src.solvers.fullspace_quadrature_diagonal import PositiveCellBasis
 from src.solvers.fullspace_same_mesh_hcurl_pmg_global import same_mesh_positive_form
 
 
@@ -139,6 +140,50 @@ def test_nonaffine_geometry_and_nonpositive_material_rejected():
     domain.geometry.x[0, 0] += .05
     with pytest.raises(NotImplementedError, match="affine"):
         IsotropicPartialAssembly(space, mu, mass)
+
+
+def test_large_coordinate_affine_geometry_is_translation_invariant_for_both_consumers():
+    def build(shift):
+        domain = mesh.create_unit_cube(
+            MPI.COMM_SELF, 1, 1, 1, cell_type=mesh.CellType.hexahedron
+        )
+        domain.geometry.x[:, 2] += shift
+        space = fem.functionspace(domain, ("N1curl", 2))
+        dg = fem.functionspace(domain, ("DG", 0))
+        mu, mass = fem.Function(dg), fem.Function(dg)
+        mu.x.array[:] = 1.
+        mass.x.array[:] = 1.
+        kernel = IsotropicPartialAssembly(space, mu, mass)
+        basis = PositiveCellBasis(space, mu, mass)
+        domain.topology.create_entity_permutations()
+        cell = basis.cell(0, domain.topology.get_cell_permutation_info()[0])
+        coefficients = np.arange(int(kernel.dofs.max()) + 1, dtype=np.complex128)
+        output = np.zeros_like(coefficients)
+        kernel.apply(coefficients, output)
+        return kernel, cell, output
+
+    origin_kernel, origin_cell, origin_output = build(0.)
+    shifted_kernel, shifted_cell, shifted_output = build(120.)
+    np.testing.assert_allclose(shifted_kernel.metrics, origin_kernel.metrics,
+                               rtol=1e-13, atol=1e-13)
+    np.testing.assert_allclose(shifted_output, origin_output, rtol=1e-13, atol=1e-13)
+    for shifted, origin in zip(shifted_cell[:3], origin_cell[:3]):
+        np.testing.assert_allclose(shifted, origin, rtol=1e-13, atol=1e-13)
+    assert shifted_cell[3] == origin_cell[3] == [1., 1.]
+
+
+def test_positive_diagonal_still_rejects_a_true_nonaffine_cell():
+    domain = mesh.create_unit_cube(MPI.COMM_SELF, 1, 1, 1, cell_type=mesh.CellType.hexahedron)
+    domain.geometry.x[0, 0] += .05
+    space = fem.functionspace(domain, ("N1curl", 2))
+    dg = fem.functionspace(domain, ("DG", 0))
+    mu, mass = fem.Function(dg), fem.Function(dg)
+    mu.x.array[:] = 1.
+    mass.x.array[:] = 1.
+    basis = PositiveCellBasis(space, mu, mass)
+    domain.topology.create_entity_permutations()
+    with pytest.raises(NotImplementedError, match="affine"):
+        basis.cell(0, domain.topology.get_cell_permutation_info()[0])
 
 
 @pytest.mark.skipif(MPI.COMM_WORLD.size != 2, reason="explicit tiny MPI2 qualification only")

@@ -19,6 +19,22 @@ from .fullspace_same_mesh_hcurl_pmg_p6 import (
 )
 
 
+def _affine_cell_jacobian(geometry_derivatives, coordinates):
+    """Compute and qualify one Q1 cell Jacobian translation-invariantly."""
+    x = np.asarray(coordinates)
+    jacobians = np.einsum(
+        'aqi,ib->qba', geometry_derivatives, x - x[0]
+    )
+    jacobian = jacobians[0]
+    scale = max(float(np.max(np.abs(jacobian))), np.finfo(float).tiny)
+    if np.max(np.abs(jacobians - jacobian)) > 128*np.finfo(float).eps*scale:
+        raise NotImplementedError('only affine geometry is qualified')
+    determinant = float(np.linalg.det(jacobian))
+    if not np.isfinite(determinant) or determinant <= 0:
+        raise ValueError('positive finite Jacobian required')
+    return jacobian
+
+
 def accumulate_basis_energy(values, curls, weights, targets, coefficients, output,
                             *, curl_coefficient, mass_coefficient):
     """Add target energies after summing all raw basis rows for each target.
@@ -114,14 +130,8 @@ class PositiveCellBasis(ReferenceCellBasis):
         """Return oriented physical basis values/curls, weights and DG0 data."""
         mesh = self.space.mesh
         x = mesh.geometry.x[mesh.geometry.dofmap[cell]]
-        jacobians = np.einsum('aqi,ib->qba', self.geometry_derivatives, x)
-        jacobian = jacobians[0]
-        scale = max(float(np.max(np.abs(jacobian))), np.finfo(float).tiny)
-        if np.max(np.abs(jacobians-jacobian)) > 128*np.finfo(float).eps*scale:
-            raise NotImplementedError('only affine geometry is qualified')
+        jacobian = _affine_cell_jacobian(self.geometry_derivatives, x)
         determinant = float(np.linalg.det(jacobian))
-        if not np.isfinite(determinant) or determinant <= 0:
-            raise ValueError('positive finite Jacobian required')
         values = np.ascontiguousarray(self.values @ np.linalg.inv(jacobian))
         curls = np.ascontiguousarray(self.curls @ jacobian.T / determinant)
         if self.space.element.needs_dof_transformations:
