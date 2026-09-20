@@ -1,5 +1,20 @@
 # Task041 outcomes summary
 
+## 2026-09-20：Review V5 R1h 跨 NUMA 复现（当前）
+
+R1h 是一次不改系统设置的内存复制诊断：CPU socket0 的 OS CPU1–8 → memory node1，CPU socket1 的 OS CPU25–32 → memory node0；两阶段各 8 个单线程 worker、3×60 s。两阶段开始和 near-end 都是 `8/8` buffer 位于预期远端 node，driver rc0 不等于硬件资格通过。
+
+| phase | 三窗吞吐（GB/s） | 结果 |
+|---|---:|---|
+| socket0 / CPU1–8 → node1 | `22.648688106036644 / 21.977584096329075 / 7.395682818558859` | 第三窗较首窗约降 `67.35%`，未准入 |
+| socket1 / CPU25–32 → node0 | `19.789193732901627 / 19.759391333017003 / 18.843317623093906` | 第三窗较首窗约降 `4.78%`，不写成零退化 |
+
+R1h 父侧 wall `629.724913916 s`、16/16 worker 三窗完成且精确 PID 清场；22 hardware samples、110 final-read、44 个48行 MSR 文件均已绑定且新读取 rc0。358 resource samples 的最低 `MemAvailable` 为 `2114795454464 B`；swap `299008 B`、`pswpin=0`、`pswpout=73`，新增 global swap delta 0。16 worker 的 minor/major/stime delta 均为0，CPU0/CPU1 最大 wait 比为 `0.0009933352281917688`/`0.0008195138298330328`，shared cgroup 的 throttle/high/max/oom 字段均为0。活跃平均 Bzy_MHz 约 `3600.33/3599.55`、CoreThr=0；BMC 温度是窗口括号（不是同刻极值），且只来自 `P1-DIMMC1/P2-DIMME1`：CPU0→node1 约 `47–54/54–78°C`，CPU1→node0 约 `57–77/76–77°C`。所有 e24 为0只能削弱持续外部 MEMHOT，不能排除瞬态或内部热控。
+
+当前分类为 `CPU1_NOT_QUALIFIED_SOCKET1_THROUGHPUT_ANOMALY_REPRODUCED_NO_UNIQUE_CAUSE`；R2–R6、R3、PDE/MPI/QEP 均 `not_run`。本批未测完整 process-tree/cgroup RSS 峰，双缓冲约1 GiB仅是对象规模，不是峰值资格。V5 最新 ledger 为 `3327.407495518 s`、SHA `06d8dd9040cdbb306f79337eea80f5f09316b7dc8f04c3d9fe419ad3ac261594`；旧 as-of 字段保留。详见 [R1h outcome](cpu_numa_condensed_speed_v5.md)、[R1h compact](records/task041_v5_cpu_numa.json) 和 [R1h raw summary](../../../results/task041_review_v5_cpu_numa_condensed_speed/r1h_sched_mba_20260920/r1h_result_summary_20260920.json)。
+
+待授权维护建议：用户明确重启维护窗口后，先记录 BIOS 当前 Memory Frequency；若现场菜单确有2666 MT/s，只改这一项并保持电压、Enforce POR、热保护、刷新/纠错不变，按同一有界对照复跑；无选项即停止、无改善则恢复原值。依据 [X11DAi-N 手册 Rev1.4 第88页](https://www.supermicro.com/manuals/motherboard/C600/MNL-1957.pdf) 与 [FAQ24488](https://www.supermicro.com/en/support/faqs/faq.php?faq=24488)；不假定原值为 Auto，不保证理论9.1%频率变化改善吞吐。本轮未改硬件或 BIOS。
+
 > **2026-09-20 Review V5 R1d-B 当前状态（as-of 2026-09-20T13:33:25.642281784Z）**：R0 终态证据已整理；R1d-B 唯一一次匹配负载已完成，driver `rc=0` 不等于 CPU1 通过。CPU0/socket0/node0 三窗为 `32.173939890 / 32.183022717 / 32.190473984 GB/s`；CPU1/socket1/node1 为 `33.263204952 / 28.338248830 / 9.265976385 GB/s`，第三窗相对首窗下降约 `72.14%`。两侧启动/near-end NUMA 均 `8/8` local，活跃频率约 `3.6 GHz`、CoreThr=0；DIMM 观测峰 socket0/1 为 `64/78°C`，状态 ok。分类为 `CPU1_NOT_QUALIFIED_SOCKET1_THROUGHPUT_COLLAPSE`，根因未闭合；R2–R6、R3、PDE/MPI/QEP 和新负载均 `not_run`。详见 [R1d-B outcome](cpu_numa_condensed_speed_v5.md)、[R1d-B compact](records/task041_v5_cpu_numa.json)。
 
 | R1d-B 项目 | 实际证据 |

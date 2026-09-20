@@ -1,6 +1,29 @@
-# Task041 Review V5：R1d-B CPU/NUMA 匹配负载终态
+# Task041 Review V5：R1h 跨 NUMA 复现与 R1d 历史证据
 
-## 结论
+## R1h 当前终态
+
+R1h 是一次不改硬件、不改系统设置的跨 NUMA 内存复制诊断，不是 PDE、MPI、QEP 或物理模型计算。CPU socket0 的 OS CPU1–8 将双缓冲 first-touch 到 memory node1；CPU socket1 的 OS CPU25–32 将其 first-touch 到 memory node0。两阶段均为 8 个单线程 worker、3×60 s；阶段开始和 near-end 均观察到 `8/8` 个 buffer 位于预期的远端 node。
+
+同一 R1h 目录先前直接执行 `664` driver 的 `rc=126` 启动级负结果保留在 compact 中；仅改为显式 `/bin/bash` 启动，未计作第二轮压力负载。
+
+| phase | 三窗吞吐（GB/s） | iterations sum | 结果边界 |
+|---|---:|---:|---|
+| socket0 / OS CPU1–8 → memory node1 | `22.648688106036644 / 21.977584096329075 / 7.395682818558859` | `20254 / 19649 / 6616` | 第三窗较首窗约降 `67.35%`；未准入 |
+| socket1 / OS CPU25–32 → memory node0 | `19.789193732901627 / 19.759391333017003 / 18.843317623093906` | `17697 / 17665 / 16847` | 第三窗较首窗约降 `4.78%`；不写成零退化 |
+
+R1h driver rc0、父侧 `CLOCK_MONOTONIC` wall `629.724913916 s`；16/16 worker 三窗完成，且精确 PID 清场。22 个硬件 raw sample、110 个 final-read、44 个 MSR 文件（每个48行）均已绑定；新 PCI/MSR 读取均 rc0，MSR 输出为0。资源共有358个 sample，最低 `MemAvailable=2114795454464 B`，swap `299008 B`、`pswpin=0`、`pswpout=73`，新增 global swap delta 0。16 个 worker 相邻采样的 minor/major/stime delta 均为0；CPU0/CPU1 最大 `wait/(run+wait)` 为 `0.0009933352281917688`/`0.0008195138298330328`；同一 shared cgroup 的 `nr_throttled/throttled_usec/high/max/oom/oom_kill` 均为0。global NUMA counters 仍只作主机快照，不归属于本批。
+
+活跃 `Busy>=95%` 样本的平均 Bzy_MHz 为 socket0 `3600.3309404163674`、socket1 `3599.549568965517`，CoreThr=0；因此不支持“核心频率降到低档”这一简单解释，但不排除内存控制器、固件、DIMM 链路或内部温控路径。BMC 温度按样本时间对 60 秒窗口作括号归属，并非同刻极值，且仅来自 `P1-DIMMC1` 与 `P2-DIMME1` 两个探头，不代表整组 DIMM 的 min/max：CPU0→node1 阶段约 `P1-DIMMC1 47–54°C / P2-DIMME1 54–78°C`，CPU1→node0 阶段约 `P1-DIMMC1 57–77°C / P2-DIMME1 76–77°C`。第一阶段第三窗在 P2-DIMME1 78°C 平台附近发生下降，只是相关；80°C 是观察线，不是内部限温阈值。所有 e24 读取为0，只削弱持续外部 MEMHOT，不排除采样间瞬态或其他热控路径；sticky 字段不作当前限速证据。
+
+当前分类为 `CPU1_NOT_QUALIFIED_SOCKET1_THROUGHPUT_ANOMALY_REPRODUCED_NO_UNIQUE_CAUSE`，R2 blocked。没有完整 process-tree/cgroup RSS 峰值；双缓冲对象大小不代替峰值资格。没有硬件、BIOS、功率、风扇、寄存器写入，也没有新 R2/PDE。
+
+证据入口：[R1h compact](records/task041_v5_cpu_numa.json)、[R1h raw summary](../../../results/task041_review_v5_cpu_numa_condensed_speed/r1h_sched_mba_20260920/r1h_result_summary_20260920.json)。driver SHA `f81d917bd462e1a5028a8bb8c3f4ca3aaad4122a9f2adaec8a6990a616099bc4`，worker SHA `7ce2dd8ff6f71cf4e9b9c13a156e1f0f0b15b38af010ac0b2b04881ec3ce0ad9`，runroot 为 `results/task041_review_v5_cpu_numa_condensed_speed/r1h_sched_mba_20260920/run_20260920T154556.093635044Z`。launch metadata SHA `62496750a7ac9d6bce344bce279e9f31b7dde65e4379aa320ca0aa7825e2945e`；driver log SHA `a7e0a45ca321b65b27a04c75f804a8352faf167bd577da908268c15dd721e977`；hardware aggregate SHA `03c00115b46de257495388999e4bbe7cc605f1bbfca56a66aa62bcdacfb8be21`；worker aggregate SHA `bc56bcc7fec6ae135f0a6327bbe2aa023c584c5c71bfd20401a5e719640daada`。逐文件生成口径与字节/SHA 清单见 [`r1h_small_hash_manifest_20260920.json`](../../../results/task041_review_v5_cpu_numa_condensed_speed/r1h_sched_mba_20260920/run_20260920T154556.093635044Z/r1h_small_hash_manifest_20260920.json)，SHA `0a2af1b58827eabd41f1e38bdc5e01bc73df8f28cbf69e4573f51043392973b1`；该小清单列出22个 hardware `.raw` 与16个 phase worker JSONL，按相对路径排序，`low_load_cpu1.jsonl`单列未纳入。21个专属 PID 的 native 只读清场证据见 [`r1h_cleanup_readonly_20260920T161002Z.json`](../../../results/task041_review_v5_cpu_numa_condensed_speed/r1h_sched_mba_20260920/run_20260920T154556.093635044Z/r1h_cleanup_readonly_20260920T161002Z.json)，SHA `8a1ae0aec4095db557c84f3773a4df49068d84e6830be0316f29960c49c7a9b6`，检查时间 `2026-09-20T16:10:02.764589740Z`，`21/21 absent`。唯一 V5 ledger SHA `06d8dd9040cdbb306f79337eea80f5f09316b7dc8f04c3d9fe419ad3ac261594`，累计 `3327.407495518 s`。
+
+### 待授权、可逆维护对照（未执行）
+
+在用户明确重启维护授权后，先记录 BIOS 当前 Memory Frequency；仅当现场菜单确有 `2666 MT/s` 时，才考虑把该单项从原值改为2666，电压、Enforce POR、热保护、刷新/纠错等保持不变，再按相同有界诊断复跑；无该选项即停止，无改善则恢复原值。菜单依据为 [X11DAi-N 手册 Rev1.4 第88页](https://www.supermicro.com/manuals/motherboard/C600/MNL-1957.pdf) 和 [Supermicro FAQ24488](https://www.supermicro.com/en/support/faqs/faq.php?faq=24488)。不假定原值为 Auto，也不把约9.1%理论频率变化当作实际吞吐改善保证；外接小风扇是用户独立加装且直吹第二路 DIMM，不对应 BMC FAN2/3/5/6，不能用 BMC 转速判断其风量。
+
+## R1d-B 历史结论
 
 这次 R1d-B 只做了一个有界的内存吞吐诊断：每个 worker 是一个固定 CPU 上的单线程程序，先在本地 NUMA 节点完成 first-touch，再连续执行三个 60 秒窗口。它不是 PDE、MPI、QEP 或 Schur 计算，也不能把 driver `rc=0` 当成 CPU1 通过。
 

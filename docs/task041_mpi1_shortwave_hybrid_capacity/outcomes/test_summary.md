@@ -1,5 +1,11 @@
 # Test and evidence summary
 
+## Review V5 R1h：硬件/调度诊断（非测试）
+
+R1h 不是 pytest、PDE、MPI 或 QEP 测试。固定 driver 父侧 `CLOCK_MONOTONIC` wall 为 `629.724913916 s`、rc0；16/16 worker 各完成3×60 s。CPU socket0 的 OS CPU1–8 → memory node1 三窗为 `22.648688106036644 / 21.977584096329075 / 7.395682818558859 GB/s`，CPU socket1 的 OS CPU25–32 → memory node0 为 `19.789193732901627 / 19.759391333017003 / 18.843317623093906 GB/s`；前者约降67.35%，后者约降4.78%，因此 `CPU1_NOT_QUALIFIED_SOCKET1_THROUGHPUT_ANOMALY_REPRODUCED_NO_UNIQUE_CAUSE`，不把 rc0 写成硬件通过。
+
+两阶段开始与 near-end 均为预期远端 node 的 `8/8`，活跃 Bzy_MHz 约 `3600.33/3599.55`、CoreThr=0。22 hardware samples、110 final-read、44×48行 MSR 输出均成功绑定；358 resource samples 的最低 MemAvailable 为 `2114795454464 B`，swap `299008`、pswpin/out `0/73`、新增 global delta 0。16 worker 的 minor/major/stime delta 均为0，CPU0/CPU1 最大 wait 比为 `0.0009933352281917688`/`0.0008195138298330328`，共享 cgroup 的 `nr_throttled/throttled_usec/high/max/oom/oom_kill` 均为0；完整 process-tree/cgroup RSS 峰未测。所有 e24 为0仅削弱持续外部 MEMHOT，不能排除内部热控或采样间瞬态。结果与 hash 入口见 [R1h outcome](cpu_numa_condensed_speed_v5.md)、[R1h compact](records/task041_v5_cpu_numa.json)。R2–R6、R3、PDE/MPI/QEP 均 `not_run`。
+
 ## Review V5 R1d-B：有界匹配负载（非测试）
 
 本批不是 pytest、PDE 或 MPI 测试，而是一次获准的 CPU/NUMA 诊断负载。driver 使用固定脚本 SHA `37bea39b72656f2c8e0ce3bb293bbfc8ff41d7a17fa28fd1fc0cedf90976a584`，父侧 `CLOCK_MONOTONIC` wall `630.795106023 s`、rc0；16/16 worker 各完成 3×60 s。CPU0/socket0/node0 三窗总吞吐为 `32.173939890 / 32.183022717 / 32.190473984 GB/s`，CPU1/socket1/node1 为 `33.263204952 / 28.338248830 / 9.265976385 GB/s`，第三窗相对首窗约降 `72.14%`，故 `CPU1_NOT_QUALIFIED_SOCKET1_THROUGHPUT_COLLAPSE`，不能写成 driver 成功即硬件通过。

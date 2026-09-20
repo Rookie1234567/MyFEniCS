@@ -1,8 +1,27 @@
-# Task041 Response V8：D3a 终态与 Review V5 R0/R1d 收口
+# Task041 Response V8：Review V5 R1h 跨 NUMA 复现与历史终态
 
-本报告保留 D3a 的自然终止证据，并补记 Review V5 的 R0 完成与唯一 R1d-B 匹配负载。D3a 的实际分类仍为 `IMPLEMENTATION_FAILURE`，不记人工受控停止；R1d-B 的 driver 虽 rc0，但 CPU1 性能准入失败。R2–R6、R3 p4 草稿测试和新 PDE/MPI/QEP 均 `not_run`。
+本报告保留 D3a 的自然终止证据、R0/R1d/R1e/R1f/R1g 历史记录，并登记最新一次 R1h 只读硬件/调度诊断。R1h driver `rc=0` 只表示诊断批次正常收尾；CPU1 仍未资格化，不能把异常归为硬件损坏、确定的 DRAM 热限流或核心降频。R2–R6、R3 p4 草稿测试和新 PDE/MPI/QEP 均 `not_run`。
 
-## Review V5 当前状态：R0 已完成，R1d-B 复现负项
+## Review V5 当前状态：R1h 已完成，CPU1 仍未准入
+
+R1h 是同一固定 worker 的跨 NUMA 诊断，不是物理模型计算：CPU socket0 的 OS CPU1–8 将双缓冲 first-touch 到 memory node1，CPU socket1 的 OS CPU25–32 将其 first-touch 到 memory node0；两阶段各 8 个单线程 worker、3×60 s。每个阶段开始和末段均观察到 `8/8` 个 buffer 位于预期的远端 node。固定 driver SHA 为 `f81d917bd462e1a5028a8bb8c3f4ca3aaad4122a9f2adaec8a6990a616099bc4`，worker SHA 为 `7ce2dd8ff6f71cf4e9b9c13a156e1f0f0b15b38af010ac0b2b04881ec3ce0ad9`，运行 source 为 `881bb9773a79793d8edd7fe525ad57a4c0d9a494`。
+
+同一 R1h 目录先前直接执行 `664` driver 的 `rc=126` 启动级负结果予以保留；仅用显式 `/bin/bash` 修正启动方式，未将其算作第二轮压力负载或第二个性能负结果。
+
+| R1h phase | 三窗吞吐（GB/s） | iterations sum | 结论 |
+|---|---:|---:|---|
+| socket0 / OS CPU1–8 → memory node1 | `22.648688106036644 / 21.977584096329075 / 7.395682818558859` | `20254 / 19649 / 6616` | 访问 node1 的路径吞吐崩落约 `67.35%`；CPU1 整体仍未准入 |
+| socket1 / OS CPU25–32 → memory node0 | `19.789193732901627 / 19.759391333017003 / 18.843317623093906` | `17697 / 17665 / 16847` | 第三窗较首窗约降 `4.78%`；不写成零退化 |
+
+R1h 共 22 个硬件 sample、110 个 final-read（每条新 PCI/MSR 读取 `rc=0`），44 个 MSR 输出文件各 48 行且值为 0；所有 16 个 worker、driver 和采样进程均已按启动 PID 清场。358 个资源 sample 的 `MemAvailable` 最低为 `2114795454464 B`；swap 为 `299008 B`，`pswpin=0`、`pswpout=73`，本批新增 global swap delta 为 0。16 个 worker 相邻样本的 minor/major fault 与 `stime` delta 均为 0；CPU0/CPU1 最大 `wait/(run+wait)` 分别为 `0.0009933352281917688`/`0.0008195138298330328`；共享 cgroup 的 `nr_throttled/throttled_usec/high/max/oom/oom_kill` 均为 0。global NUMA 计数仍是主机级，未归属于本批。
+
+活跃 `Busy>=95%` 样本中，socket0/1 的平均 `Bzy_MHz` 分别为 `3600.3309404163674`/`3599.549568965517`，CoreThr 均为 0；这削弱“核心降到低频”的解释，但不排除内存控制器、固件或 DIMM 链路路径。BMC 温度是窗口括号而非逐帧同刻，且只涉及 `P1-DIMMC1` 与 `P2-DIMME1` 两个探头，不代表整组 DIMM 的 min/max：CPU0→node1 阶段约为 `P1-DIMMC1 47–54°C / P2-DIMME1 54–78°C`，CPU1→node0 阶段约为 `P1-DIMMC1 57–77°C / P2-DIMME1 76–77°C`；第一阶段第三窗出现 P2-DIMME1 78°C 平台与吞吐下降的时间邻近只构成相关证据，80°C 是本次观察停止线，不是内部热控阈值。R1h 所有 e24 读取为 `0`，只能削弱持续外部 MEMHOT，不能排除采样间瞬态或其他热控路径；sticky 字段不当作当前限速。
+
+证据入口为 [R1h compact](outcomes/records/task041_v5_cpu_numa.json) 与 [R1h raw summary](../../results/task041_review_v5_cpu_numa_condensed_speed/r1h_sched_mba_20260920/r1h_result_summary_20260920.json)。runroot 为 `results/task041_review_v5_cpu_numa_condensed_speed/r1h_sched_mba_20260920/run_20260920T154556.093635044Z`；launch metadata SHA `62496750a7ac9d6bce344bce279e9f31b7dde65e4379aa320ca0aa7825e2945e`，driver log SHA `a7e0a45ca321b65b27a04c75f804a8352faf167bd577da908268c15dd721e977`，hardware aggregate SHA `03c00115b46de257495388999e4bbe7cc605f1bbfca56a66aa62bcdacfb8be21`，worker aggregate SHA `bc56bcc7fec6ae135f0a6327bbe2aa023c584c5c71bfd20401a5e719640daada`。逐文件、字节数和 SHA 的小清单为 [`r1h_small_hash_manifest_20260920.json`](../../results/task041_review_v5_cpu_numa_condensed_speed/r1h_sched_mba_20260920/run_20260920T154556.093635044Z/r1h_small_hash_manifest_20260920.json)，SHA `0a2af1b58827eabd41f1e38bdc5e01bc73df8f28cbf69e4573f51043392973b1`；它明确列出22个 hardware `.raw` 和16个 phase worker JSONL，按相对路径排序生成，`low_load_cpu1.jsonl`单列未纳入。21个专属 PID 的 native 只读 `/proc` 清场证据为 [`r1h_cleanup_readonly_20260920T161002Z.json`](../../results/task041_review_v5_cpu_numa_condensed_speed/r1h_sched_mba_20260920/run_20260920T154556.093635044Z/r1h_cleanup_readonly_20260920T161002Z.json)，SHA `8a1ae0aec4095db557c84f3773a4df49068d84e6830be0316f29960c49c7a9b6`，检查时间 `2026-09-20T16:10:02.764589740Z`，结果 `21/21 absent`。父侧 `CLOCK_MONOTONIC` wall 为 `629.724913916 s`，本批已按唯一 V5 ledger 追加一次；ledger SHA `06d8dd9040cdbb306f79337eea80f5f09316b7dc8f04c3d9fe419ad3ac261594`、累计 `3327.407495518 s`。
+
+因此当前状态是 `CPU1_NOT_QUALIFIED_SOCKET1_THROUGHPUT_ANOMALY_REPRODUCED_NO_UNIQUE_CAUSE`，R2 仍 blocked。没有完整 process-tree/cgroup RSS 峰值、没有新的硬件修复，也没有运行 R2/PDE。可审的后续维护建议仅是：在用户明确重启维护授权后，先记录 BIOS 当前 Memory Frequency；若现场菜单确实提供 `2666 MT/s`，只将该单项从原值改为 2666，保持电压、Enforce POR、热保护、刷新/纠错等不变，再做同一有界对照；若没有该选项则停止，若无改善恢复原值。该建议依据 [X11DAi-N 手册 Rev1.4 第88页](https://www.supermicro.com/manuals/motherboard/C600/MNL-1957.pdf) 和 [Supermicro FAQ24488](https://www.supermicro.com/en/support/faqs/faq.php?faq=24488)，不假定原值为 Auto，也不保证约 9.1% 的理论频率变化会改善实际吞吐；本轮未改 BIOS、风扇、保护或固件。
+
+## Review V5 历史状态：R0 已完成，R1d-B 复现负项
 
 R1d-B 使用固定 driver SHA `37bea39b72656f2c8e0ce3bb293bbfc8ff41d7a17fa28fd1fc0cedf90976a584`，在无检测到新 heavy 的独占窗口中完成低负载、socket0/node0 CPU1–8 和 socket1/node1 CPU25–32 三个 60 秒窗口。两侧启动与 near-end NUMA 观察均为 `8/8` local；16 个 worker 和 turbostat 的 600 个采样帧均自然退出，父侧 `CLOCK_MONOTONIC` wall 为 `630.795106023 s`，driver rc0。
 

@@ -1,6 +1,14 @@
 # 开发阶段研究对象与计算结果总账
 
-## 2026-09-20：Task041 Review V5 R1d-B 匹配负载负结果（当前）
+## 2026-09-20：Task041 Review V5 R1h 跨 NUMA 复现（当前）
+
+| 模型/阶段 | 当前结果 | 资格边界与证据 |
+|---|---|---|
+| Task041工作站 CPU/NUMA 内存复制诊断（服务于2nm计划，非物理模型） | socket0 CPU1–8→node1：`22.6487 / 21.9776 / 7.3957 GB/s`；socket1 CPU25–32→node0：`19.7892 / 19.7594 / 18.8433 GB/s`；driver rc0 | 前者约降67.35%、后者约降4.78%；`CPU1_NOT_QUALIFIED_SOCKET1_THROUGHPUT_ANOMALY_REPRODUCED_NO_UNIQUE_CAUSE`；活跃约3.6GHz/CoreThr=0，R2 blocked；[R1h outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/cpu_numa_condensed_speed_v5.md)、[compact](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v5_cpu_numa.json) |
+
+R1h 父侧 wall `629.724913916 s`；22 hardware samples、110 final-read、44×48行 MSR 文件、358 resource samples 已绑定。16 worker 的 minor/major/stime delta 与 shared cgroup throttle/high/max/oom 字段均为0，完整 process-tree/cgroup RSS 峰未测；不据此判定硬件损坏或排除内部内存热控。待授权维护对照仅考虑记录原 BIOS Memory Frequency 后，在有2666选项时单项改为2666 MT/s并保持保护/电压不变；出处为 [X11DAi-N 手册第88页](https://www.supermicro.com/manuals/motherboard/C600/MNL-1957.pdf) 和 [FAQ24488](https://www.supermicro.com/en/support/faqs/faq.php?faq=24488)，本轮未执行。
+
+## 2026-09-20：Task041 Review V5 R1d-B 匹配负载负结果（历史）
 
 | 模型/阶段 | 当前结果 | 资格边界与证据 |
 |---|---|---|

@@ -1,6 +1,14 @@
 # 项目开发进度：Task000–Task041
 
-## 2026-09-20：Task041 Review V5 R1d-B 匹配负载负结果（当前）
+## 2026-09-20：Task041 Review V5 R1h 跨 NUMA 复现（当前）
+
+R1h 是 Task041 工作站 CPU/NUMA 内存复制诊断，服务于2nm计划但不是2nm物理模型。CPU socket0 的 OS CPU1–8 → memory node1 三窗为 `22.648688106036644 / 21.977584096329075 / 7.395682818558859 GB/s`；CPU socket1 的 OS CPU25–32 → memory node0 为 `19.789193732901627 / 19.759391333017003 / 18.843317623093906 GB/s`。前者第三窗较首窗约降67.35%，后者约降4.78%；状态为 `CPU1_NOT_QUALIFIED_SOCKET1_THROUGHPUT_ANOMALY_REPRODUCED_NO_UNIQUE_CAUSE`，R2 blocked。
+
+本批 driver rc0、父侧 wall `629.724913916 s`，16 worker 三窗完成并清场；两阶段均观察到预期远端 node `8/8`。22 hardware samples/110 final-read/44个48行MSR文件成功绑定，358 resource samples 的最低 MemAvailable 为 `2114795454464 B`，新增 global swap delta 0；活跃平均 Bzy_MHz 约3.6GHz且 CoreThr=0。16 worker minor/major/stime delta、CPU wait 比和共享 cgroup throttle/high/max/oom 字段均无异常，但完整 process-tree RSS / cgroup memory.peak 未测。R1h 不证明硬件损坏或唯一热控根因；R1e/f/g 与所有历史负结果保留，[R1h compact](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v5_cpu_numa.json) 为证据入口。
+
+待授权维护建议仍只是可逆对照：先记录 BIOS 当前 Memory Frequency，若菜单确有2666 MT/s才在维护重启窗口中只改变该项，保持电压、Enforce POR、热保护、刷新/纠错不变；无选项停止、无改善恢复原值。依据 [X11DAi-N 手册 Rev1.4 第88页](https://www.supermicro.com/manuals/motherboard/C600/MNL-1957.pdf) 与 [FAQ24488](https://www.supermicro.com/en/support/faqs/faq.php?faq=24488)；本轮未执行。
+
+## 2026-09-20：Task041 Review V5 R1d-B 匹配负载负结果（历史）
 
 Task041 的钨（W）2nm D1e 终态仍保留原 `IMPLEMENTATION_FAILURE`；随后 R1d-B 只做了一次有界 CPU/NUMA 匹配负载，不能把 driver `rc=0` 当硬件资格通过。CPU0/socket0/node0 三个 60 秒窗口总吞吐约 `32.18 GB/s` 且稳定；CPU1/socket1/node1 为 `33.2632 / 28.3382 / 9.2660 GB/s`，第三窗比首窗约低 `72.14%`。两侧启动与 near-end first-touch/NUMA 观察均 `8/8` local，活跃频率约 `3.6 GHz`、CoreThr=0，DIMM 观测峰 `64/78°C`、状态 ok；原因仍未闭合，当前分类为 `CPU1_NOT_QUALIFIED_SOCKET1_THROUGHPUT_COLLAPSE`。
 
