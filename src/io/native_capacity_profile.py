@@ -10,6 +10,10 @@ NATIVE_CASES = {
     'balanced_h6_p4_native_3nm': (3.0, (2.5, 2.0), 21600, 172800, 259200),
     'balanced_h6_p4_native_2nm': (2.0, (1.5, 2.0), None, None, None),
     'balanced_h6_p4_native_2nm_measured': (2.0, (1.5,), None, None, None),
+    # Review V3 opt-in route.  This is the only profile using the measured
+    # tree-RSS policy; all historical native identities retain their old
+    # swap/prediction/resource contracts.
+    'dual_condensed_balh_native_5nm_v3': (5.0, (4.0,), None, None, None),
 }
 NATIVE_PROFILES = tuple(NATIVE_CASES)
 NATIVE_TIME_LIMIT_MODES = {
@@ -18,6 +22,7 @@ NATIVE_TIME_LIMIT_MODES = {
     'balanced_h6_p4_native_3nm': 'bounded',
     'balanced_h6_p4_native_2nm': 'none',
     'balanced_h6_p4_native_2nm_measured': 'none',
+    'dual_condensed_balh_native_5nm_v3': 'none',
 }
 NATIVE_NONE_TIME_PROFILES = frozenset(
     identity for identity, mode in NATIVE_TIME_LIMIT_MODES.items() if mode == 'none'
@@ -69,6 +74,24 @@ def native_profile_facts(identity):
         planning_cap_bytes=24*1024**3 if wavelength == 13.5 else int(1.50*1024**4),
         concurrent_neighbor_authorized=True,
     )
+    if identity == 'dual_condensed_balh_native_5nm_v3':
+        facts['resources'].update(
+            absolute_cap_bytes=1_300_000_000_000,
+            planning_cap_bytes=1_300_000_000_000,
+            startup_headroom_bytes=128*1024**3,
+            resource_stop_policy='measured_tree_rss_only_v3',
+            rss_hard_limit_bytes=1_300_000_000_000,
+            rss_warning_bytes=1_170_000_000_000,
+            swap_policy='observe_only',
+            global_swap_delta_policy='observe_only',
+            prediction_admission_policy='record_only',
+            memavailable_runtime_policy='observe_and_warn_only',
+            stop_on_global_swap=False,
+            icntl23=0,
+            require_zero_swap=False,
+            p4_budget_policy='measured_rss_only_record_prediction',
+            reference_memory_admission='measured_rss',
+        )
     facts['campaign_authorization'] = {
         'source': 'user_execution_instruction_2026-09-09',
         'formal_mpi': 1,
@@ -86,6 +109,19 @@ def native_profile_facts(identity):
         'solve_seconds': solve,
         'workflow_seconds': workflow,
     }
+    if identity == 'dual_condensed_balh_native_5nm_v3':
+        facts['campaign_authorization']['resource_policy'] = {
+            'name': 'measured_tree_rss_only_v3',
+            'rss_hard_limit_bytes': 1_300_000_000_000,
+            'rss_warning_bytes': 1_170_000_000_000,
+            'startup_headroom_bytes': 128*1024**3,
+            'swap': 'observe_only',
+            'faults': 'observe_only',
+            'prediction': 'record_only',
+            'elapsed': 'observe_only',
+            'memavailable': 'observe_and_warn_only',
+            'icntl23': 0,
+        }
     if identity == 'balanced_h6_p4_native_2nm_measured':
         # User instruction 2026-09-18: measure the whole job, do not stop on
         # a predicted factor/workspace peak. GB here means 10**9 bytes.
@@ -116,7 +152,7 @@ def validate_native_case(config):
     time_limit_mode = NATIVE_TIME_LIMIT_MODES[identity]
     expected = {
         'solver': {'restart': 32, 'max_iterations': 2048},
-        'execution': {'mpi_size': 1, 'require_zero_swap': True,
+        'execution': {'mpi_size': 1,
                       'time_limit_mode': time_limit_mode},
         'discretization': {'nedelec_degree': 6, 'assembly_backend': 'standard_full',
                                'mesh_cell_type': 'hexahedron', 'mesh_spacing_mode': 'boundary_fitted'},
@@ -125,6 +161,9 @@ def validate_native_case(config):
         'boundary': {'use_floquet_x': True, 'use_floquet_y': True,
                          'dtn_order_policy': 'auto_propagating', 'use_pml': False},
     }
+    expected['execution']['require_zero_swap'] = (
+        False if identity == 'dual_condensed_balh_native_5nm_v3' else True
+    )
     for section, values in expected.items():
         for key, value in values.items():
             if config[section][key] != value:

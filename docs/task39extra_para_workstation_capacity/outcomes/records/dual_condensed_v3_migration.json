@@ -1,0 +1,144 @@
+{
+  "schema": "task39extra.dual_condensed_v3_migration.v1",
+  "review": "aa865a49f37bc5cd6b02c5799b6f93d0ad087e19",
+  "source_snapshot": "ea717ed5c6ffe45214ecdeca80cabdaeaef5960b",
+  "source_branch": "task39extra",
+  "migration_policy": "selective_file_and_dependency_migration; no merge_or_cherry_pick",
+  "historical_evidence": {
+    "v19": "docs/task039_extra_physical_multilevel/outcomes/dual_cell_condensed_v19.md",
+    "v20": "docs/task039_extra_physical_multilevel/outcomes/dual_condensed_memory_v20.md",
+    "v20_source_commit": "b337d215c3d278d0c1e715f53e28b69f7f0ee3fe",
+    "v22_precision": "docs/task039_extra_physical_multilevel/review_report_v22.md",
+    "v24_response": "docs/task039_extra_physical_multilevel/response_v24.md"
+  },
+  "d1_resource_policy": {
+    "name": "measured_tree_rss_only_v3",
+    "configured_rss_hard_gate_bytes": 1300000000000,
+    "configured_rss_warning_bytes": 1170000000000,
+    "automatic_stop": "tree_rss_only",
+    "swap_fault_prediction_elapsed_memavailable": "observe_only_or_record_only",
+    "legacy_profiles": "unchanged; reserve-adjusted dynamic launch cap and legacy swap gates retained",
+    "startup_capacity_snapshot": {
+      "as_of": "2026-09-20主控只读现场容量快照",
+      "mem_total_bytes": 2163100413952,
+      "mem_available_bytes": 1477442351104,
+      "available_minus_fixed_gate_bytes": 177442351104,
+      "startup_headroom_bytes": 137438953472,
+      "available_minus_fixed_gate_and_startup_headroom_bytes": 40003397632,
+      "legacy_reserve_bytes": 324465062092,
+      "legacy_launch_cap_bytes": 1152977289012,
+      "hard_gate_minus_legacy_launch_cap_bytes": 147022710988,
+      "launch_headroom_source": "this review-selected fixed 137438953472-byte (128GiB) startup allowance; legacy reserve/launch_cap are recorded separately and are not a V3 veto",
+      "psi_snapshot": {
+        "some_avg10": 0,
+        "some_avg60": 0,
+        "some_avg300": 0,
+        "full_avg10": 0,
+        "full_avg60": 0,
+        "full_avg300": 0
+      },
+      "neighbor_cpu_scope": "CPU1-8 active; read-only observation, no mutation",
+      "decision": "V3 startup admission uses effective_available >= fixed 1300000000000-byte Gate + explicitly reviewed 128GiB headroom; legacy reserve/launch_cap retained as diagnostic history only"
+    },
+    "d3_status": "not_admitted_pending_review_of_fixed_gate_and_startup_headroom"
+  },
+  "items": [
+    {
+      "path": "src/solvers/p4_cell_condensed_inverse.py",
+      "source_blob": "9e2b9f1a04a4d869bbac015ee8be17b3ae2aeca7",
+      "target": "new selective module",
+      "role": "accurate p4 local inverse and same-factor residual refinement",
+      "depends_on": ["src/solvers/hcurl_assembly_time_condensation.py"],
+      "tests": ["nonzero_internal_and_port_rhs", "A4_residual_le_1e-10", "max_two_refinements"]
+    },
+    {
+      "path": "src/solvers/p6_cell_condensed_action.py",
+      "source_blob": "a9712ecc5060aebb8ce4519b4213c94bc53a6b67",
+      "target": "selective retained-action extraction",
+      "role": "V20 retained p6 Schur action and safe read-only cache boundary",
+      "depends_on": ["src/solvers/hcurl_assembly_time_condensation.py"],
+      "tests": ["retained_action_vs_original", "nonzero_RHS", "release_after_full_field"]
+    },
+    {
+      "path": "src/solvers/physical_retained_fgmres.py",
+      "source_blob": "e7fd34d0e2a6e1593163d7843a2100b11fa38d17",
+      "target": "selective outer-solver extraction",
+      "role": "V20 retained FGMRES/Krylov ownership and residual accounting",
+      "depends_on": ["src/solvers/p6_cell_condensed_action.py", "src/solvers/p4_cell_condensed_inverse.py"],
+      "tests": ["restart32", "zero_start", "residual_and_checkpoint_contract"]
+    },
+    {
+      "path": "src/runners/physical_p4_schur_v14.py",
+      "source_blob": "1609cab3f8099678e066d6900147068c5885b59b",
+      "target": "extract helpers only; no runner migration",
+      "role": "V20-compatible p4 Schur/bridge helper source for original A4 and recovery contracts",
+      "depends_on": ["p4_cell_condensed_inverse", "src/solvers/hcurl_assembly_time_condensation.py"],
+      "tests": ["real_p4_mpc_fixture", "nonhermitian_Bi_Di", "Floquet_conjugate_bridge"]
+    },
+    {
+      "path": "src/runners/physical_p4_cell_condensed_v18.py",
+      "source_blob": "5ebd7966198be392bd4c2b06b1e051d6598c3d91",
+      "target": "extract lifecycle helpers only; no runner migration",
+      "role": "p4 setup/factor lifecycle and native A4 audit",
+      "depends_on": ["physical_p4_schur_v14"],
+      "tests": ["factor_lifecycle", "ICNTL23_readback_zero"]
+    },
+    {
+      "path": "src/runners/physical_retained_outer_adapter.py",
+      "source_blob": "c96a1bd540083c43b40dc0b304d74953b69b7ba6",
+      "target": "extract V20 helpers only; no runner migration",
+      "role": "p6 retained Schur, J/JH bridge and read-only cache lifecycle",
+      "depends_on": ["hcurl_assembly_time_condensation", "physical_dual_cell_condensed_lowmem_v20"],
+      "tests": ["adjoint_J_identity", "cache_identity_before_after", "slave_zero"]
+    },
+    {
+      "path": "src/runners/physical_dual_cell_condensed_lowmem_v20.py",
+      "source_blob": "0a8af125c1dfd7b91d576c50f90398d8f83e29b8",
+      "target": "new selective runner module",
+      "role": "shared cache and measured-RSS-aware inventory callbacks",
+      "depends_on": ["physical_retained_outer_adapter", "physical_p4_schur_v14"],
+      "tests": ["inventory_lifecycle", "no_early_release"]
+    },
+    {
+      "path": "src/solvers/hcurl_assembly_time_condensation.py",
+      "source_blob": "e294f30ee189639299fe6c793a264cd173b31507",
+      "target": "minimal diff merge into target existing solver; do not replace wholesale",
+      "role": "V20 p6 retained local condensation and cache metadata",
+      "depends_on": ["hcurl_affine_isotropic_tensor"],
+      "tests": ["local_curl_plus_mass", "nonzero_RHS"]
+    },
+    {
+      "path": "src/solvers/fullspace_partial_assembly.py",
+      "source_blob": "ec4f97a285f9263738f02c37fb64a2c01b80415a",
+      "target": "selective backend update",
+      "role": "retained H6/A6 partial-assembly action",
+      "depends_on": ["hcurl_affine_isotropic_tensor"],
+      "tests": ["action_vs_original", "partial_assembly_lifecycle"]
+    },
+    {
+      "path": "src/solvers/physical_balanced_coupling.py",
+      "source_blob": "c6bb7523bbfc64f48cd271ce5877c8fe90f7cc87",
+      "target": "selective bridge update",
+      "role": "BAL_H retained/full-space coupling and conjugate direction",
+      "depends_on": ["physical_retained_outer_adapter", "physical_p4_schur_v14"],
+      "tests": ["BAL_H_contract", "nonhermitian_direction"]
+    },
+    {
+      "path": "benchmarks/subreaper_watchdog.py",
+      "source_blob": "target-base-plus-local-D1-patch",
+      "source_base_blob": "target HEAD aa865a49f37bc5cd6b02c5799b6f93d0ad087e19",
+      "target": "D1 policy-only patch; legacy profiles unchanged",
+      "role": "measured tree RSS stop and observe-only swap/fault/prediction telemetry",
+      "depends_on": ["src/runners/native_capacity.py"],
+      "tests": ["rss_scaled_stop", "swap_observe_only", "ICNTL23_zero"]
+    }
+  ],
+  "explicitly_not_migrated": [
+    "source branch notebook/multicore experiments",
+    "BLR/macro/bubble/alternative PC runners",
+    "old task budgets and 13.5nm fixed 80-mode assumptions",
+    "old profile defaults and global/system settings"
+  ],
+  "d0_status": "frozen_source_and_dependency_map; V20 selective route and D1 policy recorded",
+  "d1_status": "watchdog/native/reference/PORD64 policy checks qualified; D2 retained-condensation/checker lifecycle remains pending"
+}

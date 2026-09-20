@@ -186,6 +186,18 @@ def _base_manifest(
             'max_iterations': profile['outer']['max_iterations'],
             'initial_guess': profile['outer']['initial_guess'],
             'material_authority': material_authority,
+            'resource_stop_policy': profile['resources'].get('resource_stop_policy', 'legacy'),
+            'rss_hard_limit_bytes': profile['resources'].get('rss_hard_limit_bytes'),
+            'rss_warning_bytes': profile['resources'].get('rss_warning_bytes'),
+            'swap_policy': profile['resources'].get('swap_policy', 'legacy_stop'),
+            'global_swap_delta_policy': profile['resources'].get(
+                'global_swap_delta_policy',
+                'stop' if profile['resources'].get('concurrent_neighbor_authorized') else 'observe_only',
+            ),
+            'prediction_admission_policy': profile['resources'].get(
+                'prediction_admission_policy', 'legacy'
+            ),
+            'icntl23': profile['resources'].get('icntl23'),
         }
     return manifest
 
@@ -480,8 +492,20 @@ def launch_specification(
                     cache_path=Path(pc_profile['cache_home']) if pc_profile is not None else cache_home if light or balanced else
                         Path(os.environ['XDG_CACHE_HOME']) if 'XDG_CACHE_HOME' in os.environ else None,
                     source_state=physical_source,
-                    **(dict(stop_on_global_swap=True) if recursive or
-                       physical_resources.get('concurrent_neighbor_authorized') else {}),
+                    **dict(
+                        stop_on_global_swap=bool(
+                            physical_resources.get(
+                                'stop_on_global_swap',
+                                recursive or physical_resources.get('concurrent_neighbor_authorized', False),
+                            )
+                        ),
+                        resource_stop_policy=physical_resources.get(
+                            'resource_stop_policy', 'legacy'
+                        ),
+                        rss_hard_limit_bytes=physical_resources.get('rss_hard_limit_bytes'),
+                        rss_warning_bytes=physical_resources.get('rss_warning_bytes'),
+                        startup_headroom_bytes=physical_resources.get('startup_headroom_bytes'),
+                    ),
                     **(dict(grace_seconds=60 if packed else 30, hard_stop_immediate=True,
                             cooperative_performance_stop=packed,
                             worker_environment={'PHYSICAL_PC_PROFILE': json.dumps(pc_profile),
@@ -499,18 +523,37 @@ def launch_specification(
                     source_after = {'provenance_passed': False, 'error': str(exc)}
                     result['result_classification'] = 'EVIDENCE_INCOMPLETE'
                 zero_swap = authority['job_swap_activity'] == 'zero_supported_by_zero_global_activity'
-                result['job_swap_qualification'] = 'qualified_zero' if zero_swap else 'UNRESOLVED'
-                if not zero_swap and result['result_classification'] == 'worker_exit0':
+                observe_only_swap = physical_resources.get('swap_policy') == 'observe_only'
+                result['job_swap_qualification'] = (
+                    'observed_only' if observe_only_swap else
+                    'qualified_zero' if zero_swap else 'UNRESOLVED'
+                )
+                if (not zero_swap and not observe_only_swap and
+                        result['result_classification'] == 'worker_exit0'):
                     result['result_classification'] = 'EVIDENCE_INCOMPLETE'
                 manifest['requested_legacy_resource_fields'] = {
                     key: specification.execution[key] for key in
                     ('warning_memory_gib', 'terminate_memory_gib', 'memory_limit_gb')}
                 manifest['source_after'] = source_after
                 manifest['effective_watchdog_authority'] = {
-                    'launch_envelope': authority['launch_envelope'], 'warning_fraction': 0.85,
+                    'launch_envelope': authority['launch_envelope'],
+                    'warning_fraction': (
+                        authority['rss_warning_bytes'] / authority['rss_hard_limit_bytes']
+                        if authority.get('resource_stop_policy') == 'measured_tree_rss_only_v3'
+                        and authority.get('rss_hard_limit_bytes') else 0.85
+                    ),
                     'workflow_seconds': workflow_limit, 'solve_seconds': None if pc_profile is not None else solve_limit,
                     'time_limit_mode': 'none' if workflow_limit is None and solve_limit is None else 'bounded',
-                    'scope': authority['memory_scope'], 'legacy_resource_fields_enforced': False}
+                    'scope': authority['memory_scope'],
+                    'legacy_resource_fields_enforced': False,
+                    'resource_stop_policy': authority.get('resource_stop_policy', 'legacy'),
+                    'rss_hard_limit_bytes': authority.get('rss_hard_limit_bytes'),
+                    'startup_headroom_bytes': authority.get('startup_headroom_bytes'),
+                    'swap_policy': authority.get('swap_policy', 'legacy_stop'),
+                    'prediction_admission_policy': physical_resources.get(
+                        'prediction_admission_policy', 'legacy'
+                    ),
+                }
             else:
                 result = _run_worker(
                     plan, specification, run_directory, popen_factory=popen_factory,

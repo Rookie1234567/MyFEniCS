@@ -162,6 +162,7 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
     from mpi4py import MPI
     from petsc4py import PETSc
     from benchmarks.subreaper_watchdog import memory_envelope
+    from benchmarks.task034_wsl_resources import vmstat_swap_pages
     from benchmarks.task038_full3d_jit_staging import process_tree_snapshot
     from src.io.input_validation import simulation_config_3d_from_normalized
     from src.solvers.fullspace_memory_first_krylov import (
@@ -223,6 +224,8 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
     bundle, result, rhs, outcome = {}, None, None, None
     monitor = None
     contract = profile_facts(identity)
+    resource_policy = contract['resources'].get('resource_stop_policy', 'legacy')
+    observe_only_resources = resource_policy == 'measured_tree_rss_only_v3'
     workflow_limit, solve_limit = contract['resources']['workflow_seconds'], contract['resources']['solve_seconds']
     summary = {'profile': profile_facts(identity), 'source_sha': source_sha,
                'official_result': None, 'status': 'STARTED',
@@ -239,25 +242,78 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         threads={key: os.environ.get(key) for key in
                  ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS')})
     previous_handlers = {}
+    sample_unreadable_since = None
+    sample_unreadable_retries = 0
 
     def interrupted(signum, _frame):
         ledger.stop_signal = signum
 
     def sample():
+        nonlocal sample_unreadable_since, sample_unreadable_retries
         if ledger.stop_signal is not None and not (cooperative and ledger.phase in ('solve', 'profile')):
             raise InterruptedError(f'parent stop signal {ledger.stop_signal}')
-        facts = process_tree_snapshot(parent, ledger.phase, None,
-            **({'include_pss': False} if contract.get('native_capacity') else {}))
+        retry_started = None
+        retry_count = 0
+        while True:
+            facts = process_tree_snapshot(parent, ledger.phase, None,
+                **({'include_pss': False} if contract.get('native_capacity') else {}))
+            readable = (facts.get('all_status_readable') and
+                        facts.get('rss_bytes') is not None and
+                        facts.get('swap_bytes') is not None)
+            if readable:
+                sample_unreadable_since = None
+                sample_unreadable_retries = 0
+                break
+            if resource_policy != 'measured_tree_rss_only_v3':
+                raise RuntimeError('whole-workflow resource gate failed')
+            if retry_started is None:
+                retry_started = time.monotonic()
+                sample_unreadable_since = retry_started
+            retry_count += 1
+            sample_unreadable_retries = retry_count
+            if retry_count > 3 or time.monotonic() - retry_started >= 5.0:
+                raise RuntimeError('MONITORING_LOST: resource sample remained unreadable')
+            time.sleep(.05)
         facts['launch_cap_bytes'] = cap
         envelope = memory_envelope()
         if contract.get('native_capacity'):
             facts['planning_cap_bytes'] = envelope['planning_cap_bytes']
             facts['reference_memory_admission'] = contract['resources'].get(
                 'reference_memory_admission', 'predicted_peak')
-        facts['launch_cap_bytes'] = min(cap, facts['rss_bytes'] +
-            envelope['effective_available_bytes']-envelope['reserve_bytes'])
+        # The legacy contract exposes the instantaneous reserve-adjusted
+        # launch cap to downstream allocation checks.  V3 deliberately uses
+        # one fixed measured-RSS Gate; do not silently tighten that Gate here.
+        if resource_policy == 'legacy':
+            facts['launch_cap_bytes'] = min(
+                cap,
+                facts['rss_bytes'] + envelope['effective_available_bytes'] -
+                envelope['reserve_bytes'],
+            )
+        facts['resource_stop_policy'] = resource_policy
+        facts['rss_hard_limit_bytes'] = int(cap)
+        facts['startup_headroom_bytes'] = contract['resources'].get('startup_headroom_bytes')
+        facts['swap_policy'] = contract['resources'].get('swap_policy', 'legacy_stop')
+        facts['icntl23'] = contract['resources'].get('icntl23')
+        facts['global_swap_pages'] = vmstat_swap_pages()
+        facts['resource_policy_observations'] = {
+            'process_tree_swap_bytes': int(facts['swap_bytes']),
+            'effective_available_bytes': int(envelope['effective_available_bytes']),
+            'reserve_bytes': int(envelope['reserve_bytes']),
+            'startup_headroom_bytes': contract['resources'].get('startup_headroom_bytes'),
+            'prediction_admission_policy': contract['resources'].get(
+                'prediction_admission_policy', 'legacy'
+            ),
+        }
+        if retry_count:
+            facts['monitoring_retry'] = {
+                'attempts': retry_count,
+                'max_retries': 3,
+                'grace_seconds': 5.0,
+            }
         if (not facts['all_status_readable'] or facts['rss_bytes'] >= cap
-                or facts['swap_bytes'] != 0 or envelope['effective_available_bytes'] < envelope['reserve_bytes']):
+                or (not observe_only_resources and facts['swap_bytes'] != 0)
+                or (not observe_only_resources and
+                    envelope['effective_available_bytes'] < envelope['reserve_bytes'])):
             raise RuntimeError('whole-workflow resource gate failed')
         return facts
 

@@ -17,23 +17,34 @@ def reference_budget(sample, raw_info, future_bytes, *, marker=lambda *_: None):
     if admission not in ('predicted_peak', 'measured_rss'):
         raise ValueError(f'unknown reference memory admission: {admission}')
     measured = admission == 'measured_rss'
+    observe_only_swap = sample.get('swap_policy') == 'observe_only'
+    measured_rss_policy = sample.get('resource_stop_policy') == 'measured_tree_rss_only_v3'
     estimate_mb = int(raw_info['infog']['16'])
-    if estimate_mb <= 0:
+    prediction_available = estimate_mb > 0
+    if not prediction_available and not (measured and measured_rss_policy):
         raise ReferenceResourceBlocked('nonpositive/unavailable MUMPS estimate')
-    estimate = (estimate_mb + 1)*1_000_000
-    predicted = int(sample['rss_bytes']) + 2*estimate + int(future_bytes) + 1024**3
+    estimate = (estimate_mb + 1)*1_000_000 if prediction_available else None
+    predicted = (int(sample['rss_bytes']) + 2*estimate + int(future_bytes) + 1024**3
+                 if prediction_available else None)
     facts = dict(post_symbolic_rss_bytes=int(sample['rss_bytes']),
-        symbolic_factor_estimate_padded_bytes=estimate, factor_prediction_multiplier=2,
+        symbolic_factor_estimate_padded_bytes=estimate,
+        factor_prediction_multiplier=2 if prediction_available else None,
         future_workspace_bytes=int(future_bytes), engineering_buffer_bytes=1024**3,
         predicted_peak_bytes=predicted,
         memory_admission=admission, predicted_peak_is_diagnostic_only=measured,
+        prediction_status='available' if prediction_available else 'unavailable',
         launch_cap_bytes=int(sample['launch_cap_bytes']) if measured else min(
             int(sample['launch_cap_bytes']),
             int(sample.get('planning_cap_bytes', sample['launch_cap_bytes']))),
-        classification='predicted_engineering_budget_not_upper_bound')
+        classification=('predicted_engineering_budget_not_upper_bound'
+                        if prediction_available else
+                        'measured_rss_admission_prediction_unavailable'))
     marker('reference_budget_evaluated', dict(facts, numeric_called=False))
-    if (not sample['all_status_readable'] or sample['swap_bytes'] != 0 or
-            (int(sample['rss_bytes']) if measured else predicted) >= facts['launch_cap_bytes']):
+    measured_or_predicted = int(sample['rss_bytes']) if measured else predicted
+    if (not sample['all_status_readable'] or
+            (not observe_only_swap and sample['swap_bytes'] != 0) or
+            (measured_or_predicted is not None and
+             measured_or_predicted >= facts['launch_cap_bytes'])):
         raise ReferenceResourceBlocked(str(facts))
     return facts
 
@@ -157,11 +168,21 @@ class PhysicalP4Reference:
                           symbolic_calls=0, numeric_calls=0, solve_calls=0)
         try:
             marker('reference_symbolic_started', {})
-            sample()
+            pre_symbolic_resource = sample()
             self.factor = factor_factory(matrix)
+            if pre_symbolic_resource.get('icntl23') == 0:
+                self.factor.set_icntl(23, 0)
             self.factor.symbolic(matrix)
             raw = self.factor.info((22,29))
             self.audit.update(symbolic_calls=1, symbolic_raw=raw)
+            if pre_symbolic_resource.get('icntl23') == 0:
+                icntl23 = self.factor.get_icntl(23)
+                self.audit['icntl23_requested'] = 0
+                self.audit['icntl23_readback'] = icntl23
+                if icntl23 != 0:
+                    raise RuntimeError(
+                        f'new measured-RSS profile requires ICNTL(23)=0, got {icntl23}'
+                    )
             marker('reference_symbolic_complete', self.audit)
             # 65 V/Z plus 15 fine RHS/action/PC vectors; 16 p4/aug work vectors.
             # Includes recovery reserve conservatively, despite factor release first.

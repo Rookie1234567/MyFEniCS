@@ -1,0 +1,46 @@
+{
+  "schema": "task39extra.d1.measured_tree_rss_only_v3.v1",
+  "source_review": "aa865a49f37bc5cd6b02c5799b6f93d0ad087e19",
+  "policy": {
+    "configured_rss_hard_gate_bytes": 1300000000000,
+    "configured_rss_warning_bytes": 1170000000000,
+    "automatic_stop_reason": "tree RSS reaches hard Gate",
+    "observe_only": ["task VmSwap", "global swap", "faults", "prediction", "elapsed", "MemAvailable"],
+    "legacy_profiles_unchanged": true,
+    "stop_on_global_swap_input": "ignored as a kill condition under this policy; global counters are recorded"
+  },
+  "startup_capacity_snapshot": {
+    "as_of": "2026-09-20主控只读现场容量快照",
+    "mem_total_bytes": 2163100413952,
+    "mem_available_bytes": 1477442351104,
+    "available_minus_hard_gate_bytes": 177442351104,
+    "startup_headroom_bytes": 137438953472,
+    "available_minus_hard_gate_and_startup_headroom_bytes": 40003397632,
+    "legacy_reserve_bytes": 324465062092,
+    "legacy_launch_cap_bytes": 1152977289012,
+    "hard_gate_minus_legacy_launch_cap_bytes": 147022710988,
+    "startup_headroom_source": "this review-selected fixed 137438953472-byte (128GiB) startup allowance; not derived from legacy reserve",
+    "psi_snapshot": {
+      "some_avg10": 0,
+      "some_avg60": 0,
+      "some_avg300": 0,
+      "full_avg10": 0,
+      "full_avg60": 0,
+      "full_avg300": 0
+    },
+    "neighbor_cpu_scope": "CPU1-8 active; read-only observation, no mutation",
+    "interpretation": "configured 1300000000000-byte hard Gate and startup availability are separate; V3 admits only when effective_available >= hard Gate + explicitly reviewed 128GiB startup headroom; legacy reserve/launch cap are diagnostic history, not a second V3 veto",
+    "formal_start_status": "D1_policy_qualified; D3 admission requires final prelaunch capacity reread and review"
+  },
+  "focused_tests": {
+    "watchdog_v3": "7 passed",
+    "watchdog_file_total": "13 passed (legacy cases 6, V3 cases 7)",
+    "native_capacity_regression": "2 passed",
+    "reference_budget_and_real_small_mumps": "11 passed under PORD64 activation in 178.48s",
+    "swap_observation_labels": "global_swap_only and task_swap_only are distinct observe-only labels; task-tree VmSwap and member start_ticks are recorded",
+    "pord64_final_entry": "imports/query/maps passed; task-local 8-cell PORD64 MUMPS fixture passed with ICNTL(23)=0 readback; separate ad-hoc 2x2/4x4 probes returned PORD errors and are not qualification evidence or a general scale claim"
+  },
+  "known_deferred": [
+    "D2 retained p6/p4 implementation and checker chain"
+  ]
+}

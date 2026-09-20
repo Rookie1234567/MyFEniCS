@@ -101,6 +101,30 @@ def test_measured_admission_reaches_real_mumps_numeric_despite_large_forecast():
         mat.destroy()
 
 
+def test_measured_admission_records_unavailable_infog16_without_blocking():
+    resources = dict(rss_bytes=222_001_508_352, launch_cap_bytes=1_300_000_000_000,
+                     planning_cap_bytes=1_300_000_000_000, all_status_readable=True,
+                     swap_bytes=0, swap_policy='observe_only',
+                     resource_stop_policy='measured_tree_rss_only_v3',
+                     reference_memory_admission='measured_rss')
+    markers = []
+    facts = reference_budget(
+        resources, {'infog': {'16': 0}}, 48_545_448_448,
+        marker=lambda name, payload: markers.append((name, payload)))
+    assert facts['prediction_status'] == 'unavailable'
+    assert facts['predicted_peak_bytes'] is None
+    assert facts['classification'] == 'measured_rss_admission_prediction_unavailable'
+    assert next(payload for name, payload in markers if name == 'reference_budget_evaluated')['numeric_called'] is False
+
+
+def test_legacy_measured_admission_still_blocks_unavailable_infog16():
+    resources = dict(rss_bytes=222_001_508_352, launch_cap_bytes=1_300_000_000_000,
+                     planning_cap_bytes=1_300_000_000_000, all_status_readable=True,
+                     swap_bytes=0, reference_memory_admission='measured_rss')
+    with pytest.raises(ReferenceResourceBlocked, match='nonpositive/unavailable'):
+        reference_budget(resources, {'infog': {'16': 0}}, 48_545_448_448)
+
+
 @pytest.mark.parametrize('override', [
     {'rss_bytes': 1_537_500_000_000},
     {'rss_bytes': 1_537_500_000_001},

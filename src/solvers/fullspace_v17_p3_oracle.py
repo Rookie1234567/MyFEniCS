@@ -237,6 +237,28 @@ class _MumpsFactor:
             raise ValueError("MUMPS memory limit must be positive and precede numeric factorization")
         _petsc_error(self._api.MatMumpsSetIcntl(self._handle, 23, int(megabytes)), "MatMumpsSetIcntl(23)")
 
+    def set_icntl(self, index: int, value: int) -> None:
+        """Set one explicitly qualified MUMPS integer control."""
+        if self.destroyed or self.numeric_calls:
+            raise ValueError("MUMPS ICNTL must be set before numeric factorization")
+        _petsc_error(
+            self._api.MatMumpsSetIcntl(
+                self._handle, self._petsc_int(int(index)), self._petsc_int(int(value))
+            ),
+            f"MatMumpsSetIcntl({int(index)})",
+        )
+
+    def get_icntl(self, index: int) -> int:
+        """Read one MUMPS integer control using the runtime PetscInt width."""
+        value = self._petsc_int()
+        _petsc_error(
+            self._api.MatMumpsGetIcntl(
+                self._handle, self._petsc_int(int(index)), ctypes.byref(value)
+            ),
+            f"MatMumpsGetIcntl({int(index)})",
+        )
+        return int(value.value)
+
     def solve(self, rhs: Any, solution: Any) -> None:
         if self.destroyed or self.numeric_calls != 1 or self.solve_calls:
             raise RuntimeError("MUMPS solve has an invalid lifecycle")

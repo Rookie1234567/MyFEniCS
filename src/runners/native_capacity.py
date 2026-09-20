@@ -139,7 +139,16 @@ def _launch_swap_snapshot(stability_seconds=1.0):
     }
 
 
-def _validate_preexisting_swap(snapshot):
+def _validate_preexisting_swap(snapshot, *, observe_only=False):
+    # Review V3's new profile records the same two-read baseline but does not
+    # turn job/global swap activity into a launch veto.  Legacy profiles keep
+    # the fail-closed checks below unchanged.
+    if observe_only:
+        if snapshot.get('stable_two_read_baseline'):
+            if snapshot.get('preexisting_global_swap_bytes') == 0:
+                return 'observe_only_zero_preexisting_global_swap'
+            return 'observe_only_preexisting_global_swap_reported'
+        return 'observe_only_baseline_unavailable'
     if not snapshot.get('stable_two_read_baseline'):
         raise InputError('pre-launch swap baseline is unstable or unreadable')
     if snapshot.get('current_cgroup_relative') in (None, '', '.'):
@@ -190,8 +199,12 @@ def native_capacity_guard(profile, *, memory_policy='none'):
         os.sched_setaffinity(0, {9})
         os.environ['OMPI_MCA_hwloc_base_binding_policy'] = 'none'
         os.environ['PHYSICAL_NATIVE_CAPACITY'] = profile
+        profile_facts = native_profile_facts(profile)
+        observe_only_swap = profile_facts['resources'].get('swap_policy') == 'observe_only'
         swap_launch = _launch_swap_snapshot()
-        swap_launch['policy'] = _validate_preexisting_swap(swap_launch)
+        swap_launch['policy'] = _validate_preexisting_swap(
+            swap_launch, observe_only=observe_only_swap
+        )
         node_admission = None
         if memory_policy in {'membind_node1', 'preferred_node1'}:
             cgroup = current_cgroup_path()
