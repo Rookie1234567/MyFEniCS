@@ -1,10 +1,24 @@
 # Task041 outcomes summary
 
+> **2026-09-20 D3a 终态（as-of 2026-09-20T07:49:33.807349Z / 15:49:33.807349 CST）**：D1e 已结束，不能继续沿用下方 D2a 的“运行中”作为当前状态。producer QEP packet 已保存；consumer 在两侧合成 modal Schur 重复一致性门失败，原始分类 `IMPLEMENTATION_FAILURE`，finalizer 为 `failed/service_boundary_failure`。这不是 OOM、超时、外部 kill 或投影误差结论。40 行=8 probe+32 modal，bottom/top 各16；formal Schur `0/4800`，outer FGMRES `not_started`/0，RTA/full field `not_run`。本段只记录已自然终止的旧 D1e 与 producer metadata 复用核验，作为 Review V5 R0 的已有终态证据；R1–R6 均 `not_run`，不记人工受控停止。详见 [Response V8](../response_v8.md)、[D3a terminal record](records/task041_d3a_terminal_20260920.json) 和 [2nm terminal summary](2nm_d1e_terminal_20260920.md)。
+
+| D3a 终态项 | 实际值 |
+|---|---|
+| 运行 source / unit | `bde0686891af10bb489e4b1cb14500791cb50351` / `task041-d1e-2nm-p6h1p5-m1200-mpi8.service` |
+| producer / consumer | `29504.116038094042 s, rc0` / `135717.4772190291 s, rc1` |
+| public / finalizer | `165222.44361121487 s` / charged `165228.433265082 s`; finalizer `service_boundary_failure` |
+| repeat gate | combined bottom+top sample: relative `4.427612e-05 > 1e-10`; `max_column_relative_error=1.169058e-04`; side root cause unlocalized |
+| modal raw | 40 lines, `87154 B`, SHA `dd06b01eac2928ff0814bef9bd3951ac256d776366ed7fd177392374e0175cde` |
+| resources | service-tree RSS peak `642483171328 B`; cgroup peak `647904940032 B`; warning/hard/reserve `1539316278886/1759218604442/412316860416 B`; global swap baseline `8192 B`, new used `290816 B`, pswpout +71 pages; job/cgroup swap `0` |
+| producer reuse | packet retained; metadata validator `rc=0`, `producer_resource_qualified=true`; consumer-only restart/shard+ABI consumption validation not run |
+
+底部样本 `16/352 iter/36004.124497986864 s/max residual 0.009981656767193032`，顶部样本 `16/394 iter/40527.54153031926 s/max residual 0.009939510152843832`；这些小 RHS 的 `reason=2` 不等于正式 Schur 或全局物理通过。D1e 的完整终态与旧 D2a 运行中记录分开保存。
+
 > **2026-09-20 D2a 运行中状态纠正（as-of 01:19:51.480911341Z / 09:19:51 CST）**：下列旧段仍是历史登记，不再代表当前最新运行状态。D1e 已实际启动并仍在运行；producer QEP 已完整落盘，consumer 尚未完成 full solve，formal Schur `0/4800`，outer solver `not_started`/outer response `0`（分母不适用），RTA `not_run`。当前不是终态，`systemd Result=success` 不是 solver PASS。
 
 模型是钨（W）、2nm、p6/h1.5、M1200、MPI8×1；Schur 是供外层迭代使用的模态耦合预条件矩阵。当前两侧各 8 列各算两遍的重复性计划共 32 次，已有 21/32 个样本，正式 Schur 仍为 `0/4800`，不是 21 项 formal 进度。
 
-## 2026-09-20：Task041 D2a / D1e 运行中
+## 2026-09-20：Task041 D2a / D1e 运行中（历史快照，已被上方 D3a 终态覆盖）
 
 | 项目 | 当前事实 |
 |---|---|

@@ -1,6 +1,14 @@
 # 开发阶段研究对象与计算结果总账
 
-## 2026-09-20：Task041 2nm D1e 运行中登记（D2a）
+## 2026-09-20：Task041 2nm D1e 终态登记（D3a）
+
+| 模型/阶段 | 当前结果 | 资格边界与证据 |
+|---|---|---|
+| 钨（W）2nm p6/h1.5 M1200 BAL_H hybrid iterative，MPI8×1 CPU1–8 | producer QEP packet 已保存；consumer 在两侧合成 modal Schur 重复一致性门失败，原始 `IMPLEMENTATION_FAILURE`；formal Schur `0/4800`，outer `not_started`/0，RTA `not_run` | 失败值 `relative=4.427612e-05 > 1e-10`、`max_column_relative_error=1.169058e-04`；两次样本都含 bottom+top，侧别根因未定位；finalizer `service_boundary_failure`，不是 OOM/超时/投影失败；[Response V8](task041_mpi1_shortwave_hybrid_capacity/response_v8.md)、[D3a record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_d3a_terminal_20260920.json) |
+
+32 个 modal 行均 `reason=2` 且 true residual `<=0.01`，但这只是小 RHS 内层门，不是重复一致性、全局 residual 或 official RTA。权威 service 全树 RSS peak 为 `642483171328 B`，cgroup peak `647904940032 B`；global swap 基线 `8192 B`、新增 used `290816 B`、pswpout +71 页，job/cgroup swap 为0。producer packet 可保留；终态 public supervisor summary 存在，既有 producer validator 以 `rc=0` 核对了 metadata/resource qualification，但 consumer-only restart 未运行，不能登记为 consumer-only reuse qualified；p4 factor、未完成 Schur/native workspace 没有 checkpoint。
+
+## 2026-09-20：Task041 2nm D1e 运行中登记（D2a，历史快照）
 
 | 模型/阶段 | 当前结果 | 资格边界与证据 |
 |---|---|---|

@@ -1,6 +1,14 @@
 # 项目开发进度：Task000–Task040
 
-## 2026-09-20：Task041 D2a / D1e 运行中（as-of 01:19:51.480911341Z）
+## 2026-09-20：Task041 D3a / D1e 终态（当前）
+
+Task041 的钨（W）2nm、p6/h1.5、M1200、MPI8×1 D1e 已终止。producer QEP packet 已完整保存；consumer 在两侧合成 modal Schur 重复一致性检查处以 `IMPLEMENTATION_FAILURE` 退出。该检查的两次样本都由 bottom+top 合成，不能归因于 top；`top_construction_cleanup` 是退出清理 marker。失败值为 `relative=4.427612e-05`、`max_column_relative_error=1.169058e-04`，限值 `1e-10`。这与 32 个 modal 小 RHS 的内层 `reason=2`、true residual `<=0.01` 是不同门。
+
+本次最终记录为 40 行（8 probe+32 modal，bottom/top 各16），formal Schur `0/4800`，outer FGMRES `not_started`/0，RTA/full field `not_run`。producer/consumer wall 为 `29504.116038094042/135717.4772190291 s`，public total `165222.44361121487 s`，finalizer charged `165228.433265082 s`；finalizer status 为 `failed/service_boundary_failure`，不是 PASS。权威 service process-tree RSS peak `642483171328 B`，cgroup peak `647904940032 B`；global swap 从 `8192 B` 基线新增 used `290816 B`、pswpout +71 页，job/cgroup swap 为0。这里的 process-tree RSS / cgroup memory.peak 口径保持分开。
+
+producer packet 与 32 shards 保留；终态 public `supervisor_summary.json` 已存在，既有 producer validator `rc=0` 且 `producer_resource_qualified=true`，但 consumer-only restart 未运行，故仍不是 consumer-only reuse qualified，p4 factor/未完成 Schur/native workspace 没有 checkpoint。旧 D2a 运行中段、D1c/D1d 修复链和全部历史负结果保留，canonical 运行 source `bde0686891af10bb489e4b1cb14500791cb50351` 未被本报告修改。证据入口：[Response V8](task041_mpi1_shortwave_hybrid_capacity/response_v8.md)、[D3a record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_d3a_terminal_20260920.json)、[terminal summary](task041_mpi1_shortwave_hybrid_capacity/outcomes/2nm_d1e_terminal_20260920.md)。
+
+## 2026-09-20：Task041 D2a / D1e 运行中（历史快照，已被上方 D3a 终态覆盖；as-of 01:19:51.480911341Z）
 
 Task041 的模型是钨（W）、2nm、p6/h1.5、M1200、MPI8×1；Schur 是供外层迭代使用的模态耦合预条件矩阵。2nm D1e 已实际运行，不能再沿用旧的“尚未启动”表述。producer QEP 已完整写入
 selected-mode packet；consumer 仍在 modal/Schur 候选阶段，formal Schur response `0/4800`，outer
