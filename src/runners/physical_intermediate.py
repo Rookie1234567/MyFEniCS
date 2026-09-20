@@ -318,6 +318,28 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         return facts
 
     ledger.resource_sample = sample
+    from src.io.native_capacity_profile import RETAINED_CONDENSED_PROFILE
+    if identity == RETAINED_CONDENSED_PROFILE:
+        # The V3 profile has its own retained p6/p4 route.  Keep it outside
+        # the historical fullspace builder so old native identities retain
+        # their exact dispatch and screen contracts.
+        from .physical_retained_condensed_v20 import run_retained_condensed_workflow
+        for signum in (signal.SIGTERM, signal.SIGINT):
+            previous_handlers[signum] = signal.signal(signum, interrupted)
+        try:
+            return run_retained_condensed_workflow(
+                payload,
+                directory,
+                source_sha=source_sha,
+                cfg=cfg,
+                contract=contract,
+                ledger=ledger,
+                sample=sample,
+                summary=summary,
+            )
+        finally:
+            for signum, handler in previous_handlers.items():
+                signal.signal(signum, handler)
     release_stack = release_physical_intermediate_solver_stack
     destroy_stack = destroy_physical_intermediate_solver
     if recursive:

@@ -16,6 +16,7 @@ NATIVE_CASES = {
     'dual_condensed_balh_native_5nm_v3': (5.0, (4.0,), None, None, None),
 }
 NATIVE_PROFILES = tuple(NATIVE_CASES)
+RETAINED_CONDENSED_PROFILE = 'dual_condensed_balh_native_5nm_v3'
 NATIVE_TIME_LIMIT_MODES = {
     'balanced_h6_p4_native_13p5': 'bounded',
     'balanced_h6_p4_native_5nm': 'none',
@@ -75,6 +76,38 @@ def native_profile_facts(identity):
         concurrent_neighbor_authorized=True,
     )
     if identity == 'dual_condensed_balh_native_5nm_v3':
+        # This route deliberately overrides the inherited V5 screen/backend
+        # labels below.  The old balanced profile remains byte-for-byte
+        # described for every other identity.
+        facts['outer'].update(
+            route='RETAINED_BAL_H_V20',
+            ksp_type='fgmres',
+            restart=32,
+            max_iterations=2048,
+            initial_guess='zero',
+            screen=dict(
+                iterations=128,
+                solve_seconds=None,
+                absolute_true_limit=None,
+                progress_only=True,
+                stop_on_screen=False,
+                policy='progress_only_observed_not_a_stop_gate',
+            ),
+        )
+        facts['p4_p6_curl_implementation'] = (
+            'FFCx_original_split_curl_mass_retained_v20'
+        )
+        facts['p4_assembly_implementation'] = (
+            'assembly_time_condensed_v20_exact_MPC_p4'
+        )
+        facts['formal_runner'] = 'src.runners.physical_retained_condensed_v20'
+        facts['backend'] = {
+            'p6': 'retained_local_schur_matrix_free',
+            'p4': 'assembly_time_condensed_exact_inverse',
+            'h6': 'physical_light_setup_original_window_then_packed_action',
+            'outer': 'run_retained_fgmres',
+            'not_old_fullspace_intermediate_solver': True,
+        }
         facts['resources'].update(
             absolute_cap_bytes=1_300_000_000_000,
             planning_cap_bytes=1_300_000_000_000,
@@ -92,6 +125,18 @@ def native_profile_facts(identity):
             p4_budget_policy='measured_rss_only_record_prediction',
             reference_memory_admission='measured_rss',
         )
+        facts['condensed_route'] = {
+            'name': 'v20_selective_dual_condensed',
+            'p6': 'retained_local_schur_matrix_free',
+            'p4': 'assembly_time_condensed_exact_inverse',
+            'bridge': 'retained_J_inverse_original_BAL_H',
+            'geometry_identity_policy': 'raw_unrounded',
+            'shared_identity_cache': 'read_only_by_local_interior_dimension',
+            'p4_max_refinements': 2,
+            'p4_relative_residual_limit': 1.0e-10,
+            'matrix_lifecycle': 'MATRIX_RETAINED_BACKEND_DEPENDENCY',
+            'mode_inventory': 'dynamic_current_input',
+        }
     facts['campaign_authorization'] = {
         'source': 'user_execution_instruction_2026-09-09',
         'formal_mpi': 1,
@@ -110,6 +155,10 @@ def native_profile_facts(identity):
         'workflow_seconds': workflow,
     }
     if identity == 'dual_condensed_balh_native_5nm_v3':
+        facts['campaign_authorization']['screen'].update(
+            progress_only=True,
+            stop_on_screen=False,
+        )
         facts['campaign_authorization']['resource_policy'] = {
             'name': 'measured_tree_rss_only_v3',
             'rss_hard_limit_bytes': 1_300_000_000_000,

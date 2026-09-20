@@ -1,0 +1,218 @@
+{
+  "schema": "task39extra.dual_condensed_v3_d2_component.v1",
+  "as_of": "2026-09-20T09:50:56Z",
+  "review": "aa865a49f37bc5cd6b02c5799b6f93d0ad087e19",
+  "source_parent_sha": "dabbda495099b6a42396ec3ed464180f609824dc",
+  "frozen_source": {
+    "commit": "ea717ed5c6ffe45214ecdeca80cabdaeaef5960b",
+    "path": "src/test/test_task39extra_v19_p6_cell_condensed_action.py",
+    "selected_tests": [
+      "test_fixed_p64_galerkin_then_condense_does_not_equal_trace_condense",
+      "test_noncommuting_sum_adjoint_bilinear_repeat_and_input_immutability"
+    ]
+  },
+  "focused_checks": {
+    "activation": "scripts/activate_task39extra_pord64.sh",
+    "cpu_affinity": "CPU10-13",
+    "interpreter": ".venv/bin/python",
+    "command": "taskset -c 10-13 .venv/bin/python -m pytest -q -s src/test/test_task039extra_v20_p4_ledger.py src/test/test_task039extra_v20_noncommuting_contract.py src/test/test_task039extra_v20_geometry_identity.py",
+    "result": "7 passed in 1.31s",
+    "coverage": [
+      "controlled ledger accounting and failure packet",
+      "real FE/MUMPS p4 refinement and lifecycle",
+      "retained runtime ownership weakrefs",
+      "frozen V19 noncommuting/immutability algebra",
+      "raw-unrounded near-size geometry identity"
+    ],
+    "not_run": [
+      "formal 5nm FEM",
+      "large AIJ/factor allocation",
+      "h2/2nm/other model"
+    ]
+  },
+  "same_object_setup_probe": {
+    "path": "/tmp/task39extra-retained-setup",
+    "workflow": "run_retained_condensed_workflow",
+    "input_scope": "18-cell/30-channel component fixture",
+    "summary": "physical_intermediate_summary.json",
+    "summary_sha256": "b49826c851f1d5a32c3b3f9287b2dca849289a8f12e247a79abe56f4a3bed0c3",
+    "compact_archive": "docs/task39extra_para_workstation_capacity/outcomes/records/d2_same_object_setup_probe_compact_v1.json",
+    "driver_source_sha256": "5f7c60af8994a2bc469f0602224fa46da01a33d89303dfa0ac1808eded5bb5cf",
+    "top_level_status": "FAILED",
+    "top_level_status_explanation": "intentional StopAfterSetup probe exception; not a numerical failure",
+    "setup_checks_status": "PASS",
+    "cells": 18,
+    "p6": {
+      "full_rows": 13224,
+      "active_rows": 3996,
+      "appended_rows": 30,
+      "oriented_class_count": 12,
+      "class_count_semantics": "p6 buffer inventory oriented retained classes"
+    },
+    "p4": {
+      "full_rows": 4160,
+      "active_rows": 1704,
+      "port_rows": 30,
+      "raw_tensor_class_count": 6,
+      "class_count_semantics": "raw tensor geometry/material classes"
+    },
+    "raw_geometry_identity_policy": "raw_unrounded",
+    "cache_content_and_unique_bytes_unchanged": true,
+    "unique_cache_bytes": 150845184,
+    "unique_retained_cache_bytes": 149601024,
+    "setup_factor_counts": {
+      "logical_apply_calls": 2,
+      "symbolic_calls": 1,
+      "numeric_calls": 1,
+      "solve_calls": 2
+    },
+    "identity_maxima": {
+      "native_identity_relative": 1.28688450710742e-14,
+      "internal_residual_relative": 4.706098026251933e-15,
+      "schur_port_identity_relative": 0.0,
+      "tolerance": 1.0e-10
+    },
+    "jit": {
+      "compiled_before_p4_factor": true,
+      "expression_count": 2,
+      "form_count": 7,
+      "includes_region_volume_forms": true,
+      "released_before_factor": true
+    },
+    "resource_status": "synthetic probe samples only; no resource qualification"
+  },
+  "prior_qualified_tests_index": [
+    {
+      "family": "V18",
+      "kind": "real_FE_MPC",
+      "source_blob": "16317bcdda07c9aed69a442f7510954d11722d13",
+      "path": "src/test/test_task39extra_v18_cell_condensed_ports.py",
+      "test": "test_actual_adapter_complex_mpc_nonzero_interior_ports_and_new_rhs",
+      "result": "previously passed; not rerun"
+    },
+    {
+      "family": "V19",
+      "kind": "algebraic_bridge",
+      "source_blob": "9035dd90eb37e82f260c08ff5ed023bbf0e54a80",
+      "path": "src/test/test_task39extra_v19_p6_cell_condensed_action.py",
+      "test": "test_retained_bal_h_bridge_uses_original_hp_and_one_bal_h_call",
+      "result": "previously passed; not rerun"
+    },
+    {
+      "family": "V19",
+      "kind": "real_FE_MPC_action",
+      "source_blob": "9035dd90eb37e82f260c08ff5ed023bbf0e54a80",
+      "path": "src/test/test_task39extra_v19_p6_cell_condensed_action.py",
+      "test": "test_real_ffcx_mpc_action_only_matches_augmented_schur_and_nonzero_rhs",
+      "result": "previously passed; not rerun"
+    },
+    {
+      "family": "V19",
+      "kind": "real_PETSc_FGMRES_contract",
+      "source_blob": "b6a2ecbcec41da832a5a89765a893750b6af2a26",
+      "path": "src/test/test_task39extra_v19_retained_fgmres.py",
+      "test": "test_real_ksp_solves_retained_space_with_physical_terminal_check",
+      "result": "previously passed; not rerun"
+    },
+    {
+      "family": "V19",
+      "kind": "real_PETSc_FGMRES_contract",
+      "source_blob": "b6a2ecbcec41da832a5a89765a893750b6af2a26",
+      "path": "src/test/test_task39extra_v19_retained_fgmres.py",
+      "test": "test_schur_convergence_cannot_bypass_port_closure",
+      "result": "previously passed; not rerun"
+    },
+    {
+      "family": "V19",
+      "kind": "real_PETSc_FGMRES_contract",
+      "source_blob": "b6a2ecbcec41da832a5a89765a893750b6af2a26",
+      "path": "src/test/test_task39extra_v19_retained_fgmres.py",
+      "test": "test_user_stop_preserves_a_terminal_checkpoint_and_closes_ksp",
+      "result": "previously passed; not rerun"
+    },
+    {
+      "family": "V19",
+      "kind": "real_PETSc_FGMRES_contract",
+      "source_blob": "b6a2ecbcec41da832a5a89765a893750b6af2a26",
+      "path": "src/test/test_task39extra_v19_retained_fgmres.py",
+      "test": "test_continues_same_ksp_past_64_steps_and_observes_large_time",
+      "result": "previously passed; not rerun"
+    },
+    {
+      "family": "PORD64",
+      "kind": "real_FE_MPC_MUMPS",
+      "source_blob": "27d9595692b2cbc235a59ad2caf359408a8e2202",
+      "path": "src/test/test_task39extra_pord64_fixture.py",
+      "test": "test_pord64_small_p4_mpc_mumps_roundtrip",
+      "result": "previously passed; not rerun"
+    }
+  ],
+  "five_nm_input_contract": {
+    "input": "input/task39extra_para_workstation_capacity/original_5nm_si_p6h4_dual_condensed_v3.dat",
+    "input_sha256": "75c6ac3c126a3ef46bf62f82d821a84a65621f14a6996ea3b079f120f4da1125",
+    "input_blob_sha1": "71e5aaa75b6862faac4acbf6b219cd4a80d68a3f",
+    "profile": "dual_condensed_balh_native_5nm_v3",
+    "material": "Si / silicon",
+    "material_authority": "user-provided for this execution; not independently database-verified",
+    "n": [0.99396854453, 0.00435380777],
+    "discretization": {
+      "cells": 3780,
+      "nedelec_degree": 6,
+      "mesh_cell_type": "hexahedron",
+      "mesh_spacing_mode": "boundary_fitted",
+      "p6_rows": 2514372,
+      "p4_rows": 754696,
+      "dtn_modes": 600,
+      "propagating_modes": 598,
+      "evanescent_modes": 2,
+      "mode_manifest_sha256": "dde3aee7ee25bc5d68617a503eebec720a1527c9d044125bfb09acaa6d0b6645"
+    },
+    "inventory_reference": {
+      "record": "docs/task39extra_para_workstation_capacity/outcomes/records/p0_5nm_grid_inventory.json",
+      "inventory_source_sha": "aba005c3963a381b66fd497c67330a512cd2d589",
+      "inventory_input_sha256": "773b5f3ac5f3636a31209b2150c0de9109899514805db13008d35f942281ecf8",
+      "inventory_physical_model_sha256": "96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d",
+      "semantics": "linked prior P0 mesh/mode inventory; not a new formal run"
+    },
+    "resolved_input_contract": {
+      "physical_model_sha256": "96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d",
+      "requested_cfg_mesh_cells": [13, 7, 35],
+      "stage4_axis_plan_cells": [15, 7, 36],
+      "axis_coordinate_counts": [16, 8, 37],
+      "axis_plan_global_cells": 3780,
+      "mesh_cell_type": "hexahedron",
+      "mesh_spacing_mode": "boundary_fitted",
+      "material_names": ["Si / silicon", "Si / silicon"],
+      "n": [0.99396854453, 0.00435380777],
+      "epsilon": [0.9879545118729887, 0.00865509594462061],
+      "material_plane_alignment": true,
+      "mode_count": 600,
+      "propagating_modes": 598,
+      "evanescent_modes": 2,
+      "mode_manifest_sha256": "dde3aee7ee25bc5d68617a503eebec720a1527c9d044125bfb09acaa6d0b6645",
+      "matches_prior_p0": {
+        "physical_model": true,
+        "stage4_axis_plan": true,
+        "mode_count": true,
+        "mode_manifest": true
+      },
+      "verification": "current input API + stage4_axis_plan + build_dynamic_mode_inventory; no FE space or matrix"
+    },
+    "time_limit_mode": "none",
+    "outer_contract": {
+      "ksp": "fgmres",
+      "restart": 32,
+      "max_iterations": 2048,
+      "initial_guess": "zero",
+      "screen": "128 iterations recorded only; no stop gate"
+    },
+    "validate_only": "valid; timeout_seconds=null; no FEM launched",
+    "formal_status": "not_started; D3 clean-source/effective-resource review pending"
+  },
+  "d2_status": "component_checks_qualified_pending_d3_formal_review",
+  "limitations": [
+    "18-cell setup is not the 5nm 3780-cell/600-mode qualification",
+    "no formal resource PASS or numerical/physical result is claimed",
+    "P2 symbolic/numeric admission and full checker remain D3 work"
+  ]
+}

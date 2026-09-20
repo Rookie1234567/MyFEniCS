@@ -201,3 +201,119 @@ def compare_power_totals(current, reference):
     a,b=values(current),values(reference)
     return dict(total_absolute_differences={k:abs(a[k]-b[k]) for k in a},
                 total_current=a,total_reference=b,total_absolute_limit=1e-5)
+
+
+def compare_retained_5nm_output(outputs, current_directory, *, fine=None, solution=None):
+    """Compare the V20 retained route with the tracked old 5 nm output.
+
+    This deliberately uses the existing full modal/E-H/RTA comparison
+    helpers.  It never calls the short-wave ``compare_wsl_observables`` path.
+    """
+
+    root = Path(__file__).resolve().parents[2]
+    reference = root / (
+        'results/euv_grazing1_phi0/'
+        'original_5nm_si_p6h4_balanced_h6_p4_native__full3d_iterative__mpi1__Mna/'
+        '20260911T065955.813489Z'
+    )
+    current_directory = Path(current_directory)
+    summary_path = reference / 'physical_intermediate_summary.json'
+    if not summary_path.is_file():
+        return {
+            'status': 'REFERENCE_AUTHORITY_LIMITED',
+            'reason': 'tracked old 5 nm reference summary is unavailable',
+            'reference_directory': str(reference),
+        }
+    try:
+        old_summary = json.loads(summary_path.read_text())
+        reference_output = old_summary.get('official_result')
+        if reference_output is None:
+            raise ValueError('old 5 nm official output is unavailable')
+        modal = compare_modal_files(current_directory, reference / 'numerical_output')
+        if modal['mode_count'] != 600:
+            raise ValueError(f"expected 600 modal channels, got {modal['mode_count']}")
+        selected_eh = compare_selected_eh(reference / 'numerical_output', current_directory)
+        power = compare_power_totals(outputs, reference_output)
+        if fine is None or solution is None:
+            raise ValueError('full-field witness or current solution is unavailable')
+        witness_audit_path = reference / 'notch_reference_witness.json'
+        witness_audit = json.loads(witness_audit_path.read_text())
+        witness_path = Path(witness_audit['arrays']['path'])
+        if not witness_path.is_absolute():
+            witness_path = reference / witness_path
+        witness_sha = witness_audit['arrays']['sha256']
+        if hashlib.sha256(witness_path.read_bytes()).hexdigest() != witness_sha:
+            raise ValueError('full-field witness hash mismatch')
+        from src.solvers.condensed_fine_reference import native_map_arrays
+        from src.solvers.fullspace_physical_intermediate_runtime import (
+            fine_volume_quadrature_metadata,
+        )
+        from src.solvers.physical_error_diagnostics import metric_square
+        from src.solvers.physical_error_metric import LosslessFEMetric
+        with np.load(witness_path, allow_pickle=False) as witness:
+            mapping = native_map_arrays(
+                fine['setup']['spaces'][6], fine['setup']['floquets'][6]
+            )
+            for name, descriptor in witness_audit['map'].items():
+                if not np.array_equal(mapping[name], witness[descriptor['array_key']]):
+                    raise ValueError(f'full-field native map mismatch: {name}')
+            reference_field = np.asarray(
+                witness[witness_audit['control']['x']['array_key']],
+                dtype=np.complex128,
+            )
+            current_field = np.asarray(
+                solution.getValues(mapping['independent_indices']),
+                dtype=np.complex128,
+            )
+            if current_field.shape != reference_field.shape:
+                raise ValueError('full-field independent storage shape mismatch')
+            quadrature, _ = fine_volume_quadrature_metadata(fine['setup'], fine['cfg'])
+            metric = LosslessFEMetric(fine['setup'], 6, fine['cfg'].k0, quadrature)
+            try:
+                delta = current_field - reference_field
+                field_norms = {}
+                for name, action in (('L2', metric.mass), ('scaled_curl', metric.curl)):
+                    error_norm = float(np.sqrt(metric_square(action, delta)))
+                    reference_norm = float(np.sqrt(metric_square(action, reference_field)))
+                    field_norms[name] = {
+                        'absolute_error_norm': error_norm,
+                        'reference_norm': reference_norm,
+                        'relative': error_norm / max(reference_norm, np.finfo(float).tiny),
+                    }
+            finally:
+                metric.destroy()
+        full_field = {
+            'status': 'FULL_FIELD_PASS' if max(
+                item['relative'] for item in field_norms.values()
+            ) <= 1e-4 else 'FULL_FIELD_FAIL',
+            'phase_fitting': False,
+            'field_limit': 1e-4,
+            'fields': field_norms,
+            'witness_sha256': witness_sha,
+            'witness_audit': str(witness_audit_path),
+            'native_map_identity': 'exact_array_match',
+        }
+        passed = (
+            full_field['status'] == 'FULL_FIELD_PASS'
+            and modal['mode_count'] == 600
+            and selected_eh['status'] == 'SELECTED_EH_PASS'
+            and modal['amplitude_relative_difference'] <= modal['amplitude_limit']
+            and modal['power_max_absolute_difference'] <= modal['power_limit']
+            and max(power['total_absolute_differences'].values()) <= power['total_absolute_limit']
+        )
+        return {
+            'status': 'MATCHED_REFERENCE_PASS' if passed else 'MATCHED_REFERENCE_FAIL',
+            'reference_kind': 'old_5nm_same_physics_full_field_and_600_modal',
+            'reference_directory': str(reference),
+            'phase_fitting': False,
+            'full_field': full_field,
+            'modal': modal,
+            'selected_eh': selected_eh,
+            'power': power,
+        }
+    except (OSError, KeyError, TypeError, ValueError) as exc:
+        return {
+            'status': 'REFERENCE_AUTHORITY_LIMITED',
+            'reason': f'old 5 nm comparison unavailable: {type(exc).__name__}: {exc}',
+            'reference_directory': str(reference),
+        }

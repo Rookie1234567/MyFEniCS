@@ -1,0 +1,66 @@
+{
+  "schema": "task39extra.v20.same_object_setup_probe_compact.v1",
+  "source_parent_sha": "dabbda495099b6a42396ec3ed464180f609824dc",
+  "driver_source_sha256": "5f7c60af8994a2bc469f0602224fa46da01a33d89303dfa0ac1808eded5bb5cf",
+  "original_summary_sha256": "b49826c851f1d5a32c3b3f9287b2dca849289a8f12e247a79abe56f4a3bed0c3",
+  "probe_driver": "same_retained_workflow_setup",
+  "archived_driver": "docs/task39extra_para_workstation_capacity/outcomes/records/d2_same_object_setup_probe_driver.py",
+  "command": "cd /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity && source scripts/activate_task39extra_pord64.sh && export PYTHONPATH=\"$PWD:$PYTHONPATH\" && TASK39EXTRA_PROBE_OUT=/tmp/task39extra-retained-setup taskset -c 10-13 .venv/bin/python docs/task39extra_para_workstation_capacity/outcomes/records/d2_same_object_setup_probe_driver.py",
+  "configuration": {
+    "constructor": "replace(target_stage4_config(degree=6, h_nm=100), ...)",
+    "period_x": 20.0,
+    "period_y": 15.0,
+    "grating_width_x": 8.0,
+    "grating_width_y": 15.0,
+    "grating_height": 2.0,
+    "z_min": -1.0,
+    "z_max": 3.0,
+    "air_height": 3.0,
+    "substrate_thickness": 1.0,
+    "mesh_cell_type": "hexahedron",
+    "mesh_spacing_mode": "boundary_fitted",
+    "mesh_axis_cell_counts": [3, 2, 3],
+    "incident_theta_deg": 74.0,
+    "incident_phi_deg": 17.0,
+    "n_substrate": [1.4, 0.05],
+    "n_grating": [0.9, 0.02]
+  },
+  "stop_boundary": {
+    "marker": "retained_same_object_setup_checks_complete",
+    "meaning": "intentional StopAfterSetup; workflow top-level FAILED is probe control flow",
+    "setup_status": "PASS"
+  },
+  "p6": {
+    "full_rows": 13224,
+    "active_rows": 3996,
+    "appended_rows": 30,
+    "oriented_class_count": 12,
+    "class_semantics": "p6 retained/oriented buffer classes"
+  },
+  "p4": {
+    "full_rows": 4160,
+    "active_rows": 1704,
+    "port_rows": 30,
+    "raw_tensor_class_count": 6,
+    "class_semantics": "p4 raw tensor geometry/material classes"
+  },
+  "qualification_facts": {
+    "cells": 18,
+    "modes": 30,
+    "factor_counts": {
+      "logical_apply_calls": 2,
+      "symbolic_calls": 1,
+      "numeric_calls": 1,
+      "solve_calls": 2
+    },
+    "identity_max": 1.28688450710742e-14,
+    "internal_residual_max": 4.706098026251933e-15,
+    "schur_port_identity_max": 0.0,
+    "identity_tolerance": 1.0e-10,
+    "jit_expressions": 2,
+    "jit_forms": 7,
+    "cache_content_and_unique_bytes_unchanged": true,
+    "resource_qualification": false
+  },
+  "archival_scope": "compact facts only; no large resources, matrices, factors, or cache payload copied"
+}

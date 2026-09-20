@@ -127,6 +127,19 @@ class FullspaceSplitVolumeAction:
         self._mass_action = None
         self._curl_action = None
 
+    @property
+    def bilinear_form(self) -> Any:
+        """Return the original curl-plus-mass form for one opt-in compiler.
+
+        The retained V20 route compiles the already-built physical form once
+        for assembly-time condensation.  This is a borrowed UFL object; it
+        does not create another action or change the ordinary action path.
+        """
+
+        if self._destroyed:
+            raise RuntimeError("split volume action has been destroyed")
+        return self._curl_action._bilinear_form + self._mass_action._bilinear_form
+
 
 class FullspacePhysicalAction:
     """Compose ``A_volume`` and the current dynamic ``A_DtN`` action."""

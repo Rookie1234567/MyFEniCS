@@ -141,9 +141,337 @@ def balanced_output_classification(summary, errors, expected_errors=()):
     return 'NUMERICAL_OR_OUTPUT_FAIL'
 
 
+def check_retained_v20(directory: Path, summary: dict) -> dict:
+    """Check the opt-in retained V20 contract without legacy profile rules."""
+
+    started = time.monotonic()
+    errors: list[str] = []
+    facts: dict = {}
+
+    def require(condition: bool, message: str) -> None:
+        if not condition:
+            errors.append(message)
+
+    from src.io.physical_intermediate_profile import profile_facts
+
+    identity = summary.get('profile', {}).get('identity')
+    try:
+        require(summary['profile'] == profile_facts(identity),
+                'retained resolved profile facts differ from native contract')
+    except (KeyError, ValueError):
+        errors.append('retained profile identity is not resolvable')
+    solve = summary.get('solve', {})
+    require(solve.get('restart') == 32 and solve.get('max_it') == 2048,
+            'retained outer restart/max_it contract mismatch')
+    require(solve.get('zero_start') is True and solve.get('screen_enabled') is False,
+            'retained outer zero-start/progress-only contract mismatch')
+    require(solve.get('time_policy') == 'observe_only' and
+            solve.get('time_gate_evaluated') is False,
+            'retained outer time contract is not observe-only')
+    require(solve.get('ksp_create_count') == solve.get('ksp_solve_count') ==
+            solve.get('ksp_destroy_count') == 1, 'retained route did not use one KSP')
+    final = float(solve.get('final_true_residual', np.inf))
+    require(np.isfinite(final) and final <= 1e-6,
+            'retained final A6 residual exceeds 1e-6')
+
+    retained_runtime = summary.get('retained_runtime', {})
+    jit = retained_runtime.get('postprocess_jit_prefactor', {})
+    require(jit.get('status') == 'POSTPROCESS_JIT_PREFACTOR_PASS' and
+            jit.get('compiled_before_p4_factor') is True and
+            jit.get('expression_count') == 2 and
+            jit.get('form_count') == 7,
+            'official postprocess Form/Expression JIT was not completed before p4')
+    jit_release = retained_runtime.get('postprocess_jit_release_before_factor', {})
+    require(jit_release.get('status') == 'POSTPROCESS_JIT_RELEASED' and
+            jit_release.get('release_context') == 'cleanup' and
+            'released_after_recovery' not in jit_release,
+            'postprocess JIT holders were not released at the pre-factor boundary')
+    setup_checks = retained_runtime.get('setup_checks', {})
+    fixed_vector_facts = setup_checks.get('mixed_original_A6_J', {}).get('fixed_vector_facts', {})
+    require(set(fixed_vector_facts) == {'trace', 'port', 'mixed'},
+            'retained setup trace/port/mixed algebra coverage is incomplete')
+    for name, values in fixed_vector_facts.items():
+        for key in ('internal_residual_relative', 'native_identity_relative',
+                    'schur_port_identity_relative'):
+            require(np.isfinite(values.get(key, np.inf)) and
+                    float(values.get(key, np.inf)) <= 1e-10,
+                    f'retained setup {name} {key} identity failed')
+    require(setup_checks.get('status') == 'PASS' and
+            setup_checks.get('same_runtime_object') is True and
+            setup_checks.get('bal_h', {}).get('actual_logical_call') is True and
+            setup_checks.get('cache_content_and_unique_bytes_unchanged') is True,
+            'same-object D3 setup/A6/J/BAL_H/cache checks are incomplete')
+    require(retained_runtime.get('p6_cache_unchanged_before_release') is True,
+            'retained p6 cache changed before solver-stack release')
+
+    raw = summary.get('residual_arrays', {})
+    raw_path = directory / raw.get('filename', '')
+    try:
+        require(raw_path.is_file(), 'missing retained residual artifact')
+        require(hashlib.sha256(raw_path.read_bytes()).hexdigest() == raw.get('sha256'),
+                'retained residual artifact hash mismatch')
+        with np.load(raw_path, allow_pickle=False) as arrays:
+            rhs, action, solution = arrays['rhs'], arrays['action'], arrays['solution']
+            require(rhs.shape == action.shape == solution.shape,
+                    'retained residual vectors have incompatible shapes')
+            require(all(np.isfinite(value).all() for value in (rhs, action, solution)),
+                    'retained residual artifact contains non-finite values')
+            residual = float(np.linalg.norm(rhs-action) /
+                             max(np.linalg.norm(rhs), np.finfo(float).tiny))
+            facts['full_explicit_true_relative_residual'] = residual
+            require(np.isfinite(residual) and residual <= 1e-6,
+                    'retained raw A6 residual exceeds 1e-6')
+            require(abs(residual-final) <= max(1e-12, .001*max(residual, 1e-30)),
+                    'retained raw/reported residual mismatch')
+    except Exception as exc:
+        errors.append(f'retained residual artifact read failed: {type(exc).__name__}: {exc}')
+
+    packet = summary.get('pre_release_residual_packet', {})
+    packet_path = directory / packet.get('filename', '')
+    try:
+        require(packet_path.is_file(), 'missing pre-release residual packet')
+        require(hashlib.sha256(packet_path.read_bytes()).hexdigest() == packet.get('sha256'),
+                'pre-release residual packet hash mismatch')
+        with np.load(packet_path, allow_pickle=False) as arrays:
+            required = ('storage_solution', 'full_rhs', 'original_a6', 'residual')
+            require(all(name in arrays for name in required),
+                    'pre-release residual packet is missing a required vector')
+            if all(name in arrays for name in required):
+                require(all(np.isfinite(arrays[name]).all() for name in required),
+                        'pre-release residual packet contains non-finite values')
+                require(arrays['full_rhs'].shape == arrays['original_a6'].shape ==
+                        arrays['storage_solution'].shape == arrays['residual'].shape,
+                        'pre-release residual packet vector shapes differ')
+                require(np.allclose(arrays['residual'],
+                                    arrays['full_rhs']-arrays['original_a6'],
+                                    rtol=0.0, atol=0.0),
+                        'pre-release residual packet is not full_rhs-original_a6')
+    except Exception as exc:
+        errors.append(f'pre-release residual packet read failed: {type(exc).__name__}: {exc}')
+
+    retained_root = directory / 'retained_checkpoint_manifests'
+    full_root = directory / 'full_solution_checkpoint_manifests'
+    recovery_root = directory / 'retained_recovery_packets'
+    retained_checkpoints = sorted(
+        path.name for path in retained_root.glob('iteration_*') if path.is_dir()
+    ) if retained_root.is_dir() else []
+    full_checkpoints = sorted(
+        path.name for path in full_root.glob('iteration_*') if path.is_dir()
+    ) if full_root.is_dir() else []
+    recovery_checkpoint_names = sorted(
+        path.stem for path in recovery_root.glob('iteration_*.json')
+    ) if recovery_root.is_dir() else []
+    require(bool(retained_checkpoints), 'retained solution checkpoints are missing')
+    require(retained_checkpoints == full_checkpoints == recovery_checkpoint_names,
+            'retained/full/recovery checkpoint identities are not paired')
+    facts['checkpoints'] = {
+        'retained': retained_checkpoints,
+        'full': full_checkpoints,
+        'recovery_packets': recovery_checkpoint_names,
+        'full_field_reused_evaluation': True,
+    }
+
+    decisions_path = directory / 'p4_decisions.jsonl'
+    decisions = []
+    if decisions_path.is_file():
+        decisions = [json.loads(line) for line in decisions_path.read_text().splitlines() if line]
+    require(bool(decisions), 'retained p4 audit ledger is missing')
+    pc_path = directory / 'pc_applies.jsonl'
+    pc_rows = []
+    if pc_path.is_file():
+        pc_rows = [json.loads(line) for line in pc_path.read_text().splitlines() if line]
+    setup_pc_rows = [row for row in pc_rows if row.get('scope') == 'setup']
+    outer_pc_rows = [row for row in pc_rows if row.get('scope') == 'outer_pc']
+    require(len(setup_pc_rows) == 1,
+            'retained setup BAL_H/PC evidence is not exactly one record')
+    if setup_pc_rows:
+        setup_pc = setup_pc_rows[0]
+        require(setup_pc.get('p4_logical_apply_delta') == 2,
+                'retained setup BAL_H did not make two logical p4 calls')
+        setup_delta = setup_pc.get('p4_physical_factor_delta', {})
+        require(setup_delta.get('symbolic_calls') == 0 and
+                setup_delta.get('numeric_calls') == 0 and
+                'solve_calls' in setup_delta,
+                'retained setup BAL_H factor accounting is invalid')
+    for index, pc_row in enumerate(outer_pc_rows, start=1):
+        require(pc_row.get('p4_logical_apply_delta') == 2,
+                f'retained outer PC {index} did not make two logical p4 calls')
+        delta = pc_row.get('p4_physical_factor_delta', {})
+        require(delta.get('symbolic_calls') == 0 and
+                delta.get('numeric_calls') == 0 and
+                'solve_calls' in delta,
+                f'retained outer PC {index} factor/refinement accounting is invalid')
+    require(len(decisions) == (2 + 2 * len(outer_pc_rows)),
+            'retained p4 decisions do not match setup plus per-PC logical calls')
+    def decisions_for_interval(before, after):
+        return [
+            decision for decision in decisions
+            if int(before) < int(decision.get('logical_apply', 0)) <= int(after)
+        ]
+
+    for label, pc_row in [
+        ('setup', setup_pc_rows[0] if setup_pc_rows else None),
+        *[(f'outer PC {index}', row) for index, row in enumerate(outer_pc_rows, start=1)],
+    ]:
+        if pc_row is None:
+            continue
+        before = int(pc_row.get('p4_logical_apply_before', -1))
+        after = int(pc_row.get('p4_logical_apply_after', -1))
+        interval = decisions_for_interval(before, after)
+        expected_solves = sum(len(decision.get('rows', [])) for decision in interval)
+        delta = pc_row.get('p4_physical_factor_delta', {})
+        require(int(delta.get('solve_calls', -1)) == expected_solves,
+                f'retained {label} physical MatSolve delta disagrees with p4 rows')
+        require(int(delta.get('symbolic_calls', -1)) == 0 and
+                int(delta.get('numeric_calls', -1)) == 0,
+                f'retained {label} refactored an already symbolic/numeric factor')
+    logical_numbers = []
+    physical_solves = 0
+    max_refinements = 0
+    for decision in decisions:
+        rows = decision.get('rows', [])
+        logical_numbers.append(int(decision.get('logical_apply', 0)))
+        max_refinements = max(max_refinements, max(0, len(rows)-1))
+        counts = decision.get('factor_counts', {})
+        physical_solves = max(physical_solves, int(counts.get('solve_calls', 0)))
+        require(decision.get('logical_apply_delta') == 1,
+                'retained p4 audit is not one logical call per BAL_H coarse solve')
+        require(len(rows) <= 3, 'retained p4 exceeded two refinements')
+        if not rows:
+            require(decision.get('status') == 'P4_ZERO_RHS_DIRECT_ZERO' and
+                    float(decision.get('rhs_norm', np.nan)) == 0.0,
+                    'empty p4 audit rows are not a proven zero-RHS return')
+        else:
+            for row in rows:
+                require(row.get('port_closure', {}).get('status') == 'PASS',
+                        'retained p4 port closure failed')
+                relative = row.get('relative_residual', np.inf)
+                require(np.isfinite(relative),
+                        'retained p4 intermediate residual is non-finite')
+            final_row = rows[-1]
+            require(float(final_row.get('relative_residual', np.inf)) <= 1e-10,
+                    'retained p4 final A4 residual exceeds 1e-10')
+    if logical_numbers:
+        require(logical_numbers == list(range(1, len(logical_numbers)+1)),
+                'retained p4 logical audit numbers are not contiguous')
+    facts['p4'] = {
+        'logical_apply_count': len(decisions),
+        'physical_solve_count_at_least': physical_solves,
+        'max_refinements': max_refinements,
+    }
+    outer_counts = summary.get('outer_pc_counts', {})
+    require(int(outer_counts.get('p4_logical_apply_calls', -1)) == len(decisions),
+            'retained p4 logical count disagrees with outer PC audit')
+    require(int(outer_counts.get('retained_bal_h_bridge_apply_count', 0)) >= 0,
+            'retained BAL_H bridge count is missing')
+    factor = summary.get('retained_runtime', {}).get('p4_factor', {})
+    require(factor.get('symbolic', {}).get('symbolic_calls') == 1,
+            'retained p4 symbolic count is not one')
+    require(factor.get('numeric', {}).get('numeric_calls') == 1,
+            'retained p4 numeric count is not one')
+    require(summary.get('retained_runtime', {}).get(
+        'p4_inverse_retain_through_postprocess_v18') is False,
+        'retained p4 inverse was not configured for pre-postprocess release')
+
+    require(summary.get('auxiliary_stack_released_before_recovery') is True,
+            'retained auxiliary stack was not released before recovery')
+    for name in ('pre_release_a6', 'post_release_a6'):
+        value = summary.get(name, {})
+        require(value.get('finite') is True and value.get('relative', np.inf) <= 1e-6,
+                f'{name} gate is missing or failed')
+
+    output = summary.get('official_result')
+    if output is None:
+        errors.append('retained official outputs are unavailable')
+    else:
+        port = output.get('port_metrics', {})
+        volume = output.get('volume_metrics', {})
+        values = [port.get('R_total'), port.get('T_total'),
+                  port.get('A_balance'), volume.get('A_volume_total')]
+        require(all(value is not None and np.isfinite(value) for value in values),
+                'retained official R/T/A output is non-finite')
+        if all(value is not None and np.isfinite(value) for value in values):
+            r, t, a, av = values
+            require(abs(r+t+av-1.0) <= 1e-5, 'retained energy balance exceeds 1e-5')
+            require(abs(a-av) <= 1e-5, 'retained volume absorption mismatch exceeds 1e-5')
+            require(port.get('dtn_port_mode_count') == 600,
+                    'retained 5 nm output does not contain 600 DtN modes')
+        numerical = directory / 'numerical_output'
+        modal_path = numerical / 'dtn_port_diffraction_orders_3d.json'
+        amplitude_path = numerical / 'dtn_auxiliary_amplitudes_3d.json'
+        try:
+            modal = json.loads(modal_path.read_text())
+            rows = modal['orders']
+            keys = [(row['side'], row['m'], row['n'], row['polarization']) for row in rows]
+            require(len(rows) == 600 and len(keys) == len(set(keys)),
+                    'retained modal output is not 600 unique channels')
+            require(abs(sum(row['R'] for row in rows)-port['R_total']) <= 1e-12 and
+                    abs(sum(row['T'] for row in rows)-port['T_total']) <= 1e-12,
+                    'retained modal R/T sums disagree with official totals')
+            require(all(np.isfinite([row['R'], row['T'], row['power_ratio']]).all() and
+                        min(row['R'], row['T']) >= -1e-12 for row in rows),
+                    'retained modal powers are non-finite or negative')
+            amplitudes = json.loads(amplitude_path.read_text())
+            require(len(amplitudes) == len(rows),
+                    'retained auxiliary amplitude count differs from modal count')
+            def finite_numbers(value):
+                if isinstance(value, dict):
+                    return all(finite_numbers(item) for item in value.values())
+                if isinstance(value, list):
+                    return all(finite_numbers(item) for item in value)
+                return not isinstance(value, (int, float)) or bool(np.isfinite(value))
+            require(finite_numbers(amplitudes), 'retained modal amplitudes are non-finite')
+        except Exception as exc:
+            errors.append(f'retained modal output check failed: {type(exc).__name__}: {exc}')
+        try:
+            exported = output['field_export']
+            samples = Path(exported['full3d_reference_archive'])
+            require(hashlib.sha256(samples.read_bytes()).hexdigest() ==
+                    exported['full3d_reference_archive_sha256'],
+                    'retained E/H archive hash mismatch')
+            with np.load(samples, allow_pickle=False) as arrays:
+                e, h = arrays['E_V_per_m'], arrays['H_A_per_m']
+                require(e.shape == h.shape and e.ndim == 4 and e.shape[-1] == 3 and
+                        np.iscomplexobj(e) and np.iscomplexobj(h) and
+                        np.isfinite(e).all() and np.isfinite(h).all(),
+                        'retained E/H archive is incomplete or non-finite')
+            canonical = output['canonical_vector']
+            canonical_path = numerical / canonical['filename']
+            require(hashlib.sha256(canonical_path.read_bytes()).hexdigest() ==
+                    canonical['file_sha256'], 'retained canonical artifact hash mismatch')
+            from benchmarks.canonical_vector_artifacts import read_canonical_packet_shard
+            packets = read_canonical_packet_shard(canonical_path)
+            require(len(packets) == canonical['packet_count'] > 0 and
+                    all(np.isfinite(value) for _, value in packets),
+                    'retained canonical artifact is incomplete or non-finite')
+        except Exception as exc:
+            errors.append(f'retained E/H/canonical check failed: {type(exc).__name__}: {exc}')
+
+    matched_facts = summary.get('matched_reference', {})
+    matched = matched_facts.get('status')
+    require(matched == 'MATCHED_REFERENCE_PASS',
+            'retained 5 nm full reference comparison did not pass')
+    require(matched_facts.get('full_field', {}).get('status') == 'FULL_FIELD_PASS',
+            'retained full-field comparison is missing or failed')
+    classification = ('BALANCED_OUTPUT_PASS' if not errors and
+                      matched == 'MATCHED_REFERENCE_PASS' else
+                      'NUMERICAL_OR_OUTPUT_FAIL')
+    return {
+        'classification': classification,
+        'reference_authority': matched or 'PENDING_A4_not_compared',
+        'independent_output_gates_passed': not errors,
+        'gate_failures': errors,
+        'raw_facts': facts,
+        'checker_seconds': time.monotonic()-started,
+        'resource_authority': 'separate enclosing parent verdict required',
+    }
+
+
 def check(directory: Path) -> dict:
     started = time.monotonic()
     summary = json.loads((directory / 'physical_intermediate_summary.json').read_text())
+    if summary.get('profile', {}).get('identity') == 'dual_condensed_balh_native_5nm_v3':
+        return check_retained_v20(directory, summary)
     errors, facts, expected_errors = [], {}, []
     controlled = summary['status'] in ('SCREEN_BUDGET_NO_QUALIFIED_PROGRESS',
         'PERFORMANCE_CONTROLLED_STOP','ITERATION_BUDGET_EXHAUSTED')
