@@ -1,4 +1,15 @@
 # Test and evidence summary
+## R3i3：MPI8 tiny-FE 受控负结果
+
+一次 MPI8 场的 ABI 八 rank/CPU1–8 通过；旧 full p4 bottom/Q transfer consistency 为 `1.3116919128020489e-11 > 1e-11`，原 p4 A4 为 `6.795828778707217e-11 <= 1e-10`。新 cell-condensed、PC、side.apply、top 未运行，因此不能写成凝聚实现失败或响应/速度资格。
+
+| 项目 | 结果 | 限制 |
+|---|---|---|
+| 资源 | tree/authority 峰 `4636389376 B`；dedicated current `2565689344 B`；PSS/USS `2828743680/2582614016 B`；swap/pswp `0` | 126 samples；PSS/USS 稀疏；minAvailable `2142846394368 B` 高于 `412316860416 B` |
+| 终态 | worker `rc=1`、termination null、unit `68.728670s`、专属树清场 | 非正常求解完成，不是资源 watchdog stop |
+| NUMA | ABI rank assert 派生 CPU1–8；`numa_maps` policy=`default` | FE 私有页首触未保存，严格 membind0 未资格化 |
+
+原始 stdout、summary、memory stages、journal 与 hash-bound test/launcher 见 [R3i3 compact v2](../../../results/task041_review_v5_cpu_numa_condensed_speed/r3i_mpi8_side_20260922/run_20260921T195057.555038315Z/r3i3_compact_v2.json)。V5 ledger 本次只追加一次 `68.728670s`；R3h5/R3h6 通过历史与 R3h1–3 诊断负结果均保留。
 
 ## R3h8：p4 凝聚组件与 tiny FE 证据（R3–R6尚未完成）
 

@@ -1,4 +1,16 @@
-# Task041 Response V8：Review V5 R1i 2666 复测与历史终态
+# Task041 Response V8：R3i MPI8 数值 Gate 收口与历史终态
+## R3i3：MPI8 tiny-FE 数值门受控负结果（R3i5收口，等待 review）
+
+R3i3 是唯一获批的 MPI8 tiny-FE 场；ABI 八 rank、CPU1–8 绑定与 `rc=0` 通过，但旧 full p4 的 bottom/Q transfer-row consistency 门先失败：不同单元对同一共享自由度给出的传递值必须一致，本次偏差为 `1.3116919128020489e-11 > 1e-11`，约为限值 `1.312` 倍。原 p4 A4 为 `6.795828778707217e-11 <= 1e-10`，所以不能称 cell-condensed 失败，根因仍未证明。
+
+| 项目 | 本场事实 | 边界 |
+|---|---|---|
+| 后端进度 | bottom/full/Q 进入；cell_condensed、PC、真实 side.apply、top 均 `not_started` | 无响应等价、加速或正式 MPI8/生产资格 |
+| 资源 | 126 samples；tree/authority 峰 `4636389376 B`；dedicated current 峰 `2565689344 B`；PSS/USS 可读峰 `2828743680/2582614016 B`；minAvailable `2142846394368 B > 412316860416 B`；swap/global pswp `0` | 资源门未触发；PSS/USS 稀疏 |
+| 终态 | natural worker `rc=1`、`termination_reason=null`、无手动 signal；unit interval `68.728670 s` | phase/workflow 是嵌套区间，不另计；不是正常求解完成 |
+
+ABI 的 `/proc/numa_maps` 样本显示 `default` policy；外层 `membind=0` 只是请求，FE worker 私有页首触未保存，因此严格 node0 内存资格为 `not_qualified`。不把共享文件映射的 N1 页判作计算页越界。R3i3 新测试仍是研究资格节点，未改变 production default；13.5/5/2nm 后续未启动，既有 5nm/QEP 历史保留。完整证据见 [R3i3 compact v2](../../results/task041_review_v5_cpu_numa_condensed_speed/r3i_mpi8_side_20260922/run_20260921T195057.555038315Z/r3i3_compact_v2.json) 与 [tracked record](outcomes/records/task041_v5_condensed_speed.json)；唯一 ledger 已追加 `68.728670 s`，累计 `7668.882139588 s`，before/after 与 ID 见 [ledger](../../results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_load_ledger_20260920.json)。
+
 ## R3h8：p4 凝聚组件阶段进展（R3–R6尚未完成）
 
 p4 单元凝聚先消去单元内部未知量，再解较小的保留耦合系统并回代恢复完整 FE 与端口修正，最后用原 A4 和完整残差检查；没有放宽精度。p6 已凝聚，不重复消元；cell_condensed 仅显式可选，默认 full 路径不变，正式 runner 尚未接入 cell_condensed。

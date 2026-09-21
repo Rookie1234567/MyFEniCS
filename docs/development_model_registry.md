@@ -1,5 +1,18 @@
 # 开发阶段研究对象与计算结果总账
 
+## 2026-09-22：Task041 R3i3 MPI8 tiny-FE 数值 Gate 收口
+
+R3i3 唯一获批场在旧 full p4 的 bottom/full/Q transfer-row consistency 门停止：不同单元对同一共享自由度给出的传递值必须一致；实测偏差 `1.3116919128020489e-11` 超过 `1e-11` 门槛，超过量 `3.1169191280204895e-12`。原 p4 A4 为 `6.795828778707217e-11 <= 1e-10`，因此不能把失败归给 cell_condensed，根因仍未证明。cell_condensed、PC、真实 side.apply 和 top 未进入，无响应等价、加速或正式生产 MPI8 结论。
+
+| 项目 | 实测/状态 | 边界 |
+|---|---|---|
+| 终态 | worker `rc=1`、`termination_reason=null`、unit `68.728670 s`、process group 清场 | 不是正常求解完成；phase/workflow 不重复计费 |
+| 资源 | tree/authority 峰 `4636389376 B`；dedicated current `2565689344 B`；PSS/USS 可读峰 `2828743680/2582614016 B`；minAvailable `2142846394368 B > 412316860416 B`；swap/pswp `0` | 126 samples；PSS/USS 稀疏；资源门未触发 |
+| ABI/NUMA | 8 rank、CPU1–8、complex128/Int32 通过；ABI `numa_maps` policy=`default` | FE 私有页未保存，严格 node0 membind 未资格化；共享文件 N1 页不判作计算页越界 |
+| 后续 | 13.5/5/2nm 新流程 not_run；旧5nm/QEP保留 | 不自动重试、降精度、换 RHS；master merge `NOT_APPROVED` |
+
+证据入口：[R3i3 compact v2](../results/task041_review_v5_cpu_numa_condensed_speed/r3i_mpi8_side_20260922/run_20260921T195057.555038315Z/r3i3_compact_v2.json)、[tracked record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v5_condensed_speed.json) 和唯一 V5 ledger。gate 定位绑定 `src/solvers/physical_balanced_same_mesh_transfer.py::_resolve_owner_candidates_batched`（line 420，源 SHA 见 record），仅是位置证据，不是根因结论。R3c/R3d2/R3f/R3h5/R3h6 的历史边界保持不变；R3–R6 尚未完成。
+
 ## 2026-09-22：Task041 Review V5 R3h8 p4 凝聚组件阶段
 
 p4 单元凝聚把单元内部未知量先消去，解较小的保留耦合系统，再回代完整 FE/端口修正并复核原 A4；它没有降低精度门。p6 已凝聚，本阶段不重复消元。cell_condensed 是显式可选后端，默认 full 路径不变，正式 runner 尚未接入 cell_condensed。

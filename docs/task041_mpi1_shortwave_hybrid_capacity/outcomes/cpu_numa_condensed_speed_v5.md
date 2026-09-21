@@ -1,4 +1,15 @@
-# Task041 Review V5：R1i 2666 复测、R1h 跨 NUMA 复现与历史证据
+# Task041 Review V5：R3i MPI8 数值 Gate 收口与历史证据
+## 2026-09-22：R3i3 MPI8 tiny-FE 受控负结果（R3i5收口，等待 review）
+
+p4 单元凝聚的通俗含义仍是：先消去单元内部未知量，解较小的保留耦合系统，再回代完整 FE/端口修正，并用原 A4 与完整残差检查；本场尚未走到新凝聚后端。transfer-row consistency 要求不同单元对同一共享自由度给出的传递值一致；本场 bottom/full/Q 偏差为 `1.3116919128020489e-11 > 1e-11`（约 `1.312×`），而原 p4 A4 `6.795828778707217e-11 <= 1e-10`，故分类为 transfer consistency numerical gate，不能归因于 cell-condensed。
+
+| 证据项 | 实值/状态 | 解释边界 |
+|---|---|---|
+| ABI/绑定 | 8 rank，CPU1–8，ABI `rc=0`；`complex128/Int32` | `numa_maps` 为 `default` policy；FE 私有页未保存，严格 node0 membind 资格 `not_qualified` |
+| 运行/资源 | phase `68.54781098999956s`、workflow `68.57997969200369s`；unit `68.728670s`；126 samples；tree/authority `4636389376 B`；dedicated current `2565689344 B`；PSS/USS `2828743680/2582614016 B`；minAvailable `2142846394368 B` | phase/workflow 不与 unit 重加；journal CPU 时间不作 wall |
+| 终态/后端 | worker `rc=1`、`termination_reason=null`、process group gone；full/Q 已进入；cell_condensed、PC、side.apply、top 未进入 | 无 response equivalence、speed 或生产 MPI8 结论 |
+
+首样本只有 parent+mpiexec，`0.566540187s` 才首次含全 8 rank；分区/映射数组未在 Q 失败前独立输出，只保留“测试 collective 断言已完成”的 derived 边界，不伪造列表。完整入口为 [R3i3 compact v2](../../../results/task041_review_v5_cpu_numa_condensed_speed/r3i_mpi8_side_20260922/run_20260921T195057.555038315Z/r3i3_compact_v2.json)；新增 test/launcher/source hash 见 [tracked record](records/task041_v5_condensed_speed.json)。ledger 本次一次追加 `68.728670s`，累计 `7668.882139588s`；master merge `NOT_APPROVED`，下一步由 review 决定 transfer 敏感性/实现定位。
 
 ## 2026-09-22：R3h8 p4 凝聚组件阶段进展（R3–R6尚未完成）
 

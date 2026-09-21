@@ -53,11 +53,13 @@
       "mismatch": 0
     },
     "ledger_after_r3h8": {
-      "path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_load_ledger_20260920.json",
+      "path": "results/task041_review_v5_cpu_numa_condensed_speed/r3i_mpi8_side_20260922/r3i5_ledger_20260922/r1_load_ledger_20260920.before_r3i5.json",
       "sha256": "59f66817831c0ccf9e1c97ac6c363d044684c071ade2a2b84430c0a0efc2029a",
       "entry_id": "r3h1_r3h6_diagnostic_and_tiny_fe_validation_20260922",
       "charged_seconds": 288.010923037,
-      "total_seconds": 7600.153469588
+      "total_seconds": 7600.153469588,
+      "status": "historical_before_r3i3_append_snapshot",
+      "historical_live_path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_load_ledger_20260920.json"
     },
     "prior_compact_refs": {
       "r3d2_v2": {
@@ -68,6 +70,13 @@
         "path": "results/task041_review_v5_cpu_numa_condensed_speed/r3f_validation_20260921/r3f_validation_compact.json",
         "sha256": "69d91b91dd608962fb93f63634e5a7af0704fa8e67065f0496a268843f6d9e7e"
       }
+    },
+    "ledger_after_r3i3": {
+      "path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_load_ledger_20260920.json",
+      "sha256": "66a6d1984a655e992f898139dcc45395e8c27b8d68260b66d5f38a63c284efd7",
+      "entry_id": "r3i3_mpi8_tiny_fe_controlled_negative",
+      "charged_seconds": 68.72867,
+      "total_seconds": 7668.882139588
     }
   },
   "donor_manifest": {
@@ -371,5 +380,284 @@
   "implementation_commit": {
     "commit1": "2ba8c891afb9a15095d38f7abc18879fa6a44d95",
     "qualification_basis": "R3h5/R3h6 tests were completed on the same dirty-tree source content before commit1; the seven source/test SHA values in source_sha256 are unchanged. No post-commit test rerun is claimed."
+  },
+  "current_phase": "R3i5",
+  "r3i3_recorded_utc": "2026-09-21T20:33:17.936Z",
+  "r3i3_results": {
+    "status": "controlled_negative_numerical_gate",
+    "runroot": "results/task041_review_v5_cpu_numa_condensed_speed/r3i_mpi8_side_20260922/run_20260921T195057.555038315Z",
+    "unit": "task041-r3i-mpi8-fe-20260921T195057.555038315Z.service",
+    "invocation_id": "352e8b2333dc40b3bf4d49eb22c2a7a3",
+    "main_pid": 724042,
+    "returncode": 1,
+    "termination_reason": null,
+    "manual_signal": false,
+    "unit_interval_seconds": 68.72867,
+    "unit_interval_decimal": "68.728670",
+    "unit_interval_basis": "systemd ExecMainStartTimestampMonotonic/ExecMainExitTimestampMonotonic are microseconds; (exit_us-start_us)/1e6. Phase/workflow are nested; journal CPU time is not wall.",
+    "phase_wall_seconds": 68.54781098999956,
+    "workflow_wall_seconds": 68.57997969200369,
+    "failure": {
+      "classification": "transfer_consistency_numerical_gate",
+      "stage": "bottom/full/Q",
+      "backend": "full",
+      "message": "same-mesh owner row candidates disagree: 1.3116919128020489e-11 > 1e-11",
+      "measured": 1.3116919128020489e-11,
+      "threshold": 1e-11,
+      "excess": 3.1169191280204895e-12,
+      "p4_audit": {
+        "backsolve_count": 1,
+        "physical_relative_residual": 6.795828778707217e-11,
+        "refinement_count": 0,
+        "rhs_norm": 1087.8641826196488,
+        "status": "passed",
+        "threshold": 1e-10
+      },
+      "backend_reached": {
+        "cell_condensed": false,
+        "full": true,
+        "pc": false,
+        "side_apply": false,
+        "top": false
+      },
+      "root_cause": "unresolved; not assigned to A1, rounding, or production defect",
+      "gate_location": {
+        "path": "src/solvers/physical_balanced_same_mesh_transfer.py",
+        "sha256": "d15720a27aaf9108f238f073cd1d4c9c16d51d35f357f9785be8d3bafa6ac6c3",
+        "function": "_resolve_owner_candidates_batched",
+        "line": 420,
+        "meaning": "transfer-row consistency gate location only; not a root-cause assignment"
+      }
+    },
+    "backend_not_reached": [
+      "cell_condensed",
+      "pc",
+      "side_apply",
+      "top"
+    ],
+    "resources": {
+      "sample_count": 126,
+      "tree_rss_peak_bytes": 4636389376,
+      "memory_authority_peak_bytes": 4636389376,
+      "dedicated_cgroup_memory_current_peak_bytes": 2565689344,
+      "pss_peak_bytes": 2828743680,
+      "uss_peak_bytes": 2582614016,
+      "pss_uss_semantics": "sparse samples; full values remain in memory_stages.jsonl",
+      "minimum_host_memavailable_bytes": 2142846394368,
+      "reserve_required_bytes": 412316860416,
+      "reserve_status": "passed",
+      "global_swap_terminal": {
+        "baseline_used_bytes": 0,
+        "new_used_bytes": 0,
+        "peak_used_bytes": 0,
+        "pswpin_delta_pages": 0,
+        "pswpout_delta_pages": 0,
+        "semantics": "shared-host diagnostic; not the job swap authority"
+      },
+      "job_swap_peak_bytes": 0,
+      "tree_rss_cap_bytes": 53221163008,
+      "sampling_scope": "126 samples; RSS/authority full polling, PSS/USS sparse; no post-exit worker private-page first-touch record.",
+      "pss_uss_readable_samples": "32/126"
+    },
+    "abi_and_binding": {
+      "status": "passed",
+      "mpi_ranks": 8,
+      "rank_to_cpu": {
+        "0": 1,
+        "1": 2,
+        "2": 3,
+        "3": 4,
+        "4": 5,
+        "5": 6,
+        "6": 7,
+        "7": 8
+      },
+      "scalar_type": "complex128",
+      "int_type": "Int32",
+      "numa_maps_policy": "default",
+      "outer_membind_request": "numactl --membind=0",
+      "fe_private_first_touch_pages": "not_observed",
+      "strict_node0_membind_qualification": "not_qualified",
+      "shared_file_n1_pages": "not classified as FE private computational placement"
+    },
+    "partition_mapping_evidence": {
+      "active_ownership_summary": "not_observed_in_saved_output",
+      "basis": "the test collective partition assertion completed before the Q failure",
+      "do_not_infer": "no arrays are reconstructed from source or failure text.",
+      "ghost_remote_owner_list": "not_observed_in_saved_output",
+      "per_rank_owned_cells": "not_observed_in_saved_output",
+      "status": "derived_only"
+    },
+    "cleanup": {
+      "process_group_gone": true,
+      "all_known_proc_absent": true,
+      "known_pids": [
+        724042,
+        724050,
+        724053,
+        724054,
+        724055,
+        724056,
+        724057,
+        724058,
+        724059,
+        724060
+      ],
+      "worker_starttime": {
+        "reason": "runner raw retained PID lists but no per-worker /proc starttime field was persisted before exit.",
+        "status": "not_observed"
+      },
+      "journal_cpu_time": "9min 7.080s CPU time; not used as wall clock.",
+      "no_manual_signal": true,
+      "manual_signal": false
+    },
+    "argv": {
+      "abi": [
+        "/usr/bin/numactl",
+        "--physcpubind=1-8",
+        "--membind=0",
+        "/usr/bin/mpiexec",
+        "-n",
+        "8",
+        "--bind-to",
+        "cpu-list:ordered",
+        "--cpu-list",
+        "1,2,3,4,5,6,7,8",
+        "--report-bindings",
+        "/home/fenics/Projects/MyFEniCS/.venv/bin/python",
+        "-c",
+        "ABI_CODE"
+      ],
+      "test": [
+        "/usr/bin/numactl",
+        "--physcpubind=1-8",
+        "--membind=0",
+        "/usr/bin/mpiexec",
+        "-n",
+        "8",
+        "--bind-to",
+        "cpu-list:ordered",
+        "--cpu-list",
+        "1,2,3,4,5,6,7,8",
+        "--report-bindings",
+        "/home/fenics/Projects/MyFEniCS/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-s",
+        "src/test/test_347_task041_balh_mpi8.py::test_task041_h1e_mpi8_side_inverse_old_new_q_pc_and_apply"
+      ],
+      "unit": "task041-r3i-mpi8-fe-20260921T195057.555038315Z.service"
+    },
+    "source_sha256": {
+      "command_sheet": {
+        "path": "results/task041_review_v5_cpu_numa_condensed_speed/r3i_mpi8_side_20260922/preparation/r3i_mpi8_launch_commands.txt",
+        "sha256": "83cf7958cd59b642ab94ce1a0323b7205092573b88a226e5be8b02ac6a49268f"
+      },
+      "hcurl_assembly_time_condensation": {
+        "path": "src/solvers/hcurl_assembly_time_condensation.py",
+        "sha256": "11a5df70cbf18dd7fe63bde2f05038db9638d208f162d97b2472152859f3cfff"
+      },
+      "launcher": {
+        "path": "results/task041_review_v5_cpu_numa_condensed_speed/r3i_mpi8_side_20260922/preparation/r3i_mpi8_fe_supervised_launcher.py",
+        "sha256": "b1e0c2dffbd949a8bb48fe07ce46e854a258f380e9b58a0ec6872d0093b4ea81"
+      },
+      "p4_cell_condensed_inverse": {
+        "path": "src/solvers/p4_cell_condensed_inverse.py",
+        "sha256": "da4466e6c7dcafe356d1d53c8c7f90fb62e513b56fc15cca0cdccdf6ac6c081b"
+      },
+      "physical_balanced_physical_operator": {
+        "path": "src/solvers/physical_balanced_physical_operator.py",
+        "sha256": "96e25c220ee1c9eebd503db7a98f9a77fa4307a8a99fa4c3e5d1f2fcab8aa981"
+      },
+      "physical_balanced_side_inverse": {
+        "path": "src/solvers/physical_balanced_side_inverse.py",
+        "sha256": "901e1f414c3d8a608b78cd2d0c7878072da5a05a8d07b291894adee0c5019f54"
+      },
+      "test": {
+        "path": "src/test/test_347_task041_balh_mpi8.py",
+        "sha256": "fffd10fcf5ae0c8bf719c0bc042712324c5b75eedfb76765435cd725fdc264e1"
+      },
+      "physical_balanced_same_mesh_transfer": {
+        "path": "src/solvers/physical_balanced_same_mesh_transfer.py",
+        "sha256": "d15720a27aaf9108f238f073cd1d4c9c16d51d35f357f9785be8d3bafa6ac6c3",
+        "function": "_resolve_owner_candidates_batched",
+        "line": 420,
+        "role": "gate location only; root cause unresolved"
+      }
+    },
+    "evidence": {
+      "compact_v1": {
+        "path": "results/task041_review_v5_cpu_numa_condensed_speed/r3i_mpi8_side_20260922/run_20260921T195057.555038315Z/r3i3_compact_v1.json",
+        "sha256": "8141176ebe8455a3764e4efb2776445c194445673ede5a0d1c45a0f02264c9cf"
+      },
+      "compact_v2": {
+        "path": "results/task041_review_v5_cpu_numa_condensed_speed/r3i_mpi8_side_20260922/run_20260921T195057.555038315Z/r3i3_compact_v2.json",
+        "sha256": "2b61c97c184bd05e17fe1b0bf4ad1500367d832bd96a4615651305e90a858c51"
+      },
+      "summary": {
+        "bytes": 13039,
+        "path": "results/task041_review_v5_cpu_numa_condensed_speed/r3i_mpi8_side_20260922/run_20260921T195057.555038315Z/summary.json",
+        "sha256": "3ee4e1d0aa2d0e21c28c669ba756f25b0b391577e6c528be286662133818138e"
+      },
+      "stdout": {
+        "bytes": 147340,
+        "path": "results/task041_review_v5_cpu_numa_condensed_speed/r3i_mpi8_side_20260922/run_20260921T195057.555038315Z/logs/r3i_mpi8_fe_stdout.txt",
+        "sha256": "babaf6c20fd74fbd7f33e4a7c47847801e46d4d90021d42be91ee918e38139d7"
+      },
+      "memory": {
+        "bytes": 429747,
+        "path": "results/task041_review_v5_cpu_numa_condensed_speed/r3i_mpi8_side_20260922/run_20260921T195057.555038315Z/memory_stages.jsonl",
+        "sha256": "9e2459f8c20b8c747f5f9082c6176f4e2fceb910f950eab034cc59c74a54a46e"
+      },
+      "journal": {
+        "bytes": 1711,
+        "path": "results/task041_review_v5_cpu_numa_condensed_speed/r3i_mpi8_side_20260922/run_20260921T195057.555038315Z/systemd_journal_terminal.txt",
+        "sha256": "25b9812dccbd085574befb30eab8862524fc903e31f105d4337995217b9a831f"
+      },
+      "cleanup": {
+        "path": "results/task041_review_v5_cpu_numa_condensed_speed/r3i_mpi8_side_20260922/run_20260921T195057.555038315Z/r3i3_terminal_cleanup.json",
+        "sha256": "1305db0e05af6ad3eef4e25a475757831f2497e65f9efc3f136cd6a6b37fec38"
+      },
+      "abi": {
+        "path": "results/task041_review_v5_cpu_numa_condensed_speed/r3i_mpi8_side_20260922/preparation/preflight_20260921T195057.555038315Z/abi_mpi8_20260921T195057.555038315Z.txt",
+        "sha256": "267a3b5c978b0adba93b16ffda64326a692535cdf1ac1c99f20bfee8d015d130"
+      },
+      "r3d2_v2": {
+        "path": "results/task041_review_v5_cpu_numa_condensed_speed/r3d2_validation_20260921/r3d2_validation_compact_v2.json",
+        "sha256": "769701dc73de23a8e7d04544b60b9e8b78f3c14d5b73586eca54069324dd73ab"
+      },
+      "r3f": {
+        "path": "results/task041_review_v5_cpu_numa_condensed_speed/r3f_validation_20260921/r3f_validation_compact.json",
+        "sha256": "69d91b91dd608962fb93f63634e5a7af0704fa8e67065f0496a268843f6d9e7e"
+      }
+    },
+    "qualification_boundary": {
+      "tiny_mpi8_test": "not qualified: old full-transfer bottom/Q gate stopped before cell_condensed, PC, side.apply, and top",
+      "formal_production_mpi8": "not_run",
+      "strict_node0_memory_binding": "not qualified; ABI policy default and FE private first-touch pages not observed",
+      "response_equivalence_or_speed": "not measured",
+      "automatic_retry_or_precision_change": "not performed"
+    },
+    "ledger": {
+      "entry_id": "r3i3_mpi8_tiny_fe_controlled_negative",
+      "charged_seconds": 68.72867,
+      "before_total_seconds": 7600.153469588,
+      "after_total_seconds": 7668.882139588,
+      "ledger_path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_load_ledger_20260920.json",
+      "ledger_sha256_after": "66a6d1984a655e992f898139dcc45395e8c27b8d68260b66d5f38a63c284efd7",
+      "phase_workflow_not_added_separately": true
+    },
+    "run_source_identity": {
+      "head": "06192bb62826e45945e359bd6322224765f4f64d",
+      "upstream": "06192bb62826e45945e359bd6322224765f4f64d",
+      "new_test": {
+        "path": "src/test/test_347_task041_balh_mpi8.py",
+        "sha256": "fffd10fcf5ae0c8bf719c0bc042712324c5b75eedfb76765435cd725fdc264e1",
+        "status": "uncommitted_hash_bound_source_used_for_this_run"
+      },
+      "production_source_commit": "2ba8c891afb9a15095d38f7abc18879fa6a44d95",
+      "historical_top_identity_not_overwritten": true
+    }
   }
 }

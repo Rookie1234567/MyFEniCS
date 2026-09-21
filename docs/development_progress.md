@@ -1,4 +1,15 @@
 # 项目开发进度：Task000–Task041
+## 2026-09-22：Task041 R3i3 MPI8 tiny-FE 数值 Gate 收口
+
+transfer-row consistency 要求不同单元对同一共享自由度给出的传递值一致；唯一 MPI8 tiny-FE 场在旧 full p4 bottom/Q 阶段测得 `1.3116919128020489e-11 > 1e-11`。原 p4 A4 `6.795828778707217e-11 <= 1e-10`，所以不能称 cell-condensed 失败；cell_condensed、PC、side.apply、top 未进入，root cause unresolved。
+
+| 范围 | 当前事实 | 资格边界 |
+|---|---|---|
+| 资源/终态 | tree/authority 峰 `4636389376 B`、dedicated current `2565689344 B`、PSS/USS `2828743680/2582614016 B`、minAvailable `2142846394368 B`、swap/pswp `0`；worker `rc=1`、termination null、unit `68.728670s`、清场完成 | 资源门未触发；不是正常求解完成 |
+| ABI/NUMA | 8 rank、CPU1–8、complex128/Int32 通过；ABI `numa_maps` 为 default，FE 私有页未观测 | 严格 node0 membind 资格未取得 |
+| 后续 | 13.5/5/2nm 新流程 not_run；旧5nm/QEP保留 | master_merge `NOT_APPROVED`，不自动重试 |
+
+证据：[R3i3 compact v2](../results/task041_review_v5_cpu_numa_condensed_speed/r3i_mpi8_side_20260922/run_20260921T195057.555038315Z/r3i3_compact_v2.json)；V5 ledger 已追加 `68.728670s`，累计 `7668.882139588s`。生产默认未切换，R3–R6仍未完成。
 
 ## 2026-09-22：Task041 Review V5 R3h8 p4 凝聚阶段（R3–R6尚未完成）
 

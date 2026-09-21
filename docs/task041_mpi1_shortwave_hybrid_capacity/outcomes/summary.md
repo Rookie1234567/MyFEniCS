@@ -1,4 +1,15 @@
 # Task041 outcomes summary
+## 2026-09-22：R3i3 MPI8 tiny-FE 数值门收口
+
+唯一 MPI8 tiny-FE 场在旧 full p4 bottom/Q transfer consistency 门停止：`1.3116919128020489e-11 > 1e-11`，约 `1.312×`；原 p4 A4 `6.795828778707217e-11 <= 1e-10`。cell_condensed、PC、真实 side.apply、top 未进入，故不是凝聚 p4 失败，也没有响应等价、加速或正式生产 MPI8 资格。
+
+| 结果 | 实测 | 边界 |
+|---|---:|---|
+| 资源 | tree/authority `4636389376 B`；dedicated current `2565689344 B`；PSS/USS `2828743680/2582614016 B`；minAvailable `2142846394368 B > 412316860416 B`；swap/pswp `0` | 126 samples；资源门未触发，PSS/USS 稀疏 |
+| 终态 | worker `rc=1`、termination null、unit `68.728670s`、清场完成 | phase/workflow 嵌套不重复计费 |
+| ABI/NUMA | 8 rank、CPU1–8、complex128/Int32 通过 | ABI `numa_maps` 为 default；FE 私有页未观测，严格 node0 资格未取得 |
+
+证据与 hash 见 [R3i3 compact v2](../../../results/task041_review_v5_cpu_numa_condensed_speed/r3i_mpi8_side_20260922/run_20260921T195057.555038315Z/r3i3_compact_v2.json) 和 [record](records/task041_v5_condensed_speed.json)。R3i3 是研究资格节点，不改变默认 full/production；13.5/5/2nm 新流程未运行，既有 5nm/QEP 历史不改。V5 ledger 已一次追加 `68.728670s`，累计 `7668.882139588s`。
 
 ## 2026-09-22：R3h8 p4 凝聚组件阶段进展（R3–R6尚未完成）
 
