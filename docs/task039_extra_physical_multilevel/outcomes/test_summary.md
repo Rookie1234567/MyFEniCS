@@ -1,3 +1,16 @@
+# Review V23 / Response V26：V25 coarse-degree closeout checks
+
+| 验证 | 实际结果 | 范围与边界 |
+|---|---|---|
+| V25 common source / focused suite | 92 passed，1 skipped | S1/S2 implementation, parameterization, runner/schema and checker contracts；skip 为未用 MPI fixture；不是 PDE 重跑 |
+| Q4/Q3/Q2 formal runs | Q4/Q3 existing PASS；Q2 existing RESOURCE_CONTROLLED_STOP | source cad282e25ed53cad1f9e4a5a70c14f3dd40e6d32；本次 S6 只整理 raw evidence，不重跑 PDE |
+| Q4/Q3 dynamic checker | DYNAMIC_PASS | checker 从原始字段重算；Q2 terminal checker not_run |
+| FE audit glue promotion | tracked utility added; FE audit not rerun | 只修正 repository-root parents 层级；旧 ignored tool SHA 与 audit-recorded SHA 保留 |
+| JSON / diff / syntax closeout | pending final local rerun | 针对本次 compact/docs/tool changes；不等同 full repository pytest |
+| Ruff / full repository pytest / CI | not_run / not_run / not_claimed | 没有安装新工具或虚构 CI 结果 |
+
+测试集合不相加冒充单一覆盖率；正式 PDE 资源、残差和官方结果与工程测试分开登记。
+
 # Review V22 / Response V25：V24 formal B 测试与边界
 
 | 验证 | 实际结果 | 证据/边界 |

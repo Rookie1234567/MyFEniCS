@@ -1,0 +1,158 @@
+{
+  "schema": "task039extra.v25.coarse-degree-components.v1",
+  "batch": "V25 A6/H6 coarse-degree comparison",
+  "scope": "Three same-input p6/h7.5 MPI1 runs using the frozen v25 source and backend.",
+  "source_sha": "cad282e25ed53cad1f9e4a5a70c14f3dd40e6d32",
+  "source_lineage": {
+    "review_base_sha": "e63d2f49f19961f985faeadbe1ad3b89808369d1",
+    "implementation_commit": "a80ecab",
+    "component_freeze_commit": "b79cff2",
+    "launcher_entry_commit": "cad282e2",
+    "base_to_final_files_changed": 38,
+    "base_to_final_insertions": 5244,
+    "base_to_final_deletions": 223,
+    "implementation_scope": [
+      "fullspace_n1e_sum_factor.py",
+      "P6q/coarse-degree parameterization",
+      "actual H6/A6 calls and retained timing",
+      "runner/schema and input validation",
+      "dynamic checker and focused tests"
+    ],
+    "post_freeze_numerical_source_changes": false
+  },
+  "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+  "ordered_mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+  "backend": "isotropic_sum_factorized_n1e_v26",
+  "h6_backend": "isotropic_sum_factorized_n1e_v26_apply_and_power10",
+  "thread_contract": "mpi1_omp1_blas1_v25",
+  "common_source_freeze": {
+    "path": "docs/task039_extra_physical_multilevel/outcomes/records/v25_common_source_freeze_manifest.json",
+    "sha256": "8867cc900acab7a02810f8950d67a63d54238c250e5b8aed74b5236ca7421ead"
+  },
+  "checker": {
+    "path": "benchmarks/task39extra_v25_dynamic_checker.py",
+    "sha256": "58ebc14253da7448ec56f59196e6d57cff15e86c62f7dac5baace76ad9400be1"
+  },
+  "ignored_audit_glue": {
+    "path": "benchmarks/artifacts/task39extra/b_capacity_v22/root_engineering/fe_metric_v25_q4_glue.py",
+    "sha256": "c52dde9f0e02390d3c8ba8d0fe67348eb4149d938ebe0a41da742d7a47156648",
+    "scope": "Existing ignored Q4 audit wrapper identity only; no rerun in S6."
+  },
+  "promoted_audit_glue": {
+    "path": "benchmarks/fe_metric_v25_q4_glue.py",
+    "sha256": "e327a4560ff0e8d957991558095d31b196a910714478a8d6d38b3312f8d43661",
+    "change": "Only the repository-root parents index and tracked-file description changed; the ignored audit identity c52dde9f0e02390d3c8ba8d0fe67348eb4149d938ebe0a41da742d7a47156648 and older audit-recorded SHA are preserved.",
+    "rerun_after_promotion": false
+  },
+  "s1_operator_evidence": {
+    "purpose": "S1/S2 qualified the operator backend before the three formal runs; these are operator-only witnesses, not full-PC or PDE authority.",
+    "selected_sum_factorized": {
+      "compact_path": "docs/task039_extra_physical_multilevel/outcomes/records/s1_a6_h6_sum_factorized_v27_compact.json",
+      "compact_sha256": "5d6f0fa6e0c004cb6b05f069135c4785419a1ffd4de2b8c0bb272e9c688acbfc",
+      "a6_full_median_seconds": {
+        "baseline": 5.615303212005529,
+        "candidate": 3.326707318992703,
+        "candidate_over_baseline": 0.5977345519260012
+      },
+      "a6_volume_median_seconds": {
+        "baseline": 5.597440945501148,
+        "candidate": 3.3534994010042283,
+        "candidate_over_baseline": 0.5927790935924615
+      },
+      "h6_apply_median_seconds": {
+        "baseline": 8.367951847998484,
+        "candidate": 3.6148972290029633,
+        "candidate_over_baseline": 0.43298776361290847
+      },
+      "h6_setup_seconds": {
+        "baseline": 144.1912405710027,
+        "candidate": 89.64910604900797,
+        "candidate_over_baseline": 0.6217375320025971,
+        "baseline_power10": 96.13516185100889,
+        "candidate_power10": 38.78906060100417
+      },
+      "engineering_workflow_timing": {
+        "workflow_seconds": 710.3849701840081,
+        "conservative_settlement_seconds": 789.6493765678632,
+        "scope": "selected v27 operator-pair worker; MPI1/thread1"
+      },
+      "max_relative_differences": {
+        "a6_full": 7.268824811167207e-15,
+        "a6_volume": 7.26882481148384e-15,
+        "h6_apply": 2.156449381869184e-16,
+        "h6_setup": 9.40733840398024e-16
+      },
+      "paired_resource_scope": {
+        "rss_peak_bytes": 1421533184,
+        "pss_peak_bytes": 1389453312,
+        "swap_peak_bytes": 0,
+        "note": "Baseline and candidate objects share one paired process; not candidate-only memory."
+      }
+    },
+    "retained_negative_candidate": {
+      "compact_path": "docs/task039_extra_physical_multilevel/outcomes/records/s1_a6_h6_pair_v26_compact.json",
+      "compact_sha256": "b909c22b6916cef4340b4e8fd9a6080c451fa30380db708521f6b0d6970f6c13",
+      "h6_apply_candidate_over_baseline_median": 1.0057808725574315,
+      "h6_setup_candidate_over_baseline": 0.9163062784148617,
+      "paired_rss_peak_bytes": 1453346816,
+      "paired_pss_peak_bytes": 1421541376,
+      "executor_controlled_stop_monotonic_seconds": 349.01716884099005,
+      "engineering_workflow_timing": {
+        "workflow_seconds": 915.8957639279979,
+        "conservative_settlement_seconds": 1016.5861852233071,
+        "scope": "retained v26 operator-pair worker; MPI1/thread1"
+      },
+      "classification": "operator_equivalence_with_H6_apply_negative_candidate"
+    },
+    "thread_qualification": {
+      "mpi_size": 1,
+      "thread_count": 1,
+      "two_thread_formal": "not_run",
+      "four_thread_formal": "not_run",
+      "note": "S1 evidence is single-process/single-thread operator evidence; no 2/4-thread performance claim."
+    },
+    "selection": "The sum-factorized backend was frozen for the formal Q4/Q3/Q2 runs; operator speed does not imply an end-to-end PDE speed claim."
+  },
+  "inputs": {
+    "q4": {
+      "path": "input/task39extra/v25_q4_speed_h7p5.dat",
+      "sha256": "c638c12f1701d2816fb3bc129199af9acbba6b75db3b6820b584d8579726bc32"
+    },
+    "q3": {
+      "path": "input/task39extra/v25_q3_speed_h7p5.dat",
+      "sha256": "120884e17cfe1bdb588b816f7fc4d2e3381ff0f3d4a2cc7f0981cb9bff11003e"
+    },
+    "q2": {
+      "path": "input/task39extra/v25_q2_speed_h7p5.dat",
+      "sha256": "0fd7394712488b8e289660067a1c1ce740d370599627770b194d3e4195b61c7b"
+    }
+  },
+  "runs": [
+    {
+      "stage": "Q4_ORIGINAL",
+      "coarse_degree": 4,
+      "record": "docs/task039_extra_physical_multilevel/outcomes/records/a6_h6_coarse_degree_v25_q4.json",
+      "status": "COMPLETED"
+    },
+    {
+      "stage": "Q3_ORIGINAL",
+      "coarse_degree": 3,
+      "record": "docs/task039_extra_physical_multilevel/outcomes/records/a6_h6_coarse_degree_v25_q3.json",
+      "status": "COMPLETED"
+    },
+    {
+      "stage": "Q2_ORIGINAL",
+      "coarse_degree": 2,
+      "record": "docs/task039_extra_physical_multilevel/outcomes/records/a6_h6_coarse_degree_v25_q2.json",
+      "status": "RESOURCE_CONTROLLED_STOP"
+    }
+  ],
+  "policy": {
+    "numerical_source_changed": false,
+    "new_pde_after_q2_stop": false,
+    "q2_official_result": false,
+    "q2_is_numeric_failure": false,
+    "q2_is_max_iteration_conclusion": false,
+    "ordinary_default_changed": false
+  }
+}

@@ -1,0 +1,171 @@
+{
+  "schema": "task039extra.v25.coarse-degree-run.v1",
+  "stage": "Q2_ORIGINAL",
+  "coarse_degree": 2,
+  "run_id": "task39extra_v25_q2_speed_original_h7p5",
+  "run_root": "results/euv_grazing1_phi0/task39extra_v25_q2_speed_original_h7p5__full3d_iterative__mpi1__Mna/20260921T091106.616232Z",
+  "status": "RESOURCE_CONTROLLED_STOP",
+  "classification": "GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED",
+  "convergence_classification": "CONVERGENCE_NOT_ESTABLISHED_BEFORE_STOP",
+  "official_result": false,
+  "source_sha": "cad282e25ed53cad1f9e4a5a70c14f3dd40e6d32",
+  "input_sha256": "0fd7394712488b8e289660067a1c1ce740d370599627770b194d3e4195b61c7b",
+  "resolved_config_sha256": "e9c87ef9a662ea1ed1c989d5e76ce237fac93c683950faaa9056448193cddef8",
+  "terminal": {
+    "exit_status": -9,
+    "stop_reason": "GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED",
+    "stop_scope": "whole child tree",
+    "descendants_cleared": true,
+    "remaining_children": [],
+    "workflow_time_gate": "not_evaluated_observe_only",
+    "oom": "not_established",
+    "numeric_method_failure": false,
+    "max_iteration_2048": false
+  },
+  "timing_seconds": {
+    "full_workflow_start_to_stop_monotonic": 15755.054311790009,
+    "setup_derived": 486.12522399,
+    "outer_adapter_start_to_stop_derived": 15267.433529434,
+    "pure_ksp": "unknown_no_ksp_end",
+    "final_evaluation": "not_run",
+    "post_release": "not_run",
+    "compile_aggregate": "unknown_no_terminal_compile_ledger"
+  },
+  "progress": {
+    "last_completed_explicit_iteration": 1048,
+    "last_completed_explicit_residual": 0.0006086703757232677,
+    "last_ledger_outer_pc": 1049,
+    "active_pc_sequence": 1052,
+    "active_pc_sequence_scope": "PC sequence counter, not an outer iteration",
+    "active_p4_logical": 2103,
+    "active_p4_logical_scope": "partial inexact-PC logical call counter",
+    "active_record": "partial",
+    "last_completed_monitor_counts": {
+      "bridge": 1050,
+      "native_action": 167,
+      "schur_action": 1244,
+      "hp_solve_count": 2601,
+      "internal_residual_relative": 9.608e-18,
+      "port_residual_relative": 3.63e-16,
+      "physical_residual_pass": false
+    },
+    "iteration_112": {
+      "explicit_true_residual": 0.04151166469355988,
+      "reported_schur_relative": 0.04151166469335145,
+      "solve_seconds_recorded": 1837.3300250620264,
+      "rss_bytes": 2688901120,
+      "pss_bytes": 2656727040,
+      "swap_bytes": 0
+    }
+  },
+  "partial_raw_packet_quality": {
+    "latest_packet": "pc001052/logical002103_raw",
+    "pc_sequence_scope": "PC sequence counter, not outer iteration",
+    "native_Aq_return_residual": 1.0078163816265527e-12,
+    "all_raw_inexact_packets_scanned": 2103,
+    "max_native_A4_residual_or_g_norm": 7.727968728108255e-12,
+    "count_over_1e-10": 0,
+    "unique_factor_sha256": "46eb9afe3fe396410b95b001e836f77aed52bb807362ff49520617b16fc51ebc",
+    "max_logical_attempt": 2103,
+    "factor_solve_count": 2103,
+    "quality_interpretation": "Latest raw packet revalidation passed the inner threshold; outer KSP and official physical state remained incomplete, so this is partial evidence only."
+  },
+  "partial_raw_timing_seconds": {
+    "scope": "latest partial raw p4 packet pc001052/logical002103",
+    "elapsed_seconds": 320.0523956193065,
+    "reduce_seconds": 140.69881518252078,
+    "solve_seconds": 48.80859945167322,
+    "recover_seconds": 129.88294802472228
+  },
+  "dimensions": {
+    "p6": {
+      "full_rows": 667152,
+      "active_rows": 199260,
+      "interior_rows": 445500,
+      "slave_rows": 22392,
+      "trace_rows": 221652,
+      "appended_rows": 80
+    },
+    "coarse": {
+      "degree": 2,
+      "full_rows": 26656,
+      "active_rows": 18180,
+      "interior_rows": 5940,
+      "slave_rows": 2536,
+      "trace_rows": 20716,
+      "appended_rows": 80
+    },
+    "factor_rows": 18260,
+    "source_event": "v21_actual_dimension_identity_complete"
+  },
+  "native_aq_projection_check": {
+    "status": "PASS",
+    "source_event": "v14_common_native_aq_projection_check",
+    "coarse_degree": 2,
+    "dtn_absolute": 2.034958280171296e-13,
+    "dtn_relative": 5.362129756528201e-15,
+    "volume_absolute": 1.0889688699042256e-11,
+    "volume_relative": 1.1762517120345644e-14,
+    "limit": 1e-10,
+    "native_output_slave_zero": true,
+    "owned_slave_count": 2536,
+    "input_unchanged_after_transfer": true,
+    "fine_global_rows": 667152,
+    "coarse_global_rows": 26656
+  },
+  "factor": {
+    "csr_final_sha256": "46eb9afe3fe396410b95b001e836f77aed52bb807362ff49520617b16fc51ebc",
+    "rows": 18260,
+    "nnz": 1913120,
+    "entries": 14359560,
+    "mumps_allocated_mb": 2506,
+    "mumps_used_mb": 278,
+    "icntl23_mb": 4687,
+    "symbolic_seconds": 0.058441740984562784,
+    "numeric_seconds": 3.920166377007263,
+    "retained_cache_bytes": 262704
+  },
+  "resources": {
+    "watchdog_samples": 60683,
+    "rss_peak_bytes": 2702069760,
+    "pss_peak_observed_bytes": 2670846976,
+    "pss_all_readable": false,
+    "pss_gap": {
+      "elapsed_seconds": 8.177329701982671,
+      "stage": "setup compiler ld",
+      "pid": 698126,
+      "reason": "pss_unreadable_one_sample"
+    },
+    "process_tree_vmswap_peak_bytes": 0,
+    "global_pswpin_delta": 0,
+    "global_pswpout_delta": 7,
+    "effective_available_last_explicit_sample_bytes": 11193122816,
+    "trigger_sample": {
+      "elapsed_seconds": 15753.554006381979,
+      "timestamp_ns": 1789999196232147786,
+      "rss_bytes": 2701971456,
+      "pss_bytes": 2669953024,
+      "process_tree_vmswap_bytes": 0,
+      "global_pswpout_delta": 7,
+      "effective_available_bytes": 11173453824
+    },
+    "warnings": 0
+  },
+  "not_run": [
+    "final_ksp_end",
+    "final_native_check",
+    "post_release_residual",
+    "final_field",
+    "official_output",
+    "terminal_physical_summary",
+    "dynamic_checker_terminal_summary"
+  ],
+  "evidence_hashes": {
+    "run_summary": "22894619ee2a0405b1ad0b8debdf6f7036b0488d7919d8cb1ec60f640d1ff0ba",
+    "watchdog_summary": "0f32be4ad042a3b1a18ff5b4cb24a32eac21b0faa683a1129aabf1e537a3f861",
+    "workflow_phase": "62a462053119db40cb1f7d2b04857ec679f7024596ca8eadd54dca3cf5e270ea",
+    "latest_residual": "3f888446024a08d555ac9277327edc9b98564e02ea3c3e5fb6b30e0db41e8e6d",
+    "latest_residual_npz": "e2bae895eecd0f2e5cb972b44b0ca022d39ff752160d6418cfdf6142804de01d"
+  },
+  "authority_boundary": "Keep as resource-controlled negative evidence; do not call it numerical failure, OOM, or max-iteration nonconvergence."
+}

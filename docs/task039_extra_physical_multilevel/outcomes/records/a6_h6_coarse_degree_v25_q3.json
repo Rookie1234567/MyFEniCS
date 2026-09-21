@@ -1,0 +1,289 @@
+{
+  "schema": "task039extra.v25.coarse-degree-run.v1",
+  "stage": "Q3_ORIGINAL",
+  "coarse_degree": 3,
+  "run_id": "task39extra_v25_q3_speed_original_h7p5",
+  "run_root": "results/euv_grazing1_phi0/task39extra_v25_q3_speed_original_h7p5__full3d_iterative__mpi1__Mna/20260921T065457.454260Z",
+  "status": "COMPLETED",
+  "classification": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+  "official_result": true,
+  "source_sha": "cad282e25ed53cad1f9e4a5a70c14f3dd40e6d32",
+  "input_sha256": "120884e17cfe1bdb588b816f7fc4d2e3381ff0f3d4a2cc7f0981cb9bff11003e",
+  "resolved_config_sha256": "8559dd04904cb13b746c7871f4501fe9e05334ea219e679247485c64dc33b60c",
+  "iterations": 361,
+  "residual": {
+    "final_explicit_true": 9.460140452867132e-7,
+    "post_release": 9.460140452867132e-7,
+    "limit": 1e-6,
+    "physical_residual_pass": true
+  },
+  "same_iteration_112": {
+    "explicit_true_residual": 0.00026401726943588134,
+    "reported_schur_relative": 0.0002640172692469141,
+    "solve_seconds_recorded": 2165.2590911600328,
+    "rss_bytes": 4015267840,
+    "pss_bytes": 3981623296,
+    "swap_bytes": 0,
+    "record": "monitor_residuals.jsonl iteration=112"
+  },
+  "timing_seconds": {
+    "full_workflow_monotonic": 7065.949492944987,
+    "pure_ksp_monotonic": 6082.501362726,
+    "full_setup": 935.0583148549777,
+    "interface_setup_inclusive_subinterval": 112.08410538101452,
+    "p4_solve": 83.91039983707014,
+    "factor_symbolic": 0.5611445909889881,
+    "factor_numeric": 93.70157288498012,
+    "final_native_check": 5.658712063013809,
+    "release_check": 7.860895881021861,
+    "official_postprocess": 15.513572724012192
+  },
+  "compile_events": {
+    "count": 11,
+    "cache_hits": 10,
+    "cache_misses": 1,
+    "aggregate_seconds": 22.125253679056186,
+    "count_is_not_seconds": true
+  },
+  "resources_bytes": {
+    "watchdog_rss_peak": 4031815680,
+    "watchdog_pss_peak": 3999603712,
+    "watchdog_swap_peak": 0,
+    "factor_numeric_sample_rss": 2792673280,
+    "factor_numeric_sample_pss": 2760546304,
+    "factor_numeric_sample_scope": "single numeric_resource snapshot; not a factor-window peak",
+    "resource_windows": {
+      "source": "watchdog/resources.jsonl parent_clock.monotonic matched to physical summary lifecycle boundaries; inclusive sample windows",
+      "full_setup": {
+        "start_monotonic": 133430.701341781,
+        "end_monotonic": 134365.759656636,
+        "elapsed_seconds": 935.0583148549777,
+        "sample_count": 3451,
+        "rss_peak_bytes": 3783094272,
+        "pss_peak_bytes": 3750958080
+      },
+      "pure_ksp": {
+        "start_monotonic": 134365.786206605,
+        "end_monotonic": 140448.287569331,
+        "elapsed_seconds": 6082.501362726005,
+        "sample_count": 23088,
+        "rss_peak_bytes": 4015337472,
+        "pss_peak_bytes": 3983202304
+      },
+      "final_native_check": {
+        "start_monotonic": 140464.105046469,
+        "end_monotonic": 140469.763758532,
+        "elapsed_seconds": 5.658712063013809,
+        "sample_count": 22,
+        "rss_peak_bytes": 4016586752,
+        "pss_peak_bytes": 3984450560
+      },
+      "release_check": {
+        "start_monotonic": 140469.764628691,
+        "end_monotonic": 140477.625524572,
+        "elapsed_seconds": 7.860895881021861,
+        "sample_count": 30,
+        "rss_peak_bytes": 3994566656,
+        "pss_peak_bytes": 3961381888
+      },
+      "official_postprocess": {
+        "start_monotonic": 140477.631442591,
+        "end_monotonic": 140493.145015315,
+        "elapsed_seconds": 15.513572724012192,
+        "sample_count": 59,
+        "rss_peak_bytes": 4031815680,
+        "pss_peak_bytes": 3999603712
+      }
+    },
+    "audit_rss": 582443008,
+    "audit_pss": 550364160,
+    "descendants_cleared": true
+  },
+  "factor": {
+    "allocated_mb": 3171,
+    "used_mb": 1413,
+    "entries": 73058906,
+    "matrix_payload_bytes": 343231364,
+    "numeric_sample_rss_bytes": 2792673280,
+    "numeric_sample_pss_bytes": 2760546304
+  },
+  "shared_cache": {
+    "retained_numeric_cache_bytes": 4047264,
+    "raw_tensor_classes": 12,
+    "oriented_schur_classes": 26
+  },
+  "call_counts": {
+    "native_A4": 726,
+    "p4_logical": 726,
+    "p4_physical_f4": 726,
+    "p4_repairs": 0,
+    "A6_live": 738,
+    "A6_native_witness": 63,
+    "H6_apply": 363,
+    "H6_matrix_mult": 746,
+    "H6_power10_matrix_mult": 20,
+    "P": 727,
+    "PH": 740
+  },
+  "audit": {
+    "status": "PASS",
+    "fe_l2": 3.499927830299149e-8,
+    "scaledcurl": 1.942686463926385e-8,
+    "eh_interface_max": 7.066821025138628e-8,
+    "boundary_mode": 2.2534238396206723e-8,
+    "aux_vector_80": 1.6504305438590574e-8,
+    "max_total_power_difference": 1.2830294937593578e-8,
+    "closure": 2.19396754097545e-8
+  },
+  "official_power": {
+    "R_total": 0.3650975453210275,
+    "T_total": 0.013016803435687712,
+    "A_balance": 0.6218856512432849,
+    "A_volume_total": 0.6218856293036095,
+    "R00_s": 0.36506085452416953,
+    "R00_p": 1.2740189409450237e-22,
+    "R00_total": 0.36506085452416953
+  },
+  "dynamic_checker": {
+    "status": "DYNAMIC_PASS",
+    "sha256": "8970037556d4fe25aa97fa6d85522c412517a0d309dba5b24c587fcbf2fe6473"
+  },
+  "evidence_hashes": {
+    "run_summary": "90efd8fa852fec730912fe49c4e5e73b8173f374f08d74e93e9d517a33efb893",
+    "watchdog_summary": "d7bfaeae12185c88c686288c164e7f1a9be9a3a974342041b29177e734ce8e03",
+    "physical_summary": "650dacba7afdc90084d2fb88da9d92c996fc7765b382683fa6fcc0e67db44ad8",
+    "official_output": "7472d04378096a3aa55410fef298f18f44e600b185039311d7515095309f5339",
+    "audit": "0f12c6c06a99603c8f5b72db972a9c3903974a39f40c88fd2bf431473eee6b21"
+  },
+  "dimensions": {
+    "p6": {
+      "full_rows": 667152,
+      "active_rows": 199260,
+      "interior_rows": 445500,
+      "trace_rows": 221652
+    },
+    "p4": {
+      "full_rows": 86652,
+      "active_rows": 45360,
+      "interior_rows": 35640,
+      "trace_rows": 51012
+    },
+    "coarse": {
+      "full_rows": 86652,
+      "active_rows": 45360,
+      "interior_rows": 35640,
+      "trace_rows": 51012
+    },
+    "condensed_rows": 45440,
+    "condensed_nnz_used": 9982160,
+    "condensed_nnz_allocated": 17152480
+  },
+  "shared_cache": {
+    "retained_numeric_cache_bytes": 4047264,
+    "raw_tensor_classes": 12,
+    "oriented_schur_classes": 26
+  },
+  "call_counts": {
+    "native_A4": 726,
+    "p4_logical": 726,
+    "p4_physical_f4": 726,
+    "p4_repairs": 0,
+    "A6_live": 738,
+    "A6_native_witness": 63,
+    "H6_apply": 363,
+    "H6_matrix_mult": 746,
+    "H6_power10_matrix_mult": 20,
+    "P": 727,
+    "PH": 740
+  },
+  "cumulative_timings": {
+    "scope_note": "Cumulative monotonic wall-clock ledgers; parent wrapper values and named child kernel values can overlap. Native Aq projection timing was not separately recorded.",
+    "live_A6": {
+      "apply_count": 738,
+      "total_seconds": 2569.307760093361,
+      "volume_seconds": 2565.767899198516,
+      "dtn_seconds": 2.5622179692436475,
+      "volume_apply_seconds": 1223.587678134645,
+      "curl_apply_seconds": 1341.161556074657
+    },
+    "native_A6_witness": {
+      "apply_count": 63,
+      "total_seconds": 356.3027427189809,
+      "volume_seconds": 355.94924291592906,
+      "dtn_seconds": 0.2721792981028557
+    },
+    "native_A4": {
+      "apply_count": 726,
+      "total_seconds": 611.2342456796905,
+      "label_note": "Legacy compact key native_A4; this Q3 run's actual coarse operator is degree-3 A3."
+    },
+    "H6_B6": {
+      "H6_apply_count": 363,
+      "H6_apply_parent_seconds": 1456.900879892928,
+      "H6_matrix_mult_count": 746,
+      "H6_matrix_mult_seconds": 1545.2455900621717,
+      "H6_local_kernel_apply_seconds": 1541.5729144265642,
+      "B6_calls_per_PC_metadata": 4,
+      "B6_calls_per_PC_measured": 2,
+      "B6_apply_count_measured": 726,
+      "B6_shell_setup_seconds": 0.0002422330144327134,
+      "B6_apply_seconds_derived_from_matrix_mult": 1447.5354960261611,
+      "B6_count_note": "Measured apply portion is H6 matrix_mult_count minus power10_matrix_mult_count; metadata calls_per_PC=4 is retained but not used for the count.",
+      "diagonal_setup_seconds": 112.18477031201473,
+      "power10_matrix_mult_count": 20,
+      "power10_matrix_mult_seconds": 97.71009403601056,
+      "power10_setup_seconds": 97.9184494529909
+    },
+    "p4": {
+      "logical_apply_count": 726,
+      "physical_apply_count": 726,
+      "repair_count": 0,
+      "solve_seconds": 83.91039983707014,
+      "reduce_seconds": 108.74270782875828,
+      "recover_seconds": 99.80366611870704,
+      "last_apply_elapsed_seconds": 293.00923371344106
+    },
+    "P_PH": {
+      "P_count": 727,
+      "P_seconds": 131.6326058304403,
+      "PH_count": 740,
+      "PH_seconds": 96.62534810282523,
+      "route_seconds": 5.794357740494888
+    },
+    "native_Aq": {
+      "projection_check": "PASS",
+      "projection_timing_seconds": "not separately recorded"
+    }
+  },
+  "audit_entry": {
+    "path": "engineering/fe_metric_v25_q3/audit.json",
+    "sha256": "0f12c6c06a99603c8f5b72db972a9c3903974a39f40c88fd2bf431473eee6b21",
+    "tool_sha256_recorded_in_audit": "c52dde9f0e02390d3c8ba8d0fe67348eb4149d938ebe0a41da742d7a47156648",
+    "promoted_tool_path": "benchmarks/fe_metric_v25_q4_glue.py",
+    "promoted_tool_sha256": "e327a4560ff0e8d957991558095d31b196a910714478a8d6d38b3312f8d43661",
+    "promotion_note": "Minimal path correction from artifact-root parents[5] to repository benchmarks parents[1]; audit was not rerun after promotion.",
+    "fe_l2": 3.499927830299149e-8,
+    "scaled_curl": 1.942686463926385e-8,
+    "max_rta_difference": 1.2830294937593578e-8,
+    "max_power_difference_including_A_volume": 1.2830294937593578e-8,
+    "max_reconstruction_E_relative_l2": 2.972128314763112e-08,
+    "max_reconstruction_H_relative_l2": 2.000321213840928e-08,
+    "max_interface_E_relative_l2": 2.158370520524374e-08,
+    "max_interface_H_relative_l2": 7.066821025138628e-08,
+    "full_80_mode_relative_l2": 1.6504305438590574e-08,
+    "full_80_mode_max_absolute": 1.3501589382897959e-08,
+    "per_mode_count": 80,
+    "per_mode_max_power_difference_power_ratio": 8.362879388990052e-09,
+    "per_mode_max_power_difference_modal_power_code_units": 9.122023181262762e-08,
+    "closure": 2.19396754097545e-8,
+    "audit_rss_peak_bytes": 582443008,
+    "audit_pss_peak_bytes": 550364160
+  },
+  "lifecycle": {
+    "setup_monotonic": 935.0583148549777,
+    "final_native_check_monotonic": 5.658712063013809,
+    "release_check_monotonic": 7.860895881021861,
+    "official_postprocess_monotonic": 15.513572724012192
+  },
+  "authority_boundary": "No matched h7.5 independent reference; discrete/physical pass only."
+}

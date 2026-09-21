@@ -1,3 +1,13 @@
+# Task39extra 当前进展：Review V23 / Response V26 V25 coarse-degree 收口
+
+V25 在同一冻结 source、990-cell h7.5、MPI1、complex128 条件下完成 Q4/Q3，并对 Q2 保存了受控停止证据。V24 p4 是已完成同模型中最快整体 workflow（4579.015917060999 s）；Q4 是 V25 已完成场中最快（4718.70844729399 s），但没有端到端时间收益；Q3 通过且 RSS/PSS 最低（4031815680/3999603712 B）。Q2 在 GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED 下停止，最后完成 iteration 1048、真残差 0.0006086703757232677；PC1052 是序列计数器，不是迭代，没有 official result。
+
+同迭代 112 的 p4 对照为：V24 residual/solve_seconds/RSS/PSS = 2.7139958442857524e-6 / 3606.8307935579464 s / 7334645760 / 7302341632 B；Q4 = 2.71399585136905e-6 / 3437.2333360950015 s / 7384477696 / 7352336384 B。每 16 次共同残差表、Q3/Q4 lifecycle 窗口、p4/P/PH/A6/H6/B6 cumulative ledger 和 Q2 partial raw packet 质量均已写入 V25 outcome/response；没有重跑 PDE、第四场或改变 swap 规则。
+
+S6 还把既有 FE audit glue 以最小 tracked utility 形式提升到 benchmarks/fe_metric_v25_q4_glue.py，只修正 repository-root parents 层级，保留旧 tool SHA，提升后不重算 FE。测试集合保持分开：已有 V25 common source/focused suite 92 passed、1 skipped；本轮只需做 JSON/hash/link、py_compile 和 diff 收口，不声称 Ruff、full repository pytest 或 CI。
+
+证据入口：[Response V26](task039_extra_physical_multilevel/response_v26.md)、[V25 outcome](task039_extra_physical_multilevel/outcomes/a6_h6_coarse_degree_v25.md)、[records](task039_extra_physical_multilevel/outcomes/records/a6_h6_coarse_degree_v25_components.json)、[run index](task039_extra_physical_multilevel/outcomes/records/run_index.json)、[selective merge manifest V25](task039_extra_physical_multilevel/outcomes/selective_merge_manifest_v25.md)。
+
 # Task39extra 当前进展：Review V22 / Response V25 V24 formal B 已完成
 
 V24 在唯一一次 original p6/h7.5 formal B 中得到 `DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED`：126 iterations，explicit/post-release residual=`9.283164961979326e-7`，官方 R/T/A=`0.36509755370062585/0.013016803347759889/0.6218856429516143`，full workflow=`4579.015917060999 s`，formal watchdog RSS/PSS=`7339319296/7307023360 B`，16998 samples，resources SHA=`0b220a16d4cb096ea6a00a808e1a76b547bee42867b5152044f04e1e5e6a4e79`，swap=0。P1 bounded repair、V24 compact/checker/decision、thread selection 和 selective merge boundary 已同步；没有匹配 h7.5 reference，不作 continuum claim；2/4-thread 未资格化；master merge 未批准。

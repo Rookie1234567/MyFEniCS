@@ -1,3 +1,13 @@
+# Task39extra 当前模型登记：Review V23 / Response V26 V25 coarse-degree closeout
+
+| Model ID | stage / source / input | 模型与方法 | 正式结果 | 资源与时间 | 资格边界 |
+|---|---|---|---|---|---|
+| task39extra_v25_q4_speed_original_h7p5 | Q4_ORIGINAL；source cad282e25ed53cad1f9e4a5a70c14f3dd40e6d32；input SHA c638c12f…9726bc32 | p6/h7.5、p4 coarse degree、Full3D、MPI1、complex128 | PASS authority-limited；126 steps；residual 9.283165086752956e-7；R/T/A=0.3650975537006154/0.013016803347760878/0.6218856429516237 | workflow 4718.70844729399 s；pure KSP 3766.626355408 s；RSS/PSS 7389360128/7357231104 B；swap0 | no matched h7.5 reference；2/4 threads not run |
+| task39extra_v25_q3_speed_original_h7p5 | Q3_ORIGINAL；same source；input SHA 120884e1…ff11003e | p6/h7.5、p3 coarse degree、Full3D、MPI1、complex128 | PASS authority-limited；361 steps；residual 9.460140452867132e-7；R/T/A=0.3650975453210275/0.013016803435687712/0.6218856512432849 | workflow 7065.949492944987 s；pure KSP 6082.501362726 s；RSS/PSS 4031815680/3999603712 B；swap0 | condensed/factor rows 45440/45440；no matched reference |
+| task39extra_v25_q2_speed_original_h7p5 | Q2_ORIGINAL；same source；input SHA 0fd73947…5b61c7b | p2 coarse degree、Full3D、MPI1、complex128 | RESOURCE_CONTROLLED_STOP；iteration 1048 residual 0.0006086703757232677；no official result | start-to-stop 15755.054311790009 s；RSS/PSS observed 2702069760/2670846976 B；swap0 | PC1052 is a PC sequence counter, not an iteration；not convergence/failure/OOM conclusion |
+
+V24 remains the fastest completed same-model workflow; Q4 is the fastest completed V25 field but has no end-to-end gain over V24. Q3 is the qualified pass with lowest RSS/PSS. Evidence and common residual checkpoints are in [V25 outcome](task039_extra_physical_multilevel/outcomes/a6_h6_coarse_degree_v25.md), [records](task039_extra_physical_multilevel/outcomes/records/a6_h6_coarse_degree_v25_components.json), and [response V26](task039_extra_physical_multilevel/response_v26.md). Ordinary default and master merge state are unchanged.
+
 # Task39extra 当前模型登记：Review V22 / Response V25 V24 original h7.5 formal
 
 | Model ID | profile / source / input | 模型与方法 | 正式结果 | 资源与时间 | 资格边界 |

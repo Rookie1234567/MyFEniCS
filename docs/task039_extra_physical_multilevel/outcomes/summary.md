@@ -1,3 +1,20 @@
+## V25 A6/H6 粗阶对照：Q4/Q3 通过，Q2 受控停止
+
+本批在同一冻结 source cad282e25ed53cad1f9e4a5a70c14f3dd40e6d32、p6/h7.5、990 cells、Full3D、MPI1、complex128 条件下登记 p4/p3/p2 粗阶。粗阶改变的是预条件器的离散空间与因子规模；它不自动代表连续极限收敛，也不能把没有终态的 Q2 写成失败或通过。
+
+| 模型 | 完整流程/停止（s） | 纯 KSP（s） | 进度 | 最后显式真残差 | RSS/PSS 峰值（B） | 状态 |
+|---|---:|---:|---:|---:|---:|---|
+| V24 p4 reference | 4579.015917060999 | 3716.1522563079925 | 126 | 9.283164961979326e-7 | 7339319296 / 7307023360 | completed PASS |
+| Q4 p4 | 4718.70844729399 | 3766.626355408 | 126 | 9.283165086752956e-7 | 7389360128 / 7357231104 | completed PASS |
+| Q3 p3 | 7065.949492944987 | 6082.501362726 | 361 | 9.460140452867132e-7 | 4031815680 / 3999603712 | completed PASS |
+| Q2 p2 | 15755.054311790009 start-to-stop | unknown | iteration 1048；PC1052 partial | 0.0006086703757232677 | 2702069760 / 2670846976 observed | RESOURCE_CONTROLLED_STOP |
+
+V24 是同一模型已完成场的最快整体 workflow；Q4 是 V25 完成场中最快但没有端到端加速；Q3 是合格通过场中 RSS/PSS 最低。Q2 的最后显式 iteration 1048 未达 1e-6，但 active PC1052 是 PC sequence counter 而非 iteration；没有 final KSP、official field 或 physical result，故分类为 RESOURCE_CONTROLLED_STOP / CONVERGENCE_NOT_ESTABLISHED_BEFORE_STOP。
+
+同迭代 112 的 p4 基线：V24 真残差/solve_seconds/RSS/PSS = 2.7139958442857524e-6 / 3606.8307935579464 s / 7334645760 / 7302341632 B；Q4 = 2.71399585136905e-6 / 3437.2333360950015 s / 7384477696 / 7352336384 B。每 16 次的 8/16/32/64/96/112/128 checkpoints 与 endpoint 已在 [V25 outcome](a6_h6_coarse_degree_v25.md) 中逐项记录；无记录项保持“—”。
+
+S6 没有重跑 PDE、第四场或修改 swap 规则。既有 FE audit glue 以最小 tracked utility 提升到 benchmarks/fe_metric_v25_q4_glue.py，仅修正 repository-root parents 层级，保留旧 tool SHA，提升后不重算 FE。机器可读证据见 [components](records/a6_h6_coarse_degree_v25_components.json)、[frozen manifest](records/a6_h6_coarse_degree_v25_frozen_manifest.json)、[Q4](records/a6_h6_coarse_degree_v25_q4.json)、[Q3](records/a6_h6_coarse_degree_v25_q3.json)、[Q2](records/a6_h6_coarse_degree_v25_q2.json)、[decision](records/a6_h6_coarse_degree_v25_decision.json) 和 [selective merge manifest](selective_merge_manifest_v25.md)。
+
 ## V24-1 正式 B：laptop-speed discrete pass，authority limited
 
 本节记录 Review V22 唯一一次正式 B；下方原有 V24/V23 历史段落保持原样，不把旧 `58/59` 改写成通过。

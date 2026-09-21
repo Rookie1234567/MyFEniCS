@@ -1,0 +1,43 @@
+{
+  "schema": "task039extra.v25.coarse-degree-decision.v1",
+  "batch_status": "Q4_PASS_Q3_PASS_Q2_RESOURCE_CONTROLLED_STOP",
+  "review_status": "AWAITING_CHATGPT_REVIEW",
+  "official_result_scope": [
+    "Q4_ORIGINAL",
+    "Q3_ORIGINAL"
+  ],
+  "q2_scope": "RESOURCE_CONTROLLED_STOP / CONVERGENCE_NOT_ESTABLISHED_BEFORE_STOP",
+  "same_iteration_112": {
+    "p4_baseline": {
+      "v24_explicit_true_residual": 2.7139958442857524e-6,
+      "v24_solve_seconds_recorded": 3606.8307935579464,
+      "v24_rss_bytes": 7334645760,
+      "v24_pss_bytes": 7302341632,
+      "q4_explicit_true_residual": 2.71399585136905e-6,
+      "q4_solve_seconds_recorded": 3437.2333360950015,
+      "q4_rss_bytes": 7384477696,
+      "q4_pss_bytes": 7352336384
+    },
+    "scope_note": "Same 990-cell p6/h7.5 records only; old h10 112-step records are excluded."
+  },
+  "first_screen": {
+    "v24_full_workflow_seconds": 4579.015917060999,
+    "q4_full_workflow_seconds": 4718.70844729399,
+    "q3_full_workflow_seconds": 7065.949492944987,
+    "q2_start_to_stop_seconds": 15755.054311790009
+  },
+  "ranking": {
+    "fastest_completed_same_model_reference": "V24 p4 baseline",
+    "fastest_completed_v25": "Q4",
+    "lowest_qualified_pass_rss": "Q3",
+    "q2_memory": "not ranked because no completed physical solve and one early PSS readability gap",
+    "q4_end_to_end_vs_v24": "no gain: Q4 full workflow 4718.70844729399 s versus V24 4579.015917060999 s"
+  },
+  "decisions": [
+    "Retain Q4 and Q3 as authority-limited discrete/physical pass evidence.",
+    "Retain Q2 as a controlled-stop negative record without official result.",
+    "Do not restart Q2, run a fourth model, alter swap rules, or introduce a new algorithm.",
+    "Keep ordinary default unchanged and do not merge numerical source changes."
+  ],
+  "next_action": "Documentation and evidence review only; no new PDE."
+}

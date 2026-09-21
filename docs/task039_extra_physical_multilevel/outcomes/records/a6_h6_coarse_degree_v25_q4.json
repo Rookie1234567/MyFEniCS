@@ -1,0 +1,267 @@
+{
+  "schema": "task039extra.v25.coarse-degree-run.v1",
+  "stage": "Q4_ORIGINAL",
+  "coarse_degree": 4,
+  "run_id": "task39extra_v25_q4_speed_original_h7p5",
+  "run_root": "results/euv_grazing1_phi0/task39extra_v25_q4_speed_original_h7p5__full3d_iterative__mpi1__Mna/20260921T044641.676399Z",
+  "status": "COMPLETED",
+  "classification": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+  "official_result": true,
+  "source_sha": "cad282e25ed53cad1f9e4a5a70c14f3dd40e6d32",
+  "input_sha256": "c638c12f1701d2816fb3bc129199af9acbba6b75db3b6820b584d8579726bc32",
+  "resolved_config_sha256": "9143b4e84126316779b5470d2fe6a28dc62dddcab8916cf44a30e1e832d0fba3",
+  "iterations": 126,
+  "residual": {
+    "final_explicit_true": 9.283165086752956e-7,
+    "post_release": 9.283165086752956e-7,
+    "limit": 1e-6,
+    "physical_residual_pass": true
+  },
+  "same_iteration_112": {
+    "explicit_true_residual": 2.71399585136905e-6,
+    "reported_schur_relative": 2.7139955485764315e-6,
+    "solve_seconds_recorded": 3437.2333360950015,
+    "rss_bytes": 7384477696,
+    "pss_bytes": 7352336384,
+    "swap_bytes": 0,
+    "record": "monitor_residuals.jsonl iteration=112"
+  },
+  "v24_same_iteration_112_baseline": {
+    "explicit_true_residual": 2.7139958442857524e-6,
+    "solve_seconds_recorded": 3606.8307935579464,
+    "rss_bytes": 7334645760,
+    "pss_bytes": 7302341632,
+    "swap_bytes": 0,
+    "record": "V24 monitor_residuals.jsonl iteration=112"
+  },
+  "timing_seconds": {
+    "full_workflow_monotonic": 4718.70844729399,
+    "pure_ksp_monotonic": 3766.626355408,
+    "full_setup": 836.8461274599977,
+    "interface_setup_inclusive_subinterval": 255.8490446670039,
+    "p4_solve": 129.8930470560881,
+    "factor_symbolic": 0.597822266005096,
+    "factor_numeric": 218.3896326339891,
+    "final_native_check": 11.11452951899264,
+    "release_check": 28.718534543004353,
+    "official_postprocess": 33.62914118100889
+  },
+  "compile_events": {
+    "count": 11,
+    "cache_hits": 11,
+    "cache_misses": 0,
+    "aggregate_seconds": 0.016517077005119063,
+    "count_is_not_seconds": true
+  },
+  "resources_bytes": {
+    "watchdog_rss_peak": 7389360128,
+    "watchdog_pss_peak": 7357231104,
+    "watchdog_swap_peak": 0,
+    "factor_numeric_sample_rss": 6564626432,
+    "factor_numeric_sample_pss": 6532520960,
+    "factor_numeric_sample_scope": "single numeric_resource snapshot; not a factor-window peak",
+    "resource_windows": {
+      "source": "watchdog/resources.jsonl parent_clock.monotonic matched to physical summary lifecycle boundaries; inclusive sample windows",
+      "full_setup": {
+        "start_monotonic": 126467.026101296,
+        "end_monotonic": 127303.872228756,
+        "elapsed_seconds": 836.8461274599977,
+        "sample_count": 3124,
+        "rss_peak_bytes": 7147806720,
+        "pss_peak_bytes": 7115721728
+      },
+      "pure_ksp": {
+        "start_monotonic": 127303.955334214,
+        "end_monotonic": 131070.581689622,
+        "elapsed_seconds": 3766.626355408007,
+        "sample_count": 13318,
+        "rss_peak_bytes": 7384489984,
+        "pss_peak_bytes": 7352404992
+      },
+      "final_native_check": {
+        "start_monotonic": 131106.256029109,
+        "end_monotonic": 131117.370558628,
+        "elapsed_seconds": 11.11452951899264,
+        "sample_count": 38,
+        "rss_peak_bytes": 7387275264,
+        "pss_peak_bytes": 7355190272
+      },
+      "release_check": {
+        "start_monotonic": 131117.375883949,
+        "end_monotonic": 131146.094418492,
+        "elapsed_seconds": 28.718534543004353,
+        "sample_count": 98,
+        "rss_peak_bytes": 7387275264,
+        "pss_peak_bytes": 7355173888
+      },
+      "official_postprocess": {
+        "start_monotonic": 131146.119066505,
+        "end_monotonic": 131179.748207686,
+        "elapsed_seconds": 33.62914118100889,
+        "sample_count": 115,
+        "rss_peak_bytes": 7375278080,
+        "pss_peak_bytes": 7343121408
+      }
+    },
+    "descendants_cleared": true
+  },
+  "official_power": {
+    "R_total": 0.3650975537006154,
+    "T_total": 0.013016803347760878,
+    "A_balance": 0.6218856429516237,
+    "A_volume_total": 0.6218856421339276,
+    "R00_s": 0.3650608628870385,
+    "R00_p": 3.4352368280737534e-25,
+    "R00_total": 0.3650608628870385
+  },
+  "dynamic_checker": {
+    "status": "DYNAMIC_PASS",
+    "sha256": "a0bece2f63d5a636a9f07db92eb5610533c8e44a54414b0418e568010ea63a5d"
+  },
+  "evidence_hashes": {
+    "run_summary": "2829de8bff24cc3d3e7d451ee44b78d155da46b5bb24fe3d207be7aedc5c7225",
+    "watchdog_summary": "b251c5142c0d3d86e0dca0961a6793c65773742c4285635266e44ba4a29edc94",
+    "physical_summary": "7a4551ee3e150f2a3a9929c9f6a142615d3f5fb7c329c517c81c00686dba58f0",
+    "official_output": "7d686e31b9207be75aa8282d90d36a4c65404056ad80278a81070988a65b68f5",
+    "audit": "202a2dbfd6f26cd89932e6f0d79992acc7053ac3834201f683fb4f7e47854374",
+    "audit_supplement": "5c853b9988fe40e4b955465b28b70c0ddd05ef233293a588ae6b52ee2e03381a"
+  },
+  "dimensions": {
+    "p6": {
+      "full_rows": 667152,
+      "active_rows": 199260,
+      "interior_rows": 445500,
+      "trace_rows": 221652
+    },
+    "p4": {
+      "full_rows": 201520,
+      "active_rows": 84600,
+      "interior_rows": 106920,
+      "trace_rows": 94600
+    },
+    "coarse": {
+      "full_rows": 201520,
+      "active_rows": 84600,
+      "interior_rows": 106920,
+      "trace_rows": 94600
+    },
+    "condensed_rows": 84680,
+    "condensed_nnz_used": 32320342,
+    "condensed_nnz_allocated": 45403840
+  },
+  "factor": {
+    "allocated_mb": 4687,
+    "used_mb": 4326,
+    "entries": 221594144,
+    "matrix_payload_bytes": 908415524
+  },
+  "shared_cache": {
+    "retained_numeric_cache_bytes": 24541920,
+    "raw_tensor_classes": 12,
+    "oriented_schur_classes": 26
+  },
+  "call_counts": {
+    "native_A4": 267,
+    "p4_logical": 262,
+    "p4_physical_f4": 267,
+    "p4_repairs": 5,
+    "A6_live": 263,
+    "A6_native_witness": 29,
+    "H6_apply": 131,
+    "H6_matrix_mult": 282,
+    "H6_power10_matrix_mult": 20,
+    "P": 263,
+    "PH": 269
+  },
+  "cumulative_timings": {
+    "scope_note": "Cumulative monotonic wall-clock ledgers; parent wrapper values and named child kernel values can overlap. Native Aq projection timing was not separately recorded.",
+    "live_A6": {
+      "apply_count": 263,
+      "total_seconds": 1332.467643185184,
+      "volume_seconds": 1330.7428043539403,
+      "dtn_seconds": 1.2753846961422823,
+      "volume_apply_seconds": 637.6097534139408,
+      "curl_apply_seconds": 692.663028537776
+    },
+    "native_A6_witness": {
+      "apply_count": 29,
+      "total_seconds": 225.27302363597846,
+      "volume_seconds": 224.5926196010114,
+      "dtn_seconds": 0.6324881170003209
+    },
+    "native_A4": {
+      "apply_count": 267,
+      "total_seconds": 655.2644249749428
+    },
+    "H6_B6": {
+      "H6_apply_count": 131,
+      "H6_apply_parent_seconds": 775.3049049579422,
+      "H6_matrix_mult_count": 282,
+      "H6_matrix_mult_seconds": 810.283604650991,
+      "H6_local_kernel_apply_seconds": 789.1361720041896,
+      "B6_calls_per_PC_metadata": 4,
+      "B6_calls_per_PC_measured": 2,
+      "B6_apply_count_measured": 262,
+      "B6_shell_setup_seconds": 0.0003700780071085319,
+      "B6_apply_seconds_derived_from_matrix_mult": 770.4665523900039,
+      "B6_count_note": "Measured apply portion is H6 matrix_mult_count minus power10_matrix_mult_count; metadata calls_per_PC=4 is retained but not used for the count.",
+      "diagonal_setup_seconds": 47.394968193999375,
+      "power10_matrix_mult_count": 20,
+      "power10_matrix_mult_seconds": 39.81705226098711,
+      "power10_setup_seconds": 39.93837261298904
+    },
+    "p4": {
+      "logical_apply_count": 262,
+      "physical_apply_count": 267,
+      "repair_count": 5,
+      "solve_seconds": 129.8930470560881,
+      "reduce_seconds": 114.03232426512113,
+      "recover_seconds": 113.30134338504286,
+      "last_apply_elapsed_seconds": 357.76065140207356
+    },
+    "P_PH": {
+      "P_count": 263,
+      "P_seconds": 115.96566753796651,
+      "PH_count": 269,
+      "PH_seconds": 103.42713105508301,
+      "route_seconds": 3.1915090329857776
+    },
+    "native_Aq": {
+      "projection_check": "PASS",
+      "projection_timing_seconds": "not separately recorded"
+    }
+  },
+  "audit_entry": {
+    "path": "engineering/fe_metric_v25_q4/audit.json",
+    "sha256": "202a2dbfd6f26cd89932e6f0d79992acc7053ac3834201f683fb4f7e47854374",
+    "supplement_path": "engineering/fe_metric_v25_q4/audit_supplement.json",
+    "supplement_sha256": "5c853b9988fe40e4b955465b28b70c0ddd05ef233293a588ae6b52ee2e03381a",
+    "tool_sha256_recorded_in_audit": "6b267291c69f9445441b39875a6c1c324db796ede0acf2e3e9e6e3f8140cc5a5",
+    "tool_sha256_current_ignored": "c52dde9f0e02390d3c8ba8d0fe67348eb4149d938ebe0a41da742d7a47156648",
+    "promoted_tool_path": "benchmarks/fe_metric_v25_q4_glue.py",
+    "promoted_tool_sha256": "e327a4560ff0e8d957991558095d31b196a910714478a8d6d38b3312f8d43661",
+    "promotion_note": "Minimal path correction from artifact-root parents[5] to repository benchmarks parents[1]; audit was not rerun after promotion.",
+    "fe_l2": 2.476289715678911e-14,
+    "scaled_curl": 6.520969181545772e-14,
+    "max_rta_difference": 1.0436096431476471e-14,
+    "max_power_difference_including_A_volume": 2.3203661214665772e-14,
+    "max_reconstruction_E_relative_l2": 3.0724944152938875e-14,
+    "max_reconstruction_H_relative_l2": 1.860000609401865e-13,
+    "max_interface_E_relative_l2": 2.2478089427072907e-14,
+    "max_interface_H_relative_l2": 8.39020042108392e-14,
+    "full_80_mode_relative_l2": 2.182240297351061e-14,
+    "full_80_mode_max_absolute": 1.7481430164593073e-14,
+    "per_mode_count": 80,
+    "per_mode_max_power_difference_power_ratio": 1.0436096431476471e-14,
+    "per_mode_max_power_difference_modal_power_code_units": 1.141309269314661e-13,
+    "audit_rss_peak_bytes": 580157440,
+    "audit_pss_peak_bytes": 548302848
+  },
+  "lifecycle": {
+    "setup_monotonic": 836.8461274599977,
+    "final_native_check_monotonic": 11.11452951899264,
+    "release_check_monotonic": 28.718534543004353,
+    "official_postprocess_monotonic": 33.62914118100889
+  },
+  "authority_boundary": "No matched h7.5 independent reference; discrete/physical pass only."
+}
