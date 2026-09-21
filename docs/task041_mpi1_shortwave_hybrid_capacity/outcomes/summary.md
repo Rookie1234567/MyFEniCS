@@ -1,6 +1,21 @@
 # Task041 outcomes summary
 
-## 2026-09-20：Review V5 R1h 跨 NUMA 复现（当前）
+## 2026-09-21：Review V5 R1i 2666 复测（当前）
+
+R1i 只将 BIOS Memory Frequency 从 `Auto` 改为 `2666 MT/s`，其它设置、保护、刷新和风扇状态不变；这是工作站 CPU/NUMA 内存复制诊断，不是2nm物理模型。node1路径仍骤降，CPU1仍未准入；首窗正常不算修复。
+
+| path | window 1（GB/s） | window 2（GB/s） | window 3（GB/s） |
+|---|---:|---:|---:|
+| local socket0→node0 | `35.6379` | `35.6640` | `35.6967` |
+| local socket1→node1 | `35.6484` | `31.6700` | `11.0249` |
+| cross socket0→node1 | `23.5626` | `22.9569` | `13.1040` |
+| cross socket1→node0 | `23.4082` | `22.9247` | `21.6826` |
+
+两批 `rc=0`、清场完成；43 PCI raw+43 BMC 文件、16 DIMM、688对值的差值为 `[-1,+1]°C`。R1i compact v3 绑定六个 TEMPLO 和两个 TEMPMID 事件；cross `P1-DIMMC1` TEMPLO sample4→5 以 PCI `65→67°C` 作时间括号，异步 BMC 为 `65→66°C`，sample1–10 未见新 MID但 after_load 后置位，触发时间未知。`TEMP_MID 93→95°C` 仍仅只读评估，未改补偿、刷新、保护或80°C观察线。
+
+入口：[R1i tracked compact](records/task041_r1i_2666_retest_20260921.json)，ignored 原件为 [compact v3](../../../results/task041_review_v5_cpu_numa_condensed_speed/r1i_2666_retest_20260921/r1i_2666_two_batch_compact_v3_20260921.json)，SHA `4e7a3d0e21bfe53da457010493a22c71140b7cf734bfdf4b1034f88bc2cacbc6`；v2最终 SHA `ceb19601a337b0d40b6eedd0f260faed018c0b5459904aad24147a11a754bf57`。
+
+## 2026-09-20：Review V5 R1h 跨 NUMA 复现（历史，已由 R1i 更新）
 
 R1h 是一次不改系统设置的内存复制诊断：CPU socket0 的 OS CPU1–8 → memory node1，CPU socket1 的 OS CPU25–32 → memory node0；两阶段各 8 个单线程 worker、3×60 s。两阶段开始和 near-end 都是 `8/8` buffer 位于预期远端 node，driver rc0 不等于硬件资格通过。
 
@@ -13,7 +28,7 @@ R1h 父侧 wall `629.724913916 s`、16/16 worker 三窗完成且精确 PID 清�
 
 当前分类为 `CPU1_NOT_QUALIFIED_SOCKET1_THROUGHPUT_ANOMALY_REPRODUCED_NO_UNIQUE_CAUSE`；R2–R6、R3、PDE/MPI/QEP 均 `not_run`。本批未测完整 process-tree/cgroup RSS 峰，双缓冲约1 GiB仅是对象规模，不是峰值资格。V5 最新 ledger 为 `3327.407495518 s`、SHA `06d8dd9040cdbb306f79337eea80f5f09316b7dc8f04c3d9fe419ad3ac261594`；旧 as-of 字段保留。详见 [R1h outcome](cpu_numa_condensed_speed_v5.md)、[R1h compact](records/task041_v5_cpu_numa.json) 和 [R1h raw summary](../../../results/task041_review_v5_cpu_numa_condensed_speed/r1h_sched_mba_20260920/r1h_result_summary_20260920.json)。
 
-待授权维护建议：用户明确重启维护窗口后，先记录 BIOS 当前 Memory Frequency；若现场菜单确有2666 MT/s，只改这一项并保持电压、Enforce POR、热保护、刷新/纠错不变，按同一有界对照复跑；无选项即停止、无改善则恢复原值。依据 [X11DAi-N 手册 Rev1.4 第88页](https://www.supermicro.com/manuals/motherboard/C600/MNL-1957.pdf) 与 [FAQ24488](https://www.supermicro.com/en/support/faqs/faq.php?faq=24488)；不假定原值为 Auto，不保证理论9.1%频率变化改善吞吐。本轮未改硬件或 BIOS。
+历史维护建议（R1h当时口径；R1i已执行但未解决）：R1h阶段仅提出记录 BIOS Memory Frequency、若菜单有2666才做单项对照的计划；当时不假定原值为 Auto，且未改硬件或 BIOS。R1i 后续已实际执行 Auto→2666 MT/s，但 node1 路径仍未稳定；保护、刷新、风扇和电压边界保持不变。
 
 > **2026-09-20 Review V5 R1d-B 当前状态（as-of 2026-09-20T13:33:25.642281784Z）**：R0 终态证据已整理；R1d-B 唯一一次匹配负载已完成，driver `rc=0` 不等于 CPU1 通过。CPU0/socket0/node0 三窗为 `32.173939890 / 32.183022717 / 32.190473984 GB/s`；CPU1/socket1/node1 为 `33.263204952 / 28.338248830 / 9.265976385 GB/s`，第三窗相对首窗下降约 `72.14%`。两侧启动/near-end NUMA 均 `8/8` local，活跃频率约 `3.6 GHz`、CoreThr=0；DIMM 观测峰 socket0/1 为 `64/78°C`，状态 ok。分类为 `CPU1_NOT_QUALIFIED_SOCKET1_THROUGHPUT_COLLAPSE`，根因未闭合；R2–R6、R3、PDE/MPI/QEP 和新负载均 `not_run`。详见 [R1d-B outcome](cpu_numa_condensed_speed_v5.md)、[R1d-B compact](records/task041_v5_cpu_numa.json)。
 

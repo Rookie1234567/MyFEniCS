@@ -1,8 +1,29 @@
-# Task041 Response V8：Review V5 R1h 跨 NUMA 复现与历史终态
+# Task041 Response V8：Review V5 R1i 2666 复测与历史终态
 
-本报告保留 D3a 的自然终止证据、R0/R1d/R1e/R1f/R1g 历史记录，并登记最新一次 R1h 只读硬件/调度诊断。R1h driver `rc=0` 只表示诊断批次正常收尾；CPU1 仍未资格化，不能把异常归为硬件损坏、确定的 DRAM 热限流或核心降频。R2–R6、R3 p4 草稿测试和新 PDE/MPI/QEP 均 `not_run`。
+本报告保留 D3a 的自然终止证据、R0/R1d/R1e/R1f/R1g/R1h 历史记录，并登记最新一次 R1i 2666 复测。两批 driver `rc=0` 只表示诊断批次正常收尾；CPU1 仍未资格化，不能把异常归为硬件损坏、确定的 DRAM 热限流或核心降频。R2–R6、R3 p4 草稿测试和新 PDE/MPI/QEP 均 `not_run`。
 
-## Review V5 当前状态：R1h 已完成，CPU1 仍未准入
+## R1i：Auto→2666 MT/s 未解决吞吐异常
+
+R1i 使用 post-boot `fb33e6f4-078c-4638-becf-e8ea71f8764e`、2 TiB 级内存、16×128 GB DIMM，DMI configured speed=`2666 MT/s`；用户确认 BIOS Memory Frequency 从 `Auto` 改为 `2666`，其它设置未改。两批沿用已审 driver/worker、8×1、3×60 s、原资源/温度/身份/清场门，未运行 PDE 或新负载。 本批运行 repo HEAD 为 `4de7bc82a964ec9de03fc3689595efeb21e45678`，与当前文档工作树及其后续文档提交身份分开记录。
+
+| batch/path | 三窗吞吐（GB/s） | 结论 |
+|---|---:|---|
+| local socket0 cores1–8 → node0 | `35.63788506479269 / 35.664033252580786 / 35.6967308849817` | 稳定；不据此给 CPU0 新硬件资格结论 |
+| local socket1 cores25–32 → node1 | `35.648371306083156 / 31.66995975917892 / 11.024863223982754` | node1 路径崩落；CPU1 仍未准入 |
+| cross socket0 cores1–8 → node1 | `23.562553384022838 / 22.956933903624012 / 13.10402684910857` | node1 路径再次崩落 |
+| cross socket1 cores25–32 → node0 | `23.408224743881927 / 22.924688775860275 / 21.682633764800535` | 约 `7.37%` 下降，不写成零退化 |
+
+两批均 rc0、worker 三窗完成并清场；local 的精确父侧 monotonic wall 未测，按 `816.976233636 s` 保守上界计账；cross 父侧 wall 为 `629.805876166 s`。CPU 活跃频率约3.6 GHz、CoreThr=0；这些是 gate/排除信息，不是性能资格通过。唯一账本累计 `4774.189605320 s`，after SHA=`e0ce6a02033acd7cd0971b73e4aee5554fbbf2f3d24c486a6794c4da20c010ef`。
+
+新鲜 DIMM 事件是 `@150` 中的 DIMM `TEMPLO/TEMPMID` sticky 字段，不等同外部 MEMHOT `e24`：`ae:0c.6` 的 sample3→4 为 `66→69°C` 且 bit26 `0→1`，sample7→8 为 `77→78°C` 且 bit27 `0→1`；两对分别跨 window1→2、window2→3，均为时间括号而非同刻证明。cross raw 确有 load-time `@140/@144/e24`（`socket1_sample10.raw` 的 `@140=0000200f`，`@144=00000000`，e24=0）；local raw 没有这些 load-time 字段，不能把两批统一写成缺失或统一写成已测。cross `P1-DIMMC1` 的 TEMPLO sample4→5 以 PCI `@150` 的 `65→67°C` 作为时间括号，异步 BMC 列表为 `65→66°C`（差 `+1°C`）；samples1–10 未见新的 TEMPMID bit27，但后续 after_load 已置位，触发时间和温度未知。这里的 TEMPLO/TEMPMID 表示较低/中间温度阈值被越过的事件；sticky 只表示两次读取之间曾发生过置位，不表示此刻仍在限速。
+
+BMC `mc info` rc0、Firmware `1.71`，风扇 GET 原始返回 `01`，按已给 primary sources 可记为 BMC Full mode；这不证明每个物理风扇通道达到额定全速，也不映射用户独立外接风扇。机箱型号未知、侧板打开、外接风扇保持直吹 node1 DIMM；不再要求调风扇。用户历史 `90°C` 是自述，不是本轮 raw。Intel S2600WF TPS §12.3.4.2 仅作为同代机制参考（TSOD fixed/dynamic thermal offset），不是 X11DAi-N 的具体公式；`@140` 的 `0xf` 不换算成已证实 `+15°C`，不声称实测93°C，未改90°C/offset/保护。
+
+紧凑入口：[R1i tracked compact](outcomes/records/task041_r1i_2666_retest_20260921.json)，同内容 ignored 原件为 [compact v3](../../results/task041_review_v5_cpu_numa_condensed_speed/r1i_2666_retest_20260921/r1i_2666_two_batch_compact_v3_20260921.json)，两者 SHA `4e7a3d0e21bfe53da457010493a22c71140b7cf734bfdf4b1034f88bc2cacbc6`；v2 最终 SHA `ceb19601a337b0d40b6eedd0f260faed018c0b5459904aad24147a11a754bf57`，v1/raw/history 保留；43 raw+43 BMC 排序 hash 输出 SHA `b4fbd2eb6197421e382d39d9e5ce97a6878e3f6543c558adf9113c3244516ab1`。
+
+本轮只读阈值边界：评估的是控制器 `TEMP_MID 93→95°C`，不是把显示温度设为95°C，也没有证明 `@140` 的 `0xf` 等于 `+15°C`。`@120` 的 bits15:8 是可写字段，但 Micron 的95°C扩展TC与>85°C时2×刷新要求不自动证明系统安全；实际温差、响应超调、全系统清场和可靠回退尚未资格化，因此未写阈值、未改补偿/刷新/HI保护、未启动负载，原80°C观察线保持。
+
+## Review V5 历史状态：R1h 已完成（已由 R1i 更新），CPU1 仍未准入
 
 R1h 是同一固定 worker 的跨 NUMA 诊断，不是物理模型计算：CPU socket0 的 OS CPU1–8 将双缓冲 first-touch 到 memory node1，CPU socket1 的 OS CPU25–32 将其 first-touch 到 memory node0；两阶段各 8 个单线程 worker、3×60 s。每个阶段开始和末段均观察到 `8/8` 个 buffer 位于预期的远端 node。固定 driver SHA 为 `f81d917bd462e1a5028a8bb8c3f4ca3aaad4122a9f2adaec8a6990a616099bc4`，worker SHA 为 `7ce2dd8ff6f71cf4e9b9c13a156e1f0f0b15b38af010ac0b2b04881ec3ce0ad9`，运行 source 为 `881bb9773a79793d8edd7fe525ad57a4c0d9a494`。
 
@@ -19,7 +40,7 @@ R1h 共 22 个硬件 sample、110 个 final-read（每条新 PCI/MSR 读取 `rc=
 
 证据入口为 [R1h compact](outcomes/records/task041_v5_cpu_numa.json) 与 [R1h raw summary](../../results/task041_review_v5_cpu_numa_condensed_speed/r1h_sched_mba_20260920/r1h_result_summary_20260920.json)。runroot 为 `results/task041_review_v5_cpu_numa_condensed_speed/r1h_sched_mba_20260920/run_20260920T154556.093635044Z`；launch metadata SHA `62496750a7ac9d6bce344bce279e9f31b7dde65e4379aa320ca0aa7825e2945e`，driver log SHA `a7e0a45ca321b65b27a04c75f804a8352faf167bd577da908268c15dd721e977`，hardware aggregate SHA `03c00115b46de257495388999e4bbe7cc605f1bbfca56a66aa62bcdacfb8be21`，worker aggregate SHA `bc56bcc7fec6ae135f0a6327bbe2aa023c584c5c71bfd20401a5e719640daada`。逐文件、字节数和 SHA 的小清单为 [`r1h_small_hash_manifest_20260920.json`](../../results/task041_review_v5_cpu_numa_condensed_speed/r1h_sched_mba_20260920/run_20260920T154556.093635044Z/r1h_small_hash_manifest_20260920.json)，SHA `0a2af1b58827eabd41f1e38bdc5e01bc73df8f28cbf69e4573f51043392973b1`；它明确列出22个 hardware `.raw` 和16个 phase worker JSONL，按相对路径排序生成，`low_load_cpu1.jsonl`单列未纳入。21个专属 PID 的 native 只读 `/proc` 清场证据为 [`r1h_cleanup_readonly_20260920T161002Z.json`](../../results/task041_review_v5_cpu_numa_condensed_speed/r1h_sched_mba_20260920/run_20260920T154556.093635044Z/r1h_cleanup_readonly_20260920T161002Z.json)，SHA `8a1ae0aec4095db557c84f3773a4df49068d84e6830be0316f29960c49c7a9b6`，检查时间 `2026-09-20T16:10:02.764589740Z`，结果 `21/21 absent`。父侧 `CLOCK_MONOTONIC` wall 为 `629.724913916 s`，本批已按唯一 V5 ledger 追加一次；ledger SHA `06d8dd9040cdbb306f79337eea80f5f09316b7dc8f04c3d9fe419ad3ac261594`、累计 `3327.407495518 s`。
 
-因此当前状态是 `CPU1_NOT_QUALIFIED_SOCKET1_THROUGHPUT_ANOMALY_REPRODUCED_NO_UNIQUE_CAUSE`，R2 仍 blocked。没有完整 process-tree/cgroup RSS 峰值、没有新的硬件修复，也没有运行 R2/PDE。可审的后续维护建议仅是：在用户明确重启维护授权后，先记录 BIOS 当前 Memory Frequency；若现场菜单确实提供 `2666 MT/s`，只将该单项从原值改为 2666，保持电压、Enforce POR、热保护、刷新/纠错等不变，再做同一有界对照；若没有该选项则停止，若无改善恢复原值。该建议依据 [X11DAi-N 手册 Rev1.4 第88页](https://www.supermicro.com/manuals/motherboard/C600/MNL-1957.pdf) 和 [Supermicro FAQ24488](https://www.supermicro.com/en/support/faqs/faq.php?faq=24488)，不假定原值为 Auto，也不保证约 9.1% 的理论频率变化会改善实际吞吐；本轮未改 BIOS、风扇、保护或固件。
+因此 R1h 历史状态为 `CPU1_NOT_QUALIFIED_SOCKET1_THROUGHPUT_ANOMALY_REPRODUCED_NO_UNIQUE_CAUSE`，R2 仍 blocked。没有完整 process-tree/cgroup RSS 峰值，也没有新的硬件修复；R1i 已执行 `Auto→2666 MT/s` 对照但 node1 路径仍未稳定，不能称修复。历史建议的边界仍有效：不改电压、Enforce POR、热保护、刷新/纠错、风扇或固件；93→95 仅作只读评估，未写阈值、未启动新负载。
 
 ## Review V5 历史状态：R0 已完成，R1d-B 复现负项
 

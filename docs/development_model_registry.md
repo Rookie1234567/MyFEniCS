@@ -1,12 +1,19 @@
 # 开发阶段研究对象与计算结果总账
 
-## 2026-09-20：Task041 Review V5 R1h 跨 NUMA 复现（当前）
+## 2026-09-21：Task041 Review V5 R1i 2666 复测（当前）
 
+| 模型/阶段 | 当前结果 | 资格边界与证据 |
+|---|---|---|
+| Task041工作站CPU/NUMA内存复制诊断（服务于2nm计划，非物理模型） | Auto→2666后 local socket0→node0 `35.6379 / 35.6640 / 35.6967 GB/s`；local socket1→node1 `35.6484 / 31.6700 / 11.0249`；cross socket0→node1 `23.5626 / 22.9569 / 13.1040`；cross socket1→node0 `23.4082 / 22.9247 / 21.6826`；两批 driver rc0 | node1路径仍骤降，首窗正常不算修复；CPU1未准入、R2 blocked；R1i compact v3及43+43硬件/BMC hash绑定见 tracked compact record |
+
+R1i 的688对PCI/BMC温度差值为`[-1,+1]°C`，六个TEMPLO和两个TEMPMID事件已绑定；cross P1-DIMMC1 sample4→5的时间括号按PCI `65→67°C`、异步BMC `65→66°C`，after_load后续MID置位，触发时刻未知。TEMP_MID 93→95仍仅只读评估，未改阈值、补偿、刷新或保护。
+
+## 2026-09-20：Task041 Review V5 R1h 跨 NUMA 复现（历史，已由R1i更新）
 | 模型/阶段 | 当前结果 | 资格边界与证据 |
 |---|---|---|
 | Task041工作站 CPU/NUMA 内存复制诊断（服务于2nm计划，非物理模型） | socket0 CPU1–8→node1：`22.6487 / 21.9776 / 7.3957 GB/s`；socket1 CPU25–32→node0：`19.7892 / 19.7594 / 18.8433 GB/s`；driver rc0 | 前者约降67.35%、后者约降4.78%；`CPU1_NOT_QUALIFIED_SOCKET1_THROUGHPUT_ANOMALY_REPRODUCED_NO_UNIQUE_CAUSE`；活跃约3.6GHz/CoreThr=0，R2 blocked；[R1h outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/cpu_numa_condensed_speed_v5.md)、[compact](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v5_cpu_numa.json) |
 
-R1h 父侧 wall `629.724913916 s`；22 hardware samples、110 final-read、44×48行 MSR 文件、358 resource samples 已绑定。16 worker 的 minor/major/stime delta 与 shared cgroup throttle/high/max/oom 字段均为0，完整 process-tree/cgroup RSS 峰未测；不据此判定硬件损坏或排除内部内存热控。待授权维护对照仅考虑记录原 BIOS Memory Frequency 后，在有2666选项时单项改为2666 MT/s并保持保护/电压不变；出处为 [X11DAi-N 手册第88页](https://www.supermicro.com/manuals/motherboard/C600/MNL-1957.pdf) 和 [FAQ24488](https://www.supermicro.com/en/support/faqs/faq.php?faq=24488)，本轮未执行。
+R1h 父侧 wall `629.724913916 s`；22 hardware samples、110 final-read、44×48行 MSR 文件、358 resource samples 已绑定。16 worker 的 minor/major/stime delta 与 shared cgroup throttle/high/max/oom 字段均为0，完整 process-tree/cgroup RSS 峰未测；不据此判定硬件损坏或排除内部内存热控。历史维护对照（R1i 已执行但未解决）：已执行 Auto→2666 MT/s，原边界仍是保持保护/电压不变；出处为 [X11DAi-N 手册第88页](https://www.supermicro.com/manuals/motherboard/C600/MNL-1957.pdf) 和 [FAQ24488](https://www.supermicro.com/en/support/faqs/faq.php?faq=24488)；R1i 已实际执行，node1 路径仍未稳定。
 
 ## 2026-09-20：Task041 Review V5 R1d-B 匹配负载负结果（历史）
 

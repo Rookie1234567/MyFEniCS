@@ -1,0 +1,175 @@
+{
+  "schema": "task041.review_v5.r1i_2666_two_batch_compact.v3",
+  "generated_utc": "2026-09-21T02:38:26.489864980Z",
+  "supersedes": {
+    "v1": {
+      "path": "results/task041_review_v5_cpu_numa_condensed_speed/r1i_2666_retest_20260921/r1i_2666_two_batch_compact_20260921.json",
+      "sha256": "307228da914bbb35599be65dce2fb178a4afea104765d6d59f6023fcb165a913",
+      "preserved": true
+    },
+    "v2": {
+      "path": "results/task041_review_v5_cpu_numa_condensed_speed/r1i_2666_retest_20260921/r1i_2666_two_batch_compact_v2_20260921.json",
+      "sha256": "ceb19601a337b0d40b6eedd0f260faed018c0b5459904aad24147a11a754bf57",
+      "preserved": true
+    }
+  },
+  "scope": {
+    "no_new_load": true,
+    "source_samples": {
+      "local_raw_samples": 21,
+      "cross_raw_samples": 22,
+      "dimm_slots_per_sample": 16,
+      "pairs": 688
+    },
+    "comparison": {
+      "input": "PCI @150 low byte plus the four nonzero @154 A2/D2 readings, aligned to the subsequent BMC sensor listing",
+      "difference_celsius_min": -1,
+      "difference_celsius_max": 1,
+      "independent_calibration": false,
+      "caveat": "The reads are asynchronous and may share a source; this is consistency evidence, not independent sensor calibration."
+    },
+    "all_sample_hash_binding": {
+      "sha256sum_command": "find <local hardware_samples> <cross hardware_samples> -maxdepth 1 -type f ( -name '*.raw' -o -name '*.bmc_sensor.list' ) -print0 | sort -z | xargs -0 sha256sum",
+      "sorted_sha256sum_output_sha256": "b4fbd2eb6197421e382d39d9e5ce97a6878e3f6543c558adf9113c3244516ab1",
+      "raw_files": 43,
+      "bmc_files": 43,
+      "paths": [
+        "results/task041_review_v5_cpu_numa_condensed_speed/r1i_2666_retest_20260921/run_local_20260921T011527.514294682Z/hardware_samples/",
+        "results/task041_review_v5_cpu_numa_condensed_speed/r1i_2666_retest_20260921/run_cross_20260921T013227.053832944Z/hardware_samples/"
+      ]
+    },
+    "channel_mapping_inference": {
+      "pci_channel_to_slot_letter": {
+        "a.2": "A",
+        "a.6": "B",
+        "b.2": "C",
+        "c.2": "D",
+        "c.6": "E",
+        "d.2": "F"
+      },
+      "socket_bdf": {
+        "0000:3a": "P1/socket0/node0",
+        "0000:ae": "P2/socket1/node1"
+      },
+      "basis": "Inference from the repeated BDF/DIMM-name alignment, DMI inventory, and the 688 comparisons; not an independently validated vendor slot map."
+    }
+  },
+  "slot_difference_summary_celsius": {
+    "P1-DIMMA1": {"n": 43, "min": -1, "max": 1},
+    "P1-DIMMA2": {"n": 43, "min": -1, "max": 1},
+    "P1-DIMMB1": {"n": 43, "min": 0, "max": 1},
+    "P1-DIMMC1": {"n": 43, "min": 0, "max": 1},
+    "P1-DIMMD1": {"n": 43, "min": -1, "max": 1},
+    "P1-DIMMD2": {"n": 43, "min": -1, "max": 0},
+    "P1-DIMME1": {"n": 43, "min": -1, "max": 1},
+    "P1-DIMMF1": {"n": 43, "min": 0, "max": 1},
+    "P2-DIMMA1": {"n": 43, "min": -1, "max": 1},
+    "P2-DIMMA2": {"n": 43, "min": 0, "max": 0},
+    "P2-DIMMB1": {"n": 43, "min": -1, "max": 1},
+    "P2-DIMMC1": {"n": 43, "min": -1, "max": 1},
+    "P2-DIMMD1": {"n": 43, "min": 0, "max": 1},
+    "P2-DIMMD2": {"n": 43, "min": 0, "max": 1},
+    "P2-DIMME1": {"n": 43, "min": -1, "max": 1},
+    "P2-DIMMF1": {"n": 43, "min": -1, "max": 1}
+  },
+  "fresh_event_brackets": [
+    {
+      "kind": "TEMPLO",
+      "run": "local",
+      "slot": "P2-DIMME1",
+      "bdf": "ae:0c.6",
+      "from": {"sample": 3, "utc": "2026-09-21T01:20:43.140738367Z", "bmc_c": 66, "raw": "03000042", "bit26": 0, "bit27": 0, "raw_sha256": "9b043b633fb666fd9e9ec2a4037e39b8bf0ccfe8769f1bac6bf06a9267987435"},
+      "to": {"sample": 4, "utc": "2026-09-21T01:20:59.967924643Z", "bmc_c": 69, "raw": "07000045", "bit26": 1, "bit27": 0, "raw_sha256": "98fcc9c566121a3b607918a9d7ced8362af5e7ae5cf9babe7b0017ee2089d55b"},
+      "bmc_sha256": ["4c4212361680211a9a6f4d823a696f7363e934624a55d0ea0ae3e85bac6f90cd", "e70922cc40d9f4403d5e4243b4608689411f240527c330cfc9599412ff40a314"]
+    },
+    {
+      "kind": "TEMPLO",
+      "run": "local",
+      "slot": "P2-DIMMF1",
+      "bdf": "ae:0d.2",
+      "from": {"sample": 4, "utc": "2026-09-21T01:20:59.967924643Z", "bmc_c": 65, "raw": "03000041", "bit26": 0, "bit27": 0, "raw_sha256": "98fcc9c566121a3b607918a9d7ced8362af5e7ae5cf9babe7b0017ee2089d55b"},
+      "to": {"sample": 5, "utc": "2026-09-21T01:21:16.696405722Z", "bmc_c": 68, "raw": "07000044", "bit26": 1, "bit27": 0, "raw_sha256": "1402126f2aefa5d73cf79ae776df206459518aab70345633c704de61e8d0fc0e"},
+      "bmc_sha256": ["e70922cc40d9f4403d5e4243b4608689411f240527c330cfc9599412ff40a314", "8c4165e6739baba084504100008ad47e8c4acac19822911cd15d34918a87a7d4"]
+    },
+    {
+      "kind": "TEMPLO",
+      "run": "local",
+      "slot": "P2-DIMMD1",
+      "bdf": "ae:0c.2",
+      "from": {"sample": 5, "utc": "2026-09-21T01:21:16.696405722Z", "bmc_c": 66, "raw": "03000042", "bit26": 0, "bit27": 0, "raw_sha256": "1402126f2aefa5d73cf79ae776df206459518aab70345633c704de61e8d0fc0e"},
+      "to": {"sample": 6, "utc": "2026-09-21T01:21:33.699012897Z", "bmc_c": 67, "raw": "07000043", "bit26": 1, "bit27": 0, "raw_sha256": "24369265fb7499e6976852f328cb7cb5bc66570847084b3bc81b3e61dec03fa9"},
+      "bmc_sha256": ["8c4165e6739baba084504100008ad47e8c4acac19822911cd15d34918a87a7d4", "b62711c75c99e66ddb5be8320d79d49ba1116340ed254698f9c3eafa806203e7"]
+    },
+    {
+      "kind": "TEMPLO",
+      "run": "local",
+      "slot": "P2-DIMMB1",
+      "bdf": "ae:0a.6",
+      "from": {"sample": 5, "utc": "2026-09-21T01:21:16.696405722Z", "bmc_c": 66, "raw": "03000042", "bit26": 0, "bit27": 0, "raw_sha256": "1402126f2aefa5d73cf79ae776df206459518aab70345633c704de61e8d0fc0e"},
+      "to": {"sample": 6, "utc": "2026-09-21T01:21:33.699012897Z", "bmc_c": 69, "raw": "07000045", "bit26": 1, "bit27": 0, "raw_sha256": "24369265fb7499e6976852f328cb7cb5bc66570847084b3bc81b3e61dec03fa9"},
+      "bmc_sha256": ["8c4165e6739baba084504100008ad47e8c4acac19822911cd15d34918a87a7d4", "b62711c75c99e66ddb5be8320d79d49ba1116340ed254698f9c3eafa806203e7"]
+    },
+    {
+      "kind": "TEMPLO",
+      "run": "cross",
+      "slot": "P1-DIMMC1",
+      "bdf": "3a:0b.2",
+      "from": {"sample": 4, "utc": "2026-09-21T01:37:52.270058965Z", "pci_c": 65, "bmc_c": 65, "raw": "03000041", "bit26": 0, "bit27": 0, "raw_sha256": "d90abe4ce85eb91f25c385bbb9743dba430cbb2da655721c62439d98c8112d80"},
+      "to": {"sample": 5, "utc": "2026-09-21T01:38:09.466433237Z", "pci_c": 67, "bmc_c": 66, "raw": "07000043", "bit26": 1, "bit27": 0, "raw_sha256": "bc6229479f018a9fd7cf0f62a7ad430d59b17097f8223dd3def58c87ff085431"},
+      "bmc_sha256": ["c6496cf333eae40c8f9846cc161c0db1007abccc64f7973402f4f5c0f7c90bb1", "f0cc32c856bbe822f1809748966e39ed78abc041d624f1f101927ba04d19a3f9"]
+    },
+    {
+      "kind": "TEMPLO",
+      "run": "cross",
+      "slot": "P1-DIMMB1",
+      "bdf": "3a:0a.6",
+      "from": {"sample": 7, "utc": "2026-09-21T01:38:44.425832860Z", "bmc_c": 66, "raw": "03000042", "bit26": 0, "bit27": 0, "raw_sha256": "534bdb26e06578bd16f1b5168271f2d3890bc17cb42883db03579c8a699b9ca5"},
+      "to": {"sample": 8, "utc": "2026-09-21T01:39:01.592900115Z", "bmc_c": 67, "raw": "07000043", "bit26": 1, "bit27": 0, "raw_sha256": "6af219e4dcefbf1852b9da8c51216b4882315f7524a9303d7335c5b8b6fe71d1"},
+      "bmc_sha256": ["b9513b09bd6601b529b2aee9f041a9d9c7bbd104de4ff8a2d22a793f9032c4ef", "3b05e9efc015b1950aa7cf549b53f7966841bb4df12aeecfc6bf5ab7002cb660"]
+    },
+    {
+      "kind": "TEMPMID",
+      "run": "local",
+      "slot": "P2-DIMME1",
+      "bdf": "ae:0c.6",
+      "from": {"sample": 7, "utc": "2026-09-21T01:21:50.608102778Z", "bmc_c": 77, "raw": "0700004d", "bit26": 1, "bit27": 0, "raw_sha256": "1edd569cc501fded3ebe3ed9b3ef7361eaa9fc5786ead479a83079e4873b523b"},
+      "to": {"sample": 8, "utc": "2026-09-21T01:22:07.524546535Z", "bmc_c": 78, "raw": "0f00004e", "bit26": 1, "bit27": 1, "raw_sha256": "d42596c75da58f096b48503c4e1b4c066c927cf325bd5d05f7c3e3a1ddb985a5"},
+      "bmc_sha256": ["e166460d0b90b04285a2722fd992cda28d6bcf90a71cf27b74475b061cf6eb04", "b75da850eafd9ffa9c5c7451ceafb940c1d345a2063446fed1129e99c374315d"]
+    },
+    {
+      "kind": "TEMPMID",
+      "run": "cross",
+      "slot": "P1-DIMMC1",
+      "bdf": "3a:0b.2",
+      "from": {"sample": 10, "utc": "2026-09-21T01:39:35.905982774Z", "bmc_c": 77, "raw": "0700004d", "bit26": 1, "bit27": 0, "raw_sha256": "72cd15dbd4d8f277fcc06fcbd319e820be75bc896a78c327a90353ce8c278509"},
+      "to": {"sample": "after_load", "utc": "2026-09-21T01:42:49.916543595Z", "bmc_c": 55, "raw": "0f000037", "bit26": 1, "bit27": 1, "raw_sha256": "416d20497bfe72709bb82551f761ebfab207f1f2c1e386df72e861b785a79bf7"},
+      "gap_seconds": 194.010764114,
+      "bmc_sha256": ["feeac70e6f37e2bcd0c153442f2eeebcf54aa58d6f6cab03dbd24ecb61ec93e0", "748712afc604378fb24492e3534ac3f84f267689c7b2c28b2d51b724cf81c27b"]
+    }
+  ],
+  "cross_register_boundary": {
+    "all_16_cross_dimm_140_144": "0000200f",
+    "e24": "not used as a substitute for @150 DIMM events; existing cross e24 reads were zero",
+    "interpretation": "The later cross @150 bit27 assertion is a DIMM TEMPMID sticky transition; the 55C after-load reading is cooling after the unknown trigger interval, not the trigger temperature. Samples 1-10 alone did not show a new cross MID."
+  },
+  "temperature_interpretation": {
+    "both_paths": "The six TEMPLO brackets are consistent with a possible 82-15≈67C comparison, but this does not establish an X11DAi-N conversion formula.",
+    "sensor_failure": "not concluded",
+    "mechanism": "The paired events support a common compensation/thermal-policy path more than an isolated single-DIMM explanation, while the exact X11 formula and trigger timing remain vendor-unknown.",
+    "reference": "Intel 338846-001US §3.3.5/§3.3.8 and same-generation S2600WF TPS §12.3.4.2 are mechanism references, not X11DAi-N formula proof."
+  },
+  "threshold_93_to_95_readonly_boundary": {
+    "status": "not_run_no_write",
+    "meaning": "A proposed controller TEMP_MID 93->95C change is distinct from displaying 95C and from proving a +15C offset; no parameter was modified.",
+    "field": "@120 bits15:8 TEMP_MID, RW in the cited Intel register description; MID remains below HI.",
+    "safety_boundary": "Micron part guidance identifies 95C as an extended-TC limit and requires 2x refresh above 85C; system-level safety, overshoot, rollback and full cleanup are not qualified.",
+    "preserved_gates": "Keep the existing 80C observation stop, LO refresh behavior and HI protection; no write, reboot, load or threshold experiment was performed."
+  },
+  "preserved_context": {
+    "bios_memory_frequency": "Auto -> 2666 MT/s; this did not resolve the node1-path collapse",
+    "bmc": "Firmware 1.71; fan GET raw 01 (Full mode interpretation per supplied primary sources, not proof of every channel's rated speed)",
+    "external_fan": "user-installed fan remains at maximum and is not mapped to BMC FAN2/3/5/6",
+    "no_new_budget": true,
+    "no_hardware_write": true
+  }
+}

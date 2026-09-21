@@ -446,5 +446,60 @@
       "charged_seconds_after_append": 1434.768455852,
       "sha256_after_append": "69aa9738e83d3d9d042124ef3a71e92df3489d6461c3d32a4465c64092ab0508"
     }
+  },
+  "r1i_2666_retest": {
+    "captured_utc": "2026-09-21T02:18:34.867364961Z",
+   "status": "R1I_COMPLETED_TWO_BATCHES_CPU1_NOT_QUALIFIED",
+   "qualification": "CPU1_NOT_QUALIFIED_NODE1_PATH_THROUGHPUT_COLLAPSE_REPRODUCED; no unique hardware cause",
+    "identity_and_preflight": {
+      "repo_head": "4de7bc82a964ec9de03fc3689595efeb21e45678",
+      "driver_sha256": {
+        "local_r1d": "37bea39b72656f2c8e0ce3bb293bbfc8ff41d7a17fa28fd1fc0cedf90976a584",
+        "cross_r1h": "f81d917bd462e1a5028a8bb8c3f4ca3aaad4122a9f2adaec8a6990a616099bc4",
+        "worker": "7ce2dd8ff6f71cf4e9b9c13a156e1f0f0b15b38af010ac0b2b04881ec3ce0ad9"
+      }
+    },
+   "bios_memory_frequency": {"before": "Auto", "after": "2666 MT/s", "other_settings_changed": false},
+    "boot_id": "fb33e6f4-078c-4638-becf-e8ea71f8764e",
+    "memory": {"total_kib": 2112402728, "dimm_count": 16, "configured_speed": "2666 MT/s", "spd_speed": "2933 MT/s"},
+    "four_paths": {
+      "local_socket0_node0": [35.63788506479269, 35.664033252580786, 35.6967308849817],
+      "local_socket1_node1": [35.648371306083156, 31.66995975917892, 11.024863223982754],
+      "cross_socket0_node1": [23.562553384022838, 22.956933903624012, 13.10402684910857],
+      "cross_socket1_node0": [23.408224743881927, 22.924688775860275, 21.682633764800535]
+    },
+    "interpretation": "The CPU0->node0 control path is stable; the local socket1->node1 and cross socket0->node1 paths collapse, while cross socket1->node0 declines 7.37%. This is a path result, not a CPU0 hardware conclusion.",
+    "register_scope": {
+      "local": "local R1i raw has @108/@120/@130/@134/@150/@154/@190/@192 but no load-time @140/@144/e24 entries",
+      "cross": "cross R1i raw includes @140/@144/e24; socket1_sample10 @140=0000200f and target @144=00000000; cross e24 reads are 00000000",
+      "cross_normal_side": "3a:0b.2 P1-DIMMC1 @150 changed 03000039->0700004d: LO/TEMPLO set; samples1-10 had no new MID/TEMPMID bit27, but the later after_load read set bit27 after a 194.010764114 s gap, so the trigger time/temperature is unknown"
+    },
+    "event_evidence": "six TEMPLO and two TEMPMID brackets are recorded in compact v3; they are DIMM sticky fields, not external MEMHOT e24",
+    "bmc": {"firmware": "1.71", "fan_get_raw": "01", "fan_mode": "Full per supplied primary sources; does not prove every physical fan is at rated maximum"},
+    "thermal_boundary": "user historical 90C is self-report only; Intel S2600WF TPS §12.3.4.2 is mechanism reference, not X11DAi-N-specific offset proof; no 90C/offset/protection change",
+    "compact_v1": {"path": "results/task041_review_v5_cpu_numa_condensed_speed/r1i_2666_retest_20260921/r1i_2666_two_batch_compact_20260921.json", "sha256": "307228da914bbb35599be65dce2fb178a4afea104765d6d59f6023fcb165a913"},
+    "compact_v2": {"path": "results/task041_review_v5_cpu_numa_condensed_speed/r1i_2666_retest_20260921/r1i_2666_two_batch_compact_v2_20260921.json", "sha256": "ceb19601a337b0d40b6eedd0f260faed018c0b5459904aad24147a11a754bf57", "note": "final v2 after the same-stage thermal_mechanism_boundary supplement; v1/raw/history preserved"},
+    "hash_manifest": {"path": "results/task041_review_v5_cpu_numa_condensed_speed/r1i_2666_retest_20260921/r1i_2666_worker_resource_cleanup_hash_manifest_20260921.txt", "sha256": "db7f9f731564c818ad67cc850b09dddde5b0a5a97941aab2f69e226352aa8a4a", "files": 42},
+    "ledger": {"path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_load_ledger_20260920.json", "sha256": "e0ce6a02033acd7cd0971b73e4aee5554fbbf2f3d24c486a6794c4da20c010ef", "charged_seconds": 4774.18960532, "append_count": 1}
+  },
+  "r1i_v3_hardware_evidence": {
+    "compact": {
+     "path": "results/task041_review_v5_cpu_numa_condensed_speed/r1i_2666_retest_20260921/r1i_2666_two_batch_compact_v3_20260921.json",
+      "tracked_path": "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_r1i_2666_retest_20260921.json",
+     "sha256": "4e7a3d0e21bfe53da457010493a22c71140b7cf734bfdf4b1034f88bc2cacbc6"
+    },
+    "sample_hash_binding": {
+      "raw_samples": 43,
+      "bmc_sensor_files": 43,
+      "dimm_slots_per_sample": 16,
+      "pci_bmc_pairs": 688,
+      "difference_celsius_range": [-1, 1],
+      "sorted_sha256sum_output_sha256": "b4fbd2eb6197421e382d39d9e5ce97a6878e3f6543c558adf9113c3244516ab1"
+    },
+    "channel_mapping": "Inferred a.2=A, a.6=B, b.2=C, c.2=D, c.6=E, d.2=F; 3a->P1/socket0 and ae->P2/socket1. This is an inference from repeated PCI/BMC/DMI alignment, not an independent vendor calibration.",
+    "events": "Six TEMPLO transitions and two TEMPMID transitions are hash-bound in compact v3. For cross P1-DIMMC1 TEMPLO sample4->5, the time bracket uses PCI @150 65->67C while the asynchronous BMC listing is 65->66C (difference +1C). Cross sample10->after_load sets TEMPMID after a 194.010764114 s gap; the 55C after-load value is cooling/sticky evidence, not the trigger temperature.",
+    "cross_registers": "All 16 cross @140/@144 readings are 0000200f; existing e24 reads remain zero and are not substituted for @150 events.",
+    "threshold_boundary": "A possible controller TEMP_MID 93->95C evaluation remains read-only/not_run. It is not a display-95 or +15C experiment; the 80C observation gate, LO refresh and HI protection remain unchanged, and no write/load/reboot occurred.",
+    "interpretation": "The paired events support a common compensation/thermal-policy candidate more than an isolated sensor/DIMM conclusion, but the X11 formula and root cause remain unconfirmed."
   }
 }

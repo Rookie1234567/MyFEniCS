@@ -1,6 +1,21 @@
-# Task041 Review V5：R1h 跨 NUMA 复现与 R1d 历史证据
+# Task041 Review V5：R1i 2666 复测、R1h 跨 NUMA 复现与历史证据
 
-## R1h 当前终态
+## R1i 2666 复测终态（当前）
+
+R1i 在用户维护重启后仅将 BIOS Memory Frequency 从 `Auto` 改为 `2666 MT/s`，其它设置、风扇、保护和刷新策略未改；本次仍是工作站 CPU/NUMA 内存复制诊断，不是2nm物理模型、PDE或MPI计算。四组路径三窗总吞吐如下：
+
+| path | 三窗吞吐（GB/s） | 结果边界 |
+|---|---:|---|
+| local socket0 cores1–8 → node0 | `35.63788506479269 / 35.664033252580786 / 35.6967308849817` | 稳定；不据此给 CPU0 新硬件资格结论 |
+| local socket1 cores25–32 → node1 | `35.648371306083156 / 31.66995975917892 / 11.024863223982754` | node1 路径继续崩落；CPU1 未准入 |
+| cross socket0 cores1–8 → node1 | `23.562553384022838 / 22.956933903624012 / 13.10402684910857` | node1 路径继续崩落 |
+| cross socket1 cores25–32 → node0 | `23.408224743881927 / 22.924688775860275 / 21.682633764800535` | 约 `7.37%` 下降，不写成零退化 |
+
+两批均 `rc=0` 并完成清场，但这不等于修复：node1 访问路径仍出现骤降。R1i 共绑定43个 PCI raw 与43个 BMC 文件、16个DIMM槽、688对值，差值范围 `[-1,+1]°C`；六个 TEMPLO 与两个 TEMPMID 事件及逐文件 SHA 见 [R1i tracked compact](records/task041_r1i_2666_retest_20260921.json)，同内容 ignored 原件为 [compact v3](../../../results/task041_review_v5_cpu_numa_condensed_speed/r1i_2666_retest_20260921/r1i_2666_two_batch_compact_v3_20260921.json)，SHA `4e7a3d0e21bfe53da457010493a22c71140b7cf734bfdf4b1034f88bc2cacbc6`。cross `P1-DIMMC1` TEMPLO sample4→5 的时间括号按 PCI `65→67°C`，异步 BMC 为 `65→66°C`；sample1–10 未见新 TEMPMID，但 after_load 后续置位，触发时刻未知。控制器 `TEMP_MID 93→95°C` 仍只是未执行的只读评估，未改阈值、补偿、刷新、保护或80°C观察线；不能把本轮结果写成原因已解决。TEMPLO/TEMPMID 表示较低/中间温度阈值被越过的事件；sticky 只表示两次读取之间曾发生过置位，不表示此刻仍在限速。
+
+字段解释的 primary 入口：[Intel 二代 Xeon Scalable datasheet Vol.2](https://www.intel.com/content/dam/www/public/us/en/documents/datasheets/2nd-gen-xeon-scalable-datasheet-vol-2.pdf)（`@108/@120/@140/@150`）；[Intel S2600WF TPS §12.3.4.2](https://cdrdv2-public.intel.com/610835/Intel_Server_Board_S2600WF_TPS_2_6.pdf) 仅作同代 TSOD offset/风速机制参考；[Micron MTA144ASQ16G72LSZ-2S9E1 datasheet Table 12](https://www.nyang-tech.com/datasheet/1052970336/Micron-Technology-Inc./MTA144ASQ16G72LSZ-2S9E1.pdf) 用于温度与2×刷新边界；[Supermicro FAQ35599](https://www.supermicro.com/en/support/faqs/faq.php?faq=35599) 用于 BMC Full mode。以上不证明 X11DAi-N 的具体补偿公式，也不授权阈值写入。
+
+## R1h 历史终态（已由 R1i 更新）
 
 R1h 是一次不改硬件、不改系统设置的跨 NUMA 内存复制诊断，不是 PDE、MPI、QEP 或物理模型计算。CPU socket0 的 OS CPU1–8 将双缓冲 first-touch 到 memory node1；CPU socket1 的 OS CPU25–32 将其 first-touch 到 memory node0。两阶段均为 8 个单线程 worker、3×60 s；阶段开始和 near-end 均观察到 `8/8` 个 buffer 位于预期的远端 node。
 
@@ -19,9 +34,9 @@ R1h driver rc0、父侧 `CLOCK_MONOTONIC` wall `629.724913916 s`；16/16 worker 
 
 证据入口：[R1h compact](records/task041_v5_cpu_numa.json)、[R1h raw summary](../../../results/task041_review_v5_cpu_numa_condensed_speed/r1h_sched_mba_20260920/r1h_result_summary_20260920.json)。driver SHA `f81d917bd462e1a5028a8bb8c3f4ca3aaad4122a9f2adaec8a6990a616099bc4`，worker SHA `7ce2dd8ff6f71cf4e9b9c13a156e1f0f0b15b38af010ac0b2b04881ec3ce0ad9`，runroot 为 `results/task041_review_v5_cpu_numa_condensed_speed/r1h_sched_mba_20260920/run_20260920T154556.093635044Z`。launch metadata SHA `62496750a7ac9d6bce344bce279e9f31b7dde65e4379aa320ca0aa7825e2945e`；driver log SHA `a7e0a45ca321b65b27a04c75f804a8352faf167bd577da908268c15dd721e977`；hardware aggregate SHA `03c00115b46de257495388999e4bbe7cc605f1bbfca56a66aa62bcdacfb8be21`；worker aggregate SHA `bc56bcc7fec6ae135f0a6327bbe2aa023c584c5c71bfd20401a5e719640daada`。逐文件生成口径与字节/SHA 清单见 [`r1h_small_hash_manifest_20260920.json`](../../../results/task041_review_v5_cpu_numa_condensed_speed/r1h_sched_mba_20260920/run_20260920T154556.093635044Z/r1h_small_hash_manifest_20260920.json)，SHA `0a2af1b58827eabd41f1e38bdc5e01bc73df8f28cbf69e4573f51043392973b1`；该小清单列出22个 hardware `.raw` 与16个 phase worker JSONL，按相对路径排序，`low_load_cpu1.jsonl`单列未纳入。21个专属 PID 的 native 只读清场证据见 [`r1h_cleanup_readonly_20260920T161002Z.json`](../../../results/task041_review_v5_cpu_numa_condensed_speed/r1h_sched_mba_20260920/run_20260920T154556.093635044Z/r1h_cleanup_readonly_20260920T161002Z.json)，SHA `8a1ae0aec4095db557c84f3773a4df49068d84e6830be0316f29960c49c7a9b6`，检查时间 `2026-09-20T16:10:02.764589740Z`，`21/21 absent`。唯一 V5 ledger SHA `06d8dd9040cdbb306f79337eea80f5f09316b7dc8f04c3d9fe419ad3ac261594`，累计 `3327.407495518 s`。
 
-### 待授权、可逆维护对照（未执行）
+### 历史维护建议（R1i 已执行，结果未解决）
 
-在用户明确重启维护授权后，先记录 BIOS 当前 Memory Frequency；仅当现场菜单确有 `2666 MT/s` 时，才考虑把该单项从原值改为2666，电压、Enforce POR、热保护、刷新/纠错等保持不变，再按相同有界诊断复跑；无该选项即停止，无改善则恢复原值。菜单依据为 [X11DAi-N 手册 Rev1.4 第88页](https://www.supermicro.com/manuals/motherboard/C600/MNL-1957.pdf) 和 [Supermicro FAQ24488](https://www.supermicro.com/en/support/faqs/faq.php?faq=24488)。不假定原值为 Auto，也不把约9.1%理论频率变化当作实际吞吐改善保证；外接小风扇是用户独立加装且直吹第二路 DIMM，不对应 BMC FAN2/3/5/6，不能用 BMC 转速判断其风量。
+原建议已在 R1i 中实际执行为 `Auto→2666 MT/s` 对照，但 node1 路径仍未稳定，不能称修复。保护边界仍是：不改电压、Enforce POR、热保护、刷新/纠错；外接小风扇是用户独立加装且直吹第二路 DIMM，不对应 BMC FAN2/3/5/6，不能用 BMC 转速判断其风量。
 
 ## R1d-B 历史结论
 
