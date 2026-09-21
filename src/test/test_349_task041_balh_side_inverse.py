@@ -13,6 +13,7 @@ from petsc4py import PETSc
 from src.solvers import physical_balanced_side_inverse as side_inverse_module
 from src.solvers.hybrid_local_dtn_action import HybridLocalDtnActionSystem
 from src.solvers.physical_balanced_physical_operator import (
+    P4CondensedExactFactor,
     P4ExactFactor,
     P4PhysicalResidualGateError,
 )
@@ -226,6 +227,52 @@ class _IdentityP4:
         self.destroy_count += 1
 
 
+class _CellCondensedP4:
+    def __init__(self, size: int) -> None:
+        self.physical_action = SimpleNamespace(V=object(), floquet_data=object())
+        self.size = size
+        self.solve_count = 0
+        self.destroy_count = 0
+        self.apply_count = 0
+        self.last_port_solution = np.empty(0, dtype=np.complex128)
+        self.last_timing: dict[str, float | None] = {}
+
+    @staticmethod
+    def _copy(source: PETSc.Vec) -> PETSc.Vec:
+        target = source.duplicate()
+        source.copy(target)
+        return target
+
+    def apply(
+        self,
+        source: PETSc.Vec,
+        *,
+        timing: dict[str, float] | None = None,
+    ) -> PETSc.Vec:
+        self.apply_count += 1
+        self.solve_count += 1
+        self.last_timing = {
+            "storage_rhs_reduction_seconds": 1.0e-4,
+            "factor_backsolve_seconds": 2.0e-4,
+            "solution_recovery_seconds": 3.0e-4,
+            "inner_apply_seconds": 6.0e-4,
+        }
+        if timing is not None:
+            for name, value in self.last_timing.items():
+                timing[name] = timing.get(name, 0.0) + float(value)
+        return self._copy(source)
+
+    @property
+    def diagnostics(self) -> dict[str, object]:
+        return {
+            "factor_solve_count": self.solve_count,
+            "last_solve": {"backsolve_count": 1},
+        }
+
+    def destroy(self) -> None:
+        self.destroy_count += 1
+
+
 class _NonfiniteP4(_IdentityP4):
     def solve_with_refinement(
         self,
@@ -284,6 +331,81 @@ class _PhysicalP4Action:
         self.matrix.destroy()
 
 
+class _TimingCondensedInverse:
+    def __init__(self, *, always_inexact: bool) -> None:
+        self.always_inexact = bool(always_inexact)
+        self.solve_count = 0
+        self.destroy_count = 0
+        self.last_port_solution = np.empty(0, dtype=np.complex128)
+        self.last_timing: dict[str, float | None] = {}
+        self.condensed = SimpleNamespace(
+            active_rows=2,
+            interior_rows=0,
+            appended_rows=0,
+            build_audit={},
+        )
+        self.factor = SimpleNamespace()
+
+    def _prepare_port_rhs(self, port_rhs) -> np.ndarray:
+        if port_rhs is None:
+            return np.empty(0, dtype=np.complex128)
+        values = np.asarray(port_rhs, dtype=np.complex128)
+        if values.size:
+            raise ValueError("timing fixture has no port rows")
+        return values.copy()
+
+    def apply(
+        self,
+        source: PETSc.Vec,
+        *,
+        port_rhs: np.ndarray | None = None,
+    ) -> PETSc.Vec:
+        del port_rhs
+        self.solve_count += 1
+        self.last_timing = {
+            "storage_rhs_reduction_seconds": 1.0e-3,
+            "factor_backsolve_seconds": 2.0e-3,
+            "solution_recovery_seconds": 3.0e-3,
+            "inner_apply_seconds": 6.0e-3,
+        }
+        result = source.duplicate()
+        source.copy(result)
+        if self.always_inexact or self.solve_count == 1:
+            result.scale(PETSc.ScalarType(0.5))
+        return result
+
+    @property
+    def diagnostics(self) -> dict[str, object]:
+        return {
+            "factor_solve_count": self.solve_count,
+            "last_solve": {"backsolve_count": 1},
+        }
+
+    def destroy(self) -> None:
+        self.destroy_count += 1
+
+
+def _timing_condensed_factor(
+    *,
+    always_inexact: bool,
+) -> tuple[P4CondensedExactFactor, _TimingCondensedInverse, PETSc.Mat]:
+    matrix, _context = _scale_matrix(2, 1.0)
+    physical_action = SimpleNamespace(
+        matrix=matrix,
+        full_rows=2,
+        action=SimpleNamespace(modes=()),
+        audit={},
+    )
+    inverse = _TimingCondensedInverse(always_inexact=always_inexact)
+    factor = P4CondensedExactFactor(
+        physical_action=physical_action,
+        inverse=inverse,
+        factor_events=["timing-fixture"],
+        owns_physical_action=False,
+    )
+    return factor, inverse, matrix
+
+
 class _IdentityH6:
     def __init__(self) -> None:
         self.apply_count = 0
@@ -313,10 +435,17 @@ class _FailingH6(_IdentityH6):
 
 
 class _KspContractStub:
-    def __init__(self, approximate: PETSc.Vec, reason: int, iterations: int) -> None:
+    def __init__(
+        self,
+        approximate: PETSc.Vec,
+        reason: int,
+        iterations: int,
+        pc: PETSc.PC,
+    ) -> None:
         self.approximate = approximate
         self.reason = int(reason)
         self.iterations = int(iterations)
+        self.pc = pc
 
     def solve(self, _source: PETSc.Vec, target: PETSc.Vec) -> None:
         self.approximate.copy(target)
@@ -326,6 +455,9 @@ class _KspContractStub:
 
     def getIterationNumber(self) -> int:
         return self.iterations
+
+    def getPC(self) -> PETSc.PC:
+        return self.pc
 
 
 class _BufferRecordingComm:
@@ -347,8 +479,9 @@ class _BufferRecordingComm:
 
 
 class _RepeatedPcKsp:
-    def __init__(self, owner: SideBalancedInverse) -> None:
+    def __init__(self, owner: SideBalancedInverse, pc: PETSc.PC) -> None:
         self.owner = owner
+        self.pc = pc
 
     def solve(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
         work = target.duplicate()
@@ -363,6 +496,9 @@ class _RepeatedPcKsp:
 
     def getIterationNumber(self) -> int:
         return 1
+
+    def getPC(self) -> PETSc.PC:
+        return self.pc
 
 
 class _FullAction:
@@ -404,6 +540,7 @@ def _build_fixture(
     p4_factor=None,
     detailed_timing: bool = False,
     record_iteration_history: bool = False,
+    p4_inverse_backend: str = "full",
 ) -> tuple[SideBalancedInverse, dict[str, object]]:
     operator, operator_context = _scale_matrix(size, 2.0)
     condensed = _IdentityCondensed(size)
@@ -427,6 +564,7 @@ def _build_fixture(
         audit_callback=audit_callback,
         detailed_timing=detailed_timing,
         record_iteration_history=record_iteration_history,
+        p4_inverse_backend=p4_inverse_backend,
     )
     return inverse, {
         "operator": operator,
@@ -493,6 +631,12 @@ def _install_stub_side_builders(monkeypatch, captured):
         captured["p4"] = factor
         return factor
 
+    def fake_condensed_p4(_side_system, *, lifecycle_callback=None):
+        captured["condensed_p4_callback"] = lifecycle_callback
+        factor = _CellCondensedP4(2)
+        captured["condensed_p4"] = factor
+        return factor
+
     def fake_transfer(
         _fine_v,
         _fine_floquet,
@@ -524,6 +668,11 @@ def _install_stub_side_builders(monkeypatch, captured):
         fake_full_action,
     )
     monkeypatch.setattr(side_inverse_module, "build_p4_exact_factor", fake_p4)
+    monkeypatch.setattr(
+        side_inverse_module,
+        "build_p4_condensed_exact_factor",
+        fake_condensed_p4,
+    )
     monkeypatch.setattr(
         side_inverse_module,
         "build_same_mesh_hcurl_owner_transfer",
@@ -601,6 +750,63 @@ def test_side_inverse_builder_default_callback_skips_inventory(
             inverse.destroy()
         b.destroy()
         operator.destroy()
+
+
+def test_side_inverse_builder_selects_explicit_cell_condensed_backend(monkeypatch):
+    captured = {}
+    side_system, operator, _operator_context, b = _builder_side_system()
+    _install_stub_side_builders(monkeypatch, captured)
+    inverse = None
+    try:
+        inverse = side_inverse_module.build_side_balanced_inverse(
+            side_system,
+            p4_inverse_backend="cell_condensed",
+        )
+        assert inverse.diagnostics["p4_inverse_backend"] == "cell_condensed"
+        assert "condensed_p4" in captured
+        assert "p4" not in captured
+        assert captured["condensed_p4_callback"] is None
+    finally:
+        if inverse is not None:
+            inverse.destroy()
+        b.destroy()
+        operator.destroy()
+
+
+def test_side_inverse_condensed_q_records_timing_and_solve_delta():
+    p4_factor = _CellCondensedP4(2)
+    inverse, owned = _build_fixture(
+        p4_factor=p4_factor,
+        detailed_timing=True,
+        p4_inverse_backend="cell_condensed",
+    )
+    operator = owned["operator"]
+    source = _new_vector(operator, np.asarray([1.0 + 0.2j, -0.4 + 0.7j]))
+    result = None
+    try:
+        result = inverse._apply_q_callback(source)
+        assert p4_factor.apply_count == 1
+        assert p4_factor.solve_count == 1
+        assert inverse._p4_backsolve_count == 1
+        assert inverse._p4_refinement_count == 0
+        assert inverse._rhs_detail_seen["q_factor_solve_seconds"] is True
+        assert inverse._rhs_detail_seconds["q_factor_solve_seconds"] == pytest.approx(
+            2.0e-4
+        )
+        assert inverse._rhs_detail_seconds[
+            "q_p4_storage_rhs_reduction_seconds"
+        ] == pytest.approx(1.0e-4)
+        assert inverse._rhs_detail_seconds[
+            "q_p4_solution_recovery_seconds"
+        ] == pytest.approx(3.0e-4)
+        assert result.norm() > 0.0
+    finally:
+        if result is not None:
+            result.destroy()
+        source.destroy()
+        inverse.destroy()
+        operator.destroy()
+    assert p4_factor.destroy_count == 1
 
 
 @pytest.mark.parametrize("failure_event", ["full_action_ready", "adapter_ksp_ready"])
@@ -964,14 +1170,19 @@ def test_side_inverse_dense_batch_bound_and_true_error_propagation() -> None:
         old_h6 = inverse._h6
         inverse._h6 = _FailingH6()
         source = _new_vector(operator, np.asarray([1.0 + 0.2j, 0.4 - 0.1j]))
+        source_before = source.copy()
         target = operator.createVecLeft()
+        healthy_target = None
         try:
-            with pytest.raises((RuntimeError, PETSc.Error)):
+            with pytest.raises(RuntimeError, match="focused H1e H6 failure"):
                 inverse.apply(source, target)
             failed = inverse.diagnostics["last_apply"]
             assert failed["status"] == "FAILED"
-            assert failed["exception_type"]
+            assert failed["exception_type"] == "RuntimeError"
+            assert failed["exception"] == "focused H1e H6 failure"
+            assert int(failed["reason"]) < 0
             assert failed["residual_norm"] == "not_measured"
+            assert inverse._pending_pc_exception is None
             failed_timing = failed["operation_seconds"]["detailed"]
             assert failed_timing["measurement_status"]["q_ph_seconds"] == "measured"
             assert failed_timing["per_rank_seconds"]["q_ph_seconds"] > 0.0
@@ -989,13 +1200,113 @@ def test_side_inverse_dense_batch_bound_and_true_error_propagation() -> None:
                 == "measured"
             )
             assert audit_records[-1]["status"] == "FAILED"
+            inverse._h6 = old_h6
+            healthy_target = operator.createVecLeft()
+            inverse.apply(source, healthy_target)
+            healthy = inverse.diagnostics["last_apply"]
+            assert healthy["status"] == "KSP_CONVERGED"
+            assert int(healthy["reason"]) > 0
+            assert healthy["explicit_true_target_reached"] is True
+            assert inverse._pending_pc_exception is None
+            np.testing.assert_array_equal(
+                source.getArray(readonly=True),
+                source_before.getArray(readonly=True),
+            )
         finally:
             source.destroy()
+            source_before.destroy()
             target.destroy()
+            if healthy_target is not None:
+                healthy_target.destroy()
             inverse._h6 = old_h6
     finally:
         source_dense.destroy()
         target_dense.destroy()
+        inverse.destroy()
+        operator.destroy()
+
+
+def test_side_inverse_rank_local_pc_failure_is_collective_and_reusable() -> None:
+    comm = MPI.COMM_WORLD
+    if comm.Get_size() != 2:
+        pytest.skip("rank-local PC failure contract is an MPI2 check")
+    audit_records: list[dict[str, object]] = []
+    inverse, owned = _build_fixture(
+        audit_callback=audit_records.append,
+        detailed_timing=True,
+    )
+    operator = owned["operator"]
+    source = _new_vector(operator, np.asarray([1.0 + 0.2j, 0.4 - 0.1j]))
+    source_before = source.copy()
+    target = operator.createVecLeft()
+    original_apply_balanced_pc = inverse._apply_balanced_pc
+
+    def fail_after_collective(
+        callback_source: PETSc.Vec,
+        callback_target: PETSc.Vec,
+    ) -> None:
+        original_apply_balanced_pc(callback_source, callback_target)
+        if comm.Get_rank() == 0:
+            raise RuntimeError("rank-local PC boundary failure")
+
+    inverse._apply_balanced_pc = fail_after_collective  # type: ignore[method-assign]
+    healthy_target = None
+    caught = None
+    try:
+        try:
+            inverse.apply(source, target)
+        except BaseException as exc:  # noqa: BLE001 - collect every rank's failure
+            caught = exc
+        local_failed = caught is not None
+        assert comm.allreduce(local_failed, op=MPI.LAND)
+        failed = inverse.diagnostics["last_apply"]
+        failed_reasons = comm.allgather(int(failed["reason"]))
+        failed_statuses = comm.allgather(str(failed["status"]))
+        assert all(reason < 0 for reason in failed_reasons)
+        assert all(status == "FAILED" for status in failed_statuses)
+        assert comm.allreduce(
+            inverse._pending_pc_exception is None,
+            op=MPI.LAND,
+        )
+        exception_records = comm.allgather(
+            {
+                "type": type(caught).__name__ if caught is not None else None,
+                "message": str(caught) if caught is not None else None,
+            }
+        )
+        assert exception_records[0] == {
+            "type": "RuntimeError",
+            "message": "rank-local PC boundary failure",
+        }
+        assert exception_records[1]["type"] == "RuntimeError"
+        assert exception_records[1]["message"] != "rank-local PC boundary failure"
+        assert failed["exception_type"] == exception_records[comm.Get_rank()]["type"]
+        assert failed["exception"] == exception_records[comm.Get_rank()]["message"]
+        assert failed["operation_seconds"]["detailed"]
+        inverse._apply_balanced_pc = original_apply_balanced_pc  # type: ignore[method-assign]
+        healthy_target = operator.createVecLeft()
+        inverse.apply(source, healthy_target)
+        healthy = inverse.diagnostics["last_apply"]
+        healthy_statuses = comm.allgather(str(healthy["status"]))
+        healthy_reasons = comm.allgather(int(healthy["reason"]))
+        healthy_targets = comm.allgather(
+            bool(healthy["explicit_true_target_reached"])
+        )
+        assert all(status == "KSP_CONVERGED" for status in healthy_statuses)
+        assert all(reason > 0 for reason in healthy_reasons)
+        assert all(healthy_targets)
+        assert inverse._pending_pc_exception is None
+        np.testing.assert_array_equal(
+            source.getArray(readonly=True),
+            source_before.getArray(readonly=True),
+        )
+    finally:
+        inverse._apply_balanced_pc = original_apply_balanced_pc  # type: ignore[method-assign]
+        source.destroy()
+        source_before.destroy()
+        target.destroy()
+        if healthy_target is not None:
+            healthy_target.destroy()
         inverse.destroy()
         operator.destroy()
 
@@ -1023,9 +1334,10 @@ def test_side_inverse_rhs_timing_uses_one_buffer_for_multiple_pc_calls() -> None
 
     coupling.apply = spy_coupling_apply  # type: ignore[method-assign]
     real_ksp = inverse._ksp
+    real_pc = real_ksp.getPC()
     real_comm = inverse._comm
     recording_comm = _BufferRecordingComm(real_comm)
-    inverse._ksp = _RepeatedPcKsp(inverse)  # type: ignore[assignment]
+    inverse._ksp = _RepeatedPcKsp(inverse, real_pc)  # type: ignore[assignment]
     inverse._comm = recording_comm  # type: ignore[assignment]
     try:
         unmeasured = inverse._rhs_operation_timing(0.0, reduce=False)
@@ -1269,6 +1581,52 @@ def test_p4_physical_gate_audit_uses_each_real_vec_rhs() -> None:
         p4.destroy()
 
 
+def test_p4_condensed_timing_accumulates_one_refinement() -> None:
+    factor, inverse, matrix = _timing_condensed_factor(always_inexact=False)
+    rhs = _new_vector(matrix, np.asarray([1.0 + 0.2j, -0.4 + 0.7j]))
+    solution = None
+    timing: dict[str, float] = {}
+    try:
+        solution = factor.apply(rhs, timing=timing)
+        assert inverse.solve_count == 2
+        assert timing["storage_rhs_reduction_seconds"] == pytest.approx(2.0e-3)
+        assert timing["factor_backsolve_seconds"] == pytest.approx(4.0e-3)
+        assert timing["solution_recovery_seconds"] == pytest.approx(6.0e-3)
+        assert timing["inner_apply_seconds"] == pytest.approx(1.2e-2)
+        assert timing["native_action_and_residual_seconds"] > 0.0
+        assert timing["native_action_matrix_mult_seconds"] > 0.0
+        assert factor.diagnostics["last_solve"]["status"] == "passed"
+        assert len(factor.diagnostics["last_solve"]["history"]) == 2
+    finally:
+        if solution is not None:
+            solution.destroy()
+        rhs.destroy()
+        factor.destroy()
+        matrix.destroy()
+
+
+def test_p4_condensed_timing_survives_gate_failure() -> None:
+    factor, inverse, matrix = _timing_condensed_factor(always_inexact=True)
+    rhs = _new_vector(matrix, np.asarray([1.0 - 0.3j, 0.25 + 0.5j]))
+    timing: dict[str, float] = {}
+    try:
+        with pytest.raises(P4PhysicalResidualGateError):
+            factor.apply(rhs, timing=timing)
+        assert inverse.solve_count == 3
+        assert timing["storage_rhs_reduction_seconds"] == pytest.approx(3.0e-3)
+        assert timing["factor_backsolve_seconds"] == pytest.approx(6.0e-3)
+        assert timing["solution_recovery_seconds"] == pytest.approx(9.0e-3)
+        assert timing["inner_apply_seconds"] == pytest.approx(1.8e-2)
+        assert timing["native_action_and_residual_seconds"] > 0.0
+        assert timing["native_action_matrix_mult_seconds"] > 0.0
+        assert factor.diagnostics["last_solve"]["status"] == "gate_failed"
+        assert len(factor.diagnostics["last_solve"]["history"]) == 3
+    finally:
+        rhs.destroy()
+        factor.destroy()
+        matrix.destroy()
+
+
 @pytest.mark.parametrize(
     ("reason", "iterations", "accepted"),
     [
@@ -1292,7 +1650,7 @@ def test_side_inverse_fixed_ksp_budget_contract(
     approximate = source.copy()
     approximate.scale(0.25)
     real_ksp = inverse._ksp
-    stub = _KspContractStub(approximate, reason, iterations)
+    stub = _KspContractStub(approximate, reason, iterations, real_ksp.getPC())
     inverse._ksp = stub  # type: ignore[assignment]
     try:
         if accepted:

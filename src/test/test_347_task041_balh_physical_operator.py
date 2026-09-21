@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import numpy as np
 import pytest
 from mpi4py import MPI
@@ -23,8 +25,12 @@ from src.solvers.hybrid_local_dtn_action import (
 from src.solvers.hybrid_local_dtn_woodbury import ResearchExactFactorInverse
 from src.solvers.physical_balanced_physical_operator import (
     FullSpacePhysicalDtnActionSystem,
+    P4CondensedExactFactor,
     P4ExactFactor,
+    _assemble_augmented_matrix,
+    _build_matching_p4_action,
     build_fullspace_physical_dtn_action,
+    build_p4_condensed_exact_factor_from_action,
     build_p4_exact_factor,
 )
 from src.solvers.physical_balanced_same_mesh_transfer import (
@@ -692,6 +698,604 @@ def test_task041_h1e_real_fe_side_inverse_is_sequential_and_owned(
         for record in baseline.values():
             record["rhs"].destroy()
             record["source"].destroy()
+
+
+@pytest.fixture(scope="module")
+def h1e_one_side_real_system():
+    """Build one borrowed side so the p4 layout is reused exactly once."""
+
+    comm = MPI.COMM_WORLD
+    cfg = _fixture_config(6, condensed=True)
+    mesh = build_hybrid_local_mesh(
+        cfg,
+        "bottom",
+        bottom_interface_z_nm=0.5,
+        top_interface_z_nm=0.5,
+        comm=comm,
+    )
+    system = assemble_hybrid_local_dtn_action_system(
+        cfg,
+        "bottom",
+        local_mesh_override=mesh,
+        comm=comm,
+    )
+    try:
+        yield system
+    finally:
+        system.destroy()
+
+
+def test_task041_h1e_condensed_p4_matches_full_gp_response(
+    h1e_one_side_real_system,
+) -> None:
+    """Compare one physical layout through full and condensed p4 factors."""
+
+    comm = MPI.COMM_WORLD
+    side_system = h1e_one_side_real_system
+    physical = None
+    full_matrix = None
+    full_factor = None
+    condensed: P4CondensedExactFactor | None = None
+    fe_rhs = None
+    augmented_rhs = None
+    full_solution = None
+    full_residual = None
+    full_reference = None
+    condensed_solution = None
+    condensed_augmented = None
+    condensed_residual = None
+    rhs_b = None
+    solution_b = None
+    solution_a_repeat = None
+    near_rhs = None
+    near_solution = None
+    zero_rhs = None
+    zero_solution = None
+    combo_rhs = None
+    combo_solution = None
+    expected_combo = None
+    comparison = None
+    repeat = None
+    linearity = None
+    oracle_rhs = None
+    try:
+        physical = _build_matching_p4_action(side_system)
+        full_matrix = _assemble_augmented_matrix(physical)
+        full_factor = ResearchExactFactorInverse(
+            full_matrix,
+            factor_solver_type="mumps",
+            factor_only_storage=True,
+        )
+        fe_rhs = physical.action.context.input_vector.duplicate()
+        fe_rhs.set(PETSc.ScalarType(0.0))
+        _fill_algebraic(
+            fe_rhs,
+            physical.action.context.owned_slaves,
+            1.7,
+        )
+        fe_before = np.asarray(fe_rhs.getArray(readonly=True)).copy()
+        port_rhs = np.asarray(
+            [
+                (0.25 + 0.13j) * (index + 1)
+                for index in range(len(physical.action.modes))
+            ],
+            dtype=np.complex128,
+        )
+        augmented_rhs = _augmented_vec_from_base(
+            fe_rhs,
+            len(port_rhs),
+            comm,
+        )
+        if comm.rank == comm.size - 1:
+            start, end = map(int, augmented_rhs.getOwnershipRange())
+            port_start = physical.full_rows
+            local_ports = np.arange(
+                port_start,
+                port_start + len(port_rhs),
+                dtype=PETSc.IntType,
+            )
+            assert start <= port_start and end >= port_start + len(port_rhs)
+            augmented_rhs.setValues(
+                local_ports,
+                port_rhs,
+                addv=PETSc.InsertMode.ADD_VALUES,
+            )
+        augmented_rhs.assemble()
+        full_solution = full_matrix.createVecRight()
+        full_factor.solve(augmented_rhs, full_solution)
+        full_residual = augmented_rhs.duplicate()
+        full_matrix.mult(full_solution, full_residual)
+        full_residual.axpy(PETSc.ScalarType(-1.0), augmented_rhs)
+        full_relative = full_residual.norm() / augmented_rhs.norm()
+        assert np.isfinite(full_relative)
+        assert full_relative <= _STRICT_TOLERANCE
+        full_reference = _extract_fe_segment(full_solution, physical.full_rows)
+        if comm.rank == comm.size - 1:
+            start, end = map(int, full_solution.getOwnershipRange())
+            offset = physical.full_rows - start
+            assert 0 <= offset <= end - start
+            port_reference = np.asarray(
+                full_solution.getArray(readonly=True)[
+                    offset : offset + len(port_rhs)
+                ],
+                dtype=np.complex128,
+            ).copy()
+            assert len(port_reference) == len(port_rhs)
+        else:
+            port_reference = None
+        port_reference = np.asarray(
+            comm.bcast(port_reference, root=comm.size - 1),
+            dtype=np.complex128,
+        )
+        full_factor.destroy()
+        full_factor = None
+        augmented_rhs.destroy()
+        augmented_rhs = None
+        full_solution.destroy()
+        full_solution = None
+
+        condensed = build_p4_condensed_exact_factor_from_action(
+            physical,
+            owns_physical_action=False,
+        )
+        same_physical_v_mpc_local = (
+            condensed.physical_action is physical
+            and condensed.physical_action.V is physical.V
+            and condensed.physical_action.floquet_data.mpc
+            is physical.floquet_data.mpc
+        )
+        same_physical_v_mpc = bool(
+            all(comm.allgather(same_physical_v_mpc_local))
+        )
+        assert same_physical_v_mpc
+        condensed_solution, port_solution = condensed.solve(
+            fe_rhs,
+            port_rhs=port_rhs,
+        )
+        comparison = condensed_solution.duplicate()
+        condensed_solution.copy(comparison)
+        comparison.axpy(PETSc.ScalarType(-1.0), full_reference)
+        comparison_relative = comparison.norm() / full_reference.norm()
+        assert np.isfinite(comparison_relative)
+        assert comparison_relative <= 1.0e-11
+        port_difference = np.linalg.norm(port_solution - port_reference)
+        port_relative = port_difference / np.linalg.norm(port_reference)
+        assert np.isfinite(port_relative)
+        assert port_relative <= 1.0e-11
+        condensed_augmented = _augmented_vec_from_base(
+            condensed_solution,
+            len(port_solution),
+            comm,
+        )
+        if comm.rank == comm.size - 1:
+            start, end = map(int, condensed_augmented.getOwnershipRange())
+            offset = physical.full_rows - start
+            condensed_augmented.setValues(
+                np.arange(
+                    physical.full_rows,
+                    physical.full_rows + len(port_solution),
+                    dtype=PETSc.IntType,
+                ),
+                port_solution,
+                addv=PETSc.InsertMode.ADD_VALUES,
+            )
+            assert offset >= 0 and end >= physical.full_rows + len(port_solution)
+        condensed_augmented.assemble()
+        condensed_residual = condensed_augmented.duplicate()
+        full_matrix.mult(condensed_augmented, condensed_residual)
+        oracle_rhs = _augmented_vec_from_base(fe_rhs, len(port_rhs), comm)
+        if comm.rank == comm.size - 1:
+            oracle_rhs.setValues(
+                np.arange(
+                    physical.full_rows,
+                    physical.full_rows + len(port_rhs),
+                    dtype=PETSc.IntType,
+                ),
+                port_rhs,
+                addv=PETSc.InsertMode.ADD_VALUES,
+            )
+        oracle_rhs.assemble()
+        condensed_residual.axpy(PETSc.ScalarType(-1.0), oracle_rhs)
+        condensed_residual_norm = condensed_residual.norm()
+        oracle_rhs_norm = float(oracle_rhs.norm())
+        condensed_residual_relative = condensed_residual_norm / oracle_rhs_norm
+        assert condensed_residual_relative <= 1.0e-11
+        audit = dict(condensed.diagnostics["last_solve"])
+        assert audit["status"] == "passed"
+        assert audit["relative_residual"] <= _STRICT_TOLERANCE
+        assert audit["physical_relative_residual"] <= _STRICT_TOLERANCE
+        assert audit["backsolve_count"] <= 3
+        assert audit["refinement_count"] <= 2
+        case_audits = {"normal": audit}
+        np.testing.assert_array_equal(
+            fe_rhs.getArray(readonly=True),
+            fe_before,
+        )
+
+        zero_rhs = fe_rhs.duplicate()
+        zero_rhs.set(PETSc.ScalarType(0.0))
+        zero_rhs.assemble()
+        zero_count_before = condensed.inverse.solve_count
+        zero_solution, zero_ports = condensed.solve(
+            zero_rhs,
+            port_rhs=np.zeros_like(port_rhs),
+        )
+        zero_count_after = condensed.inverse.solve_count
+        assert zero_solution.norm() == 0.0
+        assert np.array_equal(zero_ports, np.zeros_like(port_rhs))
+        assert zero_count_after == zero_count_before
+        zero_audit = dict(condensed.diagnostics["last_solve"])
+        assert zero_audit["physical_relative_residual"] == 0.0
+        case_audits["zero"] = zero_audit
+
+        near_rhs = fe_rhs.duplicate()
+        fe_rhs.copy(near_rhs)
+        near_rhs.scale(PETSc.ScalarType(1.0e-14))
+        near_rhs.assemble()
+        near_solution, near_ports = condensed.solve(
+            near_rhs,
+            port_rhs=port_rhs * 1.0e-14,
+        )
+        near_rhs_norm = float(near_rhs.norm())
+        assert near_solution.norm() > 0.0
+        near_audit = dict(condensed.diagnostics["last_solve"])
+        assert near_audit["status"] == "passed"
+        assert near_audit["backsolve_count"] <= 3
+        assert near_audit["refinement_count"] <= 2
+        assert np.linalg.norm(near_ports) > 0.0
+        case_audits["nearzero"] = near_audit
+
+        rhs_b = fe_rhs.duplicate()
+        _fill_algebraic(
+            rhs_b,
+            physical.action.context.owned_slaves,
+            2.3,
+        )
+        gp_b = port_rhs * (-0.17 + 0.21j)
+        solution_b, ports_b = condensed.solve(rhs_b, port_rhs=gp_b)
+        b_audit = dict(condensed.diagnostics["last_solve"])
+        assert b_audit["backsolve_count"] <= 3
+        assert b_audit["refinement_count"] <= 2
+        case_audits["B"] = b_audit
+        solution_a_repeat, ports_a_repeat = condensed.solve(
+            fe_rhs,
+            port_rhs=port_rhs,
+        )
+        repeat_audit = dict(condensed.diagnostics["last_solve"])
+        assert repeat_audit["backsolve_count"] <= 3
+        assert repeat_audit["refinement_count"] <= 2
+        case_audits["A_repeat"] = repeat_audit
+        repeat = solution_a_repeat.duplicate()
+        solution_a_repeat.copy(repeat)
+        repeat.axpy(PETSc.ScalarType(-1.0), condensed_solution)
+        repeat_norm = float(repeat.norm())
+        condensed_solution_norm = float(condensed_solution.norm())
+        repeat_relative = repeat_norm / condensed_solution_norm
+        assert repeat_relative <= 1.0e-11
+        assert (
+            np.linalg.norm(ports_a_repeat - port_solution)
+            / np.linalg.norm(port_solution)
+            <= 1.0e-11
+        )
+
+        alpha = 0.37 + 0.19j
+        beta = -0.23 + 0.11j
+        combo_rhs = fe_rhs.duplicate()
+        fe_rhs.copy(combo_rhs)
+        combo_rhs.scale(PETSc.ScalarType(alpha))
+        combo_rhs.axpy(PETSc.ScalarType(beta), rhs_b)
+        combo_rhs.assemble()
+        combo_solution, combo_ports = condensed.solve(
+            combo_rhs,
+            port_rhs=alpha * port_rhs + beta * gp_b,
+        )
+        linearity_audit = dict(condensed.diagnostics["last_solve"])
+        assert linearity_audit["backsolve_count"] <= 3
+        assert linearity_audit["refinement_count"] <= 2
+        case_audits["alpha_A_plus_beta_B"] = linearity_audit
+        expected_combo = condensed_solution.duplicate()
+        condensed_solution.copy(expected_combo)
+        expected_combo.scale(PETSc.ScalarType(alpha))
+        expected_combo.axpy(PETSc.ScalarType(beta), solution_b)
+        linearity = combo_solution.duplicate()
+        combo_solution.copy(linearity)
+        linearity.axpy(PETSc.ScalarType(-1.0), expected_combo)
+        linearity_norm = float(linearity.norm())
+        expected_combo_norm = float(expected_combo.norm())
+        linearity_relative = linearity_norm / expected_combo_norm
+        assert linearity_relative <= 1.0e-11
+        expected_ports = alpha * port_solution + beta * ports_b
+        assert (
+            linearity_relative
+            <= 1.0e-11
+        )
+        port_linearity_relative = (
+            np.linalg.norm(combo_ports - expected_ports)
+            / np.linalg.norm(expected_ports)
+        )
+        assert port_linearity_relative <= 1.0e-11
+        assert condensed.inverse.solve_count >= 5
+        if comm.rank == 0:
+            print(
+                json.dumps(
+                    {
+                        "schema": "task041.h1e.p4_condensed_real_fixture.v1",
+                        "mpi_size": comm.size,
+                        "full_rows": physical.full_rows,
+                        "active_trace_rows": condensed.condensed.active_rows,
+                        "interior_rows": condensed.condensed.interior_rows,
+                        "port_rows": condensed.condensed.appended_rows,
+                        "same_physical_v_mpc": same_physical_v_mpc,
+                        "factor_order": "old_full_released_before_new_condensed",
+                        "fe_response_relative": float(comparison_relative),
+                        "port_response_relative": float(port_relative),
+                        "independent_full_residual_relative": float(full_relative),
+                        "independent_condensed_residual_relative": float(
+                            condensed_residual_relative
+                        ),
+                        "native_a4_relative": float(
+                            audit["physical_relative_residual"]
+                        ),
+                        "native_a4_tolerance": 1.0e-10,
+                        "repeat_relative": float(repeat_relative),
+                        "complex_linearity_relative": float(linearity_relative),
+                        "complex_port_linearity_relative": float(
+                            port_linearity_relative
+                        ),
+                        "nearzero_rhs_norm": near_rhs_norm,
+                        "zero_factor_solve_delta": int(
+                            zero_count_after - zero_count_before
+                        ),
+                        "case_audits": {
+                            name: {
+                                "status": str(case["status"]),
+                                "rhs_norm": float(case["physical_rhs_norm"]),
+                                "physical_relative": float(
+                                    case["physical_relative_residual"]
+                                ),
+                                "augmented_relative": float(
+                                    case["relative_residual"]
+                                ),
+                                "backsolve_count": int(case["backsolve_count"]),
+                                "refinement_count": int(case["refinement_count"]),
+                            }
+                            for name, case in case_audits.items()
+                        },
+                    },
+                    sort_keys=True,
+                ),
+                flush=True,
+            )
+    finally:
+        if condensed is not None:
+            condensed.destroy()
+        if physical is not None:
+            physical.destroy()
+        if full_factor is not None:
+            full_factor.destroy()
+        if full_matrix is not None:
+            full_matrix.destroy()
+        if full_reference is not None:
+            full_reference.destroy()
+        if condensed_solution is not None:
+            condensed_solution.destroy()
+        if full_residual is not None:
+            full_residual.destroy()
+        if full_solution is not None:
+            full_solution.destroy()
+        if augmented_rhs is not None:
+            augmented_rhs.destroy()
+        if fe_rhs is not None:
+            fe_rhs.destroy()
+        for vector in (
+            condensed_augmented,
+            condensed_residual,
+            rhs_b,
+            solution_b,
+            solution_a_repeat,
+            near_rhs,
+            near_solution,
+            zero_rhs,
+            zero_solution,
+            combo_rhs,
+            combo_solution,
+            expected_combo,
+            comparison,
+            repeat,
+            linearity,
+            oracle_rhs,
+        ):
+            if vector is not None:
+                vector.destroy()
+
+
+def test_task041_h1e_side_inverse_old_new_q_pc_same_side(
+    h1e_one_side_real_system,
+) -> None:
+    """Compare full and cell-condensed BAL_H Q/PC on one borrowed p6 side."""
+
+    side_system = h1e_one_side_real_system
+    operator = side_system.A
+    source = operator.createVecRight()
+    full_source = None
+    old_inverse = None
+    new_inverse = None
+    old_q = None
+    old_pc = None
+    new_q = None
+    new_pc = None
+    side_a_before = operator.createVecLeft()
+    side_b_before = np.asarray(
+        side_system.b.getArray(readonly=True),
+        dtype=np.complex128,
+    ).copy()
+    active_before = None
+    full_before = None
+    old_p4_audit = None
+    old_pc_p4_audit = None
+    new_p4_audit = None
+    new_pc_p4_audit = None
+
+    def relative_difference(left: PETSc.Vec, right: PETSc.Vec) -> float:
+        difference = left.duplicate()
+        try:
+            left.copy(difference)
+            difference.axpy(PETSc.ScalarType(-1.0), right)
+            denominator = float(right.norm())
+            numerator = float(difference.norm())
+            return numerator / denominator if denominator else numerator
+        finally:
+            difference.destroy()
+
+    def assert_borrowed_side_unchanged() -> None:
+        np.testing.assert_array_equal(
+            source.getArray(readonly=True),
+            active_before,
+        )
+        np.testing.assert_array_equal(
+            full_source.getArray(readonly=True),
+            full_before,
+        )
+        np.testing.assert_array_equal(
+            side_system.b.getArray(readonly=True),
+            side_b_before,
+        )
+        side_a_probe = operator.createVecLeft()
+        try:
+            operator.mult(source, side_a_probe)
+            np.testing.assert_array_equal(
+                side_a_probe.getArray(readonly=True),
+                side_a_before.getArray(readonly=True),
+            )
+        finally:
+            side_a_probe.destroy()
+
+    def p4_audit_values(adapter) -> dict[str, float]:
+        last_solve = adapter.diagnostics["p4_factor"]["last_solve"]
+        a4_relative = float(last_solve["physical_relative_residual"])
+        backsolves = int(last_solve["backsolve_count"])
+        assert np.isfinite(a4_relative)
+        assert a4_relative <= 1.0e-10
+        assert 1 <= backsolves <= 3
+        return {
+            "a4_relative": a4_relative,
+            "backsolve_count": float(backsolves),
+        }
+
+    try:
+        _fill_active(source, 1.25)
+        active_before = np.asarray(
+            source.getArray(readonly=True),
+            dtype=np.complex128,
+        ).copy()
+        operator.mult(source, side_a_before)
+        old_inverse = build_side_balanced_inverse(
+            side_system,
+            detailed_timing=True,
+        )
+        assert old_inverse._side_system is side_system
+        full_source = old_inverse._full_action.matrix.createVecRight()
+        assert full_source.getSize() == old_inverse._full_action.matrix.getSize()[1]
+        inject_active_residual_to_full_p6(
+            side_system.static_condensation.condensed,
+            source,
+            full_source,
+        )
+        full_before = np.asarray(
+            full_source.getArray(readonly=True),
+            dtype=np.complex128,
+        ).copy()
+        old_q = old_inverse._apply_q_callback(full_source)
+        old_p4_audit = p4_audit_values(old_inverse)
+        old_pc = operator.createVecLeft()
+        old_inverse._apply_balanced_pc(source, old_pc)
+        old_pc_p4_audit = p4_audit_values(old_inverse)
+        assert_borrowed_side_unchanged()
+        old_inverse.destroy()
+        released = old_inverse.diagnostics
+        assert released["destroyed"] is True
+        assert released["p4_factor_live"] == 0
+        assert released["nested_iterative_ksp_count"] == 0
+        assert_borrowed_side_unchanged()
+        old_inverse = None
+
+        new_inverse = build_side_balanced_inverse(
+            side_system,
+            detailed_timing=True,
+            p4_inverse_backend="cell_condensed",
+        )
+        assert new_inverse._side_system is side_system
+        assert new_inverse.diagnostics["p4_inverse_backend"] == (
+            "cell_condensed"
+        )
+        new_full_matrix = new_inverse._full_action.matrix
+        assert new_full_matrix.getSize()[1] == full_source.getSize()
+        assert tuple(new_full_matrix.getOwnershipRange()) == tuple(
+            full_source.getOwnershipRange()
+        )
+        new_q = new_inverse._apply_q_callback(full_source)
+        new_p4_audit = p4_audit_values(new_inverse)
+        new_pc = operator.createVecLeft()
+        new_inverse._apply_balanced_pc(source, new_pc)
+        new_pc_p4_audit = p4_audit_values(new_inverse)
+        assert_borrowed_side_unchanged()
+        new_inverse.destroy()
+        released = new_inverse.diagnostics
+        assert released["destroyed"] is True
+        assert released["p4_factor_live"] == 0
+        assert released["nested_iterative_ksp_count"] == 0
+        assert_borrowed_side_unchanged()
+        new_inverse = None
+
+        q_difference = relative_difference(new_q, old_q)
+        pc_difference = relative_difference(new_pc, old_pc)
+        assert np.isfinite(q_difference)
+        assert np.isfinite(pc_difference)
+        assert q_difference <= 1.0e-11
+        assert pc_difference <= 1.0e-8
+        if MPI.COMM_WORLD.rank == 0:
+            print(
+                json.dumps(
+                    {
+                        "schema": "task041.h1e.side_inverse_backend_compare.v1",
+                        "mpi_size": MPI.COMM_WORLD.size,
+                        "same_p6_side": True,
+                        "old_backend": "full",
+                        "new_backend": "cell_condensed",
+                        "q_relative": float(q_difference),
+                        "pc_relative": float(pc_difference),
+                        "old_p4_a4_relative": old_p4_audit["a4_relative"],
+                        "old_p4_backsolve_count": int(
+                            old_p4_audit["backsolve_count"]
+                        ),
+                        "old_pc_p4_a4_relative": old_pc_p4_audit["a4_relative"],
+                        "old_pc_p4_backsolve_count": int(
+                            old_pc_p4_audit["backsolve_count"]
+                        ),
+                        "new_p4_a4_relative": new_p4_audit["a4_relative"],
+                        "new_p4_backsolve_count": int(
+                            new_p4_audit["backsolve_count"]
+                        ),
+                        "new_pc_p4_a4_relative": new_pc_p4_audit["a4_relative"],
+                        "new_pc_p4_backsolve_count": int(
+                            new_pc_p4_audit["backsolve_count"]
+                        ),
+                    },
+                    sort_keys=True,
+                ),
+                flush=True,
+            )
+    finally:
+        for vector in (new_q, new_pc, old_q, old_pc, source):
+            if vector is not None:
+                vector.destroy()
+        if full_source is not None:
+            full_source.destroy()
+        side_a_before.destroy()
+        if new_inverse is not None:
+            new_inverse.destroy()
+        if old_inverse is not None:
+            old_inverse.destroy()
 
 
 def test_task041_h1c_j_jh_inverse_and_nonzero_particular(h1c_fixture) -> None:

@@ -30,6 +30,7 @@ from .physical_balanced_physical_operator import (
     _full_action_inventory,
     _payload_array_inventory,
     build_fullspace_physical_dtn_action,
+    build_p4_condensed_exact_factor,
     build_p4_exact_factor,
 )
 from .physical_balanced_same_mesh_transfer import (
@@ -60,9 +61,11 @@ _DETAIL_TIMING_NAMES = (
     "q_ph_ghost_mpc_prepare_seconds",
     "q_ph_ghost_mpc_check_seconds",
     "q_augmented_rhs_extract_seconds",
-    "q_factor_solve_seconds",
-    "q_a4_residual_refinement_seconds",
-    "q_physical_action_matrix_mult_seconds",
+   "q_factor_solve_seconds",
+    "q_p4_storage_rhs_reduction_seconds",
+    "q_p4_solution_recovery_seconds",
+   "q_a4_residual_refinement_seconds",
+   "q_physical_action_matrix_mult_seconds",
     "q_p_seconds",
     "q_p_local_candidate_generation_seconds",
     "q_p_route_sort_index_seconds",
@@ -105,8 +108,14 @@ _DETAIL_TIMING_SEMANTICS = {
         "output ghost/MPC finalization, zero/check, other communication, and "
         "finite validation; PH mpi_exchange_seconds is nested here"
     ),
-    "q_a4_residual_refinement_seconds": (
-        "inclusive extraction, Vec allocation, physical action, norm, and audit work"
+   "q_a4_residual_refinement_seconds": (
+       "inclusive extraction, Vec allocation, physical action, norm, and audit work"
+   ),
+    "q_p4_storage_rhs_reduction_seconds": (
+        "cell-condensed storage RHS reduction only; not factor or recovery"
+    ),
+    "q_p4_solution_recovery_seconds": (
+        "cell-condensed active/interior/port recovery only; not factor"
     ),
     "q_physical_action_matrix_mult_seconds": (
         "physical_action.matrix.mult only; nested inside q_a4_residual_refinement_seconds"
@@ -117,6 +126,17 @@ _DETAIL_TIMING_SEMANTICS = {
 }
 # Native PETSc names the task's DIVERGED_ITS budget result DIVERGED_MAX_IT.
 _DIVERGED_ITS = int(PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT)
+_P4_INVERSE_BACKENDS = frozenset({"full", "cell_condensed"})
+
+
+def _p4_solve_count(p4_factor: Any) -> int:
+    """Read the solve counter shared by the two explicit p4 backends."""
+
+    diagnostics = p4_factor.diagnostics
+    research_factor = diagnostics.get("research_factor")
+    if isinstance(research_factor, Mapping):
+        return int(research_factor["solve_count"])
+    return int(diagnostics["factor_solve_count"])
 
 _GMRES_RESTART_LIBRARY: Any | None = None
 _GMRES_RESTART_FUNCTION: Any | None = None
@@ -305,7 +325,12 @@ class _SidePythonPcContext:
         owner = self.owner
         if owner is None:
             raise RuntimeError("BAL_H side Python PC has been destroyed")
-        owner._apply_balanced_pc(source, target)
+        try:
+            owner._apply_balanced_pc(source, target)
+        except BaseException as exc:  # noqa: BLE001 - defer one callback failure to KSP
+            owner._pending_pc_exception = exc
+            _pc.setFailedReason(PETSc.PC.FailedReason.SUBPC_ERROR)
+            target.set(PETSc.ScalarType(np.inf))
 
     def destroy(self, _pc: PETSc.PC | None = None) -> None:
         self.owner = None
@@ -335,8 +360,13 @@ class SideBalancedInverse:
         audit_callback: Callable[[dict[str, Any]], None] | None = None,
         detailed_timing: bool = False,
         record_iteration_history: bool = False,
+        p4_inverse_backend: str = "full",
     ) -> None:
         _validate_ksp_pair(max_it, rtol)
+        if p4_inverse_backend not in _P4_INVERSE_BACKENDS:
+            raise ValueError(
+                "p4_inverse_backend must be 'full' or 'cell_condensed'"
+            )
         operator = side_system.A
         condensed = side_system.static_condensation.condensed
         if not isinstance(operator, PETSc.Mat):
@@ -353,6 +383,7 @@ class SideBalancedInverse:
         self._operator: PETSc.Mat | None = operator
         self._full_action: Any | None = full_action
         self._p4_factor: Any | None = p4_factor
+        self._p4_inverse_backend = p4_inverse_backend
         self._owner_transfer: Any | None = owner_transfer
         self._h6: Any | None = h6
         self._checkpoint_callback = checkpoint_callback or (lambda: None)
@@ -390,6 +421,7 @@ class SideBalancedInverse:
         self._total_apply_seconds = 0.0
         self._last_apply: dict[str, Any] = {}
         self._last_coupling_failure: dict[str, Any] | None = None
+        self._pending_pc_exception: BaseException | None = None
         self._rhs_operation_seconds = {name: 0.0 for name in ("Q", "H6", "A6")}
         self._rhs_detail_seconds = {
             name: 0.0 for name in _DETAIL_TIMING_NAMES
@@ -1019,38 +1051,45 @@ class SideBalancedInverse:
         augmented_solution = None
         coarse_solution = None
         p4_timing: dict[str, float] = {}
-        factor_solve_before = int(
-            self._p4_factor.diagnostics["research_factor"]["solve_count"]
-        )
+        factor_solve_before = _p4_solve_count(self._p4_factor)
         try:
-            allocation_started = perf_counter()
-            try:
-                augmented_rhs = self._p4_factor.create_rhs(coarse_rhs)
-                augmented_solution = augmented_rhs.duplicate()
-                augmented_solution.set(0.0)
-            finally:
-                self._add_rhs_detail_seconds(
-                    "q_augmented_rhs_extract_seconds",
-                    perf_counter() - allocation_started,
+            if self._p4_inverse_backend == "cell_condensed":
+                coarse_solution = self._p4_factor.apply(
+                    coarse_rhs,
+                    timing=p4_timing if self._detailed_timing else None,
                 )
-            solve_kwargs: dict[str, Any] = {"residual_tolerance": 1.0e-10}
-            if self._detailed_timing:
-                solve_kwargs["timing"] = p4_timing
-            self._p4_factor.solve_with_refinement(
-                augmented_rhs,
-                augmented_solution,
-                **solve_kwargs,
-            )
-            extract_started = perf_counter()
-            try:
-                coarse_solution = self._p4_factor.extract_fe_solution(
-                    augmented_solution
+            else:
+                allocation_started = perf_counter()
+                try:
+                    augmented_rhs = self._p4_factor.create_rhs(coarse_rhs)
+                    augmented_solution = augmented_rhs.duplicate()
+                    augmented_solution.set(0.0)
+                finally:
+                    self._add_rhs_detail_seconds(
+                        "q_augmented_rhs_extract_seconds",
+                        perf_counter() - allocation_started,
+                    )
+            if self._p4_inverse_backend == "full":
+                solve_kwargs: dict[str, Any] = {
+                    "residual_tolerance": 1.0e-10
+                }
+                if self._detailed_timing:
+                    solve_kwargs["timing"] = p4_timing
+                self._p4_factor.solve_with_refinement(
+                    augmented_rhs,
+                    augmented_solution,
+                    **solve_kwargs,
                 )
-            finally:
-                self._add_rhs_detail_seconds(
-                    "q_augmented_rhs_extract_seconds",
-                    perf_counter() - extract_started,
-                )
+                extract_started = perf_counter()
+                try:
+                    coarse_solution = self._p4_factor.extract_fe_solution(
+                        augmented_solution
+                    )
+                finally:
+                    self._add_rhs_detail_seconds(
+                        "q_augmented_rhs_extract_seconds",
+                        perf_counter() - extract_started,
+                    )
             p_started = perf_counter()
             p_transfer_timing: dict[str, float] = {}
             try:
@@ -1075,19 +1114,42 @@ class SideBalancedInverse:
                         "q_factor_solve_seconds",
                         p4_timing["factor_solve_seconds"],
                     )
+                if "factor_backsolve_seconds" in p4_timing:
+                    self._add_rhs_detail_seconds(
+                        "q_factor_solve_seconds",
+                        p4_timing["factor_backsolve_seconds"],
+                    )
                 if "A4_residual_refinement_seconds" in p4_timing:
                     self._add_rhs_detail_seconds(
                         "q_a4_residual_refinement_seconds",
                         p4_timing["A4_residual_refinement_seconds"],
+                    )
+                if "native_action_and_residual_seconds" in p4_timing:
+                    self._add_rhs_detail_seconds(
+                        "q_a4_residual_refinement_seconds",
+                        p4_timing["native_action_and_residual_seconds"],
                     )
                 if "physical_action_matrix_mult_seconds" in p4_timing:
                     self._add_rhs_detail_seconds(
                         "q_physical_action_matrix_mult_seconds",
                         p4_timing["physical_action_matrix_mult_seconds"],
                     )
-            factor_solve_after = int(
-                self._p4_factor.diagnostics["research_factor"]["solve_count"]
-            )
+                if "native_action_matrix_mult_seconds" in p4_timing:
+                    self._add_rhs_detail_seconds(
+                        "q_physical_action_matrix_mult_seconds",
+                        p4_timing["native_action_matrix_mult_seconds"],
+                    )
+                if "storage_rhs_reduction_seconds" in p4_timing:
+                    self._add_rhs_detail_seconds(
+                        "q_p4_storage_rhs_reduction_seconds",
+                        p4_timing["storage_rhs_reduction_seconds"],
+                    )
+                if "solution_recovery_seconds" in p4_timing:
+                    self._add_rhs_detail_seconds(
+                        "q_p4_solution_recovery_seconds",
+                        p4_timing["solution_recovery_seconds"],
+                    )
+            factor_solve_after = _p4_solve_count(self._p4_factor)
             actual_backsolves = max(factor_solve_after - factor_solve_before, 0)
             self._p4_backsolve_count += actual_backsolves
             self._p4_refinement_count += max(actual_backsolves - 1, 0)
@@ -1419,6 +1481,8 @@ class SideBalancedInverse:
             name: False for name in _DETAIL_TIMING_NAMES
         }
         self._last_coupling_failure = None
+        self._pending_pc_exception = None
+        self._ksp.getPC().setFailedReason(PETSc.PC.FailedReason.NOERROR)
         rhs_norm: Any = "not_measured"
         reason: int | None = None
         iterations = 0
@@ -1477,6 +1541,9 @@ class SideBalancedInverse:
                 self._ksp.solve(source, target)
                 reason = int(self._ksp.getConvergedReason())
                 iterations = int(self._ksp.getIterationNumber())
+                pending_pc_exception = self._pending_pc_exception
+                if pending_pc_exception is not None:
+                    raise pending_pc_exception
                 status, ksp_positive = _classify_ksp_result(
                     reason,
                     iterations,
@@ -1585,6 +1652,8 @@ class SideBalancedInverse:
             if self._audit_callback is not None:
                 self._audit_callback(dict(record))
             raise
+        finally:
+            self._pending_pc_exception = None
 
         self._total_iterations += int(iterations)
         self._total_apply_seconds += elapsed
@@ -1659,6 +1728,7 @@ class SideBalancedInverse:
             "detailed_timing": self._detailed_timing,
             "iteration_history_enabled": self._record_iteration_history,
             "preconditioner": "J BAL_H JH",
+            "p4_inverse_backend": self._p4_inverse_backend,
             "apply_count": int(self._apply_count),
             "total_iterations": int(self._total_iterations),
             "total_apply_seconds": float(self._total_apply_seconds),
@@ -1697,6 +1767,7 @@ class SideBalancedInverse:
                 ksp.destroy()
                 self._nested_ksp_destroy_count = 1
         finally:
+            self._pending_pc_exception = None
             if self._pc_context is not None:
                 self._pc_context.owner = None
             self._pc_context = None
@@ -1751,10 +1822,15 @@ def build_side_balanced_inverse(
     record_iteration_history: bool = False,
     lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
     performance_profile: str | None = None,
+    p4_inverse_backend: str = "full",
 ) -> SideBalancedInverse:
     """Build one side adapter and release all partial owned state on failure."""
 
     _validate_ksp_pair(max_it, rtol)
+    if p4_inverse_backend not in _P4_INVERSE_BACKENDS:
+        raise ValueError(
+            "p4_inverse_backend must be 'full' or 'cell_condensed'"
+        )
     if performance_profile not in {None, _TASK041_SCHUR_SPEED_V2_PROFILE}:
         raise ValueError("unsupported Task041 performance profile")
     if not isinstance(side_system, HybridLocalDtnActionSystem):
@@ -1794,10 +1870,16 @@ def build_side_balanced_inverse(
                     )
                 },
             )
-        p4_factor = build_p4_exact_factor(
-            side_system,
-            lifecycle_callback=nested_lifecycle_callback,
-        )
+        if p4_inverse_backend == "cell_condensed":
+            p4_factor = build_p4_condensed_exact_factor(
+                side_system,
+                lifecycle_callback=nested_lifecycle_callback,
+            )
+        else:
+            p4_factor = build_p4_exact_factor(
+                side_system,
+                lifecycle_callback=nested_lifecycle_callback,
+            )
         emit("transfer_begin")
         owner_transfer = build_same_mesh_hcurl_owner_transfer(
             full_action.V,
@@ -1830,6 +1912,7 @@ def build_side_balanced_inverse(
             audit_callback=audit_callback,
             detailed_timing=detailed_timing,
             record_iteration_history=record_iteration_history,
+            p4_inverse_backend=p4_inverse_backend,
         )
         full_action = None
         p4_factor = None

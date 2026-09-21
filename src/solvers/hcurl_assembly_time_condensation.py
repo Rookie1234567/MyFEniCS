@@ -471,6 +471,7 @@ def _distributed_trace_preallocation(
     appended_global_rows: int,
     appended_support_owned_cell_groups: tuple[np.ndarray, ...],
     appended_support_group_by_row: tuple[int, ...],
+    appended_support_include_group_rows: bool = False,
 ) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
     """Build exact base and support-safe appended AIJ preallocation."""
 
@@ -482,6 +483,7 @@ def _distributed_trace_preallocation(
         normalized_group_by_row = tuple(
             int(group) for group in appended_support_group_by_row
         )
+        include_group_rows = bool(appended_support_include_group_rows)
         if len(normalized_active_counts) != comm.size:
             raise ValueError("active row counts do not match the MPI communicator")
         if any(count < 0 for count in normalized_active_counts):
@@ -489,6 +491,10 @@ def _distributed_trace_preallocation(
         if normalized_appended_rows < 0:
             raise ValueError("appended row count must be nonnegative")
         active_rows_for_validation = int(sum(normalized_active_counts))
+        if include_group_rows and normalized_appended_rows == 0:
+            raise ValueError(
+                "group-row support requires appended rows",
+            )
         for ids in cell_active_ids:
             active = np.asarray(ids, dtype=np.int64)
             if len(active) == 0:
@@ -524,6 +530,7 @@ def _distributed_trace_preallocation(
             normalized_appended_rows,
             group_count,
             normalized_group_by_row,
+            include_group_rows,
         )
     except Exception as error:
         local_validation_error = f"{type(error).__name__}: {error}"
@@ -541,6 +548,7 @@ def _distributed_trace_preallocation(
         normalized_appended_rows,
         _group_count,
         normalized_group_by_row,
+        include_group_rows,
     ) = local_contract
     active_offsets = np.concatenate(
         (
@@ -678,14 +686,19 @@ def _distributed_trace_preallocation(
             for appended_index in range(normalized_appended_rows):
                 local_row = local_active_rows + appended_index
                 group = normalized_group_by_row[appended_index]
+                appended_columns = (
+                    group_rows[group]
+                    if include_group_rows
+                    else np.asarray(
+                        [active_rows + appended_index],
+                        dtype=PETSc.IntType,
+                    )
+                )
                 columns = np.unique(
                     np.concatenate(
                         (
                             support_groups[group],
-                            np.asarray(
-                                [active_rows + appended_index],
-                                dtype=PETSc.IntType,
-                            ),
+                            appended_columns,
                         )
                     )
                 )
@@ -716,7 +729,11 @@ def _distributed_trace_preallocation(
             ),
             "base_graph_preallocation": "exact",
             "appended_graph_preallocation": (
-                "support_safe_upper_bound"
+                (
+                    "support_safe_upper_bound_with_group_rows"
+                    if include_group_rows
+                    else "support_safe_upper_bound"
+                )
                 if normalized_appended_rows
                 else "not_applicable"
             ),
@@ -742,6 +759,7 @@ def _distributed_trace_preallocation(
                 int(len(support)) for support in support_groups
             ],
             "appended_rows_per_support_group": [int(len(rows)) for rows in group_rows],
+            "appended_support_include_group_rows": include_group_rows,
             "new_nonzero_allocation_error_enabled": True,
             "ordinary_default_changed": False,
         },
@@ -1094,6 +1112,7 @@ def build_unconstrained_assembly_time_condensation(
     appended_global_rows: int = 0,
     appended_support_owned_cell_groups: tuple[np.ndarray, ...] = (),
     appended_support_group_by_row: tuple[int, ...] = (),
+    appended_support_include_group_rows: bool = False,
     defer_final_assembly: bool = False,
     retain_local_schur_for_matrix_free: bool = False,
     materialize_global_matrix: bool = True,
@@ -1107,6 +1126,10 @@ def build_unconstrained_assembly_time_condensation(
 
     ``retain_local_schur_for_matrix_free`` retains one readonly Schur array
     per local class for a later owner-computes action.
+
+    ``appended_support_include_group_rows`` is a p4-only opt-in for reserving
+    every appended column in each support group.  The default preserves the
+    older support-trace-plus-own-diagonal allocation.
     """
 
     if np.dtype(compiled_form.dtype) != np.dtype(np.complex128):
@@ -1197,6 +1220,9 @@ def build_unconstrained_assembly_time_condensation(
                 appended_global_rows=appended_global_rows,
                 appended_support_owned_cell_groups=(appended_support_owned_cell_groups),
                 appended_support_group_by_row=(appended_support_group_by_row),
+                appended_support_include_group_rows=(
+                    appended_support_include_group_rows
+                ),
             )
         )
         preallocation_audit["build_seconds"] = float(

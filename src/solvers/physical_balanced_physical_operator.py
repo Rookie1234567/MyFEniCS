@@ -38,18 +38,30 @@ from .dtn_port_3d import (
     _combine_owned_entries,
     _copy_base_matrix_to_augmented,
     _mode_projection_denominator,
+    _owned_cells_adjacent_to_facet_tag,
     _ReusableSurfaceComponentAssembler,
     _traction_vector,
+)
+from .hcurl_assembly_time_condensation import (
+    build_unconstrained_assembly_time_condensation,
 )
 from .hybrid_local_dtn_action import HybridLocalDtnActionSystem
 from .hybrid_local_dtn_woodbury import ResearchExactFactorInverse
 from .mpc_form_action import MpcFormActionContext
+from .p4_cell_condensed_inverse import (
+    CellPortTerms,
+    P4CellCondensedInverse,
+    assemble_port_condensed_terms,
+)
 
 __all__ = (
     "FullSpacePhysicalDtnActionSystem",
+    "P4CondensedExactFactor",
     "P4ExactFactor",
     "P4PhysicalResidualGateError",
     "build_fullspace_physical_dtn_action",
+    "build_p4_condensed_exact_factor",
+    "build_p4_condensed_exact_factor_from_action",
     "build_p4_exact_factor",
 )
 
@@ -78,6 +90,15 @@ def _timing_add(
     if timing is not None:
         timing[name] = float(timing.get(name, 0.0)) + max(0.0, float(seconds))
 
+def _accumulate_optional_timing(
+    target: MutableMapping[str, float] | None,
+    source: Mapping[str, Any],
+) -> None:
+    if target is None:
+        return
+    for name, value in source.items():
+        if value is not None:
+            _timing_add(target, name, float(value))
 
 @dataclass(frozen=True)
 class _QuadratureSpec:
@@ -757,6 +778,533 @@ def _assemble_augmented_matrix(
         A_base.destroy()
 
 
+def _prepare_physical_p4_port_terms(
+    condensed,
+    physical: FullSpacePhysicalDtnActionSystem,
+) -> dict[int, CellPortTerms]:
+    """Insert physical trace/port rows and build owned interior port blocks."""
+
+    n_ports = len(physical.action.modes)
+    if n_ports != int(condensed.appended_rows):
+        raise ValueError("physical mode count differs from condensed port rows")
+    interior_locations: dict[int, tuple[int, int]] = {}
+    cell_b: dict[int, dict[int, dict[int, complex]]] = {}
+    cell_d: dict[int, dict[int, dict[int, complex]]] = {}
+    for cell_index, cell in enumerate(condensed.cell_recovery_maps):
+        rows = np.asarray(cell.interior_original_dofs, dtype=PETSc.IntType)
+        for local, original in enumerate(rows):
+            original = int(original)
+            if original in interior_locations:
+                raise RuntimeError(f"interior DoF {original} belongs to multiple cells")
+            interior_locations[original] = (cell_index, local)
+
+    owned_start, owned_end = (
+        int(value) for value in condensed.matrix.getOwnershipRange()
+    )
+    local_error = None
+    try:
+        for port, entry in enumerate(physical.action.modes):
+            b_rows = np.asarray(entry.traction_rows, dtype=PETSc.IntType)
+            b_values = -np.asarray(entry.traction_values, dtype=np.complex128)
+            d_rows = np.asarray(entry.projection_rows, dtype=PETSc.IntType)
+            d_values = (
+                np.conjugate(np.asarray(entry.projection_values, dtype=np.complex128))
+                / complex(entry.denominator)
+            )
+            active_b: dict[int, complex] = {}
+            active_d: dict[int, complex] = {}
+            if len(b_rows) != len(b_values) or len(d_rows) != len(d_values):
+                raise ValueError("physical mode row/value lengths differ")
+            for row, value in zip(b_rows, b_values, strict=True):
+                if value == 0.0:
+                    continue
+                location = interior_locations.get(int(row))
+                if location is not None:
+                    cell_index, local = location
+                    by_port = cell_b.setdefault(cell_index, {}).setdefault(port, {})
+                    by_port[local] = by_port.get(local, 0.0 + 0.0j) + value
+                    continue
+                active = condensed.trace_constraints.original_to_active.get(int(row))
+                if active is None:
+                    raise ValueError(
+                        f"physical B row {int(row)} is not an owned active trace row"
+                    )
+                if not owned_start <= int(active) < min(owned_end, condensed.active_rows):
+                    raise ValueError(
+                        f"physical B active row {int(active)} is not locally owned"
+                    )
+                active_b[int(active)] = active_b.get(int(active), 0.0 + 0.0j) + value
+            for row, value in zip(d_rows, d_values, strict=True):
+                if value == 0.0:
+                    continue
+                location = interior_locations.get(int(row))
+                if location is not None:
+                    cell_index, local = location
+                    by_port = cell_d.setdefault(cell_index, {}).setdefault(port, {})
+                    by_port[local] = by_port.get(local, 0.0 + 0.0j) + value
+                    continue
+                active = condensed.trace_constraints.original_to_active.get(int(row))
+                if active is None:
+                    raise ValueError(
+                        f"physical D row {int(row)} is not an owned active trace row"
+                    )
+                if not owned_start <= int(active) < min(owned_end, condensed.active_rows):
+                    raise ValueError(
+                        f"physical D active row {int(active)} is not locally owned"
+                    )
+                active_d[int(active)] = active_d.get(int(active), 0.0 + 0.0j) + value
+            if active_b:
+                b_ids = np.asarray(sorted(active_b), dtype=PETSc.IntType)
+                b_values = np.asarray(
+                    [active_b[int(row)] for row in b_ids],
+                    dtype=PETSc.ScalarType,
+                )
+                condensed.matrix.setValues(
+                    b_ids,
+                    np.asarray([condensed.active_rows + port], dtype=PETSc.IntType),
+                    b_values.reshape((-1, 1)),
+                    addv=PETSc.InsertMode.ADD_VALUES,
+                )
+            if active_d:
+                d_ids = np.asarray(sorted(active_d), dtype=PETSc.IntType)
+                d_values = np.asarray(
+                    [active_d[int(row)] for row in d_ids],
+                    dtype=PETSc.ScalarType,
+                )
+                condensed.matrix.setValues(
+                    np.asarray([condensed.active_rows + port], dtype=PETSc.IntType),
+                    d_ids,
+                    (-d_values).reshape((1, -1)),
+                    addv=PETSc.InsertMode.ADD_VALUES,
+                )
+        if condensed.comm.rank == condensed.comm.size - 1:
+            for port in range(n_ports):
+                condensed.matrix.setValue(
+                    condensed.active_rows + port,
+                    condensed.active_rows + port,
+                    PETSc.ScalarType(1.0),
+                    addv=PETSc.InsertMode.ADD_VALUES,
+                )
+    except Exception as error:  # noqa: BLE001
+        local_error = f"{type(error).__name__}: {error}"
+    errors = condensed.comm.allgather(local_error)
+    if any(error is not None for error in errors):
+        raise RuntimeError(
+            "physical p4 trace/port insertion failed: "
+            + "; ".join(
+                f"rank {rank}: {error}"
+                for rank, error in enumerate(errors)
+                if error is not None
+            )
+        )
+
+    terms: dict[int, CellPortTerms] = {}
+    for cell_index in sorted(set(cell_b) | set(cell_d)):
+        ports = sorted(
+            set(cell_b.get(cell_index, {}))
+            | set(cell_d.get(cell_index, {}))
+        )
+        rows = condensed.cell_recovery_maps[cell_index].interior_original_dofs
+        bi = np.zeros((len(rows), len(ports)), dtype=np.complex128)
+        di = np.zeros((len(ports), len(rows)), dtype=np.complex128)
+        for column, port in enumerate(ports):
+            for local, value in cell_b.get(cell_index, {}).get(port, {}).items():
+                bi[local, column] = value
+            for local, value in cell_d.get(cell_index, {}).get(port, {}).items():
+                di[column, local] = value
+        terms[cell_index] = CellPortTerms(
+            Bi=np.ascontiguousarray(bi),
+            Di=np.ascontiguousarray(di),
+            port_indices=np.asarray(ports, dtype=PETSc.IntType),
+        )
+    return terms
+
+
+def _add_physical_mode_values(
+    target: PETSc.Vec,
+    modes: Sequence[_PhysicalModeEntries],
+    values: np.ndarray,
+    *,
+    scale: complex,
+) -> None:
+    for amplitude, entry in zip(values, modes, strict=True):
+        if len(entry.traction_rows):
+            target.setValues(
+                entry.traction_rows,
+                np.asarray(
+                    scale * amplitude * entry.traction_values,
+                    dtype=PETSc.ScalarType,
+                ),
+                addv=PETSc.InsertMode.ADD_VALUES,
+            )
+
+
+def _physical_mode_projection(
+    source: PETSc.Vec,
+    modes: Sequence[_PhysicalModeEntries],
+) -> np.ndarray:
+    first, _last = (int(value) for value in source.getOwnershipRange())
+    source_values = np.asarray(source.getArray(readonly=True), dtype=np.complex128)
+    local = np.asarray(
+        [
+            np.dot(
+                np.conjugate(entry.projection_values),
+                source_values[entry.projection_rows - first],
+            )
+            if len(entry.projection_rows)
+            else 0.0 + 0.0j
+            for entry in modes
+        ],
+        dtype=np.complex128,
+    )
+    global_values = np.empty_like(local)
+    source.getComm().tompi4py().Allreduce(local, global_values, op=MPI.SUM)
+    return global_values / np.asarray(
+        [entry.denominator for entry in modes],
+        dtype=np.complex128,
+    )
+
+
+@dataclass
+class P4CondensedExactFactor:
+    """Physical p4 condensed factor with full FE/port solve semantics."""
+
+    physical_action: FullSpacePhysicalDtnActionSystem
+    inverse: P4CellCondensedInverse
+    factor_events: list[str]
+    residual_tolerance: float = 1.0e-10
+    owns_physical_action: bool = True
+    _destroyed: bool = field(default=False, init=False, repr=False)
+    _last_solve_audit: dict[str, Any] = field(default_factory=dict, init=False)
+    _final_metadata: dict[str, Any] = field(default_factory=dict, init=False, repr=False)
+
+    @property
+    def full_rows(self) -> int:
+        return self.physical_action.full_rows
+
+    @property
+    def n_aux(self) -> int:
+        return len(self.physical_action.action.modes)
+
+    @property
+    def condensed(self):
+        return self.inverse.condensed
+
+    @property
+    def factor(self):
+        return self.inverse.factor
+
+    @property
+    def last_port_solution(self) -> np.ndarray:
+        return np.array(self.inverse.last_port_solution, copy=True)
+
+    def create_fe_vector(self) -> PETSc.Vec:
+        vector = self.physical_action.action.context.input_vector.duplicate()
+        vector.set(PETSc.ScalarType(0.0))
+        return vector
+
+    def _residual_state(
+        self,
+       rhs: PETSc.Vec,
+        solution: PETSc.Vec,
+        port_rhs: np.ndarray,
+        port_solution: np.ndarray,
+       timing: MutableMapping[str, float] | None = None,
+    ) -> tuple[dict[str, Any], PETSc.Vec, np.ndarray]:
+        _require_vector_layout(rhs, self.full_rows, "p4 physical FE RHS")
+        _require_vector_layout(solution, self.full_rows, "p4 physical solution")
+        effective_rhs = rhs.duplicate()
+        action_output = rhs.duplicate()
+        residual = None
+        augmented_residual = None
+        matrix_mult_seconds = None
+        try:
+            rhs.copy(effective_rhs)
+            _add_physical_mode_values(
+                effective_rhs,
+                self.physical_action.action.modes,
+                port_rhs,
+                scale=1.0,
+            )
+            effective_rhs.assemble()
+            effective_rhs_norm = float(effective_rhs.norm())
+            matrix_mult_started = time.perf_counter()
+            try:
+                self.physical_action.matrix.mult(solution, action_output)
+            finally:
+                matrix_mult_seconds = time.perf_counter() - matrix_mult_started
+                _timing_add(
+                    timing,
+                    "native_action_matrix_mult_seconds",
+                    matrix_mult_seconds,
+                )
+            residual = effective_rhs.duplicate()
+            effective_rhs.copy(residual)
+            residual.axpy(PETSc.ScalarType(-1.0), action_output)
+            residual_norm = float(residual.norm())
+            d_solution = _physical_mode_projection(
+                solution,
+                self.physical_action.action.modes,
+            )
+            port_residual = np.asarray(
+                port_rhs + d_solution - port_solution,
+                dtype=np.complex128,
+            )
+            augmented_residual = residual.duplicate()
+            residual.copy(augmented_residual)
+            _add_physical_mode_values(
+                augmented_residual,
+                self.physical_action.action.modes,
+                port_residual,
+                scale=-1.0,
+            )
+            augmented_residual.assemble()
+            augmented_fe_norm = float(augmented_residual.norm())
+            port_norm = float(np.linalg.norm(port_residual))
+            augmented_norm = float(np.hypot(augmented_fe_norm, port_norm))
+            augmented_rhs_norm = float(
+                np.hypot(float(rhs.norm()), float(np.linalg.norm(port_rhs)))
+            )
+            physical_relative = (
+                residual_norm / effective_rhs_norm
+                if effective_rhs_norm > 0.0
+                else residual_norm
+            )
+            relative = (
+                augmented_norm / augmented_rhs_norm
+                if augmented_rhs_norm > 0.0
+                else augmented_norm
+            )
+            physical_passed = bool(
+                np.isfinite(physical_relative)
+                and physical_relative <= self.residual_tolerance
+            )
+            augmented_passed = bool(
+                np.isfinite(relative) and relative <= self.residual_tolerance
+            )
+            audit = {
+                "status": "passed" if physical_passed and augmented_passed else "gate_failed",
+                "physical_rhs_norm": effective_rhs_norm,
+                "physical_residual_norm": residual_norm,
+                "physical_relative_residual": physical_relative,
+                "physical_gate_passed": physical_passed,
+                "augmented_fe_residual_norm": augmented_fe_norm,
+                "port_residual_norm": port_norm,
+                "residual_norm": augmented_norm,
+                "relative_residual": relative,
+                "augmented_gate_passed": augmented_passed,
+                "augmented_rhs_norm": augmented_rhs_norm,
+                "residual_tolerance": self.residual_tolerance,
+                "native_action_matrix_mult_seconds": float(matrix_mult_seconds),
+            }
+            return audit, augmented_residual, port_residual
+        except BaseException:
+            if augmented_residual is not None:
+                augmented_residual.destroy()
+            raise
+        finally:
+            effective_rhs.destroy()
+            action_output.destroy()
+            if residual is not None:
+                residual.destroy()
+
+    def audit_solution(
+        self,
+        rhs: PETSc.Vec,
+        solution: PETSc.Vec,
+        *,
+        port_rhs: np.ndarray | None = None,
+        port_solution: np.ndarray | None = None,
+    ) -> dict[str, Any]:
+        values = self.inverse._prepare_port_rhs(port_rhs)
+        solution_ports = (
+            self.last_port_solution
+            if port_solution is None
+            else np.asarray(port_solution, dtype=np.complex128)
+        )
+        audit, augmented_residual, _port_residual = self._residual_state(
+            rhs,
+            solution,
+            values,
+            solution_ports,
+        )
+        augmented_residual.destroy()
+        return audit
+
+    def apply(
+        self,
+        rhs: PETSc.Vec,
+        *,
+        port_rhs: np.ndarray | None = None,
+        timing: MutableMapping[str, float] | None = None,
+    ) -> PETSc.Vec:
+        """Solve full FE storage and replicated appended-port RHS together."""
+
+        self._last_solve_audit = {}
+        values = self.inverse._prepare_port_rhs(port_rhs)
+        solve_count_start = int(self.inverse.solve_count)
+        total_started = time.perf_counter()
+        solution = None
+        keep_solution = False
+        history: list[dict[str, Any]] = []
+        try:
+            try:
+                solution = self.inverse.apply(rhs, port_rhs=values)
+            finally:
+                _accumulate_optional_timing(timing, self.inverse.last_timing)
+            initial_inverse_seconds = self.inverse.last_timing[
+                "inner_apply_seconds"
+            ]
+            port_solution = self.last_port_solution
+            for refinement in range(3):
+                augmented_residual = None
+                try:
+                    residual_started = time.perf_counter()
+                    try:
+                        audit, augmented_residual, port_residual = self._residual_state(
+                            rhs,
+                            solution,
+                            values,
+                            port_solution,
+                            timing=timing,
+                        )
+                    finally:
+                        residual_elapsed = time.perf_counter() - residual_started
+                        _timing_add(
+                            timing,
+                            "native_action_and_residual_seconds",
+                            residual_elapsed,
+                        )
+                    audit["native_action_and_residual_seconds"] = float(
+                        residual_elapsed
+                    )
+                    audit["inverse_apply_seconds"] = (
+                        float(initial_inverse_seconds)
+                    )
+                    audit.update(
+                        {
+                            "backsolve_count": int(self.inverse.solve_count)
+                            - solve_count_start,
+                            "total_factor_solve_count": int(self.inverse.solve_count),
+                            "refinement_count": refinement,
+                            "same_factor_refinement": refinement > 0,
+                            "factor_backsolve_seconds": self.inverse.last_timing[
+                                "factor_backsolve_seconds"
+                            ],
+                            "storage_rhs_reduction_seconds": self.inverse.last_timing[
+                                "storage_rhs_reduction_seconds"
+                            ],
+                            "solution_recovery_seconds": self.inverse.last_timing[
+                                "solution_recovery_seconds"
+                            ],
+                        }
+                    )
+                    history.append(dict(audit))
+                    self._last_solve_audit = dict(audit)
+                    if audit["status"] == "passed":
+                        keep_solution = True
+                        return solution
+                    if refinement == 2:
+                        raise P4PhysicalResidualGateError(dict(audit))
+                    correction = None
+                    try:
+                        correction = self.inverse.apply(
+                            augmented_residual,
+                            port_rhs=port_residual,
+                        )
+                        solution.axpy(PETSc.ScalarType(1.0), correction)
+                    finally:
+                        _accumulate_optional_timing(
+                            timing, self.inverse.last_timing
+                        )
+                        if correction is not None:
+                            correction.destroy()
+                    port_solution = port_solution + self.last_port_solution
+                    self.inverse.last_port_solution = np.array(
+                        port_solution,
+                        copy=True,
+                    )
+                    initial_inverse_seconds = self.inverse.last_timing[
+                        "inner_apply_seconds"
+                    ]
+                finally:
+                    if augmented_residual is not None:
+                        augmented_residual.destroy()
+            raise AssertionError("unreachable p4 refinement state")
+        except BaseException as error:
+            if solution is not None and not keep_solution:
+                solution.destroy()
+            if not self._last_solve_audit:
+                self._last_solve_audit = {
+                    "status": "FAILED",
+                    "error_type": type(error).__name__,
+                    "error": str(error),
+                }
+            else:
+                self._last_solve_audit["error_type"] = type(error).__name__
+                self._last_solve_audit["error"] = str(error)
+            raise
+        finally:
+            if self._last_solve_audit:
+                self._last_solve_audit["history"] = tuple(history)
+                if timing is not None:
+                    self._last_solve_audit["timing"] = dict(timing)
+                self._last_solve_audit["total_apply_seconds"] = float(
+                    time.perf_counter() - total_started
+                )
+
+    def solve(self, rhs: PETSc.Vec, *, port_rhs: np.ndarray | None = None):
+        solution = self.apply(rhs, port_rhs=port_rhs)
+        return solution, self.last_port_solution
+
+    @property
+    def diagnostics(self) -> dict[str, Any]:
+        condensed = self.condensed
+        if condensed is None:
+            return {
+                **self._final_metadata,
+                "destroyed": True,
+                "last_solve": dict(self._last_solve_audit),
+                "factor_solve_count": int(self.inverse.solve_count),
+            }
+        metadata = {
+            "schema": "task041.h1c.p4_condensed_exact_factor.v1",
+            "full_storage_rows": int(self.full_rows),
+            "active_trace_rows": int(condensed.active_rows),
+            "interior_rows": int(condensed.interior_rows),
+            "port_rows": int(condensed.appended_rows),
+            "retained_matrix_rows": int(condensed.active_rows + condensed.appended_rows),
+            "factor_creation_count": 1,
+            "factor_solve_count": int(self.inverse.solve_count),
+            "last_solve": dict(self._last_solve_audit),
+            "physical_action": self.physical_action.audit,
+            "condensed_build": dict(condensed.build_audit),
+            "factor_events": tuple(self.factor_events),
+        }
+        self._final_metadata = dict(metadata)
+        return metadata
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        cleanup_error: BaseException | None = None
+        self._final_metadata = self.diagnostics
+        try:
+            self.inverse.destroy()
+        except BaseException as error:  # noqa: BLE001 - preserve cleanup failure
+            cleanup_error = error
+        finally:
+            if self.owns_physical_action:
+                try:
+                    self.physical_action.destroy()
+                except BaseException as error:  # noqa: BLE001 - preserve cleanup failure
+                    if cleanup_error is None:
+                        cleanup_error = error
+            self._destroyed = True
+        if cleanup_error is not None:
+            raise cleanup_error
+
+
 @dataclass
 class P4ExactFactor:
     """One collective exact p4 augmented factor and its physical action."""
@@ -765,6 +1313,7 @@ class P4ExactFactor:
     matrix: PETSc.Mat
     factor: ResearchExactFactorInverse
     factor_events: list[str]
+    owns_physical_action: bool = True
     _destroyed: bool = field(default=False, init=False, repr=False)
     _last_solve_audit: dict[str, Any] = field(default_factory=dict, init=False)
 
@@ -981,7 +1530,8 @@ class P4ExactFactor:
             return
         self.factor.destroy()
         self.matrix.destroy()
-        self.physical_action.destroy()
+        if self.owns_physical_action:
+            self.physical_action.destroy()
         self._destroyed = True
 
 
@@ -1100,3 +1650,142 @@ def build_p4_exact_factor(
         if physical is not None:
             physical.destroy()
         raise
+
+
+def _build_p4_condensed_from_physical(
+    physical_action: FullSpacePhysicalDtnActionSystem,
+    *,
+    factor_solver_type: str = "mumps",
+    lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
+    owns_physical_action: bool,
+) -> P4CondensedExactFactor:
+    """Build the opt-in p4 factor around an explicit physical action."""
+
+    if not isinstance(physical_action, FullSpacePhysicalDtnActionSystem):
+        raise TypeError("condensed p4 factor requires a physical p4 action")
+    if int(physical_action.cfg.nedelec_degree) != 4:
+        raise ValueError("condensed p4 factor requires a p4 physical action")
+
+    physical = physical_action
+    condensed = None
+    factor = None
+    inverse = None
+    events: list[str] = []
+
+    def lifecycle(event: str, _details: Mapping[str, Any]) -> None:
+        events.append(str(event))
+
+    try:
+        if lifecycle_callback is not None:
+            lifecycle_callback(
+                "p4_condensed_form_assembly_begin",
+                {"scope": "side_local", "degree": 4},
+            )
+        support_cells = _owned_cells_adjacent_to_facet_tag(
+            physical.local_mesh.mesh_data,
+            physical.local_mesh.external_facet_tag,
+        )
+        n_ports = len(physical.action.modes)
+        condensed = build_unconstrained_assembly_time_condensation(
+            fem.form(physical.bilinear_form),
+            physical.V,
+            physical.local_mesh.mesh_data.cell_tags,
+            mpc=physical.floquet_data.mpc,
+            appended_global_rows=n_ports,
+            appended_support_owned_cell_groups=(support_cells,),
+            appended_support_group_by_row=tuple(0 for _ in range(n_ports)),
+            appended_support_include_group_rows=True,
+            defer_final_assembly=True,
+            materialize_global_matrix=True,
+        )
+        if lifecycle_callback is not None:
+            lifecycle_callback(
+                "p4_condensed_trace_ready",
+                {
+                    "scope": "side_local",
+                    "degree": 4,
+                    "ports": n_ports,
+                    "support_cells_local": tuple(map(int, support_cells)),
+                    "object_inventory": dict(condensed.build_audit),
+                },
+            )
+        port_terms = _prepare_physical_p4_port_terms(condensed, physical)
+        port_audit = assemble_port_condensed_terms(condensed, port_terms)
+        if lifecycle_callback is not None:
+            lifecycle_callback(
+                "p4_condensed_port_ready",
+                {
+                    "scope": "side_local",
+                    "ports": n_ports,
+                    "port_audit": port_audit,
+                },
+            )
+        factor = ResearchExactFactorInverse(
+            condensed.matrix,
+            factor_solver_type=factor_solver_type,
+            factor_only_storage=True,
+            lifecycle_callback=lifecycle,
+        )
+        inverse = P4CellCondensedInverse(
+            condensed,
+            factor,
+            port_terms=port_terms,
+            owns_condensed=True,
+            owns_factor=True,
+        )
+        return P4CondensedExactFactor(
+            physical_action=physical,
+            inverse=inverse,
+            factor_events=events,
+            owns_physical_action=owns_physical_action,
+        )
+    except Exception:
+        if inverse is not None:
+            inverse.destroy()
+        elif factor is not None:
+            factor.destroy()
+            if condensed is not None:
+                condensed.destroy()
+        elif condensed is not None:
+            condensed.destroy()
+        if owns_physical_action:
+            physical.destroy()
+        raise
+
+
+def build_p4_condensed_exact_factor_from_action(
+    physical_action: FullSpacePhysicalDtnActionSystem,
+    *,
+    factor_solver_type: str = "mumps",
+    lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
+    owns_physical_action: bool = False,
+) -> P4CondensedExactFactor:
+    """Build a condensed factor while explicitly borrowing or owning action."""
+
+    return _build_p4_condensed_from_physical(
+        physical_action,
+        factor_solver_type=factor_solver_type,
+        lifecycle_callback=lifecycle_callback,
+        owns_physical_action=owns_physical_action,
+    )
+
+
+def build_p4_condensed_exact_factor(
+    side_system: HybridLocalDtnActionSystem,
+    *,
+    factor_solver_type: str = "mumps",
+    lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
+) -> P4CondensedExactFactor:
+    """Build the opt-in p4 factor without materializing a full FE matrix."""
+
+    if not isinstance(side_system, HybridLocalDtnActionSystem):
+        raise TypeError("condensed p4 factor requires a p6 side system")
+    if int(side_system.cfg.nedelec_degree) != 6:
+        raise ValueError("condensed p4 factor requires a p6 side system")
+    physical = _build_matching_p4_action(side_system)
+    return _build_p4_condensed_from_physical(
+        physical,
+        factor_solver_type=factor_solver_type,
+        lifecycle_callback=lifecycle_callback,
+        owns_physical_action=True,
+    )
