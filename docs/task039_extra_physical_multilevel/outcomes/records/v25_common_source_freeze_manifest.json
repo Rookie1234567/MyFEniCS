@@ -1,0 +1,104 @@
+{
+  "schema": "task039extra.v25.common-source-freeze.v1",
+  "task_identity": {
+    "review": "V23",
+    "execution_profile": "V25",
+    "response": "v26",
+    "branch": "task39extra",
+    "base_sha": "e63d2f49f19961f985faeadbe1ad3b89808369d1",
+    "implementation_commit": "a80ecab029fc12c7e32f4ec9adc6f9cc5b568345",
+    "scope": "Q4/Q3/Q2 original-B coarse-degree formal sequence; one MPI rank, one thread"
+  },
+  "source_freeze": {
+    "tracked_source_clean_at_manifest_creation": true,
+    "ignored_artifacts_excluded_from_clean_check": true,
+    "formal_source_sha_after_manifest_commit": "reported as the final HEAD after this manifest commit",
+    "selected_backend": "isotropic_sum_factorized_n1e_v26",
+    "h6_backend_rule": "isotropic_sum_factorized_n1e_v26_apply_and_power10",
+    "thread_contract": "mpi1_omp1_blas1_v25",
+    "native_a6_authority": "retained; candidate is PC-internal only",
+    "formal_release_required": true,
+    "dynamic_checker_scope": "dynamic_accounting_and_wiring_only; partial audit, not final physical authority"
+  },
+  "inputs": [
+    {
+      "stage": "Q2_ORIGINAL",
+      "path": "input/task39extra/v25_q2_speed_h7p5.dat",
+      "sha256": "0fd7394712488b8e289660067a1c1ce740d370599627770b194d3e4195b61c7b",
+      "coarse_degree": 2
+    },
+    {
+      "stage": "Q3_ORIGINAL",
+      "path": "input/task39extra/v25_q3_speed_h7p5.dat",
+      "sha256": "120884e17cfe1bdb588b816f7fc4d2e3381ff0f3d4a2cc7f0981cb9bff11003e",
+      "coarse_degree": 3
+    },
+    {
+      "stage": "Q4_ORIGINAL",
+      "path": "input/task39extra/v25_q4_speed_h7p5.dat",
+      "sha256": "c638c12f1701d2816fb3bc129199af9acbba6b75db3b6820b584d8579726bc32",
+      "coarse_degree": 4
+    }
+  ],
+  "s1_component_evidence": {
+    "selected_record": "docs/task039_extra_physical_multilevel/outcomes/records/s1_a6_h6_sum_factorized_v27_compact.json",
+    "selected_record_sha256": "5d6f0fa6e0c004cb6b05f069135c4785419a1ffd4de2b8c0bb272e9c688acbfc",
+    "status": "QUALIFIED_OPERATOR_EQUIVALENCE",
+    "authority_boundary": "A6/H6 operator pair only; no full PC or formal PDE claim",
+    "mpi_size": 1,
+    "thread_count": 1,
+    "component_backend": "isotropic_sum_factorized_n1e_v26",
+    "h6_post_setup_control": "isotropic_partial_assembly_v1; not the selected V25 backend",
+    "historical_v26_record": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/s1_a6_h6_pair_v26_compact.json",
+      "sha256": "b909c22b6916cef4340b4e8fd9a6080c451fa30380db708521f6b0d6970f6c13",
+      "role": "historical pre-v27 component record; not the selected V25 backend evidence"
+    }
+  },
+  "environment_preflight": {
+    "activation": "_MYFENICS_WSL_QUALIFIED_ACTIVATION=1",
+    "python": "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python",
+    "petsc_scalar": "numpy.complex128",
+    "petsc_int": "numpy.int32",
+    "mpi_library": "Open MPI v4.1.6",
+    "mpi_size": 1,
+    "omp_num_threads": 1,
+    "blas_num_threads": 1,
+    "dolfinx_abi": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/dolfinx",
+    "slepc4py_abi": "/usr/lib/slepcdir/slepc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/slepc4py"
+  },
+  "verification": {
+    "command_class": "qualified WSL targeted pure-Python/wiring/schema regression",
+    "result": "92 passed, 1 skipped",
+    "includes": [
+      "task39extra_v25_dynamic_checker",
+      "task39extra_v19_retained_fgmres",
+      "task39extra_v25_parameterization",
+      "task39extra_v25_first_direction_pair",
+      "task39extra_v19_adapter_identity",
+      "task39extra_v20_y1_lifecycle",
+      "test_362_partial_assembly",
+      "test_260_task038_input_schema",
+      "test_263_task038_launcher_contract",
+      "test_268_task038_full3d_iterative_contract"
+    ],
+    "diff_check": "passed",
+    "python_compile": "passed",
+    "formal_pde_status_at_freeze": "not_run"
+  },
+  "execution_contract": {
+    "memory_policy": "observe_only",
+    "max_iterations": 2048,
+    "require_zero_swap": true,
+    "sequence": ["Q4_ORIGINAL", "Q3_ORIGINAL", "Q2_ORIGINAL"],
+    "q4_command": "source scripts/activate_myfenics_wsl.sh && bash scripts/run_case_in_user_service.sh input/task39extra/v25_q4_speed_h7p5.dat --v14-time-policy observe_only",
+    "q3_q2_policy": "run sequentially after Q4 completion; Q3 nonconvergence does not skip Q2",
+    "formal_evidence_required": [
+      "full explicit true residual and post-release A6",
+      "native A6/Aq and FE identity checks",
+      "full field, 80-mode output and power/conservation metrics",
+      "raw BAL_H/p4/H6 live counters",
+      "watchdog/resource evidence"
+    ]
+  }
+}
