@@ -77,3 +77,17 @@ def test_v25_worker_dispatch_keeps_explicit_stage_degree(monkeypatch, tmp_path):
     )
     assert captured["evidence_prefix"] == "v25q3"
     assert captured["profile_identity"] == COARSE_DEGREE_SPEED_PROFILE
+
+
+def test_v25_public_launcher_accepts_observe_only_policy(capsys):
+    from scripts.run_case import main as run_case_main
+
+    assert run_case_main(
+        [
+            str(ROOT / "input/task39extra/v25_q4_speed_h7p5.dat"),
+            "--validate-only",
+            "--v14-time-policy",
+            "observe_only",
+        ]
+    ) == 0
+    capsys.readouterr()

@@ -7,6 +7,7 @@
     "branch": "task39extra",
     "base_sha": "e63d2f49f19961f985faeadbe1ad3b89808369d1",
     "implementation_commit": "a80ecab029fc12c7e32f4ec9adc6f9cc5b568345",
+    "entrypoint_fix": "scripts/run_case.py observe_only whitelist includes physical_p6_trace_coarse_degree_speed_v25",
     "scope": "Q4/Q3/Q2 original-B coarse-degree formal sequence; one MPI rank, one thread"
   },
   "source_freeze": {
@@ -86,8 +87,30 @@
     "python_compile": "passed",
     "formal_pde_status_at_freeze": "not_run"
   },
+  "preflight_attempts": {
+    "q4_entrypoint_failure": {
+      "unit": "myfenics-case-20260921T044153-618244.service",
+      "log": "benchmarks/artifacts/user_services/myfenics-case-20260921T044153-618244.log",
+      "log_sha256": "402060dbbadc4dab72a14137bb7ef91b24319e04272a2051d24a4eb7ffecb22d",
+      "exit_status": 2,
+      "result": "ENGINEERING_ENTRYPOINT_FAILURE",
+      "formal_pde_started": false,
+      "ledger_lease_created": false,
+      "start_time": "2026-09-21T12:41:53+08:00",
+      "exit_time": "2026-09-21T12:41:53+08:00",
+      "reason": "scripts/run_case.py observe_only whitelist omitted V25 profile"
+    },
+    "post_fix_validate_only": {
+      "q4": "valid",
+      "q3": "valid",
+      "q2": "valid",
+      "command": "scripts/run_case.py input/task39extra/v25_q{4,3,2}_speed_h7p5.dat --validate-only --v14-time-policy observe_only",
+      "formal_pde_started": false
+    }
+  },
   "execution_contract": {
-    "memory_policy": "observe_only",
+    "time_policy": "observe_only",
+    "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
     "max_iterations": 2048,
     "require_zero_swap": true,
     "sequence": ["Q4_ORIGINAL", "Q3_ORIGINAL", "Q2_ORIGINAL"],
