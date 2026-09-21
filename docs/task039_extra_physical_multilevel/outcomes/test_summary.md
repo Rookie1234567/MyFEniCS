@@ -5,8 +5,8 @@
 | V25 common source / focused suite | 92 passed，1 skipped | S1/S2 implementation, parameterization, runner/schema and checker contracts；skip 为未用 MPI fixture；不是 PDE 重跑 |
 | Q4/Q3/Q2 formal runs | Q4/Q3 existing PASS；Q2 existing RESOURCE_CONTROLLED_STOP | source cad282e25ed53cad1f9e4a5a70c14f3dd40e6d32；本次 S6 只整理 raw evidence，不重跑 PDE |
 | Q4/Q3 dynamic checker | DYNAMIC_PASS | checker 从原始字段重算；Q2 terminal checker not_run |
-| FE audit glue promotion | tracked utility added; FE audit not rerun | 只修正 repository-root parents 层级；旧 ignored tool SHA 与 audit-recorded SHA 保留 |
-| JSON / diff / syntax closeout | pending final local rerun | 针对本次 compact/docs/tool changes；不等同 full repository pytest |
+| FE audit glue promotion | tracked utility added; FE audit not rerun | 只修正 repository-root parents 层级；旧 ignored tool SHA 与 audit-recorded SHA 保留；当前 promoted tool SHA=`507fe2b7de074dc5482b4f8343e6920a23618c11d05efb1a41ad6c86c5896099` |
+| JSON / link / syntax / diff closeout | **PASS** | qualified activation 下解析 7 个 V25 JSON；核对 promoted tool SHA=`507fe2b7de074dc5482b4f8343e6920a23618c11d05efb1a41ad6c86c5896099`、本地链接和 Q3 condensed rows=`45440`；`python -m py_compile benchmarks/fe_metric_v25_q4_glue.py`、`git diff --check` 通过；不等同 full repository pytest |
 | Ruff / full repository pytest / CI | not_run / not_run / not_claimed | 没有安装新工具或虚构 CI 结果 |
 
 测试集合不相加冒充单一覆盖率；正式 PDE 资源、残差和官方结果与工程测试分开登记。

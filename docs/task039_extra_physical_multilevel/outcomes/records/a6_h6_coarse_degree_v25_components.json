@@ -40,7 +40,7 @@
   },
   "promoted_audit_glue": {
     "path": "benchmarks/fe_metric_v25_q4_glue.py",
-    "sha256": "e327a4560ff0e8d957991558095d31b196a910714478a8d6d38b3312f8d43661",
+    "sha256": "507fe2b7de074dc5482b4f8343e6920a23618c11d05efb1a41ad6c86c5896099",
     "change": "Only the repository-root parents index and tracked-file description changed; the ignored audit identity c52dde9f0e02390d3c8ba8d0fe67348eb4149d938ebe0a41da742d7a47156648 and older audit-recorded SHA are preserved.",
     "rerun_after_promotion": false
   },

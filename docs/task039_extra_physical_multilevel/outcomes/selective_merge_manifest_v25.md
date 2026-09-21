@@ -16,4 +16,4 @@ sum-factorized 后端把 A6/H6 的局部重复动作变成可复用、有计数�
 
 建议顺序：production numerical/core → reusable runner/watchdog → checker/benchmark → input/compact evidence → response/outcomes/index → selective manifest。正式合并仍需 ChatGPT 明确批准并由用户授权；ordinary default 和 master 状态保持不变。
 
-FE glue promotion：tracked benchmarks/fe_metric_v25_q4_glue.py 只把既有 ignored wrapper 变成可审阅文件，并把 artifact-root 的 REPO_ROOT parents[5] 修正为 repository benchmarks 文件下的 parents[1]。old ignored SHA c52dde9f0e02390d3c8ba8d0fe67348eb4149d938ebe0a41da742d7a47156648、audit-recorded SHA 6b267291c69f9445441b39875a6c1c324db796ede0acf2e3e9e6e3f8140cc5a5 和 promoted SHA e327a4560ff0e8d957991558095d31b196a910714478a8d6d38b3312f8d43661 均保留；promotion 后不重算 FE。
+FE glue promotion：tracked benchmarks/fe_metric_v25_q4_glue.py 只把既有 ignored wrapper 变成可审阅文件，并把 artifact-root 的 REPO_ROOT parents[5] 修正为 repository benchmarks 文件下的 parents[1]。old ignored SHA c52dde9f0e02390d3c8ba8d0fe67348eb4149d938ebe0a41da742d7a47156648、audit-recorded SHA 6b267291c69f9445441b39875a6c1c324db796ede0acf2e3e9e6e3f8140cc5a5 和 promoted SHA 507fe2b7de074dc5482b4f8343e6920a23618c11d05efb1a41ad6c86c5896099 均保留；promotion 后不重算 FE。
