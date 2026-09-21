@@ -1,0 +1,375 @@
+{
+  "schema": "task041.v5.condensed_speed.r3h8.v1",
+  "generated_utc": "2026-09-21T18:52:35.111Z",
+  "phase": "R3h8",
+  "status": "documented_component_progress_not_formal_production_qualification",
+  "plain_language_method": "p4单元凝聚先消去每个单元内部未知量，只解较小的保留耦合系统，再回代恢复完整FE与端口修正，并用原A4物理作用与完整残差检查；不放宽逆或精度。p6已经凝聚，本阶段不重复凝聚。",
+  "identity": {
+    "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
+    "head": "d0d39a432a8316656a2ba299448ee94f49342aac",
+    "upstream": "origin/codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
+    "upstream_head": "d0d39a432a8316656a2ba299448ee94f49342aac",
+    "dirty_boundary": {
+      "tracked_files": [
+        "src/solvers/hcurl_assembly_time_condensation.py",
+        "src/solvers/physical_balanced_physical_operator.py",
+        "src/solvers/physical_balanced_side_inverse.py",
+        "src/test/test_347_task041_balh_physical_operator.py",
+        "src/test/test_349_task041_balh_side_inverse.py"
+      ],
+      "untracked_files": [
+        "src/solvers/p4_cell_condensed_inverse.py",
+        "src/test/test_task041_p4_condensed_inverse.py"
+      ],
+      "qualification_boundary": "这些源码变化属于已审研究工作树；本记录不把dirty状态当作可提交或正式runner资格。"
+    }
+  },
+  "source_sha256": {
+    "src/solvers/hcurl_assembly_time_condensation.py": "11a5df70cbf18dd7fe63bde2f05038db9638d208f162d97b2472152859f3cfff",
+    "src/solvers/p4_cell_condensed_inverse.py": "da4466e6c7dcafe356d1d53c8c7f90fb62e513b56fc15cca0cdccdf6ac6c081b",
+    "src/solvers/physical_balanced_physical_operator.py": "96e25c220ee1c9eebd503db7a98f9a77fa4307a8a99fa4c3e5d1f2fcab8aa981",
+    "src/solvers/physical_balanced_side_inverse.py": "901e1f414c3d8a608b78cd2d0c7878072da5a05a8d07b291894adee0c5019f54",
+    "src/test/test_347_task041_balh_physical_operator.py": "807c6ed383697e7469e451d951b193f9df3259fcf0480d63e30586b483c12f89",
+    "src/test/test_349_task041_balh_side_inverse.py": "26dac6bacae823d89816844b29c7ff2077a18cd8e69a6ca2e20c7f34b5e8c511",
+    "src/test/test_task041_p4_condensed_inverse.py": "681d6f9049348b46f7d8d430507cc01fa105027d1f667109862aa19c81ba1ea3"
+  },
+  "evidence": {
+    "r3h7_compact": {
+      "path": "results/task041_review_v5_cpu_numa_condensed_speed/r3h_validation_20260921/r3h7_compact.json",
+      "sha256": "ccf6c608730848258e22efce421d66d2db0b2d9cc2a7723a4b812ed9c9c85edb"
+    },
+    "r3h7_ledger_append_draft": {
+      "path": "results/task041_review_v5_cpu_numa_condensed_speed/r3h_validation_20260921/r3h7_ledger_append_draft.json",
+      "sha256": "53e17c7bce5037bef876a897ee802febc5977103e9a100563cf4c0c2fe6cc802"
+    },
+    "r3h7_summary": {
+      "path": "results/task041_review_v5_cpu_numa_condensed_speed/r3h_validation_20260921/r3h7_summary_zh.md",
+      "sha256": "21aa2906f3600b7821313b4a972079ebf7184e1b2122146a7d63adce4d4efabe"
+    },
+    "r3h7_raw_index": {
+      "path": "results/task041_review_v5_cpu_numa_condensed_speed/r3h_validation_20260921/r3h7_compact.json#/raw_sha256_index",
+      "entries": 56,
+      "missing": 0,
+      "mismatch": 0
+    },
+    "ledger_after_r3h8": {
+      "path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_load_ledger_20260920.json",
+      "sha256": "59f66817831c0ccf9e1c97ac6c363d044684c071ade2a2b84430c0a0efc2029a",
+      "entry_id": "r3h1_r3h6_diagnostic_and_tiny_fe_validation_20260922",
+      "charged_seconds": 288.010923037,
+      "total_seconds": 7600.153469588
+    },
+    "prior_compact_refs": {
+      "r3d2_v2": {
+        "path": "results/task041_review_v5_cpu_numa_condensed_speed/r3d2_validation_20260921/r3d2_validation_compact_v2.json",
+        "sha256": "769701dc73de23a8e7d04544b60b9e8b78f3c14d5b73586eca54069324dd73ab"
+      },
+      "r3f": {
+        "path": "results/task041_review_v5_cpu_numa_condensed_speed/r3f_validation_20260921/r3f_validation_compact.json",
+        "sha256": "69d91b91dd608962fb93f63634e5a7af0704fa8e67065f0496a268843f6d9e7e"
+      }
+    }
+  },
+  "donor_manifest": {
+    "commit": "b337d215c3d278d0c1e715f53e28b69f7f0ee3fe",
+    "verification": "只读git show --no-patch、git diff-tree --name-only和git grep核对；donor commit subject为Implement opt-in dual-condensed memory lifecycle for Review V20。",
+    "verified_sources": [
+      {
+        "path": "src/runners/physical_p4_cell_condensed_v18.py",
+        "functions": [
+          "CellCondensedFintAdapter",
+          "CellCondensedFintAdapter.apply_with_facts",
+          "_factor_factory_for_backend",
+          "_operator_identity",
+          "cell_condensed_stack",
+          "cell_condensed_stack_factory",
+          "run_cell_condensed_fullspace_stage"
+        ],
+        "scope": "donor的V18 cell-condensed运行与生命周期参考；其中cell_condensed_stack保留MPI1限定，未提升为Task041 MPI8或正式生产资格。"
+      },
+      {
+        "path": "src/runners/physical_dual_cell_condensed_lowmem_v20.py",
+        "functions": [
+          "run_physical_dual_cell_condensed_lowmem_v20"
+        ],
+        "scope": "donor V20 owner/lifecycle与双凝聚研究路径参考；git grep显示该runner导入/调用prepare_dual_condensed_forms，但该函数定义在其它来源，故不把它列为本文件定义；没有把donor后续性能或精度结论登记为Task041通过。"
+      },
+      {
+        "path": "src/solvers/p4_cell_condensed_inverse.py",
+        "functions": [
+          "CellPortTerms",
+          "assemble_port_condensed_terms",
+          "assemble_condensed_ports",
+          "P4CellCondensedInverse"
+        ],
+        "source_lines": "donor CellPortTerms line111; assemble_port_condensed_terms line122; assemble_condensed_ports line220; P4CellCondensedInverse line386",
+        "scope": "这是donor b337的直接p4核心来源；Task041同名文件是在该数学/生命周期来源上做窄适配，并不把后续未通过的donor精度项写成通过。"
+      },
+      {
+        "path": "src/solvers/hcurl_assembly_time_condensation.py",
+        "functions": [
+          "AssemblyTimeCondensedSystem",
+          "_owned_trace_numbering",
+          "_trace_constraint_map",
+          "_cell_trace_expansion",
+          "_distributed_trace_preallocation",
+          "build_unconstrained_assembly_time_condensation"
+        ],
+        "scope": "donor的trace ownership、cell expansion和preallocation来源；Task041在本文件上保留默认行为并增加已审p4 opt-in group-row预留。"
+      },
+      {
+        "path": "src/solvers/physical_interface_balanced.py",
+        "functions": [
+          "InterfaceBalancedCoupling.__init__",
+          "InterfaceBalancedCoupling.apply",
+          "InterfaceBalancedCoupling.destroy"
+        ],
+        "scope": "donor BAL/H接口生命周期参考，不等同Task041新的side_inverse接线。"
+      },
+      {
+        "path": "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py",
+        "functions": [
+          "build_same_mesh_physical_action",
+          "build_p6_same_mesh_physical_bundle",
+          "build_physical_rhs",
+          "recover_p0_outputs",
+          "release_p6_same_mesh_solver_stack",
+          "destroy_p6_same_mesh_physical_bundle"
+        ],
+        "scope": "donor物理action、p6/trace和释放顺序参考；Task041不重复凝聚p6，也未把donor full-field运行当作本阶段证据。"
+      }
+    ],
+    "task041_adaptation": [
+      {
+        "path": "src/solvers/physical_balanced_physical_operator.py",
+        "functions": [
+          "_build_matching_p4_action",
+          "build_p4_condensed_exact_factor_from_action",
+          "build_p4_condensed_exact_factor",
+          "P4CondensedExactFactor"
+        ],
+        "scope": "Task041从同一physical action/V/MPC建立p4 condensed factor；默认full路径不变，保留完整FE/port RHS、原A4检查和有界同因子精化。"
+      },
+      {
+        "path": "src/solvers/physical_balanced_side_inverse.py",
+        "functions": [
+          "build_side_balanced_inverse",
+          "SideBalancedInverse._apply_q_callback"
+        ],
+        "scope": "cell_condensed是显式backend；full仍默认，Q调用返回完整FE语义。"
+      },
+      {
+        "path": "src/solvers/p4_cell_condensed_inverse.py",
+        "functions": [
+          "P4CellCondensedInverse",
+          "assemble_port_condensed_terms",
+          "assemble_condensed_ports"
+        ],
+        "scope": "Task041窄核心消元、端口RHS缩减/回代、owner-local恢复与timing/audit。"
+      },
+      {
+        "path": "src/test/test_task041_p4_condensed_inverse.py",
+        "functions": [
+          "test_production_apply_shared_fixture_covers_rhs_and_recovery_contract",
+          "test_production_apply_empty_owner_uses_same_fixture",
+          "test_borrowed_factor_and_condensed_are_not_destroyed"
+        ],
+        "scope": "R3c/R3d synthetic one/two-port serial/MPI2与lifecycle测试；不外推真实FE或MPI8。"
+      },
+      {
+        "path": "src/test/test_347_task041_balh_physical_operator.py",
+        "functions": [
+          "test_task041_h1e_condensed_p4_matches_full_gp_response",
+          "test_task041_h1e_side_inverse_old_new_q_pc_same_side"
+        ],
+        "scope": "R3f/R3h6 tiny real-FE同layout old/new Q/PC证据；非13.5/5/2nm正式模型资格。"
+      },
+      {
+        "path": "src/test/test_349_task041_balh_side_inverse.py",
+        "functions": [
+          "test_side_inverse_builder_selects_explicit_cell_condensed_backend",
+          "test_side_inverse_condensed_q_records_timing_and_solve_delta",
+          "test_side_inverse_rank_local_pc_failure_is_collective_and_reusable"
+        ],
+        "scope": "R3h5 side/backend、计时和PC失败恢复回归；不代表生产大模型性能。"
+      }
+    ],
+    "not_bound_or_not_qualified": [
+      "donor后续A6、power10、p3/p2、H6/DtN等未纳入Task041本阶段适配；相关来源如src/runners/physical_retained_outer_adapter.py和src/runners/physical_p4_schur_v14.py未作为本记录的已通过接线依据。",
+      "donor后续负的p4精度/重复一致性项、MPI1限定路径和任何未在本记录source_sha256中绑定的代码均为not_run或not_qualified，不写成Task041通过。",
+      "Task041正式runner/workflow/profile/dat尚未接入cell_condensed；正式MPI8、13.5/5/2nm大模型、性能和完整资源资格均未运行。"
+    ]
+  },
+  "r3c_r3f_boundary": {
+    "r3c": "synthetic one-port condensed serial/MPI2 only; early synthetic qualification, not real FE/MPI8/performance.",
+    "r3d2": "synthetic two-port non-Hermitian preallocation/owner/empty-owner serial/MPI2 evidence; not real FE/MPI8/performance.",
+    "r3f": "tiny real-FE p4/port complete-inverse serial/MPI2 numerical result passed; MPI2 runtime resource sampling was not observed and remains so.",
+    "r3h5": "qualified serial 27 passed/4 skipped and MPI2 each rank 31 passed; first ABI NameError attempt ran pytest and is not qualification.",
+    "r3h6": "tiny same-side old/new Q/PC serial and MPI2 passed with full supervision, RSS and cleanup; do not interpret wall difference as speedup."
+  },
+  "ledger_scope": {
+    "mixed_returncode": null,
+    "status": "mixed_diagnostics_with_final_qualification",
+    "charged_seconds": 288.010923037,
+    "total_seconds_after": 7600.153469588,
+    "abi_static_launcher_errors": "unknown_or_separate; not filled as zero",
+    "unique_append_done": true
+  },
+  "r3h5_results": {
+    "serial": {
+      "argv": "numactl --physcpubind=1 --membind=0 python -m pytest -vv -s src/test/test_task041_p4_condensed_inverse.py src/test/test_349_task041_balh_side_inverse.py",
+      "abi_rc": 0,
+      "pytest_rc": 0,
+      "result": "27 passed, 4 skipped",
+      "parent_wall_seconds": 1.882421712,
+      "abi_evidence": "results/task041_review_v5_cpu_numa_condensed_speed/r3h_validation_20260921/r3h5_qualification_20260922_attempt2/serial_original_two_files.log; sha256 33b82572909ae58561a9e4f225b7e748871e327aa968f5ea358e0ec58d76408b",
+      "pytest_evidence": "results/task041_review_v5_cpu_numa_condensed_speed/r3h_validation_20260921/r3h5_qualification_20260922_attempt2/serial_original_two_files.log; sha256 33b82572909ae58561a9e4f225b7e748871e327aa968f5ea358e0ec58d76408b",
+      "meta_exit_attachment": "results/task041_review_v5_cpu_numa_condensed_speed/r3h_validation_20260921/r3h5_qualification_20260922_attempt2/serial_original_two_files.meta; sha256 f7e7b666e132ac9237e55f9a93d62c92d06b5e56f560c9753875b6469eccef72"
+    },
+    "mpi2": {
+      "argv": "numactl --physcpubind=1,2 --membind=0 mpiexec -n 2 --bind-to cpu-list:ordered --cpu-list 1,2 --report-bindings python -m pytest -vv -s src/test/test_task041_p4_condensed_inverse.py src/test/test_349_task041_balh_side_inverse.py",
+      "abi_rc": 0,
+      "pytest_rc": 0,
+      "result": "2 ranks, 31 passed each",
+      "parent_wall_seconds": 1.841063376,
+      "rank_binding": "rank0 CPU1, rank1 CPU2, node0, math threads=1",
+      "abi_evidence": "results/task041_review_v5_cpu_numa_condensed_speed/r3h_validation_20260921/r3h5_qualification_20260922_mpi2/mpi2_original_two_files.log; sha256 e951392b1833e297676cbc082ce8d35092f91f6f8442b5534d577b7d3c9d7030",
+      "pytest_evidence": "results/task041_review_v5_cpu_numa_condensed_speed/r3h_validation_20260921/r3h5_qualification_20260922_mpi2/mpi2_original_two_files.log; sha256 e951392b1833e297676cbc082ce8d35092f91f6f8442b5534d577b7d3c9d7030",
+      "meta_exit_attachment": "results/task041_review_v5_cpu_numa_condensed_speed/r3h_validation_20260921/r3h5_qualification_20260922_mpi2/mpi2_original_two_files.meta; sha256 0a9004f44fafcdffd7ef7443cbf419553963e5399ba4162b11c8f0ecc213d9cd"
+    },
+    "failed_history": {
+      "status": "not_qualification",
+      "reason": "首轮ABI NameError(mpi4py未import)后仍执行pytest；保留为启动门失效观察，不改写为通过。",
+      "log": "results/task041_review_v5_cpu_numa_condensed_speed/r3h_validation_20260921/r3h5_qualification_20260922/serial_original_two_files.log",
+      "sha256": "af64cc7fa391b635008795003da2805e4a9f76e35cb7f7f68206988e336dbbb5"
+    }
+  },
+  "r3h6_results": {
+    "test_node": "src/test/test_347_task041_balh_physical_operator.py::test_task041_h1e_side_inverse_old_new_q_pc_same_side",
+    "common": {
+      "launcher_sha256": "c36892b4213b45a2de567f6ec3257ce76d75b418be25efdc5f8bd3496896e060",
+      "command_sheet": "results/task041_review_v5_cpu_numa_condensed_speed/r3h_validation_20260921/r3h6_preparation_20260922/r3h6_launch_commands.txt",
+      "command_sheet_sha256": "9da062951dc56b79e57734cc55ffd350bcbdb7ad0dad368ddb088efb2bffee01",
+      "resource_semantics": "memory_authority=max(process-tree RSS, dedicated cgroup memory.current); job swap authority=max(process-tree VmSwap, dedicated cgroup swap.current); memory.peak/history is separate; PSS/USS are sparse and missing values remain not_measured",
+      "resource_boundary": "tiny FE serial/MPI2 full supervisor resource gates passed; formal large-model/MPI8/production resource qualification was not run",
+      "q_threshold": 1e-11,
+      "pc_threshold": 1e-08
+    },
+    "serial": {
+      "unit": "task041-r3h6-fe-serial-20260921T170617Z.service",
+      "invocation_id": "90063d1a445443ed85958db6d5489a04",
+      "argv": [
+        "/usr/bin/numactl",
+        "--physcpubind=1",
+        "--membind=0",
+        "/home/fenics/Projects/MyFEniCS/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-s",
+        "src/test/test_347_task041_balh_physical_operator.py::test_task041_h1e_side_inverse_old_new_q_pc_same_side"
+      ],
+      "returncode": 0,
+      "termination_reason": null,
+      "wrapper_interval_seconds": 168.068637084,
+      "phase_wall_seconds": 167.81843297200248,
+      "workflow_wall_seconds": 167.85164156000246,
+      "q_relative": 1.3382559074923613e-13,
+      "pc_relative": 1.3047558741076922e-13,
+      "a4_max_relative": 3.1267280149834914e-11,
+      "a4_tolerance": 1e-10,
+      "backsolve_counts": {
+        "old_q": 1,
+        "old_pc": 1,
+        "new_q": 1,
+        "new_pc": 1
+      },
+      "samples": 307,
+      "smaps_complete_samples": 77,
+      "rss_peak_bytes": 3788111872,
+      "pss_peak_bytes": 3741050880,
+      "uss_peak_bytes": 3724861440,
+      "min_memavailable_bytes": 2141861519360,
+      "swap_pswp_deltas": [
+        0,
+        0,
+        0
+      ],
+      "process_group_gone": true,
+      "cleanup_evidence": "results/task041_review_v5_cpu_numa_condensed_speed/r3h_validation_20260921/r3h6_real_fe_20260921/r3h6_serial_terminal_journal_20260922.txt; results/task041_review_v5_cpu_numa_condensed_speed/r3h_validation_20260921/r3h6_serial_cleanup_readonly_20260922T180229Z.txt",
+      "evidence": {
+        "summary": "results/task041_review_v5_cpu_numa_condensed_speed/r3h_validation_20260921/r3h6_real_fe_20260921/run_serial_20260921T170617Z/summary.json",
+        "summary_sha256": "178b934722cf6322380b63f5779a86c6307c7c14efb78b0fef828441ee3ae435",
+        "stdout": "results/task041_review_v5_cpu_numa_condensed_speed/r3h_validation_20260921/r3h6_real_fe_20260921/run_serial_20260921T170617Z/logs/r3h6_fe_serial_stdout.txt",
+        "stdout_sha256": "fe63d7db2173c30efafadf4a52987af6d3f0b796f9c291121e7f223c82481b6d",
+        "abi": "results/task041_review_v5_cpu_numa_condensed_speed/r3h_validation_20260921/r3h6_real_fe_20260921/abi_serial_20260921T170617Z.txt",
+        "abi_sha256": "e4c229e79f3e0ba837e256cd1483eacb9186eac5c23b4ad1d29c5ed9d2542d5f"
+      }
+    },
+    "mpi2": {
+      "unit": "task041-r3h6-fe-mpi2-20260921T170618Z.service",
+      "invocation_id": "adccee5205cd45279f20546dcbd5c2bf",
+      "argv": [
+        "/usr/bin/numactl",
+        "--physcpubind=1,2",
+        "--membind=0",
+        "/usr/bin/mpiexec",
+        "-n",
+        "2",
+        "--bind-to",
+        "cpu-list:ordered",
+        "--cpu-list",
+        "1,2",
+        "--report-bindings",
+        "/home/fenics/Projects/MyFEniCS/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-s",
+        "src/test/test_347_task041_balh_physical_operator.py::test_task041_h1e_side_inverse_old_new_q_pc_same_side"
+      ],
+      "returncode": 0,
+      "termination_reason": null,
+      "wrapper_interval_seconds": 82.973980422,
+      "phase_wall_seconds": 82.73368603600102,
+      "workflow_wall_seconds": 82.76650135300588,
+      "q_relative": 1.2026417833118804e-13,
+      "pc_relative": 1.1310942394716736e-13,
+      "a4_max_relative": 3.2111545815853925e-11,
+      "a4_tolerance": 1e-10,
+      "backsolve_counts": {
+        "old_q": 1,
+        "old_pc": 1,
+        "new_q": 1,
+        "new_pc": 1
+      },
+      "rank_results": "2 ranks, 1 passed each; rank0 CPU1, rank1 CPU2, node0",
+      "samples": 152,
+      "smaps_complete_samples": 38,
+      "rss_peak_bytes": 1280536576,
+      "pss_peak_bytes": 987764736,
+      "uss_peak_bytes": 748646400,
+      "min_memavailable_bytes": 2144584851456,
+      "swap_pswp_deltas": [
+        0,
+        0,
+        0
+      ],
+      "first_sample_scope": "0.033622843 s仅含parent+mpiexec；0.566081958 s第二样本已含两rank",
+      "process_group_gone": true,
+      "cleanup_evidence": "results/task041_review_v5_cpu_numa_condensed_speed/r3h_validation_20260921/r3h6_real_fe_20260921/r3h6_mpi2_terminal_journal_20260922.txt; results/task041_review_v5_cpu_numa_condensed_speed/r3h6_real_fe_20260921/r3h6_mpi2_cleanup_readonly_20260922T174635Z.txt",
+      "evidence": {
+        "summary": "results/task041_review_v5_cpu_numa_condensed_speed/r3h_validation_20260921/r3h6_real_fe_20260921/run_mpi2_20260921T170618Z/summary.json",
+        "summary_sha256": "ff38f989508aaba2310cd30df160e2c344fca278b39ca50bf97046fdd22a8693",
+        "stdout": "results/task041_review_v5_cpu_numa_condensed_speed/r3h_validation_20260921/r3h6_real_fe_20260921/run_mpi2_20260921T170618Z/logs/r3h6_fe_mpi2_stdout.txt",
+        "stdout_sha256": "8d6844f98bd759c7dbee45171a76fbcccb9f4fceef6ee0c87282671d7390a2d7",
+        "abi": "results/task041_review_v5_cpu_numa_condensed_speed/r3h_validation_20260921/r3h6_real_fe_20260921/abi_mpi2_20260921T170618Z.txt",
+        "abi_sha256": "728e61939bbc432cbf8823819e9cbbec043aa60293f40b47b76ceecff3c85759"
+      }
+    }
+  },
+  "implementation_commit": {
+    "commit1": "2ba8c891afb9a15095d38f7abc18879fa6a44d95",
+    "qualification_basis": "R3h5/R3h6 tests were completed on the same dirty-tree source content before commit1; the seven source/test SHA values in source_sha256 are unchanged. No post-commit test rerun is claimed."
+  }
+}

@@ -1,8 +1,16 @@
 # Task041 Response V8：Review V5 R1i 2666 复测与历史终态
+## R3h8：p4 凝聚组件阶段进展（R3–R6尚未完成）
 
-本报告保留 D3a 的自然终止证据、R0/R1d/R1e/R1f/R1g/R1h 历史记录，并登记最新一次 R1i 2666 复测。两批 driver `rc=0` 只表示诊断批次正常收尾；CPU1 仍未资格化，不能把异常归为硬件损坏、确定的 DRAM 热限流或核心降频。R2–R6、R3 p4 草稿测试和新 PDE/MPI/QEP 均 `not_run`。
+p4 单元凝聚先消去单元内部未知量，再解较小的保留耦合系统并回代恢复完整 FE 与端口修正，最后用原 A4 和完整残差检查；没有放宽精度。p6 已凝聚，不重复消元；cell_condensed 仅显式可选，默认 full 路径不变，正式 runner 尚未接入 cell_condensed。
 
-## R1i：Auto→2666 MT/s 未解决吞吐异常
+用户当前覆盖仅使用 socket0/node0；正式 MPI8 拟用 CPU1–8 并 membind0，node1/双路资格暂停；不设严格 elapsed-time stop，但继续计账并保留数值/资源门。
+
+R3c 是早期 synthetic 单端口资格，R3d2 才证明双端口/preallocation；R3f 是 p4 FE/port 完整逆对照；R3h6 才是同 layout old/new Q/PC。R3h5 的 serial 27 passed/4 skipped、MPI2 每 rank 31 passed，及 R3h6 的数值/资源边界均见 [R3h8 tracked record](outcomes/records/task041_v5_condensed_speed.json)。R3h1–3 的 rc59/gdb/trace 和 Cython 未证实根因保留；原始 56 项索引见 [R3h7 compact](../../results/task041_review_v5_cpu_numa_condensed_speed/r3h_validation_20260921/r3h7_compact.json)。R3h8 已一次追加 `288.010923037 s`，累计 `7600.153469588 s`；后续文档纠偏未再计费。当前只保留 socket0/node0，R3–R6尚未完成。
+
+
+本报告保留 D3a 的自然终止证据、R0/R1d/R1e/R1f/R1g/R1h 历史记录，并登记最新一次 R1i 2666 复测。两批 driver `rc=0` 只表示诊断批次正常收尾；CPU1 仍未资格化，不能把异常归为硬件损坏、确定的 DRAM 热限流或核心降频。R2、R4–R6及正式 PDE/MPI/QEP 仍未完成；R3 的小组件证据另按下节登记。
+
+## R1i：Auto→2666 MT/s 未解决吞吐异常（历史快照）
 
 R1i 使用 post-boot `fb33e6f4-078c-4638-becf-e8ea71f8764e`、2 TiB 级内存、16×128 GB DIMM，DMI configured speed=`2666 MT/s`；用户确认 BIOS Memory Frequency 从 `Auto` 改为 `2666`，其它设置未改。两批沿用已审 driver/worker、8×1、3×60 s、原资源/温度/身份/清场门，未运行 PDE 或新负载。 本批运行 repo HEAD 为 `4de7bc82a964ec9de03fc3689595efeb21e45678`，与当前文档工作树及其后续文档提交身份分开记录。
 

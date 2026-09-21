@@ -1,6 +1,12 @@
 # Test and evidence summary
 
-## Review V5 R1i：2666复测证据（非测试，当前）
+## R3h8：p4 凝聚组件与 tiny FE 证据（R3–R6尚未完成）
+
+通俗地说，p4 单元凝聚先消去单元内部未知量，解较小的保留耦合系统，再回代恢复完整 FE/端口修正，并用原 A4 和完整残差检查；这不是降低精度的近似。p6 已凝聚，不重复凝聚；cell_condensed 只在显式后端选择时使用，默认 full 与正式 runner 不变。
+
+R3c 是早期 synthetic 单端口资格，R3d2 才证明双端口/preallocation；R3f 是 p4/port 完整逆对照，R3h5 是 side/backend 回归，R3h6 才是同一 side/layout old/new Q/PC tiny FE。R3h6 数值、A4/backsolve、全程 RSS/专属 cgroup、稀疏 PSS/USS、swap 和清场通过；167 秒与82秒不是提速结论，也不是正式 MPI8/13.5/5/2nm资源资格。R3h1–3 的 rc59、gdb、trace 保留，首轮 ABI NameError 后仍跑 pytest 的观察不计资格，Cython 底层成因未证明。详见 [R3h8 record](records/task041_v5_condensed_speed.json) 与 [R3h7 compact](../../../results/task041_review_v5_cpu_numa_condensed_speed/r3h_validation_20260921/r3h7_compact.json)。R3h8 已一次追加 `288.010923037 s`，累计 `7600.153469588 s`；后续文档纠偏未再计费。R3–R6 尚未完成。
+
+## Review V5 R1i：2666复测证据（历史快照）
 
 R1i 不是 pytest、PDE、MPI 或 QEP 测试；它只复核 BIOS `Auto→2666 MT/s` 后的有界 CPU/NUMA 诊断。四组路径三窗为：local socket0→node0 `35.63788506479269 / 35.664033252580786 / 35.6967308849817`、local socket1→node1 `35.648371306083156 / 31.66995975917892 / 11.024863223982754`、cross socket0→node1 `23.562553384022838 / 22.956933903624012 / 13.10402684910857`、cross socket1→node0 `23.408224743881927 / 22.924688775860275 / 21.682633764800535 GB/s`。node1路径仍骤降，CPU1未准入；首窗正常不算修复。
 两批 `rc=0`、清场完成；43+43硬件/BMC文件、16 DIMM、688对温度值差值 `[-1,+1]°C`。六个 TEMPLO 与两个 TEMPMID 的原始事件、PCI/BMC异步差和SHA见 [R1i tracked compact](records/task041_r1i_2666_retest_20260921.json)，ignored 原件为 [compact v3](../../../results/task041_review_v5_cpu_numa_condensed_speed/r1i_2666_retest_20260921/r1i_2666_two_batch_compact_v3_20260921.json)，未改阈值或保护，R2仍 blocked。

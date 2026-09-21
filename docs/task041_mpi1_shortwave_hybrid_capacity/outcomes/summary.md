@@ -1,6 +1,20 @@
 # Task041 outcomes summary
 
-## 2026-09-21：Review V5 R1i 2666 复测（当前）
+## 2026-09-22：R3h8 p4 凝聚组件阶段进展（R3–R6尚未完成）
+
+p4 单元凝聚先消去单元内部未知量，再解较小的保留系统并回代恢复完整 FE/端口修正；最后仍检查原 A4 和完整残差，未放宽精度。p6 已凝聚，本阶段不重复消元；cell_condensed 仅显式可选，默认 full 不变，正式 runner 尚未接线。
+
+| 阶段 | 结果 | 资格边界与入口 |
+|---|---|---|
+| R3c | early synthetic 单端口 serial/MPI2 通过 | 非真实 FE/MPI8/性能资格 |
+| R3d2 | synthetic 双端口与 preallocation serial/MPI2 通过 | 非真实 FE/MPI8/性能资格 |
+| R3f | tiny real-FE p4/port 完整逆 serial/MPI2 通过 | R3f 的 MPI2运行期资源采样缺测保持 not_observed |
+| R3h5 | serial 27 passed/4 skipped；MPI2 每 rank 31 passed | 首轮 ABI NameError 后仍执行的尝试不计资格；最终源码回归关闭 |
+| R3h6 | 同一 side/layout tiny FE old/new Q/PC，serial/MPI2 rc0，自然清场，RSS/资源门通过 | 不把 167 秒对 82 秒写成加速，不外推正式 MPI8/大模型 |
+
+七个源码 hash、donor 与 Task041 自研适配边界、56 项 raw 索引和完整入口见 [R3h8 tracked record](records/task041_v5_condensed_speed.json)；冻结摘要见 [R3h7 compact](../../../results/task041_review_v5_cpu_numa_condensed_speed/r3h_validation_20260921/r3h7_compact.json)。R3h8 已一次追加 `288.010923037 s`，累计 `7600.153469588 s`；后续文档纠偏未再计费。当前仅 socket0/node0 方向继续，未来正式 MPI8 规划 CPU1–8/membind0；node1 硬件修复和双路比较暂停，5/2nm全流程、RTA、QEP、正式资源与提速均 not_run，R3–R6 尚未完成。
+
+## 2026-09-21：Review V5 R1i 2666 复测（历史快照）
 
 R1i 只将 BIOS Memory Frequency 从 `Auto` 改为 `2666 MT/s`，其它设置、保护、刷新和风扇状态不变；这是工作站 CPU/NUMA 内存复制诊断，不是2nm物理模型。node1路径仍骤降，CPU1仍未准入；首窗正常不算修复。
 

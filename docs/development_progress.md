@@ -1,6 +1,12 @@
 # 项目开发进度：Task000–Task041
 
-## 2026-09-21：Task041 Review V5 R1i 2666 复测（当前）
+## 2026-09-22：Task041 Review V5 R3h8 p4 凝聚阶段（R3–R6尚未完成）
+
+p4 单元凝聚先消去单元内部未知量，解较小的保留系统，再回代恢复完整 FE/端口修正，并用原 A4 和完整残差复核；不放宽逆或精度。p6 已凝聚，不重复消元。Task041 当前仅提供显式 cell_condensed 研究后端，默认 full 与正式 runner/workflow 不变。
+
+R3c 是早期 synthetic 单端口资格，R3d2 才证明双端口/preallocation；R3f 是 p4/port 完整逆对照，R3h5 是 side/backend 回归，R3h6 才是同一 side/layout old/new Q/PC tiny FE。R3h6 不代表正式 MPI8、13.5/5/2nm、大模型资源或性能资格，R3h1–3 的 rc59/gdb/trace 负历史和 Cython 未证实根因保留。七个源码 SHA、donor_manifest、raw 索引和结果入口见 [Task041 R3h8 record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v5_condensed_speed.json)；冻结摘要见 [R3h7 compact](../results/task041_review_v5_cpu_numa_condensed_speed/r3h_validation_20260921/r3h7_compact.json)。R3h8 已一次追加 `288.010923037 s`，累计 `7600.153469588 s`；后续文档纠偏未再计费。当前只继续 socket0/node0，正式 MPI8 规划 CPU1–8/membind0；node1 修复/双路比较暂停，5/2nm完整流程及R3–R6仍未完成。
+
+## 2026-09-21：Task041 Review V5 R1i 2666 复测（历史快照）
 
 R1i 仅把 BIOS Memory Frequency 从 `Auto` 改为 `2666 MT/s`，其余保护、刷新、风扇与系统设置不变；这是工作站 CPU/NUMA 内存复制诊断，不是2nm物理模型。local socket0→node0 三窗 `35.63788506479269 / 35.664033252580786 / 35.6967308849817 GB/s` 稳定；local socket1→node1 为 `35.648371306083156 / 31.66995975917892 / 11.024863223982754`，cross socket0→node1 为 `23.562553384022838 / 22.956933903624012 / 13.10402684910857`，两条 node1 路径仍骤降；cross socket1→node0 为 `23.408224743881927 / 22.924688775860275 / 21.682633764800535`，约降7.37%。因此首窗正常不算修复，CPU1仍未准入，R2 blocked。
 两批 `rc=0` 并清场；43 PCI raw、43 BMC 文件、688对温度值、六个 TEMPLO 和两个 TEMPMID 事件绑定于 [R1i compact v3](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v5_cpu_numa.json) 的 tracked 记录及 ignored compact。cross P1-DIMMC1 TEMPLO sample4→5 的时间括号按PCI `65→67°C`，异步BMC为`65→66°C`；after_load后续MID置位，触发时刻未知。`TEMP_MID 93→95°C`仍仅只读评估，未改阈值或保护。

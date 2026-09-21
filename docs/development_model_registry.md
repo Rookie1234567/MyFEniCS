@@ -1,6 +1,20 @@
 # 开发阶段研究对象与计算结果总账
 
-## 2026-09-21：Task041 Review V5 R1i 2666 复测（当前）
+## 2026-09-22：Task041 Review V5 R3h8 p4 凝聚组件阶段
+
+p4 单元凝聚把单元内部未知量先消去，解较小的保留耦合系统，再回代完整 FE/端口修正并复核原 A4；它没有降低精度门。p6 已凝聚，本阶段不重复消元。cell_condensed 是显式可选后端，默认 full 路径不变，正式 runner 尚未接入 cell_condensed。
+
+| 阶段 | 结果 | 边界 |
+|---|---|---|
+| R3c | early synthetic 单端口 serial/MPI2 通过 | 非真实 FE/MPI8/性能资格 |
+| R3d2 | synthetic 双端口与 preallocation serial/MPI2 通过 | 非真实 FE/MPI8/性能资格 |
+| R3f | tiny real-FE p4/port 完整逆 serial/MPI2 数值门通过 | MPI2运行期资源采样缺测仍保留 |
+| R3h5 | serial 27 passed/4 skipped；MPI2 每 rank 31 passed | 首轮 ABI NameError 后继续执行的尝试不计资格 |
+| R3h6 | 同一 side/layout old/new Q/PC tiny FE serial/MPI2、A4/backsolve、资源与清场通过 | 不把 wall 差异写成提速；非正式 MPI8/大模型资格 |
+
+来源与限制由 [Task041 R3h8 record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v5_condensed_speed.json) 绑定，冻结摘要见 [R3h7 compact](../results/task041_review_v5_cpu_numa_condensed_speed/r3h_validation_20260921/r3h7_compact.json)；R3h1–3 的 rc59/gdb/trace 和 Cython 未证实根因保留。R3h8 已一次追加 `288.010923037 s`，累计 `7600.153469588 s`；后续文档纠偏未再计费。当前只保留 socket0/node0 方向，正式 MPI8 规划 CPU1–8/membind0；node1 修复、双路比较、5/2nm全流程、正式性能/资源与 R3–R6 仍未完成。
+
+## 2026-09-21：Task041 Review V5 R1i 2666 复测（历史快照）
 
 | 模型/阶段 | 当前结果 | 资格边界与证据 |
 |---|---|---|

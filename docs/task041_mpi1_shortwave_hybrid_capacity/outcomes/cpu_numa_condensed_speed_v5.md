@@ -1,6 +1,19 @@
 # Task041 Review V5：R1i 2666 复测、R1h 跨 NUMA 复现与历史证据
 
-## R1i 2666 复测终态（当前）
+## 2026-09-22：R3h8 p4 凝聚组件阶段进展（R3–R6尚未完成）
+
+p4 单元凝聚先消去单元内部未知量，解较小的保留耦合系统，再回代恢复完整 FE/端口修正，并用原 A4 和完整残差检查；数学逆和精度没有放宽。p6 已经凝聚，本阶段不重复消元；`cell_condensed` 只是显式可选后端，默认 `full` 路径不变，正式 runner 尚未接入 `cell_condensed`。
+
+| 证据 | 已核对实值 | 边界 |
+|---|---|---|
+| R3h5 side/backend 回归 | serial `27 passed / 4 skipped`；MPI2 每 rank `31 passed`；最终 ABI 均 `rc=0` | 首轮 ABI NameError 后仍运行 pytest 的尝试不计资格；R3h1–3 的 rc59/gdb/trace 负历史保留 |
+| R3h6 serial tiny FE | 同一 side/layout old/new Q `1.3382559074923613e-13`、PC `1.3047558741076922e-13`；四项 A4 最大 `3.1267280149834914e-11`（阈值 `1e-10`）；各路径 backsolve `1`；307 次资源样本，RSS 峰 `3788111872 B`，PSS/USS 为稀疏观测，swap 增量 `0`，清场通过 | tiny FE 资源门通过，不外推正式 MPI8、13.5/5/2nm、大模型或性能资格 |
+| R3h6 MPI2 tiny FE | Q `1.2026417833118804e-13`、PC `1.1310942394716736e-13`；四项 A4 最大 `3.2111545815853925e-11`；各路径 backsolve `1`；152 次资源样本，RSS 峰 `1280536576 B`，swap 增量 `0`，清场通过 | 首样本仅含 parent+mpiexec，第二样本才含两 rank；不把 `167 s` 对 `82 s` 写成加速 |
+
+完整来源、七个源码 SHA、donor manifest、原始索引和命令/ABI入口见 [R3h8 tracked record](records/task041_v5_condensed_speed.json)；冻结摘要见 [R3h7 compact](../../../results/task041_review_v5_cpu_numa_condensed_speed/r3h_validation_20260921/r3h7_compact.json)。R3f 是 p4/port 完整逆对照，R3c/R3d2 分别是早期 synthetic 与双端口/preallocation 资格；Q/PC old/new 只归 R3h6。R3h8 已一次追加 `288.010923037 s`，累计 `7600.153469588 s`；后续文档纠偏未再计费。R3–R6 尚未完成。
+
+
+## R1i 2666 复测终态（历史快照）
 
 R1i 在用户维护重启后仅将 BIOS Memory Frequency 从 `Auto` 改为 `2666 MT/s`，其它设置、风扇、保护和刷新策略未改；本次仍是工作站 CPU/NUMA 内存复制诊断，不是2nm物理模型、PDE或MPI计算。四组路径三窗总吞吐如下：
 
