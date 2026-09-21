@@ -45,6 +45,13 @@ def test_real_ksp_solves_retained_space_with_physical_terminal_check():
     assert result["retained_global_size"] == 3
     assert result["ksp_create_count"] == result["ksp_solve_count"] == result["ksp_destroy_count"] == 1
     assert result["final_true_residual"] < 1e-12
+    phase = result["ksp_phase"]
+    assert phase["scope"] == "PETSc.KSP.solve_only"
+    assert phase["end_monotonic_ns"] >= phase["start_monotonic_ns"]
+    assert phase["elapsed_seconds"] == result["ksp_solve_monotonic_seconds"]
+    assert result["elapsed_seconds_scope"] == (
+        "retained_outer_solve_clock_through_terminal_snapshot"
+    )
     assert checkpoints[0][0] == 0 and np.count_nonzero(checkpoints[0][1]) == 0
     assert checkpoints[-1][0] == result["iterations"]
     np.testing.assert_allclose(matrix @ checkpoints[-1][1], np.ones(3), atol=1e-12)

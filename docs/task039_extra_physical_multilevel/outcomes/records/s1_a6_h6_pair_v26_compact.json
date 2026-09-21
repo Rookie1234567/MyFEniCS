@@ -1,0 +1,135 @@
+{
+  "schema": "task039extra.s1-a6-h6-pair-compact.v1",
+  "run_id": "task39extra_v25_s1_a6_h6_pair_v26",
+  "profile": "physical_p6_trace_coarse_degree_speed_v25",
+  "stage": "S1_A6_H6_PAIR",
+  "source_sha": "e63d2f49f19961f985faeadbe1ad3b89808369d1",
+  "source_worktree": {
+    "dirty": true,
+    "tracked_diff_sha256": "11953eae4c796201e29fbbec72cd5365f2f926b6e851363a125110db0251c247"
+  },
+  "input": "input/task39extra/v24_laptop_speed_original_h7p5.dat",
+  "input_sha256": "2ba2508861e02c2f1a9dbda433702c977eb0371cdb986350245e3caf15eb6928",
+  "physical_model_sha256": "d8c5abb837adda92ea86e257cff9e2ff01ccf466879b08a2cde9a071e1d1d036",
+  "status": "QUALIFIED_OPERATOR_EQUIVALENCE",
+  "classification": "operator_pair_only_no_formal_pde",
+  "authority": "component_operator_only; not full-PC or formal-PDE authority",
+  "input_witness": {
+    "scope": "saved V24 operation witness; not a claimed PC direction",
+    "shape": [667152],
+    "dtype": "complex128",
+    "nonzero_count": 644760,
+    "interior_nonzero_count": 445500,
+    "interior_row_count": 445500,
+    "slave_zero": true,
+    "vector_sha256": "01da2ae634f98eebddf31841afaaf6fd78846db0bd8c776e62854c2d14dcbc6f",
+    "archive_sha256": "31dc42bd758561c70571d0023d805ba16459d2c6cd7644df20afd3bbe65bf16c",
+    "manifest_sha256": "71a8e0d9e910cb5462181662b6c36e5372f12cc44a044e0fdf4043cb1e35875b"
+  },
+  "operators": {
+    "a6": {
+      "full_median_baseline_seconds": 7.070593831995211,
+      "full_median_candidate_seconds": 5.25183807349822,
+      "full_candidate_over_baseline": 0.7418152412116423,
+      "volume_median_baseline_seconds": 6.975063175996183,
+      "volume_median_candidate_seconds": 5.465347317993292,
+      "volume_candidate_over_baseline": 0.7829963280360684,
+      "max_relative_difference": 7.171589292269772e-15,
+      "input_unchanged": true,
+      "candidate_backend": "isotropic_partial_assembly_bounded_preallocated_v25",
+      "candidate_reference_forward_seconds": 19.743852366300416,
+      "candidate_reference_backward_seconds": 23.552006545127369
+    },
+    "h6_apply": {
+      "baseline_backend": "isotropic_partial_assembly_v1",
+      "candidate_backend": "isotropic_partial_assembly_bounded_preallocated_v25",
+      "median_baseline_seconds": 9.265999023496988,
+      "median_candidate_seconds": 9.38153646599676,
+      "candidate_over_baseline_median_of_repeat_ratios": 1.0057808725574315,
+      "candidate_over_baseline_ratio_of_medians": 1.0124689676964986,
+      "max_relative_difference": 0.0,
+      "input_unchanged": true,
+      "warm_baseline_matrix_mult_seconds": 9.256347885995638,
+      "warm_candidate_matrix_mult_seconds": 9.369802431989228
+    },
+    "h6_setup": {
+      "baseline_power10_backend": "native_ffcx",
+      "candidate_power10_backend": "isotropic_partial_assembly_bounded_preallocated_v25",
+      "baseline_seconds": 178.8431922669988,
+      "candidate_seconds": 163.87513992600725,
+      "candidate_over_baseline": 0.9163062784148617,
+      "output_relative_difference": 1.7825382090149054e-16,
+      "input_unchanged": true,
+      "same_seed": true,
+      "same_diagonal": true,
+      "same_inverse_sqrt": true,
+      "same_power_history_relative": 1.1866957505452545e-15,
+      "same_window_relative": 3.0316161046511627e-16
+    }
+  },
+  "resources": {
+    "mpi_size": 1,
+    "thread_count": 1,
+    "workflow_wall_seconds": 915.8957639279979,
+    "conservative_observed_seconds": 1016.5861852233071,
+    "workflow_limit_seconds": 43200.0,
+    "watchdog_classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "process_tree_rss_peak_bytes": 1453346816,
+    "process_tree_pss_peak_bytes": 1421541376,
+    "process_tree_swap_peak_bytes": 0,
+    "descendants_cleared": true,
+    "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+    "time_policy": "observe_only",
+    "source_state": "development_worktree; not formal PDE provenance"
+  },
+  "historical_costs": {
+    "v25_executor_controlled_stop_monotonic_seconds": 349.01716884099005,
+    "v25_executor_controlled_stop_conservative_observed_seconds": 388.5726461847661,
+    "v25_executor_controlled_stop_classification": "USER_CONTROLLED_STOP",
+    "v25_attribution": "executor-side engineering interruption; not a user stop, numerical gate, resource failure, or formal bug replay",
+    "v25_evidence_path": "benchmarks/artifacts/task39extra/b_capacity_v22/root_engineering/components/s1_a6_h6_pair_v25/watchdog_wrapper_result.json"
+  },
+  "not_admitted": [
+    "No full-PC compatibility qualification: the checkpoint is an operation witness, not a PC direction.",
+    "No formal PDE, KSP, factorization, R/T/A, field, or conservation claim.",
+    "H6 apply candidate is not adopted as a speed improvement because the four-repeat median is slower than the old packed apply.",
+    "H6 setup speed difference is a single bounded pair and is not a stable end-to-end speedup claim.",
+    "No shared sum-factorization backend has been implemented or qualified yet.",
+    "No thread, batch-size, epsilon, compiler, or platform scan was admitted."
+  ],
+  "evidence": {
+    "final": {
+      "path": "benchmarks/artifacts/task39extra/b_capacity_v22/root_engineering/components/s1_a6_h6_pair_v26/s1_a6_h6_pair.json",
+      "sha256": "c1ea42b2243cf7fec5c34600ceca0554e8043da642ec95d46210b25aee4b65f5"
+    },
+    "a6_stage": {
+      "path": "benchmarks/artifacts/task39extra/b_capacity_v22/root_engineering/components/s1_a6_h6_pair_v26/s1_a6_stage.json",
+      "sha256": "dccecc49c2f65df5c4a9f4791e8587dcc8a9cbc4ebe9e267d080057f5dae2f7d"
+    },
+    "h6_apply_stage": {
+      "path": "benchmarks/artifacts/task39extra/b_capacity_v22/root_engineering/components/s1_a6_h6_pair_v26/s1_h6_apply_stage.json",
+      "sha256": "d18a2f086008e35236b1f2592b65c932a377680bab6b18d1b947ba6ed6958f1f"
+    },
+    "h6_setup_stage": {
+      "path": "benchmarks/artifacts/task39extra/b_capacity_v22/root_engineering/components/s1_a6_h6_pair_v26/s1_h6_setup_stage.json",
+      "sha256": "48465ee64e1e4cc90ccda6e9fee4ee35fff017478012d38b816984360fe03128"
+    },
+    "watchdog_summary": {
+      "path": "benchmarks/artifacts/task39extra/b_capacity_v22/root_engineering/components/s1_a6_h6_pair_v26/watchdog/summary.json",
+      "sha256": "f17d3c089654526465d1adf42a4a6988af69ba6273a40e08a524c4cf550f12a5"
+    },
+    "watchdog_resources": {
+      "path": "benchmarks/artifacts/task39extra/b_capacity_v22/root_engineering/components/s1_a6_h6_pair_v26/watchdog/resources.jsonl",
+      "sha256": "00eb5c7daafd9619afd9e59437f45094b4e96bf0157b8dcba78aa256f268f673"
+    },
+    "watchdog_wrapper": {
+      "path": "benchmarks/artifacts/task39extra/b_capacity_v22/root_engineering/components/s1_a6_h6_pair_v26/watchdog_wrapper_result.json",
+      "sha256": "aa560b2f4a8fc78e1a48e682bec1eda39840980973167c530e6afe53debd433e"
+    },
+    "s1_script": {
+      "path": "benchmarks/artifacts/task39extra/b_capacity_v22/root_engineering/components/s1_a6_h6_pair.py",
+      "sha256": "e367c8d913d6964ca3b52a1513e89096109514841b8e4937a80f1c8098cc210f"
+    }
+  }
+}

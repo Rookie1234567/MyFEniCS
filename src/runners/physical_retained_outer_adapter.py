@@ -308,6 +308,7 @@ class RetainedOuterAdapter:
         rhs_identity_policy="fixed_historical_contract",
         save_complete_field_packet=None,
         p4_count_policy="legacy_one_mat_solve_per_logical",
+        first_direction_pair_context=None,
     ):
         self.runtime, self.common, self.resolved = runtime, common, resolved
         self.full_rhs, self.bal_h = full_rhs, apply_pc
@@ -331,6 +332,7 @@ class RetainedOuterAdapter:
         )
         self.rhs_identity_policy = str(rhs_identity_policy)
         self.p4_count_policy = str(p4_count_policy)
+        self.first_direction_pair_context = first_direction_pair_context
         if self.p4_count_policy not in {
             "legacy_one_mat_solve_per_logical",
             "bounded_repair_v24",
@@ -358,11 +360,27 @@ class RetainedOuterAdapter:
         self._final_packet_saved = False
         self._released_after_final_residual = False
         self._released_facts = None
+        self.actual_first_arnoldi = {}
+        self._active_role = "setup"
+        self.role_counts = {
+            role: {"schur_action": 0, "bridge": 0, "native_action": 0}
+            for role in ("setup", "iteration", "check")
+        }
+        self.role_timings = {role: 0.0 for role in ("setup", "iteration", "check")}
         self.time = {"setup_seconds": 0.0, "schur_action_seconds": 0.0,
                      "bridge_seconds": 0.0, "bal_h_seconds": 0.0,
                      "native_action_seconds": 0.0, "recovery_evaluation_seconds": 0.0,
                      "packet_seconds": 0.0}
         self.count = {"schur_action": 0, "bridge": 0, "native_action": 0}
+
+    def _count(self, name):
+        if name not in self.count:
+            raise KeyError(f"unknown retained adapter counter: {name}")
+        self.count[name] += 1
+        self.role_counts[self._active_role][name] += 1
+
+    def _record_role_time(self, started):
+        self.role_timings[self._active_role] += perf_counter() - started
 
     def build(self):
         from dolfinx import fem
@@ -516,15 +534,17 @@ class RetainedOuterAdapter:
         started = perf_counter()
         self.full_source.array[:] = source
         self.common["fine"]["physical_action"].apply(self.full_source, self.full_target)
-        self.count["native_action"] += 1
+        self._count("native_action")
         self.time["native_action_seconds"] += perf_counter() - started
+        self._record_role_time(started)
         return self.full_target.array_r.copy()
 
     def _apply(self, source):
         started = perf_counter()
         result = self.action.apply(source)
-        self.count["schur_action"] += 1
+        self._count("schur_action")
         self.time["schur_action_seconds"] += perf_counter() - started
+        self._record_role_time(started)
         return result
 
     def _pc(self, source):
@@ -536,33 +556,41 @@ class RetainedOuterAdapter:
         except BaseException:
             result.destroy()
             raise
-        self.count["bridge"] += 1
+        self._count("bridge")
         self.time["bridge_seconds"] += perf_counter() - started
+        self._record_role_time(started)
         return result
 
     def _evaluate(self, source, _schur_residual):
+        previous_role = self._active_role
+        self._active_role = "check"
         started = perf_counter()
-        # Previous residual arrays have already been saved.  Drop them before
-        # constructing the next packet so two full evaluation sets never live
-        # simultaneously under the single scratch reservation.
-        self.last_evaluation = None
-        self.last_evaluation = self.action.evaluate_native_residual(
-            source.array_r, self.full_rhs, self._native_array,
-            rhs_is_mpc_dual=True,
-            reduced_residual=None if _schur_residual is None else _schur_residual.array_r,
-        )
-        self.time["recovery_evaluation_seconds"] += perf_counter() - started
-        facts = {key: value for key, value in self.last_evaluation.items() if not isinstance(value, np.ndarray)}
-        facts["original_A6_relative"] = facts["native_residual_relative"]
-        facts["port_closure_relative"] = facts["port_residual_relative"]
-        facts["counts"] = dict(self.count)
-        facts["resource"] = dict(
-            self.runtime.sample(f"{self.evidence_prefix}_native_residual")
-        )
-        return facts
+        try:
+            # Previous residual arrays have already been saved.  Drop them before
+            # constructing the next packet so two full evaluation sets never live
+            # simultaneously under the single scratch reservation.
+            self.last_evaluation = None
+            self.last_evaluation = self.action.evaluate_native_residual(
+                source.array_r, self.full_rhs, self._native_array,
+                rhs_is_mpc_dual=True,
+                reduced_residual=None if _schur_residual is None else _schur_residual.array_r,
+            )
+            self.time["recovery_evaluation_seconds"] += perf_counter() - started
+            facts = {key: value for key, value in self.last_evaluation.items() if not isinstance(value, np.ndarray)}
+            facts["original_A6_relative"] = facts["native_residual_relative"]
+            facts["port_closure_relative"] = facts["port_residual_relative"]
+            facts["counts"] = dict(self.count)
+            facts["resource"] = dict(
+                self.runtime.sample(f"{self.evidence_prefix}_native_residual")
+            )
+            return facts
+        finally:
+            self._active_role = previous_role
 
     def setup_checks(self):
         started = perf_counter()
+        previous_role = self._active_role
+        self._active_role = "check"
         system = self.condensed
         actual = (system.full_rows, system.active_rows, system.interior_rows, system.appended_rows)
         expected = self.expected_space_counts
@@ -698,9 +726,377 @@ class RetainedOuterAdapter:
                 output.destroy()
             inputs.destroy()
             self.last_evaluation = None
+            self._active_role = previous_role
+
+    def _first_direction_pair(self, source):
+        """Run the four fixed Q4 first-direction BAL_H combinations.
+
+        The pair reuses the live factor, H6 smoother/window and one
+        ``InterfaceBalancedCoupling`` instance.  Only the H6 shell's action
+        is temporarily replaced by the native B6 action; both callback slots
+        used by the balanced action and its ledger are swapped together and
+        restored after each call.
+        """
+
+        context = self.first_direction_pair_context
+        if not isinstance(context, dict):
+            return None
+        pc = context.get("pc")
+        positive = context.get("positive")
+        if pc is None or not isinstance(positive, dict):
+            raise ValueError("first-direction pair context is incomplete")
+        shell = positive.get("p6_shell")
+        h6 = positive.get("h6")
+        if shell is None or h6 is None:
+            raise ValueError("first-direction pair requires the live H6 shell")
+        candidate_b6 = shell.action
+        candidate_a6 = getattr(pc, "_candidate_a6_callback", None)
+        native_a6 = getattr(pc, "_native_a6_callback", None)
+        candidate_h6 = getattr(pc, "_candidate_h6_callback", None)
+        if not all(callable(value) for value in (candidate_a6, native_a6, candidate_h6)):
+            raise ValueError("first-direction pair callbacks are not exposed by the live PC")
+        from src.solvers.fullspace_mpc_action import FullspaceMpcFormAction
+
+        native_started = perf_counter()
+        native_b6 = None
+        pair_workspace_label = f"{self.evidence_prefix}_first_direction_pair_b6"
+        pair_inventory_label = f"{self.evidence_prefix}_first_direction_pair_b6"
+        pair_workspace_live = False
+        pair_inventory_live = False
+        saved_a = saved_ledger_a = saved_s = None
+        try:
+            candidate_audit = dict(getattr(candidate_b6, "audit", {}))
+            candidate_payload = int(
+                candidate_audit.get("retained_numeric_payload_local_bytes", 0)
+            )
+            candidate_temporary = int(
+                candidate_audit.get("per_apply_bounded_temporary_bytes", 0)
+            )
+            pair_workspace_bytes = max(
+                1,
+                candidate_payload + candidate_temporary + 16 * 1024**2,
+            )
+            self.runtime.reserve_workspace(pair_workspace_label, pair_workspace_bytes)
+            pair_workspace_live = True
+            self.runtime.reserve_inventory(
+                pair_inventory_label,
+                {
+                    "native_b6_payload_upper_bytes": max(candidate_payload, 1),
+                    "native_b6_temporary_upper_bytes": max(candidate_temporary, 0),
+                },
+                check_rss=False,
+            )
+            pair_inventory_live = True
+            native_b6 = FullspaceMpcFormAction(
+                candidate_b6._bilinear_form,
+                candidate_b6._function_space,
+                mpc=self.common["levels"]["floquets"][6].mpc,
+            )
+            native_setup_seconds = perf_counter() - native_started
+            native_audit = dict(native_b6.audit)
+            source_values = np.asarray(source.array_r).copy()
+            variants = (
+                ("native_a6_native_h6", native_a6, True),
+                ("candidate_a6_native_h6", candidate_a6, True),
+                ("native_a6_candidate_h6", native_a6, False),
+                ("candidate_a6_candidate_h6", candidate_a6, False),
+            )
+            saved_a = pc.balanced.A
+            saved_ledger_a = pc.ledger.A
+            saved_s = pc.balanced.S
+            callbacks_restored = False
+            outputs = {}
+            records = {}
+            try:
+                for name, a6_callback, use_native_h6 in variants:
+                    pc.balanced.A = a6_callback
+                    pc.ledger.A = a6_callback
+                    pc.balanced.S = candidate_h6
+                    shell.action = native_b6 if use_native_h6 else candidate_b6
+                    before_adapter = dict(self.count)
+                    before_pc = int(pc.apply_count)
+                    before_native_a4 = int(pc.native_A4_count)
+                    before_h6 = int(h6.apply_count)
+                    before_h6_mult = int(h6.matrix_mult_count)
+                    before_balanced_counts = dict(pc.balanced.total_counts)
+                    before_ledger = {
+                        "A_count": int(pc.ledger.A_count),
+                        "PH_count": int(pc.ledger.PH_count),
+                        "audit_count": int(pc.ledger.audit_count),
+                    }
+                    started = perf_counter()
+                    result = self._pc(source)
+                    try:
+                        values = np.asarray(result.array_r).copy()
+                    finally:
+                        result.destroy()
+                    after_pc = int(pc.apply_count)
+                    after_native_a4 = int(pc.native_A4_count)
+                    after_h6 = int(h6.apply_count)
+                    after_h6_mult = int(h6.matrix_mult_count)
+                    after_balanced_counts = dict(pc.balanced.total_counts)
+                    after_ledger = {
+                        "A_count": int(pc.ledger.A_count),
+                        "PH_count": int(pc.ledger.PH_count),
+                        "audit_count": int(pc.ledger.audit_count),
+                    }
+                    pc_facts = dict(pc.last_apply_facts)
+                    coarse_records = list(pc.coarse_calls)
+                    outputs[name] = values
+                    records[name] = {
+                        "a6_backend": (
+                            "native_fullspace_action"
+                            if a6_callback is native_a6
+                            else "isotropic_sum_factorized_n1e_v26"
+                        ),
+                        "h6_backend": (
+                            "native_ffcx_apply_only"
+                            if use_native_h6
+                            else "isotropic_sum_factorized_n1e_v26"
+                        ),
+                        "input_identity": _array_identity(source_values),
+                        "output_identity": _array_identity(values),
+                        "input_unchanged": bool(
+                            np.array_equal(source_values, np.asarray(source.array_r))
+                        ),
+                        "elapsed_seconds": perf_counter() - started,
+                        "adapter_count_before": before_adapter,
+                        "adapter_count_after": dict(self.count),
+                        "adapter_count_delta": {
+                            key: int(self.count[key] - before_adapter[key])
+                            for key in self.count
+                        },
+                        "pc_apply_delta": after_pc - before_pc,
+                        "native_A4_delta": after_native_a4 - before_native_a4,
+                        "h6_apply_delta": after_h6 - before_h6,
+                        "h6_matrix_mult_delta": after_h6_mult - before_h6_mult,
+                        "balanced_counts_delta": {
+                            key: int(after_balanced_counts[key] - before_balanced_counts[key])
+                            for key in before_balanced_counts
+                        },
+                        "ledger_counts_before": before_ledger,
+                        "ledger_counts_after": after_ledger,
+                        "component_counts": dict(pc_facts.get("counts", {})),
+                        "component_seconds": dict(
+                            pc_facts.get("operation_seconds", {})
+                        ),
+                        "p4_call_count": len(coarse_records),
+                        "p4_mat_solve_count": int(
+                            sum(
+                                int(record.get("p4_mat_solve_count", 0) or 0)
+                                for record in coarse_records
+                            )
+                        ),
+                    }
+            finally:
+                shell.action = candidate_b6
+                pc.balanced.A = saved_a
+                pc.ledger.A = saved_ledger_a
+                pc.balanced.S = saved_s
+                callbacks_restored = True
+
+            combination = outputs["candidate_a6_candidate_h6"]
+            combination_norm = max(
+                float(np.linalg.norm(combination)), np.finfo(float).tiny
+            )
+            comparisons = {}
+            all_equivalent = True
+            for name, values in outputs.items():
+                difference = values - combination
+                relative = float(np.linalg.norm(difference)) / combination_norm
+                maximum = float(np.max(np.abs(difference))) if difference.size else 0.0
+                passed = bool(
+                    np.isfinite(values).all()
+                    and records[name]["input_unchanged"]
+                    and np.isfinite(relative)
+                    and relative <= 1.0e-10
+                )
+                all_equivalent = all_equivalent and passed
+                comparisons[name] = {
+                    "relative_to_combination": relative,
+                    "max_abs_difference": maximum,
+                    "limit": 1.0e-10,
+                    "passed": passed,
+                }
+            light_facts = dict(positive.get("light_facts", {}))
+            same_input = bool(
+                all(
+                    record["input_identity"] == records[variants[0][0]]["input_identity"]
+                    for record in records.values()
+                )
+            )
+            summary = {
+                "schema": "task039extra.v25.first-direction-a6-h6-pair.v1",
+                "same_live_factor": True,
+                "same_live_h6_window": True,
+                "same_input": same_input,
+                "input_identity": _array_identity(source_values),
+                "variants": records,
+                "comparisons_to_candidate_combination": comparisons,
+                "passed": bool(all_equivalent and same_input and callbacks_restored),
+                "native_b6_setup_seconds": native_setup_seconds,
+                "native_b6_setup_backend": native_audit.get("backend"),
+                "native_b6_setup_payload_local_bytes": native_audit.get(
+                    "retained_numeric_payload_local_bytes"
+                ),
+                "h6_window": {
+                    key: light_facts.get(key)
+                    for key in (
+                        "seed_sha256",
+                        "diagonal_sha256",
+                        "inverse_sqrt_diagonal_sha256",
+                        "power_history",
+                        "lambda_power10",
+                        "lambda_lo",
+                        "lambda_hi",
+                    )
+                },
+                "no_new_factor": True,
+                "no_new_pc": True,
+                "used_as_initial_guess": False,
+                "callbacks_restored": callbacks_restored,
+                "resource_reservation": {
+                    "workspace_label": pair_workspace_label,
+                    "workspace_bytes": pair_workspace_bytes,
+                    "inventory_label": pair_inventory_label,
+                },
+            }
+            return {
+                "summary": summary,
+                "input": source_values,
+                "outputs": outputs,
+                "combination": combination.copy(),
+            }
+        finally:
+            if saved_a is not None:
+                pc.balanced.A = saved_a
+            if saved_ledger_a is not None:
+                pc.ledger.A = saved_ledger_a
+            if saved_s is not None:
+                pc.balanced.S = saved_s
+            if native_b6 is not None:
+                shell.action = candidate_b6
+                native_b6.destroy()
+            if pair_workspace_live:
+                self.runtime.release_workspace(pair_workspace_label)
+            if pair_inventory_live:
+                self.runtime.release_inventory(pair_inventory_label)
+            self.first_direction_pair_context = None
+
+    def actual_first_arnoldi_check(self):
+        """Probe the zero-start first right-preconditioner direction.
+
+        With a zero initial guess, the first Arnoldi vector is the retained
+        physical RHS divided by its norm.  This uses the already-built
+        retained BAL_H bridge once; it does not create another factor, PC, or
+        alter the KSP initial guess.
+        """
+
+        started = perf_counter()
+        previous_role = self._active_role
+        self._active_role = "check"
+        source = self.rhs.duplicate()
+        output = None
+        try:
+            self.rhs.copy(source)
+            rhs_norm = float(self.rhs.norm())
+            if not np.isfinite(rhs_norm) or rhs_norm <= np.finfo(float).tiny:
+                raise ValueError("actual first Arnoldi check requires a finite nonzero RHS")
+            source.scale(1.0 / rhs_norm)
+            source_values = np.asarray(source.array_r).copy()
+            expected_values = np.asarray(self.rhs.array_r) / rhs_norm
+            input_matches_rhs = bool(
+                np.allclose(source_values, expected_values, rtol=1.0e-14, atol=1.0e-14)
+            )
+            before = dict(self.count)
+            pair = self._first_direction_pair(source)
+            if pair is None:
+                output = self._pc(source)
+                output_values = np.asarray(output.array_r).copy()
+            else:
+                output_values = np.asarray(pair["combination"]).copy()
+            after = dict(self.count)
+            delta = {
+                key: int(after[key] - before[key]) for key in self.count
+            }
+            finite_output = bool(np.isfinite(output_values).all())
+            size_ok = bool(
+                output.getSize() == source.getSize()
+                if output is not None
+                else output_values.shape == source_values.shape
+            )
+            expected_delta = {
+                "schur_action": 0,
+                "bridge": 4 if pair is not None else 1,
+                "native_action": 0,
+            }
+            passed = bool(
+                input_matches_rhs
+                and finite_output
+                and size_ok
+                and delta == expected_delta
+                and (pair is None or bool(pair["summary"]["passed"]))
+            )
+            packet = self._packet(
+                "x1_actual_first_arnoldi_right_preconditioner",
+                {
+                    "identity": self.identity,
+                    "role": "check",
+                    "input": source_values,
+                    "output": output_values,
+                    "rhs_norm": rhs_norm,
+                    "input_norm": float(source.norm()),
+                    "input_is_zero_start_retained_rhs": input_matches_rhs,
+                    "used_as_initial_guess": False,
+                    "bridge": type(self.bridge).__name__,
+                    "count_before": before,
+                    "count_after": after,
+                    "count_delta": delta,
+                    "expected_count_delta": expected_delta,
+                    "pair": None if pair is None else pair["outputs"],
+                    "pair_summary": None if pair is None else pair["summary"],
+                    "passed": passed,
+                },
+            )
+            self.actual_first_arnoldi = {
+                "schema": "task039extra.v25.actual-first-arnoldi-check.v1",
+                "role": "check",
+                "rhs_norm": rhs_norm,
+                "input_norm": float(source.norm()),
+                "input_identity": _array_identity(source_values),
+                "output_identity": _array_identity(output_values),
+                "input_is_zero_start_retained_rhs": input_matches_rhs,
+                "used_as_initial_guess": False,
+                "bridge": type(self.bridge).__name__,
+                "new_pc_or_factor": False,
+                "count_before": before,
+                "count_after": after,
+                "count_delta": delta,
+                "expected_count_delta": expected_delta,
+                "finite_output": finite_output,
+                "size_ok": size_ok,
+                "packet": packet,
+                "pair": None if pair is None else pair["summary"],
+                "passed": passed,
+                "elapsed_seconds": perf_counter() - started,
+            }
+            if not passed:
+                raise RuntimeError(
+                    "actual first Arnoldi retained bridge check failed: "
+                    f"{self.actual_first_arnoldi}"
+                )
+            return dict(self.actual_first_arnoldi)
+        finally:
+            if output is not None:
+                output.destroy()
+            source.destroy()
+            self._active_role = previous_role
 
     def solve(self, *, checkpoint, append, seconds, resource_sample, stop_requested):
         from src.solvers.physical_retained_fgmres import run_retained_fgmres
+
+        previous_role = self._active_role
+        self._active_role = "iteration"
 
         def save_retained(iteration, y):
             self.retained_checkpoints[iteration] = self._packet(f"x2_y_{iteration:04d}", {
@@ -727,11 +1123,15 @@ class RetainedOuterAdapter:
             self.full_target.array[:] = self.last_evaluation["storage_solution"]
             return checkpoint(iteration, self.full_target, row["original_A6_relative"])
 
-        result = run_retained_fgmres(
-            self.rhs, self._apply, self._pc, evaluate=self._evaluate,
-            checkpoint=full_checkpoint, save_retained=save_retained, append=save_row, seconds=seconds,
-            resource_sample=resource_sample, stop_requested=stop_requested,
-        )
+        try:
+            result = run_retained_fgmres(
+                self.rhs, self._apply, self._pc, evaluate=self._evaluate,
+                checkpoint=full_checkpoint, save_retained=save_retained, append=save_row, seconds=seconds,
+                resource_sample=resource_sample, stop_requested=stop_requested,
+            )
+        finally:
+            self._active_role = previous_role
+        post_ksp_started_ns = time.perf_counter_ns()
         y = result.pop("final_solution")
         try:
             cache_after = _cache_identity(
@@ -794,6 +1194,23 @@ class RetainedOuterAdapter:
             result["final_solution"].array[:] = self.last_evaluation["storage_solution"]
         finally:
             y.destroy()
+        post_ksp_end_ns = time.perf_counter_ns()
+        result["outer_adapter_return_tail"] = {
+            "scope": (
+                "from_retained_fgmres_return_through_outer_adapter_return"
+            ),
+            "start_monotonic_ns": int(post_ksp_started_ns),
+            "end_monotonic_ns": int(post_ksp_end_ns),
+            "elapsed_seconds": float(
+                (post_ksp_end_ns - post_ksp_started_ns) / 1.0e9
+            ),
+            "includes": [
+                "condensation cache validation",
+                "retained final packet save",
+                "optional complete field packet save",
+            ],
+            "is_pure_ksp": False,
+        }
         return result
 
     def facts(self):
@@ -801,6 +1218,11 @@ class RetainedOuterAdapter:
             return dict(self._released_facts)
         return {"identity": self.identity, "setup_checks": self.checks, "cache": self.cache,
                 "counts": dict(self.count), "timings": dict(self.time),
+                "role_counts": {
+                    role: dict(counts) for role, counts in self.role_counts.items()
+                },
+                "role_timings": dict(self.role_timings),
+                "actual_first_arnoldi": dict(self.actual_first_arnoldi),
                 "core_counts": dict(self.action.audit),
                 "retained_checkpoints": self.retained_checkpoints,
                 "residual_packets": self.residual_packets,
@@ -1067,9 +1489,13 @@ def _v20_observed_code(returned_code):
 
 
 def prepare_dual_condensed_forms(
-    runtime, common, *, cache_policy="v20_exclude_old_family"
+    runtime,
+    common,
+    *,
+    coarse_degree: int | None = None,
+    cache_policy="v20_exclude_old_family",
 ):
-    """Compile the p6 and p4 complete cell forms before factor construction.
+    """Compile the p6 and requested coarse complete cell forms before factors.
 
     The returned compiled objects are intentionally borrowed by the caller for
     one setup root and are not inserted into the ordinary V19 path.
@@ -1077,6 +1503,20 @@ def prepare_dual_condensed_forms(
 
     from dolfinx import fem, jit
     import ufl
+
+    actual_coarse_degree = int(common.get("coarse_degree", 4))
+    if coarse_degree is None:
+        coarse_degree = actual_coarse_degree
+    coarse_degree = int(coarse_degree)
+    if coarse_degree != actual_coarse_degree:
+        raise ValueError("prepared-form coarse degree disagrees with common")
+    if coarse_degree not in (2, 3, 4):
+        raise ValueError("prepared-form coarse degree must be 2, 3, or 4")
+    coarse = common.get("coarse")
+    if coarse is None:
+        if coarse_degree != 4 or "p4" not in common:
+            raise KeyError("common is missing the requested coarse action")
+        coarse = common["p4"]
 
     cache_dir, cache_facts = _v20_form_cache(runtime, cache_policy=cache_policy)
     jit_options = {
@@ -1159,17 +1599,29 @@ def prepare_dual_condensed_forms(
         runtime.marker(
             "v20_form_preparation_started",
             {
-                "roles": ["p6_condensation", "p4_condensation"],
+                "roles": [
+                    "p6_condensation",
+                    f"q{coarse_degree}_condensation",
+                ],
+                "coarse_degree": coarse_degree,
                 "evaluation_forms": "official postprocess kernels are compiled below",
                 "jit_options": jit_options,
                 "cache": cache_facts,
             },
         )
-        for role, action in (
-            ("p6_condensation", common["fine"]["volume_action"]),
-            ("p4_condensation", common["p4"]["volume_action"]),
-        ):
-            prepared[role] = compile_form(role, action.bilinear_form)
+        prepared["p6_condensation"] = compile_form(
+            "p6_condensation", common["fine"]["volume_action"].bilinear_form
+        )
+        coarse_role = (
+            "p4_condensation" if coarse_degree == 4 else f"q{coarse_degree}_condensation"
+        )
+        coarse_form = compile_form(
+            coarse_role, coarse["volume_action"].bilinear_form
+        )
+        prepared["coarse_condensation"] = coarse_form
+        # Compatibility for the existing V20 holder contract.  This is the
+        # same compiled object, never a second degree-4 compilation.
+        prepared["p4_condensation"] = coarse_form
 
         # These are the actual rank-zero/Expression kernels used by the
         # official 3D output path.  Compiling the native rank-one action or
@@ -1230,6 +1682,10 @@ def prepare_dual_condensed_forms(
         "pre_factor": True,
         "jit_options": jit_options,
         "cache": cache_facts,
+        "coarse_degree": coarse_degree,
+        "compatibility_aliases": {
+            "p4_condensation": "coarse_condensation"
+        },
         "roles": {key: _compiled_form_identity(value) for key, value in prepared.items()},
         "compiler_events": list(compiler_events),
         "compiler_event_count": len(compiler_events),

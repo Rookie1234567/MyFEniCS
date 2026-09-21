@@ -5,7 +5,7 @@ port and recovery residuals. Arnoldi and right-preconditioned directions
 remain in the supplied retained space. References are checkpoint-only.
 """
 
-from time import perf_counter
+from time import perf_counter, perf_counter_ns
 
 import numpy as np
 
@@ -41,6 +41,8 @@ def run_retained_fgmres(
     status = None
     result = None
     last_checkpoint = -1
+    ksp_start_monotonic_ns = None
+    ksp_end_monotonic_ns = None
     timings = {"explicit_schur_seconds": 0.0, "physical_evaluation_seconds": 0.0,
                "checkpoint_seconds": 0.0}
 
@@ -134,9 +136,12 @@ def run_retained_fgmres(
 
         ksp.setConvergenceTest(convergence)
         ksp.setUp()
-        started = perf_counter()
+        ksp_start_monotonic_ns = perf_counter_ns()
         ksp.solve(rhs, solution)
-        ksp_monotonic = perf_counter() - started
+        ksp_end_monotonic_ns = perf_counter_ns()
+        ksp_monotonic = (
+            ksp_end_monotonic_ns - ksp_start_monotonic_ns
+        ) / 1.0e9
         iteration = int(ksp.getIterationNumber())
         final = snapshot(iteration, None, ksp.getResidualNorm(), terminal=True)
         reason = int(ksp.getConvergedReason())
@@ -151,6 +156,20 @@ def run_retained_fgmres(
             "matvec_count": ac.matvec_count, "pc_apply_count": pcc.apply_count,
             "explicit_action_count": len(snapshots), "elapsed_seconds": float(seconds()),
             "ksp_solve_monotonic_seconds": ksp_monotonic, "timings": timings,
+            "ksp_phase": {
+                "scope": "PETSc.KSP.solve_only",
+                "start_monotonic_ns": int(ksp_start_monotonic_ns),
+                "end_monotonic_ns": int(ksp_end_monotonic_ns),
+                "elapsed_seconds": float(ksp_monotonic),
+                "excludes": [
+                    "KSP setup",
+                    "terminal residual snapshot",
+                    "outer adapter cache validation and packet saves",
+                ],
+            },
+            "elapsed_seconds_scope": (
+                "retained_outer_solve_clock_through_terminal_snapshot"
+            ),
             "ksp_create_count": 1, "ksp_solve_count": 1, "ksp_destroy_count": 0,
             "restart": 32, "max_it": 2048, "zero_start": True,
             "zero_start_scope": "retained unknowns; full field includes internal particular solution",

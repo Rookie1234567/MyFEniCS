@@ -18,8 +18,21 @@ from src.solvers.fullspace_same_mesh_hcurl_pmg_global import same_mesh_positive_
 
 
 @pytest.mark.parametrize("degree", [2, 3, 6])
-@pytest.mark.parametrize("component,packed", [(None, False), ("curl", False), ("mass", False), (None, True)])
-def test_original_form_complex_multimaster_affine_orientation(degree, component, packed):
+@pytest.mark.parametrize(
+    "component,packed,preallocated",
+    [
+        (None, False, False),
+        ("curl", False, False),
+        ("mass", False, False),
+        (None, True, False),
+        (None, True, True),
+        ("curl", True, True),
+        ("mass", True, True),
+    ],
+)
+def test_original_form_complex_multimaster_affine_orientation(
+    degree, component, packed, preallocated
+):
     cell_count = 9 if degree == 2 else 2  # exercise one full batch and its tail
     domain = mesh.create_box(MPI.COMM_SELF, [np.zeros(3), np.array([1., 2., 3.])],
                              [cell_count, 1, 1], cell_type=mesh.CellType.hexahedron)
@@ -53,7 +66,8 @@ def test_original_form_complex_multimaster_affine_orientation(degree, component,
     materials_before = (mu.x.array.copy(), mass.x.array.copy())
     tracemalloc.start()
     kernel = IsotropicPartialAssembly(space, mu, mass,
-        component_form=form if component else None, component=component, contiguous_work=packed)
+        component_form=form if component else None, component=component,
+        contiguous_work=packed, preallocated_work=preallocated)
     _, initialization_peak = tracemalloc.get_traced_memory()
     tracemalloc.stop()
     assert np.count_nonzero(kernel.permutations) > 0
@@ -125,6 +139,174 @@ def test_original_form_complex_multimaster_affine_orientation(degree, component,
         np.testing.assert_array_equal(oracle.apply(source).array, expected)
         with pytest.raises(RuntimeError, match="destroyed"):
             fast.apply(source)
+
+
+@pytest.mark.parametrize(
+    "degree,component",
+    [
+        (2, "mass"),
+        (2, "curl"),
+        (2, None),
+        (3, None),
+        (6, "mass"),
+        (6, "curl"),
+        (6, None),
+    ],
+)
+def test_sum_factorized_native_tabulate_adjoint_and_sheared_mpc(
+    degree, component
+):
+    """Qualify the opt-in kernel against native tabulation and the form oracle."""
+
+    cell_count = 9 if degree == 2 else 2
+    domain = mesh.create_box(
+        MPI.COMM_SELF,
+        [np.zeros(3), np.array([1.0, 2.0, 3.0])],
+        [cell_count, 1, 1],
+        cell_type=mesh.CellType.hexahedron,
+    )
+    domain.geometry.x[:, 0] = domain.geometry.x[:, 0] ** 2 + 0.1 * domain.geometry.x[:, 0]
+    domain.geometry.x[:] = domain.geometry.x @ np.array(
+        [[1.0, 0.2, -0.1], [0.0, 1.0, 0.3], [0.0, 0.0, 1.0]]
+    )
+    space = fem.functionspace(domain, ("N1curl", degree))
+    mpc = dolfinx_mpc.MultiPointConstraint(space)
+    mpc.add_constraint(
+        space,
+        np.array([0], np.int32),
+        np.array([1, 2], np.int64),
+        np.array([0.25 + 0.5j, -0.1 + 0.2j]),
+        np.array([0, 0], np.int32),
+        np.array([0, 2], np.int32),
+    )
+    mpc.finalize()
+    space = mpc.function_space
+    dg = fem.functionspace(domain, ("DG", 0))
+    mu, mass = fem.Function(dg), fem.Function(dg)
+    odd = np.arange(cell_count) % 2 == 1
+    mu.x.array[:] = np.where(odd, 1.7, 1.0)
+    mass.x.array[:] = np.where(odd, 0.4, 2.0)
+    form = same_mesh_positive_form(space, curl_coefficient=mu, mass_coefficient=mass)
+    if component is not None:
+        from src.solvers.common_3d_forms import _build_physical_volume_terms
+
+        trial, test = ufl.TrialFunction(space), ufl.TestFunction(space)
+        cfg = SimpleNamespace(
+            tags=SimpleNamespace(air=1, substrate=2, grating=3),
+            mu_r=0.8,
+            k0=1.0,
+            eps_r=2.0 + 0.3j,
+            substrate_index=np.sqrt(0.4 - 0.2j),
+            grating_index=1.0,
+        )
+        tags = mesh.meshtags(
+            domain,
+            3,
+            np.arange(cell_count, dtype=np.int32),
+            np.where(odd, 2, 1).astype(np.int32),
+        )
+        forms = _build_physical_volume_terms(
+            cfg,
+            trial,
+            test,
+            ufl.Measure("dx", domain=domain, subdomain_data=tags),
+        )
+        mu.x.array[:] = 1 / cfg.mu_r
+        mass.x.array[:] = np.where(odd, -cfg.substrate_index**2, -cfg.eps_r)
+        form = forms[0 if component == "curl" else 1]
+
+    kernel = IsotropicPartialAssembly(
+        space,
+        mu,
+        mass,
+        component_form=form if component else None,
+        component=component,
+        sum_factorized_work=True,
+    )
+    assert kernel.audit["sum_factorized_opt_in"] is True
+    assert kernel._sum_factorized.audit["native_tensor_product_api"] is False
+    sf = kernel._sum_factorized
+
+    rng = np.random.default_rng(36200 + degree + (0 if component is None else 1))
+    local = rng.normal(size=(1, sf.coefficient_matrix.shape[0])) + 1j * rng.normal(
+        size=(1, sf.coefficient_matrix.shape[0])
+    )
+    polynomial = (local @ sf.coefficient_matrix).reshape(
+        1, 3, sf.degree + 1, sf.degree + 1, sf.degree + 1
+    )
+    native = sf.element.tabulate(1, sf.points)
+    derivative_tables = (
+        (sf.derivatives_1d[0], sf.values_1d[1], sf.values_1d[2]),
+        (sf.values_1d[0], sf.derivatives_1d[1], sf.values_1d[2]),
+        (sf.values_1d[0], sf.values_1d[1], sf.derivatives_1d[2]),
+    )
+
+    def assert_scaled_close(observed, expected):
+        difference = np.linalg.norm(observed - expected)
+        scale = np.linalg.norm(expected)
+        if scale > 0.0:
+            assert difference / scale <= 1e-12
+        else:
+            assert np.max(np.abs(observed)) <= 256 * np.finfo(float).eps
+
+    for vector_component in range(3):
+        observed = sf._field_from_polynomial(
+            polynomial[:, vector_component], sf.values_1d
+        )[0]
+        expected = np.einsum("i,qic->qc", local[0], native[0])[:, vector_component]
+        assert_scaled_close(observed, expected)
+        for derivative, tables in enumerate(derivative_tables):
+            observed = sf._field_from_polynomial(
+                polynomial[:, vector_component], tables
+            )[0]
+            expected = np.einsum("i,qic->qc", local[0], native[derivative + 1])[
+                :, vector_component
+            ]
+            assert_scaled_close(observed, expected)
+
+    identity = np.eye(sf.polynomial_dimension).reshape(
+        sf.polynomial_dimension,
+        sf.degree + 1,
+        sf.degree + 1,
+        sf.degree + 1,
+    )
+    polynomial_table = sf._evaluate(identity, *sf.values_1d).T
+    field = rng.normal(size=(1, len(sf.points))) + 1j * rng.normal(
+        size=(1, len(sf.points))
+    )
+    observed = sf._polynomial_from_field(field, sf.values_1d)
+    expected = field[:, sf.natural_to_input] @ polynomial_table
+    assert_scaled_close(observed, expected)
+
+    with ExitStack() as owned:
+        oracle = FullspaceMpcFormAction(
+            form,
+            space,
+            mpc=mpc,
+            slave_row_identity=component != "mass",
+        )
+        owned.callback(oracle.destroy)
+        fast = FullspaceMpcFormAction(
+            form,
+            space,
+            mpc=mpc,
+            local_kernel=kernel,
+            slave_row_identity=component != "mass",
+        )
+        owned.callback(fast.destroy)
+        source = oracle.matrix.createVecRight()
+        owned.callback(source.destroy)
+        source.array[:] = rng.normal(size=source.getLocalSize()) + 1j * rng.normal(
+            size=source.getLocalSize()
+        )
+        source.array[0] = 0.0
+        before = source.array.copy()
+        expected = oracle.apply(source).array.copy()
+        observed = fast.apply(source).array.copy()
+        relative = np.linalg.norm(observed - expected) / np.linalg.norm(expected)
+        assert relative <= 2e-11
+        assert np.all(np.isfinite(observed))
+        np.testing.assert_array_equal(source.array, before)
 
 
 def test_nonaffine_geometry_and_nonpositive_material_rejected():

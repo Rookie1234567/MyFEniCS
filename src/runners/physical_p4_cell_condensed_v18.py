@@ -194,6 +194,7 @@ def _operator_identity(
     matrix_identity: Mapping[str, Any],
     *,
     stage: str,
+    coarse_degree: int,
 ) -> tuple[dict[str, Any], str]:
     from src.runners.physical_macro_controls import _mapping_identity_sha256
     from src.solvers.condensed_fine_reference import native_map_arrays
@@ -211,21 +212,31 @@ def _operator_identity(
     active_trace = set(
         map(int, condensed.trace_constraints.owned_active_original_dofs)
     )
-    p4_map = native_map_arrays(
-        common["levels"]["spaces"][4], common["levels"]["floquets"][4]
+    coarse_degree = int(coarse_degree)
+    if coarse_degree != int(common.get("coarse_degree", coarse_degree)):
+        raise ValueError("cell-condensed identity coarse degree disagrees with common")
+    coarse_map = native_map_arrays(
+        common["levels"]["spaces"][coarse_degree],
+        common["levels"]["floquets"][coarse_degree],
     )
     p6_map = native_map_arrays(
         common["levels"]["spaces"][6], common["levels"]["floquets"][6]
     )
+    coarse = common.get("coarse")
+    if coarse is None:
+        if coarse_degree != 4 or "p4" not in common:
+            raise KeyError("common is missing the requested coarse action")
+        coarse = common["p4"]
     identity = {
         "schema": "task039extra.v18.cell-condensed-operator-identity.v1",
         "stage": str(stage),
+        "coarse_degree": coarse_degree,
         "input_sha256": input_sha,
         "physical_model_sha256": physical_sha,
         "ordered_mode_sha256": str(common["fine"]["mode_sha256"]),
-        "p4_native_map_sha256": _mapping_identity_sha256(p4_map),
+        "coarse_native_map_sha256": _mapping_identity_sha256(coarse_map),
         "p6_native_map_sha256": _mapping_identity_sha256(p6_map),
-        "p4_storage_rows": int(common["p4"]["dtn_action"].carrier.global_rows),
+        "coarse_storage_rows": int(coarse["dtn_action"].carrier.global_rows),
         "p6_storage_rows": int(common["fine"]["dtn_action"].carrier.global_rows),
         "condensed_rows": int(condensed.matrix.getSize()[0]),
         "condensed_matrix_identity": dict(matrix_identity),
@@ -251,6 +262,13 @@ def _operator_identity(
         "reference_used_for_operator_or_initial_guess": False,
         "initial_guess": "zero",
     }
+    if coarse_degree == 4:
+        # Keep the V24 identity field names for the already-qualified q=4
+        # record.  q=2/3 records expose only their actual coarse identity.
+        identity.update(
+            p4_native_map_sha256=identity["coarse_native_map_sha256"],
+            p4_storage_rows=identity["coarse_storage_rows"],
+        )
     return identity, _sha256_json(identity)
 
 
@@ -261,6 +279,7 @@ def cell_condensed_stack(
     resolved_payload: Mapping[str, Any],
     *,
     stage: str,
+    coarse_degree: int | None = None,
     backend: str = "exact",
     compiled_form: Any | None = None,
     compiled_form_holder: dict[str, Any] | None = None,
@@ -291,10 +310,22 @@ def cell_condensed_stack(
 
     if int(common["levels"]["mesh"].comm.size) != 1:
         raise NotImplementedError("V18 cell-condensed stack is qualified for MPI1")
-    p4 = common["p4"]
+    actual_coarse_degree = int(common.get("coarse_degree", 4))
+    if coarse_degree is None:
+        coarse_degree = actual_coarse_degree
+    coarse_degree = int(coarse_degree)
+    if coarse_degree != actual_coarse_degree:
+        raise ValueError("cell-condensed stack coarse degree disagrees with common")
+    if coarse_degree not in (2, 3, 4):
+        raise ValueError("cell-condensed stack supports q=2, q=3, or q=4")
+    coarse = common.get("coarse")
+    if coarse is None:
+        if coarse_degree != 4 or "p4" not in common:
+            raise KeyError("common is missing the requested coarse action")
+        coarse = common["p4"]
     levels = common["levels"]
-    volume_action = p4["volume_action"]
-    carrier = p4["dtn_action"].carrier
+    volume_action = coarse["volume_action"]
+    carrier = coarse["dtn_action"].carrier
     volume_form = volume_action.bilinear_form
     owns_compiled_form = compiled_form is None
     condensed = None
@@ -335,9 +366,9 @@ def cell_condensed_stack(
             compiled_form = fem.form(volume_form)
         condensed = build_unconstrained_assembly_time_condensation(
             compiled_form,
-            levels["spaces"][4],
+            levels["spaces"][coarse_degree],
             levels["mesh_data"].cell_tags,
-            mpc=levels["floquets"][4].mpc,
+            mpc=levels["floquets"][coarse_degree].mpc,
             appended_global_rows=len(carrier.entries),
             appended_support_owned_cell_groups=(
                 np.arange(
@@ -387,29 +418,51 @@ def cell_condensed_stack(
                               for a in pair)
         mapping_bytes = sum(a.nbytes for a in {id(a): a for a in mapping_arrays}.values())
         if capacity_metadata_callback is not None:
-            capacity_metadata_callback(
+            # The V22 callback still consumes the historical p4 keys.  They
+            # are aliases of this one live q metadata payload, not a degree-4
+            # calculation.
+            callback_payload = {
+                "coarse_degree": coarse_degree,
+                f"q{coarse_degree}_port_terms_count": int(len(port_terms)),
+                f"q{coarse_degree}_port_terms_Bi_bytes": int(
+                    sum(term.Bi.nbytes for term in port_terms.values())
+                ),
+                "p4_port_terms_count": int(len(port_terms)),
+                "p4_port_terms_Bi_bytes": int(
+                    sum(term.Bi.nbytes for term in port_terms.values())
+                ),
+                "xiB_payload_estimate_bytes": int(
+                    sum(term.Bi.nbytes for term in port_terms.values())
+                ),
+                f"q{coarse_degree}_port_terms_payload_bytes": int(port_bytes),
+                "p4_port_terms_payload_bytes": int(port_bytes),
+                f"q{coarse_degree}_mapping_bytes": int(mapping_bytes),
+                "p4_mapping_bytes": int(mapping_bytes),
+                f"q{coarse_degree}_local_dimension": int(condensed.build_audit["local_tensor_dimension"]),
+                "p4_local_dimension": int(condensed.build_audit["local_tensor_dimension"]),
+                f"q{coarse_degree}_interior_dimension": int(condensed.build_audit["local_interior_dimension"]),
+                "p4_interior_dimension": int(condensed.build_audit["local_interior_dimension"]),
+                f"q{coarse_degree}_trace_dimension": int(condensed.build_audit["local_trace_dimension"]),
+                "p4_trace_dimension": int(condensed.build_audit["local_trace_dimension"]),
+                f"q{coarse_degree}_raw_class_count": int(
+                    condensed.build_audit["raw_tensor_class_count_global_unique"]
+                ),
+                "p4_raw_class_count": int(
+                    condensed.build_audit["raw_tensor_class_count_global_unique"]
+                ),
+                f"q{coarse_degree}_oriented_class_count": int(
+                    condensed.build_audit["oriented_schur_class_count_sum"]
+                ),
+                "p4_oriented_class_count": int(
+                    condensed.build_audit["oriented_schur_class_count_sum"]
+                ),
+            }
+            callback_payload.update(
                 {
-                    "p4_port_terms_count": int(len(port_terms)),
-                    "p4_port_terms_Bi_bytes": int(
-                        sum(term.Bi.nbytes for term in port_terms.values())
-                    ),
-                    "xiB_payload_estimate_bytes": int(
-                        sum(term.Bi.nbytes for term in port_terms.values())
-                    ),
-                    "p4_port_terms_payload_bytes": int(port_bytes),
-                    "p4_mapping_bytes": int(mapping_bytes),
-                    "p4_local_dimension": int(condensed.build_audit["local_tensor_dimension"]),
-                    "p4_interior_dimension": int(condensed.build_audit["local_interior_dimension"]),
-                    "p4_trace_dimension": int(condensed.build_audit["local_trace_dimension"]),
-                    "p4_raw_class_count": int(
-                        condensed.build_audit["raw_tensor_class_count_global_unique"]
-                    ),
-                    "p4_oriented_class_count": int(
-                        condensed.build_audit["oriented_schur_class_count_sum"]
-                    ),
-                    "source": "live_assembled_p4_port_terms_and_condensation_metadata",
+                    "source": f"live_assembled_q{coarse_degree}_port_terms_and_condensation_metadata",
                 }
             )
+            capacity_metadata_callback(callback_payload)
         runtime.reserve_inventory(
             matrix_inventory_label,
             {
@@ -503,6 +556,7 @@ def cell_condensed_stack(
             condensed,
             matrix_before,
             stage=stage,
+            coarse_degree=coarse_degree,
         )
         adapter = CellCondensedFintAdapter(inverse)
         runtime.release_workspace(assembly_workspace)
@@ -514,6 +568,7 @@ def cell_condensed_stack(
         stack_facts = {
             "schema": "task039extra.v18.cell-condensed-stack.v1",
             "stage": str(stage),
+            "coarse_degree": coarse_degree,
             "backend": str(backend),
             "matrix_identity_before_factor": matrix_before,
             "matrix_identity_after_factor": matrix_after,
@@ -704,6 +759,7 @@ def cell_condensed_stack(
 
 def cell_condensed_stack_factory(
     *,
+    coarse_degree: int | None = None,
     backend: str = "exact",
     compiled_form: Any | None = None,
     compiled_form_holder: dict[str, Any] | None = None,
@@ -720,6 +776,7 @@ def cell_condensed_stack_factory(
             common,
             resolved_payload,
             stage=stage,
+            coarse_degree=coarse_degree,
             backend=backend,
             compiled_form=compiled_form,
             compiled_form_holder=compiled_form_holder,
@@ -763,15 +820,27 @@ def _controls_after_solve(factor: Any, *, solve_index: int) -> dict[str, Any]:
     }
 
 
-def _native_residual_packet(common, rhs, solution, alpha):
+def _native_residual_packet(
+    common, rhs, solution, alpha, *, coarse_degree: int | None = None
+):
     from .physical_p4_schur_v14 import _augmented_residual_arrays
     from src.solvers.fullspace_p4_blr import (
         augmented_residual_identity, native_a4_residual_from_augmented,
     )
 
-    carrier = common["p4"]["dtn_action"].carrier
+    actual_coarse_degree = int(common.get("coarse_degree", 4))
+    if coarse_degree is None:
+        coarse_degree = actual_coarse_degree
+    if int(coarse_degree) != actual_coarse_degree:
+        raise ValueError("native residual coarse degree disagrees with common")
+    coarse = common.get("coarse")
+    if coarse is None:
+        if int(coarse_degree) != 4 or "p4" not in common:
+            raise KeyError("common is missing the requested coarse action")
+        coarse = common["p4"]
+    carrier = coarse["dtn_action"].carrier
     facts, native, volume, top, port = _augmented_residual_arrays(
-        common["p4"]["volume_action"], common["p4"]["physical_action"],
+        coarse["volume_action"], coarse["physical_action"],
         carrier, rhs, solution, alpha,
     )
     native, volume, top, port = -native, -volume, -top, -port

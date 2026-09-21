@@ -1,0 +1,136 @@
+{
+  "schema": "task039extra.s1-a6-h6-sum-factorized-compact.v1",
+  "run_id": "task39extra_v25_s1_a6_h6_sum_factorized_v27",
+  "profile": "physical_p6_trace_coarse_degree_speed_v25",
+  "stage": "S1_A6_H6_SUM_FACTORIZED_PAIR",
+  "status": "QUALIFIED_OPERATOR_EQUIVALENCE",
+  "classification": "operator_pair_only_no_formal_pde",
+  "authority": "component_operator_only; not full-PC or formal-PDE authority",
+  "source_identity": {
+    "base_head": "e63d2f49f19961f985faeadbe1ad3b89808369d1",
+    "worktree_dirty_during_component_run": true,
+    "artifact_tracked_diff_sha256": "cb10e5d4d3fdf0577e691e8a041f40fb375aeeb6f625223c8b8904df63e02366",
+    "direct_source_files": {
+      "src/solvers/fullspace_n1e_sum_factor.py": "bcd3e21a18d854c1a325e6a5814c395562bc9bcd0a78ee9ce6781b5b29c09994",
+      "src/solvers/fullspace_partial_assembly.py": "eecaae02186ff4066ade3e2f30966f0e1c51db59de3612c237eeabf33168cfb0",
+      "src/solvers/physical_equivalent_fast.py": "5a181e78acd16c3f0be26195221e695751c9844cdc513988fb36cf9a04353f77",
+      "src/solvers/physical_light_setup.py": "2cfd303ca87947197b36cb4325b58a1b5ecbd173dd8b8ece02c7d2cf89e0b043"
+    }
+  },
+  "input": {
+    "path": "input/task39extra/v24_laptop_speed_original_h7p5.dat",
+    "sha256": "2ba2508861e02c2f1a9dbda433702c977eb0371cdb986350245e3caf15eb6928",
+    "physical_model_sha256": "d8c5abb837adda92ea86e257cff9e2ff01ccf466879b08a2cde9a071e1d1d036"
+  },
+  "selection": {
+    "physical_operator_backend": "isotropic_sum_factorized_n1e_v26",
+    "h6_backend_rule": "isotropic_sum_factorized_n1e_v26_apply_and_power10",
+    "thread_contract": "mpi1_omp1_blas1_v25",
+    "mpi_size": 1,
+    "thread_count": 1,
+    "pc_internal_a6": "sum-factorized N1E kernel in both volume components",
+    "h6_apply": "sum-factorized packed apply",
+    "h6_power10": "sum-factorized packed power-estimation action"
+  },
+  "operators": {
+    "a6_full": {
+      "median_baseline_seconds": 5.615303212005529,
+      "median_candidate_seconds": 3.326707318992703,
+      "median_of_paired_repeat_ratios": 0.5977345519260012,
+      "ratio_definition": "median(candidate_seconds[i] / baseline_seconds[i]) over first plus three warm repeats",
+      "max_relative_difference": 7.268824811167207e-15,
+      "inputs_unchanged": true,
+      "repeat_seconds": {
+        "baseline_first_plus_warm": [6.349072515993612, 5.78462131600827, 5.4459851080027875, 5.311260915012099],
+        "candidate_first_plus_warm": [3.8678600410057697, 3.4706920009921305, 3.182722636993276, 3.162765954999486]
+      }
+    },
+    "a6_volume": {
+      "median_baseline_seconds": 5.597440945501148,
+      "median_candidate_seconds": 3.3534994010042283,
+      "median_of_paired_repeat_ratios": 0.5927790935924615,
+      "ratio_definition": "median(candidate_seconds[i] / baseline_seconds[i]) over first plus three warm repeats",
+      "max_relative_difference": 7.26882481148384e-15,
+      "inputs_unchanged": true,
+      "repeat_seconds": {
+        "baseline_first_plus_warm": [5.294019084001775, 5.408650457000476, 6.127147242004867, 5.78623143400182],
+        "candidate_first_plus_warm": [3.1740962250041775, 3.97929796599783, 3.31629312899895, 3.3907056730095064]
+      }
+    },
+    "h6_apply": {
+      "median_baseline_seconds": 8.367951847998484,
+      "median_candidate_seconds": 3.6148972290029633,
+      "median_of_paired_repeat_ratios": 0.43298776361290847,
+      "ratio_definition": "median(candidate_seconds[i] / baseline_seconds[i]) over first plus three warm repeats",
+      "max_relative_difference": 2.1564493818691844e-16,
+      "inputs_unchanged": true,
+      "baseline_backend": "isotropic_partial_assembly_v1",
+      "candidate_backend": "isotropic_sum_factorized_n1e_v26",
+      "repeat_seconds": {
+        "baseline_first_plus_warm": [8.346397322005942, 8.389506373991026, 8.310096796005382, 8.432070221999311],
+        "candidate_first_plus_warm": [3.6319494860072155, 3.597844971998711, 3.5801872059964808, 3.688335304002976]
+      }
+    },
+    "h6_setup": {
+      "baseline_seconds": 144.1912405710027,
+      "candidate_seconds": 89.64910604900797,
+      "candidate_over_baseline_single_setup_pair": 0.6217375320025971,
+      "baseline_power10_seconds": 96.13516185100889,
+      "candidate_power10_seconds": 38.78906060100417,
+      "output_relative_difference": 9.40733840398024e-16,
+      "same_seed_diagonal_inverse_sqrt": true,
+      "candidate_power10_backend": "isotropic_sum_factorized_n1e_v26",
+      "candidate_post_setup_apply_backend": "isotropic_partial_assembly_v1"
+    }
+  },
+  "controls": {
+    "h6_post_setup_apply": "isotropic_partial_assembly_v1; unchanged control path after the setup pair; not the selected V25 backend"
+  },
+  "resources": {
+    "workflow_monotonic_seconds": 710.3849701840081,
+    "conservative_observed_seconds": 789.6493765678632,
+    "process_tree_rss_peak_bytes": 1421533184,
+    "process_tree_pss_peak_bytes": 1389453312,
+    "process_tree_swap_peak_bytes": 0,
+    "watchdog_classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "descendants_cleared": true,
+    "mpi_size": 1,
+    "thread_count": 1,
+    "memory_scope": "dedicated subreaper parent plus descendants; sampled simultaneous paired RSS/PSS",
+    "memory_comparison_note": "RSS/PSS include the baseline and candidate objects resident in the same paired process; they are not candidate-only speed or memory savings."
+  },
+  "evidence": {
+    "root": "benchmarks/artifacts/task39extra/b_capacity_v22/root_engineering/components/s1_a6_h6_sum_factorized_v27/result_990",
+    "pair": {
+      "path": "s1_a6_h6_pair.json",
+      "sha256": "2893fc84078b91ddf4e69479ebc1be0f4b5ce700d8a51bb6ab8df09fb069932c"
+    },
+    "a6_stage": {
+      "path": "s1_a6_stage.json",
+      "sha256": "7efd498a96869d71f0526d7d32ea83d78bf0f39c6414673455bc4fd65996b761"
+    },
+    "h6_apply_stage": {
+      "path": "s1_h6_apply_stage.json",
+      "sha256": "6795a1fee6bb2bbd79782240b24043eb4b076cdbc2258d9397b2adc596f6fb7c"
+    },
+    "h6_setup_stage": {
+      "path": "s1_h6_setup_stage.json",
+      "sha256": "2c1ab81e69a334e516d4640fb7b9580cd47f00a9403d937ee80ad13e308beff9"
+    },
+    "watchdog_summary": {
+      "path": "watchdog/summary.json",
+      "sha256": "0ab8dcf281aabb2129fcb2c6aad58be477671cc3dd7a73a705d998c8c29b0cd5"
+    },
+    "provenance_sidecar": {
+      "path": "pair_provenance_sidecar.json",
+      "sha256": "a5abcd9880034f44088cd10555f297364caa34395f7bb8e5c1c4b124ed5c1314"
+    }
+  },
+  "not_admitted": [
+    "No full-PC compatibility qualification: this is an operator witness, not a PC direction.",
+    "No formal PDE, KSP, factorization, R/T/A, field, modal, or conservation claim.",
+    "No thread, batch-size, epsilon, compiler, or platform scan.",
+    "No end-to-end speed claim; Q4/Q3/Q2 formal evidence must remain separately sourced."
+  ]
+}

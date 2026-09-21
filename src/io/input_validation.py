@@ -566,6 +566,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "physical_p6_trace_p4_condensed_capacity_v22",
                 "physical_p6_trace_p4_condensed_physical_memory_v23",
                 "physical_p6_trace_p4_condensed_laptop_speed_v24",
+                "physical_p6_trace_coarse_degree_speed_v25",
             }:
                 raise _error(
                     "solver.preconditioner",
@@ -984,6 +985,86 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     raise _error(
                         "geometry.cell_notch",
                         "physical_p6_trace_p4_condensed_physical_memory_v23 does not allow a notch",
+                    )
+                try:
+                    from src.geometry.v21_frozen_plan import validate_v21_input
+
+                    validate_v21_input("Z3_ORIGINAL_H7P5", geometry, discretization)
+                except (OSError, TypeError, ValueError, KeyError) as exc:
+                    raise _error("geometry/discretization", str(exc)) from exc
+            elif preconditioner == "physical_p6_trace_coarse_degree_speed_v25":
+                stage = solver.get("stage")
+                stage_budgets = {
+                    "Q4_ORIGINAL": (43200, 43200),
+                    "Q3_ORIGINAL": (43200, 43200),
+                    "Q2_ORIGINAL": (43200, 43200),
+                }
+                if stage not in stage_budgets:
+                    raise _error(
+                        "solver.stage",
+                        f"{preconditioner} requires an explicit Q4_ORIGINAL, Q3_ORIGINAL, or Q2_ORIGINAL stage",
+                    )
+                for section, key, actual, expected in (
+                    ("solver", "restart", solver["restart"], 32),
+                    ("solver", "max_iterations", solver["max_iterations"], 2048),
+                    ("solver", "outer_restart", solver.get("outer_restart"), 0),
+                    (
+                        "solver",
+                        "memory_policy",
+                        solver.get("memory_policy"),
+                        "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+                    ),
+                    ("execution", "mpi_size", execution["mpi_size"], 1),
+                    (
+                        "execution",
+                        "timeout_seconds",
+                        execution["timeout_seconds"],
+                        stage_budgets[stage][0],
+                    ),
+                    ("execution", "require_zero_swap", execution["require_zero_swap"], True),
+                    ("discretization", "nedelec_degree", discretization["nedelec_degree"], 6),
+                    ("discretization", "mesh_target_nm", discretization["mesh_target_nm"], 7.5),
+                ):
+                    if actual != expected:
+                        raise _error(
+                            f"{section}.{key}",
+                            f"{preconditioner} fixes {key}={expected} for {stage}",
+                        )
+                expected_coarse_degree = {
+                    "Q4_ORIGINAL": 4,
+                    "Q3_ORIGINAL": 3,
+                    "Q2_ORIGINAL": 2,
+                }[stage]
+                if solver.get("coarse_degree") != expected_coarse_degree:
+                    raise _error(
+                        "solver.coarse_degree",
+                        f"{preconditioner} fixes coarse_degree={expected_coarse_degree} for {stage}",
+                    )
+                for key, expected in (
+                    (
+                        "physical_operator_backend",
+                        "isotropic_sum_factorized_n1e_v26",
+                    ),
+                    (
+                        "h6_backend_rule",
+                        "isotropic_sum_factorized_n1e_v26_apply_and_power10",
+                    ),
+                    ("thread_contract", "mpi1_omp1_blas1_v25"),
+                ):
+                    if solver.get(key) != expected:
+                        raise _error(
+                            f"solver.{key}",
+                            f"{preconditioner} fixes {key}={expected}",
+                        )
+                if geometry.get("model_variant") != "original":
+                    raise _error(
+                        "geometry.model_variant",
+                        f"{preconditioner} requires the original B model",
+                    )
+                if geometry.get("cell_notch") is not None:
+                    raise _error(
+                        "geometry.cell_notch",
+                        f"{preconditioner} does not allow a notch",
                     )
                 try:
                     from src.geometry.v21_frozen_plan import validate_v21_input

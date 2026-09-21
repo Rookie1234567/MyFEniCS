@@ -13,7 +13,14 @@ from .fullspace_same_mesh_hcurl_pmg_global import same_mesh_positive_form
 from src.io.physical_intermediate_profile import FAST_PROFILE, PACKED_PROFILE
 
 
-def build_packed_physical_action(common, cfg, *, contiguous_work=True):
+def build_packed_physical_action(
+    common,
+    cfg,
+    *,
+    contiguous_work=True,
+    preallocated_work=False,
+    sum_factorized_work=False,
+):
     """Build a packed volume action for one explicit PC owner.
 
     The returned physical action borrows the established degree-6 DtN action
@@ -59,6 +66,8 @@ def build_packed_physical_action(common, cfg, *, contiguous_work=True):
                 component_form=form,
                 component=component,
                 contiguous_work=contiguous_work,
+                preallocated_work=preallocated_work,
+                sum_factorized_work=sum_factorized_work,
             )
             for form, component in zip(forms, ("curl", "mass"), strict=True)
         )
@@ -76,6 +85,8 @@ def build_packed_physical_action(common, cfg, *, contiguous_work=True):
             "schema": "task039extra.v24.packed-pc-physical-action.v1",
             "backend": "isotropic_partial_assembly",
             "contiguous_work": bool(contiguous_work),
+            "preallocated_work": bool(preallocated_work),
+            "sum_factorized_work": bool(sum_factorized_work),
             "dtn_borrowed": True,
             "native_a6_independent": True,
             "material_function_array_bytes": int(
@@ -137,7 +148,9 @@ def shared_setup_identity(bundle):
         p1_factor=id(getattr(p['lower_cycle'], 'coarse_solver', None)))
 
 
-def install_equivalent_fast(bundle, cfg, *, profile=FAST_PROFILE):
+def install_equivalent_fast(
+    bundle, cfg, *, profile=FAST_PROFILE, preallocated_work=False
+):
     """Called only after the original setup, windows and qualification finish."""
     if 'equivalent_fast' in bundle:
         raise ValueError('fast PC backend already installed')
@@ -154,7 +167,13 @@ def install_equivalent_fast(bundle, cfg, *, profile=FAST_PROFILE):
         mu, mass = levels['mu'], levels['mass']
         form = same_mesh_positive_form(space, curl_coefficient=mu, mass_coefficient=mass)
         fast_b6 = FullspaceMpcFormAction(form, space, mpc=mpc,
-            local_kernel=IsotropicPartialAssembly(space, mu, mass, contiguous_work=packed))
+            local_kernel=IsotropicPartialAssembly(
+                space,
+                mu,
+                mass,
+                contiguous_work=packed,
+                preallocated_work=preallocated_work,
+            ))
         # Borrow original split forms with their individual tags/rules.
         original_components = fine['volume_action'].component_actions
         forms = tuple(original_components[k]._bilinear_form for k in ('curl', 'material_mass'))
@@ -172,7 +191,8 @@ def install_equivalent_fast(bundle, cfg, *, profile=FAST_PROFILE):
         physical_mu.x.scatter_forward()
         physical_mass.x.scatter_forward()
         kernels = tuple(IsotropicPartialAssembly(space, physical_mu, physical_mass,
-            component_form=form, component=component, contiguous_work=packed)
+            component_form=form, component=component, contiguous_work=packed,
+            preallocated_work=preallocated_work)
             for form, component in zip(forms, ('curl', 'mass'), strict=True))
         fast_volume = FullspaceSplitVolumeAction(*forms, space, mpc=mpc, local_kernels=kernels)
         fast_physical = FullspacePhysicalAction(fast_volume, fine['dtn_action'], owns_dtn=False)

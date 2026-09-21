@@ -63,7 +63,8 @@ def accumulate_basis_energy(values, curls, weights, targets, coefficients, outpu
 class ReferenceCellBasis:
     """Reference quadrature/bases only; cell workspaces are not retained."""
 
-    def __init__(self, space, form, *, allow_subdomains=False):
+    def __init__(self, space, form, *, allow_subdomains=False,
+                 store_reference_tables=True):
         from ffcx.analysis import analyze_ufl_objects
         from ffcx.element_interface import create_quadrature
         self.space = space
@@ -90,11 +91,16 @@ class ReferenceCellBasis:
         points, self.weights = create_quadrature(
             'hexahedron', md['quadrature_degree'], md['quadrature_rule'], data.argument_elements)
         table = element.tabulate(1, points)
-        self.values = np.ascontiguousarray(table[0].transpose(1, 0, 2))
-        self.curls = np.ascontiguousarray(np.stack((
-            table[2, :, :, 2]-table[3, :, :, 1],
-            table[3, :, :, 0]-table[1, :, :, 2],
-            table[1, :, :, 1]-table[2, :, :, 0]), axis=2).transpose(1, 0, 2))
+        if store_reference_tables:
+            self.values = np.ascontiguousarray(table[0].transpose(1, 0, 2))
+            self.curls = np.ascontiguousarray(np.stack((
+                table[2, :, :, 2]-table[3, :, :, 1],
+                table[3, :, :, 0]-table[1, :, :, 2],
+                table[1, :, :, 1]-table[2, :, :, 0]), axis=2).transpose(1, 0, 2))
+        else:
+            self.points = np.ascontiguousarray(points)
+            self.coefficient_matrix = np.ascontiguousarray(element.coefficient_matrix)
+            self.polynomial_degree = int(element.embedded_superdegree)
         geometry_element = basix.create_element(basix.ElementFamily.P,
             basix.CellType.hexahedron, 1, basix.LagrangeVariant.equispaced)
         self.geometry_derivatives = geometry_element.tabulate(1, points)[1:, :, :, 0]
@@ -104,13 +110,16 @@ class ReferenceCellBasis:
             weights_sha256=hashlib.sha256(self.weights.tobytes()).hexdigest(),
             reference_initialization_array_upper_bound_bytes=int(4*table.nbytes
                 + self.geometry_derivatives.nbytes + points.nbytes + self.weights.nbytes),
-            authority='same-ABI FFCx analysis and create_quadrature', dense_cell_tensor=False)
+            authority='same-ABI FFCx analysis and create_quadrature',
+            dense_cell_tensor=False,
+            reference_tables_retained=bool(store_reference_tables))
 
 
 class PositiveCellBasis(ReferenceCellBasis):
     """Original positive diagonal basis and unchanged coefficient validation."""
 
-    def __init__(self, space, mu, mass, *, action_rule=False):
+    def __init__(self, space, mu, mass, *, action_rule=False,
+                 store_reference_tables=True):
         for coefficient in (mu, mass):
             e = coefficient.function_space.element.basix_element
             if (coefficient.function_space.mesh is not space.mesh or e.degree != 0 or
@@ -124,10 +133,13 @@ class PositiveCellBasis(ReferenceCellBasis):
         if action_rule:
             import ufl
             form = ufl.action(form, fem.Function(space))
-        super().__init__(space, form)
+        super().__init__(space, form,
+                         store_reference_tables=store_reference_tables)
 
     def cell(self, cell, permutation):
         """Return oriented physical basis values/curls, weights and DG0 data."""
+        if not hasattr(self, 'values'):
+            raise RuntimeError('cell tables were not retained for sum-factorization')
         mesh = self.space.mesh
         x = mesh.geometry.x[mesh.geometry.dofmap[cell]]
         jacobian = _affine_cell_jacobian(self.geometry_derivatives, x)

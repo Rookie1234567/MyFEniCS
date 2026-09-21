@@ -360,6 +360,20 @@ def _dual_condensed_laptop_speed_v24_shared_ledger_path(
     )
 
 
+def _dual_condensed_coarse_degree_v25_shared_ledger_path(repo_root: Path) -> Path:
+    """Return the independent three-stage V25 coarse-degree ledger."""
+
+    return (
+        repo_root
+        / "benchmarks"
+        / "artifacts"
+        / "task39extra"
+        / "coarse_degree_speed_v25"
+        / "review_v23_a6_h6_speed_and_coarse_degree"
+        / "shared_workflow_ledger.json"
+    )
+
+
 def _validate_v17_t2_prerequisite(ledger: Mapping[str, Any]) -> dict[str, Any]:
     """Require a settled, hash-bound T1 checker decision before T2 launch."""
 
@@ -1785,6 +1799,11 @@ V24_SUMMARY_FILENAME = "physical_dual_condensed_laptop_speed_v24_summary.json"
 V24_PREDECESSOR_V23_LEDGER_SHA256 = (
     "06edc2d575577b857bb7ceb9a3d2eba13efd9e64058014c7e43549aae9634c2c"
 )
+V25_BATCH_IDENTITY = "review_v23_a6_h6_speed_and_coarse_degree"
+V25_STAGES = ("Q4_ORIGINAL", "Q3_ORIGINAL", "Q2_ORIGINAL")
+V25_LEDGER_SCHEMA = "task039extra.v25.shared-workflow-ledger.v1"
+V25_SUMMARY_FILENAME = "physical_dual_condensed_coarse_degree_v25_summary.json"
+V25_SHARED_WORKFLOW_SECONDS = 3 * V14_SHARED_WORKFLOW_SECONDS
 
 
 def _read_only_v21_ledger_reference(repo_root: Path) -> dict[str, Any]:
@@ -2187,6 +2206,91 @@ def _reserve_v24_shared_budget(
         summary_filename=V24_SUMMARY_FILENAME,
         prerequisite=prerequisite,
         bug_replay_limit=0 if prefix else 1,
+    )
+
+
+def _reserve_v25_shared_budget(
+    repo_root: Path,
+    run_directory: Path,
+    *,
+    source_sha: str,
+    stage: str,
+    stage_budget: Mapping[str, Any],
+    workflow_clock_start: Mapping[str, Any],
+    time_policy: str = V14_TIME_POLICY_ENFORCE,
+) -> dict[str, Any]:
+    """Reserve one independent V25 q-stage in the three-stage ledger."""
+
+    if stage not in V25_STAGES or time_policy != V14_TIME_POLICY_OBSERVE_ONLY:
+        raise InputError(
+            "V25 permits only Q4_ORIGINAL/Q3_ORIGINAL/Q2_ORIGINAL with observe_only"
+        )
+    if float(stage_budget.get("workflow_seconds", 0.0)) != 43200.0:
+        raise InputError("V25 q stages require a 43200-second workflow budget")
+    repo_root = Path(repo_root).resolve()
+    path = _dual_condensed_coarse_degree_v25_shared_ledger_path(repo_root)
+    prerequisite = {
+        "original_only": True,
+        "allowed_stages": list(V25_STAGES),
+        "cross_case_recycling": False,
+        "automatic_retry": False,
+        "fresh_factor_per_stage": True,
+        "direct_p6_to_q": True,
+        "coarse_degree_by_stage": {
+            "Q4_ORIGINAL": 4,
+            "Q3_ORIGINAL": 3,
+            "Q2_ORIGINAL": 2,
+        },
+        "one_implementation_bug_replay_total": True,
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        try:
+            ledger = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise InputError("V25 shared ledger cannot be read") from exc
+        if (
+            ledger.get("schema") != V25_LEDGER_SCHEMA
+            or ledger.get("batch_identity") != V25_BATCH_IDENTITY
+            or ledger.get("total_budget_seconds") != V25_SHARED_WORKFLOW_SECONDS
+            or ledger.get("allowed_stages") != list(V25_STAGES)
+            or ledger.get("cross_case_recycling") is not False
+        ):
+            raise InputError("V25 shared ledger identity or budget changed")
+    else:
+        ledger = {
+            "schema": V25_LEDGER_SCHEMA,
+            "batch_identity": V25_BATCH_IDENTITY,
+            "total_budget_seconds": V25_SHARED_WORKFLOW_SECONDS,
+            "elapsed_seconds": 0.0,
+            "conservative_allowance_seconds": 0.0,
+            "policy_debits": [],
+            "fresh_worker_count": 0,
+            "source_attempts": [],
+            "stages": {},
+            "unique_bug_replay_count": 0,
+            "replay_policy": (
+                "one independent original run per q stage; at most one explicit "
+                "hash-bound implementation-bug replay across the batch; no "
+                "automatic numerical or resource retry"
+            ),
+            "allowed_stages": list(V25_STAGES),
+            "cross_case_recycling": False,
+            "coarse_degree_by_stage": dict(prerequisite["coarse_degree_by_stage"]),
+        }
+    return _reserve_blr_stage_from_ledger(
+        path,
+        ledger,
+        stage=stage,
+        run_directory=run_directory,
+        source_sha=source_sha,
+        stage_budget=stage_budget,
+        workflow_clock_start=workflow_clock_start,
+        time_policy=time_policy,
+        error_prefix="V25",
+        summary_filename=V25_SUMMARY_FILENAME,
+        prerequisite=prerequisite,
+        bug_replay_limit=1,
     )
 
 
@@ -2876,6 +2980,7 @@ def launch_specification(
         CAPACITY_DUAL_CELL_CONDENSED_PROFILE,
         PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE,
         LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE,
+        COARSE_DEGREE_SPEED_PROFILE,
         profile_facts,
     )
     from src.io.physical_balanced_profile import BALANCED_PROFILES, BOUNDED_PROFILES
@@ -2893,6 +2998,7 @@ def launch_specification(
     capacity_v22_profile = specification.solver.get('preconditioner') == CAPACITY_DUAL_CELL_CONDENSED_PROFILE
     physical_memory_v23_profile = specification.solver.get('preconditioner') == PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE
     v24_profile = specification.solver.get('preconditioner') == LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE
+    coarse_degree_v25_profile = specification.solver.get('preconditioner') == COARSE_DEGREE_SPEED_PROFILE
     if v24_p4_prefix_target is not None:
         try:
             v24_p4_prefix_target = int(v24_p4_prefix_target)
@@ -2909,6 +3015,7 @@ def launch_specification(
         CAPACITY_DUAL_CELL_CONDENSED_PROFILE,
         PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE,
         LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE,
+        COARSE_DEGREE_SPEED_PROFILE,
     }
     cell_stage = str(specification.solver.get('stage', ''))
     if cell_condensed_profile:
@@ -3028,6 +3135,14 @@ def launch_specification(
             stage_budget=cell_stage_budget, workflow_clock_start=full_clock.start,
             time_policy=v14_time_policy,
             prefix=v24_p4_prefix_target is not None,
+        )
+    elif coarse_degree_v25_profile and physical_candidate:
+        run_directory = _timestamp_directory(specification, timestamp)
+        v14_lease = _reserve_v25_shared_budget(
+            Path(__file__).resolve().parents[2], run_directory,
+            source_sha=source, stage=cell_stage,
+            stage_budget=cell_stage_budget, workflow_clock_start=full_clock.start,
+            time_policy=v14_time_policy,
         )
     elif physical_memory_v23_profile and physical_candidate:
         run_directory = _timestamp_directory(specification, timestamp)
@@ -3193,7 +3308,7 @@ def launch_specification(
                             timebase_policy='conservative_realtime',
                             time_policy=v14_time_policy,
                         )
-                        if physical_memory_v23_profile or v24_profile:
+                        if physical_memory_v23_profile or v24_profile or coarse_degree_v25_profile:
                             watchdog_kwargs.update(
                                 memory_policy=physical_resources[
                                     'watchdog_memory_policy'
@@ -3331,7 +3446,7 @@ def launch_specification(
                                     'watchdog_memory_policy'
                                 ]
                             }
-                            if physical_memory_v23_profile or v24_profile
+                            if physical_memory_v23_profile or v24_profile or coarse_degree_v25_profile
                             else {}
                         ),
                         'wall_reference_seconds': watchdog_wall_seconds,
@@ -3448,6 +3563,7 @@ __all__ = [
     "_reserve_v21_shared_budget",
     "_reserve_v22_shared_budget",
     "_reserve_v23_shared_budget",
+    "_reserve_v25_shared_budget",
     "_validate_v21_checker_prerequisites",
     "V21_PREDECESSOR_V20_LEDGER_SHA256",
     "V22_PREDECESSOR_V21_LEDGER_SHA256",
@@ -3457,6 +3573,7 @@ __all__ = [
     "_dual_condensed_robustness_v21_shared_ledger_path",
     "_dual_condensed_capacity_v22_shared_ledger_path",
     "_dual_condensed_physical_memory_v23_shared_ledger_path",
+    "_dual_condensed_coarse_degree_v25_shared_ledger_path",
     "_cell_condensed_v18_shared_ledger_path",
     "_validate_v17_t2_prerequisite",
     "_validate_v18_prerequisite",

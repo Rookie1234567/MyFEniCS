@@ -34,6 +34,7 @@ SAME_MESH_EXTENDED_OWNER_TRANSFER_PAIRS = (
     (2, 1),
     (3, 1),
     (4, 2),
+    (6, 2),
     (6, 3),
     (6, 4),
 )

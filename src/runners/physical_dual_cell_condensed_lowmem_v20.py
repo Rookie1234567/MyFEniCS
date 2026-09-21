@@ -18,6 +18,7 @@ from pathlib import Path
 import numpy as np
 
 from src.io.physical_intermediate_profile import (
+    COARSE_DEGREE_SPEED_PROFILE,
     LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE,
     LOWMEM_DUAL_CELL_CONDENSED_PROFILE,
     profile_facts,
@@ -347,6 +348,7 @@ def v22_capacity_context(
     cfg=None,
     p6_space_facts: Mapping[str, object],
     p4_metadata: Mapping[str, object],
+    coarse_degree: int = 4,
     evidence_prefix: str = "v22",
 ) -> dict:
     """Derive the fixed-B future ledger from live common/class metadata.
@@ -367,11 +369,20 @@ def v22_capacity_context(
 
     fine_carrier = common["fine"]["dtn_action"].carrier
     p4_carrier = common["p4"]["dtn_action"].carrier
+    coarse_degree = int(coarse_degree)
+    if coarse_degree != int(common.get("coarse_degree", coarse_degree)):
+        raise ValueError("capacity context coarse degree disagrees with common")
+    if coarse_degree not in (2, 3, 4):
+        raise ValueError("capacity context coarse degree must be 2, 3, or 4")
     n6 = int(fine_carrier.global_rows)
     n4 = int(p4_carrier.global_rows)
     port_count = int(len(fine_carrier.entries))
-    if n6 != _V22_BOUND_B_IDENTITY["n6"] or n4 != _V22_BOUND_B_IDENTITY["n4"]:
-        raise ValueError("V22 live carrier rows do not match the frozen original-B identity")
+    if n6 != _V22_BOUND_B_IDENTITY["n6"]:
+        raise ValueError("V22 live p6 carrier rows do not match original B")
+    if coarse_degree == 4 and n4 != _V22_BOUND_B_IDENTITY["n4"]:
+        raise ValueError("V22 live q4 carrier rows do not match original B")
+    if n4 <= 0:
+        raise ValueError("live coarse carrier rows must be positive")
     if port_count != _V22_BOUND_B_IDENTITY["p6_port_count"]:
         raise ValueError("V22 live p6 carrier port count does not match original B")
 
@@ -430,15 +441,25 @@ def v22_capacity_context(
             f"{p6_local_dimensions!r}"
         )
     p4_class_counts = tuple(
-        int(p4_metadata.get(key, -1))
-        for key in ("p4_raw_class_count", "p4_oriented_class_count")
+        int(p4_metadata.get(key, p4_metadata.get(fallback, -1)))
+        for key, fallback in (
+            (f"q{coarse_degree}_raw_class_count", "p4_raw_class_count"),
+            (f"q{coarse_degree}_oriented_class_count", "p4_oriented_class_count"),
+        )
     )
-    if p4_class_counts != (
-        _V22_BOUND_B_IDENTITY["p6_raw_class_count"],
-        _V22_BOUND_B_IDENTITY["p6_oriented_class_count"],
-    ):
+    if coarse_degree == 4:
+        expected_class_counts = (
+            _V22_BOUND_B_IDENTITY["p6_raw_class_count"],
+            _V22_BOUND_B_IDENTITY["p6_oriented_class_count"],
+        )
+        if p4_class_counts != expected_class_counts:
+            raise ValueError(
+                "V22 q4 build_audit class identity does not match original B: "
+                f"{p4_class_counts!r}"
+            )
+    elif any(value <= 0 for value in p4_class_counts):
         raise ValueError(
-            "V22 p4 build_audit class identity does not match original B: "
+            f"V25 q{coarse_degree} build_audit class identity is incomplete: "
             f"{p4_class_counts!r}"
         )
     retained_rows = active_rows + port_count
@@ -540,6 +561,7 @@ def v22_capacity_context(
         "schema": f"task039extra.{evidence_prefix}.capacity-context.v2",
         "classification": "derived_pre_numeric_payload_estimates_live_RSS_separate",
         "identity": {
+            "coarse_degree": coarse_degree,
             "n6": n6,
             "n4": n4,
             "p6_port_count": port_count,
@@ -555,6 +577,12 @@ def v22_capacity_context(
                 "local_interior_dimension": p6_local_dimensions[1],
                 "local_trace_dimension": p6_local_dimensions[2],
             },
+            "coarse_class_counts": {
+                "raw": p4_class_counts[0],
+                "oriented": p4_class_counts[1],
+            },
+            # Historical q4 checker/fixture key; for q=2/3 this is an
+            # explicitly documented compatibility view of the live q facts.
             "p4_class_counts": {
                 "raw": p4_class_counts[0],
                 "oriented": p4_class_counts[1],
@@ -623,8 +651,13 @@ def v22_capacity_context(
                 "cache_identity_scatter_vectors_bytes": 0,
                 "payload_only": True,
             },
+            "coarse_xib": {
+                "formula": f"sum(actual assembled q{coarse_degree} port_terms Bi.nbytes)",
+                "payload_only": True,
+                "source_metadata": dict(p4_metadata),
+            },
             "p4_xib": {
-                "formula": "sum(actual assembled p4 port_terms Bi.nbytes)",
+                "formula": f"sum(actual assembled q{coarse_degree} port_terms Bi.nbytes)",
                 "payload_only": True,
                 "source_metadata": dict(p4_metadata),
             },
@@ -688,6 +721,7 @@ def _v22_capacity_callbacks(
     cfg,
     final_space_facts: Mapping[str, object],
     p4_metadata: Mapping[str, object],
+    coarse_degree: int = 4,
     directory: Path,
     source_sha: str,
     summary: dict[str, object],
@@ -733,6 +767,7 @@ def _v22_capacity_callbacks(
             cfg=cfg,
             p6_space_facts=final_space_facts,
             p4_metadata=p4_metadata,
+            coarse_degree=coarse_degree,
             evidence_prefix=evidence_prefix,
         )
         # This is frozen before any post-numeric RSS or allocated-memory gate.
@@ -921,6 +956,7 @@ def _run_physical_dual_cell_condensed_lowmem(
     *,
     source_sha,
     profile_identity=LOWMEM_DUAL_CELL_CONDENSED_PROFILE,
+    coarse_degree=None,
     allowed_stages=("Y3_ORIGINAL",),
     batch_identity="review_v20_dual_condensed_memory_lifecycle",
     evidence_prefix="v20",
@@ -987,6 +1023,26 @@ def _run_physical_dual_cell_condensed_lowmem(
     profile = str(resolved_payload["solver"]["preconditioner"])
     stage = str(resolved_payload["solver"]["stage"])
     contract = profile_facts(profile)
+    stage_coarse_degree = (
+        contract.get("coarse_degree_by_stage", {}).get(stage)
+        if isinstance(contract.get("coarse_degree_by_stage"), Mapping)
+        else None
+    )
+    if coarse_degree is None:
+        coarse_degree = 4 if stage_coarse_degree is None else stage_coarse_degree
+    try:
+        coarse_degree = int(coarse_degree)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("coarse_degree must be an integer") from exc
+    if coarse_degree not in (2, 3, 4):
+        raise ValueError("coarse_degree must be one of 2, 3, or 4")
+    if profile == COARSE_DEGREE_SPEED_PROFILE and stage_coarse_degree != coarse_degree:
+        raise ValueError(
+            f"{stage} is frozen to coarse_degree={stage_coarse_degree}, "
+            f"not {coarse_degree}"
+        )
+    if profile != COARSE_DEGREE_SPEED_PROFILE and coarse_degree != 4:
+        raise ValueError("coarse_degree overrides are limited to the V25 profile")
     if p4_repair_policy is None:
         p4_repair_policy = contract.get("p4_repair_policy")
     if p4_repair_policy is not None and not isinstance(p4_repair_policy, Mapping):
@@ -1014,6 +1070,7 @@ def _run_physical_dual_cell_condensed_lowmem(
         "official_result": False,
         "stage_pass": False,
         "time_policy": "observe_only",
+        "coarse_degree": coarse_degree,
     }
     runtime = common = None
     prepared = None
@@ -1069,9 +1126,45 @@ def _run_physical_dual_cell_condensed_lowmem(
         expected_space_facts = None
         p6_pre_facts = None
         cfg = simulation_config_3d_from_normalized(resolved_payload)
-        # The packed A6 action remains a separately qualified research helper,
-        # but the formal V24 route keeps the native A6 authority and H6 setup.
+        # V25 is the one explicit opt-in route that uses the common qualified
+        # sum-factorized N1E kernel for the PC-internal A6, H6 apply, and H6
+        # power-estimation action.  Every older profile retains its historical
+        # native/packed selection by leaving these flags at their defaults.
         pc_fine_action_factory = None
+        sum_factorized_work = False
+        sum_factorized_power10 = False
+        if profile == COARSE_DEGREE_SPEED_PROFILE:
+            expected_backend = "isotropic_sum_factorized_n1e_v26"
+            expected_h6_rule = (
+                "isotropic_sum_factorized_n1e_v26_apply_and_power10"
+            )
+            expected_threads = "mpi1_omp1_blas1_v25"
+            solver_contract = resolved_payload.get("solver", {})
+            if (
+                solver_contract.get("physical_operator_backend")
+                != expected_backend
+                or solver_contract.get("h6_backend_rule") != expected_h6_rule
+                or solver_contract.get("thread_contract") != expected_threads
+            ):
+                raise ValueError(
+                    "V25 resolved solver contract does not bind the selected "
+                    "sum-factorized backend, H6 rule, and MPI1/thread1 contract"
+                )
+            from src.solvers.physical_equivalent_fast import (
+                build_packed_physical_action,
+            )
+
+            def pc_fine_action_factory(common_):
+                return build_packed_physical_action(
+                    common_,
+                    cfg,
+                    contiguous_work=True,
+                    preallocated_work=False,
+                    sum_factorized_work=True,
+                )
+
+            sum_factorized_work = True
+            sum_factorized_power10 = True
         if derive_live_space_identity:
             from mpi4py import MPI
             from src.solvers.fullspace_dtn_action import build_dynamic_mode_inventory
@@ -1086,7 +1179,7 @@ def _run_physical_dual_cell_condensed_lowmem(
             prebuilt_levels = _build_same_mesh_levels(
                 cfg,
                 MPI.COMM_WORLD,
-                (6, 4),
+                (6, coarse_degree),
                 include_positive_coefficients=True,
             )
             p6_pre_counts, p6_pre_facts = derive_condensed_space_identity(
@@ -1094,17 +1187,20 @@ def _run_physical_dual_cell_condensed_lowmem(
                 prebuilt_levels["floquets"][6].mpc,
                 appended_rows=0,
             )
-            p4_pre_counts, p4_pre_facts = derive_condensed_space_identity(
-                prebuilt_levels["spaces"][4],
-                prebuilt_levels["floquets"][4].mpc,
+            coarse_pre_counts, coarse_pre_facts = derive_condensed_space_identity(
+                prebuilt_levels["spaces"][coarse_degree],
+                prebuilt_levels["floquets"][coarse_degree].mpc,
                 appended_rows=0,
             )
+            # Keep the historical local names below as compatibility labels;
+            # the object and counts are the requested q space.
+            p4_pre_counts, p4_pre_facts = coarse_pre_counts, coarse_pre_facts
             # Preserve the reviewed V20 common-cache accounting, substituting
             # live h7.5 FE/MPC storage rows and the actual mode inventory.
             mode_inventory = build_dynamic_mode_inventory(cfg)
             port_count = int(len(mode_inventory[0]))
             p6_storage_rows = int(p6_pre_counts[0])
-            p4_storage_rows = int(p4_pre_counts[0])
+            p4_storage_rows = int(coarse_pre_counts[0])
             component_vectors = 4 * (p6_storage_rows + p4_storage_rows) * 16 * 8
             component_indices = 4 * (p6_storage_rows + p4_storage_rows) * 4 * 8
             metric_vectors = 2 * p6_storage_rows * 16 * 8
@@ -1125,7 +1221,9 @@ def _run_physical_dual_cell_condensed_lowmem(
                 {
                     "projected_bytes": int(projected_bytes),
                     "p6": p6_pre_facts,
-                    "p4": p4_pre_facts,
+                    "coarse": coarse_pre_facts,
+                    "coarse_degree": coarse_degree,
+                    "p4": coarse_pre_facts,
                     "mode_count": port_count,
                     "formula": {
                         "component_vectors": "4*(N6_storage+N4_storage)*16*8",
@@ -1146,14 +1244,19 @@ def _run_physical_dual_cell_condensed_lowmem(
                     "strict_upper_bound": False,
                 },
             )
-        v24_owner_apply = profile == LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE
-        packed_power10 = False
+        v24_owner_apply = profile in {
+            LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE,
+            COARSE_DEGREE_SPEED_PROFILE,
+        }
+        packed_power10 = profile == COARSE_DEGREE_SPEED_PROFILE
         common = _build_common(
             runtime,
             cfg,
             prebuilt_levels=prebuilt_levels,
+            coarse_degree=coarse_degree,
             optimized_owner_apply=v24_owner_apply,
             fixed_serial_owner_route=v24_owner_apply,
+            native_aq_projection_check=(profile == COARSE_DEGREE_SPEED_PROFILE),
         )
         # The common builder now owns the FE/MPC levels.  Dropping this outer
         # alias avoids a duplicate mesh graph during form/condensation setup.
@@ -1219,7 +1322,12 @@ def _run_physical_dual_cell_condensed_lowmem(
             )
         if derive_live_space_identity:
             p6_port_count = int(len(common["fine"]["dtn_action"].carrier.entries))
-            p4_port_count = int(len(common["p4"]["dtn_action"].carrier.entries))
+            coarse_bundle = common.get("coarse")
+            if coarse_bundle is None:
+                if coarse_degree != 4 or "p4" not in common:
+                    raise KeyError("common is missing the requested coarse action")
+                coarse_bundle = common["p4"]
+            p4_port_count = int(len(coarse_bundle["dtn_action"].carrier.entries))
             expected_space_counts = tuple(int(value) for value in p6_pre_counts[:3]) + (
                 p6_port_count,
             )
@@ -1244,6 +1352,8 @@ def _run_physical_dual_cell_condensed_lowmem(
             )
             summary["actual_dimension_identity"] = {
                 "p6": expected_space_facts,
+                "coarse": p4_facts,
+                "coarse_degree": coarse_degree,
                 "p4": p4_facts,
                 "p4_expected_space_counts": list(p4_counts),
                 "geometry_semantic_identity": resolved_payload.get(
@@ -1261,14 +1371,25 @@ def _run_physical_dual_cell_condensed_lowmem(
             else "v20_exclude_old_family"
         )
         prepared, prepared_facts = prepare_dual_condensed_forms(
-            runtime, common, cache_policy=form_cache_policy
+            runtime,
+            common,
+            coarse_degree=coarse_degree,
+            cache_policy=form_cache_policy,
         )
         summary["form_preparation"] = prepared_facts
         # Transfer the two compiled forms directly to their setup consumers.
         # The preparation result must not retain a second owner while the
         # retained p6/p4 setup is running; the form holders are cleared by
         # their respective builders before the first outer KSP iteration.
-        p4_holder["form"] = prepared.pop("p4_condensation")
+        coarse_form = prepared.pop("coarse_condensation", None)
+        if coarse_form is None:
+            # Narrow q4 compatibility for older test/fixture providers that
+            # still return only the historical holder key.
+            coarse_form = prepared.pop("p4_condensation")
+        else:
+            prepared.pop("p4_condensation", None)
+        p4_holder["form"] = coarse_form
+        del coarse_form
         p6_holder["form"] = prepared.pop("p6_condensation")
         prepared.clear()
         prepared = None
@@ -1288,6 +1409,7 @@ def _run_physical_dual_cell_condensed_lowmem(
                 cfg=cfg,
                 final_space_facts=expected_space_facts,
                 p4_metadata=p4_capacity_metadata,
+                coarse_degree=coarse_degree,
                 directory=directory,
                 source_sha=source_sha,
                 summary=summary,
@@ -1304,6 +1426,7 @@ def _run_physical_dual_cell_condensed_lowmem(
                 common_,
                 resolved_,
                 stage=stage,
+                coarse_degree=coarse_degree,
                 backend="exact",
                 compiled_form=p4_holder["form"],
                 compiled_form_holder=p4_holder,
@@ -1597,7 +1720,11 @@ def _run_physical_dual_cell_condensed_lowmem(
                 p4_logical_apply_hook=logical_apply_hook,
                 pc_fine_action_factory=pc_fine_action_factory,
                 packed_power10=packed_power10,
-                formal_release_timing=v24_owner_apply,
+                sum_factorized_work=sum_factorized_work,
+                sum_factorized_power10=sum_factorized_power10,
+                formal_release_timing=(
+                    v24_owner_apply or profile == COARSE_DEGREE_SPEED_PROFILE
+                ),
                 p4_stack_ready_hook=(
                     (lambda stack: prefix_stack.update(value=stack))
                     if p4_prefix_target_sequence is not None

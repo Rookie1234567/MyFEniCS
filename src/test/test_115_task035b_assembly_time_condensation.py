@@ -41,7 +41,7 @@ from src.solvers.solve_maxwell_3d_stage_4b_block_grating import (
 )
 
 
-def _two_cell_problem(*, distinct_materials: bool):
+def _two_cell_problem(*, distinct_materials: bool, degree: int = 2):
     msh = mesh.create_unit_cube(
         MPI.COMM_SELF,
         2,
@@ -66,7 +66,7 @@ def _two_cell_problem(*, distinct_materials: bool):
         element(
             "N1curl",
             msh.basix_cell(),
-            2,
+            int(degree),
             dtype=default_real_type,
         ),
     )

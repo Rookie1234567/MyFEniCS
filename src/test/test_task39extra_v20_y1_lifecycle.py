@@ -39,6 +39,7 @@ from src.solvers.hcurl_assembly_time_condensation import (
     build_unconstrained_assembly_time_condensation,
     recover_owned_cell_interiors,
 )
+from src.solvers.hcurl_cell_static_condensation import owned_hcurl_cell_interior_dofs
 from src.solvers.p4_cell_condensed_inverse import P4CellCondensedInverse
 from src.solvers.physical_interface_balanced import InterfaceBalancedCoupling
 from src.test.test_115_task035b_assembly_time_condensation import _two_cell_problem
@@ -231,8 +232,10 @@ def test_p4_owner_handles_error_and_double_cleanup_on_a_real_condensed_matrix():
         inverse.destroy()
 
 
-def _tiny_cell_condensed_common():
-    domain, tags, space, _compiled = _two_cell_problem(distinct_materials=False)
+def _tiny_cell_condensed_common(coarse_degree: int = 4):
+    domain, tags, space, _compiled = _two_cell_problem(
+        distinct_materials=False, degree=coarse_degree
+    )
     trial = ufl.TrialFunction(space)
     test = ufl.TestFunction(space)
     dx = ufl.Measure("dx", domain=domain, subdomain_data=tags)
@@ -243,31 +246,77 @@ def _tiny_cell_condensed_common():
     mpc = dolfinx_mpc.MultiPointConstraint(space)
     mpc.finalize()
     n = space.dofmap.index_map.size_global
-    entry = SimpleNamespace(
-        coupling_rows=np.array([], dtype=PETSc.IntType),
-        coupling_values=np.array([], dtype=np.complex128),
-        projection_rows=np.array([], dtype=PETSc.IntType),
-        projection_values=np.array([], dtype=np.complex128),
-        normalization_h=1.0,
-    )
-    carrier = SimpleNamespace(entries=(entry,), global_rows=n)
+    if coarse_degree == 4:
+        entries = (
+            SimpleNamespace(
+                coupling_rows=np.array([], dtype=PETSc.IntType),
+                coupling_values=np.array([], dtype=np.complex128),
+                projection_rows=np.array([], dtype=PETSc.IntType),
+                projection_values=np.array([], dtype=np.complex128),
+                normalization_h=1.0,
+            ),
+        )
+    else:
+        interiors = owned_hcurl_cell_interior_dofs(space)
+        entries = tuple(
+            SimpleNamespace(
+                mode_identity={"side": "left" if port == 0 else "right"},
+                coupling_rows=np.asarray([rows[0]], dtype=PETSc.IntType),
+                coupling_values=np.asarray([1.0 + 0.25j], dtype=np.complex128),
+                projection_rows=np.asarray(
+                    [rows[min(1, len(rows) - 1)]], dtype=PETSc.IntType
+                ),
+                projection_values=np.asarray([0.5 - 0.125j], dtype=np.complex128),
+                normalization_h=1.0 + 0.1 * port,
+            )
+            for port, rows in enumerate(interiors[:2])
+        )
+    carrier = SimpleNamespace(entries=entries, global_rows=n)
+    if coarse_degree == 4:
+        fine_space = space
+        fine_floquet = SimpleNamespace(mpc=mpc)
+        fine_carrier = carrier
+    else:
+        fine_space = fem.functionspace(
+            domain,
+            element(
+                "N1curl",
+                domain.basix_cell(),
+                6,
+                dtype=default_real_type,
+            ),
+        )
+        fine_mpc = dolfinx_mpc.MultiPointConstraint(fine_space)
+        fine_mpc.finalize()
+        fine_floquet = SimpleNamespace(mpc=fine_mpc)
+        fine_carrier = SimpleNamespace(
+            entries=(),
+            global_rows=fine_space.dofmap.index_map.size_global,
+        )
+    coarse_action = {
+        "volume_action": SimpleNamespace(bilinear_form=form),
+        "dtn_action": SimpleNamespace(carrier=carrier),
+    }
     common = {
         "levels": {
             "mesh": domain,
             "mesh_data": SimpleNamespace(cell_tags=tags),
-            "spaces": {4: space, 6: space},
-            "floquets": {4: SimpleNamespace(mpc=mpc), 6: SimpleNamespace(mpc=mpc)},
+            "spaces": {coarse_degree: space, 6: fine_space},
+            "floquets": {
+                coarse_degree: SimpleNamespace(mpc=mpc),
+                6: fine_floquet,
+            },
         },
-        "p4": {
-            "volume_action": SimpleNamespace(bilinear_form=form),
-            "dtn_action": SimpleNamespace(carrier=carrier),
-        },
+        "coarse_degree": coarse_degree,
+        "coarse": coarse_action,
         "fine": {
             "mode_sha256": "m" * 64,
-            "dtn_action": SimpleNamespace(carrier=carrier),
+            "dtn_action": SimpleNamespace(carrier=fine_carrier),
         },
         "quadrature": [{"quadrature_degree": 4}, {"quadrature_degree": 4}],
     }
+    if coarse_degree == 4:
+        common["p4"] = coarse_action
     return domain, common
 
 
@@ -300,6 +349,109 @@ def test_actual_v20_p4_release_hook_streams_matrix_and_is_idempotent():
             name == "v20_p4_matrix_identity_before_release"
             for name, _facts in runtime.events
         )
+
+
+@pytest.mark.parametrize("coarse_degree", [2, 3])
+def test_v25_q2_q3_stack_has_nonzero_interior_ports_reuse_and_cleanup(
+    coarse_degree,
+):
+    _domain, common = _tiny_cell_condensed_common(coarse_degree)
+    runtime = TinyRuntime()
+    interiors = owned_hcurl_cell_interior_dofs(
+        common["levels"]["spaces"][coarse_degree]
+    )
+    interior_rows = np.concatenate(interiors)
+    n = common["levels"]["spaces"][coarse_degree].dofmap.index_map.size_global
+    captured = None
+    rhs = repair_rhs = first = second = None
+    oracle_matrix = oracle_applied = None
+    try:
+        with cell_condensed_stack(
+            runtime,
+            common,
+            {},
+            stage=f"V25_Q{coarse_degree}_FIXTURE",
+            coarse_degree=coarse_degree,
+            matrix_lifecycle_policy="MATRIX_RETAINED_BACKEND_DEPENDENCY",
+        ) as stack:
+            captured = stack
+            inverse_owner = stack["inverse"]
+            factor_owner = stack["factor"]
+            condensed_owner = stack["condensed"]
+            rhs = PETSc.Vec().createSeq(n)
+            rhs.set(0)
+            selected = np.asarray(interior_rows[: min(4, len(interior_rows))], dtype=PETSc.IntType)
+            rhs.setValues(selected, np.asarray([1.0 + 0.25j] * len(selected)))
+            rhs.assemble()
+            assert rhs.norm() > 0.0
+
+            first, first_facts = stack["fint"].apply_with_facts(rhs)
+            assert first_facts["status"] == "SOLVE_COMPLETED"
+            assert first_facts["factor_solve_call_delta"] == 1
+            assert np.isfinite(first.array).all()
+            assert np.linalg.norm(first.array[selected]) > 0.0
+            first_port = np.asarray(stack["fint"].last_port_solution)
+            assert first_port.size == 2
+            assert np.linalg.norm(first_port) > 0.0
+
+            oracle_form = fem.form(common["coarse"]["volume_action"].bilinear_form)
+            oracle_matrix = fem_petsc.assemble_matrix(oracle_form, bcs=[])
+            oracle_matrix.assemble()
+            oracle_applied = oracle_matrix.createVecLeft()
+            oracle_matrix.mult(first, oracle_applied)
+            upper = np.asarray(oracle_applied.array, dtype=np.complex128).copy()
+            lower = np.zeros(first_port.size, dtype=np.complex128)
+            for port, entry in enumerate(common["coarse"]["dtn_action"].carrier.entries):
+                coupling_rows = np.asarray(entry.coupling_rows, dtype=np.int64)
+                coupling_values = np.asarray(entry.coupling_values, dtype=np.complex128)
+                projection_rows = np.asarray(entry.projection_rows, dtype=np.int64)
+                projection_values = np.asarray(entry.projection_values, dtype=np.complex128)
+                upper[coupling_rows] += coupling_values * first_port[port]
+                lower[port] = (
+                    complex(entry.normalization_h) * first_port[port]
+                    - np.dot(projection_values, first.array[projection_rows])
+                )
+            upper_relative = float(
+                np.linalg.norm(upper - rhs.array)
+                / max(np.linalg.norm(rhs.array), np.finfo(float).tiny)
+            )
+            lower_relative = float(
+                np.linalg.norm(lower)
+                / max(np.linalg.norm(first_port), np.finfo(float).tiny)
+            )
+            assert upper_relative <= 1.0e-10
+            assert lower_relative <= 1.0e-10
+            numeric_calls = stack["factor"].numeric_calls
+
+            repair_rhs = rhs.copy()
+            repair_rhs.scale(0.125)
+            second, second_facts = stack["fint"].apply_with_facts(repair_rhs)
+            assert second_facts["status"] == "SOLVE_COMPLETED"
+            assert second_facts["factor_solve_call_delta"] == 1
+            assert second_facts["factor_solve_count"] == 2
+            assert stack["factor"].numeric_calls == numeric_calls
+            assert np.isfinite(second.array).all()
+            assert np.linalg.norm(stack["fint"].last_port_solution) > 0.0
+
+            release_facts = stack["release_after_final_residual"]()
+            assert release_facts["status"] == "RELEASED"
+            assert stack["released_after_final_residual"] is True
+            assert stack["fint"] is None
+            assert stack["factor"] is None
+            assert stack["condensed"] is None
+            assert inverse_owner.destroyed
+            assert factor_owner.destroyed
+            assert condensed_owner.matrix.handle == 0
+            assert runtime.inventory == runtime.workspace == {}
+    finally:
+        for value in (first, second, repair_rhs, rhs):
+            if value is not None:
+                value.destroy()
+        if oracle_applied is not None:
+            oracle_applied.destroy()
+        if oracle_matrix is not None:
+            oracle_matrix.destroy()
+    assert captured is not None
 
 
 class _AdapterRuntime:

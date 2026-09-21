@@ -1090,11 +1090,15 @@ def _build_common(
     cfg: Any,
     *,
     prebuilt_levels: dict[str, Any] | None = None,
+    coarse_degree: int = 4,
     optimized_owner_apply: bool = False,
     fixed_serial_owner_route: bool = False,
+    native_aq_projection_check: bool = False,
 ) -> dict[str, Any]:
     from mpi4py import MPI
+    from petsc4py import PETSc
     from src.solvers.fullspace_physical_intermediate_runtime import (
+        AlgebraicOwnerTransfer,
         fine_volume_quadrature_metadata,
     )
     from src.solvers.fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
@@ -1109,15 +1113,33 @@ def _build_common(
     )
     from src.solvers.physical_error_metric import LosslessFEMetric
 
+    coarse_degree = int(coarse_degree)
+    if coarse_degree not in (2, 3, 4):
+        raise ValueError("physical coarse degree must be one of 2, 3, or 4")
+    declared_degrees = (6, coarse_degree)
     runtime.set_phase("setup")
-    runtime.marker("v14_common_setup_started", {"levels": [6, 4]})
+    runtime.marker(
+        "v14_common_setup_started",
+        {"levels": list(declared_degrees), "coarse_degree": coarse_degree},
+    )
     levels = (
         _build_same_mesh_levels(
-            cfg, MPI.COMM_WORLD, (6, 4), include_positive_coefficients=True
+            cfg,
+            MPI.COMM_WORLD,
+            declared_degrees,
+            include_positive_coefficients=True,
         )
         if prebuilt_levels is None
         else prebuilt_levels
     )
+    required_levels = set(declared_degrees)
+    if not required_levels.issubset(levels["spaces"]):
+        raise ValueError(
+            "prebuilt same-mesh levels do not contain the requested "
+            f"degrees {sorted(required_levels)}"
+        )
+    levels["declared_degrees"] = declared_degrees
+    levels["coarse_degree"] = coarse_degree
     runtime.sample("same_mesh_levels")
     quadrature, integral_records = fine_volume_quadrature_metadata(levels, cfg)
     runtime.marker(
@@ -1129,25 +1151,28 @@ def _build_common(
     )
     runtime.sample("fine_physical_action")
     mode_inventory = (fine["modes"], fine["mode_rows"], fine["mode_sha256"])
-    p4 = build_same_mesh_physical_action(
+    coarse = build_same_mesh_physical_action(
         levels,
         cfg,
-        4,
+        coarse_degree,
         mode_inventory=mode_inventory,
         volume_quadrature_metadata=quadrature,
     )
-    runtime.sample("p4_physical_action")
-    local_transfer = build_same_mesh_hcurl_transfer(6, 4)
+    runtime.sample(f"p{coarse_degree}_physical_action")
+    local_transfer = build_same_mesh_hcurl_transfer(6, coarse_degree)
     transfer = build_same_mesh_hcurl_owner_transfer(
         levels["spaces"][6],
         levels["floquets"][6],
-        levels["spaces"][4],
-        levels["floquets"][4],
+        levels["spaces"][coarse_degree],
+        levels["floquets"][coarse_degree],
         local_transfer=local_transfer,
         optimized_owner_apply=optimized_owner_apply,
         fixed_serial_owner_route=fixed_serial_owner_route,
     )
-    runtime.marker("v14_p64_transfer_complete", dict(transfer=transfer.audit))
+    runtime.marker(
+        f"v14_p6{coarse_degree}_transfer_complete",
+        {"coarse_degree": coarse_degree, "transfer": transfer.audit},
+    )
     metric = LosslessFEMetric(
         levels,
         6,
@@ -1156,17 +1181,217 @@ def _build_common(
         build_cell_basis=False,
     )
     runtime.marker("v14_degree6_metric_complete", dict(metric=metric.audit))
-    warm_p4 = _new_storage_vector(levels["spaces"][4])
+    aq_projection_check = None
+    warm_coarse = _new_storage_vector(levels["spaces"][coarse_degree])
     warm_p6 = None
+    native_volume = projected_volume = None
+    native_dtn = projected_dtn = None
+    fine_volume = fine_dtn = None
+    algebraic_transfer = None
     try:
-        warm_p4.set(0)
-        warm_p6 = transfer.apply_primal(warm_p4)
+        if native_aq_projection_check:
+            # The production action contracts accept a strict slave-zero
+            # storage vector and perform the MPC expansion internally.  Keep
+            # this probe in that same contract: deterministic owned values,
+            # with only the actual owned q slave rows zeroed.
+            indices = np.arange(warm_coarse.array.size, dtype=np.float64)
+            warm_coarse.array[:] = (
+                np.sin(0.071 * (indices + 1.0))
+                + 1j * 0.37 * np.cos(0.113 * (indices + 1.0))
+            )
+            coarse_floquet = levels["floquets"][coarse_degree]
+            owned_size = int(
+                coarse_floquet.mpc.function_space.dofmap.index_map.size_local
+            )
+            coarse_slaves = np.asarray(coarse_floquet.mpc.slaves, dtype=np.int64)
+            owned_slaves = coarse_slaves[coarse_slaves < owned_size]
+            warm_coarse.array[owned_slaves] = 0.0
+            warm_coarse.ghostUpdate(
+                addv=PETSc.InsertMode.INSERT_VALUES,
+                mode=PETSc.ScatterMode.FORWARD,
+            )
+            probe_input = np.asarray(warm_coarse.array, dtype=np.complex128).copy()
+            probe_norm = float(warm_coarse.norm())
+            if not np.isfinite(probe_norm) or probe_norm <= np.finfo(float).tiny:
+                raise RuntimeError("live q-space nonzero operator probe collapsed to zero")
+            algebraic_transfer = AlgebraicOwnerTransfer(transfer)
+            warm_p6 = algebraic_transfer.apply_primal(warm_coarse)
+            projected_probe_norm = float(warm_p6.norm())
+            if not np.isfinite(projected_probe_norm) or projected_probe_norm <= np.finfo(float).tiny:
+                raise RuntimeError("live p6 projection of the q-space probe is zero")
+
+            native_volume = coarse["volume_action"].apply(warm_coarse)
+            fine_volume = fine["volume_action"].apply(warm_p6)
+            volume_slave_values = np.asarray(fine_volume.array)[
+                algebraic_transfer.fine_slaves
+            ].copy()
+            volume_native_slave_zero = bool(np.all(volume_slave_values == 0.0))
+
+            native_dtn = _new_storage_vector(levels["spaces"][coarse_degree])
+            coarse["dtn_action"].apply(warm_coarse, native_dtn)
+            fine_dtn = _new_storage_vector(levels["spaces"][6])
+            fine["dtn_action"].apply(warm_p6, fine_dtn)
+            dtn_slave_values = np.asarray(fine_dtn.array)[
+                algebraic_transfer.fine_slaves
+            ].copy()
+            dtn_native_slave_zero = bool(np.all(dtn_slave_values == 0.0))
+            input_owned_slave_zero = bool(
+                np.all(probe_input[algebraic_transfer.coarse_slaves] == 0.0)
+            )
+            input_unchanged = bool(
+                np.array_equal(probe_input, np.asarray(warm_coarse.array))
+            )
+            if not volume_native_slave_zero or not dtn_native_slave_zero:
+                aq_projection_check = {
+                    "schema": "task039extra.v25.native-aq-projection-check.v1",
+                    "reference_free": True,
+                    "probe": "deterministic_nonzero_live_coarse_field_strict_slave_zero",
+                    "coarse_degree": coarse_degree,
+                    "probe_identity": {
+                        "input_sha256": _sha256_bytes(
+                            np.ascontiguousarray(probe_input).tobytes()
+                        ),
+                        "owned_slave_zero": input_owned_slave_zero,
+                        "owned_slave_count": int(
+                            algebraic_transfer.coarse_slaves.size
+                        ),
+                        "input_unchanged_after_transfer": input_unchanged,
+                    },
+                    "native_output_slave_zero": {
+                        "volume": volume_native_slave_zero,
+                        "dtn": dtn_native_slave_zero,
+                        "volume_max_abs": float(
+                            np.max(np.abs(volume_slave_values))
+                            if volume_slave_values.size else 0.0
+                        ),
+                        "dtn_max_abs": float(
+                            np.max(np.abs(dtn_slave_values))
+                            if dtn_slave_values.size else 0.0
+                        ),
+                    },
+                    "limit": 1.0e-10,
+                    "passed": False,
+                    "failure": "native fine operator returned nonzero slave rows",
+                    "calls": {
+                        "coarse_volume": 1,
+                        "fine_volume": 1,
+                        "coarse_dtn": 1,
+                        "fine_dtn": 1,
+                        "transfer_primal": int(algebraic_transfer.primal_count),
+                        "transfer_adjoint": 0,
+                        "algebraic_wrapper": True,
+                    },
+                }
+                runtime.marker(
+                    "v14_common_native_aq_projection_check",
+                    aq_projection_check,
+                )
+                raise RuntimeError(
+                    "native fine operator returned nonzero slave rows: "
+                    f"{aq_projection_check}"
+                )
+            # The live native actions already return the algebraic slave-zero
+            # dual.  Apply the formal P^H wrapper directly; making a second
+            # copy and zeroing it would hide a native slave-row defect.
+            projected_volume = algebraic_transfer.apply_adjoint(fine_volume)
+            projected_dtn = algebraic_transfer.apply_adjoint(fine_dtn)
+
+            def comparison(native, projected):
+                difference = native.duplicate()
+                try:
+                    native.copy(difference)
+                    difference.axpy(PETSc.ScalarType(-1.0), projected)
+                    absolute = float(difference.norm())
+                    denominator = max(float(native.norm()), np.finfo(float).tiny)
+                    relative = absolute / denominator
+                finally:
+                    difference.destroy()
+                if not np.isfinite(relative):
+                    raise RuntimeError("nonfinite native/projected q operator identity")
+                return {"absolute": absolute, "relative": relative}
+
+            volume_comparison = comparison(native_volume, projected_volume)
+            dtn_comparison = comparison(native_dtn, projected_dtn)
+            aq_projection_check = {
+                "schema": "task039extra.v25.native-aq-projection-check.v1",
+                "reference_free": True,
+                "probe": "deterministic_nonzero_live_coarse_field_strict_slave_zero",
+                "coarse_degree": coarse_degree,
+                "space_identity": {
+                    "coarse_global_rows": int(levels["spaces"][coarse_degree].dofmap.index_map.size_global),
+                    "fine_global_rows": int(levels["spaces"][6].dofmap.index_map.size_global),
+                    "coarse_mpc_slave_count": int(len(coarse_floquet.mpc.slaves)),
+                    "fine_mpc_slave_count": int(len(levels["floquets"][6].mpc.slaves)),
+                    "mode_sha256": str(coarse["mode_sha256"]),
+                    "fine_mode_sha256": str(fine["mode_sha256"]),
+                },
+                "probe_identity": {
+                    "input_sha256": _sha256_bytes(np.ascontiguousarray(probe_input).tobytes()),
+                    "owned_slave_zero": input_owned_slave_zero,
+                    "owned_slave_count": int(algebraic_transfer.coarse_slaves.size),
+                    "input_unchanged_after_transfer": input_unchanged,
+                },
+                "probe_norms": {
+                    "coarse": probe_norm,
+                    "fine_after_primal_transfer": projected_probe_norm,
+                },
+                "volume": volume_comparison,
+                "dtn": dtn_comparison,
+                "native_output_slave_zero": {
+                    "volume": volume_native_slave_zero,
+                    "dtn": dtn_native_slave_zero,
+                    "volume_max_abs": float(
+                        np.max(np.abs(volume_slave_values))
+                        if volume_slave_values.size else 0.0
+                    ),
+                    "dtn_max_abs": float(
+                        np.max(np.abs(dtn_slave_values))
+                        if dtn_slave_values.size else 0.0
+                    ),
+                },
+                "limit": 1.0e-10,
+                "passed": bool(
+                    input_owned_slave_zero
+                    and input_unchanged
+                    and volume_native_slave_zero
+                    and dtn_native_slave_zero
+                    and volume_comparison["relative"] <= 1.0e-10
+                    and dtn_comparison["relative"] <= 1.0e-10
+                ),
+                "native_coarse_operator": "Aq_native",
+                "projected_fine_operator": "P^H_A6_native_P",
+                "calls": {
+                    "coarse_volume": 1,
+                    "fine_volume": 1,
+                    "coarse_dtn": 1,
+                    "fine_dtn": 1,
+                    "transfer_primal": 1,
+                    "transfer_adjoint": int(algebraic_transfer.adjoint_count),
+                    "algebraic_wrapper": True,
+                },
+            }
+            runtime.marker("v14_common_native_aq_projection_check", aq_projection_check)
+            if not aq_projection_check["passed"]:
+                raise RuntimeError(
+                    "native Aq versus projected p6 operator identity failed: "
+                    f"{aq_projection_check}"
+                )
+        else:
+            warm_coarse.set(0)
+            warm_p6 = transfer.apply_primal(warm_coarse)
         metric.mass(np.zeros(metric.mass.indices.size, dtype=np.complex128))
         metric.curl(np.zeros(metric.curl.indices.size, dtype=np.complex128))
     finally:
-        if warm_p6 is not None:
-            warm_p6.destroy()
-        warm_p4.destroy()
+        for vector in (
+            projected_volume,
+            native_dtn,
+            projected_dtn,
+            fine_dtn,
+            warm_p6,
+        ):
+            if vector is not None:
+                vector.destroy()
+        warm_coarse.destroy()
     runtime.sample("v14_common_evaluation_warmup")
 
     def required_int(mapping: Mapping[str, Any], key: str, label: str) -> int:
@@ -1203,14 +1428,15 @@ def _build_common(
     transfer_audit = dict(transfer.audit)
     routing_costs = dict(getattr(transfer, "routing_costs", {}))
     transfer_audit["routing_costs"] = routing_costs
+    transfer_prefix = f"p6{coarse_degree}"
     common_inventory: dict[str, int] = {
-        "p64_local_cache_bytes": required_int(
+        f"{transfer_prefix}_local_cache_bytes": required_int(
             transfer_audit, "local_cache_array_bytes", "P64 transfer audit"
         ),
-        "p64_owner_plan_bytes": required_int(
+        f"{transfer_prefix}_owner_plan_bytes": required_int(
             routing_costs, "plan_bytes", "P64 transfer routing audit"
         ),
-        "p64_owner_apply_extra_bytes": int(
+        f"{transfer_prefix}_owner_apply_extra_bytes": int(
             required_int(
                 transfer_audit,
                 "owner_operator_adjoint_extra_bytes",
@@ -1227,7 +1453,7 @@ def _build_common(
                 "P64 transfer audit",
             )
         ),
-        "p64_work_vector_bytes": int(
+        f"{transfer_prefix}_work_vector_bytes": int(
             16
             * (
                 int(transfer_audit.get("fine_local_owned_rows", 0))
@@ -1236,7 +1462,7 @@ def _build_common(
         ),
         "degree6_metric_vector_bytes": metric_vector_bytes,
     }
-    for degree, bundle in ((6, fine), (4, p4)):
+    for degree, bundle in ((6, fine), (coarse_degree, coarse)):
         volume_action = bundle["volume_action"]
         component_actions = getattr(volume_action, "component_actions", None)
         if not isinstance(component_actions, Mapping):
@@ -1272,7 +1498,8 @@ def _build_common(
     runtime.marker(
         "v14_common_setup_complete",
         {
-            "levels": sorted(int(value) for value in levels["spaces"]),
+            "levels": list(declared_degrees),
+            "coarse_degree": coarse_degree,
             "mode_count": len(fine["modes"]),
             "mode_sha256": fine["mode_sha256"],
             "quadrature": quadrature,
@@ -1284,13 +1511,18 @@ def _build_common(
     return {
         "levels": levels,
         "fine": fine,
-        "p4": p4,
+        "coarse": coarse,
+        # Historical consumers use ``p4`` as the coarse action key.  It is an
+        # alias of the requested q action, never a second assembled action.
+        "p4": coarse,
+        "coarse_degree": coarse_degree,
         "cfg": cfg,
         "quadrature": quadrature,
         "integral_records": integral_records,
         "transfer": transfer,
         "local_transfer": local_transfer,
         "metric": metric,
+        "native_aq_projection_check": aq_projection_check,
         "common_inventory_label": "common_fixed_caches",
     }
 
@@ -1310,10 +1542,12 @@ def _destroy_common(common: dict[str, Any], runtime: _V14Runtime | None = None) 
     # ``SameMeshHcurlTransfer`` is an immutable NumPy map without a destroy
     # method; the owner wrapper has already dropped its reference to it.
     del local_transfer
-    for name in ("p4", "fine"):
+    destroyed = set()
+    for name in ("coarse", "p4", "fine"):
         bundle = common.pop(name, None)
-        if bundle is not None:
+        if bundle is not None and id(bundle) not in destroyed:
             destroy_same_mesh_physical_action(bundle)
+            destroyed.add(id(bundle))
     common.pop("levels", None)
     if runtime is not None:
         runtime.release_inventory(common.pop("common_inventory_label", "common_fixed_caches"))
@@ -4011,6 +4245,8 @@ def _v14_balanced_adapter(
     logical_apply_hook=None,
     pc_fine_action_factory=None,
     packed_power10=False,
+    sum_factorized_work=False,
+    sum_factorized_power10=None,
 ):
     """Own H6 and its audit buffers; borrow the existing fixed interface stack."""
 
@@ -4038,6 +4274,7 @@ def _v14_balanced_adapter(
     positive = pc = None
     pc_fine_action = common["fine"]["physical_action"]
     pc_fine_action_bundle = None
+    candidate_facts = {}
     pc_fine_inventory_live = False
     live_workspaces = set()
     inventory_live = False
@@ -4082,6 +4319,8 @@ def _v14_balanced_adapter(
             common["cfg"],
             runtime.marker,
             packed_power10=packed_power10,
+            sum_factorized_work=sum_factorized_work,
+            sum_factorized_power10=sum_factorized_power10,
         )
         h6, shell = positive["h6"], positive["p6_shell"]
         transfer = AlgebraicOwnerTransfer(common["transfer"])
@@ -4190,8 +4429,13 @@ def _v14_balanced_adapter(
             ),
             "scope": "new PC/ledger/capture vectors; outer Krylov storage accounted separately",
         })
+        candidate_a6_callback = lambda x: apply_owned(pc_fine_action, x)
+        native_a6_callback = lambda x: apply_owned(
+            common["fine"]["physical_action"], x
+        )
+        candidate_h6_callback = h6.apply
         pc = InterfaceBalancedCoupling(
-            lambda x: apply_owned(pc_fine_action, x),
+            candidate_a6_callback,
             lambda x: apply_owned(common["p4"]["physical_action"], x),
             transfer, fint, h6.apply,
             save=lambda name, facts: _save_packet(
@@ -4202,6 +4446,19 @@ def _v14_balanced_adapter(
             repair_vector_sink=repair_vector_sink,
             repair_vector_capture=repair_vector_capture,
             logical_apply_hook=logical_apply_hook,
+        )
+        # Keep the callbacks used by the BAL_H closure explicit.  The public
+        # ``_pc_fine_action`` attribute is provenance only and does not alter
+        # the lambda already captured by ``InterfaceBalancedCoupling``.
+        pc._candidate_a6_callback = candidate_a6_callback
+        pc._native_a6_callback = native_a6_callback
+        pc._candidate_h6_callback = candidate_h6_callback
+        pc._pc_fine_action = pc_fine_action
+        pc._pc_fine_action_facts = dict(candidate_facts)
+        pc._pc_fine_action_role = (
+            "candidate_pc_internal_a6"
+            if pc_fine_action_bundle is not None
+            else "native_a6_witness"
         )
         runtime.sample("v14_balanced_adapter_ready")
         yield pc, positive
@@ -6306,6 +6563,9 @@ def _v14_operator_identity(
             ),
         },
         "quadrature": _jsonable(common["quadrature"]),
+        "native_aq_projection_check": _jsonable(
+            common.get("native_aq_projection_check")
+        ),
         "reference_used_for_operator_or_initial_guess": False,
         "initial_guess": "zero",
     }
@@ -6549,6 +6809,8 @@ def _v14_q4_q5_fullspace(
     p4_stack_ready_hook=None,
     pc_fine_action_factory=None,
     packed_power10=False,
+    sum_factorized_work=False,
+    sum_factorized_power10=None,
     formal_release_timing=False,
 ) -> dict[str, Any]:
     """Run one fresh p6 outer solve with the live interface BAL_H stack.
@@ -6572,11 +6834,22 @@ def _v14_q4_q5_fullspace(
         recover_p0_outputs,
     )
     from src.solvers.physical_balanced_fgmres import run_balanced_fgmres
-    from .workflow_timebase import CONSERVATIVE_REALTIME, ClockBudget, clock_sample
+    from src.io.physical_intermediate_profile import COARSE_DEGREE_SPEED_PROFILE
+    from .workflow_timebase import (
+        CONSERVATIVE_REALTIME,
+        ClockBudget,
+        checked_interval,
+        clock_sample,
+    )
 
     stage = str(stage)
+    v25_coarse_stage = (
+        str(resolved_payload.get("solver", {}).get("preconditioner", ""))
+        == COARSE_DEGREE_SPEED_PROFILE
+    )
     if stage not in {
-        "Q4_ORIGINAL", "Q5_NOTCH", "U4_ORIGINAL", "U5_NOTCH",
+        "Q4_ORIGINAL", "Q3_ORIGINAL", "Q2_ORIGINAL", "Q5_NOTCH",
+        "U4_ORIGINAL", "U5_NOTCH",
         "U4_EXACT_FALLBACK", "X2_ORIGINAL", "Y3_ORIGINAL",
         "Z2_NOTCH_H10", "Z3_ORIGINAL_H7P5", "Z4_NOTCH_H7P5",
     }:
@@ -6584,22 +6857,29 @@ def _v14_q4_q5_fullspace(
     retained_stage = stage in {
         "X2_ORIGINAL", "Y3_ORIGINAL",
         "Z2_NOTCH_H10", "Z3_ORIGINAL_H7P5", "Z4_NOTCH_H7P5",
-    }
+    } or (v25_coarse_stage and stage in {"Q4_ORIGINAL", "Q3_ORIGINAL", "Q2_ORIGINAL"})
     if retained_stage != (outer_adapter_factory is not None):
         raise ValueError("only retained-space original stages use the outer adapter")
-    if release_after_final_residual and stage not in {
-        "Y3_ORIGINAL", "Z2_NOTCH_H10", "Z3_ORIGINAL_H7P5", "Z4_NOTCH_H7P5",
-    }:
+    release_stages = {
+        "Y3_ORIGINAL", "Z2_NOTCH_H10", "Z3_ORIGINAL_H7P5", "Z4_NOTCH_H7P5"
+    }
+    if v25_coarse_stage:
+        release_stages.update({"Q4_ORIGINAL", "Q3_ORIGINAL", "Q2_ORIGINAL"})
+    if release_after_final_residual and stage not in release_stages:
         raise ValueError("post-KSP release is not enabled for this stage")
     if reference_mode not in {"required", "authority_limited"}:
         raise ValueError(f"unsupported reference mode {reference_mode!r}")
     if stage == "Z2_NOTCH_H10" and reference_mode != "required":
         raise ValueError("Z2_NOTCH_H10 must use the matched-reference branch")
-    if stage in {"Z3_ORIGINAL_H7P5", "Z4_NOTCH_H7P5"} and reference_mode != "authority_limited":
-        raise ValueError(f"{stage} must use the authority-limited branch")
-    if reference_mode == "authority_limited" and stage not in {
-        "Z3_ORIGINAL_H7P5", "Z4_NOTCH_H7P5",
-    }:
+    if (
+        v25_coarse_stage and stage in {"Q4_ORIGINAL", "Q3_ORIGINAL", "Q2_ORIGINAL"}
+    ) or stage in {"Z3_ORIGINAL_H7P5", "Z4_NOTCH_H7P5"}:
+        if reference_mode != "authority_limited":
+            raise ValueError(f"{stage} must use the authority-limited branch")
+    authority_limited_stages = {"Z3_ORIGINAL_H7P5", "Z4_NOTCH_H7P5"}
+    if v25_coarse_stage:
+        authority_limited_stages.update({"Q4_ORIGINAL", "Q3_ORIGINAL", "Q2_ORIGINAL"})
+    if reference_mode == "authority_limited" and stage not in authority_limited_stages:
         raise ValueError("authority-limited reference mode is reserved for V21 Z3/Z4")
     notch = (
         bool(notch_override)
@@ -6626,7 +6906,11 @@ def _v14_q4_q5_fullspace(
     )
     if (
         workflow_limit <= 0.0
-        or (stage in {"Q4_ORIGINAL", "Q5_NOTCH"} and solve_limit != 10800.0)
+        or (
+            not v25_coarse_stage
+            and stage in {"Q4_ORIGINAL", "Q5_NOTCH"}
+            and solve_limit != 10800.0
+        )
         or (
             stage in {
                 "U4_ORIGINAL", "U5_NOTCH", "U4_EXACT_FALLBACK", "X2_ORIGINAL",
@@ -6654,7 +6938,7 @@ def _v14_q4_q5_fullspace(
         "u5" if stage == "U5_NOTCH" else
         "u4_fallback" if stage == "U4_EXACT_FALLBACK" else
         "u4" if stage == "U4_ORIGINAL" else
-        "q5" if notch else "q4"
+        "q5" if notch else f"q{int(common.get('coarse_degree', 4))}"
     )
     final_solution = rhs = final_applied = final_residual = None
     post_release_applied = post_release_residual = None
@@ -6688,6 +6972,66 @@ def _v14_q4_q5_fullspace(
     outer_workspace_live = False
     outer_workspace_bytes = 0
     outer_adapter = None
+    lifecycle_boundaries: dict[str, dict[str, Any]] = {}
+
+    def lifecycle_boundary(
+        name: str,
+        *,
+        clock_override: Mapping[str, Any] | None = None,
+        **facts: Any,
+    ) -> dict[str, Any]:
+        sample = dict(clock_sample() if clock_override is None else clock_override)
+        lifecycle_boundaries[name] = dict(sample)
+        runtime.marker(
+            f"{prefix}_{name}",
+            {"clock": sample, **facts},
+        )
+        return sample
+
+    def attach_lifecycle(record: dict[str, Any]) -> dict[str, Any]:
+        lifecycle = record.setdefault("lifecycle", {})
+        lifecycle["boundaries"] = {
+            key: dict(value) for key, value in lifecycle_boundaries.items()
+        }
+        pairs = {
+            "setup": ("setup_started", "setup_end"),
+            "outer_adapter": (
+                "outer_adapter_started",
+                "outer_adapter_ended",
+            ),
+            "final_native_check": (
+                "final_native_check_started",
+                "final_native_check_ended",
+            ),
+            "release_check": ("release_check_started", "release_check_ended"),
+            "official_postprocess": (
+                "official_postprocess_started",
+                "official_postprocess_ended",
+            ),
+        }
+        lifecycle["intervals"] = {}
+        for name, (start_name, end_name) in pairs.items():
+            start = lifecycle_boundaries.get(start_name)
+            end = lifecycle_boundaries.get(end_name)
+            if start is not None and end is not None:
+                interval = checked_interval(
+                    start,
+                    end,
+                    policy=CONSERVATIVE_REALTIME,
+                )
+                interval["monotonic_seconds"] = float(
+                    interval["elapsed_seconds"]["monotonic"]
+                )
+                lifecycle["intervals"][name] = interval
+        return record
+
+    lifecycle_boundary(
+        "setup_started",
+        clock_override=getattr(runtime, "workflow_clock_start", None),
+        stage=stage,
+        includes="entire worker workflow from parent workflow clock start",
+    )
+
     if release_after_final_residual:
         runtime._defer_balanced_release = True
         runtime._deferred_balanced_cleanup = None
@@ -7220,6 +7564,15 @@ def _v14_q4_q5_fullspace(
                 raise RuntimeError("V24 p4 cumulative timing is unavailable")
             fine_audit = dict(common["fine"]["physical_action"].audit)
             p4_audit = dict(common["p4"]["physical_action"].audit)
+            candidate_action = getattr(pc, "_pc_fine_action", None)
+            candidate_audit = (
+                dict(candidate_action.audit)
+                if candidate_action is not None
+                else {}
+            )
+            candidate_facts = dict(getattr(pc, "_pc_fine_action_facts", {}))
+            h6 = positive["h6"]
+            h6_light_facts = dict(positive["light_facts"])
             routing = dict(getattr(common["transfer"], "routing_costs", {}))
             return {
                 "schema": "task039extra.v24.formal-release-timing.v1",
@@ -7228,6 +7581,20 @@ def _v14_q4_q5_fullspace(
                     "apply_count": int(fine_audit["apply_count"]),
                     "operation_seconds_cumulative": dict(
                         fine_audit["operation_seconds_cumulative"]
+                    ),
+                },
+                "native_A6_witness": {
+                    "role": "independent_official_residual_authority",
+                    "audit": fine_audit,
+                },
+                "candidate_pc_internal_A6": {
+                    "role": getattr(pc, "_pc_fine_action_role", "unknown"),
+                    "construction_facts": candidate_facts,
+                    "live_audit": candidate_audit,
+                    "timing_scope": (
+                        "FullspacePhysicalAction dtn/volume totals; nested volume "
+                        "component timing includes explicit input MPC, R^H, and ghost "
+                        "segments from FullspaceMpcFormAction"
                     ),
                 },
                 "native_A4": {
@@ -7275,8 +7642,25 @@ def _v14_q4_q5_fullspace(
                     "actual_mat_solve_count": int(inverse.solve_count),
                 },
                 "h6_apply_count": int(positive["h6"].apply_count),
+                "h6": {
+                    "apply_count": int(h6.apply_count),
+                    "matrix_mult_count": int(h6.matrix_mult_count),
+                    "power_matrix_mult_count": int(h6.power_matrix_mult_count),
+                    "matrix_mult_seconds": float(h6.matrix_mult_seconds),
+                    "power_matrix_mult_seconds": float(
+                        h6.power_matrix_mult_seconds
+                    ),
+                    "apply_seconds": float(h6.apply_seconds),
+                    "light_facts": h6_light_facts,
+                },
             }
 
+        lifecycle_boundary(
+            "h6_outer_setup_start",
+            stage=stage,
+            coarse_degree=int(common.get("coarse_degree", 4)),
+            includes="live H6 setup and retained outer adapter setup",
+        )
         with _v14_balanced_adapter(
             runtime,
             common,
@@ -7288,6 +7672,8 @@ def _v14_q4_q5_fullspace(
             logical_apply_hook=p4_logical_apply_hook,
             pc_fine_action_factory=pc_fine_action_factory,
             packed_power10=packed_power10,
+            sum_factorized_work=sum_factorized_work,
+            sum_factorized_power10=sum_factorized_power10,
         ) as (pc, positive):
             if outer_adapter_factory is not None:
                 # X1 checks and its one PC call share the actual X2 objects.
@@ -7307,6 +7693,11 @@ def _v14_q4_q5_fullspace(
                 # V24-only keyword.
                 if _p4_repair_enabled(p4_repair_policy):
                     outer_factory_kwargs["p4_count_policy"] = "bounded_repair_v24"
+                if v25_coarse_stage and stage == "Q4_ORIGINAL":
+                    outer_factory_kwargs["first_direction_pair_context"] = {
+                        "pc": pc,
+                        "positive": positive,
+                    }
                 outer_adapter = outer_adapter_factory(
                     runtime,
                     common,
@@ -7315,7 +7706,10 @@ def _v14_q4_q5_fullspace(
                     apply_pc,
                     **outer_factory_kwargs,
                 )
+                outer_factory_kwargs.pop("first_direction_pair_context", None)
                 outer_adapter.setup_checks()
+                if v25_coarse_stage:
+                    outer_adapter.actual_first_arnoldi_check()
                 identity = {**identity, "retained_p6": outer_adapter.identity,
                             "initial_guess": "zero_retained_y; full_field_contains_internal_rhs_particular"}
                 operator_sha256 = _sha256_bytes(
@@ -7326,6 +7720,12 @@ def _v14_q4_q5_fullspace(
                     {"identity": identity, "operator_identity_sha256": operator_sha256},
                     runtime=runtime,
                 )
+            lifecycle_boundary(
+                "setup_end",
+                stage=stage,
+                h6_setup_complete=True,
+                retained_adapter_setup_complete=outer_adapter is not None,
+            )
             # H6 setup is complete at this point.  Only now does the single
             # outer solve clock begin, and the KSP vector estimate joins the
             # already-live BAL_H workspace in the same shared 1 GiB pool.
@@ -7355,6 +7755,12 @@ def _v14_q4_q5_fullspace(
                         "p6_cache_live": True,
                     },
                 )
+            lifecycle_boundary(
+                "outer_adapter_started",
+                stage=stage,
+                zero_start=True,
+                retained_space=outer_adapter is not None,
+            )
             try:
                 if outer_adapter is None:
                     solve_result = run_balanced_fgmres(
@@ -7403,12 +7809,23 @@ def _v14_q4_q5_fullspace(
                 except BaseException:
                     pass
                 raise
+            finally:
+                lifecycle_boundary(
+                    "outer_adapter_ended",
+                    stage=stage,
+                    completed=solve_result is not None,
+                )
             pc_facts = current_pc_facts()
 
         if solve_result is None:
             raise RuntimeError(f"{stage} outer FGMRES returned no result")
         final_solution = solve_result["final_solution"]
 
+        lifecycle_boundary(
+            "final_native_check_started",
+            stage=stage,
+            action="independent native A6 residual and packet",
+        )
         # This is the one independent post-KSP A6 action.  It is deliberately
         # separate from the solver's monitor snapshots and is the only residual
         # used to authorize output recovery below.
@@ -7446,7 +7863,17 @@ def _v14_q4_q5_fullspace(
                 "relative": final_explicit_relative,
             },
         )
+        lifecycle_boundary(
+            "final_native_check_ended",
+            stage=stage,
+            relative=final_explicit_relative,
+        )
         if release_after_final_residual:
+            lifecycle_boundary(
+                "release_check_started",
+                stage=stage,
+                includes="post-residual release and post-release residual gate",
+            )
             if formal_release_timing:
                 release_timing_facts = formal_release_timing_facts()
                 runtime.marker(
@@ -7477,6 +7904,11 @@ def _v14_q4_q5_fullspace(
             post_release_residual_packet = release_result[
                 "post_release_residual_packet"
             ]
+            lifecycle_boundary(
+                "release_check_ended",
+                stage=stage,
+                post_release_relative=post_release_relative,
+            )
         # Freeze the solve-clock evidence here.  Reading historical files and
         # assembling the later report is workflow time, not solve time.
         solve_clock_interval = dict(solve_clock.update(clock_sample()))
@@ -7544,6 +7976,9 @@ def _v14_q4_q5_fullspace(
             "operator_identity": identity,
             "operator_identity_sha256": operator_sha256,
             "operator_identity_packet": identity_packet,
+            "native_aq_projection_check": _jsonable(
+                common.get("native_aq_projection_check")
+            ),
             "rhs_packet": rhs_packet,
             "rhs_facts": rhs_facts,
             "interface_stack": stack_facts,
@@ -7556,6 +7991,11 @@ def _v14_q4_q5_fullspace(
                     "preconditioner and explicit-residual vectors"
                 ),
                 "outer_solve_finished_after_independent_final_residual": True,
+                "ksp_phase": solver_facts.get("ksp_phase"),
+                "ksp_phase_time_source": (
+                    "run_retained_fgmres.ksp_phase or solver-native phase record; "
+                    "not the outer_adapter interval"
+                ),
             },
             "solver": solver_facts,
             **time_policy_facts,
@@ -7714,6 +8154,7 @@ def _v14_q4_q5_fullspace(
                     "physical_checks": {},
                 }
             )
+            attach_lifecycle(base_record)
             runtime.marker(f"{prefix}_fullspace_residual_gate_failed", base_record)
             return base_record
 
@@ -7722,6 +8163,11 @@ def _v14_q4_q5_fullspace(
             # downstream of the same independent residual and release gates;
             # only the reference-comparison branch is replaced by explicit
             # finite/closure/identity checks.
+            lifecycle_boundary(
+                "official_postprocess_started",
+                stage=stage,
+                mode="authority_limited",
+            )
             runtime.set_phase("evaluation")
             output_dir = runtime.directory / "numerical_output"
             runtime.sample(f"{prefix}_before_output_recovery")
@@ -7830,9 +8276,21 @@ def _v14_q4_q5_fullspace(
                     },
                 }
             )
+            lifecycle_boundary(
+                "official_postprocess_ended",
+                stage=stage,
+                mode="authority_limited",
+                stage_pass=stage_pass,
+            )
+            attach_lifecycle(base_record)
             runtime.marker(f"{prefix}_fullspace_stage_complete", base_record)
             return base_record
 
+        lifecycle_boundary(
+            "official_postprocess_started",
+            stage=stage,
+            mode="matched_reference",
+        )
         runtime.set_phase("evaluation")
         terminal_field_records = [
             item
@@ -7875,6 +8333,13 @@ def _v14_q4_q5_fullspace(
                     "physical_checks": {},
                 }
             )
+            lifecycle_boundary(
+                "official_postprocess_ended",
+                stage=stage,
+                mode="matched_reference",
+                stage_pass=False,
+            )
+            attach_lifecycle(base_record)
             runtime.marker(f"{prefix}_reference_binding_failed", base_record)
             return base_record
 
@@ -7977,6 +8442,13 @@ def _v14_q4_q5_fullspace(
                 },
             }
         )
+        lifecycle_boundary(
+            "official_postprocess_ended",
+            stage=stage,
+            mode="matched_reference",
+            stage_pass=stage_pass,
+        )
+        attach_lifecycle(base_record)
         runtime.marker(f"{prefix}_fullspace_stage_complete", base_record)
         return base_record
 

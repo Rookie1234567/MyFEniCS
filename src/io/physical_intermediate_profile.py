@@ -34,6 +34,7 @@ PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE = (
 LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE = (
     "physical_p6_trace_p4_condensed_laptop_speed_v24"
 )
+COARSE_DEGREE_SPEED_PROFILE = "physical_p6_trace_coarse_degree_speed_v25"
 PHYSICAL_MEMORY_POLICY_V23 = "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23"
 V23_QUALIFIED_JIT_CACHE_SOURCE = (
     "results/euv_grazing1_phi0/"
@@ -49,7 +50,7 @@ P4_BLR_TRADEOFF_THRESHOLDS = {
     "T2_BLR_CONTROL": 1.0e-4,
 }
 
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE, LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE, LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE, COARSE_DEGREE_SPEED_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
 
 
 def p4_blr_tradeoff_threshold(stage: str) -> float:
@@ -64,6 +65,104 @@ def p4_blr_tradeoff_threshold(stage: str) -> float:
 
 
 def profile_facts(identity=PROFILE) -> dict:
+    if identity == COARSE_DEGREE_SPEED_PROFILE:
+        # V25 keeps the qualified V24 native-A6/H6 and cell-condensed route,
+        # but replaces the coarse action directly with q=4, 3, or 2.  Each
+        # stage has its own live FE/MPC space, transfer, cell condensation,
+        # and factor; no q-to-q recycling is part of this contract.
+        facts = profile_facts(LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE)
+        coarse_degree_by_stage = {
+            "Q4_ORIGINAL": 4,
+            "Q3_ORIGINAL": 3,
+            "Q2_ORIGINAL": 2,
+        }
+        facts.update(
+            identity=identity,
+            scope="review_v23_a6_h6_speed_and_coarse_degree",
+            qualification=(
+                "opt_in; independent original 990-cell h7.5 formal runs for "
+                "q=4, q=3, and q=2; direct p6-to-q transfer and native Aq "
+                "cell condensation; observe_only"
+            ),
+            physical_levels={
+                "fine": 6,
+                "coarse_by_stage": dict(coarse_degree_by_stage),
+            },
+            coarse_degree_by_stage=coarse_degree_by_stage,
+            coarse_degree_policy=(
+                "direct_p6_to_q_same_mesh_basix_transfer; one native_Aq "
+                "cell-condensed factor per independent stage; no Bq or "
+                "iterative interior approximation"
+            ),
+        )
+        facts["resources"].update(
+            stage_budgets={
+                stage: {"workflow_seconds": 43200, "solve_seconds": 43200}
+                for stage in coarse_degree_by_stage
+            },
+            inventory_memory_cap_bytes_by_stage={},
+            physical_memory_evidence_reserve_bytes=128 * 1024**2,
+            static_capacity_gates_disabled=True,
+            dynamic_launch_cap_formula=(
+                "effective_available_bytes-physical_memory_evidence_reserve_bytes"
+            ),
+            reserve_formula="128MiB watchdog/evidence-write reserve only",
+        )
+        facts["gates"].update(
+            reference_authority={
+                stage: "AUTHORITY_LIMITED" for stage in coarse_degree_by_stage
+            },
+            actual_dimension_identity=True,
+            actual_resource_gate=True,
+            direct_coarse_degree_by_stage=dict(coarse_degree_by_stage),
+            no_cross_degree_factor_reuse=True,
+            no_cross_degree_initial_guess_reuse=True,
+            native_A6_authority=True,
+            h6_setup_same_backend=True,
+            selected_backend="isotropic_sum_factorized_n1e_v26",
+            physical_operator_backend_bound=True,
+            h6_power10_backend_bound=True,
+            thread_contract_bound=True,
+            q3_nonconvergence_does_not_skip_q2=True,
+            old_profiles_unchanged=True,
+        )
+        facts["route_selection"].update(
+            native_a6_authority=True,
+            pc_fine_action_factory="isotropic_sum_factorized_n1e_v26",
+            physical_operator_backend="isotropic_sum_factorized_n1e_v26",
+            h6_setup="isotropic_sum_factorized_n1e_v26_power10",
+            h6_apply="isotropic_sum_factorized_n1e_v26",
+            h6_backend_rule=(
+                "isotropic_sum_factorized_n1e_v26_apply_and_power10"
+            ),
+            packed_power10=True,
+            sum_factorized_work=True,
+            sum_factorized_power10=True,
+            coarse_operator="native_q_action_assembled_at_time_cell_condensation",
+            coarse_transfer="same_mesh_basix_direct_p6_to_q",
+        )
+        facts["thread_selection"] = {
+            "status": "SELECTED_SINGLE_CORE",
+            "contract": "mpi1_omp1_blas1_v25",
+            "mpi_ranks": 1,
+            "mumps_threads": 1,
+            "blas_threads": 1,
+            "environment_variables": {
+                "OMP_NUM_THREADS": "1",
+                "OPENBLAS_NUM_THREADS": "1",
+                "MKL_NUM_THREADS": "1",
+                "NUMEXPR_NUM_THREADS": "1",
+            },
+        }
+        facts["capacity_trial"] = {
+            "numeric_policy": "same_v23_physical_pressure_policy",
+            "numeric_backend_quota_mb": 4687,
+            "q4_cap_reference": "V24 verified MUMPS 4687 decimal MB",
+            "q3_q2_cap_policy": "same backend policy; live q-specific context",
+            "one_factor_per_stage": True,
+            "no_retry_or_backend_change": True,
+        }
+        return facts
     if identity == LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE:
         # V24 keeps the measured V23 physical-memory/lifecycle route and
         # changes only the opt-in same-factor p4 return-quality contract.

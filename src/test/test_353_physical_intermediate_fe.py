@@ -15,10 +15,25 @@ from src.solvers.fullspace_physical_intermediate import (
     BorrowedActionAdapter, apply_owned, modified_residual_accept,
 )
 from src.solvers.fullspace_physical_intermediate_runtime import (
-    PHYSICAL_PAIRS, build_physical_intermediate_actions,
-    destroy_physical_intermediate_actions, level_vector, owned_slave_indices,
+    AlgebraicOwnerTransfer, PHYSICAL_PAIRS,
+    build_physical_intermediate_actions, destroy_physical_intermediate_actions,
+    level_vector, owned_slave_indices,
+)
+from src.solvers.fullspace_physical_intermediate import (
+    BorrowedActionAdapter,
+    apply_owned,
 )
 from src.solvers.fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
+from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
+    build_same_mesh_physical_action,
+    destroy_same_mesh_physical_action,
+)
+from src.solvers.fullspace_same_mesh_hcurl_pmg_runtime import (
+    build_same_mesh_hcurl_owner_transfer,
+)
+from src.solvers.fullspace_physical_intermediate_runtime import (
+    fine_volume_quadrature_metadata,
+)
 
 
 def test_tiny_real_fe_native_galerkin_and_algebraic_transfers():
@@ -181,4 +196,121 @@ def test_tiny_real_fe_native_galerkin_and_algebraic_transfers():
     finally:
         if bundle is not None:
             destroy_physical_intermediate_actions(bundle)
+        setup.clear()
+
+
+def test_tiny_direct_p6_q2_q3_native_volume_and_dtn_galerkin():
+    """Qualify direct V25 p6->q2/q3 actions without building a factor."""
+
+    assert MPI.COMM_WORLD.size == 1, "the tiny direct-degree qualification is MPI1"
+    cfg = replace(
+        target_stage4_config(degree=6, h_nm=100),
+        period_x=20.0,
+        period_y=15.0,
+        grating_width_x=8.0,
+        grating_width_y=15.0,
+        grating_height=2.0,
+        z_min=-1.0,
+        z_max=3.0,
+        air_height=3.0,
+        substrate_thickness=1.0,
+        mesh_cell_type="hexahedron",
+        mesh_spacing_mode="boundary_fitted",
+        mesh_axis_cell_counts=(3, 2, 3),
+        incident_theta_deg=74.0,
+        incident_phi_deg=17.0,
+        n_substrate=1.4 + 0.05j,
+        n_grating=0.9 + 0.02j,
+    )
+    setup = _build_same_mesh_levels(
+        cfg, MPI.COMM_WORLD, (6, 3, 2), include_positive_coefficients=True
+    )
+    bundles = {}
+    owners = {}
+    vectors = []
+    try:
+        quadratures, _records = fine_volume_quadrature_metadata(setup, cfg)
+        fine = build_same_mesh_physical_action(
+            setup, cfg, 6, volume_quadrature_metadata=quadratures
+        )
+        bundles[6] = fine
+        inventory = (fine["modes"], fine["mode_rows"], fine["mode_sha256"])
+        for degree in (3, 2):
+            bundles[degree] = build_same_mesh_physical_action(
+                setup,
+                cfg,
+                degree,
+                mode_inventory=inventory,
+                volume_quadrature_metadata=quadratures,
+            )
+            owners[degree] = build_same_mesh_hcurl_owner_transfer(
+                setup["spaces"][6],
+                setup["floquets"][6],
+                setup["spaces"][degree],
+                setup["floquets"][degree],
+                local_transfer=None,
+                fixed_serial_owner_route=True,
+                optimized_owner_apply=True,
+            )
+
+        rng = np.random.default_rng(20260921)
+
+        def random_vector(degree: int):
+            vector = level_vector(setup, degree)
+            vectors.append(vector)
+            vector.array[:] = rng.normal(size=vector.getLocalSize()) + 1j * rng.normal(
+                size=vector.getLocalSize()
+            )
+            vector.array[
+                owned_slave_indices(setup["spaces"][degree], setup["floquets"][degree])
+            ] = 0.0
+            return vector
+
+        def relative(left, right):
+            difference = left.copy()
+            try:
+                difference.axpy(-1.0, right)
+                return float(difference.norm()) / max(
+                    float(left.norm()), float(right.norm()), np.finfo(float).tiny
+                )
+            finally:
+                difference.destroy()
+
+        for degree in (3, 2):
+            transfer = AlgebraicOwnerTransfer(owners[degree])
+            coarse = random_vector(degree)
+            fine_source = transfer.apply_primal(coarse)
+            vectors.append(fine_source)
+            assert owners[degree].routing_costs["route"] == "fixed_serial"
+            assert owners[degree].audit["owner_apply_optimization"] is True
+            for name, coarse_action, fine_action in (
+                (
+                    "volume",
+                    BorrowedActionAdapter(bundles[degree]["volume_action"]),
+                    BorrowedActionAdapter(bundles[6]["volume_action"]),
+                ),
+                ("dtn", bundles[degree]["dtn_action"], bundles[6]["dtn_action"]),
+            ):
+                native = apply_owned(coarse_action, coarse)
+                vectors.append(native)
+                projected_fine = apply_owned(fine_action, fine_source)
+                vectors.append(projected_fine)
+                projected = transfer.apply_adjoint(projected_fine)
+                vectors.append(projected)
+                error = relative(native, projected)
+                assert error <= 1.0e-10, (degree, name, error)
+                assert np.max(
+                    np.abs(native.array[
+                        owned_slave_indices(
+                            setup["spaces"][degree], setup["floquets"][degree]
+                        )
+                    ])
+                ) == 0.0
+    finally:
+        for vector in vectors:
+            vector.destroy()
+        for owner in owners.values():
+            owner.destroy()
+        for bundle in bundles.values():
+            destroy_same_mesh_physical_action(bundle)
         setup.clear()

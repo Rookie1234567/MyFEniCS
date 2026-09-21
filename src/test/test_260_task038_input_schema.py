@@ -73,8 +73,8 @@ def test_schema_identity_sections_and_unique_whitelist():
         "output",
     )
     assert len(IDENTITY_FIELD_SPECS) == 5
-    assert len(FIELD_SPECS) == 111
-    assert len(PUBLIC_FIELD_SPECS) == len(PUBLIC_FIELD_KEYS) == 116
+    assert len(FIELD_SPECS) == 115
+    assert len(PUBLIC_FIELD_SPECS) == len(PUBLIC_FIELD_KEYS) == 120
     assert set(FIELD_SPECS_BY_KEY) == set(PUBLIC_FIELD_KEYS)
     assert {name: len(keys) for name, keys in SECTION_FIELD_KEYS.items()} == {
         "geometry": 14,
@@ -83,7 +83,7 @@ def test_schema_identity_sections_and_unique_whitelist():
         "discretization": 22,
         "boundary": 10,
         "method": 7,
-        "solver": 17,
+        "solver": 21,
         "execution": 7,
         "output": 20,
     }
@@ -158,8 +158,9 @@ def test_schema_identity_sections_and_unique_whitelist():
                 "physical_p6_trace_p4_condensed_robustness_v21",
                 "physical_p6_trace_p4_condensed_capacity_v22",
                 "physical_p6_trace_p4_condensed_physical_memory_v23",
-                "physical_p6_trace_p4_condensed_laptop_speed_v24",
-                "hybrid_block_ldu_ilu0_dtn_woodbury",
+                    "physical_p6_trace_p4_condensed_laptop_speed_v24",
+                    "physical_p6_trace_coarse_degree_speed_v25",
+                    "hybrid_block_ldu_ilu0_dtn_woodbury",
     )
     for key in (
         "geometry.period_y_nm",
@@ -186,7 +187,7 @@ def test_readme_markers_and_continuous_table():
     text, rows = _readme_table()
     marker_pattern = re.compile(r"^<!-- schema-field (\{.*\}) -->$", re.MULTILINE)
     markers = [json.loads(match) for match in marker_pattern.findall(text)]
-    assert len(markers) == len(PUBLIC_FIELD_KEYS) == 116
+    assert len(markers) == len(PUBLIC_FIELD_KEYS) == 120
     assert [marker["key"] for marker in markers] == list(PUBLIC_FIELD_KEYS)
     assert len({marker["key"] for marker in markers}) == len(markers)
     for marker in markers:

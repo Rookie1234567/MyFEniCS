@@ -189,6 +189,69 @@ def run_full3d_iterative(
             notch_by_stage={"Z3_ORIGINAL_H7P5": False},
             p4_prefix_target_sequence=prefix_target,
         )
+    if resolved_payload.get("solver", {}).get("preconditioner") == "physical_p6_trace_coarse_degree_speed_v25":
+        from .physical_dual_cell_condensed_lowmem_v20 import (
+            _run_physical_dual_cell_condensed_lowmem,
+        )
+        from src.io.physical_intermediate_profile import (
+            COARSE_DEGREE_SPEED_PROFILE,
+            PHYSICAL_MEMORY_POLICY_V23,
+        )
+
+        stage = str(resolved_payload["solver"]["stage"])
+        coarse_degree_by_stage = {
+            "Q4_ORIGINAL": 4,
+            "Q3_ORIGINAL": 3,
+            "Q2_ORIGINAL": 2,
+        }
+        try:
+            coarse_degree = coarse_degree_by_stage[stage]
+        except KeyError as exc:
+            raise ValueError(
+                "physical_p6_trace_coarse_degree_speed_v25 received an unknown stage"
+            ) from exc
+        if int(resolved_payload["solver"].get("coarse_degree", -1)) != coarse_degree:
+            raise ValueError(
+                f"{stage} requires coarse_degree={coarse_degree} in the resolved payload"
+            )
+        return _run_physical_dual_cell_condensed_lowmem(
+            resolved_payload,
+            Path(run_directory),
+            source_sha=_kwargs["source_sha"],
+            profile_identity=COARSE_DEGREE_SPEED_PROFILE,
+            coarse_degree=coarse_degree,
+            allowed_stages=tuple(coarse_degree_by_stage),
+            batch_identity="review_v23_a6_h6_speed_and_coarse_degree",
+            evidence_prefix=f"v25q{coarse_degree}",
+            summary_schema="task039extra.v25.worker-summary.v1",
+            summary_filename="physical_dual_condensed_coarse_degree_v25_summary.json",
+            derive_live_space_identity=True,
+            rhs_identity_policy="case_bound_physical_rhs",
+            restore_summary_schema=True,
+            reuse_qualified_jit=True,
+            write_ordered_mode_manifest=True,
+            write_geometry_audit=True,
+            save_complete_field_packet=True,
+            capacity_trial=True,
+            capacity_policy=PHYSICAL_MEMORY_POLICY_V23,
+            reference_mode_by_stage={
+                key: "authority_limited" for key in coarse_degree_by_stage
+            },
+            predecessor_by_stage={
+                key: {
+                    "accepted_v24_route": (
+                        "physical_p6_trace_p4_condensed_laptop_speed_v24"
+                    ),
+                    "cross_case_recycling": False,
+                    "original_only": True,
+                    "independent_batch": True,
+                    "fresh_factor_allowed": True,
+                    "coarse_degree": degree,
+                }
+                for key, degree in coarse_degree_by_stage.items()
+            },
+            notch_by_stage={key: False for key in coarse_degree_by_stage},
+        )
     if resolved_payload.get("solver", {}).get("preconditioner") == "physical_p4_blr_bal_h_v16":
         from .physical_p4_blr_v16 import run_physical_p4_blr_v16
 

@@ -30,18 +30,24 @@ from src.solvers.fullspace_same_mesh_hcurl_pmg_runtime import (
 )
 
 
-def _context(comm: MPI.Comm):
-    cfg3 = target_stage4_config(degree=3, h_nm=50.0)
-    plan = _stage4_axis_plan(cfg3, comm.size)
+def _context_for_pair(
+    comm: MPI.Comm,
+    fine_degree: int,
+    coarse_degree: int,
+    *,
+    optimized_owner: bool = False,
+):
+    cfg_fine = target_stage4_config(degree=fine_degree, h_nm=50.0)
+    plan = _stage4_axis_plan(cfg_fine, comm.size)
     mesh = _structured_hexa_mesh(
         comm,
         plan.x_values,
         plan.y_values,
         plan.z_values,
-        preserve_input_partition=cfg3.stage4_preserve_structured_input_partition,
+        preserve_input_partition=cfg_fine.stage4_preserve_structured_input_partition,
     )
-    facet_tags, _ = _mark_boundary_facets(mesh, cfg3)
-    cell_tags = _mark_cells(mesh, cfg3)
+    facet_tags, _ = _mark_boundary_facets(mesh, cfg_fine)
+    cell_tags = _mark_cells(mesh, cfg_fine)
     mesh_data = SimpleNamespace(
         mesh=mesh,
         cell_tags=cell_tags,
@@ -59,16 +65,26 @@ def _context(comm: MPI.Comm):
             ),
         )
 
-    v3 = make_space(3)
-    v1 = make_space(1)
-    floquet3 = build_double_floquet_mpc(v3, mesh_data, cfg3)
-    cfg1 = target_stage4_config(degree=1, h_nm=50.0)
-    floquet1 = build_double_floquet_mpc(v1, mesh_data, cfg1)
-    local = build_same_mesh_hcurl_transfer(3, 1)
+    fine = make_space(fine_degree)
+    coarse = make_space(coarse_degree)
+    floquet_fine = build_double_floquet_mpc(fine, mesh_data, cfg_fine)
+    cfg_coarse = target_stage4_config(degree=coarse_degree, h_nm=50.0)
+    floquet_coarse = build_double_floquet_mpc(coarse, mesh_data, cfg_coarse)
+    local = build_same_mesh_hcurl_transfer(fine_degree, coarse_degree)
     owner = build_same_mesh_hcurl_owner_transfer(
-        v3, floquet3, v1, floquet1, local_transfer=local
+        fine,
+        floquet_fine,
+        coarse,
+        floquet_coarse,
+        local_transfer=local,
+        fixed_serial_owner_route=optimized_owner,
+        optimized_owner_apply=optimized_owner,
     )
-    return mesh, v3, floquet3, v1, floquet1, local, owner
+    return mesh, fine, floquet_fine, coarse, floquet_coarse, local, owner
+
+
+def _context(comm: MPI.Comm):
+    return _context_for_pair(comm, 3, 1)
 
 
 @pytest.fixture(scope="module")
@@ -351,6 +367,50 @@ def test_owner_setup_and_explicit_oracle(context):
         second,
         source,
     )
+
+
+@pytest.mark.parametrize("coarse_degree", (2, 3))
+def test_p6_direct_q_owner_transfer_mpc_and_adjoint(coarse_degree):
+    """Qualify the V25 direct p6->q owner path on the small FE mesh."""
+
+    mesh, v6, f6, vq, fq, local, owner = _context_for_pair(
+        MPI.COMM_WORLD, 6, coarse_degree, optimized_owner=True
+    )
+    source = dual = output = adjoint = oracle = None
+    try:
+        assert local.audit["pair_fine_to_coarse"] == [6, coarse_degree]
+        assert local.audit["gradient_commuting_relative"] <= 1.0e-11
+        assert local.audit["curl_commuting_relative"] <= 1.0e-11
+        assert owner.audit["pair_fine_to_coarse"] == [6, coarse_degree]
+        assert owner.audit["owner_local"] is True
+
+        source = _field(vq, fq, 0.31 - 0.27j)
+        output = owner.apply_primal(source.x.petsc_vec)
+        oracle = fem.Function(v6)
+        oracle.interpolate(source)
+        f6.mpc.homogenize(oracle)
+        oracle.x.scatter_forward()
+        f6.mpc.backsubstitution(oracle)
+        oracle.x.scatter_forward()
+        assert _relative(output, oracle.x.petsc_vec) <= 1.0e-11
+        assert owner.last_apply_facts["fine_mpc_constraint_residual"] <= 1.0e-11
+
+        dual = _dual_field(v6, f6, -0.19 + 0.43j)
+        assert _slave_max(dual, f6) == 0.0
+        adjoint = owner.apply_adjoint(dual.x.petsc_vec)
+        assert owner.last_apply_facts["coarse_dual_reduction"] == "C^H_once"
+        assert owner.last_apply_facts["coarse_slave_storage_max"] == 0.0
+        lhs = output.dot(dual.x.petsc_vec)
+        rhs = source.x.petsc_vec.dot(adjoint)
+        assert _scalar_relative(lhs, rhs) <= 1.0e-11
+        assert owner.audit["owner_apply_optimization"] is True
+        assert owner.routing_costs["route"] == "fixed_serial"
+    finally:
+        for vector in (adjoint, output):
+            if vector is not None:
+                vector.destroy()
+        owner.destroy()
+        del mesh, v6, f6, vq, fq, local, source, dual, oracle
 
 
 def test_owner_rejects_duplicate_disagreement_and_destroy_is_bounded(context):
