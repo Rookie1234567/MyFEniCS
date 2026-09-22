@@ -61,7 +61,7 @@
     "last_explicit_true_residual": 0.0041437222964080065,
     "iteration_32_recorded": false,
     "compact_record": "docs/task039_extra_physical_multilevel/outcomes/records/v25_q4_ac_repeat_result.json",
-    "compact_record_sha256": "5f0868213488b625db14f9111bf6efa0fb9440c3b6f8ad1c331bb52f3a6b5656",
+    "compact_record_sha256": "c05b1bceb7e449f8cc3ec0cf5d198d7b1bb1501c52f5d86cf6376f401f97cefd",
     "checker": {
       "path": "results/euv_grazing1_phi0/task39extra_v25_q4_ac_repeat_original_h7p5__full3d_iterative__mpi1__Mna/20260922T014519.522186Z/v25q4_dynamic_checker.json",
       "sha256": "716a411a2824d25c8d0d922d9f13cf4ead2a348a082902ec0d1a11c8880aaca1",

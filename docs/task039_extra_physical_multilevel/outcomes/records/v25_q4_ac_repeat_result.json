@@ -24,11 +24,23 @@
     "full_workflow_monotonic_seconds": 1246.2973061680095,
     "time_gate_action": "observe_only",
     "time_gate_exceeded": false,
+    "watchdog_action": "主动 whole-child-tree SIGKILL(-9) 后清场",
+    "trigger_sample": {
+      "elapsed_seconds": 1243.8138749100035,
+      "rss_bytes": 7313522688,
+      "pss_bytes": 7282219008,
+      "effective_available_bytes": 6549331968,
+      "warning": false,
+      "all_status_readable": true,
+      "process_tree_swap_bytes": 0
+    },
     "first_sigkill_scope": "whole child tree",
     "job_swap_qualification": "UNRESOLVED",
     "global_swap_pages_baseline": 7,
     "global_swap_pages_end": 9,
     "global_swap_pages_delta": 2,
+    "global_swap_delta_bytes": 8192,
+    "global_swap_attribution": "WSL-global diagnostic; not attributed to this job",
     "process_tree_swap_peak_bytes": 0,
     "descendants_cleared": true
   },
@@ -112,6 +124,7 @@
     "user_reported_plugged_in": true,
     "wsl_ac1_online_at_end": 1,
     "windows_powercfg": "unavailable_in_current_wsl_session",
-    "power_settings_changed": false
+    "power_settings_changed": false,
+    "cpu_frequency_during_run": "unknown"
   }
 }
