@@ -19,6 +19,7 @@ import numpy as np
 
 from src.io.physical_intermediate_profile import (
     COARSE_DEGREE_SPEED_PROFILE,
+    SETUP_EFFICIENCY_PROFILE,
     LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE,
     LOWMEM_DUAL_CELL_CONDENSED_PROFILE,
     profile_facts,
@@ -1023,6 +1024,11 @@ def _run_physical_dual_cell_condensed_lowmem(
     directory = Path(run_directory).resolve()
     profile = str(resolved_payload["solver"]["preconditioner"])
     stage = str(resolved_payload["solver"]["stage"])
+    if profile == SETUP_EFFICIENCY_PROFILE:
+        if resolved_payload.get("solver", {}).get("numeric_cache_mode") != "build":
+            raise ValueError(
+                "V26 formal setup-efficiency run requires numeric_cache_mode=build"
+            )
     contract = profile_facts(profile)
     stage_coarse_degree = (
         contract.get("coarse_degree_by_stage", {}).get(stage)
@@ -1037,7 +1043,7 @@ def _run_physical_dual_cell_condensed_lowmem(
         raise ValueError("coarse_degree must be an integer") from exc
     if coarse_degree not in (2, 3, 4):
         raise ValueError("coarse_degree must be one of 2, 3, or 4")
-    if profile == COARSE_DEGREE_SPEED_PROFILE and stage_coarse_degree != coarse_degree:
+    if profile in (COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE) and stage_coarse_degree != coarse_degree:
         raise ValueError(
             f"{stage} is frozen to coarse_degree={stage_coarse_degree}, "
             f"not {coarse_degree}"
@@ -1077,6 +1083,8 @@ def _run_physical_dual_cell_condensed_lowmem(
             "require_zero_swap" if require_zero_swap else "observe_only"
         ),
     }
+    if profile == SETUP_EFFICIENCY_PROFILE:
+        summary.update(numeric_cache_mode="build", numeric_cache_loads=0)
     runtime = common = None
     prepared = None
     prepared_facts = None
@@ -1139,12 +1147,18 @@ def _run_physical_dual_cell_condensed_lowmem(
         pc_fine_action_factory = None
         sum_factorized_work = False
         sum_factorized_power10 = False
-        if profile == COARSE_DEGREE_SPEED_PROFILE:
+        if profile in (COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE):
             expected_backend = "isotropic_sum_factorized_n1e_v26"
             expected_h6_rule = (
-                "isotropic_sum_factorized_n1e_v26_apply_and_power10"
+                "direct_selected_backend_same_apply_and_power10"
+                if profile == SETUP_EFFICIENCY_PROFILE
+                else "isotropic_sum_factorized_n1e_v26_apply_and_power10"
             )
-            expected_threads = "mpi1_omp1_blas1_v25"
+            expected_threads = (
+                "mpi1_omp1_blas1_v26"
+                if profile == SETUP_EFFICIENCY_PROFILE
+                else "mpi1_omp1_blas1_v25"
+            )
             solver_contract = resolved_payload.get("solver", {})
             if (
                 solver_contract.get("physical_operator_backend")
@@ -1160,13 +1174,20 @@ def _run_physical_dual_cell_condensed_lowmem(
                 build_packed_physical_action,
             )
 
-            def pc_fine_action_factory(common_):
+            def pc_fine_action_factory(common_, *, geometry_bundle=None):
                 return build_packed_physical_action(
                     common_,
                     cfg,
                     contiguous_work=True,
                     preallocated_work=False,
                     sum_factorized_work=True,
+                    reuse_projection_work=(profile == SETUP_EFFICIENCY_PROFILE),
+                    share_readonly_geometry=(profile == SETUP_EFFICIENCY_PROFILE),
+                    geometry_bundle=(
+                        geometry_bundle
+                        if profile == SETUP_EFFICIENCY_PROFILE
+                        else None
+                    ),
                 )
 
             sum_factorized_work = True
@@ -1253,8 +1274,14 @@ def _run_physical_dual_cell_condensed_lowmem(
         v24_owner_apply = profile in {
             LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE,
             COARSE_DEGREE_SPEED_PROFILE,
+            SETUP_EFFICIENCY_PROFILE,
         }
-        packed_power10 = profile == COARSE_DEGREE_SPEED_PROFILE
+        packed_power10 = profile in {
+            COARSE_DEGREE_SPEED_PROFILE,
+            SETUP_EFFICIENCY_PROFILE,
+        }
+        direct_selected_backend = profile == SETUP_EFFICIENCY_PROFILE
+        reuse_projection_work = direct_selected_backend
         common = _build_common(
             runtime,
             cfg,
@@ -1262,7 +1289,9 @@ def _run_physical_dual_cell_condensed_lowmem(
             coarse_degree=coarse_degree,
             optimized_owner_apply=v24_owner_apply,
             fixed_serial_owner_route=v24_owner_apply,
-            native_aq_projection_check=(profile == COARSE_DEGREE_SPEED_PROFILE),
+            native_aq_projection_check=(
+                profile in (COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE)
+            ),
         )
         # The common builder now owns the FE/MPC levels.  Dropping this outer
         # alias avoids a duplicate mesh graph during form/condensation setup.
@@ -1728,8 +1757,10 @@ def _run_physical_dual_cell_condensed_lowmem(
                 packed_power10=packed_power10,
                 sum_factorized_work=sum_factorized_work,
                 sum_factorized_power10=sum_factorized_power10,
+                direct_selected_backend=direct_selected_backend,
+                reuse_projection_work=reuse_projection_work,
                 formal_release_timing=(
-                    v24_owner_apply or profile == COARSE_DEGREE_SPEED_PROFILE
+                    v24_owner_apply
                 ),
                 p4_stack_ready_hook=(
                     (lambda stack: prefix_stack.update(value=stack))

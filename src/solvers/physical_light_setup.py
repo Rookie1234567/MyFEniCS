@@ -22,6 +22,9 @@ def build_light_h6_setup(
     preallocated_power10=None,
     sum_factorized_work=False,
     sum_factorized_power10=None,
+    direct_selected_backend=False,
+    reuse_projection_work=False,
+    batched_target_grouping=False,
 ):
     if sum_factorized_power10 is None:
         sum_factorized_power10 = bool(sum_factorized_work)
@@ -36,6 +39,9 @@ def build_light_h6_setup(
         preallocated_power10=preallocated_power10,
         sum_factorized_work=sum_factorized_work,
         sum_factorized_power10=sum_factorized_power10,
+        direct_selected_backend=direct_selected_backend,
+        reuse_projection_work=reuse_projection_work,
+        batched_target_grouping=batched_target_grouping,
     )
 
 
@@ -51,6 +57,9 @@ def build_light_level_setup(
     preallocated_power10=None,
     sum_factorized_work=False,
     sum_factorized_power10=None,
+    direct_selected_backend=False,
+    reuse_projection_work=False,
+    batched_target_grouping=False,
 ):
     if degree not in (4, 6):
         raise ValueError('physical pilot smoother supports p6/p4 only')
@@ -72,16 +81,51 @@ def build_light_level_setup(
         marker('h6_original_setup_started' if degree == 6 else 'h4_setup_started', {})
         started = time.perf_counter()
         form = same_mesh_positive_form(space, curl_coefficient=mu, mass_coefficient=mass)
-        action = FullspaceMpcFormAction(form, space, mpc=floquet.mpc)
-        timing['positive_native_action_seconds'] = time.perf_counter() - started
+        direct_backend = bool(
+            direct_selected_backend
+            and packed_power10
+            and packed_apply
+            and bool(preallocated_power10) == bool(preallocated_work)
+            and bool(sum_factorized_power10) == bool(sum_factorized_work)
+        )
+        if direct_backend:
+            action = FullspaceMpcFormAction(
+                form,
+                space,
+                mpc=floquet.mpc,
+                local_kernel=IsotropicPartialAssembly(
+                    floquet.mpc.function_space,
+                    mu,
+                    mass,
+                    contiguous_work=True,
+                    preallocated_work=preallocated_work,
+                    sum_factorized_work=sum_factorized_work,
+                    reuse_projection_work=reuse_projection_work,
+                    share_geometry=direct_backend,
+                ),
+            )
+            power10_kernel_facts = dict(action._local_kernel.audit)
+            timing['positive_selected_action_seconds'] = time.perf_counter() - started
+        else:
+            action = FullspaceMpcFormAction(form, space, mpc=floquet.mpc)
+            timing['positive_native_action_seconds'] = time.perf_counter() - started
         started = time.perf_counter()
-        diagonal = build_quadrature_positive_diagonal(space, mu, mass, floquet.mpc)
+        diagonal_audit = {}
+        diagonal = build_quadrature_positive_diagonal(
+            space,
+            mu,
+            mass,
+            floquet.mpc,
+            batched_target_grouping=bool(batched_target_grouping and direct_backend),
+            reuse_local_types=bool(direct_backend),
+            audit=diagonal_audit,
+        )
         timing['diagonal_seconds'] = time.perf_counter() - started
         started = time.perf_counter()
         shell = SameMeshP6MatrixFreeShell(action, diagonal)
         timing['b6_shell_seconds'] = time.perf_counter() - started
         action = diagonal = None
-        if packed_power10:
+        if packed_power10 and not direct_backend:
             packed = FullspaceMpcFormAction(
                 form,
                 space,
@@ -93,6 +137,8 @@ def build_light_level_setup(
                     contiguous_work=True,
                     preallocated_work=preallocated_power10,
                     sum_factorized_work=sum_factorized_power10,
+                    reuse_projection_work=reuse_projection_work,
+                    share_geometry=direct_backend,
                 ),
             )
             power10_kernel_facts = dict(packed._local_kernel.audit)
@@ -121,12 +167,14 @@ def build_light_level_setup(
                     contiguous_work=True,
                     preallocated_work=preallocated_work,
                     sum_factorized_work=sum_factorized_work,
+                    reuse_projection_work=reuse_projection_work,
+                    share_geometry=direct_backend,
                 ),
             )
             original = shell.action
             shell.action = packed
             original.destroy()
-        elif packed_power10 and packed_apply and (
+        elif packed_power10 and packed_apply and not direct_backend and (
             bool(preallocated_power10) != bool(preallocated_work)
             or bool(sum_factorized_power10) != bool(sum_factorized_work)
         ):
@@ -144,6 +192,8 @@ def build_light_level_setup(
                     contiguous_work=True,
                     preallocated_work=preallocated_work,
                     sum_factorized_work=sum_factorized_work,
+                    reuse_projection_work=reuse_projection_work,
+                    share_geometry=direct_backend,
                 ),
             )
             original = shell.action
@@ -192,6 +242,13 @@ def build_light_level_setup(
             apply_preallocated_work_opt_in=bool(preallocated_work),
             sum_factorized_work_opt_in=bool(sum_factorized_work),
             sum_factorized_power10_opt_in=bool(sum_factorized_power10),
+            direct_selected_backend_opt_in=bool(direct_selected_backend),
+            direct_selected_backend_used=bool(direct_backend),
+            reuse_projection_work_opt_in=bool(reuse_projection_work),
+            batched_target_grouping_opt_in=bool(
+                batched_target_grouping and direct_backend
+            ),
+            diagonal_local_type_reuse=dict(diagonal_audit),
             kernel=kernel_facts)
         facts['setup_timing_seconds'] = dict(timing)
         if degree != 6:
@@ -200,7 +257,12 @@ def build_light_level_setup(
             facts.pop('h6_degree', None)
         marker('h6_original_window_and_packed_action_complete' if degree == 6 else 'h4_window_complete', facts)
         if degree == 6:
-            return dict(p6_shell=shell, h6=smoother, light_facts=facts)
+            return dict(
+                p6_shell=shell,
+                h6=smoother,
+                light_facts=facts,
+                geometry_bundle=getattr(kernel, "geometry_bundle", None),
+            )
         return dict(shell=shell, smoother=smoother, light_facts=facts)
     except BaseException:
         if smoother is not None: smoother.destroy()

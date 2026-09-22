@@ -153,8 +153,9 @@ def test_original_form_complex_multimaster_affine_orientation(
         (6, None),
     ],
 )
+@pytest.mark.parametrize("reuse_projection_work", [False, True])
 def test_sum_factorized_native_tabulate_adjoint_and_sheared_mpc(
-    degree, component
+    degree, component, reuse_projection_work
 ):
     """Qualify the opt-in kernel against native tabulation and the form oracle."""
 
@@ -222,8 +223,10 @@ def test_sum_factorized_native_tabulate_adjoint_and_sheared_mpc(
         component_form=form if component else None,
         component=component,
         sum_factorized_work=True,
+        reuse_projection_work=reuse_projection_work,
     )
     assert kernel.audit["sum_factorized_opt_in"] is True
+    assert kernel.audit["reuse_projection_work_opt_in"] is reuse_projection_work
     assert kernel._sum_factorized.audit["native_tensor_product_api"] is False
     sf = kernel._sum_factorized
 
@@ -307,6 +310,118 @@ def test_sum_factorized_native_tabulate_adjoint_and_sheared_mpc(
         assert relative <= 2e-11
         assert np.all(np.isfinite(observed))
         np.testing.assert_array_equal(source.array, before)
+
+
+def test_same_space_geometry_bundle_is_readonly_and_matches_native_action():
+    domain = mesh.create_unit_cube(
+        MPI.COMM_SELF, 2, 1, 1, cell_type=mesh.CellType.hexahedron
+    )
+    space = fem.functionspace(domain, ("N1curl", 2))
+    dg = fem.functionspace(domain, ("DG", 0))
+    mu, mass = fem.Function(dg), fem.Function(dg)
+    mu.x.array[:] = 1.4
+    mass.x.array[:] = 0.8
+    form = same_mesh_positive_form(space, curl_coefficient=mu, mass_coefficient=mass)
+    first = IsotropicPartialAssembly(
+        space,
+        mu,
+        mass,
+        sum_factorized_work=True,
+        share_geometry=True,
+    )
+    bundle = first.geometry_bundle
+    second = IsotropicPartialAssembly(
+        space,
+        mu,
+        mass,
+        sum_factorized_work=True,
+        share_geometry=True,
+        geometry_bundle=bundle,
+    )
+    del first
+    assert second.geometry_bundle is bundle
+    assert second._sum_factorized.reference_bundle is bundle["reference_bundle"]
+    assert (
+        second._sum_factorized.coefficient_matrix
+        is bundle["reference_bundle"]["coefficient_matrix"]
+    )
+    for array in (second.dofs, second.permutations, second.metrics):
+        assert array.flags.writeable is False
+    assert second.basis.geometry_derivatives is bundle["geometry_derivatives"]
+    assert bundle["source_space"] is space
+    assert bundle["source_mesh"] is domain
+    assert bundle["identity"]["reference_quadrature_rule"]
+    with ExitStack() as owned:
+        native = FullspaceMpcFormAction(form, space)
+        owned.callback(native.destroy)
+        fast = FullspaceMpcFormAction(form, space, local_kernel=second)
+        owned.callback(fast.destroy)
+        source = native.matrix.createVecRight()
+        owned.callback(source.destroy)
+        rng = np.random.default_rng(36207)
+        source.array[:] = rng.normal(size=source.getLocalSize()) + 1j * rng.normal(
+            size=source.getLocalSize()
+        )
+        expected = native.apply(source).array.copy()
+        observed = fast.apply(source).array.copy()
+        np.testing.assert_allclose(observed, expected, rtol=2e-11, atol=2e-11)
+
+
+def test_direct_selected_h6_backend_does_not_build_native_action(monkeypatch):
+    from src.common.config_3d import target_stage4_config
+    from src.solvers import physical_light_setup
+    from src.solvers.physical_light_setup import build_light_h6_setup
+
+    domain = mesh.create_box(
+        MPI.COMM_SELF,
+        [np.zeros(3), np.ones(3) * np.array([3.0, 1.0, 1.0])],
+        [3, 1, 1],
+        cell_type=mesh.CellType.hexahedron,
+    )
+    space = fem.functionspace(domain, ("N1curl", 6))
+    mpc = dolfinx_mpc.MultiPointConstraint(space)
+    mpc.finalize()
+    work_space = mpc.function_space
+    dg = fem.functionspace(domain, ("DG", 0))
+    mu, mass = fem.Function(dg), fem.Function(dg)
+    mu.x.array[:] = 1.0
+    mass.x.array[:] = 1.0
+    levels = {
+        "spaces": {6: work_space},
+        "floquets": {6: SimpleNamespace(mpc=mpc)},
+        "mu": mu,
+        "mass": mass,
+    }
+    native_calls = []
+    actual_action = physical_light_setup.FullspaceMpcFormAction
+
+    def tracking_action(*args, **kwargs):
+        native_calls.append(kwargs.get("local_kernel") is None)
+        return actual_action(*args, **kwargs)
+
+    monkeypatch.setattr(physical_light_setup, "FullspaceMpcFormAction", tracking_action)
+    result = build_light_h6_setup(
+        levels,
+        target_stage4_config(degree=6, h_nm=50.0),
+        lambda *_args: None,
+        packed_power10=True,
+        packed_apply=True,
+        sum_factorized_work=True,
+        sum_factorized_power10=True,
+        direct_selected_backend=True,
+        reuse_projection_work=True,
+        batched_target_grouping=True,
+    )
+    try:
+        assert native_calls and all(call is False for call in native_calls)
+        assert result["light_facts"]["direct_selected_backend_used"] is True
+        assert result["light_facts"]["batched_target_grouping_opt_in"] is True
+        assert result["light_facts"]["diagonal_local_type_reuse"][
+            "local_type_cache_hits"
+        ] >= 1
+    finally:
+        result["h6"].destroy()
+        result["p6_shell"].destroy()
 
 
 def test_nonaffine_geometry_and_nonpositive_material_rejected():
@@ -432,6 +547,27 @@ def test_packed_physical_action_helper_borrows_dtn_and_cleans_volume():
         "fine": {"volume_action": native_volume, "dtn_action": dtn},
     }
     packed = build_packed_physical_action(common, cfg, contiguous_work=True)
+    shared_mu, shared_mass = fem.Function(fem.functionspace(domain, ("DG", 0))), fem.Function(
+        fem.functionspace(domain, ("DG", 0))
+    )
+    shared_mu.x.array[:] = 1.0
+    shared_mass.x.array[:] = 1.0
+    h6_like_kernel = IsotropicPartialAssembly(
+        space,
+        shared_mu,
+        shared_mass,
+        sum_factorized_work=True,
+        share_geometry=True,
+    )
+    packed_v26 = build_packed_physical_action(
+        common,
+        cfg,
+        contiguous_work=True,
+        sum_factorized_work=True,
+        reuse_projection_work=True,
+        share_readonly_geometry=True,
+        geometry_bundle=h6_like_kernel.geometry_bundle,
+    )
     source = native_volume.component_actions["curl"].matrix.createVecRight()
     target = source.duplicate()
     try:
@@ -453,8 +589,19 @@ def test_packed_physical_action_helper_borrows_dtn_and_cleans_volume():
         np.testing.assert_array_equal(target.array, observed)
         assert packed["facts"]["native_a6_independent"] is True
         assert packed["facts"]["dtn_borrowed"] is True
+        packed_v26["physical_action"].apply(source, target)
+        np.testing.assert_allclose(target.array, expected, rtol=2e-11, atol=2e-11)
+        shared = packed_v26["facts"]["shared_geometry_bundle"]
+        assert shared["same_owner"] is True
+        assert shared["readonly_arrays"] is True
+        if shared["source_owner"] == "h6_external":
+            assert shared["borrowed_components"]
+            assert shared["reference_data_shared"] is True
+        else:
+            assert shared["fallbacks"]
     finally:
         packed["physical_action"].destroy()
+        packed_v26["physical_action"].destroy()
         # The candidate owns only its packed volume; the borrowed DtN remains
         # usable until the independent native owner releases it.
         assert dtn.matrix.getType()

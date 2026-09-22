@@ -137,6 +137,7 @@ def main(argv: list[str] | None = None) -> int:
                 'physical_p6_trace_p4_condensed_physical_memory_v23',
                 'physical_p6_trace_p4_condensed_laptop_speed_v24',
                 'physical_p6_trace_coarse_degree_speed_v25',
+                'physical_p6_trace_setup_efficiency_v26',
             }
         ):
             raise InputError(

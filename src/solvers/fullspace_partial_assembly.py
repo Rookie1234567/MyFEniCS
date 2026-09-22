@@ -5,7 +5,9 @@ kernel; FullspaceMpcFormAction owns constraints, ghosts and PETSc resources.
 """
 from __future__ import annotations
 
+import hashlib
 import time
+from types import MappingProxyType
 
 import numpy as np
 import ufl
@@ -15,6 +17,42 @@ from .fullspace_quadrature_diagonal import (
     PositiveCellBasis, ReferenceCellBasis, _affine_cell_jacobian,
 )
 from .fullspace_n1e_sum_factor import N1ESumFactorizedAction
+
+
+def _array_sha256(array):
+    return hashlib.sha256(np.ascontiguousarray(array).tobytes()).hexdigest()
+
+
+def _geometry_identity(
+    space, mesh, dofs, permutations, geometry_derivatives, basis, metrics=None
+):
+    """Bind reusable geometry arrays to their live source contents once."""
+
+    element = space.element.basix_element
+    variant = getattr(getattr(element, "lagrange_variant", None), "name", "unknown")
+    audit = basis.audit
+    return {
+        "complex_dtype": np.dtype(np.complex128).str,
+        "element_family": element.family.name,
+        "element_degree": int(element.degree),
+        "element_variant": variant,
+        "element_map_type": element.map_type.name,
+        "element_value_size": int(element.value_size),
+        "needs_dof_transformations": bool(space.element.needs_dof_transformations),
+        "cell_count": int(dofs.shape[0]),
+        "local_space_dimension": int(dofs.shape[1]),
+        "geometry_x_sha256": _array_sha256(mesh.geometry.x),
+        "geometry_dofmap_sha256": _array_sha256(mesh.geometry.dofmap),
+        "dofs_sha256": _array_sha256(dofs),
+        "permutations_sha256": _array_sha256(permutations),
+        "geometry_derivatives_sha256": _array_sha256(geometry_derivatives),
+        "reference_quadrature_degree": int(audit["quadrature_degree"]),
+        "reference_quadrature_rule": audit["quadrature_rule"],
+        "reference_points_sha256": audit["points_sha256"],
+        "reference_weights_sha256": audit["weights_sha256"],
+        "metrics_sha256": None if metrics is None else _array_sha256(metrics),
+        "metric_conventions": ["mass:invJ_invJT_detJ", "curl:JTJ_detJ_inv"],
+    }
 
 
 class IsotropicPartialAssembly:
@@ -37,11 +75,16 @@ class IsotropicPartialAssembly:
         contiguous_work=False,
         preallocated_work=False,
         sum_factorized_work=False,
+        reuse_projection_work=False,
+        geometry_bundle=None,
+        share_geometry=False,
     ):
         self.space = space
         self.contiguous_work = bool(contiguous_work)
         self.preallocated_work = bool(preallocated_work)
         self.sum_factorized_work = bool(sum_factorized_work)
+        self.reuse_projection_work = bool(reuse_projection_work)
+        self.share_geometry = bool(share_geometry)
         if component_form is None:
             if component is not None:
                 raise ValueError("split component requires original form")
@@ -71,35 +114,179 @@ class IsotropicPartialAssembly:
             self.basis.mu, self.basis.mass = mu, mass
         self.component = component
         mesh = space.mesh
-        mesh.topology.create_entity_permutations()
-        self.permutations = mesh.topology.get_cell_permutation_info()
-        self.cell_count = mesh.topology.index_map(mesh.topology.dim).size_local
+        if self.sum_factorized_work:
+            n = int(space.element.space_dimension)
+        else:
+            n = int(self.basis.values.shape[0])
+        if geometry_bundle is not None:
+            if (
+                not self.share_geometry
+                or geometry_bundle.get("source_space") is not space
+                or geometry_bundle.get("source_mesh") is not mesh
+                or geometry_bundle.get("source_element_family")
+                != space.element.basix_element.family.name
+                or geometry_bundle.get("source_element_degree")
+                != int(space.element.basix_element.degree)
+            ):
+                raise ValueError("shared geometry bundle source identity mismatch")
+            if (
+                geometry_bundle.get("source_element_map_type")
+                != space.element.basix_element.map_type.name
+                or geometry_bundle.get("source_element_value_size")
+                != int(space.element.basix_element.value_size)
+            ):
+                raise ValueError("shared geometry bundle element identity mismatch")
+            mesh.topology.create_entity_permutations()
+            current_permutations = np.ascontiguousarray(
+                mesh.topology.get_cell_permutation_info()
+            )
+            current_dofs = np.asarray(
+                [
+                    space.dofmap.cell_dofs(c)
+                    for c in range(mesh.topology.index_map(mesh.topology.dim).size_local)
+                ],
+                dtype=np.int32,
+            ).reshape(-1, n)
+            expected_geometry_identity = _geometry_identity(
+                space,
+                mesh,
+                current_dofs,
+                current_permutations,
+                self.basis.geometry_derivatives,
+                self.basis,
+            )
+            bundle_identity = dict(geometry_bundle.get("identity", {}))
+            mismatched_keys = {
+                key
+                for key, value in expected_geometry_identity.items()
+                if key != "metrics_sha256" and bundle_identity.get(key) != value
+            }
+            if mismatched_keys:
+                quadrature_keys = {
+                    "geometry_derivatives_sha256",
+                    "reference_quadrature_degree",
+                    "reference_quadrature_rule",
+                    "reference_points_sha256",
+                    "reference_weights_sha256",
+                }
+                if mismatched_keys <= quadrature_keys:
+                    raise ValueError(
+                        "shared geometry bundle quadrature identity mismatch"
+                    )
+                raise ValueError("shared geometry bundle content identity mismatch")
+            if (
+                not all(
+                    not geometry_bundle[key].flags.writeable
+                    for key in (
+                        "dofs",
+                        "permutations",
+                        "metrics",
+                        "geometry_derivatives",
+                    )
+                )
+                or _array_sha256(geometry_bundle["metrics"])
+                != bundle_identity.get("metrics_sha256")
+                or _array_sha256(geometry_bundle["geometry_derivatives"])
+                != bundle_identity.get("geometry_derivatives_sha256")
+            ):
+                raise ValueError("shared geometry bundle arrays are not frozen")
+            self.basis.geometry_derivatives = geometry_bundle["geometry_derivatives"]
+            self.geometry_bundle = geometry_bundle
+            self.permutations = geometry_bundle["permutations"]
+            self.cell_count = int(geometry_bundle["cell_count"])
+            self.dofs = geometry_bundle["dofs"]
+            self.metrics = geometry_bundle["metrics"]
+        else:
+            mesh.topology.create_entity_permutations()
+            self.permutations = (
+                np.ascontiguousarray(mesh.topology.get_cell_permutation_info())
+                if self.share_geometry
+                else mesh.topology.get_cell_permutation_info()
+            )
+            self.cell_count = mesh.topology.index_map(mesh.topology.dim).size_local
+            self.dofs = np.asarray(
+                [space.dofmap.cell_dofs(c) for c in range(self.cell_count)],
+                dtype=np.int32,
+            ).reshape(self.cell_count, n)
+            self.metrics = np.empty((self.cell_count, 2, 3, 3))
+            for cell in range(self.cell_count):
+                x = mesh.geometry.x[mesh.geometry.dofmap[cell]]
+                jacobian = _affine_cell_jacobian(self.basis.geometry_derivatives, x)
+                determinant = float(np.linalg.det(jacobian))
+                inv = np.linalg.inv(jacobian)
+                self.metrics[cell, 0] = inv @ inv.T * determinant
+                self.metrics[cell, 1] = jacobian.T @ jacobian / determinant
+            self.dofs.flags.writeable = False
+            self.metrics.flags.writeable = False
+            if self.share_geometry:
+                self.permutations.flags.writeable = False
+                self.basis.geometry_derivatives.flags.writeable = False
+                expected_geometry_identity = _geometry_identity(
+                    space,
+                    mesh,
+                    self.dofs,
+                    self.permutations,
+                    self.basis.geometry_derivatives,
+                    self.basis,
+                    self.metrics,
+                )
+                self.geometry_bundle = MappingProxyType({
+                    "schema": "task039extra.readonly-geometry-bundle.v1",
+                    "identity": expected_geometry_identity,
+                    "source_space": space,
+                    "source_mesh": mesh,
+                    "source_element_family": space.element.basix_element.family.name,
+                    "source_element_degree": int(space.element.basix_element.degree),
+                    "source_element_map_type": space.element.basix_element.map_type.name,
+                    "source_element_value_size": int(space.element.basix_element.value_size),
+                    "reference_quadrature_not_shared": not self.sum_factorized_work,
+                    "material_data_not_shared": True,
+                    "cell_count": int(self.cell_count),
+                    "dofs": self.dofs,
+                    "permutations": self.permutations,
+                    "metrics": self.metrics,
+                    "geometry_derivatives": self.basis.geometry_derivatives,
+                })
+            else:
+                self.geometry_bundle = None
         if self.sum_factorized_work:
             n = int(space.element.space_dimension)
             q = len(self.basis.points)
-            self._sum_factorized = N1ESumFactorizedAction(
-                space, self.basis, batch_size=self.batch_size
+            reference_bundle = (
+                geometry_bundle.get("reference_bundle")
+                if geometry_bundle is not None
+                else None
             )
+            self._sum_factorized = N1ESumFactorizedAction(
+                space,
+                self.basis,
+                batch_size=self.batch_size,
+                reuse_projection_work=self.reuse_projection_work,
+                reference_bundle=reference_bundle,
+                share_reference=self.share_geometry,
+            )
+            if (
+                self.share_geometry
+                and geometry_bundle is None
+                and self._sum_factorized.reference_bundle is not None
+            ):
+                bundle = dict(self.geometry_bundle)
+                bundle["reference_bundle"] = self._sum_factorized.reference_bundle
+                self.geometry_bundle = MappingProxyType(bundle)
         else:
             n, q, _ = self.basis.values.shape
             self._sum_factorized = None
-        self.dofs = np.asarray([space.dofmap.cell_dofs(c) for c in range(self.cell_count)],
-                               dtype=np.int32).reshape(self.cell_count, n)
         self.material_indices = np.asarray([[f.function_space.dofmap.cell_dofs(c)[0]
             for f in (mass, mu)] for c in range(self.cell_count)], dtype=np.int32).reshape(-1, 2)
-        self.metrics = np.empty((self.cell_count, 2, 3, 3))
-        for cell in range(self.cell_count):
-            x = mesh.geometry.x[mesh.geometry.dofmap[cell]]
-            jacobian = _affine_cell_jacobian(self.basis.geometry_derivatives, x)
-            determinant = float(np.linalg.det(jacobian))
-            inv = np.linalg.inv(jacobian)
-            self.metrics[cell, 0] = inv @ inv.T * determinant
-            self.metrics[cell, 1] = jacobian.T @ jacobian / determinant
-        for array in (self.dofs, self.material_indices, self.metrics):
-            array.flags.writeable = False
+        self.material_indices.flags.writeable = False
         if self.sum_factorized_work:
             batch_capacity = max(1, self.batch_size)
             self._local_work = np.empty((batch_capacity, n), dtype=np.complex128)
+            self._materials_work = (
+                np.empty((batch_capacity, 2), dtype=np.complex128)
+                if self.reuse_projection_work
+                else None
+            )
             self._result_work = None
             self._flux_work = None
             self._forward_real_work = None
@@ -111,7 +298,9 @@ class IsotropicPartialAssembly:
             self._flux_real_work = None
             self._flux_imag_work = None
             batch_workspace_bytes = int(
-                self._local_work.nbytes + self._sum_factorized.audit["batch_workspace_bytes"]
+                self._local_work.nbytes
+                + (self._materials_work.nbytes if self._materials_work is not None else 0)
+                + self._sum_factorized.audit["batch_workspace_bytes"]
             )
         elif self.preallocated_work:
             # Keep the existing fixed batch cap, but retain its small
@@ -122,6 +311,7 @@ class IsotropicPartialAssembly:
             batch_capacity = max(1, self.batch_size)
             flat_width = int(q * 3)
             self._local_work = np.empty((batch_capacity, n), dtype=np.complex128)
+            self._materials_work = None
             self._result_work = np.empty((batch_capacity, n), dtype=np.complex128)
             self._flux_work = np.empty((batch_capacity, q, 3), dtype=np.complex128)
             self._forward_real_work = np.empty((batch_capacity, flat_width), dtype=np.float64)
@@ -159,6 +349,7 @@ class IsotropicPartialAssembly:
             batch_capacity = 0
             batch_workspace_bytes = 0
             self._local_work = None
+            self._materials_work = None
             self._result_work = None
             self._flux_work = None
             self._forward_real_work = None
@@ -214,6 +405,7 @@ class IsotropicPartialAssembly:
             ),
             reference_table_components=sum_factorized_reference_components,
             sum_factorized_opt_in=self.sum_factorized_work,
+            reuse_projection_work_opt_in=self.reuse_projection_work,
             sum_factorized_audit=(
                 self._sum_factorized.audit if self._sum_factorized is not None else None
             ),
@@ -270,7 +462,11 @@ class IsotropicPartialAssembly:
                         self.permutations[cell:cell + 1],
                         2,
                     )
-            materials = np.empty((count, 2), dtype=np.complex128)
+            materials = (
+                self._materials_work[:count]
+                if self._materials_work is not None
+                else np.empty((count, 2), dtype=np.complex128)
+            )
             materials[:, 0] = basis.mass.x.array[
                 self.material_indices[start:stop, 0]
             ]

@@ -1009,6 +1009,7 @@ FIELD_SPECS: Final = (
             "physical_p6_trace_p4_condensed_physical_memory_v23",
             "physical_p6_trace_p4_condensed_laptop_speed_v24",
             "physical_p6_trace_coarse_degree_speed_v25",
+            "physical_p6_trace_setup_efficiency_v26",
             "hybrid_block_ldu_ilu0_dtn_woodbury",
         ),
         constraints=("only reviewed iterative identities are public",),
@@ -1138,6 +1139,7 @@ FIELD_SPECS: Final = (
         allowed=(
             "native_ffcx_power10_then_packed_apply",
             "isotropic_sum_factorized_n1e_v26_apply_and_power10",
+            "direct_selected_backend_same_apply_and_power10",
         ),
     ),
     _f(
@@ -1148,7 +1150,18 @@ FIELD_SPECS: Final = (
         "Explicit execution-thread contract for the V25 selected backend",
         "thread contract",
         '"profile_default"',
-        allowed=("profile_default", "mpi1_omp1_blas1_v25"),
+        allowed=("profile_default", "mpi1_omp1_blas1_v25", "mpi1_omp1_blas1_v26"),
+    ),
+    _f(
+        "solver.numeric_cache_mode",
+        "enum",
+        "none",
+        ("full3d_iterative",),
+        "跨进程局部数值 packet 的策略；V26 正式场必须从头 build",
+        "numeric cache mode",
+        '"build"',
+        allowed=("build",),
+        constraints=("V26 formal build forbids loading prior local numeric packets",),
     ),
     _f(
         "solver.restart",

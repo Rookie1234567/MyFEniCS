@@ -2463,6 +2463,82 @@ def _reserve_v25_shared_budget(
     )
 
 
+def _reserve_v26_setup_efficiency_budget(
+    repo_root: Path,
+    run_directory: Path,
+    *,
+    source_sha: str,
+    stage: str,
+    stage_budget: Mapping[str, Any],
+    workflow_clock_start: Mapping[str, Any],
+    time_policy: str = V14_TIME_POLICY_ENFORCE,
+) -> dict[str, Any]:
+    """Reserve the single fresh V26 setup-efficiency formal attempt."""
+
+    if stage != "Q4_ORIGINAL" or time_policy != V14_TIME_POLICY_OBSERVE_ONLY:
+        raise InputError("V26 permits only Q4_ORIGINAL with observe_only")
+    if float(stage_budget.get("workflow_seconds", 0.0)) != 43200.0:
+        raise InputError("V26 Q4 requires a 43200-second workflow budget")
+    repo_root = Path(repo_root).resolve()
+    path = (
+        repo_root
+        / "benchmarks"
+        / "artifacts"
+        / "task39extra"
+        / "setup_efficiency_v26"
+        / "shared_workflow_ledger.json"
+    )
+    schema = "task039extra.v26.setup-efficiency.shared-workflow-ledger.v1"
+    batch_identity = "review_v24_setup_and_kernel_efficiency"
+    prerequisite = {
+        "original_only": True,
+        "allowed_stages": ["Q4_ORIGINAL"],
+        "cross_case_recycling": False,
+        "automatic_retry": False,
+        "fresh_factor_per_stage": True,
+        "numeric_cache_mode": "build",
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        ledger = json.loads(path.read_text(encoding="utf-8"))
+        if (
+            ledger.get("schema") != schema
+            or ledger.get("batch_identity") != batch_identity
+            or ledger.get("total_budget_seconds") != 43200.0
+            or ledger.get("allowed_stages") != ["Q4_ORIGINAL"]
+        ):
+            raise InputError("V26 shared ledger identity or budget changed")
+    else:
+        ledger = {
+            "schema": schema,
+            "batch_identity": batch_identity,
+            "total_budget_seconds": 43200.0,
+            "elapsed_seconds": 0.0,
+            "conservative_allowance_seconds": 0.0,
+            "policy_debits": [],
+            "fresh_worker_count": 0,
+            "source_attempts": [],
+            "stages": {},
+            "unique_bug_replay_count": 0,
+            "allowed_stages": ["Q4_ORIGINAL"],
+            "cross_case_recycling": False,
+        }
+    return _reserve_blr_stage_from_ledger(
+        path,
+        ledger,
+        stage=stage,
+        run_directory=run_directory,
+        source_sha=source_sha,
+        stage_budget=stage_budget,
+        workflow_clock_start=workflow_clock_start,
+        time_policy=time_policy,
+        error_prefix="V26",
+        summary_filename="physical_dual_condensed_setup_efficiency_v26_summary.json",
+        prerequisite=prerequisite,
+        bug_replay_limit=1,
+    )
+
+
 def _reserve_v20_shared_budget(
     repo_root: Path,
     run_directory: Path,
@@ -3150,6 +3226,7 @@ def launch_specification(
         PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE,
         LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE,
         COARSE_DEGREE_SPEED_PROFILE,
+        SETUP_EFFICIENCY_PROFILE,
         profile_facts,
     )
     from src.io.physical_balanced_profile import BALANCED_PROFILES, BOUNDED_PROFILES
@@ -3168,6 +3245,7 @@ def launch_specification(
     physical_memory_v23_profile = specification.solver.get('preconditioner') == PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE
     v24_profile = specification.solver.get('preconditioner') == LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE
     coarse_degree_v25_profile = specification.solver.get('preconditioner') == COARSE_DEGREE_SPEED_PROFILE
+    setup_efficiency_v26_profile = specification.solver.get('preconditioner') == SETUP_EFFICIENCY_PROFILE
     if v24_p4_prefix_target is not None:
         try:
             v24_p4_prefix_target = int(v24_p4_prefix_target)
@@ -3185,6 +3263,7 @@ def launch_specification(
         PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE,
         LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE,
         COARSE_DEGREE_SPEED_PROFILE,
+        SETUP_EFFICIENCY_PROFILE,
     }
     cell_stage = str(specification.solver.get('stage', ''))
     v25_authorized_performance_repeat = None
@@ -3357,6 +3436,14 @@ def launch_specification(
             stage_budget=cell_stage_budget, workflow_clock_start=full_clock.start,
             time_policy=v14_time_policy,
             authorized_performance_repeat=v25_authorized_performance_repeat,
+        )
+    elif setup_efficiency_v26_profile and physical_candidate:
+        run_directory = _timestamp_directory(specification, timestamp)
+        v14_lease = _reserve_v26_setup_efficiency_budget(
+            Path(__file__).resolve().parents[2], run_directory,
+            source_sha=source, stage=cell_stage,
+            stage_budget=cell_stage_budget, workflow_clock_start=full_clock.start,
+            time_policy=v14_time_policy,
         )
     elif physical_memory_v23_profile and physical_candidate:
         run_directory = _timestamp_directory(specification, timestamp)
@@ -3535,7 +3622,7 @@ def launch_specification(
                             timebase_policy='conservative_realtime',
                             time_policy=v14_time_policy,
                         )
-                        if physical_memory_v23_profile or v24_profile or coarse_degree_v25_profile:
+                        if physical_memory_v23_profile or v24_profile or coarse_degree_v25_profile or setup_efficiency_v26_profile:
                             watchdog_kwargs.update(
                                 memory_policy=physical_resources[
                                     'watchdog_memory_policy'
@@ -3696,7 +3783,7 @@ def launch_specification(
                                     'watchdog_memory_policy'
                                 ]
                             }
-                            if physical_memory_v23_profile or v24_profile or coarse_degree_v25_profile
+                            if physical_memory_v23_profile or v24_profile or coarse_degree_v25_profile or setup_efficiency_v26_profile
                             else {}
                         ),
                         'wall_reference_seconds': watchdog_wall_seconds,

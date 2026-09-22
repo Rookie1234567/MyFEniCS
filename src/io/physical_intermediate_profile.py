@@ -35,6 +35,7 @@ LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE = (
     "physical_p6_trace_p4_condensed_laptop_speed_v24"
 )
 COARSE_DEGREE_SPEED_PROFILE = "physical_p6_trace_coarse_degree_speed_v25"
+SETUP_EFFICIENCY_PROFILE = "physical_p6_trace_setup_efficiency_v26"
 PHYSICAL_MEMORY_POLICY_V23 = "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23"
 V23_QUALIFIED_JIT_CACHE_SOURCE = (
     "results/euv_grazing1_phi0/"
@@ -50,7 +51,7 @@ P4_BLR_TRADEOFF_THRESHOLDS = {
     "T2_BLR_CONTROL": 1.0e-4,
 }
 
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE, LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE, COARSE_DEGREE_SPEED_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE, LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE, COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
 
 
 def p4_blr_tradeoff_threshold(stage: str) -> float:
@@ -65,6 +66,59 @@ def p4_blr_tradeoff_threshold(stage: str) -> float:
 
 
 def profile_facts(identity=PROFILE) -> dict:
+    if identity == SETUP_EFFICIENCY_PROFILE:
+        facts = profile_facts(LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE)
+        facts.update(
+            identity=identity,
+            scope="review_v24_setup_and_kernel_efficiency",
+            qualification=(
+                "opt_in; one fresh original 990-cell p6/h7.5 q4 formal "
+                "run; direct selected H6 setup backend and bounded local "
+                "workspace reuse; numeric_cache_mode=build; observe_only"
+            ),
+            physical_levels={"fine": 6, "coarse_by_stage": {"Q4_ORIGINAL": 4}},
+            coarse_degree_by_stage={"Q4_ORIGINAL": 4},
+        )
+        facts["resources"].update(
+            stage_budgets={"Q4_ORIGINAL": {"workflow_seconds": 43200, "solve_seconds": 43200}},
+            static_capacity_gates_disabled=True,
+            physical_memory_evidence_reserve_bytes=128 * 1024**2,
+        )
+        facts["gates"].update(
+            actual_dimension_identity=True,
+            native_A6_authority=True,
+            h6_setup_same_backend=True,
+            selected_backend="isotropic_sum_factorized_n1e_v26",
+            h6_power10_backend_bound=True,
+            direct_selected_backend=True,
+            old_profiles_unchanged=True,
+        )
+        facts["route_selection"].update(
+            pc_fine_action_factory="isotropic_sum_factorized_n1e_v26",
+            physical_operator_backend="isotropic_sum_factorized_n1e_v26",
+            h6_setup="isotropic_sum_factorized_n1e_v26_direct_power10",
+            h6_apply="isotropic_sum_factorized_n1e_v26",
+            h6_backend_rule="direct_selected_backend_same_apply_and_power10",
+            packed_power10=True,
+            sum_factorized_work=True,
+            sum_factorized_power10=True,
+            reuse_projection_work=True,
+            direct_selected_backend=True,
+        )
+        facts["thread_selection"] = {
+            "status": "SELECTED_SINGLE_CORE",
+            "contract": "mpi1_omp1_blas1_v26",
+            "mpi_ranks": 1,
+            "mumps_threads": 1,
+            "blas_threads": 1,
+            "environment_variables": {
+                "OMP_NUM_THREADS": "1",
+                "OPENBLAS_NUM_THREADS": "1",
+                "MKL_NUM_THREADS": "1",
+                "NUMEXPR_NUM_THREADS": "1",
+            },
+        }
+        return facts
     if identity == COARSE_DEGREE_SPEED_PROFILE:
         # V25 keeps the qualified V24 native-A6/H6 and cell-condensed route,
         # but replaces the coarse action directly with q=4, 3, or 2.  Each

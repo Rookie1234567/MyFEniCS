@@ -4253,6 +4253,8 @@ def _v14_balanced_adapter(
     packed_power10=False,
     sum_factorized_work=False,
     sum_factorized_power10=None,
+    direct_selected_backend=False,
+    reuse_projection_work=False,
 ):
     """Own H6 and its audit buffers; borrow the existing fixed interface stack."""
 
@@ -4327,6 +4329,9 @@ def _v14_balanced_adapter(
             packed_power10=packed_power10,
             sum_factorized_work=sum_factorized_work,
             sum_factorized_power10=sum_factorized_power10,
+            direct_selected_backend=direct_selected_backend,
+            reuse_projection_work=reuse_projection_work,
+            batched_target_grouping=direct_selected_backend,
         )
         h6, shell = positive["h6"], positive["p6_shell"]
         transfer = AlgebraicOwnerTransfer(common["transfer"])
@@ -4342,7 +4347,13 @@ def _v14_balanced_adapter(
         runtime.release_workspace("v14_h6_build")
         live_workspaces.remove("v14_h6_build")
         if pc_fine_action_factory is not None:
-            pc_fine_action_bundle = pc_fine_action_factory(common)
+            if direct_selected_backend:
+                pc_fine_action_bundle = pc_fine_action_factory(
+                    common,
+                    geometry_bundle=positive.get("geometry_bundle"),
+                )
+            else:
+                pc_fine_action_bundle = pc_fine_action_factory(common)
             if not isinstance(pc_fine_action_bundle, dict):
                 raise TypeError("PC fine action factory must return an action bundle")
             pc_fine_action = pc_fine_action_bundle["physical_action"]
@@ -6823,6 +6834,8 @@ def _v14_q4_q5_fullspace(
     packed_power10=False,
     sum_factorized_work=False,
     sum_factorized_power10=None,
+    direct_selected_backend=False,
+    reuse_projection_work=False,
     formal_release_timing=False,
 ) -> dict[str, Any]:
     """Run one fresh p6 outer solve with the live interface BAL_H stack.
@@ -7686,6 +7699,8 @@ def _v14_q4_q5_fullspace(
             packed_power10=packed_power10,
             sum_factorized_work=sum_factorized_work,
             sum_factorized_power10=sum_factorized_power10,
+            direct_selected_backend=direct_selected_backend,
+            reuse_projection_work=reuse_projection_work,
         ) as (pc, positive):
             if outer_adapter_factory is not None:
                 # X1 checks and its one PC call share the actual X2 objects.

@@ -27,9 +27,59 @@ def test_complex_cross_terms_with_nontrivial_basis_transform():
     accumulate_basis_energy(values, curls, weights, targets, c, result,
                             curl_coefficient=2., mass_coefficient=1.)
     np.testing.assert_allclose(result, expected, rtol=1e-13, atol=1e-13)
+    batched = np.zeros(3, complex)
+    accumulate_basis_energy(
+        values,
+        curls,
+        weights,
+        targets,
+        c,
+        batched,
+        curl_coefficient=2.,
+        mass_coefficient=1.,
+        batched_target_grouping=True,
+    )
+    np.testing.assert_allclose(batched, result, rtol=1e-13, atol=1e-13)
     with pytest.raises(ValueError):
         accumulate_basis_energy(values*np.nan, curls, weights, targets, c, result,
                                 curl_coefficient=2., mass_coefficient=1.)
+
+
+def test_batched_target_grouping_mixes_singletons_and_repeated_targets():
+    rng = np.random.default_rng(3901)
+    values = rng.normal(size=(5, 4, 3)) + 1j * rng.normal(size=(5, 4, 3))
+    curls = rng.normal(size=(5, 4, 3)) + 1j * rng.normal(size=(5, 4, 3))
+    weights = np.array([0.2, 0.3, 0.1, 0.4])
+    targets = np.array([[0, -1], [1, -1], [0, 2], [3, -1], [2, -1]])
+    coefficients = np.array(
+        [[1.0, 0.0], [0.3 + 0.2j, 0.0], [0.5 - 0.1j, -0.7j],
+         [1.0, 0.0], [0.8 + 0.4j, 0.0]],
+        dtype=np.complex128,
+    )
+    expansion = np.zeros((len(values), 4), dtype=np.complex128)
+    for row, link in zip(*np.nonzero(targets >= 0)):
+        expansion[row, targets[row, link]] += coefficients[row, link]
+    gram = (
+        1.7 * np.einsum("iqk,jqk,q->ij", values.conj(), values, weights)
+        + 0.6 * np.einsum("iqk,jqk,q->ij", curls.conj(), curls, weights)
+    )
+    expected = np.diag(expansion.conj().T @ gram @ expansion)
+    default = np.zeros(4, dtype=np.complex128)
+    batched = np.zeros(4, dtype=np.complex128)
+    for output, enabled in ((default, False), (batched, True)):
+        accumulate_basis_energy(
+            values,
+            curls,
+            weights,
+            targets,
+            coefficients,
+            output,
+            curl_coefficient=0.6,
+            mass_coefficient=1.7,
+            batched_target_grouping=enabled,
+        )
+    np.testing.assert_allclose(default, expected, rtol=1e-13, atol=1e-13)
+    np.testing.assert_allclose(batched, expected, rtol=1e-13, atol=1e-13)
 
 
 def test_p3_assembled_mpc_repeat_inputs_slaves_ghosts():
@@ -47,6 +97,17 @@ def test_p3_assembled_mpc_repeat_inputs_slaves_ghosts():
         before = [a.copy() for a in (mu.x.array, mass.x.array, case['source'].array)]
         first = build_quadrature_positive_diagonal(space, mu, mass, mpc); vectors.append(first)
         second = build_quadrature_positive_diagonal(space, mu, mass, mpc); vectors.append(second)
+        diagonal_audit = {}
+        batched = build_quadrature_positive_diagonal(
+            space,
+            mu,
+            mass,
+            mpc,
+            batched_target_grouping=True,
+            reuse_local_types=True,
+            audit=diagonal_audit,
+        )
+        vectors.append(batched)
         reference = case['fine_matrix'].createVecRight(); vectors.append(reference)
         case['fine_matrix'].getDiagonal(reference)
         difference = first.copy(); vectors.append(difference)
@@ -54,6 +115,9 @@ def test_p3_assembled_mpc_repeat_inputs_slaves_ghosts():
         relative = difference.norm()/reference.norm()
         assert relative <= 1e-11
         np.testing.assert_array_equal(first.array, second.array)
+        np.testing.assert_allclose(batched.array, first.array, rtol=1e-12, atol=1e-12)
+        assert diagonal_audit["local_type_reuse_opt_in"] is True
+        assert diagonal_audit["merged_cell_fallbacks"] >= 0
         for a, b in zip((mu.x.array, mass.x.array, case['source'].array), before):
             np.testing.assert_array_equal(a, b)
         assert np.all(np.isfinite(first.array)) and np.all(first.array.real > 0)

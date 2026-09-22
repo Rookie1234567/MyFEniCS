@@ -20,6 +20,9 @@ def build_packed_physical_action(
     contiguous_work=True,
     preallocated_work=False,
     sum_factorized_work=False,
+    reuse_projection_work=False,
+    share_readonly_geometry=False,
+    geometry_bundle=None,
 ):
     """Build a packed volume action for one explicit PC owner.
 
@@ -58,19 +61,56 @@ def build_packed_physical_action(
                 physical_mass.x.array[dof] += -cfg.k0**2 * epsilon
         physical_mu.x.scatter_forward()
         physical_mass.x.scatter_forward()
-        kernels = tuple(
-            IsotropicPartialAssembly(
-                space,
-                physical_mu,
-                physical_mass,
-                component_form=form,
-                component=component,
-                contiguous_work=contiguous_work,
-                preallocated_work=preallocated_work,
-                sum_factorized_work=sum_factorized_work,
-            )
-            for form, component in zip(forms, ("curl", "mass"), strict=True)
-        )
+        kernels_list = []
+        external_geometry_bundle = geometry_bundle if share_readonly_geometry else None
+        geometry_bundle = None
+        geometry_borrowed_components = []
+        geometry_fallbacks = []
+        for index, (form, component) in enumerate(
+            zip(forms, ("curl", "mass"), strict=True)
+        ):
+            candidate_bundle = (
+                external_geometry_bundle if index == 0 else geometry_bundle
+            ) if share_readonly_geometry else None
+            try:
+                kernel = IsotropicPartialAssembly(
+                    space,
+                    physical_mu,
+                    physical_mass,
+                    component_form=form,
+                    component=component,
+                    contiguous_work=contiguous_work,
+                    preallocated_work=preallocated_work,
+                    sum_factorized_work=sum_factorized_work,
+                    reuse_projection_work=reuse_projection_work,
+                    share_geometry=share_readonly_geometry,
+                    geometry_bundle=candidate_bundle,
+                )
+                if candidate_bundle is not None:
+                    geometry_borrowed_components.append(component)
+            except ValueError as exc:
+                if candidate_bundle is None or str(exc) not in {
+                    "shared geometry bundle quadrature identity mismatch",
+                    "shared reference bundle identity mismatch",
+                }:
+                    raise
+                geometry_fallbacks.append({"component": component, "reason": str(exc)})
+                kernel = IsotropicPartialAssembly(
+                    space,
+                    physical_mu,
+                    physical_mass,
+                    component_form=form,
+                    component=component,
+                    contiguous_work=contiguous_work,
+                    preallocated_work=preallocated_work,
+                    sum_factorized_work=sum_factorized_work,
+                    reuse_projection_work=reuse_projection_work,
+                    share_geometry=share_readonly_geometry,
+                )
+            kernels_list.append(kernel)
+            if share_readonly_geometry and geometry_bundle is None:
+                geometry_bundle = kernel.geometry_bundle
+        kernels = tuple(kernels_list)
         volume = FullspaceSplitVolumeAction(
             *forms, space, mpc=levels["floquets"][6].mpc, local_kernels=kernels
         )
@@ -87,6 +127,43 @@ def build_packed_physical_action(
             "contiguous_work": bool(contiguous_work),
             "preallocated_work": bool(preallocated_work),
             "sum_factorized_work": bool(sum_factorized_work),
+            "reuse_projection_work": bool(reuse_projection_work),
+            "shared_geometry_bundle": (
+                {
+                    "schema": geometry_bundle["schema"],
+                    "identity": dict(geometry_bundle["identity"]),
+                    "enabled": bool(geometry_borrowed_components),
+                    "same_owner": True,
+                    "borrowed_components": list(geometry_borrowed_components),
+                    "source_owner": (
+                        "h6_external"
+                        if external_geometry_bundle is not None
+                        and "curl" in geometry_borrowed_components
+                        else "a6_curl"
+                    ),
+                    "readonly_arrays": all(
+                        not geometry_bundle[key].flags.writeable
+                        for key in (
+                            "dofs",
+                            "permutations",
+                            "metrics",
+                            "geometry_derivatives",
+                        )
+                    ),
+                    "reference_data_shared": bool(
+                        geometry_borrowed_components
+                        and geometry_bundle.get("reference_bundle") is not None
+                    ),
+                    "reference_quadrature_not_shared": not bool(
+                        geometry_borrowed_components
+                        and geometry_bundle.get("reference_bundle") is not None
+                    ),
+                    "material_data_not_shared": True,
+                    "fallbacks": geometry_fallbacks,
+                }
+                if share_readonly_geometry
+                else {"enabled": False}
+            ),
             "dtn_borrowed": True,
             "native_a6_independent": True,
             "material_function_array_bytes": int(
