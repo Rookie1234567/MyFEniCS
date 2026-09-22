@@ -17,6 +17,10 @@ from src.solvers.physical_balanced_physical_operator import (
     P4ExactFactor,
     P4PhysicalResidualGateError,
 )
+from src.solvers.physical_balanced_same_mesh_transfer import (
+    SUPPORT_POLICY_ENTITY_CLOSURE,
+    SUPPORT_POLICY_LEGACY,
+)
 from src.solvers.physical_balanced_side_inverse import SideBalancedInverse
 
 pytestmark = pytest.mark.skipif(
@@ -644,6 +648,7 @@ def _install_stub_side_builders(monkeypatch, captured):
         _coarse_floquet,
         *,
         optimization_profile=None,
+        support_policy=SUPPORT_POLICY_LEGACY,
     ):
         transfer = _IdentityTransfer(
             default_variant=(
@@ -654,6 +659,7 @@ def _install_stub_side_builders(monkeypatch, captured):
         )
         captured["transfer"] = transfer
         captured["optimization_profile"] = optimization_profile
+        captured["support_policy"] = support_policy
         return transfer
 
     def fake_h6(_side_system, *, lifecycle_callback=None):
@@ -701,9 +707,14 @@ def _install_stub_side_builders(monkeypatch, captured):
     [None, "task041_schur_speed_v2"],
     ids=["legacy", "task041_schur_speed_v2"],
 )
+@pytest.mark.parametrize(
+    "support_policy",
+    [SUPPORT_POLICY_LEGACY, SUPPORT_POLICY_ENTITY_CLOSURE],
+    ids=["legacy_support", "entity_closure_support"],
+)
 @pytest.mark.parametrize("detailed_timing", [False, True])
 def test_side_inverse_builder_default_callback_skips_inventory(
-    monkeypatch, optimization_profile, detailed_timing
+    monkeypatch, optimization_profile, support_policy, detailed_timing
 ):
     captured = {}
     side_system, operator, _operator_context, b = _builder_side_system()
@@ -735,10 +746,12 @@ def test_side_inverse_builder_default_callback_skips_inventory(
             side_system,
             detailed_timing=detailed_timing,
             performance_profile=optimization_profile,
+            support_policy=support_policy,
         )
         assert captured["p4_callback"] is None
         assert captured["h6_callback"] is None
         assert captured["optimization_profile"] == optimization_profile
+        assert captured["support_policy"] == support_policy
         assert captured["transfer"].execution_variant == (
             "optimized"
             if optimization_profile == "task041_schur_speed_v2"

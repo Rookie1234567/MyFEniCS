@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import json
 from types import SimpleNamespace
 
+import basix
 import numpy as np
 import pytest
 import ufl
@@ -27,12 +29,16 @@ from src.solvers.hcurl_assembly_time_condensation import (
 )
 from src.solvers.physical_balanced_same_mesh_transfer import (
     ROW_CONSISTENCY_LIMIT,
+    SUPPORT_POLICY_ENTITY_CLOSURE,
+    SameMeshHcurlOwnerTransfer,
     _apply_conjugate_transpose_vector,
+    _diagnostic_packet_precheck,
     _owner_ranges,
     _owner_ranks,
     _resolve_owner_candidates,
     _resolve_owner_candidates_batched,
     build_same_mesh_hcurl_owner_transfer,
+    build_same_mesh_hcurl_transfer,
 )
 from src.solvers.physical_balanced_trace_bridge import (
     extract_full_p6_to_active_trace,
@@ -167,6 +173,8 @@ def _assert_layout_api_helpers(
 class _SerialReduction:
     def __init__(self):
         self.values = []
+        self.rank = 0
+        self.size = 1
 
     def allreduce(self, value, op=None):
         self.values.append(value)
@@ -634,10 +642,138 @@ def test_task041_h1b_batched_owner_groups_reject_missing_owner_like_legacy() -> 
     values = np.asarray((1.0 + 0.5j, 1.0 + 0.5j, 2.0 - 0.25j))
     source_ranks = np.asarray((1, 1, 1), dtype=np.int32)
     comm = _SerialReduction()
+    comm.size = 2
     with pytest.raises(ValueError):
         _resolve_owner_candidates(ids, values, source_ranks, 0, comm)
     with pytest.raises(ValueError):
         _resolve_owner_candidates_batched(ids, values, source_ranks, 0, comm)
+
+
+@pytest.mark.parametrize("defect", (0.0, 2.0e-11))
+def test_task041_h1b_diagnostic_uses_full_packet_and_runs_both_resolvers(
+    defect, monkeypatch
+) -> None:
+    import src.solvers.physical_balanced_same_mesh_transfer as transfer_module
+
+    ids = np.asarray((0, 0, 2, 2), dtype=np.uint64)
+    values = np.asarray(
+        (1.0 + 0.5j, 1.0 + 0.5j, 2.0 - 0.25j, 2.0 - 0.25j),
+        dtype=np.complex128,
+    )
+    values[1] += defect
+    source_ranks = np.zeros(ids.size, dtype=np.int32)
+    emitted_ids = ids.copy()
+    emitted_values = values.copy()
+    snapshots = (ids.copy(), values.copy(), source_ranks.copy())
+    captured: dict[str, np.ndarray] = {}
+    calls = {"legacy": 0, "batched": 0}
+
+    legacy = transfer_module._resolve_owner_candidates
+    batched = transfer_module._resolve_owner_candidates_batched
+
+    def traced_legacy(*args, **kwargs):
+        calls["legacy"] += 1
+        return legacy(*args, **kwargs)
+
+    def traced_batched(*args, **kwargs):
+        calls["batched"] += 1
+        return batched(*args, **kwargs)
+
+    def callback(**payload):
+        for name in ("ids", "values", "source_ranks", "emitted_ids", "emitted_values"):
+            captured[name] = np.asarray(payload[name]).copy()
+        return {"captured": True}
+
+    monkeypatch.setattr(transfer_module, "_resolve_owner_candidates", traced_legacy)
+    monkeypatch.setattr(
+        transfer_module, "_resolve_owner_candidates_batched", traced_batched
+    )
+    transfer = object.__new__(SameMeshHcurlOwnerTransfer)
+    transfer.comm = _SerialReduction()
+    transfer.fine_ranges = ((0, 3),)
+    transfer.coarse_ranges = ((0, 2),)
+    transfer._execution_variant = "optimized"
+    transfer._destroyed = False
+    transfer._apply_in_progress = False
+    transfer._diagnostic_context = None
+    transfer._diagnostic_callback = None
+    transfer._last_diagnostic = {}
+    try:
+        context = transfer.diagnostic_context(callback)
+        with context:
+            if defect > 1.0e-11:
+                with pytest.raises(RuntimeError):
+                    transfer._diagnostic_resolve_candidates(
+                        ids, values, source_ranks, 0, emitted_ids,
+                        emitted_values, object()
+                    )
+            else:
+                result = transfer._diagnostic_resolve_candidates(
+                    ids, values, source_ranks, 0, emitted_ids,
+                    emitted_values, object()
+                )
+                np.testing.assert_array_equal(
+                    result[0], np.asarray((0, 2), dtype=np.uint64)
+                )
+        assert transfer._diagnostic_context is None
+        assert transfer._diagnostic_callback is None
+        assert calls == {"legacy": 1, "batched": 1}
+        np.testing.assert_array_equal(captured["ids"], snapshots[0])
+        np.testing.assert_array_equal(captured["values"], snapshots[1])
+        np.testing.assert_array_equal(
+            captured["source_ranks"], snapshots[2]
+        )
+        np.testing.assert_array_equal(captured["emitted_ids"], emitted_ids)
+        np.testing.assert_array_equal(
+            captured["emitted_values"], emitted_values
+        )
+        assert transfer.last_diagnostic["callback"] == {"captured": True}
+    finally:
+        transfer._diagnostic_context = None
+        transfer._diagnostic_callback = None
+
+
+def test_task041_h1b_diagnostic_packet_precheck_and_context_recovery() -> None:
+    comm = _SerialReduction()
+    missing_owner_comm = _SerialReduction()
+    missing_owner_comm.size = 2
+    with pytest.raises(ValueError):
+        _diagnostic_packet_precheck(
+            np.asarray((0, 0), dtype=np.uint64),
+            np.asarray((1.0 + 0.0j,), dtype=np.complex128),
+            np.asarray((0, 0), dtype=np.int32),
+            owner_rank=0,
+            comm=comm,
+        )
+    with pytest.raises(ValueError):
+        _diagnostic_packet_precheck(
+            np.asarray((0, 0, 2), dtype=np.uint64),
+            np.asarray((1.0 + 0.0j, 1.0 + 0.0j, 2.0 + 0.0j)),
+            np.asarray((1, 1, 1), dtype=np.int32),
+            owner_rank=0,
+            comm=missing_owner_comm,
+        )
+    transfer = object.__new__(SameMeshHcurlOwnerTransfer)
+    transfer._execution_variant = "optimized"
+    transfer._destroyed = False
+    transfer._apply_in_progress = False
+    transfer._diagnostic_context = None
+    transfer._diagnostic_callback = None
+    transfer._last_diagnostic = {}
+    with pytest.raises(RuntimeError, match="context sentinel"), transfer.diagnostic_context(
+        lambda **_: {}
+    ):
+        raise RuntimeError("context sentinel")
+    assert transfer._diagnostic_context is None
+    assert transfer._diagnostic_callback is None
+    normal = _resolve_owner_candidates(
+        np.asarray((0, 0), dtype=np.uint64),
+        np.asarray((1.0 + 0.0j, 1.0 + 0.0j)),
+        np.asarray((0, 0), dtype=np.int32),
+        owner_rank=0,
+        comm=comm,
+    )
+    assert normal[3] == 2
 
 
 def test_task041_h1b_batched_owner_groups_cover_last_and_cross_chunk(monkeypatch) -> None:
@@ -703,6 +839,408 @@ def test_task041_h1b_complex_adjoint_helper_matches_explicit_matrix_adjoint() ->
     np.testing.assert_allclose(actual, expected, atol=0.0, rtol=1.0e-14)
     np.testing.assert_array_equal(matrix, matrix_before)
     np.testing.assert_array_equal(values, values_before)
+
+
+@pytest.mark.parametrize(
+    "cell_info",
+    [0, 840882870, 81900640],
+    ids=["reference", "captured_orientation_a", "captured_orientation_b"],
+)
+def test_task041_h1b_entity_closure_support_has_tabulation_oracle(
+    cell_info: int,
+) -> None:
+    coarse_element = basix.create_element(
+        basix.ElementFamily.N1E,
+        basix.CellType.hexahedron,
+        4,
+        basix.LagrangeVariant.legendre,
+    )
+    fine_element = basix.create_element(
+        basix.ElementFamily.N1E,
+        basix.CellType.hexahedron,
+        6,
+        basix.LagrangeVariant.legendre,
+    )
+    legacy = build_same_mesh_hcurl_transfer(
+        6,
+        4,
+        coarse_cell_info=cell_info,
+        fine_cell_info=cell_info,
+    )
+    transfer = build_same_mesh_hcurl_transfer(
+        6,
+        4,
+        coarse_cell_info=cell_info,
+        fine_cell_info=cell_info,
+        support_policy=SUPPORT_POLICY_ENTITY_CLOSURE,
+    )
+    assert transfer.audit["support_policy"] == SUPPORT_POLICY_ENTITY_CLOSURE
+    assert transfer.audit["orientation_entity_blocks_verified"] is True
+    assert transfer.audit["reference_entity_trace_v1"] is True
+    assert transfer.audit["reference_edge_block"] == (
+        "legendre_identity_zero"
+    )
+    assert transfer.audit["reference_face_block"] == (
+        "quadrilateral_n1e_interpolation"
+    )
+    assert transfer.audit["reference_face_edge_map"] == [
+        [0, 1, 3, 5],
+        [0, 2, 4, 8],
+        [1, 2, 6, 9],
+        [3, 4, 7, 10],
+        [5, 6, 7, 11],
+        [8, 9, 10, 11],
+    ]
+    assert legacy.audit["reference_entity_trace_v1"] is False
+    assert int(coarse_element.dim) == 300
+    assert int(fine_element.dim) == 882
+    for topological_dim, entities in enumerate(fine_element.entity_dofs):
+        if topological_dim >= 3:
+            continue
+        for entity, rows in enumerate(entities):
+            allowed = np.asarray(
+                coarse_element.entity_closure_dofs[topological_dim][entity],
+                dtype=np.intp,
+            )
+            disallowed = np.setdiff1d(
+                np.arange(int(coarse_element.dim), dtype=np.intp),
+                allowed,
+            )
+            for row in rows:
+                assert np.all(transfer.matrix[int(row), disallowed] == 0.0)
+
+    if cell_info == 0:
+        nodes = (np.polynomial.legendre.leggauss(7)[0] + 1.0) / 2.0
+        points = np.asarray(
+            [[x, y, z] for x in nodes for y in nodes for z in nodes],
+            dtype=np.float64,
+        )
+        # Seven tensor points per axis cover the degree-six component
+        # polynomials while keeping this independent oracle bounded.
+        coarse_basis = np.asarray(coarse_element.tabulate(0, points)[0])
+        fine_basis = np.asarray(fine_element.tabulate(0, points)[0])
+        mapped_basis = np.einsum(
+            "pfv,fc->pcv",
+            fine_basis,
+            transfer.matrix,
+        )
+        basis_error = float(np.max(np.abs(mapped_basis - coarse_basis)))
+        assert basis_error <= 1.0e-11, basis_error
+    else:
+        basis_error = None
+
+    coefficients = np.asarray(
+        [0.25 + 0.5j + 0.001 * index for index in range(int(coarse_element.dim))],
+        dtype=np.complex128,
+    )
+    fine_probe = np.asarray(
+        [0.5 - 0.25j + 0.002 * index for index in range(int(fine_element.dim))],
+        dtype=np.complex128,
+    )
+    mapped = transfer.apply(coefficients)
+    if cell_info == 0:
+        coarse_values = np.einsum(
+            "pcv,c->pv",
+            coarse_basis,
+            coefficients,
+        )
+        fine_values = np.einsum("pfv,f->pv", fine_basis, mapped)
+        complex_error = float(np.max(np.abs(fine_values - coarse_values)))
+        assert complex_error <= 1.0e-11, complex_error
+    else:
+        complex_error = None
+    lhs = np.vdot(mapped, fine_probe)
+    rhs = np.vdot(coefficients, transfer.apply_adjoint(fine_probe))
+    dot_scale = max(abs(lhs), abs(rhs))
+    if dot_scale == 0.0:
+        dot_relative = 0.0
+        assert lhs == rhs
+    else:
+        dot_relative = float(abs(lhs - rhs) / dot_scale)
+        assert dot_relative <= 1.0e-10
+    if cell_info == 0 and MPI.COMM_WORLD.rank == 0:
+        print(
+            json.dumps(
+                {
+                    "schema": "task041.h1b.reference_transfer_qualification.v1",
+                    "cell_info": int(cell_info),
+                    "support_policy": SUPPORT_POLICY_ENTITY_CLOSURE,
+                    "basis_max_abs_error": basis_error,
+                    "complex_action_max_abs_error": complex_error,
+                    "complex_adjoint_dot_relative_error": dot_relative,
+                },
+                sort_keys=True,
+            ),
+            flush=True,
+        )
+
+
+
+def test_task041_h1b_reference_entity_trace_uses_ordered_hex_blocks() -> None:
+    coarse_element = basix.create_element(
+        basix.ElementFamily.N1E,
+        basix.CellType.hexahedron,
+        4,
+        basix.LagrangeVariant.legendre,
+    )
+    fine_element = basix.create_element(
+        basix.ElementFamily.N1E,
+        basix.CellType.hexahedron,
+        6,
+        basix.LagrangeVariant.legendre,
+    )
+    transfer = build_same_mesh_hcurl_transfer(
+        6,
+        4,
+        support_policy=SUPPORT_POLICY_ENTITY_CLOSURE,
+    )
+    legacy = build_same_mesh_hcurl_transfer(6, 4)
+    expected_faces = [
+        [0, 1, 3, 5],
+        [0, 2, 4, 8],
+        [1, 2, 6, 9],
+        [3, 4, 7, 10],
+        [5, 6, 7, 11],
+        [8, 9, 10, 11],
+    ]
+    assert transfer.audit["reference_face_edge_map"] == expected_faces
+    interior_rows = np.asarray(
+        fine_element.entity_dofs[3][0],
+        dtype=np.intp,
+    )
+    np.testing.assert_array_equal(
+        transfer.matrix[interior_rows, :],
+        legacy.matrix[interior_rows, :],
+    )
+    quad_coarse = basix.create_element(
+        basix.ElementFamily.N1E,
+        basix.CellType.quadrilateral,
+        4,
+        basix.LagrangeVariant.legendre,
+    )
+    quad_fine = basix.create_element(
+        basix.ElementFamily.N1E,
+        basix.CellType.quadrilateral,
+        6,
+        basix.LagrangeVariant.legendre,
+    )
+    quad_reference = np.asarray(
+        basix.compute_interpolation_operator(quad_coarse, quad_fine),
+        dtype=np.complex128,
+    )
+    edge_block = np.zeros((6, 4), dtype=np.complex128)
+    edge_block[:4, :] = np.eye(4, dtype=np.complex128)
+    for fine_rows, coarse_columns in zip(
+        fine_element.entity_dofs[1],
+        coarse_element.entity_dofs[1],
+        strict=True,
+    ):
+        expected = np.zeros(
+            (len(fine_rows), int(coarse_element.dim)),
+            dtype=np.complex128,
+        )
+        expected[:, np.asarray(coarse_columns, dtype=np.intp)] = edge_block
+        np.testing.assert_array_equal(
+            transfer.matrix[np.asarray(fine_rows, dtype=np.intp), :],
+            expected,
+        )
+    quad_rows = np.asarray(quad_fine.entity_dofs[2][0], dtype=np.intp)
+    quad_columns = np.asarray(
+        np.concatenate(
+            [
+                np.asarray(rows, dtype=np.intp)
+                for rows in quad_coarse.entity_dofs[1]
+            ]
+            + [np.asarray(quad_coarse.entity_dofs[2][0], dtype=np.intp)]
+        ),
+        dtype=np.intp,
+    )
+    for face, mapped_edges in enumerate(expected_faces):
+        fine_rows = np.asarray(
+            fine_element.entity_dofs[2][face],
+            dtype=np.intp,
+        )
+        coarse_columns = np.asarray(
+            np.concatenate(
+                [
+                    np.asarray(
+                        coarse_element.entity_dofs[1][edge],
+                        dtype=np.intp,
+                    )
+                    for edge in mapped_edges
+                ]
+                + [
+                    np.asarray(
+                        coarse_element.entity_dofs[2][face],
+                        dtype=np.intp,
+                    )
+                ]
+            ),
+            dtype=np.intp,
+        )
+        expected = quad_reference[np.ix_(quad_rows, quad_columns)]
+        np.testing.assert_array_equal(
+            transfer.matrix[np.ix_(fine_rows, coarse_columns)],
+            expected,
+        )
+        outside = np.setdiff1d(
+            np.arange(int(coarse_element.dim), dtype=np.intp),
+            coarse_columns,
+        )
+        np.testing.assert_array_equal(
+            transfer.matrix[np.ix_(fine_rows, outside)],
+            np.zeros((fine_rows.size, outside.size), dtype=np.complex128),
+        )
+
+
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size == 8,
+    reason="the nonzero-Floquet owner oracle is serial/MPI2-only",
+)
+def test_task041_h1b_entity_closure_owner_covers_nonzero_floquet(
+    small_fe_fixture,
+) -> None:
+    data = small_fe_fixture
+    assert data["cfg6"].use_floquet_xy is True
+    assert abs(complex(data["cfg6"].floquet_phase_x) - 1.0) > 1.0e-3
+    assert abs(complex(data["cfg6"].floquet_phase_y) - 1.0) > 1.0e-3
+    owner = build_same_mesh_hcurl_owner_transfer(
+        data["fine_space"],
+        data["fine_floquet"],
+        data["coarse_space"],
+        data["coarse_floquet"],
+        optimization_profile="task041_schur_speed_v2",
+        support_policy=SUPPORT_POLICY_ENTITY_CLOSURE,
+    )
+    coarse = create_vector(
+        [
+            (
+                data["coarse_space"].dofmap.index_map,
+                int(data["coarse_space"].dofmap.index_map_bs),
+            )
+        ]
+    )
+    fine_probe = create_vector(
+        [
+            (
+                data["fine_space"].dofmap.index_map,
+                int(data["fine_space"].dofmap.index_map_bs),
+            )
+        ]
+    )
+    coarse_field = fem.Function(data["coarse_floquet"].mpc.function_space)
+    fine_oracle = fem.Function(data["fine_floquet"].mpc.function_space)
+    fine_output = None
+    coarse_output = None
+    legacy_output = None
+    fine_difference = None
+    ph_difference = None
+    try:
+        assert owner.audit["support_policy"] == SUPPORT_POLICY_ENTITY_CLOSURE
+        coarse_slaves = np.asarray(owner._coarse_slaves, dtype=np.int64)
+        fine_slaves = np.asarray(owner._fine_slaves, dtype=np.int64)
+        _fill_algebraic_vector(coarse, coarse_slaves, 0.875)
+        _fill_algebraic_vector(fine_probe, fine_slaves, -0.625)
+        coarse_before = np.asarray(
+            coarse.getArray(readonly=True), dtype=np.complex128
+        ).copy()
+        fine_before = np.asarray(
+            fine_probe.getArray(readonly=True), dtype=np.complex128
+        ).copy()
+        fine_output = owner.apply_primal(coarse)
+        coarse.copy(coarse_field.x.petsc_vec)
+        coarse_field.x.scatter_forward()
+        data["coarse_floquet"].mpc.homogenize(coarse_field)
+        coarse_field.x.scatter_forward()
+        data["coarse_floquet"].mpc.backsubstitution(coarse_field)
+        coarse_field.x.scatter_forward()
+        fine_oracle.interpolate(coarse_field)
+        fine_oracle.x.scatter_forward()
+        data["fine_floquet"].mpc.homogenize(fine_oracle)
+        fine_oracle.x.scatter_forward()
+        fine_difference = fine_output.duplicate()
+        fine_output.copy(fine_difference)
+        fine_difference.axpy(
+            PETSc.ScalarType(-1.0),
+            fine_oracle.x.petsc_vec,
+        )
+        oracle_norm = fine_oracle.x.petsc_vec.norm()
+        difference_norm = fine_difference.norm()
+        if oracle_norm == 0.0:
+            p_relative = 0.0
+            assert difference_norm == 0.0
+        else:
+            p_relative = float(difference_norm / oracle_norm)
+            assert p_relative <= 1.0e-11
+
+        legacy_output = data["owner"].apply_adjoint(fine_probe)
+        coarse_output = owner.apply_adjoint(fine_probe)
+        ph_difference = coarse_output.duplicate()
+        coarse_output.copy(ph_difference)
+        ph_difference.axpy(PETSc.ScalarType(-1.0), legacy_output)
+        legacy_norm = legacy_output.norm()
+        ph_difference_norm = ph_difference.norm()
+        if legacy_norm == 0.0:
+            ph_relative = 0.0
+            assert ph_difference_norm == 0.0
+        else:
+            ph_relative = float(ph_difference_norm / legacy_norm)
+            assert ph_relative <= 1.0e-11
+        np.testing.assert_array_equal(
+            coarse.getArray(readonly=True),
+            coarse_before,
+        )
+        np.testing.assert_array_equal(
+            fine_probe.getArray(readonly=True),
+            fine_before,
+        )
+        assert np.all(np.isfinite(fine_output.getArray(readonly=True)))
+        assert np.all(np.isfinite(coarse_output.getArray(readonly=True)))
+        assert np.all(fine_output.getArray(readonly=True)[fine_slaves] == 0.0)
+        assert np.all(coarse_output.getArray(readonly=True)[coarse_slaves] == 0.0)
+        assert np.all(legacy_output.getArray(readonly=True)[coarse_slaves] == 0.0)
+        lhs = fine_output.dot(fine_probe)
+        rhs = coarse.dot(coarse_output)
+        dot_scale = max(abs(lhs), abs(rhs))
+        if dot_scale == 0.0:
+            dot_relative = 0.0
+            assert lhs == rhs
+        else:
+            dot_relative = float(abs(lhs - rhs) / dot_scale)
+            assert dot_relative <= 1.0e-10
+        if MPI.COMM_WORLD.rank == 0:
+            print(
+                json.dumps(
+                    {
+                        "schema": "task041.h1b.entity_closure_floquet_qualification.v1",
+                        "support_policy": SUPPORT_POLICY_ENTITY_CLOSURE,
+                        "floquet_phase_x_nonunit": True,
+                        "floquet_phase_y_nonunit": True,
+                        "p_relative_error": p_relative,
+                        "ph_relative_error_vs_legacy": ph_relative,
+                        "dot_relative_error": dot_relative,
+                        "oracle_norm": float(oracle_norm),
+                        "p_difference_norm": float(difference_norm),
+                        "legacy_ph_norm": float(legacy_norm),
+                    },
+                    sort_keys=True,
+                ),
+                flush=True,
+            )
+    finally:
+        if fine_output is not None:
+            fine_output.destroy()
+        if coarse_output is not None:
+            coarse_output.destroy()
+        if legacy_output is not None:
+            legacy_output.destroy()
+        if fine_difference is not None:
+            fine_difference.destroy()
+        if ph_difference is not None:
+            ph_difference.destroy()
+        fine_probe.destroy()
+        coarse.destroy()
+        owner.destroy()
 
 
 @pytest.mark.skipif(

@@ -28,7 +28,12 @@ SAME_MESH_TRANSFER_PAIRS = ((6, 4),)
 ROW_CONSISTENCY_LIMIT = 1.0e-11
 _TASK041_SCHUR_SPEED_V2_PROFILE = "task041_schur_speed_v2"
 _TRANSFER_VARIANTS = {"legacy": 0, "optimized": 1}
+SUPPORT_POLICY_LEGACY = "legacy"
+SUPPORT_POLICY_ENTITY_CLOSURE = "entity_closure"
+_SUPPORT_POLICIES = {SUPPORT_POLICY_LEGACY, SUPPORT_POLICY_ENTITY_CLOSURE}
 _OWNER_RESOLUTION_CHUNK_ROWS = 4096
+_TRANSFER_DIAGNOSTIC_MAX_LOCAL_ROWS = 8
+_TRANSFER_DIAGNOSTIC_MAX_GLOBAL_ROWS = 64
 _TRANSFER_TIMING_NAMES = (
     "local_candidate_generation_seconds",
     "route_sort_index_seconds",
@@ -57,6 +62,193 @@ def _n1e(degree: int) -> Any:
         int(degree),
         basix.LagrangeVariant.legendre,
     )
+
+
+def _normalize_support_policy(support_policy: str | None) -> str:
+    policy = SUPPORT_POLICY_LEGACY if support_policy is None else str(support_policy)
+    if policy not in _SUPPORT_POLICIES:
+        raise ValueError(
+            "support_policy must be 'legacy' or 'entity_closure'"
+        )
+    return policy
+
+
+def _entity_block_labels(element: Any) -> tuple[tuple[int, int], ...]:
+    labels: list[tuple[int, int] | None] = [None] * int(element.dim)
+    for topological_dim, entities in enumerate(element.entity_dofs):
+        for entity, dofs in enumerate(entities):
+            for dof in dofs:
+                index = int(dof)
+                label = (int(topological_dim), int(entity))
+                if labels[index] is not None and labels[index] != label:
+                    raise ValueError("Basix entity DOF belongs to multiple blocks")
+                labels[index] = label
+    if any(label is None for label in labels):
+        raise ValueError("Basix entity metadata does not cover all DOFs")
+    return tuple(label for label in labels if label is not None)
+
+
+def _verify_entity_block_transform(
+    transform: np.ndarray,
+    element: Any,
+) -> None:
+    labels = _entity_block_labels(element)
+    for row, label in enumerate(labels):
+        nonzero_columns = np.flatnonzero(transform[row, :] != 0.0)
+        if any(labels[int(column)] != label for column in nonzero_columns):
+            raise ValueError(
+                "Basix orientation transform crosses entity support blocks"
+            )
+
+
+def _apply_entity_closure_support(
+    matrix: np.ndarray,
+    fine_element: Any,
+    coarse_element: Any,
+) -> None:
+    """Zero only coarse columns outside the fine row's entity closure."""
+    all_columns = np.arange(int(coarse_element.dim), dtype=np.intp)
+    coarse_closures = coarse_element.entity_closure_dofs
+    for topological_dim, entities in enumerate(fine_element.entity_dofs):
+        if topological_dim >= 3:
+            continue
+        if topological_dim >= len(coarse_closures):
+            raise ValueError("coarse entity closure metadata is incomplete")
+        for entity, fine_rows in enumerate(entities):
+            if len(fine_rows) == 0:
+                continue
+            if entity >= len(coarse_closures[topological_dim]):
+                raise ValueError("coarse entity closure metadata is incomplete")
+            allowed = np.asarray(
+                coarse_closures[topological_dim][entity],
+                dtype=np.intp,
+            )
+            if allowed.size == 0 or np.any(allowed < 0) or np.any(
+                allowed >= int(coarse_element.dim)
+            ):
+                raise ValueError("coarse entity closure indices are invalid")
+            disallowed = np.setdiff1d(
+                all_columns,
+                allowed,
+                assume_unique=False,
+            )
+            for row in fine_rows:
+                matrix[int(row), disallowed] = 0.0
+
+
+def _reference_entity_trace_v1(
+    reference: np.ndarray,
+    fine_element: Any,
+    coarse_element: Any,
+) -> tuple[tuple[int, ...], ...]:
+    """Replace N1E boundary rows with shared edge/face trace maps."""
+    quad_coarse = basix.create_element(
+        basix.ElementFamily.N1E,
+        basix.CellType.quadrilateral,
+        4,
+        basix.LagrangeVariant.legendre,
+    )
+    quad_fine = basix.create_element(
+        basix.ElementFamily.N1E,
+        basix.CellType.quadrilateral,
+        6,
+        basix.LagrangeVariant.legendre,
+    )
+    quad_reference = np.asarray(
+        basix.compute_interpolation_operator(quad_coarse, quad_fine),
+        dtype=np.complex128,
+    )
+    quad_edges = tuple(
+        tuple(int(vertex) for vertex in edge)
+        for edge in basix.cell.topology(basix.CellType.quadrilateral)[1]
+    )
+    hex_topology = basix.cell.topology(basix.CellType.hexahedron)
+    hex_edges = tuple(
+        tuple(int(vertex) for vertex in edge)
+        for edge in hex_topology[1]
+    )
+    hex_faces = tuple(
+        tuple(int(vertex) for vertex in face)
+        for face in hex_topology[2]
+    )
+    edge_by_ordered_vertices = {
+        edge: index for index, edge in enumerate(hex_edges)
+    }
+    face_edge_map: list[tuple[int, ...]] = []
+    for face_index, face_vertices in enumerate(hex_faces):
+        mapped_edges: list[int] = []
+        for quad_edge in quad_edges:
+            ordered_edge = (
+                face_vertices[quad_edge[0]],
+                face_vertices[quad_edge[1]],
+            )
+            if ordered_edge not in edge_by_ordered_vertices:
+                raise ValueError(
+                    "hex face/quad edge orientation is not an ordered match "
+                    f"for face {face_index}: {ordered_edge}"
+                )
+            mapped_edges.append(edge_by_ordered_vertices[ordered_edge])
+        face_edge_map.append(tuple(mapped_edges))
+
+    fine_edges = fine_element.entity_dofs[1]
+    coarse_edges = coarse_element.entity_dofs[1]
+    if any(len(rows) != 6 for rows in fine_edges) or any(
+        len(columns) != 4 for columns in coarse_edges
+    ):
+        raise ValueError("unexpected hexahedron N1E edge dimensions")
+    edge_block = np.zeros((6, 4), dtype=np.complex128)
+    edge_block[:4, :] = np.eye(4, dtype=np.complex128)
+    for fine_rows, coarse_columns in zip(
+        fine_edges, coarse_edges, strict=True
+    ):
+        reference[np.asarray(fine_rows, dtype=np.intp), :] = 0.0
+        reference[np.ix_(fine_rows, coarse_columns)] = edge_block
+
+    quad_coarse_edges = quad_coarse.entity_dofs[1]
+    quad_fine_face_rows = np.asarray(
+        quad_fine.entity_dofs[2][0],
+        dtype=np.intp,
+    )
+    quad_coarse_face_columns = np.asarray(
+        np.concatenate(
+            [
+                np.asarray(rows, dtype=np.intp)
+                for rows in quad_coarse_edges
+            ]
+            + [
+                np.asarray(quad_coarse.entity_dofs[2][0], dtype=np.intp)
+            ]
+        ),
+        dtype=np.intp,
+    )
+    for face_index, mapped_edges in enumerate(face_edge_map):
+        fine_rows = np.asarray(
+            fine_element.entity_dofs[2][face_index],
+            dtype=np.intp,
+        )
+        coarse_columns = np.asarray(
+            np.concatenate(
+                [
+                    np.asarray(coarse_edges[edge], dtype=np.intp)
+                    for edge in mapped_edges
+                ]
+                + [
+                    np.asarray(
+                        coarse_element.entity_dofs[2][face_index],
+                        dtype=np.intp,
+                    )
+                ]
+            ),
+            dtype=np.intp,
+        )
+        quad_block = quad_reference[
+            np.ix_(quad_fine_face_rows, quad_coarse_face_columns)
+        ]
+        reference[fine_rows, :] = 0.0
+        reference[np.ix_(fine_rows, coarse_columns)] = quad_block
+    return tuple(face_edge_map)
+
+
 
 
 def _dof_transform(element: Any, cell_info: int) -> np.ndarray:
@@ -103,6 +295,7 @@ def build_same_mesh_hcurl_transfer(
     *,
     coarse_cell_info: int = 0,
     fine_cell_info: int = 0,
+    support_policy: str = SUPPORT_POLICY_LEGACY,
 ) -> SameMeshHcurlTransfer:
     """Build the oriented reference-cell N1E embedding used by ``P``."""
 
@@ -112,10 +305,16 @@ def build_same_mesh_hcurl_transfer(
             "same-mesh transfer supports only "
             f"{SAME_MESH_TRANSFER_PAIRS}"
         )
+    support_policy = _normalize_support_policy(support_policy)
     coarse_element = _n1e(coarse_degree)
     fine_element = _n1e(fine_degree)
     coarse_transform = _dof_transform(coarse_element, coarse_cell_info)
     fine_transform = _dof_transform(fine_element, fine_cell_info)
+    orientation_blocks_verified = False
+    if support_policy == SUPPORT_POLICY_ENTITY_CLOSURE:
+        _verify_entity_block_transform(coarse_transform, coarse_element)
+        _verify_entity_block_transform(fine_transform, fine_element)
+        orientation_blocks_verified = True
     reference = np.asarray(
         basix.compute_interpolation_operator(coarse_element, fine_element),
         dtype=np.complex128,
@@ -125,12 +324,23 @@ def build_same_mesh_hcurl_transfer(
         raise RuntimeError(
             f"Basix N1E interpolation shape {reference.shape} != {shape}"
         )
+    reference_entity_trace_v1 = False
+    reference_face_edge_map: tuple[tuple[int, ...], ...] = ()
+    if support_policy == SUPPORT_POLICY_ENTITY_CLOSURE:
+        reference_face_edge_map = _reference_entity_trace_v1(
+            reference,
+            fine_element,
+            coarse_element,
+        )
+        reference_entity_trace_v1 = True
     matrix = np.ascontiguousarray(
         fine_transform
         @ reference
         @ np.linalg.inv(coarse_transform),
         dtype=np.complex128,
     )
+    if support_policy == SUPPORT_POLICY_ENTITY_CLOSURE:
+        _apply_entity_closure_support(matrix, fine_element, coarse_element)
     return SameMeshHcurlTransfer(
         fine_degree=int(fine_degree),
         coarse_degree=int(coarse_degree),
@@ -144,6 +354,24 @@ def build_same_mesh_hcurl_transfer(
                 "shape": [int(value) for value in matrix.shape],
                 "fine_lagrange_variant": "legendre",
                 "coarse_lagrange_variant": "legendre",
+                "support_policy": support_policy,
+                "reference_entity_trace_v1": reference_entity_trace_v1,
+                "reference_edge_block": (
+                    "legendre_identity_zero"
+                    if reference_entity_trace_v1
+                    else None
+                ),
+                "reference_face_block": (
+                    "quadrilateral_n1e_interpolation"
+                    if reference_entity_trace_v1
+                    else None
+                ),
+                "reference_face_edge_map": [
+                    list(edges) for edges in reference_face_edge_map
+                ],
+                "orientation_entity_blocks_verified": (
+                    orientation_blocks_verified
+                ),
                 "global_transfer_matrix": False,
                 "numeric_allgather": False,
                 "physical": False,
@@ -426,6 +654,58 @@ def _resolve_owner_candidates_batched(
     return resolved_ids, reference_values, global_defect, packet_size
 
 
+def _diagnostic_packet_precheck(
+    ids: np.ndarray,
+    values: np.ndarray,
+    source_ranks: np.ndarray,
+    owner_rank: int,
+    comm: Any,
+) -> None:
+    ids = np.asarray(ids)
+    values = np.asarray(values)
+    source_ranks = np.asarray(source_ranks)
+    shape_ok = bool(
+        ids.ndim == 1
+        and values.ndim == 1
+        and source_ranks.ndim == 1
+        and ids.size == values.size
+        and ids.size == source_ranks.size
+        and np.issubdtype(source_ranks.dtype, np.integer)
+    )
+    sorted_ok = False
+    owner_ok = False
+    source_ok = False
+    if shape_ok:
+        source_ok = bool(
+            np.all(source_ranks >= 0)
+            and np.all(source_ranks < int(comm.size))
+        )
+        sorted_ok = True
+        owner_ok = True
+        if ids.size:
+            group_has_owner = bool(source_ranks[0] == int(owner_rank))
+            for index in range(1, int(ids.size)):
+                if ids[index] < ids[index - 1]:
+                    sorted_ok = False
+                if ids[index] == ids[index - 1]:
+                    if source_ranks[index] < source_ranks[index - 1]:
+                        sorted_ok = False
+                    group_has_owner = group_has_owner or bool(
+                        source_ranks[index] == int(owner_rank)
+                    )
+                else:
+                    owner_ok = owner_ok and group_has_owner
+                    group_has_owner = bool(
+                        source_ranks[index] == int(owner_rank)
+                    )
+            owner_ok = owner_ok and group_has_owner
+    local_ok = shape_ok and sorted_ok and source_ok and owner_ok
+    if not bool(comm.allreduce(bool(local_ok), op=MPI.LAND)):
+        raise ValueError(
+            'diagnostic candidate packet shape/order/owner precheck failed'
+        )
+
+
 def _apply_conjugate_transpose_vector(
     matrix: np.ndarray,
     values: np.ndarray,
@@ -539,7 +819,9 @@ class SameMeshHcurlOwnerTransfer:
         local_transfer: SameMeshHcurlTransfer,
         *,
         optimization_profile: str | None = None,
+        support_policy: str = SUPPORT_POLICY_LEGACY,
     ) -> None:
+        support_policy = _normalize_support_policy(support_policy)
         pair = (
             int(fine_space.element.basix_element.degree),
             int(coarse_space.element.basix_element.degree),
@@ -550,6 +832,14 @@ class SameMeshHcurlOwnerTransfer:
             raise ValueError("owner transfer requires one shared mesh object")
         if local_transfer.audit["pair_fine_to_coarse"] != list(pair):
             raise ValueError("local transfer pair does not match spaces")
+        local_support_policy = local_transfer.audit.get(
+            "support_policy",
+            SUPPORT_POLICY_LEGACY,
+        )
+        if local_support_policy != support_policy:
+            raise ValueError(
+                "local transfer support policy does not match owner policy"
+            )
         fine_variant = fine_space.element.basix_element.lagrange_variant.name
         coarse_variant = coarse_space.element.basix_element.lagrange_variant.name
         if (
@@ -580,6 +870,7 @@ class SameMeshHcurlOwnerTransfer:
         self.mesh = mesh
         self.comm = mesh.comm
         self.local_transfer = local_transfer
+        self._support_policy = support_policy
         if optimization_profile not in {None, _TASK041_SCHUR_SPEED_V2_PROFILE}:
             raise ValueError("unsupported same-mesh transfer optimization profile")
         self._optimization_profile = optimization_profile
@@ -592,6 +883,9 @@ class SameMeshHcurlOwnerTransfer:
         self._apply_in_progress = False
         self._destroyed = False
         self._last_apply_facts: dict[str, object] = {}
+        self._diagnostic_context: dict[str, Any] | None = None
+        self._last_diagnostic: dict[str, Any] = {}
+        self._diagnostic_callback: Any | None = None
         self.fine_ranges = _owner_ranges(fine_space.dofmap.index_map, self.comm)
         self.coarse_ranges = _owner_ranges(coarse_space.dofmap.index_map, self.comm)
         self._fine_owned_start = int(fine_space.dofmap.index_map.local_range[0])
@@ -630,6 +924,7 @@ class SameMeshHcurlOwnerTransfer:
                     pair[1],
                     coarse_cell_info=cell_info,
                     fine_cell_info=cell_info,
+                    support_policy=support_policy,
                 )
             fine_local, fine_global = _cell_global_dofs(fine_space, cell)
             coarse_local, coarse_global = _cell_global_dofs(coarse_space, cell)
@@ -704,6 +999,7 @@ class SameMeshHcurlOwnerTransfer:
                 "fine_owned_cells": owned_cell_count,
                 "algebraic_slave_storage": "owned fine/coarse slaves zero",
                 "optimization_profile": optimization_profile,
+                "support_policy": support_policy,
                 "default_execution_variant": self._execution_variant,
                 "owner_resolution": (
                     "numpy_batched"
@@ -749,6 +1045,10 @@ class SameMeshHcurlOwnerTransfer:
         return dict(self._last_apply_facts)
 
     @property
+    def last_diagnostic(self) -> dict[str, Any]:
+        return dict(self._last_diagnostic)
+
+    @property
     def execution_variant(self) -> str:
         return self._execution_variant
 
@@ -784,6 +1084,30 @@ class SameMeshHcurlOwnerTransfer:
         finally:
             self._execution_variant = previous
             self._variant_context_active = False
+
+    @contextmanager
+    def diagnostic_context(self, callback: Any):
+        """Enable one explicit test-only full-packet diagnostic operation."""
+
+        self._require_live()
+        if self._apply_in_progress:
+            raise RuntimeError("same-mesh diagnostic cannot nest inside apply")
+        if self._diagnostic_context is not None:
+            raise RuntimeError("same-mesh diagnostic is already active")
+        state: dict[str, Any] = {
+            "schema": "task041.same_mesh_owner_transfer.diagnostic.v1",
+            "max_local_rows": _TRANSFER_DIAGNOSTIC_MAX_LOCAL_ROWS,
+            "max_global_rows": _TRANSFER_DIAGNOSTIC_MAX_GLOBAL_ROWS,
+            "selected_variant": self._execution_variant,
+        }
+        self._diagnostic_context = state
+        self._diagnostic_callback = callback
+        try:
+            yield state
+        finally:
+            self._last_diagnostic = state
+            self._diagnostic_context = None
+            self._diagnostic_callback = None
 
     def _require_live(self) -> None:
         if self._destroyed:
@@ -829,6 +1153,122 @@ class SameMeshHcurlOwnerTransfer:
             np.concatenate(ids).astype(np.uint64, copy=False),
             np.concatenate(values).astype(np.complex128, copy=False),
         )
+
+    def _diagnostic_resolve_candidates(
+        self,
+        ids: np.ndarray,
+        values: np.ndarray,
+        source_ranks: np.ndarray,
+        owner_rank: int,
+        emitted_ids: np.ndarray,
+        emitted_values: np.ndarray,
+        source: Any,
+    ) -> tuple[np.ndarray, np.ndarray, float, int]:
+        attempts: dict[str, dict[str, Any]] = {}
+        state = self._diagnostic_context
+        if state is None or self._diagnostic_callback is None:
+            raise RuntimeError("same-mesh diagnostic context is not active")
+        try:
+            _diagnostic_packet_precheck(
+                ids, values, source_ranks, owner_rank, self.comm
+            )
+        except ValueError as exc:
+            state["packet_precheck"] = {
+                "status": "failed",
+                "exception_type": type(exc).__name__,
+                "exception_message": str(exc),
+            }
+            state["collectives_complete"] = True
+            self._last_apply_facts = {
+                "operation": "primal",
+                "finite": None,
+                "input_unchanged": None,
+                "transfer_diagnostic": dict(state),
+            }
+            raise
+        state["packet_precheck"] = {"status": "passed"}
+        for name, resolver in (
+            ("legacy", _resolve_owner_candidates),
+            ("batched", _resolve_owner_candidates_batched),
+        ):
+            try:
+                result = resolver(
+                    ids,
+                    values,
+                    source_ranks,
+                    owner_rank,
+                    self.comm,
+                )
+            except (RuntimeError, ValueError) as exc:
+                attempts[name] = {
+                    "exception": exc,
+                    "exception_type": type(exc).__name__,
+                    "exception_message": str(exc),
+                }
+            else:
+                attempts[name] = {"result": result}
+        callback_error = None
+        try:
+            callback_result = self._diagnostic_callback(
+                ids=ids,
+                values=values,
+                source_ranks=source_ranks,
+                owner_rank=int(owner_rank),
+                owner_ranges=self.fine_ranges,
+                coarse_owner_ranges=self.coarse_ranges,
+                attempts=attempts,
+                transfer=self,
+                emitted_ids=emitted_ids,
+                emitted_values=emitted_values,
+                source=source,
+            )
+        except (AttributeError, KeyError, IndexError, RuntimeError, TypeError, ValueError) as exc:
+            callback_result = None
+            callback_error = f"{type(exc).__name__}: {exc}"
+        if not bool(self.comm.allreduce(callback_error is None, op=MPI.LAND)):
+            state["callback_error"] = callback_error or "peer callback failed"
+            state["collectives_complete"] = True
+            self._last_apply_facts = {
+                "operation": "primal",
+                "finite": None,
+                "input_unchanged": None,
+                "transfer_diagnostic": dict(state),
+            }
+            raise RuntimeError("same-mesh diagnostic callback failed")
+        state["packet_rows"] = int(ids.size)
+        for name in ("legacy", "batched"):
+            attempt = attempts[name]
+            result = attempt.get("result")
+            if result is None:
+                state[name] = {
+                    "status": "exception",
+                    "exception_type": str(attempt["exception_type"]),
+                    "exception_message": str(attempt["exception_message"]),
+                }
+            else:
+                state[name] = {
+                    "status": "returned",
+                    "resolved_rows": int(result[0].size),
+                    "global_defect": float(result[2]),
+                    "packet_rows": int(result[3]),
+                }
+        state["callback"] = callback_result
+        state["collectives_complete"] = True
+        selected_name = (
+            "batched"
+            if self._execution_variant == "optimized"
+            else "legacy"
+        )
+        selected = attempts[selected_name]
+        if "result" not in selected:
+            self._last_apply_facts = {
+                "operation": "primal",
+                "finite": None,
+                "input_unchanged": None,
+                "transfer_diagnostic": dict(state),
+            }
+            raise selected["exception"] from None
+        return selected["result"]
 
     def apply_primal_into(
         self,
@@ -884,13 +1324,26 @@ class SameMeshHcurlOwnerTransfer:
                 if self._execution_variant == "optimized"
                 else _resolve_owner_candidates
             )
-            owned_ids, owned_values, defect, packet_size = resolver(
-                received_ids,
-                received_values,
-                source_ranks,
-                self.comm.rank,
-                self.comm,
-            )
+            if self._diagnostic_context is not None:
+                owned_ids, owned_values, defect, packet_size = (
+                    self._diagnostic_resolve_candidates(
+                        received_ids,
+                        received_values,
+                        source_ranks,
+                        self.comm.rank,
+                        candidate_ids,
+                        candidate_values,
+                        source,
+                    )
+                )
+            else:
+                owned_ids, owned_values, defect, packet_size = resolver(
+                    received_ids,
+                    received_values,
+                    source_ranks,
+                    self.comm.rank,
+                    self.comm,
+                )
         finally:
             _add_timing(
                 timing,
@@ -1134,6 +1587,7 @@ def build_same_mesh_hcurl_owner_transfer(
     *,
     local_transfer: SameMeshHcurlTransfer | None = None,
     optimization_profile: str | None = None,
+    support_policy: str = SUPPORT_POLICY_LEGACY,
 ) -> SameMeshHcurlOwnerTransfer:
     """Build one owner-local same-mesh adapter without a global matrix."""
 
@@ -1143,10 +1597,14 @@ def build_same_mesh_hcurl_owner_transfer(
     )
     if pair not in SAME_MESH_TRANSFER_PAIRS:
         raise ValueError("unsupported same-mesh owner transfer pair")
+    support_policy = _normalize_support_policy(support_policy)
     if optimization_profile not in {None, _TASK041_SCHUR_SPEED_V2_PROFILE}:
         raise ValueError("unsupported same-mesh transfer optimization profile")
     if local_transfer is None:
-        local_transfer = build_same_mesh_hcurl_transfer(*pair)
+        local_transfer = build_same_mesh_hcurl_transfer(
+            *pair,
+            support_policy=support_policy,
+        )
     return SameMeshHcurlOwnerTransfer(
         fine_space,
         fine_floquet,
@@ -1154,12 +1612,15 @@ def build_same_mesh_hcurl_owner_transfer(
         coarse_floquet,
         local_transfer,
         optimization_profile=optimization_profile,
+        support_policy=support_policy,
     )
 
 
 __all__ = [
     "ROW_CONSISTENCY_LIMIT",
     "SAME_MESH_TRANSFER_PAIRS",
+    "SUPPORT_POLICY_ENTITY_CLOSURE",
+    "SUPPORT_POLICY_LEGACY",
     "SameMeshHcurlOwnerTransfer",
     "SameMeshHcurlTransfer",
     "build_same_mesh_hcurl_owner_transfer",

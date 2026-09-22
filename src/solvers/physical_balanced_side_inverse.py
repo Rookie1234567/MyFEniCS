@@ -1823,6 +1823,7 @@ def build_side_balanced_inverse(
     lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
     performance_profile: str | None = None,
     p4_inverse_backend: str = "full",
+    support_policy: str = "legacy",
 ) -> SideBalancedInverse:
     """Build one side adapter and release all partial owned state on failure."""
 
@@ -1887,6 +1888,7 @@ def build_side_balanced_inverse(
             p4_factor.physical_action.V,
             p4_factor.physical_action.floquet_data,
             optimization_profile=performance_profile,
+            support_policy=support_policy,
         )
         if lifecycle_callback is None:
             emit("transfer_ready")
