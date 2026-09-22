@@ -47,9 +47,13 @@ def test_v25_q4_swap_observe_input_is_the_only_nonzero_swap_policy():
     observed = load_and_resolve(
         ROOT / "input/task39extra/v25_q4_ac_swap_observe_h7p5.dat"
     )
+    rerun = load_and_resolve(
+        ROOT / "input/task39extra/v25_q4_ac_swap_observe_r2_h7p5.dat"
+    )
     original = load_and_resolve(ROOT / "input/task39extra/v25_q4_speed_h7p5.dat")
     repeat = load_and_resolve(ROOT / "input/task39extra/v25_q4_ac_repeat_h7p5.dat")
     assert observed.execution["require_zero_swap"] is False
+    assert rerun.execution["require_zero_swap"] is False
     assert original.execution["require_zero_swap"] is True
     assert repeat.execution["require_zero_swap"] is True
     for key in (
@@ -63,6 +67,7 @@ def test_v25_q4_swap_observe_input_is_the_only_nonzero_swap_policy():
         "output",
     ):
         assert observed.as_jsonable()[key] == original.as_jsonable()[key]
+        assert rerun.as_jsonable()[key] == original.as_jsonable()[key]
 
 
 def test_v24_resolved_identity_does_not_gain_v25_backend_fields():
@@ -187,6 +192,15 @@ def _v25_ac_swap_observe_auth():
     }
 
 
+def _v25_ac_swap_observe_r2_auth():
+    return {
+        "authorization_id": launcher.V25_Q4_AC_SWAP_OBSERVE_R2_AUTHORIZATION_ID,
+        "run_id": launcher.V25_Q4_AC_SWAP_OBSERVE_R2_RUN_ID,
+        "scope": "user_authorized_swap_observe_r2",
+        "source": launcher.V25_Q4_AC_SWAP_OBSERVE_R2_AUTHORIZATION_SOURCE,
+    }
+
+
 def _reserve_v25_ac_repeat(tmp_path, *, source_sha="d" * 40):
     _copy_v25_ledger(tmp_path)
     return launcher._reserve_v25_shared_budget(
@@ -301,6 +315,43 @@ def test_v25_q4_swap_observe_rejects_duplicate_authorization(tmp_path):
                 time_policy="observe_only",
                 authorized_performance_repeat=auth,
             )
+
+
+def test_v25_q4_swap_observe_r2_is_independent_and_rejects_duplicate(tmp_path):
+    _copy_v25_ledger(tmp_path)
+    auth = _v25_ac_swap_observe_r2_auth()
+    lease = launcher._reserve_v25_shared_budget(
+        tmp_path,
+        tmp_path / "results" / "r2",
+        source_sha="f" * 40,
+        stage="Q4_ORIGINAL",
+        stage_budget={"workflow_seconds": 43200.0},
+        workflow_clock_start={"monotonic": 1.0},
+        time_policy="observe_only",
+        authorized_performance_repeat=auth,
+    )
+    ledger_path = launcher._dual_condensed_coarse_degree_v25_shared_ledger_path(
+        tmp_path
+    )
+    ledger = json.loads(ledger_path.read_text())
+    snapshot = ledger_path.with_name(
+        launcher.V25_Q4_AC_SWAP_OBSERVE_R2_SNAPSHOT_FILENAME
+    )
+    assert lease["authorized_performance_repeat"] == auth
+    assert ledger["authorized_performance_repeats"][-1]["run_id"] == auth["run_id"]
+    assert snapshot.read_bytes() != ledger_path.read_bytes()
+    assert snapshot.stat().st_mode & 0o777 == 0o444
+    with pytest.raises(InputError, match="authorized performance repeat already consumed"):
+        launcher._reserve_v25_shared_budget(
+            tmp_path,
+            tmp_path / "results" / "r2-duplicate",
+            source_sha="0" * 40,
+            stage="Q4_ORIGINAL",
+            stage_budget={"workflow_seconds": 43200.0},
+            workflow_clock_start={"monotonic": 2.0},
+            time_policy="observe_only",
+            authorized_performance_repeat=auth,
+        )
 
 
 def test_v25_watchdog_swap_observation_records_without_bypassing_memory_gate(

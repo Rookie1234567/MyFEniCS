@@ -30,6 +30,12 @@ _SECTION_SET = set(SECTION_NAMES)
 _V25_Q4_AC_SWAP_OBSERVE_RUN_ID = (
     "task39extra_v25_q4_ac_swap_observe_original_h7p5"
 )
+_V25_Q4_AC_SWAP_OBSERVE_R2_RUN_ID = (
+    "task39extra_v25_q4_ac_swap_observe_r2_h7p5"
+)
+_V25_Q4_AC_SWAP_OBSERVE_RUN_IDS = frozenset(
+    {_V25_Q4_AC_SWAP_OBSERVE_RUN_ID, _V25_Q4_AC_SWAP_OBSERVE_R2_RUN_ID}
+)
 
 
 def _error(path: str, message: str) -> InputError:
@@ -1009,7 +1015,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     )
                 swap_observation_only = (
                     stage == "Q4_ORIGINAL"
-                    and config["run_id"] == _V25_Q4_AC_SWAP_OBSERVE_RUN_ID
+                    and config["run_id"] in _V25_Q4_AC_SWAP_OBSERVE_RUN_IDS
                 )
                 expected_require_zero_swap = not swap_observation_only
                 for section, key, actual, expected in (

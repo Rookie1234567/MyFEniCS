@@ -1873,6 +1873,16 @@ V25_Q4_AC_SWAP_OBSERVE_AUTHORIZATION_SOURCE = (
 V25_Q4_AC_SWAP_OBSERVE_SNAPSHOT_FILENAME = (
     "shared_workflow_ledger.pre_q4_ac_swap_observe.json"
 )
+V25_Q4_AC_SWAP_OBSERVE_R2_RUN_ID = "task39extra_v25_q4_ac_swap_observe_r2_h7p5"
+V25_Q4_AC_SWAP_OBSERVE_R2_AUTHORIZATION_ID = (
+    "user_authorized_swap_observe_r2_20260922"
+)
+V25_Q4_AC_SWAP_OBSERVE_R2_AUTHORIZATION_SOURCE = (
+    "user_supplemental_authorization_swap_observe_r2_20260922"
+)
+V25_Q4_AC_SWAP_OBSERVE_R2_SNAPSHOT_FILENAME = (
+    "shared_workflow_ledger.pre_q4_ac_swap_observe_r2.json"
+)
 
 
 def _read_only_v21_ledger_reference(repo_root: Path) -> dict[str, Any]:
@@ -2312,10 +2322,20 @@ def _reserve_v25_shared_budget(
             "scope": "user_authorized_swap_observe_repeat",
             "source": V25_Q4_AC_SWAP_OBSERVE_AUTHORIZATION_SOURCE,
         }
+        expected_swap_observe_r2_authorization = {
+            "authorization_id": V25_Q4_AC_SWAP_OBSERVE_R2_AUTHORIZATION_ID,
+            "run_id": V25_Q4_AC_SWAP_OBSERVE_R2_RUN_ID,
+            "scope": "user_authorized_swap_observe_r2",
+            "source": V25_Q4_AC_SWAP_OBSERVE_R2_AUTHORIZATION_SOURCE,
+        }
         if (
             stage != "Q4_ORIGINAL"
             or dict(authorized_performance_repeat)
-            not in (expected_repeat_authorization, expected_swap_observe_authorization)
+            not in (
+                expected_repeat_authorization,
+                expected_swap_observe_authorization,
+                expected_swap_observe_r2_authorization,
+            )
         ):
             raise InputError(
                 "V25 authorized repeat is restricted to the exact Q4 AC authorization"
@@ -2323,6 +2343,12 @@ def _reserve_v25_shared_budget(
         if dict(authorized_performance_repeat) == expected_swap_observe_authorization:
             snapshot_filename = V25_Q4_AC_SWAP_OBSERVE_SNAPSHOT_FILENAME
             snapshot_key = "pre_swap_observe_ledger_snapshot"
+        elif (
+            dict(authorized_performance_repeat)
+            == expected_swap_observe_r2_authorization
+        ):
+            snapshot_filename = V25_Q4_AC_SWAP_OBSERVE_R2_SNAPSHOT_FILENAME
+            snapshot_key = "pre_swap_observe_r2_ledger_snapshot"
         else:
             snapshot_filename = V25_Q4_AC_REPEAT_SNAPSHOT_FILENAME
             snapshot_key = "pre_repeat_ledger_snapshot"
@@ -3165,7 +3191,8 @@ def launch_specification(
     v25_swap_observe = (
         coarse_degree_v25_profile
         and cell_stage == "Q4_ORIGINAL"
-        and specification.identity.get("run_id") == V25_Q4_AC_SWAP_OBSERVE_RUN_ID
+        and specification.identity.get("run_id")
+        in (V25_Q4_AC_SWAP_OBSERVE_RUN_ID, V25_Q4_AC_SWAP_OBSERVE_R2_RUN_ID)
         and specification.execution.get("require_zero_swap") is False
     )
     if (
@@ -3187,12 +3214,22 @@ def launch_specification(
             "scope": "user_authorized_performance_repeat",
             "source": V25_Q4_AC_REPEAT_AUTHORIZATION_SOURCE,
         }
-    elif v25_swap_observe:
+    elif (
+        v25_swap_observe
+        and specification.identity.get("run_id") == V25_Q4_AC_SWAP_OBSERVE_RUN_ID
+    ):
         v25_authorized_performance_repeat = {
             "authorization_id": V25_Q4_AC_SWAP_OBSERVE_AUTHORIZATION_ID,
             "run_id": V25_Q4_AC_SWAP_OBSERVE_RUN_ID,
             "scope": "user_authorized_swap_observe_repeat",
             "source": V25_Q4_AC_SWAP_OBSERVE_AUTHORIZATION_SOURCE,
+        }
+    elif v25_swap_observe:
+        v25_authorized_performance_repeat = {
+            "authorization_id": V25_Q4_AC_SWAP_OBSERVE_R2_AUTHORIZATION_ID,
+            "run_id": V25_Q4_AC_SWAP_OBSERVE_R2_RUN_ID,
+            "scope": "user_authorized_swap_observe_r2",
+            "source": V25_Q4_AC_SWAP_OBSERVE_R2_AUTHORIZATION_SOURCE,
         }
     if cell_condensed_profile:
         cell_is_exact = specification.solver.get('preconditioner') == CELL_CONDENSED_EXACT_PROFILE
