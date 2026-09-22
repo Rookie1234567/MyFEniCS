@@ -1105,6 +1105,7 @@ def _reserve_blr_stage_from_ledger(
     summary_filename: str,
     prerequisite: Mapping[str, Any] | None = None,
     bug_replay_limit: int = 1,
+    authorized_performance_repeat: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Share replay, reservation, and settlement metadata across BLR batches."""
 
@@ -1121,7 +1122,42 @@ def _reserve_blr_stage_from_ledger(
     attempts = list(stage_record.get("attempts", []))
     replay = False
     replay_evidence = None
-    if attempts:
+    authorized_repeat = (
+        dict(authorized_performance_repeat)
+        if authorized_performance_repeat is not None
+        else None
+    )
+    if authorized_repeat is not None:
+        history = ledger.get("authorized_performance_repeats", [])
+        if not isinstance(history, list):
+            raise InputError(
+                f"{error_prefix} authorized performance repeat history is invalid"
+            )
+        authorization_id = authorized_repeat.get("authorization_id")
+        run_id = authorized_repeat.get("run_id")
+        if any(
+            isinstance(item, Mapping)
+            and (
+                item.get("authorization_id") == authorization_id
+                or item.get("run_id") == run_id
+            )
+            for item in history
+        ) or any(
+            isinstance(item, Mapping)
+            and isinstance(item.get("authorized_performance_repeat"), Mapping)
+            and (
+                item["authorized_performance_repeat"].get("authorization_id")
+                == authorization_id
+                or item["authorized_performance_repeat"].get("run_id") == run_id
+            )
+            for stage_item in ledger.get("stages", {}).values()
+            if isinstance(stage_item, Mapping)
+            for item in stage_item.get("attempts", [])
+        ):
+            raise InputError(
+                f"{error_prefix} authorized performance repeat already consumed"
+            )
+    elif attempts:
         if bug_replay_limit == 0:
             raise InputError(
                 f"{error_prefix} BLR stage {stage} permits one attempt; "
@@ -1189,15 +1225,34 @@ def _reserve_blr_stage_from_ledger(
     }
     if prerequisite is not None:
         attempt["prerequisite"] = dict(prerequisite)
+    if authorized_repeat is not None:
+        attempt["authorized_performance_repeat"] = dict(authorized_repeat)
     attempts.append(attempt)
     stage_record.update({"attempts": attempts, "active_attempt": len(attempts) - 1})
     ledger["stages"] = dict(ledger.get("stages", {}))
     ledger["stages"][stage] = stage_record
     ledger["source_attempts"] = list(ledger.get("source_attempts", []))
-    ledger["source_attempts"].append(
-        {"stage": stage, "source_sha": str(source_sha), "attempt": len(attempts)}
-    )
+    source_attempt = {
+        "stage": stage,
+        "source_sha": str(source_sha),
+        "attempt": len(attempts),
+    }
+    if authorized_repeat is not None:
+        source_attempt["authorized_performance_repeat"] = True
+    ledger["source_attempts"].append(source_attempt)
     ledger["fresh_worker_count"] = int(ledger.get("fresh_worker_count", 0)) + 1
+    if authorized_repeat is not None:
+        history = list(ledger.get("authorized_performance_repeats", []))
+        history.append(
+            {
+                **authorized_repeat,
+                "stage": str(stage),
+                "attempt": len(attempts),
+                "run_directory": str(run_directory),
+                "reserved_timestamp_ns": attempt["reserved_timestamp_ns"],
+            }
+        )
+        ledger["authorized_performance_repeats"] = history
     if replay:
         ledger["unique_bug_replay_count"] = int(
             ledger.get("unique_bug_replay_count", 0)
@@ -1220,6 +1275,8 @@ def _reserve_blr_stage_from_ledger(
     }
     if prerequisite is not None:
         result["prerequisite"] = dict(prerequisite)
+    if authorized_repeat is not None:
+        result["authorized_performance_repeat"] = authorized_repeat
     return result
 
 
@@ -1804,6 +1861,10 @@ V25_STAGES = ("Q4_ORIGINAL", "Q3_ORIGINAL", "Q2_ORIGINAL")
 V25_LEDGER_SCHEMA = "task039extra.v25.shared-workflow-ledger.v1"
 V25_SUMMARY_FILENAME = "physical_dual_condensed_coarse_degree_v25_summary.json"
 V25_SHARED_WORKFLOW_SECONDS = 3 * V14_SHARED_WORKFLOW_SECONDS
+V25_Q4_AC_REPEAT_RUN_ID = "task39extra_v25_q4_ac_repeat_original_h7p5"
+V25_Q4_AC_REPEAT_AUTHORIZATION_ID = "user_authorized_performance_repeat_20260922"
+V25_Q4_AC_REPEAT_AUTHORIZATION_SOURCE = "user_supplemental_authorization_20260922"
+V25_Q4_AC_REPEAT_SNAPSHOT_FILENAME = "shared_workflow_ledger.pre_q4_ac_repeat.json"
 
 
 def _read_only_v21_ledger_reference(repo_root: Path) -> dict[str, Any]:
@@ -2218,6 +2279,7 @@ def _reserve_v25_shared_budget(
     stage_budget: Mapping[str, Any],
     workflow_clock_start: Mapping[str, Any],
     time_policy: str = V14_TIME_POLICY_ENFORCE,
+    authorized_performance_repeat: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Reserve one independent V25 q-stage in the three-stage ledger."""
 
@@ -2227,6 +2289,20 @@ def _reserve_v25_shared_budget(
         )
     if float(stage_budget.get("workflow_seconds", 0.0)) != 43200.0:
         raise InputError("V25 q stages require a 43200-second workflow budget")
+    if authorized_performance_repeat is not None:
+        expected_authorization = {
+            "authorization_id": V25_Q4_AC_REPEAT_AUTHORIZATION_ID,
+            "run_id": V25_Q4_AC_REPEAT_RUN_ID,
+            "scope": "user_authorized_performance_repeat",
+            "source": V25_Q4_AC_REPEAT_AUTHORIZATION_SOURCE,
+        }
+        if (
+            stage != "Q4_ORIGINAL"
+            or dict(authorized_performance_repeat) != expected_authorization
+        ):
+            raise InputError(
+                "V25 authorized performance repeat is restricted to the exact Q4 AC input"
+            )
     repo_root = Path(repo_root).resolve()
     path = _dual_condensed_coarse_degree_v25_shared_ledger_path(repo_root)
     prerequisite = {
@@ -2278,6 +2354,49 @@ def _reserve_v25_shared_budget(
             "cross_case_recycling": False,
             "coarse_degree_by_stage": dict(prerequisite["coarse_degree_by_stage"]),
         }
+    if authorized_performance_repeat is not None:
+        history = ledger.get("authorized_performance_repeats", [])
+        if not isinstance(history, list):
+            raise InputError("V25 authorized performance repeat history is invalid")
+        authorization_id = authorized_performance_repeat["authorization_id"]
+        run_id = authorized_performance_repeat["run_id"]
+        if any(
+            isinstance(item, Mapping)
+            and (
+                item.get("authorization_id") == authorization_id
+                or item.get("run_id") == run_id
+            )
+            for item in history
+        ):
+            raise InputError("V25 authorized performance repeat already consumed")
+        original_bytes = path.read_bytes() if path.exists() else None
+        if original_bytes is not None:
+            snapshot_path = path.with_name(V25_Q4_AC_REPEAT_SNAPSHOT_FILENAME)
+            original_sha256 = hashlib.sha256(original_bytes).hexdigest()
+            if snapshot_path.exists():
+                snapshot_bytes = snapshot_path.read_bytes()
+                if snapshot_bytes != original_bytes:
+                    raise InputError(
+                        "V25 pre-repeat ledger snapshot does not match the original ledger"
+                    )
+            else:
+                _write_atomic_bytes(snapshot_path, original_bytes)
+                os.chmod(snapshot_path, 0o444)
+                _fsync_directory(snapshot_path.parent)
+            prerequisite["pre_repeat_ledger_snapshot"] = {
+                "path": str(snapshot_path),
+                "sha256": original_sha256,
+                "bytes": len(original_bytes),
+                "immutable": True,
+            }
+        else:
+            prerequisite["pre_repeat_ledger_snapshot"] = {
+                "path": None,
+                "sha256": None,
+                "bytes": None,
+                "immutable": True,
+                "status": "not_applicable_new_ledger",
+            }
     return _reserve_blr_stage_from_ledger(
         path,
         ledger,
@@ -2291,6 +2410,7 @@ def _reserve_v25_shared_budget(
         summary_filename=V25_SUMMARY_FILENAME,
         prerequisite=prerequisite,
         bug_replay_limit=1,
+        authorized_performance_repeat=authorized_performance_repeat,
     )
 
 
@@ -3018,6 +3138,18 @@ def launch_specification(
         COARSE_DEGREE_SPEED_PROFILE,
     }
     cell_stage = str(specification.solver.get('stage', ''))
+    v25_authorized_performance_repeat = None
+    if (
+        coarse_degree_v25_profile
+        and cell_stage == "Q4_ORIGINAL"
+        and specification.identity.get("run_id") == V25_Q4_AC_REPEAT_RUN_ID
+    ):
+        v25_authorized_performance_repeat = {
+            "authorization_id": V25_Q4_AC_REPEAT_AUTHORIZATION_ID,
+            "run_id": V25_Q4_AC_REPEAT_RUN_ID,
+            "scope": "user_authorized_performance_repeat",
+            "source": V25_Q4_AC_REPEAT_AUTHORIZATION_SOURCE,
+        }
     if cell_condensed_profile:
         cell_is_exact = specification.solver.get('preconditioner') == CELL_CONDENSED_EXACT_PROFILE
         if cell_is_exact and cell_stage == 'U3_BLR_CONTROL':
@@ -3143,6 +3275,7 @@ def launch_specification(
             source_sha=source, stage=cell_stage,
             stage_budget=cell_stage_budget, workflow_clock_start=full_clock.start,
             time_policy=v14_time_policy,
+            authorized_performance_repeat=v25_authorized_performance_repeat,
         )
     elif physical_memory_v23_profile and physical_candidate:
         run_directory = _timestamp_directory(specification, timestamp)

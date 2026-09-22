@@ -1,0 +1,46 @@
+{
+  "schema": "task039extra.v25.q4-ac-repeat.authorization.v1",
+  "status": "AUTHORIZED_PRE_RUN",
+  "authorization_id": "user_authorized_performance_repeat_20260922",
+  "authorization_source": "user_supplemental_authorization_20260922",
+  "scope": "one additional Q4 original performance repeat on the personal laptop",
+  "run_id": "task39extra_v25_q4_ac_repeat_original_h7p5",
+  "input_path": "input/task39extra/v25_q4_ac_repeat_h7p5.dat",
+  "input_sha256": "a2e68ead115eb49e05853da3233034d564c039bb4c620d3a4689cff2c417a7db",
+  "stage": "Q4_ORIGINAL",
+  "profile": "physical_p6_trace_coarse_degree_speed_v25",
+  "baseline_source_sha": "79044a99ee038783b6fb07e24d90a3e075e5403a",
+  "formal_v25_implementation_source_sha": "cad282e25ed53cad1f9e4a5a70c14f3dd40e6d32",
+  "old_v25_ledger": {
+    "path": "benchmarks/artifacts/task39extra/coarse_degree_speed_v25/review_v23_a6_h6_speed_and_coarse_degree/shared_workflow_ledger.json",
+    "sha256_before_repeat": "14bf869d63cfdf4c1cd1520ce7bd7dcb6300079d577492435ed98e75e7c331e0",
+    "bytes_before_repeat": 8030,
+    "expected_immutable_snapshot": "benchmarks/artifacts/task39extra/coarse_degree_speed_v25/review_v23_a6_h6_speed_and_coarse_degree/shared_workflow_ledger.pre_q4_ac_repeat.json",
+    "snapshot_sha256_expected": "14bf869d63cfdf4c1cd1520ce7bd7dcb6300079d577492435ed98e75e7c331e0"
+  },
+  "first_entry_attempt": {
+    "service_unit": "myfenics-case-20260922T013135-841129.service",
+    "log_path": "benchmarks/artifacts/user_services/myfenics-case-20260922T013135-841129.log",
+    "log_sha256": "758424362907ede092720eb7e9cc6cc79597ffe5228ceeebc3915788f17893dc",
+    "exit_status": 2,
+    "error": "Task38 input error: V25 repair replay requires hash-bound bug evidence",
+    "entered_pde": false,
+    "empty_run_root": "results/euv_grazing1_phi0/task39extra_v25_q4_ac_repeat_original_h7p5__full3d_iterative__mpi1__Mna/20260922T013135.702690Z"
+  },
+  "start_power_state": {
+    "user_reported_plugged_in": true,
+    "wsl_ac1_online": 1,
+    "windows_powercfg": "unavailable_in_current_wsl_session",
+    "power_settings_changed": false
+  },
+  "command": "bash scripts/run_case_in_user_service.sh input/task39extra/v25_q4_ac_repeat_h7p5.dat --v14-time-policy observe_only",
+  "constraints": {
+    "replay": false,
+    "bug_replay_counter_increment": false,
+    "duplicate_authorization_rejected": true,
+    "old_q4_replay_gate_unchanged": true,
+    "no_numerical_algorithm_change": true,
+    "no_q3_q2_or_notch": true,
+    "no_system_power_change": true
+  }
+}
