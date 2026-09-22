@@ -207,6 +207,7 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
               cooperative_performance_stop: bool = False,
               timebase_guard: bool = False, timebase_policy: str = STRICT,
               stop_on_global_swap: bool = False,
+              allow_swap_observation: bool = False,
               tree_cap_bytes: int | None = None,
               active_pc_seconds: float | None = None,
               time_policy: str = V14_TIME_POLICY_ENFORCE,
@@ -235,6 +236,10 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
     if memory_policy == PHYSICAL_MEMORY_PRESSURE_POLICY and tree_cap_bytes is not None:
         raise ValueError(
             'physical memory pressure policy cannot receive a frozen tree_cap_bytes'
+        )
+    if allow_swap_observation and stop_on_global_swap:
+        raise ValueError(
+            'swap observation-only mode cannot enforce the global swap gate'
         )
     if active_pc_seconds is not None and (
             not 0 < float(active_pc_seconds) < float('inf') or
@@ -294,6 +299,15 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
     summary.update(
         v14_time_policy_facts(time_policy),
         memory_policy=memory_policy,
+        swap_policy=(
+            'observe_only'
+            if allow_swap_observation
+            else 'require_zero_swap'
+            if stop_on_global_swap
+            else 'worker_defined'
+        ),
+        process_tree_swap_gate_enforced=not allow_swap_observation,
+        global_swap_gate_enforced=bool(stop_on_global_swap),
         time_reference_seconds={
             'workflow': float(wall_seconds),
             'solve': None if solve_seconds is None else float(solve_seconds),
@@ -415,7 +429,7 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                     reason = (
                         'RESOURCE_CONTROLLED_STOP' if sample['rss_bytes'] >= current_cap
                         or current['effective_available_bytes'] < current['reserve_bytes']
-                        or sample['swap_bytes'] != 0 else
+                        or (sample['swap_bytes'] != 0 and not allow_swap_observation) else
                         'USER_CONTROLLED_STOP' if timebase_guard and requested_signal else
                         'TIMEBASE_INCONSISTENCY' if clock_issue else
                         'PC_TIME_CONTROLLED_STOP'
@@ -424,10 +438,12 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                         if time_policy == V14_TIME_POLICY_ENFORCE
                         and (deadline_elapsed >= wall_seconds or solve_expired) else
                         'USER_CONTROLLED_STOP' if requested_signal else None)
-                if stop_on_global_swap:
+                if stop_on_global_swap or allow_swap_observation:
                     current_swap = vmstat_swap_pages()
                     sample['global_swap_pages'] = current_swap
-                    swap_reason = global_swap_stop(swap_baseline, current_swap, enabled=True)
+                    swap_reason = global_swap_stop(
+                        swap_baseline, current_swap, enabled=stop_on_global_swap
+                    )
                     sample['global_swap_stop_reason'] = swap_reason
                     if swap_reason is not None and reason not in ('RESOURCE_CONTROLLED_STOP', 'MONITORING_FAILED'):
                         reason = swap_reason
@@ -522,6 +538,15 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
         swap_end = vmstat_swap_pages()
         swap_delta = {key: None if swap_baseline[key] is None or swap_end[key] is None
                       else swap_end[key] - swap_baseline[key] for key in swap_baseline}
+        global_swap_unresolved = any(
+            value is None or value != 0 for value in swap_delta.values()
+        )
+        if allow_swap_observation and peak_swap > 0:
+            job_swap_activity = 'observed_process_tree_swap'
+        elif global_swap_unresolved:
+            job_swap_activity = 'UNRESOLVED_global_activity_cannot_be_attributed'
+        else:
+            job_swap_activity = 'zero_supported_by_zero_global_activity'
         summary.update({
             'classification': 'EVIDENCE_INCOMPLETE' if remaining else classification,
             'leader_exit_code': None if leader is None else leader.returncode,
@@ -533,9 +558,7 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
             'swap_scope': 'same process tree sampled VmSwap; no global swap attribution',
             'global_swap_activity': {'scope': 'WSL-global diagnostic, not dedicated job',
                                      'baseline': swap_baseline, 'end': swap_end, 'delta': swap_delta},
-            'job_swap_activity': ('zero_supported_by_zero_global_activity' if
-                                  all(value == 0 for value in swap_delta.values()) else
-                                  'UNRESOLVED_global_activity_cannot_be_attributed'),
+            'job_swap_activity': job_swap_activity,
             'launch_envelope': envelope, 'samples': samples,
             'memory_policy': memory_policy,
             'elapsed_seconds': time.monotonic() - started,

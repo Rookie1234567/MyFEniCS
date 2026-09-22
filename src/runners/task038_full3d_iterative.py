@@ -251,6 +251,9 @@ def run_full3d_iterative(
                 for key, degree in coarse_degree_by_stage.items()
             },
             notch_by_stage={key: False for key in coarse_degree_by_stage},
+            require_zero_swap=bool(
+                resolved_payload.get("execution", {}).get("require_zero_swap", True)
+            ),
         )
     if resolved_payload.get("solver", {}).get("preconditioner") == "physical_p4_blr_bal_h_v16":
         from .physical_p4_blr_v16 import run_physical_p4_blr_v16

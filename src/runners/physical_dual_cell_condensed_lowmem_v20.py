@@ -980,6 +980,7 @@ def _run_physical_dual_cell_condensed_lowmem(
     p4_repair_vector_sink=None,
     p4_repair_vector_capture=None,
     p4_prefix_target_sequence=None,
+    require_zero_swap=True,
 ):
     """Run one parameterized dual-condensed robustness stage."""
 
@@ -1071,6 +1072,10 @@ def _run_physical_dual_cell_condensed_lowmem(
         "stage_pass": False,
         "time_policy": "observe_only",
         "coarse_degree": coarse_degree,
+        "require_zero_swap": bool(require_zero_swap),
+        "swap_policy": (
+            "require_zero_swap" if require_zero_swap else "observe_only"
+        ),
     }
     runtime = common = None
     prepared = None
@@ -1110,6 +1115,7 @@ def _run_physical_dual_cell_condensed_lowmem(
             source_sha=source_sha,
             batch_identity=batch_identity,
             evidence_prefix=evidence_prefix,
+            require_zero_swap=require_zero_swap,
         )
         if runtime.time_policy != "observe_only":
             raise ValueError("V20 requires observe_only throughout the worker")

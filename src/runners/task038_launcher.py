@@ -1865,6 +1865,14 @@ V25_Q4_AC_REPEAT_RUN_ID = "task39extra_v25_q4_ac_repeat_original_h7p5"
 V25_Q4_AC_REPEAT_AUTHORIZATION_ID = "user_authorized_performance_repeat_20260922"
 V25_Q4_AC_REPEAT_AUTHORIZATION_SOURCE = "user_supplemental_authorization_20260922"
 V25_Q4_AC_REPEAT_SNAPSHOT_FILENAME = "shared_workflow_ledger.pre_q4_ac_repeat.json"
+V25_Q4_AC_SWAP_OBSERVE_RUN_ID = "task39extra_v25_q4_ac_swap_observe_original_h7p5"
+V25_Q4_AC_SWAP_OBSERVE_AUTHORIZATION_ID = "user_authorized_swap_observe_repeat_20260922"
+V25_Q4_AC_SWAP_OBSERVE_AUTHORIZATION_SOURCE = (
+    "user_supplemental_authorization_swap_observe_20260922"
+)
+V25_Q4_AC_SWAP_OBSERVE_SNAPSHOT_FILENAME = (
+    "shared_workflow_ledger.pre_q4_ac_swap_observe.json"
+)
 
 
 def _read_only_v21_ledger_reference(repo_root: Path) -> dict[str, Any]:
@@ -2289,20 +2297,35 @@ def _reserve_v25_shared_budget(
         )
     if float(stage_budget.get("workflow_seconds", 0.0)) != 43200.0:
         raise InputError("V25 q stages require a 43200-second workflow budget")
+    snapshot_filename = None
+    snapshot_key = None
     if authorized_performance_repeat is not None:
-        expected_authorization = {
+        expected_repeat_authorization = {
             "authorization_id": V25_Q4_AC_REPEAT_AUTHORIZATION_ID,
             "run_id": V25_Q4_AC_REPEAT_RUN_ID,
             "scope": "user_authorized_performance_repeat",
             "source": V25_Q4_AC_REPEAT_AUTHORIZATION_SOURCE,
         }
+        expected_swap_observe_authorization = {
+            "authorization_id": V25_Q4_AC_SWAP_OBSERVE_AUTHORIZATION_ID,
+            "run_id": V25_Q4_AC_SWAP_OBSERVE_RUN_ID,
+            "scope": "user_authorized_swap_observe_repeat",
+            "source": V25_Q4_AC_SWAP_OBSERVE_AUTHORIZATION_SOURCE,
+        }
         if (
             stage != "Q4_ORIGINAL"
-            or dict(authorized_performance_repeat) != expected_authorization
+            or dict(authorized_performance_repeat)
+            not in (expected_repeat_authorization, expected_swap_observe_authorization)
         ):
             raise InputError(
-                "V25 authorized performance repeat is restricted to the exact Q4 AC input"
+                "V25 authorized repeat is restricted to the exact Q4 AC authorization"
             )
+        if dict(authorized_performance_repeat) == expected_swap_observe_authorization:
+            snapshot_filename = V25_Q4_AC_SWAP_OBSERVE_SNAPSHOT_FILENAME
+            snapshot_key = "pre_swap_observe_ledger_snapshot"
+        else:
+            snapshot_filename = V25_Q4_AC_REPEAT_SNAPSHOT_FILENAME
+            snapshot_key = "pre_repeat_ledger_snapshot"
     repo_root = Path(repo_root).resolve()
     path = _dual_condensed_coarse_degree_v25_shared_ledger_path(repo_root)
     prerequisite = {
@@ -2371,7 +2394,7 @@ def _reserve_v25_shared_budget(
             raise InputError("V25 authorized performance repeat already consumed")
         original_bytes = path.read_bytes() if path.exists() else None
         if original_bytes is not None:
-            snapshot_path = path.with_name(V25_Q4_AC_REPEAT_SNAPSHOT_FILENAME)
+            snapshot_path = path.with_name(snapshot_filename)
             original_sha256 = hashlib.sha256(original_bytes).hexdigest()
             if snapshot_path.exists():
                 snapshot_bytes = snapshot_path.read_bytes()
@@ -2383,14 +2406,14 @@ def _reserve_v25_shared_budget(
                 _write_atomic_bytes(snapshot_path, original_bytes)
                 os.chmod(snapshot_path, 0o444)
                 _fsync_directory(snapshot_path.parent)
-            prerequisite["pre_repeat_ledger_snapshot"] = {
+            prerequisite[snapshot_key] = {
                 "path": str(snapshot_path),
                 "sha256": original_sha256,
                 "bytes": len(original_bytes),
                 "immutable": True,
             }
         else:
-            prerequisite["pre_repeat_ledger_snapshot"] = {
+            prerequisite[snapshot_key] = {
                 "path": None,
                 "sha256": None,
                 "bytes": None,
@@ -3139,6 +3162,20 @@ def launch_specification(
     }
     cell_stage = str(specification.solver.get('stage', ''))
     v25_authorized_performance_repeat = None
+    v25_swap_observe = (
+        coarse_degree_v25_profile
+        and cell_stage == "Q4_ORIGINAL"
+        and specification.identity.get("run_id") == V25_Q4_AC_SWAP_OBSERVE_RUN_ID
+        and specification.execution.get("require_zero_swap") is False
+    )
+    if (
+        coarse_degree_v25_profile
+        and specification.execution.get("require_zero_swap") is False
+        and not v25_swap_observe
+    ):
+        raise InputError(
+            "V25 swap observation-only policy is restricted to the exact Q4 AC input"
+        )
     if (
         coarse_degree_v25_profile
         and cell_stage == "Q4_ORIGINAL"
@@ -3149,6 +3186,13 @@ def launch_specification(
             "run_id": V25_Q4_AC_REPEAT_RUN_ID,
             "scope": "user_authorized_performance_repeat",
             "source": V25_Q4_AC_REPEAT_AUTHORIZATION_SOURCE,
+        }
+    elif v25_swap_observe:
+        v25_authorized_performance_repeat = {
+            "authorization_id": V25_Q4_AC_SWAP_OBSERVE_AUTHORIZATION_ID,
+            "run_id": V25_Q4_AC_SWAP_OBSERVE_RUN_ID,
+            "scope": "user_authorized_swap_observe_repeat",
+            "source": V25_Q4_AC_SWAP_OBSERVE_AUTHORIZATION_SOURCE,
         }
     if cell_condensed_profile:
         cell_is_exact = specification.solver.get('preconditioner') == CELL_CONDENSED_EXACT_PROFILE
@@ -3335,6 +3379,18 @@ def launch_specification(
             adapter_identity=adapter,
             start_time=start_time,
         )
+        if coarse_degree_v25_profile:
+            manifest.update(
+                {
+                    "swap_policy": (
+                        "observe_only" if v25_swap_observe else "require_zero_swap"
+                    ),
+                    "require_zero_swap": bool(
+                        specification.execution["require_zero_swap"]
+                    ),
+                }
+            )
+            _write_json(run_directory / "run_manifest.json", manifest)
         if (
             (schur_v14 or blr_profile or cell_condensed_profile)
             and physical_candidate
@@ -3433,7 +3489,8 @@ def launch_specification(
                         )
                     if schur_v14 or blr_profile or cell_condensed_profile:
                         watchdog_kwargs.update(
-                            stop_on_global_swap=True,
+                            stop_on_global_swap=not v25_swap_observe,
+                            allow_swap_observation=v25_swap_observe,
                             grace_seconds=30,
                             hard_stop_immediate=True,
                             cooperative_performance_stop=False,
@@ -3557,8 +3614,23 @@ def launch_specification(
                         source_after = {'provenance_passed': False, 'error': str(exc)}
                         result['result_classification'] = 'EVIDENCE_INCOMPLETE'
                     zero_swap = authority['job_swap_activity'] == 'zero_supported_by_zero_global_activity'
-                    result['job_swap_qualification'] = 'qualified_zero' if zero_swap else 'UNRESOLVED'
-                    if not zero_swap and result['result_classification'] == 'worker_exit0':
+                    result['swap_policy'] = (
+                        'observe_only' if v25_swap_observe else 'require_zero_swap'
+                    )
+                    result['swap_gate_enforced'] = not v25_swap_observe
+                    if v25_swap_observe:
+                        result['job_swap_qualification'] = (
+                            'observed_zero_not_a_gate'
+                            if zero_swap
+                            else 'observed_not_a_gate'
+                        )
+                    else:
+                        result['job_swap_qualification'] = 'qualified_zero' if zero_swap else 'UNRESOLVED'
+                    if (
+                        not zero_swap
+                        and result['result_classification'] == 'worker_exit0'
+                        and not v25_swap_observe
+                    ):
                         result['result_classification'] = 'EVIDENCE_INCOMPLETE'
                     manifest['requested_legacy_resource_fields'] = {
                         key: specification.execution[key] for key in
@@ -3568,6 +3640,14 @@ def launch_specification(
                         'launch_envelope': authority['launch_envelope'], 'warning_fraction': 0.85,
                         'workflow_seconds': workflow_limit, 'solve_seconds': None if pc_profile is not None else solve_limit,
                         'scope': authority['memory_scope'], 'legacy_resource_fields_enforced': False,
+                        'swap_policy': result['swap_policy'],
+                        'swap_gate_enforced': result['swap_gate_enforced'],
+                        'process_tree_swap_gate_enforced': authority.get(
+                            'process_tree_swap_gate_enforced', not v25_swap_observe
+                        ),
+                        'global_swap_gate_enforced': authority.get(
+                            'global_swap_gate_enforced', not v25_swap_observe
+                        ),
                             **(
                             v14_time_policy_facts(v14_time_policy)
                             if schur_v14 or blr_profile or cell_condensed_profile

@@ -298,6 +298,7 @@ class _V14Runtime:
         source_sha: str,
         batch_identity: str = "review_v14",
         evidence_prefix: str = "v14",
+        require_zero_swap: bool = True,
     ) -> None:
         self.directory = directory
         self.stage = stage
@@ -306,6 +307,7 @@ class _V14Runtime:
         self.source_sha = source_sha
         self.batch_identity = str(batch_identity)
         self.evidence_prefix = str(evidence_prefix)
+        self.require_zero_swap = bool(require_zero_swap)
         if not self.batch_identity or not self.evidence_prefix:
             raise ValueError("runtime batch identity and evidence prefix are required")
         self.events_path = directory / f"{self.evidence_prefix}_events.jsonl"
@@ -836,6 +838,10 @@ class _V14Runtime:
                 "inventory_peak_bytes": self.inventory_peak_bytes,
                 "workspace_live_bytes": self.workspace_live_bytes,
                 "workspace_peak_bytes": self.workspace_peak_bytes,
+                "require_zero_swap": self.require_zero_swap,
+                "swap_policy": (
+                    "require_zero_swap" if self.require_zero_swap else "observe_only"
+                ),
                 "cap_policy": (
                     "current_tree_rss+available-reserve; no startup/static cap"
                     if self.physical_memory_pressure
@@ -852,7 +858,7 @@ class _V14Runtime:
         _append_jsonl(self.resources_path, value)
         if enforce and (
             not value["all_status_readable"]
-            or int(value["swap_bytes"]) != 0
+            or (self.require_zero_swap and int(value["swap_bytes"]) != 0)
             or int(envelope["effective_available_bytes"]) < int(envelope["reserve_bytes"])
             or int(value["rss_bytes"]) >= cap
             or (
@@ -6441,11 +6447,13 @@ def _v14_resource_facts(runtime: _V14Runtime) -> dict[str, Any]:
     """Stream worker-emitted parent-tree samples without retaining the log."""
 
     path = Path(runtime.resources_path)
+    require_zero_swap = bool(getattr(runtime, "require_zero_swap", True))
     facts = {
         "path": str(path), "status": "MISSING", "sample_count": 0,
         "scope": "worker-emitted samples of the parent process tree through this call",
         "final_parent_cleanup_included": False,
         "final_authority": "settled parent run_summary and watchdog/summary.json",
+        "swap_gate_enforced": require_zero_swap,
         "zero_swap": True, "all_status_readable": True, "pss_all_readable": True,
         "rss_peak_bytes": None, "pss_peak_bytes": None, "swap_peak_bytes": None,
         "ledger_inventory_peak_bytes": 0, "ledger_workspace_peak_bytes": 0,
@@ -6485,6 +6493,10 @@ def _v14_resource_facts(runtime: _V14Runtime) -> dict[str, Any]:
                         workspace_cap is None or workspace_value <= workspace_cap
                     ),
                 }
+                gate_checks = dict(checks)
+                gate_checks["zero_swap"] = (
+                    checks["zero_swap"] or not require_zero_swap
+                )
                 facts["zero_swap"] &= checks["zero_swap"]
                 facts["all_status_readable"] &= checks["readable"]
                 for name, value in (("rss_peak_bytes", rss), ("swap_peak_bytes", swap)):
@@ -6497,8 +6509,8 @@ def _v14_resource_facts(runtime: _V14Runtime) -> dict[str, Any]:
                 facts["ledger_inventory_peak_bytes"] = max(facts["ledger_inventory_peak_bytes"], int(row["inventory_peak_bytes"]))
                 facts["ledger_workspace_peak_bytes"] = max(facts["ledger_workspace_peak_bytes"], int(row["workspace_peak_bytes"]))
                 facts["last_timestamp_ns"] = row["timestamp_ns"]
-                if not all(checks.values()) and facts["first_failed_sample"] is None:
-                    facts["first_failed_sample"] = {"line": line_number, "label": row["label"], "checks": checks}
+                if not all(gate_checks.values()) and facts["first_failed_sample"] is None:
+                    facts["first_failed_sample"] = {"line": line_number, "label": row["label"], "checks": gate_checks}
         facts["sha256"] = _sha256_file(path)
         facts["status"] = "AVAILABLE" if facts["sample_count"] else "EMPTY"
         facts["gate"] = bool(facts["sample_count"] and facts["first_failed_sample"] is None)

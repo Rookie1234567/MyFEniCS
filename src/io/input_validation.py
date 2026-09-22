@@ -27,6 +27,9 @@ from .input_schema import (
 _SAFE_ID = re.compile(r"^[A-Za-z0-9_.-]+$")
 _IDENTITY_SET = set(IDENTITY_KEYS)
 _SECTION_SET = set(SECTION_NAMES)
+_V25_Q4_AC_SWAP_OBSERVE_RUN_ID = (
+    "task39extra_v25_q4_ac_swap_observe_original_h7p5"
+)
 
 
 def _error(path: str, message: str) -> InputError:
@@ -1004,6 +1007,11 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                         "solver.stage",
                         f"{preconditioner} requires an explicit Q4_ORIGINAL, Q3_ORIGINAL, or Q2_ORIGINAL stage",
                     )
+                swap_observation_only = (
+                    stage == "Q4_ORIGINAL"
+                    and config["run_id"] == _V25_Q4_AC_SWAP_OBSERVE_RUN_ID
+                )
+                expected_require_zero_swap = not swap_observation_only
                 for section, key, actual, expected in (
                     ("solver", "restart", solver["restart"], 32),
                     ("solver", "max_iterations", solver["max_iterations"], 2048),
@@ -1021,7 +1029,12 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                         execution["timeout_seconds"],
                         stage_budgets[stage][0],
                     ),
-                    ("execution", "require_zero_swap", execution["require_zero_swap"], True),
+                    (
+                        "execution",
+                        "require_zero_swap",
+                        execution["require_zero_swap"],
+                        expected_require_zero_swap,
+                    ),
                     ("discretization", "nedelec_degree", discretization["nedelec_degree"], 6),
                     ("discretization", "mesh_target_nm", discretization["mesh_target_nm"], 7.5),
                 ):

@@ -2,6 +2,8 @@
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
+import sys
 
 import pytest
 
@@ -39,6 +41,28 @@ def test_v25_inputs_bind_direct_coarse_degree_to_each_stage():
         )
         assert specification.solver["thread_contract"] == "mpi1_omp1_blas1_v25"
         assert specification.as_jsonable()["derived"]["physical_intermediate_profile"] == thaw(facts)
+
+
+def test_v25_q4_swap_observe_input_is_the_only_nonzero_swap_policy():
+    observed = load_and_resolve(
+        ROOT / "input/task39extra/v25_q4_ac_swap_observe_h7p5.dat"
+    )
+    original = load_and_resolve(ROOT / "input/task39extra/v25_q4_speed_h7p5.dat")
+    repeat = load_and_resolve(ROOT / "input/task39extra/v25_q4_ac_repeat_h7p5.dat")
+    assert observed.execution["require_zero_swap"] is False
+    assert original.execution["require_zero_swap"] is True
+    assert repeat.execution["require_zero_swap"] is True
+    for key in (
+        "geometry",
+        "materials",
+        "incidence",
+        "discretization",
+        "boundary",
+        "method",
+        "solver",
+        "output",
+    ):
+        assert observed.as_jsonable()[key] == original.as_jsonable()[key]
 
 
 def test_v24_resolved_identity_does_not_gain_v25_backend_fields():
@@ -154,6 +178,15 @@ def _v25_ac_repeat_auth():
     }
 
 
+def _v25_ac_swap_observe_auth():
+    return {
+        "authorization_id": launcher.V25_Q4_AC_SWAP_OBSERVE_AUTHORIZATION_ID,
+        "run_id": launcher.V25_Q4_AC_SWAP_OBSERVE_RUN_ID,
+        "scope": "user_authorized_swap_observe_repeat",
+        "source": launcher.V25_Q4_AC_SWAP_OBSERVE_AUTHORIZATION_SOURCE,
+    }
+
+
 def _reserve_v25_ac_repeat(tmp_path, *, source_sha="d" * 40):
     _copy_v25_ledger(tmp_path)
     return launcher._reserve_v25_shared_budget(
@@ -208,6 +241,249 @@ def test_v25_q4_ac_repeat_rejects_duplicate_authorization(tmp_path):
             time_policy="observe_only",
             authorized_performance_repeat=_v25_ac_repeat_auth(),
         )
+
+
+def test_v25_q4_swap_observe_uses_an_independent_immutable_snapshot(tmp_path):
+    ledger_path = _copy_v25_ledger(tmp_path)
+    before = ledger_path.read_bytes()
+    lease = launcher._reserve_v25_shared_budget(
+        tmp_path,
+        tmp_path / "results" / "ac-swap-observe",
+        source_sha="d" * 40,
+        stage="Q4_ORIGINAL",
+        stage_budget={"workflow_seconds": 43200.0},
+        workflow_clock_start={"monotonic": 1.0},
+        time_policy="observe_only",
+        authorized_performance_repeat=_v25_ac_swap_observe_auth(),
+    )
+    after = json.loads(ledger_path.read_text())
+    snapshot = ledger_path.with_name(
+        launcher.V25_Q4_AC_SWAP_OBSERVE_SNAPSHOT_FILENAME
+    )
+    attempt = after["stages"]["Q4_ORIGINAL"]["attempts"][-1]
+    assert lease["authorized_performance_repeat"]["run_id"] == (
+        launcher.V25_Q4_AC_SWAP_OBSERVE_RUN_ID
+    )
+    assert attempt["authorized_performance_repeat"]["scope"] == (
+        "user_authorized_swap_observe_repeat"
+    )
+    assert after["authorized_performance_repeats"][-1]["run_id"] == (
+        launcher.V25_Q4_AC_SWAP_OBSERVE_RUN_ID
+    )
+    assert snapshot.read_bytes() == before
+    assert snapshot.stat().st_mode & 0o777 == 0o444
+
+
+def test_v25_q4_swap_observe_rejects_duplicate_authorization(tmp_path):
+    auth = _v25_ac_swap_observe_auth()
+    _copy_v25_ledger(tmp_path)
+    for directory_name in ("first", "duplicate"):
+        if directory_name == "first":
+            launcher._reserve_v25_shared_budget(
+                tmp_path,
+                tmp_path / "results" / directory_name,
+                source_sha="d" * 40,
+                stage="Q4_ORIGINAL",
+                stage_budget={"workflow_seconds": 43200.0},
+                workflow_clock_start={"monotonic": 1.0},
+                time_policy="observe_only",
+                authorized_performance_repeat=auth,
+            )
+            continue
+        with pytest.raises(InputError, match="authorized performance repeat already consumed"):
+            launcher._reserve_v25_shared_budget(
+                tmp_path,
+                tmp_path / "results" / directory_name,
+                source_sha="e" * 40,
+                stage="Q4_ORIGINAL",
+                stage_budget={"workflow_seconds": 43200.0},
+                workflow_clock_start={"monotonic": 2.0},
+                time_policy="observe_only",
+                authorized_performance_repeat=auth,
+            )
+
+
+def test_v25_watchdog_swap_observation_records_without_bypassing_memory_gate(
+    monkeypatch, tmp_path
+):
+    from benchmarks import subreaper_watchdog
+
+    original_snapshot = subreaper_watchdog.process_tree_snapshot
+
+    def swapped_snapshot(*args, **kwargs):
+        row = original_snapshot(*args, **kwargs)
+        if row["exit_code"] is None:
+            row["swap_bytes"] = 1
+        return row
+
+    monkeypatch.setattr(subreaper_watchdog, "process_tree_snapshot", swapped_snapshot)
+    monkeypatch.setattr(
+        subreaper_watchdog,
+        "vmstat_swap_pages",
+        lambda: {"pswpin_pages": 0, "pswpout_pages": 0},
+    )
+    command = [sys.executable, "-c", "import time; time.sleep(.08)"]
+    enforced = subreaper_watchdog.supervise(
+        command,
+        tmp_path / "enforced",
+        wall_seconds=2.0,
+        interval=0.01,
+        grace_seconds=0.1,
+        hard_stop_immediate=True,
+        stop_on_global_swap=True,
+    )
+    observed = subreaper_watchdog.supervise(
+        command,
+        tmp_path / "observed",
+        wall_seconds=2.0,
+        interval=0.01,
+        grace_seconds=0.1,
+        hard_stop_immediate=True,
+        allow_swap_observation=True,
+    )
+    assert enforced["classification"] == "RESOURCE_CONTROLLED_STOP"
+    assert observed["classification"] == "COMPLETED"
+    assert observed["swap_policy"] == "observe_only"
+    assert observed["sampled_process_tree_swap_peak_bytes"] == 1
+    assert observed["job_swap_activity"] == "observed_process_tree_swap"
+
+
+def test_v25_watchdog_swap_observation_records_global_activity(monkeypatch, tmp_path):
+    from benchmarks import subreaper_watchdog
+
+    original_snapshot = subreaper_watchdog.process_tree_snapshot
+
+    def swapped_snapshot(*args, **kwargs):
+        row = original_snapshot(*args, **kwargs)
+        if row["exit_code"] is None:
+            row["swap_bytes"] = 1
+        return row
+
+    swap_calls = 0
+
+    def vmstat():
+        nonlocal swap_calls
+        swap_calls += 1
+        return {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0 if swap_calls == 1 else 1,
+        }
+
+    monkeypatch.setattr(subreaper_watchdog, "process_tree_snapshot", swapped_snapshot)
+    monkeypatch.setattr(subreaper_watchdog, "vmstat_swap_pages", vmstat)
+    result = subreaper_watchdog.supervise(
+        [sys.executable, "-c", "import time; time.sleep(.08)"],
+        tmp_path / "global-growth",
+        wall_seconds=2.0,
+        interval=0.01,
+        grace_seconds=0.1,
+        hard_stop_immediate=True,
+        allow_swap_observation=True,
+    )
+    assert result["classification"] == "COMPLETED"
+    assert result["global_swap_activity"]["delta"]["pswpout_pages"] == 1
+    assert result["job_swap_activity"] == "observed_process_tree_swap"
+
+
+@pytest.mark.parametrize(
+    "failure", ["physical_memory", "monitoring"],
+)
+def test_v25_swap_observation_keeps_physical_safety_gates(
+    monkeypatch, tmp_path, failure
+):
+    from benchmarks import subreaper_watchdog
+
+    original_snapshot = subreaper_watchdog.process_tree_snapshot
+    original_envelope = subreaper_watchdog.memory_envelope
+    envelope_calls = 0
+
+    def snapshot(*args, **kwargs):
+        row = original_snapshot(*args, **kwargs)
+        if row["exit_code"] is None:
+            row["swap_bytes"] = 1
+            if failure == "monitoring":
+                row["all_status_readable"] = False
+        return row
+
+    def envelope(policy=subreaper_watchdog.LEGACY_MEMORY_POLICY):
+        nonlocal envelope_calls
+        envelope_calls += 1
+        row = original_envelope(policy)
+        if failure == "physical_memory" and envelope_calls >= 2:
+            row["effective_available_bytes"] = row["reserve_bytes"] - 1
+        return row
+
+    monkeypatch.setattr(subreaper_watchdog, "process_tree_snapshot", snapshot)
+    monkeypatch.setattr(subreaper_watchdog, "memory_envelope", envelope)
+    monkeypatch.setattr(
+        subreaper_watchdog,
+        "vmstat_swap_pages",
+        lambda: {"pswpin_pages": 0, "pswpout_pages": 0},
+    )
+    result = subreaper_watchdog.supervise(
+        [sys.executable, "-c", "import time; time.sleep(60)"],
+        tmp_path / failure,
+        wall_seconds=2.0,
+        interval=0.01,
+        grace_seconds=0.1,
+        hard_stop_immediate=True,
+        allow_swap_observation=True,
+    )
+    assert result["classification"] == (
+        "RESOURCE_CONTROLLED_STOP"
+        if failure == "physical_memory"
+        else "MONITORING_FAILED"
+    )
+    assert result["descendants_cleared"] is True
+
+
+def test_v25_worker_resource_facts_keep_observed_swap_outside_observe_gate(tmp_path):
+    from src.runners.physical_p4_schur_v14 import _v14_resource_facts
+
+    path = tmp_path / "worker_resources.jsonl"
+    row = {
+        "rss_bytes": 100,
+        "swap_bytes": 1,
+        "memory_envelope": {
+            "effective_available_bytes": 1000,
+            "reserve_bytes": 100,
+        },
+        "inventory_memory_cap_bytes": None,
+        "inventory_used_bytes": 0,
+        "workspace_live_bytes": 0,
+        "all_status_readable": True,
+        "pss_bytes": 100,
+        "pss_all_readable": True,
+        "launch_cap_bytes": 200,
+        "inventory_peak_bytes": 0,
+        "workspace_peak_bytes": 0,
+        "timestamp_ns": 1,
+        "label": "synthetic",
+    }
+    path.write_text(json.dumps(row) + "\n", encoding="utf-8")
+    runtime = SimpleNamespace(
+        resources_path=path,
+        inventory_cap=None,
+        physical_memory_pressure=True,
+        workspace_cap=None,
+        require_zero_swap=False,
+    )
+    facts = _v14_resource_facts(runtime)
+    assert facts["zero_swap"] is False
+    assert facts["swap_gate_enforced"] is False
+    assert facts["gate"] is True
+    strict_facts = _v14_resource_facts(
+        SimpleNamespace(
+            resources_path=path,
+            inventory_cap=None,
+            physical_memory_pressure=True,
+            workspace_cap=None,
+            require_zero_swap=True,
+        )
+    )
+    assert strict_facts["zero_swap"] is False
+    assert strict_facts["swap_gate_enforced"] is True
+    assert strict_facts["gate"] is False
 
 
 def test_v25_old_q4_path_keeps_hash_bound_replay_gate(tmp_path):
