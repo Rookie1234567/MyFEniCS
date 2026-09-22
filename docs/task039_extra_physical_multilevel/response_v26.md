@@ -104,3 +104,20 @@ watchdog 60683 个样本的 RSS 全可读，RSS peak 2702069760 B；PSS observed
 S6 保留了 source/input/config、run summary、watchdog、资源增量、全样本 RSS/PSS/余量、清场状态、Q2 iteration 1048 真残差、未完成 PC/Aq 的 partial/unknown 分类和所有未运行终态。既有 FE audit glue 已以最小可审阅形式提升到 `benchmarks/fe_metric_v25_q4_glue.py`，只修正 repository-root `parents` 层级；旧 ignored tool SHA 和 audit 中记录的旧 SHA 均保留，提升后不重算 FE。没有用未过 1e-6 的场生成 Q2 official result，没有重启 Q2、第四场或新算法。
 
 交付入口为 [V25 outcome](outcomes/a6_h6_coarse_degree_v25.md)、[components](outcomes/records/a6_h6_coarse_degree_v25_components.json)、[frozen manifest](outcomes/records/a6_h6_coarse_degree_v25_frozen_manifest.json)、[Q4](outcomes/records/a6_h6_coarse_degree_v25_q4.json)、[Q3](outcomes/records/a6_h6_coarse_degree_v25_q3.json)、[Q2](outcomes/records/a6_h6_coarse_degree_v25_q2.json)、[decision](outcomes/records/a6_h6_coarse_degree_v25_decision.json) 和 [selective merge manifest V25](outcomes/selective_merge_manifest_v25.md)。ordinary default 不变，master merge 仍需明确批准和用户授权。
+
+## 用户追加授权：Q4 AC 重复运行
+
+用户授权了一个独立的 Q4 original AC 重复运行，输入、物理模型、p6/h7.5、粗阶 p4、MPI1/thread1 和求解器参数保持不变；本次仅使用 `run_id` 分支记录授权，不改变数值算法，也不重跑 Q3/Q2/notch。旧 Q4 通过结果保持为独立历史记录。
+
+该重复运行在 `iteration=18` 的 outer-PC 记录后受控停止，未产生 `iteration=32` 检查点、终态 KSP、final native check、post-release residual、field 或 official output。退出码为 `-9`，watchdog 分类为 `GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED`：作业进程树采样的 VmSwap 峰值为 0 B、RSS/PSS 峰值为 7314296832/7282536448 B，时间门未超限；WSL 全局 pswpout 从 7 增至 9，但不能归因于该作业。因此该次记录是资源受控停止，不是 OOM 证明，也不是数值方法失败。
+
+在唯一完整落盘的 16 步检查点，按 `solve_seconds` 原始字段同口径比较：
+
+| 记录 | 显式真残差 | 原始 solve_seconds（s） | 全进程树 RSS/PSS（B） |
+|---|---:|---:|---:|
+| 本次 AC 重复 | 0.0041437222964080065 | 356.40948556199953 | 7299502080 / 7267741696 |
+| 前一 Q4 案例 | 0.0041437222964080065 | 356.4489566070092 | 7290662912 / 7258555392 |
+
+本次耗时少 0.03947104500967 s；残差完全一致。对应 `pc=16` 的 p4 baseline `logical_call=1` 也有记录：两次 `native_A4_relative_residual` 都是 `9.12762008915742e-12`，本次 p4 elapsed 为 0.8213633970008232 s，前一案例为 0.8465250529989135 s；p4 原始记录没有独立内存字段。该次重复运行未到 iteration 112，因此既有 V24/Q4 的 iteration-112 p4 baseline 结论不变。
+
+重复运行的 compact 记录见 [v25 Q4 AC repeat result](outcomes/records/v25_q4_ac_repeat_result.json)，原始动态 checker 因终态字段缺失而标为 partial `DYNAMIC_FAIL`，这只确认“未完成”，不把受控停止误判成 solver convergence failure。

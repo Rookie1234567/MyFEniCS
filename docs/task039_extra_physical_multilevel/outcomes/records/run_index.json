@@ -2545,6 +2545,55 @@
       }
     },
     {
+      "id": "V25_Q4_authorized_AC_repeat_controlled_stop",
+      "source_sha": "88c0ed93742d3266a3d5af1d83955b0413fdd369",
+      "stage": "Q4_ORIGINAL",
+      "raw_root": "results/euv_grazing1_phi0/task39extra_v25_q4_ac_repeat_original_h7p5__full3d_iterative__mpi1__Mna/20260922T014519.522186Z",
+      "status": "RESOURCE_CONTROLLED_STOP",
+      "classification": "GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED / CONVERGENCE_NOT_ESTABLISHED_BEFORE_STOP",
+      "official_result": false,
+      "authorized_performance_repeat": true,
+      "authorization_id": "user_authorized_performance_repeat_20260922",
+      "coarse_degree": 4,
+      "input": "input/task39extra/v25_q4_ac_repeat_h7p5.dat",
+      "input_sha256": "a2e68ead115eb49e05853da3233034d564c039bb4c620d3a4689cff2c417a7db",
+      "resolved_config_sha256": "04e53c8eda3ba4bf9d3eba2f37552b764e274a2e20f5b4220a1d1855a889fcd9",
+      "solver": {
+        "last_recorded_iteration": 18,
+        "last_explicit_residual_iteration": 16,
+        "last_explicit_residual": 0.0041437222964080065,
+        "iteration_32_recorded": false,
+        "checkpoint_16_solve_seconds": 356.40948556199953,
+        "checkpoint_16_previous_q4_solve_seconds": 356.4489566070092
+      },
+      "resources": {
+        "process_tree_rss_peak_bytes": 7314296832,
+        "process_tree_pss_peak_observed_bytes": 7282536448,
+        "swap_peak_bytes": 0,
+        "sample_count": 4605,
+        "resource_sha256": "a7e58e7457eeedf9d4f88d112b58632df9546b5321ad2654d5f69c88db317aaf",
+        "descendants_cleared": true
+      },
+      "not_run": [
+        "iteration_32_checkpoint",
+        "final_ksp_end",
+        "final_native_check",
+        "post_release_residual",
+        "final_field",
+        "official_output",
+        "terminal_dynamic_checker_pass"
+      ],
+      "evidence": {
+        "run_summary": "results/euv_grazing1_phi0/task39extra_v25_q4_ac_repeat_original_h7p5__full3d_iterative__mpi1__Mna/20260922T014519.522186Z/run_summary.json",
+        "monitor_residuals": "results/euv_grazing1_phi0/task39extra_v25_q4_ac_repeat_original_h7p5__full3d_iterative__mpi1__Mna/20260922T014519.522186Z/monitor_residuals.jsonl",
+        "watchdog": "results/euv_grazing1_phi0/task39extra_v25_q4_ac_repeat_original_h7p5__full3d_iterative__mpi1__Mna/20260922T014519.522186Z/watchdog/resources.jsonl",
+        "checker": "results/euv_grazing1_phi0/task39extra_v25_q4_ac_repeat_original_h7p5__full3d_iterative__mpi1__Mna/20260922T014519.522186Z/v25q4_dynamic_checker.json",
+        "compact": "docs/task039_extra_physical_multilevel/outcomes/records/v25_q4_ac_repeat_result.json",
+        "outcome": "docs/task039_extra_physical_multilevel/outcomes/v25_q4_ac_repeat.md",
+        "response": "docs/task039_extra_physical_multilevel/response_v26.md"
+      }
+    },
+    {
       "id": "V24_Z3_original_h7p5_laptop_speed_formal",
       "source_sha": "b480178314efdf434c5f7405f2ab356ff9137c17",
       "stage": "Z3_ORIGINAL_H7P5",

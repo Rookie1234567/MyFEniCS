@@ -1,6 +1,6 @@
 {
   "schema": "task039extra.v25.q4-ac-repeat.authorization.v1",
-  "status": "AUTHORIZED_PRE_RUN",
+  "status": "RESOURCE_CONTROLLED_STOP",
   "authorization_id": "user_authorized_performance_repeat_20260922",
   "authorization_source": "user_supplemental_authorization_20260922",
   "scope": "one additional Q4 original performance repeat on the personal laptop",
@@ -42,5 +42,35 @@
     "no_numerical_algorithm_change": true,
     "no_q3_q2_or_notch": true,
     "no_system_power_change": true
+  },
+  "result": {
+    "classification": "GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED / CONVERGENCE_NOT_ESTABLISHED_BEFORE_STOP",
+    "official_result": false,
+    "service_unit": "myfenics-case-20260922T014519-846383.service",
+    "service_log": "benchmarks/artifacts/user_services/myfenics-case-20260922T014519-846383.log",
+    "service_log_sha256": "a6dbd6dae8b8c3ecb2345b210473359e5965b67aa55a16616d3ea85aaa2b2bf9",
+    "exit_status": -9,
+    "run_directory": "results/euv_grazing1_phi0/task39extra_v25_q4_ac_repeat_original_h7p5__full3d_iterative__mpi1__Mna/20260922T014519.522186Z",
+    "full_workflow_monotonic_seconds": 1246.2973061680095,
+    "time_gate_exceeded": false,
+    "process_tree_rss_peak_bytes": 7314296832,
+    "process_tree_pss_peak_observed_bytes": 7282536448,
+    "process_tree_swap_peak_bytes": 0,
+    "last_recorded_iteration": 18,
+    "last_explicit_residual_iteration": 16,
+    "last_explicit_true_residual": 0.0041437222964080065,
+    "iteration_32_recorded": false,
+    "compact_record": "docs/task039_extra_physical_multilevel/outcomes/records/v25_q4_ac_repeat_result.json",
+    "compact_record_sha256": "5f0868213488b625db14f9111bf6efa0fb9440c3b6f8ad1c331bb52f3a6b5656",
+    "checker": {
+      "path": "results/euv_grazing1_phi0/task39extra_v25_q4_ac_repeat_original_h7p5__full3d_iterative__mpi1__Mna/20260922T014519.522186Z/v25q4_dynamic_checker.json",
+      "sha256": "716a411a2824d25c8d0d922d9f13cf4ead2a348a082902ec0d1a11c8880aaca1",
+      "status": "DYNAMIC_FAIL",
+      "partial": true
+    },
+    "end_power_state": {
+      "wsl_ac1_online": 1,
+      "power_settings_changed": false
+    }
   }
 }
