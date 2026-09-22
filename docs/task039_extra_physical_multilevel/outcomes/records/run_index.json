@@ -2594,6 +2594,69 @@
       }
     },
     {
+      "id": "V25_Q4_authorized_AC_swap_observe_r2_pass",
+      "source_sha": "4bf2bba56cc2e568d56ff3096aeb4a108744f28d",
+      "stage": "Q4_ORIGINAL",
+      "raw_root": "results/euv_grazing1_phi0/task39extra_v25_q4_ac_swap_observe_r2_h7p5__full3d_iterative__mpi1__Mna/20260922T033647.910623Z",
+      "status": "Q4_ORIGINAL_AUTHORITY_LIMITED_PASS",
+      "classification": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+      "official_result": true,
+      "authorized_performance_repeat": true,
+      "authorization_id": "user_authorized_swap_observe_r2_20260922",
+      "authorization_source": "user_supplemental_authorization_swap_observe_r2_20260922",
+      "coarse_degree": 4,
+      "input": "input/task39extra/v25_q4_ac_swap_observe_r2_h7p5.dat",
+      "input_sha256": "07450802d1c6bcfbdb6b4d4836f118a7ca58c0631dca57a6a8667737d2a7f64d",
+      "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+      "resolved_config_sha256": "ada04581b9e9e6421438983b05045ca0dcda8e0478f3e2b156a5ebc98f673eba",
+      "solver": {
+        "iterations": 126,
+        "final_explicit_residual": 9.283165086752956e-7,
+        "post_release_explicit_residual": 9.283165086752956e-7,
+        "solver_elapsed_seconds": 2514.9931942840362,
+        "full_workflow_monotonic_seconds": 3114.283619607013,
+        "checkpoint_16_solve_seconds": 323.3362546709826,
+        "checkpoint_112_solve_seconds": 2225.8895136200404,
+        "checkpoint_112_previous_q4_solve_seconds": 3437.2333360950015,
+        "checkpoint_residuals_match_previous_q4": true
+      },
+      "resources": {
+        "process_tree_rss_peak_bytes": 7390937088,
+        "worker_rss_peak_bytes": 7386742784,
+        "worker_pss_peak_bytes": 7354803200,
+        "process_tree_swap_peak_bytes": 0,
+        "global_swap_pages_baseline": 9,
+        "global_swap_pages_end": 9,
+        "global_swap_pages_delta": 0,
+        "job_swap_qualification": "zero_supported_by_zero_global_activity",
+        "swap_policy": "observe_only",
+        "require_zero_swap": false,
+        "resource_gate": true,
+        "watchdog_classification": "COMPLETED",
+        "descendants_cleared": true
+      },
+      "power": {
+        "ac1_start": true,
+        "ac1_end": true,
+        "power_settings_changed": false,
+        "prelaunch_probe": "not_read_due_to_missing_activation"
+      },
+      "checker": {
+        "status": "DYNAMIC_PASS",
+        "dynamic_passed": true,
+        "gate_failures": []
+      },
+      "evidence": {
+        "run_summary": "results/euv_grazing1_phi0/task39extra_v25_q4_ac_swap_observe_r2_h7p5__full3d_iterative__mpi1__Mna/20260922T033647.910623Z/run_summary.json",
+        "watchdog": "results/euv_grazing1_phi0/task39extra_v25_q4_ac_swap_observe_r2_h7p5__full3d_iterative__mpi1__Mna/20260922T033647.910623Z/watchdog/summary.json",
+        "physical_summary": "results/euv_grazing1_phi0/task39extra_v25_q4_ac_swap_observe_r2_h7p5__full3d_iterative__mpi1__Mna/20260922T033647.910623Z/physical_dual_condensed_coarse_degree_v25_summary.json",
+        "checker": "results/euv_grazing1_phi0/task39extra_v25_q4_ac_swap_observe_r2_h7p5__full3d_iterative__mpi1__Mna/20260922T033647.910623Z/v25q4_dynamic_checker.json",
+        "compact": "docs/task039_extra_physical_multilevel/outcomes/records/v25_q4_ac_swap_observe_r2_result.json",
+        "outcome": "docs/task039_extra_physical_multilevel/outcomes/v25_q4_ac_swap_observe_r2.md",
+        "response": "docs/task039_extra_physical_multilevel/response_v26.md"
+      }
+    },
+    {
       "id": "V24_Z3_original_h7p5_laptop_speed_formal",
       "source_sha": "b480178314efdf434c5f7405f2ab356ff9137c17",
       "stage": "Z3_ORIGINAL_H7P5",

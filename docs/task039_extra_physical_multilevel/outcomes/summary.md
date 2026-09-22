@@ -13,6 +13,22 @@ V24 是同一模型已完成场的最快整体 workflow；Q4 是 V25 完成场�
 
 同迭代 112 的 p4 基线：V24 真残差/solve_seconds/RSS/PSS = 2.7139958442857524e-6 / 3606.8307935579464 s / 7334645760 / 7302341632 B；Q4 = 2.71399585136905e-6 / 3437.2333360950015 s / 7384477696 / 7352336384 B。每 16 次的 8/16/32/64/96/112/128 checkpoints 与 endpoint 已在 [V25 outcome](a6_h6_coarse_degree_v25.md) 中逐项记录；无记录项保持“—”。
 
+## V25 Q4 AC 重跑 r2：正常完成，残差与上一完整 Q4 一致
+
+用户在上次 AC 重复被控停止后授权同配置 r2。r2 没有改数值算法；它在第 126 步正常达到 `9.283165086752956e-7`，worker/service 退出 `0`，watchdog `COMPLETED`，动态 checker `DYNAMIC_PASS`，物理检查和资源检查通过。结果仍为 authority-limited discrete pass，没有匹配 reference，也不外推连续极限。
+
+| 检查点 | r2 真残差 | r2 `solve_seconds`（s） | 前一完整 Q4（s） | 节省（s） |
+|---:|---:|---:|---:|---:|
+| 16 | 0.0041437222964080065 | 323.3362546709826 | 356.4489566070092 | 33.11270193602661 |
+| 32 | 0.0003352917960387092 | 635.7431107280124 | 699.1251847339931 | 63.38207400598071 |
+| 48 | 0.00019419221371048617 | 957.0546633300296 | 1059.2216401279873 | 102.16697679795766 |
+| 64 | 3.0233523443058283e-5 | 1270.2234611949964 | 1399.241939390997 | 129.01847819600061 |
+| 80 | 1.760946862124978e-5 | 1590.69534846704 | 1914.236668254 | 323.54131978696 |
+| 96 | 3.7766998795463687e-6 | 1903.8770562190532 | 2676.8190681720002 | 772.942011952947 |
+| 112 | 2.71399585136905e-6 | 2225.8895136200404 | 3437.2333360950015 | 1211.3438224749611 |
+
+112 步 p4 对照也已落盘：两次 logical call 的 r2/前一完整 Q4 残差分别完全一致为 `3.578488052253746e-11`、`3.470567778839567e-13`；elapsed 分别为 `0.7877780729904771/1.7836893460043939 s` 和 `0.7901757570216432/1.907731957995565 s`。p4 独立内存字段没有记录。完整表和 AC1 起止观察见 [r2 outcome](v25_q4_ac_swap_observe_r2.md) 与 [r2 compact](records/v25_q4_ac_swap_observe_r2_result.json)。
+
 S6 没有重跑 PDE、第四场或修改 swap 规则。既有 FE audit glue 以最小 tracked utility 提升到 benchmarks/fe_metric_v25_q4_glue.py，仅修正 repository-root parents 层级，保留旧 tool SHA，提升后不重算 FE。机器可读证据见 [components](records/a6_h6_coarse_degree_v25_components.json)、[frozen manifest](records/a6_h6_coarse_degree_v25_frozen_manifest.json)、[Q4](records/a6_h6_coarse_degree_v25_q4.json)、[Q3](records/a6_h6_coarse_degree_v25_q3.json)、[Q2](records/a6_h6_coarse_degree_v25_q2.json)、[decision](records/a6_h6_coarse_degree_v25_decision.json) 和 [selective merge manifest](selective_merge_manifest_v25.md)。
 
 ## V24-1 正式 B：laptop-speed discrete pass，authority limited

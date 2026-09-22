@@ -121,3 +121,25 @@ S6 保留了 source/input/config、run summary、watchdog、资源增量、全�
 本次耗时少 0.03947104500967 s；残差完全一致。对应 `pc=16` 的 p4 baseline `logical_call=1` 也有记录：两次 `native_A4_relative_residual` 都是 `9.12762008915742e-12`，本次 p4 elapsed 为 0.8213633970008232 s，前一案例为 0.8465250529989135 s；p4 原始记录没有独立内存字段。该次重复运行未到 iteration 112，因此既有 V24/Q4 的 iteration-112 p4 baseline 结论不变。
 
 重复运行的 compact 记录见 [v25 Q4 AC repeat result](outcomes/records/v25_q4_ac_repeat_result.json)，原始动态 checker 因终态字段缺失而标为 partial `DYNAMIC_FAIL`，这只确认“未完成”，不把受控停止误判成 solver convergence failure。
+
+## 用户授权的 Q4 AC 重跑 r2
+
+用户说明上次运行期间再次拔掉电源后，授权同配置 Q4 original 重新运行。r2 保持 p6/h7.5、粗阶 p4、MPI1/thread1、物理模型和求解器参数不变，只使用独立 `run_id` 和 `observe_only` 资源策略；上次受控停止的记录不覆盖、不改判。
+
+r2 服务正常结束，worker/service 退出状态均为 `0`，watchdog 为 `COMPLETED`，后代已清场。第 126 个 outer iteration 达到完整显式真残差 `9.283165086752956e-7`，post-release 残差相同；没有 iteration 128，因为残差门已达到。物理一致性检查、资源检查和动态 checker (`DYNAMIC_PASS`) 均通过，正式分类为 `DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED`。匹配的 h7.5 independent reference 仍不存在，因此不宣称 continuum convergence。
+
+首次成功的启动后 AC1 检查和结束检查均为在线，运行期间没有观察到 AC1 断开，电源设置未被修改。启动前探针因为没有激活资格化环境而未读到 AC1；因此这里只报告观察事实，不把“未断开”解释为已经证明上次中止的唯一原因。
+
+| iteration | r2 显式真残差 | r2 `solve_seconds`（s） | 前一完整 Q4（s） | r2 节省（s） |
+|---:|---:|---:|---:|---:|
+| 16 | 0.0041437222964080065 | 323.3362546709826 | 356.4489566070092 | 33.11270193602661 |
+| 32 | 0.0003352917960387092 | 635.7431107280124 | 699.1251847339931 | 63.38207400598071 |
+| 48 | 0.00019419221371048617 | 957.0546633300296 | 1059.2216401279873 | 102.16697679795766 |
+| 64 | 3.0233523443058283e-5 | 1270.2234611949964 | 1399.241939390997 | 129.01847819600061 |
+| 80 | 1.760946862124978e-5 | 1590.69534846704 | 1914.236668254 | 323.54131978696 |
+| 96 | 3.7766998795463687e-6 | 1903.8770562190532 | 2676.8190681720002 | 772.942011952947 |
+| 112 | 2.71399585136905e-6 | 2225.8895136200404 | 3437.2333360950015 | 1211.3438224749611 |
+
+对应 iteration 112 的 p4 baseline 有记录：logical call 1 的 r2/旧 Q4 残差均为 `3.578488052253746e-11`，elapsed 为 `0.7877780729904771 / 1.7836893460043939 s`；logical call 2 的残差均为 `3.470567778839567e-13`，elapsed 为 `0.7901757570216432 / 1.907731957995565 s`。p4 原始记录没有独立内存字段。iteration 16 的 p4 两次残差和耗时也已写入 compact record。
+
+完整结果见 [r2 outcome](outcomes/v25_q4_ac_swap_observe_r2.md) 与 [r2 compact](outcomes/records/v25_q4_ac_swap_observe_r2_result.json)。
