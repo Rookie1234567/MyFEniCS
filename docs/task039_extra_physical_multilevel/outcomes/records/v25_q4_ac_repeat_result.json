@@ -16,7 +16,8 @@
     "unit": "myfenics-case-20260922T014519-846383.service",
     "log": "benchmarks/artifacts/user_services/myfenics-case-20260922T014519-846383.log",
     "log_sha256": "a6dbd6dae8b8c3ecb2345b210473359e5965b67aa55a16616d3ea85aaa2b2bf9",
-    "exit_status": -9
+    "exit_status": 3,
+    "worker_exit_status": -9
   },
   "stop": {
     "watchdog_classification": "GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED",

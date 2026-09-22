@@ -8,7 +8,7 @@
 |---|---:|
 | 状态 | `RESOURCE_CONTROLLED_STOP` |
 | watchdog 分类 | `GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED` |
-| 退出码 | `-9` |
+| 退出状态 | service `3`；worker `-9` |
 | 最后记录 outer iteration | 18 |
 | 最后完整显式残差记录 | iteration 16 |
 | iteration 16 显式真残差 | 0.0041437222964080065 |

@@ -109,7 +109,7 @@ S6 保留了 source/input/config、run summary、watchdog、资源增量、全�
 
 用户授权了一个独立的 Q4 original AC 重复运行，输入、物理模型、p6/h7.5、粗阶 p4、MPI1/thread1 和求解器参数保持不变；本次仅使用 `run_id` 分支记录授权，不改变数值算法，也不重跑 Q3/Q2/notch。旧 Q4 通过结果保持为独立历史记录。
 
-该重复运行在 `iteration=18` 的 outer-PC 记录后受控停止，未产生 `iteration=32` 检查点、终态 KSP、final native check、post-release residual、field 或 official output。触发样本为 elapsed `1243.8138749100035 s`、RSS/PSS `7313522688/7282219008 B`、effective available `6549331968 B`；此时 `warning=false`、所有进程状态可读、作业树 VmSwap 为 0 B。随后 watchdog 主动对 whole child tree 发出 `SIGKILL(-9)` 并清场。停止原因是 WSL 全局 pswpout 从 7 增至 9，即 2 页、8 KiB，但无法证明这 8 KiB 属于该作业，因此保留 `GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED`。这不是内存耗尽证明，也不是数值方法失败；本次运行没有采集全程 CPU 频率，频率结论为 unknown。
+该重复运行在 `iteration=18` 的 outer-PC 记录后受控停止，未产生 `iteration=32` 检查点、终态 KSP、final native check、post-release residual、field 或 official output。触发样本为 elapsed `1243.8138749100035 s`、RSS/PSS `7313522688/7282219008 B`、effective available `6549331968 B`；此时 `warning=false`、所有进程状态可读、作业树 VmSwap 为 0 B。随后 watchdog 主动对 whole child tree 发出 `SIGKILL(-9)` 并清场；service wrapper 最终返回 3。停止原因是 WSL 全局 pswpout 从 7 增至 9，即 2 页、8 KiB，但无法证明这 8 KiB 属于该作业，因此保留 `GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED`。这不是内存耗尽证明，也不是数值方法失败；本次运行没有采集全程 CPU 频率，频率结论为 unknown。
 
 在唯一完整落盘的 16 步检查点，按 `solve_seconds` 原始字段同口径比较：
 
