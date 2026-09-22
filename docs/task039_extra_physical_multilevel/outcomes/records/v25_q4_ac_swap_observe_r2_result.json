@@ -42,6 +42,20 @@
     "solver_elapsed_seconds": 2514.9931942840362,
     "ksp_solve_monotonic_seconds": 2284.681783819,
     "full_workflow_monotonic_seconds": 3114.283619607013,
+    "three_case_formal_comparison": {
+      "scope": "same p6/h7.5, 990-cell, Full3D, MPI1/thread1 Q4 original; full workflow from run_summary, pure KSP from solver.ksp_solve_monotonic_seconds, RSS from watchdog process tree",
+      "r2": {"source_sha": "4bf2bba56cc2e568d56ff3096aeb4a108744f28d", "full_workflow_seconds": 3114.283619607013, "pure_ksp_seconds": 2284.681783819, "iterations": 126, "full_seconds_per_iteration": 24.71653666354772, "pure_ksp_seconds_per_iteration": 18.132395109674604, "process_tree_rss_peak_bytes": 7390937088, "full_delta_minutes_vs_r2": 0.0, "pure_ksp_delta_minutes_vs_r2": 0.0, "rss_delta_bytes_vs_r2": 0},
+      "previous_q4": {"run_id": "task39extra_v25_q4_speed_original_h7p5", "source_sha": "cad282e25ed53cad1f9e4a5a70c14f3dd40e6d32", "full_workflow_seconds": 4718.70844729399, "pure_ksp_seconds": 3766.626355408, "iterations": 126, "full_seconds_per_iteration": 37.45006704201579, "pure_ksp_seconds_per_iteration": 29.893859963555556, "process_tree_rss_peak_bytes": 7389360128, "full_delta_minutes_vs_r2": 26.740413794782945, "pure_ksp_delta_minutes_vs_r2": 24.699076193150002, "rss_delta_bytes_vs_r2": -1576960},
+      "v24": {"run_id": "task39extra_v24_laptop_speed_original_h7p5", "source_sha": "b480178314efdf434c5f7405f2ab356ff9137c17", "full_workflow_seconds": 4579.015917060999, "pure_ksp_seconds": 3716.1522563079925, "iterations": 126, "full_seconds_per_iteration": 36.34139616715078, "pure_ksp_seconds_per_iteration": 29.49327187546026, "process_tree_rss_peak_bytes": 7339319296, "full_delta_minutes_vs_r2": 24.412204957566427, "pure_ksp_delta_minutes_vs_r2": 23.857841208149875, "rss_delta_bytes_vs_r2": -51617792}
+    },
+    "formal_release_timing": {
+      "source": "results/euv_grazing1_phi0/task39extra_v25_q4_ac_swap_observe_r2_h7p5__full3d_iterative__mpi1__Mna/20260922T033647.910623Z/physical_dual_condensed_coarse_degree_v25_summary.json",
+      "source_section": "formal_release_timing",
+      "a6_live": {"apply_count": 263, "operation_seconds_total": 823.1639212121663, "operation_seconds_volume": 822.071849550819, "operation_seconds_dtn": 0.7940302900387906},
+      "a6_native_witness": {"apply_count": 29, "operation_seconds_total": 148.35112204798497},
+      "h6": {"apply_count": 131, "apply_seconds": 484.89414036102244, "matrix_mult_count": 282, "matrix_mult_seconds": 518.9228249350854, "power_matrix_mult_count": 20, "power_matrix_mult_seconds": 36.88009328895714},
+      "accounting_note": "These are cumulative action clocks from formal_release_timing; nested component clocks can overlap and must not be added to full workflow."
+    },
     "milestone_baseline": {
       "run_id": "task39extra_v25_q4_speed_original_h7p5",
       "raw_root": "results/euv_grazing1_phi0/task39extra_v25_q4_speed_original_h7p5__full3d_iterative__mpi1__Mna/20260921T044641.676399Z",
@@ -64,7 +78,20 @@
       "solve_seconds": 356.40948556199953,
       "r2_faster_by_seconds": 33.07323089101692,
       "r2_faster_percent": 9.27955967245536
-    }
+    },
+    "other_interrupted_attempts": [
+      {
+        "run_id": "task39extra_v25_q4_ac_swap_observe_original_h7p5",
+        "source_sha": "e82e6cfc1a774e384f1c1cc98d41f7838d5d51ca",
+        "raw_root": "results/euv_grazing1_phi0/task39extra_v25_q4_ac_swap_observe_original_h7p5__full3d_iterative__mpi1__Mna/20260922T025001.832290Z",
+        "classification": "USER_CONTROLLED_STOP",
+        "full_workflow_monotonic_seconds": 2041.675088969001,
+        "last_native_a6_checkpoint": 24,
+        "last_native_a6_relative_residual": 0.001188840920712491,
+        "ledger_cost_status": "not_zeroed; settlement not determined in this record",
+        "interpretation": "user-controlled stop; do not classify as global-swap stop"
+      }
+    ]
   },
   "p4_baseline_records": {
     "elapsed_scope": "interface_facts.elapsed_seconds per raw p4 call",

@@ -2594,6 +2594,38 @@
       }
     },
     {
+      "id": "V25_Q4_authorized_AC_swap_observe_user_stop",
+      "source_sha": "e82e6cfc1a774e384f1c1cc98d41f7838d5d51ca",
+      "stage": "Q4_ORIGINAL",
+      "raw_root": "results/euv_grazing1_phi0/task39extra_v25_q4_ac_swap_observe_original_h7p5__full3d_iterative__mpi1__Mna/20260922T025001.832290Z",
+      "status": "USER_CONTROLLED_STOP",
+      "classification": "USER_CONTROLLED_STOP",
+      "official_result": false,
+      "input": "input/task39extra/v25_q4_ac_swap_observe_h7p5.dat",
+      "input_sha256": "a60a426df126940ca344e3a4463a1a26d018a4a307471094fc39a7cf54e078e3",
+      "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+      "resolved_config_sha256": "d9f49fc7cdd1db3a1cb11b129b04f068d38559d75d466ddd1cfad1727e70123c",
+      "solver": {
+        "last_native_a6_checkpoint": 24,
+        "last_native_a6_relative_residual": 0.001188840920712491,
+        "full_workflow_monotonic_seconds": 2041.675088969001
+      },
+      "resources": {
+        "process_tree_rss_peak_bytes": 7363276800,
+        "process_tree_swap_peak_bytes": 0,
+        "global_swap_pages_delta": 0,
+        "descendants_cleared": true,
+        "swap_policy": "observe_only"
+      },
+      "ledger_cost_status": "not_zeroed; settlement not determined in this record",
+      "not_run": ["final_ksp_end", "final_native_check", "post_release_residual", "final_field", "official_output"],
+      "evidence": {
+        "run_summary": "results/euv_grazing1_phi0/task39extra_v25_q4_ac_swap_observe_original_h7p5__full3d_iterative__mpi1__Mna/20260922T025001.832290Z/run_summary.json",
+        "watchdog": "results/euv_grazing1_phi0/task39extra_v25_q4_ac_swap_observe_original_h7p5__full3d_iterative__mpi1__Mna/20260922T025001.832290Z/watchdog/summary.json",
+        "monitor_residuals": "results/euv_grazing1_phi0/task39extra_v25_q4_ac_swap_observe_original_h7p5__full3d_iterative__mpi1__Mna/20260922T025001.832290Z/monitor_residuals.jsonl"
+      }
+    },
+    {
       "id": "V25_Q4_authorized_AC_swap_observe_r2_pass",
       "source_sha": "4bf2bba56cc2e568d56ff3096aeb4a108744f28d",
       "stage": "Q4_ORIGINAL",
