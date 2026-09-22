@@ -270,12 +270,15 @@ def build_quadrature_positive_diagonal(
         dofs = np.asarray(work.dofmap.cell_dofs(cell), dtype=np.int32)
         _fill_cell_expansion(dofs, mpc, storage, mask, targets, coefficients)
         permutation = int(permutations[cell])
-        valid_targets = targets[targets >= 0]
-        row_counts = np.count_nonzero(targets >= 0, axis=1)
-        has_target_merge = bool(
-            np.any(row_counts > 1)
-            or valid_targets.size != np.unique(valid_targets).size
-        )
+        if reuse_local_types:
+            valid_targets = targets[targets >= 0]
+            row_counts = np.count_nonzero(targets >= 0, axis=1)
+            has_target_merge = bool(
+                np.any(row_counts > 1)
+                or valid_targets.size != np.unique(valid_targets).size
+            )
+        else:
+            has_target_merge = True
         if reuse_local_types and not has_target_merge:
             x = work.mesh.geometry.x[work.mesh.geometry.dofmap[cell]]
             jacobian = _affine_cell_jacobian(basis.geometry_derivatives, x)

@@ -102,7 +102,8 @@ def profile_facts(identity=PROFILE) -> dict:
             packed_power10=True,
             sum_factorized_work=True,
             sum_factorized_power10=True,
-            reuse_projection_work=True,
+            reuse_projection_work=False,
+            projection_reuse_status="not_adopted_without_component_gain",
             direct_selected_backend=True,
         )
         facts["thread_selection"] = {

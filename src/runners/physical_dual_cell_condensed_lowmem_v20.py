@@ -1181,7 +1181,7 @@ def _run_physical_dual_cell_condensed_lowmem(
                     contiguous_work=True,
                     preallocated_work=False,
                     sum_factorized_work=True,
-                    reuse_projection_work=(profile == SETUP_EFFICIENCY_PROFILE),
+                    reuse_projection_work=False,
                     share_readonly_geometry=(profile == SETUP_EFFICIENCY_PROFILE),
                     geometry_bundle=(
                         geometry_bundle
@@ -1281,7 +1281,10 @@ def _run_physical_dual_cell_condensed_lowmem(
             SETUP_EFFICIENCY_PROFILE,
         }
         direct_selected_backend = profile == SETUP_EFFICIENCY_PROFILE
-        reuse_projection_work = direct_selected_backend
+        # Projection-work reuse remains an explicit solver option, but is not
+        # part of the V26 production route until a component measurement shows
+        # a reproducible gain on the frozen 990-cell case.
+        reuse_projection_work = False
         common = _build_common(
             runtime,
             cfg,
