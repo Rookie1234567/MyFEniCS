@@ -36,6 +36,7 @@ LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE = (
 )
 COARSE_DEGREE_SPEED_PROFILE = "physical_p6_trace_coarse_degree_speed_v25"
 SETUP_EFFICIENCY_PROFILE = "physical_p6_trace_setup_efficiency_v26"
+WORKINGSET_SETUP_PROFILE = "physical_p6_trace_workingset_efficiency_v27"
 PHYSICAL_MEMORY_POLICY_V23 = "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23"
 V23_QUALIFIED_JIT_CACHE_SOURCE = (
     "results/euv_grazing1_phi0/"
@@ -51,7 +52,7 @@ P4_BLR_TRADEOFF_THRESHOLDS = {
     "T2_BLR_CONTROL": 1.0e-4,
 }
 
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE, LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE, COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE, LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE, COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
 
 
 def p4_blr_tradeoff_threshold(stage: str) -> float:
@@ -66,11 +67,15 @@ def p4_blr_tradeoff_threshold(stage: str) -> float:
 
 
 def profile_facts(identity=PROFILE) -> dict:
-    if identity == SETUP_EFFICIENCY_PROFILE:
+    if identity in (SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE):
         facts = profile_facts(LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE)
         facts.update(
             identity=identity,
-            scope="review_v24_setup_and_kernel_efficiency",
+            scope=(
+                "review_v25_workingset_and_p6_setup"
+                if identity == WORKINGSET_SETUP_PROFILE
+                else "review_v24_setup_and_kernel_efficiency"
+            ),
             qualification=(
                 "opt_in; one fresh original 990-cell p6/h7.5 q4 formal "
                 "run; direct selected H6 setup backend and bounded local "
@@ -119,6 +124,17 @@ def profile_facts(identity=PROFILE) -> dict:
                 "NUMEXPR_NUM_THREADS": "1",
             },
         }
+        if identity == WORKINGSET_SETUP_PROFILE:
+            facts["resources"].update(
+                require_zero_swap=False,
+                swap_policy="observe_only",
+                time_policy="observe_only",
+                require_observe_only=True,
+            )
+            facts["gates"].update(
+                swap_observation_only=True,
+                physical_memory_pressure_still_enforced=True,
+            )
         return facts
     if identity == COARSE_DEGREE_SPEED_PROFILE:
         # V25 keeps the qualified V24 native-A6/H6 and cell-condensed route,

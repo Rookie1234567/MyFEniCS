@@ -36,6 +36,7 @@ _V25_Q4_AC_SWAP_OBSERVE_R2_RUN_ID = (
 _V25_Q4_AC_SWAP_OBSERVE_RUN_IDS = frozenset(
     {_V25_Q4_AC_SWAP_OBSERVE_RUN_ID, _V25_Q4_AC_SWAP_OBSERVE_R2_RUN_ID}
 )
+_V27_WORKINGSET_RUN_ID = "task39extra_v27_workingset_p6_setup_original_h7p5"
 
 
 def _error(path: str, message: str) -> InputError:
@@ -577,6 +578,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "physical_p6_trace_p4_condensed_laptop_speed_v24",
                 "physical_p6_trace_coarse_degree_speed_v25",
                 "physical_p6_trace_setup_efficiency_v26",
+                "physical_p6_trace_workingset_efficiency_v27",
             }:
                 raise _error(
                     "solver.preconditioner",
@@ -1002,7 +1004,22 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     validate_v21_input("Z3_ORIGINAL_H7P5", geometry, discretization)
                 except (OSError, TypeError, ValueError, KeyError) as exc:
                     raise _error("geometry/discretization", str(exc)) from exc
-            elif preconditioner == "physical_p6_trace_setup_efficiency_v26":
+            elif preconditioner in (
+                "physical_p6_trace_setup_efficiency_v26",
+                "physical_p6_trace_workingset_efficiency_v27",
+            ):
+                is_v27_workingset = (
+                    preconditioner == "physical_p6_trace_workingset_efficiency_v27"
+                )
+                if is_v27_workingset and (
+                    config["run_id"] != _V27_WORKINGSET_RUN_ID
+                    or config.get("comparison_group")
+                    != "review_v25_workingset_and_p6_setup"
+                ):
+                    raise _error(
+                        "identity",
+                        "V27 profile requires its frozen run_id and comparison_group",
+                    )
                 stage = solver.get("stage")
                 if stage != "Q4_ORIGINAL":
                     raise _error(

@@ -20,6 +20,7 @@ import numpy as np
 from src.io.physical_intermediate_profile import (
     COARSE_DEGREE_SPEED_PROFILE,
     SETUP_EFFICIENCY_PROFILE,
+    WORKINGSET_SETUP_PROFILE,
     LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE,
     LOWMEM_DUAL_CELL_CONDENSED_PROFILE,
     profile_facts,
@@ -1024,7 +1025,7 @@ def _run_physical_dual_cell_condensed_lowmem(
     directory = Path(run_directory).resolve()
     profile = str(resolved_payload["solver"]["preconditioner"])
     stage = str(resolved_payload["solver"]["stage"])
-    if profile == SETUP_EFFICIENCY_PROFILE:
+    if profile in (SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE):
         if resolved_payload.get("solver", {}).get("numeric_cache_mode") != "build":
             raise ValueError(
                 "V26 formal setup-efficiency run requires numeric_cache_mode=build"
@@ -1043,7 +1044,11 @@ def _run_physical_dual_cell_condensed_lowmem(
         raise ValueError("coarse_degree must be an integer") from exc
     if coarse_degree not in (2, 3, 4):
         raise ValueError("coarse_degree must be one of 2, 3, or 4")
-    if profile in (COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE) and stage_coarse_degree != coarse_degree:
+    if profile in (
+        COARSE_DEGREE_SPEED_PROFILE,
+        SETUP_EFFICIENCY_PROFILE,
+        WORKINGSET_SETUP_PROFILE,
+    ) and stage_coarse_degree != coarse_degree:
         raise ValueError(
             f"{stage} is frozen to coarse_degree={stage_coarse_degree}, "
             f"not {coarse_degree}"
@@ -1083,7 +1088,7 @@ def _run_physical_dual_cell_condensed_lowmem(
             "require_zero_swap" if require_zero_swap else "observe_only"
         ),
     }
-    if profile == SETUP_EFFICIENCY_PROFILE:
+    if profile in (SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE):
         summary.update(numeric_cache_mode="build", numeric_cache_loads=0)
     runtime = common = None
     prepared = None
@@ -1147,16 +1152,20 @@ def _run_physical_dual_cell_condensed_lowmem(
         pc_fine_action_factory = None
         sum_factorized_work = False
         sum_factorized_power10 = False
-        if profile in (COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE):
+        if profile in (
+            COARSE_DEGREE_SPEED_PROFILE,
+            SETUP_EFFICIENCY_PROFILE,
+            WORKINGSET_SETUP_PROFILE,
+        ):
             expected_backend = "isotropic_sum_factorized_n1e_v26"
             expected_h6_rule = (
                 "direct_selected_backend_same_apply_and_power10"
-                if profile == SETUP_EFFICIENCY_PROFILE
+                if profile in (SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE)
                 else "isotropic_sum_factorized_n1e_v26_apply_and_power10"
             )
             expected_threads = (
                 "mpi1_omp1_blas1_v26"
-                if profile == SETUP_EFFICIENCY_PROFILE
+                if profile in (SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE)
                 else "mpi1_omp1_blas1_v25"
             )
             solver_contract = resolved_payload.get("solver", {})
@@ -1182,10 +1191,12 @@ def _run_physical_dual_cell_condensed_lowmem(
                     preallocated_work=False,
                     sum_factorized_work=True,
                     reuse_projection_work=False,
-                    share_readonly_geometry=(profile == SETUP_EFFICIENCY_PROFILE),
+                    share_readonly_geometry=(
+                        profile in (SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE)
+                    ),
                     geometry_bundle=(
                         geometry_bundle
-                        if profile == SETUP_EFFICIENCY_PROFILE
+                        if profile in (SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE)
                         else None
                     ),
                 )
@@ -1275,12 +1286,17 @@ def _run_physical_dual_cell_condensed_lowmem(
             LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE,
             COARSE_DEGREE_SPEED_PROFILE,
             SETUP_EFFICIENCY_PROFILE,
+            WORKINGSET_SETUP_PROFILE,
         }
         packed_power10 = profile in {
             COARSE_DEGREE_SPEED_PROFILE,
             SETUP_EFFICIENCY_PROFILE,
+            WORKINGSET_SETUP_PROFILE,
         }
-        direct_selected_backend = profile == SETUP_EFFICIENCY_PROFILE
+        direct_selected_backend = profile in (
+            SETUP_EFFICIENCY_PROFILE,
+            WORKINGSET_SETUP_PROFILE,
+        )
         # Projection-work reuse remains an explicit solver option, but is not
         # part of the V26 production route until a component measurement shows
         # a reproducible gain on the frozen 990-cell case.
@@ -1293,7 +1309,12 @@ def _run_physical_dual_cell_condensed_lowmem(
             optimized_owner_apply=v24_owner_apply,
             fixed_serial_owner_route=v24_owner_apply,
             native_aq_projection_check=(
-                profile in (COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE)
+                profile
+                in (
+                    COARSE_DEGREE_SPEED_PROFILE,
+                    SETUP_EFFICIENCY_PROFILE,
+                    WORKINGSET_SETUP_PROFILE,
+                )
             ),
         )
         # The common builder now owns the FE/MPC levels.  Dropping this outer

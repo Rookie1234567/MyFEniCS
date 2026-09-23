@@ -334,6 +334,44 @@ def test_v26_q4_is_admitted_to_retained_outer_guard(tmp_path):
         )
 
 
+def test_v27_q4_is_admitted_to_retained_outer_guard(tmp_path):
+    """V27 Q4 reaches the shared retained-stage path and its release checks."""
+
+    runtime = _Runtime(tmp_path)
+    runtime.time_policy = "observe_only"
+    runtime.workflow_reserved_seconds = 43200.0
+    runtime.contract["resources"]["stage_budgets"]["Q4_ORIGINAL"] = {
+        "solve_seconds": 43200.0,
+        "workflow_seconds": 43200.0,
+    }
+    common = {"cfg": SimpleNamespace(cell_notch=None), "coarse_degree": 4}
+    resolved = {
+        "solver": {
+            "preconditioner": "physical_p6_trace_workingset_efficiency_v27",
+        },
+        "provenance": {
+            "input_sha256": "i" * 64,
+            "physical_model_sha256": "p" * 64,
+        },
+    }
+
+    def stack_probe(*_args, **_kwargs):
+        raise RuntimeError("retained V27 stack reached")
+
+    with pytest.raises(RuntimeError, match="retained V27 stack reached"):
+        v14._v14_q4_q5_fullspace(
+            runtime,
+            common,
+            resolved,
+            stage="Q4_ORIGINAL",
+            predecessor={},
+            stack_factory=stack_probe,
+            outer_adapter_factory=lambda *_args, **_kwargs: None,
+            reference_mode="authority_limited",
+            release_after_final_residual=True,
+        )
+
+
 @pytest.mark.parametrize("stage", ["Q3_ORIGINAL", "Q2_ORIGINAL"])
 def test_v26_non_q4_stages_remain_outside_retained_outer_guard(tmp_path, stage):
     """V26 only admits the fresh Q4 route; Q3/Q2 stay rejected."""

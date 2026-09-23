@@ -138,12 +138,13 @@ def main(argv: list[str] | None = None) -> int:
                 'physical_p6_trace_p4_condensed_laptop_speed_v24',
                 'physical_p6_trace_coarse_degree_speed_v25',
                 'physical_p6_trace_setup_efficiency_v26',
+                'physical_p6_trace_workingset_efficiency_v27',
             }
         ):
             raise InputError(
                 '--v14-time-policy observe_only requires '
-                'a reviewed physical_p4_schur_v14, physical_p4_blr_bal_h_v16, '
-                'physical_p4_blr_tradeoff_v17, or V18 cell-condensed profile'
+                'a reviewed physical iterative profile with a frozen '
+                'observe_only resource contract'
             )
         if args.validate_only:
             payload = {

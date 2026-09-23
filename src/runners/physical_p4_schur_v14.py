@@ -6862,6 +6862,7 @@ def _v14_q4_q5_fullspace(
     from src.io.physical_intermediate_profile import (
         COARSE_DEGREE_SPEED_PROFILE,
         SETUP_EFFICIENCY_PROFILE,
+        WORKINGSET_SETUP_PROFILE,
     )
     from .workflow_timebase import (
         CONSERVATIVE_REALTIME,
@@ -6880,7 +6881,14 @@ def _v14_q4_q5_fullspace(
         == SETUP_EFFICIENCY_PROFILE
         and stage == "Q4_ORIGINAL"
     )
-    retained_coarse_stage = v25_coarse_stage or v26_setup_efficiency_stage
+    v27_workingset_stage = (
+        str(resolved_payload.get("solver", {}).get("preconditioner", ""))
+        == WORKINGSET_SETUP_PROFILE
+        and stage == "Q4_ORIGINAL"
+    )
+    retained_coarse_stage = (
+        v25_coarse_stage or v26_setup_efficiency_stage or v27_workingset_stage
+    )
     if stage not in {
         "Q4_ORIGINAL", "Q3_ORIGINAL", "Q2_ORIGINAL", "Q5_NOTCH",
         "U4_ORIGINAL", "U5_NOTCH",

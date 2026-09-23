@@ -458,6 +458,18 @@ def _backend_facts(
     solver = resolved_config.get("solver")
     if not isinstance(solver, Mapping):
         return {"status": "failed", "passed": False, "reason": "resolved config has no solver section"}
+    workingset_profile = (
+        solver.get("preconditioner")
+        == "physical_p6_trace_workingset_efficiency_v27"
+    )
+    expected_h6_backend = (
+        "direct_selected_backend_same_apply_and_power10"
+        if workingset_profile
+        else H6_BACKEND
+    )
+    expected_thread_contract = (
+        "mpi1_omp1_blas1_v26" if workingset_profile else THREAD_CONTRACT
+    )
     expected_degree = {"Q4_ORIGINAL": 4, "Q3_ORIGINAL": 3, "Q2_ORIGINAL": 2}.get(stage)
     release = summary.get("formal_release_timing")
     release = release if isinstance(release, Mapping) else {}
@@ -490,8 +502,8 @@ def _backend_facts(
     h6_pc_apply_count = _path(summary, "pc", "h6_apply_count")
     checks = {
         "physical_operator_backend": solver.get("physical_operator_backend") == BACKEND,
-        "h6_backend_rule": solver.get("h6_backend_rule") == H6_BACKEND,
-        "thread_contract": solver.get("thread_contract") == THREAD_CONTRACT,
+        "h6_backend_rule": solver.get("h6_backend_rule") == expected_h6_backend,
+        "thread_contract": solver.get("thread_contract") == expected_thread_contract,
         "stage": stage is None or solver.get("stage") == stage,
         "coarse_degree": expected_degree is None or solver.get("coarse_degree") == expected_degree,
         "live_candidate_a6_present": bool(live_candidate),

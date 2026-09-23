@@ -2539,6 +2539,85 @@ def _reserve_v26_setup_efficiency_budget(
     )
 
 
+def _reserve_v27_workingset_setup_budget(
+    repo_root: Path,
+    run_directory: Path,
+    *,
+    source_sha: str,
+    stage: str,
+    stage_budget: Mapping[str, Any],
+    workflow_clock_start: Mapping[str, Any],
+    time_policy: str = V14_TIME_POLICY_ENFORCE,
+) -> dict[str, Any]:
+    """Reserve the independent V27 working-set/setup formal attempt."""
+
+    if stage != "Q4_ORIGINAL" or time_policy != V14_TIME_POLICY_OBSERVE_ONLY:
+        raise InputError("V27 permits only Q4_ORIGINAL with observe_only")
+    if float(stage_budget.get("workflow_seconds", 0.0)) != 43200.0:
+        raise InputError("V27 Q4 requires a 43200-second workflow budget")
+    repo_root = Path(repo_root).resolve()
+    path = (
+        repo_root
+        / "benchmarks"
+        / "artifacts"
+        / "task39extra"
+        / "workingset_p6_setup_v27"
+        / "review_v25_workingset_and_p6_setup"
+        / "shared_workflow_ledger.json"
+    )
+    schema = "task039extra.v27.workingset-p6-setup.shared-workflow-ledger.v1"
+    batch_identity = "review_v25_workingset_and_p6_setup"
+    prerequisite = {
+        "original_only": True,
+        "allowed_stages": ["Q4_ORIGINAL"],
+        "cross_case_recycling": False,
+        "automatic_retry": False,
+        "fresh_factor_per_stage": True,
+        "numeric_cache_mode": "build",
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        ledger = json.loads(path.read_text(encoding="utf-8"))
+        if (
+            ledger.get("schema") != schema
+            or ledger.get("batch_identity") != batch_identity
+            or ledger.get("total_budget_seconds") != 43200.0
+            or ledger.get("allowed_stages") != ["Q4_ORIGINAL"]
+        ):
+            raise InputError("V27 shared ledger identity or budget changed")
+    else:
+        ledger = {
+            "schema": schema,
+            "batch_identity": batch_identity,
+            "total_budget_seconds": 43200.0,
+            "elapsed_seconds": 0.0,
+            "conservative_allowance_seconds": 0.0,
+            "policy_debits": [],
+            "fresh_worker_count": 0,
+            "source_attempts": [],
+            "stages": {},
+            "unique_bug_replay_count": 0,
+            "allowed_stages": ["Q4_ORIGINAL"],
+            "cross_case_recycling": False,
+        }
+    return _reserve_blr_stage_from_ledger(
+        path,
+        ledger,
+        stage=stage,
+        run_directory=run_directory,
+        source_sha=source_sha,
+        stage_budget=stage_budget,
+        workflow_clock_start=workflow_clock_start,
+        time_policy=time_policy,
+        error_prefix="V27",
+        summary_filename=(
+            "physical_dual_condensed_workingset_p6_setup_v27_summary.json"
+        ),
+        prerequisite=prerequisite,
+        bug_replay_limit=1,
+    )
+
+
 def _reserve_v20_shared_budget(
     repo_root: Path,
     run_directory: Path,
@@ -3091,15 +3170,27 @@ def _swap_bytes(authority: dict[str, Any]) -> int:
     )
 
 
+def _is_setup_swap_observation_only(
+    *, setup_efficiency_profile: bool, stage: str, require_zero_swap: bool
+) -> bool:
+    """Bind setup-profile swap observation to the outer watchdog."""
+
+    return bool(
+        setup_efficiency_profile
+        and stage == "Q4_ORIGINAL"
+        and not require_zero_swap
+    )
+
+
 def _is_v26_swap_observation_only(
     *, setup_efficiency_v26_profile: bool, stage: str, require_zero_swap: bool
 ) -> bool:
-    """Bind V26's input-level observe-only policy to the outer watchdog."""
+    """Keep the original V26 wrapper contract while sharing its predicate."""
 
-    return bool(
-        setup_efficiency_v26_profile
-        and stage == "Q4_ORIGINAL"
-        and not require_zero_swap
+    return _is_setup_swap_observation_only(
+        setup_efficiency_profile=setup_efficiency_v26_profile,
+        stage=stage,
+        require_zero_swap=require_zero_swap,
     )
 
 
@@ -3239,6 +3330,7 @@ def launch_specification(
         LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE,
         COARSE_DEGREE_SPEED_PROFILE,
         SETUP_EFFICIENCY_PROFILE,
+        WORKINGSET_SETUP_PROFILE,
         profile_facts,
     )
     from src.io.physical_balanced_profile import BALANCED_PROFILES, BOUNDED_PROFILES
@@ -3258,6 +3350,8 @@ def launch_specification(
     v24_profile = specification.solver.get('preconditioner') == LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE
     coarse_degree_v25_profile = specification.solver.get('preconditioner') == COARSE_DEGREE_SPEED_PROFILE
     setup_efficiency_v26_profile = specification.solver.get('preconditioner') == SETUP_EFFICIENCY_PROFILE
+    setup_efficiency_v27_profile = specification.solver.get('preconditioner') == WORKINGSET_SETUP_PROFILE
+    setup_efficiency_profile = setup_efficiency_v26_profile or setup_efficiency_v27_profile
     if v24_p4_prefix_target is not None:
         try:
             v24_p4_prefix_target = int(v24_p4_prefix_target)
@@ -3276,6 +3370,7 @@ def launch_specification(
         LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE,
         COARSE_DEGREE_SPEED_PROFILE,
         SETUP_EFFICIENCY_PROFILE,
+        WORKINGSET_SETUP_PROFILE,
     }
     cell_stage = str(specification.solver.get('stage', ''))
     v25_authorized_performance_repeat = None
@@ -3291,7 +3386,12 @@ def launch_specification(
         stage=cell_stage,
         require_zero_swap=bool(specification.execution.get("require_zero_swap", True)),
     )
-    effective_swap_observe = v25_swap_observe or v26_swap_observe
+    v27_swap_observe = _is_setup_swap_observation_only(
+        setup_efficiency_profile=setup_efficiency_v27_profile,
+        stage=cell_stage,
+        require_zero_swap=bool(specification.execution.get("require_zero_swap", True)),
+    )
+    effective_swap_observe = v25_swap_observe or v26_swap_observe or v27_swap_observe
     if (
         coarse_degree_v25_profile
         and specification.execution.get("require_zero_swap") is False
@@ -3463,6 +3563,14 @@ def launch_specification(
             stage_budget=cell_stage_budget, workflow_clock_start=full_clock.start,
             time_policy=v14_time_policy,
         )
+    elif setup_efficiency_v27_profile and physical_candidate:
+        run_directory = _timestamp_directory(specification, timestamp)
+        v14_lease = _reserve_v27_workingset_setup_budget(
+            Path(__file__).resolve().parents[2], run_directory,
+            source_sha=source, stage=cell_stage,
+            stage_budget=cell_stage_budget, workflow_clock_start=full_clock.start,
+            time_policy=v14_time_policy,
+        )
     elif physical_memory_v23_profile and physical_candidate:
         run_directory = _timestamp_directory(specification, timestamp)
         v14_lease = _reserve_v23_shared_budget(
@@ -3521,7 +3629,7 @@ def launch_specification(
             adapter_identity=adapter,
             start_time=start_time,
         )
-        if coarse_degree_v25_profile or setup_efficiency_v26_profile:
+        if coarse_degree_v25_profile or setup_efficiency_profile:
             manifest.update(
                 {
                     "swap_policy": (
@@ -3640,7 +3748,7 @@ def launch_specification(
                             timebase_policy='conservative_realtime',
                             time_policy=v14_time_policy,
                         )
-                        if physical_memory_v23_profile or v24_profile or coarse_degree_v25_profile or setup_efficiency_v26_profile:
+                        if physical_memory_v23_profile or v24_profile or coarse_degree_v25_profile or setup_efficiency_profile:
                             watchdog_kwargs.update(
                                 memory_policy=physical_resources[
                                     'watchdog_memory_policy'
@@ -3801,7 +3909,7 @@ def launch_specification(
                                     'watchdog_memory_policy'
                                 ]
                             }
-                            if physical_memory_v23_profile or v24_profile or coarse_degree_v25_profile or setup_efficiency_v26_profile
+                            if physical_memory_v23_profile or v24_profile or coarse_degree_v25_profile or setup_efficiency_profile
                             else {}
                         ),
                         'wall_reference_seconds': watchdog_wall_seconds,

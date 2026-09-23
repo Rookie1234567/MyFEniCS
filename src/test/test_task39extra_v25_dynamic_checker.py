@@ -230,6 +230,24 @@ def test_counts_are_recomputed_from_raw_calls_and_four_diagnostics() -> None:
     assert counts["extra_repairs"] == 1
 
 
+def test_v27_workingset_backend_contract_is_accepted_without_changing_v25_defaults():
+    summary, config = _v25_fixture()
+    config["solver"].update(
+        preconditioner="physical_p6_trace_workingset_efficiency_v27",
+        h6_backend_rule="direct_selected_backend_same_apply_and_power10",
+        thread_contract="mpi1_omp1_blas1_v26",
+    )
+    result = check_summary(summary, resolved_config=config, stage="Q4_ORIGINAL")
+    assert result["dynamic_passed"] is True
+    assert result["recomputed"]["backend"]["checks"]["h6_backend_rule"] is True
+    assert result["recomputed"]["backend"]["checks"]["thread_contract"] is True
+
+
+def test_v25_checker_defaults_remain_the_historical_contract():
+    assert H6_BACKEND == "isotropic_sum_factorized_n1e_v26_apply_and_power10"
+    assert THREAD_CONTRACT == "mpi1_omp1_blas1_v25"
+
+
 def test_worker_status_cannot_hide_a_bad_raw_repair_count() -> None:
     summary, config = _v25_fixture()
     broken = deepcopy(summary)

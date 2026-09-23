@@ -371,6 +371,7 @@ class RetainedOuterAdapter:
                      "bridge_seconds": 0.0, "bal_h_seconds": 0.0,
                      "native_action_seconds": 0.0, "recovery_evaluation_seconds": 0.0,
                      "packet_seconds": 0.0}
+        self.time["setup_phase_seconds"] = {}
         self.count = {"schur_action": 0, "bridge": 0, "native_action": 0}
 
     def _count(self, name):
@@ -393,8 +394,11 @@ class RetainedOuterAdapter:
         prefix = self.evidence_prefix
         compiled_form = self.compiled_form
         owns_compiled_form = compiled_form is None
+        phase_started = perf_counter()
         if compiled_form is None:
             compiled_form = fem.form(self.common["fine"]["volume_action"].bilinear_form)
+        setup_phases = self.time["setup_phase_seconds"]
+        setup_phases["compiled_form_seconds"] = perf_counter() - phase_started
 
         def allocation_gate(name, facts):
             if name != "cell_tensor_working_set":
@@ -405,6 +409,7 @@ class RetainedOuterAdapter:
             runtime.reserve_workspace(f"{prefix}_p6_setup", int(facts["workspace_bytes"]))
 
         runtime.marker(f"{prefix}_p6_local_setup_started", {"global_matrix": False})
+        phase_started = perf_counter()
         self.condensed = build_unconstrained_assembly_time_condensation(
             compiled_form,
             levels["spaces"][6], levels["mesh_data"].cell_tags, mpc=levels["floquets"][6].mpc,
@@ -414,15 +419,20 @@ class RetainedOuterAdapter:
             share_identity_cache=(self.identity_cache_mode == "shared_read_only_per_interior_shape"),
             allocation_gate=allocation_gate,
         )
+        setup_phases["condensation_builder_seconds"] = perf_counter() - phase_started
         runtime.release_workspace(f"{prefix}_p6_setup")
         runtime.reserve_workspace(f"{prefix}_p6_setup", 128 << 20)
+        phase_started = perf_counter()
         self.action = build_p6_cell_condensed_action_from_carrier(
             self.condensed, self.common["fine"]["dtn_action"].carrier,
         )
+        setup_phases["p6_action_seconds"] = perf_counter() - phase_started
         shared_identity_mode = (
             self.identity_cache_mode == "shared_read_only_per_interior_shape"
         )
+        phase_started = perf_counter()
         cache = _cache_identity(self.action, include_identity=shared_identity_mode)
+        setup_phases["p6_cache_identity_seconds"] = perf_counter() - phase_started
         if shared_identity_mode:
             identity_facts = cache["identity_cache"]
             if not (
@@ -463,6 +473,7 @@ class RetainedOuterAdapter:
         from src.runners.physical_macro_controls import _mapping_identity_sha256
         from src.solvers.condensed_fine_reference import native_map_arrays
 
+        phase_started = perf_counter()
         p6_native_map = native_map_arrays(
             levels["spaces"][6], levels["floquets"][6]
         )
@@ -475,6 +486,7 @@ class RetainedOuterAdapter:
             if isinstance(value, np.ndarray)
         }
         del p6_native_map
+        setup_phases["p6_native_map_identity_seconds"] = perf_counter() - phase_started
         if self.expected_space_facts is not None:
             self.identity["expected_space_facts"] = dict(self.expected_space_facts)
         if shared_identity_mode:
@@ -495,7 +507,9 @@ class RetainedOuterAdapter:
             if prefix == "v19"
             else f"{prefix}_x1_p6_cache_identity"
         )
+        phase_started = perf_counter()
         self._packet(cache_packet_name, {"identity": self.identity, "cache": cache})
+        setup_phases["p6_cache_packet_seconds"] = perf_counter() - phase_started
         self.cache = {k: v for k, v in cache.items() if k != "arrays"}
         runtime.release_workspace(f"{prefix}_p6_setup")
         # Simultaneous full scratch, residual packet arrays, bridge outputs,
@@ -504,10 +518,14 @@ class RetainedOuterAdapter:
             int(self.full_rhs.getLocalSize()), self.action.reduced_size
         )
         runtime.reserve_workspace(f"{prefix}_p6_full_scratch", scratch_bytes)
+        phase_started = perf_counter()
         self.full_source, self.full_target = self.full_rhs.duplicate(), self.full_rhs.duplicate()
         self.rhs = self.action.create_reduced_rhs_vector()
         self.rhs.array[:] = self.action.reduce_rhs(self.full_rhs, rhs_is_mpc_dual=True)
+        setup_phases["retained_rhs_and_vectors_seconds"] = perf_counter() - phase_started
+        phase_started = perf_counter()
         self.bridge = P6RetainedBALHBridge(self.action, self._bal_h_array)
+        setup_phases["bal_h_bridge_seconds"] = perf_counter() - phase_started
         self.time["setup_seconds"] = perf_counter() - started
         runtime.marker(f"{prefix}_p6_local_setup_complete", {"identity": self.identity, "cache": self.cache})
         if owns_compiled_form:
