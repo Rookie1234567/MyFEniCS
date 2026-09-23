@@ -1,11 +1,81 @@
 """Independent dense algebra and assembled-MPC oracles for energy diagonal."""
+from types import SimpleNamespace
+
+import basix
 import numpy as np
 import pytest
 from mpi4py import MPI
 from petsc4py import PETSc
+from ffcx import analysis as ffcx_analysis
+from ffcx import element_interface as ffcx_element_interface
 from src.solvers.fullspace_quadrature_diagonal import (
-    accumulate_basis_energy, build_quadrature_positive_diagonal,
+    ReferenceCellBasis, accumulate_basis_energy, build_quadrature_positive_diagonal,
 )
+
+
+def test_sum_factorized_reference_init_rejects_high_order_tabulate(monkeypatch):
+    """The tensor path must not tabulate discarded high-order basis values."""
+
+    class ForbiddenHighOrderTabulation:
+        family = basix.ElementFamily.N1E
+        map_type = basix.MapType.covariantPiola
+        coefficient_matrix = np.eye(3)
+        embedded_superdegree = 2
+
+        def tabulate(self, *_args, **_kwargs):
+            raise AssertionError("discarded high-order Basix table was requested")
+
+    class FakeIntegral:
+        def integral_type(self):
+            return "cell"
+
+        def metadata(self):
+            return {"quadrature_degree": 4, "quadrature_rule": "default"}
+
+    fake_points = np.array(
+        [
+            [0.0, 0.0, 0.0],
+            [1.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0],
+            [0.0, 0.0, 1.0],
+        ],
+        dtype=np.float64,
+    )
+    fake_weights = np.full(len(fake_points), 0.25, dtype=np.float64)
+    fake_data = SimpleNamespace(
+        argument_elements=(),
+        integral_data=[SimpleNamespace(integrals=[FakeIntegral()])],
+    )
+    monkeypatch.setattr(
+        ffcx_analysis,
+        "analyze_ufl_objects",
+        lambda *_args, **_kwargs: SimpleNamespace(form_data=[fake_data]),
+    )
+    monkeypatch.setattr(
+        ffcx_element_interface,
+        "create_quadrature",
+        lambda *_args, **_kwargs: (fake_points, fake_weights),
+    )
+    fake_mesh = SimpleNamespace(
+        basix_cell=lambda: basix.CellType.hexahedron,
+        geometry=SimpleNamespace(cmap=SimpleNamespace(degree=1), dim=3),
+    )
+    fake_space = SimpleNamespace(
+        mesh=fake_mesh,
+        element=SimpleNamespace(basix_element=ForbiddenHighOrderTabulation()),
+        dofmap=SimpleNamespace(index_map_bs=1),
+    )
+
+    basis = ReferenceCellBasis(
+        fake_space,
+        object(),
+        store_reference_tables=False,
+    )
+
+    assert basis.audit["full_reference_tabulation_performed"] is False
+    assert basis.audit["reference_table_bytes"] == 0
+    assert basis.audit["coefficient_matrix_bytes"] == 3 * 3 * np.dtype(float).itemsize
+    assert basis.geometry_derivatives.size > 0
 
 
 def test_complex_cross_terms_with_nontrivial_basis_transform():
