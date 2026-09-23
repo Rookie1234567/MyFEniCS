@@ -1,4 +1,8 @@
 # Task041 outcomes summary
+## 2026-09-23：Review V6 13.5 nm 与 5 nm fixed-eight 收口
+
+13.5 nm 显式 cell-condensed Hybrid 的五项 true residual/物理 Gate 与 H2 数值全向量对照通过；Full3D secondary 未运行，旧 H2 资源合同令总 checker fail。5 nm 只完成固定八 RHS 组件配对：bottom 4/4、top 2/4；top formal column 12、493 的 `e_x/e_A` 超过原 `1e-8` 门。64 GiB cap 是本场专用授权；完整 5 nm consumer、RTA、EH、24h 均未运行。详细逐 RHS、finalizer、ledger 和16份 manifest 哈希见 [V6 outcome](transfer_fix_5nm_24h_v6.md)、[record](records/task041_v6_transfer_5nm_24h.json) 与 [ignored compact v2](../../../results/task041_review_v5_cpu_numa_condensed_speed/r3i_mpi8_side_20260922/preparation/f3c3_cap64_r1_20260923/cap64_r1_postmortem_compact_v2.json)。
+
 ## 2026-09-22：R3i3 MPI8 tiny-FE 数值门收口
 
 唯一 MPI8 tiny-FE 场在旧 full p4 bottom/Q transfer consistency 门停止：`1.3116919128020489e-11 > 1e-11`，约 `1.312×`；原 p4 A4 `6.795828778707217e-11 <= 1e-10`。cell_condensed、PC、真实 side.apply、top 未进入，故不是凝聚 p4 失败，也没有响应等价、加速或正式生产 MPI8 资格。

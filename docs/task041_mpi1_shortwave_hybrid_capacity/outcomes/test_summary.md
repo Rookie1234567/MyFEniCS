@@ -1,4 +1,8 @@
 # Test and evidence summary
+## 2026-09-23：Review V6 F3c4 收口
+
+F3c4 两个轻量 mock 模块最终 `99 passed`, `rc=0`，父侧 wall 约 `11.40 s`；第一次失败的 cap 断言与历史 RHS-manifest fixture 记录保留，后续只修测试期望/fixture，production validator 未改。四次 5 nm fixed-eight service 尝试不是 pytest 通过：前三次分别是 release 诊断接线错误、condensed factor 接口错误、旧 RSS cap 停止；cap64 第四次有 16 个响应但 2/8 top 配对超过 `e_x/e_A <=1e-8`。见 [V6 outcome](transfer_fix_5nm_24h_v6.md) 与 [machine record](records/task041_v6_transfer_5nm_24h.json)。本轮不运行 full repository pytest、PDE、QEP、F3a 或新 ABI。
+
 ## R3i3：MPI8 tiny-FE 受控负结果
 
 一次 MPI8 场的 ABI 八 rank/CPU1–8 通过；旧 full p4 bottom/Q transfer consistency 为 `1.3116919128020489e-11 > 1e-11`，原 p4 A4 为 `6.795828778707217e-11 <= 1e-10`。新 cell-condensed、PC、side.apply、top 未运行，因此不能写成凝聚实现失败或响应/速度资格。

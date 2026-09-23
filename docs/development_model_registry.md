@@ -1,5 +1,12 @@
 # 开发阶段研究对象与计算结果总账
 
+## 2026-09-23：Task041 Review V6 13.5 nm 与 5 nm 配对
+
+| 模型/阶段 | 结果 | 边界与证据 |
+|---|---|---|
+| W 13.5 nm BAL_H Hybrid，MPI8，显式 cell-condensed | 五项 true residual/物理 Gate 和 H2 数值完整向量通过；旧 H2 资源合同使总 checker fail | Full3D secondary 未运行；旧 time-stop scope 标签不符模型。见 [V6 outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/transfer_fix_5nm_24h_v6.md) |
+| W 5 nm BAL_H fixed-eight RHS，MPI8，full→释放→cell-condensed | bottom 4/4、top 2/4；formal column 12、493 的 `e_x/e_A` 超过原 `1e-8` 门 | 仅组件配对，不是完整 consumer/RTA/EH/24h；64 GiB cap 仅本场授权。Finalizer `service_boundary_failure`，V5 ledger 本场唯一 charge `5069.064609306 s`。见 [outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/transfer_fix_5nm_24h_v6.md) 与 [machine record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v6_transfer_5nm_24h.json) |
+
 ## 2026-09-22：Task041 R3i3 MPI8 tiny-FE 数值 Gate 收口
 
 R3i3 唯一获批场在旧 full p4 的 bottom/full/Q transfer-row consistency 门停止：不同单元对同一共享自由度给出的传递值必须一致；实测偏差 `1.3116919128020489e-11` 超过 `1e-11` 门槛，超过量 `3.1169191280204895e-12`。原 p4 A4 为 `6.795828778707217e-11 <= 1e-10`，因此不能把失败归给 cell_condensed，根因仍未证明。cell_condensed、PC、真实 side.apply 和 top 未进入，无响应等价、加速或正式生产 MPI8 结论。

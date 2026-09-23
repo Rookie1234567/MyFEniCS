@@ -1,4 +1,8 @@
 # 项目开发进度：Task000–Task041
+## 2026-09-23：Task041 Review V6 组件结果
+
+13.5 nm cell-condensed Hybrid 的五项 true residual/物理 Gate 与 H2 数值向量通过；Full3D secondary 未运行，旧 H2 资源合同令总 checker fail。5 nm fixed-eight full→释放→cell-condensed 完成16次响应，8对中6对通过；top formal column 12、493 的 `e_x/e_A` 超过原 `1e-8` 门。cap64 只授权该场；Finalizer 已执行并唯一计账，但状态为 `failed/service_boundary_failure`。完整5 nm consumer、RTA、EH、24h 未运行。详见 [V6 outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/transfer_fix_5nm_24h_v6.md)、[record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v6_transfer_5nm_24h.json)。
+
 ## 2026-09-22：Task041 R3i3 MPI8 tiny-FE 数值 Gate 收口
 
 transfer-row consistency 要求不同单元对同一共享自由度给出的传递值一致；唯一 MPI8 tiny-FE 场在旧 full p4 bottom/Q 阶段测得 `1.3116919128020489e-11 > 1e-11`。原 p4 A4 `6.795828778707217e-11 <= 1e-10`，所以不能称 cell-condensed 失败；cell_condensed、PC、side.apply、top 未进入，root cause unresolved。
