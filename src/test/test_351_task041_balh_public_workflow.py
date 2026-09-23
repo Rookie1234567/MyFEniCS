@@ -35,6 +35,7 @@ from benchmarks.task041_exact_side_workflow import (
     _task041_common_failure_details,
     _task041_stream_array_metadata,
 )
+from benchmarks.task041_rank_numa import append_stage_jsonl
 from scripts import run_case
 from src.io.execution_plan import (
     TASK041_PUBLIC_SUPERVISOR_ADAPTER,
@@ -44,13 +45,14 @@ from src.io.execution_plan import (
 )
 from src.io.input_loader import InputError
 from src.io.input_validation import (
+    TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID,
     load_and_resolve,
     task041_balh_diagnostic_output_enabled,
     task041_balh_phase_limits_for_model,
     task041_balh_profile_errors,
     task041_balh_service_contract,
 )
-from src.io.resolved_config import resolved_config_sha256
+from src.io.resolved_config import resolved_config_bytes, resolved_config_sha256
 from src.runners import task041_supervisor as supervisor
 from src.runners.task041_supervisor import (
     _validate_common_layout_equivalence_result,
@@ -67,6 +69,24 @@ BALH_INPUTS = sorted(
 )
 
 
+class _RankNumaTestComm:
+    def __init__(self, rank: int, outcome=None):
+        self.rank = rank
+        self.outcome = outcome
+        self.barrier_calls = 0
+
+    def bcast(self, value, root: int):
+        assert root == 0
+        if self.rank == 0:
+            self.outcome = value
+        else:
+            assert value is None
+        return self.outcome
+
+    def Barrier(self):
+        self.barrier_calls += 1
+
+
 def _specification(path: Path):
     specification = load_and_resolve(path)
     assert task041_balh_profile_errors(specification.as_jsonable()) == []
@@ -74,7 +94,7 @@ def _specification(path: Path):
 
 
 def test_task041_balh_dat_contracts_and_public_identity():
-    assert len(BALH_INPUTS) == 5
+    assert len(BALH_INPUTS) == 7
     for path in BALH_INPUTS:
         specification = _specification(path)
         model_id = str(specification.identity["model_id"])
@@ -97,6 +117,98 @@ def test_task041_balh_dat_contracts_and_public_identity():
         assert contract["balh"] is True
         assert contract["shortwave"] is False
         assert contract["limits"]["swap_limit_bytes"] == 0
+        if "cell_condensed" in model_id:
+            assert contract["p4_inverse_backend"] == "cell_condensed"
+            assert contract["support_policy"] == "entity_closure"
+            assert contract["construction_audit"] == "reference_entity_trace_v1"
+            service_contract = task041_balh_service_contract(model_id)
+            assert service_contract is not None
+            assert service_contract["producer"] == {
+                "mode": "reuse",
+                "invocation": "required",
+                "time_stop_enforced": True,
+                "qep": "not_run",
+            }
+            assert service_contract["time_stop"]["consumer_enforced"] is False
+            assert service_contract["ledger"]["schema"] == (
+                "task041.review_v5.r1_load_ledger.v1"
+            )
+            assert service_contract["ledger"]["path"].endswith(
+                "results/task041_review_v5_cpu_numa_condensed_speed/"
+                "r0_r1_20260920/r1_load_ledger_20260920.json"
+            )
+            assert service_contract["planning_ceiling_source"] == (
+                "strict_hard_cap_admission_upper_bound_not_model_peak"
+            )
+
+
+def test_task041_rank_numa_jsonl_is_written_by_rank_zero(tmp_path):
+    path = tmp_path / "rank_numa_evidence.jsonl"
+    comm = _RankNumaTestComm(rank=0)
+    record = {"stage": "startup", "qualification": {"status": "failed"}}
+
+    append_stage_jsonl(comm, path, record)
+
+    assert json.loads(path.read_text(encoding="utf-8")) == record
+    assert comm.barrier_calls == 0
+
+
+def test_task041_rank_numa_jsonl_nonroot_does_not_serialize_or_write(tmp_path):
+    path = tmp_path / "must-not-be-written.jsonl"
+    comm = _RankNumaTestComm(rank=1)
+
+    append_stage_jsonl(comm, path, {"unserializable": object()})
+
+    assert not path.exists()
+    assert comm.barrier_calls == 0
+
+
+def test_task041_rank_numa_jsonl_write_error_is_broadcast_to_all_ranks(
+    tmp_path,
+):
+    directory = tmp_path / "not-a-file"
+    directory.mkdir()
+    root_comm = _RankNumaTestComm(rank=0)
+
+    with pytest.raises(OSError) as root_error:
+        append_stage_jsonl(root_comm, directory, {"stage": "startup"})
+
+    nonroot_comm = _RankNumaTestComm(rank=1, outcome=root_comm.outcome)
+    with pytest.raises(OSError) as nonroot_error:
+        append_stage_jsonl(
+            nonroot_comm,
+            tmp_path / "must-not-be-written.jsonl",
+            {"stage": "startup"},
+        )
+
+    assert str(nonroot_error.value) == str(root_error.value)
+    assert root_comm.barrier_calls == nonroot_comm.barrier_calls == 0
+    assert not (tmp_path / "must-not-be-written.jsonl").exists()
+
+
+def test_task041_cell_condensed_contract_survives_resolved_serialization():
+    cell_cases = [
+        _specification(path)
+        for path in BALH_INPUTS
+        if 'cell_condensed' in path.stem
+    ]
+    assert len(cell_cases) == 2
+    for specification in cell_cases:
+        payload = json.loads(resolved_config_bytes(specification))
+        serialized = payload['derived']['task041_solver_contract']
+        assert serialized['p4_inverse_backend'] == 'cell_condensed'
+        assert serialized['support_policy'] == 'entity_closure'
+        assert serialized['construction_version'] == (
+            'reference_entity_trace_v1'
+        )
+        execution = serialized['execution_contract']
+        assert execution == {
+            'mpi_size': 8,
+            'cpu_set': '1-8',
+            'membind_node': 0,
+            'consumer_time_stop_enforced': False,
+            'runtime_reserve_bytes': 412316860416,
+        }
 
 
 def test_task041_2nm_balh_case_uses_low_level_profile_without_v2_contract(tmp_path):
@@ -2961,3 +3073,84 @@ def test_public_diagnostic_completion_requires_registered_identity_and_cleanup(
     assert task041_balh_diagnostic_output_enabled(
         TASK041_BALH_5NM_CANDIDATE_MODEL_ID
     ) is False
+
+
+def test_task041_cell_condensed_v5_service_ledger_uses_compat_view(
+    tmp_path: Path, monkeypatch
+):
+    from src.runners import task041_service as service
+
+    model_id = TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID
+    canonical_ledger = (
+        REPOSITORY_ROOT
+        / "results/task041_review_v5_cpu_numa_condensed_speed/"
+        "r0_r1_20260920/r1_load_ledger_20260920.json"
+    )
+    contract = service._service_contract(
+        {
+            "model_id": model_id,
+            "scope": "formal_consumer",
+            "ledger_path": canonical_ledger,
+        },
+        side_setup_schedule=None,
+        comparison_mode=None,
+    )
+    assert contract["ledger"]["schema"] == "task041.review_v5.r1_load_ledger.v1"
+
+    ledger_path = tmp_path / "r1_load_ledger_20260920.json"
+    ledger_path.write_text(
+        json.dumps(
+            {
+                "schema": "task041.review_v5.r1_load_ledger.v1",
+                "scope": "test",
+                "ledger_status": "measured_plus_conservative_upper_bound",
+                "charged_seconds": 10.0,
+                "entries": [{"id": "old", "seconds": 10.0}],
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    path, loaded = supervisor._load_task041_compute_wall_ledger(ledger_path)
+    assert path == ledger_path
+    assert loaded["used_compute_wall_seconds"] == pytest.approx(10.0)
+    assert loaded["source_records"] == loaded["entries"]
+    updated = supervisor._write_task041_compute_wall_ledger(
+        ledger_path,
+        used_before=loaded,
+        current_seconds=2.5,
+        run_directory=tmp_path / "run",
+        case_id=model_id,
+    )
+    on_disk = supervisor._read_json(ledger_path)
+    assert on_disk["schema"] == "task041.review_v5.r1_load_ledger.v1"
+    assert on_disk["charged_seconds"] == pytest.approx(12.5)
+    assert len(on_disk["entries"]) == 2
+    assert "used_compute_wall_seconds" not in on_disk
+    assert updated["used_compute_wall_seconds"] == pytest.approx(12.5)
+
+    observed = {}
+
+    def fake_load(path):
+        observed["load_path"] = path
+        return path, loaded
+
+    def fake_write(path, **kwargs):
+        observed["write"] = kwargs
+        return {"used_compute_wall_seconds": 12.5}
+
+    monkeypatch.setattr(
+        service.supervisor, "_load_task041_compute_wall_ledger", fake_load
+    )
+    monkeypatch.setattr(
+        service.supervisor, "_write_task041_compute_wall_ledger", fake_write
+    )
+    result, error = service._record_unit_wall(
+        {"ledger_path": ledger_path},
+        contract,
+        tmp_path / "service-run",
+        2.5,
+    )
+    assert error is None
+    assert result["used_compute_wall_seconds"] == pytest.approx(12.5)
+    assert observed["write"]["case_id"] == model_id

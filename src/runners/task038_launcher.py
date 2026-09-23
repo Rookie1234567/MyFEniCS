@@ -45,6 +45,7 @@ from src.io.input_validation import (
     TASK041_BALH_MODEL_IDS,
     task039_model_id_matches,
     task041_balh_case,
+    task041_balh_service_contract,
 )
 from src.io.resolved_config import canonical_json_bytes, write_resolved_config
 from src.io.run_specification import RunSpecification
@@ -3795,8 +3796,10 @@ def launch_specification(
     if task041_supervision_record is not None:
         if (
             performance_contract is None
-            and str(specification.identity.get("model_id", ""))
-            != TASK041_BALH_2NM_MODEL_ID
+            and task041_balh_service_contract(
+                str(specification.identity.get("model_id", ""))
+            )
+            is None
         ):
             raise InputError(
                 "--task041-supervision-record requires a registered Task041 contract"
@@ -3845,20 +3848,26 @@ def launch_specification(
     ):
         model_id = str(specification.identity.get("model_id", ""))
         case = task041_balh_case(model_id)
-        if model_id == TASK041_BALH_2NM_MODEL_ID and case is not None:
-            ledger_filename = case["compute_wall_ledger_filename"]
-        else:
-            ledger_filename = (
-                "task041_schur_speed_v2_compute_wall_ledger.json"
-                if performance_contract is not None
-                else "task041_compute_wall_ledger.json"
+        if case is not None and case.get("compute_wall_ledger_path"):
+            compute_wall_ledger_path = (
+                Path(__file__).resolve().parents[2]
+                / case["compute_wall_ledger_path"]
             )
-        compute_wall_ledger_path = (
-            Path(__file__).resolve().parents[2]
-            / "results"
-            / "task041_side_balh_component_audit"
-            / ledger_filename
-        )
+        else:
+            if model_id == TASK041_BALH_2NM_MODEL_ID and case is not None:
+                ledger_filename = case["compute_wall_ledger_filename"]
+            else:
+                ledger_filename = (
+                    "task041_schur_speed_v2_compute_wall_ledger.json"
+                    if performance_contract is not None
+                    else "task041_compute_wall_ledger.json"
+                )
+            compute_wall_ledger_path = (
+                Path(__file__).resolve().parents[2]
+                / "results"
+                / "task041_side_balh_component_audit"
+                / ledger_filename
+            )
     run_directory = _timestamp_directory(specification, timestamp)
     start_time = _now()
     manifest, _resolved_sha = _write_bootstrap(

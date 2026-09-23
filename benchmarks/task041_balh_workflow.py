@@ -87,6 +87,10 @@ def task041_schur_speed_v2_contract(
     case = _require_case(model_id)
     if model_id not in TASK041_BALH_CANDIDATE_MODEL_IDS or case["route"] != "balh":
         raise ValueError("task041_schur_speed_v2 requires a BAL_H candidate")
+    if case.get("p4_inverse_backend") == "cell_condensed":
+        raise ValueError(
+            "task041_schur_speed_v2 is not a public contract for cell-condensed cases"
+        )
     if scope not in {None, TASK041_REPRESENTATIVE_RHS_SCOPE}:
         raise ValueError(f"unsupported Task041 performance scope: {scope!r}")
     if side_setup_schedule not in {None, TASK041_SEQUENTIAL_COMPONENT_SCHEDULE}:
@@ -314,6 +318,13 @@ def task041_balh_cpu_list(model_id: str) -> str:
     return str(_require_case(model_id).get("cpu_set", "0-7"))
 
 
+def task041_balh_membind_node(model_id: str) -> str | None:
+    """Return the rank-executable NUMA node binding for explicit V6 cases."""
+
+    node = _require_case(model_id).get("membind_node")
+    return None if node is None else str(int(node))
+
+
 def _physical_contract(normalized: Mapping[str, Any]) -> dict[str, Any]:
     """Project only physical/discrete facts shared by exact and BAL_H lanes."""
 
@@ -481,6 +492,7 @@ def _mpi8_command(
     side_setup_schedule: str | None = None,
     comparison_mode: str | None = None,
     cpu_list: str = "0-7",
+    membind_node: str | None = None,
 ) -> list[str]:
     command = [
         "mpiexec",
@@ -508,6 +520,12 @@ def _mpi8_command(
         "--source-sha",
         source_sha,
     ]
+    if membind_node is not None:
+        python_index = command.index(str(python_executable))
+        command[python_index:python_index] = [
+            "numactl",
+            f"--membind={membind_node}",
+        ]
     if packet_manifest is not None:
         command.extend(
             [
@@ -591,6 +609,7 @@ def build_task041_balh_mode_prep_command(
         None,
         module="benchmarks.task041_exact_side_workflow",
         cpu_list=task041_balh_cpu_list(str(normalized["model_id"])),
+        membind_node=task041_balh_membind_node(str(normalized["model_id"])),
     )
 
 
@@ -702,6 +721,7 @@ def build_task041_balh_candidate_consumer_command(
         side_setup_schedule=side_setup_schedule,
         comparison_mode=comparison_mode,
         cpu_list=task041_balh_cpu_list(str(normalized["model_id"])),
+        membind_node=task041_balh_membind_node(str(normalized["model_id"])),
     )
 
 
@@ -1167,6 +1187,7 @@ __all__ = [
     "task041_balh_cpu_list",
     "task041_balh_exact_consumer_iterative_config",
     "task041_balh_exact_consumer_profile",
+    "task041_balh_membind_node",
     "task041_balh_route",
     "task041_balh_time_stop_override_record",
     "task041_balh_transfer_optimization_profile",

@@ -27,7 +27,6 @@ from benchmarks.watchdog_process_control import (
 )
 from src.io.execution_plan import TASK041_PUBLIC_SUPERVISOR_ADAPTER
 from src.io.input_validation import (
-    TASK041_BALH_2NM_MODEL_ID,
     TASK041_BALH_CANDIDATE_MODEL_IDS,
     TASK041_BALH_MODEL_IDS,
     TASK041_BALH_MPI_SIZE,
@@ -1621,15 +1620,15 @@ def _outer_mpi_launch_identity(
         "OMPI_COMM_WORLD_RANK": os.environ.get("OMPI_COMM_WORLD_RANK"),
     }
     if registered_model_id is not None:
-        if registered_model_id != TASK041_BALH_2NM_MODEL_ID:
+        if task041_balh_service_contract(registered_model_id) is None:
             raise Task041SupervisorError(
-                "native public singleton is limited to the registered 2 nm case",
+                "native public singleton is limited to a registered Task041 case",
                 classification="task041_identity_failure",
                 stage="outer_mpi_identity",
             )
         if performance_profile is not None:
             raise Task041SupervisorError(
-                "registered 2 nm native singleton cannot use a high-level performance profile",
+                "registered Task041 native singleton cannot use a high-level performance profile",
                 classification="task041_identity_failure",
                 stage="outer_mpi_identity",
             )
@@ -5124,14 +5123,25 @@ def _load_task041_compute_wall_ledger(
             stage="workflow_wall_budget",
         )
     payload = _read_json(ledger_path)
-    used = _wall_seconds(payload.get("used_compute_wall_seconds"))
+    schema = str(payload.get("schema", ""))
+    if schema == "task041.review_v5.r1_load_ledger.v1":
+        used = _wall_seconds(payload.get("charged_seconds"))
+        source_records = payload.get("entries")
+        if not isinstance(source_records, list) or not source_records:
+            raise Task041SupervisorError(
+                f"Task041 Review V5 ledger has no entries: {ledger_path}",
+                classification="task041_identity_failure",
+                stage="workflow_wall_budget",
+            )
+    else:
+        used = _wall_seconds(payload.get("used_compute_wall_seconds"))
+        source_records = payload.get("source_records")
     if used is None:
         raise Task041SupervisorError(
             f"Task041 compute wall ledger has no finite used value: {ledger_path}",
             classification="task041_identity_failure",
             stage="workflow_wall_budget",
         )
-    source_records = payload.get("source_records")
     if not isinstance(source_records, list):
         source_records = []
     if not source_records:
@@ -5143,8 +5153,12 @@ def _load_task041_compute_wall_ledger(
                 source_records.extend(section["records"])
     loaded = dict(payload)
     loaded["used_compute_wall_seconds"] = used
-    loaded["used_status"] = str(payload.get("used_status", "derived"))
-    loaded["basis"] = payload.get("basis", "explicit compact ledger")
+    loaded["used_status"] = str(
+        payload.get("ledger_status", payload.get("used_status", "derived"))
+    )
+    loaded["basis"] = payload.get(
+        "scope", payload.get("basis", "explicit compact ledger")
+    )
     loaded["source_records"] = source_records
     return ledger_path, loaded
 
@@ -5307,9 +5321,41 @@ def _write_task041_compute_wall_ledger(
             current_record,
         ]
     if case_id is not None:
-        if case_id != TASK041_BALH_2NM_MODEL_ID or profile_id is not None:
+        if (
+            task041_balh_service_contract(case_id) is None
+            or profile_id is not None
+        ):
             raise ValueError("unsupported Task041 registered-case ledger identity")
         current_record["case_id"] = case_id
+        if used_before.get("schema") == "task041.review_v5.r1_load_ledger.v1":
+            current_record["id"] = f"{case_id}:{run_directory.name}"
+            entries = [
+                *list(used_before.get("entries", [])),
+                current_record,
+            ]
+            payload = {
+                key: value
+                for key, value in used_before.items()
+                if key not in {
+                    "used_compute_wall_seconds",
+                    "used_status",
+                    "basis",
+                    "source_records",
+                }
+            }
+            payload["entries"] = entries
+            payload["charged_seconds"] = total
+            _write_json(ledger_path, payload)
+            read_view = dict(payload)
+            read_view["used_compute_wall_seconds"] = total
+            read_view["used_status"] = used_before.get(
+                "used_status", used_before.get("ledger_status", "derived")
+            )
+            read_view["basis"] = used_before.get(
+                "basis", used_before.get("scope", "explicit compact ledger")
+            )
+            read_view["source_records"] = entries
+            return read_view
         payload = dict(used_before)
         payload.update(
             {
@@ -5448,9 +5494,9 @@ def run_task041_public_supervisor(
                 stage="source_identity",
             )
         identity = _validate_specification(specification, repository_root)
-        if identity["model_id"] == TASK041_BALH_2NM_MODEL_ID:
+        if task041_balh_service_contract(str(identity["model_id"])) is not None:
             outer_mpi_identity = _outer_mpi_launch_identity(
-                registered_model_id=TASK041_BALH_2NM_MODEL_ID
+                registered_model_id=str(identity["model_id"])
             )
         elif performance_profile is not None:
             outer_mpi_identity = _outer_mpi_launch_identity(performance_profile)
@@ -5467,13 +5513,13 @@ def run_task041_public_supervisor(
         result["limits"] = dict(runtime_limits)
         shortwave = identity["model_id"] in TASK041_SHORTWAVE_MODEL_IDS
         balh = identity["model_id"] in TASK041_BALH_MODEL_IDS
-        if balh and identity["model_id"] == TASK041_BALH_2NM_MODEL_ID:
+        if balh and task041_balh_service_contract(str(identity["model_id"])) is not None:
             registered_contract = task041_balh_service_contract(
                 str(identity["model_id"])
             )
             if registered_contract is None:
                 raise Task041SupervisorError(
-                    "registered 2 nm service contract is unavailable",
+                    "registered Task041 service contract is unavailable",
                     classification="task041_identity_failure",
                     stage="service_contract",
                 )
@@ -5482,6 +5528,18 @@ def run_task041_public_supervisor(
             compute_wall_phase_limit_seconds = None
             compute_wall_enforced_limit_seconds = None
         legacy_native = legacy_native_packet_descriptor is not None
+        registered_case = task041_balh_case(str(identity["model_id"]))
+        if (
+            registered_case is not None
+            and registered_case.get("p4_inverse_backend") == "cell_condensed"
+            and producer_packet_root is None
+            and not legacy_native
+        ):
+            raise Task041SupervisorError(
+                "cell-condensed Task041 consumer requires an existing producer packet or legacy descriptor; producer mode-prep is not automatic",
+                classification="task041_identity_failure",
+                stage="producer_reuse_contract",
+            )
         if balh:
             from benchmarks.task041_balh_workflow import (
                 TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
@@ -5507,7 +5565,7 @@ def run_task041_public_supervisor(
                         "model_id": identity["model_id"],
                         "run_id": identity.get("run_id"),
                         "source_sha": source_sha,
-                        "scope": "registered_2nm_case",
+                        "scope": "registered_task041_case",
                     }
                 )
             else:
@@ -5809,6 +5867,21 @@ def run_task041_public_supervisor(
                     classification="task041_identity_failure",
                     stage="workflow_wall_budget",
                 )
+            registered_ledger_path = (
+                None
+                if case_runtime_contract is None
+                else case_runtime_contract["ledger"].get("path")
+            )
+            if registered_ledger_path is not None:
+                expected_ledger_path = (
+                    repository_root / registered_ledger_path
+                ).resolve()
+                if Path(compute_wall_ledger_path).resolve() != expected_ledger_path:
+                    raise Task041SupervisorError(
+                        "registered Task041 case must use its canonical Review V5 ledger path",
+                        classification="task041_identity_failure",
+                        stage="workflow_wall_budget",
+                    )
             compute_wall_ledger_path, compute_wall_ledger = (
                 _load_task041_compute_wall_ledger(
                     Path(compute_wall_ledger_path).resolve()

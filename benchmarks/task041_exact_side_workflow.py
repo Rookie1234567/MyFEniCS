@@ -660,6 +660,16 @@ def _task041_case_contract(
         )
 
         route = str(balh_case["route"])
+        p4_inverse_backend = str(balh_case.get("p4_inverse_backend", "full"))
+        support_policy = str(balh_case.get("support_policy", "legacy"))
+        if p4_inverse_backend not in {"full", "cell_condensed"}:
+            raise Task041ModePrepError(
+                f"unsupported Task041 p4 inverse backend: {p4_inverse_backend!r}"
+            )
+        if p4_inverse_backend == "cell_condensed" and support_policy != "entity_closure":
+            raise Task041ModePrepError(
+                "cell-condensed Task041 cases require entity_closure support policy"
+            )
         return {
             "shortwave": False,
             "balh": True,
@@ -693,6 +703,9 @@ def _task041_case_contract(
             "transfer_optimization_profile": (
                 task041_balh_transfer_optimization_profile(model_id)
             ),
+            "p4_inverse_backend": p4_inverse_backend,
+            "support_policy": support_policy,
+            "construction_audit": balh_case.get("construction_audit"),
         }
 
     failures = tuple(task041_shortwave_profile_errors(normalized))
@@ -2101,6 +2114,11 @@ def _run_task041_balh_candidate_setup(
     performance_profile: str | None = None,
     transfer_optimization_profile: str | None = None,
     comparison_mode: str | None = None,
+    p4_inverse_backend: str = "full",
+    support_policy: str = "legacy",
+    construction_audit: str | None = None,
+    rank_numa_stage_callback: Callable[[str, Mapping[str, object] | None, Mapping[str, Any] | None], None] | None = None,
+    rank_numa_evidence: list[Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Build the finite-response BAL_H Schur and run the shared formal path."""
 
@@ -2183,7 +2201,6 @@ def _run_task041_balh_candidate_setup(
     global_source_before: PETSc.Vec | None = None
     global_action_before: PETSc.Vec | None = None
     global_rhs_before: PETSc.Vec | None = None
-
     def audit_callback(side: str) -> Callable[[dict[str, Any]], None]:
         def record(audit: dict[str, Any]) -> None:
             index = audit_indices[side]
@@ -2422,6 +2439,8 @@ def _run_task041_balh_candidate_setup(
                 if transfer_optimization_profile is not None
                 else performance_profile
             ),
+            p4_inverse_backend=p4_inverse_backend,
+            support_policy=support_policy,
             lifecycle_callback=(
                 side_lifecycle_callback(side)
                 if detailed_timing
@@ -2439,6 +2458,84 @@ def _run_task041_balh_candidate_setup(
                 layout_instance_id=layout_instance_id,
             )
         side_diagnostics_before[side] = dict(inverse.diagnostics)
+        p4_diagnostics = side_diagnostics_before[side].get("p4_factor")
+        if construction_audit is not None:
+            if not isinstance(p4_diagnostics, Mapping):
+                raise Task041ModePrepError(
+                    f"{side} p4 factor diagnostics are unavailable for backend audit"
+                )
+            actual_backend = {
+                "task041.h1c.p4_exact_factor.v1": "full",
+                "task041.h1c.p4_condensed_exact_factor.v1": "cell_condensed",
+            }.get(p4_diagnostics.get("schema"))
+            owner_transfer = inverse._owner_transfer
+            owner_audit = dict(owner_transfer.audit)
+            local_transfer_audit = dict(owner_transfer.local_transfer.audit)
+            actual_support_policy = owner_audit.get("support_policy")
+            actual_construction = (
+                "reference_entity_trace_v1"
+                if local_transfer_audit.get("reference_entity_trace_v1") is True
+                else None
+            )
+            if actual_backend != p4_inverse_backend:
+                raise Task041ModePrepError(
+                    f"{side} requested p4 backend {p4_inverse_backend!r}, "
+                    f"actual factor schema resolved to {actual_backend!r}"
+                )
+            if actual_support_policy != support_policy:
+                raise Task041ModePrepError(
+                    f"{side} requested support policy {support_policy!r}, "
+                    f"actual owner policy is {actual_support_policy!r}"
+                )
+            if (
+                p4_inverse_backend == "cell_condensed"
+                and actual_construction != "reference_entity_trace_v1"
+            ):
+                raise Task041ModePrepError(
+                    f"{side} cell-condensed transfer lacks reference_entity_trace_v1"
+                )
+            side_diagnostics_before[side]["task041_backend_contract"] = {
+                "requested_backend": p4_inverse_backend,
+                "actual_backend": actual_backend,
+                "requested_support_policy": support_policy,
+                "actual_support_policy": actual_support_policy,
+                "requested_construction_audit": construction_audit,
+                "actual_construction_audit": actual_construction,
+                "factor_schema": p4_diagnostics.get("schema"),
+                "factor_rows": {
+                    key: p4_diagnostics.get(key)
+                    for key in (
+                        "full_storage_rows",
+                        "active_trace_rows",
+                        "interior_rows",
+                        "port_rows",
+                        "retained_matrix_rows",
+                    )
+                },
+            }
+        if rank_numa_stage_callback is not None:
+            transfer = inverse._owner_transfer
+            rank_numa_stage_callback(
+                "p4_ready",
+                {
+                    "coarse_work": transfer._coarse_work.x.array,
+                    "fine_work": transfer._fine_work.x.array,
+                },
+                {
+                    "side": side,
+                    "p4_factor": {
+                        key: p4_diagnostics.get(key)
+                        for key in (
+                            "schema",
+                            "full_storage_rows",
+                            "active_trace_rows",
+                            "interior_rows",
+                            "port_rows",
+                            "retained_matrix_rows",
+                        )
+                    },
+                },
+            )
         lifecycle_boundary = None
         if side_setup_schedule == TASK041_SEQUENTIAL_COMPONENT_SCHEDULE:
             lifecycle_boundary = sequential_boundary(
@@ -3438,6 +3535,21 @@ def _run_task041_balh_candidate_setup(
                 target = system.A.createVecLeft()
                 try:
                     inverse.apply(rhs, target)
+                    if (
+                        rank_numa_stage_callback is not None
+                        and label == "modal_traction_positive"
+                    ):
+                        rank_numa_stage_callback(
+                            "first_response",
+                            {"rhs": rhs, "target": target},
+                            {
+                                "side": side,
+                                "label": label,
+                                "last_apply": dict(
+                                    inverse.diagnostics.get("last_apply", {})
+                                ),
+                            },
+                        )
                 except BaseException:
                     audit = dict(inverse.diagnostics.get("last_apply", {}))
                     marker_callback(
@@ -5371,6 +5483,8 @@ def _run_task041_balh_candidate_setup(
             result["side_setup"] = dict(schedule_summary)
         if common_mode:
             result["comparison_mode"] = comparison_mode
+        if rank_numa_evidence is not None:
+            result["rank_numa_evidence"] = list(rank_numa_evidence)
         return result
 
     try:
@@ -5763,7 +5877,7 @@ def _run_task041_balh_candidate_setup(
                 release_before_recovery=release_before_recovery,
             )
         )
-        return {
+        result = {
             "schema": "task041.side_balh.candidate_setup.v1",
             "status": str(formal_result.get("status")),
             "qualification_scope": qualification_scope,
@@ -5817,6 +5931,9 @@ def _run_task041_balh_candidate_setup(
             },
             "full_formal": formal_result,
         }
+        if rank_numa_evidence is not None:
+            result["rank_numa_evidence"] = list(rank_numa_evidence)
+        return result
     except BaseException:
         for side, inverse in side_inverses.items():
             last_apply = dict(inverse.diagnostics.get("last_apply", {}))
@@ -6205,6 +6322,108 @@ def run_task041_consumer(
             emit("recovery_complete", {"source": "run_v3_7_recovery_runner"})
 
     try:
+        rank_numa_evidence: list[dict[str, Any]] = []
+        rank_numa_identities: dict[int, tuple[int, int]] = {}
+        rank_numa_stage_callback = None
+        rank_numa_evidence_path: Path | None = None
+        if (
+            candidate
+            and contract.get('p4_inverse_backend') == 'cell_condensed'
+            and contract.get('construction_audit') == 'reference_entity_trace_v1'
+        ):
+            from benchmarks.task041_rank_numa import (
+                append_stage_jsonl,
+                collective_snapshot,
+                qualification_errors,
+            )
+            rank_numa_evidence_path = root / "rank_numa_evidence.jsonl"
+
+            def record_rank_numa(
+                stage: str,
+                arrays: Mapping[str, object] | None = None,
+                detail: Mapping[str, Any] | None = None,
+            ) -> None:
+                local = collective_snapshot(
+                    comm,
+                    stage,
+                    arrays,
+                    include_probe=stage == 'startup',
+                )
+                if detail is not None:
+                    local['stage_detail'] = dict(detail)
+                gathered = comm.gather(local, root=0)
+                payload = None
+                if comm.rank == 0:
+                    ordered = sorted(
+                        gathered or [],
+                        key=lambda item: int(item['rank']),
+                    )
+                    payload = {
+                        'schema': 'task041.rank_numa_stage.v1',
+                        'stage': str(stage),
+                        'mpi_size': int(comm.size),
+                        'collective_status': (
+                            'measured'
+                            if all(
+                                item.get('collective_status') == 'measured'
+                                for item in ordered
+                            )
+                            else 'failed'
+                        ),
+                        'ranks': ordered,
+                    }
+                payload = comm.bcast(payload, root=0)
+                if not isinstance(payload, Mapping):
+                    raise Task041ModePrepError(
+                        f'NUMA evidence payload was not broadcast: {stage}'
+                    )
+                stage_errors = qualification_errors(
+                    payload,
+                    expected_mpi_size=8,
+                    previous_identities=rank_numa_identities,
+                    require_startup_probe=stage == 'startup',
+                )
+                all_stage_errors = comm.allgather(stage_errors)
+                merged_errors = sorted(
+                    {
+                        str(error)
+                        for rank_errors in all_stage_errors
+                        for error in rank_errors
+                    }
+                )
+                qualification = {
+                    'status': 'passed' if not merged_errors else 'failed',
+                    'errors': merged_errors or None,
+                    'policy': 'MPI8_CPU1_8_socket0_node0',
+                }
+                raw_payload = dict(payload)
+                payload = dict(raw_payload)
+                payload['qualification'] = qualification
+                rank_numa_evidence.append(payload)
+                append_stage_jsonl(
+                    comm,
+                    rank_numa_evidence_path,
+                    {
+                        'schema': 'task041.rank_numa_evidence.v1',
+                        'stage': str(stage),
+                        'raw_payload': raw_payload,
+                        'qualification': qualification,
+                    },
+                )
+                if merged_errors:
+                    raise Task041ModePrepError(
+                        f'NUMA qualification failed at {stage}: '
+                        + '; '.join(merged_errors)
+                    )
+                for item in payload['ranks']:
+                    evidence = item['evidence']
+                    identity = evidence['rank_identity']
+                    rank_numa_identities[int(item['rank'])] = (
+                        int(identity['pid']),
+                        int(identity['starttime_ticks']),
+                    )
+
+            rank_numa_stage_callback = record_rank_numa
         environment = _environment_snapshot()
         result["environment"] = environment
         if contract["balh"]:
@@ -6318,6 +6537,10 @@ def run_task041_consumer(
             },
         )
         cfg = simulation_config_3d_from_normalized(normalized)
+        if rank_numa_stage_callback is not None:
+            result['rank_numa_evidence'] = rank_numa_evidence
+            result['rank_numa_evidence_path'] = str(rank_numa_evidence_path)
+            rank_numa_stage_callback('startup')
         modal_cfg = deepcopy(cfg)
         if contract["balh"]:
             from benchmarks.task041_balh_workflow import (
@@ -6648,7 +6871,10 @@ def run_task041_consumer(
                 failure_evidence=candidate_failure_evidence,
                 identity=recomputed_identity,
                 disable_time_stop=time_stop_disabled,
-                detailed_timing=performance_contract is not None,
+                detailed_timing=(
+                    performance_contract is not None
+                    or contract.get("p4_inverse_backend") == "cell_condensed"
+                ),
                 representative_rhs_contract=representative_rhs_contract,
                 side_setup_schedule=side_setup_schedule,
                 comparison_mode=comparison_mode,
@@ -6658,6 +6884,11 @@ def run_task041_consumer(
                     else None
                 ),
                 transfer_optimization_profile=transfer_optimization_profile,
+                p4_inverse_backend=contract.get("p4_inverse_backend", "full"),
+                support_policy=contract.get("support_policy", "legacy"),
+                construction_audit=contract.get("construction_audit"),
+                rank_numa_stage_callback=rank_numa_stage_callback,
+                rank_numa_evidence=rank_numa_evidence,
             )
         else:
             setup_result = run_v5_h4_exact_side_setup_only(

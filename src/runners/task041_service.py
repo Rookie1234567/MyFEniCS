@@ -74,17 +74,26 @@ def _service_contract(
     if case_contract is not None:
         if side_setup_schedule is not None or comparison_mode is not None:
             raise Task041ServiceError(
-                "registered 2 nm case does not accept representative comparison options"
+                "registered Task041 case does not accept representative comparison options"
             )
         configured_scope = config.get("scope")
         if configured_scope not in {None, case_contract["scope"]}:
             raise Task041ServiceError(
-                "registered 2 nm service scope does not match its case contract"
+                "registered Task041 service scope does not match its case contract"
             )
         ledger_name = Path(config["ledger_path"]).name
-        if ledger_name != case_contract["ledger"]["filename"]:
+        registered_ledger_path = case_contract["ledger"].get("path")
+        if registered_ledger_path is not None:
+            expected_ledger_path = (
+                Path(__file__).resolve().parents[2] / registered_ledger_path
+            ).resolve()
+            if Path(config["ledger_path"]).resolve() != expected_ledger_path:
+                raise Task041ServiceError(
+                    "registered Task041 case must use its canonical Review V5 ledger path"
+                )
+        elif ledger_name != case_contract["ledger"]["filename"]:
             raise Task041ServiceError(
-                "registered 2 nm case must use its independent compute ledger"
+                "registered Task041 case must use its registered compute ledger"
             )
         return dict(case_contract)
     return task041_schur_speed_v2_contract(

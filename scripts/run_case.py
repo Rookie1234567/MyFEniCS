@@ -73,6 +73,22 @@ def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
         specification = load_and_resolve(args.input_path)
+        from src.io.input_validation import task041_balh_case
+
+        registered_case = task041_balh_case(
+            str(specification.identity.get("model_id", ""))
+        )
+        if (
+            not args.validate_only
+            and not args.dry_run
+            and registered_case is not None
+            and registered_case.get("p4_inverse_backend") == "cell_condensed"
+            and args.producer_packet_root is None
+            and args.legacy_native_packet_descriptor is None
+        ):
+            raise InputError(
+                "cell-condensed Task041 consumer requires an existing producer packet or legacy descriptor"
+            )
         if args.task041_balh_candidate_disable_time_stop:
             from benchmarks.task041_balh_workflow import (
                 TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
@@ -123,12 +139,14 @@ def main(argv: list[str] | None = None) -> int:
                 "Task041 comparison options require task041_schur_speed_v2"
             )
         if args.task041_supervision_record is not None:
-            from src.io.input_validation import TASK041_BALH_2NM_MODEL_ID
+            from src.io.input_validation import task041_balh_service_contract
 
             if (
                 args.task041_performance_profile != "task041_schur_speed_v2"
-                and specification.identity.get("model_id")
-                != TASK041_BALH_2NM_MODEL_ID
+                and task041_balh_service_contract(
+                    str(specification.identity.get("model_id"))
+                )
+                is None
             ):
                 raise InputError(
                     "--task041-supervision-record requires a registered Task041 contract"

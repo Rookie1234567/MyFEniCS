@@ -447,6 +447,17 @@ TASK041_BALH_2NM_SERVICE_CONTRACT_ID = (
 TASK041_BALH_2NM_COMPUTE_WALL_LEDGER_FILENAME = (
     "task041_2nm_balh_hybrid_iterative_p6h1p5_m1200_mpi8_compute_wall_ledger.json"
 )
+TASK041_BALH_CELL_CONDENSED_WARNING_MEMORY_BYTES = 47899046707
+TASK041_BALH_CELL_CONDENSED_MEMORY_CAP_BYTES = 53221163008
+TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES = 412316860416
+TASK041_BALH_CELL_CONDENSED_LEDGER_FILENAME = "r1_load_ledger_20260920.json"
+TASK041_BALH_CELL_CONDENSED_CONSTRUCTION_VERSION = "reference_entity_trace_v1"
+TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID = (
+    "task041_13p5nm_balh_hybrid_iterative_p6h10_m120_mpi8_cell_condensed"
+)
+TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID = (
+    "task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8_cell_condensed"
+)
 # This is the already validated low-level data-plane switch in the owner
 # transfer.  It is deliberately not a public Task041 V2 budget/profile
 # contract for the 2 nm case.
@@ -529,6 +540,82 @@ TASK041_BALH_CASES = {
         "solver_contract": "task041_side_balh_candidate_fgmres32_v1",
         "preconditioner": "hybrid_block_ldu_balh_side_inverse",
     },
+    TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID: {
+        "run_id": "task041_13p5nm_p6h10_m120_mpi8_cell_condensed",
+        "scope": "task041_13p5nm_p6h10_m120_mpi8",
+        "comparison_group": "task041_side_balh_13p5nm_p6h10_m120",
+        "input": "input/official/task041/side_balh/13p5nm_p6h10_m120_mpi8_cell_condensed.dat",
+        "route": "balh",
+        "wavelength_nm": 13.5,
+        "material_n": TASK041_BALH_N_13P5,
+        "material_label": TASK041_BALH_SI_LABEL,
+        "mesh_target_nm": 10.0,
+        "mode_count": 120,
+        "warning_memory_gib": 44.6094635007903,
+        "warning_memory_bytes": TASK041_BALH_CELL_CONDENSED_WARNING_MEMORY_BYTES,
+        "terminate_memory_gib": 49.566070556640625,
+        "absolute_terminate_memory_bytes": TASK041_BALH_CELL_CONDENSED_MEMORY_CAP_BYTES,
+        "producer_timeout_seconds": 18000,
+        "consumer_timeout_seconds": 86400,
+        "producer_time_stop_enforced": True,
+        "consumer_time_stop_enforced": False,
+        "runtime_reserve_bytes": TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES,
+        "planning_ceiling_bytes": TASK041_BALH_CELL_CONDENSED_MEMORY_CAP_BYTES,
+        "planning_ceiling_source": "strict_hard_cap_admission_upper_bound_not_model_peak",
+        "service_contract_id": "task041_13p5nm_cell_condensed_service_v1",
+        "compute_wall_ledger_filename": TASK041_BALH_CELL_CONDENSED_LEDGER_FILENAME,
+        "compute_wall_ledger_path": (
+            "results/task041_review_v5_cpu_numa_condensed_speed/"
+            "r0_r1_20260920/r1_load_ledger_20260920.json"
+        ),
+        "solver_contract": "task041_side_balh_candidate_fgmres32_cell_condensed_v1",
+        "preconditioner": "hybrid_block_ldu_balh_side_inverse",
+        "transfer_optimization_profile": TASK041_BALH_TRANSFER_OPTIMIZATION_PROFILE,
+        "p4_inverse_backend": "cell_condensed",
+        "support_policy": "entity_closure",
+        "construction_audit": TASK041_BALH_CELL_CONDENSED_CONSTRUCTION_VERSION,
+        "cpu_set": "1-8",
+        "membind_node": 0,
+        "reporting_harmonic_bound": 25,
+    },
+    TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID: {
+        "run_id": "task041_5nm_p6h4_m480_mpi8_cell_condensed",
+        "scope": "task041_5nm_p6h4_m480_mpi8",
+        "comparison_group": "task041_side_balh_5nm_p6h4_m480",
+        "input": "input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat",
+        "route": "balh",
+        "wavelength_nm": 5.0,
+        "material_n": TASK041_BALH_N_5NM,
+        "material_label": TASK041_BALH_W_LABEL,
+        "mesh_target_nm": 4.0,
+        "mode_count": 480,
+        "warning_memory_gib": 44.6094635007903,
+        "warning_memory_bytes": TASK041_BALH_CELL_CONDENSED_WARNING_MEMORY_BYTES,
+        "terminate_memory_gib": 49.566070556640625,
+        "absolute_terminate_memory_bytes": TASK041_BALH_CELL_CONDENSED_MEMORY_CAP_BYTES,
+        "producer_timeout_seconds": 43200,
+        "consumer_timeout_seconds": 86400,
+        "producer_time_stop_enforced": True,
+        "consumer_time_stop_enforced": False,
+        "runtime_reserve_bytes": TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES,
+        "planning_ceiling_bytes": TASK041_BALH_CELL_CONDENSED_MEMORY_CAP_BYTES,
+        "planning_ceiling_source": "strict_hard_cap_admission_upper_bound_not_model_peak",
+        "service_contract_id": "task041_5nm_cell_condensed_service_v1",
+        "compute_wall_ledger_filename": TASK041_BALH_CELL_CONDENSED_LEDGER_FILENAME,
+        "compute_wall_ledger_path": (
+            "results/task041_review_v5_cpu_numa_condensed_speed/"
+            "r0_r1_20260920/r1_load_ledger_20260920.json"
+        ),
+        "solver_contract": "task041_side_balh_candidate_fgmres32_cell_condensed_v1",
+        "preconditioner": "hybrid_block_ldu_balh_side_inverse",
+        "transfer_optimization_profile": TASK041_BALH_TRANSFER_OPTIMIZATION_PROFILE,
+        "p4_inverse_backend": "cell_condensed",
+        "support_policy": "entity_closure",
+        "construction_audit": TASK041_BALH_CELL_CONDENSED_CONSTRUCTION_VERSION,
+        "cpu_set": "1-8",
+        "membind_node": 0,
+        "reporting_harmonic_bound": 25,
+    },
     TASK041_BALH_2NM_MODEL_ID: {
         "run_id": "task041_2nm_p6h1p5_m1200_mpi8_balh",
         "scope": "task041_2nm_p6h1p5_m1200_mpi8",
@@ -568,6 +655,11 @@ TASK041_BALH_EXACT_MODEL_IDS = frozenset(
 )
 TASK041_BALH_CANDIDATE_MODEL_IDS = frozenset(
     model_id for model_id, case in TASK041_BALH_CASES.items() if case["route"] == "balh"
+)
+TASK041_BALH_CELL_CONDENSED_MODEL_IDS = frozenset(
+    model_id
+    for model_id, case in TASK041_BALH_CASES.items()
+    if case.get("p4_inverse_backend") == "cell_condensed"
 )
 TASK041_BALH_WORKFLOW_LIMITS_BY_MODEL_ID = MappingProxyType(
     {
@@ -683,7 +775,7 @@ def task041_balh_diagnostic_output_enabled(model_id: str) -> bool:
 
 
 def task041_balh_service_contract(model_id: str) -> Mapping[str, Any] | None:
-    """Return the explicit service contract for the registered 2 nm run.
+    """Return the explicit service contract for a registered Task041 case.
 
     The input file keeps its positive producer timeout as an identity fact.  The
     consumer's unlimited elapsed-time policy is represented here instead of by
@@ -691,8 +783,9 @@ def task041_balh_service_contract(model_id: str) -> Mapping[str, Any] | None:
     """
 
     case = task041_balh_case(model_id)
-    if case is None or str(model_id) != TASK041_BALH_2NM_MODEL_ID:
+    if case is None or "service_contract_id" not in case:
         return None
+    cell_condensed = case.get("p4_inverse_backend") == "cell_condensed"
     warning_bytes = int(
         case.get("warning_memory_bytes", case["warning_memory_gib"] * 2**30)
     )
@@ -700,16 +793,21 @@ def task041_balh_service_contract(model_id: str) -> Mapping[str, Any] | None:
         "contract_kind": "task041_registered_case_service",
         "contract_id": case["service_contract_id"],
         "profile_id": case["service_contract_id"],
-        "case_id": TASK041_BALH_2NM_MODEL_ID,
-        "model_id": TASK041_BALH_2NM_MODEL_ID,
+        "case_id": str(model_id),
+        "model_id": str(model_id),
         "scope": "formal_consumer",
         "side_setup_schedule": None,
         "comparison_mode": None,
         "memory_cap_bytes": int(case["absolute_terminate_memory_bytes"]),
         "warning_memory_bytes": warning_bytes,
-        "memory_cap_source": "task041_2nm_case_resource_contract",
+        "memory_cap_source": (
+            "task041_v6_cell_condensed_resource_contract"
+            if cell_condensed
+            else "task041_2nm_case_resource_contract"
+        ),
         "memory_gate_source": "simultaneous_process_tree_rss",
         "planning_ceiling_bytes": int(case["planning_ceiling_bytes"]),
+        "planning_ceiling_source": case.get("planning_ceiling_source"),
         "runtime_reserve_bytes": int(case["runtime_reserve_bytes"]),
         "mpi_size": TASK041_BALH_MPI_SIZE,
         "cpu_set": case["cpu_set"],
@@ -723,25 +821,55 @@ def task041_balh_service_contract(model_id: str) -> Mapping[str, Any] | None:
         "active_consumer_budget_seconds": None,
         "batch_budget_seconds": None,
         "compute_wall_unlimited": True,
-        "producer": {
-            "mode": "fresh",
-            "invocation": "required",
-            "time_stop_enforced": True,
-            "qep": "fresh",
-        },
+        "producer": (
+            {
+                "mode": "reuse",
+                "invocation": "required",
+                "time_stop_enforced": bool(case.get("producer_time_stop_enforced", True)),
+                "qep": "not_run",
+            }
+            if cell_condensed
+            else {
+                "mode": "fresh",
+                "invocation": "required",
+                "time_stop_enforced": bool(case.get("producer_time_stop_enforced", True)),
+                "qep": "fresh",
+            }
+        ),
         "time_stop": {
-            "producer_enforced": True,
-            "consumer_enforced": False,
+            "producer_enforced": bool(case.get("producer_time_stop_enforced", True)),
+            "consumer_enforced": bool(case.get("consumer_time_stop_enforced", False)),
             "consumer_timeout_seconds": None,
             "semantics": "resource, numerical, identity and iteration gates remain enforced",
         },
         "ledger": {
-            "schema": "task041.compute_wall_ledger.v1",
+            "schema": (
+                "task041.review_v5.r1_load_ledger.v1"
+                if cell_condensed
+                else "task041.compute_wall_ledger.v1"
+            ),
             "filename": case["compute_wall_ledger_filename"],
+            "path": case.get("compute_wall_ledger_path"),
+            "fields": (
+                {"entries": "list", "charged_seconds": "float"}
+                if cell_condensed
+                else {
+                    "source_records": "list",
+                    "used_compute_wall_seconds": "float",
+                }
+            ),
             "limit_seconds": None,
-            "semantics": "independent case ledger; records actual finalizer wall without an elapsed stop",
+            "semantics": (
+                "shared Review V5 ledger; append one finalizer interval to entries and charged_seconds"
+                if cell_condensed
+                else "independent case ledger; records actual finalizer wall without an elapsed stop"
+            ),
         },
-        "budget_semantics": "independent 2 nm case accounting; no V2 batch or phase budget",
+        "budget_semantics": (
+            "shared Review V5 ledger accounting; no V2 batch or phase budget"
+            if cell_condensed
+            else "independent 2 nm case accounting; no V2 batch or phase budget"
+        ),
     }
 
 
@@ -3510,7 +3638,7 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
         }
     if _is_task041_balh_profile(config):
         case = task041_balh_case(str(config.get("model_id", "")))
-        derived["task041_solver_contract"] = {
+        task041_solver_contract = {
             "route": case["route"],
             "outer_ksp_type": "fgmres",
             "outer_restart": 32,
@@ -3522,6 +3650,22 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
             ),
             "contract": case["solver_contract"],
         }
+        if case.get("p4_inverse_backend") is not None:
+            task041_solver_contract.update(
+                {
+                    "p4_inverse_backend": case["p4_inverse_backend"],
+                    "support_policy": case["support_policy"],
+                    "construction_version": case["construction_audit"],
+                    "execution_contract": {
+                        "mpi_size": TASK041_BALH_MPI_SIZE,
+                        "cpu_set": case["cpu_set"],
+                        "membind_node": case["membind_node"],
+                        "consumer_time_stop_enforced": case["consumer_time_stop_enforced"],
+                        "runtime_reserve_bytes": case["runtime_reserve_bytes"],
+                    },
+                }
+            )
+        derived["task041_solver_contract"] = task041_solver_contract
     material_provenance = task041_material_provenance(config)
     if material_provenance is None:
         material_provenance = task041_shortwave_material_provenance(config)
@@ -3602,8 +3746,16 @@ __all__ = [
     "TASK041_BALH_2NM_SERVICE_CONTRACT_ID",
     "TASK041_BALH_2NM_WARNING_MEMORY_BYTES",
     "TASK041_BALH_2NM_W_LABEL",
+    "TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID",
+    "TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID",
     "TASK041_BALH_CANDIDATE_MODEL_IDS",
     "TASK041_BALH_CASES",
+    "TASK041_BALH_CELL_CONDENSED_CONSTRUCTION_VERSION",
+    "TASK041_BALH_CELL_CONDENSED_LEDGER_FILENAME",
+    "TASK041_BALH_CELL_CONDENSED_MEMORY_CAP_BYTES",
+    "TASK041_BALH_CELL_CONDENSED_MODEL_IDS",
+    "TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES",
+    "TASK041_BALH_CELL_CONDENSED_WARNING_MEMORY_BYTES",
     "TASK041_BALH_COMPARISON_GROUP",
     "TASK041_BALH_EXACT_MODEL_IDS",
     "TASK041_BALH_MEMAVAILABLE_BASELINE_BYTES",
