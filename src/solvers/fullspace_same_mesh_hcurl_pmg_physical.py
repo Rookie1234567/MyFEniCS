@@ -471,7 +471,6 @@ def recover_p0_outputs(
 ) -> dict[str, Any]:
     """Recover E/H and compute the existing modal and diagnostic outputs."""
 
-    from dolfinx import fem
     from ..postprocessing.diffraction_3d import compute_diffraction_orders_3d
     from ..postprocessing.postprocess_3d import save_airbox_3d_fields
     from ..postprocessing.rta_3d import compute_volume_absorption_3d
@@ -480,14 +479,8 @@ def recover_p0_outputs(
 
     setup = bundle["setup"]
     floquet = setup["floquets"][6]
-    field = fem.Function(floquet.mpc.function_space, name="E_total")
+    field = restore_p0_full_field(floquet, solution, name="E_total")
     try:
-        solution.copy(field.x.petsc_vec)
-        field.x.scatter_forward()
-        floquet.mpc.homogenize(field)
-        field.x.scatter_forward()
-        floquet.mpc.backsubstitution(field)
-        field.x.scatter_forward()
         recovered_auxiliary = bundle["dtn_action"].recover_auxiliary(solution)
         aux = np.asarray(recovered_auxiliary, dtype=np.complex128)
         del recovered_auxiliary
@@ -537,6 +530,30 @@ def recover_p0_outputs(
         return facts
     finally:
         del field
+
+
+def restore_p0_full_field(floquet: Any, solution: Any, *, name: str = "E_total") -> Any:
+    """Recreate the full primal field from the saved zero-slave storage vector.
+
+    The scatter/homogenize/backsubstitute/scatter sequence is shared by the
+    production P0 output path and the offline R13 pair checker.
+    """
+
+    from dolfinx import fem
+
+    field = fem.Function(floquet.mpc.function_space, name=name)
+    if isinstance(solution, np.ndarray):
+        if solution.shape != field.x.array.shape:
+            raise ValueError("saved retained vector differs from the P0 function-space storage")
+        field.x.array[:] = solution
+    else:
+        solution.copy(field.x.petsc_vec)
+    field.x.scatter_forward()
+    floquet.mpc.homogenize(field)
+    field.x.scatter_forward()
+    floquet.mpc.backsubstitution(field)
+    field.x.scatter_forward()
+    return field
 
 
 def release_p6_same_mesh_solver_stack(bundle: dict[str, Any]) -> None:

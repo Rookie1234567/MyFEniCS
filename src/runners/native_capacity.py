@@ -200,6 +200,7 @@ def native_capacity_guard(profile, *, memory_policy='none'):
         os.environ['OMPI_MCA_hwloc_base_binding_policy'] = 'none'
         os.environ['PHYSICAL_NATIVE_CAPACITY'] = profile
         profile_facts = native_profile_facts(profile)
+        worker_cpu = profile_facts.get('native_execution', {}).get('worker_cpu', 23)
         observe_only_swap = profile_facts['resources'].get('swap_policy') == 'observe_only'
         swap_launch = _launch_swap_snapshot()
         swap_launch['policy'] = _validate_preexisting_swap(
@@ -274,7 +275,7 @@ def native_capacity_guard(profile, *, memory_policy='none'):
         filesystem = os.statvfs(root)
         isolation = {'canonical_repository': str(root.parent/'task-repository.git'),
                      'worktree': str(root), 'supervisor_affinity': sorted(os.sched_getaffinity(0)),
-                     'worker_affinity': [23],
+                     'worker_affinity': [worker_cpu],
                      'worker_memory_policy': ({'mode': 'strict_membind', 'node': 1}
                                               if memory_policy == 'membind_node1'
                                               else {'mode': 'preferred', 'preferred_node': 1,
@@ -282,11 +283,11 @@ def native_capacity_guard(profile, *, memory_policy='none'):
                                               if memory_policy == 'preferred_node1'
                                               else {'mode': 'default'}),
                      'native_memory_policy': memory_policy,
-                     'native_command_prefix': ['/usr/bin/taskset', '-c', '23', *memory_prefix],
+                     'native_command_prefix': ['/usr/bin/taskset', '-c', str(worker_cpu), *memory_prefix],
                      'node_memory_admission': node_admission,
                      'swap_launch': swap_launch,
                      'native_capacity_profile': profile,
-                     'cpu_launch_snapshot': _cpu_launch_snapshot({9, 23}),
+                     'cpu_launch_snapshot': _cpu_launch_snapshot({9, worker_cpu}),
                      'neighbor_concurrent_heavy_authorized': True,
                      'neighbor_files_and_processes_modified': False,
                      'disk_free_bytes': shutil.disk_usage(root).free,

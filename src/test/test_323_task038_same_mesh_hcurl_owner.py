@@ -71,6 +71,59 @@ def _context(comm: MPI.Comm):
     return mesh, v3, floquet3, v1, floquet1, local, owner
 
 
+def _context_for_pair(
+    comm: MPI.Comm,
+    fine_degree: int,
+    coarse_degree: int,
+    *,
+    optimized_owner: bool = False,
+):
+    cfg_fine = target_stage4_config(degree=fine_degree, h_nm=50.0)
+    plan = _stage4_axis_plan(cfg_fine, comm.size)
+    domain = _structured_hexa_mesh(
+        comm,
+        plan.x_values,
+        plan.y_values,
+        plan.z_values,
+        preserve_input_partition=cfg_fine.stage4_preserve_structured_input_partition,
+    )
+    facet_tags, _ = _mark_boundary_facets(domain, cfg_fine)
+    cell_tags = _mark_cells(domain, cfg_fine)
+    mesh_data = SimpleNamespace(
+        mesh=domain,
+        cell_tags=cell_tags,
+        facet_tags=facet_tags,
+    )
+
+    def make_space(degree: int):
+        return fem.functionspace(
+            domain,
+            element(
+                "N1curl",
+                domain.basix_cell(),
+                degree,
+                dtype=default_real_type,
+            ),
+        )
+
+    fine = make_space(fine_degree)
+    coarse = make_space(coarse_degree)
+    floquet_fine = build_double_floquet_mpc(fine, mesh_data, cfg_fine)
+    cfg_coarse = target_stage4_config(degree=coarse_degree, h_nm=50.0)
+    floquet_coarse = build_double_floquet_mpc(coarse, mesh_data, cfg_coarse)
+    local = build_same_mesh_hcurl_transfer(fine_degree, coarse_degree)
+    owner = build_same_mesh_hcurl_owner_transfer(
+        fine,
+        floquet_fine,
+        coarse,
+        floquet_coarse,
+        local_transfer=local,
+        fixed_serial_owner_route=optimized_owner,
+        optimized_owner_apply=optimized_owner,
+    )
+    return domain, fine, floquet_fine, coarse, floquet_coarse, local, owner
+
+
 @pytest.fixture(scope="module")
 def context():
     values = _context(MPI.COMM_WORLD)
@@ -353,6 +406,194 @@ def test_owner_setup_and_explicit_oracle(context):
     )
 
 
+@pytest.mark.skipif(MPI.COMM_WORLD.size != 1, reason="fixed serial owner route is MPI1-only")
+@pytest.mark.parametrize("coarse_degree", (3, 4))
+def test_p6_direct_q_owner_transfer_mpc_and_adjoint(coarse_degree):
+    """V5 q3/q4 direct P6->Pq owner route with complex MPC and C^H audit."""
+
+    domain, v6, f6, vq, fq, local, owner = _context_for_pair(
+        MPI.COMM_WORLD, 6, coarse_degree, optimized_owner=True
+    )
+    source = dual = output = adjoint = oracle = None
+    try:
+        assert local.audit["pair_fine_to_coarse"] == [6, coarse_degree]
+        assert local.audit["gradient_commuting_relative"] <= 1.0e-11
+        assert local.audit["curl_commuting_relative"] <= 1.0e-11
+        assert owner.audit["pair_fine_to_coarse"] == [6, coarse_degree]
+        assert owner.audit["owner_local"] is True
+
+        source = _field(vq, fq, 0.31 - 0.27j)
+        output = owner.apply_primal(source.x.petsc_vec)
+        oracle = fem.Function(v6)
+        oracle.interpolate(source)
+        f6.mpc.homogenize(oracle)
+        oracle.x.scatter_forward()
+        f6.mpc.backsubstitution(oracle)
+        oracle.x.scatter_forward()
+        assert _relative(output, oracle.x.petsc_vec) <= 1.0e-11
+        assert owner.last_apply_facts["fine_mpc_constraint_residual"] <= 1.0e-11
+
+        dual = _dual_field(v6, f6, -0.19 + 0.43j)
+        assert _slave_max(dual, f6) == 0.0
+        adjoint = owner.apply_adjoint(dual.x.petsc_vec)
+        assert owner.last_apply_facts["coarse_dual_reduction"] == "C^H_once"
+        assert owner.last_apply_facts["coarse_slave_storage_max"] == 0.0
+        lhs = output.dot(dual.x.petsc_vec)
+        rhs = source.x.petsc_vec.dot(adjoint)
+        assert _scalar_relative(lhs, rhs) <= 1.0e-11
+        assert owner.audit["owner_apply_optimization"] is True
+        assert owner.routing_costs["route"] == "fixed_serial"
+    finally:
+        for vector in (adjoint, output):
+            if vector is not None:
+                vector.destroy()
+        owner.destroy()
+        del domain, v6, f6, vq, fq, local, source, dual, oracle
+
+
+@pytest.mark.skipif(MPI.COMM_WORLD.size != 1, reason="fixed serial owner route is MPI1-only")
+@pytest.mark.parametrize("coarse_degree", (3, 4))
+def test_p6_q3_q4_owner_shared_cache_and_provider_content(coarse_degree):
+    """V5 q3/q4 optimized owner cache agrees with the default route."""
+
+    domain, v6, f6, vq, fq, local, baseline = _context_for_pair(
+        MPI.COMM_WORLD, 6, coarse_degree, optimized_owner=False
+    )
+    transfers = [baseline]
+    vectors = []
+    try:
+        optimized = build_same_mesh_hcurl_owner_transfer(
+            v6,
+            f6,
+            vq,
+            fq,
+            local_transfer=local,
+            fixed_serial_owner_route=True,
+            optimized_owner_apply=True,
+        )
+        transfers.append(optimized)
+        source = _field(vq, fq, 0.31 - 0.27j)
+        dual = _dual_field(v6, f6, -0.19 + 0.43j)
+        primal_default = baseline.apply_primal(source.x.petsc_vec)
+        primal_optimized = optimized.apply_primal(source.x.petsc_vec)
+        adjoint_default = baseline.apply_adjoint(dual.x.petsc_vec)
+        adjoint_optimized = optimized.apply_adjoint(dual.x.petsc_vec)
+        vectors.extend(
+            (primal_default, primal_optimized, adjoint_default, adjoint_optimized)
+        )
+        assert _relative(primal_optimized, primal_default) <= 1.0e-11
+        assert _relative(adjoint_optimized, adjoint_default) <= 1.0e-11
+        assert optimized.audit["owner_apply_optimization"] is True
+        assert optimized.routing_costs["route"] == "fixed_serial"
+        assert (
+            optimized.audit["owner_operator_cache_count"]
+            == optimized.audit["cell_map_cache_count"]
+        )
+        assert optimized.audit["owner_operator_adjoint_extra_bytes"] == 0
+        assert optimized.routing_costs["primal_operator_batches"] > 0
+        assert optimized.routing_costs["adjoint_operator_batches"] > 0
+        assert optimized.audit["owner_transfer_batch_scratch_bytes"] > 0
+
+        def complex_provider(_cell, _fine_info, matrix):
+            return np.asarray(matrix, dtype=np.complex128) * (1.0 + 0.02j)
+
+        provider_baseline = build_same_mesh_hcurl_owner_transfer(
+            v6,
+            f6,
+            vq,
+            fq,
+            local_transfer=local,
+            cell_matrix_provider=complex_provider,
+        )
+        provider_optimized = build_same_mesh_hcurl_owner_transfer(
+            v6,
+            f6,
+            vq,
+            fq,
+            local_transfer=local,
+            cell_matrix_provider=complex_provider,
+            fixed_serial_owner_route=True,
+            optimized_owner_apply=True,
+        )
+        transfers.extend((provider_baseline, provider_optimized))
+        provider_primal_default = provider_baseline.apply_primal(
+            source.x.petsc_vec
+        )
+        provider_primal_optimized = provider_optimized.apply_primal(
+            source.x.petsc_vec
+        )
+        provider_adjoint_default = provider_baseline.apply_adjoint(
+            dual.x.petsc_vec
+        )
+        provider_adjoint_optimized = provider_optimized.apply_adjoint(
+            dual.x.petsc_vec
+        )
+        vectors.extend(
+            (
+                provider_primal_default,
+                provider_primal_optimized,
+                provider_adjoint_default,
+                provider_adjoint_optimized,
+            )
+        )
+        assert _relative(provider_primal_optimized, provider_primal_default) <= 1.0e-11
+        assert _relative(provider_adjoint_optimized, provider_adjoint_default) <= 1.0e-11
+        assert provider_optimized.audit["owner_operator_adjoint_extra_bytes"] > 0
+        assert (
+            provider_optimized.audit["owner_operator_cache_count"]
+            == optimized.audit["owner_operator_cache_count"]
+        )
+        assert (
+            provider_optimized.audit["owner_operator_cache_key"]
+            == "provider_dtype_shape_content"
+        )
+
+        topology = domain.topology
+        topology.create_entity_permutations()
+        cell_info = np.asarray(
+            topology.get_cell_permutation_info(), dtype=np.uint32
+        )
+        cell_map = topology.index_map(topology.dim)
+        cell_count = int(cell_map.size_local + cell_map.num_ghosts)
+        first_by_info = {}
+        changed_cell = None
+        for cell in range(cell_count):
+            info = int(cell_info[cell])
+            if info in first_by_info:
+                changed_cell = cell
+                break
+            first_by_info[info] = cell
+        assert changed_cell is not None
+
+        def provider_with_one_content_change(cell, _fine_info, matrix):
+            result = np.array(matrix, copy=True)
+            if cell == changed_cell:
+                result[0, 0] += 0.125
+            return result
+
+        changed_provider = build_same_mesh_hcurl_owner_transfer(
+            v6,
+            f6,
+            vq,
+            fq,
+            local_transfer=local,
+            cell_matrix_provider=provider_with_one_content_change,
+            fixed_serial_owner_route=True,
+            optimized_owner_apply=True,
+        )
+        transfers.append(changed_provider)
+        assert (
+            changed_provider.audit["owner_operator_cache_count"]
+            > optimized.audit["owner_operator_cache_count"]
+        )
+    finally:
+        for vector in vectors:
+            vector.destroy()
+        for transfer in transfers:
+            transfer.destroy()
+        del domain, v6, f6, vq, fq, local
+
+
 def test_owner_rejects_duplicate_disagreement_and_destroy_is_bounded(context):
     _mesh, _v3, _f3, _v1, _f1, _local, owner = context
     with pytest.raises(RuntimeError, match="candidates disagree"):
@@ -371,11 +612,13 @@ def test_owner_rejects_duplicate_disagreement_and_destroy_is_bounded(context):
 
 def test_owner_public_pairs_include_the_p6_setup_pair():
     from src.solvers.fullspace_same_mesh_hcurl_pmg_runtime import (
+        SAME_MESH_EXTENDED_OWNER_TRANSFER_PAIRS,
         SAME_MESH_OWNER_TRANSFER_PAIRS,
     )
 
     assert (3, 1) in SAME_MESH_OWNER_TRANSFER_PAIRS
     assert (6, 3) in SAME_MESH_OWNER_TRANSFER_PAIRS
+    assert (6, 4) in SAME_MESH_EXTENDED_OWNER_TRANSFER_PAIRS
 
 
 def test_runtime_source_is_owner_packet_only():

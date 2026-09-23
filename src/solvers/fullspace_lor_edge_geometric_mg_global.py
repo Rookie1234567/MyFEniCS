@@ -17,6 +17,7 @@ from __future__ import annotations
 from dataclasses import replace
 from types import SimpleNamespace
 from typing import Any
+import time
 
 import numpy as np
 from mpi4py import MPI
@@ -88,6 +89,8 @@ class FixedChebyshevJacobiPETSc:
         power_action = matrix.createVecLeft()
         self.matrix_mult_count = 0
         self.power_matrix_mult_count = 0
+        self.matrix_mult_seconds = 0.0
+        self.apply_seconds = 0.0
         try:
             if power_seed is None:
                 start, stop = power_vector.getOwnershipRange()
@@ -141,6 +144,7 @@ class FixedChebyshevJacobiPETSc:
             power_action.destroy()
 
         self.power_matrix_mult_count = int(self.matrix_mult_count)
+        self.power_matrix_mult_seconds = float(self.matrix_mult_seconds)
         self.lambda_power10 = float(self.power_history[-1])
         self.lambda_hi = LAMBDA_HI_FACTOR * self.lambda_power10
         self.lambda_lo = LAMBDA_LO_FACTOR * self.lambda_hi
@@ -158,7 +162,9 @@ class FixedChebyshevJacobiPETSc:
 
     def _apply_scaled_into(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
         self._scaled_input.pointwiseMult(self._inv_sqrt, source)
+        started = time.perf_counter()
         self.matrix.mult(self._scaled_input, self._scaled_action)
+        self.matrix_mult_seconds += time.perf_counter() - started
         target.pointwiseMult(self._inv_sqrt, self._scaled_action)
         self.matrix_mult_count += 1
 
@@ -167,6 +173,7 @@ class FixedChebyshevJacobiPETSc:
             raise RuntimeError("PETSc Chebyshev smoother has been destroyed")
         if rhs.getSize() != self.matrix.getSize()[0] or target.getSize() != self.matrix.getSize()[0]:
             raise ValueError("Chebyshev Vec size does not match matrix")
+        started = time.perf_counter()
         before = self.matrix_mult_count
         self._rhs_scaled.pointwiseMult(self._inv_sqrt, rhs)
         center = 0.5 * (self.lambda_hi + self.lambda_lo)
@@ -186,6 +193,7 @@ class FixedChebyshevJacobiPETSc:
             self._solution.axpy(1.0, self._direction)
             rho = rho_new
         target.pointwiseMult(self._inv_sqrt, self._solution)
+        self.apply_seconds += time.perf_counter() - started
         self.apply_count += 1
         facts = {
             "matrix_mult_count": int(self.matrix_mult_count - before),

@@ -102,6 +102,12 @@ def _parse_value(spec: Any, value: Any) -> Any:
             _parse_complex_pair(item, f"{path}[{index}]")
             for index, item in enumerate(value)
         )
+    elif value_type == "integer_array":
+        if not isinstance(value, (list, tuple)) or any(
+            isinstance(item, bool) or not isinstance(item, int) for item in value
+        ):
+            raise _error(path, "expected an array of integers")
+        result = tuple(int(item) for item in value)
     elif value_type == "float_array":
         if not isinstance(value, (list, tuple)):
             raise _error(path, "expected an array of finite numbers")
@@ -614,6 +620,30 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 )
             from .native_capacity_profile import NATIVE_PROFILES, validate_native_case
             preconditioner = solver["preconditioner"]
+            from .native_capacity_profile import V5_NATIVE_PROFILES, V5_R13_PROFILES
+            if "coarse_degree" in solver and preconditioner not in V5_NATIVE_PROFILES:
+                raise _error(
+                    "solver.coarse_degree",
+                    "coarse_degree is reserved for the explicit V5 retained profiles",
+                )
+            if preconditioner in V5_NATIVE_PROFILES and "coarse_degree" not in solver:
+                raise _error(
+                    "solver.coarse_degree",
+                    "V5 retained profiles require an explicit coarse Nedelec degree",
+                )
+            frozen_mesh_fields = (
+                "mesh_axis_cell_counts", "mesh_axis_x_values",
+                "mesh_axis_y_values", "mesh_axis_z_values",
+                "mesh_axis_z_profile",
+                "mesh_plan_id", "mesh_plan_sha256",
+            )
+            if any(
+                discretization.get(key) is not None for key in frozen_mesh_fields
+            ) and preconditioner not in V5_R13_PROFILES:
+                raise _error(
+                    "discretization",
+                    "frozen x/y/z mesh axes are reserved for R13 V5 profiles",
+                )
             if preconditioner not in {
                 *NATIVE_PROFILES,
                 "full3d_scalable_v1",
@@ -1417,6 +1447,13 @@ def simulation_config_3d_from_normalized(
         nedelec_interior_degree=d.get("nedelec_interior_degree"),
         visualization_degree=d["visualization_degree"],
         mesh_target_size=d["mesh_target_nm"],
+        mesh_axis_cell_counts=d.get("mesh_axis_cell_counts"),
+        mesh_axis_x_values=d.get("mesh_axis_x_values"),
+        mesh_axis_y_values=d.get("mesh_axis_y_values"),
+        mesh_axis_z_values=d.get("mesh_axis_z_values"),
+        mesh_axis_z_profile=d.get("mesh_axis_z_profile"),
+        mesh_plan_id=d.get("mesh_plan_id"),
+        mesh_plan_sha256=d.get("mesh_plan_sha256"),
         mesh_cell_type=d["mesh_cell_type"],
         mesh_spacing_mode=d.get("mesh_spacing_mode", "auto"),
         mesh_refined_size=d.get("mesh_refined_size_nm"),

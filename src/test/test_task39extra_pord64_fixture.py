@@ -78,9 +78,10 @@ def test_pord64_small_p4_mpc_mumps_roundtrip():
             if (fields := line.split()) and fields[-1].startswith("/")
         }
         petsc_maps = {path for path in maps if path.name.startswith("libpetsc")}
-        assert petsc_maps == {Path(
-            "/tmp/task39extra-pord64/petsc/lib/libpetsc.so.3.19.6"
-        )}
+        pord64_root = Path(os.environ["TASK39EXTRA_PORD64_ROOT"]).resolve()
+        assert petsc_maps == {
+            (pord64_root / "petsc/lib/libpetsc.so.3.19.6").resolve()
+        }
     finally:
         try:
             del PETSc.Options()["mat_mumps_icntl_7"]

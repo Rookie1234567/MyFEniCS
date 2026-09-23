@@ -1,23 +1,27 @@
 from __future__ import annotations
 
+import numpy as np
 import pytest
 from dolfinx import fem
 from mpi4py import MPI
 
 from src.common.analytic_fields_3d import electric_field_code_values
 from src.constraints.floquet_3d import build_double_floquet_mpc
+from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
+    restore_p0_full_field,
+)
 from src.solvers.hcurl_canonical_vector import compare_canonical_packets
 from src.solvers.hcurl_canonical_vector_dolfinx import (
     compare_hcurl_fields,
     extract_canonical_full_fe_packets,
     reconstruct_canonical_full_fe_function,
 )
+from src.test.test_46_task033_high_order_floquet_topology import (
+    _fixed_target_fixture,
+)
 from src.test.test_226_task037_canonical_vector_dolfinx import (
     _physical_field,
     _static_fixture,
-)
-from src.test.test_46_task033_high_order_floquet_topology import (
-    _fixed_target_fixture,
 )
 
 
@@ -103,6 +107,53 @@ def test_serial_floquet_fresh_v_roundtrip_with_phase_packets():
     assert norms["relative_curl_l2"] <= 1.0e-12, norms
     assert norms["relative_tangential_trace_mass"] <= 1.0e-12, norms
     assert norms["relative_hcurl"] <= 1.0e-12, norms
+
+
+def test_serial_floquet_saved_retained_vector_recovers_canonical_coefficients():
+    cfg, mesh_data, space = _fixed_target_fixture(2, h_nm=50.0)
+    mesh_data.mesh.topology.create_entity_permutations()
+    floquet = build_double_floquet_mpc(space, mesh_data, cfg)
+    stored = fem.Function(space)
+    slaves = np.asarray(floquet.mpc.slaves, dtype=np.int64)
+    independent = np.setdiff1d(
+        np.arange(stored.x.array.size, dtype=np.int64), slaves,
+        assume_unique=True,
+    )
+    assert slaves.size > 0 and independent.size > 0
+
+    seed = np.arange(1, stored.x.array.size + 1, dtype=np.float64)
+    stored.x.array[:] = seed + 0.375j * seed[::-1]
+    stored.x.array[slaves] = 0.0
+    stored.x.scatter_forward()
+    saved_retained = np.array(stored.x.array, dtype=np.complex128, copy=True)
+    assert np.all(saved_retained[slaves] == 0.0)
+
+    recovered = restore_p0_full_field(
+        floquet, saved_retained, name="saved_retained_roundtrip"
+    )
+    assert np.any(np.abs(recovered.x.array[slaves]) > 0.0)
+    canonical, _audit = extract_canonical_full_fe_packets(
+        space, recovered.x.petsc_vec, floquet
+    )
+    reconstructed = reconstruct_canonical_full_fe_function(space, canonical, floquet)
+    reconstructed_packets, _restored_audit = extract_canonical_full_fe_packets(
+        space, reconstructed.x.petsc_vec, floquet
+    )
+    roundtrip = compare_canonical_packets(canonical, reconstructed_packets)
+    assert roundtrip["pass"], roundtrip
+    assert roundtrip["relative_coefficient_l2"] <= 1.0e-12, roundtrip
+
+    perturbed_saved = saved_retained.copy()
+    perturbed_saved[independent[0]] += 0.25 + 0.125j
+    perturbed = restore_p0_full_field(
+        floquet, perturbed_saved, name="perturbed_saved_retained"
+    )
+    perturbed_packets, _perturbed_audit = extract_canonical_full_fe_packets(
+        space, perturbed.x.petsc_vec, floquet
+    )
+    mismatch = compare_canonical_packets(canonical, perturbed_packets)
+    assert not mismatch["pass"], mismatch
+    assert mismatch["relative_coefficient_l2"] > 1.0e-5, mismatch
 
 
 @pytest.mark.skipif(MPI.COMM_WORLD.size != 2, reason="MPI2 fresh-V reconstruction")

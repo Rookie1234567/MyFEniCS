@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 import numpy as np
 
@@ -95,6 +96,169 @@ def recompute_p4_decisions(decisions, pc_rows):
                 refinements=len(decisions)-len(groups))
 
 
+def _retained_v5_aq_projection_errors(
+    identity, profile, runtime_space_identity, aq_facts, setup_aq_facts
+):
+    """Validate V5 Aq evidence while keeping its summed identity record-only."""
+
+    from src.io.native_capacity_profile import (
+        V5_NATIVE_PROFILES,
+    )
+
+    if identity not in V5_NATIVE_PROFILES:
+        return []
+    errors = []
+
+    def require(condition, message):
+        if not condition:
+            errors.append(message)
+
+    require(isinstance(aq_facts, dict), "missing V5 native Aq projection evidence")
+    require(isinstance(setup_aq_facts, dict), "missing setup-native Aq projection evidence")
+    if not isinstance(aq_facts, dict) or not isinstance(setup_aq_facts, dict):
+        return errors
+    require(aq_facts == setup_aq_facts, "V5 Aq summary and setup evidence differ")
+    require(
+        aq_facts.get("source_contract")
+        == "4bf2bba56cc2e568d56ff3096aeb4a108744f28d:_build_common.native_aq_projection_check",
+        "V5 Aq evidence is not bound to the frozen projection contract",
+    )
+    require(aq_facts.get("passed") is True, "V5 native Aq projection check did not pass")
+    require(aq_facts.get("input_unchanged") is True,
+            "V5 Aq projection modified its coarse input")
+    require(aq_facts.get("input_slave_zero") is True,
+            "V5 Aq projection input does not preserve zero slave values")
+    try:
+        expected_degree = int(profile["retained_condensed_v20"]["coarse_degree"])
+        require(
+            int(aq_facts.get("coarse_degree", -1)) == expected_degree,
+            "V5 Aq projection degree differs from the resolved profile",
+        )
+    except (KeyError, TypeError, ValueError):
+        errors.append("V5 resolved coarse degree is unavailable to the Aq checker")
+
+    identity_facts = aq_facts.get("space_identity", {})
+    require(identity_facts == runtime_space_identity,
+            "V5 Aq space identity differs from the runtime's FE/operator identity")
+    import re
+
+    for row_key in ("coarse_global_rows", "fine_global_rows"):
+        try:
+            require(int(identity_facts.get(row_key, 0)) > 0,
+                    f"V5 Aq {row_key} is missing or nonpositive")
+        except (TypeError, ValueError):
+            errors.append(f"V5 Aq {row_key} is not an integer")
+    for hash_key in ("coarse_mode_sha256", "fine_mode_sha256"):
+        require(bool(re.fullmatch(r"[0-9a-f]{64}", str(identity_facts.get(hash_key, "")))),
+                f"V5 Aq {hash_key} is not a SHA256 identity")
+
+    limit = aq_facts.get("limit")
+    try:
+        limit = float(limit)
+        require(np.isfinite(limit) and 0.0 < limit <= 1.0e-10,
+                "V5 Aq component identity limit is invalid")
+    except (TypeError, ValueError):
+        limit = np.nan
+        errors.append("V5 Aq component identity limit is missing")
+    for key in ("native_Aq_volume_vs_PqH_A6_volume_P",
+                "native_Aq_DtN_vs_PqH_A6_DtN_P"):
+        component = aq_facts.get(key, {})
+        try:
+            value = float(component.get("relative", np.inf))
+            require(np.isfinite(value) and np.isfinite(limit) and value <= limit,
+                    f"V5 Aq component identity failed: {key}")
+        except (TypeError, ValueError, AttributeError):
+            errors.append(f"V5 Aq component identity is missing: {key}")
+    # The combined comparison is evidence only; the two split-operator gates above
+    # remain authoritative and cannot be masked by cancellation.
+    total = aq_facts.get("native_Aq_total_vs_PqH_A6_total_P", {})
+    try:
+        require(np.isfinite(float(total["relative"])),
+                "V5 Aq total identity record is missing or nonfinite")
+    except (KeyError, TypeError, ValueError, AttributeError):
+        errors.append("V5 Aq total identity record is missing or invalid")
+    require(
+        aq_facts.get("total_identity_policy")
+        == "record_only; native volume and DtN components gate independently",
+        "V5 Aq total identity must remain record-only",
+    )
+    slave_facts = aq_facts.get("projected_A6_slave_rows_zero", {})
+    require(slave_facts.get("volume") is True and slave_facts.get("dtn") is True,
+            "V5 projected A6 slave rows are not recorded as zero")
+    calls = aq_facts.get("calls", {})
+    require(
+        calls.get("native_Aq_volume") == calls.get("projected_A6_volume")
+        == calls.get("native_Aq_DtN") == calls.get("projected_A6_DtN") == 1,
+        "V5 Aq projection action call counts are incomplete",
+    )
+    require(calls.get("transfer_primal_delta") == 1 and
+            calls.get("transfer_adjoint_delta") == 2,
+            "V5 Aq transfer counts are not probe-local before/after deltas")
+    return errors
+
+
+def _retained_v5_reference_authority_errors(identity, matched_facts, actual_identity):
+    """Require the q-specific compact observation check for single-run R13."""
+
+    from src.io.native_capacity_profile import V5_R13_PROFILES
+
+    if identity not in V5_R13_PROFILES:
+        return []
+    errors = []
+    compact = matched_facts.get("source_compact_comparison", {})
+    expected_q = "q3" if "_q3_" in identity else "q4"
+    if compact.get("status") != "SOURCE_COMPACT_OBSERVABLES_PASS":
+        errors.append("R13 source compact observables did not pass")
+    if compact.get("profile_q") != expected_q:
+        errors.append("R13 source compact comparison is bound to the wrong q profile")
+    if compact.get("phase_fitting") is not False:
+        errors.append("R13 source compact comparison used phase fitting")
+    comparisons = compact.get("comparisons", {})
+    required_observables = {
+        "R_total",
+        "T_total",
+        "A_balance",
+        "R00_s",
+        "R00_p",
+        "R00_total",
+    }
+    if expected_q == "q3":
+        required_observables.add("A_volume_total")
+    if not required_observables.issubset(comparisons):
+        errors.append("R13 source compact comparison omitted available observables")
+    else:
+        for key in sorted(required_observables):
+            row = comparisons[key]
+            try:
+                current = float(row["current"])
+                reference = float(row["source_compact"])
+                difference = abs(current - reference)
+                limit = 1.0e-6 if key in {"R00_s", "R00_p", "R00_total"} else 1.0e-5
+                recorded_difference = float(row["absolute_difference"])
+                recorded_limit = float(row["limit"])
+                passed = bool(np.isfinite(current) and np.isfinite(reference)
+                              and np.isfinite(difference) and difference <= limit)
+                if not passed:
+                    errors.append(f"R13 source compact observable exceeds limit: {key}")
+                if row.get("passed") is not passed:
+                    errors.append(f"R13 source compact pass flag is inconsistent: {key}")
+                if recorded_limit != limit:
+                    errors.append(f"R13 source compact limit is inconsistent: {key}")
+                if not np.isfinite(recorded_difference) or not np.isclose(
+                    recorded_difference, difference, rtol=1.0e-12, atol=1.0e-15
+                ):
+                    errors.append(f"R13 source compact difference is inconsistent: {key}")
+            except (KeyError, TypeError, ValueError):
+                errors.append(f"R13 source compact observable facts are invalid: {key}")
+    if matched_facts.get("pair_gate") != "PENDING_R13_PAIR_RELEASE":
+        errors.append("R13 single-run result has an invalid pair-release state")
+    run_identity = compact.get("current_run_identity", {})
+    for key in ("run_id", "source_sha", "input_sha256", "physical_model_sha256"):
+        if run_identity.get(key) != actual_identity.get(key):
+            errors.append(f"R13 current run identity disagrees with summary: {key}")
+    return errors
+
+
 def recompute_balanced_screen(solve, rows):
     if not solve['screen_enabled']:
         return dict(matches=solve.get('screen') is None, enabled=False)
@@ -153,8 +317,21 @@ def check_retained_v20(directory: Path, summary: dict) -> dict:
             errors.append(message)
 
     from src.io.physical_intermediate_profile import profile_facts
+    from src.io.native_capacity_profile import (
+        V5_EXPECTED_MODE_COUNTS,
+        V5_NATIVE_PROFILES,
+    )
 
     identity = summary.get('profile', {}).get('identity')
+    is_v5 = identity in V5_NATIVE_PROFILES
+    expected_mode_count = (
+        V5_EXPECTED_MODE_COUNTS.get(identity)
+        if is_v5
+        else 600 if identity == 'dual_condensed_balh_native_5nm_v3'
+        else None
+    )
+    require(expected_mode_count is not None,
+            f'retained checker has no mode-count contract for {identity!r}')
     try:
         require(summary['profile'] == profile_facts(identity),
                 'retained resolved profile facts differ from native contract')
@@ -201,6 +378,14 @@ def check_retained_v20(directory: Path, summary: dict) -> dict:
             setup_checks.get('bal_h', {}).get('actual_logical_call') is True and
             setup_checks.get('cache_content_and_unique_bytes_unchanged') is True,
             'same-object D3 setup/A6/J/BAL_H/cache checks are incomplete')
+    if str(identity).endswith('_v5'):
+        errors.extend(_retained_v5_aq_projection_errors(
+            identity,
+            summary.get('profile', {}),
+            retained_runtime.get('space_identity'),
+            retained_runtime.get('native_aq_projection_check'),
+            setup_checks.get('native_aq_projection'),
+        ))
     require(retained_runtime.get('p6_cache_unchanged_before_release') is True,
             'retained p6 cache changed before solver-stack release')
 
@@ -390,12 +575,21 @@ def check_retained_v20(directory: Path, summary: dict) -> dict:
                   port.get('A_balance'), volume.get('A_volume_total')]
         require(all(value is not None and np.isfinite(value) for value in values),
                 'retained official R/T/A output is non-finite')
+        zero_order = [port.get('R00_s'), port.get('R00_p'), port.get('R00_total')]
+        require(all(value is not None and np.isfinite(value) for value in zero_order),
+                'retained zero-order reflection powers are missing or non-finite')
+        if all(value is not None and np.isfinite(value) for value in zero_order):
+            require(min(zero_order) >= -1.0e-12,
+                    'retained zero-order reflection power is negative')
+            require(abs(float(zero_order[0]) + float(zero_order[1]) -
+                        float(zero_order[2])) <= 1.0e-12,
+                    'retained zero-order s/p powers do not sum to total')
         if all(value is not None and np.isfinite(value) for value in values):
             r, t, a, av = values
             require(abs(r+t+av-1.0) <= 1e-5, 'retained energy balance exceeds 1e-5')
             require(abs(a-av) <= 1e-5, 'retained volume absorption mismatch exceeds 1e-5')
-            require(port.get('dtn_port_mode_count') == 600,
-                    'retained 5 nm output does not contain 600 DtN modes')
+            require(port.get('dtn_port_mode_count') == expected_mode_count,
+                    f'retained output does not contain {expected_mode_count} DtN modes')
         numerical = directory / 'numerical_output'
         modal_path = numerical / 'dtn_port_diffraction_orders_3d.json'
         amplitude_path = numerical / 'dtn_auxiliary_amplitudes_3d.json'
@@ -403,8 +597,8 @@ def check_retained_v20(directory: Path, summary: dict) -> dict:
             modal = json.loads(modal_path.read_text())
             rows = modal['orders']
             keys = [(row['side'], row['m'], row['n'], row['polarization']) for row in rows]
-            require(len(rows) == 600 and len(keys) == len(set(keys)),
-                    'retained modal output is not 600 unique channels')
+            require(len(rows) == expected_mode_count and len(keys) == len(set(keys)),
+                    f'retained modal output is not {expected_mode_count} unique channels')
             require(abs(sum(row['R'] for row in rows)-port['R_total']) <= 1e-12 and
                     abs(sum(row['T'] for row in rows)-port['T_total']) <= 1e-12,
                     'retained modal R/T sums disagree with official totals')
@@ -449,13 +643,46 @@ def check_retained_v20(directory: Path, summary: dict) -> dict:
 
     matched_facts = summary.get('matched_reference', {})
     matched = matched_facts.get('status')
-    require(matched == 'MATCHED_REFERENCE_PASS',
-            'retained 5 nm full reference comparison did not pass')
-    require(matched_facts.get('full_field', {}).get('status') == 'FULL_FIELD_PASS',
-            'retained full-field comparison is missing or failed')
-    classification = ('BALANCED_OUTPUT_PASS' if not errors and
-                      matched == 'MATCHED_REFERENCE_PASS' else
-                      'NUMERICAL_OR_OUTPUT_FAIL')
+    reference_required = (
+        identity == 'dual_condensed_balh_native_5nm_v3'
+        or identity == 'dual_condensed_balh_native_5nm_v5'
+    )
+    if reference_required:
+        require(matched == 'MATCHED_REFERENCE_PASS',
+                'retained 5 nm full reference comparison did not pass')
+        require(matched_facts.get('full_field', {}).get('status') == 'FULL_FIELD_PASS',
+                'retained full-field comparison is missing or failed')
+    elif matched == 'MATCHED_REFERENCE_FAIL':
+        errors.append('retained matched-reference comparison failed')
+    elif matched not in ('MATCHED_REFERENCE_PASS', 'REFERENCE_AUTHORITY_LIMITED'):
+        errors.append('retained case reference authority is missing or invalid')
+    elif matched == 'MATCHED_REFERENCE_PASS':
+        require(matched_facts.get('full_field', {}).get('status') == 'FULL_FIELD_PASS',
+                'retained full-field comparison is missing or failed')
+    if is_v5:
+        provenance = summary.get('provenance', {})
+        actual_identity = {
+            "run_id": directory.name,
+            "source_sha": summary.get("source_sha"),
+            "input_sha256": provenance.get("input_sha256"),
+            "physical_model_sha256": provenance.get("physical_model_sha256"),
+        }
+        errors.extend(
+            _retained_v5_reference_authority_errors(
+                identity, matched_facts, actual_identity
+            )
+        )
+    reference_limited = matched == 'REFERENCE_AUTHORITY_LIMITED'
+    facts['reference_scope'] = {
+        'status': matched or 'MISSING',
+        'required_for_independent_output_pass': reference_required,
+        'case_expected_mode_count': expected_mode_count,
+    }
+    classification = (
+        'NUMERICAL_OR_OUTPUT_FAIL' if errors else
+        'BALANCED_OUTPUT_AUTHORITY_LIMITED' if reference_limited else
+        'BALANCED_OUTPUT_PASS'
+    )
     return {
         'classification': classification,
         'reference_authority': matched or 'PENDING_A4_not_compared',
@@ -470,7 +697,13 @@ def check_retained_v20(directory: Path, summary: dict) -> dict:
 def check(directory: Path) -> dict:
     started = time.monotonic()
     summary = json.loads((directory / 'physical_intermediate_summary.json').read_text())
-    if summary.get('profile', {}).get('identity') == 'dual_condensed_balh_native_5nm_v3':
+    from src.io.native_capacity_profile import (
+        RETAINED_CONDENSED_PROFILE,
+        V5_NATIVE_PROFILES,
+    )
+
+    identity = summary.get('profile', {}).get('identity')
+    if identity == RETAINED_CONDENSED_PROFILE or identity in V5_NATIVE_PROFILES:
         return check_retained_v20(directory, summary)
     errors, facts, expected_errors = [], {}, []
     controlled = summary['status'] in ('SCREEN_BUDGET_NO_QUALIFIED_PROGRESS',
@@ -688,8 +921,61 @@ def check(directory: Path) -> dict:
                 resource_authority='separate enclosing parent verdict required')
 
 
-def main() -> int:
-    directory = Path(sys.argv[1]).resolve()
+def main(argv: list[str] | None = None) -> int:
+    argv = sys.argv[1:] if argv is None else list(argv)
+    if argv[:1] == ["--r13-pair"]:
+        parser = argparse.ArgumentParser(prog="physical_intermediate_checker --r13-pair")
+        parser.add_argument("--r13-pair", nargs=2, metavar=("Q4_RUN_DIR", "Q3_RUN_DIR"),
+                            required=True)
+        parser.add_argument("--q4-observer-log", required=True)
+        parser.add_argument("--q3-observer-log", required=True)
+        try:
+            args = parser.parse_args(argv)
+        except SystemExit as exc:
+            return int(exc.code)
+        q4_directory, q3_directory = (Path(value).resolve() for value in args.r13_pair)
+        q4_observer_log = Path(args.q4_observer_log).resolve()
+        q3_observer_log = Path(args.q3_observer_log).resolve()
+        if not q3_directory.is_dir():
+            print("q3 run directory is unavailable", file=sys.stderr)
+            return 2
+        try:
+            from src.runners.physical_balanced_output import compare_r13_pair
+
+            result = compare_r13_pair(
+                q4_directory,
+                q3_directory,
+                q4_observer_log=q4_observer_log,
+                q3_observer_log=q3_observer_log,
+            )
+        except Exception as exc:
+            result = {
+                "status": "PAIR_COMPARISON_INVALID",
+                "release_status": "PENDING_NUMERICAL_AND_EXTERNAL_QUALIFICATION",
+                "gate_failures": [f"{type(exc).__name__}: {exc}"],
+            }
+        result["entry"] = "benchmarks.physical_intermediate_checker --r13-pair"
+        result["q4_run_directory"] = str(q4_directory)
+        result["q3_run_directory"] = str(q3_directory)
+        result["q4_observer_log"] = str(q4_observer_log)
+        result["q3_observer_log"] = str(q3_observer_log)
+        target = q3_directory / "r13_pair_numerical_comparison.json"
+        try:
+            with target.open("x", encoding="utf-8") as stream:
+                json.dump(result, stream, indent=2, allow_nan=False)
+                stream.write("\n")
+        except FileExistsError:
+            print(f"refusing to overwrite existing pair record: {target}", file=sys.stderr)
+            return 2
+        print(json.dumps({"status": result.get("status"), "record": str(target),
+                          "release_status": result.get("release_status"),
+                          "gate_failures": result.get("gate_failures", [])},
+                         indent=2, allow_nan=False))
+        return 0 if result.get("status") == "NUMERICAL_PAIR_PASS" else 2
+    if len(argv) != 1:
+        print("usage: physical_intermediate_checker RUN_DIRECTORY", file=sys.stderr)
+        return 2
+    directory = Path(argv[0]).resolve()
     try:
         result = check(directory)
     except Exception as exc:

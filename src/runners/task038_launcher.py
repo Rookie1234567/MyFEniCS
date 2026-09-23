@@ -162,6 +162,14 @@ def _base_manifest(
             material_authority = campaign.get('five_nm_material', {}).get('authority')
         if material_authority is None:
             material_authority = 'task-V5-input-identity'
+        screen_contract = {
+            'enabled': not bool(snapshot['geometry'].get('cell_notch')),
+            'iterations': profile['outer']['screen']['iterations'],
+            'solve_seconds': profile['outer']['screen']['solve_seconds'],
+            'notch_policy': 'disabled_without_extra_screen' if snapshot['geometry'].get('cell_notch') else 'enabled',
+        }
+        if profile['outer']['screen'].get('progress_only'):
+            screen_contract.update(progress_only=True, stop_on_screen=False)
         manifest['native_capacity_contract'] = {
             'profile': native_identity,
             'wavelength_nm': snapshot['incidence']['wavelength_nm'],
@@ -173,12 +181,7 @@ def _base_manifest(
                 'epsilon_substrate': properties.get('eps_substrate'),
                 'epsilon_grating': properties.get('eps_grating'),
             },
-            'screen': {
-                'enabled': not bool(snapshot['geometry'].get('cell_notch')),
-                'iterations': profile['outer']['screen']['iterations'],
-                'solve_seconds': profile['outer']['screen']['solve_seconds'],
-                'notch_policy': 'disabled_without_extra_screen' if snapshot['geometry'].get('cell_notch') else 'enabled',
-            },
+            'screen': screen_contract,
             'time_limit_mode': profile.get('campaign_authorization', {}).get('time_limit_mode', 'bounded'),
             'solve_seconds': profile['resources']['solve_seconds'],
             'workflow_seconds': profile['resources']['workflow_seconds'],
@@ -199,6 +202,10 @@ def _base_manifest(
             ),
             'icntl23': profile['resources'].get('icntl23'),
         }
+        if profile.get('native_execution'):
+            manifest['native_capacity_contract']['native_execution'] = profile[
+                'native_execution'
+            ]
     return manifest
 
 

@@ -1,0 +1,188 @@
+{
+  "record": "v5_h0_h1_m_a_profile_checks_v1",
+  "as_of_utc": "2026-09-23T09:31:31Z",
+  "classification": "bounded_hardware_diagnostic_and_standard_profile_contract_checks_only",
+  "source": {
+    "worktree_head": "819b7b0efe517a47088822a52290e41cd10f1c37",
+    "worktree_had_uncommitted_v5_changes": true,
+    "profile_test_sha256": "f0b40bda1642b4dab27a5e2cacb259eaaf2bfc8a8f9df6815b982bf4c6056fb9"
+  },
+  "h0_topology": {
+    "logical_cpus": "0-47; CPU48 is absent",
+    "socket_node_mapping": "CPU0-23 socket0/node0; CPU24-47 socket1/node1",
+    "raw_sysfs": {
+      "cpu9": {"physical_package_id": 0, "core_id": 11, "thread_siblings_list": "9"},
+      "cpu23": {"physical_package_id": 0, "core_id": 29, "thread_siblings_list": "23"},
+      "cpu24": {"physical_package_id": 1, "core_id": 0, "thread_siblings_list": "24"}
+    },
+    "scope_note": "H0 is topology evidence, not an occupancy or compute-qualification claim."
+  },
+  "h1_native_probe": {
+    "artifact_directory": "results/_h1_probe_20260923",
+    "same_binary_sha256": "561d151ac9de2f74833fa305af1f825109eb73b886fc02f035836ae904f70406",
+    "probe_source_sha256": "9d1d34b9b9fa0ca3d3c944ac8ef11975a9e227360234378514ce6f5abcf0b622",
+    "continuous_compute_60s": {
+      "cpu24_node1_updates_per_s": 7329348074.942,
+      "cpu23_node0_updates_per_s": 7287197425.883,
+      "cpu24_segments_updates_per_s": [7309683217.525, 7333275689.822, 7337742356.272, 7358997743.203, 7330759297.478, 7305648950.453],
+      "cpu23_segments_updates_per_s": [7283874096.238, 7291041128.208, 7218321918.556, 7285797976.817, 7300554975.834, 7343608337.680],
+      "interpretation": "same-duration continuous synthetic arithmetic; not a fixed-work comparison or an FEM result"
+    },
+    "fixed_work_compute": {
+      "pairs": 2,
+      "batches_per_run": 1000000,
+      "updates_per_run": 65536000000,
+      "cpu23_node0_updates_per_s": [7358527019.187, 7352543434.938],
+      "cpu24_node1_updates_per_s": [7364291800.230, 7372913158.828],
+      "median_cpu23_node0_updates_per_s": 7355535227.0625,
+      "median_cpu24_node1_updates_per_s": 7368602479.529,
+      "checksum_each_run": 9.3491903570393742,
+      "interpretation": "two paired fixed-work runs; same binary and work count"
+    },
+    "stream_like_probe": {
+      "pairs": 3,
+      "bytes_total_per_run": 805306368,
+      "passes_per_run": 23,
+      "nominal_triad_GB_s_node0": [8.555616, 8.270720, 8.229169],
+      "nominal_triad_GB_s_node1": [9.714800, 9.086460, 8.649025],
+      "median_nominal_triad_GB_s_node0": 8.270720,
+      "median_nominal_triad_GB_s_node1": 9.086460,
+      "all_runs_checksum": 71741.25,
+      "combined_vma_observed_pages": 196611,
+      "page_placement": "the single merged VMA covering the three arrays had 196611 observed pages, all local to the bound node; per-array page attribution is unavailable",
+      "interpretation": "nominal STREAM-like traffic metric, not measured memory-controller bandwidth"
+    },
+    "hardware_limits": {
+      "CoreThr_counter": 0,
+      "busy_frequency": "unknown; Bzy_MHz/MSR unavailable",
+      "do_not_infer": "TSC_MHz or scaling_cur_freq is not a busy-frequency measurement",
+      "scope": "synthetic single-core arithmetic and memory probes only; does not prove NUMA behavior of the FEM workload"
+    },
+    "raw_artifacts": [
+      {"file": "compute_calibration_cpu23.log", "sha256": "14700e4f5c6ae0ad627109419d2cc9ac4b8eacefef4925571ce286b5d61af6ae"},
+      {"file": "compute_cpu23_60s.log", "sha256": "874f984e136def338984eb5a0366191bfc18776572ed9d19d831d145f9b5c19b"},
+      {"file": "compute_cpu24_60s.log", "sha256": "c2257ae42cd7c0bced8b26aa52f6bad298e842b943df40d819e7113c47d1c022"},
+      {"file": "compute_long_monitor.log", "sha256": "b7d976a4e81e2ea01774984949889a6153232a1eb9282d7dfe138cc6356d912e"},
+      {"file": "compute_pair2_cpu23.log", "sha256": "77e10a7124e40bb35932d3f97f3455b68dee1e87abd62e272e8ab404fd8e6d2a"},
+      {"file": "compute_pair2_cpu24.log", "sha256": "29edea66eae0bb1ab31244139ebde0779e28cbd22dbb413f3f075a3433293a8d"},
+      {"file": "compute_pair3_cpu23.log", "sha256": "77dceae592cfc913baad316497cf121c369f3605a315c9aae094968a18d31206"},
+      {"file": "compute_pair3_cpu24.log", "sha256": "fa6f400393948004b18099c2b367163b1dae08a552a1a7d1c20b8db2249bd497"},
+      {"file": "stream_calibration_node0.log", "sha256": "af983b725e95d492ccc1f916671ceb0c1dce782d7e2d0d4bdc2dcc59bbce4db0"},
+      {"file": "stream_pair1_node0.log", "sha256": "327453baa0964f50883c558ba350da142dcde27c4175228bf54417bf449c4363"},
+      {"file": "stream_pair1_node1.log", "sha256": "5a2d4fc589b7c05467df8e9fac0944980b94ad8d2b9786fe01eb968d0b7c1f23"},
+      {"file": "stream_pair2_node0.log", "sha256": "4669bd392a60d1712d25c2ed926285bb0fd67becf47c679d40ffbf64f2fa8269"},
+      {"file": "stream_pair2_node1.log", "sha256": "d76d040639ba488c10f97353badcbd2e6ae5614b30838d0ec1955321870d290d"},
+      {"file": "stream_pair3_node0.log", "sha256": "ff31f1e2fd65e342ea7c9e331244204dcf1ceb464dec3973ccea32b184314e87"},
+      {"file": "stream_pair3_node1.log", "sha256": "99f23bd9556047562e9702e10e685c4b1288267b2a404d757cb42eea8beff9cb"}
+    ]
+  },
+  "prior_d3_controlled_stop": {
+    "run_id": "20260920T100744.367037Z",
+    "source_git_sha": "16cd8d2f00f27cec3d6de8056c61d668bf7ee7a9",
+    "classification": "USER_CONTROLLED_STOP",
+    "context": "The user requested stopping this run for CPU1 diagnostics. This is not a converged 5 nm result or a resource-pass claim."
+  },
+  "m_a_profile_contract_checks": {
+    "command": "source scripts/activate_myfenics_linux.sh && taskset -c 24 python -m pytest -q src/test/test_task39extra_v5_profile_frozen_axes.py",
+    "activation_classification": "standard project activation; NOT PORD64 qualification",
+    "host_execution": true,
+    "worker_affinity": "CPU24",
+    "exit_code": 0,
+    "result": "3 passed in 1.04s",
+    "captured_stdout": "... [100%]\\n3 passed in 1.04s",
+    "stdout_source": {
+      "type": "direct host exec result",
+      "observed_at_utc": "2026-09-23T09:03:49.249Z",
+      "tool_call": "call_DLGWbCDfzW7OyHLVMbNxTPE2",
+      "chunk": "3a22b2",
+      "separate_output_file": false
+    },
+    "tests": [
+      "test_r13_q3_q4_inputs_resolve_the_same_exact_v21_axis_plan",
+      "test_v5_worker_cpu_is_opt_in_and_legacy_native_profile_stays_cpu23",
+      "test_old_shortwave_inputs_keep_boundary_fitted_mesh_identity"
+    ],
+    "input_sha256": {
+      "v5_node1_13p5nm_p6h7p5_q3.dat": "6773b6882c29b91590da7d9da85909fe97f71e574488b671ec44c8167f2a722a",
+      "v5_node1_13p5nm_p6h7p5_q4.dat": "f9e20874ed86e8697b307ca9d2539ec04be8dd77dc7211cc9e0be8dae30746b5",
+      "original_5nm_si_p6h4_dual_condensed_v3.dat": "75c6ac3c126a3ef46bf62f82d821a84a65621f14a6996ea3b079f120f4da1125",
+      "original_2nm_si_p6h1p5_measured.dat": "1f54c3429625eefcdc65e4ec7dec356a8475e4249fe179d1f2957381701fb76b"
+    },
+    "coverage_limit": "input parsing, frozen R13 axis-plan values, profile facts, and generated execution argv only; no mesh assembly, FE operator, MUMPS, PORD, or FEM run",
+    "pord64_attempt": {
+      "command": "source scripts/activate_task39extra_pord64.sh && taskset -c 24 python -m pytest -q src/test/test_task39extra_v5_profile_frozen_axes.py",
+      "outcome": "activation exited 2 before Python/pytest",
+      "stderr": "missing task-local int64 stack path: /tmp/task39extra_para_int64_stack/prefix/petsc/lib",
+      "classification": "environment prerequisite absent; not a component-test failure"
+    },
+    "sandbox_attempt": {
+      "classification": "MPI_Init/PMIx sandbox socket restriction during module import; no component assertion reached and not counted as a test failure"
+    }
+  },
+  "pord64_recovery_inventory": {
+    "checked_scopes": [
+      "task worktree .venv/tmp; actual shared base /home/fenics/Projects/Maxwell3D-Lab was separately shallow-checked by the supervisor",
+      "task-local temporary launcher/cache directories",
+      "task worktree tracked source/records",
+      "/home/fenics/.cache/pip"
+    ],
+    "found": [
+      "ordinary .venv dolfinx_mpc-complex and standard site-packages dolfinx_mpc only; not the qualified task-local int64/PORD64 stack",
+      "tmp contains two old launcher log/launch.json directories and only Python bytecode under tmp/pycache/tmp/task39extra-pord64, not PETSc/MUMPS/PORD binaries or source",
+      "tracked task records contain the PORD64 qualification JSON and exact build recipe, but no source archive or built library",
+      "pip cache exists but no matching PETSc/MUMPS/PORD source archive or wheel was found"
+    ],
+    "known_build_inputs": {
+      "petsc": "3.19.6, source commit daf32f5ece2612daa6ea91d46615463471ef4efa, complex scalars, 64-bit PetscInt, MUMPS/ScaLAPACK downloads",
+      "dolfinx": "source commit b8375fa9fb932cbfce43005eeb4a3d52293f428b, DOLFINX_ENABLE_SLEPC=OFF",
+      "dolfinx_mpc": "source commit a444aa3006fdf492091443cc8c885c1eec006c2f",
+      "mumps_pord": "MUMPS 5.5.1 bundled source; 14 PORD C objects and mumps_pord.c use -DPORD_INTSIZE64 only; do not use global -DINTSIZE64",
+      "recorded_stack_prefixes": ["/tmp/task39extra_para_int64_stack", "/tmp/task39extra-pord64"]
+    },
+    "recovery_consequence": "Historical finding only: the previous /tmp task-local base and overlay were absent, so the former activation paths could not be reused. Reconstruction completed under the tracked worktree's ignored private restore directory; current paths and artifact hashes are in active_restore.pord64_overlay. This does not alter the historical /tmp build records below.",
+    "active_restore": {
+      "directory": "tmp/task39extra_v5_abi_restore_20260923",
+      "petsc_source": "3.19.6; commit daf32f5ece2612daa6ea91d46615463471ef4efa",
+      "petsc_configure_exit_code": 0,
+      "configure_stdout_log": "tmp/task39extra_v5_abi_restore_20260923/base/logs/petsc_configure.log",
+      "petsc_internal_configure_log": "tmp/task39extra_v5_abi_restore_20260923/base/src/petsc/int64-complex/lib/petsc/conf/configure.log",
+      "petsc_internal_configure_log_sha256": "ce815218a94d0d8027ccc6cd4055aaa98118fcf65da7abbcd4c9c49a3877cc93",
+      "observed_configure_concurrency": {
+        "taskset_cpu_affinity": "10-13 (four CPUs)",
+        "configure_detected_cores": 48,
+        "configure_make_np": 32,
+        "internal_commands": [
+          {"line": 10471, "command": "multiprocessing found 48 cores; using make_np=32"},
+          {"line": 15106, "command": "gmake -j32 -l72.0 scalapack"},
+          {"line": 21656, "command": "gmake -j32 -l72.0 prerequisites"},
+          {"line": 21683, "command": "gmake -j32 -l72.0 all"}
+        ],
+        "classification": "CPU affinity was limited to four CPUs, but configure-launched build concurrency was 32; affinity is not a make job limit. Preserve this first configure/build evidence; do not restart it solely for this mismatch."
+      },
+      "next_build_commands": {
+        "make": "taskset -c 10-13 make -j4",
+        "if_reconfigure": "pass --with-make-np=4 explicitly",
+        "scope": "subsequent task-local restoration stages only"
+      },
+      "pord64_overlay": {
+        "base_root": "tmp/task39extra_v5_abi_restore_20260923/base",
+        "overlay_root": "tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay",
+        "activation": "scripts/activate_task39extra_pord64.sh; set TASK39EXTRA_INT64_STACK_ROOT=<base> and TASK39EXTRA_PORD64_ROOT=<overlay>",
+        "activation_sha256": "04de50654ef5a09984d4ae7e81dbaf0298dd66e1a1f036b97119862755f546ae",
+        "petsc_soname_path": "tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/libpetsc.so.3.19.6",
+        "petsc_sha256": "9a1f23c18dcae7d16588d59bc86913456ebfbb1003e8c68dc9f26e193d1a0883",
+        "pord_archive_path": "tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/lib/libpord.a",
+        "pord_archive_sha256": "3af162663c3a1f50a2669c082e07f8d2a1f7da8f844c0ff676c026e75972de75",
+        "mumps_common_archive_path": "tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/lib/libmumps_common.a",
+        "mumps_common_archive_sha256": "d609f11e1da1c7ba921f8830a2916df8e8a8699f4a024d3371f5371a4895d911",
+        "petsc4py_cfg_path": "tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/lib/petsc.cfg",
+        "petsc4py_cfg_sha256": "412fcca61c935847ac5c70ef18b7aa38bcc3a70fe0a42a7ff300ecc7784fdc27",
+        "mpc_python_path": "tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/multipointconstraint.py",
+        "mpc_python_sha256": "cae8e0162868e1b87c417363c0639ed5e3b5280e26f92545f553e175247e96c4",
+        "mpc_python_destroy_method": false,
+        "pord64_component_qualification": "existing PORD64 8-cell FE/MPC/MUMPS fixture; INFOG7=4, INFOG1=0, ICNTL23=0 readback, one symbolic/numeric/solve, true residual 2.922259846318588e-11",
+        "r13_recovery_roundtrip_test": "src/test/test_228_task037_canonical_vector_reconstruction.py::test_serial_floquet_saved_retained_vector_recovers_canonical_coefficients; 1 passed in 1.25s under this activation"
+      }
+    }
+  }
+}

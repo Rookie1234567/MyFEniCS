@@ -147,9 +147,15 @@ def build_execution_plan(
     ]
     if contract_probe:
         argv.append("--contract-probe")
-    from .native_capacity_profile import NATIVE_PROFILES
+    from .native_capacity_profile import NATIVE_PROFILES, native_profile_facts
     if specification.solver.get("preconditioner") in NATIVE_PROFILES:
-        argv = ["/usr/bin/taskset", "-c", "23",
+        profile_facts = native_profile_facts(
+            specification.solver["preconditioner"]
+        )
+        worker_cpu = profile_facts.get("native_execution", {}).get(
+            "worker_cpu", 23
+        )
+        argv = ["/usr/bin/taskset", "-c", str(worker_cpu),
                 *native_memory_policy_prefix(
                     specification.execution.get("native_memory_policy")),
                 *argv]

@@ -1,5 +1,9 @@
 # 原生迁移与容量任务：本轮执行结果
 
+## Review V5 当前阶段（2026-09-23）：R13Q4 启动前
+
+H0/H1、M/C 与四输入合同已完成组件级检查；R13Q4 尚未启动，不能称数值、物理或正式资源通过。仅下一场 R13Q4 已排定，精确输入、ABI、硬件采样和启动合同见 [Response V5](../response_v5.md) 与 [`v5_m_c_and_four_input_contract_v1.json`](records/v5_m_c_and_four_input_contract_v1.json)。启动前仍须现场 fresh admission、CPU24 邻占用核对及 clean source SHA。持续硬件记录由 CPU9 上的只读 observer 与原 RSS watchdog 分工完成；传感器缺失、swap、温度/频率旁证均不新增 kill 条件。
+
 ## 终态：2026-09-20 04:47 UTC，2 nm h1.5 stopped by global-swap attribution Gate
 
 | 项目 | 终态事实 |

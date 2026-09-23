@@ -318,11 +318,10 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         return facts
 
     ledger.resource_sample = sample
-    from src.io.native_capacity_profile import RETAINED_CONDENSED_PROFILE
-    if identity == RETAINED_CONDENSED_PROFILE:
-        # The V3 profile has its own retained p6/p4 route.  Keep it outside
-        # the historical fullspace builder so old native identities retain
-        # their exact dispatch and screen contracts.
+    from src.io.native_capacity_profile import RETAINED_CONDENSED_PROFILES
+    if identity in RETAINED_CONDENSED_PROFILES:
+        # These opt-in identities use the retained route. Historical native
+        # profiles outside this set keep their original fullspace dispatch.
         from .physical_retained_condensed_v20 import run_retained_condensed_workflow
         for signum in (signal.SIGTERM, signal.SIGINT):
             previous_handlers[signum] = signal.signal(signum, interrupted)

@@ -1,0 +1,59 @@
+{
+  "schema": "task39extra.v5.r13-source-compact-observations.v1",
+  "source_commit": "55ceb4c84a9041f715dc0c34c72fca689e753cce",
+  "scope": "available q-specific compact observations only; not full-field or per-channel authority",
+  "reference_limits": {
+    "aggregate_power_absolute": 1e-5,
+    "zero_order_power_absolute": 1e-6,
+    "phase_fitting": false,
+    "full_field_arrays_available_in_this_worktree": false,
+    "per_channel_amplitudes_available_in_this_worktree": false
+  },
+  "q4": {
+    "record_path": "docs/task039_extra_physical_multilevel/outcomes/records/v25_q4_ac_swap_observe_r2_result.json",
+    "record_blob": "0d16b2f89536b719e56d7acce807bc6daedef966",
+    "record_sha256": "b9f5e46a15290cf9d905160ed1523dec3db8e48211979ca5f732c93b6ce32489",
+    "run_id": "task39extra_v25_q4_ac_swap_observe_r2_h7p5",
+    "source_sha": "4bf2bba56cc2e568d56ff3096aeb4a108744f28d",
+    "input_sha256": "07450802d1c6bcfbdb6b4d4836f118a7ca58c0631dca57a6a8667737d2a7f64d",
+    "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+    "status": "Q4_ORIGINAL_AUTHORITY_LIMITED_PASS",
+    "official_observations": {
+      "R_total": 0.3650975537006154,
+      "T_total": 0.013016803347760878,
+      "A_balance": 0.6218856429516237,
+      "R00_s": 0.3650608628870385,
+      "R00_p": 3.4352368280737534e-25,
+      "R00_total": 0.3650608628870385
+    },
+    "full_run_root_in_current_worktree": false,
+    "full_output_sha256": "1a10917eaefe84ee0db8765dd1bcc8638e07009160005f254d4971e1de636ebd"
+  },
+  "q3": {
+    "record_path": "docs/task039_extra_physical_multilevel/outcomes/records/a6_h6_coarse_degree_v25_q3.json",
+    "record_blob": "675ab0cfd73cf7414c99aa2e40105a96b8a09498",
+    "record_sha256": "941833181b435719662c5118537d2680a035eec6a891bf0914da098346ed5b84",
+    "run_id": "task39extra_v25_q3_speed_original_h7p5",
+    "source_sha": "cad282e25ed53cad1f9e4a5a70c14f3dd40e6d32",
+    "input_sha256": "120884e17cfe1bdb588b816f7fc4d2e3381ff0f3d4a2cc7f0981cb9bff11003e",
+    "physical_model_sha256": null,
+    "status": "COMPLETED",
+    "official_observations": {
+      "R_total": 0.3650975453210275,
+      "T_total": 0.013016803435687712,
+      "A_balance": 0.6218856512432849,
+      "A_volume_total": 0.6218856293036095,
+      "R00_s": 0.36506085452416953,
+      "R00_p": 1.2740189409450237e-22,
+      "R00_total": 0.36506085452416953
+    },
+    "dimensions": {
+      "p6_global_rows": 667152,
+      "p6_active_rows": 199260,
+      "condensed_rows": 45440,
+      "condensed_nnz_used": 9982160
+    },
+    "full_run_root_in_current_worktree": false,
+    "official_output_sha256": "7472d04378096a3aa55410fef298f18f44e600b185039311d7515095309f5339"
+  }
+}

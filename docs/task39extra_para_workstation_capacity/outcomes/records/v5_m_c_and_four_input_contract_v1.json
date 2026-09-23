@@ -1,0 +1,317 @@
+{
+  "schema": "task39extra.v5.m-c-and-four-input-contract.v1",
+  "as_of_date": "2026-09-23",
+  "classification": "component_qualification_complete_formal_runs_not_started",
+  "source": {
+    "branch": "task39extra_para_workstation_capacity",
+    "base_commit": "819b7b0efe517a47088822a52290e41cd10f1c37",
+    "source_tree_policy": "commit the reviewed V5 changes cleanly before launch; the exact formal source SHA is captured in run_manifest.json",
+    "formal_source_sha": "not assigned before the clean launch commit"
+  },
+  "prelaunch_checks": {
+    "m_c_light_regressions": {
+      "command": "export TASK39EXTRA_INT64_STACK_ROOT=<task-private-base> TASK39EXTRA_PORD64_ROOT=<task-private-overlay>; source scripts/activate_task39extra_pord64.sh && taskset -c 10-13 .venv/bin/python -m pytest -q src/test/test_task39extra_v5_profile_frozen_axes.py src/test/test_task39extra_v5_aq_projection_checker.py src/test/test_task39extra_v5_r13_pair_release.py",
+      "result": "13 passed in 2.90s",
+      "scope": "input/profile/pair-contract components; not a formal field run"
+    },
+    "saved_vector_recovery": "1 passed in 1.25s; actual complex Floquet MPC restore/canonical roundtrip",
+    "observer_hardware_self_test": "PASS; pde_started=false; covered PID/tick binding, read-only sensor records, missing sensor record-only, busy frequency unknown",
+    "changed_python_compile": "passed for touched runner/checker/observer/test modules",
+    "observer_ruff_f821": "All checks passed"
+  },
+  "four_input_contract": {
+    "r13_q3": {
+      "path": "input/task39extra_para_workstation_capacity/v5_node1_13p5nm_p6h7p5_q3.dat",
+      "input_sha256": "6773b6882c29b91590da7d9da85909fe97f71e574488b671ec44c8167f2a722a",
+      "physical_model_sha256": "255837330af27827d15ef43dfb01876187589a3b5e129f1d0882e24b955484c0",
+      "profile": "dual_condensed_balh_native_13p5_q3_v5",
+      "mesh": "frozen V21 axes; 990 hexahedra; p6/h7.5 nm",
+      "coarse_degree": 3,
+      "dtn_mode_count_expected": 80,
+      "report_window_m_n": [-2, 2]
+    },
+    "r13_q4": {
+      "path": "input/task39extra_para_workstation_capacity/v5_node1_13p5nm_p6h7p5_q4.dat",
+      "input_sha256": "f9e20874ed86e8697b307ca9d2539ec04be8dd77dc7211cc9e0be8dae30746b5",
+      "physical_model_sha256": "255837330af27827d15ef43dfb01876187589a3b5e129f1d0882e24b955484c0",
+      "profile": "dual_condensed_balh_native_13p5_q4_v5",
+      "mesh": "same exact V21 axes and physical identity as R13 q3",
+      "coarse_degree": 4,
+      "dtn_mode_count_expected": 80,
+      "report_window_m_n": [-2, 2]
+    },
+    "f5": {
+      "path": "input/task39extra_para_workstation_capacity/v5_node1_5nm_p6h4_q4.dat",
+      "input_sha256": "03a9992d576612335135fa22f25192f97754feb4a281e6c06ce29534e4095d36",
+      "physical_model_sha256": "96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d",
+      "profile": "dual_condensed_balh_native_5nm_v5",
+      "material": "Si; n=0.99396854453+0.00435380777i",
+      "mesh": "original p6/h4 nm boundary-fitted model",
+      "coarse_degree": 4,
+      "dtn_mode_count_expected": 600,
+      "output_window_m_n": "preserved from old 5 nm input: m=-7..7, n=-2..2"
+    },
+    "f2": {
+      "path": "input/task39extra_para_workstation_capacity/v5_node1_2nm_p6h1p5_q4.dat",
+      "input_sha256": "e3febbe6a785d3866e37fd3353565111952fbfe0926ee0b2c5a42eaef32149e1",
+      "physical_model_sha256": "fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef",
+      "profile": "dual_condensed_balh_native_2nm_v5",
+      "material": "Si; n=0.99880148307+0.000213688647i",
+      "mesh": "original p6/h1.5 nm boundary-fitted model",
+      "coarse_degree": 4,
+      "dtn_mode_count_expected": 3904,
+      "output_window_m_n": "preserved from old 2 nm input: m=-7..7, n=-2..2"
+    },
+    "machine_validation": {
+      "activation": "task-local PORD64 overlay; Python/DOLFINx/MPC/PETSc imports under host MPI",
+      "test": "src/test/test_task39extra_v5_profile_frozen_axes.py",
+      "result": "5 passed in 0.80s",
+      "checks": [
+        "all four inputs parse and resolve to their V5 profile/coarse degree",
+        "R13 q3/q4 physical_model_sha256 is identical and frozen axes are exact",
+        "F5/F2 physical_model_sha256 exactly matches the corresponding pre-V5 input",
+        "shortwave discretization, material, incidence, boundary, method, and output fields are unchanged",
+        "all four plans use worker CPU24 and preferred node1; legacy 5 nm profile remains CPU23",
+        "none deadline, 1.3e12-byte RSS Gate, 1.17e12-byte warning, record-only swap/prediction and mode-count contracts"
+      ]
+    }
+  },
+  "startup_contract": {
+    "status": "profile_and_input_contract_checked; fresh_host_admission_required_before_each_formal_run",
+    "worker_cpu": 24,
+    "supervisor_cpu": 9,
+    "mpi_size": 1,
+    "math_threads": 1,
+    "numa_policy": "numactl --preferred=1; allowed memory nodes 0-1; no forced migration",
+    "resource_stop_policy": "measured_tree_rss_only_v3",
+    "rss_hard_limit_bytes": 1300000000000,
+    "rss_warning_bytes": 1170000000000,
+    "startup_headroom_bytes": 137438953472,
+    "startup_admission": "fresh effective_available_bytes >= 1437438953472 B, immediately before launch",
+    "swap_fault_prediction_elapsed": "observe-only / record-only; no deadline",
+    "screen": "iteration 128 progress-only; no time/screen stop",
+    "solver": "zero retained start; FGMRES restart 32; max 2048",
+    "hardware_monitoring": {
+      "formal_requirement": "keep read-only hardware sampling alongside each R13 run",
+      "h1_probe": {
+        "side_evidence_collected": true,
+        "evidence": [
+          "docs/task39extra_para_workstation_capacity/outcomes/records/v5_h0_h1_m_a_profile_checks_v1.json",
+          "docs/task39extra_para_workstation_capacity/outcomes/records/cpu_hardware_limits.json"
+        ],
+        "scope": "H1 has temperature/thermal-counter and sysfs-side observations; busy Bzy_MHz remains unknown"
+      },
+      "990_local_fe_pair": {
+        "sensor_sampling_performed": false,
+        "scope": "this CPU23/CPU24 FE pair only; do not infer sensors from its elapsed times or NUMA placement"
+      },
+    "formal_action": "the existing read-only task39extra_event_observer runs on supervisor CPU9 at 15-second intervals, bound to this run plus the fixed worker PID/start_ticks; --hardware-cpu 24 appends hardware_sample records to the observer log",
+    "sampled_read_only_sources": {
+      "temperature": "/sys/class/hwmon/hwmon*/temp*_input and /sys/class/thermal/thermal_zone*/temp, with available labels/types",
+      "thermal_throttle": "/sys/devices/system/cpu/cpu24/thermal_throttle/* counters",
+      "frequency_side_evidence": "/sys/devices/system/cpu/cpu24/cpufreq/scaling_cur_freq and cpuinfo_cur_freq when readable; these remain sysfs side evidence, not busy frequency",
+      "busy_frequency": "unknown unless an independently authorized APERF/MPERF measurement exists; no MSR access is attempted"
+    },
+    "observer_command_template": "taskset -c 9 <PORD64 Python> scripts/task39extra_event_observer.py --run-dir <run_dir> --log <run_dir>/observer/observer.jsonl --thread 01a084a4-d4d5-7cb3-a407-f2ff7ee1e2ad --root-pid <root_pid> --root-start-ticks <root_start_ticks> --worker-pid <worker_pid> --worker-start-ticks <worker_start_ticks> --helper /home/fenics/Projects/Maxwell3D-Lab/task-control/codex-thread-notify-v2.py --interval 15 --hardware-cpu 24",
+    "observer_source": "scripts/task39extra_event_observer.py",
+    "observer_sha256": "aeded7a3f3447a186d223aec61502d0b54e60e8f1bf83d68b2cb28ac9c0f9757",
+    "observer_self_test": {
+      "result": "PASS; pde_started=false",
+      "coverage": [
+        "hardware sample bound to worker PID/start_ticks",
+        "sysfs temperature, thermal counter and frequency-side fixture values recorded",
+        "missing sensor remains null without a stop event",
+        "busy frequency remains unknown without APERF/MPERF/MSR"
+      ],
+      "command": "taskset -c 10-13 .venv/bin/python scripts/task39extra_event_observer.py --self-test"
+    },
+    "observer_effect": "read-only; missing temperature/frequency fields remain null/unknown; no temperature, throughput, swap, or sensor-availability kill/stop gate; existing measured-tree RSS watchdog is unchanged"
+    },
+    "formal_runs_started": []
+  },
+  "m_c_component_evidence": {
+    "source_scope": "selective V20/V19/Q4/Q3 path; components only, not full 990-cell FGMRES runs",
+    "q3_q4_factory_dispatch_and_blob_parity": {
+      "dispatch": "scripts/run_case.py -> src.runners.physical_intermediate.run_physical_intermediate -> RETAINED_CONDENSED_PROFILES -> src.runners.physical_retained_condensed_v20.run_retained_condensed_workflow",
+      "profile_branch": "V5 identity selects sum_factorized_work=True; RetainedCondensedRuntime.build constructs levels (6,q), then the same runtime builds A6/H6 fast actions, exact coarse Aq inverse, optimized fixed-serial owner route, and the independent native Aq projection check. q3/q4 use identical factories and differ only by their resolved coarse_degree q and input identity.",
+      "source_anchors": {
+        "q4_v20_fast_path": "4bf2bba56cc2e568d56ff3096aeb4a108744f28d",
+        "q3_coarse_qualification": "cad282e25ed53cad1f9e4a5a70c14f3dd40e6d32",
+        "retained_outer_adapter_blob_q4_q3": "e250546853e25e93ff506bac755707a5d5313200",
+        "p4_schur_v14_source_blob_q4_q3": "2975b9bafa2ead15e69e41a032df5fbc15b7591c",
+        "v20_factory_source_blob_q4_q3": "89cf8d97a70bec43c1869d6ede5e50696aa3db2b"
+      },
+      "selective_modules": [
+        {"path": "src/solvers/physical_equivalent_fast.py", "q4_q3_donor_blob": "14960db4dfc88513294c52f226c55cb307363de4", "working_blob": "c9f7955662a71185501f430118c7369dd1bb2e1c", "role": "packed physical A6/PC action factory"},
+        {"path": "src/solvers/fullspace_n1e_sum_factor.py", "q4_q3_donor_blob": "7db861d7187df66c7e5f90135cb483de5b2232db", "working_blob": "7db861d7187df66c7e5f90135cb483de5b2232db", "role": "sum-factorized N1e kernels"},
+        {"path": "src/solvers/fullspace_partial_assembly.py", "q4_q3_donor_blob": "7fc28d87cadc712018818fe0bb2d24039e530b45", "working_blob": "7fc28d87cadc712018818fe0bb2d24039e530b45", "role": "partial-assembly kernel/cache accounting; target centered-affine identity retained"},
+        {"path": "src/solvers/physical_light_setup.py", "q4_q3_donor_blob": "08e5975e5b0836bbc386de5a80ea3bab1effb694", "working_blob": "68bd68d29b55dcda2b63ddcfff557e9fd4f1f40a", "role": "V5 packed H6/A6 setup flags; no per-formal H6 native-oracle addition"},
+        {"path": "src/solvers/p4_cell_condensed_inverse.py", "q4_q3_donor_blob": "5a915d3d60165cb15732be881f3679db2cd8acbd", "working_blob": "ad9faa8ca171e8178b31ab1ced84289fc2e76a81", "role": "selective exact coarse inverse plus target refinement ledger/lifecycle"},
+        {"path": "src/solvers/p6_cell_condensed_action.py", "q4_q3_donor_blob": "a9712ecc5060aebb8ce4519b4213c94bc53a6b67", "working_blob": "746651a899cb78cc82bac39838195a1d92345f63", "role": "retained p6 Schur action and bridge; target cache inventory retained"},
+        {"path": "src/solvers/fullspace_same_mesh_hcurl_pmg_runtime.py", "q4_q3_donor_blob": "c7112a2193a33aa977b5851685b8328545620a25", "working_blob": "363a33564be4ed12722407a0405672c312ea747d", "role": "fixed-serial optimized owner route with target API and tests"},
+        {"path": "src/solvers/hcurl_assembly_time_condensation.py", "q4_q3_donor_blob": "e294f30ee189639299fe6c793a264cd173b31507", "working_blob": "40f6e9caa29c0e1c31b656d72b15114d496fc93c", "role": "selective timing/cache-policy changes; target raw-unrounded geometry identity retained"},
+        {"path": "src/runners/physical_retained_condensed_v20.py", "q4_q3_donor_blob": null, "working_blob": "0dc29fc19a79826dd0899b0a2f364557b67f4587", "role": "task-local V5 dispatcher/factory, per-call P4 audit and D2 lifecycle; not copied from V14/V20 whole runner"}
+      ],
+      "qualification_scope": "990-cell q3/q4 native Aq split projection and 18-cell q3/q4 same-object workflow setup passed; component parity only, not either full R13 solve"
+    },
+    "private_abi_restore": {
+      "base_root": "tmp/task39extra_v5_abi_restore_20260923/base",
+      "pord64_overlay_root": "tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay",
+      "activation": "TASK39EXTRA_INT64_STACK_ROOT=<base_root> TASK39EXTRA_PORD64_ROOT=<pord64_overlay_root>; source scripts/activate_task39extra_pord64.sh",
+      "activation_sha256": "04de50654ef5a09984d4ae7e81dbaf0298dd66e1a1f036b97119862755f546ae",
+      "artifacts": {
+        "libpetsc.so.3.19.6": {"path": "tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/libpetsc.so.3.19.6", "sha256": "9a1f23c18dcae7d16588d59bc86913456ebfbb1003e8c68dc9f26e193d1a0883"},
+        "libpord.a": {"path": "tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/lib/libpord.a", "sha256": "3af162663c3a1f50a2669c082e07f8d2a1f7da8f844c0ff676c026e75972de75"},
+        "libmumps_common.a": {"path": "tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/lib/libmumps_common.a", "sha256": "d609f11e1da1c7ba921f8830a2916df8e8a8699f4a024d3371f5371a4895d911"},
+        "petsc4py_cfg": {"path": "tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/lib/petsc.cfg", "sha256": "412fcca61c935847ac5c70ef18b7aa38bcc3a70fe0a42a7ff300ecc7784fdc27"},
+        "dolfinx_mpc_python_source": {"path": "tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/multipointconstraint.py", "sha256": "cae8e0162868e1b87c417363c0639ed5e3b5280e26f92545f553e175247e96c4"}
+      },
+      "soname": "libpetsc.so.3.19",
+      "numeric_stack": "PETSc PetscInt64/complex128; PORD_INTSIZE64 only, no global -DINTSIZE64",
+      "MPC_ownership": "the restored MultiPointConstraint Python class defines no destroy(); downstream PETSc/form owners are destroyed first, then Python references are cleared",
+      "pord64_fixture": "src/test/test_task39extra_pord64_fixture.py::test_pord64_small_p4_mpc_mumps_roundtrip; previously qualified with INFOG7=4, INFOG1=0, ICNTL23=0, symbolic/numeric/solve=1/1/1 and residual 2.922259846318588e-11; not rerun in this batch"
+    },
+    "sum_factorized_fe_and_owner": [
+      {
+        "source_anchor": "4bf2bba56cc2e568d56ff3096aeb4a108744f28d",
+        "target_test": "src/test/test_362_partial_assembly.py; sum_factorized_work=True cases",
+        "result": "6 passed: 3 new sum-factorized p6 component cases plus 3 existing packed regressions"
+      },
+      {
+        "source_anchor": "4bf2bba56cc2e568d56ff3096aeb4a108744f28d",
+        "target_test": "src/test/test_323_task038_same_mesh_hcurl_owner.py; q=(3,4) opt-in owner cases",
+        "result": "2 passed; optimized owner route and immutable content-cache assertions"
+      }
+    ],
+    "actual_material_components": {
+      "test_three_authoritative_materials_native_vs_sumfactorized_p6_volume": "passed; actual Si/shortwave material volume action comparison; no large global factor",
+      "test_actual_material_zero_order_aq_and_p4_inverse_components": "passed on selected real channels; actual material Aq/p4 component scope, not full 80/600/3904 channel qualification",
+      "nonhermitian_port_rhs": "kept separate and covered by the previously reviewed real V18/V19 FE/MPC ledger fixtures; the actual-material boundary trace may be structurally zero"
+    },
+    "actual_h6_native_fast_small_fe": {
+      "test": "test_small_real_h6_native_fast_window_and_apply",
+      "result": "1 passed in 11.28s; 18-cell actual FE component, not formal R13",
+      "positive_B6_action_relative": 3.852617539716818e-15,
+      "actual_H6_smoother_apply_relative": 2.022507559722795e-15,
+      "diagonal_relative": 0.0,
+      "power_history_relative": 1.5219634095472258e-15,
+      "lambda_power10_relative": 2.47053116512708e-15,
+      "lambda_hi_relative": 2.4823518884051996e-15,
+      "lambda_lo_relative": 2.3641446556239998e-15,
+      "native_and_fast_power_matrix_mults": 20,
+      "operation_scale_limit": 1e-10,
+      "power_seed_sha256": "d1e8f38ce55b8e470a1aa90a08c342ac9de1f8cdf91f551cb1f585bacc4ace5c",
+      "gradient_vector_sha256": "1d1660c7e0b8356f9f23161b809767b9ba6200da77db8f27a9323268b6c7f53d"
+    },
+    "actual_990_r13_aq_projection": {
+      "test": "test_r13_990_q3_q4_native_aq_projection",
+      "result": "1 passed in 92.76s; actual 990-cell mesh and 80 DtN modes; no full global factor",
+      "mesh_plan_sha256": "b5bab6aae4668be60aacbb49265b4c875def42e2620256cd168d8c26207dc157",
+      "mode_sha256": "d4380495d912f97f6d303a85756bb9b252a1117bad229b559f0ac8140e745fbb",
+      "q3": {
+        "fine_rows": 667152,
+        "coarse_rows": 86652,
+        "volume_relative": 2.2109884279352082e-15,
+        "dtn_relative": 3.209387062986456e-14,
+        "owner_primal_delta": 1,
+        "owner_adjoint_delta": 2
+      },
+      "q4": {
+        "fine_rows": 667152,
+        "coarse_rows": 201520,
+        "volume_relative": 2.6811983230931427e-15,
+        "dtn_relative": 1.0432164142396508e-14,
+        "owner_primal_delta": 1,
+        "owner_adjoint_delta": 2
+      },
+      "gate": "native volume and DtN projection independently <=1e-10; total is record-only"
+    },
+    "v5_same_object_runtime_setup": {
+      "test": "test_q3_and_q4_v5_setup_invoke_aq_projection_and_checker_contract",
+      "result": "1 passed in 670.17s; two actual 18-cell workflow subtests with synthetic resources and 30 channels; not full R13 qualification",
+      "q3": {
+        "profile": "dual_condensed_balh_native_13p5_q3_v5",
+        "coarse_degree": 3,
+        "scope": "subtest passed within the combined test; q-specific numeric stdout was not retained in the compact"
+      },
+      "q4": {
+        "profile": "dual_condensed_balh_native_13p5_q4_v5",
+        "coarse_degree": 4,
+        "scope": "subtest passed within the combined test; q-specific numeric stdout was not retained in the compact"
+      },
+      "resource_qualification": false
+    },
+    "legacy_d2_same_object_setup_reference": {
+      "record": "docs/task39extra_para_workstation_capacity/outcomes/records/d2_same_object_setup_probe_compact_v1.json",
+      "record_sha256": "b49826c851f1d5a32c3b3f9287b2dca849289a8f12e247a79abe56f4a3bed0c3",
+      "source_parent_sha": "dabbda495099b6a42396ec3ed464180f609824dc",
+      "scope": "separate pre-V5 D2 18-cell/30-mode setup probe; its row, tensor/cache and JIT facts are not attributed to either V5 q subtest",
+      "jit_note": "the two recorded JIT expressions are H expressions, not volume expressions; the seven forms include the region-volume forms",
+      "detailed_facts": "use the linked D2 compact as the authority; no q3/q4 split is inferred from it"
+    },
+    "990_local_cpu_memory_pair": {
+      "input_sha256": "f9e20874ed86e8697b307ca9d2539ec04be8dd77dc7211cc9e0be8dae30746b5",
+      "physical_model_sha256": "255837330af27827d15ef43dfb01876187589a3b5e129f1d0882e24b955484c0",
+      "mode_sha256": "d4380495d912f97f6d303a85756bb9b252a1117bad229b559f0ac8140e745fbb",
+      "fixed_vector_sha256": "f19c67646180d48040de45487f1ada0b01ce86f89e32618ec787cfff5f905bda",
+      "cpu23_node0": {
+        "log": "benchmarks/artifacts/native_capacity/v5_r13_local_pair_20260923/cpu23_node0.log",
+        "log_sha256": "e44132bf8e05c517160d50ee9651da4d324eb5e3d891748d5ee2fdc6e18dda93",
+        "numa_maps_sha256": "538ad780051d1efae7fad415963ac6b7b31ea13efa87dee789696eedaa1745cb",
+        "anonymous_local_fraction": 0.9996364077081565,
+        "a6_native_seconds_per_apply": 11.678439231667047,
+        "a6_fast_seconds_per_apply": 1.5158803616650403,
+        "h6_fast_seconds_per_apply": 2.2692769329975513
+      },
+      "cpu24_node1": {
+        "log": "benchmarks/artifacts/native_capacity/v5_r13_local_pair_20260923/cpu24_node1.log",
+        "log_sha256": "fb495e8b3093e5672980ea30e01bc0f9399dfd3ec087fc91c2062456583c88cd",
+        "numa_maps_sha256": "5c30b39d13a389f7b134a6ff0100b1446b337eb5382b737d9f467cb0152131ea",
+        "anonymous_local_fraction": 0.9995693193900486,
+        "a6_native_seconds_per_apply": 12.580009980670487,
+        "a6_fast_seconds_per_apply": 1.5168498576676939,
+        "h6_fast_seconds_per_apply": 2.283674530670396
+      },
+      "node1_over_node0_ratios": {
+        "native_A6_time": 1.07720,
+        "fast_A6_time": 1.000640,
+        "actual_H6_time": 1.006345
+      },
+      "scope": "independent local processes first-touched on their assigned NUMA nodes; short FE workload; not a long-term hardware repair claim",
+      "timing_note": "each timed pass includes action output copy and norm; not kernel-only timing",
+      "temperature_busy_frequency_throttle": "not collected in this pair; no inference from TSC or scaling_cur_freq"
+    }
+  },
+  "r13_pair_release": {
+    "status": "PENDING_FORMAL_Q4_AND_Q3_RUNS",
+    "not_claimed": "R13_PAIR_RELEASE",
+    "required_after_both_runs": [
+      "each R13 run passes its own numerical/physics gates, exactly 80 modes, and its q-specific source-compact gate",
+      "each parent watchdog ends COMPLETED, descendants cleared, and measured-tree RSS stays below 1300000000000 B",
+      "q3/q4 run/source/input/physical/mode identities are bound",
+      "task-local post-run entry: python -m benchmarks.physical_intermediate_checker --r13-pair Q4_RUN_DIR Q3_RUN_DIR --q4-observer-log Q4_OBSERVER_JSONL --q3-observer-log Q3_OBSERVER_JSONL",
+      "manifest.run_id is checked against the resolved dat model identity; timestamped run directories are bound through manifest.output_directory and must be distinct",
+      "watchdog summary.samples is a positive integer count; detailed rows remain in watchdog/resources.jsonl and are not reinterpreted as a list or as a per-row readability Gate",
+      "PID/start_ticks come from each actual observer_started receipt; notification acknowledgement is diagnostic only and cannot fail numerical/resource evidence",
+      "runtime comparison uses common interpreter/library/thread/CPU/NUMA/MPI/resource contracts and excludes run-specific worker_command paths and hashes",
+      "residual NPZ hash and final_solution_sha256 are verified; each saved p6 zero-slave vector is restored in its own actual MPC function space using the production scatter/homogenize/scatter/backsubstitution/scatter order, then re-exported with iter_canonical_full_fe_packets and compared coefficient-for-coefficient to its recorded canonical artifact; q3/q4 native_map arrays are compared exactly",
+      "full E/H field comparison with LosslessFEMetric L2 and scaled-curl <=1e-4; selected E/H <=1e-4",
+      "all 80 complex modal amplitudes and per-channel powers compared; amplitude <=1e-4 and channel power <=1e-6",
+      "R/T/A/A_volume differences <=1e-5; no phase fitting",
+      "numerical postprocessing reports NUMERICAL_PAIR_PASS only; R13_PAIR_RELEASE remains pending until common-path qualification and sustained-hardware review are separately bound and audited"
+    ],
+    "saved_vector_recovery_fixture": {
+      "test": "src/test/test_228_task037_canonical_vector_reconstruction.py::test_serial_floquet_saved_retained_vector_recovers_canonical_coefficients",
+      "result": "1 passed in 1.25s",
+      "activation": "task-local PORD64 overlay; host MPI; taskset CPU10-13; math threads 1",
+      "coverage": [
+        "real complex Floquet MPC and exact-zero-slave saved retained vector",
+        "same restore_p0_full_field function used by production recover_p0_outputs",
+        "existing canonical export/reconstruct functions roundtrip coefficients",
+        "one perturbed independent stored coefficient is rejected by canonical comparison"
+      ],
+      "scope": "small MPI1 component fixture; not an R13 full-field/pair or resource qualification"
+    },
+    "source_compact_authority": "per-q compact observations are checked by each run; full source q3/q4 arrays are absent, so compact match is not mislabeled full source-field authority"
+  }
+}

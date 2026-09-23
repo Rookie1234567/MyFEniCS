@@ -167,6 +167,9 @@ class RetainedCondensedRuntime:
     p4_terms: Mapping[int, Any]
     mode_count: int
     mode_sha256: str
+    coarse_degree: int = 4
+    sum_factorized_work: bool = False
+    pc_physical: dict[str, Any] | None = None
     p4_factor: Any = None
     p4_inverse: P4CellCondensedInverse | None = None
     p4_ledger: P4RefinementLedger | None = None
@@ -185,6 +188,8 @@ class RetainedCondensedRuntime:
         cfg: Any,
         comm: Any,
         *,
+        coarse_degree: int = 4,
+        sum_factorized_work: bool = False,
         marker: Callable[[str, Mapping[str, Any]], None] | None = None,
     ) -> "RetainedCondensedRuntime":
         from src.solvers.fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
@@ -194,12 +199,18 @@ class RetainedCondensedRuntime:
         from src.solvers.fullspace_physical_intermediate_runtime import (
             fine_volume_quadrature_metadata,
         )
+        from src.solvers.physical_equivalent_fast import (
+            build_packed_physical_action,
+        )
 
         if int(comm.size) != 1:
             raise ValueError("the D2 retained route is qualified for MPI1 only")
+        coarse_degree = int(coarse_degree)
         notify = (lambda name, facts: marker(name, dict(facts))) if marker else (lambda *_: None)
-        levels = _build_same_mesh_levels(cfg, comm, (6, 4), include_positive_coefficients=True)
-        notify("retained_shared_mesh_complete", {"degrees": [6, 4]})
+        levels = _build_same_mesh_levels(
+            cfg, comm, (6, coarse_degree), include_positive_coefficients=True
+        )
+        notify("retained_shared_mesh_complete", {"degrees": [6, coarse_degree]})
         volume_quadrature_metadata, quadrature_records = fine_volume_quadrature_metadata(
             levels, cfg
         )
@@ -213,22 +224,36 @@ class RetainedCondensedRuntime:
             6,
             volume_quadrature_metadata=volume_quadrature_metadata,
         )
-        p4 = build_same_mesh_physical_action(
-            levels,
-            cfg,
-            4,
-            mode_inventory=(fine["modes"], fine["mode_rows"], fine["mode_sha256"]),
-            volume_quadrature_metadata=volume_quadrature_metadata,
-        )
-        cell_tags = levels["mesh_data"].cell_tags
-        p6_space = levels["spaces"][6]
-        p4_space = levels["spaces"][4]
-        p6_carrier = fine["dtn_action"].carrier
-        p4_carrier = p4["dtn_action"].carrier
-        p6_form = _compile_volume_form(fine["volume_action"])
-        p4_form = _compile_volume_form(p4["volume_action"])
-        notify("retained_forms_compiled", {"p6": True, "p4": True})
+        p4 = None
+        pc_physical = None
         try:
+            p4 = build_same_mesh_physical_action(
+                levels,
+                cfg,
+                coarse_degree,
+                mode_inventory=(fine["modes"], fine["mode_rows"], fine["mode_sha256"]),
+                volume_quadrature_metadata=volume_quadrature_metadata,
+            )
+            if sum_factorized_work:
+                pc_physical = build_packed_physical_action(
+                    {"levels": levels, "fine": fine},
+                    cfg,
+                    contiguous_work=True,
+                    preallocated_work=False,
+                    sum_factorized_work=True,
+                )
+                notify(
+                    "retained_sum_factorized_physical_action_complete",
+                    pc_physical["facts"],
+                )
+            cell_tags = levels["mesh_data"].cell_tags
+            p6_space = levels["spaces"][6]
+            p4_space = levels["spaces"][coarse_degree]
+            p6_carrier = fine["dtn_action"].carrier
+            p4_carrier = p4["dtn_action"].carrier
+            p6_form = _compile_volume_form(fine["volume_action"])
+            p4_form = _compile_volume_form(p4["volume_action"])
+            notify("retained_forms_compiled", {"p6": True, "p4": True})
             p6_system = build_unconstrained_assembly_time_condensation(
                 p6_form,
                 p6_space,
@@ -250,7 +275,7 @@ class RetainedCondensedRuntime:
                 p4_form,
                 p4_space,
                 cell_tags,
-                mpc=levels["floquets"][4].mpc,
+                mpc=levels["floquets"][coarse_degree].mpc,
                 appended_global_rows=len(p4_carrier.entries),
                 appended_support_owned_cell_groups=groups,
                 appended_support_group_by_row=group_by_row,
@@ -274,6 +299,7 @@ class RetainedCondensedRuntime:
                     "p6_build": p6_system.build_audit,
                     "p4_build": p4_system.build_audit,
                     "p4_matrix_identity": petsc_csr_content_identity(p4_system.matrix),
+                    "coarse_degree": coarse_degree,
                     "mode_count": len(fine["modes"]),
                     "mode_sha256": fine["mode_sha256"],
                 },
@@ -288,6 +314,9 @@ class RetainedCondensedRuntime:
                 p4_terms=p4_terms,
                 mode_count=len(fine["modes"]),
                 mode_sha256=str(fine["mode_sha256"]),
+                coarse_degree=coarse_degree,
+                sum_factorized_work=bool(sum_factorized_work),
+                pc_physical=pc_physical,
             )
         except BaseException:
             from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
@@ -299,6 +328,11 @@ class RetainedCondensedRuntime:
                     destroy = getattr(value, "destroy", None)
                     if callable(destroy):
                         destroy()
+            failed_pc = locals().get("pc_physical")
+            if failed_pc is not None:
+                failed_action = failed_pc.get("physical_action")
+                if failed_action is not None:
+                    failed_action.destroy()
             destroy_same_mesh_physical_action(fine)
             destroy_same_mesh_physical_action(p4)
             levels.clear()
@@ -587,14 +621,29 @@ class RetainedCondensedRuntime:
         from src.solvers.physical_light_setup import build_light_h6_setup
         from dolfinx.la.petsc import create_vector
 
-        positive = build_light_h6_setup(self.levels, self.fine["cfg"], marker)
+        positive = build_light_h6_setup(
+            self.levels,
+            self.fine["cfg"],
+            marker,
+            packed_power10=self.sum_factorized_work,
+            packed_apply=True,
+            sum_factorized_work=self.sum_factorized_work,
+            sum_factorized_power10=self.sum_factorized_work,
+        )
+        # Transfer construction can fail after H6 setup.  Make its existing
+        # owner visible to runtime.destroy as soon as it is created.
+        self.h6 = positive
         transfer_owner = build_same_mesh_hcurl_owner_transfer(
             self.levels["spaces"][6],
             self.levels["floquets"][6],
-            self.levels["spaces"][4],
-            self.levels["floquets"][4],
+            self.levels["spaces"][self.coarse_degree],
+            self.levels["floquets"][self.coarse_degree],
+            fixed_serial_owner_route=self.sum_factorized_work,
+            optimized_owner_apply=self.sum_factorized_work,
         )
+        self.transfer_owner = transfer_owner
         transfer = AlgebraicOwnerTransfer(transfer_owner)
+        self.transfer = transfer
 
         def coarse(source: PETSc.Vec) -> PETSc.Vec:
             rhs = transfer.apply_adjoint(source)
@@ -627,7 +676,12 @@ class RetainedCondensedRuntime:
         def physical(source: PETSc.Vec) -> PETSc.Vec:
             from src.solvers.fullspace_physical_intermediate import apply_owned
 
-            return apply_owned(self.fine["physical_action"], source)
+            action = (
+                self.pc_physical["physical_action"]
+                if self.pc_physical is not None
+                else self.fine["physical_action"]
+            )
+            return apply_owned(action, source)
 
         coupling = PhysicalBalancedCoupling(
             physical,
@@ -637,9 +691,6 @@ class RetainedCondensedRuntime:
             route="BAL_H",
             checkpoint=lambda: None,
         )
-        self.h6 = positive
-        self.transfer = transfer
-        self.transfer_owner = transfer_owner
         self.bal_h = coupling
 
         def bal_h_numpy(source: np.ndarray) -> np.ndarray:
@@ -713,6 +764,11 @@ class RetainedCondensedRuntime:
         self.bridge = None
         self.bal_h = None
         self.transfer = None
+        if self.pc_physical is not None:
+            action = self.pc_physical.get("physical_action")
+            if action is not None:
+                action.destroy()
+            self.pc_physical = None
         self.solver_stack_released = True
         return {
             "status": "CLEARED",
@@ -772,12 +828,180 @@ class RetainedCondensedRuntime:
 
         destroy_same_mesh_physical_action(self.fine)
         destroy_same_mesh_physical_action(self.p4)
+        if self.pc_physical is not None:
+            action = self.pc_physical.get("physical_action")
+            if action is not None:
+                action.destroy()
+            self.pc_physical = None
         self.levels.clear()
         self.p4_terms = {}
         self.bridge = None
         self.bal_h = None
         self.transfer = None
         self.p4_factor = None
+
+
+def _native_aq_projection_check(runtime: RetainedCondensedRuntime) -> dict[str, Any]:
+    """Compare the independent native Aq split with Pq^H A6 Pq on this runtime.
+
+    This is the V5 setup identity from the frozen V14 common builder, adapted
+    to the retained runtime's already-owned q/p6 actions and algebraic owner
+    transfer.  Volume and DtN are compared separately so neither component can
+    hide a mismatch in the other.
+    """
+
+    from dolfinx.la.petsc import create_vector
+    from src.solvers.fullspace_physical_intermediate import (
+        BorrowedActionAdapter,
+        apply_owned,
+    )
+
+    q_space = runtime.levels["spaces"][runtime.coarse_degree]
+    transfer = runtime.transfer
+    if transfer is None:
+        raise RuntimeError("Aq projection requires the retained algebraic owner transfer")
+    primal_before = int(transfer.primal_count)
+    adjoint_before = int(transfer.adjoint_count)
+
+    q = create_vector([(q_space.dofmap.index_map, q_space.dofmap.index_map_bs)])
+    owned: list[Any] = [q]
+
+    def own_apply(action: Any, source: Any, *, borrowed: bool = False) -> Any:
+        adapter = BorrowedActionAdapter(action) if borrowed else action
+        value = apply_owned(adapter, source)
+        owned.append(value)
+        return value
+
+    def relative(left: Any, right: Any) -> dict[str, float]:
+        difference = left.duplicate()
+        try:
+            left.copy(difference)
+            difference.axpy(PETSc.ScalarType(-1.0), right)
+            absolute = float(difference.norm())
+            denominator = max(float(left.norm()), np.finfo(float).tiny)
+            ratio = absolute / denominator
+            if not np.isfinite(ratio):
+                raise FloatingPointError("nonfinite native/projected Aq component identity")
+            return {"absolute": absolute, "relative": ratio}
+        finally:
+            difference.destroy()
+
+    try:
+        indices = np.arange(q.array.size, dtype=np.float64)
+        q.array[:] = np.sin(0.071 * (indices + 1.0)) + 1j * 0.37 * np.cos(
+            0.113 * (indices + 1.0)
+        )
+        q.array[transfer.coarse_slaves] = 0.0
+        q.ghostUpdate(
+            addv=PETSc.InsertMode.INSERT_VALUES,
+            mode=PETSc.ScatterMode.FORWARD,
+        )
+        q_input = np.asarray(q.array, dtype=np.complex128).copy()
+        q_norm = float(q.norm())
+        if not np.isfinite(q_norm) or q_norm <= np.finfo(float).tiny:
+            raise FloatingPointError("nonzero coarse Aq probe collapsed to zero")
+
+        p6 = transfer.apply_primal(q)
+        owned.append(p6)
+        p6_norm = float(p6.norm())
+        if not np.isfinite(p6_norm) or p6_norm <= np.finfo(float).tiny:
+            raise FloatingPointError("Pq projection of the Aq probe collapsed to zero")
+
+        native_volume = own_apply(runtime.p4["volume_action"], q, borrowed=True)
+        projected_volume_source = own_apply(
+            runtime.fine["volume_action"], p6, borrowed=True
+        )
+        native_dtn = own_apply(runtime.p4["dtn_action"], q)
+        projected_dtn_source = own_apply(runtime.fine["dtn_action"], p6)
+
+        volume_slave_values = np.asarray(projected_volume_source.array)[
+            transfer.fine_slaves
+        ].copy()
+        dtn_slave_values = np.asarray(projected_dtn_source.array)[
+            transfer.fine_slaves
+        ].copy()
+        volume_slave_zero = bool(np.all(volume_slave_values == 0.0))
+        dtn_slave_zero = bool(np.all(dtn_slave_values == 0.0))
+
+        projected_volume = transfer.apply_adjoint(projected_volume_source)
+        owned.append(projected_volume)
+        projected_dtn = transfer.apply_adjoint(projected_dtn_source)
+        owned.append(projected_dtn)
+
+        volume_facts = relative(native_volume, projected_volume)
+        dtn_facts = relative(native_dtn, projected_dtn)
+
+        native_total = native_volume.duplicate()
+        owned.append(native_total)
+        native_volume.copy(native_total)
+        native_total.axpy(PETSc.ScalarType(1.0), native_dtn)
+        projected_total = projected_volume.duplicate()
+        owned.append(projected_total)
+        projected_volume.copy(projected_total)
+        projected_total.axpy(PETSc.ScalarType(1.0), projected_dtn)
+        total_facts = relative(native_total, projected_total)
+        input_unchanged = bool(np.array_equal(q_input, np.asarray(q.array)))
+        input_slave_zero = bool(np.all(q_input[transfer.coarse_slaves] == 0.0))
+        limit = 1.0e-10
+        passed = bool(
+            input_slave_zero
+            and input_unchanged
+            and volume_slave_zero
+            and dtn_slave_zero
+            and volume_facts["relative"] <= limit
+            and dtn_facts["relative"] <= limit
+        )
+        space_identity = {
+            "coarse_global_rows": int(
+                q_space.dofmap.index_map.size_global
+                * q_space.dofmap.index_map_bs
+            ),
+            "fine_global_rows": int(
+                runtime.levels["spaces"][6].dofmap.index_map.size_global
+                * runtime.levels["spaces"][6].dofmap.index_map_bs
+            ),
+            "coarse_mode_sha256": str(runtime.p4["mode_sha256"]),
+            "fine_mode_sha256": str(runtime.fine["mode_sha256"]),
+        }
+        return {
+            "schema": "task039extra.v5.native-aq-projection-check.v1",
+            "source_contract": "4bf2bba56cc2e568d56ff3096aeb4a108744f28d:_build_common.native_aq_projection_check",
+            "probe": "deterministic_nonzero_coarse_vector_with_zero_MPC_slaves",
+            "coarse_degree": int(runtime.coarse_degree),
+            "space_identity": space_identity,
+            "input_sha256": hashlib.sha256(q_input.tobytes()).hexdigest(),
+            "input_unchanged": input_unchanged,
+            "input_slave_zero": input_slave_zero,
+            "q_norm": q_norm,
+            "p6_norm": p6_norm,
+            "native_Aq_volume_vs_PqH_A6_volume_P": volume_facts,
+            "native_Aq_DtN_vs_PqH_A6_DtN_P": dtn_facts,
+            "native_Aq_total_vs_PqH_A6_total_P": total_facts,
+            "projected_A6_slave_rows_zero": {
+                "volume": volume_slave_zero,
+                "dtn": dtn_slave_zero,
+                "volume_max_abs": float(np.max(np.abs(volume_slave_values)))
+                if volume_slave_values.size
+                else 0.0,
+                "dtn_max_abs": float(np.max(np.abs(dtn_slave_values)))
+                if dtn_slave_values.size
+                else 0.0,
+            },
+            "limit": limit,
+            "total_identity_policy": "record_only; native volume and DtN components gate independently",
+            "passed": passed,
+            "calls": {
+                "native_Aq_volume": 1,
+                "projected_A6_volume": 1,
+                "native_Aq_DtN": 1,
+                "projected_A6_DtN": 1,
+                "transfer_primal_delta": int(transfer.primal_count - primal_before),
+                "transfer_adjoint_delta": int(transfer.adjoint_count - adjoint_before),
+            },
+        }
+    finally:
+        for value in reversed(owned):
+            value.destroy()
 
 
 def run_retained_condensed_workflow(
@@ -804,7 +1028,10 @@ def run_retained_condensed_workflow(
     from dolfinx.la.petsc import create_vector
     from mpi4py import MPI
     from src.runners.physical_intermediate import _atomic_json
-    from src.runners.physical_balanced_output import compare_retained_5nm_output
+    from src.runners.physical_balanced_output import (
+        compare_retained_5nm_output,
+        compare_retained_v5_output,
+    )
     from src.solvers.fullspace_memory_first_krylov import write_solution_checkpoint
     from src.solvers.fullspace_physical_intermediate import apply_owned
     from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
@@ -888,11 +1115,26 @@ def run_retained_condensed_workflow(
         }
 
     try:
-        ledger.marker("retained_runtime_build_started", {"route": "V20"})
+        from src.io.native_capacity_profile import V5_NATIVE_PROFILES
+
+        profile_identity = str(payload["solver"]["preconditioner"])
+        sum_factorized_work = profile_identity in V5_NATIVE_PROFILES
+        route = "V20_V5_4BF2_SUM_FACTORIZED" if sum_factorized_work else "V20"
+        ledger.marker("retained_runtime_build_started", {"route": route})
+        coarse_degree = int(payload["solver"].get("coarse_degree", 4))
         runtime = RetainedCondensedRuntime.build(
-            cfg, MPI.COMM_WORLD, marker=ledger.marker
+            cfg,
+            MPI.COMM_WORLD,
+            coarse_degree=coarse_degree,
+            sum_factorized_work=sum_factorized_work,
+            marker=ledger.marker,
         )
         provenance = payload["provenance"]
+        if profile_identity in V5_NATIVE_PROFILES:
+            summary["provenance"] = {
+                "input_sha256": provenance["input_sha256"],
+                "physical_model_sha256": provenance["physical_model_sha256"],
+            }
         cache_before = {
             "cache_identity": dict(runtime.p6_action.cache_identity),
             "buffer_inventory": dict(runtime.p6_action.buffer_inventory),
@@ -904,7 +1146,8 @@ def run_retained_condensed_workflow(
             {
                 "mode_count": runtime.mode_count,
                 "mode_sha256": runtime.mode_sha256,
-                "route": "V20_SELECTIVE_DUAL_CONDENSED",
+                "coarse_degree": runtime.coarse_degree,
+                "route": route,
                 "postprocess_jit_prefactor": postprocess_jit_facts,
                 "postprocess_jit_release_before_factor": postprocess_jit_release,
             },
@@ -922,7 +1165,7 @@ def run_retained_condensed_workflow(
             ),
         )
         summary["retained_runtime"] = {
-            "route": "V20_SELECTIVE_DUAL_CONDENSED",
+            "route": route,
             "mode_count": runtime.mode_count,
             "mode_sha256": runtime.mode_sha256,
             "p6_operator_recipe": dict(runtime.p6_action.operator_recipe),
@@ -935,6 +1178,21 @@ def run_retained_condensed_workflow(
             "postprocess_jit_release_before_factor": postprocess_jit_release,
             "p6_cache_before_setup": cache_before,
         }
+        if sum_factorized_work:
+            coarse_space = runtime.levels["spaces"][runtime.coarse_degree]
+            fine_space = runtime.levels["spaces"][6]
+            summary["retained_runtime"]["space_identity"] = {
+                "coarse_global_rows": int(
+                    coarse_space.dofmap.index_map.size_global
+                    * coarse_space.dofmap.index_map_bs
+                ),
+                "fine_global_rows": int(
+                    fine_space.dofmap.index_map.size_global
+                    * fine_space.dofmap.index_map_bs
+                ),
+                "coarse_mode_sha256": str(runtime.p4["mode_sha256"]),
+                "fine_mode_sha256": str(runtime.fine["mode_sha256"]),
+            }
         ledger.marker("retained_p4_factor_complete", p4_facts)
         bridge = runtime.build_bal_h(
             marker=ledger.marker, audit_append=ledger.append
@@ -944,6 +1202,21 @@ def run_retained_condensed_workflow(
             "outer_pc_logical_p4_contract": 2,
             "physical_matsolve_refinements": "ledger-recorded; up to 2 refinements per logical solve",
         }
+        aq_projection_check = None
+        if sum_factorized_work:
+            aq_projection_check = _native_aq_projection_check(runtime)
+            summary["retained_runtime"]["native_aq_projection_check"] = (
+                aq_projection_check
+            )
+            ledger.marker(
+                "retained_native_aq_projection_check_complete",
+                aq_projection_check,
+            )
+            if not aq_projection_check["passed"]:
+                raise RuntimeError(
+                    "native Aq versus projected p6 operator identity failed: "
+                    f"{aq_projection_check}"
+                )
 
         full_rhs, rhs_facts = build_physical_rhs(runtime.fine)
         reduced_values = runtime.p6_action.reduce_rhs(
@@ -1150,6 +1423,7 @@ def run_retained_condensed_workflow(
         setup_checks = {
             "status": "PASS"
             if algebra_pass
+            and (aq_projection_check is None or aq_projection_check["passed"])
             and setup_bal_h_facts.get("status") == "BALANCED_ACTION_COMPLETED"
             and setup_pc_record["p4_logical_apply_delta"] == 2
             and cache_setup_unchanged
@@ -1189,6 +1463,8 @@ def run_retained_condensed_workflow(
             "cache_after_setup": cache_after_setup,
             "cache_content_and_unique_bytes_unchanged": cache_setup_unchanged,
         }
+        if aq_projection_check is not None:
+            setup_checks["native_aq_projection"] = aq_projection_check
         summary["retained_runtime"]["setup_checks"] = setup_checks
         ledger.marker("retained_same_object_setup_checks_complete", setup_checks)
         if setup_checks["status"] != "PASS":
@@ -1344,12 +1620,29 @@ def run_retained_condensed_workflow(
             export_all_port_modes=True,
         )
         summary["official_result"] = outputs
-        summary["matched_reference"] = compare_retained_5nm_output(
-            outputs,
-            directory / "numerical_output",
-            fine=runtime.fine,
-            solution=saved_field,
-        )
+        if profile_identity in V5_NATIVE_PROFILES:
+            summary["matched_reference"] = compare_retained_v5_output(
+                profile_identity,
+                outputs,
+                directory / "numerical_output",
+                fine=runtime.fine,
+                solution=saved_field,
+                current_run_identity={
+                    "run_id": directory.name,
+                    "source_sha": source_sha,
+                    "input_sha256": provenance["input_sha256"],
+                    "physical_model_sha256": provenance[
+                        "physical_model_sha256"
+                    ],
+                },
+            )
+        else:
+            summary["matched_reference"] = compare_retained_5nm_output(
+                outputs,
+                directory / "numerical_output",
+                fine=runtime.fine,
+                solution=saved_field,
+            )
         raw_path = directory / "final_residual_arrays.npz"
         action = apply_owned(runtime.fine["physical_action"], saved_field)
         try:

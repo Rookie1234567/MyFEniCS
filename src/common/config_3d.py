@@ -126,8 +126,14 @@ class SimulationConfig3D:
     # Exact tensor-axis authority for a fixed rectangular hexahedral mesh.
     # ``None`` preserves the ordinary target-size policy.
     mesh_axis_cell_counts: tuple[int, int, int] | None = None
+    # Explicit frozen R13 V5 tensor axes.  These remain unset for the ordinary
+    # boundary-fitted 5/2 nm profiles.
+    mesh_axis_x_values: tuple[float, ...] | None = None
+    mesh_axis_y_values: tuple[float, ...] | None = None
     mesh_axis_z_values: tuple[float, ...] | None = None
     mesh_axis_z_profile: str | None = None
+    mesh_plan_id: str | None = None
+    mesh_plan_sha256: str | None = None
     mesh_refined_size: float | None = None
     mesh_refinement_radius: float | None = None
     floquet_constraint_mode: str = (
@@ -359,6 +365,38 @@ class SimulationConfig3D:
                 "mesh_axis_z_values must be strictly increasing."
             )
         return coordinates
+
+    @staticmethod
+    def _requested_axis_values(values, name: str) -> tuple[float, ...] | None:
+        if values is None:
+            return None
+        if (
+            not isinstance(values, (tuple, list, np.ndarray))
+            or len(values) < 2
+            or any(
+                isinstance(value, (bool, np.bool_))
+                or not isinstance(value, (int, float, np.integer, np.floating))
+                or not np.isfinite(float(value))
+                for value in values
+            )
+        ):
+            raise ValueError(f"{name} must contain at least two finite numbers.")
+        coordinates = tuple(float(value) for value in values)
+        if any(right <= left for left, right in zip(coordinates, coordinates[1:])):
+            raise ValueError(f"{name} must be strictly increasing.")
+        return coordinates
+
+    @property
+    def mesh_axis_x_values_requested(self) -> tuple[float, ...] | None:
+        return self._requested_axis_values(
+            self.mesh_axis_x_values, "mesh_axis_x_values"
+        )
+
+    @property
+    def mesh_axis_y_values_requested(self) -> tuple[float, ...] | None:
+        return self._requested_axis_values(
+            self.mesh_axis_y_values, "mesh_axis_y_values"
+        )
 
     @property
     def mesh_refined_size_resolved(self) -> float:
@@ -642,6 +680,16 @@ class SimulationConfig3D:
             None
             if self.mesh_axis_z_values_requested is None
             else list(self.mesh_axis_z_values_requested)
+        )
+        data["mesh_axis_x_values_requested"] = (
+            None
+            if self.mesh_axis_x_values_requested is None
+            else list(self.mesh_axis_x_values_requested)
+        )
+        data["mesh_axis_y_values_requested"] = (
+            None
+            if self.mesh_axis_y_values_requested is None
+            else list(self.mesh_axis_y_values_requested)
         )
         data["mesh_axis_z_profile_requested"] = self.mesh_axis_z_profile
         data["mesh_refined_size_resolved"] = self.mesh_refined_size_resolved

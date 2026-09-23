@@ -12,6 +12,112 @@ from .fullspace_same_mesh_hcurl_pmg_global import same_mesh_positive_form
 
 from src.io.physical_intermediate_profile import FAST_PROFILE, PACKED_PROFILE
 
+def build_packed_physical_action(
+    common,
+    cfg,
+    *,
+    contiguous_work=True,
+    preallocated_work=False,
+    sum_factorized_work=False,
+):
+    """Build a packed volume action for one explicit PC owner.
+
+    The returned physical action borrows the established degree-6 DtN action
+    and owns only the two packed volume components.  Keeping this object
+    separate from ``common['fine']['physical_action']`` preserves the native
+    A6 action as the independent residual authority.
+    """
+
+    from .fullspace_physical_action import FullspacePhysicalAction
+
+    levels = common["levels"]
+    fine = common["fine"]
+    space = levels["floquets"][6].mpc.function_space
+    original_components = fine["volume_action"].component_actions
+    forms = tuple(
+        original_components[key]._bilinear_form
+        for key in ("curl", "material_mass")
+    )
+    dg = fem.functionspace(space.mesh, ("DG", 0))
+    physical_mu, physical_mass = fem.Function(dg), fem.Function(dg)
+    kernels = ()
+    volume = action = None
+    try:
+        physical_mu.x.array[:] = 0
+        physical_mass.x.array[:] = 0
+        tags = levels["mesh_data"].cell_tags
+        for tag, epsilon in (
+            (cfg.tags.air, cfg.eps_r),
+            (cfg.tags.substrate, cfg.substrate_index**2),
+            (cfg.tags.grating, cfg.grating_index**2),
+        ):
+            for cell in tags.find(tag):
+                dof = dg.dofmap.cell_dofs(cell)[0]
+                physical_mu.x.array[dof] += 1 / cfg.mu_r
+                physical_mass.x.array[dof] += -cfg.k0**2 * epsilon
+        physical_mu.x.scatter_forward()
+        physical_mass.x.scatter_forward()
+        kernels = tuple(
+            IsotropicPartialAssembly(
+                space,
+                physical_mu,
+                physical_mass,
+                component_form=form,
+                component=component,
+                contiguous_work=contiguous_work,
+                preallocated_work=preallocated_work,
+                sum_factorized_work=sum_factorized_work,
+            )
+            for form, component in zip(forms, ("curl", "mass"), strict=True)
+        )
+        volume = FullspaceSplitVolumeAction(
+            *forms, space, mpc=levels["floquets"][6].mpc, local_kernels=kernels
+        )
+        action = FullspacePhysicalAction(
+            volume, fine["dtn_action"], owns_dtn=False
+        )
+        component_audits = [
+            dict(component)
+            for component in action.audit["volume_action"]["components"].values()
+        ]
+        facts = {
+            "schema": "task039extra.v24.packed-pc-physical-action.v1",
+            "backend": "isotropic_partial_assembly",
+            "contiguous_work": bool(contiguous_work),
+            "preallocated_work": bool(preallocated_work),
+            "sum_factorized_work": bool(sum_factorized_work),
+            "dtn_borrowed": True,
+            "native_a6_independent": True,
+            "material_function_array_bytes": int(
+                physical_mu.x.array.nbytes + physical_mass.x.array.nbytes
+            ),
+            "kernels": [dict(kernel.audit) for kernel in kernels],
+            "kernel_temporary_bytes": int(
+                max(kernel.audit["temporary_budget_bytes"] for kernel in kernels)
+            ),
+            "reference_initialization_array_upper_bound_bytes": int(
+                max(
+                    kernel.audit["reference_initialization_array_upper_bound_bytes"]
+                    for kernel in kernels
+                )
+            ),
+            "component_audits": component_audits,
+        }
+        return {
+            "physical_action": action,
+            "volume_action": volume,
+            "kernels": kernels,
+            "material_functions": (physical_mu, physical_mass),
+            "facts": facts,
+        }
+    except BaseException:
+        if action is not None:
+            action.destroy()
+        elif volume is not None:
+            volume.destroy()
+        raise
+
+
 
 def frozen_smoother_identity(positive):
     """Hash the actual original setup state, not a reconstruction from a seed."""

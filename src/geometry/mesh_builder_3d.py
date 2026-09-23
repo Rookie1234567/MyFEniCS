@@ -421,7 +421,41 @@ def _stage4_axis_plan(cfg: SimulationConfig3D, comm_size: int) -> HexaAxisPlan:
     explicit_counts = cfg.mesh_axis_cell_counts_requested
     explicit_z_values = cfg.mesh_axis_z_values_requested
     explicit_z_profile = cfg.mesh_axis_z_profile
-    if (explicit_z_values is None) != (explicit_z_profile is None):
+    has_frozen_plan = cfg.mesh_plan_id is not None or cfg.mesh_plan_sha256 is not None
+    explicit_x_values = cfg.mesh_axis_x_values_requested
+    explicit_y_values = cfg.mesh_axis_y_values_requested
+    frozen_axes = None
+    if has_frozen_plan:
+        from src.geometry.task39extra_v5_r13_mesh_plan import (
+            validate_frozen_r13_axes,
+        )
+
+        try:
+            frozen_axes = validate_frozen_r13_axes(
+                {
+                    "mesh_plan_id": cfg.mesh_plan_id,
+                    "mesh_plan_sha256": cfg.mesh_plan_sha256,
+                    "mesh_axis_cell_counts": explicit_counts,
+                    "mesh_axis_x_values": explicit_x_values,
+                    "mesh_axis_y_values": explicit_y_values,
+                    "mesh_axis_z_values": explicit_z_values,
+                }
+            )
+        except ValueError as exc:
+            raise ValueError(f"invalid R13 frozen mesh input: {exc}") from exc
+        expected_spans = {
+            "x": (cfg.x_min, cfg.x_max),
+            "y": (cfg.y_min, cfg.y_max),
+            "z": (cfg.domain_z_min, cfg.domain_z_max),
+        }
+        for axis_name, (start, stop) in expected_spans.items():
+            if frozen_axes[axis_name][0] != start or frozen_axes[axis_name][-1] != stop:
+                raise ValueError(
+                    f"R13 frozen {axis_name} axis endpoints differ from geometry"
+                )
+    elif explicit_x_values is not None or explicit_y_values is not None:
+        raise ValueError("explicit x/y axes require the frozen R13 mesh identity")
+    if not has_frozen_plan and (explicit_z_values is None) != (explicit_z_profile is None):
         raise ValueError(
             "mesh_axis_z_values and mesh_axis_z_profile must be supplied "
             "together."
@@ -480,7 +514,13 @@ def _stage4_axis_plan(cfg: SimulationConfig3D, comm_size: int) -> HexaAxisPlan:
                 spans.items()
             )
         }
-        if explicit_z_values is not None:
+        if frozen_axes is not None:
+            axes = {
+                axis_name: np.asarray(frozen_axes[axis_name], dtype=np.float64)
+                for axis_name in ("x", "y", "z")
+            }
+            mode = "v21_r13_frozen_axes"
+        elif explicit_z_values is not None:
             if len(explicit_z_values) != explicit_counts[2] + 1:
                 raise ValueError(
                     "mesh_axis_z_values length must equal NZ + 1 from "
