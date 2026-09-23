@@ -1,0 +1,81 @@
+{
+  "schema": "task039extra.v27.compact.v1",
+  "status": "COMPLETED_ENGINEERING_ONLY_NO_SOLVER_RESULT",
+  "official_result": false,
+  "profile": "physical_p6_trace_workingset_efficiency_v27",
+  "stage": "Q4_ORIGINAL",
+  "input": {
+    "path": "input/task39extra/v27_workingset_p6_setup_original_h7p5.dat",
+    "sha256": "e6dccd4d16833a49b75866eb2a2dbe721a29feb0ef373183eb7b32b8da853a74",
+    "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6"
+  },
+  "model": "13.5 nm original Full3D p6/h7.5, 990 cells, 80 channels, q4 exact two-level condensation with BAL_H, MPI1/single-thread",
+  "r2_baseline_full_workflow_ksp_setup_seconds": [3114.283619607013, 2284.681783819, 781.971881371981],
+  "new_full_run_gain_measured": false,
+  "r1": {
+    "classification": "NO_REPRODUCED_IMPLEMENTATION_REGRESSION",
+    "attempts": ["r1_attempt_20260923_01", "r1_attempt_20260923_02", "r1_attempt_20260923_03", "r1_attempt_20260923_04"],
+    "p4_factorization_count": 2,
+    "p4_numeric_seconds_by_attempt": {
+      "03": 213.98734242800128,
+      "04": 223.15502884000307,
+      "sum_seconds": 437.14237126800435
+    },
+    "p4_rows": 84680,
+    "p4_nnz": 32320342,
+    "mumps_icntl23_decimal_mb": 4687,
+    "p6_setup_total_internal_seconds_by_attempt": {
+      "03": 255.47653549700044,
+      "04": 249.1300467460096,
+      "sum_seconds_same_internal_scope": 504.60658224301003
+    },
+    "p6_retained_setup_outer_wrapper_seconds_by_attempt": {
+      "03": 255.48589261900634,
+      "04": 249.14552063400333,
+      "sum_seconds_same_outer_scope": 504.63141325300967
+    },
+    "p6_builder_audit_seconds_by_attempt": {
+      "03": 249.91902265200042,
+      "04": 242.4794395420031,
+      "sum_seconds": 492.3984621940035,
+      "note": "Nested measurement within retained setup; do not add builder and setup totals"
+    },
+    "p6_kernel_seconds_by_attempt": {
+      "03": 237.0940911529906,
+      "04": 228.84196730799158
+    },
+    "completed_pairs": ["iteration_16_A6", "iteration_16_H6", "iteration_16_BAL_H", "iteration_112_A6", "iteration_112_H6", "iteration_112_BAL_H"],
+    "all_pair_numeric_gates": "PASS; <=1e-10",
+    "all_recorded_pair_output_differences": 0.0,
+    "attempt_03_adapter_error": "InterfaceBalancedCoupling.apply() accepts one source and returns an owned vector; the original probe passed an unsupported target argument",
+    "formal_solver_result": "NOT_RUN"
+  },
+  "resources": {
+    "attempt_03": {"process_tree_rss_peak_bytes": 7132229632, "process_tree_pss_peak_bytes": 7100228608, "pss_peak_source": "maximum simultaneous sampled process-tree PSS recomputed from resources.jsonl", "process_tree_swap_peak_bytes": 0, "watchdog_samples": 1402, "elapsed_seconds": 723.6468012790065},
+    "attempt_04": {"process_tree_rss_peak_bytes": 7148744704, "process_tree_pss_peak_bytes": 7116825600, "process_tree_swap_peak_bytes": 0, "watchdog_samples": 1861, "elapsed_seconds": 966.8536068079993, "pss_scope": "maximum simultaneous sampled process-tree PSS recomputed from resources.jsonl"},
+    "formal_memory_boundary": "Retained p4 factor, p6 cache, ports/work vectors and both candidate actions; no full formal FGMRES basis/history, so not a production-solve memory estimate"
+  },
+  "r2": {
+    "status": "NO_ADOPTED_CHANGE",
+    "ordinary_default_changed": false,
+    "r4_status": "NOT_RUN"
+  },
+  "focused_tests": {
+    "files": ["test_task39extra_v27_workingset_setup.py", "test_task39extra_v25_dynamic_checker.py", "test_task39extra_v20_y1_lifecycle.py", "test_task39extra_v22_capacity.py", "test_task39extra_v22_launcher.py"],
+    "passed": 47,
+    "failed": 0,
+    "elapsed_seconds": 8.29,
+    "abi_preflight": "PASS; qualified WSL activation, PETSc complex128/int32"
+  },
+  "documentation_contract_tests": {
+    "files": ["test_26_documentation_contract.py", "test_183_development_model_registry_markdown.py", "test_development_model_registry_contract.py"],
+    "passed": 21,
+    "failed": 0,
+    "elapsed_seconds": 0.07
+  },
+  "raw_evidence_roots": [
+    "benchmarks/artifacts/task39extra/workingset_p6_setup_v27/r1_attempt_20260923_03",
+    "benchmarks/artifacts/task39extra/workingset_p6_setup_v27/r1_attempt_20260923_04"
+  ],
+  "qualification_boundary": "Operator actions on previously saved residual vectors only; no new Krylov iterations, true residual, fields, R/T/A, or formal PDE result"
+}

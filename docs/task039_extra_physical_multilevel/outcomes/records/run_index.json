@@ -6,6 +6,113 @@
     "memory": "B"
   },
   "memory_scope": "sampled simultaneous watchdog process-tree RSS; swap sampled VmSwap",
+  "review_v25_workingset_p6_setup_v27": {
+    "review": "review_report_v25.md",
+    "response": "docs/task039_extra_physical_multilevel/response_v28.md",
+    "profile": "physical_p6_trace_workingset_efficiency_v27",
+    "status": "COMPLETED_ENGINEERING_ONLY_NO_SOLVER_RESULT",
+    "formal_run": false,
+    "git_handoff": {
+      "branch": "task39extra",
+      "upstream": "origin/task39extra",
+      "reviewed_base_sha": "73d1f1f4ee3e13b85ceac6c37b667857f6d0576a",
+      "batch_start_head_and_d1_parent": "bb541cf3286b89734181d1da1a0ecfd2a5078243",
+      "d1_implementation_commit": "cefb47c6d2039f82f441854e5d1edd8642de0c95",
+      "d2_commit": "this documentation/evidence closeout commit; exact SHA in task handoff",
+      "remote_tip_and_clean_worktree": "verified in task handoff"
+    },
+    "attempts": [
+      {
+        "id": "r1_attempt_20260923_01",
+        "status": "FAILED_BEFORE_WORKER_START",
+        "heavy_setup_or_factor_started": false
+      },
+      {
+        "id": "r1_attempt_20260923_02",
+        "status": "WORKER_FAILED_BEFORE_FE_SETUP",
+        "heavy_setup_or_factor_started": false,
+        "watchdog_elapsed_seconds": 2.0229306339970208
+      },
+      {
+        "id": "r1_attempt_20260923_03",
+        "status": "WORKER_FAILED_AFTER_SETUP",
+        "raw_root": "benchmarks/artifacts/task39extra/workingset_p6_setup_v27/r1_attempt_20260923_03",
+        "source_head": "bb541cf3286b89734181d1da1a0ecfd2a5078243",
+        "probe_sha256": "c825447765086221d9686284721e7d1d113a9d593d18c960815e4d9355bca13d",
+        "input_sha256": "e6dccd4d16833a49b75866eb2a2dbe721a29feb0ef373183eb7b32b8da853a74",
+        "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+        "p4_factorization_count": 1,
+        "p4_numeric_seconds": 213.98734242800128,
+        "completed_groups_in_attempt": ["iteration_16_native_A6", "iteration_16_A6", "iteration_16_H6"],
+        "attempt_elapsed_seconds": 723.6468012790065,
+        "p6_setup_total_internal_seconds": 255.47653549700044,
+        "p6_retained_setup_outer_wrapper_seconds": 255.48589261900634,
+        "p6_builder_audit_seconds": 249.91902265200042,
+        "process_tree_rss_peak_bytes": 7132229632,
+        "process_tree_pss_peak_bytes": 7100228608,
+        "process_tree_swap_peak_bytes": 0,
+        "worker_error": "TypeError: InterfaceBalancedCoupling.apply() takes 2 positional arguments but 3 were given",
+        "classification_note": "Preserved attempt-level engineering adapter failure; not a numerical or PDE failure"
+      },
+      {
+        "id": "r1_attempt_20260923_04",
+        "status": "COMPLETED_ENGINEERING_ONLY",
+        "raw_root": "benchmarks/artifacts/task39extra/workingset_p6_setup_v27/r1_attempt_20260923_04",
+        "source_head": "bb541cf3286b89734181d1da1a0ecfd2a5078243",
+        "source_state_sha1": "665a8528ac0ab0937189b40f254e6ca844c8b095",
+        "tracked_diff_sha256": "1d9a5283c57acce7453baf52466e1d062a0bb8c8afcb905497800023cc41fb69",
+        "probe_sha256": "3b81385fe019dfb31d758325129b85abd70f2807e39af6b4eb19b50ae1be7d4b",
+        "input_sha256": "e6dccd4d16833a49b75866eb2a2dbe721a29feb0ef373183eb7b32b8da853a74",
+        "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+        "p4_factorization_count": 1,
+        "p4_numeric_seconds": 223.15502884000307,
+        "p6_setup_total_internal_seconds": 249.1300467460096,
+        "p6_retained_setup_outer_wrapper_seconds": 249.14552063400333,
+        "p6_builder_audit_seconds": 242.4794395420031,
+        "p6_kernel_seconds": 228.84196730799158,
+        "completed_groups_in_attempt": ["iteration_16_BAL_H", "iteration_112_A6", "iteration_112_H6", "iteration_112_BAL_H"],
+        "watchdog_classification": "COMPLETED",
+        "watchdog_elapsed_seconds": 966.8536068079993,
+        "process_tree_rss_peak_bytes": 7148744704,
+        "process_tree_pss_peak_bytes": 7116825600,
+        "process_tree_swap_peak_bytes": 0,
+        "watchdog_samples": 1861,
+        "pair_artifact_sha256": {
+          "iteration_16_BAL_H_pair.json": "7295a18a403304755c1705469a64a56cb2d4d250ea266b8c0e33cf8add5b7f29",
+          "iteration_112_A6_pair.json": "56fa53160ffcda934139908970d027a5ec8a4046495001d67dbe5a4a40264dfa",
+          "iteration_112_H6_pair.json": "351077a92a8b1c641aad031857295566c6e01ff10b280a2216ea607b25910f3f",
+          "iteration_112_BAL_H_pair.json": "8243d5754befc5b80f1703e3191502513589ce2932b42d2f33e1698fbcc76daa"
+        },
+        "formal_solver_result": false
+      }
+    ],
+    "resources": {
+      "attempt03_process_tree_rss_peak_bytes": 7132229632,
+      "attempt04_process_tree_rss_peak_bytes": 7148744704,
+      "attempt04_process_tree_pss_peak_bytes": 7116825600,
+      "attempt04_process_tree_swap_peak_bytes": 0,
+      "attempt03_watchdog_sample_count": 1402,
+      "attempt04_watchdog_sample_count": 1861,
+      "memory_scope_note": "R1 engineering process retained factor/cache/ports/work vectors and both candidate actions, but not a full formal FGMRES basis/history; not production solve memory"
+    },
+    "focused_tests": {
+      "files": ["test_task39extra_v27_workingset_setup.py", "test_task39extra_v25_dynamic_checker.py", "test_task39extra_v20_y1_lifecycle.py", "test_task39extra_v22_capacity.py", "test_task39extra_v22_launcher.py"],
+      "passed": 47,
+      "failed": 0,
+      "elapsed_seconds": 8.29,
+      "abi_preflight": "PASS; qualified WSL activation, PETSc complex128/int32"
+    },
+    "documentation_contract_tests": {
+      "files": ["test_26_documentation_contract.py", "test_183_development_model_registry_markdown.py", "test_development_model_registry_contract.py"],
+      "passed": 21,
+      "failed": 0,
+      "elapsed_seconds": 0.07
+    },
+    "selection": "NO_ADOPTED_CHANGE",
+    "ordinary_default_changed": false,
+    "R4": "NOT_RUN",
+    "commit_status": "D1 committed; D2 contains the evidence closeout; final push verification is reported in task handoff"
+  },
   "model": {
     "wavelength_nm": 13.5,
     "p": 6,

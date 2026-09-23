@@ -1,0 +1,51 @@
+{
+  "schema": "task039extra.v27.selection.v1",
+  "status": "NO_ADOPTED_CHANGE",
+  "r1_classification": "NO_REPRODUCED_IMPLEMENTATION_REGRESSION",
+  "r1_completed_groups": ["iteration_16_A6", "iteration_16_H6", "iteration_16_BAL_H", "iteration_112_A6", "iteration_112_H6", "iteration_112_BAL_H"],
+  "r1_pair_numeric_gate": "PASS; each <=1e-10, every recorded R2/V26 output difference is 0",
+  "review": "review_report_v25.md",
+  "batch": "review_v25_workingset_and_p6_setup",
+  "input": "input/task39extra/v27_workingset_p6_setup_original_h7p5.dat",
+  "ordinary_default_changed": false,
+  "speed_baseline": {
+    "model": "task39extra_v25_q4_ac_swap_observe_r2_h7p5",
+    "source_sha": "4bf2bba56cc2e568d56ff3096aeb4a108744f28d",
+    "full_workflow_seconds": 3114.283619607013,
+    "ksp_seconds": 2284.681783819
+  },
+  "engineering_choice": {
+    "online_A6": "no promotion from the paired saved-vector actions; output differences are zero; observed medians vary slightly by vector and do not establish solver-level speedup",
+    "online_H6": "no promotion from the paired saved-vector actions; output differences are zero; observed medians vary slightly by vector and do not establish solver-level speedup",
+    "BAL_H": "measured at i=16 and i=112 in the one authorized replay; output differences zero and gates pass, but timings are engineering operator-action samples only",
+    "p6_preparation": "retain current measured path; no new low-risk optimization adopted"
+  },
+  "r2_attribution": {
+    "v26_p6_builder_seconds": 259.0239490659951,
+    "v26_local_kernel_seconds": 244.6551928780027,
+    "v27_attempt03_builder_audit_seconds": 249.91902265200042,
+    "v27_attempt03_kernel_seconds": 237.0940911529906,
+    "v27_attempt04_builder_audit_seconds": 242.4794395420031,
+    "v27_attempt04_kernel_seconds": 228.84196730799158,
+    "same_scope_descriptive_comparisons": {
+      "attempt03_builder_delta_seconds_and_percent": [-9.10492641399469, -3.515094],
+      "attempt03_kernel_delta_seconds_and_percent": [-7.561101725012122, -3.090510],
+      "attempt04_builder_delta_seconds_and_percent": [-16.54450952399202, -6.387247],
+      "attempt04_kernel_delta_seconds_and_percent": [-15.813225570011127, -6.463467]
+    },
+    "nested_timing_note": "Builder audit is nested within retained setup; V26 comparison uses its p6_build_seconds, not V27 retained_setup_seconds",
+    "causal_speedup_claim": false,
+    "reason": "unpaired one-off engineering setup measurements versus an earlier run; neither establish a causal improvement",
+    "kernel_optimization_decision": "leave the dominant local kernel unchanged; no low-risk candidate was demonstrated"
+  },
+  "r1_resources": {
+    "attempt03": {"rss_peak_bytes": 7132229632, "pss_peak_bytes": 7100228608, "pss_peak_source": "maximum simultaneous sampled process-tree PSS recomputed from resources.jsonl", "swap_peak_bytes": 0, "watchdog_samples": 1402, "elapsed_seconds": 723.6468012790065},
+    "attempt04": {"rss_peak_bytes": 7148744704, "pss_peak_bytes": 7116825600, "swap_peak_bytes": 0, "watchdog_samples": 1861, "elapsed_seconds": 966.8536068079993},
+    "scope_caveat": "Engineering process retained factor/cache/ports/work vectors and both candidates, not a full formal FGMRES basis/history; do not generalize to production solve memory"
+  },
+  "formal_r4": {
+    "status": "NOT_RUN",
+    "reason": "NO_ADOPTED_CHANGE; one explicitly authorized adapter-bug replay completed only engineering operator pairs; no formal PDE result is claimed"
+  },
+  "qualification_boundary": "V27 remains opt-in and unqualified as a full solver result; no ordinary default change, no continuum-convergence claim, and no R/T/A field result from this engineering probe"
+}

@@ -1,0 +1,345 @@
+{
+  "schema": "task039extra.v27.r1-pair-combined.v2",
+  "status": "COMPLETED_ENGINEERING_ONLY_NO_SOLVER_RESULT",
+  "official_result": false,
+  "classification": "NO_REPRODUCED_IMPLEMENTATION_REGRESSION",
+  "attempt": "combined_attempts_01_to_04",
+  "setup_scope_note": "The p4_factor and p6_setup blocks below preserve attempt03 measurements. Attempt04 rebuilt one factor and working set; both setup timing boundaries are recorded separately under attempt04. Do not mix internal and outer-wrapper timings.",
+  "attempt_history": [
+    {
+      "attempt": "r1_attempt_20260923_01",
+      "status": "FAILED_BEFORE_WORKER_START",
+      "reason": "supervisor was not dedicated when watchdog start was attempted",
+      "mesh_or_factor_started": false
+    },
+    {
+      "attempt": "r1_attempt_20260923_02",
+      "status": "WORKER_FAILED_BEFORE_FE_SETUP",
+      "reason": "phase_path was not supplied, so the worker received no dedicated watchdog parent PID",
+      "mesh_or_factor_started": false
+    },
+    {
+      "attempt": "r1_attempt_20260923_03",
+      "status": "WORKER_FAILED_AFTER_SETUP",
+      "reason": "InterfaceBalancedCoupling.apply accepts source only, but the probe called it through apply_owned(source, target)",
+      "p4_factorizations": 1,
+      "p6_setup_completed": true,
+      "iteration_16_A6_completed": true,
+      "iteration_16_H6_completed": true,
+      "iteration_16_BAL_H_completed": false,
+      "iteration_112_pairs_completed": false
+    },
+    {
+      "attempt": "r1_attempt_20260923_04",
+      "status": "COMPLETED_ENGINEERING_ONLY",
+      "reason": "One explicitly authorized probe-only replay after correcting the source-only InterfaceBalancedCoupling.apply call",
+      "source_state_sha1": "665a8528ac0ab0937189b40f254e6ca844c8b095",
+      "tracked_diff_sha256": "1d9a5283c57acce7453baf52466e1d062a0bb8c8afcb905497800023cc41fb69",
+      "probe_path": "benchmarks/artifacts/task39extra/workingset_p6_setup_v27/r1_workingset_probe_replay04.py",
+      "probe_sha256": "3b81385fe019dfb31d758325129b85abd70f2807e39af6b4eb19b50ae1be7d4b",
+      "p4_factorizations": 1,
+      "p6_setup_completed": true,
+      "iteration_16_BAL_H_completed": true,
+      "iteration_112_A6_completed": true,
+      "iteration_112_H6_completed": true,
+      "iteration_112_BAL_H_completed": true,
+      "formal_R4_PDE_completed": false,
+      "watchdog_elapsed_seconds": 966.8536068079993,
+      "watchdog_classification": "COMPLETED"
+    }
+  ],
+  "identity": {
+    "profile": "physical_p6_trace_workingset_efficiency_v27",
+    "stage": "Q4_ORIGINAL",
+    "input": "input/task39extra/v27_workingset_p6_setup_original_h7p5.dat",
+    "input_sha256": "e6dccd4d16833a49b75866eb2a2dbe721a29feb0ef373183eb7b32b8da853a74",
+    "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+    "v26_physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+    "physical_equivalence_gate": "PASS; all required physical sections equal",
+    "p6_full_rows": 667152,
+    "p6_active_rows": 199260,
+    "p6_trace_rows": 221652,
+    "p6_slave_rows": 22392,
+    "p6_appended_port_rows": 80,
+    "p4_rows": 84680,
+    "p4_nnz": 32320342
+  },
+  "source_identity": {
+    "git_head_at_launch": "bb541cf3286b89734181d1da1a0ecfd2a5078243",
+    "tracked_source_diff_sha256": "cee236933a5b67feec7228f7b63fd7257fda67717cf19496bcd3a0042098539c",
+    "probe_path": "benchmarks/artifacts/task39extra/workingset_p6_setup_v27/r1_workingset_probe.py",
+    "probe_sha256": "c825447765086221d9686284721e7d1d113a9d593d18c960815e4d9355bca13d",
+    "r2_historical_source_sha": "4bf2bba56cc2e568d56ff3096aeb4a108744f28d",
+    "r2_hotpath_diff_sha256": "b88bf3fd18f8b4c716b530fc3bdaf026f1187f83209f271ddf1c70db617b438b",
+    "attempt04": {
+      "git_head_at_launch": "bb541cf3286b89734181d1da1a0ecfd2a5078243",
+      "source_state_sha1": "665a8528ac0ab0937189b40f254e6ca844c8b095",
+      "tracked_diff_sha256": "1d9a5283c57acce7453baf52466e1d062a0bb8c8afcb905497800023cc41fb69",
+      "probe_path": "benchmarks/artifacts/task39extra/workingset_p6_setup_v27/r1_workingset_probe_replay04.py",
+      "probe_sha256": "3b81385fe019dfb31d758325129b85abd70f2807e39af6b4eb19b50ae1be7d4b",
+      "interpretation": "Replay ran on this dirty source identity; it is not evidence bound to the later documentation commit or a clean final HEAD"
+    }
+  },
+  "environment": {
+    "python": "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python",
+    "petsc_scalar_type": "complex128",
+    "petsc_int_type": "int32",
+    "mpi_size": 1,
+    "omp_num_threads": 1,
+    "openblas_num_threads": 1,
+    "mkl_num_threads": 1,
+    "ac1_online_at_observed_samples": true,
+    "cpu_frequency": "unknown",
+    "temperature": "unknown",
+    "threadpool_inventory": "unknown (optional inspection module unavailable)"
+  },
+  "residual_inputs": [
+    {
+      "iteration": 16,
+      "saved_residual_vector_norm": 0.0059228472836568066,
+      "archive_sha256": "b4c56db2189c8470dad8cf27d5d4c5efe641da8a0ba80e2029ee7d95a32e1f97",
+      "metadata_sha256": "cfdf301de500bffa33ac9c3778bf82ce7f3f1a30e185f8d9d4bd6b9dbe5c2f3d",
+      "vector_sha256": "78dccac5f01b5c41b0853c2a35034ae3f196f20941952d4a7cb0a7087237314e"
+    },
+    {
+      "iteration": 112,
+      "saved_residual_vector_norm": 0.000003879261627632226,
+      "archive_sha256": "89f28fe01fb3be43587653feef93327e92d4e0b962e46891114fa683d7bfb16d",
+      "metadata_sha256": "86c259d4b9297bbcb98bc9dac2559172abae250d84640261ff654b2004c6f995",
+      "vector_sha256": "f2fe6ff4525edf53ad91dc9fcd24ac51da93ef99af86ae125aab068124805ede",
+      "pair_status": "NOT_RUN"
+    }
+  ],
+  "p4_factor": {
+    "numeric_completed": true,
+    "factorization_count": 1,
+    "rows": 84680,
+    "nnz": 32320342,
+    "numeric_seconds": 213.98734242800128,
+    "symbolic_seconds": 0.5649065879988484,
+    "mumps_icntl23_decimal_mb": 4687,
+    "mumps_infog22_mb": 4326,
+    "solve_call_count_at_factorization": 0,
+    "factor_callback_process_tree_rss_bytes": 6857433088,
+    "factor_callback_swap_bytes": 0
+  },
+  "p6_setup": {
+    "completed": true,
+    "retained_setup_seconds": 255.47653549700044,
+    "condensation_builder_seconds": 249.92328880200512,
+    "kernel_seconds_max": 237.0940911529906,
+    "local_schur_seconds_max": 10.883434838993708,
+    "raw_tensor_classes": 12,
+    "oriented_schur_classes": 26,
+    "retained_numeric_cache_bytes": 325283184,
+    "identity_cache_mode": "shared_read_only_per_interior_shape",
+    "identity_cache_unique_storage_bytes": 1620000
+  },
+  "attempt04_setup_and_cost": {
+    "p4_factor_numeric_seconds": 223.15502884000307,
+    "p4_rows": 84680,
+    "p4_nnz": 32320342,
+    "mumps_icntl23_decimal_mb": 4687,
+    "p6_setup_total_internal_seconds": 249.1300467460096,
+    "p6_retained_setup_outer_wrapper_seconds": 249.14552063400333,
+    "p6_builder_audit_seconds": 242.4794395420031,
+    "p6_kernel_seconds": 228.84196730799158,
+    "p6_kernel_share_of_builder_percent": 94.3758,
+    "p6_local_schur_seconds": 11.954928313018172,
+    "raw_tensor_classes": 12,
+    "oriented_schur_classes": 26,
+    "retained_numeric_cache_bytes": 325283184,
+    "identity_cache_mode": "shared_read_only_per_interior_shape",
+    "identity_cache_unique_storage_bytes": 1620000,
+    "attempt03_plus_04_cost_totals": {
+      "p4_numeric_seconds": 437.14237126800435,
+      "p6_setup_total_internal_seconds": 504.60658224301003,
+      "p6_retained_setup_outer_wrapper_seconds": 504.63141325300967,
+      "p6_builder_audit_seconds_nested_not_additive_to_setup": 492.3984621940035,
+      "known_watchdog_elapsed_attempt02_to_04_seconds_excludes_unmeasured_attempt01": 1692.5233387210028
+    },
+    "timing_scope_note": "All pairs of totals above sum the same metric boundary across attempts; builder audit is nested in setup and is not an extra additive cost"
+  },
+  "iteration_16": {
+    "native_A6_witness": {
+      "source_operator": "common.fine.physical_action",
+      "A6_r2_and_v26_relative_to_native": 6.711328281270726e-15
+    },
+    "A6": {
+      "numeric_equivalence_limit": 1e-10,
+      "numeric_equivalence_passed": true,
+      "r2_v26_relative_output_difference_each_pair": 0.0,
+      "median_wall_seconds": {
+        "r2": 3.252564728987636,
+        "v26": 3.2430441190081183
+      },
+      "median_process_cpu_seconds": {
+        "r2": 3.613929743999961,
+        "v26": 3.6033149319999893
+      },
+      "median_v26_over_r2": 0.9970728914647977,
+      "warmup_wall_seconds": {
+        "r2": 3.185854859999381,
+        "v26": 3.2580956109886756
+      },
+      "trials": [
+        {
+          "order": ["r2", "v26"],
+          "wall_seconds": {"r2": 3.246462751994841, "v26": 3.197761456001899},
+          "process_cpu_seconds": {"r2": 3.6070027039999104, "v26": 3.5530473900000743}
+        },
+        {
+          "order": ["v26", "r2"],
+          "wall_seconds": {"r2": 3.284672704990953, "v26": 3.2430441190081183},
+          "process_cpu_seconds": {"r2": 3.6495751019999716, "v26": 3.6033149319999893}
+        },
+        {
+          "order": ["r2", "v26"],
+          "wall_seconds": {"r2": 3.252564728987636, "v26": 3.684718264004914},
+          "process_cpu_seconds": {"r2": 3.613929743999961, "v26": 4.094103935000021}
+        }
+      ],
+      "raw_pair_sha256": "7ced34db1912522697e86e25d0341c1e889703bd69ea6ce4d8d0e8e71eab7cbe"
+    },
+    "H6": {
+      "numeric_equivalence_limit": 1e-10,
+      "numeric_equivalence_passed": true,
+      "r2_v26_relative_output_difference_each_pair": 0.0,
+      "median_wall_seconds": {
+        "r2": 4.000405122991651,
+        "v26": 3.9765548760042293
+      },
+      "median_process_cpu_seconds": {
+        "r2": 4.444870218999995,
+        "v26": 4.41834887199991
+      },
+      "median_v26_over_r2": 0.9940380420847011,
+      "warmup_wall_seconds": {
+        "r2": 3.925962997993338,
+        "v26": 3.9664619980030693
+      },
+      "trials": [
+        {
+          "order": ["r2", "v26"],
+          "wall_seconds": {"r2": 4.217269312997814, "v26": 4.039261653000722},
+          "process_cpu_seconds": {"r2": 4.685835029000032, "v26": 4.487994123000021}
+        },
+        {
+          "order": ["v26", "r2"],
+          "wall_seconds": {"r2": 3.989787886006525, "v26": 3.9765548760042293},
+          "process_cpu_seconds": {"r2": 4.433011453999939, "v26": 4.41834887199991}
+        },
+        {
+          "order": ["r2", "v26"],
+          "wall_seconds": {"r2": 4.000405122991651, "v26": 3.946100793007645},
+          "process_cpu_seconds": {"r2": 4.444870218999995, "v26": 4.384495168999933}
+        }
+      ],
+      "raw_pair_sha256": "c5c99b0220cd8f32733841d9aff5ce6af98ff11d776bdce7b4108adb0b236020"
+    },
+    "BAL_H": {
+      "status": "COMPLETED_IN_ATTEMPT04",
+      "numeric_equivalence_limit": 1e-10,
+      "numeric_equivalence_passed": true,
+      "r2_v26_relative_output_difference_each_pair": 0.0,
+      "median_wall_seconds": {"r2": 18.734961327994824, "v26": 18.635278850008035},
+      "median_process_cpu_seconds": {"r2": 20.81616778600005, "v26": 20.702716403000068},
+      "median_v26_over_r2": 0.9946793336670603,
+      "wall_trials_seconds": {
+        "r2": [18.734961327994824, 18.958400221992633, 16.71712044799849],
+        "v26": [22.574130731998594, 18.635278850008035, 16.535293969996134]
+      },
+      "pair_order": ["AB", "BA", "AB"],
+      "warmup_wall_seconds": {"r2": 31.238133734004805, "v26": 17.18433942500269},
+      "max_original_A4_relative_residual": 9.167487524231193e-12,
+      "p4_mat_solves_per_logical_apply": 2,
+      "extra_refinement_solves": 0,
+      "raw_pair_sha256": "7295a18a403304755c1705469a64a56cb2d4d250ea266b8c0e33cf8add5b7f29",
+      "timing_interpretation": "One saved-vector operator-action sample; the first V26 wall trial is an outlier and both paths became faster over rounds; AC online, power mode/frequency/threadpool inventory unknown"
+    }
+  },
+  "iteration_112": {
+    "residual_archive_loaded_and_identity_checked": true,
+    "saved_residual_vector_norm": 0.000003879261627632226,
+    "A6_H6_BAL_H_pairs": "COMPLETED_IN_ATTEMPT04",
+    "A6": {
+      "numeric_equivalence_limit": 1e-10,
+      "r2_v26_relative_output_difference_each_pair": 0.0,
+      "median_wall_seconds": {"r2": 3.254658235993702, "v26": 3.2609991600038484},
+      "median_process_cpu_seconds": {"r2": 3.6162458709999328, "v26": 3.6232552449999957},
+      "median_v26_over_r2": 1.0019482610923696,
+      "native_A6_relative": 6.163319440893851e-15,
+      "raw_pair_sha256": "56fa53160ffcda934139908970d027a5ec8a4046495001d67dbe5a4a40264dfa"
+    },
+    "H6": {
+      "numeric_equivalence_limit": 1e-10,
+      "r2_v26_relative_output_difference_each_pair": 0.0,
+      "median_wall_seconds": {"r2": 3.8457715039985487, "v26": 3.7622068889904767},
+      "median_process_cpu_seconds": {"r2": 4.273044335999998, "v26": 4.180216384000005},
+      "median_v26_over_r2": 0.978271040044582,
+      "raw_pair_sha256": "351077a92a8b1c641aad031857295566c6e01ff10b280a2216ea607b25910f3f"
+    },
+    "BAL_H": {
+      "numeric_equivalence_limit": 1e-10,
+      "r2_v26_relative_output_difference_each_pair": 0.0,
+      "median_wall_seconds": {"r2": 16.927638002001913, "v26": 17.18108641001163},
+      "median_process_cpu_seconds": {"r2": 18.808081790000074, "v26": 19.085469585000055},
+      "median_v26_over_r2": 1.01497246148457,
+      "wall_trials_seconds": {
+        "r2": [18.14822148399253, 16.927638002001913, 15.966040177998366],
+        "v26": [19.44891871600703, 17.18108641001163, 16.070105095990584]
+      },
+      "pair_order": ["AB", "BA", "AB"],
+      "max_original_A4_relative_residual": 6.470229892354096e-12,
+      "p4_mat_solves_per_logical_apply": 2,
+      "extra_refinement_solves": 0,
+      "raw_pair_sha256": "8243d5754befc5b80f1703e3191502513589ce2932b42d2f33e1698fbcc76daa"
+    },
+    "interpretation": "These are R2/V26 actions on the saved i112 residual vector; its norm is not a newly computed solver true residual"
+  },
+  "resources": {
+    "watchdog_samples": 1402,
+    "process_tree_rss_peak_bytes": 7132229632,
+    "process_tree_swap_peak_bytes": 0,
+    "elapsed_seconds_until_worker_exit": 723.6414420199944,
+    "classification": "WORKER_FAILED",
+    "worker_exit_code": 1
+  },
+  "attempt04_resources": {
+    "watchdog_classification": "COMPLETED",
+    "watchdog_elapsed_seconds": 966.8536068079993,
+    "r1_worker_elapsed_seconds": 962.6673532550049,
+    "watchdog_samples": 1861,
+    "process_tree_rss_peak_bytes": 7148744704,
+    "process_tree_pss_peak_bytes": 7116825600,
+    "pss_peak_source": "maximum simultaneous process-tree PSS recomputed from watchdog/resources.jsonl",
+    "process_tree_swap_peak_bytes": 0,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "launch_manifest_sha256": "d42875417f4f8b712c4939971596b39580deccbb4604eb1d6eb0204c49863697",
+    "worker_pair_sha256": "208a9d181e9e24e076897efdbb813def86f600ea0029ac15d46fff4b3ca41e89",
+    "watchdog_summary_sha256": "e5d123971604fd7956350e7feb9e202924c864baede7c884430f362671b19dbc",
+    "watchdog_resources_sha256": "05c14b917f978b783802dd0611e5e43706741c4799fde93396fcd9c923eef041",
+    "memory_scope_caveat": "Retained p4 factor, p6 cache, ports/work vectors and both candidate actions; no full formal FGMRES basis/history; do not use as production single-candidate memory"
+  },
+  "evidence": {
+    "attempt_root": "benchmarks/artifacts/task39extra/workingset_p6_setup_v27/r1_attempt_20260923_03",
+    "launch_manifest_sha256": "66a7cf5cd4d5f696b321dc29598bfc84e022de7f3d55c07abfbdf19e3952bde9",
+    "worker_result_sha256": "79357a07b0b7d8c2a0b820186db4d1890812a55e071ef2fa7c57195a5a3a1d10",
+    "preflight_sha256": "50ea7399234a7e03c53bff8a682a71842d6b774dcf53d7ee43a49307ea59facc",
+    "p4_observation_sha256": "39089dd891da95535f5c7dfa0d2bb49ba5d56cd4c0fa4ba86d8b479e2b7db628",
+    "p4_native_facts_sha256": "4b7f8e75e82cb6588fbdcc95d659f66600c4764f7cfa4d2be5e572653ae817ed",
+    "p6_cache_identity_sha256": "e3ee1a6c0e82dcfbb76c41cba900f955723e7fa1ab31defce0c6acf9875c7cd2",
+    "watchdog_summary_sha256": "99e01ff27007a561ee6c9b1047a612ed432f8e50611fca14443fe8aaece7e817",
+    "watchdog_resources_sha256": "35cd4f62b84ed77b05ec3bb9981f120f21e42bc49095283f55dd03d8dd2537cb",
+    "worker_log_sha256": "c54245b32539517483f28a4217dcff22f1657a96746d696f479531cefbf9daaa"
+  },
+  "test_result": {
+    "command_scope": "focused V27/checker/lifecycle/capacity/launcher tests; no PDE",
+    "passed": 47,
+    "failed": 0,
+    "elapsed_seconds": 8.29,
+    "abi_preflight": "PASS; qualified WSL activation, PETSc complex128/int32",
+    "docs_contract_tests": {"passed": 21, "failed": 0, "elapsed_seconds": 0.07}
+  }
+}

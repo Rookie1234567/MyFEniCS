@@ -3170,3 +3170,13 @@ V26 本轮 Full3D p6/h7.5、coarse p4 场已经完成 126 步并通过残差/物
 当前裁决：r2 是速度 baseline；V26 为显式 opt-in/review-only；T5 numeric cache reuse deferred；不改 ordinary default，不继续启动 PDE，不合并 master。证据入口为 `docs/task039_extra_physical_multilevel/response_v27.md` 与 `outcomes/setup_efficiency_v26.md`。
 
 ---
+
+# 当前进展：Review V25 / V27 engineering pairing 已完成，未运行正式场
+
+用户在 attempt03 adapter TypeError 后先选择保留部分证据；随后明确授权一次定向 probe replay。attempt03 的失败原始记录保留，attempt04 修正 probe 后重建一次 p4 factor/p6 cache，并补齐 i=16 BAL_H 与 i=112 A6/H6/BAL_H。六组保存向量算子配对均通过 `1e-10` 门、输出差为0；裁定 `NO_REPRODUCED_IMPLEMENTATION_REGRESSION` 仅表示未在这些 engineering operator actions 中复现历史 full-KSP 约18.9% slowdown，不代表排除了机器/供电或完整 solver 差异。无新 Krylov solve、true residual、field 或 R/T/A。
+
+两个实际 setup 的 p4 numeric factor 分别213.987342/223.155029 s；p6 internal total 255.476535/249.130047 s，outer wrapper 255.485893/249.145521 s，builder audit 249.919023/242.479440 s（嵌套，不能相加）。R1 attempt03/04 watchdog RSS peaks 为7132229632/7148744704 B，PSS为7100228608/7116825600 B，swap均0；工程进程同时保留factor/cache/ports/work vectors和两侧action，但没有完整 formal FGMRES basis/history，不能作为 production solve 内存结论。R2=`NO_ADOPTED_CHANGE`，r2速度基线和ordinary default不变；R4=`NOT_RUN`。final focused/docs checks在本轮复核；不声称 full pytest、Ruff 或 CI。
+
+证据入口：[Response V28](task039_extra_physical_multilevel/response_v28.md)、[V27 outcome](task039_extra_physical_multilevel/outcomes/workingset_p6_setup_v27.md)、[combined pair](task039_extra_physical_multilevel/outcomes/records/workingset_p6_setup_v27_pair.json)、[run index](task039_extra_physical_multilevel/outcomes/records/run_index.json)。D1 实现提交为 `cefb47c6d2039f82f441854e5d1edd8642de0c95`；D2 文档证据在同一 `task39extra` 分支提交，使用已批准的任务专用 hooks。远端 tip 与 clean worktree 由最终 handoff 核实。
+
+---

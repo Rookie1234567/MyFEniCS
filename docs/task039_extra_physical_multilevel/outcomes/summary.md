@@ -1,3 +1,21 @@
+## V27 working-set / p6 setup：工程配对完成，未启动正式场
+
+一次获准的探针 bug replay 后，R1 六组保存残差向量算子配对均通过 `1e-10` 等价门，且所有 R2/V26 输出差均为0；范围仅为 engineering actions，不是 Krylov solve。受控裁定 `NO_REPRODUCED_IMPLEMENTATION_REGRESSION`：没有在这些短操作中复现历史全 KSP 约18.9%的 V26 slowdown，但不能据此排除系统态或完整 solver 差异。attempt03 的原始 adapter 失败及负记录仍保留，attempt04 另行绑定 dirty source/probe hash。
+
+| 项目 | 结果 | 分类/边界 |
+|---|---:|---|
+| p4 factor | 两次各一次：213.987342 / 223.155029 s；84680 rows；`ICNTL(23)=4687 MB` | 合计 numeric factor 437.142371 s；不是 solver iteration |
+| p6 setup | 内部total 255.476535 / 249.130047 s；outer wrapper 255.485893 / 249.145521 s | builder audits 249.919023 / 242.479440 s；嵌套项不可再加到 setup |
+| i=16 A6/H6/BAL_H | V26/R2 median wall ratios 0.997073 / 0.994038 / 0.994679 | 输出差均0；仅算子短操作，不是 Krylov iteration |
+| i=112 A6/H6/BAL_H | V26/R2 median wall ratios 1.001948 / 0.978271 / 1.014972 | 输出差均0；仅算子短操作，不是 fresh residual |
+| 历史 p4/Q4 i=112 baseline | residual `2.71399585136905e-6`；solve time `3437.233336 s`；RSS/PSS=`7384477696/7352336384 B`；swap=0 | V25 历史记录；不是 V27 fresh solver result |
+| watchdog process-tree | attempt03/04 RSS=`7132229632/7148744704 B`；PSS=`7100228608/7116825600 B`；swap均0 | 两次工程进程保留factor/cache与两侧actions；没有完整formal FGMRES history，非production内存峰值 |
+| R2/R4 | `NO_ADOPTED_CHANGE` / `NOT_RUN` | r2 保持速度基线；ordinary default 不变；没有正式 R/T/A/字段结果 |
+
+R1/R2 原始证据、两次attempt计时边界、memory caveat与source/hash见 [V27 outcome](workingset_p6_setup_v27.md)、[Response V28](../response_v28.md) 和 [pair/selection/compact/decision records](records/workingset_p6_setup_v27_pair.json)。历史 V26 与更早负结果不回写。
+
+---
+
 ## V26 setup-efficiency 收口：与 r2 数值一致，但没有端到端提速
 
 V26 本轮唯一正式完成场是 `20260923T001753.478027Z`：Full3D、p6/h7.5、coarse p4、990 cells、MPI1/thread1、126 步，最终显式真残差 `9.283164976754267e-7`，分类为 `DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED`。它没有匹配的独立 h7.5 reference，不宣称 continuum convergence。

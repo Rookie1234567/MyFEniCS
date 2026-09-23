@@ -1,0 +1,44 @@
+{
+  "schema": "task039extra.v27.decision.v1",
+  "status": "ENGINEERING_EVIDENCE_CLOSEOUT_NO_FORMAL_SOLVER_RESULT",
+  "batch": "review_v25_workingset_and_p6_setup",
+  "r0": "PASS; focused route/profile/resource dry-run tests passed",
+  "r1": {
+    "status": "NO_REPRODUCED_IMPLEMENTATION_REGRESSION",
+    "attempt03": "preserved negative engineering-probe record; adapter TypeError after p4/p6 setup and i16 A6/H6",
+    "attempt04": "one authorized replay completed remaining i16 BAL_H and i112 A6/H6/BAL_H pairs",
+    "all_six_operator_pair_groups": "PASS; gates <=1e-10; recorded output differences are zero",
+    "numerical_failure": false,
+    "formal_solver_result": "NOT_RUN",
+    "source_provenance": "attempt04 ran on dirty source state_sha1 665a8528ac0ab0937189b40f254e6ca844c8b095; do not bind it to the later documentation/commit state"
+  },
+  "r2": {
+    "status": "NO_ADOPTED_CHANGE",
+    "dominant_substage": "p6 local kernel work; attempt03 237.0940911529906/249.91902265200042 s, attempt04 228.84196730799158/242.4794395420031 s (kernel/builder audit)",
+    "decision": "do not add an unmeasured optimization to the dominant local kernel"
+  },
+  "r3": {
+    "status": "PASS_FOR_NO_CHANGE_SELECTION",
+    "focused_suite": "47 passed in 8.29 s after qualified complex128/int32 ABI preflight",
+    "source_selection": "retain r2 as the measured speed baseline; keep ordinary default unchanged"
+  },
+  "r4": {
+    "status": "NOT_RUN",
+    "reason": "no newly adopted optimization; authorized R1 adapter-bug replay was limited to engineering actions; no formal PDE is claimed"
+  },
+  "r5": {
+    "status": "DOCUMENTED_ENGINEERING_CLOSEOUT",
+    "response": "response_v28.md",
+    "master_merge": "NOT_APPROVED",
+    "branch_commit_push": "D1 implementation committed as cefb47c6d2039f82f441854e5d1edd8642de0c95; D2 records this closeout; remote verification in task handoff"
+  },
+  "not_run": [
+    "one fresh formal original p6/h7.5 solve",
+    "R/T/A and field/mode/power regression",
+    "full repository pytest",
+    "Ruff",
+    "CI",
+    "temperature/frequency qualification",
+    "full formal FGMRES basis/history memory measurement"
+  ]
+}

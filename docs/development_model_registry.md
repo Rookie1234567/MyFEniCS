@@ -1,4 +1,18 @@
-# Task39extra 当前模型登记：Review V24 / Response V27 V26 setup-efficiency closeout
+# Task39extra 当前模型登记：Review V25 / Response V28 V27 engineering evidence
+
+## V27 working-set / p6 setup 工程记录
+
+| profile / attempt | 模型与测量 | 状态与当前用途 |
+|---|---|---|
+| `physical_p6_trace_workingset_efficiency_v27` / attempts 01–04 | original p6/h7.5、990 cells、MPI1；physical-model SHA 与 V26 一致。两次 p4 factor=`213.987342/223.155029 s`；p6 内部 setup=`255.476535/249.130047 s`；outer wrapper=`255.485893/249.145521 s` | **工程配对完成，无 formal solve**；六组 i16/i112 A6/H6/BAL_H gates pass、输出差0；attempt03 adapter failure保留；`NO_REPRODUCED_IMPLEMENTATION_REGRESSION` 仅限短 operator actions |
+| `r2` hot path vs V26 | i16 A6/H6/BAL_H median wall R2/V26=`3.252565/3.243044`, `4.000405/3.976555`, `18.734961/18.635279 s`；i112=`3.254658/3.260999`, `3.845772/3.762207`, `16.927638/17.181086 s` | 六组输出差0；这些保存向量算子时间不等于 KSP 迭代性能，不据此改变全流程速度基线 |
+| V27 p6 builder | attempt03/04 audit=`249.919023/242.479440 s`；kernel=`237.094091/228.841967 s` | kernel 为主项；未发现大量重复class构造，也未证明安全低风险的降本候选；`NO_ADOPTED_CHANGE`，R4=`NOT_RUN` |
+
+attempt03/04 simultaneous process-tree RSS=`7132229632/7148744704 B`，PSS=`7100228608/7116825600 B`，swap=0；1402/1861 watchdog samples。memory是保留factor/cache/ports/work vectors与两侧action的engineering生命周期观测，没有完整formal FGMRES basis/history。最终focused tests另见test summary；r2仍为已测速度基线，ordinary default不变；没有full-solver residual、R/T/A或场证据。详见 [Response V28](task039_extra_physical_multilevel/response_v28.md)、[V27 outcome](task039_extra_physical_multilevel/outcomes/workingset_p6_setup_v27.md)、[run index](task039_extra_physical_multilevel/outcomes/records/run_index.json)。
+
+---
+
+## V26 setup-efficiency 收口
 
 ## V26 当前裁决
 

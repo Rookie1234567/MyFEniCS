@@ -1,3 +1,18 @@
+## Review V25 / V27 engineering closeout (no formal solve)
+
+| 验证 | 实际结果 | 范围与边界 |
+|---|---|---|
+| R0 V27 profile/launcher/worker/watchdog mock route | PASS | original-only guard、observe-only time/swap policy、V23 physical-memory-pressure policy；无 PDE |
+| focused suite | **47 passed in 8.29 s** | ABI preflight PASS (qualified WSL, PETSc complex128/int32); five files: V27 setup, V25 checker, V20 lifecycle, V22 capacity, V22 launcher |
+| R1 engineering probe | **NO_REPRODUCED_IMPLEMENTATION_REGRESSION** | attempt03 adapter failure preserved; one later authorized probe-only replay completed i=16 BAL_H and i=112 A6/H6/BAL_H; all six groups pass equivalence gates; no formal PDE |
+| R2 selection / R4 | `NO_ADOPTED_CHANGE` / `NOT_RUN` | 不把未配对工程 setup 时间差当因果收益；未启动正式 PDE |
+| full repository pytest / Ruff / CI | not_run / not_run / not_claimed | 仅报告本地 targeted suite |
+| final documentation contracts | **21 passed in 0.07 s** | `test_26_documentation_contract.py`, `test_183_development_model_registry_markdown.py`, `test_development_model_registry_contract.py`；针对最终记录改动复核 |
+
+测试结果与工程 factor、正式 PDE 分开报告；本批没有新的求解残差或物理输出。
+
+---
+
 ## V26 setup-efficiency 收口检查
 
 | 验证 | 实际结果 | 范围与边界 |
