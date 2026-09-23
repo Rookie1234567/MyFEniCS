@@ -15,6 +15,7 @@ from scripts.task39extra_event_observer import Observer, _proc_identity
 from src.runners.physical_balanced_output import (
     _observer_pair_receipt,
     _r13_pair_binding_errors,
+    _r13_mode_identity,
     _r13_source_identity_errors,
 )
 
@@ -165,6 +166,39 @@ class Task39ExtraV5R13PairReleaseTests(unittest.TestCase):
                          "source_after": {"provenance_passed": False, "error": "dirty"}}
         self.assertTrue(any("launcher source_after is not recorded clean" in error
                             for error in _r13_source_identity_errors(failed_source, watchdog)))
+
+    def test_pair_mode_identity_reads_actual_retained_summary_schema(self):
+        mode_sha = "c" * 64
+        summary = {
+            "retained_runtime": {
+                "mode_sha256": mode_sha,
+                "space_identity": {
+                    "fine_mode_sha256": mode_sha,
+                    "fine_global_rows": 667152,
+                },
+            },
+        }
+        self.assertEqual(_r13_mode_identity(summary, 667152),
+                         (mode_sha, summary["retained_runtime"]["space_identity"]))
+
+        changed_space = {
+            "retained_runtime": {
+                **summary["retained_runtime"],
+                "space_identity": {
+                    **summary["retained_runtime"]["space_identity"],
+                    "fine_mode_sha256": "d" * 64,
+                },
+            },
+        }
+        with self.assertRaisesRegex(ValueError, "p6 space/mode identity mismatch"):
+            _r13_mode_identity(changed_space, 667152)
+
+        changed_summary = {**summary, "mode_sha256": "e" * 64}
+        with self.assertRaisesRegex(ValueError, "p6 space/mode identity mismatch"):
+            _r13_mode_identity(changed_summary, 667152)
+
+        with self.assertRaisesRegex(ValueError, "saved solution rows"):
+            _r13_mode_identity(summary, 1)
 
     def test_checker_cli_writes_nonoverwriting_numerical_pair_record(self):
         with tempfile.TemporaryDirectory(prefix="task39extra-r13-pair-entry-") as temp:

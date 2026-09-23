@@ -282,6 +282,21 @@ def _r13_source_identity_errors(manifest, watchdog):
     return errors
 
 
+def _r13_mode_identity(summary, solution_rows):
+    """Read V5 retained mode identity and bind it to the saved p6 vector."""
+    retained = summary.get("retained_runtime", {})
+    space_identity = retained.get("space_identity", {})
+    summary_mode = summary.get("mode_sha256")
+    retained_mode = retained.get("mode_sha256")
+    mode_sha = summary_mode if summary_mode is not None else retained_mode
+    if (not mode_sha or retained_mode != mode_sha or
+            space_identity.get("fine_mode_sha256") != mode_sha):
+        raise ValueError("p6 space/mode identity mismatch")
+    if space_identity.get("fine_global_rows") != solution_rows:
+        raise ValueError("saved solution rows differ from the recorded p6 space")
+    return mode_sha, space_identity
+
+
 def _sha256_file(path):
     digest = hashlib.sha256()
     with Path(path).open("rb") as stream:
@@ -577,20 +592,12 @@ def _load_r13_pair_run(directory, expected_q, observer_log):
                 hashlib.sha256(solution.tobytes()).hexdigest() != solution_sha):
             raise ValueError(f"{directory.name} final solution hash/finite check failed")
         solution_shape = [int(item) for item in solution.shape]
-    space_identity = summary.get("retained_runtime", {}).get("space_identity", {})
-    if space_identity.get("fine_mode_sha256") != summary.get("mode_sha256"):
-        raise ValueError(f"{directory.name} p6 space/mode identity mismatch")
-    if space_identity.get("fine_global_rows") != solution_shape[0]:
-        raise ValueError(f"{directory.name} saved solution rows differ from the recorded p6 space")
+    mode_sha, space_identity = _r13_mode_identity(summary, solution_shape[0])
     canonical_descriptor = official.get("canonical_vector", {})
     canonical_name = canonical_descriptor.get("filename")
     if not isinstance(canonical_name, str) or not canonical_name:
         raise ValueError(f"{directory.name} official canonical-vector identity is missing")
 
-    mode_sha = summary.get("mode_sha256")
-    retained = summary.get("retained_runtime", {})
-    if not mode_sha or retained.get("mode_sha256") != mode_sha:
-        raise ValueError(f"{directory.name} retained mode identity mismatch")
     return {
         "directory": directory,
         "run_directory": str(directory),
