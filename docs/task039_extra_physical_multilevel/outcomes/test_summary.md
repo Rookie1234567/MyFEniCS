@@ -1,3 +1,16 @@
+## Review V26 / V28：库存与融合预算 bug 修复
+
+| 验证 | 实际结果 | 范围与边界 |
+|---|---|---|
+| ABI preflight | **PASS** | qualified WSL activation；Python `.venv`；PETSc complex128/int32；同一 Linux MPI/DOLFINx ABI |
+| fused owner inventory / workspace budget / V28 profile focused tests | **15 passed in 1.44 s** | 三文件：`test_task39extra_v28_fused_kernel.py`、`test_task39extra_v28_profile.py`、`test_physical_schur_v14_budget.py`；small fixture 实走 packed factory 的 split/fused inventory 与预算字段；正式开关 `shared_contractions=False` |
+| compileall / `git diff --check` | **PASS / PASS** | 覆盖本次两处 production 文件和回归测试 |
+| 文档合同 / compact JSON parse | **21 passed in 0.06 s / PASS** | `test_26_documentation_contract.py`、`test_183_development_model_registry_markdown.py`、`test_development_model_registry_contract.py`；compact、decision、run index 可解析 |
+| source fix fresh PDE | **not_run** | 一次 replay 已消费，保留用户“停止重跑”选择；不可把 unit tests 写成 PDE qualification |
+| full repository pytest / Ruff / CI | **not_run / not_run / not_claimed** | 仅报告本地 focused suite；未安装 Ruff |
+
+本次正式 V28 run 在 KSP 前以真实 `KeyError` 退出；测试通过只验证本轮最小接口修复，不改变 raw run 的 `WORKER_FAILED` 分类。详见 [V28 outcome](fused_operator_speed_v28.md) 与 [Response V29](../response_v29.md)。
+
 ## Review V25 / V27 engineering closeout (no formal solve)
 
 | 验证 | 实际结果 | 范围与边界 |

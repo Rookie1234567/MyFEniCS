@@ -1,3 +1,9 @@
+# Task39extra 当前进展：Review V26 / V28 正式回归未完成
+
+选中的 original p6/h7.5 fused A6 case 已按 user-service 启动，但在第1次 Krylov 迭代前因 retained-inventory 字段缺失退出；p4 factor 与部分 H6 setup 已发生，不能把约 `360.619 s` 失败流程当成整场性能。没有新 residual、用户要求的16步点、合同规定的每8步 residual/每32步 field、最终场或 R/T/A。到失败为止 process-tree RSS/PSS=`6,569,861,120/6,537,753,600 B`，不是全生命周期 peak。A6 fusion-only 的保存向量组件结果只是候选证据，H6 shared-contraction 未采用，两线程未试。
+
+14行 production 接口修复提交 `f403cf126817a9019d2be59df6b2be6fc0d6bffd`；qualified targeted tests `15 passed in 1.44 s`，文档合同 `21 passed in 0.06 s`，compileall/diff 检查通过。修复未经 fresh PDE 验证；r2 仍为最快整场基线，默认不变。本批 bug replay 已消费，任何后续完整数值回归需新的明确授权。详见 [Response V29](task039_extra_physical_multilevel/response_v29.md)、[V28 outcome](task039_extra_physical_multilevel/outcomes/fused_operator_speed_v28.md)、[compact/decision](task039_extra_physical_multilevel/outcomes/records/fused_operator_speed_v28_compact.json) 和 [run index](task039_extra_physical_multilevel/outcomes/records/run_index.json)。
+
 # Task39extra 当前进展：Review V23 / Response V26 V25 coarse-degree 收口
 
 V25 在同一冻结 source、990-cell h7.5、MPI1、complex128 条件下完成 Q4/Q3，并对 Q2 保存了受控停止证据。V24 p4 是已完成同模型中最快整体 workflow（4579.015917060999 s）；Q4 是 V25 已完成场中最快（4718.70844729399 s），但没有端到端时间收益；Q3 通过且 RSS/PSS 最低（4031815680/3999603712 B）。Q2 在 GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED 下停止，最后完成 iteration 1048、真残差 0.0006086703757232677；PC1052 是序列计数器，不是迭代，没有 official result。

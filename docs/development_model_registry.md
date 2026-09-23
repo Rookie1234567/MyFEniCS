@@ -1,3 +1,12 @@
+# Task39extra 当前模型登记：Review V26 / V28 fused A6 正式门前失败
+
+| profile | 模型与实测 | 当前资格/用途 |
+|---|---|---|
+| `physical_p6_trace_fused_kernel_v28` | original p6/h7.5、990 cells、80 DtN modes、MPI1/thread1；p4 numeric `201.553137 s`；在 KSP 第1步前 `KeyError: retained_numeric_payload_components`；0 iterations、无新 residual/field/R/T/A；失败到止同时进程树 RSS/PSS peak `6,569,861,120/6,537,753,600 B`、swap0 | `FORMAL_REGRESSION_INCOMPLETE`；不是数值不收敛；内存为部分生命周期，不可与 r2 完整峰值比收益 |
+| V28 source fix | fused retained inventory 计一个 shared MPC owner；fused temporary budget 从 owner audit 传给 p4 workspace consumer；split 仍保留两个 owners；提交 `f403cf126817a9019d2be59df6b2be6fc0d6bffd`；15 focused tests pass | 无 fresh PDE evidence；尚未资格化为生产默认；r2 full-workflow/KSP/setup `3114.283619607013/2284.681783819/781.971881371981 s` 继续作为 baseline |
+
+证据与负分类：[V28 outcome](task039_extra_physical_multilevel/outcomes/fused_operator_speed_v28.md)、[Response V29](task039_extra_physical_multilevel/response_v29.md)、[compact](task039_extra_physical_multilevel/outcomes/records/fused_operator_speed_v28_compact.json)、[decision](task039_extra_physical_multilevel/outcomes/records/fused_operator_speed_v28_decision.json)。本次失败 elapsed/partial RSS 不计算为速度或内存收益；下一场 full regression 要求新的明确授权。
+
 # Task39extra 当前模型登记：Review V25 / Response V28 V27 engineering evidence
 
 ## V27 working-set / p6 setup 工程记录

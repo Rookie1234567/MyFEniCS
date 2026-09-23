@@ -1,0 +1,57 @@
+{
+  "schema": "task039extra.v28.decision.v1",
+  "profile": "physical_p6_trace_fused_kernel_v28",
+  "decisions": {
+    "N0_profile_launcher_workspace_and_checker_mocks": "PASS_IN_FOCUSED_TESTS; no heavy factorization",
+    "N1_A6_fusion": {
+      "component_evidence": "QUALIFIED_FOR_FORMAL_CANDIDATE",
+      "formal_model_adoption": "NOT_ESTABLISHED",
+      "reason": "the one formal run failed before KSP; no fresh residual/field/physical gates"
+    },
+    "N1_shared_contractions": "NOT_ADOPTED; measured A6 increment slower on both witnesses",
+    "N2_H6_shared_contractions": "NOT_ADOPTED; lower forward contraction count, but timing evidence does not establish a gain",
+    "N3_single_combination": "A6 fusion-only; shared_contractions=false; single-thread; formal qualification incomplete",
+    "N4_threads": "NOT_RUN; retain single-thread route",
+    "N5_formal_regression": "INCOMPLETE_WORKER_FAILED_BEFORE_KSP",
+    "N6_closeout": "negative result, hashes, tests, and decision records archived; final numerical gates not_run",
+    "full_workflow_speed": "UNKNOWN; do not derive from failed-at-setup elapsed time",
+    "memory_benefit": "UNKNOWN; partial process-tree peak is not a completed-run measurement",
+    "official_field_and_power": "NOT_AVAILABLE",
+    "fastest_full_run_baseline": "r2",
+    "ordinary_default": "UNCHANGED",
+    "fresh_pde_after_source_fix": "NOT_RUN",
+    "next_full_pde": "requires explicit new authorization"
+  },
+  "failure": {
+    "stage": "candidate retained-inventory consumption before KSP",
+    "error": "KeyError: 'retained_numeric_payload_components'",
+    "source_sha": "b97b605d014fd90439b5b3fa471f2570edf1beff",
+    "watchdog_rss_peak_bytes": 6569861120,
+    "watchdog_pss_peak_bytes": 6537753600,
+    "watchdog_pss_samples": 1256,
+    "watchdog_pss_all_readable": true,
+    "resource_scope": "partial process tree through pre-KSP failure, not a full solver run",
+    "raw_run_root": "results/euv_grazing1_phi0/task39extra_v28_fused_kernel_original_h7p5__full3d_iterative__mpi1__Mna/20260923T144543.633563Z",
+    "raw_classification_preserved": "WORKER_FAILED"
+  },
+  "repair": {
+    "commit": "f403cf126817a9019d2be59df6b2be6fc0d6bffd",
+    "production_files": [
+      "src/solvers/physical_equivalent_fast.py",
+      "src/runners/physical_p4_schur_v14.py"
+    ],
+    "test_file": "src/test/test_task39extra_v28_fused_kernel.py",
+    "details": [
+      "fused mode reports the shared MPC owner retained-payload audit once; split mode keeps both owners",
+      "fused temporary workspace budget flows from the existing fused-kernel audit through kernel_temporary_bytes to the workspace consumer",
+      "small-mesh factory/consumer-path test covers split and fused with shared_contractions=false"
+    ],
+    "tests": "15 passed in 1.44 s; documentation contracts 21 passed in 0.06 s; JSON parse, compileall, and diff check passed",
+    "fresh_pde_evidence": false
+  },
+  "authorization": {
+    "one_bug_replay_used": true,
+    "third_pde_started": false,
+    "future_full_regression_requires_new_explicit_authorization": true
+  }
+}

@@ -1,0 +1,204 @@
+{
+  "schema": "task039extra.v28.compact-result.v1",
+  "review": "review_report_v26.md",
+  "profile": "physical_p6_trace_fused_kernel_v28",
+  "input": {
+    "path": "input/task39extra/v28_fused_kernel_original_h7p5.dat",
+    "sha256": "80c1cbcc9c0796f79c567391a8e80466d4a8a138ea0b45b85b2590d38e957b33",
+    "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+    "ordered_modes_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
+  },
+  "formal_attempt": {
+    "run_id": "task39extra_v28_fused_kernel_original_h7p5",
+    "raw_root": "results/euv_grazing1_phi0/task39extra_v28_fused_kernel_original_h7p5__full3d_iterative__mpi1__Mna/20260923T144543.633563Z",
+    "service": "myfenics-case-20260923T144543-342647.service",
+    "source_sha": "b97b605d014fd90439b5b3fa471f2570edf1beff",
+    "classification": "WORKER_FAILED_BEFORE_KSP",
+    "worker_error": {
+      "type": "KeyError",
+      "message": "'retained_numeric_payload_components'",
+      "traceback_saved": false
+    },
+    "p4_factor_numeric_seconds": 201.55313696499798,
+    "p4_factor_symbolic_seconds": 0.5151817100122571,
+    "h6_setup_component_seconds": {
+      "b6_shell": 0.0006648699927609414,
+      "diagonal": 4.489061329994001,
+      "selected_action": 0.43456182899535634,
+      "power10": 36.81835464799951,
+      "total_setup": "unknown_not_independently_recorded"
+    },
+    "iterations_completed": 0,
+    "user_requested_16_step_update": "not_reached",
+    "review_checkpoint_policy": {
+      "true_residual_every_8_steps": "not_reached",
+      "field_every_32_steps": "not_reached"
+    },
+    "final_residual": null,
+    "official_result": false,
+    "field_rta_power": "not_available",
+    "monotonic_elapsed_seconds": 331.0613331180066,
+    "workflow_elapsed_seconds": 360.618731128,
+    "elapsed_boundaries_note": "watchdog monotonic and run-summary workflow use different measured boundaries; do not subtract them as one clock interval",
+    "watchdog_clock_interval": {
+      "field": "resource_authority.workflow_clock_interval.discrepancy_seconds",
+      "value": 29.498677822996285,
+      "source": "formal run_summary.json raw watchdog authority interval",
+      "note": "not the arithmetic difference between watchdog monotonic and wrapper workflow elapsed fields"
+    },
+    "process_tree_rss_peak_bytes": 6569861120,
+    "process_tree_pss_peak_bytes": 6537753600,
+    "process_tree_pss_samples": 1256,
+    "process_tree_pss_all_readable": true,
+    "process_tree_swap_peak_bytes": 0,
+    "resource_scope": "sampled simultaneous process-tree RSS/PSS through pre-KSP worker failure; not full solver peak",
+    "descendants_cleared": true,
+    "remaining_child_pids": []
+  },
+  "other_attempts": [
+    {
+      "id": "foreground_scope_stop",
+      "raw_root": "results/euv_grazing1_phi0/task39extra_v28_fused_kernel_original_h7p5__full3d_iterative__mpi1__Mna/20260923T141356.354598Z",
+      "raw_classification": "USER_CONTROLLED_STOP",
+      "execution_classification": "CONTROLLED_STOP_STARTUP_SCOPE_INVALID",
+      "source_sha": "53c6be5025f958f285fd174cbabded4d903658e0",
+      "monotonic_elapsed_seconds": 309.2801566459966,
+      "ledger_settled_elapsed_seconds": 338.8901043349492,
+      "process_tree_rss_peak_bytes": 5894668288,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "run_summary_sha256": "d4b2ada16fa7be1bd333c7a2f30200d41acd349a5630a9d15922a46ca8753933",
+      "scope_sidecar_sha256": "7f51ae5d720fa4b9a09d73f64cd8fe6a3fcfa362c87a12800434c4a148ebdb8c"
+    },
+    {
+      "id": "service_replay_gate_rejection",
+      "service": "myfenics-case-20260923T142032-334083.service",
+      "worker_started": false,
+      "classification": "REJECTED_BEFORE_WORKER_SAME_SOURCE_SHA",
+      "log": "benchmarks/artifacts/user_services/myfenics-case-20260923T142032-334083.log",
+      "log_sha256": "7eb78da35d2349652a726058f2044d569df156b910acafb52752316ffdb051b2",
+      "time_or_resource_cost": "not_measured"
+    }
+  ],
+  "replay_ledger": {
+    "source_path": "benchmarks/artifacts/task39extra/fused_operator_speed_v28/review_v26_fused_A6_H6_optional_setup_threads/shared_workflow_ledger.json",
+    "sha256": "8db4e543149b809e4968d5344cab9d7d4940e1418fb189ec0f6888beb9270bac",
+    "elapsed_seconds": 699.5099493818448,
+    "reserved_attempt_count": 2,
+    "fresh_worker_count": 2,
+    "unique_bug_replay_count": 1,
+    "authorized_replay_consumed": true,
+    "third_pde_started": false,
+    "active_attempt": null,
+    "settled_attempts": [
+      {
+        "attempt": 1,
+        "source_sha": "53c6be5025f958f285fd174cbabded4d903658e0",
+        "classification": "USER_CONTROLLED_STOP",
+        "settled_elapsed_seconds": 338.8901043349492,
+        "replay": false
+      },
+      {
+        "attempt": 2,
+        "source_sha": "b97b605d014fd90439b5b3fa471f2570edf1beff",
+        "classification": "WORKER_FAILED",
+        "settled_elapsed_seconds": 360.61984504689553,
+        "replay": true
+      }
+    ],
+    "rejected_gate_admission": {
+      "worker_started": false,
+      "ledger_reservation": false
+    }
+  },
+  "historical_r2_baseline": {
+    "full_workflow_seconds": 3114.283619607013,
+    "pure_ksp_seconds": 2284.681783819,
+    "setup_seconds": 781.971881371981,
+    "iterations": 126,
+    "final_residual": 9.283165086752956e-7,
+    "process_tree_rss_peak_bytes": 7390937088,
+    "process_tree_pss_peak_bytes": 7354803200,
+    "authority": "Review V26 supplied completed-run baseline; this V28 attempt has no comparable KSP data"
+  },
+  "engineering_cost_index": {
+    "component_record": "docs/task039_extra_physical_multilevel/outcomes/records/fused_operator_speed_v28_components.json",
+    "accounting_policy": "retain all attempts and their own clock/resource boundaries; do not sum unlike or overlapping scopes",
+    "preserved_component_attempts": [
+      {
+        "id": "a6_first_attempt_error",
+        "classification": "WORKER_FAILED",
+        "elapsed_monotonic_seconds": 205.474985207009,
+        "elapsed_utc_seconds": 223.215080597,
+        "process_tree_rss_peak_bytes": 704720896,
+        "swap_peak_bytes": 0
+      },
+      {
+        "id": "duplicate_a6_attempt",
+        "classification": "USER_CONTROLLED_STOP_BY_SUPERVISOR_TO_AVOID_DUPLICATE_WORK",
+        "elapsed_monotonic_seconds": 114.44591124699218,
+        "elapsed_utc_seconds": 126.068461969,
+        "process_tree_rss_peak_bytes": 704118784,
+        "swap_peak_bytes": 0
+      },
+      {
+        "id": "h6_engineering_run",
+        "classification": "COMPLETED_ENGINEERING_ONLY",
+        "elapsed_wall_seconds": 157.87739327800227,
+        "process_tree_rss_peak_bytes": 784216064,
+        "swap_peak_bytes": 0
+      }
+    ],
+    "formal_attempt_costs": "listed separately under formal_attempt and other_attempts"
+  },
+  "source_fix": {
+    "commit": "f403cf126817a9019d2be59df6b2be6fc0d6bffd",
+    "fused_inventory": "one shared MPC owner audit counted once",
+    "split_inventory": "two component owners retained",
+    "fused_temporary_budget": "use existing fused curl-plus-mass budget through kernel_temporary_bytes",
+    "fresh_pde_evidence": false
+  },
+  "stage_status": {
+    "N0": "profile/launcher/workspace mock and focused interfaces passed; no heavy factorization in these tests",
+    "N1": "A6 fusion-only saved-vector equivalence passed and was selected as formal candidate; live formal counters unavailable",
+    "N2": "A6 shared-contraction increment and H6 shared-contraction candidate not adopted",
+    "N3": "A6 fusion-only, shared_contractions=false, one thread; formal qualification incomplete",
+    "N4": "optional two-thread trial not_run; retain single-thread",
+    "N5": "formal regression worker failed before KSP",
+    "N6": "negative-result documentation and evidence indexing completed; terminal numerical gates not_run"
+  },
+  "a6_fusion_mechanism": "one gather/constraint-and-direction expansion/Nedelec-to-polynomial coefficient transform per cell batch; curl and complex mass retain their original integration rules and merge in common coefficient space before one backward transform/direction pullback/scatter; DtN added once",
+  "formal_live_a6_operation_counters": "unknown_not_recorded",
+  "tests": {
+    "abi": "qualified WSL; PETSc complex128/int32",
+    "files": [
+      "src/test/test_task39extra_v28_fused_kernel.py",
+      "src/test/test_task39extra_v28_profile.py",
+      "src/test/test_physical_schur_v14_budget.py"
+    ],
+    "result": "15 passed in 1.44 s",
+    "documentation_contracts": "21 passed in 0.06 s",
+    "json_parse": "passed",
+    "compileall": "passed",
+    "git_diff_check": "passed",
+    "full_repository_pytest": "not_run",
+    "ruff": "not_installed_not_run",
+    "ci": "not_run_not_claimed"
+  },
+  "decision": {
+    "formal_regression": "INCOMPLETE",
+    "end_to_end_benefit": "UNPROVEN",
+    "adoption": "NOT_QUALIFIED_BY_FRESH_PDE",
+    "fastest_full_run_baseline": "r2_retained",
+    "ordinary_default_changed": false,
+    "next_full_pde": "requires_explicit_new_authorization"
+  },
+  "artifact_hashes": {
+    "run_summary_sha256": "411a81e05003fdcefc329e7528b601b92ac68d13e787230e97ac5cdb7aa21205",
+    "worker_summary_sha256": "048c9016990b790f220bcd7416e476e2444d3ea950f401bc9c062b92d7acdd04",
+    "events_sha256": "68c95c66d12515ae0d6b86d9acff601c5eae53fc8f6d3407475949550e6f6656",
+    "watchdog_summary_sha256": "085e032e96f2af418df743f6e7e3a4a416a103869d4bd402b05ce747c8a6defb",
+    "watchdog_resources_sha256": "8cf09456493e779dcefc79c4bfaa670151ff4ee9456d3bf66941df5135aeec4a",
+    "worker_resources_sha256": "86026a31da3b409cc3f87de360e4edb5ebf8c99ef0dccc0404cad0ec3e26d433"
+  }
+}

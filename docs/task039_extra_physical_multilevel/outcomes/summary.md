@@ -1,3 +1,11 @@
+## Review V26 / V28 融合 A6：正式回归在 KSP 前失败，收益未证
+
+组件保存向量试验支持 A6 fusion-only 进入正式候选；H6 shared-contraction 增量未采用，两线程未试。唯一正式输入在 p4 factor/H6 setup 后、KSP 第1步前遇到 fused retained-inventory `KeyError`，分类为 `WORKER_FAILED`，不是离散不收敛。没有新残差、用户要求的16步更新点或任务合同的每8步 residual/每32步 field checkpoint、KSP/full-workflow 性能、最终场或 R/T/A。部分失败流程进程树 RSS/PSS=`6,569,861,120/6,537,753,600 B`、swap=0，不代表完整峰值或内存收益。
+
+最小 owner-inventory/temporary-budget 修复提交 `f403cf126817a9019d2be59df6b2be6fc0d6bffd`，三个 task-focused 文件 `15 passed`；该修复没有 fresh PDE 证据。因此 end-to-end gain 未证、r2 速度基线保持、ordinary default 不变。一次 bug replay 已用完；任何下一场 fresh regression 需新的明确授权。
+
+逐阶段负结果、两个未进入 worker/KSP 的启动记录、保留成本、历史 p4 baseline 与 raw artifact hashes 见 [V28 outcome](fused_operator_speed_v28.md)、[Response V29](../response_v29.md)、[compact](records/fused_operator_speed_v28_compact.json)、[decision](records/fused_operator_speed_v28_decision.json) 和 [selective merge manifest](selective_merge_manifest_v28.md)。测试细目见 [test summary](test_summary.md) 与 [run index](records/run_index.json)。旧 V27/V26 结果保持原样。
+
 ## V27 working-set / p6 setup：工程配对完成，未启动正式场
 
 一次获准的探针 bug replay 后，R1 六组保存残差向量算子配对均通过 `1e-10` 等价门，且所有 R2/V26 输出差均为0；范围仅为 engineering actions，不是 Krylov solve。受控裁定 `NO_REPRODUCED_IMPLEMENTATION_REGRESSION`：没有在这些短操作中复现历史全 KSP 约18.9%的 V26 slowdown，但不能据此排除系统态或完整 solver 差异。attempt03 的原始 adapter 失败及负记录仍保留，attempt04 另行绑定 dirty source/probe hash。
