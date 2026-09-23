@@ -63,8 +63,8 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--task041-comparison-mode",
-        choices=("common_layout_equivalence",),
-        help="opt into the reviewed common-layout representative comparison",
+        choices=("common_layout_equivalence", "p4_backend_pair"),
+        help="opt into a reviewed Task041 representative comparison",
     )
     return parser
 

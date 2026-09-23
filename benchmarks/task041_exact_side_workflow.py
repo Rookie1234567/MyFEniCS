@@ -2092,6 +2092,100 @@ def _merge_representative_parts(
     return representative
 
 
+def _task041_backend_pair_layout_identity(
+    layout_record: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Hash stable mesh, MPC, ownership, and transfer layout evidence."""
+
+    rank_records = sorted(
+        layout_record["by_rank"], key=lambda record: int(record["rank"])
+    )
+    invariant_by_rank = []
+    component_values: dict[str, list[Any]] = {
+        name: []
+        for name in (
+            "operator_global_shape",
+            "communicators",
+            "ownership",
+            "transfer_identity",
+            "dofmaps",
+            "mesh_layout",
+            "mpc_layout",
+            "layout_arrays",
+        )
+    }
+    space_object_diagnostics = []
+    for record in rank_records:
+        mpc_layout = record["mpc_layout"]
+        dofmaps = record["dofmaps"]
+        stable_spaces = {}
+        for name, space_record in sorted(dofmaps["spaces"].items()):
+            dofmap = space_record["dofmap"]
+            map_record = dofmap["map"]
+            stable_spaces[name] = {
+                "map": {
+                    key: map_record[key]
+                    for key in ("shape", "dtype", "nbytes", "sha256", "hash_status")
+                },
+                "global_size": dofmap["global_size"],
+                "local_size": dofmap["local_size"],
+                "num_ghosts": dofmap["num_ghosts"],
+                "block_size": dofmap["block_size"],
+            }
+        stable_dofmaps = {
+            "fine": dofmaps["fine"],
+            "coarse": dofmaps["coarse"],
+            "spaces": stable_spaces,
+            "cell_records": dofmaps["cell_records"],
+        }
+        components = {
+            "operator_global_shape": record["operator_global_shape"],
+            "communicators": record["communicators"],
+            "ownership": record["ownership"],
+            "transfer_identity": record["transfer_identity"],
+            "dofmaps": stable_dofmaps,
+            "mesh_layout": record["mesh_layout"],
+            "mpc_layout": {
+                "fine": mpc_layout["fine"],
+                "coarse": mpc_layout["coarse"],
+            },
+            "layout_arrays": record["layout_arrays"],
+        }
+        invariant_by_rank.append({"rank": int(record["rank"]), **components})
+        for name, value in components.items():
+            component_values[name].append(value)
+        space_object_diagnostics.append(
+            {
+                "rank": int(record["rank"]),
+                "spaces": {
+                    name: space_record["space"]
+                    for name, space_record in sorted(dofmaps["spaces"].items())
+                },
+            }
+        )
+    canonical = json.dumps(
+        _jsonable(invariant_by_rank), sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    component_sha256 = {
+        name: hashlib.sha256(
+            json.dumps(
+                _jsonable(values), sort_keys=True, separators=(",", ":")
+            ).encode("utf-8")
+        ).hexdigest()
+        for name, values in component_values.items()
+    }
+    return {
+        "identity_sha256": hashlib.sha256(canonical).hexdigest(),
+        "component_sha256": component_sha256,
+        "operator_global_shape": invariant_by_rank[0]["operator_global_shape"],
+        "ownership_by_rank": [record["ownership"] for record in invariant_by_rank],
+        "transfer_identity_by_rank": [
+            record["transfer_identity"] for record in invariant_by_rank
+        ],
+        "space_object_diagnostics": space_object_diagnostics,
+    }
+
+
 def _run_task041_balh_candidate_setup(
     setup: Any,
     layout: Any,
@@ -2155,6 +2249,7 @@ def _run_task041_balh_candidate_setup(
         "bottom": None,
         "top": None,
     }
+    rank_numa_response_sides: set[str] = set()
     layout_evidence_by_side: dict[str, dict[str, Any]] = {}
     common_layout_rechecks: dict[str, list[dict[str, Any]]] = {
         "bottom": [],
@@ -2169,6 +2264,8 @@ def _run_task041_balh_candidate_setup(
     side_diagnostics_after: dict[str, dict[str, Any]] = {}
     admission_audits: dict[str, Any] = {}
     sequential_side_records: dict[str, dict[str, Any]] = {}
+    active_backend_by_side: dict[str, str] = {}
+    p4_backend_pairs_by_side: dict[str, dict[str, Any]] = {}
     sequential_lifecycle_boundaries: list[dict[str, Any]] = []
     sequential_created_totals = {
         "side_inverse": 0,
@@ -2233,7 +2330,15 @@ def _run_task041_balh_candidate_setup(
                 "audit": recorded_audit,
             }
             if comm.rank == 0:
-                with audit_path.open("a", encoding="utf-8") as stream:
+                record_path = audit_path
+                if (
+                    recorded_audit.get("p4_backend_pair") is True
+                    and recorded_audit.get("p4_backend") == "full"
+                ):
+                    record_path = audit_path.with_name(
+                        "p4_backend_pair_audits.jsonl"
+                    )
+                with record_path.open("a", encoding="utf-8") as stream:
                     stream.write(
                         json.dumps(_jsonable(payload), sort_keys=True) + "\n"
                     )
@@ -2267,9 +2372,17 @@ def _run_task041_balh_candidate_setup(
 
     def side_lifecycle_callback(
         side: str,
+        p4_backend: str | None = None,
     ) -> Callable[[str, Mapping[str, Any]], None]:
         def record(event: str, detail: Mapping[str, Any]) -> None:
-            side_stage_event(side, event, detail)
+            side_stage_event(
+                side,
+                event,
+                {
+                    **({} if p4_backend is None else {"p4_backend": p4_backend}),
+                    **dict(detail),
+                },
+            )
 
         return record
 
@@ -2310,6 +2423,8 @@ def _run_task041_balh_candidate_setup(
     def sequential_boundary(
         side: str,
         event: str,
+        *,
+        p4_backend: str | None = None,
     ) -> dict[str, Any]:
         if side_setup_schedule != TASK041_SEQUENTIAL_COMPONENT_SCHEDULE:
             return {
@@ -2377,6 +2492,9 @@ def _run_task041_balh_candidate_setup(
             "live": live,
             "created_total": dict(sequential_created_totals),
         }
+        active_backend = p4_backend or active_backend_by_side.get(side)
+        if active_backend is not None:
+            record["p4_backend"] = active_backend
         if created_at_boundary is not None:
             record["created_at_boundary"] = created_at_boundary
         if event in {"before_build", "released"} and (
@@ -2412,17 +2530,43 @@ def _run_task041_balh_candidate_setup(
                     "substage": "side_lifecycle",
                     "event": event,
                     "lifecycle_boundary": record,
+                    **(
+                        {}
+                        if active_backend is None
+                        else {"p4_backend": active_backend}
+                    ),
                 },
             )
         return record
 
-    def build_side(side: str, system: Any) -> Any:
+    def build_side(
+        side: str,
+        system: Any,
+        *,
+        p4_backend_override: str | None = None,
+        support_policy_override: str | None = None,
+        construction_audit_override: str | None = None,
+    ) -> Any:
+        selected_backend = p4_backend_override or p4_inverse_backend
+        selected_support_policy = support_policy_override or support_policy
+        selected_construction_audit = (
+            construction_audit
+            if construction_audit_override is None
+            else construction_audit_override
+        )
+        if p4_backend_override is not None:
+            active_backend_by_side[side] = selected_backend
         marker_callback(
             f"{side}_factor_setup_begin",
             {
                 "source": "build_side_balanced_inverse",
                 "max_it": 128,
                 "rtol": 1.0e-2,
+                **(
+                    {}
+                    if p4_backend_override is None
+                    else {"p4_backend": selected_backend}
+                ),
             },
         )
         inverse = build_side_balanced_inverse(
@@ -2439,10 +2583,10 @@ def _run_task041_balh_candidate_setup(
                 if transfer_optimization_profile is not None
                 else performance_profile
             ),
-            p4_inverse_backend=p4_inverse_backend,
-            support_policy=support_policy,
+            p4_inverse_backend=selected_backend,
+            support_policy=selected_support_policy,
             lifecycle_callback=(
-                side_lifecycle_callback(side)
+                side_lifecycle_callback(side, p4_backend_override)
                 if detailed_timing
                 or side_setup_schedule == TASK041_SEQUENTIAL_COMPONENT_SCHEDULE
                 else None
@@ -2459,7 +2603,7 @@ def _run_task041_balh_candidate_setup(
             )
         side_diagnostics_before[side] = dict(inverse.diagnostics)
         p4_diagnostics = side_diagnostics_before[side].get("p4_factor")
-        if construction_audit is not None:
+        if selected_construction_audit is not None:
             if not isinstance(p4_diagnostics, Mapping):
                 raise Task041ModePrepError(
                     f"{side} p4 factor diagnostics are unavailable for backend audit"
@@ -2477,29 +2621,29 @@ def _run_task041_balh_candidate_setup(
                 if local_transfer_audit.get("reference_entity_trace_v1") is True
                 else None
             )
-            if actual_backend != p4_inverse_backend:
+            if actual_backend != selected_backend:
                 raise Task041ModePrepError(
-                    f"{side} requested p4 backend {p4_inverse_backend!r}, "
+                    f"{side} requested p4 backend {selected_backend!r}, "
                     f"actual factor schema resolved to {actual_backend!r}"
                 )
-            if actual_support_policy != support_policy:
+            if actual_support_policy != selected_support_policy:
                 raise Task041ModePrepError(
-                    f"{side} requested support policy {support_policy!r}, "
+                    f"{side} requested support policy {selected_support_policy!r}, "
                     f"actual owner policy is {actual_support_policy!r}"
                 )
             if (
-                p4_inverse_backend == "cell_condensed"
+                selected_backend == "cell_condensed"
                 and actual_construction != "reference_entity_trace_v1"
             ):
                 raise Task041ModePrepError(
                     f"{side} cell-condensed transfer lacks reference_entity_trace_v1"
                 )
             side_diagnostics_before[side]["task041_backend_contract"] = {
-                "requested_backend": p4_inverse_backend,
+                "requested_backend": selected_backend,
                 "actual_backend": actual_backend,
-                "requested_support_policy": support_policy,
+                "requested_support_policy": selected_support_policy,
                 "actual_support_policy": actual_support_policy,
-                "requested_construction_audit": construction_audit,
+                "requested_construction_audit": selected_construction_audit,
                 "actual_construction_audit": actual_construction,
                 "factor_schema": p4_diagnostics.get("schema"),
                 "factor_rows": {
@@ -2513,7 +2657,10 @@ def _run_task041_balh_candidate_setup(
                     )
                 },
             }
-        if rank_numa_stage_callback is not None:
+        if (
+            rank_numa_stage_callback is not None
+            and selected_backend == p4_inverse_backend
+        ):
             transfer = inverse._owner_transfer
             rank_numa_stage_callback(
                 "p4_ready",
@@ -2541,6 +2688,7 @@ def _run_task041_balh_candidate_setup(
             lifecycle_boundary = sequential_boundary(
                 side,
                 "ready",
+                p4_backend=p4_backend_override,
             )
         marker_callback(
             f"{side}_F_ready",
@@ -2550,6 +2698,11 @@ def _run_task041_balh_candidate_setup(
             f"{side}_factor_ready",
             {
                 "source": "build_side_balanced_inverse",
+                **(
+                    {}
+                    if p4_backend_override is None
+                    else {"p4_backend": selected_backend}
+                ),
                 "diagnostics": side_diagnostics_before[side],
                 **(
                     {}
@@ -2610,7 +2763,10 @@ def _run_task041_balh_candidate_setup(
     ) -> tuple[str, dict[str, Any]]:
         return _task041_common_failure_details(exception, inverse)
 
-    def shared_layout_instance_id(side: str) -> str:
+    def shared_layout_instance_id(
+        side: str,
+        purpose: str = "common_layout_equivalence",
+    ) -> str:
         existing = layout_instance_ids.get(side)
         if existing is not None:
             return existing
@@ -2618,7 +2774,7 @@ def _run_task041_balh_candidate_setup(
         if comm.rank == 0:
             seed = (
                 f"{audit_path.resolve()}|{side}|"
-                "task041.common_layout_equivalence.layout.v1"
+                f"task041.{purpose}.layout.v1"
             )
             candidate = hashlib.sha256(seed.encode("utf-8")).hexdigest()
         candidate = comm.bcast(candidate, root=0)
@@ -2671,6 +2827,7 @@ def _run_task041_balh_candidate_setup(
         *,
         write: bool,
         layout_instance_id: str | None = None,
+        purpose: str = "common_layout_equivalence",
     ) -> dict[str, Any]:
         local: dict[str, Any] | None = None
         local_error: str | None = None
@@ -2941,11 +3098,9 @@ def _run_task041_balh_candidate_setup(
         ]
         if errors:
             failure = {"side": side, "errors": errors}
-            failure_evidence.setdefault("common_layout_equivalence", {})[
-                side
-            ] = failure
+            failure_evidence.setdefault(purpose, {})[side] = failure
             _raise_common_error(
-                f"common-layout {side} evidence is incomplete",
+                f"{purpose} {side} layout evidence is incomplete",
                 "PAIRING_SETUP_FAILURE",
                 failure,
             )
@@ -2956,7 +3111,7 @@ def _run_task041_balh_candidate_setup(
             _jsonable(by_rank), sort_keys=True, separators=(",", ":")
         ).encode("utf-8")
         payload = {
-            "schema": "task041.common_layout_equivalence.layout.v1",
+            "schema": f"task041.{purpose}.layout.v1",
             "side": side,
             "comm_size": int(comm.size),
             "layout_instance_id": (
@@ -2967,7 +3122,7 @@ def _run_task041_balh_candidate_setup(
             "ownership_semantics": "rank-local existing PETSc ownership; no full-vector gather",
         }
         if write:
-            layout_root = audit_path.with_name("common_layout_equivalence")
+            layout_root = audit_path.with_name(purpose)
             if comm.rank == 0:
                 layout_root.mkdir(parents=True, exist_ok=True)
             comm.Barrier()
@@ -4042,6 +4197,9 @@ def _run_task041_balh_candidate_setup(
             "heap_cleanup": heap_cleanup,
             "lifecycle_boundary": lifecycle_boundary,
         }
+        active_backend = active_backend_by_side.get(side)
+        if active_backend is not None:
+            record["p4_backend"] = active_backend
         sequential_side_records[side] = record
         marker_callback(
             f"{side}_construction_cleanup",
@@ -4050,11 +4208,17 @@ def _run_task041_balh_candidate_setup(
                 "substage": "side_construction",
                 "event": "released",
                 "owner": "SideBalancedInverse",
+                **(
+                    {}
+                    if active_backend is None
+                    else {"p4_backend": active_backend}
+                ),
                 "release_gate": release_gate,
                 "lifecycle_boundary": lifecycle_boundary,
                 "diagnostics": diagnostics,
             },
         )
+        active_backend_by_side.pop(side, None)
         return record
 
     def representative_apply_gate(
@@ -4202,7 +4366,10 @@ def _run_task041_balh_candidate_setup(
                     "recomputed_relative_residual": 1.0e-2,
                 },
             }
-            if failure_classification_prefix == "COMMON_LAYOUT_EQUIVALENCE":
+            if failure_classification_prefix in {
+                "COMMON_LAYOUT_EQUIVALENCE",
+                "P4_BACKEND_PAIR",
+            }:
                 classification = (
                     "NUMERICAL_GATE_FAIL"
                     if numerical_gate_failure
@@ -4228,6 +4395,12 @@ def _run_task041_balh_candidate_setup(
 
     def run_representative_rhs_probe(
         entries_override: Sequence[Mapping[str, Any]] | None = None,
+        *,
+        rhs_vectors: Mapping[int, PETSc.Vec] | None = None,
+        p4_backend: str | None = None,
+        backend_pair: bool = False,
+        retain_responses: bool = False,
+        retained_responses_out: dict[int, PETSc.Vec] | None = None,
     ) -> dict[str, Any]:
         if representative_rhs_contract is None:
             raise RuntimeError("representative RHS contract is missing")
@@ -4237,6 +4410,9 @@ def _run_task041_balh_candidate_setup(
             else list(entries_override)
         )
         records: list[dict[str, Any]] = []
+        retained_responses = (
+            {} if retained_responses_out is None else retained_responses_out
+        )
         mode_count = int(setup.coupling.mode_count_per_direction)
         if mode_count != int(representative_rhs_contract["mode_count"]):
             raise Task041ModePrepError(
@@ -4251,6 +4427,7 @@ def _run_task041_balh_candidate_setup(
             modal[formal_column] = PETSc.ScalarType(1.0)
             rhs: PETSc.Vec | None = None
             response: PETSc.Vec | None = None
+            rhs_owned = rhs_vectors is None
             rhs_array: np.ndarray | None = None
             response_array: np.ndarray | None = None
             audit_start = len(representative_records[side])
@@ -4260,10 +4437,23 @@ def _run_task041_balh_candidate_setup(
                 "source_audit_index": int(entry["audit_index"]),
                 "formal_column": formal_column,
                 "branch_ordinal": int(entry["branch_ordinal"]),
+                **(
+                    {}
+                    if p4_backend is None
+                    else {
+                        "p4_backend": p4_backend,
+                        "p4_backend_pair": bool(backend_pair),
+                    }
+                ),
             }
             try:
-                rhs = modal_coupling_action(side, setup.coupling, modal)
+                rhs = (
+                    modal_coupling_action(side, setup.coupling, modal)
+                    if rhs_vectors is None
+                    else rhs_vectors[ordinal]
+                )
                 response = getattr(setup, side).A.createVecLeft()
+                apply_started = time.monotonic()
                 try:
                     side_inverses[side].apply(rhs, response)
                 except BaseException:
@@ -4277,16 +4467,88 @@ def _run_task041_balh_candidate_setup(
                             ),
                         }
                     raise
+                apply_wall_max_rank = (
+                    float(
+                        comm.allreduce(
+                            max(0.0, time.monotonic() - apply_started),
+                            op=MPI.MAX,
+                        )
+                    )
+                    if backend_pair
+                    else None
+                )
                 if len(representative_records[side]) != audit_start + 1:
                     raise Task041ModePrepError(
                         f"representative RHS {ordinal} did not receive one apply audit"
                     )
                 apply_audit = dict(representative_records[side][-1])
-                representative_apply_gate(entry, apply_audit)
+                representative_apply_gate(
+                    entry,
+                    apply_audit,
+                    evidence_name=(
+                        f"p4_backend_pair_{p4_backend}"
+                        if backend_pair and p4_backend is not None
+                        else "representative_rhs"
+                    ),
+                    failure_classification_prefix=(
+                        "P4_BACKEND_PAIR"
+                        if backend_pair
+                        else "REPRESENTATIVE_RHS"
+                    ),
+                )
+                if (
+                    backend_pair
+                    and p4_backend == p4_inverse_backend
+                    and branch == "positive"
+                    and side not in rank_numa_response_sides
+                    and rank_numa_stage_callback is not None
+                ):
+                    rank_numa_stage_callback(
+                        "first_response",
+                        {"rhs": rhs, "target": response},
+                        {
+                            "side": side,
+                            "label": "modal_traction_positive",
+                            "p4_backend": p4_backend,
+                            "last_apply": dict(
+                                side_inverses[side].diagnostics.get(
+                                    "last_apply", {}
+                                )
+                            ),
+                        },
+                    )
+                    rank_numa_response_sides.add(side)
+                p4_apply_record = None
+                if backend_pair:
+                    p4_factor_diagnostics = side_inverses[side].diagnostics.get(
+                        "p4_factor"
+                    )
+                    if not isinstance(p4_factor_diagnostics, Mapping):
+                        raise Task041ModePrepError(
+                            f"{side} {p4_backend or 'selected'} apply has no P4 diagnostics"
+                        )
+                    p4_apply_record = {
+                        "schema": p4_factor_diagnostics.get("schema"),
+                        "factor_rows": {
+                            key: p4_factor_diagnostics.get(key)
+                            for key in (
+                                "full_storage_rows",
+                                "active_trace_rows",
+                                "interior_rows",
+                                "port_rows",
+                                "retained_matrix_rows",
+                            )
+                        },
+                        "last_solve": p4_factor_diagnostics.get("last_solve"),
+                    }
                 ownership = tuple(int(value) for value in response.getOwnershipRange())
                 shard_directory = (
                     audit_path.parent
-                    / "representative_rhs"
+                    / (
+                        "representative_rhs"
+                        if p4_backend is None
+                        else Path("p4_backend_pair") / p4_backend
+                    )
                     / f"{ordinal:02d}_{side}_{branch}"
                 )
                 response_array = np.asarray(response.getArray(readonly=True))
@@ -4316,6 +4578,11 @@ def _run_task041_balh_candidate_setup(
                         "side": side,
                         "formal_column": formal_column,
                         "branch_ordinal": int(entry["branch_ordinal"]),
+                        **(
+                            {}
+                            if p4_backend is None
+                            else {"p4_backend": p4_backend}
+                        ),
                     },
                     metadata={
                         "scope": "representative_rhs",
@@ -4332,6 +4599,14 @@ def _run_task041_balh_candidate_setup(
                         "owned_rhs_sha256": rhs_sha256,
                         "owned_response_sha256": response_sha256,
                         "apply_audit": _jsonable(apply_audit),
+                        **(
+                            {}
+                            if not backend_pair
+                            else {
+                                "p4_factor_audit": _jsonable(p4_apply_record),
+                                "call_wall_max_rank_seconds": apply_wall_max_rank,
+                            }
+                        ),
                     },
                     ownership_range=ownership,
                     comm=comm,
@@ -4352,6 +4627,16 @@ def _run_task041_balh_candidate_setup(
                     "dtype": str(response_array.dtype),
                     "owned_rhs_sha256": rhs_sha256,
                     "owned_response_sha256": response_sha256,
+                    **(
+                        {}
+                        if p4_backend is None
+                        else {"p4_backend": p4_backend}
+                    ),
+                    **(
+                        {}
+                        if rhs_vectors is None
+                        else {"rhs_vector_python_id": id(rhs)}
+                    ),
                     "packet_manifest_sha256": representative_rhs_contract[
                         "packet_binding"
                     ]["packet_manifest_sha256"],
@@ -4370,13 +4655,29 @@ def _run_task041_balh_candidate_setup(
                         "formal_column": formal_column,
                         "branch_ordinal": int(entry["branch_ordinal"]),
                         "status": "completed",
+                        **(
+                            {}
+                            if p4_backend is None
+                            else {"p4_backend": p4_backend}
+                        ),
                         "audit": _jsonable(apply_audit),
+                        **(
+                            {}
+                            if not backend_pair
+                            else {
+                                "p4_factor_audit": _jsonable(p4_apply_record),
+                                "call_wall_max_rank_seconds": apply_wall_max_rank,
+                            }
+                        ),
                         "artifact": packet,
                         "rank_shards": sorted(
                             rank_records or [], key=lambda row: int(row["rank"])
                         ),
                     }
                 record = comm.bcast(record, root=0)
+                if retain_responses:
+                    retained_responses[ordinal] = response
+                    response = None
                 records.append(record)
                 marker_callback(
                     "system_setup_stage",
@@ -4385,6 +4686,11 @@ def _run_task041_balh_candidate_setup(
                         "ordinal": ordinal,
                         "side": side,
                         "formal_column": formal_column,
+                        **(
+                            {}
+                            if p4_backend is None
+                            else {"p4_backend": p4_backend}
+                        ),
                         "status": "completed",
                     },
                 )
@@ -4394,9 +4700,9 @@ def _run_task041_balh_candidate_setup(
                 rhs_array = None
                 if response is not None:
                     response.destroy()
-                if rhs is not None:
+                if rhs is not None and rhs_owned:
                     rhs.destroy()
-        return {
+        result = {
             "scope": "representative_rhs",
             "status": "completed",
             "expected_count": len(entries),
@@ -4411,6 +4717,11 @@ def _run_task041_balh_candidate_setup(
             "packet_binding": dict(representative_rhs_contract["packet_binding"]),
             "full_formal": "not_run",
         }
+        if p4_backend is not None:
+            result["p4_backend"] = p4_backend
+        if retain_responses and retained_responses_out is None:
+            result["_retained_responses"] = retained_responses
+        return result
 
     def write_common_variant_packet(
         entry: Mapping[str, Any],
@@ -4531,6 +4842,124 @@ def _run_task041_balh_candidate_setup(
                 else None
             ),
         }
+
+    def compare_p4_backend_responses(
+        side_operator: PETSc.Mat,
+        rhs: PETSc.Vec,
+        full_response: PETSc.Vec,
+        condensed_response: PETSc.Vec,
+    ) -> dict[str, Any]:
+        delta = condensed_response.duplicate()
+        action_delta = side_operator.createVecLeft()
+        full_action = side_operator.createVecLeft()
+        condensed_action = side_operator.createVecLeft()
+        try:
+            condensed_response.copy(delta)
+            delta.axpy(PETSc.ScalarType(-1.0), full_response)
+            side_operator.mult(delta, action_delta)
+            side_operator.mult(full_response, full_action)
+            side_operator.mult(condensed_response, condensed_action)
+            full_action.scale(PETSc.ScalarType(-1.0))
+            full_action.axpy(PETSc.ScalarType(1.0), rhs)
+            condensed_action.scale(PETSc.ScalarType(-1.0))
+            condensed_action.axpy(PETSc.ScalarType(1.0), rhs)
+            finite = bool(
+                np.isfinite(delta.getArray(readonly=True)).all()
+                and np.isfinite(action_delta.getArray(readonly=True)).all()
+                and np.isfinite(full_action.getArray(readonly=True)).all()
+                and np.isfinite(condensed_action.getArray(readonly=True)).all()
+            )
+            finite = bool(comm.allreduce(finite, op=MPI.LAND))
+            full_norm = float(full_response.norm())
+            condensed_norm = float(condensed_response.norm())
+            rhs_norm = float(rhs.norm())
+            response_delta_norm = float(delta.norm())
+            action_delta_norm = float(action_delta.norm())
+            full_residual_norm = float(full_action.norm())
+            condensed_residual_norm = float(condensed_action.norm())
+            response_denominator = max(full_norm, condensed_norm)
+
+            def relative(numerator: float, denominator: float) -> float | None:
+                return (
+                    numerator / denominator
+                    if denominator > 0.0
+                    else 0.0
+                    if numerator == 0.0
+                    else None
+                )
+
+            e_x = relative(response_delta_norm, response_denominator)
+            e_A = relative(action_delta_norm, rhs_norm)
+            full_relative = relative(full_residual_norm, rhs_norm)
+            condensed_relative = relative(condensed_residual_norm, rhs_norm)
+            finite = bool(
+                np.isfinite(
+                    (
+                        full_norm,
+                        condensed_norm,
+                        rhs_norm,
+                        response_delta_norm,
+                        action_delta_norm,
+                        full_residual_norm,
+                        condensed_residual_norm,
+                    )
+                ).all()
+                and all(
+                    value is not None and np.isfinite(value)
+                    for value in (e_x, e_A, full_relative, condensed_relative)
+                )
+            )
+            metrics = {
+                "e_x": e_x,
+                "e_A": e_A,
+                "response_delta_norm": response_delta_norm,
+                "action_delta_norm": action_delta_norm,
+                "response_norms": {
+                    "full": full_norm,
+                    "cell_condensed": condensed_norm,
+                    "denominator": response_denominator,
+                },
+                "rhs_norm": rhs_norm,
+                "side_residuals": {
+                    "full_norm": full_residual_norm,
+                    "full_relative": full_relative,
+                    "cell_condensed_norm": condensed_residual_norm,
+                    "cell_condensed_relative": condensed_relative,
+                },
+                "limits": {
+                    "e_x": 1.0e-8,
+                    "e_A": 1.0e-8,
+                    "side_relative_residual": 1.0e-2,
+                },
+                "finite": finite,
+                "pass": bool(
+                    finite
+                    and e_x <= 1.0e-8
+                    and e_A <= 1.0e-8
+                    and full_relative <= 1.0e-2
+                    and condensed_relative <= 1.0e-2
+                ),
+            }
+            passed = bool(
+                comm.allreduce(
+                    metrics["pass"],
+                    op=MPI.LAND,
+                )
+            )
+            return {
+                "operator_scope": "side_A",
+                "delta_definition": "cell_condensed_response - full_response",
+                "action_delta_definition": "side_A.mult(response_delta)",
+                "residual_definition": "rhs - side_A.mult(response)",
+                **metrics,
+                "finite": finite and metrics["finite"],
+                "pass": passed,
+            }
+        finally:
+            condensed_action.destroy()
+            full_action.destroy()
+            action_delta.destroy()
+            delta.destroy()
 
     def compare_common_responses(
         side_operator: PETSc.Mat,
@@ -5413,15 +5842,21 @@ def _run_task041_balh_candidate_setup(
                 }
             )
         common_mode = comparison_mode == TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE
+        backend_pair = representative.get("p4_backend_pairing")
+        backend_pair_mode = isinstance(backend_pair, Mapping)
         result = {
             "schema": (
                 "task041.side_balh.common_layout_equivalence_setup.v1"
                 if common_mode
+                else "task041.side_balh.p4_backend_pair_setup.v1"
+                if backend_pair_mode
                 else "task041.side_balh.representative_rhs_setup.v1"
             ),
             "status": (
                 "common_layout_equivalence_completed"
                 if common_mode
+                else "p4_backend_pair_completed"
+                if backend_pair_mode
                 else "representative_rhs_completed"
             ),
             "qualification_scope": qualification_scope,
@@ -5429,7 +5864,11 @@ def _run_task041_balh_candidate_setup(
                 "task041_balh_side_inverse_response_fgmres32"
             ),
             "qualification": (
-                "comparison_only" if common_mode else "diagnostic_component_only"
+                "comparison_only"
+                if common_mode
+                else "backend_comparison_only"
+                if backend_pair_mode
+                else "diagnostic_component_only"
             ),
             "admission_audit": dict(admission_payload),
             "representative_rhs": (
@@ -5483,6 +5922,8 @@ def _run_task041_balh_candidate_setup(
             result["side_setup"] = dict(schedule_summary)
         if common_mode:
             result["comparison_mode"] = comparison_mode
+        if backend_pair_mode:
+            result["p4_backend_pair"] = dict(backend_pair)
         if rank_numa_evidence is not None:
             result["rank_numa_evidence"] = list(rank_numa_evidence)
         return result
@@ -5546,58 +5987,511 @@ def _run_task041_balh_candidate_setup(
                         f"global operator identity failed at {label}"
                     )
 
-            representative_parts: list[Mapping[str, Any]] = []
-            for side in ("bottom", "top"):
-                require_global_identity(f"{side}_before_build")
-                sequential_boundary(side, "before_build")
-                build_side(side, getattr(setup, side))
-                live_at_build = {
-                    "p4_factor_count": int(
-                        side_diagnostics_before[side].get("p4_factor_count", 0)
-                    ),
-                    "nested_iterative_ksp_count": int(
-                        side_diagnostics_before[side].get(
-                            "nested_iterative_ksp_count", 0
-                        )
+            def pair_wall(started_at: float) -> float:
+                return float(
+                    comm.allreduce(
+                        max(0.0, time.monotonic() - started_at), op=MPI.MAX
+                    )
+                )
+
+            def pair_resource_checkpoint(label: str) -> dict[str, Any]:
+                ranks = comm.allgather(_resource_snapshot())
+                return {
+                    "label": label,
+                    "source": "task041_exact_side_workflow._resource_snapshot",
+                    "scope": "one process-tree/job/host sample per rank",
+                    "ranks": ranks,
+                    "aggregate_peak_authority": "public supervisor resource summary",
+                }
+
+            def pair_parent_identity(side: str) -> list[dict[str, Any]]:
+                system = getattr(setup, side)
+                local = {
+                    "rank": int(comm.rank),
+                    "python_object_ids": {
+                        "setup": id(setup),
+                        "global_layout": id(layout),
+                        "coupling": id(setup.coupling),
+                        "side_system": id(system),
+                        "mesh": id(system.V.mesh),
+                        "function_space": id(system.V),
+                        "side_operator": id(system.A),
+                    },
+                    "source_sha": (
+                        identity.get("source_sha")
+                        if isinstance(identity, Mapping)
+                        else None
                     ),
                 }
-                if comparison_mode == TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE:
-                    first_entry = entries_by_side[side][0]
-                    modal = np.zeros(
-                        2 * int(setup.coupling.mode_count_per_direction),
-                        dtype=PETSc.ScalarType,
+                return sorted(
+                    comm.allgather(local), key=lambda item: int(item["rank"])
+                )
+
+            def run_fixed_p4_backend_pair(
+                entries: Sequence[Mapping[str, Any]], side: str
+            ) -> tuple[dict[str, Any], dict[str, Any]]:
+                system = getattr(setup, side)
+                rhs_vectors: dict[int, PETSc.Vec] = {}
+                retained_responses: dict[str, dict[int, PETSc.Vec]] = {
+                    "full": {},
+                    "cell_condensed": {},
+                }
+                backend_state: dict[str, dict[str, Any]] = {}
+                backend_probe_entries: dict[str, list[Mapping[str, Any]]] = {}
+                rhs_started = time.monotonic()
+                try:
+                    for entry in entries:
+                        ordinal = int(entry["ordinal"])
+                        modal = np.zeros(
+                            2 * int(setup.coupling.mode_count_per_direction),
+                            dtype=PETSc.ScalarType,
+                        )
+                        modal[int(entry["formal_column"])] = PETSc.ScalarType(1.0)
+                        vector = modal_coupling_action(
+                            side, setup.coupling, modal
+                        )
+                        rhs_vectors[ordinal] = vector
+                    rhs_build_wall = pair_wall(rhs_started)
+
+                    def build_backend(backend: str) -> Any:
+                        backend_started = time.monotonic()
+                        resources = [
+                            pair_resource_checkpoint("before_" + backend)
+                        ]
+                        parent_identity = pair_parent_identity(side)
+                        if backend == "cell_condensed" and (
+                            parent_identity
+                            != backend_state["full"][
+                                "parent_setup_identity_by_rank"
+                            ]
+                        ):
+                            raise Task041ModePrepError(
+                                f"{side} setup objects changed before {backend} build"
+                            )
+                        require_global_identity(
+                            f"{side}_{backend}_before_build"
+                        )
+                        sequential_boundary(
+                            side, "before_build", p4_backend=backend
+                        )
+                        build_started = time.monotonic()
+                        inverse = build_side(
+                            side,
+                            system,
+                            p4_backend_override=backend,
+                            support_policy_override="entity_closure",
+                            construction_audit_override=(
+                                "reference_entity_trace_v1"
+                            ),
+                        )
+                        build_wall = pair_wall(build_started)
+                        layout_started = time.monotonic()
+                        layout_record = capture_layout(
+                            side,
+                            inverse,
+                            write=False,
+                            layout_instance_id=shared_layout_instance_id(
+                                side, "p4_backend_pair"
+                            ),
+                            purpose="p4_backend_pair",
+                        )
+                        layout_identity = _task041_backend_pair_layout_identity(
+                            layout_record
+                        )
+                        if backend == "cell_condensed" and (
+                            layout_identity["identity_sha256"]
+                            != backend_state["full"]["layout_identity"][
+                                "identity_sha256"
+                            ]
+                        ):
+                            raise Task041ModePrepError(
+                                f"{side} mesh/MPC/layout changed for {backend}"
+                            )
+                        layout_wall = pair_wall(layout_started)
+                        admission_started = time.monotonic()
+                        admission = dict(admit_side(side))
+                        admission_wall = pair_wall(admission_started)
+                        require_global_identity(
+                            f"{side}_{backend}_after_admission"
+                        )
+                        contract = dict(
+                            side_diagnostics_before[side][
+                                "task041_backend_contract"
+                            ]
+                        )
+                        diagnostics = side_diagnostics_before[side]
+                        backend_state[backend] = {
+                            "backend": backend,
+                            "actual_backend": contract["actual_backend"],
+                            "factor_schema": contract["factor_schema"],
+                            "factor_rows": dict(contract["factor_rows"]),
+                            "support_policy": contract["actual_support_policy"],
+                            "construction_audit": contract[
+                                "actual_construction_audit"
+                            ],
+                            "live_at_build": {
+                                "p4_factor_count": diagnostics.get(
+                                    "p4_factor_count"
+                                ),
+                                "nested_iterative_ksp_count": diagnostics.get(
+                                    "nested_iterative_ksp_count"
+                                ),
+                            },
+                            "build_wall_max_rank_seconds": build_wall,
+                            "layout_identity_wall_max_rank_seconds": layout_wall,
+                            "admission_wall_max_rank_seconds": admission_wall,
+                            "admission": admission,
+                            "parent_setup_identity_by_rank": parent_identity,
+                            "layout_identity": layout_identity,
+                            "resources": resources,
+                            "backend_started_monotonic": backend_started,
+                        }
+                        return inverse
+
+                    def apply_backend(
+                        backend: str, _inverse: Any
+                    ) -> Mapping[str, Any]:
+                        apply_started = time.monotonic()
+                        probe = run_representative_rhs_probe(
+                            entries,
+                            rhs_vectors=rhs_vectors,
+                            p4_backend=backend,
+                            backend_pair=True,
+                            retain_responses=True,
+                            retained_responses_out=retained_responses[backend],
+                        )
+                        apply_wall = pair_wall(apply_started)
+                        if probe["completed_count"] != len(entries):
+                            raise Task041ModePrepError(
+                                f"{side} {backend} fixed RHS calls are incomplete"
+                            )
+                        require_global_identity(
+                            f"{side}_{backend}_before_release"
+                        )
+                        sequential_boundary(
+                            side, "before_release", p4_backend=backend
+                        )
+                        backend_state[backend]["apply_wall_max_rank_seconds"] = (
+                            apply_wall
+                        )
+                        if backend == "full":
+                            backend_state[backend]["apply_calls"] = probe["entries"]
+                        backend_probe_entries[backend] = probe["entries"]
+                        return {"probe": probe, "apply_wall": apply_wall}
+
+                    def release_backend(
+                        backend: str, _inverse: Any
+                    ) -> Mapping[str, Any]:
+                        release_started = time.monotonic()
+                        release_record = dict(release_side(side))
+                        require_global_identity(
+                            f"{side}_{backend}_after_release"
+                        )
+                        resources = backend_state[backend]["resources"]
+                        resources.append(pair_resource_checkpoint("after_" + backend))
+                        release_wall = pair_wall(release_started)
+                        release_gate = dict(release_record.get("release_gate", {}))
+                        diagnostics = dict(release_record.get("diagnostics", {}))
+                        p4_diagnostics = dict(diagnostics.get("p4_factor", {}))
+                        destroy_counts = {
+                            "side_inverse_destroyed": diagnostics.get(
+                                "destroyed"
+                            ),
+                            "side_ksp_destroy_count": diagnostics.get(
+                                "nested_ksp_destroy_count"
+                            ),
+                            "p4_factor_destroy_count": diagnostics.get(
+                                "p4_factor_destroy_count"
+                            ),
+                            "p4_factor_owner_destroy_count": p4_diagnostics.get(
+                                "factor_destroy_count"
+                            ),
+                            "p4_factor_count_after_destroy": diagnostics.get(
+                                "p4_factor_count"
+                            ),
+                            "nested_ksp_count_after_destroy": diagnostics.get(
+                                "nested_iterative_ksp_count"
+                            ),
+                            "side_ksp_destroyed": diagnostics.get(
+                                "ksp_destroyed"
+                            ),
+                        }
+                        release_pass = bool(
+                            release_gate.get("pass") is True
+                            and destroy_counts["side_inverse_destroyed"] is True
+                            and destroy_counts["side_ksp_destroy_count"] == 1
+                            and destroy_counts["p4_factor_destroy_count"] == 1
+                            and destroy_counts["p4_factor_owner_destroy_count"] == 1
+                            and destroy_counts["p4_factor_count_after_destroy"] == 0
+                            and destroy_counts["nested_ksp_count_after_destroy"] == 0
+                            and destroy_counts["side_ksp_destroyed"] is True
+                        )
+                        release = {
+                            "pass": release_pass,
+                            "owner_destroy": (
+                                "SideBalancedInverse.destroy -> p4 factor, "
+                                "factor matrix/solver, nested side KSP"
+                            ),
+                            "release_gate": release_gate,
+                            "destroy_counts": destroy_counts,
+                            "factor_schema_after_destroy": p4_diagnostics.get(
+                                "schema"
+                            ),
+                            "release_wall_max_rank_seconds": release_wall,
+                            "backend_wall_max_rank_seconds": pair_wall(
+                                backend_state[backend][
+                                    "backend_started_monotonic"
+                                ]
+                            ),
+                        }
+                        backend_state[backend]["release"] = release
+                        backend_state[backend]["resources"] = resources
+                        backend_state[backend].pop(
+                            "backend_started_monotonic", None
+                        )
+                        backend_state[backend]["status"] = "released"
+                        return release
+
+                    backend_phase_results: dict[str, dict[str, Any]] = {}
+                    for backend in ("full", "cell_condensed"):
+                        inverse = build_backend(backend)
+                        try:
+                            phase_result = dict(apply_backend(backend, inverse))
+                        finally:
+                            release = dict(release_backend(backend, inverse))
+                        if release.get("pass") is not True:
+                            raise Task041ModePrepError(
+                                f"{backend} P4 components were not destroyed before the next backend"
+                            )
+                        backend_phase_results[backend] = {
+                            "result": phase_result,
+                            "release": release,
+                        }
+                    entry_comparisons: list[dict[str, Any]] = []
+                    for entry in entries:
+                        ordinal = int(entry["ordinal"])
+                        full_record = next(
+                            item
+                            for item in backend_probe_entries["full"]
+                            if int(item["ordinal"]) == ordinal
+                        )
+                        condensed_record = next(
+                            item
+                            for item in backend_probe_entries["cell_condensed"]
+                            if int(item["ordinal"]) == ordinal
+                        )
+                        full_shards = {
+                            int(item["rank"]): item
+                            for item in full_record["rank_shards"]
+                        }
+                        condensed_shards = {
+                            int(item["rank"]): item
+                            for item in condensed_record["rank_shards"]
+                        }
+                        rhs_identity_pass = bool(
+                            full_shards.keys() == condensed_shards.keys()
+                            and all(
+                                full_shards[rank].get("owned_rhs_sha256")
+                                == condensed_shards[rank].get("owned_rhs_sha256")
+                                and full_shards[rank].get(
+                                    "rhs_vector_python_id"
+                                )
+                                == condensed_shards[rank].get(
+                                    "rhs_vector_python_id"
+                                )
+                                for rank in full_shards
+                            )
+                        )
+                        rhs = rhs_vectors[ordinal]
+                        comparison = compare_p4_backend_responses(
+                            system.A,
+                            rhs,
+                            retained_responses["full"][ordinal],
+                            retained_responses["cell_condensed"][ordinal],
+                        )
+                        comparison_pass = bool(
+                            comm.allreduce(
+                                rhs_identity_pass and comparison["pass"],
+                                op=MPI.LAND,
+                            )
+                        )
+                        entry_comparisons.append(
+                            {
+                                "ordinal": ordinal,
+                                "rhs_identity_pass": rhs_identity_pass,
+                                "comparison": comparison,
+                                "pass": comparison_pass,
+                            }
+                        )
+
+                    side_pass = bool(
+                        all(item["pass"] for item in entry_comparisons)
+                        and backend_state["full"]["layout_identity"][
+                            "identity_sha256"
+                        ]
+                        == backend_state["cell_condensed"]["layout_identity"][
+                            "identity_sha256"
+                        ]
+                        and backend_state["full"][
+                            "parent_setup_identity_by_rank"
+                        ]
+                        == backend_state["cell_condensed"][
+                            "parent_setup_identity_by_rank"
+                        ]
+                        and list(backend_phase_results)
+                        == ["full", "cell_condensed"]
+                        and all(
+                            backend_phase_results[backend]["release"].get("pass")
+                            is True
+                            for backend in ("full", "cell_condensed")
+                        )
                     )
-                    modal[int(first_entry["formal_column"])] = PETSc.ScalarType(1.0)
-                    common_first_rhs_by_side[side] = modal_coupling_action(
-                        side, setup.coupling, modal
-                    )
-                    common_first_entry_by_side[side] = first_entry
-                admit_side(side)
-                require_global_identity(f"{side}_after_admission")
-                side_result = (
-                    run_common_layout_equivalence_probe(
+                    pair_record = {
+                        "schema": "task041.p4_backend_pair.side.v1",
+                        "side": side,
+                        "status": "passed" if side_pass else "failed",
+                        "backend_order": list(backend_phase_results),
+                        "rhs_count": len(entries),
+                        "rhs_build_wall_max_rank_seconds": rhs_build_wall,
+                        "same_parent_setup_identity": backend_state["full"][
+                            "parent_setup_identity_by_rank"
+                        ]
+                        == backend_state["cell_condensed"][
+                            "parent_setup_identity_by_rank"
+                        ],
+                        "same_mesh_mpc_layout": (
+                            backend_state["full"]["layout_identity"][
+                                "identity_sha256"
+                            ]
+                            == backend_state["cell_condensed"]["layout_identity"][
+                                "identity_sha256"
+                            ]
+                        ),
+                        "backend_phases": backend_state,
+                        "entries": entry_comparisons,
+                        "pass": side_pass,
+                    }
+                    p4_backend_pairs_by_side[side] = pair_record
+                    if not side_pass:
+                        failure_evidence.setdefault("p4_backend_pair", {})[
+                            side
+                        ] = pair_record
+                        error = Task041ModePrepError(
+                            f"{side} fixed RHS backend pair failed a layout, "
+                            "release, side-residual, e_x, or e_A gate"
+                        )
+                        error.failure_classification = "NUMERICAL_GATE_FAIL"
+                        error.failure_evidence = pair_record
+                        raise error
+
+                    cell_condensed_probe = backend_phase_results[
+                        "cell_condensed"
+                    ]["result"]["probe"]
+                    sequential_side_records[side] = {
+                        "side": side,
+                        "status": "full_then_cell_condensed_released",
+                        "live_at_build": dict(
+                            backend_state["cell_condensed"]["live_at_build"]
+                        ),
+                        "admission_pass": all(
+                            backend_state[name]["admission"].get("pass")
+                            is True
+                            for name in ("full", "cell_condensed")
+                        ),
+                        "probe_expected_count": len(entries),
+                        "probe_completed_count": len(entries),
+                        "backend_order": list(backend_phase_results),
+                        "p4_backend_pair_pass": side_pass,
+                    }
+                    return pair_record, cell_condensed_probe
+                finally:
+                    for responses in retained_responses.values():
+                        for response in responses.values():
+                            response.destroy()
+                    for vector in rhs_vectors.values():
+                        vector.destroy()
+
+            representative_parts: list[Mapping[str, Any]] = []
+            for side in ("bottom", "top"):
+                pair_enabled = (
+                    representative_rhs_contract is not None
+                    and comparison_mode == "p4_backend_pair"
+                )
+                if pair_enabled:
+                    columns = [
+                        int(entry["formal_column"])
+                        for entry in entries_by_side[side]
+                    ]
+                    expected_columns = {
+                        "bottom": [207, 15, 671, 493],
+                        "top": [310, 12, 666, 493],
+                    }
+                    if columns != expected_columns[side]:
+                        raise Task041ModePrepError(
+                            f"{side} representative RHS columns changed: {columns}"
+                        )
+                    _pair_record, side_result = run_fixed_p4_backend_pair(
                         entries_by_side[side], side
                     )
-                    if comparison_mode == TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE
-                    else run_representative_rhs_probe(entries_by_side[side])
-                )
+                else:
+                    require_global_identity(f"{side}_before_build")
+                    sequential_boundary(side, "before_build")
+                    build_side(side, getattr(setup, side))
+                    live_at_build = {
+                        "p4_factor_count": int(
+                            side_diagnostics_before[side].get(
+                                "p4_factor_count", 0
+                            )
+                        ),
+                        "nested_iterative_ksp_count": int(
+                            side_diagnostics_before[side].get(
+                                "nested_iterative_ksp_count", 0
+                            )
+                        ),
+                    }
+                    if comparison_mode == TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE:
+                        first_entry = entries_by_side[side][0]
+                        modal = np.zeros(
+                            2 * int(setup.coupling.mode_count_per_direction),
+                            dtype=PETSc.ScalarType,
+                        )
+                        modal[int(first_entry["formal_column"])] = PETSc.ScalarType(
+                            1.0
+                        )
+                        common_first_rhs_by_side[side] = modal_coupling_action(
+                            side, setup.coupling, modal
+                        )
+                        common_first_entry_by_side[side] = first_entry
+                    admit_side(side)
+                    require_global_identity(f"{side}_after_admission")
+                    side_result = (
+                        run_common_layout_equivalence_probe(
+                            entries_by_side[side], side
+                        )
+                        if comparison_mode
+                        == TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE
+                        else run_representative_rhs_probe(
+                            entries_by_side[side]
+                        )
+                    )
                 if side_result["completed_count"] != len(entries_by_side[side]):
                     raise Task041ModePrepError(
                         f"sequential_component {side} probe is incomplete"
                     )
-                sequential_side_records[side] = {
-                    "side": side,
-                    "admission_pass": True,
-                    "probe_expected_count": len(entries_by_side[side]),
-                    "probe_completed_count": int(
-                        side_result["completed_count"]
-                    ),
-                    "live_at_build": live_at_build,
-                }
-                require_global_identity(f"{side}_before_release")
-                sequential_boundary(side, "before_release")
-                release_side(side)
-                require_global_identity(f"{side}_after_release")
+                if not pair_enabled:
+                    sequential_side_records[side] = {
+                        "side": side,
+                        "admission_pass": True,
+                        "probe_expected_count": len(entries_by_side[side]),
+                        "probe_completed_count": int(
+                            side_result["completed_count"]
+                        ),
+                        "live_at_build": live_at_build,
+                    }
+                    require_global_identity(f"{side}_before_release")
+                    sequential_boundary(side, "before_release")
+                    release_side(side)
+                    require_global_identity(f"{side}_after_release")
                 representative_parts.append(side_result)
 
             global_operator_identity = {
@@ -5639,6 +6533,43 @@ def _run_task041_balh_candidate_setup(
             representative = _merge_representative_parts(
                 representative_parts, representative_entries
             )
+            if p4_backend_pairs_by_side:
+                pair_pass = bool(
+                    all(
+                        record.get("pass") is True
+                        for record in p4_backend_pairs_by_side.values()
+                    )
+                    and set(p4_backend_pairs_by_side) == {"bottom", "top"}
+                )
+                representative["p4_backend_pairing"] = {
+                    "schema": "task041.p4_backend_pair.fixed_eight_rhs.v1",
+                    "status": "passed" if pair_pass else "failed",
+                    "qualification": "backend_comparison_only",
+                    "backend_order": ["full", "cell_condensed"],
+                    "fixed_formal_columns": {
+                        "bottom": [207, 15, 671, 493],
+                        "top": [310, 12, 666, 493],
+                    },
+                    "source_sha": (
+                        identity.get("source_sha")
+                        if isinstance(identity, Mapping)
+                        else None
+                    ),
+                    "manifest": {
+                        "path": representative_rhs_contract["path"],
+                        "sha256": representative_rhs_contract["sha256"],
+                        "packet_binding": dict(
+                            representative_rhs_contract["packet_binding"]
+                        ),
+                    },
+                    "sides": dict(p4_backend_pairs_by_side),
+                    "pass": pair_pass,
+                    "full_formal": "not_run",
+                    "resources": {
+                        "phase_samples": "included_per_backend",
+                        "peak_authority": "public supervisor resource summary",
+                    },
+                }
             p4_live = {
                 side: int(
                     record["live_at_build"]["p4_factor_count"]
@@ -6079,7 +7010,7 @@ def run_task041_consumer(
                 )
         elif comparison_mode is not None:
             raise Task041ModePrepError(
-                "common_layout_equivalence requires the representative RHS manifest"
+                "Task041 comparison mode requires the representative RHS manifest"
             )
         effective_limits = dict(contract["limits"])
         effective_limits.update(
@@ -6109,9 +7040,10 @@ def run_task041_consumer(
     started = time.monotonic()
     candidate_audit_path = root / "numerical_output" / (
         "representative_rhs_audits.jsonl"
-        if representative_rhs_contract is not None and comparison_mode is None
+        if representative_rhs_contract is not None
+        and comparison_mode in (None, "p4_backend_pair")
         else "common_layout_equivalence_audits.jsonl"
-        if comparison_mode is not None
+        if comparison_mode == "common_layout_equivalence"
         else "balh_side_rhs_audits.jsonl"
     )
     result: dict[str, Any] = {

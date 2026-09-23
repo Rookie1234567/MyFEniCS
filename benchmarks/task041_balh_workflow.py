@@ -60,6 +60,7 @@ TASK041_SCHUR_SPEED_V2_LEDGER_NAME = (
 TASK041_REPRESENTATIVE_RHS_SCOPE = "representative_rhs"
 TASK041_SEQUENTIAL_COMPONENT_SCHEDULE = "sequential_component"
 TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE = "common_layout_equivalence"
+TASK041_P4_BACKEND_PAIR_MODE = "p4_backend_pair"
 TASK041_REPRESENTATIVE_RHS_SCHEMA = "task041.representative_rhs_manifest.v1"
 TASK041_REPRESENTATIVE_RHS_COUNT = 8
 TASK041_REPRESENTATIVE_RHS_MODE_COUNT = 480
@@ -104,7 +105,11 @@ def task041_schur_speed_v2_contract(
         raise ValueError(
             "sequential_component requires the representative_rhs scope"
         )
-    if comparison_mode not in {None, TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE}:
+    if comparison_mode not in {
+        None,
+        TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE,
+        TASK041_P4_BACKEND_PAIR_MODE,
+    }:
         raise ValueError(
             f"unsupported Task041 comparison mode: {comparison_mode!r}"
         )
@@ -114,7 +119,7 @@ def task041_schur_speed_v2_contract(
         or side_setup_schedule != TASK041_SEQUENTIAL_COMPONENT_SCHEDULE
     ):
         raise ValueError(
-            "common_layout_equivalence requires the 5 nm representative_rhs "
+            f"{comparison_mode} requires the 5 nm representative_rhs "
             "sequential_component contract"
         )
     try:
@@ -575,7 +580,11 @@ def _mpi8_command(
         if (
             module != "benchmarks.task041_balh_workflow"
             or phase != TASK041_BALH_CANDIDATE_PHASE
-            or comparison_mode != TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE
+            or comparison_mode
+            not in {
+                TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE,
+                TASK041_P4_BACKEND_PAIR_MODE,
+            }
         ):
             raise ValueError(
                 "comparison mode is limited to the BAL_H candidate worker"
@@ -1122,7 +1131,10 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--task041-comparison-mode",
-        choices=(TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE,),
+        choices=(
+            TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE,
+            TASK041_P4_BACKEND_PAIR_MODE,
+        ),
     )
     time_control = parser.add_mutually_exclusive_group()
     time_control.add_argument(
@@ -1170,6 +1182,7 @@ __all__ = [
     "TASK041_BALH_MODE_PREP_PHASE",
     "TASK041_BALH_MODE_PREP_PROFILE",
     "TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE",
+    "TASK041_P4_BACKEND_PAIR_MODE",
     "TASK041_REPRESENTATIVE_RHS_COUNT",
     "TASK041_REPRESENTATIVE_RHS_MODE_COUNT",
     "TASK041_REPRESENTATIVE_RHS_SCOPE",

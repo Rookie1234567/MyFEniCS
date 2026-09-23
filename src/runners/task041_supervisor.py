@@ -2110,14 +2110,17 @@ def _validate_representative_rhs_result(
     *,
     process_group_gone: bool | None,
     expected_side_setup_schedule: str | None = None,
+    expected_comparison_mode: str | None = None,
 ) -> dict[str, Any]:
     """Independently validate the fixed finite-response worker evidence."""
 
     from benchmarks.task041_balh_workflow import (
+        TASK041_P4_BACKEND_PAIR_MODE,
         TASK041_REPRESENTATIVE_RHS_COUNT,
         TASK041_REPRESENTATIVE_RHS_SCOPE,
         TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
     )
+    backend_pair_mode = expected_comparison_mode == TASK041_P4_BACKEND_PAIR_MODE
 
     binding_evidence = _task041_representative_immutable_binding(
         summary, binding
@@ -2498,6 +2501,16 @@ def _validate_representative_rhs_result(
                 f"summary_ordinal_{ordinal}_{item}" for item in artifact_failures
             )
 
+    if backend_pair_mode:
+        pair_validation = _validate_task041_p4_backend_pair_result(
+            consumer_root, summary, binding, expected_by_ordinal
+        )
+        checks["p4_backend_pair"] = pair_validation["checks"]
+        failures.extend(
+            f"p4_backend_pair:{failure}"
+            for failure in pair_validation["failures"]
+        )
+
     setup_inventory = (
         setup.get("candidate_inventory") if isinstance(setup, Mapping) else None
     )
@@ -2505,6 +2518,17 @@ def _validate_representative_rhs_result(
         setup.get("side_setup_schedule") if isinstance(setup, Mapping) else None
     )
     summary_schedule = summary.get("side_setup_schedule")
+    checks["comparison_mode_binding"] = bool(
+        expected_comparison_mode in (None, TASK041_P4_BACKEND_PAIR_MODE)
+        and isinstance(setup, Mapping)
+        and (
+            isinstance(setup.get("p4_backend_pair"), Mapping)
+            if backend_pair_mode
+            else setup.get("p4_backend_pair") is None
+        )
+    )
+    if not checks["comparison_mode_binding"]:
+        failures.append("comparison_mode_binding")
     sequential_schedule = (
         expected_side_setup_schedule == TASK041_SEQUENTIAL_COMPONENT_SCHEDULE
     )
@@ -2544,6 +2568,7 @@ def _validate_representative_rhs_result(
             consumer_root,
             setup if isinstance(setup, Mapping) else None,
             expected_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+            expected_comparison_mode=expected_comparison_mode,
         )
         checks["sequential_markers"] = {
             "path": sequential_evidence["path"],
@@ -2623,11 +2648,545 @@ def _validate_representative_rhs_result(
     }
 
 
+def _task041_p4_backend_pair_numeric_gate(comparison: Mapping[str, Any]) -> dict[str, Any]:
+    """Recompute fixed pair ratios from the recorded response and residual norms."""
+
+    metrics = comparison.get("comparison")
+    if not isinstance(metrics, Mapping):
+        return {"pass": False, "recomputed": {}}
+    response_norms = metrics.get("response_norms")
+    residuals = metrics.get("side_residuals")
+    if not isinstance(response_norms, Mapping) or not isinstance(residuals, Mapping):
+        return {"pass": False, "recomputed": {}}
+    raw = {
+        "full_response": response_norms.get("full"),
+        "cell_condensed_response": response_norms.get("cell_condensed"),
+        "response_delta": metrics.get("response_delta_norm"),
+        "action_delta": metrics.get("action_delta_norm"),
+        "rhs": metrics.get("rhs_norm"),
+        "full_residual": residuals.get("full_norm"),
+        "cell_condensed_residual": residuals.get("cell_condensed_norm"),
+    }
+    if any(
+        not isinstance(value, (int, float))
+        or isinstance(value, bool)
+        or not math.isfinite(float(value))
+        or float(value) < 0.0
+        for value in raw.values()
+    ):
+        return {"pass": False, "recomputed": {}, "raw_norms": raw}
+
+    def ratio(numerator: float, denominator: float) -> float | None:
+        return (
+            numerator / denominator
+            if denominator > 0.0
+            else 0.0
+            if numerator == 0.0
+            else None
+        )
+
+    full_response = float(raw["full_response"])
+    condensed_response = float(raw["cell_condensed_response"])
+    response_delta = float(raw["response_delta"])
+    action_delta = float(raw["action_delta"])
+    rhs_norm = float(raw["rhs"])
+    recomputed = {
+        "e_x": ratio(response_delta, max(full_response, condensed_response)),
+        "e_A": ratio(action_delta, rhs_norm),
+        "full_relative": ratio(float(raw["full_residual"]), rhs_norm),
+        "cell_condensed_relative": ratio(
+            float(raw["cell_condensed_residual"]), rhs_norm
+        ),
+    }
+
+    def matches(reported: Any, value: float | None) -> bool:
+        return bool(
+            value is not None
+            and isinstance(reported, (int, float))
+            and not isinstance(reported, bool)
+            and math.isfinite(float(reported))
+            and math.isclose(float(reported), value, rel_tol=1.0e-12, abs_tol=0.0)
+        )
+
+    recomputed_finite = all(
+        value is not None and math.isfinite(value) for value in recomputed.values()
+    )
+    reports_match = bool(
+        matches(
+            response_norms.get("denominator"),
+            max(full_response, condensed_response),
+        )
+        and matches(metrics.get("e_x"), recomputed["e_x"])
+        and matches(metrics.get("e_A"), recomputed["e_A"])
+        and matches(
+            residuals.get("full_relative"),
+            recomputed["full_relative"],
+        )
+        and matches(
+            residuals.get("cell_condensed_relative"),
+            recomputed["cell_condensed_relative"],
+        )
+    )
+    gate_pass = bool(
+        recomputed_finite
+        and recomputed["e_x"] <= 1.0e-8
+        and recomputed["e_A"] <= 1.0e-8
+        and recomputed["full_relative"] <= 1.0e-2
+        and recomputed["cell_condensed_relative"] <= 1.0e-2
+    )
+    return {
+        "pass": bool(
+            reports_match
+            and gate_pass
+            and metrics.get("finite") is True
+            and metrics.get("pass") is gate_pass
+            and comparison.get("pass") is gate_pass
+            and metrics.get("limits")
+            == {"e_x": 1.0e-8, "e_A": 1.0e-8, "side_relative_residual": 1.0e-2}
+        ),
+        "reports_match": reports_match,
+        "recomputed": recomputed,
+        "raw_norms": raw,
+    }
+
+
+def _validate_task041_p4_backend_pair_result(
+    consumer_root: Path,
+    summary: Mapping[str, Any],
+    binding: Mapping[str, Any],
+    expected_by_ordinal: Mapping[int, Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Check the opt-in 5 nm pair against its two backend call records."""
+
+    failures: list[str] = []
+    checks: dict[str, Any] = {}
+
+    def check(name: str, passed: bool) -> None:
+        checks[name] = bool(passed)
+        if not passed:
+            failures.append(name)
+
+    def finite_nonnegative(value: Any) -> bool:
+        return bool(
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and math.isfinite(float(value))
+            and float(value) >= 0.0
+        )
+
+    def response_packet_identity_ok(
+        call: Mapping[str, Any], entry: Mapping[str, Any], backend: str
+    ) -> bool:
+        artifact = call.get("artifact")
+        manifest_value = artifact.get("manifest") if isinstance(artifact, Mapping) else None
+        if not isinstance(manifest_value, str) or not isinstance(artifact, Mapping):
+            return False
+        manifest_path = Path(manifest_value)
+        try:
+            if (
+                not manifest_path.is_file()
+                or _sha256_file(manifest_path) != artifact.get("manifest_sha256")
+            ):
+                return False
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return False
+        identity = manifest.get("identity") if isinstance(manifest, Mapping) else None
+        if not isinstance(identity, Mapping):
+            return False
+        identity_sha = hashlib.sha256(
+            json.dumps(identity, sort_keys=True, separators=(",", ":")).encode(
+                "utf-8"
+            )
+        ).hexdigest()
+        return bool(
+            identity_sha == manifest.get("identity_sha256")
+            and identity_sha == artifact.get("identity_sha256")
+            and identity.get("schema")
+            == "task041.representative_rhs.response_identity.v1"
+            and identity.get("source_sha") == summary.get("source_sha")
+            and identity.get("probe_manifest_sha256") == binding.get("sha256")
+            and identity.get("packet_manifest_sha256") == expected_packet_sha
+            and identity.get("ordinal") == entry.get("ordinal")
+            and identity.get("side") == entry.get("side")
+            and identity.get("formal_column") == entry.get("formal_column")
+            and identity.get("branch_ordinal") == entry.get("branch_ordinal")
+            and identity.get("p4_backend") == backend
+        )
+
+    setup = summary.get("setup")
+    representative = summary.get("representative_rhs")
+    pair = setup.get("p4_backend_pair") if isinstance(setup, Mapping) else None
+    packet_binding = binding.get("packet_binding")
+    expected_packet_sha = (
+        packet_binding.get("packet_manifest_sha256")
+        if isinstance(packet_binding, Mapping)
+        else None
+    )
+    probe_binding = summary.get("representative_rhs_probe")
+    check(
+        "pair_manifest_source_binding",
+        bool(
+            isinstance(pair, Mapping)
+            and pair.get("schema") == "task041.p4_backend_pair.fixed_eight_rhs.v1"
+            and pair.get("qualification") == "backend_comparison_only"
+            and pair.get("backend_order") == ["full", "cell_condensed"]
+            and pair.get("source_sha") == summary.get("source_sha")
+            and isinstance(probe_binding, Mapping)
+            and isinstance(pair.get("manifest"), Mapping)
+            and pair["manifest"].get("path") == probe_binding.get("path")
+            and pair["manifest"].get("sha256") == probe_binding.get("sha256")
+            and pair["manifest"].get("packet_binding") == packet_binding
+            and pair.get("status") == "passed"
+            and pair.get("pass") is True
+            and pair.get("full_formal") == "not_run"
+        ),
+    )
+    check(
+        "pair_fixed_columns",
+        bool(
+            isinstance(pair, Mapping)
+            and pair.get("fixed_formal_columns")
+            == {"bottom": [207, 15, 671, 493], "top": [310, 12, 666, 493]}
+        ),
+    )
+
+    sides = pair.get("sides") if isinstance(pair, Mapping) else None
+    check("pair_sides", isinstance(sides, Mapping) and set(sides) == {"bottom", "top"})
+    canonical_entries = representative.get("entries") if isinstance(representative, Mapping) else None
+    canonical_by_ordinal = {
+        int(item["ordinal"]): item
+        for item in canonical_entries
+        if isinstance(item, Mapping) and type(item.get("ordinal")) is int
+    } if isinstance(canonical_entries, list) else {}
+
+    full_audit_path = consumer_root / "numerical_output" / "p4_backend_pair_audits.jsonl"
+    full_audits: dict[int, Mapping[str, Any]] = {}
+    audit_errors: list[str] = []
+    if full_audit_path.is_file():
+        try:
+            with full_audit_path.open(encoding="utf-8") as stream:
+                for line_number, line in enumerate(stream, 1):
+                    if not line.strip():
+                        continue
+                    try:
+                        row = json.loads(line)
+                    except json.JSONDecodeError:
+                        audit_errors.append(f"line_{line_number}_invalid_json")
+                        continue
+                    audit = row.get("audit") if isinstance(row, Mapping) else None
+                    ordinal = audit.get("representative_ordinal") if isinstance(audit, Mapping) else None
+                    if type(ordinal) is not int or ordinal in full_audits:
+                        audit_errors.append(f"line_{line_number}_ordinal")
+                    else:
+                        full_audits[ordinal] = row
+        except OSError as exc:
+            audit_errors.append(f"read_{type(exc).__name__}")
+    else:
+        audit_errors.append("missing")
+    check(
+        "full_backend_audit_file",
+        not audit_errors
+        and len(full_audits) == 8
+        and set(full_audits) == set(expected_by_ordinal),
+    )
+    checks["full_backend_audit_errors"] = audit_errors
+
+    if isinstance(sides, Mapping):
+        for side in ("bottom", "top"):
+            record = sides.get(side)
+            side_prefix = side
+            if not isinstance(record, Mapping):
+                check(f"{side_prefix}_record", False)
+                continue
+            check(
+                f"{side_prefix}_record",
+                record.get("schema") == "task041.p4_backend_pair.side.v1"
+                and record.get("side") == side
+                and record.get("status") == "passed"
+                and record.get("pass") is True
+                and record.get("backend_order") == ["full", "cell_condensed"]
+                and record.get("rhs_count") == 4
+                and record.get("same_parent_setup_identity") is True
+                and record.get("same_mesh_mpc_layout") is True,
+            )
+            phases = record.get("backend_phases")
+            if not isinstance(phases, Mapping) or set(phases) != {"full", "cell_condensed"}:
+                check(f"{side_prefix}_phases", False)
+                continue
+            phase_layouts: list[str] = []
+            phase_parents: list[Any] = []
+            for backend in ("full", "cell_condensed"):
+                phase = phases.get(backend)
+                if not isinstance(phase, Mapping):
+                    check(f"{side}_{backend}_phase", False)
+                    continue
+                schema = (
+                    "task041.h1c.p4_exact_factor.v1"
+                    if backend == "full"
+                    else "task041.h1c.p4_condensed_exact_factor.v1"
+                )
+                rows = phase.get("factor_rows")
+                check(
+                    f"{side}_{backend}_actual_backend",
+                    phase.get("backend") == backend
+                    and phase.get("actual_backend") == backend
+                    and phase.get("factor_schema") == schema
+                    and phase.get("support_policy") == "entity_closure"
+                    and phase.get("construction_audit") == "reference_entity_trace_v1"
+                    and isinstance(rows, Mapping)
+                    and set(rows)
+                    == {
+                        "full_storage_rows",
+                        "active_trace_rows",
+                        "interior_rows",
+                        "port_rows",
+                        "retained_matrix_rows",
+                    }
+                    and all(type(value) is int and value >= 0 for value in rows.values()),
+                )
+                phase_parents.append(phase.get("parent_setup_identity_by_rank"))
+                layout = phase.get("layout_identity")
+                phase_layouts.append(
+                    layout.get("identity_sha256") if isinstance(layout, Mapping) else ""
+                )
+                check(
+                    f"{side}_{backend}_admission",
+                    isinstance(phase.get("admission"), Mapping)
+                    and phase["admission"].get("pass") is True,
+                )
+                phase_live = phase.get("live_at_build")
+                check(
+                    f"{side}_{backend}_live_at_build",
+                    isinstance(phase_live, Mapping)
+                    and type(phase_live.get("p4_factor_count")) is int
+                    and phase_live["p4_factor_count"] >= 0
+                    and type(phase_live.get("nested_iterative_ksp_count")) is int
+                    and phase_live["nested_iterative_ksp_count"] >= 0,
+                )
+                release = phase.get("release")
+                destroy = release.get("destroy_counts") if isinstance(release, Mapping) else None
+                check(
+                    f"{side}_{backend}_release",
+                    isinstance(release, Mapping)
+                    and release.get("pass") is True
+                    and isinstance(release.get("release_gate"), Mapping)
+                    and release["release_gate"].get("pass") is True
+                    and isinstance(destroy, Mapping)
+                    and destroy.get("side_inverse_destroyed") is True
+                    and destroy.get("side_ksp_destroy_count") == 1
+                    and destroy.get("p4_factor_destroy_count") == 1
+                    and destroy.get("p4_factor_owner_destroy_count") == 1
+                    and destroy.get("p4_factor_count_after_destroy") == 0
+                    and destroy.get("nested_ksp_count_after_destroy") == 0
+                    and destroy.get("side_ksp_destroyed") is True,
+                )
+                wall_names = (
+                    "build_wall_max_rank_seconds",
+                    "layout_identity_wall_max_rank_seconds",
+                    "admission_wall_max_rank_seconds",
+                    "apply_wall_max_rank_seconds",
+                )
+                check(
+                    f"{side}_{backend}_stage_walls",
+                    all(finite_nonnegative(phase.get(name)) for name in wall_names)
+                    and isinstance(release, Mapping)
+                    and finite_nonnegative(release.get("release_wall_max_rank_seconds"))
+                    and finite_nonnegative(release.get("backend_wall_max_rank_seconds")),
+                )
+                resources = phase.get("resources")
+                expected_labels = ["before_" + backend, "after_" + backend]
+                check(
+                    f"{side}_{backend}_resource_samples",
+                    isinstance(resources, list)
+                    and [sample.get("label") for sample in resources if isinstance(sample, Mapping)]
+                    == expected_labels
+                    and len(resources) == 2
+                    and all(
+                        isinstance(sample.get("ranks"), list)
+                        and len(sample["ranks"]) == 8
+                        and {rank.get("rank") for rank in sample["ranks"] if isinstance(rank, Mapping)}
+                        == set(range(8))
+                        and all(
+                            isinstance(rank, Mapping)
+                            and finite_nonnegative(rank.get("memory_authority_bytes"))
+                            for rank in sample["ranks"]
+                        )
+                        for sample in resources
+                    ),
+                )
+            check(
+                f"{side}_shared_setup_identity",
+                len(phase_parents) == 2
+                and isinstance(phase_parents[0], list)
+                and len(phase_parents[0]) == 8
+                and phase_parents[0] == phase_parents[1]
+                and {item.get("rank") for item in phase_parents[0] if isinstance(item, Mapping)}
+                == set(range(8)),
+            )
+            check(
+                f"{side}_shared_layout_identity",
+                len(phase_layouts) == 2
+                and _valid_sha(phase_layouts[0], 64)
+                and phase_layouts[0] == phase_layouts[1],
+            )
+            side_setup = setup.get("side_setup") if isinstance(setup, Mapping) else None
+            boundaries = side_setup.get("lifecycle_boundaries") if isinstance(side_setup, Mapping) else None
+            ready_by_backend = {
+                item.get("p4_backend"): item
+                for item in boundaries
+                if isinstance(item, Mapping)
+                and item.get("side") == side
+                and item.get("event") == "ready"
+            } if isinstance(boundaries, list) else {}
+            completion = side_setup.get("side_completion") if isinstance(side_setup, Mapping) else None
+            completion_record = completion.get(side) if isinstance(completion, Mapping) else None
+            condensed_phase = phases.get("cell_condensed")
+            condensed_live = (
+                condensed_phase.get("live_at_build")
+                if isinstance(condensed_phase, Mapping)
+                else None
+            )
+            check(
+                f"{side}_live_at_build_identity",
+                all(
+                    isinstance(ready_by_backend.get(backend), Mapping)
+                    and isinstance(ready_by_backend[backend].get("live"), Mapping)
+                    and isinstance(ready_by_backend[backend]["live"].get("by_side"), Mapping)
+                    and isinstance(
+                        ready_by_backend[backend]["live"]["by_side"].get(side),
+                        Mapping,
+                    )
+                    and isinstance(phases.get(backend), Mapping)
+                    and phases[backend].get("live_at_build")
+                    == {
+                        "p4_factor_count": ready_by_backend[backend]["live"]["by_side"][side].get("p4_factor_count"),
+                        "nested_iterative_ksp_count": ready_by_backend[backend]["live"]["by_side"][side].get("nested_iterative_ksp_count"),
+                    }
+                    for backend in ("full", "cell_condensed")
+                )
+                and isinstance(completion_record, Mapping)
+                and completion_record.get("live_at_build") == condensed_live,
+            )
+
+            entries = record.get("entries")
+            pair_entries = {
+                int(item["ordinal"]): item
+                for item in entries
+                if isinstance(item, Mapping) and type(item.get("ordinal")) is int
+            } if isinstance(entries, list) else {}
+            expected_side_entries = {
+                ordinal: item
+                for ordinal, item in expected_by_ordinal.items()
+                if item.get("side") == side
+            }
+            full_calls = phases.get("full", {}).get("apply_calls") if isinstance(phases.get("full"), Mapping) else None
+            full_by_ordinal = {
+                int(item["ordinal"]): item
+                for item in full_calls
+                if isinstance(item, Mapping) and type(item.get("ordinal")) is int
+            } if isinstance(full_calls, list) else {}
+            check(
+                f"{side}_call_counts",
+                set(pair_entries) == set(expected_side_entries)
+                and set(full_by_ordinal) == set(expected_side_entries),
+            )
+            for ordinal, expected in expected_side_entries.items():
+                full = full_by_ordinal.get(ordinal)
+                condensed = canonical_by_ordinal.get(ordinal)
+                compare = pair_entries.get(ordinal)
+                check(
+                    f"rhs_{ordinal}_pair_record",
+                    isinstance(compare, Mapping)
+                    and compare.get("rhs_identity_pass") is True
+                    and compare.get("pass") is True
+                    and isinstance(compare.get("comparison"), Mapping),
+                )
+                if not all(isinstance(item, Mapping) for item in (full, condensed, compare)):
+                    continue
+                for backend, call in (("full", full), ("cell_condensed", condensed)):
+                    audit = call.get("audit")
+                    factor_audit = call.get("p4_factor_audit")
+                    artifact = call.get("artifact")
+                    audit_row = full_audits.get(ordinal) if backend == "full" else None
+                    identity_ok = bool(
+                        call.get("side") == expected["side"]
+                        and call.get("formal_column") == expected["formal_column"]
+                        and call.get("branch_ordinal") == expected["branch_ordinal"]
+                        and call.get("audit_index") == expected["audit_index"]
+                        and call.get("status") == "completed"
+                        and call.get("p4_backend") == backend
+                        and isinstance(audit, Mapping)
+                        and audit.get("p4_backend") == backend
+                        and audit.get("p4_backend_pair") is True
+                        and audit.get("representative_ordinal") == ordinal
+                        and (backend != "full" or isinstance(audit_row, Mapping)
+                             and audit_row.get("audit") == audit
+                             and audit_row.get("phase") == "representative_rhs")
+                        and isinstance(factor_audit, Mapping)
+                        and factor_audit.get("schema")
+                        == (
+                            "task041.h1c.p4_exact_factor.v1"
+                            if backend == "full"
+                            else "task041.h1c.p4_condensed_exact_factor.v1"
+                        )
+                        and response_packet_identity_ok(call, expected, backend)
+                        and finite_nonnegative(call.get("call_wall_max_rank_seconds"))
+                    )
+                    rank_shards = call.get("rank_shards")
+                    check(
+                        f"rhs_{ordinal}_{backend}_identity",
+                        identity_ok
+                        and isinstance(rank_shards, list)
+                        and len(rank_shards) == 8
+                        and {rank.get("rank") for rank in rank_shards if isinstance(rank, Mapping)}
+                        == set(range(8))
+                        and all(
+                            isinstance(rank, Mapping)
+                            and _valid_sha(rank.get("owned_rhs_sha256"), 64)
+                            and _valid_sha(rank.get("owned_response_sha256"), 64)
+                            and rank.get("dtype") == "complex128"
+                            and rank.get("packet_manifest_sha256") == expected_packet_sha
+                            and isinstance(artifact, Mapping)
+                            and rank.get("response_packet_manifest_sha256")
+                            == artifact.get("manifest_sha256")
+                            for rank in rank_shards
+                        ),
+                    )
+                full_shards = {row.get("rank"): row for row in full.get("rank_shards", []) if isinstance(row, Mapping)}
+                condensed_shards = {row.get("rank"): row for row in condensed.get("rank_shards", []) if isinstance(row, Mapping)}
+                check(
+                    f"rhs_{ordinal}_same_input_vector",
+                    set(full_shards) == set(range(8))
+                    and set(condensed_shards) == set(range(8))
+                    and all(
+                        full_shards[rank].get("owned_rhs_sha256")
+                        == condensed_shards[rank].get("owned_rhs_sha256")
+                        and full_shards[rank].get("rhs_vector_python_id")
+                        == condensed_shards[rank].get("rhs_vector_python_id")
+                        and full_shards[rank].get("ownership_range")
+                        == condensed_shards[rank].get("ownership_range")
+                        for rank in range(8)
+                    ),
+                )
+                numeric = _task041_p4_backend_pair_numeric_gate(compare)
+                checks[f"rhs_{ordinal}_recomputed_norm_ratios"] = numeric[
+                    "recomputed"
+                ]
+                check(
+                    f"rhs_{ordinal}_numeric_gates",
+                    numeric["pass"],
+                )
+
+    return {"checks": checks, "failures": failures, "audit_path": str(full_audit_path)}
+
+
 def _task041_sequential_lifecycle_evidence(
     consumer_root: Path,
     setup: Mapping[str, Any] | None,
     *,
     expected_schedule: str,
+    expected_comparison_mode: str | None = None,
 ) -> dict[str, Any]:
     """Read the fixed sequential lifecycle evidence shared by component modes."""
 
@@ -2693,6 +3252,7 @@ def _task041_sequential_lifecycle_evidence(
                                 {
                                     "side": detail.get("side")
                                     or str(stage).split("_", 1)[0],
+                                    "p4_backend": detail.get("p4_backend"),
                                     "diagnostics": dict(diagnostics),
                                     "line_number": line_number,
                                 }
@@ -2700,13 +3260,26 @@ def _task041_sequential_lifecycle_evidence(
         except OSError as exc:
             errors.append(f"markers_read_{type(exc).__name__}")
 
+    backend_pair_mode = expected_comparison_mode == "p4_backend_pair"
     expected_boundaries = [
         (side, event)
         for side in ("bottom", "top")
+        for _backend in (("full", "cell_condensed") if backend_pair_mode else (None,))
         for event in ("before_build", "ready", "before_release", "released")
     ]
     boundaries = [row["boundary"] for row in lifecycle]
     boundary_keys = [(row.get("side"), row.get("event")) for row in boundaries]
+    boundary_backends = [row.get("p4_backend") for row in boundaries]
+    expected_boundary_backends = (
+        [
+            backend
+            for _side in ("bottom", "top")
+            for backend in ("full", "cell_condensed")
+            for _event in ("before_build", "ready", "before_release", "released")
+        ]
+        if backend_pair_mode
+        else [None] * len(expected_boundaries)
+    )
 
     def live_counts(boundary: Mapping[str, Any]) -> dict[str, Any] | None:
         live = boundary.get("live")
@@ -2753,7 +3326,7 @@ def _task041_sequential_lifecycle_evidence(
     boundary_counts_pass = len(boundaries) == len(expected_boundaries)
     boundary_time_values = [row.get("wall_seconds") for row in lifecycle]
     boundary_time_pass = bool(
-        len(boundary_time_values) == 8
+        len(boundary_time_values) == len(expected_boundaries)
         and all(
             isinstance(value, (int, float))
             and not isinstance(value, bool)
@@ -2822,8 +3395,9 @@ def _task041_sequential_lifecycle_evidence(
         errors.append("lifecycle_counts")
 
     expected_identity_labels = [
-        f"{side}_{event}"
+        f"{side}_{backend}_{event}" if backend_pair_mode else f"{side}_{event}"
         for side in ("bottom", "top")
+        for backend in (("full", "cell_condensed") if backend_pair_mode else (None,))
         for event in (
             "before_build",
             "after_admission",
@@ -2859,7 +3433,7 @@ def _task041_sequential_lifecycle_evidence(
         else None
     )
     identity_values_passed = bool(
-        len(identities) == 8
+        len(identities) == len(expected_identity_labels)
         and identity_labels == expected_identity_labels
         and all(identity_values_pass(row["check"]) for row in identities)
         and isinstance(summary_identity, Mapping)
@@ -2873,9 +3447,11 @@ def _task041_sequential_lifecycle_evidence(
         errors.append("global_identity_values")
 
     lifecycle_lines = {
-        (row["boundary"].get("side"), row["boundary"].get("event")): row[
-            "line_number"
-        ]
+        (
+            row["boundary"].get("side"),
+            row["boundary"].get("p4_backend"),
+            row["boundary"].get("event"),
+        ): row["line_number"]
         for row in lifecycle
     }
     identity_lines = {
@@ -2883,20 +3459,22 @@ def _task041_sequential_lifecycle_evidence(
     }
     identity_order_pass = True
     for side in ("bottom", "top"):
-        ordered = (
-            identity_lines.get(f"{side}_before_build"),
-            lifecycle_lines.get((side, "before_build")),
-            lifecycle_lines.get((side, "ready")),
-            identity_lines.get(f"{side}_after_admission"),
-            identity_lines.get(f"{side}_before_release"),
-            lifecycle_lines.get((side, "before_release")),
-            lifecycle_lines.get((side, "released")),
-            identity_lines.get(f"{side}_after_release"),
-        )
-        if not all(type(value) is int for value in ordered) or not all(
-            left < right for left, right in pairwise(ordered)
-        ):
-            identity_order_pass = False
+        for backend in (("full", "cell_condensed") if backend_pair_mode else (None,)):
+            prefix = f"{side}_{backend}_" if backend_pair_mode else f"{side}_"
+            ordered = (
+                identity_lines.get(f"{prefix}before_build"),
+                lifecycle_lines.get((side, backend, "before_build")),
+                lifecycle_lines.get((side, backend, "ready")),
+                identity_lines.get(f"{prefix}after_admission"),
+                identity_lines.get(f"{prefix}before_release"),
+                lifecycle_lines.get((side, backend, "before_release")),
+                lifecycle_lines.get((side, backend, "released")),
+                identity_lines.get(f"{prefix}after_release"),
+            )
+            if not all(type(value) is int for value in ordered) or not all(
+                left < right for left, right in pairwise(ordered)
+            ):
+                identity_order_pass = False
     if not identity_order_pass:
         errors.append("global_identity_lifecycle_order")
 
@@ -2910,10 +3488,18 @@ def _task041_sequential_lifecycle_evidence(
         if isinstance(setup, Mapping)
         else None
     )
-    cleanup_sides = [row.get("side") for row in cleanup]
+    expected_cleanup = (
+        [
+            (side, backend)
+            for side in ("bottom", "top")
+            for backend in ("full", "cell_condensed")
+        ]
+        if backend_pair_mode
+        else [("bottom", None), ("top", None)]
+    )
     cleanup_pass = bool(
-        len(cleanup) == 2
-        and cleanup_sides == ["bottom", "top"]
+        [(row.get("side"), row.get("p4_backend")) for row in cleanup]
+        == expected_cleanup
         and isinstance(summary_after, Mapping)
         and set(summary_after) == {"bottom", "top"}
         and all(
@@ -2923,8 +3509,16 @@ def _task041_sequential_lifecycle_evidence(
             and row["diagnostics"].get("p4_factor_count") == 0
             and type(row["diagnostics"].get("nested_iterative_ksp_count")) is int
             and row["diagnostics"].get("nested_iterative_ksp_count") == 0
-            and summary_after.get(row["side"]) == row["diagnostics"]
             for row in cleanup
+        )
+        and all(
+            summary_after.get(side)
+            == next(
+                row["diagnostics"]
+                for row in reversed(cleanup)
+                if row.get("side") == side
+            )
+            for side in ("bottom", "top")
         )
     )
     if not cleanup_pass:
@@ -2965,9 +3559,9 @@ def _task041_sequential_lifecycle_evidence(
         and boundaries == summary_boundaries
         and raw_created
         == {
-            "side_inverse": 2,
-            "p4_factor": 2,
-            "nested_iterative_ksp": 2,
+            "side_inverse": 4 if backend_pair_mode else 2,
+            "p4_factor": 4 if backend_pair_mode else 2,
+            "nested_iterative_ksp": 4 if backend_pair_mode else 2,
         }
         and raw_peaks
         == {
@@ -2979,6 +3573,7 @@ def _task041_sequential_lifecycle_evidence(
         and isinstance(side_setup, Mapping)
         and side_setup.get("side_setup_schedule") == expected_schedule
         and side_setup.get("order") == ["bottom", "top"]
+        and boundary_backends == expected_boundary_backends
     )
     if not lifecycle_pass and "lifecycle_order" not in errors:
         errors.append("sequential_lifecycle_contract")
@@ -2988,6 +3583,7 @@ def _task041_sequential_lifecycle_evidence(
         "errors": errors,
         "boundaries": boundaries,
         "boundary_keys": boundary_keys,
+        "boundary_backends": boundary_backends,
         "boundary_time_pass": boundary_time_pass,
         "boundary_counts_pass": boundary_counts_pass,
         "identities": identities,
@@ -4885,6 +5481,7 @@ def _consumer_result(
             representative_rhs_binding,
             process_group_gone=process_group_gone,
             expected_side_setup_schedule=expected_side_setup_schedule,
+            expected_comparison_mode=expected_comparison_mode,
         )
         if representative_rhs_binding is not None and not common_scope
         else None

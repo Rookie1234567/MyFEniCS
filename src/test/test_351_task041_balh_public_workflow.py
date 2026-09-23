@@ -31,6 +31,7 @@ from benchmarks.task041_balh_workflow import (
 )
 from benchmarks.task041_exact_side_workflow import (
     _merge_representative_parts,
+    _task041_backend_pair_layout_identity,
     _task041_case_contract,
     _task041_common_failure_details,
     _task041_stream_array_metadata,
@@ -55,6 +56,7 @@ from src.io.input_validation import (
 from src.io.resolved_config import resolved_config_bytes, resolved_config_sha256
 from src.runners import task041_supervisor as supervisor
 from src.runners.task041_supervisor import (
+    _task041_p4_backend_pair_numeric_gate,
     _validate_common_layout_equivalence_result,
     _validate_representative_rhs_result,
     _validate_specification,
@@ -659,6 +661,190 @@ def test_task041_common_layout_mode_binds_fixed_scope_and_cpu_range(
         task041_balh_workflow.TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE
     )
     assert contract["budget_group"] == "shared_S0_S1_S3"
+
+
+def test_task041_fixed_p4_backend_pair_is_explicit_and_5nm_scoped():
+    candidate_path = (
+        REPOSITORY_ROOT
+        / "input/official/task041/side_balh/5nm_p6h4_m480_mpi8_balh.dat"
+    )
+    candidate = _specification(candidate_path)
+    manifest = (
+        REPOSITORY_ROOT
+        / "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/records/"
+        "task041_representative_rhs_v1.json"
+    )
+    pair_mode = task041_balh_workflow.TASK041_P4_BACKEND_PAIR_MODE
+
+    parsed_public = run_case._parser().parse_args(
+        [str(candidate_path), "--task041-comparison-mode", pair_mode]
+    )
+    assert parsed_public.task041_comparison_mode == pair_mode
+
+    command = build_task041_balh_candidate_consumer_command(
+        str(Path(sys.executable)),
+        candidate,
+        "packet_manifest.json",
+        "packet_identity.json",
+        "b" * 64,
+        "worker",
+        "c" * 40,
+        "a" * 40,
+        performance_profile=TASK041_SCHUR_SPEED_V2_PROFILE,
+        task041_rhs_probe_manifest=manifest,
+        side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        comparison_mode=pair_mode,
+    )
+    worker_args = command[command.index("--worker") :]
+    assert task041_balh_workflow._parser().parse_args(
+        worker_args
+    ).task041_comparison_mode == pair_mode
+    pair_contract = task041_schur_speed_v2_contract(
+        TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
+        scope=TASK041_REPRESENTATIVE_RHS_SCOPE,
+        side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        comparison_mode=pair_mode,
+    )
+    assert pair_contract["comparison_mode"] == pair_mode
+
+    unchanged_contract = task041_schur_speed_v2_contract(
+        TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
+        scope=TASK041_REPRESENTATIVE_RHS_SCOPE,
+        side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+    )
+    assert unchanged_contract["comparison_mode"] is None
+    with pytest.raises(ValueError, match="5 nm representative_rhs"):
+        task041_schur_speed_v2_contract(
+            TASK041_BALH_2NM_CANDIDATE_MODEL_ID,
+            scope=TASK041_REPRESENTATIVE_RHS_SCOPE,
+            side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+            comparison_mode=pair_mode,
+        )
+
+
+def test_task041_pair_layout_identity_excludes_space_object_addresses():
+    space_names = ("side_p6", "transfer_fine_p6", "transfer_coarse_p4")
+    rank_records = []
+    for rank in range(2):
+        spaces = {}
+        for index, name in enumerate(space_names):
+            spaces[name] = {
+                "space": {
+                    "name": name,
+                    "kind": "FunctionSpace",
+                    "python_id": 100 + index + rank * 10,
+                    "cpp_object": {
+                        "kind": "FunctionSpace",
+                        "python_id": 200 + index + rank * 10,
+                    },
+                    "cpp_kind": "FunctionSpace",
+                    "cpp_python_id": 300 + index + rank * 10,
+                },
+                "dofmap": {
+                    "map": {
+                        "shape": [2, 3],
+                        "dtype": "int32",
+                        "nbytes": 24,
+                        "sha256": f"{rank}{index}" * 32,
+                        "hash_status": "measured_contiguous",
+                    },
+                    "global_size": 12,
+                    "local_size": 6,
+                    "num_ghosts": 1,
+                    "block_size": 2,
+                },
+            }
+        rank_records.append(
+            {
+                "rank": rank,
+                "operator_global_shape": [24, 24],
+                "communicators": {"size": 2, "rank": rank},
+                "ownership": {"operator": [rank * 12, (rank + 1) * 12]},
+                "transfer_identity": {"fine_global_rows": 24},
+                "dofmaps": {
+                    "fine": {"global_size": 24, "local_size": 12},
+                    "coarse": {"global_size": 12, "local_size": 6},
+                    "spaces": spaces,
+                    "cell_records": {"record_count": 2, "sha256": "d" * 64},
+                },
+                "mesh_layout": {"geometry": {"sha256": "e" * 64}},
+                "mpc_layout": {
+                    "fine": {"slaves": {"sha256": "f" * 64}},
+                    "coarse": {"slaves": {"sha256": "a" * 64}},
+                    "objects": {"python_id": 900 + rank},
+                },
+                "layout_arrays": [{"sha256": "b" * 64}],
+            }
+        )
+    layout_record = {"by_rank": rank_records}
+
+    original_identity = _task041_backend_pair_layout_identity(layout_record)
+    address_changed = copy.deepcopy(layout_record)
+    for record in address_changed["by_rank"]:
+        for space in record["dofmaps"]["spaces"].values():
+            space["space"]["python_id"] += 10000
+            space["space"]["cpp_object"]["python_id"] += 10000
+            space["space"]["cpp_python_id"] += 10000
+    address_changed_identity = _task041_backend_pair_layout_identity(
+        address_changed
+    )
+    assert address_changed_identity["identity_sha256"] == original_identity[
+        "identity_sha256"
+    ]
+    assert address_changed_identity["space_object_diagnostics"] != (
+        original_identity["space_object_diagnostics"]
+    )
+
+    map_changed = copy.deepcopy(address_changed)
+    map_changed["by_rank"][0]["dofmaps"]["spaces"]["transfer_fine_p6"][
+        "dofmap"
+    ]["map"]["sha256"] = "c" * 64
+    map_changed_identity = _task041_backend_pair_layout_identity(map_changed)
+    assert map_changed_identity["identity_sha256"] != original_identity[
+        "identity_sha256"
+    ]
+
+
+def test_task041_pair_supervisor_recomputes_numeric_ratios_from_norms():
+    comparison = {
+        "pass": True,
+        "comparison": {
+            "finite": True,
+            "pass": True,
+            "response_norms": {
+                "full": 2.0,
+                "cell_condensed": 4.0,
+                "denominator": 4.0,
+            },
+            "response_delta_norm": 2.0e-8,
+            "action_delta_norm": 1.0e-8,
+            "rhs_norm": 2.0,
+            "side_residuals": {
+                "full_norm": 2.0e-3,
+                "full_relative": 1.0e-3,
+                "cell_condensed_norm": 4.0e-3,
+                "cell_condensed_relative": 2.0e-3,
+            },
+            "e_x": 5.0e-9,
+            "e_A": 5.0e-9,
+            "limits": {
+                "e_x": 1.0e-8,
+                "e_A": 1.0e-8,
+                "side_relative_residual": 1.0e-2,
+            },
+        },
+    }
+    checked = _task041_p4_backend_pair_numeric_gate(comparison)
+    assert checked["pass"] is True
+    assert checked["recomputed"] == {
+        "e_x": 5.0e-9,
+        "e_A": 5.0e-9,
+        "full_relative": 1.0e-3,
+        "cell_condensed_relative": 2.0e-3,
+    }
+
+    comparison["comparison"]["e_x"] = 1.0e-9
+    assert _task041_p4_backend_pair_numeric_gate(comparison)["pass"] is False
 
 
 class _CommonFailureInverse:
@@ -1430,10 +1616,14 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
     observed_schedules = []
 
     def fake_consumer_result(
-        consumer_root, process_group_gone, expected_side_setup_schedule=None
+        consumer_root,
+        process_group_gone,
+        expected_side_setup_schedule=None,
+        expected_comparison_mode=None,
     ):
         observed_schedules.append(expected_side_setup_schedule)
         assert expected_side_setup_schedule is None
+        assert expected_comparison_mode is None
         return {
             "complete": True,
             "classification": "worker_exit0",
