@@ -283,23 +283,26 @@
     }
   },
   "r13_pair_release": {
-    "status": "PENDING_FORMAL_Q4_AND_Q3_RUNS",
-    "not_claimed": "R13_PAIR_RELEASE",
-    "required_after_both_runs": [
-      "each R13 run passes its own numerical/physics gates, exactly 80 modes, and its q-specific source-compact gate",
-      "each parent watchdog ends COMPLETED, descendants cleared, and measured-tree RSS stays below 1300000000000 B",
-      "q3/q4 run/source/input/physical/mode identities are bound",
-      "task-local post-run entry: python -m benchmarks.physical_intermediate_checker --r13-pair Q4_RUN_DIR Q3_RUN_DIR --q4-observer-log Q4_OBSERVER_JSONL --q3-observer-log Q3_OBSERVER_JSONL",
-      "manifest.run_id is checked against the resolved dat model identity; timestamped run directories are bound through manifest.output_directory and must be distinct",
-      "watchdog summary.samples is a positive integer count; detailed rows remain in watchdog/resources.jsonl and are not reinterpreted as a list or as a per-row readability Gate",
-      "PID/start_ticks come from each actual observer_started receipt; notification acknowledgement is diagnostic only and cannot fail numerical/resource evidence",
-      "runtime comparison uses common interpreter/library/thread/CPU/NUMA/MPI/resource contracts and excludes run-specific worker_command paths and hashes",
-      "residual NPZ hash and final_solution_sha256 are verified; each saved p6 zero-slave vector is restored in its own actual MPC function space using the production scatter/homogenize/scatter/backsubstitution/scatter order, then re-exported with iter_canonical_full_fe_packets and compared coefficient-for-coefficient to its recorded canonical artifact; q3/q4 native_map arrays are compared exactly",
-      "full E/H field comparison with LosslessFEMetric L2 and scaled-curl <=1e-4; selected E/H <=1e-4",
-      "all 80 complex modal amplitudes and per-channel powers compared; amplitude <=1e-4 and channel power <=1e-6",
-      "R/T/A/A_volume differences <=1e-5; no phase fitting",
-      "numerical postprocessing reports NUMERICAL_PAIR_PASS only; R13_PAIR_RELEASE remains pending until common-path qualification and sustained-hardware review are separately bound and audited"
-    ],
+    "status": "R13_PAIR_RELEASE",
+    "attempt4_record": "results/euv_grazing1_phi0/v5_node1_13p5nm_p6h7p5_q3__full3d_iterative__mpi1__Mna/20260923T190511.676461Z/r13_pair_numerical_comparison_attempt4.json",
+    "attempt4_sha256": "51c144b03eb5e296f5b9676651e68acdf981485ffd9e2c875223d36a1633de4e",
+    "numerical_source_sha": "6d989b4b9cbca12fcc35455d7ff381e66ef7ca6d",
+    "checker_source_sha": "515b0c653fc25bc1da2f319da9b7e658de049a2e",
+    "q4_run": "20260923T161715.636493Z",
+    "q3_run": "20260923T190511.676461Z",
+    "pair_status": "NUMERICAL_PAIR_PASS",
+    "common_path": "same V5 retained runtime/source, physical SHA 255837330af27827d15ef43dfb01876187589a3b5e129f1d0882e24b955484c0, mode SHA d4380495d912f97f6d303a85756bb9b252a1117bad229b559f0ac8140e745fbb, 80 modes, PORD64, CPU24 worker/CPU9 parent, MPI1/math1, preferred node1, RSS-only 1300000000000-B Gate",
+    "source_compact_q4_q3": "SOURCE_COMPACT_OBSERVABLES_PASS",
+    "numerical_comparison": {
+      "full_field_l2_relative": 3.506288303537306e-8,
+      "scaled_curl_relative": 1.9531003342371262e-8,
+      "modal_amplitude_relative_difference": 2.2629395166336367e-8,
+      "channel_power_absolute_max": 8.352688096735505e-9,
+      "rta_absolute_max": 1.3109158314428271e-8,
+      "phase_fitting": false
+    },
+    "supervision": "both watchdogs COMPLETED/cleared with no unreadable samples or gaps over 1 s; swap 0/global delta 0; observer worker identity continuous, thermal throttle counters 0; busy MHz unknown",
+    "performance_limitations": "Frozen source formally used rounded_12 (12 groups derived from persisted current geometry, not measured in the source run) versus current raw_unrounded 96 classes: 8x distinct-kernel work units, not an 8x wall-time assertion. Current Q4/Q3 p6 kernel 4721.61/4680.91 s. H1 and 990-cell FE pairing found no severe node1 slowdown in tested sustained loads. Current workflow remains slower than source anchor; source full fields are unavailable. Raw geometry policy is unchanged.",
     "saved_vector_recovery_fixture": {
       "test": "src/test/test_228_task037_canonical_vector_reconstruction.py::test_serial_floquet_saved_retained_vector_recovers_canonical_coefficients",
       "result": "1 passed in 1.25s",
@@ -312,6 +315,7 @@
       ],
       "scope": "small MPI1 component fixture; not an R13 full-field/pair or resource qualification"
     },
-    "source_compact_authority": "per-q compact observations are checked by each run; full source q3/q4 arrays are absent, so compact match is not mislabeled full source-field authority"
+    "source_compact_authority": "per-q compact observations passed; full source q3/q4 arrays are absent, so release is not mislabeled full-source-field authority",
+    "next_gate": "F5 single 5 nm p6/h4 q4 formal after fresh admission; F2 remains conditional on F5"
   }
 }

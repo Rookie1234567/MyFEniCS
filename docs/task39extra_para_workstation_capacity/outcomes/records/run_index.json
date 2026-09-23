@@ -189,7 +189,49 @@
         "external_guard": {"pid": 1549434, "start_ticks": 197061667}
       }
     }
+    ,{
+      "stage": "R13Q4",
+      "attempt": 2,
+      "run_id": "20260923T161715.636493Z",
+      "record": "r13_pair_release_v1.json#q4",
+      "status": "COMPLETED_OWN_GATES_SOURCE_COMPACT_PASS",
+      "source_sha": "6d989b4b9cbca12fcc35455d7ff381e66ef7ca6d",
+      "input_sha256": "f9e20874ed86e8697b307ca9d2539ec04be8dd77dc7211cc9e0be8dae30746b5",
+      "physical_model_sha256": "255837330af27827d15ef43dfb01876187589a3b5e129f1d0882e24b955484c0",
+      "iterations": 126,
+      "true_residual": 9.283159218227881e-7,
+      "resource_status": "WATCHDOG_COMPLETED_CLEARED_CONTINUOUS"
+    },
+    {
+      "stage": "R13Q3",
+      "attempt": 1,
+      "run_id": "20260923T190511.676461Z",
+      "record": "r13_pair_release_v1.json#q3",
+      "status": "COMPLETED_OWN_GATES_SOURCE_COMPACT_PASS",
+      "source_sha": "6d989b4b9cbca12fcc35455d7ff381e66ef7ca6d",
+      "input_sha256": "6773b6882c29b91590da7d9da85909fe97f71e574488b671ec44c8167f2a722a",
+      "physical_model_sha256": "255837330af27827d15ef43dfb01876187589a3b5e129f1d0882e24b955484c0",
+      "iterations": 361,
+      "true_residual": 9.467909430661342e-7,
+      "resource_status": "WATCHDOG_COMPLETED_CLEARED_CONTINUOUS"
+    },
+    {
+      "stage": "R13_PAIR",
+      "attempt": 4,
+      "record": "r13_pair_release_v1.json",
+      "status": "R13_PAIR_RELEASE",
+      "checker_source_sha": "515b0c653fc25bc1da2f319da9b7e658de049a2e",
+      "pair_record_sha256": "51c144b03eb5e296f5b9676651e68acdf981485ffd9e2c875223d36a1633de4e"
+    },
+    {
+      "stage": "F5",
+      "attempt": 1,
+      "status": "AUTHORIZED_PENDING_FRESH_ADMISSION",
+      "input_sha256": "03a9992d576612335135fa22f25192f97754feb4a281e6c06ce29534e4095d36",
+      "physical_model_sha256": "96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d"
+    }
   ],
   "R2_S5_S3_S2_G": "R2_UNRESOLVED_5NM_OWN_PASS_REFERENCE_LIMITED_RESOURCE_UNQUALIFIED_2NM_H1P5_TERMINAL_GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED_3NM_LOCKED",
-  "next_gate": "2NM_H1P5_TERMINAL_REVIEW_NO_AUTO_RETRY"
+  "R13": "R13_PAIR_RELEASED_WITH_SOURCE_FULL_FIELD_AUTHORITY_LIMITED_BUSY_MHZ_UNKNOWN",
+  "next_gate": "F5_SINGLE_5NM_P6H4_Q4_FRESH_ADMISSION"
 }

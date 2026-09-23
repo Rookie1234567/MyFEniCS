@@ -1,8 +1,12 @@
 # 原生迁移与容量任务：本轮执行结果
 
-## Review V5 当前阶段（2026-09-24）：R13Q4 attempt 1 setup failure
+## Review V5 当前阶段（2026-09-24）：R13_PAIR_RELEASE，下一步 F5
 
-H0/H1、M/C 与四输入合同已完成组件级检查。R13Q4 attempt 1 在 `retained_sum_factorized_physical_action_complete` 的 ledger 序列化处以 `WORKER_FAILED`/exit 4 结束；未进入外层迭代，无残差或 RTA 结果。故障为嵌套 `MappingProxyType` 未被 `_jsonable` 递归识别，不是数值、物理或资源失败。原 compact 保留；唯一实现 bug replay 已登记但尚未启动，待最小修复审核。见 [Response V5](../response_v5.md) 与 [attempt 1 compact](records/v5_r13_q4_attempt1_failure_v1.json)。
+H0/H1、M/C 与四输入合同已完成所需资格。R13 Q4 与 Q3 均由同一 V5 retained-condensed 路径、同一数值 source `6d989b4b9cbca12fcc35455d7ff381e66ef7ca6d` 完成；独立 pair checker `515b0c653fc25bc1da2f319da9b7e658de049a2e` 给出 `NUMERICAL_PAIR_PASS`，全场 L2=`3.5063e-8`、scaled-curl=`1.9531e-8`、80 模态幅值=`2.2629e-8`、R/T/A/A_volume 均过限值。两 run 自身数值/物理与 source-compact Gate、完整 watchdog、持续硬件审阅均闭合，故记录 `R13_PAIR_RELEASE`。完整数值、共同路径、性能范围与硬件边界见 [R13 pair release](records/r13_pair_release_v1.json)；ignored 原始 attempt4 JSON 的 SHA 和路径绑定在该记录中。
+
+性能差异的主解释限定为凝聚 setup 的 class 工作量：现有几何按冻结源 `rounded_12` 规则推导为12组，冻结源正式调用未覆盖该规则；这12组是从已存几何派生，不是源 run 实测。当前 `raw_unrounded` 为96个 p6 tensor classes，即8倍 distinct-kernel 工作单元，不等于8倍墙钟。实测 Q4/Q3 p6 kernel 分别4721.61/4680.91 s；H1配对、990-cell FE对照及两场持续 thermal-throttle=0 未见本次测试负载下旧 node1 严重异常，忙频 MSR/APerf/MPERF 仍 unknown。raw geometry 身份策略不更改；Aq与每次原A4额外审计成本按现有操作记录说明，不伪造完整秒数拆分。
+
+下一步仅为已授权 F5：[`v5_node1_5nm_p6h4_q4.dat`](../../input/task39extra_para_workstation_capacity/v5_node1_5nm_p6h4_q4.dat)，输入 SHA=`03a9992d576612335135fa22f25192f97754feb4a281e6c06ce29534e4095d36`，physical SHA=`96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d`，p6/h4、600 modes。启动前仍须重读CPU24/CPU9占用与128-GiB-headroom admission；F2仅在F5通过后按原条件推进。早期 Q4 attempt1 序列化失败保留于[原始失败 compact](records/v5_r13_q4_attempt1_failure_v1.json)，不覆盖、不计为数值失败。
 
 ## 终态：2026-09-20 04:47 UTC，2 nm h1.5 stopped by global-swap attribution Gate
 

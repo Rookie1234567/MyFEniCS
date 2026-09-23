@@ -1,0 +1,129 @@
+{
+  "schema": "task39extra.v5.r13-pair-release.v1",
+  "status": "R13_PAIR_RELEASE",
+  "released_at_utc": "2026-09-23T23:08:23Z",
+  "numerical_source_sha": "6d989b4b9cbca12fcc35455d7ff381e66ef7ca6d",
+  "checker_source_sha": "515b0c653fc25bc1da2f319da9b7e658de049a2e",
+  "pair_record": {
+    "path": "results/euv_grazing1_phi0/v5_node1_13p5nm_p6h7p5_q3__full3d_iterative__mpi1__Mna/20260923T190511.676461Z/r13_pair_numerical_comparison_attempt4.json",
+    "sha256": "51c144b03eb5e296f5b9676651e68acdf981485ffd9e2c875223d36a1633de4e",
+    "status": "NUMERICAL_PAIR_PASS",
+    "gate_failures": []
+  },
+  "common_path": {
+    "source_contract_record": "docs/task39extra_para_workstation_capacity/outcomes/records/v5_m_c_and_four_input_contract_v1.json",
+    "source_contract_record_sha256": "1c0cbd99475e87bb340443ff96d292ce660dc135af08f2ef71fd81b932535719",
+    "physical_model_sha256": "255837330af27827d15ef43dfb01876187589a3b5e129f1d0882e24b955484c0",
+    "mode_sha256": "d4380495d912f97f6d303a85756bb9b252a1117bad229b559f0ac8140e745fbb",
+    "mode_count": 80,
+    "cells": 990,
+    "fine_global_rows": 667152,
+    "runtime_fingerprint_sha256": "4b103650062550c1f5429d6689b100aba3a1c0782f9bc71e62ed022ab3c7f45e",
+    "worker_cpu": 24,
+    "parent_cpu": 9,
+    "mpi_ranks": 1,
+    "math_threads": 1,
+    "numa_policy": "preferred_node1; allowed nodes 0,1",
+    "resource_policy": "measured_tree_rss_only_v3",
+    "rss_hard_limit_bytes": 1300000000000,
+    "runtime_deadline": null,
+    "source_compact_status": {
+      "q4": "SOURCE_COMPACT_OBSERVABLES_PASS",
+      "q3": "SOURCE_COMPACT_OBSERVABLES_PASS"
+    },
+    "full_source_arrays": "not available; compact authority is not mislabeled full-source-field authority"
+  },
+  "pair_comparison": {
+    "full_field_l2_relative": 3.506288303537306e-8,
+    "scaled_curl_relative": 1.9531003342371262e-8,
+    "selected_e_relative": 2.980041874820943e-8,
+    "selected_h_relative": 2.0115392951303568e-8,
+    "modal_amplitude_relative_difference": 2.2629395166336367e-8,
+    "channel_power_absolute_max": 8.352688096735505e-9,
+    "rta_absolute_differences": {
+      "R": 8.369432313859448e-9,
+      "T": 1.064939803008258e-10,
+      "A": 8.26293822253632e-9,
+      "A_volume": 1.3109158314428271e-8
+    },
+    "phase_fitting": false,
+    "canonical_recovery_and_native_map_identity": "verified by attempt4 checker"
+  },
+  "performance_attribution": {
+    "source_anchor": {
+      "source_sha": "4bf2bba56cc2e568d56ff3096aeb4a108744f28d",
+      "source_file_blob": "e294f30ee189639299fe6c793a264cd173b31507",
+      "profile": "physical_p6_trace_p4_condensed_lowmem_v20",
+      "q4_run_workflow_seconds": 3114.283619607013,
+      "q4_run_ksp_seconds": 2284.681783819,
+      "geometry_rule": "frozen hcurl_assembly_time_condensation._canonical_axis_aligned_coordinates unconditionally rounds widths to 12 decimal places and canonicalizes coordinates to those rounded widths",
+      "formal_call_sites": [
+        "src/runners/physical_retained_outer_adapter.py:408",
+        "src/runners/physical_p4_cell_condensed_v18.py:367"
+      ],
+      "formal_call_overrides_rounding_rule": false,
+      "source_unique_class_count": "not measured in the frozen source run"
+    },
+    "current_geometry_work": {
+      "q4_q3_geometry_policy": "raw_unrounded",
+      "raw_tensor_classes_each": 96,
+      "source_round12_classes_derived_from_saved_geometry": 12,
+      "derived_class_count_is_source_run_measurement": false,
+      "class_work_unit_ratio_raw_to_derived": 8.0,
+      "interpretation": "Applying the frozen source rounding rule to the persisted geometry inventory yields 12 groups versus 96 raw tensor classes now. This is an 8x distinct-kernel-work count, not an 8x wall-time claim; the V5 raw-geometry policy remains unchanged."
+    },
+    "current_runs": {
+      "q4": {
+        "run_id": "v5_node1_13p5nm_p6h7p5_q4",
+        "run_directory_timestamp": "20260923T161715.636493Z",
+        "workflow_seconds": 8661.435753,
+        "setup_before_solve_seconds": 5821.489170,
+        "retained_components_seconds": 5306.551786,
+        "p6_kernel_seconds": 4721.609648,
+        "p4_kernel_seconds": 546.154406,
+        "p4_total_build_seconds": 552.046711,
+        "ksp_seconds": 2656.589092,
+        "outer_iterations": 126,
+        "source_compact": "SOURCE_COMPACT_OBSERVABLES_PASS"
+      },
+      "q3": {
+        "run_id": "v5_node1_13p5nm_p6h7p5_q3",
+        "run_directory_timestamp": "20260923T190511.676461Z",
+        "workflow_seconds": 10997.372826,
+        "setup_before_solve_seconds": 5295.216863,
+        "retained_components_seconds": 4835.885369,
+        "p6_kernel_seconds": 4680.911505,
+        "p4_kernel_seconds": 123.126206,
+        "p4_total_build_seconds": 125.699224,
+        "ksp_seconds": 5521.324173,
+        "outer_iterations": 361,
+        "source_compact": "SOURCE_COMPACT_OBSERVABLES_PASS"
+      }
+    },
+    "p4_audit_scope": "Each current logical p4 duration includes inverse apply, independent original-A4 application, residual, and port-closure audit. It is not directly comparable to the frozen source raw-call timer (~0.78-0.83 s); no unsupported exact ABI-cost split is claimed.",
+    "aq_projection_audit": {
+      "q4": {"volume_relative": 2.3611081747209016e-15, "dtn_relative": 1.0432164142396508e-14, "each_native_and_projected_component_calls": 1},
+      "q3": {"volume_relative": 2.151800770296518e-15, "dtn_relative": 3.2093870629864566e-14, "each_native_and_projected_component_calls": 1},
+      "timing_claim": "operation counts and residuals are recorded; no fabricated complete wall-time decomposition"
+    },
+    "hardware_interpretation": "H1 fixed-work CPU/node comparisons and the 990-cell FE A6/H6 paired comparison showed no severe node1 slowdown in the tested sustained workloads. Both R13 runs had sustained observer coverage and zero thermal-throttle counters. Busy-frequency MSR/APerf/MPERF evidence remains unknown; no broader hardware guarantee is claimed."
+  },
+  "supervision_and_resources": {
+    "q4": {"watchdog_samples": 27232, "max_sample_gap_seconds": 0.545798, "unreadable_samples": 0, "rss_peak_bytes": 9009741824, "tree_swap_peak_bytes": 0, "global_swap_delta_pages": 0, "classification": "COMPLETED", "descendants_cleared": true, "observer_hardware_samples": 566, "observer_max_gap_seconds": 15.393, "throttle_counter_max": 0, "busy_frequency_known_samples": 0},
+    "q3": {"watchdog_samples": 34588, "max_sample_gap_seconds": 0.764067, "unreadable_samples": 0, "rss_peak_bytes": 5935751168, "tree_swap_peak_bytes": 0, "global_swap_delta_pages": 0, "classification": "COMPLETED", "descendants_cleared": true, "observer_hardware_samples": 722, "observer_max_gap_seconds": 15.386, "throttle_counter_max": 0, "busy_frequency_known_samples": 0}
+  },
+  "release_decision": {
+    "r13_pair_release": true,
+    "scope": "Releases the matched R13 q4/q3 path for the already authorized single F5 run only.",
+    "does_not_claim": ["full matched continuum field authority", "busy-MHz evidence", "general hardware repair", "performance equal to the frozen source wall time"],
+    "next_run": {
+      "case": "F5",
+      "input": "input/task39extra_para_workstation_capacity/v5_node1_5nm_p6h4_q4.dat",
+      "input_sha256": "03a9992d576612335135fa22f25192f97754feb4a281e6c06ce29534e4095d36",
+      "physical_model_sha256": "96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d",
+      "coarse_degree": 4,
+      "mode_count": 600,
+      "launch_status_at_release_commit": "authorized_pending_fresh_admission"
+    }
+  }
+}
