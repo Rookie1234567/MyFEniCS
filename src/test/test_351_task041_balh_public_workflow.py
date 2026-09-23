@@ -10,6 +10,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -31,10 +32,12 @@ from benchmarks.task041_balh_workflow import (
     validate_balh_producer_packet,
 )
 from benchmarks.task041_exact_side_workflow import (
+    Task041ModePrepError,
     _merge_representative_parts,
     _task041_backend_pair_layout_identity,
     _task041_case_contract,
     _task041_common_failure_details,
+    _task041_p4_backend_matrix_source,
     _task041_p4_backend_release_audit,
     _task041_rank_numa_observed_backend,
     _task041_rank_numa_pair_sample_stage,
@@ -68,6 +71,10 @@ from src.runners.task041_supervisor import (
     run_task041_public_supervisor,
 )
 from src.solvers.physical_balanced_coupling import BalancedConstraintRejected
+from src.solvers.physical_balanced_physical_operator import (
+    P4CondensedExactFactor,
+    P4ExactFactor,
+)
 from src.solvers.physical_balanced_side_inverse import P4PhysicalResidualGateError
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
@@ -1057,6 +1064,14 @@ def test_task041_pair_layout_identity_excludes_space_object_addresses():
                     "objects": {"python_id": 900 + rank},
                 },
                 "layout_arrays": [{"sha256": "b" * 64}],
+                "held_objects": {
+                    "p4_matrix": {
+                        "kind": "PETSc.Mat",
+                        "python_id": 500 + rank,
+                        "petsc_handle": 600 + rank,
+                    },
+                    "p4_factor": {"python_id": 700 + rank},
+                },
             }
         )
     layout_record = {"by_rank": rank_records}
@@ -1068,6 +1083,9 @@ def test_task041_pair_layout_identity_excludes_space_object_addresses():
             space["space"]["python_id"] += 10000
             space["space"]["cpp_object"]["python_id"] += 10000
             space["space"]["cpp_python_id"] += 10000
+        record["held_objects"]["p4_matrix"]["python_id"] += 10000
+        record["held_objects"]["p4_matrix"]["petsc_handle"] += 10000
+        record["held_objects"]["p4_factor"]["python_id"] += 10000
     address_changed_identity = _task041_backend_pair_layout_identity(
         address_changed
     )
@@ -1086,6 +1104,59 @@ def test_task041_pair_layout_identity_excludes_space_object_addresses():
     assert map_changed_identity["identity_sha256"] != original_identity[
         "identity_sha256"
     ]
+
+
+def test_task041_pair_layout_matrix_source_uses_actual_backend_interfaces():
+    full_matrix = object()
+    full = P4ExactFactor(
+        physical_action=None,
+        matrix=full_matrix,
+        factor=object(),
+        factor_events=[],
+    )
+    condensed_matrix = object()
+    condensed = P4CondensedExactFactor(
+        physical_action=None,
+        inverse=SimpleNamespace(
+            condensed=SimpleNamespace(matrix=condensed_matrix)
+        ),
+        factor_events=[],
+    )
+
+    assert not hasattr(condensed, "matrix")
+    assert _task041_p4_backend_matrix_source(full, "full") == (
+        full_matrix,
+        "p4.matrix",
+        "full_augmented_p4_matrix",
+    )
+    assert _task041_p4_backend_matrix_source(condensed, "cell_condensed") == (
+        condensed_matrix,
+        "p4.condensed.matrix",
+        "cell_condensed_retained_matrix",
+    )
+
+
+def test_task041_pair_layout_matrix_source_rejects_unknown_or_missing_evidence():
+    with pytest.raises(Task041ModePrepError, match="unsupported p4 backend"):
+        _task041_p4_backend_matrix_source(object(), "unknown")
+
+    missing_full_matrix = object.__new__(P4ExactFactor)
+    with pytest.raises(Task041ModePrepError, match="missing its augmented matrix"):
+        _task041_p4_backend_matrix_source(missing_full_matrix, "full")
+
+    missing_condensed_matrix = P4CondensedExactFactor(
+        physical_action=None,
+        inverse=SimpleNamespace(condensed=SimpleNamespace()),
+        factor_events=[],
+    )
+    with pytest.raises(
+        Task041ModePrepError,
+        match="missing its retained matrix",
+    ):
+        _task041_p4_backend_matrix_source(
+            missing_condensed_matrix,
+            "cell_condensed",
+        )
 
 
 def test_task041_pair_supervisor_recomputes_numeric_ratios_from_norms():

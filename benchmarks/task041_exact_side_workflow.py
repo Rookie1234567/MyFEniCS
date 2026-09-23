@@ -307,6 +307,41 @@ def _task041_held_petsc_identity(name: str, value: Any) -> dict[str, Any]:
     }
 
 
+def _task041_p4_backend_matrix_source(
+    p4_factor: Any,
+    backend: str,
+) -> tuple[Any, str, str]:
+    """Select the actual retained matrix for a known p4 backend."""
+
+    if backend == "full":
+        source = "p4.matrix"
+        semantics = "full_augmented_p4_matrix"
+        try:
+            matrix = p4_factor.matrix
+        except AttributeError as exc:
+            raise Task041ModePrepError(
+                "full p4 factor is missing its augmented matrix"
+            ) from exc
+    elif backend == "cell_condensed":
+        source = "p4.condensed.matrix"
+        semantics = "cell_condensed_retained_matrix"
+        try:
+            matrix = p4_factor.condensed.matrix
+        except AttributeError as exc:
+            raise Task041ModePrepError(
+                "cell-condensed p4 factor is missing its retained matrix"
+            ) from exc
+    else:
+        raise Task041ModePrepError(
+            f"unsupported p4 backend for layout matrix evidence: {backend!r}"
+        )
+    if matrix is None:
+        raise Task041ModePrepError(
+            f"{source} is missing from the {backend} p4 factor"
+        )
+    return matrix, source, semantics
+
+
 def _task041_communicator_identity(name: str, communicator: Any) -> dict[str, Any]:
     """Read rank, size, and the actual MPI communicator handle."""
 
@@ -2942,6 +2977,7 @@ def _run_task041_balh_candidate_setup(
         write: bool,
         layout_instance_id: str | None = None,
         purpose: str = "common_layout_equivalence",
+        p4_backend: str = "full",
     ) -> dict[str, Any]:
         local: dict[str, Any] | None = None
         local_error: str | None = None
@@ -3016,6 +3052,9 @@ def _run_task041_balh_candidate_setup(
             }
             p4 = inverse._p4_factor
             p4_factor = p4.factor
+            p4_matrix, p4_matrix_source, p4_matrix_semantics = (
+                _task041_p4_backend_matrix_source(p4, p4_backend)
+            )
             factor_ksp = p4_factor.ksp
             p4_factor_ksp = (
                 _task041_held_petsc_identity("p4.factor.ksp", factor_ksp)
@@ -3068,9 +3107,13 @@ def _run_task041_balh_candidate_setup(
                     "research_factor": _task041_held_object_metadata(
                         "p4.factor", p4_factor
                     ),
-                    "p4_matrix": _task041_held_petsc_identity(
-                        "p4.matrix", p4.matrix
-                    ),
+                    "p4_matrix": {
+                        **_task041_held_petsc_identity(
+                            p4_matrix_source, p4_matrix
+                        ),
+                        "source": p4_matrix_source,
+                        "semantics": p4_matrix_semantics,
+                    },
                     "p4_factor_ksp": p4_factor_ksp,
                     "p4_factor_matrix": (
                         _task041_held_petsc_identity(
@@ -6224,6 +6267,7 @@ def _run_task041_balh_candidate_setup(
                                 side, "p4_backend_pair"
                             ),
                             purpose="p4_backend_pair",
+                            p4_backend=backend,
                         )
                         layout_identity = _task041_backend_pair_layout_identity(
                             layout_record
