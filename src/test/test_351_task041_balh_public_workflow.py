@@ -703,7 +703,7 @@ def _write_task041_fixed_pair_manifest(
             "group": "shared_S0_S1_S3",
             "phase_limit_seconds": task041_balh_workflow.TASK041_SCHUR_SPEED_V2_S0_S1_S3_BUDGET_SECONDS,
             "batch_limit_seconds": task041_balh_workflow.TASK041_SCHUR_SPEED_V2_BATCH_BUDGET_SECONDS,
-            "memory_cap_bytes": contract["memory_cap_bytes"],
+            "memory_cap_bytes": contract["registered_memory_cap_bytes"],
             "swap_limit_bytes": 0,
             "time_stop_override": False,
         },
@@ -795,6 +795,15 @@ def test_task041_fixed_p4_backend_pair_is_explicit_and_5nm_scoped():
     assert pair_contract["time_stop"]["consumer_timeout_seconds"] is None
     assert pair_contract["active_consumer_budget_seconds"] == 21600.0
     assert pair_contract["batch_budget_seconds"] == 201600.0
+    assert pair_contract["registered_memory_cap_bytes"] == 53_221_163_008
+    assert pair_contract["registered_memory_cap_source"] == (
+        "review_report_v2_section_5_explicit_cap"
+    )
+    assert pair_contract["memory_cap_bytes"] == 68_719_476_736
+    assert pair_contract["warning_memory_bytes"] == 61_847_529_062
+    assert pair_contract["memory_cap_source"] == (
+        "user_authorized_single_5nm_fixed8_p4_backend_pair_64_gib"
+    )
     assert pair_contract["ledger"]["schema"] == (
         "task041.review_v5.r1_load_ledger.v1"
     )
@@ -811,7 +820,19 @@ def test_task041_fixed_p4_backend_pair_is_explicit_and_5nm_scoped():
     assert unchanged_contract["comparison_mode"] is None
     assert unchanged_contract["time_stop"]["consumer_enforced"] is True
     assert unchanged_contract["active_consumer_budget_seconds"] == 21600.0
+    assert unchanged_contract["memory_cap_bytes"] == 53_221_163_008
+    assert unchanged_contract["warning_memory_bytes"] == 47_899_046_707
+    assert unchanged_contract["memory_cap_source"] == (
+        "review_report_v2_section_5_explicit_cap"
+    )
     assert unchanged_contract["ledger"]["schema"] == "task041.compute_wall_ledger.v2"
+    formal_cell_contract = task041_balh_service_contract(
+        TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID
+    )
+    assert formal_cell_contract["memory_cap_bytes"] == 53_221_163_008
+    assert formal_cell_contract["memory_cap_source"] == (
+        "task041_v6_cell_condensed_resource_contract"
+    )
     default_command = build_task041_balh_candidate_consumer_command(
         str(Path(sys.executable)),
         candidate,

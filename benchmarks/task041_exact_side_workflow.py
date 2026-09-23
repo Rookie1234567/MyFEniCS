@@ -6511,6 +6511,11 @@ def _run_task041_balh_candidate_setup(
                         "pass": side_pass,
                     }
                     p4_backend_pairs_by_side[side] = pair_record
+                    _write_rank0_json(
+                        audit_path.with_name(f"p4_backend_pair_{side}.json"),
+                        pair_record,
+                        comm,
+                    )
                     if not side_pass:
                         failure_evidence.setdefault("p4_backend_pair", {})[
                             side

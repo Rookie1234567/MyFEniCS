@@ -516,6 +516,15 @@ def test_fixed_pair_service_requires_full_config_and_canonical_v5_path(tmp_path)
         comparison_mode=TASK041_P4_BACKEND_PAIR_MODE,
     )
     assert contract["p4_backend_pair_identity"]["rhs_count"] == 8
+    assert contract["memory_cap_bytes"] == 68_719_476_736
+    assert contract["warning_memory_bytes"] == 61_847_529_062
+    assert contract["registered_memory_cap_bytes"] == 53_221_163_008
+    assert contract["registered_memory_cap_source"] == (
+        "review_report_v2_section_5_explicit_cap"
+    )
+    assert contract["memory_cap_source"] == (
+        "user_authorized_single_5nm_fixed8_p4_backend_pair_64_gib"
+    )
     assert contract["ledger"]["schema"] == (
         "task041.review_v5.r1_load_ledger.v1"
     )
@@ -572,8 +581,8 @@ def test_fixed_pair_public_supervision_ignores_v2_clock_but_keeps_resource_gate(
         lambda _root: canonical_ledger,
     )
     resource_limits = {
-        "warning_memory_bytes": 47_899_046_707,
-        "hard_memory_bytes": 53_221_163_008,
+        "warning_memory_bytes": 240_518_168_576,
+        "hard_memory_bytes": 274_877_906_944,
         "swap_limit_bytes": 0,
         "min_memavailable_bytes": 412_316_860_416,
         "min_cgroup_ancestor_headroom_bytes": 412_316_860_416,
@@ -609,10 +618,10 @@ def test_fixed_pair_public_supervision_ignores_v2_clock_but_keeps_resource_gate(
     assert observed["phase_elapsed_timeout"] is False
     assert observed["cumulative_compute_limit_seconds"] is None
     assert observed["enforce_time_stops"] is False
-    assert observed["process_tree_rss_warning_bytes"] == 47_899_046_707
-    assert observed["process_tree_rss_cap_bytes"] == 53_221_163_008
-    assert observed["warning_memory_bytes"] == 47_899_046_707
-    assert observed["hard_memory_bytes"] == 53_221_163_008
+    assert observed["process_tree_rss_warning_bytes"] == 61_847_529_062
+    assert observed["process_tree_rss_cap_bytes"] == 68_719_476_736
+    assert observed["warning_memory_bytes"] == 240_518_168_576
+    assert observed["hard_memory_bytes"] == 274_877_906_944
     assert observed["min_memavailable_bytes"] == 412_316_860_416
     assert observed["min_cgroup_ancestor_headroom_bytes"] == 412_316_860_416
 
