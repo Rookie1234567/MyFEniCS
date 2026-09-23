@@ -20,6 +20,77 @@ from src.runners import task038_launcher as launcher
 
 ROOT = Path(__file__).resolve().parents[2]
 INPUT = ROOT / "input/task39extra/v28_fused_kernel_original_h7p5.dat"
+POST_REPAIR_INPUT = ROOT / "input/task39extra/v28_fused_kernel_original_h7p5_post_repair.dat"
+
+
+def _v28_pre_repair_ledger():
+    attempts = [
+        {
+            "attempt": 1,
+            "source_sha": "53c6be5025f958f285fd174cbabded4d903658e0",
+            "status": "USER_CONTROLLED_STOP",
+            "settled_seconds": 338.8901043349492,
+            "replay": False,
+        },
+        {
+            "attempt": 2,
+            "source_sha": "b97b605d014fd90439b5b3fa471f2570edf1beff",
+            "status": "WORKER_FAILED",
+            "settled_seconds": 360.61984504689553,
+            "replay": True,
+        },
+    ]
+    return {
+        "schema": "task039extra.v28.fused-kernel.shared-workflow-ledger.v1",
+        "batch_identity": "review_v26_fused_A6_H6_optional_setup_threads",
+        "total_budget_seconds": 43200.0,
+        "elapsed_seconds": 699.5099493818448,
+        "conservative_allowance_seconds": 0.0,
+        "policy_debits": [],
+        "fresh_worker_count": 2,
+        "source_attempts": [
+            {
+                "stage": "Q4_ORIGINAL",
+                "source_sha": attempts[0]["source_sha"],
+                "attempt": 1,
+            },
+            {
+                "stage": "Q4_ORIGINAL",
+                "source_sha": attempts[1]["source_sha"],
+                "attempt": 2,
+            },
+        ],
+        "stages": {
+            "Q4_ORIGINAL": {"attempts": attempts, "active_attempt": None}
+        },
+        "unique_bug_replay_count": 1,
+        "allowed_stages": ["Q4_ORIGINAL"],
+        "cross_case_recycling": False,
+    }
+
+
+def test_v28_post_repair_input_and_authorization_are_exactly_bound():
+    original = INPUT.read_text(encoding="utf-8")
+    new_input = POST_REPAIR_INPUT.read_text(encoding="utf-8")
+    old_identity = 'run_id = "task39extra_v28_fused_kernel_original_h7p5"'
+    new_identity = (
+        'run_id = "task39extra_v28_fused_kernel_original_h7p5_post_repair_v1"'
+    )
+    assert original.replace(old_identity, new_identity, 1) == new_input
+
+    specification = load_and_resolve(POST_REPAIR_INPUT)
+    authorization = launcher._v28_post_repair_validation_authorization(
+        specification, repo_root=ROOT
+    )
+    assert authorization["classification"] == (
+        "USER_AUTHORIZED_POST_REPAIR_VALIDATION"
+    )
+    assert authorization["input_sha256"] == (
+        launcher.V28_POST_REPAIR_VALIDATION_INPUT_SHA256
+    )
+    assert launcher._v28_post_repair_validation_authorization(
+        load_and_resolve(INPUT), repo_root=ROOT
+    ) is None
 
 
 def test_v28_profile_resolves_and_dispatches_only_q4(monkeypatch, tmp_path, capsys):
@@ -91,8 +162,24 @@ def test_v28_profile_resolves_and_dispatches_only_q4(monkeypatch, tmp_path, caps
 def test_v28_launcher_keeps_real_memory_gate_and_observes_swap(
     monkeypatch, tmp_path
 ):
-    specification = load_and_resolve(INPUT)
+    specification = load_and_resolve(POST_REPAIR_INPUT)
     run_directory = tmp_path / "launcher-run"
+    temporary_repo = tmp_path / "temporary-repository"
+    ledger_path = (
+        temporary_repo
+        / "benchmarks/artifacts/task39extra/fused_operator_speed_v28/"
+        "review_v26_fused_A6_H6_optional_setup_threads/shared_workflow_ledger.json"
+    )
+    ledger_path.parent.mkdir(parents=True)
+    original_ledger_bytes = json.dumps(
+        _v28_pre_repair_ledger(), sort_keys=True
+    ).encode("utf-8")
+    ledger_path.write_bytes(original_ledger_bytes)
+    monkeypatch.setattr(
+        launcher,
+        "V28_POST_REPAIR_VALIDATION_PREDECESSOR_LEDGER_SHA256",
+        hashlib.sha256(original_ledger_bytes).hexdigest(),
+    )
 
     def timestamp_directory(*_args, **_kwargs):
         run_directory.mkdir()
@@ -103,7 +190,7 @@ def test_v28_launcher_keeps_real_memory_gate_and_observes_swap(
 
     def reserve_v28(_repo_root, run_directory, **kwargs):
         result = real_reserve_v28(
-            tmp_path / "temporary-repository",
+            temporary_repo,
             run_directory,
             **kwargs,
         )
@@ -151,6 +238,11 @@ def test_v28_launcher_keeps_real_memory_gate_and_observes_swap(
         specification, source_sha="a" * 40, v14_time_policy="observe_only"
     )
     assert reservation["time_policy"] == "observe_only"
+    assert reservation["replay"] is False
+    assert reservation["elapsed_before_seconds"] == 699.5099493818448
+    assert reservation["authorized_performance_repeat"]["classification"] == (
+        "USER_AUTHORIZED_POST_REPAIR_VALIDATION"
+    )
     assert observed["kwargs"]["allow_swap_observation"] is True
     assert observed["kwargs"]["stop_on_global_swap"] is False
     assert observed["kwargs"]["memory_policy"] == PHYSICAL_MEMORY_POLICY_V23
@@ -162,6 +254,43 @@ def test_v28_launcher_keeps_real_memory_gate_and_observes_swap(
     manifest = json.loads(Path(result["manifest"]).read_text())
     assert manifest["swap_policy"] == "observe_only"
     assert manifest["require_zero_swap"] is False
+    saved_ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+    saved_attempts = saved_ledger["stages"]["Q4_ORIGINAL"]["attempts"]
+    assert saved_attempts[:2] == _v28_pre_repair_ledger()["stages"][
+        "Q4_ORIGINAL"
+    ]["attempts"]
+    assert len(saved_attempts) == 3
+    assert saved_attempts[2]["replay"] is False
+    assert saved_attempts[2]["authorized_performance_repeat"]["classification"] == (
+        "USER_AUTHORIZED_POST_REPAIR_VALIDATION"
+    )
+    assert saved_ledger["elapsed_seconds"] >= 699.5099493818448
+    assert saved_ledger["unique_bug_replay_count"] == 1
+    assert saved_ledger["fresh_worker_count"] == 3
+    snapshot_path = ledger_path.with_name(
+        launcher.V28_POST_REPAIR_VALIDATION_SNAPSHOT_NAME
+    )
+    assert snapshot_path.read_bytes() == original_ledger_bytes
+    assert snapshot_path.stat().st_mode & 0o777 == 0o444
+    reserved_ledger_bytes = ledger_path.read_bytes()
+    with pytest.raises(InputError, match="predecessor ledger hash changed"):
+        real_reserve_v28(
+            temporary_repo,
+            tmp_path / "duplicate-run",
+            source_sha="b" * 40,
+            stage="Q4_ORIGINAL",
+            stage_budget={"workflow_seconds": 43200.0},
+            workflow_clock_start={"monotonic": 2.0},
+            service_cgroup_path=Path(
+                "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/"
+                "app.slice/myfenics-case-test.service"
+            ),
+            time_policy="observe_only",
+            authorized_performance_repeat=reservation[
+                "authorized_performance_repeat"
+            ],
+        )
+    assert ledger_path.read_bytes() == reserved_ledger_bytes
 
 
 def test_v28_foreground_launch_is_rejected_before_creating_run_or_ledger(

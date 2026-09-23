@@ -2660,6 +2660,70 @@ V28_STARTUP_SCOPE_RUN_RELATIVE = Path(
     "task39extra_v28_fused_kernel_original_h7p5__full3d_iterative__mpi1__Mna/"
     "20260923T141356.354598Z"
 )
+V28_POST_REPAIR_VALIDATION_RUN_ID = (
+    "task39extra_v28_fused_kernel_original_h7p5_post_repair_v1"
+)
+V28_POST_REPAIR_VALIDATION_AUTHORIZATION_ID = (
+    "user_authorized_post_repair_validation_20260924"
+)
+V28_POST_REPAIR_VALIDATION_INPUT_RELATIVE = Path(
+    "input/task39extra/"
+    "v28_fused_kernel_original_h7p5_post_repair.dat"
+)
+V28_POST_REPAIR_VALIDATION_INPUT_SHA256 = (
+    "447519b48c87360eb5b6c69d56f61196e91a2e14e0a368522dddec48c5c50ebc"
+)
+V28_POST_REPAIR_VALIDATION_PREDECESSOR_LEDGER_SHA256 = (
+    "8db4e543149b809e4968d5344cab9d7d4940e1418fb189ec0f6888beb9270bac"
+)
+V28_POST_REPAIR_VALIDATION_SNAPSHOT_NAME = (
+    "shared_workflow_ledger.pre_post_repair_validation.json"
+)
+V28_POST_REPAIR_VALIDATION_SOURCE = (
+    "user_message_2026-09-24_continue; Review V26 single post-repair validation"
+)
+
+
+def _v28_post_repair_validation_repeat_record() -> dict[str, str]:
+    return {
+        "authorization_id": V28_POST_REPAIR_VALIDATION_AUTHORIZATION_ID,
+        "run_id": V28_POST_REPAIR_VALIDATION_RUN_ID,
+        "scope": "user_authorized_post_repair_validation",
+        "classification": "USER_AUTHORIZED_POST_REPAIR_VALIDATION",
+        "source": V28_POST_REPAIR_VALIDATION_SOURCE,
+        "input_sha256": V28_POST_REPAIR_VALIDATION_INPUT_SHA256,
+        "predecessor_ledger_sha256": (
+            V28_POST_REPAIR_VALIDATION_PREDECESSOR_LEDGER_SHA256
+        ),
+        "predecessor_ledger_snapshot": V28_POST_REPAIR_VALIDATION_SNAPSHOT_NAME,
+    }
+
+
+def _v28_post_repair_validation_authorization(
+    specification: Any, *, repo_root: Path
+) -> dict[str, str] | None:
+    """Bind the one explicit post-repair V28 validation to its new input ID."""
+
+    run_id = str(specification.identity.get("run_id", ""))
+    if run_id != V28_POST_REPAIR_VALIDATION_RUN_ID:
+        return None
+    if (
+        specification.solver.get("preconditioner")
+        != "physical_p6_trace_fused_kernel_v28"
+        or specification.solver.get("stage") != "Q4_ORIGINAL"
+    ):
+        raise InputError("V28 post-repair validation requires the reviewed Q4 profile")
+    repo_root = Path(repo_root).resolve()
+    expected_input = (repo_root / V28_POST_REPAIR_VALIDATION_INPUT_RELATIVE).resolve()
+    if Path(specification.source_path).resolve() != expected_input:
+        raise InputError("V28 post-repair validation run_id is bound to its exact input path")
+    try:
+        input_sha256 = hashlib.sha256(expected_input.read_bytes()).hexdigest()
+    except OSError as exc:
+        raise InputError("V28 post-repair validation input cannot be read") from exc
+    if input_sha256 != V28_POST_REPAIR_VALIDATION_INPUT_SHA256:
+        raise InputError("V28 post-repair validation input hash changed")
+    return _v28_post_repair_validation_repeat_record()
 
 
 def _load_v28_startup_scope_replay_evidence(
@@ -2762,6 +2826,7 @@ def _reserve_v28_fused_kernel_budget(
     workflow_clock_start: Mapping[str, Any],
     service_cgroup_path: Path | None = None,
     time_policy: str = V14_TIME_POLICY_ENFORCE,
+    authorized_performance_repeat: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Reserve the independent V28 fused-kernel formal attempt."""
 
@@ -2783,6 +2848,14 @@ def _reserve_v28_fused_kernel_budget(
     )
     schema = "task039extra.v28.fused-kernel.shared-workflow-ledger.v1"
     batch_identity = "review_v26_fused_A6_H6_optional_setup_threads"
+    authorized_repeat = (
+        dict(authorized_performance_repeat)
+        if authorized_performance_repeat is not None
+        else None
+    )
+    expected_post_repair_repeat = _v28_post_repair_validation_repeat_record()
+    if authorized_repeat is not None and authorized_repeat != expected_post_repair_repeat:
+        raise InputError("V28 post-repair repeat authorization identity changed")
     prerequisite = {
         "original_only": True,
         "allowed_stages": ["Q4_ORIGINAL"],
@@ -2793,8 +2866,23 @@ def _reserve_v28_fused_kernel_budget(
         "old_R1_probe_replay": False,
     }
     path.parent.mkdir(parents=True, exist_ok=True)
+    if authorized_repeat is not None and not path.is_file():
+        raise InputError("V28 post-repair validation requires the preserved shared ledger")
     if path.exists():
-        ledger = json.loads(path.read_text(encoding="utf-8"))
+        ledger_bytes = path.read_bytes()
+        if authorized_repeat is not None:
+            predecessor_sha256 = hashlib.sha256(ledger_bytes).hexdigest()
+            if predecessor_sha256 != V28_POST_REPAIR_VALIDATION_PREDECESSOR_LEDGER_SHA256:
+                raise InputError("V28 post-repair validation predecessor ledger hash changed")
+            snapshot_path = path.with_name(V28_POST_REPAIR_VALIDATION_SNAPSHOT_NAME)
+            if snapshot_path.exists():
+                snapshot_bytes = snapshot_path.read_bytes()
+                if hashlib.sha256(snapshot_bytes).hexdigest() != predecessor_sha256:
+                    raise InputError("V28 post-repair validation ledger snapshot changed")
+            else:
+                snapshot_path.write_bytes(ledger_bytes)
+                snapshot_path.chmod(0o444)
+        ledger = json.loads(ledger_bytes.decode("utf-8"))
         if (
             ledger.get("schema") != schema
             or ledger.get("batch_identity") != batch_identity
@@ -2849,6 +2937,7 @@ def _reserve_v28_fused_kernel_budget(
         prerequisite=prerequisite,
         bug_replay_limit=1,
         v28_startup_scope_recovery=startup_scope_recovery,
+        authorized_performance_repeat=authorized_repeat,
     )
 
 
@@ -3630,6 +3719,21 @@ def launch_specification(
     }
     cell_stage = str(specification.solver.get('stage', ''))
     v25_authorized_performance_repeat = None
+    v28_authorized_performance_repeat = None
+    if (
+        specification.identity.get("run_id")
+        == V28_POST_REPAIR_VALIDATION_RUN_ID
+    ):
+        if not fused_kernel_v28_profile or cell_stage != "Q4_ORIGINAL":
+            raise InputError(
+                "V28 post-repair validation identity is restricted to the fused Q4 profile"
+            )
+        v28_authorized_performance_repeat = (
+            _v28_post_repair_validation_authorization(
+                specification,
+                repo_root=Path(__file__).resolve().parents[2],
+            )
+        )
     v25_swap_observe = (
         coarse_degree_v25_profile
         and cell_stage == "Q4_ORIGINAL"
@@ -3851,6 +3955,7 @@ def launch_specification(
             stage_budget=cell_stage_budget, workflow_clock_start=full_clock.start,
             service_cgroup_path=service_cgroup_path,
             time_policy=v14_time_policy,
+            authorized_performance_repeat=v28_authorized_performance_repeat,
         )
     elif physical_memory_v23_profile and physical_candidate:
         run_directory = _timestamp_directory(specification, timestamp)

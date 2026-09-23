@@ -38,6 +38,9 @@ _V25_Q4_AC_SWAP_OBSERVE_RUN_IDS = frozenset(
 )
 _V27_WORKINGSET_RUN_ID = "task39extra_v27_workingset_p6_setup_original_h7p5"
 _V28_FUSED_KERNEL_RUN_ID = "task39extra_v28_fused_kernel_original_h7p5"
+_V28_POST_REPAIR_VALIDATION_RUN_ID = (
+    "task39extra_v28_fused_kernel_original_h7p5_post_repair_v1"
+)
 
 
 def _error(path: str, message: str) -> InputError:
@@ -1027,7 +1030,11 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                         "V27 profile requires its frozen run_id and comparison_group",
                     )
                 if is_v28_fused_kernel and (
-                    config["run_id"] != _V28_FUSED_KERNEL_RUN_ID
+                    config["run_id"]
+                    not in {
+                        _V28_FUSED_KERNEL_RUN_ID,
+                        _V28_POST_REPAIR_VALIDATION_RUN_ID,
+                    }
                     or config.get("comparison_group")
                     != "review_v26_fused_A6_H6_optional_setup_threads"
                 ):
