@@ -11,6 +11,7 @@ from src.io import load_and_resolve
 from src.io.input_loader import InputError
 from src.io.physical_intermediate_profile import (
     COARSE_DEGREE_SPEED_PROFILE,
+    SETUP_EFFICIENCY_PROFILE,
     profile_facts,
 )
 from src.io.run_specification import thaw
@@ -111,6 +112,34 @@ def test_v25_worker_dispatch_keeps_explicit_stage_degree(monkeypatch, tmp_path):
     )
     assert captured["evidence_prefix"] == "v25q3"
     assert captured["profile_identity"] == COARSE_DEGREE_SPEED_PROFILE
+
+
+def test_v26_worker_dispatch_uses_v26_summary_contract(monkeypatch, tmp_path):
+    specification = load_and_resolve(
+        ROOT / "input/task39extra/v26_q4_setup_efficiency_original_h7p5.dat"
+    )
+    captured = {}
+
+    def fake_runner(payload, run_directory, **kwargs):
+        captured.update(kwargs)
+        return {"passed": False, "errors": ["dispatch probe"]}
+
+    from src.runners import physical_dual_cell_condensed_lowmem_v20 as lowmem
+
+    monkeypatch.setattr(lowmem, "_run_physical_dual_cell_condensed_lowmem", fake_runner)
+    result = dispatch.run_full3d_iterative(
+        specification.as_jsonable(), tmp_path, source_sha="s" * 40
+    )
+    assert result["errors"] == ["dispatch probe"]
+    assert captured["coarse_degree"] == 4
+    assert captured["allowed_stages"] == ("Q4_ORIGINAL",)
+    assert captured["evidence_prefix"] == "v26q4"
+    assert captured["profile_identity"] == SETUP_EFFICIENCY_PROFILE
+    assert captured["summary_schema"] == "task039extra.v26.worker-summary.v1"
+    assert captured["summary_filename"] == (
+        "physical_dual_condensed_setup_efficiency_v26_summary.json"
+    )
+    assert captured["restore_summary_schema"] is True
 
 
 def test_v25_public_launcher_accepts_observe_only_policy(capsys):

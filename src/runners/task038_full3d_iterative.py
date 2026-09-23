@@ -283,6 +283,7 @@ def run_full3d_iterative(
             batch_identity="review_v24_setup_and_kernel_efficiency",
             evidence_prefix="v26q4",
             summary_schema="task039extra.v26.worker-summary.v1",
+            summary_filename="physical_dual_condensed_setup_efficiency_v26_summary.json",
             derive_live_space_identity=True,
             rhs_identity_policy="case_bound_physical_rhs",
             restore_summary_schema=True,
