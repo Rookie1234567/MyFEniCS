@@ -15,6 +15,7 @@ from scripts.task39extra_event_observer import Observer, _proc_identity
 from src.runners.physical_balanced_output import (
     _observer_pair_receipt,
     _r13_pair_binding_errors,
+    _r13_source_identity_errors,
 )
 
 
@@ -135,6 +136,35 @@ class Task39ExtraV5R13PairReleaseTests(unittest.TestCase):
         })
         self.assertTrue(any("worker PID/start_ticks" in error
                             for error in _r13_pair_binding_errors(q4, incomplete_supervision)))
+
+    def test_pair_source_gate_matches_successful_launcher_and_watchdog_schema(self):
+        source_sha = "a" * 40
+        source_state = {
+            "source_sha": source_sha,
+            "tracked_and_nonignored_untracked_clean": True,
+            "actual_git_directory": "/repo/.git/worktrees/task",
+        }
+        manifest = {"source_sha": source_sha, "source_after": source_state}
+        watchdog = {"source_state": source_state}
+        self.assertEqual(_r13_source_identity_errors(manifest, watchdog), [])
+
+        dirty_manifest = {
+            "source_sha": source_sha,
+            "source_after": {**source_state, "tracked_and_nonignored_untracked_clean": False},
+        }
+        self.assertTrue(any("launcher source_after is not recorded clean" in error
+                            for error in _r13_source_identity_errors(dirty_manifest, watchdog)))
+
+        mismatched_watchdog = {
+            "source_state": {**source_state, "source_sha": "b" * 40},
+        }
+        self.assertTrue(any("watchdog source_state SHA differs" in error
+                            for error in _r13_source_identity_errors(manifest, mismatched_watchdog)))
+
+        failed_source = {"source_sha": source_sha,
+                         "source_after": {"provenance_passed": False, "error": "dirty"}}
+        self.assertTrue(any("launcher source_after is not recorded clean" in error
+                            for error in _r13_source_identity_errors(failed_source, watchdog)))
 
     def test_checker_cli_writes_nonoverwriting_numerical_pair_record(self):
         with tempfile.TemporaryDirectory(prefix="task39extra-r13-pair-entry-") as temp:

@@ -265,6 +265,23 @@ def _r13_pair_binding_errors(q4, q3):
     return errors
 
 
+def _r13_source_identity_errors(manifest, watchdog):
+    """Bind successful launcher and watchdog source snapshots to the run SHA."""
+    expected = manifest.get("source_sha")
+    errors = []
+    for label, state in (
+            ("launcher source_after", manifest.get("source_after")),
+            ("watchdog source_state", watchdog.get("source_state"))):
+        if not isinstance(state, dict):
+            errors.append(f"{label} record is missing")
+            continue
+        if state.get("source_sha") != expected:
+            errors.append(f"{label} SHA differs from the run source SHA")
+        if state.get("tracked_and_nonignored_untracked_clean") is not True:
+            errors.append(f"{label} is not recorded clean")
+    return errors
+
+
 def _sha256_file(path):
     digest = hashlib.sha256()
     with Path(path).open("rb") as stream:
@@ -463,9 +480,12 @@ def _load_r13_pair_run(directory, expected_q, observer_log):
         raise ValueError(f"{directory.name} does not contain exactly 80 DtN modes")
 
     if (manifest.get("status") != "finished" or manifest.get("exit_status") != 0 or
-            manifest.get("result_classification") != "worker_exit0" or
-            manifest.get("source_after", {}).get("provenance_passed") is not True):
+            manifest.get("result_classification") != "worker_exit0"):
         raise ValueError(f"{directory.name} launcher terminal/source result is not successful")
+    source_errors = _r13_source_identity_errors(manifest, watchdog)
+    if source_errors:
+        raise ValueError(f"{directory.name} launcher/watchdog source identity is invalid: "
+                         + "; ".join(source_errors))
     if (watchdog.get("classification") != "COMPLETED" or
             watchdog.get("leader_exit_code") != 0 or
             watchdog.get("descendants_cleared") is not True or
