@@ -3163,3 +3163,10 @@ B finite witness 的输入 unchanged、slave constraints 和 seq2 explicit relat
 V7 A/B 的 native A4、旧 S bridge、输入不变性和 slave closure 通过，但 outer longtail 未解决。A/B fields、near-field、R/T/A、`A_volume`、能量闭合、显著衍射级、official release 和 notch 均为 `not_run`。低于 2 GB 的 A/B RSS 只能归档为未完成失败 workflow 的资源观测，不能写成 2 GB 成功 PDE。
 
 中心结果为 [bounded_inexact_outer_v7.md](task039_extra_physical_multilevel/outcomes/bounded_inexact_outer_v7.md)；机器记录为 [A compact](task039_extra_physical_multilevel/outcomes/records/bounded_inexact_outer_a_original_v7.json)、[B finite compact](task039_extra_physical_multilevel/outcomes/records/bounded_inexact_outer_b_controls_v7.json) 和 [B original compact](task039_extra_physical_multilevel/outcomes/records/bounded_inexact_outer_b_original_v7.json)。V5/V6 记录、raw negative、source/input hash 和共享预算均按原入口保留。J5 只做文档、compact、链接/hash 与 diff 合同检查，不启动新 PDE、MPI、factor 或 workstation heavy case。
+# 当前进展：V26 setup-efficiency 已完成证据收口，r2 保持速度基线
+
+V26 本轮 Full3D p6/h7.5、coarse p4 场已经完成 126 步并通过残差/物理一致性检查；与 V25 Q4 r2 的保存场、通道和功率离线回归通过。V26 full workflow 为 `3595.9571450339936 s`，r2 为 `3114.283619607013 s`，所以 V26 慢 `15.46659149457179%`，不作端到端加速结论。执行端重复启动在 worker 前因 shared replay ledger exhausted 被拒绝，没有新 PDE、残差或资源结果；该负记录保留。
+
+当前裁决：r2 是速度 baseline；V26 为显式 opt-in/review-only；T5 numeric cache reuse deferred；不改 ordinary default，不继续启动 PDE，不合并 master。证据入口为 `docs/task039_extra_physical_multilevel/response_v27.md` 与 `outcomes/setup_efficiency_v26.md`。
+
+---

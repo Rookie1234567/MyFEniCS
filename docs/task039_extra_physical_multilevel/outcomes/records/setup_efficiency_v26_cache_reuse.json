@@ -1,0 +1,18 @@
+{
+  "schema": "task039extra.v26.setup-efficiency.cache-reuse.v1",
+  "status": "DEFERRED",
+  "classification": "T5_CACHE_REUSE_NOT_QUALIFIED",
+  "profile": "physical_p6_trace_setup_efficiency_v26",
+  "source_sha": "32bf03e0ab50ea67487ecb1ca06f5da468800482",
+  "requested_scope": "local numeric packet/factor cache reuse with an independent loader and schema-bound identity",
+  "observed_existing_formal_run": {
+    "numeric_cache_mode": "build",
+    "numeric_cache_loads": 0,
+    "reused_numeric_factor": false,
+    "structural_maps_reused": true,
+    "run_root": "results/euv_grazing1_phi0/task39extra_v26_q4_setup_efficiency_original_h7p5__full3d_iterative__mpi1__Mna/20260923T001753.478027Z"
+  },
+  "reason": "No qualified local numeric packet loader/schema exists in the current source; implementing the required loader would be a new platform scope. Offline cache validation does not require PDE budget, but no such loader was qualified in this closeout.",
+  "pde_started": false,
+  "next_action": "Require a separately reviewed packet format and loader before any future run; do not infer cache benefit from structural-map reuse or JIT reuse."
+}

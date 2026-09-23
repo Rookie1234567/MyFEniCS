@@ -1,0 +1,65 @@
+{
+  "schema": "task039extra.v26.setup-efficiency.compact.v1",
+  "status": "PASS_WITH_AUTHORITY_LIMITATION",
+  "profile": "physical_p6_trace_setup_efficiency_v26",
+  "formal_run": {
+    "root": "results/euv_grazing1_phi0/task39extra_v26_q4_setup_efficiency_original_h7p5__full3d_iterative__mpi1__Mna/20260923T001753.478027Z",
+    "source_sha": "c27c07e305739b2dcf02c18dde44a0bc8bc70642",
+    "iterations": 126,
+    "final_residual": 9.283164976754267e-07,
+    "workflow_monotonic_seconds": 3595.9571450339936,
+    "workflow_conservative_seconds": 3943.2766163249958,
+    "ksp_seconds": 2716.518828,
+    "setup_monotonic_seconds": 823.0868099959989,
+    "process_tree_rss_authority_peak_bytes": 7381557248,
+    "worker_emitted_pss_peak_bytes": 7346483200,
+    "swap_peak_bytes": 0
+  },
+  "speed_baseline": {
+    "run": "V25 Q4 AC swap observe r2",
+    "root": "results/euv_grazing1_phi0/task39extra_v25_q4_ac_swap_observe_r2_h7p5__full3d_iterative__mpi1__Mna/20260922T033647.910623Z",
+    "source_sha": "4bf2bba56cc2e568d56ff3096aeb4a108744f28d",
+    "iterations": 126,
+    "final_residual": 9.283165086752956e-07,
+    "workflow_monotonic_seconds": 3114.283619607013,
+    "ksp_seconds": 2284.681783819,
+    "setup_monotonic_seconds": 781.971881371981,
+    "process_tree_rss_authority_peak_bytes": 7390937088,
+    "worker_emitted_pss_peak_bytes": 7354803200,
+    "swap_peak_bytes": 0
+  },
+  "comparison": {
+    "v26_full_delta_seconds": 481.67352542698063,
+    "v26_full_delta_percent": 15.46659149457179,
+    "v26_ksp_delta_seconds": 431.83704418100024,
+    "v26_ksp_delta_percent": 18.90140881935669,
+    "v26_setup_delta_seconds": 41.11492862401792,
+    "v26_setup_delta_percent": 5.257852565220267,
+    "v26_process_tree_rss_authority_delta_bytes": -9379840,
+    "v26_worker_emitted_pss_delta_bytes": -8320000,
+    "residual_difference_absolute": 1.0999868896436698e-14
+  },
+  "checkpoints": [
+    {"iteration": 16, "v26_residual": 0.004143722296409995, "v26_solve_seconds": 384.0337115070026, "r2_residual": 0.0041437222964080065, "r2_solve_seconds": 323.3362546709826},
+    {"iteration": 32, "v26_residual": 0.0003352917960308131, "v26_solve_seconds": 777.1027530929997, "r2_residual": 0.0003352917960387092, "r2_solve_seconds": 650.6104775810122},
+    {"iteration": 48, "v26_residual": 0.0001941922143554351, "v26_solve_seconds": 1167.9473363410007, "r2_residual": 0.00019419221371048617, "r2_solve_seconds": 957.0546633300296},
+    {"iteration": 64, "v26_residual": 3.023352345638768e-05, "v26_solve_seconds": 1586.7619330320051, "r2_residual": 3.0233523443058283e-05, "r2_solve_seconds": 1281.9846078490243},
+    {"iteration": 80, "v26_residual": 1.760946875614058e-05, "v26_solve_seconds": 1936.0104711780182, "r2_residual": 1.760946862124978e-05, "r2_solve_seconds": 1590.69534846704},
+    {"iteration": 96, "v26_residual": 3.776699912546929e-06, "v26_solve_seconds": 2307.2483297520203, "r2_residual": 3.7766998795463687e-06, "r2_solve_seconds": 1915.863995520064},
+    {"iteration": 112, "v26_residual": 2.7139958418956275e-06, "v26_solve_seconds": 2641.9852813600146, "r2_residual": 2.71399585136905e-06, "r2_solve_seconds": 2225.8895136200404},
+    {"iteration": 120, "v26_residual": 1.2975777548194936e-06, "v26_solve_seconds": 2825.9313595170174, "r2_residual": 1.2975777533057327e-06, "r2_solve_seconds": 2378.8047570660283},
+    {"iteration": 126, "v26_residual": 9.283164976753938e-07, "v26_solve_seconds": 2982.967928542012, "r2_residual": 9.283165086752617e-07, "r2_solve_seconds": 2514.900594385036}
+  ],
+  "official_output": {
+    "R": 0.3650975537006226,
+    "T": 0.013016803347760205,
+    "A": 0.6218856429516172,
+    "A_volume": 0.621885642133916,
+    "R00_total": 0.36506086288704565
+  },
+  "resource_scope": {
+    "rss": "run_summary.resource_authority.sampled_process_tree_rss_peak_bytes",
+    "pss": "worker-emitted process-tree PSS summary; retained with its own sample scope and not substituted for RSS authority"
+  },
+  "interpretation": "Residual trajectory and saved output agree with r2 at floating-point scale, but V26 is slower. Keep r2 as speed baseline; V26 is explicit opt-in/review-only."
+}

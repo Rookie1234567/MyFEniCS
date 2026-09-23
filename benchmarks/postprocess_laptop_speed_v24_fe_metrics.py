@@ -74,6 +74,20 @@ def full_solution_facts(run_root: Path, summary_name: str) -> tuple[np.ndarray, 
         raise ValueError(f"complete-field descriptor mismatch: {archive}")
     if not np.isfinite(field).all():
         raise ValueError(f"complete field is not finite: {archive}")
+    geometry_semantic_identity = summary["actual_dimension_identity"].get(
+        "geometry_semantic_identity"
+    )
+    if geometry_semantic_identity is None:
+        # V25/V26 keep the frozen geometry in resolved_config and the live
+        # cell-count witness in geometry_audit, while older summaries embedded
+        # both under actual_dimension_identity.
+        resolved = read_json(run_root / "resolved_config.json")
+        geometry_payload = dict(resolved["geometry"])
+        geometry_payload.pop("geometry_identity", None)
+        geometry_semantic_identity = {
+            "axis_cell_counts": summary["geometry_audit"]["actual_axis_cell_counts"],
+            "geometry_entity_payload": geometry_payload,
+        }
     return field, {
         "summary_path": str(run_root / summary_name),
         "summary_sha256": sha256(run_root / summary_name),
@@ -90,9 +104,7 @@ def full_solution_facts(run_root: Path, summary_name: str) -> tuple[np.ndarray, 
         "p4_native_map_sha256": summary["operator_identity"].get("p4_native_map_sha256"),
         "quadrature": summary["operator_identity"].get("quadrature"),
         "p6_dimension": summary["actual_dimension_identity"]["p6"],
-        "geometry_semantic_identity": summary["actual_dimension_identity"][
-            "geometry_semantic_identity"
-        ],
+        "geometry_semantic_identity": geometry_semantic_identity,
         "geometry_audit": summary["geometry_audit"],
     }
 

@@ -1,0 +1,79 @@
+{
+  "schema": "task039extra.v26.relaunch-gate-rejection.v2",
+  "status": "REJECTED_BEFORE_WORKER",
+  "classification": "BUDGET_GATE_REJECTION_NO_PDE",
+  "date_utc": "2026-09-23T01:41:31Z",
+  "date_local": "2026-09-23T09:41:31+08:00",
+  "attempt": {
+    "service_unit": "myfenics-case-20260923T014131-156906.service",
+    "command": "bash scripts/run_case_in_user_service.sh input/task39extra/v26_q4_setup_efficiency_original_h7p5.dat --v14-time-policy observe_only",
+    "source_sha": "32bf03e0ab50ea67487ecb1ca06f5da468800482",
+    "input_sha256": "2ad95964964175c07faf1890b666249b86037e5f6fce0ad4dc8536e1a59927cc",
+    "exit_status": 2,
+    "service_duration_seconds": 0.110,
+    "error": "Task38 input error: V26 BLR stage Q4_ORIGINAL has exhausted its one repair replay"
+  },
+  "scope": {
+    "pde_started": false,
+    "worker_started": false,
+    "ksp_started": false,
+    "factor_started": false,
+    "iterations": 0,
+    "new_residual": null,
+    "new_output_files": 0,
+    "new_budget_debit_seconds": 0.0,
+    "existing_formal_result_preserved": true
+  },
+  "attempt_history": [
+    {
+      "service_log": "benchmarks/artifacts/user_services/myfenics-case-20260923T000330-126047.log",
+      "service_log_sha256": "bc1969b7acb329c92fc6ec461fe4da7879390ae1ddc06d9447b10322c45b8212",
+      "status": "REJECTED_BEFORE_WORKER",
+      "source_sha": "unknown",
+      "error": "Task38 input error: --profile-budget-ledger requires --physical-pc-profile",
+      "pde_started": false
+    },
+    {
+      "service_log": "benchmarks/artifacts/user_services/myfenics-case-20260923T001329-130872.log",
+      "service_log_sha256": "07e3568ada5e7da0760fa2d6fde02f9b23228a674be4bd2bb14987ad2aa11f17",
+      "status": "REJECTED_BEFORE_WORKER",
+      "source_sha": "unknown",
+      "error": "Task38 input error: V26 repair replay requires hash-bound bug evidence",
+      "pde_started": false
+    },
+    {
+      "service_log": "benchmarks/artifacts/user_services/myfenics-case-20260923T000421-126465.log",
+      "service_log_sha256": "08456209348d2fa46d14d5f70b15f877ba6625f5460c75ec1eaa74d85db0fe4a",
+      "run_directory": "results/euv_grazing1_phi0/task39extra_v26_q4_setup_efficiency_original_h7p5__full3d_iterative__mpi1__Mna/20260923T000422.074399Z",
+      "status": "WORKER_FAILED_BEFORE_FORMAL_SOLVE",
+      "source_sha": "973c0c3fe6a83786aee78f93faac25c80472ac99",
+      "elapsed_seconds": 64.91704543396747,
+      "error": "only retained-space original stages use the outer adapter",
+      "outer_guard": "V26 Q4 retained outer-route admission",
+      "pde_factor_ksp_started": false,
+      "ledger_effect": "fresh worker cost; one later hash-bound implementation-bug replay"
+    },
+    {
+      "run_directory": "results/euv_grazing1_phi0/task39extra_v26_q4_setup_efficiency_original_h7p5__full3d_iterative__mpi1__Mna/20260923T001753.478027Z",
+      "status": "FORMAL_COMPLETED",
+      "source_sha": "c27c07e305739b2dcf02c18dde44a0bc8bc70642",
+      "elapsed_seconds": 3943.286275643445,
+      "iterations": 126
+    }
+  ],
+  "evidence": {
+    "service_log": "benchmarks/artifacts/user_services/myfenics-case-20260923T014131-156906.log",
+    "service_log_sha256": "a4c7b22763456810fcb0b4c0b42ac4a26ef1546416b4ca06a03f40362d9a13b4",
+    "empty_run_directory": "results/euv_grazing1_phi0/task39extra_v26_q4_setup_efficiency_original_h7p5__full3d_iterative__mpi1__Mna/20260923T014131.592563Z",
+    "shared_ledger": "benchmarks/artifacts/task39extra/setup_efficiency_v26/shared_workflow_ledger.json",
+    "shared_ledger_sha256": "b8e9d2852b1f35b2e199fc50cde2d535777327439052a4333fd4105f27ec623c",
+    "ledger_state": {
+      "fresh_worker_count": 2,
+      "unique_bug_replay_count": 1,
+      "active_attempt": null,
+      "elapsed_seconds": 4008.2033210774125,
+      "automatic_retry": false
+    }
+  },
+  "decision": "Do not delete or modify the ledger and do not change run_id to bypass the one-replay contract. The completed 20260923T001753.478027Z V26 result remains the only formal V26 authority-limited run; 000330/001329 are pre-start rejections and 000422 is the preserved 64.917 s implementation-bug failure."
+}

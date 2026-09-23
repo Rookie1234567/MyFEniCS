@@ -1,3 +1,18 @@
+## V26 setup-efficiency 收口：与 r2 数值一致，但没有端到端提速
+
+V26 本轮唯一正式完成场是 `20260923T001753.478027Z`：Full3D、p6/h7.5、coarse p4、990 cells、MPI1/thread1、126 步，最终显式真残差 `9.283164976754267e-7`，分类为 `DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED`。它没有匹配的独立 h7.5 reference，不宣称 continuum convergence。
+
+| 模型 | full workflow 单调（s） | KSP（s） | setup 单调（s） | final residual | RSS/PSS（B） | 裁决 |
+|---|---:|---:|---:|---:|---:|---|
+| V26 setup-efficiency | 3595.9571450339936 | 2716.518828 | 823.0868099959989 | 9.283164976754267e-7 | 7381557248 / 7346483200 | 一致性通过，authority limited |
+| V25 Q4 r2 speed baseline | 3114.283619607013 | 2284.681783819 | 781.971881371981 | 9.283165086752956e-7 | 7390937088 / 7354803200 | 速度基线 |
+
+V26 相对 r2 的 full/KSP/setup 分别慢 `15.46659149457179%`、`18.90140881935669%`、`5.257852565220267%`。因此 r2 保持速度基线，V26 仅显式 opt-in/review-only，不提升为 ordinary default。V26 每 16 步残差与耗时、场/通道/功率离线回归、T5 `DEFERRED` 和本次 worker 前 gate rejection 见 [V26 outcome](setup_efficiency_v26.md)、[response V27](../response_v27.md) 与 [V26 compact](records/setup_efficiency_v26_compact.json)。
+
+执行端的一次重复启动没有进入 PDE：`myfenics-case-20260923T014131-156906.service` 因一次 replay 额度耗尽在 worker 前退出；没有新残差或新物理结果。原始 log、账本 hash 和 `REJECTED_BEFORE_WORKER` 分类见 [relaunch gate record](records/setup_efficiency_v26_relaunch_gate_rejection_20260923T014131.json)。旧 64.917 s 首次 implementation-bug 记录和 V26 本轮正式结果均保留。
+
+---
+
 ## V25 A6/H6 粗阶对照：Q4/Q3 通过，Q2 受控停止
 
 本批在同一冻结 source cad282e25ed53cad1f9e4a5a70c14f3dd40e6d32、p6/h7.5、990 cells、Full3D、MPI1、complex128 条件下登记 p4/p3/p2 粗阶。粗阶改变的是预条件器的离散空间与因子规模；它不自动代表连续极限收敛，也不能把没有终态的 Q2 写成失败或通过。

@@ -1,0 +1,44 @@
+{
+  "schema": "task039extra.v26.dynamic-accounting.v1",
+  "status": "DYNAMIC_ACCOUNTING_PASS_BACKEND_IDENTITY_SEPARATE",
+  "scope": "recomputed from the V26 summary, resolved config, and all saved p4 raw repair records; no PDE action",
+  "source": {
+    "summary": "results/euv_grazing1_phi0/task39extra_v26_q4_setup_efficiency_original_h7p5__full3d_iterative__mpi1__Mna/20260923T001753.478027Z/physical_dual_condensed_setup_efficiency_v26_summary.json",
+    "summary_sha256": "f9e2975aafa0349a33c358e017705e253786db054d823579eeb6b14151d2e313",
+    "resolved_config": "results/euv_grazing1_phi0/task39extra_v26_q4_setup_efficiency_original_h7p5__full3d_iterative__mpi1__Mna/20260923T001753.478027Z/resolved_config.json",
+    "raw_directory": "results/euv_grazing1_phi0/task39extra_v26_q4_setup_efficiency_original_h7p5__full3d_iterative__mpi1__Mna/20260923T001753.478027Z/inexact_balance",
+    "raw_record_count": 267,
+    "checker": "benchmarks.task39extra_v25_dynamic_checker.check_summary",
+    "checker_script_sha256": "2db74043e8c722c6e4b2c7e9953904f523f62c371d9a4fe0546228ad0248d588"
+  },
+  "recomputed_counts": {
+    "raw_boundary_records": 131,
+    "logical_p4_units": 262,
+    "nonzero_logical_units": 262,
+    "actual_mat_solves": 267,
+    "physical_f4_calls": 267,
+    "extra_repairs": 5,
+    "reported_cross_checks": {
+      "logical_matches_raw": true,
+      "mat_solve_matches_raw": true,
+      "physical_matches_raw": true
+    }
+  },
+  "recomputed_residuals": {
+    "limit": 1e-10,
+    "max_final_recomputed_relative": 7.243731544969288e-11,
+    "max_raw_pre_repair_relative": 2.8870661155266027e-10,
+    "max_correction_relative": 9.827559370577298e-13,
+    "all_final_p4_relative_le_1e-10": true,
+    "raw_failure_keys": []
+  },
+  "gates": {
+    "raw_bal_h_and_p4": true,
+    "true_residual": true,
+    "native_aq": true,
+    "actual_first_arnoldi": true,
+    "backend_identity_generic_checker": false,
+    "backend_identity_v26_frozen_check": true
+  },
+  "interpretation": "The five corrections are same-factor repairs: the raw pre-repair 2.8870661155266027e-10 observation is preserved, while every final repaired p4 ratio is <=1e-10. The generic V25 checker backend string gate is not treated as a V26 pass; the V26 backend/thread identity is checked separately."
+}

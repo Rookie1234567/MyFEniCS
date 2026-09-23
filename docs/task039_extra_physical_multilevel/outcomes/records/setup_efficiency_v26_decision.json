@@ -1,0 +1,31 @@
+{
+  "schema": "task039extra.v26.setup-efficiency.decision.v1",
+  "status": "REVIEW_ONLY_NO_DEFAULT_PROMOTION",
+  "batch_identity": "review_v24_setup_and_kernel_efficiency",
+  "formal_source_sha": "c27c07e305739b2dcf02c18dde44a0bc8bc70642",
+  "current_source_sha": "32bf03e0ab50ea67487ecb1ca06f5da468800482",
+  "formal_result": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+  "numerical_consistency": {
+    "saved_field_regression": "PASS",
+    "channel_regression": "PASS",
+    "power_regression": "PASS",
+    "independent_matched_reference": "not_available",
+    "continuum_convergence_claim": false
+  },
+  "performance_decision": {
+    "speed_baseline": "V25 Q4 AC swap observe r2",
+    "v26_full_workflow": "15.46659149457179% slower",
+    "v26_ksp": "18.90140881935669% slower",
+    "v26_setup": "5.257852565220267% slower",
+    "memory": "observed RSS/PSS slightly lower in V26; not a general memory proof",
+    "default_promotion": false
+  },
+  "policy": {
+    "observe_only_watchdog_fix": "committed and targeted-tested in 32bf03e0ab50ea67487ecb1ca06f5da468800482",
+    "old_formal_wrapper_mismatch": "preserved; old raw run was not rewritten",
+    "numeric_cache_t5": "DEFERRED",
+    "additional_pde": false,
+    "master_merge_approved": false
+  },
+  "recommendation": "Retain r2 as the ordinary speed baseline. Retain V26 only as an explicit setup-efficiency profile for review and evidence; do not make it the default or spend another PDE run in this closeout."
+}

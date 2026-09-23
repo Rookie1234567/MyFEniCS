@@ -4908,5 +4908,58 @@
     "ordinary_default_changed": false,
     "master_merge_approved": false,
     "recommendation": "For same-original memory priority use explicit lowmem; retain V19 as time baseline; do not add V18-peak or V19-time hard gate and do not restart detach research."
+  },
+  "review_v24_setup_efficiency_v26": {
+    "review": "review_report_v24.md",
+    "response": "docs/task039_extra_physical_multilevel/response_v27.md",
+    "profile": "physical_p6_trace_setup_efficiency_v26",
+    "status": "PASS_WITH_AUTHORITY_LIMITATION_R2_SPEED_BASELINE",
+    "formal_run": {
+      "run_id": "task39extra_v26_q4_setup_efficiency_original_h7p5",
+      "run_root": "results/euv_grazing1_phi0/task39extra_v26_q4_setup_efficiency_original_h7p5__full3d_iterative__mpi1__Mna/20260923T001753.478027Z",
+      "source_sha": "c27c07e305739b2dcf02c18dde44a0bc8bc70642",
+      "summary_sha256": "f9e2975aafa0349a33c358e017705e253786db054d823579eeb6b14151d2e313",
+      "run_summary_sha256": "b49fcbc0d7eb73269f17028e7dd26100a07d5125325815128c353735a76a335d",
+      "iterations": 126,
+      "final_explicit_true_residual": 9.283164976754267e-07,
+      "full_workflow_monotonic_seconds": 3595.9571450339936,
+      "ksp_seconds": 2716.518828,
+      "process_tree_rss_authority_peak_bytes": 7381557248,
+      "worker_emitted_pss_peak_bytes": 7346483200,
+      "swap_peak_bytes": 0
+    },
+    "r2_speed_baseline": {
+      "run_id": "task39extra_v25_q4_ac_swap_observe_r2_h7p5",
+      "run_root": "results/euv_grazing1_phi0/task39extra_v25_q4_ac_swap_observe_r2_h7p5__full3d_iterative__mpi1__Mna/20260922T033647.910623Z",
+      "source_sha": "4bf2bba56cc2e568d56ff3096aeb4a108744f28d",
+      "run_summary_sha256": "afaf1c720928240a498d4af49b87131dd93176f1bbd19d6cf4ca42bbfff658c1",
+      "full_workflow_monotonic_seconds": 3114.283619607013,
+      "ksp_seconds": 2284.681783819,
+      "process_tree_rss_authority_peak_bytes": 7390937088,
+      "worker_emitted_pss_peak_bytes": 7354803200,
+      "swap_peak_bytes": 0
+    },
+    "comparison": {
+      "full_delta_seconds": 481.67352542698063,
+      "full_delta_percent": 15.46659149457179,
+      "ksp_delta_seconds": 431.83704418100024,
+      "ksp_delta_percent": 18.90140881935669,
+      "setup_delta_percent": 5.257852565220267,
+      "ordinary_default_changed": false
+    },
+    "offline_evidence": {
+      "field_record": "docs/task039_extra_physical_multilevel/outcomes/records/setup_efficiency_v26_r2_field_regression.json",
+      "power_record": "docs/task039_extra_physical_multilevel/outcomes/records/setup_efficiency_v26_r2_power_regression.json",
+      "components_record": "docs/task039_extra_physical_multilevel/outcomes/records/setup_efficiency_v26_components.json",
+      "cache_record": "docs/task039_extra_physical_multilevel/outcomes/records/setup_efficiency_v26_cache_reuse.json",
+      "relaunch_gate_record": "docs/task039_extra_physical_multilevel/outcomes/records/setup_efficiency_v26_relaunch_gate_rejection_20260923T014131.json"
+    },
+    "relaunch_gate": {
+      "status": "REJECTED_BEFORE_WORKER",
+      "pde_started": false,
+      "log_sha256": "a4c7b22763456810fcb0b4c0b42ac4a26ef1546416b4ca06a03f40362d9a13b4",
+      "ledger_sha256": "b8e9d2852b1f35b2e199fc50cde2d535777327439052a4333fd4105f27ec623c"
+    },
+    "decision": "Keep r2 as speed baseline; V26 is explicit opt-in/review-only; T5 deferred; no master merge approval."
   }
 }

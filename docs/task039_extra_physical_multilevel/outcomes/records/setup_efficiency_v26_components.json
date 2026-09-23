@@ -1,0 +1,170 @@
+{
+  "schema": "task039extra.v26.setup-efficiency.components.v1",
+  "status": "MEASURED_FORMAL_RUN_WITH_AUTHORITY_LIMITATION",
+  "profile": "physical_p6_trace_setup_efficiency_v26",
+  "run_id": "task39extra_v26_q4_setup_efficiency_original_h7p5",
+  "source_sha": "c27c07e305739b2dcf02c18dde44a0bc8bc70642",
+  "input": {
+    "path": "input/task39extra/v26_q4_setup_efficiency_original_h7p5.dat",
+    "sha256": "2ad95964964175c07faf1890b666249b86037e5f6fce0ad4dc8536e1a59927cc"
+  },
+  "model": {
+    "formulation": "Full3D",
+    "host_degree": 6,
+    "host_h_nm": 7.5,
+    "coarse_degree": 4,
+    "axis_cell_counts": [9, 5, 22],
+    "owned_cells": 990,
+    "dtn_modes": 80,
+    "mpi": 1,
+    "threads": 1,
+    "petsc_scalar": "complex128",
+    "petsc_integer": "int32"
+  },
+  "measured": {
+    "iterations": 126,
+    "final_explicit_true_residual": 9.283164976754267e-07,
+    "post_release_explicit_true_residual": 9.283164976754267e-07,
+    "solver_elapsed_seconds": 2983.060933997012,
+    "ksp_phase_seconds": 2716.518828,
+    "workflow_monotonic_seconds": 3595.9571450339936,
+    "workflow_conservative_seconds": 3943.2766163249958,
+    "setup_monotonic_seconds": 823.0868099959989,
+    "setup_conservative_seconds": 916.674193935,
+    "setup_clock_discrepancy_seconds": 93.58738393900103,
+    "interface_stack_setup_seconds": 269.76726094100013,
+    "p6_retained_build_seconds": 259.0239490659951,
+    "p4_condensation_build_seconds": 29.55984354500106,
+    "mumps_symbolic_seconds": 0.7030553580043488,
+    "mumps_numeric_seconds": 232.61775177499658,
+    "h6_apply_seconds": 563.9873873629695,
+    "matrix_operation_seconds": 601.801216872962,
+    "power_seconds": 41.70184108400281,
+    "pc_operation_seconds": {
+      "A_structure": 982.7304567490719,
+      "C": 931.5144491230603,
+      "smoother": 564.0939890390364
+    },
+    "pc_counts": {
+      "A_structure": 262,
+      "C": 262,
+      "smoother": 131,
+      "A_inner_true": 0
+    },
+    "formal_counts": {
+      "a6_live": 263,
+      "a6_native": 29,
+      "h6_apply": 131,
+      "matrix": 282,
+      "power": 20,
+      "p4_logical": 262,
+      "p4_actual_mat_solves": 267,
+      "f4_physical": 267
+    },
+    "matrix": {
+      "rows": 84680,
+      "stored_nnz": 32320342,
+      "allocated_nnz": 45403840,
+      "mumps_infog19_mb": 4687,
+      "mumps_infog22_mb": 4326
+    },
+    "resources": {
+      "process_tree_rss_authority_peak_bytes": 7381557248,
+      "process_tree_rss_authority_samples": 13247,
+      "worker_emitted_pss_peak_bytes": 7346483200,
+      "worker_emitted_pss_sample_count": 1176,
+      "worker_rss_peak_bytes": 7378411520,
+      "worker_pss_peak_bytes": 7346483200,
+      "worker_swap_peak_bytes": 0,
+      "worker_sample_count": 1176,
+      "zero_swap": true,
+      "resource_sha256": "290f4691bbe9da700b2ea9121b56035ed30c163fccd4a25eeeb25510ef843255"
+    }
+  },
+  "derived": {
+    "p6_action_only": true,
+    "full_global_p6_matrix_allocated": false,
+    "full_global_p4_matrix_allocated": false,
+    "structural_maps_reused": true,
+    "numeric_factor_reused": false,
+    "component_speed_attribution": "component pair evidence is available below; it is not a full-workflow attribution"
+  },
+  "measured_component_pairs": {
+    "raw_path": "benchmarks/artifacts/task39extra/setup_efficiency_v26/component_rerun_20260923/component_rerun.json",
+    "raw_sha256": "d8495cf6d4fd091af6227d2b9556ec236716b47312f4c9204a9d58b988e2ce6d",
+    "rechecked_path": "benchmarks/artifacts/task39extra/setup_efficiency_v26/component_rerun_20260923/component_rerun_rechecked.json",
+    "rechecked_sha256": "9a54101096124b59e97f62c6a5a9edbb080fc8ed0dc7000d1f4acb198b4e26ce",
+    "classification": "QUALIFIED_OPERATOR_EQUIVALENCE_NO_FORMAL_PDE",
+    "checks": {
+      "a6_physical_relative_difference": 0.0,
+      "a6_volume_relative_difference": 0.0,
+      "h6_apply_relative_difference": 3.9723130813956026e-16,
+      "diagonal_relative_difference": 1.028637606522096e-15,
+      "native_a6_new_relative_difference": 9.524399166150845e-15,
+      "projection_reuse_disabled": true
+    },
+    "timing_pairs_seconds": {
+      "a6_physical_median_baseline": 6.215509254499921,
+      "a6_physical_median_candidate": 5.547621760000766,
+      "a6_volume_median_baseline": 4.437351659504202,
+      "a6_volume_median_candidate": 3.616020113498962,
+      "diagonal_setup_baseline": 45.07978344000003,
+      "diagonal_setup_candidate": 4.169365248999384,
+      "h6_setup_baseline": 84.68341056300414,
+      "h6_setup_candidate": 43.2881181279954
+    },
+    "four_setup_optimizations": [
+      {
+        "name": "avoid_unused_full_reference_tabulation",
+        "evidence": "new sum-factorized path records full_reference_tabulation_performed=false; old and new operator checks share the same ABI/reference identity"
+      },
+      {
+        "name": "directly_build_selected_h6_backend",
+        "evidence": "old direct_selected_backend_used=false; new=true"
+      },
+      {
+        "name": "shared_read_only_geometry_reference_bundle",
+        "evidence": "new borrowed curl/mass components, readonly arrays, shared reference data, 990-cell identity; material data not shared"
+      },
+      {
+        "name": "h6_local_type_reuse_and_batched_grouping",
+        "evidence": "new local-type cache count=139, hits=851, batched_target_grouping_opt_in=true; old cache count/hits=0 and grouping=false"
+      }
+    ],
+    "optional_projection_reuse": "not adopted"
+  },
+  "dynamic_checker": {
+    "checker": "benchmarks.task39extra_v25_dynamic_checker.check_summary",
+    "scope": "actual V26 summary/raw p4 records; backend identity checked separately against V26 frozen H6/thread strings",
+    "raw_bal_h_and_p4_passed": true,
+    "raw_boundary_records": 131,
+    "logical_p4_units": 262,
+    "actual_p4_mat_solves": 267,
+    "physical_f4_calls": 267,
+    "extra_repairs": 5,
+    "max_final_recomputed_p4_relative": 7.243731544969288e-11,
+    "max_raw_pre_repair_relative": 2.8870661155266027e-10,
+    "max_correction_relative": 9.827559370577298e-13,
+    "all_final_p4_relative_le_1e-10": true,
+    "raw_failure_keys": [],
+    "checker_backend_gate": "old generic checker reports backend_identity false because it does not contain the V26 frozen backend strings; V26 backend/thread identity was independently checked and is not rewritten as a generic checker pass"
+  },
+  "official_output": {
+    "R": 0.3650975537006226,
+    "T": 0.013016803347760205,
+    "A": 0.6218856429516172,
+    "A_volume": 0.621885642133916,
+    "R00_s": 0.36506086288704565,
+    "R00_p": 3.451162248839328e-25,
+    "R00_total": 0.36506086288704565,
+    "output_sha256": "fb0716180bc6aa2e48a26bc11018022c80cb7cca36389616bf3513b8588edbe0"
+  },
+  "provenance": {
+    "summary_path": "results/euv_grazing1_phi0/task39extra_v26_q4_setup_efficiency_original_h7p5__full3d_iterative__mpi1__Mna/20260923T001753.478027Z/physical_dual_condensed_setup_efficiency_v26_summary.json",
+    "summary_sha256": "f9e2975aafa0349a33c358e017705e253786db054d823579eeb6b14151d2e313",
+    "run_summary_path": "results/euv_grazing1_phi0/task39extra_v26_q4_setup_efficiency_original_h7p5__full3d_iterative__mpi1__Mna/20260923T001753.478027Z/run_summary.json",
+    "run_summary_sha256": "b49fcbc0d7eb73269f17028e7dd26100a07d5125325815128c353735a76a335d",
+    "run_summary_resource_authority": "sampled_process_tree_rss_peak_bytes=7381557248; sampled_process_tree_swap_peak_bytes=0; samples=13247; memory_scope=dedicated subreaper parent plus all descendants",
+    "classification": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED"
+  }
+}

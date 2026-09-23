@@ -1,3 +1,23 @@
+## V26 setup-efficiency 收口检查
+
+| 验证 | 实际结果 | 范围与边界 |
+|---|---|---|
+| V26 formal result | **PASS, one formal run** | 本轮正式运行 126 步，显式真残差 `9.283164976754267e-7`；执行端另一次启动在 worker 前 gate rejection，没有第二场 PDE |
+| saved field / channel / power regression | **PASS** | 只读取已有 V26 与 r2 输出；FE field、80/80 channels、saved-output、modal/power/closure checker 通过；不创建 solver |
+| V26 every-16 checkpoint report | **AVAILABLE** | 读取已有 worker snapshots；16/32/48/64/80/96/112/120/126，未把 gate rejection伪造为新 checkpoint |
+| policy / parameterization targeted suite | **23 passed in 5.54s** | `test_task39extra_v25_parameterization.py` + `test_physical_schur_v14_q4_mock.py`；source `32bf03e0ab50ea67487ecb1ca06f5da468800482`；没有用修复 source 重跑 PDE |
+| V26 route replay evidence | **22 passed** | replay record 中的 Q4 route、summary dispatch、Q3/Q2 boundary focused suite；不是第二场 PDE |
+| component operator pair | **QUALIFIED_OPERATOR_EQUIVALENCE** | 990-cell raw/rechecked pair；A6/H6/diagonal checks pass，no p4 factor/no formal PDE；optional projection reuse disabled |
+| dynamic raw p4 accounting | **derived PASS for BAL_H/p4/residual/Aq/Arnoldi** | 131 boundaries、262 logical units、267 MatSolve、5 repairs；max final p4 relative `7.243731544969288e-11`; generic backend string gate is separately recorded because V26 has its own frozen backend identity |
+| replay gate rejection | **PASS as negative classification evidence** | systemd/service 约束在 worker 前拒绝；无 factor/KSP/iteration；ledger 未修改 |
+| T5 numeric cache reuse | **DEFERRED** | 无 qualified packet loader/schema；numeric cache load=0；没有第二场 |
+| targeted tests / compileall | **to rerun after final docs** | 使用 qualified activation；只报告本地 targeted 结果，不声称 full repository pytest/CI |
+| Ruff / full repository pytest / CI | **not_run / not_run / not_claimed** | 不安装工具、不扩大范围 |
+
+测试集合与正式 PDE 证据分开，不相加冒充覆盖率。
+
+---
+
 # Review V23 / Response V26：V25 coarse-degree closeout checks
 
 | 验证 | 实际结果 | 范围与边界 |

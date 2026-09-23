@@ -1,0 +1,310 @@
+{
+  "schema": "task039extra.v26.r2.same-discrete-fe-metrics.v1",
+  "execution": {
+    "status": "OFFLINE_METRIC_ONLY",
+    "pde_started": false,
+    "physical_operator_built": false,
+    "factor_started": false,
+    "ksp_started": false,
+    "mpi_size": 1
+  },
+  "source": {
+    "checker_script": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/postprocess_laptop_speed_v24_fe_metrics.py",
+    "checker_script_sha256": "9b076f27f6e58736b971b2e2f1a16e0f19f2156aed05115f9b1570435989f0bb",
+    "repository": {
+      "head": "32bf03e0ab50ea67487ecb1ca06f5da468800482",
+      "status": [
+        " M benchmarks/postprocess_laptop_speed_v24_fe_metrics.py"
+      ]
+    }
+  },
+  "current": {
+    "summary_path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v26_q4_setup_efficiency_original_h7p5__full3d_iterative__mpi1__Mna/20260923T001753.478027Z/physical_dual_condensed_setup_efficiency_v26_summary.json",
+    "summary_sha256": "f9e2975aafa0349a33c358e017705e253786db054d823579eeb6b14151d2e313",
+    "archive_path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v26_q4_setup_efficiency_original_h7p5__full3d_iterative__mpi1__Mna/20260923T001753.478027Z/x2_retained_final.npz",
+    "archive_sha256": "6784d555000c31f445705f54125938e7c462af25e44d39468c8e9aaff399f700",
+    "array_key": "array_20",
+    "shape": [
+      667152
+    ],
+    "dtype": "complex128",
+    "vector_sha256": "2b62dabde779c7a60612704a0cbaa0255c677ad1ddb075acdd817554966c52ec",
+    "source_sha": "c27c07e305739b2dcf02c18dde44a0bc8bc70642",
+    "input_sha256": "2ad95964964175c07faf1890b666249b86037e5f6fce0ad4dc8536e1a59927cc",
+    "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+    "p6_native_map_sha256": "54647a99c97786af88364d6e3f8c6c1d3c7893bbf79afc2888a63cf47be6c06e",
+    "p4_native_map_sha256": "c1f135c85518941ff356a2d26c9c88ba624688b842f77080392fc5e767d0ea08",
+    "quadrature": [
+      {
+        "quadrature_degree": 15,
+        "quadrature_rule": "default"
+      },
+      {
+        "quadrature_degree": 15,
+        "quadrature_rule": "default"
+      }
+    ],
+    "p6_dimension": {
+      "active_rows": 199260,
+      "appended_rows": 80,
+      "appended_rows_source": "live_fine_dtn_carrier_entries",
+      "cell_interior_dofs_sha256": "36ae5610c242ab942e5020ee54b68a2fa90e94a8313cbfd07fd0a234beef6658",
+      "expected_space_counts": [
+        667152,
+        199260,
+        445500,
+        80
+      ],
+      "full_rows": 667152,
+      "interior_rows": 445500,
+      "local_interior_dimension": 450,
+      "local_interior_dof_count": 445500,
+      "local_tensor_dimension": 882,
+      "local_trace_dimension": 432,
+      "owned_active_trace_dofs_sha256": "b25aabc528085649be00610c16860d16500ace44985e9b9514959f5386c650a9",
+      "owned_cell_count": 990,
+      "slave_master_entry_count": 22392,
+      "slave_rows": 22392,
+      "slave_rows_sha256": "afb7d37c9b5f3d957e3eb109e0e4678d9b826e678da2cd85c2a1989ff293b8f0",
+      "source": "live_function_space_mpc_and_cell_interior_dofs",
+      "trace_rows": 221652
+    },
+    "geometry_semantic_identity": {
+      "axis_cell_counts": [
+        9,
+        5,
+        22
+      ],
+      "geometry_entity_payload": {
+        "air_height_nm": 130.0,
+        "geometry_kind": "rectangular_block_grating",
+        "grating_height_nm": 120.0,
+        "grating_width_x_nm": 17.0,
+        "grating_width_y_nm": 25.0,
+        "interface_z_nm": 0.0,
+        "model_variant": "original",
+        "period_x_nm": 50.0,
+        "period_y_nm": 25.0,
+        "substrate_thickness_nm": 10.0,
+        "z_max_nm": 130.0,
+        "z_min_nm": -10.0
+      }
+    },
+    "geometry_audit": {
+      "actual_axis_cell_counts": [
+        9,
+        5,
+        22
+      ],
+      "geometry_entity_sha256": "539460eec567dd89bb75cab8c72926c337be40fc5cfab54765f56117ee0ae5ba",
+      "geometry_identity": "v21_original_h7p5",
+      "material_layout_sha256": "03a69cd0d12f2857cf2b04061d2c61948c64664577fcd5c9d590ce711f497683",
+      "notch_candidate_count": 36,
+      "notch_changed_cells": 0,
+      "owned_cell_count": 990,
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v26_q4_setup_efficiency_original_h7p5__full3d_iterative__mpi1__Mna/20260923T001753.478027Z/v26q4_geometry_audit.json",
+      "schema": "task039extra.v21.actual-mesh-material-entity-audit.v1",
+      "sha256": "fbc2009515cb21c044e2113ce554ca50891830df27f9facf311df5105518fe58",
+      "variant": "original"
+    }
+  },
+  "reference": {
+    "summary_path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v25_q4_ac_swap_observe_r2_h7p5__full3d_iterative__mpi1__Mna/20260922T033647.910623Z/physical_dual_condensed_coarse_degree_v25_summary.json",
+    "summary_sha256": "02abe74dbec6f08d9cfadc8b58e1a23e06c728ced0cff9cce35917a75b3a84d3",
+    "archive_path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v25_q4_ac_swap_observe_r2_h7p5__full3d_iterative__mpi1__Mna/20260922T033647.910623Z/x2_retained_final.npz",
+    "archive_sha256": "a1e7bac250445dec36762cb375ef4c6ddf3ace9eee1af827cbc70686e8a1c1c3",
+    "array_key": "array_20",
+    "shape": [
+      667152
+    ],
+    "dtype": "complex128",
+    "vector_sha256": "8621654d28112e808ef21f722951940f7cf96b77299da4e0fec9d0bd61846d88",
+    "source_sha": "4bf2bba56cc2e568d56ff3096aeb4a108744f28d",
+    "input_sha256": "07450802d1c6bcfbdb6b4d4836f118a7ca58c0631dca57a6a8667737d2a7f64d",
+    "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+    "p6_native_map_sha256": "54647a99c97786af88364d6e3f8c6c1d3c7893bbf79afc2888a63cf47be6c06e",
+    "p4_native_map_sha256": "c1f135c85518941ff356a2d26c9c88ba624688b842f77080392fc5e767d0ea08",
+    "quadrature": [
+      {
+        "quadrature_degree": 15,
+        "quadrature_rule": "default"
+      },
+      {
+        "quadrature_degree": 15,
+        "quadrature_rule": "default"
+      }
+    ],
+    "p6_dimension": {
+      "active_rows": 199260,
+      "appended_rows": 80,
+      "appended_rows_source": "live_fine_dtn_carrier_entries",
+      "cell_interior_dofs_sha256": "36ae5610c242ab942e5020ee54b68a2fa90e94a8313cbfd07fd0a234beef6658",
+      "expected_space_counts": [
+        667152,
+        199260,
+        445500,
+        80
+      ],
+      "full_rows": 667152,
+      "interior_rows": 445500,
+      "local_interior_dimension": 450,
+      "local_interior_dof_count": 445500,
+      "local_tensor_dimension": 882,
+      "local_trace_dimension": 432,
+      "owned_active_trace_dofs_sha256": "b25aabc528085649be00610c16860d16500ace44985e9b9514959f5386c650a9",
+      "owned_cell_count": 990,
+      "slave_master_entry_count": 22392,
+      "slave_rows": 22392,
+      "slave_rows_sha256": "afb7d37c9b5f3d957e3eb109e0e4678d9b826e678da2cd85c2a1989ff293b8f0",
+      "source": "live_function_space_mpc_and_cell_interior_dofs",
+      "trace_rows": 221652
+    },
+    "geometry_semantic_identity": {
+      "axis_cell_counts": [
+        9,
+        5,
+        22
+      ],
+      "geometry_entity_payload": {
+        "air_height_nm": 130.0,
+        "geometry_kind": "rectangular_block_grating",
+        "grating_height_nm": 120.0,
+        "grating_width_x_nm": 17.0,
+        "grating_width_y_nm": 25.0,
+        "interface_z_nm": 0.0,
+        "model_variant": "original",
+        "period_x_nm": 50.0,
+        "period_y_nm": 25.0,
+        "substrate_thickness_nm": 10.0,
+        "z_max_nm": 130.0,
+        "z_min_nm": -10.0
+      }
+    },
+    "geometry_audit": {
+      "actual_axis_cell_counts": [
+        9,
+        5,
+        22
+      ],
+      "geometry_entity_sha256": "539460eec567dd89bb75cab8c72926c337be40fc5cfab54765f56117ee0ae5ba",
+      "geometry_identity": "v21_original_h7p5",
+      "material_layout_sha256": "03a69cd0d12f2857cf2b04061d2c61948c64664577fcd5c9d590ce711f497683",
+      "notch_candidate_count": 36,
+      "notch_changed_cells": 0,
+      "owned_cell_count": 990,
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v25_q4_ac_swap_observe_r2_h7p5__full3d_iterative__mpi1__Mna/20260922T033647.910623Z/v25q4_geometry_audit.json",
+      "schema": "task039extra.v21.actual-mesh-material-entity-audit.v1",
+      "sha256": "fbc2009515cb21c044e2113ce554ca50891830df27f9facf311df5105518fe58",
+      "variant": "original"
+    }
+  },
+  "frozen_identity": {
+    "resolved_config_path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v26_q4_setup_efficiency_original_h7p5__full3d_iterative__mpi1__Mna/20260923T001753.478027Z/resolved_config.json",
+    "resolved_config_sha256": "325e4c35e2ef76224421602d1ff40a9d60263ca994ba4b1ac85b1718472049bb",
+    "p6_native_map_sha256": "54647a99c97786af88364d6e3f8c6c1d3c7893bbf79afc2888a63cf47be6c06e",
+    "p4_native_map_sha256": "c1f135c85518941ff356a2d26c9c88ba624688b842f77080392fc5e767d0ea08",
+    "independent_index_count": 644760,
+    "independent_indices_sha256": "dcc793a37b8bdf49a7c81e4cb27a2a658a54f8a924b2323f9bd8175e421a1fad",
+    "space_global_size": 667152,
+    "axis_vertex_counts": [
+      10,
+      6,
+      23
+    ],
+    "axis_cell_counts": [
+      9,
+      5,
+      22
+    ],
+    "actual_geometry_bounds": [
+      [
+        0.0,
+        50.0
+      ],
+      [
+        0.0,
+        25.0
+      ],
+      [
+        -10.0,
+        130.0
+      ]
+    ],
+    "expected_geometry_bounds": [
+      [
+        0.0,
+        50.0
+      ],
+      [
+        0.0,
+        25.0
+      ],
+      [
+        -10.0,
+        130.0
+      ]
+    ],
+    "p6_native_map_sha256_recomputed": "54647a99c97786af88364d6e3f8c6c1d3c7893bbf79afc2888a63cf47be6c06e",
+    "identity_checks": {
+      "p6_native_map_sha256": true,
+      "p6_native_map_matches_both_packets": true,
+      "mesh_cells_990": true,
+      "p6_space_global_size_667152": true,
+      "p6_complete_field_size": true,
+      "p6_independent_count": true,
+      "p6_slave_count_22392": true,
+      "p6_dimension_packet": true,
+      "axis_cell_counts_9_5_22": true,
+      "geometry_bounds": true,
+      "geometry_audit_owned_cells": true
+    },
+    "quadrature": [
+      {
+        "quadrature_degree": 15,
+        "quadrature_rule": "default"
+      },
+      {
+        "quadrature_degree": 15,
+        "quadrature_rule": "default"
+      }
+    ],
+    "metric_audit": {
+      "definition": "integral conj(E) dot E; no epsilon, k0 or slave identity",
+      "curl_definition": "integral abs(curl E)^2 / k0^2",
+      "degree": 6,
+      "quadrature": {},
+      "cell_basis_built": false,
+      "independent_rows": 644760,
+      "mpi_size": 1
+    }
+  },
+  "comparison": {
+    "phase_fitting": false,
+    "coordinate_alignment": "complete p6 vector through frozen native map",
+    "vector_difference_norm_euclidean": 1.2035849004141856e-11,
+    "metrics": {
+      "L2": {
+        "absolute_error_norm": 2.9976316967003073e-12,
+        "reference_norm": 175.7480415522813,
+        "relative": 1.7056415936268486e-14,
+        "current_norm": 175.74804155227963,
+        "limit": 0.0001
+      },
+      "scaled_curl": {
+        "absolute_error_norm": 1.3290529883765156e-11,
+        "reference_norm": 175.83333380413742,
+        "relative": 7.5585951743198e-14,
+        "current_norm": 175.833333804136,
+        "limit": 0.0001
+      }
+    },
+    "max_relative": 7.5585951743198e-14,
+    "limit": 0.0001,
+    "pass": true
+  },
+  "cleanup": {
+    "status": "COMPLETED",
+    "metric_destroyed": true,
+    "mpc_destroy": "NOT_APPLICABLE_BORROWED_DOLFINX_MPC_LIFETIME"
+  }
+}

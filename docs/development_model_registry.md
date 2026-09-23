@@ -1,4 +1,15 @@
-# Task39extra 当前模型登记：Review V23 / Response V26 V25 coarse-degree closeout
+# Task39extra 当前模型登记：Review V24 / Response V27 V26 setup-efficiency closeout
+
+## V26 当前裁决
+
+| profile | 身份与结果 | 时间/资源 | 当前用途 |
+|---|---|---|---|
+| `task39extra_v26_q4_setup_efficiency_original_h7p5` | p6/h7.5、coarse p4、Full3D、990 cells、MPI1；126 steps；residual `9.283164976754267e-7`；R/T/A=`0.3650975537006226/0.013016803347760205/0.6218856429516172`；source `c27c07e...` | full `3595.9571450339936 s`；KSP `2716.518828 s`；process-tree RSS authority/PSS `7381557248/7346483200 B`；swap0 | authority-limited review-only；与 r2 输出一致，但不是速度基线 |
+| `task39extra_v25_q4_ac_swap_observe_r2_h7p5` | 同离散身份；126 steps；residual `9.283165086752956e-7`；R/T/A=`0.3650975537006154/0.013016803347760878/0.6218856429516237`；source `4bf2bba...` | full `3114.283619607013 s`；KSP `2284.681783819 s`；process-tree RSS authority/PSS `7390937088/7354803200 B`；swap0 | 当前速度 baseline |
+
+V26 比 r2 full/KSP/setup 慢 `15.46659149457179%/18.90140881935669%/5.257852565220267%`。因此 V26 不改 ordinary default。T5 local numeric cache reuse 为 `DEFERRED`；执行端重复启动在 worker 前因 replay 额度耗尽拒绝，没有新的 formal result。详见 [response V27](task039_extra_physical_multilevel/response_v27.md)、[V26 outcome](task039_extra_physical_multilevel/outcomes/setup_efficiency_v26.md) 和 [selective manifest](task039_extra_physical_multilevel/outcomes/selective_merge_manifest_v26.md)。
+
+---
 
 | Model ID | stage / source / input | 模型与方法 | 正式结果 | 资源与时间 | 资格边界 |
 |---|---|---|---|---|---|

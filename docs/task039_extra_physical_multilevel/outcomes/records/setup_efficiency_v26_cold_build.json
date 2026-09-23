@@ -1,0 +1,35 @@
+{
+  "schema": "task039extra.v26.setup-efficiency.cold-build.v1",
+  "status": "MEASURED_BUILD_RUN",
+  "meaning": "cold numeric build within a qualified prepared-form environment; not a zero-JIT or empty OS-cache claim",
+  "profile": "physical_p6_trace_setup_efficiency_v26",
+  "source_sha": "c27c07e305739b2dcf02c18dde44a0bc8bc70642",
+  "run_root": "results/euv_grazing1_phi0/task39extra_v26_q4_setup_efficiency_original_h7p5__full3d_iterative__mpi1__Mna/20260923T001753.478027Z",
+  "input_sha256": "2ad95964964175c07faf1890b666249b86037e5f6fce0ad4dc8536e1a59927cc",
+  "numeric_lifecycle": {
+    "numeric_cache_mode": "build",
+    "numeric_cache_loads": 0,
+    "reused_numeric_factor": false,
+    "reused_structural_maps_only": true,
+    "fresh_factor_per_stage": true,
+    "p6_build_seconds": 259.0239490659951,
+    "p4_condensation_build_seconds": 29.55984354500106,
+    "mumps_symbolic_seconds": 0.7030553580043488,
+    "mumps_numeric_seconds": 232.61775177499658
+  },
+  "prepared_forms": {
+    "compiler_event_count": 11,
+    "cache_policy": "v21_reuse_all_qualified",
+    "compiled_form_reused": true,
+    "interpretation": "FFCx/JIT preparation was reused; this record measures fresh numeric/operator construction and factorization, not a zero-cache run"
+  },
+  "stage_timing_seconds": {
+    "setup_monotonic": 823.0868099959989,
+    "setup_conservative": 916.674193935,
+    "interface_stack": 269.76726094100013,
+    "ksp": 2716.518828,
+    "full_workflow_monotonic": 3595.9571450339936,
+    "full_workflow_conservative": 3943.2766163249958
+  },
+  "authority": "The old V26 raw wrapper recorded a strict zero-swap policy while the worker summary recorded observe_only. The source policy fix was committed after this run; this mismatch is preserved and is not silently normalized."
+}

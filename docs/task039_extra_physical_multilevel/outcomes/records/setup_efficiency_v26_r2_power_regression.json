@@ -1,0 +1,189 @@
+{
+  "schema": "task039extra.v26.r2.saved-field-power-regression.compact.v1",
+  "status": "PASS",
+  "classification": "OFFLINE_RECOMPUTED_SAVED_OUTPUT_PASS",
+  "execution": {
+    "pde_started": false,
+    "physical_operator_built": false,
+    "factor_started": false,
+    "ksp_started": false,
+    "mpi_size": 1,
+    "scope": "existing V26 and r2 saved outputs only"
+  },
+  "source": {
+    "repository_head": "32bf03e0ab50ea67487ecb1ca06f5da468800482",
+    "checker_script": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_macro_v12.py",
+    "checker_script_sha256": "2db74043e8c722c6e4b2c7e9953904f523f62c371d9a4fe0546228ad0248d588",
+    "raw_checker_return_path": "benchmarks/artifacts/task39extra/setup_efficiency_v26/root_engineering/setup_efficiency_v26_r2_power_regression_checker_raw.json",
+    "raw_checker_return_sha256": "789108503e50808ebd5f137c18e4daf0a8995c0595d81588c5eb6839a20654bb",
+    "raw_checker_return_schema": "task039extra.v26.r2.saved-field-power-regression.v1"
+  },
+  "inputs": {
+    "current_v26": {
+      "root": "results/euv_grazing1_phi0/task39extra_v26_q4_setup_efficiency_original_h7p5__full3d_iterative__mpi1__Mna/20260923T001753.478027Z",
+      "source_sha": "c27c07e305739b2dcf02c18dde44a0bc8bc70642",
+      "official_output": "results/euv_grazing1_phi0/task39extra_v26_q4_setup_efficiency_original_h7p5__full3d_iterative__mpi1__Mna/20260923T001753.478027Z/official_output/q4_output.json",
+      "official_output_sha256": "fb0716180bc6aa2e48a26bc11018022c80cb7cca36389616bf3513b8588edbe0"
+    },
+    "reference_r2": {
+      "root": "results/euv_grazing1_phi0/task39extra_v25_q4_ac_swap_observe_r2_h7p5__full3d_iterative__mpi1__Mna/20260922T033647.910623Z",
+      "source_sha": "4bf2bba56cc2e568d56ff3096aeb4a108744f28d",
+      "official_output": "results/euv_grazing1_phi0/task39extra_v25_q4_ac_swap_observe_r2_h7p5__full3d_iterative__mpi1__Mna/20260922T033647.910623Z/official_output/q4_output.json",
+      "official_output_sha256": "93700e241359ce64d1850aa3477013e25de87319dd21e73656205cd183048a20"
+    }
+  },
+  "saved_output": {
+    "current": {
+      "R": 0.3650975537006226,
+      "T": 0.013016803347760205,
+      "A": 0.6218856429516172,
+      "A_volume": 0.621885642133916
+    },
+    "reference": {
+      "R": 0.3650975537006154,
+      "T": 0.013016803347760878,
+      "A": 0.6218856429516237,
+      "A_volume": 0.6218856421339276
+    },
+    "absolute_power_differences": {
+      "R": 7.16093850883226e-15,
+      "T": 6.730727086790012e-16,
+      "A": 6.5503158452884236e-15,
+      "A_volume": 1.1657341758564144e-14
+    },
+    "power_max_absolute_difference": 1.1657341758564144e-14,
+    "power_limit": 1e-05,
+    "modal": {
+      "mode_count": 80,
+      "phase_fitting": false,
+      "amplitude_convention": "outgoing_amplitude_at_boundary",
+      "power_max_absolute_difference": 7.16093850883226e-15,
+      "amplitude_relative_difference": 1.3035632415474604e-14,
+      "power_limit": 1e-06,
+      "amplitude_limit": 0.0001
+    },
+    "closure": {
+      "R_plus_T_minus_modal": 2.6020852139652106e-17,
+      "A_minus_A_volume": 8.177012400523154e-10,
+      "R_plus_T_plus_A_volume_minus_one": 8.177012400523154e-10
+    },
+    "finite": {
+      "electric_finite": true,
+      "magnetic_finite": true,
+      "auxiliary_finite": true,
+      "curl_postprocess_success": true
+    },
+    "selected_field": {
+      "status": "AVAILABLE",
+      "max_relative_difference": 1.49476327946998e-13,
+      "max_absolute_difference": 8.225906923208388e-14,
+      "limit": 0.0001,
+      "differences": {
+        "E_V_per_m": {
+          "relative": 2.2178191553446018e-14,
+          "max_absolute": 8.225906923208388e-14,
+          "reference_norm": 25.38537826941187,
+          "near_zero_absolute_gate": false,
+          "pass": true
+        },
+        "H_A_per_m": {
+          "relative": 1.49476327946998e-13,
+          "max_absolute": 2.8312646025162065e-15,
+          "reference_norm": 0.06741764249079928,
+          "near_zero_absolute_gate": false,
+          "pass": true
+        },
+        "E_t_interface_V_per_m": {
+          "relative": 1.3953770020874106e-14,
+          "max_absolute": 2.298806854019161e-14,
+          "reference_norm": 18.4744787859509,
+          "near_zero_absolute_gate": false,
+          "pass": true
+        },
+        "H_t_interface_A_per_m": {
+          "relative": 9.81709619709013e-14,
+          "max_absolute": 1.4995173140006042e-17,
+          "reference_norm": 0.0017804756608397142,
+          "near_zero_absolute_gate": false,
+          "pass": true
+        }
+      }
+    },
+    "pass": true
+  },
+  "channel_checker": {
+    "status": "CHECKED",
+    "expected_count": 80,
+    "checked_count": 80,
+    "failure_keys": [],
+    "checks": {
+      "files": true,
+      "count": true,
+      "unique_order": true,
+      "channel_identity": true,
+      "finite_amplitudes": true,
+      "finite_powers": true,
+      "modal_sums": true,
+      "normalization": true,
+      "passivity": true,
+      "energy_closure": true,
+      "absorption_consistency": true
+    },
+    "pass": true
+  },
+  "field_checker": {
+    "status": "CHECKED",
+    "array_shapes": {
+      "E_V_per_m": [
+        5,
+        20,
+        40,
+        3
+      ],
+      "H_A_per_m": [
+        5,
+        20,
+        40,
+        3
+      ],
+      "E_t_interface_V_per_m": [
+        2,
+        20,
+        40,
+        2
+      ],
+      "H_t_interface_A_per_m": [
+        2,
+        20,
+        40,
+        2
+      ]
+    },
+    "field_export": {
+      "max_abs_E": 0.8303744002152685,
+      "max_abs_H": 0.0022039468031069386,
+      "curl_postprocess_success": true
+    },
+    "checks": {
+      "archive_files": true,
+      "electric_finite": true,
+      "magnetic_finite": true,
+      "curl_postprocess": true,
+      "field_export_scalars": true
+    },
+    "pass": true
+  },
+  "field_metric_record": {
+    "path": "docs/task039_extra_physical_multilevel/outcomes/records/setup_efficiency_v26_r2_field_regression.json",
+    "sha256": "828a231437632b4ba5fe9d6b1c775bcd432c0d8648e1b7647b761de485baa0e1",
+    "schema": "task039extra.v26.r2.same-discrete-fe-metrics.v1",
+    "comparison_pass": true,
+    "L2_relative": 1.7056415936268486e-14,
+    "scaled_curl_relative": 7.5585951743198e-14
+  },
+  "pass_components": {
+    "saved_output_pass": true,
+    "channel_pass": true,
+    "field_pass": true
+  }
+}
