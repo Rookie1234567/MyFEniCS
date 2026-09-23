@@ -6859,7 +6859,10 @@ def _v14_q4_q5_fullspace(
         recover_p0_outputs,
     )
     from src.solvers.physical_balanced_fgmres import run_balanced_fgmres
-    from src.io.physical_intermediate_profile import COARSE_DEGREE_SPEED_PROFILE
+    from src.io.physical_intermediate_profile import (
+        COARSE_DEGREE_SPEED_PROFILE,
+        SETUP_EFFICIENCY_PROFILE,
+    )
     from .workflow_timebase import (
         CONSERVATIVE_REALTIME,
         ClockBudget,
@@ -6872,6 +6875,12 @@ def _v14_q4_q5_fullspace(
         str(resolved_payload.get("solver", {}).get("preconditioner", ""))
         == COARSE_DEGREE_SPEED_PROFILE
     )
+    v26_setup_efficiency_stage = (
+        str(resolved_payload.get("solver", {}).get("preconditioner", ""))
+        == SETUP_EFFICIENCY_PROFILE
+        and stage == "Q4_ORIGINAL"
+    )
+    retained_coarse_stage = v25_coarse_stage or v26_setup_efficiency_stage
     if stage not in {
         "Q4_ORIGINAL", "Q3_ORIGINAL", "Q2_ORIGINAL", "Q5_NOTCH",
         "U4_ORIGINAL", "U5_NOTCH",
@@ -6882,13 +6891,13 @@ def _v14_q4_q5_fullspace(
     retained_stage = stage in {
         "X2_ORIGINAL", "Y3_ORIGINAL",
         "Z2_NOTCH_H10", "Z3_ORIGINAL_H7P5", "Z4_NOTCH_H7P5",
-    } or (v25_coarse_stage and stage in {"Q4_ORIGINAL", "Q3_ORIGINAL", "Q2_ORIGINAL"})
+    } or (retained_coarse_stage and stage in {"Q4_ORIGINAL", "Q3_ORIGINAL", "Q2_ORIGINAL"})
     if retained_stage != (outer_adapter_factory is not None):
         raise ValueError("only retained-space original stages use the outer adapter")
     release_stages = {
         "Y3_ORIGINAL", "Z2_NOTCH_H10", "Z3_ORIGINAL_H7P5", "Z4_NOTCH_H7P5"
     }
-    if v25_coarse_stage:
+    if retained_coarse_stage:
         release_stages.update({"Q4_ORIGINAL", "Q3_ORIGINAL", "Q2_ORIGINAL"})
     if release_after_final_residual and stage not in release_stages:
         raise ValueError("post-KSP release is not enabled for this stage")
@@ -6897,12 +6906,12 @@ def _v14_q4_q5_fullspace(
     if stage == "Z2_NOTCH_H10" and reference_mode != "required":
         raise ValueError("Z2_NOTCH_H10 must use the matched-reference branch")
     if (
-        v25_coarse_stage and stage in {"Q4_ORIGINAL", "Q3_ORIGINAL", "Q2_ORIGINAL"}
+            retained_coarse_stage and stage in {"Q4_ORIGINAL", "Q3_ORIGINAL", "Q2_ORIGINAL"}
     ) or stage in {"Z3_ORIGINAL_H7P5", "Z4_NOTCH_H7P5"}:
         if reference_mode != "authority_limited":
             raise ValueError(f"{stage} must use the authority-limited branch")
     authority_limited_stages = {"Z3_ORIGINAL_H7P5", "Z4_NOTCH_H7P5"}
-    if v25_coarse_stage:
+    if retained_coarse_stage:
         authority_limited_stages.update({"Q4_ORIGINAL", "Q3_ORIGINAL", "Q2_ORIGINAL"})
     if reference_mode == "authority_limited" and stage not in authority_limited_stages:
         raise ValueError("authority-limited reference mode is reserved for V21 Z3/Z4")
@@ -6932,7 +6941,7 @@ def _v14_q4_q5_fullspace(
     if (
         workflow_limit <= 0.0
         or (
-            not v25_coarse_stage
+            not retained_coarse_stage
             and stage in {"Q4_ORIGINAL", "Q5_NOTCH"}
             and solve_limit != 10800.0
         )
@@ -7720,7 +7729,7 @@ def _v14_q4_q5_fullspace(
                 # V24-only keyword.
                 if _p4_repair_enabled(p4_repair_policy):
                     outer_factory_kwargs["p4_count_policy"] = "bounded_repair_v24"
-                if v25_coarse_stage and stage == "Q4_ORIGINAL":
+                if retained_coarse_stage and stage == "Q4_ORIGINAL":
                     outer_factory_kwargs["first_direction_pair_context"] = {
                         "pc": pc,
                         "positive": positive,
@@ -7735,7 +7744,7 @@ def _v14_q4_q5_fullspace(
                 )
                 outer_factory_kwargs.pop("first_direction_pair_context", None)
                 outer_adapter.setup_checks()
-                if v25_coarse_stage:
+                if retained_coarse_stage:
                     outer_adapter.actual_first_arnoldi_check()
                 identity = {**identity, "retained_p6": outer_adapter.identity,
                             "initial_guess": "zero_retained_y; full_field_contains_internal_rhs_particular"}

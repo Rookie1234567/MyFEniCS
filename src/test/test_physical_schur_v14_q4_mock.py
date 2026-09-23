@@ -294,3 +294,76 @@ def test_q4_mock_covers_residual_failure_and_success_cleanup(tmp_path, monkeypat
     else:
         assert result["official_result"]
         assert result["output_role"] == "official"
+
+
+def test_v26_q4_is_admitted_to_retained_outer_guard(tmp_path):
+    """V26 Q4 uses the same retained outer route as the V25 Q4 path."""
+
+    runtime = _Runtime(tmp_path)
+    runtime.time_policy = "observe_only"
+    runtime.workflow_reserved_seconds = 43200.0
+    runtime.contract["resources"]["stage_budgets"]["Q4_ORIGINAL"] = {
+        "solve_seconds": 43200.0,
+        "workflow_seconds": 43200.0,
+    }
+    common = {"cfg": SimpleNamespace(cell_notch=None), "coarse_degree": 4}
+    resolved = {
+        "solver": {
+            "preconditioner": "physical_p6_trace_setup_efficiency_v26",
+        },
+        "provenance": {
+            "input_sha256": "i" * 64,
+            "physical_model_sha256": "p" * 64,
+        },
+    }
+
+    def stack_probe(*_args, **_kwargs):
+        raise RuntimeError("retained V26 stack reached")
+
+    with pytest.raises(RuntimeError, match="retained V26 stack reached"):
+        v14._v14_q4_q5_fullspace(
+            runtime,
+            common,
+            resolved,
+            stage="Q4_ORIGINAL",
+            predecessor={},
+            stack_factory=stack_probe,
+            outer_adapter_factory=lambda *_args, **_kwargs: None,
+            reference_mode="authority_limited",
+            release_after_final_residual=True,
+        )
+
+
+@pytest.mark.parametrize("stage", ["Q3_ORIGINAL", "Q2_ORIGINAL"])
+def test_v26_non_q4_stages_remain_outside_retained_outer_guard(tmp_path, stage):
+    """V26 only admits the fresh Q4 route; Q3/Q2 stay rejected."""
+
+    runtime = _Runtime(tmp_path)
+    runtime.time_policy = "observe_only"
+    runtime.workflow_reserved_seconds = 43200.0
+    runtime.contract["resources"]["stage_budgets"][stage] = {
+        "solve_seconds": 43200.0,
+        "workflow_seconds": 43200.0,
+    }
+    common = {"cfg": SimpleNamespace(cell_notch=None), "coarse_degree": 4}
+    resolved = {
+        "solver": {
+            "preconditioner": "physical_p6_trace_setup_efficiency_v26",
+        },
+        "provenance": {
+            "input_sha256": "i" * 64,
+            "physical_model_sha256": "p" * 64,
+        },
+    }
+
+    with pytest.raises(ValueError, match="only retained-space original stages"):
+        v14._v14_q4_q5_fullspace(
+            runtime,
+            common,
+            resolved,
+            stage=stage,
+            predecessor={},
+            stack_factory=lambda *_args, **_kwargs: None,
+            outer_adapter_factory=lambda *_args, **_kwargs: None,
+            reference_mode="authority_limited",
+        )
