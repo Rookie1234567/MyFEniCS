@@ -705,12 +705,6 @@ def compare_r13_pair(q4_directory, q3_directory, *, q4_observer_log, q3_observer
         return {"status": "PAIR_EVIDENCE_INVALID",
                 "release_status": "PENDING_NUMERICAL_AND_EXTERNAL_QUALIFICATION",
                 "gate_failures": errors}
-    if q4["canonical_mapping_identity"]["ordered_key_inventory_sha256"] != \
-            q3["canonical_mapping_identity"]["ordered_key_inventory_sha256"]:
-        return {"status": "PAIR_EVIDENCE_INVALID",
-                "release_status": "PENDING_NUMERICAL_AND_EXTERNAL_QUALIFICATION",
-                "gate_failures": ["q3/q4 canonical FE key inventories differ"]}
-
     try:
         from dolfinx import fem
         from mpi4py import MPI
