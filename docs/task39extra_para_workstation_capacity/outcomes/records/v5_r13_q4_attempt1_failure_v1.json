@@ -1,0 +1,46 @@
+{
+  "schema_version": "task039extra.v5.r13-q4-failure-compact.v1",
+  "run_id": "v5_node1_13p5nm_p6h7p5_q4",
+  "run_directory": "results/euv_grazing1_phi0/v5_node1_13p5nm_p6h7p5_q4__full3d_iterative__mpi1__Mna/20260923T155313.871301Z",
+  "source_sha": "4ce7b31c5003580e70adf979f02e5ba36e76e749",
+  "input_sha256": "f9e20874ed86e8697b307ca9d2539ec04be8dd77dc7211cc9e0be8dae30746b5",
+  "physical_model_sha256": "255837330af27827d15ef43dfb01876187589a3b5e129f1d0882e24b955484c0",
+  "resolved_config_sha256": "75b7018e269b13440bdcef2a7e93bf4372504fa33fe62c89b2e06b0487d1d4f3",
+  "classification": "WORKER_FAILED",
+  "exit_status": 4,
+  "workflow_seconds": 99.30277790199034,
+  "last_durable_stage": "retained_volume_quadrature_metadata_complete",
+  "failed_marker_stage": "retained_sum_factorized_physical_action_complete",
+  "failure": "Object of type mappingproxy is not JSON serializable",
+  "failure_kind": "setup serialization implementation bug; not a numerical, physics, or resource failure",
+  "iterations": 0,
+  "outer_solve_entered": false,
+  "residual_or_rta_result": null,
+  "watchdog": {
+    "elapsed_seconds": 99.23969360500632,
+    "samples": 315,
+    "tree_rss_peak_bytes": 1335828480,
+    "tree_swap_peak_bytes": 0,
+    "global_pswpin_delta_pages": 0,
+    "global_pswpout_delta_pages": 0,
+    "descendants_cleared": true,
+    "time_limit_mode": "none",
+    "resource_stop_policy": "measured_tree_rss_only_v3"
+  },
+  "replay": {
+    "authorized_for_this_case": 1,
+    "status": "not_started_pending_review_of_minimal_fix",
+    "scope": "same R13Q4 input only; no other case or profile"
+  },
+  "original_artifacts_preserved": true,
+  "artifact_sha256": {
+    "run_manifest.json": "60779cce3e80ea4e3c08173b708f60116df153a87d998260d52a8860225c1e69",
+    "resolved_config.json": "75b7018e269b13440bdcef2a7e93bf4372504fa33fe62c89b2e06b0487d1d4f3",
+    "run_summary.json": "acd920cad903348e23b70c5693cb070ce853cc7fdd2399db304e8c36c847172f",
+    "stages.jsonl": "47d4f02e3c43844a4ca799d7b17feb0cee50873ad37bcb905abf43edb1153745",
+    "watchdog/summary.json": "28dc311d060b49517e895d9fa80d12bf24dcf1922aaf56b4ea70a89f2d842c8d",
+    "watchdog/worker.log": "c6e2ab6935927da58063670ddea1750215e0ddd508f8203e1c32e128dfb58c03",
+    "watchdog/resources.jsonl": "161eb12696c1e222633e35f737deb227ebf910e888e1718f32e21ca9836e727e",
+    "observer/observer.jsonl": "27f36d3aa3c915ff4d53d5fae95cbacbb3dc5259615014341a7a843c6479d4ff"
+  }
+}

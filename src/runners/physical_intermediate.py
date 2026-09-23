@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter
+from collections.abc import Mapping
 import hashlib
 import json
 import os
@@ -19,7 +20,7 @@ from .workflow_timebase import TimebaseInconsistency, ClockBudget, STRICT, clock
 
 
 def _jsonable(value):
-    if isinstance(value, dict):
+    if isinstance(value, Mapping):
         return {str(k): _jsonable(v) for k, v in value.items()}
     if isinstance(value, (list, tuple, np.ndarray)):
         return [_jsonable(v) for v in value]

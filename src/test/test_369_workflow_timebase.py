@@ -2,7 +2,9 @@
 import json
 import subprocess
 import sys
+from types import MappingProxyType
 
+import numpy as np
 import pytest
 
 from src.runners.workflow_timebase import (TimebaseInconsistency, checked_interval,
@@ -36,6 +38,48 @@ def test_worker_records_error_before_raising(tmp_path, monkeypatch):
     record = json.loads(phase.read_text())
     assert record['clock_error'] and record['clock_info']['boottime']['available']
     assert record['phase_started_clock'] == sample(0, 0, 0)
+
+
+def test_workflow_ledger_serializes_nested_readonly_mappings_and_rejects_nonfinite(tmp_path):
+    from src.runners.physical_intermediate import WorkflowLedger, _atomic_json
+
+    values = np.asarray([1.5 + 2.25j, -3.0 + 0.5j], dtype=np.complex128)
+    values.flags.writeable = False
+    nested = MappingProxyType(
+        {
+            "numpy_float": np.float64(1.25),
+            "numpy_complex": np.complex128(2.0 - 3.0j),
+            "array": values,
+        }
+    )
+    facts = MappingProxyType(
+        {"immutable": MappingProxyType({"nested": nested})}
+    )
+    original_array = values.copy()
+    ledger = WorkflowLedger(tmp_path, tmp_path / "workflow_phase.json")
+    ledger.marker("nested_mappingproxy", facts)
+    ledger.append("audit.jsonl", facts)
+
+    stage = json.loads((tmp_path / "workflow_phase.json").read_text())
+    appended = json.loads((tmp_path / "audit.jsonl").read_text())
+    assert stage["facts"]["immutable"]["nested"]["numpy_float"] == 1.25
+    assert stage["facts"]["immutable"]["nested"]["numpy_complex"] == [2.0, -3.0]
+    assert stage["facts"]["immutable"]["nested"]["array"] == [
+        [1.5, 2.25],
+        [-3.0, 0.5],
+    ]
+    assert appended == stage["facts"]
+    np.testing.assert_array_equal(values, original_array)
+    assert not values.flags.writeable
+    assert isinstance(facts["immutable"], MappingProxyType)
+
+    bad = MappingProxyType({"nonfinite": np.float64(np.nan)})
+    with pytest.raises(ValueError, match="Out of range float values"):
+        ledger.append("bad.jsonl", bad)
+    with pytest.raises(ValueError, match="Out of range float values"):
+        _atomic_json(tmp_path / "bad.json", bad)
+    assert not (tmp_path / "bad.json").exists()
+    assert np.isnan(bad["nonfinite"])
 
 
 @pytest.mark.parametrize('bad_clock', [False, True])

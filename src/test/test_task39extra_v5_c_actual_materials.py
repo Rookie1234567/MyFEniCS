@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import tempfile
 import time
 import unittest
 from dataclasses import replace
@@ -17,6 +18,7 @@ from mpi4py import MPI
 
 from src.io import load_and_resolve
 from src.io.input_validation import simulation_config_3d_from_normalized
+from src.runners.physical_intermediate import WorkflowLedger
 from src.solvers.fullspace_same_mesh_hcurl_pmg_global import (
     _build_same_mesh_levels,
 )
@@ -136,6 +138,31 @@ class Task39ExtraV5ActualMaterialTests(unittest.TestCase):
                     preallocated_work=False,
                     sum_factorized_work=True,
                 )
+                if label == "13.5nm":
+                    # Exercise the exact production marker path with actual
+                    # packed-action facts, which may contain nested read-only
+                    # mapping proxies from the immutable audit APIs.
+                    with tempfile.TemporaryDirectory(
+                        prefix="task39extra-v5-fast-action-ledger-"
+                    ) as ledger_directory:
+                        ledger_path = Path(ledger_directory)
+                        ledger = WorkflowLedger(
+                            ledger_path, ledger_path / "workflow_phase.json"
+                        )
+                        ledger.marker(
+                            "retained_sum_factorized_physical_action_complete",
+                            fast["facts"],
+                        )
+                        facts_record = json.loads(
+                            (ledger_path / "workflow_phase.json").read_text()
+                        )
+                        self.assertEqual(
+                            facts_record["stage"],
+                            "retained_sum_factorized_physical_action_complete",
+                        )
+                        self.assertEqual(
+                            facts_record["facts"]["schema"], fast["facts"]["schema"]
+                        )
 
                 source = fem.Function(space)
                 source.interpolate(
