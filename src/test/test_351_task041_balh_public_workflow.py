@@ -6,6 +6,7 @@ import copy
 import hashlib
 import json
 import math
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -34,7 +35,10 @@ from benchmarks.task041_exact_side_workflow import (
     _task041_backend_pair_layout_identity,
     _task041_case_contract,
     _task041_common_failure_details,
+    _task041_rank_numa_observed_backend,
+    _task041_rank_numa_pair_sample_stage,
     _task041_stream_array_metadata,
+    _task041_worker_time_stop_enforced,
 )
 from benchmarks.task041_rank_numa import append_stage_jsonl
 from scripts import run_case
@@ -642,6 +646,7 @@ def test_task041_common_layout_mode_binds_fixed_scope_and_cpu_range(
         comparison_mode=task041_balh_workflow.TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE,
     )
     assert command[command.index("--cpu-list") + 1] == "1-8"
+    assert "numactl" not in command
     worker_args = command[command.index("--worker") :]
     parsed = task041_balh_workflow._parser().parse_args(worker_args)
     assert parsed.task041_comparison_mode == (
@@ -661,6 +666,67 @@ def test_task041_common_layout_mode_binds_fixed_scope_and_cpu_range(
         task041_balh_workflow.TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE
     )
     assert contract["budget_group"] == "shared_S0_S1_S3"
+
+
+def _write_task041_fixed_pair_manifest(
+    tmp_path: Path,
+    *,
+    packet_manifest_sha256: str,
+    packet_identity_path: Path,
+    source_sha: str,
+) -> Path:
+    expected = task041_balh_workflow._TASK041_REPRESENTATIVE_RHS_EXPECTED
+    contract = task041_schur_speed_v2_contract(
+        TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
+        scope=TASK041_REPRESENTATIVE_RHS_SCOPE,
+        side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        comparison_mode=task041_balh_workflow.TASK041_P4_BACKEND_PAIR_MODE,
+    )
+    audit_path = tmp_path / "fixed_rhs_source_audit.jsonl"
+    audit_path.write_text('{"fixture":"fixed RHS source"}\n', encoding="utf-8")
+    payload = {
+        "schema": task041_balh_workflow.TASK041_REPRESENTATIVE_RHS_SCHEMA,
+        "scope": TASK041_REPRESENTATIVE_RHS_SCOPE,
+        "model_id": TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
+        "profile_id": TASK041_SCHUR_SPEED_V2_PROFILE,
+        "mode_count": task041_balh_workflow.TASK041_REPRESENTATIVE_RHS_MODE_COUNT,
+        "mpi_size": task041_balh_workflow.TASK041_BALH_MPI_SIZE,
+        "budget": {
+            "group": "shared_S0_S1_S3",
+            "phase_limit_seconds": task041_balh_workflow.TASK041_SCHUR_SPEED_V2_S0_S1_S3_BUDGET_SECONDS,
+            "batch_limit_seconds": task041_balh_workflow.TASK041_SCHUR_SPEED_V2_BATCH_BUDGET_SECONDS,
+            "memory_cap_bytes": contract["memory_cap_bytes"],
+            "swap_limit_bytes": 0,
+            "time_stop_override": False,
+        },
+        "entries": [
+            {
+                "ordinal": ordinal,
+                "side": values[0],
+                "branch": values[1],
+                "audit_index": values[2],
+                "formal_column": values[3],
+                "branch_ordinal": values[4],
+            }
+            for ordinal, values in enumerate(expected)
+        ],
+        "packet_binding": {
+            "packet_manifest_sha256": packet_manifest_sha256,
+            "packet_identity": str(packet_identity_path),
+            "packet_identity_sha256": hashlib.sha256(
+                packet_identity_path.read_bytes()
+            ).hexdigest(),
+        },
+        "source_audit": {
+            "rhs_audit_path": str(audit_path),
+            "rhs_audit_sha256": hashlib.sha256(audit_path.read_bytes()).hexdigest(),
+            "source_git_sha": source_sha,
+        },
+        "purpose": "fixed-eight-RHS backend equivalence test",
+    }
+    path = tmp_path / "task041_fixed_eight_rhs_manifest.json"
+    path.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+    return path
 
 
 def test_task041_fixed_p4_backend_pair_is_explicit_and_5nm_scoped():
@@ -695,6 +761,13 @@ def test_task041_fixed_p4_backend_pair_is_explicit_and_5nm_scoped():
         side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
         comparison_mode=pair_mode,
     )
+    assert command[command.index("--cpu-list") + 1] == "1-8"
+    python_index = command.index(str(Path(sys.executable)))
+    assert command[python_index - 2 : python_index + 1] == [
+        "numactl",
+        "--membind=0",
+        str(Path(sys.executable)),
+    ]
     worker_args = command[command.index("--worker") :]
     assert task041_balh_workflow._parser().parse_args(
         worker_args
@@ -706,6 +779,21 @@ def test_task041_fixed_p4_backend_pair_is_explicit_and_5nm_scoped():
         comparison_mode=pair_mode,
     )
     assert pair_contract["comparison_mode"] == pair_mode
+    assert pair_contract["compute_wall_unlimited"] is True
+    assert pair_contract["producer"]["mode"] == "reused"
+    assert pair_contract["producer"]["invocation"] == "not_run"
+    assert pair_contract["producer"]["time_stop_enforced"] is True
+    assert pair_contract["time_stop"]["consumer_enforced"] is False
+    assert pair_contract["time_stop"]["consumer_timeout_seconds"] is None
+    assert pair_contract["active_consumer_budget_seconds"] == 21600.0
+    assert pair_contract["batch_budget_seconds"] == 201600.0
+    assert pair_contract["ledger"]["schema"] == (
+        "task041.review_v5.r1_load_ledger.v1"
+    )
+    assert pair_contract["ledger"]["path"].endswith(
+        "results/task041_review_v5_cpu_numa_condensed_speed/"
+        "r0_r1_20260920/r1_load_ledger_20260920.json"
+    )
 
     unchanged_contract = task041_schur_speed_v2_contract(
         TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
@@ -713,6 +801,21 @@ def test_task041_fixed_p4_backend_pair_is_explicit_and_5nm_scoped():
         side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
     )
     assert unchanged_contract["comparison_mode"] is None
+    assert unchanged_contract["time_stop"]["consumer_enforced"] is True
+    assert unchanged_contract["active_consumer_budget_seconds"] == 21600.0
+    assert unchanged_contract["ledger"]["schema"] == "task041.compute_wall_ledger.v2"
+    default_command = build_task041_balh_candidate_consumer_command(
+        str(Path(sys.executable)),
+        candidate,
+        "packet_manifest.json",
+        "packet_identity.json",
+        "b" * 64,
+        "worker",
+        "c" * 40,
+        "a" * 40,
+    )
+    assert default_command[default_command.index("--cpu-list") + 1] == "0-7"
+    assert "numactl" not in default_command
     with pytest.raises(ValueError, match="5 nm representative_rhs"):
         task041_schur_speed_v2_contract(
             TASK041_BALH_2NM_CANDIDATE_MODEL_ID,
@@ -720,6 +823,121 @@ def test_task041_fixed_p4_backend_pair_is_explicit_and_5nm_scoped():
             side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
             comparison_mode=pair_mode,
         )
+    assert _task041_worker_time_stop_enforced(
+        balh=True,
+        disable_time_stop=False,
+        case_time_stop_disabled=False,
+        p4_backend_pair=True,
+    ) is False
+    assert _task041_worker_time_stop_enforced(
+        balh=True,
+        disable_time_stop=False,
+        case_time_stop_disabled=False,
+        p4_backend_pair=False,
+    ) is True
+
+
+def test_task041_pair_numa_tracks_condensed_backend_in_five_stages():
+    pair_target = _task041_rank_numa_observed_backend(
+        candidate=True,
+        model_id=TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
+        registered_backend="full",
+        construction_audit=None,
+        performance_profile=TASK041_SCHUR_SPEED_V2_PROFILE,
+        representative_rhs_scope=TASK041_REPRESENTATIVE_RHS_SCOPE,
+        side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        comparison_mode=task041_balh_workflow.TASK041_P4_BACKEND_PAIR_MODE,
+    )
+    assert pair_target == "cell_condensed"
+
+    condensed_specification = next(
+        specification
+        for specification in (_specification(path) for path in BALH_INPUTS)
+        if str(specification.identity["model_id"])
+        == TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID
+    )
+    condensed_contract = _task041_case_contract(
+        condensed_specification.as_jsonable(), 8, phase="consumer"
+    )
+    formal_command = build_task041_balh_candidate_consumer_command(
+        str(Path(sys.executable)),
+        condensed_specification,
+        "packet_manifest.json",
+        "packet_identity.json",
+        "b" * 64,
+        "worker",
+        "c" * 40,
+        "a" * 40,
+    )
+    assert formal_command[formal_command.index("--cpu-list") + 1] == "1-8"
+    formal_python_index = formal_command.index(str(Path(sys.executable)))
+    assert formal_command[formal_python_index - 2 : formal_python_index + 1] == [
+        "numactl",
+        "--membind=0",
+        str(Path(sys.executable)),
+    ]
+    assert _task041_rank_numa_observed_backend(
+        candidate=True,
+        model_id=TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID,
+        registered_backend=condensed_contract["p4_inverse_backend"],
+        construction_audit=condensed_contract["construction_audit"],
+        performance_profile=None,
+        representative_rhs_scope=None,
+        side_setup_schedule=None,
+        comparison_mode=None,
+    ) == "cell_condensed"
+    assert _task041_rank_numa_observed_backend(
+        candidate=True,
+        model_id=TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
+        registered_backend="full",
+        construction_audit=None,
+        performance_profile=None,
+        representative_rhs_scope=None,
+        side_setup_schedule=None,
+        comparison_mode=None,
+    ) is None
+    assert _task041_rank_numa_observed_backend(
+        candidate=True,
+        model_id=TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
+        registered_backend="full",
+        construction_audit=None,
+        performance_profile=TASK041_SCHUR_SPEED_V2_PROFILE,
+        representative_rhs_scope=TASK041_REPRESENTATIVE_RHS_SCOPE,
+        side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        comparison_mode=task041_balh_workflow.TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE,
+    ) is None
+
+    stages = ["startup"]
+    first_response_sides: set[str] = set()
+    for side in ("bottom", "top"):
+        for backend in ("full", "cell_condensed"):
+            stage = _task041_rank_numa_pair_sample_stage(
+                "p4_ready",
+                backend,
+                pair_target,
+                side,
+                first_response_sides,
+            )
+            if stage is not None:
+                stages.append(f"{side}:{stage}")
+            for branch in ("positive", "positive", "negative", "negative"):
+                if branch == "positive":
+                    stage = _task041_rank_numa_pair_sample_stage(
+                        "first_response",
+                        backend,
+                        pair_target,
+                        side,
+                        first_response_sides,
+                    )
+                    if stage is not None:
+                        stages.append(f"{side}:{stage}")
+    assert stages == [
+        "startup",
+        "bottom:p4_ready",
+        "bottom:first_response",
+        "top:p4_ready",
+        "top:first_response",
+    ]
 
 
 def test_task041_pair_layout_identity_excludes_space_object_addresses():
@@ -1103,6 +1321,85 @@ def test_task041_consumer_time_stop_combines_override_and_case_policy():
     ) is True
 
 
+def test_task041_pair_worker_time_stop_policy_keeps_producer_fact(
+    tmp_path: Path, monkeypatch
+):
+    from benchmarks import run_task037b_hybrid_iterative as recovery
+    from benchmarks import task041_exact_side_workflow as worker
+
+    class FakeComm:
+        rank = 0
+        size = 8
+
+        @staticmethod
+        def bcast(value, root):
+            assert root == 0
+            return value
+
+        @staticmethod
+        def Barrier():
+            return None
+
+    candidate_path = (
+        REPOSITORY_ROOT
+        / "input/official/task041/side_balh/5nm_p6h4_m480_mpi8_balh.dat"
+    )
+    packet_identity_path = tmp_path / "unused_packet_identity.json"
+    packet_identity_path.write_text("{}\n", encoding="utf-8")
+    probe_manifest = _write_task041_fixed_pair_manifest(
+        tmp_path,
+        packet_manifest_sha256="d" * 64,
+        packet_identity_path=packet_identity_path,
+        source_sha="c" * 40,
+    )
+    monkeypatch.setattr(worker, "_environment_snapshot", lambda: {"marker": "test"})
+    monkeypatch.setattr(worker, "_write_rank_pid_affinity", lambda *args, **kwargs: None)
+    monkeypatch.setattr(worker, "_memavailable_bytes", lambda: 0)
+    monkeypatch.setattr(
+        worker,
+        "_resource_snapshot",
+        lambda: {
+            "memory_authority_bytes": 100,
+            "job_no_swap": True,
+            "process_tree": {
+                "all_status_readable": True,
+                "rss_bytes": 100,
+                "swap_bytes": 0,
+            },
+        },
+    )
+    monkeypatch.setattr(
+        recovery,
+        "release_frozen_m10_objects",
+        lambda setup, comm, communicator: {"pass": True},
+    )
+
+    run_directory = tmp_path / "pair_worker_preflight"
+    with pytest.raises(worker.Task041ModePrepError, match="MemAvailable"):
+        worker.run_task041_consumer(
+            input_path=candidate_path,
+            packet_manifest=tmp_path / "unused_packet_manifest.json",
+            packet_identity=packet_identity_path,
+            packet_manifest_sha256="d" * 64,
+            run_directory=run_directory,
+            source_sha="b" * 40,
+            candidate=True,
+            comm=FakeComm(),
+            performance_profile=TASK041_SCHUR_SPEED_V2_PROFILE,
+            task041_rhs_probe_manifest=probe_manifest,
+            side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+            comparison_mode=task041_balh_workflow.TASK041_P4_BACKEND_PAIR_MODE,
+        )
+
+    summary = json.loads(
+        (run_directory / "consumer_summary.json").read_text(encoding="utf-8")
+    )
+    assert summary["time_stop_policy"]["producer_enforced"] is True
+    assert summary["time_stop_policy"]["producer_invocation"] == "not_run"
+    assert summary["time_stop_policy"]["consumer_enforced"] is False
+    assert summary["limits"]["timeout_seconds"] is None
+
+
 def test_task041_balh_worker_time_override_keeps_memory_and_swap_gates(monkeypatch):
     from benchmarks import task041_exact_side_workflow as worker
 
@@ -1429,16 +1726,18 @@ def test_task041_balh_public_fresh_phases_share_cumulative_budget(
     assert result["phase_results"]["producer"].get("reused") is not True
 
 
+@pytest.mark.parametrize("p4_pair", [False, True], ids=["public", "fixed-pair"])
 def test_task041_balh_reused_public_producer_starts_only_one_consumer(
-    tmp_path: Path, monkeypatch
+    tmp_path: Path, monkeypatch, p4_pair: bool
 ):
+    input_prefix = "5nm_p6h4_m480_mpi8" if p4_pair else "13p5nm_p6h10_m120_mpi8"
     exact = _specification(
         REPOSITORY_ROOT
-        / "input/official/task041/side_balh/13p5nm_p6h10_m120_mpi8_exact.dat"
+        / f"input/official/task041/side_balh/{input_prefix}_exact.dat"
     )
     candidate = _specification(
         REPOSITORY_ROOT
-        / "input/official/task041/side_balh/13p5nm_p6h10_m120_mpi8_balh.dat"
+        / f"input/official/task041/side_balh/{input_prefix}_balh.dat"
     )
     from benchmarks.task041_balh_workflow import build_task041_balh_packet_identity
     from src.runners import task041_supervisor as supervisor
@@ -1455,8 +1754,19 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
     manifest_path = packet_root / "manifest.json"
     manifest_path.write_text("{\"manifest\":true}\n", encoding="utf-8")
     manifest_sha = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
-    (producer_root / "packet_identity.json").write_text(
+    packet_identity_path = producer_root / "packet_identity.json"
+    packet_identity_path.write_text(
         json.dumps(producer_identity, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    probe_manifest = (
+        _write_task041_fixed_pair_manifest(
+            tmp_path,
+            packet_manifest_sha256=manifest_sha,
+            packet_identity_path=packet_identity_path,
+            source_sha=consumer_source_sha,
+        )
+        if p4_pair
+        else None
     )
     (producer_root / "mode_prep_summary.json").write_text(
         json.dumps(
@@ -1584,14 +1894,18 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
             },
         }
 
-    monkeypatch.setattr(
-        supervisor,
-        "_outer_mpi_launch_identity",
-        lambda: {
+    def fake_outer_mpi_launch_identity(*args, **kwargs):
+        del args, kwargs
+        return {
             "mpi_size": 1,
             "mpi_rank": 0,
             "markers": {"OMPI_COMM_WORLD_SIZE": "1", "OMPI_COMM_WORLD_RANK": "0"},
-        },
+        }
+
+    monkeypatch.setattr(
+        supervisor,
+        "_outer_mpi_launch_identity",
+        fake_outer_mpi_launch_identity,
     )
     monkeypatch.setattr(
         supervisor,
@@ -1614,20 +1928,33 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
         lambda: {name: "1" for name in supervisor.TASK041_REQUIRED_THREADS},
     )
     observed_schedules = []
+    expected_pair_mode = task041_balh_workflow.TASK041_P4_BACKEND_PAIR_MODE
+    expected_schedule = (
+        TASK041_SEQUENTIAL_COMPONENT_SCHEDULE if p4_pair else None
+    )
+    expected_comparison = expected_pair_mode if p4_pair else None
 
     def fake_consumer_result(
         consumer_root,
         process_group_gone,
         expected_side_setup_schedule=None,
         expected_comparison_mode=None,
+        representative_rhs_binding=None,
     ):
         observed_schedules.append(expected_side_setup_schedule)
-        assert expected_side_setup_schedule is None
-        assert expected_comparison_mode is None
+        assert expected_side_setup_schedule == expected_schedule
+        assert expected_comparison_mode == expected_comparison
+        if p4_pair:
+            assert representative_rhs_binding["path"] == str(probe_manifest)
         return {
             "complete": True,
             "classification": "worker_exit0",
-            "worker_classification": "TASK041_CONSUMER_PASS",
+            "worker_classification": (
+                "TASK041_REPRESENTATIVE_RHS_COMPLETED"
+                if p4_pair
+                else "TASK041_CONSUMER_PASS"
+            ),
+            "completion_scope": "representative_rhs" if p4_pair else "formal",
             "process_group_gone": process_group_gone,
             "factor_inventory": {},
         }
@@ -1640,30 +1967,102 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
 
     candidate_run = tmp_path / "candidate_public_run"
     candidate_run.mkdir()
-    ledger_path = tmp_path / "compute_wall_ledger.json"
-    ledger_path.write_text(
-        json.dumps(
-            {
-                "schema": "task041.compute_wall_ledger.v1",
-                "limit_seconds": 172800.0,
-                "used_compute_wall_seconds": 0.0,
-                "used_status": "measured",
-                "basis": "test-local BALH mock ledger",
-                "measured": {"status": "measured", "seconds": 0.0, "records": []},
-                "derived": {"status": "not_measured", "seconds": None},
-            },
-            sort_keys=True,
+    supervision_record_path = None
+    v5_ledger_before = None
+    if p4_pair:
+        ledger_path = tmp_path / "review_v5_ledger.json"
+        ledger_path.write_text(
+            json.dumps(
+                {
+                    "schema": "task041.review_v5.r1_load_ledger.v1",
+                    "charged_seconds": 8061.882139588,
+                    "ledger_status": "derived",
+                    "scope": "test V5 compatibility view",
+                    "entries": [{"id": "prior_f2", "charged_seconds": 393}],
+                },
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
         )
-        + "\n",
-        encoding="utf-8",
-    )
+        v5_ledger_before = ledger_path.read_bytes()
+        monkeypatch.setattr(
+            task041_balh_workflow,
+            "task041_review_v5_ledger_path",
+            lambda _repository_root: ledger_path.resolve(),
+        )
+        monkeypatch.setenv("INVOCATION_ID", "task041-f3c4-public-pair-test")
+        probe_sha = hashlib.sha256(probe_manifest.read_bytes()).hexdigest()
+        supervision_record_path = tmp_path / "service_supervision_record.json"
+        supervision_record_path.write_text(
+            json.dumps(
+                {
+                    "profile_id": TASK041_SCHUR_SPEED_V2_PROFILE,
+                    "model_id": candidate.identity["model_id"],
+                    "source_sha": consumer_source_sha,
+                    "scope": TASK041_REPRESENTATIVE_RHS_SCOPE,
+                    "ledger_owner": "service_finalizer",
+                    "parent_pid": os.getppid(),
+                    "invocation_id": "task041-f3c4-public-pair-test",
+                    "side_setup_schedule": TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+                    "comparison_mode": expected_pair_mode,
+                    "representative_rhs_probe": {
+                        "path": str(probe_manifest),
+                        "sha256": probe_sha,
+                    },
+                    "ledger_path": str(ledger_path.resolve()),
+                },
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+        def reject_duplicate_ledger_write(*args, **kwargs):
+            del args, kwargs
+            raise AssertionError("public supervisor must defer V5 append to finalizer")
+
+        monkeypatch.setattr(
+            supervisor,
+            "_write_task041_compute_wall_ledger",
+            reject_duplicate_ledger_write,
+        )
+    else:
+        ledger_path = tmp_path / "compute_wall_ledger.json"
+        ledger_path.write_text(
+            json.dumps(
+                {
+                    "schema": "task041.compute_wall_ledger.v1",
+                    "limit_seconds": 172800.0,
+                    "used_compute_wall_seconds": 0.0,
+                    "used_status": "measured",
+                    "basis": "test-local BALH mock ledger",
+                    "measured": {
+                        "status": "measured",
+                        "seconds": 0.0,
+                        "records": [],
+                    },
+                    "derived": {"status": "not_measured", "seconds": None},
+                },
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
     result = supervisor.run_task041_public_supervisor(
         candidate,
         source_sha=consumer_source_sha,
         run_directory=candidate_run,
-        compute_wall_ledger_path=ledger_path,
+        compute_wall_ledger_path=None if p4_pair else ledger_path,
         python_executable="python",
         producer_packet_root=producer_root,
+        performance_profile=TASK041_SCHUR_SPEED_V2_PROFILE if p4_pair else None,
+        task041_rhs_probe_manifest=probe_manifest,
+        task041_side_setup_schedule=(
+            TASK041_SEQUENTIAL_COMPONENT_SCHEDULE if p4_pair else None
+        ),
+        task041_comparison_mode=expected_pair_mode if p4_pair else None,
+        task041_supervision_record=supervision_record_path,
         popen_factory=fake_popen,
         sample_factory=fake_sample,
         process_group_gone=lambda _pid: True,
@@ -1671,8 +2070,35 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
     )
     assert result["result_classification"] == "worker_exit0"
     assert len(popen_calls) == 1
-    assert observed_schedules == [None]
+    assert observed_schedules == [expected_schedule]
     assert popen_calls[0][popen_calls[0].index("--phase") + 1] == "candidate-consumer"
+    if p4_pair:
+        command = popen_calls[0]
+        assert command[command.index("--cpu-list") + 1] == "1-8"
+        resolved_python = str((REPOSITORY_ROOT / "python").resolve())
+        python_index = command.index(resolved_python)
+        assert command[python_index - 2 : python_index + 1] == [
+            "numactl",
+            "--membind=0",
+            resolved_python,
+        ]
+        assert command[command.index("--task041-comparison-mode") + 1] == (
+            expected_pair_mode
+        )
+        phase = result["phase_results"]["consumer"]
+        assert phase["limits"]["timeout_seconds"] is None
+        assert phase["limits"]["cumulative_compute_limit_seconds"] is None
+        assert phase["time_stop_enforced"] is False
+        assert result["time_stop_policy"]["producer_enforced"] is True
+        assert result["time_stop_policy"]["producer_invocation"] == "not_run"
+        assert result["time_stop_policy"]["consumer_enforced"] is False
+        assert result["ledger_owner"] == "service_finalizer"
+        assert result["compute_wall_budget"]["ledger_update"] == (
+            "deferred_to_service_finalizer"
+        )
+        assert ledger_path.read_bytes() == v5_ledger_before
+    else:
+        assert result["phase_results"]["consumer"]["time_stop_enforced"] is True
     assert result["phase_results"]["producer"]["reused"] is True
     assert result["phase_results"]["producer"]["returncode"] == 0
     assert result["phase_results"]["producer"]["process_group_gone"] is True
@@ -1697,12 +2123,21 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
     assert summary["resource_authority"]["workflow_peak"]["memory_authority_bytes"] == 200
     reused_budget = result["compute_wall_budget"]
     consumer_wall = result["phase_results"]["consumer"]["phase_wall_seconds"]
-    assert reused_budget["used_before_seconds"] == pytest.approx(0.0)
-    assert reused_budget["current_invocation_seconds"] == pytest.approx(
-        consumer_wall
-    )
-    assert reused_budget["used_after_seconds"] == pytest.approx(consumer_wall)
-    assert reused_budget["used_after_seconds"] < producer_phase["phase_wall_seconds"]
+    if p4_pair:
+        assert reused_budget["used_before_seconds"] == pytest.approx(
+            8061.882139588
+        )
+        assert reused_budget["current_invocation_seconds"] == pytest.approx(
+            consumer_wall
+        )
+        assert reused_budget["used_after_seconds"] is None
+    else:
+        assert reused_budget["used_before_seconds"] == pytest.approx(0.0)
+        assert reused_budget["current_invocation_seconds"] == pytest.approx(
+            consumer_wall
+        )
+        assert reused_budget["used_after_seconds"] == pytest.approx(consumer_wall)
+        assert reused_budget["used_after_seconds"] < producer_phase["phase_wall_seconds"]
 
     incomplete_summary = json.loads(
         (old_run / "supervisor_summary.json").read_text(encoding="utf-8")

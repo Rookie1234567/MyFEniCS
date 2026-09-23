@@ -22,7 +22,15 @@ from typing import Any
 from benchmarks.task034_wsl_resources import resource_authority_sample
 from benchmarks.task041_balh_workflow import (
     TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE,
+    TASK041_P4_BACKEND_PAIR_CONTRACT_KIND,
+    TASK041_P4_BACKEND_PAIR_MODE,
+    TASK041_REPRESENTATIVE_RHS_SCOPE,
+    TASK041_SCHUR_SPEED_V2_PROFILE,
     TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+    load_task041_representative_rhs_manifest,
+    task041_is_explicit_p4_backend_pair,
+    task041_p4_backend_pair_identity,
+    task041_review_v5_ledger_path,
     task041_schur_speed_v2_contract,
 )
 from src.io.input_validation import (
@@ -70,9 +78,21 @@ def _service_contract(
     """Resolve the registered case contract without widening the V2 profile."""
 
     model_id = str(config["model_id"])
+    command = list(config.get("public_command", []))
+    bound_profile = (
+        _performance_profile_binding(
+            command,
+            config.get("performance_profile"),
+        )
+        if comparison_mode == TASK041_P4_BACKEND_PAIR_MODE
+        else None
+    )
     case_contract = task041_balh_service_contract(model_id)
     if case_contract is not None:
-        if side_setup_schedule is not None or comparison_mode is not None:
+        if (
+            side_setup_schedule is not None
+            or comparison_mode is not None
+        ):
             raise Task041ServiceError(
                 "registered Task041 case does not accept representative comparison options"
             )
@@ -96,12 +116,81 @@ def _service_contract(
                 "registered Task041 case must use its registered compute ledger"
             )
         return dict(case_contract)
-    return task041_schur_speed_v2_contract(
+    contract = task041_schur_speed_v2_contract(
         model_id,
         scope=config.get("scope"),
         side_setup_schedule=side_setup_schedule,
         comparison_mode=comparison_mode,
     )
+    if comparison_mode == TASK041_P4_BACKEND_PAIR_MODE:
+        if (
+            bound_profile != TASK041_SCHUR_SPEED_V2_PROFILE
+            or config.get("performance_profile") != bound_profile
+        ):
+            raise Task041ServiceError(
+                "p4_backend_pair service config and command must bind task041_schur_speed_v2"
+            )
+        if not task041_is_explicit_p4_backend_pair(
+            model_id=model_id,
+            profile_id=bound_profile,
+            scope=config.get("scope"),
+            side_setup_schedule=side_setup_schedule,
+            comparison_mode=comparison_mode,
+        ):
+            raise Task041ServiceError("incomplete fixed-eight-RHS pair service contract")
+        probe = _representative_rhs_probe_binding(
+            command, TASK041_REPRESENTATIVE_RHS_SCOPE
+        )
+        if probe is None:
+            raise Task041ServiceError("p4_backend_pair service requires its fixed RHS manifest")
+        try:
+            manifest = load_task041_representative_rhs_manifest(probe["path"])
+            pair_identity = task041_p4_backend_pair_identity(
+                model_id=model_id,
+                profile_id=bound_profile,
+                scope=config.get("scope"),
+                side_setup_schedule=side_setup_schedule,
+                comparison_mode=comparison_mode,
+                rhs_probe_binding=manifest,
+            )
+        except (OSError, TypeError, ValueError) as exc:
+            raise Task041ServiceError(f"invalid fixed RHS pair binding: {exc}") from exc
+        if probe["sha256"] != pair_identity["rhs_manifest_sha256"]:
+            raise Task041ServiceError("fixed RHS pair manifest changed during binding")
+        canonical_ledger = task041_review_v5_ledger_path(
+            Path(__file__).resolve().parents[2]
+        )
+        if Path(config["ledger_path"]).resolve() != canonical_ledger:
+            raise Task041ServiceError(
+                "p4_backend_pair must use the canonical Review V5 ledger path"
+            )
+        contract["p4_backend_pair_identity"] = pair_identity
+    return contract
+
+
+def _performance_profile_binding(
+    command: list[str], configured: str | None
+) -> str | None:
+    flag = "--task041-performance-profile"
+    positions = [index for index, value in enumerate(command) if value == flag]
+    if configured not in {None, TASK041_SCHUR_SPEED_V2_PROFILE}:
+        raise Task041ServiceError("unsupported Task041 performance profile in service config")
+    if not positions:
+        if configured is not None:
+            raise Task041ServiceError(
+                "service config performance profile is absent from public command"
+            )
+        return None
+    if (
+        len(positions) != 1
+        or positions[0] + 1 >= len(command)
+        or command[positions[0] + 1] != TASK041_SCHUR_SPEED_V2_PROFILE
+        or configured not in {None, command[positions[0] + 1]}
+    ):
+        raise Task041ServiceError(
+            "public command performance profile does not match service config"
+        )
+    return command[positions[0] + 1]
 
 
 def _read_job_config(config_path: str | Path) -> dict[str, Any]:
@@ -182,7 +271,11 @@ def _comparison_mode_binding(
 ) -> str | None:
     flag = "--task041-comparison-mode"
     positions = [index for index, value in enumerate(command) if value == flag]
-    if configured not in {None, TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE}:
+    if configured not in {
+        None,
+        TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE,
+        TASK041_P4_BACKEND_PAIR_MODE,
+    }:
         raise Task041ServiceError("unsupported Task041 comparison mode in service config")
     if configured is None:
         if positions:
@@ -289,7 +382,12 @@ def _budget_and_charged(
             "phase_limit_seconds": None,
             "batch_limit_seconds": None,
             "available_before_unit_seconds": None,
-            "basis": "registered case ledger; no elapsed wall stop",
+            "basis": (
+                "fixed-eight-RHS V5 ledger; no elapsed wall stop"
+                if contract.get("contract_kind")
+                == TASK041_P4_BACKEND_PAIR_CONTRACT_KIND
+                else "registered case ledger; no elapsed wall stop"
+            ),
             "time_stop_enforced": False,
         }
         return snapshot, dict(ledger)
@@ -390,12 +488,13 @@ def run_service_parent(config_path: str | Path) -> dict[str, Any]:
         "time_stop_policy": dict(contract["time_stop"]),
     }
     if contract.get("compute_wall_unlimited") is True:
-        launch.update(
-            {
-                "contract_kind": contract["contract_kind"],
-                "case_id": contract["case_id"],
-            }
-        )
+        launch["contract_kind"] = contract["contract_kind"]
+        if contract.get("case_id") is not None:
+            launch["case_id"] = contract["case_id"]
+        if contract.get("p4_backend_pair_identity") is not None:
+            launch["p4_backend_pair_identity"] = dict(
+                contract["p4_backend_pair_identity"]
+            )
     public = supervisor.run_task041_supervised_public_command(
         list(config["public_command"]),
         root,
@@ -545,6 +644,7 @@ def _record_unit_wall(
                 else str(contract["active_consumer_phase"])
             ),
             case_id=contract.get("case_id"),
+            p4_backend_pair_identity=contract.get("p4_backend_pair_identity"),
         )
         return result, None
     except (
@@ -732,12 +832,13 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
             "ledger_owner": LEDGER_OWNER,
         }
         if contract.get("compute_wall_unlimited") is True:
-            expected.update(
-                {
-                    "contract_kind": contract["contract_kind"],
-                    "case_id": contract["case_id"],
-                }
-            )
+            expected["contract_kind"] = contract["contract_kind"]
+            if contract.get("case_id") is not None:
+                expected["case_id"] = contract["case_id"]
+            if contract.get("p4_backend_pair_identity") is not None:
+                expected["p4_backend_pair_identity"] = dict(
+                    contract["p4_backend_pair_identity"]
+                )
         if any(launch.get(name) != value for name, value in expected.items()):
             raise Task041ServiceError("launch manifest does not match frozen job config")
         if launch.get("global_swap_baseline") != config["global_swap_baseline"]:
@@ -971,7 +1072,10 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
             "unit_elapsed_seconds": full_wall,
             "post_remaining_seconds": post_remaining,
             "basis": (
-                "registered case ledger has no elapsed wall limit"
+                "fixed-eight-RHS V5 ledger has no elapsed wall limit"
+                if contract.get("contract_kind")
+                == TASK041_P4_BACKEND_PAIR_CONTRACT_KIND
+                else "registered case ledger has no elapsed wall limit"
                 if contract.get("compute_wall_unlimited") is True
                 else "min(phase_limit-phase_used,batch_limit-batch_used)-unit_elapsed"
             ),

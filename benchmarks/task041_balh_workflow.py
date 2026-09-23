@@ -17,11 +17,13 @@ from typing import Any
 
 from src.io.input_validation import (
     TASK041_BALH_2NM_MODEL_ID,
+    TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID,
     TASK041_BALH_CANDIDATE_MODEL_IDS,
     TASK041_BALH_MPI_SIZE,
     TASK041_BALH_TRANSFER_OPTIMIZATION_PROFILE,
     task041_balh_case,
     task041_balh_profile_errors,
+    task041_balh_service_contract,
 )
 from src.io.resolved_config import resolved_config_sha256
 
@@ -61,6 +63,7 @@ TASK041_REPRESENTATIVE_RHS_SCOPE = "representative_rhs"
 TASK041_SEQUENTIAL_COMPONENT_SCHEDULE = "sequential_component"
 TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE = "common_layout_equivalence"
 TASK041_P4_BACKEND_PAIR_MODE = "p4_backend_pair"
+TASK041_P4_BACKEND_PAIR_CONTRACT_KIND = "task041_fixed_eight_rhs_p4_backend_pair"
 TASK041_REPRESENTATIVE_RHS_SCHEMA = "task041.representative_rhs_manifest.v1"
 TASK041_REPRESENTATIVE_RHS_COUNT = 8
 TASK041_REPRESENTATIVE_RHS_MODE_COUNT = 480
@@ -74,6 +77,110 @@ _TASK041_REPRESENTATIVE_RHS_EXPECTED = (
     ("top", "negative", 686, 666, 186),
     ("top", "negative", 513, 493, 13),
 )
+
+
+def task041_is_explicit_p4_backend_pair(
+    *,
+    model_id: str,
+    profile_id: str | None,
+    scope: str | None,
+    side_setup_schedule: str | None,
+    comparison_mode: str | None,
+) -> bool:
+    """Match only the reviewed old 5 nm fixed-eight-RHS pair tuple."""
+
+    return bool(
+        model_id == TASK041_BALH_5NM_CANDIDATE_MODEL_ID
+        and profile_id == TASK041_SCHUR_SPEED_V2_PROFILE
+        and scope == TASK041_REPRESENTATIVE_RHS_SCOPE
+        and side_setup_schedule == TASK041_SEQUENTIAL_COMPONENT_SCHEDULE
+        and comparison_mode == TASK041_P4_BACKEND_PAIR_MODE
+    )
+
+
+def task041_p4_backend_pair_identity(
+    *,
+    model_id: str,
+    profile_id: str | None,
+    scope: str | None,
+    side_setup_schedule: str | None,
+    comparison_mode: str | None,
+    rhs_probe_binding: Mapping[str, Any],
+) -> dict[str, Any]:
+    if not task041_is_explicit_p4_backend_pair(
+        model_id=model_id,
+        profile_id=profile_id,
+        scope=scope,
+        side_setup_schedule=side_setup_schedule,
+        comparison_mode=comparison_mode,
+    ):
+        raise ValueError("incomplete Task041 fixed-eight-RHS backend-pair identity")
+    path = rhs_probe_binding.get("path")
+    manifest_sha256 = rhs_probe_binding.get("sha256")
+    if (
+        not isinstance(path, str)
+        or not Path(path).is_absolute()
+        or not _valid_sha(manifest_sha256, 64)
+    ):
+        raise ValueError("backend-pair identity requires its bound RHS manifest")
+    return {
+        "contract_kind": TASK041_P4_BACKEND_PAIR_CONTRACT_KIND,
+        "model_id": model_id,
+        "profile_id": profile_id,
+        "scope": scope,
+        "side_setup_schedule": side_setup_schedule,
+        "comparison_mode": comparison_mode,
+        "rhs_manifest_path": path,
+        "rhs_manifest_sha256": manifest_sha256,
+        "rhs_count": TASK041_REPRESENTATIVE_RHS_COUNT,
+    }
+
+
+def task041_validate_p4_backend_pair_identity(
+    identity: Mapping[str, Any],
+    *,
+    outer_profile_contract: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    if not isinstance(identity, Mapping):
+        raise TypeError("fixed-eight-RHS backend-pair identity must be a mapping")
+    try:
+        expected = task041_p4_backend_pair_identity(
+            model_id=identity["model_id"],
+            profile_id=identity["profile_id"],
+            scope=identity["scope"],
+            side_setup_schedule=identity["side_setup_schedule"],
+            comparison_mode=identity["comparison_mode"],
+            rhs_probe_binding={
+                "path": identity["rhs_manifest_path"],
+                "sha256": identity["rhs_manifest_sha256"],
+            },
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError("invalid fixed-eight-RHS backend-pair identity") from exc
+    if dict(identity) != expected:
+        raise ValueError("fixed-eight-RHS backend-pair identity is not canonical")
+    if outer_profile_contract is not None and any(
+        outer_profile_contract.get(key) != expected[key]
+        for key in ("model_id", "profile_id", "scope")
+    ):
+        raise ValueError("outer profile contract does not match pair identity")
+    return expected
+
+
+def task041_review_v5_ledger_path(repository_root: str | Path) -> Path:
+    """Resolve the canonical V5 path from the existing registered service contract."""
+
+    contract = task041_balh_service_contract(
+        TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID
+    )
+    ledger = contract.get("ledger") if isinstance(contract, Mapping) else None
+    relative = ledger.get("path") if isinstance(ledger, Mapping) else None
+    if (
+        not isinstance(relative, str)
+        or ledger.get("schema") != "task041.review_v5.r1_load_ledger.v1"
+    ):
+        raise ValueError("registered Task041 V5 ledger path is unavailable")
+    return (Path(repository_root) / relative).resolve()
 
 
 def task041_schur_speed_v2_contract(
@@ -113,7 +220,19 @@ def task041_schur_speed_v2_contract(
         raise ValueError(
             f"unsupported Task041 comparison mode: {comparison_mode!r}"
         )
-    if comparison_mode is not None and (
+    p4_backend_pair = task041_is_explicit_p4_backend_pair(
+        model_id=model_id,
+        profile_id=TASK041_SCHUR_SPEED_V2_PROFILE,
+        scope=scope,
+        side_setup_schedule=side_setup_schedule,
+        comparison_mode=comparison_mode,
+    )
+    if comparison_mode == TASK041_P4_BACKEND_PAIR_MODE and not p4_backend_pair:
+        raise ValueError(
+            "p4_backend_pair requires the complete 5 nm representative_rhs "
+            "sequential_component fixed-eight-RHS contract"
+        )
+    if comparison_mode == TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE and (
         model_id != TASK041_BALH_5NM_CANDIDATE_MODEL_ID
         or scope != TASK041_REPRESENTATIVE_RHS_SCOPE
         or side_setup_schedule != TASK041_SEQUENTIAL_COMPONENT_SCHEDULE
@@ -137,7 +256,18 @@ def task041_schur_speed_v2_contract(
     active_budget_group = (
         "shared_S0_S1_S3" if scope == TASK041_REPRESENTATIVE_RHS_SCOPE else active_phase
     )
-    return {
+    ledger = {
+        "schema": "task041.compute_wall_ledger.v2",
+        "filename": TASK041_SCHUR_SPEED_V2_LEDGER_NAME,
+    }
+    time_stop = {
+        "consumer_enforced": True,
+        "disable_time_stop_inherited": False,
+        "mutually_exclusive_with": (
+            "--task041-balh-candidate-disable-time-stop"
+        ),
+    }
+    contract = {
         "profile_id": TASK041_SCHUR_SPEED_V2_PROFILE,
         "model_id": str(model_id),
         "scope": scope or "formal_consumer",
@@ -163,21 +293,41 @@ def task041_schur_speed_v2_contract(
             "qep": "not_run",
         },
         "time_stop": {
-            "consumer_enforced": True,
-            "disable_time_stop_inherited": False,
-            "mutually_exclusive_with": (
-                "--task041-balh-candidate-disable-time-stop"
-            ),
+            **time_stop,
         },
-        "ledger": {
-            "schema": "task041.compute_wall_ledger.v2",
-            "filename": TASK041_SCHUR_SPEED_V2_LEDGER_NAME,
-        },
+        "ledger": ledger,
         "budget_semantics": (
             "S0/S1/S3 share 21600 seconds; S2 and S4 are separate review phases; "
             "the batch value is the cumulative stop budget across these groups"
         ),
     }
+    if p4_backend_pair:
+        ledger_contract = task041_balh_service_contract(
+            TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID
+        )
+        v5_ledger = ledger_contract.get("ledger") if ledger_contract is not None else None
+        if not isinstance(v5_ledger, Mapping) or not isinstance(
+            v5_ledger.get("path"), str
+        ):
+            raise ValueError("registered Task041 V5 ledger path is unavailable")
+        contract.update(
+            {
+                "compute_wall_unlimited": True,
+                "contract_kind": TASK041_P4_BACKEND_PAIR_CONTRACT_KIND,
+                "time_stop": {
+                    **time_stop,
+                    "consumer_enforced": False,
+                    "consumer_timeout_seconds": None,
+                    "scope": "explicit_5nm_fixed_eight_rhs_backend_pair",
+                },
+                "ledger": dict(v5_ledger),
+                "budget_semantics": (
+                    "fixed RHS V2 budget fields are historical identity only; "
+                    "the pair has no elapsed wall stop"
+                ),
+            }
+        )
+    return contract
 
 
 def task041_balh_time_stop_override_record(enabled: bool) -> dict[str, Any]:
@@ -711,6 +861,16 @@ def build_task041_balh_candidate_consumer_command(
             )
         if not Path(task041_rhs_probe_manifest).is_absolute():
             raise ValueError("representative RHS manifest must be an absolute path")
+    p4_backend_pair = bool(
+        task041_rhs_probe_manifest is not None
+        and task041_is_explicit_p4_backend_pair(
+            model_id=str(normalized["model_id"]),
+            profile_id=performance_profile,
+            scope=TASK041_REPRESENTATIVE_RHS_SCOPE,
+            side_setup_schedule=side_setup_schedule,
+            comparison_mode=comparison_mode,
+        )
+    )
     return _mpi8_command(
         python_executable,
         TASK041_BALH_CANDIDATE_PHASE,
@@ -729,8 +889,16 @@ def build_task041_balh_candidate_consumer_command(
         task041_rhs_probe_manifest=task041_rhs_probe_manifest,
         side_setup_schedule=side_setup_schedule,
         comparison_mode=comparison_mode,
-        cpu_list=task041_balh_cpu_list(str(normalized["model_id"])),
-        membind_node=task041_balh_membind_node(str(normalized["model_id"])),
+        cpu_list=(
+            "1-8"
+            if p4_backend_pair
+            else task041_balh_cpu_list(str(normalized["model_id"]))
+        ),
+        membind_node=(
+            "0"
+            if p4_backend_pair
+            else task041_balh_membind_node(str(normalized["model_id"]))
+        ),
     )
 
 

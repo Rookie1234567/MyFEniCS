@@ -10,7 +10,17 @@ from pathlib import Path
 
 import pytest
 
-from benchmarks.task041_balh_workflow import task041_schur_speed_v2_contract
+from benchmarks import task041_balh_workflow
+from benchmarks.task041_balh_workflow import (
+    TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
+    TASK041_P4_BACKEND_PAIR_MODE,
+    TASK041_REPRESENTATIVE_RHS_SCOPE,
+    TASK041_SCHUR_SPEED_V2_PROFILE,
+    TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+    load_task041_representative_rhs_manifest,
+    task041_p4_backend_pair_identity,
+    task041_schur_speed_v2_contract,
+)
 from src.io.input_validation import (
     TASK041_BALH_2NM_MODEL_ID,
     task041_balh_phase_limits_for_model,
@@ -467,6 +477,319 @@ def test_registered_2nm_parent_and_finalizer_keep_unlimited_budget(monkeypatch, 
     assert ledger["profile_id"] is None
     assert len(ledger["source_records"]) == 1
     assert ledger["used_compute_wall_seconds"] > 100.0
+
+
+def test_fixed_pair_service_requires_full_config_and_canonical_v5_path(tmp_path):
+    repository_root = Path(__file__).resolve().parents[2]
+    manifest_path = (
+        repository_root
+        / "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/records/"
+        "task041_representative_rhs_v1.json"
+    )
+    canonical_ledger = task041_balh_workflow.task041_review_v5_ledger_path(
+        repository_root
+    )
+    command = [
+        sys.executable,
+        "scripts/run_case.py",
+        "input/official/task041/side_balh/5nm_p6h4_m480_mpi8_balh.dat",
+        "--task041-performance-profile",
+        TASK041_SCHUR_SPEED_V2_PROFILE,
+        "--task041-side-setup-schedule",
+        TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        "--task041-comparison-mode",
+        TASK041_P4_BACKEND_PAIR_MODE,
+        "--task041-rhs-probe",
+        str(manifest_path),
+    ]
+    config = {
+        "model_id": TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
+        "scope": TASK041_REPRESENTATIVE_RHS_SCOPE,
+        "performance_profile": TASK041_SCHUR_SPEED_V2_PROFILE,
+        "ledger_path": canonical_ledger,
+        "public_command": command,
+    }
+
+    contract = service._service_contract(
+        config,
+        side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        comparison_mode=TASK041_P4_BACKEND_PAIR_MODE,
+    )
+    assert contract["p4_backend_pair_identity"]["rhs_count"] == 8
+    assert contract["ledger"]["schema"] == (
+        "task041.review_v5.r1_load_ledger.v1"
+    )
+    with pytest.raises(ValueError, match="complete 5 nm|sequential_component"):
+        service._service_contract(
+            config,
+            side_setup_schedule=None,
+            comparison_mode=TASK041_P4_BACKEND_PAIR_MODE,
+        )
+    with pytest.raises(service.Task041ServiceError, match="canonical Review V5"):
+        service._service_contract(
+            {**config, "ledger_path": tmp_path / "wrong-ledger.json"},
+            side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+            comparison_mode=TASK041_P4_BACKEND_PAIR_MODE,
+        )
+    with pytest.raises(service.Task041ServiceError, match="config and command"):
+        service._service_contract(
+            {**config, "performance_profile": None},
+            side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+            comparison_mode=TASK041_P4_BACKEND_PAIR_MODE,
+        )
+    with pytest.raises(service.Task041ServiceError, match="comparison mode"):
+        service._comparison_mode_binding(command, "common_layout_equivalence")
+
+
+def test_fixed_pair_public_supervision_ignores_v2_clock_but_keeps_resource_gate(
+    monkeypatch, tmp_path
+):
+    manifest_path = (
+        Path(__file__).resolve().parents[2]
+        / "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/records/"
+        "task041_representative_rhs_v1.json"
+    )
+    manifest = load_task041_representative_rhs_manifest(manifest_path)
+    contract = task041_schur_speed_v2_contract(
+        TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
+        scope=TASK041_REPRESENTATIVE_RHS_SCOPE,
+        side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        comparison_mode=TASK041_P4_BACKEND_PAIR_MODE,
+    )
+    contract["p4_backend_pair_identity"] = task041_p4_backend_pair_identity(
+        model_id=TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
+        profile_id=TASK041_SCHUR_SPEED_V2_PROFILE,
+        scope=TASK041_REPRESENTATIVE_RHS_SCOPE,
+        side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        comparison_mode=TASK041_P4_BACKEND_PAIR_MODE,
+        rhs_probe_binding=manifest,
+    )
+    canonical_ledger = tmp_path / "canonical-v5.json"
+    contract["ledger"]["path"] = str(canonical_ledger)
+    monkeypatch.setattr(
+        task041_balh_workflow,
+        "task041_review_v5_ledger_path",
+        lambda _root: canonical_ledger,
+    )
+    resource_limits = {
+        "warning_memory_bytes": 47_899_046_707,
+        "hard_memory_bytes": 53_221_163_008,
+        "swap_limit_bytes": 0,
+        "min_memavailable_bytes": 412_316_860_416,
+        "min_cgroup_ancestor_headroom_bytes": 412_316_860_416,
+    }
+    observed = {}
+
+    def fake_run_phase(_phase, _command, _root, **kwargs):
+        observed.update(kwargs)
+        return {
+            "returncode": -15,
+            "termination_reason": "process_tree_rss_limit",
+            "process_group_gone": True,
+        }
+
+    monkeypatch.setattr(supervisor, "_run_phase", fake_run_phase)
+    pair_result = supervisor.run_task041_supervised_public_command(
+        [sys.executable, "scripts/run_case.py"],
+        tmp_path / "pair-supervision",
+        profile_contract=contract,
+        ledger_snapshot={
+            "schema": "task041.review_v5.r1_load_ledger.v1",
+            "used_compute_wall_seconds": 300_000.0,
+        },
+        resource_limits=resource_limits,
+        environment={name: "1" for name in supervisor.TASK041_REQUIRED_THREADS},
+        sample_factory=lambda _pid: {},
+        repository_root=tmp_path,
+        launch_manifest={"ledger_path": str(canonical_ledger)},
+    )
+    assert pair_result["result_classification"] == "process_tree_rss_limit"
+    assert pair_result["budget"]["effective_remaining_seconds"] is None
+    assert observed["timeout_seconds"] is None
+    assert observed["phase_elapsed_timeout"] is False
+    assert observed["cumulative_compute_limit_seconds"] is None
+    assert observed["enforce_time_stops"] is False
+    assert observed["process_tree_rss_warning_bytes"] == 47_899_046_707
+    assert observed["process_tree_rss_cap_bytes"] == 53_221_163_008
+    assert observed["warning_memory_bytes"] == 47_899_046_707
+    assert observed["hard_memory_bytes"] == 53_221_163_008
+    assert observed["min_memavailable_bytes"] == 412_316_860_416
+    assert observed["min_cgroup_ancestor_headroom_bytes"] == 412_316_860_416
+
+    legacy_contract = task041_schur_speed_v2_contract(
+        TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
+        scope=TASK041_REPRESENTATIVE_RHS_SCOPE,
+        side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+    )
+    legacy_result = supervisor.run_task041_supervised_public_command(
+        [sys.executable, "scripts/run_case.py"],
+        tmp_path / "legacy-v2-supervision",
+        profile_contract=legacy_contract,
+        ledger_snapshot={
+            "schema": "task041.compute_wall_ledger.v2",
+            "used_compute_wall_seconds": 201_600.0,
+            "batch_used_compute_wall_seconds": 201_600.0,
+            "shared_S0_S1_S3_used_seconds": 21_600.0,
+        },
+        resource_limits=resource_limits,
+        environment={name: "1" for name in supervisor.TASK041_REQUIRED_THREADS},
+        sample_factory=lambda _pid: {},
+        repository_root=tmp_path,
+    )
+    assert legacy_result["result_classification"] == "cumulative_wall_timeout"
+
+
+def test_fixed_pair_service_finalizer_appends_one_v5_record_after_parent(
+    monkeypatch, tmp_path
+):
+    repository_root = Path(__file__).resolve().parents[2]
+    manifest_path = (
+        repository_root
+        / "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/records/"
+        "task041_representative_rhs_v1.json"
+    )
+    ledger_path = tmp_path / "r1_load_ledger.json"
+    def canonical_v5(_root):
+        return ledger_path
+
+    monkeypatch.setattr(service, "task041_review_v5_ledger_path", canonical_v5)
+    monkeypatch.setattr(task041_balh_workflow, "task041_review_v5_ledger_path", canonical_v5)
+    old_entries = [
+        {"id": "old-1", "seconds": 10.0},
+        {"id": "old-2", "seconds": 20.0},
+    ]
+    old_payload = {
+        "schema": "task041.review_v5.r1_load_ledger.v1",
+        "scope": "r1_load_ledger",
+        "ledger_status": "measured_plus_conservative_upper_bound",
+        "charge_rule": {"basis": "one service-unit interval"},
+        "charged_seconds": 300_000.0,
+        "entries": old_entries,
+    }
+    supervisor._write_json(ledger_path, old_payload)
+    root = tmp_path / "pair-service-root"
+    config = {
+        "unit": UNIT,
+        "model_id": TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
+        "source_sha": SOURCE_SHA,
+        "ledger_path": str(ledger_path),
+        "supervision_root": str(root),
+        "scope": TASK041_REPRESENTATIVE_RHS_SCOPE,
+        "performance_profile": TASK041_SCHUR_SPEED_V2_PROFILE,
+        "side_setup_schedule": TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        "comparison_mode": TASK041_P4_BACKEND_PAIR_MODE,
+        "public_command": [
+            sys.executable,
+            "scripts/run_case.py",
+            "input/official/task041/side_balh/5nm_p6h4_m480_mpi8_balh.dat",
+            "--task041-performance-profile",
+            TASK041_SCHUR_SPEED_V2_PROFILE,
+            "--task041-side-setup-schedule",
+            TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+            "--task041-comparison-mode",
+            TASK041_P4_BACKEND_PAIR_MODE,
+            "--task041-rhs-probe",
+            str(manifest_path),
+        ],
+        "global_swap_baseline": {
+            "global_swap_used_bytes": 0,
+            "global_pswpin_pages": 0,
+            "global_pswpout_pages": 0,
+        },
+    }
+    config_path = tmp_path / "pair-job-config.json"
+    supervisor._write_json(config_path, config)
+    identity = _identity(start_ns=1_000_000_000_000)
+    monkeypatch.setattr(service, "_parent_unit_identity", lambda _unit: identity)
+    monkeypatch.setattr(service, "_cgroup_members", lambda _group: [os.getpid()])
+    monkeypatch.setattr(service, "_sparse_sample_factory", lambda: "pair-sampler")
+    monkeypatch.setattr(service.time, "monotonic_ns", lambda: 2_000_000_000_000)
+    public_observed = {}
+
+    def fake_public(command, supervision_root, **kwargs):
+        public_observed.update(command=command, kwargs=kwargs)
+        Path(supervision_root).mkdir(parents=True, exist_ok=True)
+        supervisor._write_json(
+            Path(supervision_root) / "launch_manifest.json",
+            kwargs["launch_manifest"],
+        )
+        supervisor._write_json(
+            Path(supervision_root) / "summary.json",
+            {
+                "status": "completed",
+                "result_classification": "worker_exit0",
+                "phase_result": {"returncode": 0, "wall_seconds": 3.0},
+            },
+        )
+        return {
+            "status": "completed",
+            "result_classification": "worker_exit0",
+            "phase_result": {"returncode": 0, "wall_seconds": 3.0},
+        }
+
+    monkeypatch.setattr(
+        supervisor, "run_task041_supervised_public_command", fake_public
+    )
+    parent = service.run_service_parent(config_path)
+    assert parent["status"] == "pre_exit_ok"
+    assert public_observed["kwargs"]["profile_contract"][
+        "compute_wall_unlimited"
+    ] is True
+    assert public_observed["kwargs"]["ledger_snapshot"][
+        "used_compute_wall_seconds"
+    ] == 300_000.0
+    assert public_observed["kwargs"]["resource_limits"]["timeout_seconds"] is None
+    assert public_observed["kwargs"]["resource_limits"]["time_stop_enforced"] is False
+    assert public_observed["kwargs"]["launch_manifest"]["ledger_path"] == str(
+        ledger_path
+    )
+    assert supervisor._read_json(ledger_path) == old_payload
+
+    finalizer_observed = {}
+
+    def fake_post(_root_path, finalizer_root, contract, phase_limits, launch, remaining):
+        finalizer_observed.update(
+            contract=contract,
+            phase_limits=phase_limits,
+            launch=launch,
+            remaining=remaining,
+        )
+        supervisor._write_json(
+            finalizer_root / "artifact_hashes.json", {"pass": True}
+        )
+        return (
+            {
+                "returncode": 0,
+                "termination_reason": None,
+                "partial": False,
+                "process_group_gone": True,
+            },
+            None,
+        )
+
+    monkeypatch.setattr(service, "_run_post_hash", fake_post)
+    _normal_terminal(monkeypatch)
+    finalizer = service.run_service_finalize(config_path)
+    assert finalizer["status"] == "completed"
+    assert finalizer["checks"]["ledger_written"] is True
+    assert finalizer_observed["remaining"] is None
+    assert finalizer_observed["phase_limits"]["timeout_seconds"] is None
+    assert finalizer_observed["phase_limits"]["time_stop_enforced"] is False
+    assert finalizer["timing"]["basis"] == (
+        "fixed-eight-RHS V5 ledger has no elapsed wall limit"
+    )
+
+    updated = supervisor._read_json(ledger_path)
+    assert updated["schema"] == old_payload["schema"]
+    assert updated["charge_rule"] == old_payload["charge_rule"]
+    assert updated["entries"][: len(old_entries)] == old_entries
+    new_entries = updated["entries"][len(old_entries) :]
+    assert len(new_entries) == 1
+    assert new_entries[0]["p4_backend_pair_identity"]["rhs_count"] == 8
+    assert "case_id" not in new_entries[0]
+    assert updated["charged_seconds"] == pytest.approx(
+        old_payload["charged_seconds"] + new_entries[0]["seconds"]
+    )
 
 
 def test_finalize_deducts_unit_wall_once_and_limits_post_time(monkeypatch, tmp_path):

@@ -69,6 +69,72 @@ TASK041_WARNING_MEMORY_BYTES = 192 * 2**30
 TASK041_HARD_MEMORY_BYTES = 256 * 2**30
 TASK041_MIN_MEMAVAILABLE_BYTES = 384 * 2**30
 TASK041_TIMEOUT_SECONDS = 172800
+
+
+def _task041_rank_numa_observed_backend(
+    *,
+    candidate: bool,
+    model_id: str,
+    registered_backend: str | None,
+    construction_audit: str | None,
+    performance_profile: str | None,
+    representative_rhs_scope: str | None,
+    side_setup_schedule: str | None,
+    comparison_mode: str | None,
+) -> str | None:
+    from benchmarks.task041_balh_workflow import (
+        task041_is_explicit_p4_backend_pair,
+    )
+
+    registered_cell_condensed = (
+        candidate
+        and registered_backend == "cell_condensed"
+        and construction_audit == "reference_entity_trace_v1"
+    )
+    fixed_five_nanometer_pair = bool(
+        candidate
+        and task041_is_explicit_p4_backend_pair(
+            model_id=model_id,
+            profile_id=performance_profile,
+            scope=representative_rhs_scope,
+            side_setup_schedule=side_setup_schedule,
+            comparison_mode=comparison_mode,
+        )
+    )
+    return (
+        "cell_condensed"
+        if registered_cell_condensed or fixed_five_nanometer_pair
+        else None
+    )
+
+
+def _task041_rank_numa_pair_sample_stage(
+    stage: str,
+    selected_backend: str,
+    observed_backend: str | None,
+    side: str,
+    first_response_sides: set[str],
+) -> str | None:
+    if observed_backend != selected_backend:
+        return None
+    if stage == "p4_ready":
+        return stage
+    if stage == "first_response" and side not in first_response_sides:
+        first_response_sides.add(side)
+        return stage
+    return None
+
+
+def _task041_worker_time_stop_enforced(
+    *,
+    balh: bool,
+    disable_time_stop: bool,
+    case_time_stop_disabled: bool,
+    p4_backend_pair: bool,
+) -> bool:
+    if not balh:
+        return True
+    return not (disable_time_stop or case_time_stop_disabled or p4_backend_pair)
 TASK041_MARKER_SEQUENCE = (
     "preflight_begin",
     "qep_begin",
@@ -2195,7 +2261,7 @@ def _run_task041_balh_candidate_setup(
     sampled_column_contract: Mapping[str, Any],
     qualification_scope: str,
     full_formal_runner: Callable[..., Mapping[str, Any]],
-    timeout_seconds: float,
+    timeout_seconds: float | None,
     audit_path: Path,
     elapsed_seconds: float,
     workflow_started_monotonic: float | None = None,
@@ -2208,9 +2274,11 @@ def _run_task041_balh_candidate_setup(
     performance_profile: str | None = None,
     transfer_optimization_profile: str | None = None,
     comparison_mode: str | None = None,
+    time_stop_enforced: bool | None = None,
     p4_inverse_backend: str = "full",
     support_policy: str = "legacy",
     construction_audit: str | None = None,
+    rank_numa_observed_backend: str | None = None,
     rank_numa_stage_callback: Callable[[str, Mapping[str, object] | None, Mapping[str, Any] | None], None] | None = None,
     rank_numa_evidence: list[Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
@@ -2657,13 +2725,17 @@ def _run_task041_balh_candidate_setup(
                     )
                 },
             }
-        if (
-            rank_numa_stage_callback is not None
-            and selected_backend == p4_inverse_backend
-        ):
+        numa_stage = _task041_rank_numa_pair_sample_stage(
+            "p4_ready",
+            selected_backend,
+            rank_numa_observed_backend,
+            side,
+            rank_numa_response_sides,
+        )
+        if rank_numa_stage_callback is not None and numa_stage is not None:
             transfer = inverse._owner_transfer
             rank_numa_stage_callback(
-                "p4_ready",
+                numa_stage,
                 {
                     "coarse_work": transfer._coarse_work.x.array,
                     "fine_work": transfer._fine_work.x.array,
@@ -3819,10 +3891,19 @@ def _run_task041_balh_candidate_setup(
         consumer_elapsed = float(
             comm.allreduce(local_consumer_elapsed, op=MPI.MAX)
         )
-        remaining_budget = max(float(timeout_seconds) - consumer_elapsed, 0.0)
+        active_time_stop_enforced = (
+            not disable_time_stop
+            if time_stop_enforced is None
+            else bool(time_stop_enforced)
+        )
+        remaining_budget = (
+            None
+            if timeout_seconds is None
+            else max(float(timeout_seconds) - consumer_elapsed, 0.0)
+        )
         summary = {
             "status": "derived",
-            "time_stop_enforced": not disable_time_stop,
+            "time_stop_enforced": active_time_stop_enforced,
             "time_stop_override": (
                 "user_authorized_single_candidate_time_override"
                 if disable_time_stop
@@ -3871,7 +3952,8 @@ def _run_task041_balh_candidate_setup(
         }
         if (
             all_sides_measured
-            and not disable_time_stop
+            and active_time_stop_enforced
+            and remaining_budget is not None
             and float(
                 summary["estimate"]["optimistic_seconds_total"]
             )
@@ -4477,6 +4559,34 @@ def _run_task041_balh_candidate_setup(
                     if backend_pair
                     else None
                 )
+                numa_stage = (
+                    _task041_rank_numa_pair_sample_stage(
+                        "first_response",
+                        str(p4_backend),
+                        rank_numa_observed_backend,
+                        side,
+                        rank_numa_response_sides,
+                    )
+                    if backend_pair
+                    and branch == "positive"
+                    and rank_numa_stage_callback is not None
+                    else None
+                )
+                if numa_stage is not None:
+                    rank_numa_stage_callback(
+                        numa_stage,
+                        {"rhs": rhs, "target": response},
+                        {
+                            "side": side,
+                            "label": "modal_traction_positive",
+                            "p4_backend": p4_backend,
+                            "last_apply": dict(
+                                side_inverses[side].diagnostics.get(
+                                    "last_apply", {}
+                                )
+                            ),
+                        },
+                    )
                 if len(representative_records[side]) != audit_start + 1:
                     raise Task041ModePrepError(
                         f"representative RHS {ordinal} did not receive one apply audit"
@@ -4496,28 +4606,6 @@ def _run_task041_balh_candidate_setup(
                         else "REPRESENTATIVE_RHS"
                     ),
                 )
-                if (
-                    backend_pair
-                    and p4_backend == p4_inverse_backend
-                    and branch == "positive"
-                    and side not in rank_numa_response_sides
-                    and rank_numa_stage_callback is not None
-                ):
-                    rank_numa_stage_callback(
-                        "first_response",
-                        {"rhs": rhs, "target": response},
-                        {
-                            "side": side,
-                            "label": "modal_traction_positive",
-                            "p4_backend": p4_backend,
-                            "last_apply": dict(
-                                side_inverses[side].diagnostics.get(
-                                    "last_apply", {}
-                                )
-                            ),
-                        },
-                    )
-                    rank_numa_response_sides.add(side)
                 p4_apply_record = None
                 if backend_pair:
                     p4_factor_diagnostics = side_inverses[side].diagnostics.get(
@@ -6918,7 +7006,14 @@ def run_task041_consumer(
         and contract.get("consumer_time_stop_enforced", True) is False
     )
     time_stop_disabled = bool(disable_time_stop or case_time_stop_disabled)
-    time_stop_enforced = not time_stop_disabled if contract["balh"] else True
+    time_stop_enforced = _task041_worker_time_stop_enforced(
+        balh=contract["balh"],
+        disable_time_stop=disable_time_stop,
+        case_time_stop_disabled=case_time_stop_disabled,
+        p4_backend_pair=False,
+    )
+    p4_backend_pair_identity: dict[str, Any] | None = None
+    p4_backend_pair_runtime = False
     diagnostic_output_enabled = bool(
         contract.get("diagnostic_output_on_unqualified", False)
     )
@@ -6966,6 +7061,9 @@ def run_task041_consumer(
             load_task041_representative_rhs_manifest,
             task041_schur_speed_v2_contract,
         )
+        from benchmarks.task041_balh_workflow import (
+            task041_p4_backend_pair_identity as bind_pair_identity,
+        )
 
         if performance_profile != TASK041_SCHUR_SPEED_V2_PROFILE:
             raise Task041ModePrepError("unsupported Task041 performance profile")
@@ -7012,6 +7110,32 @@ def run_task041_consumer(
             raise Task041ModePrepError(
                 "Task041 comparison mode requires the representative RHS manifest"
             )
+        if performance_contract.get("compute_wall_unlimited") is True:
+            try:
+                p4_backend_pair_identity = bind_pair_identity(
+                    model_id=str(normalized["model_id"]),
+                    profile_id=performance_contract["profile_id"],
+                    scope=performance_contract["scope"],
+                    side_setup_schedule=performance_contract[
+                        "side_setup_schedule"
+                    ],
+                    comparison_mode=performance_contract["comparison_mode"],
+                    rhs_probe_binding=representative_rhs_contract or {},
+                )
+            except (KeyError, TypeError, ValueError) as exc:
+                raise Task041ModePrepError(
+                    f"invalid fixed-eight-RHS pair identity: {exc}"
+                ) from exc
+            p4_backend_pair_runtime = True
+            performance_contract["p4_backend_pair_identity"] = (
+                p4_backend_pair_identity
+            )
+            time_stop_enforced = _task041_worker_time_stop_enforced(
+                balh=contract["balh"],
+                disable_time_stop=disable_time_stop,
+                case_time_stop_disabled=case_time_stop_disabled,
+                p4_backend_pair=True,
+            )
         effective_limits = dict(contract["limits"])
         effective_limits.update(
             {
@@ -7027,8 +7151,10 @@ def run_task041_consumer(
                 "memory_cap_source": performance_contract["memory_gate_source"],
             }
         )
-        effective_limits["timeout_seconds"] = int(
-            performance_contract["active_consumer_budget_seconds"]
+        effective_limits["timeout_seconds"] = (
+            None
+            if p4_backend_pair_runtime
+            else int(performance_contract["active_consumer_budget_seconds"])
         )
         contract = dict(contract)
         contract["limits"] = effective_limits
@@ -7112,7 +7238,17 @@ def run_task041_consumer(
     if candidate:
         result["side_rhs_audit_path"] = str(candidate_audit_path)
     if contract["balh"]:
-        if case_time_stop_disabled:
+        if p4_backend_pair_runtime:
+            result["time_stop_policy"] = {
+                "model_id": normalized["model_id"],
+                "run_id": normalized["run_id"],
+                "producer_enforced": True,
+                "producer_invocation": "not_run",
+                "consumer_enforced": False,
+                "consumer_timeout_seconds": None,
+                "scope": "task041_fixed_eight_rhs_backend_pair",
+            }
+        elif case_time_stop_disabled:
             result["time_stop_policy"] = {
                 "model_id": normalized["model_id"],
                 "run_id": normalized["run_id"],
@@ -7258,11 +7394,25 @@ def run_task041_consumer(
         rank_numa_identities: dict[int, tuple[int, int]] = {}
         rank_numa_stage_callback = None
         rank_numa_evidence_path: Path | None = None
-        if (
-            candidate
-            and contract.get('p4_inverse_backend') == 'cell_condensed'
-            and contract.get('construction_audit') == 'reference_entity_trace_v1'
-        ):
+        rank_numa_observed_backend = _task041_rank_numa_observed_backend(
+            candidate=candidate,
+            model_id=str(normalized["model_id"]),
+            registered_backend=contract.get("p4_inverse_backend"),
+            construction_audit=contract.get("construction_audit"),
+            performance_profile=(
+                performance_contract.get("profile_id")
+                if isinstance(performance_contract, Mapping)
+                else None
+            ),
+            representative_rhs_scope=(
+                str(representative_rhs_contract.get("scope"))
+                if isinstance(representative_rhs_contract, Mapping)
+                else None
+            ),
+            side_setup_schedule=side_setup_schedule,
+            comparison_mode=comparison_mode,
+        )
+        if rank_numa_observed_backend is not None:
             from benchmarks.task041_rank_numa import (
                 append_stage_jsonl,
                 collective_snapshot,
@@ -7819,6 +7969,8 @@ def run_task041_consumer(
                 p4_inverse_backend=contract.get("p4_inverse_backend", "full"),
                 support_policy=contract.get("support_policy", "legacy"),
                 construction_audit=contract.get("construction_audit"),
+                time_stop_enforced=time_stop_enforced,
+                rank_numa_observed_backend=rank_numa_observed_backend,
                 rank_numa_stage_callback=rank_numa_stage_callback,
                 rank_numa_evidence=rank_numa_evidence,
             )

@@ -3792,6 +3792,41 @@ def launch_specification(
             )
         except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
             raise InputError(f"invalid representative RHS manifest: {exc}") from exc
+    p4_backend_pair_identity = None
+    if performance_contract is not None and performance_contract.get(
+        "compute_wall_unlimited"
+    ) is True:
+        from benchmarks.task041_balh_workflow import (
+            task041_p4_backend_pair_identity as bind_p4_backend_pair,
+        )
+        from benchmarks.task041_balh_workflow import (
+            task041_review_v5_ledger_path as canonical_v5_ledger_path,
+        )
+
+        try:
+            p4_backend_pair_identity = bind_p4_backend_pair(
+                model_id=str(specification.identity["model_id"]),
+                profile_id=performance_contract["profile_id"],
+                scope=performance_contract["scope"],
+                side_setup_schedule=performance_contract["side_setup_schedule"],
+                comparison_mode=performance_contract["comparison_mode"],
+                rhs_probe_binding=rhs_probe_binding or {},
+            )
+        except (KeyError, TypeError, ValueError) as exc:
+            raise InputError(f"invalid fixed-eight-RHS pair identity: {exc}") from exc
+        performance_contract["p4_backend_pair_identity"] = (
+            p4_backend_pair_identity
+        )
+        canonical_ledger = canonical_v5_ledger_path(
+            Path(__file__).resolve().parents[2]
+        )
+        if compute_wall_ledger_path is not None and Path(
+            compute_wall_ledger_path
+        ).resolve() != canonical_ledger:
+            raise InputError(
+                "p4_backend_pair requires the canonical Review V5 ledger path"
+            )
+        compute_wall_ledger_path = canonical_ledger
     supervision_record_path = None
     if task041_supervision_record is not None:
         if (

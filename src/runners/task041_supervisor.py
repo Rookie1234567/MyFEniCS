@@ -1284,6 +1284,71 @@ def run_task041_supervised_public_command(
     profile_id = profile_contract["profile_id"]
     model_id = profile_contract["model_id"]
     case_runtime_contract = task041_balh_service_contract(str(model_id))
+    p4_backend_pair_identity = profile_contract.get("p4_backend_pair_identity")
+    p4_backend_pair_runtime = False
+    if isinstance(p4_backend_pair_identity, Mapping):
+        from benchmarks.task041_balh_workflow import (
+            TASK041_P4_BACKEND_PAIR_CONTRACT_KIND,
+            task041_review_v5_ledger_path,
+            task041_validate_p4_backend_pair_identity,
+        )
+
+        try:
+            expected_pair_identity = task041_validate_p4_backend_pair_identity(
+                p4_backend_pair_identity,
+                outer_profile_contract=profile_contract,
+            )
+        except (TypeError, ValueError):
+            expected_pair_identity = None
+        launch_ledger_path = (
+            launch_manifest.get("ledger_path")
+            if isinstance(launch_manifest, Mapping)
+            else None
+        )
+        repository = (
+            Path(repository_root).resolve()
+            if repository_root is not None
+            else Path(__file__).resolve().parents[2]
+        )
+        expected_ledger_path = task041_review_v5_ledger_path(repository)
+        profile_ledger = profile_contract.get("ledger")
+        profile_ledger_path = (
+            profile_ledger.get("path")
+            if isinstance(profile_ledger, Mapping)
+            else None
+        )
+        declared_ledger_path = (
+            (repository / profile_ledger_path).resolve()
+            if isinstance(profile_ledger_path, str)
+            else None
+        )
+        p4_backend_pair_runtime = bool(
+            expected_pair_identity == dict(p4_backend_pair_identity)
+            and p4_backend_pair_identity.get("contract_kind")
+            == TASK041_P4_BACKEND_PAIR_CONTRACT_KIND
+            and p4_backend_pair_identity.get("rhs_count") == 8
+            and profile_contract.get("contract_kind")
+            == TASK041_P4_BACKEND_PAIR_CONTRACT_KIND
+            and profile_contract.get("compute_wall_unlimited") is True
+            and profile_contract.get("time_stop", {}).get(
+                "consumer_enforced"
+            ) is False
+            and isinstance(profile_ledger, Mapping)
+            and profile_ledger.get("schema")
+            == "task041.review_v5.r1_load_ledger.v1"
+            and declared_ledger_path == expected_ledger_path
+            and isinstance(ledger_snapshot, Mapping)
+            and ledger_snapshot.get("schema")
+            == "task041.review_v5.r1_load_ledger.v1"
+            and isinstance(launch_ledger_path, str)
+            and Path(launch_ledger_path).resolve() == expected_ledger_path
+        )
+        if not p4_backend_pair_runtime:
+            raise Task041SupervisorError(
+                "fixed-eight-RHS pair identity or V5 ledger binding is invalid",
+                classification="task041_identity_failure",
+                stage="supervised_public_profile",
+            )
     is_case_runtime = bool(
         case_runtime_contract is not None
         and profile_contract.get("contract_kind")
@@ -1291,7 +1356,10 @@ def run_task041_supervised_public_command(
         and profile_id == case_runtime_contract["profile_id"]
         and profile_contract.get("compute_wall_unlimited") is True
     )
-    if profile_id != "task041_schur_speed_v2" and not is_case_runtime:
+    if (
+        profile_id != "task041_schur_speed_v2"
+        and not is_case_runtime
+    ):
         raise Task041SupervisorError(
             "Task041 supervised public command has an unsupported contract",
             classification="task041_identity_failure",
@@ -1310,6 +1378,14 @@ def run_task041_supervised_public_command(
         phase_used = float(
             ledger_snapshot.get("used_compute_wall_seconds", 0.0)
         )
+        batch_used = phase_used
+        phase_remaining = None
+        batch_remaining = None
+        effective_remaining = None
+    elif p4_backend_pair_runtime:
+        phase_budget = None
+        batch_budget = None
+        phase_used = float(ledger_snapshot["used_compute_wall_seconds"])
         batch_used = phase_used
         phase_remaining = None
         batch_remaining = None
@@ -1380,8 +1456,8 @@ def run_task041_supervised_public_command(
             "batch_remaining_seconds": batch_remaining,
             "effective_remaining_seconds": effective_remaining,
             "basis": (
-                "registered case ledger; no elapsed wall stop"
-                if is_case_runtime
+                "registered case or explicit backend-pair ledger; no elapsed wall stop"
+                if is_case_runtime or p4_backend_pair_runtime
                 else "min(phase_remaining_seconds, batch_remaining_seconds)"
             ),
         },
@@ -1448,7 +1524,9 @@ def run_task041_supervised_public_command(
             process_tree_rss_warning_bytes=rss_warning_bytes,
             process_tree_rss_cap_bytes=rss_cap_bytes,
             timeout_seconds=effective_remaining,
-            phase_elapsed_timeout=not is_case_runtime,
+            phase_elapsed_timeout=not (
+                is_case_runtime or p4_backend_pair_runtime
+            ),
             sample_root_pid=os.getpid(),
             min_memavailable_bytes=resource_limits["min_memavailable_bytes"],
             min_cgroup_ancestor_headroom_bytes=resource_limits[
@@ -1461,7 +1539,7 @@ def run_task041_supervised_public_command(
             global_swap_baseline=global_swap_baseline,
             partial_phase_results=partial_phase_results,
             enforce_time_stops=(
-                not is_case_runtime
+                not (is_case_runtime or p4_backend_pair_runtime)
                 or profile_contract["time_stop"]["consumer_enforced"]
             ),
         )
@@ -5793,6 +5871,7 @@ def _write_task041_compute_wall_ledger(
     profile_id: str | None = None,
     phase_group: str | None = None,
     case_id: str | None = None,
+    p4_backend_pair_identity: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     before = float(used_before["used_compute_wall_seconds"])
     current_seconds = max(0.0, float(current_seconds))
@@ -5917,7 +5996,51 @@ def _write_task041_compute_wall_ledger(
             ),
             current_record,
         ]
-    if case_id is not None:
+    pair_record = False
+    registered_case_v5_record = False
+    if p4_backend_pair_identity is not None:
+        from benchmarks.task041_balh_workflow import (
+            task041_validate_p4_backend_pair_identity,
+        )
+
+        try:
+            canonical_pair_identity = (
+                task041_validate_p4_backend_pair_identity(
+                    p4_backend_pair_identity
+                )
+            )
+        except (TypeError, ValueError) as exc:
+            raise ValueError("invalid fixed-eight-RHS pair ledger identity") from exc
+        if (
+            profile_id is not None
+            or phase_group is not None
+            or case_id is not None
+            or used_before.get("schema")
+            != "task041.review_v5.r1_load_ledger.v1"
+        ):
+            raise ValueError("unsupported fixed-eight-RHS pair ledger identity")
+        entries = used_before.get("entries")
+        if not isinstance(entries, list):
+            raise ValueError("Task041 V5 ledger has no entries list")
+        record_id = (
+            "task041_p4_backend_pair:"
+            f"{canonical_pair_identity['model_id']}:"
+            f"{canonical_pair_identity['rhs_manifest_sha256']}:"
+            f"{run_directory.name}"
+        )
+        if any(
+            isinstance(entry, Mapping) and entry.get("id") == record_id
+            for entry in entries
+        ):
+            raise ValueError(f"duplicate Task041 pair ledger id: {record_id}")
+        current_record.update(
+            {
+                "id": record_id,
+                "p4_backend_pair_identity": canonical_pair_identity,
+            }
+        )
+        pair_record = True
+    elif case_id is not None:
         if (
             task041_balh_service_contract(case_id) is None
             or profile_id is not None
@@ -5926,33 +6049,37 @@ def _write_task041_compute_wall_ledger(
         current_record["case_id"] = case_id
         if used_before.get("schema") == "task041.review_v5.r1_load_ledger.v1":
             current_record["id"] = f"{case_id}:{run_directory.name}"
-            entries = [
-                *list(used_before.get("entries", [])),
-                current_record,
-            ]
-            payload = {
-                key: value
-                for key, value in used_before.items()
-                if key not in {
-                    "used_compute_wall_seconds",
-                    "used_status",
-                    "basis",
-                    "source_records",
-                }
+            registered_case_v5_record = True
+    if pair_record or registered_case_v5_record:
+        entries = used_before.get("entries", [])
+        if pair_record and not isinstance(entries, list):
+            raise ValueError("Task041 V5 ledger has no entries list")
+        entries = list(entries)
+        payload = {
+            key: value
+            for key, value in used_before.items()
+            if key
+            not in {
+                "used_compute_wall_seconds",
+                "used_status",
+                "basis",
+                "source_records",
             }
-            payload["entries"] = entries
-            payload["charged_seconds"] = total
-            _write_json(ledger_path, payload)
-            read_view = dict(payload)
-            read_view["used_compute_wall_seconds"] = total
-            read_view["used_status"] = used_before.get(
-                "used_status", used_before.get("ledger_status", "derived")
-            )
-            read_view["basis"] = used_before.get(
-                "basis", used_before.get("scope", "explicit compact ledger")
-            )
-            read_view["source_records"] = entries
-            return read_view
+        }
+        payload["entries"] = [*entries, current_record]
+        payload["charged_seconds"] = total
+        _write_json(ledger_path, payload)
+        read_view = dict(payload)
+        read_view["used_compute_wall_seconds"] = total
+        read_view["used_status"] = used_before.get(
+            "used_status", used_before.get("ledger_status", "derived")
+        )
+        read_view["basis"] = used_before.get(
+            "basis", used_before.get("scope", "explicit compact ledger")
+        )
+        read_view["source_records"] = payload["entries"]
+        return read_view
+    if case_id is not None:
         payload = dict(used_before)
         payload.update(
             {
@@ -6067,6 +6194,8 @@ def run_task041_public_supervisor(
     performance_contract: dict[str, Any] | None = None
     case_runtime_contract: dict[str, Any] | None = None
     representative_rhs_binding: dict[str, Any] | None = None
+    p4_backend_pair_identity: dict[str, Any] | None = None
+    p4_backend_pair_runtime = False
     compute_wall_limit_seconds = TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS
     compute_wall_phase_limit_seconds = TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS
     compute_wall_phase_group: str | None = None
@@ -6248,15 +6377,21 @@ def run_task041_public_supervisor(
                     classification="task041_identity_failure",
                     stage="performance_profile",
                 ) from exc
-            compute_wall_limit_seconds = float(
-                performance_contract["batch_budget_seconds"]
-            )
-            compute_wall_phase_group = str(
-                performance_contract["active_consumer_phase"]
-            )
-            compute_wall_phase_limit_seconds = float(
-                performance_contract["active_consumer_budget_seconds"]
-            )
+            if performance_contract.get("compute_wall_unlimited") is True:
+                compute_wall_limit_seconds = None
+                compute_wall_phase_group = None
+                compute_wall_phase_limit_seconds = None
+                compute_wall_enforced_limit_seconds = None
+            else:
+                compute_wall_limit_seconds = float(
+                    performance_contract["batch_budget_seconds"]
+                )
+                compute_wall_phase_group = str(
+                    performance_contract["active_consumer_phase"]
+                )
+                compute_wall_phase_limit_seconds = float(
+                    performance_contract["active_consumer_budget_seconds"]
+                )
         elif (
             task041_side_setup_schedule is not None
             or task041_comparison_mode is not None
@@ -6311,6 +6446,47 @@ def run_task041_public_supervisor(
                 "purpose": representative_rhs_binding["purpose"],
                 "budget_group": performance_contract["budget_group"],
             }
+            if performance_contract.get("compute_wall_unlimited") is True:
+                from benchmarks.task041_balh_workflow import (
+                    task041_p4_backend_pair_identity as bind_pair_identity,
+                )
+
+                try:
+                    p4_backend_pair_identity = bind_pair_identity(
+                        model_id=str(identity["model_id"]),
+                        profile_id=performance_contract["profile_id"],
+                        scope=performance_contract["scope"],
+                        side_setup_schedule=performance_contract[
+                            "side_setup_schedule"
+                        ],
+                        comparison_mode=performance_contract[
+                            "comparison_mode"
+                        ],
+                        rhs_probe_binding=representative_rhs_binding,
+                    )
+                except (KeyError, TypeError, ValueError) as exc:
+                    raise Task041SupervisorError(
+                        f"invalid fixed-eight-RHS pair identity: {exc}",
+                        classification="task041_identity_failure",
+                        stage="representative_rhs_probe",
+                    ) from exc
+                p4_backend_pair_runtime = True
+                performance_contract["p4_backend_pair_identity"] = (
+                    p4_backend_pair_identity
+                )
+                result["time_stop_policy"] = {
+                    "model_id": identity["model_id"],
+                    "run_id": identity.get("run_id"),
+                    "source_sha": source_sha,
+                    "producer_enforced": True,
+                    "producer_invocation": performance_contract["producer"][
+                        "invocation"
+                    ],
+                    "consumer_enforced": False,
+                    "consumer_timeout_seconds": None,
+                    "scope": "task041_fixed_eight_rhs_backend_pair",
+                }
+                result.pop("time_stop_override", None)
         if task041_supervision_record is not None:
             supervision_contract = performance_contract or case_runtime_contract
             if supervision_contract is None:
@@ -6368,7 +6544,11 @@ def run_task041_public_supervisor(
                 else task041_shortwave_timeout_scope(identity["model_id"])
             )
         if performance_contract is not None:
-            active_timeout = int(performance_contract["active_consumer_budget_seconds"])
+            active_timeout = (
+                None
+                if p4_backend_pair_runtime
+                else int(performance_contract["active_consumer_budget_seconds"])
+            )
             runtime_limits = dict(runtime_limits)
             runtime_limits.update(
                 {
@@ -6401,6 +6581,9 @@ def run_task041_public_supervisor(
                 }
             )
             phase_limits["consumer"]["timeout_seconds"] = active_timeout
+            if p4_backend_pair_runtime:
+                runtime_limits["time_stop_enforced"] = False
+                phase_limits["consumer"]["time_stop_enforced"] = False
             result["limits"] = dict(runtime_limits)
             result["phase_limits"] = phase_limits
             result["performance_profile"] = performance_contract
@@ -6479,6 +6662,19 @@ def run_task041_public_supervisor(
                         classification="task041_identity_failure",
                         stage="workflow_wall_budget",
                     )
+            elif p4_backend_pair_runtime:
+                from benchmarks.task041_balh_workflow import (
+                    task041_review_v5_ledger_path,
+                )
+
+                if Path(compute_wall_ledger_path).resolve() != (
+                    task041_review_v5_ledger_path(repository_root)
+                ):
+                    raise Task041SupervisorError(
+                        "fixed-eight-RHS pair must use the canonical Review V5 ledger path",
+                        classification="task041_identity_failure",
+                        stage="workflow_wall_budget",
+                    )
             compute_wall_ledger_path, compute_wall_ledger = (
                 _load_task041_compute_wall_ledger(
                     Path(compute_wall_ledger_path).resolve()
@@ -6487,7 +6683,7 @@ def run_task041_public_supervisor(
             used_before = float(
                 compute_wall_ledger["used_compute_wall_seconds"]
             )
-            if case_runtime_contract is not None:
+            if case_runtime_contract is not None or p4_backend_pair_runtime:
                 compute_wall_phase_used_seconds = used_before
                 compute_wall_budget = {
                     "limit_seconds": None,
@@ -6495,14 +6691,25 @@ def run_task041_public_supervisor(
                     "used_before_status": compute_wall_ledger["used_status"],
                     "remaining_seconds": None,
                     "ledger_path": str(compute_wall_ledger_path),
-                    "basis": compute_wall_ledger.get(
-                        "budget_semantics",
-                        "independent registered 2 nm case ledger; "
-                        "no elapsed wall stop",
+                    "basis": (
+                        "fixed-eight-RHS V5 ledger; no elapsed wall stop"
+                        if p4_backend_pair_runtime
+                        else compute_wall_ledger.get(
+                            "budget_semantics",
+                            "independent registered 2 nm case ledger; "
+                            "no elapsed wall stop",
+                        )
                     ),
                     "time_stop_enforced": False,
-                    "case_id": case_runtime_contract["case_id"],
                 }
+                if case_runtime_contract is not None:
+                    compute_wall_budget["case_id"] = case_runtime_contract[
+                        "case_id"
+                    ]
+                if p4_backend_pair_identity is not None:
+                    compute_wall_budget[
+                        "p4_backend_pair_identity"
+                    ] = p4_backend_pair_identity
             else:
                 if compute_wall_phase_group is not None:
                     compute_wall_phase_used_seconds = _task041_v2_group_used(
@@ -6556,6 +6763,7 @@ def run_task041_public_supervisor(
             result["compute_wall_budget"] = compute_wall_budget
             if (
                 case_runtime_contract is None
+                and not p4_backend_pair_runtime
                 and remaining <= 0.0
                 and not disable_time_stop
             ):
@@ -7087,7 +7295,9 @@ def run_task041_public_supervisor(
                 phase_limits.get("consumer", runtime_limits)["timeout_seconds"]
             ),
             phase_elapsed_timeout=(
-                timeout_scope == "phase" and case_runtime_contract is None
+                timeout_scope == "phase"
+                and case_runtime_contract is None
+                and not p4_backend_pair_runtime
             ),
             sample_root_pid=public_launcher_pid if balh else None,
             min_memavailable_bytes=(
@@ -7553,13 +7763,18 @@ def run_task041_public_supervisor(
                     run_directory=root,
                     phase_seconds=current_phase_seconds,
                     limit_seconds=compute_wall_limit_seconds,
-                    profile_id=performance_profile,
-                    phase_group=compute_wall_phase_group,
+                    profile_id=(
+                        None if p4_backend_pair_runtime else performance_profile
+                    ),
+                    phase_group=(
+                        None if p4_backend_pair_runtime else compute_wall_phase_group
+                    ),
                     case_id=(
                         case_runtime_contract["case_id"]
                         if case_runtime_contract is not None
                         else None
                     ),
+                    p4_backend_pair_identity=p4_backend_pair_identity,
                 )
                 budget_update = {
                     "current_invocation_seconds": current_compute_seconds,
@@ -7571,6 +7786,7 @@ def run_task041_public_supervisor(
                     "remaining_after_seconds": (
                         None
                         if case_runtime_contract is not None
+                        or p4_backend_pair_runtime
                         else max(
                             0.0,
                             compute_wall_limit_seconds
@@ -7579,7 +7795,7 @@ def run_task041_public_supervisor(
                     ),
                     "ledger_update": "current_phase_wall_appended",
                 }
-                if performance_contract is not None:
+                if performance_contract is not None and not p4_backend_pair_runtime:
                     phase_used_after = _task041_v2_group_used(
                         updated_ledger, compute_wall_phase_group
                     )
