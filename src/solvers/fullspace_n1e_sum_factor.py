@@ -47,6 +47,7 @@ class N1ESumFactorizedAction:
         *,
         batch_size: int,
         reuse_projection_work: bool = False,
+        shared_contractions: bool = False,
         reference_bundle=None,
         share_reference: bool = False,
     ) -> None:
@@ -54,6 +55,7 @@ class N1ESumFactorizedAction:
         if batch_size < 1:
             raise ValueError("sum-factorized batch_size must be positive")
         self.batch_size = batch_size
+        self.shared_contractions = bool(shared_contractions)
         element = space.element.basix_element
         if (
             element.family != basix.ElementFamily.N1E
@@ -302,6 +304,30 @@ class N1ESumFactorizedAction:
             (self.batch_size, 3 * polynomial_dimension), dtype=np.float64
         )
         self._polynomial_imag_work = np.empty_like(self._polynomial_real_work)
+        if self.shared_contractions:
+            qx, qy, _ = shape
+            width = degree + 1
+            self._x_values = np.empty(
+                (self.batch_size, qx, width, width), dtype=np.complex128
+            )
+            self._x_derivatives = np.empty_like(self._x_values)
+            self._y_values = np.empty(
+                (self.batch_size, qx, qy, width), dtype=np.complex128
+            )
+            self._y_derivatives = np.empty_like(self._y_values)
+            self._y_from_x_derivatives = np.empty_like(self._y_values)
+            self._tensor_evaluation = np.empty(
+                (self.batch_size, len(points)), dtype=np.complex128
+            )
+        else:
+            self._x_values = None
+            self._x_derivatives = None
+            self._y_values = None
+            self._y_derivatives = None
+            self._y_from_x_derivatives = None
+            self._tensor_evaluation = None
+        self._contraction_counts = {"x": 0, "y": 0, "z": 0}
+        self._backward_projection_count = 0
         self.timing = {
             "coefficient_transform": 0.0,
             "reference_forward": 0.0,
@@ -351,6 +377,12 @@ class N1ESumFactorizedAction:
                     self._coefficient_imag_work,
                     self._polynomial_real_work,
                     self._polynomial_imag_work,
+                    self._x_values,
+                    self._x_derivatives,
+                    self._y_values,
+                    self._y_derivatives,
+                    self._y_from_x_derivatives,
+                    self._tensor_evaluation,
                 ) if array is not None)
             ),
             "temporary_einsum_workspace_upper_bound_bytes": temporary_einsum_bytes,
@@ -362,6 +394,26 @@ class N1ESumFactorizedAction:
             "native_tensor_product_api": bool(element.has_tensor_product_factorisation),
             "coefficient_transform_real_imag": True,
             "reuse_projection_work_opt_in": self.reuse_projection_work,
+            "shared_contractions_opt_in": self.shared_contractions,
+            "shared_contraction_scratch_bytes": int(
+                sum(
+                    array.nbytes
+                    for array in (
+                        self._x_values,
+                        self._x_derivatives,
+                        self._y_values,
+                        self._y_derivatives,
+                        self._y_from_x_derivatives,
+                        self._tensor_evaluation,
+                    )
+                    if array is not None
+                )
+            ),
+            "forward_tensor_contraction_counts": self._contraction_counts,
+            "forward_tensor_contraction_count": 0,
+            "backward_projection_count": 0,
+            "backward_tensor_contraction_count": 0,
+            "backward_tensor_contraction_counts": {"x": 0, "y": 0, "z": 0},
         }
 
     @staticmethod
@@ -440,33 +492,124 @@ class N1ESumFactorizedAction:
         )
         return result
 
-    def apply(
-        self,
-        local: np.ndarray,
-        metrics: np.ndarray,
-        materials: np.ndarray,
-        *,
-        component: str | None = None,
-    ) -> np.ndarray:
-        """Apply ``curl_coefficient*curl^H curl + mass_coefficient*mass``."""
+    def _record_contractions(self, x: int, y: int, z: int) -> None:
+        self._contraction_counts["x"] += int(x)
+        self._contraction_counts["y"] += int(y)
+        self._contraction_counts["z"] += int(z)
 
+    def _store_tensor_field(
+        self, intermediate: np.ndarray, z_table: np.ndarray, destination: np.ndarray
+    ) -> None:
+        count = int(destination.shape[0])
+        tensor = self._tensor_evaluation[:count].reshape(count, *self.shape)
+        np.einsum(
+            "zk,bxyk->bxyz", z_table, intermediate, out=tensor, optimize=True
+        )
+        np.take(
+            tensor.reshape(count, -1),
+            self.input_to_natural,
+            axis=1,
+            out=destination,
+        )
+        self._contraction_counts["z"] += 1
+
+    def _evaluate_shared_fields(
+        self, polynomial: np.ndarray, component: str | None
+    ) -> None:
+        values = self.values_1d
+        derivatives = self.derivatives_1d
+        for vector_component in range(3):
+            need_dx = component != "mass" and vector_component in (1, 2)
+            need_dy = component != "mass" and vector_component in (0, 2)
+            need_dz = component != "mass" and vector_component in (0, 1)
+            need_value = component != "curl"
+            need_x_value = need_value or need_dy or need_dz
+            if need_x_value:
+                np.einsum(
+                    "xi,bijk->bxjk",
+                    values[0],
+                    polynomial[:, vector_component],
+                    out=self._x_values[: polynomial.shape[0]],
+                    optimize=True,
+                )
+                self._contraction_counts["x"] += 1
+            if need_dx:
+                np.einsum(
+                    "xi,bijk->bxjk",
+                    derivatives[0],
+                    polynomial[:, vector_component],
+                    out=self._x_derivatives[: polynomial.shape[0]],
+                    optimize=True,
+                )
+                self._contraction_counts["x"] += 1
+            if need_value or need_dz:
+                np.einsum(
+                    "yj,bxjk->bxyk",
+                    values[1],
+                    self._x_values[: polynomial.shape[0]],
+                    out=self._y_values[: polynomial.shape[0]],
+                    optimize=True,
+                )
+                self._contraction_counts["y"] += 1
+            if need_dy:
+                np.einsum(
+                    "yj,bxjk->bxyk",
+                    derivatives[1],
+                    self._x_values[: polynomial.shape[0]],
+                    out=self._y_derivatives[: polynomial.shape[0]],
+                    optimize=True,
+                )
+                self._contraction_counts["y"] += 1
+            if need_dx:
+                np.einsum(
+                    "yj,bxjk->bxyk",
+                    values[1],
+                    self._x_derivatives[: polynomial.shape[0]],
+                    out=self._y_from_x_derivatives[: polynomial.shape[0]],
+                    optimize=True,
+                )
+                self._contraction_counts["y"] += 1
+            if need_value:
+                self._store_tensor_field(
+                    self._y_values[: polynomial.shape[0]],
+                    values[2],
+                    self._values[: polynomial.shape[0], :, vector_component],
+                )
+            if need_dx:
+                self._store_tensor_field(
+                    self._y_from_x_derivatives[: polynomial.shape[0]],
+                    values[2],
+                    self._derivatives[
+                        : polynomial.shape[0], :, vector_component, 0
+                    ],
+                )
+            if need_dy:
+                self._store_tensor_field(
+                    self._y_derivatives[: polynomial.shape[0]],
+                    values[2],
+                    self._derivatives[
+                        : polynomial.shape[0], :, vector_component, 1
+                    ],
+                )
+            if need_dz:
+                self._store_tensor_field(
+                    self._y_values[: polynomial.shape[0]],
+                    derivatives[2],
+                    self._derivatives[
+                        : polynomial.shape[0], :, vector_component, 2
+                    ],
+                )
+
+    def _coefficients_to_polynomial(self, local: np.ndarray) -> np.ndarray:
         local = np.asarray(local, dtype=np.complex128)
-        metrics = np.asarray(metrics, dtype=np.float64)
-        materials = np.asarray(materials, dtype=np.complex128)
         count = int(local.shape[0])
         if (
             local.ndim != 2
             or local.shape[1] != self.coefficient_matrix.shape[0]
             or count > self.batch_size
-            or metrics.shape != (count, 2, 3, 3)
-            or materials.shape != (count, 2)
-            or component not in (None, "curl", "mass")
         ):
-            raise ValueError("sum-factorized local action has incompatible inputs")
+            raise ValueError("sum-factorized coefficient input has incompatible shape")
         started = time.perf_counter()
-        # C is real.  Transforming the real and imaginary parts separately
-        # keeps the real coefficient matrix from being promoted or copied to
-        # a full complex temporary on every batch.
         coefficient_real = self._coefficient_real_work[:count]
         coefficient_imag = self._coefficient_imag_work[:count]
         polynomial_real = self._polynomial_real_work[:count]
@@ -479,41 +622,60 @@ class N1ESumFactorizedAction:
         np.copyto(polynomial_work.real, polynomial_real)
         np.copyto(polynomial_work.imag, polynomial_imag)
         self.timing["coefficient_transform"] += time.perf_counter() - started
-        polynomial = self._poly[:count].reshape(
+        return self._poly[:count].reshape(
             count, 3, self.degree + 1, self.degree + 1, self.degree + 1
         )
+
+    def _integrate_polynomial(
+        self,
+        polynomial: np.ndarray,
+        metrics: np.ndarray,
+        materials: np.ndarray,
+        *,
+        component: str | None,
+    ) -> np.ndarray:
+        count = int(polynomial.shape[0])
+        metrics = np.asarray(metrics, dtype=np.float64)
+        materials = np.asarray(materials, dtype=np.complex128)
+        if (
+            polynomial.shape
+            != (count, 3, self.degree + 1, self.degree + 1, self.degree + 1)
+            or count > self.batch_size
+            or metrics.shape != (count, 2, 3, 3)
+            or materials.shape != (count, 2)
+            or component not in (None, "curl", "mass")
+        ):
+            raise ValueError("sum-factorized polynomial action has incompatible inputs")
+
         started = time.perf_counter()
-        if component != "curl":
-            for vector_component in range(3):
-                self._values[:count, :, vector_component] = self._field_from_polynomial(
-                    polynomial[:, vector_component], self.values_1d
+        if self.shared_contractions:
+            self._evaluate_shared_fields(polynomial, component)
+        else:
+            if component != "curl":
+                for vector_component in range(3):
+                    self._values[:count, :, vector_component] = self._field_from_polynomial(
+                        polynomial[:, vector_component], self.values_1d
+                    )
+            if component != "mass":
+                dx = (self.derivatives_1d[0], self.values_1d[1], self.values_1d[2])
+                dy = (self.values_1d[0], self.derivatives_1d[1], self.values_1d[2])
+                dz = (self.values_1d[0], self.values_1d[1], self.derivatives_1d[2])
+                fields = (
+                    (1, 2, dz), (2, 1, dy), (0, 2, dz),
+                    (2, 0, dx), (1, 0, dx), (0, 1, dy),
                 )
+                for vector_component, axis, tables in fields:
+                    self._derivatives[:count, :, vector_component, axis] = (
+                        self._field_from_polynomial(
+                            polynomial[:, vector_component], tables
+                        )
+                    )
+            field_count = (3 if component != "curl" else 0) + (
+                6 if component != "mass" else 0
+            )
+            self._record_contractions(field_count, field_count, field_count)
         if component != "mass":
-            # Only the six cross derivatives entering curl are evaluated.
-            # The diagonal derivatives never enter the H(curl) curl and are
-            # deliberately left out of this opt-in path.
-            dx = (self.derivatives_1d[0], self.values_1d[1], self.values_1d[2])
-            dy = (self.values_1d[0], self.derivatives_1d[1], self.values_1d[2])
-            dz = (self.values_1d[0], self.values_1d[1], self.derivatives_1d[2])
             derivatives = self._derivatives[:count]
-            derivatives[:, :, 1, 2] = self._field_from_polynomial(
-                polynomial[:, 1], dz
-            )
-            derivatives[:, :, 2, 1] = self._field_from_polynomial(
-                polynomial[:, 2], dy
-            )
-            derivatives[:, :, 0, 2] = self._field_from_polynomial(
-                polynomial[:, 0], dz
-            )
-            derivatives[:, :, 2, 0] = self._field_from_polynomial(
-                polynomial[:, 2], dx
-            )
-            derivatives[:, :, 1, 0] = self._field_from_polynomial(
-                polynomial[:, 1], dx
-            )
-            derivatives[:, :, 0, 1] = self._field_from_polynomial(
-                polynomial[:, 0], dy
-            )
             self._curls[:count, :, 0] = (
                 derivatives[:, :, 2, 1] - derivatives[:, :, 1, 2]
             )
@@ -552,85 +714,104 @@ class N1ESumFactorizedAction:
         )
         for vector_component in range(3):
             if component != "curl":
-                self._poly_result[:count, vector_component] += (
-                    backward_projection(
-                        self._flux[:count, :, vector_component], self.values_1d
-                    )
+                self._poly_result[:count, vector_component] += backward_projection(
+                    self._flux[:count, :, vector_component], self.values_1d
                 )
         if component != "mass":
-            fx = self._curl_flux[:count, :, 0]
-            fy = self._curl_flux[:count, :, 1]
-            fz = self._curl_flux[:count, :, 2]
+            fx, fy, fz = (self._curl_flux[:count, :, k] for k in range(3))
             if self.reuse_projection_work:
                 self._poly_result[:count, 0] += backward_projection(
-                    fy,
-                    (self.values_1d[0], self.values_1d[1], self.derivatives_1d[2]),
+                    fy, (self.values_1d[0], self.values_1d[1], self.derivatives_1d[2])
                 )
                 self._poly_result[:count, 0] -= backward_projection(
-                    fz,
-                    (self.values_1d[0], self.derivatives_1d[1], self.values_1d[2]),
+                    fz, (self.values_1d[0], self.derivatives_1d[1], self.values_1d[2])
                 )
                 self._poly_result[:count, 1] += backward_projection(
-                    fz,
-                    (self.derivatives_1d[0], self.values_1d[1], self.values_1d[2]),
+                    fz, (self.derivatives_1d[0], self.values_1d[1], self.values_1d[2])
                 )
                 self._poly_result[:count, 1] -= backward_projection(
-                    fx,
-                    (self.values_1d[0], self.values_1d[1], self.derivatives_1d[2]),
+                    fx, (self.values_1d[0], self.values_1d[1], self.derivatives_1d[2])
                 )
                 self._poly_result[:count, 2] += backward_projection(
-                    fx,
-                    (self.values_1d[0], self.derivatives_1d[1], self.values_1d[2]),
+                    fx, (self.values_1d[0], self.derivatives_1d[1], self.values_1d[2])
                 )
                 self._poly_result[:count, 2] -= backward_projection(
-                    fy,
-                    (self.derivatives_1d[0], self.values_1d[1], self.values_1d[2]),
+                    fy, (self.derivatives_1d[0], self.values_1d[1], self.values_1d[2])
                 )
             else:
-                self._poly_result[:count, 0] += (
-                    backward_projection(
-                        fy,
-                        (self.values_1d[0], self.values_1d[1], self.derivatives_1d[2]),
-                    )
-                    - backward_projection(
-                        fz,
-                        (self.values_1d[0], self.derivatives_1d[1], self.values_1d[2]),
-                    )
+                self._poly_result[:count, 0] += backward_projection(
+                    fy, (self.values_1d[0], self.values_1d[1], self.derivatives_1d[2])
+                ) - backward_projection(
+                    fz, (self.values_1d[0], self.derivatives_1d[1], self.values_1d[2])
                 )
-                self._poly_result[:count, 1] += (
-                    backward_projection(
-                        fz,
-                        (self.derivatives_1d[0], self.values_1d[1], self.values_1d[2]),
-                    )
-                    - backward_projection(
-                        fx,
-                        (self.values_1d[0], self.values_1d[1], self.derivatives_1d[2]),
-                    )
+                self._poly_result[:count, 1] += backward_projection(
+                    fz, (self.derivatives_1d[0], self.values_1d[1], self.values_1d[2])
+                ) - backward_projection(
+                    fx, (self.values_1d[0], self.values_1d[1], self.derivatives_1d[2])
                 )
-                self._poly_result[:count, 2] += (
-                    backward_projection(
-                        fx,
-                        (self.values_1d[0], self.derivatives_1d[1], self.values_1d[2]),
-                    )
-                    - backward_projection(
-                        fy,
-                        (self.derivatives_1d[0], self.values_1d[1], self.values_1d[2]),
-                    )
+                self._poly_result[:count, 2] += backward_projection(
+                    fx, (self.values_1d[0], self.derivatives_1d[1], self.values_1d[2])
+                ) - backward_projection(
+                    fy, (self.derivatives_1d[0], self.values_1d[1], self.values_1d[2])
                 )
-        polynomial_result = self._poly_result[:count].reshape(count, -1)
-        np.copyto(polynomial_real, polynomial_result.real)
-        np.copyto(polynomial_imag, polynomial_result.imag)
-        np.matmul(
-            polynomial_real,
-            self.coefficient_matrix.T,
-            out=coefficient_real,
+        backward_fields = (3 if component != "curl" else 0) + (
+            6 if component != "mass" else 0
         )
-        np.matmul(
-            polynomial_imag,
-            self.coefficient_matrix.T,
-            out=coefficient_imag,
+        self._backward_projection_count += backward_fields
+        self.timing["reference_backward"] += time.perf_counter() - started
+        self.audit["forward_tensor_contraction_counts"] = dict(
+            self._contraction_counts
         )
+        self.audit["forward_tensor_contraction_count"] = int(
+            sum(self._contraction_counts.values())
+        )
+        self.audit["backward_projection_count"] = int(
+            self._backward_projection_count
+        )
+        self.audit["backward_tensor_contraction_counts"] = {
+            axis: self._backward_projection_count for axis in ("x", "y", "z")
+        }
+        self.audit["backward_tensor_contraction_count"] = int(
+            3 * self._backward_projection_count
+        )
+        self.audit["contraction_count_scope"] = (
+            "forward reference evaluation and backward field projection; "
+            "coefficient transforms and metric products excluded"
+        )
+        return self._poly_result[:count]
+
+    def _polynomial_to_coefficients(self, polynomial_result: np.ndarray) -> np.ndarray:
+        count = int(polynomial_result.shape[0])
+        started = time.perf_counter()
+        coefficient_real = self._coefficient_real_work[:count]
+        coefficient_imag = self._coefficient_imag_work[:count]
+        polynomial_real = self._polynomial_real_work[:count]
+        polynomial_imag = self._polynomial_imag_work[:count]
+        polynomial_work = np.asarray(polynomial_result).reshape(count, -1)
+        np.copyto(polynomial_real, polynomial_work.real)
+        np.copyto(polynomial_imag, polynomial_work.imag)
+        np.matmul(polynomial_real, self.coefficient_matrix.T, out=coefficient_real)
+        np.matmul(polynomial_imag, self.coefficient_matrix.T, out=coefficient_imag)
         np.copyto(self._result[:count].real, coefficient_real)
         np.copyto(self._result[:count].imag, coefficient_imag)
         self.timing["reference_backward"] += time.perf_counter() - started
         return self._result[:count]
+
+    def apply(
+        self,
+        local: np.ndarray,
+        metrics: np.ndarray,
+        materials: np.ndarray,
+        *,
+        component: str | None = None,
+    ) -> np.ndarray:
+        """Apply ``curl_coefficient*curl^H curl + mass_coefficient*mass``."""
+        local = np.asarray(local, dtype=np.complex128)
+        count = int(local.shape[0])
+        if component not in (None, "curl", "mass"):
+            raise ValueError("sum-factorized local action has incompatible inputs")
+        polynomial = self._coefficients_to_polynomial(local)
+        polynomial_result = self._integrate_polynomial(
+            polynomial, metrics, materials, component=component
+        )
+        return self._polynomial_to_coefficients(polynomial_result)

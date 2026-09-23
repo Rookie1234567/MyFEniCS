@@ -243,6 +243,97 @@ def test_v27_workingset_backend_contract_is_accepted_without_changing_v25_defaul
     assert result["recomputed"]["backend"]["checks"]["thread_contract"] is True
 
 
+def test_v28_fused_backend_selects_a6_fusion_and_nonshared_a6_h6_kernels():
+    summary, config = _v25_fixture()
+    config["solver"].update(
+        preconditioner="physical_p6_trace_fused_kernel_v28",
+        h6_backend_rule="direct_selected_backend_same_apply_and_power10",
+        thread_contract="mpi1_omp1_blas1_v26",
+    )
+    release = summary["formal_release_timing"]
+    candidate = release["candidate_pc_internal_A6"]["live_audit"]
+    volume = candidate["volume_action"]
+    volume["apply_count"] = 2
+    volume.update(
+        schema="task039extra.fused-split-volume-action.v1",
+        fused_local_kernel={
+            "cell_count": 990,
+            "batch_size": 8,
+            "apply_count": 2,
+            "full_apply_count": 2,
+            "component_apply_count": 0,
+            "curl_component_apply_count": 0,
+            "mass_component_apply_count": 0,
+            "gather_count": 248,
+            "coefficient_forward_count": 248,
+            "coefficient_backward_count": 248,
+            "scatter_count": 248,
+            "curl_integral_count": 248,
+            "mass_integral_count": 248,
+            "tensor_contractions": {
+                name: {
+                    "forward_tensor_contraction_count": 100,
+                    "backward_tensor_contraction_count": 100,
+                    "timing_cumulative_seconds": {
+                        "reference_forward": 1.0,
+                        "reference_backward": 1.0,
+                    },
+                }
+                for name in ("curl", "mass")
+            },
+        },
+    )
+    for component in volume["components"].values():
+        kernel = component.pop("local_kernel")
+        component.clear()
+        component.update(kernel)
+        component["shared_contractions_opt_in"] = False
+    release["h6"]["light_facts"].update(
+        direct_selected_backend_used=True,
+        power_matrix_mult_count=20,
+        power_matrix_mult_seconds=0.5,
+        apply_action_backend="packed_partial_assembly",
+        power10_action_backend="packed_partial_assembly",
+        sum_factorized_power10_opt_in=True,
+        live_kernel_audit={
+            "shared_contractions_opt_in": False,
+            "sum_factorized_audit": {
+                "forward_tensor_contraction_count": 100,
+                "backward_tensor_contraction_count": 100,
+            },
+            "timing_cumulative_seconds": {
+                "reference_forward": 1.0,
+                "reference_backward": 1.0,
+            },
+        },
+        # The checker must bind power10 to this live direct-selected backend,
+        # not this construction-time snapshot.
+        power10_kernel={"shared_contractions_opt_in": True},
+    )
+
+    result = check_summary(summary, resolved_config=config, stage="Q4_ORIGINAL")
+    assert result["dynamic_passed"] is True
+    checks = result["recomputed"]["backend"]["checks"]
+    assert checks["fused_volume_schema"] is True
+    assert checks["fused_curl_and_mass_integrated"] is True
+    assert checks["candidate_a6_shared_contractions_disabled"] is True
+    assert checks["candidate_a6_contraction_audit_present"] is True
+    assert checks["h6_apply_shared_contractions_disabled"] is True
+    assert checks["h6_power10_uses_same_live_nonshared_backend"] is True
+
+    misconfigured = deepcopy(summary)
+    misconfigured["formal_release_timing"]["h6"]["light_facts"][
+        "live_kernel_audit"
+    ]["shared_contractions_opt_in"] = True
+    rejected = check_summary(
+        misconfigured, resolved_config=config, stage="Q4_ORIGINAL"
+    )
+    assert rejected["dynamic_passed"] is False
+    assert rejected["recomputed"]["backend"]["checks"][
+        "h6_apply_shared_contractions_disabled"
+    ] is False
+
+
 def test_v25_checker_defaults_remain_the_historical_contract():
     assert H6_BACKEND == "isotropic_sum_factorized_n1e_v26_apply_and_power10"
     assert THREAD_CONTRACT == "mpi1_omp1_blas1_v25"

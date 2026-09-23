@@ -367,6 +367,60 @@ def run_full3d_iterative(
                 resolved_payload.get("execution", {}).get("require_zero_swap", True)
             ),
         )
+    if resolved_payload.get("solver", {}).get("preconditioner") == "physical_p6_trace_fused_kernel_v28":
+        from .physical_dual_cell_condensed_lowmem_v20 import (
+            _run_physical_dual_cell_condensed_lowmem,
+        )
+        from src.io.physical_intermediate_profile import (
+            FUSED_KERNEL_PROFILE,
+            PHYSICAL_MEMORY_POLICY_V23,
+        )
+
+        stage = str(resolved_payload["solver"]["stage"])
+        if stage != "Q4_ORIGINAL":
+            raise ValueError("V28 fused-kernel profile allows only Q4_ORIGINAL")
+        if int(resolved_payload["solver"].get("coarse_degree", -1)) != 4:
+            raise ValueError("V28 Q4_ORIGINAL requires coarse_degree=4")
+        return _run_physical_dual_cell_condensed_lowmem(
+            resolved_payload,
+            Path(run_directory),
+            source_sha=_kwargs["source_sha"],
+            profile_identity=FUSED_KERNEL_PROFILE,
+            coarse_degree=4,
+            allowed_stages=("Q4_ORIGINAL",),
+            batch_identity="review_v26_fused_A6_H6_optional_setup_threads",
+            evidence_prefix="v28q4",
+            summary_schema="task039extra.v28.fused-kernel.worker-summary.v1",
+            summary_filename=(
+                "physical_dual_condensed_fused_kernel_v28_summary.json"
+            ),
+            derive_live_space_identity=True,
+            rhs_identity_policy="case_bound_physical_rhs",
+            restore_summary_schema=True,
+            reuse_qualified_jit=True,
+            write_ordered_mode_manifest=True,
+            write_geometry_audit=True,
+            save_complete_field_packet=True,
+            capacity_trial=True,
+            capacity_policy=PHYSICAL_MEMORY_POLICY_V23,
+            reference_mode_by_stage={"Q4_ORIGINAL": "authority_limited"},
+            predecessor_by_stage={
+                "Q4_ORIGINAL": {
+                    "accepted_v27_route": (
+                        "physical_p6_trace_workingset_efficiency_v27"
+                    ),
+                    "cross_case_recycling": False,
+                    "original_only": True,
+                    "independent_batch": True,
+                    "fresh_factor_allowed": True,
+                    "coarse_degree": 4,
+                }
+            },
+            notch_by_stage={"Q4_ORIGINAL": False},
+            require_zero_swap=bool(
+                resolved_payload.get("execution", {}).get("require_zero_swap", True)
+            ),
+        )
     if resolved_payload.get("solver", {}).get("preconditioner") == "physical_p4_blr_bal_h_v16":
         from .physical_p4_blr_v16 import run_physical_p4_blr_v16
 

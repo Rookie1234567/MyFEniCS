@@ -1,0 +1,36 @@
+{
+  "schema": "task039extra.v28.selection.v1",
+  "batch": "review_v26_fused_A6_H6_optional_setup_threads",
+  "profile": "physical_p6_trace_fused_kernel_v28",
+  "selection": "A6_FUSION_ONLY_SINGLE_THREAD",
+  "selected_input": {
+    "path": "input/task39extra/v28_fused_kernel_original_h7p5.dat",
+    "sha256": "80c1cbcc9c0796f79c567391a8e80466d4a8a138ea0b45b85b2590d38e957b33"
+  },
+  "selected_route": {
+    "fused_component_volume": true,
+    "a6_shared_contractions": false,
+    "h6_shared_contractions": false,
+    "ordinary_default_changed": false,
+    "numeric_cache_mode": "build",
+    "time_policy": "observe_only",
+    "swap_policy": "observe_only"
+  },
+  "component_basis": {
+    "a6_fusion": "adopted; both saved 990-cell witnesses are equivalent to the old action and independent native action, with lower measured median component wall time",
+    "shared_contractions": "not adopted; output-equivalent and forward work is reduced, but complete H6 apply gains are within trial variation and one late trial is slower",
+    "raw_candidate_recommendation": "adopt_h6_shared_contractions=true; retained unchanged in raw artifact, overridden by this explicit conservative selection"
+  },
+  "n4_threads": {
+    "selected_setup_threads": 1,
+    "selected_iteration_threads": 1,
+    "two_thread_trial": "not_run",
+    "reason": "runtime thread-control support and whole-lifecycle peak neutrality were not established; see fused_operator_speed_v28_setup_threads.json"
+  },
+  "historical_partial_evidence": {
+    "user_choice": "preserve partial evidence and stop rerunning",
+    "r1_missing_bal_h_and_iteration_112": "not_replayed; original partial/missing classifications remain unchanged",
+    "this_batch_formal_run": "one new original p6/h7.5 q4 run remains the sole formal case; it does not rewrite historical partial evidence"
+  },
+  "formal_run_at_selection_time": "not_started"
+}

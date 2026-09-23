@@ -37,6 +37,7 @@ _V25_Q4_AC_SWAP_OBSERVE_RUN_IDS = frozenset(
     {_V25_Q4_AC_SWAP_OBSERVE_RUN_ID, _V25_Q4_AC_SWAP_OBSERVE_R2_RUN_ID}
 )
 _V27_WORKINGSET_RUN_ID = "task39extra_v27_workingset_p6_setup_original_h7p5"
+_V28_FUSED_KERNEL_RUN_ID = "task39extra_v28_fused_kernel_original_h7p5"
 
 
 def _error(path: str, message: str) -> InputError:
@@ -579,6 +580,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "physical_p6_trace_coarse_degree_speed_v25",
                 "physical_p6_trace_setup_efficiency_v26",
                 "physical_p6_trace_workingset_efficiency_v27",
+                "physical_p6_trace_fused_kernel_v28",
             }:
                 raise _error(
                     "solver.preconditioner",
@@ -1007,9 +1009,13 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
             elif preconditioner in (
                 "physical_p6_trace_setup_efficiency_v26",
                 "physical_p6_trace_workingset_efficiency_v27",
+                "physical_p6_trace_fused_kernel_v28",
             ):
                 is_v27_workingset = (
                     preconditioner == "physical_p6_trace_workingset_efficiency_v27"
+                )
+                is_v28_fused_kernel = (
+                    preconditioner == "physical_p6_trace_fused_kernel_v28"
                 )
                 if is_v27_workingset and (
                     config["run_id"] != _V27_WORKINGSET_RUN_ID
@@ -1019,6 +1025,15 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     raise _error(
                         "identity",
                         "V27 profile requires its frozen run_id and comparison_group",
+                    )
+                if is_v28_fused_kernel and (
+                    config["run_id"] != _V28_FUSED_KERNEL_RUN_ID
+                    or config.get("comparison_group")
+                    != "review_v26_fused_A6_H6_optional_setup_threads"
+                ):
+                    raise _error(
+                        "identity",
+                        "V28 profile requires its frozen run_id and comparison_group",
                     )
                 stage = solver.get("stage")
                 if stage != "Q4_ORIGINAL":

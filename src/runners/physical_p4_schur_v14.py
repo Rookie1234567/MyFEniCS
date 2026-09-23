@@ -4253,6 +4253,7 @@ def _v14_balanced_adapter(
     packed_power10=False,
     sum_factorized_work=False,
     sum_factorized_power10=None,
+    shared_contractions=False,
     direct_selected_backend=False,
     reuse_projection_work=False,
 ):
@@ -4329,6 +4330,7 @@ def _v14_balanced_adapter(
             packed_power10=packed_power10,
             sum_factorized_work=sum_factorized_work,
             sum_factorized_power10=sum_factorized_power10,
+            shared_contractions=shared_contractions,
             direct_selected_backend=direct_selected_backend,
             reuse_projection_work=reuse_projection_work,
             batched_target_grouping=direct_selected_backend,
@@ -6834,6 +6836,7 @@ def _v14_q4_q5_fullspace(
     packed_power10=False,
     sum_factorized_work=False,
     sum_factorized_power10=None,
+    shared_contractions=False,
     direct_selected_backend=False,
     reuse_projection_work=False,
     formal_release_timing=False,
@@ -6863,6 +6866,7 @@ def _v14_q4_q5_fullspace(
         COARSE_DEGREE_SPEED_PROFILE,
         SETUP_EFFICIENCY_PROFILE,
         WORKINGSET_SETUP_PROFILE,
+        FUSED_KERNEL_PROFILE,
     )
     from .workflow_timebase import (
         CONSERVATIVE_REALTIME,
@@ -6886,8 +6890,16 @@ def _v14_q4_q5_fullspace(
         == WORKINGSET_SETUP_PROFILE
         and stage == "Q4_ORIGINAL"
     )
+    v28_fused_kernel_stage = (
+        str(resolved_payload.get("solver", {}).get("preconditioner", ""))
+        == FUSED_KERNEL_PROFILE
+        and stage == "Q4_ORIGINAL"
+    )
     retained_coarse_stage = (
-        v25_coarse_stage or v26_setup_efficiency_stage or v27_workingset_stage
+        v25_coarse_stage
+        or v26_setup_efficiency_stage
+        or v27_workingset_stage
+        or v28_fused_kernel_stage
     )
     if stage not in {
         "Q4_ORIGINAL", "Q3_ORIGINAL", "Q2_ORIGINAL", "Q5_NOTCH",
@@ -7615,6 +7627,12 @@ def _v14_q4_q5_fullspace(
             candidate_facts = dict(getattr(pc, "_pc_fine_action_facts", {}))
             h6 = positive["h6"]
             h6_light_facts = dict(positive["light_facts"])
+            h6_action = positive["p6_shell"].action
+            h6_local_kernel = getattr(h6_action, "_local_kernel", None)
+            if h6_local_kernel is not None:
+                h6_light_facts["live_kernel_audit"] = dict(
+                    h6_local_kernel.audit
+                )
             routing = dict(getattr(common["transfer"], "routing_costs", {}))
             return {
                 "schema": "task039extra.v24.formal-release-timing.v1",
@@ -7716,6 +7734,7 @@ def _v14_q4_q5_fullspace(
             packed_power10=packed_power10,
             sum_factorized_work=sum_factorized_work,
             sum_factorized_power10=sum_factorized_power10,
+            shared_contractions=shared_contractions,
             direct_selected_backend=direct_selected_backend,
             reuse_projection_work=reuse_projection_work,
         ) as (pc, positive):

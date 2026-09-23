@@ -76,6 +76,7 @@ class IsotropicPartialAssembly:
         preallocated_work=False,
         sum_factorized_work=False,
         reuse_projection_work=False,
+        shared_contractions=False,
         geometry_bundle=None,
         share_geometry=False,
     ):
@@ -84,6 +85,7 @@ class IsotropicPartialAssembly:
         self.preallocated_work = bool(preallocated_work)
         self.sum_factorized_work = bool(sum_factorized_work)
         self.reuse_projection_work = bool(reuse_projection_work)
+        self.shared_contractions = bool(shared_contractions)
         self.share_geometry = bool(share_geometry)
         if component_form is None:
             if component is not None:
@@ -262,6 +264,7 @@ class IsotropicPartialAssembly:
                 self.basis,
                 batch_size=self.batch_size,
                 reuse_projection_work=self.reuse_projection_work,
+                shared_contractions=self.shared_contractions,
                 reference_bundle=reference_bundle,
                 share_reference=self.share_geometry,
             )
@@ -406,6 +409,7 @@ class IsotropicPartialAssembly:
             reference_table_components=sum_factorized_reference_components,
             sum_factorized_opt_in=self.sum_factorized_work,
             reuse_projection_work_opt_in=self.reuse_projection_work,
+            shared_contractions_opt_in=self.shared_contractions,
             sum_factorized_audit=(
                 self._sum_factorized.audit if self._sum_factorized is not None else None
             ),

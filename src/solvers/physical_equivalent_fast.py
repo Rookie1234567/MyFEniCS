@@ -21,6 +21,8 @@ def build_packed_physical_action(
     preallocated_work=False,
     sum_factorized_work=False,
     reuse_projection_work=False,
+    shared_contractions=False,
+    fuse_components=False,
     share_readonly_geometry=False,
     geometry_bundle=None,
 ):
@@ -83,6 +85,7 @@ def build_packed_physical_action(
                     preallocated_work=preallocated_work,
                     sum_factorized_work=sum_factorized_work,
                     reuse_projection_work=reuse_projection_work,
+                    shared_contractions=shared_contractions,
                     share_geometry=share_readonly_geometry,
                     geometry_bundle=candidate_bundle,
                 )
@@ -105,15 +108,29 @@ def build_packed_physical_action(
                     preallocated_work=preallocated_work,
                     sum_factorized_work=sum_factorized_work,
                     reuse_projection_work=reuse_projection_work,
+                    shared_contractions=shared_contractions,
                     share_geometry=share_readonly_geometry,
                 )
             kernels_list.append(kernel)
             if share_readonly_geometry and geometry_bundle is None:
                 geometry_bundle = kernel.geometry_bundle
         kernels = tuple(kernels_list)
-        volume = FullspaceSplitVolumeAction(
-            *forms, space, mpc=levels["floquets"][6].mpc, local_kernels=kernels
-        )
+        if fuse_components:
+            from .fullspace_fused_split_volume import FullspaceFusedSplitVolumeAction
+
+            volume = FullspaceFusedSplitVolumeAction(
+                *forms,
+                space,
+                mpc=levels["floquets"][6].mpc,
+                local_kernels=kernels,
+            )
+        else:
+            volume = FullspaceSplitVolumeAction(
+                *forms,
+                space,
+                mpc=levels["floquets"][6].mpc,
+                local_kernels=kernels,
+            )
         action = FullspacePhysicalAction(
             volume, fine["dtn_action"], owns_dtn=False
         )
@@ -128,6 +145,8 @@ def build_packed_physical_action(
             "preallocated_work": bool(preallocated_work),
             "sum_factorized_work": bool(sum_factorized_work),
             "reuse_projection_work": bool(reuse_projection_work),
+            "shared_contractions": bool(shared_contractions),
+            "fuse_components": bool(fuse_components),
             "shared_geometry_bundle": (
                 {
                     "schema": geometry_bundle["schema"],
@@ -181,6 +200,15 @@ def build_packed_physical_action(
             ),
             "component_audits": component_audits,
         }
+        if fuse_components:
+            facts["schema"] = "task039extra.v28.fused-pc-physical-action.v1"
+            facts["backend"] = "fused_sum_factorized_split_volume"
+            facts["fused_volume_audit"] = dict(
+                volume.audit["fused_local_kernel"]
+            )
+            facts["fused_volume_runtime_audit_source"] = (
+                "physical_action.audit.volume_action.fused_local_kernel"
+            )
         return {
             "physical_action": action,
             "volume_action": volume,

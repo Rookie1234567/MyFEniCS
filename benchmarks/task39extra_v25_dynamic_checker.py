@@ -55,6 +55,81 @@ def _positive_integer(value: Any) -> bool:
         return False
 
 
+def _positive_number(value: Any) -> bool:
+    return _finite(value) and float(value) > 0.0
+
+
+def _fused_batch_counts_close(
+    volume_action: Mapping[str, Any], fused_volume: Mapping[str, Any]
+) -> bool:
+    """Recompute fused per-batch work from the live cell/apply counters."""
+
+    try:
+        cells = _number(fused_volume.get("cell_count"), "fused.cell_count")
+        batch_size = _number(
+            fused_volume.get("batch_size"), "fused.batch_size"
+        )
+        full_applies = _number(
+            fused_volume.get("full_apply_count"), "fused.full_apply_count"
+        )
+        component_applies = _number(
+            fused_volume.get("component_apply_count"),
+            "fused.component_apply_count",
+        )
+        curl_applies = _number(
+            fused_volume.get("curl_component_apply_count"),
+            "fused.curl_component_apply_count",
+        )
+        mass_applies = _number(
+            fused_volume.get("mass_component_apply_count"),
+            "fused.mass_component_apply_count",
+        )
+        all_applies = _number(fused_volume.get("apply_count"), "fused.apply_count")
+        volume_applies = _number(
+            volume_action.get("apply_count"), "volume.apply_count"
+        )
+    except ValueError:
+        return False
+    if cells < 1 or batch_size < 1 or all_applies < 1:
+        return False
+    batches_per_apply = (cells + batch_size - 1) // batch_size
+    expected_batches = batches_per_apply * all_applies
+    try:
+        return bool(
+            all_applies == full_applies + component_applies
+            and component_applies == curl_applies + mass_applies
+            and full_applies == volume_applies
+            and _number(fused_volume.get("gather_count"), "fused.gather_count")
+            == expected_batches
+            and _number(
+                fused_volume.get("coefficient_forward_count"),
+                "fused.coefficient_forward_count",
+            )
+            == expected_batches
+            and _number(
+                fused_volume.get("coefficient_backward_count"),
+                "fused.coefficient_backward_count",
+            )
+            == expected_batches
+            and _number(
+                fused_volume.get("scatter_count"), "fused.scatter_count"
+            )
+            == expected_batches
+            and _number(
+                fused_volume.get("curl_integral_count"),
+                "fused.curl_integral_count",
+            )
+            == batches_per_apply * (full_applies + curl_applies)
+            and _number(
+                fused_volume.get("mass_integral_count"),
+                "fused.mass_integral_count",
+            )
+            == batches_per_apply * (full_applies + mass_applies)
+        )
+    except ValueError:
+        return False
+
+
 def _path(record: Mapping[str, Any], *parts: str) -> Any:
     value: Any = record
     for part in parts:
@@ -462,13 +537,19 @@ def _backend_facts(
         solver.get("preconditioner")
         == "physical_p6_trace_workingset_efficiency_v27"
     )
+    fused_kernel_profile = (
+        solver.get("preconditioner")
+        == "physical_p6_trace_fused_kernel_v28"
+    )
     expected_h6_backend = (
         "direct_selected_backend_same_apply_and_power10"
-        if workingset_profile
+        if workingset_profile or fused_kernel_profile
         else H6_BACKEND
     )
     expected_thread_contract = (
-        "mpi1_omp1_blas1_v26" if workingset_profile else THREAD_CONTRACT
+        "mpi1_omp1_blas1_v26"
+        if workingset_profile or fused_kernel_profile
+        else THREAD_CONTRACT
     )
     expected_degree = {"Q4_ORIGINAL": 4, "Q3_ORIGINAL": 3, "Q2_ORIGINAL": 2}.get(stage)
     release = summary.get("formal_release_timing")
@@ -485,17 +566,48 @@ def _backend_facts(
     for name in ("curl_curl", "complex_material_mass"):
         component = components.get(name)
         component = component if isinstance(component, Mapping) else {}
-        kernel = component.get("local_kernel")
+        kernel = (
+            component
+            if fused_kernel_profile
+            else component.get("local_kernel")
+        )
         kernel = kernel if isinstance(kernel, Mapping) else {}
         component_checks[name] = {
             "backend": kernel.get("backend") == BACKEND,
             "sum_factorized_opt_in": kernel.get("sum_factorized_opt_in") is True,
-            "apply_count": _positive_integer(component.get("apply_count")),
+            "apply_count": (
+                True
+                if fused_kernel_profile
+                else _positive_integer(component.get("apply_count"))
+            ),
+            "shared_contractions_opt_in": (
+                kernel.get("shared_contractions_opt_in") is False
+                if fused_kernel_profile
+                else True
+            ),
         }
     live_h6 = release.get("h6")
     live_h6 = live_h6 if isinstance(live_h6, Mapping) else {}
     live_h6_facts = live_h6.get("light_facts")
     live_h6_facts = live_h6_facts if isinstance(live_h6_facts, Mapping) else {}
+    h6_live_kernel = live_h6_facts.get("live_kernel_audit")
+    h6_live_kernel = h6_live_kernel if isinstance(h6_live_kernel, Mapping) else {}
+    fused_volume = volume_action.get("fused_local_kernel")
+    fused_volume = fused_volume if isinstance(fused_volume, Mapping) else {}
+    tensor_contractions = fused_volume.get("tensor_contractions")
+    tensor_contractions = (
+        tensor_contractions if isinstance(tensor_contractions, Mapping) else {}
+    )
+    fused_curl = tensor_contractions.get("curl")
+    fused_curl = fused_curl if isinstance(fused_curl, Mapping) else {}
+    fused_mass = tensor_contractions.get("mass")
+    fused_mass = fused_mass if isinstance(fused_mass, Mapping) else {}
+    h6_sum_factorized = h6_live_kernel.get("sum_factorized_audit")
+    h6_sum_factorized = (
+        h6_sum_factorized if isinstance(h6_sum_factorized, Mapping) else {}
+    )
+    h6_timing = h6_live_kernel.get("timing_cumulative_seconds")
+    h6_timing = h6_timing if isinstance(h6_timing, Mapping) else {}
     candidate_apply_count = live_candidate.get("apply_count")
     h6_apply_count = live_h6.get("apply_count")
     h6_top_apply_count = release.get("h6_apply_count")
@@ -528,6 +640,109 @@ def _backend_facts(
         "h6_power10_sum_factorized": live_h6_facts.get("power10_action_backend")
         == "packed_partial_assembly"
         and live_h6_facts.get("sum_factorized_power10_opt_in") is True,
+        "fused_volume_schema": (
+            volume_action.get("schema")
+            == "task039extra.fused-split-volume-action.v1"
+            if fused_kernel_profile
+            else True
+        ),
+        "fused_curl_and_mass_integrated": (
+            _positive_integer(fused_volume.get("curl_integral_count"))
+            and _positive_integer(fused_volume.get("mass_integral_count"))
+            if fused_kernel_profile
+            else True
+        ),
+        "fused_batch_and_apply_counts_close": (
+            _fused_batch_counts_close(volume_action, fused_volume)
+            if fused_kernel_profile
+            else True
+        ),
+        "candidate_a6_shared_contractions_disabled": (
+            all(
+                item["shared_contractions_opt_in"]
+                for item in component_checks.values()
+            )
+            if fused_kernel_profile
+            else True
+        ),
+        "candidate_a6_contraction_audit_present": (
+            _positive_integer(
+                fused_curl.get("forward_tensor_contraction_count")
+            )
+            and _positive_integer(
+                fused_curl.get("backward_tensor_contraction_count")
+            )
+            and _positive_integer(
+                fused_mass.get("forward_tensor_contraction_count")
+            )
+            and _positive_integer(
+                fused_mass.get("backward_tensor_contraction_count")
+            )
+            and _positive_number(
+                _path(
+                    fused_curl,
+                    "timing_cumulative_seconds",
+                    "reference_forward",
+                )
+            )
+            and _positive_number(
+                _path(
+                    fused_curl,
+                    "timing_cumulative_seconds",
+                    "reference_backward",
+                )
+            )
+            and _positive_number(
+                _path(
+                    fused_mass,
+                    "timing_cumulative_seconds",
+                    "reference_forward",
+                )
+            )
+            and _positive_number(
+                _path(
+                    fused_mass,
+                    "timing_cumulative_seconds",
+                    "reference_backward",
+                )
+            )
+            if fused_kernel_profile
+            else True
+        ),
+        "h6_apply_shared_contractions_disabled": (
+            h6_live_kernel.get("shared_contractions_opt_in") is False
+            and _positive_integer(
+                h6_sum_factorized.get("forward_tensor_contraction_count")
+            )
+            and _positive_integer(
+                h6_sum_factorized.get("backward_tensor_contraction_count")
+            )
+            and _positive_number(h6_timing.get("reference_forward"))
+            and _positive_number(h6_timing.get("reference_backward"))
+            if fused_kernel_profile
+            else True
+        ),
+        "h6_power10_uses_same_live_nonshared_backend": (
+            live_h6_facts.get("direct_selected_backend_used") is True
+            and live_h6_facts.get("apply_action_backend")
+            == "packed_partial_assembly"
+            and live_h6_facts.get("power10_action_backend")
+            == "packed_partial_assembly"
+            and live_h6_facts.get("sum_factorized_power10_opt_in") is True
+            and _positive_integer(live_h6_facts.get("power_matrix_mult_count"))
+            and _positive_number(live_h6_facts.get("power_matrix_mult_seconds"))
+            and h6_live_kernel.get("shared_contractions_opt_in") is False
+            and _positive_integer(
+                h6_sum_factorized.get("forward_tensor_contraction_count")
+            )
+            and _positive_integer(
+                h6_sum_factorized.get("backward_tensor_contraction_count")
+            )
+            and _positive_number(h6_timing.get("reference_forward"))
+            and _positive_number(h6_timing.get("reference_backward"))
+            if fused_kernel_profile
+            else True
+        ),
     }
     return {
         "status": "derived",

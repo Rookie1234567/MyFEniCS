@@ -21,6 +21,7 @@ from src.io.physical_intermediate_profile import (
     COARSE_DEGREE_SPEED_PROFILE,
     SETUP_EFFICIENCY_PROFILE,
     WORKINGSET_SETUP_PROFILE,
+    FUSED_KERNEL_PROFILE,
     LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE,
     LOWMEM_DUAL_CELL_CONDENSED_PROFILE,
     profile_facts,
@@ -1025,7 +1026,11 @@ def _run_physical_dual_cell_condensed_lowmem(
     directory = Path(run_directory).resolve()
     profile = str(resolved_payload["solver"]["preconditioner"])
     stage = str(resolved_payload["solver"]["stage"])
-    if profile in (SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE):
+    if profile in (
+        SETUP_EFFICIENCY_PROFILE,
+        WORKINGSET_SETUP_PROFILE,
+        FUSED_KERNEL_PROFILE,
+    ):
         if resolved_payload.get("solver", {}).get("numeric_cache_mode") != "build":
             raise ValueError(
                 "V26 formal setup-efficiency run requires numeric_cache_mode=build"
@@ -1048,6 +1053,7 @@ def _run_physical_dual_cell_condensed_lowmem(
         COARSE_DEGREE_SPEED_PROFILE,
         SETUP_EFFICIENCY_PROFILE,
         WORKINGSET_SETUP_PROFILE,
+        FUSED_KERNEL_PROFILE,
     ) and stage_coarse_degree != coarse_degree:
         raise ValueError(
             f"{stage} is frozen to coarse_degree={stage_coarse_degree}, "
@@ -1088,7 +1094,11 @@ def _run_physical_dual_cell_condensed_lowmem(
             "require_zero_swap" if require_zero_swap else "observe_only"
         ),
     }
-    if profile in (SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE):
+    if profile in (
+        SETUP_EFFICIENCY_PROFILE,
+        WORKINGSET_SETUP_PROFILE,
+        FUSED_KERNEL_PROFILE,
+    ):
         summary.update(numeric_cache_mode="build", numeric_cache_loads=0)
     runtime = common = None
     prepared = None
@@ -1145,27 +1155,40 @@ def _run_physical_dual_cell_condensed_lowmem(
         expected_space_facts = None
         p6_pre_facts = None
         cfg = simulation_config_3d_from_normalized(resolved_payload)
-        # V25 is the one explicit opt-in route that uses the common qualified
-        # sum-factorized N1E kernel for the PC-internal A6, H6 apply, and H6
-        # power-estimation action.  Every older profile retains its historical
-        # native/packed selection by leaving these flags at their defaults.
+        # The V25+ explicit opt-in routes select the common qualified
+        # sum-factorized N1E kernel for the PC-internal A6 and H6 actions.
+        # Older profiles retain their historical native/packed selection.
         pc_fine_action_factory = None
         sum_factorized_work = False
         sum_factorized_power10 = False
+        # The V28 evidence selects A6 fusion, but does not adopt the shared
+        # contraction schedule in either A6 or H6. Keep the flags separate so
+        # a future measured decision cannot accidentally couple both routes.
+        a6_shared_contractions = False
+        h6_shared_contractions = False
         if profile in (
             COARSE_DEGREE_SPEED_PROFILE,
             SETUP_EFFICIENCY_PROFILE,
             WORKINGSET_SETUP_PROFILE,
+            FUSED_KERNEL_PROFILE,
         ):
             expected_backend = "isotropic_sum_factorized_n1e_v26"
             expected_h6_rule = (
                 "direct_selected_backend_same_apply_and_power10"
-                if profile in (SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE)
+                if profile in (
+                    SETUP_EFFICIENCY_PROFILE,
+                    WORKINGSET_SETUP_PROFILE,
+                    FUSED_KERNEL_PROFILE,
+                )
                 else "isotropic_sum_factorized_n1e_v26_apply_and_power10"
             )
             expected_threads = (
                 "mpi1_omp1_blas1_v26"
-                if profile in (SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE)
+                if profile in (
+                    SETUP_EFFICIENCY_PROFILE,
+                    WORKINGSET_SETUP_PROFILE,
+                    FUSED_KERNEL_PROFILE,
+                )
                 else "mpi1_omp1_blas1_v25"
             )
             solver_contract = resolved_payload.get("solver", {})
@@ -1176,7 +1199,7 @@ def _run_physical_dual_cell_condensed_lowmem(
                 or solver_contract.get("thread_contract") != expected_threads
             ):
                 raise ValueError(
-                    "V25 resolved solver contract does not bind the selected "
+                    "resolved solver contract does not bind the selected "
                     "sum-factorized backend, H6 rule, and MPI1/thread1 contract"
                 )
             from src.solvers.physical_equivalent_fast import (
@@ -1192,13 +1215,25 @@ def _run_physical_dual_cell_condensed_lowmem(
                     sum_factorized_work=True,
                     reuse_projection_work=False,
                     share_readonly_geometry=(
-                        profile in (SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE)
+                        profile
+                        in (
+                            SETUP_EFFICIENCY_PROFILE,
+                            WORKINGSET_SETUP_PROFILE,
+                            FUSED_KERNEL_PROFILE,
+                        )
                     ),
                     geometry_bundle=(
                         geometry_bundle
-                        if profile in (SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE)
+                        if profile
+                        in (
+                            SETUP_EFFICIENCY_PROFILE,
+                            WORKINGSET_SETUP_PROFILE,
+                            FUSED_KERNEL_PROFILE,
+                        )
                         else None
                     ),
+                    shared_contractions=a6_shared_contractions,
+                    fuse_components=profile == FUSED_KERNEL_PROFILE,
                 )
 
             sum_factorized_work = True
@@ -1287,15 +1322,18 @@ def _run_physical_dual_cell_condensed_lowmem(
             COARSE_DEGREE_SPEED_PROFILE,
             SETUP_EFFICIENCY_PROFILE,
             WORKINGSET_SETUP_PROFILE,
+            FUSED_KERNEL_PROFILE,
         }
         packed_power10 = profile in {
             COARSE_DEGREE_SPEED_PROFILE,
             SETUP_EFFICIENCY_PROFILE,
             WORKINGSET_SETUP_PROFILE,
+            FUSED_KERNEL_PROFILE,
         }
         direct_selected_backend = profile in (
             SETUP_EFFICIENCY_PROFILE,
             WORKINGSET_SETUP_PROFILE,
+            FUSED_KERNEL_PROFILE,
         )
         # Projection-work reuse remains an explicit solver option, but is not
         # part of the V26 production route until a component measurement shows
@@ -1314,6 +1352,7 @@ def _run_physical_dual_cell_condensed_lowmem(
                     COARSE_DEGREE_SPEED_PROFILE,
                     SETUP_EFFICIENCY_PROFILE,
                     WORKINGSET_SETUP_PROFILE,
+                    FUSED_KERNEL_PROFILE,
                 )
             ),
         )
@@ -1781,6 +1820,7 @@ def _run_physical_dual_cell_condensed_lowmem(
                 packed_power10=packed_power10,
                 sum_factorized_work=sum_factorized_work,
                 sum_factorized_power10=sum_factorized_power10,
+                shared_contractions=h6_shared_contractions,
                 direct_selected_backend=direct_selected_backend,
                 reuse_projection_work=reuse_projection_work,
                 formal_release_timing=(

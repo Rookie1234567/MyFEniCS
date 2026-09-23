@@ -1,0 +1,24 @@
+{
+  "schema": "task039extra.v28.setup-thread-selection.v1",
+  "status": "NOT_SELECTED_SINGLE_THREAD",
+  "probe_scope": "read-only local capability check; no worker pool, p4 factor, or PDE",
+  "activation": {
+    "qualified_marker": "1",
+    "petsc_scalar_type": "complex128",
+    "petsc_int_type": "int32",
+    "environment_authority": "existing qualified shared WSL ABI, confirmed by supervisor; not rebuilt"
+  },
+  "observations": {
+    "threadpoolctl": "not installed (ModuleNotFoundError)",
+    "available_processor_count_nproc": 1,
+    "reported_cpu_affinity": "0-15",
+    "runtime_thread_limit_readback": "not established"
+  },
+  "qualification": {
+    "two_thread_trial": "not_run",
+    "kernel_reentrancy_for_parallel_calls": "not_established",
+    "whole_lifecycle_peak_neutrality": "unknown; no two-thread setup/factor/iteration/postprocess lifecycle measured",
+    "component_probe_rss_is_not_thread_peak_evidence": true
+  },
+  "decision": "retain mpi1_omp1_blas1_v26; do not install dependencies, create ctypes controls, or pursue another thread candidate"
+}

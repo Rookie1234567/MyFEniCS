@@ -324,9 +324,19 @@ class FullspaceMpcFormAction:
         self._audit["apply_count"] = int(self._audit["apply_count"])
         return MappingProxyType(self._audit)
 
-    def apply(self, source: PETSc.Vec) -> PETSc.Vec:
+    def apply(
+        self,
+        source: PETSc.Vec,
+        *,
+        local_component: str | None = None,
+        slave_row_identity: bool | None = None,
+    ) -> PETSc.Vec:
         if self._destroyed:
             raise RuntimeError("full-space action has been destroyed")
+        if local_component is not None and not hasattr(
+            self._local_kernel, "apply_component"
+        ):
+            raise ValueError("local component application is unavailable")
         apply_started = time.perf_counter()
         source_values = np.asarray(source.getArray(readonly=True))
         if source_values.size != self._owned_rows:
@@ -357,6 +367,10 @@ class FullspaceMpcFormAction:
             if self._local_kernel is None:
                 self._assemble_vector(raw, self._action_form, self._constants,
                                       packed_coefficients)
+            elif local_component is not None:
+                self._local_kernel.apply_component(
+                    coefficient.x.array, raw, component=local_component
+                )
             else:
                 self._local_kernel.apply(coefficient.x.array, raw)
             del packed_arrays
@@ -379,7 +393,12 @@ class FullspaceMpcFormAction:
             addv=PETSc.InsertMode.ADD_VALUES,
             mode=PETSc.ScatterMode.REVERSE,
         )
-        if self._mpc is not None and self._slave_row_identity:
+        restore_identity = (
+            self._slave_row_identity
+            if slave_row_identity is None
+            else bool(slave_row_identity)
+        )
+        if self._mpc is not None and restore_identity:
             np.take(
                 source_values,
                 self._owned_slave_indices,

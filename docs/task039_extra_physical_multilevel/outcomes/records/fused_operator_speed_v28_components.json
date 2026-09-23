@@ -1,0 +1,140 @@
+{
+  "schema": "task039extra.v28.component-evidence-summary.v1",
+  "status": "COMPONENT_EVIDENCE_PRESERVED",
+  "formal_solver_result": false,
+  "model": {
+    "component_probe_input_sha256": "5ba1113c85dc06dd396866ea666ebed66a099116ef9abb8bbb104bf73cf42e75",
+    "selected_formal_input_sha256": "80c1cbcc9c0796f79c567391a8e80466d4a8a138ea0b45b85b2590d38e957b33",
+    "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+    "mesh_cells": 990,
+    "p6_rows": 667152,
+    "dtn_modes": 80,
+    "witnesses": ["early_i008", "late_i120"]
+  },
+  "a6_fusion_only": {
+    "selection": "ADOPT",
+    "equivalence": "PASS",
+    "inputs_unchanged": true,
+    "early_i008": {
+      "full_action_median_wall_seconds": {"baseline": 3.3449158889998216, "fused": 1.9299046689993702},
+      "full_action_median_cpu_seconds": {"baseline": 3.6489044769999985, "fused": 2.105215182000002},
+      "volume_median_wall_seconds": {"baseline": 3.399484077002853, "fused": 1.9646101359976456},
+      "volume_median_cpu_seconds": {"baseline": 3.7082314659999938, "fused": 2.142976607999998},
+      "max_relative_difference_from_baseline": 1.9443266998623726e-16,
+      "max_relative_difference_from_native": 7.279327129955207e-15
+    },
+    "late_i120": {
+      "full_action_median_wall_seconds": {"baseline": 3.4063278700050432, "fused": 1.9797485259914538},
+      "full_action_median_cpu_seconds": {"baseline": 3.71595678300001, "fused": 2.159721700999995},
+      "volume_median_wall_seconds": {"baseline": 3.3866474039969034, "fused": 1.9695246830087854},
+      "volume_median_cpu_seconds": {"baseline": 3.6944390510000034, "fused": 2.148561762},
+      "max_relative_difference_from_baseline": 1.669691796863127e-16,
+      "max_relative_difference_from_native": 6.556990120568528e-15
+    },
+    "live_step_counters": "not_available_in_the_preserved_partial_records; do not infer counts"
+  },
+  "a6_shared_contractions_increment": {
+    "selection": "NOT_ADOPTED",
+    "early_i008": {
+      "full_action_median_wall_seconds": {"baseline": 1.959416184006841, "shared": 1.9877248739940114},
+      "full_action_median_cpu_seconds": {"baseline": 2.1373573819999763, "shared": 2.1668155170000034},
+      "volume_median_wall_seconds": {"baseline": 1.961200017001829, "shared": 1.9746179420035332},
+      "volume_median_cpu_seconds": {"baseline": 2.1394421219999913, "shared": 2.154109476000002},
+      "max_relative_output_difference": 0.0
+    },
+    "late_i120": {
+      "full_action_median_wall_seconds": {"baseline": 1.96385699500388, "shared": 1.9678796520020114},
+      "full_action_median_cpu_seconds": {"baseline": 2.1423321840000256, "shared": 2.1467492330000084},
+      "volume_median_wall_seconds": {"baseline": 1.9565319499961333, "shared": 1.9766407139977673},
+      "volume_median_cpu_seconds": {"baseline": 2.1343592370000124, "shared": 2.1563073339999903},
+      "max_relative_output_difference": 0.0
+    },
+    "interpretation": "shared contraction code is correct but the A6 increment is slower on both witness medians; no further sampling"
+  },
+  "shared_contraction_candidate": {
+    "correctness": "PASS",
+    "raw_measurement_recommendation": "adopt_h6_shared_contractions=true",
+    "selection": "NOT_ADOPTED",
+    "selection_reason": "the full H6 apply differences are within the observed trial spread; one late-witness repeat is 0.379% slower, so the small median differences do not establish an end-to-end gain",
+    "h6_setup_wall_seconds_single_observation": {"baseline": 44.605909564998, "candidate": 44.360340921004536},
+    "h6_apply": {
+      "early_i008": {
+        "median_wall_seconds": {"baseline": 3.959227151994128, "candidate": 3.937837050005328},
+        "median_cpu_seconds": {"baseline": 4.319035761000009, "candidate": 4.2956890199999975},
+        "baseline_trial_range_seconds": [3.9502091690083034, 4.072404293998261],
+        "candidate_trial_range_seconds": [3.875566856993828, 3.9569253959925845],
+        "max_relative_output_difference": 0.0
+      },
+      "late_i120": {
+        "median_wall_seconds": {"baseline": 3.9130975589941954, "candidate": 3.8818484980001813},
+        "median_cpu_seconds": {"baseline": 4.268718471, "candidate": 4.234632780999988},
+        "baseline_trial_range_seconds": [3.8866773799963994, 4.100398484006291],
+        "candidate_trial_range_seconds": [3.8434286569972755, 3.901407344004838],
+        "one_candidate_over_baseline_trial_ratio": 1.0037898602246353,
+        "max_relative_output_difference": 0.0
+      }
+    },
+    "live_forward_contractions": {
+      "per_h6_apply_baseline": 6696,
+      "per_h6_apply_candidate": 5208,
+      "three_apply_trials_baseline": 20088,
+      "three_apply_trials_candidate": 15624,
+      "reduction_fraction": 0.2222222222222222,
+      "backward_contractions_reduced": false
+    },
+    "trial_series": "all three interleaved wall/CPU records per witness remain intact in the raw h6_pair_result.json; memory snapshots and independent power10/power-history fields remain intact there as well; AC/power-supply telemetry was not captured"
+  },
+  "raw_artifacts": {
+    "a6_early": {
+      "path": "benchmarks/artifacts/task39extra/fused_operator_speed_v28/result_990_pair_20260923T1317/pair_early_i008_a6_partial.json",
+      "sha256": "639e9c542e1d06d776020ca345ca1eb82717e1cb01eb21bcbe0e50b7f592a7b1",
+      "identity_capture": "reconstructed after run from partial data; not startup-captured"
+    },
+    "a6_late": {
+      "path": "benchmarks/artifacts/task39extra/fused_operator_speed_v28/result_990_pair_20260923T1317/pair_late_i120_a6_partial.json",
+      "sha256": "0d152d34aa8dd648a5c63089006712033bdfc54c11a9668a595a834e5b5eab24c",
+      "identity_capture": "reconstructed after run from partial data; not startup-captured"
+    },
+    "h6_result": {
+      "path": "benchmarks/artifacts/task39extra/fused_operator_speed_v28/result_990_h6_only_20260923T1334/h6_pair_result.json",
+      "sha256": "cf9befe1a16001601a98abdc5b3699b2568c79d2fd4bb5a81a8cf9d7431309c7"
+    },
+    "h6_watchdog": {
+      "path": "benchmarks/artifacts/task39extra/fused_operator_speed_v28/result_990_h6_only_20260923T1334/watchdog_wrapper_result.json",
+      "sha256": "d3743a1b22435a1df4fbe111d11c5d2f57c79f1486b3f60d509c25feedd7601a",
+      "status": "COMPLETED",
+      "elapsed_wall_seconds": 157.87739327800227,
+      "simultaneous_process_tree_rss_peak_bytes": 784216064,
+      "process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    "a6_first_attempt_error": {
+      "path": "benchmarks/artifacts/task39extra/fused_operator_speed_v28/result_990_pair_20260923T1317/pair_failure.json",
+      "sha256": "303d458ebcabe6f67351c8477ab9ea2af422628e2c482eafedcbdc7d2c3ff1aa",
+      "classification_note": "cleanup AttributeError masked the primary stale-audit snapshot issue; preserve as engineering-attempt metadata, not an A6 equivalence failure"
+    },
+    "a6_first_attempt_watchdog": {
+      "path": "benchmarks/artifacts/task39extra/fused_operator_speed_v28/result_990_pair_20260923T1317/watchdog_wrapper_result.json",
+      "sha256": "afd5b8bd3946e1a22c1283468c92f8fe03cabcf9dd612a68a1564b9e94b2b566",
+      "classification": "WORKER_FAILED",
+      "elapsed_monotonic_seconds": 205.474985207009,
+      "elapsed_utc_seconds": 223.215080597,
+      "utc_minus_monotonic_seconds": 17.740095389990984,
+      "process_tree_rss_peak_bytes": 704720896,
+      "process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    "duplicate_a6_attempt": {
+      "path": "benchmarks/artifacts/task39extra/fused_operator_speed_v28/result_990_pair_20260923T1323/watchdog_wrapper_result.json",
+      "sha256": "3c5dafe756e1f8c9f52bdb484f99660d82cb64174e72abbb73c73304e5e01150",
+      "classification": "USER_CONTROLLED_STOP",
+      "elapsed_monotonic_seconds": 114.44591124699218,
+      "elapsed_utc_seconds": 126.068461969,
+      "utc_minus_monotonic_seconds": 11.622548571001914,
+      "process_tree_rss_peak_bytes": 704118784,
+      "process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "interpretation": "supervisor-directed stop to avoid duplicate A6 work; not a positive result or user cancellation"
+    }
+  }
+}

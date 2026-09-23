@@ -37,6 +37,7 @@ LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE = (
 COARSE_DEGREE_SPEED_PROFILE = "physical_p6_trace_coarse_degree_speed_v25"
 SETUP_EFFICIENCY_PROFILE = "physical_p6_trace_setup_efficiency_v26"
 WORKINGSET_SETUP_PROFILE = "physical_p6_trace_workingset_efficiency_v27"
+FUSED_KERNEL_PROFILE = "physical_p6_trace_fused_kernel_v28"
 PHYSICAL_MEMORY_POLICY_V23 = "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23"
 V23_QUALIFIED_JIT_CACHE_SOURCE = (
     "results/euv_grazing1_phi0/"
@@ -52,7 +53,7 @@ P4_BLR_TRADEOFF_THRESHOLDS = {
     "T2_BLR_CONTROL": 1.0e-4,
 }
 
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE, LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE, COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE, LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE, COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE, FUSED_KERNEL_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
 
 
 def p4_blr_tradeoff_threshold(stage: str) -> float:
@@ -67,13 +68,17 @@ def p4_blr_tradeoff_threshold(stage: str) -> float:
 
 
 def profile_facts(identity=PROFILE) -> dict:
-    if identity in (SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE):
+    if identity in (
+        SETUP_EFFICIENCY_PROFILE,
+        WORKINGSET_SETUP_PROFILE,
+        FUSED_KERNEL_PROFILE,
+    ):
         facts = profile_facts(LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE)
         facts.update(
             identity=identity,
             scope=(
                 "review_v25_workingset_and_p6_setup"
-                if identity == WORKINGSET_SETUP_PROFILE
+                if identity in (WORKINGSET_SETUP_PROFILE, FUSED_KERNEL_PROFILE)
                 else "review_v24_setup_and_kernel_efficiency"
             ),
             qualification=(
@@ -111,6 +116,28 @@ def profile_facts(identity=PROFILE) -> dict:
             projection_reuse_status="not_adopted_without_component_gain",
             direct_selected_backend=True,
         )
+        if identity == FUSED_KERNEL_PROFILE:
+            facts.update(
+                scope="review_v26_A6_fusion_only_single_thread",
+                qualification=(
+                    "opt_in; one fresh original 990-cell p6/h7.5 q4 formal "
+                    "run; fused A6 volume only; shared tensor contractions "
+                    "disabled for A6 and H6 after the H6 timing difference "
+                    "was within observed trial variation; numeric_cache_mode=build; "
+                    "observe_only; single-thread"
+                ),
+                fused_a6_volume=True,
+                shared_tensor_contractions=False,
+                a6_shared_tensor_contractions=False,
+                h6_shared_tensor_contractions=False,
+                optional_setup_threads="not_adopted_runtime_control_and_peak_neutrality_unqualified",
+            )
+            facts["route_selection"].update(
+                fused_component_volume=True,
+                shared_contractions=False,
+                a6_shared_contractions=False,
+                h6_shared_contractions=False,
+            )
         facts["thread_selection"] = {
             "status": "SELECTED_SINGLE_CORE",
             "contract": "mpi1_omp1_blas1_v26",
@@ -124,7 +151,12 @@ def profile_facts(identity=PROFILE) -> dict:
                 "NUMEXPR_NUM_THREADS": "1",
             },
         }
-        if identity == WORKINGSET_SETUP_PROFILE:
+        if identity == FUSED_KERNEL_PROFILE:
+            facts["thread_selection"]["selection_reason"] = (
+                "N4 was not qualified: runtime thread-control support and "
+                "whole-lifecycle peak neutrality were not established"
+            )
+        if identity in (WORKINGSET_SETUP_PROFILE, FUSED_KERNEL_PROFILE):
             facts["resources"].update(
                 require_zero_swap=False,
                 swap_policy="observe_only",
