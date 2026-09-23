@@ -304,7 +304,7 @@ def task041_schur_speed_v2_contract(
     if p4_backend_pair:
         registered_memory_cap = int(contract["memory_cap_bytes"])
         registered_memory_cap_source = str(contract["memory_cap_source"])
-        pair_memory_cap = 68_719_476_736
+        pair_memory_cap = registered_memory_cap
         ledger_contract = task041_balh_service_contract(
             TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID
         )
@@ -319,7 +319,7 @@ def task041_schur_speed_v2_contract(
                 "registered_memory_cap_source": registered_memory_cap_source,
                 "memory_cap_bytes": pair_memory_cap,
                 "memory_cap_source": (
-                    "user_authorized_single_5nm_fixed8_p4_backend_pair_64_gib"
+                    "review_report_v2_section_5_explicit_cap"
                 ),
                 "warning_memory_bytes": int(
                     pair_memory_cap * TASK041_SCHUR_SPEED_V2_WARNING_FRACTION

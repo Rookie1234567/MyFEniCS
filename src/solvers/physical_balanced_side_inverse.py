@@ -10,6 +10,7 @@ remain borrowed.
 
 from __future__ import annotations
 
+import sys
 from collections.abc import Callable, Mapping
 from contextlib import contextmanager
 from time import perf_counter
@@ -360,6 +361,7 @@ class SideBalancedInverse:
         audit_callback: Callable[[dict[str, Any]], None] | None = None,
         detailed_timing: bool = False,
         record_iteration_history: bool = False,
+        diagnostic_callback: Callable[[Mapping[str, Any]], Any] | None = None,
         p4_inverse_backend: str = "full",
     ) -> None:
         _validate_ksp_pair(max_it, rtol)
@@ -397,6 +399,13 @@ class SideBalancedInverse:
         self._active_variant: str | None = None
         self._apply_in_progress = False
         self._record_iteration_history = bool(record_iteration_history)
+        self._diagnostic_callback = diagnostic_callback
+        self._active_apply_pc_count = 0
+        self._active_pc_index: int | None = None
+        self._active_pc_q_count = 0
+        self._active_ksp_iteration: int | None = None
+        self._active_p4_call_records: list[dict[str, Any]] | None = None
+        self._direct_p4_call_records: list[dict[str, Any]] = []
         self._iteration_history: list[dict[str, Any]] | None = (
             [] if self._record_iteration_history else None
         )
@@ -575,7 +584,11 @@ class SideBalancedInverse:
         _iteration: int,
         _reported_residual: float,
     ) -> None:
-        if self._iteration_history is not None and len(self._iteration_history) < 129:
+        self._active_ksp_iteration = int(_iteration)
+        if (
+            self._iteration_history is not None
+            and len(self._iteration_history) < self._max_it + 1
+        ):
             residual = float(_reported_residual)
             if np.isnan(residual):
                 recorded_residual: float | str = "nan"
@@ -591,7 +604,96 @@ class SideBalancedInverse:
                     "reported_residual": recorded_residual,
                 }
             )
+        self._emit_diagnostic(
+            "ksp_monitor",
+            iteration=int(_iteration),
+            reported_residual=float(_reported_residual),
+        )
         self._checkpoint()
+
+    def _emit_diagnostic(
+        self,
+        event: str,
+        *,
+        vectors: Mapping[str, PETSc.Vec] | None = None,
+        **facts: Any,
+    ) -> Any:
+        """Synchronously expose borrowed vectors to an opt-in diagnostic."""
+
+        if self._diagnostic_callback is None:
+            return None
+        record: dict[str, Any] = {
+            "event": str(event),
+            "p4_backend": self._p4_inverse_backend,
+            **facts,
+        }
+        if self._apply_in_progress:
+            record["scope"] = "side_apply"
+            if self._active_ksp_iteration is not None:
+                record["ksp_iteration"] = int(self._active_ksp_iteration)
+            if self._active_pc_index is not None:
+                record["pc_apply_index"] = int(self._active_pc_index)
+        else:
+            record["scope"] = "independent_replay"
+        if vectors:
+            # These PETSc Vecs are borrowed and valid only during this callback.
+            record["borrowed_vectors"] = dict(vectors)
+        return self._diagnostic_callback(record)
+
+    @staticmethod
+    def _p4_call_summary(calls: list[dict[str, Any]]) -> dict[str, Any]:
+        fields = (
+            "physical_relative_residual",
+            "augmented_relative_residual",
+            "factor_solve_seconds",
+            "factor_backsolve_seconds",
+            "solution_recovery_seconds",
+        )
+        maxima: dict[str, Any] = {}
+        for field in fields:
+            candidates: list[tuple[float, int]] = []
+            missing: list[int] = []
+            nonfinite: list[int] = []
+            for position, call in enumerate(calls):
+                call_index = int(call.get("p4_call_index", position + 1))
+                value = call.get(field)
+                if value is None or isinstance(value, bool) or not isinstance(
+                    value, (int, float)
+                ):
+                    missing.append(call_index)
+                    continue
+                if not np.isfinite(float(value)):
+                    nonfinite.append(call_index)
+                    continue
+                else:
+                    candidates.append((float(value), call_index))
+            maximum = max(candidates, key=lambda candidate: candidate[0]) if candidates else None
+            maxima[field] = {
+                "maximum": (
+                    {"value": maximum[0], "p4_call_index": maximum[1]}
+                    if maximum is not None else None
+                ),
+                "missing_call_indices": missing,
+                "nonfinite_call_indices": nonfinite,
+            }
+        failed = [
+            int(call.get("p4_call_index", position + 1))
+            for position, call in enumerate(calls)
+            if call.get("status") not in {"passed", "ZERO_RHS_DIRECT_ZERO"}
+        ]
+        augmented_unqualified = [
+            int(call.get("p4_call_index", position + 1))
+            for position, call in enumerate(calls)
+            if call.get("augmented_gate_passed") is not True
+        ]
+        return {
+            "call_count": len(calls),
+            "call_index_field": "p4_call_index",
+            "call_index_base": "one_based",
+            "failed_or_unqualified_call_indices": failed,
+            "augmented_residual_unqualified_call_indices": augmented_unqualified,
+            "maxima_and_argmax": maxima,
+        }
 
     def _checkpoint(self) -> None:
         self._checkpoint_count += 1
@@ -1009,9 +1111,21 @@ class SideBalancedInverse:
         self._ph_total_count += 1
         started = perf_counter()
         transfer_timing: dict[str, float] = {}
+        result = None
         try:
+            self._emit_diagnostic("PH_input", vectors={"source": source})
             kwargs = {"timing": transfer_timing} if self._detailed_timing else {}
-            return self._owner_transfer.apply_adjoint(source, **kwargs)
+            result = self._owner_transfer.apply_adjoint(source, **kwargs)
+            try:
+                self._emit_diagnostic("PH_output", vectors={"result": result})
+            except BaseException:
+                try:
+                    result.destroy()
+                except BaseException:  # noqa: BLE001, S110 - preserve callback error
+                    pass
+                result = None
+                raise
+            return result
         finally:
             self._add_rhs_detail_seconds(
                 "balance_ph_seconds", perf_counter() - started
@@ -1033,10 +1147,34 @@ class SideBalancedInverse:
     def _apply_q_callback(self, source: PETSc.Vec) -> PETSc.Vec:
         if self._owner_transfer is None or self._p4_factor is None:
             raise RuntimeError("BAL_H coarse components have been destroyed")
+        call_history = (
+            self._active_p4_call_records
+            if self._apply_in_progress
+            else self._direct_p4_call_records
+        )
+        if (
+            self._diagnostic_callback is not None
+            and call_history is not None
+            and len(call_history) >= 2 * (self._max_it + 1)
+        ):
+            raise RuntimeError(
+                "BAL_H p4 diagnostic call history exceeded its KSP bound"
+            )
         self._q_count += 1
+        if self._apply_in_progress:
+            self._active_pc_q_count += 1
+            q_call_index = self._active_pc_q_count
+        else:
+            q_call_index = len(self._direct_p4_call_records) + 1
         self._ph_total_count += 1
+        self._emit_diagnostic(
+            "Q_input",
+            vectors={"source": source},
+            q_call_index=int(q_call_index),
+        )
         ph_started = perf_counter()
         ph_transfer_timing: dict[str, float] = {}
+        coarse_rhs = None
         try:
             kwargs = (
                 {"timing": ph_transfer_timing} if self._detailed_timing else {}
@@ -1050,14 +1188,30 @@ class SideBalancedInverse:
         augmented_rhs = None
         augmented_solution = None
         coarse_solution = None
+        solution_norm: float | None = None
+        solution_norm_status = "not_measured_no_solution"
+        capture_port_values = False
         p4_timing: dict[str, float] = {}
         factor_solve_before = _p4_solve_count(self._p4_factor)
         try:
+            self._emit_diagnostic(
+                "PH_Q_output",
+                vectors={"result": coarse_rhs},
+                q_call_index=int(q_call_index),
+            )
             if self._p4_inverse_backend == "cell_condensed":
-                coarse_solution = self._p4_factor.apply(
-                    coarse_rhs,
-                    timing=p4_timing if self._detailed_timing else None,
-                )
+                capture_port_values = self._emit_diagnostic(
+                    "p4_rhs",
+                    vectors={"rhs": coarse_rhs},
+                    q_call_index=int(q_call_index),
+                    rhs_global_size=int(coarse_rhs.getSize()),
+                ) is True
+                apply_kwargs: dict[str, Any] = {
+                    "timing": p4_timing if self._detailed_timing else None
+                }
+                if capture_port_values:
+                    apply_kwargs["capture_port_values"] = True
+                coarse_solution = self._p4_factor.apply(coarse_rhs, **apply_kwargs)
             else:
                 allocation_started = perf_counter()
                 try:
@@ -1070,11 +1224,21 @@ class SideBalancedInverse:
                         perf_counter() - allocation_started,
                     )
             if self._p4_inverse_backend == "full":
+                capture_port_values = self._emit_diagnostic(
+                    "p4_rhs",
+                    vectors={"rhs": augmented_rhs},
+                    q_call_index=int(q_call_index),
+                    rhs_global_size=int(augmented_rhs.getSize()),
+                ) is True
                 solve_kwargs: dict[str, Any] = {
                     "residual_tolerance": 1.0e-10
                 }
                 if self._detailed_timing:
                     solve_kwargs["timing"] = p4_timing
+                if self._diagnostic_callback is not None:
+                    solve_kwargs["diagnostic_audit"] = True
+                if capture_port_values:
+                    solve_kwargs["capture_port_values"] = True
                 self._p4_factor.solve_with_refinement(
                     augmented_rhs,
                     augmented_solution,
@@ -1090,8 +1254,34 @@ class SideBalancedInverse:
                         "q_augmented_rhs_extract_seconds",
                         perf_counter() - extract_started,
                     )
+            if self._diagnostic_callback is not None and coarse_solution is not None:
+                solution_norm = float(coarse_solution.norm())
+                solution_norm_status = "measured"
+            if capture_port_values:
+                last_solve = self._p4_factor.diagnostics.get("last_solve", {})
+                self._emit_diagnostic(
+                    "p4_port_solution",
+                    q_call_index=int(q_call_index),
+                    port_solution_complex=last_solve.get(
+                        "port_solution_complex"
+                    ),
+                    port_rhs_complex=last_solve.get("port_rhs_complex"),
+                    port_projection_complex=last_solve.get(
+                        "port_projection_complex"
+                    ),
+                    port_values_available=(
+                        isinstance(last_solve.get("port_solution_complex"), list)
+                    ),
+                )
+            self._emit_diagnostic(
+                "p4_recovered_solution",
+                vectors={"solution": coarse_solution},
+                q_call_index=int(q_call_index),
+                solution_global_size=int(coarse_solution.getSize()),
+            )
             p_started = perf_counter()
             p_transfer_timing: dict[str, float] = {}
+            result = None
             try:
                 kwargs = (
                     {"timing": p_transfer_timing} if self._detailed_timing else {}
@@ -1100,6 +1290,19 @@ class SideBalancedInverse:
                     coarse_solution,
                     **kwargs,
                 )
+                try:
+                    self._emit_diagnostic(
+                        "P_output",
+                        vectors={"result": result},
+                        q_call_index=int(q_call_index),
+                    )
+                except BaseException:
+                    try:
+                        result.destroy()
+                    except BaseException:  # noqa: BLE001, S110 - preserve callback error
+                        pass
+                    result = None
+                    raise
             finally:
                 self._add_rhs_detail_seconds(
                     "q_p_seconds", perf_counter() - p_started
@@ -1108,6 +1311,24 @@ class SideBalancedInverse:
             self._p_count += 1
             return result
         finally:
+            # Release every Vec before reading or appending optional audit data;
+            # diagnostic failures must never strand factor-work vectors.
+            active_error = sys.exc_info()[1]
+            cleanup_error: BaseException | None = None
+            for vector in (
+                coarse_rhs,
+                augmented_rhs,
+                augmented_solution,
+                coarse_solution,
+            ):
+                if vector is not None:
+                    try:
+                        vector.destroy()
+                    except BaseException as error:  # noqa: BLE001
+                        if cleanup_error is None:
+                            cleanup_error = error
+            if cleanup_error is not None and active_error is None:
+                raise cleanup_error
             if self._detailed_timing:
                 if "factor_solve_seconds" in p4_timing:
                     self._add_rhs_detail_seconds(
@@ -1153,13 +1374,125 @@ class SideBalancedInverse:
             actual_backsolves = max(factor_solve_after - factor_solve_before, 0)
             self._p4_backsolve_count += actual_backsolves
             self._p4_refinement_count += max(actual_backsolves - 1, 0)
-            coarse_rhs.destroy()
-            if augmented_rhs is not None:
-                augmented_rhs.destroy()
-            if augmented_solution is not None:
-                augmented_solution.destroy()
-            if coarse_solution is not None:
-                coarse_solution.destroy()
+            if self._diagnostic_callback is not None:
+                try:
+                    factor_diagnostics = self._p4_factor.diagnostics
+                    last_solve = factor_diagnostics.get("last_solve", {})
+                except BaseException as diagnostic_error:  # noqa: BLE001
+                    last_solve = {
+                        "diagnostic_read_error": {
+                            "type": type(diagnostic_error).__name__,
+                            "message": str(diagnostic_error),
+                        }
+                    }
+                physical_rhs_norm = (
+                    last_solve.get(
+                        "physical_rhs_norm",
+                        last_solve.get("rhs_norm"),
+                    )
+                    if isinstance(last_solve, Mapping)
+                    else None
+                )
+                scalar_summary = {
+                    key: last_solve[key]
+                    for key in (
+                        "status",
+                        "rhs_norm",
+                        "physical_rhs_norm",
+                        "residual_norm",
+                        "relative_residual",
+                        "physical_relative_residual",
+                        "augmented_relative_residual",
+                        "augmented_gate_passed",
+                        "augmented_rhs_norm",
+                        "port_residual_norm",
+                        "backsolve_count",
+                        "refinement_count",
+                    )
+                    if isinstance(last_solve, Mapping)
+                    and isinstance(
+                        last_solve.get(key),
+                        (int, float, bool, str),
+                    )
+                }
+                scalar_summary.update(
+                    {
+                        "physical_rhs_norm": physical_rhs_norm,
+                        "solution_norm": solution_norm,
+                        "solution_norm_status": solution_norm_status,
+                    }
+                )
+                call_record = {
+                    "p4_call_index": (
+                        len(self._active_p4_call_records or []) + 1
+                        if self._apply_in_progress
+                        else len(self._direct_p4_call_records) + 1
+                    ),
+                    "scope": (
+                        "side_apply"
+                        if self._apply_in_progress
+                        else "independent_q_replay"
+                    ),
+                    "pc_apply_index": (
+                        self._active_pc_index
+                        if self._apply_in_progress
+                        else None
+                    ),
+                    "q_call_index": int(q_call_index),
+                    "ksp_iteration": (
+                        int(self._active_ksp_iteration)
+                        if self._apply_in_progress
+                        and self._active_ksp_iteration is not None
+                        else None
+                    ),
+                    "backend": self._p4_inverse_backend,
+                    "factor_solve_count_delta": int(actual_backsolves),
+                    "last_solve_scalar_summary": scalar_summary,
+                    "factor_solve_seconds": p4_timing.get(
+                        "factor_solve_seconds"
+                    ),
+                    "factor_backsolve_seconds": p4_timing.get(
+                        "factor_backsolve_seconds"
+                    ),
+                    "solution_recovery_seconds": p4_timing.get(
+                        "solution_recovery_seconds"
+                    ),
+                    "physical_relative_residual": (
+                        last_solve.get("physical_relative_residual")
+                        if isinstance(last_solve, Mapping)
+                        else None
+                    ),
+                    "physical_rhs_norm": physical_rhs_norm,
+                    "solution_norm": solution_norm,
+                    "solution_norm_status": solution_norm_status,
+                    "augmented_relative_residual": (
+                        last_solve.get(
+                            "augmented_relative_residual",
+                            last_solve.get("relative_residual"),
+                        )
+                        if isinstance(last_solve, Mapping)
+                        else None
+                    ),
+                    "status": (
+                        last_solve.get("status")
+                        if isinstance(last_solve, Mapping)
+                        else None
+                    ),
+                    "augmented_gate_passed": (
+                        last_solve.get("augmented_gate_passed")
+                        if isinstance(last_solve, Mapping)
+                        else None
+                    ),
+                    "port_residual_norm": (
+                        last_solve.get("port_residual_norm")
+                        if isinstance(last_solve, Mapping)
+                        else None
+                    ),
+                }
+                if self._active_p4_call_records is not None:
+                    self._active_p4_call_records.append(call_record)
+                else:
+                    self._direct_p4_call_records.append(call_record)
 
     def _apply_balanced_pc(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
         if self._destroyed or self._full_action is None or self._condensed is None:
@@ -1169,6 +1502,10 @@ class SideBalancedInverse:
         if target.getSize() != self.operator.getSize()[0]:
             raise ValueError("BAL_H side PC target has the wrong active size")
         self._pc_apply_count += 1
+        self._active_apply_pc_count += 1
+        self._active_pc_index = self._active_apply_pc_count
+        self._active_pc_q_count = 0
+        self._emit_diagnostic("PC_input", vectors={"source": source})
         full_source = None
         full_output = None
         active_output = None
@@ -1227,6 +1564,7 @@ class SideBalancedInverse:
                 full_output,
             )
             active_output.copy(target)
+            self._emit_diagnostic("PC_output", vectors={"target": target})
         finally:
             if full_source is not None:
                 full_source.destroy()
@@ -1234,6 +1572,8 @@ class SideBalancedInverse:
                 full_output.destroy()
             if active_output is not None:
                 active_output.destroy()
+            self._active_pc_index = None
+            self._active_pc_q_count = 0
 
     def _explicit_residual(self, source: PETSc.Vec, target: PETSc.Vec) -> dict[str, Any]:
         if self._operator is None:
@@ -1444,10 +1784,12 @@ class SideBalancedInverse:
         if self._apply_in_progress:
             raise RuntimeError("BAL_H side inverse apply is already in progress")
         self._apply_in_progress = True
+        self._active_ksp_iteration = None
         try:
             self._apply_impl(source, target)
         finally:
             self._apply_in_progress = False
+            self._active_ksp_iteration = None
 
     def _apply_impl(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
         """Apply the side inverse into ``target`` and record one RHS audit."""
@@ -1467,6 +1809,13 @@ class SideBalancedInverse:
             raise ValueError("BAL_H side inverse target has the wrong size")
         target.set(0.0)
         self._apply_count += 1
+        self._active_apply_pc_count = 0
+        self._active_pc_index = None
+        self._active_pc_q_count = 0
+        self._active_ksp_iteration = None
+        self._active_p4_call_records = (
+            [] if self._diagnostic_callback is not None else None
+        )
         if self._iteration_history is not None:
             self._iteration_history.clear()
         before = self._count_snapshot()
@@ -1589,6 +1938,16 @@ class SideBalancedInverse:
                     if self._iteration_history is not None
                     else {}
                 ),
+                **(
+                    {
+                        "p4_call_history": list(self._active_p4_call_records),
+                        "p4_call_summary": self._p4_call_summary(
+                            self._active_p4_call_records
+                        ),
+                    }
+                    if self._active_p4_call_records is not None
+                    else {}
+                ),
             }
         except BaseException as exc:
             if solve_started and self._ksp is not None:
@@ -1631,6 +1990,16 @@ class SideBalancedInverse:
                     if self._iteration_history is not None
                     else {}
                 ),
+                **(
+                    {
+                        "p4_call_history": list(self._active_p4_call_records),
+                        "p4_call_summary": self._p4_call_summary(
+                            self._active_p4_call_records
+                        ),
+                    }
+                    if self._active_p4_call_records is not None
+                    else {}
+                ),
             }
             if self._last_coupling_failure is not None:
                 record.update(dict(self._last_coupling_failure))
@@ -1654,6 +2023,10 @@ class SideBalancedInverse:
             raise
         finally:
             self._pending_pc_exception = None
+            self._active_pc_index = None
+            self._active_pc_q_count = 0
+            self._active_ksp_iteration = None
+            self._active_p4_call_records = None
 
         self._total_iterations += int(iterations)
         self._total_apply_seconds += elapsed
@@ -1751,6 +2124,18 @@ class SideBalancedInverse:
             "approximate_nonlinear_inverse": True,
             "counts": self._count_snapshot(),
             "last_apply": dict(self._last_apply),
+            **(
+                {
+                    "independent_p4_call_history": list(
+                        self._direct_p4_call_records
+                    ),
+                    "independent_p4_call_summary": self._p4_call_summary(
+                        self._direct_p4_call_records
+                    ),
+                }
+                if self._diagnostic_callback is not None
+                else {}
+            ),
             "p4_factor": p4_diagnostics,
             "destroyed": bool(self._destroyed),
             "ksp_destroyed": not bool(nested_ksp_live),
@@ -1820,6 +2205,7 @@ def build_side_balanced_inverse(
     audit_callback: Callable[[dict[str, Any]], None] | None = None,
     detailed_timing: bool = False,
     record_iteration_history: bool = False,
+    diagnostic_callback: Callable[[Mapping[str, Any]], None] | None = None,
     lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
     performance_profile: str | None = None,
     p4_inverse_backend: str = "full",
@@ -1914,6 +2300,7 @@ def build_side_balanced_inverse(
             audit_callback=audit_callback,
             detailed_timing=detailed_timing,
             record_iteration_history=record_iteration_history,
+            diagnostic_callback=diagnostic_callback,
             p4_inverse_backend=p4_inverse_backend,
         )
         full_action = None

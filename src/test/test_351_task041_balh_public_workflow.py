@@ -799,10 +799,10 @@ def test_task041_fixed_p4_backend_pair_is_explicit_and_5nm_scoped():
     assert pair_contract["registered_memory_cap_source"] == (
         "review_report_v2_section_5_explicit_cap"
     )
-    assert pair_contract["memory_cap_bytes"] == 68_719_476_736
-    assert pair_contract["warning_memory_bytes"] == 61_847_529_062
+    assert pair_contract["memory_cap_bytes"] == 53_221_163_008
+    assert pair_contract["warning_memory_bytes"] == 47_899_046_707
     assert pair_contract["memory_cap_source"] == (
-        "user_authorized_single_5nm_fixed8_p4_backend_pair_64_gib"
+        "review_report_v2_section_5_explicit_cap"
     )
     assert pair_contract["ledger"]["schema"] == (
         "task041.review_v5.r1_load_ledger.v1"
@@ -1178,6 +1178,215 @@ def test_task041_pair_layout_matrix_source_rejects_unknown_or_missing_evidence()
             missing_condensed_matrix,
             "cell_condensed",
         )
+
+
+@pytest.mark.parametrize(
+    "port_rhs",
+    (
+        np.asarray([0.0 + 0.0j]),
+        np.asarray([0.3 - 0.2j]),
+    ),
+    ids=("zero-port-rhs", "nonzero-port-rhs"),
+)
+def test_task041_full_p4_augmented_residual_matches_original_block_matrix(
+    port_rhs: np.ndarray,
+):
+    # Tiny complex block fixture for M = [[A0, -T], [-D, I]].  The physical
+    # action is its Schur complement A0 - T D; compare the diagnostic formula
+    # against an independent dense multiplication of the original block.
+    a0 = np.asarray(
+        [[2.0 + 0.5j, -0.2 + 0.1j], [0.4 - 0.3j, 1.7 + 0.2j]],
+        dtype=np.complex128,
+    )
+    traction = np.asarray([[0.7 - 0.1j], [-0.3 + 0.25j]], dtype=np.complex128)
+    projection = np.asarray([[0.2 + 0.15j, -0.1 + 0.3j]], dtype=np.complex128)
+    fe_rhs = np.asarray([0.8 + 0.2j, -0.4 + 0.7j], dtype=np.complex128)
+    fe_solution = np.asarray([0.6 - 0.2j, 0.1 + 0.5j], dtype=np.complex128)
+    port_solution = np.asarray([-0.25 + 0.4j], dtype=np.complex128)
+
+    physical_action = a0 - traction @ projection
+    bare_full_residual = fe_rhs - physical_action @ fe_solution
+    effective_condensed_residual = (
+        fe_rhs + traction @ port_rhs - physical_action @ fe_solution
+    )
+    port_residual = port_rhs + projection @ fe_solution - port_solution
+    full_diagnostic_fe_residual = bare_full_residual + traction @ (
+        port_rhs - port_residual
+    )
+    condensed_diagnostic_fe_residual = (
+        effective_condensed_residual - traction @ port_residual
+    )
+
+    augmented_matrix = np.block(
+        [
+            [a0, -traction],
+            [-projection, np.eye(1, dtype=np.complex128)],
+        ]
+    )
+    augmented_rhs = np.concatenate((fe_rhs, port_rhs))
+    augmented_solution = np.concatenate((fe_solution, port_solution))
+    block_residual = augmented_rhs - augmented_matrix @ augmented_solution
+
+    np.testing.assert_allclose(full_diagnostic_fe_residual, block_residual[:2])
+    np.testing.assert_allclose(
+        condensed_diagnostic_fe_residual,
+        block_residual[:2],
+    )
+    np.testing.assert_allclose(port_residual, block_residual[2:])
+
+
+@pytest.mark.parametrize(
+    "port_solution_perturbation",
+    (0.0 + 0.0j, 0.12 - 0.07j),
+    ids=("exact-port-solution", "perturbed-port-solution"),
+)
+def test_task041_full_p4_solve_audit_matches_original_block_matrix_zero_port_rhs(
+    monkeypatch,
+    port_solution_perturbation: complex,
+):
+    from src.solvers import physical_balanced_physical_operator as p4_operator
+
+    class TinyVec:
+        def __init__(self, values):
+            self.values = np.asarray(values, dtype=np.complex128).copy()
+
+        def duplicate(self):
+            return TinyVec(np.zeros_like(self.values))
+
+        def copy(self, target):
+            target.values[:] = self.values
+
+        def axpy(self, alpha, other):
+            self.values += alpha * other.values
+
+        def norm(self):
+            return float(np.linalg.norm(self.values))
+
+        def getArray(self, readonly=False):
+            return self.values
+
+        def getOwnershipRange(self):
+            return (0, int(self.values.size))
+
+        def getSize(self):
+            return int(self.values.size)
+
+        def getLocalSize(self):
+            return int(self.values.size)
+
+        def getComm(self):
+            return TinyComm()
+
+        def setValues(self, rows, values, *, addv):
+            assert addv == p4_operator.PETSc.InsertMode.ADD_VALUES
+            self.values[np.asarray(rows, dtype=np.int64)] += values
+
+        def assemble(self):
+            pass
+
+        def destroy(self):
+            pass
+
+    class TinyMPIComm:
+        def Allreduce(self, source, target, op=None):
+            target[:] = source
+
+    class TinyComm:
+        def tompi4py(self):
+            return TinyMPIComm()
+
+    class TinyMatrix:
+        def __init__(self, values=None):
+            self.values = values
+            self.comm = TinyComm()
+
+        def getComm(self):
+            return self.comm
+
+        def mult(self, source, target):
+            target.values[:] = self.values @ source.values
+
+    class TinyFactor:
+        def __init__(self, solution_values):
+            self.solution_values = solution_values
+
+        def solve(self, rhs, solution):
+            solution.values[:] = self.solution_values
+
+    a0 = np.asarray(
+        [[2.0 + 0.5j, -0.2 + 0.1j], [0.4 - 0.3j, 1.7 + 0.2j]],
+        dtype=np.complex128,
+    )
+    traction = np.asarray(
+        [[0.7 - 0.1j], [-0.3 + 0.25j]], dtype=np.complex128
+    )
+    projection = np.asarray(
+        [[0.2 + 0.15j, -0.1 + 0.3j]], dtype=np.complex128
+    )
+    fe_solution = np.asarray([0.6 - 0.2j, 0.1 + 0.5j], dtype=np.complex128)
+    port_solution = projection @ fe_solution
+    augmented_matrix = np.block(
+        [
+            [a0, -traction],
+            [-projection, np.eye(1, dtype=np.complex128)],
+        ]
+    )
+    augmented_solution = np.concatenate((fe_solution, port_solution))
+    augmented_rhs = augmented_matrix @ augmented_solution
+    assert augmented_rhs[-1] == pytest.approx(0.0j)
+    solved_augmented_solution = augmented_solution.copy()
+    solved_augmented_solution[-1] += port_solution_perturbation
+
+    mode = SimpleNamespace(
+        projection_rows=np.asarray([0, 1], dtype=np.int64),
+        projection_values=np.conjugate(projection[0]),
+        denominator=1.0 + 0.0j,
+        traction_rows=np.asarray([0, 1], dtype=np.int64),
+        traction_values=traction[:, 0],
+    )
+    physical_action = SimpleNamespace(
+        full_rows=2,
+        modes=[mode],
+        action=SimpleNamespace(modes=[mode]),
+        matrix=TinyMatrix(a0 - traction @ projection),
+    )
+    matrix = TinyMatrix()
+
+    def extract_fe_solution(self, vector):
+        return TinyVec(vector.values[: self.full_rows])
+
+    monkeypatch.setattr(P4ExactFactor, "extract_fe_solution", extract_fe_solution)
+    p4 = P4ExactFactor(
+        physical_action=physical_action,
+        matrix=matrix,
+        factor=TinyFactor(solved_augmented_solution),
+        factor_events=[],
+    )
+    audit = p4.solve_with_refinement(
+        TinyVec(augmented_rhs),
+        TinyVec(np.zeros_like(augmented_solution)),
+        diagnostic_audit=True,
+    )
+
+    direct_residual = (
+        augmented_rhs - augmented_matrix @ solved_augmented_solution
+    )
+    np.testing.assert_allclose(
+        audit["augmented_fe_residual_norm"],
+        np.linalg.norm(direct_residual[:2]),
+        atol=1.0e-14,
+    )
+    np.testing.assert_allclose(
+        audit["port_residual_norm"],
+        np.linalg.norm(direct_residual[2:]),
+        atol=1.0e-14,
+    )
+    np.testing.assert_allclose(
+        audit["augmented_residual_norm"],
+        np.linalg.norm(direct_residual),
+        atol=1.0e-14,
+    )
+    assert audit["augmented_gate_passed"] is (port_solution_perturbation == 0.0j)
 
 
 def test_task041_pair_supervisor_recomputes_numeric_ratios_from_norms():

@@ -240,6 +240,7 @@ class _CellCondensedP4:
         self.apply_count = 0
         self.last_port_solution = np.empty(0, dtype=np.complex128)
         self.last_timing: dict[str, float | None] = {}
+        self.last_physical_rhs_norm: float | None = None
 
     @staticmethod
     def _copy(source: PETSc.Vec) -> PETSc.Vec:
@@ -255,6 +256,7 @@ class _CellCondensedP4:
     ) -> PETSc.Vec:
         self.apply_count += 1
         self.solve_count += 1
+        self.last_physical_rhs_norm = float(source.norm())
         self.last_timing = {
             "storage_rhs_reduction_seconds": 1.0e-4,
             "factor_backsolve_seconds": 2.0e-4,
@@ -270,7 +272,10 @@ class _CellCondensedP4:
     def diagnostics(self) -> dict[str, object]:
         return {
             "factor_solve_count": self.solve_count,
-            "last_solve": {"backsolve_count": 1},
+            "last_solve": {
+                "backsolve_count": 1,
+                "physical_rhs_norm": self.last_physical_rhs_norm,
+            },
         }
 
     def destroy(self) -> None:
@@ -545,6 +550,7 @@ def _build_fixture(
     detailed_timing: bool = False,
     record_iteration_history: bool = False,
     p4_inverse_backend: str = "full",
+    diagnostic_callback=None,
 ) -> tuple[SideBalancedInverse, dict[str, object]]:
     operator, operator_context = _scale_matrix(size, 2.0)
     condensed = _IdentityCondensed(size)
@@ -566,6 +572,7 @@ def _build_fixture(
         h6,
         checkpoint_callback=checkpoint_callback,
         audit_callback=audit_callback,
+        diagnostic_callback=diagnostic_callback,
         detailed_timing=detailed_timing,
         record_iteration_history=record_iteration_history,
         p4_inverse_backend=p4_inverse_backend,
@@ -797,6 +804,7 @@ def test_side_inverse_condensed_q_records_timing_and_solve_delta():
     source = _new_vector(operator, np.asarray([1.0 + 0.2j, -0.4 + 0.7j]))
     result = None
     try:
+        assert inverse._diagnostic_callback is None
         result = inverse._apply_q_callback(source)
         assert p4_factor.apply_count == 1
         assert p4_factor.solve_count == 1
@@ -820,6 +828,123 @@ def test_side_inverse_condensed_q_records_timing_and_solve_delta():
         inverse.destroy()
         operator.destroy()
     assert p4_factor.destroy_count == 1
+
+
+def test_side_inverse_opt_in_diagnostic_scope_labels_and_p4_norms():
+    events: list[dict[str, object]] = []
+
+    def collect(record):
+        events.append(record)
+        return False
+
+    p4_factor = _CellCondensedP4(2)
+    inverse, owned = _build_fixture(
+        p4_factor=p4_factor,
+        p4_inverse_backend="cell_condensed",
+        diagnostic_callback=collect,
+    )
+    operator = owned["operator"]
+    source = _new_vector(operator, np.asarray([1.0 + 0.2j, -0.4 + 0.7j]))
+    result = None
+    try:
+        result = inverse._apply_q_callback(source)
+        replay_input = next(event for event in events if event["event"] == "Q_input")
+        assert replay_input["scope"] == "independent_replay"
+        assert replay_input["q_call_index"] == 1
+        assert "pc_apply_index" not in replay_input
+        assert "ksp_iteration" not in replay_input
+        ph_q_output = next(
+            event for event in events if event["event"] == "PH_Q_output"
+        )
+        p_output = next(event for event in events if event["event"] == "P_output")
+        assert ph_q_output["q_call_index"] == 1
+        assert p_output["q_call_index"] == 1
+
+        call = inverse.diagnostics["independent_p4_call_history"][0]
+        assert call["ksp_iteration"] is None
+        assert call["physical_rhs_norm"] == pytest.approx(float(source.norm()))
+        assert call["solution_norm"] == pytest.approx(float(source.norm()))
+        assert call["solution_norm_status"] == "measured"
+
+        inverse._apply_in_progress = True
+        inverse._active_ksp_iteration = 4
+        inverse._active_pc_index = 3
+        inverse._emit_diagnostic("PC_input")
+        pc_input = events[-1]
+        assert pc_input["scope"] == "side_apply"
+        assert pc_input["pc_apply_index"] == 3
+        assert "q_call_index" not in pc_input
+
+        inverse._emit_diagnostic("Q_input", q_call_index=2)
+        q_input = events[-1]
+        assert q_input["scope"] == "side_apply"
+        assert q_input["pc_apply_index"] == 3
+        assert q_input["q_call_index"] == 2
+        assert q_input["ksp_iteration"] == 4
+
+        inverse._active_pc_index = None
+        inverse._active_pc_q_count = 0
+        inverse._monitor(None, 5, 0.25)
+        monitor = events[-1]
+        assert monitor["event"] == "ksp_monitor"
+        assert monitor["scope"] == "side_apply"
+        assert monitor["ksp_iteration"] == 5
+        assert "pc_apply_index" not in monitor
+        assert "q_call_index" not in monitor
+    finally:
+        inverse._apply_in_progress = False
+        inverse._active_ksp_iteration = None
+        if result is not None:
+            result.destroy()
+        source.destroy()
+        inverse.destroy()
+        operator.destroy()
+
+
+def test_side_inverse_diagnostic_callback_failure_destroys_borrowed_vecs():
+    class TrackedVec:
+        def __init__(self, vector):
+            self.vector = vector
+            self.destroyed = False
+
+        def destroy(self):
+            self.destroyed = True
+            self.vector.destroy()
+
+    tracked: list[TrackedVec] = []
+
+    def fail_after_transfer(record):
+        if record["event"] == "PH_Q_output":
+            raise RuntimeError("injected diagnostic callback failure")
+        return False
+
+    p4_factor = _CellCondensedP4(2)
+    inverse, owned = _build_fixture(
+        p4_factor=p4_factor,
+        p4_inverse_backend="cell_condensed",
+        diagnostic_callback=fail_after_transfer,
+    )
+    operator = owned["operator"]
+    source = _new_vector(operator, np.asarray([1.0 + 0.2j, -0.4 + 0.7j]))
+    transfer = owned["transfer"]
+    original_apply_adjoint = transfer.apply_adjoint
+
+    def tracked_apply_adjoint(vector, *, timing=None):
+        borrowed = TrackedVec(original_apply_adjoint(vector, timing=timing))
+        tracked.append(borrowed)
+        return borrowed
+
+    transfer.apply_adjoint = tracked_apply_adjoint
+    try:
+        with pytest.raises(RuntimeError, match="diagnostic callback failure"):
+            inverse._apply_q_callback(source)
+        assert len(tracked) == 1
+        assert tracked[0].destroyed is True
+        assert p4_factor.apply_count == 0
+    finally:
+        source.destroy()
+        inverse.destroy()
+        operator.destroy()
 
 
 @pytest.mark.parametrize("failure_event", ["full_action_ready", "adapter_ksp_ready"])

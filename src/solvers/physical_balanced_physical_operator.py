@@ -1005,11 +1005,12 @@ class P4CondensedExactFactor:
 
     def _residual_state(
         self,
-       rhs: PETSc.Vec,
+        rhs: PETSc.Vec,
         solution: PETSc.Vec,
         port_rhs: np.ndarray,
         port_solution: np.ndarray,
-       timing: MutableMapping[str, float] | None = None,
+        timing: MutableMapping[str, float] | None = None,
+        capture_port_values: bool = False,
     ) -> tuple[dict[str, Any], PETSc.Vec, np.ndarray]:
         _require_vector_layout(rhs, self.full_rows, "p4 physical FE RHS")
         _require_vector_layout(solution, self.full_rows, "p4 physical solution")
@@ -1097,6 +1098,23 @@ class P4CondensedExactFactor:
                 "residual_tolerance": self.residual_tolerance,
                 "native_action_matrix_mult_seconds": float(matrix_mult_seconds),
             }
+            if capture_port_values:
+                audit.update(
+                    {
+                        "port_solution_complex": [
+                            [float(value.real), float(value.imag)]
+                            for value in port_solution
+                        ],
+                        "port_rhs_complex": [
+                            [float(value.real), float(value.imag)]
+                            for value in port_rhs
+                        ],
+                        "port_projection_complex": [
+                            [float(value.real), float(value.imag)]
+                            for value in d_solution
+                        ],
+                    }
+                )
             return audit, augmented_residual, port_residual
         except BaseException:
             if augmented_residual is not None:
@@ -1137,6 +1155,7 @@ class P4CondensedExactFactor:
         *,
         port_rhs: np.ndarray | None = None,
         timing: MutableMapping[str, float] | None = None,
+        capture_port_values: bool = False,
     ) -> PETSc.Vec:
         """Solve full FE storage and replicated appended-port RHS together."""
 
@@ -1167,6 +1186,7 @@ class P4CondensedExactFactor:
                             values,
                             port_solution,
                             timing=timing,
+                            capture_port_values=capture_port_values,
                         )
                     finally:
                         residual_elapsed = time.perf_counter() - residual_started
@@ -1369,6 +1389,8 @@ class P4ExactFactor:
         *,
         residual_tolerance: float = 1.0e-10,
         timing: MutableMapping[str, float] | None = None,
+        diagnostic_audit: bool = False,
+        capture_port_values: bool = False,
     ) -> dict[str, Any]:
         _require_vector_layout(rhs, self.augmented_rows, "p4 augmented RHS")
         _require_vector_layout(solution, self.augmented_rows, "p4 augmented solution")
@@ -1395,6 +1417,7 @@ class P4ExactFactor:
         fe_solution = None
         physical_output = None
         physical_residual = None
+        augmented_fe_residual = None
         physical_relative = np.inf
         physical_residual_norm = np.inf
         try:
@@ -1415,6 +1438,9 @@ class P4ExactFactor:
                     physical_output.destroy()
                 if physical_residual is not None:
                     physical_residual.destroy()
+                if augmented_fe_residual is not None:
+                    augmented_fe_residual.destroy()
+                    augmented_fe_residual = None
                 residual_started = time.perf_counter()
                 try:
                     fe_solution = self.extract_fe_solution(solution)
@@ -1465,6 +1491,112 @@ class P4ExactFactor:
                         "refinement_count": max(backsolves - 1, 0),
                         "same_factor_refinement": backsolves > 1,
                     }
+                    if diagnostic_audit:
+                        row_start, row_end = (
+                            int(value)
+                            for value in solution.getOwnershipRange()
+                        )
+                        local_solution = np.asarray(
+                            solution.getArray(readonly=True),
+                            dtype=np.complex128,
+                        )
+                        local_rhs = np.asarray(
+                            rhs.getArray(readonly=True),
+                            dtype=np.complex128,
+                        )
+                        local_tail = np.zeros(
+                            (2, self.n_aux), dtype=np.complex128
+                        )
+                        for index in range(self.n_aux):
+                            row = self.full_rows + index
+                            if row_start <= row < row_end:
+                                local_tail[0, index] = local_solution[
+                                    row - row_start
+                                ]
+                                local_tail[1, index] = local_rhs[
+                                    row - row_start
+                                ]
+                        port_values = np.empty_like(local_tail)
+                        self.matrix.getComm().tompi4py().Allreduce(
+                            local_tail,
+                            port_values,
+                            op=MPI.SUM,
+                        )
+                        port_solution = port_values[0]
+                        port_rhs = port_values[1]
+                        d_solution = _physical_mode_projection(
+                            fe_solution,
+                            self.physical_action.action.modes,
+                        )
+                        port_residual = (
+                            port_rhs
+                            + d_solution
+                            - port_solution
+                        )
+                        augmented_fe_residual = physical_residual.duplicate()
+                        physical_residual.copy(augmented_fe_residual)
+                        # physical_residual starts from bare b - A_phys u;
+                        # the full block's effective RHS contributes T g_p,
+                        # and its bottom-row residual subtracts T r_p.
+                        _add_physical_mode_values(
+                            augmented_fe_residual,
+                            self.physical_action.action.modes,
+                            port_rhs - port_residual,
+                            scale=1.0,
+                        )
+                        augmented_fe_residual.assemble()
+                        augmented_fe_norm = float(
+                            augmented_fe_residual.norm()
+                        )
+                        port_residual_norm = float(
+                            np.linalg.norm(port_residual)
+                        )
+                        augmented_residual_norm = float(
+                            np.hypot(augmented_fe_norm, port_residual_norm)
+                        )
+                        augmented_rhs_norm = float(rhs.norm())
+                        augmented_relative = (
+                            augmented_residual_norm / augmented_rhs_norm
+                            if augmented_rhs_norm > 0.0
+                            else augmented_residual_norm
+                        )
+                        self._last_solve_audit.update(
+                            {
+                                "augmented_residual_source": (
+                                    "existing_A4_residual_effective_rhs_minus_traction_port_residual"
+                                ),
+                                "augmented_fe_residual_norm": augmented_fe_norm,
+                                "port_residual_norm": port_residual_norm,
+                                "augmented_residual_norm": augmented_residual_norm,
+                                "augmented_rhs_norm": augmented_rhs_norm,
+                                "augmented_relative_residual": augmented_relative,
+                                "augmented_residual_finite": bool(
+                                    np.isfinite(augmented_relative)
+                                ),
+                                "augmented_gate_passed": bool(
+                                    np.isfinite(augmented_relative)
+                                    and augmented_relative
+                                    <= float(residual_tolerance)
+                                ),
+                            }
+                        )
+                        if capture_port_values:
+                            self._last_solve_audit.update(
+                                {
+                                    "port_solution_complex": [
+                                        [float(value.real), float(value.imag)]
+                                        for value in port_solution
+                                    ],
+                                    "port_rhs_complex": [
+                                        [float(value.real), float(value.imag)]
+                                        for value in port_rhs
+                                    ],
+                                    "port_projection_complex": [
+                                        [float(value.real), float(value.imag)]
+                                        for value in d_solution
+                                    ],
+                                }
+                            )
                 finally:
                     _timing_add(
                         timing,
@@ -1510,6 +1642,8 @@ class P4ExactFactor:
                 physical_output.destroy()
             if physical_residual is not None:
                 physical_residual.destroy()
+            if augmented_fe_residual is not None:
+                augmented_fe_residual.destroy()
             if correction is not None:
                 correction.destroy()
 
