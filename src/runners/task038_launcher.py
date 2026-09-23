@@ -15,7 +15,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
-from benchmarks.task034_wsl_resources import resource_authority_sample
+from benchmarks.task034_wsl_resources import (
+    current_cgroup_path,
+    resource_authority_sample,
+)
 from benchmarks.watchdog_process_control import (
     terminate_process_tree,
     worker_process_group_popen_kwargs,
@@ -1106,6 +1109,7 @@ def _reserve_blr_stage_from_ledger(
     prerequisite: Mapping[str, Any] | None = None,
     bug_replay_limit: int = 1,
     authorized_performance_repeat: Mapping[str, Any] | None = None,
+    v28_startup_scope_recovery: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Share replay, reservation, and settlement metadata across BLR batches."""
 
@@ -1170,43 +1174,73 @@ def _reserve_blr_stage_from_ledger(
             raise InputError(f"{error_prefix} BLR stage {stage} cannot replay the same source SHA")
         if int(ledger.get("unique_bug_replay_count", 0)) >= bug_replay_limit:
             raise InputError(f"{error_prefix} BLR batch has exhausted its one implementation-bug replay")
-        previous_run_directory = Path(str(previous.get("run_directory", "")))
-        evidence_path = previous_run_directory / "implementation_bug_replay.json"
-        summary_path = previous_run_directory / summary_filename
-        try:
-            evidence_bytes = evidence_path.read_bytes()
-            evidence = json.loads(evidence_bytes.decode("utf-8"))
-            summary_bytes = summary_path.read_bytes()
-            previous_summary = json.loads(summary_bytes.decode("utf-8"))
-        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-            raise InputError(f"{error_prefix} repair replay requires hash-bound bug evidence") from exc
-        if (
-            evidence.get("classification") != "IMPLEMENTATION_BUG"
-            or evidence.get("stage") != stage
-            or evidence.get("failed_source_sha") != previous.get("source_sha")
-            or evidence.get("fixed_source_sha") != source_sha
-            or not evidence.get("bug_and_fix")
-            or previous.get("status") not in {"WORKER_FAILED", "FAILED"}
-            or previous.get("watchdog_classification") not in {None, "WORKER_FAILED"}
-            or previous_summary.get("status") != "FAILED"
-            or previous_summary.get("result_classification") != "WORKER_FAILED"
-            or not previous_summary.get("error")
-            or previous_summary.get("source_sha") != previous.get("source_sha")
-        ):
-            raise InputError(
-                f"{error_prefix} repair replay requires a genuine worker exception, changed source, and bound fix"
-            )
-        replay = True
-        replay_evidence = {
-            "path": str(evidence_path),
-            "sha256": hashlib.sha256(evidence_bytes).hexdigest(),
-            "worker_summary_path": str(summary_path),
-            "worker_summary_sha256": hashlib.sha256(summary_bytes).hexdigest(),
-            "worker_summary_result_classification": previous_summary.get(
-                "result_classification"
-            ),
-            **evidence,
-        }
+        if v28_startup_scope_recovery is not None:
+            if (
+                error_prefix != "V28"
+                or stage != "Q4_ORIGINAL"
+                or bug_replay_limit != 1
+                or previous.get("status") != "USER_CONTROLLED_STOP"
+                or previous.get("watchdog_classification") != "USER_CONTROLLED_STOP"
+                or v28_startup_scope_recovery.get("authorization_id")
+                != V28_STARTUP_SCOPE_RECOVERY_ID
+                or v28_startup_scope_recovery.get("classification")
+                != "CONTROLLED_STOP_STARTUP_SCOPE_INVALID"
+                or v28_startup_scope_recovery.get("failed_source_sha")
+                != previous.get("source_sha")
+                or v28_startup_scope_recovery.get("fixed_source_sha") != source_sha
+                or v28_startup_scope_recovery.get("previous_run_directory")
+                != str(Path(str(previous.get("run_directory", ""))).resolve())
+                or v28_startup_scope_recovery.get("raw_summary_sha256") is None
+                or v28_startup_scope_recovery.get("scope_evidence_sha256") is None
+                or v28_startup_scope_recovery.get("input_sha256") is None
+                or v28_startup_scope_recovery.get("observed_cgroup_path")
+                != "/init.scope"
+                or not _is_v28_user_service_cgroup(
+                    Path(str(v28_startup_scope_recovery.get("new_service_cgroup_path", "")))
+                )
+                or v28_startup_scope_recovery.get("descendants_cleared") is not True
+            ):
+                raise InputError("V28 startup-scope recovery evidence is not authorized or hash-bound")
+            replay = True
+            replay_evidence = dict(v28_startup_scope_recovery)
+        else:
+            previous_run_directory = Path(str(previous.get("run_directory", "")))
+            evidence_path = previous_run_directory / "implementation_bug_replay.json"
+            summary_path = previous_run_directory / summary_filename
+            try:
+                evidence_bytes = evidence_path.read_bytes()
+                evidence = json.loads(evidence_bytes.decode("utf-8"))
+                summary_bytes = summary_path.read_bytes()
+                previous_summary = json.loads(summary_bytes.decode("utf-8"))
+            except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+                raise InputError(f"{error_prefix} repair replay requires hash-bound bug evidence") from exc
+            if (
+                evidence.get("classification") != "IMPLEMENTATION_BUG"
+                or evidence.get("stage") != stage
+                or evidence.get("failed_source_sha") != previous.get("source_sha")
+                or evidence.get("fixed_source_sha") != source_sha
+                or not evidence.get("bug_and_fix")
+                or previous.get("status") not in {"WORKER_FAILED", "FAILED"}
+                or previous.get("watchdog_classification") not in {None, "WORKER_FAILED"}
+                or previous_summary.get("status") != "FAILED"
+                or previous_summary.get("result_classification") != "WORKER_FAILED"
+                or not previous_summary.get("error")
+                or previous_summary.get("source_sha") != previous.get("source_sha")
+            ):
+                raise InputError(
+                    f"{error_prefix} repair replay requires a genuine worker exception, changed source, and bound fix"
+                )
+            replay = True
+            replay_evidence = {
+                "path": str(evidence_path),
+                "sha256": hashlib.sha256(evidence_bytes).hexdigest(),
+                "worker_summary_path": str(summary_path),
+                "worker_summary_sha256": hashlib.sha256(summary_bytes).hexdigest(),
+                "worker_summary_result_classification": previous_summary.get(
+                    "result_classification"
+                ),
+                **evidence,
+            }
     attempt = {
         "source_sha": str(source_sha),
         "run_directory": str(run_directory),
@@ -2618,6 +2652,106 @@ def _reserve_v27_workingset_setup_budget(
     )
 
 
+V28_STARTUP_SCOPE_RECOVERY_ID = "review_v26_v28_startup_scope_replay_once"
+V28_STARTUP_SCOPE_FAILED_SOURCE_SHA = "53c6be5025f958f285fd174cbabded4d903658e0"
+V28_STARTUP_SCOPE_INPUT_SHA256 = "80c1cbcc9c0796f79c567391a8e80466d4a8a138ea0b45b85b2590d38e957b33"
+V28_STARTUP_SCOPE_RUN_RELATIVE = Path(
+    "results/euv_grazing1_phi0/"
+    "task39extra_v28_fused_kernel_original_h7p5__full3d_iterative__mpi1__Mna/"
+    "20260923T141356.354598Z"
+)
+
+
+def _load_v28_startup_scope_replay_evidence(
+    repo_root: Path,
+    previous_attempt: Mapping[str, Any],
+    *,
+    fixed_source_sha: str,
+    stage: str,
+    service_cgroup_path: Path,
+) -> dict[str, Any]:
+    """Bind the one reviewed V28 startup-scope repair to its stopped attempt."""
+
+    if (
+        stage != "Q4_ORIGINAL"
+        or previous_attempt.get("attempt") != 1
+        or previous_attempt.get("source_sha") != V28_STARTUP_SCOPE_FAILED_SOURCE_SHA
+    ):
+        raise InputError("V28 startup-scope recovery only accepts the reviewed first Q4 attempt")
+    if (
+        previous_attempt.get("status") != "USER_CONTROLLED_STOP"
+        or previous_attempt.get("watchdog_classification") != "USER_CONTROLLED_STOP"
+    ):
+        raise InputError("V28 startup-scope recovery requires the preserved controlled-stop attempt")
+    if not _is_v28_user_service_cgroup(service_cgroup_path):
+        raise InputError("V28 startup-scope recovery requires the existing user service cgroup")
+    repo_root = Path(repo_root).resolve()
+    run_directory = Path(str(previous_attempt.get("run_directory", ""))).resolve()
+    expected_run_directory = (repo_root / V28_STARTUP_SCOPE_RUN_RELATIVE).resolve()
+    if run_directory != expected_run_directory:
+        raise InputError("V28 startup-scope evidence does not match the reviewed first-run path")
+    summary_path = run_directory / "run_summary.json"
+    scope_path = run_directory / "launch_scope_classification.json"
+    input_hash_path = run_directory / "input_sha256.txt"
+    input_path = repo_root / "input/task39extra/v28_fused_kernel_original_h7p5.dat"
+    try:
+        summary_bytes = summary_path.read_bytes()
+        summary = json.loads(summary_bytes.decode("utf-8"))
+        scope_bytes = scope_path.read_bytes()
+        scope = json.loads(scope_bytes.decode("utf-8"))
+        recorded_input_sha = input_hash_path.read_text(encoding="utf-8").strip()
+        input_sha = hashlib.sha256(input_path.read_bytes()).hexdigest()
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise InputError("V28 startup-scope recovery requires readable raw, input, and sidecar evidence") from exc
+    if not isinstance(summary, Mapping) or not isinstance(scope, Mapping):
+        raise InputError("V28 startup-scope raw summary and sidecar must be JSON objects")
+    summary_sha = hashlib.sha256(summary_bytes).hexdigest()
+    scope_sha = hashlib.sha256(scope_bytes).hexdigest()
+    authority = summary.get("resource_authority", {})
+    source_state = authority.get("source_state", {})
+    if (
+        summary.get("run_id") != "task39extra_v28_fused_kernel_original_h7p5"
+        or summary.get("status") != "finished"
+        or summary.get("result_classification") != "USER_CONTROLLED_STOP"
+        or summary.get("output_directory") != str(run_directory)
+        or source_state.get("source_sha") != V28_STARTUP_SCOPE_FAILED_SOURCE_SHA
+        or authority.get("classification") != "USER_CONTROLLED_STOP"
+        or authority.get("descendants_cleared") is not True
+        or authority.get("remaining_child_pids") != []
+        or recorded_input_sha != V28_STARTUP_SCOPE_INPUT_SHA256
+        or input_sha != V28_STARTUP_SCOPE_INPUT_SHA256
+        or scope.get("schema") != "task39extra.v28.launch-scope-classification.v1"
+        or scope.get("observed_run_root") != str(run_directory.relative_to(repo_root))
+        or scope.get("observed_run_root_absolute") != str(run_directory)
+        or scope.get("source_sha") != V28_STARTUP_SCOPE_FAILED_SOURCE_SHA
+        or scope.get("input_sha256") != V28_STARTUP_SCOPE_INPUT_SHA256
+        or scope.get("raw_run_summary") != "run_summary.json"
+        or scope.get("raw_run_summary_sha256") != summary_sha
+        or scope.get("raw_classification_preserved") != "USER_CONTROLLED_STOP"
+        or scope.get("execution_classification") != "CONTROLLED_STOP_STARTUP_SCOPE_INVALID"
+        or scope.get("observed_cgroup_path") != "/init.scope"
+        or scope.get("numerical_iteration_result") is not None
+    ):
+        raise InputError("V28 startup-scope recovery evidence is not bound to the preserved stopped attempt")
+    return {
+        "authorization_id": V28_STARTUP_SCOPE_RECOVERY_ID,
+        "classification": "CONTROLLED_STOP_STARTUP_SCOPE_INVALID",
+        "stage": stage,
+        "failed_source_sha": str(previous_attempt["source_sha"]),
+        "fixed_source_sha": fixed_source_sha,
+        "previous_run_directory": str(run_directory),
+        "raw_summary_path": str(summary_path),
+        "raw_summary_sha256": summary_sha,
+        "scope_evidence_path": str(scope_path),
+        "scope_evidence_sha256": scope_sha,
+        "input_sha256": V28_STARTUP_SCOPE_INPUT_SHA256,
+        "observed_cgroup_path": "/init.scope",
+        "original_attempt_status": "USER_CONTROLLED_STOP",
+        "new_service_cgroup_path": str(service_cgroup_path),
+        "descendants_cleared": True,
+    }
+
+
 def _reserve_v28_fused_kernel_budget(
     repo_root: Path,
     run_directory: Path,
@@ -2626,6 +2760,7 @@ def _reserve_v28_fused_kernel_budget(
     stage: str,
     stage_budget: Mapping[str, Any],
     workflow_clock_start: Mapping[str, Any],
+    service_cgroup_path: Path | None = None,
     time_policy: str = V14_TIME_POLICY_ENFORCE,
 ) -> dict[str, Any]:
     """Reserve the independent V28 fused-kernel formal attempt."""
@@ -2634,6 +2769,8 @@ def _reserve_v28_fused_kernel_budget(
         raise InputError("V28 permits only Q4_ORIGINAL with observe_only")
     if float(stage_budget.get("workflow_seconds", 0.0)) != 43200.0:
         raise InputError("V28 Q4 requires a 43200-second workflow budget")
+    if not _is_v28_user_service_cgroup(service_cgroup_path):
+        raise InputError("V28 formal reservation requires the existing user service cgroup")
     repo_root = Path(repo_root).resolve()
     path = (
         repo_root
@@ -2680,6 +2817,22 @@ def _reserve_v28_fused_kernel_budget(
             "allowed_stages": ["Q4_ORIGINAL"],
             "cross_case_recycling": False,
         }
+    startup_scope_recovery = None
+    stage_record = ledger.get("stages", {}).get(stage, {})
+    attempts = stage_record.get("attempts", [])
+    if (
+        isinstance(attempts, list)
+        and attempts
+        and isinstance(attempts[-1], Mapping)
+        and attempts[-1].get("status") == "USER_CONTROLLED_STOP"
+    ):
+        startup_scope_recovery = _load_v28_startup_scope_replay_evidence(
+            repo_root,
+            attempts[-1],
+            fixed_source_sha=source_sha,
+            stage=stage,
+            service_cgroup_path=service_cgroup_path,
+        )
     return _reserve_blr_stage_from_ledger(
         path,
         ledger,
@@ -2695,6 +2848,22 @@ def _reserve_v28_fused_kernel_budget(
         ),
         prerequisite=prerequisite,
         bug_replay_limit=1,
+        v28_startup_scope_recovery=startup_scope_recovery,
+    )
+
+
+def _is_v28_user_service_cgroup(path: Path | None) -> bool:
+    """Accept only the existing V28 user-service unit's actual cgroup."""
+
+    if path is None:
+        return False
+    parts = path.parts
+    return any(
+        parts[index] == "app.slice"
+        and index + 1 < len(parts)
+        and parts[index + 1].startswith("myfenics-case-")
+        and parts[index + 1].endswith(".service")
+        for index in range(len(parts))
     )
 
 
@@ -3669,11 +3838,18 @@ def launch_specification(
             time_policy=v14_time_policy,
         )
     elif fused_kernel_v28_profile and physical_candidate:
+        service_cgroup_path = current_cgroup_path()
+        if not _is_v28_user_service_cgroup(service_cgroup_path):
+            raise InputError(
+                "V28 Q4 formal launch requires the existing "
+                "myfenics-case-*.service under the systemd user app.slice cgroup"
+            )
         run_directory = _timestamp_directory(specification, timestamp)
         v14_lease = _reserve_v28_fused_kernel_budget(
             Path(__file__).resolve().parents[2], run_directory,
             source_sha=source, stage=cell_stage,
             stage_budget=cell_stage_budget, workflow_clock_start=full_clock.start,
+            service_cgroup_path=service_cgroup_path,
             time_policy=v14_time_policy,
         )
     elif physical_memory_v23_profile and physical_candidate:

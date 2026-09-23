@@ -151,7 +151,7 @@ def test_preflight_exception_is_settled_by_launcher_without_starting_worker(tmp_
     ledger_path = tmp_path / 'batch' / 'shared.json'
     monkeypatch.setattr(launcher, '_v14_shared_ledger_path', lambda _root: ledger_path)
     spec = SimpleNamespace(solver={'preconditioner': 'physical_p4_schur_v14', 'stage': 'Q0_CORE'},
-                           expected_output_parent=tmp_path / 'runs')
+                           expected_output_parent=tmp_path / 'runs', execution={})
     def fail_source(*_args):
         raise InputError('synthetic preflight failure')
     monkeypatch.setattr(launcher, '_physical_source_gate', fail_source)
