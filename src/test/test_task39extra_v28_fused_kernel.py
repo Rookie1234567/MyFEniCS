@@ -1,6 +1,7 @@
 """Focused equivalence checks for the opt-in fused V28 local kernel."""
 
 from contextlib import ExitStack
+from collections.abc import Mapping
 from types import SimpleNamespace
 
 import numpy as np
@@ -16,6 +17,7 @@ from src.solvers.fullspace_physical_action import (
     FullspacePhysicalAction,
     FullspaceSplitVolumeAction,
 )
+from src.solvers.physical_equivalent_fast import build_packed_physical_action
 
 
 def _physical_forms(space, domain, tags):
@@ -229,6 +231,102 @@ def test_fused_split_volume_preserves_distinct_rules_and_full_action_semantics()
             fused.apply(source)
 
     assert fused.audit["destroyed"] is True
+
+
+def test_packed_factory_inventory_and_temporary_budget_follow_volume_owner():
+    domain = mesh.create_box(
+        MPI.COMM_SELF,
+        [np.zeros(3), np.array([1.0, 1.0, 1.0])],
+        [2, 1, 1],
+        cell_type=mesh.CellType.hexahedron,
+    )
+    space = fem.functionspace(domain, ("N1curl", 2))
+    mpc = dolfinx_mpc.MultiPointConstraint(space)
+    mpc.add_constraint(
+        space,
+        np.array([0], np.int32),
+        np.array([1, 2], np.int64),
+        np.array([0.25 + 0.5j, -0.1 + 0.2j]),
+        np.array([0, 0], np.int32),
+        np.array([0, 2], np.int32),
+    )
+    mpc.finalize()
+    space = mpc.function_space
+    tags = mesh.meshtags(
+        domain,
+        3,
+        np.arange(2, dtype=np.int32),
+        np.array([1, 2], dtype=np.int32),
+    )
+    cfg, curl_form, mass_form = _physical_forms(space, domain, tags)
+    source_volume = FullspaceSplitVolumeAction(
+        curl_form, mass_form, space, mpc=mpc
+    )
+    common = {
+        "levels": {
+            "floquets": {6: SimpleNamespace(mpc=mpc)},
+            "mesh_data": SimpleNamespace(cell_tags=tags),
+        },
+        "fine": {
+            "volume_action": source_volume,
+            "dtn_action": SimpleNamespace(audit={}),
+        },
+    }
+
+    with ExitStack() as owned:
+        owned.callback(source_volume.destroy)
+        for fuse_components, owner_count in ((False, 2), (True, 1)):
+            candidate = build_packed_physical_action(
+                common,
+                cfg,
+                fuse_components=fuse_components,
+                sum_factorized_work=True,
+                shared_contractions=False,
+            )
+            owned.callback(candidate["physical_action"].destroy)
+            facts = candidate["facts"]
+
+            # Exercise the same strict inventory extraction used by the p4
+            # consumer, without building a p4 factor or Krylov workspace.
+            inventory = {
+                "material_function_array_bytes": int(
+                    facts["material_function_array_bytes"]
+                )
+            }
+            assert len(facts["component_audits"]) == owner_count
+            for index, audit in enumerate(facts["component_audits"]):
+                assert isinstance(audit, dict)
+                components = audit["retained_numeric_payload_components"]
+                assert isinstance(components, Mapping)
+                for name, amount in components.items():
+                    inventory[f"component_{index}_{name}"] = int(amount)
+            assert len(inventory) > 1
+
+            candidate_kernel_temporary_bytes = int(
+                facts["kernel_temporary_bytes"]
+            )
+            if fuse_components:
+                fused_owner = candidate["volume_action"].audit[
+                    "shared_fullspace_mpc_action"
+                ]
+                assert dict(
+                    facts["component_audits"][0][
+                        "retained_numeric_payload_components"
+                    ]
+                ) == dict(fused_owner["retained_numeric_payload_components"])
+                assert candidate_kernel_temporary_bytes == int(
+                    facts["fused_volume_audit"]["temporary_budget_bytes"]
+                )
+                assert candidate_kernel_temporary_bytes == sum(
+                    int(kernel["temporary_budget_bytes"])
+                    for kernel in facts["kernels"]
+                )
+            else:
+                split_budget = max(
+                    int(kernel["temporary_budget_bytes"])
+                    for kernel in facts["kernels"]
+                )
+                assert candidate_kernel_temporary_bytes == split_budget
 
 
 def test_shared_tensor_dag_reuses_forward_prefixes_without_changing_result():

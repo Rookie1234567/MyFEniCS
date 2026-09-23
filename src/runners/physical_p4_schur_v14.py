@@ -4379,9 +4379,8 @@ def _v14_balanced_adapter(
                 "v24_pc_a6_candidate", candidate_components, check_rss=False
             )
             pc_fine_inventory_live = True
-            candidate_kernel_temporary_bytes = max(
-                int(kernel["temporary_budget_bytes"])
-                for kernel in candidate_facts["kernels"]
+            candidate_kernel_temporary_bytes = int(
+                candidate_facts["kernel_temporary_bytes"]
             )
             runtime.marker(
                 "v24_pc_a6_candidate_ready",

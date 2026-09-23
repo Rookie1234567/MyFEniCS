@@ -138,6 +138,13 @@ def build_packed_physical_action(
             dict(component)
             for component in action.audit["volume_action"]["components"].values()
         ]
+        if fuse_components:
+            # The component views borrow one shared MPC owner.  Count its
+            # retained payload once instead of treating each local-kernel
+            # view as a complete owner audit.
+            component_audits = [
+                dict(volume.audit["shared_fullspace_mpc_action"])
+            ]
         facts = {
             "schema": "task039extra.v24.packed-pc-physical-action.v1",
             "backend": "isotropic_partial_assembly",
@@ -190,7 +197,11 @@ def build_packed_physical_action(
             ),
             "kernels": [dict(kernel.audit) for kernel in kernels],
             "kernel_temporary_bytes": int(
-                max(kernel.audit["temporary_budget_bytes"] for kernel in kernels)
+                volume.audit["fused_local_kernel"]["temporary_budget_bytes"]
+                if fuse_components
+                else max(
+                    kernel.audit["temporary_budget_bytes"] for kernel in kernels
+                )
             ),
             "reference_initialization_array_upper_bound_bytes": int(
                 max(
