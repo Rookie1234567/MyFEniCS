@@ -142,6 +142,67 @@ def test_v26_worker_dispatch_uses_v26_summary_contract(monkeypatch, tmp_path):
     assert captured["restore_summary_schema"] is True
 
 
+def test_v26_observe_only_policy_reaches_effective_watchdog_policy(
+    monkeypatch, tmp_path
+):
+    specification = load_and_resolve(
+        ROOT / "input/task39extra/v26_q4_setup_efficiency_original_h7p5.dat"
+    )
+    run_directory = tmp_path / "v26-launcher-run"
+
+    def timestamp_directory(*_args, **_kwargs):
+        run_directory.mkdir()
+        return run_directory
+
+    monkeypatch.setattr(launcher, "_timestamp_directory", timestamp_directory)
+    monkeypatch.setattr(
+        launcher,
+        "_reserve_v26_setup_efficiency_budget",
+        lambda *_args, **_kwargs: None,
+    )
+    monkeypatch.setattr(
+        launcher,
+        "_physical_source_gate",
+        lambda *_args, **_kwargs: {
+            "source_sha": "a" * 40,
+            "tracked_and_nonignored_untracked_clean": True,
+        },
+    )
+    monkeypatch.setattr(
+        launcher,
+        "build_execution_plan",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            adapter_available=True, argv=["synthetic-worker"]
+        ),
+    )
+    from benchmarks import subreaper_watchdog
+
+    captured = {}
+
+    def fake_supervise(argv, *_args, **kwargs):
+        captured["argv"] = list(argv)
+        captured["kwargs"] = dict(kwargs)
+        return {
+            "leader_exit_code": 0,
+            "classification": "COMPLETED",
+            "job_swap_activity": "zero_supported_by_zero_global_activity",
+            "launch_envelope": {},
+            "memory_scope": "synthetic mock process tree",
+            "process_tree_swap_gate_enforced": False,
+            "global_swap_gate_enforced": False,
+        }
+
+    monkeypatch.setattr(subreaper_watchdog, "supervise", fake_supervise)
+    result = launcher.launch_specification(
+        specification, source_sha="a" * 40, v14_time_policy="observe_only"
+    )
+    assert result["result_classification"] == "worker_exit0"
+    assert captured["kwargs"]["stop_on_global_swap"] is False
+    assert captured["kwargs"]["allow_swap_observation"] is True
+    assert result["swap_policy"] == "observe_only"
+    assert result["swap_gate_enforced"] is False
+
+
 def test_v25_public_launcher_accepts_observe_only_policy(capsys):
     from scripts.run_case import main as run_case_main
 

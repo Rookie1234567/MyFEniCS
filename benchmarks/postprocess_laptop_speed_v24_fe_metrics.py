@@ -97,7 +97,16 @@ def full_solution_facts(run_root: Path, summary_name: str) -> tuple[np.ndarray, 
     }
 
 
-def compare_fields(current: Path, old: Path, output: Path, root: Path) -> dict[str, Any]:
+def compare_fields(
+    current: Path,
+    old: Path,
+    output: Path,
+    root: Path,
+    *,
+    current_summary_name: str = "physical_dual_condensed_laptop_speed_v24_summary.json",
+    old_summary_name: str = "physical_dual_condensed_physical_memory_v23_summary.json",
+    comparison_schema: str = "task039extra.v24.same-discrete-fe-metrics.v1",
+) -> dict[str, Any]:
     from mpi4py import MPI
 
     from src.io.input_validation import simulation_config_3d_from_normalized
@@ -107,10 +116,10 @@ def compare_fields(current: Path, old: Path, output: Path, root: Path) -> dict[s
     from src.solvers.physical_error_metric import LosslessFEMetric
 
     current_field, current_facts = full_solution_facts(
-        current, "physical_dual_condensed_laptop_speed_v24_summary.json"
+        current, current_summary_name
     )
     old_field, old_facts = full_solution_facts(
-        old, "physical_dual_condensed_physical_memory_v23_summary.json"
+        old, old_summary_name
     )
     if current_field.shape != old_field.shape:
         raise ValueError("V24/V23 complete-field shapes differ")
@@ -219,7 +228,7 @@ def compare_fields(current: Path, old: Path, output: Path, root: Path) -> dict[s
                     "limit": 1.0e-4,
                 }
             result = {
-                "schema": "task039extra.v24.same-discrete-fe-metrics.v1",
+                "schema": comparison_schema,
                 "execution": {
                     "status": "OFFLINE_METRIC_ONLY",
                     "pde_started": False,
@@ -284,9 +293,27 @@ def main() -> int:
     parser.add_argument("old_root", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
+    parser.add_argument(
+        "--current-summary-name",
+        default="physical_dual_condensed_laptop_speed_v24_summary.json",
+    )
+    parser.add_argument(
+        "--old-summary-name",
+        default="physical_dual_condensed_physical_memory_v23_summary.json",
+    )
+    parser.add_argument(
+        "--comparison-schema",
+        default="task039extra.v24.same-discrete-fe-metrics.v1",
+    )
     args = parser.parse_args()
     result = compare_fields(
-        args.current_root.resolve(), args.old_root.resolve(), args.output.resolve(), args.root.resolve()
+        args.current_root.resolve(),
+        args.old_root.resolve(),
+        args.output.resolve(),
+        args.root.resolve(),
+        current_summary_name=args.current_summary_name,
+        old_summary_name=args.old_summary_name,
+        comparison_schema=args.comparison_schema,
     )
     print(json.dumps({"pass": result["comparison"]["pass"], "output": str(args.output)}))
     return 0 if result["comparison"]["pass"] else 1

@@ -3091,6 +3091,18 @@ def _swap_bytes(authority: dict[str, Any]) -> int:
     )
 
 
+def _is_v26_swap_observation_only(
+    *, setup_efficiency_v26_profile: bool, stage: str, require_zero_swap: bool
+) -> bool:
+    """Bind V26's input-level observe-only policy to the outer watchdog."""
+
+    return bool(
+        setup_efficiency_v26_profile
+        and stage == "Q4_ORIGINAL"
+        and not require_zero_swap
+    )
+
+
 def _run_worker(
     plan: ExecutionPlan,
     specification: RunSpecification,
@@ -3274,6 +3286,12 @@ def launch_specification(
         in (V25_Q4_AC_SWAP_OBSERVE_RUN_ID, V25_Q4_AC_SWAP_OBSERVE_R2_RUN_ID)
         and specification.execution.get("require_zero_swap") is False
     )
+    v26_swap_observe = _is_v26_swap_observation_only(
+        setup_efficiency_v26_profile=setup_efficiency_v26_profile,
+        stage=cell_stage,
+        require_zero_swap=bool(specification.execution.get("require_zero_swap", True)),
+    )
+    effective_swap_observe = v25_swap_observe or v26_swap_observe
     if (
         coarse_degree_v25_profile
         and specification.execution.get("require_zero_swap") is False
@@ -3503,11 +3521,11 @@ def launch_specification(
             adapter_identity=adapter,
             start_time=start_time,
         )
-        if coarse_degree_v25_profile:
+        if coarse_degree_v25_profile or setup_efficiency_v26_profile:
             manifest.update(
                 {
                     "swap_policy": (
-                        "observe_only" if v25_swap_observe else "require_zero_swap"
+                        "observe_only" if effective_swap_observe else "require_zero_swap"
                     ),
                     "require_zero_swap": bool(
                         specification.execution["require_zero_swap"]
@@ -3613,8 +3631,8 @@ def launch_specification(
                         )
                     if schur_v14 or blr_profile or cell_condensed_profile:
                         watchdog_kwargs.update(
-                            stop_on_global_swap=not v25_swap_observe,
-                            allow_swap_observation=v25_swap_observe,
+                            stop_on_global_swap=not effective_swap_observe,
+                            allow_swap_observation=effective_swap_observe,
                             grace_seconds=30,
                             hard_stop_immediate=True,
                             cooperative_performance_stop=False,
@@ -3739,10 +3757,10 @@ def launch_specification(
                         result['result_classification'] = 'EVIDENCE_INCOMPLETE'
                     zero_swap = authority['job_swap_activity'] == 'zero_supported_by_zero_global_activity'
                     result['swap_policy'] = (
-                        'observe_only' if v25_swap_observe else 'require_zero_swap'
+                        'observe_only' if effective_swap_observe else 'require_zero_swap'
                     )
-                    result['swap_gate_enforced'] = not v25_swap_observe
-                    if v25_swap_observe:
+                    result['swap_gate_enforced'] = not effective_swap_observe
+                    if effective_swap_observe:
                         result['job_swap_qualification'] = (
                             'observed_zero_not_a_gate'
                             if zero_swap
@@ -3753,7 +3771,7 @@ def launch_specification(
                     if (
                         not zero_swap
                         and result['result_classification'] == 'worker_exit0'
-                        and not v25_swap_observe
+                        and not effective_swap_observe
                     ):
                         result['result_classification'] = 'EVIDENCE_INCOMPLETE'
                     manifest['requested_legacy_resource_fields'] = {
@@ -3767,10 +3785,10 @@ def launch_specification(
                         'swap_policy': result['swap_policy'],
                         'swap_gate_enforced': result['swap_gate_enforced'],
                         'process_tree_swap_gate_enforced': authority.get(
-                            'process_tree_swap_gate_enforced', not v25_swap_observe
+                            'process_tree_swap_gate_enforced', not effective_swap_observe
                         ),
                         'global_swap_gate_enforced': authority.get(
-                            'global_swap_gate_enforced', not v25_swap_observe
+                            'global_swap_gate_enforced', not effective_swap_observe
                         ),
                             **(
                             v14_time_policy_facts(v14_time_policy)
