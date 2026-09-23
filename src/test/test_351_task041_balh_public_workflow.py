@@ -35,6 +35,7 @@ from benchmarks.task041_exact_side_workflow import (
     _task041_backend_pair_layout_identity,
     _task041_case_contract,
     _task041_common_failure_details,
+    _task041_p4_backend_release_audit,
     _task041_rank_numa_observed_backend,
     _task041_rank_numa_pair_sample_stage,
     _task041_stream_array_metadata,
@@ -835,6 +836,70 @@ def test_task041_fixed_p4_backend_pair_is_explicit_and_5nm_scoped():
         case_time_stop_disabled=False,
         p4_backend_pair=False,
     ) is True
+
+
+def test_task041_backend_pair_release_reads_post_destroy_diagnostics_cache():
+    release_record = {
+        "side": "bottom",
+        "status": "destroyed",
+        "p4_backend": "full",
+        "release_gate": {
+            "destroyed": True,
+            "p4_factor_count": 0,
+            "nested_iterative_ksp_count": 0,
+            "pass": True,
+        },
+        "heap_cleanup": {"pass": True},
+        "lifecycle_boundary": {"event": "released"},
+    }
+    assert "diagnostics" not in release_record
+    diagnostics_after_destroy = {
+        "destroyed": True,
+        "nested_ksp_destroy_count": 1,
+        "p4_factor_destroy_count": 1,
+        "p4_factor": {
+            "schema": "task041.h1c.p4_exact_factor.v1",
+            "factor_destroy_count": 1,
+        },
+        "p4_factor_count": 0,
+        "nested_iterative_ksp_count": 0,
+        "ksp_destroyed": True,
+    }
+
+    release = _task041_p4_backend_release_audit(
+        side="bottom",
+        release_record=release_record,
+        side_diagnostics_after={"bottom": diagnostics_after_destroy},
+    )
+    assert release["pass"] is True
+    assert release["destroy_counts"] == {
+        "side_inverse_destroyed": True,
+        "side_ksp_destroy_count": 1,
+        "p4_factor_destroy_count": 1,
+        "p4_factor_owner_destroy_count": 1,
+        "p4_factor_count_after_destroy": 0,
+        "nested_ksp_count_after_destroy": 0,
+        "side_ksp_destroyed": True,
+    }
+
+    missing_cache = _task041_p4_backend_release_audit(
+        side="bottom",
+        release_record=release_record,
+        side_diagnostics_after={"top": diagnostics_after_destroy},
+    )
+    assert missing_cache["pass"] is False
+    assert (
+        missing_cache["destroy_counts"]["p4_factor_count_after_destroy"] is None
+    )
+
+    mismatched_diagnostics = copy.deepcopy(diagnostics_after_destroy)
+    mismatched_diagnostics["p4_factor_count"] = 1
+    count_mismatch = _task041_p4_backend_release_audit(
+        side="bottom",
+        release_record=release_record,
+        side_diagnostics_after={"bottom": mismatched_diagnostics},
+    )
+    assert count_mismatch["pass"] is False
 
 
 def test_task041_pair_numa_tracks_condensed_backend_in_five_stages():

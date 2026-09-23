@@ -2252,6 +2252,48 @@ def _task041_backend_pair_layout_identity(
     }
 
 
+def _task041_p4_backend_release_audit(
+    *,
+    side: str,
+    release_record: Mapping[str, Any],
+    side_diagnostics_after: Mapping[str, Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Validate post-destroy diagnostics cached by ``release_side``."""
+
+    release_gate = dict(release_record.get("release_gate", {}))
+    diagnostics = dict(side_diagnostics_after.get(side, {}))
+    p4_diagnostics = dict(diagnostics.get("p4_factor", {}))
+    destroy_counts = {
+        "side_inverse_destroyed": diagnostics.get("destroyed"),
+        "side_ksp_destroy_count": diagnostics.get("nested_ksp_destroy_count"),
+        "p4_factor_destroy_count": diagnostics.get("p4_factor_destroy_count"),
+        "p4_factor_owner_destroy_count": p4_diagnostics.get(
+            "factor_destroy_count"
+        ),
+        "p4_factor_count_after_destroy": diagnostics.get("p4_factor_count"),
+        "nested_ksp_count_after_destroy": diagnostics.get(
+            "nested_iterative_ksp_count"
+        ),
+        "side_ksp_destroyed": diagnostics.get("ksp_destroyed"),
+    }
+    release_pass = bool(
+        release_gate.get("pass") is True
+        and destroy_counts["side_inverse_destroyed"] is True
+        and destroy_counts["side_ksp_destroy_count"] == 1
+        and destroy_counts["p4_factor_destroy_count"] == 1
+        and destroy_counts["p4_factor_owner_destroy_count"] == 1
+        and destroy_counts["p4_factor_count_after_destroy"] == 0
+        and destroy_counts["nested_ksp_count_after_destroy"] == 0
+        and destroy_counts["side_ksp_destroyed"] is True
+    )
+    return {
+        "pass": release_pass,
+        "release_gate": release_gate,
+        "destroy_counts": destroy_counts,
+        "factor_schema_after_destroy": p4_diagnostics.get("schema"),
+    }
+
+
 def _run_task041_balh_candidate_setup(
     setup: Any,
     layout: Any,
@@ -6278,60 +6320,25 @@ def _run_task041_balh_candidate_setup(
                         resources = backend_state[backend]["resources"]
                         resources.append(pair_resource_checkpoint("after_" + backend))
                         release_wall = pair_wall(release_started)
-                        release_gate = dict(release_record.get("release_gate", {}))
-                        diagnostics = dict(release_record.get("diagnostics", {}))
-                        p4_diagnostics = dict(diagnostics.get("p4_factor", {}))
-                        destroy_counts = {
-                            "side_inverse_destroyed": diagnostics.get(
-                                "destroyed"
-                            ),
-                            "side_ksp_destroy_count": diagnostics.get(
-                                "nested_ksp_destroy_count"
-                            ),
-                            "p4_factor_destroy_count": diagnostics.get(
-                                "p4_factor_destroy_count"
-                            ),
-                            "p4_factor_owner_destroy_count": p4_diagnostics.get(
-                                "factor_destroy_count"
-                            ),
-                            "p4_factor_count_after_destroy": diagnostics.get(
-                                "p4_factor_count"
-                            ),
-                            "nested_ksp_count_after_destroy": diagnostics.get(
-                                "nested_iterative_ksp_count"
-                            ),
-                            "side_ksp_destroyed": diagnostics.get(
-                                "ksp_destroyed"
-                            ),
-                        }
-                        release_pass = bool(
-                            release_gate.get("pass") is True
-                            and destroy_counts["side_inverse_destroyed"] is True
-                            and destroy_counts["side_ksp_destroy_count"] == 1
-                            and destroy_counts["p4_factor_destroy_count"] == 1
-                            and destroy_counts["p4_factor_owner_destroy_count"] == 1
-                            and destroy_counts["p4_factor_count_after_destroy"] == 0
-                            and destroy_counts["nested_ksp_count_after_destroy"] == 0
-                            and destroy_counts["side_ksp_destroyed"] is True
+                        release = _task041_p4_backend_release_audit(
+                            side=side,
+                            release_record=release_record,
+                            side_diagnostics_after=side_diagnostics_after,
                         )
-                        release = {
-                            "pass": release_pass,
-                            "owner_destroy": (
-                                "SideBalancedInverse.destroy -> p4 factor, "
-                                "factor matrix/solver, nested side KSP"
-                            ),
-                            "release_gate": release_gate,
-                            "destroy_counts": destroy_counts,
-                            "factor_schema_after_destroy": p4_diagnostics.get(
-                                "schema"
-                            ),
-                            "release_wall_max_rank_seconds": release_wall,
-                            "backend_wall_max_rank_seconds": pair_wall(
-                                backend_state[backend][
-                                    "backend_started_monotonic"
-                                ]
-                            ),
-                        }
+                        release.update(
+                            {
+                                "owner_destroy": (
+                                    "SideBalancedInverse.destroy -> p4 factor, "
+                                    "factor matrix/solver, nested side KSP"
+                                ),
+                                "release_wall_max_rank_seconds": release_wall,
+                                "backend_wall_max_rank_seconds": pair_wall(
+                                    backend_state[backend][
+                                        "backend_started_monotonic"
+                                    ]
+                                ),
+                            }
+                        )
                         backend_state[backend]["release"] = release
                         backend_state[backend]["resources"] = resources
                         backend_state[backend].pop(
