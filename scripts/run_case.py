@@ -66,6 +66,11 @@ def _parser() -> argparse.ArgumentParser:
         choices=("common_layout_equivalence", "p4_backend_pair"),
         help="opt into a reviewed Task041 representative comparison",
     )
+    parser.add_argument(
+        "--task041-top-causal-replay",
+        action="store_true",
+        help="capture and replay the selected top fixed-RHS causal nodes",
+    )
     return parser
 
 
@@ -128,12 +133,14 @@ def main(argv: list[str] | None = None) -> int:
                     ),
                     side_setup_schedule=args.task041_side_setup_schedule,
                     comparison_mode=args.task041_comparison_mode,
+                    top_causal_replay=args.task041_top_causal_replay,
                 )
             except ValueError as exc:
                 raise InputError(str(exc)) from exc
         elif (
             args.task041_side_setup_schedule is not None
             or args.task041_comparison_mode is not None
+            or args.task041_top_causal_replay
         ):
             raise InputError(
                 "Task041 comparison options require task041_schur_speed_v2"
@@ -193,6 +200,7 @@ def main(argv: list[str] | None = None) -> int:
             task041_rhs_probe_manifest=args.task041_rhs_probe,
             task041_side_setup_schedule=args.task041_side_setup_schedule,
             task041_comparison_mode=args.task041_comparison_mode,
+            task041_top_causal_replay=args.task041_top_causal_replay,
         )
         print(json.dumps(result, sort_keys=True, separators=(",", ":")))
         return 0 if result["result_classification"] == "worker_exit0" else 3

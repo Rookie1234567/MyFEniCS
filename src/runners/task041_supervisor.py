@@ -2805,16 +2805,31 @@ def _task041_p4_backend_pair_numeric_gate(comparison: Mapping[str, Any]) -> dict
             recomputed["cell_condensed_relative"],
         )
     )
-    gate_pass = bool(
+    strong_pair_gate_pass = bool(
         recomputed_finite
         and recomputed["e_x"] <= 1.0e-8
         and recomputed["e_A"] <= 1.0e-8
+    )
+    side_residual_gate_pass = bool(
+        recomputed_finite
         and recomputed["full_relative"] <= 1.0e-2
         and recomputed["cell_condensed_relative"] <= 1.0e-2
     )
+    subgate_reports_match = bool(
+        (
+            "strong_pair_gate_pass" not in metrics
+            or metrics.get("strong_pair_gate_pass") is strong_pair_gate_pass
+        )
+        and (
+            "side_residual_gate_pass" not in metrics
+            or metrics.get("side_residual_gate_pass") is side_residual_gate_pass
+        )
+    )
+    gate_pass = bool(strong_pair_gate_pass and side_residual_gate_pass)
     return {
         "pass": bool(
             reports_match
+            and subgate_reports_match
             and gate_pass
             and metrics.get("finite") is True
             and metrics.get("pass") is gate_pass
@@ -2823,6 +2838,10 @@ def _task041_p4_backend_pair_numeric_gate(comparison: Mapping[str, Any]) -> dict
             == {"e_x": 1.0e-8, "e_A": 1.0e-8, "side_relative_residual": 1.0e-2}
         ),
         "reports_match": reports_match,
+        "subgate_reports_match": subgate_reports_match,
+        "finite": recomputed_finite and metrics.get("finite") is True,
+        "strong_pair_gate_pass": strong_pair_gate_pass,
+        "side_residual_gate_pass": side_residual_gate_pass,
         "recomputed": recomputed,
         "raw_norms": raw,
     }
@@ -5503,6 +5522,1312 @@ def _validate_common_layout_equivalence_result(
         "failures": failures,
     }
 
+def _validate_task041_top_causal_replay_result(
+    consumer_root: Path,
+    summary: Mapping[str, Any],
+    representative_rhs_binding: Mapping[str, Any],
+    *,
+    process_group_gone: bool | None,
+    expected_side_setup_schedule: str | None,
+    expected_comparison_mode: str | None,
+) -> dict[str, Any]:
+    """Validate the top-only record, frozen packet identities, and reported gates."""
+
+    import numpy as np
+
+    from benchmarks.task041_balh_workflow import TASK041_REPRESENTATIVE_RHS_SCOPE
+
+    failures: list[str] = []
+    action_failures: list[str] = []
+    checks: dict[str, bool] = {}
+
+    def check(
+        name: str,
+        passed: bool,
+        *,
+        action_safety: bool = False,
+        evidence: bool = True,
+    ) -> None:
+        checks[name] = bool(passed)
+        if not passed:
+            if evidence:
+                failures.append(name)
+            if action_safety:
+                action_failures.append(name)
+
+    immutable_binding = _task041_representative_immutable_binding(
+        summary, representative_rhs_binding
+    )
+    for binding_name, binding_pass in immutable_binding["checks"].items():
+        check(
+            f"fixed_rhs_{binding_name}",
+            binding_pass is True,
+            action_safety=True,
+        )
+
+    def safe_path(value: Any) -> Path | None:
+        if not isinstance(value, str):
+            return None
+        path = Path(value)
+        try:
+            path.resolve().relative_to(consumer_root.resolve())
+        except (OSError, ValueError):
+            return None
+        return path
+
+    record = summary.get("top_causal_replay")
+    sidecar = consumer_root / "numerical_output" / "top_causal_replay_top.json"
+    sidecar_record: Any = None
+    try:
+        sidecar_record = _read_json(sidecar)
+        sidecar_ok = sidecar_record == record
+    except (OSError, ValueError, TypeError):
+        sidecar_ok = False
+    check("top_causal_sidecar_matches_summary", sidecar_ok)
+    probe_summary = summary.get("representative_rhs_probe")
+    manifest_record = record.get("manifest") if isinstance(record, Mapping) else None
+    check(
+        "top_causal_source_and_manifest_binding",
+        bool(
+            isinstance(record, Mapping)
+            and record.get("schema") == "task041.top_causal_replay.result.v1"
+            and record.get("source_sha") == summary.get("source_sha")
+            and isinstance(probe_summary, Mapping)
+            and isinstance(manifest_record, Mapping)
+            and manifest_record.get("path") == probe_summary.get("path")
+            and manifest_record.get("sha256") == probe_summary.get("sha256")
+            and manifest_record.get("parent_packet_manifest_sha256")
+            == immutable_binding.get("expected_packet_sha")
+            and isinstance(representative_rhs_binding, Mapping)
+            and representative_rhs_binding.get("scope")
+            == TASK041_REPRESENTATIVE_RHS_SCOPE
+        ),
+        action_safety=True,
+    )
+    check(
+        "top_causal_explicit_scope",
+        bool(
+            expected_side_setup_schedule == "sequential_component"
+            and expected_comparison_mode == "p4_backend_pair"
+            and isinstance(record, Mapping)
+            and record.get("scope") == "top_only_fixed_manifest_replay"
+            and record.get("qualification") == "diagnostic_only"
+            and record.get("selected_formal_columns") == [12, 493, 666]
+            and record.get("bottom_scope") == "not_run"
+            and record.get("fixed_eight_completion") is False
+            and record.get("qualification_pass") is False
+        ),
+    )
+
+    expected_entries = immutable_binding.get("expected_entries")
+    entries_by_column = {
+        item.get("formal_column"): item
+        for item in expected_entries or []
+        if isinstance(item, Mapping)
+        and item.get("side") == "top"
+        and item.get("formal_column") in {12, 493, 666}
+    }
+    expected_top_entries = [
+        entries_by_column[column]
+        for column in (12, 493, 666)
+        if column in entries_by_column
+    ]
+    check(
+        "top_causal_manifest_columns",
+        bool(
+            len(expected_top_entries) == 3
+            and [item.get("formal_column") for item in expected_top_entries]
+            == [12, 493, 666]
+            and isinstance(record, Mapping)
+            and record.get("selected_formal_columns") == [12, 493, 666]
+            and record.get("full_reference_response_count") == 3
+            and record.get("condensed_free_response_count") == 3
+        ),
+    )
+
+    audits = (
+        record.get("full_capture_and_condensed_replay_audits")
+        if isinstance(record, Mapping)
+        else None
+    )
+    reference_nodes = [
+        item
+        for item in audits or []
+        if isinstance(item, Mapping)
+        and item.get("backend") == "full"
+        and item.get("replay_kind") == "reference"
+        and item.get("trajectory") == "full_reference"
+    ]
+    full_counts = {
+        item.get("actual_pc_count")
+        for item in reference_nodes
+        if type(item.get("actual_pc_count")) is int
+    }
+    actual_pc_count = next(iter(full_counts)) if len(full_counts) == 1 else None
+    expected_indices: list[int] = []
+    if isinstance(actual_pc_count, int) and actual_pc_count > 0:
+        from benchmarks.task041_exact_side_workflow import (
+            _task041_top_causal_pc_indices,
+        )
+
+        expected_indices = _task041_top_causal_pc_indices(actual_pc_count)
+    observed_indices = sorted(
+        int(item["pc_index"])
+        for item in reference_nodes
+        if type(item.get("pc_index")) is int
+    )
+    check(
+        "frozen_pc_indices_derived_from_full_count",
+        bool(
+            actual_pc_count is not None
+            and record.get("frozen_pc_nodes") == expected_indices
+            and record.get("frozen_pc_node_count") == len(expected_indices)
+            and observed_indices == expected_indices
+            and len(reference_nodes) == len(expected_indices)
+            and len(expected_indices) <= 8
+        ),
+    )
+
+    def verify_packet(
+        artifact: Any,
+        *,
+        expected_identity: Mapping[str, Any] | None = None,
+    ) -> tuple[bool, dict[int, tuple[Path, str, tuple[int, int]]]]:
+        if not isinstance(artifact, Mapping):
+            return False, {}
+        manifest_path = safe_path(artifact.get("manifest"))
+        manifest_sha = artifact.get("manifest_sha256")
+        if (
+            manifest_path is None
+            or not manifest_path.is_file()
+            or not _valid_sha(manifest_sha, 64)
+        ):
+            return False, {}
+        try:
+            raw = manifest_path.read_bytes()
+            manifest = json.loads(raw)
+        except (OSError, ValueError, TypeError):
+            return False, {}
+        identity = manifest.get("identity") if isinstance(manifest, Mapping) else None
+        if not isinstance(identity, Mapping):
+            return False, {}
+        identity_sha = hashlib.sha256(
+            json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        bound_identity = (
+            expected_identity
+            if expected_identity is not None
+            else artifact.get("identity")
+        )
+        if (
+            hashlib.sha256(raw).hexdigest() != manifest_sha
+            or manifest.get("manifest_sha256") not in (None, manifest_sha)
+            or not isinstance(bound_identity, Mapping)
+            or identity != dict(bound_identity)
+            or identity_sha != manifest.get("identity_sha256")
+            or identity_sha != artifact.get("identity_sha256")
+            or manifest.get("schema") != "myfenics.full3d.pre_recovery_packet.v1"
+            or manifest.get("rank_count") != 8
+        ):
+            return False, {}
+        shards = manifest.get("shards")
+        if not isinstance(shards, list) or len(shards) != 8:
+            return False, {}
+        by_rank: dict[int, Mapping[str, Any]] = {}
+        for shard in shards:
+            rank = shard.get("rank") if isinstance(shard, Mapping) else None
+            if type(rank) is not int or rank in by_rank:
+                return False, {}
+            by_rank[rank] = shard
+        if set(by_rank) != set(range(8)):
+            return False, {}
+        shard_by_rank: dict[int, tuple[Path, str, tuple[int, int]]] = {}
+        expected_start = 0
+        try:
+            for rank in range(8):
+                shard = by_rank[rank]
+                relative = shard.get("path")
+                if (
+                    not isinstance(relative, str)
+                    or Path(relative).is_absolute()
+                    or ".." in Path(relative).parts
+                ):
+                    return False, {}
+                shard_path = manifest_path.parent / relative
+                shard_sha = shard.get("sha256")
+                if (
+                    not shard_path.is_file()
+                    or not _valid_sha(shard_sha, 64)
+                    or _sha256_file(shard_path) != shard_sha
+                ):
+                    return False, {}
+                ownership = shard.get("ownership_range")
+                if (
+                    not isinstance(ownership, list)
+                    or len(ownership) != 2
+                    or any(type(value) is not int for value in ownership)
+                    or ownership[0] != expected_start
+                    or ownership[1] < ownership[0]
+                ):
+                    return False, {}
+                expected_start = ownership[1]
+                shard_by_rank[rank] = (
+                    shard_path,
+                    str(shard_sha),
+                    (int(ownership[0]), int(ownership[1])),
+                )
+        except (OSError, ValueError, KeyError, EOFError):
+            return False, {}
+        if expected_start != manifest.get("global_size"):
+            return False, {}
+        return True, shard_by_rank
+
+    def load_packet_shard(
+        descriptor: tuple[Path, str, tuple[int, int]],
+    ) -> tuple[np.ndarray, np.ndarray]:
+        shard_path, _validated_sha, ownership = descriptor
+        with np.load(shard_path, allow_pickle=False) as arrays:
+            if set(arrays.files) != {"solution", "rhs"}:
+                raise ValueError("response packet shard array keys changed")
+            solution = np.array(arrays["solution"], copy=True)
+            rhs = np.array(arrays["rhs"], copy=True)
+        if (
+            solution.ndim != 1
+            or rhs.ndim != 1
+            or solution.shape != rhs.shape
+            or solution.dtype != np.dtype("complex128")
+            or rhs.dtype != np.dtype("complex128")
+            or solution.size != ownership[1] - ownership[0]
+            or not np.isfinite(solution).all()
+            or not np.isfinite(rhs).all()
+        ):
+            raise ValueError("response packet shard payload is invalid")
+        return solution, rhs
+
+    node_audit_checks: list[bool] = []
+    checked_node_packets: set[tuple[str, str]] = set()
+    checked_history_files: set[tuple[str, str]] = set()
+    replay_audits = [
+        item
+        for item in audits or []
+        if isinstance(item, Mapping)
+        and item.get("replay_kind") in {"reference", "independent_q", "independent_pc"}
+    ]
+    for audit in replay_audits:
+        audit_path = safe_path(audit.get("audit_path"))
+        audit_sha = audit.get("audit_sha256")
+        audit_ok = bool(
+            audit_path is not None
+            and audit_path.is_file()
+            and _valid_sha(audit_sha, 64)
+            and _sha256_file(audit_path) == audit_sha
+        )
+        if audit_ok:
+            try:
+                raw_audit = _read_json(audit_path)
+                expected_raw = {
+                    key: value
+                    for key, value in audit.items()
+                    if key not in {"audit_path", "audit_sha256"}
+                }
+                audit_ok = raw_audit == expected_raw
+            except (OSError, ValueError, TypeError):
+                audit_ok = False
+        by_rank = audit.get("by_rank")
+        rank_ids = {
+            row.get("rank")
+            for row in by_rank or []
+            if isinstance(row, Mapping)
+        }
+        audit_ok = bool(
+            audit_ok
+            and isinstance(by_rank, list)
+            and len(by_rank) == 8
+            and rank_ids == set(range(8))
+        )
+        node_pc = audit.get("pc_index")
+        for rank_row in by_rank or []:
+            if not isinstance(rank_row, Mapping):
+                audit_ok = False
+                continue
+            audit_ok = bool(
+                audit_ok
+                and rank_row.get("pc_index") == node_pc
+                and isinstance(rank_row.get("p4_call_history"), Mapping)
+            )
+            artifacts = rank_row.get("artifacts")
+            if not isinstance(artifacts, list):
+                audit_ok = False
+                continue
+            history = rank_row.get("p4_call_history")
+            history_path = (
+                safe_path(history.get("path"))
+                if isinstance(history, Mapping)
+                else None
+            )
+            history_sha = history.get("sha256") if isinstance(history, Mapping) else None
+            history_key = (str(history_path), str(history_sha))
+            if history_key not in checked_history_files:
+                history_ok = bool(
+                    history_path is not None
+                    and history_path.is_file()
+                    and _valid_sha(history_sha, 64)
+                    and _sha256_file(history_path) == history_sha
+                )
+                if history_ok:
+                    try:
+                        history_record = _read_json(history_path)
+                        history_ranks = history_record.get("by_rank")
+                        history_ok = bool(
+                            history_record.get("schema")
+                            == "task041.top_causal_replay.p4_call_history.v1"
+                            and history_record.get("source_sha")
+                            == summary.get("source_sha")
+                            and history_record.get("trajectory")
+                            == audit.get("trajectory")
+                            and history_record.get("backend")
+                            == audit.get("backend")
+                            and history_record.get("formal_column") == 12
+                            and isinstance(history_ranks, list)
+                            and len(history_ranks) == 8
+                            and {
+                                item.get("rank")
+                                for item in history_ranks
+                                if isinstance(item, Mapping)
+                            }
+                            == set(range(8))
+                        )
+                    except (OSError, ValueError, TypeError):
+                        history_ok = False
+                checked_history_files.add(history_key)
+                audit_ok = bool(audit_ok and history_ok)
+            if rank_row.get("rank") == 0:
+                for artifact in artifacts:
+                    path_value = (
+                        artifact.get("manifest")
+                        if isinstance(artifact, Mapping)
+                        else None
+                    )
+                    sha_value = (
+                        artifact.get("manifest_sha256")
+                        if isinstance(artifact, Mapping)
+                        else None
+                    )
+                    packet_key = (str(path_value), str(sha_value))
+                    if packet_key in checked_node_packets:
+                        continue
+                    packet_ok, _ = verify_packet(artifact)
+                    checked_node_packets.add(packet_key)
+                    audit_ok = bool(audit_ok and packet_ok)
+        node_audit_checks.append(audit_ok)
+    check(
+        "top_causal_node_raw_and_packet_hashes",
+        bool(node_audit_checks) and all(node_audit_checks),
+    )
+
+    by_backend: dict[str, dict[int, Mapping[str, Any]]] = {
+        "full": {},
+        "cell_condensed": {},
+    }
+    response_records = (
+        record.get("response_probe_records_by_backend")
+        if isinstance(record, Mapping)
+        else None
+    )
+    response_packets_ok = isinstance(response_records, Mapping)
+    response_comparisons = record.get("response_comparisons") if isinstance(record, Mapping) else None
+    recomputed_response_checks: list[bool] = []
+    response_recomputations: list[dict[str, Any]] = []
+    true_residual_evidence: list[dict[str, bool]] = []
+    response_packet_shards: dict[
+        tuple[str, int], dict[int, tuple[Path, str, tuple[int, int]]]
+    ] = {}
+    response_shard_rows: dict[
+        tuple[str, int], dict[int, Mapping[str, Any]]
+    ] = {}
+    if isinstance(response_records, Mapping):
+        for backend in ("full", "cell_condensed"):
+            calls = response_records.get(backend)
+            if not isinstance(calls, list) or len(calls) != 3:
+                response_packets_ok = False
+                continue
+            for call in calls:
+                if not isinstance(call, Mapping) or type(call.get("ordinal")) is not int:
+                    response_packets_ok = False
+                    continue
+                ordinal = int(call["ordinal"])
+                by_backend[backend][ordinal] = call
+                apply_audit = call.get("audit")
+                true_samples = (
+                    apply_audit.get("true_residual_samples")
+                    if isinstance(apply_audit, Mapping)
+                    else None
+                )
+                sample_labels = {
+                    sample.get("sample_label")
+                    for sample in true_samples or []
+                    if isinstance(sample, Mapping)
+                }
+                true_sample_evidence_complete = bool(
+                    isinstance(true_samples, list)
+                    and {"first_iteration", "final_iteration"} <= sample_labels
+                    and all(
+                        isinstance(sample, Mapping)
+                        and type(sample.get("iteration")) is int
+                        and all(
+                            name in sample
+                            for name in (
+                                "true_residual_norm",
+                                "rhs_norm",
+                                "true_relative_residual",
+                                "finite",
+                            )
+                        )
+                        for sample in true_samples
+                    )
+                )
+                true_sample_finite = bool(
+                    true_sample_evidence_complete
+                    and all(
+                        sample.get("finite") is True
+                        and all(
+                            isinstance(sample.get(name), (int, float))
+                            and not isinstance(sample.get(name), bool)
+                            and math.isfinite(float(sample[name]))
+                            and float(sample[name]) >= 0.0
+                            for name in (
+                                "true_residual_norm",
+                                "rhs_norm",
+                                "true_relative_residual",
+                            )
+                        )
+                        and (
+                            math.isclose(
+                                float(sample["true_relative_residual"]),
+                                float(sample["true_residual_norm"])
+                                / float(sample["rhs_norm"]),
+                                rel_tol=1.0e-12,
+                                abs_tol=0.0,
+                            )
+                            if float(sample["rhs_norm"]) > 0.0
+                            else float(sample["true_residual_norm"]) == 0.0
+                            and float(sample["true_relative_residual"]) == 0.0
+                        )
+                        for sample in true_samples
+                    )
+                )
+                true_residual_evidence.append(
+                    {
+                        "complete": true_sample_evidence_complete,
+                        "finite": true_sample_finite,
+                    }
+                )
+                expected_entry = next(
+                    (
+                        item
+                        for item in expected_top_entries
+                        if item.get("ordinal") == ordinal
+                    ),
+                    None,
+                )
+                expected_identity = {
+                    "schema": "task041.representative_rhs.response_identity.v1",
+                    "source_sha": summary.get("source_sha"),
+                    "probe_manifest_sha256": probe_summary.get("sha256")
+                    if isinstance(probe_summary, Mapping)
+                    else None,
+                    "packet_manifest_sha256": immutable_binding.get(
+                        "expected_packet_sha"
+                    ),
+                    "ordinal": ordinal,
+                    "side": "top",
+                    "formal_column": expected_entry.get("formal_column")
+                    if isinstance(expected_entry, Mapping)
+                    else None,
+                    "branch_ordinal": expected_entry.get("branch_ordinal")
+                    if isinstance(expected_entry, Mapping)
+                    else None,
+                    "p4_backend": backend,
+                }
+                packet_ok, packet_shards = verify_packet(
+                    call.get("artifact"),
+                    expected_identity=expected_identity,
+                )
+                response_packet_shards[(backend, ordinal)] = packet_shards
+                shards = call.get("rank_shards")
+                shard_ok = bool(
+                    isinstance(shards, list)
+                    and len(shards) == 8
+                    and {
+                        row.get("rank")
+                        for row in shards
+                        if isinstance(row, Mapping)
+                    }
+                    == set(range(8))
+                )
+                # The packet loader above has already checked the complete rank
+                # map and shard hashes; bind each audit row to its owned RHS.
+                shard_by_rank = {
+                    int(row["rank"]): row
+                    for row in shards or []
+                    if isinstance(row, Mapping)
+                    and type(row.get("rank")) is int
+                }
+                response_shard_rows[(backend, ordinal)] = shard_by_rank
+                for rank in range(8):
+                    descriptor = packet_shards.get(rank)
+                    row = shard_by_rank.get(rank)
+                    if descriptor is None or row is None:
+                        shard_ok = False
+                        continue
+                    shard_ok = bool(
+                        shard_ok
+                        and row.get("ownership_range") == list(descriptor[2])
+                        and _valid_sha(row.get("owned_rhs_sha256"), 64)
+                        and _valid_sha(row.get("owned_response_sha256"), 64)
+                    )
+                response_packets_ok = bool(
+                    response_packets_ok
+                    and packet_ok
+                    and shard_ok
+                    and true_sample_evidence_complete
+                    and isinstance(expected_entry, Mapping)
+                )
+
+    comparisons_by_ordinal = {
+        int(item["ordinal"]): item
+        for item in response_comparisons or []
+        if isinstance(item, Mapping) and type(item.get("ordinal")) is int
+    }
+    if set(by_backend["full"]) != {int(item["ordinal"]) for item in expected_top_entries}:
+        response_packets_ok = False
+    if set(by_backend["cell_condensed"]) != {int(item["ordinal"]) for item in expected_top_entries}:
+        response_packets_ok = False
+    if set(comparisons_by_ordinal) != {int(item["ordinal"]) for item in expected_top_entries}:
+        response_packets_ok = False
+    for ordinal in by_backend["full"]:
+        condensed_call = by_backend["cell_condensed"].get(ordinal)
+        comparison_record = comparisons_by_ordinal.get(ordinal)
+        expected_entry = next(
+            (item for item in expected_top_entries if item.get("ordinal") == ordinal),
+            None,
+        )
+        if (
+            condensed_call is None
+            or comparison_record is None
+            or not isinstance(expected_entry, Mapping)
+            or comparison_record.get("formal_column")
+            != expected_entry.get("formal_column")
+        ):
+            response_packets_ok = False
+            continue
+        full_shards = response_packet_shards.get(("full", ordinal), {})
+        cond_shards = response_packet_shards.get(("cell_condensed", ordinal), {})
+        full_rows = response_shard_rows.get(("full", ordinal), {})
+        cond_rows = response_shard_rows.get(("cell_condensed", ordinal), {})
+        rhs_norm_sq = full_sq = cond_sq = delta_sq = 0.0
+        raw_rhs_equal = bool(
+            len(full_shards) == len(cond_shards) == 8
+            and set(full_shards) == set(cond_shards) == set(range(8))
+        )
+        for rank in range(8):
+            full_descriptor = full_shards.get(rank)
+            cond_descriptor = cond_shards.get(rank)
+            full_row = full_rows.get(rank)
+            cond_row = cond_rows.get(rank)
+            if (
+                full_descriptor is None
+                or cond_descriptor is None
+                or full_row is None
+                or cond_row is None
+                or full_descriptor[2] != cond_descriptor[2]
+            ):
+                raw_rhs_equal = False
+                continue
+            full_payload = cond_payload = None
+            try:
+                full_payload = load_packet_shard(full_descriptor)
+                cond_payload = load_packet_shard(cond_descriptor)
+            except (OSError, ValueError, KeyError, EOFError):
+                del full_payload, cond_payload
+                raw_rhs_equal = False
+                continue
+            full_solution, full_rhs = full_payload
+            cond_solution, cond_rhs = cond_payload
+            full_rhs_sha = hashlib.sha256(
+                memoryview(np.ascontiguousarray(full_rhs)).cast("B")
+            ).hexdigest()
+            cond_rhs_sha = hashlib.sha256(
+                memoryview(np.ascontiguousarray(cond_rhs)).cast("B")
+            ).hexdigest()
+            full_solution_sha = hashlib.sha256(
+                memoryview(np.ascontiguousarray(full_solution)).cast("B")
+            ).hexdigest()
+            cond_solution_sha = hashlib.sha256(
+                memoryview(np.ascontiguousarray(cond_solution)).cast("B")
+            ).hexdigest()
+            raw_rhs_equal = bool(
+                raw_rhs_equal
+                and full_row.get("ownership_range") == list(full_descriptor[2])
+                and cond_row.get("ownership_range") == list(cond_descriptor[2])
+                and full_row.get("owned_rhs_sha256") == full_rhs_sha
+                and cond_row.get("owned_rhs_sha256") == cond_rhs_sha
+                and full_row.get("owned_response_sha256") == full_solution_sha
+                and cond_row.get("owned_response_sha256") == cond_solution_sha
+                and full_rhs_sha == cond_rhs_sha
+                and full_rhs.dtype == cond_rhs.dtype
+                and full_rhs.shape == cond_rhs.shape
+                and memoryview(np.ascontiguousarray(full_rhs)).cast("B")
+                == memoryview(np.ascontiguousarray(cond_rhs)).cast("B")
+            )
+            rhs_norm_sq += float(np.vdot(full_rhs, full_rhs).real)
+            full_sq += float(np.vdot(full_solution, full_solution).real)
+            cond_sq += float(np.vdot(cond_solution, cond_solution).real)
+            delta = cond_solution - full_solution
+            delta_sq += float(np.vdot(delta, delta).real)
+            del (
+                delta,
+                full_solution,
+                full_rhs,
+                cond_solution,
+                cond_rhs,
+                full_payload,
+                cond_payload,
+            )
+        metrics = comparison_record.get("comparison")
+        rhs_norm = math.sqrt(rhs_norm_sq)
+        e_x = (
+            math.sqrt(delta_sq) / max(math.sqrt(full_sq), math.sqrt(cond_sq))
+            if max(math.sqrt(full_sq), math.sqrt(cond_sq)) > 0.0
+            else 0.0
+            if delta_sq == 0.0
+            else None
+        )
+        reported_e_a = (
+            _task041_p4_backend_pair_numeric_gate(
+                {"pass": comparison_record.get("pass"), "comparison": metrics}
+            )
+            if isinstance(metrics, Mapping)
+            else {"pass": False, "recomputed": {}}
+        )
+        reported_rhs_norm = metrics.get("rhs_norm") if isinstance(metrics, Mapping) else None
+        reported_e_x = metrics.get("e_x") if isinstance(metrics, Mapping) else None
+        finite_reported_rhs = bool(
+            isinstance(reported_rhs_norm, (int, float))
+            and not isinstance(reported_rhs_norm, bool)
+            and math.isfinite(float(reported_rhs_norm))
+        )
+        finite_reported_e_x = bool(
+            isinstance(reported_e_x, (int, float))
+            and not isinstance(reported_e_x, bool)
+            and math.isfinite(float(reported_e_x))
+        )
+        metrics_ok = bool(
+            isinstance(metrics, Mapping)
+            and math.isfinite(rhs_norm)
+            and finite_reported_rhs
+            and math.isclose(float(reported_rhs_norm), rhs_norm, rel_tol=1.0e-12, abs_tol=0.0)
+            and e_x is not None
+            and math.isfinite(e_x)
+            and finite_reported_e_x
+            and math.isclose(float(reported_e_x), e_x, rel_tol=1.0e-12, abs_tol=0.0)
+            and reported_e_a.get("reports_match") is True
+            and reported_e_a.get("subgate_reports_match") is True
+            and metrics.get("limits")
+            == {
+                "e_x": 1.0e-8,
+                "e_A": 1.0e-8,
+                "side_relative_residual": 1.0e-2,
+            }
+            and comparison_record.get("pass")
+            is reported_e_a.get("pass")
+            and metrics.get("pass") is reported_e_a.get("pass")
+        )
+        recomputed_response_checks.append(metrics_ok)
+        side_residuals_within_limit = bool(
+            reported_e_a.get("recomputed", {}).get("full_relative") is not None
+            and reported_e_a.get("recomputed", {}).get(
+                "cell_condensed_relative"
+            )
+            is not None
+            and reported_e_a["recomputed"]["full_relative"] <= 1.0e-2
+            and reported_e_a["recomputed"]["cell_condensed_relative"]
+            <= 1.0e-2
+        )
+        response_recomputations.append(
+            {
+                "ordinal": ordinal,
+                "raw_rhs_norm": rhs_norm,
+                "raw_response_e_x": e_x,
+                "reported_e_x": reported_e_x,
+                "input_identity_pass": bool(
+                    raw_rhs_equal
+                    and comparison_record.get("rhs_identity_pass") is True
+                ),
+                "finite_pass": reported_e_a.get("finite") is True,
+                "e_A_and_side_reports_match": (
+                    reported_e_a.get("reports_match") is True
+                ),
+                "strong_pair_gate_pass": (
+                    reported_e_a.get("strong_pair_gate_pass") is True
+                ),
+                "side_residuals_within_limit": side_residuals_within_limit,
+            }
+        )
+        response_packets_ok = bool(response_packets_ok and metrics_ok)
+
+    modal_projection_by_column: dict[int, Mapping[str, Any]] = {}
+    for item in response_comparisons or []:
+        if not isinstance(item, Mapping) or type(item.get("formal_column")) is not int:
+            continue
+        projection = item.get("comparison", {}).get("top_modal_projection")
+        if isinstance(projection, Mapping):
+            modal_projection_by_column[int(item["formal_column"])] = projection
+    modal_projection_evidence_complete = bool(
+        set(modal_projection_by_column) == {12, 493, 666}
+        and all(
+            all(
+                name in projection
+                for name in (
+                    "source",
+                    "global_size",
+                    "full_sha256",
+                    "cell_condensed_sha256",
+                    "difference_sha256",
+                    "full_norm",
+                    "cell_condensed_norm",
+                    "numerator_norm",
+                    "denominator_norm",
+                    "difference_norm",
+                    "relative_difference",
+                    "finite",
+                )
+            )
+            and projection.get("source") == "same_live_coupling_top_projection"
+            and type(projection.get("global_size")) is int
+            and projection.get("global_size", 0) > 0
+            and all(
+                _valid_sha(projection.get(name), 64)
+                for name in (
+                    "full_sha256",
+                    "cell_condensed_sha256",
+                    "difference_sha256",
+                )
+            )
+            for projection in modal_projection_by_column.values()
+        )
+    )
+
+    def modal_number(value: Any) -> bool:
+        return bool(
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and math.isfinite(float(value))
+            and float(value) >= 0.0
+        )
+
+    modal_projection_finite_pass = bool(
+        modal_projection_evidence_complete
+        and all(
+            projection.get("finite") is True
+            and all(
+                modal_number(projection.get(name))
+                for name in (
+                    "full_norm",
+                    "cell_condensed_norm",
+                    "numerator_norm",
+                    "denominator_norm",
+                    "difference_norm",
+                    "relative_difference",
+                )
+            )
+            for projection in modal_projection_by_column.values()
+        )
+    )
+    modal_projection_reports_match = bool(
+        modal_projection_finite_pass
+        and all(
+            math.isclose(
+                float(projection["numerator_norm"]),
+                float(projection["difference_norm"]),
+                rel_tol=1.0e-12,
+                abs_tol=0.0,
+            )
+            and math.isclose(
+                float(projection["denominator_norm"]),
+                max(
+                    float(projection["full_norm"]),
+                    float(projection["cell_condensed_norm"]),
+                ),
+                rel_tol=1.0e-12,
+                abs_tol=0.0,
+            )
+            and math.isclose(
+                float(projection["relative_difference"]),
+                (
+                    float(projection["numerator_norm"])
+                    / float(projection["denominator_norm"])
+                    if float(projection["denominator_norm"]) > 0.0
+                    else 0.0
+                    if float(projection["numerator_norm"]) == 0.0
+                    else math.inf
+                ),
+                rel_tol=1.0e-12,
+                abs_tol=0.0,
+            )
+            for projection in modal_projection_by_column.values()
+        )
+    )
+    check(
+        "top_causal_modal_projection_measurements",
+        bool(modal_projection_evidence_complete and modal_projection_reports_match),
+    )
+    check(
+        "top_causal_modal_projection_finite_gate",
+        modal_projection_finite_pass,
+        action_safety=True,
+        evidence=False,
+    )
+    check("top_causal_response_artifact_hashes_and_norm_reports", response_packets_ok)
+    response_identity_pass = bool(
+        len(response_recomputations) == 3
+        and all(item.get("input_identity_pass") is True for item in response_recomputations)
+    )
+    response_finite_pass = bool(
+        len(response_recomputations) == 3
+        and all(item.get("finite_pass") is True for item in response_recomputations)
+        and len(true_residual_evidence) == 6
+        and all(item.get("finite") is True for item in true_residual_evidence)
+    )
+    response_pair_pass = bool(
+        len(response_recomputations) == 3
+        and all(
+            item.get("strong_pair_gate_pass") is True
+            for item in response_recomputations
+        )
+    )
+    side_residual_gate_pass = bool(
+        len(response_recomputations) == 3
+        and all(
+            item.get("side_residuals_within_limit") is True
+            for item in response_recomputations
+        )
+    )
+    check(
+        "top_causal_response_input_identity_gate",
+        response_identity_pass,
+        action_safety=True,
+        evidence=False,
+    )
+    check(
+        "top_causal_response_finite_gate",
+        response_finite_pass,
+        action_safety=True,
+        evidence=False,
+    )
+    check(
+        "top_causal_side_original_residual_gate",
+        side_residual_gate_pass,
+        action_safety=True,
+        evidence=False,
+    )
+
+    replay_checks: list[bool] = []
+    replay_gate_results: list[bool] = []
+
+    def shared_a4_values_match(item: Mapping[str, Any]) -> tuple[bool, bool]:
+        gate_map = item.get("residual_gates")
+        if not isinstance(gate_map, Mapping):
+            return False, False
+        all_match = True
+        all_pass = True
+        for backend_key in ("full_reference", "cell_condensed_replay"):
+            audit_record = item.get(backend_key)
+            reported_gates = gate_map.get(backend_key)
+            if not isinstance(audit_record, Mapping) or not isinstance(
+                reported_gates, Mapping
+            ):
+                return False, False
+            for field, limit in (
+                ("physical_relative_residual", 1.0e-10),
+                ("relative_residual", 1.0e-10),
+            ):
+                value = audit_record.get(field)
+                gate = reported_gates.get(field)
+                finite_value = bool(
+                    isinstance(value, (int, float))
+                    and not isinstance(value, bool)
+                    and math.isfinite(float(value))
+                    and float(value) >= 0.0
+                )
+                expected_pass = bool(finite_value and float(value) <= limit)
+                all_match = bool(
+                    all_match
+                    and isinstance(gate, Mapping)
+                    and gate.get("limit") == limit
+                    and gate.get("value") == (float(value) if finite_value else None)
+                    and gate.get("pass") is expected_pass
+                )
+                all_pass = bool(all_pass and expected_pass)
+        return all_match, all_pass
+
+    def comparison_gate_values_match(
+        item: Mapping[str, Any],
+        *,
+        gate_name: str,
+        limit: float,
+        input_matches: bool,
+    ) -> tuple[bool, bool]:
+        numerator = item.get("numerator_norm")
+        denominator = item.get("denominator_norm")
+        relative = item.get("relative_difference")
+        finite_norms = bool(
+            all(
+                isinstance(value, (int, float))
+                and not isinstance(value, bool)
+                and math.isfinite(float(value))
+                and float(value) >= 0.0
+                for value in (numerator, denominator)
+            )
+        )
+        if finite_norms:
+            recomputed_relative = (
+                float(numerator) / float(denominator)
+                if float(denominator) > 0.0
+                else 0.0
+                if float(numerator) == 0.0
+                else None
+            )
+        else:
+            recomputed_relative = None
+        relative_matches = bool(
+            (relative is None and recomputed_relative is None)
+            or (
+                isinstance(relative, (int, float))
+                and not isinstance(relative, bool)
+                and math.isfinite(float(relative))
+                and recomputed_relative is not None
+                and math.isclose(
+                    float(relative),
+                    recomputed_relative,
+                    rel_tol=1.0e-12,
+                    abs_tol=0.0,
+                )
+            )
+        )
+        applicable = bool(input_matches)
+        expected_pass = (
+            bool(recomputed_relative is not None and recomputed_relative <= limit)
+            if applicable
+            else None
+        )
+        expected_status = (
+            "passed"
+            if expected_pass is True
+            else "failed"
+            if expected_pass is False
+            else "trajectory_only_input_diverged"
+            if item.get("gate_limit") is not None and input_matches is False
+            else "not_applicable"
+        )
+        consistent = bool(
+            finite_norms
+            and relative_matches
+            and item.get("gate_name") == gate_name
+            and item.get("gate_limit") == limit
+            and item.get("gate_applicable") is applicable
+            and item.get("gate_pass") is expected_pass
+            and item.get("gate_status") == expected_status
+        )
+        return consistent, expected_pass is True
+
+    for pc_index in expected_indices:
+        pc_audits = [
+            item
+            for item in audits or []
+            if isinstance(item, Mapping) and item.get("pc_index") == pc_index
+        ]
+        q1 = [
+            item
+            for item in pc_audits
+            if item.get("replay_kind") == "independent_q"
+            and item.get("q_replay_index") == 1
+        ]
+        q2 = [
+            item
+            for item in pc_audits
+            if item.get("replay_kind") == "independent_q"
+            and item.get("q_replay_index") == 2
+        ]
+        pc = [item for item in pc_audits if item.get("replay_kind") == "independent_pc"]
+        this_pc_ok = len(q1) == len(q2) == len(pc) == 1
+        this_gate_pass = this_pc_ok
+        for expected_q, items in ((1, q1), (2, q2)):
+            if len(items) != 1:
+                continue
+            audit = items[0]
+            rank_rows = audit.get("by_rank")
+            for row in rank_rows or []:
+                q_calls = row.get("q_calls") if isinstance(row, Mapping) else None
+                shared = row.get("shared_a4_checks") if isinstance(row, Mapping) else None
+                gates = [
+                    item
+                    for item in row.get("comparisons", [])
+                    if isinstance(item, Mapping)
+                    and item.get("gate_name") == "Q"
+                    and item.get("q_call_index") == expected_q
+                ] if isinstance(row, Mapping) else []
+                a4 = [
+                    item
+                    for item in shared or []
+                    if isinstance(item, Mapping)
+                    and item.get("q_call_index") == expected_q
+                ]
+                q_input = [
+                    item
+                    for item in row.get("comparisons", [])
+                    if isinstance(item, Mapping)
+                    and item.get("event") == "Q_input"
+                    and item.get("q_call_index") == expected_q
+                ]
+                a4_match, a4_pass = (
+                    shared_a4_values_match(a4[0]) if len(a4) == 1 else (False, False)
+                )
+                q_input_matches = bool(
+                    len(q_input) == 1
+                    and q_input[0].get("exact_owned_bytes_equal") is True
+                    and isinstance(q_calls, Mapping)
+                    and isinstance(q_calls.get(str(expected_q)), Mapping)
+                    and q_calls[str(expected_q)].get("input_matches_full") is True
+                )
+                q_gate_consistent, q_gate_pass = (
+                    comparison_gate_values_match(
+                        gates[0],
+                        gate_name="Q",
+                        limit=1.0e-11,
+                        input_matches=q_input_matches,
+                    )
+                    if len(gates) == 1
+                    else (False, False)
+                )
+                this_pc_ok = bool(
+                    this_pc_ok
+                    and isinstance(q_calls, Mapping)
+                    and set(q_calls) == {str(expected_q)}
+                    and isinstance(q_calls.get(str(expected_q)), Mapping)
+                    and q_calls[str(expected_q)].get("completed") is True
+                    and q_gate_consistent
+                    and len(a4) == 1
+                    and a4_match
+                )
+                this_gate_pass = bool(this_gate_pass and q_gate_pass and a4_pass)
+        if len(pc) == 1:
+            audit = pc[0]
+            rank_rows = audit.get("by_rank")
+            for row in rank_rows or []:
+                q_calls = row.get("q_calls") if isinstance(row, Mapping) else None
+                shared = row.get("shared_a4_checks") if isinstance(row, Mapping) else None
+                pc_gates = [
+                    item
+                    for item in row.get("comparisons", [])
+                    if isinstance(item, Mapping) and item.get("gate_name") == "PC"
+                ] if isinstance(row, Mapping) else []
+                a4_qs = {
+                    int(item["q_call_index"])
+                    for item in shared or []
+                    if isinstance(item, Mapping)
+                    and type(item.get("q_call_index")) is int
+                }
+                pc_input = [
+                    item
+                    for item in row.get("comparisons", [])
+                    if isinstance(item, Mapping) and item.get("event") == "PC_input"
+                ]
+                pc_input_matches = bool(
+                    len(pc_input) == 1
+                    and pc_input[0].get("exact_owned_bytes_equal") is True
+                )
+                pc_gate_consistent, pc_gate_pass = (
+                    comparison_gate_values_match(
+                        pc_gates[0],
+                        gate_name="PC",
+                        limit=1.0e-8,
+                        input_matches=pc_input_matches,
+                    )
+                    if len(pc_gates) == 1
+                    else (False, False)
+                )
+                a4_checks_by_q = [
+                    item
+                    for item in shared or []
+                    if isinstance(item, Mapping)
+                    and type(item.get("q_call_index")) is int
+                ]
+                a4_data_match = len(a4_checks_by_q) == 2 and all(
+                    shared_a4_values_match(item)[0]
+                    for item in a4_checks_by_q
+                )
+                a4_data_pass = len(a4_checks_by_q) == 2 and all(
+                    shared_a4_values_match(item)[1]
+                    for item in a4_checks_by_q
+                )
+                this_pc_ok = bool(
+                    this_pc_ok
+                    and isinstance(q_calls, Mapping)
+                    and set(q_calls) == {"1", "2"}
+                    and all(isinstance(q_calls.get(str(index)), Mapping) for index in (1, 2))
+                    and all(q_calls[str(index)].get("completed") is True for index in (1, 2))
+                    and pc_gate_consistent
+                    and a4_qs == {1, 2}
+                    and a4_data_match
+                )
+                this_gate_pass = bool(
+                    this_gate_pass and pc_gate_pass and a4_data_pass
+                )
+        replay_checks.append(this_pc_ok)
+        replay_gate_results.append(this_gate_pass)
+    check(
+        "top_causal_independent_q1_q2_pc_and_shared_a4_complete",
+        bool(expected_indices)
+        and len(replay_checks) == len(expected_indices)
+        and all(replay_checks),
+    )
+    replay_action_pass = bool(
+        len(replay_gate_results) == len(expected_indices)
+        and bool(expected_indices)
+        and all(replay_gate_results)
+    )
+    check(
+        "top_causal_q_pc_and_shared_a4_numeric_gates",
+        replay_action_pass,
+        action_safety=True,
+        evidence=False,
+    )
+
+    backend_phases = (
+        record.get("backend_phases") if isinstance(record, Mapping) else None
+    )
+    backend_order = record.get("backend_order") if isinstance(record, Mapping) else None
+    full_phase = backend_phases.get("full") if isinstance(backend_phases, Mapping) else None
+    condensed_phase = (
+        backend_phases.get("cell_condensed")
+        if isinstance(backend_phases, Mapping)
+        else None
+    )
+    full_layout = full_phase.get("layout_identity") if isinstance(full_phase, Mapping) else None
+    condensed_layout = (
+        condensed_phase.get("layout_identity")
+        if isinstance(condensed_phase, Mapping)
+        else None
+    )
+    layout_evidence_present = bool(
+        isinstance(full_layout, Mapping)
+        and isinstance(condensed_layout, Mapping)
+        and _valid_sha(full_layout.get("identity_sha256"), 64)
+        and _valid_sha(condensed_layout.get("identity_sha256"), 64)
+    )
+    layout_pass = bool(
+        layout_evidence_present
+        and full_layout.get("identity_sha256")
+        == condensed_layout.get("identity_sha256")
+    )
+    release_evidence_present = bool(
+        isinstance(backend_phases, Mapping)
+        and backend_order == ["full", "cell_condensed"]
+        and all(
+            isinstance(backend_phases.get(backend), Mapping)
+            and isinstance(backend_phases[backend].get("release"), Mapping)
+            and isinstance(backend_phases[backend].get("resources"), list)
+            for backend in ("full", "cell_condensed")
+        )
+    )
+    release_pass = bool(
+        release_evidence_present
+        and all(
+            backend_phases[backend]["release"].get("pass") is True
+            for backend in ("full", "cell_condensed")
+        )
+    )
+    declared_gates = record.get("gates") if isinstance(record, Mapping) else None
+    declared_layout_release_match = bool(
+        isinstance(declared_gates, Mapping)
+        and declared_gates.get("same_layout_identity") is layout_pass
+        and declared_gates.get("full_released_before_condensed")
+        is bool(
+            release_evidence_present
+            and backend_order == ["full", "cell_condensed"]
+            and backend_phases["full"]["release"].get("pass") is True
+        )
+        and declared_gates.get("both_backend_releases") is release_pass
+    )
+    check(
+        "top_causal_layout_release_resource_evidence",
+        bool(layout_evidence_present and release_evidence_present),
+    )
+    check(
+        "top_causal_layout_release_resource_action_gates",
+        bool(layout_pass and release_pass and declared_layout_release_match),
+        action_safety=True,
+        evidence=False,
+    )
+    check(
+        "top_causal_process_group_gone",
+        process_group_gone is True,
+        action_safety=True,
+        evidence=False,
+    )
+
+    evidence_complete = bool(not failures)
+    worker_action_safety_pass = bool(
+        response_identity_pass
+        and response_finite_pass
+        and modal_projection_finite_pass
+        and side_residual_gate_pass
+        and replay_action_pass
+        and layout_pass
+        and release_pass
+    )
+    action_safety_pass = bool(not action_failures)
+    diagnostic_pass = bool(evidence_complete and action_safety_pass)
+    declared_record_flags_match = bool(
+        isinstance(record, Mapping)
+        and record.get("evidence_complete") is evidence_complete
+        and record.get("response_pair_pass") is response_pair_pass
+        and record.get("side_residual_gate_pass") is side_residual_gate_pass
+        and record.get("action_safety_pass") is worker_action_safety_pass
+        and record.get("diagnostic_pass")
+        is bool(evidence_complete and worker_action_safety_pass)
+        and record.get("status")
+        == (
+            "diagnostic_complete"
+            if evidence_complete and worker_action_safety_pass
+            else "failed_required_gate"
+        )
+    )
+    check("top_causal_declared_result_flags_match_raw", declared_record_flags_match)
+    evidence_complete = bool(not failures)
+    diagnostic_pass = bool(evidence_complete and not action_failures)
+    return {
+        "pass": diagnostic_pass,
+        "status": "validated" if diagnostic_pass else "validation_failed",
+        "scope": "top_causal_replay",
+        "consumer_root": str(consumer_root),
+        "checks": checks,
+        "failures": failures,
+        "action_safety_failures": action_failures,
+        "response_recomputations": response_recomputations,
+        "evidence_complete": evidence_complete,
+        "response_pair_pass": response_pair_pass,
+        "side_residual_gate_pass": side_residual_gate_pass,
+        "action_safety_pass": action_safety_pass,
+        "diagnostic_pass": diagnostic_pass,
+        "qualification_pass": False,
+        "failure_classification": (
+            None if diagnostic_pass else "TOP_CAUSAL_REPLAY_VALIDATION_FAILURE"
+        ),
+    }
+
+
 def _consumer_result(
     consumer_root: Path,
     *,
@@ -5510,6 +6835,7 @@ def _consumer_result(
     representative_rhs_binding: Mapping[str, Any] | None = None,
     expected_side_setup_schedule: str | None = None,
     expected_comparison_mode: str | None = None,
+    expected_top_causal_replay: bool = False,
     expected_diagnostic_output: bool = False,
     expected_diagnostic_model_id: str | None = None,
 ) -> dict[str, Any]:
@@ -5553,7 +6879,7 @@ def _consumer_result(
         representative_rhs_binding is not None and not common_scope
     )
     representative_validation = (
-        _validate_representative_rhs_result(
+        _validate_task041_top_causal_replay_result(
             consumer_root,
             summary,
             representative_rhs_binding,
@@ -5561,7 +6887,25 @@ def _consumer_result(
             expected_side_setup_schedule=expected_side_setup_schedule,
             expected_comparison_mode=expected_comparison_mode,
         )
-        if representative_rhs_binding is not None and not common_scope
+        if expected_top_causal_replay
+        and representative_rhs_binding is not None
+        else _validate_representative_rhs_result(
+            consumer_root,
+            summary,
+            representative_rhs_binding,
+            process_group_gone=process_group_gone,
+            expected_side_setup_schedule=expected_side_setup_schedule,
+            expected_comparison_mode=expected_comparison_mode,
+        )
+        if representative_rhs_binding is not None
+        and not common_scope
+        and expected_top_causal_replay is False
+        else None
+    )
+    top_causal_validation = (
+        representative_validation
+        if expected_top_causal_replay
+        and representative_rhs_binding is not None
         else None
     )
     common_validation = (
@@ -5653,8 +6997,18 @@ def _consumer_result(
     )
     representative_complete = bool(
         representative_scope
-        and worker_classification == "TASK041_REPRESENTATIVE_RHS_COMPLETED"
-        and summary.get("status") == "task041_representative_rhs_completed"
+        and (
+            (
+                not expected_top_causal_replay
+                and worker_classification == "TASK041_REPRESENTATIVE_RHS_COMPLETED"
+                and summary.get("status") == "task041_representative_rhs_completed"
+            )
+            or (
+                expected_top_causal_replay
+                and worker_classification == "TASK041_TOP_CAUSAL_REPLAY_COMPLETED"
+                and summary.get("status") == "task041_top_causal_replay_completed"
+            )
+        )
         and representative_validation is not None
         and representative_validation.get("pass") is True
         and lifecycle_gate
@@ -5738,6 +7092,7 @@ def _consumer_result(
         "process_group_gone": process_group_gone,
         "lifecycle_gate": lifecycle_gate,
         "representative_validation": representative_validation,
+        "top_causal_replay_validation": top_causal_validation,
         "common_validation": common_validation,
         "completion_scope": (
             "representative_rhs"
@@ -6152,6 +7507,7 @@ def run_task041_public_supervisor(
     task041_rhs_probe_manifest: str | Path | None = None,
     task041_side_setup_schedule: str | None = None,
     task041_comparison_mode: str | None = None,
+    task041_top_causal_replay: bool = False,
 ) -> dict[str, Any]:
     """Run one Task041 consumer, optionally reusing a completed BAL_H producer."""
 
@@ -6370,6 +7726,7 @@ def run_task041_public_supervisor(
                     ),
                     side_setup_schedule=task041_side_setup_schedule,
                     comparison_mode=task041_comparison_mode,
+                    top_causal_replay=task041_top_causal_replay,
                 )
             except ValueError as exc:
                 raise Task041SupervisorError(
@@ -7207,6 +8564,7 @@ def run_task041_public_supervisor(
                         if performance_contract is not None
                         else None
                     ),
+                    top_causal_replay=task041_top_causal_replay,
                 )
             else:
                 consumer_command = producer_command_module["balh_exact_consumer"](
@@ -7368,6 +8726,7 @@ def run_task041_public_supervisor(
                         if performance_contract is not None
                         else None
                     ),
+                    expected_top_causal_replay=task041_top_causal_replay,
                     **(
                         {"representative_rhs_binding": representative_rhs_binding}
                         if representative_rhs_binding is not None
@@ -7438,6 +8797,7 @@ def run_task041_public_supervisor(
                     if performance_contract is not None
                     else None
                 ),
+                expected_top_causal_replay=task041_top_causal_replay,
                 **(
                     {"representative_rhs_binding": representative_rhs_binding}
                     if representative_rhs_binding is not None

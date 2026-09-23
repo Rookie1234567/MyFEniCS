@@ -269,6 +269,8 @@ def _dense_types(matrix: PETSc.Mat) -> bool:
 
 
 def _context_apply_count(matrix: PETSc.Mat) -> int | None:
+    if str(matrix.getType()).lower() != "python":
+        return None
     try:
         context = matrix.getPythonContext()
     except (AttributeError, PETSc.Error):
@@ -404,7 +406,10 @@ class SideBalancedInverse:
         self._active_pc_index: int | None = None
         self._active_pc_q_count = 0
         self._active_ksp_iteration: int | None = None
+        self._active_rhs_source: PETSc.Vec | None = None
+        self._active_rhs_norm: float | None = None
         self._active_p4_call_records: list[dict[str, Any]] | None = None
+        self._active_true_residual_samples: list[dict[str, Any]] | None = None
         self._direct_p4_call_records: list[dict[str, Any]] = []
         self._iteration_history: list[dict[str, Any]] | None = (
             [] if self._record_iteration_history else None
@@ -609,7 +614,94 @@ class SideBalancedInverse:
             iteration=int(_iteration),
             reported_residual=float(_reported_residual),
         )
+        if self._diagnostic_callback is not None and (
+            int(_iteration) == 1
+            or (int(_iteration) > 0 and int(_iteration) % 32 == 0)
+        ):
+            self._emit_ksp_true_residual_sample(
+                _ksp,
+                iteration=int(_iteration),
+                sample_label=(
+                    "first_iteration"
+                    if int(_iteration) == 1
+                    else "restart_boundary"
+                ),
+            )
         self._checkpoint()
+
+    def _emit_ksp_true_residual_sample(
+        self,
+        ksp: PETSc.KSP,
+        *,
+        iteration: int,
+        sample_label: str,
+        final_solution: PETSc.Vec | None = None,
+        reported_residual: float | None = None,
+    ) -> None:
+        source = self._active_rhs_source
+        if self._diagnostic_callback is None or source is None or self._operator is None:
+            return
+        solution = final_solution
+        owns_solution = solution is None
+        if solution is None:
+            solution = self._operator.createVecRight()
+        residual = self._operator.createVecLeft()
+        try:
+            if owns_solution:
+                # Supplying our own Vec keeps ownership explicit; buildSolution
+                # is the public KSP API for the current Krylov approximation.
+                ksp.buildSolution(solution)
+            self._operator.mult(solution, residual)
+            residual.scale(PETSc.ScalarType(-1.0))
+            residual.axpy(PETSc.ScalarType(1.0), source)
+            local_finite = bool(
+                np.isfinite(solution.getArray(readonly=True)).all()
+                and np.isfinite(residual.getArray(readonly=True)).all()
+            )
+            finite = bool(self._comm.allreduce(local_finite, op=MPI.LAND))
+            residual_norm = float(residual.norm())
+            rhs_norm = self._active_rhs_norm
+            relative = (
+                residual_norm / rhs_norm
+                if rhs_norm is not None and rhs_norm > 0.0
+                else 0.0
+                if rhs_norm == 0.0 and residual_norm == 0.0
+                else None
+            )
+            finite = bool(
+                finite
+                and np.isfinite(residual_norm)
+                and relative is not None
+                and np.isfinite(relative)
+            )
+            sample = {
+                "iteration": int(iteration),
+                "sample_label": str(sample_label),
+                "reported_residual": (
+                    None
+                    if reported_residual is None
+                    else float(reported_residual)
+                ),
+                "true_residual_norm": residual_norm,
+                "rhs_norm": rhs_norm,
+                "true_relative_residual": relative,
+                "finite": finite,
+            }
+            if self._active_true_residual_samples is not None:
+                self._active_true_residual_samples.append(dict(sample))
+            self._emit_diagnostic(
+                "ksp_true_residual_sample",
+                vectors={
+                    "solution": solution,
+                    "rhs": source,
+                    "true_residual": residual,
+                },
+                **sample,
+            )
+        finally:
+            residual.destroy()
+            if owns_solution:
+                solution.destroy()
 
     def _emit_diagnostic(
         self,
@@ -627,12 +719,17 @@ class SideBalancedInverse:
             "p4_backend": self._p4_inverse_backend,
             **facts,
         }
-        if self._apply_in_progress:
+        if self._active_pc_index is not None:
+            record["scope"] = (
+                "side_apply" if self._apply_in_progress else "direct_pc_apply"
+            )
+            record["pc_apply_index"] = int(self._active_pc_index)
+            if self._active_ksp_iteration is not None:
+                record["ksp_iteration"] = int(self._active_ksp_iteration)
+        elif self._apply_in_progress:
             record["scope"] = "side_apply"
             if self._active_ksp_iteration is not None:
                 record["ksp_iteration"] = int(self._active_ksp_iteration)
-            if self._active_pc_index is not None:
-                record["pc_apply_index"] = int(self._active_pc_index)
         else:
             record["scope"] = "independent_replay"
         if vectors:
@@ -1161,7 +1258,7 @@ class SideBalancedInverse:
                 "BAL_H p4 diagnostic call history exceeded its KSP bound"
             )
         self._q_count += 1
-        if self._apply_in_progress:
+        if self._active_pc_index is not None:
             self._active_pc_q_count += 1
             q_call_index = self._active_pc_q_count
         else:
@@ -1505,6 +1602,14 @@ class SideBalancedInverse:
         self._active_apply_pc_count += 1
         self._active_pc_index = self._active_apply_pc_count
         self._active_pc_q_count = 0
+        if (
+            self._apply_in_progress
+            and self._diagnostic_callback is not None
+            and self._ksp is not None
+        ):
+            self._active_ksp_iteration = int(self._ksp.getIterationNumber())
+        else:
+            self._active_ksp_iteration = None
         self._emit_diagnostic("PC_input", vectors={"source": source})
         full_source = None
         full_output = None
@@ -1574,6 +1679,8 @@ class SideBalancedInverse:
                 active_output.destroy()
             self._active_pc_index = None
             self._active_pc_q_count = 0
+            if not self._apply_in_progress:
+                self._active_ksp_iteration = None
 
     def _explicit_residual(self, source: PETSc.Vec, target: PETSc.Vec) -> dict[str, Any]:
         if self._operator is None:
@@ -1813,7 +1920,11 @@ class SideBalancedInverse:
         self._active_pc_index = None
         self._active_pc_q_count = 0
         self._active_ksp_iteration = None
+        self._active_rhs_norm = None
         self._active_p4_call_records = (
+            [] if self._diagnostic_callback is not None else None
+        )
+        self._active_true_residual_samples = (
             [] if self._diagnostic_callback is not None else None
         )
         if self._iteration_history is not None:
@@ -1883,16 +1994,36 @@ class SideBalancedInverse:
             rhs_norm = float(source.norm())
             if not np.isfinite(rhs_norm):
                 raise RuntimeError("BAL_H side RHS norm is non-finite")
+            self._active_rhs_source = source
+            self._active_rhs_norm = rhs_norm
             residual_audit["rhs_norm"] = rhs_norm
             zero_rhs = rhs_norm == 0.0
             if not zero_rhs:
                 solve_started = True
                 self._ksp.solve(source, target)
-                reason = int(self._ksp.getConvergedReason())
-                iterations = int(self._ksp.getIterationNumber())
                 pending_pc_exception = self._pending_pc_exception
                 if pending_pc_exception is not None:
                     raise pending_pc_exception
+                reason = int(self._ksp.getConvergedReason())
+                iterations = int(self._ksp.getIterationNumber())
+                if self._diagnostic_callback is not None:
+                    self._emit_ksp_true_residual_sample(
+                        self._ksp,
+                        iteration=iterations,
+                        sample_label="final_iteration",
+                        final_solution=target,
+                        reported_residual=(
+                            float(self._iteration_history[-1]["reported_residual"])
+                            if self._iteration_history
+                            and isinstance(
+                                self._iteration_history[-1].get(
+                                    "reported_residual"
+                                ),
+                                (int, float),
+                            )
+                            else None
+                        ),
+                    )
                 status, ksp_positive = _classify_ksp_result(
                     reason,
                     iterations,
@@ -1948,6 +2079,15 @@ class SideBalancedInverse:
                     if self._active_p4_call_records is not None
                     else {}
                 ),
+                **(
+                    {
+                        "true_residual_samples": list(
+                            self._active_true_residual_samples
+                        )
+                    }
+                    if self._active_true_residual_samples is not None
+                    else {}
+                ),
             }
         except BaseException as exc:
             if solve_started and self._ksp is not None:
@@ -2000,6 +2140,15 @@ class SideBalancedInverse:
                     if self._active_p4_call_records is not None
                     else {}
                 ),
+                **(
+                    {
+                        "true_residual_samples": list(
+                            self._active_true_residual_samples
+                        )
+                    }
+                    if self._active_true_residual_samples is not None
+                    else {}
+                ),
             }
             if self._last_coupling_failure is not None:
                 record.update(dict(self._last_coupling_failure))
@@ -2027,6 +2176,9 @@ class SideBalancedInverse:
             self._active_pc_q_count = 0
             self._active_ksp_iteration = None
             self._active_p4_call_records = None
+            self._active_true_residual_samples = None
+            self._active_rhs_source = None
+            self._active_rhs_norm = None
 
         self._total_iterations += int(iterations)
         self._total_apply_seconds += elapsed

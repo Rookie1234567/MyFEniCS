@@ -200,9 +200,10 @@ class _IdentityP4:
         solution: PETSc.Vec,
         *,
         residual_tolerance: float,
+        diagnostic_audit: bool = False,
         timing=None,
     ) -> dict[str, object]:
-        del residual_tolerance
+        del residual_tolerance, diagnostic_audit
         rhs.copy(solution)
         self.solve_count += 1
         if timing is not None:
@@ -899,6 +900,163 @@ def test_side_inverse_opt_in_diagnostic_scope_labels_and_p4_norms():
         source.destroy()
         inverse.destroy()
         operator.destroy()
+
+
+def test_side_inverse_direct_pc_uses_per_pc_q_labels_after_direct_q_history():
+    events: list[dict[str, object]] = []
+
+    def collect(record):
+        events.append(dict(record))
+        return False
+
+    inverse, owned = _build_fixture(diagnostic_callback=collect)
+    operator = owned["operator"]
+    source = _new_vector(
+        operator, np.asarray([0.5 + 0.25j, -0.125 + 0.375j])
+    )
+    pc_output = operator.createVecLeft()
+    direct_q_output = None
+    try:
+        direct_q_output = inverse._apply_q_callback(source)
+        first_q = next(
+            event
+            for event in events
+            if event.get("event") == "Q_input"
+        )
+        assert first_q["scope"] == "independent_replay"
+        assert first_q["q_call_index"] == 1
+
+        inverse._apply_balanced_pc(source, pc_output)
+        pc_q_events = [
+            event
+            for event in events
+            if event.get("event") == "Q_input"
+            and event.get("scope") == "direct_pc_apply"
+        ]
+        assert [event["q_call_index"] for event in pc_q_events] == [1, 2]
+        assert all(event.get("pc_apply_index") is not None for event in pc_q_events)
+        assert all(event.get("ksp_iteration") is None for event in pc_q_events)
+    finally:
+        if direct_q_output is not None:
+            direct_q_output.destroy()
+        pc_output.destroy()
+        source.destroy()
+        inverse.destroy()
+        operator.destroy()
+
+
+def test_side_inverse_samples_true_residual_from_real_ksp_monitor():
+    comm = MPI.COMM_WORLD
+    samples: list[dict[str, object]] = []
+    first_sample_solution_refs: list[PETSc.Vec] = []
+    audit_records: list[dict[str, object]] = []
+
+    def collect(record):
+        if record.get("event") != "ksp_true_residual_sample":
+            return
+        vectors = record["borrowed_vectors"]
+        sample_solution = vectors["solution"]
+        lo, hi = sample_solution.getOwnershipRange()
+        values = np.array(sample_solution.getArray(readonly=True), copy=True)
+        residual = np.array(
+            vectors["true_residual"].getArray(readonly=True), copy=True
+        )
+        source = np.array(vectors["rhs"].getArray(readonly=True), copy=True)
+        diagonal = np.arange(lo + 2, hi + 2, dtype=np.float64)
+        if record["sample_label"] == "first_iteration":
+            first_sample_solution_refs.append(sample_solution)
+        samples.append(
+            {
+                "iteration": record["iteration"],
+                "sample_label": record["sample_label"],
+                "true_residual_norm": record["true_residual_norm"],
+                "finite": record["finite"],
+                "local_residual_error": float(
+                    np.max(np.abs(residual - (source - diagonal * values)))
+                )
+                if values.size
+                else 0.0,
+                "solution": values,
+            }
+        )
+
+    inverse, owned = _build_fixture(
+        audit_callback=audit_records.append,
+        diagnostic_callback=collect,
+    )
+    fixture_operator = owned["operator"]
+    matrix = PETSc.Mat().createAIJ(size=(2, 2), nnz=1, comm=comm)
+    matrix.setUp()
+    first, last = matrix.getOwnershipRange()
+    for row in range(first, last):
+        matrix.setValue(row, row, PETSc.ScalarType(2 + row))
+    matrix.assemble()
+    rhs = matrix.createVecRight()
+    for index in range(*rhs.getOwnershipRange()):
+        rhs.setValue(index, PETSc.ScalarType(1.0))
+    rhs.assemble()
+    solution = matrix.createVecRight()
+    solution.set(0.0)
+    solver = inverse._ksp
+    assert solver is not None
+
+    try:
+        inverse._operator = matrix
+        inverse._max_it = 5
+        solver.setOperators(matrix)
+        solver.setTolerances(rtol=1.0e-13, atol=0.0, max_it=5)
+        solver.getPC().setType("none")
+        inverse._rtol = 1.0e-13
+        solver.setUp()
+        assert solver.getType().lower() == "fgmres"
+        assert solver.getPCSide() == PETSc.PC.Side.RIGHT
+        assert side_inverse_module._live_gmres_restart(solver) == 32
+        inverse.apply(rhs, solution)
+        first_samples = [
+            item for item in samples if item["sample_label"] == "first_iteration"
+        ]
+        assert len(first_samples) == 1
+        assert first_samples[0]["iteration"] == 1
+        assert first_samples[0]["true_residual_norm"] > 0.0
+        assert first_samples[0]["finite"] is True
+        assert first_samples[0]["local_residual_error"] < 1.0e-12
+        assert all(item["iteration"] > 0 for item in samples)
+        assert samples[-1]["sample_label"] == "final_iteration"
+        assert samples[-1]["iteration"] == int(solver.getIterationNumber())
+        assert len(first_sample_solution_refs) == 1
+        assert int(first_sample_solution_refs[0].handle) == 0
+
+        persisted = inverse.diagnostics["last_apply"]["true_residual_samples"]
+        assert [item["sample_label"] for item in persisted] == [
+            "first_iteration",
+            "final_iteration",
+        ]
+        assert persisted[0]["iteration"] == 1
+        assert persisted[-1]["iteration"] == int(solver.getIterationNumber())
+        assert persisted == audit_records[-1]["true_residual_samples"]
+
+        sampled_solution = matrix.createVecRight()
+        try:
+            sampled_solution.getArray()[:] = first_samples[0]["solution"]
+            sampled_solution.assemble()
+            sampled_residual = matrix.createVecLeft()
+            try:
+                matrix.mult(sampled_solution, sampled_residual)
+                sampled_residual.axpy(PETSc.ScalarType(-1.0), rhs)
+                assert sampled_residual.norm() == pytest.approx(
+                    first_samples[0]["true_residual_norm"], rel=1.0e-12
+                )
+            finally:
+                sampled_residual.destroy()
+        finally:
+            sampled_solution.destroy()
+    finally:
+        inverse._operator = fixture_operator
+        solution.destroy()
+        rhs.destroy()
+        matrix.destroy()
+        inverse.destroy()
+        fixture_operator.destroy()
 
 
 def test_side_inverse_diagnostic_callback_failure_destroys_borrowed_vecs():

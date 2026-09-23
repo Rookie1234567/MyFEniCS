@@ -98,6 +98,29 @@ def task041_is_explicit_p4_backend_pair(
     )
 
 
+def task041_is_explicit_top_causal_replay(
+    *,
+    enabled: bool,
+    model_id: str,
+    profile_id: str | None,
+    scope: str | None,
+    side_setup_schedule: str | None,
+    comparison_mode: str | None,
+) -> bool:
+    """Allow the top-only replay only inside the reviewed fixed-eight contract."""
+
+    return bool(
+        enabled is True
+        and task041_is_explicit_p4_backend_pair(
+            model_id=model_id,
+            profile_id=profile_id,
+            scope=scope,
+            side_setup_schedule=side_setup_schedule,
+            comparison_mode=comparison_mode,
+        )
+    )
+
+
 def task041_p4_backend_pair_identity(
     *,
     model_id: str,
@@ -189,6 +212,7 @@ def task041_schur_speed_v2_contract(
     scope: str | None = None,
     side_setup_schedule: str | None = None,
     comparison_mode: str | None = None,
+    top_causal_replay: bool = False,
 ) -> dict[str, Any]:
     """Return the explicit S1/S2/S3/S4 budget contract for one candidate."""
 
@@ -231,6 +255,18 @@ def task041_schur_speed_v2_contract(
         raise ValueError(
             "p4_backend_pair requires the complete 5 nm representative_rhs "
             "sequential_component fixed-eight-RHS contract"
+        )
+    if top_causal_replay and not task041_is_explicit_top_causal_replay(
+        enabled=top_causal_replay,
+        model_id=model_id,
+        profile_id=TASK041_SCHUR_SPEED_V2_PROFILE,
+        scope=scope,
+        side_setup_schedule=side_setup_schedule,
+        comparison_mode=comparison_mode,
+    ):
+        raise ValueError(
+            "top_causal_replay requires the complete 5 nm representative_rhs "
+            "sequential_component p4_backend_pair contract"
         )
     if comparison_mode == TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE and (
         model_id != TASK041_BALH_5NM_CANDIDATE_MODEL_ID
@@ -339,6 +375,8 @@ def task041_schur_speed_v2_contract(
                 ),
             }
         )
+    if top_causal_replay:
+        contract["top_causal_replay"] = True
     return contract
 
 
@@ -658,6 +696,7 @@ def _mpi8_command(
     task041_rhs_probe_manifest: str | Path | None = None,
     side_setup_schedule: str | None = None,
     comparison_mode: str | None = None,
+    top_causal_replay: bool = False,
     cpu_list: str = "0-7",
     membind_node: str | None = None,
 ) -> list[str]:
@@ -752,6 +791,8 @@ def _mpi8_command(
                 "comparison mode is limited to the BAL_H candidate worker"
             )
         command.extend(["--task041-comparison-mode", comparison_mode])
+    if top_causal_replay:
+        command.append("--task041-top-causal-replay")
     return command
 
 
@@ -832,6 +873,7 @@ def build_task041_balh_candidate_consumer_command(
     task041_rhs_probe_manifest: str | Path | None = None,
     side_setup_schedule: str | None = None,
     comparison_mode: str | None = None,
+    top_causal_replay: bool = False,
 ) -> list[str]:
     normalized = specification.as_jsonable()
     if task041_balh_route(str(normalized["model_id"])) != "balh":
@@ -857,8 +899,13 @@ def build_task041_balh_candidate_consumer_command(
             ),
             side_setup_schedule=side_setup_schedule,
             comparison_mode=comparison_mode,
+            top_causal_replay=top_causal_replay,
         )
-    elif side_setup_schedule is not None or comparison_mode is not None:
+    elif (
+        side_setup_schedule is not None
+        or comparison_mode is not None
+        or top_causal_replay
+    ):
         raise ValueError(
             "Task041 comparison options require task041_schur_speed_v2"
         )
@@ -883,6 +930,10 @@ def build_task041_balh_candidate_consumer_command(
             comparison_mode=comparison_mode,
         )
     )
+    if top_causal_replay and not p4_backend_pair:
+        raise ValueError(
+            "top causal replay requires the explicit fixed-eight backend pair"
+        )
     return _mpi8_command(
         python_executable,
         TASK041_BALH_CANDIDATE_PHASE,
@@ -901,6 +952,7 @@ def build_task041_balh_candidate_consumer_command(
         task041_rhs_probe_manifest=task041_rhs_probe_manifest,
         side_setup_schedule=side_setup_schedule,
         comparison_mode=comparison_mode,
+        top_causal_replay=top_causal_replay,
         cpu_list=(
             "1-8"
             if p4_backend_pair
@@ -1316,6 +1368,11 @@ def _parser() -> argparse.ArgumentParser:
             TASK041_P4_BACKEND_PAIR_MODE,
         ),
     )
+    parser.add_argument(
+        "--task041-top-causal-replay",
+        action="store_true",
+        help="capture and replay only the selected top fixed-RHS causal nodes",
+    )
     time_control = parser.add_mutually_exclusive_group()
     time_control.add_argument(
         "--task041-performance-profile",
@@ -1347,6 +1404,7 @@ def main(argv: Sequence[str] | None = None) -> dict[str, Any]:
         task041_rhs_probe_manifest=args.task041_rhs_probe,
         side_setup_schedule=args.task041_side_setup_schedule,
         comparison_mode=args.task041_comparison_mode,
+        top_causal_replay=args.task041_top_causal_replay,
     )
 
 

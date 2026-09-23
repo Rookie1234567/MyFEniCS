@@ -11,6 +11,7 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import math
 import os
 import sys
 import time
@@ -50,7 +51,7 @@ from src.io.input_validation import (
     task041_shortwave_workflow_limits,
 )
 from src.io.resolved_config import resolved_config_sha256
-from src.solvers.full3d_lifecycle_packet import write_packet
+from src.solvers.full3d_lifecycle_packet import load_packet, write_packet
 from src.solvers.hybrid_interface_basis import canonical_mode_keys_sha256
 
 TASK041_MODE_PREP_SCHEMA = "task041.exact_side.mode_prep.v1"
@@ -69,6 +70,18 @@ TASK041_WARNING_MEMORY_BYTES = 192 * 2**30
 TASK041_HARD_MEMORY_BYTES = 256 * 2**30
 TASK041_MIN_MEMAVAILABLE_BYTES = 384 * 2**30
 TASK041_TIMEOUT_SECONDS = 172800
+
+
+def _task041_form_p4_residual_identity(
+    action_delta: PETSc.Vec,
+    full_residual: PETSc.Vec,
+    condensed_residual: PETSc.Vec,
+    residual_identity: PETSc.Vec,
+) -> None:
+    """Form D*(x_c-x_f) - (r_f-r_c) using PETSc's source.copy(target)."""
+    action_delta.copy(residual_identity)
+    residual_identity.axpy(PETSc.ScalarType(-1.0), full_residual)
+    residual_identity.axpy(PETSc.ScalarType(1.0), condensed_residual)
 
 
 def _task041_rank_numa_observed_backend(
@@ -2213,6 +2226,8 @@ def _task041_backend_pair_layout_identity(
             "mesh_layout",
             "mpc_layout",
             "layout_arrays",
+            "vector_layouts",
+            "port_layout",
         )
     }
     space_object_diagnostics = []
@@ -2252,6 +2267,10 @@ def _task041_backend_pair_layout_identity(
             },
             "layout_arrays": record["layout_arrays"],
         }
+        if "vector_layouts" in record:
+            components["vector_layouts"] = record["vector_layouts"]
+        if "port_layout" in record:
+            components["port_layout"] = record["port_layout"]
         invariant_by_rank.append({"rank": int(record["rank"]), **components})
         for name, value in components.items():
             component_values[name].append(value)
@@ -2283,8 +2302,1580 @@ def _task041_backend_pair_layout_identity(
         "transfer_identity_by_rank": [
             record["transfer_identity"] for record in invariant_by_rank
         ],
+        "vector_layouts_by_rank": [
+            record.get("vector_layouts") for record in rank_records
+        ],
+        "port_layouts_by_rank": [
+            record.get("port_layout") for record in rank_records
+        ],
         "space_object_diagnostics": space_object_diagnostics,
     }
+
+
+_TASK041_TOP_CAUSAL_FIXED_PC_INDICES = (1, 30, 31, 32, 33)
+_TASK041_TOP_CAUSAL_MAX_NODES = 8
+
+
+def _task041_top_causal_pc_indices(pc_count: int) -> list[int]:
+    """Return first, local-window, and final two PC indices (1-based)."""
+
+    count = int(pc_count)
+    if count < 0:
+        raise ValueError("PC count must be non-negative")
+    fixed = [index for index in _TASK041_TOP_CAUSAL_FIXED_PC_INDICES if index <= count]
+    tail = list(range(max(1, count - 1), count + 1))
+    selected = sorted(set(fixed + tail))
+    if len(selected) > _TASK041_TOP_CAUSAL_MAX_NODES:
+        raise ValueError("top causal replay exceeds its bounded PC node count")
+    return selected
+
+
+def _task041_validate_top_causal_packet_identity(
+    actual: Mapping[str, Any], expected: Mapping[str, Any]
+) -> bool:
+    """Require the complete frozen packet identity, including causal labels."""
+
+    required = (
+        "source_sha",
+        "probe_manifest_sha256",
+        "parent_packet_manifest_sha256",
+        "side",
+        "formal_column",
+        "pc_index",
+        "q_call_index",
+        "backend",
+        "trajectory",
+        "role",
+        "layout_identity_sha256",
+        "owned_input_sha256",
+    )
+    if any(key not in actual or key not in expected for key in required):
+        return False
+    return all(actual[key] == expected[key] for key in required) and dict(
+        actual
+    ) == dict(expected)
+
+
+def _task041_top_causal_node_gate_status(
+    node: Mapping[str, Any],
+    *,
+    replay_kind: str,
+    q_replay_index: int | None,
+    apply_error: bool,
+) -> str:
+    if replay_kind == "reference":
+        return "reference_only_not_applicable"
+    if replay_kind == "free_trajectory":
+        return "diagnostic_only_free_trajectory"
+    independent_q = replay_kind == "independent_q"
+    independent_pc = replay_kind == "independent_pc"
+    if not independent_q and not independent_pc:
+        return "not_applicable_unknown_replay_kind"
+    if apply_error or node.get("complete") is not True:
+        return "incomplete"
+    q_calls = node.get("q_calls")
+    if not isinstance(q_calls, Mapping) or not q_calls:
+        return "not_applicable_required_q_checks_missing"
+    try:
+        observed_q_indices = {int(index) for index in q_calls}
+    except (TypeError, ValueError):
+        return "not_applicable_required_q_checks_missing"
+    required_q_indices = [int(q_replay_index)] if independent_q else [1, 2]
+    expected_q_indices = set(required_q_indices)
+    if observed_q_indices != expected_q_indices:
+        return "not_applicable_required_q_checks_missing"
+    comparisons = node.get("comparisons")
+    if not isinstance(comparisons, list):
+        return "not_applicable_comparisons_missing"
+    required_checks: list[Mapping[str, Any]] = []
+    if independent_q:
+        q_checks = [
+            item
+            for item in comparisons
+            if isinstance(item, Mapping)
+            and item.get("gate_name") == "Q"
+            and item.get("q_call_index") == int(q_replay_index)
+        ]
+        if len(q_checks) != 1:
+            return "not_applicable_required_q_gate_missing"
+        required_checks.extend(q_checks)
+    else:
+        pc_checks = [
+            item
+            for item in comparisons
+            if isinstance(item, Mapping) and item.get("gate_name") == "PC"
+        ]
+        if len(pc_checks) != 1:
+            return "not_applicable_required_pc_gate_missing"
+        required_checks.extend(pc_checks)
+    shared_checks = node.get("shared_a4_checks")
+    if not isinstance(shared_checks, list):
+        return "not_applicable_p4_residual_checks_missing"
+    for q_index in required_q_indices:
+        audits = [
+            item
+            for item in shared_checks
+            if isinstance(item, Mapping)
+            and item.get("q_call_index") == q_index
+        ]
+        if len(audits) != 1:
+            return "not_applicable_p4_residual_checks_missing"
+        if audits[0].get("pass") is not True:
+            return "failed_p4_residual_gate"
+    if any(item.get("gate_pass") is False for item in required_checks):
+        return "failed_action_gate"
+    if any(
+        item.get("gate_status") == "trajectory_only_input_diverged"
+        or item.get("gate_applicable") is not True
+        for item in required_checks
+    ):
+        return "trajectory_only_input_diverged"
+    if any(item.get("gate_pass") is not True for item in required_checks):
+        return "not_applicable_action_gate_missing"
+    if independent_q:
+        return "passed_independent_q_replay_gates"
+    return "passed_independent_pc_replay_gates"
+
+
+def _task041_top_causal_packet_budget(
+    vector_layouts_by_rank: Sequence[Mapping[str, Any]],
+    *,
+    port_layouts_by_rank: Sequence[Mapping[str, Any]],
+    comm_size: int,
+    memory_cap_bytes: int,
+    dtype_itemsize: int = 16,
+    node_limit: int = _TASK041_TOP_CAUSAL_MAX_NODES,
+) -> dict[str, Any]:
+    """Conservative packet and borrowed-vector budget for the fixed replay."""
+
+    if int(comm_size) != len(vector_layouts_by_rank) or int(comm_size) <= 0:
+        raise ValueError("causal packet budget needs one layout per MPI rank")
+    if int(comm_size) != len(port_layouts_by_rank):
+        raise ValueError("causal packet budget needs one port layout per MPI rank")
+    required = ("active_p6", "full_p6", "p4_full_fe")
+    per_rank: list[dict[str, int]] = []
+    for rank, record in enumerate(vector_layouts_by_rank):
+        values: dict[str, int] = {}
+        for name in required:
+            item = record.get(name)
+            if not isinstance(item, Mapping):
+                raise TypeError(f"causal vector layout {name} is missing on rank {rank}")
+            local_size = item.get("local_owned_entries")
+            if type(local_size) is not int or local_size < 0:
+                raise ValueError(f"causal vector layout {name} is invalid on rank {rank}")
+            values[name] = local_size
+        per_rank.append(values)
+    global_sizes = {
+        name: sum(record[name] for record in per_rank)
+        for name in required
+    }
+    port_entries_by_rank = [
+        record.get("replicated_entries") for record in port_layouts_by_rank
+    ]
+    if any(type(value) is not int or value < 0 for value in port_entries_by_rank):
+        raise ValueError("causal port layout is missing its replicated dimension")
+    if len(set(port_entries_by_rank)) != 1:
+        raise ValueError("causal port dimension differs across MPI ranks")
+    port_entries = int(port_entries_by_rank[0])
+    active = global_sizes["active_p6"]
+    full = global_sizes["full_p6"]
+    p4 = global_sizes["p4_full_fe"]
+    # One full reference node stores PC, two Q, and two p4 paired packets;
+    # replay is streamed and persists at most the first byte and gate differences.
+    causal_entries_per_node = 2 * active + 4 * full + 4 * p4
+    # Independent Q1, Q2, and PC replays each have their own first-byte and
+    # first-gate packet slots.
+    first_difference_entries_per_node = 12 * max(active, full, p4)
+    ordinary_rhs_entries = 12 * active
+    packet_count = int(node_limit) * 11 + 6
+    raw_payload_bytes = int(
+        (
+            int(node_limit)
+            * (causal_entries_per_node + first_difference_entries_per_node)
+            + ordinary_rhs_entries
+        )
+        * int(dtype_itemsize)
+    )
+    shard_overhead_bytes = packet_count * int(comm_size) * 4096
+    manifest_overhead_bytes = packet_count * 65536
+    port_metadata_upper_bytes = (
+        int(node_limit) * 2 * port_entries * 256
+    )
+    node_audit_count = int(node_limit) * 5
+    history_file_count = 2 + int(node_limit) * 3
+    node_audit_metadata_upper_bytes = node_audit_count * 256 * 1024
+    p4_history_metadata_upper_bytes = (
+        history_file_count * int(comm_size) * 512 * 1024
+    )
+    bounded_metadata_slack_bytes = 4 * 1024**2
+    disk_upper_bytes = (
+        raw_payload_bytes
+        + shard_overhead_bytes
+        + manifest_overhead_bytes
+        + port_metadata_upper_bytes
+        + node_audit_metadata_upper_bytes
+        + p4_history_metadata_upper_bytes
+        + bounded_metadata_slack_bytes
+    )
+    max_local = max(
+        (max(record[name] for name in required) for record in per_rank),
+        default=0,
+    )
+    max_packet_payload_bytes = 2 * max_local * int(dtype_itemsize)
+    capture_input_bytes = max(
+        (
+            (record["active_p6"] + record["full_p6"] + record["p4_full_fe"])
+            * int(dtype_itemsize)
+            for record in per_rank
+        ),
+        default=0,
+    )
+    output_copy_bytes = max_local * int(dtype_itemsize)
+    write_packet_temporary_bytes = 2 * max_packet_payload_bytes + 4096
+    load_packet_payload_bytes = max_packet_payload_bytes
+    load_packet_peak_bytes = 2 * load_packet_payload_bytes
+    compare_temporary_bytes = max_local * int(dtype_itemsize)
+    checker_vector_bytes = max(
+        (7 * record["p4_full_fe"] * int(dtype_itemsize) for record in per_rank),
+        default=0,
+    )
+    port_metadata_rank_bytes = 128 * port_entries
+    ram_upper_bytes = (
+        capture_input_bytes
+        + output_copy_bytes
+        + write_packet_temporary_bytes
+        + load_packet_peak_bytes
+        + compare_temporary_bytes
+        + checker_vector_bytes
+        + port_metadata_rank_bytes
+    )
+    return {
+        "schema": "task041.top_causal_replay.packet_budget.v1",
+        "vector_global_owned_entries": global_sizes,
+        "dtype": "complex128",
+        "dtype_itemsize_bytes": int(dtype_itemsize),
+        "max_nodes": int(node_limit),
+        "packet_count_upper_bound": packet_count,
+        "disk": {
+            "raw_payload_bytes": raw_payload_bytes,
+            "rank_shard_overhead_bytes": shard_overhead_bytes,
+            "manifest_overhead_bytes": manifest_overhead_bytes,
+            "port_metadata_upper_bytes": port_metadata_upper_bytes,
+            "node_audit_count_upper_bound": node_audit_count,
+            "node_audit_metadata_upper_bytes": node_audit_metadata_upper_bytes,
+            "p4_history_file_count_upper_bound": history_file_count,
+            "p4_history_records_per_rank_upper_bound": 2 * (128 + 1),
+            "p4_history_metadata_upper_bytes": p4_history_metadata_upper_bytes,
+            "bounded_metadata_slack_bytes": bounded_metadata_slack_bytes,
+            "upper_bound_bytes": disk_upper_bytes,
+            "limit_bytes": 2 * 1024**3,
+            "pass": disk_upper_bytes <= 2 * 1024**3,
+            "formula": (
+                f"16*({int(node_limit)}*(2*Nactive+4*Nfull+4*Np4+"
+                "12*max(Nactive,Nfull,Np4))"
+                "+12*Nactive)+rank_shards+packet_manifests+port_metadata"
+                "+bounded_node_and_history_json"
+            ),
+        },
+        "additional_rank_local_ram": {
+            "held_input_copy_bytes": capture_input_bytes,
+            "one_output_copy_bytes": output_copy_bytes,
+            "write_packet_npz_and_read_bytes_upper_bytes": write_packet_temporary_bytes,
+            "load_packet_rhs_solution_and_npz_payload_upper_bytes": load_packet_peak_bytes,
+            "stream_compare_delta_vector_bytes": compare_temporary_bytes,
+            "common_A4_checker_temporary_vecs_upper_bytes": checker_vector_bytes,
+            "port_metadata_python_values_upper_bytes": port_metadata_rank_bytes,
+            "upper_bound_bytes": ram_upper_bytes,
+            "held_input_arrays_max": [
+                "PC_input(active_p6)",
+                "current_Q_input(full_p6)",
+                "current_PH_Q_output(p4_full_FE)",
+            ],
+            "borrowed_petsc_vectors_retained": 0,
+        },
+        "existing_tree_rss_cap_bytes": int(memory_cap_bytes),
+        "pass": disk_upper_bytes <= 2 * 1024**3,
+    }
+
+
+class _Task041TopCausalPacketCapture:
+    """Full-reference packets with rank-local streaming comparison on replay."""
+
+    def __init__(
+        self,
+        *,
+        comm: MPI.Intracomm,
+        root: Path,
+        source_sha: str,
+        probe_manifest_sha256: str,
+        parent_packet_sha256: str,
+        memory_cap_bytes: int,
+    ) -> None:
+        self.comm = comm
+        self.root = Path(root)
+        self.source_sha = source_sha
+        self.probe_manifest_sha256 = probe_manifest_sha256
+        self.parent_packet_sha256 = parent_packet_sha256
+        self.memory_cap_bytes = int(memory_cap_bytes)
+        self.layout_identity_sha256: str | None = None
+        self.budget: dict[str, Any] | None = None
+        self.mode = ""
+        self.trajectory = ""
+        self.backend = ""
+        self.pc_index_override: int | None = None
+        self.q_replay_index: int | None = None
+        self.inverse: Any | None = None
+        self.current: dict[str, Any] | None = None
+        self.completed: list[dict[str, Any]] = []
+        self.ring_nodes: dict[int, dict[str, Any]] = {}
+        self.max_pc_index = 0
+        self.reference_nodes: list[dict[str, Any]] = []
+        self.node_summaries: list[dict[str, Any]] = []
+        self.packet_bindings: dict[tuple[int, str], dict[str, Any]] = {}
+        self.representative_ordinal: int | None = None
+        self.pending_ksp_monitor: dict[int, dict[str, Any]] = {}
+
+    def configure_layout(self, layout: Mapping[str, Any]) -> dict[str, Any]:
+        identity = _task041_backend_pair_layout_identity(layout)
+        vector_layouts = identity.get("vector_layouts_by_rank")
+        if not isinstance(vector_layouts, list):
+            raise TypeError("top causal replay vector layouts were not captured")
+        port_layouts = identity.get("port_layouts_by_rank")
+        if not isinstance(port_layouts, list):
+            raise TypeError("top causal replay port layouts were not captured")
+        self.budget = _task041_top_causal_packet_budget(
+            vector_layouts,
+            port_layouts_by_rank=port_layouts,
+            comm_size=int(self.comm.size),
+            memory_cap_bytes=self.memory_cap_bytes,
+        )
+        self.layout_identity_sha256 = str(identity["identity_sha256"])
+        self._write_json_collective(self.root / "packet_budget.json", self.budget)
+        if self.budget.get("pass") is not True:
+            raise Task041ModePrepError(
+                "top causal packet budget exceeds the fixed 2 GiB disk limit"
+            )
+        return identity
+
+    def activate(
+        self,
+        *,
+        mode: str,
+        backend: str,
+        trajectory: str,
+        inverse: Any,
+        pc_index: int | None = None,
+        q_replay_index: int | None = None,
+        representative_ordinal: int | None = None,
+    ) -> None:
+        self.mode = str(mode)
+        self.backend = str(backend)
+        self.trajectory = str(trajectory)
+        self.inverse = inverse
+        self.pc_index_override = pc_index
+        self.q_replay_index = q_replay_index
+        self.representative_ordinal = representative_ordinal
+        self.current = None
+        self.completed = []
+        self.ring_nodes = {}
+        self.max_pc_index = 0
+        self.node_summaries = []
+        self.pending_ksp_monitor = {}
+        if q_replay_index is not None:
+            refdir = self._reference_directory(int(pc_index or 0))
+            self.current = self._new_node(int(pc_index or 0), refdir)
+
+    def _write_json_collective(
+        self, path: Path, payload: Mapping[str, Any]
+    ) -> str:
+        outcome: dict[str, Any] | None = None
+        if self.comm.rank == 0:
+            try:
+                _write_json(path, payload)
+                outcome = {
+                    "sha256": hashlib.sha256(path.read_bytes()).hexdigest()
+                }
+            except Exception as exc:  # noqa: BLE001 - synchronize collective failures
+                outcome = {"error": f"{type(exc).__name__}: {exc}"}
+        outcome = self.comm.bcast(outcome, root=0)
+        if not isinstance(outcome, Mapping) or outcome.get("error") is not None:
+            detail = (
+                "invalid rank-zero write result"
+                if not isinstance(outcome, Mapping)
+                else str(outcome.get("error"))
+            )
+            raise Task041ModePrepError(f"top causal evidence write failed: {detail}")
+        self.comm.Barrier()
+        return str(outcome["sha256"])
+
+    def _prepare_directory(self, path: Path, *, clear: bool = False) -> None:
+        error = None
+        if self.comm.rank == 0:
+            try:
+                if clear and path.exists():
+                    import shutil
+
+                    shutil.rmtree(path)
+                path.mkdir(parents=True, exist_ok=True)
+            except OSError as exc:
+                error = f"{type(exc).__name__}: {exc}"
+        error = self.comm.bcast(error, root=0)
+        if error is not None:
+            raise Task041ModePrepError(f"top causal directory preparation failed: {error}")
+        self.comm.Barrier()
+
+    def _vector_copy(
+        self, vector: PETSc.Vec, label: str
+    ) -> tuple[np.ndarray, tuple[int, int]]:
+        local_error = None
+        array = None
+        ownership = None
+        try:
+            array = np.array(
+                vector.getArray(readonly=True), dtype=np.complex128, copy=True
+            )
+            ownership = tuple(int(value) for value in vector.getOwnershipRange())
+            if ownership[1] - ownership[0] != int(array.size):
+                raise ValueError(f"{label} ownership does not match its local array")
+        except BaseException as exc:  # noqa: BLE001 - synchronize before collectives
+            local_error = f"{type(exc).__name__}: {exc}"
+        errors = self.comm.allgather(local_error)
+        if any(error is not None for error in errors):
+            raise Task041ModePrepError(
+                f"top causal vector copy failed for {label}: {errors}"
+            )
+        assert array is not None and ownership is not None
+        return array, ownership
+
+    @staticmethod
+    def _array_norm(array: np.ndarray, comm: MPI.Intracomm) -> float:
+        local_squared = float(np.vdot(array, array).real)
+        local_finite = bool(math.isfinite(local_squared) and local_squared >= 0.0)
+        all_finite = bool(comm.allreduce(local_finite, op=MPI.LAND))
+        if not all_finite:
+            raise Task041ModePrepError(
+                "top causal comparison norm is non-finite or negative"
+            )
+        total = float(comm.allreduce(local_squared, op=MPI.SUM))
+        if not math.isfinite(total) or total < 0.0:
+            raise Task041ModePrepError(
+                "top causal global comparison norm is non-finite or negative"
+            )
+        return float(math.sqrt(total))
+
+    def _global_hash(self, array: np.ndarray, ownership: tuple[int, int]) -> str:
+        local = {
+            "rank": int(self.comm.rank),
+            "ownership_range": list(ownership),
+            "sha256": hashlib.sha256(memoryview(array).cast("B")).hexdigest(),
+        }
+        gathered = sorted(self.comm.allgather(local), key=lambda item: item["rank"])
+        encoded = json.dumps(gathered, sort_keys=True, separators=(",", ":")).encode()
+        return hashlib.sha256(encoded).hexdigest()
+
+    def _reference_directory(self, pc_index: int) -> Path:
+        return self.root / "full_reference" / f"pc_{int(pc_index):05d}"
+
+    def _new_node(self, pc_index: int, reference_directory: Path | None) -> dict[str, Any]:
+        if self.mode == "capture":
+            if pc_index >= 34 or pc_index not in _TASK041_TOP_CAUSAL_FIXED_PC_INDICES:
+                slot = int(pc_index) % 2
+                previous = self.ring_nodes.get(slot)
+                directory = self.root / "full_reference" / f"pending_tail_slot_{slot}"
+                if previous is not None and previous["pc_index"] != pc_index:
+                    self._prepare_directory(directory, clear=True)
+                    self.completed = [
+                        item for item in self.completed if item is not previous
+                    ]
+                    previous_index = int(previous["pc_index"])
+                    self.packet_bindings = {
+                        key: value
+                        for key, value in self.packet_bindings.items()
+                        if key[0] != previous_index
+                    }
+                node = {
+                    "pc_index": int(pc_index),
+                    "directory": directory,
+                    "tail_slot": slot,
+                }
+                self.ring_nodes[slot] = node
+            else:
+                directory = self._reference_directory(pc_index)
+                node = {
+                    "pc_index": int(pc_index),
+                    "directory": directory,
+                    "tail_slot": None,
+                }
+            self._prepare_directory(Path(node["directory"]), clear=True)
+        else:
+            node = {
+                "pc_index": int(pc_index),
+                "directory": (
+                    self.root
+                    / "replay"
+                    / self.trajectory
+                    / f"pc_{int(pc_index):05d}"
+                ),
+                "tail_slot": None,
+                "reference_directory": reference_directory
+                or self._reference_directory(pc_index),
+            }
+            self._prepare_directory(Path(node["directory"]), clear=True)
+        node.update(
+            {
+                "ksp_iterations": [],
+                "true_residual_samples": [],
+                "comparisons": [],
+                "shared_a4_checks": [],
+                "q_calls": {},
+                "artifacts": [],
+                "complete": False,
+                "first_byte_difference_saved": False,
+                "first_gate_difference_saved": False,
+                "representative_ordinal": self.representative_ordinal,
+                "ksp_iteration": None,
+            }
+        )
+        return node
+
+    def _rename_collective(self, source: Path, target: Path) -> None:
+        outcome: dict[str, str] | None = None
+        if self.comm.rank == 0:
+            try:
+                target.parent.mkdir(parents=True, exist_ok=True)
+                if target.exists():
+                    import shutil
+
+                    shutil.rmtree(target)
+                os.replace(source, target)
+                outcome = {"status": "renamed"}
+            except Exception as exc:  # noqa: BLE001 - synchronize collective failures
+                outcome = {"error": f"{type(exc).__name__}: {exc}"}
+        outcome = self.comm.bcast(outcome, root=0)
+        if not isinstance(outcome, Mapping) or outcome.get("error") is not None:
+            detail = (
+                "invalid rank-zero rename result"
+                if not isinstance(outcome, Mapping)
+                else str(outcome.get("error"))
+            )
+            raise Task041ModePrepError(f"top causal packet rename failed: {detail}")
+        self.comm.Barrier()
+
+    @staticmethod
+    def _q_call_scalar_record(
+        qrecord: Mapping[str, Any], *, reference_q_index: int
+    ) -> dict[str, Any]:
+        allowed = {
+            "actual_q_call_index",
+            "input_sha256",
+            "input_matches_full",
+            "free_input_matches_full",
+            "output_sha256",
+            "p4_solution_sha256",
+            "shared_a4_pass",
+            "completed",
+        }
+        return {
+            "reference_q_index": int(reference_q_index),
+            **{
+                str(key): value
+                for key, value in qrecord.items()
+                if key in allowed
+                and (
+                    value is None
+                    or isinstance(value, (str, bool, int, float))
+                )
+            },
+        }
+
+    def _write_failure_snapshot(self, node: dict[str, Any]) -> dict[str, Any] | None:
+        candidates: list[tuple[str, np.ndarray, tuple[int, int]]] = []
+        pc_input = node.get("pc_input")
+        pc_ownership = node.get("pc_ownership")
+        if isinstance(pc_input, np.ndarray) and isinstance(pc_ownership, tuple):
+            candidates.append(("PC_input", pc_input, pc_ownership))
+        for q_index in (1, 2):
+            qrecord = node["q_calls"].get(q_index, {})
+            for key, ownership_key, label in (
+                ("input", "ownership", f"Q{q_index}_input"),
+                ("ph_rhs", "p4_ownership", f"Q{q_index}_PH_output"),
+            ):
+                value = qrecord.get(key)
+                ownership = qrecord.get(ownership_key)
+                if isinstance(value, np.ndarray) and isinstance(ownership, tuple):
+                    candidates.append((label, value, ownership))
+        labels_by_rank = self.comm.allgather(
+            [label for label, _array, _ownership in candidates]
+        )
+        selected_label = next(
+            (
+                label
+                for label in labels_by_rank[0]
+                if all(label in labels for labels in labels_by_rank)
+            ),
+            None,
+        )
+        if selected_label is None:
+            return None
+        _label, array, ownership = next(
+            item for item in candidates if item[0] == selected_label
+        )
+        directory = (
+            self.root
+            / "failure_snapshots"
+            / self.trajectory
+            / f"pc_{int(node['pc_index']):05d}"
+        )
+        self._prepare_directory(directory)
+        identity = {
+            "schema": "task041.top_causal_replay.failure_snapshot.v1",
+            "source_sha": self.source_sha,
+            "probe_manifest_sha256": self.probe_manifest_sha256,
+            "parent_packet_manifest_sha256": self.parent_packet_sha256,
+            "side": "top",
+            "formal_column": 12,
+            "pc_index": int(node["pc_index"]),
+            "trajectory": self.trajectory,
+            "layout_identity_sha256": self.layout_identity_sha256,
+            "snapshot_label": selected_label,
+        }
+        packet = write_packet(
+            directory,
+            array,
+            array,
+            identity=identity,
+            metadata={
+                **identity,
+                "payload_semantics": (
+                    "single_rank_owned_vector_duplicated_in_solution_and_rhs_slots"
+                ),
+            },
+            ownership_range=ownership,
+            comm=self.comm,
+            allow_nonfinite_diagnostic=True,
+        )
+        return {
+            "label": selected_label,
+            "manifest": str(packet["manifest"]),
+            "manifest_sha256": str(packet["manifest_sha256"]),
+            "identity_sha256": str(packet["identity_sha256"]),
+            "owner_shards_only": True,
+        }
+
+    def _write_pair(
+        self,
+        *,
+        directory: Path,
+        solution: np.ndarray,
+        rhs: np.ndarray,
+        ownership: tuple[int, int],
+        node: Mapping[str, Any],
+        role: str,
+        input_sha256: str,
+        q_index: int | None = None,
+        metadata: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        local_error = None
+        if solution.ndim != 1 or solution.shape != rhs.shape:
+            local_error = f"{role} packet arrays do not share a 1-D space"
+        errors = self.comm.allgather(local_error)
+        if any(value is not None for value in errors):
+            raise Task041ModePrepError(
+                f"top causal {role} packet validation failed: {errors}"
+            )
+        self._prepare_directory(directory)
+        identity = {
+            "schema": "task041.top_causal_replay.owned_pair.v1",
+            "source_sha": self.source_sha,
+            "probe_manifest_sha256": self.probe_manifest_sha256,
+            "parent_packet_manifest_sha256": self.parent_packet_sha256,
+            "side": "top",
+            "formal_column": 12,
+            "pc_index": int(node["pc_index"]),
+            "q_call_index": q_index,
+            "backend": self.backend,
+            "trajectory": self.trajectory,
+            "role": role,
+            "layout_identity_sha256": self.layout_identity_sha256,
+            "owned_input_sha256": input_sha256,
+        }
+        packet = write_packet(
+            directory,
+            solution,
+            rhs,
+            identity=identity,
+            metadata={
+                **identity,
+                "space_tag": (
+                    "active_p6"
+                    if role == "pc_input_output"
+                    else "full_p6"
+                    if role == "q_input_output"
+                    else "p4_full_fe"
+                ),
+                **dict(metadata or {}),
+            },
+            ownership_range=ownership,
+            comm=self.comm,
+            allow_nonfinite_diagnostic=True,
+        )
+        relative_directory = str(
+            Path(directory).relative_to(Path(node["directory"]))
+        )
+        relative_directory = (
+            "" if relative_directory == "." else relative_directory
+        )
+        artifact = {
+            "role": role,
+            "manifest": str(packet["manifest"]),
+            "manifest_relative_to_node": str(
+                Path(relative_directory) / "manifest.json"
+            ),
+            "manifest_sha256": str(packet["manifest_sha256"]),
+            "identity_sha256": str(packet["identity_sha256"]),
+            "identity": identity,
+        }
+        if self.mode == "capture":
+            self.packet_bindings[(int(node["pc_index"]), relative_directory)] = {
+                "identity": identity,
+                "manifest_sha256": str(packet["manifest_sha256"]),
+            }
+        return artifact
+
+    def _packet(
+        self, node: Mapping[str, Any], relative: str
+    ) -> dict[str, Any]:
+        pc_index: int | None = None
+        packet = None
+        local_error = None
+        try:
+            pc_index = int(node["pc_index"])
+            binding = self.packet_bindings.get((pc_index, str(relative)))
+            if not isinstance(binding, Mapping):
+                raise TypeError(
+                    f"frozen packet binding is missing for PC {pc_index}: {relative}"
+                )
+            expected_identity = binding.get("identity")
+            if not isinstance(expected_identity, Mapping):
+                raise TypeError("frozen packet identity binding is invalid")
+            path = Path(node["reference_directory"]) / relative / "manifest.json"
+            packet = load_packet(
+                path,
+                identity=expected_identity,
+                expected_manifest_sha256=str(binding["manifest_sha256"]),
+                comm=self.comm,
+            )
+            if not _task041_validate_top_causal_packet_identity(
+                packet["identity"], expected_identity
+            ):
+                raise ValueError("frozen packet causal identity mismatch")
+            if packet is None:
+                raise ValueError("frozen packet load returned no data")
+        except Exception as exc:  # noqa: BLE001 - synchronize rank-local packet reads
+            local_error = f"{type(exc).__name__}: {exc}"
+        errors = self.comm.allgather(local_error)
+        if any(error is not None for error in errors):
+            raise Task041ModePrepError(
+                f"frozen packet validation failed for PC {pc_index}: {errors}"
+            )
+        assert packet is not None
+        return packet
+
+    def _compare_arrays(
+        self,
+        *,
+        node: dict[str, Any],
+        event: str,
+        actual: np.ndarray,
+        actual_ownership: tuple[int, int],
+        expected: np.ndarray,
+        expected_ownership: tuple[int, int],
+        packet_directory: Path,
+        role: str,
+        q_index: int | None,
+        input_sha256: str,
+        gate_name: str | None = None,
+        gate_limit: float | None = None,
+        gate_input_matches: bool | None = None,
+        metadata: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        local_same_layout = (
+            actual.shape == expected.shape
+            and actual_ownership == expected_ownership
+        )
+        same_layout = bool(
+            self.comm.allreduce(local_same_layout, op=MPI.LAND)
+        )
+        if not same_layout:
+            raise Task041ModePrepError(
+                f"top causal replay {event} layout differs from its frozen packet"
+            )
+        delta = actual - expected
+        numerator = self._array_norm(delta, self.comm)
+        actual_norm = self._array_norm(actual, self.comm)
+        expected_norm = self._array_norm(expected, self.comm)
+        denominator = max(actual_norm, expected_norm)
+        relative = (
+            numerator / denominator
+            if denominator > 0.0
+            else 0.0
+            if numerator == 0.0
+            else None
+        )
+        local_exact_bytes = bool(
+            actual.dtype == expected.dtype
+            and actual.shape == expected.shape
+            and memoryview(np.ascontiguousarray(actual)).cast("B")
+            == memoryview(np.ascontiguousarray(expected)).cast("B")
+        )
+        exact = bool(
+            self.comm.allreduce(
+                local_exact_bytes, op=MPI.LAND
+            )
+        )
+        gate_applicable = gate_limit is not None and gate_input_matches is True
+        gate_pass = (
+            bool(relative is not None and relative <= float(gate_limit))
+            if gate_applicable
+            else None
+        )
+        comparison = {
+            "event": event,
+            "q_call_index": q_index,
+            "numerator_norm": numerator,
+            "denominator_norm": denominator,
+            "relative_difference": relative,
+            "exact_owned_bytes_equal": exact,
+            "gate_name": gate_name,
+            "gate_limit": gate_limit,
+            "gate_applicable": gate_applicable,
+            "gate_pass": gate_pass,
+            "gate_status": (
+                "passed"
+                if gate_pass is True
+                else "failed"
+                if gate_pass is False
+                else "trajectory_only_input_diverged"
+                if gate_limit is not None and gate_input_matches is False
+                else "not_applicable"
+            ),
+        }
+        node["comparisons"].append(comparison)
+        independent_replay = (
+            self.q_replay_index is not None or self.pc_index_override is not None
+        )
+        save_byte_difference = (
+            independent_replay
+            and not exact
+            and not node["first_byte_difference_saved"]
+        )
+        save_gate_difference = (
+            independent_replay
+            and gate_pass is False
+            and not node["first_gate_difference_saved"]
+        )
+        for should_save, difference_kind in (
+            (save_byte_difference, "first_byte_difference"),
+            (save_gate_difference, "first_gate_difference"),
+        ):
+            if not should_save:
+                continue
+            artifact = self._write_pair(
+                directory=packet_directory / difference_kind,
+                solution=actual,
+                rhs=expected,
+                ownership=actual_ownership,
+                node=node,
+                role=f"{difference_kind}_{event}",
+                input_sha256=input_sha256,
+                q_index=q_index,
+                metadata={
+                    "comparison": comparison,
+                    "difference_kind": difference_kind,
+                    **dict(metadata or {}),
+                },
+            )
+            node["artifacts"].append(artifact)
+            node[
+                "first_byte_difference_saved"
+                if difference_kind == "first_byte_difference"
+                else "first_gate_difference_saved"
+            ] = True
+        return comparison
+
+    def _port_values(self, value: Any) -> np.ndarray:
+        if not isinstance(value, list):
+            raise TypeError("top causal port diagnostic is missing")
+        return np.asarray(
+            [complex(float(pair[0]), float(pair[1])) for pair in value],
+            dtype=np.complex128,
+        )
+
+    def _shared_a4_check(
+        self,
+        *,
+        node: dict[str, Any],
+        q_index: int,
+        reference_packet: Mapping[str, Any],
+        current_solution: PETSc.Vec,
+        current_rhs: np.ndarray,
+        current_port: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        inverse = self.inverse
+        p4 = getattr(inverse, "_p4_factor", None)
+        if p4 is None or not hasattr(p4, "audit_solution"):
+            raise Task041ModePrepError(
+                "top causal common A4 check requires the live condensed physical action"
+            )
+        metadata = reference_packet["metadata"]
+        reference_port = metadata.get("port_values")
+        if (
+            not isinstance(reference_port, Mapping)
+            or not isinstance(current_port, Mapping)
+            or reference_port.get("port_values_available") is not True
+            or current_port.get("port_values_available") is not True
+        ):
+            raise Task041ModePrepError("frozen p4 packet has no port audit")
+        ref_rhs = p4.create_fe_vector()
+        ref_solution = p4.create_fe_vector()
+        replay_rhs = p4.create_fe_vector()
+        audits: dict[str, Any] = {}
+        try:
+            ref_rhs.getArray()[:] = reference_packet["rhs"]
+            ref_solution.getArray()[:] = reference_packet["solution"]
+            replay_rhs.getArray()[:] = current_rhs
+            for vector in (ref_rhs, ref_solution, replay_rhs):
+                vector.assemble()
+            full_audit = p4.audit_solution(
+                ref_rhs,
+                ref_solution,
+                port_rhs=self._port_values(reference_port["port_rhs_complex"]),
+                port_solution=self._port_values(
+                    reference_port["port_solution_complex"]
+                ),
+            )
+            condensed_audit = p4.audit_solution(
+                replay_rhs,
+                current_solution,
+                port_rhs=self._port_values(current_port["port_rhs_complex"]),
+                port_solution=self._port_values(
+                    current_port["port_solution_complex"]
+                ),
+            )
+            residual_limits = {
+                "physical_relative_residual": 1.0e-10,
+                "relative_residual": 1.0e-10,
+            }
+
+            def residual_gates(audit: Mapping[str, Any]) -> dict[str, Any]:
+                values: dict[str, Any] = {}
+                for field, limit in residual_limits.items():
+                    value = audit.get(field)
+                    finite_numeric = (
+                        isinstance(value, (int, float, np.integer, np.floating))
+                        and not isinstance(value, bool)
+                        and math.isfinite(float(value))
+                    )
+                    values[field] = {
+                        "value": None if not finite_numeric else float(value),
+                        "limit": limit,
+                        "pass": bool(finite_numeric and float(value) <= limit),
+                    }
+                return values
+
+            full_residual_gates = residual_gates(full_audit)
+            condensed_residual_gates = residual_gates(condensed_audit)
+            audits = {
+                "source": "same_live_p4.physical_action.matrix_and_port_projection",
+                "residual_limits": residual_limits,
+                "full_reference": _jsonable(full_audit),
+                "cell_condensed_replay": _jsonable(condensed_audit),
+                "residual_gates": {
+                    "full_reference": full_residual_gates,
+                    "cell_condensed_replay": condensed_residual_gates,
+                },
+                "pass": all(
+                    gate["pass"]
+                    for side_gates in (
+                        full_residual_gates,
+                        condensed_residual_gates,
+                    )
+                    for gate in side_gates.values()
+                ),
+                "scope": "one_shared_original_A4_action_per_saved_p4_pair",
+            }
+            node["shared_a4_checks"].append(
+                {"q_call_index": int(q_index), **audits}
+            )
+            return audits
+        finally:
+            replay_rhs.destroy()
+            ref_solution.destroy()
+            ref_rhs.destroy()
+
+    def callback(self, record: Mapping[str, Any]) -> bool | None:
+        context = record.get("representative_context")
+        if not isinstance(context, Mapping) or int(context.get("formal_column", -1)) != 12:
+            return None
+        if self.layout_identity_sha256 is None:
+            raise Task041ModePrepError("top causal layout was not budgeted before capture")
+        event = str(record.get("event", ""))
+        ordinal = context.get("representative_ordinal")
+        if isinstance(ordinal, int) and not isinstance(ordinal, bool):
+            self.representative_ordinal = int(ordinal)
+        q_override = self.q_replay_index
+        pc_override = self.pc_index_override
+        pc_index = int(
+            pc_override
+            if pc_override is not None
+            else record.get("pc_apply_index", 0)
+        )
+        q_index = int(q_override or record.get("q_call_index", 0))
+        if (
+            event in {"ksp_monitor", "ksp_true_residual_sample"}
+            and self.current is None
+        ):
+            iteration = record.get("ksp_iteration", record.get("iteration"))
+            if isinstance(iteration, int) and not isinstance(iteration, bool):
+                pending = self.pending_ksp_monitor.setdefault(int(iteration), {})
+                if event == "ksp_monitor":
+                    pending.update(
+                        {
+                            "iteration": int(iteration),
+                            "reported_residual": record.get("reported_residual"),
+                        }
+                    )
+                else:
+                    pending["true_residual_sample"] = {
+                        key: record.get(key)
+                        for key in (
+                            "iteration",
+                            "sample_label",
+                            "reported_residual",
+                            "true_residual_norm",
+                            "rhs_norm",
+                            "true_relative_residual",
+                            "finite",
+                        )
+                    }
+            return None
+        if event == "PC_input":
+            ksp_iteration = record.get("ksp_iteration")
+            if isinstance(ksp_iteration, int) and not isinstance(ksp_iteration, bool):
+                self.pending_ksp_monitor.setdefault(ksp_iteration, {})
+            self.max_pc_index = max(self.max_pc_index, pc_index)
+            if self.mode == "capture":
+                self.current = self._new_node(pc_index, None)
+                self.completed.append(self.current)
+            elif pc_index in {int(node["pc_index"]) for node in self.reference_nodes}:
+                self.current = self._new_node(
+                    pc_index, self._reference_directory(pc_index)
+                )
+                self.completed.append(self.current)
+            else:
+                self.current = None
+                return None
+            self.current["ksp_iteration"] = ksp_iteration
+            self.current["actual_pc_apply_index"] = record.get(
+                "pc_apply_index"
+            )
+            if isinstance(ksp_iteration, int):
+                monitor = self.pending_ksp_monitor.pop(ksp_iteration, None)
+                if monitor is not None:
+                    true_sample = monitor.pop("true_residual_sample", None)
+                    self.current["ksp_iterations"].append(monitor)
+                    if isinstance(true_sample, Mapping):
+                        self.current["true_residual_samples"].append(
+                            dict(true_sample)
+                        )
+        node = self.current
+        if node is None:
+            return None
+        if event == "ksp_monitor":
+            iteration = record.get("ksp_iteration")
+            monitor = {
+                "iteration": iteration,
+                "reported_residual": record.get("reported_residual"),
+            }
+            if node is None:
+                if isinstance(iteration, int) and not isinstance(iteration, bool):
+                    self.pending_ksp_monitor[int(iteration)] = monitor
+            else:
+                node["ksp_iterations"].append(monitor)
+            return None
+        if event == "ksp_true_residual_sample":
+            node["true_residual_samples"].append(
+                {
+                    key: record.get(key)
+                    for key in (
+                        "iteration",
+                        "sample_label",
+                        "reported_residual",
+                        "true_residual_norm",
+                        "rhs_norm",
+                        "true_relative_residual",
+                        "finite",
+                    )
+                }
+            )
+            return None
+        borrowed = record.get("borrowed_vectors")
+        borrowed = borrowed if isinstance(borrowed, Mapping) else {}
+        if event == "PC_input":
+            array, ownership = self._vector_copy(borrowed.get("source"), event)
+            if self.mode == "capture":
+                node["pc_input"] = array
+                node["pc_ownership"] = ownership
+                node["pc_input_sha256"] = self._global_hash(array, ownership)
+            else:
+                packet = self._packet(node, "pc_input_output")
+                input_sha = self._global_hash(array, ownership)
+                expected_sha = packet["identity"].get("owned_input_sha256")
+                input_matches = bool(input_sha == expected_sha)
+                self._compare_arrays(
+                    node=node,
+                    event=event,
+                    actual=array,
+                    actual_ownership=ownership,
+                    expected=packet["rhs"],
+                    expected_ownership=packet["ownership_range"],
+                    packet_directory=Path(node["directory"]),
+                    role="pc_input_output",
+                    q_index=None,
+                    input_sha256=input_sha,
+                )
+                node["pc_input_sha256"] = input_sha
+                node["pc_input_matches_full"] = input_matches
+            return None
+        if event == "Q_input":
+            q_index = int(q_override or record.get("q_call_index", 0))
+            if q_index not in (1, 2):
+                return None
+            array, ownership = self._vector_copy(borrowed.get("source"), event)
+            qrecord = node["q_calls"].setdefault(q_index, {})
+            qrecord["actual_q_call_index"] = record.get("q_call_index")
+            if self.mode == "capture":
+                qrecord.update(
+                    {
+                        "input": array,
+                        "ownership": ownership,
+                        "input_sha256": self._global_hash(array, ownership),
+                    }
+                )
+            else:
+                packet = self._packet(
+                    node, f"q_{q_index:02d}_input_output"
+                )
+                qrecord["input_sha256"] = self._global_hash(array, ownership)
+                self._compare_arrays(
+                    node=node,
+                    event=event,
+                    actual=array,
+                    actual_ownership=ownership,
+                    expected=packet["rhs"],
+                    expected_ownership=packet["ownership_range"],
+                    packet_directory=Path(node["directory"]),
+                    role="q_input_output",
+                    q_index=q_index,
+                    input_sha256=qrecord["input_sha256"],
+                )
+                qrecord["input_matches_full"] = bool(
+                    qrecord["input_sha256"]
+                    == packet["identity"].get("owned_input_sha256")
+                )
+                qrecord["free_input_matches_full"] = qrecord[
+                    "input_matches_full"
+                ]
+            return None
+        if event == "PH_Q_output":
+            q_index = int(q_override or record.get("q_call_index", 0))
+            result, ownership = self._vector_copy(borrowed.get("result"), event)
+            qrecord = node["q_calls"].setdefault(q_index, {})
+            if self.mode == "capture":
+                qrecord["ph_rhs"] = result
+                qrecord["p4_ownership"] = ownership
+            else:
+                packet = self._packet(node, f"q_{q_index:02d}_p4")
+                qrecord["ph_rhs"] = result
+                qrecord["p4_ownership"] = ownership
+                qrecord["p4_reference"] = packet
+                self._compare_arrays(
+                    node=node,
+                    event=event,
+                    actual=result,
+                    actual_ownership=ownership,
+                    expected=packet["rhs"],
+                    expected_ownership=packet["ownership_range"],
+                    packet_directory=Path(node["directory"]),
+                    role="p4_coarse_rhs_recovered_fe",
+                    q_index=q_index,
+                    input_sha256=qrecord.get("input_sha256", ""),
+                )
+            return None
+        if event == "p4_rhs":
+            return q_index in node["q_calls"]
+        if event == "p4_port_solution":
+            node["q_calls"].setdefault(q_index, {})["port"] = {
+                key: record.get(key)
+                for key in (
+                    "port_solution_complex",
+                    "port_rhs_complex",
+                    "port_projection_complex",
+                    "port_values_available",
+                )
+            }
+            return None
+        if event == "p4_recovered_solution":
+            qrecord = node["q_calls"].setdefault(q_index, {})
+            solution, ownership = self._vector_copy(
+                borrowed.get("solution"), event
+            )
+            rhs = qrecord.get("ph_rhs")
+            if not isinstance(rhs, np.ndarray) or ownership != qrecord.get("p4_ownership"):
+                raise ValueError("top causal p4 RHS/recovery layout changed")
+            if self.mode == "capture":
+                artifact = self._write_pair(
+                    directory=Path(node["directory"]) / f"q_{q_index:02d}_p4",
+                    solution=solution,
+                    rhs=rhs,
+                    ownership=ownership,
+                    node=node,
+                    role="p4_coarse_rhs_recovered_fe",
+                    input_sha256=qrecord["input_sha256"],
+                    q_index=q_index,
+                    metadata={"port_values": qrecord.get("port", {})},
+                )
+                node["artifacts"].append(artifact)
+                qrecord["p4_solution_sha256"] = self._global_hash(solution, ownership)
+                qrecord.pop("ph_rhs", None)
+            else:
+                packet = qrecord.get("p4_reference")
+                if not isinstance(packet, Mapping):
+                    packet = self._packet(node, f"q_{q_index:02d}_p4")
+                self._compare_arrays(
+                    node=node,
+                    event=event,
+                    actual=solution,
+                    actual_ownership=ownership,
+                    expected=packet["solution"],
+                    expected_ownership=packet["ownership_range"],
+                    packet_directory=Path(node["directory"]),
+                    role="p4_coarse_rhs_recovered_fe",
+                    q_index=q_index,
+                    input_sha256=qrecord.get("input_sha256", ""),
+                    metadata={
+                        "p4_rhs_comparison": qrecord.get("free_input_matches_full")
+                    },
+                )
+                shared_a4 = self._shared_a4_check(
+                    node=node,
+                    q_index=q_index,
+                    reference_packet=packet,
+                    current_solution=borrowed.get("solution"),
+                    current_rhs=rhs,
+                    current_port=qrecord.get("port", {}),
+                )
+                qrecord["shared_a4_pass"] = shared_a4.get("pass")
+                qrecord.pop("ph_rhs", None)
+                qrecord.pop("p4_reference", None)
+            return None
+        if event == "P_output":
+            q_index = int(q_override or record.get("q_call_index", 0))
+            qrecord = node["q_calls"].get(q_index)
+            if qrecord is None:
+                return None
+            output, ownership = self._vector_copy(borrowed.get("result"), event)
+            if self.mode == "capture":
+                input_array = qrecord.get("input")
+                if not isinstance(input_array, np.ndarray) or ownership != qrecord.get("ownership"):
+                    raise ValueError("top causal Q input/output layout changed")
+                artifact = self._write_pair(
+                    directory=Path(node["directory"]) / f"q_{q_index:02d}_input_output",
+                    solution=output,
+                    rhs=input_array,
+                    ownership=ownership,
+                    node=node,
+                    role="q_input_output",
+                    input_sha256=qrecord["input_sha256"],
+                    q_index=q_index,
+                )
+                node["artifacts"].append(artifact)
+                qrecord["output_sha256"] = self._global_hash(output, ownership)
+            else:
+                packet = self._packet(node, f"q_{q_index:02d}_input_output")
+                self._compare_arrays(
+                    node=node,
+                    event=event,
+                    actual=output,
+                    actual_ownership=ownership,
+                    expected=packet["solution"],
+                    expected_ownership=packet["ownership_range"],
+                    packet_directory=Path(node["directory"]),
+                    role="q_input_output",
+                    q_index=q_index,
+                    input_sha256=qrecord.get("input_sha256", ""),
+                    gate_name=("Q" if self.q_replay_index is not None else None),
+                    gate_limit=(
+                        1.0e-11 if self.q_replay_index is not None else None
+                    ),
+                    gate_input_matches=(
+                        qrecord.get("input_matches_full")
+                        if self.q_replay_index is not None
+                        else None
+                    ),
+                )
+                qrecord["output_sha256"] = self._global_hash(output, ownership)
+            qrecord.pop("input", None)
+            qrecord["completed"] = True
+            if self.q_replay_index is not None:
+                node["complete"] = True
+            return None
+        if event == "PC_output":
+            output, ownership = self._vector_copy(borrowed.get("target"), event)
+            if self.mode == "capture":
+                input_array = node.get("pc_input")
+                if not isinstance(input_array, np.ndarray) or ownership != node.get("pc_ownership"):
+                    raise ValueError("top causal PC input/output layout changed")
+                artifact = self._write_pair(
+                    directory=Path(node["directory"]) / "pc_input_output",
+                    solution=output,
+                    rhs=input_array,
+                    ownership=ownership,
+                    node=node,
+                    role="pc_input_output",
+                    input_sha256=node["pc_input_sha256"],
+                )
+                node["artifacts"].append(artifact)
+                node["pc_output_sha256"] = self._global_hash(output, ownership)
+                node.pop("pc_input", None)
+            else:
+                packet = self._packet(node, "pc_input_output")
+                self._compare_arrays(
+                    node=node,
+                    event=event,
+                    actual=output,
+                    actual_ownership=ownership,
+                    expected=packet["solution"],
+                    expected_ownership=packet["ownership_range"],
+                    packet_directory=Path(node["directory"]),
+                    role="pc_input_output",
+                    q_index=None,
+                    input_sha256=node.get("pc_input_sha256", ""),
+                    gate_name="PC",
+                    gate_limit=1.0e-8,
+                    gate_input_matches=node.get("pc_input_matches_full"),
+                )
+            node["complete"] = True
+            self.current = None
+            return None
+        return None
+
+    def finish_apply(self, inverse: Any, *, error: BaseException | None = None) -> None:
+        local_error = (
+            None
+            if error is None
+            else f"{type(error).__name__}: {error}"
+        )
+        errors_by_rank = self.comm.allgather(local_error)
+        error_text = next(
+            (value for value in errors_by_rank if value is not None), None
+        )
+        has_error = error_text is not None
+        if self.current is not None and self.current not in self.completed:
+            self.completed.append(self.current)
+        local_indices = sorted(
+            {int(node["pc_index"]) for node in self.completed}
+        )
+        indices_by_rank = self.comm.allgather(local_indices)
+        if any(indices != indices_by_rank[0] for indices in indices_by_rank):
+            raise Task041ModePrepError(
+                f"top causal PC node sequence differs across ranks: {indices_by_rank}"
+            )
+        if not local_indices:
+            return
+        maxima = self.comm.allgather(int(self.max_pc_index))
+        if len(set(maxima)) != 1:
+            raise Task041ModePrepError(
+                f"top causal PC count differs across ranks: {maxima}"
+            )
+        if self.pc_index_override is not None:
+            selected = {int(self.pc_index_override)}
+        elif self.q_replay_index is not None:
+            selected = {int(self.current["pc_index"])} if self.current else set()
+        else:
+            selected = set(_task041_top_causal_pc_indices(self.max_pc_index))
+        nodes = [
+            node
+            for node in self.completed
+            if int(node["pc_index"]) in selected
+        ]
+        if not nodes:
+            raise Task041ModePrepError(
+                "top causal apply has recorded nodes but none match its bounded selection"
+            )
+        failure_snapshot = None
+        failed_node = None
+        if has_error:
+            failed_node = next(
+                (node for node in reversed(nodes) if not node.get("complete")),
+                None,
+            )
+            if failed_node is not None:
+                failure_snapshot = self._write_failure_snapshot(failed_node)
+        failure_node_index = (
+            None if failed_node is None else int(failed_node["pc_index"])
+        )
+
+        for node in nodes:
+            if self.mode == "capture" and node.get("tail_slot") is not None:
+                old_directory = Path(node["directory"])
+                final_path = self._reference_directory(int(node["pc_index"]))
+                self._rename_collective(old_directory, final_path)
+                for artifact in node["artifacts"]:
+                    relative_manifest = artifact.get("manifest_relative_to_node")
+                    if isinstance(relative_manifest, str):
+                        artifact["manifest"] = str(final_path / relative_manifest)
+                node["directory"] = final_path
+                node.pop("tail_slot", None)
+
+        history_local = {
+            "rank": int(self.comm.rank),
+            "last_apply": _jsonable(inverse.diagnostics.get("last_apply", {})),
+            "independent_p4_call_history": _jsonable(
+                inverse.diagnostics.get("independent_p4_call_history", [])
+            ),
+        }
+        history_by_rank = self.comm.gather(history_local, root=0)
+        representative_ordinal = self.representative_ordinal
+        if representative_ordinal is None:
+            representative_ordinal = nodes[-1].get("representative_ordinal")
+        history_path = (
+            self.root
+            / "p4_call_history"
+            / self.trajectory
+            / f"{int(representative_ordinal or 0):02d}_{self.backend}_by_rank.json"
+        )
+        self._prepare_directory(history_path.parent)
+        history_payload = {
+            "schema": "task041.top_causal_replay.p4_call_history.v1",
+            "source_sha": self.source_sha,
+            "side": "top",
+            "formal_column": 12,
+            "representative_ordinal": representative_ordinal,
+            "backend": self.backend,
+            "trajectory": self.trajectory,
+            "by_rank": sorted(history_by_rank or [], key=lambda item: item["rank"])
+            if self.comm.rank == 0
+            else [],
+        }
+        history_sha256 = self._write_json_collective(history_path, history_payload)
+
+        for node in nodes:
+            local = {
+                "rank": int(self.comm.rank),
+                "pc_index": int(node["pc_index"]),
+                "reference_pc_index": int(node["pc_index"]),
+                "actual_pc_apply_index": node.get("actual_pc_apply_index"),
+                "ksp_iteration": node.get("ksp_iteration"),
+                "complete": bool(node.get("complete")),
+                "ksp_iterations": list(node["ksp_iterations"]),
+                "true_residual_samples": list(
+                    node.get("true_residual_samples", [])
+                ),
+                "comparisons": list(node["comparisons"]),
+                "shared_a4_checks": list(node.get("shared_a4_checks", [])),
+                "q_calls": {
+                    str(index): self._q_call_scalar_record(
+                        qrecord, reference_q_index=int(index)
+                    )
+                    for index, qrecord in node["q_calls"].items()
+                },
+                "artifacts": list(node["artifacts"]),
+                "error": error_text,
+                "failure_snapshot": (
+                    failure_snapshot
+                    if int(node["pc_index"]) == failure_node_index
+                    and failure_snapshot is not None
+                    else None
+                ),
+                "p4_call_history": {
+                    "path": str(history_path),
+                    "sha256": history_sha256,
+                },
+            }
+            gathered = self.comm.gather(local, root=0)
+            if self.mode == "capture":
+                output = Path(node["directory"]) / "node_audit.json"
+            else:
+                output = (
+                    Path(node["directory"])
+                    / f"{self.trajectory}_node_audit.json"
+                )
+            replay_kind = (
+                "reference"
+                if self.mode == "capture"
+                else "independent_q"
+                if self.q_replay_index is not None
+                else "independent_pc"
+                if self.pc_index_override is not None
+                else "free_trajectory"
+            )
+            payload = {
+                "schema": "task041.top_causal_replay.pc_node.v1",
+                "side": "top",
+                "formal_column": 12,
+                "backend": self.backend,
+                "trajectory": self.trajectory,
+                "replay_kind": replay_kind,
+                "q_replay_index": self.q_replay_index,
+                "pc_index_override": self.pc_index_override,
+                "actual_pc_count": int(self.max_pc_index),
+                "pc_index": int(node["pc_index"]),
+                "layout_identity_sha256": self.layout_identity_sha256,
+                "status": (
+                    "partial_failure_evidence"
+                    if not node.get("complete") or has_error
+                    else "reference_captured"
+                    if self.mode == "capture"
+                    else "replay_compared"
+                ),
+                "gate_status": _task041_top_causal_node_gate_status(
+                    node,
+                    replay_kind=replay_kind,
+                    q_replay_index=self.q_replay_index,
+                    apply_error=has_error,
+                ),
+                "by_rank": sorted(gathered or [], key=lambda item: item["rank"])
+                if self.comm.rank == 0
+                else [],
+            }
+            audit_sha256 = self._write_json_collective(output, payload)
+            payload["audit_path"] = str(output)
+            payload["audit_sha256"] = audit_sha256
+            if self.mode == "capture":
+                existing = {
+                    int(item["pc_index"]): item for item in self.reference_nodes
+                }
+                existing[int(node["pc_index"])] = {
+                    "pc_index": int(node["pc_index"]),
+                    "directory": str(node["directory"]),
+                }
+                self.reference_nodes = [existing[index] for index in sorted(existing)]
+            self.node_summaries.append(payload)
+        for node in self.completed:
+            node.pop("pc_input", None)
+            node["q_calls"].clear()
+        self.current = None
+        self.completed = []
+        self.ring_nodes = {}
+        self.node_summaries = [
+            item
+            for item in self.node_summaries
+            if item.get("trajectory") == self.trajectory
+        ]
+
+    def replay_node_directory(self, pc_index: int) -> Path:
+        return self._reference_directory(pc_index)
 
 
 def _task041_p4_backend_release_audit(
@@ -2358,6 +3949,8 @@ def _run_task041_balh_candidate_setup(
     rank_numa_observed_backend: str | None = None,
     rank_numa_stage_callback: Callable[[str, Mapping[str, object] | None, Mapping[str, Any] | None], None] | None = None,
     rank_numa_evidence: list[Mapping[str, Any]] | None = None,
+    top_causal_replay: bool = False,
+    top_causal_memory_cap_bytes: int | None = None,
 ) -> dict[str, Any]:
     """Build the finite-response BAL_H Schur and run the shared formal path."""
 
@@ -2411,6 +4004,7 @@ def _run_task041_balh_candidate_setup(
     sequential_side_records: dict[str, dict[str, Any]] = {}
     active_backend_by_side: dict[str, str] = {}
     p4_backend_pairs_by_side: dict[str, dict[str, Any]] = {}
+    top_causal_by_side: dict[str, dict[str, Any]] = {}
     sequential_lifecycle_boundaries: list[dict[str, Any]] = []
     sequential_created_totals = {
         "side_inverse": 0,
@@ -2443,6 +4037,63 @@ def _run_task041_balh_candidate_setup(
     global_source_before: PETSc.Vec | None = None
     global_action_before: PETSc.Vec | None = None
     global_rhs_before: PETSc.Vec | None = None
+    top_causal_capture: _Task041TopCausalPacketCapture | None = None
+    top_causal_audits: list[dict[str, Any]] = []
+    top_causal_response_comparisons: list[dict[str, Any]] = []
+    top_causal_timings: list[dict[str, Any]] = []
+    if top_causal_replay:
+        if (
+            not isinstance(representative_rhs_contract, Mapping)
+            or not isinstance(identity, Mapping)
+            or top_causal_memory_cap_bytes is None
+            or comparison_mode != "p4_backend_pair"
+        ):
+            raise Task041ModePrepError(
+                "top causal replay requires its explicit pair identity and memory contract"
+            )
+        packet_binding = representative_rhs_contract.get("packet_binding")
+        if not isinstance(packet_binding, Mapping):
+            raise Task041ModePrepError(
+                "top causal replay has no bound producer packet identity"
+            )
+        top_causal_capture = _Task041TopCausalPacketCapture(
+            comm=comm,
+            root=audit_path.parent / "top_causal_replay",
+            source_sha=str(identity.get("source_sha", "")),
+            probe_manifest_sha256=str(representative_rhs_contract["sha256"]),
+            parent_packet_sha256=str(
+                packet_binding.get("packet_manifest_sha256", "")
+            ),
+            memory_cap_bytes=int(top_causal_memory_cap_bytes),
+        )
+        root_exists = comm.bcast(
+            top_causal_capture.root.exists() if comm.rank == 0 else None,
+            root=0,
+        )
+        if root_exists:
+            raise Task041ModePrepError(
+                "top causal replay root already contains an attempt"
+            )
+        top_causal_capture._prepare_directory(
+            top_causal_capture.root
+        )
+
+    def causal_diagnostic_callback(
+        side: str,
+    ) -> Callable[[Mapping[str, Any]], Any] | None:
+        if not top_causal_replay or top_causal_capture is None or side != "top":
+            return None
+
+        def emit(record: Mapping[str, Any]) -> Any:
+            context = representative_context[side]
+            if not isinstance(context, Mapping):
+                return None
+            enriched = dict(record)
+            enriched["representative_context"] = dict(context)
+            return top_causal_capture.callback(enriched)
+
+        return emit
+
     def audit_callback(side: str) -> Callable[[dict[str, Any]], None]:
         def record(audit: dict[str, Any]) -> None:
             index = audit_indices[side]
@@ -2722,6 +4373,10 @@ def _run_task041_balh_candidate_setup(
             detailed_timing=detailed_timing,
             record_iteration_history=(
                 comparison_mode == TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE
+                or top_causal_replay
+            ),
+            diagnostic_callback=(
+                causal_diagnostic_callback(side)
             ),
             performance_profile=(
                 transfer_optimization_profile
@@ -3051,6 +4706,77 @@ def _run_task041_balh_candidate_setup(
                 ),
             }
             p4 = inverse._p4_factor
+            vector_layouts = None
+            port_layout = None
+            if top_causal_replay:
+                p4_space = p4.physical_action.V
+                spaces["p4_physical_fe"] = _task041_space_layout_metadata(
+                    "p4.physical_action.V", p4_space
+                )
+                active_vector = operator.createVecRight()
+                full_p6_vector = inverse._full_action.matrix.createVecRight()
+                p4_fe_vector = p4.create_fe_vector()
+
+                def vector_layout(vector: PETSc.Vec) -> dict[str, Any]:
+                    ownership = tuple(
+                        int(value) for value in vector.getOwnershipRange()
+                    )
+                    return {
+                        "global_entries": int(vector.getSize()),
+                        "local_entries": int(vector.getLocalSize()),
+                        "local_owned_entries": ownership[1] - ownership[0],
+                        "ownership_range": list(ownership),
+                    }
+
+                try:
+                    vector_layouts = {
+                        "active_p6": vector_layout(active_vector),
+                        "full_p6": vector_layout(full_p6_vector),
+                        "p4_full_fe": vector_layout(p4_fe_vector),
+                    }
+                finally:
+                    p4_fe_vector.destroy()
+                    full_p6_vector.destroy()
+                    active_vector.destroy()
+                port_modes = tuple(p4.physical_action.action.modes)
+                port_keys = [
+                    {
+                        "side": str(entry.mode.side),
+                        "m": int(entry.mode.m),
+                        "n": int(entry.mode.n),
+                        "polarization": str(entry.mode.polarization),
+                    }
+                    for entry in port_modes
+                ]
+                normalizations = [
+                    {
+                        "key": port_keys[index],
+                        "denominator": float(entry.denominator),
+                        "electric_tangential_norm_sq": float(
+                            entry.mode.electric_tangential_norm_sq
+                        ),
+                        "power_per_unit_amplitude": float(
+                            entry.mode.power_per_unit_amplitude
+                        ),
+                    }
+                    for index, entry in enumerate(port_modes)
+                ]
+                port_layout = {
+                    "replicated_entries": len(port_modes),
+                    "mode_key_sha256": _task041_canonical_mode_keys_sha256(
+                        port_keys
+                    ),
+                    "normalization_sha256": hashlib.sha256(
+                        json.dumps(
+                            _jsonable(normalizations),
+                            sort_keys=True,
+                            separators=(",", ":"),
+                        ).encode("utf-8")
+                    ).hexdigest(),
+                    "normalization_source": (
+                        "p4.physical_action.action.modes[*].denominator"
+                    ),
+                }
             p4_factor = p4.factor
             p4_matrix, p4_matrix_source, p4_matrix_semantics = (
                 _task041_p4_backend_matrix_source(p4, p4_backend)
@@ -3245,6 +4971,10 @@ def _run_task041_balh_candidate_setup(
                 ],
                 "transfer_communicator": communicators["transfer"],
             }
+            if vector_layouts is not None:
+                local["vector_layouts"] = vector_layouts
+            if port_layout is not None:
+                local["port_layout"] = port_layout
         except Exception as exc:  # noqa: BLE001 - synchronize all rank evidence
             local_error = f"{type(exc).__name__}: {exc}"
         gathered = comm.allgather({"local": local, "error": local_error})
@@ -4621,9 +6351,32 @@ def _run_task041_balh_candidate_setup(
                 )
                 response = getattr(setup, side).A.createVecLeft()
                 apply_started = time.monotonic()
+                causal_capture_mode = None
+                causal_error: BaseException | None = None
+                if (
+                    top_causal_replay
+                    and side == "top"
+                    and formal_column == 12
+                    and p4_backend in {"full", "cell_condensed"}
+                ):
+                    causal_capture_mode = (
+                        "capture" if p4_backend == "full" else "replay"
+                    )
+                    top_causal_capture.activate(
+                        mode=causal_capture_mode,
+                        backend=str(p4_backend),
+                        trajectory=(
+                            "full_reference"
+                            if p4_backend == "full"
+                            else "condensed_free_trajectory"
+                        ),
+                        inverse=side_inverses[side],
+                        representative_ordinal=ordinal,
+                    )
                 try:
                     side_inverses[side].apply(rhs, response)
-                except BaseException:
+                except BaseException as exc:
+                    causal_error = exc
                     if len(representative_records[side]) > audit_start:
                         failure_evidence.setdefault("representative_rhs", {})[
                             str(ordinal)
@@ -4634,6 +6387,15 @@ def _run_task041_balh_candidate_setup(
                             ),
                         }
                     raise
+                finally:
+                    if causal_capture_mode is not None:
+                        top_causal_capture.finish_apply(
+                            side_inverses[side], error=causal_error
+                        )
+                        top_causal_audits.extend(
+                            dict(item)
+                            for item in top_causal_capture.node_summaries
+                        )
                 apply_wall_max_rank = (
                     float(
                         comm.allreduce(
@@ -5026,6 +6788,7 @@ def _run_task041_balh_candidate_setup(
         action_delta = side_operator.createVecLeft()
         full_action = side_operator.createVecLeft()
         condensed_action = side_operator.createVecLeft()
+        residual_identity = side_operator.createVecLeft()
         try:
             condensed_response.copy(delta)
             delta.axpy(PETSc.ScalarType(-1.0), full_response)
@@ -5036,13 +6799,22 @@ def _run_task041_balh_candidate_setup(
             full_action.axpy(PETSc.ScalarType(1.0), rhs)
             condensed_action.scale(PETSc.ScalarType(-1.0))
             condensed_action.axpy(PETSc.ScalarType(1.0), rhs)
-            finite = bool(
+            _task041_form_p4_residual_identity(
+                action_delta,
+                full_action,
+                condensed_action,
+                residual_identity,
+            )
+            finite_arrays = bool(
                 np.isfinite(delta.getArray(readonly=True)).all()
                 and np.isfinite(action_delta.getArray(readonly=True)).all()
                 and np.isfinite(full_action.getArray(readonly=True)).all()
                 and np.isfinite(condensed_action.getArray(readonly=True)).all()
+                and np.isfinite(
+                    residual_identity.getArray(readonly=True)
+                ).all()
             )
-            finite = bool(comm.allreduce(finite, op=MPI.LAND))
+            finite = bool(comm.allreduce(finite_arrays, op=MPI.LAND))
             full_norm = float(full_response.norm())
             condensed_norm = float(condensed_response.norm())
             rhs_norm = float(rhs.norm())
@@ -5050,6 +6822,7 @@ def _run_task041_balh_candidate_setup(
             action_delta_norm = float(action_delta.norm())
             full_residual_norm = float(full_action.norm())
             condensed_residual_norm = float(condensed_action.norm())
+            residual_identity_norm = float(residual_identity.norm())
             response_denominator = max(full_norm, condensed_norm)
 
             def relative(numerator: float, denominator: float) -> float | None:
@@ -5065,7 +6838,12 @@ def _run_task041_balh_candidate_setup(
             e_A = relative(action_delta_norm, rhs_norm)
             full_relative = relative(full_residual_norm, rhs_norm)
             condensed_relative = relative(condensed_residual_norm, rhs_norm)
-            finite = bool(
+            eta_D = relative(action_delta_norm, rhs_norm)
+            residual_identity_relative = relative(
+                residual_identity_norm,
+                max(full_residual_norm, condensed_residual_norm, action_delta_norm),
+            )
+            finite_scalar_metrics = bool(
                 np.isfinite(
                     (
                         full_norm,
@@ -5075,18 +6853,47 @@ def _run_task041_balh_candidate_setup(
                         action_delta_norm,
                         full_residual_norm,
                         condensed_residual_norm,
+                        residual_identity_norm,
                     )
                 ).all()
                 and all(
                     value is not None and np.isfinite(value)
-                    for value in (e_x, e_A, full_relative, condensed_relative)
+                    for value in (
+                        e_x,
+                        e_A,
+                        full_relative,
+                        condensed_relative,
+                        eta_D,
+                        residual_identity_relative,
+                    )
                 )
+            )
+            finite = bool(finite and finite_scalar_metrics)
+            strong_pair_gate_pass = bool(
+                finite
+                and e_x is not None
+                and e_A is not None
+                and e_x <= 1.0e-8
+                and e_A <= 1.0e-8
+            )
+            side_residual_gate_pass = bool(
+                finite
+                and full_relative is not None
+                and condensed_relative is not None
+                and full_relative <= 1.0e-2
+                and condensed_relative <= 1.0e-2
             )
             metrics = {
                 "e_x": e_x,
                 "e_A": e_A,
                 "response_delta_norm": response_delta_norm,
                 "action_delta_norm": action_delta_norm,
+                "eta_D": eta_D,
+                "residual_identity": {
+                    "definition": "D*(x_condensed-x_full) - (r_full-r_condensed)",
+                    "absolute_norm": residual_identity_norm,
+                    "relative": residual_identity_relative,
+                },
                 "response_norms": {
                     "full": full_norm,
                     "cell_condensed": condensed_norm,
@@ -5105,12 +6912,10 @@ def _run_task041_balh_candidate_setup(
                     "side_relative_residual": 1.0e-2,
                 },
                 "finite": finite,
+                "strong_pair_gate_pass": strong_pair_gate_pass,
+                "side_residual_gate_pass": side_residual_gate_pass,
                 "pass": bool(
-                    finite
-                    and e_x <= 1.0e-8
-                    and e_A <= 1.0e-8
-                    and full_relative <= 1.0e-2
-                    and condensed_relative <= 1.0e-2
+                    strong_pair_gate_pass and side_residual_gate_pass
                 ),
             }
             passed = bool(
@@ -5132,6 +6937,7 @@ def _run_task041_balh_candidate_setup(
             condensed_action.destroy()
             full_action.destroy()
             action_delta.destroy()
+            residual_identity.destroy()
             delta.destroy()
 
     def compare_common_responses(
@@ -6017,10 +7823,14 @@ def _run_task041_balh_candidate_setup(
         common_mode = comparison_mode == TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE
         backend_pair = representative.get("p4_backend_pairing")
         backend_pair_mode = isinstance(backend_pair, Mapping)
+        top_causal_result = representative.get("top_causal_replay")
+        top_causal_mode = isinstance(top_causal_result, Mapping)
         result = {
             "schema": (
                 "task041.side_balh.common_layout_equivalence_setup.v1"
                 if common_mode
+                else "task041.side_balh.top_causal_replay_setup.v1"
+                if top_causal_mode
                 else "task041.side_balh.p4_backend_pair_setup.v1"
                 if backend_pair_mode
                 else "task041.side_balh.representative_rhs_setup.v1"
@@ -6028,6 +7838,8 @@ def _run_task041_balh_candidate_setup(
             "status": (
                 "common_layout_equivalence_completed"
                 if common_mode
+                else "top_causal_replay_completed"
+                if top_causal_mode
                 else "p4_backend_pair_completed"
                 if backend_pair_mode
                 else "representative_rhs_completed"
@@ -6039,6 +7851,8 @@ def _run_task041_balh_candidate_setup(
             "qualification": (
                 "comparison_only"
                 if common_mode
+                else "diagnostic_only"
+                if top_causal_mode
                 else "backend_comparison_only"
                 if backend_pair_mode
                 else "diagnostic_component_only"
@@ -6048,6 +7862,9 @@ def _run_task041_balh_candidate_setup(
                 None
                 if common_mode
                 else {**dict(representative), "cleanup": dict(cleanup)}
+            ),
+            "top_causal_replay": (
+                dict(top_causal_result) if top_causal_mode else None
             ),
             "common_layout_equivalence": (
                 {**dict(representative), "cleanup": dict(cleanup)}
@@ -6136,6 +7953,30 @@ def _run_task041_balh_candidate_setup(
                 raise Task041ModePrepError(
                     "sequential_component requires four fixed entries per side"
                 )
+            representative_entries_for_run = representative_entries
+            sides_for_run = ("bottom", "top")
+            if top_causal_replay:
+                top_entries_by_column = {
+                    int(entry["formal_column"]): entry
+                    for entry in representative_entries
+                    if str(entry["side"]) == "top"
+                    and int(entry["formal_column"]) in {12, 493, 666}
+                }
+                top_entries = [
+                    top_entries_by_column[column]
+                    for column in (12, 493, 666)
+                    if column in top_entries_by_column
+                ]
+                top_columns = [
+                    int(entry["formal_column"]) for entry in top_entries
+                ]
+                if top_columns != [12, 493, 666]:
+                    raise Task041ModePrepError(
+                        "top causal replay requires manifest columns 12, 493, and 666"
+                    )
+                representative_entries_for_run = top_entries
+                entries_by_side = {"bottom": [], "top": top_entries}
+                sides_for_run = ("top",)
 
             global_identity_checks: dict[str, dict[str, Any]] = {}
 
@@ -6226,6 +8067,493 @@ def _run_task041_balh_candidate_setup(
                         rhs_vectors[ordinal] = vector
                     rhs_build_wall = pair_wall(rhs_started)
 
+                    def response_packet_identity(
+                        entry: Mapping[str, Any], backend: str
+                    ) -> dict[str, Any]:
+                        return {
+                            "schema": "task041.representative_rhs.response_identity.v1",
+                            "source_sha": identity["source_sha"],
+                            "probe_manifest_sha256": representative_rhs_contract[
+                                "sha256"
+                            ],
+                            "packet_manifest_sha256": representative_rhs_contract[
+                                "packet_binding"
+                            ]["packet_manifest_sha256"],
+                            "ordinal": int(entry["ordinal"]),
+                            "side": side,
+                            "formal_column": int(entry["formal_column"]),
+                            "branch_ordinal": int(entry["branch_ordinal"]),
+                            "p4_backend": backend,
+                        }
+
+                    def load_response_vector(
+                        record: Mapping[str, Any],
+                        entry: Mapping[str, Any],
+                        backend: str,
+                    ) -> tuple[PETSc.Vec, bool]:
+                        artifact = record.get("artifact")
+                        packet = None
+                        local_error = None
+                        packet_rhs_matches = False
+                        try:
+                            if not isinstance(artifact, Mapping):
+                                raise TypeError("response packet artifact is missing")
+                            packet = load_packet(
+                                Path(str(artifact["manifest"])),
+                                identity=response_packet_identity(entry, backend),
+                                expected_manifest_sha256=str(
+                                    artifact["manifest_sha256"]
+                                ),
+                                comm=comm,
+                            )
+                            packet_rhs = packet["rhs"]
+                            current_rhs = np.asarray(
+                                rhs_vectors[int(entry["ordinal"])].getArray(
+                                    readonly=True
+                                )
+                            )
+                            packet_rhs_matches = bool(
+                                packet_rhs.dtype == current_rhs.dtype
+                                and packet_rhs.shape == current_rhs.shape
+                                and memoryview(packet_rhs).cast("B")
+                                == memoryview(current_rhs).cast("B")
+                            )
+                        except BaseException as exc:  # noqa: BLE001 - synchronize local packet reads
+                            local_error = f"{type(exc).__name__}: {exc}"
+                        vector = system.A.createVecLeft()
+                        if local_error is None and packet is not None:
+                            expected_ownership = tuple(
+                                int(value) for value in packet["ownership_range"]
+                            )
+                            actual_ownership = tuple(
+                                int(value) for value in vector.getOwnershipRange()
+                            )
+                            values = packet["solution"]
+                            if (
+                                actual_ownership != expected_ownership
+                                or values.shape != vector.getArray(readonly=True).shape
+                            ):
+                                local_error = (
+                                    "response packet ownership or vector size changed"
+                                )
+                        errors = comm.allgather(local_error)
+                        if any(value is not None for value in errors):
+                            vector.destroy()
+                            raise Task041ModePrepError(
+                                f"response packet read failed: {errors}"
+                            )
+                        assert packet is not None
+                        vector.getArray()[:] = packet["solution"]
+                        vector.assemble()
+                        packet["solution"] = np.empty(0, dtype=np.complex128)
+                        packet["rhs"] = np.empty(0, dtype=np.complex128)
+                        del packet
+                        packet_rhs_matches = bool(
+                            comm.allreduce(packet_rhs_matches, op=MPI.LAND)
+                        )
+                        return vector, packet_rhs_matches
+
+                    def compare_response_packets(
+                        full_record: Mapping[str, Any],
+                        condensed_record: Mapping[str, Any],
+                        entry: Mapping[str, Any],
+                    ) -> dict[str, Any]:
+                        full_shards = {
+                            int(item["rank"]): item
+                            for item in full_record.get("rank_shards", [])
+                        }
+                        condensed_shards = {
+                            int(item["rank"]): item
+                            for item in condensed_record.get("rank_shards", [])
+                        }
+                        current_rhs_array = np.asarray(
+                            rhs_vectors[int(entry["ordinal"])].getArray(
+                                readonly=True
+                            )
+                        )
+                        current_rhs_sha = hashlib.sha256(
+                            memoryview(current_rhs_array).cast("B")
+                        ).hexdigest()
+                        current_rhs_shas = comm.allgather(current_rhs_sha)
+                        rhs_identity_pass = bool(
+                            full_shards.keys()
+                            == set(range(int(comm.size)))
+                            and condensed_shards.keys()
+                            == set(range(int(comm.size)))
+                            and all(
+                                full_shards[rank].get("owned_rhs_sha256")
+                                == condensed_shards[rank].get(
+                                    "owned_rhs_sha256"
+                                )
+                                == current_rhs_shas[rank]
+                                for rank in full_shards
+                            )
+                        )
+                        full_response = None
+                        condensed_response = None
+                        full_modal = None
+                        condensed_modal = None
+                        modal_delta = None
+                        full_packet_rhs_matches = False
+                        condensed_packet_rhs_matches = False
+                        try:
+                            full_response, full_packet_rhs_matches = load_response_vector(
+                                full_record, entry, "full"
+                            )
+                            condensed_response, condensed_packet_rhs_matches = load_response_vector(
+                                condensed_record, entry, "cell_condensed"
+                            )
+                            comparison = compare_p4_backend_responses(
+                                system.A,
+                                rhs_vectors[int(entry["ordinal"])],
+                                full_response,
+                                condensed_response,
+                            )
+                            if top_causal_replay:
+                                projection = setup.coupling.top.projection
+                                projection_rows, projection_columns = (
+                                    int(value) for value in projection.getSize()
+                                )
+                                full_ownership = tuple(
+                                    int(value)
+                                    for value in full_response.getOwnershipRange()
+                                )
+                                condensed_ownership = tuple(
+                                    int(value)
+                                    for value in condensed_response.getOwnershipRange()
+                                )
+                                local_layout_ok = bool(
+                                    projection_columns
+                                    == int(full_response.getSize())
+                                    == int(condensed_response.getSize())
+                                    and full_ownership == condensed_ownership
+                                )
+                                layout_ok = bool(
+                                    comm.allreduce(local_layout_ok, op=MPI.LAND)
+                                )
+                                if not layout_ok:
+                                    raise Task041ModePrepError(
+                                        "top modal projection input layout differs from the paired response vectors"
+                                    )
+                                modal_started = time.monotonic()
+                                try:
+                                    full_modal = projection.createVecLeft()
+                                    condensed_modal = projection.createVecLeft()
+                                    modal_delta = full_modal.duplicate()
+                                    projection.mult(full_response, full_modal)
+                                    projection.mult(
+                                        condensed_response, condensed_modal
+                                    )
+                                    full_modal_values = np.asarray(
+                                        full_modal.getArray(readonly=True)
+                                    )
+                                    condensed_modal_values = np.asarray(
+                                        condensed_modal.getArray(readonly=True)
+                                    )
+                                    local_finite = bool(
+                                        np.isfinite(full_modal_values).all()
+                                        and np.isfinite(
+                                            condensed_modal_values
+                                        ).all()
+                                    )
+                                    modal_finite = bool(
+                                        comm.allreduce(
+                                            local_finite, op=MPI.LAND
+                                        )
+                                    )
+                                    full_modal_norm = float(full_modal.norm())
+                                    condensed_modal_norm = float(
+                                        condensed_modal.norm()
+                                    )
+                                    condensed_modal.copy(modal_delta)
+                                    modal_delta.axpy(
+                                        PETSc.ScalarType(-1.0), full_modal
+                                    )
+                                    modal_delta_values = np.asarray(
+                                        modal_delta.getArray(readonly=True)
+                                    )
+                                    modal_finite = bool(
+                                        modal_finite
+                                        and comm.allreduce(
+                                            bool(
+                                                np.isfinite(
+                                                    modal_delta_values
+                                                ).all()
+                                            ),
+                                            op=MPI.LAND,
+                                        )
+                                    )
+                                    modal_delta_norm = float(modal_delta.norm())
+                                    modal_relative = (
+                                        modal_delta_norm
+                                        / max(
+                                            full_modal_norm,
+                                            condensed_modal_norm,
+                                        )
+                                        if max(
+                                            full_modal_norm,
+                                            condensed_modal_norm,
+                                        )
+                                        > 0.0
+                                        else 0.0
+                                        if modal_delta_norm == 0.0
+                                        else None
+                                    )
+                                    if top_causal_capture is None:
+                                        raise Task041ModePrepError(
+                                            "top modal projection has no active causal capture"
+                                        )
+                                    full_modal_hash = (
+                                        top_causal_capture._global_hash(
+                                            full_modal_values,
+                                            tuple(
+                                                int(value)
+                                                for value in full_modal.getOwnershipRange()
+                                            ),
+                                        )
+                                    )
+                                    condensed_modal_hash = (
+                                        top_causal_capture._global_hash(
+                                            condensed_modal_values,
+                                            tuple(
+                                                int(value)
+                                                for value in condensed_modal.getOwnershipRange()
+                                            ),
+                                        )
+                                    )
+                                    modal_delta_hash = (
+                                        top_causal_capture._global_hash(
+                                            modal_delta_values,
+                                            tuple(
+                                                int(value)
+                                                for value in modal_delta.getOwnershipRange()
+                                            ),
+                                        )
+                                    )
+                                    comparison["top_modal_projection"] = {
+                                        "source": "same_live_coupling_top_projection",
+                                        "global_size": projection_rows,
+                                        "full_sha256": full_modal_hash,
+                                        "cell_condensed_sha256": condensed_modal_hash,
+                                        "difference_sha256": modal_delta_hash,
+                                        "full_norm": full_modal_norm,
+                                        "cell_condensed_norm": condensed_modal_norm,
+                                        "numerator_norm": modal_delta_norm,
+                                        "denominator_norm": max(
+                                            full_modal_norm,
+                                            condensed_modal_norm,
+                                        ),
+                                        "difference_norm": modal_delta_norm,
+                                        "relative_difference": modal_relative,
+                                        "finite": bool(
+                                            modal_finite
+                                            and math.isfinite(full_modal_norm)
+                                            and math.isfinite(condensed_modal_norm)
+                                            and math.isfinite(modal_delta_norm)
+                                            and modal_relative is not None
+                                            and math.isfinite(modal_relative)
+                                        ),
+                                        "wall_max_rank_seconds": pair_wall(
+                                            modal_started
+                                        ),
+                                        "gate": "not_set_diagnostic_only",
+                                    }
+                                finally:
+                                    if modal_delta is not None:
+                                        modal_delta.destroy()
+                                    if condensed_modal is not None:
+                                        condensed_modal.destroy()
+                                    if full_modal is not None:
+                                        full_modal.destroy()
+                            return {
+                                "ordinal": int(entry["ordinal"]),
+                                "formal_column": int(entry["formal_column"]),
+                                "rhs_identity_pass": bool(
+                                    rhs_identity_pass
+                                    and full_packet_rhs_matches
+                                    and condensed_packet_rhs_matches
+                                ),
+                                "full_packet_rhs_matches_current_owned_rhs": full_packet_rhs_matches,
+                                "condensed_packet_rhs_matches_current_owned_rhs": condensed_packet_rhs_matches,
+                                "comparison": comparison,
+                                "pass": bool(
+                                    rhs_identity_pass
+                                    and comparison.get("pass") is True
+                                ),
+                            }
+                        finally:
+                            if condensed_response is not None:
+                                condensed_response.destroy()
+                            if full_response is not None:
+                                full_response.destroy()
+
+                    def causal_vector_from_packet(
+                        reference_node: Mapping[str, Any],
+                        relative: str,
+                        template: PETSc.Vec,
+                    ) -> PETSc.Vec:
+                        packet = top_causal_capture._packet(
+                            reference_node, relative
+                        )
+                        vector = template
+                        local_error = None
+                        actual_ownership = tuple(
+                            int(value) for value in vector.getOwnershipRange()
+                        )
+                        if (
+                            actual_ownership
+                            != tuple(packet["ownership_range"])
+                            or packet["rhs"].shape
+                            != vector.getArray(readonly=True).shape
+                        ):
+                            local_error = (
+                                f"frozen {relative} packet layout changed"
+                            )
+                        errors = comm.allgather(local_error)
+                        if any(value is not None for value in errors):
+                            vector.destroy()
+                            raise Task041ModePrepError(
+                                f"frozen causal input layout failed: {errors}"
+                            )
+                        vector.getArray()[:] = packet["rhs"]
+                        vector.assemble()
+                        packet["solution"] = np.empty(0, dtype=np.complex128)
+                        packet["rhs"] = np.empty(0, dtype=np.complex128)
+                        del packet
+                        return vector
+
+                    def finish_causal_replay(
+                        inverse: Any,
+                        *,
+                        error: BaseException | None,
+                    ) -> None:
+                        top_causal_capture.finish_apply(inverse, error=error)
+                        top_causal_audits.extend(
+                            dict(item)
+                            for item in top_causal_capture.node_summaries
+                        )
+
+                    def run_independent_causal_replays(
+                        inverse: Any,
+                        top_entry: Mapping[str, Any],
+                    ) -> None:
+                        references = list(top_causal_capture.reference_nodes)
+                        if not references or len(references) > _TASK041_TOP_CAUSAL_MAX_NODES:
+                            raise Task041ModePrepError(
+                                "top causal full reference node set is missing or exceeds its bound"
+                            )
+                        replay_context = {
+                            "representative_ordinal": int(top_entry["ordinal"]),
+                            "source_audit_index": int(top_entry["audit_index"]),
+                            "formal_column": 12,
+                            "branch_ordinal": int(top_entry["branch_ordinal"]),
+                            "p4_backend": "cell_condensed",
+                            "p4_backend_pair": True,
+                        }
+                        for reference in references:
+                            pc_index = int(reference["pc_index"])
+                            reference_node = {
+                                "pc_index": pc_index,
+                                "reference_directory": str(
+                                    reference["directory"]
+                                ),
+                            }
+                            for q_index in (1, 2):
+                                replay_started = time.monotonic()
+                                source = causal_vector_from_packet(
+                                    reference_node,
+                                    f"q_{q_index:02d}_input_output",
+                                    inverse._full_action.matrix.createVecRight(),
+                                )
+                                top_causal_capture.activate(
+                                    mode="replay",
+                                    backend="cell_condensed",
+                                    trajectory=(
+                                        f"independent_q{q_index}_pc{pc_index:05d}"
+                                    ),
+                                    inverse=inverse,
+                                    pc_index=pc_index,
+                                    q_replay_index=q_index,
+                                    representative_ordinal=int(
+                                        top_entry["ordinal"]
+                                    ),
+                                )
+                                representative_context["top"] = replay_context
+                                replay_error: BaseException | None = None
+                                recovered = None
+                                try:
+                                    recovered = inverse._apply_q_callback(source)
+                                except BaseException as exc:  # noqa: BLE001 - preserve the original Q failure
+                                    replay_error = exc
+                                finally:
+                                    try:
+                                        finish_causal_replay(
+                                            inverse, error=replay_error
+                                        )
+                                    finally:
+                                        if recovered is not None:
+                                            recovered.destroy()
+                                        source.destroy()
+                                        representative_context["top"] = None
+                                if replay_error is not None:
+                                    raise replay_error
+                                top_causal_timings.append(
+                                    {
+                                        "phase": "independent_q_replay",
+                                        "pc_index": pc_index,
+                                        "q_call_index": q_index,
+                                        "max_rank_wall_seconds": pair_wall(
+                                            replay_started
+                                        ),
+                                    }
+                                )
+
+                            replay_started = time.monotonic()
+                            active_source = causal_vector_from_packet(
+                                reference_node,
+                                "pc_input_output",
+                                inverse.operator.createVecRight(),
+                            )
+                            active_target = inverse.operator.createVecLeft()
+                            top_causal_capture.activate(
+                                mode="replay",
+                                backend="cell_condensed",
+                                trajectory=f"independent_pc_pc{pc_index:05d}",
+                                inverse=inverse,
+                                pc_index=pc_index,
+                                representative_ordinal=int(
+                                    top_entry["ordinal"]
+                                ),
+                            )
+                            representative_context["top"] = replay_context
+                            replay_error = None
+                            try:
+                                inverse._apply_balanced_pc(
+                                    active_source, active_target
+                                )
+                            except BaseException as exc:  # noqa: BLE001 - preserve the original PC failure
+                                replay_error = exc
+                            finally:
+                                try:
+                                    finish_causal_replay(
+                                        inverse, error=replay_error
+                                    )
+                                finally:
+                                    active_target.destroy()
+                                    active_source.destroy()
+                                    representative_context["top"] = None
+                            if replay_error is not None:
+                                raise replay_error
+                            top_causal_timings.append(
+                                {
+                                    "phase": "independent_pc_replay",
+                                    "pc_index": pc_index,
+                                    "max_rank_wall_seconds": pair_wall(
+                                        replay_started
+                                    ),
+                                }
+                            )
+
                     def build_backend(backend: str) -> Any:
                         backend_started = time.monotonic()
                         resources = [
@@ -6269,6 +8597,8 @@ def _run_task041_balh_candidate_setup(
                             purpose="p4_backend_pair",
                             p4_backend=backend,
                         )
+                        if top_causal_replay and backend == "full":
+                            top_causal_capture.configure_layout(layout_record)
                         layout_identity = _task041_backend_pair_layout_identity(
                             layout_record
                         )
@@ -6326,12 +8656,21 @@ def _run_task041_balh_candidate_setup(
                         backend: str, _inverse: Any
                     ) -> Mapping[str, Any]:
                         apply_started = time.monotonic()
+                        if top_causal_replay and backend == "cell_condensed":
+                            top_entry = next(
+                                entry
+                                for entry in entries
+                                if int(entry["formal_column"]) == 12
+                            )
+                            run_independent_causal_replays(
+                                _inverse, top_entry
+                            )
                         probe = run_representative_rhs_probe(
                             entries,
                             rhs_vectors=rhs_vectors,
                             p4_backend=backend,
                             backend_pair=True,
-                            retain_responses=True,
+                            retain_responses=not top_causal_replay,
                             retained_responses_out=retained_responses[backend],
                         )
                         apply_wall = pair_wall(apply_started)
@@ -6351,6 +8690,43 @@ def _run_task041_balh_candidate_setup(
                         if backend == "full":
                             backend_state[backend]["apply_calls"] = probe["entries"]
                         backend_probe_entries[backend] = probe["entries"]
+                        if top_causal_replay:
+                            top_causal_timings.extend(
+                                {
+                                    "phase": "backend_response_apply",
+                                    "backend": backend,
+                                    "ordinal": int(item["ordinal"]),
+                                    "formal_column": int(
+                                        item["formal_column"]
+                                    ),
+                                    "max_rank_wall_seconds": item.get(
+                                        "call_wall_max_rank_seconds"
+                                    ),
+                                    "trajectory": (
+                                        "full_reference"
+                                        if backend == "full"
+                                        else "condensed_free_trajectory"
+                                    ),
+                                }
+                                for item in probe["entries"]
+                            )
+                        if top_causal_replay and backend == "cell_condensed":
+                            full_by_ordinal = {
+                                int(item["ordinal"]): item
+                                for item in backend_probe_entries["full"]
+                            }
+                            for entry, condensed_record in zip(
+                                entries, probe["entries"], strict=True
+                            ):
+                                top_causal_response_comparisons.append(
+                                    compare_response_packets(
+                                        full_by_ordinal[
+                                            int(entry["ordinal"])
+                                        ],
+                                        condensed_record,
+                                        entry,
+                                    )
+                                )
                         return {"probe": probe, "apply_wall": apply_wall}
 
                     def release_backend(
@@ -6406,6 +8782,419 @@ def _run_task041_balh_candidate_setup(
                             "result": phase_result,
                             "release": release,
                         }
+                    if top_causal_replay:
+                        reference_nodes = list(
+                            top_causal_capture.reference_nodes
+                        )
+                        reference_indices = [
+                            int(item["pc_index"]) for item in reference_nodes
+                        ]
+                        replay_records = [
+                            item
+                            for item in top_causal_audits
+                            if item.get("backend") == "cell_condensed"
+                            and item.get("replay_kind")
+                            in {"independent_q", "independent_pc"}
+                        ]
+                        replay_gates: list[dict[str, Any]] = []
+                        for pc_index in reference_indices:
+                            pc_records = [
+                                item
+                                for item in replay_records
+                                if int(item.get("pc_index", -1)) == pc_index
+                            ]
+                            q1 = [
+                                item
+                                for item in pc_records
+                                if item.get("replay_kind") == "independent_q"
+                                and str(item.get("trajectory", "")).startswith(
+                                    "independent_q1_"
+                                )
+                            ]
+                            q2 = [
+                                item
+                                for item in pc_records
+                                if item.get("replay_kind") == "independent_q"
+                                and str(item.get("trajectory", "")).startswith(
+                                    "independent_q2_"
+                                )
+                            ]
+                            pc = [
+                                item
+                                for item in pc_records
+                                if item.get("replay_kind") == "independent_pc"
+                            ]
+                            replay_gates.append(
+                                {
+                                    "pc_index": pc_index,
+                                    "q1": q1[0].get("gate_status")
+                                    if len(q1) == 1
+                                    else "missing_or_duplicate",
+                                    "q2": q2[0].get("gate_status")
+                                    if len(q2) == 1
+                                    else "missing_or_duplicate",
+                                    "pc": pc[0].get("gate_status")
+                                    if len(pc) == 1
+                                    else "missing_or_duplicate",
+                                    "pass": bool(
+                                        len(q1) == len(q2) == len(pc) == 1
+                                        and q1[0].get("gate_status")
+                                        == "passed_independent_q_replay_gates"
+                                        and q2[0].get("gate_status")
+                                        == "passed_independent_q_replay_gates"
+                                        and pc[0].get("gate_status")
+                                        == "passed_independent_pc_replay_gates"
+                                    ),
+                                }
+                            )
+                        response_columns = {
+                            int(item["formal_column"]): item
+                            for item in top_causal_response_comparisons
+                            if type(item.get("formal_column")) is int
+                        }
+                        response_set_complete = bool(
+                            len(top_causal_response_comparisons) == 3
+                            and set(response_columns) == {12, 493, 666}
+                        )
+                        response_identity_pass = bool(
+                            response_set_complete
+                            and all(
+                                response_columns[column].get(
+                                    "rhs_identity_pass"
+                                )
+                                is True
+                                for column in (12, 493, 666)
+                            )
+                        )
+                        response_finite_pass = bool(
+                            response_set_complete
+                            and all(
+                                isinstance(
+                                    response_columns[column].get(
+                                        "comparison"
+                                    ),
+                                    Mapping,
+                                )
+                                and response_columns[column][
+                                    "comparison"
+                                ].get("finite")
+                                is True
+                                for column in (12, 493, 666)
+                            )
+                        )
+                        response_pair_pass = bool(
+                            response_set_complete
+                            and all(
+                                response_columns[column]
+                                .get("comparison", {})
+                                .get("strong_pair_gate_pass")
+                                is True
+                                for column in (12, 493, 666)
+                            )
+                        )
+                        side_residual_pass = bool(
+                            response_set_complete
+                            and all(
+                                response_columns[column]
+                                .get("comparison", {})
+                                .get("side_residual_gate_pass")
+                                is True
+                                for column in (12, 493, 666)
+                            )
+                        )
+                        response_artifacts_complete = all(
+                            isinstance(
+                                backend_probe_entries.get(backend), list
+                            )
+                            and len(backend_probe_entries[backend]) == 3
+                            and {
+                                item.get("formal_column")
+                                for item in backend_probe_entries[backend]
+                                if isinstance(item, Mapping)
+                            }
+                            == {12, 493, 666}
+                            and all(
+                                item.get("status") == "completed"
+                                and isinstance(item.get("artifact"), Mapping)
+                                and isinstance(
+                                    item["artifact"].get("manifest"), str
+                                )
+                                and isinstance(
+                                    item["artifact"].get(
+                                        "manifest_sha256"
+                                    ),
+                                    str,
+                                )
+                                and isinstance(item.get("rank_shards"), list)
+                                and len(item["rank_shards"]) == int(comm.size)
+                                and {
+                                    int(rank_row["rank"])
+                                    for rank_row in item["rank_shards"]
+                                    if isinstance(rank_row, Mapping)
+                                    and type(rank_row.get("rank")) is int
+                                }
+                                == set(range(int(comm.size)))
+                                for item in backend_probe_entries[backend]
+                            )
+                            for backend in ("full", "cell_condensed")
+                        )
+                        modal_projection_by_column = {
+                            column: response_columns[column]
+                            .get("comparison", {})
+                            .get("top_modal_projection")
+                            for column in (12, 493, 666)
+                            if column in response_columns
+                        }
+                        modal_projection_evidence_complete = bool(
+                            set(modal_projection_by_column) == {12, 493, 666}
+                            and all(
+                                isinstance(projection, Mapping)
+                                and projection.get("source")
+                                == "same_live_coupling_top_projection"
+                                and _valid_sha(projection.get("full_sha256"), 64)
+                                and _valid_sha(
+                                    projection.get("cell_condensed_sha256"), 64
+                                )
+                                and _valid_sha(
+                                    projection.get("difference_sha256"), 64
+                                )
+                                and type(projection.get("global_size")) is int
+                                and projection["global_size"] > 0
+                                and all(
+                                    isinstance(projection.get(name), (int, float))
+                                    and not isinstance(projection.get(name), bool)
+                                    for name in (
+                                        "full_norm",
+                                        "cell_condensed_norm",
+                                        "numerator_norm",
+                                        "denominator_norm",
+                                        "relative_difference",
+                                    )
+                                )
+                                for projection in modal_projection_by_column.values()
+                            )
+                        )
+                        modal_projection_finite_pass = bool(
+                            modal_projection_evidence_complete
+                            and all(
+                                projection.get("finite") is True
+                                and all(
+                                    math.isfinite(float(projection[name]))
+                                    and float(projection[name]) >= 0.0
+                                    for name in (
+                                        "full_norm",
+                                        "cell_condensed_norm",
+                                        "numerator_norm",
+                                        "denominator_norm",
+                                        "relative_difference",
+                                    )
+                                )
+                                for projection in modal_projection_by_column.values()
+                            )
+                        )
+                        replay_pass = bool(
+                            0 < len(reference_indices)
+                            <= _TASK041_TOP_CAUSAL_MAX_NODES
+                            and len(set(reference_indices))
+                            == len(reference_indices)
+                            and len(replay_gates) == len(reference_indices)
+                            and all(item["pass"] for item in replay_gates)
+                        )
+                        replay_statuses = {
+                            "passed_independent_q_replay_gates",
+                            "passed_independent_pc_replay_gates",
+                            "failed_p4_residual_gate",
+                            "failed_action_gate",
+                            "trajectory_only_input_diverged",
+                        }
+                        replay_evidence_complete = bool(
+                            0 < len(reference_indices)
+                            <= _TASK041_TOP_CAUSAL_MAX_NODES
+                            and len(set(reference_indices))
+                            == len(reference_indices)
+                            and len(replay_gates) == len(reference_indices)
+                            and all(
+                                item.get(key) in replay_statuses
+                                for item in replay_gates
+                                for key in ("q1", "q2", "pc")
+                            )
+                        )
+                        release_pass = all(
+                            backend_phase_results[name]["release"].get("pass")
+                            is True
+                            for name in ("full", "cell_condensed")
+                        )
+                        layout_pass = bool(
+                            backend_state["full"]["layout_identity"][
+                                "identity_sha256"
+                            ]
+                            == backend_state["cell_condensed"][
+                                "layout_identity"
+                            ]["identity_sha256"]
+                        )
+                        evidence_complete = bool(
+                            response_set_complete
+                            and response_artifacts_complete
+                            and modal_projection_evidence_complete
+                            and replay_evidence_complete
+                            and len(replay_records) == 3 * len(reference_indices)
+                            and 0 < len(reference_indices)
+                            <= _TASK041_TOP_CAUSAL_MAX_NODES
+                        )
+                        action_safety_pass = bool(
+                            response_identity_pass
+                            and response_finite_pass
+                            and modal_projection_finite_pass
+                            and side_residual_pass
+                            and replay_pass
+                            and layout_pass
+                            and release_pass
+                        )
+                        diagnostic_pass = bool(
+                            evidence_complete and action_safety_pass
+                        )
+                        failed_action_gates = [
+                            name
+                            for name, passed in (
+                                ("response_input_identity", response_identity_pass),
+                                ("response_finite", response_finite_pass),
+                                (
+                                    "top_modal_projection_finite",
+                                    modal_projection_finite_pass,
+                                ),
+                                ("side_original_residuals", side_residual_pass),
+                                ("independent_q_pc_shared_a4", replay_pass),
+                                ("same_layout_identity", layout_pass),
+                                ("backend_release", release_pass),
+                            )
+                            if not passed
+                        ]
+                        missing_evidence = [
+                            name
+                            for name, passed in (
+                                ("response_columns", response_set_complete),
+                                ("response_artifacts", response_artifacts_complete),
+                                (
+                                    "top_modal_projection",
+                                    modal_projection_evidence_complete,
+                                ),
+                                ("frozen_replay_records", replay_evidence_complete),
+                                (
+                                    "frozen_replay_count",
+                                    len(replay_records) == 3 * len(reference_indices),
+                                ),
+                            )
+                            if not passed
+                        ]
+                        causal_record = {
+                            "schema": "task041.top_causal_replay.result.v1",
+                            "scope": "top_only_fixed_manifest_replay",
+                            "status": (
+                                "diagnostic_complete"
+                                if diagnostic_pass
+                                else "failed_required_gate"
+                            ),
+                            "qualification": "diagnostic_only",
+                            "source_sha": identity.get("source_sha"),
+                            "manifest": {
+                                "path": representative_rhs_contract["path"],
+                                "sha256": representative_rhs_contract["sha256"],
+                                "parent_packet_manifest_sha256": (
+                                    representative_rhs_contract[
+                                        "packet_binding"
+                                    ]["packet_manifest_sha256"]
+                                ),
+                            },
+                            "selected_formal_columns": [12, 493, 666],
+                            "bottom_scope": "not_run",
+                            "fixed_eight_completion": False,
+                            "full_reference_response_count": len(entries),
+                            "condensed_free_response_count": len(entries),
+                            "frozen_pc_nodes": reference_indices,
+                            "frozen_pc_node_count": len(reference_indices),
+                            "node_limit": _TASK041_TOP_CAUSAL_MAX_NODES,
+                            "full_capture_and_condensed_replay_audits": list(
+                                top_causal_audits
+                            ),
+                            "response_probe_records_by_backend": {
+                                name: list(records)
+                                for name, records in backend_probe_entries.items()
+                            },
+                            "phase_timings": list(top_causal_timings),
+                            "independent_replay_gates": replay_gates,
+                            "response_comparisons": list(
+                                top_causal_response_comparisons
+                            ),
+                            "backend_order": list(backend_phase_results),
+                            "backend_phases": backend_state,
+                            "evidence_complete": evidence_complete,
+                            "response_pair_pass": response_pair_pass,
+                            "side_residual_gate_pass": side_residual_pass,
+                            "modal_projection_evidence_complete": (
+                                modal_projection_evidence_complete
+                            ),
+                            "modal_projection_finite_pass": (
+                                modal_projection_finite_pass
+                            ),
+                            "action_safety_pass": action_safety_pass,
+                            "gates": {
+                                "response_e_x_e_A": response_pair_pass,
+                                "response_input_identity": response_identity_pass,
+                                "response_finite": response_finite_pass,
+                                "side_original_residuals": side_residual_pass,
+                                "top_modal_projection_finite": (
+                                    modal_projection_finite_pass
+                                ),
+                                "independent_q1_q2_pc_and_p4_a4": replay_pass,
+                                "same_layout_identity": layout_pass,
+                                "full_released_before_condensed": bool(
+                                    list(backend_phase_results)
+                                    == ["full", "cell_condensed"]
+                                    and backend_phase_results["full"][
+                                        "release"
+                                    ].get("pass")
+                                    is True
+                                ),
+                                "both_backend_releases": release_pass,
+                            },
+                            "diagnostic_pass": diagnostic_pass,
+                            "failed_action_gates": failed_action_gates,
+                            "missing_evidence": missing_evidence,
+                            "qualification_pass": False,
+                            "qualification_reason": (
+                                "top-only causal diagnostic is not a fixed-eight or solver qualification"
+                            ),
+                        }
+                        top_causal_by_side[side] = causal_record
+                        _write_rank0_json(
+                            audit_path.with_name("top_causal_replay_top.json"),
+                            causal_record,
+                            comm,
+                        )
+                        live_record = backend_state["full"]["live_at_build"]
+                        sequential_side_records[side] = {
+                            "side": side,
+                            "status": "top_causal_full_then_condensed_released",
+                            "live_at_build": dict(live_record),
+                            "backend_live_at_build": {
+                                name: dict(state["live_at_build"])
+                                for name, state in backend_state.items()
+                            },
+                            "admission_pass": all(
+                                backend_state[name]["admission"].get("pass")
+                                is True
+                                for name in ("full", "cell_condensed")
+                            ),
+                            "probe_expected_count": len(entries),
+                            "probe_completed_count": len(entries),
+                            "backend_order": list(backend_phase_results),
+                            "top_causal_diagnostic_pass": causal_record[
+                                "diagnostic_pass"
+                            ],
+                        }
+                        return causal_record, backend_phase_results[
+                            "cell_condensed"
+                        ]["result"]["probe"]
                     entry_comparisons: list[dict[str, Any]] = []
                     for entry in entries:
                         ordinal = int(entry["ordinal"])
@@ -6463,9 +9252,28 @@ def _run_task041_balh_candidate_setup(
                             }
                         )
 
-                    side_pass = bool(
-                        all(item["pass"] for item in entry_comparisons)
-                        and backend_state["full"]["layout_identity"][
+                    response_pair_pass = bool(
+                        all(
+                            item["comparison"].get("strong_pair_gate_pass") is True
+                            for item in entry_comparisons
+                        )
+                    )
+                    side_residual_gate_pass = bool(
+                        all(
+                            item["comparison"].get("side_residual_gate_pass")
+                            is True
+                            for item in entry_comparisons
+                        )
+                    )
+                    response_identity_pass = bool(
+                        all(
+                            item.get("rhs_identity_pass") is True
+                            and item["comparison"].get("finite") is True
+                            for item in entry_comparisons
+                        )
+                    )
+                    backend_identity_and_release_pass = bool(
+                        backend_state["full"]["layout_identity"][
                             "identity_sha256"
                         ]
                         == backend_state["cell_condensed"]["layout_identity"][
@@ -6484,6 +9292,15 @@ def _run_task041_balh_candidate_setup(
                             is True
                             for backend in ("full", "cell_condensed")
                         )
+                    )
+                    side_pass = bool(
+                        (
+                            response_identity_pass
+                            and side_residual_gate_pass
+                            if top_causal_replay
+                            else response_pair_pass
+                        )
+                        and backend_identity_and_release_pass
                     )
                     pair_record = {
                         "schema": "task041.p4_backend_pair.side.v1",
@@ -6508,6 +9325,13 @@ def _run_task041_balh_candidate_setup(
                         ),
                         "backend_phases": backend_state,
                         "entries": entry_comparisons,
+                        "response_pair_pass": response_pair_pass,
+                        "side_residual_gate_pass": side_residual_gate_pass,
+                        "action_safety_pass": bool(
+                            response_identity_pass
+                            and side_residual_gate_pass
+                            and backend_identity_and_release_pass
+                        ),
                         "pass": side_pass,
                     }
                     p4_backend_pairs_by_side[side] = pair_record
@@ -6520,13 +9344,14 @@ def _run_task041_balh_candidate_setup(
                         failure_evidence.setdefault("p4_backend_pair", {})[
                             side
                         ] = pair_record
-                        error = Task041ModePrepError(
-                            f"{side} fixed RHS backend pair failed a layout, "
-                            "release, side-residual, e_x, or e_A gate"
-                        )
-                        error.failure_classification = "NUMERICAL_GATE_FAIL"
-                        error.failure_evidence = pair_record
-                        raise error
+                        if not top_causal_replay:
+                            error = Task041ModePrepError(
+                                f"{side} fixed RHS backend pair failed a layout, "
+                                "release, side-residual, e_x, or e_A gate"
+                            )
+                            error.failure_classification = "NUMERICAL_GATE_FAIL"
+                            error.failure_evidence = pair_record
+                            raise error
 
                     cell_condensed_probe = backend_phase_results[
                         "cell_condensed"
@@ -6556,7 +9381,7 @@ def _run_task041_balh_candidate_setup(
                         vector.destroy()
 
             representative_parts: list[Mapping[str, Any]] = []
-            for side in ("bottom", "top"):
+            for side in sides_for_run:
                 pair_enabled = (
                     representative_rhs_contract is not None
                     and comparison_mode == "p4_backend_pair"
@@ -6570,6 +9395,8 @@ def _run_task041_balh_candidate_setup(
                         "bottom": [207, 15, 671, 493],
                         "top": [310, 12, 666, 493],
                     }
+                    if top_causal_replay:
+                        expected_columns["top"] = [12, 493, 666]
                     if columns != expected_columns[side]:
                         raise Task041ModePrepError(
                             f"{side} representative RHS columns changed: {columns}"
@@ -6675,9 +9502,19 @@ def _run_task041_balh_candidate_setup(
                     "sequential_component admission audit failed"
                 )
             representative = _merge_representative_parts(
-                representative_parts, representative_entries
+                representative_parts, representative_entries_for_run
             )
-            if p4_backend_pairs_by_side:
+            if top_causal_replay:
+                representative["top_causal_replay"] = top_causal_by_side.get(
+                    "top",
+                    {
+                        "schema": "task041.top_causal_replay.result.v1",
+                        "status": "missing",
+                        "qualification": "diagnostic_only",
+                        "diagnostic_pass": False,
+                    },
+                )
+            if p4_backend_pairs_by_side and not top_causal_replay:
                 pair_pass = bool(
                     all(
                         record.get("pass") is True
@@ -6729,7 +9566,7 @@ def _run_task041_balh_candidate_setup(
             cleanup = release_before_recovery()
             schedule_summary = {
                 "side_setup_schedule": side_setup_schedule,
-                "order": ["bottom", "top"],
+                "order": ["top"] if top_causal_replay else ["bottom", "top"],
                 "side_completion": dict(sequential_side_records),
                 "lifecycle_boundaries": list(sequential_lifecycle_boundaries),
                 "global_identity_checks": global_identity_checks,
@@ -7040,6 +9877,7 @@ def run_task041_consumer(
     task041_rhs_probe_manifest: str | Path | None = None,
     side_setup_schedule: str | None = None,
     comparison_mode: str | None = None,
+    top_causal_replay: bool = False,
 ) -> dict[str, Any]:
     """Consume one fresh Task041 packet through an exact or BAL_H side path."""
 
@@ -7100,7 +9938,11 @@ def run_task041_consumer(
     performance_contract = None
     representative_rhs_contract: Mapping[str, Any] | None = None
     if (
-        (side_setup_schedule is not None or comparison_mode is not None)
+        (
+            side_setup_schedule is not None
+            or comparison_mode is not None
+            or top_causal_replay
+        )
         and performance_profile is None
     ):
         raise Task041ModePrepError(
@@ -7137,6 +9979,7 @@ def run_task041_consumer(
                 ),
                 side_setup_schedule=side_setup_schedule,
                 comparison_mode=comparison_mode,
+                top_causal_replay=top_causal_replay,
             )
         except ValueError as exc:
             raise Task041ModePrepError(str(exc)) from exc
@@ -8029,6 +10872,13 @@ def run_task041_consumer(
                 rank_numa_observed_backend=rank_numa_observed_backend,
                 rank_numa_stage_callback=rank_numa_stage_callback,
                 rank_numa_evidence=rank_numa_evidence,
+                top_causal_replay=top_causal_replay,
+                top_causal_memory_cap_bytes=(
+                    int(performance_contract["memory_cap_bytes"])
+                    if top_causal_replay
+                    and isinstance(performance_contract, Mapping)
+                    else None
+                ),
             )
         else:
             setup_result = run_v5_h4_exact_side_setup_only(
@@ -8075,10 +10925,19 @@ def run_task041_consumer(
             result["setup"] = _jsonable(setup_result)
             result["formal"] = _jsonable(formal_result)
             result[component_key] = _jsonable(representative)
+            top_causal_result = setup_result.get("top_causal_replay")
+            if top_causal_replay:
+                if not isinstance(top_causal_result, Mapping):
+                    raise Task041ModePrepError(
+                        "top causal setup returned no explicit diagnostic record"
+                    )
+                result["top_causal_replay"] = _jsonable(top_causal_result)
             result["gates"] = {
                 "pass": False,
                 "status": (
-                    "not_run_common_layout_equivalence_mode"
+                    "top_causal_diagnostic_only"
+                    if top_causal_replay
+                    else "not_run_common_layout_equivalence_mode"
                     if comparison_mode == "common_layout_equivalence"
                     else "not_run_representative_rhs_scope"
                 ),
@@ -8141,16 +11000,54 @@ def run_task041_consumer(
                 ),
             }
             result["setup_cost_probe"] = setup_result.get("cost_probe")
-            result["status"] = (
-                "task041_common_layout_equivalence_completed"
-                if comparison_mode == "common_layout_equivalence"
-                else "task041_representative_rhs_completed"
+            top_causal_safe = bool(
+                not top_causal_replay
+                or (
+                    isinstance(top_causal_result, Mapping)
+                    and top_causal_result.get("evidence_complete") is True
+                    and top_causal_result.get("action_safety_pass") is True
+                    and top_causal_result.get("diagnostic_pass") is True
+                )
             )
-            result["classification"] = (
-                "COMMON_LAYOUT_EQUIVALENCE_PASS"
-                if comparison_mode == "common_layout_equivalence"
-                else "TASK041_REPRESENTATIVE_RHS_COMPLETED"
-            )
+            if top_causal_replay and not top_causal_safe:
+                failed_gates = (
+                    list(top_causal_result.get("failed_action_gates", []))
+                    if isinstance(top_causal_result, Mapping)
+                    else ["top_causal_record_missing"]
+                )
+                missing_evidence = (
+                    list(top_causal_result.get("missing_evidence", []))
+                    if isinstance(top_causal_result, Mapping)
+                    else ["top_causal_record_missing"]
+                )
+                result["status"] = "task041_top_causal_replay_failed_required_gate"
+                result["classification"] = "TASK041_TOP_CAUSAL_REPLAY_REQUIRED_GATE_FAILURE"
+                result["failure_stage"] = "top_causal_replay"
+                result["failure_gate"] = failed_gates or missing_evidence
+                result["failure_evidence"] = {
+                    "top_causal_replay": result.get("top_causal_replay"),
+                    "failed_action_gates": failed_gates,
+                    "missing_evidence": missing_evidence,
+                }
+                error = Task041ModePrepError(
+                    "top causal replay failed required gate(s): "
+                    + ", ".join(str(item) for item in result["failure_gate"])
+                )
+            else:
+                result["status"] = (
+                    "task041_top_causal_replay_completed"
+                    if top_causal_replay
+                    else "task041_common_layout_equivalence_completed"
+                    if comparison_mode == "common_layout_equivalence"
+                    else "task041_representative_rhs_completed"
+                )
+                result["classification"] = (
+                    "TASK041_TOP_CAUSAL_REPLAY_COMPLETED"
+                    if top_causal_replay
+                    else "COMMON_LAYOUT_EQUIVALENCE_PASS"
+                    if comparison_mode == "common_layout_equivalence"
+                    else "TASK041_REPRESENTATIVE_RHS_COMPLETED"
+                )
             emit(
                 "official_outputs_written",
                 {

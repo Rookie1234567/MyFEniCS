@@ -3657,6 +3657,7 @@ def launch_specification(
     task041_rhs_probe_manifest: str | Path | None = None,
     task041_side_setup_schedule: str | None = None,
     task041_comparison_mode: str | None = None,
+    task041_top_causal_replay: bool = False,
 ) -> dict[str, Any]:
     """Launch one resolved input or fail closed before numerical execution."""
 
@@ -3694,6 +3695,10 @@ def launch_specification(
     if task041_comparison_mode is not None and not task041_public_route:
         raise InputError(
             "--task041-comparison-mode requires the Task041 public route"
+        )
+    if task041_top_causal_replay and not task041_public_route:
+        raise InputError(
+            "--task041-top-causal-replay requires the Task041 public route"
         )
     balh_time_stop_override = None
     performance_contract = None
@@ -3763,10 +3768,15 @@ def launch_specification(
                 ),
                 side_setup_schedule=task041_side_setup_schedule,
                 comparison_mode=task041_comparison_mode,
+                top_causal_replay=task041_top_causal_replay,
             )
         except ValueError as exc:
             raise InputError(str(exc)) from exc
-    elif task041_side_setup_schedule is not None or task041_comparison_mode is not None:
+    elif (
+        task041_side_setup_schedule is not None
+        or task041_comparison_mode is not None
+        or task041_top_causal_replay
+    ):
         raise InputError(
             "Task041 comparison options require task041_schur_speed_v2"
         )
@@ -3924,6 +3934,9 @@ def launch_specification(
     if task041_comparison_mode is not None:
         manifest["comparison_mode"] = task041_comparison_mode
         _write_json(run_directory / "run_manifest.json", manifest)
+    if task041_top_causal_replay:
+        manifest["task041_top_causal_replay"] = True
+        _write_json(run_directory / "run_manifest.json", manifest)
     if rhs_probe_binding is not None:
         manifest["representative_rhs_probe"] = {
             "path": rhs_probe_binding["path"],
@@ -3969,6 +3982,7 @@ def launch_specification(
                 task041_rhs_probe_manifest=rhs_probe_path,
                 task041_side_setup_schedule=task041_side_setup_schedule,
                 task041_comparison_mode=task041_comparison_mode,
+                task041_top_causal_replay=task041_top_causal_replay,
             )
         except OSError as exc:
             result = {
