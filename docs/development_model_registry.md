@@ -1,11 +1,12 @@
-# Task39extra 当前模型登记：Review V26 / V28 fused A6 正式门前失败
+# Task39extra 当前模型登记：Review V26 / V28 修复后正式验证通过
 
 | profile | 模型与实测 | 当前资格/用途 |
 |---|---|---|
-| `physical_p6_trace_fused_kernel_v28` | original p6/h7.5、990 cells、80 DtN modes、MPI1/thread1；p4 numeric `201.553137 s`；在 KSP 第1步前 `KeyError: retained_numeric_payload_components`；0 iterations、无新 residual/field/R/T/A；失败到止同时进程树 RSS/PSS peak `6,569,861,120/6,537,753,600 B`、swap0 | `FORMAL_REGRESSION_INCOMPLETE`；不是数值不收敛；内存为部分生命周期，不可与 r2 完整峰值比收益 |
-| V28 source fix | fused retained inventory 计一个 shared MPC owner；fused temporary budget 从 owner audit 传给 p4 workspace consumer；split 仍保留两个 owners；提交 `f403cf126817a9019d2be59df6b2be6fc0d6bffd`；15 focused tests pass | 无 fresh PDE evidence；尚未资格化为生产默认；r2 full-workflow/KSP/setup `3114.283619607013/2284.681783819/781.971881371981 s` 继续作为 baseline |
+| `physical_p6_trace_fused_kernel_v28` post-repair | original p6/h7.5、990 cells、80 DtN modes、MPI1/thread1；126步，独立 final true residual `9.283164917015627e-7`；dynamic audit、same-discrete L2/scaled-curl (`2.38e-14/8.92e-14`)、80模态功率、E/H/curl输出通过；workflow monotonic/realtime budget=`2936.076242/3203.447880 s`；RSS/PSS peak=`7,356,289,024/7,324,145,664 B`，swap0 | `DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED`；单次相对 R2 观察更快，不据此宣称因果或内存收益；R2 保留为比较分母，ordinary default不变 |
+| `physical_p6_trace_fused_kernel_v28` pre-repair failure | original正式尝试在KSP前 `KeyError: retained_numeric_payload_components`、0迭代；当时进程树RSS/PSS peak=`6,569,861,120/6,537,753,600 B`、swap0 | 保留为修复前软件错误负记录；部分生命周期，不是数值不收敛或完整运行内存峰值 |
+| V28 source fix | fused retained inventory计一个shared MPC owner；temporary budget沿既有 audit 传递；split仍保留两个 owners；提交 `f403cf126817a9019d2be59df6b2be6fc0d6bffd`；15 focused tests pass | 已有一场 fresh post-repair PDE evidence；资格仅限本次 discrete pass，是否采纳仍待 review；r2是比较分母 |
 
-证据与负分类：[V28 outcome](task039_extra_physical_multilevel/outcomes/fused_operator_speed_v28.md)、[Response V29](task039_extra_physical_multilevel/response_v29.md)、[compact](task039_extra_physical_multilevel/outcomes/records/fused_operator_speed_v28_compact.json)、[decision](task039_extra_physical_multilevel/outcomes/records/fused_operator_speed_v28_decision.json)。本次失败 elapsed/partial RSS 不计算为速度或内存收益；下一场 full regression 要求新的明确授权。
+正式分项显示 A6 live action 263次 `517.325 s`，R2同计数 `823.164 s`；H6 apply 131次 `527.518 s`，R2 `484.894 s`，差异仅作观测。H6 shared-contraction候选仍未采用，是此前组件 AB/BA 证据未能显示可重复收益，而非本次H6计时差异所致。下一具名 profiling目标是BAL_H C累计项，但各计时桶重叠，不能认作独占热点。证据与历史负分类：[V28 outcome](task039_extra_physical_multilevel/outcomes/fused_operator_speed_v28.md)、[Response V29](task039_extra_physical_multilevel/response_v29.md)、[pre/post compact](task039_extra_physical_multilevel/outcomes/records/fused_operator_speed_v28_compact.json)、[post-repair compact](task039_extra_physical_multilevel/outcomes/records/fused_operator_speed_v28_post_repair_compact.json)、[decision](task039_extra_physical_multilevel/outcomes/records/fused_operator_speed_v28_decision.json)。未来额外 full regression 要求新的明确授权。
 
 # Task39extra 当前模型登记：Review V25 / Response V28 V27 engineering evidence
 

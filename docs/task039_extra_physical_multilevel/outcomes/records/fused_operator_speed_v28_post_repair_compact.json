@@ -1,0 +1,190 @@
+{
+  "schema": "task039extra.v28.post-repair-validation.v1",
+  "review": "review_report_v26.md",
+  "profile": "physical_p6_trace_fused_kernel_v28",
+  "status": "Q4_ORIGINAL_AUTHORITY_LIMITED_PASS",
+  "result_classification": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+  "authorization": "one explicitly authorized post-repair formal validation; no further PDE run is included",
+  "run": {
+    "run_id": "task39extra_v28_fused_kernel_original_h7p5_post_repair_v1",
+    "service": "myfenics-case-20260923T225705-412613.service",
+    "raw_root": "results/euv_grazing1_phi0/task39extra_v28_fused_kernel_original_h7p5_post_repair_v1__full3d_iterative__mpi1__Mna/20260923T225705.444431Z",
+    "source_sha": "4c504fe9d268ae5841dc439b79988f386a1c09b1",
+    "input_sha256": "447519b48c87360eb5b6c69d56f61196e91a2e14e0a368522dddec48c5c50ebc",
+    "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+    "ordered_modes_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+    "mesh_cells": 990,
+    "p6_full_dofs": 667152,
+    "dtn_modes": 80,
+    "mpi_ranks": 1,
+    "threads": 1,
+    "iterations": 126,
+    "worker_exit_status": 0,
+    "run_summary_sha256": "d4dbccdfc59091da89a389be818c0e880e4bcbcfdc6a50e4fd30b7c084eba93a",
+    "worker_summary_sha256": "9a18ee7b00cf1bcf0294c3e7d73b53d1f298956ee57d1e03fea3f88958de6c3b",
+    "official_q4_output_sha256": "518de77349307cafb8a1686283e40bda7cbc40d629beee852ef1e278b18500f8"
+  },
+  "residual": {
+    "limit": 1e-6,
+    "independently_recomputed_final_explicit_relative": 9.283164917015627e-7,
+    "post_release_explicit_relative": 9.283164917015627e-7,
+    "passed": true,
+    "terminal_iteration_monitor_value": 9.283164296933889e-7,
+    "note": "The monitor snapshot and independently recomputed terminal explicit residual are distinct recorded quantities; both satisfy the limit."
+  },
+  "checkers": {
+    "dynamic": {
+      "status": "DYNAMIC_PASS",
+      "scope": "dynamic accounting and wiring only",
+      "all_gates_passed": true,
+      "gate_failures": [],
+      "path": "results/euv_grazing1_phi0/task39extra_v28_fused_kernel_original_h7p5_post_repair_v1__full3d_iterative__mpi1__Mna/20260923T225705.444431Z/v28_post_repair_dynamic_checker.json",
+      "sha256": "f466c1b3c5dee9de605b69a191466bba2ab659ff576077b848e4c226c1e79dc0"
+    },
+    "same_discrete_full_fe_metrics_vs_r2": {
+      "status": "PASS",
+      "path": "results/euv_grazing1_phi0/task39extra_v28_fused_kernel_original_h7p5_post_repair_v1__full3d_iterative__mpi1__Mna/20260923T225705.444431Z/v28_post_repair_fe_metrics.json",
+      "sha256": "221cc2ab472043a8db6d0cb48a913701cf287d3021fdd70386cdcea3d17b1e71",
+      "L2_relative": 2.3779936882500124e-14,
+      "scaled_curl_relative": 8.920693445578506e-14,
+      "limit": 0.0001,
+      "current_field_archive_sha256": "3b9e7c1c6537ee749990e26e9d0fa0785c0aefafb4e4657b7d2c9bd8567f2c76",
+      "r2_field_archive_sha256": "a1e7bac250445dec36762cb375ef4c6ddf3ace9eee1af827cbc70686e8a1c1c3"
+    },
+    "saved_fields_channels_and_power_vs_r2": {
+      "report_path": "results/euv_grazing1_phi0/task39extra_v28_fused_kernel_original_h7p5_post_repair_v1__full3d_iterative__mpi1__Mna/20260923T225705.444431Z/v28_post_repair_saved_output_audit.json",
+      "report_sha256": "1576dc0405f92bc9013e26642744b8f8b804751265eea594d50d790d5b4a0f72",
+      "legacy_old_b_status": "PARTIAL_PASS_POINT_SAMPLES_AND_MODAL_ONLY",
+      "legacy_status_note": "The V24 wrapper also requires its historical engineering/v24_same_discrete_fe_metrics.json and paired watchdog artifacts; those V24-specific artifacts are absent. The separately run V28 same-discrete full FE checker above passed.",
+      "same_80_mode_keys": true,
+      "max_per_mode_power_absolute_difference": 1.0880185641326534e-14,
+      "max_per_mode_amplitude_relative_difference": 2.0813567905150192e-14,
+      "max_sample_field_relative_difference": 2.2551618575435548e-13,
+      "max_total_R_T_A_Avolume_absolute_difference": 1.7319479184152442e-14,
+      "channel_checks_all_true": true,
+      "field_export_checks_all_true": true,
+      "R_plus_T_plus_A_volume_closure_error": 8.177032384537597e-10
+    }
+  },
+  "official_power": {
+    "R_total": 0.3650975537006263,
+    "T_total": 0.013016803347760153,
+    "A_balance": 0.6218856429516136,
+    "A_volume": 0.6218856421339103,
+    "closure_error": 8.177032384537597e-10
+  },
+  "checkpoints_vs_r2": [
+    {"iteration": 16, "current_residual": 0.004143722296393416, "current_solve_seconds": 307.741215479, "r2_residual": 0.0041437222964080065, "r2_solve_seconds": 323.3362546709826, "r2_minus_current_seconds": 15.595039191982607},
+    {"iteration": 32, "current_residual": 0.00033529179602836533, "current_solve_seconds": 615.525272542, "r2_residual": 0.0003352917960387092, "r2_solve_seconds": 635.7431107280124, "r2_minus_current_seconds": 20.217838186012386},
+    {"iteration": 48, "current_residual": 0.00019419221395322323, "current_solve_seconds": 925.579194945, "r2_residual": 0.00019419221371048617, "r2_solve_seconds": 957.0546633300296, "r2_minus_current_seconds": 31.475468385029558},
+    {"iteration": 64, "current_residual": 0.00003023352344555217, "current_solve_seconds": 1204.548391747, "r2_residual": 0.000030233523443058283, "r2_solve_seconds": 1270.2234611949964, "r2_minus_current_seconds": 65.6750694479963},
+    {"iteration": 80, "current_residual": 0.000017609468797954283, "current_solve_seconds": 1491.888132021, "r2_residual": 0.00001760946862124978, "r2_solve_seconds": 1590.69534846704, "r2_minus_current_seconds": 98.80721644604},
+    {"iteration": 96, "current_residual": 0.000003776699911513131, "current_solve_seconds": 1770.094143791, "r2_residual": 0.0000037766998795463687, "r2_solve_seconds": 1903.8770562190532, "r2_minus_current_seconds": 133.78291242805312},
+    {"iteration": 112, "current_residual": 0.0000027139958196409527, "current_solve_seconds": 2057.738996279, "r2_residual": 0.00000271399585136905, "r2_solve_seconds": 2225.8895136200404, "r2_minus_current_seconds": 168.15051734104054, "current_pss_bytes": 7319279616, "current_rss_bytes": 7351422976, "r2_pss_bytes": 7354127360, "r2_rss_bytes": 7386054656}
+  ],
+  "checkpoint_sampling_note": "For readability, this table selects every 16th point from the task's saved every-8-step residual records; the required every-8-step residual and every-32-step field policies remain unchanged.",
+  "time_comparison_vs_r2": {
+    "reference_run": "results/euv_grazing1_phi0/task39extra_v25_q4_ac_swap_observe_r2_h7p5__full3d_iterative__mpi1__Mna/20260922T033647.910623Z",
+    "current_full_workflow_monotonic_seconds": 2936.0762416610087,
+    "current_full_workflow_conservative_realtime_budget_seconds": 3203.447879573999,
+    "current_workflow_utc_elapsed_seconds_separate_field": 3203.447879536,
+    "current_workflow_clock_discrepancy_seconds": 267.37247301899606,
+    "current_pure_ksp_seconds": 2113.442534869,
+    "current_setup_seconds": 773.9463588640065,
+    "r2_full_workflow_monotonic_seconds": 3114.283619607013,
+    "r2_full_workflow_conservative_realtime_seconds": 3407.55540992,
+    "r2_pure_ksp_seconds": 2284.681783819,
+    "r2_setup_seconds": 781.971881371981,
+    "same_clock_monotonic_savings_seconds": 178.20737794600427,
+    "same_clock_monotonic_savings_percent": 5.722259103957012,
+    "same_clock_conservative_realtime_savings_seconds": 204.10753034600066,
+    "same_clock_conservative_realtime_savings_percent": 5.989852131290582,
+    "timing_note": "Use r2 as the comparison denominator. Report monotonic and conservative realtime only against the matching clock; KSP/setup components are nested in workflow and must not be added to workflow totals. A single observed run does not isolate causal speedup."
+  },
+  "formal_subtimings_vs_r2": {
+    "timing_note": "These are cumulative formal_release_timing counters from the saved worker summaries. Categories are nested or overlapping; do not add them to each other or to KSP/workflow totals.",
+    "A6_live_action": {
+      "current": {"calls": 263, "seconds": 517.3248120769858, "volume_seconds": 516.0976865441335, "dtn_seconds": 0.8679222987993853},
+      "r2": {"calls": 263, "seconds": 823.1639212121663, "volume_seconds": 822.071849550819, "dtn_seconds": 0.7940302900387906},
+      "observed_current_minus_r2_seconds": -305.8391091351805,
+      "observed_percent_lower": 37.154095466770585
+    },
+    "H6_apply": {
+      "current": {"calls": 131, "seconds": 527.5183640260511},
+      "r2": {"calls": 131, "seconds": 484.89414036102244},
+      "observed_current_minus_r2_seconds": 42.624223665028694,
+      "observed_percent_higher": 8.790418385607488,
+      "shared_contractions": "not adopted"
+    },
+    "p4": {
+      "current": {"logical_calls": 262, "physical_f4_calls": 268, "mat_solve_calls": 268, "elapsed_seconds": 239.71010760913487, "reduce_seconds": 76.98887651201221, "solve_seconds": 90.85710013094649, "recover_seconds": 71.47568589297589},
+      "r2": {"logical_calls": 262, "physical_f4_calls": 267, "mat_solve_calls": 267, "elapsed_seconds": 228.90130193924415, "reduce_seconds": 72.1405858938524, "solve_seconds": 90.57600459491368, "recover_seconds": 65.84683266020147}
+    },
+    "native_A4": {
+      "current": {"actions": 268, "seconds": 457.12798303701857, "volume_seconds": 456.5357608549966, "dtn_seconds": 0.43980413099052384},
+      "r2": {"actions": 267, "seconds": 416.44895958175766, "volume_seconds": 415.91283301555086, "dtn_seconds": 0.39473763093701564}
+    },
+    "P_PH": {
+      "current": {"primal_count": 263, "primal_seconds": 78.1446840949211, "adjoint_count": 269, "adjoint_seconds": 69.1868089279451, "route_seconds": 2.228018773967051},
+      "r2": {"primal_count": 263, "primal_seconds": 73.08855635588407, "adjoint_count": 269, "adjoint_seconds": 64.87882036904921, "route_seconds": 2.112080710066948}
+    },
+    "BAL_H_cumulative_operations": {
+      "current": {"A_structure_seconds": 530.4577908200008, "C_seconds": 851.4014605310513, "smoother_seconds": 527.6189238998486, "A_structure_count": 262, "C_count": 262, "smoother_count": 131},
+      "r2": {"A_structure_seconds": 828.1792197637551, "C_seconds": 790.8652278198861, "smoother_seconds": 484.9842406800599, "A_structure_count": 262, "C_count": 262, "smoother_count": 131}
+    },
+    "lifecycle": {
+      "setup_monotonic_seconds": {"current": 773.9463588640065, "r2": 781.971881371981},
+      "setup_conservative_realtime_budget_seconds": {"current": 844.595066274, "r2": 852.68848528},
+      "outer_adapter_monotonic_seconds": {"current": 2128.1249811909947, "r2": 2298.7314641620032},
+      "outer_adapter_conservative_realtime_budget_seconds": {"current": 2321.912337419, "r2": 2517.680829151},
+      "pure_ksp_solve_only_seconds": {"current": 2113.442534869, "r2": 2284.681783819},
+      "final_native_residual_check_monotonic_seconds": {"current": 5.506354545010254, "r2": 5.187346332997549},
+      "release_check_monotonic_seconds": {"current": 10.797347971994895, "r2": 10.472017924010288},
+      "official_postprocess_monotonic_seconds": {"current": 14.378270745000918, "r2": 14.213875571003882},
+      "outer_solve_finished_after_independent_final_residual": {"current": true, "r2": true},
+      "release": "p4 factor destroyed before its borrowed matrix; p4 matrix identity checked and released after final residual; H6/BAL_H released; p6 owner references cleared after final residual"
+    },
+    "next_profile_target": "BAL_H C cumulative time is the largest recorded named operation bucket in this run; counters overlap, so this is a profiling target, not a proven exclusive bottleneck."
+  },
+  "resources": {
+    "scope": "completed-run sampled simultaneous process-tree peak",
+    "rss_peak_bytes": 7356289024,
+    "pss_peak_bytes": 7324145664,
+    "sample_count": 10901,
+    "all_pss_samples_readable": true,
+    "swap_peak_bytes": 0,
+    "r2_rss_peak_bytes": 7390937088,
+    "r2_pss_peak_bytes": 7354803200,
+    "observed_rss_reduction_bytes": 34648064,
+    "observed_pss_reduction_bytes": 30657536,
+    "interpretation": "One-run observed difference only; do not claim a qualified memory benefit."
+  },
+  "cumulative_attempt_ledger": {
+    "path": "benchmarks/artifacts/task39extra/fused_operator_speed_v28/review_v26_fused_A6_H6_optional_setup_threads/shared_workflow_ledger.json",
+    "sha256": "b408f7966b9901ed1cf0df355356b554badf1b6be804a6b5d177113f770e07df",
+    "settled_elapsed_seconds": 3902.9635367376695,
+    "scope_note": "Cumulative settled attempt ledger including the preserved pre-repair stop/failure and this authorized post-repair validation; not one solver runtime."
+  },
+  "pre_repair_failure": {
+    "classification": "WORKER_FAILED_BEFORE_KSP",
+    "error": "KeyError: 'retained_numeric_payload_components'",
+    "source_sha": "b97b605d014fd90439b5b3fa471f2570edf1beff",
+    "raw_root": "results/euv_grazing1_phi0/task39extra_v28_fused_kernel_original_h7p5__full3d_iterative__mpi1__Mna/20260923T144543.633563Z",
+    "preservation": "Original failed run, its partial RSS/PSS, and the earlier 699.5099493818448 s two-attempt subtotal remain in the original compact and component records; none is overwritten or relabeled as a numerical failure."
+  },
+  "decision": {
+    "post_repair_formal_validation": "PASS_AUTHORITY_LIMITED",
+    "r2_role": "comparison denominator retained",
+    "ordinary_default_changed": false,
+    "memory_benefit_claimed": false,
+    "continuum_convergence_claimed": false,
+    "next_pde": "requires new explicit authorization"
+  },
+  "closeout_checks": {
+    "documentation_contract_tests": "21 passed in 0.09 s",
+    "json_parse": "PASS",
+    "git_diff_check": "PASS",
+    "numerical_checker_rerun_after_documentation": false,
+    "additional_pde_or_component_run": false
+  }
+}

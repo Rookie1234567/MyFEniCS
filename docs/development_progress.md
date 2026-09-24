@@ -1,8 +1,8 @@
-# Task39extra 当前进展：Review V26 / V28 正式回归未完成
+# Task39extra 当前进展：Review V26 / V28 修复后正式验证完成
 
-选中的 original p6/h7.5 fused A6 case 已按 user-service 启动，但在第1次 Krylov 迭代前因 retained-inventory 字段缺失退出；p4 factor 与部分 H6 setup 已发生，不能把约 `360.619 s` 失败流程当成整场性能。没有新 residual、用户要求的16步点、合同规定的每8步 residual/每32步 field、最终场或 R/T/A。到失败为止 process-tree RSS/PSS=`6,569,861,120/6,537,753,600 B`，不是全生命周期 peak。A6 fusion-only 的保存向量组件结果只是候选证据，H6 shared-contraction 未采用，两线程未试。
+按明确授权完成一场修复后 original p6/h7.5 fused A6 case：126步、独立显式真残差 `9.283164917015627e-7`，分类 `DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED`；80模式功率、同网格全 FE L2/curl、通道和E/H/curl导出检查通过。workflow monotonic/conservative realtime budget=`2936.076242/3203.447880 s`；R2对应=`3114.283620/3407.555410 s`，本次单场同钟观测短 `5.72%/5.99%`，不能单独证明因果收益。R2保留为比较分母；ordinary default不变。
 
-14行 production 接口修复提交 `f403cf126817a9019d2be59df6b2be6fc0d6bffd`；qualified targeted tests `15 passed in 1.44 s`，文档合同 `21 passed in 0.06 s`，compileall/diff 检查通过。修复未经 fresh PDE 验证；r2 仍为最快整场基线，默认不变。本批 bug replay 已消费，任何后续完整数值回归需新的明确授权。详见 [Response V29](task039_extra_physical_multilevel/response_v29.md)、[V28 outcome](task039_extra_physical_multilevel/outcomes/fused_operator_speed_v28.md)、[compact/decision](task039_extra_physical_multilevel/outcomes/records/fused_operator_speed_v28_compact.json) 和 [run index](task039_extra_physical_multilevel/outcomes/records/run_index.json)。
+修复前那一轮接口失败仍保留：`KeyError: retained_numeric_payload_components`、KSP前退出，部分进程树 RSS/PSS=`6,569,861,120/6,537,753,600 B`；不能与新完整流程合并为一次运行。修复提交 `f403cf126817a9019d2be59df6b2be6fc0d6bffd` 的 focused tests `15 passed in 1.44 s`、文档合同 `21 passed in 0.06 s` 等原结果保持有效。新正式 run 进程树 RSS/PSS peak=`7,356,289,024/7,324,145,664 B`，10,901样本、PSS全可读、swap0；累计尝试账本 `3902.9635367376695 s`，不是单次 solve。A6/H6/p4分项和每16步展示、artifact hash及checker边界见 [Response V29](task039_extra_physical_multilevel/response_v29.md)、[V28 outcome](task039_extra_physical_multilevel/outcomes/fused_operator_speed_v28.md)、[post-repair compact/decision](task039_extra_physical_multilevel/outcomes/records/fused_operator_speed_v28_post_repair_compact.json) 和 [run index](task039_extra_physical_multilevel/outcomes/records/run_index.json)。后续完整数值回归仍需新的明确授权。
 
 # Task39extra 当前进展：Review V23 / Response V26 V25 coarse-degree 收口
 

@@ -1,6 +1,6 @@
-# Selective merge manifest V28：fused A6 候选未获 fresh PDE qualification
+# Selective merge manifest V28：修复后离散验证通过，仍待审查
 
-本 manifest 记录 Review V26 的依赖组与结果边界；当前没有 master merge approval，ordinary default 保持不变。
+本 manifest 记录 Review V26 的依赖组与结果边界；修复后一次获准正式验证已通过 authority-limited discrete gates，R2仍为本轮比较分母；当前没有 master merge approval，ordinary default 保持不变。以下原表保留的是修复前决策快照，最新状态追加在文末。
 
 | 依赖组 | 文件 | 数值行为/依赖 | 测试与 fresh PDE | 建议 |
 |---|---|---|---|---|
@@ -12,3 +12,15 @@
 | do-not-merge/default promotion | 将 V28 提升为 fastest profile/default；将 partial RSS/PSS 当作全流程节省；任何无新授权的完整重跑 | 无法从 pre-KSP failure 证明 residual、field、R/T/A、full/KSP timing、生命周期峰值 | 正式回归 `INCOMPLETE_WORKER_FAILED_BEFORE_KSP`；一次 bug replay 已消耗 | 不合并为默认、不宣称提速；下一场需新的明确用户授权 |
 
 实现提交：`f403cf126817a9019d2be59df6b2be6fc0d6bffd`。本 manifest 不是 master merge approval；任何最终合入仍等待主控审阅及用户授权。
+
+## 修复后证据状态（追加）
+
+| 依赖组 | 新增证据 | 当前建议 |
+|---|---|---|
+| production numerical/core | 一场授权 post-repair run：126步，显式真残差 `9.283164917015627e-7`；ordinary default未改 | source fix有fresh formal evidence，等待主控review；不自动提升默认 |
+| reusable runner/watchdog | 完整workflow RSS/PSS peak=`7,356,289,024/7,324,145,664 B`，10,901样本、swap0；KSP/setup和释放边界见 compact | 只作当前路径实测，单场样本不构成已资格化内存收益 |
+| checker/benchmark | dynamic `DYNAMIC_PASS`；同离散 L2/scaled-curl=`2.38e-14/8.92e-14`；80模态功率、通道、E/H/curl通过；legacy V24 wrapper仍保持 `PARTIAL_PASS_POINT_SAMPLES_AND_MODAL_ONLY` | 以分离保存的 checker 结果为准，不改写 legacy partial 分类 |
+| compact evidence/docs | 修复后分项、逐16步展示、R2同钟对比、checker/raw hashes与累计账本已追加 | 轻量证据可审查；旧失败和成本保留，R2仍作比较分母 |
+| research-only / do-not-merge | A6 live action 单次观测低于 R2；H6 shared-contraction候选仍因先前组件证据未确立可重复收益而未采用；未作 default promotion | 无 master merge approval；额外 PDE 需新授权，禁止把单次时间差写成因果收益 |
+
+完整证据见 [V28 post-repair compact](records/fused_operator_speed_v28_post_repair_compact.json)。该追加不改变本 manifest 不是 merge approval 的性质。

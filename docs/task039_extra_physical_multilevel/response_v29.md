@@ -1,10 +1,16 @@
-# Response V29：Review V26 / V28 正式回归的负结果与接口修复
+# Response V29：Review V26 / V28 修复后正式验证收口
 
-## 结论
+## 修复后最新状态
+
+按明确授权完成一次 V28 修复后 original p6/h7.5、990 cells、80个DtN通道、MPI1/thread1正式验证，worker exit0、126步，独立最终显式真残差 `9.283164917015627e-7`（门限 `1e-6`），dynamic audit、同网格全 FE `L2/scaled-curl`、80模态功率、E/H/curl 导出均通过。V28 相对 R2 的 workflow monotonic/conservative realtime budget 为 `2936.076242/3203.447880 s`，R2 对应 `3114.283620/3407.555410 s`；同钟差值分别 `178.207378 s (5.72%)`、`204.107530 s (5.99%)`。这是一场运行的观察，不单独证明因果加速；R2 仍作比较分母，默认不变。
+
+修复后峰值为进程树 RSS/PSS `7,356,289,024/7,324,145,664 B`，10,901个样本且 PSS 全可读，swap=0。A6 live action 263次累计 `517.325 s`，比 R2同计数 `823.164 s` 低37.15%；H6 apply 131次累计 `527.518 s`，比 R2 `484.894 s` 高8.79%，这是描述性观测，不用来归因 shared-contraction 效果。H6 shared-contraction 候选未采用，是因为此前组件 AB/BA 证据未能显示可重复收益。仍按单线程运行。下一步具名 profiling 目标是 BAL_H C（累计851.401 s）；计时类别重叠，尚不能称为独占热点。conservative realtime 的权威对照字段是 wrapper 完整边界 `run_summary.json.workflow_clock_interval.budget_seconds=3203.447879573999`。完整 i16…i112 残差/耗时比较、p4/A4/P-PH分项、功率、artifact hash 与累计尝试账本 `3902.9635367376695 s`（不是单场 runtime）见 [V28 outcome](outcomes/fused_operator_speed_v28.md) 与 [post-repair compact](outcomes/records/fused_operator_speed_v28_post_repair_compact.json)。此前修复前 `WORKER_FAILED_BEFORE_KSP` 与 ledger 分项保留在原记录中，未被覆盖。额外 PDE 仍需新的明确授权。
+
+## 修复前结论（历史阶段记录，保留）
 
 A6 fusion-only 的保存向量工程结果支持把该候选送入本批正式测试，但正式 V28 case 在 KSP 第 1 步之前触发库存接口 `KeyError`。所以本批**正式回归未完成、端到端收益未证、物理结果不可用**。本次失败后的 14 行生产改动和小网格回归测试通过，但尚无修复后 fresh PDE 证据。r2 仍是最快整场基线；ordinary default 不变；本批不再运行第三场 PDE。下一次 fresh regression 必须另有明确授权。共享 workflow ledger 原件及 SHA 已进入 compact record；两次 settled worker 合计 `699.5099493818448 s`，分项 `338.8901043349492/360.61984504689553 s`。它与 replay run-summary 的 `360.618731128 s` 是不同计时边界。组件配对的完整 AB/BA 三轮 wall/CPU 数组见 [component record](outcomes/records/fused_operator_speed_v28_components.json)，A6 raw partial-derived 文件的身份捕获限制见 V28 outcome。
 
-## 逐项回应
+## 修复前逐项回应（历史记录，保留）
 
 | Review 问题 | 回答 |
 |---|---|
@@ -18,7 +24,7 @@ A6 fusion-only 的保存向量工程结果支持把该候选送入本批正式�
 | N0/N3/N6 到哪一步？ | N0 profile/launcher/workspace mock 与 small-fixture tests 通过；N3 选择 A6 fusion-only（shared contractions=false、单线程），但未获 fresh PDE qualification；N6 的负结果、hash、测试和 decision 已归档，数值终态 Gate 都 `not_run`。 |
 | 下一最大热点？ | 此次停在迭代前，无法从正式 KSP 指认；本批组件失败/重复停止和 H6 engineering 成本保留在 [component record](outcomes/records/fused_operator_speed_v28_components.json)，不从 setup 差值造热点。 |
 
-Review V26 的 r2 完成场基线为 workflow/KSP/setup `3114.283619607013/2284.681783819/781.971881371981 s`、126步、最终 residual `9.283165086752956e-7`、全流程 RSS/PSS `7,390,937,088/7,354,803,200 B`。当前失败成本与资源边界不同，不据此做差后宣称收益。
+修复前失败阶段使用的 Review V26 R2 完成场参考为 workflow/KSP/setup `3114.283619607013/2284.681783819/781.971881371981 s`、126步、最终 residual `9.283165086752956e-7`、全流程 RSS/PSS `7,390,937,088/7,354,803,200 B`。当时失败成本不能与其比较；修复后同口径实测对照见上方最新状态和 V28 outcome。
 
 ## 根因与修复
 

@@ -5,21 +5,22 @@
     "N0_profile_launcher_workspace_and_checker_mocks": "PASS_IN_FOCUSED_TESTS; no heavy factorization",
     "N1_A6_fusion": {
       "component_evidence": "QUALIFIED_FOR_FORMAL_CANDIDATE",
-      "formal_model_adoption": "NOT_ESTABLISHED",
-      "reason": "the one formal run failed before KSP; no fresh residual/field/physical gates"
+      "formal_model_adoption": "POST_REPAIR_FORMAL_EVIDENCE_AVAILABLE; ordinary default unchanged pending review",
+      "reason": "one authorized post-repair run passed residual and same-discrete field/power checks; it is one measurement and does not independently establish causal speed or memory gains"
     },
     "N1_shared_contractions": "NOT_ADOPTED; measured A6 increment slower on both witnesses",
     "N2_H6_shared_contractions": "NOT_ADOPTED; lower forward contraction count, but timing evidence does not establish a gain",
     "N3_single_combination": "A6 fusion-only; shared_contractions=false; single-thread; formal qualification incomplete",
     "N4_threads": "NOT_RUN; retain single-thread route",
-    "N5_formal_regression": "INCOMPLETE_WORKER_FAILED_BEFORE_KSP",
-    "N6_closeout": "negative result, hashes, tests, and decision records archived; final numerical gates not_run",
-    "full_workflow_speed": "UNKNOWN; do not derive from failed-at-setup elapsed time",
-    "memory_benefit": "UNKNOWN; partial process-tree peak is not a completed-run measurement",
-    "official_field_and_power": "NOT_AVAILABLE",
-    "fastest_full_run_baseline": "r2",
+    "N5_formal_regression": "POST_REPAIR_Q4_ORIGINAL_AUTHORITY_LIMITED_PASS; initial pre-repair worker failure remains preserved",
+    "N6_closeout": "pre-repair negative evidence and post-repair run/checker hashes archived separately",
+    "full_workflow_speed": "one post-repair run measured 2936.076241661 s monotonic and wrapper run_summary.json.workflow_clock_interval.budget_seconds 3203.447879574 s conservative realtime; same-clock comparison to r2 is in the post_repair_validation record",
+    "memory_benefit": "completed-run RSS/PSS measured; one-run difference is not claimed as a qualified benefit",
+    "official_field_and_power": "AVAILABLE; same-discrete and saved-output checks passed, with legacy V24 wrapper limitation stated separately",
+    "comparison_baseline": "r2 remains the denominator for this comparison",
+    "fastest_full_run_baseline": "r2 comparison reference retained; the single post-repair V28 run was faster on measured clocks",
     "ordinary_default": "UNCHANGED",
-    "fresh_pde_after_source_fix": "NOT_RUN",
+    "fresh_pde_after_source_fix": "ONE_AUTHORIZED_RUN_COMPLETED; see post_repair_validation",
     "next_full_pde": "requires explicit new authorization"
   },
   "failure": {
@@ -50,8 +51,19 @@
     "fresh_pde_evidence": false
   },
   "authorization": {
+    "time_scope": "The following counters describe the original pre-repair replay ledger; the separate authorized post-repair validation is recorded below.",
     "one_bug_replay_used": true,
     "third_pde_started": false,
     "future_full_regression_requires_new_explicit_authorization": true
+  },
+  "post_repair_validation": {
+    "record": "docs/task039_extra_physical_multilevel/outcomes/records/fused_operator_speed_v28_post_repair_compact.json",
+    "status": "Q4_ORIGINAL_AUTHORITY_LIMITED_PASS",
+    "authorized": true,
+    "completed_iterations": 126,
+    "independent_final_explicit_residual": 9.283164917015627e-7,
+    "fresh_pde_after_source_fix": true,
+    "ordinary_default_changed": false,
+    "next_pde_requires_new_authorization": true
   }
 }

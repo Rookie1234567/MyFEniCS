@@ -1,4 +1,8 @@
-## Review V26 / V28：库存与融合预算 bug 修复
+## Review V26 / V28：修复后正式验证追加
+
+修复后按明确授权完成一场正式 V28 运行：126步、独立最终显式真残差 `9.283164917015627e-7`、dynamic checker `DYNAMIC_PASS`。现成离线全 FE 指标 `L2/scaled-curl=2.38e-14/8.92e-14`，80模态功率、通道和 E/H/curl 导出检查通过。旧 V24 `old_b_regression` 返回 `PARTIAL_PASS_POINT_SAMPLES_AND_MODAL_ONLY`，原因是它还查找本次不适用的 V24 专用 metric/watchdog 文件；不改写这个 raw 状态，完整 V28 FE PASS 由独立报告提供。Checker 输出、哈希和细节见 [post-repair compact](records/fused_operator_speed_v28_post_repair_compact.json)。最终文档合同测试 `21 passed in 0.09 s`，四份权威 JSON 解析与 `git diff --check` 通过。本轮只用现成工具做离线证据核验；未运行组件试验或第二场 PDE。
+
+## Review V26 / V28：库存与融合预算 bug 修复（修复前测试记录，保留）
 
 | 验证 | 实际结果 | 范围与边界 |
 |---|---|---|
@@ -9,7 +13,7 @@
 | source fix fresh PDE | **not_run** | 一次 replay 已消费，保留用户“停止重跑”选择；不可把 unit tests 写成 PDE qualification |
 | full repository pytest / Ruff / CI | **not_run / not_run / not_claimed** | 仅报告本地 focused suite；未安装 Ruff |
 
-本次正式 V28 run 在 KSP 前以真实 `KeyError` 退出；测试通过只验证本轮最小接口修复，不改变 raw run 的 `WORKER_FAILED` 分类。详见 [V28 outcome](fused_operator_speed_v28.md) 与 [Response V29](../response_v29.md)。
+修复前 V28 run 在 KSP 前以真实 `KeyError` 退出；上述历史 focused tests 只验证最小接口修复，不改变原 raw run 的 `WORKER_FAILED` 分类。此后另一次获准 post-repair run 的状态见本文件顶部；详见 [V28 outcome](fused_operator_speed_v28.md) 与 [Response V29](../response_v29.md)。
 
 ## Review V25 / V27 engineering closeout (no formal solve)
 

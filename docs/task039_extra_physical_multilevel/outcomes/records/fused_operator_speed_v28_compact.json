@@ -162,10 +162,10 @@
     "N0": "profile/launcher/workspace mock and focused interfaces passed; no heavy factorization in these tests",
     "N1": "A6 fusion-only saved-vector equivalence passed and was selected as formal candidate; live formal counters unavailable",
     "N2": "A6 shared-contraction increment and H6 shared-contraction candidate not adopted",
-    "N3": "A6 fusion-only, shared_contractions=false, one thread; formal qualification incomplete",
+    "N3": "A6 fusion-only, shared_contractions=false, one thread; one authorized post-repair formal validation passed with authority limitation",
     "N4": "optional two-thread trial not_run; retain single-thread",
-    "N5": "formal regression worker failed before KSP",
-    "N6": "negative-result documentation and evidence indexing completed; terminal numerical gates not_run"
+    "N5": "pre-repair worker failure preserved; authorized post-repair run completed 126 iterations and passed the discrete residual/consistency gates",
+    "N6": "pre-repair negative evidence and post-repair pass evidence indexed separately; no further PDE run authorized"
   },
   "a6_fusion_mechanism": "one gather/constraint-and-direction expansion/Nedelec-to-polynomial coefficient transform per cell batch; curl and complex mass retain their original integration rules and merge in common coefficient space before one backward transform/direction pullback/scatter; DtN added once",
   "formal_live_a6_operation_counters": "unknown_not_recorded",
@@ -185,13 +185,19 @@
     "ruff": "not_installed_not_run",
     "ci": "not_run_not_claimed"
   },
+  "post_repair_validation_record": {
+    "path": "docs/task039_extra_physical_multilevel/outcomes/records/fused_operator_speed_v28_post_repair_compact.json",
+    "sha256": "4ffd099ee98f65edbb05cab3b671f696a0001d0ff7ddcb8d83f7ead016bfa36d",
+    "status": "Q4_ORIGINAL_AUTHORITY_LIMITED_PASS",
+    "pre_repair_formal_attempt": "WORKER_FAILED_BEFORE_KSP; preserved under formal_attempt"
+  },
   "decision": {
-    "formal_regression": "INCOMPLETE",
-    "end_to_end_benefit": "UNPROVEN",
-    "adoption": "NOT_QUALIFIED_BY_FRESH_PDE",
-    "fastest_full_run_baseline": "r2_retained",
+    "formal_regression": "POST_REPAIR_COMPLETE_AUTHORITY_LIMITED_PASS; pre-repair failure preserved",
+    "end_to_end_benefit": "one post-repair run measured faster than the r2 denominator on both matching workflow clocks; causal attribution is not isolated",
+    "adoption": "fresh post-repair evidence available; pending review; ordinary default unchanged",
+    "comparison_baseline": "r2 retained as the denominator for this comparison",
     "ordinary_default_changed": false,
-    "next_full_pde": "requires_explicit_new_authorization"
+    "next_full_pde": "requires explicit new authorization"
   },
   "artifact_hashes": {
     "run_summary_sha256": "411a81e05003fdcefc329e7528b601b92ac68d13e787230e97ac5cdb7aa21205",

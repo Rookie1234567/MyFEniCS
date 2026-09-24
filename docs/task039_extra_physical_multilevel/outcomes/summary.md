@@ -1,8 +1,16 @@
-## Review V26 / V28 融合 A6：正式回归在 KSP 前失败，收益未证
+## Review V26 / V28 融合 A6：修复后正式验证完成，修复前负结果保留
+
+获准的一次修复后 V28 正式运行在990个 cells、p6/h7.5、80个 DtN 通道、MPI1/thread1下完成126步；worker exit0，独立显式真残差 `9.283164917015627e-7`，低于 `1e-6`，分类 `DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED`。同 R2 离散场的 full FE `L2/scaled-curl` 相对差为 `2.38e-14/8.92e-14`，80通道、模态功率、E/H/curl 导出均通过。workflow monotonic/conservative realtime budget=`2936.076242/3203.447880 s`，R2相同口径=`3114.283620/3407.555410 s`；此单次观察分别短 `5.72%/5.99%`，不能单独证明因果加速。R2 保留为本轮比较分母；ordinary default 不变。
+
+修复后进程树 RSS/PSS peak=`7,356,289,024/7,324,145,664 B`，10,901个样本、PSS全可读、swap=0。累计账本 `3902.9635367376695 s` 包含前面受控停止/失败与本次修复后正式运行，**不是单次求解时间**。完整分项和逐16步展示见 [V28 outcome](fused_operator_speed_v28.md) 与 [post-repair compact](records/fused_operator_speed_v28_post_repair_compact.json)。
+
+修复前唯一 worker 在 KSP 前遇到 retained-inventory `KeyError` 的失败及更早启动/停止记录保持原分类、成本和 raw evidence，见下面历史段落及原 [compact](records/fused_operator_speed_v28_compact.json)。当前修复后运行已完成；任何进一步 PDE 仍需新的明确授权。
+
+## V28 修复前正式回归在 KSP 前失败（历史负结果，原样保留）
 
 组件保存向量试验支持 A6 fusion-only 进入正式候选；H6 shared-contraction 增量未采用，两线程未试。唯一正式输入在 p4 factor/H6 setup 后、KSP 第1步前遇到 fused retained-inventory `KeyError`，分类为 `WORKER_FAILED`，不是离散不收敛。没有新残差、用户要求的16步更新点或任务合同的每8步 residual/每32步 field checkpoint、KSP/full-workflow 性能、最终场或 R/T/A。部分失败流程进程树 RSS/PSS=`6,569,861,120/6,537,753,600 B`、swap=0，不代表完整峰值或内存收益。
 
-最小 owner-inventory/temporary-budget 修复提交 `f403cf126817a9019d2be59df6b2be6fc0d6bffd`，三个 task-focused 文件 `15 passed`；该修复没有 fresh PDE 证据。因此 end-to-end gain 未证、r2 速度基线保持、ordinary default 不变。一次 bug replay 已用完；任何下一场 fresh regression 需新的明确授权。
+最小 owner-inventory/temporary-budget 修复提交 `f403cf126817a9019d2be59df6b2be6fc0d6bffd`，三个 task-focused 文件 `15 passed`。当时该修复尚无 fresh PDE 证据；此后的一次获准 post-repair 验证通过，已在本节开头单独登记。原始失败成本和分类不改写；R2继续作为这次结果的比较分母，ordinary default 不变。进一步 fresh regression 需新授权。
 
 逐阶段负结果、两个未进入 worker/KSP 的启动记录、保留成本、历史 p4 baseline 与 raw artifact hashes 见 [V28 outcome](fused_operator_speed_v28.md)、[Response V29](../response_v29.md)、[compact](records/fused_operator_speed_v28_compact.json)、[decision](records/fused_operator_speed_v28_decision.json) 和 [selective merge manifest](selective_merge_manifest_v28.md)。测试细目见 [test summary](test_summary.md) 与 [run index](records/run_index.json)。旧 V27/V26 结果保持原样。
 
@@ -50,7 +58,7 @@ V26 相对 r2 的 full/KSP/setup 分别慢 `15.46659149457179%`、`18.9014088193
 | Q3 p3 | 7065.949492944987 | 6082.501362726 | 361 | 9.460140452867132e-7 | 4031815680 / 3999603712 | completed PASS |
 | Q2 p2 | 15755.054311790009 start-to-stop | unknown | iteration 1048；PC1052 partial | 0.0006086703757232677 | 2702069760 / 2670846976 observed | RESOURCE_CONTROLLED_STOP |
 
-V24 是同一模型已完成场的最快整体 workflow；Q4 是 V25 完成场中最快但没有端到端加速；Q3 是合格通过场中 RSS/PSS 最低。Q2 的最后显式 iteration 1048 未达 1e-6，但 active PC1052 是 PC sequence counter 而非 iteration；没有 final KSP、official field 或 physical result，故分类为 RESOURCE_CONTROLLED_STOP / CONVERGENCE_NOT_ESTABLISHED_BEFORE_STOP。
+本段是 V25 阶段的历史横向结论；截至 V28 修复后，另有一场同配置正式观察比 R2 denominator 的 workflow 时间短，详细口径和单次运行限制见本页顶部。Q3 是当时合格通过场中 RSS/PSS 最低。Q2 的最后显式 iteration 1048 未达 1e-6，但 active PC1052 是 PC sequence counter 而非 iteration；没有 final KSP、official field 或 physical result，故分类为 RESOURCE_CONTROLLED_STOP / CONVERGENCE_NOT_ESTABLISHED_BEFORE_STOP。
 
 同迭代 112 的 p4 基线：V24 真残差/solve_seconds/RSS/PSS = 2.7139958442857524e-6 / 3606.8307935579464 s / 7334645760 / 7302341632 B；Q4 = 2.71399585136905e-6 / 3437.2333360950015 s / 7384477696 / 7352336384 B。每 16 次的 8/16/32/64/96/112/128 checkpoints 与 endpoint 已在 [V25 outcome](a6_h6_coarse_degree_v25.md) 中逐项记录；无记录项保持“—”。
 
