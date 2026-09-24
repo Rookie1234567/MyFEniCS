@@ -1,6 +1,16 @@
 # 测试与证据资格
 
-性能实现提交：`f124679e75915758076d9240bd4bef2f5c772752`。测试均使用本worktree原生activation和complex128/int32 ABI；真实FE及MPI测试在宿主机CPU23执行。没有隔壁文件/进程修改，没有CI通过声明。
+## Review V5：5 nm rounded-tensor representative bounded component
+
+| 检查 | 实际结果 | 范围 / 限制 |
+|---|---|---|
+| 105-cell真实5 nm Si FE/MPC raw-vs-candidate | `1 passed / 2986.99 s`；18 raw几何类/阶→9 tensor组/阶；p4/p6逐类代表tensor最大相对差`6.295e-16/4.348e-16`；A6动作差`3.139e-13`；Aq体积/DtN`4.104e-15/1.081e-14`；原A4返回rho raw/candidate`2.382e-11/1.658e-11` | 4个真实零阶mode；显式port RHS仅对增广矩阵单独核验，未测其原A4恢复；非完整网格/非600通道/非资源资格；[compact](records/v5_5nm_geometry_105_component_v1.json) |
+| 几何身份与结果归档回归 | `7 passed / 0.76 s`，CPU24 | raw identity不合并近尺寸单元；V5冻结轴/profile合同与旧入口保持；无FEM启动 |
+| targeted Ruff / py_compile / JSON / diff check | 全部通过 | 新测试、相关合同和记录检查；不等于全库lint/pytest |
+
+候选构建用时 raw→representative：p6 tensor `892.56→447.23 s`、p4 `43.45→21.26 s`；额外逐raw类tensor复算另计 p6=`1434.48 s`、p4=`64.51 s`，不混入构建计时。完整 3780-cell setup-only 尚未运行；其启动仍等待 clean source 审核与新鲜准入。
+
+以下历史性能实现提交为 `f124679e75915758076d9240bd4bef2f5c772752`；对应测试使用当时worktree的原生activation和complex128/int32 ABI，真实FE/MPI测试在宿主机CPU23执行。上方V5几何组件使用独立PORD64 activation与CPU10–13允许集（一次PSR快照为CPU10）；CPU24上的后续focused回归单列报告。没有隔壁文件/进程修改，没有CI通过声明。
 
 | 检查 | 实际结果 | 范围 / 限制 |
 |---|---|---|

@@ -226,12 +226,37 @@
     {
       "stage": "F5",
       "attempt": 1,
-      "status": "AUTHORIZED_PENDING_FRESH_ADMISSION",
+      "run_id": "20260923T231207.264441Z",
+      "record": "f5_5nm_q4_terminal_compact_v1.json",
+      "status": "COMPLETED_BALANCED_OUTPUT_PASS_MATCHED_REFERENCE_PASS",
+      "source_sha": "b468907cf54d04280b461cae5fc9078186302d54",
       "input_sha256": "03a9992d576612335135fa22f25192f97754feb4a281e6c06ce29534e4095d36",
-      "physical_model_sha256": "96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d"
+      "physical_model_sha256": "96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d",
+      "iterations": 121,
+      "true_residual": 8.604222538518652e-7,
+      "tree_rss_peak_bytes": 38934622208,
+      "tree_swap_peak_bytes": 0,
+      "reference_mode_count": 600,
+      "workflow_seconds": 22680.91177625401
+    },
+    {
+      "stage": "F5_GEOMETRY_EQUIVALENCE_COMPONENT",
+      "attempt": 1,
+      "record": "v5_5nm_geometry_105_component_v1.json",
+      "status": "REAL_FE_MPC_CANDIDATE_COMPONENT_PASS_SETUP_ONLY_NOT_RUN",
+      "base_source_sha": "b468907cf54d04280b461cae5fc9078186302d54",
+      "input_sha256": "03a9992d576612335135fa22f25192f97754feb4a281e6c06ce29534e4095d36",
+      "physical_model_sha256": "96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d",
+      "cells": 105,
+      "raw_geometry_classes_per_degree": 18,
+      "candidate_tensor_groups_per_degree": 9,
+      "selected_zero_order_modes": 4,
+      "available_dtn_modes": 600,
+      "pytest": "1 passed / 2986.99 s",
+      "resource_qualification": "NOT_PERFORMED_COMPONENT_ONLY"
     }
   ],
   "R2_S5_S3_S2_G": "R2_UNRESOLVED_5NM_OWN_PASS_REFERENCE_LIMITED_RESOURCE_UNQUALIFIED_2NM_H1P5_TERMINAL_GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED_3NM_LOCKED",
   "R13": "R13_PAIR_RELEASED_WITH_SOURCE_FULL_FIELD_AUTHORITY_LIMITED_BUSY_MHZ_UNKNOWN",
-  "next_gate": "F5_SINGLE_5NM_P6H4_Q4_FRESH_ADMISSION"
+  "next_gate": "FOCUSED_REGRESSION_AND_CLEAN_SOURCE_REVIEW_THEN_SEPARATE_F5_SETUP_ONLY_BEFORE_F2"
 }

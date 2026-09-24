@@ -838,6 +838,21 @@ def _canonical_axis_aligned_coordinates(
     return np.ascontiguousarray(canonical.ravel()), identity_widths
 
 
+def _lexicographic_min_coordinates(
+    first: np.ndarray,
+    second: np.ndarray,
+) -> np.ndarray:
+    """Choose the same raw coordinate representative independent of traversal."""
+
+    first_values = np.asarray(first, dtype=np.float64).reshape(-1)
+    second_values = np.asarray(second, dtype=np.float64).reshape(-1)
+    if tuple(float(value) for value in second_values) < tuple(
+        float(value) for value in first_values
+    ):
+        return np.asarray(second, dtype=np.float64)
+    return np.asarray(first, dtype=np.float64)
+
+
 def _tabulate_cell_tensor(
     compiled_form,
     kernel,
@@ -893,26 +908,39 @@ def _global_raw_tensor_cache(
         str,
         tuple[Any, dict[int, Any], int],
     ],
+    *,
+    select_lexicographic_representative: bool = False,
 ) -> tuple[dict[tuple[Any, ...], np.ndarray], dict[str, Any], float]:
-    """Evaluate each raw tensor class once globally, then broadcast it.
+    """Evaluate each tensor-cache class once globally, then broadcast it.
 
     Every rank participates in the deterministic class order.  Only ranks
-    owning cells in a class retain its tensor after the broadcast.
+    owning cells in a class retain its tensor after the broadcast.  The
+    optional representative mode is an explicit approximation: when callers
+    group slightly different raw geometries under one tensor key, the tensor
+    input is the lexicographically smallest unrounded canonical coordinate
+    packet, independent of cell or MPI traversal order.
     """
 
     local_policy_signature = {
-        policy: {
-            "dimension": int(dimension),
-            "kernel_ids": tuple(sorted(int(key) for key in kernels)),
-            "dtype": str(np.dtype(compiled_form.dtype)),
-            "element_hash": int(
-                compiled_form.function_spaces[0].element.basix_element.hash()
-            ),
-            "ufcx_form_signature": compiled_form.module.ffi.string(
-                compiled_form.ufcx_form.signature
-            ).decode("ascii"),
-        }
-        for policy, (compiled_form, kernels, dimension) in policy_forms.items()
+        "coordinate_representative_selection": (
+            "lexicographic_min_unrounded_canonical"
+            if select_lexicographic_representative
+            else "identical_coordinates_required"
+        ),
+        "forms": {
+            policy: {
+                "dimension": int(dimension),
+                "kernel_ids": tuple(sorted(int(key) for key in kernels)),
+                "dtype": str(np.dtype(compiled_form.dtype)),
+                "element_hash": int(
+                    compiled_form.function_spaces[0].element.basix_element.hash()
+                ),
+                "ufcx_form_signature": compiled_form.module.ffi.string(
+                    compiled_form.ufcx_form.signature
+                ).decode("ascii"),
+            }
+            for policy, (compiled_form, kernels, dimension) in policy_forms.items()
+        },
     }
     policy_signatures = comm.allgather(local_policy_signature)
     if any(signature != policy_signatures[0] for signature in policy_signatures[1:]):
@@ -933,11 +961,16 @@ def _global_raw_tensor_cache(
                 previous,
                 canonical,
             ):
-                raise RuntimeError(
-                    "raw tensor class has inconsistent canonical geometry "
-                    "across MPI ranks"
+                if not select_lexicographic_representative:
+                    raise RuntimeError(
+                        "raw tensor class has inconsistent canonical geometry "
+                        "across MPI ranks"
+                    )
+                global_coordinates[key] = _lexicographic_min_coordinates(
+                    previous, canonical
                 )
-            global_coordinates.setdefault(key, canonical)
+            else:
+                global_coordinates.setdefault(key, canonical)
             ranks_by_class.setdefault(key, []).append(rank)
 
     ordered_keys = sorted(global_coordinates)
@@ -1032,64 +1065,65 @@ def _global_raw_tensor_cache(
         )
     if set(cache) != local_keys:
         raise RuntimeError("global raw tensor cache is incomplete on this rank")
-    return (
-        cache,
-        {
-            "raw_tensor_class_count_sum": evaluation_count,
-            "raw_tensor_class_use_count_sum": use_count,
-            "raw_tensor_class_count_global_unique": unique_count,
-            "raw_tensor_global_owner_policy": (
-                "deterministic_dimension_squared_greedy_all_mpi_ranks"
-            ),
-            "raw_tensor_owner_cost_loads": owner_loads,
-            "raw_tensor_policy_signatures_identical": True,
-            "raw_tensor_owner_evaluation_sync_seconds_max": float(
-                comm.allreduce(owner_sync_seconds, op=MPI.MAX)
-            ),
-            "raw_tensor_cross_rank_dedup_active": bool(
-                comm.size > 1 and use_count > unique_count
-            ),
-            "raw_tensor_class_owner_ranks": {
-                repr(key): int(owner_by_class[key])
-                for key in sorted(global_coordinates)
-            },
-            "raw_tensor_class_user_rank_counts": {
-                repr(key): len(ranks_by_class[key])
-                for key in sorted(global_coordinates)
-            },
-            "raw_tensor_classes": [
-                {
-                    "policy": str(key[0]),
-                    "material_tag": int(key[1]),
-                    "cell_widths": [float(value) for value in key[2:]],
-                    "dimension": int(policy_forms[str(key[0])][2]),
-                    "active_kernel_ids": [
-                        kernel_id
-                        for kernel_id in dict.fromkeys((-1, int(key[1])))
-                        if kernel_id in policy_forms[str(key[0])][1]
-                    ],
-                    "owner_rank": int(owner_by_class[key]),
-                    "consumer_rank_count": len(ranks_by_class[key]),
-                    "tensor_bytes": int(
-                        int(policy_forms[str(key[0])][2]) ** 2
-                        * np.dtype(np.complex128).itemsize
-                    ),
-                    "canonical_coordinates_sha256": hashlib.sha256(
-                        np.ascontiguousarray(
-                            global_coordinates[key],
-                            dtype=np.float64,
-                        ).tobytes()
-                    ).hexdigest(),
-                }
-                for key in ordered_keys
-            ],
-            "raw_tensor_logical_broadcast_bytes": logical_broadcast_bytes,
-            "raw_tensor_broadcast_seconds_max": float(
-                comm.allreduce(local_broadcast_seconds, op=MPI.MAX)
-            ),
+    cache_audit = {
+        "raw_tensor_class_count_sum": evaluation_count,
+        "raw_tensor_class_use_count_sum": use_count,
+        "raw_tensor_class_count_global_unique": unique_count,
+        "raw_tensor_global_owner_policy": (
+            "deterministic_dimension_squared_greedy_all_mpi_ranks"
+        ),
+        "raw_tensor_owner_cost_loads": owner_loads,
+        "raw_tensor_policy_signatures_identical": True,
+        "raw_tensor_owner_evaluation_sync_seconds_max": float(
+            comm.allreduce(owner_sync_seconds, op=MPI.MAX)
+        ),
+        "raw_tensor_cross_rank_dedup_active": bool(
+            comm.size > 1 and use_count > unique_count
+        ),
+        "raw_tensor_class_owner_ranks": {
+            repr(key): int(owner_by_class[key])
+            for key in sorted(global_coordinates)
         },
-        local_kernel_seconds,
-    )
+        "raw_tensor_class_user_rank_counts": {
+            repr(key): len(ranks_by_class[key])
+            for key in sorted(global_coordinates)
+        },
+        "raw_tensor_classes": [
+            {
+                "policy": str(key[0]),
+                "material_tag": int(key[1]),
+                "cell_widths": [float(value) for value in key[2:]],
+                "dimension": int(policy_forms[str(key[0])][2]),
+                "active_kernel_ids": [
+                    kernel_id
+                    for kernel_id in dict.fromkeys((-1, int(key[1])))
+                    if kernel_id in policy_forms[str(key[0])][1]
+                ],
+                "owner_rank": int(owner_by_class[key]),
+                "consumer_rank_count": len(ranks_by_class[key]),
+                "tensor_bytes": int(
+                    int(policy_forms[str(key[0])][2]) ** 2
+                    * np.dtype(np.complex128).itemsize
+                ),
+                "canonical_coordinates_sha256": hashlib.sha256(
+                    np.ascontiguousarray(
+                        global_coordinates[key],
+                        dtype=np.float64,
+                    ).tobytes()
+                ).hexdigest(),
+            }
+            for key in ordered_keys
+        ],
+        "raw_tensor_logical_broadcast_bytes": logical_broadcast_bytes,
+        "raw_tensor_broadcast_seconds_max": float(
+            comm.allreduce(local_broadcast_seconds, op=MPI.MAX)
+        ),
+    }
+    if select_lexicographic_representative:
+        cache_audit["tensor_group_representative_selection"] = (
+            "lexicographic_min_unrounded_canonical_coordinates"
+        )
+    return cache, cache_audit, local_kernel_seconds
 
 
 def _orient_cell_tensor(element, tensor: np.ndarray, cell_info: np.ndarray) -> None:
@@ -1188,9 +1222,17 @@ def build_unconstrained_assembly_time_condensation(
         raise TypeError("assembly-time condensation requires complex128")
     if int(appended_global_rows) < 0:
         raise ValueError("appended_global_rows must be non-negative")
-    if geometry_identity_policy not in {"rounded_12", "raw_unrounded"}:
+    representative_tensor_groups = (
+        geometry_identity_policy == "rounded_12_representative"
+    )
+    if geometry_identity_policy not in {
+        "rounded_12",
+        "raw_unrounded",
+        "rounded_12_representative",
+    }:
         raise ValueError(
-            "geometry_identity_policy must be rounded_12 or raw_unrounded"
+            "geometry_identity_policy must be rounded_12, raw_unrounded, "
+            "or rounded_12_representative"
         )
     materialize_global_matrix = bool(materialize_global_matrix)
     if not materialize_global_matrix and not retain_local_schur_for_matrix_free:
@@ -1313,6 +1355,7 @@ def build_unconstrained_assembly_time_condensation(
     cell_permutations = mesh.topology.get_cell_permutation_info()
     local_class_coordinates: dict[tuple[Any, ...], np.ndarray] = {}
     cell_raw_metadata: list[tuple[tuple[Any, ...], tuple[Any, ...]]] = []
+    local_raw_geometry_classes: set[tuple[Any, ...]] = set()
     local_metadata_error = None
     try:
         for cell in range(owned_cells):
@@ -1320,25 +1363,43 @@ def build_unconstrained_assembly_time_condensation(
                 mesh,
                 cell,
                 tolerance=geometry_tolerance,
-                geometry_identity_policy=geometry_identity_policy,
+                geometry_identity_policy=(
+                    "raw_unrounded"
+                    if representative_tensor_groups
+                    else geometry_identity_policy
+                ),
             )
             tag = int(tags[cell])
             raw_key = (tag, *widths)
-            policy_raw_key = ("actual_space", *raw_key)
-            previous = local_class_coordinates.get(policy_raw_key)
+            if representative_tensor_groups:
+                local_raw_geometry_classes.add(raw_key)
+            tensor_group_widths = (
+                tuple(float(np.round(value, 12)) for value in widths)
+                if representative_tensor_groups
+                else widths
+            )
+            tensor_group_key = ("actual_space", tag, *tensor_group_widths)
+            previous = local_class_coordinates.get(tensor_group_key)
             if previous is not None and not np.array_equal(
                 previous,
                 canonical_coordinates,
             ):
-                raise RuntimeError(
-                    "raw tensor class has inconsistent canonical geometry "
-                    "on one MPI rank"
+                if not representative_tensor_groups:
+                    raise RuntimeError(
+                        "raw tensor class has inconsistent canonical geometry "
+                        "on one MPI rank"
+                    )
+                local_class_coordinates[tensor_group_key] = (
+                    _lexicographic_min_coordinates(
+                        previous, canonical_coordinates
+                    )
                 )
-            local_class_coordinates.setdefault(
-                policy_raw_key,
-                canonical_coordinates,
-            )
-            cell_raw_metadata.append((raw_key, policy_raw_key))
+            else:
+                local_class_coordinates.setdefault(
+                    tensor_group_key,
+                    canonical_coordinates,
+                )
+            cell_raw_metadata.append((raw_key, tensor_group_key))
     except Exception as error:
         local_metadata_error = f"{type(error).__name__}: {error}"
     metadata_errors = comm.allgather(local_metadata_error)
@@ -1374,11 +1435,42 @@ def build_unconstrained_assembly_time_condensation(
             comm,
             local_class_coordinates,
             policy_forms,
+            select_lexicographic_representative=representative_tensor_groups,
         )
     except Exception:
         if condensed is not None:
             condensed.destroy()
         raise
+    geometry_identity_audit: dict[str, Any] = {}
+    if representative_tensor_groups:
+        raw_geometry_classes_by_rank = comm.allgather(
+            tuple(sorted(local_raw_geometry_classes))
+        )
+        raw_geometry_class_count = len(
+            {
+                raw_key
+                for rank_classes in raw_geometry_classes_by_rank
+                for raw_key in rank_classes
+            }
+        )
+        tensor_group_count = int(
+            raw_cache_audit["raw_tensor_class_count_global_unique"]
+        )
+        geometry_identity_audit = {
+            "raw_geometry_class_count_global_unique": raw_geometry_class_count,
+            "tensor_group_count_global_unique": tensor_group_count,
+            "raw_geometry_classes_merged_into_tensor_groups": (
+                raw_geometry_class_count - tensor_group_count
+            ),
+            "tensor_grouping_is_approximate": True,
+            "tensor_group_width_key": "decimal_round_12",
+            "tensor_group_representative_selection": (
+                "lexicographic_min_unrounded_canonical_coordinates"
+            ),
+            "tensor_group_kernel_coordinates_unrounded": True,
+            "schur_lu_recovery_cache_key": "raw_float64_widths_plus_orientation",
+            "mpc_expansion_applied_per_cell": True,
+        }
     schur_cache: dict[tuple[Any, ...], np.ndarray] = {}
     recovery_cache: dict[tuple[Any, ...], np.ndarray] = {}
     lu_cache: dict[tuple[Any, ...], tuple[np.ndarray, np.ndarray]] = {}
@@ -1395,8 +1487,8 @@ def build_unconstrained_assembly_time_condensation(
     for cell, (original_dofs, metadata) in enumerate(
         zip(local_cell_dofs, cell_raw_metadata, strict=True)
     ):
-        raw_key, policy_raw_key = metadata
-        tensor = raw_cache[policy_raw_key]
+        raw_key, tensor_group_key = metadata
+        tensor = raw_cache[tensor_group_key]
         class_key = (
             *raw_key,
             int(cell_permutations[cell]),
@@ -1667,7 +1759,11 @@ def build_unconstrained_assembly_time_condensation(
             "axis_aligned_affine_geometry_verified": True,
             "geometry_identity_policy": geometry_identity_policy,
             "geometry_identity_rounding": (
-                "decimal_12" if geometry_identity_policy == "rounded_12" else "none"
+                "decimal_12"
+                if geometry_identity_policy == "rounded_12"
+                else "tensor_group_key_only; coordinates remain unrounded"
+                if representative_tensor_groups
+                else "none"
             ),
             "retained_local_schur_enabled": bool(retain_local_schur_for_matrix_free),
             "shared_readonly_identity_cache": bool(share_identity_cache),
@@ -1712,6 +1808,7 @@ def build_unconstrained_assembly_time_condensation(
             "trace_preallocation_seconds": preallocation_audit["build_seconds"],
             "trace_preallocation": preallocation_audit,
             "trace_constraints": trace_constraints.build_audit,
+            **geometry_identity_audit,
             "total_build_seconds": float(
                 comm.allreduce(perf_counter() - started, op=MPI.MAX)
             ),

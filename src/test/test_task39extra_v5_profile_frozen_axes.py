@@ -66,6 +66,10 @@ class Task39ExtraV5FrozenAxesTests(unittest.TestCase):
         )
 
     def test_v5_worker_cpu_is_opt_in_and_legacy_native_profile_stays_cpu23(self):
+        from src.runners.physical_retained_condensed_v20 import (
+            _geometry_identity_policy_for_profile,
+        )
+
         for identity, coarse_degree in (
             ("dual_condensed_balh_native_13p5_q4_v5", 4),
             ("dual_condensed_balh_native_13p5_q3_v5", 3),
@@ -76,6 +80,23 @@ class Task39ExtraV5FrozenAxesTests(unittest.TestCase):
             self.assertEqual(facts["native_execution"]["worker_cpu"], 24)
             self.assertEqual(facts["native_execution"]["supervisor_cpu"], 9)
             self.assertEqual(facts["retained_condensed_v20"]["coarse_degree"], coarse_degree)
+            expected_geometry_policy = (
+                "rounded_12_representative"
+                if identity
+                in {
+                    "dual_condensed_balh_native_5nm_v5",
+                    "dual_condensed_balh_native_2nm_v5",
+                }
+                else "raw_unrounded"
+            )
+            self.assertEqual(
+                facts["condensed_route"]["geometry_identity_policy"],
+                expected_geometry_policy,
+            )
+            self.assertEqual(
+                _geometry_identity_policy_for_profile(identity),
+                expected_geometry_policy,
+            )
             self.assertEqual(facts["resources"]["resource_stop_policy"], "measured_tree_rss_only_v3")
             self.assertEqual(facts["resources"]["rss_hard_limit_bytes"], 1_300_000_000_000)
             self.assertTrue(facts["outer"]["screen"]["progress_only"])
@@ -96,6 +117,10 @@ class Task39ExtraV5FrozenAxesTests(unittest.TestCase):
 
         legacy = native_profile_facts("dual_condensed_balh_native_5nm_v3")
         self.assertNotIn("native_execution", legacy)
+        self.assertEqual(
+            _geometry_identity_policy_for_profile("dual_condensed_balh_native_5nm_v3"),
+            "raw_unrounded",
+        )
         self.assertEqual(legacy["resources"]["resource_stop_policy"], "measured_tree_rss_only_v3")
         self.assertEqual(legacy["outer"]["screen"]["progress_only"], True)
         legacy_specification = load_and_resolve(

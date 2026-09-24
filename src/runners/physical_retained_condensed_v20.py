@@ -72,6 +72,16 @@ def _compile_volume_form(volume_action: Any) -> Any:
     return fem.form(form)
 
 
+def _geometry_identity_policy_for_profile(profile_identity: str) -> str:
+    from src.io.native_capacity_profile import (
+        V5_ROUNDED_TENSOR_REPRESENTATIVE_PROFILES,
+    )
+
+    if profile_identity in V5_ROUNDED_TENSOR_REPRESENTATIVE_PROFILES:
+        return "rounded_12_representative"
+    return "raw_unrounded"
+
+
 def _failure_diagnostic_jsonable(value: Any) -> Any:
     """Serialize failure diagnostics without placing arrays/nonfinite floats in JSON."""
 
@@ -190,6 +200,7 @@ class RetainedCondensedRuntime:
         *,
         coarse_degree: int = 4,
         sum_factorized_work: bool = False,
+        geometry_identity_policy: str = "raw_unrounded",
         marker: Callable[[str, Mapping[str, Any]], None] | None = None,
     ) -> "RetainedCondensedRuntime":
         from src.solvers.fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
@@ -264,7 +275,7 @@ class RetainedCondensedRuntime:
                 retain_local_schur_for_matrix_free=True,
                 sum_duplicate_cell_integrals=True,
                 strict_local_checks=True,
-                geometry_identity_policy="raw_unrounded",
+                geometry_identity_policy=geometry_identity_policy,
                 share_identity_cache=True,
             )
             p6_action = build_p6_cell_condensed_action_from_carrier(
@@ -285,7 +296,7 @@ class RetainedCondensedRuntime:
                 sum_duplicate_cell_integrals=True,
                 strict_local_checks=True,
                 defer_final_assembly=True,
-                geometry_identity_policy="raw_unrounded",
+                geometry_identity_policy=geometry_identity_policy,
                 share_identity_cache=True,
             )
             p4_terms = assemble_condensed_ports(p4_system, p4_carrier)
@@ -1119,14 +1130,24 @@ def run_retained_condensed_workflow(
 
         profile_identity = str(payload["solver"]["preconditioner"])
         sum_factorized_work = profile_identity in V5_NATIVE_PROFILES
+        geometry_identity_policy = _geometry_identity_policy_for_profile(
+            profile_identity
+        )
         route = "V20_V5_4BF2_SUM_FACTORIZED" if sum_factorized_work else "V20"
-        ledger.marker("retained_runtime_build_started", {"route": route})
+        ledger.marker(
+            "retained_runtime_build_started",
+            {
+                "route": route,
+                "geometry_identity_policy": geometry_identity_policy,
+            },
+        )
         coarse_degree = int(payload["solver"].get("coarse_degree", 4))
         runtime = RetainedCondensedRuntime.build(
             cfg,
             MPI.COMM_WORLD,
             coarse_degree=coarse_degree,
             sum_factorized_work=sum_factorized_work,
+            geometry_identity_policy=geometry_identity_policy,
             marker=ledger.marker,
         )
         provenance = payload["provenance"]
@@ -1148,6 +1169,7 @@ def run_retained_condensed_workflow(
                 "mode_sha256": runtime.mode_sha256,
                 "coarse_degree": runtime.coarse_degree,
                 "route": route,
+                "geometry_identity_policy": geometry_identity_policy,
                 "postprocess_jit_prefactor": postprocess_jit_facts,
                 "postprocess_jit_release_before_factor": postprocess_jit_release,
             },

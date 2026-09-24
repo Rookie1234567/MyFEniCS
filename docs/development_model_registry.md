@@ -1620,3 +1620,10 @@ R0 不改变旧 V16–V18 结果；R1/R2/R3、official E/H、near-field、R/T/A�
 0.7 nm/2 TiB scalable solve 均 not_run。p6 local object file 在最后 timeline 后才落盘，
 因此完整同期 process peak 与 cache closeout 仍是 unknown；不得把该条目登记为已通过的
 production model。
+
+## task39extra Review V5：5 nm Si p6/h4 q4 F5 完整场
+
+| run / source | 数值与物理结果 | 资源与状态 | evidence |
+|---|---|---|---|
+| `20260923T231207.264441Z` / `b468907cf54d04280b461cae5fc9078186302d54`；input `03a9992d576612335135fa22f25192f97754feb4a281e6c06ce29534e4095d36`；3780 cells、p6/h4、600 DtN channels | 121步；explicit A6 residual `8.60422e-7`；244/244 p4 returns `<=1e-10`、最多1次 refinement；`BALANCED_OUTPUT_PASS` 与旧5 nm 同物理 `MATCHED_REFERENCE_PASS`；全场 L2/scaled-curl `7.20455e-8/7.16517e-8`；R/T/A/A_volume=`0.733183508848/0.000222439621/0.266594051531/0.266594036660`；energy closure `1.49e-8` | workflow `22680.912 s`、solve `10671.216 s`；整树RSS峰 `38,934,622,208 B`、swap0；watchdog completed/cleared。后续独立setup-only须另立run身份，不代表完整物理结果。 | [F5 compact](task39extra_para_workstation_capacity/outcomes/records/f5_5nm_q4_terminal_compact_v1.json) |
+| `F5_GEOMETRY_EQUIVALENCE_COMPONENT` | 同一5 nm Si物理/材料输入；派生105-cell网格；每阶18个raw类→9个tensor组；4个实际零阶mode | 逐raw类代表tensor、A6、Aq、p4原A4及独立增广port RHS检查通过；仅组件资格，非完整setup/600通道/资源PASS | [105-cell compact](task39extra_para_workstation_capacity/outcomes/records/v5_5nm_geometry_105_component_v1.json) |

@@ -42,6 +42,12 @@ V5_R13_PROFILES = frozenset(
         'dual_condensed_balh_native_13p5_q3_v5',
     }
 )
+V5_ROUNDED_TENSOR_REPRESENTATIVE_PROFILES = frozenset(
+    {
+        'dual_condensed_balh_native_5nm_v5',
+        'dual_condensed_balh_native_2nm_v5',
+    }
+)
 RETAINED_CONDENSED_PROFILES = frozenset(
     {RETAINED_CONDENSED_PROFILE, *V5_NATIVE_PROFILES}
 )
@@ -305,7 +311,11 @@ def native_profile_facts(identity):
             'p6': 'retained_local_schur_matrix_free',
             'p4': 'assembly_time_condensed_exact_inverse',
             'bridge': 'retained_J_inverse_original_BAL_H',
-            'geometry_identity_policy': 'raw_unrounded',
+            'geometry_identity_policy': (
+                'rounded_12_representative'
+                if identity in V5_ROUNDED_TENSOR_REPRESENTATIVE_PROFILES
+                else 'raw_unrounded'
+            ),
             'shared_identity_cache': 'read_only_by_local_interior_dimension',
             'p4_max_refinements': 2,
             'p4_relative_residual_limit': 1.0e-10,

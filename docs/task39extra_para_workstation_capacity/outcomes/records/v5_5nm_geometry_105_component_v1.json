@@ -1,0 +1,138 @@
+{
+  "schema_version": "task39extra.v5.5nm.geometry-105-component.v1",
+  "stage": "F5_GEOMETRY_EQUIVALENCE_COMPONENT",
+  "attempt": 1,
+  "status": "REAL_FE_MPC_CANDIDATE_COMPONENT_PASS",
+  "tested_source": {
+    "base_commit_sha": "b468907cf54d04280b461cae5fc9078186302d54",
+    "worktree_was_clean": false,
+    "implementation_file_sha256": {
+      "src/runners/physical_retained_condensed_v20.py": "f89116fff46a48e16f4447520a3450df601eea7f1ddef940bcd04cd25d513cf0",
+      "src/solvers/hcurl_assembly_time_condensation.py": "4ad8a2a5eed79282e1e3e1f2075644ac1161a18e6f6b2e86228e05505231f1fa",
+      "src/io/native_capacity_profile.py": "6f4356f6d1d60bdf154529f1a79290f3bfe8ec74898eb21b0b832896b212eff5"
+    }
+  },
+  "test": {
+    "path": "src/test/test_task39extra_v5_geometry_105_fe.py",
+    "sha256": "4a0b5e9c625e7aa040e6a511f0c99d4114c542ed002d62d08358471e31ab6b5a",
+    "result": "1 passed",
+    "pytest_elapsed_seconds": 2986.99,
+    "command": "taskset -c 10-13 .venv/bin/python -m pytest -q -s src/test/test_task39extra_v5_geometry_105_fe.py",
+    "activation": "scripts/activate_task39extra_pord64.sh",
+    "mpi_scope": "MPI.COMM_SELF",
+    "observed_process": {
+      "pid": 308348,
+      "sampled_psr": 10,
+      "sampled_at_elapsed_seconds": 2814,
+      "sampled_rss_kib": 1146592,
+      "rss_is_peak": false
+    },
+    "stdout_log": {
+      "path": "tmp/task39extra_v5_geometry_105_probe.cLPJDp/probe.log",
+      "sha256": "dc6ae78ffa65a7271b0cce17264ab86ee9a4a9c5ab40bb495a762fd8afb985c1"
+    }
+  },
+  "input_identity": {
+    "path": "input/task39extra_para_workstation_capacity/v5_node1_5nm_p6h4_q4.dat",
+    "sha256": "03a9992d576612335135fa22f25192f97754feb4a281e6c06ce29534e4095d36",
+    "physical_model_sha256": "96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d",
+    "material_refractive_index": [0.99396854453, 0.00435380777],
+    "original_mesh_cells": 3780,
+    "derived_probe_mesh_cell_counts": [5, 3, 7],
+    "derived_probe_mesh_cells": 105,
+    "derived_probe_mesh_note": "The test retained the 5 nm Si physical/material input, replaced mesh axis counts for the bounded component, and cleared frozen axis values; it is not the formal 3780-cell mesh."
+  },
+  "mode_scope": {
+    "full_inventory_count": 600,
+    "full_inventory_sha256": "dde3aee7ee25bc5d68617a503eebec720a1527c9d044125bfb09acaa6d0b6645",
+    "component_count": 4,
+    "component_sha256": "054bbf9a840e1034207e391e639a43e7adffe5cf5430625b6fe51cc65f13d1a5",
+    "component_description": "The four actual zero-order modes selected from the 600-mode inventory; this is not a 600-channel action qualification."
+  },
+  "geometry_and_cache_identity": {
+    "raw_geometry_class_count_per_degree": 18,
+    "candidate_tensor_group_count_per_degree": 9,
+    "candidate_grouping_is_approximate": true,
+    "oriented_schur_class_count_sum": {
+      "p6": 30,
+      "p4": 30
+    },
+    "schur_lu_recovery_key": "raw_float64_widths_plus_orientation",
+    "mpc_expansion": "still_applied_per_cell",
+    "representative_selection": "lexicographic minimum canonical coordinates within each material-tag/rounded-width tensor group",
+    "worst_raw_class": {
+      "material_tag": 3,
+      "raw_widths": [8.5, 8.333333333333334, 24.0],
+      "raw_canonical_coordinates_sha256": "bd2e95a0191990cc437cbdde4b2d5fd1c67f72a5f612fda14ff620a2a6627d3a",
+      "representative_coordinates_sha256": "3cade13bd48362af147ae076c98a48c608c80de5ab6ffdf6187fc2e04c949568"
+    }
+  },
+  "representative_tensor_comparison": {
+    "scope": "all unique raw FE geometry classes, one tensor at a time",
+    "p4_max_relative_difference": 6.294747257444385e-16,
+    "p4_max_absolute_difference": 3.78580668601085e-12,
+    "p6_max_relative_difference": 4.3482557455231726e-16,
+    "p6_max_absolute_difference": 3.6385992644494326e-11,
+    "acceptance_limit": 1e-6
+  },
+  "raw_vs_candidate": {
+    "p6_condensed_action_relative_difference": 3.1391071437988904e-13,
+    "independent_original_A6_residual_action_relative_difference": 3.0198935776117324e-13,
+    "original_A6_calls": 2,
+    "native_setup_identity_relative": {
+      "raw_unrounded": 3.820808984157679e-14,
+      "rounded_12_representative": 3.10883128055136e-14
+    },
+    "schur_port_identity_relative": {
+      "raw_unrounded": 2.4770555616061927e-19,
+      "rounded_12_representative": 2.4770555616061927e-19
+    },
+    "nonzero_internal_rhs_norm_p6": 217.36774003635375,
+    "p4_nonzero_internal_rhs_norm": {
+      "raw_unrounded": 106.26903763462332,
+      "rounded_12_representative": 106.26903763462332
+    },
+    "p4_matrix_nonzero_complex_action_relative_difference": 9.673942003566501e-13,
+    "p4_returned_solution_relative_difference": 6.628350162748127e-13,
+    "p4_original_A4_returned_residual": {
+      "raw_unrounded": 2.381592216275904e-11,
+      "rounded_12_representative": 1.6577140835134777e-11
+    },
+    "p4_original_A4_limit": 1e-10,
+    "p4_explicit_nonzero_port_rhs_norm": 0.6723094525588644,
+    "p4_explicit_port_rhs_augmented_matrix_residual": {
+      "raw_unrounded": 6.390314365946142e-14,
+      "rounded_12_representative": 8.555049333297091e-14
+    },
+    "explicit_port_rhs_scope": "Separate solve against the augmented matrix. The original-A4 ledger residual above is for a nonzero interior RHS; this record does not claim original-A4 recovery qualification for the explicit-port-RHS solve.",
+    "native_Aq_volume_projection_relative": 4.103892635859994e-15,
+    "native_Aq_DtN_projection_relative": 1.0811475688779736e-14,
+    "native_Aq_component_limit": 1e-10
+  },
+  "timing_seconds": {
+    "production_tensor_build_raw_first_candidate_second": {
+      "p6_kernel_raw": 892.5605109129683,
+      "p6_kernel_candidate": 447.23147471106495,
+      "p6_total_builder_raw": 897.110042757995,
+      "p6_total_builder_candidate": 451.76712397899246,
+      "p4_kernel_raw": 43.4506987730274,
+      "p4_kernel_candidate": 21.25994143303251,
+      "p4_total_builder_raw": 44.48748153299675,
+      "p4_total_builder_candidate": 22.335864222986856,
+      "cache_temperature": "not controlled; these are bounded-component timings, not a full-setup speedup claim"
+    },
+    "additional_per_raw_class_tensor_retabulation": {
+      "p6": 1434.4831535189878,
+      "p4": 64.51365934900241,
+      "note": "Separate validation work; not included in the production tensor-build times above."
+    },
+    "whole_test_wall_seconds": 2986.99
+  },
+  "qualification_limits": [
+    "This is a 105-cell real FE/MPC component using four zero-order modes, not a full 5 nm 3780-cell setup, all-600-channel qualification, full solve, RTA, or resource qualification.",
+    "The rounded-width representative is an opt-in approximate tensor grouping. Raw float64 widths plus orientation remain the Schur/LU/recovery identity; MPC expansion remains per cell.",
+    "Explicit nonzero port RHS was checked against the augmented matrix separately; it was not the RHS used for the original-A4 ledger recovery check.",
+    "No setup-only formal run has been started. It remains gated on focused regression, clean source review, and fresh admission/supervision."
+  ],
+  "next_gate": "FOCUSED_REGRESSION_AND_CLEAN_SOURCE_REVIEW_THEN_SEPARATE_F5_SETUP_ONLY"
+}
