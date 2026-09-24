@@ -50,6 +50,7 @@ from benchmarks.task041_exact_side_workflow import (
     _task041_rank_numa_pair_sample_stage,
     _task041_stream_array_metadata,
     _task041_top_causal_node_gate_status,
+    _task041_top_causal_packet_budget,
     _task041_top_causal_pc_indices,
     _task041_worker_time_stop_enforced,
     _Task041TopCausalPacketCapture,
@@ -1924,6 +1925,181 @@ def test_task041_top_causal_capture_tail_packets_and_replay_gates(
                 "normalization_sha256": "b" * 64,
             },
         }
+
+    from benchmarks import task041_exact_side_workflow as worker
+
+    setup_tree = ast.parse(
+        inspect.getsource(worker._run_task041_balh_candidate_setup)
+    )
+    capture_layout_node = next(
+        node
+        for node in ast.walk(setup_tree)
+        if isinstance(node, ast.FunctionDef) and node.name == "capture_layout"
+    )
+    p4_capture_branch = next(
+        node
+        for node in ast.walk(capture_layout_node)
+        if isinstance(node, ast.If)
+        and "p4_physical_fe" in ast.dump(node)
+        and any(
+            isinstance(child, ast.Assign)
+            and any(
+                isinstance(target, ast.Name)
+                and target.id == "vector_layouts"
+                for target in child.targets
+            )
+            for child in ast.walk(node)
+        )
+    )
+    condition_node = ast.Expression(body=copy.deepcopy(p4_capture_branch.test))
+    ast.fix_missing_locations(condition_node)
+    condition_code = compile(condition_node, "<capture_layout_condition>", "eval")
+    branch_module = ast.Module(
+        body=copy.deepcopy(p4_capture_branch.body), type_ignores=[]
+    )
+    ast.fix_missing_locations(branch_module)
+    branch_code = compile(branch_module, "<capture_layout_p4_fields>", "exec")
+
+    def run_capture_layout_fields():
+        created_vectors = []
+
+        def make_vector(global_size):
+            local_size = (
+                owned_range(global_size, comm.rank)[1]
+                - owned_range(global_size, comm.rank)[0]
+            )
+            vector = PETSc.Vec().createMPI(
+                (local_size, global_size), comm=comm
+            )
+            created_vectors.append(vector)
+            return vector
+
+        p4_space = SimpleNamespace(
+            global_size=2,
+            local_size=owned_range(2, comm.rank)[1]
+            - owned_range(2, comm.rank)[0],
+        )
+        mode = SimpleNamespace(
+            side="top",
+            m=0,
+            n=0,
+            polarization="s",
+            electric_tangential_norm_sq=1.0,
+            power_per_unit_amplitude=1.0,
+        )
+        p4 = SimpleNamespace(
+            physical_action=SimpleNamespace(
+                V=p4_space,
+                action=SimpleNamespace(
+                    modes=[SimpleNamespace(mode=mode, denominator=1.0)]
+                ),
+            ),
+            create_fe_vector=lambda: make_vector(2),
+        )
+
+        def space_layout_metadata(_name, space):
+            ownership = owned_range(space.global_size, comm.rank)
+            local_map = np.arange(*ownership, dtype=np.int32)
+            return {
+                "space": {"kind": "FunctionSpace", "python_id": 100 + comm.rank},
+                "dofmap": {
+                    "map": {
+                        "shape": [int(local_map.size)],
+                        "dtype": str(local_map.dtype),
+                        "nbytes": int(local_map.nbytes),
+                        "sha256": hashlib.sha256(local_map.tobytes()).hexdigest(),
+                        "hash_status": "measured_contiguous",
+                    },
+                    "global_size": int(space.global_size),
+                    "local_size": int(space.local_size),
+                    "num_ghosts": 0,
+                    "block_size": 1,
+                },
+            }
+
+        namespace = vars(worker).copy()
+        operator = SimpleNamespace(createVecRight=lambda: make_vector(3))
+        inverse = SimpleNamespace(
+            _full_action=SimpleNamespace(
+                matrix=SimpleNamespace(createVecRight=lambda: make_vector(3))
+            )
+        )
+        namespace.update(
+            {
+                "p4": p4,
+                "operator": operator,
+                "inverse": inverse,
+                "spaces": dict(rank_layout(comm.rank)["dofmaps"]["spaces"]),
+                "vector_layouts": None,
+                "port_layout": None,
+                "_task041_space_layout_metadata": space_layout_metadata,
+            }
+        )
+        exec(branch_code, namespace, namespace)  # noqa: S102 - execute the captured production AST branch
+        assert all(int(vector.handle) == 0 for vector in created_vectors)
+        return {
+            "vector_layouts": namespace["vector_layouts"],
+            "port_layout": namespace["port_layout"],
+            "p4_space": namespace["spaces"]["p4_physical_fe"],
+        }
+
+    for top_causal_replay, correction_root, expected_capture in (
+        (True, None, True),
+        (False, Path("g1"), True),
+        (False, None, False),
+    ):
+        capture_requested = bool(
+            eval(
+                condition_code,
+                {"__builtins__": {}},
+                {
+                    "top_causal_replay": top_causal_replay,
+                    "p4_correction_replay_from": correction_root,
+                },
+            )
+        )
+        assert capture_requested is expected_capture
+        local_fields = (
+            run_capture_layout_fields() if capture_requested else None
+        )
+        fields_by_rank = comm.allgather(local_fields)
+        by_rank = []
+        for rank, fields in enumerate(fields_by_rank):
+            record = rank_layout(rank)
+            if fields is not None:
+                record["vector_layouts"] = fields["vector_layouts"]
+                record["port_layout"] = fields["port_layout"]
+                record["dofmaps"]["spaces"]["p4_physical_fe"] = fields[
+                    "p4_space"
+                ]
+            else:
+                record.pop("vector_layouts")
+                record.pop("port_layout")
+            by_rank.append(record)
+        layout_identity = _task041_backend_pair_layout_identity(
+            {"by_rank": by_rank}
+        )
+        if capture_requested:
+            assert all(
+                isinstance(record, dict)
+                for record in layout_identity["vector_layouts_by_rank"]
+            )
+            assert all(
+                isinstance(record, dict)
+                for record in layout_identity["port_layouts_by_rank"]
+            )
+            budget = _task041_top_causal_packet_budget(
+                layout_identity["vector_layouts_by_rank"],
+                port_layouts_by_rank=layout_identity["port_layouts_by_rank"],
+                comm_size=comm.size,
+                memory_cap_bytes=53_221_163_008,
+            )
+            assert budget["pass"] is True
+        else:
+            assert layout_identity["vector_layouts_by_rank"] == [
+                None
+            ] * comm.size
+            assert layout_identity["port_layouts_by_rank"] == [None] * comm.size
 
     capture = _Task041TopCausalPacketCapture(
         comm=capture_comm,

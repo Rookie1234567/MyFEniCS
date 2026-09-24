@@ -5094,7 +5094,7 @@ def _run_task041_balh_candidate_setup(
             p4 = inverse._p4_factor
             vector_layouts = None
             port_layout = None
-            if top_causal_replay:
+            if top_causal_replay or p4_correction_replay_from is not None:
                 p4_space = p4.physical_action.V
                 spaces["p4_physical_fe"] = _task041_space_layout_metadata(
                     "p4.physical_action.V", p4_space
