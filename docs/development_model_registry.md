@@ -1,5 +1,9 @@
 # 开发阶段研究对象与计算结果总账
 
+## Task041 V7 当前模型资格状态
+
+**未资格化。** G1 top-only 诊断有 14 项独立 Q 未过原 `1e-11`；G2 两次 layout admission 失败且新 hash 未持久化；完整 5 nm consumer 未运行。不得登记为通过模型或优化收益。见[Task041 V7 outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/causal_fix_5nm_v7.md)。
+
 ## 2026-09-23：Task041 Review V6 13.5 nm 与 5 nm 配对
 
 | 模型/阶段 | 结果 | 边界与证据 |

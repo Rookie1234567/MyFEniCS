@@ -1,0 +1,420 @@
+{
+  "record_type": "task041_review_v7_progress_snapshot",
+  "status": {
+    "formal_full_5nm_consumer": "not_started",
+    "g2_correction_stages_0_1_2": "not_run",
+    "cross_run_frozen_layout_qualification": "blocked_not_persisted"
+  },
+  "frozen_at_utc": "2026-09-24T09:47:34Z",
+  "repository": {
+    "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
+    "frozen_runtime_source_head": "6d27033e89646692e7f41e779ed65032a26b9967",
+    "upstream_at_freeze": "origin/codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
+    "ahead_behind_at_freeze": [
+      0,
+      0
+    ],
+    "worktree_clean_at_freeze": true,
+    "snapshot_documents_dirty_after_draft": 7
+  },
+  "host_snapshot": {
+    "observed_at_utc": "2026-09-24T09:47:34Z",
+    "hostname": "fenics-ws01",
+    "init_process": "systemd",
+    "task041_active_at_snapshot": false,
+    "neighbor_task39extra": {
+      "state": "running",
+      "pids": [
+        331176,
+        331213,
+        331220,
+        332221
+      ],
+      "worktree": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity",
+      "protection": "do_not_touch"
+    }
+  },
+  "runs": [
+    {
+      "phase": "G1_top_causal",
+      "unit": "task041-g1c-5nm-top-causal-20260924.service",
+      "invocation_id": "c92af396fec2441a91661223c91af9af",
+      "main_pid": 246596,
+      "source_sha": "e2965ee25e56220d1623afe4dd221612542c2764",
+      "start_utc": "2026-09-23T23:10:59Z",
+      "exit_utc": "2026-09-24T00:01:45Z",
+      "finalizer_wall_seconds": 3047.166289001,
+      "service_state": "failed",
+      "main_pid_after_exit": 0,
+      "result": "service_boundary_failure",
+      "exec_main_status": 3,
+      "cleanup_artifact_hash_and_ledger_checks": true,
+      "resource_peak_bytes_original_record": 44116103168,
+      "public_runroot": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260923T231100.070610Z",
+      "outerroot": "results/task041_review_v6_transfer_and_5nm_24h/g1c_top_causal_run_20260924",
+      "finalizer_path": "results/task041_review_v6_transfer_and_5nm_24h/g1c_top_causal_run_20260924/finalizer/finalizer_summary.json",
+      "user_service_state": {
+        "active_state": "failed",
+        "sub_state": "failed",
+        "result": "exit-code",
+        "exec_main_status": 3,
+        "main_pid_after_exit": 0
+      },
+      "service_time_source": "controller host systemctl --user show CST converted to UTC",
+      "resource_peak_bytes": 44116103168,
+      "resource_cap_bytes": 53221163008,
+      "resource_warning_bytes": 47899046707,
+      "job_swap_peak_bytes": 0,
+      "consumer_root": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260923T231100.070610Z/consumer"
+    },
+    {
+      "phase": "G2_first",
+      "unit": "task041-g2b-5nm-pc1-frozen-q-correction-20260924.service",
+      "invocation_id": "36836ada01ba46b8bbd3693c0ef8b010",
+      "main_pid": 307083,
+      "source_sha": "28c2ca95c9ca9ae0431797c66449b30be97c0cac",
+      "start_utc": "2026-09-24T06:49:57Z",
+      "exit_utc": "2026-09-24T07:17:49Z",
+      "finalizer_wall_seconds": 1673.342361168,
+      "service_state": "failed",
+      "main_pid_after_exit": 0,
+      "result": "service_boundary_failure",
+      "exec_main_status": 3,
+      "failure": "G2 capture_layout required fields absent at setup",
+      "correction_steps": "not_run",
+      "cleanup_artifact_hash_and_ledger_checks": true,
+      "public_runroot": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260924T064958.063572Z",
+      "outerroot": "results/task041_review_v6_transfer_and_5nm_24h/g2b_frozen_q_correction_20260924T063626Z",
+      "finalizer_path": "results/task041_review_v6_transfer_and_5nm_24h/g2b_frozen_q_correction_20260924T063626Z/finalizer/finalizer_summary.json",
+      "user_service_state": {
+        "active_state": "failed",
+        "sub_state": "failed",
+        "result": "exit-code",
+        "exec_main_status": 3,
+        "main_pid_after_exit": 0
+      },
+      "service_time_source": "controller host systemctl --user show CST converted to UTC",
+      "resource_peak_tree_and_authority_bytes": 38718169088,
+      "resource_cap_bytes": 53221163008,
+      "resource_warning_bytes": 47899046707,
+      "job_swap_peak_bytes": 0,
+      "frozen_inputs": [
+        "G1 PC1 Q1",
+        "G1 PC1 Q2"
+      ],
+      "loaded_or_corrected_frozen_inputs": false,
+      "later_capture_switch_fix_commit": "ed16b8e3d55aa15b99a9c2d596bef2431c2f42d7",
+      "consumer_root": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260924T064958.063572Z/consumer"
+    },
+    {
+      "phase": "G2_layoutfix_r1",
+      "unit": "task041-g2b-5nm-pc1-frozen-q-correction-layoutfix-r1-20260924.service",
+      "invocation_id": "7f479b688f8141c49f340d6ae1b8d55a",
+      "main_pid": 317364,
+      "source_sha": "ed16b8e3d55aa15b99a9c2d596bef2431c2f42d7",
+      "start_utc": "2026-09-24T08:20:03Z",
+      "exit_utc": "2026-09-24T08:47:56Z",
+      "finalizer_wall_seconds": 1673.806519391,
+      "service_state": "failed",
+      "main_pid_after_exit": 0,
+      "result": "service_boundary_failure",
+      "exec_main_status": 3,
+      "failure": "full stable layout component hashes differ from G1",
+      "correction_steps": "not_run",
+      "actual_new_layout_hashes": {
+        "status": "not_persisted",
+        "offline_reconstruction": "not_possible_from_retained_artifacts"
+      },
+      "cleanup_artifact_hash_and_ledger_checks": true,
+      "public_runroot": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260924T082003.946929Z",
+      "outerroot": "results/task041_review_v6_transfer_and_5nm_24h/g2b_frozen_q_correction_layoutfix_r1_20260924T080226Z",
+      "finalizer_path": "results/task041_review_v6_transfer_and_5nm_24h/g2b_frozen_q_correction_layoutfix_r1_20260924T080226Z/finalizer/finalizer_summary.json",
+      "user_service_state": {
+        "active_state": "failed",
+        "sub_state": "failed",
+        "result": "exit-code",
+        "exec_main_status": 3,
+        "main_pid_after_exit": 0
+      },
+      "service_time_source": "controller host systemctl --user show CST converted to UTC",
+      "resource_peak_tree_and_authority_bytes": 39235481600,
+      "resource_cap_bytes": 53221163008,
+      "resource_warning_bytes": 47899046707,
+      "job_swap_peak_bytes": 0,
+      "frozen_inputs": [
+        "G1 PC1 Q1",
+        "G1 PC1 Q2"
+      ],
+      "loaded_or_corrected_frozen_inputs": false,
+      "evidence_persistence_only_commit_after_run": "6d27033e89646692e7f41e779ed65032a26b9967",
+      "layout_identity_full": "not_generated",
+      "layout_identity_cell_condensed": "not_generated",
+      "consumer_root": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260924T082003.946929Z/consumer"
+    }
+  ],
+  "g1": {
+    "scope": {
+      "columns": [
+        12,
+        493,
+        666
+      ],
+      "frozen_pc_indices": [
+        1,
+        30,
+        31,
+        32,
+        33,
+        56,
+        57
+      ],
+      "independent_q_replays": 14,
+      "free_response_columns_by_backend": 3
+    },
+    "same_input_findings": {
+      "q_input_and_ph_output_byte_identical_count": 14,
+      "first_recorded_divergence": "p4_recovered_solution",
+      "root_cause": "not_proven",
+      "q_gate": 1e-11,
+      "q_relative_min": 4.462076935295908e-11,
+      "q_relative_max": 5.217215402500894e-11,
+      "independent_q_gate_failures": 14
+    },
+    "pc_gate": 1e-08,
+    "independent_pc_count": 7,
+    "independent_pc_pass_count": 7,
+    "shared_a4_gate": 1e-10,
+    "pc1_q1_shared_a4": {
+      "physical_relative_full": 3.9464450760276146e-11,
+      "physical_relative_condensed": 6.182890011924572e-11,
+      "augmented_relative_full": 2.8873234816987417e-11,
+      "augmented_relative_condensed": 5.637969700358617e-11,
+      "pass": true
+    }
+  },
+  "old_g1_stable_component_sha256": {
+    "operator_global_shape": "4a530d5b17d0b7755a8a407b0c17b9e513b703036e7779b768a8f2a0da4aabb1",
+    "ownership": "e1bd8322ca2763b1cbe77447503c134aa7b9c39a7c6a6f73c5f9b9338f12f342",
+    "transfer_identity": "0e0532983ed8a252ad41a7f94f048ac953b29ceab37607c94f516c9aebbbaf99",
+    "dofmaps": "a6cb7f4009a597f6d37f11d126229d9944d27dc7080745caae78cf3df712535c",
+    "mesh_layout": "3bc5cf2ebfa0de26ae900d89e3eb67c4e0c36bbc1bffab8191dfa8e3f45794ab",
+    "mpc_layout": "4724a5500787cd8ed53bcd597c59c0d0580bb2b7e436f4fdeb0586b369d919ad",
+    "layout_arrays": "3cfd702fb54cb051958fdc16183ad11b4926e6dfd3e5e2df15f5b8f457870039",
+    "vector_layouts": "e576014e7db844d017c4cded05f1aa7ebd07d6af7d74708e10db64e3be6599ee",
+    "port_layout": "fe1d4814abdcc009c7efc32ec5d7f4345e79628d1c5eb75756c89ab8ac906ef2"
+  },
+  "g2_new_stable_component_sha256": {
+    "status": "not_persisted",
+    "components": {
+      "operator_global_shape": null,
+      "ownership": null,
+      "transfer_identity": null,
+      "dofmaps": null,
+      "mesh_layout": null,
+      "mpc_layout": null,
+      "layout_arrays": null,
+      "vector_layouts": null,
+      "port_layout": null
+    }
+  },
+  "retained_input_bindings": {
+    "q1_manifest": {
+      "path": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260923T231100.070610Z/consumer/numerical_output/top_causal_replay/full_reference/pc_00001/q_01_input_output/manifest.json",
+      "sha256": "d947fe58d52ff7e3fa293cadd193854652529d5066bde1c8b42d26f9ac079297"
+    },
+    "q2_manifest": {
+      "path": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260923T231100.070610Z/consumer/numerical_output/top_causal_replay/full_reference/pc_00001/q_02_input_output/manifest.json",
+      "sha256": "ced34ee9e9ee174799d4cd09b70924385c5aebf51339cbc835c72fafbd6eba0b"
+    },
+    "parent_packet_sha256": "306939dda3b70777204c11fbd65beac2db5dc0637bc9b6803f7794d0d7cbad2f",
+    "rhs_probe_manifest_sha256": "fb68011ed3e55861c59455d082be549cdd9f6c2d5a569015cf88bdc739f5636a",
+    "cross_run_layout_qualified": false,
+    "producer_source_sha": "e2965ee25e56220d1623afe4dd221612542c2764",
+    "qep_source_sha": "b01a5932e4dfaf895e81e0424e0dd88c276fb0d3"
+  },
+  "g2a_lightweight_tests_not_numerical_result": {
+    "ledger_path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_load_ledger_20260920.json",
+    "ledger_entries": 40,
+    "charged_seconds": 30664.492338104035,
+    "g2a_view_lifetime_aggregate_seconds": 23.83706211,
+    "layout_identity_microtest": {
+      "node": "test_task041_pair_layout_identity_excludes_space_object_addresses",
+      "result": "1 passed",
+      "parent_wall_seconds": 2.318605613982072,
+      "source_commit": "6d27033e89646692e7f41e779ed65032a26b9967",
+      "production_source_file_sha256": "cf4de590484f34bf1d8594e57e34a17a44d63d7f9bb3d16b51fa8c62283ef11b",
+      "test_file_sha256": "83b03838d5c29f47d288e197218eb7f2bdb1f2ad39e7f71498117182263acae6",
+      "result_record_sha256": "c90ed6873cbe84fbfcb571a0d7888d159d62c3b68051d0d3a35eb914cbad11ea"
+    },
+    "earlier_negative_attempts_retained": true
+  },
+  "previous_component_timing_context": {
+    "full_seconds": 1185.079661994,
+    "cell_condensed_seconds": 1173.609554288,
+    "wall_reduction_fraction_approx": 0.0097,
+    "qualification": "not_passed_numeric_pair_gate; historical component timing only"
+  },
+  "artifact_hash_limits": "仅对 evidence_index 和已列 manifest 做轻量文件哈希核验；未重哈希大型数组。",
+  "snapshot_type": "progress_snapshot_not_final",
+  "frozen_q_inputs": {
+    "source_runroot": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260923T231100.070610Z/consumer",
+    "Q1_manifest": {
+      "path": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260923T231100.070610Z/consumer/numerical_output/top_causal_replay/full_reference/pc_00001/q_01_input_output/manifest.json",
+      "sha256": "d947fe58d52ff7e3fa293cadd193854652529d5066bde1c8b42d26f9ac079297"
+    },
+    "Q2_manifest": {
+      "path": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260923T231100.070610Z/consumer/numerical_output/top_causal_replay/full_reference/pc_00001/q_02_input_output/manifest.json",
+      "sha256": "ced34ee9e9ee174799d4cd09b70924385c5aebf51339cbc835c72fafbd6eba0b"
+    },
+    "parent_packet_sha256": "306939dda3b70777204c11fbd65beac2db5dc0637bc9b6803f7794d0d7cbad2f",
+    "rhs_probe_manifest_sha256": "fb68011ed3e55861c59455d082be549cdd9f6c2d5a569015cf88bdc739f5636a",
+    "producer_source_commit_sha": "e2965ee25e56220d1623afe4dd221612542c2764",
+    "qep_producer_source_commit_sha": "b01a5932e4dfaf895e81e0424e0dd88c276fb0d3",
+    "cross_run_layout_qualified": false,
+    "loaded_or_corrected_in_G2": false
+  },
+  "run_root_index": [
+    {
+      "phase": "G1",
+      "public_runroot": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260923T231100.070610Z",
+      "outerroot": "results/task041_review_v6_transfer_and_5nm_24h/g1c_top_causal_run_20260924",
+      "finalizer_path": "results/task041_review_v6_transfer_and_5nm_24h/g1c_top_causal_run_20260924/finalizer/finalizer_summary.json",
+      "finalizer_sha256": "8af494030818475b802ebab3356a53b1377ff9578beb6019f8717c347ea889fb",
+      "consumer_root": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260923T231100.070610Z/consumer"
+    },
+    {
+      "phase": "G2_first",
+      "public_runroot": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260924T064958.063572Z",
+      "outerroot": "results/task041_review_v6_transfer_and_5nm_24h/g2b_frozen_q_correction_20260924T063626Z",
+      "finalizer_path": "results/task041_review_v6_transfer_and_5nm_24h/g2b_frozen_q_correction_20260924T063626Z/finalizer/finalizer_summary.json",
+      "finalizer_sha256": "00097d885993c52290e4bb495501c6ddd760b052e8182f101bb1c415e29febf7",
+      "consumer_root": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260924T064958.063572Z/consumer"
+    },
+    {
+      "phase": "G2_layoutfix_r1",
+      "public_runroot": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260924T082003.946929Z",
+      "outerroot": "results/task041_review_v6_transfer_and_5nm_24h/g2b_frozen_q_correction_layoutfix_r1_20260924T080226Z",
+      "finalizer_path": "results/task041_review_v6_transfer_and_5nm_24h/g2b_frozen_q_correction_layoutfix_r1_20260924T080226Z/finalizer/finalizer_summary.json",
+      "finalizer_sha256": "1841017d16060f235e1d0178da165025cbaa3601309fd066881329432a7fc0da",
+      "consumer_root": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260924T082003.946929Z/consumer"
+    }
+  ],
+  "G1_evidence": {
+    "top_rank0_summary_path": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260923T231100.070610Z/consumer/numerical_output/top_causal_replay_top.json",
+    "pc1_q1_node_audit_path": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260923T231100.070610Z/consumer/numerical_output/top_causal_replay/replay/independent_q1_pc00001/pc_00001/independent_q1_pc00001_node_audit.json",
+    "pc1_q2_node_audit_path": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260923T231100.070610Z/consumer/numerical_output/top_causal_replay/replay/independent_q2_pc00001/pc_00001/independent_q2_pc00001_node_audit.json",
+    "rank_ids": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "q_input_and_ph_output_bytes_equal_for_q1_q2": true,
+    "all_8_rank_global_comparison_scalars_equal": true,
+    "free_columns": [
+      {
+        "column": 12,
+        "ordinal": 5,
+        "e_x": 1.1210098132838252e-08,
+        "e_A": 3.042995719987375e-08,
+        "limit": 1e-08,
+        "pass": false
+      },
+      {
+        "column": 493,
+        "ordinal": 7,
+        "e_x": 2.8209859775046248e-08,
+        "e_A": 7.657308734067504e-08,
+        "limit": 1e-08,
+        "pass": false
+      },
+      {
+        "column": 666,
+        "ordinal": 6,
+        "e_x": 4.6517113135754246e-12,
+        "e_A": 2.761034144410454e-12,
+        "limit": 1e-08,
+        "pass": true
+      }
+    ],
+    "pc1_independent_q": {
+      "Q1": {
+        "q_input_bytes_equal": true,
+        "ph_output_bytes_equal": true,
+        "p4_relative_difference": 4.825884073423821e-11,
+        "q_relative_difference": 4.835081880078008e-11,
+        "q_limit": 1e-11,
+        "A4_physical_full": 3.9464450760276146e-11,
+        "A4_physical_condensed": 6.182890011924572e-11,
+        "A4_augmented_full": 2.8873234816987417e-11,
+        "A4_augmented_condensed": 5.637969700358617e-11,
+        "A4_limit": 1e-10
+      },
+      "Q2": {
+        "q_input_bytes_equal": true,
+        "ph_output_bytes_equal": true,
+        "p4_relative_difference": 5.164430142728058e-11,
+        "q_relative_difference": 5.19243276103674e-11,
+        "q_limit": 1e-11,
+        "A4_physical_full": 3.4284403371928055e-12,
+        "A4_physical_condensed": 5.409279310936007e-12,
+        "A4_augmented_full": 2.2433325962304662e-12,
+        "A4_augmented_condensed": 4.309485690767991e-12,
+        "A4_limit": 1e-10
+      }
+    }
+  },
+  "G2_layout_evidence": {
+    "layout_identity_full": "not_generated",
+    "layout_identity_cell_condensed": "not_generated",
+    "new_component_hashes": "not_persisted",
+    "offline_reconstruction": "not_possible_from_retained_files",
+    "synthetic_dofmaps_test_change": "not an observed host layout difference"
+  },
+  "evidence_index": [
+    {
+      "role": "G1 finalizer",
+      "path": "results/task041_review_v6_transfer_and_5nm_24h/g1c_top_causal_run_20260924/finalizer/finalizer_summary.json",
+      "sha256": "8af494030818475b802ebab3356a53b1377ff9578beb6019f8717c347ea889fb"
+    },
+    {
+      "role": "G2 first finalizer",
+      "path": "results/task041_review_v6_transfer_and_5nm_24h/g2b_frozen_q_correction_20260924T063626Z/finalizer/finalizer_summary.json",
+      "sha256": "00097d885993c52290e4bb495501c6ddd760b052e8182f101bb1c415e29febf7"
+    },
+    {
+      "role": "G2 layoutfix finalizer",
+      "path": "results/task041_review_v6_transfer_and_5nm_24h/g2b_frozen_q_correction_layoutfix_r1_20260924T080226Z/finalizer/finalizer_summary.json",
+      "sha256": "1841017d16060f235e1d0178da165025cbaa3601309fd066881329432a7fc0da"
+    },
+    {
+      "role": "G1 top_causal_replay_top rank0 summary",
+      "path": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260923T231100.070610Z/consumer/numerical_output/top_causal_replay_top.json",
+      "sha256": "a527ee58642804263ef6daf89d03bfdf29bd6ebd3bb8ba7f3704c6590e96f64b"
+    },
+    {
+      "role": "G2 layout_component_attribution",
+      "path": "results/task041_review_v6_transfer_and_5nm_24h/g2b_frozen_q_correction_layoutfix_r1_20260924T080226Z/layout_component_attribution.json",
+      "sha256": "a79e8e57b86701acba6baa8ae421d0e0359d67c3bab9f10e4162462dfb2bd569"
+    },
+    {
+      "role": "existing lightweight layout test compact",
+      "path": "results/task041_review_v6_transfer_and_5nm_24h/g2b_frozen_q_correction_layoutfix_r1_20260924T080226Z/layout_evidence_serial/layout_evidence_serial_compact.json",
+      "sha256": "c90ed6873cbe84fbfcb571a0d7888d159d62c3b68051d0d3a35eb914cbad11ea"
+    }
+  ],
+  "runtime_status": {
+    "complete_formal_5nm_consumer": "not_started",
+    "G2_correction_steps_0_1_2": "not_run",
+    "V5_ledger_entries": 40,
+    "V5_ledger_charged_seconds": 30664.492338104035,
+    "this_snapshot_added_ledger_charge": false
+  },
+  "service_time_source": "Controller host systemctl --user show CST readings, converted to UTC; finalizer wall is retained from raw finalizer.",
+  "hash_scope": "Only three finalizers, G1 top summary, G2 layout attribution and the existing small layout-test compact are newly bound in evidence_index; no array/shard rehash.",
+  "next_verifiable_action": "使用已提交的落盘代码执行同一最小 top/PC1 诊断并取得真实新旧九组件比较；身份门不过则在载入前逐项归因并停止，不关闭身份门、不按长度加载；身份通过后才对 Q1/Q2 分别执行最多两次同因子修正。"
+}

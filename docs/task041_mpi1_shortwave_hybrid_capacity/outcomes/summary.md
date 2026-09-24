@@ -1,4 +1,15 @@
 # Task041 outcomes summary
+
+## Task041 V7 当前状态（冻结仓库 HEAD）
+
+| 阶段 | 当前结论 |
+|---|---|
+| G1 | 14 项独立 Q 全部未过 `1e-11`；7 项独立 PC 通过 `1e-8`。 |
+| G2 | 两次 setup/layout admission 失败；运行时比较字段未持久化，独立 layout identity 文件 `not_generated`，stage 0/1/2 `not_run`。 |
+| 完整正式 5 nm consumer | `not_started`；V7 未完成。 |
+
+见[中心 outcome](causal_fix_5nm_v7.md)和[机器记录](records/task041_v7_causal_fix_5nm.json)。以下历史正文保留。
+
 ## 2026-09-23：Review V6 13.5 nm 与 5 nm fixed-eight 收口
 
 13.5 nm 显式 cell-condensed Hybrid 的五项 true residual/物理 Gate 与 H2 数值全向量对照通过；Full3D secondary 未运行，旧 H2 资源合同令总 checker fail。5 nm 只完成固定八 RHS 组件配对：bottom 4/4、top 2/4；top formal column 12、493 的 `e_x/e_A` 超过原 `1e-8` 门。64 GiB cap 是本场专用授权；完整 5 nm consumer、RTA、EH、24h 均未运行。详细逐 RHS、finalizer、ledger 和16份 manifest 哈希见 [V6 outcome](transfer_fix_5nm_24h_v6.md)、[record](records/task041_v6_transfer_5nm_24h.json) 与 [ignored compact v2](../../../results/task041_review_v5_cpu_numa_condensed_speed/r3i_mpi8_side_20260922/preparation/f3c3_cap64_r1_20260923/cap64_r1_postmortem_compact_v2.json)。

@@ -249,3 +249,8 @@ own residual 与生命周期证据保留，但跨 fresh-run condensed-row identi
 `10454.390888826106675 s`、S2/S4=`0`；R4b 文档合同测试为 15 passed，JSON/路径/hash 自检与 `git diff --check` 均通过。最终 compact 为
 `153382 B` / `7f5d84e6a2a9a6809d9438bbb6e9444a4ffead9d6272728b394d3346401852df`。三份 harness-only 自检失败日志仅记录工具断言错误，不属于文档合同测试失败；其实际外层时间已按一次 shared ledger 记录。
 R2h v1、R2h v2 和 R2g 原 index 均保留；未重跑已绑定测试、FE/MPI、service、PDE 或 QEP。
+
+
+## Review V7 进度快照（2026-09-24）
+
+轻量验证与真实计算分开：G2a view-lifetime 相关 serial/MPI2 组件测试通过；G1b4/G1b5 文件与微型协议测试只验证接线/协议。当前布局证据 micro-test 为 1 passed（父 wall 2.318605613982072 s，source commit 6d27033e）；不是 MPI8、5 nm 布局或修正数值资格。V5 ledger 已有 40 entries、总计 30664.492338104035 s，本快照不追加费用。早期失败与受控停止记录保留，汇总见 [V7 outcome](causal_fix_5nm_v7.md)。
