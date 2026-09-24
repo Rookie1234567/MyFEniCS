@@ -1603,6 +1603,7 @@ class P4ExactFactor:
         augmented_fe_residual = None
         effective_physical_residual = None
         port_residual: np.ndarray | None = None
+        port_correction: np.ndarray | None = None
         physical_relative = np.inf
         physical_residual_norm = np.inf
         augmented_relative = np.inf
@@ -1938,6 +1939,11 @@ class P4ExactFactor:
                                 ),
                                 "port_rhs": _readonly_diagnostic_array(port_rhs),
                                 "correction": correction,
+                                "port_correction": (
+                                    None
+                                    if port_correction is None
+                                    else _readonly_diagnostic_array(port_correction)
+                                ),
                             },
                         )
                     if nonfinite_residual:
@@ -1996,6 +2002,30 @@ class P4ExactFactor:
                 backsolves += 1
                 solution.axpy(PETSc.ScalarType(1.0), correction)
                 if diagnostic_mode:
+                    if diagnostic_callback is not None:
+                        start, end = (
+                            int(value)
+                            for value in correction.getOwnershipRange()
+                        )
+                        local_port_correction = np.zeros(
+                            self.n_aux, dtype=np.complex128
+                        )
+                        correction_values = correction.getArray(readonly=True)
+                        try:
+                            for index in range(self.n_aux):
+                                row = self.full_rows + index
+                                if start <= row < end:
+                                    local_port_correction[index] = correction_values[
+                                        row - start
+                                    ]
+                        finally:
+                            del correction_values
+                        port_correction = np.empty_like(local_port_correction)
+                        self.matrix.getComm().tompi4py().Allreduce(
+                            local_port_correction,
+                            port_correction,
+                            op=MPI.SUM,
+                        )
                     correction_norm = float(correction.norm())
                     correction_seconds = time.perf_counter() - correction_started
             gate_failed = (

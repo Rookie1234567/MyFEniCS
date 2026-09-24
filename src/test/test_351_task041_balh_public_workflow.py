@@ -44,6 +44,8 @@ from benchmarks.task041_exact_side_workflow import (
     _task041_form_p4_residual_identity,
     _task041_p4_backend_matrix_source,
     _task041_p4_backend_release_audit,
+    _task041_p4_correction_callback_stage,
+    _task041_p4_cross_run_component_hashes_match,
     _task041_rank_numa_observed_backend,
     _task041_rank_numa_pair_sample_stage,
     _task041_stream_array_metadata,
@@ -78,6 +80,7 @@ from src.runners.task041_supervisor import (
     _validate_specification,
     run_task041_public_supervisor,
 )
+from src.solvers.full3d_lifecycle_packet import load_packet
 from src.solvers.physical_balanced_coupling import BalancedConstraintRejected
 from src.solvers.physical_balanced_physical_operator import (
     P4CondensedExactFactor,
@@ -890,6 +893,25 @@ def test_task041_fixed_p4_backend_pair_is_explicit_and_5nm_scoped():
         "results/task041_review_v5_cpu_numa_condensed_speed/"
         "r0_r1_20260920/r1_load_ledger_20260920.json"
     )
+    correction_contract = task041_schur_speed_v2_contract(
+        TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
+        scope=TASK041_REPRESENTATIVE_RHS_SCOPE,
+        side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        comparison_mode=pair_mode,
+        p4_correction_replay=True,
+    )
+    assert correction_contract["p4_correction_replay"]["pc_action"] == "not_run"
+    correction_command = build_task041_balh_candidate_consumer_command(
+        str(Path(sys.executable)), candidate, "packet.json", "identity.json",
+        "b" * 64, "worker", "c" * 40, "a" * 40,
+        performance_profile=TASK041_SCHUR_SPEED_V2_PROFILE,
+        task041_rhs_probe_manifest=manifest,
+        side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        comparison_mode=pair_mode,
+        p4_correction_replay_from=REPOSITORY_ROOT / "results/g1",
+    )
+    assert "--task041-p4-correction-replay-from" in correction_command
+    assert "--task041-top-causal-replay" not in correction_command
 
     unchanged_contract = task041_schur_speed_v2_contract(
         TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
@@ -945,7 +967,279 @@ def test_task041_fixed_p4_backend_pair_is_explicit_and_5nm_scoped():
     ) is True
 
 
-def test_task041_top_causal_worker_parameter_and_lifecycle_order(monkeypatch):
+def _write_p4_correction_result_fixture(tmp_path):
+    root = tmp_path / "consumer"
+    result_path = root / "numerical_output/top_causal_replay/p4_correction_replay/result.json"
+    result_path.parent.mkdir(parents=True)
+    a4 = {
+        "physical_relative_residual": 1.0e-12,
+        "augmented_relative_residual": 1.0e-12,
+        "physical_pass": True,
+        "augmented_pass": True,
+        "pass": True,
+    }
+    stages = [
+        {
+            "operation": q,
+            "step": step,
+            "same_frozen_input_bytes": True,
+            "same_q_input_bytes": True,
+            "same_fe_ownership": True,
+            "stage_gates_pass": True,
+            "q_output_difference": {
+                "finite": True,
+                "numerator_norm": 1.0e-12,
+                "denominator_norm": 1.0,
+                "relative": 1.0e-12,
+                "limit": 1.0e-11,
+                "pass": True,
+            },
+            "original_a4_gates": {backend: dict(a4) for backend in ("full", "cell_condensed")},
+        }
+        for q in ("q1", "q2")
+        for step in (0, 1, 2)
+    ]
+    source = {
+        "producer_source_sha": "e2965ee25e56220d1623afe4dd221612542c2764",
+        "consumer_source_sha": "c" * 40,
+        "qep_source_sha": "b01a5932e4dfaf895e81e0424e0dd88c276fb0d3",
+        "g1_root": str((tmp_path / "g1").resolve()),
+    }
+    producer_identity = {"source_sha": source["qep_source_sha"], "schema": "packet"}
+    producer_identity_path = root / "producer_identity.json"
+    producer_identity_path.parent.mkdir(parents=True, exist_ok=True)
+    producer_identity_path.write_text(json.dumps(producer_identity) + "\n")
+    source.update(
+        {
+            "producer_identity_sha256": hashlib.sha256(
+                json.dumps(producer_identity, sort_keys=True, separators=(",", ":")).encode()
+            ).hexdigest(),
+            "producer_packet_identity_path": str(producer_identity_path),
+            "producer_packet_identity_sha256": hashlib.sha256(
+                producer_identity_path.read_bytes()
+            ).hexdigest(),
+        }
+    )
+    record = {
+        "schema": "task041.p4_correction_replay.result.v1",
+        "scope": "top_pc1_frozen_independent_q1_q2",
+        "status": "completed_action_gates_pass",
+        "qualification_pass": False,
+        "source": source,
+        "selected_formal_columns": [12],
+        "pc_index": 1,
+        "pc_action": "not_run",
+        "backend_release_pass": True,
+        "cross_run_layout_pass": True,
+        "evidence_complete": True,
+        "action_safety_pass": True,
+        "stage_comparisons": stages,
+        "port_direction": {
+            "source": "existing_external_PortMode_and_physical_action_path",
+            "mode_generation_source": (
+                "src/common/modes_3d.py::outgoing_port_modes_3d"
+            ),
+            "mode_key_sha256": "a" * 64,
+            "normalization_sha256": "b" * 64,
+            "port_layout_same": True,
+            "pass": True,
+        },
+        "artifact_path": str(result_path),
+    }
+    result_path.write_text(json.dumps(record, sort_keys=True) + "\n")
+    record["artifact_sha256"] = hashlib.sha256(result_path.read_bytes()).hexdigest()
+    reference = {
+        key: record[key]
+        for key in (
+            "schema", "scope", "status", "qualification_pass",
+            "evidence_complete", "action_safety_pass", "artifact_path",
+            "artifact_sha256",
+        )
+    }
+    sidecar = root / "numerical_output/p4_correction_replay_top.json"
+    sidecar.write_text(json.dumps(reference, sort_keys=True) + "\n")
+    summary = {
+        "schema": "task041.side_balh.candidate_consumer.v1",
+        "status": "task041_p4_correction_replay_completed",
+        "classification": "TASK041_P4_CORRECTION_REPLAY_COMPLETED",
+        "source_sha": "c" * 40,
+        "identity": {"mode_count": 480},
+        "producer_identity": producer_identity,
+        "packet": {"identity": str(producer_identity_path)},
+        "p4_correction_replay": reference,
+        "side_setup": {
+            "side_completion": {
+                "top": {
+                    "status": "destroyed",
+                    "backend_order": ["full", "cell_condensed"],
+                }
+            }
+        },
+        "markers": {"observed": ["final_cleanup_complete"]},
+        "lifecycle": {
+            "setup_released": True,
+            "representative_rhs_cleanup_pass": True,
+            "rss_marker_emitted": True,
+        },
+        "cleanup": {"pass": True},
+        "gates": {"pass": False},
+    }
+    root.mkdir(exist_ok=True)
+    (root / "consumer_summary.json").write_text(
+        json.dumps(summary, sort_keys=True) + "\n"
+    )
+    return root
+
+
+def _rewrite_p4_correction_fixture_result(root, update):
+    result_path = root / "numerical_output/top_causal_replay/p4_correction_replay/result.json"
+    record = json.loads(result_path.read_text())
+    update(record)
+    result_path.write_text(json.dumps(record, sort_keys=True) + "\n")
+    reference = {
+        key: record[key]
+        for key in (
+            "schema", "scope", "status", "qualification_pass",
+            "evidence_complete", "action_safety_pass", "artifact_path",
+        )
+    }
+    reference["artifact_sha256"] = hashlib.sha256(result_path.read_bytes()).hexdigest()
+    summary_path = root / "consumer_summary.json"
+    summary = json.loads(summary_path.read_text())
+    summary["p4_correction_replay"] = reference
+    summary_path.write_text(json.dumps(summary, sort_keys=True) + "\n")
+    sidecar = root / "numerical_output/p4_correction_replay_top.json"
+    sidecar.write_text(json.dumps(reference, sort_keys=True) + "\n")
+
+
+def test_task041_p4_correction_result_has_separate_public_scope(tmp_path):
+    root = _write_p4_correction_result_fixture(tmp_path)
+
+    result = supervisor._consumer_result(
+        root,
+        process_group_gone=True,
+        expected_p4_correction_replay_from=tmp_path / "g1",
+    )
+    assert result["complete"] is True
+    assert result["classification"] == "task041_p4_correction_replay_complete"
+    assert result["completion_scope"] == "p4_correction_replay"
+    assert result["p4_correction_replay_validation"]["pass"] is True
+
+    old_scope = supervisor._consumer_result(root, process_group_gone=True)
+    assert old_scope["complete"] is False
+
+
+def test_task041_p4_correction_callback_reads_nested_side_inverse_audit():
+    # This matches the outer record emitted by observe_p4_correction in side_inverse.
+    callback_record = {
+        "backend": "full",
+        "q_call_index": 1,
+        "p4_audit": {
+            "diagnostic_step_index": 2,
+            "diagnostic_correction_count": 2,
+        },
+        "port_state": {"port_correction": [[0.25, -0.5]]},
+    }
+    step, p4_audit = _task041_p4_correction_callback_stage(callback_record)
+    assert step == 2
+    assert p4_audit["diagnostic_correction_count"] == 2
+    with pytest.raises(Task041ModePrepError, match="omitted its core audit"):
+        _task041_p4_correction_callback_stage({"q_call_index": 1})
+
+
+def test_task041_p4_correction_allows_early_negative_stages_if_final_passes(tmp_path):
+    root = _write_p4_correction_result_fixture(tmp_path)
+
+    def mark_early_steps_negative(record):
+        for row in record["stage_comparisons"]:
+            if row["step"] not in (0, 1):
+                continue
+            row["q_output_difference"].update(
+                {
+                    "numerator_norm": 5.0e-11,
+                    "relative": 5.0e-11,
+                    "pass": False,
+                }
+            )
+            row["stage_gates_pass"] = False
+            for audit in row["original_a4_gates"].values():
+                audit.update(
+                    {
+                        "physical_relative_residual": 2.0e-10,
+                        "physical_pass": False,
+                        "pass": False,
+                    }
+                )
+
+    _rewrite_p4_correction_fixture_result(root, mark_early_steps_negative)
+    result = supervisor._consumer_result(
+        root,
+        process_group_gone=True,
+        expected_p4_correction_replay_from=root.parent / "g1",
+    )
+    assert result["complete"] is True
+    assert result["p4_correction_replay_validation"]["pass"] is True
+    assert result["p4_correction_replay_validation"]["qualification_pass"] is False
+
+
+@pytest.mark.parametrize(
+    "failure",
+    ("missing_step", "nonfinite_step", "final_q_over_limit", "final_a4_over_limit"),
+)
+def test_task041_p4_correction_rejects_incomplete_nonfinite_or_final_failure(
+    tmp_path, failure
+):
+    root = _write_p4_correction_result_fixture(tmp_path)
+
+    def introduce_failure(record):
+        if failure == "missing_step":
+            record["stage_comparisons"] = [
+                row
+                for row in record["stage_comparisons"]
+                if (row["operation"], row["step"]) != ("q2", 1)
+            ]
+            return
+        row = next(
+            item
+            for item in record["stage_comparisons"]
+            if item["operation"] == "q2" and item["step"] == 2
+        )
+        row["stage_gates_pass"] = False
+        if failure == "nonfinite_step":
+            row["q_output_difference"]["relative"] = float("nan")
+        elif failure == "final_q_over_limit":
+            row["q_output_difference"].update(
+                {
+                    "numerator_norm": 2.0e-11,
+                    "relative": 2.0e-11,
+                    "pass": False,
+                }
+            )
+        else:
+            row["original_a4_gates"]["cell_condensed"].update(
+                {
+                    "physical_relative_residual": 2.0e-10,
+                    "physical_pass": False,
+                    "pass": False,
+                }
+            )
+
+    _rewrite_p4_correction_fixture_result(root, introduce_failure)
+    result = supervisor._consumer_result(
+        root,
+        process_group_gone=True,
+        expected_p4_correction_replay_from=root.parent / "g1",
+    )
+    assert result["complete"] is False
+    assert (
+        result["p4_correction_replay_validation"]["checks"][
+            "required_q_stages_and_original_gates"
+        ]
+        is False
+    )
+
+
+def test_task041_causal_and_correction_worker_routes_preserve_lifecycle_order(monkeypatch):
     from benchmarks import task041_exact_side_workflow as worker
 
     calls = []
@@ -987,6 +1281,12 @@ def test_task041_top_causal_worker_parameter_and_lifecycle_order(monkeypatch):
     assert calls[0]["comparison_mode"] == (
         task041_balh_workflow.TASK041_P4_BACKEND_PAIR_MODE
     )
+    correction_args = args[:-1] + [
+        "--task041-p4-correction-replay-from", "g1-consumer-root"
+    ]
+    assert task041_balh_workflow.main(correction_args) == {"status": "captured"}
+    assert calls[1]["p4_correction_replay_from"] == "g1-consumer-root"
+    assert calls[1]["top_causal_replay"] is False
 
     tree = ast.parse(inspect.getsource(worker._run_task041_balh_candidate_setup))
     apply_backend = next(
@@ -1410,6 +1710,10 @@ def test_task041_pair_layout_identity_excludes_space_object_addresses():
     assert address_changed_identity["identity_sha256"] == original_identity[
         "identity_sha256"
     ]
+    assert _task041_p4_cross_run_component_hashes_match(
+        original_identity["component_sha256"],
+        address_changed_identity["component_sha256"],
+    )
     assert address_changed_identity["space_object_diagnostics"] != (
         original_identity["space_object_diagnostics"]
     )
@@ -1422,6 +1726,10 @@ def test_task041_pair_layout_identity_excludes_space_object_addresses():
     assert map_changed_identity["identity_sha256"] != original_identity[
         "identity_sha256"
     ]
+    assert not _task041_p4_cross_run_component_hashes_match(
+        original_identity["component_sha256"],
+        map_changed_identity["component_sha256"],
+    )
 
 
 def test_task041_pair_layout_matrix_source_uses_actual_backend_interfaces():
@@ -1498,12 +1806,16 @@ class _Task041TopCausalTinyVec:
 class _Task041TopCausalTinyP4:
     def __init__(self, comm):
         self.comm = comm
+        self.audit_rhs = []
 
     def create_fe_vector(self):
         start, end = (0, 2) if self.comm.rank == 0 else (2, 2)
         return _Task041TopCausalTinyVec(np.zeros(end - start), (start, end))
 
     def audit_solution(self, rhs, solution, *, port_rhs, port_solution):
+        self.audit_rhs.append(
+            np.array(rhs.getArray(readonly=True), dtype=np.complex128, copy=True)
+        )
         return {
             "physical_relative_residual": 1.0e-13,
             "relative_residual": 2.0e-13,
@@ -1727,6 +2039,103 @@ def test_task041_top_causal_capture_tail_packets_and_replay_gates(
     assert capture._packet(reference_node, "q_02_input_output")["rhs"].size == local_size(
         3, comm.rank
     )
+
+    def packet_vec(global_size, values):
+        start, end = owned_range(global_size, comm.rank)
+        vector = PETSc.Vec().createMPI(
+            (end - start, global_size), comm=comm
+        )
+        if end > start:
+            vector.getArray()[:] = np.asarray(values, dtype=np.complex128)[
+                start:end
+            ]
+        vector.assemble()
+        return vector
+
+    stage_solution = packet_vec(2, [2.0 + 0.5j, -1.0 + 0.25j])
+    stage_rhs = packet_vec(2, [3.0 + 0.75j, 4.0 - 0.5j])
+    stage_residual = packet_vec(2, [0.125 - 0.25j, -0.375 + 0.5j])
+    stage_p6 = packet_vec(3, [0.5 + 0.25j, 1.5 - 0.5j, -2.0 + 0.75j])
+    stage_q_input = packet_vec(3, [1.0 - 0.25j, -0.5 + 0.5j, 2.5 + 0.125j])
+    port_state = {
+        "port_rhs_complex": [[0.25, -0.125]],
+        "port_solution_complex": [[0.5, 0.25]],
+    }
+    borrowed_stage_vectors = {
+        "solution": stage_solution,
+        "coarse_rhs": stage_rhs,
+        "fe_residual": stage_residual,
+        "p_output": stage_p6,
+        "q_input": stage_q_input,
+    }
+    audit_rhs_count = len(p4.audit_rhs)
+    try:
+        stage_record = capture.write_p4_correction_stage(
+            backend="cell_condensed",
+            operation="q1",
+            q_call_index=1,
+            step=0,
+            vectors=borrowed_stage_vectors,
+            audit={"diagnostic_step_index": 0, "relative_residual": 1.0e-13},
+            port_state=port_state,
+            layout_identity_sha256=capture.layout_identity_sha256,
+        )
+        state_artifact = next(
+            item
+            for item in stage_record["artifacts"]
+            if item["role"] == "p4_state"
+        )
+        state_packet = load_packet(
+            Path(state_artifact["manifest"]),
+            identity=state_artifact["identity"],
+            expected_manifest_sha256=state_artifact["manifest_sha256"],
+            comm=comm,
+        )
+        expected_owned_rhs = np.asarray(
+            stage_rhs.getArray(readonly=True), dtype=np.complex128
+        ).copy()
+        np.testing.assert_array_equal(state_packet["rhs"], expected_owned_rhs)
+        if expected_owned_rhs.size:
+            assert not np.array_equal(
+                state_packet["rhs"], stage_residual.getArray()
+            )
+        assert state_packet["metadata"]["p4_audit"][
+            "diagnostic_step_index"
+        ] == 0
+        assert state_packet["metadata"]["port_state"] == port_state
+
+        # Match the production condensed callback's temporary live-inverse binding.
+        capture.inverse = inverse
+        shared_node = {"shared_a4_checks": []}
+        shared_check = capture._shared_a4_check(
+            node=shared_node,
+            q_index=1,
+            reference_packet=state_packet,
+            current_solution=stage_solution,
+            current_rhs=expected_owned_rhs,
+            current_port=port_state,
+        )
+        capture.inverse = None
+        assert shared_check["pass"] is True
+        assert shared_node["shared_a4_checks"][0]["q_call_index"] == 1
+        assert len(p4.audit_rhs) == audit_rhs_count + 2
+        np.testing.assert_array_equal(
+            p4.audit_rhs[audit_rhs_count], expected_owned_rhs
+        )
+        np.testing.assert_array_equal(
+            p4.audit_rhs[audit_rhs_count + 1], expected_owned_rhs
+        )
+        assert int(stage_solution.handle) != 0
+        assert int(stage_rhs.handle) != 0
+        assert int(stage_residual.handle) != 0
+    finally:
+        capture.inverse = None
+        stage_q_input.destroy()
+        stage_p6.destroy()
+        stage_residual.destroy()
+        stage_rhs.destroy()
+        stage_solution.destroy()
+
     binding_key = (2, "q_02_input_output")
     saved_binding = capture.packet_bindings[binding_key]
     wrong_binding = copy.deepcopy(saved_binding)
@@ -2386,7 +2795,7 @@ def test_task041_balh_ordinary_hybrid_cannot_opt_into_balh_pc(tmp_path: Path):
 
 
 def test_task041_balh_scripts_run_case_reaches_public_launcher(monkeypatch):
-    path = REPOSITORY_ROOT / "input/official/task041/side_balh/13p5nm_p6h10_m120_mpi8_exact.dat"
+    path = REPOSITORY_ROOT / "input/official/task041/side_balh/5nm_p6h4_m480_mpi8_balh.dat"
     captured = {}
 
     def fake_launch(specification, **kwargs):
@@ -2395,9 +2804,21 @@ def test_task041_balh_scripts_run_case_reaches_public_launcher(monkeypatch):
         return {"result_classification": "worker_exit0"}
 
     monkeypatch.setattr("src.runners.task038_launcher.launch_specification", fake_launch)
-    assert run_case.main([str(path)]) == 0
-    assert captured["model_id"] == "task041_13p5nm_exact_side_hybrid_iterative_p6h10_m120_mpi8"
-    assert captured["kwargs"]["producer_packet_root"] is None
+    packet_root = REPOSITORY_ROOT / "results/producer"
+    probe = REPOSITORY_ROOT / "results/representative_rhs.json"
+    correction_root = REPOSITORY_ROOT / "results/g1"
+    assert run_case.main(
+        [
+            str(path), "--producer-packet-root", str(packet_root),
+            "--task041-performance-profile", TASK041_SCHUR_SPEED_V2_PROFILE,
+            "--task041-rhs-probe", str(probe),
+            "--task041-side-setup-schedule", TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+            "--task041-comparison-mode", task041_balh_workflow.TASK041_P4_BACKEND_PAIR_MODE,
+            "--task041-p4-correction-replay-from", str(correction_root),
+        ]
+    ) == 0
+    assert captured["model_id"] == TASK041_BALH_5NM_CANDIDATE_MODEL_ID
+    assert captured["kwargs"]["task041_p4_correction_replay_from"] == correction_root
 
 
 def test_task041_balh_time_stop_override_is_forwarded_only_to_5nm_candidate(

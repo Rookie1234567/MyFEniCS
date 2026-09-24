@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import time
 from contextlib import contextmanager
+from itertools import pairwise
 from types import SimpleNamespace
 
 import numpy as np
@@ -1166,6 +1167,34 @@ def test_side_inverse_condensed_q_records_timing_and_solve_delta():
     assert p4_factor.destroy_count == 1
 
 
+def test_diagnostic_p4_configuration_preserves_default_solver_state():
+    inverse, owned = _build_fixture()
+    try:
+        assert inverse._ksp is not None
+        original_ksp = inverse._ksp
+        original_coupling = inverse._coupling
+        inverse._p4_backsolve_count = 7
+        inverse._p4_refinement_count = 3
+
+        def observer(_audit, _vectors):
+            return None
+
+        inverse.configure_diagnostic_p4_corrections(2, observer)
+
+        assert inverse._diagnostic_p4_correction_steps == 2
+        assert inverse._diagnostic_p4_correction_callback is observer
+        assert inverse._p4_backsolve_count == 7
+        assert inverse._p4_refinement_count == 3
+        assert inverse._ksp is original_ksp
+        assert inverse._coupling is original_coupling
+        inverse.configure_diagnostic_p4_corrections(0, None)
+        assert inverse._diagnostic_p4_correction_steps == 0
+        assert inverse._diagnostic_p4_correction_callback is None
+    finally:
+        inverse.destroy()
+        owned["operator"].destroy()
+
+
 def test_side_inverse_opt_in_diagnostic_scope_labels_and_p4_norms():
     events: list[dict[str, object]] = []
 
@@ -2248,6 +2277,16 @@ def test_p4_opt_in_corrections_match_nonhermitian_augmented_block(
             "port_residual": np.array(
                 borrowed["port_residual"], dtype=np.complex128, copy=True
             ),
+            "port_solution": np.array(
+                borrowed["port_solution"], dtype=np.complex128, copy=True
+            ),
+            "port_correction": (
+                None
+                if borrowed.get("port_correction") is None
+                else np.array(
+                    borrowed["port_correction"], dtype=np.complex128, copy=True
+                )
+            ),
             "block_residual": block_residual,
             "block_norm": float(np.linalg.norm(block_residual)),
         }
@@ -2344,6 +2383,16 @@ def test_p4_opt_in_corrections_match_nonhermitian_augmented_block(
                 )
         assert audit["backsolve_count"] == correction_steps + 1
         assert len(audit["diagnostic_correction_history"]) == correction_steps + 1
+        if backend == "full":
+            assert events[0]["port_correction"] is None
+            for previous, current in pairwise(events):
+                assert current["port_correction"] is not None
+                np.testing.assert_allclose(
+                    current["port_correction"],
+                    current["port_solution"] - previous["port_solution"],
+                    rtol=1.0e-12,
+                    atol=1.0e-13,
+                )
         np.testing.assert_array_equal(_gather_dense_vector(rhs), rhs_before)
         np.testing.assert_array_equal(port_rhs, port_rhs_before)
     finally:

@@ -3658,6 +3658,7 @@ def launch_specification(
     task041_side_setup_schedule: str | None = None,
     task041_comparison_mode: str | None = None,
     task041_top_causal_replay: bool = False,
+    task041_p4_correction_replay_from: str | Path | None = None,
 ) -> dict[str, Any]:
     """Launch one resolved input or fail closed before numerical execution."""
 
@@ -3699,6 +3700,10 @@ def launch_specification(
     if task041_top_causal_replay and not task041_public_route:
         raise InputError(
             "--task041-top-causal-replay requires the Task041 public route"
+        )
+    if task041_p4_correction_replay_from is not None and not task041_public_route:
+        raise InputError(
+            "--task041-p4-correction-replay-from requires the Task041 public route"
         )
     balh_time_stop_override = None
     performance_contract = None
@@ -3769,6 +3774,9 @@ def launch_specification(
                 side_setup_schedule=task041_side_setup_schedule,
                 comparison_mode=task041_comparison_mode,
                 top_causal_replay=task041_top_causal_replay,
+                p4_correction_replay=(
+                    task041_p4_correction_replay_from is not None
+                ),
             )
         except ValueError as exc:
             raise InputError(str(exc)) from exc
@@ -3776,6 +3784,7 @@ def launch_specification(
         task041_side_setup_schedule is not None
         or task041_comparison_mode is not None
         or task041_top_causal_replay
+        or task041_p4_correction_replay_from is not None
     ):
         raise InputError(
             "Task041 comparison options require task041_schur_speed_v2"
@@ -3937,6 +3946,16 @@ def launch_specification(
     if task041_top_causal_replay:
         manifest["task041_top_causal_replay"] = True
         _write_json(run_directory / "run_manifest.json", manifest)
+    if task041_p4_correction_replay_from is not None:
+        correction_root = Path(task041_p4_correction_replay_from)
+        if not correction_root.is_absolute():
+            raise InputError(
+                "--task041-p4-correction-replay-from must be absolute"
+            )
+        manifest["task041_p4_correction_replay_from"] = str(
+            correction_root
+        )
+        _write_json(run_directory / "run_manifest.json", manifest)
     if rhs_probe_binding is not None:
         manifest["representative_rhs_probe"] = {
             "path": rhs_probe_binding["path"],
@@ -3983,6 +4002,9 @@ def launch_specification(
                 task041_side_setup_schedule=task041_side_setup_schedule,
                 task041_comparison_mode=task041_comparison_mode,
                 task041_top_causal_replay=task041_top_causal_replay,
+                task041_p4_correction_replay_from=(
+                    task041_p4_correction_replay_from
+                ),
             )
         except OSError as exc:
             result = {

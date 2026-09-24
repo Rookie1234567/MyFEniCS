@@ -402,6 +402,10 @@ class SideBalancedInverse:
         self._apply_in_progress = False
         self._record_iteration_history = bool(record_iteration_history)
         self._diagnostic_callback = diagnostic_callback
+        self._diagnostic_p4_correction_steps = 0
+        self._diagnostic_p4_correction_callback: Callable[
+            [Mapping[str, Any], Mapping[str, Any]], None
+        ] | None = None
         self._active_apply_pc_count = 0
         self._active_pc_index: int | None = None
         self._active_pc_q_count = 0
@@ -428,6 +432,7 @@ class SideBalancedInverse:
         self._ph_audit_count = 0
         self._ph_total_count = 0
         self._p_count = 0
+
         self._p4_backsolve_count = 0
         self._p4_refinement_count = 0
         self._apply_count = 0
@@ -490,6 +495,20 @@ class SideBalancedInverse:
             self._ksp.destroy()
             self._ksp = None
             raise
+
+    def configure_diagnostic_p4_corrections(
+        self,
+        steps: int,
+        callback: Callable[[Mapping[str, Any], Mapping[str, Any]], None] | None,
+    ) -> None:
+        """Set the opt-in correction observer without changing solver state."""
+
+        if isinstance(steps, bool) or int(steps) not in (0, 1, 2):
+            raise ValueError("diagnostic P4 corrections must be 0, 1, or 2")
+        if int(steps) and callback is None:
+            raise ValueError("diagnostic P4 corrections require an observer")
+        self._diagnostic_p4_correction_steps = int(steps)
+        self._diagnostic_p4_correction_callback = callback
 
     @property
     def operator(self) -> PETSc.Mat:
@@ -1263,6 +1282,84 @@ class SideBalancedInverse:
             q_call_index = self._active_pc_q_count
         else:
             q_call_index = len(self._direct_p4_call_records) + 1
+        correction_steps = int(self._diagnostic_p4_correction_steps)
+
+        def observe_p4_correction(
+            audit: Mapping[str, Any], vectors: Mapping[str, Any]
+        ) -> None:
+            callback = self._diagnostic_p4_correction_callback
+            if callback is None:
+                raise RuntimeError("P4 correction observer disappeared during replay")
+            fe_solution = None
+            fe_correction = None
+            p_output = None
+            local_error = None
+            try:
+                if self._p4_inverse_backend == "full":
+                    fe_solution = self._p4_factor.extract_fe_solution(
+                        vectors["solution"]
+                    )
+                    if vectors.get("correction") is not None:
+                        fe_correction = self._p4_factor.extract_fe_solution(
+                            vectors["correction"]
+                        )
+                else:
+                    fe_solution = vectors["solution"]
+                    fe_correction = vectors.get("correction")
+                if not isinstance(fe_solution, PETSc.Vec):
+                    raise TypeError("P4 correction observer has no FE solution")
+            except BaseException as exc:  # noqa: BLE001 - synchronize before P
+                local_error = f"{type(exc).__name__}: {exc}"
+            errors = self._comm.allgather(local_error)
+            if any(value is not None for value in errors):
+                if self._p4_inverse_backend == "full":
+                    if fe_correction is not None:
+                        fe_correction.destroy()
+                    if fe_solution is not None:
+                        fe_solution.destroy()
+                raise RuntimeError(f"P4 correction state extraction failed: {errors}")
+            try:
+                p_output = self._owner_transfer.apply_primal(fe_solution)
+                port_state = {
+                    key: (
+                        None
+                        if vectors.get(key) is None
+                        else [
+                            [float(value.real), float(value.imag)]
+                            for value in np.asarray(vectors[key]).reshape(-1)
+                        ]
+                    )
+                    for key in (
+                        "port_solution",
+                        "port_rhs",
+                        "port_residual",
+                        "port_correction",
+                    )
+                }
+                callback(
+                    {
+                        "backend": self._p4_inverse_backend,
+                        "q_call_index": int(q_call_index),
+                        "p4_audit": dict(audit),
+                        "port_state": port_state,
+                    },
+                    {
+                        "solution": fe_solution,
+                        "coarse_rhs": coarse_rhs,
+                        "fe_residual": vectors["fe_residual"],
+                        "correction": fe_correction,
+                        "p_output": p_output,
+                        "q_input": source,
+                    },
+                )
+            finally:
+                if p_output is not None:
+                    p_output.destroy()
+                if self._p4_inverse_backend == "full":
+                    if fe_correction is not None:
+                        fe_correction.destroy()
+                    if fe_solution is not None:
+                        fe_solution.destroy()
         self._ph_total_count += 1
         self._emit_diagnostic(
             "Q_input",
@@ -1306,6 +1403,13 @@ class SideBalancedInverse:
                 apply_kwargs: dict[str, Any] = {
                     "timing": p4_timing if self._detailed_timing else None
                 }
+                if correction_steps:
+                    apply_kwargs.update(
+                        {
+                            "diagnostic_correction_steps": correction_steps,
+                            "diagnostic_callback": observe_p4_correction,
+                        }
+                    )
                 if capture_port_values:
                     apply_kwargs["capture_port_values"] = True
                 coarse_solution = self._p4_factor.apply(coarse_rhs, **apply_kwargs)
@@ -1334,6 +1438,13 @@ class SideBalancedInverse:
                     solve_kwargs["timing"] = p4_timing
                 if self._diagnostic_callback is not None:
                     solve_kwargs["diagnostic_audit"] = True
+                if correction_steps:
+                    solve_kwargs.update(
+                        {
+                            "diagnostic_correction_steps": correction_steps,
+                            "diagnostic_callback": observe_p4_correction,
+                        }
+                    )
                 if capture_port_values:
                     solve_kwargs["capture_port_values"] = True
                 self._p4_factor.solve_with_refinement(

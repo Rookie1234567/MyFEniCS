@@ -71,6 +71,12 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="capture and replay the selected top fixed-RHS causal nodes",
     )
+    parser.add_argument(
+        "--task041-p4-correction-replay-from",
+        type=Path,
+        metavar="G1_CONSUMER_ROOT",
+        help="run the fixed PC1 Q1/Q2 correction diagnostic from frozen G1 packets",
+    )
     return parser
 
 
@@ -134,6 +140,9 @@ def main(argv: list[str] | None = None) -> int:
                     side_setup_schedule=args.task041_side_setup_schedule,
                     comparison_mode=args.task041_comparison_mode,
                     top_causal_replay=args.task041_top_causal_replay,
+                    p4_correction_replay=(
+                        args.task041_p4_correction_replay_from is not None
+                    ),
                 )
             except ValueError as exc:
                 raise InputError(str(exc)) from exc
@@ -141,6 +150,7 @@ def main(argv: list[str] | None = None) -> int:
             args.task041_side_setup_schedule is not None
             or args.task041_comparison_mode is not None
             or args.task041_top_causal_replay
+            or args.task041_p4_correction_replay_from is not None
         ):
             raise InputError(
                 "Task041 comparison options require task041_schur_speed_v2"
@@ -169,6 +179,23 @@ def main(argv: list[str] | None = None) -> int:
                 )
             if not args.task041_rhs_probe.is_absolute():
                 raise InputError("--task041-rhs-probe must be an absolute path")
+        if args.task041_p4_correction_replay_from is not None:
+            if (
+                args.task041_top_causal_replay
+                or args.task041_performance_profile != "task041_schur_speed_v2"
+                or args.task041_rhs_probe is None
+                or args.task041_comparison_mode != "p4_backend_pair"
+                or args.task041_side_setup_schedule != "sequential_component"
+                or args.producer_packet_root is None
+            ):
+                raise InputError(
+                    "P4 correction replay requires the explicit 5 nm fixed-eight pair, "
+                    "representative RHS manifest, and producer packet"
+                )
+            if not args.task041_p4_correction_replay_from.is_absolute():
+                raise InputError(
+                    "--task041-p4-correction-replay-from must be an absolute G1 consumer root"
+                )
         if args.validate_only:
             payload = {
                 "status": "valid",
@@ -201,6 +228,9 @@ def main(argv: list[str] | None = None) -> int:
             task041_side_setup_schedule=args.task041_side_setup_schedule,
             task041_comparison_mode=args.task041_comparison_mode,
             task041_top_causal_replay=args.task041_top_causal_replay,
+            task041_p4_correction_replay_from=(
+                args.task041_p4_correction_replay_from
+            ),
         )
         print(json.dumps(result, sort_keys=True, separators=(",", ":")))
         return 0 if result["result_classification"] == "worker_exit0" else 3

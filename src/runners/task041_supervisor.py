@@ -6836,6 +6836,7 @@ def _consumer_result(
     expected_side_setup_schedule: str | None = None,
     expected_comparison_mode: str | None = None,
     expected_top_causal_replay: bool = False,
+    expected_p4_correction_replay_from: str | Path | None = None,
     expected_diagnostic_output: bool = False,
     expected_diagnostic_model_id: str | None = None,
 ) -> dict[str, Any]:
@@ -6876,8 +6877,243 @@ def _consumer_result(
         and worker_classification in common_failure_classes
     )
     representative_scope = (
-        representative_rhs_binding is not None and not common_scope
+        representative_rhs_binding is not None
+        and not common_scope
+        and expected_p4_correction_replay_from is None
     )
+    correction_reference = summary.get("p4_correction_replay")
+    correction_record: Mapping[str, Any] | None = None
+    correction_checks: dict[str, bool] = {}
+    if expected_p4_correction_replay_from is not None:
+        correction_artifact_ok = False
+        try:
+            result_path = Path(str(correction_reference["artifact_path"])).resolve()
+            result_path.relative_to(consumer_root.resolve())
+            disk_record = _read_json(result_path)
+            correction_artifact_ok = bool(
+                result_path.is_file()
+                and _valid_sha(correction_reference.get("artifact_sha256"), 64)
+                and _sha256_file(result_path)
+                == correction_reference.get("artifact_sha256")
+                and isinstance(disk_record, Mapping)
+            )
+            if correction_artifact_ok:
+                correction_record = dict(disk_record)
+                correction_record["artifact_sha256"] = correction_reference[
+                    "artifact_sha256"
+                ]
+                correction_artifact_ok = all(
+                    correction_record.get(key) == correction_reference.get(key)
+                    for key in (
+                        "schema", "scope", "status", "qualification_pass",
+                        "evidence_complete", "action_safety_pass", "artifact_path",
+                    )
+                )
+        except (KeyError, OSError, TypeError, ValueError):
+            correction_artifact_ok = False
+        source = correction_record.get("source") if isinstance(correction_record, Mapping) else None
+        producer_identity = summary.get("producer_identity")
+        packet = summary.get("packet")
+        producer_identity_sha = (
+            hashlib.sha256(
+                json.dumps(
+                    producer_identity, sort_keys=True, separators=(",", ":")
+                ).encode("utf-8")
+            ).hexdigest()
+            if isinstance(producer_identity, Mapping)
+            else None
+        )
+        producer_identity_path = (
+            Path(str(source.get("producer_packet_identity_path"))).resolve()
+            if isinstance(source, Mapping)
+            and source.get("producer_packet_identity_path")
+            else None
+        )
+        try:
+            producer_identity_file_ok = bool(
+                producer_identity_path is not None
+                and isinstance(packet, Mapping)
+                and producer_identity_path == Path(str(packet.get("identity"))).resolve()
+                and _valid_sha(source.get("producer_packet_identity_sha256"), 64)
+                and _sha256_file(producer_identity_path)
+                == source.get("producer_packet_identity_sha256")
+            )
+        except OSError:
+            producer_identity_file_ok = False
+        correction_checks["scope_and_source"] = bool(
+            isinstance(correction_record, Mapping)
+            and correction_record.get("schema")
+            == "task041.p4_correction_replay.result.v1"
+            and correction_record.get("scope")
+            == "top_pc1_frozen_independent_q1_q2"
+            and correction_record.get("selected_formal_columns") == [12]
+            and correction_record.get("pc_index") == 1
+            and correction_record.get("pc_action") == "not_run"
+            and correction_record.get("backend_release_pass") is True
+            and correction_record.get("cross_run_layout_pass") is True
+            and correction_record.get("qualification_pass") is False
+            and isinstance(source, Mapping)
+            and source.get("producer_source_sha")
+            == "e2965ee25e56220d1623afe4dd221612542c2764"
+            and source.get("qep_source_sha")
+            == "b01a5932e4dfaf895e81e0424e0dd88c276fb0d3"
+            and producer_identity_sha == source.get("producer_identity_sha256")
+            and producer_identity_file_ok
+            and source.get("consumer_source_sha") == summary.get("source_sha")
+            and source.get("g1_root")
+            == str(Path(expected_p4_correction_replay_from).resolve())
+            and expected_top_causal_replay is False
+        )
+        side_setup = summary.get("side_setup")
+        side_completion = (
+            side_setup.get("side_completion")
+            if isinstance(side_setup, Mapping)
+            else None
+        )
+        top_completion = (
+            side_completion.get("top")
+            if isinstance(side_completion, Mapping)
+            else None
+        )
+        correction_checks["backend_lifecycle_order"] = bool(
+            isinstance(top_completion, Mapping)
+            and top_completion.get("status") == "destroyed"
+            and top_completion.get("backend_order") == [
+                "full",
+                "cell_condensed",
+            ]
+        )
+        port_direction = (
+            correction_record.get("port_direction")
+            if isinstance(correction_record, Mapping)
+            else None
+        )
+        correction_checks["bound_top_port_direction"] = bool(
+            isinstance(port_direction, Mapping)
+            and port_direction.get("source")
+            == "existing_external_PortMode_and_physical_action_path"
+            and port_direction.get("mode_generation_source")
+            == "src/common/modes_3d.py::outgoing_port_modes_3d"
+            and _valid_sha(port_direction.get("mode_key_sha256"), 64)
+            and _valid_sha(port_direction.get("normalization_sha256"), 64)
+            and port_direction.get("port_layout_same") is True
+            and port_direction.get("pass") is True
+        )
+        stages = (
+            correction_record.get("stage_comparisons")
+            if isinstance(correction_record, Mapping)
+            else None
+        )
+        expected_stages = [(q, step) for q in ("q1", "q2") for step in (0, 1, 2)]
+
+        def ratio_pass(value: Any, limit: float) -> bool:
+            return bool(
+                isinstance(value, (int, float))
+                and not isinstance(value, bool)
+                and math.isfinite(float(value))
+                and float(value) <= limit
+            )
+
+        def finite_number(value: Any) -> bool:
+            return bool(
+                isinstance(value, (int, float))
+                and not isinstance(value, bool)
+                and math.isfinite(float(value))
+            )
+
+        def original_a4_record_valid(audit: Any) -> bool:
+            if not isinstance(audit, Mapping):
+                return False
+            physical = audit.get("physical_relative_residual")
+            augmented = audit.get("augmented_relative_residual")
+            physical_pass = audit.get("physical_pass")
+            augmented_pass = audit.get("augmented_pass")
+            return bool(
+                finite_number(physical)
+                and finite_number(augmented)
+                and isinstance(physical_pass, bool)
+                and isinstance(augmented_pass, bool)
+                and isinstance(audit.get("pass"), bool)
+                and audit["pass"] is (physical_pass and augmented_pass)
+                and not (physical_pass and float(physical) > 1.0e-10)
+                and not (augmented_pass and float(augmented) > 1.0e-10)
+            )
+
+        def original_a4_pass(audit: Any) -> bool:
+            return bool(
+                original_a4_record_valid(audit)
+                and audit.get("pass") is True
+                and audit.get("physical_pass") is True
+                and audit.get("augmented_pass") is True
+                and ratio_pass(audit.get("physical_relative_residual"), 1.0e-10)
+                and ratio_pass(audit.get("augmented_relative_residual"), 1.0e-10)
+            )
+
+        def q_difference_record_valid(difference: Any) -> bool:
+            if not isinstance(difference, Mapping):
+                return False
+            numerator = difference.get("numerator_norm")
+            denominator = difference.get("denominator_norm")
+            relative = difference.get("relative")
+            return bool(
+                difference.get("finite") is True
+                and difference.get("limit") == 1.0e-11
+                and finite_number(numerator)
+                and finite_number(denominator)
+                and finite_number(relative)
+                and float(numerator) >= 0.0
+                and float(denominator) >= 0.0
+                and isinstance(difference.get("pass"), bool)
+                and difference["pass"] is (float(relative) <= 1.0e-11)
+            )
+
+        def stage_records_valid(row: Any) -> bool:
+            if not isinstance(row, Mapping):
+                return False
+            a4_gates = row.get("original_a4_gates")
+            return bool(
+                row.get("same_frozen_input_bytes") is True
+                and row.get("same_q_input_bytes") is True
+                and row.get("same_fe_ownership") is True
+                and isinstance(row.get("stage_gates_pass"), bool)
+                and q_difference_record_valid(row.get("q_output_difference"))
+                and isinstance(a4_gates, Mapping)
+                and all(
+                    original_a4_record_valid(a4_gates.get(backend))
+                    for backend in ("full", "cell_condensed")
+                )
+            )
+
+        correction_checks["required_q_stages_and_original_gates"] = bool(
+            isinstance(stages, list)
+            and [(row.get("operation"), row.get("step")) for row in stages if isinstance(row, Mapping)] == expected_stages
+            and len(stages) == len(expected_stages)
+            and all(stage_records_valid(row) for row in stages)
+            and all(
+                row["stage_gates_pass"] is True
+                and ratio_pass(row["q_output_difference"].get("relative"), 1.0e-11)
+                and all(
+                    original_a4_pass(row["original_a4_gates"].get(backend))
+                    for backend in ("full", "cell_condensed")
+                )
+                for row in stages
+                if row.get("step") == 2
+            )
+        )
+        sidecar = consumer_root / "numerical_output" / "p4_correction_replay_top.json"
+        try:
+            sidecar_ok = sidecar.is_file() and _read_json(sidecar) == correction_reference
+        except (OSError, TypeError, ValueError):
+            sidecar_ok = False
+        correction_checks["result_and_sidecar_hashes"] = bool(
+            correction_artifact_ok and sidecar_ok
+        )
+    correction_validation = {
+        "checks": correction_checks,
+        "pass": bool(correction_checks) and all(correction_checks.values()),
+        "qualification_pass": False,
+        "scope": "top_pc1_frozen_independent_q1_q2",
+    } if expected_p4_correction_replay_from is not None else None
     representative_validation = (
         _validate_task041_top_causal_replay_result(
             consumer_root,
@@ -6900,6 +7136,7 @@ def _consumer_result(
         if representative_rhs_binding is not None
         and not common_scope
         and expected_top_causal_replay is False
+        and expected_p4_correction_replay_from is None
         else None
     )
     top_causal_validation = (
@@ -7015,6 +7252,20 @@ def _consumer_result(
         and process_group_gone is True
         and marker_gate
     )
+    correction_complete = bool(
+        expected_p4_correction_replay_from is not None
+        and worker_classification == "TASK041_P4_CORRECTION_REPLAY_COMPLETED"
+        and summary.get("status") == "task041_p4_correction_replay_completed"
+        and correction_validation is not None
+        and correction_validation.get("pass") is True
+        and correction_record.get("status") == "completed_action_gates_pass"
+        and correction_record.get("evidence_complete") is True
+        and correction_record.get("action_safety_pass") is True
+        and representative_lifecycle_gate
+        and cleanup_gate
+        and process_group_gone is True
+        and marker_gate
+    )
     regular_complete = bool(
         not representative_scope
         and not common_scope
@@ -7040,11 +7291,14 @@ def _consumer_result(
     )
     complete = (
         representative_complete
+        or correction_complete
         or common_complete
         or regular_complete
         or diagnostic_complete
     )
-    if diagnostic_complete:
+    if correction_complete:
+        classification = "task041_p4_correction_replay_complete"
+    elif diagnostic_complete:
         classification = "DIAGNOSTIC_RESULT_AVAILABLE"
     elif complete:
         classification = "worker_exit0"
@@ -7056,6 +7310,8 @@ def _consumer_result(
             if isinstance(common_validation, Mapping)
             else None
         ) or worker_classification or "PAIRING_SETUP_FAILURE"
+    elif expected_p4_correction_replay_from is not None:
+        classification = "task041_p4_correction_replay_validation_failure"
     elif representative_scope:
         classification = "task041_representative_rhs_validation_failure"
     elif worker_classification != "TASK041_CONSUMER_PASS":
@@ -7093,12 +7349,13 @@ def _consumer_result(
         "lifecycle_gate": lifecycle_gate,
         "representative_validation": representative_validation,
         "top_causal_replay_validation": top_causal_validation,
+        "p4_correction_replay_validation": correction_validation,
         "common_validation": common_validation,
         "completion_scope": (
-            "representative_rhs"
-            if common_scope
+            "p4_correction_replay"
+            if correction_complete
             else "representative_rhs"
-            if representative_complete
+            if common_scope or representative_complete
             else "formal"
         ),
     }
@@ -7508,6 +7765,7 @@ def run_task041_public_supervisor(
     task041_side_setup_schedule: str | None = None,
     task041_comparison_mode: str | None = None,
     task041_top_causal_replay: bool = False,
+    task041_p4_correction_replay_from: str | Path | None = None,
 ) -> dict[str, Any]:
     """Run one Task041 consumer, optionally reusing a completed BAL_H producer."""
 
@@ -7725,9 +7983,12 @@ def run_task041_public_supervisor(
                         else None
                     ),
                     side_setup_schedule=task041_side_setup_schedule,
-                    comparison_mode=task041_comparison_mode,
-                    top_causal_replay=task041_top_causal_replay,
-                )
+                comparison_mode=task041_comparison_mode,
+                top_causal_replay=task041_top_causal_replay,
+                p4_correction_replay=(
+                    task041_p4_correction_replay_from is not None
+                ),
+            )
             except ValueError as exc:
                 raise Task041SupervisorError(
                     str(exc),
@@ -7752,6 +8013,7 @@ def run_task041_public_supervisor(
         elif (
             task041_side_setup_schedule is not None
             or task041_comparison_mode is not None
+            or task041_p4_correction_replay_from is not None
         ):
             raise Task041SupervisorError(
                 "Task041 comparison options require task041_schur_speed_v2",
@@ -8565,6 +8827,9 @@ def run_task041_public_supervisor(
                         else None
                     ),
                     top_causal_replay=task041_top_causal_replay,
+                    p4_correction_replay_from=(
+                        task041_p4_correction_replay_from
+                    ),
                 )
             else:
                 consumer_command = producer_command_module["balh_exact_consumer"](
@@ -8727,6 +8992,9 @@ def run_task041_public_supervisor(
                         else None
                     ),
                     expected_top_causal_replay=task041_top_causal_replay,
+                    expected_p4_correction_replay_from=(
+                        task041_p4_correction_replay_from
+                    ),
                     **(
                         {"representative_rhs_binding": representative_rhs_binding}
                         if representative_rhs_binding is not None
@@ -8798,6 +9066,9 @@ def run_task041_public_supervisor(
                     else None
                 ),
                 expected_top_causal_replay=task041_top_causal_replay,
+                expected_p4_correction_replay_from=(
+                    task041_p4_correction_replay_from
+                ),
                 **(
                     {"representative_rhs_binding": representative_rhs_binding}
                     if representative_rhs_binding is not None
@@ -8837,6 +9108,9 @@ def run_task041_public_supervisor(
         representative_completion = (
             consumer_status.get("completion_scope") == "representative_rhs"
         )
+        correction_completion = (
+            consumer_status.get("completion_scope") == "p4_correction_replay"
+        )
         diagnostic_completion = bool(
             consumer_status.get("diagnostic_result_available") is True
             and consumer_status.get("classification")
@@ -8872,6 +9146,8 @@ def run_task041_public_supervisor(
             if diagnostic_completion
             else "representative_rhs_completed"
             if representative_completion
+            else "p4_correction_replay_completed"
+            if correction_completion
             else "completed"
         )
         result["workflow_status"] = result["status"]

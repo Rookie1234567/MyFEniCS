@@ -2312,8 +2312,192 @@ def _task041_backend_pair_layout_identity(
     }
 
 
+def _task041_p4_cross_run_component_hashes_match(
+    frozen_components: Mapping[str, Any],
+    current_components: Mapping[str, Any],
+) -> bool:
+    return bool(
+        all(
+            isinstance(frozen_components.get(name), str)
+            and isinstance(current_components.get(name), str)
+            and current_components[name] == frozen_components[name]
+            for name in _TASK041_P4_CROSS_RUN_COMPONENTS
+        )
+    )
+
+
 _TASK041_TOP_CAUSAL_FIXED_PC_INDICES = (1, 30, 31, 32, 33)
 _TASK041_TOP_CAUSAL_MAX_NODES = 8
+_TASK041_P4_CROSS_RUN_COMPONENTS = (
+    "operator_global_shape",
+    "ownership",
+    "transfer_identity",
+    "dofmaps",
+    "mesh_layout",
+    "mpc_layout",
+    "layout_arrays",
+    "vector_layouts",
+    "port_layout",
+)
+
+def _task041_load_p4_correction_reference(
+    root: str | Path,
+    *,
+    current_identity: Mapping[str, Any],
+    current_packet_identity: Mapping[str, Any],
+    representative_rhs_contract: Mapping[str, Any],
+    comm: MPI.Intracomm,
+) -> dict[str, Any]:
+    """Bind the existing G1 PC1 Q1/Q2 owner packets without loading PC data."""
+    consumer_root = Path(root).resolve()
+    local_error = None
+    loaded: dict[str, Any] | None = None
+    try:
+        summary = json.loads(
+            (consumer_root / "consumer_summary.json").read_text(encoding="utf-8")
+        )
+        from src.runners.task041_supervisor import (
+            _task041_representative_immutable_binding,
+        )
+        immutable = _task041_representative_immutable_binding(
+            summary, representative_rhs_contract
+        )
+        if not all(value is True for value in immutable["checks"].values()):
+            raise ValueError(f"G1 immutable binding failed: {immutable['failures']}")
+        identity, producer, packet, probe, top = (
+            summary.get(key) for key in (
+                "identity", "producer_identity", "packet",
+                "representative_rhs_probe", "top_causal_replay",
+            )
+        )
+        if not all(isinstance(value, Mapping) for value in (identity, producer, packet, probe, top)):
+            raise ValueError("G1 consumer identity or top replay record is missing")
+        if (
+            summary.get("source_sha") != "e2965ee25e56220d1623afe4dd221612542c2764"
+            or producer.get("source_sha") != "b01a5932e4dfaf895e81e0424e0dd88c276fb0d3"
+            or _jsonable(producer) != _jsonable(current_packet_identity)
+            or any(
+                key not in identity
+                or key not in current_identity
+                or identity.get(key) != current_identity.get(key)
+                for key in (
+                    "input_sha256", "physical_sha256", "resolved_sha256", "mesh",
+                    "mode_count", "model_id", "scope",
+                )
+            )
+        ):
+            raise ValueError("G1 source, producer, or physical configuration identity differs")
+        if (
+            top.get("schema") != "task041.top_causal_replay.result.v1"
+            or top.get("source_sha") != summary["source_sha"]
+            or top.get("backend_order") != ["full", "cell_condensed"]
+            or 1 not in top.get("frozen_pc_nodes", [])
+        ):
+            raise ValueError("G1 full-reference PC1 node is missing")
+        full_phase = top.get("backend_phases", {}).get("full")
+        frozen_layout = full_phase.get("layout_identity") if isinstance(full_phase, Mapping) else None
+        if (
+            not isinstance(frozen_layout, Mapping)
+            or not isinstance(frozen_layout.get("identity_sha256"), str)
+            or len(frozen_layout["identity_sha256"]) != 64
+        ):
+            raise ValueError("G1 frozen layout hash is missing")
+        frozen_component_sha256 = frozen_layout.get("component_sha256")
+        if not isinstance(frozen_component_sha256, Mapping) or any(
+            not isinstance(frozen_component_sha256.get(name), str)
+            or len(frozen_component_sha256[name]) != 64
+            for name in _TASK041_P4_CROSS_RUN_COMPONENTS
+        ):
+            raise ValueError("G1 stable layout component hashes are missing")
+        node_directory = consumer_root / "numerical_output/top_causal_replay/full_reference/pc_00001"
+        node_path = node_directory / "node_audit.json"
+        audit = next((row for row in top.get("full_capture_and_condensed_replay_audits", [])
+                      if isinstance(row, Mapping) and row.get("backend") == "full"
+                      and row.get("replay_kind") == "reference" and row.get("pc_index") == 1), None)
+        if not isinstance(audit, Mapping):
+            raise TypeError("G1 PC1 node audit binding is missing")
+        raw = node_path.read_bytes()
+        node = json.loads(raw)
+        by_rank = node.get("by_rank") if isinstance(node, Mapping) else None
+        if (
+            hashlib.sha256(raw).hexdigest() != audit.get("audit_sha256")
+            or not isinstance(node, Mapping)
+            or node.get("backend") != "full"
+            or node.get("trajectory") != "full_reference"
+            or node.get("pc_index") != 1
+            or node.get("layout_identity_sha256") != frozen_layout.get("identity_sha256")
+            or not isinstance(by_rank, list)
+            or len(by_rank) != int(comm.size)
+            or any(not isinstance(row, Mapping) for row in by_rank)
+            or [row.get("rank") for row in by_rank if isinstance(row, Mapping)]
+            != list(range(int(comm.size)))
+        ):
+            raise ValueError("G1 PC1 full-reference rank audit is invalid")
+        artifacts = by_rank[0].get("artifacts")
+        found = {}
+        for q_index in (1, 2):
+            directory = f"q_0{q_index}_input_output"
+            artifact = next((row for row in artifacts if isinstance(row, Mapping)
+                             and row.get("manifest_relative_to_node") == f"{directory}/manifest.json"), None)
+            actual = artifact.get("identity") if isinstance(artifact, Mapping) else None
+            expected = {
+                "schema": "task041.top_causal_replay.owned_pair.v1",
+                "source_sha": summary["source_sha"],
+                "probe_manifest_sha256": probe["sha256"],
+                "parent_packet_manifest_sha256": packet["manifest_sha256"],
+                "side": "top", "formal_column": 12, "pc_index": 1,
+                "q_call_index": q_index, "backend": "full",
+                "trajectory": "full_reference", "role": "q_input_output",
+                "layout_identity_sha256": node["layout_identity_sha256"],
+                "owned_input_sha256": actual.get("owned_input_sha256") if isinstance(actual, Mapping) else None,
+            }
+            if not isinstance(actual, Mapping) or not _task041_validate_top_causal_packet_identity(actual, expected):
+                raise ValueError(f"G1 Q{q_index} packet identity is invalid")
+            found[directory] = artifact
+        if any(not isinstance(row, Mapping) or _jsonable(row.get("artifacts")) != _jsonable(artifacts)
+               for row in by_rank):
+            raise ValueError("G1 rank-local packet artifact bindings differ")
+        loaded = {
+            "consumer_root": str(consumer_root),
+            "source_sha": str(summary["source_sha"]),
+            "qep_source_sha": str(producer["source_sha"]),
+            "producer_identity_sha256": hashlib.sha256(
+                json.dumps(_jsonable(producer), sort_keys=True, separators=(",", ":")).encode()
+            ).hexdigest(),
+            "producer_packet_identity_path": str(immutable["expected_identity_path"]),
+            "producer_packet_identity_sha256": str(
+                immutable["packet_binding"]["packet_identity_sha256"]
+            ),
+            "parent_packet_manifest_sha256": str(packet["manifest_sha256"]),
+            "probe_manifest_sha256": str(probe["sha256"]),
+            "component_sha256": dict(frozen_component_sha256),
+            "node_directory": str(node_directory),
+            "node_audit_sha256": hashlib.sha256(raw).hexdigest(),
+            "artifacts": found,
+        }
+    except BaseException as exc:  # noqa: BLE001 - all ranks reject one shared reference
+        local_error = f"{type(exc).__name__}: {exc}"
+    errors = comm.allgather(local_error)
+    if any(error is not None for error in errors):
+        raise Task041ModePrepError(f"G1 correction-reference binding failed: {errors}")
+    assert loaded is not None
+    return loaded
+
+
+def _task041_p4_correction_callback_stage(
+    callback_record: Mapping[str, Any],
+) -> tuple[int, Mapping[str, Any]]:
+    """Read the step index from the nested P4 core-audit callback payload."""
+
+    p4_audit = callback_record.get("p4_audit")
+    if not isinstance(p4_audit, Mapping):
+        raise Task041ModePrepError("P4 correction callback omitted its core audit")
+    step = p4_audit.get("diagnostic_step_index")
+    if type(step) is not int or step not in (0, 1, 2):
+        raise Task041ModePrepError(
+            "P4 correction callback step is outside 0/1/2"
+        )
+    return step, p4_audit
 
 
 def _task041_top_causal_pc_indices(pc_count: int) -> list[int]:
@@ -2974,6 +3158,7 @@ class _Task041TopCausalPacketCapture:
         input_sha256: str,
         q_index: int | None = None,
         metadata: Mapping[str, Any] | None = None,
+        identity_override: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         local_error = None
         if solution.ndim != 1 or solution.shape != rhs.shape:
@@ -2984,7 +3169,7 @@ class _Task041TopCausalPacketCapture:
                 f"top causal {role} packet validation failed: {errors}"
             )
         self._prepare_directory(directory)
-        identity = {
+        identity = dict(identity_override) if identity_override is not None else {
             "schema": "task041.top_causal_replay.owned_pair.v1",
             "source_sha": self.source_sha,
             "probe_manifest_sha256": self.probe_manifest_sha256,
@@ -3041,6 +3226,116 @@ class _Task041TopCausalPacketCapture:
                 "manifest_sha256": str(packet["manifest_sha256"]),
             }
         return artifact
+
+    def write_p4_correction_stage(
+        self,
+        *,
+        backend: str,
+        operation: str,
+        q_call_index: int,
+        step: int,
+        vectors: Mapping[str, PETSc.Vec | None],
+        audit: Mapping[str, Any],
+        port_state: Mapping[str, Any],
+        layout_identity_sha256: str,
+    ) -> dict[str, Any]:
+        """Write borrowed stage vectors through the existing owner-packet writer."""
+
+        directory = (
+            self.root
+            / str(backend)
+            / str(operation)
+            / f"q_call_{int(q_call_index):02d}"
+            / f"step_{int(step)}"
+        )
+        identity = {
+            "schema": "task041.p4_correction_replay.packet.v1",
+            "producer_source_sha": "e2965ee25e56220d1623afe4dd221612542c2764",
+            "consumer_source_sha": self.source_sha,
+            "parent_packet_manifest_sha256": self.parent_packet_sha256,
+            "probe_manifest_sha256": self.probe_manifest_sha256,
+            "side": "top",
+            "formal_column": 12,
+            "pc_index": 1,
+            "backend": str(backend),
+            "operation": str(operation),
+            "q_call_index": int(q_call_index),
+            "step": int(step),
+            "layout_identity_sha256": str(layout_identity_sha256),
+        }
+
+        solution = vectors.get("solution")
+        residual = vectors.get("fe_residual")
+        original_rhs = vectors.get("coarse_rhs")
+        correction = vectors.get("correction")
+        p_output = vectors.get("p_output")
+        q_input = vectors.get("q_input")
+        if not all(
+            isinstance(value, PETSc.Vec)
+            for value in (solution, residual, original_rhs, p_output, q_input)
+        ):
+            raise Task041ModePrepError("P4 correction callback omitted a borrowed vector")
+        q_input_sha256 = self._global_hash(
+            np.asarray(q_input.getArray(readonly=True)),
+            tuple(int(value) for value in q_input.getOwnershipRange()),
+        )
+        reference_q_index = (
+            int(operation[1:]) if operation in {"q1", "q2"} else None
+        )
+        identity.update(
+            {
+                "reference_q_index": reference_q_index,
+                "owned_q_input_sha256": q_input_sha256,
+            }
+        )
+        node = {"pc_index": 1, "directory": self.root}
+        state_metadata = {
+            "p4_audit": _jsonable(
+                {
+                    key: value
+                    for key, value in audit.items()
+                    if key != "diagnostic_correction_history"
+                }
+            ),
+            "port_state": _jsonable(port_state),
+        }
+        vectors_by_role = [
+            ("p4_state", solution, original_rhs, "p4_full_fe", state_metadata),
+            ("q_output", p_output, q_input, "full_p6", {}),
+        ]
+        if correction is not None:
+            vectors_by_role.append(
+                ("p4_correction", correction, residual, "p4_full_fe", {})
+            )
+        artifacts = []
+        for role, left, right, space_tag, extra in vectors_by_role:
+            left_array, ownership = self._vector_copy(left, role + " solution")
+            right_array, right_ownership = self._vector_copy(right, role + " rhs")
+            local_error = (
+                f"{role} packet ownership ranges differ"
+                if ownership != right_ownership
+                else None
+            )
+            errors = self.comm.allgather(local_error)
+            if any(error is not None for error in errors):
+                raise Task041ModePrepError(
+                    f"P4 correction packet layout failed for {role}: {errors}"
+                )
+            artifact = self._write_pair(
+                directory=directory / role,
+                solution=left_array,
+                rhs=right_array,
+                ownership=ownership,
+                node=node,
+                role=role,
+                input_sha256=q_input_sha256,
+                q_index=reference_q_index,
+                identity_override={**identity, "role": role},
+                metadata={"space_tag": space_tag, **extra},
+            )
+            del left_array, right_array
+            artifacts.append(artifact)
+        return {"step": int(step), "artifacts": artifacts}
 
     def _packet(
         self, node: Mapping[str, Any], relative: str
@@ -3229,11 +3524,33 @@ class _Task041TopCausalPacketCapture:
             )
         metadata = reference_packet["metadata"]
         reference_port = metadata.get("port_values")
+        if not isinstance(reference_port, Mapping):
+            reference_port = metadata.get("port_state")
         if (
             not isinstance(reference_port, Mapping)
             or not isinstance(current_port, Mapping)
-            or reference_port.get("port_values_available") is not True
-            or current_port.get("port_values_available") is not True
+            or not isinstance(
+                reference_port.get(
+                    "port_rhs_complex", reference_port.get("port_rhs")
+                ),
+                list,
+            )
+            or not isinstance(
+                reference_port.get(
+                    "port_solution_complex", reference_port.get("port_solution")
+                ),
+                list,
+            )
+            or not isinstance(
+                current_port.get("port_rhs_complex", current_port.get("port_rhs")),
+                list,
+            )
+            or not isinstance(
+                current_port.get(
+                    "port_solution_complex", current_port.get("port_solution")
+                ),
+                list,
+            )
         ):
             raise Task041ModePrepError("frozen p4 packet has no port audit")
         ref_rhs = p4.create_fe_vector()
@@ -3249,17 +3566,30 @@ class _Task041TopCausalPacketCapture:
             full_audit = p4.audit_solution(
                 ref_rhs,
                 ref_solution,
-                port_rhs=self._port_values(reference_port["port_rhs_complex"]),
+                port_rhs=self._port_values(
+                    reference_port.get(
+                        "port_rhs_complex", reference_port.get("port_rhs")
+                    )
+                ),
                 port_solution=self._port_values(
-                    reference_port["port_solution_complex"]
+                    reference_port.get(
+                        "port_solution_complex",
+                        reference_port.get("port_solution"),
+                    )
                 ),
             )
             condensed_audit = p4.audit_solution(
                 replay_rhs,
                 current_solution,
-                port_rhs=self._port_values(current_port["port_rhs_complex"]),
+                port_rhs=self._port_values(
+                    current_port.get(
+                        "port_rhs_complex", current_port.get("port_rhs")
+                    )
+                ),
                 port_solution=self._port_values(
-                    current_port["port_solution_complex"]
+                    current_port.get(
+                        "port_solution_complex", current_port.get("port_solution")
+                    )
                 ),
             )
             residual_limits = {
@@ -3950,6 +4280,8 @@ def _run_task041_balh_candidate_setup(
     rank_numa_stage_callback: Callable[[str, Mapping[str, object] | None, Mapping[str, Any] | None], None] | None = None,
     rank_numa_evidence: list[Mapping[str, Any]] | None = None,
     top_causal_replay: bool = False,
+    p4_correction_replay_from: str | Path | None = None,
+    p4_correction_replay_packet_identity: Mapping[str, Any] | None = None,
     top_causal_memory_cap_bytes: int | None = None,
 ) -> dict[str, Any]:
     """Build the finite-response BAL_H Schur and run the shared formal path."""
@@ -4038,6 +4370,9 @@ def _run_task041_balh_candidate_setup(
     global_action_before: PETSc.Vec | None = None
     global_rhs_before: PETSc.Vec | None = None
     top_causal_capture: _Task041TopCausalPacketCapture | None = None
+    p4_correction_capture: _Task041TopCausalPacketCapture | None = None
+    p4_correction_reference: dict[str, Any] | None = None
+    p4_correction_by_side: dict[str, dict[str, Any]] = {}
     top_causal_audits: list[dict[str, Any]] = []
     top_causal_response_comparisons: list[dict[str, Any]] = []
     top_causal_timings: list[dict[str, Any]] = []
@@ -4077,6 +4412,57 @@ def _run_task041_balh_candidate_setup(
         top_causal_capture._prepare_directory(
             top_causal_capture.root
         )
+    if p4_correction_replay_from is not None:
+        if (
+            top_causal_replay
+            or not isinstance(representative_rhs_contract, Mapping)
+            or not isinstance(identity, Mapping)
+            or not isinstance(p4_correction_replay_packet_identity, Mapping)
+            or top_causal_memory_cap_bytes is None
+            or comparison_mode != "p4_backend_pair"
+            or side_setup_schedule != TASK041_SEQUENTIAL_COMPONENT_SCHEDULE
+            or str(identity.get("model_id")) != "task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8"
+        ):
+            raise Task041ModePrepError(
+                "P4 correction replay requires the explicit 5 nm sequential backend-pair contract"
+            )
+        p4_correction_reference = _task041_load_p4_correction_reference(
+            p4_correction_replay_from,
+            current_identity=identity,
+            current_packet_identity=p4_correction_replay_packet_identity,
+            representative_rhs_contract=representative_rhs_contract,
+            comm=comm,
+        )
+        correction_root = audit_path.parent / "p4_correction_replay"
+        root_exists = comm.bcast(
+            correction_root.exists() if comm.rank == 0 else None, root=0
+        )
+        if root_exists:
+            raise Task041ModePrepError(
+                "P4 correction replay root already contains an attempt"
+            )
+        p4_correction_capture = _Task041TopCausalPacketCapture(
+            comm=comm,
+            root=correction_root,
+            source_sha=str(identity.get("source_sha", "")),
+            probe_manifest_sha256=str(
+                p4_correction_reference["probe_manifest_sha256"]
+            ),
+            parent_packet_sha256=str(
+                p4_correction_reference["parent_packet_manifest_sha256"]
+            ),
+            memory_cap_bytes=int(top_causal_memory_cap_bytes),
+        )
+        p4_correction_capture.packet_bindings.update(
+            {
+                (1, name): {
+                    "identity": artifact["identity"],
+                    "manifest_sha256": artifact["manifest_sha256"],
+                }
+                for name, artifact in p4_correction_reference["artifacts"].items()
+            }
+        )
+        p4_correction_capture._prepare_directory(correction_root)
 
     def causal_diagnostic_callback(
         side: str,
@@ -7825,10 +8211,14 @@ def _run_task041_balh_candidate_setup(
         backend_pair_mode = isinstance(backend_pair, Mapping)
         top_causal_result = representative.get("top_causal_replay")
         top_causal_mode = isinstance(top_causal_result, Mapping)
+        p4_correction_result = representative.get("p4_correction_replay")
+        p4_correction_mode = isinstance(p4_correction_result, Mapping)
         result = {
             "schema": (
                 "task041.side_balh.common_layout_equivalence_setup.v1"
                 if common_mode
+                else "task041.side_balh.p4_correction_replay_setup.v1"
+                if p4_correction_mode
                 else "task041.side_balh.top_causal_replay_setup.v1"
                 if top_causal_mode
                 else "task041.side_balh.p4_backend_pair_setup.v1"
@@ -7838,6 +8228,8 @@ def _run_task041_balh_candidate_setup(
             "status": (
                 "common_layout_equivalence_completed"
                 if common_mode
+                else "p4_correction_replay_completed"
+                if p4_correction_mode
                 else "top_causal_replay_completed"
                 if top_causal_mode
                 else "p4_backend_pair_completed"
@@ -7851,6 +8243,8 @@ def _run_task041_balh_candidate_setup(
             "qualification": (
                 "comparison_only"
                 if common_mode
+                else "correction_diagnostic_only"
+                if p4_correction_mode
                 else "diagnostic_only"
                 if top_causal_mode
                 else "backend_comparison_only"
@@ -7865,6 +8259,9 @@ def _run_task041_balh_candidate_setup(
             ),
             "top_causal_replay": (
                 dict(top_causal_result) if top_causal_mode else None
+            ),
+            "p4_correction_replay": (
+                dict(p4_correction_result) if p4_correction_mode else None
             ),
             "common_layout_equivalence": (
                 {**dict(representative), "cleanup": dict(cleanup)}
@@ -7977,6 +8374,23 @@ def _run_task041_balh_candidate_setup(
                 representative_entries_for_run = top_entries
                 entries_by_side = {"bottom": [], "top": top_entries}
                 sides_for_run = ("top",)
+            elif p4_correction_replay_from is not None:
+                correction_entry = next(
+                    (
+                        entry
+                        for entry in representative_entries
+                        if str(entry["side"]) == "top"
+                        and int(entry["formal_column"]) == 12
+                    ),
+                    None,
+                )
+                if correction_entry is None:
+                    raise Task041ModePrepError(
+                        "P4 correction replay requires the fixed top column 12 manifest entry"
+                    )
+                representative_entries_for_run = [correction_entry]
+                entries_by_side = {"bottom": [], "top": [correction_entry]}
+                sides_for_run = ("top",)
 
             global_identity_checks: dict[str, dict[str, Any]] = {}
 
@@ -8052,19 +8466,24 @@ def _run_task041_balh_candidate_setup(
                 }
                 backend_state: dict[str, dict[str, Any]] = {}
                 backend_probe_entries: dict[str, list[Mapping[str, Any]]] = {}
+                correction_states: dict[str, dict[str, list[dict[str, Any]]]] = {
+                    "full": {},
+                    "cell_condensed": {},
+                }
                 rhs_started = time.monotonic()
                 try:
-                    for entry in entries:
-                        ordinal = int(entry["ordinal"])
-                        modal = np.zeros(
-                            2 * int(setup.coupling.mode_count_per_direction),
-                            dtype=PETSc.ScalarType,
-                        )
-                        modal[int(entry["formal_column"])] = PETSc.ScalarType(1.0)
-                        vector = modal_coupling_action(
-                            side, setup.coupling, modal
-                        )
-                        rhs_vectors[ordinal] = vector
+                    if p4_correction_replay_from is None:
+                        for entry in entries:
+                            ordinal = int(entry["ordinal"])
+                            modal = np.zeros(
+                                2 * int(setup.coupling.mode_count_per_direction),
+                                dtype=PETSc.ScalarType,
+                            )
+                            modal[int(entry["formal_column"])] = PETSc.ScalarType(1.0)
+                            vector = modal_coupling_action(
+                                side, setup.coupling, modal
+                            )
+                            rhs_vectors[ordinal] = vector
                     rhs_build_wall = pair_wall(rhs_started)
 
                     def response_packet_identity(
@@ -8152,6 +8571,45 @@ def _run_task041_balh_candidate_setup(
                             comm.allreduce(packet_rhs_matches, op=MPI.LAND)
                         )
                         return vector, packet_rhs_matches
+
+                    def load_frozen_input(
+                        directory_name: str,
+                        vector_factory: Callable[[], PETSc.Vec],
+                    ) -> tuple[PETSc.Vec, str]:
+                        if p4_correction_reference is None or p4_correction_capture is None:
+                            raise Task041ModePrepError(
+                                "G1 frozen input reference is unavailable"
+                            )
+                        artifact = p4_correction_reference["artifacts"].get(
+                            directory_name
+                        )
+                        if not isinstance(artifact, Mapping):
+                            raise Task041ModePrepError(
+                                f"G1 frozen input packet is missing: {directory_name}"
+                            )
+                        node = {
+                            "pc_index": 1,
+                            "reference_directory": Path(
+                                p4_correction_reference["node_directory"]
+                            ),
+                        }
+                        template = vector_factory()
+                        vector = causal_vector_from_packet(
+                            node, directory_name, template, p4_correction_capture
+                        )
+                        ownership = tuple(int(value) for value in vector.getOwnershipRange())
+                        input_sha = p4_correction_capture._global_hash(
+                            np.asarray(vector.getArray(readonly=True)), ownership
+                        )
+                        expected_sha = artifact["identity"].get(
+                            "owned_input_sha256"
+                        )
+                        if input_sha != expected_sha:
+                            vector.destroy()
+                            raise Task041ModePrepError(
+                                f"G1 frozen input owned hash changed: {directory_name}"
+                            )
+                        return vector, input_sha
 
                     def compare_response_packets(
                         full_record: Mapping[str, Any],
@@ -8391,10 +8849,21 @@ def _run_task041_balh_candidate_setup(
                         reference_node: Mapping[str, Any],
                         relative: str,
                         template: PETSc.Vec,
+                        capture: _Task041TopCausalPacketCapture | None = None,
                     ) -> PETSc.Vec:
-                        packet = top_causal_capture._packet(
-                            reference_node, relative
-                        )
+                        packet_capture = capture or top_causal_capture
+                        if packet_capture is None:
+                            template.destroy()
+                            raise Task041ModePrepError(
+                                "causal packet reader is not configured"
+                            )
+                        try:
+                            packet = packet_capture._packet(
+                                reference_node, relative
+                            )
+                        except BaseException:
+                            template.destroy()
+                            raise
                         vector = template
                         local_error = None
                         actual_ownership = tuple(
@@ -8554,6 +9023,129 @@ def _run_task041_balh_candidate_setup(
                                 }
                             )
 
+                    def run_p4_correction_replays(
+                        inverse: Any, backend: str
+                    ) -> dict[str, Any]:
+                        if p4_correction_capture is None:
+                            raise Task041ModePrepError(
+                                "P4 correction capture was not initialized"
+                            )
+                        from src.solvers.physical_balanced_physical_operator import (
+                            P4PhysicalResidualGateError,
+                        )
+
+                        operation_records: dict[str, Any] = {}
+                        for operation in ("q1", "q2"):
+                            packet_directory = f"q_0{int(operation[1])}_input_output"
+                            source, input_sha = load_frozen_input(
+                                packet_directory,
+                                inverse._full_action.matrix.createVecRight,
+                            )
+                            output = None
+                            operation_started = time.monotonic()
+
+                            def observe(
+                                audit: Mapping[str, Any],
+                                vectors: Mapping[str, Any],
+                                *,
+                                current_operation: str = operation,
+                            ) -> None:
+                                step, p4_audit = (
+                                    _task041_p4_correction_callback_stage(audit)
+                                )
+                                record = p4_correction_capture.write_p4_correction_stage(
+                                    backend=backend,
+                                    operation=current_operation,
+                                    q_call_index=int(audit["q_call_index"]),
+                                    step=step,
+                                    vectors=vectors,
+                                    audit=p4_audit,
+                                    port_state=audit["port_state"],
+                                    layout_identity_sha256=str(
+                                        backend_state[backend]["layout_identity"][
+                                            "identity_sha256"
+                                        ]
+                                    ),
+                                )
+                                if backend == "cell_condensed":
+                                    full_stage = next(
+                                        item
+                                        for item in correction_states["full"][
+                                            current_operation
+                                        ]
+                                        if int(item["step"]) == step
+                                    )
+                                    full_state = next(
+                                        item
+                                        for item in full_stage["artifacts"]
+                                        if item.get("role") == "p4_state"
+                                    )
+                                    full_packet = load_packet(
+                                        Path(str(full_state["manifest"])),
+                                        identity=full_state["identity"],
+                                        expected_manifest_sha256=str(
+                                            full_state["manifest_sha256"]
+                                        ),
+                                        comm=comm,
+                                    )
+                                    current_rhs_array = np.array(
+                                        vectors["coarse_rhs"].getArray(
+                                            readonly=True
+                                        ),
+                                        dtype=np.complex128,
+                                        copy=True,
+                                    )
+                                    try:
+                                        shared_node = {"shared_a4_checks": []}
+                                        record["shared_a4_check"] = (
+                                            p4_correction_capture._shared_a4_check(
+                                                node=shared_node,
+                                                q_index=int(
+                                                    audit["q_call_index"]
+                                                ),
+                                                reference_packet=full_packet,
+                                                current_solution=vectors[
+                                                    "solution"
+                                                ],
+                                                current_rhs=current_rhs_array,
+                                                current_port=audit["port_state"],
+                                            )
+                                        )
+                                    finally:
+                                        del current_rhs_array
+                                        del full_packet
+                                correction_states[backend].setdefault(
+                                    current_operation, []
+                                ).append(record)
+
+                            if backend == "cell_condensed":
+                                p4_correction_capture.inverse = inverse
+                            try:
+                                inverse.configure_diagnostic_p4_corrections(2, observe)
+                                output = inverse._apply_q_callback(source)
+                            except P4PhysicalResidualGateError as exc:
+                                if exc.audit.get("status") == "failed_nonfinite_residual":
+                                    raise
+                            except BaseException:
+                                raise
+                            finally:
+                                try:
+                                    inverse.configure_diagnostic_p4_corrections(0, None)
+                                finally:
+                                    if output is not None:
+                                        output.destroy()
+                                    source.destroy()
+                                    if backend == "cell_condensed":
+                                        p4_correction_capture.inverse = None
+
+                            operation_records[operation] = {
+                                "input_sha256": input_sha,
+                                "max_rank_wall_seconds": pair_wall(
+                                    operation_started
+                                ),
+                            }
+                        return operation_records
+
                     def build_backend(backend: str) -> Any:
                         backend_started = time.monotonic()
                         resources = [
@@ -8597,16 +9189,61 @@ def _run_task041_balh_candidate_setup(
                             purpose="p4_backend_pair",
                             p4_backend=backend,
                         )
-                        if top_causal_replay and backend == "full":
-                            top_causal_capture.configure_layout(layout_record)
                         layout_identity = _task041_backend_pair_layout_identity(
                             layout_record
                         )
-                        if backend == "cell_condensed" and (
-                            layout_identity["identity_sha256"]
-                            != backend_state["full"]["layout_identity"][
-                                "identity_sha256"
-                            ]
+                        cross_run_component_hash_pass = None
+                        if p4_correction_replay_from is not None:
+                            frozen_components = p4_correction_reference.get(
+                                "component_sha256", {}
+                            )
+                            current_components = layout_identity.get(
+                                "component_sha256", {}
+                            )
+                            cross_run_component_hash_pass = bool(
+                                isinstance(frozen_components, Mapping)
+                                and isinstance(current_components, Mapping)
+                                and _task041_p4_cross_run_component_hashes_match(
+                                    frozen_components,
+                                    current_components,
+                                )
+                            )
+                        if top_causal_replay and backend == "full":
+                            top_causal_capture.configure_layout(layout_record)
+                        if p4_correction_replay_from is not None:
+                            if p4_correction_capture is None or p4_correction_reference is None:
+                                raise Task041ModePrepError(
+                                    "P4 correction replay capture/reference is unavailable"
+                                )
+                            if backend == "full":
+                                budget = _task041_top_causal_packet_budget(
+                                    layout_identity["vector_layouts_by_rank"],
+                                    port_layouts_by_rank=layout_identity[
+                                        "port_layouts_by_rank"
+                                    ],
+                                    comm_size=8,
+                                    memory_cap_bytes=int(
+                                        top_causal_memory_cap_bytes
+                                    ),
+                                    node_limit=8,
+                                )
+                                p4_correction_capture._write_json_collective(
+                                    p4_correction_capture.root
+                                    / "packet_budget.json",
+                                    budget,
+                                )
+                                if budget.get("pass") is not True:
+                                    raise Task041ModePrepError(
+                                        "P4 correction packet budget exceeds 2 GiB"
+                                    )
+                        if (
+                            backend == "cell_condensed"
+                            and (
+                                layout_identity["identity_sha256"]
+                                != backend_state["full"]["layout_identity"][
+                                    "identity_sha256"
+                                ]
+                            )
                         ):
                             raise Task041ModePrepError(
                                 f"{side} mesh/MPC/layout changed for {backend}"
@@ -8647,6 +9284,9 @@ def _run_task041_balh_candidate_setup(
                             "admission": admission,
                             "parent_setup_identity_by_rank": parent_identity,
                             "layout_identity": layout_identity,
+                            "cross_run_component_hash_pass": (
+                                cross_run_component_hash_pass
+                            ),
                             "resources": resources,
                             "backend_started_monotonic": backend_started,
                         }
@@ -8656,6 +9296,24 @@ def _run_task041_balh_candidate_setup(
                         backend: str, _inverse: Any
                     ) -> Mapping[str, Any]:
                         apply_started = time.monotonic()
+                        if p4_correction_replay_from is not None:
+                            operations = run_p4_correction_replays(
+                                _inverse, backend
+                            )
+                            probe = {
+                                "completed_count": 1,
+                                "entries": [
+                                    {
+                                        "ordinal": int(entries[0]["ordinal"]),
+                                        "formal_column": 12,
+                                        "scope": "frozen_pc1_q1_q2_pc_correction_replay",
+                                        "operations": operations,
+                                    }
+                                ],
+                            }
+                            backend_state[backend]["correction_operations"] = operations
+                        else:
+                            probe = None
                         if top_causal_replay and backend == "cell_condensed":
                             top_entry = next(
                                 entry
@@ -8665,14 +9323,15 @@ def _run_task041_balh_candidate_setup(
                             run_independent_causal_replays(
                                 _inverse, top_entry
                             )
-                        probe = run_representative_rhs_probe(
-                            entries,
-                            rhs_vectors=rhs_vectors,
-                            p4_backend=backend,
-                            backend_pair=True,
-                            retain_responses=not top_causal_replay,
-                            retained_responses_out=retained_responses[backend],
-                        )
+                        if probe is None:
+                            probe = run_representative_rhs_probe(
+                                entries,
+                                rhs_vectors=rhs_vectors,
+                                p4_backend=backend,
+                                backend_pair=True,
+                                retain_responses=not top_causal_replay,
+                                retained_responses_out=retained_responses[backend],
+                            )
                         apply_wall = pair_wall(apply_started)
                         if probe["completed_count"] != len(entries):
                             raise Task041ModePrepError(
@@ -8768,9 +9427,20 @@ def _run_task041_balh_candidate_setup(
                         return release
 
                     backend_phase_results: dict[str, dict[str, Any]] = {}
+                    backend_release_order: list[str] = []
                     for backend in ("full", "cell_condensed"):
                         inverse = build_backend(backend)
                         try:
+                            if (
+                                p4_correction_replay_from is not None
+                                and backend_state[backend].get(
+                                    "cross_run_component_hash_pass"
+                                )
+                                is not True
+                            ):
+                                raise Task041ModePrepError(
+                                    f"{backend} stable layout component hashes differ from G1"
+                                )
                             phase_result = dict(apply_backend(backend, inverse))
                         finally:
                             release = dict(release_backend(backend, inverse))
@@ -8778,10 +9448,539 @@ def _run_task041_balh_candidate_setup(
                             raise Task041ModePrepError(
                                 f"{backend} P4 components were not destroyed before the next backend"
                             )
+                        backend_release_order.append(backend)
                         backend_phase_results[backend] = {
                             "result": phase_result,
                             "release": release,
                         }
+                    if p4_correction_replay_from is not None:
+                        if p4_correction_capture is None or p4_correction_reference is None:
+                            raise Task041ModePrepError(
+                                "P4 correction evidence capture/reference is unavailable"
+                            )
+                        def read_correction_packet(
+                            artifact: Mapping[str, Any],
+                        ) -> dict[str, Any]:
+                            packet = None
+                            local_error = None
+                            try:
+                                packet = load_packet(
+                                    Path(str(artifact["manifest"])),
+                                    identity=artifact["identity"],
+                                    expected_manifest_sha256=str(
+                                        artifact["manifest_sha256"]
+                                    ),
+                                    comm=comm,
+                                )
+                                if (
+                                    packet["solution"].dtype
+                                    != np.dtype(np.complex128)
+                                    or packet["rhs"].dtype
+                                    != np.dtype(np.complex128)
+                                    or packet["solution"].shape != packet["rhs"].shape
+                                ):
+                                    raise ValueError(
+                                        "correction packet dtype/space changed"
+                                    )
+                            except BaseException as exc:  # noqa: BLE001 - converge rank-local artifact failures
+                                local_error = f"{type(exc).__name__}: {exc}"
+                            errors = comm.allgather(local_error)
+                            if any(value is not None for value in errors):
+                                raise Task041ModePrepError(
+                                    f"P4 correction packet read failed: {errors}"
+                                )
+                            assert packet is not None
+                            return packet
+
+                        def relative_delta(
+                            current: np.ndarray,
+                            reference: np.ndarray,
+                            *,
+                            replicated: bool = False,
+                        ) -> dict[str, float | bool | None]:
+                            finite = bool(comm.allreduce(bool(
+                                current.shape == reference.shape
+                                and np.isfinite(current).all()
+                                and np.isfinite(reference).all()
+                            ), op=MPI.LAND))
+                            if not finite:
+                                return {
+                                    "finite": False,
+                                    "numerator_norm": None,
+                                    "denominator_norm": None,
+                                    "relative": None,
+                                }
+                            delta = current - reference
+                            local_sq = np.asarray(
+                                [
+                                    float(np.vdot(delta, delta).real),
+                                    float(np.vdot(current, current).real),
+                                    float(np.vdot(reference, reference).real),
+                                ],
+                                dtype=np.float64,
+                            )
+                            if replicated and comm.rank != 0:
+                                local_sq.fill(0.0)
+                            total_sq = np.empty_like(local_sq)
+                            comm.Allreduce(local_sq, total_sq, op=MPI.SUM)
+                            norms = np.sqrt(total_sq)
+                            denominator = max(float(norms[1]), float(norms[2]))
+                            relative = (
+                                float(norms[0] / denominator)
+                                if denominator > 0.0
+                                else 0.0
+                                if norms[0] == 0.0
+                                else None
+                            )
+                            return {
+                                "finite": bool(np.isfinite(norms).all()),
+                                "numerator_norm": float(norms[0]),
+                                "denominator_norm": denominator,
+                                "relative": relative,
+                            }
+
+                        def original_residual_gates(
+                            audit: Mapping[str, Any],
+                        ) -> dict[str, Any]:
+                            physical = audit.get("physical_relative_residual")
+                            augmented = audit.get(
+                                "augmented_relative_residual",
+                                audit.get("relative_residual"),
+                            )
+                            finite = bool(
+                                isinstance(physical, (int, float))
+                                and isinstance(augmented, (int, float))
+                                and math.isfinite(float(physical))
+                                and math.isfinite(float(augmented))
+                            )
+                            physical_pass = bool(
+                                finite
+                                and audit.get("physical_gate_passed") is True
+                                and float(physical) <= 1.0e-10
+                            )
+                            augmented_pass = bool(
+                                finite
+                                and audit.get("augmented_gate_passed") is True
+                                and float(augmented) <= 1.0e-10
+                            )
+                            return {
+                                "physical_relative_residual": physical,
+                                "augmented_relative_residual": augmented,
+                                "physical_pass": physical_pass,
+                                "augmented_pass": augmented_pass,
+                                "pass": physical_pass and augmented_pass,
+                            }
+
+                        stage_comparisons: list[dict[str, Any]] = []
+                        input_identity_pass = True
+                        evidence_complete = True
+                        final_q_pass: dict[str, bool] = {"q1": False, "q2": False}
+                        for operation in ("q1", "q2"):
+                            frozen_artifact = p4_correction_reference["artifacts"].get(
+                                f"q_0{int(operation[1])}_input_output"
+                            )
+                            expected_input_sha = (
+                                frozen_artifact.get("identity", {}).get(
+                                    "owned_input_sha256"
+                                )
+                                if isinstance(frozen_artifact, Mapping)
+                                else None
+                            )
+                            same_input = bool(
+                                isinstance(expected_input_sha, str)
+                                and all(
+                                    backend_state[backend]["correction_operations"]
+                                    .get(operation, {})
+                                    .get("input_sha256") == expected_input_sha
+                                    for backend in ("full", "cell_condensed")
+                                )
+                            )
+                            input_identity_pass = input_identity_pass and same_input
+                            steps = {
+                                backend: correction_states[backend].get(operation, [])
+                                for backend in ("full", "cell_condensed")
+                            }
+                            if not same_input or any(
+                                [item.get("step") for item in steps[backend]] != [0, 1, 2]
+                                or len(steps[backend]) != 3
+                                or any(
+                                    not (
+                                        {artifact.get("role") for artifact in item.get("artifacts", [])}
+                                        >= ({"p4_state", "q_output"} | ({"p4_correction"} if step else set()))
+                                    )
+                                    for step, item in enumerate(steps[backend])
+                                )
+                                for backend in steps
+                            ) or any(
+                                not isinstance(item.get("shared_a4_check"), Mapping)
+                                for item in steps["cell_condensed"]
+                            ):
+                                evidence_complete = False
+                                continue
+                            for step in range(3):
+                                records = {backend: steps[backend][step] for backend in steps}
+                                artifacts = {
+                                    backend: {
+                                        item["role"]: item
+                                        for item in records[backend]["artifacts"]
+                                    }
+                                    for backend in records
+                                }
+                                loaded = {
+                                    backend: read_correction_packet(
+                                        artifacts[backend]["p4_state"]
+                                    )
+                                    for backend in records
+                                }
+                                state_metadata = {
+                                    backend: loaded[backend].get("metadata", {})
+                                    for backend in records
+                                }
+                                fe_difference = relative_delta(
+                                    loaded["cell_condensed"]["solution"],
+                                    loaded["full"]["solution"],
+                                )
+                                same_fe_owner = bool(
+                                    comm.allreduce(
+                                        loaded["full"]["ownership_range"]
+                                        == loaded["cell_condensed"]["ownership_range"],
+                                        op=MPI.LAND,
+                                    )
+                                )
+                                del loaded
+                                q_packets = {
+                                    backend: read_correction_packet(
+                                        artifacts[backend]["q_output"]
+                                    )
+                                    for backend in records
+                                }
+                                same_q_input = bool(
+                                    all(
+                                        p4_correction_capture._global_hash(
+                                            packet["rhs"], packet["ownership_range"]
+                                        )
+                                        == expected_input_sha
+                                        and packet["identity"].get(
+                                            "owned_q_input_sha256"
+                                        ) == expected_input_sha
+                                        for packet in q_packets.values()
+                                    )
+                                )
+                                q_difference = relative_delta(
+                                    q_packets["cell_condensed"]["solution"],
+                                    q_packets["full"]["solution"],
+                                )
+                                q_pass = bool(
+                                    same_q_input
+                                    and q_difference["finite"]
+                                    and q_difference["relative"] is not None
+                                    and q_difference["relative"] <= 1.0e-11
+                                )
+                                del q_packets
+
+                                port_local: dict[str, np.ndarray | None] = {}
+                                for backend in records:
+                                    pairs = state_metadata[backend].get(
+                                        "port_state", {}
+                                    ).get("port_solution")
+                                    try:
+                                        port_local[backend] = np.asarray(
+                                            [complex(*pair) for pair in pairs],
+                                            dtype=np.complex128,
+                                        ) if isinstance(pairs, list) else None
+                                    except (TypeError, ValueError):
+                                        port_local[backend] = None
+                                port_present = bool(
+                                    comm.allreduce(
+                                        all(value is not None for value in port_local.values()),
+                                        op=MPI.LAND,
+                                    )
+                                )
+                                port_consistent = False
+                                if port_present:
+                                    local_port_hashes = tuple(
+                                        hashlib.sha256(
+                                            memoryview(
+                                                np.ascontiguousarray(port_local[backend])
+                                            ).cast("B")
+                                        ).hexdigest()
+                                        for backend in ("full", "cell_condensed")
+                                    )
+                                    port_consistent = len(
+                                        set(comm.allgather(local_port_hashes))
+                                    ) == 1
+                                port_difference = (
+                                    relative_delta(
+                                        port_local["cell_condensed"],
+                                        port_local["full"],
+                                        replicated=True,
+                                    )
+                                    if port_consistent
+                                    else {
+                                        "finite": False,
+                                        "numerator_norm": None,
+                                        "denominator_norm": None,
+                                        "relative": None,
+                                    }
+                                )
+                                del port_local
+                                shared_a4_check = records[
+                                    "cell_condensed"
+                                ]["shared_a4_check"]
+                                residuals = {
+                                    "full": original_residual_gates(
+                                        shared_a4_check.get("full_reference", {})
+                                    ),
+                                    "cell_condensed": original_residual_gates(
+                                        shared_a4_check.get(
+                                            "cell_condensed_replay", {}
+                                        )
+                                    ),
+                                }
+                                stage_pass = bool(
+                                    q_pass
+                                    and shared_a4_check.get("pass") is True
+                                    and all(item["pass"] for item in residuals.values())
+                                    and fe_difference["finite"]
+                                    and port_difference["finite"]
+                                    and same_fe_owner
+                                )
+                                calls = {}
+                                for backend in records:
+                                    audit = state_metadata[backend].get("p4_audit", {})
+                                    calls[backend] = {
+                                        key: audit.get(key)
+                                        for key in (
+                                            "backsolve_count", "refinement_count",
+                                            "factor_solve_seconds_for_state",
+                                            "correction_from_previous_seconds",
+                                        )
+                                    }
+                                del state_metadata
+                                stage_comparisons.append({
+                                    "operation": operation,
+                                    "step": step,
+                                    "same_frozen_input_bytes": same_input,
+                                    "same_q_input_bytes": same_q_input,
+                                    "fe_solution_difference_diagnostic_only": fe_difference,
+                                    "port_solution_difference_diagnostic_only": port_difference,
+                                    "q_output_difference": {
+                                        **q_difference,
+                                        "limit": 1.0e-11,
+                                        "pass": q_pass,
+                                    },
+                                    "original_a4_gates": residuals,
+                                    "shared_a4_check": shared_a4_check,
+                                    "p4_calls": calls,
+                                    "same_fe_ownership": same_fe_owner,
+                                    "artifact_refs": {
+                                        backend: [
+                                            {
+                                                key: artifact.get(key)
+                                                for key in (
+                                                    "role", "manifest",
+                                                    "manifest_sha256", "identity_sha256",
+                                                )
+                                            }
+                                            for artifact in record["artifacts"]
+                                        ]
+                                        for backend, record in records.items()
+                                    },
+                                    "stage_gates_pass": stage_pass,
+                                })
+                                if step == 2:
+                                    final_q_pass[operation] = stage_pass
+
+                        release_pass = set(backend_phase_results) == {
+                            "full", "cell_condensed"
+                        } and all(
+                            phase.get("release", {}).get("pass") is True
+                            for phase in backend_phase_results.values()
+                        )
+                        full_layout = backend_state.get("full", {}).get(
+                            "layout_identity", {}
+                        )
+                        condensed_layout = backend_state.get(
+                            "cell_condensed", {}
+                        ).get("layout_identity", {})
+                        layout_pass = bool(
+                            isinstance(full_layout, Mapping)
+                            and isinstance(condensed_layout, Mapping)
+                            and full_layout.get("identity_sha256")
+                            == condensed_layout.get("identity_sha256")
+                        )
+                        full_port_layouts = full_layout.get(
+                            "port_layouts_by_rank", []
+                        )
+                        condensed_port_layouts = condensed_layout.get(
+                            "port_layouts_by_rank", []
+                        )
+                        port_layout_same = bool(
+                            isinstance(full_port_layouts, list)
+                            and len(full_port_layouts) == int(comm.size)
+                            and full_port_layouts == condensed_port_layouts
+                        )
+                        top_port_layout = (
+                            full_port_layouts[0]
+                            if port_layout_same
+                            and full_port_layouts
+                            and isinstance(full_port_layouts[0], Mapping)
+                            else {}
+                        )
+                        mode_key_sha256 = top_port_layout.get("mode_key_sha256")
+                        normalization_sha256 = top_port_layout.get(
+                            "normalization_sha256"
+                        )
+                        direction_pass = bool(
+                            entries[0].get("side") == "top"
+                            and int(entries[0].get("formal_column", -1)) == 12
+                            and port_layout_same
+                            and isinstance(mode_key_sha256, str)
+                            and len(mode_key_sha256) == 64
+                            and isinstance(normalization_sha256, str)
+                            and len(normalization_sha256) == 64
+                        )
+                        cross_run_component_hash_pass = all(
+                            backend_state[backend].get(
+                                "cross_run_component_hash_pass"
+                            )
+                            is True
+                            for backend in ("full", "cell_condensed")
+                        )
+                        action_safety = bool(
+                            evidence_complete
+                            and input_identity_pass
+                            and cross_run_component_hash_pass
+                            and all(final_q_pass.values())
+                            and backend_release_order == ["full", "cell_condensed"]
+                            and release_pass
+                            and layout_pass
+                            and direction_pass
+                        )
+                        correction_result = {
+                            "schema": "task041.p4_correction_replay.result.v1",
+                            "scope": "top_pc1_frozen_independent_q1_q2",
+                            "status": (
+                                "completed_action_gates_pass"
+                                if action_safety
+                                else "failed_or_incomplete_required_gate"
+                            ),
+                            "qualification_pass": False,
+                            "source": {
+                                "producer_source_sha": p4_correction_reference[
+                                    "source_sha"
+                                ],
+                                "producer_identity_sha256": p4_correction_reference[
+                                    "producer_identity_sha256"
+                                ],
+                                "producer_packet_identity_path": p4_correction_reference[
+                                    "producer_packet_identity_path"
+                                ],
+                                "producer_packet_identity_sha256": p4_correction_reference[
+                                    "producer_packet_identity_sha256"
+                                ],
+                                "consumer_source_sha": str(identity["source_sha"]),
+                                "qep_source_sha": p4_correction_reference[
+                                    "qep_source_sha"
+                                ],
+                                "g1_root": p4_correction_reference["consumer_root"],
+                                "node_audit_sha256": p4_correction_reference[
+                                    "node_audit_sha256"
+                                ],
+                                "rhs_manifest_sha256": p4_correction_reference[
+                                    "probe_manifest_sha256"
+                                ],
+                                "parent_packet_manifest_sha256": p4_correction_reference[
+                                    "parent_packet_manifest_sha256"
+                                ],
+                            },
+                            "selected_formal_columns": [12],
+                            "pc_index": 1,
+                            "pc_action": "not_run",
+                            "backend_release_pass": release_pass,
+                            "cross_run_component_hash_pass": (
+                                cross_run_component_hash_pass
+                            ),
+                            "cross_run_layout_pass": bool(
+                                layout_pass
+                                and input_identity_pass
+                                and cross_run_component_hash_pass
+                            ),
+                            "p4_correction_steps": 2,
+                            "evidence_complete": evidence_complete,
+                            "stage_comparisons": stage_comparisons,
+                            "action_safety_pass": action_safety,
+                            "port_direction": {
+                                "source": "existing_external_PortMode_and_physical_action_path",
+                                "mode_generation_source": (
+                                    "src/common/modes_3d.py::outgoing_port_modes_3d"
+                                ),
+                                "mode_key_sha256": mode_key_sha256,
+                                "normalization_sha256": normalization_sha256,
+                                "port_layout_same": port_layout_same,
+                                "pass": direction_pass,
+                            },
+                            "timing_by_backend": {
+                                backend: {
+                                    operation: backend_state[backend][
+                                        "correction_operations"
+                                    ].get(operation, {}).get(
+                                        "max_rank_wall_seconds"
+                                    )
+                                    for operation in ("q1", "q2")
+                                }
+                                for backend in ("full", "cell_condensed")
+                            },
+                        }
+                        correction_result["artifact_path"] = str(
+                            p4_correction_capture.root / "result.json"
+                        )
+                        correction_result["artifact_sha256"] = (
+                            p4_correction_capture._write_json_collective(
+                                p4_correction_capture.root / "result.json",
+                                correction_result,
+                            )
+                        )
+                        correction_reference = {
+                            key: correction_result[key]
+                            for key in (
+                                "schema", "scope", "status", "qualification_pass",
+                                "evidence_complete", "action_safety_pass",
+                                "artifact_path", "artifact_sha256",
+                            )
+                        }
+                        p4_correction_by_side[side] = correction_reference
+                        _write_rank0_json(
+                            audit_path.with_name("p4_correction_replay_top.json"),
+                            correction_reference,
+                            comm,
+                        )
+                        if not evidence_complete or not action_safety:
+                            failure_evidence.setdefault(
+                                "p4_correction_replay", {}
+                            )[side] = correction_reference
+                            raise Task041ModePrepError(
+                                "P4 correction replay did not pass its frozen-Q action gates"
+                            )
+                        side_result = {
+                            "completed_count": 1,
+                            "entries": [
+                                {
+                                    "ordinal": int(entries[0]["ordinal"]),
+                                    "formal_column": 12,
+                                }
+                            ],
+                        }
+                        sequential_side_records[side] = {
+                            "side": side,
+                            "status": "full_then_cell_condensed_released",
+                            "live_at_build": dict(
+                                backend_state["cell_condensed"]["live_at_build"]
+                            ),
+                            "backend_order": list(backend_release_order),
+                            "p4_correction_replay": True,
+                        }
+                        return correction_reference, side_result
                     if top_causal_replay:
                         reference_nodes = list(
                             top_causal_capture.reference_nodes
@@ -9397,6 +10596,8 @@ def _run_task041_balh_candidate_setup(
                     }
                     if top_causal_replay:
                         expected_columns["top"] = [12, 493, 666]
+                    elif p4_correction_replay_from is not None:
+                        expected_columns["top"] = [12]
                     if columns != expected_columns[side]:
                         raise Task041ModePrepError(
                             f"{side} representative RHS columns changed: {columns}"
@@ -9504,6 +10705,17 @@ def _run_task041_balh_candidate_setup(
             representative = _merge_representative_parts(
                 representative_parts, representative_entries_for_run
             )
+            if p4_correction_replay_from is not None:
+                representative["p4_correction_replay"] = p4_correction_by_side.get(
+                    "top",
+                    {
+                        "schema": "task041.p4_correction_replay.result.v1",
+                        "status": "missing",
+                        "evidence_complete": False,
+                        "action_safety_pass": False,
+                        "qualification_pass": False,
+                    },
+                )
             if top_causal_replay:
                 representative["top_causal_replay"] = top_causal_by_side.get(
                     "top",
@@ -9514,7 +10726,11 @@ def _run_task041_balh_candidate_setup(
                         "diagnostic_pass": False,
                     },
                 )
-            if p4_backend_pairs_by_side and not top_causal_replay:
+            if (
+                p4_backend_pairs_by_side
+                and not top_causal_replay
+                and p4_correction_replay_from is None
+            ):
                 pair_pass = bool(
                     all(
                         record.get("pass") is True
@@ -9566,7 +10782,11 @@ def _run_task041_balh_candidate_setup(
             cleanup = release_before_recovery()
             schedule_summary = {
                 "side_setup_schedule": side_setup_schedule,
-                "order": ["top"] if top_causal_replay else ["bottom", "top"],
+                "order": (
+                    ["top"]
+                    if top_causal_replay or p4_correction_replay_from is not None
+                    else ["bottom", "top"]
+                ),
                 "side_completion": dict(sequential_side_records),
                 "lifecycle_boundaries": list(sequential_lifecycle_boundaries),
                 "global_identity_checks": global_identity_checks,
@@ -9878,6 +11098,7 @@ def run_task041_consumer(
     side_setup_schedule: str | None = None,
     comparison_mode: str | None = None,
     top_causal_replay: bool = False,
+    p4_correction_replay_from: str | Path | None = None,
 ) -> dict[str, Any]:
     """Consume one fresh Task041 packet through an exact or BAL_H side path."""
 
@@ -9942,6 +11163,7 @@ def run_task041_consumer(
             side_setup_schedule is not None
             or comparison_mode is not None
             or top_causal_replay
+            or p4_correction_replay_from is not None
         )
         and performance_profile is None
     ):
@@ -9980,6 +11202,7 @@ def run_task041_consumer(
                 side_setup_schedule=side_setup_schedule,
                 comparison_mode=comparison_mode,
                 top_causal_replay=top_causal_replay,
+                p4_correction_replay=(p4_correction_replay_from is not None),
             )
         except ValueError as exc:
             raise Task041ModePrepError(str(exc)) from exc
@@ -10873,9 +12096,18 @@ def run_task041_consumer(
                 rank_numa_stage_callback=rank_numa_stage_callback,
                 rank_numa_evidence=rank_numa_evidence,
                 top_causal_replay=top_causal_replay,
+                p4_correction_replay_from=p4_correction_replay_from,
+                p4_correction_replay_packet_identity=(
+                    disk_identity
+                    if p4_correction_replay_from is not None
+                    else None
+                ),
                 top_causal_memory_cap_bytes=(
                     int(performance_contract["memory_cap_bytes"])
-                    if top_causal_replay
+                    if (
+                        top_causal_replay
+                        or p4_correction_replay_from is not None
+                    )
                     and isinstance(performance_contract, Mapping)
                     else None
                 ),
@@ -10926,17 +12158,30 @@ def run_task041_consumer(
             result["formal"] = _jsonable(formal_result)
             result[component_key] = _jsonable(representative)
             top_causal_result = setup_result.get("top_causal_replay")
+            p4_correction_result = setup_result.get(
+                "p4_correction_replay"
+            )
             if top_causal_replay:
                 if not isinstance(top_causal_result, Mapping):
                     raise Task041ModePrepError(
                         "top causal setup returned no explicit diagnostic record"
                     )
                 result["top_causal_replay"] = _jsonable(top_causal_result)
+            if p4_correction_replay_from is not None:
+                if not isinstance(p4_correction_result, Mapping):
+                    raise Task041ModePrepError(
+                        "P4 correction replay setup returned no explicit result"
+                    )
+                result["p4_correction_replay"] = _jsonable(
+                    p4_correction_result
+                )
             result["gates"] = {
                 "pass": False,
                 "status": (
                     "top_causal_diagnostic_only"
                     if top_causal_replay
+                    else "p4_correction_replay_diagnostic_only"
+                    if p4_correction_replay_from is not None
                     else "not_run_common_layout_equivalence_mode"
                     if comparison_mode == "common_layout_equivalence"
                     else "not_run_representative_rhs_scope"
@@ -11009,6 +12254,15 @@ def run_task041_consumer(
                     and top_causal_result.get("diagnostic_pass") is True
                 )
             )
+            p4_correction_safe = bool(
+                p4_correction_replay_from is None
+                or (
+                    isinstance(p4_correction_result, Mapping)
+                    and p4_correction_result.get("evidence_complete") is True
+                    and p4_correction_result.get("action_safety_pass") is True
+                    and p4_correction_result.get("qualification_pass") is False
+                )
+            )
             if top_causal_replay and not top_causal_safe:
                 failed_gates = (
                     list(top_causal_result.get("failed_action_gates", []))
@@ -11033,10 +12287,28 @@ def run_task041_consumer(
                     "top causal replay failed required gate(s): "
                     + ", ".join(str(item) for item in result["failure_gate"])
                 )
+            elif p4_correction_replay_from is not None and not p4_correction_safe:
+                result["status"] = (
+                    "task041_p4_correction_replay_failed_required_gate"
+                )
+                result["classification"] = (
+                    "TASK041_P4_CORRECTION_REPLAY_REQUIRED_GATE_FAILURE"
+                )
+                result["failure_stage"] = "p4_correction_replay"
+                result["failure_evidence"] = {
+                    "p4_correction_replay": result.get(
+                        "p4_correction_replay"
+                    )
+                }
+                error = Task041ModePrepError(
+                    "P4 correction replay failed an original action gate"
+                )
             else:
                 result["status"] = (
                     "task041_top_causal_replay_completed"
                     if top_causal_replay
+                    else "task041_p4_correction_replay_completed"
+                    if p4_correction_replay_from is not None
                     else "task041_common_layout_equivalence_completed"
                     if comparison_mode == "common_layout_equivalence"
                     else "task041_representative_rhs_completed"
@@ -11044,6 +12316,8 @@ def run_task041_consumer(
                 result["classification"] = (
                     "TASK041_TOP_CAUSAL_REPLAY_COMPLETED"
                     if top_causal_replay
+                    else "TASK041_P4_CORRECTION_REPLAY_COMPLETED"
+                    if p4_correction_replay_from is not None
                     else "COMMON_LAYOUT_EQUIVALENCE_PASS"
                     if comparison_mode == "common_layout_equivalence"
                     else "TASK041_REPRESENTATIVE_RHS_COMPLETED"
