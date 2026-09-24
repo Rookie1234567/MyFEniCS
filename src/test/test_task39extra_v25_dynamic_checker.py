@@ -12,8 +12,13 @@ import sys
 
 from benchmarks.task39extra_v25_dynamic_checker import (
     BACKEND,
+    BEST_FINITE_EXHAUSTION_PROFILE,
     H6_BACKEND,
+    NATIVE_A4_IMPLEMENTATION,
     THREAD_CONTRACT,
+    V29_A4_IMPLEMENTATION,
+    V29_A4_ORACLE,
+    _raw_bal_h_facts,
     _raw_call_facts,
     check_summary,
 )
@@ -76,6 +81,7 @@ def _call(
             "repair": {
                 "logical_p4_apply_count": 1,
                 "actual_mat_solve_count": actual,
+                "native_A4_action_count": 1 + extra_solve_count,
                 "rhs_norm": rhs_norm,
                 "extra_solve_count": extra_solve_count,
                 "records": records,
@@ -83,6 +89,76 @@ def _call(
             },
             "p4_mat_solve_count": actual,
         }
+    }
+
+
+def _soft_call(residual_norms: tuple[float, ...]) -> dict:
+    extra = len(residual_norms) - 1
+    call = _call(extra_solve_count=extra, residual_norms=residual_norms)
+    repair = call["inner"]["repair"]
+    ratios = [record["relative_residual"] for record in repair["records"]]
+    selected = min(range(len(ratios)), key=lambda index: (ratios[index], index))
+    returned = ratios[selected]
+    repair.update(
+        a4_action_implementation=V29_A4_IMPLEMENTATION,
+        a4_action_oracle=V29_A4_ORACLE,
+        best_snapshot_peak_local_bytes=(
+            3 * 201520 * 16 + 80 * 16
+            if returned > 1.0e-10 else 0
+        ),
+        selected_evidence_copy_local_bytes=(
+            4 * 201520 * 16 + 80 * 16
+            if returned > 1.0e-10 else 0
+        ),
+        final_relative_residual=returned,
+        selected_attempt=selected,
+        returned_rho=returned,
+        last_attempt_rho=ratios[-1],
+        min_rho=min(ratios),
+        status=(
+            "COARSE_TARGET_UNMET_CONTINUE"
+            if returned > 1.0e-10 else
+            "REFINED_TARGET_MET" if extra else "NOT_NEEDED"
+        ),
+    )
+    call["a4_action_implementation"] = V29_A4_IMPLEMENTATION
+    call["a4_action_oracle"] = V29_A4_ORACLE
+    call["native_A4_relative_residual"] = returned
+    return call
+
+
+def _set_v29_a4_identity(summary: dict) -> None:
+    total = 0
+    for boundary in summary["pc"]["boundary_records"]:
+        for call in boundary["pc"]["inexact_balance"]["calls"]:
+            repair = call["inner"]["repair"]
+            identity = {
+                "a4_action_implementation": V29_A4_IMPLEMENTATION,
+                "a4_action_oracle": V29_A4_ORACLE,
+            }
+            call.update(identity)
+            repair.update(identity)
+            total += int(repair["native_A4_action_count"])
+    summary["formal_release_timing"]["a4_verification"] = {
+        "action_count": total,
+        "implementation": V29_A4_IMPLEMENTATION,
+        "oracle_identity": V29_A4_ORACLE,
+        "selected_action_audit": {"apply_count": total},
+        "selected_action_apply_count_start": 0,
+        "selected_action_apply_count_end": total,
+        "candidate_construction_facts": {
+            "implementation_identity": V29_A4_IMPLEMENTATION,
+            "oracle_identity": V29_A4_ORACLE,
+            "degree": 4,
+            "action_role": "full_A4_verification_candidate",
+        },
+        "soft_repair_workspace": {
+            "enabled": True,
+            "reserved_coarse_vector_upper_count": 24,
+            "reserved_bytes": 24 * 201520 * 16,
+            "best_snapshot_upper_bytes": 3 * 201520 * 16 + 80 * 16,
+            "selected_evidence_copy_upper_bytes": 4 * 201520 * 16 + 80 * 16,
+        },
     }
 
 
@@ -437,3 +513,79 @@ def test_missing_native_aq_is_not_reported_as_pass() -> None:
     result = check_summary(summary, resolved_config=config, stage="Q4_ORIGINAL")
     assert result["dynamic_passed"] is False
     assert "native_aq" in result["gate_failures"]
+
+
+def test_soft_checker_recomputes_best_finite_selection_and_tie_order():
+    call = _soft_call((0.4, 0.4, 0.5))
+    facts, failures = _raw_call_facts(
+        call, "soft_tie", allow_soft_return=True
+    )
+    assert not failures
+    assert facts["selected_attempt"] == 0
+    assert facts["final_recomputed_relative"] == 0.4
+    assert facts["last_attempt_recomputed_relative"] == 0.5
+    assert facts["coarse_target_met"] is False
+
+    broken = deepcopy(call)
+    broken["inner"]["repair"]["selected_attempt"] = 1
+    _facts, failures = _raw_call_facts(
+        broken, "soft_tie", allow_soft_return=True
+    )
+    assert "soft_tie.selected_attempt_not_argmin_tie_earliest" in failures
+
+
+def test_only_v29_resolved_profile_allows_soft_return_status():
+    summary, config = _v25_fixture()
+    for boundary in summary["pc"]["boundary_records"]:
+        calls = boundary["pc"]["inexact_balance"]["calls"]
+        boundary["pc"]["inexact_balance"]["calls"] = [
+            _soft_call((0.0,)) for _ in calls
+        ]
+    call = _soft_call((0.5, 0.4, 0.5))
+    summary["pc"]["boundary_records"][4]["pc"]["inexact_balance"]["calls"][0] = call
+    summary["formal_release_timing"]["p4"].update(
+        actual_mat_solve_count=256,
+        physical_f4_call_count=256,
+    )
+    _set_v29_a4_identity(summary)
+
+    config["solver"]["preconditioner"] = BEST_FINITE_EXHAUSTION_PROFILE
+    allowed = check_summary(summary, resolved_config=config, stage="Q4_ORIGINAL")
+    bal_h = allowed["recomputed"]["bal_h_and_p4"]
+    assert bal_h["passed"] is True
+    assert bal_h["coarse_target_met_all"] is False
+    assert bal_h["coarse_unmet_continued_count"] == 1
+    assert bal_h["returned_rho_distribution"]["max"] == 0.4
+
+    config["solver"]["preconditioner"] = "physical_p6_trace_fused_kernel_v28"
+    strict = check_summary(summary, resolved_config=config, stage="Q4_ORIGINAL")
+    assert strict["recomputed"]["bal_h_and_p4"]["passed"] is False
+    assert "raw_bal_h_and_p4" in strict["gate_failures"]
+
+    fallback = deepcopy(summary)
+    for boundary in fallback["pc"]["boundary_records"]:
+        for call in boundary["pc"]["inexact_balance"]["calls"]:
+            repair = call["inner"]["repair"]
+            call["a4_action_implementation"] = NATIVE_A4_IMPLEMENTATION
+            call["a4_action_oracle"] = NATIVE_A4_IMPLEMENTATION
+            repair["a4_action_implementation"] = NATIVE_A4_IMPLEMENTATION
+            repair["a4_action_oracle"] = NATIVE_A4_IMPLEMENTATION
+    verification = fallback["formal_release_timing"]["a4_verification"]
+    verification.update(
+        implementation=NATIVE_A4_IMPLEMENTATION,
+        oracle_identity=NATIVE_A4_IMPLEMENTATION,
+        selected_action_audit={"apply_count": 263},
+        selected_action_apply_count_start=7,
+        selected_action_apply_count_end=263,
+        candidate_construction_facts={},
+    )
+    fallback["formal_release_timing"]["native_A4"] = {
+        "operator_action": {"apply_count": 263}
+    }
+    config["solver"]["preconditioner"] = BEST_FINITE_EXHAUSTION_PROFILE
+    # The fallback's existing native action history begins at 7. The selected
+    # interval still contains exactly the 256 recomputed repair checks.
+    fallback_result = check_summary(
+        fallback, resolved_config=config, stage="Q4_ORIGINAL"
+    )
+    assert fallback_result["recomputed"]["bal_h_and_p4"]["passed"] is True

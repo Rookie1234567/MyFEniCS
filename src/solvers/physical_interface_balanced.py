@@ -9,6 +9,7 @@ import numpy as np
 
 from .physical_balanced_coupling import PhysicalBalancedCoupling
 from .physical_inexact_balance import InexactBalanceLedger
+from .fullspace_physical_intermediate import _copy as _copy_vector
 
 
 @dataclass(frozen=True)
@@ -24,6 +25,7 @@ class P4ResidualRepairPolicy:
     enabled: bool = False
     residual_limit: float = 1.0e-10
     max_extra_solves: int = 0
+    exhaustion_policy: str = 'raise'
 
     def __post_init__(self) -> None:
         if not np.isfinite(self.residual_limit) or self.residual_limit <= 0.0:
@@ -34,6 +36,14 @@ class P4ResidualRepairPolicy:
             raise ValueError("p4 extra solve count must be between zero and two")
         if not self.enabled and int(self.max_extra_solves) != 0:
             raise ValueError("disabled p4 repair cannot reserve extra solves")
+        if self.exhaustion_policy not in ('raise', 'continue_outer_best_finite'):
+            raise ValueError("unknown p4 repair exhaustion policy")
+        if self.exhaustion_policy == 'continue_outer_best_finite' and (
+            not self.enabled or int(self.max_extra_solves) != 2
+        ):
+            raise ValueError(
+                "continue_outer_best_finite requires enabled repair and two extra solves"
+            )
 
 
 class P4ResidualRepairRejected(RuntimeError):
@@ -55,6 +65,7 @@ def _repair_policy(value: P4ResidualRepairPolicy | Mapping[str, Any] | None) -> 
         enabled=bool(value.get("enabled", False)),
         residual_limit=float(value.get("residual_limit", 1.0e-10)),
         max_extra_solves=int(value.get("max_extra_solves", 0)),
+        exhaustion_policy=str(value.get("exhaustion_policy", 'raise')),
     )
 
 
@@ -93,8 +104,12 @@ class InterfaceBalancedCoupling:
                  checkpoint=lambda: None, capture_vectors=False,
                  repair_policy: P4ResidualRepairPolicy | Mapping[str, Any] | None = None,
                  repair_vector_sink=None, repair_vector_capture=None,
-                 logical_apply_hook=None):
+                 logical_apply_hook=None,
+                 p4_action_implementation='native_ffcx_full_A4',
+                 p4_action_oracle='native_ffcx_full_A4'):
         self.p4_action, self.transfer, self.fint = p4_action, transfer, fint
+        self.p4_action_implementation = str(p4_action_implementation)
+        self.p4_action_oracle = str(p4_action_oracle)
         self.coarse_calls = []
         self.native_A4_count = 0
         self.native_A4_seconds = 0.0
@@ -187,6 +202,9 @@ class InterfaceBalancedCoupling:
             'native_A4_relative_residual': float(relative),
             'interface_facts': deepcopy(interface),
         }
+        soft_return = (
+            self.repair_policy.exhaustion_policy == 'continue_outer_best_finite'
+        )
         capture_selected = False
         if self.repair_vector_capture is not None:
             capture_selected = bool(self.repair_vector_capture(scalar))
@@ -201,6 +219,9 @@ class InterfaceBalancedCoupling:
                 or relative > self.repair_policy.residual_limit
             )
         )
+        if soft_return and phase not in ('raw', 'selected'):
+            full_packet = False
+            capture_selected = False
         if self.repair_vector_sink is not None:
             payload = dict(scalar)
             if full_packet:
@@ -212,7 +233,9 @@ class InterfaceBalancedCoupling:
                     native_A4_residual=_array_copy(residual),
                 )
             self.repair_vector_sink(payload)
-        if self.capture_vectors or capture_selected:
+        if (self.capture_vectors or capture_selected) and (
+            not soft_return or phase in ('raw', 'selected')
+        ):
             self._last_repair_vectors.append({
                 **scalar,
                 'g': _array_copy(g),
@@ -243,6 +266,8 @@ class InterfaceBalancedCoupling:
         logical_call_sequence = self._logical_call_sequence
         interfaces = []
         repair_records = []
+        best_state = None
+        best_snapshot_peak_local_bytes = 0
         port_total = None
         native_actions = 0
         native_A4_seconds = 0.0
@@ -303,6 +328,23 @@ class InterfaceBalancedCoupling:
                 'rhs_norm': rhs_norm,
                 'factor_solve_call_delta': self._factor_solve_delta(interface),
             })
+            soft_return = (
+                self.repair_policy.exhaustion_policy == 'continue_outer_best_finite'
+            )
+            if soft_return and np.isfinite(relative) and relative > self.repair_policy.residual_limit:
+                best_state = {
+                    'attempt': 0,
+                    'relative': relative,
+                    'correction': _copy_vector(correction),
+                    'applied': _copy_vector(applied),
+                    'residual': _copy_vector(residual),
+                    'port': None if port_total is None else port_total.copy(),
+                    'interface': deepcopy(interface),
+                }
+                best_snapshot_peak_local_bytes = sum(
+                    _array_view(best_state[key]).nbytes
+                    for key in ('correction', 'applied', 'residual')
+                ) + (0 if best_state['port'] is None else best_state['port'].nbytes)
             self._repair_snapshot(
                 logical_call=logical_call, phase='raw', g=g,
                 correction=correction, port=port_total, applied=applied,
@@ -395,6 +437,28 @@ class InterfaceBalancedCoupling:
                         applied=delta_applied, residual=next_residual,
                         relative=relative, interface=delta_interface,
                     )
+                    if soft_return and np.isfinite(relative) and relative > policy.residual_limit and (
+                        best_state is None or relative < best_state['relative']
+                    ):
+                        if best_state is not None:
+                            for key in ('correction', 'applied', 'residual'):
+                                best_state[key].destroy()
+                        best_state = {
+                            'attempt': int(extra_solves),
+                            'relative': relative,
+                            'correction': _copy_vector(correction),
+                            'applied': _copy_vector(delta_applied),
+                            'residual': _copy_vector(next_residual),
+                            'port': None if port_total is None else port_total.copy(),
+                            'interface': deepcopy(delta_interface),
+                        }
+                        best_snapshot_peak_local_bytes = max(
+                            best_snapshot_peak_local_bytes,
+                            sum(
+                                _array_view(best_state[key]).nbytes
+                                for key in ('correction', 'applied', 'residual')
+                            ) + (0 if best_state['port'] is None else best_state['port'].nbytes),
+                        )
                     applied.destroy()
                     residual.destroy()
                     applied, residual = delta_applied, next_residual
@@ -407,8 +471,53 @@ class InterfaceBalancedCoupling:
                     if delta is not None:
                         delta.destroy()
 
+            if soft_return and np.isfinite(relative) and relative <= policy.residual_limit:
+                if best_state is not None:
+                    for key in ('correction', 'applied', 'residual'):
+                        best_state[key].destroy()
+                    best_state = None
+            last_attempt_relative = float(relative)
+            selected_attempt = len(repair_records) - 1
+            minimum_relative = min(
+                float(item['relative_residual']) for item in repair_records
+            )
+            unmet_continue = bool(
+                soft_return
+                and np.isfinite(relative)
+                and relative > policy.residual_limit
+            )
+            if unmet_continue:
+                if best_state is None:
+                    raise FloatingPointError(
+                        'p4 repair exhausted without a finite complete state'
+                    )
+                for value in (correction, applied, residual):
+                    value.destroy()
+                selected_attempt = int(best_state['attempt'])
+                relative = float(best_state['relative'])
+                correction, applied, residual = (
+                    best_state['correction'],
+                    best_state['applied'],
+                    best_state['residual'],
+                )
+                best_state['correction'] = None
+                best_state['applied'] = None
+                best_state['residual'] = None
+                port_total = best_state['port']
+                self._set_port_state(port_total)
+            status = (
+                'NONFINITE_REJECT' if not np.isfinite(relative) else
+                'COARSE_TARGET_UNMET_CONTINUE' if unmet_continue else
+                ('REFINED_TARGET_MET' if extra_solves else 'NOT_NEEDED')
+            ) if soft_return else (
+                'NOT_NEEDED' if not policy.enabled or extra_solves == 0 and relative <= policy.residual_limit else (
+                    'PASS' if relative <= policy.residual_limit else 'BOUNDED_REPAIR_EXHAUSTED'
+                )
+            )
             repair = {
                 'schema': 'task039extra.v24.bounded-p4-repair.v1',
+                'a4_action_implementation': self.p4_action_implementation,
+                'a4_action_oracle': self.p4_action_oracle,
                 'enabled': bool(policy.enabled),
                 'residual_limit': float(policy.residual_limit),
                 'max_extra_solves': int(policy.max_extra_solves),
@@ -419,11 +528,34 @@ class InterfaceBalancedCoupling:
                 'actual_mat_solve_count': None,
                 'native_A4_action_count': int(native_actions),
                 'records': repair_records,
-                'status': 'NOT_NEEDED' if not policy.enabled or extra_solves == 0 and relative <= policy.residual_limit else (
-                    'PASS' if relative <= policy.residual_limit else 'BOUNDED_REPAIR_EXHAUSTED'
-                ),
+                'status': status,
                 'elapsed_seconds': time.perf_counter() - started,
             }
+            if soft_return:
+                repair.update(
+                    selected_attempt=int(selected_attempt),
+                    last_attempt_rho=last_attempt_relative,
+                    returned_rho=float(relative),
+                    min_rho=float(minimum_relative),
+                    selection_policy='minimum_rho_tie_earliest',
+                    best_snapshot_peak_vector_count=(
+                        3 if best_snapshot_peak_local_bytes else 0
+                    ),
+                    best_snapshot_peak_local_bytes=int(best_snapshot_peak_local_bytes),
+                    best_snapshot_lifetime=(
+                        'one bounded snapshot; transferred to the returned state '
+                        'when selected, otherwise released after a passing refinement'
+                        if unmet_continue or best_snapshot_peak_local_bytes else
+                        'not allocated because the raw residual met the target'
+                    ),
+                    selected_evidence_copy_local_bytes=int(
+                        _array_view(g).nbytes
+                        + _array_view(correction).nbytes
+                        + _array_view(applied).nbytes
+                        + _array_view(residual).nbytes
+                        + (0 if port_total is None else port_total.nbytes)
+                    ) if unmet_continue else 0,
+                )
             repair.update(
                 logical_call_sequence=int(logical_call_sequence),
                 pc_apply_sequence=int(self._pc_apply_sequence),
@@ -434,7 +566,7 @@ class InterfaceBalancedCoupling:
                 if all(value is not None for value in solve_deltas)
                 else None
             )
-            if policy.enabled and (
+            if policy.enabled and not unmet_continue and (
                 not np.isfinite(relative) or relative > policy.residual_limit
             ):
                 self._save_repair_evidence(f'p4_repair_failure_{logical_call}', {
@@ -446,6 +578,45 @@ class InterfaceBalancedCoupling:
                 })
                 raise P4ResidualRepairRejected(repair)
 
+            if unmet_continue:
+                selected_interface = best_state['interface']
+                selected_phase = 'raw' if selected_attempt == 0 else f'correction_{selected_attempt}'
+                selected_scalar = {
+                    'schema': 'task039extra.v27.p4-selected-best-finite.v1',
+                    'logical_call': int(logical_call),
+                    'logical_call_sequence': int(logical_call_sequence),
+                    'pc_apply_sequence': int(self._pc_apply_sequence),
+                    'phase': 'selected',
+                    'source_phase': selected_phase,
+                    'selected_attempt': int(selected_attempt),
+                    'last_attempt_rho': float(last_attempt_relative),
+                    'returned_rho': float(relative),
+                    'min_rho': float(minimum_relative),
+                    'interface_facts': deepcopy(selected_interface),
+                }
+                if self.repair_vector_sink is not None:
+                    self.repair_vector_sink({
+                        **selected_scalar,
+                        'g': _array_copy(g),
+                        'correction': _array_copy(correction),
+                        'alpha': None if port_total is None else port_total.copy(),
+                        'native_applied': _array_copy(applied),
+                        'native_A4_residual': _array_copy(residual),
+                    })
+                capture_selected = bool(
+                    self.repair_vector_capture is not None
+                    and self.repair_vector_capture(selected_scalar)
+                )
+                if self.capture_vectors or capture_selected:
+                    self._last_repair_vectors.append({
+                        **selected_scalar,
+                        'g': _array_copy(g),
+                        'correction': _array_copy(correction),
+                        'alpha': None if port_total is None else np.asarray(port_total).copy(),
+                        'native_applied': _array_copy(applied),
+                        'native_A4_residual': _array_copy(residual),
+                    })
+
             interface_facts = deepcopy(interfaces[0])
             interface_facts['logical_p4_apply_count'] = 1
             interface_facts['factor_solve_call_delta_total'] = repair['actual_mat_solve_count']
@@ -455,6 +626,8 @@ class InterfaceBalancedCoupling:
                 'rhs_norm': rhs_norm,
                 'native_A4_residual_norm': float(residual.norm()),
                 'native_A4_relative_residual': float(relative),
+                'a4_action_implementation': self.p4_action_implementation,
+                'a4_action_oracle': self.p4_action_oracle,
                 'fint_and_native_A4_seconds': time.perf_counter() - started,
                 'native_A4_actions': int(native_actions),
                 'native_A4_seconds': float(native_A4_seconds),
@@ -488,6 +661,10 @@ class InterfaceBalancedCoupling:
             for vector in (residual, applied, correction, g):
                 if vector is not None:
                     vector.destroy()
+            if best_state is not None:
+                for key in ('correction', 'applied', 'residual'):
+                    if best_state[key] is not None:
+                        best_state[key].destroy()
 
     def apply(self, source):
         self.coarse_calls = []
@@ -513,6 +690,16 @@ class InterfaceBalancedCoupling:
     @property
     def apply_count(self):
         return self.balanced.apply_count
+
+    @property
+    def a4_check_action_count(self):
+        """Complete A4 applications; ``native_A4_count`` is the legacy alias."""
+        return self.native_A4_count
+
+    @property
+    def a4_check_seconds(self):
+        """Time spent by the selected complete A4 implementation."""
+        return self.native_A4_seconds
 
     @property
     def last_apply_facts(self):
@@ -551,6 +738,8 @@ class InterfaceBalancedCoupling:
         self._destroyed = True
         self.ledger = None
         self.p4_action = None
+        self.p4_action_implementation = None
+        self.p4_action_oracle = None
         self.transfer = None
         self.fint = None
         self.repair_vector_sink = None

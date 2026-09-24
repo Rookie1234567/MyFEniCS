@@ -19,6 +19,10 @@ from typing import Any, Mapping
 CHECKER_SCHEMA = "task039extra.v25.dynamic-checker.v1"
 TRUE_RESIDUAL_LIMIT = 1.0e-6
 NATIVE_AQ_LIMIT = 1.0e-10
+BEST_FINITE_EXHAUSTION_PROFILE = "physical_p6_trace_a4_tensor_h6_v29"
+V29_A4_IMPLEMENTATION = "fused_sum_factorized_partial_assembly_full_A4"
+V29_A4_ORACLE = "native_ffcx_full_A4_same_p4_forms_and_dtn"
+NATIVE_A4_IMPLEMENTATION = "native_ffcx_full_A4"
 
 BACKEND = "isotropic_sum_factorized_n1e_v26"
 H6_BACKEND = "isotropic_sum_factorized_n1e_v26_apply_and_power10"
@@ -146,7 +150,9 @@ def _boundary_records(summary: Mapping[str, Any]) -> list[Any]:
     return list(records)
 
 
-def _raw_call_facts(call: Any, label: str) -> tuple[dict[str, Any], list[str]]:
+def _raw_call_facts(
+    call: Any, label: str, *, allow_soft_return: bool = False
+) -> tuple[dict[str, Any], list[str]]:
     """Read one p4 call and recompute its repair residuals from raw records."""
 
     failures: list[str] = []
@@ -171,6 +177,14 @@ def _raw_call_facts(call: Any, label: str) -> tuple[dict[str, Any], list[str]]:
         return {}, [str(exc)]
     if logical != 1:
         failures.append(f"{label}.logical_p4_apply_count_not_one")
+    implementation = call.get("a4_action_implementation", inner.get("a4_action_implementation"))
+    oracle = call.get("a4_action_oracle", inner.get("a4_action_oracle"))
+    allowed_a4_identities = {
+        (V29_A4_IMPLEMENTATION, V29_A4_ORACLE),
+        (NATIVE_A4_IMPLEMENTATION, NATIVE_A4_IMPLEMENTATION),
+    }
+    if allow_soft_return and (implementation, oracle) not in allowed_a4_identities:
+        failures.append(f"{label}.a4_action_identity_mismatch")
     rhs_norm = repair.get("rhs_norm", call.get("rhs_norm", inner.get("rhs_norm")))
     if not _finite(rhs_norm):
         failures.append(f"{label}.rhs_norm_missing_or_nonfinite")
@@ -206,6 +220,36 @@ def _raw_call_facts(call: Any, label: str) -> tuple[dict[str, Any], list[str]]:
     expected_physical = logical + max(extra, 0)
     if actual != expected_actual:
         failures.append(f"{label}.mat_solve_formula_mismatch")
+    try:
+        a4_action_count = _number(
+            repair.get("native_A4_action_count", inner.get("native_A4_actions")),
+            f"{label}.a4_action_count",
+        )
+    except ValueError as exc:
+        failures.append(str(exc))
+        a4_action_count = -1
+    if a4_action_count != expected_physical:
+        failures.append(f"{label}.a4_action_count_mismatch")
+    if allow_soft_return and (
+        repair.get("a4_action_implementation"), repair.get("a4_action_oracle")
+    ) != (implementation, oracle):
+        failures.append(f"{label}.repair_a4_action_identity_mismatch")
+    best_snapshot_bytes = 0
+    selected_evidence_bytes = 0
+    if allow_soft_return:
+        try:
+            best_snapshot_bytes = _number(
+                repair.get("best_snapshot_peak_local_bytes"),
+                f"{label}.best_snapshot_peak_local_bytes",
+            )
+            selected_evidence_bytes = _number(
+                repair.get("selected_evidence_copy_local_bytes"),
+                f"{label}.selected_evidence_copy_local_bytes",
+            )
+        except ValueError as exc:
+            failures.append(str(exc))
+        if best_snapshot_bytes < 0 or selected_evidence_bytes < 0:
+            failures.append(f"{label}.negative_repair_memory_bytes")
     if not records:
         failures.append(f"{label}.mat_solve_has_no_raw_records")
     if inner.get("p4_mat_solve_count") is not None:
@@ -266,9 +310,48 @@ def _raw_call_facts(call: Any, label: str) -> tuple[dict[str, Any], list[str]]:
     )
     if factor_delta_sum != actual:
         failures.append(f"{label}.factor_solve_delta_sum_mismatch")
-    final_ratio = residual_rows[-1]["recomputed_relative"] if residual_rows else math.nan
-    if final_ratio > 1.0e-10:
-        failures.append(f"{label}.final_Aq_residual_limit")
+    last_ratio = residual_rows[-1]["recomputed_relative"] if residual_rows else math.nan
+    selected_index = min(
+        range(len(residual_rows)),
+        key=lambda index: (residual_rows[index]["recomputed_relative"], index),
+        default=-1,
+    )
+    min_ratio = (
+        residual_rows[selected_index]["recomputed_relative"]
+        if selected_index >= 0 else math.nan
+    )
+    if allow_soft_return:
+        try:
+            reported_selected = _number(
+                repair.get("selected_attempt"), f"{label}.selected_attempt"
+            )
+        except ValueError as exc:
+            failures.append(str(exc))
+            reported_selected = -1
+        if reported_selected != selected_index:
+            failures.append(f"{label}.selected_attempt_not_argmin_tie_earliest")
+        final_ratio = min_ratio
+        for key, expected in (
+            ("returned_rho", final_ratio),
+            ("last_attempt_rho", last_ratio),
+            ("min_rho", min_ratio),
+        ):
+            reported = repair.get(key)
+            if not _finite(reported) or not math.isclose(
+                float(reported), expected, rel_tol=1.0e-12, abs_tol=1.0e-25
+            ):
+                failures.append(f"{label}.{key}_mismatch")
+        if final_ratio > 1.0e-10:
+            if extra != 2 or repair.get("status") != "COARSE_TARGET_UNMET_CONTINUE":
+                failures.append(f"{label}.soft_exhaustion_status_or_count_mismatch")
+        elif repair.get("status") != (
+            "REFINED_TARGET_MET" if extra else "NOT_NEEDED"
+        ):
+            failures.append(f"{label}.soft_target_met_status_mismatch")
+    else:
+        final_ratio = last_ratio
+        if final_ratio > 1.0e-10:
+            failures.append(f"{label}.final_Aq_residual_limit")
     for key, value in (
         ("final_relative_residual", final_ratio),
         ("native_A4_relative_residual", final_ratio),
@@ -286,14 +369,27 @@ def _raw_call_facts(call: Any, label: str) -> tuple[dict[str, Any], list[str]]:
         "rhs_norm": rhs_norm_value,
         "actual_mat_solve": actual,
         "physical_f4_calls": expected_physical,
+        "a4_action_count": a4_action_count,
+        "a4_action_implementation": implementation,
+        "a4_action_oracle": oracle,
+        "best_snapshot_peak_local_bytes": best_snapshot_bytes,
+        "selected_evidence_copy_local_bytes": selected_evidence_bytes,
         "extra_repairs": max(extra, 0),
         "repair_records": len(records),
         "residuals": residual_rows,
         "final_recomputed_relative": final_ratio,
+        "last_attempt_recomputed_relative": last_ratio,
+        "selected_attempt": selected_index,
+        "coarse_target_met": _finite(final_ratio) and final_ratio <= 1.0e-10,
     }, failures
 
 
-def _raw_bal_h_facts(summary: Mapping[str, Any], stage: str | None = None) -> dict[str, Any]:
+def _raw_bal_h_facts(
+    summary: Mapping[str, Any],
+    stage: str | None = None,
+    *,
+    allow_soft_return: bool = False,
+) -> dict[str, Any]:
     """Recompute the one-pass boundary ledger and split setup/check/solve."""
 
     boundaries = _boundary_records(summary)
@@ -320,7 +416,11 @@ def _raw_bal_h_facts(summary: Mapping[str, Any], stage: str | None = None) -> di
         if len(calls) != 2:
             failures.append(f"boundary[{index}].BAL_H_coarse_call_count_not_two")
         for call_index, call in enumerate(calls, start=1):
-            facts, call_failures = _raw_call_facts(call, f"boundary[{index}].call[{call_index}]")
+            facts, call_failures = _raw_call_facts(
+                call,
+                f"boundary[{index}].call[{call_index}]",
+                allow_soft_return=allow_soft_return,
+            )
             failures.extend(call_failures)
             if facts:
                 facts.update({"boundary": index, "call": call_index})
@@ -403,15 +503,106 @@ def _raw_bal_h_facts(summary: Mapping[str, Any], stage: str | None = None) -> di
             "nonzero_logical_units": sum(int(row["nonzero_logical_units"]) for row in items),
             "actual_mat_solve": sum(int(row["actual_mat_solve"]) for row in items),
             "physical_f4_calls": sum(int(row["physical_f4_calls"]) for row in items),
+            "a4_action_count": sum(int(row["a4_action_count"]) for row in items),
+            "best_snapshot_peak_local_bytes": max(
+                (int(row["best_snapshot_peak_local_bytes"]) for row in items), default=0
+            ),
+            "selected_evidence_copy_local_bytes": max(
+                (int(row["selected_evidence_copy_local_bytes"]) for row in items), default=0
+            ),
             "extra_repairs": sum(int(row["extra_repairs"]) for row in items),
         }
 
     phase_totals = {phase: totals(phase_rows[phase]) for phase in phase_names}
     all_totals = totals(rows)
+    returned = sorted(
+        float(row["final_recomputed_relative"])
+        for row in rows
+        if _finite(row.get("final_recomputed_relative"))
+    )
+
+    def quantile(fraction: float) -> float | None:
+        if not returned:
+            return None
+        index = max(0, math.ceil(fraction * len(returned)) - 1)
+        return returned[min(index, len(returned) - 1)]
+
+    coarse_target_met_all = bool(rows) and all(
+        row["coarse_target_met"] for row in rows
+    )
+    coarse_unmet_continued_count = sum(
+        not row["coarse_target_met"] for row in rows
+    )
     if all_totals["actual_mat_solve"] != (
         all_totals["nonzero_logical_units"] + all_totals["extra_repairs"]
     ):
         failures.append("mat_solve_nonzero_logical_plus_repairs_mismatch")
+    if allow_soft_return:
+        verification = _path(summary, "formal_release_timing", "a4_verification")
+        if not isinstance(verification, Mapping):
+            failures.append("formal_release_timing.a4_verification_missing")
+        else:
+            selected_audit = verification.get("selected_action_audit")
+            construction = verification.get("candidate_construction_facts")
+            repair_workspace = verification.get("soft_repair_workspace")
+            repair_workspace = repair_workspace if isinstance(repair_workspace, Mapping) else {}
+            action_count_start = verification.get("selected_action_apply_count_start")
+            action_count_end = verification.get("selected_action_apply_count_end")
+            implementation = verification.get("implementation")
+            oracle_identity = verification.get("oracle_identity")
+            identities = {
+                (row.get("a4_action_implementation"), row.get("a4_action_oracle"))
+                for row in rows
+            }
+            candidate_selected = (
+                implementation == V29_A4_IMPLEMENTATION
+                and oracle_identity == V29_A4_ORACLE
+            )
+            native_fallback_selected = (
+                implementation == NATIVE_A4_IMPLEMENTATION
+                and oracle_identity == NATIVE_A4_IMPLEMENTATION
+            )
+            checks = {
+                "implementation": candidate_selected or native_fallback_selected,
+                "all_calls_use_selected_action": identities == {(implementation, oracle_identity)},
+                "action_count": verification.get("action_count") == all_totals["a4_action_count"],
+                "selected_audit_count": isinstance(selected_audit, Mapping)
+                and selected_audit.get("apply_count") == action_count_end
+                and _finite(action_count_start)
+                and _finite(action_count_end)
+                and float(action_count_end) - float(action_count_start)
+                == all_totals["a4_action_count"],
+                "construction_facts": (
+                    isinstance(construction, Mapping)
+                    and construction.get("implementation_identity") == V29_A4_IMPLEMENTATION
+                    and construction.get("oracle_identity") == V29_A4_ORACLE
+                    and construction.get("degree") == 4
+                    and construction.get("action_role") == "full_A4_verification_candidate"
+                ) if candidate_selected else (
+                    native_fallback_selected and construction == {}
+                ),
+                "repair_workspace_enabled": repair_workspace.get("enabled") is True,
+                "repair_workspace_vector_reserve": repair_workspace.get(
+                    "reserved_coarse_vector_upper_count"
+                ) == 24,
+                "repair_workspace_covers_snapshots": (
+                    _finite(repair_workspace.get("reserved_bytes"))
+                    and _finite(repair_workspace.get("best_snapshot_upper_bytes"))
+                    and _finite(repair_workspace.get("selected_evidence_copy_upper_bytes"))
+                    and float(repair_workspace["reserved_bytes"])
+                    >= float(repair_workspace["best_snapshot_upper_bytes"])
+                    + float(repair_workspace["selected_evidence_copy_upper_bytes"])
+                    and float(repair_workspace["best_snapshot_upper_bytes"])
+                    >= all_totals["best_snapshot_peak_local_bytes"]
+                    and float(repair_workspace["selected_evidence_copy_upper_bytes"])
+                    >= all_totals["selected_evidence_copy_local_bytes"]
+                ),
+            }
+            failures.extend(
+                f"formal_release_timing.a4_verification_{name}"
+                for name, passed in checks.items()
+                if not passed
+            )
     formal = _path(summary, "formal_release_timing", "p4")
     formal = formal if isinstance(formal, Mapping) else {}
     reported_checks = {
@@ -440,7 +631,25 @@ def _raw_bal_h_facts(summary: Mapping[str, Any], stage: str | None = None) -> di
         "nonzero_logical_units": all_totals["nonzero_logical_units"],
         "actual_mat_solve": all_totals["actual_mat_solve"],
         "physical_f4_calls": all_totals["physical_f4_calls"],
+        "a4_action_count": all_totals["a4_action_count"],
+        "a4_action_implementation": (
+            sorted({row["a4_action_implementation"] for row in rows})
+        ),
+        "best_snapshot_peak_local_bytes": all_totals["best_snapshot_peak_local_bytes"],
+        "selected_evidence_copy_local_bytes": all_totals[
+            "selected_evidence_copy_local_bytes"
+        ],
         "extra_repairs": all_totals["extra_repairs"],
+        "coarse_target_met_all": coarse_target_met_all,
+        "coarse_unmet_continued_count": coarse_unmet_continued_count,
+        "returned_rho_distribution": {
+            "count": len(returned),
+            "min": returned[0] if returned else None,
+            "p50": quantile(0.50),
+            "p90": quantile(0.90),
+            "p99": quantile(0.99),
+            "max": returned[-1] if returned else None,
+        },
         "reported_cross_checks": reported_checks,
         "rows": rows,
     }
@@ -541,6 +750,10 @@ def _backend_facts(
         solver.get("preconditioner")
         == "physical_p6_trace_fused_kernel_v28"
     )
+    best_finite_profile = (
+        solver.get("preconditioner") == BEST_FINITE_EXHAUSTION_PROFILE
+    )
+    fused_kernel_profile = fused_kernel_profile or best_finite_profile
     expected_h6_backend = (
         "direct_selected_backend_same_apply_and_power10"
         if workingset_profile or fused_kernel_profile
@@ -760,7 +973,18 @@ def check_summary(
 ) -> dict[str, Any]:
     """Return only the dynamic accounting/wiring audit."""
 
-    bal_h = _raw_bal_h_facts(summary, stage)
+    solver_config = (
+        resolved_config.get("solver")
+        if isinstance(resolved_config, Mapping)
+        and isinstance(resolved_config.get("solver"), Mapping)
+        else {}
+    )
+    allow_soft_return = (
+        solver_config.get("preconditioner") == BEST_FINITE_EXHAUSTION_PROFILE
+    )
+    bal_h = _raw_bal_h_facts(
+        summary, stage, allow_soft_return=allow_soft_return
+    )
     residual = _residual_facts(summary)
     aq = _aq_facts(summary)
     arnoldi = _first_arnoldi_facts(summary, stage)

@@ -48,6 +48,7 @@ class N1ESumFactorizedAction:
         batch_size: int,
         reuse_projection_work: bool = False,
         shared_contractions: bool = False,
+        combine_real_imag_transforms: bool = False,
         reference_bundle=None,
         share_reference: bool = False,
     ) -> None:
@@ -56,6 +57,7 @@ class N1ESumFactorizedAction:
             raise ValueError("sum-factorized batch_size must be positive")
         self.batch_size = batch_size
         self.shared_contractions = bool(shared_contractions)
+        self.combine_real_imag_transforms = bool(combine_real_imag_transforms)
         element = space.element.basix_element
         if (
             element.family != basix.ElementFamily.N1E
@@ -296,14 +298,27 @@ class N1ESumFactorizedAction:
         # These four contiguous real arrays are reused for both coefficient
         # transforms.  They avoid stride-2 complex views as BLAS operands and
         # avoid promoting the real coefficient matrix to a complex temporary.
+        transform_batch = (
+            2 * self.batch_size
+            if self.combine_real_imag_transforms
+            else self.batch_size
+        )
         self._coefficient_real_work = np.empty(
-            (self.batch_size, int(element.dim)), dtype=np.float64
+            (transform_batch, int(element.dim)), dtype=np.float64
         )
-        self._coefficient_imag_work = np.empty_like(self._coefficient_real_work)
+        self._coefficient_imag_work = (
+            None
+            if self.combine_real_imag_transforms
+            else np.empty_like(self._coefficient_real_work)
+        )
         self._polynomial_real_work = np.empty(
-            (self.batch_size, 3 * polynomial_dimension), dtype=np.float64
+            (transform_batch, 3 * polynomial_dimension), dtype=np.float64
         )
-        self._polynomial_imag_work = np.empty_like(self._polynomial_real_work)
+        self._polynomial_imag_work = (
+            None
+            if self.combine_real_imag_transforms
+            else np.empty_like(self._polynomial_real_work)
+        )
         if self.shared_contractions:
             qx, qy, _ = shape
             width = degree + 1
@@ -393,6 +408,14 @@ class N1ESumFactorizedAction:
             "workspace_scope": "one fixed local batch; no global matrix or cell tensor",
             "native_tensor_product_api": bool(element.has_tensor_product_factorisation),
             "coefficient_transform_real_imag": True,
+            "coefficient_transform_real_imag_layout": (
+                "stacked_real_then_imag_single_real_gemm"
+                if self.combine_real_imag_transforms
+                else "separate_real_and_imag_real_gemms"
+            ),
+            "combined_real_imag_transform_opt_in": (
+                self.combine_real_imag_transforms
+            ),
             "reuse_projection_work_opt_in": self.reuse_projection_work,
             "shared_contractions_opt_in": self.shared_contractions,
             "shared_contraction_scratch_bytes": int(
@@ -610,17 +633,30 @@ class N1ESumFactorizedAction:
         ):
             raise ValueError("sum-factorized coefficient input has incompatible shape")
         started = time.perf_counter()
-        coefficient_real = self._coefficient_real_work[:count]
-        coefficient_imag = self._coefficient_imag_work[:count]
-        polynomial_real = self._polynomial_real_work[:count]
-        polynomial_imag = self._polynomial_imag_work[:count]
-        np.copyto(coefficient_real, local.real)
-        np.copyto(coefficient_imag, local.imag)
-        np.matmul(coefficient_real, self.coefficient_matrix, out=polynomial_real)
-        np.matmul(coefficient_imag, self.coefficient_matrix, out=polynomial_imag)
         polynomial_work = self._poly[:count].reshape(count, -1)
-        np.copyto(polynomial_work.real, polynomial_real)
-        np.copyto(polynomial_work.imag, polynomial_imag)
+        if self.combine_real_imag_transforms:
+            coefficient_stack = self._coefficient_real_work[: 2 * count]
+            polynomial_stack = self._polynomial_real_work[: 2 * count]
+            np.copyto(coefficient_stack[:count], local.real)
+            np.copyto(coefficient_stack[count:], local.imag)
+            np.matmul(
+                coefficient_stack,
+                self.coefficient_matrix,
+                out=polynomial_stack,
+            )
+            np.copyto(polynomial_work.real, polynomial_stack[:count])
+            np.copyto(polynomial_work.imag, polynomial_stack[count:])
+        else:
+            coefficient_real = self._coefficient_real_work[:count]
+            coefficient_imag = self._coefficient_imag_work[:count]
+            polynomial_real = self._polynomial_real_work[:count]
+            polynomial_imag = self._polynomial_imag_work[:count]
+            np.copyto(coefficient_real, local.real)
+            np.copyto(coefficient_imag, local.imag)
+            np.matmul(coefficient_real, self.coefficient_matrix, out=polynomial_real)
+            np.matmul(coefficient_imag, self.coefficient_matrix, out=polynomial_imag)
+            np.copyto(polynomial_work.real, polynomial_real)
+            np.copyto(polynomial_work.imag, polynomial_imag)
         self.timing["coefficient_transform"] += time.perf_counter() - started
         return self._poly[:count].reshape(
             count, 3, self.degree + 1, self.degree + 1, self.degree + 1
@@ -783,17 +819,30 @@ class N1ESumFactorizedAction:
     def _polynomial_to_coefficients(self, polynomial_result: np.ndarray) -> np.ndarray:
         count = int(polynomial_result.shape[0])
         started = time.perf_counter()
-        coefficient_real = self._coefficient_real_work[:count]
-        coefficient_imag = self._coefficient_imag_work[:count]
-        polynomial_real = self._polynomial_real_work[:count]
-        polynomial_imag = self._polynomial_imag_work[:count]
         polynomial_work = np.asarray(polynomial_result).reshape(count, -1)
-        np.copyto(polynomial_real, polynomial_work.real)
-        np.copyto(polynomial_imag, polynomial_work.imag)
-        np.matmul(polynomial_real, self.coefficient_matrix.T, out=coefficient_real)
-        np.matmul(polynomial_imag, self.coefficient_matrix.T, out=coefficient_imag)
-        np.copyto(self._result[:count].real, coefficient_real)
-        np.copyto(self._result[:count].imag, coefficient_imag)
+        if self.combine_real_imag_transforms:
+            polynomial_stack = self._polynomial_real_work[: 2 * count]
+            coefficient_stack = self._coefficient_real_work[: 2 * count]
+            np.copyto(polynomial_stack[:count], polynomial_work.real)
+            np.copyto(polynomial_stack[count:], polynomial_work.imag)
+            np.matmul(
+                polynomial_stack,
+                self.coefficient_matrix.T,
+                out=coefficient_stack,
+            )
+            np.copyto(self._result[:count].real, coefficient_stack[:count])
+            np.copyto(self._result[:count].imag, coefficient_stack[count:])
+        else:
+            coefficient_real = self._coefficient_real_work[:count]
+            coefficient_imag = self._coefficient_imag_work[:count]
+            polynomial_real = self._polynomial_real_work[:count]
+            polynomial_imag = self._polynomial_imag_work[:count]
+            np.copyto(polynomial_real, polynomial_work.real)
+            np.copyto(polynomial_imag, polynomial_work.imag)
+            np.matmul(polynomial_real, self.coefficient_matrix.T, out=coefficient_real)
+            np.matmul(polynomial_imag, self.coefficient_matrix.T, out=coefficient_imag)
+            np.copyto(self._result[:count].real, coefficient_real)
+            np.copyto(self._result[:count].imag, coefficient_imag)
         self.timing["reference_backward"] += time.perf_counter() - started
         return self._result[:count]
 

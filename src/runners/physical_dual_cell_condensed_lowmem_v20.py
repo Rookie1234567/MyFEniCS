@@ -18,10 +18,11 @@ from pathlib import Path
 import numpy as np
 
 from src.io.physical_intermediate_profile import (
+    A4_TENSOR_H6_PROFILE,
     COARSE_DEGREE_SPEED_PROFILE,
     SETUP_EFFICIENCY_PROFILE,
     WORKINGSET_SETUP_PROFILE,
-    FUSED_KERNEL_PROFILE,
+    FUSED_KERNEL_PROFILES,
     LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE,
     LOWMEM_DUAL_CELL_CONDENSED_PROFILE,
     profile_facts,
@@ -1029,7 +1030,7 @@ def _run_physical_dual_cell_condensed_lowmem(
     if profile in (
         SETUP_EFFICIENCY_PROFILE,
         WORKINGSET_SETUP_PROFILE,
-        FUSED_KERNEL_PROFILE,
+        *FUSED_KERNEL_PROFILES,
     ):
         if resolved_payload.get("solver", {}).get("numeric_cache_mode") != "build":
             raise ValueError(
@@ -1053,7 +1054,7 @@ def _run_physical_dual_cell_condensed_lowmem(
         COARSE_DEGREE_SPEED_PROFILE,
         SETUP_EFFICIENCY_PROFILE,
         WORKINGSET_SETUP_PROFILE,
-        FUSED_KERNEL_PROFILE,
+        *FUSED_KERNEL_PROFILES,
     ) and stage_coarse_degree != coarse_degree:
         raise ValueError(
             f"{stage} is frozen to coarse_degree={stage_coarse_degree}, "
@@ -1065,6 +1066,15 @@ def _run_physical_dual_cell_condensed_lowmem(
         p4_repair_policy = contract.get("p4_repair_policy")
     if p4_repair_policy is not None and not isinstance(p4_repair_policy, Mapping):
         raise TypeError("p4_repair_policy must be a mapping or None")
+    exhaustion_policy = (
+        p4_repair_policy.get("exhaustion_policy", "raise")
+        if isinstance(p4_repair_policy, Mapping)
+        else "raise"
+    )
+    if exhaustion_policy == "continue_outer_best_finite" and profile != A4_TENSOR_H6_PROFILE:
+        raise ValueError("soft p4 exhaustion is reserved for the exact V29 profile")
+    if profile == A4_TENSOR_H6_PROFILE and exhaustion_policy != "continue_outer_best_finite":
+        raise ValueError("V29 requires its reviewed best-finite outer-continuation policy")
     if p4_prefix_target_sequence is not None:
         try:
             p4_prefix_target_sequence = int(p4_prefix_target_sequence)
@@ -1097,7 +1107,7 @@ def _run_physical_dual_cell_condensed_lowmem(
     if profile in (
         SETUP_EFFICIENCY_PROFILE,
         WORKINGSET_SETUP_PROFILE,
-        FUSED_KERNEL_PROFILE,
+        *FUSED_KERNEL_PROFILES,
     ):
         summary.update(numeric_cache_mode="build", numeric_cache_loads=0)
     runtime = common = None
@@ -1159,6 +1169,7 @@ def _run_physical_dual_cell_condensed_lowmem(
         # sum-factorized N1E kernel for the PC-internal A6 and H6 actions.
         # Older profiles retain their historical native/packed selection.
         pc_fine_action_factory = None
+        pc_a4_action_factory = None
         sum_factorized_work = False
         sum_factorized_power10 = False
         # The V28 evidence selects A6 fusion, but does not adopt the shared
@@ -1170,7 +1181,7 @@ def _run_physical_dual_cell_condensed_lowmem(
             COARSE_DEGREE_SPEED_PROFILE,
             SETUP_EFFICIENCY_PROFILE,
             WORKINGSET_SETUP_PROFILE,
-            FUSED_KERNEL_PROFILE,
+            *FUSED_KERNEL_PROFILES,
         ):
             expected_backend = "isotropic_sum_factorized_n1e_v26"
             expected_h6_rule = (
@@ -1178,7 +1189,7 @@ def _run_physical_dual_cell_condensed_lowmem(
                 if profile in (
                     SETUP_EFFICIENCY_PROFILE,
                     WORKINGSET_SETUP_PROFILE,
-                    FUSED_KERNEL_PROFILE,
+                    *FUSED_KERNEL_PROFILES,
                 )
                 else "isotropic_sum_factorized_n1e_v26_apply_and_power10"
             )
@@ -1187,7 +1198,7 @@ def _run_physical_dual_cell_condensed_lowmem(
                 if profile in (
                     SETUP_EFFICIENCY_PROFILE,
                     WORKINGSET_SETUP_PROFILE,
-                    FUSED_KERNEL_PROFILE,
+                    *FUSED_KERNEL_PROFILES,
                 )
                 else "mpi1_omp1_blas1_v25"
             )
@@ -1219,7 +1230,7 @@ def _run_physical_dual_cell_condensed_lowmem(
                         in (
                             SETUP_EFFICIENCY_PROFILE,
                             WORKINGSET_SETUP_PROFILE,
-                            FUSED_KERNEL_PROFILE,
+                            *FUSED_KERNEL_PROFILES,
                         )
                     ),
                     geometry_bundle=(
@@ -1228,13 +1239,27 @@ def _run_physical_dual_cell_condensed_lowmem(
                         in (
                             SETUP_EFFICIENCY_PROFILE,
                             WORKINGSET_SETUP_PROFILE,
-                            FUSED_KERNEL_PROFILE,
+                            *FUSED_KERNEL_PROFILES,
                         )
                         else None
                     ),
                     shared_contractions=a6_shared_contractions,
-                    fuse_components=profile == FUSED_KERNEL_PROFILE,
+                    fuse_components=profile in FUSED_KERNEL_PROFILES,
                 )
+
+            if profile == A4_TENSOR_H6_PROFILE:
+                def pc_a4_action_factory(common_):
+                    return build_packed_physical_action(
+                        common_,
+                        cfg,
+                        degree=4,
+                        contiguous_work=True,
+                        preallocated_work=False,
+                        sum_factorized_work=True,
+                        reuse_projection_work=False,
+                        shared_contractions=False,
+                        fuse_components=True,
+                    )
 
             sum_factorized_work = True
             sum_factorized_power10 = True
@@ -1322,18 +1347,18 @@ def _run_physical_dual_cell_condensed_lowmem(
             COARSE_DEGREE_SPEED_PROFILE,
             SETUP_EFFICIENCY_PROFILE,
             WORKINGSET_SETUP_PROFILE,
-            FUSED_KERNEL_PROFILE,
+            *FUSED_KERNEL_PROFILES,
         }
         packed_power10 = profile in {
             COARSE_DEGREE_SPEED_PROFILE,
             SETUP_EFFICIENCY_PROFILE,
             WORKINGSET_SETUP_PROFILE,
-            FUSED_KERNEL_PROFILE,
+            *FUSED_KERNEL_PROFILES,
         }
         direct_selected_backend = profile in (
             SETUP_EFFICIENCY_PROFILE,
             WORKINGSET_SETUP_PROFILE,
-            FUSED_KERNEL_PROFILE,
+            *FUSED_KERNEL_PROFILES,
         )
         # Projection-work reuse remains an explicit solver option, but is not
         # part of the V26 production route until a component measurement shows
@@ -1352,7 +1377,7 @@ def _run_physical_dual_cell_condensed_lowmem(
                     COARSE_DEGREE_SPEED_PROFILE,
                     SETUP_EFFICIENCY_PROFILE,
                     WORKINGSET_SETUP_PROFILE,
-                    FUSED_KERNEL_PROFILE,
+                    *FUSED_KERNEL_PROFILES,
                 )
             ),
         )
@@ -1538,6 +1563,18 @@ def _run_physical_dual_cell_condensed_lowmem(
             )
 
         def outer_factory(runtime_, common_, resolved_, full_rhs, apply_pc, **kwargs):
+            raw_tensor_evaluator = None
+            if profile == A4_TENSOR_H6_PROFILE:
+                from src.solvers.task39extra_p6_raw_tensor import (
+                    Task39ExtraP6RawTensorCandidate,
+                )
+
+                raw_tensor_evaluator = Task39ExtraP6RawTensorCandidate(
+                    common_["levels"]["spaces"][6].element.basix_element,
+                    cfg,
+                    common_["fine"]["volume_action"].bilinear_form,
+                    compiled_form=p6_holder["form"],
+                )
             adapter = build_retained_outer_adapter(
                 runtime_,
                 common_,
@@ -1545,6 +1582,7 @@ def _run_physical_dual_cell_condensed_lowmem(
                 full_rhs,
                 apply_pc,
                 compiled_form=p6_holder["form"],
+                raw_tensor_evaluator=raw_tensor_evaluator,
                 identity_cache_mode="shared_read_only_per_interior_shape",
                 evidence_prefix=evidence_prefix,
                 expected_space_counts=expected_space_counts,
@@ -1817,6 +1855,7 @@ def _run_physical_dual_cell_condensed_lowmem(
                 p4_repair_vector_capture=repair_vector_capture,
                 p4_logical_apply_hook=logical_apply_hook,
                 pc_fine_action_factory=pc_fine_action_factory,
+                pc_a4_action_factory=pc_a4_action_factory,
                 packed_power10=packed_power10,
                 sum_factorized_work=sum_factorized_work,
                 sum_factorized_power10=sum_factorized_power10,

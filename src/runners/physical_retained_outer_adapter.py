@@ -301,6 +301,7 @@ class RetainedOuterAdapter:
         p4_identity_sha256,
         pc_counts,
         compiled_form=None,
+        raw_tensor_evaluator=None,
         identity_cache_mode="per_oriented_class",
         evidence_prefix="v19",
         expected_space_counts=(173802, 51192, 113400, 80),
@@ -315,6 +316,8 @@ class RetainedOuterAdapter:
         self.p4_identity_sha256 = p4_identity_sha256
         self.pc_counts = pc_counts
         self.compiled_form = compiled_form
+        self.raw_tensor_evaluator = raw_tensor_evaluator
+        self.raw_tensor_candidate_gate_facts = None
         self.identity_cache_mode = str(identity_cache_mode)
         self.evidence_prefix = str(evidence_prefix)
         self.save_complete_field_packet = (
@@ -404,9 +407,21 @@ class RetainedOuterAdapter:
             if name != "cell_tensor_working_set":
                 raise ValueError("V19 p6 unexpectedly requested global matrix storage")
             amount = int(facts["retained_numeric_bytes_upper"])
+            workspace_bytes = int(facts["workspace_bytes"])
+            candidate_workspace = int(
+                facts.get("raw_tensor_candidate_workspace_bytes_upper", 0)
+            )
+            self.raw_tensor_candidate_gate_facts = {
+                "workspace_bytes_upper": workspace_bytes,
+                "candidate_workspace_bytes_upper": candidate_workspace,
+                "gate_scope": str(facts["gate_scope"]),
+            }
             runtime.check_inventory_projected(f"{prefix}_p6_local_caches", amount)
-            runtime.check_projected(f"{prefix}_p6_local_caches", amount, workspace_bytes=int(facts["workspace_bytes"]))
-            runtime.reserve_workspace(f"{prefix}_p6_setup", int(facts["workspace_bytes"]))
+            runtime.check_projected(
+                f"{prefix}_p6_local_caches", amount,
+                workspace_bytes=workspace_bytes,
+            )
+            runtime.reserve_workspace(f"{prefix}_p6_setup", workspace_bytes)
 
         runtime.marker(f"{prefix}_p6_local_setup_started", {"global_matrix": False})
         phase_started = perf_counter()
@@ -418,7 +433,12 @@ class RetainedOuterAdapter:
             materialize_global_matrix=False, retain_local_schur_for_matrix_free=True,
             share_identity_cache=(self.identity_cache_mode == "shared_read_only_per_interior_shape"),
             allocation_gate=allocation_gate,
+            raw_tensor_evaluator=self.raw_tensor_evaluator,
         )
+        if self.raw_tensor_evaluator is not None:
+            self.condensed.build_audit[
+                "raw_tensor_candidate_allocation_gate"
+            ] = dict(self.raw_tensor_candidate_gate_facts or {})
         setup_phases["condensation_builder_seconds"] = perf_counter() - phase_started
         runtime.release_workspace(f"{prefix}_p6_setup")
         runtime.reserve_workspace(f"{prefix}_p6_setup", 128 << 20)
@@ -1311,6 +1331,8 @@ class RetainedOuterAdapter:
         self.resolved = None
         self.pc_counts = None
         self.compiled_form = None
+        self.raw_tensor_evaluator = None
+        self.raw_tensor_candidate_gate_facts = None
         self.full_rhs = None
         self.runtime.release_workspace(f"{self.evidence_prefix}_p6_setup")
         self.runtime.release_workspace(f"{self.evidence_prefix}_p6_full_scratch")

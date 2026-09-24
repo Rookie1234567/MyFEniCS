@@ -312,6 +312,47 @@ def test_sum_factorized_native_tabulate_adjoint_and_sheared_mpc(
         np.testing.assert_array_equal(source.array, before)
 
 
+def test_sum_factorized_stacked_real_imag_coefficient_transforms_match() -> None:
+    domain = mesh.create_unit_cube(
+        MPI.COMM_SELF, 1, 1, 1, cell_type=mesh.CellType.hexahedron
+    )
+    space = fem.functionspace(domain, ("N1curl", 6))
+    dg = fem.functionspace(domain, ("DG", 0))
+    mu, mass = fem.Function(dg), fem.Function(dg)
+    mu.x.array[:] = 1.25
+    mass.x.array[:] = 0.7
+    separate = IsotropicPartialAssembly(
+        space, mu, mass, sum_factorized_work=True
+    )
+    stacked = IsotropicPartialAssembly(
+        space,
+        mu,
+        mass,
+        sum_factorized_work=True,
+        combine_real_imag_transforms=True,
+    )
+    old, new = separate._sum_factorized, stacked._sum_factorized
+    assert new.audit["coefficient_transform_real_imag_layout"] == (
+        "stacked_real_then_imag_single_real_gemm"
+    )
+    assert new.audit["batch_workspace_bytes"] == old.audit["batch_workspace_bytes"]
+
+    rng = np.random.default_rng(36206)
+    local = rng.normal(size=(3, old.element.dim)) + 1j * rng.normal(
+        size=(3, old.element.dim)
+    )
+    metrics = np.repeat(separate.metrics[:1], len(local), axis=0)
+    materials = np.column_stack(
+        (
+            np.full(len(local), mass.x.array[0], dtype=np.complex128),
+            np.full(len(local), mu.x.array[0], dtype=np.complex128),
+        )
+    )
+    expected = old.apply(local, metrics, materials)
+    observed = new.apply(local, metrics, materials)
+    np.testing.assert_allclose(observed, expected, rtol=3e-12, atol=3e-12)
+
+
 def test_same_space_geometry_bundle_is_readonly_and_matches_native_action():
     domain = mesh.create_unit_cube(
         MPI.COMM_SELF, 2, 1, 1, cell_type=mesh.CellType.hexahedron
@@ -541,12 +582,19 @@ def test_packed_physical_action_helper_borrows_dtn_and_cleans_volume():
     native = FullspacePhysicalAction(native_volume, dtn, owns_dtn=False)
     common = {
         "levels": {
-            "floquets": {6: SimpleNamespace(mpc=mpc)},
+            "floquets": {
+                6: SimpleNamespace(mpc=mpc),
+                4: SimpleNamespace(mpc=mpc),
+            },
             "mesh_data": SimpleNamespace(cell_tags=tags),
         },
         "fine": {"volume_action": native_volume, "dtn_action": dtn},
+        "p4": {"volume_action": native_volume, "dtn_action": dtn},
     }
     packed = build_packed_physical_action(common, cfg, contiguous_work=True)
+    packed_p4 = build_packed_physical_action(
+        common, cfg, contiguous_work=True, degree=4
+    )
     shared_mu, shared_mass = fem.Function(fem.functionspace(domain, ("DG", 0))), fem.Function(
         fem.functionspace(domain, ("DG", 0))
     )
@@ -589,6 +637,11 @@ def test_packed_physical_action_helper_borrows_dtn_and_cleans_volume():
         np.testing.assert_array_equal(target.array, observed)
         assert packed["facts"]["native_a6_independent"] is True
         assert packed["facts"]["dtn_borrowed"] is True
+        assert packed_p4["facts"]["degree"] == 4
+        assert packed_p4["facts"]["action_role"] == "full_A4_verification_candidate"
+        assert packed_p4["facts"]["native_a6_independent"] is False
+        packed_p4["physical_action"].apply(source, target)
+        np.testing.assert_allclose(target.array, expected, rtol=2e-11, atol=2e-11)
         packed_v26["physical_action"].apply(source, target)
         np.testing.assert_allclose(target.array, expected, rtol=2e-11, atol=2e-11)
         shared = packed_v26["facts"]["shared_geometry_bundle"]
@@ -601,6 +654,7 @@ def test_packed_physical_action_helper_borrows_dtn_and_cleans_volume():
             assert shared["fallbacks"]
     finally:
         packed["physical_action"].destroy()
+        packed_p4["physical_action"].destroy()
         packed_v26["physical_action"].destroy()
         # The candidate owns only its packed volume; the borrowed DtN remains
         # usable until the independent native owner releases it.

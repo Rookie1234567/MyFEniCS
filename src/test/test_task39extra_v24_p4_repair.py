@@ -466,3 +466,219 @@ def test_complex_nonhermitian_bidi_port_repair_accumulates_augmented_state():
     finally:
         pc.destroy()
         source.destroy()
+
+
+class _SoftPartialFint:
+    def __init__(self, factors, *, with_port=True):
+        self.factors = tuple(factors)
+        self.with_port = with_port
+        self.local_count = 0
+        self.apply_count = 0
+        self.solve_count = 0
+        self.logical_apply_count = 0
+        self.logical_apply_attempt_count = 0
+        self._last_port_solution = np.zeros(1 if with_port else 0, dtype=np.complex128)
+
+    @property
+    def last_port_solution(self):
+        return self._last_port_solution
+
+    @last_port_solution.setter
+    def last_port_solution(self, value):
+        self._last_port_solution = np.asarray(value, dtype=np.complex128).copy()
+
+    def begin_logical_apply(self):
+        self.logical_apply_attempt_count += 1
+        self.local_count = 0
+
+    def complete_logical_apply(self):
+        self.logical_apply_count += 1
+
+    def apply_with_facts(self, rhs):
+        self.apply_count += 1
+        self.local_count += 1
+        factor = self.factors[min(self.local_count - 1, len(self.factors) - 1)]
+        result = _copy(rhs)
+        result.scale(PETSc.ScalarType(factor))
+        result.assemble()
+        nonzero = bool(rhs.norm())
+        self.solve_count += int(nonzero)
+        self.last_port_solution = (
+            np.asarray([factor * np.sum(rhs.array)], dtype=np.complex128)
+            if self.with_port else np.empty(0, dtype=np.complex128)
+        )
+        return result, {"factor_solve_call_delta": int(nonzero)}
+
+
+@pytest.mark.parametrize(
+    "factors, selected, returned_rho, last_rho, selected_factor",
+    [
+        ((0.1, -1.0, -1.0), 0, 0.9, 3.6, 0.1),
+        ((0.5, 0.2, -0.25), 1, 0.4, 0.5, 0.6),
+        ((0.5, 0.2, 0.0), 1, 0.4, 0.4, 0.6),
+    ],
+)
+def test_soft_exhaustion_returns_best_complete_state_and_releases_snapshot(
+    factors, selected, returned_rho, last_rho, selected_factor, monkeypatch
+):
+    import src.solvers.physical_interface_balanced as balanced_module
+
+    fint = _SoftPartialFint(factors)
+    policy = P4ResidualRepairPolicy(
+        enabled=True,
+        max_extra_solves=2,
+        exhaustion_policy="continue_outer_best_finite",
+    )
+    saved = []
+    pc = _pc(fint, policy=policy, sink=saved.append)
+    source = _vec([1.0, 2.0])
+    tracked = []
+    copy_vector = balanced_module._copy_vector
+
+    def track_copy(value):
+        duplicate = copy_vector(value)
+        tracked.append(duplicate)
+        return duplicate
+
+    monkeypatch.setattr(balanced_module, "_copy_vector", track_copy)
+    try:
+        result = pc.apply(source)
+        result.destroy()
+        facts = pc.coarse_calls[0]
+        repair = facts["repair"]
+        selected_packet = next(item for item in saved if item.get("phase") == "selected")
+        assert repair["status"] == "COARSE_TARGET_UNMET_CONTINUE"
+        assert repair["selected_attempt"] == selected
+        assert repair["returned_rho"] == pytest.approx(returned_rho)
+        assert repair["last_attempt_rho"] == pytest.approx(last_rho)
+        assert repair["min_rho"] == pytest.approx(returned_rho)
+        assert repair["native_A4_action_count"] == 3
+        assert repair["actual_mat_solve_count"] == 3
+        assert repair["best_snapshot_peak_vector_count"] == 3
+        assert repair["best_snapshot_peak_local_bytes"] == 112
+        assert repair["selected_evidence_copy_local_bytes"] == 144
+        assert fint.solve_count == 3
+        np.testing.assert_allclose(selected_packet["correction"], selected_factor * source.array)
+        np.testing.assert_allclose(selected_packet["native_applied"], selected_factor * source.array)
+        np.testing.assert_allclose(
+            selected_packet["native_A4_residual"],
+            (1.0 - selected_factor) * source.array,
+        )
+        np.testing.assert_allclose(
+            selected_packet["alpha"], [selected_factor * np.sum(source.array)]
+        )
+        assert tracked and all(vector.handle == 0 for vector in tracked)
+    finally:
+        pc.destroy()
+        source.destroy()
+
+
+def test_soft_exhaustion_continues_into_the_next_live_outer_fgmres_step():
+    from src.solvers.physical_balanced_fgmres import run_balanced_fgmres
+
+    matrix = np.diag(np.asarray([1.0, 2.0], dtype=np.complex128))
+    fint = _SoftPartialFint((0.5, 0.5, 0.5))
+    events = []
+    pc = _pc(
+        fint,
+        policy=P4ResidualRepairPolicy(
+            enabled=True,
+            max_extra_solves=2,
+            exhaustion_policy="continue_outer_best_finite",
+        ),
+        sink=events.append,
+        fine_action=lambda value: _vec(matrix @ value.array),
+        p4_action=lambda value: _vec(matrix @ value.array),
+    )
+    rhs = _vec([1.0, 1.0])
+    result = None
+    try:
+        result = run_balanced_fgmres(
+            rhs,
+            lambda value: _vec(matrix @ value.array),
+            lambda value: pc.apply(value),
+            checkpoint=lambda *_args: None,
+            append=lambda *_args: None,
+            seconds=lambda: 0.0,
+            screen_enabled=False,
+        )
+        assert result["status"] == "TRUE_RESIDUAL_PASS"
+        assert result["iterations"] == 2
+        assert result["pc_apply_count"] == 2
+        assert pc.successful_logical_apply_count == 4
+        assert fint.apply_count == 8
+        assert fint.solve_count == 6
+        assert sum(item.get("phase") == "selected" for item in events) >= 2
+        assert not pc._last_repair_vectors
+    finally:
+        if result is not None:
+            result["final_solution"].destroy()
+        pc.destroy()
+        rhs.destroy()
+
+
+def test_soft_exhaustion_zero_rhs_stays_zero_and_nonfinite_operator_still_rejects():
+    policy = P4ResidualRepairPolicy(
+        enabled=True,
+        max_extra_solves=2,
+        exhaustion_policy="continue_outer_best_finite",
+    )
+    zero_fint = _SoftPartialFint((0.5, 0.5, 0.5))
+    zero_pc = _pc(zero_fint, policy=policy)
+    zero = _vec([0.0, 0.0])
+    bad_fint = _SoftPartialFint((0.5, 0.5, 0.5))
+    bad_pc = _pc(
+        bad_fint,
+        policy=policy,
+        sink=lambda _facts: None,
+        p4_action=lambda value: _vec([np.nan] * value.getSize()),
+    )
+    rhs = _vec([1.0, 2.0])
+    try:
+        output = zero_pc.apply(zero)
+        try:
+            assert output.norm() == 0.0
+        finally:
+            output.destroy()
+        assert zero_pc.coarse_calls[0]["repair"]["status"] == "NOT_NEEDED"
+        with pytest.raises(FloatingPointError, match="non-finite p4 repair state"):
+            bad_pc.apply(rhs)
+        assert bad_fint.apply_count == 1
+    finally:
+        zero_pc.destroy()
+        bad_pc.destroy()
+        zero.destroy()
+        rhs.destroy()
+
+
+def test_soft_policy_does_not_snapshot_raw_pass_and_allows_second_refinement_to_pass():
+    policy = P4ResidualRepairPolicy(
+        enabled=True,
+        max_extra_solves=2,
+        exhaustion_policy="continue_outer_best_finite",
+    )
+    raw_fint = _SoftPartialFint((1.0, 0.5, 0.5))
+    raw_pc = _pc(raw_fint, policy=policy)
+    refined_fint = _SoftPartialFint((0.0, 0.5, 1.0))
+    refined_pc = _pc(refined_fint, policy=policy)
+    rhs = _vec([1.0, 2.0])
+    try:
+        output = raw_pc.apply(rhs)
+        output.destroy()
+        raw = raw_pc.coarse_calls[0]["repair"]
+        assert raw["status"] == "NOT_NEEDED"
+        assert raw["extra_solve_count"] == 0
+        assert raw["best_snapshot_peak_vector_count"] == 0
+        assert raw["best_snapshot_peak_local_bytes"] == 0
+
+        output = refined_pc.apply(rhs)
+        output.destroy()
+        refined = refined_pc.coarse_calls[0]["repair"]
+        assert refined["status"] == "REFINED_TARGET_MET"
+        assert refined["extra_solve_count"] == 2
+        assert refined["selected_attempt"] == 2
+        assert refined["returned_rho"] == pytest.approx(0.0)
+    finally:
+        raw_pc.destroy()
+        refined_pc.destroy()
+        rhs.destroy()

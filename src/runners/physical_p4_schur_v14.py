@@ -4250,6 +4250,7 @@ def _v14_balanced_adapter(
     repair_vector_capture=None,
     logical_apply_hook=None,
     pc_fine_action_factory=None,
+    pc_a4_action_factory=None,
     packed_power10=False,
     sum_factorized_work=False,
     sum_factorized_power10=None,
@@ -4268,6 +4269,12 @@ def _v14_balanced_adapter(
     h6_setup = _v14_balanced_h6_setup_facts(common)
     n6 = int(h6_setup["n6"])
     n4 = int(h6_setup["n4"])
+    p4_exhaustion_policy = (
+        repair_policy.get("exhaustion_policy", "raise")
+        if isinstance(repair_policy, Mapping)
+        else getattr(repair_policy, "exhaustion_policy", "raise")
+    )
+    soft_p4_exhaustion = p4_exhaustion_policy == "continue_outer_best_finite"
     # Same-degree positive setup uses the already-qualified H6 constructor.
     # The two existing physical component payloads and twelve fine vectors
     # provide a construction estimate; measured RSS remains independent.
@@ -4283,25 +4290,34 @@ def _v14_balanced_adapter(
     positive = pc = None
     pc_fine_action = common["fine"]["physical_action"]
     pc_fine_action_bundle = None
+    pc_a4_action_bundle = None
     candidate_facts = {}
+    candidate_a4_facts = {}
     pc_fine_inventory_live = False
+    pc_a4_inventory_live = False
     live_workspaces = set()
     inventory_live = False
     cleaned = False
 
     def cleanup_balanced_objects() -> None:
         nonlocal cleaned, pc, positive, pc_fine_action_bundle
+        nonlocal pc_a4_action_bundle, pc_a4_inventory_live
         nonlocal pc_fine_inventory_live
         if cleaned:
             return
         cleaned = True
         if pc is not None:
             pc.destroy()
+            pc._p4_verification_action = None
             pc = None
         if pc_fine_action_bundle is not None:
             pc_fine_action_bundle["physical_action"].destroy()
             pc_fine_action_bundle.clear()
             pc_fine_action_bundle = None
+        if pc_a4_action_bundle is not None:
+            pc_a4_action_bundle["physical_action"].destroy()
+            pc_a4_action_bundle.clear()
+            pc_a4_action_bundle = None
         if positive is not None:
             h6 = positive.pop("h6", None)
             shell = positive.pop("p6_shell", None)
@@ -4316,6 +4332,8 @@ def _v14_balanced_adapter(
         live_workspaces.clear()
         if pc_fine_inventory_live:
             runtime.release_inventory("v24_pc_a6_candidate")
+        if pc_a4_inventory_live:
+            runtime.release_inventory("v29_pc_a4_candidate")
         if inventory_live:
             runtime.release_inventory("v14_h6")
         runtime._deferred_balanced_cleanup = None
@@ -4393,14 +4411,97 @@ def _v14_balanced_adapter(
             )
         else:
             candidate_kernel_temporary_bytes = 0
+        candidate_a4_kernel_temporary_bytes = 0
+        a4_action_implementation = "native_ffcx_full_A4"
+        a4_action_oracle = "native_ffcx_full_A4"
+        if pc_a4_action_factory is not None:
+            pc_a4_action_bundle = pc_a4_action_factory(common)
+            if not isinstance(pc_a4_action_bundle, dict):
+                raise TypeError("PC A4 action factory must return an action bundle")
+            candidate_a4_facts = pc_a4_action_bundle.get("facts")
+            if not isinstance(candidate_a4_facts, dict):
+                raise TypeError("PC A4 action facts must be a mapping")
+            if (
+                candidate_a4_facts.get("schema") != "task039extra.v29.p4-fast-a4-action.v1"
+                or candidate_a4_facts.get("degree") != 4
+                or candidate_a4_facts.get("action_role") != "full_A4_verification_candidate"
+                or candidate_a4_facts.get("implementation_identity")
+                != "fused_sum_factorized_partial_assembly_full_A4"
+                or candidate_a4_facts.get("oracle_identity")
+                != "native_ffcx_full_A4_same_p4_forms_and_dtn"
+                or not candidate_a4_facts.get("fuse_components")
+                or not candidate_a4_facts.get("sum_factorized_work")
+                or candidate_a4_facts.get("shared_contractions")
+                or candidate_a4_facts.get("reuse_projection_work")
+                or not candidate_a4_facts.get("dtn_borrowed")
+            ):
+                raise ValueError("PC A4 candidate does not match the qualified V29 action")
+            candidate_a4_components = {
+                "material_function_array_bytes": int(
+                    candidate_a4_facts["material_function_array_bytes"]
+                )
+            }
+            for index, audit in enumerate(candidate_a4_facts["component_audits"]):
+                if not isinstance(audit, dict):
+                    raise TypeError("PC A4 component audit must be a mapping")
+                retained = audit["retained_numeric_payload_components"]
+                if not isinstance(retained, Mapping):
+                    raise ValueError("PC A4 component payload audit is missing")
+                for name, amount in retained.items():
+                    candidate_a4_components[f"component_{index}_{name}"] = int(amount)
+            runtime.reserve_inventory(
+                "v29_pc_a4_candidate", candidate_a4_components, check_rss=False
+            )
+            pc_a4_inventory_live = True
+            candidate_a4_kernel_temporary_bytes = int(
+                candidate_a4_facts["kernel_temporary_bytes"]
+            )
+            a4_action_implementation = str(
+                candidate_a4_facts["implementation_identity"]
+            )
+            a4_action_oracle = str(candidate_a4_facts["oracle_identity"])
+            runtime.marker(
+                "v29_pc_a4_candidate_ready",
+                {
+                    "candidate": candidate_a4_facts,
+                    "inventory_components": candidate_a4_components,
+                    "native_ffcx_oracle": "common.p4.physical_action",
+                    "dtn_ownership": "borrowed_common_p4_dtn_action",
+                },
+            )
         # Fine work vectors, retained audit copies, p4 residual copies and
         # H6's bounded packed-kernel temporaries share the existing 1 GiB pool.
         fine_vectors = 64 if capture_vectors else 40
-        coarse_vectors = 16 if capture_vectors else 12
+        coarse_vectors = 24 if soft_p4_exhaustion else (16 if capture_vectors else 12)
+        p4_port_count = int(len(common["p4"].get("modes", ())))
+        scalar_bytes = int(np.dtype(PETSc.ScalarType).itemsize)
+        soft_repair_workspace = {
+            "enabled": bool(soft_p4_exhaustion),
+            "reserved_coarse_vector_upper_count": coarse_vectors,
+            "reserved_bytes": int(coarse_vectors * n4 * scalar_bytes)
+            if soft_p4_exhaustion else 0,
+            "best_snapshot_upper_bytes": int(
+                3 * n4 * scalar_bytes + p4_port_count * scalar_bytes
+            ) if soft_p4_exhaustion else 0,
+            "selected_evidence_copy_upper_bytes": int(
+                4 * n4 * scalar_bytes + p4_port_count * scalar_bytes
+            ) if soft_p4_exhaustion else 0,
+            "accounting": (
+                "included in the reserved 24 full p4-space vector equivalents; "
+                "covers live solve/refinement vectors, one 3-vector best snapshot, "
+                "and transient selected-evidence copies"
+                if soft_p4_exhaustion else "strict legacy workspace unchanged"
+            ),
+            "port_count": p4_port_count,
+        }
         h6_kernel_temporary_bytes = int(
             positive["light_facts"]["kernel"]["temporary_budget_bytes"]
         )
-        kernel_temp = max(h6_kernel_temporary_bytes, candidate_kernel_temporary_bytes)
+        kernel_temp = max(
+            h6_kernel_temporary_bytes,
+            candidate_kernel_temporary_bytes,
+            candidate_a4_kernel_temporary_bytes,
+        )
         pc_workspace = _v14_balanced_apply_workspace_bytes(
             n6,
             n4,
@@ -4434,8 +4535,10 @@ def _v14_balanced_adapter(
             "coarse_vector_upper_count": coarse_vectors,
             "h6_kernel_temporary_bytes": h6_kernel_temporary_bytes,
             "pc_a6_kernel_temporary_bytes": candidate_kernel_temporary_bytes,
+            "pc_a4_kernel_temporary_bytes": candidate_a4_kernel_temporary_bytes,
             "kernel_temporary_bytes": kernel_temp,
             "ordinary_balanced_workspace_bytes": pc_workspace,
+            "soft_p4_repair_workspace": soft_repair_workspace,
             "v24_prefix_workspace": prefix_workspace_facts,
             "workspace_upper_bytes": int(
                 pc_workspace
@@ -4452,9 +4555,14 @@ def _v14_balanced_adapter(
             common["fine"]["physical_action"], x
         )
         candidate_h6_callback = h6.apply
+        selected_p4_action = (
+            pc_a4_action_bundle["physical_action"]
+            if pc_a4_action_bundle is not None
+            else common["p4"]["physical_action"]
+        )
         pc = InterfaceBalancedCoupling(
             candidate_a6_callback,
-            lambda x: apply_owned(common["p4"]["physical_action"], x),
+            lambda x: apply_owned(selected_p4_action, x),
             transfer, fint, h6.apply,
             save=lambda name, facts: _save_packet(
                 runtime.directory / "inexact_balance", name, facts, runtime=runtime),
@@ -4464,6 +4572,8 @@ def _v14_balanced_adapter(
             repair_vector_sink=repair_vector_sink,
             repair_vector_capture=repair_vector_capture,
             logical_apply_hook=logical_apply_hook,
+            p4_action_implementation=a4_action_implementation,
+            p4_action_oracle=a4_action_oracle,
         )
         # Keep the callbacks used by the BAL_H closure explicit.  The public
         # ``_pc_fine_action`` attribute is provenance only and does not alter
@@ -4473,6 +4583,12 @@ def _v14_balanced_adapter(
         pc._candidate_h6_callback = candidate_h6_callback
         pc._pc_fine_action = pc_fine_action
         pc._pc_fine_action_facts = dict(candidate_facts)
+        pc._p4_verification_action = selected_p4_action
+        pc._p4_verification_action_apply_count_start = int(
+            selected_p4_action.audit["apply_count"]
+        )
+        pc._p4_verification_action_facts = dict(candidate_a4_facts)
+        pc._soft_p4_repair_workspace = dict(soft_repair_workspace)
         pc._pc_fine_action_role = (
             "candidate_pc_internal_a6"
             if pc_fine_action_bundle is not None
@@ -6832,6 +6948,7 @@ def _v14_q4_q5_fullspace(
     p4_logical_apply_hook=None,
     p4_stack_ready_hook=None,
     pc_fine_action_factory=None,
+    pc_a4_action_factory=None,
     packed_power10=False,
     sum_factorized_work=False,
     sum_factorized_power10=None,
@@ -6862,6 +6979,7 @@ def _v14_q4_q5_fullspace(
     )
     from src.solvers.physical_balanced_fgmres import run_balanced_fgmres
     from src.io.physical_intermediate_profile import (
+        A4_TENSOR_H6_PROFILE,
         COARSE_DEGREE_SPEED_PROFILE,
         SETUP_EFFICIENCY_PROFILE,
         WORKINGSET_SETUP_PROFILE,
@@ -6894,11 +7012,19 @@ def _v14_q4_q5_fullspace(
         == FUSED_KERNEL_PROFILE
         and stage == "Q4_ORIGINAL"
     )
+    v29_a4_tensor_stage = (
+        str(resolved_payload.get("solver", {}).get("preconditioner", ""))
+        == A4_TENSOR_H6_PROFILE
+        and stage == "Q4_ORIGINAL"
+    )
+    if pc_a4_action_factory is not None and not v29_a4_tensor_stage:
+        raise ValueError("the complete p4 A4 candidate is reserved for the exact V29 Q4 profile")
     retained_coarse_stage = (
         v25_coarse_stage
         or v26_setup_efficiency_stage
         or v27_workingset_stage
         or v28_fused_kernel_stage
+        or v29_a4_tensor_stage
     )
     if stage not in {
         "Q4_ORIGINAL", "Q3_ORIGINAL", "Q2_ORIGINAL", "Q5_NOTCH",
@@ -7568,6 +7694,9 @@ def _v14_q4_q5_fullspace(
             facts = {
                 "apply_count": int(pc.apply_count),
                 "native_A4_action_count": int(pc.native_A4_count),
+                "a4_check_action_count": int(pc.a4_check_action_count),
+                "a4_action_implementation": pc.p4_action_implementation,
+                "a4_action_oracle": pc.p4_action_oracle,
                 "total_counts": dict(balanced.total_counts),
                 "total_operation_seconds": dict(balanced.total_operation_seconds),
                 "last_apply_facts": dict(pc.last_apply_facts),
@@ -7616,7 +7745,18 @@ def _v14_q4_q5_fullspace(
             if not isinstance(timing, Mapping):
                 raise RuntimeError("V24 p4 cumulative timing is unavailable")
             fine_audit = dict(common["fine"]["physical_action"].audit)
-            p4_audit = dict(common["p4"]["physical_action"].audit)
+            native_p4_audit = dict(common["p4"]["physical_action"].audit)
+            selected_p4_action = getattr(
+                pc, "_p4_verification_action", common["p4"]["physical_action"]
+            )
+            selected_p4_audit = dict(selected_p4_action.audit)
+            selected_a4_apply_count_start = int(
+                getattr(pc, "_p4_verification_action_apply_count_start", 0)
+            )
+            selected_a4_apply_count_end = int(selected_p4_audit["apply_count"])
+            candidate_a4_facts = dict(
+                getattr(pc, "_p4_verification_action_facts", {})
+            )
             candidate_action = getattr(pc, "_pc_fine_action", None)
             candidate_audit = (
                 dict(candidate_action.audit)
@@ -7657,14 +7797,30 @@ def _v14_q4_q5_fullspace(
                     ),
                 },
                 "native_A4": {
-                    "action_count": int(pc.native_A4_count),
-                    "seconds_cumulative": float(pc.native_A4_seconds),
+                    "action_count": int(pc.a4_check_action_count),
+                    "seconds_cumulative": float(pc.a4_check_seconds),
+                    "implementation": pc.p4_action_implementation,
+                    "oracle_identity": pc.p4_action_oracle,
                     "operator_action": {
-                        "apply_count": int(p4_audit["apply_count"]),
+                        "apply_count": int(native_p4_audit["apply_count"]),
                         "operation_seconds_cumulative": dict(
-                            p4_audit["operation_seconds_cumulative"]
+                            native_p4_audit["operation_seconds_cumulative"]
                         ),
                     },
+                },
+                "a4_verification": {
+                    "action_count": int(pc.a4_check_action_count),
+                    "seconds_cumulative": float(pc.a4_check_seconds),
+                    "implementation": pc.p4_action_implementation,
+                    "oracle_identity": pc.p4_action_oracle,
+                    "selected_action_audit": selected_p4_audit,
+                    "selected_action_apply_count_start": selected_a4_apply_count_start,
+                    "selected_action_apply_count_end": selected_a4_apply_count_end,
+                    "native_ffcx_oracle_audit": native_p4_audit,
+                    "candidate_construction_facts": candidate_a4_facts,
+                    "soft_repair_workspace": dict(
+                        getattr(pc, "_soft_p4_repair_workspace", {})
+                    ),
                 },
                 "owner_P_PH": {
                     "route": routing["route"],
@@ -7730,6 +7886,7 @@ def _v14_q4_q5_fullspace(
             repair_vector_capture=p4_repair_vector_capture,
             logical_apply_hook=p4_logical_apply_hook,
             pc_fine_action_factory=pc_fine_action_factory,
+            pc_a4_action_factory=pc_a4_action_factory,
             packed_power10=packed_power10,
             sum_factorized_work=sum_factorized_work,
             sum_factorized_power10=sum_factorized_power10,

@@ -367,33 +367,59 @@ def run_full3d_iterative(
                 resolved_payload.get("execution", {}).get("require_zero_swap", True)
             ),
         )
-    if resolved_payload.get("solver", {}).get("preconditioner") == "physical_p6_trace_fused_kernel_v28":
+    if resolved_payload.get("solver", {}).get("preconditioner") in {
+        "physical_p6_trace_fused_kernel_v28",
+        "physical_p6_trace_a4_tensor_h6_v29",
+    }:
         from .physical_dual_cell_condensed_lowmem_v20 import (
             _run_physical_dual_cell_condensed_lowmem,
         )
         from src.io.physical_intermediate_profile import (
+            A4_TENSOR_H6_PROFILE,
             FUSED_KERNEL_PROFILE,
             PHYSICAL_MEMORY_POLICY_V23,
         )
 
+        profile = str(resolved_payload["solver"]["preconditioner"])
+        v29_profile = profile == A4_TENSOR_H6_PROFILE
         stage = str(resolved_payload["solver"]["stage"])
         if stage != "Q4_ORIGINAL":
-            raise ValueError("V28 fused-kernel profile allows only Q4_ORIGINAL")
+            raise ValueError(f"{profile} allows only Q4_ORIGINAL")
         if int(resolved_payload["solver"].get("coarse_degree", -1)) != 4:
-            raise ValueError("V28 Q4_ORIGINAL requires coarse_degree=4")
+            raise ValueError(f"{profile} Q4_ORIGINAL requires coarse_degree=4")
+        batch_identity = (
+            "review_v27_a4_tensor_h6_continue_outer"
+            if v29_profile
+            else "review_v26_fused_A6_H6_optional_setup_threads"
+        )
+        evidence_prefix = "v29q4" if v29_profile else "v28q4"
+        summary_schema = (
+            "task039extra.v29.a4-tensor-h6.worker-summary.v1"
+            if v29_profile
+            else "task039extra.v28.fused-kernel.worker-summary.v1"
+        )
+        summary_filename = (
+            "physical_dual_condensed_a4_tensor_h6_v29_summary.json"
+            if v29_profile
+            else "physical_dual_condensed_fused_kernel_v28_summary.json"
+        )
+        accepted_route_key = "accepted_v28_route" if v29_profile else "accepted_v27_route"
+        accepted_route = (
+            FUSED_KERNEL_PROFILE
+            if v29_profile
+            else "physical_p6_trace_workingset_efficiency_v27"
+        )
         return _run_physical_dual_cell_condensed_lowmem(
             resolved_payload,
             Path(run_directory),
             source_sha=_kwargs["source_sha"],
-            profile_identity=FUSED_KERNEL_PROFILE,
+            profile_identity=profile,
             coarse_degree=4,
             allowed_stages=("Q4_ORIGINAL",),
-            batch_identity="review_v26_fused_A6_H6_optional_setup_threads",
-            evidence_prefix="v28q4",
-            summary_schema="task039extra.v28.fused-kernel.worker-summary.v1",
-            summary_filename=(
-                "physical_dual_condensed_fused_kernel_v28_summary.json"
-            ),
+            batch_identity=batch_identity,
+            evidence_prefix=evidence_prefix,
+            summary_schema=summary_schema,
+            summary_filename=summary_filename,
             derive_live_space_identity=True,
             rhs_identity_policy="case_bound_physical_rhs",
             restore_summary_schema=True,
@@ -406,9 +432,7 @@ def run_full3d_iterative(
             reference_mode_by_stage={"Q4_ORIGINAL": "authority_limited"},
             predecessor_by_stage={
                 "Q4_ORIGINAL": {
-                    "accepted_v27_route": (
-                        "physical_p6_trace_workingset_efficiency_v27"
-                    ),
+                    accepted_route_key: accepted_route,
                     "cross_case_recycling": False,
                     "original_only": True,
                     "independent_batch": True,

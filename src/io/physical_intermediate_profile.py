@@ -38,6 +38,8 @@ COARSE_DEGREE_SPEED_PROFILE = "physical_p6_trace_coarse_degree_speed_v25"
 SETUP_EFFICIENCY_PROFILE = "physical_p6_trace_setup_efficiency_v26"
 WORKINGSET_SETUP_PROFILE = "physical_p6_trace_workingset_efficiency_v27"
 FUSED_KERNEL_PROFILE = "physical_p6_trace_fused_kernel_v28"
+A4_TENSOR_H6_PROFILE = "physical_p6_trace_a4_tensor_h6_v29"
+FUSED_KERNEL_PROFILES = (FUSED_KERNEL_PROFILE, A4_TENSOR_H6_PROFILE)
 PHYSICAL_MEMORY_POLICY_V23 = "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23"
 V23_QUALIFIED_JIT_CACHE_SOURCE = (
     "results/euv_grazing1_phi0/"
@@ -53,7 +55,7 @@ P4_BLR_TRADEOFF_THRESHOLDS = {
     "T2_BLR_CONTROL": 1.0e-4,
 }
 
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE, LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE, COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE, FUSED_KERNEL_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE, LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE, COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE, FUSED_KERNEL_PROFILE, A4_TENSOR_H6_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
 
 
 def p4_blr_tradeoff_threshold(stage: str) -> float:
@@ -68,6 +70,54 @@ def p4_blr_tradeoff_threshold(stage: str) -> float:
 
 
 def profile_facts(identity=PROFILE) -> dict:
+    if identity == A4_TENSOR_H6_PROFILE:
+        facts = profile_facts(FUSED_KERNEL_PROFILE)
+        facts.update(
+            identity=identity,
+            scope="review_v27_continue_outer_and_a4_tensor_h6_candidates",
+            qualification=(
+                "opt_in; one fresh original 990-cell p6/h7.5 q4 formal run; "
+                "full A4 residual checks retained; after two extra same-factor "
+                "refinements a finite best state may continue outer FGMRES; "
+                "numeric_cache_mode=build; observe_only; single-thread"
+            ),
+            coarse_refinement_exhaustion_policy="continue_outer_best_finite",
+            a4_verification_action="fused_sum_factorized_partial_assembly_full_A4",
+            a4_action_oracle="native_ffcx_full_A4_same_p4_forms_and_dtn",
+        )
+        facts["p4_repair_policy"] = {
+            **facts["p4_repair_policy"],
+            "exhaustion_policy": "continue_outer_best_finite",
+            "selection_policy": "minimum_rho_tie_earliest",
+        }
+        facts["gates"].update(
+            coarse_refinement_exhaustion_is_soft=True,
+            p4_return_quality=(
+                "1e-10 remains the coarse target; after two extra complete "
+                "A4 checks, finite best-state return continues outer FGMRES"
+            ),
+            best_finite_state_must_match_port_and_native_residual=True,
+            outer_true_residual_limit=1.0e-6,
+            complete_A4_action_every_raw_and_refined_attempt=True,
+            a4_action_relative_limit=1.0e-10,
+            a4_residual_difference_over_original_g_limit=1.0e-11,
+        )
+        facts["route_selection"].update(
+            pc_a4_action_factory="fused_sum_factorized_partial_assembly_full_A4",
+            pc_a4_action_oracle="native_ffcx_full_A4_same_p4_forms_and_dtn",
+            pc_a4_dtn_owner="borrow_common_p4_dtn_action",
+            p4_global_matrix=False,
+            p4_global_factor=False,
+        )
+        facts["resources"].update(
+            soft_p4_repair_workspace_vector_equivalents=24,
+            soft_p4_repair_workspace_basis=(
+                "reserved inside the existing BAL_H coarse workspace for live "
+                "refinement vectors, one best-state snapshot, and transient "
+                "selected-evidence copies"
+            ),
+        )
+        return facts
     if identity in (
         SETUP_EFFICIENCY_PROFILE,
         WORKINGSET_SETUP_PROFILE,

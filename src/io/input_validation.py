@@ -41,6 +41,8 @@ _V28_FUSED_KERNEL_RUN_ID = "task39extra_v28_fused_kernel_original_h7p5"
 _V28_POST_REPAIR_VALIDATION_RUN_ID = (
     "task39extra_v28_fused_kernel_original_h7p5_post_repair_v1"
 )
+_V29_A4_TENSOR_H6_RUN_ID = "task39extra_v29_a4_tensor_h6_original_h7p5_v1"
+_V29_A4_TENSOR_H6_COMPARISON_GROUP = "review_v27_a4_tensor_h6_continue_outer"
 
 
 def _error(path: str, message: str) -> InputError:
@@ -584,6 +586,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "physical_p6_trace_setup_efficiency_v26",
                 "physical_p6_trace_workingset_efficiency_v27",
                 "physical_p6_trace_fused_kernel_v28",
+                "physical_p6_trace_a4_tensor_h6_v29",
             }:
                 raise _error(
                     "solver.preconditioner",
@@ -1013,12 +1016,16 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "physical_p6_trace_setup_efficiency_v26",
                 "physical_p6_trace_workingset_efficiency_v27",
                 "physical_p6_trace_fused_kernel_v28",
+                "physical_p6_trace_a4_tensor_h6_v29",
             ):
                 is_v27_workingset = (
                     preconditioner == "physical_p6_trace_workingset_efficiency_v27"
                 )
                 is_v28_fused_kernel = (
                     preconditioner == "physical_p6_trace_fused_kernel_v28"
+                )
+                is_v29_a4_tensor_h6 = (
+                    preconditioner == "physical_p6_trace_a4_tensor_h6_v29"
                 )
                 if is_v27_workingset and (
                     config["run_id"] != _V27_WORKINGSET_RUN_ID
@@ -1041,6 +1048,15 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     raise _error(
                         "identity",
                         "V28 profile requires its frozen run_id and comparison_group",
+                    )
+                if is_v29_a4_tensor_h6 and (
+                    config["run_id"] != _V29_A4_TENSOR_H6_RUN_ID
+                    or config.get("comparison_group")
+                    != _V29_A4_TENSOR_H6_COMPARISON_GROUP
+                ):
+                    raise _error(
+                        "identity",
+                        "V29 profile requires its frozen run_id and comparison_group",
                     )
                 stage = solver.get("stage")
                 if stage != "Q4_ORIGINAL":

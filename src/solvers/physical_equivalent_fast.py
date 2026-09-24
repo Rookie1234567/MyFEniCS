@@ -25,21 +25,25 @@ def build_packed_physical_action(
     fuse_components=False,
     share_readonly_geometry=False,
     geometry_bundle=None,
+    degree=6,
 ):
     """Build a packed volume action for one explicit PC owner.
 
-    The returned physical action borrows the established degree-6 DtN action
-    and owns only the two packed volume components.  Keeping this object
-    separate from ``common['fine']['physical_action']`` preserves the native
-    A6 action as the independent residual authority.
+    The returned physical action borrows the matching degree's established
+    DtN action and owns only the two packed volume components. For degree 6,
+    it remains separate from the native A6 residual authority; degree 4 is
+    available only as a complete A4 verification candidate.
     """
 
     from .fullspace_physical_action import FullspacePhysicalAction
 
+    degree = int(degree)
+    if degree not in (4, 6):
+        raise ValueError("packed physical actions support degree 4 or 6")
     levels = common["levels"]
-    fine = common["fine"]
-    space = levels["floquets"][6].mpc.function_space
-    original_components = fine["volume_action"].component_actions
+    reference_bundle = common["fine"] if degree == 6 else common["p4"]
+    space = levels["floquets"][degree].mpc.function_space
+    original_components = reference_bundle["volume_action"].component_actions
     forms = tuple(
         original_components[key]._bilinear_form
         for key in ("curl", "material_mass")
@@ -121,18 +125,18 @@ def build_packed_physical_action(
             volume = FullspaceFusedSplitVolumeAction(
                 *forms,
                 space,
-                mpc=levels["floquets"][6].mpc,
+                mpc=levels["floquets"][degree].mpc,
                 local_kernels=kernels,
             )
         else:
             volume = FullspaceSplitVolumeAction(
                 *forms,
                 space,
-                mpc=levels["floquets"][6].mpc,
+                mpc=levels["floquets"][degree].mpc,
                 local_kernels=kernels,
             )
         action = FullspacePhysicalAction(
-            volume, fine["dtn_action"], owns_dtn=False
+            volume, reference_bundle["dtn_action"], owns_dtn=False
         )
         component_audits = [
             dict(component)
@@ -146,7 +150,27 @@ def build_packed_physical_action(
                 dict(volume.audit["shared_fullspace_mpc_action"])
             ]
         facts = {
-            "schema": "task039extra.v24.packed-pc-physical-action.v1",
+            "schema": (
+                "task039extra.v29.p4-fast-a4-action.v1"
+                if degree == 4
+                else "task039extra.v24.packed-pc-physical-action.v1"
+            ),
+            "degree": degree,
+            "implementation_identity": (
+                "fused_sum_factorized_partial_assembly_full_A4"
+                if degree == 4 and fuse_components and sum_factorized_work
+                else "isotropic_partial_assembly_physical_action"
+            ),
+            "oracle_identity": (
+                "native_ffcx_full_A4_same_p4_forms_and_dtn"
+                if degree == 4
+                else "independent_native_full_A6_authority"
+            ),
+            "action_role": (
+                "full_A4_verification_candidate"
+                if degree == 4
+                else "candidate_pc_internal_A6"
+            ),
             "backend": "isotropic_partial_assembly",
             "contiguous_work": bool(contiguous_work),
             "preallocated_work": bool(preallocated_work),
@@ -191,7 +215,8 @@ def build_packed_physical_action(
                 else {"enabled": False}
             ),
             "dtn_borrowed": True,
-            "native_a6_independent": True,
+            "native_a6_independent": degree == 6,
+            "native_physical_authority_independent": True,
             "material_function_array_bytes": int(
                 physical_mu.x.array.nbytes + physical_mass.x.array.nbytes
             ),
@@ -212,7 +237,11 @@ def build_packed_physical_action(
             "component_audits": component_audits,
         }
         if fuse_components:
-            facts["schema"] = "task039extra.v28.fused-pc-physical-action.v1"
+            facts["schema"] = (
+                "task039extra.v29.p4-fast-a4-action.v1"
+                if degree == 4
+                else "task039extra.v28.fused-pc-physical-action.v1"
+            )
             facts["backend"] = "fused_sum_factorized_split_volume"
             facts["fused_volume_audit"] = dict(
                 volume.audit["fused_local_kernel"]

@@ -77,6 +77,7 @@ class IsotropicPartialAssembly:
         sum_factorized_work=False,
         reuse_projection_work=False,
         shared_contractions=False,
+        combine_real_imag_transforms=False,
         geometry_bundle=None,
         share_geometry=False,
     ):
@@ -86,6 +87,11 @@ class IsotropicPartialAssembly:
         self.sum_factorized_work = bool(sum_factorized_work)
         self.reuse_projection_work = bool(reuse_projection_work)
         self.shared_contractions = bool(shared_contractions)
+        self.combine_real_imag_transforms = bool(combine_real_imag_transforms)
+        if self.combine_real_imag_transforms and not self.sum_factorized_work:
+            raise ValueError(
+                "combined real/imaginary transforms require the sum-factorized backend"
+            )
         self.share_geometry = bool(share_geometry)
         if component_form is None:
             if component is not None:
@@ -265,6 +271,7 @@ class IsotropicPartialAssembly:
                 batch_size=self.batch_size,
                 reuse_projection_work=self.reuse_projection_work,
                 shared_contractions=self.shared_contractions,
+                combine_real_imag_transforms=self.combine_real_imag_transforms,
                 reference_bundle=reference_bundle,
                 share_reference=self.share_geometry,
             )
@@ -410,6 +417,9 @@ class IsotropicPartialAssembly:
             sum_factorized_opt_in=self.sum_factorized_work,
             reuse_projection_work_opt_in=self.reuse_projection_work,
             shared_contractions_opt_in=self.shared_contractions,
+            combined_real_imag_transform_opt_in=(
+                self.combine_real_imag_transforms
+            ),
             sum_factorized_audit=(
                 self._sum_factorized.audit if self._sum_factorized is not None else None
             ),

@@ -23,6 +23,7 @@ def build_light_h6_setup(
     sum_factorized_work=False,
     sum_factorized_power10=None,
     shared_contractions=False,
+    combine_real_imag_transforms=False,
     direct_selected_backend=False,
     reuse_projection_work=False,
     batched_target_grouping=False,
@@ -41,6 +42,7 @@ def build_light_h6_setup(
         sum_factorized_work=sum_factorized_work,
         sum_factorized_power10=sum_factorized_power10,
         shared_contractions=shared_contractions,
+        combine_real_imag_transforms=combine_real_imag_transforms,
         direct_selected_backend=direct_selected_backend,
         reuse_projection_work=reuse_projection_work,
         batched_target_grouping=batched_target_grouping,
@@ -60,6 +62,7 @@ def build_light_level_setup(
     sum_factorized_work=False,
     sum_factorized_power10=None,
     shared_contractions=False,
+    combine_real_imag_transforms=False,
     direct_selected_backend=False,
     reuse_projection_work=False,
     batched_target_grouping=False,
@@ -70,6 +73,10 @@ def build_light_level_setup(
         preallocated_power10 = bool(preallocated_work)
     if sum_factorized_power10 is None:
         sum_factorized_power10 = bool(sum_factorized_work)
+    if combine_real_imag_transforms and (degree != 6 or not sum_factorized_work):
+        raise ValueError(
+            "combined real/imaginary coefficient transforms are H6 sum-factorized only"
+        )
     space, floquet = levels['spaces'][degree], levels['floquets'][degree]
     mu, mass = levels['mu'], levels['mass']
     action = diagonal = shell = smoother = None
@@ -104,6 +111,7 @@ def build_light_level_setup(
                     preallocated_work=preallocated_work,
                     sum_factorized_work=sum_factorized_work,
                     shared_contractions=shared_contractions,
+                    combine_real_imag_transforms=combine_real_imag_transforms,
                     reuse_projection_work=reuse_projection_work,
                     share_geometry=direct_backend,
                 ),
@@ -142,6 +150,7 @@ def build_light_level_setup(
                     preallocated_work=preallocated_power10,
                     sum_factorized_work=sum_factorized_power10,
                     shared_contractions=shared_contractions,
+                    combine_real_imag_transforms=combine_real_imag_transforms,
                     reuse_projection_work=reuse_projection_work,
                     share_geometry=direct_backend,
                 ),
@@ -173,6 +182,7 @@ def build_light_level_setup(
                     preallocated_work=preallocated_work,
                     sum_factorized_work=sum_factorized_work,
                     shared_contractions=shared_contractions,
+                    combine_real_imag_transforms=combine_real_imag_transforms,
                     reuse_projection_work=reuse_projection_work,
                     share_geometry=direct_backend,
                 ),
@@ -199,6 +209,7 @@ def build_light_level_setup(
                     preallocated_work=preallocated_work,
                     sum_factorized_work=sum_factorized_work,
                     shared_contractions=shared_contractions,
+                    combine_real_imag_transforms=combine_real_imag_transforms,
                     reuse_projection_work=reuse_projection_work,
                     share_geometry=direct_backend,
                 ),

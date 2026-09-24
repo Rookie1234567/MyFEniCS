@@ -1,4 +1,4 @@
-"""V28 opt-in profile routing and observe-only launcher contract."""
+"""V28/V29 profile routing and observe-only launcher contracts."""
 
 import hashlib
 import json
@@ -9,6 +9,7 @@ import pytest
 from src.io import load_and_resolve
 from src.io.input_loader import InputError
 from src.io.physical_intermediate_profile import (
+    A4_TENSOR_H6_PROFILE,
     FUSED_KERNEL_PROFILE,
     PHYSICAL_MEMORY_POLICY_V23,
     profile_facts,
@@ -21,6 +22,75 @@ from src.runners import task038_launcher as launcher
 ROOT = Path(__file__).resolve().parents[2]
 INPUT = ROOT / "input/task39extra/v28_fused_kernel_original_h7p5.dat"
 POST_REPAIR_INPUT = ROOT / "input/task39extra/v28_fused_kernel_original_h7p5_post_repair.dat"
+V29_INPUT = ROOT / "input/task39extra/v29_a4_tensor_h6_original_h7p5.dat"
+
+
+def test_v29_profile_opts_into_best_finite_continue_without_changing_v28():
+    old = profile_facts(FUSED_KERNEL_PROFILE)
+    new = profile_facts(A4_TENSOR_H6_PROFILE)
+    assert old["p4_repair_policy"].get("exhaustion_policy", "raise") == "raise"
+    assert new["coarse_refinement_exhaustion_policy"] == (
+        "continue_outer_best_finite"
+    )
+    assert new["p4_repair_policy"]["exhaustion_policy"] == (
+        "continue_outer_best_finite"
+    )
+    assert new["p4_repair_policy"]["selection_policy"] == (
+        "minimum_rho_tie_earliest"
+    )
+    assert "continues outer FGMRES" in new["gates"]["p4_return_quality"]
+    assert old["gates"]["p4_return_quality"] == (
+        "every successful logical p4 native rho <= 1e-10"
+    )
+
+
+def test_v29_input_is_physical_inheritance_and_dispatches_through_reviewed_profile(
+    monkeypatch, tmp_path, capsys
+):
+    base = load_and_resolve(POST_REPAIR_INPUT)
+    specification = load_and_resolve(V29_INPUT)
+    facts = profile_facts(A4_TENSOR_H6_PROFILE)
+    payload = specification.as_jsonable()
+    assert specification.identity["run_id"] == (
+        "task39extra_v29_a4_tensor_h6_original_h7p5_v1"
+    )
+    assert specification.identity["comparison_group"] == (
+        "review_v27_a4_tensor_h6_continue_outer"
+    )
+    assert specification.physical_model_sha256 == base.physical_model_sha256
+    assert specification.solver["preconditioner"] == A4_TENSOR_H6_PROFILE
+    assert specification.solver["numeric_cache_mode"] == "build"
+    assert specification.execution["require_zero_swap"] is False
+    assert payload["derived"]["physical_intermediate_profile"] == thaw(facts)
+
+    from scripts.run_case import main as run_case_main
+
+    assert run_case_main(
+        [str(V29_INPUT), "--validate-only", "--v14-time-policy", "observe_only"]
+    ) == 0
+    capsys.readouterr()
+
+    worker = {}
+
+    def fake_worker(resolved_payload, run_directory, **kwargs):
+        worker.update(kwargs)
+        worker["payload"] = resolved_payload
+        worker["run_directory"] = run_directory
+        return {"mock_worker": True}
+
+    from src.runners import physical_dual_cell_condensed_lowmem_v20 as lowmem
+
+    monkeypatch.setattr(
+        lowmem, "_run_physical_dual_cell_condensed_lowmem", fake_worker
+    )
+    assert dispatch.run_full3d_iterative(
+        payload, tmp_path / "v29-worker", source_sha="d" * 40
+    ) == {"mock_worker": True}
+    assert worker["profile_identity"] == A4_TENSOR_H6_PROFILE
+    assert worker["allowed_stages"] == ("Q4_ORIGINAL",)
+    assert worker["batch_identity"] == "review_v27_a4_tensor_h6_continue_outer"
+    assert worker["evidence_prefix"] == "v29q4"
+    assert worker["require_zero_swap"] is False
 
 
 def _v28_pre_repair_ledger():
@@ -468,3 +538,92 @@ def test_v28_startup_scope_recovery_is_hash_bound_and_one_shot(tmp_path):
     with pytest.raises(InputError, match="exhausted its one repair replay"):
         reserve("c" * 40, "second-replay")
     assert ledger_path.read_bytes() == used_ledger
+
+
+def test_v29_launcher_reserves_one_observe_only_worker_under_user_service(
+    monkeypatch, tmp_path
+):
+    specification = load_and_resolve(V29_INPUT)
+    run_directory = tmp_path / "v29-launcher-run"
+    temporary_repo = tmp_path / "v29-temporary-repository"
+    ledger_path = (
+        temporary_repo
+        / "benchmarks/artifacts/task39extra/a4_tensor_h6_v29/"
+        "review_v27_a4_tensor_h6_continue_outer/shared_workflow_ledger.json"
+    )
+    service_cgroup_path = Path(
+        "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/"
+        "app.slice/myfenics-case-test.service"
+    )
+
+    def timestamp_directory(*_args, **_kwargs):
+        run_directory.mkdir()
+        return run_directory
+
+    reservation = {}
+    reserve_v29 = launcher._reserve_v29_a4_tensor_h6_budget
+
+    def reserve(repo_root, actual_run_directory, **kwargs):
+        result = reserve_v29(
+            temporary_repo,
+            actual_run_directory,
+            **kwargs,
+        )
+        reservation.update(result)
+        return result
+
+    monkeypatch.setattr(launcher, "_timestamp_directory", timestamp_directory)
+    monkeypatch.setattr(launcher, "_reserve_v29_a4_tensor_h6_budget", reserve)
+    monkeypatch.setattr(
+        launcher, "current_cgroup_path", lambda: service_cgroup_path
+    )
+    monkeypatch.setattr(
+        launcher,
+        "_physical_source_gate",
+        lambda *_args, **_kwargs: {
+            "source_sha": "e" * 40,
+            "tracked_and_nonignored_untracked_clean": True,
+        },
+    )
+    from benchmarks import subreaper_watchdog
+
+    observed = {}
+
+    def fake_supervise(argv, *_args, **kwargs):
+        observed["argv"] = list(argv)
+        observed["kwargs"] = dict(kwargs)
+        return {
+            "leader_exit_code": 0,
+            "classification": "COMPLETED",
+            "job_swap_activity": "observed_process_tree_swap",
+            "launch_envelope": {},
+            "memory_scope": "synthetic mock process tree",
+            "process_tree_swap_gate_enforced": False,
+            "global_swap_gate_enforced": False,
+            "sampled_process_tree_swap_peak_bytes": 1,
+        }
+
+    monkeypatch.setattr(subreaper_watchdog, "supervise", fake_supervise)
+    result = launcher.launch_specification(
+        specification, source_sha="e" * 40, v14_time_policy="observe_only"
+    )
+
+    assert reservation["time_policy"] == "observe_only"
+    assert reservation["replay"] is False
+    assert reservation["prerequisite"]["r1_probe_replay"] is False
+    assert observed["kwargs"]["allow_swap_observation"] is True
+    assert observed["kwargs"]["stop_on_global_swap"] is False
+    assert observed["kwargs"]["memory_policy"] == PHYSICAL_MEMORY_POLICY_V23
+    assert observed["kwargs"]["worker_environment"][
+        "PHYSICAL_WATCHDOG_MEMORY_POLICY"
+    ] == PHYSICAL_MEMORY_POLICY_V23
+    assert result["swap_gate_enforced"] is False
+    manifest = json.loads(Path(result["manifest"]).read_text())
+    assert manifest["swap_policy"] == "observe_only"
+    assert manifest["require_zero_swap"] is False
+    saved_ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+    assert saved_ledger["batch_identity"] == (
+        "review_v27_a4_tensor_h6_continue_outer"
+    )
+    assert saved_ledger["fresh_worker_count"] == 1
+    assert saved_ledger["unique_bug_replay_count"] == 0

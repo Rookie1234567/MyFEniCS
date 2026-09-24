@@ -140,6 +140,7 @@ def main(argv: list[str] | None = None) -> int:
                 'physical_p6_trace_setup_efficiency_v26',
                 'physical_p6_trace_workingset_efficiency_v27',
                 'physical_p6_trace_fused_kernel_v28',
+                'physical_p6_trace_a4_tensor_h6_v29',
             }
         ):
             raise InputError(

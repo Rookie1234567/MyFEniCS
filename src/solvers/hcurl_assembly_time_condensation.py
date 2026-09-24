@@ -981,6 +981,8 @@ def _global_raw_tensor_cache(
         str,
         tuple[Any, dict[int, Any], int],
     ],
+    *,
+    raw_tensor_evaluator: Callable[..., np.ndarray] | None = None,
 ) -> tuple[dict[tuple[Any, ...], np.ndarray], dict[str, Any], float]:
     """Evaluate each raw tensor class once globally, then broadcast it.
 
@@ -1003,12 +1005,42 @@ def _global_raw_tensor_cache(
             "ufcx_form_signature": compiled_form.module.ffi.string(
                 compiled_form.ufcx_form.signature
             ).decode("ascii"),
+            "raw_tensor_evaluator": (
+                None
+                if raw_tensor_evaluator is None
+                else {
+                    "identity": str(raw_tensor_evaluator.identity),
+                    "full_form_signature": str(
+                        raw_tensor_evaluator.analysis_facts["full_form_signature"]
+                    ),
+                    "workspace_bytes_upper": int(
+                        raw_tensor_evaluator.workspace_bytes_upper
+                    ),
+                }
+            ),
         }
         for policy, (compiled_form, kernels, dimension) in policy_forms.items()
     }
     policy_signatures = comm.allgather(local_policy_signature)
     if any(signature != policy_signatures[0] for signature in policy_signatures[1:]):
         raise RuntimeError("raw tensor FFCx policy signatures differ across MPI ranks")
+    if raw_tensor_evaluator is not None:
+        compiled_form, kernels, _dimension = policy_forms["actual_space"]
+        local_validation_error = None
+        try:
+            raw_tensor_evaluator.validate_compiled_form(compiled_form, kernels)
+        except Exception as error:
+            local_validation_error = f"{type(error).__name__}: {error}"
+        validation_errors = comm.allgather(local_validation_error)
+        if any(error is not None for error in validation_errors):
+            raise RuntimeError(
+                "p6 raw tensor candidate form validation failed: "
+                + "; ".join(
+                    f"rank {rank}: {error}"
+                    for rank, error in enumerate(validation_errors)
+                    if error is not None
+                )
+            )
     packets = comm.allgather(
         tuple(
             (key, np.asarray(coordinates, dtype=np.float64))
@@ -1071,13 +1103,22 @@ def _global_raw_tensor_cache(
                 raise RuntimeError(f"unknown raw tensor policy {policy!r}")
             compiled_form, kernels, dimension = policy_forms[policy]
             kernel_started = perf_counter()
-            locally_evaluated[key] = _tabulate_raw_tensor_class(
-                compiled_form,
-                kernels,
-                global_coordinates[key],
-                tag=int(key[1]),
-                dimension=int(dimension),
-            )
+            if raw_tensor_evaluator is None:
+                locally_evaluated[key] = _tabulate_raw_tensor_class(
+                    compiled_form,
+                    kernels,
+                    global_coordinates[key],
+                    tag=int(key[1]),
+                    dimension=int(dimension),
+                )
+            else:
+                locally_evaluated[key] = raw_tensor_evaluator(
+                    compiled_form,
+                    kernels,
+                    global_coordinates[key],
+                    tag=int(key[1]),
+                    dimension=int(dimension),
+                )
             local_kernel_seconds += perf_counter() - kernel_started
             local_evaluations += 1
     except Exception as error:
@@ -1124,6 +1165,44 @@ def _global_raw_tensor_cache(
         )
     if set(cache) != local_keys:
         raise RuntimeError("global raw tensor cache is incomplete on this rank")
+    evaluator_audit = None
+    if raw_tensor_evaluator is not None:
+        local_evaluator_facts = {
+            "class_count": int(raw_tensor_evaluator.class_count),
+            "class_seconds": dict(raw_tensor_evaluator.class_seconds),
+        }
+        evaluator_packets = comm.allgather(local_evaluator_facts)
+        class_seconds: dict[str, float] = {}
+        for packet in evaluator_packets:
+            for key, seconds in packet["class_seconds"].items():
+                if key in class_seconds:
+                    raise RuntimeError("p6 raw tensor class was evaluated more than once")
+                class_seconds[str(key)] = float(seconds)
+        evaluator_audit = raw_tensor_evaluator.audit()
+        evaluator_audit.update({
+            "implementation": str(raw_tensor_evaluator.identity),
+            "full_form_signature": str(
+                raw_tensor_evaluator.analysis_facts["full_form_signature"]
+            ),
+            "ufcx_form_signature": str(
+                raw_tensor_evaluator.expected_ufcx_signature
+            ),
+            "class_count_sum": int(
+                sum(packet["class_count"] for packet in evaluator_packets)
+            ),
+            "class_seconds": class_seconds,
+            "workspace_bytes_upper": int(
+                raw_tensor_evaluator.workspace_bytes_upper
+            ),
+            "literal_zero_default_integral_count": int(
+                raw_tensor_evaluator.analysis_facts[
+                    "literal_zero_default_integral_count"
+                ]
+            ),
+            "ffcx_default_kernel_absent": bool(
+                raw_tensor_evaluator.ffcx_default_kernel_absent
+            ),
+        })
     return (
         cache,
         {
@@ -1176,6 +1255,7 @@ def _global_raw_tensor_cache(
                 }
                 for key in ordered_keys
             ],
+            "raw_tensor_evaluator": evaluator_audit,
             "raw_tensor_logical_broadcast_bytes": logical_broadcast_bytes,
             "raw_tensor_broadcast_seconds_max": float(
                 comm.allreduce(local_broadcast_seconds, op=MPI.MAX)
@@ -1272,6 +1352,7 @@ def build_unconstrained_assembly_time_condensation(
     materialize_global_matrix: bool = True,
     geometry_tolerance: float = 1.0e-11,
     allocation_gate: Callable[[str, Mapping[str, Any]], None] | None = None,
+    raw_tensor_evaluator: Callable[..., np.ndarray] | None = None,
 ) -> AssemblyTimeCondensedSystem:
     """Assemble only the independent H(curl) trace Schur matrix.
 
@@ -1540,6 +1621,11 @@ def build_unconstrained_assembly_time_condensation(
         local_working_bytes_upper = int(
             condensation_capacity["local_working_bytes_upper"]
         )
+        raw_tensor_candidate_workspace_bytes_upper = int(
+            0
+            if raw_tensor_evaluator is None
+            else raw_tensor_evaluator.workspace_bytes_upper
+        )
         allocation_gate(
             "cell_tensor_working_set",
             {
@@ -1549,11 +1635,15 @@ def build_unconstrained_assembly_time_condensation(
                     + oriented_tensor_bytes_upper
                     + schur_cache_bytes_upper
                     + local_working_bytes_upper
+                    + raw_tensor_candidate_workspace_bytes_upper
                 ),
                 "raw_cache_bytes_upper": raw_cache_bytes_upper,
                 "oriented_tensor_bytes_upper": oriented_tensor_bytes_upper,
                 "schur_cache_bytes_upper": schur_cache_bytes_upper,
                 "local_working_bytes_upper": local_working_bytes_upper,
+                "raw_tensor_candidate_workspace_bytes_upper": (
+                    raw_tensor_candidate_workspace_bytes_upper
+                ),
                 "raw_class_count_local": int(len(local_raw_classes)),
                 "raw_class_count_global_unique": int(len(global_raw_classes)),
                 "oriented_class_count_local": int(len(local_oriented_classes)),
@@ -1574,6 +1664,7 @@ def build_unconstrained_assembly_time_condensation(
             comm,
             local_class_coordinates,
             policy_forms,
+            raw_tensor_evaluator=raw_tensor_evaluator,
         )
     except Exception:
         if condensed is not None:
