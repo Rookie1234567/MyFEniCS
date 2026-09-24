@@ -2820,6 +2820,22 @@ def test_task041_balh_scripts_run_case_reaches_public_launcher(monkeypatch):
     assert captured["model_id"] == TASK041_BALH_5NM_CANDIDATE_MODEL_ID
     assert captured["kwargs"]["task041_p4_correction_replay_from"] == correction_root
 
+    captured.clear()
+    assert run_case.main(
+        [
+            str(path), "--legacy-native-packet-descriptor", str(packet_root),
+            "--task041-performance-profile", TASK041_SCHUR_SPEED_V2_PROFILE,
+            "--task041-rhs-probe", str(probe),
+            "--task041-side-setup-schedule", TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+            "--task041-comparison-mode", task041_balh_workflow.TASK041_P4_BACKEND_PAIR_MODE,
+            "--task041-p4-correction-replay-from", str(correction_root),
+        ]
+    ) == 0
+    assert captured["model_id"] == TASK041_BALH_5NM_CANDIDATE_MODEL_ID
+    assert captured["kwargs"]["legacy_native_packet_descriptor"] == packet_root
+    assert captured["kwargs"]["producer_packet_root"] is None
+    assert captured["kwargs"]["task041_p4_correction_replay_from"] == correction_root
+
 
 def test_task041_balh_time_stop_override_is_forwarded_only_to_5nm_candidate(
     tmp_path, monkeypatch

@@ -186,7 +186,10 @@ def main(argv: list[str] | None = None) -> int:
                 or args.task041_rhs_probe is None
                 or args.task041_comparison_mode != "p4_backend_pair"
                 or args.task041_side_setup_schedule != "sequential_component"
-                or args.producer_packet_root is None
+                or (
+                    args.producer_packet_root is None
+                    and args.legacy_native_packet_descriptor is None
+                )
             ):
                 raise InputError(
                     "P4 correction replay requires the explicit 5 nm fixed-eight pair, "
