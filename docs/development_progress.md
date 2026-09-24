@@ -2824,3 +2824,8 @@ run `20260918T035017.294454Z`、source `41caf5141493ad6c5d6c518a64ee74fda8d7a7db
 该 run 随后以 `exit=-9` 结束，原 watchdog 分类为 `GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED`：全局 `pswpout` 从 `2` 到 `73` 页，delta=`71` 页（page size 4096 B，即284 KiB）；同一 stop sample 的整树 RSS=`635625377792 B`、任务树 swap=`0`、MemAvailable=`836791996416 B`、reserve=`324465062092 B`。这不是 OOM、全机 RAM 耗尽或数值不收敛证据；无 numeric complete、outer 或 RTA。
 
 1300GB measured guard 另记 attachment peak=`640141377536 B`，后以 worker RSS unreadable/`monitoring_failed` 停止，触发晚于原 watchdog stop约`0.245228993 s`，不作为最初原因。详见 [终态 compact](task39extra_para_workstation_capacity/outcomes/records/2nm_h1p5_measured_terminal_snapshot_v1.json)；不自动重跑。后续 cgroup v2 swap隔离只作建议，不在本轮修改系统或 Gate。
+
+
+## Task39extra_para V5：5 nm setup-only 终态
+
+5 nm Si p6/h4 q4 setup-only run `20260924T092250.568977Z`（source `96057565d171077cc84a8dae3cd4eb88b6ff21ea`）自然 exit 0，`SETUP_ONLY_COMPLETED`，setup checks PASS。setup-only/workflow 为 `2023.440526/2028.390414 s`；整树同时RSS峰 `37236830208 B`，watchdog 6192个样本全可读、最大间隔 `0.653519 s`、swap 0、后代清场。p6/p4各175 raw几何类在本run实际形成6个近似tensor组，组内核计时 `292.039/33.847 s`。与旧完整F5 setup `11263.076 s` 比约快 `5.57×`，但旧F5走raw类，本run采用不同source和近似分组；本run不含outer solve、完整A6 recovery、R/T/A或checker，故只记setup候选证据。完整哈希与计时范围见 [compact](task39extra_para_workstation_capacity/outcomes/records/f5_setup_only_v5_compact_v1.json)。主审批准在fresh准入通过时执行唯一F2；未通过任一CPU、身份、内存或隔离条件则不启动。

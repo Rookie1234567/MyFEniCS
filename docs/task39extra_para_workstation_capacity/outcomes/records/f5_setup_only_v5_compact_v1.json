@@ -1,0 +1,184 @@
+{
+  "schema": "task39extra.v5.setup-only-terminal-compact.v1",
+  "classification": "SETUP_ONLY_COMPLETED",
+  "run": {
+    "run_id": "v5_node1_5nm_p6h4_q4",
+    "run_directory": "results/euv_grazing1_phi0/v5_node1_5nm_p6h4_q4__full3d_iterative__mpi1__Mna/20260924T092250.568977Z",
+    "started_utc": "2026-09-24T09:22:50.569106+00:00",
+    "ended_utc": "2026-09-24T09:56:38.938488+00:00",
+    "exit_status": 0,
+    "status": "finished",
+    "result_classification": "setup_only",
+    "setup_checks_status": "PASS",
+    "completion_marker": "SETUP_ONLY_COMPLETED",
+    "source_sha": "96057565d171077cc84a8dae3cd4eb88b6ff21ea",
+    "source_tree_clean_at_run": true,
+    "input_path": "input/task39extra_para_workstation_capacity/v5_node1_5nm_p6h4_q4.dat",
+    "input_sha256": "03a9992d576612335135fa22f25192f97754feb4a281e6c06ce29534e4095d36",
+    "physical_model_sha256": "96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d",
+    "resolved_config_sha256": "a75bb0d69f008d382fbda2f94c13ea49e57e6fbfbc6439c598303db5c1129208",
+    "profile": "dual_condensed_balh_native_5nm_v5",
+    "model": "5 nm Si, p6/h4, q4, 3780 cells, 600 DtN channels",
+    "mode_manifest_sha256": "dde3aee7ee25bc5d68617a503eebec720a1527c9d044125bfb09acaa6d0b6645",
+    "mode_count": 600,
+    "mpi_ranks": 1,
+    "supervisor_cpu": 9,
+    "worker_cpu": 24,
+    "math_threads": 1,
+    "native_memory_policy": "preferred_node1",
+    "node0_fallback_allowed": true,
+    "execution_cache_empty_before_launch": true
+  },
+  "timing_seconds": {
+    "full_workflow": 2028.3904144229891,
+    "watchdog_elapsed": 2028.3233925749955,
+    "setup_only": 2023.440526041988,
+    "stage_steps": {
+      "shared_mesh": 13.38353427,
+      "volume_quadrature_metadata": 0.106891539,
+      "sum_factorized_physical_action": 218.66397248901194,
+      "forms_compile": 66.20613900801982,
+      "p6_p4_condensed_components_total": 447.291794746,
+      "postprocess_jit": 53.85993267298909,
+      "reference_symbolic_setup": 4.82311316,
+      "reference_numeric_setup": 273.8567577449721,
+      "retained_p4_factor_setup": 22.295633056026418,
+      "h6_original_setup": 460.818263739,
+      "bal_h_bridge": 15.325432398007251,
+      "native_aq_projection_check": 59.50489531402127,
+      "same_object_setup_checks": 387.06709210397094
+    },
+    "stage_step_scope": "stages.jsonl phase_clock_interval.step; nested substage times are not additive"
+  },
+  "retained_condensed_component_builds": {
+    "scope": "action-only local tensor and Schur setup; final global assembly was not run and no outer solve began",
+    "p6": {
+      "cells": 3780,
+      "raw_geometry_classes": 175,
+      "tensor_groups": 6,
+      "merged_raw_classes": 169,
+      "tensor_kernel_seconds": 292.0390080860525,
+      "total_build_seconds": 333.0742641070101
+    },
+    "p4": {
+      "cells": 3780,
+      "raw_geometry_classes": 175,
+      "tensor_groups": 6,
+      "merged_raw_classes": 169,
+      "tensor_kernel_seconds": 33.84702022696729,
+      "total_build_seconds": 54.25774779898347
+    },
+    "measurement_definition": "Sum of local kernel evaluations over unique tensor classes, reduced with MPI_MAX; MPI size is 1",
+    "grouping_policy": "decimal_round_12 tensor-group key; coordinates retained unrounded; lexicographic minimum unrounded canonical coordinates select the representative",
+    "grouping_is_approximate": true,
+    "schur_lu_recovery_cache_key": "raw_float64_widths_plus_orientation",
+    "mpc_expansion": "applied per cell",
+    "p4_setup_check": {
+      "logical_apply_delta": 2,
+      "symbolic_calls": 1,
+      "numeric_calls": 1,
+      "solve_calls": 3,
+      "returned_vector_relative_residual": 1.1138774783343563e-11,
+      "port_closure_relative": 8.219690748472179e-13,
+      "status": "PASS"
+    }
+  },
+  "resource_authority": {
+    "policy": "measured_tree_rss_only_v3",
+    "memory_scope": "dedicated watchdog parent plus all descendants; simultaneous sampled process-tree RSS",
+    "rss_hard_limit_bytes": 1300000000000,
+    "rss_warning_bytes": 1170000000000,
+    "sampled_process_tree_rss_peak_bytes": 37236830208,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "watchdog_classification": "COMPLETED",
+    "watchdog_samples": 6192,
+    "samples_all_status_readable": true,
+    "unreadable_status_samples": 0,
+    "malformed_samples": 0,
+    "max_sample_gap_seconds": 0.653518776,
+    "watchdog_descendants_cleared": true,
+    "remaining_child_pids": [],
+    "workflow_deadline_seconds": null,
+    "time_limit_mode": "none",
+    "swap_policy": "observe_only",
+    "global_swap_delta_pages": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 0
+    }
+  },
+  "observer": {
+    "path": "tmp/task39extra_v5_5nm_setup_only_20260924T092249.363247Z_346ula8o/observer.jsonl",
+    "interval_seconds": 15,
+    "samples": 121,
+    "max_sample_gap_seconds": 15.325357,
+    "worker_identity": {
+      "pid": 331220,
+      "start_ticks": 16676562
+    },
+    "last_sample_utc": "2026-09-24T09:56:31.823117+00:00",
+    "seconds_before_run_end": 7.115371,
+    "supervisor_identity": {
+      "pid": 331176,
+      "start_ticks": 16676422
+    },
+    "mpi_identity": {
+      "pid": 331213,
+      "start_ticks": 16676545
+    },
+    "observer_identity": {
+      "pid": 332221,
+      "start_ticks": 16697751
+    }
+  },
+  "not_run": {
+    "outer_solve": true,
+    "full_a6_recovery": true,
+    "rta": true,
+    "physical_checker": true,
+    "complete_numeric_solution": true
+  },
+  "setup_check_scope": "Same-object setup QA includes two internal p4 logical applications and three factor solve calls; these are setup checks, not outer iterations or an official field result.",
+  "comparison_with_prior_complete_f5": {
+    "prior_run_id": "20260923T231207.264441Z",
+    "prior_source_sha": "b468907cf54d04280b461cae5fc9078186302d54",
+    "prior_compact": "f5_5nm_q4_terminal_compact_v1.json",
+    "prior_setup_seconds": 11263.076,
+    "current_setup_seconds": 2023.440526041988,
+    "setup_time_ratio_prior_over_current": 5.566782,
+    "prior_p6_p4_raw_tensor_kernel_seconds": [8571.805, 988.356],
+    "current_p6_p4_grouped_tensor_kernel_seconds": [292.0390080860525, 33.84702022696729],
+    "prior_raw_geometry_classes_each": 175,
+    "prior_six_group_count": "derived from saved geometry; not runtime-measured in the complete F5 run",
+    "prior_tensor_path": "complete F5 used raw_unrounded classes; it did not run the current approximate grouped candidate",
+    "cache_comparison": "current run began with an empty JIT cache; prior F5 cache temperature was not classified",
+    "interpretation": "Measured setup-only time is about 5.57x shorter; grouped local tensor-kernel sums are about 29x lower. These metrics do not establish full-workflow or end-to-end speedup.",
+    "limits": [
+      "Runs use different source SHAs and tensor grouping policies.",
+      "This setup-only run did not compute a converged solution or official R/T/A.",
+      "The old F5 full numerical and physical qualification remains valid for its own source and run; this run adds setup evidence only.",
+      "The approximate grouped candidate is not qualified for the full 3780-cell, 600-channel solve by the prior 105-cell/four-mode component checks."
+    ]
+  },
+  "artifact_sha256": {
+    "run_manifest.json": "742ca19d127ca902a31324695164a0051fca2985418cb8802f29221893098492",
+    "run_summary.json": "9baf3d20652088125b84f3f816427744ad4de897043709b06722db19e27366d2",
+    "physical_intermediate_summary.json": "f939a6e8ab8e0a5c51916130a3452878f6b3fae953cd37f793d807604caee5b0",
+    "stages.jsonl": "9693332c66f45cc218fea436ff32aadc2cea9ccd680d3cdb48d6bb4e65b5722b",
+    "watchdog/resources.jsonl": "5e8f957ca3f2e3af7a8559856eeecdc5f4320630251e2ec44080087fe38907ba",
+    "observer.jsonl": "8318e3b20ada0b7d0fb51d26359142e3e57570a70f78811cbced9e81321ac382",
+    "observer_attach.json": "86cad620cacf083e4e5e07e18f242dbe7c595139644f7cb33199b51cbd7cdd12",
+    "prior_complete_f5_compact": "d7085ad85ed891f9373375293229ba5580bb22cdd39895f6345529a6493adbc1",
+    "four_input_contract": "1c0cbd99475e87bb340443ff96d292ce660dc135af08f2ef71fd81b932535719",
+    "f2_input_sha256": "e3febbe6a785d3866e37fd3353565111952fbfe0926ee0b2c5a42eaef32149e1"
+  },
+  "f2_gate": {
+    "status_after_setup_only": "approved_pending_fresh_prelaunch_gates_by_main_review",
+    "input_path": "input/task39extra_para_workstation_capacity/v5_node1_2nm_p6h1p5_q4.dat",
+    "expected_input_sha256": "e3febbe6a785d3866e37fd3353565111952fbfe0926ee0b2c5a42eaef32149e1",
+    "expected_physical_model_sha256": "fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef",
+    "expected_profile": "dual_condensed_balh_native_2nm_v5",
+    "expected_cells": 54332,
+    "expected_dtn_channels": 3904,
+    "instruction": "Run only if all fresh CPU, source, memory, isolation, and old-tree-clearance checks pass; otherwise report and leave F2 unstarted."
+  }
+}

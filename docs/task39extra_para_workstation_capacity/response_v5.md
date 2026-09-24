@@ -1,4 +1,12 @@
-# Review V5 执行记录：R13_PAIR_RELEASE → F5 完成 → 105-cell 几何组件通过；setup-only 待审
+# Review V5 执行记录：R13_PAIR_RELEASE → F5 完成 → 5 nm setup-only 通过 → F2 fresh 准入待核
+
+## 当前状态（2026-09-24）
+
+5 nm F5 setup-only `20260924T092250.568977Z` 已自然结束：exit 0、`SETUP_ONLY_COMPLETED`、`setup_checks=PASS`；setup-only 为 `2023.440526 s`，完整 workflow 为 `2028.390414 s`。watchdog 整树 RSS 峰 `37236830208 B`，低于 `1300000000000 B` RSS Gate；6192 个样本全可读、最大间隔 `0.653519 s`、swap 0，`descendants_cleared=true`。详细身份、阶段、p6/p4 tensor 组和哈希见 [setup-only compact](outcomes/records/f5_setup_only_v5_compact_v1.json)。
+
+正式 F5 的 setup 为 `11263.076 s`；本次setup-only约快 `5.57×`。本次在3780个cell上实际将p6和p4各175个raw几何类归为6个tensor组，分组kernel实测`292.039/33.847 s`；旧F5的`8571.805/988.356 s`是完整F5使用raw类时的kernel计时。源、分组策略与缓存状态不同，故这是setup与局部kernel的候选路径证据，不是完整求解加速或场等价证明。
+
+主审已批准准备并在fresh prelaunch Gate全部通过时启动唯一F2：2 nm Si、p6/h1.5、q4、3904通道。F2仍须先确认干净source、完整输入/物理/通道身份、CPU24空闲与CPU9监督、MPI1/数学线程1、preferred node1可回落、旧树清场，以及有效可用内存不少于`1437438953472 B`；运行使用整树RSS-only `1300000000000 B`硬线、15秒只读observer且无时间截止。任一条件失败即不启动并报告。
 
 **截至 2026-09-24。** R13 Q4/Q3 均以 source `6d989b4b9cbca12fcc35455d7ff381e66ef7ca6d` 完成；离线 checker source `515b0c653fc25bc1da2f319da9b7e658de049a2e` 的 attempt4 为 `NUMERICAL_PAIR_PASS`，结合共同路径、source-compact、连续 watchdog 与持续硬件证据记录 `R13_PAIR_RELEASE`。详见 [R13 release compact](outcomes/records/r13_pair_release_v1.json)。
 
@@ -16,7 +24,7 @@ F5 setup 实测 `11263.076 s`，其中 p6/p4 raw tensor kernel `8571.805/988.356
 
 与较早同5nm离散的698步结果对照：旧 solve/workflow=`206568.519/217665.164 s`，旧观测RSS峰=`50,161,172,480 B`；当前为121步、`10671.216/22680.912 s`、`38,934,622,208 B`。workflow墙钟约9.60倍，但旧CPU23与当前CPU24跨插槽，且source/runtime不同，不能把该比值全归因于算法提速；旧RSS记录有约8小时34分监督断档，不是连续资源PASS。旧run原记录不改写，当前 compact 只作对照。
 
-下一门槛按最新指令为：CPU24上完成必要focused regression并clean提交/审核后，以同一input SHA单独运行一次5nm setup-only。setup-only须独立run身份、完整RSS-only监督，不进入外层迭代/RTA，不能冒充完整数值/物理PASS。只有该setup-only正常完成且实测提速明确、全部原Gate不变才评估条件F2；Q4 attempt1序列化错误的负记录继续保留，见[compact](outcomes/records/v5_r13_q4_attempt1_failure_v1.json)。
+setup-only之后尚未重新打开数值求解，因此本条不报告新的正式场结果。新F5 setup-only的`outer_solve`、`full_a6_recovery`、RTA和physical checker均为`NOT_RUN`；同对象setup QA中的p4逻辑调用不是outer迭代。旧F5完整数值/物理PASS保留其原run/source范围。Q4 attempt1序列化错误的负记录继续保留，见[compact](outcomes/records/v5_r13_q4_attempt1_failure_v1.json)。
 
 ## H0/H1
 
@@ -38,4 +46,4 @@ H1 是合成负载，不是 FE 结果。CPU23/node0 与 CPU24/node1 的 60 秒�
 
 监督复用原 native parent/watchdog；另以 task-local 只读 `scripts/task39extra_event_observer.py`（SHA256=`aeded7a3f3447a186d223aec61502d0b54e60e8f1bf83d68b2cb28ac9c0f9757`）在 CPU9 每15秒读取该 run 与固定 root/worker PID+start_ticks，并将可读的 CPU24 hwmon/thermal-zone 温度、thermal-throttle 计数、`scaling_cur_freq`/`cpuinfo_cur_freq` 旁证写入 observer JSONL。helper 使用 `/home/fenics/Projects/Maxwell3D-Lab/task-control/codex-thread-notify-v2.py`。忙频保持 unknown（除非另有获准的 APERF/MPERF 证据）；缺失传感器不失败、不停止、不杀进程。观察器没有信号或重启能力，RSS 硬 Gate 仍由既有 watchdog 实施。observer 自测已覆盖 PID/tick 绑定、缺项仅记录和忙频不推断。
 
-该启动合同对应已完成的 R13Q4 replay，不能覆盖 attempt1 的原始负记录。当前 R13 pair 与 F5 均已完成；F2 未启动，须先经过上述独立 setup-only 决策门。
+该启动合同对应已完成的 R13Q4 replay，不能覆盖 attempt1 的原始负记录。当前 R13 pair、F5完整场与5 nm setup-only均已完成；F2按主审决定已批准有条件执行，仍须fresh prelaunch Gate全通过。

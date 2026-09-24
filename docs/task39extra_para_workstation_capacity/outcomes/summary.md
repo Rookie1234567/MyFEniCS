@@ -1,6 +1,6 @@
 # 原生迁移与容量任务：本轮执行结果
 
-## Review V5 当前阶段（2026-09-24）：F5 通过；105-cell 几何分组组件通过；setup-only 待审
+## Review V5 当前阶段（2026-09-24）：F5 通过；5 nm setup-only 通过；F2 fresh 准入待核
 
 H0/H1、M/C 与四输入合同已完成所需资格。R13 Q4/Q3 由同一 V5 retained-condensed 路径与数值 source `6d989b4b9cbca12fcc35455d7ff381e66ef7ca6d` 完成；离线 checker source `515b0c653fc25bc1da2f319da9b7e658de049a2e` 的 attempt4 为 `NUMERICAL_PAIR_PASS`，全场 L2=`3.5063e-8`、scaled-curl=`1.9531e-8`、80模态幅值=`2.2629e-8`、R/T/A/A_volume 均过限值，故记录 `R13_PAIR_RELEASE`。详见 [R13 pair release](records/r13_pair_release_v1.json)。
 
@@ -12,7 +12,9 @@ F5 setup 实测 `11263.076 s`（p6/p4 tensor kernels `8571.805/988.356 s`；Schu
 
 随后在同一5nm Si物理/材料输入上完成105-cell真实FE/MPC候选组件：每阶18个raw几何类→9个tensor组，Schur/LU/recovery键仍是raw float64 widths+orientation，MPC expansion仍逐cell。全体raw类与代表tensor最大相对差 p4=`6.29475e-16`、p6=`4.34826e-16`；p6 action差=`3.13911e-13`、独立原A6残差行动差=`3.01989e-13`；Aq体积/DtN投影差=`4.10e-15/1.08e-14`；p4原A4返回rho raw/candidate=`2.38159e-11/1.65771e-11`。显式非零端口RHS仅另以增广矩阵残差核验，未声称该RHS通过原A4恢复检查。构建计时 p6 tensor `892.56→447.23 s`、p4 `43.45→21.26 s`；额外逐raw类tensor复算另耗 p6=`1434.48 s`、p4=`64.51 s`，不得混入生产构建计时。该组件只覆盖105 cells和4个真实零阶mode，不是完整3780-cell setup、600通道或资源资格。原始记录、命令及各项限制见[105-cell组件compact](records/v5_5nm_geometry_105_component_v1.json)；测试时基于 `b468907cf54d04280b461cae5fc9078186302d54` 的未提交工作树，精确相关源文件hash记录在compact中。
 
-下一门槛是CPU24上的必要focused regression、clean source审核及fresh资源准入，然后才运行同一输入的一次独立setup-only：完整measured-tree RSS-only监督，不进外层迭代/RTA，也不声称完整物理PASS。只有setup-only正常完成且实测提速明确、全部原Gate不变，才评估条件F2；不复跑原样F5。正式输入为[`v5_node1_5nm_p6h4_q4.dat`](../../../input/task39extra_para_workstation_capacity/v5_node1_5nm_p6h4_q4.dat)，input SHA=`03a9992d576612335135fa22f25192f97754feb4a281e6c06ce29534e4095d36`，physical SHA=`96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d`。Q4 attempt1序列化失败记录继续保留：[原始 compact](records/v5_r13_q4_attempt1_failure_v1.json)。
+独立5 nm setup-only run `20260924T092250.568977Z` 以exit 0、`SETUP_ONLY_COMPLETED`、setup checks PASS自然完成。完整workflow=`2028.390414 s`，setup-only=`2023.440526 s`；整树RSS峰=`37236830208 B`，6192/6192样本可读、最大间隔`0.653519 s`、swap 0、后代清场。p6/p4各175个raw几何类在本次run实际聚为6个tensor组，kernel分别`292.039/33.847 s`。正式完整F5 setup=`11263.076 s`，约为当前setup-only的`5.57×`；旧F5的6组数来自保存几何推导，且旧完整场使用raw类。本次近似分组是新候选路径，不能据此宣称新的完整解或物理PASS。身份、阶段、资源、哈希和比较边界见[setup-only compact](records/f5_setup_only_v5_compact_v1.json)。
+
+主审已批准在fresh prelaunch Gate全部通过时运行唯一F2：2 nm Si、p6/h1.5、q4、3904通道。正式输入为[`v5_node1_2nm_p6h1p5_q4.dat`](../../../input/task39extra_para_workstation_capacity/v5_node1_2nm_p6h1p5_q4.dat)，合同input SHA=`e3febbe6a785d3866e37fd3353565111952fbfe0926ee0b2c5a42eaef32149e1`、physical SHA=`fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef`。启动前须再次核实干净源码、完整输入/物理/3904通道身份、CPU24/CPU9、MPI1/线程1、preferred node1允许回落、旧任务树清场、有效可用内存`>=1437438953472 B`、原生heavy lock可得及15秒只读observer。运行中唯一资源硬门为整树实测RSS=`1300000000000 B`，无时间截止；任一准入失败则不启动。Q4 attempt1序列化失败记录继续保留：[原始 compact](records/v5_r13_q4_attempt1_failure_v1.json)。
 
 ## 终态：2026-09-20 04:47 UTC，2 nm h1.5 stopped by global-swap attribution Gate
 

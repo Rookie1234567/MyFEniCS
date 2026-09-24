@@ -254,9 +254,19 @@
       "available_dtn_modes": 600,
       "pytest": "1 passed / 2986.99 s",
       "resource_qualification": "NOT_PERFORMED_COMPONENT_ONLY"
+    },
+    {
+      "stage": "F5_SETUP_ONLY",
+      "attempt": 1,
+      "run_id": "20260924T092250.568977Z",
+      "record": "f5_setup_only_v5_compact_v1.json",
+      "status": "SETUP_ONLY_COMPLETED",
+      "source_sha": "96057565d171077cc84a8dae3cd4eb88b6ff21ea",
+      "input_sha256": "03a9992d576612335135fa22f25192f97754feb4a281e6c06ce29534e4095d36",
+      "physical_model_sha256": "96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d"
     }
   ],
   "R2_S5_S3_S2_G": "R2_UNRESOLVED_5NM_OWN_PASS_REFERENCE_LIMITED_RESOURCE_UNQUALIFIED_2NM_H1P5_TERMINAL_GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED_3NM_LOCKED",
   "R13": "R13_PAIR_RELEASED_WITH_SOURCE_FULL_FIELD_AUTHORITY_LIMITED_BUSY_MHZ_UNKNOWN",
-  "next_gate": "FOCUSED_REGRESSION_AND_CLEAN_SOURCE_REVIEW_THEN_SEPARATE_F5_SETUP_ONLY_BEFORE_F2"
+  "next_gate": "F2_FRESH_PRELAUNCH_ADMISSION_PENDING_MAIN_REVIEW_APPROVED_IF_ALL_GATES_PASS"
 }
