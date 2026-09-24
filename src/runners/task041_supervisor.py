@@ -6964,7 +6964,12 @@ def _consumer_result(
             == str(Path(expected_p4_correction_replay_from).resolve())
             and expected_top_causal_replay is False
         )
-        side_setup = summary.get("side_setup")
+        setup = summary.get("setup")
+        side_setup = (
+            setup.get("side_setup")
+            if isinstance(setup, Mapping)
+            else None
+        )
         side_completion = (
             side_setup.get("side_completion")
             if isinstance(side_setup, Mapping)
@@ -6977,7 +6982,8 @@ def _consumer_result(
         )
         correction_checks["backend_lifecycle_order"] = bool(
             isinstance(top_completion, Mapping)
-            and top_completion.get("status") == "destroyed"
+            and top_completion.get("status")
+            == "full_then_cell_condensed_released"
             and top_completion.get("backend_order") == [
                 "full",
                 "cell_condensed",

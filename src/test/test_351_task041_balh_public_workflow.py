@@ -1068,11 +1068,13 @@ def _write_p4_correction_result_fixture(tmp_path):
         "producer_identity": producer_identity,
         "packet": {"identity": str(producer_identity_path)},
         "p4_correction_replay": reference,
-        "side_setup": {
-            "side_completion": {
-                "top": {
-                    "status": "destroyed",
-                    "backend_order": ["full", "cell_condensed"],
+        "setup": {
+            "side_setup": {
+                "side_completion": {
+                    "top": {
+                        "status": "full_then_cell_condensed_released",
+                        "backend_order": ["full", "cell_condensed"],
+                    }
                 }
             }
         },
@@ -1125,9 +1127,49 @@ def test_task041_p4_correction_result_has_separate_public_scope(tmp_path):
     assert result["classification"] == "task041_p4_correction_replay_complete"
     assert result["completion_scope"] == "p4_correction_replay"
     assert result["p4_correction_replay_validation"]["pass"] is True
+    assert result["p4_correction_replay_validation"]["checks"][
+        "backend_lifecycle_order"
+    ] is True
+    assert result["p4_correction_replay_validation"]["qualification_pass"] is False
 
     old_scope = supervisor._consumer_result(root, process_group_gone=True)
     assert old_scope["complete"] is False
+
+
+@pytest.mark.parametrize("failure", ("missing_nested", "reverse_order", "wrong_status"))
+def test_task041_p4_correction_requires_nested_released_backend_order(
+    tmp_path, failure
+):
+    root = _write_p4_correction_result_fixture(tmp_path)
+    summary_path = root / "consumer_summary.json"
+    summary = json.loads(summary_path.read_text())
+    if failure == "missing_nested":
+        summary.pop("setup")
+        summary["side_setup"] = {
+            "side_completion": {
+                "top": {
+                    "status": "full_then_cell_condensed_released",
+                    "backend_order": ["full", "cell_condensed"],
+                }
+            }
+        }
+    else:
+        top = summary["setup"]["side_setup"]["side_completion"]["top"]
+        if failure == "reverse_order":
+            top["backend_order"] = ["cell_condensed", "full"]
+        else:
+            top["status"] = "destroyed"
+    summary_path.write_text(json.dumps(summary, sort_keys=True) + "\n")
+
+    result = supervisor._consumer_result(
+        root,
+        process_group_gone=True,
+        expected_p4_correction_replay_from=tmp_path / "g1",
+    )
+    assert result["complete"] is False
+    assert result["p4_correction_replay_validation"]["checks"][
+        "backend_lifecycle_order"
+    ] is False
 
 
 def test_task041_p4_correction_callback_reads_nested_side_inverse_audit():
