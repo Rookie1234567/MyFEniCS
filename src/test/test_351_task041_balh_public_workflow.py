@@ -1631,7 +1631,7 @@ def test_task041_pair_numa_tracks_condensed_backend_in_five_stages():
     ]
 
 
-def test_task041_pair_layout_identity_excludes_space_object_addresses():
+def test_task041_pair_layout_identity_excludes_space_object_addresses(tmp_path):
     space_names = ("side_p6", "transfer_fine_p6", "transfer_coarse_p4")
     rank_records = []
     for rank in range(2):
@@ -1731,6 +1731,80 @@ def test_task041_pair_layout_identity_excludes_space_object_addresses():
         original_identity["component_sha256"],
         map_changed_identity["component_sha256"],
     )
+
+    frozen_components = copy.deepcopy(original_identity["component_sha256"])
+    from benchmarks import task041_exact_side_workflow as worker
+
+    comm = MPI.COMM_WORLD
+    root_text = str(tmp_path / "layout-evidence") if comm.rank == 0 else None
+    evidence_root = Path(comm.bcast(root_text, root=0))
+    capture = worker._Task041TopCausalPacketCapture(
+        comm=comm,
+        root=evidence_root,
+        source_sha="c" * 64,
+        probe_manifest_sha256="m" * 64,
+        parent_packet_sha256="p" * 64,
+        memory_cap_bytes=53_221_163_008,
+    )
+    capture._prepare_directory(evidence_root)
+
+    consumer_tree = ast.parse(
+        inspect.getsource(worker._run_task041_balh_candidate_setup)
+    )
+    build_backend = next(
+        node
+        for node in ast.walk(consumer_tree)
+        if isinstance(node, ast.FunctionDef) and node.name == "build_backend"
+    )
+    persist_layout_branch = next(
+        node
+        for node in ast.walk(build_backend)
+        if isinstance(node, ast.If)
+        and "g1_component_comparisons" in ast.dump(node)
+    )
+    branch_module = ast.Module(
+        body=[copy.deepcopy(persist_layout_branch)], type_ignores=[]
+    )
+    ast.fix_missing_locations(branch_module)
+    namespace = vars(worker).copy()
+    namespace.update(
+        {
+            "backend": "full",
+            "layout_record": map_changed,
+            "layout_identity": map_changed_identity,
+            "p4_correction_replay_from": Path("g1-consumer"),
+            "p4_correction_reference": {
+                "component_sha256": frozen_components
+            },
+            "p4_correction_capture": capture,
+            "cross_run_component_hash_pass": None,
+        }
+    )
+    exec(  # noqa: S102 - execute the captured production evidence branch
+        compile(branch_module, "<p4_layout_evidence_branch>", "exec"),
+        namespace,
+        namespace,
+    )
+
+    assert namespace["cross_run_component_hash_pass"] is False
+    artifact_path = evidence_root / "layout_identity_full.json"
+    artifact = json.loads(artifact_path.read_text()) if comm.rank == 0 else None
+    artifact = comm.bcast(artifact, root=0)
+    assert artifact["layout_record"] == map_changed
+    assert artifact["layout_identity"]["component_sha256"] == (
+        map_changed_identity["component_sha256"]
+    )
+    comparisons = artifact["g1_component_comparisons"]
+    assert [name for name, row in comparisons.items() if row["equal"] is False] == [
+        "dofmaps"
+    ]
+    assert comparisons["dofmaps"]["g1_sha256"] == (
+        frozen_components["dofmaps"]
+    )
+    assert comparisons["dofmaps"]["current_sha256"] == (
+        map_changed_identity["component_sha256"]["dofmaps"]
+    )
+    assert original_identity["component_sha256"] == frozen_components
 
 
 def test_task041_pair_layout_matrix_source_uses_actual_backend_interfaces():

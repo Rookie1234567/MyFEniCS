@@ -9208,6 +9208,39 @@ def _run_task041_balh_candidate_setup(
                                     current_components,
                                 )
                             )
+                            component_comparisons = {
+                                name: {
+                                    "g1_sha256": frozen_components.get(name),
+                                    "current_sha256": current_components.get(name),
+                                    "equal": bool(
+                                        isinstance(
+                                            frozen_components.get(name), str
+                                        )
+                                        and isinstance(
+                                            current_components.get(name), str
+                                        )
+                                        and current_components[name]
+                                        == frozen_components[name]
+                                    ),
+                                }
+                                for name in _TASK041_P4_CROSS_RUN_COMPONENTS
+                            }
+                            p4_correction_capture._write_json_collective(
+                                p4_correction_capture.root
+                                / f"layout_identity_{backend}.json",
+                                {
+                                    "schema": (
+                                        "task041.p4_correction_replay.layout_identity.v1"
+                                    ),
+                                    "backend": backend,
+                                    "layout_record": layout_record,
+                                    "layout_identity": layout_identity,
+                                    "g1_component_comparisons": component_comparisons,
+                                    "cross_run_component_hash_pass": (
+                                        cross_run_component_hash_pass
+                                    ),
+                                },
+                            )
                         if top_causal_replay and backend == "full":
                             top_causal_capture.configure_layout(layout_record)
                         if p4_correction_replay_from is not None:
