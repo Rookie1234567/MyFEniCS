@@ -295,12 +295,15 @@ def native_capacity_guard(profile, *, memory_policy='none'):
         yield root, isolation
 
 
-def launch_native_capacity(specification):
+def launch_native_capacity(specification, *, setup_only: bool = False):
     from .task038_launcher import launch_specification
     memory_policy = specification.execution.get('native_memory_policy', 'none')
     with native_capacity_guard(specification.solver['preconditioner'],
                                memory_policy=memory_policy) as (_root, isolation):
-        result = launch_specification(specification, prelaunch_isolation=isolation)
+        launch_kwargs = {'prelaunch_isolation': isolation}
+        if setup_only:
+            launch_kwargs['setup_only'] = True
+        result = launch_specification(specification, **launch_kwargs)
         path = Path(result['run_directory'])/'workstation_isolation.json'
         path.write_text(json.dumps(isolation, indent=2)+'\n')
         return result

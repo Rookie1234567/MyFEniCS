@@ -36,6 +36,32 @@ NATIVE_CASES.update(
 NATIVE_PROFILES = tuple(NATIVE_CASES)
 RETAINED_CONDENSED_PROFILE = 'dual_condensed_balh_native_5nm_v3'
 V5_NATIVE_PROFILES = frozenset(V5_NATIVE_CASES)
+SETUP_ONLY_5NM_PROFILE = 'dual_condensed_balh_native_5nm_v5'
+SETUP_ONLY_5NM_INPUT_SHA256 = (
+    '03a9992d576612335135fa22f25192f97754feb4a281e6c06ce29534e4095d36'
+)
+SETUP_ONLY_5NM_PHYSICAL_SHA256 = (
+    '96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d'
+)
+
+
+def setup_only_5nm_identity_errors(
+    *, profile: str, method: str, input_sha256: str, physical_model_sha256: str
+) -> list[str]:
+    """Fail closed unless setup-only is bound to the reviewed 5 nm V5 input."""
+
+    errors = []
+    if profile != SETUP_ONLY_5NM_PROFILE:
+        errors.append("setup-only is restricted to the V5 5 nm profile")
+    if method != "full3d_iterative":
+        errors.append("setup-only requires the full3d_iterative worker")
+    if input_sha256 != SETUP_ONLY_5NM_INPUT_SHA256:
+        errors.append("setup-only input SHA does not match the reviewed 5 nm input")
+    if physical_model_sha256 != SETUP_ONLY_5NM_PHYSICAL_SHA256:
+        errors.append("setup-only physical SHA does not match the reviewed model")
+    return errors
+
+
 V5_R13_PROFILES = frozenset(
     {
         'dual_condensed_balh_native_13p5_q4_v5',

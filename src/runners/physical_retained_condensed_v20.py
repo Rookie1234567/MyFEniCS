@@ -1025,6 +1025,7 @@ def run_retained_condensed_workflow(
     ledger: Any,
     sample: Callable[[], Mapping[str, Any]],
     summary: dict[str, Any],
+    setup_only: bool = False,
 ) -> dict[str, Any]:
     """Run the opt-in retained V20 route through the existing worker contract.
 
@@ -1035,6 +1036,19 @@ def run_retained_condensed_workflow(
     from pathlib import Path
     import json
     import time
+
+    if setup_only:
+        from src.io.native_capacity_profile import setup_only_5nm_identity_errors
+
+        provenance = payload.get("provenance", {})
+        errors = setup_only_5nm_identity_errors(
+            profile=str(payload.get("solver", {}).get("preconditioner", "")),
+            method=str(payload.get("method", {}).get("kind", "")),
+            input_sha256=str(provenance.get("input_sha256", "")),
+            physical_model_sha256=str(provenance.get("physical_model_sha256", "")),
+        )
+        if errors:
+            raise ValueError("; ".join(errors))
 
     from dolfinx.la.petsc import create_vector
     from mpi4py import MPI
@@ -1491,6 +1505,48 @@ def run_retained_condensed_workflow(
         ledger.marker("retained_same_object_setup_checks_complete", setup_checks)
         if setup_checks["status"] != "PASS":
             raise RuntimeError("D2 same-object setup checks were not qualified")
+
+        if setup_only:
+            not_run = {
+                "outer_solve_status": "NOT_RUN",
+                "full_a6_recovery_status": "NOT_RUN",
+                "rta_status": "NOT_RUN",
+                "physical_checker_status": "NOT_RUN",
+            }
+            setup_only_facts = {
+                "status": "SETUP_ONLY_COMPLETED",
+                "setup_checks_status": setup_checks["status"],
+                "mode_count": int(runtime.mode_count),
+                "mode_sha256": runtime.mode_sha256,
+                "coarse_degree": int(runtime.coarse_degree),
+                "p4_logical_apply_delta": int(
+                    setup_pc_record["p4_logical_apply_delta"]
+                ),
+                "p4_factor_counts_after_setup": dict(setup_factor_after),
+                "elapsed_monotonic_seconds": float(
+                    time.monotonic() - ledger.started
+                ),
+            }
+            summary.update(
+                status="SETUP_ONLY_COMPLETED",
+                result_classification="setup_only",
+                execution_mode="setup_only",
+                setup_only=True,
+                complete_solve=False,
+                setup_only_facts=setup_only_facts,
+                **not_run,
+            )
+            ledger.marker("SETUP_ONLY_COMPLETED", setup_only_facts)
+            _atomic_json(directory / "physical_intermediate_summary.json", summary)
+            return {
+                "passed": True,
+                "setup_only": True,
+                "result_classification": "setup_only",
+                "complete_solve": False,
+                "errors": [],
+                "summary": str(directory / "physical_intermediate_summary.json"),
+                "numerical_output_directory": str(directory / "numerical_output"),
+            }
 
         def pc(source: PETSc.Vec) -> PETSc.Vec:
             values = np.asarray(source.getArray(readonly=True), dtype=np.complex128).copy()

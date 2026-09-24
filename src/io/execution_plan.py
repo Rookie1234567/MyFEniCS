@@ -47,6 +47,7 @@ class ExecutionPlan:
     adapter_identity: str
     adapter_available: bool
     contract_probe: bool
+    setup_only: bool
     expected_output_directory: Path
     expected_resolved_config: Path
     expected_manifest: Path
@@ -93,12 +94,26 @@ def build_execution_plan(
     mpiexec_command: str | None = None,
     adapter_identity: str | None = None,
     contract_probe: bool = False,
+    setup_only: bool = False,
 ) -> ExecutionPlan:
     """Build the private worker argv without shell interpolation or overrides."""
 
     run_directory = Path(run_directory).resolve()
     executable = Path(os.path.abspath(python_executable or sys.executable))
     method = str(specification.method["kind"])
+    if setup_only:
+        from .native_capacity_profile import setup_only_5nm_identity_errors
+
+        if contract_probe:
+            raise InputError("setup-only cannot be combined with a contract probe")
+        errors = setup_only_5nm_identity_errors(
+            profile=str(specification.solver.get("preconditioner", "")),
+            method=method,
+            input_sha256=specification.input_sha256,
+            physical_model_sha256=specification.physical_model_sha256,
+        )
+        if errors:
+            raise InputError("; ".join(errors))
     if contract_probe:
         if adapter_identity != CONTRACT_PROBE_ADAPTER:
             raise InputError(
@@ -147,6 +162,8 @@ def build_execution_plan(
     ]
     if contract_probe:
         argv.append("--contract-probe")
+    if setup_only:
+        argv.append("--setup-only")
     from .native_capacity_profile import NATIVE_PROFILES, native_profile_facts
     if specification.solver.get("preconditioner") in NATIVE_PROFILES:
         profile_facts = native_profile_facts(
@@ -173,6 +190,7 @@ def build_execution_plan(
         adapter_identity=adapter,
         adapter_available=available,
         contract_probe=contract_probe,
+        setup_only=setup_only,
         expected_output_directory=run_directory,
         expected_resolved_config=resolved_path,
         expected_manifest=manifest_path,

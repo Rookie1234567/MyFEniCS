@@ -38,6 +38,7 @@ def _load_and_validate_worker_payload(
     expected_resolved_config_sha256: str,
     actual_mpi_size: int,
     contract_probe: bool = False,
+    setup_only: bool = False,
 ) -> tuple[dict[str, Any] | None, list[str]]:
     """Read each contract JSON once and return the validated resolved payload."""
 
@@ -146,6 +147,38 @@ def _load_and_validate_worker_payload(
         errors.append("manifest solver payload mismatch")
     if manifest_value.get("requested_modes") != requested_modes:
         errors.append("manifest requested-mode identity mismatch")
+
+    expected_execution_mode = "setup_only" if setup_only else "full_solve"
+    if manifest_value.get("execution_mode", "full_solve") != expected_execution_mode:
+        errors.append("worker CLI and manifest execution mode mismatch")
+    if setup_only:
+        from src.io.native_capacity_profile import (
+            SETUP_ONLY_5NM_PROFILE,
+            setup_only_5nm_identity_errors,
+        )
+
+        if contract_probe:
+            errors.append("setup-only cannot be combined with a contract probe")
+        solver = resolved.get("solver")
+        profile = solver.get("preconditioner") if isinstance(solver, dict) else None
+        errors.extend(
+            setup_only_5nm_identity_errors(
+                profile=str(profile or ""),
+                method=str(method or ""),
+                input_sha256=expected_input_sha256,
+                physical_model_sha256=expected_physical_model_sha256,
+            )
+        )
+        expected_setup_contract = {
+            "profile": SETUP_ONLY_5NM_PROFILE,
+            "input_sha256": expected_input_sha256,
+            "physical_model_sha256": expected_physical_model_sha256,
+            "completion_marker": "SETUP_ONLY_COMPLETED",
+        }
+        if manifest_value.get("setup_only_contract") != expected_setup_contract:
+            errors.append("manifest setup-only identity contract mismatch")
+    elif "setup_only_contract" in manifest_value:
+        errors.append("full-solve worker cannot accept a setup-only manifest contract")
     return resolved, errors
 
 
@@ -169,6 +202,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--expected-output-directory", type=Path, required=True)
     parser.add_argument("--resolved-config-sha256", required=True)
     parser.add_argument("--contract-probe", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--setup-only", action="store_true")
     return parser
 
 
@@ -178,8 +212,12 @@ def _dispatch_resolved_payload(
     expected_method: str,
     output_directory: Path,
     expected_source_sha: str | None = None,
+    setup_only: bool = False,
 ) -> tuple[int, list[str]]:
     """Dispatch the already validated payload without rereading its input."""
+
+    if setup_only and expected_method != "full3d_iterative":
+        return 3, ["setup-only is available only through the full3d_iterative worker"]
 
     if expected_method in {"2d_scattered", "2d_port"}:
         from src.runners.task038_2d import run_2d
@@ -195,7 +233,18 @@ def _dispatch_resolved_payload(
         from src.runners.task038_full3d_iterative import run_full3d_iterative
 
         def adapter(payload, directory):
-            return run_full3d_iterative(payload, directory, source_sha=expected_source_sha)
+            if setup_only:
+                return run_full3d_iterative(
+                    payload,
+                    directory,
+                    source_sha=expected_source_sha,
+                    setup_only=True,
+                )
+            return run_full3d_iterative(
+                payload,
+                directory,
+                source_sha=expected_source_sha,
+            )
         label = "Full3D iterative"
     elif expected_method == "hybrid_direct":
         from src.runners.task038_hybrid_direct import run_hybrid_direct
@@ -251,6 +300,7 @@ def main(argv: list[str] | None = None) -> int:
         expected_resolved_config_sha256=args.resolved_config_sha256,
         actual_mpi_size=comm.size,
         contract_probe=args.contract_probe,
+        setup_only=args.setup_only,
     )
     failed = comm.allreduce(bool(errors), op=MPI.LOR)
     if failed:
@@ -278,6 +328,7 @@ def main(argv: list[str] | None = None) -> int:
         expected_method=args.expected_method,
         output_directory=args.expected_output_directory,
         expected_source_sha=args.expected_source_sha,
+        setup_only=args.setup_only,
     )
     if exit_status != 0:
         if comm.rank == 0:

@@ -23,6 +23,7 @@ def _parser() -> argparse.ArgumentParser:
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--validate-only", action="store_true")
     mode.add_argument("--dry-run", action="store_true")
+    mode.add_argument("--setup-only", action="store_true")
     mode.add_argument('--physical-pc-profile', type=Path, metavar='CHECKPOINT_DIRECTORY')
     parser.add_argument('--profile-budget-ledger', '--batch-budget-ledger', dest='profile_budget_ledger', type=Path)
     parser.add_argument('--profile-variant', choices=('R0', 'a2r_equivalent_fast_v1', 'a2r_packed_equivalent_v2'), default='R0')
@@ -37,9 +38,32 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.profile_recovery_from is not None and args.physical_pc_profile is None:
             raise InputError('--profile-recovery-from requires --physical-pc-profile')
+        if args.setup_only and (
+            args.profile_budget_ledger is not None
+            or args.profile_variant != 'R0'
+            or args.profile_r0_reference is not None
+            or args.profile_recovery_from is not None
+        ):
+            raise InputError('--setup-only cannot be combined with diagnostic profile options')
         if args.physical_pc_profile is None and (args.profile_variant != 'R0' or args.profile_r0_reference is not None):
             raise InputError('fast profile options require --physical-pc-profile')
         specification = load_and_resolve(args.input_path)
+        if args.setup_only:
+            from src.io.native_capacity_profile import setup_only_5nm_identity_errors
+
+            errors = setup_only_5nm_identity_errors(
+                profile=str(specification.solver.get('preconditioner', '')),
+                method=str(specification.method.get('kind', '')),
+                input_sha256=specification.input_sha256,
+                physical_model_sha256=specification.physical_model_sha256,
+            )
+            if errors:
+                raise InputError('; '.join(errors))
+            from src.runners.native_capacity import launch_native_capacity
+
+            result = launch_native_capacity(specification, setup_only=True)
+            print(json.dumps(result, sort_keys=True, separators=(',', ':')))
+            return 0 if result['result_classification'] == 'setup_only' else 3
         if args.validate_only:
             payload = {
                 "status": "valid",

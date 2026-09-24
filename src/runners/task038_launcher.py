@@ -379,6 +379,7 @@ def launch_specification(
     poll_interval: float = 0.25,
     pc_profile: dict | None = None,
     prelaunch_isolation: dict[str, Any] | None = None,
+    setup_only: bool = False,
 ) -> dict[str, Any]:
     """Launch one resolved input or fail closed before numerical execution."""
 
@@ -410,6 +411,19 @@ def launch_specification(
     solve_limit = physical_resources.get('solve_seconds', 3600)
     physical_source = (_physical_source_gate(Path(__file__).resolve().parents[2], source)
                        if physical_candidate else None)
+    if setup_only:
+        from src.io.native_capacity_profile import setup_only_5nm_identity_errors
+
+        errors = setup_only_5nm_identity_errors(
+            profile=str(specification.solver.get('preconditioner', '')),
+            method=str(specification.method.get('kind', '')),
+            input_sha256=specification.input_sha256,
+            physical_model_sha256=specification.physical_model_sha256,
+        )
+        if errors:
+            raise InputError('; '.join(errors))
+        if contract_probe or pc_profile is not None or not physical_candidate:
+            raise InputError('setup-only requires the reviewed native 5 nm workflow')
     adapter = (
         CONTRACT_PROBE_ADAPTER
         if contract_probe
@@ -424,6 +438,15 @@ def launch_specification(
         adapter_identity=adapter,
         start_time=start_time,
     )
+    if setup_only:
+        manifest['execution_mode'] = 'setup_only'
+        manifest['setup_only_contract'] = {
+            'profile': specification.solver['preconditioner'],
+            'input_sha256': specification.input_sha256,
+            'physical_model_sha256': specification.physical_model_sha256,
+            'completion_marker': 'SETUP_ONLY_COMPLETED',
+        }
+        _write_json(run_directory / 'run_manifest.json', manifest)
     if prelaunch_isolation is not None:
         manifest['native_capacity_isolation'] = prelaunch_isolation
         _write_json(run_directory / 'run_manifest.json', manifest)
@@ -465,8 +488,9 @@ def launch_specification(
         mpiexec_command=mpiexec_command,
         adapter_identity=adapter,
         contract_probe=contract_probe,
+        setup_only=setup_only,
     )
-    if prelaunch_isolation is not None:
+    if prelaunch_isolation is not None or setup_only:
         manifest['worker_command'] = list(plan.argv)
         _write_json(run_directory / 'run_manifest.json', manifest)
     if not plan.adapter_available:
@@ -583,6 +607,70 @@ def launch_specification(
         result['full_workflow_monotonic_seconds'] = monotonic()-workflow_started
         if workflow_limit is not None and result['full_workflow_monotonic_seconds'] > workflow_limit:
             result['result_classification'] = 'PERFORMANCE_CONTROLLED_STOP'
+    if setup_only:
+        result.update(
+            execution_mode='setup_only',
+            setup_only=True,
+            complete_solve=False,
+            numerical_scope='same_object_setup_checks_only',
+            not_run={
+                'outer_solve': 'NOT_RUN',
+                'full_a6_recovery': 'NOT_RUN',
+                'rta': 'NOT_RUN',
+                'physical_checker': 'NOT_RUN',
+            },
+        )
+        if result.get('result_classification') == 'worker_exit0':
+            setup_summary_path = run_directory / 'physical_intermediate_summary.json'
+            try:
+                setup_summary = json.loads(
+                    setup_summary_path.read_text(encoding='utf-8')
+                )
+            except (OSError, json.JSONDecodeError) as exc:
+                result['setup_only_evidence_error'] = str(exc)
+                result['result_classification'] = 'EVIDENCE_INCOMPLETE'
+            else:
+                if not isinstance(setup_summary, dict):
+                    setup_summary = {}
+                retained_summary = setup_summary.get('retained_runtime')
+                setup_checks = (
+                    retained_summary.get('setup_checks', {})
+                    if isinstance(retained_summary, dict)
+                    else {}
+                )
+                if not isinstance(setup_checks, dict):
+                    setup_checks = {}
+                setup_facts = setup_summary.get('setup_only_facts')
+                required_not_run = (
+                    'outer_solve_status',
+                    'full_a6_recovery_status',
+                    'rta_status',
+                    'physical_checker_status',
+                )
+                if not (
+                    setup_summary.get('status') == 'SETUP_ONLY_COMPLETED'
+                    and setup_summary.get('result_classification') == 'setup_only'
+                    and setup_summary.get('execution_mode') == 'setup_only'
+                    and isinstance(setup_facts, dict)
+                    and setup_facts.get('status') == 'SETUP_ONLY_COMPLETED'
+                    and setup_checks.get('status') == 'PASS'
+                    and all(
+                        setup_summary.get(key) == 'NOT_RUN'
+                        for key in required_not_run
+                    )
+                ):
+                    result['setup_only_evidence_error'] = (
+                        'worker did not record the qualified setup-only terminal contract'
+                    )
+                    result['result_classification'] = 'EVIDENCE_INCOMPLETE'
+                else:
+                    result['worker_result_classification'] = 'worker_exit0'
+                    result['setup_checks_status'] = 'PASS'
+                    result['setup_only_facts'] = setup_facts
+                    result['result_classification'] = 'setup_only'
+        manifest['execution_mode'] = 'setup_only'
+        manifest['complete_solve'] = False
+        manifest['not_run'] = result['not_run']
     manifest.update(
         {
             "end_time": end_time,
@@ -598,6 +686,10 @@ def launch_specification(
         "numerical_output_directory": str(run_directory / "numerical_output"),
         **result,
     }
+    if setup_only:
+        summary['execution_mode'] = 'setup_only'
+        summary['setup_only'] = True
+        summary['complete_solve'] = False
     _write_json(run_directory / "run_manifest.json", manifest)
     _write_json(run_directory / "run_summary.json", summary)
     return {

@@ -158,8 +158,26 @@ class WorkflowLedger:
         self.joint_cycle.clear()
 
 
-def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str) -> dict:
+def run_physical_intermediate(
+    payload: dict,
+    directory: Path,
+    *,
+    source_sha: str,
+    setup_only: bool = False,
+) -> dict:
     """Run only under the dedicated parent; save safe states before recovery."""
+    if setup_only:
+        from src.io.native_capacity_profile import setup_only_5nm_identity_errors
+
+        provenance = payload.get('provenance', {})
+        errors = setup_only_5nm_identity_errors(
+            profile=str(payload.get('solver', {}).get('preconditioner', '')),
+            method=str(payload.get('method', {}).get('kind', '')),
+            input_sha256=str(provenance.get('input_sha256', '')),
+            physical_model_sha256=str(provenance.get('physical_model_sha256', '')),
+        )
+        if errors:
+            raise ValueError('; '.join(errors))
     from mpi4py import MPI
     from petsc4py import PETSc
     from benchmarks.subreaper_watchdog import memory_envelope
@@ -327,15 +345,20 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         for signum in (signal.SIGTERM, signal.SIGINT):
             previous_handlers[signum] = signal.signal(signum, interrupted)
         try:
+            workflow_kwargs = {
+                'source_sha': source_sha,
+                'cfg': cfg,
+                'contract': contract,
+                'ledger': ledger,
+                'sample': sample,
+                'summary': summary,
+            }
+            if setup_only:
+                workflow_kwargs['setup_only'] = True
             return run_retained_condensed_workflow(
                 payload,
                 directory,
-                source_sha=source_sha,
-                cfg=cfg,
-                contract=contract,
-                ledger=ledger,
-                sample=sample,
-                summary=summary,
+                **workflow_kwargs,
             )
         finally:
             for signum, handler in previous_handlers.items():
