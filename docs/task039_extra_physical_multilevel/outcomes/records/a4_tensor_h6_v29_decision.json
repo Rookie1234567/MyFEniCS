@@ -1,0 +1,15 @@
+{
+  "schema": "task039extra.v29.decision.v1",
+  "status": "PASS_AUTHORITY_LIMITED_WITH_MIXED_PERFORMANCE_RESULTS",
+  "decisions": {
+    "P1": "adopt bounded best-finite continuation policy; no formal coarse-target miss occurred",
+    "P2": "adopt qualified complete A4 action for this explicit profile; each original verification remains",
+    "P3": "adopt qualified local p6 raw-tensor generation for this explicit profile",
+    "P4": "retain baseline H6 transform; candidate was exact but slower on apply",
+    "ordinary_default": "unchanged",
+    "additional_PDE": "not authorized or run"
+  },
+  "formal_outcome": "126-iteration original p6/h7.5 solve passed its independent true-residual and physical consistency gates; V28 same-discrete offline comparison also passed. This is a discrete, authority-limited result, not continuum convergence or broad wavelength/geometry validation.",
+  "timing_interpretation": "V29 observed shorter same-boundary workflow, setup, and KSP clocks than V28. This single pair does not isolate causality. Monotonic and conservative realtime clocks are reported separately; their discrepancy is unassigned. Nested operation buckets are not summed.",
+  "next_step": "Submit V29 evidence on task39extra for review; do not merge master or launch another PDE until separately authorized."
+}

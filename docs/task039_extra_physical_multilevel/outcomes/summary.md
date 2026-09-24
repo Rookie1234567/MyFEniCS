@@ -1,3 +1,14 @@
+## Review V27 / V29 A4、p6 tensor 与 H6 收口
+
+V29 original p6/h7.5、coarse p4、990 cells、80 modes 的唯一正式运行完成126步，独立 final/post-release A6 真残差=`9.283162362107749e-7`，authority-limited 离散一致性 Gate 通过。离线与 V28 同离散 full FE、坐标 E/H、80模态和 R/T/A/A_volume 检查全部通过；worker 内原 `reference_evaluation=NOT_ATTEMPTED` 保持未改写。
+
+| 模型 | 正式结果 | Full workflow/KSP/setup monotonic (s) | RSS/PSS (B) | 裁决 |
+|---|---|---:|---:|---|
+| V29 original p6/h7.5、p4、990 cells、MPI1/thread1 | 126步；真残差`9.283162362107749e-7`；R/T/A=`0.36509755369517294/0.013016803348172958/0.621885642956654`；`A_volume=0.6218856421420225` | `2422.426 / 1837.175 / 533.755` | worker tree`7,323,303,936/7,291,101,184`；watchdog RSS`7,326,449,664` | discrete consistency pass, authority-limited；普通默认不变 |
+| V28 修复后同离散基线 | 126步；真残差`9.283164917015627e-7` | `2936.076 / 2113.443 / 773.946` | tree`7,356,289,024/7,324,145,664` | 已通过对照；单次差异不证明因果提速 |
+
+P1/P2/P3 对应策略、完整 A4 及局部 p6 raw-tensor 进入本 profile；P4 H6 堆叠实虚候选准确但 apply 慢1.69%，未采用。正式粗层目标未达=`0/262`，不能宣称 soft-return 在本场触发。R1 的部分证据按用户要求保留且不重放。每16步残差/elapsed、i112 p4 baseline、分项计时、尝试成本及 raw hash 见 [V29 outcome](a4_tensor_h6_v29.md)、[Response V30](../response_v30.md)、[compact](records/a4_tensor_h6_v29_compact.json)、[component](records/a4_tensor_h6_v29_components.json)、[checker](records/a4_tensor_h6_v29_checker.json)、[run index](records/run_index.json) 和 [selective merge manifest V29](selective_merge_manifest_v29.md)。
+
 ## Review V26 / V28 融合 A6：修复后正式验证完成，修复前负结果保留
 
 获准的一次修复后 V28 正式运行在990个 cells、p6/h7.5、80个 DtN 通道、MPI1/thread1下完成126步；worker exit0，独立显式真残差 `9.283164917015627e-7`，低于 `1e-6`，分类 `DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED`。同 R2 离散场的 full FE `L2/scaled-curl` 相对差为 `2.38e-14/8.92e-14`，80通道、模态功率、E/H/curl 导出均通过。workflow monotonic/conservative realtime budget=`2936.076242/3203.447880 s`，R2相同口径=`3114.283620/3407.555410 s`；此单次观察分别短 `5.72%/5.99%`，不能单独证明因果加速。R2 保留为本轮比较分母；ordinary default 不变。

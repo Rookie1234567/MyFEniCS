@@ -1,0 +1,44 @@
+{
+  "schema": "task039extra.v29.refinement-policy-evidence.v1",
+  "status": "FORMAL_POLICY_PATH_NOT_TRIGGERED",
+  "policy": "coarse_refinement_exhaustion_policy=continue_outer_best_finite",
+  "plain_language": "粗层解是外层迭代每一步的近似预条件结果。最多两次完整修正后若仍有限但超出粗层目标，就返回已验算的最佳有限状态并继续外层；这不放宽最终全场残差门槛。",
+  "formal_run": {
+    "iterations": 126,
+    "logical_units": 262,
+    "nonzero_logical_units": 262,
+    "coarse_target_met_all": true,
+    "coarse_unmet_continued_count": 0,
+    "extra_repairs": 5,
+    "returned_rho_max": 8.555614417203139e-11,
+    "returned_rho_p50": 1.6415728321137422e-12,
+    "returned_rho_p90": 2.079765667477623e-11,
+    "returned_rho_p99": 5.115851692110368e-11,
+    "interpretation": "formal case did not exercise the soft-return continuation branch; that branch is covered only by its small fixtures"
+  },
+  "a4_and_factor_counts": {
+    "a4_full_action_implementation": "fused_sum_factorized_partial_assembly_full_A4",
+    "independent_oracle_identity": "native_ffcx_full_A4_same_p4_forms_and_dtn",
+    "a4_full_action_count": 267,
+    "actual_mat_solve_count": 267,
+    "physical_f4_calls": 267,
+    "logical_units": 262,
+    "check_bal_h": 4,
+    "total_bal_h": 131,
+    "h6_apply_count": 131,
+    "raw_boundary_records": 131,
+    "phase_counts": {
+      "setup": {"logical_units": 2, "physical_f4_calls": 2, "a4_actions": 2, "mat_solve": 2, "extra_repairs": 0},
+      "iteration": {"logical_units": 252, "physical_f4_calls": 253, "a4_actions": 253, "mat_solve": 253, "extra_repairs": 1},
+      "check": {"logical_units": 8, "physical_f4_calls": 12, "a4_actions": 12, "mat_solve": 12, "extra_repairs": 4}
+    },
+    "best_snapshot_peak_local_bytes": 9674240,
+    "selected_evidence_copy_local_bytes": 0
+  },
+  "verification": {
+    "dynamic_checker_status": "DYNAMIC_PASS",
+    "gate_failures": [],
+    "dynamic_checker_sha256": "9a5dcae609dc87fe4ec05cfef18988f4bb0f93dc38285de763373ba1683b0bd7",
+    "dynamic_checker_path": "results/euv_grazing1_phi0/task39extra_v29_a4_tensor_h6_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260924T125506.302465Z/dynamic_checker_v29.json"
+  }
+}

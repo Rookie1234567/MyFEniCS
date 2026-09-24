@@ -1,3 +1,13 @@
+# Task39extra 当前模型登记：Review V27 / V29 A4、p6 tensor、H6
+
+| profile | 模型与实测 | 当前资格/用途 |
+|---|---|---|
+| `physical_p6_trace_a4_tensor_h6_v29` | original p6/h7.5、p4、990 cells、80 modes、MPI1/thread1；126步；独立 final true residual `9.283162362107749e-7`；workflow monotonic/realtime=`2422.426/2643.635 s`；worker tree RSS/PSS=`7,323,303,936/7,291,101,184 B`；swap0 | `DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED`；P2完整A4与P3 raw tensor资格通过；H6 candidate不采用；V28离线同离散全观测对照通过；不改变ordinary default，不作连续收敛或单次因果加速主张 |
+| V29 H6 attempt01 | H6 candidate adapter缺 `_live_kernel`，monotonic/realtime=`52.606/58.515 s` | 保留真实工程失败成本；不是PDE/数值失败；attempt02修正后等价但较慢，因此不采用 |
+| V29 R1 partial | 部分 p4 factor/p6 setup、A6/H6完成；BAL_H/i112缺失 | 按用户选择保留、不重放；不混入V29 formal结果；缺失raw hash/time不回填 |
+
+每16步对比、完整操作次数、资源边界和artifact身份：[V29 outcome](task039_extra_physical_multilevel/outcomes/a4_tensor_h6_v29.md)、[Response V30](task039_extra_physical_multilevel/response_v30.md)、[compact records](task039_extra_physical_multilevel/outcomes/records/a4_tensor_h6_v29_compact.json)。
+
 # Task39extra 当前模型登记：Review V26 / V28 修复后正式验证通过
 
 | profile | 模型与实测 | 当前资格/用途 |

@@ -1,3 +1,13 @@
+## Review V27 / V29 final closeout (no replay)
+
+| 验证 | 实际结果 | 范围与边界 |
+|---|---|---|
+| source-focused regression | **79 passed, 1 skipped in 29.74 s** | 覆盖 `test_362_partial_assembly.py`、`test_task39extra_v24_p4_repair.py`、`test_task39extra_v25_dynamic_checker.py`、`test_task39extra_v28_profile.py`、`test_task39extra_v29_p6_raw_tensor.py`；唯一 skip 是 `test_362_partial_assembly.py:712` 的显式 tiny MPI2 qualification。 |
+| documentation contracts | **21 passed (<1 s)** | `test_26_documentation_contract.py`、`test_183_development_model_registry_markdown.py`、`test_development_model_registry_contract.py`；覆盖 p4/p6 归属、setup峰值口径、CPU/wall-time unknown 及 V29 selective manifest 的最终本地复核。 |
+| JSON parse / `git diff --check` | **PASS / PASS** | 7份本轮 compact/component/checker/decision/selection/refinement/run-index JSON均为对象；所有变更通过 whitespace/error 检查。 |
+| formal PDE / R1 | **1 formal V29 run / R1 not replayed** | 用户选择保留 R1 部分证据并停止重跑；本轮为文档和记录收口，没有额外数值运行。 |
+| full repository pytest / Ruff / CI / MPI2/4 | **not_run / not_run / not_claimed / not_run** | 仅报告以上本地 targeted suites。 |
+
 ## Review V26 / V28：修复后正式验证追加
 
 修复后按明确授权完成一场正式 V28 运行：126步、独立最终显式真残差 `9.283164917015627e-7`、dynamic checker `DYNAMIC_PASS`。现成离线全 FE 指标 `L2/scaled-curl=2.38e-14/8.92e-14`，80模态功率、通道和 E/H/curl 导出检查通过。旧 V24 `old_b_regression` 返回 `PARTIAL_PASS_POINT_SAMPLES_AND_MODAL_ONLY`，原因是它还查找本次不适用的 V24 专用 metric/watchdog 文件；不改写这个 raw 状态，完整 V28 FE PASS 由独立报告提供。Checker 输出、哈希和细节见 [post-repair compact](records/fused_operator_speed_v28_post_repair_compact.json)。最终文档合同测试 `21 passed in 0.09 s`，四份权威 JSON 解析与 `git diff --check` 通过。本轮只用现成工具做离线证据核验；未运行组件试验或第二场 PDE。

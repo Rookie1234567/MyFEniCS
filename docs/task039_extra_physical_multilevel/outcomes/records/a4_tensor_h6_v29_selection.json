@@ -1,0 +1,30 @@
+{
+  "schema": "task039extra.v29.selection.v1",
+  "profile": "physical_p6_trace_a4_tensor_h6_v29",
+  "input": "input/task39extra/v29_a4_tensor_h6_original_h7p5.dat",
+  "source_sha": "780f58918b0e5a9868cd2ea3de26d451bc6b5d86",
+  "input_sha256": "977111a9a65693d90b3c8fb874f738d8ef8e5d3c314ea3b318f4dfc978ae24b5",
+  "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+  "selection": {
+    "P1_finite_best_state_continue_outer": "adopted; formal coarse-target-unmet continuation count is zero, fixture-only branch evidence",
+    "P2_fused_full_A4_verification": "adopted; every original A4 verification remains; no global p4 matrix/factor added",
+    "P3_p6_raw_tensor_local_matrix_generation": "adopted; 12/12 raw classes qualified; p4 solve/factor inputs unchanged",
+    "P4_H6_stacked_real_imag_transform": "not adopted; exact output but median apply 1.69% slower",
+    "ordinary_default": "unchanged",
+    "new_pde_after_v29": "not_run"
+  },
+  "selective_merge_groups": {
+    "production_numerical_core": {
+      "candidate_changes": ["bounded finite coarse-return policy", "full-A4 action implementation", "p6 raw local tensor generation"],
+      "numerical_behavior": "P1 changes only the soft coarse-return failure handling; P2/P3 preserve mathematical operators within measured limits",
+      "dependencies": ["src/solvers/physical_interface_balanced.py", "src/solvers/fullspace_n1e_sum_factor.py", "src/solvers/fullspace_partial_assembly.py", "src/solvers/hcurl_assembly_time_condensation.py", "src/solvers/task39extra_p6_raw_tensor.py"],
+      "fresh_pde_evidence": "one V29 original p6/h7.5 formal run, authority-limited discrete pass",
+      "recommendation": "review before any promotion; do not change ordinary default in this task"
+    },
+    "reusable_runner_watchdog": {"numerical_behavior_changed": false, "recommendation": "retain only task-contract infrastructure edits after review"},
+    "checker_benchmark": {"files": ["benchmarks/task39extra_v25_dynamic_checker.py", "benchmarks/run_task39extra_v29_a4_action_pair.py", "benchmarks/run_task39extra_v29_p6_tensor_pair.py", "benchmarks/run_task39extra_v29_h6_transform_pair.py"], "recommendation": "checker/tests and reproducible component harnesses are separable from production core"},
+    "compact_evidence_docs": {"files": ["docs/task039_extra_physical_multilevel/response_v30.md", "docs/task039_extra_physical_multilevel/outcomes/a4_tensor_h6_v29.md", "docs/task039_extra_physical_multilevel/outcomes/records/a4_tensor_h6_v29_*.json"], "recommendation": "merge with reviewed evidence and hashes"},
+    "research_only": {"items": ["H6 stacked real/imag candidate", "component-only engineering measurements"], "recommendation": "do not promote unadopted H6 candidate"},
+    "do_not_merge": {"items": ["ignored full fields, matrices, factors, caches, timelines and raw logs", "R1 partial run as a formal pass"], "recommendation": "keep large artifacts ignored and preserve partial/negative classifications"}
+  }
+}

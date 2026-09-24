@@ -1,0 +1,220 @@
+{
+  "schema": "task039extra.v29.component-results.v1",
+  "source_sha": "780f58918b0e5a9868cd2ea3de26d451bc6b5d86",
+  "components": {
+    "P2_A4_full_action": {
+      "status": "QUALIFIED_ADOPTED_FOR_V29",
+      "packet_count": 12,
+      "repeats_per_saved_state": 3,
+      "samples_per_implementation": 36,
+      "native_median_wall_seconds": 1.6624406429909868,
+      "candidate_median_wall_seconds": 0.589996335998876,
+      "candidate_over_native": 0.35489768521141407,
+      "observed_speedup": 2.8177135035532728,
+      "max_full_action_relative_difference": 3.1771568889793947e-12,
+      "max_residual_difference_over_original_rhs": 3.1771568889806706e-12,
+      "qualification_limits": {"action": 1e-10, "residual_difference": 1e-11},
+      "global_p4_matrix_or_factor_built": false,
+      "artifact": "results/euv_grazing1_phi0/task39extra_v29_a4_action_pair_v1/a4_action_pair.json",
+      "artifact_sha256": "0616fbf3b66d8f224ecccd3d0ef98a6396d2c4ca4681518f4aadf5d6896aec10"
+    },
+    "P3_p6_raw_tensor": {
+      "status": "QUALIFIED_ADOPTED_FOR_V29",
+      "raw_classes": 12,
+      "cells": 990,
+      "native_all_classes_seconds": 230.546598760935,
+      "candidate_all_classes_seconds": 19.55763549209223,
+      "candidate_over_native": 0.0848315941211195,
+      "observed_speedup": 11.788,
+      "compile_seconds": 0.0053285660105757415,
+      "mesh_build_seconds": 2.921895098988898,
+      "paired_elapsed_seconds": 254.81686504700338,
+      "candidate_workspace_upper_bytes": 40600224,
+      "process_peak_rss_bytes": 350306304,
+      "maximum_errors": {
+        "matrix": 1.9695052192371877e-15,
+        "action": 2.0854448304731246e-15,
+        "schur": 1.2254858255252715e-14,
+        "recovery_map": 1.7147774651580664e-12,
+        "recovery_solution": 5.836044711148638e-13,
+        "nonzero_rhs_closure": 2.243193735169826e-12
+      },
+      "global_p4_matrix_or_factor_built": false,
+      "official_pde_in_component_trial": false,
+      "artifact": "results/euv_grazing1_phi0/task39extra_v29_p6_tensor_pair_attempt03/p6_tensor_pair.json",
+      "artifact_sha256": "bb9200dc378441e16e4d8355ce780e7813a040b930502375877b552f4c5e9ddc"
+    },
+    "P4_H6_transform": {
+      "status": "QUALIFIED_OPERATOR_EQUIVALENCE_NOT_ADOPTED",
+      "baseline": "two real GEMMs for real and imaginary parts",
+      "candidate": "stack real then imaginary into one bounded real GEMM",
+      "output_difference": 0.0,
+      "baseline_i120_median_apply_seconds": 3.8930954659881536,
+      "candidate_i120_median_apply_seconds": 3.9588529049942736,
+      "candidate_apply_slowdown_percent": 1.6890785129880959,
+      "baseline_setup_seconds": 44.96579104999546,
+      "candidate_setup_seconds": 44.551097288000165,
+      "candidate_setup_reduction_percent": 0.9222427812605738,
+      "decision": "do not adopt; setup delta does not compensate for slower apply",
+      "official_pde_in_component_trial": false,
+      "global_p4_matrix_or_factor_built": false,
+      "attempt01": {
+        "status": "WORKER_FAILED",
+        "error": "module 's1_v28_h6_only_pair' has no attribute '_live_kernel'",
+        "elapsed_monotonic_seconds": 52.60616792700603,
+        "conservative_realtime_seconds": 58.514567886021496,
+        "artifact_sha256": "363da20b6384230a8e13067a8a04c0154c11370825d86cd47520cec018e5d4d1"
+      },
+      "attempt02_artifact": "results/euv_grazing1_phi0/task39extra_v29_h6_transform_pair_20260924_attempt02/h6_transform_pair_result.json",
+      "attempt02_artifact_sha256": "2979d7eb5ba293d9f471d992b3d4cd90e29d7015230b99af6289af13c5a27b98"
+    }
+  },
+  "formal_setup_and_phase_accounting": {
+    "setup_components": {
+      "p4_interface_factor": {
+        "setup_seconds_inclusive": 250.09930594201433,
+        "rows": 84680,
+        "symbolic_seconds": 0.6374958850210533,
+        "numeric_seconds": 216.39411855800427,
+        "MUMPS_INFOG19_allocated_decimal_bytes": 4688000000,
+        "MUMPS_INFOG22_used_decimal_bytes": 4327000000,
+        "ICNTL23_readback_MB": 4687,
+        "scope_note": "backend reported allocated/used bytes, not RSS/PSS; nested within setup",
+        "raw_source_file": "results/euv_grazing1_phi0/task39extra_v29_a4_tensor_h6_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260924T125506.302465Z/physical_dual_condensed_a4_tensor_h6_v29_summary.json",
+        "raw_json_path": ".interface_stack.factor",
+        "raw_source_sha256": "b2b986afd144b17e1c0adc001409c65f2fd282abbcc4076c713354267768a4ce"
+      },
+      "p4_local_condensation_builder": {
+        "unique_raw_classes": 12,
+        "total_build_seconds": 26.588305592973484,
+        "kernel_seconds_max_rank": 23.561351662996458,
+        "local_insert_seconds_max_rank": 0.7473068358958699,
+        "local_schur_seconds_max_rank": 0.3150801299198065,
+        "local_lu_identity_relative_residual_max": 3.931002704109607e-18,
+        "trace_preallocation_seconds": 0.8594134930172004,
+        "raw_tensor_broadcast_seconds_max_rank": 0.000013545039109885693,
+        "final_assembly_seconds": 0.0,
+        "map_build_seconds": "unknown",
+        "local_lu_factor_seconds": "unknown",
+        "temporary_raw_tensor_bytes_max": 17280000,
+        "temporary_oriented_schur_bytes_max": 15335424,
+        "retained_numeric_cache_bytes_max": 24541920,
+        "identity_cache_classes": 26,
+        "identity_cache_bytes_local": 2426112,
+        "numeric_mapping_bytes": 3796800,
+        "raw_source_file": "results/euv_grazing1_phi0/task39extra_v29_a4_tensor_h6_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260924T125506.302465Z/physical_dual_condensed_a4_tensor_h6_v29_summary.json",
+        "raw_json_path": ".interface_stack.condensation",
+        "raw_source_sha256": "b2b986afd144b17e1c0adc001409c65f2fd282abbcc4076c713354267768a4ce"
+      },
+      "p6_local_tensor_schur_builder": {
+        "status": "unconstrained_trace_schur_built_without_full_matrix",
+        "unique_raw_classes": 12,
+        "total_build_seconds": 34.122371820005355,
+        "kernel_seconds_max_rank": 20.289459018968046,
+        "local_schur_seconds_max_rank": 11.551856103091268,
+        "local_tensor_dimension": 882,
+        "temporary_raw_tensor_bytes_max": 149361408,
+        "temporary_oriented_schur_bytes_max": 77635584,
+        "retained_numeric_cache_bytes_max": 325283184,
+        "candidate_workspace_bytes_upper": 40600224,
+        "identity_cache_classes_local": 1,
+        "identity_cache_bytes_local": 1620000,
+        "matrix_materialized": false,
+        "raw_source_file": "results/euv_grazing1_phi0/task39extra_v29_a4_tensor_h6_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260924T125506.302465Z/physical_dual_condensed_a4_tensor_h6_v29_summary.json",
+        "raw_json_path": ".operator_identity.retained_p6.p6_build_audit",
+        "raw_source_sha256": "b2b986afd144b17e1c0adc001409c65f2fd282abbcc4076c713354267768a4ce"
+      },
+      "H6_setup": {
+        "diagonal_seconds": 4.798956676997477,
+        "power10_seconds": 39.08678095601499,
+        "positive_selected_action_seconds": 0.4881926070083864,
+        "B6_shell_seconds": 0.0006707689899485558,
+        "raw_source_file": "results/euv_grazing1_phi0/task39extra_v29_a4_tensor_h6_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260924T125506.302465Z/physical_dual_condensed_a4_tensor_h6_v29_summary.json",
+        "raw_json_path": ".pc.h6_facts",
+        "raw_source_sha256": "b2b986afd144b17e1c0adc001409c65f2fd282abbcc4076c713354267768a4ce"
+      },
+      "whole_setup_interval": {
+        "monotonic_seconds": 533.7549639960052,
+        "conservative_realtime_seconds": 582.442486514,
+        "whole_window_process_tree_rss_pss_peak": "unknown; the four phase=setup samples are early samples, not a reduction over the whole setup window",
+        "phase_setup_labeled_samples": 4,
+        "phase_setup_labeled_rss_peak_bytes": 1041850368,
+        "phase_setup_labeled_pss_peak_bytes": 1009605632
+      }
+    },
+    "operation_buckets": {
+      "A6_live": {"calls": 263, "total_seconds": 517.1558918120281, "mean_seconds": 1.9663722122130347, "volume_seconds": 515.9424551817938, "dtn_seconds": 0.8650257819972467},
+      "H6_apply": {"calls": 131, "total_seconds": 525.0361430749181, "mean_seconds": 4.007909489121512},
+      "P": {"calls": 263, "total_seconds": 77.89519974027644, "mean_seconds": 0.29617946669306633},
+      "PH": {"calls": 269, "total_seconds": 69.32624430407304, "mean_seconds": 0.2577183803125392},
+      "A4_complete_verification": {"calls": 267, "total_seconds": 159.091448716179, "mean_seconds": 0.5958481225325056},
+      "p4_F4": {"calls": 267, "total_seconds": 243.56268202979118, "mean_seconds": 0.912219782883113},
+      "BAL_H_nested_operation_seconds": {"A_structure": 529.8744240887172, "C": 557.4321488557034, "smoother_H6": 525.0361430749181}
+    },
+    "phase_process_tree_samples": [
+      {"phase":"preflight","samples":2,"rss_peak_bytes":430845952,"pss_peak_bytes":397787136,"swap_peak_bytes":0},
+      {"phase":"setup","samples":4,"rss_peak_bytes":1041850368,"pss_peak_bytes":1009605632,"swap_peak_bytes":0},
+      {"phase":"assembly","samples":5,"rss_peak_bytes":1912086528,"pss_peak_bytes":1879872512,"inventory_peak_bytes":1174973030,"workspace_peak_bytes":76405680,"swap_peak_bytes":0},
+      {"phase":"factor","samples":25,"rss_peak_bytes":6945210368,"pss_peak_bytes":6913007616,"inventory_peak_bytes":6508502382,"workspace_peak_bytes":1167956936,"swap_peak_bytes":0},
+      {"phase":"solve","samples":1137,"rss_peak_bytes":7323303936,"pss_peak_bytes":7291101184,"inventory_peak_bytes":6554231494,"workspace_peak_bytes":1167956936,"workspace_live_peak_bytes":1056456352,"swap_peak_bytes":0},
+      {"phase":"evaluation","samples":3,"rss_peak_bytes":7315034112,"pss_peak_bytes":7282828288,"inventory_peak_bytes":6554231494,"swap_peak_bytes":0},
+      {"phase":"cleanup","samples":1,"rss_peak_bytes":7306645504,"pss_peak_bytes":7274439680,"inventory_peak_bytes":6554231494,"swap_peak_bytes":0}
+    ],
+    "resource_file_sha256": "e791a44b49d22898c63f0c04d57ef23ed16b854bd19254a60863f723cb544453",
+    "resource_source_file": "results/euv_grazing1_phi0/task39extra_v29_a4_tensor_h6_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260924T125506.302465Z/v29q4_worker_resources.jsonl",
+    "formal_boundary_cpu_seconds": {
+      "preflight": "unknown",
+      "setup_window": "unknown",
+      "p4_interface_factor": "unknown",
+      "p4_local_condensation": "unknown",
+      "p6_local_tensor_schur_build": "unknown",
+      "H6_setup": "unknown",
+      "assembly": "unknown",
+      "factor": "unknown",
+      "KSP_solve": "unknown",
+      "final_native_residual_check": "unknown",
+      "post_release_residual_check": "unknown",
+      "official_postprocess": "unknown",
+      "cleanup": "unknown"
+    },
+    "cpu_accounting_note": "Per-boundary CPU time is absent from the preserved run/worker timing records; no wall-clock duration was reinterpreted as CPU time.",
+    "unreported_formal_wall_seconds": {
+      "space_constraint_port_and_JIT_preparation": "unknown",
+      "bridge_and_startup_checks": "unknown",
+      "outer_orthogonalization": "unknown"
+    },
+    "unreported_wall_accounting_note": "These substage wall times were not recorded separately; they are not inferred from parent intervals or operation buckets.",
+    "cpu_accounting_source_files": [
+      "results/euv_grazing1_phi0/task39extra_v29_a4_tensor_h6_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260924T125506.302465Z/run_summary.json#workflow_clock_interval",
+      "results/euv_grazing1_phi0/task39extra_v29_a4_tensor_h6_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260924T125506.302465Z/physical_dual_condensed_a4_tensor_h6_v29_summary.json#formal_release_timing"
+    ],
+    "inventory_definition": "sampled solver object inventory and workspace estimate; not RSS/PSS and not an additive memory term",
+    "timing_definition": "component buckets overlap parent lifecycle; do not add them to setup, KSP, or workflow totals"
+  },
+  "preserved_engineering_failures": [
+    {
+      "stage": "P2 A4 saved-sequence serialization",
+      "status": "failed attempt retained as negative engineering evidence",
+      "failure": "serialization failure",
+      "raw_artifact_identity": "unknown in this closeout record",
+      "elapsed_cost_seconds": "unknown; not included in qualified P2 median or formal workflow"
+    },
+    {
+      "stage": "P3 attempt01",
+      "status": "FAILED_OR_UNSUPPORTED",
+      "failure": "NotImplementedError: FFCx analysis integral groups do not match the original form",
+      "artifact": "results/euv_grazing1_phi0/task39extra_v29_p6_tensor_pair_v1/p6_tensor_pair.json.partial",
+      "artifact_sha256": "f58a56bdb4176f54f166d5d746c52c7d6e2d6e414402b26e7a62e7fc31918e50",
+      "elapsed_cost_seconds": "unknown; no elapsed field in preserved partial packet"
+    },
+    {
+      "stage": "P3 attempt02",
+      "status": "FAILED_OR_UNSUPPORTED",
+      "failure": "NotImplementedError: default cell integrals are not qualified",
+      "artifact": "results/euv_grazing1_phi0/task39extra_v29_p6_tensor_pair_attempt02/p6_tensor_pair.json.partial",
+      "artifact_sha256": "84a6338e81d7487285edbd98d251b7b27fb922030afc6b71ceddffde7ab1aaf4",
+      "elapsed_cost_seconds": "unknown; no elapsed field in preserved partial packet"
+    }
+  ],
+  "timing_note": "Component trial clocks are engineering measurements, not extra terms to add to formal setup/KSP/workflow; P3 class times and paired elapsed include nested setup work."
+}

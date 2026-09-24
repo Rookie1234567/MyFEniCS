@@ -1,0 +1,40 @@
+{
+  "schema": "task039extra.v29.checker-evidence.v1",
+  "dynamic_checker": {
+    "status": "DYNAMIC_PASS",
+    "scope": "dynamic accounting and wiring only",
+    "dynamic_passed": true,
+    "gate_failures": [],
+    "sha256": "9a5dcae609dc87fe4ec05cfef18988f4bb0f93dc38285de763373ba1683b0bd7",
+    "path": "results/euv_grazing1_phi0/task39extra_v29_a4_tensor_h6_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260924T125506.302465Z/dynamic_checker_v29.json"
+  },
+  "final_residual": {
+    "worker": 9.283162362107749e-7,
+    "post_release": 9.283162362107749e-7,
+    "limit": 1e-6,
+    "passed": true
+  },
+  "same_discrete_fe": {
+    "status": "PASS",
+    "L2_relative": 1.6170268396896093e-11,
+    "scaled_curl_relative": 1.615508652542779e-11,
+    "limit": 1e-4,
+    "archive_sha256": "ffc42fa4deeee0ccfccab12b0d75fe9d26d40a8396a40f39113c95aff2e17ee1"
+  },
+  "same_coordinate_E_H_and_official_output": {
+    "status": "PASS",
+    "max_sample_relative": {"E_V_per_m": 1.7018307253226757e-11, "H_A_per_m": 1.7001032123722306e-11, "E_t_interface_V_per_m": 7.276798126743536e-12, "H_t_interface_A_per_m": 3.3668973866352804e-10},
+    "ordered_modes": 80,
+    "complex_mode_amplitude_relative": 1.454234602556907e-11,
+    "max_per_mode_power_absolute": 5.947109471549084e-11,
+    "official_totals_absolute": {"R": 5.453359985807538e-12, "T": 4.128052066842969e-13, "A": 5.040412531798211e-12, "A_volume": 8.112177596331094e-12},
+    "same_physical_model_p4_p6_maps": true,
+    "archive_sha256": "d71f16d821638b9ee348698fa5893d55416e701e1bd5ac104863d1e9a6faec31"
+  },
+  "raw_worker_reference_evaluation": {
+    "attempted": false,
+    "status": "MATCHED_REFERENCE_NOT_AVAILABLE",
+    "policy": "preserved unchanged; separate offline comparison above does not rewrite the worker field"
+  },
+  "execution": {"offline_audits_started_pde": false, "built_physical_operator": false, "started_factor": false, "started_ksp": false}
+}

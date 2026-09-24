@@ -6,6 +6,37 @@
     "memory": "B"
   },
   "memory_scope": "sampled simultaneous watchdog process-tree RSS; swap sampled VmSwap",
+  "review_v27_a4_tensor_h6_v29": {
+    "review": "review_report_v27.md",
+    "response": "docs/task039_extra_physical_multilevel/response_v30.md",
+    "profile": "physical_p6_trace_a4_tensor_h6_v29",
+    "raw_root": "results/euv_grazing1_phi0/task39extra_v29_a4_tensor_h6_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260924T125506.302465Z",
+    "source_sha": "780f58918b0e5a9868cd2ea3de26d451bc6b5d86",
+    "input_sha256": "977111a9a65693d90b3c8fb874f738d8ef8e5d3c314ea3b318f4dfc978ae24b5",
+    "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+    "status": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+    "iterations": 126,
+    "final_explicit_true_residual": 9.283162362107749e-7,
+    "full_workflow_monotonic_seconds": 2422.426388672,
+    "full_workflow_conservative_realtime_seconds": 2643.634584208,
+    "pure_ksp_seconds": 1837.17495212,
+    "setup_monotonic_seconds": 533.7549639960052,
+    "process_tree_rss_peak_bytes": 7326449664,
+    "worker_process_tree_pss_peak_bytes": 7291101184,
+    "swap_peak_bytes": 0,
+    "evidence": {
+      "compact": "docs/task039_extra_physical_multilevel/outcomes/records/a4_tensor_h6_v29_compact.json",
+      "checker": "docs/task039_extra_physical_multilevel/outcomes/records/a4_tensor_h6_v29_checker.json",
+      "components": "docs/task039_extra_physical_multilevel/outcomes/records/a4_tensor_h6_v29_components.json",
+      "decision": "docs/task039_extra_physical_multilevel/outcomes/records/a4_tensor_h6_v29_decision.json",
+      "refinement_policy": "docs/task039_extra_physical_multilevel/outcomes/records/a4_tensor_h6_v29_refinement_policy.json",
+      "selection": "docs/task039_extra_physical_multilevel/outcomes/records/a4_tensor_h6_v29_selection.json",
+      "outcome": "docs/task039_extra_physical_multilevel/outcomes/a4_tensor_h6_v29.md"
+    },
+    "r1_partial_replayed": false,
+    "ordinary_default_changed": false,
+    "additional_pde_run": false
+  },
   "review_v26_fused_operator_speed_v28": {
     "review": "review_report_v26.md",
     "response": "docs/task039_extra_physical_multilevel/response_v29.md",
@@ -2929,6 +2960,54 @@
         "qualified_2_thread_formal",
         "qualified_4_thread_formal",
         "C_Z4_notch_h7p5"
+      ]
+    },
+    {
+      "id": "V29_A4_tensor_H6_original_h7p5_formal",
+      "source_sha": "780f58918b0e5a9868cd2ea3de26d451bc6b5d86",
+      "stage": "Q4_ORIGINAL_H7P5",
+      "raw_root": "results/euv_grazing1_phi0/task39extra_v29_a4_tensor_h6_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260924T125506.302465Z",
+      "status": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+      "official_result": true,
+      "profile": "physical_p6_trace_a4_tensor_h6_v29",
+      "input": "input/task39extra/v29_a4_tensor_h6_original_h7p5.dat",
+      "input_sha256": "977111a9a65693d90b3c8fb874f738d8ef8e5d3c314ea3b318f4dfc978ae24b5",
+      "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+      "parent_classification": "COMPLETED",
+      "worker_classification": "Q4_ORIGINAL_AUTHORITY_LIMITED_PASS",
+      "worker_exit_status": 0,
+      "solver": {
+        "iterations": 126,
+        "retained_global_size": 199340,
+        "explicit_relative_residual": 9.283162362107749e-7,
+        "post_release_explicit_relative_residual": 9.283162362107749e-7,
+        "full_workflow_monotonic_seconds": 2422.426388672,
+        "pure_ksp_seconds": 1837.17495212
+      },
+      "resources": {
+        "watchdog_process_tree_rss_peak_bytes": 7326449664,
+        "worker_process_tree_pss_peak_bytes": 7291101184,
+        "swap_peak_bytes": 0,
+        "watchdog_sample_count": 8993,
+        "worker_sample_count": 1176,
+        "watchdog_summary_sha256": "ed01c6b1bc127591534724ed6a087a812c6c979fe44aa1088b934faf45e4688c",
+        "worker_resource_sha256": "e791a44b49d22898c63f0c04d57ef23ed16b854bd19254a60863f723cb544453",
+        "descendants_cleared": true
+      },
+      "evidence": {
+        "run_summary_sha256": "3b9a7ea6bb945478cad7b1319aed174146429f426e5f4f1873d55b70ad54682d",
+        "worker_summary_sha256": "b2b986afd144b17e1c0adc001409c65f2fd282abbcc4076c713354267768a4ce",
+        "dynamic_checker_sha256": "9a5dcae609dc87fe4ec05cfef18988f4bb0f93dc38285de763373ba1683b0bd7",
+        "same_discrete_fe_metrics_sha256": "ffc42fa4deeee0ccfccab12b0d75fe9d26d40a8396a40f39113c95aff2e17ee1",
+        "offline_observable_audit_sha256": "d71f16d821638b9ee348698fa5893d55416e701e1bd5ac104863d1e9a6faec31",
+        "compact": "docs/task039_extra_physical_multilevel/outcomes/records/a4_tensor_h6_v29_compact.json",
+        "response": "docs/task039_extra_physical_multilevel/response_v30.md"
+      },
+      "not_run": [
+        "coarse_target_unmet_formal_branch_trigger",
+        "matched_external_or_continuum_reference",
+        "qualified_MPI2_or_MPI4",
+        "additional_PDE_after_V29"
       ]
     }
   ],

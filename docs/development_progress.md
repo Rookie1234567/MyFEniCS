@@ -1,3 +1,11 @@
+# Task39extra 当前进展：Review V27 / V29 A4、p6 tensor、H6 已收口
+
+V29 original p6/h7.5 正式场在126步通过 authority-limited discrete Gate，真残差`9.283162362107749e-7`。与V28同离散的full FE、同坐标E/H、80复模态及R/T/A/A_volume离线比较均通过。V29完整workflow monotonic/conservative realtime=`2422.426/2643.635 s`，V28 monotonic=`2936.076 s`；setup/KSP也观察到缩短，但单次配对不作因果提速结论。worker树RSS/PSS=`7,323,303,936/7,291,101,184 B`，watchdog树RSS=`7,326,449,664 B`，swap0。
+
+P2完整A4候选约2.818x配对中位速度且作用差`3.18e-12`，P3的12种p6 raw class全数通过、总kernel时间`230.547→19.558 s`；二者按explicit profile采用。H6实虚单GEMM候选输出相同但apply慢1.69%，未采用。正式A4逐项检查未减少：267次full action/MatSolve，262 logical units，5次额外精化；实际粗层超限继续次数为0。用户决定R1部分证据保留、不重跑。普通默认未变；master未合并；下一步等待主控review，不启动更多PDE。
+
+详细入口：[Response V30](task039_extra_physical_multilevel/response_v30.md)、[V29 outcome](task039_extra_physical_multilevel/outcomes/a4_tensor_h6_v29.md)、[compact/checker/decision](task039_extra_physical_multilevel/outcomes/records/)。
+
 # Task39extra 当前进展：Review V26 / V28 修复后正式验证完成
 
 按明确授权完成一场修复后 original p6/h7.5 fused A6 case：126步、独立显式真残差 `9.283164917015627e-7`，分类 `DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED`；80模式功率、同网格全 FE L2/curl、通道和E/H/curl导出检查通过。workflow monotonic/conservative realtime budget=`2936.076242/3203.447880 s`；R2对应=`3114.283620/3407.555410 s`，本次单场同钟观测短 `5.72%/5.99%`，不能单独证明因果收益。R2保留为比较分母；ordinary default不变。
