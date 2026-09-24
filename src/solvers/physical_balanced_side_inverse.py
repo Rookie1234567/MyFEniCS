@@ -505,8 +505,6 @@ class SideBalancedInverse:
 
         if isinstance(steps, bool) or int(steps) not in (0, 1, 2):
             raise ValueError("diagnostic P4 corrections must be 0, 1, or 2")
-        if int(steps) and callback is None:
-            raise ValueError("diagnostic P4 corrections require an observer")
         self._diagnostic_p4_correction_steps = int(steps)
         self._diagnostic_p4_correction_callback = callback
 
@@ -1404,12 +1402,9 @@ class SideBalancedInverse:
                     "timing": p4_timing if self._detailed_timing else None
                 }
                 if correction_steps:
-                    apply_kwargs.update(
-                        {
-                            "diagnostic_correction_steps": correction_steps,
-                            "diagnostic_callback": observe_p4_correction,
-                        }
-                    )
+                    apply_kwargs["diagnostic_correction_steps"] = correction_steps
+                    if self._diagnostic_p4_correction_callback is not None:
+                        apply_kwargs["diagnostic_callback"] = observe_p4_correction
                 if capture_port_values:
                     apply_kwargs["capture_port_values"] = True
                 coarse_solution = self._p4_factor.apply(coarse_rhs, **apply_kwargs)
@@ -1439,12 +1434,9 @@ class SideBalancedInverse:
                 if self._diagnostic_callback is not None:
                     solve_kwargs["diagnostic_audit"] = True
                 if correction_steps:
-                    solve_kwargs.update(
-                        {
-                            "diagnostic_correction_steps": correction_steps,
-                            "diagnostic_callback": observe_p4_correction,
-                        }
-                    )
+                    solve_kwargs["diagnostic_correction_steps"] = correction_steps
+                    if self._diagnostic_p4_correction_callback is not None:
+                        solve_kwargs["diagnostic_callback"] = observe_p4_correction
                 if capture_port_values:
                     solve_kwargs["capture_port_values"] = True
                 self._p4_factor.solve_with_refinement(

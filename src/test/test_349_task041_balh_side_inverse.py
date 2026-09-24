@@ -101,6 +101,7 @@ class _IdentityCondensed:
 class _IdentityTransfer:
     def __init__(self, default_variant: str = "legacy") -> None:
         self.apply_count = 0
+        self.primal_apply_count = 0
         self.destroy_count = 0
         self._execution_variant = default_variant
         self._variant_context_active = False
@@ -162,6 +163,7 @@ class _IdentityTransfer:
         timing: dict[str, float] | None = None,
     ) -> PETSc.Vec:
         self.apply_count += 1
+        self.primal_apply_count += 1
         self._before_apply()
         if timing is not None:
             timing.update(
@@ -190,6 +192,8 @@ class _IdentityP4:
         self.solve_count = 0
         self.destroy_count = 0
         self.size = size
+        self.last_solve: dict[str, object] = {"backsolve_count": 0}
+        self.last_diagnostic_kwargs: dict[str, object] = {}
 
     @staticmethod
     def _copy(source: PETSc.Vec) -> PETSc.Vec:
@@ -208,15 +212,30 @@ class _IdentityP4:
         residual_tolerance: float,
         diagnostic_audit: bool = False,
         timing=None,
+        **diagnostic_kwargs,
     ) -> dict[str, object]:
         del residual_tolerance, diagnostic_audit
+        self.last_diagnostic_kwargs = dict(diagnostic_kwargs)
+        correction_steps = int(diagnostic_kwargs.get("diagnostic_correction_steps", 0))
+        correction_callback = diagnostic_kwargs.get("diagnostic_callback")
         rhs.copy(solution)
-        self.solve_count += 1
+        self.solve_count += 1 + correction_steps
+        self.last_solve = {
+            "backsolve_count": 1 + correction_steps,
+            "refinement_count": correction_steps,
+        }
+        if correction_steps and correction_callback is not None:
+            for step in range(correction_steps + 1):
+                record = {
+                    "diagnostic_step_index": step,
+                    "backsolve_count": step + 1,
+                }
+                correction_callback(record, {"solution": solution, "fe_residual": rhs})
         if timing is not None:
             timing["factor_solve_seconds"] = 1.0e-3
             timing["A4_residual_refinement_seconds"] = 2.0e-3
             timing["physical_action_matrix_mult_seconds"] = 3.0e-4
-        return {"backsolve_count": 1, "relative_residual": 0.0}
+        return dict(self.last_solve, relative_residual=0.0)
 
     def extract_fe_solution(self, solution: PETSc.Vec) -> PETSc.Vec:
         return self._copy(solution)
@@ -226,7 +245,7 @@ class _IdentityP4:
         return {
             "factor_creation_count": 1,
             "factor_destroy_count": int(self.destroy_count > 0),
-            "last_solve": {"backsolve_count": 1},
+            "last_solve": dict(self.last_solve),
             "research_factor": {
                 "solve_count": self.solve_count,
                 "direct_factor_count": int(self.destroy_count == 0),
@@ -248,6 +267,8 @@ class _CellCondensedP4:
         self.last_port_solution = np.empty(0, dtype=np.complex128)
         self.last_timing: dict[str, float | None] = {}
         self.last_physical_rhs_norm: float | None = None
+        self.last_solve: dict[str, object] = {"backsolve_count": 0}
+        self.last_diagnostic_kwargs: dict[str, object] = {}
 
     @staticmethod
     def _copy(source: PETSc.Vec) -> PETSc.Vec:
@@ -260,10 +281,18 @@ class _CellCondensedP4:
         source: PETSc.Vec,
         *,
         timing: dict[str, float] | None = None,
+        **diagnostic_kwargs,
     ) -> PETSc.Vec:
         self.apply_count += 1
-        self.solve_count += 1
+        self.last_diagnostic_kwargs = dict(diagnostic_kwargs)
+        correction_steps = int(diagnostic_kwargs.get("diagnostic_correction_steps", 0))
+        correction_callback = diagnostic_kwargs.get("diagnostic_callback")
+        self.solve_count += 1 + correction_steps
         self.last_physical_rhs_norm = float(source.norm())
+        self.last_solve = {
+            "backsolve_count": 1 + correction_steps,
+            "refinement_count": correction_steps,
+        }
         self.last_timing = {
             "storage_rhs_reduction_seconds": 1.0e-4,
             "factor_backsolve_seconds": 2.0e-4,
@@ -273,16 +302,24 @@ class _CellCondensedP4:
         if timing is not None:
             for name, value in self.last_timing.items():
                 timing[name] = timing.get(name, 0.0) + float(value)
-        return self._copy(source)
+        result = self._copy(source)
+        if correction_callback is not None:
+            for step in range(correction_steps + 1):
+                record = {
+                    "diagnostic_step_index": step,
+                    "backsolve_count": step + 1,
+                }
+                correction_callback(record, {"solution": result, "fe_residual": source})
+        return result
 
     @property
     def diagnostics(self) -> dict[str, object]:
         return {
             "factor_solve_count": self.solve_count,
-            "last_solve": {
-                "backsolve_count": 1,
-                "physical_rhs_norm": self.last_physical_rhs_norm,
-            },
+            "last_solve": dict(
+                self.last_solve,
+                physical_rhs_norm=self.last_physical_rhs_norm,
+            ),
         }
 
     def destroy(self) -> None:
@@ -1193,6 +1230,83 @@ def test_diagnostic_p4_configuration_preserves_default_solver_state():
     finally:
         inverse.destroy()
         owned["operator"].destroy()
+
+
+@pytest.mark.parametrize("backend", ["full", "cell_condensed"])
+@pytest.mark.parametrize(
+    ("correction_steps", "with_observer"),
+    [(0, False), (1, False), (1, True)],
+)
+def test_side_inverse_opt_in_correction_without_observer_uses_one_primal_action(
+    backend: str,
+    correction_steps: int,
+    with_observer: bool,
+) -> None:
+    p4_factor = (
+        _IdentityP4(2) if backend == "full" else _CellCondensedP4(2)
+    )
+    inverse, owned = _build_fixture(
+        p4_factor=p4_factor,
+        p4_inverse_backend=backend,
+        detailed_timing=True,
+    )
+    operator = owned["operator"]
+    transfer = owned["transfer"]
+    source = _new_vector(
+        operator,
+        np.asarray([0.5 + 0.25j, -0.125 + 0.375j]),
+    )
+    source_before = _gather_dense_vector(source)
+    correction_events: list[dict[str, object]] = []
+    result = None
+    try:
+        if correction_steps:
+            observer = (
+                (lambda record, _borrowed: correction_events.append(dict(record)))
+                if with_observer
+                else None
+            )
+            inverse.configure_diagnostic_p4_corrections(
+                correction_steps,
+                observer,
+            )
+
+        result = inverse._apply_q_callback(source)
+
+        expected_kwargs: dict[str, object] = {}
+        if correction_steps:
+            expected_kwargs["diagnostic_correction_steps"] = correction_steps
+            if with_observer:
+                callback = p4_factor.last_diagnostic_kwargs.get(
+                    "diagnostic_callback"
+                )
+                assert callable(callback)
+                expected_kwargs["diagnostic_callback"] = callback
+        assert p4_factor.last_diagnostic_kwargs == expected_kwargs
+        assert p4_factor.solve_count == correction_steps + 1
+        assert inverse._p4_backsolve_count == correction_steps + 1
+        assert inverse._p4_refinement_count == correction_steps
+        assert inverse._p_count == 1
+        assert transfer.primal_apply_count == (
+            1 + correction_steps + 1 if with_observer else 1
+        )
+        np.testing.assert_array_equal(_gather_dense_vector(source), source_before)
+        assert result.norm() > 0.0
+
+        if correction_steps:
+            last_solve = p4_factor.diagnostics["last_solve"]
+            assert last_solve["backsolve_count"] == correction_steps + 1
+        if with_observer:
+            assert [
+                record["p4_audit"]["diagnostic_step_index"]
+                for record in correction_events
+            ] == list(range(correction_steps + 1))
+    finally:
+        if result is not None:
+            result.destroy()
+        source.destroy()
+        inverse.destroy()
+        operator.destroy()
 
 
 def test_side_inverse_opt_in_diagnostic_scope_labels_and_p4_norms():
@@ -2470,6 +2584,66 @@ def test_p4_diagnostic_corrects_small_fe_error_even_when_original_gates_pass(
             ) == pytest.approx(
                 residual_norm / float(np.linalg.norm(fixture["block_rhs"]))
             )
+    finally:
+        if result is not None:
+            result.destroy()
+        _destroy_g2a_p4_fixture(fixture)
+
+
+@pytest.mark.parametrize("backend", ["full", "cell_condensed"])
+def test_p4_correction_without_observer_retains_real_core_a4_history(
+    backend: str,
+) -> None:
+    fixture = _g2a_p4_fixture(
+        backend=backend,
+        perturb_initial_port=True,
+    )
+    p4 = fixture["p4"]
+    rhs = fixture["rhs"]
+    rhs_before = _gather_dense_vector(rhs)
+    port_rhs_before = fixture["port_rhs"].copy()
+    result = None
+    try:
+        if backend == "full":
+            audit = p4.solve_with_refinement(
+                rhs,
+                fixture["solution"],
+                diagnostic_correction_steps=1,
+            )
+        else:
+            result = p4.apply(
+                rhs,
+                port_rhs=fixture["port_rhs"],
+                diagnostic_correction_steps=1,
+            )
+            audit = p4.diagnostics["last_solve"]
+
+        history = audit["diagnostic_correction_history"]
+        assert [entry["diagnostic_step_index"] for entry in history] == [0, 1]
+        assert audit["backsolve_count"] == 2
+        augmented_norm_key = (
+            "augmented_residual_norm" if backend == "full" else "residual_norm"
+        )
+        augmented_relative_key = (
+            "augmented_relative_residual"
+            if backend == "full"
+            else "relative_residual"
+        )
+        for entry in history:
+            assert entry["residual_tolerance"] == pytest.approx(1.0e-10)
+            for key in (
+                "physical_residual_norm",
+                "physical_relative_residual",
+                "augmented_fe_residual_norm",
+                augmented_norm_key,
+                augmented_relative_key,
+            ):
+                assert np.isfinite(entry[key])
+            assert entry["physical_gate_passed"] is True
+        assert history[0]["augmented_gate_passed"] is False
+        assert history[1]["augmented_gate_passed"] is True
+        np.testing.assert_array_equal(_gather_dense_vector(rhs), rhs_before)
+        np.testing.assert_array_equal(fixture["port_rhs"], port_rhs_before)
     finally:
         if result is not None:
             result.destroy()
