@@ -2,7 +2,7 @@
 
 ## Task041 V7 当前模型资格状态
 
-**未资格化。** G1 top-only 诊断有 14 项独立 Q 未过原 `1e-11`；G2 两次 layout admission 失败且新 hash 未持久化；完整 5 nm consumer 未运行。不得登记为通过模型或优化收益。见[Task041 V7 outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/causal_fix_5nm_v7.md)。
+**未资格化。** G1 top-only 诊断有 14 项独立 Q 未过原 `1e-11`；其独立 PC 7/7 通过。G2 layoutfix-r2 的跨运行布局门通过；PC1 冻结 Q1/Q2 的 step0 差分别为 `4.826827545952679e-11`、`5.193718954731701e-11`，step1/2 经最多两次同因子修正后通过原 Q/A4 门。原 service 因 public lifecycle schema 错读以 ExecMainStatus 3 失败；后续只读合同重校验通过，但不改写原失败。完整 5 nm consumer，以及 r2 及新修正策略下的 PC action/side.apply 未运行；并行计时不作性能资格，也不得登记为正式模型 PASS 或优化收益。见[Task041 V7 outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/causal_fix_5nm_v7.md)。
 
 ## 2026-09-23：Task041 Review V6 13.5 nm 与 5 nm 配对
 

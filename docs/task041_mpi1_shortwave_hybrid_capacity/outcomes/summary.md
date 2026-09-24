@@ -1,14 +1,15 @@
 # Task041 outcomes summary
 
-## Task041 V7 当前状态（冻结仓库 HEAD）
+## Task041 V7 当前状态（运行与文档 HEAD 分列）
 
 | 阶段 | 当前结论 |
 |---|---|
 | G1 | 14 项独立 Q 全部未过 `1e-11`；7 项独立 PC 通过 `1e-8`。 |
-| G2 | 两次 setup/layout admission 失败；运行时比较字段未持久化，独立 layout identity 文件 `not_generated`，stage 0/1/2 `not_run`。 |
-| 完整正式 5 nm consumer | `not_started`；V7 未完成。 |
+| G2 | layoutfix-r2 跨运行布局匹配；PC1 的 Q1/Q2 实际执行 0/1/2 修正，step0 Q 超限、step1/2 通过，六步 A4 均通过。 |
+| public/service | 原 r2 service 因 lifecycle schema 错读以 ExecMainStatus 3 失败；真实结果的只读 `_consumer_result` 重校验五项全真，诊断 complete，qualification 仍为 false。 |
+| 完整正式 5 nm consumer | `not_started`；r2 及新修正策略下 PC action、side.apply、Schur、outer/RTA/EH 未运行；G1 原独立 PC 7/7 通过；r2 并行性能 `not_qualified`。 |
 
-见[中心 outcome](causal_fix_5nm_v7.md)和[机器记录](records/task041_v7_causal_fix_5nm.json)。以下历史正文保留。
+Q 差依次为 Q1 `4.826827545952679e-11 → 2.9154557401617235e-14 → 3.0334089133384796e-14`、Q2 `5.193718954731701e-11 → 3.306986700793151e-14 → 1.6691082262359168e-14`；原限值 `1e-11`。A4 physical/augmented 六步的 full/condensed 实值见[中心 outcome](causal_fix_5nm_v7.md)。见[机器记录](records/task041_v7_causal_fix_5nm.json)。以下历史正文保留。
 
 ## 2026-09-23：Review V6 13.5 nm 与 5 nm fixed-eight 收口
 

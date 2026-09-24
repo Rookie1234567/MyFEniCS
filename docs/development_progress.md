@@ -1,8 +1,8 @@
 # 项目开发进度：Task000–Task041
 
-## Task041 V7 当前状态（冻结仓库 HEAD）
+## Task041 V7 当前状态（运行与文档 HEAD 分列）
 
-冻结仓库 HEAD `6d27033e89646692e7f41e779ed65032a26b9967`，尚未用于真实 FE。G1 14 项独立 Q 未过原 `1e-11`；G2 两次 setup/layout admission 失败，运行时比较字段未持久化，独立 layout identity 文件 `not_generated`，修正步骤 `not_run`。完整正式 5 nm consumer 未启动。见[Task041 V7 outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/causal_fix_5nm_v7.md)。以下进度历史保留。
+冻结文档快照 HEAD `6d27033e89646692e7f41e779ed65032a26b9967` 未用于真实 FE；G2 r2 的运行 source 是 `646c9fff0d08894a8dc634694caa32427bd71707`。跨运行布局门匹配，PC1 Q1/Q2 的 0/1/2 修正中 step0 的 Q 差分别 `4.826827545952679e-11`、`5.193718954731701e-11` 超过 `1e-11`，step1/2 的 Q 与六步 A4 门通过。原 service 仍 ExecMainStatus 3（public lifecycle schema 错读）；后续只读重校验及 9 项 targeted contract tests 通过，`qualification_pass=false` 保留诊断资格边界。G1 原独立 PC 7/7 通过；完整 5 nm consumer、r2 及新修正策略下 PC action/side.apply、Schur/outer/RTA/EH 未运行；与邻任务并行，性能 not_qualified。见[Task041 V7 outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/causal_fix_5nm_v7.md)。以下进度历史保留。
 ## 2026-09-23：Task041 Review V6 组件结果
 
 13.5 nm cell-condensed Hybrid 的五项 true residual/物理 Gate 与 H2 数值向量通过；Full3D secondary 未运行，旧 H2 资源合同令总 checker fail。5 nm fixed-eight full→释放→cell-condensed 完成16次响应，8对中6对通过；top formal column 12、493 的 `e_x/e_A` 超过原 `1e-8` 门。cap64 只授权该场；Finalizer 已执行并唯一计账，但状态为 `failed/service_boundary_failure`。完整5 nm consumer、RTA、EH、24h 未运行。详见 [V6 outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/transfer_fix_5nm_24h_v6.md)、[record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v6_transfer_5nm_24h.json)。

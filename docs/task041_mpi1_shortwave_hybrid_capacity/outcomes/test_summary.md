@@ -253,4 +253,4 @@ R2h v1、R2h v2 和 R2g 原 index 均保留；未重跑已绑定测试、FE/MPI�
 
 ## Review V7 进度快照（2026-09-24）
 
-轻量验证与真实计算分开：G2a view-lifetime 相关 serial/MPI2 组件测试通过；G1b4/G1b5 文件与微型协议测试只验证接线/协议。当前布局证据 micro-test 为 1 passed（父 wall 2.318605613982072 s，source commit 6d27033e）；不是 MPI8、5 nm 布局或修正数值资格。V5 ledger 已有 40 entries、总计 30664.492338104035 s，本快照不追加费用。早期失败与受控停止记录保留，汇总见 [V7 outcome](causal_fix_5nm_v7.md)。
+轻量验证与真实计算分开：G2a view-lifetime 相关 serial/MPI2 组件测试通过；G1b4/G1b5 文件与微型协议测试只验证接线/协议。G2b public correction-result contract recheck 为 9 passed/rc0，父 wall `2.000488571 s`；ABI/static 不收费，read-only `_consumer_result` recheck wall `0.006336727 s` 单列。它只验证 public lifecycle contract，不是新数值运行。V5 ledger 为 42 entries、总计 `32511.335930633035 s`，仅追加该 pytest parent wall 一次；r2 原 finalizer charge 未重复。早期失败与受控停止记录保留，汇总见 [V7 outcome](causal_fix_5nm_v7.md)。
