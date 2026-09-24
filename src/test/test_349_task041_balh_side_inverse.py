@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+import time
 from contextlib import contextmanager
 from types import SimpleNamespace
 
@@ -30,6 +32,9 @@ pytestmark = pytest.mark.skipif(
 
 # Native PETSc names the task's DIVERGED_ITS budget result DIVERGED_MAX_IT.
 _DIVERGED_ITS = int(PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT)
+
+_G2A_MATRIX_DIAGNOSTICS_ENV = "TASK041_G2A_MATRIX_DIAGNOSTICS"
+_G2A_MATRIX_SEQUENCE = 0
 
 
 class _ScaleContext:
@@ -339,6 +344,336 @@ class _PhysicalP4Action:
 
     def destroy(self) -> None:
         self.matrix.destroy()
+
+
+class _DensePythonMatrix:
+    def __init__(self, dense: np.ndarray) -> None:
+        self.dense = np.asarray(dense, dtype=np.complex128)
+        self.apply_count = 0
+
+    def mult(
+        self,
+        _matrix: PETSc.Mat,
+        source: PETSc.Vec,
+        target: PETSc.Vec,
+    ) -> None:
+        values = _gather_dense_vector(source)
+        first, last = (int(value) for value in target.getOwnershipRange())
+        target.getArray()[:] = (self.dense @ values)[first:last]
+        target.assemble()
+        self.apply_count += 1
+
+    def destroy(self, _matrix: PETSc.Mat | None = None) -> None:
+        return None
+
+
+class _DenseBlockSolve:
+    def __init__(
+        self,
+        block: np.ndarray,
+        perturb_port: complex,
+        *,
+        perturb_fe: complex = 0.0 + 0.0j,
+        nonfinite_first_fe: bool = False,
+    ) -> None:
+        self.block = np.asarray(block, dtype=np.complex128)
+        self.perturb_port = complex(perturb_port)
+        self.perturb_fe = complex(perturb_fe)
+        self.nonfinite_first_fe = bool(nonfinite_first_fe)
+        self.solve_count = 0
+        self.destroy_count = 0
+        self.last_result: PETSc.Vec | None = None
+        self.last_port_solution = np.zeros(1, dtype=np.complex128)
+        self.last_timing: dict[str, float] = {}
+        self.condensed = SimpleNamespace(
+            active_rows=2,
+            interior_rows=0,
+            appended_rows=1,
+            build_audit={},
+        )
+        self.factor = self
+
+    def _solve(self, rhs: np.ndarray) -> np.ndarray:
+        self.solve_count += 1
+        values = np.linalg.solve(self.block, rhs)
+        if self.solve_count == 1:
+            values[-1] += self.perturb_port
+            values[0] += self.perturb_fe
+            if self.nonfinite_first_fe:
+                values[0] = np.nan + 0.0j
+        return values
+
+    def solve(self, rhs: PETSc.Vec, solution: PETSc.Vec) -> None:
+        values = self._solve(_gather_dense_vector(rhs))
+        first, last = (int(value) for value in solution.getOwnershipRange())
+        solution.getArray()[:] = values[first:last]
+        solution.assemble()
+
+    @staticmethod
+    def _prepare_port_rhs(port_rhs) -> np.ndarray:
+        values = np.asarray(port_rhs, dtype=np.complex128)
+        if values.shape != (1,):
+            raise ValueError("dense block fixture expects one port RHS")
+        return values.copy()
+
+    def apply(
+        self,
+        source: PETSc.Vec,
+        *,
+        port_rhs: np.ndarray | None = None,
+    ) -> PETSc.Vec:
+        values = self._solve(
+            np.concatenate(
+                (
+                    _gather_dense_vector(source),
+                    self._prepare_port_rhs(port_rhs),
+                )
+            )
+        )
+        self.last_port_solution = values[-1:].copy()
+        result = source.duplicate()
+        first, last = (int(value) for value in result.getOwnershipRange())
+        result.getArray()[:] = values[first:last]
+        result.assemble()
+        self.last_result = result
+        self.last_timing = {
+            "storage_rhs_reduction_seconds": 0.0,
+            "factor_backsolve_seconds": 0.0,
+            "solution_recovery_seconds": 0.0,
+            "inner_apply_seconds": 0.0,
+        }
+        return result
+
+    @property
+    def diagnostics(self) -> dict[str, object]:
+        return {
+            "solve_count": self.solve_count,
+            "factor_solve_count": self.solve_count,
+        }
+
+    def destroy(self) -> None:
+        self.destroy_count += 1
+
+
+def _gather_dense_vector(vector: PETSc.Vec) -> np.ndarray:
+    first, _last = (int(value) for value in vector.getOwnershipRange())
+    local = np.array(vector.getArray(readonly=True), dtype=np.complex128, copy=True)
+    result = np.empty(int(vector.getSize()), dtype=np.complex128)
+    for start, values in vector.getComm().tompi4py().allgather((first, local)):
+        result[start : start + values.size] = values
+    return result
+
+
+def _g2a_matrix_diagnostic(
+    metadata: dict[str, int | str] | None,
+    event: str,
+    *,
+    resource: str = "Mat",
+    role: str = "matrix",
+) -> None:
+    if os.environ.get(_G2A_MATRIX_DIAGNOSTICS_ENV) != "1" or metadata is None:
+        return
+    node = os.environ.get("PYTEST_CURRENT_TEST", "<unset>")
+    print(
+        "TASK041_G2A_MATRIX_DIAG "
+        f"event={event} rank={MPI.COMM_WORLD.rank} pid={os.getpid()} "
+        f"node={node!r} matrix_seq={metadata['sequence']} "
+        f"purpose={metadata['purpose']} global_rows={metadata['global_rows']} "
+        f"local_rows={metadata['local_rows']} resource={resource} role={role} "
+        f"monotonic_ns={time.monotonic_ns()}",
+        flush=True,
+    )
+
+
+def _dense_python_matrix(
+    values: np.ndarray,
+    *,
+    base_rows: int,
+    appended_rows: int = 0,
+    purpose: str,
+) -> tuple[PETSc.Mat, _DensePythonMatrix]:
+    global _G2A_MATRIX_SEQUENCE
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    local_base = base_rows // comm.size + int(rank < base_rows % comm.size)
+    local_rows = local_base + (appended_rows if rank == comm.size - 1 else 0)
+    context = _DensePythonMatrix(values)
+    matrix_metadata = None
+    if os.environ.get(_G2A_MATRIX_DIAGNOSTICS_ENV) == "1":
+        _G2A_MATRIX_SEQUENCE += 1
+        matrix_metadata = {
+            "sequence": _G2A_MATRIX_SEQUENCE,
+            "purpose": purpose,
+            "global_rows": int(values.shape[0]),
+            "local_rows": int(local_rows),
+        }
+        context._g2a_matrix_metadata = matrix_metadata
+        _g2a_matrix_diagnostic(matrix_metadata, "createPython.begin")
+    matrix = PETSc.Mat().createPython(
+        size=((local_rows, values.shape[0]), (local_rows, values.shape[1])),
+        context=context,
+        comm=comm,
+    )
+    _g2a_matrix_diagnostic(matrix_metadata, "createPython.end")
+    _g2a_matrix_diagnostic(matrix_metadata, "setUp.begin")
+    matrix.setUp()
+    _g2a_matrix_diagnostic(matrix_metadata, "setUp.end")
+    return matrix, context
+
+
+def _set_dense_vector(vector: PETSc.Vec, values: np.ndarray) -> None:
+    first, last = (int(value) for value in vector.getOwnershipRange())
+    vector.getArray()[:] = np.asarray(values[first:last], dtype=PETSc.ScalarType)
+    vector.assemble()
+
+
+def _g2a_p4_fixture(
+    *,
+    backend: str,
+    zero_rhs: bool = False,
+    perturb_initial_port: bool = True,
+    perturb_initial_fe: complex = 0.0 + 0.0j,
+    nonfinite_first_fe: bool = False,
+):
+    A0 = np.asarray(
+        [[3.2 + 0.4j, 0.7 - 0.2j], [-0.3 + 0.5j, 2.4 - 0.6j]],
+        dtype=np.complex128,
+    )
+    traction = np.asarray([[0.6 + 0.3j], [-0.2 + 0.45j]])
+    projection = np.asarray([[0.35 - 0.1j, -0.15 + 0.25j]])
+    block = np.block(
+        [[A0, -traction], [-projection, np.ones((1, 1), dtype=np.complex128)]]
+    )
+    physical_matrix_values = A0 - traction @ projection
+    physical_matrix, physical_context = _dense_python_matrix(
+        physical_matrix_values,
+        base_rows=2,
+        purpose="physical",
+    )
+    first, last = (int(value) for value in physical_matrix.getOwnershipRange())
+    rows = np.arange(first, last, dtype=PETSc.IntType)
+    modes = (
+        SimpleNamespace(
+            projection_rows=rows,
+            projection_values=np.conjugate(projection[0, rows]),
+            denominator=1.0,
+            traction_rows=rows,
+            traction_values=traction[rows, 0],
+        ),
+    )
+    physical_action = SimpleNamespace(
+        matrix=physical_matrix,
+        full_rows=2,
+        modes=modes,
+        action=SimpleNamespace(modes=modes),
+        audit={},
+    )
+    exact_fe = np.asarray([0.3 + 0.1j, -0.2 + 0.4j])
+    port_rhs = np.asarray([0.21 - 0.08j], dtype=np.complex128)
+    if zero_rhs:
+        exact_fe = np.zeros(2, dtype=np.complex128)
+        port_rhs[:] = 0.0
+    exact_port = port_rhs + projection @ exact_fe
+    block_solution = np.concatenate((exact_fe, exact_port))
+    block_rhs = block @ block_solution
+    fe_rhs = _new_vector(physical_matrix, block_rhs[:2])
+    perturb = 0.08 - 0.05j if perturb_initial_port else 0.0 + 0.0j
+    dense_options = {
+        "perturb_fe": perturb_initial_fe,
+        "nonfinite_first_fe": nonfinite_first_fe,
+    }
+    factor_matrix, factor_context = _dense_python_matrix(
+        block,
+        base_rows=2,
+        appended_rows=1,
+        purpose="augmented",
+    )
+    factor_matrix_metadata = getattr(factor_context, "_g2a_matrix_metadata", None)
+    if backend == "full":
+        factor = _DenseBlockSolve(block, perturb, **dense_options)
+        p4 = P4ExactFactor(
+            physical_action=physical_action,
+            matrix=factor_matrix,
+            factor=factor,
+            factor_events=["dense-nonhermitian-test"],
+            owns_physical_action=False,
+        )
+        rhs = p4.create_rhs(fe_rhs)
+        _set_dense_vector(rhs, block_rhs)
+        solution = rhs.duplicate()
+        solution.set(0.0)
+        inverse = factor
+    elif backend == "cell_condensed":
+        _g2a_matrix_diagnostic(factor_matrix_metadata, "destroy.begin", role="temporary_augmented")
+        factor_matrix.destroy()
+        _g2a_matrix_diagnostic(factor_matrix_metadata, "destroy.end", role="temporary_augmented")
+        inverse = _DenseBlockSolve(block, perturb, **dense_options)
+        p4 = P4CondensedExactFactor(
+            physical_action=physical_action,
+            inverse=inverse,
+            factor_events=["dense-nonhermitian-test"],
+            owns_physical_action=False,
+        )
+        rhs = fe_rhs
+        solution = None
+    else:
+        raise ValueError("backend must be full or cell_condensed")
+    return {
+        "backend": backend,
+        "p4": p4,
+        "inverse": inverse,
+        "rhs": rhs,
+        "fe_rhs": fe_rhs,
+        "solution": solution,
+        "block": block,
+        "block_rhs": block_rhs,
+        "exact_solution": block_solution,
+        "traction": traction[:, 0].copy(),
+        "port_rhs": port_rhs.copy(),
+        "physical_context": physical_context,
+        "physical_matrix": physical_matrix,
+        "factor_matrix": factor_matrix if backend == "full" else None,
+        "factor_matrix_metadata": factor_matrix_metadata,
+    }
+
+
+def _g2a_destroy_vec(
+    vector: PETSc.Vec,
+    metadata: dict[str, int | str] | None,
+    role: str,
+) -> None:
+    _g2a_matrix_diagnostic(metadata, "destroy.begin", resource="Vec", role=role)
+    vector.destroy()
+    _g2a_matrix_diagnostic(metadata, "destroy.end", resource="Vec", role=role)
+
+
+def _destroy_g2a_p4_fixture(fixture: dict[str, object]) -> None:
+    solution = fixture["solution"]
+    factor_metadata = fixture.get("factor_matrix_metadata")
+    physical_context = fixture["physical_context"]
+    physical_metadata = getattr(physical_context, "_g2a_matrix_metadata", None)
+    rhs_metadata = factor_metadata if fixture["backend"] == "full" else physical_metadata
+    if solution is not None:
+        _g2a_destroy_vec(solution, factor_metadata, "full_solution")
+    rhs = fixture["rhs"]
+    fe_rhs = fixture["fe_rhs"]
+    _g2a_destroy_vec(rhs, rhs_metadata, "rhs")
+    if fe_rhs is not rhs:
+        _g2a_destroy_vec(fe_rhs, physical_metadata, "fe_rhs")
+    _g2a_matrix_diagnostic(
+        factor_metadata,
+        "p4.destroy.begin",
+        role="p4_owned_augmented_mat" if fixture["backend"] == "full" else "p4_inverse",
+    )
+    fixture["p4"].destroy()
+    _g2a_matrix_diagnostic(
+        factor_metadata,
+        "p4.destroy.end",
+        role="p4_owned_augmented_mat" if fixture["backend"] == "full" else "p4_inverse",
+    )
+    _g2a_matrix_diagnostic(physical_metadata, "destroy.begin", role="physical_action_mat")
+    fixture["physical_matrix"].destroy()
+    _g2a_matrix_diagnostic(physical_metadata, "destroy.end", role="physical_action_mat")
 
 
 class _TimingCondensedInverse:
@@ -1875,6 +2210,411 @@ def test_p4_physical_gate_audit_uses_each_real_vec_rhs() -> None:
         augmented_rhs3.destroy()
         solution3.destroy()
         p4.destroy()
+
+
+@pytest.mark.parametrize("backend", ["full", "cell_condensed"])
+@pytest.mark.parametrize("correction_steps", [0, 1, 2])
+def test_p4_opt_in_corrections_match_nonhermitian_augmented_block(
+    backend: str,
+    correction_steps: int,
+) -> None:
+    fixture = _g2a_p4_fixture(
+        backend=backend,
+        perturb_initial_port=correction_steps > 0,
+    )
+    p4 = fixture["p4"]
+    rhs = fixture["rhs"]
+    rhs_before = _gather_dense_vector(rhs)
+    port_rhs = fixture["port_rhs"]
+    port_rhs_before = port_rhs.copy()
+    events: list[dict[str, object]] = []
+    block = fixture["block"]
+    block_rhs = fixture["block_rhs"]
+    assert not np.allclose(block, block.conj().T)
+    assert np.any(port_rhs != 0.0)
+
+    def observe(record, borrowed) -> None:
+        if backend == "full":
+            block_solution = _gather_dense_vector(borrowed["solution"])
+        else:
+            fe_solution = _gather_dense_vector(borrowed["solution"])
+            block_solution = np.concatenate(
+                (fe_solution, np.asarray(borrowed["port_solution"]))
+            )
+        block_residual = block_rhs - block @ block_solution
+        event = {
+            "record": dict(record),
+            "fe_residual": _gather_dense_vector(borrowed["fe_residual"]),
+            "port_residual": np.array(
+                borrowed["port_residual"], dtype=np.complex128, copy=True
+            ),
+            "block_residual": block_residual,
+            "block_norm": float(np.linalg.norm(block_residual)),
+        }
+        if backend == "full":
+            event["effective_physical_residual"] = _gather_dense_vector(
+                borrowed["effective_physical_residual"]
+            )
+        events.append(event)
+
+    result = None
+    try:
+        if backend == "full":
+            audit = p4.solve_with_refinement(
+                rhs,
+                fixture["solution"],
+                residual_tolerance=1.0e-12,
+                diagnostic_correction_steps=correction_steps,
+                diagnostic_callback=observe,
+            )
+            block_solution = _gather_dense_vector(fixture["solution"])
+            solve_count = fixture["inverse"].solve_count
+        else:
+            result = p4.apply(
+                rhs,
+                port_rhs=port_rhs,
+                diagnostic_correction_steps=correction_steps,
+                diagnostic_callback=observe,
+            )
+            block_solution = np.concatenate(
+                (_gather_dense_vector(result), p4.last_port_solution)
+            )
+            audit = p4.diagnostics["last_solve"]
+            solve_count = fixture["inverse"].solve_count
+
+        assert np.allclose(
+            block_solution,
+            fixture["exact_solution"],
+            rtol=0.0,
+            atol=1.0e-11,
+        )
+        assert solve_count == correction_steps + 1
+        assert fixture["physical_context"].apply_count == correction_steps + 1
+        assert len(events) == correction_steps + 1
+        assert MPI.COMM_WORLD.allgather(len(events)) == [
+            correction_steps + 1
+        ] * MPI.COMM_WORLD.size
+        assert events[0]["record"]["physical_gate_passed"] is True
+        assert events[0]["record"]["augmented_gate_passed"] is (
+            correction_steps == 0
+        )
+        assert events[-1]["record"]["status"] == "passed"
+        for event in events:
+            np.testing.assert_allclose(
+                event["fe_residual"],
+                event["block_residual"][:2],
+                rtol=1.0e-12,
+                atol=1.0e-13,
+            )
+            np.testing.assert_allclose(
+                event["port_residual"],
+                event["block_residual"][2:],
+                rtol=1.0e-12,
+                atol=1.0e-13,
+            )
+            assert event["record"].get(
+                "augmented_residual_norm", event["record"].get("residual_norm")
+            ) == pytest.approx(event["block_norm"])
+            if backend == "full":
+                effective_oracle = event["block_residual"][:2] + (
+                    fixture["traction"] * event["block_residual"][2]
+                )
+                effective_norm = float(np.linalg.norm(effective_oracle))
+                effective_rhs = (
+                    block_rhs[:2] + fixture["traction"] * port_rhs[0]
+                )
+                effective_rhs_norm = float(np.linalg.norm(effective_rhs))
+                np.testing.assert_allclose(
+                    event["effective_physical_residual"],
+                    effective_oracle,
+                    rtol=1.0e-12,
+                    atol=1.0e-13,
+                )
+                assert event["record"]["residual_norm"] == pytest.approx(
+                    effective_norm
+                )
+                assert event["record"]["relative_residual"] == pytest.approx(
+                    effective_norm / effective_rhs_norm
+                )
+                assert event["record"]["rhs_norm"] == pytest.approx(
+                    effective_rhs_norm
+                )
+                assert event["record"]["bare_physical_relative_residual"] != pytest.approx(
+                    event["record"]["relative_residual"]
+                )
+        assert audit["backsolve_count"] == correction_steps + 1
+        assert len(audit["diagnostic_correction_history"]) == correction_steps + 1
+        np.testing.assert_array_equal(_gather_dense_vector(rhs), rhs_before)
+        np.testing.assert_array_equal(port_rhs, port_rhs_before)
+    finally:
+        if result is not None:
+            result.destroy()
+        _destroy_g2a_p4_fixture(fixture)
+
+
+@pytest.mark.parametrize("backend", ["full", "cell_condensed"])
+def test_p4_diagnostic_corrects_small_fe_error_even_when_original_gates_pass(
+    backend: str,
+) -> None:
+    fixture = _g2a_p4_fixture(
+        backend=backend,
+        perturb_initial_port=False,
+        perturb_initial_fe=2.0e-12,
+    )
+    p4 = fixture["p4"]
+    records: list[dict[str, object]] = []
+    solution_errors: list[float] = []
+    dense_residuals: list[np.ndarray] = []
+
+    def observe(record, borrowed) -> None:
+        if backend == "full":
+            block_solution = _gather_dense_vector(borrowed["solution"])
+        else:
+            block_solution = np.concatenate(
+                (
+                    _gather_dense_vector(borrowed["solution"]),
+                    np.asarray(borrowed["port_solution"]),
+                )
+            )
+        residual = fixture["block_rhs"] - fixture["block"] @ block_solution
+        records.append(dict(record))
+        dense_residuals.append(residual)
+        solution_errors.append(
+            float(np.linalg.norm(block_solution - fixture["exact_solution"]))
+        )
+
+    result = None
+    try:
+        if backend == "full":
+            audit = p4.solve_with_refinement(
+                fixture["rhs"],
+                fixture["solution"],
+                residual_tolerance=1.0e-10,
+                diagnostic_correction_steps=1,
+                diagnostic_callback=observe,
+            )
+        else:
+            result = p4.apply(
+                fixture["rhs"],
+                port_rhs=fixture["port_rhs"],
+                diagnostic_correction_steps=1,
+                diagnostic_callback=observe,
+            )
+            audit = p4.diagnostics["last_solve"]
+
+        assert len(records) == 2
+        assert records[0]["physical_gate_passed"] is True
+        assert records[0]["augmented_gate_passed"] is True
+        assert records[0]["diagnostic_correction_limit"] == 1
+        assert audit["backsolve_count"] == 2
+        assert fixture["inverse"].solve_count == 2
+        assert solution_errors[0] > 0.0
+        assert solution_errors[1] < solution_errors[0] * 1.0e-4
+        assert audit["status"] == "passed"
+        for record, residual in zip(records, dense_residuals, strict=True):
+            residual_norm = float(np.linalg.norm(residual))
+            assert record.get(
+                "augmented_residual_norm", record.get("residual_norm")
+            ) == pytest.approx(residual_norm)
+            assert record.get(
+                "augmented_relative_residual", record.get("relative_residual")
+            ) == pytest.approx(
+                residual_norm / float(np.linalg.norm(fixture["block_rhs"]))
+            )
+    finally:
+        if result is not None:
+            result.destroy()
+        _destroy_g2a_p4_fixture(fixture)
+
+
+@pytest.mark.parametrize("backend", ["full", "cell_condensed"])
+def test_p4_diagnostic_zero_rhs_keeps_absolute_residual_semantics(
+    backend: str,
+) -> None:
+    fixture = _g2a_p4_fixture(backend=backend, zero_rhs=True)
+    p4 = fixture["p4"]
+    records: list[dict[str, object]] = []
+    result = None
+    try:
+        if backend == "full":
+            audit = p4.solve_with_refinement(
+                fixture["rhs"],
+                fixture["solution"],
+                residual_tolerance=1.0e-12,
+                diagnostic_correction_steps=1,
+                diagnostic_callback=lambda record, _borrowed: records.append(
+                    dict(record)
+                ),
+            )
+        else:
+            result = p4.apply(
+                fixture["rhs"],
+                port_rhs=fixture["port_rhs"],
+                diagnostic_correction_steps=1,
+                diagnostic_callback=lambda record, _borrowed: records.append(
+                    dict(record)
+                ),
+            )
+            audit = p4.diagnostics["last_solve"]
+        first = records[0]
+        if backend == "full":
+            assert first["augmented_rhs_norm"] == 0.0
+            assert first["augmented_relative_residual"] == pytest.approx(
+                first["augmented_residual_norm"]
+            )
+            assert first["physical_rhs_norm"] == 0.0
+            assert first["physical_relative_residual"] == pytest.approx(
+                first["physical_residual_norm"]
+            )
+        else:
+            assert first["augmented_rhs_norm"] == 0.0
+            assert first["relative_residual"] == pytest.approx(
+                first["residual_norm"]
+            )
+            assert first["physical_rhs_norm"] == 0.0
+            assert first["physical_relative_residual"] == pytest.approx(
+                first["physical_residual_norm"]
+            )
+        assert audit["status"] == "passed"
+    finally:
+        if result is not None:
+            result.destroy()
+        _destroy_g2a_p4_fixture(fixture)
+
+
+def test_p4_condensed_diagnostic_rejects_nonfinite_before_next_backsolve() -> None:
+    fixture = _g2a_p4_fixture(
+        backend="cell_condensed",
+        perturb_initial_port=False,
+        nonfinite_first_fe=True,
+    )
+    p4 = fixture["p4"]
+    records: list[dict[str, object]] = []
+    try:
+        with pytest.raises(P4PhysicalResidualGateError):
+            p4.apply(
+                fixture["rhs"],
+                port_rhs=fixture["port_rhs"],
+                diagnostic_correction_steps=1,
+                diagnostic_callback=lambda record, _borrowed: records.append(
+                    dict(record)
+                ),
+            )
+        assert len(records) == 1
+        assert records[0]["status"] == "failed_nonfinite_residual"
+        assert fixture["inverse"].solve_count == 1
+        assert p4.diagnostics["last_solve"]["backsolve_count"] == 1
+    finally:
+        _destroy_g2a_p4_fixture(fixture)
+
+
+@pytest.mark.parametrize("backend", ["full", "cell_condensed"])
+def test_p4_default_refinement_path_does_not_enable_diagnostic_callbacks(
+    backend: str,
+) -> None:
+    fixture = _g2a_p4_fixture(backend=backend, zero_rhs=True)
+    p4 = fixture["p4"]
+    result = None
+    try:
+        if backend == "full":
+            audit = p4.solve_with_refinement(fixture["rhs"], fixture["solution"])
+            assert audit["backsolve_count"] == 1
+            assert "augmented_gate_passed" not in audit
+            assert fixture["inverse"].solve_count == 1
+            assert fixture["physical_context"].apply_count == 1
+        else:
+            result = p4.apply(fixture["rhs"], port_rhs=fixture["port_rhs"])
+            audit = p4.diagnostics["last_solve"]
+            assert audit["backsolve_count"] == 2
+            assert "diagnostic_correction_history" not in audit
+            assert fixture["inverse"].solve_count == 2
+            assert fixture["physical_context"].apply_count == 2
+    finally:
+        if result is not None:
+            result.destroy()
+        _destroy_g2a_p4_fixture(fixture)
+
+
+@pytest.mark.parametrize("backend", ["full", "cell_condensed"])
+def test_p4_diagnostic_callback_failure_is_synchronized_and_cleaned(
+    backend: str,
+) -> None:
+    fixture = _g2a_p4_fixture(
+        backend=backend,
+        zero_rhs=True,
+        perturb_initial_port=False,
+    )
+    p4 = fixture["p4"]
+    rhs_before = _gather_dense_vector(fixture["rhs"])
+    port_rhs_before = fixture["port_rhs"].copy()
+    caller_solution = fixture["solution"] if backend == "full" else None
+    caller_rhs = fixture["rhs"]
+    native_refs_before = (
+        {
+            "solution": int(caller_solution.getRefCount()),
+            "rhs": int(caller_rhs.getRefCount()),
+        }
+        if caller_solution is not None
+        else None
+    )
+
+    def fail_on_one_rank(_record, _borrowed) -> None:
+        if MPI.COMM_WORLD.rank == 0:
+            raise ValueError("intentional diagnostic callback failure")
+
+    try:
+        with pytest.raises(
+            RuntimeError,
+            match="callback failed on at least one rank",
+        ) as caught:
+            if backend == "full":
+                p4.solve_with_refinement(
+                    fixture["rhs"],
+                    fixture["solution"],
+                    diagnostic_correction_steps=1,
+                    diagnostic_callback=fail_on_one_rank,
+                )
+            else:
+                p4.apply(
+                    fixture["rhs"],
+                    port_rhs=fixture["port_rhs"],
+                    diagnostic_correction_steps=1,
+                    diagnostic_callback=fail_on_one_rank,
+                )
+        np.testing.assert_array_equal(
+            _gather_dense_vector(fixture["rhs"]), rhs_before
+        )
+        np.testing.assert_array_equal(fixture["port_rhs"], port_rhs_before)
+        assert p4.diagnostics["last_solve"]["error_type"] == "RuntimeError"
+        if backend == "full":
+            assert caller_solution is not None
+            assert caller_solution.getSize() == fixture["block"].shape[0]
+            assert np.isfinite(float(caller_solution.norm()))
+            assert native_refs_before is not None
+            native_refs_after = {
+                "solution": int(caller_solution.getRefCount()),
+                "rhs": int(caller_rhs.getRefCount()),
+            }
+            print(
+                "G2a_view_lifetime_refcounts "
+                f"rank={MPI.COMM_WORLD.rank} pid={os.getpid()} "
+                f"before={native_refs_before} after={native_refs_after}",
+                flush=True,
+            )
+            assert native_refs_after == native_refs_before
+            if MPI.COMM_WORLD.rank == 0:
+                assert isinstance(caught.value.__cause__, ValueError)
+                assert str(caught.value.__cause__) == (
+                    "intentional diagnostic callback failure"
+                )
+            else:
+                assert caught.value.__cause__ is None
+        else:
+            owned_solution = fixture["inverse"].last_result
+            assert owned_solution is not None
+            assert int(owned_solution.handle) == 0
+    finally:
+        _destroy_g2a_p4_fixture(fixture)
 
 
 def test_p4_condensed_timing_accumulates_one_refinement() -> None:

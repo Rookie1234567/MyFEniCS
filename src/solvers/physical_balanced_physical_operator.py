@@ -75,9 +75,13 @@ class P4PhysicalResidualGateError(RuntimeError):
 
     def __init__(self, audit: Mapping[str, Any]) -> None:
         self.audit = dict(audit)
+        relative = self.audit.get(
+            "augmented_relative_residual",
+            self.audit.get("relative_residual"),
+        )
         super().__init__(
             "p4 exact factor physical residual refinement exceeded the fixed "
-            f"tolerance: relative={self.audit.get('relative_residual')!s}, "
+            f"tolerance: relative={relative!s}, "
             f"tolerance={self.audit.get('residual_tolerance')!s}"
         )
 
@@ -99,6 +103,41 @@ def _accumulate_optional_timing(
     for name, value in source.items():
         if value is not None:
             _timing_add(target, name, float(value))
+
+
+def _diagnostic_correction_count(value: int) -> int:
+    if isinstance(value, bool) or not isinstance(value, (int, np.integer)):
+        raise TypeError("diagnostic_correction_steps must be an integer")
+    count = int(value)
+    if count not in (0, 1, 2):
+        raise ValueError("diagnostic_correction_steps must be 0, 1, or 2")
+    return count
+
+
+def _readonly_diagnostic_array(values: np.ndarray) -> np.ndarray:
+    result = np.array(values, dtype=np.complex128, copy=True)
+    result.setflags(write=False)
+    return result
+
+
+def _emit_p4_diagnostic(
+    comm: MPI.Intracomm,
+    callback: Callable[[Mapping[str, Any], Mapping[str, Any]], None] | None,
+    record: Mapping[str, Any],
+    borrowed: Mapping[str, Any],
+) -> None:
+    """Call all-rank observer with read-only, borrowed, short-lived data."""
+
+    if callback is None:
+        return
+    local_error: BaseException | None = None
+    try:
+        callback(dict(record), borrowed)
+    except BaseException as error:  # noqa: BLE001 - synchronize callback failure
+        local_error = error
+    all_succeeded = comm.allreduce(local_error is None, op=MPI.LAND)
+    if not all_succeeded:
+        raise RuntimeError("p4 diagnostic callback failed on at least one rank") from local_error
 
 @dataclass(frozen=True)
 class _QuadratureSpec:
@@ -1156,9 +1195,24 @@ class P4CondensedExactFactor:
         port_rhs: np.ndarray | None = None,
         timing: MutableMapping[str, float] | None = None,
         capture_port_values: bool = False,
+        diagnostic_correction_steps: int = 0,
+        diagnostic_callback: Callable[
+            [Mapping[str, Any], Mapping[str, Any]], None
+        ]
+        | None = None,
     ) -> PETSc.Vec:
-        """Solve full FE storage and replicated appended-port RHS together."""
+        """Solve full FE and port RHS, optionally auditing fixed corrections.
 
+        The observer runs synchronously on every rank. PETSc vectors in its
+        mapping are borrowed and must not be retained, modified, or destroyed.
+        """
+
+        diagnostic_correction_steps = _diagnostic_correction_count(
+            diagnostic_correction_steps
+        )
+        diagnostic_mode = (
+            diagnostic_correction_steps > 0 or diagnostic_callback is not None
+        )
         self._last_solve_audit = {}
         values = self.inverse._prepare_port_rhs(port_rhs)
         solve_count_start = int(self.inverse.solve_count)
@@ -1166,6 +1220,11 @@ class P4CondensedExactFactor:
         solution = None
         keep_solution = False
         history: list[dict[str, Any]] = []
+        correction_history: list[dict[str, Any]] = []
+        correction: PETSc.Vec | None = None
+        correction_seconds: float | None = None
+        correction_norm: float | None = None
+        port_correction: np.ndarray | None = None
         try:
             try:
                 solution = self.inverse.apply(rhs, port_rhs=values)
@@ -1219,26 +1278,109 @@ class P4CondensedExactFactor:
                             ],
                         }
                     )
+                    nonfinite_residual = False
+                    if diagnostic_mode:
+                        nonfinite_residual = not np.isfinite(
+                            audit["physical_relative_residual"]
+                        ) or not np.isfinite(audit["relative_residual"])
+                        if nonfinite_residual:
+                            audit["status"] = "failed_nonfinite_residual"
+                        audit.update(
+                            {
+                                "diagnostic_step_index": int(refinement),
+                                "diagnostic_correction_count": int(refinement),
+                                "diagnostic_correction_limit": int(
+                                    diagnostic_correction_steps
+                                ),
+                                "correction_from_previous_seconds": correction_seconds,
+                                "correction_from_previous_norm": correction_norm,
+                                "factor_solve_seconds_for_state": audit[
+                                    "factor_backsolve_seconds"
+                                ],
+                                "physical_gate_passed": bool(
+                                    audit["physical_gate_passed"]
+                                ),
+                                "augmented_gate_passed": bool(
+                                    audit["augmented_gate_passed"]
+                                ),
+                            }
+                        )
+                        correction_history.append(
+                            {
+                                key: value
+                                for key, value in audit.items()
+                                if isinstance(
+                                    value,
+                                    (bool, int, float, str, type(None)),
+                                )
+                            }
+                        )
+                        audit["diagnostic_correction_history"] = tuple(
+                            correction_history
+                        )
                     history.append(dict(audit))
                     self._last_solve_audit = dict(audit)
-                    if audit["status"] == "passed":
+                    if diagnostic_callback is not None:
+                        _emit_p4_diagnostic(
+                            self.physical_action.matrix.getComm().tompi4py(),
+                            diagnostic_callback,
+                            audit,
+                            {
+                                "solution": solution,
+                                "fe_residual": augmented_residual,
+                                "port_residual": _readonly_diagnostic_array(
+                                    port_residual
+                                ),
+                                "port_solution": _readonly_diagnostic_array(
+                                    port_solution
+                                ),
+                                "port_rhs": _readonly_diagnostic_array(values),
+                                "correction": correction,
+                                "port_correction": (
+                                    None
+                                    if port_correction is None
+                                    else _readonly_diagnostic_array(port_correction)
+                                ),
+                            },
+                        )
+                    if diagnostic_mode:
+                        if nonfinite_residual:
+                            raise P4PhysicalResidualGateError(dict(audit))
+                        if refinement >= diagnostic_correction_steps:
+                            if audit["status"] != "passed":
+                                raise P4PhysicalResidualGateError(dict(audit))
+                            keep_solution = True
+                            return solution
+                    elif audit["status"] == "passed":
                         keep_solution = True
                         return solution
-                    if refinement == 2:
+                    elif refinement == 2:
                         raise P4PhysicalResidualGateError(dict(audit))
-                    correction = None
+                    if correction is not None:
+                        correction.destroy()
+                        correction = None
                     try:
+                        correction_started = (
+                            time.perf_counter() if diagnostic_mode else 0.0
+                        )
                         correction = self.inverse.apply(
                             augmented_residual,
                             port_rhs=port_residual,
                         )
                         solution.axpy(PETSc.ScalarType(1.0), correction)
+                        if diagnostic_mode:
+                            port_correction = self.last_port_solution
+                            correction_norm = float(correction.norm())
+                            correction_seconds = (
+                                time.perf_counter() - correction_started
+                            )
                     finally:
                         _accumulate_optional_timing(
                             timing, self.inverse.last_timing
                         )
-                        if correction is not None:
+                        if correction is not None and not diagnostic_mode:
                             correction.destroy()
+                            correction = None
                     port_solution = port_solution + self.last_port_solution
                     self.inverse.last_port_solution = np.array(
                         port_solution,
@@ -1272,6 +1414,8 @@ class P4CondensedExactFactor:
                 self._last_solve_audit["total_apply_seconds"] = float(
                     time.perf_counter() - total_started
                 )
+            if correction is not None:
+                correction.destroy()
 
     def solve(self, rhs: PETSc.Vec, *, port_rhs: np.ndarray | None = None):
         solution = self.apply(rhs, port_rhs=port_rhs)
@@ -1359,6 +1503,28 @@ class P4ExactFactor:
         rhs.assemble()
         return rhs
 
+    def _create_augmented_residual_rhs(
+        self,
+        fe_residual: PETSc.Vec,
+        port_residual: np.ndarray,
+    ) -> PETSc.Vec:
+        rhs = self.create_rhs(fe_residual)
+        try:
+            first, last = (int(value) for value in rhs.getOwnershipRange())
+            for index, value in enumerate(port_residual):
+                row = self.full_rows + index
+                if first <= row < last:
+                    rhs.setValue(
+                        row,
+                        PETSc.ScalarType(value),
+                        addv=PETSc.InsertMode.INSERT_VALUES,
+                    )
+            rhs.assemble()
+            return rhs
+        except BaseException:
+            rhs.destroy()
+            raise
+
     def create_fe_vector(self) -> PETSc.Vec:
         start, end = self.matrix.getOwnershipRange()
         fe_local = max(0, min(int(end), self.full_rows) - int(start))
@@ -1391,7 +1557,24 @@ class P4ExactFactor:
         timing: MutableMapping[str, float] | None = None,
         diagnostic_audit: bool = False,
         capture_port_values: bool = False,
+        diagnostic_correction_steps: int = 0,
+        diagnostic_callback: Callable[
+            [Mapping[str, Any], Mapping[str, Any]], None
+        ]
+        | None = None,
     ) -> dict[str, Any]:
+        """Solve the augmented system, with opt-in same-factor corrections.
+
+        Observer PETSc vectors are borrowed for the synchronous call only; the
+        callback must not retain, modify, or destroy them.
+        """
+        diagnostic_correction_steps = _diagnostic_correction_count(
+            diagnostic_correction_steps
+        )
+        diagnostic_mode = (
+            diagnostic_correction_steps > 0 or diagnostic_callback is not None
+        )
+        audit_requested = diagnostic_audit or diagnostic_mode
         _require_vector_layout(rhs, self.augmented_rows, "p4 augmented RHS")
         _require_vector_layout(solution, self.augmented_rows, "p4 augmented solution")
         fe_rhs = self.extract_fe_solution(rhs)
@@ -1418,17 +1601,25 @@ class P4ExactFactor:
         physical_output = None
         physical_residual = None
         augmented_fe_residual = None
+        effective_physical_residual = None
+        port_residual: np.ndarray | None = None
         physical_relative = np.inf
         physical_residual_norm = np.inf
+        augmented_relative = np.inf
+        correction_history: list[dict[str, Any]] = []
+        correction_seconds: float | None = None
+        correction_norm: float | None = None
+        last_factor_solve_seconds: float | None = None
         try:
             factor_started = time.perf_counter()
             try:
                 self.factor.solve(rhs, solution)
             finally:
+                last_factor_solve_seconds = time.perf_counter() - factor_started
                 _timing_add(
                     timing,
                     "factor_solve_seconds",
-                    time.perf_counter() - factor_started,
+                    last_factor_solve_seconds,
                 )
             backsolves += 1
             for refinement in range(3):
@@ -1441,6 +1632,9 @@ class P4ExactFactor:
                 if augmented_fe_residual is not None:
                     augmented_fe_residual.destroy()
                     augmented_fe_residual = None
+                if effective_physical_residual is not None:
+                    effective_physical_residual.destroy()
+                    effective_physical_residual = None
                 residual_started = time.perf_counter()
                 try:
                     fe_solution = self.extract_fe_solution(solution)
@@ -1491,31 +1685,41 @@ class P4ExactFactor:
                         "refinement_count": max(backsolves - 1, 0),
                         "same_factor_refinement": backsolves > 1,
                     }
-                    if diagnostic_audit:
+                    if audit_requested:
                         row_start, row_end = (
                             int(value)
                             for value in solution.getOwnershipRange()
                         )
-                        local_solution = np.asarray(
-                            solution.getArray(readonly=True),
-                            dtype=np.complex128,
-                        )
-                        local_rhs = np.asarray(
-                            rhs.getArray(readonly=True),
-                            dtype=np.complex128,
-                        )
-                        local_tail = np.zeros(
-                            (2, self.n_aux), dtype=np.complex128
-                        )
-                        for index in range(self.n_aux):
-                            row = self.full_rows + index
-                            if row_start <= row < row_end:
-                                local_tail[0, index] = local_solution[
-                                    row - row_start
-                                ]
-                                local_tail[1, index] = local_rhs[
-                                    row - row_start
-                                ]
+                        local_solution = None
+                        local_rhs = None
+                        try:
+                            local_solution = np.asarray(
+                                solution.getArray(readonly=True),
+                                dtype=np.complex128,
+                            )
+                            local_rhs = np.asarray(
+                                rhs.getArray(readonly=True),
+                                dtype=np.complex128,
+                            )
+                            local_tail = np.zeros(
+                                (2, self.n_aux), dtype=np.complex128
+                            )
+                            for index in range(self.n_aux):
+                                row = self.full_rows + index
+                                if row_start <= row < row_end:
+                                    local_tail[0, index] = local_solution[
+                                        row - row_start
+                                    ]
+                                    local_tail[1, index] = local_rhs[
+                                        row - row_start
+                                    ]
+                        finally:
+                            # These are PETSc-backed NumPy views. Release them
+                            # before collectives and the diagnostic observer.
+                            if local_solution is not None:
+                                del local_solution
+                            if local_rhs is not None:
+                                del local_rhs
                         port_values = np.empty_like(local_tail)
                         self.matrix.getComm().tompi4py().Allreduce(
                             local_tail,
@@ -1580,6 +1784,62 @@ class P4ExactFactor:
                                 ),
                             }
                         )
+                        if diagnostic_mode:
+                            effective_rhs = fe_rhs.duplicate()
+                            try:
+                                fe_rhs.copy(effective_rhs)
+                                _add_physical_mode_values(
+                                    effective_rhs,
+                                    self.physical_action.action.modes,
+                                    port_rhs,
+                                    scale=1.0,
+                                )
+                                effective_rhs.assemble()
+                                effective_rhs_norm = float(effective_rhs.norm())
+                            finally:
+                                effective_rhs.destroy()
+                            effective_physical_residual = (
+                                augmented_fe_residual.duplicate()
+                            )
+                            augmented_fe_residual.copy(
+                                effective_physical_residual
+                            )
+                            _add_physical_mode_values(
+                                effective_physical_residual,
+                                self.physical_action.action.modes,
+                                port_residual,
+                                scale=1.0,
+                            )
+                            effective_physical_residual.assemble()
+                            bare_residual_norm = physical_residual_norm
+                            bare_relative = physical_relative
+                            physical_residual_norm = float(
+                                effective_physical_residual.norm()
+                            )
+                            physical_relative = (
+                                physical_residual_norm / effective_rhs_norm
+                                if effective_rhs_norm > 0.0
+                                else physical_residual_norm
+                            )
+                            physical_passed = bool(
+                                np.isfinite(physical_relative)
+                                and physical_relative
+                                <= float(residual_tolerance)
+                            )
+                            self._last_solve_audit.update(
+                                {
+                                    "bare_physical_residual_norm": bare_residual_norm,
+                                    "bare_physical_relative_residual": bare_relative,
+                                    "rhs_norm": effective_rhs_norm,
+                                    "residual_norm": physical_residual_norm,
+                                    "relative_residual": physical_relative,
+                                    "physical_rhs_norm": effective_rhs_norm,
+                                    "effective_physical_residual_norm": physical_residual_norm,
+                                    "physical_residual_norm": physical_residual_norm,
+                                    "physical_relative_residual": physical_relative,
+                                    "physical_gate_passed": physical_passed,
+                                }
+                            )
                         if capture_port_values:
                             self._last_solve_audit.update(
                                 {
@@ -1597,6 +1857,10 @@ class P4ExactFactor:
                                     ],
                                 }
                             )
+                    else:
+                        port_solution = np.empty(0, dtype=np.complex128)
+                        port_rhs = np.empty(0, dtype=np.complex128)
+                        port_residual = None
                 finally:
                     _timing_add(
                         timing,
@@ -1604,36 +1868,154 @@ class P4ExactFactor:
                         time.perf_counter() - residual_started,
                     )
 
-                if not np.isfinite(physical_relative):
-                    raise P4PhysicalResidualGateError(dict(self._last_solve_audit))
-                if physical_passed:
-                    break
-                if refinement == 2:
-                    break
+                augmented_passed = bool(
+                    self._last_solve_audit.get("augmented_gate_passed", False)
+                )
+                if diagnostic_mode:
+                    nonfinite_residual = not np.isfinite(
+                        physical_relative
+                    ) or not np.isfinite(augmented_relative)
+                    self._last_solve_audit.update(
+                        {
+                            "status": (
+                                "failed_nonfinite_residual"
+                                if nonfinite_residual
+                                else (
+                                    "passed"
+                                    if physical_passed and augmented_passed
+                                    else "gate_failed"
+                                )
+                            ),
+                            "physical_gate_passed": bool(physical_passed),
+                        }
+                    )
+                    diagnostic_record = dict(self._last_solve_audit)
+                    diagnostic_record.update(
+                        {
+                            "diagnostic_step_index": int(refinement),
+                            "diagnostic_correction_count": int(refinement),
+                            "diagnostic_correction_limit": int(
+                                diagnostic_correction_steps
+                            ),
+                            "correction_from_previous_seconds": correction_seconds,
+                            "correction_from_previous_norm": correction_norm,
+                            "factor_solve_seconds_for_state": last_factor_solve_seconds,
+                            "backsolve_count": int(backsolves),
+                            "refinement_count": int(backsolves - 1),
+                        }
+                    )
+                    correction_history.append(
+                        {
+                            key: value
+                            for key, value in diagnostic_record.items()
+                            if isinstance(
+                                value,
+                                (bool, int, float, str, type(None)),
+                            )
+                        }
+                    )
+                    self._last_solve_audit[
+                        "diagnostic_correction_history"
+                    ] = tuple(correction_history)
+                    diagnostic_record[
+                        "diagnostic_correction_history"
+                    ] = tuple(correction_history)
+                    if diagnostic_callback is not None:
+                        _emit_p4_diagnostic(
+                            self.matrix.getComm().tompi4py(),
+                            diagnostic_callback,
+                            diagnostic_record,
+                            {
+                                "solution": solution,
+                                "fe_residual": augmented_fe_residual,
+                                "physical_residual": physical_residual,
+                                "effective_physical_residual": effective_physical_residual,
+                                "port_residual": _readonly_diagnostic_array(
+                                    port_residual
+                                ),
+                                "port_solution": _readonly_diagnostic_array(
+                                    port_solution
+                                ),
+                                "port_rhs": _readonly_diagnostic_array(port_rhs),
+                                "correction": correction,
+                            },
+                        )
+                    if nonfinite_residual:
+                        raise P4PhysicalResidualGateError(
+                            dict(self._last_solve_audit)
+                        )
+                    if refinement >= diagnostic_correction_steps:
+                        if not (physical_passed and augmented_passed):
+                            self._last_solve_audit["status"] = "failed_gate"
+                            raise P4PhysicalResidualGateError(
+                                dict(self._last_solve_audit)
+                            )
+                        break
+                else:
+                    if not np.isfinite(physical_relative):
+                        raise P4PhysicalResidualGateError(
+                            dict(self._last_solve_audit)
+                        )
+                    if physical_passed:
+                        break
+                    if refinement == 2:
+                        break
                 if correction is not None:
                     correction.destroy()
+                    correction = None
                 correction = solution.duplicate()
-                correction_rhs = self.create_rhs(physical_residual)
+                if diagnostic_mode:
+                    if augmented_fe_residual is None or port_residual is None:
+                        raise AssertionError(
+                            "diagnostic augmented residual was not created"
+                        )
+                    correction_rhs = self._create_augmented_residual_rhs(
+                        augmented_fe_residual,
+                        port_residual,
+                    )
+                else:
+                    correction_rhs = self.create_rhs(physical_residual)
+                correction_started = (
+                    time.perf_counter() if diagnostic_mode else 0.0
+                )
                 try:
                     factor_started = time.perf_counter()
                     try:
                         self.factor.solve(correction_rhs, correction)
                     finally:
+                        last_factor_solve_seconds = (
+                            time.perf_counter() - factor_started
+                        )
                         _timing_add(
                             timing,
                             "factor_solve_seconds",
-                            time.perf_counter() - factor_started,
+                            last_factor_solve_seconds,
                         )
                 finally:
                     correction_rhs.destroy()
                 backsolves += 1
                 solution.axpy(PETSc.ScalarType(1.0), correction)
-            if not np.isfinite(physical_relative) or physical_relative > float(
-                residual_tolerance
-            ):
+                if diagnostic_mode:
+                    correction_norm = float(correction.norm())
+                    correction_seconds = time.perf_counter() - correction_started
+            gate_failed = (
+                not np.isfinite(physical_relative)
+                or physical_relative > float(residual_tolerance)
+            )
+            if diagnostic_mode:
+                gate_failed = gate_failed or (
+                    not np.isfinite(augmented_relative)
+                    or augmented_relative > float(residual_tolerance)
+                )
+            if gate_failed:
                 self._last_solve_audit["status"] = "failed_gate"
                 raise P4PhysicalResidualGateError(dict(self._last_solve_audit))
             return dict(self._last_solve_audit)
+        except BaseException as error:
+            if diagnostic_mode and self._last_solve_audit:
+                self._last_solve_audit["error_type"] = type(error).__name__
+                self._last_solve_audit["error"] = str(error)
+            raise
         finally:
             fe_rhs.destroy()
             if fe_solution is not None:
@@ -1644,6 +2026,8 @@ class P4ExactFactor:
                 physical_residual.destroy()
             if augmented_fe_residual is not None:
                 augmented_fe_residual.destroy()
+            if effective_physical_residual is not None:
+                effective_physical_residual.destroy()
             if correction is not None:
                 correction.destroy()
 
