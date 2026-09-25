@@ -3659,6 +3659,7 @@ def launch_specification(
     task041_comparison_mode: str | None = None,
     task041_top_causal_replay: bool = False,
     task041_p4_correction_replay_from: str | Path | None = None,
+    task041_p4_response_correction_steps: int = 0,
 ) -> dict[str, Any]:
     """Launch one resolved input or fail closed before numerical execution."""
 
@@ -3704,6 +3705,10 @@ def launch_specification(
     if task041_p4_correction_replay_from is not None and not task041_public_route:
         raise InputError(
             "--task041-p4-correction-replay-from requires the Task041 public route"
+        )
+    if task041_p4_response_correction_steps and not task041_public_route:
+        raise InputError(
+            "--task041-p4-response-correction-steps requires the Task041 public route"
         )
     balh_time_stop_override = None
     performance_contract = None
@@ -3777,6 +3782,9 @@ def launch_specification(
                 p4_correction_replay=(
                     task041_p4_correction_replay_from is not None
                 ),
+                p4_response_correction_steps=(
+                    task041_p4_response_correction_steps
+                ),
             )
         except ValueError as exc:
             raise InputError(str(exc)) from exc
@@ -3785,6 +3793,7 @@ def launch_specification(
         or task041_comparison_mode is not None
         or task041_top_causal_replay
         or task041_p4_correction_replay_from is not None
+        or task041_p4_response_correction_steps != 0
     ):
         raise InputError(
             "Task041 comparison options require task041_schur_speed_v2"
@@ -4004,6 +4013,9 @@ def launch_specification(
                 task041_top_causal_replay=task041_top_causal_replay,
                 task041_p4_correction_replay_from=(
                     task041_p4_correction_replay_from
+                ),
+                task041_p4_response_correction_steps=(
+                    task041_p4_response_correction_steps
                 ),
             )
         except OSError as exc:

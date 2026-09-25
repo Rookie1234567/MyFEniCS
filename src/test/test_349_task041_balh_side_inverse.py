@@ -223,6 +223,27 @@ class _IdentityP4:
         self.last_solve = {
             "backsolve_count": 1 + correction_steps,
             "refinement_count": correction_steps,
+            "rhs_norm": 1.0,
+            "physical_rhs_norm": 1.0,
+            "diagnostic_correction_history": [
+                {
+                    "diagnostic_step_index": step,
+                    "diagnostic_correction_count": step,
+                    "diagnostic_correction_limit": correction_steps,
+                    "backsolve_count": step + 1,
+                    "refinement_count": step,
+                    "status": "passed",
+                    "physical_residual_norm": 0.0,
+                    "physical_relative_residual": 0.0,
+                    "augmented_residual_norm": 0.0,
+                    "augmented_relative_residual": 0.0,
+                    "physical_gate_passed": True,
+                    "augmented_gate_passed": True,
+                    "correction_from_previous_seconds": 0.001 * step,
+                    "factor_solve_seconds_for_state": 0.001,
+                }
+                for step in range(correction_steps + 1)
+            ] if correction_steps else [],
         }
         if correction_steps and correction_callback is not None:
             for step in range(correction_steps + 1):
@@ -292,6 +313,27 @@ class _CellCondensedP4:
         self.last_solve = {
             "backsolve_count": 1 + correction_steps,
             "refinement_count": correction_steps,
+            "rhs_norm": 1.0,
+            "physical_rhs_norm": 1.0,
+            "diagnostic_correction_history": [
+                {
+                    "diagnostic_step_index": step,
+                    "diagnostic_correction_count": step,
+                    "diagnostic_correction_limit": correction_steps,
+                    "backsolve_count": step + 1,
+                    "refinement_count": step,
+                    "status": "passed",
+                    "physical_residual_norm": 0.0,
+                    "physical_relative_residual": 0.0,
+                    "residual_norm": 0.0,
+                    "relative_residual": 0.0,
+                    "physical_gate_passed": True,
+                    "augmented_gate_passed": True,
+                    "correction_from_previous_seconds": 0.001 * step,
+                    "factor_solve_seconds_for_state": 0.001,
+                }
+                for step in range(correction_steps + 1)
+            ] if correction_steps else [],
         }
         self.last_timing = {
             "storage_rhs_reduction_seconds": 1.0e-4,
@@ -1245,10 +1287,14 @@ def test_side_inverse_opt_in_correction_without_observer_uses_one_primal_action(
     p4_factor = (
         _IdentityP4(2) if backend == "full" else _CellCondensedP4(2)
     )
+    side_diagnostic_events: list[dict[str, object]] = []
     inverse, owned = _build_fixture(
         p4_factor=p4_factor,
         p4_inverse_backend=backend,
         detailed_timing=True,
+        diagnostic_callback=lambda record: side_diagnostic_events.append(
+            dict(record)
+        ),
     )
     operator = owned["operator"]
     transfer = owned["transfer"]
@@ -1296,6 +1342,23 @@ def test_side_inverse_opt_in_correction_without_observer_uses_one_primal_action(
         if correction_steps:
             last_solve = p4_factor.diagnostics["last_solve"]
             assert last_solve["backsolve_count"] == correction_steps + 1
+            p4_call_history = inverse.diagnostics["independent_p4_call_history"]
+            assert len(p4_call_history) == 1
+            scalar_history = p4_call_history[0][
+                "last_solve_scalar_summary"
+            ]["diagnostic_correction_history"]
+            assert [
+                step["diagnostic_step_index"] for step in scalar_history
+            ] == list(range(correction_steps + 1))
+            assert [step["refinement_count"] for step in scalar_history] == list(
+                range(correction_steps + 1)
+            )
+            assert all(
+                "physical_relative_residual" in step
+                and "correction_from_previous_seconds" in step
+                and "factor_solve_seconds_for_state" in step
+                for step in scalar_history
+            )
         if with_observer:
             assert [
                 record["p4_audit"]["diagnostic_step_index"]
@@ -2654,6 +2717,9 @@ def test_p4_correction_without_observer_retains_real_core_a4_history(
 def test_p4_diagnostic_zero_rhs_keeps_absolute_residual_semantics(
     backend: str,
 ) -> None:
+    # The zero-RHS case deliberately perturbs the initial port solution.  The
+    # first augmented residual is therefore nonzero and must retain the
+    # absolute-residual interpretation before the one requested correction.
     fixture = _g2a_p4_fixture(backend=backend, zero_rhs=True)
     p4 = fixture["p4"]
     records: list[dict[str, object]] = []
@@ -2699,6 +2765,84 @@ def test_p4_diagnostic_zero_rhs_keeps_absolute_residual_semantics(
                 first["physical_residual_norm"]
             )
         assert audit["status"] == "passed"
+        zero_history = audit["diagnostic_correction_history"]
+        assert len(zero_history) == 2
+        assert [step["backsolve_count"] for step in zero_history] == [1, 2]
+        assert [step["refinement_count"] for step in zero_history] == [0, 1]
+        assert zero_history[0]["physical_rhs_norm"] == 0.0
+        assert zero_history[0]["augmented_rhs_norm"] == 0.0
+        assert zero_history[0]["correction_from_previous_seconds"] is None
+        assert zero_history[1]["correction_from_previous_seconds"] >= 0.0
+        assert zero_history[0]["augmented_gate_passed"] is False
+        assert zero_history[1]["augmented_gate_passed"] is True
+        augmented_relative_key = (
+            "augmented_relative_residual"
+            if backend == "full"
+            else "relative_residual"
+        )
+        augmented_residual_key = (
+            "augmented_residual_norm" if backend == "full" else "residual_norm"
+        )
+        assert zero_history[0][augmented_relative_key] == pytest.approx(
+            zero_history[0][augmented_residual_key]
+        )
+    finally:
+        if result is not None:
+            result.destroy()
+        _destroy_g2a_p4_fixture(fixture)
+
+
+@pytest.mark.parametrize("backend", ["full", "cell_condensed"])
+def test_p4_diagnostic_exact_zero_rhs_records_one_requested_correction(
+    backend: str,
+) -> None:
+    # This fixture uses the dense oracle factor, which executes on a zero
+    # RHS. The production condensed inverse's direct-zero path is 0/0 and is
+    # covered by the supervisor protocol fixture.
+    fixture = _g2a_p4_fixture(
+        backend=backend,
+        zero_rhs=True,
+        perturb_initial_port=False,
+    )
+    p4 = fixture["p4"]
+    records: list[dict[str, object]] = []
+    result = None
+    try:
+        assert np.linalg.norm(fixture["block_rhs"]) == 0.0
+        assert np.linalg.norm(fixture["port_rhs"]) == 0.0
+        if backend == "full":
+            audit = p4.solve_with_refinement(
+                fixture["rhs"],
+                fixture["solution"],
+                diagnostic_correction_steps=1,
+                diagnostic_callback=lambda record, _borrowed: records.append(
+                    dict(record)
+                ),
+            )
+        else:
+            result = p4.apply(
+                fixture["rhs"],
+                port_rhs=fixture["port_rhs"],
+                diagnostic_correction_steps=1,
+                diagnostic_callback=lambda record, _borrowed: records.append(
+                    dict(record)
+                ),
+            )
+            audit = p4.diagnostics["last_solve"]
+
+        assert audit["status"] == "passed"
+        history = audit["diagnostic_correction_history"]
+        assert len(history) == len(records) == 2
+        assert [step["diagnostic_step_index"] for step in history] == [0, 1]
+        assert [step["backsolve_count"] for step in history] == [1, 2]
+        assert [step["refinement_count"] for step in history] == [0, 1]
+        assert [step["physical_rhs_norm"] for step in history] == [0.0, 0.0]
+        assert [step["augmented_rhs_norm"] for step in history] == [0.0, 0.0]
+        assert history[0]["correction_from_previous_seconds"] is None
+        assert history[1]["correction_from_previous_seconds"] >= 0.0
+        assert all(step["physical_gate_passed"] for step in history)
+        assert all(step["augmented_gate_passed"] for step in history)
+        assert fixture["inverse"].solve_count == 2
     finally:
         if result is not None:
             result.destroy()

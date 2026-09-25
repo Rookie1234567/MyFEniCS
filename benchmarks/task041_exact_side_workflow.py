@@ -4281,6 +4281,7 @@ def _run_task041_balh_candidate_setup(
     rank_numa_evidence: list[Mapping[str, Any]] | None = None,
     top_causal_replay: bool = False,
     p4_correction_replay_from: str | Path | None = None,
+    p4_response_correction_steps: int = 0,
     p4_correction_replay_packet_identity: Mapping[str, Any] | None = None,
     top_causal_memory_cap_bytes: int | None = None,
 ) -> dict[str, Any]:
@@ -4288,7 +4289,9 @@ def _run_task041_balh_candidate_setup(
 
     from benchmarks.run_task037b_hybrid_iterative import collective_heap_cleanup
     from benchmarks.task041_balh_workflow import (
+        TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
         TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE,
+        TASK041_P4_BACKEND_PAIR_MODE,
         TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
     )
     from src.solvers.hybrid_fem_modal_augmented_direct import (
@@ -4305,6 +4308,24 @@ def _run_task041_balh_candidate_setup(
     from src.solvers.physical_balanced_trace_bridge import (
         inject_active_residual_to_full_p6,
     )
+
+    if (
+        isinstance(p4_response_correction_steps, bool)
+        or not isinstance(p4_response_correction_steps, int)
+        or p4_response_correction_steps not in (0, 1)
+    ):
+        raise Task041ModePrepError("P4 response correction steps must be 0 or 1")
+    if p4_response_correction_steps and (
+        not top_causal_replay
+        or p4_correction_replay_from is not None
+        or comparison_mode != TASK041_P4_BACKEND_PAIR_MODE
+        or side_setup_schedule != TASK041_SEQUENTIAL_COMPONENT_SCHEDULE
+        or not isinstance(identity, Mapping)
+        or str(identity.get("model_id")) != TASK041_BALH_5NM_CANDIDATE_MODEL_ID
+    ):
+        raise Task041ModePrepError(
+            "P4 response corrections require the 5 nm top-causal fixed-eight pair"
+        )
 
     side_inverses: dict[str, Any] = {}
     probe_records: dict[str, list[dict[str, Any]]] = {
@@ -4373,6 +4394,11 @@ def _run_task041_balh_candidate_setup(
     p4_correction_capture: _Task041TopCausalPacketCapture | None = None
     p4_correction_reference: dict[str, Any] | None = None
     p4_correction_by_side: dict[str, dict[str, Any]] = {}
+    p4_response_correction_applied: dict[str, set[int]] = {
+        "full": set(),
+        "cell_condensed": set(),
+    }
+    p4_response_correction_replay_applied: set[str] = set()
     top_causal_audits: list[dict[str, Any]] = []
     top_causal_response_comparisons: list[dict[str, Any]] = []
     top_causal_timings: list[dict[str, Any]] = []
@@ -6692,6 +6718,11 @@ def _run_task041_balh_candidate_setup(
             if entries_override is None
             else list(entries_override)
         )
+        selected_top_response_columns = {
+            int(entry["formal_column"])
+            for entry in entries
+            if str(entry["side"]) == "top"
+        }
         records: list[dict[str, Any]] = []
         retained_responses = (
             {} if retained_responses_out is None else retained_responses_out
@@ -6739,6 +6770,14 @@ def _run_task041_balh_candidate_setup(
                 apply_started = time.monotonic()
                 causal_capture_mode = None
                 causal_error: BaseException | None = None
+                response_correction_enabled = bool(
+                    p4_response_correction_steps == 1
+                    and top_causal_replay
+                    and backend_pair
+                    and side == "top"
+                    and formal_column in selected_top_response_columns
+                    and p4_backend in {"full", "cell_condensed"}
+                )
                 if (
                     top_causal_replay
                     and side == "top"
@@ -6760,7 +6799,15 @@ def _run_task041_balh_candidate_setup(
                         representative_ordinal=ordinal,
                     )
                 try:
+                    if response_correction_enabled:
+                        side_inverses[side].configure_diagnostic_p4_corrections(
+                            1, None
+                        )
                     side_inverses[side].apply(rhs, response)
+                    if response_correction_enabled and p4_backend is not None:
+                        p4_response_correction_applied[p4_backend].add(
+                            formal_column
+                        )
                 except BaseException as exc:
                     causal_error = exc
                     if len(representative_records[side]) > audit_start:
@@ -6774,14 +6821,20 @@ def _run_task041_balh_candidate_setup(
                         }
                     raise
                 finally:
-                    if causal_capture_mode is not None:
-                        top_causal_capture.finish_apply(
-                            side_inverses[side], error=causal_error
-                        )
-                        top_causal_audits.extend(
-                            dict(item)
-                            for item in top_causal_capture.node_summaries
-                        )
+                    try:
+                        if causal_capture_mode is not None:
+                            top_causal_capture.finish_apply(
+                                side_inverses[side], error=causal_error
+                            )
+                            top_causal_audits.extend(
+                                dict(item)
+                                for item in top_causal_capture.node_summaries
+                            )
+                    finally:
+                        if response_correction_enabled:
+                            side_inverses[
+                                side
+                            ].configure_diagnostic_p4_corrections(0, None)
                 apply_wall_max_rank = (
                     float(
                         comm.allreduce(
@@ -8929,6 +8982,9 @@ def _run_task041_balh_candidate_setup(
                             }
                             for q_index in (1, 2):
                                 replay_started = time.monotonic()
+                                replay_trajectory = (
+                                    f"independent_q{q_index}_pc{pc_index:05d}"
+                                )
                                 source = causal_vector_from_packet(
                                     reference_node,
                                     f"q_{q_index:02d}_input_output",
@@ -8937,9 +8993,7 @@ def _run_task041_balh_candidate_setup(
                                 top_causal_capture.activate(
                                     mode="replay",
                                     backend="cell_condensed",
-                                    trajectory=(
-                                        f"independent_q{q_index}_pc{pc_index:05d}"
-                                    ),
+                                    trajectory=replay_trajectory,
                                     inverse=inverse,
                                     pc_index=pc_index,
                                     q_replay_index=q_index,
@@ -8951,6 +9005,10 @@ def _run_task041_balh_candidate_setup(
                                 replay_error: BaseException | None = None
                                 recovered = None
                                 try:
+                                    if p4_response_correction_steps:
+                                        inverse.configure_diagnostic_p4_corrections(
+                                            1, None
+                                        )
                                     recovered = inverse._apply_q_callback(source)
                                 except BaseException as exc:  # noqa: BLE001 - preserve the original Q failure
                                     replay_error = exc
@@ -8960,12 +9018,22 @@ def _run_task041_balh_candidate_setup(
                                             inverse, error=replay_error
                                         )
                                     finally:
-                                        if recovered is not None:
-                                            recovered.destroy()
-                                        source.destroy()
-                                        representative_context["top"] = None
+                                        try:
+                                            if p4_response_correction_steps:
+                                                inverse.configure_diagnostic_p4_corrections(
+                                                    0, None
+                                                )
+                                        finally:
+                                            if recovered is not None:
+                                                recovered.destroy()
+                                            source.destroy()
+                                            representative_context["top"] = None
                                 if replay_error is not None:
                                     raise replay_error
+                                if p4_response_correction_steps:
+                                    p4_response_correction_replay_applied.add(
+                                        replay_trajectory
+                                    )
                                 top_causal_timings.append(
                                     {
                                         "phase": "independent_q_replay",
@@ -8978,6 +9046,9 @@ def _run_task041_balh_candidate_setup(
                                 )
 
                             replay_started = time.monotonic()
+                            replay_trajectory = (
+                                f"independent_pc_pc{pc_index:05d}"
+                            )
                             active_source = causal_vector_from_packet(
                                 reference_node,
                                 "pc_input_output",
@@ -8987,7 +9058,7 @@ def _run_task041_balh_candidate_setup(
                             top_causal_capture.activate(
                                 mode="replay",
                                 backend="cell_condensed",
-                                trajectory=f"independent_pc_pc{pc_index:05d}",
+                                trajectory=replay_trajectory,
                                 inverse=inverse,
                                 pc_index=pc_index,
                                 representative_ordinal=int(
@@ -8997,6 +9068,10 @@ def _run_task041_balh_candidate_setup(
                             representative_context["top"] = replay_context
                             replay_error = None
                             try:
+                                if p4_response_correction_steps:
+                                    inverse.configure_diagnostic_p4_corrections(
+                                        1, None
+                                    )
                                 inverse._apply_balanced_pc(
                                     active_source, active_target
                                 )
@@ -9008,11 +9083,21 @@ def _run_task041_balh_candidate_setup(
                                         inverse, error=replay_error
                                     )
                                 finally:
-                                    active_target.destroy()
-                                    active_source.destroy()
-                                    representative_context["top"] = None
+                                    try:
+                                        if p4_response_correction_steps:
+                                            inverse.configure_diagnostic_p4_corrections(
+                                                0, None
+                                            )
+                                    finally:
+                                        active_target.destroy()
+                                        active_source.destroy()
+                                        representative_context["top"] = None
                             if replay_error is not None:
                                 raise replay_error
+                            if p4_response_correction_steps:
+                                p4_response_correction_replay_applied.add(
+                                    replay_trajectory
+                                )
                             top_causal_timings.append(
                                 {
                                     "phase": "independent_pc_replay",
@@ -10285,6 +10370,14 @@ def _run_task041_balh_candidate_setup(
                         diagnostic_pass = bool(
                             evidence_complete and action_safety_pass
                         )
+                        expected_replay_correction_trajectories = {
+                            f"independent_q{q_index}_pc{pc_index:05d}"
+                            for pc_index in reference_indices
+                            for q_index in (1, 2)
+                        } | {
+                            f"independent_pc_pc{pc_index:05d}"
+                            for pc_index in reference_indices
+                        }
                         failed_action_gates = [
                             name
                             for name, passed in (
@@ -10327,6 +10420,46 @@ def _run_task041_balh_candidate_setup(
                                 else "failed_required_gate"
                             ),
                             "qualification": "diagnostic_only",
+                            **(
+                                {
+                                    "p4_response_correction_strategy": {
+                                        "schema": "task041.p4_response_correction.strategy.v1",
+                                        "requested_steps": 1,
+                                        "applied": all(
+                                            p4_response_correction_applied[backend]
+                                            == set(top_columns)
+                                            for backend in (
+                                                "full",
+                                                "cell_condensed",
+                                            )
+                                        )
+                                        and p4_response_correction_replay_applied
+                                        == expected_replay_correction_trajectories,
+                                        "formal_columns": list(top_columns),
+                                        "backends": [
+                                            "full",
+                                            "cell_condensed",
+                                        ],
+                                        "max_corrections_per_p4_call": 1,
+                                        "applied_formal_columns_by_backend": {
+                                            backend: sorted(
+                                                p4_response_correction_applied[
+                                                    backend
+                                                ]
+                                            )
+                                            for backend in (
+                                                "full",
+                                                "cell_condensed",
+                                            )
+                                        },
+                                        "applied_replay_trajectories": sorted(
+                                            p4_response_correction_replay_applied
+                                        ),
+                                    }
+                                }
+                                if p4_response_correction_steps
+                                else {}
+                            ),
                             "source_sha": identity.get("source_sha"),
                             "manifest": {
                                 "path": representative_rhs_contract["path"],
@@ -11132,6 +11265,7 @@ def run_task041_consumer(
     comparison_mode: str | None = None,
     top_causal_replay: bool = False,
     p4_correction_replay_from: str | Path | None = None,
+    p4_response_correction_steps: int = 0,
 ) -> dict[str, Any]:
     """Consume one fresh Task041 packet through an exact or BAL_H side path."""
 
@@ -11197,6 +11331,7 @@ def run_task041_consumer(
             or comparison_mode is not None
             or top_causal_replay
             or p4_correction_replay_from is not None
+            or p4_response_correction_steps != 0
         )
         and performance_profile is None
     ):
@@ -11236,6 +11371,7 @@ def run_task041_consumer(
                 comparison_mode=comparison_mode,
                 top_causal_replay=top_causal_replay,
                 p4_correction_replay=(p4_correction_replay_from is not None),
+                p4_response_correction_steps=p4_response_correction_steps,
             )
         except ValueError as exc:
             raise Task041ModePrepError(str(exc)) from exc
@@ -12130,6 +12266,7 @@ def run_task041_consumer(
                 rank_numa_evidence=rank_numa_evidence,
                 top_causal_replay=top_causal_replay,
                 p4_correction_replay_from=p4_correction_replay_from,
+                p4_response_correction_steps=p4_response_correction_steps,
                 p4_correction_replay_packet_identity=(
                     disk_identity
                     if p4_correction_replay_from is not None

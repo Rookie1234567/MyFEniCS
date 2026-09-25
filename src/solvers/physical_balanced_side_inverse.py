@@ -1622,6 +1622,24 @@ class SideBalancedInverse:
                         "solution_norm_status": solution_norm_status,
                     }
                 )
+                if correction_steps:
+                    correction_history = (
+                        last_solve.get("diagnostic_correction_history", [])
+                        if isinstance(last_solve, Mapping)
+                        else []
+                    )
+                    scalar_summary["diagnostic_correction_history"] = [
+                        {
+                            key: value
+                            for key, value in step.items()
+                            if isinstance(
+                                value,
+                                (bool, int, float, str, type(None)),
+                            )
+                        }
+                        for step in correction_history
+                        if isinstance(step, Mapping)
+                    ] if isinstance(correction_history, (list, tuple)) else []
                 call_record = {
                     "p4_call_index": (
                         len(self._active_p4_call_records or []) + 1

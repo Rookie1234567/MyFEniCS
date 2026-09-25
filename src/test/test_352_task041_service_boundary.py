@@ -549,6 +549,35 @@ def test_fixed_pair_service_requires_full_config_and_canonical_v5_path(tmp_path)
     with pytest.raises(service.Task041ServiceError, match="comparison mode"):
         service._comparison_mode_binding(command, "common_layout_equivalence")
 
+    correction_command = [
+        *command,
+        "--task041-top-causal-replay",
+        "--task041-p4-response-correction-steps",
+        "1",
+    ]
+    correction_config = {
+        **config,
+        "public_command": correction_command,
+        "p4_response_correction_steps": 1,
+    }
+    assert service._p4_response_correction_steps_binding(
+        correction_command, 1
+    ) == 1
+    correction_contract = service._service_contract(
+        correction_config,
+        side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        comparison_mode=TASK041_P4_BACKEND_PAIR_MODE,
+        p4_response_correction_steps=1,
+    )
+    assert correction_contract["top_causal_replay"] is True
+    assert correction_contract["p4_response_correction"]["requested_steps"] == 1
+    with pytest.raises(service.Task041ServiceError, match="does not match service config"):
+        service._p4_response_correction_steps_binding(correction_command, 0)
+    with pytest.raises(service.Task041ServiceError, match="top causal replay"):
+        service._p4_response_correction_steps_binding(
+            [*command, "--task041-p4-response-correction-steps", "1"], 1
+        )
+
 
 def test_fixed_pair_public_supervision_ignores_v2_clock_but_keeps_resource_gate(
     monkeypatch, tmp_path

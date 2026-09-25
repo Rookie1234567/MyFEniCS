@@ -74,6 +74,7 @@ def _service_contract(
     *,
     side_setup_schedule: str | None,
     comparison_mode: str | None,
+    p4_response_correction_steps: int = 0,
 ) -> dict[str, Any]:
     """Resolve the registered case contract without widening the V2 profile."""
 
@@ -92,6 +93,7 @@ def _service_contract(
         if (
             side_setup_schedule is not None
             or comparison_mode is not None
+            or p4_response_correction_steps != 0
         ):
             raise Task041ServiceError(
                 "registered Task041 case does not accept representative comparison options"
@@ -121,6 +123,8 @@ def _service_contract(
         scope=config.get("scope"),
         side_setup_schedule=side_setup_schedule,
         comparison_mode=comparison_mode,
+        top_causal_replay=p4_response_correction_steps == 1,
+        p4_response_correction_steps=p4_response_correction_steps,
     )
     if comparison_mode == TASK041_P4_BACKEND_PAIR_MODE:
         if (
@@ -294,6 +298,48 @@ def _comparison_mode_binding(
     return configured
 
 
+def _p4_response_correction_steps_binding(
+    command: list[str], configured: Any
+) -> int:
+    flag = "--task041-p4-response-correction-steps"
+    positions = [index for index, value in enumerate(command) if value == flag]
+    expected = 0 if configured is None else configured
+    if (
+        isinstance(expected, bool)
+        or not isinstance(expected, int)
+        or expected not in (0, 1)
+    ):
+        raise Task041ServiceError(
+            "service P4 response correction steps must be 0 or 1"
+        )
+    if len(positions) > 1:
+        raise Task041ServiceError(
+            "public command has duplicate P4 response correction flags"
+        )
+    observed = 0
+    if positions:
+        index = positions[0]
+        if index + 1 >= len(command) or command[index + 1] not in {"0", "1"}:
+            raise Task041ServiceError(
+                "public P4 response correction flag must be followed by 0 or 1"
+            )
+        observed = int(command[index + 1])
+    if observed != expected:
+        raise Task041ServiceError(
+            "public P4 response correction option does not match service config"
+        )
+    if observed == 1:
+        if command.count("--task041-top-causal-replay") != 1:
+            raise Task041ServiceError(
+                "P4 response correction requires the top causal replay flag"
+            )
+        if "--task041-p4-correction-replay-from" in command:
+            raise Task041ServiceError(
+                "P4 response correction cannot be combined with frozen-Q replay"
+            )
+    return observed
+
+
 def _systemd_identity(unit: str) -> dict[str, str]:
     completed = subprocess.run(
         [
@@ -430,16 +476,21 @@ def _sparse_sample_factory() -> Any:
 
 def run_service_parent(config_path: str | Path) -> dict[str, Any]:
     config = _read_job_config(config_path)
+    public_command = list(config["public_command"])
     side_setup_schedule = _side_setup_schedule_binding(
-        list(config["public_command"]), config.get("side_setup_schedule")
+        public_command, config.get("side_setup_schedule")
     )
     comparison_mode = _comparison_mode_binding(
-        list(config["public_command"]), config.get("comparison_mode")
+        public_command, config.get("comparison_mode")
+    )
+    p4_response_correction_steps = _p4_response_correction_steps_binding(
+        public_command, config.get("p4_response_correction_steps")
     )
     contract = _service_contract(
         config,
         side_setup_schedule=side_setup_schedule,
         comparison_mode=comparison_mode,
+        p4_response_correction_steps=p4_response_correction_steps,
     )
     phase_limits = dict(
         task041_balh_phase_limits_for_model(str(config["model_id"]), "consumer")
@@ -480,6 +531,11 @@ def run_service_parent(config_path: str | Path) -> dict[str, Any]:
         "scope": contract["scope"],
         "side_setup_schedule": contract["side_setup_schedule"],
         "comparison_mode": contract["comparison_mode"],
+        **(
+            {"p4_response_correction_steps": p4_response_correction_steps}
+            if p4_response_correction_steps
+            else {}
+        ),
         "representative_rhs_probe": probe_binding,
         "ledger_owner": LEDGER_OWNER,
         "service_identity": dict(identity),
@@ -496,7 +552,7 @@ def run_service_parent(config_path: str | Path) -> dict[str, Any]:
                 contract["p4_backend_pair_identity"]
             )
     public = supervisor.run_task041_supervised_public_command(
-        list(config["public_command"]),
+        public_command,
         root,
         profile_contract=contract,
         ledger_snapshot=charged,
@@ -742,19 +798,24 @@ def _run_post_hash(
 
 def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
     config = _read_job_config(config_path)
+    public_command = list(config["public_command"])
     side_setup_schedule = _side_setup_schedule_binding(
-        list(config["public_command"]), config.get("side_setup_schedule")
+        public_command, config.get("side_setup_schedule")
     )
     comparison_mode = _comparison_mode_binding(
-        list(config["public_command"]), config.get("comparison_mode")
+        public_command, config.get("comparison_mode")
+    )
+    p4_response_correction_steps = _p4_response_correction_steps_binding(
+        public_command, config.get("p4_response_correction_steps")
     )
     contract = _service_contract(
         config,
         side_setup_schedule=side_setup_schedule,
         comparison_mode=comparison_mode,
+        p4_response_correction_steps=p4_response_correction_steps,
     )
     probe_binding = _representative_rhs_probe_binding(
-        list(config["public_command"]), contract["scope"]
+        public_command, contract["scope"]
     )
     root = Path(config["supervision_root"])
     finalizer_root = root / "finalizer"
@@ -831,6 +892,10 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
             "representative_rhs_probe": probe_binding,
             "ledger_owner": LEDGER_OWNER,
         }
+        if p4_response_correction_steps:
+            expected["p4_response_correction_steps"] = (
+                p4_response_correction_steps
+            )
         if contract.get("compute_wall_unlimited") is True:
             expected["contract_kind"] = contract["contract_kind"]
             if contract.get("case_id") is not None:

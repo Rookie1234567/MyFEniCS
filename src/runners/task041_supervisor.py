@@ -5530,6 +5530,7 @@ def _validate_task041_top_causal_replay_result(
     process_group_gone: bool | None,
     expected_side_setup_schedule: str | None,
     expected_comparison_mode: str | None,
+    expected_p4_response_correction_steps: int = 0,
 ) -> dict[str, Any]:
     """Validate the top-only record, frozen packet identities, and reported gates."""
 
@@ -5939,12 +5940,249 @@ def _validate_task041_top_causal_replay_result(
     recomputed_response_checks: list[bool] = []
     response_recomputations: list[dict[str, Any]] = []
     true_residual_evidence: list[dict[str, bool]] = []
+    p4_response_correction_call_checks: list[bool] = []
     response_packet_shards: dict[
         tuple[str, int], dict[int, tuple[Path, str, tuple[int, int]]]
     ] = {}
     response_shard_rows: dict[
         tuple[str, int], dict[int, Mapping[str, Any]]
     ] = {}
+
+    def response_correction_history_pass(apply_audit: Any) -> bool:
+        if not isinstance(apply_audit, Mapping):
+            return False
+        p4_calls = apply_audit.get("p4_call_history")
+        if not isinstance(p4_calls, list) or not p4_calls:
+            return False
+        for p4_call in p4_calls:
+            backend = (
+                p4_call.get("backend")
+                if isinstance(p4_call, Mapping)
+                else None
+            )
+            if backend not in {"full", "cell_condensed"}:
+                return False
+            scalar_summary = (
+                p4_call.get("last_solve_scalar_summary")
+                if isinstance(p4_call, Mapping)
+                else None
+            )
+            history = (
+                scalar_summary.get("diagnostic_correction_history")
+                if isinstance(scalar_summary, Mapping)
+                else None
+            )
+            if not isinstance(history, list) or len(history) != 2:
+                return False
+            if not all(isinstance(step, Mapping) for step in history):
+                return False
+            initial_rhs_is_zero = bool(
+                scalar_summary.get("physical_rhs_norm") == 0.0
+                and scalar_summary.get("augmented_rhs_norm") == 0.0
+            )
+            previous_augmented_residual = history[0].get(
+                "augmented_residual_norm", history[0].get("residual_norm")
+            )
+            if backend == "cell_condensed":
+                initial_backsolves = 0 if initial_rhs_is_zero else 1
+                correction_backsolves = (
+                    0 if previous_augmented_residual == 0.0 else 1
+                )
+                expected_backsolve_counts = [
+                    initial_backsolves,
+                    initial_backsolves + correction_backsolves,
+                ]
+            else:
+                expected_backsolve_counts = [1, 2]
+            for step_index, step in enumerate(history):
+                if not isinstance(step, Mapping) or any(
+                    step.get(name) != value
+                    for name, value in (
+                        ("diagnostic_step_index", step_index),
+                        ("diagnostic_correction_count", step_index),
+                        ("diagnostic_correction_limit", 1),
+                        ("refinement_count", step_index),
+                    )
+                ) or (
+                    type(step.get("backsolve_count")) is not int
+                    or step.get("backsolve_count")
+                    != expected_backsolve_counts[step_index]
+                ):
+                    return False
+                residual_tolerance = step.get("residual_tolerance")
+                physical_rhs_norm = step.get("physical_rhs_norm")
+                physical_residual_norm = step.get("physical_residual_norm")
+                augmented_rhs_norm = step.get("augmented_rhs_norm")
+                augmented_residual_norm = step.get(
+                    "augmented_residual_norm", step.get("residual_norm")
+                )
+                physical_relative = step.get("physical_relative_residual")
+                augmented_relative = step.get(
+                    "augmented_relative_residual",
+                    step.get("relative_residual"),
+                )
+                if any(
+                    isinstance(value, bool)
+                    or not isinstance(value, (int, float))
+                    or not np.isfinite(value)
+                    or value < 0.0
+                    for value in (
+                        residual_tolerance,
+                        physical_rhs_norm,
+                        physical_residual_norm,
+                        augmented_rhs_norm,
+                        augmented_residual_norm,
+                        physical_relative,
+                        augmented_relative,
+                    )
+                ):
+                    return False
+                if residual_tolerance != 1.0e-10:
+                    return False
+                expected_physical_relative = (
+                    physical_residual_norm / physical_rhs_norm
+                    if physical_rhs_norm > 0.0
+                    else physical_residual_norm
+                )
+                expected_augmented_relative = (
+                    augmented_residual_norm / augmented_rhs_norm
+                    if augmented_rhs_norm > 0.0
+                    else augmented_residual_norm
+                )
+                physical_pass = bool(
+                    expected_physical_relative <= residual_tolerance
+                )
+                augmented_pass = bool(
+                    expected_augmented_relative <= residual_tolerance
+                )
+                if not (
+                    math.isclose(
+                        physical_relative,
+                        expected_physical_relative,
+                        rel_tol=1.0e-12,
+                        abs_tol=0.0,
+                    )
+                    and math.isclose(
+                        augmented_relative,
+                        expected_augmented_relative,
+                        rel_tol=1.0e-12,
+                        abs_tol=0.0,
+                    )
+                    and step.get("physical_gate_passed") is physical_pass
+                    and step.get("augmented_gate_passed") is augmented_pass
+                    and step.get("status")
+                    == ("passed" if physical_pass and augmented_pass else "gate_failed")
+                ):
+                    return False
+                correction_seconds = step.get("correction_from_previous_seconds")
+                if step_index == 0:
+                    if correction_seconds is not None:
+                        return False
+                elif (
+                    isinstance(correction_seconds, bool)
+                    or not isinstance(correction_seconds, (int, float))
+                    or not np.isfinite(correction_seconds)
+                    or correction_seconds < 0.0
+                ):
+                    return False
+                timing_value = step.get("factor_solve_seconds_for_state")
+                if (
+                    isinstance(timing_value, bool)
+                    or not isinstance(timing_value, (int, float))
+                    or not np.isfinite(timing_value)
+                    or timing_value < 0.0
+                ):
+                    return False
+            final_step = history[-1]
+            if not (
+                final_step.get("status") == "passed"
+                and final_step.get("physical_gate_passed") is True
+                and final_step.get("augmented_gate_passed") is True
+                and float(final_step["physical_relative_residual"]) <= 1.0e-10
+                and float(
+                    final_step.get(
+                        "augmented_relative_residual",
+                        final_step.get("relative_residual"),
+                    )
+                )
+                <= 1.0e-10
+            ):
+                return False
+        return True
+
+    independent_replay_history_checks: list[bool] = []
+    independent_replay_audits = [
+        item
+        for item in replay_audits
+        if item.get("backend") == "cell_condensed"
+        and item.get("replay_kind") in {"independent_q", "independent_pc"}
+    ]
+    if expected_p4_response_correction_steps == 1:
+        for audit in independent_replay_audits:
+            audit_rows = audit.get("by_rank")
+            rank_zero = next(
+                (
+                    item
+                    for item in audit_rows or []
+                    if isinstance(item, Mapping) and item.get("rank") == 0
+                ),
+                None,
+            )
+            history_ref = (
+                rank_zero.get("p4_call_history")
+                if isinstance(rank_zero, Mapping)
+                else None
+            )
+            history_path = (
+                safe_path(history_ref.get("path"))
+                if isinstance(history_ref, Mapping)
+                else None
+            )
+            history_sha = (
+                history_ref.get("sha256")
+                if isinstance(history_ref, Mapping)
+                else None
+            )
+            history_record = None
+            if (
+                history_path is not None
+                and history_path.is_file()
+                and _valid_sha(history_sha, 64)
+                and _sha256_file(history_path) == history_sha
+            ):
+                try:
+                    history_record = _read_json(history_path)
+                except (OSError, ValueError, TypeError):
+                    history_record = None
+            history_rows = (
+                history_record.get("by_rank")
+                if isinstance(history_record, Mapping)
+                else None
+            )
+            rank_ids = {
+                item.get("rank")
+                for item in history_rows or []
+                if isinstance(item, Mapping)
+            }
+            independent_replay_history_checks.append(
+                bool(
+                    isinstance(history_rows, list)
+                    and len(history_rows) == 8
+                    and rank_ids == set(range(8))
+                    and all(
+                        isinstance(item, Mapping)
+                        and response_correction_history_pass(
+                            {
+                                "p4_call_history": item.get(
+                                    "independent_p4_call_history"
+                                )
+                            }
+                        )
+                        for item in history_rows
+                    )
+                )
+            )
+
     if isinstance(response_records, Mapping):
         for backend in ("full", "cell_condensed"):
             calls = response_records.get(backend)
@@ -5958,6 +6196,26 @@ def _validate_task041_top_causal_replay_result(
                 ordinal = int(call["ordinal"])
                 by_backend[backend][ordinal] = call
                 apply_audit = call.get("audit")
+                if expected_p4_response_correction_steps == 1:
+                    p4_response_correction_call_checks.append(
+                        response_correction_history_pass(apply_audit)
+                    )
+                elif isinstance(apply_audit, Mapping):
+                    p4_calls = apply_audit.get("p4_call_history")
+                    p4_response_correction_call_checks.append(
+                        not any(
+                            isinstance(p4_call, Mapping)
+                            and isinstance(
+                                p4_call.get("last_solve_scalar_summary"),
+                                Mapping,
+                            )
+                            and "diagnostic_correction_history"
+                            in p4_call["last_solve_scalar_summary"]
+                            for p4_call in p4_calls or []
+                        )
+                    )
+                else:
+                    p4_response_correction_call_checks.append(False)
                 true_samples = (
                     apply_audit.get("true_residual_samples")
                     if isinstance(apply_audit, Mapping)
@@ -6388,6 +6646,70 @@ def _validate_task041_top_causal_replay_result(
         action_safety=True,
         evidence=False,
     )
+    correction_strategy = (
+        record.get("p4_response_correction_strategy")
+        if isinstance(record, Mapping)
+        else None
+    )
+    selected_columns = (
+        record.get("selected_formal_columns")
+        if isinstance(record, Mapping)
+        else None
+    )
+    if expected_p4_response_correction_steps == 1:
+        applied_replay_trajectories = (
+            correction_strategy.get("applied_replay_trajectories")
+            if isinstance(correction_strategy, Mapping)
+            else None
+        )
+        expected_replay_trajectories = sorted(
+            str(item.get("trajectory"))
+            for item in independent_replay_audits
+            if isinstance(item.get("trajectory"), str)
+        )
+        strategy_declares_applied = bool(
+            isinstance(correction_strategy, Mapping)
+            and correction_strategy.get("schema")
+            == "task041.p4_response_correction.strategy.v1"
+            and correction_strategy.get("requested_steps") == 1
+            and correction_strategy.get("applied") is True
+            and correction_strategy.get("formal_columns") == selected_columns
+            and correction_strategy.get("backends")
+            == ["full", "cell_condensed"]
+            and correction_strategy.get("max_corrections_per_p4_call") == 1
+            and correction_strategy.get("applied_formal_columns_by_backend")
+            == {
+                "full": selected_columns,
+                "cell_condensed": selected_columns,
+            }
+            and applied_replay_trajectories
+            == expected_replay_trajectories
+            and isinstance(selected_columns, list)
+            and all(type(column) is int for column in selected_columns)
+        )
+        correction_history_pass = bool(
+            len(p4_response_correction_call_checks) == 6
+            and all(p4_response_correction_call_checks)
+            and len(independent_replay_history_checks)
+            == len(independent_replay_audits)
+            and len(independent_replay_audits)
+            == 3 * len(record.get("frozen_pc_nodes", []))
+            and all(independent_replay_history_checks)
+        )
+    elif expected_p4_response_correction_steps == 0:
+        strategy_declares_applied = correction_strategy is None
+        correction_history_pass = all(p4_response_correction_call_checks)
+    else:
+        strategy_declares_applied = False
+        correction_history_pass = False
+    p4_response_correction_strategy_pass = bool(
+        strategy_declares_applied and correction_history_pass
+    )
+    check(
+        "top_causal_p4_response_correction_strategy_matches_history",
+        p4_response_correction_strategy_pass,
+        action_safety=True,
+    )
     check("top_causal_response_artifact_hashes_and_norm_reports", response_packets_ok)
     response_identity_pass = bool(
         len(response_recomputations) == 3
@@ -6816,6 +7138,9 @@ def _validate_task041_top_causal_replay_result(
         "failures": failures,
         "action_safety_failures": action_failures,
         "response_recomputations": response_recomputations,
+        "p4_response_correction_strategy_pass": (
+            p4_response_correction_strategy_pass
+        ),
         "evidence_complete": evidence_complete,
         "response_pair_pass": response_pair_pass,
         "side_residual_gate_pass": side_residual_gate_pass,
@@ -6837,6 +7162,7 @@ def _consumer_result(
     expected_comparison_mode: str | None = None,
     expected_top_causal_replay: bool = False,
     expected_p4_correction_replay_from: str | Path | None = None,
+    expected_p4_response_correction_steps: int = 0,
     expected_diagnostic_output: bool = False,
     expected_diagnostic_model_id: str | None = None,
 ) -> dict[str, Any]:
@@ -7128,6 +7454,9 @@ def _consumer_result(
             process_group_gone=process_group_gone,
             expected_side_setup_schedule=expected_side_setup_schedule,
             expected_comparison_mode=expected_comparison_mode,
+            expected_p4_response_correction_steps=(
+                expected_p4_response_correction_steps
+            ),
         )
         if expected_top_causal_replay
         and representative_rhs_binding is not None
@@ -7772,6 +8101,7 @@ def run_task041_public_supervisor(
     task041_comparison_mode: str | None = None,
     task041_top_causal_replay: bool = False,
     task041_p4_correction_replay_from: str | Path | None = None,
+    task041_p4_response_correction_steps: int = 0,
 ) -> dict[str, Any]:
     """Run one Task041 consumer, optionally reusing a completed BAL_H producer."""
 
@@ -7989,12 +8319,15 @@ def run_task041_public_supervisor(
                         else None
                     ),
                     side_setup_schedule=task041_side_setup_schedule,
-                comparison_mode=task041_comparison_mode,
-                top_causal_replay=task041_top_causal_replay,
-                p4_correction_replay=(
-                    task041_p4_correction_replay_from is not None
-                ),
-            )
+                    comparison_mode=task041_comparison_mode,
+                    top_causal_replay=task041_top_causal_replay,
+                    p4_correction_replay=(
+                        task041_p4_correction_replay_from is not None
+                    ),
+                    p4_response_correction_steps=(
+                        task041_p4_response_correction_steps
+                    ),
+                )
             except ValueError as exc:
                 raise Task041SupervisorError(
                     str(exc),
@@ -8020,6 +8353,7 @@ def run_task041_public_supervisor(
             task041_side_setup_schedule is not None
             or task041_comparison_mode is not None
             or task041_p4_correction_replay_from is not None
+            or task041_p4_response_correction_steps != 0
         ):
             raise Task041SupervisorError(
                 "Task041 comparison options require task041_schur_speed_v2",
@@ -8836,6 +9170,9 @@ def run_task041_public_supervisor(
                     p4_correction_replay_from=(
                         task041_p4_correction_replay_from
                     ),
+                    p4_response_correction_steps=(
+                        task041_p4_response_correction_steps
+                    ),
                 )
             else:
                 consumer_command = producer_command_module["balh_exact_consumer"](
@@ -9001,6 +9338,9 @@ def run_task041_public_supervisor(
                     expected_p4_correction_replay_from=(
                         task041_p4_correction_replay_from
                     ),
+                    expected_p4_response_correction_steps=(
+                        task041_p4_response_correction_steps
+                    ),
                     **(
                         {"representative_rhs_binding": representative_rhs_binding}
                         if representative_rhs_binding is not None
@@ -9074,6 +9414,9 @@ def run_task041_public_supervisor(
                 expected_top_causal_replay=task041_top_causal_replay,
                 expected_p4_correction_replay_from=(
                     task041_p4_correction_replay_from
+                ),
+                expected_p4_response_correction_steps=(
+                    task041_p4_response_correction_steps
                 ),
                 **(
                     {"representative_rhs_binding": representative_rhs_binding}

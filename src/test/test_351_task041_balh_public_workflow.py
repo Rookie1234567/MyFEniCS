@@ -538,6 +538,8 @@ def test_task041_sequential_component_opt_in_is_bound_and_formal_rejected(
         "--task041-comparison-mode",
         task041_balh_workflow.TASK041_P4_BACKEND_PAIR_MODE,
         "--task041-top-causal-replay",
+        "--task041-p4-response-correction-steps",
+        "1",
     ]
     assert run_case.main(opt_in_argv) == 0
     assert captured[-1][1]["performance_profile"] == (
@@ -551,6 +553,7 @@ def test_task041_sequential_component_opt_in_is_bound_and_formal_rejected(
         task041_balh_workflow.TASK041_P4_BACKEND_PAIR_MODE
     )
     assert captured[-1][1]["task041_top_causal_replay"] is True
+    assert captured[-1][1]["task041_p4_response_correction_steps"] == 1
 
     contract = task041_schur_speed_v2_contract(
         candidate_model,
@@ -827,10 +830,19 @@ def test_task041_fixed_p4_backend_pair_is_explicit_and_5nm_scoped():
             "--task041-comparison-mode",
             pair_mode,
             "--task041-top-causal-replay",
+            "--task041-p4-response-correction-steps",
+            "1",
         ]
     )
     assert parsed_public.task041_comparison_mode == pair_mode
     assert parsed_public.task041_top_causal_replay is True
+    assert parsed_public.task041_p4_response_correction_steps == 1
+    assert (
+        run_case._parser()
+        .parse_args([str(candidate_path)])
+        .task041_p4_response_correction_steps
+        == 0
+    )
 
     command = build_task041_balh_candidate_consumer_command(
         str(Path(sys.executable)),
@@ -846,6 +858,7 @@ def test_task041_fixed_p4_backend_pair_is_explicit_and_5nm_scoped():
         side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
         comparison_mode=pair_mode,
         top_causal_replay=True,
+        p4_response_correction_steps=1,
     )
     assert command[command.index("--cpu-list") + 1] == "1-8"
     python_index = command.index(str(Path(sys.executable)))
@@ -861,6 +874,9 @@ def test_task041_fixed_p4_backend_pair_is_explicit_and_5nm_scoped():
     assert task041_balh_workflow._parser().parse_args(
         worker_args
     ).task041_top_causal_replay is True
+    assert task041_balh_workflow._parser().parse_args(
+        worker_args
+    ).task041_p4_response_correction_steps == 1
     pair_contract = task041_schur_speed_v2_contract(
         TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
         scope=TASK041_REPRESENTATIVE_RHS_SCOPE,
@@ -870,6 +886,7 @@ def test_task041_fixed_p4_backend_pair_is_explicit_and_5nm_scoped():
     )
     assert pair_contract["comparison_mode"] == pair_mode
     assert pair_contract["top_causal_replay"] is True
+    assert "p4_response_correction" not in pair_contract
     assert pair_contract["compute_wall_unlimited"] is True
     assert pair_contract["producer"]["mode"] == "reused"
     assert pair_contract["producer"]["invocation"] == "not_run"
@@ -894,6 +911,39 @@ def test_task041_fixed_p4_backend_pair_is_explicit_and_5nm_scoped():
         "results/task041_review_v5_cpu_numa_condensed_speed/"
         "r0_r1_20260920/r1_load_ledger_20260920.json"
     )
+    response_correction_contract = task041_schur_speed_v2_contract(
+        TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
+        scope=TASK041_REPRESENTATIVE_RHS_SCOPE,
+        side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        comparison_mode=pair_mode,
+        top_causal_replay=True,
+        p4_response_correction_steps=1,
+    )
+    assert response_correction_contract["p4_response_correction"] == {
+        "schema": "task041.p4_response_correction.strategy.v1",
+        "requested_steps": 1,
+        "scope": "top_manifest_responses",
+        "selection": "existing_top_causal_manifest_selection",
+        "backends": ["full", "cell_condensed"],
+        "max_corrections_per_p4_call": 1,
+    }
+    with pytest.raises(ValueError, match="P4 response correction"):
+        task041_schur_speed_v2_contract(
+            TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
+            scope=TASK041_REPRESENTATIVE_RHS_SCOPE,
+            side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+            comparison_mode=pair_mode,
+            p4_response_correction_steps=1,
+        )
+    with pytest.raises(ValueError, match="P4 response correction"):
+        task041_schur_speed_v2_contract(
+            TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
+            scope=TASK041_REPRESENTATIVE_RHS_SCOPE,
+            side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+            comparison_mode=task041_balh_workflow.TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE,
+            top_causal_replay=True,
+            p4_response_correction_steps=1,
+        )
     correction_contract = task041_schur_speed_v2_contract(
         TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
         scope=TASK041_REPRESENTATIVE_RHS_SCOPE,
@@ -913,6 +963,17 @@ def test_task041_fixed_p4_backend_pair_is_explicit_and_5nm_scoped():
     )
     assert "--task041-p4-correction-replay-from" in correction_command
     assert "--task041-top-causal-replay" not in correction_command
+    with pytest.raises(ValueError, match="P4 response correction"):
+        build_task041_balh_candidate_consumer_command(
+            str(Path(sys.executable)), candidate, "packet.json", "identity.json",
+            "b" * 64, "worker", "c" * 40, "a" * 40,
+            performance_profile=TASK041_SCHUR_SPEED_V2_PROFILE,
+            task041_rhs_probe_manifest=manifest,
+            side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+            comparison_mode=pair_mode,
+            p4_correction_replay_from=REPOSITORY_ROOT / "results/g1",
+            p4_response_correction_steps=1,
+        )
 
     unchanged_contract = task041_schur_speed_v2_contract(
         TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
@@ -947,6 +1008,7 @@ def test_task041_fixed_p4_backend_pair_is_explicit_and_5nm_scoped():
     )
     assert default_command[default_command.index("--cpu-list") + 1] == "0-7"
     assert "numactl" not in default_command
+    assert "--task041-p4-response-correction-steps" not in default_command
     with pytest.raises(ValueError, match="5 nm representative_rhs"):
         task041_schur_speed_v2_contract(
             TASK041_BALH_2NM_CANDIDATE_MODEL_ID,
@@ -1501,8 +1563,10 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
             side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
             comparison_mode=task041_balh_workflow.TASK041_P4_BACKEND_PAIR_MODE,
             top_causal_replay=True,
+            p4_response_correction_steps=1,
         )
     assert captured["top_causal_replay"] is True
+    assert captured["p4_response_correction_steps"] == 1
     assert captured["top_causal_memory_cap_bytes"] == 53_221_163_008
 
 
@@ -2047,6 +2111,33 @@ def test_task041_top_causal_capture_tail_packets_and_replay_gates(
     setup_tree = ast.parse(
         inspect.getsource(worker._run_task041_balh_candidate_setup)
     )
+
+    def correction_routes(function_name: str) -> set[tuple[int, object]]:
+        function_node = next(
+            node
+            for node in ast.walk(setup_tree)
+            if isinstance(node, ast.FunctionDef) and node.name == function_name
+        )
+        return {
+            (
+                call.args[0].value,
+                call.args[1].value,
+            )
+            for call in ast.walk(function_node)
+            if isinstance(call, ast.Call)
+            and isinstance(call.func, ast.Attribute)
+            and call.func.attr == "configure_diagnostic_p4_corrections"
+            and len(call.args) == 2
+            and isinstance(call.args[0], ast.Constant)
+            and isinstance(call.args[1], ast.Constant)
+        }
+
+    for function_name in (
+        "run_representative_rhs_probe",
+        "run_independent_causal_replays",
+    ):
+        assert correction_routes(function_name) == {(1, None), (0, None)}
+
     capture_layout_node = next(
         node
         for node in ast.walk(setup_tree)
@@ -3621,9 +3712,13 @@ def test_task041_balh_public_fresh_phases_share_cumulative_budget(
     assert result["phase_results"]["producer"].get("reused") is not True
 
 
-@pytest.mark.parametrize("p4_pair", [False, True], ids=["public", "fixed-pair"])
+@pytest.mark.parametrize(
+    ("p4_pair", "correction_steps"),
+    [(False, 0), (True, 0), (True, 1)],
+    ids=["public", "fixed-pair-default", "fixed-pair-correction"],
+)
 def test_task041_balh_reused_public_producer_starts_only_one_consumer(
-    tmp_path: Path, monkeypatch, p4_pair: bool
+    tmp_path: Path, monkeypatch, p4_pair: bool, correction_steps: int
 ):
     input_prefix = "5nm_p6h4_m480_mpi8" if p4_pair else "13p5nm_p6h10_m120_mpi8"
     exact = _specification(
@@ -3834,22 +3929,38 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
         process_group_gone,
         expected_side_setup_schedule=None,
         expected_comparison_mode=None,
+        expected_top_causal_replay=False,
+        expected_p4_correction_replay_from=None,
+        expected_p4_response_correction_steps=0,
         representative_rhs_binding=None,
     ):
         observed_schedules.append(expected_side_setup_schedule)
         assert expected_side_setup_schedule == expected_schedule
         assert expected_comparison_mode == expected_comparison
+        assert expected_top_causal_replay is (correction_steps == 1)
+        assert expected_p4_correction_replay_from is None
+        assert expected_p4_response_correction_steps == correction_steps
         if p4_pair:
             assert representative_rhs_binding["path"] == str(probe_manifest)
         return {
             "complete": True,
             "classification": "worker_exit0",
             "worker_classification": (
-                "TASK041_REPRESENTATIVE_RHS_COMPLETED"
-                if p4_pair
-                else "TASK041_CONSUMER_PASS"
+                "TASK041_TOP_CAUSAL_REPLAY_COMPLETED"
+                if correction_steps == 1
+                else (
+                    "TASK041_REPRESENTATIVE_RHS_COMPLETED"
+                    if p4_pair
+                    else "TASK041_CONSUMER_PASS"
+                )
             ),
-            "completion_scope": "representative_rhs" if p4_pair else "formal",
+            "completion_scope": (
+                "top_only_diagnostic"
+                if correction_steps == 1
+                else "representative_rhs"
+                if p4_pair
+                else "formal"
+            ),
             "process_group_gone": process_group_gone,
             "factor_inventory": {},
         }
@@ -3957,6 +4068,8 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
             TASK041_SEQUENTIAL_COMPONENT_SCHEDULE if p4_pair else None
         ),
         task041_comparison_mode=expected_pair_mode if p4_pair else None,
+        task041_top_causal_replay=correction_steps == 1,
+        task041_p4_response_correction_steps=correction_steps,
         task041_supervision_record=supervision_record_path,
         popen_factory=fake_popen,
         sample_factory=fake_sample,
@@ -3980,6 +4093,14 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
         assert command[command.index("--task041-comparison-mode") + 1] == (
             expected_pair_mode
         )
+        if correction_steps:
+            assert "--task041-top-causal-replay" in command
+            assert command[
+                command.index("--task041-p4-response-correction-steps") + 1
+            ] == "1"
+        else:
+            assert "--task041-top-causal-replay" not in command
+            assert "--task041-p4-response-correction-steps" not in command
         phase = result["phase_results"]["consumer"]
         assert phase["limits"]["timeout_seconds"] is None
         assert phase["limits"]["cumulative_compute_limit_seconds"] is None
@@ -4464,13 +4585,20 @@ def _write_top_causal_protocol_fixture(
     tmp_path: Path,
     *,
     mode: str = "healthy",
+    p4_response_correction_steps: int = 0,
+    exact_zero_rhs: bool = False,
+    zero_first_augmented_residual: bool = False,
 ):
     """Write a tiny on-disk top-only result using the production packet schema."""
+
+    assert p4_response_correction_steps in (0, 1)
+    assert not (exact_zero_rhs and zero_first_augmented_residual)
 
     root, summary, binding, _raw_path = _write_representative_result_fixture(tmp_path)
     source_sha = str(summary["source_sha"])
     probe = summary["representative_rhs_probe"]
     packet_sha = binding["packet_binding"]["packet_manifest_sha256"]
+    scalar_rhs_norm = 0.0 if exact_zero_rhs else 1.0
     top_entries = [
         entry
         for entry in binding["entries"]
@@ -4501,6 +4629,58 @@ def _write_top_causal_protocol_fixture(
     )
     audit_packet["identity"] = audit_identity
 
+    def p4_correction_history(backend: str) -> list[dict[str, object]]:
+        residual_norm = (
+            0.0
+            if exact_zero_rhs or zero_first_augmented_residual
+            else 1.0e-12
+        )
+        initial_backsolves = (
+            0 if exact_zero_rhs and backend == "cell_condensed" else 1
+        )
+        correction_backsolves = (
+            0
+            if backend == "cell_condensed" and residual_norm == 0.0
+            else 1
+        )
+        return [
+            {
+                "diagnostic_step_index": step,
+                "diagnostic_correction_count": step,
+                "diagnostic_correction_limit": 1,
+                "backsolve_count": (
+                    initial_backsolves
+                    if step == 0
+                    else initial_backsolves + correction_backsolves
+                ),
+                "refinement_count": step,
+                "status": "passed",
+                "residual_tolerance": 1.0e-10,
+                "physical_rhs_norm": scalar_rhs_norm,
+                "physical_residual_norm": residual_norm,
+                "physical_relative_residual": residual_norm,
+                "augmented_rhs_norm": scalar_rhs_norm,
+                "physical_gate_passed": True,
+                "augmented_gate_passed": True,
+                "correction_from_previous_seconds": (
+                    None if step == 0 else 1.0e-3
+                ),
+                "factor_solve_seconds_for_state": 1.0e-3,
+                **(
+                    {
+                        "augmented_residual_norm": residual_norm,
+                        "augmented_relative_residual": residual_norm,
+                    }
+                    if backend == "full"
+                    else {
+                        "residual_norm": residual_norm,
+                        "relative_residual": residual_norm,
+                    }
+                ),
+            }
+            for step in (0, 1)
+        ]
+
     def write_p4_history(backend: str, trajectory: str) -> dict[str, str]:
         history_path = (
             root
@@ -4510,13 +4690,37 @@ def _write_top_causal_protocol_fixture(
             / f"{backend}_{trajectory}.json"
         )
         history_path.parent.mkdir(parents=True, exist_ok=True)
+        independent_calls = (
+            [
+                {
+                    "backend": backend,
+                    "last_solve_scalar_summary": {
+                        "physical_rhs_norm": scalar_rhs_norm,
+                        "augmented_rhs_norm": scalar_rhs_norm,
+                        "diagnostic_correction_history": p4_correction_history(
+                            backend
+                        ),
+                    },
+                }
+            ]
+            if p4_response_correction_steps
+            and trajectory.startswith("independent_")
+            else []
+        )
         history = {
             "schema": "task041.top_causal_replay.p4_call_history.v1",
             "source_sha": source_sha,
             "trajectory": trajectory,
             "backend": backend,
             "formal_column": 12,
-            "by_rank": [{"rank": rank, "calls": []} for rank in range(8)],
+            "by_rank": [
+                {
+                    "rank": rank,
+                    "last_apply": {},
+                    "independent_p4_call_history": independent_calls,
+                }
+                for rank in range(8)
+            ],
         }
         history_path.write_text(
             json.dumps(history, sort_keys=True) + "\n", encoding="utf-8"
@@ -4686,6 +4890,38 @@ def _write_top_causal_protocol_fixture(
                 right_hand_sides.append(np.array(arrays["rhs"], copy=True))
         return np.concatenate(solutions), np.concatenate(right_hand_sides)
 
+    def response_audit(backend: str) -> dict[str, object]:
+        audit: dict[str, object] = {
+            "true_residual_samples": [
+                {
+                    "sample_label": label,
+                    "iteration": iteration,
+                    "true_residual_norm": 1.0e-3,
+                    "rhs_norm": 1.0,
+                    "true_relative_residual": 1.0e-3,
+                    "finite": True,
+                }
+                for label, iteration in (
+                    ("first_iteration", 1),
+                    ("final_iteration", 1),
+                )
+            ]
+        }
+        if p4_response_correction_steps:
+            audit["p4_call_history"] = [
+                {
+                    "backend": backend,
+                    "last_solve_scalar_summary": {
+                        "physical_rhs_norm": scalar_rhs_norm,
+                        "augmented_rhs_norm": scalar_rhs_norm,
+                        "diagnostic_correction_history": p4_correction_history(
+                            backend
+                        ),
+                    },
+                }
+            ]
+        return audit
+
     for backend in ("full", "cell_condensed"):
         for formal_column in (12, 493, 666):
             entry = selected_entries[formal_column]
@@ -4729,22 +4965,7 @@ def _write_top_causal_protocol_fixture(
                         "ordinal": ordinal,
                         "artifact": artifact,
                         "rank_shards": rank_shards,
-                        "audit": {
-                            "true_residual_samples": [
-                                {
-                                    "sample_label": label,
-                                    "iteration": iteration,
-                                    "true_residual_norm": 1.0e-3,
-                                    "rhs_norm": 1.0,
-                                    "true_relative_residual": 1.0e-3,
-                                    "finite": True,
-                                }
-                                for label, iteration in (
-                                    ("first_iteration", 1),
-                                    ("final_iteration", 1),
-                                )
-                            ]
-                        },
+                        "audit": response_audit(backend),
                     }
                 )
                 continue
@@ -4820,22 +5041,7 @@ def _write_top_causal_protocol_fixture(
                     "ordinal": ordinal,
                     "artifact": artifact,
                     "rank_shards": rank_shards,
-                    "audit": {
-                        "true_residual_samples": [
-                            {
-                                "sample_label": label,
-                                "iteration": iteration,
-                                "true_residual_norm": 1.0e-3,
-                                "rhs_norm": 1.0,
-                                "true_relative_residual": 1.0e-3,
-                                "finite": True,
-                            }
-                            for label, iteration in (
-                                ("first_iteration", 1),
-                                ("final_iteration", 1),
-                            )
-                        ]
-                    },
+                    "audit": response_audit(backend),
                 }
             )
             response_comparisons.append(
@@ -4907,6 +5113,24 @@ def _write_top_causal_protocol_fixture(
         "diagnostic_pass": diagnostic_pass,
         "status": "diagnostic_complete" if diagnostic_pass else "failed_required_gate",
     }
+    if p4_response_correction_steps:
+        top_record["p4_response_correction_strategy"] = {
+            "schema": "task041.p4_response_correction.strategy.v1",
+            "requested_steps": 1,
+            "applied": True,
+            "formal_columns": [12, 493, 666],
+            "backends": ["full", "cell_condensed"],
+            "max_corrections_per_p4_call": 1,
+            "applied_formal_columns_by_backend": {
+                "full": [12, 493, 666],
+                "cell_condensed": [12, 493, 666],
+            },
+            "applied_replay_trajectories": sorted(
+                audit["trajectory"]
+                for audit in audits
+                if audit["replay_kind"] in {"independent_q", "independent_pc"}
+            ),
+        }
     if mode == "bad_packet_hash":
         full_ordinal = int(selected_entries[12]["ordinal"])
         call = next(
@@ -4994,6 +5218,144 @@ def test_task041_top_causal_result_protocol_healthy_positive(tmp_path):
     assert consumer["complete"] is True
     assert consumer["top_causal_replay_validation"]["pass"] is True
     assert consumer["top_causal_replay_validation"]["qualification_pass"] is False
+
+
+@pytest.mark.parametrize(
+    ("exact_zero_rhs", "zero_first_augmented_residual"),
+    [(False, False), (True, False), (False, True)],
+    ids=["nonzero_rhs", "exact_zero_rhs", "nonzero_rhs_zero_correction"],
+)
+def test_task041_top_causal_response_correction_strategy_uses_saved_history(
+    tmp_path,
+    exact_zero_rhs: bool,
+    zero_first_augmented_residual: bool,
+):
+    root, summary, binding = _write_top_causal_protocol_fixture(
+        tmp_path,
+        p4_response_correction_steps=1,
+        exact_zero_rhs=exact_zero_rhs,
+        zero_first_augmented_residual=zero_first_augmented_residual,
+    )
+    record = summary["top_causal_replay"]
+    assert record["p4_response_correction_strategy"]["applied"] is True
+    assert record["p4_response_correction_strategy"]["formal_columns"] == [
+        12,
+        493,
+        666,
+    ]
+    assert all(
+        len(call["audit"]["p4_call_history"][0]["last_solve_scalar_summary"][
+            "diagnostic_correction_history"
+        ]) == 2
+        for backend in ("full", "cell_condensed")
+        for call in record["response_probe_records_by_backend"][backend]
+    )
+    if exact_zero_rhs or zero_first_augmented_residual:
+        full_counts = [
+            step["backsolve_count"]
+            for call in record["response_probe_records_by_backend"]["full"]
+            for step in call["audit"]["p4_call_history"][0][
+                "last_solve_scalar_summary"
+            ]["diagnostic_correction_history"]
+        ]
+        condensed_counts = [
+            step["backsolve_count"]
+            for call in record["response_probe_records_by_backend"]["cell_condensed"]
+            for step in call["audit"]["p4_call_history"][0][
+                "last_solve_scalar_summary"
+            ]["diagnostic_correction_history"]
+        ]
+        assert full_counts == [1, 2] * 3
+        expected_condensed_counts = (
+            [0, 0] * 3
+            if exact_zero_rhs
+            else [1, 1] * 3
+        )
+        assert condensed_counts == expected_condensed_counts
+    validation = supervisor._validate_task041_top_causal_replay_result(
+        root,
+        summary,
+        binding,
+        process_group_gone=True,
+        expected_side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        expected_comparison_mode=task041_balh_workflow.TASK041_P4_BACKEND_PAIR_MODE,
+        expected_p4_response_correction_steps=1,
+    )
+    assert validation["checks"][
+        "top_causal_p4_response_correction_strategy_matches_history"
+    ] is True
+    assert validation["pass"] is True
+    assert validation["qualification_pass"] is False
+    consumer = supervisor._consumer_result(
+        root,
+        process_group_gone=True,
+        representative_rhs_binding=binding,
+        expected_side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        expected_comparison_mode=task041_balh_workflow.TASK041_P4_BACKEND_PAIR_MODE,
+        expected_top_causal_replay=True,
+        expected_p4_response_correction_steps=1,
+    )
+    assert consumer["complete"] is True
+    assert consumer["top_causal_replay_validation"]["qualification_pass"] is False
+
+
+@pytest.mark.parametrize(
+    "failure_kind",
+    ["missing_history", "single_zero_stage"],
+    ids=["missing", "single_zero_stage"],
+)
+def test_task041_top_causal_correction_flag_cannot_replace_call_history(
+    tmp_path,
+    failure_kind: str,
+):
+    root, summary, binding = _write_top_causal_protocol_fixture(
+        tmp_path,
+        p4_response_correction_steps=1,
+        exact_zero_rhs=failure_kind == "single_zero_stage",
+    )
+    record = summary["top_causal_replay"]
+    first_full_call = record["response_probe_records_by_backend"]["full"][0]
+    scalar_summary = first_full_call["audit"]["p4_call_history"][0][
+        "last_solve_scalar_summary"
+    ]
+    if failure_kind == "missing_history":
+        del scalar_summary["diagnostic_correction_history"]
+    else:
+        # Even an exact zero RHS with zero residual needs both requested states.
+        scalar_summary["diagnostic_correction_history"] = scalar_summary[
+            "diagnostic_correction_history"
+        ][:1]
+    (root / "numerical_output" / "top_causal_replay_top.json").write_text(
+        json.dumps(record, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    (root / "consumer_summary.json").write_text(
+        json.dumps(summary, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    validation = supervisor._validate_task041_top_causal_replay_result(
+        root,
+        summary,
+        binding,
+        process_group_gone=True,
+        expected_side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        expected_comparison_mode=task041_balh_workflow.TASK041_P4_BACKEND_PAIR_MODE,
+        expected_p4_response_correction_steps=1,
+    )
+    assert validation["checks"][
+        "top_causal_p4_response_correction_strategy_matches_history"
+    ] is False
+    assert validation["pass"] is False
+    consumer = supervisor._consumer_result(
+        root,
+        process_group_gone=True,
+        representative_rhs_binding=binding,
+        expected_side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        expected_comparison_mode=task041_balh_workflow.TASK041_P4_BACKEND_PAIR_MODE,
+        expected_top_causal_replay=True,
+        expected_p4_response_correction_steps=1,
+    )
+    assert consumer["complete"] is False
 
 
 def test_task041_top_causal_strong_pair_failure_remains_diagnostic_complete(

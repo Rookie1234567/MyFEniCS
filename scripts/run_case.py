@@ -72,6 +72,13 @@ def _parser() -> argparse.ArgumentParser:
         help="capture and replay the selected top fixed-RHS causal nodes",
     )
     parser.add_argument(
+        "--task041-p4-response-correction-steps",
+        type=int,
+        choices=(0, 1),
+        default=0,
+        help="apply at most one same-factor P4 correction in the top causal diagnostic",
+    )
+    parser.add_argument(
         "--task041-p4-correction-replay-from",
         type=Path,
         metavar="G1_CONSUMER_ROOT",
@@ -143,6 +150,9 @@ def main(argv: list[str] | None = None) -> int:
                     p4_correction_replay=(
                         args.task041_p4_correction_replay_from is not None
                     ),
+                    p4_response_correction_steps=(
+                        args.task041_p4_response_correction_steps
+                    ),
                 )
             except ValueError as exc:
                 raise InputError(str(exc)) from exc
@@ -151,6 +161,7 @@ def main(argv: list[str] | None = None) -> int:
             or args.task041_comparison_mode is not None
             or args.task041_top_causal_replay
             or args.task041_p4_correction_replay_from is not None
+            or args.task041_p4_response_correction_steps != 0
         ):
             raise InputError(
                 "Task041 comparison options require task041_schur_speed_v2"
@@ -186,6 +197,7 @@ def main(argv: list[str] | None = None) -> int:
                 or args.task041_rhs_probe is None
                 or args.task041_comparison_mode != "p4_backend_pair"
                 or args.task041_side_setup_schedule != "sequential_component"
+                or args.task041_p4_response_correction_steps != 0
                 or (
                     args.producer_packet_root is None
                     and args.legacy_native_packet_descriptor is None
@@ -233,6 +245,9 @@ def main(argv: list[str] | None = None) -> int:
             task041_top_causal_replay=args.task041_top_causal_replay,
             task041_p4_correction_replay_from=(
                 args.task041_p4_correction_replay_from
+            ),
+            task041_p4_response_correction_steps=(
+                args.task041_p4_response_correction_steps
             ),
         )
         print(json.dumps(result, sort_keys=True, separators=(",", ":")))

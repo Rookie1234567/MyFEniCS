@@ -214,6 +214,7 @@ def task041_schur_speed_v2_contract(
     comparison_mode: str | None = None,
     top_causal_replay: bool = False,
     p4_correction_replay: bool = False,
+    p4_response_correction_steps: int = 0,
 ) -> dict[str, Any]:
     """Return the explicit S1/S2/S3/S4 budget contract for one candidate."""
 
@@ -256,6 +257,21 @@ def task041_schur_speed_v2_contract(
         raise ValueError(
             "p4_backend_pair requires the complete 5 nm representative_rhs "
             "sequential_component fixed-eight-RHS contract"
+        )
+    if (
+        isinstance(p4_response_correction_steps, bool)
+        or not isinstance(p4_response_correction_steps, int)
+        or p4_response_correction_steps not in (0, 1)
+    ):
+        raise ValueError("P4 response correction steps must be 0 or 1")
+    if p4_response_correction_steps and (
+        not top_causal_replay
+        or p4_correction_replay
+        or not p4_backend_pair
+    ):
+        raise ValueError(
+            "P4 response correction requires the explicit 5 nm top-causal "
+            "p4_backend_pair diagnostic and cannot be combined with frozen-Q replay"
         )
     if top_causal_replay and not task041_is_explicit_top_causal_replay(
         enabled=top_causal_replay,
@@ -394,6 +410,15 @@ def task041_schur_speed_v2_contract(
         )
     if top_causal_replay:
         contract["top_causal_replay"] = True
+    if p4_response_correction_steps:
+        contract["p4_response_correction"] = {
+            "schema": "task041.p4_response_correction.strategy.v1",
+            "requested_steps": 1,
+            "scope": "top_manifest_responses",
+            "selection": "existing_top_causal_manifest_selection",
+            "backends": ["full", "cell_condensed"],
+            "max_corrections_per_p4_call": 1,
+        }
     if p4_correction_replay:
         contract["p4_correction_replay"] = {
             "schema": "task041.p4_correction_replay.contract.v1",
@@ -723,6 +748,7 @@ def _mpi8_command(
     comparison_mode: str | None = None,
     top_causal_replay: bool = False,
     p4_correction_replay_from: str | Path | None = None,
+    p4_response_correction_steps: int = 0,
     cpu_list: str = "0-7",
     membind_node: str | None = None,
 ) -> list[str]:
@@ -834,6 +860,29 @@ def _mpi8_command(
                 str(p4_correction_replay_from),
             ]
         )
+    if (
+        isinstance(p4_response_correction_steps, bool)
+        or not isinstance(p4_response_correction_steps, int)
+        or p4_response_correction_steps not in (0, 1)
+    ):
+        raise ValueError("P4 response correction steps must be 0 or 1")
+    if p4_response_correction_steps:
+        if (
+            module != "benchmarks.task041_balh_workflow"
+            or phase != TASK041_BALH_CANDIDATE_PHASE
+            or comparison_mode != TASK041_P4_BACKEND_PAIR_MODE
+            or not top_causal_replay
+            or p4_correction_replay_from is not None
+        ):
+            raise ValueError(
+                "P4 response correction requires the top-causal fixed-eight pair worker"
+            )
+        command.extend(
+            [
+                "--task041-p4-response-correction-steps",
+                str(p4_response_correction_steps),
+            ]
+        )
     return command
 
 
@@ -916,6 +965,7 @@ def build_task041_balh_candidate_consumer_command(
     comparison_mode: str | None = None,
     top_causal_replay: bool = False,
     p4_correction_replay_from: str | Path | None = None,
+    p4_response_correction_steps: int = 0,
 ) -> list[str]:
     normalized = specification.as_jsonable()
     if task041_balh_route(str(normalized["model_id"])) != "balh":
@@ -943,12 +993,14 @@ def build_task041_balh_candidate_consumer_command(
             comparison_mode=comparison_mode,
             top_causal_replay=top_causal_replay,
             p4_correction_replay=p4_correction_replay_from is not None,
+            p4_response_correction_steps=p4_response_correction_steps,
         )
     elif (
         side_setup_schedule is not None
         or comparison_mode is not None
         or top_causal_replay
         or p4_correction_replay_from is not None
+        or p4_response_correction_steps != 0
     ):
         raise ValueError(
             "Task041 comparison options require task041_schur_speed_v2"
@@ -984,6 +1036,10 @@ def build_task041_balh_candidate_consumer_command(
         raise ValueError(
             "P4 correction replay requires the fixed-eight pair and its own top-only mode"
         )
+    if p4_response_correction_steps and not top_causal_replay:
+        raise ValueError(
+            "P4 response corrections require top_causal_replay"
+        )
     return _mpi8_command(
         python_executable,
         TASK041_BALH_CANDIDATE_PHASE,
@@ -1004,6 +1060,7 @@ def build_task041_balh_candidate_consumer_command(
         comparison_mode=comparison_mode,
         top_causal_replay=top_causal_replay,
         p4_correction_replay_from=p4_correction_replay_from,
+        p4_response_correction_steps=p4_response_correction_steps,
         cpu_list=(
             "1-8"
             if p4_backend_pair
@@ -1428,6 +1485,13 @@ def _parser() -> argparse.ArgumentParser:
         "--task041-p4-correction-replay-from",
         help="reuse the frozen PC1 Q1/Q2 and PC inputs from a G1 consumer root",
     )
+    parser.add_argument(
+        "--task041-p4-response-correction-steps",
+        type=int,
+        choices=(0, 1),
+        default=0,
+        help="apply at most one same-factor P4 correction in the top causal diagnostic",
+    )
     time_control = parser.add_mutually_exclusive_group()
     time_control.add_argument(
         "--task041-performance-profile",
@@ -1461,6 +1525,7 @@ def main(argv: Sequence[str] | None = None) -> dict[str, Any]:
         comparison_mode=args.task041_comparison_mode,
         top_causal_replay=args.task041_top_causal_replay,
         p4_correction_replay_from=args.task041_p4_correction_replay_from,
+        p4_response_correction_steps=args.task041_p4_response_correction_steps,
     )
 
 
