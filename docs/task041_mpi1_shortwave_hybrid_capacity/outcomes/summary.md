@@ -5,11 +5,14 @@
 | 阶段 | 当前结论 |
 |---|---|
 | G1 | 14 项独立 Q 全部未过 `1e-11`；7 项独立 PC 通过 `1e-8`。 |
-| G2 | layoutfix-r2 跨运行布局匹配；PC1 的 Q1/Q2 实际执行 0/1/2 修正，step0 Q 超限、step1/2 通过，六步 A4 均通过。 |
-| public/service | 原 r2 service 因 lifecycle schema 错读以 ExecMainStatus 3 失败；真实结果的只读 `_consumer_result` 重校验五项全真，诊断 complete，qualification 仍为 false。 |
-| 完整正式 5 nm consumer | `not_started`；r2 及新修正策略下 PC action、side.apply、Schur、outer/RTA/EH 未运行；G1 原独立 PC 7/7 通过；r2 并行性能 `not_qualified`。 |
+| G2r2 | layoutfix-r2 跨运行布局匹配；PC1 的Q1/Q2实际执行0/1/2修正。step0 Q差`4.8268e-11/5.1937e-11`超`1e-11`，A4仍通过；step1/2 Q与A4通过。 |
+| G2c | 顶部列12/493/666三响应的`e_x/e_A`均过`1e-8`；7冻结PC节点/14独立Q/7 PC及shared A4均过原门。诊断完成，`qualification_pass=false`不代表动作失败。 |
+| 修正触发 | 524个响应P4调用中521个原physical/augmented A4均过门仍接受单修正；原A4失败才修正不适用。没有足够证据设更严阈值。 |
+| G2c响应成本 | full `660.297 s`、condensed `745.262 s`，凝聚慢`84.964 s`；不是加速。authority/tree峰`42,588,479,488 B`，swap 0，cap`53,221,163,008 B`，清场/finalizer通过。 |
+| public/service | G2c worker/public诊断合同通过、service exit0。G2r2旧service exit3是public lifecycle schema误读，保留原始失败；只读重校验已通过。 |
+| 完整正式 5 nm consumer | G2c的一修正策略未做完整八项/正式consumer验证；完整Schur、outer/RTA/EH/全场未运行。V6历史固定八项组件结果仍单独保留，不代表G2c策略资格。并行运行按用户许可，性能不作为无竞争资格；G1旧PC 7/7及G2c本次7/7均保留各自范围。 |
 
-Q 差依次为 Q1 `4.826827545952679e-11 → 2.9154557401617235e-14 → 3.0334089133384796e-14`、Q2 `5.193718954731701e-11 → 3.306986700793151e-14 → 1.6691082262359168e-14`；原限值 `1e-11`。A4 physical/augmented 六步的 full/condensed 实值见[中心 outcome](causal_fix_5nm_v7.md)。见[机器记录](records/task041_v7_causal_fix_5nm.json)。以下历史正文保留。
+G2c的三响应凝聚比full多`84.964094673 s`；缩减+恢复计时合计`84.001845964 s`，是可节省量的宽松上界、不是预测。原A4门不足以单独触发Q修正；不设未验证阈值。V5 ledger当前45条、`35847.63433988102 s`，G2c finalizer仅追加一次`3315.690725968 s`。逐节点实值与后续局部G3方案见[中心outcome](causal_fix_5nm_v7.md)和[机器记录](records/task041_v7_causal_fix_5nm.json)。以下历史正文保留。
 
 ## 2026-09-23：Review V6 13.5 nm 与 5 nm fixed-eight 收口
 

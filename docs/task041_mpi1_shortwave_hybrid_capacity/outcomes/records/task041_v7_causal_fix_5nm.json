@@ -2,20 +2,21 @@
   "record_type": "task041_review_v7_progress_snapshot",
   "status": {
     "formal_full_5nm_consumer": "not_started",
-    "g2_correction_stages_0_1_2": "executed_for_q1_q2; step0_q_gate_failed; steps1_2_q_and_a4_gates_passed",
-    "cross_run_frozen_layout_qualification": "passed_for_g2_layoutfix_r2_pc1_q1_q2_only"
+    "g2_correction_stages_0_1_2": "G2r2 PC1 Q1/Q2 ran steps 0/1/2; G2c top-three responses and 14 frozen-Q replays used one correction",
+    "cross_run_frozen_layout_qualification": "passed_for_g2_layoutfix_r2_pc1_q1_q2_only",
+    "g2c_top_three_diagnostic": "completed_action_gates_pass; qualification_pass=false by diagnostic scope"
   },
   "repository": {
     "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
     "latest_validator_only_commit_after_runtime": "3bcf00527b3b2440a66792e079c6667cb30aec2d",
-    "current_document_source_head": "3bcf00527b3b2440a66792e079c6667cb30aec2d",
-    "current_runtime_source_head": "646c9fff0d08894a8dc634694caa32427bd71707",
+    "current_document_source_head": "c0a077212cc3dd0ed6989ba66ff44ca0a7cbce74",
+    "current_runtime_source_head": "c0a077212cc3dd0ed6989ba66ff44ca0a7cbce74",
     "current_upstream": "origin/codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
     "current_ahead_behind": [
       0,
       0
     ],
-    "current_worktree_state": "code commit 3bcf00527b3b2440a66792e079c6667cb30aec2d is pushed; pending changes are limited to the seven V7 docs/record"
+    "current_worktree_state": "G2c runtime source c0a077212cc3dd0ed6989ba66ff44ca0a7cbce74; this update changes existing V7 docs/record only"
   },
   "runs": [
     {
@@ -173,6 +174,42 @@
       "performance_qualification": "not_qualified; concurrent with Task39extra, so not an uncontended performance comparison; parallel execution was authorized",
       "resource_peak_bytes": 43820285952,
       "resource_peak_cgroup_bytes": 41557790720
+    },
+    {
+      "phase": "G2c_top_three_response_correction",
+      "unit": "task041-g2c-5nm-top3-response-correction-20260925.service",
+      "invocation_id": "71fb0d0cdbda4ddf99f29f42fd2241c0",
+      "main_pid": 402047,
+      "source_sha": "c0a077212cc3dd0ed6989ba66ff44ca0a7cbce74",
+      "service_state": "completed",
+      "service_result": "success",
+      "exit_status": 0,
+      "finalizer_wall_seconds": 3315.690725968,
+      "worker_result": "TASK041_TOP_CAUSAL_REPLAY_COMPLETED",
+      "worker_action_safety_pass": true,
+      "worker_evidence_complete": true,
+      "qualification_pass": false,
+      "qualification_pass_semantics": "diagnostic-only scope; not a failed action gate and not full fixed-eight qualification",
+      "scope": "top columns 12/493/666; seven frozen PC nodes; 14 independent Q and 7 PC replays; one correction per P4 call",
+      "public_runroot": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260925T063810.285517Z",
+      "outerroot": "results/task041_review_v6_transfer_and_5nm_24h/g2c_top3_response_correction_20260925T062603Z",
+      "frozen_input_producer_source_sha": "c0a077212cc3dd0ed6989ba66ff44ca0a7cbce74",
+      "qep_source_sha": "b01a5932e4dfaf895e81e0424e0dd88c276fb0d3",
+      "cross_run_layout_pass": null,
+      "cross_run_layout_status": "not_compared; full and cell_condensed layouts were checked only within this G2c run",
+      "all_tested_common_input_gates_pass": true,
+      "response_wall_full_seconds": 660.297494636,
+      "response_wall_cell_condensed_seconds": 745.261589309,
+      "condensed_minus_full_seconds": 84.964094673,
+      "resource_peak_authority_tree_bytes": 42588479488,
+      "resource_peak_cgroup_bytes": 40596865024,
+      "resource_cap_bytes": 53221163008,
+      "maximum_swap_bytes": 0,
+      "global_swap_used_bytes_at_final_sample": 0,
+      "pswpin_pages_at_final_sample": 0,
+      "pswpout_pages_at_final_sample": 0,
+      "parallel_performance_qualification": "not_qualified_contention_free",
+      "ledger_added_once_seconds": 3315.690725968
     }
   ],
   "g1": {
@@ -213,6 +250,166 @@
       "augmented_relative_full": 2.8873234816987417e-11,
       "augmented_relative_condensed": 5.637969700358617e-11,
       "pass": true
+    },
+    "frozen_same_input_rows": {
+      "columns": [
+        "pc_index",
+        "q_index",
+        "p4_recovered_relative",
+        "q_relative",
+        "a4_physical_full",
+        "a4_physical_cell_condensed",
+        "a4_augmented_full",
+        "a4_augmented_cell_condensed"
+      ],
+      "same_q_input_and_ph_output_bytes_for_all": true,
+      "correction_steps": 0,
+      "limits": {
+        "q": 1e-11,
+        "a4": 1e-10
+      },
+      "values": [
+        [
+          1,
+          1,
+          4.825884073423821e-11,
+          4.835081880078008e-11,
+          3.9464450760276146e-11,
+          6.182890011924572e-11,
+          2.8873234816987417e-11,
+          5.637969700358617e-11
+        ],
+        [
+          1,
+          2,
+          5.164430142728058e-11,
+          5.19243276103674e-11,
+          3.4284403371928055e-12,
+          5.409279310936007e-12,
+          2.2433325962304662e-12,
+          4.309485690767991e-12
+        ],
+        [
+          30,
+          1,
+          4.4397922920504124e-11,
+          4.462076935295908e-11,
+          3.654113637643077e-12,
+          5.458035144757573e-12,
+          2.452049782360244e-12,
+          4.750269559211456e-12
+        ],
+        [
+          30,
+          2,
+          5.1034505634618704e-11,
+          5.1283637542105954e-11,
+          1.973966403160416e-12,
+          2.4173109484327384e-12,
+          1.0813267809288344e-12,
+          2.284688191044488e-12
+        ],
+        [
+          31,
+          1,
+          5.081456104384457e-11,
+          5.1321797848411515e-11,
+          6.3443385716400905e-12,
+          7.793360447894946e-12,
+          5.058489475111119e-12,
+          6.620178640486386e-12
+        ],
+        [
+          31,
+          2,
+          5.153849523344201e-11,
+          5.2035358958957035e-11,
+          2.3381564383558e-12,
+          2.978282523891486e-12,
+          1.3806740981424754e-12,
+          2.725419839020618e-12
+        ],
+        [
+          32,
+          1,
+          5.037207356584424e-11,
+          5.097171606789805e-11,
+          5.87051516626635e-12,
+          7.051700681386341e-12,
+          4.3057430311817605e-12,
+          5.731872592171731e-12
+        ],
+        [
+          32,
+          2,
+          5.158634082777632e-11,
+          5.216111825454414e-11,
+          2.869470129729816e-12,
+          2.566580471225628e-12,
+          1.6968564752086194e-12,
+          2.145698024237914e-12
+        ],
+        [
+          33,
+          1,
+          4.991145925703986e-11,
+          5.000999486386378e-11,
+          1.489026254314328e-11,
+          1.3934993933989614e-11,
+          1.1014617129482493e-11,
+          1.3171288722251232e-11
+        ],
+        [
+          33,
+          2,
+          5.133405766306454e-11,
+          5.113784875174484e-11,
+          1.0149338648523306e-12,
+          1.7230759356956178e-12,
+          5.827079827927219e-13,
+          1.2557502852900712e-12
+        ],
+        [
+          56,
+          1,
+          4.849352688295466e-11,
+          4.848371288963943e-11,
+          6.3746784005681535e-12,
+          1.1611642460058005e-11,
+          4.224391411815735e-12,
+          9.219602049468394e-12
+        ],
+        [
+          56,
+          2,
+          5.134359432281261e-11,
+          5.167235092931522e-11,
+          2.1875391430962328e-12,
+          4.523109442354909e-12,
+          1.549642368882732e-12,
+          3.874474635477557e-12
+        ],
+        [
+          57,
+          1,
+          4.731171771886874e-11,
+          4.7587352070319125e-11,
+          6.829070810886213e-12,
+          8.757326823382582e-12,
+          5.35724948767332e-12,
+          6.8064151718700645e-12
+        ],
+        [
+          57,
+          2,
+          5.152875910314068e-11,
+          5.217215402500894e-11,
+          1.896032364965216e-12,
+          3.5014003174912706e-12,
+          1.2119846826316607e-12,
+          2.3789482561480533e-12
+        ]
+      ]
     }
   },
   "old_g1_stable_component_sha256": {
@@ -274,7 +471,9 @@
     },
     "parent_packet_sha256": "306939dda3b70777204c11fbd65beac2db5dc0637bc9b6803f7794d0d7cbad2f",
     "rhs_probe_manifest_sha256": "fb68011ed3e55861c59455d082be549cdd9f6c2d5a569015cf88bdc739f5636a",
-    "cross_run_layout_qualified": false,
+    "cross_run_layout_qualified": true,
+    "cross_run_layout_qualification_scope": "G2r2 PC1 Q1/Q2 only; G2c used inputs produced by its own source and did not compare layout hashes across runs",
+    "loaded_in_G2r2": true,
     "producer_source_sha": "e2965ee25e56220d1623afe4dd221612542c2764",
     "qep_source_sha": "b01a5932e4dfaf895e81e0424e0dd88c276fb0d3",
     "frozen_input_producer_source_sha": "e2965ee25e56220d1623afe4dd221612542c2764"
@@ -324,8 +523,10 @@
     "rhs_probe_manifest_sha256": "fb68011ed3e55861c59455d082be549cdd9f6c2d5a569015cf88bdc739f5636a",
     "producer_source_commit_sha": "e2965ee25e56220d1623afe4dd221612542c2764",
     "qep_producer_source_commit_sha": "b01a5932e4dfaf895e81e0424e0dd88c276fb0d3",
-    "cross_run_layout_qualified": false,
-    "loaded_or_corrected_in_G2": false
+    "cross_run_layout_qualified": true,
+    "loaded_in_G2r2": true,
+    "cross_run_layout_qualification_scope": "G2r2 PC1 Q1/Q2 only; G2c cross-run layout was not compared",
+    "G2c_independently_generated_scope": "three top responses and 14 frozen-Q replays generated by the G2c source; one correction per P4 call"
   },
   "run_root_index": [
     {
@@ -351,6 +552,21 @@
       "finalizer_path": "results/task041_review_v6_transfer_and_5nm_24h/g2b_frozen_q_correction_layoutfix_r1_20260924T080226Z/finalizer/finalizer_summary.json",
       "finalizer_sha256": "1841017d16060f235e1d0178da165025cbaa3601309fd066881329432a7fc0da",
       "consumer_root": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260924T082003.946929Z/consumer"
+    },
+    {
+      "phase": "G2_layoutfix_r2",
+      "public_runroot": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260924T105403.903510Z",
+      "outerroot": "results/task041_review_v6_transfer_and_5nm_24h/g2b_frozen_q_correction_layoutfix_r2_20260924T103628Z",
+      "finalizer_path": "results/task041_review_v6_transfer_and_5nm_24h/g2b_frozen_q_correction_layoutfix_r2_20260924T103628Z/finalizer/finalizer_summary.json",
+      "finalizer_sha256": "ef34f561bca6efbe359f6a104100e8343fc1b5bdc62d88c94e4e3f9aa02991b2",
+      "consumer_root": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260924T105403.903510Z/consumer"
+    },
+    {
+      "phase": "G2c_top_three_response_correction",
+      "public_runroot": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260925T063810.285517Z",
+      "outerroot": "results/task041_review_v6_transfer_and_5nm_24h/g2c_top3_response_correction_20260925T062603Z",
+      "finalizer_path": "results/task041_review_v6_transfer_and_5nm_24h/g2c_top3_response_correction_20260925T062603Z/finalizer/finalizer_summary.json",
+      "consumer_root": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260925T063810.285517Z/consumer"
     }
   ],
   "G1_evidence": {
@@ -583,22 +799,30 @@
       "path": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260924T105403.903510Z/consumer/numerical_output/p4_correction_replay/layout_identity_cell_condensed.json",
       "role": "G2 layoutfix-r2 persisted cell-condensed layout identity and G1 component comparison",
       "sha256": "555a2849a4391420738f7edc3fec5525a59a3cb7197826a0b2bf79a1aaf074d3"
+    },
+    {
+      "role": "G2c top-three correction diagnostic compact",
+      "path": "results/task041_review_v6_transfer_and_5nm_24h/g2c_top3_response_correction_20260925T062603Z/g2c_top3_result_compact.json",
+      "sha256": "61ec415cb90ff7768ff0e59d3eb49a4a3b272708a3e7a6a35f08bf7bde6fd03c"
     }
   ],
   "runtime_status": {
-    "complete_formal_5nm_consumer": "not_started",
-    "G2_correction_steps_0_1_2": "executed for Q1/Q2 in r2; step0 Q gates fail, steps1/2 Q and all A4 gates pass",
-    "V5_ledger_entries": 42,
-    "V5_ledger_charged_seconds": 32511.335930633035,
-    "this_snapshot_added_ledger_charge": true,
-    "cross_run_layout_qualification": "passed_for_r2_PC1_Q1_Q2_only",
-    "ledger_added_seconds": 2.000488571,
-    "parallel_performance_qualification": "not_qualified"
+    "complete_formal_5nm_consumer": "G2c one-correction strategy full-eight/formal consumer not_run; historical V6 fixed-eight component results remain separate evidence",
+    "G2_correction_steps_0_1_2": "G2r2 PC1 Q1/Q2 ran steps 0/1/2; G2c top-three responses and 14 frozen-Q replays used one correction",
+    "V5_ledger_entries": 45,
+    "V5_ledger_charged_seconds": 35847.63433988102,
+    "cross_run_layout_qualification": "passed only for G2r2 PC1 Q1/Q2; G2c full/condensed was checked within-run and cross-run was not compared",
+    "parallel_performance_qualification": "not_qualified; concurrent heavy work means no contention-free performance qualification",
+    "latest_doc_refresh_ledger_write": "none; docs/record update only",
+    "initial_v7_snapshot_test_charge_seconds": 2.000488571,
+    "initial_v7_snapshot_added_ledger_charge": true,
+    "initial_v7_snapshot_ledger_added_seconds": 2.000488571,
+    "this_snapshot_added_ledger_charge": false
   },
   "service_time_source": "Controller host systemctl --user show CST readings, converted to UTC; finalizer wall is retained from raw finalizer.",
   "hash_scope": "Only three finalizers, G1 top summary, G2 layout attribution and the existing small layout-test compact are newly bound in evidence_index; no array/shard rehash.",
-  "next_verifiable_action": "Review-only proposal: use one opt-in p4 correction comparison, justified by r2 Q1/Q2 step0-to-step1 reduction, on the already frozen top RHS 12 and associated 493 plus successful 666 control; use manifest identities rather than production column-number rules, leave all other Q unchanged, and compare original e_x/e_A/A4 and cost before deciding any broader policy.",
-  "record_updated_utc": "2026-09-24T15:52:02Z",
+  "next_verifiable_action": "Do not adopt an original-A4-failure-only correction trigger and do not infer a stricter residual cutoff from current samples. Review a minimal G3 optimization in src/solvers/p4_cell_condensed_inverse.py: cache factor-lifetime trace-to-active indices and owner/request communication schedule; retain per-RHS value exchange, cell LU solves and recovery. Prove unchanged values/ownership/collective behavior with existing serial/MPI2 fixtures before considering broader full-eight qualification.",
+  "record_updated_utc": "2026-09-25T08:45:54Z",
   "g2_correction_replay_r2": {
     "scope": "top PC1, two frozen independent inputs Q1/Q2 only",
     "runtime_source_sha": "646c9fff0d08894a8dc634694caa32427bd71707",
@@ -933,5 +1157,350 @@
     },
     "scope": "Initial V7 freeze before G2 layoutfix-r2; not current repository/runtime identity",
     "snapshot_documents_dirty_after_draft": 7
+  },
+  "g2c_response_correction_diagnostic": {
+    "status": "completed_diagnostic_only",
+    "scope": {
+      "columns": [
+        12,
+        493,
+        666
+      ],
+      "frozen_pc_nodes": [
+        1,
+        30,
+        31,
+        32,
+        33,
+        56,
+        57
+      ],
+      "independent_q_replays": 14,
+      "independent_pc_replays": 7,
+      "full_then_release_then_cell_condensed": true,
+      "one_p4_correction_per_call": true
+    },
+    "runtime_source_sha": "c0a077212cc3dd0ed6989ba66ff44ca0a7cbce74",
+    "compact_path": "results/task041_review_v6_transfer_and_5nm_24h/g2c_top3_response_correction_20260925T062603Z/g2c_top3_result_compact.json",
+    "compact_sha256": "61ec415cb90ff7768ff0e59d3eb49a4a3b272708a3e7a6a35f08bf7bde6fd03c",
+    "same_input_and_ph_bytes_equal_for_all_frozen_q": true,
+    "cross_run_component_hash_pass": null,
+    "cross_run_layout_status": "not_compared; full and cell_condensed consistency applies only within this G2c run",
+    "independent_q_pre_correction_q_relative": "not_saved; do not derive from unbound per-call scalar history",
+    "independent_q_post_correction_rows": {
+      "columns": [
+        "pc_index",
+        "q_index",
+        "p4_recovered_relative",
+        "q_relative",
+        "a4_physical_full",
+        "a4_physical_cell_condensed",
+        "a4_augmented_full",
+        "a4_augmented_cell_condensed"
+      ],
+      "same_q_input_and_ph_output_bytes_for_all": true,
+      "correction_steps": 1,
+      "limits": {
+        "q": 1e-11,
+        "a4": 1e-10
+      },
+      "values": [
+        [
+          1,
+          1,
+          3.125408977574808e-14,
+          3.106847415545327e-14,
+          2.7905968335299396e-13,
+          2.8027373660543356e-13,
+          2.785679896995849e-13,
+          2.798423337198374e-13
+        ],
+        [
+          1,
+          2,
+          2.344240418772914e-14,
+          2.338487495703779e-14,
+          2.3620595766931176e-14,
+          2.3811172145020994e-14,
+          2.355322846219823e-14,
+          2.3650086677098484e-14
+        ],
+        [
+          30,
+          1,
+          2.697133479384404e-14,
+          2.6904395603403504e-14,
+          3.034863279378026e-14,
+          3.050126255483184e-14,
+          3.0288327321362906e-14,
+          3.0476022636961235e-14
+        ],
+        [
+          30,
+          2,
+          3.144062749746893e-14,
+          3.141534030612608e-14,
+          1.1035940404334338e-14,
+          1.10703025542009e-14,
+          1.0985766210237252e-14,
+          1.1004819644660958e-14
+        ],
+        [
+          31,
+          1,
+          3.9711242033701456e-14,
+          3.996053037953431e-14,
+          3.572835686521321e-14,
+          3.5911938592982836e-14,
+          3.565733742768245e-14,
+          3.580162753972153e-14
+        ],
+        [
+          31,
+          2,
+          3.566888116146568e-14,
+          3.596888665491808e-14,
+          1.6895981920305744e-14,
+          1.6826854016734047e-14,
+          1.6750828533281464e-14,
+          1.67923365885847e-14
+        ],
+        [
+          32,
+          1,
+          3.384321004042215e-14,
+          3.3809099846691813e-14,
+          3.247602029067409e-14,
+          3.2344306249111834e-14,
+          3.233693079134721e-14,
+          3.226683555607531e-14
+        ],
+        [
+          32,
+          2,
+          2.6164312273470588e-14,
+          2.6353590997378523e-14,
+          1.3185442602031988e-14,
+          1.3206588854499715e-14,
+          1.3112913882178886e-14,
+          1.315530683779686e-14
+        ],
+        [
+          33,
+          1,
+          2.4973299439960212e-14,
+          2.4896984376666135e-14,
+          8.115004171027833e-14,
+          8.11171320577905e-14,
+          8.084815877515425e-14,
+          8.092590250198445e-14
+        ],
+        [
+          33,
+          2,
+          3.786544856347675e-14,
+          3.7662536260336845e-14,
+          6.6578956929961485e-15,
+          6.692152861803851e-15,
+          6.6293087095665334e-15,
+          6.684393317559322e-15
+        ],
+        [
+          56,
+          1,
+          3.117593222976909e-14,
+          3.114622707467374e-14,
+          6.207406453481073e-14,
+          6.200876382807535e-14,
+          6.190019802694673e-14,
+          6.194036261349721e-14
+        ],
+        [
+          56,
+          2,
+          3.143561217368312e-14,
+          3.147761233784542e-14,
+          1.855197001747374e-14,
+          1.8719189599258113e-14,
+          1.846424771069214e-14,
+          1.8625658868663457e-14
+        ],
+        [
+          57,
+          1,
+          2.3667811365632244e-14,
+          2.369137771455721e-14,
+          5.464465848442445e-14,
+          5.498504423552076e-14,
+          5.4531571990835945e-14,
+          5.4851620458542024e-14
+        ],
+        [
+          57,
+          2,
+          2.8150754449186517e-14,
+          2.8342662783772745e-14,
+          1.4551782028918864e-14,
+          1.459310599299852e-14,
+          1.4507055057163758e-14,
+          1.4558831767907408e-14
+        ]
+      ]
+    },
+    "common_gate_maxima": {
+      "q_relative": 3.996053037953431e-14,
+      "q_limit": 1e-11,
+      "pc_relative": 3.844186772718575e-14,
+      "pc_limit": 1e-08,
+      "shared_a4_physical_or_augmented": 2.8027375355266255e-13,
+      "a4_limit": 1e-10,
+      "side_residual_relative": 0.009453705395961444,
+      "side_limit": 0.01
+    },
+    "free_trajectory_pc_relative_max": 2.75725e-06,
+    "free_trajectory_common_gate_applicable": false,
+    "response_results": [
+      {
+        "column": 12,
+        "manifest_ordinal": 5,
+        "iterations_full_cell_condensed": [
+          57,
+          57
+        ],
+        "e_x": 1.4318417426450893e-09,
+        "e_A": 3.886608788135826e-09,
+        "side_residual_full": 0.00938704716188584,
+        "side_residual_cell_condensed": 0.009387047161899385,
+        "response_wall_max_rank_full_seconds": 290.4609601510165,
+        "response_wall_max_rank_cell_condensed_seconds": 329.03119971900014
+      },
+      {
+        "column": 493,
+        "manifest_ordinal": 7,
+        "iterations_full_cell_condensed": [
+          57,
+          57
+        ],
+        "e_x": 1.358542624664209e-09,
+        "e_A": 3.6875523761831136e-09,
+        "side_residual_full": 0.009387047156910886,
+        "side_residual_cell_condensed": 0.009387047156843999,
+        "response_wall_max_rank_full_seconds": 284.8370841630094,
+        "response_wall_max_rank_cell_condensed_seconds": 320.62788094501593
+      },
+      {
+        "column": 666,
+        "manifest_ordinal": 6,
+        "iterations_full_cell_condensed": [
+          17,
+          17
+        ],
+        "e_x": 1.8635858341897108e-13,
+        "e_A": 9.030847922606297e-14,
+        "side_residual_full": 0.009453705395961444,
+        "side_residual_cell_condensed": 0.00945370539596132,
+        "response_wall_max_rank_full_seconds": 84.99945032200776,
+        "response_wall_max_rank_cell_condensed_seconds": 95.60250864500995
+      }
+    ],
+    "response_wall_max_rank_seconds": {
+      "full_sum": 660.297494636,
+      "cell_condensed_sum": 745.261589309,
+      "condensed_minus_full": 84.964094673,
+      "condensed_relative_slowdown": 0.1287
+    },
+    "correction_trigger_audit": {
+      "p4_calls_total": 524,
+      "calls_with_both_original_a4_gates_passed_at_step0": 521,
+      "calls_with_physical_gate_failed_at_step0": 3,
+      "calls_with_augmented_gate_failed_at_step0": 0,
+      "one_correction_run_for_all_calls": 524,
+      "all_step1_physical_gates_passed": true,
+      "therefore_original_a4_failure_only_trigger_is_inadequate": true,
+      "three_step0_physical_outliers": [
+        {
+          "backend": "cell_condensed",
+          "column": 12,
+          "call_index": 1,
+          "physical_relative": 1.069080708157395e-10,
+          "augmented_gate_pass": true,
+          "step1_physical_relative": 2.8027375355266255e-13
+        },
+        {
+          "backend": "cell_condensed",
+          "column": 493,
+          "call_index": 1,
+          "physical_relative": 1.0425977368832555e-10,
+          "augmented_gate_pass": true,
+          "step1_physical_relative": 2.795126174733129e-13
+        },
+        {
+          "backend": "full",
+          "column": 12,
+          "call_index": 1,
+          "physical_relative": 1.3844823493314017e-10,
+          "augmented_relative": 7.925966689663366e-11,
+          "step1_physical_relative": 2.7905968335299396e-13
+        }
+      ],
+      "stricter_residual_threshold_interval": "unknown; G1/G2r2 Q failures occur while original A4 gates pass, including G2r2 Q2 at about 4.9e-12 A4",
+      "adopted_policy": "none; original-gate-only trigger rejected, no new cutoff inferred"
+    },
+    "correction_cost": {
+      "p4_calls_per_backend": 262,
+      "correction_backsolves_per_backend": 262,
+      "total_backsolves": 524,
+      "rank0_correction_seconds_full": 64.99234533734852,
+      "rank0_correction_seconds_cell_condensed": 110.59777569724245,
+      "cell_condensed_reduction_plus_recovery_max_rank_seconds_by_column": {
+        "12": 36.74733589333482,
+        "493": 36.47491873119725,
+        "666": 10.779591339233056
+      },
+      "reduction_seconds_sum": 22.6686896459,
+      "recovery_seconds_sum": 61.3331563179,
+      "reduction_plus_recovery_sum_seconds": 84.0018459638,
+      "timing_scope": "nested inside response wall; theoretical upper bound only, do not add twice"
+    },
+    "service_and_resources": {
+      "unit": "task041-g2c-5nm-top3-response-correction-20260925.service",
+      "invocation_id": "71fb0d0cdbda4ddf99f29f42fd2241c0",
+      "main_pid": 402047,
+      "public_runroot": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260925T063810.285517Z",
+      "supervision_root": "results/task041_review_v6_transfer_and_5nm_24h/g2c_top3_response_correction_20260925T062603Z",
+      "service_result": "success",
+      "exit_status": 0,
+      "finalizer_status": "completed",
+      "process_group_gone": true,
+      "finalizer_checks_pass": true,
+      "authority_tree_peak_bytes": 42588479488,
+      "dedicated_cgroup_peak_bytes": 40596865024,
+      "rss_cap_bytes": 53221163008,
+      "warning_bytes": 47899046707,
+      "warning_reached": false,
+      "maximum_swap_bytes": 0,
+      "global_swap_used_bytes_at_final_sample": 0,
+      "pswpin_pages_at_final_sample": 0,
+      "pswpout_pages_at_final_sample": 0,
+      "concurrent_heavy_jobs_present": true,
+      "user_authorized_disjoint_cpu_parallelism": true,
+      "performance_qualification": "not_qualified_contention_free",
+      "ledger_added_once_seconds": 3315.690725968,
+      "ledger_entries_after": 45,
+      "ledger_charged_seconds_after": 35847.63433988102,
+      "main_pid_after_exit": 0,
+      "consumer_phase_wall_seconds": 3310.3574755429872,
+      "outer_phase_wall_seconds": 3314.841905841022,
+      "service_unit_elapsed_seconds": 3315.690725968,
+      "minimum_host_memavailable_bytes": 987666657280,
+      "host_memavailable_reserve_bytes": 412316860416,
+      "public_validator_checks_count": 25,
+      "public_validator_all_checks_pass": true
+    },
+    "qualification_pass": false,
+    "qualification_semantics": "diagnostic completion and all tested action gates pass; not full fixed-eight or full 5nm qualification",
+    "full_eight_rhs_formal_schur_outer_rta_eh": "not_run",
+    "frozen_input_producer_source_sha": "c0a077212cc3dd0ed6989ba66ff44ca0a7cbce74",
+    "qep_source_sha": "b01a5932e4dfaf895e81e0424e0dd88c276fb0d3"
   }
 }

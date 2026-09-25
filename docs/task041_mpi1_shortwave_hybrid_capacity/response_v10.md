@@ -1,18 +1,25 @@
 # Task041 Review V7 进度快照
 
-> **进度快照；V7 未完成。G2 layoutfix-r2 已完成 Q1/Q2 的 0/1/2 修正诊断；r2及新修正策略下的 PC action/side.apply 与完整正式 5 nm consumer 未运行。G1 原独立 PC 7/7 通过仍成立。**
+**不是结项。** 最近的G2c是显式三条顶部响应诊断；G2c的一修正策略未运行完整固定八项consumer、正式Schur、outer/RTA/EH或全场。V6历史fixed-eight组件结果另行保留，不与G2c策略资格混同。Q表示粗层校正，p4恢复回到原有限元自由度，A4是原方程残差检查。
 
-这里的 Q 是粗层校正；p4 恢复是把粗层结果解回原有限元自由度；A4 是用原方程检查残差。
+## 已测结果
 
-本次文档更新前仓库 HEAD：分支 `codex/20260902-task41-mpi1-shortwave-hybrid-capacity`，HEAD `3bcf00527b3b2440a66792e079c6667cb30aec2d`，upstream 同 SHA、ahead/behind `0/0`、clean。V7 初始快照 HEAD `6d27033e89646692e7f41e779ed65032a26b9967` 保留作历史；该 SHA 与 validator-only 提交均未用于 r2 数值运行，各运行 source SHA 见 record。
+G1在列12/493/666上检查7个冻结PC节点、14次同输入Q。14次输入与PH输出都逐字节一致；Q差`4.4621e-11–5.2173e-11`，超过原`1e-11`限值，而所有physical/augmented A4低于原`1e-10`门。G1没有执行修正；根因仍未证明。G2r2对PC1的Q1/Q2做0/1/2步骤：step0 Q差分别`4.8268e-11`、`5.1937e-11`且A4门均通过；step1后分别降至`2.9155e-14`、`3.3070e-14`，step2保持通过。
 
-| 阶段 | 结果 | 边界 |
-|---|---|---|
-| G1 顶部因果诊断 | 14 项独立 Q 输入与 PH 输出逐字节一致，首次差异位于 p4 恢复；Q 差 `4.462076935295908e-11`–`5.217215402500894e-11`，原限值 `1e-11`，全失败。独立 PC 7/7 通过 `1e-8`。 | 原 A4 复核通过不替代 Q 门；根因未证明。 |
-| G2 三场 | 首次 setup 缺布局采集字段；layoutfix-r1 stable-layout admission 报差异；layoutfix-r2 与 G1 冻结布局匹配，并对 PC1 的 Q1/Q2 实际运行 0/1/2 修正。 | Q1/Q2 的 step0 超 `1e-11`，step1/2 通过；原用户服务仍因 public lifecycle schema 错读以 ExecMainStatus 3 结束。修正 validator 的只读重校验五项全真、诊断 complete，`qualification_pass=false` 仍表示非正式资格。 |
+G2c运行源码SHA为`c0a077212cc3dd0ed6989ba66ff44ca0a7cbce74`，仅覆盖顶部列12/493/666。三列`e_x/e_A`都低于原`1e-8`门；14个冻结Q回放、7个PC回放及共同A4门均通过。最大共同输入Q差`3.9961e-14`（限`1e-11`），PC差`3.8442e-14`（限`1e-8`），A4 physical/augmented最大`2.8028e-13`（限`1e-10`）。自由轨迹PC差`2.75725e-6`来自输入分叉，gate不适用。
 
-四次 G1/G2 服务均已退出：用户服务状态 failed、Result `exit-code`、ExecMainStatus `3`、MainPID `0`。起止时间取自主控宿主 `systemctl --user show` 的 CST 读数并换算为 UTC；精确 wall 仍引用原 finalizer。G2 tree/authority 峰依次为 `38718169088 B`、`39235481600 B`、`43820285952 B`；r2 cgroup peak `41557790720 B`，cap `53221163008 B`、swap `0 B`。r2 的 worker correction action gates 通过，但 public 的 backend lifecycle 字段路径最初不匹配；修正后只读 `_consumer_result` 重校验通过。该次与 Task39extra 并行，性能不资格化。细节见[中心 outcome](outcomes/causal_fix_5nm_v7.md)和[机器记录](outcomes/records/task041_v7_causal_fix_5nm.json)。
+| 代表响应 | `e_x/e_A` | 迭代 full/condensed | 响应 wall full/condensed |
+|---|---:|---:|---:|
+| 列12 | `1.43184e-9/3.88661e-9` | 57/57 | `290.461/329.031 s` |
+| 列493 | `1.35854e-9/3.68755e-9` | 57/57 | `284.837/320.628 s` |
+| 列666 | `1.86359e-13/9.03085e-14` | 17/17 | `84.999/95.603 s` |
 
-layoutfix-r2 的稳定布局身份门已通过；旧 r1 未持久化的组件差异仍保留为历史证据，不能用合成测试的 dofmap 变化解释。G1 的冻结输入 producer source 为 `e2965ee25e56220d1623afe4dd221612542c2764`；QEP producer source 是独立的 `b01a5932e4dfaf895e81e0424e0dd88c276fb0d3`。完整 5 nm consumer，以及 r2 和新修正策略下的 PC action/side.apply、Schur、outer/RTA/EH 未运行；G1 原独立 PC 7/7 通过。并行场景不作性能资格。
+三条响应 full 合计`660.297 s`、condensed`745.262 s`；本场凝聚慢`84.964 s`，不能宣称提速。524个P4调用中，521个step0的原physical和augmented A4门都通过，仍执行了单次修正；另3个仅physical略超限；524个step1均通过。因此“只在原A4门失败时修正”不适用。现有数据也不足以支持更严的新残差阈值。
 
-本次 Q/A4 分步实值、服务退出边界、只读合同重校验和测试账单见[中心 outcome](outcomes/causal_fix_5nm_v7.md)及[机器记录](outcomes/records/task041_v7_causal_fix_5nm.json)。
+G2c service正常完成、finalizer清场/检查通过、swap为0；authority/tree峰`42,588,479,488 B`，硬cap`53,221,163,008 B`。finalizer只追加一次`3315.690725968 s`，V5账本当前45条、`35847.63433988102 s`。用户允许隔离CPU并行，但本场与邻heavy并行，性能不作为无竞争资格。worker/public诊断检查通过，`qualification_pass=false`表示诊断尚未取得完整资格，不代表动作门失败。旧G1/G2r2负证据和r2原service exit3均保留。
+
+## 下一步
+
+优先评审一个G3局部热点：在`src/solvers/p4_cell_condensed_inverse.py`因子生命周期内缓存稳定的trace→active索引和owner/request通信计划；保留每次RHS必需的数据交换、LU求解和回代。三列现有缩减+恢复区间合计`84.002 s`只是理论节省上界，实际收益未知。先以已有fixture和serial/MPI2核对，不微基准、不跑FE。
+
+修正策略继续显式opt-in；不采纳原A4失败才修正，也不推导新阈值。下一次数值资格工作需另行审核，不能把G2c三列外推为完整八项或正式全场通过。逐节点A4/Q/p4差、G2阶段表、资源及证据索引见[中心outcome](outcomes/causal_fix_5nm_v7.md)和[机器record](outcomes/records/task041_v7_causal_fix_5nm.json)。
