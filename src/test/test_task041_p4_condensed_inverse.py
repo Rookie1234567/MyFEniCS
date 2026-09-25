@@ -949,6 +949,33 @@ def test_production_apply_shared_fixture_covers_rhs_and_recovery_contract(
         "opt-in changed appended off-diagonal preallocation",
     )
     inverse = _inverse_for(fixture)
+    plan_arrays = (
+        inverse._active_offsets,
+        inverse._owned_active_local_indices,
+        *inverse._active_request_rows_by_owner,
+        *inverse._active_request_rows_from_rank,
+    )
+    plan_array_ids = tuple(id(array) for array in plan_arrays)
+    plan_nbytes = sum(array.nbytes for array in plan_arrays)
+    plan_is_valid = (
+        inverse.active_exchange_plan_nbytes == plan_nbytes
+        and plan_nbytes == (64 if fixture.size == 1 else 104)
+        and all(array.dtype == np.dtype(np.int64) for array in plan_arrays)
+        and all(not array.flags.writeable for array in plan_arrays)
+    )
+    _assert_collective_condition(
+        fixture.comm,
+        plan_is_valid,
+        "cached active exchange plan is invalid",
+    )
+    remote_requests = sum(
+        len(rows)
+        for owner, rows in enumerate(inverse._active_request_rows_by_owner)
+        if owner != fixture.comm.rank
+    )
+    remote_requests_total = fixture.comm.allreduce(remote_requests, op=MPI.SUM)
+    assert (remote_requests_total > 0) == (fixture.size > 1)
+    del plan_arrays
     payload_a = _payload(
         gi_by_rank=fixture.gi_a,
         gt=fixture.gt_a,
@@ -1046,6 +1073,22 @@ def test_production_apply_shared_fixture_covers_rhs_and_recovery_contract(
         assert inverse.solve_count == factor_count_before_zero
         assert fixture.factor.solve_count == inverse.solve_count
         assert inverse.solve_count == 6
+        current_plan_arrays = (
+            inverse._active_offsets,
+            inverse._owned_active_local_indices,
+            *inverse._active_request_rows_by_owner,
+            *inverse._active_request_rows_from_rank,
+        )
+        plan_is_unchanged = (
+            tuple(id(array) for array in current_plan_arrays) == plan_array_ids
+            and inverse.active_exchange_plan_nbytes == plan_nbytes
+        )
+        del current_plan_arrays
+        _assert_collective_condition(
+            fixture.comm,
+            plan_is_unchanged,
+            "active exchange plan changed across RHS applications",
+        )
         assert fixture.preallocation_audit["new_nonzero_allocation_error_enabled"]
         assert (
             fixture.preallocation_audit["appended_support_include_group_rows"]
@@ -1104,6 +1147,16 @@ def test_production_apply_shared_fixture_covers_rhs_and_recovery_contract(
             )
     finally:
         inverse.destroy()
+    plan_released = (
+        inverse.active_exchange_plan_nbytes == 0
+        and inverse._active_request_rows_by_owner == ()
+        and inverse._active_request_rows_from_rank == ()
+    )
+    _assert_collective_condition(
+        fixture.comm,
+        plan_released,
+        "active exchange plan remained after destroy",
+    )
 
 
 @pytest.mark.skipif(MPI.COMM_WORLD.size != 2, reason="requires MPI2")
@@ -1125,6 +1178,27 @@ def test_production_apply_empty_owner_uses_same_fixture(n_ports: int) -> None:
     assert layout[1][3] == n_ports
     assert fixture.preallocation_audit["new_nonzero_allocation_error_enabled"]
     inverse = _inverse_for(fixture)
+    plan_arrays = (
+        inverse._active_offsets,
+        inverse._owned_active_local_indices,
+        *inverse._active_request_rows_by_owner,
+        *inverse._active_request_rows_from_rank,
+    )
+    plan_is_valid = (
+        inverse._owned_active_local_indices.size
+        == int(fixture.system.owned_active_rows)
+        and inverse.active_exchange_plan_nbytes
+        == sum(array.nbytes for array in plan_arrays)
+        and inverse.active_exchange_plan_nbytes
+        == (24 if fixture.comm.rank == 0 else 72)
+        and all(not array.flags.writeable for array in plan_arrays)
+    )
+    _assert_collective_condition(
+        fixture.comm,
+        plan_is_valid,
+        "empty-owner cached plan does not match local ownership",
+    )
+    del plan_arrays
     payload = _payload(
         gi_by_rank=fixture.gi_a,
         gt=fixture.gt_a,
@@ -1139,6 +1213,11 @@ def test_production_apply_empty_owner_uses_same_fixture(n_ports: int) -> None:
         )
     finally:
         inverse.destroy()
+    _assert_collective_condition(
+        fixture.comm,
+        inverse.active_exchange_plan_nbytes == 0,
+        "empty-owner active exchange plan remained after destroy",
+    )
 
 
 @pytest.mark.parametrize(
@@ -1198,6 +1277,16 @@ def test_borrowed_factor_and_condensed_are_not_destroyed() -> None:
     try:
         borrowed.destroy()
         borrowed.destroy()
+        cache_released = (
+            borrowed.active_exchange_plan_nbytes == 0
+            and borrowed._active_request_rows_by_owner == ()
+            and borrowed._active_request_rows_from_rank == ()
+        )
+        _assert_collective_condition(
+            fixture.comm,
+            cache_released,
+            "borrowed inverse retained its active exchange plan",
+        )
         assert not fixture.factor.destroyed
         assert fixture.system.matrix.getSize() == (
             fixture.active_rows + 1,

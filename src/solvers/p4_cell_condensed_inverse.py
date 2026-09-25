@@ -445,53 +445,44 @@ def _collective_errors(comm, local_error: str | None, context: str) -> None:
 
 def _exchange_active_values(
     comm,
-    active_counts: tuple[int, ...],
     owned_values: np.ndarray,
-    requested: np.ndarray,
+    active_offsets: np.ndarray,
+    requested_rows_by_owner: tuple[np.ndarray, ...],
+    requested_rows_from_rank: tuple[np.ndarray, ...],
 ) -> dict[int, complex]:
-    """Exchange only requested active trace values by their owning rank."""
+    """Exchange fresh values over the inverse's fixed owner/request plan."""
 
-    offsets = np.concatenate(([0], np.cumsum(np.asarray(active_counts, dtype=np.int64))) )
-    active_rows = int(offsets[-1])
-    requested = np.unique(np.asarray(requested, dtype=np.int64))
-    local_start = int(offsets[comm.rank])
-    local_end = int(offsets[comm.rank + 1])
-    local_error = None
-    if len(requested) and (
-        int(requested.min()) < 0 or int(requested.max()) >= active_rows
-    ):
-        local_error = "requested active trace row is out of range"
-    elif len(owned_values) != local_end - local_start:
+    local_start = int(active_offsets[comm.rank])
+    local_end = int(active_offsets[comm.rank + 1])
+    if len(owned_values) != local_end - local_start:
         local_error = "active solution local ownership does not match condensed metadata"
-    _collective_errors(comm, local_error, "active-trace request validation failed")
-    send_requests: list[list[int]] = [[] for _rank in range(comm.size)]
-    for row in requested:
-        owner = int(np.searchsorted(offsets[1:], int(row), side="right"))
-        send_requests[owner].append(int(row))
-    received_requests = comm.alltoall(send_requests)
-    send_values: list[list[tuple[int, complex]]] = [[] for _rank in range(comm.size)]
-    local_error = None
-    for source, rows in enumerate(received_requests):
-        values = []
-        for row in rows:
-            if row < local_start or row >= local_end:
-                local_error = "owner exchange routed an active row to the wrong rank"
-                break
-            values.append((int(row), complex(owned_values[row - local_start])))
-        if local_error is not None:
-            break
-        send_values[source] = values
-    _collective_errors(comm, local_error, "active-trace owner request validation failed")
-    received_values = comm.alltoall(send_values)
-    result: dict[int, complex] = {}
-    for packet in received_values:
-        for row, value in packet:
-            result[int(row)] = complex(value)
-    if len(result) != len(requested):
-        missing = sorted(set(map(int, requested)) - set(result))
-        local_error = f"owner exchange missed active rows {missing[:8]}"
     else:
         local_error = None
+    _collective_errors(comm, local_error, "active-trace request validation failed")
+    send_values: list[list[tuple[int, complex]]] = [[] for _rank in range(comm.size)]
+    for source, rows in enumerate(requested_rows_from_rank):
+        send_values[source] = [
+            (int(row), complex(owned_values[int(row) - local_start]))
+            for row in rows
+        ]
+    received_values = comm.alltoall(send_values)
+    result: dict[int, complex] = {}
+    local_error = None
+    for owner, packets in enumerate(received_values):
+        expected_rows = requested_rows_by_owner[owner]
+        if len(packets) != len(expected_rows):
+            local_error = f"owner exchange returned an unexpected row count from rank {owner}"
+            break
+        for (row, value), expected in zip(packets, expected_rows, strict=True):
+            if int(row) != int(expected):
+                local_error = f"owner exchange returned an unexpected row from rank {owner}"
+                break
+            result[int(row)] = complex(value)
+        if local_error is not None:
+            break
+    expected_count = sum(len(rows) for rows in requested_rows_by_owner)
+    if local_error is None and len(result) != expected_count:
+        local_error = f"owner exchange missed {expected_count - len(result)} requested active rows"
     _collective_errors(comm, local_error, "distributed active-trace exchange failed")
     return result
 
@@ -533,6 +524,12 @@ class P4CellCondensedInverse:
         self.active_counts = tuple(
             int(value) for value in condensed.comm.allgather(condensed.owned_active_rows)
         )
+        self._active_offsets = np.concatenate(
+            (
+                np.asarray([0], dtype=np.int64),
+                np.cumsum(np.asarray(self.active_counts, dtype=np.int64)),
+            )
+        )
         owned_active_original = {
             int(active)
             for active in condensed.trace_constraints.owned_active_original_dofs
@@ -545,9 +542,124 @@ class P4CellCondensedInverse:
             ],
             dtype=PETSc.IntType,
         )
+        self._initialize_active_exchange_plan()
         self._xiB_by_cell: dict[int, np.ndarray] = {}
         for index, cell in enumerate(condensed.cell_recovery_maps):
             self._port_data(index, cell)
+
+    def _initialize_active_exchange_plan(self) -> None:
+        """Cache immutable owned indices and trace-row owner routes for this factor."""
+
+        system = self.condensed
+        comm = system.comm
+        local_error = None
+        owned_indices = np.empty(0, dtype=np.int64)
+        requests_by_owner: tuple[np.ndarray, ...] = ()
+        try:
+            if len(self.active_counts) != comm.size:
+                raise ValueError("active row counts do not match communicator size")
+            active_original = np.asarray(
+                system.trace_constraints.owned_active_original_dofs,
+                dtype=PETSc.IntType,
+            )
+            local_start = int(self._active_offsets[comm.rank])
+            local_end = int(self._active_offsets[comm.rank + 1])
+            if len(active_original) != int(system.owned_active_rows):
+                raise ValueError("owned active IDs do not match local condensed rows")
+            if local_end - local_start != int(system.owned_active_rows):
+                raise ValueError("active ownership counts do not match local condensed rows")
+            active_ids = np.asarray(
+                [
+                    system.trace_constraints.original_to_active[int(original)]
+                    for original in active_original
+                ],
+                dtype=np.int64,
+            )
+            owned_indices = active_ids - local_start
+            if len(owned_indices) and (
+                int(owned_indices.min()) < 0
+                or int(owned_indices.max()) >= int(system.owned_active_rows)
+            ):
+                raise ValueError("owned active solution mapping is not local")
+
+            requested = np.fromiter(
+                (
+                    int(active)
+                    for cell in system.cell_recovery_maps
+                    for original in cell.trace_original_dofs
+                    for active in system.trace_constraints.expansion_by_original[
+                        int(original)
+                    ][0]
+                ),
+                dtype=np.int64,
+            )
+            requested = np.unique(requested)
+            if len(requested) and (
+                int(requested.min()) < 0
+                or int(requested.max()) >= int(self._active_offsets[-1])
+            ):
+                raise ValueError("requested active trace row is out of range")
+            owners = np.searchsorted(
+                self._active_offsets[1:],
+                requested,
+                side="right",
+            )
+            requests_by_owner = tuple(
+                np.asarray(requested[owners == owner], dtype=np.int64)
+                for owner in range(comm.size)
+            )
+        except Exception as error:  # noqa: BLE001
+            local_error = f"{type(error).__name__}: {error}"
+        _collective_errors(
+            comm,
+            local_error,
+            "active-trace communication plan construction failed",
+        )
+
+        received_requests = comm.alltoall(
+            [rows.tolist() for rows in requests_by_owner]
+        )
+        local_start = int(self._active_offsets[comm.rank])
+        local_end = int(self._active_offsets[comm.rank + 1])
+        local_error = None
+        requests_from_rank: tuple[np.ndarray, ...] = ()
+        try:
+            incoming = []
+            for rows in received_requests:
+                requested_rows = np.asarray(rows, dtype=np.int64)
+                if len(requested_rows) and (
+                    int(requested_rows.min()) < local_start
+                    or int(requested_rows.max()) >= local_end
+                ):
+                    raise ValueError("owner request was routed outside local active rows")
+                requested_rows.setflags(write=False)
+                incoming.append(requested_rows)
+            requests_from_rank = tuple(incoming)
+        except Exception as error:  # noqa: BLE001
+            local_error = f"{type(error).__name__}: {error}"
+        _collective_errors(
+            comm,
+            local_error,
+            "active-trace communication plan ownership failed",
+        )
+
+        self._active_offsets.setflags(write=False)
+        owned_indices.setflags(write=False)
+        for rows in requests_by_owner:
+            rows.setflags(write=False)
+        self._owned_active_local_indices = owned_indices
+        self._active_request_rows_by_owner = requests_by_owner
+        self._active_request_rows_from_rank = requests_from_rank
+        # Exact NumPy integer-buffer bytes; Python tuple/object headers are excluded.
+        self.active_exchange_plan_nbytes = sum(
+            array.nbytes
+            for array in (
+                self._active_offsets,
+                self._owned_active_local_indices,
+                *self._active_request_rows_by_owner,
+                *self._active_request_rows_from_rank,
+            )
+        )
 
     def _port_data(self, index: int, cell: Any) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         term = self.port_terms.get(int(index))
@@ -644,25 +756,13 @@ class P4CellCondensedInverse:
             local_error,
             "p4 port RHS ownership validation failed",
         )
-        active_indices = np.empty(0, dtype=np.int64)
-        local_error = None
-        try:
-            if len(active_original):
-                active_indices = self._owned_active_indices(active_original)
-        except Exception as error:  # noqa: BLE001
-            local_error = f"{type(error).__name__}: {error}"
-        _collective_errors(
-            system.comm,
-            local_error,
-            "p4 active RHS ownership mapping failed",
-        )
         reduced = system.create_augmented_vector()
         if len(active_original):
             active_local = np.zeros(
                 int(system.owned_active_rows),
                 dtype=np.complex128,
             )
-            active_local[active_indices] = active_values
+            active_local[self._owned_active_local_indices] = active_values
             reduced.getArray()[: int(system.owned_active_rows)] = active_local
         if local_appended:
             reduced.getArray()[
@@ -730,49 +830,29 @@ class P4CellCondensedInverse:
         values = np.asarray(solution.getArray(readonly=True), dtype=np.complex128)
         if len(values) < local_size:
             raise ValueError("factor solution has fewer entries than owned active rows")
-        requested: list[int] = []
-        for cell in self.condensed.cell_recovery_maps:
-            for original in cell.trace_original_dofs:
-                ids, _coefficients = self.condensed.trace_constraints.expansion_by_original[int(original)]
-                requested.extend(map(int, ids))
         return _exchange_active_values(
             self.condensed.comm,
-            self.active_counts,
             values[:local_size],
-            np.asarray(requested, dtype=np.int64),
+            self._active_offsets,
+            self._active_request_rows_by_owner,
+            self._active_request_rows_from_rank,
         )
 
     def _owned_active_solution(
         self,
         solution: PETSc.Vec,
-        active_original: np.ndarray,
     ) -> np.ndarray:
         """Read owned solution entries using the explicit original-to-active map."""
 
-        local_indices = self._owned_active_indices(active_original)
         local_size = int(self.condensed.owned_active_rows)
         values = np.asarray(solution.getArray(readonly=True), dtype=np.complex128)
         if len(values) < local_size:
             raise ValueError("factor solution has fewer entries than owned active rows")
-        return np.array(values[local_indices], dtype=np.complex128, copy=True)
-
-    def _owned_active_indices(self, active_original: np.ndarray) -> np.ndarray:
-        active_ids = np.asarray(
-            [
-                self.condensed.trace_constraints.original_to_active[int(original)]
-                for original in active_original
-            ],
-            dtype=np.int64,
+        return np.array(
+            values[self._owned_active_local_indices],
+            dtype=np.complex128,
+            copy=True,
         )
-        active_start = int(sum(self.active_counts[: self.condensed.comm.rank]))
-        local_indices = active_ids - active_start
-        local_size = int(self.condensed.owned_active_rows)
-        if len(local_indices) and (
-            int(local_indices.min()) < 0
-            or int(local_indices.max()) >= local_size
-        ):
-            raise ValueError("owned active solution mapping is not local")
-        return local_indices
 
     def _port_solution(self, solution: PETSc.Vec) -> np.ndarray:
         appended = int(self.condensed.appended_rows)
@@ -906,7 +986,7 @@ class P4CellCondensedInverse:
                     _write_local_rows(
                         result,
                         active_original,
-                        self._owned_active_solution(solution, active_original),
+                        self._owned_active_solution(solution),
                         "active solution",
                     )
                 for index, cell in enumerate(self.condensed.cell_recovery_maps):
@@ -1010,6 +1090,11 @@ class P4CellCondensedInverse:
             cleanup_error = error
         finally:
             self._xiB_by_cell.clear()
+            self._active_offsets = np.empty(0, dtype=np.int64)
+            self._owned_active_local_indices = np.empty(0, dtype=np.int64)
+            self._active_request_rows_by_owner = ()
+            self._active_request_rows_from_rank = ()
+            self.active_exchange_plan_nbytes = 0
             if self.owns_condensed and condensed is not None:
                 for cache in (
                     condensed.interior_from_trace_by_class,
