@@ -217,9 +217,12 @@ class _IdentityP4:
         del residual_tolerance, diagnostic_audit
         self.last_diagnostic_kwargs = dict(diagnostic_kwargs)
         correction_steps = int(diagnostic_kwargs.get("diagnostic_correction_steps", 0))
+        target_tolerance = diagnostic_kwargs.get("refinement_target_tolerance")
+        target_mode = target_tolerance is not None
         correction_callback = diagnostic_kwargs.get("diagnostic_callback")
         rhs.copy(solution)
         self.solve_count += 1 + correction_steps
+        recorded_steps = correction_steps + 1 if correction_steps else int(target_mode)
         self.last_solve = {
             "backsolve_count": 1 + correction_steps,
             "refinement_count": correction_steps,
@@ -229,7 +232,9 @@ class _IdentityP4:
                 {
                     "diagnostic_step_index": step,
                     "diagnostic_correction_count": step,
-                    "diagnostic_correction_limit": correction_steps,
+                    "diagnostic_correction_limit": (
+                        2 if target_mode else correction_steps
+                    ),
                     "backsolve_count": step + 1,
                     "refinement_count": step,
                     "status": "passed",
@@ -241,9 +246,32 @@ class _IdentityP4:
                     "augmented_gate_passed": True,
                     "correction_from_previous_seconds": 0.001 * step,
                     "factor_solve_seconds_for_state": 0.001,
+                    **(
+                        {
+                            "refinement_target_tolerance": float(target_tolerance),
+                            "target_reached": True,
+                            "stop_reason": "target_reached",
+                            "actual_correction_count": 0,
+                        }
+                        if target_mode
+                        else {}
+                    ),
                 }
-                for step in range(correction_steps + 1)
-            ] if correction_steps else [],
+                for step in range(recorded_steps)
+            ],
+            **(
+                {
+                    "refinement_target_tolerance": float(target_tolerance),
+                    "target_reached": True,
+                    "stop_reason": "target_reached",
+                    "actual_correction_count": 0,
+                    "status": "passed",
+                    "physical_gate_passed": True,
+                    "augmented_gate_passed": True,
+                }
+                if target_mode
+                else {}
+            ),
         }
         if correction_steps and correction_callback is not None:
             for step in range(correction_steps + 1):
@@ -307,9 +335,12 @@ class _CellCondensedP4:
         self.apply_count += 1
         self.last_diagnostic_kwargs = dict(diagnostic_kwargs)
         correction_steps = int(diagnostic_kwargs.get("diagnostic_correction_steps", 0))
+        target_tolerance = diagnostic_kwargs.get("refinement_target_tolerance")
+        target_mode = target_tolerance is not None
         correction_callback = diagnostic_kwargs.get("diagnostic_callback")
         self.solve_count += 1 + correction_steps
         self.last_physical_rhs_norm = float(source.norm())
+        recorded_steps = correction_steps + 1 if correction_steps else int(target_mode)
         self.last_solve = {
             "backsolve_count": 1 + correction_steps,
             "refinement_count": correction_steps,
@@ -319,7 +350,9 @@ class _CellCondensedP4:
                 {
                     "diagnostic_step_index": step,
                     "diagnostic_correction_count": step,
-                    "diagnostic_correction_limit": correction_steps,
+                    "diagnostic_correction_limit": (
+                        2 if target_mode else correction_steps
+                    ),
                     "backsolve_count": step + 1,
                     "refinement_count": step,
                     "status": "passed",
@@ -331,9 +364,32 @@ class _CellCondensedP4:
                     "augmented_gate_passed": True,
                     "correction_from_previous_seconds": 0.001 * step,
                     "factor_solve_seconds_for_state": 0.001,
+                    **(
+                        {
+                            "refinement_target_tolerance": float(target_tolerance),
+                            "target_reached": True,
+                            "stop_reason": "target_reached",
+                            "actual_correction_count": 0,
+                        }
+                        if target_mode
+                        else {}
+                    ),
                 }
-                for step in range(correction_steps + 1)
-            ] if correction_steps else [],
+                for step in range(recorded_steps)
+            ],
+            **(
+                {
+                    "refinement_target_tolerance": float(target_tolerance),
+                    "target_reached": True,
+                    "stop_reason": "target_reached",
+                    "actual_correction_count": 0,
+                    "status": "passed",
+                    "physical_gate_passed": True,
+                    "augmented_gate_passed": True,
+                }
+                if target_mode
+                else {}
+            ),
         }
         self.last_timing = {
             "storage_rhs_reduction_seconds": 1.0e-4,
@@ -455,11 +511,13 @@ class _DenseBlockSolve:
         *,
         perturb_fe: complex = 0.0 + 0.0j,
         nonfinite_first_fe: bool = False,
+        correction_scales: tuple[float, ...] = (),
     ) -> None:
         self.block = np.asarray(block, dtype=np.complex128)
         self.perturb_port = complex(perturb_port)
         self.perturb_fe = complex(perturb_fe)
         self.nonfinite_first_fe = bool(nonfinite_first_fe)
+        self.correction_scales = tuple(float(value) for value in correction_scales)
         self.solve_count = 0
         self.destroy_count = 0
         self.last_result: PETSc.Vec | None = None
@@ -476,6 +534,12 @@ class _DenseBlockSolve:
     def _solve(self, rhs: np.ndarray) -> np.ndarray:
         self.solve_count += 1
         values = np.linalg.solve(self.block, rhs)
+        if self.solve_count > 1 and self.correction_scales:
+            correction_index = min(
+                self.solve_count - 2,
+                len(self.correction_scales) - 1,
+            )
+            values *= self.correction_scales[correction_index]
         if self.solve_count == 1:
             values[-1] += self.perturb_port
             values[0] += self.perturb_fe
@@ -614,6 +678,7 @@ def _g2a_p4_fixture(
     perturb_initial_port: bool = True,
     perturb_initial_fe: complex = 0.0 + 0.0j,
     nonfinite_first_fe: bool = False,
+    correction_scales: tuple[float, ...] = (),
 ):
     A0 = np.asarray(
         [[3.2 + 0.4j, 0.7 - 0.2j], [-0.3 + 0.5j, 2.4 - 0.6j]],
@@ -661,6 +726,7 @@ def _g2a_p4_fixture(
     dense_options = {
         "perturb_fe": perturb_initial_fe,
         "nonfinite_first_fe": nonfinite_first_fe,
+        "correction_scales": correction_scales,
     }
     factor_matrix, factor_context = _dense_python_matrix(
         block,
@@ -1364,6 +1430,56 @@ def test_side_inverse_opt_in_correction_without_observer_uses_one_primal_action(
                 record["p4_audit"]["diagnostic_step_index"]
                 for record in correction_events
             ] == list(range(correction_steps + 1))
+    finally:
+        if result is not None:
+            result.destroy()
+        source.destroy()
+        inverse.destroy()
+        operator.destroy()
+
+
+@pytest.mark.parametrize("backend", ["full", "cell_condensed"])
+def test_side_inverse_residual_target_routes_without_extra_observer_or_primal(
+    backend: str,
+) -> None:
+    p4_factor = _IdentityP4(2) if backend == "full" else _CellCondensedP4(2)
+    inverse, owned = _build_fixture(
+        p4_factor=p4_factor,
+        p4_inverse_backend=backend,
+        detailed_timing=True,
+    )
+    operator = owned["operator"]
+    transfer = owned["transfer"]
+    source = _new_vector(
+        operator,
+        np.asarray([0.5 + 0.25j, -0.125 + 0.375j]),
+    )
+    source_before = _gather_dense_vector(source)
+    result = None
+    try:
+        inverse.configure_diagnostic_p4_corrections(
+            0,
+            None,
+            refinement_target_tolerance=5.0e-13,
+        )
+        result = inverse._apply_q_callback(source)
+
+        assert p4_factor.last_diagnostic_kwargs == {
+            "refinement_target_tolerance": 5.0e-13
+        }
+        assert p4_factor.solve_count == 1
+        assert inverse._p4_backsolve_count == 1
+        assert inverse._p4_refinement_count == 0
+        assert inverse._p_count == 1
+        assert transfer.primal_apply_count == 1
+        np.testing.assert_array_equal(_gather_dense_vector(source), source_before)
+        call = inverse.diagnostics["independent_p4_call_history"][0]
+        assert call["refinement_target_tolerance"] == 5.0e-13
+        assert call["target_reached"] is True
+        assert call["actual_correction_count"] == 0
+        assert call["last_solve_scalar_summary"]["diagnostic_correction_history"][
+            0
+        ]["stop_reason"] == "target_reached"
     finally:
         if result is not None:
             result.destroy()
@@ -2575,6 +2691,286 @@ def test_p4_opt_in_corrections_match_nonhermitian_augmented_block(
     finally:
         if result is not None:
             result.destroy()
+        _destroy_g2a_p4_fixture(fixture)
+
+
+@pytest.mark.parametrize("backend", ["full", "cell_condensed"])
+@pytest.mark.parametrize(
+    "scenario",
+    [
+        "already_met",
+        "one_correction",
+        "two_corrections",
+        "target_not_reached",
+        "original_gate_failure",
+        "nonzero_port_correction",
+        "zero_rhs",
+        "nonfinite",
+    ],
+)
+def test_p4_refinement_target_uses_original_nonhermitian_augmented_block(
+    backend: str,
+    scenario: str,
+) -> None:
+    fixture_options: dict[str, object] = {
+        "backend": backend,
+        "perturb_initial_port": False,
+    }
+    expected_corrections = {
+        "already_met": 0,
+        "one_correction": 1,
+        "two_corrections": 2,
+        "target_not_reached": 2,
+        "original_gate_failure": 2,
+        "nonzero_port_correction": 1,
+        "zero_rhs": 0,
+        "nonfinite": 0,
+    }[scenario]
+    if scenario in {"one_correction", "two_corrections", "target_not_reached"}:
+        fixture_options["perturb_initial_fe"] = 2.0e-12
+    elif scenario == "original_gate_failure":
+        fixture_options.update(
+            perturb_initial_port=True,
+            correction_scales=(0.0, 0.0),
+        )
+    elif scenario == "nonzero_port_correction":
+        fixture_options["perturb_initial_port"] = True
+    elif scenario == "zero_rhs":
+        fixture_options["zero_rhs"] = True
+    elif scenario == "nonfinite":
+        fixture_options["nonfinite_first_fe"] = True
+    if scenario == "two_corrections":
+        fixture_options["correction_scales"] = (0.5, 1.0)
+    elif scenario == "target_not_reached":
+        fixture_options["correction_scales"] = (0.25, 0.25)
+
+    fixture = _g2a_p4_fixture(**fixture_options)
+    p4 = fixture["p4"]
+    rhs = fixture["rhs"]
+    rhs_before = _gather_dense_vector(rhs)
+    port_rhs_before = fixture["port_rhs"].copy()
+    result = None
+    raised = False
+    try:
+        try:
+            if backend == "full":
+                p4.solve_with_refinement(
+                    rhs,
+                    fixture["solution"],
+                    residual_tolerance=1.0e-10,
+                    refinement_target_tolerance=5.0e-13,
+                )
+            else:
+                result = p4.apply(
+                    rhs,
+                    port_rhs=fixture["port_rhs"],
+                    refinement_target_tolerance=5.0e-13,
+                )
+        except P4PhysicalResidualGateError:
+            raised = True
+
+        expected_failure = scenario in {"original_gate_failure", "nonfinite"}
+        assert raised is expected_failure
+        audit = p4.diagnostics["last_solve"]
+        history = audit["diagnostic_correction_history"]
+        assert len(history) == expected_corrections + 1
+        assert len(history) <= 3
+        assert audit["refinement_target_tolerance"] == 5.0e-13
+        assert audit["actual_correction_count"] == expected_corrections
+        assert audit["backsolve_count"] == expected_corrections + 1
+        assert fixture["inverse"].solve_count == expected_corrections + 1
+        assert fixture["physical_context"].apply_count == len(history)
+        assert [step["diagnostic_step_index"] for step in history] == list(
+            range(len(history))
+        )
+        assert [step["actual_correction_count"] for step in history] == list(
+            range(len(history))
+        )
+        assert all("physical_relative_residual" in step for step in history)
+        assert all(
+            "augmented_relative_residual" in step
+            if backend == "full"
+            else "relative_residual" in step
+            for step in history
+        )
+
+        if scenario in {"already_met", "zero_rhs"}:
+            assert audit["status"] == "passed"
+            assert audit["target_reached"] is True
+            assert audit["stop_reason"] == "target_reached"
+            assert audit["actual_correction_count"] == 0
+        elif scenario in {
+            "one_correction",
+            "two_corrections",
+            "nonzero_port_correction",
+        }:
+            assert audit["status"] == "passed"
+            assert audit["target_reached"] is True
+            assert audit["stop_reason"] == "target_reached"
+            assert audit["physical_gate_passed"] is True
+            assert audit["augmented_gate_passed"] is True
+            if scenario == "two_corrections":
+                augmented_field = (
+                    "augmented_relative_residual"
+                    if backend == "full"
+                    else "relative_residual"
+                )
+                assert [step["target_reached"] for step in history] == [
+                    False,
+                    False,
+                    True,
+                ]
+                assert all(
+                    max(
+                        float(step["physical_relative_residual"]),
+                        float(step[augmented_field]),
+                    )
+                    > 5.0e-13
+                    for step in history[:2]
+                )
+                assert max(
+                    float(history[2]["physical_relative_residual"]),
+                    float(history[2][augmented_field]),
+                ) <= 5.0e-13
+                assert [step["actual_correction_count"] for step in history] == [
+                    0,
+                    1,
+                    2,
+                ]
+                assert [step["backsolve_count"] for step in history] == [1, 2, 3]
+        elif scenario == "target_not_reached":
+            assert raised is False
+            assert audit["status"] == "passed"
+            assert audit["target_reached"] is False
+            assert audit["stop_reason"] == "max_corrections_target_not_reached"
+            assert audit["physical_gate_passed"] is True
+            assert audit["augmented_gate_passed"] is True
+            summary_call = {
+                "p4_call_index": 1,
+                "status": audit["status"],
+                "physical_relative_residual": audit[
+                    "physical_relative_residual"
+                ],
+                "augmented_relative_residual": audit.get(
+                    "augmented_relative_residual", audit.get("relative_residual")
+                ),
+                "augmented_gate_passed": audit["augmented_gate_passed"],
+                "last_solve_scalar_summary": {
+                    key: audit[key]
+                    for key in (
+                        "target_reached",
+                        "stop_reason",
+                        "actual_correction_count",
+                    )
+                },
+            }
+            call_summary = SideBalancedInverse._p4_call_summary([summary_call])
+            assert call_summary["failed_or_unqualified_call_indices"] == []
+            assert (
+                summary_call["last_solve_scalar_summary"]["target_reached"]
+                is False
+            )
+            assert (
+                summary_call["last_solve_scalar_summary"]["stop_reason"]
+                == "max_corrections_target_not_reached"
+            )
+        elif scenario == "original_gate_failure":
+            assert audit["status"] in {"gate_failed", "failed_gate"}
+            assert audit["target_reached"] is False
+            assert audit["stop_reason"] == "original_residual_gate_failed"
+            assert not (
+                audit["physical_gate_passed"] and audit["augmented_gate_passed"]
+            )
+        else:
+            assert audit["status"] == "failed_nonfinite_residual"
+            assert audit["target_reached"] is False
+            assert audit["stop_reason"] == "nonfinite_residual"
+            assert audit["backsolve_count"] == 1
+
+        if scenario == "zero_rhs":
+            if backend == "full":
+                assert audit["rhs_norm"] == 0.0
+                assert audit["relative_residual"] == audit["residual_norm"]
+                assert audit["augmented_relative_residual"] == audit[
+                    "augmented_residual_norm"
+                ]
+            else:
+                assert audit["physical_rhs_norm"] == 0.0
+                assert audit["physical_relative_residual"] == audit[
+                    "physical_residual_norm"
+                ]
+                assert audit["relative_residual"] == audit["residual_norm"]
+
+        if scenario == "nonzero_port_correction":
+            assert np.any(port_rhs_before != 0.0)
+            assert history[0]["port_residual_norm"] > 0.0
+        if not expected_failure:
+            if backend == "full":
+                final_solution = _gather_dense_vector(fixture["solution"])
+            else:
+                final_solution = np.concatenate(
+                    (_gather_dense_vector(result), p4.last_port_solution)
+                )
+            block_residual = fixture["block_rhs"] - fixture["block"] @ final_solution
+            expected_norm = float(np.linalg.norm(block_residual))
+            actual_norm = audit.get(
+                "augmented_residual_norm", audit.get("residual_norm")
+            )
+            assert actual_norm == pytest.approx(expected_norm, abs=2.0e-13)
+            if scenario in {"already_met", "one_correction", "two_corrections", "nonzero_port_correction", "zero_rhs"}:
+                np.testing.assert_allclose(
+                    final_solution,
+                    fixture["exact_solution"],
+                    rtol=0.0,
+                    atol=1.0e-11,
+                )
+        np.testing.assert_array_equal(_gather_dense_vector(rhs), rhs_before)
+        np.testing.assert_array_equal(fixture["port_rhs"], port_rhs_before)
+    finally:
+        if result is not None:
+            result.destroy()
+        _destroy_g2a_p4_fixture(fixture)
+    if scenario == "two_corrections" and MPI.COMM_WORLD.rank == 0:
+        augmented_field = (
+            "augmented_relative_residual"
+            if backend == "full"
+            else "relative_residual"
+        )
+        print(
+            "G3_TARGET_TWO_CORRECTIONS_HISTORY "
+            f"backend={backend} "
+            f"steps={[(step['diagnostic_step_index'], step['physical_relative_residual'], step[augmented_field], step['target_reached'], step['actual_correction_count'], step['backsolve_count']) for step in history]!r}",
+            flush=True,
+        )
+
+
+@pytest.mark.parametrize("backend", ["full", "cell_condensed"])
+def test_p4_refinement_target_is_single_candidate_and_excludes_fixed_steps(
+    backend: str,
+) -> None:
+    fixture = _g2a_p4_fixture(
+        backend=backend,
+        perturb_initial_port=False,
+    )
+    p4 = fixture["p4"]
+    try:
+        def solve(**kwargs):
+            if backend == "full":
+                return p4.solve_with_refinement(
+                    fixture["rhs"], fixture["solution"], **kwargs
+                )
+            return p4.apply(
+                fixture["rhs"], port_rhs=fixture["port_rhs"], **kwargs
+            )
+        with pytest.raises(ValueError, match="only supported refinement target"):
+            solve(refinement_target_tolerance=4.0e-13)
+        with pytest.raises(ValueError, match="mutually exclusive"):
+            solve(
+                diagnostic_correction_steps=1,
+                refinement_target_tolerance=5.0e-13,
+            )
+        assert fixture["inverse"].solve_count == 0
+    finally:
         _destroy_g2a_p4_fixture(fixture)
 
 

@@ -30,6 +30,7 @@ from .physical_balanced_physical_operator import (
     P4PhysicalResidualGateError,
     _full_action_inventory,
     _payload_array_inventory,
+    _refinement_target_tolerance,
     build_fullspace_physical_dtn_action,
     build_p4_condensed_exact_factor,
     build_p4_exact_factor,
@@ -406,6 +407,7 @@ class SideBalancedInverse:
         self._diagnostic_p4_correction_callback: Callable[
             [Mapping[str, Any], Mapping[str, Any]], None
         ] | None = None
+        self._p4_refinement_target_tolerance: float | None = None
         self._active_apply_pc_count = 0
         self._active_pc_index: int | None = None
         self._active_pc_q_count = 0
@@ -500,13 +502,21 @@ class SideBalancedInverse:
         self,
         steps: int,
         callback: Callable[[Mapping[str, Any], Mapping[str, Any]], None] | None,
+        *,
+        refinement_target_tolerance: float | None = None,
     ) -> None:
-        """Set the opt-in correction observer without changing solver state."""
+        """Set fixed-step auditing or the single opt-in residual target."""
 
         if isinstance(steps, bool) or int(steps) not in (0, 1, 2):
             raise ValueError("diagnostic P4 corrections must be 0, 1, or 2")
+        target = _refinement_target_tolerance(refinement_target_tolerance)
+        if target is not None and (int(steps) != 0 or callback is not None):
+            raise ValueError(
+                "refinement target and fixed-step P4 diagnostics are mutually exclusive"
+            )
         self._diagnostic_p4_correction_steps = int(steps)
         self._diagnostic_p4_correction_callback = callback
+        self._p4_refinement_target_tolerance = target
 
     @property
     def operator(self) -> PETSc.Mat:
@@ -1385,6 +1395,11 @@ class SideBalancedInverse:
         capture_port_values = False
         p4_timing: dict[str, float] = {}
         factor_solve_before = _p4_solve_count(self._p4_factor)
+        refinement_target_tolerance = self._p4_refinement_target_tolerance
+        record_p4_refinement = (
+            self._diagnostic_callback is not None
+            or refinement_target_tolerance is not None
+        )
         try:
             self._emit_diagnostic(
                 "PH_Q_output",
@@ -1405,6 +1420,10 @@ class SideBalancedInverse:
                     apply_kwargs["diagnostic_correction_steps"] = correction_steps
                     if self._diagnostic_p4_correction_callback is not None:
                         apply_kwargs["diagnostic_callback"] = observe_p4_correction
+                if refinement_target_tolerance is not None:
+                    apply_kwargs["refinement_target_tolerance"] = (
+                        refinement_target_tolerance
+                    )
                 if capture_port_values:
                     apply_kwargs["capture_port_values"] = True
                 coarse_solution = self._p4_factor.apply(coarse_rhs, **apply_kwargs)
@@ -1437,6 +1456,10 @@ class SideBalancedInverse:
                     solve_kwargs["diagnostic_correction_steps"] = correction_steps
                     if self._diagnostic_p4_correction_callback is not None:
                         solve_kwargs["diagnostic_callback"] = observe_p4_correction
+                if refinement_target_tolerance is not None:
+                    solve_kwargs["refinement_target_tolerance"] = (
+                        refinement_target_tolerance
+                    )
                 if capture_port_values:
                     solve_kwargs["capture_port_values"] = True
                 self._p4_factor.solve_with_refinement(
@@ -1574,7 +1597,7 @@ class SideBalancedInverse:
             actual_backsolves = max(factor_solve_after - factor_solve_before, 0)
             self._p4_backsolve_count += actual_backsolves
             self._p4_refinement_count += max(actual_backsolves - 1, 0)
-            if self._diagnostic_callback is not None:
+            if record_p4_refinement:
                 try:
                     factor_diagnostics = self._p4_factor.diagnostics
                     last_solve = factor_diagnostics.get("last_solve", {})
@@ -1608,6 +1631,10 @@ class SideBalancedInverse:
                         "port_residual_norm",
                         "backsolve_count",
                         "refinement_count",
+                        "actual_correction_count",
+                        "refinement_target_tolerance",
+                        "target_reached",
+                        "stop_reason",
                     )
                     if isinstance(last_solve, Mapping)
                     and isinstance(
@@ -1622,7 +1649,7 @@ class SideBalancedInverse:
                         "solution_norm_status": solution_norm_status,
                     }
                 )
-                if correction_steps:
+                if correction_steps or refinement_target_tolerance is not None:
                     correction_history = (
                         last_solve.get("diagnostic_correction_history", [])
                         if isinstance(last_solve, Mapping)
@@ -1707,6 +1734,19 @@ class SideBalancedInverse:
                         else None
                     ),
                 }
+                if refinement_target_tolerance is not None:
+                    call_record.update(
+                        {
+                            "refinement_target_tolerance": (
+                                refinement_target_tolerance
+                            ),
+                            "target_reached": last_solve.get("target_reached"),
+                            "stop_reason": last_solve.get("stop_reason"),
+                            "actual_correction_count": last_solve.get(
+                                "actual_correction_count"
+                            ),
+                        }
+                    )
                 if self._active_p4_call_records is not None:
                     self._active_p4_call_records.append(call_record)
                 else:
@@ -2043,7 +2083,12 @@ class SideBalancedInverse:
         self._active_ksp_iteration = None
         self._active_rhs_norm = None
         self._active_p4_call_records = (
-            [] if self._diagnostic_callback is not None else None
+            []
+            if (
+                self._diagnostic_callback is not None
+                or self._p4_refinement_target_tolerance is not None
+            )
+            else None
         )
         self._active_true_residual_samples = (
             [] if self._diagnostic_callback is not None else None
@@ -2375,6 +2420,15 @@ class SideBalancedInverse:
             "iteration_history_enabled": self._record_iteration_history,
             "preconditioner": "J BAL_H JH",
             "p4_inverse_backend": self._p4_inverse_backend,
+            **(
+                {
+                    "p4_refinement_target_tolerance": (
+                        self._p4_refinement_target_tolerance
+                    )
+                }
+                if self._p4_refinement_target_tolerance is not None
+                else {}
+            ),
             "apply_count": int(self._apply_count),
             "total_iterations": int(self._total_iterations),
             "total_apply_seconds": float(self._total_apply_seconds),
@@ -2406,7 +2460,10 @@ class SideBalancedInverse:
                         self._direct_p4_call_records
                     ),
                 }
-                if self._diagnostic_callback is not None
+                if (
+                    self._diagnostic_callback is not None
+                    or self._p4_refinement_target_tolerance is not None
+                )
                 else {}
             ),
             "p4_factor": p4_diagnostics,

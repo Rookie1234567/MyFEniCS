@@ -114,6 +114,26 @@ def _diagnostic_correction_count(value: int) -> int:
     return count
 
 
+_TASK041_REFINEMENT_TARGET_TOLERANCE = 5.0e-13
+_TASK041_ORIGINAL_P4_RESIDUAL_TOLERANCE = 1.0e-10
+
+
+def _refinement_target_tolerance(value: float | None) -> float | None:
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        raise TypeError("refinement_target_tolerance must be 5e-13 or None")
+    try:
+        target = float(value)
+    except (TypeError, ValueError) as error:
+        raise TypeError(
+            "refinement_target_tolerance must be 5e-13 or None"
+        ) from error
+    if not np.isfinite(target) or target != _TASK041_REFINEMENT_TARGET_TOLERANCE:
+        raise ValueError("the only supported refinement target is 5e-13")
+    return target
+
+
 def _readonly_diagnostic_array(values: np.ndarray) -> np.ndarray:
     result = np.array(values, dtype=np.complex128, copy=True)
     result.setflags(write=False)
@@ -1200,6 +1220,7 @@ class P4CondensedExactFactor:
             [Mapping[str, Any], Mapping[str, Any]], None
         ]
         | None = None,
+        refinement_target_tolerance: float | None = None,
     ) -> PETSc.Vec:
         """Solve full FE and port RHS, optionally auditing fixed corrections.
 
@@ -1210,10 +1231,42 @@ class P4CondensedExactFactor:
         diagnostic_correction_steps = _diagnostic_correction_count(
             diagnostic_correction_steps
         )
-        diagnostic_mode = (
-            diagnostic_correction_steps > 0 or diagnostic_callback is not None
+        refinement_target_tolerance = _refinement_target_tolerance(
+            refinement_target_tolerance
         )
-        self._last_solve_audit = {}
+        target_mode = refinement_target_tolerance is not None
+        if target_mode and (
+            diagnostic_correction_steps != 0 or diagnostic_callback is not None
+        ):
+            raise ValueError(
+                "refinement target and fixed-step P4 diagnostics are mutually exclusive"
+            )
+        if target_mode and float(self.residual_tolerance) != (
+            _TASK041_ORIGINAL_P4_RESIDUAL_TOLERANCE
+        ):
+            raise ValueError(
+                "target mode requires the original 1e-10 residual gate"
+            )
+        diagnostic_mode = (
+            diagnostic_correction_steps > 0
+            or diagnostic_callback is not None
+            or target_mode
+        )
+        self._last_solve_audit = (
+            {
+                "status": "started",
+                "refinement_target_tolerance": float(
+                    refinement_target_tolerance
+                ),
+                "target_reached": False,
+                "stop_reason": "not_evaluated",
+                "actual_correction_count": 0,
+                "backsolve_count": 0,
+                "diagnostic_correction_history": (),
+            }
+            if target_mode
+            else {}
+        )
         values = self.inverse._prepare_port_rhs(port_rhs)
         solve_count_start = int(self.inverse.solve_count)
         total_started = time.perf_counter()
@@ -1278,11 +1331,30 @@ class P4CondensedExactFactor:
                             ],
                         }
                     )
+                    if target_mode:
+                        audit["actual_correction_count"] = int(refinement)
                     nonfinite_residual = False
+                    target_reached = False
                     if diagnostic_mode:
-                        nonfinite_residual = not np.isfinite(
-                            audit["physical_relative_residual"]
-                        ) or not np.isfinite(audit["relative_residual"])
+                        if target_mode:
+                            finite_residual_fields = (
+                                audit["physical_rhs_norm"],
+                                audit["physical_residual_norm"],
+                                audit["physical_relative_residual"],
+                                audit["augmented_fe_residual_norm"],
+                                audit["port_residual_norm"],
+                                audit["residual_norm"],
+                                audit["augmented_rhs_norm"],
+                                audit["relative_residual"],
+                            )
+                            nonfinite_residual = not all(
+                                np.isfinite(value)
+                                for value in finite_residual_fields
+                            )
+                        else:
+                            nonfinite_residual = not np.isfinite(
+                                audit["physical_relative_residual"]
+                            ) or not np.isfinite(audit["relative_residual"])
                         if nonfinite_residual:
                             audit["status"] = "failed_nonfinite_residual"
                         audit.update(
@@ -1290,7 +1362,7 @@ class P4CondensedExactFactor:
                                 "diagnostic_step_index": int(refinement),
                                 "diagnostic_correction_count": int(refinement),
                                 "diagnostic_correction_limit": int(
-                                    diagnostic_correction_steps
+                                    2 if target_mode else diagnostic_correction_steps
                                 ),
                                 "correction_from_previous_seconds": correction_seconds,
                                 "correction_from_previous_norm": correction_norm,
@@ -1305,6 +1377,38 @@ class P4CondensedExactFactor:
                                 ),
                             }
                         )
+                        if target_mode:
+                            target_reached = bool(
+                                not nonfinite_residual
+                                and audit["physical_relative_residual"]
+                                <= refinement_target_tolerance
+                                and audit["relative_residual"]
+                                <= refinement_target_tolerance
+                            )
+                            stop_reason = None
+                            if nonfinite_residual:
+                                stop_reason = "nonfinite_residual"
+                            elif target_reached:
+                                stop_reason = "target_reached"
+                            elif refinement >= 2:
+                                original_gates_passed = bool(
+                                    audit["physical_gate_passed"]
+                                    and audit["augmented_gate_passed"]
+                                )
+                                stop_reason = (
+                                    "max_corrections_target_not_reached"
+                                    if original_gates_passed
+                                    else "original_residual_gate_failed"
+                                )
+                            audit.update(
+                                {
+                                    "refinement_target_tolerance": float(
+                                        refinement_target_tolerance
+                                    ),
+                                    "target_reached": target_reached,
+                                    "stop_reason": stop_reason,
+                                }
+                            )
                         correction_history.append(
                             {
                                 key: value
@@ -1343,7 +1447,21 @@ class P4CondensedExactFactor:
                                 ),
                             },
                         )
-                    if diagnostic_mode:
+                    if target_mode:
+                        if nonfinite_residual:
+                            raise P4PhysicalResidualGateError(dict(audit))
+                        if target_reached:
+                            keep_solution = True
+                            return solution
+                        if refinement >= 2:
+                            if (
+                                audit["physical_gate_passed"]
+                                and audit["augmented_gate_passed"]
+                            ):
+                                keep_solution = True
+                                return solution
+                            raise P4PhysicalResidualGateError(dict(audit))
+                    elif diagnostic_mode:
                         if nonfinite_residual:
                             raise P4PhysicalResidualGateError(dict(audit))
                         if refinement >= diagnostic_correction_steps:
@@ -1369,8 +1487,9 @@ class P4CondensedExactFactor:
                         )
                         solution.axpy(PETSc.ScalarType(1.0), correction)
                         if diagnostic_mode:
-                            port_correction = self.last_port_solution
-                            correction_norm = float(correction.norm())
+                            if not target_mode:
+                                port_correction = self.last_port_solution
+                                correction_norm = float(correction.norm())
                             correction_seconds = (
                                 time.perf_counter() - correction_started
                             )
@@ -1562,6 +1681,7 @@ class P4ExactFactor:
             [Mapping[str, Any], Mapping[str, Any]], None
         ]
         | None = None,
+        refinement_target_tolerance: float | None = None,
     ) -> dict[str, Any]:
         """Solve the augmented system, with opt-in same-factor corrections.
 
@@ -1571,8 +1691,26 @@ class P4ExactFactor:
         diagnostic_correction_steps = _diagnostic_correction_count(
             diagnostic_correction_steps
         )
+        refinement_target_tolerance = _refinement_target_tolerance(
+            refinement_target_tolerance
+        )
+        target_mode = refinement_target_tolerance is not None
+        if target_mode and (
+            diagnostic_correction_steps != 0 or diagnostic_callback is not None
+        ):
+            raise ValueError(
+                "refinement target and fixed-step P4 diagnostics are mutually exclusive"
+            )
+        if target_mode and float(residual_tolerance) != (
+            _TASK041_ORIGINAL_P4_RESIDUAL_TOLERANCE
+        ):
+            raise ValueError(
+                "target mode requires the original 1e-10 residual gate"
+            )
         diagnostic_mode = (
-            diagnostic_correction_steps > 0 or diagnostic_callback is not None
+            diagnostic_correction_steps > 0
+            or diagnostic_callback is not None
+            or target_mode
         )
         audit_requested = diagnostic_audit or diagnostic_mode
         _require_vector_layout(rhs, self.augmented_rows, "p4 augmented RHS")
@@ -1591,9 +1729,23 @@ class P4ExactFactor:
             "refinement_count": 0,
             "same_factor_refinement": False,
         }
+        if target_mode:
+            self._last_solve_audit.update(
+                {
+                    "refinement_target_tolerance": float(
+                        refinement_target_tolerance
+                    ),
+                    "target_reached": False,
+                    "stop_reason": "not_evaluated",
+                    "actual_correction_count": 0,
+                    "diagnostic_correction_history": (),
+                }
+            )
         if not np.isfinite(physical_rhs_norm):
             fe_rhs.destroy()
             self._last_solve_audit["status"] = "failed_nonfinite_rhs"
+            if target_mode:
+                self._last_solve_audit["stop_reason"] = "nonfinite_rhs"
             raise P4PhysicalResidualGateError(dict(self._last_solve_audit))
         backsolves = 0
         correction = None
@@ -1873,9 +2025,25 @@ class P4ExactFactor:
                     self._last_solve_audit.get("augmented_gate_passed", False)
                 )
                 if diagnostic_mode:
-                    nonfinite_residual = not np.isfinite(
-                        physical_relative
-                    ) or not np.isfinite(augmented_relative)
+                    if target_mode:
+                        finite_residual_fields = (
+                            physical_relative,
+                            augmented_relative,
+                            effective_rhs_norm,
+                            physical_residual_norm,
+                            augmented_fe_norm,
+                            port_residual_norm,
+                            augmented_residual_norm,
+                            augmented_rhs_norm,
+                        )
+                        nonfinite_residual = not all(
+                            np.isfinite(value)
+                            for value in finite_residual_fields
+                        )
+                    else:
+                        nonfinite_residual = not np.isfinite(
+                            physical_relative
+                        ) or not np.isfinite(augmented_relative)
                     self._last_solve_audit.update(
                         {
                             "status": (
@@ -1896,7 +2064,7 @@ class P4ExactFactor:
                             "diagnostic_step_index": int(refinement),
                             "diagnostic_correction_count": int(refinement),
                             "diagnostic_correction_limit": int(
-                                diagnostic_correction_steps
+                                2 if target_mode else diagnostic_correction_steps
                             ),
                             "correction_from_previous_seconds": correction_seconds,
                             "correction_from_previous_norm": correction_norm,
@@ -1905,6 +2073,44 @@ class P4ExactFactor:
                             "refinement_count": int(backsolves - 1),
                         }
                     )
+                    if target_mode:
+                        target_reached = bool(
+                            not nonfinite_residual
+                            and physical_relative <= refinement_target_tolerance
+                            and augmented_relative <= refinement_target_tolerance
+                        )
+                        stop_reason = None
+                        if nonfinite_residual:
+                            stop_reason = "nonfinite_residual"
+                        elif target_reached:
+                            stop_reason = "target_reached"
+                        elif refinement >= 2:
+                            stop_reason = (
+                                "max_corrections_target_not_reached"
+                                if physical_passed and augmented_passed
+                                else "original_residual_gate_failed"
+                            )
+                        self._last_solve_audit.update(
+                            {
+                                "refinement_target_tolerance": float(
+                                    refinement_target_tolerance
+                                ),
+                                "target_reached": target_reached,
+                                "stop_reason": stop_reason,
+                                "actual_correction_count": int(backsolves - 1),
+                            }
+                        )
+                        diagnostic_record.update(
+                            {
+                                "status": self._last_solve_audit["status"],
+                                "refinement_target_tolerance": float(
+                                    refinement_target_tolerance
+                                ),
+                                "target_reached": target_reached,
+                                "stop_reason": stop_reason,
+                                "actual_correction_count": int(backsolves - 1),
+                            }
+                        )
                     correction_history.append(
                         {
                             key: value
@@ -1950,7 +2156,21 @@ class P4ExactFactor:
                         raise P4PhysicalResidualGateError(
                             dict(self._last_solve_audit)
                         )
-                    if refinement >= diagnostic_correction_steps:
+                    if target_mode:
+                        if target_reached:
+                            break
+                        if refinement >= 2:
+                            if physical_passed and augmented_passed:
+                                break
+                            self._last_solve_audit["status"] = "failed_gate"
+                            raise P4PhysicalResidualGateError(
+                                dict(self._last_solve_audit)
+                            )
+                        # Target mode is an audit mode: corrections must use the
+                        # original full FE+port residual assembled above.
+                        assert augmented_fe_residual is not None
+                        assert port_residual is not None
+                    elif refinement >= diagnostic_correction_steps:
                         if not (physical_passed and augmented_passed):
                             self._last_solve_audit["status"] = "failed_gate"
                             raise P4PhysicalResidualGateError(
@@ -2026,7 +2246,8 @@ class P4ExactFactor:
                             port_correction,
                             op=MPI.SUM,
                         )
-                    correction_norm = float(correction.norm())
+                    if not target_mode:
+                        correction_norm = float(correction.norm())
                     correction_seconds = time.perf_counter() - correction_started
             gate_failed = (
                 not np.isfinite(physical_relative)
