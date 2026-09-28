@@ -64,6 +64,7 @@ TASK041_SEQUENTIAL_COMPONENT_SCHEDULE = "sequential_component"
 TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE = "common_layout_equivalence"
 TASK041_P4_BACKEND_PAIR_MODE = "p4_backend_pair"
 TASK041_P4_BACKEND_PAIR_CONTRACT_KIND = "task041_fixed_eight_rhs_p4_backend_pair"
+TASK041_P4_REFINEMENT_TARGET_TOLERANCE = 5.0e-13
 TASK041_REPRESENTATIVE_RHS_SCHEMA = "task041.representative_rhs_manifest.v1"
 TASK041_REPRESENTATIVE_RHS_COUNT = 8
 TASK041_REPRESENTATIVE_RHS_MODE_COUNT = 480
@@ -119,6 +120,64 @@ def task041_is_explicit_top_causal_replay(
             comparison_mode=comparison_mode,
         )
     )
+
+
+def task041_p4_refinement_target_binding(
+    *,
+    model_id: str,
+    refinement_target_tolerance: float | None,
+    p4_backend_pair_side: str | None,
+    profile_id: str | None = None,
+    scope: str | None = None,
+    side_setup_schedule: str | None = None,
+    comparison_mode: str | None = None,
+) -> dict[str, Any] | None:
+    """Bind the reviewed target to the registered 5 nm formal or pair path."""
+
+    if p4_backend_pair_side not in {None, "bottom", "top"}:
+        raise ValueError("p4_backend_pair_side must be bottom, top, or None")
+    if refinement_target_tolerance is None:
+        if p4_backend_pair_side is not None:
+            raise ValueError("a selected pair side requires the P4 refinement target")
+        return None
+    if (
+        isinstance(refinement_target_tolerance, bool)
+        or not isinstance(refinement_target_tolerance, (int, float))
+        or float(refinement_target_tolerance)
+        != TASK041_P4_REFINEMENT_TARGET_TOLERANCE
+    ):
+        raise ValueError("only the reviewed P4 target 5e-13 is supported")
+    if p4_backend_pair_side is None:
+        if not (
+            model_id == TASK041_BALH_5NM_CANDIDATE_MODEL_ID
+            and profile_id == TASK041_SCHUR_SPEED_V2_PROFILE
+            and scope is None
+            and side_setup_schedule is None
+            and comparison_mode is None
+        ):
+            raise ValueError(
+                "the formal P4 target is limited to the registered 5 nm consumer"
+            )
+        return {
+            "scope": "registered_5nm_formal_consumer_target",
+            "tolerance": TASK041_P4_REFINEMENT_TARGET_TOLERANCE,
+            "selected_side": None,
+        }
+    if not task041_is_explicit_p4_backend_pair(
+        model_id=model_id,
+        profile_id=profile_id,
+        scope=scope,
+        side_setup_schedule=side_setup_schedule,
+        comparison_mode=comparison_mode,
+    ):
+        raise ValueError(
+            "the selected-side P4 target requires the explicit 5 nm representative fixed-eight pair"
+        )
+    return {
+        "scope": "fixed_eight_rhs_selected_side_common_input_diagnostic",
+        "tolerance": TASK041_P4_REFINEMENT_TARGET_TOLERANCE,
+        "selected_side": p4_backend_pair_side,
+    }
 
 
 def task041_p4_backend_pair_identity(
@@ -215,6 +274,8 @@ def task041_schur_speed_v2_contract(
     top_causal_replay: bool = False,
     p4_correction_replay: bool = False,
     p4_response_correction_steps: int = 0,
+    p4_refinement_target_tolerance: float | None = None,
+    p4_backend_pair_side: str | None = None,
 ) -> dict[str, Any]:
     """Return the explicit S1/S2/S3/S4 budget contract for one candidate."""
 
@@ -272,6 +333,21 @@ def task041_schur_speed_v2_contract(
         raise ValueError(
             "P4 response correction requires the explicit 5 nm top-causal "
             "p4_backend_pair diagnostic and cannot be combined with frozen-Q replay"
+        )
+    p4_refinement_target_binding: dict[str, Any] | None = None
+    if p4_refinement_target_tolerance is not None or p4_backend_pair_side is not None:
+        if top_causal_replay or p4_correction_replay or p4_response_correction_steps:
+            raise ValueError(
+                "the P4 refinement target is mutually exclusive with existing causal/fixed-step diagnostics"
+            )
+        p4_refinement_target_binding = task041_p4_refinement_target_binding(
+            model_id=model_id,
+            refinement_target_tolerance=p4_refinement_target_tolerance,
+            p4_backend_pair_side=p4_backend_pair_side,
+            profile_id=TASK041_SCHUR_SPEED_V2_PROFILE,
+            scope=scope,
+            side_setup_schedule=side_setup_schedule,
+            comparison_mode=comparison_mode,
         )
     if top_causal_replay and not task041_is_explicit_top_causal_replay(
         enabled=top_causal_replay,
@@ -418,6 +494,15 @@ def task041_schur_speed_v2_contract(
             "selection": "existing_top_causal_manifest_selection",
             "backends": ["full", "cell_condensed"],
             "max_corrections_per_p4_call": 1,
+        }
+    if p4_refinement_target_tolerance is not None:
+        contract["p4_refinement_target"] = {
+            "schema": "task041.p4_refinement_target.strategy.v1",
+            "tolerance": float(p4_refinement_target_tolerance),
+            "scope": p4_refinement_target_binding["scope"],
+            "selected_side": p4_backend_pair_side,
+            "max_corrections_per_p4_call": 2,
+            "original_gates_unchanged": True,
         }
     if p4_correction_replay:
         contract["p4_correction_replay"] = {
@@ -749,6 +834,8 @@ def _mpi8_command(
     top_causal_replay: bool = False,
     p4_correction_replay_from: str | Path | None = None,
     p4_response_correction_steps: int = 0,
+    p4_refinement_target_tolerance: float | None = None,
+    p4_backend_pair_side: str | None = None,
     cpu_list: str = "0-7",
     membind_node: str | None = None,
 ) -> list[str]:
@@ -883,6 +970,31 @@ def _mpi8_command(
                 str(p4_response_correction_steps),
             ]
         )
+    if p4_refinement_target_tolerance is not None or p4_backend_pair_side is not None:
+        if module != "benchmarks.task041_balh_workflow" or phase != TASK041_BALH_CANDIDATE_PHASE:
+            raise ValueError("P4 refinement target requires the Task041 BAL_H candidate worker")
+        if p4_refinement_target_tolerance != TASK041_P4_REFINEMENT_TARGET_TOLERANCE:
+            raise ValueError("P4 refinement target must be 5e-13")
+        if p4_backend_pair_side is None:
+            if (
+                comparison_mode is not None
+                or top_causal_replay
+                or p4_correction_replay_from is not None
+                or p4_response_correction_steps != 0
+            ):
+                raise ValueError("formal target cannot combine with pair/replay modes")
+        else:
+            if (
+                comparison_mode != TASK041_P4_BACKEND_PAIR_MODE
+                or top_causal_replay
+                or p4_correction_replay_from is not None
+                or p4_response_correction_steps != 0
+                or p4_backend_pair_side not in {"bottom", "top"}
+            ):
+                raise ValueError("selected-side target requires its separate fixed-eight pair mode")
+        command.extend(["--task041-p4-refinement-target-tolerance", "5e-13"])
+        if p4_backend_pair_side is not None:
+            command.extend(["--task041-p4-backend-pair-side", p4_backend_pair_side])
     return command
 
 
@@ -966,6 +1078,8 @@ def build_task041_balh_candidate_consumer_command(
     top_causal_replay: bool = False,
     p4_correction_replay_from: str | Path | None = None,
     p4_response_correction_steps: int = 0,
+    p4_refinement_target_tolerance: float | None = None,
+    p4_backend_pair_side: str | None = None,
 ) -> list[str]:
     normalized = specification.as_jsonable()
     if task041_balh_route(str(normalized["model_id"])) != "balh":
@@ -994,6 +1108,8 @@ def build_task041_balh_candidate_consumer_command(
             top_causal_replay=top_causal_replay,
             p4_correction_replay=p4_correction_replay_from is not None,
             p4_response_correction_steps=p4_response_correction_steps,
+            p4_refinement_target_tolerance=p4_refinement_target_tolerance,
+            p4_backend_pair_side=p4_backend_pair_side,
         )
     elif (
         side_setup_schedule is not None
@@ -1001,6 +1117,8 @@ def build_task041_balh_candidate_consumer_command(
         or top_causal_replay
         or p4_correction_replay_from is not None
         or p4_response_correction_steps != 0
+        or p4_refinement_target_tolerance is not None
+        or p4_backend_pair_side is not None
     ):
         raise ValueError(
             "Task041 comparison options require task041_schur_speed_v2"
@@ -1040,6 +1158,20 @@ def build_task041_balh_candidate_consumer_command(
         raise ValueError(
             "P4 response corrections require top_causal_replay"
         )
+    if p4_refinement_target_tolerance is not None or p4_backend_pair_side is not None:
+        task041_p4_refinement_target_binding(
+            model_id=str(normalized["model_id"]),
+            refinement_target_tolerance=p4_refinement_target_tolerance,
+            p4_backend_pair_side=p4_backend_pair_side,
+            profile_id=performance_profile,
+            scope=(
+                TASK041_REPRESENTATIVE_RHS_SCOPE
+                if task041_rhs_probe_manifest is not None
+                else None
+            ),
+            side_setup_schedule=side_setup_schedule,
+            comparison_mode=comparison_mode,
+        )
     return _mpi8_command(
         python_executable,
         TASK041_BALH_CANDIDATE_PHASE,
@@ -1061,6 +1193,8 @@ def build_task041_balh_candidate_consumer_command(
         top_causal_replay=top_causal_replay,
         p4_correction_replay_from=p4_correction_replay_from,
         p4_response_correction_steps=p4_response_correction_steps,
+        p4_refinement_target_tolerance=p4_refinement_target_tolerance,
+        p4_backend_pair_side=p4_backend_pair_side,
         cpu_list=(
             "1-8"
             if p4_backend_pair
@@ -1492,6 +1626,17 @@ def _parser() -> argparse.ArgumentParser:
         default=0,
         help="apply at most one same-factor P4 correction in the top causal diagnostic",
     )
+    parser.add_argument(
+        "--task041-p4-refinement-target-tolerance",
+        type=float,
+        choices=(TASK041_P4_REFINEMENT_TARGET_TOLERANCE,),
+        default=None,
+    )
+    parser.add_argument(
+        "--task041-p4-backend-pair-side",
+        choices=("bottom", "top"),
+        default=None,
+    )
     time_control = parser.add_mutually_exclusive_group()
     time_control.add_argument(
         "--task041-performance-profile",
@@ -1526,6 +1671,8 @@ def main(argv: Sequence[str] | None = None) -> dict[str, Any]:
         top_causal_replay=args.task041_top_causal_replay,
         p4_correction_replay_from=args.task041_p4_correction_replay_from,
         p4_response_correction_steps=args.task041_p4_response_correction_steps,
+        p4_refinement_target_tolerance=args.task041_p4_refinement_target_tolerance,
+        p4_backend_pair_side=args.task041_p4_backend_pair_side,
     )
 
 

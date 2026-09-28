@@ -2514,6 +2514,31 @@ def _task041_top_causal_pc_indices(pc_count: int) -> list[int]:
     return selected
 
 
+def _task041_selected_p4_pair_entries(
+    manifest_entries: Sequence[Mapping[str, Any]], side: str
+) -> list[Mapping[str, Any]]:
+    """Select one side's original four manifest rows without reordering them."""
+
+    expected_by_side = {
+        "bottom": [207, 15, 671, 493],
+        "top": [310, 12, 666, 493],
+    }
+    expected = expected_by_side.get(side)
+    if expected is None:
+        raise Task041ModePrepError("selected pair side must be bottom or top")
+    selected = [
+        entry
+        for entry in manifest_entries
+        if isinstance(entry, Mapping) and entry.get("side") == side
+    ]
+    columns = [int(entry["formal_column"]) for entry in selected]
+    if columns != expected:
+        raise Task041ModePrepError(
+            f"{side} target RHS manifest entries changed"
+        )
+    return selected
+
+
 def _task041_validate_top_causal_packet_identity(
     actual: Mapping[str, Any], expected: Mapping[str, Any]
 ) -> bool:
@@ -2794,6 +2819,8 @@ class _Task041TopCausalPacketCapture:
         probe_manifest_sha256: str,
         parent_packet_sha256: str,
         memory_cap_bytes: int,
+        selected_side: str = "top",
+        formal_column: int = 12,
     ) -> None:
         self.comm = comm
         self.root = Path(root)
@@ -2801,6 +2828,10 @@ class _Task041TopCausalPacketCapture:
         self.probe_manifest_sha256 = probe_manifest_sha256
         self.parent_packet_sha256 = parent_packet_sha256
         self.memory_cap_bytes = int(memory_cap_bytes)
+        if selected_side not in {"bottom", "top"} or int(formal_column) <= 0:
+            raise ValueError("causal packet capture requires a manifest side/column")
+        self.selected_side = str(selected_side)
+        self.formal_column = int(formal_column)
         self.layout_identity_sha256: str | None = None
         self.budget: dict[str, Any] | None = None
         self.mode = ""
@@ -3116,8 +3147,8 @@ class _Task041TopCausalPacketCapture:
             "source_sha": self.source_sha,
             "probe_manifest_sha256": self.probe_manifest_sha256,
             "parent_packet_manifest_sha256": self.parent_packet_sha256,
-            "side": "top",
-            "formal_column": 12,
+            "side": self.selected_side,
+            "formal_column": self.formal_column,
             "pc_index": int(node["pc_index"]),
             "trajectory": self.trajectory,
             "layout_identity_sha256": self.layout_identity_sha256,
@@ -3174,8 +3205,8 @@ class _Task041TopCausalPacketCapture:
             "source_sha": self.source_sha,
             "probe_manifest_sha256": self.probe_manifest_sha256,
             "parent_packet_manifest_sha256": self.parent_packet_sha256,
-            "side": "top",
-            "formal_column": 12,
+            "side": self.selected_side,
+            "formal_column": self.formal_column,
             "pc_index": int(node["pc_index"]),
             "q_call_index": q_index,
             "backend": self.backend,
@@ -3254,8 +3285,8 @@ class _Task041TopCausalPacketCapture:
             "consumer_source_sha": self.source_sha,
             "parent_packet_manifest_sha256": self.parent_packet_sha256,
             "probe_manifest_sha256": self.probe_manifest_sha256,
-            "side": "top",
-            "formal_column": 12,
+            "side": self.selected_side,
+            "formal_column": self.formal_column,
             "pc_index": 1,
             "backend": str(backend),
             "operation": str(operation),
@@ -3645,7 +3676,11 @@ class _Task041TopCausalPacketCapture:
 
     def callback(self, record: Mapping[str, Any]) -> bool | None:
         context = record.get("representative_context")
-        if not isinstance(context, Mapping) or int(context.get("formal_column", -1)) != 12:
+        if (
+            not isinstance(context, Mapping)
+            or context.get("side") != self.selected_side
+            or int(context.get("formal_column", -1)) != self.formal_column
+        ):
             return None
         if self.layout_identity_sha256 is None:
             raise Task041ModePrepError("top causal layout was not budgeted before capture")
@@ -4089,8 +4124,8 @@ class _Task041TopCausalPacketCapture:
         history_payload = {
             "schema": "task041.top_causal_replay.p4_call_history.v1",
             "source_sha": self.source_sha,
-            "side": "top",
-            "formal_column": 12,
+            "side": self.selected_side,
+            "formal_column": self.formal_column,
             "representative_ordinal": representative_ordinal,
             "backend": self.backend,
             "trajectory": self.trajectory,
@@ -4152,8 +4187,8 @@ class _Task041TopCausalPacketCapture:
             )
             payload = {
                 "schema": "task041.top_causal_replay.pc_node.v1",
-                "side": "top",
-                "formal_column": 12,
+                "side": self.selected_side,
+                "formal_column": self.formal_column,
                 "backend": self.backend,
                 "trajectory": self.trajectory,
                 "replay_kind": replay_kind,
@@ -4284,6 +4319,8 @@ def _run_task041_balh_candidate_setup(
     p4_response_correction_steps: int = 0,
     p4_correction_replay_packet_identity: Mapping[str, Any] | None = None,
     top_causal_memory_cap_bytes: int | None = None,
+    p4_refinement_target_tolerance: float | None = None,
+    p4_backend_pair_side: str | None = None,
 ) -> dict[str, Any]:
     """Build the finite-response BAL_H Schur and run the shared formal path."""
 
@@ -4293,6 +4330,7 @@ def _run_task041_balh_candidate_setup(
         TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE,
         TASK041_P4_BACKEND_PAIR_MODE,
         TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        task041_p4_refinement_target_binding,
     )
     from src.solvers.hybrid_fem_modal_augmented_direct import (
         internal_modal_rhs_correction,
@@ -4326,6 +4364,59 @@ def _run_task041_balh_candidate_setup(
         raise Task041ModePrepError(
             "P4 response corrections require the 5 nm top-causal fixed-eight pair"
         )
+    try:
+        refinement_target_binding = task041_p4_refinement_target_binding(
+            model_id=(
+                str(identity.get("model_id", ""))
+                if isinstance(identity, Mapping)
+                else ""
+            ),
+            refinement_target_tolerance=p4_refinement_target_tolerance,
+            p4_backend_pair_side=p4_backend_pair_side,
+            profile_id=performance_profile,
+            scope=(
+                str(representative_rhs_contract.get("scope"))
+                if isinstance(representative_rhs_contract, Mapping)
+                else None
+            ),
+            side_setup_schedule=side_setup_schedule,
+            comparison_mode=comparison_mode,
+        )
+    except ValueError as exc:
+        raise Task041ModePrepError(str(exc)) from exc
+    target_side_mode = bool(
+        refinement_target_binding is not None
+        and p4_backend_pair_side is not None
+    )
+    causal_pair_enabled = bool(top_causal_replay or target_side_mode)
+    causal_side = p4_backend_pair_side if target_side_mode else "top"
+    if target_side_mode and not isinstance(representative_rhs_contract, Mapping):
+        raise Task041ModePrepError(
+            "selected-side target requires the fixed RHS manifest"
+        )
+    target_side_entries = (
+        _task041_selected_p4_pair_entries(
+            representative_rhs_contract["entries"], str(causal_side)
+        )
+        if target_side_mode
+        else []
+    )
+    causal_formal_column = (
+        int(target_side_entries[1 if causal_side == "top" else 0]["formal_column"])
+        if target_side_mode
+        else 12
+    )
+    if target_side_mode and (
+        top_causal_replay
+        or p4_correction_replay_from is not None
+        or p4_response_correction_steps != 0
+        or comparison_mode != TASK041_P4_BACKEND_PAIR_MODE
+        or side_setup_schedule != TASK041_SEQUENTIAL_COMPONENT_SCHEDULE
+        or representative_rhs_contract is None
+    ):
+        raise Task041ModePrepError(
+            "selected-side target requires only the explicit fixed-eight pair path"
+        )
 
     side_inverses: dict[str, Any] = {}
     probe_records: dict[str, list[dict[str, Any]]] = {
@@ -4358,6 +4449,7 @@ def _run_task041_balh_candidate_setup(
     active_backend_by_side: dict[str, str] = {}
     p4_backend_pairs_by_side: dict[str, dict[str, Any]] = {}
     top_causal_by_side: dict[str, dict[str, Any]] = {}
+    p4_refinement_target_by_side: dict[str, dict[str, Any]] = {}
     sequential_lifecycle_boundaries: list[dict[str, Any]] = []
     sequential_created_totals = {
         "side_inverse": 0,
@@ -4399,10 +4491,15 @@ def _run_task041_balh_candidate_setup(
         "cell_condensed": set(),
     }
     p4_response_correction_replay_applied: set[str] = set()
+    target_p4_history_counts = {
+        backend: {"calls": 0, "not_reached": 0}
+        for backend in ("full", "cell_condensed")
+    }
+    target_p4_history_capture_valid = {"value": True}
     top_causal_audits: list[dict[str, Any]] = []
     top_causal_response_comparisons: list[dict[str, Any]] = []
     top_causal_timings: list[dict[str, Any]] = []
-    if top_causal_replay:
+    if causal_pair_enabled:
         if (
             not isinstance(representative_rhs_contract, Mapping)
             or not isinstance(identity, Mapping)
@@ -4419,13 +4516,19 @@ def _run_task041_balh_candidate_setup(
             )
         top_causal_capture = _Task041TopCausalPacketCapture(
             comm=comm,
-            root=audit_path.parent / "top_causal_replay",
+            root=(
+                audit_path.parent / "top_causal_replay"
+                if top_causal_replay
+                else audit_path.parent / f"p4_refinement_target_{causal_side}"
+            ),
             source_sha=str(identity.get("source_sha", "")),
             probe_manifest_sha256=str(representative_rhs_contract["sha256"]),
             parent_packet_sha256=str(
                 packet_binding.get("packet_manifest_sha256", "")
             ),
             memory_cap_bytes=int(top_causal_memory_cap_bytes),
+            selected_side=causal_side,
+            formal_column=causal_formal_column,
         )
         root_exists = comm.bcast(
             top_causal_capture.root.exists() if comm.rank == 0 else None,
@@ -4493,12 +4596,24 @@ def _run_task041_balh_candidate_setup(
     def causal_diagnostic_callback(
         side: str,
     ) -> Callable[[Mapping[str, Any]], Any] | None:
-        if not top_causal_replay or top_causal_capture is None or side != "top":
+        if (
+            not causal_pair_enabled
+            or top_causal_capture is None
+            or side != causal_side
+        ):
             return None
 
         def emit(record: Mapping[str, Any]) -> Any:
             context = representative_context[side]
             if not isinstance(context, Mapping):
+                raise Task041ModePrepError(
+                    f"{side} causal capture has no representative context"
+                )
+            if context.get("side") != side:
+                raise Task041ModePrepError(
+                    f"{side} causal capture context has no matching side identity"
+                )
+            if context.get("causal_capture_enabled") is False:
                 return None
             enriched = dict(record)
             enriched["representative_context"] = dict(context)
@@ -4511,6 +4626,35 @@ def _run_task041_balh_candidate_setup(
             index = audit_indices[side]
             audit_indices[side] += 1
             recorded_audit = dict(audit)
+            context = representative_context[side]
+            if (
+                p4_refinement_target_tolerance is not None
+                and isinstance(context, Mapping)
+                and context.get("p4_backend") in target_p4_history_counts
+            ):
+                backend = str(context["p4_backend"])
+                calls = recorded_audit.get("p4_call_history")
+                if not isinstance(calls, list) or not calls:
+                    target_p4_history_capture_valid["value"] = False
+                else:
+                    for p4_call in calls:
+                        scalar = (
+                            p4_call.get("last_solve_scalar_summary")
+                            if isinstance(p4_call, Mapping)
+                            else None
+                        )
+                        if (
+                            not isinstance(scalar, Mapping)
+                            or scalar.get("refinement_target_tolerance")
+                            != p4_refinement_target_tolerance
+                            or type(scalar.get("target_reached")) is not bool
+                        ):
+                            target_p4_history_capture_valid["value"] = False
+                            continue
+                        target_p4_history_counts[backend]["calls"] += 1
+                        target_p4_history_counts[backend]["not_reached"] += int(
+                            scalar["target_reached"] is False
+                        )
             if audit_phase[side] in {
                 "representative_rhs",
                 "common_layout_equivalence",
@@ -4785,7 +4929,7 @@ def _run_task041_balh_candidate_setup(
             detailed_timing=detailed_timing,
             record_iteration_history=(
                 comparison_mode == TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE
-                or top_causal_replay
+                or causal_pair_enabled
             ),
             diagnostic_callback=(
                 causal_diagnostic_callback(side)
@@ -4812,6 +4956,12 @@ def _run_task041_balh_candidate_setup(
                 inverse,
                 write=True,
                 layout_instance_id=layout_instance_id,
+            )
+        if p4_refinement_target_tolerance is not None:
+            inverse.configure_diagnostic_p4_corrections(
+                0,
+                None,
+                refinement_target_tolerance=p4_refinement_target_tolerance,
             )
         side_diagnostics_before[side] = dict(inverse.diagnostics)
         p4_diagnostics = side_diagnostics_before[side].get("p4_factor")
@@ -5120,7 +5270,7 @@ def _run_task041_balh_candidate_setup(
             p4 = inverse._p4_factor
             vector_layouts = None
             port_layout = None
-            if top_causal_replay or p4_correction_replay_from is not None:
+            if causal_pair_enabled or p4_correction_replay_from is not None:
                 p4_space = p4.physical_action.V
                 spaces["p4_physical_fe"] = _task041_space_layout_metadata(
                     "p4.physical_action.V", p4_space
@@ -6710,6 +6860,9 @@ def _run_task041_balh_candidate_setup(
         backend_pair: bool = False,
         retain_responses: bool = False,
         retained_responses_out: dict[int, PETSc.Vec] | None = None,
+        causal_capture_enabled: bool = True,
+        packet_subdirectory: str | None = None,
+        sequence_index_offset: int = 0,
     ) -> dict[str, Any]:
         if representative_rhs_contract is None:
             raise RuntimeError("representative RHS contract is missing")
@@ -6732,7 +6885,8 @@ def _run_task041_balh_candidate_setup(
             raise Task041ModePrepError(
                 "representative RHS mode count does not match the setup"
             )
-        for entry in entries:
+        for probe_sequence_index, entry in enumerate(entries):
+            apply_sequence_index = int(sequence_index_offset) + probe_sequence_index
             side = str(entry["side"])
             branch = str(entry["branch"])
             ordinal = int(entry["ordinal"])
@@ -6747,10 +6901,12 @@ def _run_task041_balh_candidate_setup(
             audit_start = len(representative_records[side])
             audit_phase[side] = "representative_rhs"
             representative_context[side] = {
+                "side": side,
                 "representative_ordinal": ordinal,
                 "source_audit_index": int(entry["audit_index"]),
                 "formal_column": formal_column,
                 "branch_ordinal": int(entry["branch_ordinal"]),
+                "causal_capture_enabled": bool(causal_capture_enabled),
                 **(
                     {}
                     if p4_backend is None
@@ -6766,7 +6922,21 @@ def _run_task041_balh_candidate_setup(
                     if rhs_vectors is None
                     else rhs_vectors[ordinal]
                 )
+                rhs_input_sha_before = None
+                if p4_refinement_target_tolerance is not None:
+                    rhs_input_view = np.asarray(rhs.getArray(readonly=True))
+                    rhs_input_bytes = memoryview(rhs_input_view).cast("B")
+                    try:
+                        rhs_input_sha_before = hashlib.sha256(
+                            rhs_input_bytes
+                        ).hexdigest()
+                    finally:
+                        rhs_input_bytes.release()
+                        del rhs_input_bytes
+                        del rhs_input_view
                 response = getattr(setup, side).A.createVecLeft()
+                if p4_refinement_target_tolerance is not None:
+                    response.set(0.0)
                 apply_started = time.monotonic()
                 causal_capture_mode = None
                 causal_error: BaseException | None = None
@@ -6779,9 +6949,10 @@ def _run_task041_balh_candidate_setup(
                     and p4_backend in {"full", "cell_condensed"}
                 )
                 if (
-                    top_causal_replay
-                    and side == "top"
-                    and formal_column == 12
+                    causal_capture_enabled
+                    and causal_pair_enabled
+                    and side == causal_side
+                    and formal_column == causal_formal_column
                     and p4_backend in {"full", "cell_condensed"}
                 ):
                     causal_capture_mode = (
@@ -6822,7 +6993,7 @@ def _run_task041_balh_candidate_setup(
                     raise
                 finally:
                     try:
-                        if causal_capture_mode is not None:
+                        if causal_capture_enabled and causal_capture_mode is not None:
                             top_causal_capture.finish_apply(
                                 side_inverses[side], error=causal_error
                             )
@@ -6923,6 +7094,12 @@ def _run_task041_balh_candidate_setup(
                         if p4_backend is None
                         else Path("p4_backend_pair") / p4_backend
                     )
+                    / (packet_subdirectory if packet_subdirectory else Path())
+                    / (
+                        f"{probe_sequence_index:02d}"
+                        if packet_subdirectory
+                        else Path()
+                    )
                     / f"{ordinal:02d}_{side}_{branch}"
                 )
                 response_array = np.asarray(response.getArray(readonly=True))
@@ -6933,6 +7110,10 @@ def _run_task041_balh_candidate_setup(
                     try:
                         response_sha256 = hashlib.sha256(response_bytes).hexdigest()
                         rhs_sha256 = hashlib.sha256(rhs_bytes).hexdigest()
+                        rhs_unchanged = (
+                            rhs_input_sha_before is None
+                            or rhs_sha256 == rhs_input_sha_before
+                        )
                     finally:
                         rhs_bytes.release()
                 finally:
@@ -6953,6 +7134,11 @@ def _run_task041_balh_candidate_setup(
                         "formal_column": formal_column,
                         "branch_ordinal": int(entry["branch_ordinal"]),
                         **(
+                            {"apply_sequence_index": apply_sequence_index}
+                            if packet_subdirectory or target_side_mode
+                            else {}
+                        ),
+                        **(
                             {}
                             if p4_backend is None
                             else {"p4_backend": p4_backend}
@@ -6971,6 +7157,12 @@ def _run_task041_balh_candidate_setup(
                             response_array.dtype
                         ),
                         "owned_rhs_sha256": rhs_sha256,
+                        "input_unchanged": rhs_unchanged,
+                        **(
+                            {"apply_sequence_index": apply_sequence_index}
+                            if packet_subdirectory or target_side_mode
+                            else {}
+                        ),
                         "owned_response_sha256": response_sha256,
                         "apply_audit": _jsonable(apply_audit),
                         **(
@@ -6999,8 +7191,9 @@ def _run_task041_balh_candidate_setup(
                     "ownership_range": list(ownership),
                     "local_size": int(response.getLocalSize()),
                     "dtype": str(response_array.dtype),
-                    "owned_rhs_sha256": rhs_sha256,
-                    "owned_response_sha256": response_sha256,
+                "owned_rhs_sha256": rhs_sha256,
+                "input_unchanged": rhs_unchanged,
+                "owned_response_sha256": response_sha256,
                     **(
                         {}
                         if p4_backend is None
@@ -7029,6 +7222,11 @@ def _run_task041_balh_candidate_setup(
                         "formal_column": formal_column,
                         "branch_ordinal": int(entry["branch_ordinal"]),
                         "status": "completed",
+                        **(
+                            {"apply_sequence_index": apply_sequence_index}
+                            if packet_subdirectory or target_side_mode
+                            else {}
+                        ),
                         **(
                             {}
                             if p4_backend is None
@@ -7169,8 +7367,9 @@ def _run_task041_balh_candidate_setup(
                 "rhs_array_name": "rhs",
                 "response_array_name": "solution",
                 "dtype": str(response_array.dtype),
-                "owned_rhs_sha256": rhs_sha256,
-                "owned_response_sha256": response_sha256,
+                    "owned_rhs_sha256": rhs_sha256,
+                    "input_unchanged": rhs_unchanged,
+                    "owned_response_sha256": response_sha256,
                 "layout_identity_sha256": layout_sha,
                 "apply_audit": _jsonable(dict(apply_audit)),
                 "diagnostic_only": bool(diagnostic_only),
@@ -8264,6 +8463,8 @@ def _run_task041_balh_candidate_setup(
         backend_pair_mode = isinstance(backend_pair, Mapping)
         top_causal_result = representative.get("top_causal_replay")
         top_causal_mode = isinstance(top_causal_result, Mapping)
+        refinement_target_result = representative.get("p4_refinement_target")
+        refinement_target_mode = isinstance(refinement_target_result, Mapping)
         p4_correction_result = representative.get("p4_correction_replay")
         p4_correction_mode = isinstance(p4_correction_result, Mapping)
         result = {
@@ -8272,6 +8473,8 @@ def _run_task041_balh_candidate_setup(
                 if common_mode
                 else "task041.side_balh.p4_correction_replay_setup.v1"
                 if p4_correction_mode
+                else "task041.side_balh.p4_refinement_target_setup.v1"
+                if refinement_target_mode
                 else "task041.side_balh.top_causal_replay_setup.v1"
                 if top_causal_mode
                 else "task041.side_balh.p4_backend_pair_setup.v1"
@@ -8283,6 +8486,8 @@ def _run_task041_balh_candidate_setup(
                 if common_mode
                 else "p4_correction_replay_completed"
                 if p4_correction_mode
+                else "p4_refinement_target_completed"
+                if refinement_target_mode
                 else "top_causal_replay_completed"
                 if top_causal_mode
                 else "p4_backend_pair_completed"
@@ -8298,6 +8503,8 @@ def _run_task041_balh_candidate_setup(
                 if common_mode
                 else "correction_diagnostic_only"
                 if p4_correction_mode
+                else "refinement_target_diagnostic_only"
+                if refinement_target_mode
                 else "diagnostic_only"
                 if top_causal_mode
                 else "backend_comparison_only"
@@ -8312,6 +8519,11 @@ def _run_task041_balh_candidate_setup(
             ),
             "top_causal_replay": (
                 dict(top_causal_result) if top_causal_mode else None
+            ),
+            "p4_refinement_target": (
+                dict(refinement_target_result)
+                if refinement_target_mode
+                else None
             ),
             "p4_correction_replay": (
                 dict(p4_correction_result) if p4_correction_mode else None
@@ -8427,6 +8639,14 @@ def _run_task041_balh_candidate_setup(
                 representative_entries_for_run = top_entries
                 entries_by_side = {"bottom": [], "top": top_entries}
                 sides_for_run = ("top",)
+            elif target_side_mode:
+                selected_entries = target_side_entries
+                representative_entries_for_run = selected_entries
+                entries_by_side = {
+                    "bottom": selected_entries if p4_backend_pair_side == "bottom" else [],
+                    "top": selected_entries if p4_backend_pair_side == "top" else [],
+                }
+                sides_for_run = (str(p4_backend_pair_side),)
             elif p4_correction_replay_from is not None:
                 correction_entry = next(
                     (
@@ -8519,6 +8739,7 @@ def _run_task041_balh_candidate_setup(
                 }
                 backend_state: dict[str, dict[str, Any]] = {}
                 backend_probe_entries: dict[str, list[Mapping[str, Any]]] = {}
+                same_factor_repeat_by_backend: dict[str, dict[str, Any]] = {}
                 correction_states: dict[str, dict[str, list[dict[str, Any]]]] = {
                     "full": {},
                     "cell_condensed": {},
@@ -8540,9 +8761,12 @@ def _run_task041_balh_candidate_setup(
                     rhs_build_wall = pair_wall(rhs_started)
 
                     def response_packet_identity(
-                        entry: Mapping[str, Any], backend: str
+                        entry: Mapping[str, Any],
+                        backend: str,
+                        *,
+                        apply_sequence_index: int | None = None,
                     ) -> dict[str, Any]:
-                        return {
+                        identity_record = {
                             "schema": "task041.representative_rhs.response_identity.v1",
                             "source_sha": identity["source_sha"],
                             "probe_manifest_sha256": representative_rhs_contract[
@@ -8557,6 +8781,11 @@ def _run_task041_balh_candidate_setup(
                             "branch_ordinal": int(entry["branch_ordinal"]),
                             "p4_backend": backend,
                         }
+                        if apply_sequence_index is not None:
+                            identity_record["apply_sequence_index"] = int(
+                                apply_sequence_index
+                            )
+                        return identity_record
 
                     def load_response_vector(
                         record: Mapping[str, Any],
@@ -8567,31 +8796,56 @@ def _run_task041_balh_candidate_setup(
                         packet = None
                         local_error = None
                         packet_rhs_matches = False
+                        current_rhs_view = None
+                        packet_rhs_bytes = None
+                        current_rhs_bytes = None
                         try:
                             if not isinstance(artifact, Mapping):
                                 raise TypeError("response packet artifact is missing")
                             packet = load_packet(
                                 Path(str(artifact["manifest"])),
-                                identity=response_packet_identity(entry, backend),
+                                identity=response_packet_identity(
+                                    entry,
+                                    backend,
+                                    apply_sequence_index=(
+                                        int(record["apply_sequence_index"])
+                                        if type(
+                                            record.get("apply_sequence_index")
+                                        )
+                                        is int
+                                        else None
+                                    ),
+                                ),
                                 expected_manifest_sha256=str(
                                     artifact["manifest_sha256"]
                                 ),
                                 comm=comm,
                             )
                             packet_rhs = packet["rhs"]
-                            current_rhs = np.asarray(
+                            current_rhs_view = np.asarray(
                                 rhs_vectors[int(entry["ordinal"])].getArray(
                                     readonly=True
                                 )
                             )
+                            packet_rhs_bytes = memoryview(packet_rhs).cast("B")
+                            current_rhs_bytes = memoryview(current_rhs_view).cast(
+                                "B"
+                            )
                             packet_rhs_matches = bool(
-                                packet_rhs.dtype == current_rhs.dtype
-                                and packet_rhs.shape == current_rhs.shape
-                                and memoryview(packet_rhs).cast("B")
-                                == memoryview(current_rhs).cast("B")
+                                packet_rhs.dtype == current_rhs_view.dtype
+                                and packet_rhs.shape == current_rhs_view.shape
+                                and packet_rhs_bytes == current_rhs_bytes
                             )
                         except BaseException as exc:  # noqa: BLE001 - synchronize local packet reads
                             local_error = f"{type(exc).__name__}: {exc}"
+                        finally:
+                            if current_rhs_bytes is not None:
+                                current_rhs_bytes.release()
+                                del current_rhs_bytes
+                            if packet_rhs_bytes is not None:
+                                packet_rhs_bytes.release()
+                                del packet_rhs_bytes
+                            del current_rhs_view
                         vector = system.A.createVecLeft()
                         if local_error is None and packet is not None:
                             expected_ownership = tuple(
@@ -8720,8 +8974,8 @@ def _run_task041_balh_candidate_setup(
                                 full_response,
                                 condensed_response,
                             )
-                            if top_causal_replay:
-                                projection = setup.coupling.top.projection
+                            if causal_pair_enabled:
+                                projection = getattr(setup.coupling, causal_side).projection
                                 projection_rows, projection_columns = (
                                     int(value) for value in projection.getSize()
                                 )
@@ -8841,8 +9095,16 @@ def _run_task041_balh_candidate_setup(
                                             ),
                                         )
                                     )
-                                    comparison["top_modal_projection"] = {
-                                        "source": "same_live_coupling_top_projection",
+                                    projection_key = (
+                                        "side_modal_projection"
+                                        if target_side_mode
+                                        else "top_modal_projection"
+                                    )
+                                    comparison[projection_key] = {
+                                        "source": (
+                                            f"same_live_coupling_{causal_side}_projection"
+                                        ),
+                                        "side": causal_side,
                                         "global_size": projection_rows,
                                         "full_sha256": full_modal_hash,
                                         "cell_condensed_sha256": condensed_modal_hash,
@@ -8965,9 +9227,10 @@ def _run_task041_balh_candidate_setup(
                                 "top causal full reference node set is missing or exceeds its bound"
                             )
                         replay_context = {
+                            "side": causal_side,
                             "representative_ordinal": int(top_entry["ordinal"]),
                             "source_audit_index": int(top_entry["audit_index"]),
-                            "formal_column": 12,
+                            "formal_column": causal_formal_column,
                             "branch_ordinal": int(top_entry["branch_ordinal"]),
                             "p4_backend": "cell_condensed",
                             "p4_backend_pair": True,
@@ -9001,7 +9264,7 @@ def _run_task041_balh_candidate_setup(
                                         top_entry["ordinal"]
                                     ),
                                 )
-                                representative_context["top"] = replay_context
+                                representative_context[causal_side] = replay_context
                                 replay_error: BaseException | None = None
                                 recovered = None
                                 try:
@@ -9027,7 +9290,7 @@ def _run_task041_balh_candidate_setup(
                                             if recovered is not None:
                                                 recovered.destroy()
                                             source.destroy()
-                                            representative_context["top"] = None
+                                            representative_context[causal_side] = None
                                 if replay_error is not None:
                                     raise replay_error
                                 if p4_response_correction_steps:
@@ -9065,7 +9328,7 @@ def _run_task041_balh_candidate_setup(
                                     top_entry["ordinal"]
                                 ),
                             )
-                            representative_context["top"] = replay_context
+                            representative_context[causal_side] = replay_context
                             replay_error = None
                             try:
                                 if p4_response_correction_steps:
@@ -9091,7 +9354,7 @@ def _run_task041_balh_candidate_setup(
                                     finally:
                                         active_target.destroy()
                                         active_source.destroy()
-                                        representative_context["top"] = None
+                                        representative_context[causal_side] = None
                             if replay_error is not None:
                                 raise replay_error
                             if p4_response_correction_steps:
@@ -9326,7 +9589,7 @@ def _run_task041_balh_candidate_setup(
                                     ),
                                 },
                             )
-                        if top_causal_replay and backend == "full":
+                        if causal_pair_enabled and backend == "full":
                             top_causal_capture.configure_layout(layout_record)
                         if p4_correction_replay_from is not None:
                             if p4_correction_capture is None or p4_correction_reference is None:
@@ -9432,14 +9695,15 @@ def _run_task041_balh_candidate_setup(
                             backend_state[backend]["correction_operations"] = operations
                         else:
                             probe = None
-                        if top_causal_replay and backend == "cell_condensed":
-                            top_entry = next(
+                        if causal_pair_enabled and backend == "cell_condensed":
+                            causal_entry = next(
                                 entry
                                 for entry in entries
-                                if int(entry["formal_column"]) == 12
+                                if int(entry["formal_column"])
+                                == causal_formal_column
                             )
                             run_independent_causal_replays(
-                                _inverse, top_entry
+                                _inverse, causal_entry
                             )
                         if probe is None:
                             probe = run_representative_rhs_probe(
@@ -9447,9 +9711,110 @@ def _run_task041_balh_candidate_setup(
                                 rhs_vectors=rhs_vectors,
                                 p4_backend=backend,
                                 backend_pair=True,
-                                retain_responses=not top_causal_replay,
+                                retain_responses=not causal_pair_enabled,
                                 retained_responses_out=retained_responses[backend],
                             )
+                        repeat_record = None
+                        if target_side_mode:
+                            if len(entries) != 4:
+                                raise Task041ModePrepError(
+                                    "selected-side target requires its four manifest responses"
+                                )
+                            repeat_probe = run_representative_rhs_probe(
+                                [entries[0]],
+                                rhs_vectors=rhs_vectors,
+                                p4_backend=backend,
+                                backend_pair=True,
+                                retain_responses=False,
+                                causal_capture_enabled=False,
+                                packet_subdirectory=(
+                                    f"same_factor_repeat_{backend}"
+                                ),
+                                sequence_index_offset=len(entries),
+                            )
+                            if repeat_probe.get("completed_count") != 1:
+                                raise Task041ModePrepError(
+                                    f"{backend} same-factor repeat is incomplete"
+                                )
+                            first_record = probe["entries"][0]
+                            last_record = repeat_probe["entries"][0]
+                            first_vector = last_vector = None
+                            try:
+                                first_vector, first_rhs_matches = load_response_vector(
+                                    first_record, entries[0], backend
+                                )
+                                last_vector, last_rhs_matches = load_response_vector(
+                                    last_record, entries[0], backend
+                                )
+                                repeat_comparison = compare_p4_backend_responses(
+                                    system.A,
+                                    rhs_vectors[int(entries[0]["ordinal"])],
+                                    first_vector,
+                                    last_vector,
+                                )
+                                unchanged = bool(
+                                    all(
+                                        shard.get("input_unchanged") is True
+                                        for item in (
+                                            first_record,
+                                            last_record,
+                                        )
+                                        for shard in item.get("rank_shards", [])
+                                        if isinstance(shard, Mapping)
+                                    )
+                                    and len(first_record.get("rank_shards", []))
+                                    == int(comm.size)
+                                    and len(last_record.get("rank_shards", []))
+                                    == int(comm.size)
+                                    and first_rhs_matches
+                                    and last_rhs_matches
+                                )
+                                repeat_local_pass = bool(
+                                    unchanged
+                                    and repeat_comparison.get("pass") is True
+                                )
+                                repeat_pass = bool(
+                                    comm.allreduce(
+                                        repeat_local_pass,
+                                        op=MPI.LAND,
+                                    )
+                                )
+                                repeat_record = {
+                                    "scope": "same_factor_A_B_C_D_A_zero_initial_response",
+                                    "sequence_formal_columns": [
+                                        *[
+                                            int(item["formal_column"])
+                                            for item in entries
+                                        ],
+                                        int(entries[0]["formal_column"]),
+                                    ],
+                                    "sequence_apply_indices": [
+                                        *[
+                                            item.get("apply_sequence_index")
+                                            for item in probe["entries"]
+                                        ],
+                                        last_record.get("apply_sequence_index"),
+                                    ],
+                                    "first_response_reference": {
+                                        "ordinal": first_record["ordinal"],
+                                        "formal_column": first_record[
+                                            "formal_column"
+                                        ],
+                                        "apply_sequence_index": first_record.get(
+                                            "apply_sequence_index"
+                                        ),
+                                    },
+                                    "last_response_record": last_record,
+                                    "input_unchanged": unchanged,
+                                    "comparison": repeat_comparison,
+                                    "pass": repeat_pass,
+                                }
+                            finally:
+                                if last_vector is not None:
+                                    last_vector.destroy()
+                                if first_vector is not None:
+                                    first_vector.destroy()
+                            same_factor_repeat_by_backend[backend] = repeat_record
                         apply_wall = pair_wall(apply_started)
                         if probe["completed_count"] != len(entries):
                             raise Task041ModePrepError(
@@ -9467,7 +9832,7 @@ def _run_task041_balh_candidate_setup(
                         if backend == "full":
                             backend_state[backend]["apply_calls"] = probe["entries"]
                         backend_probe_entries[backend] = probe["entries"]
-                        if top_causal_replay:
+                        if causal_pair_enabled:
                             top_causal_timings.extend(
                                 {
                                     "phase": "backend_response_apply",
@@ -9487,7 +9852,7 @@ def _run_task041_balh_candidate_setup(
                                 }
                                 for item in probe["entries"]
                             )
-                        if top_causal_replay and backend == "cell_condensed":
+                        if causal_pair_enabled and backend == "cell_condensed":
                             full_by_ordinal = {
                                 int(item["ordinal"]): item
                                 for item in backend_probe_entries["full"]
@@ -10099,7 +10464,7 @@ def _run_task041_balh_candidate_setup(
                             "p4_correction_replay": True,
                         }
                         return correction_reference, side_result
-                    if top_causal_replay:
+                    if causal_pair_enabled:
                         reference_nodes = list(
                             top_causal_capture.reference_nodes
                         )
@@ -10169,9 +10534,13 @@ def _run_task041_balh_candidate_setup(
                             for item in top_causal_response_comparisons
                             if type(item.get("formal_column")) is int
                         }
+                        selected_formal_columns = [
+                            int(item["formal_column"]) for item in entries
+                        ]
                         response_set_complete = bool(
-                            len(top_causal_response_comparisons) == 3
-                            and set(response_columns) == {12, 493, 666}
+                            len(top_causal_response_comparisons) == len(entries)
+                            and set(response_columns)
+                            == set(selected_formal_columns)
                         )
                         response_identity_pass = bool(
                             response_set_complete
@@ -10180,7 +10549,7 @@ def _run_task041_balh_candidate_setup(
                                     "rhs_identity_pass"
                                 )
                                 is True
-                                for column in (12, 493, 666)
+                                for column in selected_formal_columns
                             )
                         )
                         response_finite_pass = bool(
@@ -10196,7 +10565,7 @@ def _run_task041_balh_candidate_setup(
                                     "comparison"
                                 ].get("finite")
                                 is True
-                                for column in (12, 493, 666)
+                                for column in selected_formal_columns
                             )
                         )
                         response_pair_pass = bool(
@@ -10206,7 +10575,7 @@ def _run_task041_balh_candidate_setup(
                                 .get("comparison", {})
                                 .get("strong_pair_gate_pass")
                                 is True
-                                for column in (12, 493, 666)
+                                for column in selected_formal_columns
                             )
                         )
                         side_residual_pass = bool(
@@ -10216,20 +10585,20 @@ def _run_task041_balh_candidate_setup(
                                 .get("comparison", {})
                                 .get("side_residual_gate_pass")
                                 is True
-                                for column in (12, 493, 666)
+                                for column in selected_formal_columns
                             )
                         )
                         response_artifacts_complete = all(
                             isinstance(
                                 backend_probe_entries.get(backend), list
                             )
-                            and len(backend_probe_entries[backend]) == 3
+                            and len(backend_probe_entries[backend]) == len(entries)
                             and {
                                 item.get("formal_column")
                                 for item in backend_probe_entries[backend]
                                 if isinstance(item, Mapping)
                             }
-                            == {12, 493, 666}
+                            == set(selected_formal_columns)
                             and all(
                                 item.get("status") == "completed"
                                 and isinstance(item.get("artifact"), Mapping)
@@ -10258,16 +10627,26 @@ def _run_task041_balh_candidate_setup(
                         modal_projection_by_column = {
                             column: response_columns[column]
                             .get("comparison", {})
-                            .get("top_modal_projection")
-                            for column in (12, 493, 666)
+                            .get(
+                                "side_modal_projection"
+                                if target_side_mode
+                                else "top_modal_projection"
+                            )
+                            for column in selected_formal_columns
                             if column in response_columns
                         }
+                        modal_projection_source = (
+                            f"same_live_coupling_{causal_side}_projection"
+                        )
                         modal_projection_evidence_complete = bool(
-                            set(modal_projection_by_column) == {12, 493, 666}
+                            causal_pair_enabled
+                            and set(modal_projection_by_column)
+                            == set(selected_formal_columns)
                             and all(
                                 isinstance(projection, Mapping)
                                 and projection.get("source")
-                                == "same_live_coupling_top_projection"
+                                == modal_projection_source
+                                and projection.get("side") == causal_side
                                 and _valid_sha(projection.get("full_sha256"), 64)
                                 and _valid_sha(
                                     projection.get("cell_condensed_sha256"), 64
@@ -10336,6 +10715,83 @@ def _run_task041_balh_candidate_setup(
                                 for key in ("q1", "q2", "pc")
                             )
                         )
+                        target_history_pass = True
+                        target_not_reached_call_count = 0
+                        if target_side_mode:
+                            target_history_pass = bool(
+                                comm.allreduce(
+                                    bool(target_p4_history_capture_valid["value"]),
+                                    op=MPI.LAND,
+                                )
+                            )
+                            for backend in ("full", "cell_condensed"):
+                                counts = target_p4_history_counts[backend]
+                                calls = int(counts["calls"])
+                                not_reached = int(counts["not_reached"])
+                                low = (
+                                    int(comm.allreduce(calls, op=MPI.MIN)),
+                                    int(comm.allreduce(not_reached, op=MPI.MIN)),
+                                )
+                                high = (
+                                    int(comm.allreduce(calls, op=MPI.MAX)),
+                                    int(comm.allreduce(not_reached, op=MPI.MAX)),
+                                )
+                                target_history_pass = bool(
+                                    target_history_pass
+                                    and low == high
+                                    and calls > 0
+                                    and 0 <= not_reached <= calls
+                                )
+                                target_not_reached_call_count += not_reached
+                        same_factor_repeat_pass = bool(
+                            not target_side_mode
+                            or all(
+                                same_factor_repeat_by_backend.get(backend, {}).get(
+                                    "pass"
+                                )
+                                is True
+                                for backend in ("full", "cell_condensed")
+                            )
+                        )
+                        same_factor_repeat_evidence_complete = bool(
+                            not target_side_mode
+                            or all(
+                                isinstance(
+                                    same_factor_repeat_by_backend.get(backend),
+                                    Mapping,
+                                )
+                                and same_factor_repeat_by_backend[backend].get(
+                                    "sequence_formal_columns"
+                                )
+                                == [
+                                    *selected_formal_columns,
+                                    selected_formal_columns[0],
+                                ]
+                                and same_factor_repeat_by_backend[backend].get(
+                                    "sequence_apply_indices"
+                                )
+                                == list(range(len(selected_formal_columns) + 1))
+                                and same_factor_repeat_by_backend[backend].get(
+                                    "first_response_reference"
+                                )
+                                == {
+                                    "ordinal": int(entries[0]["ordinal"]),
+                                    "formal_column": selected_formal_columns[0],
+                                    "apply_sequence_index": 0,
+                                }
+                                and isinstance(
+                                    same_factor_repeat_by_backend[backend].get(
+                                        "last_response_record"
+                                    ),
+                                    Mapping,
+                                )
+                                and same_factor_repeat_by_backend[backend][
+                                    "last_response_record"
+                                ].get("apply_sequence_index")
+                                == len(selected_formal_columns)
+                                for backend in ("full", "cell_condensed")
+                            )
+                        )
                         release_pass = all(
                             backend_phase_results[name]["release"].get("pass")
                             is True
@@ -10355,6 +10811,8 @@ def _run_task041_balh_candidate_setup(
                             and modal_projection_evidence_complete
                             and replay_evidence_complete
                             and len(replay_records) == 3 * len(reference_indices)
+                            and target_history_pass
+                            and same_factor_repeat_evidence_complete
                             and 0 < len(reference_indices)
                             <= _TASK041_TOP_CAUSAL_MAX_NODES
                         )
@@ -10362,10 +10820,13 @@ def _run_task041_balh_candidate_setup(
                             response_identity_pass
                             and response_finite_pass
                             and modal_projection_finite_pass
+                            and (not target_side_mode or response_pair_pass)
                             and side_residual_pass
                             and replay_pass
                             and layout_pass
                             and release_pass
+                            and target_history_pass
+                            and same_factor_repeat_pass
                         )
                         diagnostic_pass = bool(
                             evidence_complete and action_safety_pass
@@ -10378,15 +10839,22 @@ def _run_task041_balh_candidate_setup(
                             f"independent_pc_pc{pc_index:05d}"
                             for pc_index in reference_indices
                         }
+                        modal_gate_name = (
+                            f"{causal_side}_modal_projection_finite"
+                            if target_side_mode
+                            else "top_modal_projection_finite"
+                        )
+                        modal_evidence_name = (
+                            f"{causal_side}_modal_projection"
+                            if target_side_mode
+                            else "top_modal_projection"
+                        )
                         failed_action_gates = [
                             name
                             for name, passed in (
                                 ("response_input_identity", response_identity_pass),
                                 ("response_finite", response_finite_pass),
-                                (
-                                    "top_modal_projection_finite",
-                                    modal_projection_finite_pass,
-                                ),
+                                (modal_gate_name, modal_projection_finite_pass),
                                 ("side_original_residuals", side_residual_pass),
                                 ("independent_q_pc_shared_a4", replay_pass),
                                 ("same_layout_identity", layout_pass),
@@ -10399,10 +10867,7 @@ def _run_task041_balh_candidate_setup(
                             for name, passed in (
                                 ("response_columns", response_set_complete),
                                 ("response_artifacts", response_artifacts_complete),
-                                (
-                                    "top_modal_projection",
-                                    modal_projection_evidence_complete,
-                                ),
+                                (modal_evidence_name, modal_projection_evidence_complete),
                                 ("frozen_replay_records", replay_evidence_complete),
                                 (
                                     "frozen_replay_count",
@@ -10412,8 +10877,27 @@ def _run_task041_balh_candidate_setup(
                             if not passed
                         ]
                         causal_record = {
-                            "schema": "task041.top_causal_replay.result.v1",
-                            "scope": "top_only_fixed_manifest_replay",
+                            "schema": (
+                                "task041.p4_refinement_target.result.v1"
+                                if target_side_mode
+                                else "task041.top_causal_replay.result.v1"
+                            ),
+                            "scope": (
+                                "selected_side_fixed_eight_rhs_target_causal_diagnostic"
+                                if target_side_mode
+                                else "top_only_fixed_manifest_replay"
+                            ),
+                            **(
+                                {
+                                    "selected_side": causal_side,
+                                    "refinement_target_tolerance": float(
+                                        p4_refinement_target_tolerance
+                                    ),
+                                    "causal_formal_column": causal_formal_column,
+                                }
+                                if target_side_mode
+                                else {}
+                            ),
                             "status": (
                                 "diagnostic_complete"
                                 if diagnostic_pass
@@ -10470,8 +10954,17 @@ def _run_task041_balh_candidate_setup(
                                     ]["packet_manifest_sha256"]
                                 ),
                             },
-                            "selected_formal_columns": [12, 493, 666],
-                            "bottom_scope": "not_run",
+                            "selected_formal_columns": list(
+                                selected_formal_columns
+                            ),
+                            "selected_side_manifest_columns": list(
+                                selected_formal_columns
+                            ),
+                            "unselected_side": (
+                                ("bottom" if causal_side == "top" else "top")
+                                if target_side_mode
+                                else "bottom"
+                            ),
                             "fixed_eight_completion": False,
                             "full_reference_response_count": len(entries),
                             "condensed_free_response_count": len(entries),
@@ -10490,6 +10983,51 @@ def _run_task041_balh_candidate_setup(
                             "response_comparisons": list(
                                 top_causal_response_comparisons
                             ),
+                            **(
+                                {
+                                    "p4_refinement_target_strategy": {
+                                        "schema": "task041.p4_refinement_target.strategy.v1",
+                                        "requested_tolerance": float(
+                                            p4_refinement_target_tolerance
+                                        ),
+                                        "selected_side": causal_side,
+                                        "selected_formal_columns": list(
+                                            selected_formal_columns
+                                        ),
+                                        "causal_formal_column": causal_formal_column,
+                                        "backends": [
+                                            "full",
+                                            "cell_condensed",
+                                        ],
+                                        "maximum_corrections_per_p4_call": 2,
+                                        "target_history_pass": target_history_pass,
+                                        "target_not_reached_call_count": int(
+                                            target_not_reached_call_count
+                                        ),
+                                        "target_not_reached_call_count_scope": (
+                                            "side_apply_responses_and_same_factor_repeat"
+                                        ),
+                                        "same_factor_repeat_pass": (
+                                            same_factor_repeat_pass
+                                        ),
+                                        "applied": bool(
+                                            target_history_pass
+                                            and same_factor_repeat_evidence_complete
+                                            and same_factor_repeat_pass
+                                        ),
+                                    }
+                                }
+                                if target_side_mode
+                                else {}
+                            ),
+                            "same_factor_repeat_by_backend": (
+                                {
+                                    backend: dict(record)
+                                    for backend, record in same_factor_repeat_by_backend.items()
+                                }
+                                if target_side_mode
+                                else None
+                            ),
                             "backend_order": list(backend_phase_results),
                             "backend_phases": backend_state,
                             "evidence_complete": evidence_complete,
@@ -10507,8 +11045,19 @@ def _run_task041_balh_candidate_setup(
                                 "response_input_identity": response_identity_pass,
                                 "response_finite": response_finite_pass,
                                 "side_original_residuals": side_residual_pass,
-                                "top_modal_projection_finite": (
-                                    modal_projection_finite_pass
+                                modal_gate_name: modal_projection_finite_pass,
+                                **(
+                                    {
+                                        "p4_refinement_target_history": (
+                                            target_history_pass
+                                        ),
+                                        "same_factor_repeat": (
+                                            same_factor_repeat_pass
+                                            and same_factor_repeat_evidence_complete
+                                        ),
+                                    }
+                                    if target_side_mode
+                                    else {}
                                 ),
                                 "independent_q1_q2_pc_and_p4_a4": replay_pass,
                                 "same_layout_identity": layout_pass,
@@ -10530,16 +11079,27 @@ def _run_task041_balh_candidate_setup(
                                 "top-only causal diagnostic is not a fixed-eight or solver qualification"
                             ),
                         }
-                        top_causal_by_side[side] = causal_record
+                        if target_side_mode:
+                            p4_refinement_target_by_side[side] = causal_record
+                        else:
+                            top_causal_by_side[side] = causal_record
                         _write_rank0_json(
-                            audit_path.with_name("top_causal_replay_top.json"),
+                            audit_path.with_name(
+                                f"p4_refinement_target_{causal_side}.json"
+                                if target_side_mode
+                                else "top_causal_replay_top.json"
+                            ),
                             causal_record,
                             comm,
                         )
                         live_record = backend_state["full"]["live_at_build"]
                         sequential_side_records[side] = {
                             "side": side,
-                            "status": "top_causal_full_then_condensed_released",
+                            "status": (
+                                "selected_side_target_full_then_condensed_released"
+                                if target_side_mode
+                                else "top_causal_full_then_condensed_released"
+                            ),
                             "live_at_build": dict(live_record),
                             "backend_live_at_build": {
                                 name: dict(state["live_at_build"])
@@ -10556,6 +11116,15 @@ def _run_task041_balh_candidate_setup(
                             "top_causal_diagnostic_pass": causal_record[
                                 "diagnostic_pass"
                             ],
+                            **(
+                                {
+                                    "p4_refinement_target_pass": causal_record[
+                                        "diagnostic_pass"
+                                    ]
+                                }
+                                if target_side_mode
+                                else {}
+                            ),
                         }
                         return causal_record, backend_phase_results[
                             "cell_condensed"
@@ -10658,6 +11227,16 @@ def _run_task041_balh_candidate_setup(
                             for backend in ("full", "cell_condensed")
                         )
                     )
+                    same_factor_repeat_pass = bool(
+                        not target_side_mode
+                        or all(
+                            same_factor_repeat_by_backend.get(name, {}).get(
+                                "pass"
+                            )
+                            is True
+                            for name in ("full", "cell_condensed")
+                        )
+                    )
                     side_pass = bool(
                         (
                             response_identity_pass
@@ -10666,6 +11245,7 @@ def _run_task041_balh_candidate_setup(
                             else response_pair_pass
                         )
                         and backend_identity_and_release_pass
+                        and same_factor_repeat_pass
                     )
                     pair_record = {
                         "schema": "task041.p4_backend_pair.side.v1",
@@ -10692,10 +11272,16 @@ def _run_task041_balh_candidate_setup(
                         "entries": entry_comparisons,
                         "response_pair_pass": response_pair_pass,
                         "side_residual_gate_pass": side_residual_gate_pass,
+                        "same_factor_repeat": (
+                            dict(same_factor_repeat_by_backend)
+                            if target_side_mode
+                            else None
+                        ),
                         "action_safety_pass": bool(
                             response_identity_pass
                             and side_residual_gate_pass
                             and backend_identity_and_release_pass
+                            and same_factor_repeat_pass
                         ),
                         "pass": side_pass,
                     }
@@ -10709,7 +11295,7 @@ def _run_task041_balh_candidate_setup(
                         failure_evidence.setdefault("p4_backend_pair", {})[
                             side
                         ] = pair_record
-                        if not top_causal_replay:
+                        if not top_causal_replay and not target_side_mode:
                             error = Task041ModePrepError(
                                 f"{side} fixed RHS backend pair failed a layout, "
                                 "release, side-residual, e_x, or e_A gate"
@@ -10892,10 +11478,25 @@ def _run_task041_balh_candidate_setup(
                         "diagnostic_pass": False,
                     },
                 )
+            if target_side_mode:
+                representative["p4_refinement_target"] = (
+                    p4_refinement_target_by_side.get(
+                        str(p4_backend_pair_side),
+                        {
+                            "schema": "task041.p4_refinement_target.result.v1",
+                            "status": "missing",
+                            "selected_side": p4_backend_pair_side,
+                            "evidence_complete": False,
+                            "action_safety_pass": False,
+                            "qualification_pass": False,
+                        },
+                    )
+                )
             if (
                 p4_backend_pairs_by_side
                 and not top_causal_replay
                 and p4_correction_replay_from is None
+                and not target_side_mode
             ):
                 pair_pass = bool(
                     all(
@@ -10949,7 +11550,9 @@ def _run_task041_balh_candidate_setup(
             schedule_summary = {
                 "side_setup_schedule": side_setup_schedule,
                 "order": (
-                    ["top"]
+                    [str(p4_backend_pair_side)]
+                    if target_side_mode
+                    else ["top"]
                     if top_causal_replay or p4_correction_replay_from is not None
                     else ["bottom", "top"]
                 ),
@@ -11266,6 +11869,8 @@ def run_task041_consumer(
     top_causal_replay: bool = False,
     p4_correction_replay_from: str | Path | None = None,
     p4_response_correction_steps: int = 0,
+    p4_refinement_target_tolerance: float | None = None,
+    p4_backend_pair_side: str | None = None,
 ) -> dict[str, Any]:
     """Consume one fresh Task041 packet through an exact or BAL_H side path."""
 
@@ -11283,6 +11888,30 @@ def run_task041_consumer(
     specification = load_and_resolve(input_path)
     normalized = specification.as_jsonable()
     contract = _task041_case_contract(normalized, comm.size, phase="consumer")
+    from benchmarks.task041_balh_workflow import (
+        task041_p4_refinement_target_binding,
+    )
+
+    try:
+        refinement_target_binding = task041_p4_refinement_target_binding(
+            model_id=str(normalized.get("model_id", "")),
+            refinement_target_tolerance=p4_refinement_target_tolerance,
+            p4_backend_pair_side=p4_backend_pair_side,
+            profile_id=performance_profile,
+            scope=(
+                "representative_rhs"
+                if task041_rhs_probe_manifest is not None
+                else None
+            ),
+            side_setup_schedule=side_setup_schedule,
+            comparison_mode=comparison_mode,
+        )
+    except ValueError as exc:
+        raise Task041ModePrepError(str(exc)) from exc
+    if refinement_target_binding is not None and p4_correction_replay_from is not None:
+        raise Task041ModePrepError(
+            "P4 refinement target cannot be combined with frozen-Q correction replay"
+        )
     case_time_stop_disabled = bool(
         contract["balh"]
         and contract.get("consumer_time_stop_enforced", True) is False
@@ -11332,6 +11961,11 @@ def run_task041_consumer(
             or top_causal_replay
             or p4_correction_replay_from is not None
             or p4_response_correction_steps != 0
+            or p4_backend_pair_side is not None
+            or (
+                p4_refinement_target_tolerance is not None
+                and p4_backend_pair_side is not None
+            )
         )
         and performance_profile is None
     ):
@@ -11372,6 +12006,10 @@ def run_task041_consumer(
                 top_causal_replay=top_causal_replay,
                 p4_correction_replay=(p4_correction_replay_from is not None),
                 p4_response_correction_steps=p4_response_correction_steps,
+                p4_refinement_target_tolerance=(
+                    p4_refinement_target_tolerance
+                ),
+                p4_backend_pair_side=p4_backend_pair_side,
             )
         except ValueError as exc:
             raise Task041ModePrepError(str(exc)) from exc
@@ -12267,6 +12905,10 @@ def run_task041_consumer(
                 top_causal_replay=top_causal_replay,
                 p4_correction_replay_from=p4_correction_replay_from,
                 p4_response_correction_steps=p4_response_correction_steps,
+                p4_refinement_target_tolerance=(
+                    p4_refinement_target_tolerance
+                ),
+                p4_backend_pair_side=p4_backend_pair_side,
                 p4_correction_replay_packet_identity=(
                     disk_identity
                     if p4_correction_replay_from is not None
@@ -12276,6 +12918,7 @@ def run_task041_consumer(
                     int(performance_contract["memory_cap_bytes"])
                     if (
                         top_causal_replay
+                        or p4_backend_pair_side is not None
                         or p4_correction_replay_from is not None
                     )
                     and isinstance(performance_contract, Mapping)
@@ -12328,6 +12971,9 @@ def run_task041_consumer(
             result["formal"] = _jsonable(formal_result)
             result[component_key] = _jsonable(representative)
             top_causal_result = setup_result.get("top_causal_replay")
+            refinement_target_result = setup_result.get(
+                "p4_refinement_target"
+            )
             p4_correction_result = setup_result.get(
                 "p4_correction_replay"
             )
@@ -12337,6 +12983,14 @@ def run_task041_consumer(
                         "top causal setup returned no explicit diagnostic record"
                     )
                 result["top_causal_replay"] = _jsonable(top_causal_result)
+            if p4_backend_pair_side is not None:
+                if not isinstance(refinement_target_result, Mapping):
+                    raise Task041ModePrepError(
+                        "selected-side target setup returned no explicit result"
+                    )
+                result["p4_refinement_target"] = _jsonable(
+                    refinement_target_result
+                )
             if p4_correction_replay_from is not None:
                 if not isinstance(p4_correction_result, Mapping):
                     raise Task041ModePrepError(
@@ -12350,6 +13004,8 @@ def run_task041_consumer(
                 "status": (
                     "top_causal_diagnostic_only"
                     if top_causal_replay
+                    else "p4_refinement_target_diagnostic_only"
+                    if p4_backend_pair_side is not None
                     else "p4_correction_replay_diagnostic_only"
                     if p4_correction_replay_from is not None
                     else "not_run_common_layout_equivalence_mode"
@@ -12433,6 +13089,25 @@ def run_task041_consumer(
                     and p4_correction_result.get("qualification_pass") is False
                 )
             )
+            refinement_target_safe = bool(
+                p4_backend_pair_side is None
+                or (
+                    isinstance(refinement_target_result, Mapping)
+                    and refinement_target_result.get("selected_side")
+                    == p4_backend_pair_side
+                    and refinement_target_result.get(
+                        "refinement_target_tolerance"
+                    )
+                    == p4_refinement_target_tolerance
+                    and refinement_target_result.get("evidence_complete")
+                    is True
+                    and refinement_target_result.get("action_safety_pass")
+                    is True
+                    and refinement_target_result.get("diagnostic_pass") is True
+                    and refinement_target_result.get("qualification_pass")
+                    is False
+                )
+            )
             if top_causal_replay and not top_causal_safe:
                 failed_gates = (
                     list(top_causal_result.get("failed_action_gates", []))
@@ -12473,10 +13148,40 @@ def run_task041_consumer(
                 error = Task041ModePrepError(
                     "P4 correction replay failed an original action gate"
                 )
+            elif p4_backend_pair_side is not None and not refinement_target_safe:
+                failed_gates = (
+                    list(
+                        refinement_target_result.get(
+                            "failed_action_gates", []
+                        )
+                    )
+                    if isinstance(refinement_target_result, Mapping)
+                    else ["p4_refinement_target_record_missing"]
+                )
+                result["status"] = (
+                    "task041_p4_refinement_target_failed_required_gate"
+                )
+                result["classification"] = (
+                    "TASK041_P4_REFINEMENT_TARGET_REQUIRED_GATE_FAILURE"
+                )
+                result["failure_stage"] = "p4_refinement_target"
+                result["failure_gate"] = failed_gates
+                result["failure_evidence"] = {
+                    "p4_refinement_target": result.get(
+                        "p4_refinement_target"
+                    ),
+                    "failed_action_gates": failed_gates,
+                }
+                error = Task041ModePrepError(
+                    "P4 refinement target diagnostic failed required gates: "
+                    + ", ".join(str(item) for item in failed_gates)
+                )
             else:
                 result["status"] = (
                     "task041_top_causal_replay_completed"
                     if top_causal_replay
+                    else "task041_p4_refinement_target_completed"
+                    if p4_backend_pair_side is not None
                     else "task041_p4_correction_replay_completed"
                     if p4_correction_replay_from is not None
                     else "task041_common_layout_equivalence_completed"
@@ -12486,6 +13191,8 @@ def run_task041_consumer(
                 result["classification"] = (
                     "TASK041_TOP_CAUSAL_REPLAY_COMPLETED"
                     if top_causal_replay
+                    else "TASK041_P4_REFINEMENT_TARGET_DIAGNOSTIC_COMPLETED"
+                    if p4_backend_pair_side is not None
                     else "TASK041_P4_CORRECTION_REPLAY_COMPLETED"
                     if p4_correction_replay_from is not None
                     else "COMMON_LAYOUT_EQUIVALENCE_PASS"

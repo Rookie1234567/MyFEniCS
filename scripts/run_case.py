@@ -79,6 +79,17 @@ def _parser() -> argparse.ArgumentParser:
         help="apply at most one same-factor P4 correction in the top causal diagnostic",
     )
     parser.add_argument(
+        "--task041-p4-refinement-target-tolerance",
+        type=float,
+        choices=(5.0e-13,),
+        default=None,
+    )
+    parser.add_argument(
+        "--task041-p4-backend-pair-side",
+        choices=("bottom", "top"),
+        default=None,
+    )
+    parser.add_argument(
         "--task041-p4-correction-replay-from",
         type=Path,
         metavar="G1_CONSUMER_ROOT",
@@ -96,6 +107,29 @@ def main(argv: list[str] | None = None) -> int:
         registered_case = task041_balh_case(
             str(specification.identity.get("model_id", ""))
         )
+        target_tolerance = args.task041_p4_refinement_target_tolerance
+        target_side = args.task041_p4_backend_pair_side
+        if target_tolerance is not None or target_side is not None:
+            from benchmarks.task041_balh_workflow import (
+                task041_p4_refinement_target_binding,
+            )
+
+            try:
+                task041_p4_refinement_target_binding(
+                    model_id=str(specification.identity.get("model_id", "")),
+                    refinement_target_tolerance=target_tolerance,
+                    p4_backend_pair_side=target_side,
+                    profile_id=args.task041_performance_profile,
+                    scope=(
+                        "representative_rhs"
+                        if args.task041_rhs_probe is not None
+                        else None
+                    ),
+                    side_setup_schedule=args.task041_side_setup_schedule,
+                    comparison_mode=args.task041_comparison_mode,
+                )
+            except ValueError as exc:
+                raise InputError(str(exc)) from exc
         if (
             not args.validate_only
             and not args.dry_run
@@ -153,6 +187,8 @@ def main(argv: list[str] | None = None) -> int:
                     p4_response_correction_steps=(
                         args.task041_p4_response_correction_steps
                     ),
+                    p4_refinement_target_tolerance=target_tolerance,
+                    p4_backend_pair_side=target_side,
                 )
             except ValueError as exc:
                 raise InputError(str(exc)) from exc
@@ -162,6 +198,8 @@ def main(argv: list[str] | None = None) -> int:
             or args.task041_top_causal_replay
             or args.task041_p4_correction_replay_from is not None
             or args.task041_p4_response_correction_steps != 0
+            or target_tolerance is not None
+            or target_side is not None
         ):
             raise InputError(
                 "Task041 comparison options require task041_schur_speed_v2"
@@ -249,6 +287,8 @@ def main(argv: list[str] | None = None) -> int:
             task041_p4_response_correction_steps=(
                 args.task041_p4_response_correction_steps
             ),
+            task041_p4_refinement_target_tolerance=target_tolerance,
+            task041_p4_backend_pair_side=target_side,
         )
         print(json.dumps(result, sort_keys=True, separators=(",", ":")))
         return 0 if result["result_classification"] == "worker_exit0" else 3

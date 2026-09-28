@@ -75,6 +75,8 @@ def _service_contract(
     side_setup_schedule: str | None,
     comparison_mode: str | None,
     p4_response_correction_steps: int = 0,
+    p4_refinement_target_tolerance: float | None = None,
+    p4_backend_pair_side: str | None = None,
 ) -> dict[str, Any]:
     """Resolve the registered case contract without widening the V2 profile."""
 
@@ -94,6 +96,8 @@ def _service_contract(
             side_setup_schedule is not None
             or comparison_mode is not None
             or p4_response_correction_steps != 0
+            or p4_refinement_target_tolerance is not None
+            or p4_backend_pair_side is not None
         ):
             raise Task041ServiceError(
                 "registered Task041 case does not accept representative comparison options"
@@ -125,6 +129,8 @@ def _service_contract(
         comparison_mode=comparison_mode,
         top_causal_replay=p4_response_correction_steps == 1,
         p4_response_correction_steps=p4_response_correction_steps,
+        p4_refinement_target_tolerance=p4_refinement_target_tolerance,
+        p4_backend_pair_side=p4_backend_pair_side,
     )
     if comparison_mode == TASK041_P4_BACKEND_PAIR_MODE:
         if (
@@ -340,6 +346,86 @@ def _p4_response_correction_steps_binding(
     return observed
 
 
+def _p4_refinement_target_binding(
+    command: list[str],
+    configured_tolerance: Any,
+    configured_side: Any,
+    *,
+    model_id: str,
+    profile_id: str | None,
+    scope: str | None,
+    side_setup_schedule: str | None,
+    comparison_mode: str | None,
+) -> tuple[float | None, str | None, dict[str, Any] | None]:
+    tolerance_flag = "--task041-p4-refinement-target-tolerance"
+    side_flag = "--task041-p4-backend-pair-side"
+    tolerance_positions = [i for i, value in enumerate(command) if value == tolerance_flag]
+    side_positions = [i for i, value in enumerate(command) if value == side_flag]
+    if len(tolerance_positions) > 1 or len(side_positions) > 1:
+        raise Task041ServiceError("public command duplicates P4 refinement target options")
+    observed_tolerance: float | None = None
+    if tolerance_positions:
+        position = tolerance_positions[0]
+        if position + 1 >= len(command):
+            raise Task041ServiceError("P4 refinement target option has no value")
+        try:
+            observed_tolerance = float(command[position + 1])
+        except ValueError as exc:
+            raise Task041ServiceError("P4 refinement target is not numeric") from exc
+    observed_side: str | None = None
+    if side_positions:
+        position = side_positions[0]
+        if position + 1 >= len(command):
+            raise Task041ServiceError("P4 backend-pair side option has no value")
+        observed_side = command[position + 1]
+    expected_tolerance = (
+        None
+        if configured_tolerance is None
+        else float(configured_tolerance)
+    )
+    expected_side = None if configured_side is None else str(configured_side)
+    if observed_tolerance != expected_tolerance or observed_side != expected_side:
+        raise Task041ServiceError(
+            "public P4 refinement target options do not match service config"
+        )
+    fixed_step_positions = [
+        index
+        for index, value in enumerate(command)
+        if value == "--task041-p4-response-correction-steps"
+    ]
+    fixed_step_requested = any(
+        index + 1 < len(command) and command[index + 1] == "1"
+        for index in fixed_step_positions
+    )
+    if observed_tolerance is not None and (
+        "--task041-top-causal-replay" in command
+        or "--task041-p4-correction-replay-from" in command
+        or fixed_step_requested
+    ):
+        raise Task041ServiceError(
+            "P4 refinement target cannot be combined with an existing causal replay"
+        )
+    binding = None
+    if observed_tolerance is not None or observed_side is not None:
+        from benchmarks.task041_balh_workflow import (
+            task041_p4_refinement_target_binding,
+        )
+
+        try:
+            binding = task041_p4_refinement_target_binding(
+                model_id=model_id,
+                refinement_target_tolerance=observed_tolerance,
+                p4_backend_pair_side=observed_side,
+                profile_id=profile_id,
+                scope=scope,
+                side_setup_schedule=side_setup_schedule,
+                comparison_mode=comparison_mode,
+            )
+        except ValueError as exc:
+            raise Task041ServiceError(str(exc)) from exc
+    return observed_tolerance, observed_side, binding
+
+
 def _systemd_identity(unit: str) -> dict[str, str]:
     completed = subprocess.run(
         [
@@ -486,11 +572,33 @@ def run_service_parent(config_path: str | Path) -> dict[str, Any]:
     p4_response_correction_steps = _p4_response_correction_steps_binding(
         public_command, config.get("p4_response_correction_steps")
     )
+    p4_refinement_target_tolerance, p4_backend_pair_side, target_binding = (
+        _p4_refinement_target_binding(
+            public_command,
+            config.get("p4_refinement_target_tolerance"),
+            config.get("p4_backend_pair_side"),
+            model_id=str(config["model_id"]),
+            profile_id=(
+                str(config.get("performance_profile"))
+                if config.get("performance_profile") is not None
+                else None
+            ),
+            scope=(
+                TASK041_REPRESENTATIVE_RHS_SCOPE
+                if "--task041-rhs-probe" in public_command
+                else None
+            ),
+            side_setup_schedule=side_setup_schedule,
+            comparison_mode=comparison_mode,
+        )
+    )
     contract = _service_contract(
         config,
         side_setup_schedule=side_setup_schedule,
         comparison_mode=comparison_mode,
         p4_response_correction_steps=p4_response_correction_steps,
+        p4_refinement_target_tolerance=p4_refinement_target_tolerance,
+        p4_backend_pair_side=p4_backend_pair_side,
     )
     phase_limits = dict(
         task041_balh_phase_limits_for_model(str(config["model_id"]), "consumer")
@@ -534,6 +642,15 @@ def run_service_parent(config_path: str | Path) -> dict[str, Any]:
         **(
             {"p4_response_correction_steps": p4_response_correction_steps}
             if p4_response_correction_steps
+            else {}
+        ),
+        **(
+            {
+                "p4_refinement_target_tolerance": p4_refinement_target_tolerance,
+                "p4_backend_pair_side": p4_backend_pair_side,
+                "p4_refinement_target_binding": dict(target_binding or {}),
+            }
+            if target_binding is not None
             else {}
         ),
         "representative_rhs_probe": probe_binding,
@@ -808,11 +925,33 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
     p4_response_correction_steps = _p4_response_correction_steps_binding(
         public_command, config.get("p4_response_correction_steps")
     )
+    p4_refinement_target_tolerance, p4_backend_pair_side, target_binding = (
+        _p4_refinement_target_binding(
+            public_command,
+            config.get("p4_refinement_target_tolerance"),
+            config.get("p4_backend_pair_side"),
+            model_id=str(config["model_id"]),
+            profile_id=(
+                str(config.get("performance_profile"))
+                if config.get("performance_profile") is not None
+                else None
+            ),
+            scope=(
+                TASK041_REPRESENTATIVE_RHS_SCOPE
+                if "--task041-rhs-probe" in public_command
+                else None
+            ),
+            side_setup_schedule=side_setup_schedule,
+            comparison_mode=comparison_mode,
+        )
+    )
     contract = _service_contract(
         config,
         side_setup_schedule=side_setup_schedule,
         comparison_mode=comparison_mode,
         p4_response_correction_steps=p4_response_correction_steps,
+        p4_refinement_target_tolerance=p4_refinement_target_tolerance,
+        p4_backend_pair_side=p4_backend_pair_side,
     )
     probe_binding = _representative_rhs_probe_binding(
         public_command, contract["scope"]
@@ -896,6 +1035,12 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
             expected["p4_response_correction_steps"] = (
                 p4_response_correction_steps
             )
+        if target_binding is not None:
+            expected["p4_refinement_target_tolerance"] = (
+                p4_refinement_target_tolerance
+            )
+            expected["p4_backend_pair_side"] = p4_backend_pair_side
+            expected["p4_refinement_target_binding"] = dict(target_binding)
         if contract.get("compute_wall_unlimited") is True:
             expected["contract_kind"] = contract["contract_kind"]
             if contract.get("case_id") is not None:

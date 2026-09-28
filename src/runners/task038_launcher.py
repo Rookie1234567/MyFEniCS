@@ -3660,6 +3660,8 @@ def launch_specification(
     task041_top_causal_replay: bool = False,
     task041_p4_correction_replay_from: str | Path | None = None,
     task041_p4_response_correction_steps: int = 0,
+    task041_p4_refinement_target_tolerance: float | None = None,
+    task041_p4_backend_pair_side: str | None = None,
 ) -> dict[str, Any]:
     """Launch one resolved input or fail closed before numerical execution."""
 
@@ -3710,6 +3712,38 @@ def launch_specification(
         raise InputError(
             "--task041-p4-response-correction-steps requires the Task041 public route"
         )
+    if (
+        task041_p4_refinement_target_tolerance is not None
+        or task041_p4_backend_pair_side is not None
+    ) and not task041_public_route:
+        raise InputError("P4 refinement target requires the Task041 public route")
+    p4_refinement_target = None
+    if (
+        task041_p4_refinement_target_tolerance is not None
+        or task041_p4_backend_pair_side is not None
+    ):
+        from benchmarks.task041_balh_workflow import (
+            task041_p4_refinement_target_binding,
+        )
+
+        try:
+            p4_refinement_target = task041_p4_refinement_target_binding(
+                model_id=str(specification.identity.get("model_id", "")),
+                refinement_target_tolerance=(
+                    task041_p4_refinement_target_tolerance
+                ),
+                p4_backend_pair_side=task041_p4_backend_pair_side,
+                profile_id=performance_profile,
+                scope=(
+                    "representative_rhs"
+                    if task041_rhs_probe_manifest is not None
+                    else None
+                ),
+                side_setup_schedule=task041_side_setup_schedule,
+                comparison_mode=task041_comparison_mode,
+            )
+        except ValueError as exc:
+            raise InputError(str(exc)) from exc
     balh_time_stop_override = None
     performance_contract = None
     if task041_public_route and str(
@@ -3785,6 +3819,10 @@ def launch_specification(
                 p4_response_correction_steps=(
                     task041_p4_response_correction_steps
                 ),
+                p4_refinement_target_tolerance=(
+                    task041_p4_refinement_target_tolerance
+                ),
+                p4_backend_pair_side=task041_p4_backend_pair_side,
             )
         except ValueError as exc:
             raise InputError(str(exc)) from exc
@@ -3965,6 +4003,12 @@ def launch_specification(
             correction_root
         )
         _write_json(run_directory / "run_manifest.json", manifest)
+    if p4_refinement_target is not None:
+        manifest["task041_p4_refinement_target"] = {
+            **p4_refinement_target,
+            "requested_tolerance": task041_p4_refinement_target_tolerance,
+        }
+        _write_json(run_directory / "run_manifest.json", manifest)
     if rhs_probe_binding is not None:
         manifest["representative_rhs_probe"] = {
             "path": rhs_probe_binding["path"],
@@ -4017,6 +4061,10 @@ def launch_specification(
                 task041_p4_response_correction_steps=(
                     task041_p4_response_correction_steps
                 ),
+                task041_p4_refinement_target_tolerance=(
+                    task041_p4_refinement_target_tolerance
+                ),
+                task041_p4_backend_pair_side=task041_p4_backend_pair_side,
             )
         except OSError as exc:
             result = {

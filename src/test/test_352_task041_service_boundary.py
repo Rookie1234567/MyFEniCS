@@ -578,6 +578,123 @@ def test_fixed_pair_service_requires_full_config_and_canonical_v5_path(tmp_path)
             [*command, "--task041-p4-response-correction-steps", "1"], 1
         )
 
+    target_command = [
+        *command,
+        "--task041-p4-refinement-target-tolerance",
+        "5e-13",
+        "--task041-p4-backend-pair-side",
+        "bottom",
+    ]
+    target_config = {
+        **config,
+        "public_command": target_command,
+        "p4_refinement_target_tolerance": 5.0e-13,
+        "p4_backend_pair_side": "bottom",
+    }
+    target_binding = service._p4_refinement_target_binding(
+        target_command,
+        target_config["p4_refinement_target_tolerance"],
+        target_config["p4_backend_pair_side"],
+        model_id=TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
+        profile_id=TASK041_SCHUR_SPEED_V2_PROFILE,
+        scope=TASK041_REPRESENTATIVE_RHS_SCOPE,
+        side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        comparison_mode=TASK041_P4_BACKEND_PAIR_MODE,
+    )
+    assert target_binding[2]["selected_side"] == "bottom"
+    target_contract = service._service_contract(
+        target_config,
+        side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        comparison_mode=TASK041_P4_BACKEND_PAIR_MODE,
+        p4_refinement_target_tolerance=5.0e-13,
+        p4_backend_pair_side="bottom",
+    )
+    target_contract_binding = target_contract["p4_refinement_target"]
+    assert all(
+        target_contract_binding[key] == value
+        for key, value in target_binding[2].items()
+    )
+    assert target_contract_binding["max_corrections_per_p4_call"] == 2
+    assert target_contract_binding["original_gates_unchanged"] is True
+
+    formal_target_command = [
+        sys.executable,
+        "scripts/run_case.py",
+        "input/official/task041/side_balh/5nm_p6h4_m480_mpi8_balh.dat",
+        "--task041-performance-profile",
+        TASK041_SCHUR_SPEED_V2_PROFILE,
+        "--task041-p4-refinement-target-tolerance",
+        "5e-13",
+    ]
+    formal_target_config = {
+        "model_id": TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
+        "scope": None,
+        "performance_profile": TASK041_SCHUR_SPEED_V2_PROFILE,
+        "ledger_path": canonical_ledger,
+        "public_command": formal_target_command,
+        "p4_refinement_target_tolerance": 5.0e-13,
+        "p4_backend_pair_side": None,
+    }
+    formal_target_binding = service._p4_refinement_target_binding(
+        formal_target_command,
+        5.0e-13,
+        None,
+        model_id=TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
+        profile_id=TASK041_SCHUR_SPEED_V2_PROFILE,
+        scope=None,
+        side_setup_schedule=None,
+        comparison_mode=None,
+    )
+    assert formal_target_binding[2] == {
+        "scope": "registered_5nm_formal_consumer_target",
+        "tolerance": 5.0e-13,
+        "selected_side": None,
+    }
+    formal_target_contract = service._service_contract(
+        formal_target_config,
+        side_setup_schedule=None,
+        comparison_mode=None,
+        p4_refinement_target_tolerance=5.0e-13,
+        p4_backend_pair_side=None,
+    )
+    formal_contract_binding = formal_target_contract["p4_refinement_target"]
+    assert all(
+        formal_contract_binding[key] == value
+        for key, value in formal_target_binding[2].items()
+    )
+    assert formal_contract_binding["max_corrections_per_p4_call"] == 2
+    assert formal_contract_binding["original_gates_unchanged"] is True
+    with pytest.raises(
+        service.Task041ServiceError,
+        match="P4 refinement target options do not match service config",
+    ):
+        service._p4_refinement_target_binding(
+            target_command,
+            5.0e-13,
+            "top",
+            model_id=TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
+            profile_id=TASK041_SCHUR_SPEED_V2_PROFILE,
+            scope=TASK041_REPRESENTATIVE_RHS_SCOPE,
+            side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+            comparison_mode=TASK041_P4_BACKEND_PAIR_MODE,
+        )
+    for incompatible in (
+        [*target_command, "--task041-top-causal-replay"],
+        [*target_command, "--task041-p4-correction-replay-from", "g1"],
+        [*target_command, "--task041-p4-response-correction-steps", "1"],
+    ):
+        with pytest.raises(service.Task041ServiceError, match="cannot be combined"):
+            service._p4_refinement_target_binding(
+                incompatible,
+                5.0e-13,
+                "bottom",
+                model_id=TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
+                profile_id=TASK041_SCHUR_SPEED_V2_PROFILE,
+                scope=TASK041_REPRESENTATIVE_RHS_SCOPE,
+                side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+                comparison_mode=TASK041_P4_BACKEND_PAIR_MODE,
+            )
+
 
 def test_fixed_pair_public_supervision_ignores_v2_clock_but_keeps_resource_gate(
     monkeypatch, tmp_path
