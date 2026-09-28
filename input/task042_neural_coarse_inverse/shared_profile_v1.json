@@ -124,5 +124,10 @@
     "selection_split": "validation only",
     "deployment_rank": 128,
     "meaning": "preregistered offline representation signal, not strict 1e-10 qualification; require both median ratios at rank128; no rank enlargement if negative"
+  },
+  "teacher_qualification": {
+    "directory": "results/task042/task042_f2_teacher_shared_20260928T115902548611Z",
+    "source_sha": "b72448bb2117a0221f041f1b47ac41049750a3c7",
+    "manifest_sha256": "99c354ea4ce85b2dd8284b8f91dab4f2e453b4b9d426034aa47af43e89a14783"
   }
 }

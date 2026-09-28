@@ -60,3 +60,33 @@ def test_gram_loss_includes_unrepresented_native_equation_and_real_channels():
     np.testing.assert_allclose(
         predicted, np.concatenate((expected.real, expected.imag), axis=1), atol=1e-14
     )
+
+
+def test_linear_pc_keeps_full_b0_and_attains_native_subspace_minimum():
+    from src.solvers.learned_reduced_correction import ReducedCorrectionPC
+
+    rng = np.random.default_rng(44)
+    a = rng.standard_normal((6, 6)) + 1j * rng.standard_normal((6, 6))
+    w = rng.standard_normal((9, 6)) + 1j * rng.standard_normal((9, 6))
+    q, _ = np.linalg.qr(rng.standard_normal((6, 3)) + 1j * rng.standard_normal((6, 3)))
+    images = w @ a @ q
+    u, r = np.linalg.qr(images)
+
+    class B0:
+        rows = 6
+        factors = ()
+        factor_bytes = 0
+        declarations = ()
+
+        def apply_array(self, rhs):
+            return 0.1 * rhs
+
+    pc = ReducedCorrectionPC(B0(), q, u, r, lambda v: a @ v, lambda v: w @ v)
+    rhs = rng.standard_normal(6) + 1j * rng.standard_normal(6)
+    z = pc.apply_array(rhs)
+    gap = w @ (rhs - a @ (0.1 * rhs))
+    expected = gap - u @ (u.conj().T @ gap)
+    np.testing.assert_allclose(w @ (rhs - a @ z), expected, atol=2e-13)
+    np.testing.assert_array_equal(pc.apply_array(np.zeros(6, dtype=np.complex128)), 0)
+    assert pc.declarations[-1].rows == 3 and pc.declarations[-1].scope == "bottom"
+    assert pc.representation_bytes < 512 * 2**20 and not pc.q.flags.writeable

@@ -145,6 +145,28 @@ class ReducedCorrectionPC:
     """
 
     def __init__(self, b0, q, u, r, matrix_apply, native_residual_map, *, weights=None):
+        rank = q.shape[1] if q.ndim == 2 else 0
+        if (
+            q.ndim != 2
+            or u.ndim != 2
+            or not 0 < rank <= 128
+            or q.shape[0] != b0.rows
+            or u.shape[1] != rank
+            or r.shape != (rank, rank)
+            or any(
+                a.dtype != np.complex128 or not np.isfinite(a).all() for a in (q, u, r)
+            )
+        ):
+            raise ValueError("invalid frozen representation shape/dtype/values")
+        buffers = (6 * q.shape[0] + 4 * u.shape[0] + 10 * rank) * 16
+        weight_bytes = (
+            sum(a.nbytes for a in weights.values()) if weights is not None else 0
+        )
+        self.construction_representation_bytes = (
+            q.nbytes + 3 * u.nbytes + r.nbytes + buffers + weight_bytes
+        )
+        if self.construction_representation_bytes > 512 * 2**20:
+            raise ValueError("representation construction capacity exceeded")
         self.b0 = b0
         self.q, self.u_h, self.r = q, np.ascontiguousarray(u.conj().T), r
         self.matrix_apply = matrix_apply
@@ -166,10 +188,19 @@ class ReducedCorrectionPC:
                 raise ValueError("NN weight dtype/finite Gate failed")
         if q.shape[1] > 128 or self.representation_bytes > 512 * 2**20:
             raise ValueError("representation capacity exceeded")
+        for a in (self.q, self.u_h, self.r):
+            a.flags.writeable = False
+        if weights is not None:
+            for a in weights.values():
+                a.flags.writeable = False
 
     @property
     def declarations(self):
-        return self.b0.declarations
+        from .coarse_inverse_protocol import FactorDeclaration
+
+        return self.b0.declarations + (
+            FactorDeclaration("bottom", self.r.shape[0], self.r.nbytes),
+        )
 
     def encode(self, residual):
         z = self.b0.apply_array(residual)

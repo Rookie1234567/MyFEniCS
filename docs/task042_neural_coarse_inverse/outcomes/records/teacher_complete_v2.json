@@ -1,0 +1,454 @@
+{
+  "schema": "task042.teacher.v2",
+  "source_sha": "b72448bb2117a0221f041f1b47ac41049750a3c7",
+  "numerical_summary": {
+    "status": "TEACHER_QUALIFIED",
+    "stage": "F2-teacher",
+    "source_sha": "b72448bb2117a0221f041f1b47ac41049750a3c7",
+    "shared_workstation": true,
+    "input_sha256": "fe3674c746a4cd0faef785a0285f6802ba86fc10e192a1a5c85c0ec7c1f1bc98",
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "official_result": null,
+    "artifact_directory": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z",
+    "performance_conclusion": "inconclusive under shared load",
+    "dataset_manifest": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/dataset_manifest.json",
+    "dataset_manifest_sha256": "99c354ea4ce85b2dd8284b8f91dab4f2e453b4b9d426034aa47af43e89a14783",
+    "teacher_pairs": 384,
+    "global_p4_factor_created": true,
+    "candidate_constructed": false,
+    "worker_seconds": 1684.3956579549704
+  },
+  "run_summary": {
+    "workflow_deadline_seconds": 10800,
+    "solve_deadline_seconds": null,
+    "time_limit_mode": "bounded",
+    "resource_stop_policy": "legacy",
+    "rss_hard_limit_bytes": 17179869184,
+    "rss_warning_bytes": 12884901888,
+    "startup_headroom_bytes": null,
+    "swap_policy": "legacy_stop",
+    "global_swap_delta_policy": "observe_only",
+    "cache_metadata_stable": true,
+    "classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "observed_child_pids": [
+      545413,
+      545414,
+      545421,
+      545422
+    ],
+    "sampled_process_tree_rss_peak_bytes": 1558155264,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+    "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+    "global_swap_activity": {
+      "scope": "WSL-global diagnostic, not dedicated job",
+      "baseline": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 300
+      },
+      "end": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 300
+      },
+      "delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      }
+    },
+    "job_swap_activity": "zero_supported_by_zero_global_activity",
+    "launch_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 948810518528,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 948810518528,
+      "reserve_bytes": 353748992000,
+      "launch_cap_bytes": 17179869184,
+      "planning_cap_bytes": 17179869184,
+      "cgroup_limits": [],
+      "system_reserve_bytes": 216310038528,
+      "neighbor_growth_allowance_bytes": 137438953472,
+      "shared_workstation": true
+    },
+    "samples": 2495,
+    "elapsed_seconds": 1687.6017427570187,
+    "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_state": {
+      "source_sha": "b72448bb2117a0221f041f1b47ac41049750a3c7",
+      "git_status": "",
+      "stage": "F2-teacher",
+      "formal_pde": false,
+      "formal_fe_stage": true,
+      "input_sha256": "fe3674c746a4cd0faef785a0285f6802ba86fc10e192a1a5c85c0ec7c1f1bc98",
+      "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "shared_workstation": true,
+      "cpu": 0,
+      "mpi_size": 1,
+      "math_threads": 1,
+      "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+      "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+      "nice": 10,
+      "io_priority": "idle"
+    },
+    "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_f2_teacher_shared_20260928T115902548611Z",
+    "stage": "F2-teacher",
+    "shared_workstation": true
+  },
+  "dataset_manifest": {
+    "schema": "task042.teacher.v1",
+    "source_sha": "b72448bb2117a0221f041f1b47ac41049750a3c7",
+    "f1_qualification": {
+      "directory": "results/task042/task042_f1_b0_shared_retry4_20260928T112714491078Z",
+      "source_sha": "cca180f875bd22146f2d30fa4d004e372135dfbb",
+      "operator_sha256": "150f18e26f15783726f2ffeb362ef053450962a16fff13d5241cc93c8d018560",
+      "files_sha256": {
+        "run_manifest.json": "edfd3fab79b50e757959747430aafb9363773377f349b196d0670c429f589b4d",
+        "run_summary.json": "921be1219cecec25760dafcef6695eb3373bfbcb439f7b35739e87cfdee7fb79",
+        "operator_identity.json": "4cc364de8961ec36e93b9023dc6276e5e9cbdc47d65fac55c6182ec53c969440",
+        "component_checks.json": "7a84d6114a87a4cfbb665d2bf975d269cc66797eaf96385e336620d184b11d1d",
+        "candidate_construction.json": "4d44d77a593513be38b788b822151d773dee4cea84dbe750ca32148e9d5912ef",
+        "numerical_summary.json": "4a93d67f0b4dd57f12845c8e11b496dea2e735c8384d02e280113de33e03890a"
+      },
+      "artifacts_sha256": {
+        "rhs_000.npz": "ed514fb0c18808caa496302ab6786b647a32151002f690687506c44464a3f2d8",
+        "rhs_001.npz": "413f351646293060438d4652be6fac38765d35083064b43a90bb86919e3d03b5",
+        "rhs_002.npz": "b34551681ff11a9ea4694c3cf013d3eb82fb696789fe93707c6021b017cb8459",
+        "rhs_003.npz": "c72fc83b50dab3e2ca053990f93a7c39f6ee7475da82a2d9f50b4220cc299fbd",
+        "rhs_004.npz": "8309020169f7fdb4d712beafd017a5e4ea3e04ef3049691013f90fa8d4a5a2bc",
+        "rhs_005.npz": "b52f9f305f303659983646ae3107228f69f0dc002da37753ec5cefa04fbcaad7",
+        "rhs_006.npz": "d7267957b8b82eacbbef3c16e91fd05da564835fd1855d45f127c3a3ad106e45",
+        "rhs_007.npz": "14f763f9da0d7f19d8ac27acfefe3a769819777c432b26837bafbff4f57044eb",
+        "trajectory_000.npz": "f95de00cb3f32f8abe347d054edef991a8bbd215b6f5a7d3104244cc6b878e56",
+        "trajectory_001.npz": "ce09e57ea6506407f08972feffef00b5c8e8cacaa257f5bf729ba4e44571ad45",
+        "trajectory_002.npz": "b7c294435a5582bb457a4286fa9f4eaa332e5496c8b20881d6980853abbe7770",
+        "trajectory_003.npz": "7d0b1e084a20516beef92ef7fcdb225606b4ecbbd29e8a035dead1b8e7980b63",
+        "trajectory_004.npz": "e6478f23817860af7a75977379183ca0e86c0d4335c6539620a6a4bcd06dff48",
+        "trajectory_005.npz": "90093628edf1fe376a548a28c01f0042c8729f636007cc1b5fd5a3f3ee525943",
+        "trajectory_006.npz": "d6c44ca3f7afe6de70f03162bc3d58c2fde10425bbc8366738e0a90642a7e90c"
+      }
+    },
+    "operator_sha256": "150f18e26f15783726f2ffeb362ef053450962a16fff13d5241cc93c8d018560",
+    "normalization": "divide raw reduced RHS, solution and full/port RHS by ||raw||; zero scale=1",
+    "precision": "complex128",
+    "batch_max": 32,
+    "splits": {
+      "train": {
+        "count": 256,
+        "files": [
+          {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+            "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+            "rows": 32
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_001.npz",
+            "sha256": "0f8a3a30d491c1457673a56c600b91cf932400d2e55df6e8d9109bde53434d31",
+            "rows": 32
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_002.npz",
+            "sha256": "6a320aa89264aff20bceab828fb9a9c1f33b9f873053d694cb4610452edf9bb0",
+            "rows": 32
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_003.npz",
+            "sha256": "ca2a775925ba007bdf92ea3d74a75ae5ad8b89b7e05c0833ead614a1624e2ea0",
+            "rows": 32
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_004.npz",
+            "sha256": "b087346d7194220d5ad88715c77beee882196ac91d63d1f3ba374a53143db4d2",
+            "rows": 32
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_005.npz",
+            "sha256": "5afed1016f70c307ead08a9c95cb2595a176a41de950e09f637444550ceecc92",
+            "rows": 32
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_006.npz",
+            "sha256": "5e2fffaf9f128622bb3038debde2dff07824bfad1021c71164446f2e6c5cee1a",
+            "rows": 32
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_007.npz",
+            "sha256": "b551d5598a3c945f38637427cfebdd2687cd4d7afe92f69aef91c0141e9cc8d2",
+            "rows": 32
+          }
+        ],
+        "residuals_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/teacher_residuals.json",
+        "residuals_sha256": "4e91d7a62454ff5ac5cb6e0fd44b891f0582daca2d38e4d4a8f8deeda2bb927c",
+        "seconds": 1038.6840723489877,
+        "worst_metrics": {
+          "native_residual_relative": 2.711719485548497e-13,
+          "port_residual_relative": 5.296235380981714e-14,
+          "internal_residual_relative": 5.557633737574444e-17,
+          "native_identity_relative": 1.5628059027985894e-13,
+          "schur_port_identity_relative": 4.703485812513346e-17
+        }
+      },
+      "validation": {
+        "count": 64,
+        "files": [
+          {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/validation/batch_000.npz",
+            "sha256": "11b2e9b64e56ae41db57904a4006cb459de0e57259b5c607447bcb2212c22ede",
+            "rows": 32
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/validation/batch_001.npz",
+            "sha256": "99ba7110b7a9ddb42ab3597b106b80e7866ab58bfa20b66804df833727e3d287",
+            "rows": 32
+          }
+        ],
+        "residuals_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/validation/teacher_residuals.json",
+        "residuals_sha256": "5f61fd5ff6c9ba73a175eca2acee4ddcbdaafe6fa2a50ba011e4bccf387faf05",
+        "seconds": 265.67239868600154,
+        "worst_metrics": {
+          "native_residual_relative": 2.990522226689744e-13,
+          "port_residual_relative": 5.317581198984316e-14,
+          "internal_residual_relative": 5.384050806258879e-17,
+          "native_identity_relative": 1.767398344500323e-13,
+          "schur_port_identity_relative": 3.8846312630025105e-17
+        }
+      },
+      "heldout": {
+        "count": 64,
+        "files": [
+          {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/heldout/batch_000.npz",
+            "sha256": "a995472bf4ce0451a07bbb644f6e714a923183b61f47251881050e2dd045dcc2",
+            "rows": 32
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/heldout/batch_001.npz",
+            "sha256": "bdcf0e3546b45bea4f85391a381c11b0822a62a746cf5eb951a0ca814958dab6",
+            "rows": 32
+          }
+        ],
+        "residuals_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/heldout/teacher_residuals.json",
+        "residuals_sha256": "3ee2fbd7004af736056bee9cce1402d0822a4f8d6cc18550e510d41e91fe1d86",
+        "seconds": 254.89940581598785,
+        "worst_metrics": {
+          "native_residual_relative": 3.959901353972973e-12,
+          "port_residual_relative": 5.085989243456113e-14,
+          "internal_residual_relative": 5.4879164327220334e-17,
+          "native_identity_relative": 2.0022736651837392e-12,
+          "schur_port_identity_relative": 3.6992027491271356e-17
+        }
+      }
+    },
+    "teacher_global_p4_factor": true,
+    "candidate_constructed": false,
+    "split_policy": {
+      "train_max": 256,
+      "validation_max": 64,
+      "heldout_max": 64,
+      "batch_max": 32,
+      "seeds": [
+        420200,
+        420300,
+        420400
+      ],
+      "split": "independent seed + entire trajectory",
+      "whole_training_families": [
+        "seed420110_F1_synthetic_family",
+        "seed420200"
+      ],
+      "whole_validation_families": [
+        "seed420300"
+      ],
+      "whole_heldout_families": [
+        "physical_F1_trajectory",
+        "seed420400"
+      ],
+      "heldout_strict_inventory": "first 16: physical, zero, real Krylov r0/r32/r128/r256, physical phase/amplitude, unseen internal/port/mixed/phase/amplitude, manufactured"
+    },
+    "shared_workstation": true,
+    "reference_inventory_passed": 8,
+    "status": "TEACHER_QUALIFIED",
+    "factor_release": "finally then worker exit before any candidate"
+  },
+  "reference_results": [
+    {
+      "index": 0,
+      "metrics": {
+        "native_residual_relative": 3.953772517570791e-12,
+        "port_residual_relative": 1.0630885491943925e-16,
+        "internal_residual_relative": 2.033224583928779e-17,
+        "native_identity_relative": 1.9976367493060917e-12,
+        "schur_port_identity_relative": 0.0
+      },
+      "refinements": 3,
+      "passed": true,
+      "seconds": 3.0378422180074267
+    },
+    {
+      "index": 1,
+      "metrics": {
+        "native_residual_relative": 5.384197957430117e-13,
+        "port_residual_relative": 2.4513000479377293e-16,
+        "internal_residual_relative": 4.621968621324495e-17,
+        "native_identity_relative": 3.0858872921554335e-13,
+        "schur_port_identity_relative": 0.0
+      },
+      "refinements": 1,
+      "passed": true,
+      "seconds": 3.0691910079913214
+    },
+    {
+      "index": 2,
+      "metrics": {
+        "native_residual_relative": 3.9884691389996585e-14,
+        "port_residual_relative": 2.6991375111796973e-16,
+        "internal_residual_relative": 0.0,
+        "native_identity_relative": 1.994955600682468e-14,
+        "schur_port_identity_relative": 2.508949444382752e-17
+      },
+      "refinements": 1,
+      "passed": true,
+      "seconds": 2.670495066966396
+    },
+    {
+      "index": 3,
+      "metrics": {
+        "native_residual_relative": 1.330760576398012e-13,
+        "port_residual_relative": 2.041577694895611e-16,
+        "internal_residual_relative": 4.4860632729258035e-17,
+        "native_identity_relative": 7.661081406555823e-14,
+        "schur_port_identity_relative": 2.660095396656201e-17
+      },
+      "refinements": 1,
+      "passed": true,
+      "seconds": 2.824412891000975
+    },
+    {
+      "index": 4,
+      "metrics": {
+        "native_residual_relative": 1.3298845508648198e-13,
+        "port_residual_relative": 2.7253135577293357e-16,
+        "internal_residual_relative": 4.6097046534174145e-17,
+        "native_identity_relative": 7.688600728241285e-14,
+        "schur_port_identity_relative": 2.6299971275474663e-17
+      },
+      "refinements": 1,
+      "passed": true,
+      "seconds": 3.0021076180273667
+    },
+    {
+      "index": 5,
+      "metrics": {
+        "native_residual_relative": 1.329498910248909e-13,
+        "port_residual_relative": 2.0176334435393923e-16,
+        "internal_residual_relative": 4.608129066714161e-17,
+        "native_identity_relative": 7.689030814649586e-14,
+        "schur_port_identity_relative": 1.3876424084361651e-17
+      },
+      "refinements": 1,
+      "passed": true,
+      "seconds": 3.029290813021362
+    },
+    {
+      "index": 6,
+      "metrics": {
+        "native_residual_relative": 1.3330918715315535e-13,
+        "port_residual_relative": 1.932836412798323e-16,
+        "internal_residual_relative": 4.6759544352623094e-17,
+        "native_identity_relative": 7.758239235219081e-14,
+        "schur_port_identity_relative": 2.5838135822859958e-17
+      },
+      "refinements": 1,
+      "passed": true,
+      "seconds": 2.8618365750298835
+    },
+    {
+      "index": 7,
+      "metrics": {
+        "native_residual_relative": 0.0,
+        "port_residual_relative": 0.0,
+        "internal_residual_relative": 0.0,
+        "native_identity_relative": 0.0,
+        "schur_port_identity_relative": 0.0
+      },
+      "refinements": 0,
+      "passed": true,
+      "seconds": 3.3866037749685347
+    }
+  ],
+  "reference_factor": {
+    "setup_seconds": 6.26403969398234,
+    "offline_only": true,
+    "global_p4_factor_created": true,
+    "factor_info": {
+      "infog": {
+        "1": 0,
+        "2": 0,
+        "3": 40282272,
+        "4": 197648,
+        "5": 1800,
+        "6": 164,
+        "7": 4,
+        "8": 100,
+        "9": 40282272,
+        "10": 197648,
+        "11": 1800,
+        "12": 128,
+        "13": 0,
+        "14": 0,
+        "15": 0,
+        "16": 971,
+        "17": 971,
+        "18": 4582,
+        "19": 4582,
+        "20": 40282272,
+        "22": 837,
+        "29": 40282272
+      },
+      "rinfog": {
+        "1": 44396550096.0,
+        "2": 46475648.0,
+        "3": 44396550096.0,
+        "4": 0.0,
+        "5": 0.0,
+        "6": 0.0,
+        "7": 0.0,
+        "8": 0.0,
+        "9": 0.0,
+        "10": 0.0,
+        "11": 0.0,
+        "12": 0.0,
+        "13": 0.0,
+        "14": 0.0,
+        "15": 644.516352,
+        "16": 0.0,
+        "17": 679.283378,
+        "18": 4450.893573,
+        "19": 0.0003958012808041658,
+        "20": 0.0003958012808041658
+      }
+    },
+    "icntl22": 0,
+    "icntl23": 8192
+  },
+  "symbolic_budget": {
+    "post_symbolic_rss_bytes": 708243456,
+    "symbolic_factor_estimate_padded_bytes": 972000000,
+    "factor_prediction_multiplier": 2,
+    "future_workspace_bytes": 1073741824,
+    "engineering_buffer_bytes": 1073741824,
+    "predicted_peak_bytes": 4799727104,
+    "memory_admission": "predicted_peak",
+    "predicted_peak_is_diagnostic_only": false,
+    "prediction_status": "available",
+    "launch_cap_bytes": 17179869184,
+    "classification": "predicted_engineering_budget_not_upper_bound"
+  },
+  "raw_records_sha256": {
+    "numerical_summary.json": "bba6c3312ee03739e5ae4cee1be498e19f60c2e8199826ac6e1e7757fa1005ab",
+    "run_summary.json": "a6fe4f25fa13e92defe24a721785c4a4193b7df34a1fba32aeb9aa2c44f1a48d",
+    "reference_results.json": "0db1438132d6c14376c6111a448b67af58cc45b404d2a34b8e9375c84196ba06",
+    "stages.jsonl": "f6b689199372c829ae9d2bc2d98f74bc8ac240d9f7ae82efcfe9220edeed5276"
+  }
+}

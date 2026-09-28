@@ -256,6 +256,28 @@ def oracle(runtime, directory, artifact, source, profile, marker):
     )
     try:
         errors = []
+        from src.solvers.coarse_inverse_protocol import CoarseState
+        from src.solvers.learned_coarse_inverse import OriginalEquationAudit
+
+        f1_artifacts = ARTIFACTS / Path(profile["f1_qualification"]["directory"]).name
+        failure_audits = []
+        for path in sorted(f1_artifacts.glob("failure_*.npz")):
+            with np.load(path, allow_pickle=False) as p:
+                rhs = CoarseRHS(p["rhs_fe"], p["rhs_port"])
+                state = CoarseState(p["state_fe"], p["state_port"])
+            independent = OriginalEquationAudit(action, native)
+            d = independent.evaluate(state, rhs)
+            failure_audits.append(
+                {
+                    "packet": path.name,
+                    "packet_sha256": file_sha256(path),
+                    "metrics": scalar_audit(d),
+                    "submitted_recovery_relative": independent.recovery(
+                        state, rhs
+                    ).relative(),
+                }
+            )
+        write_json(directory / "f1_failure_full_audits.json", failure_audits)
         for index, packet in enumerate(dataset["splits"]["train"]["files"]):
             with np.load(packet["path"], allow_pickle=False) as p:
                 error = np.stack(
