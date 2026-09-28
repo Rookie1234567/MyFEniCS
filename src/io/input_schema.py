@@ -992,7 +992,7 @@ FIELD_SPECS: Final = (
         allowed=(
             "task042_shared_f1_reference_v1", "task042_shared_f1_b0_v1",
             "task042_shared_f2_teacher_v1", "task042_shared_f2_oracle_v1",
-            "task042_shared_f3_train_v1", "task042_shared_f4_linear_v1", "task042_shared_f4_neural_v1",
+            "task042_shared_f3_train_v1", "task042_shared_f4_b0_v1", "task042_shared_f4_linear_v1", "task042_shared_f4_neural_v1",
             "full3d_scalable_v1",
             "fullspace_pml_double_sweep_v19",
             "physical_intermediate_p4_shifted_aux_v1",

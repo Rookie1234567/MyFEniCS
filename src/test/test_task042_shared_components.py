@@ -79,3 +79,18 @@ def test_profiles_preserve_physical_identity_and_old_input():
     assert (
         b0.execution["terminate_memory_gib"] == 16.0 and b0.execution["mpi_size"] == 1
     )
+
+
+def test_all_later_stage_inputs_parse_and_keep_same_physics():
+    seed = load_and_resolve("input/task042_neural_coarse_inverse/f1_b0_shared.dat")
+    for name in (
+        "f2_teacher_shared",
+        "f2_oracle_shared",
+        "f3_train_shared",
+        "f4_b0_shared",
+        "f4_linear_shared",
+        "f4_neural_shared",
+    ):
+        case = load_and_resolve(f"input/task042_neural_coarse_inverse/{name}.dat")
+        assert case.physical_model_sha256 == seed.physical_model_sha256
+        assert case.execution["mpi_size"] == 1
