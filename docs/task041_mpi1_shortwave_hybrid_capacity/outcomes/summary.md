@@ -2,17 +2,24 @@
 
 ## Task041 V7 当前状态（运行与文档 HEAD 分列）
 
+本快照基于运行源码 HEAD `c5f95db7f7c2c640b666035a1949f9dc666f4da4`。13.5 consumer 使用target=None，不能替代5nm target正式入口或完整consumer验证。
+
 | 阶段 | 当前结论 |
 |---|---|
 | G1 | 14 项独立 Q 全部未过 `1e-11`；7 项独立 PC 通过 `1e-8`。 |
 | G2r2 | layoutfix-r2 跨运行布局匹配；PC1 的Q1/Q2实际执行0/1/2修正。step0 Q差`4.8268e-11/5.1937e-11`超`1e-11`，A4仍通过；step1/2 Q与A4通过。 |
 | G2c | 顶部列12/493/666三响应的`e_x/e_A`均过`1e-8`；7冻结PC节点/14独立Q/7 PC及shared A4均过原门。诊断完成，`qualification_pass=false`不代表动作失败。 |
-| 修正触发 | 524个响应P4调用中521个原physical/augmented A4均过门仍接受单修正；原A4失败才修正不适用。没有足够证据设更严阈值。 |
+| G2c修正触发 | 524个响应P4调用中521个原physical/augmented A4均过门仍接受单修正；原A4失败才修正不适用。此结论仅描述G2c当时的触发分析。 |
+| 当前内部精化目标 | 后续实现并分侧验证`5e-13`内部目标，最多两次修正；原最终physical/augmented A4门`1e-10`及Q/PC/响应门不变。 |
 | G2c响应成本 | full `660.297 s`、condensed `745.262 s`，凝聚慢`84.964 s`；不是加速。authority/tree峰`42,588,479,488 B`，swap 0，cap`53,221,163,008 B`，清场/finalizer通过。 |
 | public/service | G2c worker/public诊断合同通过、service exit0。G2r2旧service exit3是public lifecycle schema误读，保留原始失败；只读重校验已通过。 |
-| 完整正式 5 nm consumer | G2c的一修正策略未做完整八项/正式consumer验证；完整Schur、outer/RTA/EH/全场未运行。V6历史固定八项组件结果仍单独保留，不代表G2c策略资格。并行运行按用户许可，性能不作为无竞争资格；G1旧PC 7/7及G2c本次7/7均保留各自范围。 |
+| Bottom/top selected-side target | Bottom4与top4分两次运行覆盖固定manifest八项，重复A及共同Q/PC/A4检查和原配对门通过。Bottom原service exit3因策略声明误判保留，派生25项合同复核通过；top原service exit0且25项通过。它们不证明单个完整consumer同时持有两侧时的资源资格或全场资格。 |
+| 13.5 nm registered cell-condensed | source `c5f95db7f7c2c640b666035a1949f9dc666f4da4` 下consumer数值/物理门通过并自然exit0；`R/T/A/A_volume=0.3656257890944995/0.012990632409140064/0.6213835784963604/0.6213835794981195`，closure`1.001759120100587e-9`，5项残差全过，复用producer且QEP调用0。 |
+| 13.5 nm global资源门 | 运行中global swap增`286720 B`、pswpout增70页（首越门elapsed `2179.15364028397 s`，worker仍存活），归因未知；job/cgroup swap为0、authority/tree峰`8,910,348,288 B`、cgroup峰`6,212,177,920 B`、硬cap`53,221,163,008 B`。自然exit0不改变global零增量资源门未通过的结论。 |
+| 13.5终态与入口 | Finalizer 10项全真，wall `2269.036298547 s`；V5 ledger 54条、累计`45194.90092220603 s`。正式5nm cell-condensed target入口修复已随source `c5f95db7f7c2c640b666035a1949f9dc666f4da4`推送；本次13.5使用target=None。 |
+| 完整正式 5 nm consumer | 固定八项分侧验证已完成；单个完整consumer双侧同时驻留、资源资格、Schur、outer/RTA/EH与全场资格未运行/未建立。G1旧PC 7/7及G2c本次7/7均保留各自范围。 |
 
-G2c的三响应凝聚比full多`84.964094673 s`；缩减+恢复计时合计`84.001845964 s`，是可节省量的宽松上界、不是预测。原A4门不足以单独触发Q修正；不设未验证阈值。V5 ledger当前45条、`35847.63433988102 s`，G2c finalizer仅追加一次`3315.690725968 s`。逐节点实值与后续局部G3方案见[中心outcome](causal_fix_5nm_v7.md)和[机器记录](records/task041_v7_causal_fix_5nm.json)。以下历史正文保留。
+G2c的三响应凝聚比full多`84.964094673 s`；缩减+恢复计时合计`84.001845964 s`，是可节省量的宽松上界、不是预测。原A4门不足以单独触发Q修正；**G2c阶段**不据当时数据提出更严的内部目标。后续G2d已实现并分侧验证`5e-13`内部精化目标、最多两次修正，原最终A4门`1e-10`不变。G2c收口时ledger为45条、`35847.63433988102 s`，当场finalizer追加一次`3315.690725968 s`。截至13.5终态，V5 ledger为54条、`45194.90092220603 s`；本次finalizer单次追加`2269.036298547 s`。逐节点实值及global资源监督缺口建议见[中心outcome](causal_fix_5nm_v7.md)和[机器记录](records/task041_v7_causal_fix_5nm.json)。以下历史正文保留。
 
 ## 2026-09-23：Review V6 13.5 nm 与 5 nm fixed-eight 收口
 

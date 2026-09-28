@@ -2,7 +2,7 @@
 
 ## Task041 V7 当前状态（运行与文档 HEAD 分列）
 
-本次代码运行 source `c0a077212cc3dd0ed6989ba66ff44ca0a7cbce74` 完成G2c顶部列12/493/666三响应、7冻结PC节点与14独立Q回放；`e_x/e_A`、Q/PC、shared A4与side residual均过原门。G2c冻结输入由本场source生成；full/condensed只确认本场内布局输入匹配，未做G1跨运行组件hash比较。condensed响应合计比full慢`84.964 s`；524次P4 step0中521次原A4两门通过仍执行单修正，故不采纳“原门失败才修正”，也没有新阈值证据。service正常完成，authority/tree峰`42588479488 B`、swap bytes为0、pswpin/pswpout为0页，finalizer清场并只计账一次；与邻heavy并行，性能不作无竞争资格。`qualification_pass=false`是诊断资格边界；G2c策略的完整八项consumer、正式Schur/outer/RTA/EH/全场未运行，V6历史固定八项组件结果另行保留。G1/G2逐节点与G3热点建议见[Task041 V7 outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/causal_fix_5nm_v7.md)；以下历史正文保留。
+本次代码运行 source `c0a077212cc3dd0ed6989ba66ff44ca0a7cbce74` 完成G2c顶部列12/493/666三响应、7冻结PC节点与14独立Q回放；`e_x/e_A`、Q/PC、shared A4与side residual均过原门。G2c冻结输入由本场source生成；full/condensed只确认本场内布局输入匹配，未做G1跨运行组件hash比较。condensed响应合计比full慢`84.964 s`；524次P4 step0中521次原A4两门通过仍执行单修正，故不采纳“原门失败才修正”，也没有在G2c阶段提出更严的内部目标。后续已实现并分侧验证`5e-13`内部精化目标、最多两次修正，原最终A4门`1e-10`不变。service正常完成，authority/tree峰`42588479488 B`、swap bytes为0、pswpin/pswpout为0页，finalizer清场并只计账一次；与邻heavy并行，性能不作无竞争资格。`qualification_pass=false`是诊断资格边界；G2c策略的完整consumer、正式Schur/outer/RTA/EH/全场未运行。G2d随后以bottom/top两场分别完成固定manifest八项分侧target验证并通过原配对门；bottom原service exit3与派生25项复核、top exit0分别保留，仍未证明单个完整consumer双侧同时驻留时的资源或全场资格。G1/G2逐节点与G3热点建议见[Task041 V7 outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/causal_fix_5nm_v7.md)；以下历史正文保留。
 ## 2026-09-23：Task041 Review V6 组件结果
 
 13.5 nm cell-condensed Hybrid 的五项 true residual/物理 Gate 与 H2 数值向量通过；Full3D secondary 未运行，旧 H2 资源合同令总 checker fail。5 nm fixed-eight full→释放→cell-condensed 完成16次响应，8对中6对通过；top formal column 12、493 的 `e_x/e_A` 超过原 `1e-8` 门。cap64 只授权该场；Finalizer 已执行并唯一计账，但状态为 `failed/service_boundary_failure`。完整5 nm consumer、RTA、EH、24h 未运行。详见 [V6 outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/transfer_fix_5nm_24h_v6.md)、[record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v6_transfer_5nm_24h.json)。
@@ -2844,3 +2844,9 @@ fresh run 的 132300 condensed rows 缺跨运行稳定 physical key，正式状�
 矩阵、factor 和 shard 仍留在 ignored results；本次 R4 只做文档/compact 整理，不新增计算。
 `task041_schur_speed_v2`、sequential component 和 A1/A2 仍为显式 opt-in research-only，
 ordinary/default 不变，负结果文档可保留，不表示 production 或 master merge approval。
+
+## 2026-09-28：Task041 V7 13.5 nm 终态与资源门
+
+在源码 `c5f95db7f7c2c640b666035a1949f9dc666f4da4` 下，registered 13.5 nm / p6h10 / M120 / MPI8 cell-condensed consumer 自然 exit0，R/T/A、closure 与五项真实残差通过；复用既有 producer，QEP调用0。运行中 global swap 增286720 B、pswpout增70页，job/cgroup swap仍0；该global零增量资源门未通过，来源未知，不能归因于Task041。监督器仅以job/cgroup swap作停止条件，global增量只落遥测。
+
+Bottom与top各自四项的selected-side target诊断通过共同输入与响应门，合计完成固定manifest八项分侧验证并通过原配对门；bottom原service exit3及其25项派生只读合同复核、top原service exit0分别保留。两场不证明单个完整5nm consumer双侧同时驻留时的资源或全场资格。正式5nm cell-condensed target入口修复已推送；完整consumer资格仍未建立。V7详情与hash-bound record见[response](task041_mpi1_shortwave_hybrid_capacity/response_v10.md)、[outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/causal_fix_5nm_v7.md)和[compact record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v7_causal_fix_5nm.json)。

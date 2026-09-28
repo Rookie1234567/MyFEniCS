@@ -97,7 +97,7 @@ G2c使用source `c0a077212cc3dd0ed6989ba66ff44ca0a7cbce74`，unit `task041-g2c-5
 | 493/7 | 57/57 | `1.358542624664209e-9` / `3.6875523761831136e-9` | `0.009387047156910886` / `0.009387047156843999` | `284.8370841630094` / `320.62788094501593 s` |
 | 666/6 | 17/17 | `1.8635858341897108e-13` / `9.030847922606297e-14` | `0.009453705395961444` / `0.00945370539596132` | `84.99945032200776` / `95.60250864500995 s` |
 
-三响应 full合计`660.297494636 s`，condensed合计`745.261589309 s`，后者多`84.964094673 s`（约12.87%）；本场响应没有加速。每backend 262次P4调用、262次单次修正；524次step0中521次原physical与augmented门都通过仍执行修正，另3次仅physical略超`1e-10`，全部step1通过。原A4门条件不足以作为修正唯一触发器；数据也未给出可据以选择的更严残差阈值。
+三响应 full合计`660.297494636 s`，condensed合计`745.261589309 s`，后者多`84.964094673 s`（约12.87%）；本场响应没有加速。每backend 262次P4调用、262次单次修正；524次step0中521次原physical与augmented门都通过仍执行修正，另3次仅physical略超`1e-10`，全部step1通过。原A4门条件不足以作为修正唯一触发器；**G2c阶段**的数据未用于选择更严的内部目标。
 
 已有max-rank分项里的factor solve时间相近；缩减+恢复区间分别为列12`36.74733589333482 s`、493`36.47491873119725 s`、666`10.779591339233056 s`，合计`84.0018459638 s`，已包含在响应wall内。全量消除该区间只是不可超过的节省上界，不是预期收益。源码热点为`src/solvers/p4_cell_condensed_inverse.py`的`_exchange_active_values`、`_active_solution_map`与`_reduce_storage_rhs`/恢复循环：每个RHS会重建trace→active/owner索引，重复`np.unique`/owner查找并交换请求列表，也会分配局部行和回代临时量。最小G3方向是按factor布局缓存trace→active索引与owner/request通信计划，避免后续RHS重复建表/请求alltoall；保留每RHS实际值交换、单元LU求解和回代。缓存只存有界整数计划，随factor销毁；收益需后续测量。
 
@@ -109,8 +109,36 @@ G2c使用source `c0a077212cc3dd0ed6989ba66ff44ca0a7cbce74`，unit `task041-g2c-5
 
 ## 当前边界与下一步
 
-G2c的三响应、14个独立Q与7个PC比较通过原数值门，但仍是显式三列诊断；`qualification_pass=false`表示未授予完整八项/正式consumer资格，不是数值失败。G1与G2c分别完成各自运行内的共同输入PC节点；跨运行轨迹并非同输入，G2c未与G1做布局hash比较。G1/G2r2/G2c分阶段Q/A4数据及未知项见上表。完整八项consumer、全场、formal Schur、outer/RTA/EH仍`not_run`。G2c与邻heavy并行，用户允许隔离并行；记录其实际数值/资源，但性能`not_qualified`。
+G2c的三响应、14个独立Q与7个PC比较通过原数值门，但仍是显式三列诊断；`qualification_pass=false`表示未授予完整consumer资格，不是数值失败。G1与G2c分别完成各自运行内的共同输入PC节点；跨运行轨迹并非同输入，G2c未与G1做布局hash比较。G1/G2r2/G2c分阶段Q/A4数据及未知项见上表。随后G2d以bottom4和top4两次独立运行覆盖固定manifest八项且原配对门通过；完整consumer双侧同时驻留的资源资格、全场、formal Schur、outer/RTA/EH仍`not_run`。G2c与邻heavy并行，用户允许隔离并行；记录其实际数值/资源，但性能`not_qualified`。
 
-当前V5唯一ledger为45条、`35847.63433988102 s`；G2c finalizer按unit只追加一次`3315.690725968 s`。公共合同复核9 passed的`2.000488571 s`及更早项目均已在各自历史条目中，不重复计入本轮文档。
+G2c 收口时 V5 ledger 为45条、`35847.63433988102 s`；G2c finalizer 按 unit 只追加一次`3315.690725968 s`。公共合同复核9 passed的`2.000488571 s`及更早项目均已在各自历史条目中，不重复计入本轮文档。
 
-不采纳“仅原`1e-10` A4门失败时才修正”，也不拍定更严格阈值；若继续数值策略验证，应保持显式opt-in且不改变默认，先取得足以区分Q误差的触发证据。最近的最小G3实现建议是只在`P4CellCondensedInverse`生命周期内复用稳定trace/ownership/request索引与通信计划，保持每个RHS必需的数据交换和单元求解；先做现有fixture serial/MPI2，不微基准。待审核实现及测试后，再决定下一项数值资格工作，不自动扩至全八项或全场。
+## G2d：13.5 nm registered cell-condensed 正式 consumer
+
+本次使用源码`c5f95db7f7c2c640b666035a1949f9dc666f4da4`、registered 13.5 nm / p6h10 / M120 / MPI8 cell-condensed入口，target保持`None`；复用旧producer packet，consumer 内 QEP 调用0。Public runroot为`results/task041_13p5nm_balh_hybrid_iterative_p6h10_m120_mpi8_cell_condensed/task041_13p5nm_p6h10_m120_mpi8_cell_condensed__hybrid_iterative__mpi8__M120/20260928T054340.371682Z`，supervision root为`results/task041_review_v7_transfer_and_5nm_24h/g2d_13p5_cellcond_regression_20260928`。服务自然完成，worker/public`exit_status=0`、无人工信号；这与资源资格结论分开。
+
+| 检查 | 实测 | 结论 |
+|---|---:|---|
+| R / T / A / A_volume | `0.3656257890944995 / 0.012990632409140064 / 0.6213835784963604 / 0.6213835794981195` | formal consumer 数值/物理门通过 |
+| energy closure | `1.001759120100587e-9` | 通过 |
+| 五项真实相对残差 | global `2.0397686096698112e-11`；bottom `4.778517303700258e-11`；top `1.4974344154032008e-11`；modal `6.623795236568788e-13`；reported `2.0395762006196024e-11` | 全部通过 |
+| 资源峰与边界 | authority/tree `8,910,348,288 B`；dedicated cgroup `6,212,177,920 B`；job/cgroup swap峰0；hard cap `53,221,163,008 B`；reserve `412,316,860,416 B` | 内存/job-swap项通过 |
+| global swap / pswp | 首次增量在elapsed `2179.15364028397 s`、`phase_running`且进程组仍存活：global swap `+286,720 B`，pswpout `+70页`；pswpin `+0页` | V6/V7要求global增量为0；资源资格未通过，来源归因未知 |
+| 自然终态 / 收尾 | public phase `2268.0992593290284 s`；parent wall `2268.314857358 s`；finalizer wall `2269.036298547 s`；finalizer `service_complete`，10项检查全真 | 自然 exit0，进程组清场、artifact hash与ledger写入通过 |
+| V5 ledger | 本次唯一追加 `2269.036298547 s`；总计54条、after `45194.90092220603 s` | 未重复计费 |
+
+Global swap / pswp 是共享主机计数；样本能证明越门发生在 Task041 worker仍运行时，不能证明增量由本作业造成。job/cgroup swap保持0也不能抵消该global零增量要求。本场按数值通过、自然exit0、global资源门失败分别记录，不改baseline、不重跑；Full3D secondary checker仍未运行。
+
+首次越门为`results/task041_review_v7_transfer_and_5nm_24h/g2d_13p5_cellcond_regression_20260928/memory_stages.jsonl`第7248行；此前通知中的7542行为笔误，以该原始行号为准。`src/runners/task041_supervisor.py`的`_run_phase`在每次采样后已把`global_swap_used_bytes_delta`、`global_pswpin_pages_delta`、`global_pswpout_pages_delta`汇入遥测，但当前停止谓词只检查job/process-tree/cgroup swap，故没有触发停止；这属于监督合同执行缺口，不是对global增量来源的归因。
+
+Bottom与top的单侧target运行各自覆盖4项响应、同输入Q1/Q2/PC、shared A4与重复A，合计完成固定manifest八项分侧验证且原配对门通过。Bottom原service exit3因strategy声明字段不匹配保留；修正后的只读合同复核25项全通过，四响应`e_x`约`1.19e-13–6.55e-13`。Top原service exit0、25项全通过，四响应`e_x`均不高于`4.367853753649037e-10`。两次运行分别留存身份与结果；这不证明单个完整consumer双侧同时驻留时的资源资格或全场资格。registered 5nm cell-condensed target入口修复已在源码`c5f95db7f7c2c640b666035a1949f9dc666f4da4`推送；本次13.5运行没有使用target。
+
+机器record保留首次样本、终态、资源/ledger及小文件hash；V1 ignored compact原样保留。V1中的inherited producer路径有误，正确指针在机器record中为`results/task041_13p5nm_exact_side_hybrid_iterative_p6h10_m120_mpi8/task041_13p5nm_p6h10_m120_mpi8_exact__hybrid_iterative__mpi8__M120/20260912T011115.594655Z/producer/selected_mode_packet/manifest.json`，SHA-256 `9d02d9a926d8be48a3b32d2d172b7c4828dedefe1189fae4d4fd936a9d321c81`。只核对相关轻量JSON/manifest与V1 compact hash，未重hash场、矩阵或分片。详情见[机器record](records/task041_v7_causal_fix_5nm.json)及[global资源事件compact V1](../../../results/task041_review_v7_transfer_and_5nm_24h/g2d_13p5_cellcond_regression_20260928/global_swap_event_review.json)。
+
+### 下一项最小可验证修复（待审核，当前未实现）
+
+在`src/runners/task041_supervisor.py`的`_run_phase`嵌套`_resource_termination_reason`中，复用已写入每条`memory_stages.jsonl`记录的三个global增量字段；紧接现有job-swap谓词，把任一正的global swap used、pswpin或pswpout增量纳入相同受控停止路径。采样记录仍先落盘再判停，保持实际启动时的baseline，不把共享增量归因给Task041。
+
+最小测试可扩展`src/test/test_344_task041_public_supervisor.py::test_phase_resource_limits_terminate_the_child`与`test_phase_cgroup_only_swap_is_authoritative`：global增量全零时继续；global swap used、pswpin、pswpout任一为正时终止目标子进程、保留首越门样本并走既有`swap_detected`分类；job/cgroup swap=0不覆盖该结果。当前仅为建议，未改代码、未运行测试。
+
+不采纳“仅原`1e-10` A4门失败时才修正”；G2c阶段未据当时数据提出更严目标。后续G2d已实现并分侧验证`5e-13`内部精化目标、最多两次修正，原最终A4门仍为`1e-10`。G3 active-exchange 索引计划已在 `c5f95db7f7c2c640b666035a1949f9dc666f4da4` 对应的13.5正式 consumer 路径中运行，数值门通过；本场没有隔离性能归因，且global资源门未通过。当前待审核的最小后续是把global swap/pswp增量接入现有停止谓词；固定八项分侧验证已完成，但单个完整5nm consumer及其双侧同时驻留资源/全场资格仍未建立。

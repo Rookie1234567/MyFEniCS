@@ -1,22 +1,24 @@
 {
   "record_type": "task041_review_v7_progress_snapshot",
   "status": {
-    "formal_full_5nm_consumer": "not_started",
+    "formal_full_5nm_consumer": "not_run/not_established; fixed manifest eight entries were validated side-by-side in separate bottom4 and top4 runs with original pairing gates passed; single-consumer both-side residency/resource/full-field qualification remains unestablished",
     "g2_correction_stages_0_1_2": "G2r2 PC1 Q1/Q2 ran steps 0/1/2; G2c top-three responses and 14 frozen-Q replays used one correction",
     "cross_run_frozen_layout_qualification": "passed_for_g2_layoutfix_r2_pc1_q1_q2_only",
-    "g2c_top_three_diagnostic": "completed_action_gates_pass; qualification_pass=false by diagnostic scope"
+    "g2c_top_three_diagnostic": "completed_action_gates_pass; qualification_pass=false by diagnostic scope",
+    "bottom_top_selected_side_target": "fixed manifest eight entries completed as separate bottom4 and top4 target runs with original pairing gates passed; bottom original service exit3 retained with derived 25-check read-only contract pass; top service exit0 with 25 checks pass; this does not establish one full consumer with both sides simultaneously resident or resource/full-field qualification",
+    "g2d_13p5_registered_cell_condensed": "numerical/formal consumer gates pass and natural exit0; global zero-delta resource gate failed; source attribution unknown"
   },
   "repository": {
     "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
     "latest_validator_only_commit_after_runtime": "3bcf00527b3b2440a66792e079c6667cb30aec2d",
-    "current_document_source_head": "c0a077212cc3dd0ed6989ba66ff44ca0a7cbce74",
-    "current_runtime_source_head": "c0a077212cc3dd0ed6989ba66ff44ca0a7cbce74",
+    "current_document_source_head": "c5f95db7f7c2c640b666035a1949f9dc666f4da4",
+    "current_runtime_source_head": "c5f95db7f7c2c640b666035a1949f9dc666f4da4",
     "current_upstream": "origin/codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
     "current_ahead_behind": [
       0,
       0
     ],
-    "current_worktree_state": "G2c runtime source c0a077212cc3dd0ed6989ba66ff44ca0a7cbce74; this update changes existing V7 docs/record only"
+    "current_worktree_state": "snapshot prepared from base source c5f95db7f7c2c640b666035a1949f9dc666f4da4 with documentation-only changes"
   },
   "runs": [
     {
@@ -210,6 +212,100 @@
       "pswpout_pages_at_final_sample": 0,
       "parallel_performance_qualification": "not_qualified_contention_free",
       "ledger_added_once_seconds": 3315.690725968
+    },
+    {
+      "phase": "G2d_13p5_registered_cell_condensed",
+      "model_id": "task041_13p5nm_balh_hybrid_iterative_p6h10_m120_mpi8_cell_condensed",
+      "unit": "task041-v7-13p5-cellcond-regression-20260928.service",
+      "invocation_id": "7065613bf61e47d3a52fe744830e96b8",
+      "main_pid": 498740,
+      "source_sha": "c5f95db7f7c2c640b666035a1949f9dc666f4da4",
+      "config_sha256": "33d02582afc8fb933578fc38074f9492b58a42d7a914e992f63cadae589cc27d",
+      "input_sha256": "0509e3d913f36a35a9f3457ac50d237cd10aae1dd698741b88548bade2c1ec72",
+      "physical_model_sha256": "c11aad8944122e6fd7538c81de77522bead4e90c622abaa179a4b2d419bc3c69",
+      "formal_target_tolerance": null,
+      "producer_reused": true,
+      "producer_source_sha": "cda7cc8a785c38352c840e6ec2737c08215e7ed7",
+      "producer_manifest_path": "results/task041_13p5nm_exact_side_hybrid_iterative_p6h10_m120_mpi8/task041_13p5nm_p6h10_m120_mpi8_exact__hybrid_iterative__mpi8__M120/20260912T011115.594655Z/producer/selected_mode_packet/manifest.json",
+      "producer_manifest_sha256": "9d02d9a926d8be48a3b32d2d172b7c4828dedefe1189fae4d4fd936a9d321c81",
+      "qep_calls": 0,
+      "public_runroot": "results/task041_13p5nm_balh_hybrid_iterative_p6h10_m120_mpi8_cell_condensed/task041_13p5nm_p6h10_m120_mpi8_cell_condensed__hybrid_iterative__mpi8__M120/20260928T054340.371682Z",
+      "outerroot": "results/task041_review_v7_transfer_and_5nm_24h/g2d_13p5_cellcond_regression_20260928",
+      "start_utc": "2026-09-28T05:43:39.680000Z",
+      "public_result": {
+        "status": "completed",
+        "result_classification": "worker_exit0",
+        "exit_status": 0,
+        "termination_reason": null,
+        "manual_signal_sent": false,
+        "completion_scope": "formal",
+        "gates_pass": true,
+        "official_rta_status": "measured",
+        "R": 0.3656257890944995,
+        "T": 0.012990632409140064,
+        "A": 0.6213835784963604,
+        "A_volume": 0.6213835794981195,
+        "energy_closure": 1.001759120100587e-09,
+        "five_true_residuals": {
+          "global": 2.0397686096698112e-11,
+          "bottom": 4.778517303700258e-11,
+          "top": 1.4974344154032008e-11,
+          "modal": 6.623795236568788e-13,
+          "reported": 2.0395762006196024e-11
+        },
+        "external_key_count": 80,
+        "external_q_pass": true,
+        "grid_E_H_evidence_pass": true
+      },
+      "phase_wall_seconds": 2268.0992593290284,
+      "parent_wall_seconds": 2268.314857358,
+      "finalizer_wall_seconds": 2269.036298547,
+      "service_state": "inactive/dead after natural exit",
+      "exec_main_status": 0,
+      "finalizer_path": "results/task041_review_v7_transfer_and_5nm_24h/g2d_13p5_cellcond_regression_20260928/finalizer/finalizer_summary.json",
+      "finalizer_sha256": "38de42a31cb3c31bf21dd96defce3f2d6a27d9a4348d65541a8fb0000ef8e9f9",
+      "finalizer_status": "completed",
+      "finalizer_result_classification": "service_complete",
+      "finalizer_checks_all_true": true,
+      "ledger": {
+        "status": "written",
+        "entry_seconds": 2269.036298547,
+        "entries_after": 54,
+        "used_after_seconds": 45194.90092220603
+      },
+      "resource_gate": {
+        "qualification": "failed_global_zero_delta_gate",
+        "first_delta_elapsed_seconds": 2179.15364028397,
+        "first_delta_raw_path": "results/task041_review_v7_transfer_and_5nm_24h/g2d_13p5_cellcond_regression_20260928/memory_stages.jsonl",
+        "first_delta_line": 7248,
+        "worker_process_group_gone_at_first_delta": false,
+        "global_swap_baseline_bytes": 937984,
+        "global_swap_used_bytes": 1224704,
+        "global_swap_used_delta_bytes": 286720,
+        "global_pswpout_baseline_pages": 229,
+        "global_pswpout_pages": 299,
+        "global_pswpout_delta_pages": 70,
+        "global_pswpin_delta_pages": 0,
+        "attribution_to_task041": "unknown_not_observed",
+        "job_and_dedicated_cgroup_swap_bytes": 0,
+        "authority_and_process_tree_peak_bytes": 8910348288,
+        "dedicated_cgroup_memory_peak_bytes": 6212177920,
+        "hard_cap_bytes": 53221163008,
+        "warning_bytes": 47899046707,
+        "reserve_bytes": 412316860416,
+        "minimum_host_memavailable_bytes": 979612364800
+      },
+      "supervisor_behavior": "global swap/pswp deltas were recorded as telemetry; _run_phase stopped only on job/process-tree/dedicated-cgroup swap, so the global-delta contract was not enforced",
+      "global_delta_gate_fix_status": "proposed_not_implemented",
+      "evidence_paths": {
+        "run_summary": "results/task041_13p5nm_balh_hybrid_iterative_p6h10_m120_mpi8_cell_condensed/task041_13p5nm_p6h10_m120_mpi8_cell_condensed__hybrid_iterative__mpi8__M120/20260928T054340.371682Z/run_summary.json",
+        "consumer_summary": "results/task041_13p5nm_balh_hybrid_iterative_p6h10_m120_mpi8_cell_condensed/task041_13p5nm_p6h10_m120_mpi8_cell_condensed__hybrid_iterative__mpi8__M120/20260928T054340.371682Z/consumer/consumer_summary.json",
+        "outer_summary": "results/task041_review_v7_transfer_and_5nm_24h/g2d_13p5_cellcond_regression_20260928/summary.json",
+        "service_parent_summary": "results/task041_review_v7_transfer_and_5nm_24h/g2d_13p5_cellcond_regression_20260928/service_parent_summary.json",
+        "global_swap_event_review_v1": "results/task041_review_v7_transfer_and_5nm_24h/g2d_13p5_cellcond_regression_20260928/global_swap_event_review.json",
+        "inherited_producer_manifest": "results/task041_13p5nm_exact_side_hybrid_iterative_p6h10_m120_mpi8/task041_13p5nm_p6h10_m120_mpi8_exact__hybrid_iterative__mpi8__M120/20260912T011115.594655Z/producer/selected_mode_packet/manifest.json"
+      },
+      "service_result": "success"
     }
   ],
   "g1": {
@@ -804,25 +900,64 @@
       "role": "G2c top-three correction diagnostic compact",
       "path": "results/task041_review_v6_transfer_and_5nm_24h/g2c_top3_response_correction_20260925T062603Z/g2c_top3_result_compact.json",
       "sha256": "61ec415cb90ff7768ff0e59d3eb49a4a3b272708a3e7a6a35f08bf7bde6fd03c"
+    },
+    {
+      "role": "G2d 13.5 global swap event review V1; original compact preserved",
+      "path": "results/task041_review_v7_transfer_and_5nm_24h/g2d_13p5_cellcond_regression_20260928/global_swap_event_review.json",
+      "sha256": "b6c19f2b62f72f5f36e94dcefffed75132138255f6330f0990e70584ce5c0966"
+    },
+    {
+      "role": "G2d 13.5 finalizer summary; natural exit and ledger checks",
+      "path": "results/task041_review_v7_transfer_and_5nm_24h/g2d_13p5_cellcond_regression_20260928/finalizer/finalizer_summary.json",
+      "sha256": "38de42a31cb3c31bf21dd96defce3f2d6a27d9a4348d65541a8fb0000ef8e9f9"
+    },
+    {
+      "role": "G2d 13.5 outer summary",
+      "path": "results/task041_review_v7_transfer_and_5nm_24h/g2d_13p5_cellcond_regression_20260928/summary.json",
+      "sha256": "d28508254d70ac54007bb168ee60ec12f381ff2de6a8aace01f6dec6d3536589"
+    },
+    {
+      "role": "G2d 13.5 service parent summary",
+      "path": "results/task041_review_v7_transfer_and_5nm_24h/g2d_13p5_cellcond_regression_20260928/service_parent_summary.json",
+      "sha256": "ce3037dd8d6e66bf682491c88440977b1e5799a4004ce0af046826092d08d7a1"
+    },
+    {
+      "role": "G2d 13.5 run summary",
+      "path": "results/task041_13p5nm_balh_hybrid_iterative_p6h10_m120_mpi8_cell_condensed/task041_13p5nm_p6h10_m120_mpi8_cell_condensed__hybrid_iterative__mpi8__M120/20260928T054340.371682Z/run_summary.json",
+      "sha256": "88fcd568c27cb8887d0f65f438293349f6720a15256c4f3b778b26e5a39e0464"
+    },
+    {
+      "role": "G2d 13.5 consumer summary",
+      "path": "results/task041_13p5nm_balh_hybrid_iterative_p6h10_m120_mpi8_cell_condensed/task041_13p5nm_p6h10_m120_mpi8_cell_condensed__hybrid_iterative__mpi8__M120/20260928T054340.371682Z/consumer/consumer_summary.json",
+      "sha256": "d8493c3fa3325551753d677ad09f5c841f493b0a90d0b576cec6d749a6b61e12"
+    },
+    {
+      "role": "G2d 13.5 inherited producer manifest; corrected selected_mode_packet pointer",
+      "path": "results/task041_13p5nm_exact_side_hybrid_iterative_p6h10_m120_mpi8/task041_13p5nm_p6h10_m120_mpi8_exact__hybrid_iterative__mpi8__M120/20260912T011115.594655Z/producer/selected_mode_packet/manifest.json",
+      "sha256": "9d02d9a926d8be48a3b32d2d172b7c4828dedefe1189fae4d4fd936a9d321c81"
     }
   ],
   "runtime_status": {
-    "complete_formal_5nm_consumer": "G2c one-correction strategy full-eight/formal consumer not_run; historical V6 fixed-eight component results remain separate evidence",
+    "complete_formal_5nm_consumer": "not_run/not_established; fixed manifest eight entries were validated side-by-side in separate bottom4 and top4 runs with original pairing gates passed; single-consumer both-side residency/resource/full-field qualification remains unestablished",
     "G2_correction_steps_0_1_2": "G2r2 PC1 Q1/Q2 ran steps 0/1/2; G2c top-three responses and 14 frozen-Q replays used one correction",
-    "V5_ledger_entries": 45,
-    "V5_ledger_charged_seconds": 35847.63433988102,
+    "V5_ledger_entries": 54,
+    "V5_ledger_charged_seconds": 45194.90092220603,
     "cross_run_layout_qualification": "passed only for G2r2 PC1 Q1/Q2; G2c full/condensed was checked within-run and cross-run was not compared",
     "parallel_performance_qualification": "not_qualified; concurrent heavy work means no contention-free performance qualification",
     "latest_doc_refresh_ledger_write": "none; docs/record update only",
     "initial_v7_snapshot_test_charge_seconds": 2.000488571,
     "initial_v7_snapshot_added_ledger_charge": true,
     "initial_v7_snapshot_ledger_added_seconds": 2.000488571,
-    "this_snapshot_added_ledger_charge": false
+    "this_snapshot_added_ledger_charge": false,
+    "13p5_registered_consumer": "numerical/formal gates pass; natural exit0; global zero-delta resource gate failed, attribution unknown",
+    "13p5_ledger_entry_seconds": 2269.036298547,
+    "13p5_global_swap_used_delta_bytes": 286720,
+    "13p5_global_pswpout_delta_pages": 70
   },
   "service_time_source": "Controller host systemctl --user show CST readings, converted to UTC; finalizer wall is retained from raw finalizer.",
-  "hash_scope": "Only three finalizers, G1 top summary, G2 layout attribution and the existing small layout-test compact are newly bound in evidence_index; no array/shard rehash.",
-  "next_verifiable_action": "Do not adopt an original-A4-failure-only correction trigger and do not infer a stricter residual cutoff from current samples. Review a minimal G3 optimization in src/solvers/p4_cell_condensed_inverse.py: cache factor-lifetime trace-to-active indices and owner/request communication schedule; retain per-RHS value exchange, cell LU solves and recovery. Prove unchanged values/ownership/collective behavior with existing serial/MPI2 fixtures before considering broader full-eight qualification.",
-  "record_updated_utc": "2026-09-25T08:45:54Z",
+  "hash_scope": "G2d evidence_index binds only lightweight JSON summaries, finalizer and producer manifest plus preserved global event compact V1; no field arrays, matrices or shards were rehashed.",
+  "next_verifiable_action": "Propose the minimal resource-contract fix for review: in src/runners/task041_supervisor.py::_run_phase, reuse the existing per-sample global_swap_used_bytes_delta, global_pswpin_pages_delta and global_pswpout_pages_delta fields in the existing swap termination predicate after the sample is flushed. Extend existing src/test/test_344_task041_public_supervisor.py resource-stop cases for all-zero continuation and each positive global delta; keep the original baseline and stop classification. Not implemented or tested.",
+  "record_updated_utc": "2026-09-28T06:53:27Z",
   "g2_correction_replay_r2": {
     "scope": "top PC1, two frozen independent inputs Q1/Q2 only",
     "runtime_source_sha": "646c9fff0d08894a8dc634694caa32427bd71707",
@@ -1502,5 +1637,45 @@
     "full_eight_rhs_formal_schur_outer_rta_eh": "not_run",
     "frozen_input_producer_source_sha": "c0a077212cc3dd0ed6989ba66ff44ca0a7cbce74",
     "qep_source_sha": "b01a5932e4dfaf895e81e0424e0dd88c276fb0d3"
+  },
+  "selected_side_target_qualification": {
+    "target_tolerance": 5e-13,
+    "selected_columns_per_side": 4,
+    "checks": [
+      "response_pair",
+      "repeat_A",
+      "independent_Q1_Q2",
+      "PC",
+      "shared_A4"
+    ],
+    "bottom": {
+      "run_source_sha": "36ef49f77f6b133510e3e72db7a0897278da2851",
+      "public_runroot": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260928T015000.545248Z",
+      "consumer_summary_path": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260928T015000.545248Z/consumer/consumer_summary.json",
+      "consumer_summary_sha256": "452f9f4ebc4d040b7a3928dfebcb3fc0c75e3f36b5ae1640439371bfb744deff",
+      "original_service_exit_status": 3,
+      "original_failure": "strategy_matches_history=false; retained",
+      "derived_read_only_contract_recheck": "25/25 checks passed",
+      "derived_recheck_path": "results/task041_review_v7_transfer_and_5nm_24h/g2d_preparation_20260928T013552Z/bottom/strategy_history_recheck_20260928T030449Z/derived_consumer_revalidation.json",
+      "derived_recheck_sha256": "15338804ecb631753de15b4fb7ed1cfc2c9991f24a6833e266b69fe0804f3c46",
+      "e_x_range": [
+        1.19e-13,
+        6.55e-13
+      ],
+      "original_strong_pair_gate_pass": true,
+      "scope": "bottom4 of fixed manifest; together with separate top4 run covers fixed eight and original pairing gates; not a single full consumer with both sides resident or resource/full-field qualification"
+    },
+    "top": {
+      "run_source_sha": "12f909325700abc3c0bd91e2b4fc4e2b0a946db5",
+      "public_runroot": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260928T032731.835076Z",
+      "consumer_summary_path": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260928T032731.835076Z/consumer/consumer_summary.json",
+      "consumer_summary_sha256": "fe1e584343f08d7c09cacc0239c2877a25e2a2adb422c4ea56aaa6b2887f1f10",
+      "service_exit_status": 0,
+      "read_only_contract_checks": "25/25 passed",
+      "maximum_e_x": 4.367853753649037e-10,
+      "original_strong_pair_gate_pass": true,
+      "scope": "top4 of fixed manifest; together with separate bottom4 run covers fixed eight and original pairing gates; not a single full consumer with both sides resident or resource/full-field qualification"
+    },
+    "registered_5nm_cell_condensed_formal_target_entry_fix_source_sha": "c5f95db7f7c2c640b666035a1949f9dc666f4da4"
   }
 }
