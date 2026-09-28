@@ -6354,7 +6354,7 @@ def _validate_task041_top_causal_replay_result(
         and item.get("replay_kind") in {"independent_q", "independent_pc"}
     ]
     target_replay_not_reached_calls = 0
-    counted_target_replay_calls: set[tuple[str, str, int]] = set()
+    counted_target_replay_calls: set[tuple[str, int]] = set()
     if expected_p4_response_correction_steps == 1 or target_mode:
         for audit in independent_replay_audits:
             audit_rows = audit.get("by_rank")
@@ -6409,7 +6409,10 @@ def _validate_task041_top_causal_replay_result(
 
                 def target_calls_by_identity(
                     row: Mapping[str, Any],
-                ) -> tuple[bool, dict[int, tuple[tuple[Any, ...], int]]]:
+                ) -> tuple[
+                    bool,
+                    dict[int, tuple[tuple[Any, ...], int]],
+                ]:
                     calls = row.get("independent_p4_call_history")
                     if not isinstance(calls, list) or not calls:
                         return False, {}
@@ -6437,7 +6440,7 @@ def _validate_task041_top_causal_replay_result(
                             not call_valid
                             or type(q_call_index) is not int
                             or type(p4_call_index) is not int
-                            or q_call_index in facts
+                            or p4_call_index in facts
                             or not isinstance(history, list)
                         ):
                             valid = False
@@ -6465,7 +6468,7 @@ def _validate_task041_top_causal_replay_result(
                                 if isinstance(step, Mapping)
                             ),
                         )
-                        facts[q_call_index] = (signature, not_reached)
+                        facts[p4_call_index] = (signature, not_reached)
                     return valid, facts
 
                 rank_facts = [target_calls_by_identity(row) for row in ordered_rows]
@@ -6486,14 +6489,11 @@ def _validate_task041_top_causal_replay_result(
                     )
                 )
                 if rank_consistent:
-                    for q_call_index, (_signature, not_reached) in rank_facts[0][1].items():
-                        # Direct P4 call indices are monotone for this inverse;
-                        # successive replay snapshots may include prior calls.
-                        call_key = (
-                            str(audit.get("backend")),
-                            str(audit.get("trajectory")),
-                            q_call_index,
-                        )
+                    for p4_call_index, (_signature, not_reached) in rank_facts[0][1].items():
+                        # P4 indices are monotone for this inverse; later
+                        # snapshots may repeat earlier calls, while Q indices
+                        # restart at one for each PC application.
+                        call_key = (str(audit.get("backend")), p4_call_index)
                         if call_key not in counted_target_replay_calls:
                             counted_target_replay_calls.add(call_key)
                             target_replay_not_reached_calls += not_reached

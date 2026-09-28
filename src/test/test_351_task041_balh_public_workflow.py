@@ -5091,9 +5091,19 @@ def _write_top_causal_protocol_fixture(
             ]
         elif target_mode and replay_kind == "independent_pc":
             independent_calls = [
-                target_call(backend, q_call_index=q, p4_call_index=q)
-                for q in (1, 2)
+                target_call(
+                    backend,
+                    q_call_index=q_call_index,
+                    p4_call_index=p4_call_index,
+                )
+                for p4_call_index, q_call_index in enumerate(
+                    (1, 2, 1, 2), start=1
+                )
             ]
+            if mode == "target_duplicate_p4_call_identity":
+                independent_calls[-1] = target_call(
+                    backend, q_call_index=1, p4_call_index=1
+                )
         else:
             independent_calls = (
             [
@@ -5996,6 +6006,10 @@ def test_task041_p4_refinement_target_protocol_healthy_positive(
         ("target_q_gate_failure", "top_causal_q_pc_and_shared_a4_numeric_gates"),
         ("target_missing_projection", "top_modal_projection_measurements"),
         ("target_missing_history", "top_causal_p4_response_correction_strategy_matches_history"),
+        (
+            "target_duplicate_p4_call_identity",
+            "top_causal_p4_response_correction_strategy_matches_history",
+        ),
     ],
 )
 def test_task041_p4_refinement_target_rejects_missing_or_failed_evidence(
