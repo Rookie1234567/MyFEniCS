@@ -1,0 +1,225 @@
+{
+  "schema": "task042.cpu-fp64-model.v2",
+  "numerical_summary": {
+    "status": "TRAINING_COMPLETED",
+    "stage": "F3-train",
+    "source_sha": "a221d881bae9405c98e351df2b0b9533582e6d50",
+    "input_sha256": "38cdde0b4914a82115e92e6fa80516e198c13365e500ba09910184e6bf50fcff",
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "oracle_manifest_sha256": "507370ad8b120459556e793b67ee2249514308e03cf5f92b02d4631985bccbce",
+    "oracle_source_sha": "d9de8ad69bfeeac4860e5187e1738c902a3d808e",
+    "dataset_manifest_sha256": "99c354ea4ce85b2dd8284b8f91dab4f2e453b4b9d426034aa47af43e89a14783",
+    "features_sha256": "591450b4ab5b628c787d7dfe37bee37b96690e36e998065acc2424cfaf927946",
+    "basis_sha256": "47d23a1c4d760b2ba91327df370bbf61099a9d03e8e67e905dbf676bd2f2d121",
+    "official_result": null,
+    "shared_workstation": true,
+    "epochs": 300,
+    "selected_epoch": 51,
+    "rank": 128,
+    "width": 64,
+    "hidden_layers": 2,
+    "dtype": "float64 real/imag",
+    "seed": 420500,
+    "batch_size": 32,
+    "data_loader_workers": 0,
+    "intra_threads": 1,
+    "interop_threads": 1,
+    "parameter_count": 103040,
+    "device": "cpu",
+    "cuda_build": null,
+    "vram_bytes": null,
+    "loaded_training_seconds": 19.0361736289924,
+    "best_validation_loss": 4.947570117563409,
+    "frozen_torch_numpy_relative_difference": 5.71091073830398e-17,
+    "weight_payload_bytes": 824320,
+    "torch_version": "2.7.1+cpu",
+    "actual_default_dtype": "torch.float64",
+    "inference_probe_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f3_train_shared_20260928T124806299236Z/inference_probe.npz",
+    "inference_probe_sha256": "3469dc585b3362c6d13ebbc9227bc649876f816e0f02f57a50d78403fcd8895a",
+    "best_checkpoint_sha256": "460b5631375b09c08b3e9d7ef43e8ef9b04ebe37a86424e824fed9e8bb205eef",
+    "frozen_model_sha256": "b25b389adf0f22849c434d4eefbe561ea86d36d4d618b2140b8cb7ff1ea2a0e6",
+    "heldout_read": false,
+    "model_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f3_train_shared_20260928T124806299236Z/frozen_model.npz",
+    "model_manifest": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f3_train_shared_20260928T124806299236Z/training_summary.json"
+  },
+  "run_summary": {
+    "workflow_deadline_seconds": 10800,
+    "solve_deadline_seconds": null,
+    "time_limit_mode": "bounded",
+    "resource_stop_policy": "legacy",
+    "rss_hard_limit_bytes": 17179869184,
+    "rss_warning_bytes": 12884901888,
+    "startup_headroom_bytes": null,
+    "swap_policy": "legacy_stop",
+    "global_swap_delta_policy": "observe_only",
+    "cache_metadata_stable": true,
+    "classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "observed_child_pids": [
+      549024
+    ],
+    "sampled_process_tree_rss_peak_bytes": 361848832,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+    "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+    "global_swap_activity": {
+      "scope": "WSL-global diagnostic, not dedicated job",
+      "baseline": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 300
+      },
+      "end": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 300
+      },
+      "delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      }
+    },
+    "job_swap_activity": "zero_supported_by_zero_global_activity",
+    "launch_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 946993287168,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 946993287168,
+      "reserve_bytes": 353748992000,
+      "launch_cap_bytes": 17179869184,
+      "planning_cap_bytes": 17179869184,
+      "cgroup_limits": [],
+      "system_reserve_bytes": 216310038528,
+      "neighbor_growth_allowance_bytes": 137438953472,
+      "shared_workstation": true
+    },
+    "samples": 34,
+    "elapsed_seconds": 22.26764107006602,
+    "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_state": {
+      "source_sha": "a221d881bae9405c98e351df2b0b9533582e6d50",
+      "git_status": "",
+      "stage": "F3-train",
+      "formal_pde": false,
+      "formal_fe_stage": false,
+      "input_sha256": "38cdde0b4914a82115e92e6fa80516e198c13365e500ba09910184e6bf50fcff",
+      "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "shared_workstation": true,
+      "cpu": 0,
+      "mpi_size": 1,
+      "math_threads": 1,
+      "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+      "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+      "nice": 10,
+      "io_priority": "idle"
+    },
+    "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_f3_train_shared_20260928T124806299236Z",
+    "stage": "F3-train",
+    "shared_workstation": true
+  },
+  "selected_history": [
+    {
+      "epoch": 0,
+      "validation_loss": 5.342281302071337,
+      "correction_loss": 3.684113170850031,
+      "native_equation_loss": 1.6581681312213055
+    },
+    {
+      "epoch": 51,
+      "validation_loss": 4.947570117563409,
+      "correction_loss": 3.1095798161963417,
+      "native_equation_loss": 1.837990301367067,
+      "loaded_seconds": 5.50429578893818
+    },
+    {
+      "epoch": 300,
+      "validation_loss": 4.980547552690362,
+      "correction_loss": 3.032035578010066,
+      "native_equation_loss": 1.9485119746802961,
+      "loaded_seconds": 19.020123083959334
+    }
+  ],
+  "history_path": "benchmarks/artifacts/task042/task042_f3_train_shared_20260928T124806299236Z/training_history.json",
+  "history_sha256": "9aa0086cbdddd944aef6cb1abecfbc373a516d8bc56be7586b9b57f1c6e749d8",
+  "ml_environment": {
+    "schema": "task042.environment.v1",
+    "utc": "2026-09-28T12:47:38.660763+00:00",
+    "mode": "ml",
+    "python": "/home/fenics/Projects/NN-Lab/.venv-ml/bin/python",
+    "prefix": "/home/fenics/Projects/NN-Lab/.venv-ml",
+    "python_version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+    "host": "fenics-ws01",
+    "kernel": "7.0.0-31-generic",
+    "cwd": "/home/fenics/Projects/NN-Lab",
+    "source_sha": "a221d881bae9405c98e351df2b0b9533582e6d50",
+    "git_status": "",
+    "affinity": [
+      0
+    ],
+    "caches": {
+      "TMPDIR": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/tmp",
+      "TMP": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/tmp",
+      "TEMP": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/tmp",
+      "XDG_CACHE_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/xdg",
+      "XDG_CONFIG_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/config",
+      "FFCX_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/xdg/fenics",
+      "PYTHONPYCACHEPREFIX": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/pycache",
+      "MPLCONFIGDIR": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/matplotlib",
+      "TORCH_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/torch",
+      "HF_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/huggingface",
+      "HUGGINGFACE_HUB_CACHE": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/huggingface/hub",
+      "TRANSFORMERS_CACHE": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/huggingface/transformers",
+      "TRITON_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/triton",
+      "CUDA_CACHE_PATH": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/cuda",
+      "NUMBA_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/numba",
+      "PIP_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/pip",
+      "UV_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/uv",
+      "RUFF_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/ruff",
+      "TASK042_RESULTS_ROOT": "/home/fenics/Projects/NN-Lab/results/task042",
+      "TASK042_ARTIFACT_ROOT": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042"
+    },
+    "threads": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "BLIS_NUM_THREADS": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "modules": {
+      "numpy": {
+        "path": "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/numpy/__init__.py",
+        "version": "1.26.4"
+      },
+      "src": {
+        "path": "/home/fenics/Projects/NN-Lab/src/__init__.py",
+        "version": null
+      },
+      "src.solvers.coarse_inverse_protocol": {
+        "path": "/home/fenics/Projects/NN-Lab/src/solvers/coarse_inverse_protocol.py",
+        "version": null
+      },
+      "torch": {
+        "path": "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/torch/__init__.py",
+        "version": "2.7.1+cpu"
+      }
+    },
+    "fe_jit": false,
+    "gpu_context": false,
+    "ml": {
+      "torch_version": "2.7.1+cpu",
+      "cuda_build": null,
+      "default_dtype": "torch.float32",
+      "candidate_dtype": "float64 real/imag; no model created"
+    },
+    "loaded_libraries": [
+      "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/numpy.libs/libopenblas64_p-r0-0cf96a72.3.23.dev.so",
+      "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/torch/lib/libtorch.so",
+      "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/torch/lib/libtorch_cpu.so",
+      "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/torch/lib/libtorch_global_deps.so",
+      "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/torch/lib/libtorch_python.so"
+    ],
+    "status": "IMPORT_PATH_PASS"
+  },
+  "source_and_model_only": "FP64 model frozen; no online learning/dropout/GPU; F4 qualification still pending"
+}

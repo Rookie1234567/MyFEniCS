@@ -134,5 +134,11 @@
     "directory": "results/task042/task042_f2_oracle_shared_20260928T123331290778Z",
     "source_sha": "d9de8ad69bfeeac4860e5187e1738c902a3d808e",
     "manifest_sha256": "507370ad8b120459556e793b67ee2249514308e03cf5f92b02d4631985bccbce"
+  },
+  "model_qualification": {
+    "directory": "results/task042/task042_f3_train_shared_20260928T124806299236Z",
+    "source_sha": "a221d881bae9405c98e351df2b0b9533582e6d50",
+    "frozen_model_sha256": "b25b389adf0f22849c434d4eefbe561ea86d36d4d618b2140b8cb7ff1ea2a0e6",
+    "best_checkpoint_sha256": "460b5631375b09c08b3e9d7ef43e8ef9b04ebe37a86424e824fed9e8bb205eef"
   }
 }
