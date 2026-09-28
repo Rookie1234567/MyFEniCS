@@ -390,6 +390,11 @@ def run_f1(runtime, action, physical, stage, directory, artifacts, marker):
         )
     try:
         for index, (label, rhs) in enumerate(rhs_inventory(action, physical)):
+            np.savez(
+                artifacts / f"rhs_{index:03d}.npz",
+                rhs_fe=rhs.fe,
+                rhs_port=rhs.port,
+            )
             started = time.perf_counter()
             success = True
             if stage == "F1-B0":
@@ -523,7 +528,10 @@ def main():
             cfg, MPI.COMM_WORLD, retain_coarse_schur=True, marker=marker
         )
         action = build_p6_cell_condensed_action_from_carrier(
-            runtime.p4_system, runtime.p4["dtn_action"].carrier, owns_condensed=False
+            runtime.p4_system,
+            runtime.p4["dtn_action"].carrier,
+            owns_condensed=False,
+            borrowed_p4_witness=True,
         )
         from benchmarks.run_task038_full3d_t5 import _mesh_identity
 

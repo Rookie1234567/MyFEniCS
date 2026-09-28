@@ -340,6 +340,12 @@ class P6CellCondensedAction:
     The class borrows its local LU/recovery/trace Schur caches and owns only
     the additional carrier arrays.  It is safe to use with a PETSc Python
     matrix or directly with global NumPy vectors in MPI1 tests.
+
+    Explicit ``borrowed_p4_witness=True`` is restricted to caller-owned p4
+    (300 local tensor rows). It shares local caches with one materialized
+    p4 Schur matrix while independently evaluating its action and recovery.
+    It never copies, owns or destroys that matrix. The p6 default still
+    rejects a materialized matrix.
     """
 
     def __init__(
@@ -350,8 +356,15 @@ class P6CellCondensedAction:
         port_terms: Mapping[int, P6CellPortTerms] | None = None,
         direct_trace_terms: Sequence[P6DirectTracePortTerms] = (),
         owns_condensed: bool = False,
+        borrowed_p4_witness: bool = False,
     ) -> None:
-        if condensed.matrix is not None:
+        if borrowed_p4_witness and (
+            condensed.matrix is None
+            or owns_condensed
+            or condensed.build_audit.get("local_tensor_dimension") != 300
+        ):
+            raise ValueError("only caller-owned materialized p4 may be an explicit witness")
+        if condensed.matrix is not None and not borrowed_p4_witness:
             raise ValueError("p6 action-only condensation cannot borrow a materialized matrix")
         retained = condensed.retained_local_schur_by_class
         if retained is None:
@@ -397,7 +410,7 @@ class P6CellCondensedAction:
         self._matrix: PETSc.Mat | None = None
         self._audit = {
             "schema_version": "task039extra.v19.p6-cell-condensed-action.v1",
-            "matrix_materialized": False,
+            "matrix_materialized": condensed.matrix is not None,
             "global_s6_allocated": False,
             "global_a6_allocated": False,
             "global_dense_trace_port_block_allocated": False,
@@ -416,7 +429,16 @@ class P6CellCondensedAction:
             "apply_count": 0,
             "hp_solve_count": 0,
         }
-        condensed.build_audit.setdefault("p6_cell_condensed_action", dict(self._audit))
+        if borrowed_p4_witness:
+            self._audit.update(
+                borrowed_p4_schur_witness=True,
+                borrowed_matrix_rows=int(condensed.matrix.getSize()[0]),
+                matrix_ownership="caller-owned; action never copies or destroys it",
+            )
+        condensed.build_audit.setdefault(
+            "p4_cell_condensed_witness" if borrowed_p4_witness else "p6_cell_condensed_action",
+            dict(self._audit),
+        )
 
     def _build_cells(self, retained: Mapping[tuple[Any, ...], np.ndarray]) -> tuple[_CellActionData, ...]:
         result: list[_CellActionData] = []
@@ -1153,6 +1175,7 @@ def build_p6_cell_condensed_action_from_carrier(
     *,
     H_p: Any | None = None,
     owns_condensed: bool = False,
+    borrowed_p4_witness: bool = False,
 ) -> P6CellCondensedAction:
     """Translate a native carrier into local/internal and direct trace terms.
 
@@ -1231,6 +1254,7 @@ def build_p6_cell_condensed_action_from_carrier(
         port_terms=terms,
         direct_trace_terms=direct,
         owns_condensed=owns_condensed,
+        borrowed_p4_witness=borrowed_p4_witness,
     )
 
 

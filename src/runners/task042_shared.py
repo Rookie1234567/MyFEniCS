@@ -385,6 +385,7 @@ def launch(specification):
             "git_status": status,
             "stage": stage,
             "formal_pde": False,
+            "formal_fe_stage": True,
             "input_sha256": specification.input_sha256,
             "physical_model_sha256": specification.physical_model_sha256,
             "shared_workstation": True,
