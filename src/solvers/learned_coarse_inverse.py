@@ -123,7 +123,9 @@ class OriginalEquationAudit:
 
 
 class IterativeCoarseBackend:
-    def __init__(self, matrix, action, pc, sha, cell_declarations):
+    def __init__(
+        self, matrix, action, pc, sha, cell_declarations, *, diagnostic_observer=None
+    ):
         self.matrix = matrix
         self.action = action
         self.pc = pc
@@ -136,6 +138,7 @@ class IterativeCoarseBackend:
         self.history = []
         self.trajectory = []
         self.last_reason = None
+        self.diagnostic_observer = diagnostic_observer
 
     def solve(self, rhs):
         from petsc4py import PETSc
@@ -165,7 +168,12 @@ class IterativeCoarseBackend:
                 self.history.append(
                     {"iteration": int(iteration), "reported": float(reported)}
                 )
-                if iteration in (0, 32, 128, 256):
+                if self.diagnostic_observer is not None or iteration in (
+                    0,
+                    32,
+                    128,
+                    256,
+                ):
                     if iteration == 0:
                         temporary.set(0.0)
                     else:
@@ -173,7 +181,16 @@ class IterativeCoarseBackend:
                     v = self.matrix.createVecLeft()
                     self.matrix.mult(temporary, v)
                     residual = b.array - v.array
-                    self.trajectory.append((int(iteration), residual.copy()))
+                    if iteration in (0, 32, 128, 256):
+                        self.trajectory.append((int(iteration), residual.copy()))
+                    if self.diagnostic_observer is not None:
+                        self.diagnostic_observer(
+                            int(iteration),
+                            float(reported),
+                            temporary.array,
+                            residual,
+                            b.array,
+                        )
                     v.destroy()
 
             ksp.setMonitor(monitor)

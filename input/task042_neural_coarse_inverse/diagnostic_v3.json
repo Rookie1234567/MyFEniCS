@@ -170,5 +170,44 @@
   "new_pc_count_max": 1,
   "representation_rank_max": 128,
   "neural_training": false,
-  "F5": false
+  "F5": false,
+  "reuse_prerequisite": {
+    "directory": "results/task042/task042_v3_reuse_shared_20260928T145515339381Z",
+    "source_sha": "b158c5301e7ff59000b15b335672afdb61c5e5e1",
+    "sha256": "38f0adc294de92dd893170a2a3fba0752314b3c92bcce3d803b8e122319435f7"
+  },
+  "structure": {
+    "name": "R-GEO-CELL80-v3",
+    "family": "weighted additive overlapping Schwarz, singleton physical cell trace support plus all80 ports",
+    "fe_support": "existing owned_active_support_groups on condensed cell_recovery_maps singleton groups; canonical MPC masters, phases already in original Schur",
+    "patch_count": 252,
+    "trace_rows_max_per_patch": 192,
+    "all_ports_per_patch": 80,
+    "patch_rows_max": 272,
+    "halo": "FE support overlap at shared edges/faces and Floquet master identifications; no additional halo or tunable layers",
+    "restriction": "canonical coordinate extraction",
+    "prolongation": "coordinate extension sum then inverse row multiplicity",
+    "port_weights": "1/252 with complete port inventory",
+    "shift": 0,
+    "factor_fallback": false,
+    "private_audit_csr": false,
+    "factor_cap_bytes": 536870912,
+    "representation_cap_bytes": 536870912,
+    "patch_factor_upper_bytes": 298577664,
+    "dense_construction_temporary_upper_bytes": 3586048,
+    "original_p4_runtime_planning_bytes": 4294967296,
+    "process_tree_planning_bytes": 8589934592,
+    "planning_identity": "engineering reserve, not mathematical allocator/RSS proof; existing p4 measured <=1.31GiB, RSS16GiB own watchdog remains authoritative",
+    "numerical_history": "all 0..256 reported/explicit Schur and independent native/port/recovery; PC probes at 0,32,...256, diagnostic costs separated",
+    "used_RHS": [
+      0,
+      10,
+      11
+    ],
+    "new_PC_count": 1,
+    "linear_NN_rerun": false,
+    "global_gain_decision": "If physical/mixed remain O(1) (>=0.1) and last32-step Schur reduction <1%, stop further teacher/space/training. A port-only improvement alone does not prove global hard directions removed. Otherwise evaluate finite same<=128-rank space comparison before any architecture discussion.",
+    "fresh_test_selection": "separate seed/whole families only after candidate source freeze; run conditional on diagnostics, old16 never fresh",
+    "F5": false
+  }
 }
