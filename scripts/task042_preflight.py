@@ -100,6 +100,8 @@ def main():
             "petsc4py",
             "dolfinx",
             "dolfinx_mpc",
+            "setuptools",
+            "cffi",
             "pyvista",
             "src.solvers.dtn_port_3d",
             "src.runners.task042_experiment",

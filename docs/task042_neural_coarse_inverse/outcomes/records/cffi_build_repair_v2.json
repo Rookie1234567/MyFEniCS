@@ -1,0 +1,269 @@
+{
+  "schema": "task042.cffi-build-repair.v2",
+  "classification": "BUILD_DEPENDENCY_MISSING",
+  "source_sha": "23cb4710e3ed2c8f7c51fd2b3f4e4dd952bea716",
+  "failed_manifest": {
+    "source_sha": "23cb4710e3ed2c8f7c51fd2b3f4e4dd952bea716",
+    "git_status": "",
+    "stage": "F1-B0",
+    "formal_pde": false,
+    "input_sha256": "97aa523950f31a9c3c5ea8c4c9f6c62756214a4dbbb8034aebfe184d56b6d8a7",
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "shared_workstation": true,
+    "cpu": 0,
+    "mpi_size": 1,
+    "math_threads": 1,
+    "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+    "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+    "nice": 10,
+    "io_priority": "idle"
+  },
+  "numerical_summary": {
+    "status": "FAILED",
+    "stage": "F1-B0",
+    "source_sha": "23cb4710e3ed2c8f7c51fd2b3f4e4dd952bea716",
+    "shared_workstation": true,
+    "input_sha256": "97aa523950f31a9c3c5ea8c4c9f6c62756214a4dbbb8034aebfe184d56b6d8a7",
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "official_result": null,
+    "artifact_directory": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f1_b0_shared_retry1_20260928T103349973838Z",
+    "performance_conclusion": "inconclusive under shared load",
+    "error_type": "Exception",
+    "error": "This CFFI feature requires setuptools on Python >= 3.12. The setuptools module is missing or non-functional.",
+    "worker_seconds": 5.967527745000552
+  },
+  "supervision": {
+    "workflow_deadline_seconds": 10800,
+    "solve_deadline_seconds": null,
+    "time_limit_mode": "bounded",
+    "resource_stop_policy": "legacy",
+    "rss_hard_limit_bytes": 17179869184,
+    "rss_warning_bytes": 12884901888,
+    "startup_headroom_bytes": null,
+    "swap_policy": "legacy_stop",
+    "global_swap_delta_policy": "observe_only",
+    "cache_metadata_stable": true,
+    "classification": "WORKER_FAILED",
+    "leader_exit_code": 1,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "observed_child_pids": [
+      537685,
+      537686
+    ],
+    "sampled_process_tree_rss_peak_bytes": 429707264,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+    "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+    "global_swap_activity": {
+      "scope": "WSL-global diagnostic, not dedicated job",
+      "baseline": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 299
+      },
+      "end": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 299
+      },
+      "delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      }
+    },
+    "job_swap_activity": "zero_supported_by_zero_global_activity",
+    "launch_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 949004754944,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 949004754944,
+      "reserve_bytes": 353748992000,
+      "launch_cap_bytes": 17179869184,
+      "planning_cap_bytes": 17179869184,
+      "cgroup_limits": [],
+      "system_reserve_bytes": 216310038528,
+      "neighbor_growth_allowance_bytes": 137438953472,
+      "shared_workstation": true
+    },
+    "samples": 14,
+    "elapsed_seconds": 8.654440130048897,
+    "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_state": {
+      "source_sha": "23cb4710e3ed2c8f7c51fd2b3f4e4dd952bea716",
+      "git_status": "",
+      "stage": "F1-B0",
+      "formal_pde": false,
+      "input_sha256": "97aa523950f31a9c3c5ea8c4c9f6c62756214a4dbbb8034aebfe184d56b6d8a7",
+      "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "shared_workstation": true,
+      "cpu": 0,
+      "mpi_size": 1,
+      "math_threads": 1,
+      "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+      "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+      "nice": 10,
+      "io_priority": "idle"
+    },
+    "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_f1_b0_shared_retry1_20260928T103349973838Z",
+    "stage": "F1-B0",
+    "shared_workstation": true
+  },
+  "diagnosis": "Python3.12 CFFI actual compiler path imports setuptools; module absent in fresh FE venv.",
+  "repair": "Install only NN-Lab setuptools78.1.0 and verify actual complex CFFI compile; no FE library/physics/solver parameter changes.",
+  "runs": [
+    {
+      "id": "setuptools-install-01",
+      "summary": {
+        "workflow_deadline_seconds": 180.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1610612736,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          537892
+        ],
+        "sampled_process_tree_rss_peak_bytes": 92135424,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "end": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 948913782784,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 948913782784,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 12000000000,
+          "planning_cap_bytes": 12000000000,
+          "cgroup_limits": []
+        },
+        "samples": 33,
+        "elapsed_seconds": 7.207633191021159,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "23cb4710e3ed2c8f7c51fd2b3f4e4dd952bea716",
+          "git_status": " M input/task042_neural_coarse_inverse/requirements-fe-tools.txt\n",
+          "stage": "F0",
+          "formal_pde": false,
+          "command": [
+            "python",
+            "-m",
+            "pip",
+            "install",
+            "--no-input",
+            "--only-binary=:all:",
+            "setuptools==78.1.0"
+          ],
+          "utc": "2026-09-28T10:35:56.392879+00:00",
+          "affinity": [
+            0
+          ],
+          "environment_mode": "pure",
+          "gpu_visible": false
+        }
+      },
+      "worker_log_sha256": "da8ba985fbcc5d8a02d533cb395839317e3672106f60b63356e13e92831409d1"
+    },
+    {
+      "id": "cffi-build-check-01",
+      "summary": {
+        "workflow_deadline_seconds": 180.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1610612736,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          537998
+        ],
+        "sampled_process_tree_rss_peak_bytes": 79179776,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "end": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 948817973248,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 948817973248,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 12000000000,
+          "planning_cap_bytes": 12000000000,
+          "cgroup_limits": []
+        },
+        "samples": 12,
+        "elapsed_seconds": 2.559660230006557,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "23cb4710e3ed2c8f7c51fd2b3f4e4dd952bea716",
+          "git_status": " M input/task042_neural_coarse_inverse/requirements-fe-tools.txt\n",
+          "stage": "F0",
+          "formal_pde": false,
+          "command": [
+            "python",
+            "tmp/task042/cffi_build_probe.py"
+          ],
+          "utc": "2026-09-28T10:37:10.829932+00:00",
+          "affinity": [
+            0
+          ],
+          "environment_mode": "fe",
+          "gpu_visible": false
+        }
+      },
+      "worker_log_sha256": "8982dc788d3d68d233ae0d40a32371307bd3f0f8deb4288100f54b3311302389"
+    }
+  ],
+  "raw_hashes": {
+    "results/task042/task042_f1_b0_shared_retry1_20260928T103349973838Z/supervision/worker.log": "2d0cceac7ecbd6d62f912e6fe61e641963fdd53eba8bf161d551dab234a1cb3e",
+    "results/task042/task042_f1_b0_shared_retry1_20260928T103349973838Z/supervision/resources.jsonl": "cc5330b7b4bb8c2b290ec8ce09a69301962bd63a500c923c09b917526b7e1ffa",
+    "results/task042/task042_f1_b0_shared_retry1_20260928T103349973838Z/shared_health.jsonl": "9f36f01430d6a6deff359631e0224f09a1ea11eac4e3d5ed14e8f9c9f3ecb657",
+    "results/task042/task042_f1_b0_shared_retry1_20260928T103349973838Z/stages.jsonl": "898356fef71aa64e768d831361c74a4b4d533e3858ed5ffbf7c3ae8e86dcc39a"
+  }
+}
