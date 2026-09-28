@@ -807,6 +807,137 @@ def test_registered_5nm_formal_target_keeps_case_resource_and_time_contract(
             )
 
 
+def test_v8_resource_policy_is_bound_by_registered_5nm_finalizer(
+    monkeypatch, tmp_path
+):
+    repository_root = Path(__file__).resolve().parents[2]
+    model_id = TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID
+    registered = task041_balh_service_contract(model_id)
+    ledger_path = (repository_root / registered["ledger"]["path"]).resolve()
+    root = tmp_path / "v8-service-root"
+    root.mkdir()
+    policy = task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+    input_path = (
+        repository_root
+        / "input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+    )
+    config = {
+        "unit": UNIT,
+        "model_id": model_id,
+        "source_sha": SOURCE_SHA,
+        "ledger_path": str(ledger_path),
+        "supervision_root": str(root),
+        "public_command": [
+            sys.executable,
+            "scripts/run_case.py",
+            str(input_path),
+            "--producer-packet-root",
+            str(tmp_path / "producer"),
+            "--task041-p4-refinement-target-tolerance",
+            "5e-13",
+            "--task041-resource-policy",
+            policy,
+        ],
+        "p4_refinement_target_tolerance": 5.0e-13,
+        "task041_resource_policy": policy,
+        "global_swap_baseline": {
+            "global_swap_used_bytes": 8192,
+            "global_pswpin_pages": 0,
+            "global_pswpout_pages": 2,
+        },
+    }
+    config_path = tmp_path / "v8-job-config.json"
+    supervisor._write_json(config_path, config)
+    identity = _identity(start_ns=1_000_000_000)
+    monkeypatch.setattr(
+        supervisor,
+        "_load_task041_compute_wall_ledger",
+        lambda path: (Path(path), {"used_compute_wall_seconds": 100.0}),
+    )
+    monkeypatch.setattr(service, "_parent_unit_identity", lambda _unit: identity)
+    monkeypatch.setattr(service, "_cgroup_members", lambda _group: [os.getpid()])
+    monkeypatch.setattr(service, "_sparse_sample_factory", lambda: "sampler")
+    monkeypatch.setattr(service.time, "monotonic_ns", lambda: 2_000_000_000)
+
+    def fake_public(_command, supervision_root, **kwargs):
+        supervisor._write_json(
+            Path(supervision_root) / "launch_manifest.json",
+            kwargs["launch_manifest"],
+        )
+        supervisor._write_json(
+            Path(supervision_root) / "summary.json",
+            {
+                "status": "completed",
+                "result_classification": "worker_exit0",
+                "phase_result": {
+                    "returncode": 0,
+                    "termination_reason": None,
+                    "wall_seconds": 1.0,
+                },
+            },
+        )
+        return {
+            "status": "completed",
+            "result_classification": "worker_exit0",
+            "phase_result": {
+                "returncode": 0,
+                "termination_reason": None,
+                "wall_seconds": 1.0,
+            },
+        }
+
+    monkeypatch.setattr(supervisor, "run_task041_supervised_public_command", fake_public)
+    parent = service.run_service_parent(config_path)
+    assert parent["status"] == "pre_exit_ok"
+    launch = supervisor._read_json(root / "launch_manifest.json")
+    policy_binding = launch["task041_resource_policy"]
+    target_binding = launch["p4_refinement_target_binding"]
+    assert launch["p4_refinement_target_tolerance"] == 5.0e-13
+    assert target_binding["scope"] == (
+        "registered_5nm_cell_condensed_formal_consumer_target"
+    )
+
+    monkeypatch.setattr(
+        service,
+        "_record_unit_wall",
+        lambda *_args: ({"used_compute_wall_seconds": 101.0}, None),
+    )
+
+    def fake_post_hash(_root, finalizer_root, *_args):
+        supervisor._write_json(
+            finalizer_root / "artifact_hashes.json", {"pass": True}
+        )
+        return (
+            {
+                "returncode": 0,
+                "termination_reason": None,
+                "partial": False,
+                "process_group_gone": True,
+            },
+            None,
+        )
+
+    monkeypatch.setattr(service, "_run_post_hash", fake_post_hash)
+    _normal_terminal(monkeypatch)
+
+    finalizer = service.run_service_finalize(config_path)
+
+    assert finalizer["status"] == "completed"
+    assert finalizer["result_classification"] == "service_complete"
+    assert all(finalizer["checks"].values())
+    assert finalizer["checks"]["invocation_matches"] is True
+    assert finalizer["launch_manifest"]["path"] == str(
+        root / "launch_manifest.json"
+    )
+    assert finalizer["task041_resource_policy"] == policy_binding
+    assert finalizer["public_to_finalizer_time_target"] == {
+        "target_seconds": 86400,
+        "wall_seconds": 1.0,
+        "met": True,
+        "scope": "public-to-finalizer unit wall; not a resource-safety gate",
+    }
+
+
 def test_fixed_pair_public_supervision_ignores_v2_clock_but_keeps_resource_gate(
     monkeypatch, tmp_path
 ):

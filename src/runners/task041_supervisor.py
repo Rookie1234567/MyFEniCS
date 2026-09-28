@@ -323,7 +323,9 @@ def _numeric(value: Any) -> int | None:
     return int(value)
 
 
-def _resource_authority_kind(authority: Mapping[str, Any]) -> str | None:
+def _resource_authority_kind(
+    authority: Mapping[str, Any], *, swap_observe_only: bool = False
+) -> str | None:
     process_tree = authority.get("process_tree")
     if (
         isinstance(process_tree, Mapping)
@@ -337,7 +339,10 @@ def _resource_authority_kind(authority: Mapping[str, Any]) -> str | None:
         job_cgroup.get("dedicated_job_cgroup") is True
         and job_cgroup.get("readable") is True
         and _numeric(job_cgroup.get("memory_current_bytes")) is not None
-        and _numeric(job_cgroup.get("swap_current_bytes")) is not None
+        and (
+            swap_observe_only
+            or _numeric(job_cgroup.get("swap_current_bytes")) is not None
+        )
     ):
         return "dedicated_cgroup_fallback"
     return None
@@ -349,6 +354,7 @@ def _sample_record(
     elapsed: float,
     *,
     authority_kind: str | None = None,
+    swap_observe_only: bool = False,
 ) -> dict[str, Any]:
     process_tree = authority.get("process_tree")
     if not isinstance(process_tree, Mapping):
@@ -437,7 +443,9 @@ def _sample_record(
         "process_tree_swap_by_pid_bytes": pid_swap,
     }
     if authority_kind == "dedicated_cgroup_fallback":
-        if cgroup_memory is None or dedicated_swap is None:
+        if cgroup_memory is None or (
+            dedicated_swap is None and not swap_observe_only
+        ):
             raise Task041SupervisorError(
                 f"{phase} dedicated cgroup fallback is incomplete",
                 classification="task041_implementation_failure",
@@ -453,13 +461,18 @@ def _sample_record(
             "memory_authority_source": (
                 "max(existing memory_authority_bytes, dedicated cgroup memory.current)"
             ),
-            "job_no_swap": dedicated_swap == 0,
+            "job_no_swap": (
+                None if dedicated_swap is None else dedicated_swap == 0
+            ),
             "process_tree_rss_bytes": None,
             "process_tree_swap_bytes": None,
             "dedicated_cgroup_memory_bytes": cgroup_memory,
             "dedicated_cgroup_swap_bytes": dedicated_swap,
             "swap_bytes": dedicated_swap,
             "swap_authority_source": "dedicated cgroup swap.current",
+            "swap_measurement_status": (
+                "unknown" if dedicated_swap is None else "measured"
+            ),
             "pss_bytes": None,
             "uss_bytes": None,
             "all_status_readable": False,
@@ -471,16 +484,30 @@ def _sample_record(
             stage=f"{phase}_resource_sample",
         )
     if job_cgroup.get("dedicated_job_cgroup") is not True or dedicated_swap is None:
-        dedicated_swap = 0
+        dedicated_swap = None if swap_observe_only else 0
     pss = _numeric(smaps.get("pss_bytes"))
     uss = _numeric(smaps.get("uss_bytes"))
-    if memory is None or rss is None or process_swap is None:
+    if memory is None or rss is None or (
+        process_swap is None and not swap_observe_only
+    ):
         raise Task041SupervisorError(
             f"{phase} resource sample lacks memory_authority/process-tree fields",
             classification="task041_implementation_failure",
             stage=f"{phase}_resource_sample",
         )
-    swap = max(process_swap, dedicated_swap)
+    observed_swap = [
+        value
+        for value in (process_swap, dedicated_swap)
+        if isinstance(value, int)
+    ]
+    swap = max(observed_swap) if observed_swap else None
+    swap_measurement_status = (
+        "measured"
+        if process_swap is not None and dedicated_swap is not None
+        else "partially_measured"
+        if observed_swap
+        else "unknown"
+    )
     return {
         **common,
         "phase": phase,
@@ -488,13 +515,18 @@ def _sample_record(
         "authority_kind": authority_kind,
         "memory_authority_bytes": memory,
         "memory_authority_source": "existing memory_authority_bytes",
-        "job_no_swap": authority.get("job_no_swap"),
+        "job_no_swap": (
+            authority.get("job_no_swap")
+            if process_swap is not None or dedicated_swap is not None
+            else None
+        ),
         "process_tree_rss_bytes": rss,
         "process_tree_swap_bytes": process_swap,
         "dedicated_cgroup_memory_bytes": cgroup_memory,
         "dedicated_cgroup_swap_bytes": dedicated_swap,
         "swap_bytes": swap,
-        "swap_authority_source": "max(process-tree VmSwap, dedicated cgroup swap.current)",
+        "swap_authority_source": "max(measured process-tree VmSwap, dedicated cgroup swap.current)",
+        "swap_measurement_status": swap_measurement_status,
         "pss_bytes": pss,
         "uss_bytes": uss,
         "all_status_readable": process_tree.get("all_status_readable"),
@@ -610,6 +642,7 @@ def _run_phase(
     global_swap_baseline: Mapping[str, Any] | None = None,
     partial_phase_results: dict[str, Any] | None = None,
     enforce_time_stops: bool = True,
+    swap_observe_only: bool = False,
 ) -> dict[str, Any]:
     if phase_root.exists():
         raise Task041SupervisorError(
@@ -668,6 +701,10 @@ def _run_phase(
             "warning_memory_bytes": warning_memory_bytes,
             "hard_memory_bytes": hard_memory_bytes,
             "swap_limit_bytes": 0,
+            "swap_observe_only": swap_observe_only,
+            "swap_semantics": (
+                "observe_only_continue" if swap_observe_only else "zero_swap_gate"
+            ),
             "timeout_seconds": timeout_seconds,
             "min_memavailable_bytes": min_memavailable_bytes,
             "min_cgroup_ancestor_headroom_bytes": (
@@ -829,7 +866,11 @@ def _run_phase(
             and _cgroup_ancestor_headroom_unmeasured(record)
         ):
             return "cgroup_headroom_unmeasured"
-        if record["swap_bytes"] > 0 or record["job_no_swap"] is not True:
+        if not swap_observe_only and (
+            record.get("swap_bytes") is None
+            or record.get("swap_bytes", 0) > 0
+            or record.get("job_no_swap") is not True
+        ):
             return "swap_detected"
         if (
             min_memavailable_bytes is not None
@@ -894,7 +935,9 @@ def _run_phase(
                 )
                 authority = sample_factory(sample_pid)
                 authority_kind = (
-                    _resource_authority_kind(authority)
+                    _resource_authority_kind(
+                        authority, swap_observe_only=swap_observe_only
+                    )
                     if isinstance(authority, Mapping)
                     else None
                 )
@@ -930,7 +973,9 @@ def _run_phase(
                                 )
                             authority = sample_factory(sample_pid)
                             authority_kind = (
-                                _resource_authority_kind(authority)
+                                _resource_authority_kind(
+                                    authority, swap_observe_only=swap_observe_only
+                                )
                                 if isinstance(authority, Mapping)
                                 else None
                             )
@@ -945,7 +990,10 @@ def _run_phase(
                                 now = monotonic()
                                 authority = sample_factory(sample_pid)
                                 authority_kind = (
-                                    _resource_authority_kind(authority)
+                                    _resource_authority_kind(
+                                        authority,
+                                        swap_observe_only=swap_observe_only,
+                                    )
                                     if isinstance(authority, Mapping)
                                     else None
                                 )
@@ -968,6 +1016,7 @@ def _run_phase(
                     phase,
                     now - workflow_started,
                     authority_kind=authority_kind,
+                    swap_observe_only=swap_observe_only,
                 )
                 record = _annotate_sample(
                     record,
@@ -1015,7 +1064,9 @@ def _run_phase(
         if sampling_root_pid is not None:
             post_authority = sample_factory(sampling_root_pid)
             post_kind = (
-                _resource_authority_kind(post_authority)
+                _resource_authority_kind(
+                    post_authority, swap_observe_only=swap_observe_only
+                )
                 if isinstance(post_authority, Mapping)
                 else None
             )
@@ -1047,6 +1098,7 @@ def _run_phase(
                     phase,
                     post_now - workflow_started,
                     authority_kind=post_kind,
+                    swap_observe_only=swap_observe_only,
                 ),
                 sample_role="phase_end_public_root",
                 worker_pid=process.pid,
@@ -1284,6 +1336,44 @@ def run_task041_supervised_public_command(
     profile_id = profile_contract["profile_id"]
     model_id = profile_contract["model_id"]
     case_runtime_contract = task041_balh_service_contract(str(model_id))
+    resource_policy_binding = profile_contract.get("task041_resource_policy")
+    swap_observe_only = False
+    if resource_policy_binding is not None:
+        from benchmarks.task041_balh_workflow import (
+            task041_v8_resource_policy_binding,
+        )
+
+        if not isinstance(resource_policy_binding, Mapping):
+            raise Task041SupervisorError(
+                "V8 resource policy contract is malformed",
+                classification="task041_identity_failure",
+                stage="supervised_public_profile",
+            )
+        try:
+            expected_policy = task041_v8_resource_policy_binding(
+                str(model_id), str(resource_policy_binding.get("policy", ""))
+            )
+        except ValueError as exc:
+            raise Task041SupervisorError(
+                str(exc),
+                classification="task041_identity_failure",
+                stage="supervised_public_profile",
+            ) from exc
+        if (
+            dict(resource_policy_binding) != expected_policy
+            or case_runtime_contract is None
+            or resource_policy_binding.get("swap_semantics")
+            != "observe_only_continue"
+            or not isinstance(launch_manifest, Mapping)
+            or launch_manifest.get("task041_resource_policy")
+            != expected_policy
+        ):
+            raise Task041SupervisorError(
+                "V8 resource policy is not bound to the registered service launch",
+                classification="task041_identity_failure",
+                stage="supervised_public_profile",
+            )
+        swap_observe_only = True
     p4_backend_pair_identity = profile_contract.get("p4_backend_pair_identity")
     p4_backend_pair_runtime = False
     if isinstance(p4_backend_pair_identity, Mapping):
@@ -1446,6 +1536,11 @@ def run_task041_supervised_public_command(
         "command": spawn_command,
         "profile_id": profile_id,
         "model_id": model_id,
+        "task041_resource_policy": (
+            dict(resource_policy_binding)
+            if isinstance(resource_policy_binding, Mapping)
+            else None
+        ),
         "budget": {
             "phase_group": active_phase,
             "phase_budget_seconds": phase_budget,
@@ -1542,6 +1637,7 @@ def run_task041_supervised_public_command(
                 not (is_case_runtime or p4_backend_pair_runtime)
                 or profile_contract["time_stop"]["consumer_enforced"]
             ),
+            swap_observe_only=swap_observe_only,
         )
         resource_failure = _phase_resource_failure(phase_result)
         if resource_failure:
@@ -8754,6 +8850,7 @@ def run_task041_public_supervisor(
     task041_p4_response_correction_steps: int = 0,
     task041_p4_refinement_target_tolerance: float | None = None,
     task041_p4_backend_pair_side: str | None = None,
+    task041_resource_policy: str | None = None,
 ) -> dict[str, Any]:
     """Run one Task041 consumer, optionally reusing a completed BAL_H producer."""
 
@@ -8807,6 +8904,7 @@ def run_task041_public_supervisor(
     supervision_binding: dict[str, Any] | None = None
     expected_diagnostic_output = False
     expected_diagnostic_model_id: str | None = None
+    resource_policy_binding: dict[str, Any] | None = None
     producer_root = root / "producer"
     try:
         if not root.is_dir():
@@ -8823,6 +8921,45 @@ def run_task041_public_supervisor(
                 stage="source_identity",
             )
         identity = _validate_specification(specification, repository_root)
+        if task041_resource_policy is not None:
+            from benchmarks.task041_balh_workflow import (
+                task041_v8_resource_policy_binding,
+            )
+
+            try:
+                resource_policy_binding = task041_v8_resource_policy_binding(
+                    str(identity["model_id"]), task041_resource_policy
+                )
+            except ValueError as exc:
+                raise Task041SupervisorError(
+                    str(exc),
+                    classification="task041_identity_failure",
+                    stage="resource_policy",
+                ) from exc
+            if (
+                task041_balh_service_contract(str(identity["model_id"])) is None
+                or performance_profile is not None
+                or task041_rhs_probe_manifest is not None
+                or task041_side_setup_schedule is not None
+                or task041_comparison_mode is not None
+                or task041_top_causal_replay
+                or task041_p4_correction_replay_from is not None
+                or task041_p4_response_correction_steps != 0
+                or task041_p4_backend_pair_side is not None
+            ):
+                raise Task041SupervisorError(
+                    "V8 resource policy is limited to a registered formal BAL_H consumer",
+                    classification="task041_identity_failure",
+                    stage="resource_policy",
+                )
+            manifest = _read_json(root / "run_manifest.json")
+            if manifest.get("task041_resource_policy") != resource_policy_binding:
+                raise Task041SupervisorError(
+                    "run manifest does not bind the V8 resource policy",
+                    classification="task041_identity_failure",
+                    stage="resource_policy",
+                )
+            result["task041_resource_policy"] = resource_policy_binding
         if (
             task041_p4_refinement_target_tolerance is not None
             or task041_p4_backend_pair_side is not None
@@ -9480,7 +9617,10 @@ def run_task041_public_supervisor(
         if balh:
             preflight_authority = sample_factory(public_launcher_pid)
             preflight_kind = (
-                _resource_authority_kind(preflight_authority)
+                _resource_authority_kind(
+                    preflight_authority,
+                    swap_observe_only=resource_policy_binding is not None,
+                )
                 if isinstance(preflight_authority, Mapping)
                 else None
             )
@@ -9489,6 +9629,7 @@ def run_task041_public_supervisor(
                 "preflight",
                 monotonic() - started,
                 authority_kind=preflight_kind,
+                swap_observe_only=resource_policy_binding is not None,
             )
             preflight.update(
                 {
@@ -9648,6 +9789,7 @@ def run_task041_public_supervisor(
                 specification,
                 source_sha,
                 require_public_supervisor_summary=True,
+                swap_observe_only=resource_policy_binding is not None,
             )
             producer_result = dict(packet["producer_phase"])
             producer_result.update(
@@ -9739,6 +9881,7 @@ def run_task041_public_supervisor(
                 global_swap_baseline=global_swap_baseline if balh else None,
                 partial_phase_results=result["phase_results"],
                 enforce_time_stops=True,
+                swap_observe_only=resource_policy_binding is not None,
             )
         producer_result["rank_pid_affinity"] = _rank_pid_affinity_artifact(
             producer_root
@@ -9892,6 +10035,7 @@ def run_task041_public_supervisor(
                         task041_p4_refinement_target_tolerance
                     ),
                     p4_backend_pair_side=task041_p4_backend_pair_side,
+                    task041_resource_policy=task041_resource_policy,
                 )
             else:
                 consumer_command = producer_command_module["balh_exact_consumer"](
@@ -10032,6 +10176,7 @@ def run_task041_public_supervisor(
                 disable_time_stop=disable_time_stop,
                 phase_limits=phase_limits,
             ),
+            swap_observe_only=resource_policy_binding is not None,
         )
         consumer_result["rank_pid_affinity"] = _rank_pid_affinity_artifact(
             consumer_root
@@ -10294,8 +10439,7 @@ def run_task041_public_supervisor(
         qualification_peak_fields = (
             "peak_memory_authority_bytes",
             "peak_process_tree_rss_bytes",
-            "peak_swap_bytes",
-        )
+        ) + (() if resource_policy_binding is not None else ("peak_swap_bytes",))
 
         def _phase_resource_qualified(phase: Mapping[str, Any]) -> bool:
             return bool(
@@ -10315,10 +10459,13 @@ def run_task041_public_supervisor(
                     "cgroup_headroom_unmeasured",
                     "memavailable_floor",
                     "memavailable_unmeasured",
-                    "swap_detected",
                     "cumulative_wall_timeout",
                     "wall_timeout",
                 }
+                and (
+                    resource_policy_binding is not None
+                    or phase.get("termination_reason") != "swap_detected"
+                )
             )
 
         def _phase_resource_values(phase: Mapping[str, Any]) -> dict[str, Any]:
@@ -10604,6 +10751,11 @@ def run_task041_public_supervisor(
             "warning_memory_bytes": runtime_limits["warning_memory_bytes"],
             "hard_memory_bytes": runtime_limits["hard_memory_bytes"],
             "swap_limit_bytes": runtime_limits["swap_limit_bytes"],
+            "swap_observation_policy": (
+                "observe_only_continue"
+                if resource_policy_binding is not None
+                else "zero_swap_gate"
+            ),
             "timeout_seconds": runtime_limits["timeout_seconds"],
             "workflow_limits": dict(runtime_limits),
             "swap_semantics": "max(process-tree VmSwap, dedicated job cgroup swap.current)",

@@ -95,6 +95,12 @@ def _parser() -> argparse.ArgumentParser:
         metavar="G1_CONSUMER_ROOT",
         help="run the fixed PC1 Q1/Q2 correction diagnostic from frozen G1 packets",
     )
+    parser.add_argument(
+        "--task041-resource-policy",
+        choices=("task041_v8_swap_observe_continue",),
+        default=None,
+        help="opt into the Task041 V8 swap-observe-only resource policy",
+    )
     return parser
 
 
@@ -109,6 +115,19 @@ def main(argv: list[str] | None = None) -> int:
         )
         target_tolerance = args.task041_p4_refinement_target_tolerance
         target_side = args.task041_p4_backend_pair_side
+        resource_policy_binding = None
+        if args.task041_resource_policy is not None:
+            from benchmarks.task041_balh_workflow import (
+                task041_v8_resource_policy_binding,
+            )
+
+            try:
+                resource_policy_binding = task041_v8_resource_policy_binding(
+                    str(specification.identity.get("model_id", "")),
+                    args.task041_resource_policy,
+                )
+            except ValueError as exc:
+                raise InputError(str(exc)) from exc
         target_binding = None
         if target_tolerance is not None or target_side is not None:
             from benchmarks.task041_balh_workflow import (
@@ -277,9 +296,12 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(payload, sort_keys=True, separators=(",", ":")))
             return 0
         if args.dry_run:
+            payload = dry_run_payload(specification)
+            if resource_policy_binding is not None:
+                payload["task041_resource_policy"] = resource_policy_binding
             print(
                 json.dumps(
-                    dry_run_payload(specification),
+                    payload,
                     ensure_ascii=False,
                     sort_keys=True,
                     separators=(",", ":"),
@@ -307,6 +329,7 @@ def main(argv: list[str] | None = None) -> int:
             ),
             task041_p4_refinement_target_tolerance=target_tolerance,
             task041_p4_backend_pair_side=target_side,
+            task041_resource_policy=args.task041_resource_policy,
         )
         print(json.dumps(result, sort_keys=True, separators=(",", ":")))
         return 0 if result["result_classification"] == "worker_exit0" else 3

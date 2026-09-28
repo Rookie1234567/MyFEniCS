@@ -44,7 +44,9 @@ from benchmarks.task041_side_balh_comparison import (
     _compare_selected_fields,
     _own_gates,
     _pair_identity,
+    _resource_phase,
     _resources,
+    _task041_v8_public_to_finalizer_time_target,
     _validate_legacy_consumer_binding,
     compare_task041_side_balh_pair,
     load_task041_side_balh_result,
@@ -643,6 +645,98 @@ def test_task041_time_override_is_worker_bound_and_keeps_resource_gates(tmp_path
     assert memory_failure["time_stop_override"]["status"] == "valid"
     assert memory_failure["phases"]["consumer"]["hard_cap_pass"] is False
     assert memory_failure["pass"] is False
+
+
+def test_task041_v8_resource_observes_swap_but_keeps_memory_gates():
+    model_id = "task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8_cell_condensed"
+    phase, samples = _measured_phase(model_id, "consumer", 12.0, 500)
+    for row in samples:
+        row["job_no_swap"] = False
+        row["swap_bytes"] = 4096
+        row["process_tree_swap_bytes"] = 4096
+        row["global_swap_used_bytes_delta"] = 8192
+        row["global_pswpin_pages_delta"] = 2
+        row["global_pswpout_pages_delta"] = 3
+    limits = _phase_limits(model_id, "consumer")
+
+    result = _resource_phase(
+        "consumer",
+        phase,
+        samples,
+        "sample-sha",
+        limits,
+        swap_observe_only=True,
+    )
+
+    assert result["pass"] is True
+    assert result["swap_pass"] is None
+    assert result["global_swap"]["pass"] is None
+    assert result["swap_observation"]["peak_job_swap_bytes"] == 4096
+    assert result["swap_observation"]["global_swap_used_delta_peak_bytes"] == 8192
+    assert result["swap_observation"]["job_no_swap_false_sample_count"] == 2
+    assert "job_no_swap_samples" not in result["swap_observation"]
+    assert "global_swap_used_delta_bytes" not in result["swap_observation"]
+    assert result["phase_time_target_diagnostic"]["met_for_this_phase"] is True
+    assert "time_target_met" not in result
+
+    phase, unsafe_samples = _measured_phase(model_id, "consumer", 12.0, 500)
+    unsafe_samples[0]["memory_authority_bytes"] = limits["hard_memory_bytes"]
+    unsafe_samples[0]["process_tree_rss_bytes"] = limits["hard_memory_bytes"]
+    unsafe = _resource_phase(
+        "consumer",
+        phase,
+        unsafe_samples,
+        "sample-sha",
+        limits,
+        swap_observe_only=True,
+    )
+    assert unsafe["hard_cap_pass"] is False
+    assert unsafe["pass"] is False
+
+
+def test_task041_v8_finalizer_time_target_uses_real_bound_schema(tmp_path):
+    launch_path = tmp_path / "launch_manifest.json"
+    launch = {"invocation_id": "inv-v8"}
+    launch_bytes = json.dumps(launch, sort_keys=True).encode()
+    launch_path.write_bytes(launch_bytes)
+    launch_sha = hashlib.sha256(launch_bytes).hexdigest()
+    run_manifest = {
+        "supervision_record": {
+            "path": str(launch_path),
+            "sha256": launch_sha,
+        }
+    }
+    finalizer = {
+        "launch_manifest": {"path": str(launch_path)},
+        "checks": {
+            "service_terminal_normal": True,
+            "invocation_matches": True,
+            "parent_summary_present": True,
+            "pre_exit_membership_record": True,
+            "pre_exit_members_clean": True,
+            "public_result_completed": True,
+            "post_cgroup_finalizer_only": True,
+            "post_hash_phase_completed": True,
+            "closed_artifacts_hashed": True,
+            "ledger_written": True,
+        },
+        "service_terminal": {"INVOCATION_ID": "inv-v8"},
+        "timing": {"unit_elapsed_seconds": 86_399.0},
+    }
+
+    result = _task041_v8_public_to_finalizer_time_target(
+        run_manifest,
+        launch_path,
+        launch_sha,
+        launch,
+        finalizer,
+    )
+
+    assert result["status"] == "measured"
+    assert result["public_to_finalizer_wall_seconds"] == 86_399.0
+    assert result["time_target_met"] is True
+    assert all(finalizer["checks"].values())
+    assert "launch_manifest" not in finalizer["checks"]
 
 
 def test_task041_unqualified_producer_does_not_enter_workflow_peak(comparison_pair):

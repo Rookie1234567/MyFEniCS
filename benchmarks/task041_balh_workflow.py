@@ -69,6 +69,10 @@ TASK041_P4_REFINEMENT_TARGET_TOLERANCE = 5.0e-13
 TASK041_P4_REGISTERED_5NM_TARGET_SCOPE = (
     "registered_5nm_cell_condensed_formal_consumer_target"
 )
+TASK041_V8_SWAP_OBSERVE_CONTINUE = "task041_v8_swap_observe_continue"
+TASK041_V8_REVIEW_PATH = (
+    "docs/task041_mpi1_shortwave_hybrid_capacity/review_report_v8.md"
+)
 TASK041_REPRESENTATIVE_RHS_SCHEMA = "task041.representative_rhs_manifest.v1"
 TASK041_REPRESENTATIVE_RHS_COUNT = 8
 TASK041_REPRESENTATIVE_RHS_MODE_COUNT = 480
@@ -82,6 +86,35 @@ _TASK041_REPRESENTATIVE_RHS_EXPECTED = (
     ("top", "negative", 686, 666, 186),
     ("top", "negative", 513, 493, 13),
 )
+
+
+def task041_v8_resource_policy_binding(
+    model_id: str, policy: str | None
+) -> dict[str, Any] | None:
+    """Bind the one V8 observe-only swap policy to its Task041 run and review."""
+
+    if policy is None:
+        return None
+    if policy != TASK041_V8_SWAP_OBSERVE_CONTINUE:
+        raise ValueError(f"unsupported Task041 resource policy: {policy}")
+    if model_id not in {
+        TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
+        TASK041_BALH_2NM_CANDIDATE_MODEL_ID,
+    } or task041_balh_service_contract(model_id) is None:
+        raise ValueError(
+            "V8 resource policy is limited to registered 5 nm cell-condensed "
+            "and 2 nm Task041 consumers"
+        )
+    review_path = Path(__file__).resolve().parents[1] / TASK041_V8_REVIEW_PATH
+    if not review_path.is_file():
+        raise ValueError("Task041 V8 review source is missing")
+    return {
+        "policy": policy,
+        "model_id": model_id,
+        "review_path": TASK041_V8_REVIEW_PATH,
+        "review_sha256": hashlib.sha256(review_path.read_bytes()).hexdigest(),
+        "swap_semantics": "observe_only_continue",
+    }
 
 
 def task041_is_explicit_p4_backend_pair(
@@ -1096,6 +1129,7 @@ def build_task041_balh_candidate_consumer_command(
     p4_response_correction_steps: int = 0,
     p4_refinement_target_tolerance: float | None = None,
     p4_backend_pair_side: str | None = None,
+    task041_resource_policy: str | None = None,
 ) -> list[str]:
     normalized = specification.as_jsonable()
     if task041_balh_route(str(normalized["model_id"])) != "balh":
@@ -1121,6 +1155,22 @@ def build_task041_balh_candidate_consumer_command(
             ),
             side_setup_schedule=side_setup_schedule,
             comparison_mode=comparison_mode,
+        )
+    resource_policy_binding = task041_v8_resource_policy_binding(
+        str(normalized["model_id"]), task041_resource_policy
+    )
+    if resource_policy_binding is not None and (
+        performance_profile is not None
+        or task041_rhs_probe_manifest is not None
+        or side_setup_schedule is not None
+        or comparison_mode is not None
+        or top_causal_replay
+        or p4_correction_replay_from is not None
+        or p4_response_correction_steps != 0
+        or p4_backend_pair_side is not None
+    ):
+        raise ValueError(
+            "V8 resource policy is limited to a registered formal consumer"
         )
     if performance_profile is not None:
         if disable_time_stop:
@@ -1196,7 +1246,7 @@ def build_task041_balh_candidate_consumer_command(
         raise ValueError(
             "P4 response corrections require top_causal_replay"
         )
-    return _mpi8_command(
+    command = _mpi8_command(
         python_executable,
         TASK041_BALH_CANDIDATE_PHASE,
         specification.source_path,
@@ -1230,6 +1280,11 @@ def build_task041_balh_candidate_consumer_command(
             else task041_balh_membind_node(str(normalized["model_id"]))
         ),
     )
+    if resource_policy_binding is not None:
+        command.extend(
+            ["--task041-resource-policy", str(resource_policy_binding["policy"])]
+        )
+    return command
 
 
 def task041_balh_exact_consumer_iterative_config() -> Any:
@@ -1417,6 +1472,7 @@ def validate_balh_producer_packet(
     consumer_source_sha: str,
     *,
     require_public_supervisor_summary: bool = False,
+    swap_observe_only: bool = False,
 ) -> dict[str, Any]:
     """Validate a completed new-profile producer for an independent consumer."""
 
@@ -1482,8 +1538,7 @@ def validate_balh_producer_packet(
         resource_fields = (
             "peak_memory_authority_bytes",
             "peak_process_tree_rss_bytes",
-            "peak_swap_bytes",
-        )
+        ) + (() if swap_observe_only else ("peak_swap_bytes",))
         sample_count = producer_phase.get("sample_count")
         producer_resource_qualified = bool(
             isinstance(sample_count, int)
@@ -1527,7 +1582,11 @@ def validate_balh_producer_packet(
             producer_phase.get("returncode") != 0
             or producer_phase.get("process_group_gone") is not True
             or producer_phase.get("termination_reason")
-            in {"absolute_memory_limit", "swap_detected", "wall_timeout"}
+            in (
+                {"absolute_memory_limit", "wall_timeout"}
+                if swap_observe_only
+                else {"absolute_memory_limit", "swap_detected", "wall_timeout"}
+            )
         ):
             raise ValueError("Task041 public supervisor producer phase did not satisfy resource lifecycle")
         selected_mode_manifest_path = root.parent / "selected_mode_manifest.json"
@@ -1661,6 +1720,11 @@ def _parser() -> argparse.ArgumentParser:
         choices=("bottom", "top"),
         default=None,
     )
+    parser.add_argument(
+        "--task041-resource-policy",
+        choices=(TASK041_V8_SWAP_OBSERVE_CONTINUE,),
+        default=None,
+    )
     time_control = parser.add_mutually_exclusive_group()
     time_control.add_argument(
         "--task041-performance-profile",
@@ -1697,6 +1761,7 @@ def main(argv: Sequence[str] | None = None) -> dict[str, Any]:
         p4_response_correction_steps=args.task041_p4_response_correction_steps,
         p4_refinement_target_tolerance=args.task041_p4_refinement_target_tolerance,
         p4_backend_pair_side=args.task041_p4_backend_pair_side,
+        task041_resource_policy=args.task041_resource_policy,
     )
 
 

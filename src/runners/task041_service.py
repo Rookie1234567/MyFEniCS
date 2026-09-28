@@ -80,6 +80,7 @@ def _service_contract(
     p4_response_correction_steps: int = 0,
     p4_refinement_target_tolerance: float | None = None,
     p4_backend_pair_side: str | None = None,
+    task041_resource_policy: str | None = None,
 ) -> dict[str, Any]:
     """Resolve the registered case contract without widening the V2 profile."""
 
@@ -94,6 +95,20 @@ def _service_contract(
         else None
     )
     case_contract = task041_balh_service_contract(model_id)
+    resource_policy_binding = _resource_policy_binding(
+        command, task041_resource_policy, model_id
+    )
+    if resource_policy_binding is not None and (
+        case_contract is None
+        or config.get("performance_profile") is not None
+        or side_setup_schedule is not None
+        or comparison_mode is not None
+        or p4_response_correction_steps != 0
+        or p4_backend_pair_side is not None
+    ):
+        raise Task041ServiceError(
+            "V8 resource policy is limited to a registered formal Task041 consumer"
+        )
     if case_contract is not None:
         registered_target_binding = None
         target_requested = (
@@ -173,6 +188,8 @@ def _service_contract(
                 "max_corrections_per_p4_call": 2,
                 "original_gates_unchanged": True,
             }
+        if resource_policy_binding is not None:
+            resolved_contract["task041_resource_policy"] = resource_policy_binding
         return resolved_contract
     contract = task041_schur_speed_v2_contract(
         model_id,
@@ -253,6 +270,38 @@ def _performance_profile_binding(
             "public command performance profile does not match service config"
         )
     return command[positions[0] + 1]
+
+
+def _resource_policy_binding(
+    command: list[str], configured: str | None, model_id: str
+) -> dict[str, Any] | None:
+    flag = "--task041-resource-policy"
+    positions = [index for index, value in enumerate(command) if value == flag]
+    if not positions:
+        if configured is not None:
+            raise Task041ServiceError(
+                "service config resource policy is absent from public command"
+            )
+        return None
+    if (
+        len(positions) != 1
+        or positions[0] + 1 >= len(command)
+        or configured != command[positions[0] + 1]
+    ):
+        raise Task041ServiceError(
+            "public command resource policy does not match service config"
+        )
+    from benchmarks.task041_balh_workflow import (
+        task041_v8_resource_policy_binding,
+    )
+
+    try:
+        binding = task041_v8_resource_policy_binding(model_id, configured)
+    except ValueError as exc:
+        raise Task041ServiceError(str(exc)) from exc
+    if not isinstance(binding, Mapping):
+        raise Task041ServiceError("Task041 resource policy binding is incomplete")
+    return dict(binding)
 
 
 def _read_job_config(config_path: str | Path) -> dict[str, Any]:
@@ -644,6 +693,11 @@ def run_service_parent(config_path: str | Path) -> dict[str, Any]:
             comparison_mode=comparison_mode,
         )
     )
+    resource_policy_binding = _resource_policy_binding(
+        public_command,
+        config.get("task041_resource_policy"),
+        str(config["model_id"]),
+    )
     contract = _service_contract(
         config,
         side_setup_schedule=side_setup_schedule,
@@ -651,6 +705,7 @@ def run_service_parent(config_path: str | Path) -> dict[str, Any]:
         p4_response_correction_steps=p4_response_correction_steps,
         p4_refinement_target_tolerance=p4_refinement_target_tolerance,
         p4_backend_pair_side=p4_backend_pair_side,
+        task041_resource_policy=config.get("task041_resource_policy"),
     )
     phase_limits = dict(
         task041_balh_phase_limits_for_model(str(config["model_id"]), "consumer")
@@ -706,6 +761,11 @@ def run_service_parent(config_path: str | Path) -> dict[str, Any]:
             else {}
         ),
         "representative_rhs_probe": probe_binding,
+        **(
+            {"task041_resource_policy": resource_policy_binding}
+            if resource_policy_binding is not None
+            else {}
+        ),
         "ledger_owner": LEDGER_OWNER,
         "service_identity": dict(identity),
         "budget_snapshot_before": dict(snapshot),
@@ -947,6 +1007,9 @@ def _run_post_hash(
             global_swap_baseline=dict(launch["global_swap_baseline"]),
             partial_phase_results=partial,
             enforce_time_stops=not unlimited,
+            swap_observe_only=(
+                contract.get("task041_resource_policy") is not None
+            ),
         )
         return result, None
     except supervisor.Task041SupervisorError as exc:
@@ -997,6 +1060,11 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
             comparison_mode=comparison_mode,
         )
     )
+    resource_policy_binding = _resource_policy_binding(
+        public_command,
+        config.get("task041_resource_policy"),
+        str(config["model_id"]),
+    )
     contract = _service_contract(
         config,
         side_setup_schedule=side_setup_schedule,
@@ -1004,6 +1072,7 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
         p4_response_correction_steps=p4_response_correction_steps,
         p4_refinement_target_tolerance=p4_refinement_target_tolerance,
         p4_backend_pair_side=p4_backend_pair_side,
+        task041_resource_policy=config.get("task041_resource_policy"),
     )
     probe_binding = _representative_rhs_probe_binding(
         public_command, contract["scope"]
@@ -1093,6 +1162,8 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
             )
             expected["p4_backend_pair_side"] = p4_backend_pair_side
             expected["p4_refinement_target_binding"] = dict(target_binding)
+        if resource_policy_binding is not None:
+            expected["task041_resource_policy"] = resource_policy_binding
         if contract.get("compute_wall_unlimited") is True:
             expected["contract_kind"] = contract["contract_kind"]
             if contract.get("case_id") is not None:
@@ -1364,6 +1435,14 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
             ),
         },
     }
+    if resource_policy_binding is not None:
+        result["task041_resource_policy"] = dict(resource_policy_binding)
+        result["public_to_finalizer_time_target"] = {
+            "target_seconds": 86400,
+            "wall_seconds": full_wall,
+            "met": full_wall <= 86400.0,
+            "scope": "public-to-finalizer unit wall; not a resource-safety gate",
+        }
     supervisor._write_json(finalizer_root / "finalizer_summary.json", result)
     return result
 

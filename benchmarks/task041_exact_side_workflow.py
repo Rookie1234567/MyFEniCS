@@ -1077,7 +1077,13 @@ def _check_resource(
             )
         if process_tree_rss >= process_tree_rss_cap:
             raise Task041ModePrepError("Task041 process-tree RSS cap reached")
-    if sample.get("job_no_swap") is not True:
+    resource_policy = active_limits.get("task041_resource_policy")
+    swap_observe_only = bool(
+        isinstance(resource_policy, Mapping)
+        and resource_policy.get("policy") == "task041_v8_swap_observe_continue"
+        and resource_policy.get("swap_semantics") == "observe_only_continue"
+    )
+    if not swap_observe_only and sample.get("job_no_swap") is not True:
         raise Task041ModePrepError("Task041 swap limit reached")
     if enforce_time_stop and time.monotonic() - started >= active_limits["timeout_seconds"]:
         raise Task041ModePrepError("Task041 mode-prep timeout reached")
@@ -11871,6 +11877,7 @@ def run_task041_consumer(
     p4_response_correction_steps: int = 0,
     p4_refinement_target_tolerance: float | None = None,
     p4_backend_pair_side: str | None = None,
+    task041_resource_policy: str | None = None,
 ) -> dict[str, Any]:
     """Consume one fresh Task041 packet through an exact or BAL_H side path."""
 
@@ -11908,6 +11915,36 @@ def run_task041_consumer(
         )
     except ValueError as exc:
         raise Task041ModePrepError(str(exc)) from exc
+    from benchmarks.task041_balh_workflow import (
+        task041_v8_resource_policy_binding,
+    )
+
+    try:
+        resource_policy_binding = task041_v8_resource_policy_binding(
+            str(normalized.get("model_id", "")), task041_resource_policy
+        )
+    except ValueError as exc:
+        raise Task041ModePrepError(str(exc)) from exc
+    if resource_policy_binding is not None:
+        if (
+            not candidate
+            or not contract.get("balh")
+            or performance_profile is not None
+            or task041_rhs_probe_manifest is not None
+            or side_setup_schedule is not None
+            or comparison_mode is not None
+            or top_causal_replay
+            or p4_correction_replay_from is not None
+            or p4_response_correction_steps != 0
+            or p4_backend_pair_side is not None
+        ):
+            raise Task041ModePrepError(
+                "V8 resource policy is limited to a registered formal BAL_H consumer"
+            )
+        contract = dict(contract)
+        limits = dict(contract.get("limits", {}))
+        limits["task041_resource_policy"] = resource_policy_binding
+        contract["limits"] = limits
     if refinement_target_binding is not None and p4_correction_replay_from is not None:
         raise Task041ModePrepError(
             "P4 refinement target cannot be combined with frozen-Q correction replay"
@@ -12108,6 +12145,7 @@ def run_task041_consumer(
         "input": str(Path(input_path).resolve()),
         "run_directory": str(root),
         "source_sha": source_sha,
+        "task041_resource_policy": resource_policy_binding,
         "status": "IMPLEMENTATION_FAILURE",
         "classification": "IMPLEMENTATION_FAILURE",
         "diagnostic_output_policy": {
@@ -13646,6 +13684,11 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--packet-producer-source-sha")
     parser.add_argument("--packet-origin")
     parser.add_argument("--legacy-native-binding")
+    parser.add_argument(
+        "--task041-resource-policy",
+        choices=("task041_v8_swap_observe_continue",),
+        default=None,
+    )
     return parser
 
 
@@ -13682,6 +13725,7 @@ def main(argv: Sequence[str] | None = None) -> dict[str, Any]:
         packet_producer_source_sha=args.packet_producer_source_sha,
         packet_origin=args.packet_origin,
         legacy_native_binding=args.legacy_native_binding,
+        task041_resource_policy=args.task041_resource_policy,
     )
 
 

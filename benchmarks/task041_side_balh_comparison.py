@@ -1046,6 +1046,7 @@ def _resource_phase(
     expected_limits: Mapping[str, Any],
     *,
     time_stop_overridden: bool = False,
+    swap_observe_only: bool = False,
 ) -> dict[str, Any]:
     if not isinstance(phase, Mapping):
         return {"status": "not_measured", "pass": False, "reason": "phase_missing"}
@@ -1086,22 +1087,25 @@ def _resource_phase(
     required_fields = (
         "memory_authority_bytes",
         "process_tree_rss_bytes",
-        "swap_bytes",
-        "job_no_swap",
-        "global_swap_used_bytes",
-        "global_swap_used_bytes_delta",
-        "global_pswpin_pages",
-        "global_pswpin_pages_delta",
-        "global_pswpout_pages",
-        "global_pswpout_pages_delta",
     )
+    if not swap_observe_only:
+        required_fields += (
+            "swap_bytes",
+            "global_swap_used_bytes",
+            "global_swap_used_bytes_delta",
+            "global_pswpin_pages",
+            "global_pswpin_pages_delta",
+            "global_pswpout_pages",
+            "global_pswpout_pages_delta",
+        )
     required_samples_pass = all(
-        type(row.get(field)) is int
-        and row[field] >= 0
+        type(row.get(field)) is int and row[field] >= 0
         for row in samples
         for field in required_fields
-        if field != "job_no_swap"
-    ) and all(row.get("job_no_swap") is True for row in samples)
+    ) and (
+        swap_observe_only
+        or all(row.get("job_no_swap") is True for row in samples)
+    )
     peaks = {
         field: max(
             (
@@ -1113,7 +1117,11 @@ def _resource_phase(
         )
         for field in _RESOURCE_PEAK_FIELDS
     }
-    post_role = _CONTRACT["resource"]["post_phase_sample_role"]
+    post_role = (
+        "phase_end_public_root"
+        if swap_observe_only
+        else _CONTRACT["resource"]["post_phase_sample_role"]
+    )
     post = [row for row in samples if row.get("sample_role") == post_role]
     phase_end = phase.get("phase_end_sample")
     phase_end_pass = (
@@ -1133,21 +1141,42 @@ def _resource_phase(
         if later >= earlier
     ]
     sample_scope = phase.get("sample_root_scope")
+    expected_sample_scope = (
+        "public_launcher_and_all_descendants"
+        if swap_observe_only
+        else _CONTRACT["resource"]["sample_scope"]
+    )
     phase_limits = phase.get("limits")
     phase_limits = phase_limits if isinstance(phase_limits, Mapping) else {}
-    expected_record_limits = {
-        "warning_memory_bytes": expected_limits["warning_memory_bytes"],
-        "hard_memory_bytes": expected_limits["hard_memory_bytes"],
-        "swap_limit_bytes": expected_limits["swap_limit_bytes"],
-        "timeout_seconds": expected_limits["timeout_seconds"],
-        "min_memavailable_bytes": expected_limits["min_memavailable_bytes"],
-        "min_cgroup_ancestor_headroom_bytes": expected_limits[
-            "min_memavailable_bytes"
-        ],
-        "cumulative_compute_limit_seconds": _CONTRACT["resource"][
-            "batch_wall_limit_seconds"
-        ],
-    }
+    if swap_observe_only:
+        expected_record_limits = {
+            name: expected_limits[name]
+            for name in (
+                "warning_memory_bytes",
+                "hard_memory_bytes",
+                "min_memavailable_bytes",
+                "process_tree_rss_warning_bytes",
+                "process_tree_rss_cap_bytes",
+            )
+            if name in expected_limits
+        }
+        expected_record_limits["min_cgroup_ancestor_headroom_bytes"] = (
+            expected_limits["min_memavailable_bytes"]
+        )
+    else:
+        expected_record_limits = {
+            "warning_memory_bytes": expected_limits["warning_memory_bytes"],
+            "hard_memory_bytes": expected_limits["hard_memory_bytes"],
+            "swap_limit_bytes": expected_limits["swap_limit_bytes"],
+            "timeout_seconds": expected_limits["timeout_seconds"],
+            "min_memavailable_bytes": expected_limits["min_memavailable_bytes"],
+            "min_cgroup_ancestor_headroom_bytes": expected_limits[
+                "min_memavailable_bytes"
+            ],
+            "cumulative_compute_limit_seconds": _CONTRACT["resource"][
+                "batch_wall_limit_seconds"
+            ],
+        }
     limits_match = all(
         phase_limits.get(name) == value
         for name, value in expected_record_limits.items()
@@ -1229,48 +1258,111 @@ def _resource_phase(
     )
     cgroup_pass = cgroup_pass and cgroup_state_pass
 
-    global_deltas = [
-        int(row["global_swap_used_bytes_delta"])
-        for row in samples
-        if type(row.get("global_swap_used_bytes_delta")) is int
-    ]
-    global_pswpin_deltas = [
-        int(row["global_pswpin_pages_delta"])
-        for row in samples
-        if type(row.get("global_pswpin_pages_delta")) is int
-    ]
-    global_pswpout_deltas = [
-        int(row["global_pswpout_pages_delta"])
-        for row in samples
-        if type(row.get("global_pswpout_pages_delta")) is int
-    ]
+    global_swap_pass = True
+    global_missing_count = 0
+    global_measured_count = 0
+    global_peak_used_delta = None
+    global_peak_pswpin_delta = None
+    global_peak_pswpout_delta = None
+    first_global_swap_event = None
+    job_swap_missing_count = 0
+    job_swap_false_count = 0
+    job_swap_unknown_count = 0
+    first_job_swap_event = None
+    global_fields = (
+        "global_swap_used_bytes_delta",
+        "global_pswpin_pages_delta",
+        "global_pswpout_pages_delta",
+    )
+    for row in samples:
+        deltas = tuple(row.get(field) for field in global_fields)
+        row_global_measured = all(type(value) is int for value in deltas) and (
+            row.get("global_swap_readable") is True
+        )
+        if row_global_measured:
+            global_measured_count += 1
+        else:
+            global_missing_count += 1
+        if not row_global_measured or any(value != 0 for value in deltas):
+            global_swap_pass = False
+        if any(type(value) is not int or value < 0 for value in deltas):
+            global_swap_pass = False
+        for value, field in zip(
+            deltas,
+            (
+                "global_peak_used_delta",
+                "global_peak_pswpin_delta",
+                "global_peak_pswpout_delta",
+            ),
+        ):
+            if type(value) is int:
+                if field == "global_peak_used_delta":
+                    global_peak_used_delta = (
+                        value
+                        if global_peak_used_delta is None
+                        else max(global_peak_used_delta, value)
+                    )
+                elif field == "global_peak_pswpin_delta":
+                    global_peak_pswpin_delta = (
+                        value
+                        if global_peak_pswpin_delta is None
+                        else max(global_peak_pswpin_delta, value)
+                    )
+                else:
+                    global_peak_pswpout_delta = (
+                        value
+                        if global_peak_pswpout_delta is None
+                        else max(global_peak_pswpout_delta, value)
+                    )
+        if first_global_swap_event is None and any(
+            type(value) is int and value != 0 for value in deltas
+        ):
+            first_global_swap_event = {
+                "sample_elapsed_seconds": row.get("sample_elapsed_seconds"),
+                **dict(zip(global_fields, deltas)),
+            }
+        job_swap = row.get("swap_bytes")
+        if type(job_swap) is not int or job_swap < 0:
+            job_swap_missing_count += 1
+        if row.get("job_no_swap") is False:
+            job_swap_false_count += 1
+        elif row.get("job_no_swap") is None:
+            job_swap_unknown_count += 1
+        if (
+            first_job_swap_event is None
+            and type(job_swap) is int
+            and job_swap > 0
+        ):
+            first_job_swap_event = {
+                "sample_elapsed_seconds": row.get("sample_elapsed_seconds"),
+                "swap_bytes": job_swap,
+            }
     global_swap_pass = bool(
-        len(global_deltas) == len(samples)
-        and min(global_deltas, default=-1) >= 0
-        and max(global_deltas, default=1) == 0
-        and len(global_pswpin_deltas) == len(samples)
-        and min(global_pswpin_deltas, default=-1) >= 0
-        and max(global_pswpin_deltas, default=1) == 0
-        and len(global_pswpout_deltas) == len(samples)
-        and min(global_pswpout_deltas, default=-1) >= 0
-        and max(global_pswpout_deltas, default=1) == 0
-        and all(row.get("global_swap_readable") is True for row in samples)
+        global_swap_pass and global_measured_count == len(samples)
     )
     hard_cap_pass = bool(
         peaks["memory_authority_bytes"] is not None
         and peaks["memory_authority_bytes"]
         < int(expected_limits["hard_memory_bytes"])
     )
-    swap_pass = bool(
-        peaks["swap_bytes"] is not None
-        and peaks["swap_bytes"] <= int(expected_limits["swap_limit_bytes"])
+    swap_pass = (
+        None
+        if swap_observe_only
+        else bool(
+            peaks["swap_bytes"] is not None
+            and peaks["swap_bytes"] <= int(expected_limits["swap_limit_bytes"])
+        )
     )
     wall = _optional_finite(phase.get("phase_wall_seconds"))
-    wall_pass = bool(
-        wall is not None
-        and (
-            time_stop_overridden
-            or wall < float(expected_limits["timeout_seconds"])
+    wall_pass = (
+        None
+        if swap_observe_only
+        else bool(
+            wall is not None
+            and (
+                time_stop_overridden
+                or wall < float(expected_limits["timeout_seconds"])
+            )
         )
     )
     parent_rss = (
@@ -1282,7 +1374,7 @@ def _resource_phase(
         phase.get("returncode") == 0
         and phase.get("termination_reason") is None
         and phase.get("process_group_gone") is True
-        and sample_scope == _CONTRACT["resource"]["sample_scope"]
+        and sample_scope == expected_sample_scope
         and required_samples_pass
         and len(post) > 0
         and phase_end_pass
@@ -1290,9 +1382,10 @@ def _resource_phase(
         and hard_cap_pass
         and reserve_pass
         and cgroup_pass
-        and swap_pass
-        and global_swap_pass
-        and wall_pass
+        and (
+            swap_observe_only
+            or (swap_pass and global_swap_pass and wall_pass)
+        )
     )
     return {
         "status": "measured",
@@ -1325,21 +1418,55 @@ def _resource_phase(
         "cgroup_states": sorted(cgroup_states),
         "cgroup_pass": cgroup_pass,
         "swap_pass": swap_pass,
+        "swap_observation": {
+            "policy": "observe_only_continue" if swap_observe_only else "zero_swap_gate",
+            "peak_job_swap_bytes": peaks["swap_bytes"],
+            "job_swap_missing_sample_count": job_swap_missing_count,
+            "job_no_swap_false_sample_count": job_swap_false_count,
+            "job_no_swap_unknown_sample_count": job_swap_unknown_count,
+            "first_job_swap_event": first_job_swap_event,
+            "global_sample_count": len(samples),
+            "global_missing_sample_count": global_missing_count,
+            "global_measured_sample_count": global_measured_count,
+            "global_swap_used_delta_peak_bytes": global_peak_used_delta,
+            "global_pswpin_delta_peak_pages": global_peak_pswpin_delta,
+            "global_pswpout_delta_peak_pages": global_peak_pswpout_delta,
+            "first_global_swap_event": first_global_swap_event,
+            "measurement_status": (
+                "unknown"
+                if global_measured_count == 0 and job_swap_missing_count == len(samples)
+                else "partially_measured"
+                if global_missing_count or job_swap_missing_count
+                else "measured"
+            ),
+        },
         "global_swap": {
             "baseline_used_bytes": samples[0].get("global_swap_used_bytes"),
-            "new_used_bytes": max(global_deltas, default=None),
+            "new_used_bytes": global_peak_used_delta,
             "baseline_pswpin_pages": samples[0].get("global_pswpin_pages"),
             "baseline_pswpout_pages": samples[0].get("global_pswpout_pages"),
-            "pswpin_delta_pages": max(global_pswpin_deltas, default=None),
-            "pswpout_delta_pages": max(global_pswpout_deltas, default=None),
-            "pass": global_swap_pass,
+            "pswpin_delta_pages": global_peak_pswpin_delta,
+            "pswpout_delta_pages": global_peak_pswpout_delta,
+            "pass": None if swap_observe_only else global_swap_pass,
             "semantics": (
-                "raw global used, pswpin, and pswpout deltas; "
+                "observe-only peak deltas and first event; raw samples remain in JSONL"
+                if swap_observe_only
+                else "raw global used, pswpin, and pswpout deltas; "
                 "pre-existing baselines are separate"
             ),
         },
         "phase_wall_seconds": wall,
         "phase_wall_pass": wall_pass,
+        "phase_time_target_diagnostic": (
+            {
+                "target_seconds": 86400,
+                "phase_wall_seconds": wall,
+                "met_for_this_phase": None if wall is None else wall <= 86400.0,
+                "scope": "phase only; not the public-to-finalizer total target",
+            }
+            if swap_observe_only
+            else None
+        ),
         "time_stop_overridden": time_stop_overridden,
         "sample_timestamp_gap_seconds": {
             "count": len(gaps),
@@ -1355,6 +1482,44 @@ def _resource_phase(
     }
 
 
+def _task041_v8_public_to_finalizer_time_target(
+    run_manifest: Mapping[str, Any],
+    launch_manifest_path: Path | None,
+    launch_manifest_sha256: str | None,
+    launch_manifest: Mapping[str, Any],
+    finalizer_summary: Mapping[str, Any],
+) -> dict[str, Any]:
+    supervision_record = run_manifest.get("supervision_record")
+    finalizer_launch = finalizer_summary.get("launch_manifest")
+    finalizer_checks = finalizer_summary.get("checks")
+    terminal = finalizer_summary.get("service_terminal")
+    timing = finalizer_summary.get("timing")
+    wall = (
+        _optional_finite(timing.get("unit_elapsed_seconds"))
+        if isinstance(timing, Mapping)
+        else None
+    )
+    binding_pass = bool(
+        launch_manifest_path is not None
+        and isinstance(supervision_record, Mapping)
+        and supervision_record.get("path") == str(launch_manifest_path)
+        and supervision_record.get("sha256") == launch_manifest_sha256
+        and isinstance(finalizer_launch, Mapping)
+        and finalizer_launch.get("path") == str(launch_manifest_path)
+        and isinstance(finalizer_checks, Mapping)
+        and finalizer_checks.get("invocation_matches") is True
+        and isinstance(terminal, Mapping)
+        and terminal.get("INVOCATION_ID") == launch_manifest.get("invocation_id")
+    )
+    return {
+        "status": "measured" if wall is not None and binding_pass else "unknown",
+        "target_seconds": 86400,
+        "public_to_finalizer_wall_seconds": wall if binding_pass else None,
+        "time_target_met": None if wall is None or not binding_pass else wall <= 86400.0,
+        "scope": "public-to-finalizer unit wall; not a resource-safety gate",
+    }
+
+
 def _resources(
     public_root: Path, method: str, model_id: str
 ) -> dict[str, Any]:
@@ -1366,6 +1531,101 @@ def _resources(
             "reason": "public supervisor summary is missing",
         }
     supervisor = _read_json(supervisor_path, "public supervisor summary")
+    resource_policy_binding = None
+    service_time_target: dict[str, Any] = {
+        "status": "not_applicable",
+        "scope": "public-to-finalizer unit wall",
+    }
+    run_manifest_path = public_root / "run_manifest.json"
+    run_manifest = (
+        _read_json(run_manifest_path, "Task041 run manifest")
+        if run_manifest_path.is_file()
+        else {}
+    )
+    declared_resource_policy = run_manifest.get("task041_resource_policy")
+    summary_resource_policy = supervisor.get("task041_resource_policy")
+    if declared_resource_policy is not None or summary_resource_policy is not None:
+        if not isinstance(declared_resource_policy, Mapping):
+            raise Task041ComparisonError(
+                "V8 resource policy is missing from the public run manifest"
+            )
+        from benchmarks.task041_balh_workflow import (
+            task041_v8_resource_policy_binding,
+        )
+
+        try:
+            expected_policy = task041_v8_resource_policy_binding(
+                model_id, str(declared_resource_policy.get("policy", ""))
+            )
+        except ValueError as exc:
+            raise Task041ComparisonError(str(exc)) from exc
+        if (
+            dict(declared_resource_policy) != expected_policy
+            or summary_resource_policy != expected_policy
+        ):
+            raise Task041ComparisonError(
+                "V8 resource policy differs between run manifest and supervisor"
+            )
+        consumer_summary_path = public_root / "consumer" / "consumer_summary.json"
+        consumer_summary = _read_json(
+            consumer_summary_path, "Task041 consumer summary"
+        )
+        if consumer_summary.get("task041_resource_policy") != expected_policy:
+            raise Task041ComparisonError(
+                "V8 resource policy is not bound to the worker consumer summary"
+            )
+        resource_policy_binding = dict(expected_policy)
+        supervision_record = run_manifest.get("supervision_record")
+        launch_path = (
+            Path(str(supervision_record.get("path")))
+            if isinstance(supervision_record, Mapping)
+            and supervision_record.get("path")
+            else None
+        )
+        launch = (
+            _read_json(launch_path, "Task041 service launch manifest")
+            if launch_path is not None and launch_path.is_file()
+            else {}
+        )
+        if launch and launch.get("task041_resource_policy") != expected_policy:
+            raise Task041ComparisonError(
+                "V8 resource policy differs from the service launch manifest"
+            )
+        supervision_root_value = launch.get("supervision_root")
+        finalizer_path = (
+            Path(str(supervision_root_value))
+            / "finalizer"
+            / "finalizer_summary.json"
+            if isinstance(supervision_root_value, str)
+            else None
+        )
+        finalizer = (
+            _read_json(finalizer_path, "Task041 service finalizer summary")
+            if finalizer_path is not None and finalizer_path.is_file()
+            else {}
+        )
+        service_time_target = _task041_v8_public_to_finalizer_time_target(
+            run_manifest,
+            launch_path,
+            _sha256(launch_path)
+            if launch_path is not None and launch_path.is_file()
+            else None,
+            launch,
+            finalizer,
+        )
+        service_time_target.update(
+            {
+                "finalizer_path": str(finalizer_path)
+                if finalizer_path is not None
+                else None,
+                "finalizer_sha256": _sha256(finalizer_path)
+                if finalizer_path is not None and finalizer_path.is_file()
+                else None,
+                "launch_manifest_path": str(launch_path)
+                if launch_path is not None
+                else None,
+            }
+        )
     time_stop_override: dict[str, Any] = {
         "status": "not_present",
         "enabled": False,
@@ -1482,6 +1742,7 @@ def _resources(
             raw_sha,
             frozen_limits[phase_name],
             time_stop_overridden=time_stop_overridden,
+            swap_observe_only=resource_policy_binding is not None,
         )
     current = [
         view
@@ -1495,14 +1756,24 @@ def _resources(
     ]
     current_wall = sum(current_wall_values) if current_wall_values else None
     budget = supervisor.get("compute_wall_budget")
-    batch_limit = float(_CONTRACT["resource"]["batch_wall_limit_seconds"])
-    if not isinstance(budget, Mapping):
+    if resource_policy_binding is not None:
+        batch = {
+            "status": "not_applicable",
+            "pass": None,
+            "reason": (
+                "V8 time target is measured public-to-finalizer, not by the "
+                "legacy batch resource contract"
+            ),
+        }
+    elif not isinstance(budget, Mapping):
+        batch_limit = float(_CONTRACT["resource"]["batch_wall_limit_seconds"])
         batch = {
             "status": "not_measured",
             "pass": False,
             "reason": "compute_wall_budget is missing",
         }
     else:
+        batch_limit = float(_CONTRACT["resource"]["batch_wall_limit_seconds"])
         used_before = _optional_finite(budget.get("used_before_seconds"))
         used_after = _optional_finite(budget.get("used_after_seconds"))
         recorded_limit = _optional_finite(budget.get("limit_seconds"))
@@ -1595,7 +1866,10 @@ def _resources(
         "pass": bool(
             current
             and all(view.get("pass") is True for view in current)
-            and batch.get("pass") is True
+            and (
+                resource_policy_binding is not None
+                or batch.get("pass") is True
+            )
         ),
         "public_supervisor_summary_sha256": _sha256(supervisor_path),
         "supervisor_wall_seconds": supervisor_wall_seconds,
@@ -1609,6 +1883,8 @@ def _resources(
         },
         "phases": phase_views,
         "batch_compute_wall": batch,
+        "task041_resource_policy": resource_policy_binding,
+        "public_to_finalizer_time_target": service_time_target,
         "current_invocation_compute_wall_seconds": current_wall,
         "time_stop_override": time_stop_override,
         "derived_common_producer_workflow": derived,

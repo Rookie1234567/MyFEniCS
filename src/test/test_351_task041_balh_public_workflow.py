@@ -681,6 +681,7 @@ def test_registered_5nm_cell_condensed_formal_target_reaches_worker(
     specification = _specification(input_path)
     model_id = str(specification.identity["model_id"])
     assert model_id == TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID
+    resource_policy = task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
     assert task041_balh_workflow.task041_balh_case(model_id)[
         "p4_inverse_backend"
     ] == "cell_condensed"
@@ -701,12 +702,15 @@ def test_registered_5nm_cell_condensed_formal_target_reaches_worker(
             str(tmp_path / "producer"),
             "--task041-p4-refinement-target-tolerance",
             "5e-13",
+            "--task041-resource-policy",
+            resource_policy,
         ]
     ) == 0
     assert captured["model_id"] == TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID
     assert captured["performance_profile"] is None
     assert captured["task041_p4_refinement_target_tolerance"] == 5.0e-13
     assert captured["task041_p4_backend_pair_side"] is None
+    assert captured["task041_resource_policy"] == resource_policy
 
     command = build_task041_balh_candidate_consumer_command(
         str(Path(sys.executable)),
@@ -718,12 +722,24 @@ def test_registered_5nm_cell_condensed_formal_target_reaches_worker(
         "c" * 40,
         "a" * 40,
         p4_refinement_target_tolerance=5.0e-13,
+        task041_resource_policy=resource_policy,
     )
     assert "--task041-performance-profile" not in command
     worker_args = command[command.index("--worker") :]
     parsed = task041_balh_workflow._parser().parse_args(worker_args)
     assert parsed.task041_p4_refinement_target_tolerance == 5.0e-13
     assert parsed.task041_p4_backend_pair_side is None
+    assert parsed.task041_resource_policy == resource_policy
+
+    with pytest.raises(SystemExit) as unknown_policy:
+        run_case._parser().parse_args(
+            [
+                str(input_path),
+                "--task041-resource-policy",
+                "unsupported-policy",
+            ]
+        )
+    assert unknown_policy.value.code == 2
 
 
 def test_registered_formal_p4_target_rejects_13p5nm_and_2nm():
@@ -3780,6 +3796,29 @@ def test_task041_balh_worker_time_override_keeps_memory_and_swap_gates(monkeypat
             {"memory_authority_bytes": 100, "job_no_swap": False},
             0.0,
             limits,
+            enforce_time_stop=False,
+        )
+
+    policy = task041_balh_workflow.task041_v8_resource_policy_binding(
+        TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
+        task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE,
+    )
+    v8_limits = {
+        **limits,
+        "task041_resource_policy": policy,
+    }
+    for job_no_swap in (False, None):
+        worker._check_resource(
+            {"memory_authority_bytes": 100, "job_no_swap": job_no_swap},
+            0.0,
+            v8_limits,
+            enforce_time_stop=False,
+        )
+    with pytest.raises(worker.Task041ModePrepError, match="hard RSS"):
+        worker._check_resource(
+            {"memory_authority_bytes": 1000, "job_no_swap": False},
+            0.0,
+            v8_limits,
             enforce_time_stop=False,
         )
 

@@ -143,6 +143,7 @@ def _run_phase(
     global_swap_baseline=None,
     partial_phase_results=None,
     enforce_time_stops=True,
+    swap_observe_only=False,
 ):
     (tmp_path / "numerical_output" / "log").mkdir(parents=True)
     limits = {
@@ -188,6 +189,7 @@ def _run_phase(
         global_swap_baseline=global_swap_baseline,
         partial_phase_results=partial_phase_results,
         enforce_time_stops=enforce_time_stops,
+        swap_observe_only=swap_observe_only,
         **limits,
     )
 
@@ -1687,6 +1689,156 @@ def test_phase_dedicated_cgroup_fallback_enforces_memory_and_swap(
     assert len(terminated) == 1
     assert phase["peak_memory_authority_bytes"] == cgroup_memory
     assert phase["peak_swap_bytes"] == cgroup_swap
+
+
+def test_v8_swap_observation_keeps_unknown_and_nonzero_values_nonblocking(tmp_path):
+    authority = {
+        "memory_authority_bytes": 256,
+        "host_memory": {"mem_available_bytes": 4096, "mem_total_bytes": 8192},
+        "process_tree": {
+            "all_status_readable": False,
+            "rss_bytes": None,
+            "swap_bytes": None,
+        },
+        "job_cgroup": {
+            "dedicated_job_cgroup": True,
+            "readable": True,
+            "memory_current_bytes": 256,
+            "swap_current_bytes": None,
+        },
+    }
+    assert supervisor._resource_authority_kind(authority) is None
+    authority_kind = supervisor._resource_authority_kind(
+        authority, swap_observe_only=True
+    )
+    assert authority_kind == "dedicated_cgroup_fallback"
+    sample = supervisor._sample_record(
+        authority,
+        "consumer",
+        1.0,
+        authority_kind=authority_kind,
+        swap_observe_only=True,
+    )
+    assert sample["memory_authority_bytes"] == 256
+    assert sample["swap_bytes"] is None
+    assert sample["job_no_swap"] is None
+    assert sample["swap_measurement_status"] == "unknown"
+
+    missing_memory = {
+        **authority,
+        "job_cgroup": {**authority["job_cgroup"], "memory_current_bytes": None},
+    }
+    assert (
+        supervisor._resource_authority_kind(
+            missing_memory, swap_observe_only=True
+        )
+        is None
+    )
+
+    phase = _run_phase(
+        tmp_path,
+        sample=_Samples(swap=False),
+        popen_factory=_FakePopen(),
+        swap_observe_only=True,
+    )
+    assert phase["returncode"] == 0
+    assert phase["termination_reason"] is None
+    assert phase["peak_swap_bytes"] == 1
+    assert phase["last_sample"]["job_no_swap"] is False
+
+    global_only = _complete_resource_sample()
+    global_only["global_swap"] = {"readable": True, "used_bytes": 4096}
+    global_only["wsl_vm_global_swap_diagnostic"] = {
+        "pswpin_pages": 5,
+        "pswpout_pages": 9,
+    }
+    global_phase = _run_phase(
+        tmp_path / "global-only",
+        sample=lambda _pid: global_only,
+        global_swap_baseline={
+            "global_swap_used_bytes": 1024,
+            "global_pswpin_pages": 3,
+            "global_pswpout_pages": 7,
+        },
+        swap_observe_only=True,
+    )
+    assert global_phase["termination_reason"] is None
+    assert global_phase["peak_swap_bytes"] == 0
+    assert global_phase["global_swap"]["new_used_bytes"] == 3072
+    assert global_phase["global_swap"]["pswpin_delta_pages"] == 2
+    assert global_phase["global_swap"]["pswpout_delta_pages"] == 2
+
+    cgroup_only = _complete_resource_sample()
+    cgroup_only["job_no_swap"] = None
+    cgroup_only["process_tree"]["swap_bytes"] = None
+    cgroup_only["job_cgroup"].update(
+        {
+            "dedicated_job_cgroup": True,
+            "readable": True,
+            "memory_current_bytes": 100,
+            "swap_current_bytes": 64,
+        }
+    )
+    cgroup_phase = _run_phase(
+        tmp_path / "cgroup-only",
+        sample=lambda _pid: cgroup_only,
+        swap_observe_only=True,
+    )
+    assert cgroup_phase["termination_reason"] is None
+    assert cgroup_phase["peak_dedicated_cgroup_swap_bytes"] == 64
+    assert cgroup_phase["last_sample"]["process_tree_swap_bytes"] is None
+    assert cgroup_phase["last_sample"]["job_no_swap"] is None
+
+
+@pytest.mark.parametrize(
+    "safety_gate",
+    ["hard_memory", "tree_rss", "host_reserve", "cgroup_reserve"],
+)
+def test_v8_swap_observation_keeps_memory_and_reserve_stops(
+    tmp_path, safety_gate
+):
+    if safety_gate == "cgroup_reserve":
+        sample = _complete_resource_sample(
+            cgroup_state="finite",
+            cgroup_current=1014,
+            cgroup_headroom=10,
+            memavailable=4096,
+        )
+    else:
+        sample = _complete_resource_sample(
+            memavailable=99 if safety_gate == "host_reserve" else 4096
+        )
+    sample["process_tree"]["swap_bytes"] = 1
+    sample["job_no_swap"] = False
+    terminated = []
+
+    def terminate(process):
+        terminated.append(process.pid)
+        return {"requested": True}
+
+    gate_options = {
+        "hard_memory": {"hard_memory_bytes": 100},
+        "tree_rss": {"process_tree_rss_cap_bytes": 100},
+        "host_reserve": {"min_memavailable_bytes": 100},
+        "cgroup_reserve": {"min_cgroup_ancestor_headroom_bytes": 20},
+    }[safety_gate]
+    expected_reason = {
+        "hard_memory": "absolute_memory_limit",
+        "tree_rss": "process_tree_rss_limit",
+        "host_reserve": "memavailable_floor",
+        "cgroup_reserve": "cgroup_headroom_floor",
+    }[safety_gate]
+    phase = _run_phase(
+        tmp_path / safety_gate,
+        sample=lambda _pid: sample,
+        terminate=terminate,
+        swap_observe_only=True,
+        **gate_options,
+    )
+
+    assert phase["termination_reason"] == expected_reason
+    assert phase["last_sample"]["swap_bytes"] == 1
+    assert len(terminated) == 1
 
 
 def test_phase_fails_if_unreadable_child_survives_terminal_grace(tmp_path):

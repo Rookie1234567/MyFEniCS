@@ -3662,6 +3662,7 @@ def launch_specification(
     task041_p4_response_correction_steps: int = 0,
     task041_p4_refinement_target_tolerance: float | None = None,
     task041_p4_backend_pair_side: str | None = None,
+    task041_resource_policy: str | None = None,
 ) -> dict[str, Any]:
     """Launch one resolved input or fail closed before numerical execution."""
 
@@ -3717,6 +3718,21 @@ def launch_specification(
         or task041_p4_backend_pair_side is not None
     ) and not task041_public_route:
         raise InputError("P4 refinement target requires the Task041 public route")
+    task041_resource_policy_binding = None
+    if task041_resource_policy is not None:
+        if not task041_public_route:
+            raise InputError("Task041 resource policy requires the Task041 public route")
+        from benchmarks.task041_balh_workflow import (
+            task041_v8_resource_policy_binding,
+        )
+
+        try:
+            task041_resource_policy_binding = task041_v8_resource_policy_binding(
+                str(specification.identity.get("model_id", "")),
+                task041_resource_policy,
+            )
+        except ValueError as exc:
+            raise InputError(str(exc)) from exc
     p4_refinement_target = None
     if (
         task041_p4_refinement_target_tolerance is not None
@@ -3984,6 +4000,9 @@ def launch_specification(
     if performance_contract is not None:
         manifest["performance_profile"] = performance_contract
         _write_json(run_directory / "run_manifest.json", manifest)
+    if task041_resource_policy_binding is not None:
+        manifest["task041_resource_policy"] = task041_resource_policy_binding
+        _write_json(run_directory / "run_manifest.json", manifest)
     if task041_side_setup_schedule is not None:
         manifest["side_setup_schedule"] = task041_side_setup_schedule
         _write_json(run_directory / "run_manifest.json", manifest)
@@ -4065,6 +4084,7 @@ def launch_specification(
                     task041_p4_refinement_target_tolerance
                 ),
                 task041_p4_backend_pair_side=task041_p4_backend_pair_side,
+                task041_resource_policy=task041_resource_policy,
             )
         except OSError as exc:
             result = {
