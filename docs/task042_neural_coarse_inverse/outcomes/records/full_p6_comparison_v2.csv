@@ -1,0 +1,5 @@
+method,wavelength_nm,p,h_nm,classification,original_A6_residual,R00_s,R00_p,R00_total,R_total,T_total,A_volume,A_balance,field_L2_relative,scaled_curl_relative,all_channel_power_difference,elapsed_seconds,peak_rss_bytes,reason
+R-LU,13.5,6,10,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,no low-memory F4 candidate qualified; do not launch p6 or publish a field
+R-B0,13.5,6,10,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,no low-memory F4 candidate qualified; do not launch p6 or publish a field
+R-LIN,13.5,6,10,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,no low-memory F4 candidate qualified; do not launch p6 or publish a field
+R-NN,13.5,6,10,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,no low-memory F4 candidate qualified; do not launch p6 or publish a field

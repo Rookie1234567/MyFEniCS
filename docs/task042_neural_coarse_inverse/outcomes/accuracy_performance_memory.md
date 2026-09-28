@@ -1,59 +1,77 @@
-# 准确性、性能与完整资源口径
+# 严格粗逆的准确性、时间与内存
 
-| 比较项 | 当前结果 | 判定原因 |
-|---|---|---|
-| 去global p4 LU | not_run | 无真实candidate/参考构造，F0无因子不等于内存收益 |
-| R-B0传统低内存 | not_run | 固定PC、原A4内层还未实现 |
-| R-LIN线性降维 | not_run | 数据/表示未建立 |
-| R-NN相对R-LIN | not_run | 无模型/严格粗返回/端到端计时，G-neural无结论 |
-| 原A4 rho<=1e-10、port/recovery | not_run（真实FE） | toy验证器通过只记组件接口证据 |
-| 原A6 rho<=1e-6及全部物理对照 | not_run | F4前置未通过，F5没有启动 |
-| G-memory>=20% / G-time>=20% | not_run | 没有相同物理本轮R-LU分母 |
-| G-neural>=10%或额外数值资格 | not_run | 无同预算R-LIN/R-NN结果 |
-| N=1/10/100、break-even | not_run | teacher、训练、setup、完整solve均未测，不假设正单次节省 |
+| 路线/作用 | 严格通过 | 实际 PH b6 原A4残差 | 同 RHS port closure | 非零 RHS 内部恢复最大 | 整树 wall s | 整树 RSS 峰 |
+|---|---|---|---|---|---|---|
+| R-B0 | 1/16，仅零 RHS | 0.998655 | 0.465472 | 4.70942e-16 | 486.668 | 0.793 GiB |
+| R-LIN | 1/16，仅零 RHS | 0.998262 | 0.239496 | 2.11953e-16 | 1239.273 | 0.962 GiB |
+| R-NN | 1/16，仅零 RHS | 0.998456 | 0.179987 | 2.20347e-16 | 1238.082 | 0.937 GiB |
 
-所有R/T/A、A_volume、R00_s/p/total、逐通道功率/复振幅、selected E/H、场L2/scaled-curl、能量误差以及DoF/rows/NNZ，都在 [统一CSV](records/full_p6_comparison.csv) 写为 `not_run`。没有减少通道或省验算，也没有把历史测量移进本轮表。
+表内时间为同一16RHS组的监督工作流wall（含launcher、装载、p4构建/PC setup、求解、验算和释放），RSS为0.5s采样的launcher与全部后代同时RSS和。全部是shared-workstation，绝非无争用条件的中位加速；没有合格路线，按任务书不追加三次计时。实际teacher8参考、F1完整p6接口和F4 p4-only生命周期/库存不同，不能作正式时间或20%内存Gate的分母。
 
-## F0 全部有监督调用
+## 逐载荷真残差
 
-单位：时间s、内存B；RSS为专用subreaper父+全部后代在同一采样时刻之和，不是单worker VmHWM或对象载荷。采样0.1s，own VmSwap所有样本0，全部后代清场；采样峰不能排除样本间更短峰。
+| index / 未见载荷 | R-B0 A4 / port | R-LIN A4 / port | R-NN A4 / port |
+|---|---|---|---|
+| 0 / physical_PH_b6 | 0.998655 / 0.465472 | 0.998262 / 0.239496 | 0.998456 / 0.179987 |
+| 1 / zero | 0 / 0 | 0 / 0 | 0 / 0 |
+| 2 / F1_rhs0_r_000 | 0.998655 / 0.465472 | 0.998262 / 0.239496 | 0.998456 / 0.179987 |
+| 3 / F1_rhs0_r_032 | 1 / 0.984073 | 0.999304 / 0.230701 | 0.999522 / 0.231518 |
+| 4 / F1_rhs0_r_128 | 1 / 0.999995 | 0.999302 / 0.23056 | 0.99952 / 0.2325 |
+| 5 / F1_rhs0_r_256 | 1 / 1 | 0.999302 / 0.23056 | 0.99952 / 0.2325 |
+| 6 / physical_phase_i | 0.998655 / 0.465472 | 0.998262 / 0.239496 | 0.998433 / 0.220653 |
+| 7 / physical_amp_1e-3 | 0.998655 / 0.465472 | 0.998262 / 0.239496 | 0.998456 / 0.179987 |
+| 8 / physical_amp_1e3 | 0.998655 / 0.465472 | 0.998262 / 0.239496 | 0.998456 / 0.179987 |
+| 9 / unseen_internal_only | 1.89056 / 0.740581 | 1.86265 / 0.129738 | 1.86219 / 0.169348 |
+| 10 / unseen_port_only | 0.954193 / 0.276458 | 0.861691 / 0.148338 | 0.822191 / 0.123535 |
+| 11 / unseen_mixed | 1.00078 / 0.62499 | 0.98513 / 0.167229 | 0.991893 / 0.249092 |
+| 12 / unseen_mixed_phase_i | 1.00078 / 0.62499 | 0.98513 / 0.167229 | 0.991053 / 0.257942 |
+| 13 / unseen_mixed_amp_1e-3 | 1.00078 / 0.62499 | 0.98513 / 0.167229 | 0.991893 / 0.249092 |
+| 14 / unseen_mixed_amp_1e3 | 1.00078 / 0.62499 | 0.98513 / 0.167229 | 0.991893 / 0.249092 |
+| 15 / seed420400_remaining_0000 | 0.910583 / 0.430199 | 0.602504 / 0.118919 | 0.631766 / 0.125327 |
 
-| 调用 | source / 数据身份 | wall s | tree RSS peak B | 分类 |
-|---|---|---:|---:|---|
-| CPU ML依赖安装 | 初期dirty development | 54.551683 | 190951424 | completed |
-| 31测试初检 | dirty development | 2.096333 | 83984384 | passed |
-| 33测试初检 | dirty development | 1.461182 | 67633152 | passed |
-| pure import初检 | clean2c9b54b | 1.459420 | 45719552 | passed |
-| FE import初检 | clean2c9b54b | 3.719178 | 179027968 | failed，错误cache API |
-| pure import最终 | clean9934c2e | 1.376872 | 44138496 | passed |
-| FE import最终 | clean9934c2e | 2.260087 | 120582144 | passed，complex128/int64 |
-| CPU ML import最终 | clean9934c2e | 3.640839 | 236548096 | passed，CPU-only |
-| 33测试最终 | clean9934c2e | 1.659649 | 67231744 | passed |
-| toy残差证据提取 | 9934c2e +仅交付文档dirty | 1.751461 | 65552384 | completed |
-| 文档检查器初检 | 9934c2e +仅交付文档dirty | 2.616270 | 57163776 | failed，检查器自引用/代码围栏误报；既有27测试/Ruff/compile通过 |
-| 文档检查器针对复查 | 9934c2e +仅交付文档dirty | 2.954395 | 57368576 | passed，27静态测试及全部定向检查通过 |
-| 提交前最终文档校验 | 9934c2e +仅交付文档dirty | 2.423536 | 53276672 | passed，更新后文档与记录语义 |
-| 发布页面检查初检 | clean2636fe5文档HEAD | 6.626467 | 63635456 | failed，检查器关键词断言；发布页本身可读取 |
-| 发布页面针对复查 | 2636fe5 +仅首次检查记录dirty | 17.024449 | 55427072 | passed，5页真实GitHub渲染 |
+非零项全部固定RIGHT FGMRES32/max256/零初值，迭代达到256；三条路线各15个非零未通过原A4门限`1e-10`。port closure也需<=1e-10，内部恢复与native/Schur恒等式独立保存，不因先拒绝native而省略。零RHS精确零、0iterations且不调用backend；原raw `native_audit`沿用了前项缓存，不能归因到零RHS，v2摘要置null并使用zero自身的三项0检查。原始证据未改写。[全部精确数值/PC耗时 CSV](records/strict_rhs_metrics_v2.csv)，[R-B0](records/f4_b0_complete_v2.json)、[R-LIN](records/f4_lin_complete_v2.json)、[R-NN](records/f4_nn_complete_v2.json)。
 
-前9项顺序wall合计72.22524276096374s，加入toy提取为73.97670381999342s；最大采样同时RSS236,548,096B（约0.220302GiB），没有相加不同阶段峰。[运行账](records/bounded_f0_runs.json)和[索引](records/run_index.json)保留全部值、raw SHA和范围；最后文档/Ruff/compile/ignore检查单列在[测试摘要](test_summary.md)，纳入最终索引。
+## 表示和训练与严格资格的区别
 
-加入两次上述文档检查后，已监督顺序工作流wall合计79.54736903001322s；最终发布核验/文档闭环另列run index。缓存大小由du实读：新FE venv16,072,704B、ML venv820,117,504B、Task042 tmp369,111,040B，results/artifacts各4096B目录；没有PDE结果或JIT核。这是磁盘占用，不能和RSS相加。
+| rank | validation 误差表示比 | validation 最佳 native残差比 | validation 线性 native残差 | 表示及在线buffer B | rank wall s |
+|---|---|---|---|---|---|
+| 16 | 0.732241 | 0.633718 | 2.20516 | 24675584 | 42.515 |
+| 32 | 0.687492 | 0.507641 | 1.80659 | 43866880 | 45.873 |
+| 64 | 0.63802 | 0.414244 | 1.50899 | 82274048 | 60.624 |
+| 128 | 0.513825 | 0.333884 | 1.26123 | 159186688 | 79.966 |
 
-再计入提交前最终文档校验和两次发布检查为105.62182026903611s；发布记录补齐后的最后文档校验耗时另列最终[索引](records/run_index.json)，最终总额以该索引为准。未改变数值测试源码，没有再次启动FE/ML资格或数组研究。
+oracle先取B0一步后的剩余误差，再问有限basis能否表示teacher修正，并在该子空间寻找原方程最佳残差。两个validation中位比门限在数据生成前登记为`.90 / .99`，只作为继续小模型训练的诊断信号。rank128 train误差表示比`.00983542966728795`，validation为`.5138245737888352`，已显示明显的未见载荷表示差距。validation线性一步native中位仍为`1.2612261732272319`，离`1e-10`很远；F4迭代也未补足差距。
 
-Task042没有运行GPU工作，VRAM peak记 `not_run/null`，不拿0充当测量峰。FE导入映射libcuda但没有执行GPU算子；ML为CPU构建、CUDA不可见且Torch context未初始化。邻GPU100%只是资源阻塞证据。
+模型300epochs/CPU FP64、validation选51，teacher坐标与完整native Gram（含正交剩余项）联合loss；best validation总loss`4.947570117563409`，epoch0为`5.342281302071337`。loss下降不能替代原方程资格。冻结Torch→NumPy16validation probe相对差`5.71091073830398e-17`，FE集成的独立probe差在R-NN构造record实测。heldout16仅严格评估，未用于rank/width/epoch选型，之后标consumed。
 
-没有在编辑器/工具代理外层做连续采样；Git、只读审阅、venv创建和文档编辑的全过程wall/RSS未独立测量，写 `未记录`，不伪造整段会话峰或把这些轻开销作为solver时间。所有实际数值研究为not_run，无正式PDE资源曲线、VRAM、R-LU factor存储或候选向量账。
+## 分阶段完整成本
 
-## F1–F5将保留的成本与内存边界
+| 实际阶段/尝试 | 状态 | 真实 clean source SHA | 整树监督 wall s | 采样整树 RSS 峰 | own swap B / GPU |
+|---|---|---|---|---|---|
+| f1_b0_shared | FAILED | ae5b7d2b79dec38056e4a8b9bd986429989455dd | 5.981 | 0.283 GiB | 0 / CPU-only |
+| f1_b0_shared_retry1 | FAILED | 23cb4710e3ed2c8f7c51fd2b3f4e4dd952bea716 | 8.654 | 0.400 GiB | 0 / CPU-only |
+| f1_b0_shared_retry2 | FAILED | f194e455cf904d255fbb30151f21d12be19bc56b | 1079.193 | 2.198 GiB | 0 / CPU-only |
+| f1_b0_shared_retry3 | FAILED | 7188564f1a284049ddac3eb32a77ccbda84c5c6b | 881.548 | 1.080 GiB | 0 / CPU-only |
+| f1_b0_shared_retry4 | COARSE_INVERSE_NOT_QUALIFIED | cca180f875bd22146f2d30fa4d004e372135dfbb | 1242.043 | 1.529 GiB | 0 / CPU-only |
+| f2_teacher_shared | TEACHER_QUALIFIED | b72448bb2117a0221f041f1b47ac41049750a3c7 | 1687.602 | 1.451 GiB | 0 / CPU-only |
+| f2_oracle_shared | REPRESENTATION_POSITIVE | d9de8ad69bfeeac4860e5187e1738c902a3d808e | 358.751 | 1.309 GiB | 0 / CPU-only |
+| f3_train_shared | TRAINING_COMPLETED | a221d881bae9405c98e351df2b0b9533582e6d50 | 22.268 | 0.337 GiB | 0 / CPU-only |
+| f4_b0_shared | COARSE_INVERSE_NOT_QUALIFIED | 7216efa605bae155ee383fd716c0fae422448b52 | 486.668 | 0.793 GiB | 0 / CPU-only |
+| f4_linear_shared | COARSE_INVERSE_NOT_QUALIFIED | 7216efa605bae155ee383fd716c0fae422448b52 | 1239.273 | 0.962 GiB | 0 / CPU-only |
+| f4_neural_shared | COARSE_INVERSE_NOT_QUALIFIED | 7216efa605bae155ee383fd716c0fae422448b52 | 1238.082 | 0.937 GiB | 0 / CPU-only |
 
-| 项目 | future完整账范围 / 本轮状态 |
-|---|---|
-| CPU成本 | mesh/JIT、A4/A6 setup、teacher factor/solve/release、流式数据、POD、训练、加载、B0/线性/NN apply、内层A4/恢复/port check、p6 solve/recovery/checker；均not_run |
-| RAM | weights、basis、编码/解码、所有cell/patch/bottom factors、port、内/外Krylov、恢复/audit、Python/Torch/BLAS allocator、临时通信；实际unique backing去重；均not_run |
-| GPU | 单卡<=8GiB，传输/同步/allocator allocated和reserved分别记录；当前not_run |
-| teacher/deployment | 分阶段、分进程退出并核实释放；候选从构建起禁止global p4 factor；本轮二者均未创建 |
-| hard Gate | 闲置时treeRSS16GiB/warning12GiB、MPI1/math1、own swap0、reserve和磁盘合同、artifacts20GiB；未因F0成功放宽 |
+上述尝试合计监督wall`8250.064113 s`；各阶段整树RSS最大取`2359627776 B`，own swap最大0；不累加阶段峰。所有成本shared-workstation。训练有载`19.036173629 s`，监督工作流还包含独立ML导入、数据/模型装载和保存。teacher分解setup6.264s、384对数据生成及审核分开见[teacher记录](records/teacher_complete_v2.json)；oracle各rank wall包括构建与原方程审核。安装、ABI和targeted checks额外成本见[测试](test_summary.md)，没有把未监控的编辑/Git等待算进数值总时间。
 
-停止原因是共享资源占用。没有执行后发现数值停滞，也没有把正常实现错误当作算法参数调优理由。
+B0局部因子载荷177886464B，cell/port3469728B；R-LIN表示/在线buffer159186688B，R-NN另有824320B权重。cell、patch、128行bottom均计入构造声明；实际数组载荷与RSS口径不同，basis/temp/Krylov/Python/allocator开销由整树监督覆盖，无额外private audit CSR。teacher后端factor NNZ40282272、RINFOG15报告644.516352decimalMB，只是后端factor载荷，不等于进程峰。离线teacher释放/退出后才开始oracle和候选。
+
+G-no-factor与绝对资源上限已通过；低内存迭代、线性和神经严格资格均失败。G-memory/G-time为`inconclusive`，G-neural无正信号，不宣布TB量级收益或所有网格无效。没有合格单次节省，N=1/10/100的合格总成本及break-even为`undefined`；可记录离线teacher+oracle+训练成本，但不能用失败求解推算摊销。[未运行p6比较](records/full_p6_comparison_v2.csv)全部保留not_run。
+
+验证集原方程残差loss的线性初始映射为1.6581681312213055，所选NN为1.837990301367067，记录`LINEAR_BASELINE_PREFERRED`，仅指该离线native方程目标。它不代表任一粗逆可部署，也不是三进程端到端性能胜出；combined teacher/native loss用于选择epoch，两类目标不可混称。
+
+| 摊销次数N | R-LIN / R-NN合格总成本 | break-even | 原因 |
+|---|---|---|---|
+| 1 | undefined | undefined | 无合格粗返回，失败计时不能作有效solve成本 |
+| 10 | undefined | undefined | 同上；未自动重放终测组 |
+| 100 | undefined | undefined | 同上；未作无界重复或外推加速 |
+
+离线teacher（含8参考、384对数据与审核）1687.601743s、oracle358.751261s、NN训练监督22.267641s分开实测；合计2068.620645s为shared-workstation离线成本，basis/PC setup含在各候选工作流中，不能二次累计。尚无严格合格单次节省，不能由该离线合计推断摊销阈值。

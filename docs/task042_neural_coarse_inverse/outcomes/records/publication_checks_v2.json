@@ -1,0 +1,5 @@
+{
+  "schema": "task042.publication-checks.v2",
+  "status": "PENDING_POST_PUSH",
+  "note": "After exact branch push inspect actual published GitHub rendered HTML; no pre-publication pass claim"
+}

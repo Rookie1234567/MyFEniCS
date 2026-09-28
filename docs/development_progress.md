@@ -2858,3 +2858,22 @@ run `20260918T035017.294454Z`、source `41caf5141493ad6c5d6c518a64ee74fda8d7a7db
 本轮决策是交付F0并等待review，而不在邻heavy旁构造FE/teacher/训练或正式PDE。teacher/dataset/basis/model/checkpoint不存在；真实无global p4因子、线性/NN优劣、时间和内存20%改善、NN10%增量均未评价。后续先fresh核查heavy清场和同机lock，再完成F1不建global factor的opt-in factory、真实非零内部/port RHS、尺寸/身份/容量Gate，依次oracle、同表示线性与一个NN、严格粗返回，最后条件p6；不自动启动5/2/0.7nm或无界扫描。
 
 详细证据：[Task042 summary](task042_neural_coarse_inverse/outcomes/summary.md)、[Response V1](task042_neural_coarse_inverse/response_v1.md)、[Git/环境隔离](task042_neural_coarse_inverse/outcomes/environment_and_isolation.md)、[架构/oracle](task042_neural_coarse_inverse/outcomes/architecture_and_oracle.md)、[provenance](task042_neural_coarse_inverse/outcomes/dataset_and_model_provenance.md)、[run index](task042_neural_coarse_inverse/outcomes/records/run_index.json)、[测试](task042_neural_coarse_inverse/outcomes/test_summary.md)。新增协议和activation仍为research-only；没有fresh PDE或production merge approval，ignored缓存/下载/日志不提交。
+
+
+## 2026-09-28 Task042 V2：用户授权受控共享，真实F1–F4完成
+
+本节更新上面的F0历史等待状态。用户明确允许仅Task042在其他heavy仍运行时受控共享，替代§2.3 heavy禁令/全机独占锁，不取消精度、资源或Gate，不宣称F0正式review通过；原任务/review/response_v1保留。真实运行使用自有nonblocking flock、一次一阶段、现场选CPU0（48物理核无SMT）、MPI1/math/编译1、nice10/idle I/O、整树16GiB/12GiB、own swap0。两GPU持续训练，隔离CPU-only Torch FP64/intra-inter1/Loader0；不改邻任务。无cgroup委派，采用已验证整树采样停止，不冒充内核限制；额外128GiB邻增长规划余量，disk/artifacts门保持。
+
+F1核实原13.5nm p6/h10/同网格p4、252cells、173802/53084 FE storage、80DtN，完整A4=PH A6P相对差3.366065072840215e-15、非零内部/端口制造解p4/p6原残差1.2255722548154e-14/2.0935547822786585e-14。后续p4-only与同F1 Schur CSR hash严格一致，21824rows/8184464NNZ，无private audit CSR。F2准确参考8项/teacher384对全部<=1e-10，256/64/64按整问题/seed划分；global LU仅offline，destroy/退出清场后oracle/训练/候选。oracle ranks16/32/64/128最高validation表示比.51382457/native最佳残差比.33388418，有诊断正信号但非严格返回。
+
+F3同basis/B0/归一化/FP64，线性小解码基线与一个2hidden64 residual MLP，103040参数、300epochs、validation选51，有载训练19.036174s/监督22.267641s，heldout不用于选型；冻结Torch/NumPy相对差5.71091e-17。F4三路线同clean source7216efa605bae155ee383fd716c0fae422448b52、16heldout，各从构造没有global p4 LU、仅有界cell/patch/bottom，无fallback或数值调参重跑。
+
+| 阶段/方法 | 实际数字 | 结果与证据 |
+|---|---|---|
+| R-B0严格粗逆 | 原PH b6 A4=0.9986549671，port=0.4654717527；486.668s / 851476480B | 1/16仅zero，非零256步未达1e-10；shared-workstation；[逐RHS](task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv) |
+| R-LIN严格粗逆 | 原PH b6 A4=0.9982615363，port=0.2394959774；1239.273s / 1032511488B | 1/16仅zero，非零256步未达1e-10；shared-workstation；[逐RHS](task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv) |
+| R-NN严格粗逆 | 原PH b6 A4=0.9984559263，port=0.1799872838；1238.082s / 1006587904B | 1/16仅zero，非零256步未达1e-10；shared-workstation；[逐RHS](task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv) |
+
+终态COARSE_INVERSE_NOT_QUALIFIED：没有F4合格路线，三独立进程合格计时与条件F5/p6最终物理解/全部RTA/A_volume/场/通道not_run，不能生成official结果。去全局因子已实现，但传统低内存、线性降维与NN都未提供严格逆，G-neural无正信号；共享load/cache/lifecycle条件下G-time/G-memory inconclusive，N=1/10/100合格摊销未定义。数值尝试含4次实现失败监督wall共8250.064s，最大同时整树RSS2359627776B，own swap0，未分配Task042 VRAM；不累加阶段峰。
+
+未见持续PSI压力，固定邻身份/CPU时间保留；短phase缺实时可比指标，不能证明绝对零干扰。两个继承schema2文档枚举fail在精确起点复现；final focused/static见[测试](task042_neural_coarse_inverse/outcomes/test_summary.md)。完整source/hash/所有RHS/时间/内存见[summary](task042_neural_coarse_inverse/outcomes/summary.md)、[response_v2](task042_neural_coarse_inverse/response_v2.md)、[run index](task042_neural_coarse_inverse/outcomes/records/run_index_v2.json)。无5/2/0.7nm或无界扫描；仅推送本执行分支，停止等review，不合并master。

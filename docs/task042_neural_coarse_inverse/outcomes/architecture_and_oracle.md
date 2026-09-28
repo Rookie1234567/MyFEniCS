@@ -1,56 +1,41 @@
-# 原方程、严格返回接口与未运行 oracle
+# 原方程、低内存修正与可表达性诊断
 
-粗逆是求解器中把粗层残差转成修正的一步。原实现提前构建全局 p4 LU，后续反复回代；候选要改成原 A4 上的迭代求解，并把传统/线性/神经方法仅放在这个内层的辅助修正中。方程、边界通道、传递和最终验算保留。
+粗逆把粗层残差转成修正。原实现先构建全局p4 LU，再回代；本轮候选在原p4方程上用迭代求解，以固定传统B0辅助全部空间，再分别增加线性或神经低维修正。方程、物理复质量、负号、完整DtN通道及最终验算保留。
 
 ```math
 A_4=P^H A_6P,\qquad C=P A_4^{-1}P^H.
 ```
 
-BAL_H先做粗修正，再对剩余误差做细层平滑，最后抵消平滑对粗层方程的破坏；每个外层PC通常调用两次C。因此既要测去因子的内存收益，也要测每次迭代粗逆增加的作用和验算成本。
+单元凝聚先精确消去内部未知量，再求公共边界与端口。p4必须独立凝聚；不能把p6已经凝聚的矩阵投影后叫p4。F1在完整空间验证上式，另以同一个p4的独立单元作用核对Schur矩阵，非零内部/端口RHS验证恢复。BAL_H的粗修正、细层平滑和粗反馈数学未修改；由于F4未通过，本轮没有把研究逆接到BAL_H或p6外层。
 
-## 冻结源调用链与复用边界
-
-| 现有模块 / 接口 | 审计发现 | Task042 决策 |
+| 层次/实现 | 行为及容量 | 实际证据与边界 |
 |---|---|---|
-| `physical_balanced_coupling.PhysicalBalancedCoupling` | C→A→H6→A→C反馈，独立PH balance<=1e-8；拥有返回向量并清理 | 保留BAL_H数学；未改该模块 |
-| `physical_inexact_balance.InexactBalanceLedger` | 保存两次非精确粗残差差并审核；允许非零粗缺陷 | 首轮不用宽松inexact路线，仍要求每次1e-10 |
-| `P4CellCondensedInverse.apply` | 缩减任意内部RHS、因子MatSolve、局部恢复和port state | 原 LU接口保留；新backend不冒充该类型 |
-| `P4RefinementLedger.solve` | 类型绑定LU inverse、实际因子计数、累积端口、原A4复算、最多2次准确精化 | 不伪造MatSolve、不绕过ledger；独立新验证器 |
-| `RetainedCondensedRuntime.attach_p4_factor/build_bal_h` | 构造MUMPS因子后绑定LU ledger，build_bal_h明确要求factor已完成 | 不把旧profile复制后称候选；F1须在factory之前选择不建global factor的opt-in路径 |
-| `apply_original_a4` / `port_closure` | native原物理作用与H*a-D*c独立；旧port_closure合同为zero_port_rhs | 非零port load的真实effective RHS和closure需在F1显式扩展，不能照搬零port回调 |
-| `P6CellCondensedAction.reduce_rhs/recover_storage/evaluate_native_residual` | 任意内部/端口载荷、严格slave-zero、完整恢复、native与augmented残差恒等式 | 可复用已存在action/recovery对象；不额外复制private audit CSR |
-| `physical_retained_fgmres.run_retained_fgmres` | trace+port RIGHT FGMRES32/max2048/zero start，独立恢复原A6与port/internal/identity | F5保留；本轮没有启动 |
+| 原A6/A4与传递 | F1完整p6、同网格物理p4，curl+mass后凝聚；共享已有cache/LU/witness | 原A4=PH A6P差3.366065072840215e-15；制造解原p6差2.0935547822786585e-14；不是最终物理解 |
+| p4-only后续构建 | F2/F4不重复构建p6；原p4全部mesh/tags/MPC/mode/quadrature和逐行CSR内容必须与F1一致 | 21824×21824、8184464存储NNZ；原operator SHA固定；非减少通道或积分 |
+| B0 | 固定不重叠、连续索引512行block Jacobi；43块、无shift/扫描 | patch因子177886464B；cell/port3469728B；最大patch512、port bottom80；无全局因子 |
+| oracle | teacher误差streamed POD；Q ranks16/32/64/128；用原native残差像W S4 Q做最佳子空间最小残差 | 独立native作用核验最坏1.5951422754826113e-13；最高rank validation两比.51382457/.33388418，诊断正信号 |
+| R-LIN | 先B0，取剩余原native残差的低维投影，用128×128三角R解码，再Q回到全空间 | 同basis/归一化/精度；最小残差线性基线；表示+buffer159186688B，R计入bottom因子 |
+| R-NN | 相同B0、Q和native残差投影，FP64实虚256维输入/输出，2hidden×64 residual MLP；线性skip初始化为同R逆 | 103040参数、824320B；离线训练300epochs，validation选51；在线冻结NumPy，不导入Torch或teacher解 |
+| 真正的逆返回 | 原p4 Schur上的RIGHT FGMRES32/max256/零初值，随后恢复完整FE+累计port并独立原A4审核 | 三路线各16项，仅零通过；原A4/port未达1e-10就拒绝，无LU fallback |
 
-单元凝聚是先精确消去单元内部未知量，再求公共边界和端口，可降低全局空间，但不能先把p6凝聚矩阵投影成p4。纯数组反例得到独立凝聚p4的8，而p6凝聚后投影为4.666667；curl与mass也必须先相加再凝聚。新测试只证明这两个代数禁区，不替代真实传递/FE配对。
+`W`将凝聚后的残差恢复成原native方程的不平衡量，含端口消元贡献。它不是把投影残差当全系统误差；F1与oracle都用独立原A4作用核对。神经loss包含teacher修正坐标误差和完整native Gram残差（包括子空间之外的正交剩余项）；保留常数项，避免把投影很好误报为全系统通过。oracle的最佳子空间残差是同一Q上可达到的下界，非线性网络不能宣称越过这个下界。
 
-## F0 新接口
+## 严格协议及实际构造
 
-[coarse_inverse_protocol.py](../../../src/solvers/coarse_inverse_protocol.py) 只定义返回合同，不实现内层FGMRES、B0或FE构造。`CoarseRHS/CoarseState` 持有独立complex128 FE/累计port数组；`InversePlan`声明operator SHA、局部因子和表示容量；backend报告固定RIGHT/restart32/zero-start/最多256步。
+[coarse_inverse_protocol.py](../../../src/solvers/coarse_inverse_protocol.py)保留F0完整复数FE/port、身份、容量和失败返回合同；[learned_coarse_inverse.py](../../../src/solvers/learned_coarse_inverse.py)提供真实有界B0、PETSc内层FGMRES及原方程audit；[learned_reduced_correction.py](../../../src/solvers/learned_reduced_correction.py)实现streamed POD和同表示线性/冻结NN修正。
 
-| 检查 | 固定规则 | 测试证据 / 限制 |
-|---|---|---|
-| native原方程 | mandatory quantitative `ResidualWitness`，relative<=1e-10，不能只给PASS字样 | 解析复数toy；F1仍须绑定真实A4和非零port的effective RHS |
-| port closure | 独立回调检查累计端口，不接受最后一次增量 | toy错误port被拒绝；真实H/D/port load尚未绑定 |
-| 内部恢复 | 第三个独立数值witness必须通过1e-10 | toy内部坐标；实际cell recovery未运行 |
-| 零/finite/存储 | 全FE+port零才直接零；complex128、尺寸、finite；slave输入/返回逐位0 | 非零port且FE零仍调用backend；极小幅值不因norm下溢当零 |
-| 身份/迭代 | operator SHA一致；plan变更拒绝；设置或步数超限拒绝 | 声明验证，不能证明backend实际执行了FGMRES；F4需要真实计数 |
-| 因子/表示 | 仅cell/patch/bottom；patch<=6000、bottom<=2048；factor总载荷<=512MiB；表示<=512MiB | 构建前声明容量，无实际PC；不能作为物理分配证明 |
-| 失败 | 抛 `CoarseReturnRejected`，保存 audit/RHS/state；sink错误保留原拒绝 | 没有LU fallback；真实packet持久化适配待F1 |
+候选factory为[learned_coarse_runtime.py](../../../src/solvers/learned_coarse_runtime.py)的p4-only原方程构建，没有attach_p4_factor或MUMPS调用。FGMRES使用Python PC；局部dense LU只用于cell、有限patch和小bottom，全部计入512MiB因子预算；basis/映射/buffer另限512MiB且分配前检查。不设置PETSc options来接受隐藏solver覆盖。原矩阵仅借用，audit使用已存在的native/local tensor，不为每个candidate复制CSR。
 
-所有现有数值源未修改，候选没有接线到普通runner。新模块只依赖NumPy；纯数组进程未加载FE库。FE预检虽然导入PETSc等库，但没有Mat/KSP/factor构造。故只能说F0没有构建global p4 LU，不能给尚未存在的部署candidate颁发G-no-factor通过。
+唯一global p4 LU在`F2-teacher`分支的offline_reference_factor中，MUMPS ICNTL22=0、不OOC；symbolic后预算检查，再numeric。参考8项和384对数据全部原方程审核后factor.destroy、runtime.destroy、worker退出；launcher证实descendants_cleared才允许下一阶段。teacher、oracle、CPU训练及三候选均为独立顺序进程，无factor/训练/candidate共驻留。
 
-## 历史神经接口与 oracle
+`P6CellCondensedAction`仅新增显式`borrowed_p4_witness=True`研究接口，共享调用者已持有p4的材料化tensor、Schur及局部恢复；不取得destroy所有权、不复制矩阵。原p6默认constructor仍拒绝材料化p4，以paired test验证。`RetainedCondensedRuntime.build`仅新增`retain_coarse_schur` opt-in，默认False；没有篡改P4RefinementLedger类型/MatSolve计数，也未改旧production返回路径。
 
-精确固定参考 SHA `d91652dd2d611d6d6bedd10e677c3f7030c07d4f` 的实际文件/blob/依赖见 [审计JSON](records/neural_reference_audit.json)。通过只读GitHub读取，没有fetch该分支或迁移源码。
+## 冻结身份、历史和停止条件
 
-| 历史 / 数据身份 | 教训 | 本轮处理 |
-|---|---|---|
-| PARA001 measured历史 | 单slab ILU+NN 861→854步，整体156.746→452.641s，内存增加 | 不把ILU常驻再附加NN作为默认部署 |
-| PARA004 measured历史 | 全16 exact two-step 861→566步；solve更慢、存储更多；one-step失败 | 是局部逆改善的全局信号，不能当所有NN的数学上限 |
-| PARA005 measured历史 | model+basis27.824 + private CSR40.458=68.282MiB，超过50.505MiB；全局未集成；非线性无明显线性优势 | 完整容量记账、共享exact audit；R-LIN强制对照 |
-| 旧 model接口 | FP64实虚pack、operator/checkpoint SHA和fail-closed可借鉴；存在显式fallback/ILU+NN类 | 只借鉴合同，不迁移fallback或private CSR |
-| 旧 capture / teacher | raw-only开关、capture provenance、one-factor/many-RHS/destroy；默认可保存local correction，teacher一次concat全部RHS | F1/F2需raw-only、整轨迹split、<=32流式batch，teacher退出后才训练 |
+原physical SHA `9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f`；完整mode SHA `d4380495d912f97f6d303a85756bb9b252a1117bad229b559f0ac8140e745fbb`；p4 Schur CSR SHA `150f18e26f15783726f2ffeb362ef053450962a16fff13d5241cc93c8d018560`。轴坐标、material tags、MPC映射、80通道和curl/mass quadrature15在F1原始operator_identity.json冻结并hash绑定后续构建。h10边界拟合实际为252cells；没有将名义网格步数硬填成cells。
 
-F2 POD/小最小二乘oracle的目的是先判断有限basis能否表示难误差，避免把表示失败误判为训练不足。R-B0处理未学习全空间，R-LIN与R-NN使用同一basis/数据/FP64和预算。rank仅16/32/64/128、表示<=512MiB，网络一类两hidden、至多两个预登记width、epochs<=300、总有载训练<=2小时。当前均未实现/未运行，未改变参数来获得正结果。
+冻结神经历史源`d91652dd2d611d6d6bedd10e677c3f7030c07d4f`仅作只读接口审计，见[原F0审计](records/neural_reference_audit.json)。PARA001/004/005的局部改进、全局成本增长、私有CSR及线性对照教训均保留；没有迁移旧fallback/ILU依赖或旧权重。
 
-F1继续前需冻结真实axes/tags/MPC/mode/integration/physical SHA、验证非零内部及port RHS、候选构造时实际容量账，并取得同机heavy lock与独立邻任务清场证据。F4统一16未见RHS全部严格通过后才做三次独立计时；仅合格路线才能F5。未来外层与全部物理验算门限保持任务书原值。
+预登记oracle最高rank两比<=.90/.99才继续；本轮通过，因此实际完成小训练和F4。F4要求所有非零原A4及port/recovery<=1e-10、zero精确零、finite/slave-zero/恢复成立。三路线到256步仍失败即`COARSE_INVERSE_NOT_QUALIFIED`，不改参数重跑；仅全部合格路线允许三独立进程计时和条件F5。F5原A6<=1e-6、全部场/模态/RTA原门限仍保留，当前全部not_run。
+
+[逐RHS与资源](accuracy_performance_memory.md)、[独立Gate](records/gate_decisions_v2.json)、[真实F1](records/f1_real_components_v2.json)、[teacher](records/teacher_complete_v2.json)、[oracle](records/oracle_complete_v2.json)给出正信号和失败的不同含义。用户共享授权替代仅Task042 heavy/全机锁要求，使用自有非阻塞锁和低开销整树监督；不把原F0等待或用户授权当成正式review通过。

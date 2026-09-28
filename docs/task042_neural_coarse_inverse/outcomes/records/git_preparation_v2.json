@@ -1,0 +1,32 @@
+{
+  "schema": "task042.git-verification.v2",
+  "scope": "post-numerical delivery preparation; final push HEAD verified separately",
+  "utc": "2026-09-28T13:46:29.175892+00:00",
+  "pwd": "/home/fenics/Projects/NN-Lab",
+  "toplevel": "/home/fenics/Projects/NN-Lab",
+  "branch": "task42_neural_coarse_inverse",
+  "HEAD_at_delivery_preparation": "932bb2a747c15e846916474cefa0debf8d42b715",
+  "upstream": "origin/task42_neural_coarse_inverse",
+  "common_git_directory": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+  "origin": "git@github-myfenics:Rookie1234567/MyFEniCS.git",
+  "fetch_refspecs": [
+    "+refs/heads/task39extra_para_workstation_capacity:refs/remotes/origin/task39extra_para_workstation_capacity",
+    "+refs/heads/task42_neural_coarse_inverse:refs/remotes/origin/task42_neural_coarse_inverse"
+  ],
+  "worktree_porcelain": "worktree /home/fenics/Projects/Maxwell3D-Lab/task-repository.git\nbare\n\nworktree /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity\nHEAD 64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa\nbranch refs/heads/task39extra_para_workstation_capacity\n\nworktree /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity-docs-20260920\nHEAD 47cb73bf083072ed03788f67830f6ca1e933b60c\ndetached\n\nworktree /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity-docs-20260928\nHEAD ccd357885f7f9be84efe3be07868cc94f13d93fc\ndetached\n\nworktree /home/fenics/Projects/NN-Lab\nHEAD 932bb2a747c15e846916474cefa0debf8d42b715\nbranch refs/heads/task42_neural_coarse_inverse",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "initial_task_anchor": "f8c51c8e614edc806cf72120ac2cfd14ae8b62f7",
+  "base_ancestor": true,
+  "initial_anchor_ancestor": true,
+  "remote_HEAD_before_push": "a76e0435a40139dd6d2a31f0726fb229c7adaff8",
+  "auth": "actual noninteractive BatchMode ls-remote success; no secrets or prompt",
+  "ahead_behind_vs_tracking": "11\t0",
+  "old_worktree_HEADs_preserved": [
+    "64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa",
+    "47cb73bf083072ed03788f67830f6ca1e933b60c",
+    "ccd357885f7f9be84efe3be07868cc94f13d93fc"
+  ],
+  "origin_url_or_other_worktrees_modified": false,
+  "maintenance_gc": "disabled for fetch/commits/push; no gc/prune/repack",
+  "only_origin_change": "earlier user-authorized Task042 fetch refspec added; original Task39 mapping and URL preserved"
+}

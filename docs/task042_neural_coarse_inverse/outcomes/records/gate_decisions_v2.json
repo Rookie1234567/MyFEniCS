@@ -1,0 +1,134 @@
+{
+  "schema": "task042.gate-decisions.v2",
+  "classification": "COARSE_INVERSE_NOT_QUALIFIED",
+  "basis": "recomputed from original numeric fields; solver reason/status alone is insufficient",
+  "user_authorization": "2026-09-28 controlled shared CPU execution overrides only Task042 task.md §2.3 heavy-present/exclusive whole-machine lock; not formal F0 review approval",
+  "G_identity": "PASS_COMPONENT",
+  "G_no_factor": "PASS_CANDIDATE_CONSTRUCTION",
+  "G_numerical_F4": {
+    "F4-B0": false,
+    "F4-LIN": false,
+    "F4-NN": false
+  },
+  "G_numerical_F5": "not_run_no_F4_qualified_candidate",
+  "G_memory": "inconclusive: compliant absolute resources, unequal lifecycle and no qualified solves",
+  "G_time": "inconclusive under shared-workstation load; no qualified candidate and no comparable three-process medians",
+  "G_neural": "NO_POSITIVE_SIGNAL: no numerical qualification, no qualified timing median",
+  "G_generalization": "fixed-operator 16 heldout RHS consumed once per frozen candidate; cross operator not_run",
+  "G_amortization": "undefined: no strictly qualified single-solve savings; no break-even",
+  "routes": {
+    "F4-B0": {
+      "count": 16,
+      "nonzero_count": 15,
+      "strict_pass_count": 1,
+      "qualified": false,
+      "original_A4_min": 0.9105829491218781,
+      "original_A4_max": 1.8905575728007602,
+      "port_closure_min": 0.27645843374538487,
+      "port_closure_max": 0.9999999997041626,
+      "internal_recovery_max": 4.709420448190683e-16,
+      "physical_original_A4": 0.9986549671046351,
+      "physical_port_closure": 0.4654717527063063,
+      "all_nonzero_iterations": [
+        256
+      ],
+      "frozen_source_sha": "7216efa605bae155ee383fd716c0fae422448b52",
+      "operator_sha256": "150f18e26f15783726f2ffeb362ef053450962a16fff13d5241cc93c8d018560",
+      "construction": {
+        "global_p4_factor_created": false,
+        "private_audit_csr": false,
+        "original_matrix_borrowed": true,
+        "patch_factor_bytes": 177886464,
+        "cell_port_factor_bytes": 3469728,
+        "representation_bytes": 0,
+        "factor_count": 62,
+        "all_factor_payload_bytes": 181356192,
+        "max_patch_rows": 512,
+        "max_bottom_rows": 80
+      }
+    },
+    "F4-LIN": {
+      "count": 16,
+      "nonzero_count": 15,
+      "strict_pass_count": 1,
+      "qualified": false,
+      "original_A4_min": 0.6025044779568466,
+      "original_A4_max": 1.862650227270794,
+      "port_closure_min": 0.11891875713809315,
+      "port_closure_max": 0.23949597741595657,
+      "internal_recovery_max": 2.1195325377037746e-16,
+      "physical_original_A4": 0.9982615362865193,
+      "physical_port_closure": 0.23949597741594056,
+      "all_nonzero_iterations": [
+        256
+      ],
+      "frozen_source_sha": "7216efa605bae155ee383fd716c0fae422448b52",
+      "operator_sha256": "150f18e26f15783726f2ffeb362ef053450962a16fff13d5241cc93c8d018560",
+      "construction": {
+        "global_p4_factor_created": false,
+        "private_audit_csr": false,
+        "original_matrix_borrowed": true,
+        "patch_factor_bytes": 177886464,
+        "cell_port_factor_bytes": 3469728,
+        "representation_bytes": 159186688,
+        "basis_sha256": "47d23a1c4d760b2ba91327df370bbf61099a9d03e8e67e905dbf676bd2f2d121",
+        "oracle_source_sha": "d9de8ad69bfeeac4860e5187e1738c902a3d808e",
+        "rank": 128,
+        "factor_count": 63,
+        "all_factor_payload_bytes": 181618336,
+        "max_patch_rows": 512,
+        "max_bottom_rows": 128
+      }
+    },
+    "F4-NN": {
+      "count": 16,
+      "nonzero_count": 15,
+      "strict_pass_count": 1,
+      "qualified": false,
+      "original_A4_min": 0.6317660568713639,
+      "original_A4_max": 1.86218975746739,
+      "port_closure_min": 0.12353482907488254,
+      "port_closure_max": 0.2579419245610169,
+      "internal_recovery_max": 2.203472981531973e-16,
+      "physical_original_A4": 0.9984559262641479,
+      "physical_port_closure": 0.17998728383551968,
+      "all_nonzero_iterations": [
+        256
+      ],
+      "frozen_source_sha": "7216efa605bae155ee383fd716c0fae422448b52",
+      "operator_sha256": "150f18e26f15783726f2ffeb362ef053450962a16fff13d5241cc93c8d018560",
+      "construction": {
+        "global_p4_factor_created": false,
+        "private_audit_csr": false,
+        "original_matrix_borrowed": true,
+        "patch_factor_bytes": 177886464,
+        "cell_port_factor_bytes": 3469728,
+        "representation_bytes": 160011008,
+        "fe_numpy_torch_relative_difference": 5.5468358098222756e-17,
+        "training_source_sha": "a221d881bae9405c98e351df2b0b9533582e6d50",
+        "model_sha256": "b25b389adf0f22849c434d4eefbe561ea86d36d4d618b2140b8cb7ff1ea2a0e6",
+        "selected_epoch": 51,
+        "basis_sha256": "47d23a1c4d760b2ba91327df370bbf61099a9d03e8e67e905dbf676bd2f2d121",
+        "oracle_source_sha": "d9de8ad69bfeeac4860e5187e1738c902a3d808e",
+        "rank": 128,
+        "factor_count": 63,
+        "all_factor_payload_bytes": 181618336,
+        "max_patch_rows": 512,
+        "max_bottom_rows": 128
+      }
+    }
+  },
+  "F5": "not_run: no low-memory candidate passes all strict A4/port/recovery checks",
+  "performance_identity": "shared-workstation",
+  "formal_review": "pending; user authorization is not F0 review",
+  "global_factor_scope": "offline F2 teacher only, destroyed then process exit before oracle/training/F4",
+  "zero_audit_disclosure": "original F4 raw native_audit at zero bypass is stale from preceding RHS; exact-zero checks and no-backend return are authoritative; compact v2 sets native_audit null",
+  "validation_equation_preference": {
+    "status": "LINEAR_BASELINE_PREFERRED",
+    "scope": "offline validation native-equation objective only; neither route deployable",
+    "linear_initial_native_equation_loss": 1.6581681312213055,
+    "selected_neural_native_equation_loss": 1.837990301367067,
+    "neural_selected_for": "combined teacher-coordinate plus full-native loss, validation only",
+    "deployment_choice": null
+  }
+}

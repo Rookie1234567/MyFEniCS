@@ -1,0 +1,324 @@
+{
+  "schema": "task042.final-checks.v2",
+  "status": "TARGETED_VERIFIED_WITH_DOCUMENTED_INHERITED_REGISTRY_CHECK_FAILURE",
+  "focused_tests": [
+    {
+      "id": "pure/final-focused-v2",
+      "passed": 44,
+      "scope": "targeted; not full pytest or formal PDE",
+      "source_state": {
+        "source_sha": "7216efa605bae155ee383fd716c0fae422448b52",
+        "git_status": " M src/runners/task042_coarse_stages.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "--tb=short",
+          "src/test/test_task042_coarse_inverse_protocol.py",
+          "src/test/test_task042_shared_components.py",
+          "src/test/test_task042_reduced_oracle.py",
+          "src/test/test_task042_shared_watchdog.py",
+          "src/test/test_354_subreaper_watchdog.py",
+          "-k",
+          "not measured_rss_policy and not reserve"
+        ],
+        "utc": "2026-09-28T13:43:12.564419+00:00",
+        "affinity": [
+          44
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "summary": {
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "elapsed_seconds": 12.890690716914833,
+        "sampled_process_tree_rss_peak_bytes": 141455360,
+        "sampled_process_tree_swap_peak_bytes": 0
+      },
+      "raw_sha256": {
+        "summary.json": "5609d3eb408662b0f1338ecc4e134bee7100340421a8774a6b256e802a1f7ca1",
+        "worker.log": "705dfe32b00f3773a5e48dcc822c3bd087c6149ad7d9df383244e7dbe62ca65b"
+      }
+    },
+    {
+      "id": "fe/final-interfaces-v2",
+      "passed": 18,
+      "scope": "targeted; not full pytest or formal PDE",
+      "source_state": {
+        "source_sha": "932bb2a747c15e846916474cefa0debf8d42b715",
+        "git_status": "",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "--tb=short",
+          "src/test/test_task042_p4_witness.py",
+          "src/test/test_task042_mode_metadata.py",
+          "src/test/test_task039extra_v20_noncommuting_contract.py",
+          "src/test/test_375_balanced_coupling.py",
+          "-k",
+          "not real_e1_inputs_load_without_fe"
+        ],
+        "utc": "2026-09-28T13:44:32.945433+00:00",
+        "affinity": [
+          33
+        ],
+        "environment_mode": "fe",
+        "gpu_visible": false
+      },
+      "summary": {
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "elapsed_seconds": 3.3648544009774923,
+        "sampled_process_tree_rss_peak_bytes": 237211648,
+        "sampled_process_tree_swap_peak_bytes": 0
+      },
+      "raw_sha256": {
+        "summary.json": "7396c88b981140be509e3304f09c51c19c1732707d32d4500f36f45c4a300066",
+        "worker.log": "6506c6effa8d11264bb1d72b66808907425a4111f56c386d718e63e949ea5622"
+      }
+    }
+  ],
+  "numerical_sources": "actual run_index_v2; report-only fix 932bb2a747c15e846916474cefa0debf8d42b715 is not relabelled as F4 source",
+  "full_pytest": "not_run: neighboring heavy; Task042 contract forbids full suite",
+  "inherited_failures": "two schema2 documentation/enumeration failures reproduced at exact a76; retained shared_preimplementation_checks_v2.json",
+  "static": {
+    "id": "pure/final-doc-static-v2",
+    "source_state": {
+      "source_sha": "932bb2a747c15e846916474cefa0debf8d42b715",
+      "git_status": " M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042_neural_coarse_inverse/outcomes/accuracy_performance_memory.md\n M docs/task042_neural_coarse_inverse/outcomes/architecture_and_oracle.md\n M docs/task042_neural_coarse_inverse/outcomes/changed_files.md\n M docs/task042_neural_coarse_inverse/outcomes/dataset_and_model_provenance.md\n M docs/task042_neural_coarse_inverse/outcomes/environment_and_isolation.md\n M docs/task042_neural_coarse_inverse/outcomes/summary.md\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n M input/task042_neural_coarse_inverse/README.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/auxiliary_costs_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/component_metrics_v2.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/dataset_model_manifest_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/documentation_cpu_audit_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_b0_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_lin_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_nn_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/final_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/full_p6_comparison_v2.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/git_preparation_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/shared_workstation_snapshot_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv\n?? docs/task042_neural_coarse_inverse/response_v2.md\n",
+      "stage": "F0",
+      "formal_pde": false,
+      "command": [
+        "python",
+        "tmp/task042/static_checks_v2.py"
+      ],
+      "utc": "2026-09-28T13:52:51.564162+00:00",
+      "affinity": [
+        0
+      ],
+      "environment_mode": "pure",
+      "gpu_visible": false
+    },
+    "supervision": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 2.874043438001536,
+      "sampled_process_tree_rss_peak_bytes": 77533184,
+      "sampled_process_tree_swap_peak_bytes": 0
+    },
+    "raw_sha256": {
+      "summary.json": "9b1a0a78eee9f707e6bf17f4d4221e0e8aca876706e4ce772c95f7a823755310",
+      "worker.log": "3393193300fd34a2c16ec34732a0cc12dbf58635629b331711a74ea187629db0"
+    }
+  },
+  "governance": {
+    "id": "pure/final-governance-v2",
+    "source_state": {
+      "source_sha": "932bb2a747c15e846916474cefa0debf8d42b715",
+      "git_status": " M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042_neural_coarse_inverse/outcomes/accuracy_performance_memory.md\n M docs/task042_neural_coarse_inverse/outcomes/architecture_and_oracle.md\n M docs/task042_neural_coarse_inverse/outcomes/changed_files.md\n M docs/task042_neural_coarse_inverse/outcomes/dataset_and_model_provenance.md\n M docs/task042_neural_coarse_inverse/outcomes/environment_and_isolation.md\n M docs/task042_neural_coarse_inverse/outcomes/summary.md\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n M input/task042_neural_coarse_inverse/README.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/auxiliary_costs_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/component_metrics_v2.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/dataset_model_manifest_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/documentation_cpu_audit_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_b0_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_lin_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_nn_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/final_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/full_p6_comparison_v2.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/git_preparation_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/shared_workstation_snapshot_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv\n?? docs/task042_neural_coarse_inverse/response_v2.md\n",
+      "stage": "F0",
+      "formal_pde": false,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "src/test/test_24_repository_work_principles.py",
+        "src/test/test_183_development_model_registry_markdown.py",
+        "src/test/test_development_model_registry_contract.py",
+        "src/test/test_26_documentation_contract.py"
+      ],
+      "utc": "2026-09-28T13:54:34.847902+00:00",
+      "affinity": [
+        0
+      ],
+      "environment_mode": "pure",
+      "gpu_visible": false
+    },
+    "supervision": {
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "descendants_cleared": true,
+      "elapsed_seconds": 2.0789223320316523,
+      "sampled_process_tree_rss_peak_bytes": 48234496,
+      "sampled_process_tree_swap_peak_bytes": 0
+    },
+    "raw_sha256": {
+      "summary.json": "002bdac9ebb9e53ae0b1b4273ddededa67a2e3c26ce6fadd3986a19ce5a4c41a",
+      "worker.log": "146a599020aba4ba05909a2de2f307ea731efd646a673919b2e1cfd88e17f859"
+    },
+    "result": "27 passed, 1 inherited checker failed; local Task042 uniform header then fixed and baseline comparison shows 0 new errors"
+  },
+  "registry_baseline_proof": {
+    "id": "pure/registry-baseline-proof-v2",
+    "source_state": {
+      "source_sha": "932bb2a747c15e846916474cefa0debf8d42b715",
+      "git_status": " M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042_neural_coarse_inverse/outcomes/accuracy_performance_memory.md\n M docs/task042_neural_coarse_inverse/outcomes/architecture_and_oracle.md\n M docs/task042_neural_coarse_inverse/outcomes/changed_files.md\n M docs/task042_neural_coarse_inverse/outcomes/dataset_and_model_provenance.md\n M docs/task042_neural_coarse_inverse/outcomes/environment_and_isolation.md\n M docs/task042_neural_coarse_inverse/outcomes/summary.md\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n M input/task042_neural_coarse_inverse/README.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/auxiliary_costs_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/component_metrics_v2.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/dataset_model_manifest_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/documentation_cpu_audit_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_b0_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_lin_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_nn_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/final_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/full_p6_comparison_v2.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/git_preparation_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/shared_workstation_snapshot_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv\n?? docs/task042_neural_coarse_inverse/response_v2.md\n",
+      "stage": "F0",
+      "formal_pde": false,
+      "command": [
+        "python",
+        "tmp/task042/registry_baseline_check_v2.py"
+      ],
+      "utc": "2026-09-28T13:57:22.608350+00:00",
+      "affinity": [
+        0
+      ],
+      "environment_mode": "pure",
+      "gpu_visible": false
+    },
+    "supervision": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 1.5302760869963095,
+      "sampled_process_tree_rss_peak_bytes": 21155840,
+      "sampled_process_tree_swap_peak_bytes": 0
+    },
+    "raw_sha256": {
+      "summary.json": "39283f6a9158ac719dbeff991682ab3c0033d4505d7fe8094d433aa2a46395f2",
+      "worker.log": "e3144ed8dae508cd101dda96d01fabe359edb374a1bfa3ec0f7eda801d4421aa"
+    }
+  },
+  "lint_compile": {
+    "schema": "task042.lint-compile.v2",
+    "status": "PASS",
+    "ruff_scope": "new Task042/learned numerical, runner, tests, profile and protocol; pre-existing legacy opt-in source compiled/paired tested without unrelated reformat",
+    "ruff_files": [
+      "/home/fenics/Projects/NN-Lab/src/runners/task042_experiment.py",
+      "/home/fenics/Projects/NN-Lab/src/runners/task042_coarse_stages.py",
+      "/home/fenics/Projects/NN-Lab/src/runners/task042_training.py",
+      "/home/fenics/Projects/NN-Lab/src/runners/task042_shared.py",
+      "/home/fenics/Projects/NN-Lab/src/solvers/learned_coarse_data.py",
+      "/home/fenics/Projects/NN-Lab/src/solvers/learned_coarse_packets.py",
+      "/home/fenics/Projects/NN-Lab/src/solvers/learned_coarse_runtime.py",
+      "/home/fenics/Projects/NN-Lab/src/solvers/learned_coarse_inverse.py",
+      "/home/fenics/Projects/NN-Lab/src/solvers/learned_training.py",
+      "/home/fenics/Projects/NN-Lab/src/solvers/learned_reduced_correction.py",
+      "/home/fenics/Projects/NN-Lab/src/test/test_task042_reduced_oracle.py",
+      "/home/fenics/Projects/NN-Lab/src/test/test_task042_mode_metadata.py",
+      "/home/fenics/Projects/NN-Lab/src/test/test_task042_shared_components.py",
+      "/home/fenics/Projects/NN-Lab/src/test/test_task042_p4_witness.py",
+      "/home/fenics/Projects/NN-Lab/src/test/test_task042_coarse_inverse_protocol.py",
+      "/home/fenics/Projects/NN-Lab/src/test/test_task042_shared_watchdog.py",
+      "src/io/task042_profile.py",
+      "src/solvers/coarse_inverse_protocol.py",
+      "scripts/task042_preflight.py",
+      "scripts/task042_bounded_check.py"
+    ],
+    "compiled_files": [
+      "/home/fenics/Projects/NN-Lab/src/runners/task042_coarse_stages.py",
+      "/home/fenics/Projects/NN-Lab/src/runners/task042_experiment.py",
+      "/home/fenics/Projects/NN-Lab/src/runners/task042_shared.py",
+      "/home/fenics/Projects/NN-Lab/src/runners/task042_training.py",
+      "/home/fenics/Projects/NN-Lab/src/solvers/learned_coarse_data.py",
+      "/home/fenics/Projects/NN-Lab/src/solvers/learned_coarse_inverse.py",
+      "/home/fenics/Projects/NN-Lab/src/solvers/learned_coarse_packets.py",
+      "/home/fenics/Projects/NN-Lab/src/solvers/learned_coarse_runtime.py",
+      "/home/fenics/Projects/NN-Lab/src/solvers/learned_reduced_correction.py",
+      "/home/fenics/Projects/NN-Lab/src/solvers/learned_training.py",
+      "/home/fenics/Projects/NN-Lab/src/test/test_task042_coarse_inverse_protocol.py",
+      "/home/fenics/Projects/NN-Lab/src/test/test_task042_mode_metadata.py",
+      "/home/fenics/Projects/NN-Lab/src/test/test_task042_p4_witness.py",
+      "/home/fenics/Projects/NN-Lab/src/test/test_task042_reduced_oracle.py",
+      "/home/fenics/Projects/NN-Lab/src/test/test_task042_shared_components.py",
+      "/home/fenics/Projects/NN-Lab/src/test/test_task042_shared_watchdog.py",
+      "benchmarks/subreaper_watchdog.py",
+      "scripts/run_case.py",
+      "scripts/task042_bounded_check.py",
+      "scripts/task042_preflight.py",
+      "src/io/input_schema.py",
+      "src/io/input_validation.py",
+      "src/io/task042_profile.py",
+      "src/runners/physical_retained_condensed_v20.py",
+      "src/runners/task042_coarse_stages.py",
+      "src/runners/task042_experiment.py",
+      "src/runners/task042_shared.py",
+      "src/runners/task042_training.py",
+      "src/solvers/coarse_inverse_protocol.py",
+      "src/solvers/learned_coarse_data.py",
+      "src/solvers/learned_coarse_inverse.py",
+      "src/solvers/learned_coarse_packets.py",
+      "src/solvers/learned_coarse_runtime.py",
+      "src/solvers/learned_reduced_correction.py",
+      "src/solvers/learned_training.py",
+      "src/solvers/p6_cell_condensed_action.py",
+      "src/test/test_task042_mode_metadata.py",
+      "src/test/test_task042_p4_witness.py",
+      "src/test/test_task042_reduced_oracle.py",
+      "src/test/test_task042_shared_components.py",
+      "src/test/test_task042_shared_watchdog.py"
+    ],
+    "bash_syntax": "PASS",
+    "diff_check": "PASS",
+    "bytecode": "Task042 activation local cache",
+    "formal_pde": false
+  },
+  "lint_supervision": {
+    "id": "pure/final-lint-compile-v2",
+    "source_state": {
+      "source_sha": "932bb2a747c15e846916474cefa0debf8d42b715",
+      "git_status": " M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042_neural_coarse_inverse/outcomes/accuracy_performance_memory.md\n M docs/task042_neural_coarse_inverse/outcomes/architecture_and_oracle.md\n M docs/task042_neural_coarse_inverse/outcomes/changed_files.md\n M docs/task042_neural_coarse_inverse/outcomes/dataset_and_model_provenance.md\n M docs/task042_neural_coarse_inverse/outcomes/environment_and_isolation.md\n M docs/task042_neural_coarse_inverse/outcomes/summary.md\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n M input/task042_neural_coarse_inverse/README.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/auxiliary_costs_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/component_metrics_v2.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/dataset_model_manifest_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/documentation_cpu_audit_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_b0_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_lin_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_nn_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/final_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/full_p6_comparison_v2.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/git_preparation_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/shared_workstation_snapshot_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv\n?? docs/task042_neural_coarse_inverse/response_v2.md\n",
+      "stage": "F0",
+      "formal_pde": false,
+      "command": [
+        "python",
+        "tmp/task042/lint_compile_v2.py"
+      ],
+      "utc": "2026-09-28T13:55:36.870675+00:00",
+      "affinity": [
+        0
+      ],
+      "environment_mode": "pure",
+      "gpu_visible": false
+    },
+    "supervision": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 1.551640474004671,
+      "sampled_process_tree_rss_peak_bytes": 38047744,
+      "sampled_process_tree_swap_peak_bytes": 0
+    },
+    "raw_sha256": {
+      "summary.json": "8b70da6af91089da41419186bed4c113a552ef808ddcf27a1b37ca6749a63f33",
+      "worker.log": "dae9cb3a49ebae47a4ed2dc47584d89e966a9ce92d62f96c3e40984951c18562"
+    }
+  },
+  "static_final": {
+    "classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "descendants_cleared": true,
+    "elapsed_seconds": 2.9449291710043326,
+    "sampled_process_tree_rss_peak_bytes": 96956416,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "source_state": {
+      "source_sha": "932bb2a747c15e846916474cefa0debf8d42b715",
+      "git_status": " M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042_neural_coarse_inverse/outcomes/accuracy_performance_memory.md\n M docs/task042_neural_coarse_inverse/outcomes/architecture_and_oracle.md\n M docs/task042_neural_coarse_inverse/outcomes/changed_files.md\n M docs/task042_neural_coarse_inverse/outcomes/dataset_and_model_provenance.md\n M docs/task042_neural_coarse_inverse/outcomes/environment_and_isolation.md\n M docs/task042_neural_coarse_inverse/outcomes/summary.md\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n M input/task042_neural_coarse_inverse/README.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/README.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/auxiliary_costs_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/component_metrics_v2.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/dataset_model_manifest_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/documentation_cpu_audit_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_b0_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_lin_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_nn_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/final_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/full_p6_comparison_v2.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/git_preparation_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/registry_contract_baseline_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/shared_workstation_snapshot_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv\n?? docs/task042_neural_coarse_inverse/response_v2.md\n",
+      "stage": "F0",
+      "formal_pde": false,
+      "command": [
+        "python",
+        "tmp/task042/static_checks_v2.py"
+      ],
+      "utc": "2026-09-28T14:00:45.095217+00:00",
+      "affinity": [
+        0
+      ],
+      "environment_mode": "pure",
+      "gpu_visible": false
+    }
+  }
+}

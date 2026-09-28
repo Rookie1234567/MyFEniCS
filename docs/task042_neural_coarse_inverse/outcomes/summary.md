@@ -1,72 +1,50 @@
-# Task042 首轮交付：F0 完成，等待共享工作站
+# Task042 第二轮：真实首轮试验，严格粗逆未合格
 
-| 项目 | 实际状态 / 数据身份 | 证据 |
+| 项目 | 实际结果 / 单位与身份 | 证据 |
 |---|---|---|
-| 最终分类 | `WAITING_FOR_SHARED_WORKSTATION`；F0 接口与隔离通过，F1–F5 `not_run` | [Gate](records/gate_decisions.json) |
-| 分支 / 工作树 | `task42_neural_coarse_inverse`；`/home/fenics/Projects/NN-Lab` linked worktree | [Git 准备](records/git_preparation.json) |
-| base / 初始任务锚点 | `ccd357885f7f9be84efe3be07868cc94f13d93fc` / `f8c51c8e614edc806cf72120ac2cfd14ae8b62f7`；均为祖先 | 同上 |
-| clean 运行源码 | `9934c2e08d017124ba70bdc86ec0c22f39ca792f`；此后提交为交付文档，不替代运行源码 | [运行账](records/bounded_f0_runs.json) |
-| 邻 heavy | 2026-09-28 08:57:36 UTC，原 2 nm worker 仍运行；另两 GPU 各100% | [现场快照](records/shared_workstation_snapshot.json) |
-| 环境 | FE complex128/int64、MPI1；独立 Torch `2.7.1+cpu`；项目导入、可写缓存均在 NN-Lab | [环境与隔离](environment_and_isolation.md) |
-| 无全局 p4 因子 | F0 新模块只有返回验证和声明检查；没有构建 FE/candidate/factor。实际部署 Gate 为 `not_run` | [架构](architecture_and_oracle.md) |
-| review / merge | 待 ChatGPT review；未批准 master merge；普通默认未改变 | [response](../response_v1.md) |
+| 终态 | `COARSE_INVERSE_NOT_QUALIFIED`；F1、teacher、oracle、CPU训练和三条F4路线已运行；F5 `not_run` | [独立重算Gate](records/gate_decisions_v2.json) |
+| 授权 | 用户允许Task042受控共享运行，覆盖本任务§2.3 heavy禁令和全机独占锁；原task/review保留；不代表F0正式review通过 | [授权原文与适用边界](shared_authorization_v2.md) |
+| 工作树 / 分支 | `/home/fenics/Projects/NN-Lab` canonical linked worktree；`task42_neural_coarse_inverse` | [隔离](environment_and_isolation.md) |
+| 冻结模型 | original Si矩形块13.5nm、1°/phi0/s、p6/h10、同网格p4、完整80个DtN通道；252cells | [真实F1](records/f1_real_components_v2.json) |
+| 真实运行源码 | F1 `cca180f875bd22146f2d30fa4d004e372135dfbb`；teacher `b72448bb2117a0221f041f1b47ac41049750a3c7`；oracle `d9de8ad69bfeeac4860e5187e1738c902a3d808e`；训练 `a221d881bae9405c98e351df2b0b9533582e6d50`；F4 `7216efa605bae155ee383fd716c0fae422448b52` | [逐run索引](records/run_index_v2.json)；后续文档HEAD不替代source |
+| 候选无全局p4 LU | B0及线性/NN构建全过程没有global p4 factor；只有有界cell/port、43个<=512行patch和128行bottom | [构造与全部F4](records/run_index_v2.json)、[架构](architecture_and_oracle.md) |
+| 资源 | MPI1、现场选核CPU0（48独立物理核，无SMT）；数学/编译/训练线程1；nice10/idle I/O；整树RSS hard16GiB/warning12GiB、own swap0 | [资源与影响](environment_and_isolation.md) |
+| GPU / 性能 | 两卡持续邻训练，CPU-only；所有成本标 `shared-workstation`，性能结论 `inconclusive` | [时间与内存](accuracy_performance_memory.md) |
 
-目标是在保留原电磁方程和最终验算的前提下，减少粗层直接分解的内存。粗层直接分解相当于提前存储一套快速求解辅助表；迭代粗逆则逐步纠正误差，节省存储但可能增加作用次数。本轮先做好独立环境和严格返回检查，避免把不合格近似解送入原平衡预条件器。工作站仍忙，因此没有执行数值研究，不能判断低内存、线性降维或神经网络的实际收益。
+粗层直接分解提前存储一套精确求解辅助表，迭代粗逆则反复纠正误差，节省因子存储但可能难以收敛。本轮用固定传统块方法B0处理全部未知量，再分别增加线性低维修正与小型神经修正，检验它们能否把原方程的误差降到严格门限。真正的p4返回需原A4、端口和恢复全部通过`1e-10`；局部误差或训练loss变小不等于返回合格。
 
-## 实施矩阵
+## 完成的数值阶段
 
-| 阶段 | 实施内容 | 状态 | 具体原因 / 范围 |
-|---|---|---|---|
-| F0 Git | 核验 canonical、仅 fetch 本分支、登记 NN-Lab、设置 upstream | measured pass | 原 Task39 refspec 保留；用户另授权仅追加 Task042 refspec |
-| F0 环境 | 新 activation、两独立 venv、导入路径/实际动态库/缓存核验 | measured pass | FE 仅导入，不创建 mesh/form/JIT；ML 仅 CPU 导入 |
-| F0 接口 | 原方程、累计端口、内部恢复、slave-zero、固定内层设置、因子容量声明 | 33 pure-array tests pass | 使用解析 toy 的受控 backend；不是 FGMRES 或 Maxwell 资格 |
-| F0 历史 | 冻结神经 SHA 下001/004/005的11份实际文档及5个接口审计 | read-only complete | Task001 无 response 文件；无 merge/cherry-pick/代码迁移 |
-| F1 | 真实小 FE、A6/A4/传递、固定 B0、离线 LU 参考 | not_run | heavy 资源 Gate 阻止；adapter/profile 尚未实现 |
-| F2 | teacher、分段数据、POD / 可表达性 oracle | not_run | 没有真实算子或数据，不做 synthetic 训练替代 |
-| F3 | 同预算 R-LIN 与一个 R-NN | not_run | 数据/表示 Gate 未通过；模型未创建 |
-| F4 | 至少16未见 RHS、严格 p4 返回、三独立进程计时 | not_run | 没有合格实际 candidate |
-| F5 | 条件 p6 外层和完整输出比较 | not_run | F4 未解锁 |
-
-冻结输入见 [静态清单](../../../input/task042_neural_coarse_inverse/frozen_model.json)：13.5 nm、1°、s、original Si block、Full3D p6/h10，同网格 p4、双 Floquet 和完整 auto Fourier-DtN。252 cells、173802/53084 FE storage、80通道是历史锚点；当前 mesh/mode/physical SHA 均未构建，未强填历史数量。
-
-## 统一数值与资源结果
-
-| 路线 | 比较目的 | 原 A4 / A6 真残差 | R/T/A/A_volume、场、E/H、全部通道 | 端到端时间 / RSS / VRAM | 数据身份 |
-|---|---|---|---|---|---|
-| R-LU | 本轮准确粗逆参考，计入分解和验算 | not_run | not_run | not_run | 没有本轮实测 baseline |
-| R-B0 | 去全局因子后的固定传统低内存 PC | not_run | not_run | not_run | 无 candidate 构造 |
-| R-LIN | 在 B0 上增加线性低维修正 | not_run | not_run | not_run | 无数据、basis、线性 map |
-| R-NN | 在相同表示上检验神经增量 | not_run | not_run | not_run | 无训练/checkpoint/推理 |
-
-详见 [full p6 CSV](records/full_p6_comparison.csv) 和 [准确性、性能、内存](accuracy_performance_memory.md)。旧任务成功解仍是历史证据，不作为本轮速度分母。去因子、B0、线性降维、NN增量四项收益全部未测；G-memory/G-time/G-neural 和 N=1/10/100 摊销均 `not_run`。
-
-| F0 实测口径 | 数值 / 单位 | 含义 / 证据 |
+| 阶段 | 实际结果 | Gate与限制 |
 |---|---|---|
-| clean 最终纯数组测试 | 33 passed，pytest 0.19 s； enclosing workflow 1.659649 s；RSS 67,231,744 B | [运行账](records/bounded_f0_runs.json) |
-| 11个解析 toy 返回 | native witness 最大 `1.2757622972373108e-16`；port/recovery最大0 | [数组记录](records/pure_component_audit.json)；不是物理 A4 残差 |
-| 初期安装/测试、失败导入和最终导入/测试 | 9个顺序监督工作流共72.225243 s；采样同时整树 RSS 最大236,548,096 B；各树 swap0 | 同上；峰值取最大，不相加 |
-| 数组证据提取 | 1.751461 s；RSS 65,552,384 B；swap0 | [运行索引](records/run_index.json) |
-| GPU | 不启动 GPU；Task042 VRAM 峰 `not_run` | CPU-only Torch；不能把邻 GPU 使用量记为本任务 |
-| 覆盖限制 | 未持续监督编辑器、Git、只读审阅、venv 创建与等待 | 不虚构整段会话峰值/总耗时；最终静态检查另列 [测试摘要](test_summary.md) |
+| F0历史 | 独立Git/FE/ML/缓存和33解析协议测试；先前因heavy等待 | [response_v1](../response_v1.md)及无后缀records是保留历史；不再把等待状态当本轮终态 |
+| F1真实接口 | 原A4=PH A6P相对差`3.366065072840215e-15`；独立p4 Schur作用差`2.3566154699905024e-16`；非零内部/80端口制造解p4/p6原残差`1.2255722548154e-14 / 2.0935547822786585e-14` | 接口通过；F1 B0七个非零载荷在256步失败，全部保留 |
+| F2 teacher | 256train/64validation/64heldout，每batch<=32；384对原方程/端口/内部/恒等式均<=1e-10；最坏native`3.959901353972973e-12` | global LU仅离线teacher；destroy且退出后才运行下一阶段 |
+| F2可表达性oracle | ranks16/32/64/128全部通过预登记的诊断标准；rank128 validation误差比`.5138245737888352`、最佳native残差比`.3338841772011458` | 仅表示正信号，非严格逆资格；固定rank128继续，未扫描扩大 |
+| F3 R-LIN / R-NN | 同basis/FP64/归一化/B0；NN两hidden64、103040参数、300epochs，validation选51；有载训练19.036s | 独立CPU-only Torch进程；heldout不参与训练或选型 |
+| F4严格返回 | 三路线各同16 heldout；每路线只有精确零通过，其余15个均256步后未达1e-10 | 无fallback、无数值调参重跑；端口失败独立记录，内部恢复小不改变判定 |
+| F5 / 三次合格计时 | `not_run` | 无F4合格路线，不能嵌入p6；不产生official R/T/A、场或通道数据 |
 
-## 失败、决策与下一步
+## 同组严格粗返回结果
 
-| 项目 | 事实 | 决策 |
-|---|---|---|
-| FE 初次预检 | C1 上错误 API `jit.get_parameters()` 抛 AttributeError；3.719178 s、179,027,968 B、swap0、后代清场 | 保留失败；最小修复为0.10实际 `get_options()`，补隔离 XDG_CONFIG_HOME；一次针对性重检通过 |
-| 共享资源 | 原 worker PID341839/start_ticks17197130、CPU24，RSS快照1,149,927,038,976 B；监督器CPU9/10，另 ML CPU25–32 | Task042 CPU14仅轻测试；没有控制邻任务；交付后等待 review |
-| 数值研究 | 未启动；不存在数值停滞、表示失败或NN负结果 | 不作算法结论、不进行参数扫描或自动等空闲启动 |
-| 后续 | 同机重新核验 heavy 清场与 lock，完成 F1 opt-in adapter、真实身份和容量检查 | 再按原 F1→F5 Gate 顺序；首轮不跨到5/2/0.7 nm |
+| 路线/作用 | 严格通过 | 实际 PH b6 原A4残差 | 同 RHS port closure | 非零 RHS 内部恢复最大 | 整树 wall s | 整树 RSS 峰 |
+|---|---|---|---|---|---|---|
+| R-B0 | 1/16，仅零 RHS | 0.998655 | 0.465472 | 4.70942e-16 | 486.668 | 0.793 GiB |
+| R-LIN | 1/16，仅零 RHS | 0.998262 | 0.239496 | 2.11953e-16 | 1239.273 | 0.962 GiB |
+| R-NN | 1/16，仅零 RHS | 0.998456 | 0.179987 | 2.20347e-16 | 1238.082 | 0.937 GiB |
 
-## Selective merge 边界
+原A4残差是完整原方程的相对不平衡量，port closure是端口方程的独立相对不平衡量；门限均`1e-10`。内部恢复达到很小误差，只证明局部消元有效，全局及端口错误仍接近原载荷量级。全部16项与实值见[逐RHS CSV](records/strict_rhs_metrics_v2.csv)和[准确性分析](accuracy_performance_memory.md)。
 
-| 依赖组 | 本轮内容 | 建议 / fresh PDE evidence |
-|---|---|---|
-| production numerical/core | 无 production 变更 | 不提升新协议为生产粗逆；没有 fresh PDE |
-| reusable runner/watchdog | 复用既有 subreaper；新脚本只是 F0 2 GiB 参数封装 | research tool；依赖既有监督器；仅自身后代可被停止 |
-| checker/benchmark | 独立返回检查、33纯数组测试、import/path核验 | 可审阅基础接口；真实 FE witness、构造记账仍待资格化 |
-| compact evidence/docs | 本 outcomes、response、progress、registry | 正负与未运行证据可独立审阅 |
-| research-only | activation、独立依赖清单、静态模型冻结、新协议 | 全部保留本执行分支，等待 review |
-| do-not-merge | venv、下载/bytecode/JIT缓存、raw日志/时间线 | ignored；不提交大数据、factor、模型或旧结果 |
+去全局因子已由构造及容量记录证明；B0、线性降维和NN均未提供合格粗返回。oracle显示线性子空间能表示部分训练/验证误差，但未使严格迭代成功。神经额外贡献没有正信号，不能把表示改善或去因子的效果算给NN。共享负载、缓存及生命周期不同，不能据此宣布正式20%内存/时间改善或10%神经加速；N=1/10/100合格求解摊销与break-even未定义。
 
-实际变化和依赖见 [changed_files](changed_files.md)。本轮只推送执行分支，之后停止等待 ChatGPT review。
+## 全过程数值成本及未运行项
+
+全部正式组件尝试（包含4次实现/环境失败）监督wall合计`8250.064 s`；阶段同时整树RSS最大`2.198 GiB`（取最大，不相加），各树swap0。teacher、oracle、训练和各路线分别计费；安装/测试/预检另列，编辑器/Git/只读审阅的总会话内存与耗时未持续采样。所有数值成本均shared-workstation，未启动Task042 GPU，无本任务VRAM分配，PSS及cgroup峰未采样。
+
+原p6物理载荷求解与全部R/T/A/A_volume、R00_s/p/total、复E/H、场/scaled-curl、80通道复振幅/功率均`not_run`，见[统一p6 CSV](records/full_p6_comparison_v2.csv)。p6仅F1矩阵作用/制造解接口验证，不冒充最终物理解。5/2/0.7nm、h/p/角度/几何泛化、GPU训练和无界参数扫描均未运行。
+
+运行中未观测到触线的持续内存压力或Task042 swap，邻worker/监督器身份保留并有CPU时间推进；已有可读阶段记录缺少可比实时耗时，不能证明绝对零干扰，也不能判断邻任务自然阶段变化是否受影响。详见[环境与影响证据](environment_and_isolation.md)。
+
+## 审阅与合入边界
+
+研究接口、参数化监督器、严格checker、有限数值证据和模型总账可审阅；本轮研究粗逆未合格，不作为production默认。[实际变化与依赖分组](changed_files.md)、[测试](test_summary.md)、[数据与模型身份](dataset_and_model_provenance.md)、[response_v2](../response_v2.md)给出完整入口。保留所有失败与F0记录；只推送本执行分支，之后停止等待ChatGPT review，不合并master。

@@ -1526,7 +1526,9 @@ S6 优化只省掉取得对角项时不需要的计算；A2R 用额外矩阵及�
 | `native_2nm_h1p5_measured_retry_current` | source `41caf5141493ad6c5d6c518a64ee74fda8d7a7db`；run `20260918T035017.294454Z`；54332 cells、p6 35594790、p4 10604228、augmented 10608132、augmented NNZ 4899800920；3904 modes/3902 propagating | symbolic facts `INFOG1=0, INFOG7=4, INFOG16=1222577, RINFOG1=1100362818940466`；p4 numeric 进行中，末次RSS `477900079104 B`、swap0；1300 GB guard attachment peak 同值 | `RUNNING; NOT_NUMERIC_OR_PHYSICS_QUALIFIED`；outer/RTA未运行，阶段峰值未完整聚合；[compact](task39extra_para_workstation_capacity/outcomes/records/2nm_h1p5_measured_running_snapshot_v1.json)、[Response V4](task39extra_para_workstation_capacity/response_v4.md) |
 | `native_2nm_h1p5_measured_retry_terminal` | 同一 run/source；workflow `176218.086 s`；原 watchdog 整树RSS峰 `635625377792 B`、任务树swap0；global pswpout `2→73`（delta71页） | 独立1300 GB guard attachment峰 `640141377536 B`，随后因 RSS unreadable/`monitoring_failed` 停止，约晚于原 watchdog stop `0.245228993 s`；两峰均未达各自 cap | `GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED; exit=-9`；无 numeric complete/outer/RTA；不称OOM或数值失败；[terminal compact](task39extra_para_workstation_capacity/outcomes/records/2nm_h1p5_measured_terminal_snapshot_v1.json) |
 
-## 3.43 Task042：神经辅助低内存 p4 粗逆，F0资源等待
+## 3.43 Task042：神经辅助低内存 p4 粗逆
+
+### 3.43.0 F0历史（response_v1）
 
 本任务研究用原p4方程上的迭代求逆减少全局LU存储，并分别比较传统低内存、线性降维和神经修正。本轮共享工作站仍有原2nm计算及其他GPU训练，按任务合同止于隔离、接口与有界数组验证；没有取得新的正式模型资格。
 
@@ -1536,6 +1538,23 @@ S6 优化只省掉取得对角项时不需要的计算；A2R 用额外矩阵及�
 | `task042_f0_strict_return_toy`；measured纯数组 | complex128解析3×3+port+slave toy，非Maxwell | 独立原方程/累计端口/恢复返回检查；实际FGMRES/PC未实现 | 33测试通过；11toy返回native最大1.2757622972373108e-16、port/recovery0；受监督F0采样RSS最大236548096B、own swap0、无GPU训练；不作物理或因子消除资格 | `component_interface_pass`；clean source`9934c2e08d017124ba70bdc86ec0c22f39ca792f`；[audit](task042_neural_coarse_inverse/outcomes/records/pure_component_audit.json)、[运行账](task042_neural_coarse_inverse/outcomes/records/run_index.json) |
 
 F1–F5由邻heavy占用而未启动，不是数值方法失败。teacher/dataset/basis/线性map/model/checkpoint均无；神经增量、20%时间/内存改善与摊销没有数据。NN-Lab为canonical linked worktree，新FE/CPU-only ML环境及可写缓存隔离，旧计算源码/HEAD/环境/watchdog保留。下一步先由review检查F0，再重新核查同机空闲/lock，完成真实无global p4 factor的opt-in构造和逐阶段Gate。没有master merge或ordinary default变更。
+
+### 3.43.1 V2：受控共享首轮实际数值
+
+上一小节表为response_v1的F0历史。用户2026-09-28授权仅Task042受控共享CPU，override本任务heavy/全机锁要求，未修改其他任务合同或宣布F0正式review通过。真实fixed operator与F1/F2/F3/F4已经运行，终态严格粗逆未合格，未获正式p6场资格。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `task042_original_13p5nm_p6h10_interfaces_v2` | measured / shared-workstation | 固定original13.5nm；p6/h10接口、同网格物理p4 | 原A4 / original Si block 13.5nm、1°/phi0/s、Full3D p6/h10，同网格p4、完整80DtN；252cells、p6/p4 storage173802/53084，p4 Schur21824rows/8184464NNZ；原p6未物化全局CSR，NNZ not_assembled | A4=PH A6P差3.366065072840215e-15，非零内部/port制造解A4/A6残差1.2255722548154e-14/2.0935547822786585e-14；F1监督1242.043s/1641930752B | `real_component_pass`，非最终物理解 | [F1](task042_neural_coarse_inverse/outcomes/records/f1_real_components_v2.json) |
+| `task042_offline_p4_teacher_v2` | measured / shared-workstation | 固定original13.5nm；p6/h10接口、同网格物理p4 | 原A4 / 原p4准确LU仅离线参考/384对teacher；256train/64validation/64heldout，每batch<=32，native/port/internal/恒等式审核 | 最坏native3.959901353972973e-12；factorNNZ40282272，后端644.516352decimalMB；监督1687.602s/1558155264B，swap0；shared-workstation | `TEACHER_QUALIFIED`，factor.destroy并退出后才部署，无候选共驻留 | [teacher](task042_neural_coarse_inverse/outcomes/records/teacher_complete_v2.json) |
+| `task042_rank128_oracle_v2` | measured / shared-workstation | 固定original13.5nm；p6/h10接口、同网格物理p4 | 原A4 / 固定B0难分量POD，ranks16/32/64/128；独立原native残差像QR | validation表示比.5138245738/native最佳残差比.3338841772，线性一步native中位1.2612261732；监督358.751s/1405636608B | `REPRESENTATION_POSITIVE`仅诊断，非1e-10资格 | [oracle](task042_neural_coarse_inverse/outcomes/records/oracle_complete_v2.json) |
+| `task042_cpu_fp64_mlp_v2` | measured / shared-workstation | 固定original13.5nm；p6/h10接口、同网格物理p4 | 原A4 / 同rank128/B0/归一化，2hidden64、FP64实虚、103040参数；CPU-only Torch、线程1/Loader0 | 300epochs、validation选51，有载19.036174s/监督22.267641s、RSS361848832B、swap0；权重824320B；无本任务GPU分配 | `TRAINING_COMPLETED`，非部署资格 | [model](task042_neural_coarse_inverse/outcomes/records/training_complete_v2.json) |
+| `task042_r-b0_strict_v2` | measured / shared-workstation | 固定original13.5nm；p6/h10接口、同网格物理p4 | 原A4 / 同16未见RHS、RIGHT FGMRES32/max256/zero，全部无global p4 LU/私有CSR；R-B0比较传统/线性/神经增量 | 物理PHb6原A4=0.998654967105、port=0.465471752706，限值1e-10；1/16仅zero，非零256步；486.668s/851476480B，swap0；shared-workstation | `COARSE_INVERSE_NOT_QUALIFIED` | [严格CSV](task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv) |
+| `task042_r-lin_strict_v2` | measured / shared-workstation | 固定original13.5nm；p6/h10接口、同网格物理p4 | 原A4 / 同16未见RHS、RIGHT FGMRES32/max256/zero，全部无global p4 LU/私有CSR；R-LIN比较传统/线性/神经增量 | 物理PHb6原A4=0.998261536287、port=0.239495977416，限值1e-10；1/16仅zero，非零256步；1239.273s/1032511488B，swap0；shared-workstation | `COARSE_INVERSE_NOT_QUALIFIED` | [严格CSV](task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv) |
+| `task042_r-nn_strict_v2` | measured / shared-workstation | 固定original13.5nm；p6/h10接口、同网格物理p4 | 原A4 / 同16未见RHS、RIGHT FGMRES32/max256/zero，全部无global p4 LU/私有CSR；R-NN比较传统/线性/神经增量 | 物理PHb6原A4=0.998455926264、port=0.179987283836，限值1e-10；1/16仅zero，非零256步；1238.082s/1006587904B，swap0；shared-workstation | `COARSE_INVERSE_NOT_QUALIFIED` | [严格CSV](task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv) |
+
+所选NN的validation原方程loss为1.837990301367067，初始线性映射为1.6581681312213055；离线native目标记录LINEAR_BASELINE_PREFERRED，两者部署资格均失败。所有official R/T/A/A_volume、R00_s/p/total、80通道复振幅/功率、复E/H、场/scaled-curl与能量闭合均not_run，F4没有合格路线所以不嵌入p6。G-time/G-memory inconclusive、G-neural无正信号，不能把去因子或表示改善算给NN；teacher/oracle/train/各候选成本分别记录，不累加RSS峰。CPU现场选核、16GiB整树阈值/own swap0、额外128GiB邻增长余量、独立FE/ML/缓存保护邻任务，未改原watchdog/锁；PSI无持续压力但无可比阶段吞吐，不能宣称零影响。原p6实际物理解、三合格计时、5/2/0.7nm/几何泛化全部not_run。无production/default或master merge approval；仅推送执行分支后等review。[Summary](task042_neural_coarse_inverse/outcomes/summary.md)、[Response V2](task042_neural_coarse_inverse/response_v2.md)。
+
 
 # 4. 今后新增模型的登记模板
 

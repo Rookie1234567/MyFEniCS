@@ -1,0 +1,862 @@
+{
+  "schema": "task042.auxiliary-costs.v2",
+  "scope": "bounded installation/probes/targeted tests/static extraction with source_state UTC >= 10:00; numerical results indexed separately; venv creation/editor/Git/review/wait unsampled",
+  "shared_workstation": true,
+  "runs": [
+    {
+      "id": "tmp/task042/pure/shared-profile-tests-02",
+      "utc": "2026-09-28T10:13:38.190018+00:00",
+      "source_sha": "a76e0435a40139dd6d2a31f0726fb229c7adaff8",
+      "git_status": " M benchmarks/subreaper_watchdog.py\n M scripts/activate_task042.sh\n M scripts/run_case.py\n M src/io/input_schema.py\n M src/io/input_validation.py\n M src/runners/physical_retained_condensed_v20.py\n?? docs/task042_neural_coarse_inverse/outcomes/shared_authorization_v2.md\n?? input/task042_neural_coarse_inverse/f1_b0_shared.dat\n?? input/task042_neural_coarse_inverse/f1_reference_shared.dat\n?? input/task042_neural_coarse_inverse/shared_profile_v1.json\n?? src/io/task042_profile.py\n?? src/runners/task042_experiment.py\n?? src/runners/task042_shared.py\n?? src/solvers/learned_coarse_inverse.py\n?? src/test/test_task042_shared_components.py\n",
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "src/test/test_task042_shared_components.py",
+        "src/test/test_task042_coarse_inverse_protocol.py"
+      ],
+      "affinity": [
+        0
+      ],
+      "environment_mode": "pure",
+      "shared_workstation": true,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 1.6670789520139806,
+      "rss_peak_bytes": 82169856,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/pure/shared-profile-tests-02/summary.json": "c4bb36abfe90aee450e14ee91823de385077c71deabf728531a5cedfb444ee03",
+        "tmp/task042/pure/shared-profile-tests-02/worker.log": "068610c15e2716ad9dbda4df158f891693e53cb7da2c57aef3783e722fb6f354"
+      }
+    },
+    {
+      "id": "tmp/task042/pure/shared-profile-tests-03",
+      "utc": "2026-09-28T10:15:24.449874+00:00",
+      "source_sha": "a76e0435a40139dd6d2a31f0726fb229c7adaff8",
+      "git_status": " M benchmarks/subreaper_watchdog.py\n M scripts/activate_task042.sh\n M scripts/run_case.py\n M src/io/input_schema.py\n M src/io/input_validation.py\n M src/runners/physical_retained_condensed_v20.py\n?? docs/task042_neural_coarse_inverse/outcomes/shared_authorization_v2.md\n?? input/task042_neural_coarse_inverse/f1_b0_shared.dat\n?? input/task042_neural_coarse_inverse/f1_reference_shared.dat\n?? input/task042_neural_coarse_inverse/shared_profile_v1.json\n?? src/io/task042_profile.py\n?? src/runners/task042_experiment.py\n?? src/runners/task042_shared.py\n?? src/solvers/learned_coarse_inverse.py\n?? src/test/test_task042_shared_components.py\n?? src/test/test_task042_shared_watchdog.py\n",
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "src/test/test_task042_shared_components.py",
+        "src/test/test_task042_shared_watchdog.py",
+        "src/test/test_task042_coarse_inverse_protocol.py"
+      ],
+      "affinity": [
+        0
+      ],
+      "environment_mode": "pure",
+      "shared_workstation": true,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 3.1486584020312876,
+      "rss_peak_bytes": 274219008,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/pure/shared-profile-tests-03/summary.json": "b4a0cbd2a1b12b440235cd64c8f1af14d0cdeaa2ac7e2d0d824dea8f397bb3d0",
+        "tmp/task042/pure/shared-profile-tests-03/worker.log": "cfbc60c04f23d8c29d531b1fccefb8affecc0379005a32864111e36bae7ed55c"
+      }
+    },
+    {
+      "id": "tmp/task042/pure/shared-regressions-01",
+      "utc": "2026-09-28T10:18:35.377102+00:00",
+      "source_sha": "a76e0435a40139dd6d2a31f0726fb229c7adaff8",
+      "git_status": " M benchmarks/subreaper_watchdog.py\n M scripts/activate_task042.sh\n M scripts/run_case.py\n M src/io/input_schema.py\n M src/io/input_validation.py\n M src/runners/physical_retained_condensed_v20.py\n?? docs/task042_neural_coarse_inverse/outcomes/shared_authorization_v2.md\n?? input/task042_neural_coarse_inverse/f1_b0_shared.dat\n?? input/task042_neural_coarse_inverse/f1_reference_shared.dat\n?? input/task042_neural_coarse_inverse/shared_profile_v1.json\n?? src/io/task042_profile.py\n?? src/runners/task042_experiment.py\n?? src/runners/task042_shared.py\n?? src/solvers/learned_coarse_inverse.py\n?? src/test/test_task042_shared_components.py\n?? src/test/test_task042_shared_watchdog.py\n",
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "src/test/test_task042_shared_components.py",
+        "src/test/test_task042_shared_watchdog.py",
+        "src/test/test_354_subreaper_watchdog.py",
+        "src/test/test_260_task038_input_schema.py",
+        "src/test/test_261_task038_input_resolution.py"
+      ],
+      "affinity": [
+        0
+      ],
+      "environment_mode": "pure",
+      "shared_workstation": true,
+      "classification": "WORKER_FAILED",
+      "exit": 1,
+      "descendants_cleared": true,
+      "elapsed_seconds": 27.395041711977683,
+      "rss_peak_bytes": 219770880,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/pure/shared-regressions-01/summary.json": "7bfb99d02a2461372ea0339a627422ac4cecb95c9ceb47120b81891c2d65dc33",
+        "tmp/task042/pure/shared-regressions-01/worker.log": "8297074804dac3763da163eb211afba60939f13a5d98bb39a338013bdd9bea64"
+      }
+    },
+    {
+      "id": "tmp/task042/pure/inherited-schema-baseline-01",
+      "utc": "2026-09-28T10:22:07.068301+00:00",
+      "source_sha": "a76e0435a40139dd6d2a31f0726fb229c7adaff8",
+      "git_status": " M benchmarks/subreaper_watchdog.py\n M scripts/activate_task042.sh\n M scripts/run_case.py\n M src/io/input_schema.py\n M src/io/input_validation.py\n M src/runners/physical_retained_condensed_v20.py\n?? docs/task042_neural_coarse_inverse/outcomes/shared_authorization_v2.md\n?? input/task042_neural_coarse_inverse/f1_b0_shared.dat\n?? input/task042_neural_coarse_inverse/f1_reference_shared.dat\n?? input/task042_neural_coarse_inverse/shared_profile_v1.json\n?? src/io/task042_profile.py\n?? src/runners/task042_experiment.py\n?? src/runners/task042_shared.py\n?? src/solvers/learned_coarse_inverse.py\n?? src/test/test_task042_shared_components.py\n?? src/test/test_task042_shared_watchdog.py\n",
+      "command": [
+        "python",
+        "tmp/task042/check_inherited_schema_failures.py"
+      ],
+      "affinity": [
+        0
+      ],
+      "environment_mode": "pure",
+      "shared_workstation": true,
+      "classification": "WORKER_FAILED",
+      "exit": 1,
+      "descendants_cleared": true,
+      "elapsed_seconds": 1.5604167180135846,
+      "rss_peak_bytes": 67678208,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/pure/inherited-schema-baseline-01/summary.json": "c5fd55e25551fb1cdddf2359adc46d595101b6aa9a86f6cdd0aa240adb3bd157",
+        "tmp/task042/pure/inherited-schema-baseline-01/worker.log": "cf3de52c76248faa82847131b25da70ece3fd842e42ac6ce3b81e37eaf6409fc"
+      }
+    },
+    {
+      "id": "tmp/task042/pure/shared-final-check-01",
+      "utc": "2026-09-28T10:23:11.074249+00:00",
+      "source_sha": "a76e0435a40139dd6d2a31f0726fb229c7adaff8",
+      "git_status": " M benchmarks/subreaper_watchdog.py\n M scripts/activate_task042.sh\n M scripts/run_case.py\n M src/io/input_schema.py\n M src/io/input_validation.py\n M src/runners/physical_retained_condensed_v20.py\n?? docs/task042_neural_coarse_inverse/outcomes/shared_authorization_v2.md\n?? input/task042_neural_coarse_inverse/f1_b0_shared.dat\n?? input/task042_neural_coarse_inverse/f1_reference_shared.dat\n?? input/task042_neural_coarse_inverse/shared_profile_v1.json\n?? src/io/task042_profile.py\n?? src/runners/task042_experiment.py\n?? src/runners/task042_shared.py\n?? src/solvers/learned_coarse_inverse.py\n?? src/test/test_task042_shared_components.py\n?? src/test/test_task042_shared_watchdog.py\n",
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "src/test/test_task042_shared_components.py",
+        "src/test/test_task042_shared_watchdog.py",
+        "src/test/test_354_subreaper_watchdog.py",
+        "src/test/test_261_task038_input_resolution.py"
+      ],
+      "affinity": [
+        0
+      ],
+      "environment_mode": "pure",
+      "shared_workstation": true,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 27.298877933993936,
+      "rss_peak_bytes": 140095488,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/pure/shared-final-check-01/summary.json": "f464f5faaa82d48a33fbf5fa20a3a2a7d12ea42277c61b8f068fd3a0a8cf1e01",
+        "tmp/task042/pure/shared-final-check-01/worker.log": "fc2477fb6fa61225d1b6216adc042f1208bee49db2281f02c5be8ff3ad5017d0"
+      }
+    },
+    {
+      "id": "tmp/task042/fe/shared-clean-preflight-01",
+      "utc": "2026-09-28T10:25:45.697461+00:00",
+      "source_sha": "ae5b7d2b79dec38056e4a8b9bd986429989455dd",
+      "git_status": "",
+      "command": [
+        "python",
+        "scripts/task042_preflight.py",
+        "--output",
+        "tmp/task042/fe/shared-clean-preflight-01-imports.json"
+      ],
+      "affinity": [
+        0
+      ],
+      "environment_mode": "fe",
+      "shared_workstation": true,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 2.447243814007379,
+      "rss_peak_bytes": 142450688,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/fe/shared-clean-preflight-01/summary.json": "b7436bd8b628873c4999598e560a6af8beef089c21f385a5edc391984359577f",
+        "tmp/task042/fe/shared-clean-preflight-01/worker.log": "afd288bcbcd9a9c194e4189733630f57a16dc3c4fb00d4d5bf6fbd652d034122"
+      }
+    },
+    {
+      "id": "tmp/task042/fe/optional-dependency-probe-01",
+      "utc": "2026-09-28T10:28:00.907991+00:00",
+      "source_sha": "ae5b7d2b79dec38056e4a8b9bd986429989455dd",
+      "git_status": "",
+      "command": [
+        "python",
+        "-m",
+        "pip",
+        "index",
+        "versions",
+        "pyvista",
+        "--disable-pip-version-check"
+      ],
+      "affinity": [
+        0
+      ],
+      "environment_mode": "fe",
+      "shared_workstation": true,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 4.603031125967391,
+      "rss_peak_bytes": 78422016,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/fe/optional-dependency-probe-01/summary.json": "70ef50e985c20f8c7008388ee4d859158b23b4fff054349627096034b4b95960",
+        "tmp/task042/fe/optional-dependency-probe-01/worker.log": "edca3f7d4ed1f9b7a1cf0aec693c5aabb61a0b21c30496b68ba9f87907ecc99b"
+      }
+    },
+    {
+      "id": "tmp/task042/fe/pyvista-install-01",
+      "utc": "2026-09-28T10:29:04.336621+00:00",
+      "source_sha": "ae5b7d2b79dec38056e4a8b9bd986429989455dd",
+      "git_status": "?? input/task042_neural_coarse_inverse/requirements-fe-tools.txt\n",
+      "command": [
+        "python",
+        "-m",
+        "pip",
+        "install",
+        "--no-input",
+        "--only-binary=:all:",
+        "-r",
+        "input/task042_neural_coarse_inverse/requirements-fe-tools.txt"
+      ],
+      "affinity": [
+        0
+      ],
+      "environment_mode": "pure",
+      "shared_workstation": true,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 33.47026795503916,
+      "rss_peak_bytes": 256200704,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/fe/pyvista-install-01/summary.json": "478bb89f0c63f66cdeb59d9fa823fc785d5942f2202bb51336453a8ca31b2610",
+        "tmp/task042/fe/pyvista-install-01/worker.log": "3ad4843ec031e9ba36af9b8d0f5a30141f43265edb2a317c645b2c18d72f298f"
+      }
+    },
+    {
+      "id": "tmp/task042/fe/project-import-check-01",
+      "utc": "2026-09-28T10:31:04.561585+00:00",
+      "source_sha": "ae5b7d2b79dec38056e4a8b9bd986429989455dd",
+      "git_status": "?? input/task042_neural_coarse_inverse/requirements-fe-tools.txt\n",
+      "command": [
+        "python",
+        "-c",
+        "import numpy,pyvista; from petsc4py import PETSc; from src.solvers import dtn_port_3d; from src.runners.task042_experiment import thread_qualification; assert numpy.__version__ == \"1.26.4\"; assert PETSc.ScalarType is numpy.complex128; assert PETSc.IntType is numpy.int64; print(\"project imports pass\",pyvista.__version__,pyvista.__file__,thread_qualification())"
+      ],
+      "affinity": [
+        0
+      ],
+      "environment_mode": "fe",
+      "shared_workstation": true,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 4.033465023036115,
+      "rss_peak_bytes": 227102720,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/fe/project-import-check-01/summary.json": "20a716c6f928fb31e9ad7536f0f99fa5732de83721c76640a7eeb95308431073",
+        "tmp/task042/fe/project-import-check-01/worker.log": "270a8263783e4f6f8b827e562c026c192c3f02ce7d57cc3200e761e7d12371b9"
+      }
+    },
+    {
+      "id": "tmp/task042/fe/shared-clean-preflight-02",
+      "utc": "2026-09-28T10:33:45.262792+00:00",
+      "source_sha": "23cb4710e3ed2c8f7c51fd2b3f4e4dd952bea716",
+      "git_status": "",
+      "command": [
+        "python",
+        "scripts/task042_preflight.py",
+        "--output",
+        "tmp/task042/fe/shared-clean-preflight-02-imports.json"
+      ],
+      "affinity": [
+        0
+      ],
+      "environment_mode": "fe",
+      "shared_workstation": true,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 3.288938303012401,
+      "rss_peak_bytes": 223105024,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/fe/shared-clean-preflight-02/summary.json": "274cf8c5602adc1ea5784a6710ec7aedcd895b6452fb647c3892406676388b4d",
+        "tmp/task042/fe/shared-clean-preflight-02/worker.log": "75bde92863e020687bbfa3e7e2f3818c77a2f58f455bd93fddc430c8b2be83f8"
+      }
+    },
+    {
+      "id": "tmp/task042/fe/setuptools-install-01",
+      "utc": "2026-09-28T10:35:56.392879+00:00",
+      "source_sha": "23cb4710e3ed2c8f7c51fd2b3f4e4dd952bea716",
+      "git_status": " M input/task042_neural_coarse_inverse/requirements-fe-tools.txt\n",
+      "command": [
+        "python",
+        "-m",
+        "pip",
+        "install",
+        "--no-input",
+        "--only-binary=:all:",
+        "setuptools==78.1.0"
+      ],
+      "affinity": [
+        0
+      ],
+      "environment_mode": "pure",
+      "shared_workstation": true,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 7.207633191021159,
+      "rss_peak_bytes": 92135424,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/fe/setuptools-install-01/summary.json": "ab4cb73e6cddcbead1c54e3610c4de5730ae780d874323c9a2995c6b5e26ea51",
+        "tmp/task042/fe/setuptools-install-01/worker.log": "da8ba985fbcc5d8a02d533cb395839317e3672106f60b63356e13e92831409d1"
+      }
+    },
+    {
+      "id": "tmp/task042/fe/cffi-build-check-01",
+      "utc": "2026-09-28T10:37:10.829932+00:00",
+      "source_sha": "23cb4710e3ed2c8f7c51fd2b3f4e4dd952bea716",
+      "git_status": " M input/task042_neural_coarse_inverse/requirements-fe-tools.txt\n",
+      "command": [
+        "python",
+        "tmp/task042/cffi_build_probe.py"
+      ],
+      "affinity": [
+        0
+      ],
+      "environment_mode": "fe",
+      "shared_workstation": true,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 2.559660230006557,
+      "rss_peak_bytes": 79179776,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/fe/cffi-build-check-01/summary.json": "8128270b24c55f341de97d51aa8a5a99560cbfeba655d0d00498620a22a5954f",
+        "tmp/task042/fe/cffi-build-check-01/worker.log": "8982dc788d3d68d233ae0d40a32371307bd3f0f8deb4288100f54b3311302389"
+      }
+    },
+    {
+      "id": "tmp/task042/fe/f1-preflight-03",
+      "utc": "2026-09-28T10:42:46.026492+00:00",
+      "source_sha": "f194e455cf904d255fbb30151f21d12be19bc56b",
+      "git_status": "",
+      "command": [
+        "python",
+        "scripts/task042_preflight.py",
+        "--output",
+        "tmp/task042/fe/f1-preflight-03/environment.json"
+      ],
+      "affinity": [
+        0
+      ],
+      "environment_mode": "fe",
+      "shared_workstation": true,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 3.5035610150080174,
+      "rss_peak_bytes": 227553280,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/fe/f1-preflight-03/summary.json": "aa9f794d6ad501fbcb6cb9bb2258f8e46260e417eda446dd562981f0d5c84939",
+        "tmp/task042/fe/f1-preflight-03/worker.log": "9ec4f8cde90ba8f81cb2a9878da10e79e3f65fca89851d7dc0d7f5c765196276"
+      }
+    },
+    {
+      "id": "tmp/task042/fe/p4-witness-check-01",
+      "utc": "2026-09-28T11:04:28.698071+00:00",
+      "source_sha": "f194e455cf904d255fbb30151f21d12be19bc56b",
+      "git_status": " M src/runners/task042_experiment.py\n M src/runners/task042_shared.py\n M src/solvers/p6_cell_condensed_action.py\n?? input/task042_neural_coarse_inverse/f1_b0_shared_retry3.dat\n?? src/test/test_task042_p4_witness.py\n",
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "src/test/test_task042_p4_witness.py",
+        "src/test/test_task039extra_v20_noncommuting_contract.py"
+      ],
+      "affinity": [
+        0
+      ],
+      "environment_mode": "fe",
+      "shared_workstation": true,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 3.3537867050035857,
+      "rss_peak_bytes": 144834560,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/fe/p4-witness-check-01/summary.json": "ec7bf7feb4edc2425c98e1b2d731069e5e7ea46bf4d9a07a90f76260aa0bc2e1",
+        "tmp/task042/fe/p4-witness-check-01/worker.log": "bfe2b4eeda4b771affaa7df3f63d650cb327b75895450aae1f170ea21e51aef6"
+      }
+    },
+    {
+      "id": "tmp/task042/fe/f1-preflight-04",
+      "utc": "2026-09-28T11:06:00.679510+00:00",
+      "source_sha": "7188564f1a284049ddac3eb32a77ccbda84c5c6b",
+      "git_status": "",
+      "command": [
+        "python",
+        "scripts/task042_preflight.py",
+        "--output",
+        "tmp/task042/fe/f1-preflight-04/environment.json"
+      ],
+      "affinity": [
+        33
+      ],
+      "environment_mode": "fe",
+      "shared_workstation": true,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 3.2213956199702807,
+      "rss_peak_bytes": 227844096,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/fe/f1-preflight-04/summary.json": "37ddf67a33fabc565736002c4d367f27db96e2c93986bd3f71a4b3642da59710",
+        "tmp/task042/fe/f1-preflight-04/worker.log": "cfbcad7ec0e75a75e53bafc6dc731a2555481c3cdab84321fe9f9c71fb241cb7"
+      }
+    },
+    {
+      "id": "tmp/task042/fe/mode-metadata-check-01",
+      "utc": "2026-09-28T11:22:53.117819+00:00",
+      "source_sha": "7188564f1a284049ddac3eb32a77ccbda84c5c6b",
+      "git_status": " M src/runners/task042_shared.py\n M src/test/test_task042_shared_components.py\n?? input/task042_neural_coarse_inverse/f1_b0_shared_retry4.dat\n?? src/test/test_task042_mode_metadata.py\n",
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "src/test/test_task042_mode_metadata.py",
+        "src/test/test_task042_shared_components.py::test_nested_complex_metadata_keeps_both_channels"
+      ],
+      "affinity": [
+        0
+      ],
+      "environment_mode": "fe",
+      "shared_workstation": true,
+      "classification": "WORKER_FAILED",
+      "exit": 1,
+      "descendants_cleared": true,
+      "elapsed_seconds": 3.827253598952666,
+      "rss_peak_bytes": 229699584,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/fe/mode-metadata-check-01/summary.json": "4106e72978394c1b7e5d2f2bf392526a408fd7f5c013f39f199e756613f62d86",
+        "tmp/task042/fe/mode-metadata-check-01/worker.log": "b044dea7f3c726cd85dfa9713a4bf374525dc5f47c510671217e9ea68ccd368b"
+      }
+    },
+    {
+      "id": "tmp/task042/fe/mode-metadata-check-02",
+      "utc": "2026-09-28T11:23:58.819423+00:00",
+      "source_sha": "7188564f1a284049ddac3eb32a77ccbda84c5c6b",
+      "git_status": " M src/runners/task042_shared.py\n M src/test/test_task042_shared_components.py\n?? docs/task042_neural_coarse_inverse/outcomes/records/mode_metadata_repair_v2.json\n?? input/task042_neural_coarse_inverse/f1_b0_shared_retry4.dat\n?? src/test/test_task042_mode_metadata.py\n",
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "src/test/test_task042_mode_metadata.py",
+        "src/test/test_task042_shared_components.py::test_nested_complex_metadata_keeps_both_channels"
+      ],
+      "affinity": [
+        0
+      ],
+      "environment_mode": "fe",
+      "shared_workstation": true,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 3.684914821991697,
+      "rss_peak_bytes": 229629952,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/fe/mode-metadata-check-02/summary.json": "e6b285647777176b92408a853f436da6f18fa95d1119b5fea37cd4ed258ee023",
+        "tmp/task042/fe/mode-metadata-check-02/worker.log": "b6b77ff64ca00bbcfc5e84bb13f88fd1b8111c7c655601816929747f67ce0580"
+      }
+    },
+    {
+      "id": "tmp/task042/fe/interface-completion-check-01",
+      "utc": "2026-09-28T11:26:08.007209+00:00",
+      "source_sha": "7188564f1a284049ddac3eb32a77ccbda84c5c6b",
+      "git_status": " M src/runners/task042_experiment.py\n M src/runners/task042_shared.py\n M src/solvers/learned_coarse_inverse.py\n M src/test/test_task042_p4_witness.py\n M src/test/test_task042_shared_components.py\n?? docs/task042_neural_coarse_inverse/outcomes/records/mode_metadata_repair_v2.json\n?? input/task042_neural_coarse_inverse/f1_b0_shared_retry4.dat\n?? src/test/test_task042_mode_metadata.py\n",
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "src/test/test_task042_p4_witness.py",
+        "src/test/test_task042_mode_metadata.py",
+        "src/test/test_task042_shared_components.py",
+        "src/test/test_task039extra_v20_noncommuting_contract.py"
+      ],
+      "affinity": [
+        0
+      ],
+      "environment_mode": "fe",
+      "shared_workstation": true,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 3.829096995003056,
+      "rss_peak_bytes": 232681472,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/fe/interface-completion-check-01/summary.json": "fe7e77994d44e888a67d01e834435259ed4e9a0bd3c77efff36368ba11f6a051",
+        "tmp/task042/fe/interface-completion-check-01/worker.log": "ef11dfb49973a3ffd692d70dd52dcec5c8c87edd829b9a01c837bfaa2e41c5a4"
+      }
+    },
+    {
+      "id": "tmp/task042/fe/f1-preflight-05",
+      "utc": "2026-09-28T11:27:10.320703+00:00",
+      "source_sha": "cca180f875bd22146f2d30fa4d004e372135dfbb",
+      "git_status": "",
+      "command": [
+        "python",
+        "scripts/task042_preflight.py",
+        "--output",
+        "tmp/task042/fe/f1-preflight-05/environment.json"
+      ],
+      "affinity": [
+        45
+      ],
+      "environment_mode": "fe",
+      "shared_workstation": true,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 2.8428435979876667,
+      "rss_peak_bytes": 228151296,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/fe/f1-preflight-05/summary.json": "b2b05f31196a491647039ee33a0479ed40bae338e9e8a431ab8503702af673cf",
+        "tmp/task042/fe/f1-preflight-05/worker.log": "f631125e5302c27a8b40c848ac94ad07974ea7c352e08cf97da51097bbab8aa5"
+      }
+    },
+    {
+      "id": "tmp/task042/fe-preflight-06",
+      "utc": "2026-09-28T11:58:15.464329+00:00",
+      "source_sha": "b72448bb2117a0221f041f1b47ac41049750a3c7",
+      "git_status": "",
+      "command": [
+        "python",
+        "scripts/task042_preflight.py",
+        "--output",
+        "tmp/task042/fe-preflight-06/environment.json"
+      ],
+      "affinity": [
+        44
+      ],
+      "environment_mode": "fe",
+      "shared_workstation": true,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 2.9622818320058286,
+      "rss_peak_bytes": 228155392,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/fe-preflight-06/summary.json": "ea5d246e4ab2a9a75c793f3bd6c8202b7149efe77d823c44ac8e76b063908082",
+        "tmp/task042/fe-preflight-06/worker.log": "6df8d2c1fd2fcbc71dacedf10e2bc22677f51965ea92aca7c1a192464890a43f"
+      }
+    },
+    {
+      "id": "tmp/task042/ml-preflight-v2",
+      "utc": "2026-09-28T12:47:38.496954+00:00",
+      "source_sha": "a221d881bae9405c98e351df2b0b9533582e6d50",
+      "git_status": "",
+      "command": [
+        "python",
+        "scripts/task042_preflight.py",
+        "--output",
+        "tmp/task042/ml-preflight-v2/environment.json"
+      ],
+      "affinity": [
+        0
+      ],
+      "environment_mode": "ml",
+      "shared_workstation": true,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 4.322551500052214,
+      "rss_peak_bytes": 236670976,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/ml-preflight-v2/summary.json": "248fb69f5f8c4e5849b01c8146f453db01d22a25fd6d9556605d32952c113c84",
+        "tmp/task042/ml-preflight-v2/worker.log": "ac3aa2649d3f6745c2532407eeffef7c092354ee6752317bf1ec3029317ac909"
+      }
+    },
+    {
+      "id": "tmp/task042/pure/final-focused-v2",
+      "utc": "2026-09-28T13:43:12.564419+00:00",
+      "source_sha": "7216efa605bae155ee383fd716c0fae422448b52",
+      "git_status": " M src/runners/task042_coarse_stages.py\n",
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "src/test/test_task042_coarse_inverse_protocol.py",
+        "src/test/test_task042_shared_components.py",
+        "src/test/test_task042_reduced_oracle.py",
+        "src/test/test_task042_shared_watchdog.py",
+        "src/test/test_354_subreaper_watchdog.py",
+        "-k",
+        "not measured_rss_policy and not reserve"
+      ],
+      "affinity": [
+        44
+      ],
+      "environment_mode": "pure",
+      "shared_workstation": true,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 12.890690716914833,
+      "rss_peak_bytes": 141455360,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/pure/final-focused-v2/summary.json": "5609d3eb408662b0f1338ecc4e134bee7100340421a8774a6b256e802a1f7ca1",
+        "tmp/task042/pure/final-focused-v2/worker.log": "705dfe32b00f3773a5e48dcc822c3bd087c6149ad7d9df383244e7dbe62ca65b"
+      }
+    },
+    {
+      "id": "tmp/task042/fe/final-interfaces-v2",
+      "utc": "2026-09-28T13:44:32.945433+00:00",
+      "source_sha": "932bb2a747c15e846916474cefa0debf8d42b715",
+      "git_status": "",
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "src/test/test_task042_p4_witness.py",
+        "src/test/test_task042_mode_metadata.py",
+        "src/test/test_task039extra_v20_noncommuting_contract.py",
+        "src/test/test_375_balanced_coupling.py",
+        "-k",
+        "not real_e1_inputs_load_without_fe"
+      ],
+      "affinity": [
+        33
+      ],
+      "environment_mode": "fe",
+      "shared_workstation": true,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 3.3648544009774923,
+      "rss_peak_bytes": 237211648,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/fe/final-interfaces-v2/summary.json": "7396c88b981140be509e3304f09c51c19c1732707d32d4500f36f45c4a300066",
+        "tmp/task042/fe/final-interfaces-v2/worker.log": "6506c6effa8d11264bb1d72b66808907425a4111f56c386d718e63e949ea5622"
+      }
+    },
+    {
+      "id": "tmp/task042/pure/collect-numerics-v2",
+      "utc": "2026-09-28T13:45:27.448829+00:00",
+      "source_sha": "932bb2a747c15e846916474cefa0debf8d42b715",
+      "git_status": "",
+      "command": [
+        "python",
+        "tmp/task042/collect_shared_results_v2.py"
+      ],
+      "affinity": [
+        33
+      ],
+      "environment_mode": "pure",
+      "shared_workstation": true,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 2.2890112469904125,
+      "rss_peak_bytes": 40869888,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/pure/collect-numerics-v2/summary.json": "828dba79664a3918888d51159e9274fc3f2586d5a9e4c175be641f03f679e90a",
+        "tmp/task042/pure/collect-numerics-v2/worker.log": "15213187d1ed3150e45c6b07e8a9775bf092b56f25412303c7d3098ebb021a4c"
+      }
+    },
+    {
+      "id": "tmp/task042/pure/build-documents-v2",
+      "utc": "2026-09-28T13:50:00.421649+00:00",
+      "source_sha": "932bb2a747c15e846916474cefa0debf8d42b715",
+      "git_status": "?? docs/task042_neural_coarse_inverse/outcomes/records/component_metrics_v2.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/git_preparation_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/shared_workstation_snapshot_v2.json\n",
+      "command": [
+        "python",
+        "tmp/task042/build_all_documents_v2.py"
+      ],
+      "affinity": [
+        0
+      ],
+      "environment_mode": "pure",
+      "shared_workstation": true,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 2.337305924971588,
+      "rss_peak_bytes": 42422272,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/pure/build-documents-v2/summary.json": "7508ebbfd7adcc1a0e5281c6d5b4b906aca6b9baf574a6b08d504363828543ed",
+        "tmp/task042/pure/build-documents-v2/worker.log": "c38a126fd5853717f4c53351b5b4f4d4898ea3f61be5a18ce9f9b2fbe982470c"
+      }
+    },
+    {
+      "id": "tmp/task042/pure/final-doc-static-v2",
+      "utc": "2026-09-28T13:52:51.564162+00:00",
+      "source_sha": "932bb2a747c15e846916474cefa0debf8d42b715",
+      "git_status": " M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042_neural_coarse_inverse/outcomes/accuracy_performance_memory.md\n M docs/task042_neural_coarse_inverse/outcomes/architecture_and_oracle.md\n M docs/task042_neural_coarse_inverse/outcomes/changed_files.md\n M docs/task042_neural_coarse_inverse/outcomes/dataset_and_model_provenance.md\n M docs/task042_neural_coarse_inverse/outcomes/environment_and_isolation.md\n M docs/task042_neural_coarse_inverse/outcomes/summary.md\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n M input/task042_neural_coarse_inverse/README.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/auxiliary_costs_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/component_metrics_v2.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/dataset_model_manifest_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/documentation_cpu_audit_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_b0_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_lin_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_nn_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/final_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/full_p6_comparison_v2.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/git_preparation_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/shared_workstation_snapshot_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv\n?? docs/task042_neural_coarse_inverse/response_v2.md\n",
+      "command": [
+        "python",
+        "tmp/task042/static_checks_v2.py"
+      ],
+      "affinity": [
+        0
+      ],
+      "environment_mode": "pure",
+      "shared_workstation": true,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 2.874043438001536,
+      "rss_peak_bytes": 77533184,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/pure/final-doc-static-v2/summary.json": "9b1a0a78eee9f707e6bf17f4d4221e0e8aca876706e4ce772c95f7a823755310",
+        "tmp/task042/pure/final-doc-static-v2/worker.log": "3393193300fd34a2c16ec34732a0cc12dbf58635629b331711a74ea187629db0"
+      }
+    },
+    {
+      "id": "tmp/task042/pure/final-governance-v2",
+      "utc": "2026-09-28T13:54:34.847902+00:00",
+      "source_sha": "932bb2a747c15e846916474cefa0debf8d42b715",
+      "git_status": " M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042_neural_coarse_inverse/outcomes/accuracy_performance_memory.md\n M docs/task042_neural_coarse_inverse/outcomes/architecture_and_oracle.md\n M docs/task042_neural_coarse_inverse/outcomes/changed_files.md\n M docs/task042_neural_coarse_inverse/outcomes/dataset_and_model_provenance.md\n M docs/task042_neural_coarse_inverse/outcomes/environment_and_isolation.md\n M docs/task042_neural_coarse_inverse/outcomes/summary.md\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n M input/task042_neural_coarse_inverse/README.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/auxiliary_costs_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/component_metrics_v2.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/dataset_model_manifest_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/documentation_cpu_audit_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_b0_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_lin_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_nn_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/final_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/full_p6_comparison_v2.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/git_preparation_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/shared_workstation_snapshot_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv\n?? docs/task042_neural_coarse_inverse/response_v2.md\n",
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "src/test/test_24_repository_work_principles.py",
+        "src/test/test_183_development_model_registry_markdown.py",
+        "src/test/test_development_model_registry_contract.py",
+        "src/test/test_26_documentation_contract.py"
+      ],
+      "affinity": [
+        0
+      ],
+      "environment_mode": "pure",
+      "shared_workstation": true,
+      "classification": "WORKER_FAILED",
+      "exit": 1,
+      "descendants_cleared": true,
+      "elapsed_seconds": 2.0789223320316523,
+      "rss_peak_bytes": 48234496,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/pure/final-governance-v2/summary.json": "002bdac9ebb9e53ae0b1b4273ddededa67a2e3c26ce6fadd3986a19ce5a4c41a",
+        "tmp/task042/pure/final-governance-v2/worker.log": "146a599020aba4ba05909a2de2f307ea731efd646a673919b2e1cfd88e17f859"
+      }
+    },
+    {
+      "id": "tmp/task042/pure/final-lint-compile-v2",
+      "utc": "2026-09-28T13:55:36.870675+00:00",
+      "source_sha": "932bb2a747c15e846916474cefa0debf8d42b715",
+      "git_status": " M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042_neural_coarse_inverse/outcomes/accuracy_performance_memory.md\n M docs/task042_neural_coarse_inverse/outcomes/architecture_and_oracle.md\n M docs/task042_neural_coarse_inverse/outcomes/changed_files.md\n M docs/task042_neural_coarse_inverse/outcomes/dataset_and_model_provenance.md\n M docs/task042_neural_coarse_inverse/outcomes/environment_and_isolation.md\n M docs/task042_neural_coarse_inverse/outcomes/summary.md\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n M input/task042_neural_coarse_inverse/README.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/auxiliary_costs_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/component_metrics_v2.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/dataset_model_manifest_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/documentation_cpu_audit_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_b0_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_lin_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_nn_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/final_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/full_p6_comparison_v2.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/git_preparation_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/shared_workstation_snapshot_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv\n?? docs/task042_neural_coarse_inverse/response_v2.md\n",
+      "command": [
+        "python",
+        "tmp/task042/lint_compile_v2.py"
+      ],
+      "affinity": [
+        0
+      ],
+      "environment_mode": "pure",
+      "shared_workstation": true,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 1.551640474004671,
+      "rss_peak_bytes": 38047744,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/pure/final-lint-compile-v2/summary.json": "8b70da6af91089da41419186bed4c113a552ef808ddcf27a1b37ca6749a63f33",
+        "tmp/task042/pure/final-lint-compile-v2/worker.log": "dae9cb3a49ebae47a4ed2dc47584d89e966a9ce92d62f96c3e40984951c18562"
+      }
+    },
+    {
+      "id": "tmp/task042/pure/registry-baseline-proof-v2",
+      "utc": "2026-09-28T13:57:22.608350+00:00",
+      "source_sha": "932bb2a747c15e846916474cefa0debf8d42b715",
+      "git_status": " M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042_neural_coarse_inverse/outcomes/accuracy_performance_memory.md\n M docs/task042_neural_coarse_inverse/outcomes/architecture_and_oracle.md\n M docs/task042_neural_coarse_inverse/outcomes/changed_files.md\n M docs/task042_neural_coarse_inverse/outcomes/dataset_and_model_provenance.md\n M docs/task042_neural_coarse_inverse/outcomes/environment_and_isolation.md\n M docs/task042_neural_coarse_inverse/outcomes/summary.md\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n M input/task042_neural_coarse_inverse/README.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/auxiliary_costs_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/component_metrics_v2.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/dataset_model_manifest_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/documentation_cpu_audit_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_b0_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_lin_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_nn_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/final_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/full_p6_comparison_v2.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/git_preparation_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/shared_workstation_snapshot_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv\n?? docs/task042_neural_coarse_inverse/response_v2.md\n",
+      "command": [
+        "python",
+        "tmp/task042/registry_baseline_check_v2.py"
+      ],
+      "affinity": [
+        0
+      ],
+      "environment_mode": "pure",
+      "shared_workstation": true,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 1.5302760869963095,
+      "rss_peak_bytes": 21155840,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/pure/registry-baseline-proof-v2/summary.json": "39283f6a9158ac719dbeff991682ab3c0033d4505d7fe8094d433aa2a46395f2",
+        "tmp/task042/pure/registry-baseline-proof-v2/worker.log": "e3144ed8dae508cd101dda96d01fabe359edb374a1bfa3ec0f7eda801d4421aa"
+      }
+    },
+    {
+      "id": "tmp/task042/pure/final-doc-static-v2-final",
+      "utc": "2026-09-28T14:00:45.095217+00:00",
+      "source_sha": "932bb2a747c15e846916474cefa0debf8d42b715",
+      "git_status": " M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042_neural_coarse_inverse/outcomes/accuracy_performance_memory.md\n M docs/task042_neural_coarse_inverse/outcomes/architecture_and_oracle.md\n M docs/task042_neural_coarse_inverse/outcomes/changed_files.md\n M docs/task042_neural_coarse_inverse/outcomes/dataset_and_model_provenance.md\n M docs/task042_neural_coarse_inverse/outcomes/environment_and_isolation.md\n M docs/task042_neural_coarse_inverse/outcomes/summary.md\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n M input/task042_neural_coarse_inverse/README.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/README.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/auxiliary_costs_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/component_metrics_v2.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/dataset_model_manifest_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/documentation_cpu_audit_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_b0_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_lin_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_nn_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/final_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/full_p6_comparison_v2.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/git_preparation_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/registry_contract_baseline_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/shared_workstation_snapshot_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv\n?? docs/task042_neural_coarse_inverse/response_v2.md\n",
+      "command": [
+        "python",
+        "tmp/task042/static_checks_v2.py"
+      ],
+      "affinity": [
+        0
+      ],
+      "environment_mode": "pure",
+      "shared_workstation": true,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 2.9449291710043326,
+      "rss_peak_bytes": 96956416,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/pure/final-doc-static-v2-final/summary.json": "aec4832a15530a0f45c0a8c025c791ad89557e96a4bdf82ec489f0c580e26655",
+        "tmp/task042/pure/final-doc-static-v2-final/worker.log": "aad62f7e33dc24bf7d83f4cb9fcb5a532c9a234fbb7725b3392abead9a04a461"
+      }
+    }
+  ],
+  "elapsed_sum_seconds": 182.08967283798847,
+  "simultaneous_tree_peak_bytes": 274219008,
+  "swap_peak_bytes": 0,
+  "all_descendants_cleared": true
+}
