@@ -100,6 +100,9 @@ def main():
             "petsc4py",
             "dolfinx",
             "dolfinx_mpc",
+            "pyvista",
+            "src.solvers.dtn_port_3d",
+            "src.runners.task042_experiment",
         ]
     elif mode == "ml":
         names += ["torch"]

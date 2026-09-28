@@ -1,0 +1,374 @@
+{
+  "schema": "task042.first-fe-import-repair.v2",
+  "classification": "ENVIRONMENT_IMPORT_INCOMPLETE",
+  "failed_run_manifest": {
+    "source_sha": "ae5b7d2b79dec38056e4a8b9bd986429989455dd",
+    "git_status": "",
+    "stage": "F1-B0",
+    "formal_pde": false,
+    "input_sha256": "8672b312be8532b19fb5d33bf0e7ff05517ddace5601f39e678c112912c5ad5b",
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "shared_workstation": true,
+    "cpu": 0,
+    "mpi_size": 1,
+    "math_threads": 1,
+    "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+    "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+    "nice": 10,
+    "io_priority": "idle"
+  },
+  "failed_numerical_summary": {
+    "status": "FAILED",
+    "stage": "F1-B0",
+    "source_sha": "ae5b7d2b79dec38056e4a8b9bd986429989455dd",
+    "shared_workstation": true,
+    "input_sha256": "8672b312be8532b19fb5d33bf0e7ff05517ddace5601f39e678c112912c5ad5b",
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "official_result": null,
+    "artifact_directory": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f1_b0_shared_20260928T102549637194Z",
+    "performance_conclusion": "inconclusive under shared load",
+    "error_type": "ModuleNotFoundError",
+    "error": "No module named 'pyvista'",
+    "worker_seconds": 3.069582430005539
+  },
+  "failed_supervision": {
+    "workflow_deadline_seconds": 10800,
+    "solve_deadline_seconds": null,
+    "time_limit_mode": "bounded",
+    "resource_stop_policy": "legacy",
+    "rss_hard_limit_bytes": 17179869184,
+    "rss_warning_bytes": 12884901888,
+    "startup_headroom_bytes": null,
+    "swap_policy": "legacy_stop",
+    "global_swap_delta_policy": "observe_only",
+    "cache_metadata_stable": true,
+    "classification": "WORKER_FAILED",
+    "leader_exit_code": 1,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "observed_child_pids": [
+      536871,
+      536872
+    ],
+    "sampled_process_tree_rss_peak_bytes": 303497216,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+    "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+    "global_swap_activity": {
+      "scope": "WSL-global diagnostic, not dedicated job",
+      "baseline": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 299
+      },
+      "end": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 299
+      },
+      "delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      }
+    },
+    "job_swap_activity": "zero_supported_by_zero_global_activity",
+    "launch_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 949280501760,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 949280501760,
+      "reserve_bytes": 353748992000,
+      "launch_cap_bytes": 17179869184,
+      "planning_cap_bytes": 17179869184,
+      "cgroup_limits": [],
+      "system_reserve_bytes": 216310038528,
+      "neighbor_growth_allowance_bytes": 137438953472,
+      "shared_workstation": true
+    },
+    "samples": 10,
+    "elapsed_seconds": 5.9806631109677255,
+    "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_state": {
+      "source_sha": "ae5b7d2b79dec38056e4a8b9bd986429989455dd",
+      "git_status": "",
+      "stage": "F1-B0",
+      "formal_pde": false,
+      "input_sha256": "8672b312be8532b19fb5d33bf0e7ff05517ddace5601f39e678c112912c5ad5b",
+      "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "shared_workstation": true,
+      "cpu": 0,
+      "mpi_size": 1,
+      "math_threads": 1,
+      "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+      "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+      "nice": 10,
+      "io_priority": "idle"
+    },
+    "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_f1_b0_shared_20260928T102549637194Z",
+    "stage": "F1-B0",
+    "shared_workstation": true
+  },
+  "diagnosis": "Qualified core ABI did not exercise project dtn_port_3d import chain; that chain imports pyvista via common_3d_utils/solve_vector_maxwell/postprocessing.",
+  "repair": "Only NN-Lab .venv install pyvista0.48.4/vtk9.6.2 matching qualified neighbor versions, NumPy1.26.4 pinned; record resolved local lock; preflight now tests actual project import chain and isolated VTK/PyVista caches.",
+  "numerical_settings_changed": false,
+  "new_retry_input": "input/task042_neural_coarse_inverse/f1_b0_shared_retry1.dat",
+  "runs": [
+    {
+      "id": "optional-dependency-probe-01",
+      "summary": {
+        "workflow_deadline_seconds": 180.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1610612736,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          537081
+        ],
+        "sampled_process_tree_rss_peak_bytes": 78422016,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "end": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 949204799488,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 949204799488,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 12000000000,
+          "planning_cap_bytes": 12000000000,
+          "cgroup_limits": []
+        },
+        "samples": 20,
+        "elapsed_seconds": 4.603031125967391,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "ae5b7d2b79dec38056e4a8b9bd986429989455dd",
+          "git_status": "",
+          "stage": "F0",
+          "formal_pde": false,
+          "command": [
+            "python",
+            "-m",
+            "pip",
+            "index",
+            "versions",
+            "pyvista",
+            "--disable-pip-version-check"
+          ],
+          "utc": "2026-09-28T10:28:00.907991+00:00",
+          "affinity": [
+            0
+          ],
+          "environment_mode": "fe",
+          "gpu_visible": false
+        }
+      },
+      "worker_log_sha256": "edca3f7d4ed1f9b7a1cf0aec693c5aabb61a0b21c30496b68ba9f87907ecc99b",
+      "resources_sha256": "f525aa64f4339d8d373d5e32f2227f35f9a61ad9c2d8d6801948528e72f8ed10"
+    },
+    {
+      "id": "pyvista-install-01",
+      "summary": {
+        "workflow_deadline_seconds": 600.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1610612736,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          537175
+        ],
+        "sampled_process_tree_rss_peak_bytes": 256200704,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "end": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 949241430016,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 949241430016,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 12000000000,
+          "planning_cap_bytes": 12000000000,
+          "cgroup_limits": []
+        },
+        "samples": 148,
+        "elapsed_seconds": 33.47026795503916,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "ae5b7d2b79dec38056e4a8b9bd986429989455dd",
+          "git_status": "?? input/task042_neural_coarse_inverse/requirements-fe-tools.txt\n",
+          "stage": "F0",
+          "formal_pde": false,
+          "command": [
+            "python",
+            "-m",
+            "pip",
+            "install",
+            "--no-input",
+            "--only-binary=:all:",
+            "-r",
+            "input/task042_neural_coarse_inverse/requirements-fe-tools.txt"
+          ],
+          "utc": "2026-09-28T10:29:04.336621+00:00",
+          "affinity": [
+            0
+          ],
+          "environment_mode": "pure",
+          "gpu_visible": false
+        }
+      },
+      "worker_log_sha256": "3ad4843ec031e9ba36af9b8d0f5a30141f43265edb2a317c645b2c18d72f298f",
+      "resources_sha256": "bf444fec1c9be84229cdcb289597f87dec7ee7657ece3e528f89be4aaaf32a15"
+    },
+    {
+      "id": "project-import-check-01",
+      "summary": {
+        "workflow_deadline_seconds": 180.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1610612736,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          537356,
+          537357
+        ],
+        "sampled_process_tree_rss_peak_bytes": 227102720,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "end": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 948872384512,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 948872384512,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 12000000000,
+          "planning_cap_bytes": 12000000000,
+          "cgroup_limits": []
+        },
+        "samples": 18,
+        "elapsed_seconds": 4.033465023036115,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "ae5b7d2b79dec38056e4a8b9bd986429989455dd",
+          "git_status": "?? input/task042_neural_coarse_inverse/requirements-fe-tools.txt\n",
+          "stage": "F0",
+          "formal_pde": false,
+          "command": [
+            "python",
+            "-c",
+            "import numpy,pyvista; from petsc4py import PETSc; from src.solvers import dtn_port_3d; from src.runners.task042_experiment import thread_qualification; assert numpy.__version__ == \"1.26.4\"; assert PETSc.ScalarType is numpy.complex128; assert PETSc.IntType is numpy.int64; print(\"project imports pass\",pyvista.__version__,pyvista.__file__,thread_qualification())"
+          ],
+          "utc": "2026-09-28T10:31:04.561585+00:00",
+          "affinity": [
+            0
+          ],
+          "environment_mode": "fe",
+          "gpu_visible": false
+        }
+      },
+      "worker_log_sha256": "270a8263783e4f6f8b827e562c026c192c3f02ce7d57cc3200e761e7d12371b9",
+      "resources_sha256": "e972a512cd6ed964e00ae8011dbec89022eac5e43d7dd29f6b0272d47492f311"
+    }
+  ],
+  "raw_files": [
+    {
+      "path": "results/task042/task042_f1_b0_shared_20260928T102549637194Z/run_manifest.json",
+      "sha256": "b2806c6c7b92b6f846efc293032f9dce36a0f711bf0d5ee2b9dbf98a82fa90d8",
+      "bytes": 618
+    },
+    {
+      "path": "results/task042/task042_f1_b0_shared_20260928T102549637194Z/numerical_summary.json",
+      "sha256": "5b3b59db448017a12f8a01e15cb6306b9dcc6231fcbee487752a361181ebc5e4",
+      "bytes": 652
+    },
+    {
+      "path": "results/task042/task042_f1_b0_shared_20260928T102549637194Z/supervision/worker.log",
+      "sha256": "b6dbf42a87a8a933672b691a26c5a61e51761a36e4f35495b81668d056eeeb2a",
+      "bytes": 1573
+    },
+    {
+      "path": "results/task042/task042_f1_b0_shared_20260928T102549637194Z/supervision/resources.jsonl",
+      "sha256": "e56e75b4646bf8e894e4e44bd51631752296ba8fe977de86edbed94b8b03f7a8",
+      "bytes": 88543
+    },
+    {
+      "path": "results/task042/task042_f1_b0_shared_20260928T102549637194Z/stages.jsonl",
+      "sha256": "341f354e11fb69b78870563ad3c9bcea97aad2592c0cca08b47f3c6a095b5ec0",
+      "bytes": 938
+    }
+  ]
+}

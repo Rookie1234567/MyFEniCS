@@ -1,0 +1,4 @@
+# Missing native FE import-chain dependency, pinned to qualified neighbor versions; installed only in NN-Lab.
+numpy==1.26.4
+pyvista==0.48.4
+vtk==9.6.2
