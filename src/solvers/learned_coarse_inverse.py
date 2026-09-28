@@ -234,3 +234,32 @@ def cell_declarations(action):
         )
     )
     return tuple(result)
+
+
+def reference_solve(matrix, action, rhs, ksp):
+    """Offline-only repeated factor application; never used by a candidate."""
+    b = matrix.createVecRight()
+    x = b.duplicate()
+    residual = b.duplicate()
+    correction = b.duplicate()
+    try:
+        b.array[:] = action.reduce_rhs(rhs.fe, port_rhs=rhs.port, rhs_is_mpc_dual=True)
+        x.set(0.0)
+        ksp.solve_repeated(b, x)
+        refinements = 0
+        for _ in range(3):
+            matrix.mult(x, residual)
+            residual.array[:] = b.array - residual.array
+            if (
+                np.linalg.norm(residual.array)
+                / max(np.linalg.norm(b.array), np.finfo(float).tiny)
+                <= 1.0e-13
+            ):
+                break
+            ksp.solve_repeated(residual, correction)
+            x.axpy(1.0, correction)
+            refinements += 1
+        return x.array.copy(), refinements
+    finally:
+        for v in (b, x, residual, correction):
+            v.destroy()

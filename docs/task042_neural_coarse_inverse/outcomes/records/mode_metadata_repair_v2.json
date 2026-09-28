@@ -1,0 +1,363 @@
+{
+  "schema": "task042.complex-mode-metadata-repair.v2",
+  "classification": "METADATA_ENCODING_ERROR_AFTER_OPERATOR_CONSTRUCTION",
+  "failed_source_sha": "7188564f1a284049ddac3eb32a77ccbda84c5c6b",
+  "manifest": {
+    "source_sha": "7188564f1a284049ddac3eb32a77ccbda84c5c6b",
+    "git_status": "",
+    "stage": "F1-B0",
+    "formal_pde": false,
+    "formal_fe_stage": true,
+    "input_sha256": "97e9d26712f9025438d2cb636377ff96bb4b563266ab6245732068876515d327",
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "shared_workstation": true,
+    "cpu": 0,
+    "mpi_size": 1,
+    "math_threads": 1,
+    "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+    "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+    "nice": 10,
+    "io_priority": "idle"
+  },
+  "numerical_summary": {
+    "status": "FAILED",
+    "stage": "F1-B0",
+    "source_sha": "7188564f1a284049ddac3eb32a77ccbda84c5c6b",
+    "shared_workstation": true,
+    "input_sha256": "97e9d26712f9025438d2cb636377ff96bb4b563266ab6245732068876515d327",
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "official_result": null,
+    "artifact_directory": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f1_b0_shared_retry3_20260928T110605340793Z",
+    "performance_conclusion": "inconclusive under shared load",
+    "error_type": "TypeError",
+    "error": "complex",
+    "worker_seconds": 878.6523824399919
+  },
+  "supervision": {
+    "workflow_deadline_seconds": 10800,
+    "solve_deadline_seconds": null,
+    "time_limit_mode": "bounded",
+    "resource_stop_policy": "legacy",
+    "rss_hard_limit_bytes": 17179869184,
+    "rss_warning_bytes": 12884901888,
+    "startup_headroom_bytes": null,
+    "swap_policy": "legacy_stop",
+    "global_swap_delta_policy": "observe_only",
+    "cache_metadata_stable": true,
+    "classification": "WORKER_FAILED",
+    "leader_exit_code": 1,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "observed_child_pids": [
+      540525,
+      540526
+    ],
+    "sampled_process_tree_rss_peak_bytes": 1159725056,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+    "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+    "global_swap_activity": {
+      "scope": "WSL-global diagnostic, not dedicated job",
+      "baseline": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 299
+      },
+      "end": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 299
+      },
+      "delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      }
+    },
+    "job_swap_activity": "zero_supported_by_zero_global_activity",
+    "launch_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 952262356992,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 952262356992,
+      "reserve_bytes": 353748992000,
+      "launch_cap_bytes": 17179869184,
+      "planning_cap_bytes": 17179869184,
+      "cgroup_limits": [],
+      "system_reserve_bytes": 216310038528,
+      "neighbor_growth_allowance_bytes": 137438953472,
+      "shared_workstation": true
+    },
+    "samples": 1320,
+    "elapsed_seconds": 881.547936975956,
+    "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_state": {
+      "source_sha": "7188564f1a284049ddac3eb32a77ccbda84c5c6b",
+      "git_status": "",
+      "stage": "F1-B0",
+      "formal_pde": false,
+      "formal_fe_stage": true,
+      "input_sha256": "97e9d26712f9025438d2cb636377ff96bb4b563266ab6245732068876515d327",
+      "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "shared_workstation": true,
+      "cpu": 0,
+      "mpi_size": 1,
+      "math_threads": 1,
+      "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+      "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+      "nice": 10,
+      "io_priority": "idle"
+    },
+    "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_f1_b0_shared_retry3_20260928T110605340793Z",
+    "stage": "F1-B0",
+    "shared_workstation": true
+  },
+  "diagnosis": "Actual mode rows include Python complex values. Identity JSON failed before component checks; p4 borrowed witness constructor completed. No coarse solve/teacher was reached.",
+  "repair": "Task042 JSON encoder preserves complex as explicit real/imag channels, including NumPy arrays; tests use actual frozen80-mode inventory. No equation, geometry, precision or solver parameter change.",
+  "raw_hashes": {
+    "results/task042/task042_f1_b0_shared_retry3_20260928T110605340793Z/stages.jsonl": "c5ae69746be6c7d5ee8de7bd3331fc9af244140758bcde4f6ccbb755b8b75359",
+    "results/task042/task042_f1_b0_shared_retry3_20260928T110605340793Z/supervision/worker.log": "e3cf2cf12a39fd13a410512c459ff95155b087e9d66464fbacf234cdcde639db",
+    "results/task042/task042_f1_b0_shared_retry3_20260928T110605340793Z/supervision/resources.jsonl": "e03f45455b6da844abd7c1fe3eebe7fe5f935835b38e1a0d02c1f59ec7072b9d",
+    "results/task042/task042_f1_b0_shared_retry3_20260928T110605340793Z/shared_health.jsonl": "473e8baa2789b27dc8eb68a69afc738b7020186cfcd301de342e4068464f066e",
+    "results/task042/task042_f1_b0_shared_retry3_20260928T110605340793Z/actual_threads.json": "89a03edbbafab967d9fc993c0e3e88b0765bfdcd9a47f625df7a1a8ccbfcc42d"
+  },
+  "targeted_check": {
+    "workflow_deadline_seconds": 180.0,
+    "solve_deadline_seconds": null,
+    "time_limit_mode": "bounded",
+    "resource_stop_policy": "legacy",
+    "rss_hard_limit_bytes": 2147483648,
+    "rss_warning_bytes": 1610612736,
+    "startup_headroom_bytes": null,
+    "swap_policy": "legacy_stop",
+    "global_swap_delta_policy": "observe_only",
+    "cache_metadata_stable": true,
+    "classification": "WORKER_FAILED",
+    "leader_exit_code": 1,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "observed_child_pids": [
+      541767,
+      541768
+    ],
+    "sampled_process_tree_rss_peak_bytes": 229699584,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+    "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+    "global_swap_activity": {
+      "scope": "WSL-global diagnostic, not dedicated job",
+      "baseline": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 299
+      },
+      "end": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 299
+      },
+      "delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      }
+    },
+    "job_swap_activity": "zero_supported_by_zero_global_activity",
+    "launch_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 949105033216,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 949105033216,
+      "reserve_bytes": 324465057792,
+      "launch_cap_bytes": 12000000000,
+      "planning_cap_bytes": 12000000000,
+      "cgroup_limits": []
+    },
+    "samples": 17,
+    "elapsed_seconds": 3.827253598952666,
+    "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_state": {
+      "source_sha": "7188564f1a284049ddac3eb32a77ccbda84c5c6b",
+      "git_status": " M src/runners/task042_shared.py\n M src/test/test_task042_shared_components.py\n?? input/task042_neural_coarse_inverse/f1_b0_shared_retry4.dat\n?? src/test/test_task042_mode_metadata.py\n",
+      "stage": "F0",
+      "formal_pde": false,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "src/test/test_task042_mode_metadata.py",
+        "src/test/test_task042_shared_components.py::test_nested_complex_metadata_keeps_both_channels"
+      ],
+      "utc": "2026-09-28T11:22:53.117819+00:00",
+      "affinity": [
+        0
+      ],
+      "environment_mode": "fe",
+      "gpu_visible": false
+    }
+  },
+  "targeted_log_sha256": "b044dea7f3c726cd85dfa9713a4bf374525dc5f47c510671217e9ea68ccd368b",
+  "targeted_log": ".F                                                                       [100%]\n=================================== FAILURES ===================================\n_______________ test_nested_complex_metadata_keeps_both_channels _______________\n\ntmp_path = PosixPath('/home/fenics/Projects/NN-Lab/tmp/task042/fe/tmp/pytest-of-fenics/pytest-0/test_nested_complex_metadata_k0')\n\n    def test_nested_complex_metadata_keeps_both_channels(tmp_path):\n        import json\n    \n        from src.runners.task042_shared import write_json\n    \n        path = tmp_path / \"complex.json\"\n        write_json(path, {\"scalar\": 1.0 + 2.0j, \"array\": np.array([3.0 - 4.0j])})\n>       assert json.loads(path.read_text()) == {\n            \"scalar\": {\"real\": 1.0, \"imag\": 2.0},\n            \"array\": [{\"real\": 3.0, \"imag\": -4.0}],\n        }\nE       AssertionError: assert {'array': {'i... 'real': 1.0}} == {'array': [{'... 'real': 1.0}}\nE         Omitting 1 identical items, use -vv to show\nE         Differing items:\nE         {'array': {'imag': -4.0, 'real': 3.0}} != {'array': [{'imag': -4.0, 'real': 3.0}]}\nE         Use -v to get more diff\n\nsrc/test/test_task042_shared_components.py:17: AssertionError\n=========================== short test summary info ============================\nFAILED src/test/test_task042_shared_components.py::test_nested_complex_metadata_keeps_both_channels\n1 failed, 1 passed in 1.61s\n",
+  "targeted_recheck": {
+    "summary": {
+      "workflow_deadline_seconds": 180.0,
+      "solve_deadline_seconds": null,
+      "time_limit_mode": "bounded",
+      "resource_stop_policy": "legacy",
+      "rss_hard_limit_bytes": 2147483648,
+      "rss_warning_bytes": 1610612736,
+      "startup_headroom_bytes": null,
+      "swap_policy": "legacy_stop",
+      "global_swap_delta_policy": "observe_only",
+      "cache_metadata_stable": true,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "observed_child_pids": [
+        541896,
+        541897
+      ],
+      "sampled_process_tree_rss_peak_bytes": 229629952,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+      "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 299
+        },
+        "end": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 299
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "job_swap_activity": "zero_supported_by_zero_global_activity",
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 949130309632,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 949130309632,
+        "reserve_bytes": 324465057792,
+        "launch_cap_bytes": 12000000000,
+        "planning_cap_bytes": 12000000000,
+        "cgroup_limits": []
+      },
+      "samples": 16,
+      "elapsed_seconds": 3.684914821991697,
+      "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_state": {
+        "source_sha": "7188564f1a284049ddac3eb32a77ccbda84c5c6b",
+        "git_status": " M src/runners/task042_shared.py\n M src/test/test_task042_shared_components.py\n?? docs/task042_neural_coarse_inverse/outcomes/records/mode_metadata_repair_v2.json\n?? input/task042_neural_coarse_inverse/f1_b0_shared_retry4.dat\n?? src/test/test_task042_mode_metadata.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "src/test/test_task042_mode_metadata.py",
+          "src/test/test_task042_shared_components.py::test_nested_complex_metadata_keeps_both_channels"
+        ],
+        "utc": "2026-09-28T11:23:58.819423+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "fe",
+        "gpu_visible": false
+      }
+    },
+    "worker_log": "..                                                                       [100%]\n2 passed in 1.63s\n",
+    "worker_log_sha256": "b6b77ff64ca00bbcfc5e84bb13f88fd1b8111c7c655601816929747f67ce0580"
+  },
+  "additional_targeted_diagnosis": "First serializer test exposed ndarray.item() flattening a one-element vector; tolist now precedes item, preserving all array dimensions. Actual80-mode inventory test passed on both light attempts.",
+  "interface_completion_check": {
+    "summary": {
+      "workflow_deadline_seconds": 180.0,
+      "solve_deadline_seconds": null,
+      "time_limit_mode": "bounded",
+      "resource_stop_policy": "legacy",
+      "rss_hard_limit_bytes": 2147483648,
+      "rss_warning_bytes": 1610612736,
+      "startup_headroom_bytes": null,
+      "swap_policy": "legacy_stop",
+      "global_swap_delta_policy": "observe_only",
+      "cache_metadata_stable": true,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "observed_child_pids": [
+        542536,
+        542537
+      ],
+      "sampled_process_tree_rss_peak_bytes": 232681472,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+      "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 299
+        },
+        "end": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 299
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "job_swap_activity": "zero_supported_by_zero_global_activity",
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 948841914368,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 948841914368,
+        "reserve_bytes": 324465057792,
+        "launch_cap_bytes": 12000000000,
+        "planning_cap_bytes": 12000000000,
+        "cgroup_limits": []
+      },
+      "samples": 17,
+      "elapsed_seconds": 3.829096995003056,
+      "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_state": {
+        "source_sha": "7188564f1a284049ddac3eb32a77ccbda84c5c6b",
+        "git_status": " M src/runners/task042_experiment.py\n M src/runners/task042_shared.py\n M src/solvers/learned_coarse_inverse.py\n M src/test/test_task042_p4_witness.py\n M src/test/test_task042_shared_components.py\n?? docs/task042_neural_coarse_inverse/outcomes/records/mode_metadata_repair_v2.json\n?? input/task042_neural_coarse_inverse/f1_b0_shared_retry4.dat\n?? src/test/test_task042_mode_metadata.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "src/test/test_task042_p4_witness.py",
+          "src/test/test_task042_mode_metadata.py",
+          "src/test/test_task042_shared_components.py",
+          "src/test/test_task039extra_v20_noncommuting_contract.py"
+        ],
+        "utc": "2026-09-28T11:26:08.007209+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "fe",
+        "gpu_visible": false
+      }
+    },
+    "worker_log": ".........                                                                [100%]\n9 passed in 1.66s\n",
+    "worker_log_sha256": "ef11dfb49973a3ffd692d70dd52dcec5c8c87edd829b9a01c837bfaa2e41c5a4"
+  },
+  "offline_reference_static_fix": {
+    "diagnosis": "Qualified _MumpsFactor.solve is intentionally one-shot; Task042 multiple RHS/refinement must use solve_repeated. Found before any offline reference launch.",
+    "change": "Moved repeated reference kernel into src.solvers.learned_coarse_inverse and calls solve_repeated; fixed three correction cap/1e-13 Schur stopping unchanged; candidate code never uses this helper.",
+    "test": "Two independent toy RHS use repeated API; one-shot mock raises if called, true residual <1e-13."
+  },
+  "final_static_checks": {
+    "ruff_affected_task042_modules": "PASS",
+    "py_compile": "PASS",
+    "git_diff_check": "PASS"
+  }
+}

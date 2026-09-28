@@ -25,10 +25,12 @@ ARTIFACTS = ROOT / "benchmarks/artifacts/task042"
 
 def write_json(path, value):
     def convert(item):
-        if hasattr(item, "item"):
-            return item.item()
+        if isinstance(item, complex):
+            return {"real": float(item.real), "imag": float(item.imag)}
         if hasattr(item, "tolist"):
             return item.tolist()
+        if hasattr(item, "item"):
+            return item.item()
         raise TypeError(type(item).__name__)
 
     path.write_text(

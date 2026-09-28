@@ -7,6 +7,19 @@ from src.io import load_and_resolve
 from src.solvers.learned_coarse_inverse import BoundedBlockPC
 
 
+def test_nested_complex_metadata_keeps_both_channels(tmp_path):
+    import json
+
+    from src.runners.task042_shared import write_json
+
+    path = tmp_path / "complex.json"
+    write_json(path, {"scalar": 1.0 + 2.0j, "array": np.array([3.0 - 4.0j])})
+    assert json.loads(path.read_text()) == {
+        "scalar": {"real": 1.0, "imag": 2.0},
+        "array": [{"real": 3.0, "imag": -4.0}],
+    }
+
+
 def test_complex_disjoint_patches_are_bounded_and_do_not_solve_global():
     a = np.array(
         [

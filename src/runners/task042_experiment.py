@@ -29,6 +29,7 @@ from src.solvers.learned_coarse_inverse import (
     cell_declarations,
     manufacture,
     native_numpy_apply,
+    reference_solve,
 )
 from src.solvers.p6_cell_condensed_action import (
     build_p6_cell_condensed_action_from_carrier,
@@ -263,30 +264,6 @@ def rhs_inventory(action, physical):
         ("amplitude_1e3", CoarseRHS(1.0e3 * g, 1.0e3 * p)),
         ("zero", CoarseRHS(zf, zp)),
     ]
-
-
-def reference_solve(matrix, action, rhs, ksp):
-    b = matrix.createVecRight()
-    x = b.duplicate()
-    residual = b.duplicate()
-    correction = b.duplicate()
-    try:
-        b.array[:] = action.reduce_rhs(rhs.fe, port_rhs=rhs.port, rhs_is_mpc_dual=True)
-        x.set(0.0)
-        ksp.solve(b, x)
-        refinements = 0
-        for _ in range(3):
-            matrix.mult(x, residual)
-            residual.array[:] = b.array - residual.array
-            if relative(residual.array, b.array) <= 1.0e-13:
-                break
-            ksp.solve(residual, correction)
-            x.axpy(1.0, correction)
-            refinements += 1
-        return x.array.copy(), refinements
-    finally:
-        for v in (b, x, residual, correction):
-            v.destroy()
 
 
 def run_f1(runtime, action, physical, stage, directory, artifacts, marker):

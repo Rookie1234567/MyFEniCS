@@ -5,8 +5,48 @@ import pytest
 from mpi4py import MPI
 from petsc4py import PETSc
 
+from src.solvers.learned_coarse_inverse import reference_solve
 from src.solvers.p6_cell_condensed_action import P6CellCondensedAction
 from src.test.test_task039extra_v20_noncommuting_contract import _problem
+
+
+def test_offline_reference_uses_qualified_repeated_api_across_rhs():
+    from src.solvers.coarse_inverse_protocol import CoarseRHS
+
+    _, _, action = _problem()
+    dense = np.column_stack(
+        [action.apply(np.eye(4, dtype=np.complex128)[:, i]) for i in range(4)]
+    )
+    matrix = PETSc.Mat().createDense([4, 4], comm=MPI.COMM_SELF)
+    matrix.setUp()
+    matrix.setValues(range(4), range(4), dense)
+    matrix.assemble()
+
+    class RepeatedFactor:
+        calls = 0
+
+        def solve(self, *_):
+            raise AssertionError("MUMPS one-shot solve is forbidden for multiple RHS")
+
+        def solve_repeated(self, b, x):
+            self.calls += 1
+            x.array[:] = np.linalg.solve(dense, b.array)
+
+    factor = RepeatedFactor()
+    try:
+        for phase in (1.0, 1j):
+            rhs = CoarseRHS(
+                np.full(4, phase, dtype=np.complex128),
+                np.full(2, -phase, dtype=np.complex128),
+            )
+            x, refinement = reference_solve(matrix, action, rhs, factor)
+            b = action.reduce_rhs(rhs.fe, port_rhs=rhs.port, rhs_is_mpc_dual=True)
+            assert np.linalg.norm(dense @ x - b) / np.linalg.norm(b) < 1e-13
+            assert refinement == 0
+        assert factor.calls == 2
+    finally:
+        matrix.destroy()
+        action.destroy()
 
 
 def test_borrowed_matrix_default_rejection_and_p4_ownership():
