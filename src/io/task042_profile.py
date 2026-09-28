@@ -14,6 +14,8 @@ TASK042_PROFILES = {
     "task042_shared_f4_b0_v1": "F4-B0",
     "task042_shared_f4_linear_v1": "F4-LIN",
     "task042_shared_f4_neural_v1": "F4-NN",
+    "task042_shared_v3_reuse_diagnostic": "V3-reuse",
+    "task042_shared_v3_cell_port_overlap": "V3-overlap",
 }
 
 

@@ -1,0 +1,174 @@
+{
+  "schema": "task042.bounded-diagnostic.v3",
+  "authorization": "User bounded V3 geometry/representation diagnosis; no F5",
+  "start_head": "d42a7de47bcd966472d58367bab93872d31584e7",
+  "diagnostic_indices": [
+    0,
+    10,
+    11
+  ],
+  "diagnostic_role": "old heldout consumed, diagnostic only; not fresh qualification",
+  "previous_runs": {
+    "R-B0": "task042_f4_b0_shared_20260928T125023426273Z",
+    "R-LIN": "task042_f4_linear_shared_20260928T125922282126Z",
+    "R-NN": "task042_f4_neural_shared_20260928T132035458383Z"
+  },
+  "consumed_files": [
+    {
+      "path": "results/task042/task042_f4_b0_shared_20260928T125023426273Z/run_manifest.json",
+      "sha256": "6108b1728ed7262be223f9fbb2708b78c15d4aa6aff90f0ebe7764bafe4160ae"
+    },
+    {
+      "path": "results/task042/task042_f4_b0_shared_20260928T125023426273Z/coarse_results.json",
+      "sha256": "4c5083cd13b370f6451dd2e38f485783960b56cca5d413f9a989fa1066cd7f57"
+    },
+    {
+      "path": "results/task042/task042_f4_b0_shared_20260928T125023426273Z/qualified_original_operator.json",
+      "sha256": "8166f9fac012ac015e5a57c6e40385dc122cfb96e3a4872ad7280390eeb8f597"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/task042_f4_b0_shared_20260928T125023426273Z/failure_000.npz",
+      "sha256": "1cc24ad8b55b567bb37b909d7a283303dfd585b5032e2a8c7c6f601682b751a7"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/task042_f4_b0_shared_20260928T125023426273Z/trajectory_000.npz",
+      "sha256": "d34772a953d5a64a7dcf74a54549232ebf02b9a0a1aca58811e01fab1a6ce02f"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/task042_f4_b0_shared_20260928T125023426273Z/history_000.json",
+      "sha256": "8372e444993ff278e562b827777034de863f7378baea7cca09361a0291e21f5e"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/task042_f4_b0_shared_20260928T125023426273Z/failure_010.npz",
+      "sha256": "1e083e022c99ce7f4014e003f3ee097ba6571e921b83f7fcb99fe82ee3df8aa4"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/task042_f4_b0_shared_20260928T125023426273Z/trajectory_010.npz",
+      "sha256": "fc9548ee81152c7b233344d462cee25121a0ddfb93ba26433d830bf697cab41a"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/task042_f4_b0_shared_20260928T125023426273Z/history_010.json",
+      "sha256": "133540a9fc419e69087582fdfc2dc08239276bb00eed5c6126d5dbd123463c86"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/task042_f4_b0_shared_20260928T125023426273Z/failure_011.npz",
+      "sha256": "995379f3fd82679b22bfd60fc8b8524514aa2e5cc3be591a77b57c069a1611f8"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/task042_f4_b0_shared_20260928T125023426273Z/trajectory_011.npz",
+      "sha256": "7098e963d049bbb296a0488fa6a2e4317b60c275f45addc51145761882844214"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/task042_f4_b0_shared_20260928T125023426273Z/history_011.json",
+      "sha256": "5ab122116d07cd7d9698027095c36e584a0fb3f7f75d343fccfcd2503abe2f07"
+    },
+    {
+      "path": "results/task042/task042_f4_linear_shared_20260928T125922282126Z/run_manifest.json",
+      "sha256": "d2fa3495f8f21c54c8c88b4e0472ce7ead13e5043a16a7d00da69f5bad391189"
+    },
+    {
+      "path": "results/task042/task042_f4_linear_shared_20260928T125922282126Z/coarse_results.json",
+      "sha256": "243e05f18bbe23d8ba2e46c2b48266796cf9c982ccb1212fa683dec6d79da2ef"
+    },
+    {
+      "path": "results/task042/task042_f4_linear_shared_20260928T125922282126Z/qualified_original_operator.json",
+      "sha256": "8166f9fac012ac015e5a57c6e40385dc122cfb96e3a4872ad7280390eeb8f597"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/task042_f4_linear_shared_20260928T125922282126Z/failure_000.npz",
+      "sha256": "cf5ad548e2b6b83ae6b950c2e713e309efca99965e0e26dee47be9587f122a99"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/task042_f4_linear_shared_20260928T125922282126Z/trajectory_000.npz",
+      "sha256": "e53d5a5d7c6868d5029d91f5d981e74cf1ca594c6ab0d928b50658a7ddc45c0d"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/task042_f4_linear_shared_20260928T125922282126Z/history_000.json",
+      "sha256": "f0482e4c7f9243633e4720b27c5981e9fa4028ac3a2ca8ef2c9788046a9509d9"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/task042_f4_linear_shared_20260928T125922282126Z/failure_010.npz",
+      "sha256": "79bd5b6e5c2d3b10f95bb44017018c3a0b3e63d9185eb89697a664ba8e76545d"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/task042_f4_linear_shared_20260928T125922282126Z/trajectory_010.npz",
+      "sha256": "bce119218fd9ab9f8c7e1b2ef777706403e97a8934033f260d7fcee6746e194a"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/task042_f4_linear_shared_20260928T125922282126Z/history_010.json",
+      "sha256": "aa09bb35d317a7677e305eac90b500a278d99686b800e5deae77006062be3344"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/task042_f4_linear_shared_20260928T125922282126Z/failure_011.npz",
+      "sha256": "e0f230707cd089f87a49eb47c0e7e69ac2a4468dfa13f846ecb5efc3a5638bb0"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/task042_f4_linear_shared_20260928T125922282126Z/trajectory_011.npz",
+      "sha256": "96d441cc4dd7b6aec22106aa364b9ff3f7afe4de9cdb6fa4763bda60f3884740"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/task042_f4_linear_shared_20260928T125922282126Z/history_011.json",
+      "sha256": "af4ae22b7d8ab798409f2309635680b3cd6dc13ff3f0a8febce32cf2329908e0"
+    },
+    {
+      "path": "results/task042/task042_f4_neural_shared_20260928T132035458383Z/run_manifest.json",
+      "sha256": "e6929449c6e27ccbbc4c0664c6a4b9b0400af9783717066fb2210e718876767b"
+    },
+    {
+      "path": "results/task042/task042_f4_neural_shared_20260928T132035458383Z/coarse_results.json",
+      "sha256": "9383a1f342221ac2bd7a42db9e928e11fafebc483ae049007ded4c52def1f01b"
+    },
+    {
+      "path": "results/task042/task042_f4_neural_shared_20260928T132035458383Z/qualified_original_operator.json",
+      "sha256": "8166f9fac012ac015e5a57c6e40385dc122cfb96e3a4872ad7280390eeb8f597"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/task042_f4_neural_shared_20260928T132035458383Z/failure_000.npz",
+      "sha256": "c164309d6ae8349f3b91be51a4fb7aa6e134e10e4abd1069480984b85b8a4e08"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/task042_f4_neural_shared_20260928T132035458383Z/trajectory_000.npz",
+      "sha256": "41cd9dc96cf5f4ee67dc6d84b1c5b6c678a88e44ed6fb210423677e686bea7fe"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/task042_f4_neural_shared_20260928T132035458383Z/history_000.json",
+      "sha256": "5746f5c875652cec3a7c3a3c3fe5c154675be2473f4e7e0aa9216b931d1e87c6"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/task042_f4_neural_shared_20260928T132035458383Z/failure_010.npz",
+      "sha256": "ec3d15c49fd6beafceb2c9c87cc8bdfbe2a04925c9e0e93dc09cbfbe9851bedc"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/task042_f4_neural_shared_20260928T132035458383Z/trajectory_010.npz",
+      "sha256": "18d9e9674fed2b121b0b8256100bab4849218704cf4552862948926f22aff9ec"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/task042_f4_neural_shared_20260928T132035458383Z/history_010.json",
+      "sha256": "e11a947d44382fbe27bae6dfe345678dc9aed2cba6b13073908676fa4126dd51"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/task042_f4_neural_shared_20260928T132035458383Z/failure_011.npz",
+      "sha256": "cb7ee805b212ae579557f87716464c90c837fc2774842486538100460f2c6ce0"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/task042_f4_neural_shared_20260928T132035458383Z/trajectory_011.npz",
+      "sha256": "57d43d287349500d847212f201e5b5fce175e842262162ff7392832467da1e5a"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/task042_f4_neural_shared_20260928T132035458383Z/history_011.json",
+      "sha256": "cb35956a22ec12e6cd8fb2e760f6c90fde446b5d503522149df3f679efcd3f63"
+    }
+  ],
+  "reuse_solver_rerun": false,
+  "inner": {
+    "restart": 32,
+    "max_iterations": 256,
+    "rtol": 1e-12,
+    "zero_start": true,
+    "strict_return": 1e-10
+  },
+  "new_pc_count_max": 1,
+  "representation_rank_max": 128,
+  "neural_training": false,
+  "F5": false
+}

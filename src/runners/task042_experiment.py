@@ -497,6 +497,15 @@ def main():
     write_json(directory / "numerical_summary.json", result)
     started = time.perf_counter()
     try:
+        if stage in ("V3-reuse", "V3-overlap"):
+            from src.runners.task042_diagnostics import run_diagnostic_stage
+
+            result.update(
+                run_diagnostic_stage(
+                    cfg, MPI.COMM_WORLD, stage, directory, artifact, source, marker
+                )
+            )
+            return 0
         if stage in ("F2-teacher", "F2-oracle", "F4-B0", "F4-LIN", "F4-NN"):
             from src.runners.task042_coarse_stages import run_coarse_stage
 

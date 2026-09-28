@@ -1,0 +1,552 @@
+{
+  "schema": "task042.actual-cpu-audit.v3",
+  "v2_blanket_cpu0_claim": "incorrect; authoritative manifest and worker affinity listed per run",
+  "runs": [
+    {
+      "run": "task042_f1_b0_shared_20260928T102549637194Z",
+      "source_sha": "ae5b7d2b79dec38056e4a8b9bd986429989455dd",
+      "manifest_cpu": 0,
+      "actual_threads": {
+        "pools": [
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          }
+        ],
+        "affinity": [
+          0
+        ],
+        "nice": 10
+      },
+      "baseline_cpu": 0,
+      "supervisor_source_state": {
+        "source_sha": "ae5b7d2b79dec38056e4a8b9bd986429989455dd",
+        "git_status": "",
+        "stage": "F1-B0",
+        "formal_pde": false,
+        "input_sha256": "8672b312be8532b19fb5d33bf0e7ff05517ddace5601f39e678c112912c5ad5b",
+        "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle"
+      },
+      "evidence_sha256": {
+        "results/task042/task042_f1_b0_shared_20260928T102549637194Z/run_manifest.json": "b2806c6c7b92b6f846efc293032f9dce36a0f711bf0d5ee2b9dbf98a82fa90d8",
+        "results/task042/task042_f1_b0_shared_20260928T102549637194Z/actual_threads.json": "89a03edbbafab967d9fc993c0e3e88b0765bfdcd9a47f625df7a1a8ccbfcc42d",
+        "results/task042/task042_f1_b0_shared_20260928T102549637194Z/resource_baseline.json": "26e440fb8d1c38cd84939571716fa1751339e65f2d8c1c50c92b146b80fd244e",
+        "results/task042/task042_f1_b0_shared_20260928T102549637194Z/supervision/summary.json": "de62960c4c1dd96e0ea6c79921ed89ff966164fd38e55876cecfeb05b6a0c5c1"
+      }
+    },
+    {
+      "run": "task042_f1_b0_shared_retry1_20260928T103349973838Z",
+      "source_sha": "23cb4710e3ed2c8f7c51fd2b3f4e4dd952bea716",
+      "manifest_cpu": 0,
+      "actual_threads": {
+        "pools": [
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          }
+        ],
+        "affinity": [
+          0
+        ],
+        "nice": 10
+      },
+      "baseline_cpu": 0,
+      "supervisor_source_state": {
+        "source_sha": "23cb4710e3ed2c8f7c51fd2b3f4e4dd952bea716",
+        "git_status": "",
+        "stage": "F1-B0",
+        "formal_pde": false,
+        "input_sha256": "97aa523950f31a9c3c5ea8c4c9f6c62756214a4dbbb8034aebfe184d56b6d8a7",
+        "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle"
+      },
+      "evidence_sha256": {
+        "results/task042/task042_f1_b0_shared_retry1_20260928T103349973838Z/run_manifest.json": "5c47baae4f73710b2b2dc281f2c1665061ef77fbb3bb2dddb1a245463e425e9b",
+        "results/task042/task042_f1_b0_shared_retry1_20260928T103349973838Z/actual_threads.json": "89a03edbbafab967d9fc993c0e3e88b0765bfdcd9a47f625df7a1a8ccbfcc42d",
+        "results/task042/task042_f1_b0_shared_retry1_20260928T103349973838Z/resource_baseline.json": "edb4df052785e2b6104f2acbe0abbb4a0884f999b7e7de071c3c55da6bcf68e4",
+        "results/task042/task042_f1_b0_shared_retry1_20260928T103349973838Z/supervision/summary.json": "c248439cd2dc73a08d8170020f29c26d8ed9800ff2f2064879014c9f27b53fba"
+      }
+    },
+    {
+      "run": "task042_f1_b0_shared_retry2_20260928T104250954083Z",
+      "source_sha": "f194e455cf904d255fbb30151f21d12be19bc56b",
+      "manifest_cpu": 0,
+      "actual_threads": {
+        "pools": [
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          }
+        ],
+        "affinity": [
+          0
+        ],
+        "nice": 10
+      },
+      "baseline_cpu": 0,
+      "supervisor_source_state": {
+        "source_sha": "f194e455cf904d255fbb30151f21d12be19bc56b",
+        "git_status": "",
+        "stage": "F1-B0",
+        "formal_pde": false,
+        "input_sha256": "b1e6d60b7a2b42e319b413ff6dddaf5a481c102681e4f0aa008e2955c46d1bfc",
+        "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle"
+      },
+      "evidence_sha256": {
+        "results/task042/task042_f1_b0_shared_retry2_20260928T104250954083Z/run_manifest.json": "e29e0adb24e32325b35204d3b88f4593378d22e4ceaa0278fa64479b2da8b5ab",
+        "results/task042/task042_f1_b0_shared_retry2_20260928T104250954083Z/actual_threads.json": "89a03edbbafab967d9fc993c0e3e88b0765bfdcd9a47f625df7a1a8ccbfcc42d",
+        "results/task042/task042_f1_b0_shared_retry2_20260928T104250954083Z/resource_baseline.json": "4e05d18652c3fe220b0fb78ce81930c535085dd6d2a23a6e4c885b7fee59a729",
+        "results/task042/task042_f1_b0_shared_retry2_20260928T104250954083Z/supervision/summary.json": "3031b280fd4b256bb85223eeeb7054bca885c755f8da737261ade8f5225f33ca"
+      }
+    },
+    {
+      "run": "task042_f1_b0_shared_retry3_20260928T110605340793Z",
+      "source_sha": "7188564f1a284049ddac3eb32a77ccbda84c5c6b",
+      "manifest_cpu": 0,
+      "actual_threads": {
+        "pools": [
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          }
+        ],
+        "affinity": [
+          0
+        ],
+        "nice": 10
+      },
+      "baseline_cpu": 0,
+      "supervisor_source_state": {
+        "source_sha": "7188564f1a284049ddac3eb32a77ccbda84c5c6b",
+        "git_status": "",
+        "stage": "F1-B0",
+        "formal_pde": false,
+        "formal_fe_stage": true,
+        "input_sha256": "97e9d26712f9025438d2cb636377ff96bb4b563266ab6245732068876515d327",
+        "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle"
+      },
+      "evidence_sha256": {
+        "results/task042/task042_f1_b0_shared_retry3_20260928T110605340793Z/run_manifest.json": "b0139e8666ed1338e959de9ae60ccba8ddab6dd1f48df29d036417e3be950e6a",
+        "results/task042/task042_f1_b0_shared_retry3_20260928T110605340793Z/actual_threads.json": "89a03edbbafab967d9fc993c0e3e88b0765bfdcd9a47f625df7a1a8ccbfcc42d",
+        "results/task042/task042_f1_b0_shared_retry3_20260928T110605340793Z/resource_baseline.json": "1ab53486e85d20c87cd7f56b95964fc7b0e51c6c501c7bc590a3853ef657ff11",
+        "results/task042/task042_f1_b0_shared_retry3_20260928T110605340793Z/supervision/summary.json": "8bcf00df165a6c2d34c51a095f6e14fac3224c729705cbf8b6577521e31b5f90"
+      }
+    },
+    {
+      "run": "task042_f1_b0_shared_retry4_20260928T112714491078Z",
+      "source_sha": "cca180f875bd22146f2d30fa4d004e372135dfbb",
+      "manifest_cpu": 0,
+      "actual_threads": {
+        "pools": [
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          }
+        ],
+        "affinity": [
+          0
+        ],
+        "nice": 10
+      },
+      "baseline_cpu": 0,
+      "supervisor_source_state": {
+        "source_sha": "cca180f875bd22146f2d30fa4d004e372135dfbb",
+        "git_status": "",
+        "stage": "F1-B0",
+        "formal_pde": false,
+        "formal_fe_stage": true,
+        "input_sha256": "0727ec6c034fe7275aa1d1e72af74c0cbd486e9ed11dbe2fa96719a284184752",
+        "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle"
+      },
+      "evidence_sha256": {
+        "results/task042/task042_f1_b0_shared_retry4_20260928T112714491078Z/run_manifest.json": "edfd3fab79b50e757959747430aafb9363773377f349b196d0670c429f589b4d",
+        "results/task042/task042_f1_b0_shared_retry4_20260928T112714491078Z/actual_threads.json": "89a03edbbafab967d9fc993c0e3e88b0765bfdcd9a47f625df7a1a8ccbfcc42d",
+        "results/task042/task042_f1_b0_shared_retry4_20260928T112714491078Z/resource_baseline.json": "fe16b37abb2ab20dc206d080bdc275589a02dcc5aa8d9b257d47564f9c875158",
+        "results/task042/task042_f1_b0_shared_retry4_20260928T112714491078Z/supervision/summary.json": "c9977f9c97db49f6d65b7a978fd697a878284d4978205b2e22e14b2852970f6b"
+      }
+    },
+    {
+      "run": "task042_f2_oracle_shared_20260928T123331290778Z",
+      "source_sha": "d9de8ad69bfeeac4860e5187e1738c902a3d808e",
+      "manifest_cpu": 33,
+      "actual_threads": {
+        "pools": [
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          }
+        ],
+        "affinity": [
+          33
+        ],
+        "nice": 10
+      },
+      "baseline_cpu": 33,
+      "supervisor_source_state": {
+        "source_sha": "d9de8ad69bfeeac4860e5187e1738c902a3d808e",
+        "git_status": "",
+        "stage": "F2-oracle",
+        "formal_pde": false,
+        "formal_fe_stage": true,
+        "input_sha256": "68def69e00cd8a4b707102ab7bde3eacb53daa59a9bac47f95140ed2e8d7539c",
+        "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+        "shared_workstation": true,
+        "cpu": 33,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle"
+      },
+      "evidence_sha256": {
+        "results/task042/task042_f2_oracle_shared_20260928T123331290778Z/run_manifest.json": "a26bb80d4b6ca294b827d2affb8a856368ccbb5e84f97e8813ca96565d8707b8",
+        "results/task042/task042_f2_oracle_shared_20260928T123331290778Z/actual_threads.json": "286fc5115aa6eb1020cacf0b5cf1a97d196b8506bf7f23c82ed6ac25ce24ae49",
+        "results/task042/task042_f2_oracle_shared_20260928T123331290778Z/resource_baseline.json": "009204e775864fc93b53e9ff21edb8089a42032e0ea291b68385339880c182ba",
+        "results/task042/task042_f2_oracle_shared_20260928T123331290778Z/supervision/summary.json": "9a7c49bbd24c9bb5e4daf6014f2862f1afcbd6ebea9da5f4271b0e7c193a87f5"
+      }
+    },
+    {
+      "run": "task042_f2_teacher_shared_20260928T115902548611Z",
+      "source_sha": "b72448bb2117a0221f041f1b47ac41049750a3c7",
+      "manifest_cpu": 0,
+      "actual_threads": {
+        "pools": [
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          }
+        ],
+        "affinity": [
+          0
+        ],
+        "nice": 10
+      },
+      "baseline_cpu": 0,
+      "supervisor_source_state": {
+        "source_sha": "b72448bb2117a0221f041f1b47ac41049750a3c7",
+        "git_status": "",
+        "stage": "F2-teacher",
+        "formal_pde": false,
+        "formal_fe_stage": true,
+        "input_sha256": "fe3674c746a4cd0faef785a0285f6802ba86fc10e192a1a5c85c0ec7c1f1bc98",
+        "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle"
+      },
+      "evidence_sha256": {
+        "results/task042/task042_f2_teacher_shared_20260928T115902548611Z/run_manifest.json": "1e2d544b2c640c7148019ec1ba6f609f172c94b8805231677bd38dfd8c198c07",
+        "results/task042/task042_f2_teacher_shared_20260928T115902548611Z/actual_threads.json": "89a03edbbafab967d9fc993c0e3e88b0765bfdcd9a47f625df7a1a8ccbfcc42d",
+        "results/task042/task042_f2_teacher_shared_20260928T115902548611Z/resource_baseline.json": "6ef213903541f639c888544099e353f94db648cc970f2fda497c6f8915d6cb29",
+        "results/task042/task042_f2_teacher_shared_20260928T115902548611Z/supervision/summary.json": "a42ff793de1afed6d7b91aed4a48a2d21566de45ec4988b879b4af917efa0221"
+      }
+    },
+    {
+      "run": "task042_f3_train_shared_20260928T124806299236Z",
+      "source_sha": "a221d881bae9405c98e351df2b0b9533582e6d50",
+      "manifest_cpu": 0,
+      "actual_threads": null,
+      "baseline_cpu": 0,
+      "supervisor_source_state": {
+        "source_sha": "a221d881bae9405c98e351df2b0b9533582e6d50",
+        "git_status": "",
+        "stage": "F3-train",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "38cdde0b4914a82115e92e6fa80516e198c13365e500ba09910184e6bf50fcff",
+        "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle"
+      },
+      "evidence_sha256": {
+        "results/task042/task042_f3_train_shared_20260928T124806299236Z/run_manifest.json": "cbb2712d375b3e4e97fccd66c3a1849eb56376d7d40f7714e71debbc0c0a202f",
+        "results/task042/task042_f3_train_shared_20260928T124806299236Z/resource_baseline.json": "a380bbcbc3f41202099db9f97bfd91400383d01f351c079c255053974c3292fd",
+        "results/task042/task042_f3_train_shared_20260928T124806299236Z/supervision/summary.json": "06a93d5419829ac472c588134ef74794ca2b52a7f8f02517981798071ac78e30"
+      }
+    },
+    {
+      "run": "task042_f4_b0_shared_20260928T125023426273Z",
+      "source_sha": "7216efa605bae155ee383fd716c0fae422448b52",
+      "manifest_cpu": 45,
+      "actual_threads": {
+        "pools": [
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          }
+        ],
+        "affinity": [
+          45
+        ],
+        "nice": 10
+      },
+      "baseline_cpu": 45,
+      "supervisor_source_state": {
+        "source_sha": "7216efa605bae155ee383fd716c0fae422448b52",
+        "git_status": "",
+        "stage": "F4-B0",
+        "formal_pde": false,
+        "formal_fe_stage": true,
+        "input_sha256": "5a8dc2cd78a397bec93cf0d9c08c1b121a64117989e763bd715da37037ce0d75",
+        "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+        "shared_workstation": true,
+        "cpu": 45,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle"
+      },
+      "evidence_sha256": {
+        "results/task042/task042_f4_b0_shared_20260928T125023426273Z/run_manifest.json": "6108b1728ed7262be223f9fbb2708b78c15d4aa6aff90f0ebe7764bafe4160ae",
+        "results/task042/task042_f4_b0_shared_20260928T125023426273Z/actual_threads.json": "f328aa0f342672ec3c0802cde5b5737356676262d389721c52acc5405418b836",
+        "results/task042/task042_f4_b0_shared_20260928T125023426273Z/resource_baseline.json": "141ad1bc8a3d5172f74d18abe5f9059e8bbf7005fc4f7273a3e64d4996e665e3",
+        "results/task042/task042_f4_b0_shared_20260928T125023426273Z/supervision/summary.json": "2fe82e9ae7052904ccc5a5966986f21273d4904d446be9fde4ac7232df5d77bf"
+      }
+    },
+    {
+      "run": "task042_f4_linear_shared_20260928T125922282126Z",
+      "source_sha": "7216efa605bae155ee383fd716c0fae422448b52",
+      "manifest_cpu": 0,
+      "actual_threads": {
+        "pools": [
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          }
+        ],
+        "affinity": [
+          0
+        ],
+        "nice": 10
+      },
+      "baseline_cpu": 0,
+      "supervisor_source_state": {
+        "source_sha": "7216efa605bae155ee383fd716c0fae422448b52",
+        "git_status": "",
+        "stage": "F4-LIN",
+        "formal_pde": false,
+        "formal_fe_stage": true,
+        "input_sha256": "f4484eda5c7eb1af9b5b79f36223510018345a8a6052b3aa4d950e303f5e7196",
+        "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle"
+      },
+      "evidence_sha256": {
+        "results/task042/task042_f4_linear_shared_20260928T125922282126Z/run_manifest.json": "d2fa3495f8f21c54c8c88b4e0472ce7ead13e5043a16a7d00da69f5bad391189",
+        "results/task042/task042_f4_linear_shared_20260928T125922282126Z/actual_threads.json": "89a03edbbafab967d9fc993c0e3e88b0765bfdcd9a47f625df7a1a8ccbfcc42d",
+        "results/task042/task042_f4_linear_shared_20260928T125922282126Z/resource_baseline.json": "3bafafb94ac31e8b3e5c01de57982392a5fd0539aac03e136133403483e42734",
+        "results/task042/task042_f4_linear_shared_20260928T125922282126Z/supervision/summary.json": "83a7c3695dc7528658075e9902be1f460af829ba207e788720cdfe888e50e818"
+      }
+    },
+    {
+      "run": "task042_f4_neural_shared_20260928T132035458383Z",
+      "source_sha": "7216efa605bae155ee383fd716c0fae422448b52",
+      "manifest_cpu": 0,
+      "actual_threads": {
+        "pools": [
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          }
+        ],
+        "affinity": [
+          0
+        ],
+        "nice": 10
+      },
+      "baseline_cpu": 0,
+      "supervisor_source_state": {
+        "source_sha": "7216efa605bae155ee383fd716c0fae422448b52",
+        "git_status": "",
+        "stage": "F4-NN",
+        "formal_pde": false,
+        "formal_fe_stage": true,
+        "input_sha256": "ececdf2c8fbad1d0d7fed2750ea5f1f273b4edeefb66bcee6564f118405dbda1",
+        "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle"
+      },
+      "evidence_sha256": {
+        "results/task042/task042_f4_neural_shared_20260928T132035458383Z/run_manifest.json": "e6929449c6e27ccbbc4c0664c6a4b9b0400af9783717066fb2210e718876767b",
+        "results/task042/task042_f4_neural_shared_20260928T132035458383Z/actual_threads.json": "89a03edbbafab967d9fc993c0e3e88b0765bfdcd9a47f625df7a1a8ccbfcc42d",
+        "results/task042/task042_f4_neural_shared_20260928T132035458383Z/resource_baseline.json": "e812b3cb8f055271b39c565c5efb350689fd716219ccbfd6891fa8ebc3a2cc73",
+        "results/task042/task042_f4_neural_shared_20260928T132035458383Z/supervision/summary.json": "c7886ddad88b411ffd7ff82e90e53dc141d2c6a426c23b1fa0e20264b056dc84"
+      }
+    }
+  ]
+}
