@@ -662,7 +662,11 @@ def candidate_validation(runtime, directory, artifact, source, profile, stage, m
                     pc_seconds=pc.seconds - before_pc,
                     additional_A4_apply_seconds=apply.seconds - before_apply,
                     ksp_reason=backend.last_reason if d["backend_called"] else None,
-                    native_audit=scalar_audit(audit.last) if audit.last else None,
+                    # Exact-zero returns bypass the audit callbacks; do not
+                    # attach the preceding nonzero RHS's cached measurements.
+                    native_audit=scalar_audit(audit.last)
+                    if d["backend_called"] and audit.last
+                    else None,
                 )
                 rows.append(d)
                 if d["backend_called"]:
