@@ -16,6 +16,7 @@ CACHES = (
     "TMP",
     "TEMP",
     "XDG_CACHE_HOME",
+    "XDG_CONFIG_HOME",
     "FFCX_CACHE_DIR",
     "PYTHONPYCACHEPREFIX",
     "MPLCONFIGDIR",
@@ -121,7 +122,7 @@ def main():
             raise ValueError("expected qualified complex128/int64 stack")
         if MPI.COMM_WORLD.size != 1:
             raise ValueError("Task042 first round requires MPI1")
-        jit_cache = Path(jit.get_parameters()["cache_dir"]).resolve()
+        jit_cache = Path(jit.get_options()["cache_dir"]).resolve()
         if not jit_cache.is_relative_to(ROOT):
             raise ValueError("actual DOLFINx JIT cache escaped NN-Lab")
         record["abi"] = {
