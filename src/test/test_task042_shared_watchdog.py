@@ -31,7 +31,27 @@ assert summary['sampled_process_tree_swap_peak_bytes']==0
         assert result.returncode == 0, result.stdout + result.stderr
         assert sibling.poll() is None
         summary = json.loads((root / "summary.json").read_text())
-        assert len(summary["observed_child_pids"]) >= 2
+        assert summary["descendants_cleared"]
+        # A new descendant can appear between the supervisor's child inventory
+        # and its RSS snapshot. Verify enforcement against the actual samples,
+        # rather than requiring the earlier inventory to contain that PID.
+        samples = [
+            json.loads(line)
+            for line in (root / "resources.jsonl").read_text().splitlines()
+        ]
+        descendants = {
+            member["pid"]
+            for sample in samples
+            for member in sample["members"]
+            if member["pid"] != sample["root_pid"]
+        }
+        assert len(descendants) >= 2
+        assert any(
+            "os.setsid()" in member["cmdline"]
+            for sample in samples
+            for member in sample["members"]
+            if member["pid"] != sample["root_pid"]
+        )
     finally:
         sibling.terminate()
         sibling.wait(timeout=5)

@@ -1,0 +1,22 @@
+{
+  "schema": "task042.resource-test-inventory.v3",
+  "raw_summary_inventory": [
+    564287
+  ],
+  "raw_resource_descendants": [
+    564287,
+    564288
+  ],
+  "triggered_peak_bytes": 143638528,
+  "limit_bytes": 134217728,
+  "classification": "RESOURCE_CONTROLLED_STOP",
+  "descendants_cleared": true,
+  "sibling_alive_assertion_passed": true,
+  "cause": "grandchild appears between child inventory and fresh RSS snapshot; cap and cleanup effective, summary-count assertion was too narrow",
+  "repair": "test asserts original RSS samples include the setsid grandchild; no supervisor or numerical source change",
+  "source_unchanged": "7fc3f1434cf4f38f43e5244ebfed3a19d0780a26",
+  "files_sha256": {
+    "/home/fenics/Projects/NN-Lab/tmp/task042/pure/tmp/pytest-of-fenics/pytest-11/test_opt_in_tree_limit_clears_0/tree/summary.json": "232763ae319911011895e55bc1a6a450ce36940414972877716c7b982dd29df4",
+    "/home/fenics/Projects/NN-Lab/tmp/task042/pure/tmp/pytest-of-fenics/pytest-11/test_opt_in_tree_limit_clears_0/tree/resources.jsonl": "8a53f702de1097b4285ee93ddfcbd89fee7970344f4cad9af7ae562ffd3a4bbd"
+  }
+}
