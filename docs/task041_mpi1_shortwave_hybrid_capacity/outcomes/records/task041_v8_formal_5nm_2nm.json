@@ -1,0 +1,227 @@
+{
+  "evidence_index": [
+    {
+      "name": "review_v8",
+      "path": "docs/task041_mpi1_shortwave_hybrid_capacity/review_report_v8.md",
+      "sha256": "416aeb645d44fa6e93e895c2c7491932b81a87385a876b98f94c0f45ed1116f7"
+    },
+    {
+      "name": "service_config",
+      "path": "results/task041_review_v8_swap_observe_continue/s1_preparation_20260928T084551Z/task041_v8_5nm_cellcond_formal_service_config.json",
+      "sha256": "8afbbc0dc37890aea0adb975d460104abd5279d6ef619b08a537b93dae94b68f"
+    },
+    {
+      "name": "systemd_run_argv",
+      "path": "results/task041_review_v8_swap_observe_continue/s1_preparation_20260928T084551Z/systemd_run_argv.json",
+      "sha256": "4e3b28b191a549cb0b59aa3e7300a331cda9f26e767be9774260222c94113521"
+    },
+    {
+      "name": "startup_identity",
+      "path": "results/task041_review_v8_swap_observe_continue/s1_preparation_20260928T084551Z/startup_identity.json",
+      "sha256": "3842161dad4e027c7573230cf318218895f1a53f67fb1ff0dd84a1603c46b52a"
+    },
+    {
+      "name": "host_snapshot",
+      "path": "results/task041_review_v8_swap_observe_continue/s1_preparation_20260928T084551Z/host_snapshot.json",
+      "sha256": "52ccab1daca8022ce1e243d06bc82ae3ee74861ad20316d32adbe6709eb93eda"
+    },
+    {
+      "name": "prelaunch_gate",
+      "path": "results/task041_review_v8_swap_observe_continue/s1_preparation_20260928T084551Z/prelaunch_gate.json",
+      "sha256": "03979fa7a525df50d37e69fbcaa7888cc9ef5e0364fa46977e6152e5b66761ef"
+    },
+    {
+      "name": "mpi8_abi_report",
+      "path": "results/task041_review_v8_swap_observe_continue/s1_preparation_20260928T084551Z/mpi8_abi_preflight.report.json",
+      "sha256": "a5590bafaae1014af951e6e80858a7e730d6a835a3e4de8979070843a3aa2104"
+    },
+    {
+      "name": "public_validate_only_stdout",
+      "path": "results/task041_review_v8_swap_observe_continue/s1_preparation_20260928T084551Z/public_validate_only.stdout.log",
+      "sha256": "18eb53a559f2acf060d585b701a18ffeb29257b8bee7b88ed0548dc0378d5926"
+    },
+    {
+      "name": "legacy_packet_descriptor",
+      "path": "results/task041_side_balh_component_audit/task041_h3b_legacy_native_packet_descriptor.json",
+      "sha256": "175a2463e15e039ff4dec91eed6a1f011d8eca338e1d2cc98cd8e30e37d86c86"
+    },
+    {
+      "name": "packet_identity",
+      "path": "results/task041_5nm_mpi8_fresh_selected_packet_identity_b01a5932_r1.json",
+      "sha256": "2a5cd006e87c48a89fa8166f687413ee0007346d6cf63d76c1cf9fb03ee994eb"
+    },
+    {
+      "hash_status": "append_only; latest sampled row is identified by sample_elapsed_seconds and row hash",
+      "latest_row_sha256": "97184106da37164ada5702132f629c87216fdfb7735087baeb809486f795668b",
+      "latest_sample_elapsed_seconds": 1020.8539173839963,
+      "name": "outer_memory_stages",
+      "path": "results/task041_v8_5nm_cellcond_formal_run_20260928/memory_stages.jsonl",
+      "sampled_at_utc": "2026-09-28T09:15:50Z",
+      "sha256": null
+    },
+    {
+      "hash_status": "append_only; latest sampled row is identified by wall_seconds and row hash",
+      "latest_event_wall_seconds": 492.16928206098964,
+      "latest_row_sha256": "642109ac6c494f9d969aa3772d9b57cb268843c9142eb40b24d46bf03d579126",
+      "name": "worker_markers",
+      "path": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8_cell_condensed/task041_5nm_p6h4_m480_mpi8_cell_condensed__hybrid_iterative__mpi8__M480/20260928T085850.487306Z/consumer/markers.jsonl",
+      "sampled_at_utc": "2026-09-28T09:15:50Z",
+      "sha256": null
+    },
+    {
+      "name": "preparation_index",
+      "path": "results/task041_review_v8_swap_observe_continue/s1_preparation_20260928T084551Z/preparation_index.json",
+      "sha256": "ce23d2fe2f90384e4faec63d3c6b1963ab3f487b86640a29f91d41010d214d2b"
+    }
+  ],
+  "observed_utc": "2026-09-28T09:15:50Z",
+  "progress": {
+    "current_rhs_iterations": "not_run",
+    "current_rhs_residual": "not_run",
+    "expected_formal_responses": 1920,
+    "formal_residuals": "not_run",
+    "latest_sampler_elapsed_seconds": 1020.8539173839963,
+    "latest_sampler_phase": "public_command",
+    "latest_worker_event": "one_cell_factor_destroyed",
+    "latest_worker_event_wall_seconds": 492.16928206098964,
+    "official_R_T_A_E_H": "not_run",
+    "phase": "system_setup_stage",
+    "process_group_gone_at_latest_sample": false,
+    "progress_signal": "system setup markers advanced; no formal response marker emitted",
+    "time_stop_enforced": false,
+    "time_target_met": null,
+    "time_target_seconds": 86400
+  },
+  "qualification": {
+    "formal_consumer_complete": false,
+    "next_progress_update_due_utc": "2026-09-28T10:15:50Z",
+    "numeric_status": "not_run",
+    "two_nm": "not_started"
+  },
+  "record_type": "task041_review_v8_formal_progress",
+  "record_written_utc": "2026-09-28T09:18:47Z",
+  "repository": {
+    "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
+    "document_base_head": "d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f",
+    "document_changes": "documentation_only_pending_review",
+    "runtime_source_sha": "d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f",
+    "source_changes_during_run": false,
+    "upstream": "origin/codex/20260902-task41-mpi1-shortwave-hybrid-capacity"
+  },
+  "resources": {
+    "latest_sample": {
+      "authority_bytes": 32118370304,
+      "authority_kind": "process_tree",
+      "cap_bytes": 53221163008,
+      "dedicated_cgroup_current_bytes": 30203195392,
+      "dedicated_cgroup_peak_bytes": 30228844544,
+      "elapsed_seconds": 1020.8539173839963,
+      "global_pswpin_pages": 0,
+      "global_pswpout_delta_pages": 0,
+      "global_pswpout_pages": 299,
+      "global_swap_baseline_bytes": 1224704,
+      "global_swap_bytes": 1224704,
+      "global_swap_delta_bytes": 0,
+      "host_memavailable_bytes": 955940761600,
+      "host_reserve_gate_at_start": true,
+      "host_reserve_required_bytes": 412316860416,
+      "job_swap_bytes": 0,
+      "oom_events": null,
+      "oom_events_status": "not_observed_in_this_sample",
+      "process_tree_rss_bytes": 32118370304,
+      "swap_policy": "observe_only_continue",
+      "warning_bytes": 47899046707
+    },
+    "neighbor_context_at_start": {
+      "cpu_sets_do_not_overlap_task041_cpu1_to_8": true,
+      "metrology_pids": [
+        509381,
+        509439,
+        509440
+      ],
+      "task39_pids": [
+        341799,
+        341839,
+        341987
+      ]
+    },
+    "performance_isolation": "not_isolated; authorized neighbor tasks have non-overlapping CPU sets and were not touched",
+    "startup_sample": {
+      "dedicated_cgroup_memory_events": {
+        "high": 0,
+        "low": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_group_kill": 0,
+        "oom_kill": 0,
+        "sock_throttled": 0
+      },
+      "observed_utc": "2026-09-28T09:01:35Z",
+      "scope": "startup_identity_sample_only; not attributed to the later resource sample",
+      "source_path": "results/task041_review_v8_swap_observe_continue/s1_preparation_20260928T084551Z/startup_identity.json"
+    }
+  },
+  "review": {
+    "path": "docs/task041_mpi1_shortwave_hybrid_capacity/review_report_v8.md",
+    "resource_policy": "task041_v8_swap_observe_continue",
+    "sha256": "416aeb645d44fa6e93e895c2c7491932b81a87385a876b98f94c0f45ed1116f7"
+  },
+  "run": {
+    "backend_factor_audit": "not_yet_emitted",
+    "completed_formal_responses": "not_emitted",
+    "completed_probe_samples": "not_emitted",
+    "control_group": "/user.slice/user-1000.slice/user@1000.service/app.slice/task041-v8-5nm-cellcond-formal-20260928.service",
+    "dat": {
+      "input_sha256": "a788489e9d3d582d2abbdf21b3edd535a35c9649c6d5cf7dd53952f30594c5dc",
+      "path": "input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat",
+      "physical_sha256": "65bb1e2947604a7efe54b2d6450a63a583714341505c207241f4278bd25b22a4",
+      "resolved_sha256": "278d5813aa0227d3a8ddcfb2759b197436e9f0e74fef82b7c7b01c00ce1421eb"
+    },
+    "expected_formal_responses": 1920,
+    "factor_target_history": "not_yet_emitted",
+    "invocation_id": "755aeb44c48a4d1cbc8bbf6db9f6fd3e",
+    "main_pid": 527794,
+    "main_pid_start_ticks": 51092431,
+    "model_id": "task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8_cell_condensed",
+    "mpi": 8,
+    "mpi_launcher_pid": 527817,
+    "numa_policy": "numactl --membind=0",
+    "outer_supervision_root": "results/task041_v8_5nm_cellcond_formal_run_20260928",
+    "packet_manifest_sha256": "306939dda3b70777204c11fbd65beac2db5dc0637bc9b6803f7794d0d7cbad2f",
+    "producer_source_sha": "b01a5932e4dfaf895e81e0424e0dd88c276fb0d3",
+    "public_pid": 527799,
+    "public_runroot": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8_cell_condensed/task041_5nm_p6h4_m480_mpi8_cell_condensed__hybrid_iterative__mpi8__M480/20260928T085850.487306Z",
+    "qep_recomputed": false,
+    "rank_cpu_binding": {
+      "0": 1,
+      "1": 2,
+      "2": 3,
+      "3": 4,
+      "4": 5,
+      "5": 6,
+      "6": 7,
+      "7": 8
+    },
+    "rank_pids": [
+      527820,
+      527821,
+      527822,
+      527823,
+      527824,
+      527825,
+      527826,
+      527827
+    ],
+    "requested_backend": "cell_condensed",
+    "requested_refinement_target_tolerance": 5e-13,
+    "resource_policy_passed_to_worker": true,
+    "sequence": "S1",
+    "start_utc": "2026-09-28T08:58:49Z",
+    "target_passed_to_worker": true,
+    "threads_per_rank": 1,
+    "unit": "task041-v8-5nm-cellcond-formal-20260928.service",
+    "worker_root": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8_cell_condensed/task041_5nm_p6h4_m480_mpi8_cell_condensed__hybrid_iterative__mpi8__M480/20260928T085850.487306Z/consumer"
+  },
+  "schema": "task041.v8.formal_progress.v1",
+  "status": "running_at_latest_observation"
+}

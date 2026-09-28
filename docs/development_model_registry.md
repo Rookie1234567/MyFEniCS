@@ -1,6 +1,14 @@
 # 开发阶段研究对象与计算结果总账
 
-## Task041 V7 当前模型资格状态
+## Task041 V8：5 nm 完整 consumer 运行中
+
+| 模型/阶段 | 当前状态 | 资格边界与证据 |
+|---|---|---|
+| W 5 nm，p6/h4，M480，MPI8×1，registered cell-condensed 正式 consumer | unit `task041-v8-5nm-cellcond-formal-20260928.service`；runtime source `d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f`；worker 最近 marker `system_setup_stage / one_cell_factor_destroyed` | target `5e-13` 已传入，实际 factor audit 尚未输出；正式残差/RTA/全场 `not_run`，24 h 目标 `null`；不提前登记数值通过 |
+| 当前资源样本 | wall `653.757583 s`；authority/tree RSS `32,041,730,048 B`，cgroup current/peak `30,164,492,288/30,228,844,544 B`；cap/warning/reserve `53,221,163,008/47,899,046,707/412,316,860,416 B` | job/cgroup swap `0 B`；global swap `1,224,704 B`、pswpout `299` 页，均无启动后增量；V8 swap 只观察。并行性能非独占 |
+| 身份与进度 | Invocation `755aeb44c48a4d1cbc8bbf6db9f6fd3e`；public runroot 后缀 `20260928T085850.487306Z`；CPU1–8/node0 | [V8 outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/formal_5nm_2nm_v8.md)、[record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v8_formal_5nm_2nm.json)；文档 HEAD 与 runtime SHA 分开登记 |
+
+## Task041 V7 历史资格快照
 
 **未资格化。** G1 top-only 诊断有 14 项独立 Q 未过原 `1e-11`；其独立 PC 7/7 通过。G2 layoutfix-r2 的跨运行布局门通过；PC1 冻结 Q1/Q2 的 step0 差分别为 `4.826827545952679e-11`、`5.193718954731701e-11`，step1/2 经最多两次同因子修正后通过原 Q/A4 门。原 service 因 public lifecycle schema 错读以 ExecMainStatus 3 失败；后续只读合同重校验通过，但不改写原失败。完整 5 nm consumer，以及 r2 及新修正策略下的 PC action/side.apply 未运行；并行计时不作性能资格，也不得登记为正式模型 PASS 或优化收益。见[Task041 V7 outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/causal_fix_5nm_v7.md)。
 

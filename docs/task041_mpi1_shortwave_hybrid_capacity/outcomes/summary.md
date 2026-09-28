@@ -1,6 +1,10 @@
 # Task041 outcomes summary
 
-## Task041 V7 当前状态（运行与文档 HEAD 分列）
+## Task041 V8 启动快照（截至 2026-09-28T09:09:29Z）
+
+运行源码 SHA `d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f`，registered 5 nm `cell_condensed` 完整 consumer 已启动；本场在单个生命周期内验证正式两侧流程、完整响应与物理结果。最近 worker marker 为 `system_setup_stage / one_cell_factor_destroyed`；尚未输出正式残差或响应，不能报告数值通过。当前 unit 为 `task041-v8-5nm-cellcond-formal-20260928.service`，Invocation `755aeb44c48a4d1cbc8bbf6db9f6fd3e`，public runroot 后缀 `20260928T085850.487306Z`。最新资源样本（wall `653.757583 s`）authority/tree RSS `32,041,730,048 B`，cgroup current/peak `30,164,492,288/30,228,844,544 B`，job swap `0 B`；global swap `1,224,704 B`、增量 `0 B`，pswpout `299` 页、增量 `0`。V8 将 swap 作为观测；原 cap `53,221,163,008 B`、warning `47,899,046,707 B` 和 reserve `412,316,860,416 B` 仍有效。target `5e-13` 与 V8 policy 已传入 worker；因子审计尚未输出，正式响应、残差、R/T/A/E/H 和 `time_target_met` 仍为 `not_run/null`。详情见 [V8 progress outcome](formal_5nm_2nm_v8.md) 与 [机器记录](records/task041_v8_formal_5nm_2nm.json)。
+
+## Task041 V7 快照（进入 Review V8 前）
 
 本快照基于运行源码 HEAD `c5f95db7f7c2c640b666035a1949f9dc666f4da4`。13.5 consumer 使用target=None，不能替代5nm target正式入口或完整consumer验证。
 

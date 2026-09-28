@@ -1,6 +1,12 @@
 # 项目开发进度：Task000–Task041
 
-## Task041 V7 当前状态（运行与文档 HEAD 分列）
+## 2026-09-28：Task041 Review V8 5 nm 正式 consumer 启动（09:09:29Z 快照）
+
+运行源码冻结在 `d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f`；registered 5 nm cell-condensed 完整 consumer 已进入 worker `system_setup_stage`。单元内部自由度先被消去，解完成后仍要恢复完整场并检查原物理方程；本轮的内部精化目标是 `5e-13`、最多两次修正，最终原 A4/物理及完整场门没有放宽。worker 命令已收到 target 和 V8 swap-observe policy，但实际因子审计与数值结果尚未输出。最新进度记录的累计 wall 为 `403.645936 s`，formal RHS/residual 和 R/T/A/E/H 仍为 `not_run`，24 h `time_target_met=null`。
+
+本场为 MPI8×1，rank 0–7 绑定 CPU1–8、membind node0；hard RSS cap `53,221,163,008 B`、warning `47,899,046,707 B`、host reserve `412,316,860,416 B`。最新 authority/tree RSS `32,041,730,048 B`、专属 cgroup current `30,164,492,288 B`、job/cgroup swap `0 B`；global swap `1,224,704 B`、pswpout `299` 页均与启动基线相同。V8 仅观测 swap，不用其单独停止或否决结果；其他内存、OOM、磁盘和数值门保留。启动期间与邻任务并行但 CPU 集未重叠，性能不作为无竞争基准。unit、Invocation、runroot、输入绑定及小时更新记录见 [Task041 V8 outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/formal_5nm_2nm_v8.md) 和 [progress record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v8_formal_5nm_2nm.json)。
+
+## Task041 V7 快照（进入 Review V8 前）
 
 本次代码运行 source `c0a077212cc3dd0ed6989ba66ff44ca0a7cbce74` 完成G2c顶部列12/493/666三响应、7冻结PC节点与14独立Q回放；`e_x/e_A`、Q/PC、shared A4与side residual均过原门。G2c冻结输入由本场source生成；full/condensed只确认本场内布局输入匹配，未做G1跨运行组件hash比较。condensed响应合计比full慢`84.964 s`；524次P4 step0中521次原A4两门通过仍执行单修正，故不采纳“原门失败才修正”，也没有在G2c阶段提出更严的内部目标。后续已实现并分侧验证`5e-13`内部精化目标、最多两次修正，原最终A4门`1e-10`不变。service正常完成，authority/tree峰`42588479488 B`、swap bytes为0、pswpin/pswpout为0页，finalizer清场并只计账一次；与邻heavy并行，性能不作无竞争资格。`qualification_pass=false`是诊断资格边界；G2c策略的完整consumer、正式Schur/outer/RTA/EH/全场未运行。G2d随后以bottom/top两场分别完成固定manifest八项分侧target验证并通过原配对门；bottom原service exit3与派生25项复核、top exit0分别保留，仍未证明单个完整consumer双侧同时驻留时的资源或全场资格。G1/G2逐节点与G3热点建议见[Task041 V7 outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/causal_fix_5nm_v7.md)；以下历史正文保留。
 ## 2026-09-23：Task041 Review V6 组件结果
