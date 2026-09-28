@@ -4,13 +4,13 @@
   "errors": [],
   "source_sha": "9934c2e08d017124ba70bdc86ec0c22f39ca792f",
   "formal_pde": false,
-  "git_status_at_check": " M docs/development_model_registry.md\n M docs/development_progress.md\n?? docs/task042_neural_coarse_inverse/outcomes/\n?? docs/task042_neural_coarse_inverse/response_v1.md\n",
+  "git_status_at_check": " M docs/task042_neural_coarse_inverse/outcomes/accuracy_performance_memory.md\n M docs/task042_neural_coarse_inverse/outcomes/records/publication_checks.json\n M docs/task042_neural_coarse_inverse/outcomes/records/run_index.json\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/publication_attempt1.json\n",
   "markdown": [
     {
       "path": "docs/task042_neural_coarse_inverse/outcomes/accuracy_performance_memory.md",
-      "sha256": "6fa48d23daf0eaf968f2dc0ec5ba8da490e7734a5dd76fb7afe774bdd6e0861c",
+      "sha256": "32a62f328e9979b03907d6676207b913c0db3b1a630930ac5350635d17181fbe",
       "tables": 3,
-      "preview_html_sha256": "c68a79ae32337c79ee983e9010c032f0c823a12400f6f3b74af9f64ada57ebe2",
+      "preview_html_sha256": "b3fe10a61179f4765af637c6b41dbfbbc7e73d688c71eba5239c30c4e393fba1",
       "status": "PASS"
     },
     {
@@ -50,9 +50,9 @@
     },
     {
       "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
-      "sha256": "409add9e0290150c933952d0f5cf16ea7f785092927a5734b99e4a683f54de90",
+      "sha256": "6987f458e14f9313cc8c4ace464c24fad12ea47b7030171f98739db7a5559ab8",
       "tables": 1,
-      "preview_html_sha256": "68b5b64fbfae5c1a2bea96946eefe96225ccccff59c5f9a8e96d901b9d8470fa",
+      "preview_html_sha256": "bdfa08bdf3e524974fb44c4ba9fbfd97e27b01de2a2be6835101b95dc58e08a8",
       "status": "PASS"
     },
     {

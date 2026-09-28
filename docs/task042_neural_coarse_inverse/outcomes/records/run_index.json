@@ -1223,6 +1223,290 @@
           "bytes": 816
         }
       ]
+    },
+    {
+      "id": "f0_pure_publication-01",
+      "identity": "published documentation HTML verification; not PDE",
+      "mode": "pure",
+      "summary": {
+        "workflow_deadline_seconds": 180.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1610612736,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "WORKER_FAILED",
+        "leader_exit_code": 1,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          530599
+        ],
+        "sampled_process_tree_rss_peak_bytes": 63635456,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "end": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 963259150336,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 963259150336,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 12000000000,
+          "planning_cap_bytes": 12000000000,
+          "cgroup_limits": []
+        },
+        "samples": 34,
+        "elapsed_seconds": 6.62646689102985,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "2636fe5491e1381aa9cbda16abceb7ae4644b3e9",
+          "git_status": "",
+          "stage": "F0",
+          "formal_pde": false,
+          "command": [
+            "python",
+            "tmp/task042/post_push_render_check.py"
+          ],
+          "utc": "2026-09-28T09:20:49.187020+00:00",
+          "affinity": [
+            14
+          ],
+          "environment_mode": "pure",
+          "gpu_visible": false
+        }
+      },
+      "raw_files": [
+        {
+          "path": "tmp/task042/pure/publication-01/summary.json",
+          "sha256": "fb4ba75f768dc0fddf4ce679020adb08300d2e8e55c3a2a1e4a5a580260f6c2e",
+          "bytes": 2033
+        },
+        {
+          "path": "tmp/task042/pure/publication-01/worker.log",
+          "sha256": "2ea78c721fac39d5511f2b0817213fdd08deec906b6cf7ce9602d89c863729af",
+          "bytes": 1299
+        },
+        {
+          "path": "tmp/task042/pure/publication-01/resources.jsonl",
+          "sha256": "400704861d2d69b1418e81ff25e3800443bdefb69ee714d70426e779208edfeb",
+          "bytes": 54955
+        }
+      ],
+      "note": "Checker keyword assertion failure; published HTTP200/math component checks retained. No numerical change.",
+      "checker_script_sha256": "dfd587db71adf68f628a87346cdc523a24587775331055f2894235389e55c84b"
+    },
+    {
+      "id": "f0_pure_publication-02",
+      "identity": "published documentation HTML verification; not PDE",
+      "mode": "pure",
+      "summary": {
+        "workflow_deadline_seconds": 180.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1610612736,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          530712
+        ],
+        "sampled_process_tree_rss_peak_bytes": 55427072,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "end": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 960025178112,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 960025178112,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 12000000000,
+          "planning_cap_bytes": 12000000000,
+          "cgroup_limits": []
+        },
+        "samples": 96,
+        "elapsed_seconds": 17.024448601994663,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "2636fe5491e1381aa9cbda16abceb7ae4644b3e9",
+          "git_status": "?? docs/task042_neural_coarse_inverse/outcomes/records/publication_attempt1.json\n",
+          "stage": "F0",
+          "formal_pde": false,
+          "command": [
+            "python",
+            "tmp/task042/post_push_render_check.py"
+          ],
+          "utc": "2026-09-28T09:22:00.326720+00:00",
+          "affinity": [
+            14
+          ],
+          "environment_mode": "pure",
+          "gpu_visible": false
+        }
+      },
+      "raw_files": [
+        {
+          "path": "tmp/task042/pure/publication-02/summary.json",
+          "sha256": "1a0c685925e0c1b40995500c28526f3f0fbe3b2662acd5a07cb90eadfaa384ac",
+          "bytes": 2113
+        },
+        {
+          "path": "tmp/task042/pure/publication-02/worker.log",
+          "sha256": "9250984ca937011f649dfe8a009190f8461d3052810ef8f131ceb5d73627df18",
+          "bytes": 4777
+        },
+        {
+          "path": "tmp/task042/pure/publication-02/resources.jsonl",
+          "sha256": "b07ac0b01cb41ef61b3fd6c9b9c6401857dbf775bcb87c096ad6b8fdac867f64",
+          "bytes": 158590
+        },
+        {
+          "path": "tmp/task042/post_push_render_check.py",
+          "sha256": "a1c19d6bba6f1cdce620d287366cfd91ea65643afdeb64f40080f092958b7c34",
+          "bytes": 4419
+        }
+      ],
+      "note": "Five exact-head published GitHub richText pages checked; tables and math-renderer present. No browser screenshot claim."
+    },
+    {
+      "id": "f0_pure_final-publication-document-check-01",
+      "identity": "final updated publication records/document semantics; not PDE",
+      "mode": "pure",
+      "summary": {
+        "workflow_deadline_seconds": 180.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1610612736,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          52,
+          64
+        ],
+        "sampled_process_tree_rss_peak_bytes": 59535360,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "end": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 947470028800,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 947470028800,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 12000000000,
+          "planning_cap_bytes": 12000000000,
+          "cgroup_limits": []
+        },
+        "samples": 18,
+        "elapsed_seconds": 1.771895690006204,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "2636fe5491e1381aa9cbda16abceb7ae4644b3e9",
+          "git_status": " M docs/task042_neural_coarse_inverse/outcomes/accuracy_performance_memory.md\n M docs/task042_neural_coarse_inverse/outcomes/records/publication_checks.json\n M docs/task042_neural_coarse_inverse/outcomes/records/run_index.json\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/publication_attempt1.json\n",
+          "stage": "F0",
+          "formal_pde": false,
+          "command": [
+            "python",
+            "tmp/task042/final_static_checks.py"
+          ],
+          "utc": "2026-09-28T09:27:17.621810+00:00",
+          "affinity": [
+            14
+          ],
+          "environment_mode": "pure",
+          "gpu_visible": false
+        }
+      },
+      "raw_files": [
+        {
+          "path": "tmp/task042/pure/final-publication-document-check-01/summary.json",
+          "sha256": "e4b9feec368d1667329a4a5d6da30601746ed0c88393f3445dc34c4e00ad1cfa",
+          "bytes": 2407
+        },
+        {
+          "path": "tmp/task042/pure/final-publication-document-check-01/worker.log",
+          "sha256": "39157b6072d55ca1ac8ad9a108ce9034773cb6373e3e14037ddf65216a08c2ef",
+          "bytes": 185
+        },
+        {
+          "path": "tmp/task042/pure/final-publication-document-check-01/resources.jsonl",
+          "sha256": "a00ec457996b2c63935fb52405e7acfde2bae9b32a9388dccf949c0c05a3268b",
+          "bytes": 27306
+        },
+        {
+          "path": "tmp/task042/final_static_checks.py",
+          "sha256": "cd65eff4a05e623eff9f87b8b2c5676446372f2f8afa7afbad26f3b63a2f397b",
+          "bytes": 4533
+        }
+      ]
     }
   ],
   "not_run": [
@@ -1290,7 +1574,11 @@
     "ruff_compile_shell_diff_status": "pass",
     "markdown_json_csv_ignore_status": "pass",
     "first_additional_scanner_failure_preserved": true,
-    "final_publication_check_pending": true
+    "final_publication_check_pending": false,
+    "actual_published_html_status": "RENDERED_HTML_PASS",
+    "published_head": "2636fe5491e1381aa9cbda16abceb7ae4644b3e9",
+    "cached_diff_after_tracking": "PASS after preserving new CSV CRLF negative record and normalizing only new CSV to LF",
+    "first_publication_checker_failure_preserved": true
   },
   "total_sequential_monitored_wall_seconds_before_document_checks": 73.97670381999342,
   "rss_peak_bytes_observed": 236548096,
@@ -1299,5 +1587,5 @@
     "bytes": null
   },
   "scope": "These foreground bounded invocations including supervisor/descendants only. Not a continuously monitored agent/editor/Git/read/wait session. Uninstrumented environment creation and static edits/reads have no invented wall/RSS peak.",
-  "total_sequential_monitored_wall_seconds": 81.9709047760116
+  "total_sequential_monitored_wall_seconds": 107.39371595904231
 }

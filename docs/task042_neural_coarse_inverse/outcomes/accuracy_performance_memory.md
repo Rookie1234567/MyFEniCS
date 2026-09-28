@@ -32,10 +32,15 @@
 | toy残差证据提取 | 9934c2e +仅交付文档dirty | 1.751461 | 65552384 | completed |
 | 文档检查器初检 | 9934c2e +仅交付文档dirty | 2.616270 | 57163776 | failed，检查器自引用/代码围栏误报；既有27测试/Ruff/compile通过 |
 | 文档检查器针对复查 | 9934c2e +仅交付文档dirty | 2.954395 | 57368576 | passed，27静态测试及全部定向检查通过 |
+| 提交前最终文档校验 | 9934c2e +仅交付文档dirty | 2.423536 | 53276672 | passed，更新后文档与记录语义 |
+| 发布页面检查初检 | clean2636fe5文档HEAD | 6.626467 | 63635456 | failed，检查器关键词断言；发布页本身可读取 |
+| 发布页面针对复查 | 2636fe5 +仅首次检查记录dirty | 17.024449 | 55427072 | passed，5页真实GitHub渲染 |
 
 前9项顺序wall合计72.22524276096374s，加入toy提取为73.97670381999342s；最大采样同时RSS236,548,096B（约0.220302GiB），没有相加不同阶段峰。[运行账](records/bounded_f0_runs.json)和[索引](records/run_index.json)保留全部值、raw SHA和范围；最后文档/Ruff/compile/ignore检查单列在[测试摘要](test_summary.md)，纳入最终索引。
 
 加入两次上述文档检查后，已监督顺序工作流wall合计79.54736903001322s；最终发布核验/文档闭环另列run index。缓存大小由du实读：新FE venv16,072,704B、ML venv820,117,504B、Task042 tmp369,111,040B，results/artifacts各4096B目录；没有PDE结果或JIT核。这是磁盘占用，不能和RSS相加。
+
+再计入提交前最终文档校验和两次发布检查为105.62182026903611s；发布记录补齐后的最后文档校验耗时另列最终[索引](records/run_index.json)，最终总额以该索引为准。未改变数值测试源码，没有再次启动FE/ML资格或数组研究。
 
 Task042没有运行GPU工作，VRAM peak记 `not_run/null`，不拿0充当测量峰。FE导入映射libcuda但没有执行GPU算子；ML为CPU构建、CUDA不可见且Torch context未初始化。邻GPU100%只是资源阻塞证据。
 

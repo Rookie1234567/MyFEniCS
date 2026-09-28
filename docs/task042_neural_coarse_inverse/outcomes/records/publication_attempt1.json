@@ -1,0 +1,8 @@
+{
+  "schema": "task042.publication-checker-attempt1.v1",
+  "classification": "CHECKER_KEYWORD_ASSERTION_FAILED",
+  "published_head": "2636fe5491e1381aa9cbda16abceb7ae4644b3e9",
+  "reason": "Checker wrongly required literal English not_run in architecture prose that explicitly states Chinese 未实现/未运行. Actual page HTTP200 and math-renderer check passed before this assertion.",
+  "script_sha256": "dfd587db71adf68f628a87346cdc523a24587775331055f2894235389e55c84b",
+  "repair": "Apply not_run literal sentinel only to summary/response status documents; keep architecture math and all table checks."
+}
