@@ -48,6 +48,20 @@ def main(argv: list[str] | None = None) -> int:
         if args.physical_pc_profile is None and (args.profile_variant != 'R0' or args.profile_r0_reference is not None):
             raise InputError('fast profile options require --physical-pc-profile')
         specification = load_and_resolve(args.input_path)
+        from src.io.task042_profile import TASK042_PROFILES
+        if specification.solver.get('preconditioner') in TASK042_PROFILES:
+            if args.validate_only or args.dry_run:
+                print(json.dumps({'status': 'valid', 'profile': specification.solver['preconditioner'],
+                                  'stage': TASK042_PROFILES[specification.solver['preconditioner']],
+                                  'input_sha256': specification.input_sha256,
+                                  'physical_model_sha256': specification.physical_model_sha256}))
+                return 0
+            if args.setup_only or args.physical_pc_profile or args.profile_budget_ledger:
+                raise InputError('Task042 accepts one explicit stage dat without other campaign options')
+            from src.runners.task042_shared import launch
+            result = launch(specification)
+            print(json.dumps(result, sort_keys=True))
+            return 0 if result['classification'] == 'COMPLETED' and result['leader_exit_code'] == 0 else 3
         if args.setup_only:
             from src.io.native_capacity_profile import setup_only_5nm_identity_errors
 

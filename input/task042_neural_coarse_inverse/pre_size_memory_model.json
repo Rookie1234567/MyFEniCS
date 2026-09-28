@@ -1,0 +1,28 @@
+{
+  "schema": "task042.pre-size-memory-model.v1",
+  "identity": "predicted engineering budget, not observed peak or strict bound",
+  "frozen_seed": "original_13p5nm_p6h10_balanced_h6_p4_v5.dat",
+  "historical_cells_ceiling": 252,
+  "p6_max_storage_rows": 200000,
+  "p4_max_full_plus_ports": 60000,
+  "nominal_mesh_cells": [
+    5,
+    3,
+    14
+  ],
+  "nominal_is_not_boundary_fitted_actual": true,
+  "cache_all_cells_distinct_p6_bytes": 3136589568,
+  "cache_all_cells_distinct_p4_bytes": 362880000,
+  "a4_csr_forecast_bytes": 3571200000,
+  "a4_csr_forecast_assumption": "at most 8 adjacent local300 rows plus80 ports; conservative degree-connectivity planning, actual nnz recorded at build",
+  "pc_factor_budget_bytes": 536870912,
+  "inner_krylov_forecast_bytes": 63360000,
+  "jit_transient_forecast_bytes": 3221225472,
+  "native_ports_buffers_transient_forecast_bytes": 1073741824,
+  "python_launcher_forecast_bytes": 536870912,
+  "teacher_numeric_admission": "Existing symbolic INFOG16, predicted RSS+2*padded_estimate+1GiB future+1GiB buffer <16GiB before numeric; MUMPS ICNTL22=0, ICNTL23=8192 decimal MB, monitored whole tree",
+  "hard_bytes": 17179869184,
+  "warning_bytes": 12884901888,
+  "candidate_has_global_p4_factor": false,
+  "candidate_predicted_peak_bytes": 12502738688
+}

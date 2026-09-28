@@ -197,7 +197,9 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
               resource_stop_policy: str = 'legacy',
               rss_hard_limit_bytes: int | None = None,
               rss_warning_bytes: int | None = None,
-              startup_headroom_bytes: int | None = None) -> dict:
+              startup_headroom_bytes: int | None = None,
+              memory_envelope_provider=None, health_check=None,
+              include_pss: bool | None = None) -> dict:
     """Supervise one command; wall_seconds=None disables only the time gate."""
     if (not command or interval <= 0 or grace_seconds <= 0 or
             (wall_seconds is not None and wall_seconds <= 0)):
@@ -219,7 +221,8 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
     if _children():
         raise RuntimeError('watchdog must be a dedicated parent with no existing children')
     directory.mkdir(parents=True, exist_ok=False)
-    envelope = memory_envelope()
+    envelope_fn = memory_envelope_provider or memory_envelope
+    envelope = envelope_fn()
     cap = envelope['launch_cap_bytes']
     if resource_stop_policy == 'measured_tree_rss_only_v3':
         if rss_hard_limit_bytes is None:
@@ -303,6 +306,8 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
                 observed.update(children)
                 stage = 'resource_sample'
                 sample_options = {}
+                if include_pss is not None:
+                    sample_options['include_pss'] = include_pss
                 if os.environ.get('PHYSICAL_NATIVE_CAPACITY'):
                     sample_options['include_pss'] = time.monotonic() >= next_pss_sample
                     if sample_options['include_pss']:
@@ -337,7 +342,7 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
                         'scope': 'current readable task-tree members; observe-only',
                         'members': fault_members,
                     }
-                current = memory_envelope()
+                current = envelope_fn()
                 elapsed = time.monotonic() - started
                 phase = json.loads(phase_path.read_text()) if phase_path is not None and phase_path.exists() else {}
                 solve_expired = (solve_seconds is not None and phase.get('phase') == 'solve'
@@ -427,6 +432,11 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
                             swap_reason is not None and
                             reason not in ('RESOURCE_CONTROLLED_STOP', 'MONITORING_FAILED')):
                         reason = swap_reason
+                if health_check is not None:
+                    health = health_check()
+                    sample['opt_in_health_check'] = health
+                    if health.get('stop_reason') is not None and reason is None:
+                        reason = health['stop_reason']
                 sample.update({'elapsed_seconds': elapsed, 'memory_envelope': current,
                                'worker_phase': phase,
                                'launch_cap_bytes': cap, 'rss_warning_bytes': warning_cap,

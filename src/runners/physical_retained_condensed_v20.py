@@ -201,6 +201,7 @@ class RetainedCondensedRuntime:
         coarse_degree: int = 4,
         sum_factorized_work: bool = False,
         geometry_identity_policy: str = "raw_unrounded",
+        retain_coarse_schur: bool = False,
         marker: Callable[[str, Mapping[str, Any]], None] | None = None,
     ) -> "RetainedCondensedRuntime":
         from src.solvers.fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
@@ -291,7 +292,7 @@ class RetainedCondensedRuntime:
                 appended_support_owned_cell_groups=groups,
                 appended_support_group_by_row=group_by_row,
                 materialize_global_matrix=True,
-                retain_local_schur_for_matrix_free=False,
+                retain_local_schur_for_matrix_free=retain_coarse_schur,
                 dense_appended_block=True,
                 sum_duplicate_cell_integrals=True,
                 strict_local_checks=True,

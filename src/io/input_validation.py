@@ -620,6 +620,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 )
             from .native_capacity_profile import NATIVE_PROFILES, validate_native_case
             preconditioner = solver["preconditioner"]
+            from .task042_profile import TASK042_PROFILES, validate_task042_case
             from .native_capacity_profile import V5_NATIVE_PROFILES, V5_R13_PROFILES
             if "coarse_degree" in solver and preconditioner not in V5_NATIVE_PROFILES:
                 raise _error(
@@ -645,6 +646,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     "frozen x/y/z mesh axes are reserved for R13 V5 profiles",
                 )
             if preconditioner not in {
+                *TASK042_PROFILES,
                 *NATIVE_PROFILES,
                 "full3d_scalable_v1",
                 "fullspace_pml_double_sweep_v19",
@@ -659,7 +661,12 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     "solver.preconditioner",
                     "full3d_iterative requires a reviewed physical preconditioner",
                 )
-            if preconditioner in NATIVE_PROFILES:
+            if preconditioner in TASK042_PROFILES:
+                try:
+                    validate_task042_case(config)
+                except ValueError as exc:
+                    raise _error("Task042", str(exc)) from exc
+            elif preconditioner in NATIVE_PROFILES:
                 validate_native_case(config)
             elif preconditioner == "full3d_scalable_v1":
                 if solver["restart"] != 20:
