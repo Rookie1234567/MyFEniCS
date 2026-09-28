@@ -52,20 +52,20 @@
     },
     {
       "hash_status": "append_only; latest sampled row is identified by sample_elapsed_seconds and row hash",
-      "latest_row_sha256": "97184106da37164ada5702132f629c87216fdfb7735087baeb809486f795668b",
-      "latest_sample_elapsed_seconds": 1020.8539173839963,
+      "latest_row_sha256": "55a19fd5794b42fe371fd3dfa42533fa73fbf21a30f15f8225c877d831b71edb",
+      "latest_sample_elapsed_seconds": 4057.3800140329986,
       "name": "outer_memory_stages",
       "path": "results/task041_v8_5nm_cellcond_formal_run_20260928/memory_stages.jsonl",
-      "sampled_at_utc": "2026-09-28T09:15:50Z",
+      "sampled_at_utc": "2026-09-28T10:06:27Z",
       "sha256": null
     },
     {
       "hash_status": "append_only; latest sampled row is identified by wall_seconds and row hash",
-      "latest_event_wall_seconds": 492.16928206098964,
-      "latest_row_sha256": "642109ac6c494f9d969aa3772d9b57cb268843c9142eb40b24d46bf03d579126",
+      "latest_event_wall_seconds": 3976.615879086021,
+      "latest_row_sha256": "fc92e0b8ed41f6253b9a7a1a5586e67c15e87b33be57573d5f9d5e8f6f46cd63",
       "name": "worker_markers",
       "path": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8_cell_condensed/task041_5nm_p6h4_m480_mpi8_cell_condensed__hybrid_iterative__mpi8__M480/20260928T085850.487306Z/consumer/markers.jsonl",
-      "sampled_at_utc": "2026-09-28T09:15:50Z",
+      "sampled_at_utc": "2026-09-28T10:06:27Z",
       "sha256": null
     },
     {
@@ -74,32 +74,32 @@
       "sha256": "ce23d2fe2f90384e4faec63d3c6b1963ab3f487b86640a29f91d41010d214d2b"
     }
   ],
-  "observed_utc": "2026-09-28T09:15:50Z",
+  "observed_utc": "2026-09-28T10:06:27Z",
   "progress": {
     "current_rhs_iterations": "not_run",
     "current_rhs_residual": "not_run",
     "expected_formal_responses": 1920,
     "formal_residuals": "not_run",
-    "latest_sampler_elapsed_seconds": 1020.8539173839963,
+    "latest_sampler_elapsed_seconds": 4057.3800140329986,
     "latest_sampler_phase": "public_command",
-    "latest_worker_event": "one_cell_factor_destroyed",
-    "latest_worker_event_wall_seconds": 492.16928206098964,
+    "latest_worker_event": "modal_batch_begin",
+    "latest_worker_event_wall_seconds": 3976.615879086021,
     "official_R_T_A_E_H": "not_run",
     "phase": "system_setup_stage",
     "process_group_gone_at_latest_sample": false,
-    "progress_signal": "system setup markers advanced; no formal response marker emitted",
+    "progress_signal": "modal_batch_begin; side=bottom; batch=1/30; logical_completed=0/960; formal response markers not emitted",
     "time_stop_enforced": false,
     "time_target_met": null,
     "time_target_seconds": 86400
   },
   "qualification": {
     "formal_consumer_complete": false,
-    "next_progress_update_due_utc": "2026-09-28T10:15:50Z",
+    "next_progress_update_due_utc": "2026-09-28T11:06:27Z",
     "numeric_status": "not_run",
     "two_nm": "not_started"
   },
   "record_type": "task041_review_v8_formal_progress",
-  "record_written_utc": "2026-09-28T09:18:47Z",
+  "record_written_utc": "2026-09-28T10:06:27Z",
   "repository": {
     "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
     "document_base_head": "d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f",
@@ -110,27 +110,29 @@
   },
   "resources": {
     "latest_sample": {
-      "authority_bytes": 32118370304,
+      "authority_bytes": 43090579456,
       "authority_kind": "process_tree",
       "cap_bytes": 53221163008,
-      "dedicated_cgroup_current_bytes": 30203195392,
-      "dedicated_cgroup_peak_bytes": 30228844544,
-      "elapsed_seconds": 1020.8539173839963,
+      "dedicated_cgroup_current_bytes": 40398192640,
+      "dedicated_cgroup_peak_bytes": 40398196736,
+      "elapsed_seconds": 4057.3800140329986,
       "global_pswpin_pages": 0,
       "global_pswpout_delta_pages": 0,
       "global_pswpout_pages": 299,
       "global_swap_baseline_bytes": 1224704,
       "global_swap_bytes": 1224704,
       "global_swap_delta_bytes": 0,
-      "host_memavailable_bytes": 955940761600,
+      "host_memavailable_bytes": 948850798592,
       "host_reserve_gate_at_start": true,
       "host_reserve_required_bytes": 412316860416,
       "job_swap_bytes": 0,
       "oom_events": null,
       "oom_events_status": "not_observed_in_this_sample",
-      "process_tree_rss_bytes": 32118370304,
+      "process_tree_rss_bytes": 43090579456,
       "swap_policy": "observe_only_continue",
-      "warning_bytes": 47899046707
+      "warning_bytes": 47899046707,
+      "sample_role": "phase_running",
+      "worker_process_group_gone": false
     },
     "neighbor_context_at_start": {
       "cpu_sets_do_not_overlap_task041_cpu1_to_8": true,
@@ -223,5 +225,6 @@
     "worker_root": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8_cell_condensed/task041_5nm_p6h4_m480_mpi8_cell_condensed__hybrid_iterative__mpi8__M480/20260928T085850.487306Z/consumer"
   },
   "schema": "task041.v8.formal_progress.v1",
-  "status": "running_at_latest_observation"
+  "status": "running_at_latest_observation",
+  "next_progress_update_due_utc": "2026-09-28T11:06:27Z"
 }
