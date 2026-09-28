@@ -52,20 +52,20 @@
     },
     {
       "hash_status": "append_only; latest sampled row is identified by sample_elapsed_seconds and row hash",
-      "latest_row_sha256": "f572036029fae9dacbd17183fec8f0cc439d5d69bef98ee632724771619f7d88",
-      "latest_sample_elapsed_seconds": 33815.99520425906,
+      "latest_row_sha256": "21f6cf1c058cbb8089428f7a44a668f476a652223b0abc0822c6e7285dd96b42",
+      "latest_sample_elapsed_seconds": 36265.603026506025,
       "name": "outer_memory_stages",
       "path": "results/task041_v8_5nm_cellcond_formal_run_20260928/memory_stages.jsonl",
-      "sampled_at_utc": "2026-09-28T18:22:26Z",
+      "sampled_at_utc": "2026-09-28T19:03:16Z",
       "sha256": null
     },
     {
       "hash_status": "append_only; latest sampled row is identified by wall_seconds and row hash",
-      "latest_event_wall_seconds": 33549.86347876699,
-      "latest_row_sha256": "aec2364196491a6a733f7cbac4993d8565901c1b7a5a84ed3c95c9c5afc7f4b4",
+      "latest_event_wall_seconds": 36153.74131290696,
+      "latest_row_sha256": "1e2b1ed141c9eb65bf90f20a4ef6efb3f0f7772612b0d4047b3525d740deaff9",
       "name": "worker_markers",
       "path": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8_cell_condensed/task041_5nm_p6h4_m480_mpi8_cell_condensed__hybrid_iterative__mpi8__M480/20260928T085850.487306Z/consumer/markers.jsonl",
-      "sampled_at_utc": "2026-09-28T18:22:26Z",
+      "sampled_at_utc": "2026-09-28T19:03:16Z",
       "sha256": null
     },
     {
@@ -74,20 +74,20 @@
       "sha256": "ce23d2fe2f90384e4faec63d3c6b1963ab3f487b86640a29f91d41010d214d2b"
     }
   ],
-  "observed_utc": "2026-09-28T18:22:26Z",
+  "observed_utc": "2026-09-28T19:03:16Z",
   "progress": {
     "current_rhs_iterations": "not_run",
     "current_rhs_residual": "not_run",
     "expected_formal_responses": 1920,
     "formal_residuals": "not_run",
-    "latest_sampler_elapsed_seconds": 33815.99520425906,
+    "latest_sampler_elapsed_seconds": 36265.603026506025,
     "latest_sampler_phase": "public_command",
     "latest_worker_event": "modal_batch_begin",
-    "latest_worker_event_wall_seconds": 33549.86347876699,
+    "latest_worker_event_wall_seconds": 36153.74131290696,
     "official_R_T_A_E_H": "not_run",
     "phase": "system_setup_stage",
     "process_group_gone_at_latest_sample": false,
-    "progress_signal": "modal_batch_begin; side=bottom; batch=13/30; logical_completed=384/960; formal response markers not emitted; V8 swap observation continues",
+    "progress_signal": "modal_batch_begin; side=bottom; batch=14/30; logical_completed=416/960; formal response markers not emitted; V8 swap observation continues",
     "time_stop_enforced": false,
     "time_target_met": null,
     "time_target_seconds": 86400
@@ -99,7 +99,7 @@
     "two_nm": "not_started"
   },
   "record_type": "task041_review_v8_formal_progress",
-  "record_written_utc": "2026-09-28T18:22:26Z",
+  "record_written_utc": "2026-09-28T19:03:16Z",
   "repository": {
     "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
     "document_base_head": "d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f",
@@ -110,29 +110,31 @@
   },
   "resources": {
     "latest_sample": {
-      "authority_bytes": 43146346496,
+      "authority_bytes": 43146362880,
       "authority_kind": "process_tree",
       "cap_bytes": 53221163008,
-      "dedicated_cgroup_current_bytes": 40625528832,
-      "dedicated_cgroup_peak_bytes": 40625532928,
-      "elapsed_seconds": 33815.99520425906,
+      "dedicated_cgroup_current_bytes": 40687607808,
+      "dedicated_cgroup_peak_bytes": null,
+      "elapsed_seconds": 36265.603026506025,
       "global_pswpin_pages": 0,
       "global_pswpout_delta_pages": 5,
       "global_pswpout_pages": 304,
       "global_swap_baseline_bytes": 1224704,
       "global_swap_bytes": 1245184,
       "global_swap_delta_bytes": 20480,
-      "host_memavailable_bytes": 949423972352,
+      "host_memavailable_bytes": 947995426816,
       "host_reserve_gate_at_start": true,
       "host_reserve_required_bytes": 412316860416,
-      "job_swap_bytes": 0,
+      "job_swap_bytes": null,
       "oom_events": null,
       "oom_events_status": "not_observed_in_this_sample",
-      "process_tree_rss_bytes": 43146346496,
+      "process_tree_rss_bytes": 43146362880,
       "swap_policy": "observe_only_continue",
       "warning_bytes": 47899046707,
       "sample_role": "phase_running",
-      "worker_process_group_gone": false
+      "worker_process_group_gone": false,
+      "dedicated_cgroup_swap_bytes": 0,
+      "sampled_at_utc": "2026-09-28T19:03:16Z"
     },
     "neighbor_context_at_start": {
       "cpu_sets_do_not_overlap_task041_cpu1_to_8": true,
@@ -226,5 +228,5 @@
   },
   "schema": "task041.v8.formal_progress.v1",
   "status": "running_at_latest_observation",
-  "next_progress_update_due_utc": "2026-09-28T19:22:26Z"
+  "next_progress_update_due_utc": "2026-09-28T20:03:16Z"
 }
