@@ -1,0 +1,4 @@
+# Independent CPU-only ML environment; no FE packages or GPU runtime.
+# Install with --index-url https://download.pytorch.org/whl/cpu
+torch==2.7.1+cpu
+numpy==1.26.4
