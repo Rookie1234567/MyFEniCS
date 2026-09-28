@@ -1,5 +1,16 @@
 # 原生迁移与容量任务：本轮执行结果
 
+## Review V5 运行中交接（2026-09-28 02:34:15.838437 UTC / 10:34:15.838437 UTC+8）：F2 RUNNING
+
+唯一2 nm Si、p6/h1.5、q4、3904通道run `20260924T104936.107285Z` 仍在solve，启动source为 `64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa`；文档提交HEAD不代表运行源码。最后完成outer iteration64，独立原A6相对残差 `0.022358747111508717`（iteration64、solve_seconds130416.063935、physical_residual_pass=false），尚未收敛；不记录正式数值/物理/RTA PASS。bridge sequence65含setup一次，实际已完成64次outer PC；logical131已返回，当前完整PC与outer65完成记录未写。
+
+同一冻结快照：worker workflow总 315878.685780 s，setup 184388.380644 s，实时KSP阶段 131490.305148 s（含检查/输出；最终直接KSP timer unknown）。任务树RSS当前 1151172259840 B、既有前缀峰 1154356473856 B，task swap0；global pswp当前0/229页，基线0/0，仅全机诊断，不归因到任务。固定整树实测RSS硬线1.3e12 B、无时间截止，未改watchdog/CPU/NUMA/参数。
+
+本场p6/p4实际54 raw geometry→6 tensor groups、87 oriented classes，FFCx kernel约292.124/33.861 s；p4 numeric完整marker区间44111.673835 s，H6 diagonal118597.092899 s。最近完整PC两次C1371.435401 s，p4 ledger占1319.492162 s，外围51.943239 s；因子求解/恢复/native A4验算内部份额unknown，不能全叫LU回代。当前PC A6为分开的curl/mass快速作用，原A4验算仍native，局部tensor仍FFCx，非blocked Gram。
+
+完整时间边界、source/ABI、近期PC/精化、采样峰、PSS观察局限和文件范围/hash见[本次运行中交接](f2_running_handoff_20260928.md)及[compact](records/f2_running_handoff_20260928_compact_v1.json)。原9月24日“F2 fresh准入待核”段与更早失败均保留为历史，当前状态以本带时间戳交接为准。
+
+
 ## Review V5 当前阶段（2026-09-24）：F5 通过；5 nm setup-only 通过；F2 fresh 准入待核
 
 H0/H1、M/C 与四输入合同已完成所需资格。R13 Q4/Q3 由同一 V5 retained-condensed 路径与数值 source `6d989b4b9cbca12fcc35455d7ff381e66ef7ca6d` 完成；离线 checker source `515b0c653fc25bc1da2f319da9b7e658de049a2e` 的 attempt4 为 `NUMERICAL_PAIR_PASS`，全场 L2=`3.5063e-8`、scaled-curl=`1.9531e-8`、80模态幅值=`2.2629e-8`、R/T/A/A_volume 均过限值，故记录 `R13_PAIR_RELEASE`。详见 [R13 pair release](records/r13_pair_release_v1.json)。

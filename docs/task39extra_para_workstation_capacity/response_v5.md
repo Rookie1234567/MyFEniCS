@@ -47,3 +47,12 @@ H1 是合成负载，不是 FE 结果。CPU23/node0 与 CPU24/node1 的 60 秒�
 监督复用原 native parent/watchdog；另以 task-local 只读 `scripts/task39extra_event_observer.py`（SHA256=`aeded7a3f3447a186d223aec61502d0b54e60e8f1bf83d68b2cb28ac9c0f9757`）在 CPU9 每15秒读取该 run 与固定 root/worker PID+start_ticks，并将可读的 CPU24 hwmon/thermal-zone 温度、thermal-throttle 计数、`scaling_cur_freq`/`cpuinfo_cur_freq` 旁证写入 observer JSONL。helper 使用 `/home/fenics/Projects/Maxwell3D-Lab/task-control/codex-thread-notify-v2.py`。忙频保持 unknown（除非另有获准的 APERF/MPERF 证据）；缺失传感器不失败、不停止、不杀进程。观察器没有信号或重启能力，RSS 硬 Gate 仍由既有 watchdog 实施。observer 自测已覆盖 PID/tick 绑定、缺项仅记录和忙频不推断。
 
 该启动合同对应已完成的 R13Q4 replay，不能覆盖 attempt1 的原始负记录。当前 R13 pair、F5完整场与5 nm setup-only均已完成；F2按主审决定已批准有条件执行，仍须fresh prelaunch Gate全通过。
+
+
+## 2026-09-28 运行中证据交接（仅文档提交推送，非最终收口）
+
+截至2026-09-28T02:34:15.838437+00:00（UTC+8 2026-09-28T10:34:15.838437+08:00），F2 run `20260924T104936.107285Z` / 数值source `64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa` 为RUNNING，最后完成64步，最新独立原A6 residual=0.022358747111508717，尚未过最终资格。最新PC sequence65含setup一次，actual outer PC64；logical131已通过1次精化后返回，未据此冒充外层65完成。
+
+总workflow/setup/实时KSP阶段分别315878.685780/184388.380644/131490.305148 s，最终KSP内部累计timer尚未写。当前/既有前缀峰RSS=1151172259840/1154356473856 B，task swap0、global pswpout增量229页仅机器诊断；watchdog固定RSS硬线1.3e12 B、无截止未改变。完整marker numeric44111.673835 s与44110.416671 s采样覆盖有区别；两次C的主要时间落在p4 ledger，MatSolve/恢复/native A4验算未分项计时，不称全部LU回代，也不保证H6关闭PSS后只需5小时。
+
+本次按用户授权仅核验现有运行身份、读取已有日志和轻量证据，新增[运行中outcome](outcomes/f2_running_handoff_20260928.md)、[compact](outcomes/records/f2_running_handoff_20260928_compact_v1.json)及相应小型CSV/选字段日志摘录，更新summary；保留原失败与旧snapshot。未改任何求解代码、task/review、默认配置、运行参数、绑定、资源或swap/watchdog策略，未发信号、重启或启动额外计算。本次新commit只含这些文档，在隔离sparse detached worktree基于运行SHA提交并向执行分支推送；canonical执行worktree HEAD/clean不变，避免终态source gate因文档提交误拒。正常快进push携带既有3个批准提交，运行SHA不变。远端提交完成身份以主控最终回读HEAD为准，报告数值只对应上述冻结快照。

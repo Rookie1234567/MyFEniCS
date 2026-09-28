@@ -1,0 +1,459 @@
+{
+  "schema": "task39extra.v5.f2.running_handoff_compact.v1",
+  "status": "RUNNING",
+  "converged": false,
+  "final_numerical_or_physical_qualification": "NOT_REACHED",
+  "exit_status": null,
+  "scope": "existing evidence and documentation only; no algorithm/runtime change",
+  "snapshot_utc": "2026-09-28T02:34:15.838437+00:00",
+  "snapshot_utc_plus8": "2026-09-28T10:34:15.838437+08:00",
+  "run_id": "v5_node1_2nm_p6h1p5_q4",
+  "execution_id": "20260924T104936.107285Z",
+  "run_directory": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z",
+  "start_time": "2026-09-24T10:49:36.107349+00:00",
+  "input_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/input/task39extra_para_workstation_capacity/v5_node1_2nm_p6h1p5_q4.dat",
+  "running_source_sha": "64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa",
+  "input_sha256": "e3febbe6a785d3866e37fd3353565111952fbfe0926ee0b2c5a42eaef32149e1",
+  "physical_model_sha256": "fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef",
+  "resolved_config_sha256": "ceb5d3123ff856c70ca685f1a9df5492e23cead9edad5168997ac101331de291",
+  "mode_sha256": "4b62741e84970cc5312c88039244ad5ba30065ea92dcf72a949773fef8de6364",
+  "git_before_documentation": {
+    "canonical_worktree": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity",
+    "git_directory": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git/worktrees/task39extra_para_workstation_capacity",
+    "common_git_directory": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+    "branch": "task39extra_para_workstation_capacity",
+    "head": "64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa",
+    "upstream": "origin/task39extra_para_workstation_capacity",
+    "upstream_local_sha": "b468907cf54d04280b461cae5fc9078186302d54",
+    "ahead_behind": "3\t0",
+    "status_porcelain": ""
+  },
+  "remote_head_before_handoff_verified": "b468907cf54d04280b461cae5fc9078186302d54",
+  "startup_clean": {
+    "explicit_flag_in_current_manifest": null,
+    "inference_from_fail_closed_source_gate": true,
+    "gate_source": "src/runners/task038_launcher.py:_physical_source_gate lines63-73, launch line412",
+    "dirty_patch_record": null,
+    "at_snapshot_source_worktree_clean": true,
+    "running_source_sha_is_not_documentation_commit": true
+  },
+  "runtime_path": {
+    "outer_space": "p6 condensed independent trace plus appended port rows; retained-space FGMRES",
+    "p4_factor_space": "direct assembly-time cell-condensed augmented AIJ, not full A4 augmented matrix",
+    "pc_a6_volume": "two separate curl and mass sum-factorized isotropic_sum_factorized_n1e_v26 kernels",
+    "pc_a6_curl_mass_fused": false,
+    "independent_original_a6": "native action",
+    "original_a4_verification": "p4 native physical_action, not new packed fast A4",
+    "p6_local_tensor_generation": "original compiled FFCx tabulate_tensor_complex128 summed cell integrals, not blocked Gram",
+    "h6": {
+      "degree": 3,
+      "lambda_lo": 1.3965717017305685,
+      "lambda_hi": 13.965717017305685,
+      "lambda_power10": 12.696106379368803,
+      "power_mult_count": 20,
+      "backend": "isotropic_sum_factorized_n1e_v26",
+      "component": "positive_sum",
+      "shared_mesh_levels": [
+        6
+      ],
+      "calls_per_PC": {
+        "B6": 4,
+        "H6": 2,
+        "S6": 0,
+        "positive_p1": 0,
+        "positive_p3": 0
+      }
+    },
+    "transfer": "same-mesh degrees6->4, AlgebraicOwnerTransfer, fixed_serial_owner_route and optimized_owner_apply enabled; PH adjoint/P primal",
+    "geometry": {
+      "policy": "rounded_12_representative",
+      "key_rounding": "decimal_round_12",
+      "coordinates_unrounded": true,
+      "representative": "lexicographic_min_unrounded_canonical_coordinates",
+      "approximate": true,
+      "schur_lu_recovery_key": "raw_float64_widths_plus_orientation",
+      "mpc_per_cell": true
+    },
+    "coarse_refinement": {
+      "original_a4_rho_tolerance": 1e-10,
+      "independent_port_closure_tolerance": 1e-10,
+      "max_extra_refinements": 2,
+      "reuse_one_factor": true,
+      "exhaustion": "save failure packet and raise; no unqualified coarse return"
+    },
+    "outer": {
+      "ksp": "FGMRES",
+      "side": "RIGHT",
+      "norm": "UNPRECONDITIONED",
+      "restart": 32,
+      "max_iterations": 2048,
+      "initial_guess": "zero",
+      "original_a6_residual_interval": 8,
+      "checkpoint_interval": 32,
+      "exhaustion": "terminal original residual/checkpoint, ITERATION_BUDGET_EXHAUSTED then workflow rejects before official output"
+    }
+  },
+  "abi": {
+    "mpi_size": 1,
+    "math_threads_configured": 1,
+    "worker_os_threads_observed": 3,
+    "worker_affinities": [
+      24
+    ],
+    "petsc": "3.19.6",
+    "petsc_index_bits": 64,
+    "scalar": "complex128",
+    "mumps_version": "5.5.1 (same overlay headers/build identity; no new backend probe)",
+    "ordering": "PORD; this run numeric INFOG(7)=4",
+    "icntl23": 0,
+    "loaded_maps": [
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/libpetsc.so.3.19.6",
+      "/usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6",
+      "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+      "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+      "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so"
+    ],
+    "blas": "OpenBLAS pthread libopenblasp-r0.3.26.so as actually mapped",
+    "static_mumps_identity_record": "docs/task39extra_para_workstation_capacity/outcomes/records/v5_m_c_and_four_input_contract_v1.json",
+    "loaded_library_bytes_rehashed_this_handoff": false
+  },
+  "counts": {
+    "cells": 54332,
+    "port_channels": 3904,
+    "propagating_channels": null,
+    "p6": {
+      "full_storage_rows": 35594790,
+      "mpc_slave_rows": 346038,
+      "full_independent_rows_derived": 35248752,
+      "full_trace_rows": 11145390,
+      "active_independent_trace_rows": 10799352,
+      "retained_trace_plus_ports_rows": 10803256,
+      "cell_interior_rows": 24449400,
+      "global_full_a6_or_s6_nnz": null,
+      "global_full_a6_allocated": false,
+      "global_s6_allocated": false,
+      "local_tensor_dimension": 882,
+      "local_interior_dimension": 450,
+      "local_trace_dimension": 432,
+      "raw_geometry_classes": 54,
+      "tensor_groups": 6,
+      "oriented_schur_classes": 87
+    },
+    "p4": {
+      "full_storage_rows": 10604228,
+      "full_plus_ports_rows_derived": 10608132,
+      "mpc_slave_rows": 153988,
+      "full_independent_rows_derived": 10450240,
+      "full_trace_rows": 4736372,
+      "active_condensed_trace_rows": 4582384,
+      "condensed_augmented_factor_rows": 4586288,
+      "cell_interior_rows": 5867856,
+      "nnz_stored": 2070391064,
+      "preallocated_structural_nnz": 2284367488,
+      "original_full_a4_nnz": null,
+      "local_tensor_dimension": 300,
+      "local_interior_dimension": 108,
+      "local_trace_dimension": 192,
+      "raw_geometry_classes": 54,
+      "tensor_groups": 6,
+      "oriented_schur_classes": 87
+    }
+  },
+  "latest_progress": {
+    "phase": "solve",
+    "last_phase_marker": "solve_started",
+    "last_completed_outer_iteration": 64,
+    "last_complete_pc_sequence_including_setup": 65,
+    "completed_outer_pc_calls_derived": 64,
+    "inflight_bridge_pc_sequence_inferred": 66,
+    "inflight_outer_pc_call_inferred": 65,
+    "last_completed_p4_logical_call": 131,
+    "current_pc_suboperation": null,
+    "p4_factor_counts_last_completed": {
+      "logical_apply_calls": 131,
+      "numeric_calls": 1,
+      "solve_calls": 193,
+      "symbolic_calls": 1
+    },
+    "latest_reported_schur_relative": 0.022358747111689517,
+    "latest_reported_solve_seconds": 129100.80999725702,
+    "latest_original_a6": {
+      "iteration": 64,
+      "relative": 0.022358747111508717,
+      "solve_seconds": 130416.06393501797,
+      "derived_utc": "2026-09-28T02:16:21.597259+00:00",
+      "time_policy": "derived solve phase UTC origin + monotonic solve_seconds; row has no native UTC field",
+      "physical_residual_pass": false
+    },
+    "all_logged_p4_returns": {
+      "count": 131,
+      "statuses": [
+        "P4_RETURN_PASS"
+      ],
+      "max_refinements_observed": 1
+    },
+    "whole_workflow_monotonic_seconds_at_snapshot": 315878.685780046,
+    "launcher_start_to_snapshot_utc_seconds": 315879.73111891747,
+    "setup_to_solve_marker_monotonic_seconds": 184388.380644418,
+    "setup_budget_conservative_seconds": 184388.380664856,
+    "live_ksp_phase_elapsed_seconds_at_snapshot": 131490.305147957,
+    "final_ksp_solve_monotonic_seconds": null,
+    "live_ksp_time_policy": "elapsed solve phase includes monitoring, recovery and checkpoints; final direct KSP timer not yet emitted",
+    "recent_completed_steps": {
+      "distinct_iterations": [
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64
+      ],
+      "first_callback_mean_seconds": 2008.827413299754,
+      "iterations58_64_first_callback_mean_seconds": 1846.8341981124333,
+      "rule": "first callback per distinct iteration, exclude duplicate64 as a new step; callback deltas include preceding checks/output",
+      "last_iteration64_restart_callback_delta_seconds": 1445.1664102650248
+    }
+  },
+  "setup_child_timers": {
+    "p6_build": {
+      "total_build_seconds": 463.35584773198934,
+      "kernel_seconds_max": 292.1243196360592,
+      "local_schur_seconds_max": 12.27561647206312
+    },
+    "p4_build": {
+      "total_build_seconds": 292.2023990970047,
+      "kernel_seconds_max": 33.861448555020615,
+      "local_schur_seconds_max": 0.9598256651079282,
+      "trace_preallocation_seconds": 91.63215205000597,
+      "local_insert_seconds_max": 57.49247940146597,
+      "final_assembly_seconds": 0.0,
+      "final_assembly_status": "deferred"
+    },
+    "h6": {
+      "b6_shell_seconds": 0.00021304801339283586,
+      "diagonal_seconds": 118597.09289895801,
+      "positive_native_action_seconds": 83.42555451800581,
+      "power10_seconds": 1352.1281882710173
+    },
+    "numeric_budget_to_complete_marker_seconds": 44111.673835251015,
+    "numeric_resource_sample_span_seconds": 44110.416670841,
+    "exact_numeric_api_timer_seconds": null,
+    "setup_minus_numeric_marker_seconds_unattributed": 140276.706809167,
+    "independent_child_cpu_times": null,
+    "policy": "child timers included in parent stage intervals, do not add both; assembly/port/identity remainder not separately attributed"
+  },
+  "latest_complete_pc_decomposition": {
+    "sequence_including_setup": 65,
+    "coarse_c1_logical": 129,
+    "coarse_c2_logical": 130,
+    "C_total_wall_seconds": 1371.4354005449568,
+    "c1_p4_ledger_wall_seconds": 879.5495330090052,
+    "c2_p4_ledger_wall_seconds": 439.9426289370167,
+    "C_minus_p4_ledgers_seconds_derived": 51.94323859893484,
+    "c1_actual_MatSolve_calls": 2,
+    "c2_actual_MatSolve_calls": 1,
+    "c1_extra_refinements": 1,
+    "c2_extra_refinements": 0,
+    "A6_two_calls_combined_seconds": 186.84676087496337,
+    "H6_one_call_seconds": 136.8140525300405,
+    "timed_component_subtotal_seconds": 1695.0962139499607,
+    "full_pc_wall_seconds": null,
+    "individual_C_including_transfer_wall_seconds": null,
+    "PH_restriction_seconds": null,
+    "p4_rhs_reduction_pack_seconds": null,
+    "factor_MatSolve_seconds": null,
+    "cell_interior_recovery_seconds": null,
+    "original_a4_volume_seconds": null,
+    "original_a4_DtN_seconds": null,
+    "port_closure_seconds": null,
+    "P_prolongation_seconds": null,
+    "refinement_per_attempt_seconds": null,
+    "A6_each_call_seconds": null,
+    "outer_schur_seconds": null,
+    "orthogonalization_seconds": null,
+    "independent_a6_seconds": null,
+    "checkpoint_output_seconds": null,
+    "last_snapshot_callback_to_monitor_append_delta_seconds": 1315.25393776095,
+    "snapshot_delta_scope": "explicit Schur action plus recovery/native A6 and validation together; not A6-only and excludes following checkpoint",
+    "interpretation": "p4 ledger dominates C timed scope, transfer/other outside ledgers small; MatSolve vs recovery vs native verification share unknown"
+  },
+  "memory": {
+    "current_sample_utc": "2026-09-28T02:34:08.657526+00:00",
+    "current_tree_rss_bytes": 1151172259840,
+    "current_tree_pss_bytes": 1151090952192,
+    "current_task_swap_bytes": 0,
+    "observed_prefix_tree_rss_peak_bytes": 1154356473856,
+    "rss_peak_utc": "2026-09-28T01:28:16.296977+00:00",
+    "observed_prefix_tree_pss_peak_bytes": 1154478180352,
+    "sample_scope": "dedicated subreaper parent and all descendants, simultaneous sampled RSS; PSS independently timed and may exceed non-atomic RSS",
+    "process_tree_swap_peak_bytes": 0,
+    "global_swap_current_pages": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 229
+    },
+    "global_swap_baseline_pages": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 0
+    },
+    "global_swap_delta_pages": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 229
+    },
+    "global_swap_attribution": "machine-wide diagnostic, not job-attributed",
+    "watchdog_sample_age_seconds": 7.180942036,
+    "all_status_readable": true,
+    "unreadable_pids": [],
+    "vanished_pids": [],
+    "prefix_samples": 104020,
+    "max_existing_sample_gap_seconds": 7.40611875,
+    "pss_sampled_count": 49957,
+    "rss_hard_limit_bytes": 1300000000000,
+    "rss_warning_bytes": 1170000000000,
+    "warning": false,
+    "current_memory_envelope_diagnostic": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 950933897216,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 950933897216,
+      "reserve_bytes": 324465057792,
+      "launch_cap_bytes": 626468839424,
+      "planning_cap_bytes": 626468839424,
+      "cgroup_limits": []
+    },
+    "backend_numeric_infog": {
+      "1": 0,
+      "10": 72603776,
+      "11": 39656,
+      "12": 17412,
+      "13": 34,
+      "14": 0,
+      "15": 0,
+      "16": 1091654,
+      "17": 1091654,
+      "18": 1091654,
+      "19": 1091654,
+      "2": 0,
+      "20": -54415,
+      "22": 916713,
+      "29": -54415,
+      "3": -54415,
+      "4": 72603708,
+      "5": 39656,
+      "6": 27345,
+      "7": 4,
+      "8": 100,
+      "9": -54415
+    },
+    "mumps_allocated_during_numeric_bytes_derived": 1091654000000,
+    "mumps_used_during_numeric_bytes_derived": 916713000000,
+    "mumps_factor_entries_million_precision_derived": 54415000000,
+    "predicted_peak_diagnostic_bytes": 2392236814208,
+    "p6_assembly_cache": {
+      "oriented_schur_bytes": 259780608,
+      "raw_tensor_bytes": 74680704,
+      "scope": "assembly-time peak components; raw/oriented arrays are released after return"
+    },
+    "p4_assembly_cache": {
+      "oriented_schur_bytes": 51314688,
+      "raw_tensor_bytes": 8640000,
+      "scope": "assembly-time peak components; raw/oriented arrays are released after return"
+    },
+    "p6_retained_numeric_cache_bytes": {
+      "lu_bytes": 282036600,
+      "recovery_bytes": 270604800,
+      "residual_projection_bytes": 0,
+      "retained_numeric_cache_bytes": 1084646808,
+      "retained_schur_bytes": 259780608,
+      "rhs_projection_bytes": 1620000,
+      "rhs_trace_bytes": 270604800,
+      "solution_embedding_bytes": 0
+    },
+    "p4_retained_numeric_cache_bytes": {
+      "lu_bytes": 16273872,
+      "recovery_bytes": 28864512,
+      "residual_projection_bytes": 0,
+      "retained_numeric_cache_bytes": 74096208,
+      "retained_schur_bytes": 0,
+      "rhs_projection_bytes": 93312,
+      "rhs_trace_bytes": 28864512,
+      "solution_embedding_bytes": 0
+    },
+    "p6_action_buffer_inventory_at_setup": {
+      "cell_count": 54332,
+      "class_count": 87,
+      "local_carrier_cell_payload_bytes": 91060468992,
+      "unique_LU_factor_buffers": 87,
+      "unique_S_V_buffers": 87,
+      "unique_cache_bytes": 108004276088,
+      "unique_port_cache_bytes": 106341066752,
+      "unique_recovery_buffers": 87,
+      "unique_retained_cache_bytes": 93211397240,
+      "unique_trace_rhs_projection_buffers": 87
+    },
+    "p4_port_terms": {
+      "carrier_cell_count": 54332,
+      "carrier_rows_are_mpc_processed": true,
+      "cells_with_port_terms": 578,
+      "dense_trace_carrier_copies_retained": false,
+      "direct_normalization_H_entries": 3904,
+      "direct_trace_B_entries": 69078276,
+      "direct_trace_D_entries": 69078276,
+      "global_full_p4_matrix_allocated": false,
+      "interior_port_cell_count": 578,
+      "nonzero_Bi": true,
+      "nonzero_Di": true,
+      "schema_version": "task039extra.v18.port-condensed-terms.v1",
+      "stored_interior_term_bytes": 3708766240
+    },
+    "p6_cache_content_and_bytes_unchanged_before_after_setup": true,
+    "p6_cache_growth_after_setup": null,
+    "retained_vector_complex128_payload_bytes_derived": 172852096,
+    "full_p6_vector_complex128_payload_bytes_derived": 569516640,
+    "krylov_nominal_restart32_65_retained_vector_payload_bytes_derived": 11235386240,
+    "actual_krylov_allocated_or_resident_bytes": null,
+    "array_inventory_caveat": "nbytes/id-distinct arrays only, aliases/views may share backing memory; subset inventories overlap and are not RSS/PSS allocations",
+    "policy": "do not sum RSS, PSS, phase peaks, backend allocated/used, predictions and overlapping array payloads"
+  },
+  "existing_pss_diagnostic": {
+    "record": "f2_pss_observation_20260926.json",
+    "classification": "observational, not PSS-off paired performance proof",
+    "h6_worker_cpu_sample_seconds": 18044.23,
+    "h6_parent_cpu_sample_seconds": 115503.09,
+    "h6_wall_sample_span_seconds": 120213.768972935,
+    "no_5hour_wall_guarantee": true,
+    "no_watchdog_change_this_handoff": true
+  },
+  "evidence_artifacts": {
+    "f2_running_handoff_20260928_evidence_v1.json": {
+      "repository_relative_path": "docs/task39extra_para_workstation_capacity/outcomes/records/f2_running_handoff_20260928_evidence_v1.json",
+      "sha256": "b8ab045ca49b7b5698ea4b1c819a09d8e0cf0b07fc3f8efb9bffe84f91abd17a",
+      "bytes": 210674
+    },
+    "f2_setup_stages_20260928.csv": {
+      "repository_relative_path": "docs/task39extra_para_workstation_capacity/outcomes/records/f2_setup_stages_20260928.csv",
+      "sha256": "a7897a0f6a5ce09e4f07f116c96144f13e2b9bcff339a1e4ce391afc355222c2",
+      "bytes": 6219
+    },
+    "f2_iterations_20260928.csv": {
+      "repository_relative_path": "docs/task39extra_para_workstation_capacity/outcomes/records/f2_iterations_20260928.csv",
+      "sha256": "40fea8fa927d585c9f2ca600c6c15cc1261525a831cc460f54cec65cbdb53432",
+      "bytes": 1494
+    },
+    "f2_pss_observation_20260926.json": {
+      "repository_relative_path": "docs/task39extra_para_workstation_capacity/outcomes/records/f2_pss_observation_20260926.json",
+      "sha256": "f72a067db62d78ce1a379dcac20051a28eac8fb96d988473586dc1b5f70b339f",
+      "bytes": 2991
+    }
+  },
+  "documentation_publication_policy": {
+    "method": "isolated sparse detached worktree based on running source commit; push documentation commit to same remote execution branch",
+    "documentation_worktree": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity-docs-20260928",
+    "parent_source_commit": "64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa",
+    "active_execution_head_and_clean_state_preserved": true,
+    "reason": "launcher terminal _physical_source_gate still requires running SHA and clean execution worktree; documentation must not cause that provenance gate to fail",
+    "active_branch_not_switched": true,
+    "remote_target": "origin/refs/heads/task39extra_para_workstation_capacity"
+  }
+}

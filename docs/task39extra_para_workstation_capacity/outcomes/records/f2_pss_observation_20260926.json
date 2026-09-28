@@ -1,0 +1,79 @@
+{
+  "schema": "task39extra.v5.live_pss_cost_diagnostic.v1",
+  "classification": "DIAGNOSTIC_PSS_OVERHEAD_OBSERVED",
+  "recorded_at_utc": "2026-09-26T12:01:22.602144+00:00",
+  "run": "20260924T104936.107285Z",
+  "source_sha": "64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa",
+  "worker": {
+    "pid": 341839,
+    "start_ticks": 17197130,
+    "cpu": 24
+  },
+  "parent": {
+    "pid": 341799,
+    "start_ticks": 17196977,
+    "cpu": 9
+  },
+  "h6_report": {
+    "diagonal_wall_seconds": 118597.09289895801,
+    "power10_wall_seconds": 1352.1281882710173
+  },
+  "h6_watchdog_window": {
+    "first_utc_ns": 1790303408998891711,
+    "last_utc_ns": 1790423622767864646,
+    "samples": 18485,
+    "unreadable_samples": 0,
+    "maximum_gap_seconds": 6.859,
+    "worker_cpu_delta_seconds": 18044.23,
+    "wall_seconds": 120213.77,
+    "worker_state_sample_counts": {
+      "R": 18482,
+      "S": 3
+    }
+  },
+  "live_pss_sample_observation": {
+    "successive_samples": 12,
+    "all_pss_sampled": true,
+    "sample_spacing_approx_seconds": 6.58,
+    "parent_cpu_per_sample_approx_seconds": 6.33,
+    "worker_cpu_per_sample_approx_seconds": 0.85
+  },
+  "host_wait_channel_observation": {
+    "snapshots": 10,
+    "parent_open_worker_smaps_rollup_count": 8,
+    "worker_D_with_vm_mmap_pgoff_and_parent_open_smaps_count": 5,
+    "worker_R_with_parent_open_smaps_count": 3,
+    "parent_sleep_worker_R_no_smaps_count": 2
+  },
+  "host_cgroup_observation": {
+    "path": "/user.slice/user-1000.slice/session-129.scope",
+    "cpu_max": "max 100000",
+    "nr_throttled": 0,
+    "throttled_usec": 0,
+    "worker_schedstat_runtime_ns": 73729227602912,
+    "worker_schedstat_wait_ns": 38926761776
+  },
+  "limitations": [
+    "Read-only observational evidence; no controlled PSS-off comparison on this run.",
+    "Do not attribute all H6 wall time to PSS scanning.",
+    "Busy frequency/MSR remains unknown; sysfs frequency is side evidence only."
+  ],
+  "interpretation": "5-second PSS schedule is armed before an expensive smaps_rollup scan; scan exceeds interval, repeatedly scanning on each loop. Concurrent worker allocation waits were observed. PSS is diagnostic; measured RSS remains the stopping authority.",
+  "run_actions": {
+    "signals_sent": false,
+    "restart": false,
+    "solver_or_observer_source_changed": false,
+    "rss_gate_changed": false,
+    "run_continues": true
+  },
+  "source_files": {
+    "benchmarks/subreaper_watchdog.py": "1a28bbd24ec6d8c6d594655b1da8b10dc10cfc15e9d326041a2cceb7dc19921a",
+    "benchmarks/task038_full3d_jit_staging.py": "07b236414f0833f1232a3c2adaa95e345ecc039129c601d34d34928d2a22857a",
+    "src/solvers/fullspace_quadrature_diagonal.py": "81af27491cdfdf50fbeffba42ae96f2faf4e25dde338c7bafa6e02ac8c8dfb85"
+  },
+  "stages_prefix": {
+    "path": "results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z/stages.jsonl",
+    "bytes": 137646,
+    "sha256": "2b6c3079b9aa47f8fd48367a0d5bb67f0eeb30670982506fcc5192ca7d10cb8b"
+  }
+}
