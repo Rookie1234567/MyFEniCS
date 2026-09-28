@@ -1,7 +1,233 @@
 {
   "schema": "task042.publication-checks.v3",
-  "status": "NOT_RUN_PENDING_FIRST_PUSH",
-  "exact_pushed_head": null,
-  "checks": [],
-  "note": "Local render only at this point; actual GitHub rendered HTML will be checked after first push, with evidence committed separately."
+  "status": "RENDERED_HTML_PASS",
+  "utc": "2026-09-28T16:07:04.641980+00:00",
+  "exact_pushed_head": "e1c8d77b19a89573cd5308243d9da9cddff37bd9",
+  "github_rendered_view": "Actual published GitHub richText HTML, tables/headings/links and math-renderer component inspected; no browser screenshot claim",
+  "browser_math_pixels": "not separately captured; GitHub math-renderer is present, not a raw language-math code fence",
+  "checks": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/e1c8d77b19a89573cd5308243d9da9cddff37bd9/docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "http": 200,
+      "status": "RENDERED_HTML_PASS",
+      "source_file_sha256": "521dcef2761fba0328246ffacdc7acab80126a483cac752ba1d5c958c020d90f",
+      "rendered_html_sha256": "f85fd1b94635c1c4eb0932fe8204ec6daf4efa00f3ed38ccdb1de65a32e767c6",
+      "table_count": 11,
+      "header_samples": [
+        "依赖与合入边界",
+        "Task042 第二轮：真实首轮试验，严格粗逆未合格",
+        "完成的数值阶段",
+        "同组严格粗返回结果",
+        "全过程数值成本及未运行项",
+        "审阅与合入边界"
+      ],
+      "first_table_rows": [
+        [
+          "项目",
+          "最新实际状态 / 身份",
+          "证据"
+        ],
+        [
+          "状态",
+          "BOUNDED_STRUCTURAL_GLOBAL_STAGNATION，有限批次完成，待review，F5 not_run",
+          "原字段重算Gate"
+        ],
+        [
+          "授权",
+          "用户仅授权一个新B0/表示诊断批次，保留旧合同与负结果；继续仅Task042受控共享CPU，不代表F0正式review",
+          "预登记与准确授权"
+        ]
+      ],
+      "math_renderer_blocks": 0,
+      "table_columns_consistent": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/architecture_and_oracle.md",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/e1c8d77b19a89573cd5308243d9da9cddff37bd9/docs/task042_neural_coarse_inverse/outcomes/architecture_and_oracle.md",
+      "http": 200,
+      "status": "RENDERED_HTML_PASS",
+      "source_file_sha256": "935884052ea275b8ee4f6daa368dbf0352e9ee69f6b91bbb908a32a50f6d7325",
+      "rendered_html_sha256": "8c3ac468d2598fab61ac653d3ade4f64bb7881265c8f5bc931230a96053f5166",
+      "table_count": 1,
+      "header_samples": [
+        "原方程、低内存修正与可表达性诊断",
+        "严格协议及实际构造",
+        "冻结身份、历史和停止条件",
+        "V3 最新有限诊断（原V2正文保留）"
+      ],
+      "first_table_rows": [
+        [
+          "层次/实现",
+          "行为及容量",
+          "实际证据与边界"
+        ],
+        [
+          "原A6/A4与传递",
+          "F1完整p6、同网格物理p4，curl+mass后凝聚；共享已有cache/LU/witness",
+          "原A4=PH A6P差3.366065072840215e-15；制造解原p6差2.0935547822786585e-14；不是最终物理解"
+        ],
+        [
+          "p4-only后续构建",
+          "F2/F4不重复构建p6；原p4全部mesh/tags/MPC/mode/quadrature和逐行CSR内容必须与F1一致",
+          "21824×21824、8184464存储NNZ；原operator SHA固定；非减少通道或积分"
+        ]
+      ],
+      "math_renderer_blocks": 1,
+      "table_columns_consistent": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v3.md",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/e1c8d77b19a89573cd5308243d9da9cddff37bd9/docs/task042_neural_coarse_inverse/response_v3.md",
+      "http": 200,
+      "status": "RENDERED_HTML_PASS",
+      "source_file_sha256": "36e386064651a7efa4b35dc6516b59af59a4ad7b4391aa78d0fcf92ae25f9865",
+      "rendered_html_sha256": "9655466d9d989fb401a6e0178bf331277a5e0d5ac8462d031b8581c1d1de17bc",
+      "table_count": 3,
+      "header_samples": [
+        "Task042 Response V3：有限诊断完成，全局粗逆仍未合格"
+      ],
+      "first_table_rows": [
+        [
+          "身份",
+          "实际值"
+        ],
+        [
+          "branch / worktree",
+          "task42_neural_coarse_inverse / /home/fenics/Projects/NN-Lab canonical linked worktree"
+        ],
+        [
+          "起点 / base",
+          "d42a7de47bcd966472d58367bab93872d31584e7 / ccd357885f7f9be84efe3be07868cc94f13d93fc"
+        ]
+      ],
+      "math_renderer_blocks": 0,
+      "table_columns_consistent": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/bounded_diagnostic_design_v3.md",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/e1c8d77b19a89573cd5308243d9da9cddff37bd9/docs/task042_neural_coarse_inverse/outcomes/bounded_diagnostic_design_v3.md",
+      "http": 200,
+      "status": "RENDERED_HTML_PASS",
+      "source_file_sha256": "594ed90d9a65f6de42f57688acd14733317e5fd06513b3b3b78dd67dd5163b68",
+      "rendered_html_sha256": "bc59c0d31baa22b4df3afd6678d4173bb6eb0c893977735d704d07b95a14b389",
+      "table_count": 2,
+      "header_samples": [
+        "Task042 V3 有界诊断授权与预登记",
+        "唯一新结构：R-GEO-CELL80-v3"
+      ],
+      "first_table_rows": [
+        [
+          "项目",
+          "本轮范围 / 单位与身份"
+        ],
+        [
+          "起点",
+          "local/remote d42a7de47bcd966472d58367bab93872d31584e7，clean；冻结base不变"
+        ],
+        [
+          "用户授权",
+          "仅一个有限B0/表示诊断批次；新增命名与显式opt-in；不修改旧task/review、旧B0合同或普通默认"
+        ]
+      ],
+      "math_renderer_blocks": 1,
+      "table_columns_consistent": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/residual_diagnosis_v3.md",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/e1c8d77b19a89573cd5308243d9da9cddff37bd9/docs/task042_neural_coarse_inverse/outcomes/residual_diagnosis_v3.md",
+      "http": 200,
+      "status": "RENDERED_HTML_PASS",
+      "source_file_sha256": "1cc69861552071bbe29601ec834f07c67edde22d73c301cc4a5ab561619a77b8",
+      "rendered_html_sha256": "1d3d26bea24fa0f5002023c0b7bbc9bb37228ef7443fc6eaa82316e0037bf934",
+      "table_count": 3,
+      "header_samples": [
+        "V3 残差、端口尺度与结构作用诊断",
+        "原native与Schur residual映射",
+        "PC幅值与restart前后",
+        "固定空间与停止边界"
+      ],
+      "first_table_rows": [
+        [
+          "candidate",
+          "RHS index",
+          "reported Schur absolute",
+          "explicit Schur / RHS",
+          "native RHS scale",
+          "native relative",
+          "port operation scale",
+          "port absolute",
+          "port relative"
+        ],
+        [
+          "R-B0",
+          "0",
+          "1.04800038797",
+          "0.99919610526",
+          "1.04884354778",
+          "0.998654967105",
+          "0.076024225561",
+          "0.03538712952",
+          "0.465471752706"
+        ],
+        [
+          "R-B0",
+          "10",
+          "0.000881632711399",
+          "0.881632711399",
+          "0.0144082913115",
+          "0.954192801905",
+          "0.00303563670332",
+          "0.000839227368421",
+          "0.276458433745"
+        ]
+      ],
+      "math_renderer_blocks": 1,
+      "table_columns_consistent": true
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/e1c8d77b19a89573cd5308243d9da9cddff37bd9/docs/development_model_registry.md",
+      "http": 200,
+      "status": "RENDERED_HTML_PASS",
+      "source_file_sha256": "3d07cab98275e803222796a4c8a0e7f8f1660eb8339e2bc51918d66ecf363962",
+      "rendered_html_sha256": "963aaa34d3da26612d6b20d51758bba7c40829819f59e0529e90a25e506f4e83",
+      "table_count": 120,
+      "header_samples": [
+        "Task038-extra Review V2：T5/R4 bounded iterative lane",
+        "Task038-extra Review V9：P1 memory-first controlled negative",
+        "Task038-extra Review V10：Q0 exact-reference controlled negative",
+        "Task038-extra Review V19：PML 双向扫描 R0 真实结构",
+        "task39extra Review V5：5 nm Si p6/h4 q4 F5 完整场",
+        "3.43.2 V3：唯一几何重叠结构诊断，旧负结果保留"
+      ],
+      "first_table_rows": null,
+      "math_renderer_blocks": 0,
+      "table_columns_consistent": true
+    },
+    {
+      "path": "docs/development_progress.md",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/e1c8d77b19a89573cd5308243d9da9cddff37bd9/docs/development_progress.md",
+      "http": 200,
+      "status": "RENDERED_HTML_PASS",
+      "source_file_sha256": "72218ae1735415c64edea5639e3bc033f97d91cbc9b1844e565cdf06a31a2fe8",
+      "rendered_html_sha256": "10d4842fca861b02f9efa848f46727c43e144671e249260ef6a104f4c8fba070",
+      "table_count": 46,
+      "header_samples": [
+        "Task39extra 2026-09-20：2 nm h1.5 实测内存运行快照",
+        "终态补记：global swap attribution Gate",
+        "Task39extra_para V5：5 nm setup-only 终态",
+        "Task042：低内存 p4 粗逆首轮，F0完成并等待共享工作站",
+        "2026-09-28 Task042 V2：用户授权受控共享，真实F1–F4完成",
+        "2026-09-28 Task042 V3：有界几何重叠对照，仍有全局停滞"
+      ],
+      "first_table_rows": null,
+      "math_renderer_blocks": 5,
+      "table_columns_consistent": true
+    }
+  ],
+  "wall_seconds": 11.217816403019242,
+  "numerical_sources": "per run_index_v3; publication HEAD is documentation only",
+  "final_document_bytes_preserved": true,
+  "finalization": "Only publication/auxiliary/static evidence JSON changes follow; published Markdown bytes are unchanged. Exact final branch HEAD is reported after the final push."
 }

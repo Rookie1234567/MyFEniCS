@@ -57,6 +57,12 @@
       "local_preview_sha256": "4c769496df084e7efeb8f030ee96bb1f94fee70fff08035721a0abd42909bd51"
     },
     {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/residual_diagnosis_v3.md",
+      "file_sha256": "1cc69861552071bbe29601ec834f07c67edde22d73c301cc4a5ab561619a77b8",
+      "tables": 3,
+      "local_preview_sha256": "1d330731124c48d07f5186e144e8d5b1d531bf31443da45240f7a7b2cafcf5a9"
+    },
+    {
       "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
       "file_sha256": "521dcef2761fba0328246ffacdc7acab80126a483cac752ba1d5c958c020d90f",
       "tables": 11,
@@ -67,12 +73,6 @@
       "file_sha256": "9b51d36ab46484d8b39daf67c7ef1b34c6289c170a231a4fa09177510bd92923",
       "tables": 2,
       "local_preview_sha256": "49ed30e39b3a3cb0517d1b47af2a7f2404b2513ae6fd25a87c578bbe6437b844"
-    },
-    {
-      "path": "docs/task042_neural_coarse_inverse/outcomes/residual_diagnosis_v3.md",
-      "file_sha256": "1cc69861552071bbe29601ec834f07c67edde22d73c301cc4a5ab561619a77b8",
-      "tables": 3,
-      "local_preview_sha256": "1d330731124c48d07f5186e144e8d5b1d531bf31443da45240f7a7b2cafcf5a9"
     },
     {
       "path": "docs/task042_neural_coarse_inverse/response_v3.md",
@@ -154,6 +154,6 @@
     "src/solvers/learned_geometry_overlap.py": "c363efda6da9f51d3fa41bbc15e969b67aa1526d200ae29379a37930adfeaa1b"
   },
   "errors": [],
-  "source_sha": "7fc3f1434cf4f38f43e5244ebfed3a19d0780a26",
+  "source_sha": "e1c8d77b19a89573cd5308243d9da9cddff37bd9",
   "local_preview": "markdown-it HTML tables/headings/links; GitHub math renderer checked only after push"
 }

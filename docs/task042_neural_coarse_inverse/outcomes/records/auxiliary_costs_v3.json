@@ -387,6 +387,65 @@
       "role": "bounded auxiliary only; not a clean formal numerical source claim"
     },
     {
+      "directory": "tmp/task042/v3/post-publication-static",
+      "source_state": {
+        "source_sha": "e1c8d77b19a89573cd5308243d9da9cddff37bd9",
+        "git_status": " M docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v3.json\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "bash",
+          "-c",
+          "python tmp/task042/v3/static_delivery_checks.py && git diff --check"
+        ],
+        "utc": "2026-09-28T16:08:15.583709+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "wall_seconds": 2.6717124299611896,
+      "sampled_simultaneous_tree_rss_peak_bytes": 61923328,
+      "own_swap_peak_bytes": 0,
+      "summary_sha256": "7921740835322c83411f058200a013021ae39e7571be2fd6831cedc157549a84",
+      "worker_log_sha256": "ba237a4f15cbc0eb678a5535ecade476e5fec9f60dd3df791b30963dbb047539",
+      "performance_identity": "shared-workstation",
+      "role": "bounded auxiliary only; not a clean formal numerical source claim"
+    },
+    {
+      "directory": "tmp/task042/v3/publication-html-check",
+      "source_state": {
+        "source_sha": "e1c8d77b19a89573cd5308243d9da9cddff37bd9",
+        "git_status": "",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "tmp/task042/v3/post_push_render_check.py"
+        ],
+        "utc": "2026-09-28T16:06:53.264589+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "wall_seconds": 12.694336883956566,
+      "sampled_simultaneous_tree_rss_peak_bytes": 55328768,
+      "own_swap_peak_bytes": 0,
+      "summary_sha256": "500fb13dbc6f1c4a20214feeb3bcda5fc7f6fd3419c7c06fab85bce2b0c3d1ca",
+      "worker_log_sha256": "077ed99c0b1949372d9a8a5c30c538e5221d02450f199a25e2758dd28d14b990",
+      "performance_identity": "shared-workstation",
+      "role": "bounded auxiliary only; not a clean formal numerical source claim"
+    },
+    {
       "directory": "tmp/task042/v3/reuse-prechecks",
       "source_state": {
         "source_sha": "d42a7de47bcd966472d58367bab93872d31584e7",
@@ -447,7 +506,7 @@
       "role": "bounded auxiliary only; not a clean formal numerical source claim"
     }
   ],
-  "wall_seconds_sum": 45.18252145126462,
+  "wall_seconds_sum": 60.548570765182376,
   "sampled_simultaneous_tree_rss_peak_bytes_max": 350633984,
   "own_swap_peak_bytes_max": 0,
   "status_scope": "Retains failed lint-before-test attempts and all recorded final checks, packing and publication checks; not PDE attempts.",
