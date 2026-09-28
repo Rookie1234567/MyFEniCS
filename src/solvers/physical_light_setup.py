@@ -27,6 +27,7 @@ def build_light_h6_setup(
     direct_selected_backend=False,
     reuse_projection_work=False,
     batched_target_grouping=False,
+    reference_metric_diagonal=False,
 ):
     if sum_factorized_power10 is None:
         sum_factorized_power10 = bool(sum_factorized_work)
@@ -46,6 +47,7 @@ def build_light_h6_setup(
         direct_selected_backend=direct_selected_backend,
         reuse_projection_work=reuse_projection_work,
         batched_target_grouping=batched_target_grouping,
+        reference_metric_diagonal=reference_metric_diagonal,
     )
 
 
@@ -66,9 +68,12 @@ def build_light_level_setup(
     direct_selected_backend=False,
     reuse_projection_work=False,
     batched_target_grouping=False,
+    reference_metric_diagonal=False,
 ):
     if degree not in (4, 6):
         raise ValueError('physical pilot smoother supports p6/p4 only')
+    if reference_metric_diagonal and degree != 6:
+        raise ValueError("reference-metric diagonal is qualified for H6 only")
     if preallocated_power10 is None:
         preallocated_power10 = bool(preallocated_work)
     if sum_factorized_power10 is None:
@@ -123,15 +128,32 @@ def build_light_level_setup(
             timing['positive_native_action_seconds'] = time.perf_counter() - started
         started = time.perf_counter()
         diagonal_audit = {}
-        diagonal = build_quadrature_positive_diagonal(
-            space,
-            mu,
-            mass,
-            floquet.mpc,
-            batched_target_grouping=bool(batched_target_grouping and direct_backend),
-            reuse_local_types=bool(direct_backend),
-            audit=diagonal_audit,
-        )
+        if reference_metric_diagonal:
+            from .fullspace_metric_positive_diagonal import (
+                build_reference_metric_positive_diagonal,
+            )
+
+            diagonal = build_reference_metric_positive_diagonal(
+                space, mu, mass, floquet.mpc, audit=diagonal_audit
+            )
+            diagonal_builder = "reference_energy_actual_affine_metric_v1"
+        else:
+            diagonal = build_quadrature_positive_diagonal(
+                space,
+                mu,
+                mass,
+                floquet.mpc,
+                batched_target_grouping=bool(
+                    batched_target_grouping and direct_backend
+                ),
+                reuse_local_types=bool(direct_backend),
+                audit=diagonal_audit,
+            )
+            diagonal_builder = (
+                "quadrature_batched_local_type_reuse_v1"
+                if direct_backend
+                else "quadrature_full_cell_integration_v1"
+            )
         timing['diagonal_seconds'] = time.perf_counter() - started
         started = time.perf_counter()
         shell = SameMeshP6MatrixFreeShell(action, diagonal)
@@ -267,6 +289,9 @@ def build_light_level_setup(
             batched_target_grouping_opt_in=bool(
                 batched_target_grouping and direct_backend
             ),
+            diagonal_builder=diagonal_builder,
+            reference_metric_diagonal_opt_in=bool(reference_metric_diagonal),
+            diagonal_build_audit=dict(diagonal_audit),
             diagonal_local_type_reuse=dict(diagonal_audit),
             kernel=kernel_facts)
         facts['setup_timing_seconds'] = dict(timing)

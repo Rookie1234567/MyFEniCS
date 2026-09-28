@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -248,6 +249,29 @@ def test_bounded_repair_counts_solves_not_new_logical_p4_and_accumulates_port():
         source.destroy()
 
 
+
+def test_enabled_independent_port_closure_rejects_missing_alpha_and_nonfinite_norms():
+    fint = _SequenceFint(with_port=True)
+    pc = _pc(fint)
+    pc._port_closure_carrier = SimpleNamespace(entries=(SimpleNamespace(
+        projection_rows=np.asarray([0, 1], dtype=np.int64),
+        projection_values=np.asarray([0.3 + 0.1j, -0.2 + 0.4j], dtype=np.complex128),
+        normalization_h=1.7 + 0.2j,
+    ),))
+    field = _vec([0.5 + 0.2j, -0.1 + 0.3j])
+    rhs = _vec([1.0 + 0.2j, 0.4 - 0.5j])
+    try:
+        with pytest.raises(RuntimeError, match="no selected alpha"):
+            pc._independent_port_closure(field, rhs, None)
+        with pytest.raises(FloatingPointError, match="non-finite"):
+            pc._independent_port_closure(
+                field, rhs, np.asarray([np.nan + 0.0j], dtype=np.complex128)
+            )
+    finally:
+        field.destroy()
+        rhs.destroy()
+        pc.destroy()
+
 def test_logical_count_accumulates_across_pc_applications_but_records_recent_calls():
     from types import SimpleNamespace
 
@@ -265,6 +289,17 @@ def test_logical_count_accumulates_across_pc_applications_but_records_recent_cal
             result.destroy()
         assert pc.successful_logical_apply_count == 4
         assert len(pc.coarse_calls) == 2
+        for call_facts in pc.coarse_calls:
+            assert call_facts['fint_and_native_A4_seconds'] >= 0.0
+            assert call_facts['transfer_apply_adjoint_seconds'] >= 0.0
+            assert call_facts['transfer_apply_primal_seconds'] >= 0.0
+            assert call_facts['same_call_inclusive_seconds'] >= call_facts[
+                'fint_and_native_A4_seconds'
+            ]
+        last_recorded = pc.ledger.last['summary']['calls'][-1]['inner']
+        assert last_recorded['same_call_inclusive_seconds'] == pc.coarse_calls[-1][
+            'same_call_inclusive_seconds'
+        ]
         facts = _pc_count_facts(
             pc,
             {"inverse": SimpleNamespace(solve_count=fint.apply_count)},
@@ -430,6 +465,11 @@ def test_complex_nonhermitian_bidi_port_repair_accumulates_augmented_state():
     H = np.asarray([[1.7 + 0.2j]], dtype=np.complex128)
     fint = _NonHermitianCoupledFint(V, B, D, H)
     reduced_native = V + B @ np.linalg.solve(H, D)
+    carrier = SimpleNamespace(entries=(SimpleNamespace(
+        projection_rows=np.asarray([0, 1], dtype=np.int64),
+        projection_values=D[0].copy(),
+        normalization_h=H[0, 0],
+    ),))
     pc = _pc(
         fint,
         policy=P4ResidualRepairPolicy(enabled=True, max_extra_solves=2),
@@ -437,6 +477,7 @@ def test_complex_nonhermitian_bidi_port_repair_accumulates_augmented_state():
         fine_action=lambda value: _vec(reduced_native @ value.array),
         p4_action=lambda value: _vec(reduced_native @ value.array),
     )
+    pc._port_closure_carrier = carrier
     source = _vec([0.8 + 0.4j, -0.6 + 0.9j])
     original = source.array.copy()
     try:
@@ -456,6 +497,23 @@ def test_complex_nonhermitian_bidi_port_repair_accumulates_augmented_state():
             rtol=2.0e-12,
             atol=2.0e-12,
         )
+        closure_facts = pc.coarse_calls[0]["independent_port_closure"]
+        assert closure_facts["status"] == "MEASURED"
+        assert closure_facts["added_full_A4_actions"] == 0
+        assert closure_facts["new_coarse_residual_gate"] is False
+        correction_snapshot = next(
+            item
+            for item in pc.last_apply_vectors["p4_repair_calls"]
+            if item["logical_call"] == 1 and item["phase"] == "correction_1"
+        )
+        selected_residual = (
+            -D @ correction_snapshot["correction"]
+            + H @ correction_snapshot["alpha"]
+        )
+        assert closure_facts["residual_norm"] == pytest.approx(
+            np.linalg.norm(selected_residual), rel=1e-12, abs=1e-14
+        )
+        assert closure_facts["rhs_norm"] == pytest.approx(np.linalg.norm(original))
         np.testing.assert_array_equal(source.array, original)
         assert fint.solve_calls == 2
         assert fint.apply_count == 3
@@ -531,6 +589,12 @@ def test_soft_exhaustion_returns_best_complete_state_and_releases_snapshot(
     )
     saved = []
     pc = _pc(fint, policy=policy, sink=saved.append)
+    carrier = SimpleNamespace(entries=(SimpleNamespace(
+        projection_rows=np.asarray([0, 1], dtype=np.int64),
+        projection_values=np.asarray([0.3 + 0.1j, -0.2 + 0.4j], dtype=np.complex128),
+        normalization_h=1.7 + 0.2j,
+    ),))
+    pc._port_closure_carrier = carrier
     source = _vec([1.0, 2.0])
     tracked = []
     copy_vector = balanced_module._copy_vector
@@ -547,6 +611,7 @@ def test_soft_exhaustion_returns_best_complete_state_and_releases_snapshot(
         facts = pc.coarse_calls[0]
         repair = facts["repair"]
         selected_packet = next(item for item in saved if item.get("phase") == "selected")
+        assert selected_packet["selected_attempt"] == selected
         assert repair["status"] == "COARSE_TARGET_UNMET_CONTINUE"
         assert repair["selected_attempt"] == selected
         assert repair["returned_rho"] == pytest.approx(returned_rho)
@@ -566,6 +631,26 @@ def test_soft_exhaustion_returns_best_complete_state_and_releases_snapshot(
         )
         np.testing.assert_allclose(
             selected_packet["alpha"], [selected_factor * np.sum(source.array)]
+        )
+        selected_residual = (
+            -np.dot(
+                carrier.entries[0].projection_values,
+                selected_packet["correction"][carrier.entries[0].projection_rows],
+            )
+            + carrier.entries[0].normalization_h * selected_packet["alpha"][0]
+        )
+        closure = facts["independent_port_closure"]
+        assert closure["status"] == "MEASURED"
+        assert closure["carrier_entry_count"] == 1
+        assert closure["operator"] == "-D*c+H_p*alpha_from_original_carrier"
+        assert closure["residual_norm"] == pytest.approx(
+            abs(selected_residual), rel=1e-12, abs=1e-14
+        )
+        assert closure["rhs_norm"] == pytest.approx(np.linalg.norm(source.array))
+        assert closure["relative_residual"] == pytest.approx(
+            abs(selected_residual) / np.linalg.norm(source.array),
+            rel=1e-12,
+            abs=1e-14,
         )
         assert tracked and all(vector.handle == 0 for vector in tracked)
     finally:

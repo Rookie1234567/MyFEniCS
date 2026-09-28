@@ -318,6 +318,18 @@ class _V14Runtime:
         )
         self.parent_pid = int(os.environ.get("PHYSICAL_WATCHDOG_PARENT_PID", "-1"))
         resources = contract["resources"]
+        self.pss_sampling_policy = str(
+            resources.get("pss_sampling_policy", "sampled")
+        )
+        if self.pss_sampling_policy not in {"sampled", "disabled_by_profile"}:
+            raise ValueError("unsupported V14 PSS sampling policy")
+        worker_pss_policy = os.environ.get(
+            "PHYSICAL_WATCHDOG_PSS_POLICY", self.pss_sampling_policy
+        )
+        if worker_pss_policy != self.pss_sampling_policy:
+            raise RuntimeError(
+                "worker/watchdog PSS sampling policy differs from resolved contract"
+            )
         from benchmarks.subreaper_watchdog import (
             LEGACY_MEMORY_POLICY,
             PHYSICAL_MEMORY_PRESSURE_POLICY,
@@ -819,7 +831,10 @@ class _V14Runtime:
         from benchmarks.subreaper_watchdog import memory_envelope
         from benchmarks.task038_full3d_jit_staging import process_tree_snapshot
 
-        value = process_tree_snapshot(self.parent_pid, self._phase, None)
+        value = process_tree_snapshot(
+            self.parent_pid, self._phase, None,
+            pss_sampling_policy=self.pss_sampling_policy,
+        )
         envelope = memory_envelope(self.memory_policy)
         dynamic_cap = (
             int(value["rss_bytes"])
@@ -4257,6 +4272,8 @@ def _v14_balanced_adapter(
     shared_contractions=False,
     direct_selected_backend=False,
     reuse_projection_work=False,
+    reference_metric_diagonal=False,
+    port_closure_carrier=None,
 ):
     """Own H6 and its audit buffers; borrow the existing fixed interface stack."""
 
@@ -4352,6 +4369,7 @@ def _v14_balanced_adapter(
             direct_selected_backend=direct_selected_backend,
             reuse_projection_work=reuse_projection_work,
             batched_target_grouping=direct_selected_backend,
+            reference_metric_diagonal=reference_metric_diagonal,
         )
         h6, shell = positive["h6"], positive["p6_shell"]
         transfer = AlgebraicOwnerTransfer(common["transfer"])
@@ -4584,6 +4602,8 @@ def _v14_balanced_adapter(
         pc._pc_fine_action = pc_fine_action
         pc._pc_fine_action_facts = dict(candidate_facts)
         pc._p4_verification_action = selected_p4_action
+        if port_closure_carrier is not None:
+            pc._port_closure_carrier = port_closure_carrier
         pc._p4_verification_action_apply_count_start = int(
             selected_p4_action.audit["apply_count"]
         )
@@ -6571,24 +6591,42 @@ def _v14_history_facts(
     return facts
 
 
+def _v14_worker_pss_sampling_policy(worker: Mapping[str, Any]) -> str:
+    """Read the persisted worker ``profile`` field used by V14 summaries."""
+    if worker.get("profile") == "physical_p6_trace_workstation_guided_v30":
+        return "disabled_by_profile"
+    return "sampled"
+
+
 def _v14_resource_facts(runtime: _V14Runtime) -> dict[str, Any]:
     """Stream worker-emitted parent-tree samples without retaining the log."""
 
     path = Path(runtime.resources_path)
     require_zero_swap = bool(getattr(runtime, "require_zero_swap", True))
+    pss_sampling_policy = str(
+        getattr(runtime, "pss_sampling_policy", "sampled")
+    )
+    if pss_sampling_policy not in {"sampled", "disabled_by_profile"}:
+        raise ValueError("unsupported V14 resource PSS policy")
+    pss_disabled = pss_sampling_policy == "disabled_by_profile"
     facts = {
         "path": str(path), "status": "MISSING", "sample_count": 0,
         "scope": "worker-emitted samples of the parent process tree through this call",
         "final_parent_cleanup_included": False,
         "final_authority": "settled parent run_summary and watchdog/summary.json",
         "swap_gate_enforced": require_zero_swap,
-        "zero_swap": True, "all_status_readable": True, "pss_all_readable": True,
+        "zero_swap": True, "all_status_readable": True,
+        "pss_all_readable": None if pss_disabled else True,
+        "pss_sampling_policy": pss_sampling_policy,
+        "pss_status": "DISABLED_BY_PROFILE" if pss_disabled else "SAMPLED",
         "rss_peak_bytes": None, "pss_peak_bytes": None, "swap_peak_bytes": None,
         "ledger_inventory_peak_bytes": 0, "ledger_workspace_peak_bytes": 0,
         "first_failed_sample": None, "gate": False,
     }
     if not path.is_file():
-        facts.update(zero_swap=False, all_status_readable=False, pss_all_readable=False)
+        facts.update(zero_swap=False, all_status_readable=False)
+        if not pss_disabled:
+            facts["pss_all_readable"] = False
         return facts
     line_number = 0
     try:
@@ -6629,11 +6667,20 @@ def _v14_resource_facts(runtime: _V14Runtime) -> dict[str, Any]:
                 facts["all_status_readable"] &= checks["readable"]
                 for name, value in (("rss_peak_bytes", rss), ("swap_peak_bytes", swap)):
                     facts[name] = value if facts[name] is None else max(facts[name], value)
+                row_pss_policy = row.get("pss_sampling_policy", "sampled")
+                if row_pss_policy != pss_sampling_policy:
+                    raise ValueError("resource trace PSS policy differs from profile")
                 pss = row.get("pss_bytes")
-                readable_pss = row.get("pss_all_readable") is True and pss is not None
-                facts["pss_all_readable"] &= readable_pss
-                if readable_pss:
-                    facts["pss_peak_bytes"] = max(facts["pss_peak_bytes"] or 0, int(pss))
+                if pss_disabled:
+                    if (row.get("pss_status") != "DISABLED_BY_PROFILE"
+                            or pss is not None
+                            or row.get("pss_all_readable") is not None):
+                        raise ValueError("disabled PSS trace contains a value or lacks its marker")
+                else:
+                    readable_pss = row.get("pss_all_readable") is True and pss is not None
+                    facts["pss_all_readable"] &= readable_pss
+                    if readable_pss:
+                        facts["pss_peak_bytes"] = max(facts["pss_peak_bytes"] or 0, int(pss))
                 facts["ledger_inventory_peak_bytes"] = max(facts["ledger_inventory_peak_bytes"], int(row["inventory_peak_bytes"]))
                 facts["ledger_workspace_peak_bytes"] = max(facts["ledger_workspace_peak_bytes"], int(row["workspace_peak_bytes"]))
                 facts["last_timestamp_ns"] = row["timestamp_ns"]
@@ -6643,7 +6690,9 @@ def _v14_resource_facts(runtime: _V14Runtime) -> dict[str, Any]:
         facts["status"] = "AVAILABLE" if facts["sample_count"] else "EMPTY"
         facts["gate"] = bool(facts["sample_count"] and facts["first_failed_sample"] is None)
         if not facts["sample_count"]:
-            facts.update(zero_swap=False, all_status_readable=False, pss_all_readable=False)
+            facts.update(zero_swap=False, all_status_readable=False)
+            if not pss_disabled:
+                facts["pss_all_readable"] = False
     except (OSError, ValueError, TypeError, KeyError) as exc:
         facts.update(status="READ_ERROR", gate=False, failed_line=line_number,
                      error=f"{type(exc).__name__}: {exc}")
@@ -6929,6 +6978,7 @@ def _pc_count_facts(pc, stack, positive, repair_policy):
     return facts
 
 
+
 def _v14_q4_q5_fullspace(
     runtime: _V14Runtime,
     common: dict[str, Any],
@@ -6955,6 +7005,7 @@ def _v14_q4_q5_fullspace(
     shared_contractions=False,
     direct_selected_backend=False,
     reuse_projection_work=False,
+    reference_metric_diagonal=False,
     formal_release_timing=False,
 ) -> dict[str, Any]:
     """Run one fresh p6 outer solve with the live interface BAL_H stack.
@@ -6980,6 +7031,7 @@ def _v14_q4_q5_fullspace(
     from src.solvers.physical_balanced_fgmres import run_balanced_fgmres
     from src.io.physical_intermediate_profile import (
         A4_TENSOR_H6_PROFILE,
+        A4_TENSOR_H6_PROFILES,
         COARSE_DEGREE_SPEED_PROFILE,
         SETUP_EFFICIENCY_PROFILE,
         WORKINGSET_SETUP_PROFILE,
@@ -7014,11 +7066,11 @@ def _v14_q4_q5_fullspace(
     )
     v29_a4_tensor_stage = (
         str(resolved_payload.get("solver", {}).get("preconditioner", ""))
-        == A4_TENSOR_H6_PROFILE
+        in A4_TENSOR_H6_PROFILES
         and stage == "Q4_ORIGINAL"
     )
     if pc_a4_action_factory is not None and not v29_a4_tensor_stage:
-        raise ValueError("the complete p4 A4 candidate is reserved for the exact V29 Q4 profile")
+        raise ValueError("the complete p4 A4 candidate is reserved for reviewed V29-derived Q4 profiles")
     retained_coarse_stage = (
         v25_coarse_stage
         or v26_setup_efficiency_stage
@@ -7893,6 +7945,13 @@ def _v14_q4_q5_fullspace(
             shared_contractions=shared_contractions,
             direct_selected_backend=direct_selected_backend,
             reuse_projection_work=reuse_projection_work,
+            reference_metric_diagonal=reference_metric_diagonal,
+            port_closure_carrier=(
+                common["p4"]["dtn_action"].carrier
+                if resolved_payload.get("solver", {}).get("preconditioner")
+                == "physical_p6_trace_workstation_guided_v30"
+                else None
+            ),
         ) as (pc, positive):
             if outer_adapter_factory is not None:
                 # X1 checks and its one PC call share the actual X2 objects.
@@ -8751,7 +8810,8 @@ def _q6_finalize(runtime: _V14Runtime) -> dict[str, Any]:
         resource = _v14_resource_facts(SimpleNamespace(
             resources_path=directory / "v14_worker_resources.jsonl", workspace_cap=1 << 30,
             inventory_cap=((6 if stage in {"Q1_FULL_DIRECT", "Q2_SCHUR_DIRECT"} else 3) << 30)
-            if stage != "Q0_CORE" else None))
+            if stage != "Q0_CORE" else None,
+            pss_sampling_policy=_v14_worker_pss_sampling_policy(worker)))
         item["resource_trace"] = resource
         item["memory"] = {
             "full_process_tree_sampled_rss_peak_bytes": watchdog.get("sampled_process_tree_rss_peak_bytes"),

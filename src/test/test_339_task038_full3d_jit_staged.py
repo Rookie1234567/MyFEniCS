@@ -1298,7 +1298,8 @@ def test_parent_and_solver_keep_heavy_imports_lazy(tmp_path: Path) -> None:
         tmp_path / "root/parent_record.json",
         SOURCE_SHA,
     )
-    assert j4_command[:3] == [str(PYTHON), "-m", parent.P0_MODULE]
+    assert Path(j4_command[0]).resolve() == PYTHON.resolve()
+    assert j4_command[1:3] == ["-m", parent.P0_MODULE]
     assert parent._solver_command(tmp_path / "root/jit_cache", tmp_path / "root/solver.json", tmp_path / "root/markers", INPUT, SOURCE_SHA)[2] != j4_command[2]
     assert parent.WORKFLOW_J4 in j4_command
     j5_command = parent._p0_command(
@@ -1310,7 +1311,8 @@ def test_parent_and_solver_keep_heavy_imports_lazy(tmp_path: Path) -> None:
         SOURCE_SHA,
         workflow=parent.WORKFLOW_J5,
     )
-    assert j5_command[:3] == [str(PYTHON), "-m", parent.P0_MODULE]
+    assert Path(j5_command[0]).resolve() == PYTHON.resolve()
+    assert j5_command[1:3] == ["-m", parent.P0_MODULE]
     assert parent.WORKFLOW_J5 in j5_command
     module = SimpleNamespace(__name__="fake", __file__=str(ROOT / "fake.so"))
     results = [("compiled", module, (None, None)), ("compiled", module, ("header", "implementation"))]

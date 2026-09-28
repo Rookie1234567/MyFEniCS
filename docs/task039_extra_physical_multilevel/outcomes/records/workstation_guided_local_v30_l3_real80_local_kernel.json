@@ -1,0 +1,276 @@
+{
+  "attempt_history": [
+    {
+      "attempt": 1,
+      "correction": "Supply a conservative support group containing every locally owned cell and map all 80 carrier rows to group 0.",
+      "exception": "ValueError: trace preallocation input validation failed: rank 0: ValueError: every appended row requires an explicit support group",
+      "interpretation": "No numerical global factor or PDE solve started; the diagnostic stopped while validating appended-row preallocation metadata.",
+      "stage": "global_condensed_matrix_preallocation",
+      "status": "FAILED_DIAGNOSTIC_FIXTURE_SETUP"
+    },
+    {
+      "attempt": 2,
+      "correction": "Enable dense_appended_block for the materialized diagnostic matrix and rerun.",
+      "exception": "PETSc MatSetValues error 63: new nonzero at (2208,2208) caused a malloc",
+      "interpretation": "Explicit cell supports were accepted, but no dense port block was reserved and the condensed matrix had already completed final assembly; no numerical global factor or PDE solve started.",
+      "stage": "carrier_port_term_matrix_assembly",
+      "status": "FAILED_DIAGNOSTIC_FIXTURE_SETUP"
+    },
+    {
+      "attempt": 3,
+      "correction": "Set defer_final_assembly=True for the materialized local-identity fixture, matching the existing condensed-port assembly contract.",
+      "exception": "PETSc MatSetValues error 63: new nonzero at (2208,2208) caused a malloc",
+      "interpretation": "Dense appended-block preallocation was present, but the matrix still had completed final assembly before carrier terms were added.",
+      "stage": "carrier_port_term_matrix_assembly",
+      "status": "FAILED_DIAGNOSTIC_FIXTURE_SETUP"
+    },
+    {
+      "attempt": 4,
+      "correction": "Retain the physical carrier and record its actual support audit instead of requiring interior port terms in this real FE local-kernel timing.",
+      "exception": "AssertionError: expected nonzero interior Bi/Di for the real V30 carrier",
+      "interpretation": "The actual 80-mode carrier has MPC-processed trace support but no cell-interior Bi/Di terms; the synthetic component fixture remains the separate nonzero-interior-port algebra check.",
+      "stage": "carrier_support_validation",
+      "status": "FAILED_DIAGNOSTIC_ASSERTION"
+    }
+  ],
+  "candidate_selected_for_formal_route": false,
+  "candidate_selection": {
+    "candidate_selected_for_formal_route": false,
+    "decision": "NOT_SELECTED",
+    "full_C_performance": "unknown_not_measured",
+    "selection_rule": "Select only if every paired round has lower process CPU and wall time for bounded batching."
+  },
+  "candidate_selection_pending_timing_review": false,
+  "classification": "DIAGNOSTIC_REAL_P4_80_MODE_LOCAL_REDUCE_RECOVERY",
+  "fixed_active_alpha_sha256": "103bf2ae81edeb91e4e78d9cd114b7b53e9a8f2aa149d804db911fba73045833",
+  "fixture": {
+    "MPC_slave_zero": true,
+    "active_trace_rows": 2208,
+    "carrier_port_term_cells": 0,
+    "carrier_term_support": {
+      "carrier_rows_are_mpc_processed": true,
+      "nonzero_Bi": false,
+      "nonzero_Di": false
+    },
+    "cell_count": 24,
+    "full_storage_rows": 5476,
+    "global_condensed_matrix_materialized": true,
+    "global_numeric_factor_built": false,
+    "local_existing_class_count": 12,
+    "matrix_used_for": "carrier-port-term assembly input; no global numeric factorization",
+    "mesh_target_nm": 60.0,
+    "mode_count": 80,
+    "nedelec_degree": 4,
+    "nonzero_interior_rhs_norm": 2746.489222084414
+  },
+  "global_solve_scope": {
+    "complete_C_performance_claim": false,
+    "factor_object": "fixed-output vector injection stub",
+    "one_factor_object_reused_for_all_routes": true,
+    "stub_solve_calls": 8,
+    "true_global_MatSolve_count": 0
+  },
+  "input_path": "input/task39extra/v30_workstation_guided_original_h7p5.dat",
+  "input_sha256": "ba2c0745221a017d71f606325c20e98a3a57611887929fe55c18180f308f544b",
+  "interleaved_samples": [
+    {
+      "alpha_relative_to_seed": 0.0,
+      "alpha_sha256": "291159fdb316c711bc67149bb733d4ae471af2381e4b8c8af43581e6763ffb3e",
+      "batch_size": 1,
+      "local_recover_lu_solve_calls": 24,
+      "local_reduce_lu_solve_calls": 24,
+      "output_relative_to_seed": 7.179447895244329e-13,
+      "output_sha256": "03e24bc6ec42fb1ff2a74bbe868fcba6fef40031de648aa20d5f539ac818771d",
+      "port_closure_relative": 3.5660237905015354e-17,
+      "process_cpu_seconds": 0.013342020999999704,
+      "recover_seconds": 0.005608536012005061,
+      "reduce_seconds": 0.006536368979141116,
+      "round": 0,
+      "route": "legacy_per_cell",
+      "solve_seconds": 1.864900696091354e-05,
+      "wall_seconds": 0.012228076986502856
+    },
+    {
+      "alpha_relative_to_seed": 0.0,
+      "alpha_sha256": "291159fdb316c711bc67149bb733d4ae471af2381e4b8c8af43581e6763ffb3e",
+      "batch_size": 3,
+      "local_recover_lu_solve_calls": 15,
+      "local_reduce_lu_solve_calls": 15,
+      "output_relative_to_seed": 7.179447895244329e-13,
+      "output_sha256": "03e24bc6ec42fb1ff2a74bbe868fcba6fef40031de648aa20d5f539ac818771d",
+      "port_closure_relative": 3.5660237905015354e-17,
+      "process_cpu_seconds": 0.015276770999999911,
+      "recover_seconds": 0.00586099800420925,
+      "reduce_seconds": 0.008061050000833347,
+      "round": 0,
+      "route": "bounded_multicolumn",
+      "solve_seconds": 1.588900340721011e-05,
+      "wall_seconds": 0.014002931013237685
+    },
+    {
+      "alpha_relative_to_seed": 0.0,
+      "alpha_sha256": "291159fdb316c711bc67149bb733d4ae471af2381e4b8c8af43581e6763ffb3e",
+      "batch_size": 3,
+      "local_recover_lu_solve_calls": 15,
+      "local_reduce_lu_solve_calls": 15,
+      "output_relative_to_seed": 7.179447895244329e-13,
+      "output_sha256": "03e24bc6ec42fb1ff2a74bbe868fcba6fef40031de648aa20d5f539ac818771d",
+      "port_closure_relative": 3.5660237905015354e-17,
+      "process_cpu_seconds": 0.01535297499999988,
+      "recover_seconds": 0.005932888016104698,
+      "reduce_seconds": 0.008053511002799496,
+      "round": 1,
+      "route": "bounded_multicolumn",
+      "solve_seconds": 1.8130987882614136e-05,
+      "wall_seconds": 0.014072468009544536
+    },
+    {
+      "alpha_relative_to_seed": 0.0,
+      "alpha_sha256": "291159fdb316c711bc67149bb733d4ae471af2381e4b8c8af43581e6763ffb3e",
+      "batch_size": 1,
+      "local_recover_lu_solve_calls": 24,
+      "local_reduce_lu_solve_calls": 24,
+      "output_relative_to_seed": 7.179447895244329e-13,
+      "output_sha256": "03e24bc6ec42fb1ff2a74bbe868fcba6fef40031de648aa20d5f539ac818771d",
+      "port_closure_relative": 3.5660237905015354e-17,
+      "process_cpu_seconds": 0.013565004000000158,
+      "recover_seconds": 0.005732140009058639,
+      "reduce_seconds": 0.006607123010326177,
+      "round": 1,
+      "route": "legacy_per_cell",
+      "solve_seconds": 2.1526997443288565e-05,
+      "wall_seconds": 0.012433552998118103
+    },
+    {
+      "alpha_relative_to_seed": 0.0,
+      "alpha_sha256": "291159fdb316c711bc67149bb733d4ae471af2381e4b8c8af43581e6763ffb3e",
+      "batch_size": 1,
+      "local_recover_lu_solve_calls": 24,
+      "local_reduce_lu_solve_calls": 24,
+      "output_relative_to_seed": 7.179447895244329e-13,
+      "output_sha256": "03e24bc6ec42fb1ff2a74bbe868fcba6fef40031de648aa20d5f539ac818771d",
+      "port_closure_relative": 3.5660237905015354e-17,
+      "process_cpu_seconds": 0.013363939000000435,
+      "recover_seconds": 0.005644896999001503,
+      "reduce_seconds": 0.006519874004879966,
+      "round": 2,
+      "route": "legacy_per_cell",
+      "solve_seconds": 1.8552993424236774e-05,
+      "wall_seconds": 0.012249413004610687
+    },
+    {
+      "alpha_relative_to_seed": 0.0,
+      "alpha_sha256": "291159fdb316c711bc67149bb733d4ae471af2381e4b8c8af43581e6763ffb3e",
+      "batch_size": 3,
+      "local_recover_lu_solve_calls": 15,
+      "local_reduce_lu_solve_calls": 15,
+      "output_relative_to_seed": 7.179447895244329e-13,
+      "output_sha256": "03e24bc6ec42fb1ff2a74bbe868fcba6fef40031de648aa20d5f539ac818771d",
+      "port_closure_relative": 3.5660237905015354e-17,
+      "process_cpu_seconds": 0.015322825000000151,
+      "recover_seconds": 0.0058881419827230275,
+      "reduce_seconds": 0.008078865997958928,
+      "round": 2,
+      "route": "bounded_multicolumn",
+      "solve_seconds": 1.5841011190786958e-05,
+      "wall_seconds": 0.014045025018276647
+    }
+  ],
+  "max_port_closure_relative": 3.5660237905015354e-17,
+  "max_relative_alpha_difference": 0.0,
+  "max_relative_field_difference": 0.0,
+  "mode_manifest_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+  "paired_rounds": [
+    {
+      "batch_recovery_lu_calls": 15,
+      "batch_reduction_lu_calls": 15,
+      "legacy_recovery_lu_calls": 24,
+      "legacy_reduction_lu_calls": 24,
+      "relative_alpha_difference": 0.0,
+      "relative_field_difference": 0.0,
+      "round": 0,
+      "route_order": [
+        "legacy_per_cell",
+        "bounded_multicolumn"
+      ]
+    },
+    {
+      "batch_recovery_lu_calls": 15,
+      "batch_reduction_lu_calls": 15,
+      "legacy_recovery_lu_calls": 24,
+      "legacy_reduction_lu_calls": 24,
+      "relative_alpha_difference": 0.0,
+      "relative_field_difference": 0.0,
+      "round": 1,
+      "route_order": [
+        "bounded_multicolumn",
+        "legacy_per_cell"
+      ]
+    },
+    {
+      "batch_recovery_lu_calls": 15,
+      "batch_reduction_lu_calls": 15,
+      "legacy_recovery_lu_calls": 24,
+      "legacy_reduction_lu_calls": 24,
+      "relative_alpha_difference": 0.0,
+      "relative_field_difference": 0.0,
+      "round": 2,
+      "route_order": [
+        "legacy_per_cell",
+        "bounded_multicolumn"
+      ]
+    }
+  ],
+  "performance_scope": "real p4 FE/carrier local reduce/recovery only; fixed global vector stub; excludes a numeric p4 factor, native A4 repair loop, and complete C timing",
+  "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+  "rhs_sha256": "f380f7f267b46f585f566410c0330b4b277ca2ea28fc6d66c93896a32ba6e458",
+  "runner_source_sha256": "28ad0b7576e77def075e0d5873f38f79c809944aa7f579ec057495435b9d0607",
+  "schema": "task039extra.v30.l3.real-p4-80-mode-local-kernel.v1",
+  "source_head": "8d7e59e584ce58829efbb29966035844f95ced5f",
+  "status": "PASS_LOCAL_EQUIVALENCE",
+  "test_command": "source scripts/activate_myfenics_wsl.sh && TASK39EXTRA_V30_SAVE_L3_REAL80_RECORD=1 python -m pytest -q src/test/test_task39extra_v30_local_rhs_batch.py::test_l3_real_p4_80_mode_local_batch_qualification",
+  "test_source_sha256": "f0fab9291b1d9a70ca8095e3f8331ca0ddb961bce1357e45b232cd80766104dd",
+  "timing_summary": {
+    "bounded_batch_slower_pairs": {
+      "process_cpu": 3,
+      "wall": 3
+    },
+    "median_process_cpu_seconds": {
+      "bounded_multicolumn": 0.015322825000000151,
+      "legacy_per_cell": 0.013363939000000435
+    },
+    "median_wall_seconds": {
+      "bounded_multicolumn": 0.014045025018276647,
+      "legacy_per_cell": 0.012249413004610687
+    }
+  },
+  "tracked_diff_sha256": "772c0d540ce17331e9e3321081d70824e545a4b42e52327a9ea67009c3815e64",
+  "warmups": [
+    {
+      "alpha_relative_to_seed": 0.0,
+      "batch_size": 1,
+      "local_recover_lu_solve_calls": 24,
+      "local_reduce_lu_solve_calls": 24,
+      "output_relative_to_seed": 7.179447895244329e-13,
+      "process_cpu_seconds": 0.013838182999999837,
+      "recover_seconds": 0.005708398995921016,
+      "reduce_seconds": 0.00684828101657331,
+      "route": "legacy_per_cell",
+      "solve_seconds": 2.5563989765942097e-05,
+      "wall_seconds": 0.012684957007877529
+    },
+    {
+      "alpha_relative_to_seed": 0.0,
+      "batch_size": 3,
+      "local_recover_lu_solve_calls": 15,
+      "local_reduce_lu_solve_calls": 15,
+      "output_relative_to_seed": 7.179447895244329e-13,
+      "process_cpu_seconds": 0.01610988899999999,
+      "recover_seconds": 0.005952967010671273,
+      "reduce_seconds": 0.008718794997548684,
+      "route": "bounded_multicolumn",
+      "solve_seconds": 2.1907006157562137e-05,
+      "wall_seconds": 0.014765918022021651
+    }
+  ]
+}

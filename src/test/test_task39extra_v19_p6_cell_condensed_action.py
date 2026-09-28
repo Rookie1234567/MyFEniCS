@@ -32,11 +32,12 @@ def _matrix(rng: np.random.Generator, rows: int, columns: int, diagonal: float =
 @dataclass
 class _FakeCondensed:
     blocks: tuple[dict[str, np.ndarray], ...]
+    appended_rows: int = 2
 
     def __post_init__(self) -> None:
         self.matrix = None
         self.active_rows = 2
-        self.appended_rows = 2
+        self.appended_rows = int(self.appended_rows)
         self.full_rows = 4
         self.owned_active_rows = 2
         self.owned_appended_rows = 2
@@ -479,8 +480,14 @@ def test_fixed_p64_galerkin_then_condense_does_not_equal_trace_condense() -> Non
     )
 
 
-def test_real_ffcx_mpc_action_only_matches_augmented_schur_and_nonzero_rhs() -> None:
-    """Exercise the retained action on a real two-cell complex MPC fixture."""
+@pytest.mark.parametrize(
+    "port_count, port_coupling_mode",
+    ((2, "cached"), (80, "cached"), (80, "streamed")),
+)
+def test_real_ffcx_mpc_action_only_matches_augmented_schur_and_nonzero_rhs(
+    port_count: int, port_coupling_mode: str
+) -> None:
+    """Exercise cached and streamed actions on a real complex-MPC FE fixture."""
 
     import dolfinx_mpc
     import ufl
@@ -541,19 +548,20 @@ def test_real_ffcx_mpc_action_only_matches_augmented_schur_and_nonzero_rhs() -> 
         space,
         tags,
         mpc=mpc,
-        appended_global_rows=2,
+        appended_global_rows=port_count,
         materialize_global_matrix=False,
         retain_local_schur_for_matrix_free=True,
         sum_duplicate_cell_integrals=True,
     )
     rng = np.random.default_rng(3919)
-    B = 0.02 * (rng.normal(size=(n, 2)) + 1j * rng.normal(size=(n, 2))
+    B = 0.02 * (rng.normal(size=(n, port_count)) + 1j * rng.normal(size=(n, port_count))
                 ).astype(np.complex128)
-    D = 0.03 * (rng.normal(size=(2, n)) + 1j * rng.normal(size=(2, n))
+    D = 0.03 * (rng.normal(size=(port_count, n)) + 1j * rng.normal(size=(port_count, n))
                 ).astype(np.complex128)
     B[slave, :] = 0.0
     D[:, slave] = 0.0
-    H = np.diag(np.asarray([1.1 + 0.3j, 0.9 - 0.2j], dtype=np.complex128))
+    H = np.diag(np.asarray([1.1 + 0.003 * i + 0.3j - 0.001j * i
+                            for i in range(port_count)], dtype=np.complex128))
     entries = tuple(
         SimpleNamespace(
             coupling_rows=np.flatnonzero(B[:, port]).astype(PETSc.IntType),
@@ -562,12 +570,14 @@ def test_real_ffcx_mpc_action_only_matches_augmented_schur_and_nonzero_rhs() -> 
             projection_values=D[port, D[port] != 0.0].copy(),
             normalization_h=H[port, port],
         )
-        for port in range(2)
+        for port in range(port_count)
     )
     carrier = SimpleNamespace(entries=entries)
     action = None
     try:
-        action = build_p6_cell_condensed_action_from_carrier(condensed, carrier)
+        action = build_p6_cell_condensed_action_from_carrier(
+            condensed, carrier, port_coupling_mode=port_coupling_mode
+        )
         tensor_identities = condensed.build_audit["action_only_complete_tensor_identities"]
         assert len(tensor_identities) == len(condensed.retained_local_schur_by_class)
         assert tensor_identities
@@ -585,7 +595,7 @@ def test_real_ffcx_mpc_action_only_matches_augmented_schur_and_nonzero_rhs() -> 
         augmented = np.block([[volume, B], [-D, H]])
         retained = np.r_[
             condensed.trace_constraints.owned_active_original_dofs,
-            n + np.arange(2),
+            n + np.arange(port_count),
         ]
         eliminated = interiors
         expected = augmented[np.ix_(retained, retained)] - (
@@ -600,7 +610,7 @@ def test_real_ffcx_mpc_action_only_matches_augmented_schur_and_nonzero_rhs() -> 
             np.testing.assert_allclose(action.apply(vector), expected @ vector, rtol=2e-10, atol=2e-11)
         rhs = rng.normal(size=n) + 1j * rng.normal(size=n)
         rhs[slave] = 0.0
-        port_rhs = rng.normal(size=2) + 1j * rng.normal(size=2)
+        port_rhs = rng.normal(size=port_count) + 1j * rng.normal(size=port_count)
         expected_rhs = np.r_[rhs, port_rhs][retained] - (
             augmented[np.ix_(retained, eliminated)]
             @ np.linalg.solve(
@@ -655,6 +665,17 @@ def test_real_ffcx_mpc_action_only_matches_augmented_schur_and_nonzero_rhs() -> 
         }
         assert evaluated["schur_port_identity_relative"] <= 3e-10
         assert evaluated["storage_solution"][slave] == 0.0
+        carrier_closure = -D @ recovered + H @ solution[condensed.active_rows :]
+        np.testing.assert_allclose(
+            carrier_closure, port_rhs, rtol=3e-10, atol=3e-11
+        )
+        if port_coupling_mode == "streamed":
+            inventory = action.buffer_inventory
+            assert inventory["Hhat_materialized"] is False
+            assert inventory["resident_Hhat_bytes"] == 0
+            assert inventory["transformed_port_payload_bytes_sum"] == 0
+            assert inventory["per_cell_transformed_arrays_resident"] is False
+            assert action.audit["streamed_max_local_scratch_bytes"] > 0
         assert action.buffer_inventory["unique_S_V_buffers"] <= action.buffer_inventory["class_count"]
         assert action.buffer_inventory["unique_recovery_buffers"] <= action.buffer_inventory["class_count"]
         assert action.operator_recipe["global_S6_matrix"] is False

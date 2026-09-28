@@ -39,7 +39,13 @@ SETUP_EFFICIENCY_PROFILE = "physical_p6_trace_setup_efficiency_v26"
 WORKINGSET_SETUP_PROFILE = "physical_p6_trace_workingset_efficiency_v27"
 FUSED_KERNEL_PROFILE = "physical_p6_trace_fused_kernel_v28"
 A4_TENSOR_H6_PROFILE = "physical_p6_trace_a4_tensor_h6_v29"
-FUSED_KERNEL_PROFILES = (FUSED_KERNEL_PROFILE, A4_TENSOR_H6_PROFILE)
+WORKSTATION_GUIDED_LOCAL_V30_PROFILE = (
+    "physical_p6_trace_workstation_guided_v30"
+)
+A4_TENSOR_H6_PROFILES = (A4_TENSOR_H6_PROFILE, WORKSTATION_GUIDED_LOCAL_V30_PROFILE)
+FUSED_KERNEL_PROFILES = (
+    FUSED_KERNEL_PROFILE, A4_TENSOR_H6_PROFILE, WORKSTATION_GUIDED_LOCAL_V30_PROFILE
+)
 PHYSICAL_MEMORY_POLICY_V23 = "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23"
 V23_QUALIFIED_JIT_CACHE_SOURCE = (
     "results/euv_grazing1_phi0/"
@@ -55,7 +61,7 @@ P4_BLR_TRADEOFF_THRESHOLDS = {
     "T2_BLR_CONTROL": 1.0e-4,
 }
 
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE, LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE, COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE, FUSED_KERNEL_PROFILE, A4_TENSOR_H6_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE, LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE, COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE, FUSED_KERNEL_PROFILE, A4_TENSOR_H6_PROFILE, WORKSTATION_GUIDED_LOCAL_V30_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
 
 
 def p4_blr_tradeoff_threshold(stage: str) -> float:
@@ -117,6 +123,27 @@ def profile_facts(identity=PROFILE) -> dict:
                 "selected-evidence copies"
             ),
         )
+        return facts
+    if identity == WORKSTATION_GUIDED_LOCAL_V30_PROFILE:
+        facts = profile_facts(A4_TENSOR_H6_PROFILE)
+        facts.update(
+            identity=identity,
+            scope="review_v28_workstation_guided_local_v30",
+            qualification=(
+                "opt-in V30 batch; inherits the accepted V29 original 13.5 nm "
+                "p6/h7.5 coarse-p4 solver and full numerical gates; selects "
+                "the exact actual-Basix reference-metric H6 diagonal and "
+                "disables only the process-tree PSS diagnostic"
+            ),
+        )
+        facts["route_selection"]["h6_diagonal_builder"] = (
+            "reference_energy_actual_affine_metric_v1"
+        )
+        facts["gates"]["h6_diagonal"] = (
+            "same original FFCx quadrature; exact actual Basix T_apply; "
+            "true affine-cell metrics; exact MPC target cross terms"
+        )
+        facts["resources"]["pss_sampling_policy"] = "disabled_by_profile"
         return facts
     if identity in (
         SETUP_EFFICIENCY_PROFILE,

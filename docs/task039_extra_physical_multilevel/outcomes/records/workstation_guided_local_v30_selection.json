@@ -1,0 +1,420 @@
+{
+  "authority": {
+    "execution_branch_required": "task39extra",
+    "formal_run_limit": 1,
+    "required_response_after_formal_run": "docs/task039_extra_physical_multilevel/response_v31.md",
+    "review": "docs/task039_extra_physical_multilevel/review_report_v28.md"
+  },
+  "batch_id": "review_v28_workstation_guided_local_v30",
+  "evidence_records": {
+    "geometry": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_l2_geometry_diagnostic.json",
+      "sha256": "987c363ed2b0df3b10eaaf4a8183f7e42571c74de72fbe148be30577b1005df3",
+      "status": "PASS"
+    },
+    "h6_power10": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_l2_h6_power10.json",
+      "sha256": "d8accba8e69afbd2c8b4a3f336bef0fc2bd270a1f0b10d9994cb8991b97d57e1",
+      "status": "PASS"
+    },
+    "l3_component": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_l3_batch.json",
+      "sha256": "73cd472afa0864a9139b1b9a73e8c17590ffcfe2a3b97380f8f19eb055fecfba",
+      "status": "PASS"
+    },
+    "l3_real80": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_l3_real80_local_kernel.json",
+      "sha256": "f7711c81650d06ae2dd414cb874696bdf2ab733d6275c022e789fcd55c9c34f9",
+      "status": "PASS_LOCAL_EQUIVALENCE"
+    },
+    "l4_mode3904": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_l4_scaling_3904.json",
+      "sha256": "78e6145acaea960e88c2d5ede076ed46eb2ee654b274aba2d583e655e9d00100",
+      "status": "DIAGNOSTIC_MODE_SCALING"
+    },
+    "l4_mode512": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_l4_scaling_512.json",
+      "sha256": "8e7019d0c8c3bbff06f5aaa2ebe5a96bcd1fe71dbfcee0b62bf04c7af0169a14",
+      "status": "DIAGNOSTIC_MODE_SCALING"
+    },
+    "l4_mode80": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_l4_scaling_80.json",
+      "sha256": "6e0c3574bdd9863c6744ea5f6ae84ccebf87d335640f204339dfb247d8456e6b",
+      "status": "DIAGNOSTIC_MODE_SCALING"
+    },
+    "l4_real80": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_l4_real80_p6.json",
+      "sha256": "61c4f0f8205678a1500f9061f65cdea7b53da65fa66d51d029c5c9f13793e242",
+      "status": "DIAGNOSTIC_REAL_80_MODE_P6_CARRIER"
+    },
+    "l4_synthetic80": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_l4_synthetic80_pair.json",
+      "sha256": "2bddbbff73c47db1b9e2ef2542c8ebc7751569905623497b2478abe72ca8311e",
+      "status": "DIAGNOSTIC_SYNTHETIC_NONHERMITIAN_80_MODE"
+    },
+    "monitor": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_monitor_policy.json",
+      "sha256": "0d3056fbc035ac2fb03397891bffa06fe6828afa7163b2954a0501ef0d0cb92b",
+      "status": "DIAGNOSTIC_CONTROL_FLOW"
+    },
+    "p6_diagonal": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_l2_p6_diagonal.json",
+      "sha256": "82166c612b0bc26d07bc2c649d7b0a74f0f2d999592391fb537db82bf82908cc",
+      "status": "PASS"
+    }
+  },
+  "formal_run_gate": {
+    "next_action_after_main_review": "Commit the reviewed pre-formal source and selection record to a clean task39extra HEAD; only then perform the single fresh original p6/h7.5 run authorized by Review V28.",
+    "numerical_global_p4_factor_built_for_L3": false,
+    "pde_started_in_this_batch": false,
+    "status": "NOT_STARTED_WAITING_FOR_MAIN_REVIEW",
+    "workstation_process_or_source_touched": false
+  },
+  "input_geometry_citation_as_recorded": {
+    "degree": 6,
+    "first_instrumentation_failure_preserved": [
+      {
+        "attempt": 1,
+        "correction": "classify rectilinear physical spans from coordinate minima and maxima, sorted independent of local orientation",
+        "reason": "assumed positive local corner edge slots; DOLFINx cell orientation can reverse those slots, so inventory stopped before candidate diagonal construction",
+        "status": "CONTROLLED_DIAGNOSTIC_HARNESS_FAILURE"
+      }
+    ],
+    "floating_point_cache_identity_counts": {
+      "exact_jacobian_byte_patterns": 84,
+      "interpretation": "\u4ec5\u4e3a\u7cbe\u786e\u6d6e\u70b9\u7f13\u5b58\u952e\u8eab\u4efd\uff0c\u4e0d\u662f\u7269\u7406\u5f62\u72b6\u6570\u91cf\uff1b\u4fdd\u7559\u8f93\u5165\u8f74\u8ba1\u5212\u4e0e\u7edf\u8ba1\u539f\u503c\uff0c\u4e0d\u7ee7\u7eed\u505a\u51e0\u4f55\u5206\u7c7b\u3002",
+      "jacobian_plus_permutation_key_patterns": 124
+    },
+    "geometry_source": {
+      "axis_plan_builder": "src.geometry.mesh_builder_3d._stage4_axis_plan",
+      "axis_widths": {
+        "x": {
+          "interval_count": 9,
+          "maximum": 5.666666666666668,
+          "minimum": 5.5,
+          "unique_exact_width_count": 3,
+          "unique_widths_coordinate_units": [
+            5.5,
+            5.666666666666664,
+            5.666666666666668
+          ]
+        },
+        "y": {
+          "interval_count": 5,
+          "maximum": 5.555555555555557,
+          "minimum": 4.166666666666667,
+          "unique_exact_width_count": 4,
+          "unique_widths_coordinate_units": [
+            4.166666666666667,
+            5.555555555555554,
+            5.555555555555555,
+            5.555555555555557
+          ]
+        },
+        "z": {
+          "interval_count": 22,
+          "maximum": 6.666666666666671,
+          "minimum": 5.0,
+          "unique_exact_width_count": 7,
+          "unique_widths_coordinate_units": [
+            5.0,
+            6.666666666666657,
+            6.666666666666664,
+            6.666666666666666,
+            6.666666666666667,
+            6.666666666666668,
+            6.666666666666671
+          ]
+        }
+      },
+      "cells_per_axis": [
+        9,
+        5,
+        22
+      ],
+      "mesh_builder": "src.geometry.mesh_builder_3d._structured_hexa_mesh",
+      "resolved_spacing_mode": "boundary_fitted_exact_counts_explicit_axes"
+    },
+    "mesh_cells": 990,
+    "mesh_target_size": 7.5,
+    "mpi_size": 1,
+    "source_record": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_l2_geometry_diagnostic.json",
+      "sha256": "987c363ed2b0df3b10eaaf4a8183f7e42571c74de72fbe148be30577b1005df3",
+      "status": "PASS"
+    }
+  },
+  "language": "zh-CN",
+  "measured_selection_facts": {
+    "l1_monitor": {
+      "classification": "DIAGNOSTIC_CONTROL_FLOW_SMALL_WORKSET",
+      "disabled_pss_peak_bytes": [
+        null,
+        null,
+        null
+      ],
+      "disabled_pss_provider_calls": [
+        0,
+        0,
+        0
+      ],
+      "disabled_rss_peak_bytes": [
+        57511936,
+        57643008,
+        57724928
+      ],
+      "disabled_swap_peak_bytes": [
+        0,
+        0,
+        0
+      ],
+      "disabled_trial_count": 3,
+      "limitation": "\u5c0f\u5de5\u4f5c\u96c6\u63a7\u5236\u6d41\u4e0e provider \u68c0\u67e5\uff0c\u4e0d\u4ee3\u8868 TB \u5de5\u4f5c\u96c6\u6216\u7aef\u5230\u7aef\u52a0\u901f\u3002",
+      "maximum_rss_sample_gap_seconds_disabled": 0.099000326,
+      "sampled_trial_count": 3,
+      "trial_count": 6,
+      "workset_bytes_per_trial": 25165824
+    },
+    "l2_h6": {
+      "axis_plan_and_cache_diagnostic": {
+        "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_l2_geometry_diagnostic.json",
+        "sha256": "987c363ed2b0df3b10eaaf4a8183f7e42571c74de72fbe148be30577b1005df3",
+        "status": "PASS"
+      },
+      "candidate_diagonal_all_finite": true,
+      "candidate_diagonal_minimum_owned_real": 0.6437725518550843,
+      "diagonal_relative_difference_vs_v29": 7.132951741487729e-16,
+      "diagonal_timing_seconds": {
+        "reference_metric_diagonal_seconds": 2.061660056002438,
+        "v29_optimized_diagonal_seconds": 4.090365536976606,
+        "workstation_definition_reference_seconds": 44.679189905000385
+      },
+      "h6_apply_relative_difference_vs_native_power10": 8.110162096140907e-16,
+      "h6_power10_history_max_relative_difference": 9.337377602325596e-16,
+      "mesh_cells": 990,
+      "status": "PASS"
+    },
+    "l3_local_batch": {
+      "complete_C_numeric_factor_pairing": "NOT_RUN; not pursued after real local timing showed no gain.",
+      "component_fixture": {
+        "candidate_slower_pairs_of_three": {
+          "process_cpu": 3,
+          "wall": 2
+        },
+        "equivalence_max_abs": 0.0,
+        "evidence": {
+          "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_l3_batch.json",
+          "sha256": "73cd472afa0864a9139b1b9a73e8c17590ffcfe2a3b97380f8f19eb055fecfba",
+          "status": "PASS"
+        },
+        "legacy_vs_candidate_local_call_counts": {
+          "candidate_recovery_lu_calls": 3,
+          "candidate_reduction_lu_calls": 3,
+          "legacy_recovery_lu_calls_per_cell": 6,
+          "legacy_reduction_lu_calls_per_nonzero_cell": 6
+        },
+        "performance_scope": "component_fixture_only_no_physical_80_mode_or_full_C_claim"
+      },
+      "real_fixture": {
+        "actual_carrier_support": {
+          "carrier_rows_are_mpc_processed": true,
+          "nonzero_Bi": false,
+          "nonzero_Di": false
+        },
+        "batch_local_lu_calls_per_reduce_and_recover": 15,
+        "candidate_slowdown_percent_from_medians": {
+          "process_cpu": 14.657998663415416,
+          "wall": 14.658759672729538
+        },
+        "cells": 24,
+        "classes": 12,
+        "degree": 4,
+        "evidence": {
+          "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_l3_real80_local_kernel.json",
+          "sha256": "f7711c81650d06ae2dd414cb874696bdf2ab733d6275c022e789fcd55c9c34f9",
+          "status": "PASS_LOCAL_EQUIVALENCE"
+        },
+        "legacy_local_lu_calls_per_reduce_and_recover": 24,
+        "median_process_cpu_seconds": {
+          "bounded_multicolumn": 0.015322825000000151,
+          "legacy_per_cell": 0.013363939000000435
+        },
+        "median_wall_seconds": {
+          "bounded_multicolumn": 0.014045025018276647,
+          "legacy_per_cell": 0.012249413004610687
+        },
+        "modes": 80,
+        "port_closure_relative": 3.5660237905015354e-17,
+        "relative_alpha_difference": 0.0,
+        "relative_field_difference": 0.0,
+        "slower_pairs": {
+          "process_cpu": 3,
+          "wall": 3
+        },
+        "true_global_MatSolve_count": 0
+      }
+    },
+    "l4_port_storage": {
+      "evidence": [
+        {
+          "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_l4_real80_p6.json",
+          "sha256": "61c4f0f8205678a1500f9061f65cdea7b53da65fa66d51d029c5c9f13793e242",
+          "status": "DIAGNOSTIC_REAL_80_MODE_P6_CARRIER"
+        },
+        {
+          "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_l4_synthetic80_pair.json",
+          "sha256": "2bddbbff73c47db1b9e2ef2542c8ebc7751569905623497b2478abe72ca8311e",
+          "status": "DIAGNOSTIC_SYNTHETIC_NONHERMITIAN_80_MODE"
+        }
+      ],
+      "real_80_mode": {
+        "apply_streamed_slowdown_percent": 65.4798190991782,
+        "cached_vs_streamed_action_relative": 0.0,
+        "including_hhat_bytes_saved": 1887232,
+        "port_closure_relative": 3.1537291280447046e-17,
+        "recovery_relative": 0.0,
+        "rhs_reduction_relative": 0.0,
+        "three_operation_streamed_slowdown_percent": 3.129008639261932,
+        "unique_owner_bytes_saved": 1784832
+      },
+      "synthetic_nonhermitian_80_mode": {
+        "apply_slowdown_percent": 31.239927084960595,
+        "defects": {
+          "apply": 4.694819328217978e-16,
+          "recover_storage": 3.838605483762609e-16,
+          "reduce_rhs": 0.0
+        },
+        "recovery_slowdown_percent": 62.02910537544175,
+        "rhs_slowdown_percent": 16.568000832733134,
+        "unique_owner_bytes_saved": 660480
+      }
+    }
+  },
+  "record_status": "PRE_FORMAL_SELECTION_FOR_MAIN_REVIEW",
+  "schema": "task039extra.v30.local-selection.v1",
+  "selected_explicit_profile": {
+    "choices": {
+      "full_C_pair_probe": {
+        "complete_C_performance": "UNKNOWN_NOT_MEASURED",
+        "decision": "REMOVED_AND_NOT_RUN",
+        "reason": "\u771f\u5b9e\u5c40\u90e8\u914d\u5bf9\u5df2\u663e\u793a\u65e0\u53ef\u9760\u6536\u76ca\uff0c\u6545\u4e0d\u53e6\u5efa\u6570\u503c\u56e0\u5b50\uff1b\u5df2\u79fb\u9664\u539f\u7ea6 600 \u884c\u81ea\u52a8\u5b8c\u6574 C \u914d\u5bf9 probe\u3002"
+      },
+      "h6_setup_pre_move": {
+        "decision": "NOT_ADOPTED",
+        "evidence_scope": "\u6e90\u7801\u8def\u5f84\u6838\u67e5\uff1b\u672c\u8f6e\u672a\u505a\u9884\u79fb\u5b9e\u73b0\u6216\u6027\u80fd\u58f0\u79f0\u3002",
+        "reason": "\u5f53\u524d _v14_balanced_adapter \u5728\u6301\u6709\u552f\u4e00 p4 stack \u540e\u521b\u5efa\u5e76\u72ec\u5360 positive/H6\uff1b\u6ca1\u6709\u5df2\u8d44\u683c\u5316\u7684 H6 \u9884\u5efa/\u5355\u4e00\u5bf9\u8c61\u79fb\u4ea4\u4e0e\u6e05\u7406\u63a5\u53e3\u3002\u4e3a\u907f\u514d\u65b0\u5efa\u7b2c\u4e8c\u4efd H6 \u6216\u5f15\u5165\u672a\u7ecf\u9a8c\u8bc1\u7684\u751f\u547d\u5468\u671f\u91cd\u6392\uff0c\u4fdd\u7559\u5f53\u524d\u5355\u4e00 owner \u987a\u5e8f\u3002",
+        "source_locations": [
+          "src/runners/physical_p4_schur_v14.py::_v14_balanced_adapter: builds H6 at build_light_h6_setup",
+          "src/runners/physical_p4_schur_v14.py::fresh p6 stage: enters the p4 stack before creating the balanced adapter"
+        ]
+      },
+      "low_perturbation_monitoring": {
+        "decision": "SELECTED",
+        "evidence": {
+          "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_monitor_policy.json",
+          "sha256": "0d3056fbc035ac2fb03397891bffa06fe6828afa7163b2954a0501ef0d0cb92b",
+          "status": "DIAGNOSTIC_CONTROL_FLOW"
+        },
+        "pss": "\u6b63\u5f0f heavy profile \u4e3a disabled_by_profile\uff1b\u672a\u91c7\u6837\u65f6\u4e3a unknown/null\uff0c\u4e0d\u4f2a\u586b\u96f6\u3002",
+        "rss_and_process_tree_safety": "\u4fdd\u7559\u65e2\u6709\u5feb\u901f RSS/status\u3001\u8fdb\u7a0b\u6811\u8eab\u4efd\u3001swap \u4e0e\u6e05\u573a\u94fe\u3002"
+      },
+      "p4_local_rhs_batch": {
+        "decision": "NOT_SELECTED",
+        "evidence": [
+          {
+            "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_l3_batch.json",
+            "sha256": "73cd472afa0864a9139b1b9a73e8c17590ffcfe2a3b97380f8f19eb055fecfba",
+            "status": "PASS"
+          },
+          {
+            "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_l3_real80_local_kernel.json",
+            "sha256": "f7711c81650d06ae2dd414cb874696bdf2ab733d6275c022e789fcd55c9c34f9",
+            "status": "PASS_LOCAL_EQUIVALENCE"
+          }
+        ],
+        "formal_batch_size": 1,
+        "formal_route": "dispatches to original legacy per-cell reduction and recovery",
+        "reason": "\u771f\u5b9e 24-cell\u3001p4\u300180-mode \u5c40\u90e8\u914d\u5bf9\u4e2d\u4e09\u8f6e CPU \u548c\u5899\u949f\u90fd\u53d8\u6162\uff1b\u672a\u6784\u9020\u6570\u503c\u5168\u5c40\u56e0\u5b50\uff0c\u56e0\u6b64\u5b8c\u6574 C \u6027\u80fd\u672a\u77e5\u3002"
+      },
+      "p6_port_storage": {
+        "decision": "KEEP_CACHED_ROUTE; STREAMED_ROUTE_RESEARCH_ONLY",
+        "evidence": [
+          {
+            "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_l4_real80_p6.json",
+            "sha256": "61c4f0f8205678a1500f9061f65cdea7b53da65fa66d51d029c5c9f13793e242",
+            "status": "DIAGNOSTIC_REAL_80_MODE_P6_CARRIER"
+          },
+          {
+            "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_l4_synthetic80_pair.json",
+            "sha256": "2bddbbff73c47db1b9e2ef2542c8ebc7751569905623497b2478abe72ca8311e",
+            "status": "DIAGNOSTIC_SYNTHETIC_NONHERMITIAN_80_MODE"
+          }
+        ],
+        "mode_scaling_diagnostics": [
+          {
+            "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_l4_scaling_80.json",
+            "sha256": "6e0c3574bdd9863c6744ea5f6ae84ccebf87d335640f204339dfb247d8456e6b",
+            "status": "DIAGNOSTIC_MODE_SCALING"
+          },
+          {
+            "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_l4_scaling_512.json",
+            "sha256": "8e7019d0c8c3bbff06f5aaa2ebe5a96bcd1fe71dbfcee0b62bf04c7af0169a14",
+            "status": "DIAGNOSTIC_MODE_SCALING"
+          },
+          {
+            "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_l4_scaling_3904.json",
+            "sha256": "78e6145acaea960e88c2d5ede076ed46eb2ee654b274aba2d583e655e9d00100",
+            "status": "DIAGNOSTIC_MODE_SCALING"
+          }
+        ],
+        "reason": "\u771f\u5b9e\u4e0e\u5408\u6210\u95ed\u5408\u5747\u901a\u8fc7\uff0c\u4f46\u771f\u5b9e\u5c0f\u8f7d\u4f53\u4e0a apply \u660e\u663e\u53d8\u6162\uff0c\u4e09\u64cd\u4f5c\u5408\u8ba1\u4e5f\u53d8\u6162\uff1b\u672c\u8f6e\u8282\u7701\u7684\u552f\u4e00\u6301\u6709\u8005\u5b57\u8282\u6709\u9650\u3002"
+      },
+      "reference_metric_h6_diagonal": {
+        "decision": "SELECTED_FOR_EXPLICIT_V30_PROFILE",
+        "evidence": {
+          "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_l2_h6_power10.json",
+          "sha256": "d8accba8e69afbd2c8b4a3f336bef0fc2bd270a1f0b10d9994cb8991b97d57e1",
+          "status": "PASS"
+        },
+        "p6_diagonal_comparison": {
+          "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_l2_p6_diagonal.json",
+          "sha256": "82166c612b0bc26d07bc2c649d7b0a74f0f2d999592391fb537db82bf82908cc",
+          "status": "PASS"
+        },
+        "why": "\u76f8\u540c\u79ef\u5206\u70b9/\u6743\u91cd\u3001\u5b9e\u9645 Basix \u65b9\u5411\u548c affine metric \u7684\u5bf9\u89d2\u4e0e\u65e2\u6709\u53c2\u8003\u5728\u820d\u5165\u7ea7\u543b\u5408\uff0c\u4e14\u5c40\u90e8\u6784\u5efa\u8f83\u5feb\u3002"
+      }
+    },
+    "inherited_v29_physics_and_solver": "\u4fdd\u7559 V29 original p6/h7.5\u3001\u540c\u7f51\u683c p4\u300180 \u6a21\u6001\u3001\u5b8c\u6574 A4 \u6838\u9a8c\u4e0e\u65e2\u6709\u5916\u5c42/\u8d44\u6e90\u95e8\uff1b\u672c\u6b21\u5c40\u90e8\u8d44\u683c\u6ca1\u6709\u542f\u52a8\u8be5\u6b63\u5f0f\u6c42\u89e3\u3002",
+    "input": "input/task39extra/v30_workstation_guided_original_h7p5.dat",
+    "profile": "physical_p6_trace_workstation_guided_v30"
+  },
+  "source_identity": {
+    "branch": "task39extra",
+    "head_before_selection_record": "8d7e59e584ce58829efbb29966035844f95ced5f",
+    "relevant_source_sha256": {
+      "src/runners/physical_p4_schur_v14.py": "28ad0b7576e77def075e0d5873f38f79c809944aa7f579ec057495435b9d0607",
+      "src/solvers/fullspace_metric_positive_diagonal.py": "fe93deb9b38b66ee18a306ac50baaaa42cc9abfa345342227884c2d8cb064195",
+      "src/solvers/p4_cell_condensed_inverse.py": "678eb3103e57505a42c996ee2818c0e9e757189c0a2f871c90f3f911faf210e7",
+      "src/solvers/physical_interface_balanced.py": "eb73a4109014115f9005402eeee05e1d62d867e3a5eb17cea393bad0635adc93",
+      "src/solvers/physical_light_setup.py": "1a19e35450c2b84cd068bbb3af26a60ffcb1ca22a43598567152628ce10dd1b7",
+      "src/test/test_task39extra_v24_p4_repair.py": "e7bd7ad62bd553a7a32208f9d5a35f1731460d61b8c8ab9bab97d81278ca55ff",
+      "src/test/test_task39extra_v30_local_rhs_batch.py": "f0fab9291b1d9a70ca8095e3f8331ca0ddb961bce1357e45b232cd80766104dd",
+      "src/test/test_task39extra_v30_streamed_ports.py": "e7802859061fb9ef55f862fc017dedce1e2283279406288d030bc022826fe88d"
+    },
+    "selected_input": {
+      "path": "input/task39extra/v30_workstation_guided_original_h7p5.dat",
+      "run_id": "task39extra_v30_workstation_guided_original_h7p5_v1",
+      "sha256": "ba2c0745221a017d71f606325c20e98a3a57611887929fe55c18180f308f544b"
+    },
+    "tracked_diff_sha256_before_selection_record": "772c0d540ce17331e9e3321081d70824e545a4b42e52327a9ea67009c3815e64"
+  },
+  "targeted_verification": {
+    "command": "source scripts/activate_myfenics_wsl.sh && TASK39EXTRA_V30_SAVE_L3_REAL80_RECORD=1 python -m pytest -q src/test/test_task39extra_v24_p4_repair.py::test_soft_exhaustion_returns_best_complete_state_and_releases_snapshot src/test/test_task39extra_v30_local_rhs_batch.py::test_l3_bounded_batch_matches_legacy_on_same_factor_and_fixed_rhs src/test/test_task39extra_v30_local_rhs_batch.py::test_l3_real_p4_80_mode_local_batch_qualification",
+    "compileall": "passed for changed runner/solver/targeted tests",
+    "full_repository_pytest": "not_run",
+    "github_ci": "not_run",
+    "mpi2_mpi4": "not_run",
+    "result": "5 passed in 6.78s",
+    "ruff": "unavailable in qualified environment; not_run"
+  }
+}

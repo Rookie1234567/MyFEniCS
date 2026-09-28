@@ -1,0 +1,1266 @@
+{
+  "candidate_audit": {
+    "actual_cell_T_apply_before_reference_integration": true,
+    "cells_using_reference_metric": 990,
+    "geometry_rounding_or_approximation": false,
+    "identity": "reference_energy_actual_affine_metric_v1",
+    "metric_cache_bypasses": 586,
+    "metric_cache_entries": 64,
+    "metric_cache_hits": 340,
+    "metric_cache_limit": 64,
+    "metric_cache_misses": 650,
+    "metric_cache_storage_bytes": 903168,
+    "orientation_build_input_copy_bytes": 21676032,
+    "orientation_build_input_copy_bytes_cumulative": 108380160,
+    "orientation_build_input_copy_bytes_per_build": 21676032,
+    "orientation_build_known_array_peak_bytes": 43479072,
+    "orientation_tabulation_retained_after_tensor_build": false,
+    "orientation_tensor_build_count": 5,
+    "orientation_tensor_cache_bypasses": 0,
+    "orientation_tensor_cache_entries": 5,
+    "orientation_tensor_cache_hits": 985,
+    "orientation_tensor_cache_limit": 64,
+    "orientation_tensor_cache_misses": 5,
+    "orientation_tensor_cache_storage_bytes": 635040,
+    "orientation_tensor_pair_bytes": 127008,
+    "owned_cells": 990,
+    "per_cell_physical_basis_table_builds": 0,
+    "points_sha256": "dfd7f88ca358f9ef5a1a48bbd8b09e080b0bc24ce6215cb74718bd13dd5e2fc0",
+    "quadrature_degree": 15,
+    "quadrature_rule": "default",
+    "reference_basis_curls_bytes": 10838016,
+    "reference_basis_values_bytes": 10838016,
+    "retained_cache_ndarray_storage_bytes": 1538208,
+    "target_cross_terms_preserved_by_fallback": true,
+    "target_merge_fallbacks": 0,
+    "weights_sha256": "5eedb32c5e648bf31a102add0c230ccd7513f59b75fc28b21dd2c613db1ef09d"
+  },
+  "candidate_diagonal": {
+    "all_finite": true,
+    "minimum_owned_real": 0.6437725518550843,
+    "sha256": "a2c14585351a357084fdefe68da5c186a379a6839b0ffd4ac084fa3791d85606"
+  },
+  "candidate_source_sha256": "fe93deb9b38b66ee18a306ac50baaaa42cc9abfa345342227884c2d8cb064195",
+  "candidate_timing_seconds": {
+    "process_cpu": 1.9818737989999997,
+    "wall": 1.8229514950071461
+  },
+  "degree": 6,
+  "diagnostic_attempt_history": [
+    {
+      "attempt": 1,
+      "correction": "classify rectilinear physical spans from coordinate minima and maxima, sorted independent of local orientation",
+      "reason": "assumed positive local corner edge slots; DOLFINx cell orientation can reverse those slots, so inventory stopped before candidate diagonal construction",
+      "status": "CONTROLLED_DIAGNOSTIC_HARNESS_FAILURE"
+    }
+  ],
+  "diagnostic_test_source_sha256": "b4300548eb7225f0e32939d4f5d2c6ba2f2ec3488f0803677d312d83bd2100bc",
+  "geometry_inventory": {
+    "bit_pattern_counts_are_not_physical_shape_counts": true,
+    "exact_jacobian_bit_pattern_count_cache_diagnostic_only": 84,
+    "exact_jacobian_permutation_bit_pattern_count_cache_diagnostic_only": 124,
+    "geometry_inventory_process_cpu_seconds": 0.865490071,
+    "geometry_inventory_wall_seconds": 0.7940430140006356,
+    "jacobian_bit_pattern_histogram": {
+      "1": 3,
+      "12": 9,
+      "14": 4,
+      "16": 1,
+      "18": 6,
+      "2": 10,
+      "24": 5,
+      "28": 1,
+      "3": 6,
+      "36": 2,
+      "4": 12,
+      "42": 3,
+      "48": 1,
+      "6": 11,
+      "7": 3,
+      "8": 6,
+      "84": 1
+    },
+    "jacobian_permutation_bit_pattern_histogram": {
+      "1": 14,
+      "10": 2,
+      "12": 6,
+      "14": 7,
+      "15": 3,
+      "18": 9,
+      "2": 20,
+      "21": 2,
+      "22": 1,
+      "3": 15,
+      "35": 1,
+      "4": 10,
+      "42": 3,
+      "49": 1,
+      "5": 6,
+      "6": 18,
+      "7": 6
+    },
+    "physical_size_shape_class_sha256": "3325240ef3adada19fb8917a167602232557ea2d2236f8bd47da0cd37f4bfd8f",
+    "physical_size_shape_classes": [
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.9090909090909091,
+          0.7575757575757577
+        ],
+        "cell_count": 48,
+        "edge_widths_coordinate_units": [
+          5.5,
+          5.0,
+          4.166666666666667
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.9900000000000003,
+          0.9000000000000004
+        ],
+        "cell_count": 24,
+        "edge_widths_coordinate_units": [
+          5.555555555555554,
+          5.5,
+          5.0
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.99,
+          0.9
+        ],
+        "cell_count": 24,
+        "edge_widths_coordinate_units": [
+          5.555555555555555,
+          5.5,
+          5.0
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.9899999999999998,
+          0.8999999999999997
+        ],
+        "cell_count": 24,
+        "edge_widths_coordinate_units": [
+          5.555555555555557,
+          5.5,
+          5.0
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8250000000000012,
+          0.6250000000000009
+        ],
+        "cell_count": 36,
+        "edge_widths_coordinate_units": [
+          6.666666666666657,
+          5.5,
+          4.166666666666667
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8333333333333343,
+          0.8250000000000012
+        ],
+        "cell_count": 18,
+        "edge_widths_coordinate_units": [
+          6.666666666666657,
+          5.555555555555554,
+          5.5
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8333333333333345,
+          0.8250000000000012
+        ],
+        "cell_count": 18,
+        "edge_widths_coordinate_units": [
+          6.666666666666657,
+          5.555555555555555,
+          5.5
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8333333333333347,
+          0.8250000000000012
+        ],
+        "cell_count": 18,
+        "edge_widths_coordinate_units": [
+          6.666666666666657,
+          5.555555555555557,
+          5.5
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8500000000000009,
+          0.8333333333333343
+        ],
+        "cell_count": 3,
+        "edge_widths_coordinate_units": [
+          6.666666666666657,
+          5.666666666666664,
+          5.555555555555554
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8500000000000009,
+          0.8333333333333345
+        ],
+        "cell_count": 3,
+        "edge_widths_coordinate_units": [
+          6.666666666666657,
+          5.666666666666664,
+          5.555555555555555
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8500000000000009,
+          0.8333333333333347
+        ],
+        "cell_count": 3,
+        "edge_widths_coordinate_units": [
+          6.666666666666657,
+          5.666666666666664,
+          5.555555555555557
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8500000000000009,
+          0.6250000000000009
+        ],
+        "cell_count": 6,
+        "edge_widths_coordinate_units": [
+          6.666666666666657,
+          5.666666666666664,
+          4.166666666666667
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8500000000000014,
+          0.8333333333333343
+        ],
+        "cell_count": 6,
+        "edge_widths_coordinate_units": [
+          6.666666666666657,
+          5.666666666666668,
+          5.555555555555554
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8500000000000014,
+          0.8333333333333345
+        ],
+        "cell_count": 6,
+        "edge_widths_coordinate_units": [
+          6.666666666666657,
+          5.666666666666668,
+          5.555555555555555
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8500000000000014,
+          0.8333333333333347
+        ],
+        "cell_count": 6,
+        "edge_widths_coordinate_units": [
+          6.666666666666657,
+          5.666666666666668,
+          5.555555555555557
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8500000000000014,
+          0.6250000000000009
+        ],
+        "cell_count": 12,
+        "edge_widths_coordinate_units": [
+          6.666666666666657,
+          5.666666666666668,
+          4.166666666666667
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.882352941176471,
+          0.7352941176470592
+        ],
+        "cell_count": 8,
+        "edge_widths_coordinate_units": [
+          5.666666666666664,
+          5.0,
+          4.166666666666667
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.9803921568627452,
+          0.882352941176471
+        ],
+        "cell_count": 4,
+        "edge_widths_coordinate_units": [
+          5.666666666666664,
+          5.555555555555554,
+          5.0
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.9803921568627455,
+          0.882352941176471
+        ],
+        "cell_count": 4,
+        "edge_widths_coordinate_units": [
+          5.666666666666664,
+          5.555555555555555,
+          5.0
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.9803921568627458,
+          0.882352941176471
+        ],
+        "cell_count": 4,
+        "edge_widths_coordinate_units": [
+          5.666666666666664,
+          5.555555555555557,
+          5.0
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8250000000000003,
+          0.6250000000000002
+        ],
+        "cell_count": 36,
+        "edge_widths_coordinate_units": [
+          6.666666666666664,
+          5.5,
+          4.166666666666667
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8333333333333334,
+          0.8250000000000003
+        ],
+        "cell_count": 18,
+        "edge_widths_coordinate_units": [
+          6.666666666666664,
+          5.555555555555554,
+          5.5
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8333333333333336,
+          0.8250000000000003
+        ],
+        "cell_count": 18,
+        "edge_widths_coordinate_units": [
+          6.666666666666664,
+          5.555555555555555,
+          5.5
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8333333333333338,
+          0.8250000000000003
+        ],
+        "cell_count": 18,
+        "edge_widths_coordinate_units": [
+          6.666666666666664,
+          5.555555555555557,
+          5.5
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.85,
+          0.8333333333333334
+        ],
+        "cell_count": 3,
+        "edge_widths_coordinate_units": [
+          6.666666666666664,
+          5.666666666666664,
+          5.555555555555554
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.85,
+          0.8333333333333336
+        ],
+        "cell_count": 3,
+        "edge_widths_coordinate_units": [
+          6.666666666666664,
+          5.666666666666664,
+          5.555555555555555
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.85,
+          0.8333333333333338
+        ],
+        "cell_count": 3,
+        "edge_widths_coordinate_units": [
+          6.666666666666664,
+          5.666666666666664,
+          5.555555555555557
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.85,
+          0.6250000000000002
+        ],
+        "cell_count": 6,
+        "edge_widths_coordinate_units": [
+          6.666666666666664,
+          5.666666666666664,
+          4.166666666666667
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8500000000000005,
+          0.8333333333333334
+        ],
+        "cell_count": 6,
+        "edge_widths_coordinate_units": [
+          6.666666666666664,
+          5.666666666666668,
+          5.555555555555554
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8500000000000005,
+          0.8333333333333336
+        ],
+        "cell_count": 6,
+        "edge_widths_coordinate_units": [
+          6.666666666666664,
+          5.666666666666668,
+          5.555555555555555
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8500000000000005,
+          0.8333333333333338
+        ],
+        "cell_count": 6,
+        "edge_widths_coordinate_units": [
+          6.666666666666664,
+          5.666666666666668,
+          5.555555555555557
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8500000000000005,
+          0.6250000000000002
+        ],
+        "cell_count": 12,
+        "edge_widths_coordinate_units": [
+          6.666666666666664,
+          5.666666666666668,
+          4.166666666666667
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8250000000000001,
+          0.6250000000000001
+        ],
+        "cell_count": 12,
+        "edge_widths_coordinate_units": [
+          6.666666666666666,
+          5.5,
+          4.166666666666667
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8333333333333331,
+          0.8250000000000001
+        ],
+        "cell_count": 6,
+        "edge_widths_coordinate_units": [
+          6.666666666666666,
+          5.555555555555554,
+          5.5
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8333333333333334,
+          0.8250000000000001
+        ],
+        "cell_count": 6,
+        "edge_widths_coordinate_units": [
+          6.666666666666666,
+          5.555555555555555,
+          5.5
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8333333333333336,
+          0.8250000000000001
+        ],
+        "cell_count": 6,
+        "edge_widths_coordinate_units": [
+          6.666666666666666,
+          5.555555555555557,
+          5.5
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8499999999999998,
+          0.8333333333333331
+        ],
+        "cell_count": 1,
+        "edge_widths_coordinate_units": [
+          6.666666666666666,
+          5.666666666666664,
+          5.555555555555554
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8499999999999998,
+          0.8333333333333334
+        ],
+        "cell_count": 1,
+        "edge_widths_coordinate_units": [
+          6.666666666666666,
+          5.666666666666664,
+          5.555555555555555
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8499999999999998,
+          0.8333333333333336
+        ],
+        "cell_count": 1,
+        "edge_widths_coordinate_units": [
+          6.666666666666666,
+          5.666666666666664,
+          5.555555555555557
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8499999999999998,
+          0.6250000000000001
+        ],
+        "cell_count": 2,
+        "edge_widths_coordinate_units": [
+          6.666666666666666,
+          5.666666666666664,
+          4.166666666666667
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8500000000000002,
+          0.8333333333333331
+        ],
+        "cell_count": 2,
+        "edge_widths_coordinate_units": [
+          6.666666666666666,
+          5.666666666666668,
+          5.555555555555554
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8500000000000002,
+          0.8333333333333334
+        ],
+        "cell_count": 2,
+        "edge_widths_coordinate_units": [
+          6.666666666666666,
+          5.666666666666668,
+          5.555555555555555
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8500000000000002,
+          0.8333333333333336
+        ],
+        "cell_count": 2,
+        "edge_widths_coordinate_units": [
+          6.666666666666666,
+          5.666666666666668,
+          5.555555555555557
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8500000000000002,
+          0.6250000000000001
+        ],
+        "cell_count": 4,
+        "edge_widths_coordinate_units": [
+          6.666666666666666,
+          5.666666666666668,
+          4.166666666666667
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.825,
+          0.625
+        ],
+        "cell_count": 24,
+        "edge_widths_coordinate_units": [
+          6.666666666666667,
+          5.5,
+          4.166666666666667
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.833333333333333,
+          0.825
+        ],
+        "cell_count": 12,
+        "edge_widths_coordinate_units": [
+          6.666666666666667,
+          5.555555555555554,
+          5.5
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8333333333333333,
+          0.825
+        ],
+        "cell_count": 12,
+        "edge_widths_coordinate_units": [
+          6.666666666666667,
+          5.555555555555555,
+          5.5
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8333333333333335,
+          0.825
+        ],
+        "cell_count": 12,
+        "edge_widths_coordinate_units": [
+          6.666666666666667,
+          5.555555555555557,
+          5.5
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8499999999999996,
+          0.833333333333333
+        ],
+        "cell_count": 2,
+        "edge_widths_coordinate_units": [
+          6.666666666666667,
+          5.666666666666664,
+          5.555555555555554
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8499999999999996,
+          0.8333333333333333
+        ],
+        "cell_count": 2,
+        "edge_widths_coordinate_units": [
+          6.666666666666667,
+          5.666666666666664,
+          5.555555555555555
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8499999999999996,
+          0.8333333333333335
+        ],
+        "cell_count": 2,
+        "edge_widths_coordinate_units": [
+          6.666666666666667,
+          5.666666666666664,
+          5.555555555555557
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8499999999999996,
+          0.625
+        ],
+        "cell_count": 4,
+        "edge_widths_coordinate_units": [
+          6.666666666666667,
+          5.666666666666664,
+          4.166666666666667
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8500000000000001,
+          0.833333333333333
+        ],
+        "cell_count": 4,
+        "edge_widths_coordinate_units": [
+          6.666666666666667,
+          5.666666666666668,
+          5.555555555555554
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8500000000000001,
+          0.8333333333333333
+        ],
+        "cell_count": 4,
+        "edge_widths_coordinate_units": [
+          6.666666666666667,
+          5.666666666666668,
+          5.555555555555555
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8500000000000001,
+          0.8333333333333335
+        ],
+        "cell_count": 4,
+        "edge_widths_coordinate_units": [
+          6.666666666666667,
+          5.666666666666668,
+          5.555555555555557
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8500000000000001,
+          0.625
+        ],
+        "cell_count": 8,
+        "edge_widths_coordinate_units": [
+          6.666666666666667,
+          5.666666666666668,
+          4.166666666666667
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8823529411764705,
+          0.7352941176470588
+        ],
+        "cell_count": 16,
+        "edge_widths_coordinate_units": [
+          5.666666666666668,
+          5.0,
+          4.166666666666667
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.9803921568627445,
+          0.8823529411764705
+        ],
+        "cell_count": 8,
+        "edge_widths_coordinate_units": [
+          5.666666666666668,
+          5.555555555555554,
+          5.0
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.9803921568627448,
+          0.8823529411764705
+        ],
+        "cell_count": 8,
+        "edge_widths_coordinate_units": [
+          5.666666666666668,
+          5.555555555555555,
+          5.0
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.9803921568627452,
+          0.8823529411764705
+        ],
+        "cell_count": 8,
+        "edge_widths_coordinate_units": [
+          5.666666666666668,
+          5.555555555555557,
+          5.0
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8249999999999998,
+          0.6249999999999999
+        ],
+        "cell_count": 24,
+        "edge_widths_coordinate_units": [
+          6.666666666666668,
+          5.5,
+          4.166666666666667
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8333333333333329,
+          0.8249999999999998
+        ],
+        "cell_count": 12,
+        "edge_widths_coordinate_units": [
+          6.666666666666668,
+          5.555555555555554,
+          5.5
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8333333333333331,
+          0.8249999999999998
+        ],
+        "cell_count": 12,
+        "edge_widths_coordinate_units": [
+          6.666666666666668,
+          5.555555555555555,
+          5.5
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8333333333333334,
+          0.8249999999999998
+        ],
+        "cell_count": 12,
+        "edge_widths_coordinate_units": [
+          6.666666666666668,
+          5.555555555555557,
+          5.5
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8499999999999995,
+          0.8333333333333329
+        ],
+        "cell_count": 2,
+        "edge_widths_coordinate_units": [
+          6.666666666666668,
+          5.666666666666664,
+          5.555555555555554
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8499999999999995,
+          0.8333333333333331
+        ],
+        "cell_count": 2,
+        "edge_widths_coordinate_units": [
+          6.666666666666668,
+          5.666666666666664,
+          5.555555555555555
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8499999999999995,
+          0.8333333333333334
+        ],
+        "cell_count": 2,
+        "edge_widths_coordinate_units": [
+          6.666666666666668,
+          5.666666666666664,
+          5.555555555555557
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8499999999999995,
+          0.6249999999999999
+        ],
+        "cell_count": 4,
+        "edge_widths_coordinate_units": [
+          6.666666666666668,
+          5.666666666666664,
+          4.166666666666667
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.85,
+          0.8333333333333329
+        ],
+        "cell_count": 4,
+        "edge_widths_coordinate_units": [
+          6.666666666666668,
+          5.666666666666668,
+          5.555555555555554
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.85,
+          0.8333333333333331
+        ],
+        "cell_count": 4,
+        "edge_widths_coordinate_units": [
+          6.666666666666668,
+          5.666666666666668,
+          5.555555555555555
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.85,
+          0.8333333333333334
+        ],
+        "cell_count": 4,
+        "edge_widths_coordinate_units": [
+          6.666666666666668,
+          5.666666666666668,
+          5.555555555555557
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.85,
+          0.6249999999999999
+        ],
+        "cell_count": 8,
+        "edge_widths_coordinate_units": [
+          6.666666666666668,
+          5.666666666666668,
+          4.166666666666667
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8249999999999994,
+          0.6249999999999996
+        ],
+        "cell_count": 84,
+        "edge_widths_coordinate_units": [
+          6.666666666666671,
+          5.5,
+          4.166666666666667
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8333333333333325,
+          0.8249999999999994
+        ],
+        "cell_count": 42,
+        "edge_widths_coordinate_units": [
+          6.666666666666671,
+          5.555555555555554,
+          5.5
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8333333333333327,
+          0.8249999999999994
+        ],
+        "cell_count": 42,
+        "edge_widths_coordinate_units": [
+          6.666666666666671,
+          5.555555555555555,
+          5.5
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8333333333333329,
+          0.8249999999999994
+        ],
+        "cell_count": 42,
+        "edge_widths_coordinate_units": [
+          6.666666666666671,
+          5.555555555555557,
+          5.5
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8499999999999991,
+          0.8333333333333325
+        ],
+        "cell_count": 7,
+        "edge_widths_coordinate_units": [
+          6.666666666666671,
+          5.666666666666664,
+          5.555555555555554
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8499999999999991,
+          0.8333333333333327
+        ],
+        "cell_count": 7,
+        "edge_widths_coordinate_units": [
+          6.666666666666671,
+          5.666666666666664,
+          5.555555555555555
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8499999999999991,
+          0.8333333333333329
+        ],
+        "cell_count": 7,
+        "edge_widths_coordinate_units": [
+          6.666666666666671,
+          5.666666666666664,
+          5.555555555555557
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8499999999999991,
+          0.6249999999999996
+        ],
+        "cell_count": 14,
+        "edge_widths_coordinate_units": [
+          6.666666666666671,
+          5.666666666666664,
+          4.166666666666667
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8499999999999995,
+          0.8333333333333325
+        ],
+        "cell_count": 14,
+        "edge_widths_coordinate_units": [
+          6.666666666666671,
+          5.666666666666668,
+          5.555555555555554
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8499999999999995,
+          0.8333333333333327
+        ],
+        "cell_count": 14,
+        "edge_widths_coordinate_units": [
+          6.666666666666671,
+          5.666666666666668,
+          5.555555555555555
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8499999999999995,
+          0.8333333333333329
+        ],
+        "cell_count": 14,
+        "edge_widths_coordinate_units": [
+          6.666666666666671,
+          5.666666666666668,
+          5.555555555555557
+        ]
+      },
+      {
+        "aspect_ratios_to_largest_edge": [
+          1.0,
+          0.8499999999999995,
+          0.6249999999999996
+        ],
+        "cell_count": 28,
+        "edge_widths_coordinate_units": [
+          6.666666666666671,
+          5.666666666666668,
+          4.166666666666667
+        ]
+      }
+    ],
+    "structured_cell_edge_size_identity": "sorted_exact_coordinate_spans_of_rectilinear_hexa_corners",
+    "unique_physical_size_and_shape_classes": 84
+  },
+  "geometry_source": {
+    "axis_plan_builder": "src.geometry.mesh_builder_3d._stage4_axis_plan",
+    "axis_widths": {
+      "x": {
+        "interval_count": 9,
+        "maximum": 5.666666666666668,
+        "minimum": 5.5,
+        "unique_exact_width_count": 3,
+        "unique_widths_coordinate_units": [
+          5.5,
+          5.666666666666664,
+          5.666666666666668
+        ]
+      },
+      "y": {
+        "interval_count": 5,
+        "maximum": 5.555555555555557,
+        "minimum": 4.166666666666667,
+        "unique_exact_width_count": 4,
+        "unique_widths_coordinate_units": [
+          4.166666666666667,
+          5.555555555555554,
+          5.555555555555555,
+          5.555555555555557
+        ]
+      },
+      "z": {
+        "interval_count": 22,
+        "maximum": 6.666666666666671,
+        "minimum": 5.0,
+        "unique_exact_width_count": 7,
+        "unique_widths_coordinate_units": [
+          5.0,
+          6.666666666666657,
+          6.666666666666664,
+          6.666666666666666,
+          6.666666666666667,
+          6.666666666666668,
+          6.666666666666671
+        ]
+      }
+    },
+    "cells_per_axis": [
+      9,
+      5,
+      22
+    ],
+    "mesh_builder": "src.geometry.mesh_builder_3d._structured_hexa_mesh",
+    "resolved_spacing_mode": "boundary_fitted_exact_counts_explicit_axes"
+  },
+  "input_path": "input/task39extra/v30_workstation_guided_original_h7p5.dat",
+  "input_sha256": "ba2c0745221a017d71f606325c20e98a3a57611887929fe55c18180f308f544b",
+  "memory_accounting": {
+    "cache_storage_bytes_scope": "retained ndarray payload for bounded orientation and metric caches",
+    "orientation_build_known_array_peak_bytes_scope": "retained_reference_values_and_curls_plus_one_oriented_copy_pair_plus_two_tensor_outputs; excludes NumPy einsum/BLAS internal scratch",
+    "process_rss_not_measured": true
+  },
+  "mesh_cells": 990,
+  "mesh_target_size": 7.5,
+  "mpi_size": 1,
+  "run_id": "task39extra_v30_workstation_guided_original_h7p5_v1",
+  "schema": "task39extra.v30.l2.geometry-diagnostic.v1",
+  "scope": "candidate_only_no_old_or_v29_diagonal_no_h6_no_pde",
+  "source_head": "8d7e59e584ce58829efbb29966035844f95ced5f",
+  "status": "PASS",
+  "tracked_diff_sha256": "f1881f07a49bacd191519a34d38090a95d681d079f9c17b3513c3fdb57e6b697"
+}

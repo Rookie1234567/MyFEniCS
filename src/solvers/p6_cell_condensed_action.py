@@ -282,10 +282,10 @@ class _CellActionData:
     Di: np.ndarray
     Dt: np.ndarray
     ports: np.ndarray
-    Bhat: np.ndarray
-    Dhat: np.ndarray
-    XiB: np.ndarray
-    Hlocal: np.ndarray
+    Bhat: np.ndarray | None
+    Dhat: np.ndarray | None
+    XiB: np.ndarray | None
+    Hlocal: np.ndarray | None
 
 
 def _normalise_port_terms(
@@ -295,7 +295,8 @@ def _normalise_port_terms(
     nt: int,
     appended_rows: int,
     name: str,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    streamed: bool = False,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray | None]:
     """Validate one cell's optional carrier block and fill omitted blocks."""
 
     if term is None:
@@ -316,7 +317,13 @@ def _normalise_port_terms(
     di = _complex_matrix(term.Di, f"{name}.Di", shape=(np_, ni))
     bt = np.zeros((nt, np_), dtype=np.complex128) if term.Bt is None else _complex_matrix(term.Bt, f"{name}.Bt", shape=(nt, np_))
     dt = np.zeros((np_, nt), dtype=np.complex128) if term.Dt is None else _complex_matrix(term.Dt, f"{name}.Dt", shape=(np_, nt))
-    h = np.zeros((np_, np_), dtype=np.complex128) if term.H is None else _complex_matrix(term.H, f"{name}.H", shape=(np_, np_))
+    h = (
+        None
+        if streamed and term.H is None
+        else np.zeros((np_, np_), dtype=np.complex128)
+        if term.H is None
+        else _complex_matrix(term.H, f"{name}.H", shape=(np_, np_))
+    )
     return bi, bt, di, dt, ports, h
 
 
@@ -350,14 +357,22 @@ class P6CellCondensedAction:
         port_terms: Mapping[int, P6CellPortTerms] | None = None,
         direct_trace_terms: Sequence[P6DirectTracePortTerms] = (),
         owns_condensed: bool = False,
+        port_coupling_mode: str = "cached",
     ) -> None:
         if condensed.matrix is not None:
             raise ValueError("p6 action-only condensation cannot borrow a materialized matrix")
         retained = condensed.retained_local_schur_by_class
         if retained is None:
             raise ValueError("p6 action-only condensation requires retained local Schur classes")
+        if port_coupling_mode not in {"cached", "streamed"}:
+            raise ValueError("port_coupling_mode must be 'cached' or 'streamed'")
+        self.port_coupling_mode = str(port_coupling_mode)
         self.condensed = condensed
         self.owns_condensed = bool(owns_condensed)
+        self._streamed_action_lu_solve_count = 0
+        self._streamed_recovery_lu_solve_count = 0
+        self._streamed_hhat_lu_solve_count = 0
+        self._streamed_max_local_scratch_bytes = 0
         # Hlocal contributions are merged into this original carrier block
         # below.  Own the copy explicitly so construction never mutates the
         # caller's carrier array; the large class payloads remain borrowed.
@@ -369,12 +384,17 @@ class P6CellCondensedAction:
         if unknown_cells:
             raise ValueError(f"port terms refer to unknown cells: {sorted(unknown_cells)}")
         self._cells: tuple[_CellActionData, ...] = self._build_cells(retained)
+        # The streamed prototype does not retain its staging map after cell
+        # arrays are validated.  Preserve the established cached object's
+        # metadata lifetime and behavior.
+        if self.port_coupling_mode == "streamed":
+            self._port_terms.clear()
         # Optional local H blocks are direct contributions to the original
         # carrier block.  Merge them before freezing H_p so that both the
         # native A6 action and the BAL_H bridge use the same original block;
         # Hhat then receives only the internal-elimination correction.
         for cell in self._cells:
-            if len(cell.ports):
+            if len(cell.ports) and cell.Hlocal is not None:
                 self._H_p[np.ix_(cell.ports, cell.ports)] += cell.Hlocal
         self._direct_terms = tuple(
             _as_direct_term(term, condensed.appended_rows)
@@ -386,11 +406,15 @@ class P6CellCondensedAction:
         self._direct_D_active: dict[int, tuple[np.ndarray, np.ndarray]] = {}
         self._prepare_direct_terms()
         self._direct_terms = ()
-        self._Hhat = self._H_p.copy()
-        for cell in self._cells:
-            if len(cell.ports):
-                self._Hhat[np.ix_(cell.ports, cell.ports)] += cell.Di @ cell.XiB
-        self._Hhat = _readonly(self._Hhat)
+        if self.port_coupling_mode == "cached":
+            self._Hhat = self._H_p.copy()
+            for cell in self._cells:
+                if len(cell.ports):
+                    assert cell.XiB is not None
+                    self._Hhat[np.ix_(cell.ports, cell.ports)] += cell.Di @ cell.XiB
+            self._Hhat = _readonly(self._Hhat)
+        else:
+            self._Hhat = None
         self._hp_solve_count = 0
         self._apply_count = 0
         self._destroyed = False
@@ -406,7 +430,9 @@ class P6CellCondensedAction:
             "active_trace_rows": int(condensed.active_rows),
             "appended_port_rows": int(condensed.appended_rows),
             "H_p_is_original_carrier_block": True,
-            "Hhat_is_retained_small_dense_block": True,
+            "Hhat_is_retained_small_dense_block": self.port_coupling_mode == "cached",
+            "Hhat_is_resident": self.port_coupling_mode == "cached",
+            "port_coupling_mode": self.port_coupling_mode,
             "shared_S_V_buffer_count": len({id(cell.S_V) for cell in self._cells}),
             "shared_recovery_buffer_count": len({id(cell.recovery) for cell in self._cells}),
             "shared_LU_factor_buffer_count": len({id(cell.interior_lu[0]) for cell in self._cells}),
@@ -415,6 +441,16 @@ class P6CellCondensedAction:
             "direct_trace_D_entry_count": int(sum(len(rows) for rows, _values in self._direct_D_original.values())),
             "apply_count": 0,
             "hp_solve_count": 0,
+            "streamed_action_lu_solve_count": 0,
+            "streamed_recovery_lu_solve_count": 0,
+            "streamed_hhat_lu_solve_count": 0,
+            "streamed_max_local_scratch_bytes": 0,
+            "streamed_scratch_scope": (
+                "maximum sum of named per-cell NumPy intermediates live in one "
+                "streamed apply or recovery, plus the H_p action vector; excludes "
+                "input/output vectors, shared resident payloads, and NumPy/SciPy/PETSc "
+                "internal temporaries or workspace"
+            ),
         }
         condensed.build_audit.setdefault("p6_cell_condensed_action", dict(self._audit))
 
@@ -436,6 +472,7 @@ class P6CellCondensedAction:
                 nt=nt,
                 appended_rows=self.condensed.appended_rows,
                 name=f"port_terms[{index}]",
+                streamed=self.port_coupling_mode == "streamed",
             )
             recovery = _borrow_matrix(
                 self.condensed.interior_from_trace_by_class[cell.class_key],
@@ -448,18 +485,24 @@ class P6CellCondensedAction:
                 shape=(nt, ni),
             )
             factor = self.condensed.interior_lu_by_class[cell.class_key]
-            xib = np.ascontiguousarray(lu_solve(factor, bi))
-            bhat = np.ascontiguousarray(bt + trace_from_interior @ bi)
-            dhat = np.ascontiguousarray(dt + di @ recovery)
+            if self.port_coupling_mode == "cached":
+                xib = np.ascontiguousarray(lu_solve(factor, bi))
+                bhat = np.ascontiguousarray(bt + trace_from_interior @ bi)
+                dhat = np.ascontiguousarray(dt + di @ recovery)
+            else:
+                xib = bhat = dhat = None
             # ``recovery=-Vii^{-1}Vit``; hence ``Dt-Di*Xit=Dt+Di*recovery``.
             for row in range(nt):
                 original = int(cell.trace_original_dofs[row])
                 if original not in constraints.original_to_active:
                     if np.any(bt[row]) or np.any(dt[:, row]):
                         raise ValueError("local port coupling touches an MPC slave trace row")
-            for values in (schur, recovery, trace_from_interior, bi, bt, di, dt, bhat, dhat, xib):
-                if not np.isfinite(values).all():
+            for values in (schur, recovery, trace_from_interior, bi, bt, di, dt, h):
+                if values is not None and not np.isfinite(values).all():
                     raise ValueError("local p6 carrier data contains non-finite values")
+            for values in (bhat, dhat, xib):
+                if values is not None and not np.isfinite(values).all():
+                    raise ValueError("local p6 condensed port data contains non-finite values")
             result.append(
                 _CellActionData(
                     original_interiors=np.asarray(cell.interior_original_dofs, dtype=PETSc.IntType).copy(),
@@ -476,10 +519,10 @@ class P6CellCondensedAction:
                     Di=_readonly(di),
                     Dt=_readonly(dt),
                     ports=np.asarray(ports, dtype=PETSc.IntType),
-                    Bhat=_readonly(bhat),
-                    Dhat=_readonly(dhat),
-                    XiB=_readonly(xib),
-                    Hlocal=_readonly(h),
+                    Bhat=None if bhat is None else _readonly(bhat),
+                    Dhat=None if dhat is None else _readonly(dhat),
+                    XiB=None if xib is None else _readonly(xib),
+                    Hlocal=None if h is None else _readonly(h),
                 )
             )
         return tuple(result)
@@ -553,22 +596,110 @@ class P6CellCondensedAction:
 
         return self._H_p.copy()
 
+    def _materialize_Hhat(self) -> np.ndarray:
+        if self._Hhat is not None:
+            return self._Hhat.copy()
+        # Explicit requests may build this block temporarily.  The streamed
+        # apply path never calls this method and retains only the original H_p.
+        result = self._H_p.copy()
+        for cell in self._cells:
+            if not len(cell.ports):
+                continue
+            xi_b = lu_solve(cell.interior_lu, cell.Bi)
+            self._streamed_hhat_lu_solve_count += 1
+            result[np.ix_(cell.ports, cell.ports)] += cell.Di @ xi_b
+            del xi_b
+        return result
+
     @property
     def Hhat(self) -> np.ndarray:
-        """Return the small post-elimination port block."""
+        """Return a copy, materializing Hhat on demand in streamed mode."""
 
-        return self._Hhat.copy()
+        return self._materialize_Hhat()
 
     @property
     def audit(self) -> Mapping[str, Any]:
         self._audit["apply_count"] = int(self._apply_count)
         self._audit["hp_solve_count"] = int(self._hp_solve_count)
+        self._audit["streamed_action_lu_solve_count"] = int(
+            self._streamed_action_lu_solve_count
+        )
+        self._audit["streamed_recovery_lu_solve_count"] = int(
+            self._streamed_recovery_lu_solve_count
+        )
+        self._audit["streamed_hhat_lu_solve_count"] = int(
+            self._streamed_hhat_lu_solve_count
+        )
+        self._audit["streamed_max_local_scratch_bytes"] = int(
+            self._streamed_max_local_scratch_bytes
+        )
         return MappingProxyType(self._audit)
 
     @property
     def buffer_inventory(self) -> Mapping[str, Any]:
-        """Return a compact proof that class payloads are shared by cells."""
+        """Count resident carrier arrays by backing owner, not view identity."""
 
+        raw_fields = ("Bi", "Bt", "Di", "Dt", "Hlocal")
+        transformed_fields = ("Bhat", "Dhat", "XiB")
+        payload_arrays = []
+        for cell in self._cells:
+            payload_arrays.extend(
+                value for value in (getattr(cell, name) for name in raw_fields)
+                if value is not None
+            )
+            payload_arrays.extend(
+                value for value in (getattr(cell, name) for name in transformed_fields)
+                if value is not None
+            )
+            payload_arrays.append(cell.ports)
+
+        staging_arrays = []
+        if self.port_coupling_mode == "cached":
+            for term in self._port_terms.values():
+                staging_arrays.extend(
+                    value
+                    for value in (term.Bi, term.Di, term.Bt, term.Dt, term.H)
+                    if value is not None
+                )
+        direct_arrays = [
+            value
+            for mapping in (
+                self._direct_B_original,
+                self._direct_D_original,
+                self._direct_B_active,
+                self._direct_D_active,
+            )
+            for pair in mapping.values()
+            for value in pair
+        ]
+        owners: dict[int, int] = {}
+        for value in (*payload_arrays, *staging_arrays, *direct_arrays):
+            owner = value
+            while isinstance(getattr(owner, "base", None), np.ndarray):
+                owner = owner.base
+            owners[id(owner)] = int(owner.nbytes)
+
+        def bytes_for(fields: tuple[str, ...]) -> int:
+            return int(sum(
+                getattr(cell, name).nbytes
+                for cell in self._cells
+                for name in fields
+                if getattr(cell, name) is not None
+            ))
+
+        def direct_bytes(mapping: Mapping[int, tuple[np.ndarray, np.ndarray]]) -> int:
+            return int(sum(array.nbytes for pair in mapping.values() for array in pair))
+
+        staging_bytes = int(sum(array.nbytes for array in staging_arrays))
+        direct_payload_bytes = sum(
+            direct_bytes(mapping)
+            for mapping in (
+                self._direct_B_original,
+                self._direct_D_original,
+                self._direct_B_active,
+                self._direct_D_active,
+            )
+        )
         return MappingProxyType(
             {
                 "cell_count": len(self._cells),
@@ -579,19 +710,26 @@ class P6CellCondensedAction:
                 "unique_trace_rhs_projection_buffers": len(
                     {id(cell.trace_from_interior) for cell in self._cells}
                 ),
+                "port_coupling_mode": self.port_coupling_mode,
+                "raw_port_payload_bytes_sum": bytes_for(raw_fields),
+                "transformed_port_payload_bytes_sum": bytes_for(transformed_fields),
+                "staging_port_payload_bytes_sum": staging_bytes,
+                "direct_trace_payload_bytes_sum": int(direct_payload_bytes),
                 "local_carrier_cell_payload_bytes": int(
-                    sum(
-                        cell.Bi.nbytes
-                        + cell.Bt.nbytes
-                        + cell.Di.nbytes
-                        + cell.Dt.nbytes
-                        + cell.Bhat.nbytes
-                        + cell.Dhat.nbytes
-                        + cell.XiB.nbytes
-                        + cell.Hlocal.nbytes
-                        for cell in self._cells
-                    )
+                    bytes_for(raw_fields) + bytes_for(transformed_fields)
                 ),
+                "all_port_payload_bytes_sum_with_aliases": int(
+                    bytes_for(raw_fields)
+                    + bytes_for(transformed_fields)
+                    + staging_bytes
+                    + direct_payload_bytes
+                ),
+                "unique_port_payload_owner_count": len(owners),
+                "unique_port_payload_owner_bytes": int(sum(owners.values())),
+                "resident_H_p_bytes": int(self._H_p.nbytes),
+                "resident_Hhat_bytes": 0 if self._Hhat is None else int(self._Hhat.nbytes),
+                "Hhat_materialized": self._Hhat is not None,
+                "per_cell_transformed_arrays_resident": self.port_coupling_mode == "cached",
             }
         )
 
@@ -615,7 +753,9 @@ class P6CellCondensedAction:
                 "schema_version": "task039extra.v19.p6-cell-condensed-cache-identity.v1",
                 "class_payloads": classes,
                 "H_p_sha256": _array_sha256(self._H_p),
-                "Hhat_sha256": _array_sha256(self._Hhat),
+                "Hhat_sha256": None if self._Hhat is None else _array_sha256(self._Hhat),
+                "Hhat_materialized": self._Hhat is not None,
+                "port_coupling_mode": self.port_coupling_mode,
                 "matrix_hash": None,
                 "global_S6_matrix": False,
                 "global_A6_matrix": False,
@@ -631,8 +771,17 @@ class P6CellCondensedAction:
                 "schema_version": "task039extra.v19.p6-cell-condensed-recipe.v1",
                 "formula": "S_V=Vtt-Vti*Vii^-1*Vit; Bhat=Bt-Vti*Vii^-1*Bi; Dhat=Dt-Di*Vii^-1*Vit; Hhat=Hp+Di*Vii^-1*Bi",
                 "sign_convention": "augmented=[[V,B],[-D,Hp]]",
-                "trace_action": "MPI1 NumPy gather expansion, owner-local S_V/Bhat/Dhat multiply, conjugate-transpose scatter",
-                "port_action": "stream sparse direct trace terms plus dense Hhat only",
+                "port_coupling_mode": self.port_coupling_mode,
+                "trace_action": (
+                    "MPI1 owner-local S_V/Bhat/Dhat cached multiply"
+                    if self.port_coupling_mode == "cached"
+                    else "MPI1 bounded owner-local Bi/Di actions with cached S_V and conjugate-transpose scatter"
+                ),
+                "port_action": (
+                    "cached Hhat plus sparse direct trace terms"
+                    if self.port_coupling_mode == "cached"
+                    else "original Hp plus per-cell streamed Di*solve(Bi*alpha), no resident Hhat"
+                ),
                 "original_hp_for_bridge": True,
                 "global_S6_matrix": False,
                 "global_A6_matrix": False,
@@ -653,8 +802,100 @@ class P6CellCondensedAction:
     def _check_reduced_array(self, value: Any, name: str) -> np.ndarray:
         return _complex_vector(value, name, size=self.reduced_size)
 
+    @staticmethod
+    def _streamed_cell_action(cell: Any, local_trace: np.ndarray, alpha: np.ndarray):
+        """Apply one cell's local trace/port terms and report named scratch."""
+
+        local_action = np.asarray(cell.S_V @ local_trace, dtype=np.complex128).reshape(-1)
+        port_action = None
+        local_lu_solve_calls = 0
+        scratch_bytes = int(local_trace.nbytes + local_action.nbytes)
+        if len(cell.ports):
+            local_alpha = alpha[cell.ports]
+            bi_alpha = cell.Bi @ local_alpha
+            b_action = cell.Bt @ local_alpha
+            trace_from_b = cell.trace_from_interior @ bi_alpha
+            b_action += trace_from_b
+            local_action += b_action
+
+            recovery_trace = cell.recovery @ local_trace
+            di_recovery_trace = cell.Di @ recovery_trace
+            dt_trace = cell.Dt @ local_trace
+            xi_b_alpha = lu_solve(cell.interior_lu, bi_alpha)
+            local_lu_solve_calls += 1
+            di_xi_b_alpha = cell.Di @ xi_b_alpha
+            port_action = -dt_trace.copy()
+            port_action -= di_recovery_trace
+            port_action += di_xi_b_alpha
+            scratch_bytes = sum(
+                array.nbytes
+                for array in (
+                    local_trace,
+                    local_action,
+                    local_alpha,
+                    bi_alpha,
+                    b_action,
+                    trace_from_b,
+                    recovery_trace,
+                    di_recovery_trace,
+                    dt_trace,
+                    xi_b_alpha,
+                    di_xi_b_alpha,
+                    port_action,
+                )
+            )
+            del (
+                local_alpha,
+                bi_alpha,
+                b_action,
+                trace_from_b,
+                recovery_trace,
+                di_recovery_trace,
+                dt_trace,
+                xi_b_alpha,
+                di_xi_b_alpha,
+            )
+        return local_action, port_action, int(scratch_bytes), local_lu_solve_calls
+
+    def _apply_streamed_array(self, source: np.ndarray) -> np.ndarray:
+        active = source[: self.condensed.active_rows]
+        alpha = source[self.condensed.active_rows :]
+        result = np.zeros_like(source)
+        port_offset = self.condensed.active_rows
+        local_lu_solve_calls = 0
+        for cell in self._cells:
+            local_trace = np.asarray(
+                cell.expansion @ active[cell.active_ids], dtype=np.complex128
+            ).reshape(-1)
+            local_action, port_action, scratch_bytes, cell_solve_calls = (
+                self._streamed_cell_action(cell, local_trace, alpha)
+            )
+            self._streamed_max_local_scratch_bytes = max(
+                self._streamed_max_local_scratch_bytes, scratch_bytes
+            )
+            local_lu_solve_calls += cell_solve_calls
+            if port_action is not None:
+                result[port_offset + cell.ports] += port_action
+            result[cell.active_ids] += np.asarray(
+                cell.expansion.conjugate().T @ local_action
+            ).reshape(-1)
+            del local_trace, local_action, port_action
+
+        hp_action = self._H_p @ alpha
+        self._streamed_max_local_scratch_bytes = max(
+            self._streamed_max_local_scratch_bytes, int(hp_action.nbytes)
+        )
+        result[port_offset:] += hp_action
+        del hp_action
+        self._add_direct_reduced(result, alpha, active)
+        self._streamed_action_lu_solve_count += local_lu_solve_calls
+        self._apply_count += 1
+        return np.ascontiguousarray(result)
+
     def _apply_array(self, value: Any) -> np.ndarray:
         source = self._check_reduced_array(value, "reduced source")
+        if self.port_coupling_mode == "streamed":
+            return self._apply_streamed_array(source)
         active = source[: self.condensed.active_rows]
         alpha = source[self.condensed.active_rows :]
         result = np.zeros_like(source)
@@ -845,10 +1086,37 @@ class P6CellCondensedAction:
         for cell in self._cells:
             local_trace = np.asarray(cell.expansion @ active[cell.active_ids], dtype=np.complex128).reshape(-1)
             bi = self._cell_internal_rhs(full_rhs_values, cell)
-            values = lu_solve(cell.interior_lu, bi) + cell.recovery @ local_trace
+            solved_rhs = lu_solve(cell.interior_lu, bi)
+            trace_recovery = cell.recovery @ local_trace
+            values = solved_rhs + trace_recovery
+            if self.port_coupling_mode == "streamed":
+                self._streamed_max_local_scratch_bytes = max(
+                    self._streamed_max_local_scratch_bytes,
+                    int(sum(array.nbytes for array in (
+                        local_trace, bi, solved_rhs, trace_recovery, values
+                    ))),
+                )
+            del local_trace, bi, solved_rhs, trace_recovery
             if len(cell.ports):
-                values = values - cell.XiB @ alpha[cell.ports]
+                if self.port_coupling_mode == "streamed":
+                    local_alpha = alpha[cell.ports]
+                    bi_alpha = cell.Bi @ local_alpha
+                    xi_b_alpha = lu_solve(cell.interior_lu, bi_alpha)
+                    self._streamed_recovery_lu_solve_count += 1
+                    self._streamed_max_local_scratch_bytes = max(
+                        self._streamed_max_local_scratch_bytes,
+                        int(sum(array.nbytes for array in (
+                            local_alpha, bi_alpha, xi_b_alpha, values
+                        ))),
+                    )
+                    values -= xi_b_alpha
+                    del local_alpha, bi_alpha, xi_b_alpha
+                else:
+                    assert cell.XiB is not None
+                    values = values - cell.XiB @ alpha[cell.ports]
             result[cell.original_interiors] = values
+            if self.port_coupling_mode == "streamed":
+                del values
         if not np.isfinite(result).all():
             raise FloatingPointError("p6 local recovery returned non-finite values")
         return result
@@ -1099,6 +1367,7 @@ def build_p6_cell_condensed_action_from_carrier(
     *,
     H_p: Any | None = None,
     owns_condensed: bool = False,
+    port_coupling_mode: str = "cached",
 ) -> P6CellCondensedAction:
     """Translate a native carrier into local/internal and direct trace terms.
 
@@ -1177,6 +1446,7 @@ def build_p6_cell_condensed_action_from_carrier(
         port_terms=terms,
         direct_trace_terms=direct,
         owns_condensed=owns_condensed,
+        port_coupling_mode=port_coupling_mode,
     )
 
 

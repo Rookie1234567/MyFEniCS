@@ -211,7 +211,8 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
               tree_cap_bytes: int | None = None,
               active_pc_seconds: float | None = None,
               time_policy: str = V14_TIME_POLICY_ENFORCE,
-              memory_policy: str = LEGACY_MEMORY_POLICY) -> dict:
+              memory_policy: str = LEGACY_MEMORY_POLICY,
+              pss_sampling_policy: str = 'sampled') -> dict:
     """Supervise one command, with an explicit workflow wall budget."""
     try:
         time_policy = normalize_v14_time_policy(time_policy)
@@ -222,6 +223,10 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
         PHYSICAL_MEMORY_PRESSURE_POLICY,
     }:
         raise ValueError(f"unsupported watchdog memory policy: {memory_policy!r}")
+    if pss_sampling_policy not in {'sampled', 'disabled_by_profile'}:
+        raise ValueError(
+            f"unsupported watchdog PSS policy: {pss_sampling_policy!r}"
+        )
     if not command or any(
         not math.isfinite(float(value)) or float(value) <= 0.0
         for value in (wall_seconds, interval, grace_seconds)
@@ -314,12 +319,20 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
             'active_pc': None if active_pc_seconds is None else float(active_pc_seconds),
         },
     )
+    if pss_sampling_policy == 'disabled_by_profile':
+        summary.update(
+            pss_sampling_policy=pss_sampling_policy,
+            pss_status='DISABLED_BY_PROFILE',
+            sampled_process_tree_pss_peak_bytes=None,
+        )
     stage = 'launch'
     swap_baseline = vmstat_swap_pages()
     try:
         with (directory / 'worker.log').open('w') as output, (directory / 'resources.jsonl').open('w') as timeline:
             environment = os.environ.copy()
             environment.update(worker_environment or {})
+            if pss_sampling_policy == 'disabled_by_profile':
+                environment['PHYSICAL_WATCHDOG_PSS_POLICY'] = pss_sampling_policy
             if timebase_guard:
                 clock_budget.update(clock_start)
                 environment['PHYSICAL_TIMEBASE_GUARD'] = '1'
@@ -336,7 +349,10 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                 children = _children()
                 observed.update(children)
                 stage = 'resource_sample'
-                sample = process_tree_snapshot(os.getpid(), 'workflow', exit_code)
+                sample = process_tree_snapshot(
+                    os.getpid(), 'workflow', exit_code,
+                    pss_sampling_policy=pss_sampling_policy,
+                )
                 current = memory_envelope(memory_policy)
                 elapsed = time.monotonic() - started
                 phase = json.loads(phase_path.read_text()) if phase_path is not None and phase_path.exists() else {}

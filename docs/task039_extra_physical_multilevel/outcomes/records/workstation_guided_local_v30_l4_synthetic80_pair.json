@@ -1,0 +1,145 @@
+{
+  "cached_vs_streamed_relative_defects": {
+    "apply": 4.694819328217978e-16,
+    "recover_storage": 3.838605483762609e-16,
+    "reduce_rhs": 0.0
+  },
+  "cell_count": 6,
+  "classification": "DIAGNOSTIC_SYNTHETIC_NONHERMITIAN_80_MODE",
+  "derived_comparison": {
+    "apply_streamed_slowdown_percent": 31.239927084960595,
+    "including_cached_Hhat_bytes_saved": 762880,
+    "recovery_streamed_slowdown_percent": 62.02910537544175,
+    "reduce_rhs_streamed_slowdown_percent": 16.568000832733134,
+    "unique_owner_bytes_saved": 660480
+  },
+  "distinct_Bi_Di": true,
+  "global_factor_built": false,
+  "global_schur_materialized": false,
+  "local_interior_rows": 2,
+  "local_trace_rows": 2,
+  "mode_count": 80,
+  "resident_inventory_bytes": {
+    "cached": {
+      "Hhat_materialized": true,
+      "all_port_payload_bytes_sum_with_aliases": 783360,
+      "cell_count": 6,
+      "class_count": 6,
+      "direct_trace_payload_bytes_sum": 0,
+      "local_carrier_cell_payload_bytes": 721920,
+      "per_cell_transformed_arrays_resident": true,
+      "port_coupling_mode": "cached",
+      "raw_port_payload_bytes_sum": 675840,
+      "resident_H_p_bytes": 102400,
+      "resident_Hhat_bytes": 102400,
+      "staging_port_payload_bytes_sum": 61440,
+      "transformed_port_payload_bytes_sum": 46080,
+      "unique_LU_factor_buffers": 6,
+      "unique_S_V_buffers": 6,
+      "unique_port_payload_owner_bytes": 723840,
+      "unique_port_payload_owner_count": 54,
+      "unique_recovery_buffers": 6,
+      "unique_trace_rhs_projection_buffers": 6
+    },
+    "cached_minus_streamed_unique_owner_bytes": 660480,
+    "streamed": {
+      "Hhat_materialized": false,
+      "all_port_payload_bytes_sum_with_aliases": 61440,
+      "cell_count": 6,
+      "class_count": 6,
+      "direct_trace_payload_bytes_sum": 0,
+      "local_carrier_cell_payload_bytes": 61440,
+      "per_cell_transformed_arrays_resident": false,
+      "port_coupling_mode": "streamed",
+      "raw_port_payload_bytes_sum": 61440,
+      "resident_H_p_bytes": 102400,
+      "resident_Hhat_bytes": 0,
+      "staging_port_payload_bytes_sum": 0,
+      "transformed_port_payload_bytes_sum": 0,
+      "unique_LU_factor_buffers": 6,
+      "unique_S_V_buffers": 6,
+      "unique_port_payload_owner_bytes": 63360,
+      "unique_port_payload_owner_count": 30,
+      "unique_recovery_buffers": 6,
+      "unique_trace_rhs_projection_buffers": 6
+    }
+  },
+  "schema": "task039extra.v30.l4-synthetic-80-nonhermitian-pair.v1",
+  "scratch": {
+    "scope": "maximum sum of named per-cell NumPy intermediates live in one streamed apply or recovery, plus the H_p action vector; excludes input/output vectors, shared resident payloads, and NumPy/SciPy/PETSc internal temporaries or workspace",
+    "streamed_max_named_local_bytes": 6624
+  },
+  "selected": false,
+  "selection_reason": "research_only: exact non-Hermitian algebra but extra local solves and slower means for apply, RHS reduction, and recovery; measured owner-byte reduction is below 1 MiB",
+  "streamed_additional_local_lu_solves_per_call": {
+    "apply": 6,
+    "recovery": 6
+  },
+  "test_command": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q --basetemp=/tmp/task39extra-v30-l4-evidence src/test/test_task39extra_v30_streamed_ports.py::test_diagnostic_synthetic_80_nonhermitian_cached_streamed_timing",
+  "timing": {
+    "arithmetic_mean_seconds": {
+      "cached": {
+        "apply": 0.00029672067224358517,
+        "recover_storage": 6.899233752240737e-05,
+        "reduce_rhs": 0.00011109366702536742
+      },
+      "streamed": {
+        "apply": 0.0003894159938984861,
+        "recover_storage": 0.00011178766726516187,
+        "reduce_rhs": 0.00012949966670324406
+      }
+    },
+    "interleaved_sample_orders": [
+      [
+        "cached",
+        "streamed"
+      ],
+      [
+        "streamed",
+        "cached"
+      ],
+      [
+        "cached",
+        "streamed"
+      ]
+    ],
+    "scope": "one six-cell synthetic local action/RHS/recovery; not a physical solve",
+    "wall_seconds_samples": {
+      "cached": {
+        "apply": [
+          0.00029862800147384405,
+          0.00029942800756543875,
+          0.00029210600769147277
+        ],
+        "recover_storage": [
+          6.935899727977812e-05,
+          6.925800698809326e-05,
+          6.836000829935074e-05
+        ],
+        "reduce_rhs": [
+          0.00011423398973420262,
+          0.00010968200513161719,
+          0.00010936500621028244
+        ]
+      },
+      "streamed": {
+        "apply": [
+          0.00037347301258705556,
+          0.0003996339801233262,
+          0.00039514098898507655
+        ],
+        "recover_storage": [
+          0.0001511570008005947,
+          9.340699762105942e-05,
+          9.079900337383151e-05
+        ],
+        "reduce_rhs": [
+          0.00014332300634123385,
+          0.00013281198334880173,
+          0.00011236401041969657
+        ]
+      }
+    },
+    "warmup_calls_per_mode_and_operation": 1
+  }
+}

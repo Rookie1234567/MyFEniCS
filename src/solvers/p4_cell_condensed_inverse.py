@@ -391,11 +391,15 @@ class P4CellCondensedInverse:
     locally, performs one global factor solve, and returns exact slave zeros.
     """
 
-    def __init__(self, condensed: AssemblyTimeCondensedSystem, factor: Any, *, port_terms: Mapping[int, CellPortTerms] | None = None, owns_condensed: bool = False, owns_factor: bool = False, retain_through_postprocess_v18: bool = True) -> None:
+    def __init__(self, condensed: AssemblyTimeCondensedSystem, factor: Any, *, port_terms: Mapping[int, CellPortTerms] | None = None, owns_condensed: bool = False, owns_factor: bool = False, retain_through_postprocess_v18: bool = True, local_rhs_batch_size: int = 1) -> None:
         if condensed.matrix is None:
             raise ValueError("p4 inverse requires a materialized condensed matrix")
         if condensed.comm.Get_size() != 1:
             raise NotImplementedError("Review V18 U0 adapter is qualified for MPI1 only")
+        batch_size = int(local_rhs_batch_size)
+        if batch_size < 1:
+            raise ValueError("local RHS batch size must be positive")
+        self.local_rhs_batch_size = batch_size
         self.condensed = condensed; self.factor = factor; self.port_terms = dict(port_terms or {})
         self.owns_condensed = bool(owns_condensed); self.owns_factor = bool(owns_factor)
         self.retain_through_postprocess_v18 = bool(retain_through_postprocess_v18)
@@ -437,9 +441,46 @@ class P4CellCondensedInverse:
             self._xiB_by_cell[index] = np.ascontiguousarray(lu_solve(self.condensed.interior_lu_by_class[cell.class_key], Bi))
         return Bi, Di, ports
 
+    def _local_rhs_batches(self):
+        """Yield bounded panels for identical owner/class/orientation operators."""
+        grouped: dict[tuple[Any, ...], list[tuple[int, Any, np.ndarray]]] = {}
+        owner = int(self.condensed.comm.Get_rank())
+        for index, cell in enumerate(self.condensed.cell_recovery_maps):
+            _bi, _di, ports = self._port_data(index, cell)
+            key = (
+                owner,
+                cell.class_key,
+                len(cell.interior_original_dofs),
+                len(cell.trace_original_dofs),
+                len(ports),
+            )
+            grouped.setdefault(key, []).append((index, cell, ports))
+        for key, members in grouped.items():
+            for start in range(0, len(members), self.local_rhs_batch_size):
+                yield key, members[start : start + self.local_rhs_batch_size]
+
     def _reduce_storage_rhs(self, rhs: PETSc.Vec) -> PETSc.Vec:
+        if self.local_rhs_batch_size == 1:
+            self._last_reduce_audit = {
+                "mode": "legacy_per_cell",
+                "batch_size": 1,
+                "cell_count": len(self.condensed.cell_recovery_maps),
+                "local_lu_solve_calls": None,
+            }
+            return self._reduce_storage_rhs_legacy(rhs)
+        return self._reduce_storage_rhs_batched(rhs)
+
+    def _reduce_storage_rhs_legacy(self, rhs: PETSc.Vec) -> PETSc.Vec:
         system = self.condensed; active_original = system.trace_constraints.owned_active_original_dofs
         reduced = system.create_augmented_vector()
+        legacy_stats = {
+            "mode": "legacy_per_cell",
+            "batch_size": 1,
+            "cell_count": len(system.cell_recovery_maps),
+            "rhs_get_values_calls": 0,
+            "nonzero_rhs_columns": 0,
+            "local_lu_solve_calls": 0,
+        }
         try:
             if len(active_original):
                 reduced.getArray()[:len(active_original)] = np.asarray(rhs.getValues(active_original), dtype=PETSc.ScalarType)
@@ -447,9 +488,12 @@ class P4CellCondensedInverse:
                 raise ValueError("native p4 RHS violates exact MPC slave-zero storage")
             for index, cell in enumerate(system.cell_recovery_maps):
                 rows = np.asarray(cell.interior_original_dofs, dtype=PETSc.IntType); gi = np.asarray(rhs.getValues(rows), dtype=np.complex128)
+                legacy_stats["rhs_get_values_calls"] += 1
                 if not np.any(gi):
                     continue
+                legacy_stats["nonzero_rhs_columns"] += 1
                 xig = lu_solve(system.interior_lu_by_class[cell.class_key], gi)
+                legacy_stats["local_lu_solve_calls"] += 1
                 correction = system.trace_from_interior_rhs_by_class[cell.class_key] @ gi
                 for original, value in zip(cell.trace_original_dofs, correction, strict=True):
                     if value == 0.0:
@@ -459,10 +503,288 @@ class P4CellCondensedInverse:
                 _Bi, Di, ports = self._port_data(index, cell)
                 if len(ports):
                     reduced.setValues(system.active_rows + ports, np.asarray(Di @ xig, dtype=PETSc.ScalarType), addv=PETSc.InsertMode.ADD_VALUES)
-            reduced.assemble(); return reduced
+            reduced.assemble()
+            self._last_reduce_audit = legacy_stats
+            return reduced
         except BaseException:
             reduced.destroy()
             raise
+
+    def _reduce_storage_rhs_batched(self, rhs: PETSc.Vec) -> PETSc.Vec:
+        system = self.condensed
+        active_original = system.trace_constraints.owned_active_original_dofs
+        reduced = system.create_augmented_vector()
+        stats = {
+            "mode": "bounded_multicolumn",
+            "batch_size": int(self.local_rhs_batch_size),
+            "batch_group_key": "owner_rank+existing_class_key(material,width,orientation)+local_dims+port_width",
+            "batch_count": 0,
+            "batch_group_count": 0,
+            "cell_count": 0,
+            "nonzero_rhs_columns": 0,
+            "rhs_get_values_calls": 0,
+            "local_lu_solve_calls": 0,
+            "max_batch_columns": 0,
+            "max_rhs_panel_bytes": 0,
+            "max_visible_batch_ndarray_bytes": 0,
+            "group_member_reference_count": 0,
+            "gather_seconds": 0.0,
+            "local_lu_seconds": 0.0,
+            "projection_and_scatter_pack_seconds": 0.0,
+            "vector_scatter_seconds": 0.0,
+            "vector_assembly_seconds": 0.0,
+            "visible_array_scope": "NumPy arrays owned by this batch; excludes PETSc/SciPy internal scratch and Python group references",
+        }
+        try:
+            if len(active_original):
+                reduced.getArray()[: len(active_original)] = np.asarray(
+                    rhs.getValues(active_original), dtype=PETSc.ScalarType
+                )
+            if len(self._slave_original) and np.any(
+                rhs.getValues(self._slave_original) != 0.0
+            ):
+                raise ValueError("native p4 RHS violates exact MPC slave-zero storage")
+
+            seen_group_keys: set[tuple[Any, ...]] = set()
+            for key, members in self._local_rhs_batches():
+                if key not in seen_group_keys:
+                    seen_group_keys.add(key)
+                    stats["batch_group_count"] += 1
+                stats["batch_count"] += 1
+                stats["cell_count"] += len(members)
+                ni = len(members[0][1].interior_original_dofs)
+                panel_bytes = ni * len(members) * np.dtype(np.complex128).itemsize
+                stats["max_batch_columns"] = max(
+                    stats["max_batch_columns"], len(members)
+                )
+                stats["max_rhs_panel_bytes"] = max(
+                    stats["max_rhs_panel_bytes"], panel_bytes
+                )
+                stats["group_member_reference_count"] += len(members)
+
+                gather_started = perf_counter()
+                all_rows = np.concatenate(
+                    [
+                        np.asarray(cell.interior_original_dofs, dtype=PETSc.IntType)
+                        for _index, cell, _ports in members
+                    ]
+                )
+                packed = np.asarray(
+                    rhs.getValues(all_rows), dtype=np.complex128
+                ).reshape(len(members), ni)
+                stats["rhs_get_values_calls"] += 1
+                active_columns = np.flatnonzero(np.any(packed != 0.0, axis=1))
+                if not len(active_columns):
+                    stats["gather_seconds"] += perf_counter() - gather_started
+                    del all_rows, packed, active_columns
+                    continue
+                live_members = [members[int(column)] for column in active_columns]
+                gi = np.ascontiguousarray(packed[active_columns].T)
+                stats["max_visible_batch_ndarray_bytes"] = max(
+                    stats["max_visible_batch_ndarray_bytes"],
+                    int(all_rows.nbytes + packed.nbytes + gi.nbytes + active_columns.nbytes),
+                )
+                del all_rows, packed, active_columns
+                stats["gather_seconds"] += perf_counter() - gather_started
+                stats["nonzero_rhs_columns"] += len(live_members)
+
+                local_lu_started = perf_counter()
+                class_key = live_members[0][1].class_key
+                xig = lu_solve(system.interior_lu_by_class[class_key], gi)
+                stats["local_lu_solve_calls"] += 1
+                stats["local_lu_seconds"] += perf_counter() - local_lu_started
+
+                projection_started = perf_counter()
+                correction = (
+                    system.trace_from_interior_rhs_by_class[class_key] @ gi
+                )
+                trace_capacity = sum(
+                    len(system.trace_constraints.expansion_by_original[int(original)][0])
+                    for _index, cell, _ports in live_members
+                    for original in cell.trace_original_dofs
+                )
+                port_capacity = sum(len(ports) for _index, _cell, ports in live_members)
+                trace_rows = np.empty(trace_capacity, dtype=PETSc.IntType)
+                trace_values = np.empty(trace_capacity, dtype=PETSc.ScalarType)
+                port_rows = np.empty(port_capacity, dtype=PETSc.IntType)
+                port_values = np.empty(port_capacity, dtype=PETSc.ScalarType)
+                trace_count = 0
+                port_count = 0
+                for column, (index, cell, ports) in enumerate(live_members):
+                    for row, original in enumerate(cell.trace_original_dofs):
+                        value = correction[row, column]
+                        if value == 0.0:
+                            continue
+                        ids, coefficients = system.trace_constraints.expansion_by_original[
+                            int(original)
+                        ]
+                        count = len(ids)
+                        trace_rows[trace_count : trace_count + count] = ids
+                        trace_values[trace_count : trace_count + count] = (
+                            np.conj(coefficients) * value
+                        )
+                        trace_count += count
+                    if len(ports):
+                        _bi, di, _ports = self._port_data(index, cell)
+                        count = len(ports)
+                        port_rows[port_count : port_count + count] = (
+                            system.active_rows + ports
+                        )
+                        port_values[port_count : port_count + count] = (
+                            di @ xig[:, column]
+                        )
+                        port_count += count
+                stats["projection_and_scatter_pack_seconds"] += (
+                    perf_counter() - projection_started
+                )
+                stats["max_visible_batch_ndarray_bytes"] = max(
+                    stats["max_visible_batch_ndarray_bytes"],
+                    int(
+                        gi.nbytes + xig.nbytes + correction.nbytes
+                        + trace_rows.nbytes + trace_values.nbytes
+                        + port_rows.nbytes + port_values.nbytes
+                    ),
+                )
+                if trace_count:
+                    scatter_started = perf_counter()
+                    reduced.setValues(
+                        trace_rows[:trace_count],
+                        trace_values[:trace_count],
+                        addv=PETSc.InsertMode.ADD_VALUES,
+                    )
+                    stats["vector_scatter_seconds"] += perf_counter() - scatter_started
+                if port_count:
+                    scatter_started = perf_counter()
+                    reduced.setValues(
+                        port_rows[:port_count],
+                        port_values[:port_count],
+                        addv=PETSc.InsertMode.ADD_VALUES,
+                    )
+                    stats["vector_scatter_seconds"] += perf_counter() - scatter_started
+                del gi, xig, correction, trace_rows, trace_values
+                del port_rows, port_values, live_members
+            assembly_started = perf_counter()
+            reduced.assemble()
+            stats["vector_assembly_seconds"] = perf_counter() - assembly_started
+            self._last_reduce_audit = stats
+            return reduced
+        except BaseException:
+            reduced.destroy()
+            raise
+
+    def _restore_local_interiors(
+        self,
+        rhs: PETSc.Vec,
+        active_solution: np.ndarray,
+        port_solution: np.ndarray,
+        result: PETSc.Vec,
+    ) -> dict[str, Any]:
+        system = self.condensed
+        stats = {
+            "mode": "bounded_multicolumn",
+            "batch_size": int(self.local_rhs_batch_size),
+            "batch_group_count": 0,
+            "batch_count": 0,
+            "cell_count": 0,
+            "rhs_get_values_calls": 0,
+            "local_lu_solve_calls": 0,
+            "max_batch_columns": 0,
+            "max_rhs_panel_bytes": 0,
+            "max_visible_batch_ndarray_bytes": 0,
+            "group_member_reference_count": 0,
+            "gather_seconds": 0.0,
+            "local_lu_seconds": 0.0,
+            "trace_and_port_action_seconds": 0.0,
+            "vector_scatter_seconds": 0.0,
+            "vector_assembly_seconds": 0.0,
+            "recovered_interior_rows": 0,
+            "visible_array_scope": "NumPy arrays owned by this batch; excludes PETSc/SciPy internal scratch and Python group references",
+        }
+        seen_group_keys: set[tuple[Any, ...]] = set()
+        for key, members in self._local_rhs_batches():
+            if key not in seen_group_keys:
+                seen_group_keys.add(key)
+                stats["batch_group_count"] += 1
+            stats["batch_count"] += 1
+            stats["cell_count"] += len(members)
+            stats["group_member_reference_count"] += len(members)
+            ni = len(members[0][1].interior_original_dofs)
+            nt = len(members[0][1].trace_original_dofs)
+            panel_bytes = ni * len(members) * np.dtype(np.complex128).itemsize
+            stats["max_batch_columns"] = max(
+                stats["max_batch_columns"], len(members)
+            )
+            stats["max_rhs_panel_bytes"] = max(
+                stats["max_rhs_panel_bytes"], panel_bytes
+            )
+
+            gather_started = perf_counter()
+            rows = np.concatenate(
+                [
+                    np.asarray(cell.interior_original_dofs, dtype=PETSc.IntType)
+                    for _index, cell, _ports in members
+                ]
+            )
+            packed_rhs = np.asarray(
+                rhs.getValues(rows), dtype=np.complex128
+            ).reshape(len(members), ni)
+            gi = np.ascontiguousarray(packed_rhs.T)
+            trace_values = np.empty((nt, len(members)), dtype=np.complex128)
+            for column, (_index, cell, _ports) in enumerate(members):
+                for row, original in enumerate(cell.trace_original_dofs):
+                    ids, coefficients = system.trace_constraints.expansion_by_original[
+                        int(original)
+                    ]
+                    trace_values[row, column] = np.dot(
+                        coefficients, active_solution[ids]
+                    )
+            stats["rhs_get_values_calls"] += 1
+            stats["gather_seconds"] += perf_counter() - gather_started
+            del packed_rhs
+
+            local_lu_started = perf_counter()
+            class_key = members[0][1].class_key
+            xig = lu_solve(system.interior_lu_by_class[class_key], gi)
+            stats["local_lu_solve_calls"] += 1
+            stats["local_lu_seconds"] += perf_counter() - local_lu_started
+
+            action_started = perf_counter()
+            recovered = (
+                system.interior_from_trace_by_class[class_key] @ trace_values
+            ) + xig
+            for column, (index, _cell, ports) in enumerate(members):
+                if len(ports):
+                    recovered[:, column] -= (
+                        self._xiB_by_cell[index] @ port_solution[ports]
+                    )
+            if not np.isfinite(recovered).all():
+                raise FloatingPointError(
+                    "local p4 interior recovery returned non-finite values"
+                )
+            stats["trace_and_port_action_seconds"] += (
+                perf_counter() - action_started
+            )
+            scatter_values = np.ascontiguousarray(recovered.T).reshape(-1)
+            stats["max_visible_batch_ndarray_bytes"] = max(
+                stats["max_visible_batch_ndarray_bytes"],
+                int(
+                    rows.nbytes + gi.nbytes + trace_values.nbytes + xig.nbytes
+                    + recovered.nbytes + scatter_values.nbytes
+                ),
+            )
+            scatter_started = perf_counter()
+            result.setValues(
+                rows,
+                scatter_values,
+                addv=PETSc.InsertMode.INSERT_VALUES,
+            )
+            stats["vector_scatter_seconds"] += perf_counter() - scatter_started
+            stats["recovered_interior_rows"] += len(rows)
+            del rows, gi, trace_values, xig, recovered, scatter_values
+        assembly_started = perf_counter()
+        result.assemble()
+        stats["vector_assembly_seconds"] = perf_counter() - assembly_started
+        return stats
 
     def _solve_once(self, rhs: PETSc.Vec) -> PETSc.Vec:
         solution = rhs.duplicate(); solution.set(PETSc.ScalarType(0.0)); solve = getattr(self.factor, "solve_repeated", None)
@@ -484,6 +806,7 @@ class P4CellCondensedInverse:
             "input_is_mpc_dual_storage": True,
             "duplicate_C_H_applied": False,
             "factor_solve_call_delta": 0,
+            "local_rhs_batch_size": int(self.local_rhs_batch_size),
             "reduce_seconds": 0.0,
             "solve_seconds": 0.0,
             "recover_seconds": 0.0,
@@ -523,6 +846,7 @@ class P4CellCondensedInverse:
             reduce_started = perf_counter()
             reduced_rhs = self._reduce_storage_rhs(rhs)
             audit["reduce_seconds"] = float(perf_counter() - reduce_started)
+            audit["reduce_batch"] = dict(self._last_reduce_audit)
             reduced_values = np.asarray(reduced_rhs.getArray(readonly=True))
             if not np.isfinite(reduced_values).all():
                 raise FloatingPointError(
@@ -554,26 +878,43 @@ class P4CellCondensedInverse:
                 ],
                 dtype=np.complex128,
             ).copy()
-            recovered_rows = 0
             recover_started = perf_counter()
-            for index, cell in enumerate(self.condensed.cell_recovery_maps):
-                local_trace = np.empty(len(cell.trace_original_dofs), dtype=np.complex128)
-                for row, original in enumerate(cell.trace_original_dofs):
-                    ids, coefficients = self.condensed.trace_constraints.expansion_by_original[int(original)]
-                    local_trace[row] = np.dot(coefficients, active_solution[ids])
-                rows = np.asarray(cell.interior_original_dofs, dtype=PETSc.IntType); gi = np.asarray(rhs.getValues(rows), dtype=np.complex128)
-                xig = lu_solve(self.condensed.interior_lu_by_class[cell.class_key], gi)
-                values = self.condensed.interior_from_trace_by_class[cell.class_key] @ local_trace + xig
-                _Bi, _Di, ports = self._port_data(index, cell)
-                if len(ports):
-                    values = values - self._xiB_by_cell[index] @ self.last_port_solution[ports]
-                if not np.isfinite(values).all():
-                    raise FloatingPointError(
-                        "local p4 interior recovery returned non-finite values"
+            if self.local_rhs_batch_size == 1:
+                recovered_rows = 0
+                for index, cell in enumerate(self.condensed.cell_recovery_maps):
+                    local_trace = np.empty(
+                        len(cell.trace_original_dofs), dtype=np.complex128
                     )
-                result.setValues(rows, np.asarray(values, dtype=PETSc.ScalarType), addv=PETSc.InsertMode.INSERT_VALUES); recovered_rows += len(rows)
-            result.assemble()
+                    for row, original in enumerate(cell.trace_original_dofs):
+                        ids, coefficients = self.condensed.trace_constraints.expansion_by_original[int(original)]
+                        local_trace[row] = np.dot(coefficients, active_solution[ids])
+                    rows = np.asarray(cell.interior_original_dofs, dtype=PETSc.IntType); gi = np.asarray(rhs.getValues(rows), dtype=np.complex128)
+                    xig = lu_solve(self.condensed.interior_lu_by_class[cell.class_key], gi)
+                    values = self.condensed.interior_from_trace_by_class[cell.class_key] @ local_trace + xig
+                    _Bi, _Di, ports = self._port_data(index, cell)
+                    if len(ports):
+                        values = values - self._xiB_by_cell[index] @ self.last_port_solution[ports]
+                    if not np.isfinite(values).all():
+                        raise FloatingPointError(
+                            "local p4 interior recovery returned non-finite values"
+                        )
+                    result.setValues(rows, np.asarray(values, dtype=PETSc.ScalarType), addv=PETSc.InsertMode.INSERT_VALUES); recovered_rows += len(rows)
+                result.assemble()
+                recover_batch = {
+                    "mode": "legacy_per_cell",
+                    "batch_size": 1,
+                    "cell_count": len(self.condensed.cell_recovery_maps),
+                    "rhs_get_values_calls": len(self.condensed.cell_recovery_maps),
+                    "local_lu_solve_calls": len(self.condensed.cell_recovery_maps),
+                    "recovered_interior_rows": recovered_rows,
+                }
+            else:
+                recover_batch = self._restore_local_interiors(
+                    rhs, active_solution, self.last_port_solution, result
+                )
+                recovered_rows = int(recover_batch["recovered_interior_rows"])
             audit["recover_seconds"] = float(perf_counter() - recover_started)
+            audit["recover_batch"] = recover_batch
             output_values = np.asarray(result.getArray(readonly=True))
             output_finite = bool(np.isfinite(output_values).all())
             audit["output_finite"] = output_finite

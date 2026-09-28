@@ -1013,6 +1013,7 @@ FIELD_SPECS: Final = (
             "physical_p6_trace_workingset_efficiency_v27",
             "physical_p6_trace_fused_kernel_v28",
             "physical_p6_trace_a4_tensor_h6_v29",
+            "physical_p6_trace_workstation_guided_v30",
             "hybrid_block_ldu_ilu0_dtn_woodbury",
         ),
         constraints=("only reviewed iterative identities are public",),

@@ -19,9 +19,11 @@ import numpy as np
 
 from src.io.physical_intermediate_profile import (
     A4_TENSOR_H6_PROFILE,
+    A4_TENSOR_H6_PROFILES,
     COARSE_DEGREE_SPEED_PROFILE,
     SETUP_EFFICIENCY_PROFILE,
     WORKINGSET_SETUP_PROFILE,
+    WORKSTATION_GUIDED_LOCAL_V30_PROFILE,
     FUSED_KERNEL_PROFILES,
     LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE,
     LOWMEM_DUAL_CELL_CONDENSED_PROFILE,
@@ -1071,9 +1073,9 @@ def _run_physical_dual_cell_condensed_lowmem(
         if isinstance(p4_repair_policy, Mapping)
         else "raise"
     )
-    if exhaustion_policy == "continue_outer_best_finite" and profile != A4_TENSOR_H6_PROFILE:
+    if exhaustion_policy == "continue_outer_best_finite" and profile not in A4_TENSOR_H6_PROFILES:
         raise ValueError("soft p4 exhaustion is reserved for the exact V29 profile")
-    if profile == A4_TENSOR_H6_PROFILE and exhaustion_policy != "continue_outer_best_finite":
+    if profile in A4_TENSOR_H6_PROFILES and exhaustion_policy != "continue_outer_best_finite":
         raise ValueError("V29 requires its reviewed best-finite outer-continuation policy")
     if p4_prefix_target_sequence is not None:
         try:
@@ -1247,7 +1249,7 @@ def _run_physical_dual_cell_condensed_lowmem(
                     fuse_components=profile in FUSED_KERNEL_PROFILES,
                 )
 
-            if profile == A4_TENSOR_H6_PROFILE:
+            if profile in A4_TENSOR_H6_PROFILES:
                 def pc_a4_action_factory(common_):
                     return build_packed_physical_action(
                         common_,
@@ -1564,7 +1566,7 @@ def _run_physical_dual_cell_condensed_lowmem(
 
         def outer_factory(runtime_, common_, resolved_, full_rhs, apply_pc, **kwargs):
             raw_tensor_evaluator = None
-            if profile == A4_TENSOR_H6_PROFILE:
+            if profile in A4_TENSOR_H6_PROFILES:
                 from src.solvers.task39extra_p6_raw_tensor import (
                     Task39ExtraP6RawTensorCandidate,
                 )
@@ -1862,6 +1864,9 @@ def _run_physical_dual_cell_condensed_lowmem(
                 shared_contractions=h6_shared_contractions,
                 direct_selected_backend=direct_selected_backend,
                 reuse_projection_work=reuse_projection_work,
+                reference_metric_diagonal=(
+                    profile == WORKSTATION_GUIDED_LOCAL_V30_PROFILE
+                ),
                 formal_release_timing=(
                     v24_owner_apply
                 ),

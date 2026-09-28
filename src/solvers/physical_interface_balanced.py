@@ -257,9 +257,109 @@ class InterfaceBalancedCoupling:
         except (TypeError, ValueError):
             return None
 
+    def _native_component_timing_snapshot(self):
+        action = getattr(self, '_p4_verification_action', None)
+        if action is None:
+            action = getattr(self.p4_action, '__self__', None)
+        if action is None:
+            return None
+        try:
+            audit = dict(action.audit)
+            cumulative = audit.get('operation_seconds_cumulative')
+            if not isinstance(cumulative, Mapping):
+                return None
+            return {
+                'apply_count': int(audit.get('apply_count', 0)),
+                'dtn_seconds': float(cumulative['dtn']),
+                'volume_seconds': float(cumulative['volume']),
+                'total_seconds': float(cumulative['total']),
+            }
+        except (AttributeError, KeyError, TypeError, ValueError):
+            return None
+
+    @staticmethod
+    def _native_component_timing_delta(before, after):
+        if before is None or after is None:
+            return {
+                'status': 'NOT_EXPOSED_BY_ACTION',
+                'apply_count': None,
+                'dtn_seconds': None,
+                'volume_seconds': None,
+                'total_seconds': None,
+            }
+        return {
+            'status': 'MEASURED_CUMULATIVE_COUNTER_DELTA',
+            'apply_count': int(after['apply_count'] - before['apply_count']),
+            'dtn_seconds': float(after['dtn_seconds'] - before['dtn_seconds']),
+            'volume_seconds': float(after['volume_seconds'] - before['volume_seconds']),
+            'total_seconds': float(after['total_seconds'] - before['total_seconds']),
+        }
+
+    def _independent_port_closure(self, solution, rhs, port_solution):
+        carrier = getattr(self, "_port_closure_carrier", None)
+        if carrier is None:
+            return {
+                "status": "NOT_ENABLED_BY_PROFILE",
+                "residual_norm": None,
+                "rhs_norm": None,
+                "relative_residual": None,
+                "seconds": None,
+                "operator": None,
+            }
+        started = time.perf_counter()
+        entries = tuple(getattr(carrier, "entries", ()))
+        if port_solution is None:
+            raise RuntimeError(
+                "enabled independent p4 port closure has no selected alpha"
+            )
+        alpha = np.asarray(port_solution, dtype=np.complex128).reshape(-1)
+        if len(entries) != len(alpha):
+            raise ValueError("p4 port carrier entry count differs from solved alpha")
+        field = _array_view(solution)
+        if not np.isfinite(alpha).all() or not np.isfinite(field).all():
+            raise FloatingPointError("p4 port closure input contains non-finite values")
+        residual = np.empty(len(entries), dtype=np.complex128)
+        for index, entry in enumerate(entries):
+            rows = np.asarray(entry.projection_rows, dtype=np.int64).reshape(-1)
+            values = np.asarray(entry.projection_values, dtype=np.complex128).reshape(-1)
+            if rows.shape != values.shape or np.any(rows < 0) or np.any(rows >= len(field)):
+                raise ValueError("p4 carrier projection support is outside the returned field")
+            if not np.isfinite(values).all() or not np.isfinite(entry.normalization_h):
+                raise FloatingPointError("p4 port carrier contains non-finite values")
+            residual[index] = (
+                -np.dot(values, field[rows])
+                + complex(entry.normalization_h) * alpha[index]
+            )
+        rhs_values = _array_view(rhs)
+        if not np.isfinite(rhs_values).all() or not np.isfinite(residual).all():
+            raise FloatingPointError("p4 port closure residual contains non-finite values")
+        rhs_norm = float(np.linalg.norm(rhs_values))
+        residual_norm = float(np.linalg.norm(residual))
+        relative_residual = residual_norm / max(rhs_norm, np.finfo(float).tiny)
+        if not np.isfinite(rhs_norm) or not np.isfinite(residual_norm) or not np.isfinite(relative_residual):
+            raise FloatingPointError("p4 port closure norm is non-finite")
+        denominator = max(rhs_norm, np.finfo(float).tiny)
+        return {
+            "status": "MEASURED",
+            "residual_norm": residual_norm,
+            "rhs_norm": rhs_norm,
+            "relative_residual": relative_residual,
+            "seconds": float(time.perf_counter() - started),
+            "operator": "-D*c+H_p*alpha_from_original_carrier",
+            "carrier_entry_count": len(entries),
+            "added_full_A4_actions": 0,
+            "new_coarse_residual_gate": False,
+        }
+
     def _coarse(self, fine_rhs):
+        call_started = time.perf_counter()
+        native_component_timing_before = self._native_component_timing_snapshot()
+        adjoint_started = time.perf_counter()
         g = self.transfer.apply_adjoint(fine_rhs)
+        transfer_apply_adjoint_seconds = time.perf_counter() - adjoint_started
         correction = applied = residual = None
+        # Preserve the historical bucket boundary: this timer starts after
+        # P^H and covers F4 plus every native-A4 attempt before P.
         started = time.perf_counter()
         logical_call = len(self.coarse_calls) + 1
         self._logical_call_sequence += 1
@@ -621,6 +721,30 @@ class InterfaceBalancedCoupling:
             interface_facts['logical_p4_apply_count'] = 1
             interface_facts['factor_solve_call_delta_total'] = repair['actual_mat_solve_count']
             interface_facts['repair_call_facts'] = interfaces[1:]
+            c_timing_fields = (
+                'elapsed_seconds', 'reduce_seconds', 'solve_seconds', 'recover_seconds'
+            )
+            c_attempt_timing = [
+                {
+                    'attempt': index,
+                    **{name: item.get(name) for name in c_timing_fields},
+                }
+                for index, item in enumerate(interfaces)
+            ]
+            c_timing_sum = {}
+            for name in c_timing_fields:
+                values = [item.get(name) for item in interfaces]
+                try:
+                    c_timing_sum[name] = float(sum(float(value) for value in values))
+                except (TypeError, ValueError):
+                    c_timing_sum[name] = None
+            native_component_timing = self._native_component_timing_delta(
+                native_component_timing_before,
+                self._native_component_timing_snapshot(),
+            )
+            independent_port_closure = self._independent_port_closure(
+                correction, g, port_total
+            )
             facts = {
                 'interface_facts': interface_facts,
                 'rhs_norm': rhs_norm,
@@ -629,14 +753,37 @@ class InterfaceBalancedCoupling:
                 'a4_action_implementation': self.p4_action_implementation,
                 'a4_action_oracle': self.p4_action_oracle,
                 'fint_and_native_A4_seconds': time.perf_counter() - started,
+                'transfer_apply_adjoint_seconds': float(transfer_apply_adjoint_seconds),
                 'native_A4_actions': int(native_actions),
                 'native_A4_seconds': float(native_A4_seconds),
+                'native_A4_component_timing': native_component_timing,
+                'c_attempt_timing': c_attempt_timing,
+                'c_attempt_timing_sum': c_timing_sum,
+                'independent_port_closure': independent_port_closure,
+                'independent_port_closure_seconds': independent_port_closure['seconds'],
+                'independent_port_closure_status': independent_port_closure['status'],
                 'p4_logical_apply_count': 1,
                 'p4_mat_solve_count': repair['actual_mat_solve_count'],
                 'repair': repair,
             }
             self.ledger.record(g, applied, residual, facts)
+            transfer_started = time.perf_counter()
             output = self.transfer.apply_primal(correction)
+            facts['transfer_apply_primal_seconds'] = float(
+                time.perf_counter() - transfer_started
+            )
+            facts['same_call_inclusive_seconds'] = float(
+                time.perf_counter() - call_started
+            )
+            # The ledger intentionally copies facts at record time, before P
+            # runs so a P failure does not create a successful logical call.
+            # On success, attach the completed inclusive timing to that same
+            # recorded call without changing its copied residual vectors.
+            self.ledger.calls[-1]['inner'].update(
+                transfer_apply_adjoint_seconds=facts['transfer_apply_adjoint_seconds'],
+                transfer_apply_primal_seconds=facts['transfer_apply_primal_seconds'],
+                same_call_inclusive_seconds=facts['same_call_inclusive_seconds'],
+            )
             complete_logical = getattr(self.fint, 'complete_logical_apply', None)
             if callable(complete_logical):
                 complete_logical()

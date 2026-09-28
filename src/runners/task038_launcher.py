@@ -2941,7 +2941,7 @@ def _reserve_v28_fused_kernel_budget(
     )
 
 
-def _reserve_v29_a4_tensor_h6_budget(
+def _reserve_a4_tensor_h6_budget(
     repo_root: Path,
     run_directory: Path,
     *,
@@ -2951,27 +2951,27 @@ def _reserve_v29_a4_tensor_h6_budget(
     workflow_clock_start: Mapping[str, Any],
     service_cgroup_path: Path | None = None,
     time_policy: str = V14_TIME_POLICY_ENFORCE,
+    batch_identity: str,
+    artifact_directory: str,
+    schema: str,
+    error_prefix: str,
+    summary_filename: str,
 ) -> dict[str, Any]:
-    """Reserve the single fresh V29 original-model formal attempt."""
+    """Reserve one fresh original-model attempt in an independent batch ledger."""
 
     if stage != "Q4_ORIGINAL" or time_policy != V14_TIME_POLICY_OBSERVE_ONLY:
-        raise InputError("V29 permits only Q4_ORIGINAL with observe_only")
+        raise InputError(f"{error_prefix} permits only Q4_ORIGINAL with observe_only")
     if float(stage_budget.get("workflow_seconds", 0.0)) != 43200.0:
-        raise InputError("V29 Q4 requires a 43200-second workflow budget")
+        raise InputError(f"{error_prefix} Q4 requires a 43200-second workflow budget")
     if not _is_v28_user_service_cgroup(service_cgroup_path):
-        raise InputError("V29 formal reservation requires the existing user service cgroup")
+        raise InputError(
+            f"{error_prefix} formal reservation requires the existing user service cgroup"
+        )
     repo_root = Path(repo_root).resolve()
     path = (
-        repo_root
-        / "benchmarks"
-        / "artifacts"
-        / "task39extra"
-        / "a4_tensor_h6_v29"
-        / "review_v27_a4_tensor_h6_continue_outer"
-        / "shared_workflow_ledger.json"
+        repo_root / "benchmarks" / "artifacts" / "task39extra"
+        / artifact_directory / batch_identity / "shared_workflow_ledger.json"
     )
-    schema = "task039extra.v29.a4-tensor-h6.shared-workflow-ledger.v1"
-    batch_identity = "review_v27_a4_tensor_h6_continue_outer"
     prerequisite = {
         "original_only": True,
         "allowed_stages": ["Q4_ORIGINAL"],
@@ -2990,7 +2990,7 @@ def _reserve_v29_a4_tensor_h6_budget(
             or ledger.get("total_budget_seconds") != 43200.0
             or ledger.get("allowed_stages") != ["Q4_ORIGINAL"]
         ):
-            raise InputError("V29 shared ledger identity or budget changed")
+            raise InputError(f"{error_prefix} shared ledger identity or budget changed")
     else:
         ledger = {
             "schema": schema,
@@ -3015,10 +3015,44 @@ def _reserve_v29_a4_tensor_h6_budget(
         stage_budget=stage_budget,
         workflow_clock_start=workflow_clock_start,
         time_policy=time_policy,
-        error_prefix="V29",
-        summary_filename="physical_dual_condensed_a4_tensor_h6_v29_summary.json",
+        error_prefix=error_prefix,
+        summary_filename=summary_filename,
         prerequisite=prerequisite,
         bug_replay_limit=1,
+    )
+
+
+def _reserve_v29_a4_tensor_h6_budget(
+    repo_root: Path,
+    run_directory: Path,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    return _reserve_a4_tensor_h6_budget(
+        repo_root,
+        run_directory,
+        **kwargs,
+        batch_identity="review_v27_a4_tensor_h6_continue_outer",
+        artifact_directory="a4_tensor_h6_v29",
+        schema="task039extra.v29.a4-tensor-h6.shared-workflow-ledger.v1",
+        error_prefix="V29",
+        summary_filename="physical_dual_condensed_a4_tensor_h6_v29_summary.json",
+    )
+
+
+def _reserve_v30_workstation_guided_local_budget(
+    repo_root: Path,
+    run_directory: Path,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    return _reserve_a4_tensor_h6_budget(
+        repo_root,
+        run_directory,
+        **kwargs,
+        batch_identity="review_v28_workstation_guided_local_v30",
+        artifact_directory="workstation_guided_local_v30",
+        schema="task039extra.v30.workstation-guided-local.shared-workflow-ledger.v1",
+        error_prefix="V30",
+        summary_filename="physical_dual_condensed_workstation_guided_local_v30_summary.json",
     )
 
 
@@ -3752,6 +3786,7 @@ def launch_specification(
         WORKINGSET_SETUP_PROFILE,
         FUSED_KERNEL_PROFILE,
         A4_TENSOR_H6_PROFILE,
+        WORKSTATION_GUIDED_LOCAL_V30_PROFILE,
         profile_facts,
     )
     from src.io.physical_balanced_profile import BALANCED_PROFILES, BOUNDED_PROFILES
@@ -3774,11 +3809,16 @@ def launch_specification(
     setup_efficiency_v27_profile = specification.solver.get('preconditioner') == WORKINGSET_SETUP_PROFILE
     fused_kernel_v28_profile = specification.solver.get('preconditioner') == FUSED_KERNEL_PROFILE
     a4_tensor_h6_v29_profile = specification.solver.get('preconditioner') == A4_TENSOR_H6_PROFILE
+    workstation_guided_local_v30_profile = (
+        specification.solver.get('preconditioner')
+        == WORKSTATION_GUIDED_LOCAL_V30_PROFILE
+    )
     setup_efficiency_profile = (
         setup_efficiency_v26_profile
         or setup_efficiency_v27_profile
         or fused_kernel_v28_profile
         or a4_tensor_h6_v29_profile
+        or workstation_guided_local_v30_profile
     )
     if v24_p4_prefix_target is not None:
         try:
@@ -3801,6 +3841,7 @@ def launch_specification(
         WORKINGSET_SETUP_PROFILE,
         FUSED_KERNEL_PROFILE,
         A4_TENSOR_H6_PROFILE,
+        WORKSTATION_GUIDED_LOCAL_V30_PROFILE,
     }
     cell_stage = str(specification.solver.get('stage', ''))
     v25_authorized_performance_repeat = None
@@ -3846,12 +3887,18 @@ def launch_specification(
         stage=cell_stage,
         require_zero_swap=bool(specification.execution.get("require_zero_swap", True)),
     )
+    v30_swap_observe = _is_setup_swap_observation_only(
+        setup_efficiency_profile=workstation_guided_local_v30_profile,
+        stage=cell_stage,
+        require_zero_swap=bool(specification.execution.get("require_zero_swap", True)),
+    )
     effective_swap_observe = (
         v25_swap_observe
         or v26_swap_observe
         or v27_swap_observe
         or v28_swap_observe
         or v29_swap_observe
+        or v30_swap_observe
     )
     if (
         coarse_degree_v25_profile
@@ -4032,15 +4079,21 @@ def launch_specification(
             stage_budget=cell_stage_budget, workflow_clock_start=full_clock.start,
             time_policy=v14_time_policy,
         )
-    elif a4_tensor_h6_v29_profile and physical_candidate:
+    elif (a4_tensor_h6_v29_profile or workstation_guided_local_v30_profile) and physical_candidate:
         service_cgroup_path = current_cgroup_path()
+        profile_label = "V30" if workstation_guided_local_v30_profile else "V29"
         if not _is_v28_user_service_cgroup(service_cgroup_path):
             raise InputError(
-                "V29 Q4 formal launch requires the existing "
+                f"{profile_label} Q4 formal launch requires the existing "
                 "myfenics-case-*.service under the systemd user app.slice cgroup"
             )
         run_directory = _timestamp_directory(specification, timestamp)
-        v14_lease = _reserve_v29_a4_tensor_h6_budget(
+        reserve_profile_budget = (
+            _reserve_v30_workstation_guided_local_budget
+            if workstation_guided_local_v30_profile
+            else _reserve_v29_a4_tensor_h6_budget
+        )
+        v14_lease = reserve_profile_budget(
             Path(__file__).resolve().parents[2],
             run_directory,
             source_sha=source,
@@ -4283,6 +4336,18 @@ def launch_specification(
                             watchdog_kwargs['tree_cap_bytes'] = int(
                                 physical_resources['tree_cap_bytes']
                             )
+                        pss_sampling_policy = physical_resources.get(
+                            'pss_sampling_policy'
+                        )
+                        if pss_sampling_policy is not None:
+                            watchdog_kwargs['pss_sampling_policy'] = pss_sampling_policy
+                            watchdog_environment = dict(
+                                watchdog_kwargs.get('worker_environment', {})
+                            )
+                            watchdog_environment[
+                                'PHYSICAL_WATCHDOG_PSS_POLICY'
+                            ] = pss_sampling_policy
+                            watchdog_kwargs['worker_environment'] = watchdog_environment
                         if schur_v14:
                             watchdog_kwargs['active_pc_seconds'] = float(
                                 physical_resources['pc_hard_seconds']

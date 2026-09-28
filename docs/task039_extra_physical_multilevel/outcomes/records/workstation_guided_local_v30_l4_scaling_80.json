@@ -1,0 +1,27 @@
+{
+  "cell_count": 1,
+  "classification": "DIAGNOSTIC_MODE_SCALING",
+  "dense_H_p_or_Hhat_allocated": false,
+  "input_alpha_bytes": 1280,
+  "local_interior_rows": 2,
+  "local_lu_solve_calls_per_cell_action": 1,
+  "local_trace_rows": 2,
+  "measured_named_local_scratch_bytes": 6624,
+  "mode_count": 80,
+  "mode_square_or_global_factor_allocated": false,
+  "one_cell_action_wall_seconds_arithmetic_mean": 1.4340999769046903e-05,
+  "one_cell_action_wall_seconds_samples": [
+    1.7568992916494608e-05,
+    1.3648997992277145e-05,
+    1.1805008398368955e-05
+  ],
+  "persistent_local_port_array_bytes": 10880,
+  "port_action_relative_defect": 0.0,
+  "schema": "task039extra.v30.l4-mode-scaling-streamed-cell.v1",
+  "scope": "one local streamed action helper call; no full operator or PDE claim",
+  "scratch_formula_upper_bytes": 14336,
+  "selected": false,
+  "selection_reason": "DIAGNOSTIC_MODE_SCALING only; not a physical mode inventory or production timing",
+  "test_command": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q --basetemp=/tmp/task39extra-v30-l4-evidence src/test/test_task39extra_v30_streamed_ports.py::test_diagnostic_mode_scaling_uses_only_streamed_local_cell_action",
+  "trace_action_relative_defect": 0.0
+}

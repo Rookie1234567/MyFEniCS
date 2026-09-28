@@ -1,0 +1,188 @@
+{
+  "active_trace_rows": 5184,
+  "cell_count": 24,
+  "cell_internal_port_support": {
+    "additional_streamed_action_local_solves_per_call": 6,
+    "additional_streamed_recovery_local_solves_per_call": 6,
+    "cells_with_ports": 6,
+    "ports_per_cell": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      14,
+      0,
+      0,
+      14,
+      0,
+      14,
+      0,
+      14,
+      14,
+      14
+    ],
+    "streamed_action_local_solves_total_in_test": 42,
+    "streamed_recovery_local_solves_total_in_test": 36
+  },
+  "classification": "DIAGNOSTIC_REAL_80_MODE_P6_CARRIER",
+  "degree": 6,
+  "derived_comparison": {
+    "apply_streamed_slowdown_percent": 65.4798190991782,
+    "including_cached_Hhat_bytes_saved": 1887232,
+    "three_operation_cached_mean_sum_seconds": 0.09283729500990981,
+    "three_operation_streamed_mean_sum_seconds": 0.09574218199122697,
+    "three_operation_streamed_slowdown_percent": 3.129008639261932,
+    "unique_payload_owner_bytes_saved": 1784832
+  },
+  "full_rows": 17478,
+  "global_schur_materialized": false,
+  "input_path": "input/task39extra/v30_workstation_guided_original_h7p5.dat",
+  "input_sha256": "ba2c0745221a017d71f606325c20e98a3a57611887929fe55c18180f308f544b",
+  "measured_defects": {
+    "augmented_port_residual_relative": 5.642823385795094e-17,
+    "cached_vs_streamed_action_relative": 0.0,
+    "cached_vs_streamed_recovery_relative": 0.0,
+    "cached_vs_streamed_rhs_reduction_relative": 0.0,
+    "independent_carrier_port_closure_relative": 3.1537291280447046e-17,
+    "internal_residual_relative": 1.6924553837413497e-16,
+    "original_A6_identity_relative": 1.5247689984195058e-15,
+    "original_A6_native_residual_relative": 3.1213381055984546e-15,
+    "recovered_storage_relative_to_seed": 1.8290146429040428e-12
+  },
+  "mesh_target_nm": 60.0,
+  "mode_count": 80,
+  "mode_manifest_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+  "p4_global_factor_built": false,
+  "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+  "recorded_test_wall_seconds": 139.56,
+  "reduced_rows": 5264,
+  "resident_inventory_bytes": {
+    "cached": {
+      "Hhat_materialized": true,
+      "all_port_payload_bytes_sum_with_aliases": 7246848,
+      "cell_count": 24,
+      "class_count": 12,
+      "direct_trace_payload_bytes_sum": 1881600,
+      "local_carrier_cell_payload_bytes": 4155648,
+      "per_cell_transformed_arrays_resident": true,
+      "port_coupling_mode": "cached",
+      "raw_port_payload_bytes_sum": 2389632,
+      "resident_H_p_bytes": 102400,
+      "resident_Hhat_bytes": 102400,
+      "staging_port_payload_bytes_sum": 1209600,
+      "transformed_port_payload_bytes_sum": 1766016,
+      "unique_LU_factor_buffers": 12,
+      "unique_S_V_buffers": 12,
+      "unique_port_payload_owner_bytes": 6037584,
+      "unique_port_payload_owner_count": 856,
+      "unique_recovery_buffers": 12,
+      "unique_trace_rhs_projection_buffers": 12
+    },
+    "streamed": {
+      "Hhat_materialized": false,
+      "all_port_payload_bytes_sum_with_aliases": 4252416,
+      "cell_count": 24,
+      "class_count": 12,
+      "direct_trace_payload_bytes_sum": 1881600,
+      "local_carrier_cell_payload_bytes": 2370816,
+      "per_cell_transformed_arrays_resident": false,
+      "port_coupling_mode": "streamed",
+      "raw_port_payload_bytes_sum": 2370816,
+      "resident_H_p_bytes": 102400,
+      "resident_Hhat_bytes": 0,
+      "staging_port_payload_bytes_sum": 0,
+      "transformed_port_payload_bytes_sum": 0,
+      "unique_LU_factor_buffers": 12,
+      "unique_S_V_buffers": 12,
+      "unique_port_payload_owner_bytes": 4252752,
+      "unique_port_payload_owner_count": 778,
+      "unique_recovery_buffers": 12,
+      "unique_trace_rhs_projection_buffers": 12
+    }
+  },
+  "schema": "task039extra.v30.l4-real-80-mode-streamed-diagnostic.v1",
+  "scratch": {
+    "scope": "maximum sum of named per-cell NumPy intermediates live in one streamed apply or recovery, plus the H_p action vector; excludes input/output vectors, shared resident payloads, and NumPy/SciPy/PETSc internal temporaries or workspace",
+    "streamed_max_named_local_bytes": 50368
+  },
+  "selected": false,
+  "selection_reason": "research_only: streamed apply was materially slower in all three samples (mean 14.98 ms versus 9.05 ms, about 65.5% slower); the roughly 1.89 MB port-object reduction on this 24-cell diagnostic does not offset that measured cost",
+  "setup_seconds_including_mesh_jit_condensation_and_action_builders": 124.86181299600867,
+  "test_command": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q --basetemp=/tmp/task39extra-v30-l4-evidence-real src/test/test_task39extra_v30_streamed_ports.py::test_v30_real_80_mode_carrier_streamed_fe_closure",
+  "timing": {
+    "arithmetic_mean_seconds": {
+      "cached": {
+        "apply": 0.009052085670797775,
+        "recover_storage": 0.023474862672931824,
+        "reduce_rhs": 0.060310346666180216
+      },
+      "streamed": {
+        "apply": 0.014979374992738789,
+        "recover_storage": 0.02285832566364358,
+        "reduce_rhs": 0.057904481334844604
+      }
+    },
+    "interleaved_sample_orders": [
+      [
+        "cached",
+        "streamed"
+      ],
+      [
+        "streamed",
+        "cached"
+      ],
+      [
+        "cached",
+        "streamed"
+      ]
+    ],
+    "scope": "one small real-carrier p6 action/RHS/recovery operation; not a PDE solve",
+    "wall_seconds_samples": {
+      "cached": {
+        "apply": [
+          0.008849681005813181,
+          0.008263772004283965,
+          0.01004280400229618
+        ],
+        "recover_storage": [
+          0.02057145899743773,
+          0.026227006019325927,
+          0.023626123002031818
+        ],
+        "reduce_rhs": [
+          0.057331758027430624,
+          0.058372785977553576,
+          0.06522649599355645
+        ]
+      },
+      "streamed": {
+        "apply": [
+          0.014464874984696507,
+          0.015228094009216875,
+          0.015245155984302983
+        ],
+        "recover_storage": [
+          0.022732482000719756,
+          0.024016449984628707,
+          0.021826045005582273
+        ],
+        "reduce_rhs": [
+          0.05740566999884322,
+          0.059152164991246536,
+          0.05715560901444405
+        ]
+      }
+    },
+    "warmup_calls_per_mode_and_operation": 1
+  }
+}
