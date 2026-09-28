@@ -20,3 +20,5 @@
 CPU审计以[逐run实际证据](records/cpu_provenance_v3.json)为准：oracle manifest和worker affinity都是33，F4-B0都是45，其余已核FE是0。V2“全部CPU0”的概括不准确；本页明确纠正，原response/raw记录不回写、不猜填。ML实际affinity另从其原始环境记录取证。
 
 复用输入和原artifact哈希见[diagnostic_v3.json](../../../input/task042_neural_coarse_inverse/diagnostic_v3.json)。正式FE前实现提交clean，run绑定真实source SHA；之后仅在本执行分支提交response_v3及outcomes/两总账，推送后等待review，不merge。
+
+首次数值启动在旧准入时拒绝，未启动FE worker。只读逐核/逐线程样本显示76个宽线程中仅7个有CPU计数推进，多个物理核busy=0；旧逻辑把休眠线程最后PSR当作忙核。V3显式profile改用一秒实际逐核busy<=5%，仍完整排除窄亲和性邻线程及其SMT同胞，排除活动/无法确认的宽线程所在核；V2默认不改。4个准入/自有监督测试通过，[修复证据](records/admission_repair_v3.json)保留失败与原始样本，不是数值参数重跑。

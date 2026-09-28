@@ -131,12 +131,62 @@ def pressure():
     return rows
 
 
-def audit():
+def _cpu_ticks():
+    return {
+        int(fields[0][3:]): tuple(map(int, fields[1:9]))
+        for line in Path("/proc/stat").read_text().splitlines()
+        if (fields := line.split())
+        and fields[0].startswith("cpu")
+        and fields[0][3:].isdigit()
+    }
+
+
+def _thread_ticks():
+    result = {}
+    for process in Path("/proc").iterdir():
+        if not process.name.isdigit():
+            continue
+        try:
+            for thread in (process / "task").iterdir():
+                try:
+                    fields = (thread / "stat").read_text().rsplit(")", 1)[1].split()
+                    result[int(thread.name)] = (
+                        int(fields[19]),
+                        int(fields[11]) + int(fields[12]),
+                    )
+                except (OSError, ValueError, IndexError):
+                    pass
+        except OSError:
+            pass
+    return result
+
+
+def spare_cores(topology, neighbors, cpu_busy_fraction, thread_deltas):
+    """V3: reserve narrow affinities; exclude active wide threads and busy CPUs.
+
+    A sleeping wide controller's last PSR is not a reservation of that core.
+    Wide controllers may migrate later; this is admission, not zero-impact proof.
+    """
+    excluded = {cpu for cpu, fraction in cpu_busy_fraction.items() if fraction > 0.05}
+    for row in neighbors:
+        for thread in row["threads"]:
+            if len(thread["affinity"]) <= 16:
+                excluded.update(thread["affinity"])
+            elif thread_deltas.get(thread["tid"], 1) > 0:
+                excluded.add(thread["cpu"])
+    return [t["cpu"] for t in topology if not set(t["siblings"]) & excluded]
+
+
+def audit(*, observed_activity=False):
     """Two short CPU samples; include worker parents, siblings and descendants."""
     before = proc_stats()
+    cpu_before = _cpu_ticks() if observed_activity else None
+    threads_before = _thread_ticks() if observed_activity else None
     started = time.monotonic()
     time.sleep(1)
     after = proc_stats()
+    cpu_after = _cpu_ticks() if observed_activity else None
+    threads_after = _thread_ticks() if observed_activity else None
     interval = time.monotonic() - started
     ticks_per_s = os.sysconf("SC_CLK_TCK")
     busy = set()
@@ -219,6 +269,20 @@ def audit():
             }
         )
     candidates = [t["cpu"] for t in topology if not set(t["siblings"]) & excluded]
+    cpu_busy_fraction = {}
+    thread_deltas = {}
+    if observed_activity:
+        for cpu, first in cpu_before.items():
+            last = cpu_after[cpu]
+            elapsed = max(sum(last) - sum(first), 1)
+            idle = last[3] - first[3] + last[4] - first[4]
+            cpu_busy_fraction[cpu] = 1.0 - idle / elapsed
+        thread_deltas = {
+            tid: last[1] - threads_before[tid][1]
+            for tid, last in threads_after.items()
+            if tid in threads_before and last[0] == threads_before[tid][0]
+        }
+        candidates = spare_cores(topology, rows, cpu_busy_fraction, thread_deltas)
     if not candidates:
         raise RuntimeError(
             "No audited unoccupied physical core; do not overlap a busy worker/SMT sibling"
@@ -280,6 +344,11 @@ def audit():
         "utc": datetime.now(timezone.utc).isoformat(),
         "cpu": candidates[0],
         "candidate_cpus": candidates,
+        "admission_policy": "V3 observed CPU/thread activity"
+        if observed_activity
+        else "V2 conservative last-PSR",
+        "cpu_busy_fractions": cpu_busy_fraction,
+        "thread_delta_ticks": thread_deltas,
         "topology": topology,
         "neighbor_processes": rows,
         "memory": env,
@@ -370,7 +439,7 @@ def launch(specification):
     lock_path = ROOT / "tmp/task042/task042_shared.lock"
     with lock_path.open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        baseline = audit()
+        baseline = audit(observed_activity=stage in ("V3-reuse", "V3-overlap"))
         os.sched_setaffinity(0, {baseline["cpu"]})
         os.nice(10)
         subprocess.run(["ionice", "-c", "3", "-p", str(os.getpid())], check=True)

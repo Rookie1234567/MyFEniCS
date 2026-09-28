@@ -1,0 +1,133 @@
+{
+  "schema": "task042.v3-admission-repair",
+  "formal_fe_worker_started": false,
+  "original_failure": "No audited unoccupied physical core in V2 last-PSR admission",
+  "raw_evidence_path": "tmp/task042/v3/cpu_admission_failure_evidence.json",
+  "raw_evidence_sha256": "a6ba9a15ed0f79c1df4195b331741566b48dffe05ac1ad40dcca30171c5597f5",
+  "cpu_busy_fractions": {
+    "0": 0.0,
+    "1": 1.0,
+    "2": 1.0,
+    "3": 1.0,
+    "4": 1.0,
+    "5": 1.0,
+    "6": 1.0,
+    "7": 1.0,
+    "8": 1.0,
+    "9": 1.0,
+    "10": 0.03418803418803418,
+    "11": 0.025423728813559365,
+    "12": 0.05084745762711862,
+    "13": 0.06779661016949157,
+    "14": 0.0,
+    "15": 0.0,
+    "16": 0.0,
+    "17": 0.0,
+    "18": 0.0,
+    "19": 0.0,
+    "20": 0.0,
+    "21": 0.0,
+    "22": 0.0,
+    "23": 0.0,
+    "24": 1.0,
+    "25": 0.15254237288135597,
+    "26": 0.0,
+    "27": 0.01680672268907568,
+    "28": 0.0,
+    "29": 1.0,
+    "30": 0.0,
+    "31": 0.008474576271186418,
+    "32": 1.0,
+    "33": 0.0,
+    "34": 0.0,
+    "35": 0.0,
+    "36": 0.0,
+    "37": 0.0,
+    "38": 0.05932203389830504,
+    "39": 0.17647058823529416,
+    "40": 0.15384615384615385,
+    "41": 0.0,
+    "42": 0.0,
+    "43": 0.008403361344537785,
+    "44": 0.0,
+    "45": 0.0,
+    "46": 0.0,
+    "47": 0.0
+  },
+  "wide_thread_count": 76,
+  "wide_threads_with_nonzero_ticks": 7,
+  "correction": "Only V3 opts into 1s per-CPU busy<=5%, narrow neighbor affinity reservations, active/unknown wide thread last-PSR exclusion and physical/SMT siblings. V2 policy remains default.",
+  "tests": {
+    "workflow_deadline_seconds": 180.0,
+    "solve_deadline_seconds": null,
+    "time_limit_mode": "bounded",
+    "resource_stop_policy": "legacy",
+    "rss_hard_limit_bytes": 2147483648,
+    "rss_warning_bytes": 1610612736,
+    "startup_headroom_bytes": null,
+    "swap_policy": "legacy_stop",
+    "global_swap_delta_policy": "observe_only",
+    "cache_metadata_stable": true,
+    "classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "observed_child_pids": [
+      559359,
+      559363,
+      559364,
+      559365,
+      559366
+    ],
+    "sampled_process_tree_rss_peak_bytes": 259219456,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+    "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+    "global_swap_activity": {
+      "scope": "WSL-global diagnostic, not dedicated job",
+      "baseline": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 304
+      },
+      "end": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 304
+      },
+      "delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      }
+    },
+    "job_swap_activity": "zero_supported_by_zero_global_activity",
+    "launch_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 947850035200,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 947850035200,
+      "reserve_bytes": 324465057792,
+      "launch_cap_bytes": 12000000000,
+      "planning_cap_bytes": 12000000000,
+      "cgroup_limits": []
+    },
+    "samples": 17,
+    "elapsed_seconds": 4.150349939009175,
+    "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_state": {
+      "source_sha": "400a0ed348bf74838e1a42227d0fcf7ca4ebd463",
+      "git_status": " M src/runners/task042_shared.py\n?? src/test/test_task042_v3_admission.py\n",
+      "stage": "F0",
+      "formal_pde": false,
+      "command": [
+        "bash",
+        "-c",
+        "/home/fenics/Projects/Metrology/.venv/bin/ruff check src/runners/task042_shared.py src/test/test_task042_v3_admission.py && python -m pytest -q src/test/test_task042_v3_admission.py src/test/test_task042_shared_watchdog.py"
+      ],
+      "utc": "2026-09-28T14:54:10.052740+00:00",
+      "affinity": [
+        0
+      ],
+      "environment_mode": "pure",
+      "gpu_visible": false
+    }
+  }
+}
