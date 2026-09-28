@@ -1,5 +1,177 @@
 {
   "schema": "task042.publication-checks.v2",
-  "status": "PENDING_POST_PUSH",
-  "note": "After exact branch push inspect actual published GitHub rendered HTML; no pre-publication pass claim"
+  "status": "RENDERED_HTML_PASS",
+  "utc": "2026-09-28T14:04:42.913784+00:00",
+  "exact_pushed_head": "5090e0179bf51c0153db9bbeef9bb23fa6e27cef",
+  "github_rendered_view": "Actual published GitHub richText HTML, tables/headings/links and math-renderer component inspected; no browser screenshot claim",
+  "browser_math_pixels": "not separately captured; GitHub math-renderer is present, not a raw language-math code fence",
+  "checks": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5090e0179bf51c0153db9bbeef9bb23fa6e27cef/docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "http": 200,
+      "status": "RENDERED_HTML_PASS",
+      "source_file_sha256": "195e363e8cccf2e85d4796dd24d247f69ab06d0461f4cd51e821c6f1c70a2d6c",
+      "rendered_html_sha256": "985e31909b6b6dacd63fd9e8ee4032d36ebef1948fc29a361efa27d11b26db57",
+      "table_count": 3,
+      "header_samples": [
+        "Task042 第二轮：真实首轮试验，严格粗逆未合格",
+        "完成的数值阶段",
+        "同组严格粗返回结果",
+        "全过程数值成本及未运行项",
+        "审阅与合入边界"
+      ],
+      "first_table_rows": [
+        [
+          "项目",
+          "实际结果 / 单位与身份",
+          "证据"
+        ],
+        [
+          "终态",
+          "COARSE_INVERSE_NOT_QUALIFIED；F1、teacher、oracle、CPU训练和三条F4路线已运行；F5 not_run",
+          "独立重算Gate"
+        ],
+        [
+          "授权",
+          "用户允许Task042受控共享运行，覆盖本任务§2.3 heavy禁令和全机独占锁；原task/review保留；不代表F0正式review通过",
+          "授权原文与适用边界"
+        ]
+      ],
+      "math_renderer_blocks": 0,
+      "table_columns_consistent": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/architecture_and_oracle.md",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5090e0179bf51c0153db9bbeef9bb23fa6e27cef/docs/task042_neural_coarse_inverse/outcomes/architecture_and_oracle.md",
+      "http": 200,
+      "status": "RENDERED_HTML_PASS",
+      "source_file_sha256": "cce6cbe4bf07a769bb538cafe58d1967ab77293886a172a9b818b17337e108e8",
+      "rendered_html_sha256": "d008416e86536ed9f60c27604d4d8ff810680f8850415c11abe19cbce1b3670f",
+      "table_count": 1,
+      "header_samples": [
+        "原方程、低内存修正与可表达性诊断",
+        "严格协议及实际构造",
+        "冻结身份、历史和停止条件"
+      ],
+      "first_table_rows": [
+        [
+          "层次/实现",
+          "行为及容量",
+          "实际证据与边界"
+        ],
+        [
+          "原A6/A4与传递",
+          "F1完整p6、同网格物理p4，curl+mass后凝聚；共享已有cache/LU/witness",
+          "原A4=PH A6P差3.366065072840215e-15；制造解原p6差2.0935547822786585e-14；不是最终物理解"
+        ],
+        [
+          "p4-only后续构建",
+          "F2/F4不重复构建p6；原p4全部mesh/tags/MPC/mode/quadrature和逐行CSR内容必须与F1一致",
+          "21824×21824、8184464存储NNZ；原operator SHA固定；非减少通道或积分"
+        ]
+      ],
+      "math_renderer_blocks": 1,
+      "table_columns_consistent": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v2.md",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5090e0179bf51c0153db9bbeef9bb23fa6e27cef/docs/task042_neural_coarse_inverse/response_v2.md",
+      "http": 200,
+      "status": "RENDERED_HTML_PASS",
+      "source_file_sha256": "854867709947f82c1543da7d09f0c93b419bb0e52934725be7e2c3e95d9a1d91",
+      "rendered_html_sha256": "7bc74a354766141bd6115406c01c1e16236c6293cbab4530b7c39bf828229545",
+      "table_count": 3,
+      "header_samples": [
+        "Task042 Response V2：完成首轮真实试验，严格粗逆负结果",
+        "用户共享授权及资源路线",
+        "完成的真实数值工作",
+        "严格线性与NN对照",
+        "全过程成本、测试和未运行项"
+      ],
+      "first_table_rows": [
+        [
+          "身份 / 交付",
+          "实际值"
+        ],
+        [
+          "branch / upstream",
+          "task42_neural_coarse_inverse / origin/task42_neural_coarse_inverse"
+        ],
+        [
+          "pwd / toplevel / worktree",
+          "/home/fenics/Projects/NN-Lab，本身为canonical登记linked worktree，无嵌套clone"
+        ]
+      ],
+      "math_renderer_blocks": 0,
+      "table_columns_consistent": true
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5090e0179bf51c0153db9bbeef9bb23fa6e27cef/docs/development_model_registry.md",
+      "http": 200,
+      "status": "RENDERED_HTML_PASS",
+      "source_file_sha256": "447b59f008c6d2b8f45386f8ec8158030754ab9336a3c82a40a2e1561e9ac624",
+      "rendered_html_sha256": "d4ce4a3daa8cab377f333c900e83aa056d98a5c9bdb8fe1ba43a6f071b5e7fc3",
+      "table_count": 119,
+      "header_samples": [
+        "5. 当前数据缺口与后续自动化",
+        "Task038-extra Review V2：T5/R4 bounded iterative lane",
+        "Task038-extra Review V9：P1 memory-first controlled negative",
+        "Task038-extra Review V10：Q0 exact-reference controlled negative",
+        "Task038-extra Review V19：PML 双向扫描 R0 真实结构",
+        "task39extra Review V5：5 nm Si p6/h4 q4 F5 完整场"
+      ],
+      "first_table_rows": null,
+      "math_renderer_blocks": 0,
+      "table_columns_consistent": true
+    },
+    {
+      "path": "docs/development_progress.md",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5090e0179bf51c0153db9bbeef9bb23fa6e27cef/docs/development_progress.md",
+      "http": 200,
+      "status": "RENDERED_HTML_PASS",
+      "source_file_sha256": "b9bd0f5ddbbc8a875a9b7723103177a6c5a30f2bcd9f6ce70d520ffceb2c856d",
+      "rendered_html_sha256": "76f1287cb7e8743d3ce1775376968b9d3f7cbe9a26f522e830f4e5178a4c349f",
+      "table_count": 45,
+      "header_samples": [
+        "Task39extra_para：原生工作站复现、单核性能诊断与受控停止",
+        "Task39extra 2026-09-20：2 nm h1.5 实测内存运行快照",
+        "终态补记：global swap attribution Gate",
+        "Task39extra_para V5：5 nm setup-only 终态",
+        "Task042：低内存 p4 粗逆首轮，F0完成并等待共享工作站",
+        "2026-09-28 Task042 V2：用户授权受控共享，真实F1–F4完成"
+      ],
+      "first_table_rows": null,
+      "math_renderer_blocks": 5,
+      "table_columns_consistent": true
+    }
+  ],
+  "wall_seconds": 7.7725933759938926,
+  "numerical_sources": "per run_index_v2; publication HEAD is documentation only",
+  "supervision": {
+    "classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "descendants_cleared": true,
+    "elapsed_seconds": 9.26382193097379,
+    "sampled_process_tree_rss_peak_bytes": 55070720,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "source_state": {
+      "source_sha": "5090e0179bf51c0153db9bbeef9bb23fa6e27cef",
+      "git_status": "",
+      "stage": "F0",
+      "formal_pde": false,
+      "command": [
+        "python",
+        "tmp/task042/post_push_render_check_v2.py"
+      ],
+      "utc": "2026-09-28T14:04:34.918008+00:00",
+      "affinity": [
+        0
+      ],
+      "environment_mode": "pure",
+      "gpu_visible": false
+    }
+  },
+  "subsequent_commit_scope": "publication and auxiliary cost JSON only; the five checked Markdown files remain byte-identical; numeric run sources unchanged"
 }

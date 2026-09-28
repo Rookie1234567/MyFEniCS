@@ -853,9 +853,59 @@
         "tmp/task042/pure/final-doc-static-v2-final/summary.json": "aec4832a15530a0f45c0a8c025c791ad89557e96a4bdf82ec489f0c580e26655",
         "tmp/task042/pure/final-doc-static-v2-final/worker.log": "aad62f7e33dc24bf7d83f4cb9fcb5a532c9a234fbb7725b3392abead9a04a461"
       }
+    },
+    {
+      "id": "tmp/task042/pure/auxiliary-index-final-v2",
+      "utc": "2026-09-28T14:02:47.232633+00:00",
+      "source_sha": "932bb2a747c15e846916474cefa0debf8d42b715",
+      "git_status": " M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042_neural_coarse_inverse/outcomes/accuracy_performance_memory.md\n M docs/task042_neural_coarse_inverse/outcomes/architecture_and_oracle.md\n M docs/task042_neural_coarse_inverse/outcomes/changed_files.md\n M docs/task042_neural_coarse_inverse/outcomes/dataset_and_model_provenance.md\n M docs/task042_neural_coarse_inverse/outcomes/environment_and_isolation.md\n M docs/task042_neural_coarse_inverse/outcomes/summary.md\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n M input/task042_neural_coarse_inverse/README.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/README.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/auxiliary_costs_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/component_metrics_v2.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/dataset_model_manifest_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/documentation_cpu_audit_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_b0_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_lin_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/f4_nn_complete_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/final_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/full_p6_comparison_v2.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/git_preparation_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/registry_contract_baseline_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/shared_workstation_snapshot_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v2.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv\n?? docs/task042_neural_coarse_inverse/response_v2.md\n",
+      "command": [
+        "python",
+        "tmp/task042/auxiliary_index_v2.py"
+      ],
+      "affinity": [
+        0
+      ],
+      "environment_mode": "pure",
+      "shared_workstation": true,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 1.5405363630270585,
+      "rss_peak_bytes": 21110784,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/pure/auxiliary-index-final-v2/summary.json": "453ae6b28193cd2ee4d73f101525a8007add3d68e90b4ca3bbf91110a117625a",
+        "tmp/task042/pure/auxiliary-index-final-v2/worker.log": "b111bd585692504954d03f6b56910e06ec525ed6087e872011e9e5f440a5906e"
+      }
+    },
+    {
+      "id": "tmp/task042/pure/post-push-publication-v2",
+      "utc": "2026-09-28T14:04:34.918008+00:00",
+      "source_sha": "5090e0179bf51c0153db9bbeef9bb23fa6e27cef",
+      "git_status": "",
+      "command": [
+        "python",
+        "tmp/task042/post_push_render_check_v2.py"
+      ],
+      "affinity": [
+        0
+      ],
+      "environment_mode": "pure",
+      "shared_workstation": true,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 9.26382193097379,
+      "rss_peak_bytes": 55070720,
+      "swap_peak_bytes": 0,
+      "files_sha256": {
+        "tmp/task042/pure/post-push-publication-v2/summary.json": "b4910f6f171e51013cbf75c4e57adfbcbf7a3003e22e6697f47bc7990c6e32c8",
+        "tmp/task042/pure/post-push-publication-v2/worker.log": "e178680caa54a25fe1e4e9f5e94cdf76c203ba19532467a9f903669c376c40eb"
+      }
     }
   ],
-  "elapsed_sum_seconds": 182.08967283798847,
+  "elapsed_sum_seconds": 192.89403113198932,
   "simultaneous_tree_peak_bytes": 274219008,
   "swap_peak_bytes": 0,
   "all_descendants_cleared": true
