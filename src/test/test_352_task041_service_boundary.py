@@ -23,6 +23,9 @@ from benchmarks.task041_balh_workflow import (
 )
 from src.io.input_validation import (
     TASK041_BALH_2NM_MODEL_ID,
+    TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
+    TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID,
+    task041_balh_case,
     task041_balh_phase_limits_for_model,
     task041_balh_service_contract,
 )
@@ -693,6 +696,114 @@ def test_fixed_pair_service_requires_full_config_and_canonical_v5_path(tmp_path)
                 scope=TASK041_REPRESENTATIVE_RHS_SCOPE,
                 side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
                 comparison_mode=TASK041_P4_BACKEND_PAIR_MODE,
+            )
+
+
+def test_registered_5nm_formal_target_keeps_case_resource_and_time_contract(
+    tmp_path,
+):
+    repository_root = Path(__file__).resolve().parents[2]
+    model_id = TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID
+    input_path = (
+        repository_root
+        / "input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+    )
+    case = task041_balh_case(model_id)
+    assert case["p4_inverse_backend"] == "cell_condensed"
+    registered = task041_balh_service_contract(model_id)
+    ledger_path = (
+        repository_root / registered["ledger"]["path"]
+    ).resolve()
+    command = [
+        sys.executable,
+        "scripts/run_case.py",
+        str(input_path),
+        "--producer-packet-root",
+        str(tmp_path / "producer"),
+        "--task041-p4-refinement-target-tolerance",
+        "5e-13",
+    ]
+    config = {
+        "model_id": model_id,
+        "scope": "formal_consumer",
+        "performance_profile": None,
+        "ledger_path": ledger_path,
+        "public_command": command,
+        "p4_refinement_target_tolerance": 5.0e-13,
+        "p4_backend_pair_side": None,
+    }
+    tolerance, side, binding = service._p4_refinement_target_binding(
+        command,
+        config["p4_refinement_target_tolerance"],
+        config["p4_backend_pair_side"],
+        model_id=model_id,
+        profile_id=None,
+        scope=None,
+        side_setup_schedule=None,
+        comparison_mode=None,
+    )
+    assert tolerance == 5.0e-13
+    assert side is None
+    assert binding["scope"] == (
+        "registered_5nm_cell_condensed_formal_consumer_target"
+    )
+    contract = service._service_contract(
+        config,
+        side_setup_schedule=None,
+        comparison_mode=None,
+        p4_refinement_target_tolerance=tolerance,
+        p4_backend_pair_side=side,
+    )
+    assert contract["p4_refinement_target"]["tolerance"] == 5.0e-13
+    assert contract["p4_refinement_target"]["max_corrections_per_p4_call"] == 2
+    assert contract["memory_cap_bytes"] == 53_221_163_008
+    assert contract["warning_memory_bytes"] == 47_899_046_707
+    assert contract["runtime_reserve_bytes"] == 412_316_860_416
+    assert contract["swap_limit_bytes"] == 0
+    assert contract["compute_wall_unlimited"] is True
+    assert contract["time_stop"]["consumer_enforced"] is False
+    assert contract["time_stop"]["consumer_timeout_seconds"] is None
+    assert contract["ledger"] == registered["ledger"]
+
+    for invalid_model, invalid_input in (
+        (
+            TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID,
+            "13p5nm_p6h10_m120_mpi8_cell_condensed.dat",
+        ),
+        (TASK041_BALH_2NM_MODEL_ID, "2nm_p6h1p5_m1200_mpi8_balh.dat"),
+    ):
+        invalid_case_contract = task041_balh_service_contract(invalid_model)
+        invalid_ledger_path = invalid_case_contract["ledger"].get("path")
+        if isinstance(invalid_ledger_path, str):
+            invalid_ledger_path = (repository_root / invalid_ledger_path).resolve()
+        else:
+            invalid_ledger_path = ledger_path
+        invalid_config = {
+            **config,
+            "model_id": invalid_model,
+            "ledger_path": invalid_ledger_path,
+            "public_command": [
+                sys.executable,
+                "scripts/run_case.py",
+                str(
+                    repository_root
+                    / "input/official/task041/side_balh"
+                    / invalid_input
+                ),
+                "--task041-p4-refinement-target-tolerance",
+                "5e-13",
+            ],
+        }
+        with pytest.raises(
+            service.Task041ServiceError,
+            match="registered P4 refinement target is limited",
+        ):
+            service._service_contract(
+                invalid_config,
+                side_setup_schedule=None,
+                comparison_mode=None,
+                p4_refinement_target_tolerance=5.0e-13,
+                p4_backend_pair_side=None,
             )
 
 

@@ -8828,6 +8828,9 @@ def run_task041_public_supervisor(
             or task041_p4_backend_pair_side is not None
         ):
             from benchmarks.task041_balh_workflow import (
+                TASK041_P4_REGISTERED_5NM_TARGET_SCOPE,
+            )
+            from benchmarks.task041_balh_workflow import (
                 task041_p4_refinement_target_binding as bind_refinement_target,
             )
 
@@ -9052,8 +9055,20 @@ def run_task041_public_supervisor(
             or task041_comparison_mode is not None
             or task041_p4_correction_replay_from is not None
             or task041_p4_response_correction_steps != 0
-            or task041_p4_refinement_target_tolerance is not None
-            or task041_p4_backend_pair_side is not None
+            or (
+                (
+                    task041_p4_refinement_target_tolerance is not None
+                    or task041_p4_backend_pair_side is not None
+                )
+                and not (
+                    case_runtime_contract is not None
+                    and isinstance(p4_refinement_target_binding, Mapping)
+                    and p4_refinement_target_binding.get("scope")
+                    == TASK041_P4_REGISTERED_5NM_TARGET_SCOPE
+                    and performance_profile is None
+                    and task041_p4_backend_pair_side is None
+                )
+            )
         ):
             raise Task041SupervisorError(
                 "Task041 comparison options require task041_schur_speed_v2",

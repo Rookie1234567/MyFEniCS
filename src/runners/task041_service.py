@@ -24,16 +24,19 @@ from benchmarks.task041_balh_workflow import (
     TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE,
     TASK041_P4_BACKEND_PAIR_CONTRACT_KIND,
     TASK041_P4_BACKEND_PAIR_MODE,
+    TASK041_P4_REGISTERED_5NM_TARGET_SCOPE,
     TASK041_REPRESENTATIVE_RHS_SCOPE,
     TASK041_SCHUR_SPEED_V2_PROFILE,
     TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
     load_task041_representative_rhs_manifest,
     task041_is_explicit_p4_backend_pair,
     task041_p4_backend_pair_identity,
+    task041_p4_refinement_target_binding,
     task041_review_v5_ledger_path,
     task041_schur_speed_v2_contract,
 )
 from src.io.input_validation import (
+    TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
     task041_balh_phase_limits_for_model,
     task041_balh_service_contract,
 )
@@ -92,12 +95,53 @@ def _service_contract(
     )
     case_contract = task041_balh_service_contract(model_id)
     if case_contract is not None:
+        registered_target_binding = None
+        target_requested = (
+            p4_refinement_target_tolerance is not None
+            or p4_backend_pair_side is not None
+        )
+        if target_requested:
+            if (
+                model_id != TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID
+                or config.get("performance_profile") is not None
+                or side_setup_schedule is not None
+                or comparison_mode is not None
+                or p4_response_correction_steps != 0
+                or p4_backend_pair_side is not None
+            ):
+                raise Task041ServiceError(
+                    "registered P4 refinement target is limited to the 5 nm cell-condensed formal consumer"
+                )
+            try:
+                registered_target_binding = (
+                    task041_p4_refinement_target_binding(
+                        model_id=model_id,
+                        refinement_target_tolerance=(
+                            p4_refinement_target_tolerance
+                        ),
+                        p4_backend_pair_side=None,
+                        profile_id=None,
+                        scope=None,
+                        side_setup_schedule=None,
+                        comparison_mode=None,
+                    )
+                )
+            except ValueError as exc:
+                raise Task041ServiceError(str(exc)) from exc
+            if (
+                not isinstance(registered_target_binding, Mapping)
+                or registered_target_binding.get("scope")
+                != TASK041_P4_REGISTERED_5NM_TARGET_SCOPE
+            ):
+                raise Task041ServiceError(
+                    "registered P4 refinement target binding is incomplete"
+                )
         if (
             side_setup_schedule is not None
             or comparison_mode is not None
             or p4_response_correction_steps != 0
-            or p4_refinement_target_tolerance is not None
-            or p4_backend_pair_side is not None
+            or (target_requested and registered_target_binding is None)
+            or (p4_backend_pair_side is not None and not target_requested)
         ):
             raise Task041ServiceError(
                 "registered Task041 case does not accept representative comparison options"
@@ -121,7 +165,15 @@ def _service_contract(
             raise Task041ServiceError(
                 "registered Task041 case must use its registered compute ledger"
             )
-        return dict(case_contract)
+        resolved_contract = dict(case_contract)
+        if registered_target_binding is not None:
+            resolved_contract["p4_refinement_target"] = {
+                "schema": "task041.p4_refinement_target.strategy.v1",
+                **dict(registered_target_binding),
+                "max_corrections_per_p4_call": 2,
+                "original_gates_unchanged": True,
+            }
+        return resolved_contract
     contract = task041_schur_speed_v2_contract(
         model_id,
         scope=config.get("scope"),

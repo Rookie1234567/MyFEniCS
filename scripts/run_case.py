@@ -109,13 +109,14 @@ def main(argv: list[str] | None = None) -> int:
         )
         target_tolerance = args.task041_p4_refinement_target_tolerance
         target_side = args.task041_p4_backend_pair_side
+        target_binding = None
         if target_tolerance is not None or target_side is not None:
             from benchmarks.task041_balh_workflow import (
                 task041_p4_refinement_target_binding,
             )
 
             try:
-                task041_p4_refinement_target_binding(
+                target_binding = task041_p4_refinement_target_binding(
                     model_id=str(specification.identity.get("model_id", "")),
                     refinement_target_tolerance=target_tolerance,
                     p4_backend_pair_side=target_side,
@@ -192,18 +193,35 @@ def main(argv: list[str] | None = None) -> int:
                 )
             except ValueError as exc:
                 raise InputError(str(exc)) from exc
-        elif (
-            args.task041_side_setup_schedule is not None
-            or args.task041_comparison_mode is not None
-            or args.task041_top_causal_replay
-            or args.task041_p4_correction_replay_from is not None
-            or args.task041_p4_response_correction_steps != 0
-            or target_tolerance is not None
-            or target_side is not None
-        ):
-            raise InputError(
-                "Task041 comparison options require task041_schur_speed_v2"
+        else:
+            from benchmarks.task041_balh_workflow import (
+                TASK041_P4_REGISTERED_5NM_TARGET_SCOPE,
             )
+
+            registered_formal_target = bool(
+                registered_case is not None
+                and registered_case.get("p4_inverse_backend")
+                == "cell_condensed"
+                and isinstance(target_binding, dict)
+                and target_binding.get("scope")
+                == TASK041_P4_REGISTERED_5NM_TARGET_SCOPE
+                and args.task041_performance_profile is None
+                and target_side is None
+            )
+            has_non_target_comparison_option = (
+                args.task041_side_setup_schedule is not None
+                or args.task041_comparison_mode is not None
+                or args.task041_top_causal_replay
+                or args.task041_p4_correction_replay_from is not None
+                or args.task041_p4_response_correction_steps != 0
+            )
+            if has_non_target_comparison_option or (
+                (target_tolerance is not None or target_side is not None)
+                and not registered_formal_target
+            ):
+                raise InputError(
+                    "Task041 comparison options require task041_schur_speed_v2"
+                )
         if args.task041_supervision_record is not None:
             from src.io.input_validation import task041_balh_service_contract
 
