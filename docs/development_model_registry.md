@@ -1658,3 +1658,18 @@ production model。
 | `20260923T231207.264441Z` / `b468907cf54d04280b461cae5fc9078186302d54`；input `03a9992d576612335135fa22f25192f97754feb4a281e6c06ce29534e4095d36`；3780 cells、p6/h4、600 DtN channels | 121步；explicit A6 residual `8.60422e-7`；244/244 p4 returns `<=1e-10`、最多1次 refinement；`BALANCED_OUTPUT_PASS` 与旧5 nm 同物理 `MATCHED_REFERENCE_PASS`；全场 L2/scaled-curl `7.20455e-8/7.16517e-8`；R/T/A/A_volume=`0.733183508848/0.000222439621/0.266594051531/0.266594036660`；energy closure `1.49e-8` | workflow `22680.912 s`、solve `10671.216 s`；整树RSS峰 `38,934,622,208 B`、swap0；watchdog completed/cleared。后续独立setup-only须另立run身份，不代表完整物理结果。 | [F5 compact](task39extra_para_workstation_capacity/outcomes/records/f5_5nm_q4_terminal_compact_v1.json) |
 | `F5_GEOMETRY_EQUIVALENCE_COMPONENT` | 同一5 nm Si物理/材料输入；派生105-cell网格；每阶18个raw类→9个tensor组；4个实际零阶mode | 逐raw类代表tensor、A6、Aq、p4原A4及独立增广port RHS检查通过；仅组件资格，非完整setup/600通道/资源PASS | [105-cell compact](task39extra_para_workstation_capacity/outcomes/records/v5_5nm_geometry_105_component_v1.json) |
 | `F5_SETUP_ONLY_V5` | run `20260924T092250.568977Z`、source `96057565d171077cc84a8dae3cd4eb88b6ff21ea`；同一5 nm Si input/physical SHA；3780 cells、p6/h4、q4、600 channels | `SETUP_ONLY_COMPLETED`、setup checks PASS；setup `2023.440526 s`，workflow `2028.390414 s`；p6/p4各175 raw几何类实际并为6个近似tensor组，kernel `292.039/33.847 s`；RSS峰 `37236830208 B`、6192样本全可读、swap0、后代清场。`outer_solve/full_a6_recovery/RTA/checker=NOT_RUN`，不构成新完整数值/物理资格；当前分组策略仍待完整F2场验证 | [setup-only compact](task39extra_para_workstation_capacity/outcomes/records/f5_setup_only_v5_compact_v1.json) |
+
+
+### 3.43.2 V3：唯一几何重叠结构诊断，旧负结果保留
+
+用户授权一个有限批次，原fixed original13.5nm/p6h10对应p4、252cells、80完整DtN、A4/port/recovery1e-10保持。新结构把真实FE边/面和Floquet master支持重叠起来，252个272行块，factor含cell/port302047392B，构造前预算，部署无global p4 LU/私有audit CSR/fallback。新与旧数据都只作consumed诊断；freeze后另选未消费pool而未运行。
+
+| 已消费诊断RHS / index | 旧B0原A4 | 新GEO原A4 | 新GEO port closure | 新GEO port绝对残差 | 末32步Schur降幅 | 严格返回 |
+|---|---|---|---|---|---|---|
+| physical_PH_b6 / 0 | 0.998654967105 | 0.891957825531 | 0.00773091335604 | 0.187210874612 | 5.70298292157e-06 | False |
+| unseen_port_only / 10 | 0.954192801905 | 0.935861877336 | 0.725338952963 | 0.000935056697255 | 1.23982140442e-05 | False |
+| unseen_mixed / 11 | 1.000780838 | 0.932010701839 | 0.677921290639 | 0.000951255917368 | 1.24422653291e-07 | False |
+
+新数值源：reuse b158c5301e7ff59000b15b335672afdb61c5e5e1，结构7fc3f1434cf4f38f43e5244ebfed3a19d0780a26；clean/真实source绑定，文档HEAD不替代。两阶段wall2636.49526309s、整树峰1074900992B、swap0，CPU现场选核/math1/16GiB监督，shared-workstation/perfinconclusive；无零干扰证明。CPU纠正oracle33和F4-B045，旧CPU0概括不准确。固定Q上LIN已精确最小native残差，本轮不训练NN、不扩大rank或迭代。
+
+严格粗逆未合格，量级1末段停滞触停止，实际误差空间对照/新teacher/fresh资格/F5/official RTA、场、通道/短波/GPU全部not_run；BOUNDED_STRUCTURAL_GLOBAL_STAGNATION，research-only待review不merge。[V3 response](task042_neural_coarse_inverse/response_v3.md)、[source/资源](task042_neural_coarse_inverse/outcomes/records/run_index_v3.json)、[实际结构](task042_neural_coarse_inverse/outcomes/records/structure_complete_v3.json)、[旧48项失败](task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv)。

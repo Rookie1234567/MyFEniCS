@@ -1,0 +1,1094 @@
+{
+  "schema": "task042.inherited-schema-lint.v3",
+  "base": "d42a7de47bcd966472d58367bab93872d31584e7",
+  "baseline_sha256": "f94b6985413724d59f0fb02ecf0d420f990c205b66e6d3095c8afe3467ac8895",
+  "current_sha256": "0bc614a3b35224b09121c8d6ab0fff64dd44a03e08f6eec2320e6a82a042ed89",
+  "baseline": [
+    {
+      "cell": null,
+      "code": "ISC004",
+      "end_location": {
+        "column": 51,
+        "row": 186
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/src/io/input_schema.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "(",
+            "end_location": {
+              "column": 13,
+              "row": 185
+            },
+            "location": {
+              "column": 13,
+              "row": 185
+            }
+          },
+          {
+            "content": ")",
+            "end_location": {
+              "column": 51,
+              "row": 186
+            },
+            "location": {
+              "column": 51,
+              "row": 186
+            }
+          }
+        ],
+        "message": "Did you forget a comma?"
+      },
+      "location": {
+        "column": 13,
+        "row": 185
+      },
+      "message": "Unparenthesized implicit string concatenation in collection",
+      "name": "implicit-string-concatenation-in-collection-literal",
+      "noqa_row": 185,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal"
+    },
+    {
+      "cell": null,
+      "code": "ISC004",
+      "end_location": {
+        "column": 35,
+        "row": 276
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/src/io/input_schema.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "(",
+            "end_location": {
+              "column": 13,
+              "row": 275
+            },
+            "location": {
+              "column": 13,
+              "row": 275
+            }
+          },
+          {
+            "content": ")",
+            "end_location": {
+              "column": 35,
+              "row": 276
+            },
+            "location": {
+              "column": 35,
+              "row": 276
+            }
+          }
+        ],
+        "message": "Did you forget a comma?"
+      },
+      "location": {
+        "column": 13,
+        "row": 275
+      },
+      "message": "Unparenthesized implicit string concatenation in collection",
+      "name": "implicit-string-concatenation-in-collection-literal",
+      "noqa_row": 275,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal"
+    },
+    {
+      "cell": null,
+      "code": "ISC004",
+      "end_location": {
+        "column": 35,
+        "row": 301
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/src/io/input_schema.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "(",
+            "end_location": {
+              "column": 13,
+              "row": 300
+            },
+            "location": {
+              "column": 13,
+              "row": 300
+            }
+          },
+          {
+            "content": ")",
+            "end_location": {
+              "column": 35,
+              "row": 301
+            },
+            "location": {
+              "column": 35,
+              "row": 301
+            }
+          }
+        ],
+        "message": "Did you forget a comma?"
+      },
+      "location": {
+        "column": 13,
+        "row": 300
+      },
+      "message": "Unparenthesized implicit string concatenation in collection",
+      "name": "implicit-string-concatenation-in-collection-literal",
+      "noqa_row": 300,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal"
+    },
+    {
+      "cell": null,
+      "code": "ISC004",
+      "end_location": {
+        "column": 44,
+        "row": 387
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/src/io/input_schema.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "(",
+            "end_location": {
+              "column": 13,
+              "row": 386
+            },
+            "location": {
+              "column": 13,
+              "row": 386
+            }
+          },
+          {
+            "content": ")",
+            "end_location": {
+              "column": 44,
+              "row": 387
+            },
+            "location": {
+              "column": 44,
+              "row": 387
+            }
+          }
+        ],
+        "message": "Did you forget a comma?"
+      },
+      "location": {
+        "column": 13,
+        "row": 386
+      },
+      "message": "Unparenthesized implicit string concatenation in collection",
+      "name": "implicit-string-concatenation-in-collection-literal",
+      "noqa_row": 386,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal"
+    },
+    {
+      "cell": null,
+      "code": "ISC004",
+      "end_location": {
+        "column": 37,
+        "row": 400
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/src/io/input_schema.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "(",
+            "end_location": {
+              "column": 13,
+              "row": 399
+            },
+            "location": {
+              "column": 13,
+              "row": 399
+            }
+          },
+          {
+            "content": ")",
+            "end_location": {
+              "column": 37,
+              "row": 400
+            },
+            "location": {
+              "column": 37,
+              "row": 400
+            }
+          }
+        ],
+        "message": "Did you forget a comma?"
+      },
+      "location": {
+        "column": 13,
+        "row": 399
+      },
+      "message": "Unparenthesized implicit string concatenation in collection",
+      "name": "implicit-string-concatenation-in-collection-literal",
+      "noqa_row": 399,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal"
+    },
+    {
+      "cell": null,
+      "code": "ISC004",
+      "end_location": {
+        "column": 71,
+        "row": 685
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/src/io/input_schema.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "(",
+            "end_location": {
+              "column": 13,
+              "row": 684
+            },
+            "location": {
+              "column": 13,
+              "row": 684
+            }
+          },
+          {
+            "content": ")",
+            "end_location": {
+              "column": 71,
+              "row": 685
+            },
+            "location": {
+              "column": 71,
+              "row": 685
+            }
+          }
+        ],
+        "message": "Did you forget a comma?"
+      },
+      "location": {
+        "column": 13,
+        "row": 684
+      },
+      "message": "Unparenthesized implicit string concatenation in collection",
+      "name": "implicit-string-concatenation-in-collection-literal",
+      "noqa_row": 684,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal"
+    },
+    {
+      "cell": null,
+      "code": "ISC004",
+      "end_location": {
+        "column": 32,
+        "row": 749
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/src/io/input_schema.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "(",
+            "end_location": {
+              "column": 13,
+              "row": 745
+            },
+            "location": {
+              "column": 13,
+              "row": 745
+            }
+          },
+          {
+            "content": ")",
+            "end_location": {
+              "column": 32,
+              "row": 749
+            },
+            "location": {
+              "column": 32,
+              "row": 749
+            }
+          }
+        ],
+        "message": "Did you forget a comma?"
+      },
+      "location": {
+        "column": 13,
+        "row": 745
+      },
+      "message": "Unparenthesized implicit string concatenation in collection",
+      "name": "implicit-string-concatenation-in-collection-literal",
+      "noqa_row": 745,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal"
+    },
+    {
+      "cell": null,
+      "code": "ISC004",
+      "end_location": {
+        "column": 60,
+        "row": 763
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/src/io/input_schema.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "(",
+            "end_location": {
+              "column": 13,
+              "row": 762
+            },
+            "location": {
+              "column": 13,
+              "row": 762
+            }
+          },
+          {
+            "content": ")",
+            "end_location": {
+              "column": 60,
+              "row": 763
+            },
+            "location": {
+              "column": 60,
+              "row": 763
+            }
+          }
+        ],
+        "message": "Did you forget a comma?"
+      },
+      "location": {
+        "column": 13,
+        "row": 762
+      },
+      "message": "Unparenthesized implicit string concatenation in collection",
+      "name": "implicit-string-concatenation-in-collection-literal",
+      "noqa_row": 762,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal"
+    },
+    {
+      "cell": null,
+      "code": "ISC004",
+      "end_location": {
+        "column": 47,
+        "row": 780
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/src/io/input_schema.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "(",
+            "end_location": {
+              "column": 13,
+              "row": 776
+            },
+            "location": {
+              "column": 13,
+              "row": 776
+            }
+          },
+          {
+            "content": ")",
+            "end_location": {
+              "column": 47,
+              "row": 780
+            },
+            "location": {
+              "column": 47,
+              "row": 780
+            }
+          }
+        ],
+        "message": "Did you forget a comma?"
+      },
+      "location": {
+        "column": 13,
+        "row": 776
+      },
+      "message": "Unparenthesized implicit string concatenation in collection",
+      "name": "implicit-string-concatenation-in-collection-literal",
+      "noqa_row": 776,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal"
+    },
+    {
+      "cell": null,
+      "code": "ISC004",
+      "end_location": {
+        "column": 31,
+        "row": 850
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/src/io/input_schema.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "(",
+            "end_location": {
+              "column": 13,
+              "row": 848
+            },
+            "location": {
+              "column": 13,
+              "row": 848
+            }
+          },
+          {
+            "content": ")",
+            "end_location": {
+              "column": 31,
+              "row": 850
+            },
+            "location": {
+              "column": 31,
+              "row": 850
+            }
+          }
+        ],
+        "message": "Did you forget a comma?"
+      },
+      "location": {
+        "column": 13,
+        "row": 848
+      },
+      "message": "Unparenthesized implicit string concatenation in collection",
+      "name": "implicit-string-concatenation-in-collection-literal",
+      "noqa_row": 848,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal"
+    },
+    {
+      "cell": null,
+      "code": "ISC004",
+      "end_location": {
+        "column": 50,
+        "row": 968
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/src/io/input_schema.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "(",
+            "end_location": {
+              "column": 13,
+              "row": 967
+            },
+            "location": {
+              "column": 13,
+              "row": 967
+            }
+          },
+          {
+            "content": ")",
+            "end_location": {
+              "column": 50,
+              "row": 968
+            },
+            "location": {
+              "column": 50,
+              "row": 968
+            }
+          }
+        ],
+        "message": "Did you forget a comma?"
+      },
+      "location": {
+        "column": 13,
+        "row": 967
+      },
+      "message": "Unparenthesized implicit string concatenation in collection",
+      "name": "implicit-string-concatenation-in-collection-literal",
+      "noqa_row": 967,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal"
+    },
+    {
+      "cell": null,
+      "code": "RUF022",
+      "end_location": {
+        "column": 2,
+        "row": 1453
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/src/io/input_schema.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "[\n    \"FIELD_SPECS\",\n    \"FIELD_SPECS_BY_KEY\",\n    \"IDENTITY_FIELD_SPECS\",\n    \"IDENTITY_KEYS\",\n    \"METHOD_KINDS\",\n    \"PUBLIC_FIELD_KEYS\",\n    \"PUBLIC_FIELD_SPECS\",\n    \"SCHEMA_VERSION\",\n    \"SECTION_FIELD_KEYS\",\n    \"SECTION_NAMES\",\n    \"FieldSpec\",\n]",
+            "end_location": {
+              "column": 2,
+              "row": 1453
+            },
+            "location": {
+              "column": 11,
+              "row": 1441
+            }
+          }
+        ],
+        "message": "Apply an isort-style sorting to `__all__`"
+      },
+      "location": {
+        "column": 11,
+        "row": 1441
+      },
+      "message": "`__all__` is not sorted",
+      "name": "unsorted-dunder-all",
+      "noqa_row": 1441,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unsorted-dunder-all"
+    }
+  ],
+  "current": [
+    {
+      "cell": null,
+      "code": "ISC004",
+      "end_location": {
+        "column": 51,
+        "row": 186
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/src/io/input_schema.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "(",
+            "end_location": {
+              "column": 13,
+              "row": 185
+            },
+            "location": {
+              "column": 13,
+              "row": 185
+            }
+          },
+          {
+            "content": ")",
+            "end_location": {
+              "column": 51,
+              "row": 186
+            },
+            "location": {
+              "column": 51,
+              "row": 186
+            }
+          }
+        ],
+        "message": "Did you forget a comma?"
+      },
+      "location": {
+        "column": 13,
+        "row": 185
+      },
+      "message": "Unparenthesized implicit string concatenation in collection",
+      "name": "implicit-string-concatenation-in-collection-literal",
+      "noqa_row": 185,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal"
+    },
+    {
+      "cell": null,
+      "code": "ISC004",
+      "end_location": {
+        "column": 35,
+        "row": 276
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/src/io/input_schema.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "(",
+            "end_location": {
+              "column": 13,
+              "row": 275
+            },
+            "location": {
+              "column": 13,
+              "row": 275
+            }
+          },
+          {
+            "content": ")",
+            "end_location": {
+              "column": 35,
+              "row": 276
+            },
+            "location": {
+              "column": 35,
+              "row": 276
+            }
+          }
+        ],
+        "message": "Did you forget a comma?"
+      },
+      "location": {
+        "column": 13,
+        "row": 275
+      },
+      "message": "Unparenthesized implicit string concatenation in collection",
+      "name": "implicit-string-concatenation-in-collection-literal",
+      "noqa_row": 275,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal"
+    },
+    {
+      "cell": null,
+      "code": "ISC004",
+      "end_location": {
+        "column": 35,
+        "row": 301
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/src/io/input_schema.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "(",
+            "end_location": {
+              "column": 13,
+              "row": 300
+            },
+            "location": {
+              "column": 13,
+              "row": 300
+            }
+          },
+          {
+            "content": ")",
+            "end_location": {
+              "column": 35,
+              "row": 301
+            },
+            "location": {
+              "column": 35,
+              "row": 301
+            }
+          }
+        ],
+        "message": "Did you forget a comma?"
+      },
+      "location": {
+        "column": 13,
+        "row": 300
+      },
+      "message": "Unparenthesized implicit string concatenation in collection",
+      "name": "implicit-string-concatenation-in-collection-literal",
+      "noqa_row": 300,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal"
+    },
+    {
+      "cell": null,
+      "code": "ISC004",
+      "end_location": {
+        "column": 44,
+        "row": 387
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/src/io/input_schema.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "(",
+            "end_location": {
+              "column": 13,
+              "row": 386
+            },
+            "location": {
+              "column": 13,
+              "row": 386
+            }
+          },
+          {
+            "content": ")",
+            "end_location": {
+              "column": 44,
+              "row": 387
+            },
+            "location": {
+              "column": 44,
+              "row": 387
+            }
+          }
+        ],
+        "message": "Did you forget a comma?"
+      },
+      "location": {
+        "column": 13,
+        "row": 386
+      },
+      "message": "Unparenthesized implicit string concatenation in collection",
+      "name": "implicit-string-concatenation-in-collection-literal",
+      "noqa_row": 386,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal"
+    },
+    {
+      "cell": null,
+      "code": "ISC004",
+      "end_location": {
+        "column": 37,
+        "row": 400
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/src/io/input_schema.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "(",
+            "end_location": {
+              "column": 13,
+              "row": 399
+            },
+            "location": {
+              "column": 13,
+              "row": 399
+            }
+          },
+          {
+            "content": ")",
+            "end_location": {
+              "column": 37,
+              "row": 400
+            },
+            "location": {
+              "column": 37,
+              "row": 400
+            }
+          }
+        ],
+        "message": "Did you forget a comma?"
+      },
+      "location": {
+        "column": 13,
+        "row": 399
+      },
+      "message": "Unparenthesized implicit string concatenation in collection",
+      "name": "implicit-string-concatenation-in-collection-literal",
+      "noqa_row": 399,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal"
+    },
+    {
+      "cell": null,
+      "code": "ISC004",
+      "end_location": {
+        "column": 71,
+        "row": 685
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/src/io/input_schema.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "(",
+            "end_location": {
+              "column": 13,
+              "row": 684
+            },
+            "location": {
+              "column": 13,
+              "row": 684
+            }
+          },
+          {
+            "content": ")",
+            "end_location": {
+              "column": 71,
+              "row": 685
+            },
+            "location": {
+              "column": 71,
+              "row": 685
+            }
+          }
+        ],
+        "message": "Did you forget a comma?"
+      },
+      "location": {
+        "column": 13,
+        "row": 684
+      },
+      "message": "Unparenthesized implicit string concatenation in collection",
+      "name": "implicit-string-concatenation-in-collection-literal",
+      "noqa_row": 684,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal"
+    },
+    {
+      "cell": null,
+      "code": "ISC004",
+      "end_location": {
+        "column": 32,
+        "row": 749
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/src/io/input_schema.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "(",
+            "end_location": {
+              "column": 13,
+              "row": 745
+            },
+            "location": {
+              "column": 13,
+              "row": 745
+            }
+          },
+          {
+            "content": ")",
+            "end_location": {
+              "column": 32,
+              "row": 749
+            },
+            "location": {
+              "column": 32,
+              "row": 749
+            }
+          }
+        ],
+        "message": "Did you forget a comma?"
+      },
+      "location": {
+        "column": 13,
+        "row": 745
+      },
+      "message": "Unparenthesized implicit string concatenation in collection",
+      "name": "implicit-string-concatenation-in-collection-literal",
+      "noqa_row": 745,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal"
+    },
+    {
+      "cell": null,
+      "code": "ISC004",
+      "end_location": {
+        "column": 60,
+        "row": 763
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/src/io/input_schema.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "(",
+            "end_location": {
+              "column": 13,
+              "row": 762
+            },
+            "location": {
+              "column": 13,
+              "row": 762
+            }
+          },
+          {
+            "content": ")",
+            "end_location": {
+              "column": 60,
+              "row": 763
+            },
+            "location": {
+              "column": 60,
+              "row": 763
+            }
+          }
+        ],
+        "message": "Did you forget a comma?"
+      },
+      "location": {
+        "column": 13,
+        "row": 762
+      },
+      "message": "Unparenthesized implicit string concatenation in collection",
+      "name": "implicit-string-concatenation-in-collection-literal",
+      "noqa_row": 762,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal"
+    },
+    {
+      "cell": null,
+      "code": "ISC004",
+      "end_location": {
+        "column": 47,
+        "row": 780
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/src/io/input_schema.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "(",
+            "end_location": {
+              "column": 13,
+              "row": 776
+            },
+            "location": {
+              "column": 13,
+              "row": 776
+            }
+          },
+          {
+            "content": ")",
+            "end_location": {
+              "column": 47,
+              "row": 780
+            },
+            "location": {
+              "column": 47,
+              "row": 780
+            }
+          }
+        ],
+        "message": "Did you forget a comma?"
+      },
+      "location": {
+        "column": 13,
+        "row": 776
+      },
+      "message": "Unparenthesized implicit string concatenation in collection",
+      "name": "implicit-string-concatenation-in-collection-literal",
+      "noqa_row": 776,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal"
+    },
+    {
+      "cell": null,
+      "code": "ISC004",
+      "end_location": {
+        "column": 31,
+        "row": 850
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/src/io/input_schema.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "(",
+            "end_location": {
+              "column": 13,
+              "row": 848
+            },
+            "location": {
+              "column": 13,
+              "row": 848
+            }
+          },
+          {
+            "content": ")",
+            "end_location": {
+              "column": 31,
+              "row": 850
+            },
+            "location": {
+              "column": 31,
+              "row": 850
+            }
+          }
+        ],
+        "message": "Did you forget a comma?"
+      },
+      "location": {
+        "column": 13,
+        "row": 848
+      },
+      "message": "Unparenthesized implicit string concatenation in collection",
+      "name": "implicit-string-concatenation-in-collection-literal",
+      "noqa_row": 848,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal"
+    },
+    {
+      "cell": null,
+      "code": "ISC004",
+      "end_location": {
+        "column": 50,
+        "row": 968
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/src/io/input_schema.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "(",
+            "end_location": {
+              "column": 13,
+              "row": 967
+            },
+            "location": {
+              "column": 13,
+              "row": 967
+            }
+          },
+          {
+            "content": ")",
+            "end_location": {
+              "column": 50,
+              "row": 968
+            },
+            "location": {
+              "column": 50,
+              "row": 968
+            }
+          }
+        ],
+        "message": "Did you forget a comma?"
+      },
+      "location": {
+        "column": 13,
+        "row": 967
+      },
+      "message": "Unparenthesized implicit string concatenation in collection",
+      "name": "implicit-string-concatenation-in-collection-literal",
+      "noqa_row": 967,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal"
+    },
+    {
+      "cell": null,
+      "code": "RUF022",
+      "end_location": {
+        "column": 2,
+        "row": 1454
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/src/io/input_schema.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "[\n    \"FIELD_SPECS\",\n    \"FIELD_SPECS_BY_KEY\",\n    \"IDENTITY_FIELD_SPECS\",\n    \"IDENTITY_KEYS\",\n    \"METHOD_KINDS\",\n    \"PUBLIC_FIELD_KEYS\",\n    \"PUBLIC_FIELD_SPECS\",\n    \"SCHEMA_VERSION\",\n    \"SECTION_FIELD_KEYS\",\n    \"SECTION_NAMES\",\n    \"FieldSpec\",\n]",
+            "end_location": {
+              "column": 2,
+              "row": 1454
+            },
+            "location": {
+              "column": 11,
+              "row": 1442
+            }
+          }
+        ],
+        "message": "Apply an isort-style sorting to `__all__`"
+      },
+      "location": {
+        "column": 11,
+        "row": 1442
+      },
+      "message": "`__all__` is not sorted",
+      "name": "unsorted-dunder-all",
+      "noqa_row": 1442,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unsorted-dunder-all"
+    }
+  ],
+  "new_diagnostics": [],
+  "classification": "12 inherited lint diagnostics retained; no global Ruff green claim"
+}

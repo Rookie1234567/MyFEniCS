@@ -38,3 +38,8 @@ F4 first16固定为physical、zero、真实内层r0/r32/r128/r256、physical pha
 此前4个F1实现/环境失败和F4-B0 enum解析失败均保留真实source/错误/资源，不冒充数值不收敛或覆盖成成功。enum错误发生在正式load前，仅局部修复后开始正式阶段；无参数扫描。后续交付/报告修正的HEAD不 retro-label 任一run source；文档publication HEAD由其实际push和render检查记录，不能称求解源码。
 
 F0的[原空dataset/model manifest](records/dataset_model_manifest.json)为历史，当前事实为本页和v2记录。新模型没有production资格，不能以checkpoint存在、训练loss下降或oracle正信号替代严格p4返回；F5及official场/模态/功率not_run。
+
+
+## V3 最新有限诊断（原V2正文保留）
+
+V3只复用哈希绑定的旧0/10/11 RHS、失败state/0/32/128/256快照及原Q/冻结模型作诊断，未重训练/改变basis；新结构仅读取RHS，不读取old/teacher解作初值，零reduced start。结构source冻结后另选seed420620整族16项，数组与求解not_run，不称fresh终测。[未消费计划](records/unconsumed_test_plan_v3.json)。实际两个clean source见[run index](records/run_index_v3.json)，文档HEAD不替代。

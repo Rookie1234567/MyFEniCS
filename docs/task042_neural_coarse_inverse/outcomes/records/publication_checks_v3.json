@@ -1,0 +1,7 @@
+{
+  "schema": "task042.publication-checks.v3",
+  "status": "NOT_RUN_PENDING_FIRST_PUSH",
+  "exact_pushed_head": null,
+  "checks": [],
+  "note": "Local render only at this point; actual GitHub rendered HTML will be checked after first push, with evidence committed separately."
+}

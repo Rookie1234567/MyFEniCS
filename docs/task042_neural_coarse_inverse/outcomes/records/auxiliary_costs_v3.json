@@ -1,0 +1,457 @@
+{
+  "schema": "task042.auxiliary-costs.v3",
+  "runs": [
+    {
+      "directory": "tmp/task042/v3/admission-tests",
+      "source_state": {
+        "source_sha": "400a0ed348bf74838e1a42227d0fcf7ca4ebd463",
+        "git_status": " M src/runners/task042_shared.py\n?? src/test/test_task042_v3_admission.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "bash",
+          "-c",
+          "/home/fenics/Projects/Metrology/.venv/bin/ruff check src/runners/task042_shared.py src/test/test_task042_v3_admission.py && python -m pytest -q src/test/test_task042_v3_admission.py src/test/test_task042_shared_watchdog.py"
+        ],
+        "utc": "2026-09-28T14:54:10.052740+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "wall_seconds": 4.150349939009175,
+      "sampled_simultaneous_tree_rss_peak_bytes": 259219456,
+      "own_swap_peak_bytes": 0,
+      "summary_sha256": "c5c9a366cb6d903475a71cfa760b3238b89ac2ec50f1cb2183da2b4eb3ffafb1",
+      "worker_log_sha256": "063e4489bd08028323c119dc3b093101d7dc254f824f7e9cc989753da1882b77",
+      "performance_identity": "shared-workstation",
+      "role": "bounded auxiliary only; not a clean formal numerical source claim"
+    },
+    {
+      "directory": "tmp/task042/v3/delivery-packing",
+      "source_state": {
+        "source_sha": "7fc3f1434cf4f38f43e5244ebfed3a19d0780a26",
+        "git_status": " M src/test/test_task042_shared_watchdog.py\n?? docs/task042_neural_coarse_inverse/outcomes/records/schema_lint_baseline_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/watchdog_test_evidence_v3.json\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "bash",
+          "-c",
+          "python tmp/task042/v3/collect_delivery.py && python tmp/task042/v3/build_documents.py && python tmp/task042/v3/build_residual_diagnosis.py"
+        ],
+        "utc": "2026-09-28T15:56:39.080555+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "wall_seconds": 1.7566746349912137,
+      "sampled_simultaneous_tree_rss_peak_bytes": 50823168,
+      "own_swap_peak_bytes": 0,
+      "summary_sha256": "d4fe9a9ef3e8805223ef1671e93ad395c70519ca38be273d2299e5153bf6e71a",
+      "worker_log_sha256": "27c7f8540688270e67e30e8ad3dd800c2ed2a4b80280fcc0b01f66d1f39df23c",
+      "performance_identity": "shared-workstation",
+      "role": "bounded auxiliary only; not a clean formal numerical source claim"
+    },
+    {
+      "directory": "tmp/task042/v3/final-array-checks",
+      "source_state": {
+        "source_sha": "7fc3f1434cf4f38f43e5244ebfed3a19d0780a26",
+        "git_status": "",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "bash",
+          "tmp/task042/v3/final_array_checks.sh"
+        ],
+        "utc": "2026-09-28T15:52:24.337110+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "descendants_cleared": true,
+      "wall_seconds": 1.7513208650052547,
+      "sampled_simultaneous_tree_rss_peak_bytes": 37904384,
+      "own_swap_peak_bytes": 0,
+      "summary_sha256": "6dab1fd441607cfa63759538aea9bd11017649d388d53954b1a5b49e65cee0fb",
+      "worker_log_sha256": "91f41f3e08dec16b976b395d49901687216c324443ad55cbb551ed4e7647d582",
+      "performance_identity": "shared-workstation",
+      "role": "bounded auxiliary only; not a clean formal numerical source claim"
+    },
+    {
+      "directory": "tmp/task042/v3/final-array-checks-complete",
+      "source_state": {
+        "source_sha": "7fc3f1434cf4f38f43e5244ebfed3a19d0780a26",
+        "git_status": " M src/test/test_task042_shared_watchdog.py\n?? docs/task042_neural_coarse_inverse/outcomes/records/schema_lint_baseline_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/watchdog_test_evidence_v3.json\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "bash",
+          "tmp/task042/v3/final_array_checks.sh"
+        ],
+        "utc": "2026-09-28T15:55:54.658126+00:00",
+        "affinity": [
+          11
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "wall_seconds": 4.7910131480311975,
+      "sampled_simultaneous_tree_rss_peak_bytes": 350633984,
+      "own_swap_peak_bytes": 0,
+      "summary_sha256": "ec4d267451c9099ac6e3c18778851052fbd8dff04a75b13ddf5bf6b93f529686",
+      "worker_log_sha256": "ad4baf087e1ca8ec515b587ad5d8aee5e2f6c0b5689f18897c378c17862907e8",
+      "performance_identity": "shared-workstation",
+      "role": "bounded auxiliary only; not a clean formal numerical source claim"
+    },
+    {
+      "directory": "tmp/task042/v3/final-array-checks-inherited-lint",
+      "source_state": {
+        "source_sha": "7fc3f1434cf4f38f43e5244ebfed3a19d0780a26",
+        "git_status": "",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "bash",
+          "tmp/task042/v3/final_array_checks.sh"
+        ],
+        "utc": "2026-09-28T15:53:26.790347+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "descendants_cleared": true,
+      "wall_seconds": 4.9855016929795966,
+      "sampled_simultaneous_tree_rss_peak_bytes": 151814144,
+      "own_swap_peak_bytes": 0,
+      "summary_sha256": "d2e85a24f9996635067f53e4277669a7450a9eac372fbc0687f02b6dbb818392",
+      "worker_log_sha256": "faf4049c0e1a5f9fdf9b2a9b7fe068ec1d28293f9166d8e7f7e3098bf14659d7",
+      "performance_identity": "shared-workstation",
+      "role": "bounded auxiliary only; not a clean formal numerical source claim"
+    },
+    {
+      "directory": "tmp/task042/v3/final-array-checks-raw-resource-proof",
+      "source_state": {
+        "source_sha": "7fc3f1434cf4f38f43e5244ebfed3a19d0780a26",
+        "git_status": " M src/test/test_task042_shared_watchdog.py\n?? docs/task042_neural_coarse_inverse/outcomes/records/schema_lint_baseline_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/watchdog_test_evidence_v3.json\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "bash",
+          "tmp/task042/v3/final_array_checks.sh"
+        ],
+        "utc": "2026-09-28T15:55:17.296192+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "descendants_cleared": true,
+      "wall_seconds": 1.508378447033465,
+      "sampled_simultaneous_tree_rss_peak_bytes": 44609536,
+      "own_swap_peak_bytes": 0,
+      "summary_sha256": "a6e066c7a3d3685ae08221abc42f895f5caf37f5b56dbe7aad2e0bb416dd6603",
+      "worker_log_sha256": "4ee7f007b46f54793dcdf257ca6de1366db0c3394a7cb1f58554c3f44b69b3ba",
+      "performance_identity": "shared-workstation",
+      "role": "bounded auxiliary only; not a clean formal numerical source claim"
+    },
+    {
+      "directory": "tmp/task042/v3/final-document-checks",
+      "source_state": {
+        "source_sha": "7fc3f1434cf4f38f43e5244ebfed3a19d0780a26",
+        "git_status": " M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042_neural_coarse_inverse/outcomes/accuracy_performance_memory.md\n M docs/task042_neural_coarse_inverse/outcomes/architecture_and_oracle.md\n M docs/task042_neural_coarse_inverse/outcomes/changed_files.md\n M docs/task042_neural_coarse_inverse/outcomes/dataset_and_model_provenance.md\n M docs/task042_neural_coarse_inverse/outcomes/environment_and_isolation.md\n M docs/task042_neural_coarse_inverse/outcomes/records/README.md\n M docs/task042_neural_coarse_inverse/outcomes/summary.md\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n M src/test/test_task042_shared_watchdog.py\n?? docs/task042_neural_coarse_inverse/outcomes/records/auxiliary_costs_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/full_residual_history_v3.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/pc_probes_v3.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/schema_lint_baseline_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/structure_complete_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/unconsumed_test_plan_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/watchdog_test_evidence_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/residual_diagnosis_v3.md\n?? docs/task042_neural_coarse_inverse/response_v3.md\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "bash",
+          "tmp/task042/v3/final_document_checks.sh"
+        ],
+        "utc": "2026-09-28T15:59:57.574206+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "descendants_cleared": true,
+      "wall_seconds": 3.9635622759815305,
+      "sampled_simultaneous_tree_rss_peak_bytes": 62631936,
+      "own_swap_peak_bytes": 0,
+      "summary_sha256": "a8c66d7cb5f99bea581222adc6f909a6231cabc229624b8a8617b7bb0e29080a",
+      "worker_log_sha256": "a6990371aa57f4dd60bbb9481649eb6cd3048e75b131b2c11b75aa96088ca0b4",
+      "performance_identity": "shared-workstation",
+      "role": "bounded auxiliary only; not a clean formal numerical source claim"
+    },
+    {
+      "directory": "tmp/task042/v3/final-static-complete",
+      "source_state": {
+        "source_sha": "7fc3f1434cf4f38f43e5244ebfed3a19d0780a26",
+        "git_status": " M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042_neural_coarse_inverse/outcomes/accuracy_performance_memory.md\n M docs/task042_neural_coarse_inverse/outcomes/architecture_and_oracle.md\n M docs/task042_neural_coarse_inverse/outcomes/changed_files.md\n M docs/task042_neural_coarse_inverse/outcomes/dataset_and_model_provenance.md\n M docs/task042_neural_coarse_inverse/outcomes/environment_and_isolation.md\n M docs/task042_neural_coarse_inverse/outcomes/records/README.md\n M docs/task042_neural_coarse_inverse/outcomes/summary.md\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n M src/test/test_task042_shared_watchdog.py\n?? docs/task042_neural_coarse_inverse/outcomes/records/auxiliary_costs_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/full_residual_history_v3.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/pc_probes_v3.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/registry_contract_baseline_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/schema_lint_baseline_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/structure_complete_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/unconsumed_test_plan_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/watchdog_test_evidence_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/residual_diagnosis_v3.md\n?? docs/task042_neural_coarse_inverse/response_v3.md\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "bash",
+          "-c",
+          "python tmp/task042/v3/static_delivery_checks.py && git diff --check"
+        ],
+        "utc": "2026-09-28T16:00:52.016993+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "wall_seconds": 2.576975216041319,
+      "sampled_simultaneous_tree_rss_peak_bytes": 62976000,
+      "own_swap_peak_bytes": 0,
+      "summary_sha256": "58057d93e4b95108ab65493ea6702e551c7d2b63b7a856f85398955204ac3fd2",
+      "worker_log_sha256": "ba237a4f15cbc0eb678a5535ecade476e5fec9f60dd3df791b30963dbb047539",
+      "performance_identity": "shared-workstation",
+      "role": "bounded auxiliary only; not a clean formal numerical source claim"
+    },
+    {
+      "directory": "tmp/task042/v3/history-enrichment-check",
+      "source_state": {
+        "source_sha": "7fc3f1434cf4f38f43e5244ebfed3a19d0780a26",
+        "git_status": " M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042_neural_coarse_inverse/outcomes/accuracy_performance_memory.md\n M docs/task042_neural_coarse_inverse/outcomes/architecture_and_oracle.md\n M docs/task042_neural_coarse_inverse/outcomes/changed_files.md\n M docs/task042_neural_coarse_inverse/outcomes/dataset_and_model_provenance.md\n M docs/task042_neural_coarse_inverse/outcomes/environment_and_isolation.md\n M docs/task042_neural_coarse_inverse/outcomes/records/README.md\n M docs/task042_neural_coarse_inverse/outcomes/summary.md\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n M src/test/test_task042_shared_watchdog.py\n?? docs/task042_neural_coarse_inverse/outcomes/records/auxiliary_costs_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/full_residual_history_v3.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/pc_probes_v3.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/registry_contract_baseline_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/schema_lint_baseline_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/structure_complete_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/unconsumed_test_plan_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/watchdog_test_evidence_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/residual_diagnosis_v3.md\n?? docs/task042_neural_coarse_inverse/response_v3.md\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "bash",
+          "-c",
+          "python tmp/task042/v3/enrich_history_csv.py && python tmp/task042/v3/static_delivery_checks.py && git diff --check"
+        ],
+        "utc": "2026-09-28T16:03:42.612028+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "descendants_cleared": true,
+      "wall_seconds": 2.12184908404015,
+      "sampled_simultaneous_tree_rss_peak_bytes": 61583360,
+      "own_swap_peak_bytes": 0,
+      "summary_sha256": "9022b0ed2e2745c2f85c9c936491af039a011211ffa55706411ceb1025fd81b8",
+      "worker_log_sha256": "a9f26b434ca761cd6a1d050dacc35bb1119b3c422ece34564e5695da5865f4a8",
+      "performance_identity": "shared-workstation",
+      "role": "bounded auxiliary only; not a clean formal numerical source claim"
+    },
+    {
+      "directory": "tmp/task042/v3/history-enrichment-complete",
+      "source_state": {
+        "source_sha": "7fc3f1434cf4f38f43e5244ebfed3a19d0780a26",
+        "git_status": " M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042_neural_coarse_inverse/outcomes/accuracy_performance_memory.md\n M docs/task042_neural_coarse_inverse/outcomes/architecture_and_oracle.md\n M docs/task042_neural_coarse_inverse/outcomes/changed_files.md\n M docs/task042_neural_coarse_inverse/outcomes/dataset_and_model_provenance.md\n M docs/task042_neural_coarse_inverse/outcomes/environment_and_isolation.md\n M docs/task042_neural_coarse_inverse/outcomes/records/README.md\n M docs/task042_neural_coarse_inverse/outcomes/summary.md\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n M src/test/test_task042_shared_watchdog.py\n?? docs/task042_neural_coarse_inverse/outcomes/records/auxiliary_costs_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/full_residual_history_v3.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/pc_probes_v3.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/registry_contract_baseline_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/schema_lint_baseline_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/structure_complete_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/unconsumed_test_plan_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/watchdog_test_evidence_v3.json\n?? docs/task042_neural_coarse_inverse/outcomes/residual_diagnosis_v3.md\n?? docs/task042_neural_coarse_inverse/response_v3.md\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "bash",
+          "-c",
+          "python tmp/task042/v3/enrich_history_csv.py && python tmp/task042/v3/static_delivery_checks.py && git diff --check"
+        ],
+        "utc": "2026-09-28T16:04:37.834168+00:00",
+        "affinity": [
+          11
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "wall_seconds": 2.9206270560389385,
+      "sampled_simultaneous_tree_rss_peak_bytes": 62582784,
+      "own_swap_peak_bytes": 0,
+      "summary_sha256": "314180e260e510a4fcf3b53219e7c839c4ac386a8d9444c12e939a942381c5b2",
+      "worker_log_sha256": "a6dc96df2fbd582f80ae2bee8e31be63b68651bc14e43cb2cf95ed45c00050e6",
+      "performance_identity": "shared-workstation",
+      "role": "bounded auxiliary only; not a clean formal numerical source claim"
+    },
+    {
+      "directory": "tmp/task042/v3/overlap-fe-support-tests",
+      "source_state": {
+        "source_sha": "b158c5301e7ff59000b15b335672afdb61c5e5e1",
+        "git_status": " M docs/task042_neural_coarse_inverse/outcomes/bounded_diagnostic_design_v3.md\n M input/task042_neural_coarse_inverse/diagnostic_v3.json\n M src/runners/task042_diagnostics.py\n M src/solvers/learned_coarse_inverse.py\n?? src/solvers/learned_geometry_overlap.py\n?? src/test/test_task042_geometry_overlap.py\n?? src/test/test_task042_geometry_support.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "bash",
+          "-c",
+          "python scripts/task042_preflight.py --output tmp/task042/v3/environment_fe.json && python -m pytest -q src/test/test_task042_geometry_support.py src/test/test_task042_p4_witness.py src/test/test_task042_mode_metadata.py"
+        ],
+        "utc": "2026-09-28T15:06:54.600762+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "fe",
+        "gpu_visible": false
+      },
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "wall_seconds": 6.994310269015841,
+      "sampled_simultaneous_tree_rss_peak_bytes": 232992768,
+      "own_swap_peak_bytes": 0,
+      "summary_sha256": "e8324bf786db10c41a0014827a783a27f55dde72f7eec43fc694787c3ce4e411",
+      "worker_log_sha256": "9fe4ca2c58ae06e4a2ef39092ef5bb669ba8c6c566bd33b92cbd8b4ec51a9764",
+      "performance_identity": "shared-workstation",
+      "role": "bounded auxiliary only; not a clean formal numerical source claim"
+    },
+    {
+      "directory": "tmp/task042/v3/overlap-pure-tests",
+      "source_state": {
+        "source_sha": "b158c5301e7ff59000b15b335672afdb61c5e5e1",
+        "git_status": " M docs/task042_neural_coarse_inverse/outcomes/bounded_diagnostic_design_v3.md\n M input/task042_neural_coarse_inverse/diagnostic_v3.json\n M src/runners/task042_diagnostics.py\n M src/solvers/learned_coarse_inverse.py\n?? src/solvers/learned_geometry_overlap.py\n?? src/test/test_task042_geometry_overlap.py\n?? src/test/test_task042_geometry_support.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "bash",
+          "-c",
+          "/home/fenics/Projects/Metrology/.venv/bin/ruff check src/runners/task042_diagnostics.py src/solvers/learned_geometry_overlap.py src/solvers/learned_coarse_inverse.py src/test/test_task042_geometry_overlap.py src/test/test_task042_geometry_support.py && python -m pytest -q src/test/test_task042_geometry_overlap.py src/test/test_task042_reduced_oracle.py src/test/test_task042_coarse_inverse_protocol.py src/test/test_task042_shared_components.py src/test/test_task042_v3_admission.py"
+        ],
+        "utc": "2026-09-28T15:06:05.923730+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "descendants_cleared": true,
+      "wall_seconds": 1.4737947940593585,
+      "sampled_simultaneous_tree_rss_peak_bytes": 21147648,
+      "own_swap_peak_bytes": 0,
+      "summary_sha256": "3ceb029e5d534027f5f36e72cbab9fc8f8a7181741363e400bbb042e6bb97982",
+      "worker_log_sha256": "385dc62d45c9c7813c04c2b7524c42cf4115c1e4c70344ad696447d2c23fa1e7",
+      "performance_identity": "shared-workstation",
+      "role": "bounded auxiliary only; not a clean formal numerical source claim"
+    },
+    {
+      "directory": "tmp/task042/v3/overlap-pure-tests-fixed",
+      "source_state": {
+        "source_sha": "b158c5301e7ff59000b15b335672afdb61c5e5e1",
+        "git_status": " M docs/task042_neural_coarse_inverse/outcomes/bounded_diagnostic_design_v3.md\n M input/task042_neural_coarse_inverse/diagnostic_v3.json\n M src/runners/task042_diagnostics.py\n M src/solvers/learned_coarse_inverse.py\n?? src/solvers/learned_geometry_overlap.py\n?? src/test/test_task042_geometry_overlap.py\n?? src/test/test_task042_geometry_support.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "bash",
+          "-c",
+          "/home/fenics/Projects/Metrology/.venv/bin/ruff check src/runners/task042_diagnostics.py src/solvers/learned_geometry_overlap.py src/solvers/learned_coarse_inverse.py src/test/test_task042_geometry_overlap.py src/test/test_task042_geometry_support.py && python -m pytest -q src/test/test_task042_geometry_overlap.py src/test/test_task042_reduced_oracle.py src/test/test_task042_coarse_inverse_protocol.py src/test/test_task042_shared_components.py src/test/test_task042_v3_admission.py && python -m compileall -q src/runners/task042_diagnostics.py src/solvers/learned_geometry_overlap.py src/solvers/learned_coarse_inverse.py"
+        ],
+        "utc": "2026-09-28T15:07:45.166484+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "wall_seconds": 2.695867744041607,
+      "sampled_simultaneous_tree_rss_peak_bytes": 92307456,
+      "own_swap_peak_bytes": 0,
+      "summary_sha256": "103d1fe067a8cdfe2a724beb9e4c917dd035c4348b156a074bb435ac7294bea0",
+      "worker_log_sha256": "a8386a3feee25111675f5bf8b2bb6305e643dc2f9e03c981bb267338914948d5",
+      "performance_identity": "shared-workstation",
+      "role": "bounded auxiliary only; not a clean formal numerical source claim"
+    },
+    {
+      "directory": "tmp/task042/v3/reuse-prechecks",
+      "source_state": {
+        "source_sha": "d42a7de47bcd966472d58367bab93872d31584e7",
+        "git_status": " M src/io/input_schema.py\n M src/io/task042_profile.py\n M src/runners/task042_experiment.py\n?? docs/task042_neural_coarse_inverse/outcomes/bounded_diagnostic_design_v3.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/cpu_provenance_v3.json\n?? input/task042_neural_coarse_inverse/diagnostic_v3.json\n?? input/task042_neural_coarse_inverse/v3_overlap_shared.dat\n?? input/task042_neural_coarse_inverse/v3_reuse_shared.dat\n?? src/runners/task042_diagnostics.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "bash",
+          "-c",
+          "/home/fenics/Projects/Metrology/.venv/bin/ruff check src/runners/task042_diagnostics.py src/io/task042_profile.py && python -m pytest -q src/test/test_task042_shared_components.py src/test/test_task042_reduced_oracle.py && python -m compileall -q src/runners/task042_diagnostics.py"
+        ],
+        "utc": "2026-09-28T14:49:29.653914+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "descendants_cleared": true,
+      "wall_seconds": 1.4903631010092795,
+      "sampled_simultaneous_tree_rss_peak_bytes": 21123072,
+      "own_swap_peak_bytes": 0,
+      "summary_sha256": "a3dc54fb400806bf6e3d1f1a955105738a0c96c4b5b30a6c7fa8e9098cfb16ea",
+      "worker_log_sha256": "a3e6f7bce56f522dd64d8026f56994be9496c53b650c9f04efacd2a1c5697c43",
+      "performance_identity": "shared-workstation",
+      "role": "bounded auxiliary only; not a clean formal numerical source claim"
+    },
+    {
+      "directory": "tmp/task042/v3/reuse-prechecks-fixed",
+      "source_state": {
+        "source_sha": "d42a7de47bcd966472d58367bab93872d31584e7",
+        "git_status": " M src/io/input_schema.py\n M src/io/task042_profile.py\n M src/runners/task042_experiment.py\n?? docs/task042_neural_coarse_inverse/outcomes/bounded_diagnostic_design_v3.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/cpu_provenance_v3.json\n?? input/task042_neural_coarse_inverse/diagnostic_v3.json\n?? input/task042_neural_coarse_inverse/v3_overlap_shared.dat\n?? input/task042_neural_coarse_inverse/v3_reuse_shared.dat\n?? src/runners/task042_diagnostics.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "bash",
+          "-c",
+          "/home/fenics/Projects/Metrology/.venv/bin/ruff check src/runners/task042_diagnostics.py src/io/task042_profile.py && python -m pytest -q src/test/test_task042_shared_components.py src/test/test_task042_reduced_oracle.py && python -m compileall -q src/runners/task042_diagnostics.py"
+        ],
+        "utc": "2026-09-28T14:50:24.736081+00:00",
+        "affinity": [
+          44
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "wall_seconds": 2.0019331839866936,
+      "sampled_simultaneous_tree_rss_peak_bytes": 91586560,
+      "own_swap_peak_bytes": 0,
+      "summary_sha256": "2ebb8b8f2881c3a522e49dfc72f8c67b14f4ed38604fd8e9e18e3dab3fa1544f",
+      "worker_log_sha256": "344609fb98e577f21fe32a12d777a7ae39625576a392d646566cfef6246de309",
+      "performance_identity": "shared-workstation",
+      "role": "bounded auxiliary only; not a clean formal numerical source claim"
+    }
+  ],
+  "wall_seconds_sum": 45.18252145126462,
+  "sampled_simultaneous_tree_rss_peak_bytes_max": 350633984,
+  "own_swap_peak_bytes_max": 0,
+  "status_scope": "Retains failed lint-before-test attempts and all recorded final checks, packing and publication checks; not PDE attempts.",
+  "uncounted": "Session editing/review/Git, initial read-only resource probes and this small metadata packaging command were not continuously resource sampled.",
+  "memory_scope": "Per-invocation sampled simultaneous parent plus descendants; max of sequential invocations, not summed RSS and not total session peak.",
+  "performance_identity": "shared-workstation"
+}

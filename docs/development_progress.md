@@ -2877,3 +2877,20 @@ F3同basis/B0/归一化/FP64，线性小解码基线与一个2hidden64 residual 
 终态COARSE_INVERSE_NOT_QUALIFIED：没有F4合格路线，三独立进程合格计时与条件F5/p6最终物理解/全部RTA/A_volume/场/通道not_run，不能生成official结果。去全局因子已实现，但传统低内存、线性降维与NN都未提供严格逆，G-neural无正信号；共享load/cache/lifecycle条件下G-time/G-memory inconclusive，N=1/10/100合格摊销未定义。数值尝试含4次实现失败监督wall共8250.064s，最大同时整树RSS2359627776B，own swap0，未分配Task042 VRAM；不累加阶段峰。
 
 未见持续PSI压力，固定邻身份/CPU时间保留；短phase缺实时可比指标，不能证明绝对零干扰。两个继承schema2文档枚举fail在精确起点复现；final focused/static见[测试](task042_neural_coarse_inverse/outcomes/test_summary.md)。完整source/hash/所有RHS/时间/内存见[summary](task042_neural_coarse_inverse/outcomes/summary.md)、[response_v2](task042_neural_coarse_inverse/response_v2.md)、[run index](task042_neural_coarse_inverse/outcomes/records/run_index_v2.json)。无5/2/0.7nm或无界扫描；仅推送本执行分支，停止等review，不合并master。
+
+
+## 2026-09-28 Task042 V3：有界几何重叠对照，仍有全局停滞
+
+起因是V2三路线全部15非零不合格。用户仅授权一个新有限批次，沿原13.5nm/p6h10对应p4/252cells/80DtN及1e-10合同，保留旧B0/负结果；继续Task042受控共享CPU，不进入F5。先复用9个旧state重算真实Schur/native/port，映射最大7.44e-15，未发现接口错误；KSP/operation/native/port不同分母及port绝对量澄清，未改loss。CPU证据纠正oracle33、F4-B045，旧“全部CPU0”概括不准确。
+
+新几何PC借用真实Nédélec cell trace/MPC支撑形成重叠，252个192trace+80port局部原Schur块，canonical限制/次数平均延拓；因子构造前上界与实际均合规，无global p4 LU/hidden fallback/private audit CSR，普通默认不变。same256预算对3个consumed RHS逐步独立验算。
+
+| 已消费诊断RHS / index | 旧B0原A4 | 新GEO原A4 | 新GEO port closure | 新GEO port绝对残差 | 末32步Schur降幅 | 严格返回 |
+|---|---|---|---|---|---|---|
+| physical_PH_b6 / 0 | 0.998654967105 | 0.891957825531 | 0.00773091335604 | 0.187210874612 | 5.70298292157e-06 | False |
+| unseen_port_only / 10 | 0.954192801905 | 0.935861877336 | 0.725338952963 | 0.000935056697255 | 1.23982140442e-05 | False |
+| unseen_mixed / 11 | 1.000780838 | 0.932010701839 | 0.677921290639 | 0.000951255917368 | 1.24422653291e-07 | False |
+
+局部划分使部分native残差下降，但末周期global方向仍停滞、严格返回未通过，不能把port相对分母增长当绝对改善。按预登记停止teacher/表示扩展/训练；R-LIN固定Q/native范数下精确最优，不能默认同Q MLP胜出。新未消费集合freeze后已选但not_run，F5/official/shortwave/GPU均not_run。两新阶段wall2636.49526309s、同时整树峰1074900992B、swap0；shared-workstation，perfinconclusive，邻身份/CPU推进未能量化影响。整树16GiB/12GiB、MPI1/math1/own lock/独立cache/只清理本树，无cgroup委派不假称内核上限。
+
+终态BOUNDED_STRUCTURAL_GLOBAL_STAGNATION，research-only，待review，无master merge；未扩大网络或扫描。依据真实全局停滞，下一步需review决定新的空间/接口响应方向，不能直接加epoch。[response_v3](task042_neural_coarse_inverse/response_v3.md)、[summary](task042_neural_coarse_inverse/outcomes/summary.md)、[逐步历史](task042_neural_coarse_inverse/outcomes/records/full_residual_history_v3.csv)、[Gate/资源](task042_neural_coarse_inverse/outcomes/records/run_index_v3.json)。

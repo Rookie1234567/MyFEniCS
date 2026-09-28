@@ -1,0 +1,252 @@
+{
+  "schema": "task042.gates.v3",
+  "comparison": [
+    {
+      "index": 0,
+      "label": {
+        "problem_id": "physical_PH_b6",
+        "kind": "actual_fine_physical_coarse_call",
+        "whole_problem": "physical_F1_trajectory"
+      },
+      "B0_native": 0.9986549671046347,
+      "GEO_native": 0.891957825531469,
+      "B0_port": 0.4654717527063063,
+      "GEO_port": 0.007730913356040553,
+      "GEO_port_absolute": 0.1872108746118584,
+      "GEO_Schur_relative": 0.9096244755012562,
+      "GEO_internal": 6.8893806116558e-17,
+      "strict_pass_recomputed": false,
+      "iterations": 256,
+      "last32_Schur_fractional_decrease": 5.702982921573785e-06,
+      "native_map_max_difference": 3.184361063558725e-14,
+      "independent_Schur_max_difference": 1.0438025235154611e-14,
+      "reported_vs_explicit_max_difference_over_initial": 3.1755632962926627e-15,
+      "restart_samples": [
+        {
+          "iteration": 0,
+          "Schur": 1.0,
+          "native": 1.0000000000000002,
+          "port": 0.0
+        },
+        {
+          "iteration": 32,
+          "Schur": 0.910496937810565,
+          "native": 0.8924768737496036,
+          "port": 0.007771240970871495
+        },
+        {
+          "iteration": 64,
+          "Schur": 0.9097031852006695,
+          "native": 0.892380288284293,
+          "port": 0.0077387437318859565
+        },
+        {
+          "iteration": 96,
+          "Schur": 0.9096629582064414,
+          "native": 0.8920355772796854,
+          "port": 0.007731766254127788
+        },
+        {
+          "iteration": 128,
+          "Schur": 0.9096474070637943,
+          "native": 0.8919951318412978,
+          "port": 0.007733229717714458
+        },
+        {
+          "iteration": 160,
+          "Schur": 0.9096357816888253,
+          "native": 0.8919892150399602,
+          "port": 0.007731537377799827
+        },
+        {
+          "iteration": 192,
+          "Schur": 0.9096324147679395,
+          "native": 0.8919784175868712,
+          "port": 0.007730970884260896
+        },
+        {
+          "iteration": 224,
+          "Schur": 0.9096296631036899,
+          "native": 0.8919741422924734,
+          "port": 0.00773097579424339
+        },
+        {
+          "iteration": 256,
+          "Schur": 0.9096244755012562,
+          "native": 0.891957825531469,
+          "port": 0.007730913356040553
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "label": {
+        "problem_id": "unseen_port_only",
+        "kind": "unseen_port_only",
+        "seed": 420400,
+        "whole_problem": "heldout_seed420400_first_full_rhs_family"
+      },
+      "B0_native": 0.9541928019049628,
+      "GEO_native": 0.9358618773364152,
+      "B0_port": 0.27645843374538487,
+      "GEO_port": 0.7253389529626245,
+      "GEO_port_absolute": 0.0009350566972545408,
+      "GEO_Schur_relative": 0.9489899030823906,
+      "GEO_internal": 0.0,
+      "strict_pass_recomputed": false,
+      "iterations": 256,
+      "last32_Schur_fractional_decrease": 1.2398214044195832e-05,
+      "native_map_max_difference": 3.4858121261633683e-16,
+      "independent_Schur_max_difference": 2.929943333433596e-16,
+      "reported_vs_explicit_max_difference_over_initial": 1.0842021724855042e-15,
+      "restart_samples": [
+        {
+          "iteration": 0,
+          "Schur": 1.0,
+          "native": 1.0,
+          "port": 1.0
+        },
+        {
+          "iteration": 32,
+          "Schur": 0.9497620974588386,
+          "native": 0.9338621200551748,
+          "port": 0.7285202039346419
+        },
+        {
+          "iteration": 64,
+          "Schur": 0.9494731463302525,
+          "native": 0.9348465197167697,
+          "port": 0.7288957030227969
+        },
+        {
+          "iteration": 96,
+          "Schur": 0.9492949988095417,
+          "native": 0.9353595918520164,
+          "port": 0.7268209318225551
+        },
+        {
+          "iteration": 128,
+          "Schur": 0.9490812297622435,
+          "native": 0.9354592557782201,
+          "port": 0.7261318186614029
+        },
+        {
+          "iteration": 160,
+          "Schur": 0.949027513965746,
+          "native": 0.9354890943389046,
+          "port": 0.7257458649301677
+        },
+        {
+          "iteration": 192,
+          "Schur": 0.9490114229574508,
+          "native": 0.9356284565928252,
+          "port": 0.7256035654759998
+        },
+        {
+          "iteration": 224,
+          "Schur": 0.9490016690082113,
+          "native": 0.9357186738494236,
+          "port": 0.7254795968558698
+        },
+        {
+          "iteration": 256,
+          "Schur": 0.9489899030823906,
+          "native": 0.9358618773364152,
+          "port": 0.7253389529626245
+        }
+      ]
+    },
+    {
+      "index": 11,
+      "label": {
+        "problem_id": "unseen_mixed",
+        "kind": "unseen_mixed",
+        "seed": 420400,
+        "whole_problem": "heldout_seed420400_first_full_rhs_family"
+      },
+      "B0_native": 1.0007808380005114,
+      "GEO_native": 0.9320107018386657,
+      "B0_port": 0.6249897676433934,
+      "GEO_port": 0.6779212906385966,
+      "GEO_port_absolute": 0.0009512559173680396,
+      "GEO_Schur_relative": 0.9742435670846832,
+      "GEO_internal": 3.405734234559493e-16,
+      "strict_pass_recomputed": false,
+      "iterations": 256,
+      "last32_Schur_fractional_decrease": 1.2442265329148938e-07,
+      "native_map_max_difference": 6.389319556183191e-15,
+      "independent_Schur_max_difference": 2.2475937780418135e-16,
+      "reported_vs_explicit_max_difference_over_initial": 2.659706868636919e-15,
+      "restart_samples": [
+        {
+          "iteration": 0,
+          "Schur": 1.0,
+          "native": 1.0044759655979907,
+          "port": 1.0
+        },
+        {
+          "iteration": 32,
+          "Schur": 0.9744751549839791,
+          "native": 0.9321721414601728,
+          "port": 0.6838850208242521
+        },
+        {
+          "iteration": 64,
+          "Schur": 0.9743006062414796,
+          "native": 0.9320767917593488,
+          "port": 0.6790242511352309
+        },
+        {
+          "iteration": 96,
+          "Schur": 0.9742637688739475,
+          "native": 0.9319680431458419,
+          "port": 0.6784561885248072
+        },
+        {
+          "iteration": 128,
+          "Schur": 0.9742515535074388,
+          "native": 0.9319447177895711,
+          "port": 0.6781079125433781
+        },
+        {
+          "iteration": 160,
+          "Schur": 0.9742456674566446,
+          "native": 0.9319952825376316,
+          "port": 0.6780118214177621
+        },
+        {
+          "iteration": 192,
+          "Schur": 0.9742441296485504,
+          "native": 0.9320014707741648,
+          "port": 0.6779373061423966
+        },
+        {
+          "iteration": 224,
+          "Schur": 0.9742436883026678,
+          "native": 0.9320117969668783,
+          "port": 0.6779403784001009
+        },
+        {
+          "iteration": 256,
+          "Schur": 0.9742435670846832,
+          "native": 0.9320107018386657,
+          "port": 0.6779212906385966
+        }
+      ]
+    }
+  ],
+  "preregistered_global_stagnation_stop": true,
+  "strict_return_all3": false,
+  "consumed_diagnostic_count": 3,
+  "fresh_qualification_performed": false,
+  "old15_nonzero_failures_per_candidate_retained": true,
+  "global_p4_factor_created": false,
+  "private_audit_csr": false,
+  "all_factor_bytes": 302047392,
+  "representation_bytes": 3010048,
+  "F5": false,
+  "teacher_new_run": false,
+  "neural_new_training": false,
+  "linear_optimality": "exact minimum of fixed Q and fixed native norm; same-Q MLP cannot improve that minimum",
+  "performance": "inconclusive/shared-workstation"
+}

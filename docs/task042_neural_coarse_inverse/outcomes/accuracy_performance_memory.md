@@ -75,3 +75,19 @@ G-no-factor与绝对资源上限已通过；低内存迭代、线性和神经严
 | 100 | undefined | undefined | 同上；未作无界重复或外推加速 |
 
 离线teacher（含8参考、384对数据与审核）1687.601743s、oracle358.751261s、NN训练监督22.267641s分开实测；合计2068.620645s为shared-workstation离线成本，basis/PC setup含在各候选工作流中，不能二次累计。尚无严格合格单次节省，不能由该离线合计推断摊销阈值。
+
+
+## V3 最新有限诊断（原V2正文保留）
+
+| 已消费诊断RHS / index | 旧B0原A4 | 新GEO原A4 | 新GEO port closure | 新GEO port绝对残差 | 末32步Schur降幅 | 严格返回 |
+|---|---|---|---|---|---|---|
+| physical_PH_b6 / 0 | 0.998654967105 | 0.891957825531 | 0.00773091335604 | 0.187210874612 | 5.70298292157e-06 | False |
+| unseen_port_only / 10 | 0.954192801905 | 0.935861877336 | 0.725338952963 | 0.000935056697255 | 1.23982140442e-05 | False |
+| unseen_mixed / 11 | 1.000780838 | 0.932010701839 | 0.677921290639 | 0.000951255917368 | 1.24422653291e-07 | False |
+
+| 新阶段 | 真实clean source | 现场核 / threads | 整树wall s | 整树RSS峰 B | own swap B |
+|---|---|---|---|---|---|
+| V3-reuse | `b158c5301e7ff59000b15b335672afdb61c5e5e1` | 12 / 1 | 141.744161531 | 1074900992 | 0 |
+| V3-overlap | `7fc3f1434cf4f38f43e5244ebfed3a19d0780a26` | 0 / 1 | 2494.75110155 | 945766400 | 0 |
+
+新结构仅3个consumed诊断，全部未通过原1e-10；新teacher/训练not_run，fixed Q的线性最优性不变。新port相对closure同时报告绝对残差，不能混淆分母变化；共享成本/performance inconclusive。旧16测试已消费且原失败保留。全部逐步独立残差见[历史CSV](records/full_residual_history_v3.csv)，末周期分流见[Gate](records/gate_decisions_v3.json)。

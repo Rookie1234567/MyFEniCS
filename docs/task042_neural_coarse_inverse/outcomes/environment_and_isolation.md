@@ -39,3 +39,8 @@ effective总内存2163100385280B，原reserve=max(128GiB,10%)为216310038528B，
 每个正式组件/训练/测试成本标`shared-workstation`。邻负载、缓存和完整p6/p4-only生命周期不同，性能Gate为`inconclusive`；数值残差仍可判定。新共享profile只落实[用户授权](shared_authorization_v2.md)，不修改Task39/其他合同，也不是F0正式review通过。原F0 WAITING记录在response_v1及无后缀JSON保留为历史；本轮按数值Gate实际停止。
 
 数值与final FE/pure回归完成后，一次保守进程/线程审计未给出spare，未启动处理负载。只读1秒逐CPU计数与既有worker/宽监督器PSR核验显示CPU0 busy fraction0、26候选核心，随后仅用CPU0完成有界stdlib文档提取；不修改数值准入或邻亲和性。[该轻量审计](records/documentation_cpu_audit_v2.json)保留实际准入差异，不能宣称整机独占。
+
+
+## V3 最新有限诊断（原V2正文保留）
+
+V3资源准入/执行详见[运行账](records/run_index_v3.json)。明确纠正V2全CPU0概括：oracle实际33、F4-B0实际45，worker affinity/source_state一致；V3每个阶段实际核见账，不把旧核永久保留。无cgroup委派，整树RSS16GiB/warning12GiB、swap0、math1、own lock及只清理本树保持。宽休眠线程旧PSR误排全部核的问题仅V3用活动样本修正。全部shared-workstation，无可比邻性能记录，不能声称零干扰；未修改邻任务/锁/环境。

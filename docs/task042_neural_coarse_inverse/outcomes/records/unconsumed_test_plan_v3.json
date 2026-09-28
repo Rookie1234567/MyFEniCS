@@ -1,0 +1,34 @@
+{
+  "schema": "task042.unconsumed-test-selection.v3",
+  "selected_utc": "2026-09-28T15:09:08.138635+00:00",
+  "candidate_frozen_source_sha": "7fc3f1434cf4f38f43e5244ebfed3a19d0780a26",
+  "candidate_files_sha256": {
+    "src/solvers/learned_geometry_overlap.py": "c363efda6da9f51d3fa41bbc15e969b67aa1526d200ae29379a37930adfeaa1b",
+    "src/solvers/learned_coarse_inverse.py": "e95776a6a1a5d734f2fc5db9ab176428956fa489cd4eca1cf7059e4638a9e4c3",
+    "src/runners/task042_diagnostics.py": "f2cbdc1618edd6f585ea4d3c43a894f42362ead9b89d4e6b40439bdaafdde5ea",
+    "input/task042_neural_coarse_inverse/diagnostic_v3.json": "fabaecefe0667304aea9a79a3115a3f0c7af5efb7deb5257a4e31e99517efcc3"
+  },
+  "seed": 420620,
+  "count": 16,
+  "whole_families": [
+    "zero",
+    "seed420620_internal",
+    "seed420620_port",
+    "seed420620_mixed",
+    "seed420620_manufactured0",
+    "seed420620_manufactured1"
+  ],
+  "family_variants": [
+    "1",
+    "phase_i",
+    "amplitude_1e3"
+  ],
+  "inventory": "one exact zero plus five independent whole families with three variants each",
+  "no_old16_relabeling": true,
+  "arrays_generated": false,
+  "solver_executed": false,
+  "conditional_gate": "Only if the preregistered consumed-RHS global diagnostic permits further finite-space research and a subsequent final candidate is frozen; not a qualification of current diagnostic candidate.",
+  "F5": false,
+  "role": "new unconsumed pool selected after structure freeze, not a performed fresh terminal test",
+  "not_run_reason": "Preregistered O(1) global stagnation"
+}

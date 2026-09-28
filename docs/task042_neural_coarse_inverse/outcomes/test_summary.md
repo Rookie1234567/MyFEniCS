@@ -22,3 +22,23 @@ F4 zero路径会直接返回精确零、不调用backend；原报告字段沿用
 所有测试和后处理Math threads1、仅自身nice/idle I/O、fresh现场选核及bounded监督。最终Markdown本地实际生成HTML并核对表格/标题/链接；local markdown-it的math按code展示，推送后用GitHub真实math-renderer核对，不能只凭本地预览宣称公式显示资格。
 
 最终协议/表示/监督器44 passed（11 deselected），小型FE/80mode/默认与noncommuting/BAL_H18 passed（1 deselected），治理/文档27 passed。额外旧总账checker为1 failed：其40节固定序列和旧Task038缺失evidence在精确a76已存在；Task042表头缺失已在V2局部补成统一格式，基线对比当前无新增错误。[完整基线proof](records/registry_contract_baseline_v2.json)保留原失败及修复后剩余两项错误，不删历史章节、不改测试期待，也不称全仓全绿。Ruff0.16.6对20个新源/协议/测试文件通过，41个相关Python定向compile、bash与diff通过；没有重新运行昂贵F1–F4。
+
+
+## V3 最新有限诊断的实际检查（V2历史完整保留）
+
+| 检查 | 实际结果 / 范围 | 证据 |
+|---|---|---|
+| 前期pure/准入 | 48纯数组/协议/表示/几何、4准入与自有监督；首次lint阻断未执行tests/FE，全部尝试保留 | [辅助成本](records/auxiliary_costs_v3.json) |
+| FE小接口 | ABI/complex128/int64、几何MPC主从支撑、原borrowed witness/80mode/default，4 passed；未重跑teacher/F1正式算例 | 本地tmp/task042/v3/overlap-fe-support-tests、[环境](environment_and_isolation.md) |
+| 最终pure/source | 49 passed；11个相关Python定向compile，10文件Ruff无问题，input_schema仅对经proof的ISC004/RUF022作本次限定；bash/diff通过 | tmp/task042/v3/final-array-checks-complete；[继承schema lint proof](records/schema_lint_baseline_v3.json) |
+| 资源测试真实失败 | 首次汇总observed_child_pids只记1，但原RSS样本含2后代及setsid孙进程，触128MiB测试门并整树清场、sibling仍活；另一次修复后lint未使用变量失败保留 | [原始样本与修复](records/watchdog_test_evidence_v3.json)、辅助账 |
+| 资源测试最小修复 | 只把测试断言改为原始整树samples的后代/setsid证据，监督器与数值实现不变；49项重跑通过，不重跑任何数值 | src/test/test_task042_shared_watchdog.py；[冻结源码 proof](records/static_checks_v3.json) |
+| 新正式残差 | 3项各0..256每步，reported/显式/独立native/port/internal与恢复，原字段重算5条件全部<=1e-10才passed，三项failed | [Gate](records/gate_decisions_v3.json)、[完整CSV](records/full_residual_history_v3.csv) |
+| 文档/治理/原历史 | 定向治理/表格测试与V3独立表格/链接/围栏/Gate/hash/source/旧正文保护；结果见static，不冒充全仓CI | [独立static](records/static_checks_v3.json)、[继承registry proof](records/registry_contract_baseline_v3.json) |
+| GitHub发布 | 首次push后实际exactHEAD richText表格与math-renderer，最终文档bytes保持一致；见实际检查，不称像素截图 | [publication](records/publication_checks_v3.json) |
+
+扩大Ruff范围时input_schema原有12条诊断（11 ISC004、1 RUF022）与本轮起点d42逐项源码片段一致，未改旧schema错误。原schema字段/README枚举及总账40节/Task038历史问题不因V3改为green；registry检查当前与起点的错误相同。raw失败尝试完整保留，未放宽数值Gate或迭代预算来重跑。
+
+全部检查单核math1、nice10/idle I/O、fresh现场核与自身2GiB整树监督；辅助wall/RSS/swap/source/命令/失败均在新v3账，V2记录逐字保护。新数值仅两个分进程阶段，CPU12 reuse、CPU0 structure，真实clean source各自绑定。旧16heldout消费边界、fresh未运行、teacher/训练/误差空间/F5/正式物理/GPU/短波not_run。未运行full pytest、MPI2/4，也没有CI声明。辅助峰为顺序树峰的最大，不是会话总峰；编辑/Git/审阅未持续采样。
+
+V3治理/文档表格定向测试28 passed；registry当前继承两项错误与d42完全一致。首次独立static因其结果文件尚未生成而报告三处自身链接缺失，真实FAIL副本和辅助尝试保留；生成结果文件后仅重查静态链接/Gate，不重跑数值。

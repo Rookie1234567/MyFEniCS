@@ -39,3 +39,8 @@ A_4=P^H A_6P,\qquad C=P A_4^{-1}P^H.
 预登记oracle最高rank两比<=.90/.99才继续；本轮通过，因此实际完成小训练和F4。F4要求所有非零原A4及port/recovery<=1e-10、zero精确零、finite/slave-zero/恢复成立。三路线到256步仍失败即`COARSE_INVERSE_NOT_QUALIFIED`，不改参数重跑；仅全部合格路线允许三独立进程计时和条件F5。F5原A6<=1e-6、全部场/模态/RTA原门限仍保留，当前全部not_run。
 
 [逐RHS与资源](accuracy_performance_memory.md)、[独立Gate](records/gate_decisions_v2.json)、[真实F1](records/f1_real_components_v2.json)、[teacher](records/teacher_complete_v2.json)、[oracle](records/oracle_complete_v2.json)给出正信号和失败的不同含义。用户共享授权替代仅Task042 heavy/全机锁要求，使用自有非阻塞锁和低开销整树监督；不把原F0等待或用户授权当成正式review通过。
+
+
+## V3 最新有限诊断（原V2正文保留）
+
+V3只新增显式R-GEO-CELL80-v3与可选逐步observer，复用单元trace/MPC支撑，不复制audit CSR；原连续512行B0不变。252个局部原Schur块含完整80ports，限制canonical坐标、延拓次数平均。全局粗逆未资格化，固定Q下R-LIN精确最小native残差的最优性仍成立；同Q MLP不能胜过该最优解。详细[预登记](bounded_diagnostic_design_v3.md)与[结构实测](records/structure_complete_v3.json)。
