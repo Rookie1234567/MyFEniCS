@@ -1,0 +1,13 @@
+stage,component,data_identity,status,value,unit,baseline_or_denominator,reason,evidence
+F0,toy_original_a4,measured,pass,1.2757622972373108e-16,relative,explicit analytic toy witness scale,not physical A4/FE qualification,pure_component_audit.json
+F0,toy_port_closure,measured,pass,0.0,relative,explicit analytic toy witness scale,not physical A4/FE qualification,pure_component_audit.json
+F0,toy_recovery,measured,pass,0.0,relative,explicit analytic toy witness scale,not physical A4/FE qualification,pure_component_audit.json
+F0,pure_contract_tests,measured,pass,33,tests,focused source file,controlled analytic backend; no FGMRES,bounded_f0_runs.json
+F1-F4,real_A4,not_run,not_run,not_run,not_run,not_run,WAITING_FOR_SHARED_WORKSTATION,gate_decisions.json
+F1-F4,real_port_recovery,not_run,not_run,not_run,not_run,not_run,WAITING_FOR_SHARED_WORKSTATION,gate_decisions.json
+F1-F4,teacher,not_run,not_run,not_run,not_run,not_run,WAITING_FOR_SHARED_WORKSTATION,gate_decisions.json
+F1-F4,POD_oracle,not_run,not_run,not_run,not_run,not_run,WAITING_FOR_SHARED_WORKSTATION,gate_decisions.json
+F1-F4,R_B0,not_run,not_run,not_run,not_run,not_run,WAITING_FOR_SHARED_WORKSTATION,gate_decisions.json
+F1-F4,R_LIN,not_run,not_run,not_run,not_run,not_run,WAITING_FOR_SHARED_WORKSTATION,gate_decisions.json
+F1-F4,R_NN,not_run,not_run,not_run,not_run,not_run,WAITING_FOR_SHARED_WORKSTATION,gate_decisions.json
+F1-F4,F4_three_repeats,not_run,not_run,not_run,not_run,not_run,WAITING_FOR_SHARED_WORKSTATION,gate_decisions.json

@@ -1,0 +1,31 @@
+{
+  "schema": "task042.git-preparation.v1",
+  "utc": "2026-09-28T09:01:35.490875+00:00",
+  "pwd": "/home/fenics/Projects/NN-Lab",
+  "toplevel": "/home/fenics/Projects/NN-Lab",
+  "branch": "task42_neural_coarse_inverse",
+  "source_head": "9934c2e08d017124ba70bdc86ec0c22f39ca792f",
+  "upstream": "origin/task42_neural_coarse_inverse",
+  "common_git_directory": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+  "origin": "git@github-myfenics:Rookie1234567/MyFEniCS.git",
+  "initial_worktree_head_and_remote_observed": "f8c51c8e614edc806cf72120ac2cfd14ae8b62f7",
+  "frozen_base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "initial_task_document_anchor": "f8c51c8e614edc806cf72120ac2cfd14ae8b62f7",
+  "base_is_ancestor": true,
+  "anchor_is_ancestor": true,
+  "ahead_behind_at_preparation_complete": "0 0",
+  "fetch_refspecs_after_user_permission": [
+    "+refs/heads/task39extra_para_workstation_capacity:refs/remotes/origin/task39extra_para_workstation_capacity",
+    "+refs/heads/task42_neural_coarse_inverse:refs/remotes/origin/task42_neural_coarse_inverse"
+  ],
+  "explicit_user_exception": "Allowed only append Task042 fetch refspec and set upstream; preserve existing refspec/URL/defaults/old worktrees.",
+  "old_worktree_registry_and_new_registration": "worktree /home/fenics/Projects/Maxwell3D-Lab/task-repository.git\nbare\n\nworktree /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity\nHEAD 64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa\nbranch refs/heads/task39extra_para_workstation_capacity\n\nworktree /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity-docs-20260920\nHEAD 47cb73bf083072ed03788f67830f6ca1e933b60c\ndetached\n\nworktree /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity-docs-20260928\nHEAD ccd357885f7f9be84efe3be07868cc94f13d93fc\ndetached\n\nworktree /home/fenics/Projects/NN-Lab\nHEAD 9934c2e08d017124ba70bdc86ec0c22f39ca792f\nbranch refs/heads/task42_neural_coarse_inverse\n\n",
+  "fetch_policy": "task42 only; --no-auto-maintenance --no-write-fetch-head --no-tags; maintenance.auto=false gc.auto=0; no force/reset/stash/clean/GC/prune/repack",
+  "authentication": "SSH alias github-myfenics, BatchMode=yes, StrictHostKeyChecking=yes, ConnectTimeout=15; no credentials requested or logged",
+  "preparation_errors_retained": [
+    "Sandbox-only empty .git/.agents/.codex placeholders: first defensive assertion stopped before any mutation; authoritative host found directory truly empty.",
+    "--track initial add rejected because old origin.fetch mapped Task39 only; no branch/worktree created by failure. --no-track add succeeded, then limited user refspec authorization enabled standard upstream."
+  ],
+  "initial_tree_status": "clean",
+  "current_note": "This record follows clean source checks, while delivery documents are being written. Final document HEAD and final clean/ahead-behind are reported after push."
+}

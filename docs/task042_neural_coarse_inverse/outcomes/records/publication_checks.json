@@ -1,0 +1,7 @@
+{
+  "schema": "task042.publication-checks.v1",
+  "status": "pending_until_push",
+  "github_rendered_view": null,
+  "exact_pushed_head": null,
+  "reason": "Actual post-push verification will be recorded; no pre-push PASS claim."
+}

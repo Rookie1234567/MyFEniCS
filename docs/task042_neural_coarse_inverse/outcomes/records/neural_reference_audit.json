@@ -1,0 +1,156 @@
+{
+  "schema": "task042.neural-reference-audit.v1",
+  "repository": "Rookie1234567/MyFEniCS",
+  "frozen_reference": "d91652dd2d611d6d6bedd10e677c3f7030c07d4f",
+  "access": "read-only GitHub connector at exact SHA; no old-branch Git fetch/merge/cherry-pick",
+  "documents": [
+    {
+      "path": "docs/para_task001_neural_local_pc_acceleration/outcomes/summary.md",
+      "git_blob": "b796f2c1385712a122130a7ec4818cc40ea81fb5",
+      "read": true
+    },
+    {
+      "path": "docs/para_task001_neural_local_pc_acceleration/review_report_v1.md",
+      "git_blob": "25d27282c25c429a67137d227724dbbe40a626d4",
+      "read": true
+    },
+    {
+      "path": "docs/para_task001_neural_local_pc_acceleration/task.md",
+      "git_blob": "8f948cd8b56db7b2c13ddcdaac1811dbc960c923",
+      "read": true
+    },
+    {
+      "path": "docs/para_task004_full_16_slab_exact_oracle/outcomes/summary.md",
+      "git_blob": "67be3dfedd414e440383d5e15ad0bf3927f1a829",
+      "read": true
+    },
+    {
+      "path": "docs/para_task004_full_16_slab_exact_oracle/response_v1.md",
+      "git_blob": "9334f798f2fbcc50778c71399687ee8e3f08031e",
+      "read": true
+    },
+    {
+      "path": "docs/para_task004_full_16_slab_exact_oracle/review_report_v1.md",
+      "git_blob": "65b787ece26f98e2a96c725fccd0b8410a1b69c1",
+      "read": true
+    },
+    {
+      "path": "docs/para_task004_full_16_slab_exact_oracle/task.md",
+      "git_blob": "d47fa094ed2e8ab6aea8152c5dc855b19cfb10cc",
+      "read": true
+    },
+    {
+      "path": "docs/para_task005_comprehensive_all_slab_learned_pc/outcomes/summary.md",
+      "git_blob": "9c658ba67db7f7280f936f09c9fc2aac3c35bdc8",
+      "read": true
+    },
+    {
+      "path": "docs/para_task005_comprehensive_all_slab_learned_pc/response_v1.md",
+      "git_blob": "5910f1a7661d325cdf32b63e2e2a650f7994809c",
+      "read": true
+    },
+    {
+      "path": "docs/para_task005_comprehensive_all_slab_learned_pc/review_report_v1.md",
+      "git_blob": "6d3c9bd14db8bb3f753b17db126341e2e0ab1c9c",
+      "read": true
+    },
+    {
+      "path": "docs/para_task005_comprehensive_all_slab_learned_pc/task.md",
+      "git_blob": "b1d207fd030a1965ef55311ecce6a586d6d0aea3",
+      "read": true
+    }
+  ],
+  "source_interfaces": [
+    {
+      "path": "src/solvers/neural_local_pc.py",
+      "git_blob": "baa9b4d6a4b3c926c01b91f46c22e8ad128295d8",
+      "dependencies": [
+        "numpy",
+        "local_slab_solver.LocalCsrOperator",
+        "local_slab_solver.LocalSlabSolver"
+      ],
+      "migration": "none; read-only design reference"
+    },
+    {
+      "path": "src/solvers/lu_teacher_local_solver.py",
+      "git_blob": "dec69db055b44583d62d09b421aa9a5fdde86494",
+      "dependencies": [
+        "numpy",
+        "scipy.sparse",
+        "scipy.sparse.linalg",
+        "local_slab_solver.LocalCsrOperator"
+      ],
+      "migration": "none; read-only design reference"
+    },
+    {
+      "path": "benchmarks/neural_pc/data_contract.py",
+      "git_blob": "090a3c3d0e0751bf1842a7872af69736f9cfc7ce",
+      "dependencies": [
+        "numpy",
+        "LocalCsrOperator",
+        "data_contract",
+        "SparseLuTeacherLocalSolver (teacher only)"
+      ],
+      "migration": "none; read-only design reference"
+    },
+    {
+      "path": "benchmarks/neural_pc/petsc_capture.py",
+      "git_blob": "59e6976748d15f534144fd5256cea8fd9eaeb3f1",
+      "dependencies": [
+        "numpy",
+        "LocalCsrOperator",
+        "data_contract",
+        "SparseLuTeacherLocalSolver (teacher only)"
+      ],
+      "migration": "none; read-only design reference"
+    },
+    {
+      "path": "benchmarks/neural_pc/build_lu_teacher_dataset.py",
+      "git_blob": "5e761661e8a148c43397cdbbe1d8c82aaaf5fd15",
+      "dependencies": [
+        "numpy",
+        "LocalCsrOperator",
+        "data_contract",
+        "SparseLuTeacherLocalSolver (teacher only)"
+      ],
+      "migration": "none; read-only design reference"
+    }
+  ],
+  "absent_files": [
+    "docs/para_task001_neural_local_pc_acceleration/response_v1.md"
+  ],
+  "reuse_decisions": [
+    "Complex FP64 real/imag packing, checkpoint/operator checksums and raw-only capture are useful patterns; no source migrated.",
+    "Reject online private CSR copies and ILU+NN/fallback deployment patterns.",
+    "Teacher one-factor/many-RHS/destroy pattern must be streaming <=32 RHS and separate process for Task042.",
+    "Old default capture may include local_correction; Task042 capture must be raw-only and whole-trajectory independent.",
+    "Old teacher loader concatenates all RHS; unsuitable for Task042 streaming memory Gate."
+  ],
+  "task001": {
+    "iterations": [
+      861,
+      854
+    ],
+    "solve_campaign_seconds": [
+      156.746,
+      452.641
+    ],
+    "meaning": "historical small iteration benefit, slower full campaign; not Task042 measurements"
+  },
+  "task004": {
+    "iterations": [
+      861,
+      566
+    ],
+    "meaning": "full16 exact two-step signal only, not universal learned-PC upper bound"
+  },
+  "task005": {
+    "persistent_mib": {
+      "model_basis": 27.824,
+      "private_audit_csr": 40.458,
+      "total": 68.282,
+      "guard": 50.505
+    },
+    "meaning": "historical storage Gate failed before global integration; nonlinear did not clearly beat linear"
+  }
+}

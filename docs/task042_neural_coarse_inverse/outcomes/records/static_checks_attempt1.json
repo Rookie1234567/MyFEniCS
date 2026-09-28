@@ -1,0 +1,104 @@
+{
+  "schema": "task042.static-checks.v1",
+  "status": "FAIL",
+  "errors": [
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/test_summary.md broken local link records/static_checks.json",
+    "/home/fenics/Projects/NN-Lab/docs/development_progress.md ambiguous Setext"
+  ],
+  "source_sha": "9934c2e08d017124ba70bdc86ec0c22f39ca792f",
+  "formal_pde": false,
+  "git_status_at_check": " M docs/development_model_registry.md\n M docs/development_progress.md\n?? docs/task042_neural_coarse_inverse/outcomes/\n?? docs/task042_neural_coarse_inverse/response_v1.md\n",
+  "markdown": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/accuracy_performance_memory.md",
+      "sha256": "7df223704b6dbb4a2ddab8bc88ce88a7e977c946387073d30911c9cf8bf707e5",
+      "tables": 3,
+      "preview_html_sha256": "5ad7f0498e0a23b2da7e875f5c63d803b383ce54022b74e144953c1ef85be99c",
+      "status": "PASS"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/architecture_and_oracle.md",
+      "sha256": "64ff276a9ca57d3b85677051e31f328b11ae4aaa9248c242503d6122e982ad81",
+      "tables": 3,
+      "preview_html_sha256": "a628b7dc0395c826061d2dd71f31746924fb0f0301826232fef96251334c010e",
+      "status": "PASS"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "a61db165de0d3210035d62cca61e3ff197ae62b56da786f45378e87a5e2bf2d2",
+      "tables": 1,
+      "preview_html_sha256": "2c115b962a578820c430d1577e1a014afd5062a16489f4f8e28706cc8ff10f76",
+      "status": "PASS"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/dataset_and_model_provenance.md",
+      "sha256": "24cfbd3f5839736b1dd4892a2d9f451f3582f542a594e895f4cd05daaf696ede",
+      "tables": 1,
+      "preview_html_sha256": "112e6ccdd67c0f0e3742316e1b5aa6ca1d3ed0858e58ff14e662523fd9cb583b",
+      "status": "PASS"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/environment_and_isolation.md",
+      "sha256": "f39b0c3ce510c1f8a30e9ae661aaccb0d375a03b73b8b9a22a33d9b3d17b5295",
+      "tables": 3,
+      "preview_html_sha256": "1f5c7f237915b690579fb10622dbd22eb29d3f72d2b3293f3695fdb072be32af",
+      "status": "PASS"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "a674e7edd9406ddeda15867c9bff485c2e2d51d8b34b60d0e216377b0c947aca",
+      "tables": 6,
+      "preview_html_sha256": "c3ec40e95be5f2e715321995085c1cd40af453de689ad7003ecd7a7c9fe22ffa",
+      "status": "PASS"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "91bbac05297a9b542d58f535727468f71783f9053f4ed0dcbabd3aa19d35c50f",
+      "tables": 1,
+      "preview_html_sha256": "762bc4048f87a6f08b46ebdeea6e5fdc430e0d3330c53e01bbbbab59578cf65f",
+      "status": "PASS"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v1.md",
+      "sha256": "852d9d715baea0a21bd135558cb3f826c9fb7da52ddf88e26a757a96cea0ff99",
+      "tables": 1,
+      "preview_html_sha256": "0d6eb29021ddda82e12571421f63e480d9305ea465cedc2b3fba1916822fa90c",
+      "status": "PASS"
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/README.md",
+      "sha256": "68390c63aadc4e65e629c2fde480b54de12c92e3b8244d475c942122ce53f64b",
+      "tables": 0,
+      "preview_html_sha256": "37878a8c504a5b5a8c7855eac7f9d2debc3903bdc36c4a2315b5126f4927df32",
+      "status": "PASS"
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "b934741db5727700d425baeb6fb25bf70ab9a82ae15f7427f1db83f2b5be4445",
+      "tables": 44,
+      "preview_html_sha256": "2398d2f9d1ed47a997fc13823365e7ce5baa158bf432fc1fa41ef9731c7afb67",
+      "status": "PASS"
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "1bd60251297b6f783012d1f7a632d4a784a59276667afc5f0bd30972dc5a1e4e",
+      "tables": 118,
+      "preview_html_sha256": "e00c47d5dfaaf0d63f403860876253f2439e3abc675a82325d736f592dfd7b16",
+      "status": "PASS"
+    }
+  ],
+  "json_csv_semantics": "PASS",
+  "source_equals_qualified_commit": true,
+  "protected_contracts_unchanged": true,
+  "ignored_paths": {
+    ".venv": true,
+    ".venv-ml": true,
+    "tmp/task042": true,
+    "results/task042": true,
+    "benchmarks/artifacts/task042": true
+  },
+  "fe_jit_kernel_files": [],
+  "pde_results": [],
+  "local_preview": "markdown-it HTML inspected; math represented as code locally, GitHub view required",
+  "static_check_script_sha256": "959737ea232fcd0d053330301b53d9b75df7666602a5d7a698d525bc5bfa51fa"
+}

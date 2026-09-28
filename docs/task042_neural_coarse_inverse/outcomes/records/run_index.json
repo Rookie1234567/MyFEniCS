@@ -1,0 +1,1303 @@
+{
+  "schema": "task042.run-index.v1",
+  "classification": "WAITING_FOR_SHARED_WORKSTATION",
+  "frozen_base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "initial_task_anchor": "f8c51c8e614edc806cf72120ac2cfd14ae8b62f7",
+  "clean_f0_source_sha": "9934c2e08d017124ba70bdc86ec0c22f39ca792f",
+  "runs": [
+    {
+      "id": "f0_ml_bootstrap-01",
+      "identity": "bounded F0, not formal PDE",
+      "mode": "ml",
+      "summary": {
+        "workflow_deadline_seconds": 600.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1610612736,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          525960
+        ],
+        "sampled_process_tree_rss_peak_bytes": 190951424,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "end": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 988867497984,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 988867497984,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 12000000000,
+          "planning_cap_bytes": 12000000000,
+          "cgroup_limits": []
+        },
+        "samples": 253,
+        "elapsed_seconds": 54.55168269400019,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "f8c51c8e614edc806cf72120ac2cfd14ae8b62f7",
+          "git_status": " M .gitignore\n?? input/task042_neural_coarse_inverse/\n?? scripts/activate_task042.sh\n?? scripts/task042_bounded_check.py\n?? scripts/task042_preflight.py\n?? src/solvers/coarse_inverse_protocol.py\n",
+          "stage": "F0",
+          "formal_pde": false,
+          "command": [
+            "python",
+            "-m",
+            "pip",
+            "install",
+            "--no-input",
+            "--index-url",
+            "https://download.pytorch.org/whl/cpu",
+            "-r",
+            "input/task042_neural_coarse_inverse/requirements-ml.txt"
+          ],
+          "utc": "2026-09-28T08:50:20.469100+00:00",
+          "affinity": [
+            14
+          ],
+          "environment_mode": "ml",
+          "gpu_visible": false
+        }
+      },
+      "raw_files": [
+        {
+          "path": "tmp/task042/ml/bootstrap-01/summary.json",
+          "sha256": "3529d01f95204145721b995b83b76cc5a3f565506296c46d2e2fe18a9cc274b9",
+          "bytes": 2390
+        },
+        {
+          "path": "tmp/task042/ml/bootstrap-01/worker.log",
+          "sha256": "d4fb312dddcb4aabc7f2a56ea0d868e06e281c2d60037398121aad345157304c",
+          "bytes": 5262
+        },
+        {
+          "path": "tmp/task042/ml/bootstrap-01/resources.jsonl",
+          "sha256": "e3db0d056a6ace452e38f0e8e7a1ef094ffcc3c377ddb5c7d11dd45694505066",
+          "bytes": 468465
+        }
+      ],
+      "note": "Environment installation before implementation commit; dirty development provenance retained."
+    },
+    {
+      "id": "f0_pure_development-tests-01",
+      "identity": "bounded F0, not formal PDE",
+      "mode": "pure",
+      "summary": {
+        "workflow_deadline_seconds": 180,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1610612736,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          49
+        ],
+        "sampled_process_tree_rss_peak_bytes": 83984384,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "end": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 989111701504,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 989111701504,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 12000000000,
+          "planning_cap_bytes": 12000000000,
+          "cgroup_limits": []
+        },
+        "samples": 21,
+        "elapsed_seconds": 2.0963330030208454,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "f8c51c8e614edc806cf72120ac2cfd14ae8b62f7",
+          "git_status": " M .gitignore\n?? input/task042_neural_coarse_inverse/\n?? scripts/activate_task042.sh\n?? scripts/task042_bounded_check.py\n?? scripts/task042_preflight.py\n?? src/solvers/coarse_inverse_protocol.py\n?? src/test/test_task042_coarse_inverse_protocol.py\n",
+          "stage": "F0",
+          "formal_pde": false,
+          "command": [
+            "python",
+            "-m",
+            "pytest",
+            "-q",
+            "src/test/test_task042_coarse_inverse_protocol.py"
+          ],
+          "utc": "2026-09-28T08:52:53.478496+00:00",
+          "affinity": [
+            14
+          ],
+          "environment_mode": "pure",
+          "gpu_visible": false
+        }
+      },
+      "raw_files": [
+        {
+          "path": "tmp/task042/pure/development-tests-01/summary.json",
+          "sha256": "d348f7b7e7a0743b44335367d997b38813b9d640e1155297acbb79c1136bc6ed",
+          "bytes": 2330
+        },
+        {
+          "path": "tmp/task042/pure/development-tests-01/worker.log",
+          "sha256": "196970050b4d88ebe96ab8167bbd05bc63a191b0d5a789c462d010b031cd8868",
+          "bytes": 99
+        },
+        {
+          "path": "tmp/task042/pure/development-tests-01/resources.jsonl",
+          "sha256": "bd3b72956909974fd3d18e2eee660df579e2e2476d4184aa127a33ee02f6f439",
+          "bytes": 32175
+        }
+      ]
+    },
+    {
+      "id": "f0_pure_development-tests-02",
+      "identity": "bounded F0, not formal PDE",
+      "mode": "pure",
+      "summary": {
+        "workflow_deadline_seconds": 180,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1610612736,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          49
+        ],
+        "sampled_process_tree_rss_peak_bytes": 67633152,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "end": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 988787716096,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 988787716096,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 12000000000,
+          "planning_cap_bytes": 12000000000,
+          "cgroup_limits": []
+        },
+        "samples": 15,
+        "elapsed_seconds": 1.4611817779950798,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "f8c51c8e614edc806cf72120ac2cfd14ae8b62f7",
+          "git_status": " M .gitignore\n?? input/task042_neural_coarse_inverse/\n?? scripts/activate_task042.sh\n?? scripts/task042_bounded_check.py\n?? scripts/task042_preflight.py\n?? src/solvers/coarse_inverse_protocol.py\n?? src/test/test_task042_coarse_inverse_protocol.py\n",
+          "stage": "F0",
+          "formal_pde": false,
+          "command": [
+            "python",
+            "-m",
+            "pytest",
+            "-q",
+            "src/test/test_task042_coarse_inverse_protocol.py"
+          ],
+          "utc": "2026-09-28T08:54:15.808324+00:00",
+          "affinity": [
+            14
+          ],
+          "environment_mode": "pure",
+          "gpu_visible": false
+        }
+      },
+      "raw_files": [
+        {
+          "path": "tmp/task042/pure/development-tests-02/summary.json",
+          "sha256": "ba5e8b962d6f8a7cf803bd560e8f818a3ab022467d09786d8e09b79dfdfb9253",
+          "bytes": 2330
+        },
+        {
+          "path": "tmp/task042/pure/development-tests-02/worker.log",
+          "sha256": "2cc4cda1ed7d04e56f5039827478e6e3b63957159df438660f15e179e5dce88e",
+          "bytes": 99
+        },
+        {
+          "path": "tmp/task042/pure/development-tests-02/resources.jsonl",
+          "sha256": "f111e10ec51ba846582282675523cd6259dd04317f5eddc0b7ca14a9f91d55bf",
+          "bytes": 22092
+        }
+      ]
+    },
+    {
+      "id": "f0_pure_clean-preflight-01",
+      "identity": "bounded F0, not formal PDE",
+      "mode": "pure",
+      "summary": {
+        "workflow_deadline_seconds": 180.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1610612736,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          526949
+        ],
+        "sampled_process_tree_rss_peak_bytes": 45719552,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "end": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 988840112128,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 988840112128,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 12000000000,
+          "planning_cap_bytes": 12000000000,
+          "cgroup_limits": []
+        },
+        "samples": 8,
+        "elapsed_seconds": 1.4594197400147095,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "2c9b54b4f4f7e8e083c398c0290c3881f3dc8980",
+          "git_status": "",
+          "stage": "F0",
+          "formal_pde": false,
+          "command": [
+            "python",
+            "scripts/task042_preflight.py",
+            "--output",
+            "tmp/task042/pure/clean-preflight-01-imports.json"
+          ],
+          "utc": "2026-09-28T08:55:29.609466+00:00",
+          "affinity": [
+            14
+          ],
+          "environment_mode": "pure",
+          "gpu_visible": false
+        }
+      },
+      "raw_files": [
+        {
+          "path": "tmp/task042/pure/clean-preflight-01/summary.json",
+          "sha256": "537989395f5f4839eaf9cc4d3e172e86010fdcce679d936fc4bb122ff6e0e048",
+          "bytes": 2097
+        },
+        {
+          "path": "tmp/task042/pure/clean-preflight-01/worker.log",
+          "sha256": "ceabc6dbcbafdb522ba240726a728224155d2153fece7676de7a36858d8b5742",
+          "bytes": 138
+        },
+        {
+          "path": "tmp/task042/pure/clean-preflight-01/resources.jsonl",
+          "sha256": "a10e0871a5bfe246d37913c8c3e2936380d138a998bdf637a3a0ea5245d25091",
+          "bytes": 11955
+        }
+      ]
+    },
+    {
+      "id": "f0_fe_clean-preflight-01",
+      "identity": "bounded F0, not formal PDE",
+      "mode": "fe",
+      "summary": {
+        "workflow_deadline_seconds": 180.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1610612736,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "WORKER_FAILED",
+        "leader_exit_code": 1,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          527044,
+          527054
+        ],
+        "sampled_process_tree_rss_peak_bytes": 179027968,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "end": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 988833603584,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 988833603584,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 12000000000,
+          "planning_cap_bytes": 12000000000,
+          "cgroup_limits": []
+        },
+        "samples": 18,
+        "elapsed_seconds": 3.7191776339896023,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "2c9b54b4f4f7e8e083c398c0290c3881f3dc8980",
+          "git_status": "",
+          "stage": "F0",
+          "formal_pde": false,
+          "command": [
+            "python",
+            "scripts/task042_preflight.py",
+            "--output",
+            "tmp/task042/fe/clean-preflight-01-imports.json"
+          ],
+          "utc": "2026-09-28T08:55:31.501200+00:00",
+          "affinity": [
+            14
+          ],
+          "environment_mode": "fe",
+          "gpu_visible": false
+        }
+      },
+      "raw_files": [
+        {
+          "path": "tmp/task042/fe/clean-preflight-01/summary.json",
+          "sha256": "492956a8a3f9ab3456a39ad0c2ac6e7f26a37f1915cb27ab343ae078295edc19",
+          "bytes": 2111
+        },
+        {
+          "path": "tmp/task042/fe/clean-preflight-01/worker.log",
+          "sha256": "2dd9901f1851ebcbc31e44a7a350d03798574cb2e127e78696bfc4039d985397",
+          "bytes": 399
+        },
+        {
+          "path": "tmp/task042/fe/clean-preflight-01/resources.jsonl",
+          "sha256": "a213bc6d50466d6e1430ad0e903b7702c26bb0e20d6575f41c91db8ec2c7c969",
+          "bytes": 31442
+        }
+      ],
+      "reason": "AttributeError: dolfinx.jit.get_parameters unavailable in 0.10; no JIT/factor/PDE. One minimal API repair in 9934c2e."
+    },
+    {
+      "id": "f0_pure_clean-preflight-02",
+      "identity": "bounded F0, not formal PDE",
+      "mode": "pure",
+      "summary": {
+        "workflow_deadline_seconds": 180.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1610612736,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          527352
+        ],
+        "sampled_process_tree_rss_peak_bytes": 44138496,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "end": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 989084475392,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 989084475392,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 12000000000,
+          "planning_cap_bytes": 12000000000,
+          "cgroup_limits": []
+        },
+        "samples": 8,
+        "elapsed_seconds": 1.3768720199586824,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "9934c2e08d017124ba70bdc86ec0c22f39ca792f",
+          "git_status": "",
+          "stage": "F0",
+          "formal_pde": false,
+          "command": [
+            "python",
+            "scripts/task042_preflight.py",
+            "--output",
+            "tmp/task042/pure/clean-preflight-02-imports.json"
+          ],
+          "utc": "2026-09-28T08:56:43.882148+00:00",
+          "affinity": [
+            14
+          ],
+          "environment_mode": "pure",
+          "gpu_visible": false
+        }
+      },
+      "raw_files": [
+        {
+          "path": "tmp/task042/pure/clean-preflight-02/summary.json",
+          "sha256": "30dfdce745849d9a8c70e48a47c4c4c461162224144308136cb60cb1d175e0e2",
+          "bytes": 2097
+        },
+        {
+          "path": "tmp/task042/pure/clean-preflight-02/worker.log",
+          "sha256": "9f58871b1228e40b6ad018f340512cd54e135be401ad2ad9fdef763196c4cfa2",
+          "bytes": 138
+        },
+        {
+          "path": "tmp/task042/pure/clean-preflight-02/resources.jsonl",
+          "sha256": "e0ed3f5ee6d0ddc332e725e1a5e29405e06283ebd8844c12f588e53bdef1bbc6",
+          "bytes": 11957
+        }
+      ]
+    },
+    {
+      "id": "f0_fe_clean-preflight-02",
+      "identity": "bounded F0, not formal PDE",
+      "mode": "fe",
+      "summary": {
+        "workflow_deadline_seconds": 180.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1610612736,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          527423,
+          527434
+        ],
+        "sampled_process_tree_rss_peak_bytes": 120582144,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "end": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 989073858560,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 989073858560,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 12000000000,
+          "planning_cap_bytes": 12000000000,
+          "cgroup_limits": []
+        },
+        "samples": 12,
+        "elapsed_seconds": 2.2600873920018785,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "9934c2e08d017124ba70bdc86ec0c22f39ca792f",
+          "git_status": "",
+          "stage": "F0",
+          "formal_pde": false,
+          "command": [
+            "python",
+            "scripts/task042_preflight.py",
+            "--output",
+            "tmp/task042/fe/clean-preflight-02-imports.json"
+          ],
+          "utc": "2026-09-28T08:56:45.433849+00:00",
+          "affinity": [
+            14
+          ],
+          "environment_mode": "fe",
+          "gpu_visible": false
+        }
+      },
+      "raw_files": [
+        {
+          "path": "tmp/task042/fe/clean-preflight-02/summary.json",
+          "sha256": "05b03975b687aa3f5380287a289e7431a187e9c40c4d2d7870584420bbbf0bdb",
+          "bytes": 2107
+        },
+        {
+          "path": "tmp/task042/fe/clean-preflight-02/worker.log",
+          "sha256": "aa4b21cbcf53e4f7dd56dd61db1f250cad51a44ca60a11a5d5a534e4663bf7d0",
+          "bytes": 138
+        },
+        {
+          "path": "tmp/task042/fe/clean-preflight-02/resources.jsonl",
+          "sha256": "7681f18679dc593fb852e64f0e6072660ea2005aa680b1403ab516e488c6723e",
+          "bytes": 20173
+        }
+      ]
+    },
+    {
+      "id": "f0_ml_clean-preflight-02",
+      "identity": "bounded F0, not formal PDE",
+      "mode": "ml",
+      "summary": {
+        "workflow_deadline_seconds": 180.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1610612736,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          527489
+        ],
+        "sampled_process_tree_rss_peak_bytes": 236548096,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "end": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 989129756672,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 989129756672,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 12000000000,
+          "planning_cap_bytes": 12000000000,
+          "cgroup_limits": []
+        },
+        "samples": 17,
+        "elapsed_seconds": 3.6408393969759345,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "9934c2e08d017124ba70bdc86ec0c22f39ca792f",
+          "git_status": "",
+          "stage": "F0",
+          "formal_pde": false,
+          "command": [
+            "python",
+            "scripts/task042_preflight.py",
+            "--output",
+            "tmp/task042/ml/clean-preflight-02-imports.json"
+          ],
+          "utc": "2026-09-28T08:56:47.880834+00:00",
+          "affinity": [
+            14
+          ],
+          "environment_mode": "ml",
+          "gpu_visible": false
+        }
+      },
+      "raw_files": [
+        {
+          "path": "tmp/task042/ml/clean-preflight-02/summary.json",
+          "sha256": "83839466eea7d309ea1e82ae1e74e61d1a08b155593499fb30435ae59d93b189",
+          "bytes": 2095
+        },
+        {
+          "path": "tmp/task042/ml/clean-preflight-02/worker.log",
+          "sha256": "ae31b43f8b836676a402193aeca59cb520d9a280d6fc36015fbe23d2211764e5",
+          "bytes": 134
+        },
+        {
+          "path": "tmp/task042/ml/clean-preflight-02/resources.jsonl",
+          "sha256": "d36879a37f3e6a682c3b70aa97d075703d2ae0b92932ba856e5fee00cbbf0b21",
+          "bytes": 27556
+        }
+      ]
+    },
+    {
+      "id": "f0_pure_clean-tests-02",
+      "identity": "bounded F0, not formal PDE",
+      "mode": "pure",
+      "summary": {
+        "workflow_deadline_seconds": 180,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1610612736,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          527547
+        ],
+        "sampled_process_tree_rss_peak_bytes": 67231744,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "end": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 989092499456,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 989092499456,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 12000000000,
+          "planning_cap_bytes": 12000000000,
+          "cgroup_limits": []
+        },
+        "samples": 9,
+        "elapsed_seconds": 1.6596491030068137,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "9934c2e08d017124ba70bdc86ec0c22f39ca792f",
+          "git_status": "",
+          "stage": "F0",
+          "formal_pde": false,
+          "command": [
+            "python",
+            "-m",
+            "pytest",
+            "-q",
+            "src/test/test_task042_coarse_inverse_protocol.py"
+          ],
+          "utc": "2026-09-28T08:56:51.708834+00:00",
+          "affinity": [
+            14
+          ],
+          "environment_mode": "pure",
+          "gpu_visible": false
+        }
+      },
+      "raw_files": [
+        {
+          "path": "tmp/task042/pure/clean-tests-02/summary.json",
+          "sha256": "1fa0d0fb8a4840fb04ad0fc02828b4dfa26f08c54cb3bddf57600015abaf06c9",
+          "bytes": 2079
+        },
+        {
+          "path": "tmp/task042/pure/clean-tests-02/worker.log",
+          "sha256": "703d55900dd8ce986eacbf006892f17c7d6843d9201d2e775e6c072036cece18",
+          "bytes": 99
+        },
+        {
+          "path": "tmp/task042/pure/clean-tests-02/resources.jsonl",
+          "sha256": "7bd1e462f1ab9b02af95934a9802238a9ec6fca242e1282564d4abaa453ceca6",
+          "bytes": 13237
+        }
+      ]
+    },
+    {
+      "id": "f0_pure_component-audit-01",
+      "identity": "bounded pure-array evidence extraction; not PDE",
+      "mode": "pure",
+      "summary": {
+        "workflow_deadline_seconds": 180,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1610612736,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          528226
+        ],
+        "sampled_process_tree_rss_peak_bytes": 65552384,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "end": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 973342449664,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 973342449664,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 12000000000,
+          "planning_cap_bytes": 12000000000,
+          "cgroup_limits": []
+        },
+        "samples": 9,
+        "elapsed_seconds": 1.7514610590296797,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "9934c2e08d017124ba70bdc86ec0c22f39ca792f",
+          "git_status": "?? docs/task042_neural_coarse_inverse/outcomes/\n",
+          "stage": "F0",
+          "formal_pde": false,
+          "command": [
+            "python",
+            "tmp/task042/component_fixture_audit.py"
+          ],
+          "utc": "2026-09-28T09:02:23.436646+00:00",
+          "affinity": [
+            14
+          ],
+          "environment_mode": "pure",
+          "gpu_visible": false
+        }
+      },
+      "raw_files": [
+        {
+          "path": "tmp/task042/pure/component-audit-01/summary.json",
+          "sha256": "1eca3b612b7ff3ce3b8dba1e189494d98949ea50bf92903eec26f0f22576b038",
+          "bytes": 2078
+        },
+        {
+          "path": "tmp/task042/pure/component-audit-01/worker.log",
+          "sha256": "692973d08fd8d41321680d62c45338ab24a40da5a01349e09e471bac73455bb5",
+          "bytes": 78
+        },
+        {
+          "path": "tmp/task042/pure/component-audit-01/resources.jsonl",
+          "sha256": "c2702fbd834f62187f440963fb1c5861e79682f5932c66de657e8a055eaab229",
+          "bytes": 13020
+        },
+        {
+          "path": "tmp/task042/component_fixture_audit.py",
+          "sha256": "07085c1ab01301ab281271f7f5b91eb12b6b254128bbc5b15cb7b5abdb96f81b",
+          "bytes": 1735
+        }
+      ]
+    },
+    {
+      "id": "f0_pure_final-static-01",
+      "identity": "static/documentation check; not PDE",
+      "mode": "pure",
+      "summary": {
+        "workflow_deadline_seconds": 180.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1610612736,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "WORKER_FAILED",
+        "leader_exit_code": 1,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          529468,
+          529469,
+          529476
+        ],
+        "sampled_process_tree_rss_peak_bytes": 57163776,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "end": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 956124291072,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 956124291072,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 12000000000,
+          "planning_cap_bytes": 12000000000,
+          "cgroup_limits": []
+        },
+        "samples": 12,
+        "elapsed_seconds": 2.616269854013808,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "9934c2e08d017124ba70bdc86ec0c22f39ca792f",
+          "git_status": " M docs/development_model_registry.md\n M docs/development_progress.md\n?? docs/task042_neural_coarse_inverse/outcomes/\n?? docs/task042_neural_coarse_inverse/response_v1.md\n",
+          "stage": "F0",
+          "formal_pde": false,
+          "command": [
+            "bash",
+            "tmp/task042/final_static_checks.sh"
+          ],
+          "utc": "2026-09-28T09:13:59.582780+00:00",
+          "affinity": [
+            14
+          ],
+          "environment_mode": "pure",
+          "gpu_visible": false
+        }
+      },
+      "raw_files": [
+        {
+          "path": "tmp/task042/pure/final-static-01/summary.json",
+          "sha256": "daea2bb0a4d7d467ca6ad9fec462aecb830ddd5bc06c4f8c16c7920f596d2f88",
+          "bytes": 2228
+        },
+        {
+          "path": "tmp/task042/pure/final-static-01/worker.log",
+          "sha256": "b72a87da979c623b855a9815134575b1e4c5ef88aaa16321549f7c17c44729c3",
+          "bytes": 528
+        },
+        {
+          "path": "tmp/task042/pure/final-static-01/resources.jsonl",
+          "sha256": "4989da8666ea8d23d74eda6398cef3d8ba96500d1b6a93ba3370c68e975cfcaf",
+          "bytes": 19659
+        }
+      ]
+    },
+    {
+      "id": "f0_pure_final-static-02",
+      "identity": "static/documentation check; not PDE",
+      "mode": "pure",
+      "summary": {
+        "workflow_deadline_seconds": 180.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1610612736,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          529694,
+          529695,
+          529702
+        ],
+        "sampled_process_tree_rss_peak_bytes": 57368576,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "end": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 955905441792,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 955905441792,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 12000000000,
+          "planning_cap_bytes": 12000000000,
+          "cgroup_limits": []
+        },
+        "samples": 13,
+        "elapsed_seconds": 2.954395356005989,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "9934c2e08d017124ba70bdc86ec0c22f39ca792f",
+          "git_status": " M docs/development_model_registry.md\n M docs/development_progress.md\n?? docs/task042_neural_coarse_inverse/outcomes/\n?? docs/task042_neural_coarse_inverse/response_v1.md\n",
+          "stage": "F0",
+          "formal_pde": false,
+          "command": [
+            "bash",
+            "tmp/task042/final_static_checks.sh"
+          ],
+          "utc": "2026-09-28T09:15:20.863126+00:00",
+          "affinity": [
+            14
+          ],
+          "environment_mode": "pure",
+          "gpu_visible": false
+        }
+      },
+      "raw_files": [
+        {
+          "path": "tmp/task042/pure/final-static-02/summary.json",
+          "sha256": "28c972e9c0cc6c0c25b02c379b4e8548a2f3c3f2847448c75ade7d220589b796",
+          "bytes": 2224
+        },
+        {
+          "path": "tmp/task042/pure/final-static-02/worker.log",
+          "sha256": "1cf3c2819922beb491dea0e4a700c729a73ab741da58b430451f26efeb70d79b",
+          "bytes": 426
+        },
+        {
+          "path": "tmp/task042/pure/final-static-02/resources.jsonl",
+          "sha256": "768d59a95c95727a5f56a8220a71b48283094f4b28d4b6a74d5df70138ac04e3",
+          "bytes": 21625
+        }
+      ]
+    },
+    {
+      "id": "f0_pure_final-document-check-01",
+      "identity": "final changed-documents semantic check; not PDE",
+      "mode": "pure",
+      "summary": {
+        "workflow_deadline_seconds": 180.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1610612736,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          529924
+        ],
+        "sampled_process_tree_rss_peak_bytes": 53276672,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "end": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 299
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 955971956736,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 955971956736,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 12000000000,
+          "planning_cap_bytes": 12000000000,
+          "cgroup_limits": []
+        },
+        "samples": 11,
+        "elapsed_seconds": 2.423535745998379,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "9934c2e08d017124ba70bdc86ec0c22f39ca792f",
+          "git_status": " M docs/development_model_registry.md\n M docs/development_progress.md\n?? docs/task042_neural_coarse_inverse/outcomes/\n?? docs/task042_neural_coarse_inverse/response_v1.md\n",
+          "stage": "F0",
+          "formal_pde": false,
+          "command": [
+            "python",
+            "tmp/task042/final_static_checks.py"
+          ],
+          "utc": "2026-09-28T09:17:29.491763+00:00",
+          "affinity": [
+            14
+          ],
+          "environment_mode": "pure",
+          "gpu_visible": false
+        }
+      },
+      "raw_files": [
+        {
+          "path": "tmp/task042/pure/final-document-check-01/summary.json",
+          "sha256": "4ae7150546de332bffe44326452d0f94961a0e482c1b1bd80c219db3097d28fe",
+          "bytes": 2202
+        },
+        {
+          "path": "tmp/task042/pure/final-document-check-01/worker.log",
+          "sha256": "39157b6072d55ca1ac8ad9a108ce9034773cb6373e3e14037ddf65216a08c2ef",
+          "bytes": 185
+        },
+        {
+          "path": "tmp/task042/pure/final-document-check-01/resources.jsonl",
+          "sha256": "6b6fb8b8f41cb86a1c186359ecf3728ed060836e709bb8332806661a08b32b9d",
+          "bytes": 16502
+        },
+        {
+          "path": "tmp/task042/final_static_checks.py",
+          "sha256": "cd65eff4a05e623eff9f87b8b2c5676446372f2f8afa7afbad26f3b63a2f397b",
+          "bytes": 4533
+        },
+        {
+          "path": "tmp/task042/final_static_checks.sh",
+          "sha256": "fbb81b9c918ccfeab182ce2e33002b20c31a6400439fb240a87d8859df94ce64",
+          "bytes": 816
+        }
+      ]
+    }
+  ],
+  "not_run": [
+    {
+      "id": "F1_R_LU_B0",
+      "status": "not_run",
+      "source_sha": null,
+      "reason": "WAITING_FOR_SHARED_WORKSTATION; no real FE/candidate/dataset; preceding numerical Gate not completed",
+      "original_A4_residual": null,
+      "original_A6_residual": null,
+      "wall_seconds": null,
+      "rss_peak_bytes": null,
+      "vram_peak_bytes": null
+    },
+    {
+      "id": "F2_teacher_oracle",
+      "status": "not_run",
+      "source_sha": null,
+      "reason": "WAITING_FOR_SHARED_WORKSTATION; no real FE/candidate/dataset; preceding numerical Gate not completed",
+      "original_A4_residual": null,
+      "original_A6_residual": null,
+      "wall_seconds": null,
+      "rss_peak_bytes": null,
+      "vram_peak_bytes": null
+    },
+    {
+      "id": "F3_R_LIN_NN",
+      "status": "not_run",
+      "source_sha": null,
+      "reason": "WAITING_FOR_SHARED_WORKSTATION; no real FE/candidate/dataset; preceding numerical Gate not completed",
+      "original_A4_residual": null,
+      "original_A6_residual": null,
+      "wall_seconds": null,
+      "rss_peak_bytes": null,
+      "vram_peak_bytes": null
+    },
+    {
+      "id": "F4_strict_p4",
+      "status": "not_run",
+      "source_sha": null,
+      "reason": "WAITING_FOR_SHARED_WORKSTATION; no real FE/candidate/dataset; preceding numerical Gate not completed",
+      "original_A4_residual": null,
+      "original_A6_residual": null,
+      "wall_seconds": null,
+      "rss_peak_bytes": null,
+      "vram_peak_bytes": null
+    },
+    {
+      "id": "F5_p6",
+      "status": "not_run",
+      "source_sha": null,
+      "reason": "WAITING_FOR_SHARED_WORKSTATION; no real FE/candidate/dataset; preceding numerical Gate not completed",
+      "original_A4_residual": null,
+      "original_A6_residual": null,
+      "wall_seconds": null,
+      "rss_peak_bytes": null,
+      "vram_peak_bytes": null
+    }
+  ],
+  "formal_pde_runs": [],
+  "post_document_checks": {
+    "existing_test_count": 27,
+    "pytest_status": "pass",
+    "ruff_version": "0.16.6",
+    "ruff_compile_shell_diff_status": "pass",
+    "markdown_json_csv_ignore_status": "pass",
+    "first_additional_scanner_failure_preserved": true,
+    "final_publication_check_pending": true
+  },
+  "total_sequential_monitored_wall_seconds_before_document_checks": 73.97670381999342,
+  "rss_peak_bytes_observed": 236548096,
+  "gpu_peak": {
+    "status": "not_run",
+    "bytes": null
+  },
+  "scope": "These foreground bounded invocations including supervisor/descendants only. Not a continuously monitored agent/editor/Git/read/wait session. Uninstrumented environment creation and static edits/reads have no invented wall/RSS peak.",
+  "total_sequential_monitored_wall_seconds": 81.9709047760116
+}

@@ -1,0 +1,68 @@
+{
+  "schema": "task042.environment.v1",
+  "utc": "2026-09-28T08:56:43.972690+00:00",
+  "mode": "pure",
+  "python": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+  "prefix": "/home/fenics/Projects/NN-Lab/.venv",
+  "python_version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "host": "fenics-ws01",
+  "kernel": "7.0.0-31-generic",
+  "cwd": "/home/fenics/Projects/NN-Lab",
+  "source_sha": "9934c2e08d017124ba70bdc86ec0c22f39ca792f",
+  "git_status": "",
+  "affinity": [
+    14
+  ],
+  "caches": {
+    "TMPDIR": "/home/fenics/Projects/NN-Lab/tmp/task042/pure/tmp",
+    "TMP": "/home/fenics/Projects/NN-Lab/tmp/task042/pure/tmp",
+    "TEMP": "/home/fenics/Projects/NN-Lab/tmp/task042/pure/tmp",
+    "XDG_CACHE_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/pure/xdg",
+    "XDG_CONFIG_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/pure/config",
+    "FFCX_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/pure/xdg/fenics",
+    "PYTHONPYCACHEPREFIX": "/home/fenics/Projects/NN-Lab/tmp/task042/pure/pycache",
+    "MPLCONFIGDIR": "/home/fenics/Projects/NN-Lab/tmp/task042/pure/matplotlib",
+    "TORCH_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/pure/torch",
+    "HF_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/pure/huggingface",
+    "HUGGINGFACE_HUB_CACHE": "/home/fenics/Projects/NN-Lab/tmp/task042/pure/huggingface/hub",
+    "TRANSFORMERS_CACHE": "/home/fenics/Projects/NN-Lab/tmp/task042/pure/huggingface/transformers",
+    "TRITON_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/pure/triton",
+    "CUDA_CACHE_PATH": "/home/fenics/Projects/NN-Lab/tmp/task042/pure/cuda",
+    "NUMBA_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/pure/numba",
+    "PIP_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/pure/pip",
+    "UV_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/pure/uv",
+    "RUFF_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/pure/ruff",
+    "TASK042_RESULTS_ROOT": "/home/fenics/Projects/NN-Lab/results/task042",
+    "TASK042_ARTIFACT_ROOT": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042"
+  },
+  "threads": {
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1",
+    "BLIS_NUM_THREADS": "1",
+    "VECLIB_MAXIMUM_THREADS": "1"
+  },
+  "modules": {
+    "numpy": {
+      "path": "/usr/lib/python3/dist-packages/numpy/__init__.py",
+      "version": "1.26.4"
+    },
+    "src": {
+      "path": "/home/fenics/Projects/NN-Lab/src/__init__.py",
+      "version": null
+    },
+    "src.solvers.coarse_inverse_protocol": {
+      "path": "/home/fenics/Projects/NN-Lab/src/solvers/coarse_inverse_protocol.py",
+      "version": null
+    }
+  },
+  "fe_jit": false,
+  "gpu_context": false,
+  "loaded_libraries": [
+    "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+    "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+    "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so"
+  ],
+  "status": "IMPORT_PATH_PASS"
+}

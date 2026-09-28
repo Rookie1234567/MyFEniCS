@@ -1526,6 +1526,17 @@ S6 优化只省掉取得对角项时不需要的计算；A2R 用额外矩阵及�
 | `native_2nm_h1p5_measured_retry_current` | source `41caf5141493ad6c5d6c518a64ee74fda8d7a7db`；run `20260918T035017.294454Z`；54332 cells、p6 35594790、p4 10604228、augmented 10608132、augmented NNZ 4899800920；3904 modes/3902 propagating | symbolic facts `INFOG1=0, INFOG7=4, INFOG16=1222577, RINFOG1=1100362818940466`；p4 numeric 进行中，末次RSS `477900079104 B`、swap0；1300 GB guard attachment peak 同值 | `RUNNING; NOT_NUMERIC_OR_PHYSICS_QUALIFIED`；outer/RTA未运行，阶段峰值未完整聚合；[compact](task39extra_para_workstation_capacity/outcomes/records/2nm_h1p5_measured_running_snapshot_v1.json)、[Response V4](task39extra_para_workstation_capacity/response_v4.md) |
 | `native_2nm_h1p5_measured_retry_terminal` | 同一 run/source；workflow `176218.086 s`；原 watchdog 整树RSS峰 `635625377792 B`、任务树swap0；global pswpout `2→73`（delta71页） | 独立1300 GB guard attachment峰 `640141377536 B`，随后因 RSS unreadable/`monitoring_failed` 停止，约晚于原 watchdog stop `0.245228993 s`；两峰均未达各自 cap | `GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED; exit=-9`；无 numeric complete/outer/RTA；不称OOM或数值失败；[terminal compact](task39extra_para_workstation_capacity/outcomes/records/2nm_h1p5_measured_terminal_snapshot_v1.json) |
 
+## 3.43 Task042：神经辅助低内存 p4 粗逆，F0资源等待
+
+本任务研究用原p4方程上的迭代求逆减少全局LU存储，并分别比较传统低内存、线性降维和神经修正。本轮共享工作站仍有原2nm计算及其他GPU训练，按任务合同止于隔离、接口与有界数组验证；没有取得新的正式模型资格。
+
+| Model ID / 数据身份 | 物理与离散 | 本轮方法 / 规模 | 实际结果与具体未满足项 | 状态 / evidence |
+|---|---|---|---|---|
+| `task042_original_13p5nm_p6h10`；静态冻结，runtime not_run | Si矩形块、13.5nm、1°、phi0、s、Full3D p6/h10，同网格p4、双Floquet/完整auto DtN | mesh/mode/A4/A6、实际DoF/rows/NNZ尚未构建；252cells/173802/53084/80是历史锚点 | 原A4/A6残差、R/T/A/A_volume、R00_s/p/total、全部通道幅值/功率、E/H、场/scaled-curl均not_run；无R-LU/B0/LIN/NN本轮对照 | `not_run / WAITING_FOR_SHARED_WORKSTATION`；[summary](task042_neural_coarse_inverse/outcomes/summary.md)、[统一CSV](task042_neural_coarse_inverse/outcomes/records/full_p6_comparison.csv) |
+| `task042_f0_strict_return_toy`；measured纯数组 | complex128解析3×3+port+slave toy，非Maxwell | 独立原方程/累计端口/恢复返回检查；实际FGMRES/PC未实现 | 33测试通过；11toy返回native最大1.2757622972373108e-16、port/recovery0；受监督F0采样RSS最大236548096B、own swap0、无GPU训练；不作物理或因子消除资格 | `component_interface_pass`；clean source`9934c2e08d017124ba70bdc86ec0c22f39ca792f`；[audit](task042_neural_coarse_inverse/outcomes/records/pure_component_audit.json)、[运行账](task042_neural_coarse_inverse/outcomes/records/run_index.json) |
+
+F1–F5由邻heavy占用而未启动，不是数值方法失败。teacher/dataset/basis/线性map/model/checkpoint均无；神经增量、20%时间/内存改善与摊销没有数据。NN-Lab为canonical linked worktree，新FE/CPU-only ML环境及可写缓存隔离，旧计算源码/HEAD/环境/watchdog保留。下一步先由review检查F0，再重新核查同机空闲/lock，完成真实无global p4 factor的opt-in构造和逐阶段Gate。没有master merge或ordinary default变更。
+
 # 4. 今后新增模型的登记模板
 
 每次正式计算至少新增一行主表，并按可用性新增衍射级和复振幅表。

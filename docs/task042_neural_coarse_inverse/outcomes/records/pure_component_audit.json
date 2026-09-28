@@ -1,0 +1,211 @@
+{
+  "schema": "task042.pure-component-audit.v1",
+  "scope": "pure-array controlled backend/analytic toy; not Maxwell A4 or FGMRES/PC",
+  "source_sha": "9934c2e08d017124ba70bdc86ec0c22f39ca792f",
+  "git_status_at_audit": "?? docs/task042_neural_coarse_inverse/outcomes/\n",
+  "fixture_operator_sha256": "0e33eec2ff48c2360b2b2e440dc41ceed953f83109ecf775ad39e1ecdf881fb9",
+  "audit_script_sha256": "07085c1ab01301ab281271f7f5b91eb12b6b254128bbc5b15cb7b5abdb96f81b",
+  "rows": [
+    {
+      "kind": "analytic_complex_toy",
+      "amplitude": 1.0,
+      "phase_real": 1.0,
+      "phase_imag": 0.0,
+      "status": "STRICT_RETURN_CHECK_PASS",
+      "call": 1,
+      "operator_sha256": "0e33eec2ff48c2360b2b2e440dc41ceed953f83109ecf775ad39e1ecdf881fb9",
+      "tolerance": 1e-10,
+      "backend_called": true,
+      "checks": {
+        "original_a4": 2.248036906646485e-17,
+        "port_closure": 0.0,
+        "recovery": 0.0
+      },
+      "iterations": 3,
+      "zero_rhs": false
+    },
+    {
+      "kind": "analytic_complex_toy",
+      "amplitude": 1.0,
+      "phase_real": 0.0,
+      "phase_imag": 1.0,
+      "status": "STRICT_RETURN_CHECK_PASS",
+      "call": 1,
+      "operator_sha256": "0e33eec2ff48c2360b2b2e440dc41ceed953f83109ecf775ad39e1ecdf881fb9",
+      "tolerance": 1e-10,
+      "backend_called": true,
+      "checks": {
+        "original_a4": 2.248036906646485e-17,
+        "port_closure": 0.0,
+        "recovery": 0.0
+      },
+      "iterations": 3,
+      "zero_rhs": false
+    },
+    {
+      "kind": "analytic_complex_toy",
+      "amplitude": 1.0,
+      "phase_real": 0.7648421872844885,
+      "phase_imag": 0.644217687237691,
+      "status": "STRICT_RETURN_CHECK_PASS",
+      "call": 1,
+      "operator_sha256": "0e33eec2ff48c2360b2b2e440dc41ceed953f83109ecf775ad39e1ecdf881fb9",
+      "tolerance": 1e-10,
+      "backend_called": true,
+      "checks": {
+        "original_a4": 1.2757622972373108e-16,
+        "port_closure": 0.0,
+        "recovery": 0.0
+      },
+      "iterations": 3,
+      "zero_rhs": false
+    },
+    {
+      "kind": "analytic_complex_toy",
+      "amplitude": 1e-200,
+      "phase_real": 1.0,
+      "phase_imag": 0.0,
+      "status": "STRICT_RETURN_CHECK_PASS",
+      "call": 1,
+      "operator_sha256": "0e33eec2ff48c2360b2b2e440dc41ceed953f83109ecf775ad39e1ecdf881fb9",
+      "tolerance": 1e-10,
+      "backend_called": true,
+      "checks": {
+        "original_a4": 3.2248145094191294e-17,
+        "port_closure": 0.0,
+        "recovery": 0.0
+      },
+      "iterations": 3,
+      "zero_rhs": false
+    },
+    {
+      "kind": "analytic_complex_toy",
+      "amplitude": 1e-200,
+      "phase_real": 0.0,
+      "phase_imag": 1.0,
+      "status": "STRICT_RETURN_CHECK_PASS",
+      "call": 1,
+      "operator_sha256": "0e33eec2ff48c2360b2b2e440dc41ceed953f83109ecf775ad39e1ecdf881fb9",
+      "tolerance": 1e-10,
+      "backend_called": true,
+      "checks": {
+        "original_a4": 3.2248145094191294e-17,
+        "port_closure": 0.0,
+        "recovery": 0.0
+      },
+      "iterations": 3,
+      "zero_rhs": false
+    },
+    {
+      "kind": "analytic_complex_toy",
+      "amplitude": 1e-200,
+      "phase_real": 0.7648421872844885,
+      "phase_imag": 0.644217687237691,
+      "status": "STRICT_RETURN_CHECK_PASS",
+      "call": 1,
+      "operator_sha256": "0e33eec2ff48c2360b2b2e440dc41ceed953f83109ecf775ad39e1ecdf881fb9",
+      "tolerance": 1e-10,
+      "backend_called": true,
+      "checks": {
+        "original_a4": 1.4239421928011857e-17,
+        "port_closure": 0.0,
+        "recovery": 0.0
+      },
+      "iterations": 3,
+      "zero_rhs": false
+    },
+    {
+      "kind": "analytic_complex_toy",
+      "amplitude": 1e+100,
+      "phase_real": 1.0,
+      "phase_imag": 0.0,
+      "status": "STRICT_RETURN_CHECK_PASS",
+      "call": 1,
+      "operator_sha256": "0e33eec2ff48c2360b2b2e440dc41ceed953f83109ecf775ad39e1ecdf881fb9",
+      "tolerance": 1e-10,
+      "backend_called": true,
+      "checks": {
+        "original_a4": 1.0408735606839378e-17,
+        "port_closure": 0.0,
+        "recovery": 0.0
+      },
+      "iterations": 3,
+      "zero_rhs": false
+    },
+    {
+      "kind": "analytic_complex_toy",
+      "amplitude": 1e+100,
+      "phase_real": 0.0,
+      "phase_imag": 1.0,
+      "status": "STRICT_RETURN_CHECK_PASS",
+      "call": 1,
+      "operator_sha256": "0e33eec2ff48c2360b2b2e440dc41ceed953f83109ecf775ad39e1ecdf881fb9",
+      "tolerance": 1e-10,
+      "backend_called": true,
+      "checks": {
+        "original_a4": 1.0408735606839378e-17,
+        "port_closure": 0.0,
+        "recovery": 0.0
+      },
+      "iterations": 3,
+      "zero_rhs": false
+    },
+    {
+      "kind": "analytic_complex_toy",
+      "amplitude": 1e+100,
+      "phase_real": 0.7648421872844885,
+      "phase_imag": 0.644217687237691,
+      "status": "STRICT_RETURN_CHECK_PASS",
+      "call": 1,
+      "operator_sha256": "0e33eec2ff48c2360b2b2e440dc41ceed953f83109ecf775ad39e1ecdf881fb9",
+      "tolerance": 1e-10,
+      "backend_called": true,
+      "checks": {
+        "original_a4": 8.582435525937136e-17,
+        "port_closure": 0.0,
+        "recovery": 0.0
+      },
+      "iterations": 3,
+      "zero_rhs": false
+    },
+    {
+      "kind": "zero",
+      "status": "STRICT_RETURN_CHECK_PASS",
+      "call": 1,
+      "operator_sha256": "0e33eec2ff48c2360b2b2e440dc41ceed953f83109ecf775ad39e1ecdf881fb9",
+      "tolerance": 1e-10,
+      "backend_called": false,
+      "checks": {
+        "original_a4": 0.0,
+        "port_closure": 0.0,
+        "recovery": 0.0
+      },
+      "iterations": 0,
+      "zero_rhs": true
+    },
+    {
+      "kind": "nonzero_port_zero_fe",
+      "status": "STRICT_RETURN_CHECK_PASS",
+      "call": 1,
+      "operator_sha256": "0e33eec2ff48c2360b2b2e440dc41ceed953f83109ecf775ad39e1ecdf881fb9",
+      "tolerance": 1e-10,
+      "backend_called": true,
+      "checks": {
+        "original_a4": 5.4045180315247026e-17,
+        "port_closure": 0.0,
+        "recovery": 0.0
+      },
+      "iterations": 3,
+      "zero_rhs": false
+    }
+  ],
+  "max_relative_checks": {
+    "original_a4": 1.2757622972373108e-16,
+    "port_closure": 0.0,
+    "recovery": 0.0
+  },
+  "factor_construction": false,
+  "fe_jit": false,
+  "model_or_dataset": false,
+  "physical_A4_A6_metrics": null
+}

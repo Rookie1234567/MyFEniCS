@@ -1,0 +1,87 @@
+{
+  "schema": "task042.gate-decisions.v1",
+  "classification": "WAITING_FOR_SHARED_WORKSTATION",
+  "stage": "F0",
+  "stage_result": "F0_INTERFACE_ENVIRONMENT_PASS",
+  "shared_workstation": {
+    "status": "blocked",
+    "heavy_present": true,
+    "snapshot": "shared_workstation_snapshot.json",
+    "teacher_fe_jit_gpu_training_pde_authorized_now": false,
+    "automatic_wait_launcher": false
+  },
+  "gates": [
+    {
+      "name": "Git/canonical/branch/upstream/ancestry",
+      "status": "measured_pass",
+      "evidence": "git_preparation.json"
+    },
+    {
+      "name": "F0 imports ABI paths caches threads",
+      "status": "measured_pass",
+      "source_sha": "9934c2e08d017124ba70bdc86ec0c22f39ca792f"
+    },
+    {
+      "name": "F0 independent strict-return toy tests",
+      "status": "measured_pass",
+      "count": 33,
+      "physical_numerical_credit": false
+    },
+    {
+      "name": "G-identity real mesh modes A4 A6",
+      "status": "not_run"
+    },
+    {
+      "name": "G-no-factor deployed candidate",
+      "status": "not_run",
+      "reason": "No candidate exists; declarations/code-only F0 do not prove construction allocations."
+    },
+    {
+      "name": "G-numerical F4/F5",
+      "status": "not_run"
+    },
+    {
+      "name": "G-memory relative R-LU",
+      "status": "not_run"
+    },
+    {
+      "name": "G-time relative R-LU",
+      "status": "not_run"
+    },
+    {
+      "name": "G-neural relative R-LIN",
+      "status": "not_run"
+    },
+    {
+      "name": "G-generalization",
+      "status": "not_run"
+    },
+    {
+      "name": "G-amortization N1/10/100",
+      "status": "not_run"
+    }
+  ],
+  "preserved_negative": [
+    {
+      "id": "FE_import_01",
+      "classification": "WORKER_FAILED",
+      "cause": "Implementation API error; no JIT/PDE",
+      "source_sha": "2c9b54b4f4f7e8e083c398c0290c3881f3dc8980",
+      "fix_source_sha": "9934c2e08d017124ba70bdc86ec0c22f39ca792f",
+      "targeted_retry_count": 1,
+      "numerical_parameter_changed": false
+    }
+  ],
+  "next": {
+    "requires": "fresh heavy/process and same-machine lock Gate; ChatGPT F0 review",
+    "order": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "conditional F5"
+    ],
+    "short_wavelength_or_unbounded_scan": false,
+    "merge_approved": false
+  }
+}

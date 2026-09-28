@@ -1,0 +1,213 @@
+{
+  "schema": "task042.host-resource-snapshot.v1",
+  "utc": "2026-09-28T08:57:36.348903+00:00",
+  "host": "fenics-ws01",
+  "kernel": "7.0.0-31-generic",
+  "scope": "host read-only one-shot; status/stat/affinity + bounded nvidia queries; no neighbor smaps/numa_maps/log scan",
+  "processes": [
+    {
+      "pid": 341799,
+      "present": true,
+      "start_ticks": 17196977,
+      "cwd": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity",
+      "affinity": [
+        9
+      ],
+      "status": {
+        "Name": "python",
+        "State": "R (running)",
+        "PPid": "1",
+        "Threads": "1",
+        "VmRSS": "39440 kB",
+        "VmSwap": "0 kB",
+        "Cpus_allowed_list": "9",
+        "Mems_allowed_list": "0-1"
+      }
+    },
+    {
+      "pid": 341830,
+      "present": true,
+      "start_ticks": 17197099,
+      "cwd": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity",
+      "affinity": [
+        24
+      ],
+      "status": {
+        "Name": "mpiexec",
+        "State": "S (sleeping)",
+        "PPid": "341799",
+        "Threads": "3",
+        "VmRSS": "24976 kB",
+        "VmSwap": "0 kB",
+        "Cpus_allowed_list": "24",
+        "Mems_allowed_list": "0-1"
+      }
+    },
+    {
+      "pid": 341839,
+      "present": true,
+      "start_ticks": 17197130,
+      "cwd": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity",
+      "affinity": [
+        24
+      ],
+      "status": {
+        "Name": "python",
+        "State": "R (running)",
+        "PPid": "341830",
+        "Threads": "3",
+        "VmRSS": "1122975624 kB",
+        "VmSwap": "0 kB",
+        "Cpus_allowed_list": "24",
+        "Mems_allowed_list": "0-1"
+      }
+    },
+    {
+      "pid": 341987,
+      "present": true,
+      "start_ticks": 17219061,
+      "cwd": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity",
+      "affinity": [
+        10
+      ],
+      "status": {
+        "Name": "python",
+        "State": "S (sleeping)",
+        "PPid": "1",
+        "Threads": "1",
+        "VmRSS": "20540 kB",
+        "VmSwap": "0 kB",
+        "Cpus_allowed_list": "10",
+        "Mems_allowed_list": "0-1"
+      }
+    },
+    {
+      "pid": 509378,
+      "present": true,
+      "start_ticks": 50302401,
+      "cwd": "/home/fenics/Projects/Metrology",
+      "affinity": [
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32
+      ],
+      "status": {
+        "Name": "uv",
+        "State": "S (sleeping)",
+        "PPid": "464872",
+        "Threads": "2",
+        "VmRSS": "32528 kB",
+        "VmSwap": "0 kB",
+        "Cpus_allowed_list": "25-32",
+        "Mems_allowed_list": "0-1"
+      }
+    },
+    {
+      "pid": 509381,
+      "present": true,
+      "start_ticks": 50302403,
+      "cwd": "/home/fenics/Projects/Metrology",
+      "affinity": [
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32
+      ],
+      "status": {
+        "Name": "pt_elastic",
+        "State": "S (sleeping)",
+        "PPid": "509378",
+        "Threads": "12",
+        "VmRSS": "536156 kB",
+        "VmSwap": "0 kB",
+        "Cpus_allowed_list": "25-32",
+        "Mems_allowed_list": "0-1"
+      }
+    },
+    {
+      "pid": 509439,
+      "present": true,
+      "start_ticks": 50302565,
+      "cwd": "/home/fenics/Projects/Metrology",
+      "affinity": [
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32
+      ],
+      "status": {
+        "Name": "python",
+        "State": "R (running)",
+        "PPid": "509381",
+        "Threads": "14",
+        "VmRSS": "1533860 kB",
+        "VmSwap": "0 kB",
+        "Cpus_allowed_list": "25-32",
+        "Mems_allowed_list": "0-1"
+      }
+    },
+    {
+      "pid": 509440,
+      "present": true,
+      "start_ticks": 50302565,
+      "cwd": "/home/fenics/Projects/Metrology",
+      "affinity": [
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32
+      ],
+      "status": {
+        "Name": "python",
+        "State": "R (running)",
+        "PPid": "509381",
+        "Threads": "14",
+        "VmRSS": "1532692 kB",
+        "VmSwap": "0 kB",
+        "Cpus_allowed_list": "25-32",
+        "Mems_allowed_list": "0-1"
+      }
+    }
+  ],
+  "memory_bytes": {
+    "MemTotal": 2163100385280,
+    "MemAvailable": 988837916672,
+    "SwapTotal": 8589930496,
+    "SwapFree": 8588705792
+  },
+  "gpu_queries": {
+    "gpu": {
+      "exit_code": 0,
+      "stdout": "0, Quadro RTX 8000, 3607, 46080, 100\n1, Quadro RTX 8000, 3551, 49152, 100",
+      "stderr": ""
+    },
+    "gpu_processes": {
+      "exit_code": 0,
+      "stdout": "509439, 3598\n509440, 3542",
+      "stderr": ""
+    }
+  },
+  "f0_cpu": 14,
+  "cpu14_thread_siblings": "14",
+  "heavy_present": true,
+  "gate": "WAITING_FOR_SHARED_WORKSTATION",
+  "wall_seconds": 0.06460363697260618,
+  "disk_free_bytes": 3456128942080
+}

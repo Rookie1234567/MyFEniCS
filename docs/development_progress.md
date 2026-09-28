@@ -2829,3 +2829,32 @@ run `20260918T035017.294454Z`、source `41caf5141493ad6c5d6c518a64ee74fda8d7a7db
 ## Task39extra_para V5：5 nm setup-only 终态
 
 5 nm Si p6/h4 q4 setup-only run `20260924T092250.568977Z`（source `96057565d171077cc84a8dae3cd4eb88b6ff21ea`）自然 exit 0，`SETUP_ONLY_COMPLETED`，setup checks PASS。setup-only/workflow 为 `2023.440526/2028.390414 s`；整树同时RSS峰 `37236830208 B`，watchdog 6192个样本全可读、最大间隔 `0.653519 s`、swap 0、后代清场。p6/p4各175 raw几何类在本run实际形成6个近似tensor组，组内核计时 `292.039/33.847 s`。与旧完整F5 setup `11263.076 s` 比约快 `5.57×`，但旧F5走raw类，本run采用不同source和近似分组；本run不含outer solve、完整A6 recovery、R/T/A或checker，故只记setup候选证据。完整哈希与计时范围见 [compact](task39extra_para_workstation_capacity/outcomes/records/f5_setup_only_v5_compact_v1.json)。主审批准在fresh准入通过时执行唯一F2；未通过任一CPU、身份、内存或隔离条件则不启动。
+
+## Task042：低内存 p4 粗逆首轮，F0完成并等待共享工作站
+
+执行分支`task42_neural_coarse_inverse`，冻结base`ccd357885f7f9be84efe3be07868cc94f13d93fc`，最终分类`WAITING_FOR_SHARED_WORKSTATION`。本轮等待ChatGPT review，未合并master，普通默认未改变。clean F0运行source为`9934c2e08d017124ba70bdc86ec0c22f39ca792f`，后续文档HEAD不能代替它。
+
+启动原因是原A6已经有不物化全局p6矩阵的作用路径，但准确p4粗逆仍存储大型LU，BAL_H每次外层修正要两次粗调用。Task39工作站交接显示粗逆整体昂贵，内部回代/恢复/原A4验算的份额仍unknown，因此不能先假定NN推理快就能加速全流程。本任务保留原方程及验算，分别比较去因子、传统B0、线性降维、NN相对线性的增量。
+
+首轮只冻结original Si块、13.5nm、1°、phi0、s、50×25nm单胞、120nm块高、Full3D p6/h10、同网格p4、双Floquet/完整auto Fourier-DtN。旧252cells/173802/53084 FE storage/80通道仅是历史锚点；当前真实mesh/mode和operator identity未构建。真实粗返回需原A4与端口/恢复<=1e-10、固定RIGHT FGMRES32/max256/zero start；只有F4通过才有条件进入p6原A6<=1e-6及完整场/模态/能量比较。
+
+| 方法 / 目的 | 实际实施与证据 | 结果与范围 |
+|---|---|---|
+| canonical linked worktree / 隔离源码 | 宿主机核验空NN-Lab、canonical/origin/登记；仅fetch任务ref；用户授权仅追加Task042 refspec以建立upstream | 准备完成时clean、ahead0/behind0；base和初始task提交均祖先；旧工作树保留 |
+| 新activation / 隔离环境与写缓存 | 两新venv，FE只读prefix；CPU-only Torch2.7.1；src/TMP/JIT/bytecode/model等全部NN-Lab | clean导入核验complex128/int64、MPI1、线程1；没有JIT/form/FE构造或GPU训练 |
+| 独立严格返回协议 / 保留原数学门 | 新src模块持有完整FE+累计port状态，独立三个数值witness、精确slave-zero、身份/容量/步数拒绝 | 33纯数组测试通过；还给出凝聚与p传递/curl-mass非交换反例；未实现真实FGMRES/B0/FE adapter |
+| 冻结神经历史 / 避免归因错误 | 只读d91652d SHA下001/004/005的11份实际文档及5个接口，保存blob | 001整体更慢；004exact全16仅局部逆信号；005完整存储超限、非线性无明显线性优势；没有源码或数据迁移 |
+| 资源Gate / 保护邻任务 | 2026-09-28T08:57:36Z固定PID/start_ticks/status/affinity与短GPU查询 | 原2nm CPU24约1.150TB RSS仍运行，另两GPU100%；本任务仅CPU14/2GiB轻测试，F1–F5不启动 |
+
+| 实测 / 数据身份 | 数值 / 单位 | 解释 |
+|---|---|---|
+| 最终33 tests | pytest0.19s；监督workflow1.659649s；RSS67231744B、swap0 | 组件接口验证，不是Maxwell或实际内层迭代资格 |
+| 11解析toy返回 | native witness最大1.2757622972373108e-16，port/recovery0 | 受控解析backend，不是teacher/数据集/物理A4 |
+| 安装与测试/导入含失败9个顺序监督工作流 | wall合计72.225243s；同时tree RSS最大236548096B，各own swap0 | 0.1s采样父及后代，峰取最大不相加；toy提取另1.751461s，最后静态检查另列 |
+| R-LU/B0/LIN/NN、A4/A6/RTA/场/模态 | 全部not_run | 无本轮分母、收益或摊销结论；GPU peak not_run，编辑/Git会话峰未记录 |
+
+唯一实现负记录是初次FE预检错误调用DOLFINx cache API，在无JIT阶段抛AttributeError。原失败3.719178s、179027968B、swap0与清场保留；一次最小修复实际0.10 `get_options()`并增加XDG_CONFIG_HOME隔离后通过。没有数值停滞或参数重试。
+
+本轮决策是交付F0并等待review，而不在邻heavy旁构造FE/teacher/训练或正式PDE。teacher/dataset/basis/model/checkpoint不存在；真实无global p4因子、线性/NN优劣、时间和内存20%改善、NN10%增量均未评价。后续先fresh核查heavy清场和同机lock，再完成F1不建global factor的opt-in factory、真实非零内部/port RHS、尺寸/身份/容量Gate，依次oracle、同表示线性与一个NN、严格粗返回，最后条件p6；不自动启动5/2/0.7nm或无界扫描。
+
+详细证据：[Task042 summary](task042_neural_coarse_inverse/outcomes/summary.md)、[Response V1](task042_neural_coarse_inverse/response_v1.md)、[Git/环境隔离](task042_neural_coarse_inverse/outcomes/environment_and_isolation.md)、[架构/oracle](task042_neural_coarse_inverse/outcomes/architecture_and_oracle.md)、[provenance](task042_neural_coarse_inverse/outcomes/dataset_and_model_provenance.md)、[run index](task042_neural_coarse_inverse/outcomes/records/run_index.json)、[测试](task042_neural_coarse_inverse/outcomes/test_summary.md)。新增协议和activation仍为research-only；没有fresh PDE或production merge approval，ignored缓存/下载/日志不提交。

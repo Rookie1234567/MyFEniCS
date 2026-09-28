@@ -1,0 +1,32 @@
+{
+  "schema": "task042.dataset-model.v1",
+  "status": "not_run",
+  "reason": "Shared workstation heavy Gate; no FE operator/dataset/representation/model constructed.",
+  "physics_seed_git_blob": "0c5211a0e99b4f1b74ad5e4223b5d91066b57816",
+  "clean_f0_source_sha": "9934c2e08d017124ba70bdc86ec0c22f39ca792f",
+  "operator_sha256": null,
+  "physical_model_sha256": null,
+  "mode_sha256": null,
+  "dataset_sha256": null,
+  "split_hashes": {
+    "train": null,
+    "validation": null,
+    "heldout": null
+  },
+  "teacher_source_sha": null,
+  "teacher_A4_residuals": null,
+  "basis_sha256": null,
+  "normalization_sha256": null,
+  "linear_map_sha256": null,
+  "model_sha256": null,
+  "checkpoint_sha256": null,
+  "training_source_sha": null,
+  "training_seed": null,
+  "training_epochs": null,
+  "training_wall_seconds": null,
+  "training_rss_bytes": null,
+  "training_vram_bytes": null,
+  "fixture_is_training_data": false,
+  "old_datasets_or_weights_migrated": false,
+  "task042_target_model_precision": "float64 real/imag; requirement only, no model exists"
+}

@@ -1,0 +1,101 @@
+{
+  "schema": "task042.static-checks.v1",
+  "status": "PASS",
+  "errors": [],
+  "source_sha": "9934c2e08d017124ba70bdc86ec0c22f39ca792f",
+  "formal_pde": false,
+  "git_status_at_check": " M docs/development_model_registry.md\n M docs/development_progress.md\n?? docs/task042_neural_coarse_inverse/outcomes/\n?? docs/task042_neural_coarse_inverse/response_v1.md\n",
+  "markdown": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/accuracy_performance_memory.md",
+      "sha256": "6fa48d23daf0eaf968f2dc0ec5ba8da490e7734a5dd76fb7afe774bdd6e0861c",
+      "tables": 3,
+      "preview_html_sha256": "c68a79ae32337c79ee983e9010c032f0c823a12400f6f3b74af9f64ada57ebe2",
+      "status": "PASS"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/architecture_and_oracle.md",
+      "sha256": "64ff276a9ca57d3b85677051e31f328b11ae4aaa9248c242503d6122e982ad81",
+      "tables": 3,
+      "preview_html_sha256": "a628b7dc0395c826061d2dd71f31746924fb0f0301826232fef96251334c010e",
+      "status": "PASS"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "a61db165de0d3210035d62cca61e3ff197ae62b56da786f45378e87a5e2bf2d2",
+      "tables": 1,
+      "preview_html_sha256": "2c115b962a578820c430d1577e1a014afd5062a16489f4f8e28706cc8ff10f76",
+      "status": "PASS"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/dataset_and_model_provenance.md",
+      "sha256": "24cfbd3f5839736b1dd4892a2d9f451f3582f542a594e895f4cd05daaf696ede",
+      "tables": 1,
+      "preview_html_sha256": "112e6ccdd67c0f0e3742316e1b5aa6ca1d3ed0858e58ff14e662523fd9cb583b",
+      "status": "PASS"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/environment_and_isolation.md",
+      "sha256": "c14196dbd3870fb53e16a4724320ca3a329257ba6292e66691ccceada469c85e",
+      "tables": 3,
+      "preview_html_sha256": "4eec7c40c1f9ff31717801ab075864e197008849780a7217891bedd0c6985ecf",
+      "status": "PASS"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "a674e7edd9406ddeda15867c9bff485c2e2d51d8b34b60d0e216377b0c947aca",
+      "tables": 6,
+      "preview_html_sha256": "c3ec40e95be5f2e715321995085c1cd40af453de689ad7003ecd7a7c9fe22ffa",
+      "status": "PASS"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "409add9e0290150c933952d0f5cf16ea7f785092927a5734b99e4a683f54de90",
+      "tables": 1,
+      "preview_html_sha256": "68b5b64fbfae5c1a2bea96946eefe96225ccccff59c5f9a8e96d901b9d8470fa",
+      "status": "PASS"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v1.md",
+      "sha256": "852d9d715baea0a21bd135558cb3f826c9fb7da52ddf88e26a757a96cea0ff99",
+      "tables": 1,
+      "preview_html_sha256": "0d6eb29021ddda82e12571421f63e480d9305ea465cedc2b3fba1916822fa90c",
+      "status": "PASS"
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/README.md",
+      "sha256": "68390c63aadc4e65e629c2fde480b54de12c92e3b8244d475c942122ce53f64b",
+      "tables": 0,
+      "preview_html_sha256": "37878a8c504a5b5a8c7855eac7f9d2debc3903bdc36c4a2315b5126f4927df32",
+      "status": "PASS"
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "b934741db5727700d425baeb6fb25bf70ab9a82ae15f7427f1db83f2b5be4445",
+      "tables": 44,
+      "preview_html_sha256": "2398d2f9d1ed47a997fc13823365e7ce5baa158bf432fc1fa41ef9731c7afb67",
+      "status": "PASS"
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "1bd60251297b6f783012d1f7a632d4a784a59276667afc5f0bd30972dc5a1e4e",
+      "tables": 118,
+      "preview_html_sha256": "e00c47d5dfaaf0d63f403860876253f2439e3abc675a82325d736f592dfd7b16",
+      "status": "PASS"
+    }
+  ],
+  "json_csv_semantics": "PASS",
+  "source_equals_qualified_commit": true,
+  "protected_contracts_unchanged": true,
+  "ignored_paths": {
+    ".venv": true,
+    ".venv-ml": true,
+    "tmp/task042": true,
+    "results/task042": true,
+    "benchmarks/artifacts/task042": true
+  },
+  "fe_jit_kernel_files": [],
+  "pde_results": [],
+  "local_preview": "markdown-it HTML inspected; math represented as code locally, GitHub view required",
+  "static_check_script_sha256": "cd65eff4a05e623eff9f87b8b2c5676446372f2f8afa7afbad26f3b63a2f397b"
+}
