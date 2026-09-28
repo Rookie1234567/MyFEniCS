@@ -1,3 +1,13 @@
+# Task39extra 当前模型登记：Review V28 / V30 工作站引导型笔记本 profile
+
+| profile / 记录 | 模型与实测 | 当前资格/用途 |
+|---|---|---|
+| physical_p6_trace_workstation_guided_v30 | original p6/h7.5、同网格 p4、990 cells、80 DtN modes、MPI1；126步；独立 final/post-release true residual=9.283162411158622e-7；R/T/A=0.36509755369518077/0.013016803348172736/0.6218856429566464；A_volume=0.6218856421420169；workflow monotonic/realtime=2532.759/2762.545 s；watchdog RSS=8044191744 B | DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED_WITH_LEGACY_CHECKER_INCOMPATIBILITY；同离散 offline FE/field/mode/physical comparison通过；PSS disabled/null，swap仅observe-only；相对V29没有端到端速度收益，不改ordinary default；工作站未迁移 |
+| V30 legacy checker boundary | 旧 V25 dynamic checker DYNAMIC_FAIL，唯一 gate failure=backend_identity；raw BAL_H/p4、true residual、native A4、first Arnoldi gates通过 | 保留 checker 原始 FAIL；它固定的是V25 backend/thread合同，不冒称V30独立checker已修复旧checker |
+| V30 local candidates | L3 algebraic equivalence pass，但真实24-cell配对慢约14.66%；L4 streamed apply慢65.48%、合计慢3.129%、只减1,784,832 B unique payload；H6 pre-move未采用 | batch_size=1仍legacy；cached port owner保留；streaming与batch不是production default；完整C performance=UNKNOWN_NOT_MEASURED |
+
+全FE L2/scaled-curl离线差=1.4028635388466484e-14/3.3312391899680165e-14；same-coordinate E/H/interface、80-mode及R/T/A/A_volume逐项证据见 [V30 outcome](task039_extra_physical_multilevel/outcomes/workstation_guided_local_v30.md)、[Response V31](task039_extra_physical_multilevel/response_v31.md)、[compact/checker/components](task039_extra_physical_multilevel/outcomes/records/) 和 [selective Workstation handoff](task039_extra_physical_multilevel/outcomes/selective_workstation_handoff_v30.md)。该 profile 只支持本机该离散模型；不等同 int64/PORD64 工作站资格。
+
 # Task39extra 当前模型登记：Review V27 / V29 A4、p6 tensor、H6
 
 | profile | 模型与实测 | 当前资格/用途 |

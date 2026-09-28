@@ -1,3 +1,11 @@
+# Task39extra 当前进展：Review V28 / V30 笔记本正式验证完成，工作站未迁移
+
+V30 original p6/h7.5 唯一 formal run 于 source 254f0cf78f950246655dc86af9409139b9a97680 完成126步；独立 final/post-release 真残差=9.283162411158622e-7，classification=DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED_WITH_LEGACY_CHECKER_INCOMPATIBILITY。离线同 V29 离散 full FE L2/scaled-curl=1.4029e-14/3.3312e-14，80 mode、同坐标场与官方物理量一致。worker field checkpoints仍为not attempted。V25旧动态checker的backend_identity fail原样保留；独立V30 checker pass带authority limitation。
+
+V30 full workflow monotonic/realtime=2532.759/2762.545 s、KSP/setup=1854.603/626.931 s；相对V29本次配对没有端到端提速，ordinary default不变。watchdog RSS=8044191744 B；PSS disabled/null；swap为observe-only。L3 batch candidate与L4 streamed-port route均未采用；H6 pre-move未尝试；完整C为unknown/not measured。工作站 ABI/端口/几何身份需授权后从其权威manifest复核，当前未迁移。
+
+证据入口：[Response V31](task039_extra_physical_multilevel/response_v31.md)、[V30 outcome](task039_extra_physical_multilevel/outcomes/workstation_guided_local_v30.md)、[选择性交接](task039_extra_physical_multilevel/outcomes/selective_workstation_handoff_v30.md)、[run index](task039_extra_physical_multilevel/outcomes/records/run_index.json)。
+
 # Task39extra 当前进展：Review V27 / V29 A4、p6 tensor、H6 已收口
 
 V29 original p6/h7.5 正式场在126步通过 authority-limited discrete Gate，真残差`9.283162362107749e-7`。与V28同离散的full FE、同坐标E/H、80复模态及R/T/A/A_volume离线比较均通过。V29完整workflow monotonic/conservative realtime=`2422.426/2643.635 s`，V28 monotonic=`2936.076 s`；setup/KSP也观察到缩短，但单次配对不作因果提速结论。worker树RSS/PSS=`7,323,303,936/7,291,101,184 B`，watchdog树RSS=`7,326,449,664 B`，swap0。

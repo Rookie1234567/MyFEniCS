@@ -1,3 +1,11 @@
+## Review V28 / V30：工作站引导型笔记本验证已完成，等待主控 review
+
+V30 在 original p6/h7.5、coarse p4、990 cells、80 modes、MPI1 下完成唯一正式场：126 步，独立最终及 release 后真残差均为 9.283162411158622e-7，分类为 authority-limited discrete pass。离线与 V29 同离散全 FE、坐标 E/H、80 mode 和 R/T/A/A_volume 复核均通过；worker 内五个 reference checkpoints 仍保持 NOT_ATTEMPTED / MATCHED_REFERENCE_NOT_AVAILABLE。
+
+R/T/A=0.36509755369518077 / 0.013016803348172736 / 0.6218856429566464；A_volume=0.6218856421420169；R00_s=0.365060862881605、R00_p=4.812903003419231e-23。能量闭合误差约 8.15e-10。workflow monotonic/conservative realtime=2532.759/2762.545 s，setup/KSP=626.931/1854.603 s；较 V29 单次配对分别慢约 4.55%/4.50%/17.46%/0.95%，没有端到端提速证据。Watchdog process-tree RSS=8,044,191,744 B，PSS disabled/null，swap 观察为0但 Gate 未启用。旧 V25 checker 对 V30 的 backend identity 返回 DYNAMIC_FAIL，原分类保留；独立 V30 checker 为 PASS_WITH_AUTHORITY_LIMITATION。普通默认未变，工作站未迁移，master 未合并。
+
+逐阶段计时、模型说明、ABI/身份和权限边界见 [V30 outcome](workstation_guided_local_v30.md)、[Response V31](../response_v31.md)、[compact/checker/components/selection/monitor records](records/)、[选择性交接清单](selective_workstation_handoff_v30.md) 与 [run index](records/run_index.json)。
+
 ## Review V27 / V29 A4、p6 tensor 与 H6 收口
 
 V29 original p6/h7.5、coarse p4、990 cells、80 modes 的唯一正式运行完成126步，独立 final/post-release A6 真残差=`9.283162362107749e-7`，authority-limited 离散一致性 Gate 通过。离线与 V28 同离散 full FE、坐标 E/H、80模态和 R/T/A/A_volume 检查全部通过；worker 内原 `reference_evaluation=NOT_ATTEMPTED` 保持未改写。

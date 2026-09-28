@@ -54,21 +54,51 @@
     },
     "monitor": {
       "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_monitor_policy.json",
-      "sha256": "0d3056fbc035ac2fb03397891bffa06fe6828afa7163b2954a0501ef0d0cb92b",
-      "status": "DIAGNOSTIC_CONTROL_FLOW"
+      "sha256": "5fa379cb4da079ebe0d6d79ddf5e7a9d624485e36fd242163fdd7aea36aa3e4d",
+      "status": "DIAGNOSTIC_CONTROL_FLOW_FORMAL_OBSERVED"
     },
     "p6_diagonal": {
       "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_l2_p6_diagonal.json",
       "sha256": "82166c612b0bc26d07bc2c649d7b0a74f0f2d999592391fb537db82bf82908cc",
       "status": "PASS"
+    },
+    "formal_run": {
+      "path": "results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/run_manifest.json",
+      "status": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED_WITH_LEGACY_CHECKER_INCOMPATIBILITY",
+      "source_sha": "254f0cf78f950246655dc86af9409139b9a97680",
+      "summary_sha256": "60df6b8051c410bdbb224886a780d6638a7800d21d198644168a6e822f29c193"
+    },
+    "checker": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_checker.json",
+      "sha256": "0e79564a38539b83a4f270bfcc10a5d240f861a39eb8771750aff950a9f042b2",
+      "status": "PASS_WITH_AUTHORITY_LIMITATION"
+    },
+    "compact": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_compact.json",
+      "status": "PASS_WITH_AUTHORITY_LIMITATION",
+      "sha256": "ff41f8b91643cb150df56f45096f633333a0d70d5a4363651b9e4445e59f0318"
+    },
+    "components": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_components.json",
+      "sha256": "d37ae3e98b711978b3413cbf940f453be829a4168810f509ca31c25a50674f7e",
+      "status": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED_WITH_LEGACY_CHECKER_INCOMPATIBILITY"
     }
   },
   "formal_run_gate": {
-    "next_action_after_main_review": "Commit the reviewed pre-formal source and selection record to a clean task39extra HEAD; only then perform the single fresh original p6/h7.5 run authorized by Review V28.",
-    "numerical_global_p4_factor_built_for_L3": false,
-    "pde_started_in_this_batch": false,
-    "status": "NOT_STARTED_WAITING_FOR_MAIN_REVIEW",
-    "workstation_process_or_source_touched": false
+    "status": "COMPLETED_SINGLE_FRESH_RUN_AUTHORITY_LIMITED",
+    "pde_started_in_this_batch": true,
+    "formal_run_count": 1,
+    "exit_status": 0,
+    "run_id": "task39extra_v30_workstation_guided_original_h7p5_v1",
+    "run_root": "results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z",
+    "source_sha": "254f0cf78f950246655dc86af9409139b9a97680",
+    "final_explicit_true_residual": 9.283162411158622e-07,
+    "post_release_explicit_true_residual": 9.283162411158622e-07,
+    "checker_status": "PASS_WITH_AUTHORITY_LIMITATION",
+    "field_reference_worker_status": "NOT_ATTEMPTED_AT_ALL_FIVE_CHECKPOINTS",
+    "offline_v29_same_discrete_audit": "PASS_WITHIN_LIMITS",
+    "workstation_process_or_source_touched": false,
+    "next_action_after_main_review": "Review response_v31 and the V30 outcome; do not migrate to Workstation or merge master without separate authorization."
   },
   "input_geometry_citation_as_recorded": {
     "degree": 6,
@@ -82,7 +112,7 @@
     ],
     "floating_point_cache_identity_counts": {
       "exact_jacobian_byte_patterns": 84,
-      "interpretation": "\u4ec5\u4e3a\u7cbe\u786e\u6d6e\u70b9\u7f13\u5b58\u952e\u8eab\u4efd\uff0c\u4e0d\u662f\u7269\u7406\u5f62\u72b6\u6570\u91cf\uff1b\u4fdd\u7559\u8f93\u5165\u8f74\u8ba1\u5212\u4e0e\u7edf\u8ba1\u539f\u503c\uff0c\u4e0d\u7ee7\u7eed\u505a\u51e0\u4f55\u5206\u7c7b\u3002",
+      "interpretation": "仅为精确浮点缓存键身份，不是物理形状数量；保留输入轴计划与统计原值，不继续做几何分类。",
       "jacobian_plus_permutation_key_patterns": 124
     },
     "geometry_source": {
@@ -169,7 +199,7 @@
         0
       ],
       "disabled_trial_count": 3,
-      "limitation": "\u5c0f\u5de5\u4f5c\u96c6\u63a7\u5236\u6d41\u4e0e provider \u68c0\u67e5\uff0c\u4e0d\u4ee3\u8868 TB \u5de5\u4f5c\u96c6\u6216\u7aef\u5230\u7aef\u52a0\u901f\u3002",
+      "limitation": "小工作集控制流与 provider 检查，不代表 TB 工作集或端到端加速。",
       "maximum_rss_sample_gap_seconds_disabled": 0.099000326,
       "sampled_trial_count": 3,
       "trial_count": 6,
@@ -290,19 +320,19 @@
       }
     }
   },
-  "record_status": "PRE_FORMAL_SELECTION_FOR_MAIN_REVIEW",
+  "record_status": "FORMAL_RUN_COMPLETE_PENDING_MAIN_REVIEW",
   "schema": "task039extra.v30.local-selection.v1",
   "selected_explicit_profile": {
     "choices": {
       "full_C_pair_probe": {
         "complete_C_performance": "UNKNOWN_NOT_MEASURED",
         "decision": "REMOVED_AND_NOT_RUN",
-        "reason": "\u771f\u5b9e\u5c40\u90e8\u914d\u5bf9\u5df2\u663e\u793a\u65e0\u53ef\u9760\u6536\u76ca\uff0c\u6545\u4e0d\u53e6\u5efa\u6570\u503c\u56e0\u5b50\uff1b\u5df2\u79fb\u9664\u539f\u7ea6 600 \u884c\u81ea\u52a8\u5b8c\u6574 C \u914d\u5bf9 probe\u3002"
+        "reason": "真实局部配对已显示无可靠收益，故不另建数值因子；已移除原约 600 行自动完整 C 配对 probe。"
       },
       "h6_setup_pre_move": {
         "decision": "NOT_ADOPTED",
-        "evidence_scope": "\u6e90\u7801\u8def\u5f84\u6838\u67e5\uff1b\u672c\u8f6e\u672a\u505a\u9884\u79fb\u5b9e\u73b0\u6216\u6027\u80fd\u58f0\u79f0\u3002",
-        "reason": "\u5f53\u524d _v14_balanced_adapter \u5728\u6301\u6709\u552f\u4e00 p4 stack \u540e\u521b\u5efa\u5e76\u72ec\u5360 positive/H6\uff1b\u6ca1\u6709\u5df2\u8d44\u683c\u5316\u7684 H6 \u9884\u5efa/\u5355\u4e00\u5bf9\u8c61\u79fb\u4ea4\u4e0e\u6e05\u7406\u63a5\u53e3\u3002\u4e3a\u907f\u514d\u65b0\u5efa\u7b2c\u4e8c\u4efd H6 \u6216\u5f15\u5165\u672a\u7ecf\u9a8c\u8bc1\u7684\u751f\u547d\u5468\u671f\u91cd\u6392\uff0c\u4fdd\u7559\u5f53\u524d\u5355\u4e00 owner \u987a\u5e8f\u3002",
+        "evidence_scope": "源码路径核查；本轮未做预移实现或性能声称。",
+        "reason": "当前 _v14_balanced_adapter 在持有唯一 p4 stack 后创建并独占 positive/H6；没有已资格化的 H6 预建/单一对象移交与清理接口。为避免新建第二份 H6 或引入未经验证的生命周期重排，保留当前单一 owner 顺序。",
         "source_locations": [
           "src/runners/physical_p4_schur_v14.py::_v14_balanced_adapter: builds H6 at build_light_h6_setup",
           "src/runners/physical_p4_schur_v14.py::fresh p6 stage: enters the p4 stack before creating the balanced adapter"
@@ -315,8 +345,8 @@
           "sha256": "0d3056fbc035ac2fb03397891bffa06fe6828afa7163b2954a0501ef0d0cb92b",
           "status": "DIAGNOSTIC_CONTROL_FLOW"
         },
-        "pss": "\u6b63\u5f0f heavy profile \u4e3a disabled_by_profile\uff1b\u672a\u91c7\u6837\u65f6\u4e3a unknown/null\uff0c\u4e0d\u4f2a\u586b\u96f6\u3002",
-        "rss_and_process_tree_safety": "\u4fdd\u7559\u65e2\u6709\u5feb\u901f RSS/status\u3001\u8fdb\u7a0b\u6811\u8eab\u4efd\u3001swap \u4e0e\u6e05\u573a\u94fe\u3002"
+        "pss": "正式 heavy profile 为 disabled_by_profile；未采样时为 unknown/null，不伪填零。",
+        "rss_and_process_tree_safety": "保留既有快速 RSS/status、进程树身份、swap 与清场链。"
       },
       "p4_local_rhs_batch": {
         "decision": "NOT_SELECTED",
@@ -334,7 +364,7 @@
         ],
         "formal_batch_size": 1,
         "formal_route": "dispatches to original legacy per-cell reduction and recovery",
-        "reason": "\u771f\u5b9e 24-cell\u3001p4\u300180-mode \u5c40\u90e8\u914d\u5bf9\u4e2d\u4e09\u8f6e CPU \u548c\u5899\u949f\u90fd\u53d8\u6162\uff1b\u672a\u6784\u9020\u6570\u503c\u5168\u5c40\u56e0\u5b50\uff0c\u56e0\u6b64\u5b8c\u6574 C \u6027\u80fd\u672a\u77e5\u3002"
+        "reason": "真实 24-cell、p4、80-mode 局部配对中三轮 CPU 和墙钟都变慢；未构造数值全局因子，因此完整 C 性能未知。"
       },
       "p6_port_storage": {
         "decision": "KEEP_CACHED_ROUTE; STREAMED_ROUTE_RESEARCH_ONLY",
@@ -367,7 +397,7 @@
             "status": "DIAGNOSTIC_MODE_SCALING"
           }
         ],
-        "reason": "\u771f\u5b9e\u4e0e\u5408\u6210\u95ed\u5408\u5747\u901a\u8fc7\uff0c\u4f46\u771f\u5b9e\u5c0f\u8f7d\u4f53\u4e0a apply \u660e\u663e\u53d8\u6162\uff0c\u4e09\u64cd\u4f5c\u5408\u8ba1\u4e5f\u53d8\u6162\uff1b\u672c\u8f6e\u8282\u7701\u7684\u552f\u4e00\u6301\u6709\u8005\u5b57\u8282\u6709\u9650\u3002"
+        "reason": "真实与合成闭合均通过，但真实小载体上 apply 明显变慢，三操作合计也变慢；本轮节省的唯一持有者字节有限。"
       },
       "reference_metric_h6_diagonal": {
         "decision": "SELECTED_FOR_EXPLICIT_V30_PROFILE",
@@ -381,10 +411,10 @@
           "sha256": "82166c612b0bc26d07bc2c649d7b0a74f0f2d999592391fb537db82bf82908cc",
           "status": "PASS"
         },
-        "why": "\u76f8\u540c\u79ef\u5206\u70b9/\u6743\u91cd\u3001\u5b9e\u9645 Basix \u65b9\u5411\u548c affine metric \u7684\u5bf9\u89d2\u4e0e\u65e2\u6709\u53c2\u8003\u5728\u820d\u5165\u7ea7\u543b\u5408\uff0c\u4e14\u5c40\u90e8\u6784\u5efa\u8f83\u5feb\u3002"
+        "why": "相同积分点/权重、实际 Basix 方向和 affine metric 的对角与既有参考在舍入级吻合，且局部构建较快。"
       }
     },
-    "inherited_v29_physics_and_solver": "\u4fdd\u7559 V29 original p6/h7.5\u3001\u540c\u7f51\u683c p4\u300180 \u6a21\u6001\u3001\u5b8c\u6574 A4 \u6838\u9a8c\u4e0e\u65e2\u6709\u5916\u5c42/\u8d44\u6e90\u95e8\uff1b\u672c\u6b21\u5c40\u90e8\u8d44\u683c\u6ca1\u6709\u542f\u52a8\u8be5\u6b63\u5f0f\u6c42\u89e3\u3002",
+    "inherited_v29_physics_and_solver": "保留 V29 original p6/h7.5、同网格 p4、80 模态、完整 A4 核验与既有外层/资源门；本次局部资格没有启动该正式求解。",
     "input": "input/task39extra/v30_workstation_guided_original_h7p5.dat",
     "profile": "physical_p6_trace_workstation_guided_v30"
   },

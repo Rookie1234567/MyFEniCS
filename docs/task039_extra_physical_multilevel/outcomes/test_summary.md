@@ -1,3 +1,20 @@
+## Review V28 / V30 收口验证（没有文档后 pytest 重跑）
+
+| 验证 | 实际结果 | 范围与边界 |
+|---|---|---|
+| V30 targeted source suite（正式场前） | **5 passed in 6.78 s** | qualified activation；覆盖 bounded best-complete state、L3 fixed-factor fixture、24-cell/80-mode local pairing；不是 PDE 重跑 |
+| compileall（正式场前） | **PASS** | 变更 runner、solver 和目标测试；不是全仓 compile/test 声明 |
+| L1 monitor control-flow diagnostic | **3 PSS sampled + 3 disabled trials** | 每轮约24 MiB小工作集；关闭组 PSS provider 调用0且 RSS sampling gap最大约0.099 s；只验证采样流程，不推断大工作集性能 |
+| L2 geometry / diagonal / H6 | **PASS** | 990-cell inventory 6.64 s；84 Jacobian、124 Jacobian+permutation cache byte identities；实际 affine metric diagonal、H6 apply/power10 与参考吻合至舍入误差。首次角点方向假设 instrumentation failure保留 |
+| L3 batch | **代数 PASS；未采用** | fixed factor/RHS、MPC、非零交叉与端口项的 fixture 最大差0；真实 24-cell p4/80-mode median CPU 与 wall 慢约14.66%（三组均慢）；完整 C 未测 |
+| L4 streamed ports | **diagnostic closure PASS；未采用** | 真实和 synthetic closure通过；apply 慢65.48%、三操作总时长慢3.129%，unique owner payload仅省1,784,832 B |
+| V30 formal PDE / independent audit | **1场 PASS_WITH_AUTHORITY_LIMITATION** | final/post-release residual 9.283162411158622e-7；离线同离散 field/modal/physical checks通过；旧 V25 checker DYNAMIC_FAIL 仅因 V30 backend identity 不兼容，原始 FAIL保留 |
+| JSON / hash / links / git diff --check | **PASS** | 本轮 V30 JSON 与 run_index 可解析；selection 中 compact/component/checker/monitor SHA 与文件相符；response/outcome/handoff 的本地链接存在；staged diff 无 whitespace error。不是 pytest |
+| 文档更新后 pytest | **not_run** | 本次任务未要求重跑测试；不把修改前 focused suite 说成修改后通过 |
+| full repository pytest / Ruff / CI / MPI2/4 | **not_run / not_run / not_claimed / not_run** | 不声称全库、Ruff、CI 或多 MPI 资格通过 |
+
+正式 run 与工程 tests/diagnostics 分开统计；测试集合不相加冒充 PDE 数量或覆盖率。
+
 ## Review V27 / V29 final closeout (no replay)
 
 | 验证 | 实际结果 | 范围与边界 |

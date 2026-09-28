@@ -1,0 +1,61 @@
+{
+  "schema": "task039extra.v30.local-components.v1",
+  "batch_id": "review_v28_workstation_guided_local_v30",
+  "source_sha_for_formal_run": "254f0cf78f950246655dc86af9409139b9a97680",
+  "overall_classification": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED_WITH_LEGACY_CHECKER_INCOMPATIBILITY",
+  "phases": {
+    "L2_geometry_inventory": {
+      "status": "PASS_DIAGNOSTIC",
+      "record": "workstation_guided_local_v30_l2_geometry_diagnostic.json",
+      "actual_cells": 990,
+      "exact_jacobian_byte_patterns": 84,
+      "jacobian_plus_permutation_key_patterns": 124,
+      "interpretation": "浮点缓存 key 身份，不等于物理形状数量；首次方向插槽假设错误已在原记录保留。"
+    },
+    "L2_h6_diagonal_and_power10": {
+      "status": "PASS_SELECTED",
+      "records": [
+        "workstation_guided_local_v30_l2_p6_diagonal.json",
+        "workstation_guided_local_v30_l2_h6_power10.json"
+      ],
+      "decision": "显式 V30 profile 采用与真实 Basix 方向和 affine metric 一致的参考对角；不推广为普通默认。"
+    },
+    "L3_local_p4_batch": {
+      "status": "ALGEBRAIC_EQUIVALENCE_PASS_PERFORMANCE_NOT_SELECTED",
+      "records": [
+        "workstation_guided_local_v30_l3_batch.json",
+        "workstation_guided_local_v30_l3_real80_local_kernel.json"
+      ],
+      "same_factor_rhs_complex_mpc_nonhermitian_closure_max_difference": 0.0,
+      "performance": "真实 24-cell/80-mode 小载体三轮 CPU 均较慢、三轮墙钟两轮较慢；正式 batch_size=1 保留 legacy 路径。",
+      "global_p4_factor_for_l3": false
+    },
+    "L4_port_storage": {
+      "status": "CACHED_SELECTED_STREAMED_RESEARCH_ONLY",
+      "records": [
+        "workstation_guided_local_v30_l4_real80_p6.json",
+        "workstation_guided_local_v30_l4_synthetic80_pair.json",
+        "workstation_guided_local_v30_l4_scaling_80.json",
+        "workstation_guided_local_v30_l4_scaling_512.json",
+        "workstation_guided_local_v30_l4_scaling_3904.json"
+      ],
+      "real_80_mode_24_cell_apply_slowdown_percent": 65.4798190991782,
+      "three_operation_slowdown_percent": 3.129008639261932,
+      "unique_owner_bytes_saved": 1784832,
+      "decision": "保留 cached；streamed 不进入正式 selected route。"
+    },
+    "L5_formal_original_h7p5": {
+      "status": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED_WITH_LEGACY_CHECKER_INCOMPATIBILITY",
+      "record": "workstation_guided_local_v30_checker.json",
+      "iterations": 126,
+      "final_residual": 9.283162411158622e-07,
+      "post_release_residual": 9.283162411158622e-07,
+      "reference_worker_checkpoints": "NOT_ATTEMPTED",
+      "offline_v29_comparison": "PASS_WITHIN_LIMITS"
+    }
+  },
+  "decision": "V30 显式 profile 在本离散模型上通过求解和一致性核查；全流程与 setup 慢于 V29，不作为端到端提速成果；不改 ordinary default。",
+  "ordinary_default_changed": false,
+  "workstation_migrated": false,
+  "master_merge_approved": false
+}

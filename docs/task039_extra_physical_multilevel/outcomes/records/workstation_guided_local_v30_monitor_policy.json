@@ -193,5 +193,20 @@
         "worker_log_sha256": "dbb3169d8747c767d8d255dc1f0d0340065c55c66c10513b05ee38f84f1d8e58"
       }
     }
-  ]
+  ],
+  "formal_run_observation": {
+    "run_id": "task39extra_v30_workstation_guided_original_h7p5_v1",
+    "run_root": "results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z",
+    "source_sha": "254f0cf78f950246655dc86af9409139b9a97680",
+    "watchdog_classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "descendants_cleared": true,
+    "process_tree_rss_peak_bytes": 8044191744,
+    "swap_peak_bytes": 0,
+    "swap_policy": "observe_only",
+    "swap_gate_enforced": false,
+    "pss_sampling_policy": "disabled_by_profile",
+    "pss_peak_bytes": null,
+    "interpretation": "正式过程树完整结束；RSS 为同步过程树采样峰值；swap 零仅为 observe_only 观测，PSS 为 disabled/null，不改写为 gate pass。"
+  }
 }
