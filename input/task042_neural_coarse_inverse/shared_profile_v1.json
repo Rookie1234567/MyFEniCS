@@ -49,7 +49,19 @@
       420300,
       420400
     ],
-    "split": "independent seed + entire trajectory"
+    "split": "independent seed + entire trajectory",
+    "whole_training_families": [
+      "seed420110_F1_synthetic_family",
+      "seed420200"
+    ],
+    "whole_validation_families": [
+      "seed420300"
+    ],
+    "whole_heldout_families": [
+      "physical_F1_trajectory",
+      "seed420400"
+    ],
+    "heldout_strict_inventory": "first 16: physical, zero, real Krylov r0/r32/r128/r256, physical phase/amplitude, unseen internal/port/mixed/phase/amplitude, manufactured"
   },
   "oracle_ranks": [
     16,
@@ -75,5 +87,42 @@
     "consecutive_5s_samples": 3,
     "own_swap_nonzero": true
   },
-  "performance": "inconclusive if loads differ; never infer uncontended speedup"
+  "performance": "inconclusive if loads differ; never infer uncontended speedup",
+  "f1_qualification": {
+    "directory": "results/task042/task042_f1_b0_shared_retry4_20260928T112714491078Z",
+    "source_sha": "cca180f875bd22146f2d30fa4d004e372135dfbb",
+    "operator_sha256": "150f18e26f15783726f2ffeb362ef053450962a16fff13d5241cc93c8d018560",
+    "files_sha256": {
+      "run_manifest.json": "edfd3fab79b50e757959747430aafb9363773377f349b196d0670c429f589b4d",
+      "run_summary.json": "921be1219cecec25760dafcef6695eb3373bfbcb439f7b35739e87cfdee7fb79",
+      "operator_identity.json": "4cc364de8961ec36e93b9023dc6276e5e9cbdc47d65fac55c6182ec53c969440",
+      "component_checks.json": "7a84d6114a87a4cfbb665d2bf975d269cc66797eaf96385e336620d184b11d1d",
+      "candidate_construction.json": "4d44d77a593513be38b788b822151d773dee4cea84dbe750ca32148e9d5912ef",
+      "numerical_summary.json": "4a93d67f0b4dd57f12845c8e11b496dea2e735c8384d02e280113de33e03890a"
+    },
+    "artifacts_sha256": {
+      "rhs_000.npz": "ed514fb0c18808caa496302ab6786b647a32151002f690687506c44464a3f2d8",
+      "rhs_001.npz": "413f351646293060438d4652be6fac38765d35083064b43a90bb86919e3d03b5",
+      "rhs_002.npz": "b34551681ff11a9ea4694c3cf013d3eb82fb696789fe93707c6021b017cb8459",
+      "rhs_003.npz": "c72fc83b50dab3e2ca053990f93a7c39f6ee7475da82a2d9f50b4220cc299fbd",
+      "rhs_004.npz": "8309020169f7fdb4d712beafd017a5e4ea3e04ef3049691013f90fa8d4a5a2bc",
+      "rhs_005.npz": "b52f9f305f303659983646ae3107228f69f0dc002da37753ec5cefa04fbcaad7",
+      "rhs_006.npz": "d7267957b8b82eacbbef3c16e91fd05da564835fd1855d45f127c3a3ad106e45",
+      "rhs_007.npz": "14f763f9da0d7f19d8ac27acfefe3a769819777c432b26837bafbff4f57044eb",
+      "trajectory_000.npz": "f95de00cb3f32f8abe347d054edef991a8bbd215b6f5a7d3104244cc6b878e56",
+      "trajectory_001.npz": "ce09e57ea6506407f08972feffef00b5c8e8cacaa257f5bf729ba4e44571ad45",
+      "trajectory_002.npz": "b7c294435a5582bb457a4286fa9f4eaa332e5496c8b20881d6980853abbe7770",
+      "trajectory_003.npz": "7d0b1e084a20516beef92ef7fcdb225606b4ecbbd29e8a035dead1b8e7980b63",
+      "trajectory_004.npz": "e6478f23817860af7a75977379183ca0e86c0d4335c6539620a6a4bcd06dff48",
+      "trajectory_005.npz": "90093628edf1fe376a548a28c01f0042c8729f636007cc1b5fd5a3f3ee525943",
+      "trajectory_006.npz": "d6c44ca3f7afe6de70f03162bc3d58c2fde10425bbc8366738e0a90642a7e90c"
+    }
+  },
+  "oracle_positive": {
+    "median_error_ratio_max": 0.9,
+    "median_native_ratio_max": 0.99,
+    "selection_split": "validation only",
+    "deployment_rank": 128,
+    "meaning": "preregistered offline representation signal, not strict 1e-10 qualification; require both median ratios at rank128; no rank enlargement if negative"
+  }
 }

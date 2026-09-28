@@ -127,7 +127,11 @@ class IterativeCoarseBackend:
         self.matrix = matrix
         self.action = action
         self.pc = pc
-        self.plan = InversePlan(sha, tuple(cell_declarations) + pc.declarations)
+        self.plan = InversePlan(
+            sha,
+            tuple(cell_declarations) + pc.declarations,
+            representation_bytes=getattr(pc, "representation_bytes", 0),
+        )
         self.last_reduced = None
         self.history = []
         self.trajectory = []

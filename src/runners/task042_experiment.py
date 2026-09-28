@@ -497,6 +497,15 @@ def main():
     write_json(directory / "numerical_summary.json", result)
     started = time.perf_counter()
     try:
+        if stage in ("F2-teacher", "F2-oracle"):
+            from src.runners.task042_coarse_stages import run_coarse_stage
+
+            result.update(
+                run_coarse_stage(
+                    cfg, MPI.COMM_WORLD, stage, directory, artifact, source, marker
+                )
+            )
+            return 0
         if stage not in ("F1-reference", "F1-B0"):
             raise RuntimeError(
                 "Later stage has not passed its preceding Gate or been implemented yet"
