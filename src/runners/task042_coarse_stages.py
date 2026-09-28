@@ -470,7 +470,233 @@ def run_coarse_stage(cfg, comm, stage, directory, artifact, source, marker):
             return teacher(runtime, f1, directory, artifact, source, profile, marker)
         if stage == "F2-oracle":
             return oracle(runtime, directory, artifact, source, profile, marker)
+        if stage in ("F4-B0", "F4-LIN", "F4-NN"):
+            return candidate_validation(
+                runtime, directory, artifact, source, profile, stage, marker
+            )
         raise ValueError("Unimplemented later coarse stage")
     finally:
         runtime.destroy()
         marker("original_p4_stack_destroyed", {})
+
+
+def frozen_oracle(profile):
+    proof = profile["oracle_qualification"]
+    directory = ROOT / proof["directory"]
+    numerical = json.loads((directory / "numerical_summary.json").read_text())
+    supervision = json.loads((directory / "run_summary.json").read_text())
+    if (
+        numerical["status"] != "REPRESENTATION_POSITIVE"
+        or not supervision["descendants_cleared"]
+        or supervision["leader_exit_code"] != 0
+    ):
+        raise ValueError("Oracle not qualified or released")
+    path = Path(numerical["oracle_manifest"])
+    if file_sha256(path) != proof["manifest_sha256"]:
+        raise ValueError("Oracle manifest changed")
+    result = json.loads(path.read_text())
+    for key in ("basis", "features"):
+        if file_sha256(result[key + "_path"]) != result[key + "_sha256"]:
+            raise ValueError("Oracle " + key + " changed")
+    return result
+
+
+def candidate_validation(runtime, directory, artifact, source, profile, stage, marker):
+    from src.runners.task042_experiment import scalar_audit
+    from src.solvers.coarse_inverse_protocol import (
+        CoarseReturnRejected,
+        StrictCoarseReturn,
+    )
+    from src.solvers.learned_coarse_inverse import (
+        IterativeCoarseBackend,
+        OriginalEquationAudit,
+    )
+    from src.solvers.learned_reduced_correction import ReducedCorrectionPC
+
+    dataset, dataset_path = read_dataset(profile)
+    matrix, action = runtime.p4_system.matrix, runtime.action
+    native = native_numpy_apply(runtime.p4)
+    apply = BorrowedMatrixAction(matrix)
+    declarations = cell_declarations(action)
+    b0 = BoundedBlockPC(
+        matrix.getSize()[0],
+        lambda a, b: matrix.getValues(
+            np.arange(a, b, dtype=np.int64), np.arange(a, b, dtype=np.int64)
+        ),
+        cell_factor_bytes=sum(d.payload_bytes for d in declarations),
+        width=512,
+    )
+    pc = b0
+    weights = None
+    metadata = {}
+    rows = []
+    try:
+        if stage != "F4-B0":
+            oracle = frozen_oracle(profile)
+            with np.load(oracle["basis_path"], allow_pickle=False) as packet:
+                q, u, r = (packet[name] for name in ("q", "u", "r"))
+            if stage == "F4-NN":
+                proof = profile["model_qualification"]
+                previous = ROOT / proof["directory"]
+                run = json.loads((previous / "run_summary.json").read_text())
+                model = json.loads((previous / "numerical_summary.json").read_text())
+                if (
+                    not run["descendants_cleared"]
+                    or run["leader_exit_code"] != 0
+                    or model["status"] != "TRAINING_COMPLETED"
+                ):
+                    raise ValueError("NN training not completed or released")
+                if file_sha256(model["model_path"]) != proof["frozen_model_sha256"]:
+                    raise ValueError("Frozen model changed")
+                with np.load(model["model_path"], allow_pickle=False) as packet:
+                    weights = {name: packet[name] for name in packet.files}
+                from src.solvers.learned_reduced_correction import numpy_mlp
+
+                if (
+                    file_sha256(model["inference_probe_path"])
+                    != model["inference_probe_sha256"]
+                ):
+                    raise ValueError("Frozen Torch inference probe changed")
+                with np.load(
+                    model["inference_probe_path"], allow_pickle=False
+                ) as probe:
+                    predicted = numpy_mlp(probe["input"], weights)
+                    delta = float(
+                        np.linalg.norm(predicted - probe["output"])
+                        / max(np.linalg.norm(probe["output"]), np.finfo(float).tiny)
+                    )
+                if delta > 1.0e-12:
+                    raise ValueError(
+                        "FE NumPy inference differs from frozen Torch FP64"
+                    )
+                metadata["fe_numpy_torch_relative_difference"] = delta
+                metadata.update(
+                    training_source_sha=model["source_sha"],
+                    model_sha256=proof["frozen_model_sha256"],
+                    selected_epoch=model["selected_epoch"],
+                )
+            pc = ReducedCorrectionPC(
+                b0,
+                q,
+                u,
+                r,
+                apply,
+                lambda v: mapped_original_residual(action, v),
+                weights=weights,
+            )
+            del u
+            metadata.update(
+                basis_sha256=oracle["basis_sha256"],
+                oracle_source_sha=oracle["source_sha"],
+                rank=q.shape[1],
+            )
+        backend = IterativeCoarseBackend(
+            matrix, action, pc, runtime.operator_identity["csr_sha256"], declarations
+        )
+        audit = OriginalEquationAudit(action, native)
+        write_json(
+            directory / "candidate_construction.json",
+            dict(
+                global_p4_factor_created=False,
+                private_audit_csr=False,
+                original_matrix_borrowed=True,
+                patch_factor_bytes=b0.factor_bytes,
+                cell_port_factor_bytes=sum(d.payload_bytes for d in declarations),
+                factors=[
+                    {"scope": d.scope, "rows": d.rows, "payload_bytes": d.payload_bytes}
+                    for d in backend.plan.factors
+                ],
+                representation_bytes=backend.plan.representation_bytes,
+                **metadata,
+            ),
+        )
+
+        def failure(packet):
+            s = packet["state"]
+            r = packet["rhs"]
+            np.savez(
+                artifact / f"failure_{len(rows):03d}.npz",
+                rhs_fe=r.fe,
+                rhs_port=r.port,
+                state_fe=np.zeros_like(r.fe) if s is None else s.fe,
+                state_port=np.zeros_like(r.port) if s is None else s.port,
+            )
+
+        verifier = StrictCoarseReturn(
+            backend,
+            witness_operator_sha256=runtime.operator_identity["csr_sha256"],
+            original_a4=audit.native,
+            port_closure=audit.port,
+            recovery=audit.recovery,
+            slave_dofs=tuple(int(i) for i in runtime.levels["floquets"][4].mpc.slaves),
+            failure_sink=failure,
+        )
+        count = 0
+        labels = json.loads(
+            Path(dataset["splits"]["heldout"]["residuals_path"]).read_text()
+        )
+        for packet in dataset["splits"]["heldout"]["files"]:
+            with np.load(packet["path"], allow_pickle=False) as data:
+                # Never access held-out teacher solutions, initial guesses or coefficients.
+                fe = data["rhs_fe"]
+                ports = data["rhs_port"]
+                scales = data["normalization_scale"]
+            for g, p, scale in zip(fe, ports, scales, strict=True):
+                if count == 16:
+                    break
+                rhs = CoarseRHS(g * scale, p * scale)
+                before_pc = pc.seconds
+                before_apply = apply.seconds
+                started = time.perf_counter()
+                passed = True
+                try:
+                    verifier.solve(rhs)
+                except CoarseReturnRejected:
+                    passed = False
+                d = dict(verifier.last_audit)
+                d.update(
+                    index=count,
+                    label=labels[count]["label"],
+                    passed=passed,
+                    seconds=time.perf_counter() - started,
+                    pc_seconds=pc.seconds - before_pc,
+                    additional_A4_apply_seconds=apply.seconds - before_apply,
+                    ksp_reason=backend.last_reason if d["backend_called"] else None,
+                    native_audit=scalar_audit(audit.last) if audit.last else None,
+                )
+                rows.append(d)
+                if d["backend_called"]:
+                    np.savez(
+                        artifact / f"trajectory_{count:03d}.npz",
+                        **{f"r_{i:03d}": v for i, v in backend.trajectory},
+                    )
+                    write_json(artifact / f"history_{count:03d}.json", backend.history)
+                count += 1
+                write_json(directory / "coarse_results.json", rows)
+                marker(
+                    "strict_heldout_rhs_complete",
+                    {k: v for k, v in d.items() if k != "native_audit"},
+                )
+            if count == 16:
+                break
+        if count != 16:
+            raise ValueError("Insufficient unseen RHS inventory")
+        status = (
+            "F4_QUALIFIED"
+            if all(r["passed"] for r in rows)
+            else "COARSE_INVERSE_NOT_QUALIFIED"
+        )
+        return dict(
+            status=status,
+            rows=rows,
+            heldout_consumed=16,
+            global_p4_factor_created=False,
+            candidate=stage,
+            private_audit_csr=False,
+            dataset_manifest_sha256=file_sha256(dataset_path),
+            operator_sha256=runtime.operator_identity["csr_sha256"],
+            **metadata,
+        )
+    finally:
+        b0.factors.clear()
+        apply.destroy()

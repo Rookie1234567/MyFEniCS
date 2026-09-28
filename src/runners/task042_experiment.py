@@ -497,7 +497,7 @@ def main():
     write_json(directory / "numerical_summary.json", result)
     started = time.perf_counter()
     try:
-        if stage in ("F2-teacher", "F2-oracle"):
+        if stage in ("F2-teacher", "F2-oracle", "F4-B0", "F4-LIN", "F4-NN"):
             from src.runners.task042_coarse_stages import run_coarse_stage
 
             result.update(

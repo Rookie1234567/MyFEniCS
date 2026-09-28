@@ -129,5 +129,10 @@
     "directory": "results/task042/task042_f2_teacher_shared_20260928T115902548611Z",
     "source_sha": "b72448bb2117a0221f041f1b47ac41049750a3c7",
     "manifest_sha256": "99c354ea4ce85b2dd8284b8f91dab4f2e453b4b9d426034aa47af43e89a14783"
+  },
+  "oracle_qualification": {
+    "directory": "results/task042/task042_f2_oracle_shared_20260928T123331290778Z",
+    "source_sha": "d9de8ad69bfeeac4860e5187e1738c902a3d808e",
+    "manifest_sha256": "507370ad8b120459556e793b67ee2249514308e03cf5f92b02d4631985bccbce"
   }
 }

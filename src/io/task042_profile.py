@@ -11,6 +11,7 @@ TASK042_PROFILES = {
     "task042_shared_f2_teacher_v1": "F2-teacher",
     "task042_shared_f2_oracle_v1": "F2-oracle",
     "task042_shared_f3_train_v1": "F3-train",
+    "task042_shared_f4_b0_v1": "F4-B0",
     "task042_shared_f4_linear_v1": "F4-LIN",
     "task042_shared_f4_neural_v1": "F4-NN",
 }
