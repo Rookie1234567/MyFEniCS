@@ -1,3 +1,25 @@
+# V10 最新交付：输出头／精确端口多路径负结果，有限诊断完成
+
+固定原0.7nm／384hex／p3／40复通道。网络隐藏层提供空间函数，本批直接由原有限元方程求线性组合，检验是否可免去线性输出层长训练；同时用随机隐藏函数区分已学习特征与线性代数收益。薄矩阵和稳定分解增加设置内存，仍不能外推最终大模型。所有原V1–V9正文按字节保留。
+
+| 模型／方法／比较目的 | 原Schur／native／固定RHS端口残差；无量纲measured | 散射E L2／curl-H相对差 | 状态与具体原因 |
+|---|---|---|---|
+| A原NN7方向的复幅相＋40端口 | 0.912888／0.687417／0.00458282 | 0.634723／0.634718 | 原S/b决定c，原方程1e-6及场1e-4均失败 |
+| B1已训练隐藏＋直接线性头 | 0.797694／4.381516／0.00695473 | 0.700726／0.700810 | rank1600；降低Schur loss却native放大 |
+| B0随机隐藏seed420906＋同线性头 | 0.797324／10.964503／0.00582247 | 0.732080／0.732146 | rank1600；原loss略优B1，场略差，未证明神经增量 |
+| C同B1空间、原Hhat精确端口闭合 | 0.798258／0.309567／6.5094e-17 | 0.697842／0.697932 | rank1560；只解决port/native放大，体场未合格 |
+| D1参考辅助固定空间拟合，非求解 | B1/B0 trace差0.00115672／0.00115235 | E约0.001025，curl约0.00320 | 远优于方程拟合但仍超1e-4；不是整个NN或物理L2下限 |
+| D2原curl/质量作用定位，非求解 | LSQR8误差两项约10.402，相加V=0.04745 | 重组最大operation差1.697e-14 | 强抵消固定方向证据，非全局奇异/唯一根因证明 |
+| E/P与最终目标 not_run | 无候选P/P+或严格资格；micro未通过 | 无新p4 enrichment/最大模型 | E/P未准入；最终0.7nm／48h NOT_QUALIFIED |
+
+四候选R/T/A_balance/A_volume分别为A 0.0889836/0.835105/0.0759116/0.00502812，B1 0.0845095/0.796652/0.118838/0.00484248，B0 0.0851194/0.798195/0.116685/0.00485441，C 0.0843697/0.796538/0.119092/0.00484248；能量闭合差0.07088–0.11425，全部仅未资格化诊断，无official R/T/A。R00_s/R00_p及完整40通道见[候选CSV](records/candidate_comparison_v10.csv)、[通道](records/channel_observables_v10.csv)，不把背景主导total误差约0.07当作散射准确。
+
+正式12次launch含失败与保存向量重放共650.093757705s，整树同时采样峰2.213718GiB、自身swap0；B1/B0新构建204.3765/190.4928s。B1/A/C另继承NN7原7142.986s训练及原FE/moment/真实梯度设置；全账不重复累计父子时间，不清零历史carry10209.145962639828s。[全过程成本](records/resource_costs_v10.json)、[run index](records/run_index_v10.json)。共享CPU实时核11/13/0、MPI1/mathTorch1/自有锁/16-12GiB采样整树监督，独立缓存、无GPU/cgroup委派；不修改邻任务，未观测持续PSI压力，影响与正式加速INCONCLUSIVE。
+
+每正式stage clean source绑定：A/B为1fb8a949bbed81f34645d96e80c7025a3b22ef4d；C/D/三见证补核为6e564a66868374560dae66321564f3e767f5639c；D2仅元数据修复／保存向量重放为6cbaec7848936b81bf2c34c862358a38090c58c0。最初B只有一个见证，三见证补核晚于冻结，时序偏差保留。D reference barrier后无训练／新候选。原task/review/response/records和旧p4负结果不改；普通default/原方程/MPC/材料不改，无global p4 factor/完整S/CSR/正规方程/ILU/Riesz/hidden fallback。
+
+最终25相关pytest及三个ML矩/输出头见证通过，真实C九FD最大1.088e-8。Review V7实际GitHub3表5公式通过，最终文档显示/历史保护见新compact记录；无full pytest/MPI2/4/CI声明。[Response V10](../response_v10.md)、[完整结果](autonomous_neural_head_v10.md)、[独立Gate](records/qualification_and_dispatch_v10.json)、[journal](records/progress_journal_v10.jsonl)。唯一下一建议是固定随机特征空间内一次已知非零系数的制造RHS回收检查，区分薄LS/回写稳定性与目标表示/弱响应；未自动实施。全部可执行路径结束后提前交付，不以重复失败填满7小时，不merge。
+
 # V9 最新交付：固定误差定位完成，求解负结果保留
 
 本轮把六个固定向量恢复成真实FE场，定位遗漏散射和原方程响应。完成D0–D4，独立状态FIXED_ERROR_DIAGNOSTIC_COMPLETE，solver_pass=false；没有新增求解、训练、参考LU或神经增量资格。[Response V9](../response_v9.md)、[完整定位](frozen_error_localization_v9.md)。

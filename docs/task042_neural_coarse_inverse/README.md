@@ -106,3 +106,8 @@ sed -n '1,100p' docs/task042_neural_coarse_inverse/task.md
 ## V9 最新有限批次入口
 
 [Review V6](review_report_v6.md)授权固定误差定位；[Response V9](response_v9.md)及[完整结果](outcomes/frozen_error_localization_v9.md)为本轮交付。六状态齐次恢复/物理区域/原方程作用核验完成，没有新求解、训练、PC或loss变更。旧p4路线关闭，V7/V8负结果保留；后续建议等待review，未自动执行。
+
+
+## V10 最新自主批次入口
+
+[Review V7](review_report_v7.md)授权单个七小时窗口的原方程幅相／端口、固定隐藏线性头与随机特征对照，明确覆盖旧只诊断与仅本任务heavy独占限制。[Response V10](response_v10.md)、[完整结果](outcomes/autonomous_neural_head_v10.md)为本轮交付。A/B1/B0/C及D1/D2已完成，四候选均严格负结果，E/P条件未满足；全部可执行路径结束后提前收口，不重复计算填满窗口。旧p4路线关闭，历史与普通default不改；下一制造RHS建议仅提议未执行，推送后等待review，不merge。

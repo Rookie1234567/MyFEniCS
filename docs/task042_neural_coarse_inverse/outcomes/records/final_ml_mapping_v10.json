@@ -1,0 +1,27 @@
+{
+  "status": "PASS",
+  "tests": 3,
+  "head_original_moment_relative_errors": [
+    7.171157807219877e-16,
+    1.2313858234454049e-15,
+    1.1116742663617453e-15
+  ],
+  "nontrivial_orientation": true,
+  "non_diagonal_piola": true,
+  "partial_batch": true,
+  "owner_filter": true,
+  "real_imag_coefficient_order_checked": true,
+  "threads": {
+    "intraop": 1,
+    "interop": 1,
+    "cuda_build": null,
+    "data_loader_workers": 0,
+    "actual_blas_pools": [
+      {
+        "path": "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/numpy.libs/libopenblas64_p-r0-0cf96a72.3.23.dev.so",
+        "function": "openblas_get_num_threads64_",
+        "threads": 1
+      }
+    ]
+  }
+}

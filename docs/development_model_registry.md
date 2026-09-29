@@ -1758,3 +1758,19 @@ production model。
 | 资格／下一步 | FIXED_ERROR_DIAGNOSTIC_COMPLETE≠solver PASS；原V7/V8及旧p4负结果保留，最大0.7nm/48h仍NOT_QUALIFIED；只建议后续有界原V内部作用平衡检查，未实施 |
 
 身份、40复通道、区域、方程分量与累计资源见[Task042 V9](task042_neural_coarse_inverse/outcomes/frozen_error_localization_v9.md)、[Response V9](task042_neural_coarse_inverse/response_v9.md)。受控共享CPU授权继续，无cgroup委派不冒称连续限额；未观测持续PSI压力，邻影响INCONCLUSIVE。原seed420620封存，不改变其他Task合同/记录，不merge。
+
+
+### Task042 V10：固定0.7nm micro-pilot输出头／端口对照
+
+| 模型／机制 | 实际残差与场／功率结果 | 最终分类 |
+|---|---|---|
+| 原Full3D384hex p3/40复端口，A NN7复幅相＋port | Schur/native0.912888/0.687417；scatter E/H差0.634723/0.634718；R/T/A_balance/A_volume0.0889836/0.835105/0.0759116/0.00502812 | CONTROLLED_NUMERICAL_NEGATIVE |
+| 同对象B1已学习隐藏＋1600列薄方程LS | Schur/native0.797694/4.381516；scatter0.700726/0.700810；R/T/A/Avol0.0845095/0.796652/0.118838/0.00484248 | rank1600，未合格；包含原7143s训练成本 |
+| 同对象B0随机隐藏＋同薄LS | Schur/native0.797324/10.964503；scatter0.732080/0.732146；R/T/A/Avol0.0851194/0.798195/0.116685/0.00485441 | rank1600，随机loss略优B1，未合格 |
+| 同对象C原Hhat精确40端口闭合＋同B1隐藏 | Schur/native0.798258/0.309567、port6.509e-17；scatter0.697842/0.697932；R/T/A/Avol0.0843697/0.796538/0.119092/0.00484248 | rank1560，只解决端口/native放大；NEGATIVE |
+| D1/D2 offline diagnostic | 同空间参考拟合E差约0.001025/curl约0.00320；LSQR8误差curl/mass≈10.402、V0.04745，重组1.697e-14 | 非求解/非训练；多因素仍INCONCLUSIVE |
+| E/P/最大0.7nm/48h | 无P/P+与原完整方程资格，未做50步隐藏更新/p4 enrichment/放大 | NOT_RUN_NOT_ADMITTED；最终NOT_QUALIFIED |
+
+以上新R/T/A全部未资格化诊断、不是official物理结果；原限值方程1e-6/场1e-4不变。R00_s/p与完整40复通道及参考面见[候选](task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v10.csv)、[通道](task042_neural_coarse_inverse/outcomes/records/channel_observables_v10.csv)。原材料表及physical/mode/action identity不变，p/h/MPI/波长影响未扫描；原NN7接受unknown保持，reference在冻结后独立验证，D后禁回训。
+
+12正式含失败/replay wall650.093757705s、同时树峰2.213718GiB/own swap0；全aux/继承训练/设置及历史费用见[resource](task042_neural_coarse_inverse/outcomes/records/resource_costs_v10.json)。共享CPU MPI1/线程1、独立cache/自有监督/原25200s总窗口，无GPU/邻任务修改，性能与影响INCONCLUSIVE。无global p4 LU/新global S/CSR或hidden inverse；旧路线关闭，旧Task/results不改。全部可执行路径完成后提前收口，唯一下一制造RHS建议仅建议未执行，待review不merge。[Response](task042_neural_coarse_inverse/response_v10.md)、[完整证据](task042_neural_coarse_inverse/outcomes/autonomous_neural_head_v10.md)。

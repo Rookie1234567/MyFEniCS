@@ -1,0 +1,30 @@
+{
+  "status": "POST_RUN_NUMPY_SCIPY_THREADS_ONE",
+  "numpy": "1.26.4",
+  "scipy": "1.11.4",
+  "affinity": [
+    0
+  ],
+  "pools": [
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+      "symbol": "openblas_get_num_threads",
+      "threads": 1,
+      "sha256": "8ba4a98f44d763c2e648755ef452025919e28633339f23ff605044de3483a25d"
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+      "symbol": "openblas_get_num_threads",
+      "threads": 1,
+      "sha256": "1e82245607c58d13405580c71b9b0134b5a952686ac861f979fc7a886ebd4229"
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+      "symbol": "openblas_get_num_threads",
+      "threads": 1,
+      "sha256": "bfc7492adbf84a8f567720a9e1fae2afc18f3d817da233e7f4d453683485308e"
+    }
+  ],
+  "evidence_scope": "post-run installation-matched probe; not retroactive in-run measurement; BLAS/LAPACK wrappers may share a pool",
+  "run_environment_threads": "OPENBLAS_NUM_THREADS=1; in-run probe preceded lazy SciPy import"
+}

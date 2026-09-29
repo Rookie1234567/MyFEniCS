@@ -2965,3 +2965,12 @@ NEURAL_OPTIMIZATION_NEGATIVE、神经增量NOT_DEMONSTRATED、最终0.7nm/48h NO
 | 资格／下一步 | FIXED_ERROR_DIAGNOSTIC_COMPLETE≠solver PASS；原V7/V8及旧p4负结果保留，最大0.7nm/48h仍NOT_QUALIFIED；只建议后续有界原V内部作用平衡检查，未实施 |
 
 身份、40复通道、区域、方程分量与累计资源见[Task042 V9](task042_neural_coarse_inverse/outcomes/frozen_error_localization_v9.md)、[Response V9](task042_neural_coarse_inverse/response_v9.md)。受控共享CPU授权继续，无cgroup委派不冒称连续限额；未观测持续PSI压力，邻影响INCONCLUSIVE。原seed420620封存，不改变其他Task合同/记录，不merge。
+
+
+## Task042 V10：自主线性头与端口多路径完成，仍未合格
+
+固定0.7nm/384hex/p3/40端口，隐藏层给空间函数、原方程直接求线性输出系数；N0→A→B1→B0→C→D1/D2完成。A/B1/B0/C的Schur分别0.912888/0.797694/0.797324/0.798258，native0.687417/4.381516/10.964503/0.309567；场误差0.635–0.732远高于1e-4，原方程1e-6未过。C原Hhat闭合端口到6.509e-17，只改善端口和native放大；无P/P+故E/P未准入。B0原loss略好、B1场略好，没有合格已学习特征增量。D1参考辅助同空间场差约1e-3但仍超门限，D2固定误差curl/mass强抵消，唯一根因INCONCLUSIVE；参考诊断不回传训练。
+
+12正式launch共650.093757705s，整树同时采样峰2.213718GiB/own swap0；B1继承NN7原7142.986s及必要FE/moment设置，历史carry10209.145962639828s不重置。共享CPU现场核11/13/0、MPI1/mathTorch1、自有锁/16-12GiB采样watchdog/原单个7h总截止；未观测持续PSI压力，缺可比邻速率，影响/正式加速INCONCLUSIVE。无cgroup委派不称连续kernel cap，邻任务不操作。D2序列化一次最小修复只审核保存向量，失败保留，未重做FE分项；B三见证后补时序偏差披露。
+
+原task/review/response及全部负结果/材料/算子/普通default保留；无global p4 factor/完整S或CSR/正规方程/ILU/Riesz/fallback，无新隐藏训练/GPU/最大模型。最终25相关pytest和ML三见证通过，Review V7实际3表5公式；不声明CI。唯一下一建议是固定随机特征空间的非零已知系数制造RHS回收，进一步区分数值链稳定性与目标表示/弱响应；未自动实施。全部可执行路径耗尽后提前交付，不填满7h，不merge。[Response V10](task042_neural_coarse_inverse/response_v10.md)、[完整结果](task042_neural_coarse_inverse/outcomes/autonomous_neural_head_v10.md)、[费用](task042_neural_coarse_inverse/outcomes/records/resource_costs_v10.json)。

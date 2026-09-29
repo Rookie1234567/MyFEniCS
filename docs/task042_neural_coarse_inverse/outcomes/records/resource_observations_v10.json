@@ -1,0 +1,209 @@
+{
+  "initial_full_baseline": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v10/initial_resource_baseline.json",
+    "sha256": "cd84cf865b5de89f74c6a0451dc62f8951c35b7da3e69cd66b6e4409a1842f10"
+  },
+  "final_full_baseline": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v10/post_resource_baseline.json",
+    "sha256": "215eff254fb402e440a43d2cf0c84d9ac70c12df9df8c396fcb827e3eec7de6c"
+  },
+  "initial_memory": {
+    "mem_total_bytes": 2163100385280,
+    "mem_available_bytes": 945257488384,
+    "effective_total_bytes": 2163100385280,
+    "effective_available_bytes": 945257488384,
+    "reserve_bytes": 353748992000,
+    "launch_cap_bytes": 17179869184,
+    "planning_cap_bytes": 17179869184,
+    "cgroup_limits": [],
+    "system_reserve_bytes": 216310038528,
+    "neighbor_growth_allowance_bytes": 137438953472,
+    "shared_workstation": true
+  },
+  "final_memory": {
+    "mem_total_bytes": 2163100385280,
+    "mem_available_bytes": 947388563456,
+    "effective_total_bytes": 2163100385280,
+    "effective_available_bytes": 947388563456,
+    "reserve_bytes": 353748992000,
+    "launch_cap_bytes": 17179869184,
+    "planning_cap_bytes": 17179869184,
+    "cgroup_limits": [],
+    "system_reserve_bytes": 216310038528,
+    "neighbor_growth_allowance_bytes": 137438953472,
+    "shared_workstation": true
+  },
+  "initial_pressure": {
+    "some": {
+      "avg10": 0.0,
+      "avg60": 0.0,
+      "avg300": 0.0,
+      "total": 395013.0
+    },
+    "full": {
+      "avg10": 0.0,
+      "avg60": 0.0,
+      "avg300": 0.0,
+      "total": 394029.0
+    }
+  },
+  "final_pressure": {
+    "some": {
+      "avg10": 0.0,
+      "avg60": 0.0,
+      "avg300": 0.0,
+      "total": 395013.0
+    },
+    "full": {
+      "avg10": 0.0,
+      "avg60": 0.0,
+      "avg300": 0.0,
+      "total": 394029.0
+    }
+  },
+  "initial_disk_free_bytes": 3445814759424,
+  "final_disk_free_bytes": 3443751661568,
+  "observed_neighbor_count_start": 22,
+  "observed_neighbor_count_end": 31,
+  "neighbor_changed_by_task042": false,
+  "SMT_and_affinity_evidence": "each run resource_baseline.json",
+  "performance_label": "shared-workstation",
+  "performance_conclusion": "INCONCLUSIVE",
+  "neighbor_impact": "No watchdog resource stop or sustained memory PSI observed; no reliable matched phase-rate baseline, no assertion of zero interference",
+  "cgroup_delegated": false,
+  "enforcement": "independent sampled simultaneous process-tree watchdog, 0.5s; hard stop own full tree and worker-parent death guard; not continuous kernel memory cap",
+  "hard_rss_bytes": 17179869184,
+  "warning_rss_bytes": 12884901888,
+  "own_swap_peak_bytes": 0,
+  "math_threads": 1,
+  "torch_intra_interop": 1,
+  "data_loader_workers": 0,
+  "mpi": 1,
+  "no_GPU_allocation_supported_by": "CPU-only Torch, empty CUDA_VISIBLE_DEVICES, unchanged GPU policy; not continuous VRAM attribution",
+  "thread_caveat": "In-run BLAS pools recorded before lazy SciPy import; post-run identical installation probe separately recorded; wrapper shared libraries do not imply distinct pools",
+  "own_already_recorded_health": [
+    {
+      "path": "results/task042/task042_v10_a_20260929T140728101333Z/shared_health.jsonl",
+      "samples": 2,
+      "memory_some_avg10_max": 0.0,
+      "memory_full_avg10_max": 0.0,
+      "pressure_consecutive_samples_max": 0,
+      "artifact_bytes_max": 1962028478,
+      "disk_free_bytes_min": 3445756366848,
+      "stop_observed": false
+    },
+    {
+      "path": "results/task042/task042_v10_b0_20260929T141312370707Z/shared_health.jsonl",
+      "samples": 35,
+      "memory_some_avg10_max": 0.0,
+      "memory_full_avg10_max": 0.0,
+      "pressure_consecutive_samples_max": 0,
+      "artifact_bytes_max": 3813699675,
+      "disk_free_bytes_min": 3443875594240,
+      "stop_observed": false
+    },
+    {
+      "path": "results/task042/task042_v10_b1_20260929T140837696042Z/shared_health.jsonl",
+      "samples": 37,
+      "memory_some_avg10_max": 0.0,
+      "memory_full_avg10_max": 0.0,
+      "pressure_consecutive_samples_max": 0,
+      "artifact_bytes_max": 2893922269,
+      "disk_free_bytes_min": 3444810477568,
+      "stop_observed": false
+    },
+    {
+      "path": "results/task042/task042_v10_c_20260929T142444320208Z/shared_health.jsonl",
+      "samples": 10,
+      "memory_some_avg10_max": 0.0,
+      "memory_full_avg10_max": 0.0,
+      "pressure_consecutive_samples_max": 0,
+      "artifact_bytes_max": 3815018320,
+      "disk_free_bytes_min": 3443846660096,
+      "stop_observed": false
+    },
+    {
+      "path": "results/task042/task042_v10_d1_20260929T142827133434Z/shared_health.jsonl",
+      "samples": 17,
+      "memory_some_avg10_max": 0.0,
+      "memory_full_avg10_max": 0.0,
+      "pressure_consecutive_samples_max": 0,
+      "artifact_bytes_max": 3816057991,
+      "disk_free_bytes_min": 3443833618432,
+      "stop_observed": false
+    },
+    {
+      "path": "results/task042/task042_v10_d2_20260929T143029062507Z/shared_health.jsonl",
+      "samples": 2,
+      "memory_some_avg10_max": 0.0,
+      "memory_full_avg10_max": 0.0,
+      "pressure_consecutive_samples_max": 0,
+      "artifact_bytes_max": 3819273850,
+      "disk_free_bytes_min": 3443828125696,
+      "stop_observed": false
+    },
+    {
+      "path": "results/task042/task042_v10_d2_replay_20260929T143625396206Z/shared_health.jsonl",
+      "samples": 1,
+      "memory_some_avg10_max": 0.0,
+      "memory_full_avg10_max": 0.0,
+      "pressure_consecutive_samples_max": 0,
+      "artifact_bytes_max": 3823634310,
+      "disk_free_bytes_min": 3443810852864,
+      "stop_observed": false
+    },
+    {
+      "path": "results/task042/task042_v10_head_check_20260929T142419449280Z/shared_health.jsonl",
+      "samples": 4,
+      "memory_some_avg10_max": 0.0,
+      "memory_full_avg10_max": 0.0,
+      "pressure_consecutive_samples_max": 0,
+      "artifact_bytes_max": 3814317083,
+      "disk_free_bytes_min": 3443852054528,
+      "stop_observed": false
+    },
+    {
+      "path": "results/task042/task042_v10_verify_a_20260929T140804257056Z/shared_health.jsonl",
+      "samples": 3,
+      "memory_some_avg10_max": 0.0,
+      "memory_full_avg10_max": 0.0,
+      "pressure_consecutive_samples_max": 0,
+      "artifact_bytes_max": 1974575290,
+      "disk_free_bytes_min": 3445742014464,
+      "stop_observed": false
+    },
+    {
+      "path": "results/task042/task042_v10_verify_b0_20260929T141810227744Z/shared_health.jsonl",
+      "samples": 3,
+      "memory_some_avg10_max": 0.0,
+      "memory_full_avg10_max": 0.0,
+      "pressure_consecutive_samples_max": 0,
+      "artifact_bytes_max": 3814130135,
+      "disk_free_bytes_min": 3443868164096,
+      "stop_observed": false
+    },
+    {
+      "path": "results/task042/task042_v10_verify_b1_20260929T141242225841Z/shared_health.jsonl",
+      "samples": 3,
+      "memory_some_avg10_max": 0.0,
+      "memory_full_avg10_max": 0.0,
+      "pressure_consecutive_samples_max": 0,
+      "artifact_bytes_max": 2894353188,
+      "disk_free_bytes_min": 3444805771264,
+      "stop_observed": false
+    },
+    {
+      "path": "results/task042/task042_v10_verify_c_20260929T142616933012Z/shared_health.jsonl",
+      "samples": 3,
+      "memory_some_avg10_max": 0.0,
+      "memory_full_avg10_max": 0.0,
+      "pressure_consecutive_samples_max": 0,
+      "artifact_bytes_max": 3816050963,
+      "disk_free_bytes_min": 3443843330048,
+      "stop_observed": false
+    }
+  ],
+  "artifact_bytes_max": 3823634310,
+  "own_monitor_only_read": true,
+  "comparable_neighbor_phase_rate": "INCONCLUSIVE; phase snapshots insufficient for matched stable-stage performance comparison"
+}

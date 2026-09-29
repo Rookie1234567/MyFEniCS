@@ -1,0 +1,27 @@
+{
+  "utc": "2026-09-29T15:17:06.803937+00:00",
+  "documentation_precommit_head": "b6546d762f5749ceca24b28e60ad4c380adc6741",
+  "branch": "task42_neural_coarse_inverse",
+  "upstream": "origin/task42_neural_coarse_inverse",
+  "worktree": "/home/fenics/Projects/NN-Lab",
+  "toplevel": "/home/fenics/Projects/NN-Lab",
+  "common_git_directory": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+  "lock": "FREE_NO_ACTIVE_FORMAL_RUN",
+  "all_formal_descendants_cleared": true,
+  "branch_only_push": "git push origin HEAD:refs/heads/task42_neural_coarse_inverse",
+  "numerical_paths_exhausted": true,
+  "old_p4_closed": true,
+  "no_global_p4_factor": "runtime construction declarations plus new source call graph; no p4 builder/factor invoked in A/B/C/D",
+  "small_factors": "only gelsd thin <=18184x1600 and exact Hhat40; pre-existing local recovery packet reused",
+  "reference_feedback": false,
+  "official_new_results": false,
+  "formal_implementation_repairs": 1,
+  "auxiliary_implementation_repairs": [
+    "post-probe fixed loaded-wrapper count",
+    "compact helper unmatched closing parenthesis",
+    "nested final audit reselecting only already-bound core"
+  ],
+  "observed_admission_failure": "compact_records_corrected final nested audit counted own bound supervisor; no new numerical stage, independent unbound read-only snapshot fixed placement",
+  "original_failed_runs_retained": true,
+  "CPU_GPU_neighbor_tasks_modified": false
+}

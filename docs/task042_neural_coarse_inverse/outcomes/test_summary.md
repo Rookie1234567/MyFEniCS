@@ -114,3 +114,18 @@ V3治理/文档表格定向测试28 passed；registry当前继承两项错误与
 真实六状态S/恢复/原方程/MPC/全FE区域与交叉项通过1e-10；全部独立最大差1.60056e-11。首次正式stage checker平方恒等式分母错误失败保留，e21只修复运算尺度、只重放数组checker；未重算FE。参考原残差不置零，完整40通道和192/8/48/136区mask真实核验。FE preflight首次sandbox MPI socket失败，随后同只读ABI complex128/int64/MPI1合格，无升级/重装。[状态及独立Gate](records/gate_decisions_v9.json)、[资源](records/resource_costs_v9.json)。
 
 新相关文件Ruff/format、compileall、one-run输入、本地表格/链接/公式、旧authority/response/records字节保护见[静态证据](records/static_checks_v9.json)。Review V6 GitHub实际5表/6math-renderer，review未修改；新文档发布检查见publication_checks_v9.json。旧V7/V8求解仍失败，不重跑teacher/训练/LSQR/参考LU；full repository pytest/MPI2/4/CI not_run。
+
+
+## V10：薄输出头、端口闭合和自主监督
+
+| 检查／真实范围 | 实际结果及边界 | evidence |
+|---|---|---|
+| 最终pure-array/task-focused回归 | 25 passed in5.54s；复非Hermitian、原packet/recovery特解、薄LS、Hhat闭合、原时间窗、整树超时/RSS清场、材料和raw Gate反例 | tmp/task042/v10/delivery_focused_tests_final/worker.log；clean b6546d762f5749ceca24b28e60ad4c380adc6741 |
+| ML原矩/真实输出头小回归 | 三非零复系数，最大1.2314e-15；orientation/非对角Piola/owner/partial batch/实虚序一致；无pytest安装 | records/final_ml_mapping_v10.json |
+| 真实pilot线性映射 | B1/B0各三个固定非零见证最大6.265e-16，真实保存trace再生差0；三见证补核在B冻结后，时序偏差不追溯改写 | records/head_mapping_and_rank_v10.json |
+| C真实Hhat/原S/gradient | cond13284≤1e10、三solve与三块重组通过；三方向×三h非零FD最大1.088e-8≤1e-5 | records/port_closure_checks_v10.json |
+| 独立数值checker | 从原审核、raw selected复E/H、全部total/scattered复通道和功率重算；四候选无P/P+、全部NOT_QUALIFIED，未信saved status | records/qualification_and_dispatch_v10.json |
+| D2最小修复 | mappingproxy序列化一次修复，保存向量重放而非FE重装配；原数值/source/失败保留，重组最大1.69745e-14 | records/volume_balance_diagnostic_v10.json |
+| 静态/历史/显示 | task新文件Ruff/compileall、one-run输入、diff、Markdown/链接、旧authority/结果byte保护；Review V7真实3表/5公式 | records/static_checks_v10.json、review_render_check_v10.json、publication_checks_v10.json |
+
+一次ABI CLI错误、post线程探针库数量断言及compact括号/嵌套选核错误都记录失败并局部收口。没有重跑V7/V8、旧teacher/F0/长KSP；本批数值停滞不当作bug。新checker加入raw selected样本重算后最终25项重跑，之前24项费用保留；ML无新代码变更不重复昂贵Gate。共享工作站单核/mathTorch1/自有树监督，full repository pytest/MPI2/4/CI not_run。

@@ -1,0 +1,319 @@
+{
+  "schema": "task042.qualification.v10",
+  "checker_source_sha": "b6546d762f5749ceca24b28e60ad4c380adc6741",
+  "checker": {
+    "path": "benchmarks/neural_head_gate_check.py",
+    "sha256": "dde54e2e5f5295adfb9ad23b104bd62912ae7a776c3756ef682ee47fec7a8e2d"
+  },
+  "raw_status_not_trusted": true,
+  "strict_limits": {
+    "original_equation": 1e-06,
+    "recovery": 1e-10,
+    "field": 0.0001,
+    "R_T_A_Avolume": 1e-05,
+    "channel_power": 1e-06,
+    "closure": 1e-05
+  },
+  "checks": {
+    "A": {
+      "candidate": "A",
+      "status": "NOT_QUALIFIED",
+      "original_equation": {
+        "passed": false,
+        "checks": {
+          "schur_relative": false,
+          "native_relative": false,
+          "augmented_relative": false,
+          "original_total_augmented_relative": false,
+          "port_full_rhs_relative": false,
+          "port_operation_relative": false,
+          "recovery_relative": true,
+          "slave_storage_zero": true,
+          "original_schur_identity": true
+        },
+        "rho": 0.9128881178128867
+      },
+      "reference_pass": true,
+      "field_checks": {
+        "full_FE_L2_relative": false,
+        "full_FE_scaled_curl_relative": false,
+        "scattered_FE_L2_relative": false,
+        "scattered_scaled_curl_relative": false,
+        "selected_E_relative": false,
+        "selected_H_relative": false
+      },
+      "original_field_errors": {
+        "full_FE_L2_relative": 0.06642043044403703,
+        "full_FE_scaled_curl_relative": 0.06642121331780478,
+        "scattered_FE_L2_relative": 0.6347225587320888,
+        "scattered_scaled_curl_relative": 0.634717994237015,
+        "selected_E_relative": 0.06636889989786704,
+        "selected_H_relative": 0.06666874571312349
+      },
+      "channel_checks": {
+        "ordered_complex_port_vector": {
+          "relative_or_near_zero_absolute": 0.06613233877247199,
+          "passed": false
+        },
+        "ordered_complex_scattered_port_vector": {
+          "relative_or_near_zero_absolute": 0.6327080438654719,
+          "passed": false
+        }
+      },
+      "power_differences": {
+        "R_total": 0.02866222272922843,
+        "T_total": 0.04194299469716156,
+        "A_balance": 0.07060521742638992,
+        "A_volume": 0.00027828218138468974
+      },
+      "max_channel_power_difference": 0.0419430438609002,
+      "energy_closure_absolute": 0.07088349960486828,
+      "A_balance_A_volume_absolute": 0.07088349960486827,
+      "baseline_rho": 0.913263144662792,
+      "progress_signal": "NEGATIVE",
+      "E_admitted": false,
+      "P4_admitted": false,
+      "recorded_status_trusted": false,
+      "diagnostic_RTA_only": true,
+      "selected_scattered_point_samples": "not separately recorded; full scattered E/H norms checked; no candidate qualifies"
+    },
+    "B1": {
+      "candidate": "B1",
+      "status": "NOT_QUALIFIED",
+      "original_equation": {
+        "passed": false,
+        "checks": {
+          "schur_relative": false,
+          "native_relative": false,
+          "augmented_relative": false,
+          "original_total_augmented_relative": false,
+          "port_full_rhs_relative": false,
+          "port_operation_relative": false,
+          "recovery_relative": true,
+          "slave_storage_zero": true,
+          "original_schur_identity": true
+        },
+        "rho": 4.381516135362798
+      },
+      "reference_pass": true,
+      "field_checks": {
+        "full_FE_L2_relative": false,
+        "full_FE_scaled_curl_relative": false,
+        "scattered_FE_L2_relative": false,
+        "scattered_scaled_curl_relative": false,
+        "selected_E_relative": false,
+        "selected_H_relative": false
+      },
+      "original_field_errors": {
+        "full_FE_L2_relative": 0.0733273918107913,
+        "full_FE_scaled_curl_relative": 0.07333752347771653,
+        "scattered_FE_L2_relative": 0.7007264096927315,
+        "scattered_scaled_curl_relative": 0.7008099292219414,
+        "selected_E_relative": 0.08212631478216621,
+        "selected_H_relative": 0.06333126558600174
+      },
+      "channel_checks": {
+        "ordered_complex_port_vector": {
+          "relative_or_near_zero_absolute": 0.05021257850292618,
+          "passed": false
+        },
+        "ordered_complex_scattered_port_vector": {
+          "relative_or_near_zero_absolute": 0.4803988927615592,
+          "passed": false
+        }
+      },
+      "power_differences": {
+        "R_total": 0.03313633547986426,
+        "T_total": 0.08039547175317263,
+        "A_balance": 0.11353180723303691,
+        "A_volume": 0.0004639214627886381
+      },
+      "max_channel_power_difference": 0.08042115722858723,
+      "energy_closure_absolute": 0.11399572869291907,
+      "A_balance_A_volume_absolute": 0.11399572869291921,
+      "baseline_rho": 0.913263144662792,
+      "progress_signal": "NEGATIVE",
+      "E_admitted": false,
+      "P4_admitted": false,
+      "recorded_status_trusted": false,
+      "diagnostic_RTA_only": true,
+      "selected_scattered_point_samples": "not separately recorded; full scattered E/H norms checked; no candidate qualifies"
+    },
+    "B0": {
+      "candidate": "B0",
+      "status": "NOT_QUALIFIED",
+      "original_equation": {
+        "passed": false,
+        "checks": {
+          "schur_relative": false,
+          "native_relative": false,
+          "augmented_relative": false,
+          "original_total_augmented_relative": false,
+          "port_full_rhs_relative": false,
+          "port_operation_relative": false,
+          "recovery_relative": true,
+          "slave_storage_zero": true,
+          "original_schur_identity": true
+        },
+        "rho": 10.964503374108958
+      },
+      "reference_pass": true,
+      "field_checks": {
+        "full_FE_L2_relative": false,
+        "full_FE_scaled_curl_relative": false,
+        "scattered_FE_L2_relative": false,
+        "scattered_scaled_curl_relative": false,
+        "selected_E_relative": false,
+        "selected_H_relative": false
+      },
+      "original_field_errors": {
+        "full_FE_L2_relative": 0.07660840355409605,
+        "full_FE_scaled_curl_relative": 0.07661674881191458,
+        "scattered_FE_L2_relative": 0.7320801988057828,
+        "scattered_scaled_curl_relative": 0.7321460524694139,
+        "selected_E_relative": 0.08523239637116646,
+        "selected_H_relative": 0.0668129964970931
+      },
+      "channel_checks": {
+        "ordered_complex_port_vector": {
+          "relative_or_near_zero_absolute": 0.049566248395744895,
+          "passed": false
+        },
+        "ordered_complex_scattered_port_vector": {
+          "relative_or_near_zero_absolute": 0.4742152575628558,
+          "passed": false
+        }
+      },
+      "power_differences": {
+        "R_total": 0.032526429815056795,
+        "T_total": 0.0788526670215628,
+        "A_balance": 0.1113790968366195,
+        "A_volume": 0.0004519909769413596
+      },
+      "max_channel_power_difference": 0.07891912677671487,
+      "energy_closure_absolute": 0.11183108781065454,
+      "A_balance_A_volume_absolute": 0.11183108781065453,
+      "baseline_rho": 1.0,
+      "progress_signal": "NEGATIVE",
+      "E_admitted": false,
+      "P4_admitted": false,
+      "recorded_status_trusted": false,
+      "diagnostic_RTA_only": true,
+      "selected_scattered_point_samples": "not separately recorded; full scattered E/H norms checked; no candidate qualifies"
+    },
+    "C": {
+      "candidate": "C",
+      "status": "NOT_QUALIFIED",
+      "original_equation": {
+        "passed": false,
+        "checks": {
+          "schur_relative": false,
+          "native_relative": false,
+          "augmented_relative": false,
+          "original_total_augmented_relative": false,
+          "port_full_rhs_relative": true,
+          "port_operation_relative": true,
+          "recovery_relative": true,
+          "slave_storage_zero": true,
+          "original_schur_identity": true
+        },
+        "rho": 0.7982576297473281
+      },
+      "reference_pass": true,
+      "field_checks": {
+        "full_FE_L2_relative": false,
+        "full_FE_scaled_curl_relative": false,
+        "scattered_FE_L2_relative": false,
+        "scattered_scaled_curl_relative": false,
+        "selected_E_relative": false,
+        "selected_H_relative": false
+      },
+      "original_field_errors": {
+        "full_FE_L2_relative": 0.07302559364311915,
+        "full_FE_scaled_curl_relative": 0.07303631730735809,
+        "scattered_FE_L2_relative": 0.6978423858475846,
+        "scattered_scaled_curl_relative": 0.6979316172075707,
+        "selected_E_relative": 0.08184576194675937,
+        "selected_H_relative": 0.06299575346856581
+      },
+      "channel_checks": {
+        "ordered_complex_port_vector": {
+          "relative_or_near_zero_absolute": 0.050260576905726044,
+          "passed": false
+        },
+        "ordered_complex_scattered_port_vector": {
+          "relative_or_near_zero_absolute": 0.480858107967129,
+          "passed": false
+        }
+      },
+      "power_differences": {
+        "R_total": 0.03327614015292471,
+        "T_total": 0.08050951374601145,
+        "A_balance": 0.11378565389893613,
+        "A_volume": 0.0004639161998260541
+      },
+      "max_channel_power_difference": 0.08051045197019013,
+      "energy_closure_absolute": 0.1142495700958559,
+      "A_balance_A_volume_absolute": 0.11424957009585585,
+      "baseline_rho": 4.381516135362798,
+      "progress_signal": "NEGATIVE",
+      "E_admitted": false,
+      "P4_admitted": false,
+      "recorded_status_trusted": false,
+      "diagnostic_RTA_only": true,
+      "selected_scattered_point_samples": "not separately recorded; full scattered E/H norms checked; no candidate qualifies"
+    }
+  },
+  "same_discrete_qualified": 0,
+  "final_0p7nm_48h": "NOT_QUALIFIED",
+  "source_records": {
+    "A": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v10/task042_v10_a_20260929T140728101333Z/stage_result.json",
+      "sha256": "3efc26daa11db880342371a51b30f76d2ee46fc5685cf81fb9a4072c28e489a9"
+    },
+    "B1": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v10/task042_v10_b1_20260929T140837696042Z/stage_result.json",
+      "sha256": "7a96d86c2a68cb76b7855c6cc975bc5dfd4dc540f71436a3119a0e2c7758d368"
+    },
+    "B0": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v10/task042_v10_b0_20260929T141312370707Z/stage_result.json",
+      "sha256": "e3f762fbfd997825adf7df969195ff3eeb0fa25e64e132e4733cc4cc954530f4"
+    },
+    "C": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v10/task042_v10_c_20260929T142444320208Z/stage_result.json",
+      "sha256": "f44912830bf5804d28835336010d68ec9182a452fdca72f5e5e3df11a1863c4f"
+    },
+    "VERIFY_A": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v10/task042_v10_verify_a_20260929T140804257056Z/stage_result.json",
+      "sha256": "da4f65fb55d1929e6217fcc2630da3f24eed799551c8253be939193013b1a600"
+    },
+    "VERIFY_B1": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v10/task042_v10_verify_b1_20260929T141242225841Z/stage_result.json",
+      "sha256": "3960f327d15ec5c997a229e5f11391f84fcb7979c472f66a609e91a5bbcc5fe6"
+    },
+    "VERIFY_B0": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v10/task042_v10_verify_b0_20260929T141810227744Z/stage_result.json",
+      "sha256": "f764074e1e8e5a562f0910a827666d04631b95bd6668823929f5f0fd11c9fc96"
+    },
+    "VERIFY_C": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v10/task042_v10_verify_c_20260929T142616933012Z/stage_result.json",
+      "sha256": "b2922a64ec7819026f4ea4b839c5b3c08d10d5925586820947e64e697b154f12"
+    },
+    "HEAD_CHECK": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v10/task042_v10_head_check_20260929T142419449280Z/stage_result.json",
+      "sha256": "f65111b316ed7f9413bd051feb40cac4aabea1562fdc475c1dedcf18c2bfd4c1"
+    },
+    "D1": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v10/task042_v10_d1_20260929T142827133434Z/stage_result.json",
+      "sha256": "8204360519bcdf2879da77bbcaed388440299311557ce4447ac1c2caab3fd0ae"
+    },
+    "D2_REPLAY": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v10/task042_v10_d2_replay_20260929T143625396206Z/stage_result.json",
+      "sha256": "3dcc32cf0dfe7e1870af616dc85d6ee5ba37a8239da219270dedcd347b7e53ab"
+    }
+  },
+  "data_boundary": "All unlabelled states frozen before separate REF7 verification; D reference barrier irreversible tonight",
+  "E": "NOT_RUN_NO_PROGRESS",
+  "P4": "NOT_RUN_NOT_QUALIFIED",
+  "reason": "Even C rho=0.798 and scattered L2=0.698; neither P+ nor P holds"
+}

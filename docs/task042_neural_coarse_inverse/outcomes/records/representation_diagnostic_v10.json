@@ -1,0 +1,161 @@
+{
+  "status": "DIAGNOSTIC_COMPLETED",
+  "source_sha": "6e564a66868374560dae66321564f3e767f5639c",
+  "raw": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v10/task042_v10_d1_20260929T142827133434Z/stage_result.json",
+    "sha256": "8204360519bcdf2879da77bbcaed388440299311557ce4447ac1c2caab3fd0ae"
+  },
+  "records": [
+    {
+      "candidate": "B1",
+      "status": "REFERENCE_ASSISTED_DIAGNOSTIC_ONLY",
+      "trace_relative_error": 0.001156719742790723,
+      "least_squares": {
+        "lapack_driver": "gelsd",
+        "fixed_cond": 1e-12,
+        "effective_rank": 1560,
+        "columns": 1560,
+        "rows": 18144,
+        "retained_singular_range": [
+          3.311650600393286e-10,
+          16.98250434957712
+        ],
+        "dropped_singular_range": null,
+        "singular_max": 16.98250434957712,
+        "lapack_workspace_bytes": 3201736,
+        "least_squares_seconds": 29.508609030977823,
+        "coefficient_norm": 78558.92691119289,
+        "explicit_residual_norm": 0.0013771096988138144,
+        "full_untruncated_first_order_norm": 6.421365571821597e-10,
+        "full_untruncated_first_order_relative": 9.622754531674935e-09,
+        "exact_full_space_optimum_claimed": true,
+        "residual_correction_count": 0,
+        "normal_matrix_constructed": false,
+        "coordinate_scaling": "none; identical B1/B0 physical coefficient coordinates",
+        "zero_column_indices": []
+      },
+      "P_identity": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v10/task042_v10_b1_20260929T140837696042Z/P.npy",
+        "sha256": "046ba6c4b827c2454bf91b32ccb488242c6425fced4c0ee664790f5a025645c8",
+        "shape": [
+          18144,
+          1560
+        ]
+      },
+      "trace_fit_weights_not_published_to_solver": true,
+      "reference_ports_used": true,
+      "scattered_FE_L2_relative": 0.0010245209753927478,
+      "scattered_scaled_curl_relative": 0.0032017467912728178,
+      "diagnostic_state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v10/task042_v10_d1_20260929T142827133434Z/B1_REFERENCE_ASSISTED_state.npz",
+        "sha256": "254dfbf002bda5848d3df01910ff3db2255c621ada02b7c1593d496d7a6fbbc4",
+        "z_sha256": "805448dd8ff582c983409f621f8c6d0b2b77f4d8564dbd1def07aa88831aae7c",
+        "z_kind": "physical_canonical_trace_plus_original_forty_ports",
+        "shape": [
+          18184
+        ],
+        "arrays": {}
+      },
+      "original_audit": {
+        "schur_relative": 0.8636574660245502,
+        "augmented_relative": 0.3349296313235764,
+        "native_relative": 0.3349565204354277,
+        "original_total_augmented_relative": 0.11622037655640424,
+        "port_absolute": 0.00020531040096326053,
+        "port_full_rhs_relative": 0.0009630117224513816,
+        "port_operation_relative": 0.00035394320807327834,
+        "recovery_relative": 4.71381726983346e-13,
+        "schur_original_identity_operation_relative": 5.041529892001645e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.631519696764497,
+        "port_unknown_norm": 0.1974501489758752,
+        "strict_pass": false,
+        "independent_DOLFINx_total_native_relative": 0.11622970706280947
+      },
+      "representation_label": "FROZEN_FEATURE_LIMITATION_SUPPORTED"
+    },
+    {
+      "candidate": "B0",
+      "status": "REFERENCE_ASSISTED_DIAGNOSTIC_ONLY",
+      "trace_relative_error": 0.0011523511940385181,
+      "least_squares": {
+        "lapack_driver": "gelsd",
+        "fixed_cond": 1e-12,
+        "effective_rank": 1560,
+        "columns": 1560,
+        "rows": 18144,
+        "retained_singular_range": [
+          8.027524479292017e-10,
+          20.20004615505263
+        ],
+        "dropped_singular_range": null,
+        "singular_max": 20.20004615505263,
+        "lapack_workspace_bytes": 3201736,
+        "least_squares_seconds": 33.609459438943304,
+        "coefficient_norm": 48152.63724886321,
+        "explicit_residual_norm": 0.001371908809926167,
+        "full_untruncated_first_order_norm": 5.26720220191722e-10,
+        "full_untruncated_first_order_relative": 6.35989967757999e-09,
+        "exact_full_space_optimum_claimed": true,
+        "residual_correction_count": 0,
+        "normal_matrix_constructed": false,
+        "coordinate_scaling": "none; identical B1/B0 physical coefficient coordinates",
+        "zero_column_indices": []
+      },
+      "P_identity": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v10/task042_v10_b0_20260929T141312370707Z/P.npy",
+        "sha256": "a64b74da8014aa929c9bfcf5675c10ca531cc0667de5161459bb7c81e253a0f0",
+        "shape": [
+          18144,
+          1560
+        ]
+      },
+      "trace_fit_weights_not_published_to_solver": true,
+      "reference_ports_used": true,
+      "scattered_FE_L2_relative": 0.0010287881346830914,
+      "scattered_scaled_curl_relative": 0.0031992736866948528,
+      "diagnostic_state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v10/task042_v10_d1_20260929T142827133434Z/B0_REFERENCE_ASSISTED_state.npz",
+        "sha256": "55fca58a548bbd8e80423f868d63f0387e98e0c4e73b01f69b9ef511454142bf",
+        "z_sha256": "e6905eb6950a51d34d85849419e1729cccbc13362daed9c7274d2f919ce97b60",
+        "z_kind": "physical_canonical_trace_plus_original_forty_ports",
+        "shape": [
+          18184
+        ],
+        "arrays": {}
+      },
+      "original_audit": {
+        "schur_relative": 0.8721701408324348,
+        "augmented_relative": 0.33823087880552133,
+        "native_relative": 0.3382465616091752,
+        "original_total_augmented_relative": 0.11736590740704078,
+        "port_absolute": 0.0002012212171786958,
+        "port_full_rhs_relative": 0.0009438313404477508,
+        "port_operation_relative": 0.0003468950732408658,
+        "recovery_relative": 4.676338940454257e-13,
+        "schur_original_identity_operation_relative": 4.991767694118416e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.6315197664425662,
+        "port_unknown_norm": 0.1974501489758752,
+        "strict_pass": false,
+        "independent_DOLFINx_total_native_relative": 0.11737134933134116
+      },
+      "representation_label": "FROZEN_FEATURE_LIMITATION_SUPPORTED"
+    }
+  ],
+  "reference_identity": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v7/V7-M3-REFERENCE/task042_v7_same_mesh_p3_reference_20260929T081232010551Z/accurate_reference_state.npz",
+    "sha256": "a0610a5a55e7508196b17277e706595c33e4398ace82b245f70b656e6b9ed355",
+    "z_sha256": "4a681a75950ac8087ee8265f34e10363fef99b523c8eecf434f30fafecc09936"
+  },
+  "accurate_reference_ports_explicit": true,
+  "candidate_or_training_feedback": false,
+  "not_entire_nonlinear_network_bound": true,
+  "reference_fit_not_solver": true,
+  "interpretations": [
+    "Both fixed feature spaces yield approximately 1e-3 scattered E and 3.2e-3 scaled curl with reference-assisted Euclidean trace fit; both exceed 1e-4",
+    "Far better fields exist in the same feature spaces than equation-only B results, supporting an objective/stability gap as well as incomplete fixed representation",
+    "Trace Euclidean minimization is not FE L2 minimization; these values do not prove the best possible physical field error or a unique root cause"
+  ],
+  "conclusion": "MIXED_EVIDENCE_NO_UNIQUE_ROOT_CAUSE"
+}

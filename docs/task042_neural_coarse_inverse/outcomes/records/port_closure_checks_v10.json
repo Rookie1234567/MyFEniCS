@@ -1,0 +1,202 @@
+{
+  "candidate": "C",
+  "source_sha": "6e564a66868374560dae66321564f3e767f5639c",
+  "checks": {
+    "status": "PASS",
+    "condition_2": 13284.16302612138,
+    "small_solve_operation_errors": [
+      1.2837318527955893e-20,
+      5.280891346978391e-21,
+      1.1619755436367534e-20
+    ],
+    "Hp_used": false,
+    "Hhat_size": 40,
+    "shift_or_damping": false,
+    "full_S_reassembly_operation_errors": [
+      1.1807806312171841e-18,
+      1.37138351556457e-18,
+      8.360889260844187e-19
+    ],
+    "Hhat_port_column_pair": 0.0,
+    "gradient_nonzero_norm": 34898381.4007946,
+    "true_original_gradient_fd": [
+      {
+        "direction_id": 0,
+        "h": 0.0001,
+        "analytic": 71664.48283628258,
+        "finite_difference": 71664.4828376593,
+        "absolute_error": 1.3767275959253311e-06,
+        "relative_error": 1.9210737891885213e-11,
+        "passed": true
+      },
+      {
+        "direction_id": 0,
+        "h": 1e-05,
+        "analytic": 71664.48283628258,
+        "finite_difference": 71664.48285570368,
+        "absolute_error": 1.9421102479100227e-05,
+        "relative_error": 2.7100038555315765e-10,
+        "passed": true
+      },
+      {
+        "direction_id": 0,
+        "h": 1e-06,
+        "analytic": 71664.48283628258,
+        "finite_difference": 71664.48258794844,
+        "absolute_error": 0.00024833413772284985,
+        "relative_error": 3.4652330958721754e-09,
+        "passed": true
+      },
+      {
+        "direction_id": 1,
+        "h": 0.0001,
+        "analytic": 22621.757695403037,
+        "finite_difference": 22621.75769719761,
+        "absolute_error": 1.794571289792657e-06,
+        "relative_error": 7.932943646361004e-11,
+        "passed": true
+      },
+      {
+        "direction_id": 1,
+        "h": 1e-05,
+        "analytic": 22621.757695403037,
+        "finite_difference": 22621.75771174952,
+        "absolute_error": 1.63464828801807e-05,
+        "relative_error": 7.226000340151494e-10,
+        "passed": true
+      },
+      {
+        "direction_id": 1,
+        "h": 1e-06,
+        "analytic": 22621.757695403037,
+        "finite_difference": 22621.757932938635,
+        "absolute_error": 0.00023753559798933566,
+        "relative_error": 1.0500315722045119e-08,
+        "passed": true
+      },
+      {
+        "direction_id": 2,
+        "h": 0.0001,
+        "analytic": -29838.150167848224,
+        "finite_difference": -29838.15017156303,
+        "absolute_error": 3.7148056435398757e-06,
+        "relative_error": 1.24498523623047e-10,
+        "passed": true
+      },
+      {
+        "direction_id": 2,
+        "h": 1e-05,
+        "analytic": -29838.150167848224,
+        "finite_difference": -29838.15016923472,
+        "absolute_error": 1.3864955690223724e-06,
+        "relative_error": 4.646720930161333e-11,
+        "passed": true
+      },
+      {
+        "direction_id": 2,
+        "h": 1e-06,
+        "analytic": -29838.150167848224,
+        "finite_difference": -29838.14984327182,
+        "absolute_error": 0.0003245764019084163,
+        "relative_error": 1.0877899604452024e-08,
+        "passed": true
+      }
+    ],
+    "initial_loss": 943329.856001731,
+    "gradient_uses_F_adjoint_with_original_sign": true
+  },
+  "rewrite": {
+    "status": "PASS",
+    "trace_pair": 2.8677596030844214e-11,
+    "threads": {
+      "intraop": 1,
+      "interop": 1,
+      "cuda_build": null,
+      "data_loader_workers": 0,
+      "actual_blas_pools": [
+        {
+          "path": "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/numpy.libs/libopenblas64_p-r0-0cf96a72.3.23.dev.so",
+          "function": "openblas_get_num_threads64_",
+          "threads": 1
+        }
+      ]
+    }
+  },
+  "least_squares": {
+    "lapack_driver": "gelsd",
+    "fixed_cond": 1e-12,
+    "effective_rank": 1560,
+    "columns": 1560,
+    "rows": 18144,
+    "retained_singular_range": [
+      9.292415178164609e-09,
+      4539.417583647676
+    ],
+    "dropped_singular_range": null,
+    "singular_max": 4539.417583647676,
+    "lapack_workspace_bytes": 3201736,
+    "least_squares_seconds": 29.154909364995547,
+    "coefficient_norm": 27178.09620077439,
+    "explicit_residual_norm": 0.06599856577635353,
+    "full_untruncated_first_order_norm": 1.0236486880540469e-05,
+    "full_untruncated_first_order_relative": 3.17498557251081e-08,
+    "exact_full_space_optimum_claimed": true,
+    "residual_correction_count": 0,
+    "normal_matrix_constructed": false,
+    "coordinate_scaling": "none; identical B1/B0 physical coefficient coordinates",
+    "zero_column_indices": [],
+    "status": "HEAD_SOLVED",
+    "zero_increment_retained": false,
+    "port_small_solve_seconds": 0.007761815912090242,
+    "port_block": "original condensed Hhat, not Hp",
+    "all_ports_retained": 40,
+    "exact_port_elimination": true,
+    "full_K_minus_C_Hinv_F_constructed": false,
+    "closed_baseline_loss": 63.82557851768769,
+    "real_rewritten_trace_port_closure_seconds": 0.00033835601061582565
+  },
+  "audit": {
+    "schur_relative": 0.7982576297473281,
+    "augmented_relative": 0.3095673274998361,
+    "native_relative": 0.3095673274998361,
+    "original_total_augmented_relative": 0.10741967269183057,
+    "port_absolute": 1.3877800379298096e-17,
+    "port_full_rhs_relative": 6.50940448433288e-17,
+    "port_operation_relative": 1.911554941140521e-17,
+    "recovery_relative": 6.142189930200465e-13,
+    "schur_original_identity_operation_relative": 6.653582043930204e-13,
+    "slave_storage_max": 0.0,
+    "field_norm": 2.2045979960645314,
+    "port_unknown_norm": 0.24713191277431634,
+    "strict_pass": false
+  },
+  "P_identity": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v10/task042_v10_b1_20260929T140837696042Z/P.npy",
+    "sha256": "046ba6c4b827c2454bf91b32ccb488242c6425fced4c0ee664790f5a025645c8",
+    "shape": [
+      18144,
+      1560
+    ]
+  },
+  "W_identity": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v10/task042_v10_b1_20260929T140837696042Z/W.npy",
+    "sha256": "22ae2604f3909c27faa98677829c883320fe175c19acd9d82ba9b4692afadfce",
+    "shape": [
+      18184,
+      1600
+    ]
+  },
+  "B1_cached_W_reused": true,
+  "all_ports_retained": 40,
+  "Hhat_not_Hp": true,
+  "C_neither_new_PC_nor_loss_weight": true,
+  "new_actions": {
+    "S": 47,
+    "SH": 2,
+    "audit": 1
+  },
+  "small_condition_gate": 10000000000.0,
+  "small_solve_gate": 1e-12,
+  "true_complex_gradient_gate": 1e-05,
+  "interpreted_result": "Port relation closed to roundoff, native amplification reduced, body/field and original Schur still fail; no E signal"
+}

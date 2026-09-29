@@ -1,0 +1,148 @@
+{
+  "registered_plan": {
+    "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+    "mode_manifest_sha256": "93795b53d7c5aef69af66b4ff0a56fa46515771f1ec43332ec929970270ea262",
+    "action_packet_sha256": "9196edb807b534217d0c0eb78882125341342784a48ef20ebe2d9421fe636454",
+    "schema": "task042.autonomous-neural-head.v10",
+    "batch": "V10_AUTONOMOUS_NEURAL_HEAD_AND_PORT",
+    "review_commit": "fe2d3f6730080e629daa712e99a096605bcbf947",
+    "start_utc": "2026-09-29T13:42:33Z",
+    "stop_heavy_utc": "2026-09-29T20:12:33Z",
+    "deadline_utc": "2026-09-29T20:42:33Z",
+    "carry_in_seconds": 10209.145962639828,
+    "old_route": "CLOSED",
+    "columns": {
+      "hidden_complex_head": 1560,
+      "ports": 40,
+      "total": 1600
+    },
+    "thin_ls": {
+      "driver": "gelsd",
+      "cond": 1e-12,
+      "column_normalization": false,
+      "normal_equations": false,
+      "residual_corrections": 0
+    },
+    "random_seed": 420906,
+    "hidden_continuation": {
+      "lr": 0.0001,
+      "updates_per_round": 50,
+      "max_rounds": 2,
+      "batch": 8
+    },
+    "strict": {
+      "equation": 1e-06,
+      "recovery": 1e-10,
+      "field": 0.0001,
+      "power": 1e-05
+    },
+    "progress": {
+      "rho_strong": 0.1,
+      "field_strong": 0.25,
+      "rho_fraction": 0.5,
+      "field_positive": 0.5
+    },
+    "order": [
+      "A",
+      "B1",
+      "B0",
+      "P_if_strict",
+      "C_if_B_not_strict",
+      "E_if_progress",
+      "D1",
+      "D2"
+    ],
+    "limits": {
+      "A": {
+        "wall": 900,
+        "S": 48
+      },
+      "B1": {
+        "wall": 3600,
+        "S": 1700
+      },
+      "B0": {
+        "wall": 3600,
+        "S": 1700
+      },
+      "C": {
+        "wall": 1800,
+        "new_S": 100
+      },
+      "E_total": {
+        "wall": 5400
+      },
+      "D1": {
+        "wall": 1200
+      },
+      "D2": {
+        "wall": 1200
+      },
+      "P4": {
+        "wall": 3600
+      }
+    },
+    "implementation_fix_limit": {
+      "per_path": 2,
+      "batch": 4
+    },
+    "reference_boundary": "read only in separate verification after candidate frozen; after D no solver restart",
+    "material_table_id": "SI_OPTICAL_CONSTANTS_USER_20260929_V1"
+  },
+  "registered_plan_identity": {
+    "path": "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/autonomous_head_v10.json",
+    "sha256": "146bf2dc1b174ff65e92652049e375b143bb9952c1a433e1a5b46fe5332fe8a2"
+  },
+  "window_identity": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v10/window.json",
+    "sha256": "5bc8bb2f18ba47acd2e05d1a958c731e91dd57520da066c8f1c726f33dbc683e"
+  },
+  "frozen_window": {
+    "schema": "task042.autonomous-window.v10",
+    "start_utc": "2026-09-29T13:42:33Z",
+    "start_utc_ns": 1790689353000000000,
+    "observed_monotonic": 614381.438984011,
+    "observed_utc_ns": 1790689386578117993,
+    "stop_heavy_utc": "2026-09-29T20:12:33+00:00",
+    "deadline_utc": "2026-09-29T20:42:33+00:00",
+    "heavy_limit_seconds": 23400,
+    "total_limit_seconds": 25200,
+    "cleanup_reserve_seconds": 1800,
+    "carry_in_seconds": 10209.145962639828,
+    "start_asia_singapore": "2026-09-29T21:42:33+08:00",
+    "stop_heavy_asia_singapore": "2026-09-30T04:12:33+08:00",
+    "deadline_asia_singapore": "2026-09-30T04:42:33+08:00"
+  },
+  "nominal_wave_nm": 0.7,
+  "review_commit": "fe2d3f6730080e629daa712e99a096605bcbf947",
+  "current_checker_sha": "b6546d762f5749ceca24b28e60ad4c380adc6741",
+  "user_authorization": "Task042 controlled shared CPU and this single new 25200s autonomous window; existing review limits overridden only where Review V7 explicitly does so",
+  "executed_order": [
+    "N0",
+    "A",
+    "VERIFY_A",
+    "B1",
+    "VERIFY_B1",
+    "B0",
+    "VERIFY_B0",
+    "HEAD_CHECK",
+    "C",
+    "VERIFY_C",
+    "D1",
+    "D2",
+    "D2_REPLAY",
+    "F"
+  ],
+  "unavailable_continuations": {
+    "E": "NO_PROGRESS_SIGNAL",
+    "P": "NO_STRICT_CANDIDATE"
+  },
+  "registered_but_not_implemented_or_launched": [
+    "E1",
+    "E2",
+    "P4"
+  ],
+  "early_finish_authorized": "All feasible paths completed; no duty to fill seven hours",
+  "reference_barrier": true,
+  "old_p4_inverse_route": "CLOSED_RESEARCH_NEGATIVE"
+}

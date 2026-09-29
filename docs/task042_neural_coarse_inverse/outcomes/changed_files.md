@@ -92,3 +92,18 @@ C1 `64c128c3541887e22788343692cc4f7832a45696`；唯一正式坐标修复／成�
 | do-not-merge | raw_fixed_error_vectors、原状态/packet、FE积分JIT、日志、环境、tmp helper | ignored NN-Lab；Git只有小CSV/JSON/文档 |
 
 建议依赖顺序为helper→FE积分→研究IO/stage→显式dispatch→checker/tests→compact证据，均待review，不merge。正式FE source a1dc3466294c30b6de292468d6dd1aa9b685b193；最小checker修复source e21af767d3522af531ad83c45eacc1df252566c9，不替代运行source。原task/review/response、旧records和所有负结果保留，不修改邻任务。
+
+
+## V10：自主输出头／端口研究依赖组
+
+| Selective merge组 | 必要文件／行为与依赖 | 测试、fresh证据及建议顺序 |
+|---|---|---|
+| production numerical/core | 无新增合格production路线；原S/A4/A6/MPC/材料/trace矩/恢复/优化事务/batch8按字节不改 | 四候选负结果，不提升默认，不merge |
+| reusable runner/watchdog | autonomous_batch_window、自有journal/父监督保护；task042_shared最小deadline/dispatch，沿原subreaper | 原start不重置、超时及整树触线/独立兄弟存活测试；先于研究stage接入 |
+| research-only numerical/core | neural_linear_head、neural_linear_head_torch、neural_port_closed_head、neural_volume_balance | 复代数/薄容量/原矩与真实回写/Hhat真梯度/保存分项；原action依赖，有限pilot实测，不生产部署 |
+| research runner/profile/input | autonomous_neural_head IO及统一参数化stage、run_case/profile最小显式V10入口；冻结plan与one-run dat | clean实际source/hash/自有锁；E/P入口预登记但不准入、不启动，普通default不改 |
+| checker/benchmark/tests | neural_head_gate_check、薄LS/矩/窗口/Hhat/元数据及watchdog tests | 25最终pytest、ML三见证、真实pilot补核与原raw false-PASS反例；数值核后接入 |
+| compact evidence/docs | response_v10、autonomous_neural_head_v10及必需11compact记录、通道/身份/静态/发布；summary新前缀及两总账/README/tests/changed追加 | 旧历史逐字保护，D2失败与Gate时序偏差披露，费用source完整；依赖最后归档 |
+| do-not-merge | P/W/参数/field/action/raw分项、环境/JIT/监控/tmp helper及大日志 | ignored NN-Lab，保留hash-bound数据，不入Git；无global p4部署/hidden fallback |
+
+建议审阅依赖顺序：窗口/监督→薄LS→原矩输出映射→Hhat精确端口与原V诊断→研究IO/stage/显式dispatch→checker/tests→compact证据。全部待review，不merge；E/P/最大模型未运行，不提升普通默认。最初B一见证、三个见证后补，原时序偏差及首次D2失败保留；后续文档source不冒充正式1fb8/6e56/6cba运行source。
