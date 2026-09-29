@@ -211,3 +211,50 @@ def armijo_steps(hidden, direction):
         raise ValueError("no finite descent direction")
     alpha0 = min(1.0, 1e-3 * max(1.0, np.linalg.norm(hidden)) / np.linalg.norm(direction))
     return [alpha0 * 4.0 ** -j for j in range(4)]
+
+
+def one_same_basis_residual_correction(
+    packet, P, A, ports, old_gamma, actual_bar_residual, *, qr_cache=None
+):
+    """Exactly one GELSD correction against a saved A from the same frozen P.
+
+    Recomputing P's deterministic economic QR supplies only its triangular R.
+    The expensive A is read unchanged; three original actions verify that the
+    recomputed Z still corresponds to that saved A.  No second correction loop.
+    """
+    from scipy.linalg import lstsq, qr, solve_triangular
+
+    if P.shape != (packet.nt, HEAD_COLUMNS) or A.shape != (packet.nt, HEAD_COLUMNS):
+        raise ValueError("same-space correction input shape mismatch")
+    if qr_cache is None:
+        Z, R = qr(P, mode="economic", pivoting=False, check_finite=False)
+        reassembly = float(np.linalg.norm(P - Z @ R) / max(np.linalg.norm(P), 1e-300))
+        if reassembly > 1e-10:
+            raise ValueError("same-space QR reconstruction failed")
+        checks = []
+        for j in (0, HEAD_COLUMNS // 2, HEAD_COLUMNS - 1):
+            action = packet.apply(np.r_[Z[:, j], np.zeros(PORT_COLUMNS, np.complex128)])
+            actual = action[: packet.nt] - ports.C @ np.linalg.solve(ports.H, action[packet.nt :])
+            checks.append(float(np.linalg.norm(actual - A[:, j]) / max(np.linalg.norm(A[:, j]), 1e-300)))
+        if max(checks) > 1e-10:
+            raise ValueError("saved A does not match same deterministic QR space")
+        qr_cache = (Z, R, reassembly, checks)
+    else:
+        Z, R, reassembly, checks = qr_cache
+    delta_c, _, rank, singular = lstsq(
+        A, actual_bar_residual, cond=RANK_TOL, lapack_driver="gelsd", check_finite=False
+    )
+    if rank != HEAD_COLUMNS:
+        raise ValueError("saved A rank unsafe for correction")
+    delta_gamma = solve_triangular(R, delta_c, lower=False, check_finite=False)
+    gamma = old_gamma + delta_gamma
+    return gamma, Z @ delta_c, A @ delta_c, {
+        "same_space_P_reassembly": reassembly,
+        "saved_A_three_fresh_original_action_checks": checks,
+        "rank_A": int(rank),
+        "A_singular_range": [float(singular[-1]), float(singular[0])],
+        "delta_c_norm": float(np.linalg.norm(delta_c)),
+        "delta_gamma_norm": float(np.linalg.norm(delta_gamma)),
+        "one_correction_only": True,
+        "new_global_factor_constructed": False,
+    }, qr_cache

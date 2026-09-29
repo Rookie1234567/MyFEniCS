@@ -12,7 +12,7 @@ from src.solvers.neural_fe_action_packet import file_hash
 
 V11_ROOT = ROOT / "benchmarks/artifacts/task042/v11"
 PLAN_PATH = ROOT / "input/task042_neural_coarse_inverse/stable_head_varpro_v11.json"
-STAGES = {"MAIN": ("ml", 13500), "VERIFY": ("fe", 900)}
+STAGES = {"MAIN": ("ml", 13500), "REPLAY": ("ml", 13500), "VERIFY": ("fe", 900)}
 
 
 def load_stable_head(path):

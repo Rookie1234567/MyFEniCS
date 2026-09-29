@@ -104,3 +104,30 @@ def test_hidden_only_armijo_and_lbfgs():
     steps = v11.armijo_steps(hidden, direction)
     assert len(steps) == 4
     assert steps[0] > steps[1] > steps[2] > steps[3] > 0
+
+
+def test_one_saved_basis_residual_correction(monkeypatch):
+    monkeypatch.setattr(v11, "HEAD_COLUMNS", 3)
+    rng = np.random.default_rng(421108)
+    packet = SmallPacket()
+    P = np.asarray(rng.normal(size=(7, 3)) + 1j * rng.normal(size=(7, 3)),
+                   dtype=np.complex128)
+    basis = v11.StableBasis(packet, P, _ports(packet))
+    known_gamma = rng.normal(size=3) + 1j * rng.normal(size=3)
+    known_port = rng.normal(size=40) + 1j * rng.normal(size=40)
+    rhs = packet.apply(np.r_[P @ known_gamma, known_port])
+    old_gamma = known_gamma + 0.01 * (rng.normal(size=3) + 1j * rng.normal(size=3))
+    _, action = basis.ports.closed(P @ old_gamma, rhs)
+    bar_rhs = basis.ports.reduced_rhs(rhs)
+    residual = bar_rhs - (
+        action[: packet.nt] - basis.ports.C @ np.linalg.solve(
+            basis.ports.H, action[packet.nt :]
+        )
+    )
+    gamma, _, _, record, _ = v11.one_same_basis_residual_correction(
+        packet, P, basis.A, basis.ports, old_gamma, residual
+    )
+    z, _ = basis.ports.closed(P @ gamma, rhs)
+    assert record["one_correction_only"]
+    assert max(record["saved_A_three_fresh_original_action_checks"]) < 1e-10
+    assert v11.rhs_residual(packet, z, rhs)["relative"] < 1e-10

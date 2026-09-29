@@ -5,6 +5,7 @@ from __future__ import annotations
 import ctypes
 import json
 import os
+import shutil
 import signal
 import subprocess
 import sys
@@ -111,6 +112,58 @@ def basis_child(work):
         write_json(work / "child_result.json", record)
 
 
+def correction_child(work):
+    """One permitted same-A residual correction, isolated from Torch/reference."""
+    _guard_numerical_parent()
+    from src.runners.task042_experiment import thread_qualification
+    from src.solvers.stable_head_varpro import PortBlocks, one_same_basis_residual_correction
+
+    threads = thread_qualification()
+    _, _, _, fe = plan_and_operator()
+    packet = original_packet(fe)
+    prior = json.loads((work / "request.json").read_text())
+    for name in ("P.npy", "A.npy", "U.npy", "solutions.npz", "rhs.npz", "residuals.npz"):
+        if file_hash(work / name) != prior["files"][name]:
+            raise ValueError("same-decomposition replay input hash differs: " + name)
+    P = np.load(work / "P.npy", mmap_mode="r", allow_pickle=False)
+    A = np.load(work / "A.npy", mmap_mode="r", allow_pickle=False)
+    a, _ = read_v10("A")
+    columns = np.load(owned(a["original_port_columns"], V11_ROOT.parent / "v10"), mmap_mode="r")
+    ports = PortBlocks(packet, columns)
+    with np.load(work / "solutions.npz", allow_pickle=False) as previous:
+        old = {name: np.array(previous[name]) for name in previous.files}
+    with np.load(work / "residuals.npz", allow_pickle=False) as residuals:
+        exact = {name: np.array(residuals[name]) for name in residuals.files}
+    corrections = {}
+    records = {}
+    start = time.perf_counter()
+    try:
+        cache = None
+        for name in ("M2", "physical"):
+            gamma, trace_delta, bar_delta, info, cache = one_same_basis_residual_correction(
+                packet, P, A, ports, old[name + "_gamma"], exact[name], qr_cache=cache
+            )
+            corrections[name + "_gamma"] = gamma
+            corrections[name + "_trace_p"] = P @ gamma
+            corrections[name + "_trace_z"] = old[name + "_trace_z"] + trace_delta
+            corrections[name + "_bar_residual"] = old[name + "_bar_residual"] - bar_delta
+            records[name] = info
+        np.savez(work / "corrections.npz", **corrections)
+        status = "PASS"
+    except Exception:
+        status = "FAILED"
+        raise
+    finally:
+        write_json(work / "correction_result.json", {
+            "status": status, "source_sha": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+            "prior_source_sha": prior["prior_source_sha"],
+            "same_A_sha256": prior["files"]["A.npy"], "corrections": records,
+            "threads": threads, "wall_seconds": time.perf_counter() - start,
+            "action_counts": packet.counts, "action_costs_seconds": packet.costs,
+            "thin_LS_resolves": len(records), "full_A_rebuilds": 0,
+        })
+
+
 class Stage:
     def __init__(self, specification, directory):
         self.specification, self.directory = specification, directory
@@ -122,10 +175,15 @@ class Stage:
         self.stats = {"full_PA_builds": 0, "thin_LS_head_resolves": 0,
                       "equivalent_S_SH": 0, "FD_perturbed_points": 0,
                       "trial_points": 0, "accepted_updates": 0}
+        if specification.derived["stage"] == "V11-REPLAY":
+            previous, _ = read_result("MAIN")
+            self.stats.update(previous["budget_counts"])
+            self.stats["equivalent_S_SH"] += previous["action_counts"]["S"]
+            self.stats["equivalent_S_SH"] += previous["action_counts"]["SH"]
         self.meta = {"source_sha": (directory / "source_sha.txt").read_text().strip(),
                      "plan_sha256": file_hash(PLAN_PATH),
                      "input_sha256": specification.input_sha256,
-                     "physical": self.fe["physical"], "operator_packet": self.fe["packet"],
+                     "physical_identity": self.fe["physical"], "operator_packet": self.fe["packet"],
                      "shared_workstation": True, "complete_ports": 40,
                      "reference_arrays_read": False, "global_p4_factor_constructed": False,
                      "global_S_or_CSR_constructed": False, "hidden_fallback": False}
@@ -479,11 +537,11 @@ def _field_gate(point):
             and point["actual_stationarity_UHr_fixed_physical_b"] <= 1e-8)
 
 
-def main_stage(stage):
+def main_stage(stage, *, experiment=None, initial_data=None):
     from src.solvers.stable_head_varpro import armijo_steps, lbfgs_direction
     from src.solvers.stable_head_varpro_torch import fixed_directions
 
-    experiment = MainExperiment(stage)
+    experiment = MainExperiment(stage) if experiment is None else experiment
     p_bytes = stage.packet.nt * 1560 * 16
     packet_bytes = sum(value.nbytes for value in stage.packet.a.values())
     resident_plan = 8 * p_bytes + 2 * 1560**2 * 16 + 2 * 2**30 + packet_bytes + experiment.cache.cache_bytes
@@ -492,7 +550,7 @@ def main_stage(stage):
     stage.event("pre_thin_resident_plan", resident_plan_bytes=resident_plan,
                 cap_bytes=8 * 2**30, packet_bytes=packet_bytes,
                 lifecycle="P/Z/A/U plus QR/GELSD copies, parent ML/cache, packet and small factors")
-    result, baseline = experiment.initial()
+    result, baseline = experiment.initial() if initial_data is None else initial_data
     result["resident_plan_bytes"] = resident_plan
     result["accepted_updates"] = 0
     result["states"] = experiment.states
@@ -632,12 +690,113 @@ def main_stage(stage):
     return result
 
 
+def replay_stage(stage):
+    """One justified correction of the retained initial decomposition, then gates."""
+    experiment = MainExperiment(stage)
+    old, old_path = read_result("MAIN")
+    old_work = old_path.parent / "initial"
+    if old["status"] != "STABLE_RECOVERY_OR_HEAD_GATE_FAILED":
+        raise ValueError("residual correction is only for the retained failed initial gate")
+    experiment.pre_mapping_witnesses()
+    witness_rhs, known, identity = experiment.manufactured_rhs()
+    for name in ("M1", "M2"):
+        if array_hash(witness_rhs[name]) != old["manufactured"][name]["manufactured_rhs_sha256"]:
+            raise ValueError("manufactured RHS differs from frozen initial run")
+    work = stage.artifact / "same_basis_correction"
+    work.mkdir()
+    for name in ("P.npy", "A.npy", "U.npy"):
+        os.symlink((old_work / name).resolve(), work / name)
+    shutil.copyfile(old_work / "solutions.npz", work / "solutions.npz")
+    shutil.copyfile(old_work / "rhs.npz", work / "rhs.npz")
+    old_points = {}
+    old_points["M2"] = experiment._actual_solution(work, "M2", witness_rhs["M2"], known["M2"])
+    old_points["physical"] = experiment._actual_solution(work, "physical", stage.packet.a["b"])
+    np.savez(work / "residuals.npz",
+             M2=old_points["M2"]["bar_residual"],
+             physical=old_points["physical"]["bar_residual"])
+    stage.capacity(additional_builds=0, additional_ls=2)
+    files = {name: file_hash(work / name) for name in (
+        "P.npy", "A.npy", "U.npy", "solutions.npz", "rhs.npz", "residuals.npz")}
+    write_json(work / "request.json", {
+        "prior_source_sha": old["source_sha"], "files": files,
+        "scope": "one same-decomposition residual correction for M2 and physical; no A rebuild"
+    })
+    stage.event("same_decomposition_correction_start", prior_source=old["source_sha"],
+                old_A_sha256=files["A.npy"])
+    child = subprocess.run(
+        ["bash", "-c",
+         'source scripts/activate_task042.sh pure; exec python -m src.runners.stable_head_varpro --correct "$1"',
+         "task042-v11-correct", str(work)],
+        check=False, env=dict(os.environ, TASK042_NUMERICAL_PARENT_PID=str(os.getpid())),
+    )
+    correction = json.loads((work / "correction_result.json").read_text())
+    stage.stats["thin_LS_head_resolves"] += correction["thin_LS_resolves"]
+    stage.stats["equivalent_S_SH"] += correction["action_counts"]["S"]
+    stage.stats["equivalent_S_SH"] += correction["action_counts"]["SH"]
+    write_json(stage.artifact / "budget.json", stage.stats)
+    if child.returncode or correction["status"] != "PASS":
+        raise RuntimeError("same-decomposition correction failed; original negative retained")
+    with np.load(work / "solutions.npz", allow_pickle=False) as source:
+        merged = {key: np.array(source[key]) for key in source.files}
+    with np.load(work / "corrections.npz", allow_pickle=False) as source:
+        merged.update({key: np.array(source[key]) for key in source.files})
+    np.savez(work / "solutions.npz", **merged)
+    m1 = old["manufactured"]["M1"]
+    m2 = experiment._actual_solution(work, "M2", witness_rhs["M2"], known["M2"])
+    physical = experiment._actual_solution(work, "physical", stage.packet.a["b"])
+    audit = stage.packet.audit(physical["z"])
+    physical["original_audit"] = audit
+    physical["original_gate"] = original_gate(audit)
+    m2_gate = bool(m2["full_rhs_residual"]["relative"] <= 1e-8
+                   and m2["known_z_relative"] <= 1e-6
+                   and m2["homogeneous_recovery_pair"] <= 1e-10)
+    numeric_gate = bool(old["stable_basis"]["solutions"]["physical"]["numerical_full_column_rank"]
+                        and _field_gate(physical)
+                        and physical["Pgamma_vs_Zc_trace_relative"] <= 1e-8)
+    state = stage.freeze("S2_corrected_random_baseline", physical["z"],
+                         network_parameters=experiment._network_parameters(),
+                         hidden=experiment.initial_hidden, gamma=physical["gamma"],
+                         port=physical["z"][stage.packet.nt :])
+    experiment.states.append(dict(name="S2_BASELINE", state=state, audit=audit,
+                                  Phi=physical["Phi"], hidden_updates=0))
+    result = {
+        "status": "CORRECTED_BASELINE_FROZEN", "prior_MAIN": {"path": str(old_path),
+            "sha256": file_hash(old_path), "source_sha": old["source_sha"]},
+        "same_decomposition_correction": correction,
+        "M1_unchanged_original_pass": m1,
+        "M2_before": experiment._public_point(old_points["M2"]),
+        "M2_after": experiment._public_point(m2),
+        "physical_before": experiment._public_point(old_points["physical"]),
+        "physical_baseline": experiment._public_point(physical),
+        "manufactured_identity": identity,
+        "three_prior_nonzero_mapping_witnesses": experiment.initial_witnesses,
+        "S1_gate": bool(m1["stable_gate"] and m2_gate),
+        "S2_gate": numeric_gate,
+        "baseline_state": state,
+        "states": experiment.states,
+        "reference_arrays_read": False,
+        "no_new_A_build": True,
+    }
+    experiment.log("single_residual_correction_result", M2=result["M2_after"],
+                   physical=result["physical_baseline"], S1_gate=result["S1_gate"],
+                   S2_gate=result["S2_gate"])
+    if not result["S1_gate"] or not result["S2_gate"]:
+        result.update(status="SAME_DECOMPOSITION_CORRECTION_STILL_FAILED",
+                      S3="NOT_RUN_DEPENDENT_GATE", S4="NOT_RUN_DEPENDENT_GATE")
+        experiment.log("stop", reason=result["status"])
+        return result
+    return main_stage(stage, experiment=experiment, initial_data=(result, physical))
+
+
 def verify_stage(stage):
     """Only this separate, post-freeze FE process can read the saved p3 reference."""
     from src.io.neural_fe_continuation import V7_ROOT, read_index
     from src.solvers.neural_fe_blind_reference import independent_physics
 
-    main, _ = read_result("MAIN")
+    try:
+        main, _ = read_result("REPLAY")
+    except FileNotFoundError:
+        main, _ = read_result("MAIN")
     if main["source_sha"] != stage.meta["source_sha"]:
         # A newer clean implementation source requires an explicit provenance
         # statement; there is no warm-start or candidate rewrite here.
@@ -716,6 +875,9 @@ def main():
     if len(sys.argv) == 3 and sys.argv[1] == "--basis":
         basis_child(Path(sys.argv[2]).resolve())
         return
+    if len(sys.argv) == 3 and sys.argv[1] == "--correct":
+        correction_child(Path(sys.argv[2]).resolve())
+        return
     if len(sys.argv) != 3:
         raise SystemExit("one Task042 V11 dat and output directory required")
     guard_worker_parent()
@@ -728,6 +890,9 @@ def main():
         if specification.derived["stage"] == "V11-MAIN":
             result = main_stage(stage)
             stage.finish("MAIN", result)
+        elif specification.derived["stage"] == "V11-REPLAY":
+            result = replay_stage(stage)
+            stage.finish("REPLAY", result)
         else:
             result = verify_stage(stage)
             stage.finish("VERIFY", result)
