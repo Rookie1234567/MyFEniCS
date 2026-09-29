@@ -1,0 +1,169 @@
+{
+  "schema": "task042.offline-teacher-exception.v5",
+  "source_sha": "5d82651af0f723c73487783deb43969f05d46ed3",
+  "run": {
+    "path": "results/task042/task042_v5_d1_shared_20260929T022428745481Z/numerical_summary.json",
+    "sha256": "b192ee74eac855f9f078a1318f5b0a64c321492087b3d8db2a23ea50b253527c"
+  },
+  "allowed_consumed_rows": [
+    0,
+    10,
+    11
+  ],
+  "references": {
+    "0": {
+      "teacher_solution_sha256": "a5e400c52175bd4e0d3dce3b4a899da4d407d7ea1ddfcf0200587f6a1941d8f4",
+      "teacher_residual_sha256": "22459c5515c068174307a2fe56508443fa99bb7f96f400952c60ef22a1db7786",
+      "teacher_normalization_scale": 1.048843547777456,
+      "teacher_audit": {
+        "original_norms": {
+          "native_absolute": 4.1485395847936005e-12,
+          "native_scale": 1.0488435477774558,
+          "port_absolute": 1.5910007513058484e-13,
+          "port_scale": 1780.7940122574437,
+          "internal_absolute": 3.9149740541773666e-13,
+          "internal_scale": 19768.451091414216,
+          "native_identity_absolute": 4.1924105626741714e-12,
+          "native_identity_scale": 2.097687095555618,
+          "Schur_port_identity_absolute": 0.0,
+          "Schur_port_identity_scale": 1780.7940122574437,
+          "submitted_recovery_absolute": 0.0,
+          "submitted_field_norm": 170.25223281188397,
+          "maximum_slave_storage": 0.0,
+          "finite": true
+        },
+        "checks": {
+          "Schur_independent_operation_defect": 1.1736927383174844e-13,
+          "native_map_operation_defect": 1.977827591109465e-12,
+          "native_identity_relative": 1.9985871923208452e-12,
+          "Schur_port_identity_relative": 0.0,
+          "internal_recovery_relative": 1.980415175712835e-17,
+          "submitted_recovery_relative": 0.0
+        },
+        "native_relative": 3.955346432348784e-12,
+        "Schur_absolute": 2.7288253452278537e-13,
+        "Schur_rhs_norm": 1.048843547777456,
+        "Schur_relative_rhs": 2.6017468010461144e-13,
+        "port_absolute": 1.5910007513058484e-13,
+        "port_operation_relative": 8.934221141551337e-17,
+        "port_initial_reference_scale": 0.0,
+        "port_fixed_reference_value": 1.5910007513058484e-13,
+        "port_fixed_reference_rule": "exact-zero initial scale: absolute",
+        "original_strict_metrics_pass": true,
+        "full_field_norm": 170.25223281188397,
+        "full_field_sha256": "1ad404889702b16cb5c1c73b8b19ca0e19ca5d7fdf1e5d870ea187482d563d19",
+        "port_state_norm": 0.7130606947502125,
+        "diagnostic_only_no_solver_qualification": true
+      },
+      "RHS_match": {
+        "fe": 0.0,
+        "port": 0.0,
+        "Schur": 3.3497253877716695e-17
+      }
+    },
+    "10": {
+      "teacher_solution_sha256": "bb493744e82fd25bd1135a816fc1218126fc991c520163d27d11b635914758a0",
+      "teacher_residual_sha256": "fb0ea2f185a68b4d41309dc06482de5caee8077668a9fcf4a515f0b58b623ea6",
+      "teacher_normalization_scale": 0.001,
+      "teacher_audit": {
+        "original_norms": {
+          "native_absolute": 5.651081892937641e-16,
+          "native_scale": 0.014408291311489812,
+          "port_absolute": 1.050727524588892e-18,
+          "port_scale": 0.0023681883036148037,
+          "internal_absolute": 0.0,
+          "internal_scale": 3.96344202593969,
+          "native_identity_absolute": 5.655490145549491e-16,
+          "native_identity_scale": 0.028816582622979647,
+          "Schur_port_identity_absolute": 6.216371384552014e-20,
+          "Schur_port_identity_scale": 0.0023681883036148037,
+          "submitted_recovery_absolute": 0.0,
+          "submitted_field_norm": 0.03497596381776758,
+          "maximum_slave_storage": 0.0,
+          "finite": true
+        },
+        "checks": {
+          "Schur_independent_operation_defect": 1.5204643927361417e-14,
+          "native_map_operation_defect": 1.960399474260008e-14,
+          "native_identity_relative": 1.9625818298938568e-14,
+          "Schur_port_identity_relative": 2.6249480985373256e-17,
+          "internal_recovery_relative": 0.0,
+          "submitted_recovery_relative": 0.0
+        },
+        "native_relative": 3.9221041348818494e-14,
+        "Schur_absolute": 2.0588861319491642e-17,
+        "Schur_rhs_norm": 0.001,
+        "Schur_relative_rhs": 2.0588861319491643e-14,
+        "port_absolute": 1.050727524588892e-18,
+        "port_operation_relative": 4.4368411202143895e-16,
+        "port_initial_reference_scale": 0.001,
+        "port_fixed_reference_value": 1.0507275245888921e-15,
+        "port_fixed_reference_rule": "relative to original zero-start scale",
+        "original_strict_metrics_pass": true,
+        "full_field_norm": 0.03497596381776758,
+        "full_field_sha256": "2a6eb022a6e6e4ba900a2a6a018955cba067e267ec374947be4f700632c8aaa5",
+        "port_state_norm": 0.00012890722273718467,
+        "diagnostic_only_no_solver_qualification": true
+      },
+      "RHS_match": {
+        "fe": 0.0,
+        "port": 0.0,
+        "Schur": 0.0
+      }
+    },
+    "11": {
+      "teacher_solution_sha256": "182d50c4e708dc5f124a732d7e7004c804b9ccc541006f622489b1c73db016a6",
+      "teacher_residual_sha256": "5d7ea057ebf933ef22f1b442d893ad8312e8e0ff03688531dbe790298f10513e",
+      "teacher_normalization_scale": 0.001875142728036528,
+      "teacher_audit": {
+        "original_norms": {
+          "native_absolute": 1.0903382503144417e-15,
+          "native_scale": 0.014440984576310005,
+          "port_absolute": 1.6539920465490928e-17,
+          "port_scale": 0.0986159205953593,
+          "internal_absolute": 4.3961674790951217e-16,
+          "internal_scale": 8.872232014980074,
+          "native_identity_absolute": 1.2789365773068183e-15,
+          "native_identity_scale": 0.02888196915262066,
+          "Schur_port_identity_absolute": 2.5642147537443224e-18,
+          "Schur_port_identity_scale": 0.0986159205953593,
+          "submitted_recovery_absolute": 0.0,
+          "submitted_field_norm": 0.06146638225081577,
+          "maximum_slave_storage": 0.0,
+          "finite": true
+        },
+        "checks": {
+          "Schur_independent_operation_defect": 1.5780544038717145e-14,
+          "native_map_operation_defect": 3.774342259871215e-14,
+          "native_identity_relative": 4.42814882374726e-14,
+          "Schur_port_identity_relative": 2.600203636759428e-17,
+          "internal_recovery_relative": 4.9549735305304625e-17,
+          "submitted_recovery_relative": 0.0
+        },
+        "native_relative": 7.550304098399969e-14,
+        "Schur_absolute": 4.224225152904458e-17,
+        "Schur_rhs_norm": 0.001875142728036528,
+        "Schur_relative_rhs": 2.252748598677428e-14,
+        "port_absolute": 1.6539920465490928e-17,
+        "port_operation_relative": 1.677205908096473e-16,
+        "port_initial_reference_scale": 0.001,
+        "port_fixed_reference_value": 1.6539920465490926e-14,
+        "port_fixed_reference_rule": "relative to original zero-start scale",
+        "original_strict_metrics_pass": true,
+        "full_field_norm": 0.06146638225081577,
+        "full_field_sha256": "1a00f976f97554ca6f57277a67a9dac10b8b06856c6da622c27afa3d4e5be824",
+        "port_state_norm": 0.00020142058727901652,
+        "diagnostic_only_no_solver_qualification": true
+      },
+      "RHS_match": {
+        "fe": 0.0,
+        "port": 0.0,
+        "Schur": 3.479125766809337e-17
+      }
+    }
+  },
+  "new_factor_created": false,
+  "only_scalar_hash_output": true,
+  "teacher_or_coefficients_in_D2_D3": false,
+  "teacher_qualified_count": 3
+}

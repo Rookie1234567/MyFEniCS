@@ -1,3 +1,22 @@
+# Task042 V5 最新状态：固定对象失效定位完成，严格粗逆仍未资格化
+
+同一个残差分别测局部B、粗空间C与原两层B2，再做有限方向的最小二乘，区分空间覆盖与组合失效；这不是新的求解器或训练。所有数值比例dimensionless，绝对port为原数组欧氏范数，无新物理R/T/A。
+
+| 最新范围 / 身份 | measured结论 / 边界 | evidence |
+|---|---|---|
+| 完成阶段 | Review V2 D0–D4，12/12共同state、3已消费teacher离线审核、24同r作用和192原方程审核 | [response_v5](../response_v5.md) |
+| 固定模型 | 原Si13.5nm/p6h10对应p4、MPI1/80DtN，53084FE/21824reduced/8184464NNZ；S/B/双rank128 Z/U/R不改 | [预登记](records/localization_design_v5.json) |
+| 覆盖 | 物理初态OLDPOD eta_r/e .9990665/.2216303、ERROR .9997845/.7134416；e与r覆盖区别明确 | [24覆盖](records/coverage_v5.csv) |
+| 同向量组合 | port-only Bopt .9845925；OLDPOD B2opt .9926201/ZB .6171864，ERROR .9872461/.7423358；部分组合利用不佳，原A4/port仍失败 | [192审核](records/same_residual_actions_v5.csv) |
+| 补空间 | 有效rank16/16，完整TV最小奇异值4.771224799/3.034800156；无已证near-null，不能据小投影谱断言真实奇异 | [探针](records/complement_probes_v5.json) |
+| 资格 / 未运行 | strict0/192诊断修正，无新solver pass；fresh seed420620、F5、短波、NN/GPU/official均not_run | [D4及唯一建议](records/localization_decisions_v5.json) |
+| 内存 / 时间 | 四阶段wall1144.401529s，整树同时RSS峰1135407104B，own swap0；shared-workstation/performance inconclusive | [完整费用](records/run_index_v5.json) |
+| 源码 / Git / 环境 | 四阶段clean source`5d82651af0f723c73487783deb43969f05d46ed3`，canonical NN-Lab / origin同任务branch；只读native prefix/独立cache，实际现场CPU0/0/0/13数学1，自有树16GiB监督 | [前检](records/pre_run_checks_v5.json) |
+
+D4三假设分别评价、多因素或INCONCLUSIVE允许；[中心说明](failure_localization_v5.md)列实际连续指标、范数分母、完整像与限制。未修改A4/A6/80通道/原1e-10，未构造global p4 factor或隐藏fallback。未发现持续压力，但邻阶段没有可比时长，不宣称绝对零影响/提速。唯一下一试验仅建议、未实施；等待review，不merge。以下V1–V4正文逐字保留。
+
+---
+
 # Task042 V4 最新状态：两个全局空间仍未通过严格粗逆
 
 | 最新范围 / 身份 | 实际结果 | 证据 |

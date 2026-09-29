@@ -1686,3 +1686,16 @@ production model。
 | `TWOLEVEL-ERROR-V4` | 同5691source；16 train轨迹、128真实解误差，未泄漏 | 同原physical/operator/mode SHA；无F5/p6外层 | 同rank128/同Schur范数/同B/同两层公式/同256预算 | Rcond586.120；三诊断原native 0.999863649936/0.937175812499/0.901084822725；strict0/3；formal全批wall1534.00828393s、同时整树峰1128828928B、swap0 | `BOUNDED_TWOLEVEL_NEGATIVE`；P4未解锁，既存终测未消费 | [完整结果](task042_neural_coarse_inverse/outcomes/two_level_global_error_v4.md)、[source/成本](task042_neural_coarse_inverse/outcomes/records/run_index_v4.json) |
 
 正式source真实绑定，文档HEAD不替代。六阶段fresh核查后均CPU0/MPI1/math1，own lock/整树16GiB监督/独立cache，只有自有优先级降低，无neighbor或GPU修改；shared-workstation、performance inconclusive。没有把V3昂贵审核成本相减当新加速，没有新teacher/NN训练，G-neural not_run。原V1–V3 task/review/response/负结果逐字保留；Formal Review V1替代V3“局部量级1停滞禁止全局空间”。P4/fresh资格、F5/official RTA/A_volume/场/正式通道/短波均not_run。仅Task042分支待review，不merge。
+
+
+### 3.43.4 V5：固定operator的失效定位（非新solver资格）
+
+本轮把相同残差交给局部B、两个粗空间C和原B2，再看保留方向的小最小二乘，分辨空间不足与组合失效；新probe只在U正交补中测完整输出，不把小投影矩阵当全局谱。3个原已消费RHS仅两个whole families，12共同state全部真实可用，准确teacher只离线审核三行且不进入PC。没有新训练/换基/长KSP，旧负结果保留。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+| --- | --- | --- | --- | --- | --- | --- |
+| LOCALIZATION-OLDPOD-V5 | source5d82651af0f723c73487783deb43969f05d46ed3；旧冻结basis hash见run index；12共同states原0/10/11 | 原Si13.5nm/p6h10对应p4、MPI1/full80；53084 FE/21824 reduced、8184464NNZ | 固定B/Z/U/R rank128；12同r×8原审核、16补空间probe；无新KSP | 完整TV最小奇异值4.771224799；树RSS/阶段cost见run index；无global p4 factor | FIXED_OPERATOR_LOCALIZATION_COMPLETE；strict0/96诊断修正，非production | [同向量定位](task042_neural_coarse_inverse/outcomes/failure_localization_v5.md) |
+| LOCALIZATION-ERROR-V5 | source5d82651af0f723c73487783deb43969f05d46ed3；旧冻结basis hash见run index；12共同states原0/10/11 | 原Si13.5nm/p6h10对应p4、MPI1/full80；53084 FE/21824 reduced、8184464NNZ | 固定B/Z/U/R rank128；12同r×8原审核、16补空间probe；无新KSP | 完整TV最小奇异值3.034800156；树RSS/阶段cost见run index；无global p4 factor | FIXED_OPERATOR_LOCALIZATION_COMPLETE；strict0/96诊断修正，非production | [同向量定位](task042_neural_coarse_inverse/outcomes/failure_localization_v5.md) |
+
+
+四正式阶段wall1144.401529s、整树同时峰1135407104B/own swap0；两空间有效rank128/128，补空间16/16。shared-workstation、performance/邻影响inconclusive，MPI1/math1、实时CPU0/0/0/13/own lock/16GiB监督/独立cache；不动邻任务，未委派cgroup不声称内核连续限额。物理eta_r接近1、OLDPOD eta_e≈.222 vsERROR≈.713；port-only保留Z＋Br的Schur反事实较好，但原A4/port失败，未确定唯一根因或真实奇异。唯一建议需后续review、未实施；seed420620 fresh/F5/p6/短波/GPU/NN/official RTA/A_volume/场/衍射均not_run，无神经收益归因。[hash/source/分阶段账](task042_neural_coarse_inverse/outcomes/records/run_index_v5.json)、[原独立Gate](task042_neural_coarse_inverse/outcomes/records/independent_checks_v5.json)。

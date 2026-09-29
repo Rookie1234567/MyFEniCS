@@ -1,0 +1,459 @@
+{
+  "schema": "task042.auxiliary-costs.v5",
+  "cost_identity": "shared-workstation",
+  "stages": [
+    {
+      "name": "adapter_pre_run",
+      "summary_path": "tmp/task042/v5/adapter_pre_run/summary.json",
+      "summary_sha256": "c0fdc35234ff8eb3630ad12f0751ad5ea9dae47e2399518f5af5278ca06c8b10",
+      "source_state": {
+        "source_sha": "91c4a0dbfa2e8a14df273eab5e27726059d7c835",
+        "git_status": " M input/task042_neural_coarse_inverse/README.md\n M src/io/input_schema.py\n M src/io/task042_profile.py\n M src/runners/task042_experiment.py\n M src/runners/task042_shared.py\n?? input/task042_neural_coarse_inverse/localization_v5.json\n?? input/task042_neural_coarse_inverse/v5_d0_shared.dat\n?? input/task042_neural_coarse_inverse/v5_d1_shared.dat\n?? input/task042_neural_coarse_inverse/v5_error_shared.dat\n?? input/task042_neural_coarse_inverse/v5_oldpod_shared.dat\n?? src/runners/task042_localization.py\n?? src/solvers/learned_fixed_localization.py\n?? src/test/test_task042_fixed_localization.py\n?? src/test/test_task042_v5_adapter.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "src/test/test_task042_v5_adapter.py",
+          "src/test/test_task042_v3_admission.py",
+          "src/test/test_task042_v4_monitor.py",
+          "src/test/test_task042_shared_watchdog.py"
+        ],
+        "utc": "2026-09-29T02:13:23.975534+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "fe",
+        "gpu_visible": false
+      },
+      "elapsed_seconds": 6.584691885043867,
+      "sampled_tree_rss_peak_bytes": 214970368,
+      "sampled_tree_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 334
+        },
+        "end": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 334
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    },
+    {
+      "name": "collect_evidence",
+      "summary_path": "tmp/task042/v5/collect_evidence/summary.json",
+      "summary_sha256": "1c4646add717eacd15c40fbe1931329a909da350bc1fbfca759818f14dd24815",
+      "source_state": {
+        "source_sha": "5d82651af0f723c73487783deb43969f05d46ed3",
+        "git_status": "",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "tmp/task042/v5/collect_v5.py"
+        ],
+        "utc": "2026-09-29T02:47:16.295647+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "elapsed_seconds": 5.563619861961342,
+      "sampled_tree_rss_peak_bytes": 151961600,
+      "sampled_tree_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 14287
+        },
+        "end": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 14287
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    },
+    {
+      "name": "final_static",
+      "summary_path": "tmp/task042/v5/final_static/summary.json",
+      "summary_sha256": "1aa1add9983719d6c5011d9a31ae53a7b1800676b6efb41efb6355753645d7c1",
+      "source_state": {
+        "source_sha": "5d82651af0f723c73487783deb43969f05d46ed3",
+        "git_status": " M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042_neural_coarse_inverse/outcomes/summary.md\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n?? docs/task042_neural_coarse_inverse/outcomes/failure_localization_v5.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/action_details_v5.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/common_state_manifest_v5.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/complement_probes_v5.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/coverage_v5.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/independent_checks_v5.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/localization_decisions_v5.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/localization_design_v5.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/post_checks_v5.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/pre_run_checks_v5.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v5.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/review_render_check_v5.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v5.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/same_residual_actions_v5.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v5.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/teacher_exception_v5.json\n?? docs/task042_neural_coarse_inverse/response_v5.md\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "tmp/task042/v5/final_static.py"
+        ],
+        "utc": "2026-09-29T02:49:07.027132+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "elapsed_seconds": 2.9685218590311706,
+      "sampled_tree_rss_peak_bytes": 131571712,
+      "sampled_tree_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 14287
+        },
+        "end": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 14287
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    },
+    {
+      "name": "inventory",
+      "summary_path": "tmp/task042/v5/inventory/summary.json",
+      "summary_sha256": "5bfdc5b04910658cf8dfc48f26fda2bf458fa71e25bb80ae100e388746405b7f",
+      "source_state": {
+        "source_sha": "91c4a0dbfa2e8a14df273eab5e27726059d7c835",
+        "git_status": "",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "tmp/task042/v5/register.py"
+        ],
+        "utc": "2026-09-29T01:58:54.191312+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "elapsed_seconds": 3.3914392130682245,
+      "sampled_tree_rss_peak_bytes": 61128704,
+      "sampled_tree_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 304
+        },
+        "end": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 304
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    },
+    {
+      "name": "pre_commit",
+      "summary_path": "tmp/task042/v5/pre_commit/summary.json",
+      "summary_sha256": "b4abeffcb6531639dd48b29b34bf0d1cd0a12d5f89ae70fd0eef764af16cfeff",
+      "source_state": {
+        "source_sha": "91c4a0dbfa2e8a14df273eab5e27726059d7c835",
+        "git_status": " M input/task042_neural_coarse_inverse/README.md\n M src/io/input_schema.py\n M src/io/task042_profile.py\n M src/runners/task042_experiment.py\n M src/runners/task042_shared.py\n?? input/task042_neural_coarse_inverse/localization_v5.json\n?? input/task042_neural_coarse_inverse/v5_d0_shared.dat\n?? input/task042_neural_coarse_inverse/v5_d1_shared.dat\n?? input/task042_neural_coarse_inverse/v5_error_shared.dat\n?? input/task042_neural_coarse_inverse/v5_oldpod_shared.dat\n?? src/io/task042_v5_gate.py\n?? src/runners/task042_localization.py\n?? src/solvers/learned_fixed_localization.py\n?? src/test/test_task042_fixed_localization.py\n?? src/test/test_task042_v5_adapter.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "tmp/task042/v5/pre_commit.py"
+        ],
+        "utc": "2026-09-29T02:19:45.316179+00:00",
+        "affinity": [
+          11
+        ],
+        "environment_mode": "fe",
+        "gpu_visible": false
+      },
+      "elapsed_seconds": 3.6205792650580406,
+      "sampled_tree_rss_peak_bytes": 180789248,
+      "sampled_tree_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 334
+        },
+        "end": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 334
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    },
+    {
+      "name": "preflight",
+      "summary_path": "tmp/task042/v5/preflight/summary.json",
+      "summary_sha256": "1a6a7c5634520d18d86acf9af74c37c89d1f4b9f64423be46e172daf5392a27b",
+      "source_state": {
+        "source_sha": "91c4a0dbfa2e8a14df273eab5e27726059d7c835",
+        "git_status": "",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "scripts/task042_preflight.py",
+          "--output",
+          "tmp/task042/v5/environment_preflight.json"
+        ],
+        "utc": "2026-09-29T01:54:47.380299+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "fe",
+        "gpu_visible": false
+      },
+      "elapsed_seconds": 3.580454476061277,
+      "sampled_tree_rss_peak_bytes": 227508224,
+      "sampled_tree_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 304
+        },
+        "end": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 304
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    },
+    {
+      "name": "pure_initial",
+      "summary_path": "tmp/task042/v5/pure_initial/summary.json",
+      "summary_sha256": "1c0fc62930407f73d4c2b0ffb4a3e4a00051ee639e7a4613b2bf243c5b07b614",
+      "source_state": {
+        "source_sha": "91c4a0dbfa2e8a14df273eab5e27726059d7c835",
+        "git_status": " M src/io/input_schema.py\n M src/io/task042_profile.py\n M src/runners/task042_experiment.py\n M src/runners/task042_shared.py\n?? input/task042_neural_coarse_inverse/localization_v5.json\n?? input/task042_neural_coarse_inverse/v5_d0_shared.dat\n?? input/task042_neural_coarse_inverse/v5_d1_shared.dat\n?? input/task042_neural_coarse_inverse/v5_error_shared.dat\n?? input/task042_neural_coarse_inverse/v5_oldpod_shared.dat\n?? src/runners/task042_localization.py\n?? src/solvers/learned_fixed_localization.py\n?? src/test/test_task042_fixed_localization.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "src/test/test_task042_fixed_localization.py",
+          "src/test/test_task042_two_level.py"
+        ],
+        "utc": "2026-09-29T02:11:27.843195+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "elapsed_seconds": 2.08888045407366,
+      "sampled_tree_rss_peak_bytes": 83218432,
+      "sampled_tree_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 334
+        },
+        "end": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 334
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    },
+    {
+      "name": "review_render",
+      "summary_path": "tmp/task042/v5/review_render/summary.json",
+      "summary_sha256": "577137f9721b5fee1bf4b1a222654c0e7a3716e64708e3ccfb7d95ca64c98b0c",
+      "source_state": {
+        "source_sha": "91c4a0dbfa2e8a14df273eab5e27726059d7c835",
+        "git_status": "",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "tmp/task042/v5/review_render.py"
+        ],
+        "utc": "2026-09-29T01:55:08.880531+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "elapsed_seconds": 3.0225774940336123,
+      "sampled_tree_rss_peak_bytes": 45789184,
+      "sampled_tree_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 304
+        },
+        "end": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 304
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    },
+    {
+      "name": "static_pre_run",
+      "summary_path": "tmp/task042/v5/static_pre_run/summary.json",
+      "summary_sha256": "39e94e5cc0b9fbeec7cb1c3b4affbe26214583676fde0862dde479ce6dc629e5",
+      "source_state": {
+        "source_sha": "91c4a0dbfa2e8a14df273eab5e27726059d7c835",
+        "git_status": " M input/task042_neural_coarse_inverse/README.md\n M src/io/input_schema.py\n M src/io/task042_profile.py\n M src/runners/task042_experiment.py\n M src/runners/task042_shared.py\n?? input/task042_neural_coarse_inverse/localization_v5.json\n?? input/task042_neural_coarse_inverse/v5_d0_shared.dat\n?? input/task042_neural_coarse_inverse/v5_d1_shared.dat\n?? input/task042_neural_coarse_inverse/v5_error_shared.dat\n?? input/task042_neural_coarse_inverse/v5_oldpod_shared.dat\n?? src/io/task042_v5_gate.py\n?? src/runners/task042_localization.py\n?? src/solvers/learned_fixed_localization.py\n?? src/test/test_task042_fixed_localization.py\n?? src/test/test_task042_v5_adapter.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "tmp/task042/v5/static_pre_run.py"
+        ],
+        "utc": "2026-09-29T02:16:27.005658+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "elapsed_seconds": 1.755566739011556,
+      "sampled_tree_rss_peak_bytes": 34299904,
+      "sampled_tree_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 334
+        },
+        "end": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 334
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    },
+    {
+      "name": "static_repaired",
+      "summary_path": "tmp/task042/v5/static_repaired/summary.json",
+      "summary_sha256": "2993280f10d95ecc04a92af36fc6ee806de343f9853ddb23c52c5171219b6eab",
+      "source_state": {
+        "source_sha": "91c4a0dbfa2e8a14df273eab5e27726059d7c835",
+        "git_status": " M input/task042_neural_coarse_inverse/README.md\n M src/io/input_schema.py\n M src/io/task042_profile.py\n M src/runners/task042_experiment.py\n M src/runners/task042_shared.py\n?? input/task042_neural_coarse_inverse/localization_v5.json\n?? input/task042_neural_coarse_inverse/v5_d0_shared.dat\n?? input/task042_neural_coarse_inverse/v5_d1_shared.dat\n?? input/task042_neural_coarse_inverse/v5_error_shared.dat\n?? input/task042_neural_coarse_inverse/v5_oldpod_shared.dat\n?? src/io/task042_v5_gate.py\n?? src/runners/task042_localization.py\n?? src/solvers/learned_fixed_localization.py\n?? src/test/test_task042_fixed_localization.py\n?? src/test/test_task042_v5_adapter.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "tmp/task042/v5/static_repaired.py"
+        ],
+        "utc": "2026-09-29T02:18:07.691766+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "elapsed_seconds": 1.4443865900393575,
+      "sampled_tree_rss_peak_bytes": 34435072,
+      "sampled_tree_swap_peak_bytes": 0,
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "descendants_cleared": true,
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 334
+        },
+        "end": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 334
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    }
+  ],
+  "auxiliary_supervised_wall_sum_seconds": 34.02071783738211,
+  "auxiliary_sampled_tree_rss_peak_bytes_max": 227508224,
+  "own_swap_peak_bytes": 0,
+  "cost_scope": "bounded auxiliary subreaper+descendants; outer aux admission helper not continuously sampled; per-check baseline identity retained",
+  "includes_failed_attempts": true,
+  "numeric_sources": [
+    "5d82651af0f723c73487783deb43969f05d46ed3"
+  ],
+  "static_failures": "FE .venv has no python ruff module (wrapper exit0 but subcommands failed); standalone existing read-only ruff then RUF005 new style fixed before formal commit; no numerical replay",
+  "interference_or_performance_claim": "inconclusive; no zero-interference/speedup claim; global swap deltas are observed separately and not attributed to own VmSwap",
+  "session_edit_git_review_wall_RSS": "not continuously measured"
+}

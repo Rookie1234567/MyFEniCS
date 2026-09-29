@@ -1,0 +1,286 @@
+{
+  "status": "PASS",
+  "source_sha_of_FE": "5d82651af0f723c73487783deb43969f05d46ed3",
+  "checks": {
+    "ruff": {
+      "command": [
+        "/home/fenics/Projects/Metrology/.venv/bin/ruff",
+        "check",
+        "--select",
+        "E4,E7,E9,F,I,B,ISC,RUF",
+        "src/solvers/learned_fixed_localization.py",
+        "src/runners/task042_localization.py",
+        "src/io/task042_v5_gate.py",
+        "src/test/test_task042_fixed_localization.py",
+        "src/test/test_task042_v5_adapter.py",
+        "src/io/task042_profile.py",
+        "src/runners/task042_shared.py",
+        "src/runners/task042_experiment.py"
+      ],
+      "returncode": 0,
+      "stdout": "All checks passed!\n",
+      "stderr": ""
+    },
+    "format_new": {
+      "command": [
+        "/home/fenics/Projects/Metrology/.venv/bin/ruff",
+        "format",
+        "--check",
+        "src/solvers/learned_fixed_localization.py",
+        "src/runners/task042_localization.py",
+        "src/io/task042_v5_gate.py",
+        "src/test/test_task042_fixed_localization.py",
+        "src/test/test_task042_v5_adapter.py"
+      ],
+      "returncode": 0,
+      "stdout": "5 files already formatted\n",
+      "stderr": ""
+    },
+    "compileall": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "compileall",
+        "-q",
+        "src/solvers/learned_fixed_localization.py",
+        "src/runners/task042_localization.py",
+        "src/io/task042_v5_gate.py",
+        "src/test/test_task042_fixed_localization.py",
+        "src/test/test_task042_v5_adapter.py",
+        "src/io/task042_profile.py",
+        "src/runners/task042_shared.py",
+        "src/runners/task042_experiment.py",
+        "src/io/input_schema.py"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "diff": {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "markdown_tests": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "src/test/test_183_development_model_registry_markdown.py"
+      ],
+      "returncode": 0,
+      "stdout": ".....                                                                    [100%]\n5 passed in 0.03s\n",
+      "stderr": ""
+    }
+  },
+  "protected_exact_paths": [
+    "AGENTS.md",
+    "docs/AGENTS.md",
+    "docs/repository_work_principles.md",
+    "docs/task042_neural_coarse_inverse/README.md",
+    "docs/task042_neural_coarse_inverse/outcomes/accuracy_performance_memory.md",
+    "docs/task042_neural_coarse_inverse/outcomes/architecture_and_oracle.md",
+    "docs/task042_neural_coarse_inverse/outcomes/bounded_diagnostic_design_v3.md",
+    "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+    "docs/task042_neural_coarse_inverse/outcomes/dataset_and_model_provenance.md",
+    "docs/task042_neural_coarse_inverse/outcomes/environment_and_isolation.md",
+    "docs/task042_neural_coarse_inverse/outcomes/records/README.md",
+    "docs/task042_neural_coarse_inverse/outcomes/records/admission_repair_v3.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/auxiliary_costs_v2.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/auxiliary_costs_v3.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/bounded_f0_runs.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/cffi_build_repair_v2.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/coarse_space_algebra_v4.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/component_metrics.csv",
+    "docs/task042_neural_coarse_inverse/outcomes/records/component_metrics_v2.csv",
+    "docs/task042_neural_coarse_inverse/outcomes/records/cpu_provenance_v3.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/csv_line_endings_attempt1.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/csv_newline_check_v4.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/dataset_model_manifest.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/dataset_model_manifest_v2.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/documentation_cpu_audit_v2.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/environment_fe.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/environment_ml.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/environment_pure.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/f1_real_components_v2.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/f4_b0_complete_v2.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/f4_lin_complete_v2.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/f4_nn_complete_v2.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/final_checks_v2.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/first_fe_import_repair_v2.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/fresh_qualification_v4.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/full_p6_comparison.csv",
+    "docs/task042_neural_coarse_inverse/outcomes/records/full_p6_comparison_v2.csv",
+    "docs/task042_neural_coarse_inverse/outcomes/records/full_residual_history_v3.csv",
+    "docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v2.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v3.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v4.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/git_preparation.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/git_preparation_v2.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/mode_metadata_repair_v2.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/neural_reference_audit.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/oracle_complete_v2.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/p4_privacy_repair_v4.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/p4_witness_adapter_repair_v2.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/pc_probes_v3.csv",
+    "docs/task042_neural_coarse_inverse/outcomes/records/post_checks_v4.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/pre_run_checks_v4.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/publication_attempt1.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/publication_checks.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v2.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v3.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v4.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/pure_component_audit.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/registry_contract_baseline_v2.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/registry_contract_baseline_v3.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/registry_contract_baseline_v4.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/reused_diagnostics_v3.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/review_render_check_v4.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/run_index.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v2.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v3.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v4.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/schema_lint_baseline_v3.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/shared_preimplementation_checks_v2.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/shared_workstation_snapshot.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/shared_workstation_snapshot_v2.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/static_checks.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_attempt1.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v2.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v3.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v4.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv",
+    "docs/task042_neural_coarse_inverse/outcomes/records/structure_complete_v3.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/teacher_complete_v2.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/training_complete_v2.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/training_snapshot_manifest_v4.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/two_level_comparison_v4.csv",
+    "docs/task042_neural_coarse_inverse/outcomes/records/two_level_design_v4.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/two_level_history_v4.csv",
+    "docs/task042_neural_coarse_inverse/outcomes/records/unconsumed_test_plan_v3.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/watchdog_test_evidence_v3.json",
+    "docs/task042_neural_coarse_inverse/outcomes/residual_diagnosis_v3.md",
+    "docs/task042_neural_coarse_inverse/outcomes/shared_authorization_v2.md",
+    "docs/task042_neural_coarse_inverse/outcomes/shared_numerical_design_v2.md",
+    "docs/task042_neural_coarse_inverse/outcomes/two_level_global_error_v4.md",
+    "docs/task042_neural_coarse_inverse/response_v1.md",
+    "docs/task042_neural_coarse_inverse/response_v2.md",
+    "docs/task042_neural_coarse_inverse/response_v3.md",
+    "docs/task042_neural_coarse_inverse/response_v4.md",
+    "docs/task042_neural_coarse_inverse/review_report_v1.md",
+    "docs/task042_neural_coarse_inverse/review_report_v2.md",
+    "docs/task042_neural_coarse_inverse/task.md",
+    "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+    "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+    "docs/development_progress.md",
+    "docs/development_model_registry.md",
+    "input/task042_neural_coarse_inverse/README.md"
+  ],
+  "protected_exact_count": 97,
+  "history_preservation": "97 previous authority/response/records exact; summary old suffix; test summary and ledgers old prefixes",
+  "frozen_numerical_files_sha_and_git_blobs_unchanged": [
+    "src/solvers/learned_two_level.py",
+    "src/solvers/learned_geometry_overlap.py",
+    "src/solvers/learned_coarse_runtime.py",
+    "src/solvers/p6_cell_condensed_action.py",
+    "src/solvers/learned_coarse_data.py"
+  ],
+  "basis_hashes_unchanged": true,
+  "fresh_seed420620_unconsumed": true,
+  "inherited_schema_explicit_selected_lint_diagnostics": {
+    "count": 20,
+    "diagnostics": [
+      [
+        "ISC004",
+        "Unparenthesized implicit string concatenation in collection"
+      ],
+      [
+        "ISC004",
+        "Unparenthesized implicit string concatenation in collection"
+      ],
+      [
+        "ISC004",
+        "Unparenthesized implicit string concatenation in collection"
+      ],
+      [
+        "ISC004",
+        "Unparenthesized implicit string concatenation in collection"
+      ],
+      [
+        "ISC004",
+        "Unparenthesized implicit string concatenation in collection"
+      ],
+      [
+        "RUF001",
+        "String contains ambiguous `；` (FULLWIDTH SEMICOLON). Did you mean `;` (SEMICOLON)?"
+      ],
+      [
+        "ISC004",
+        "Unparenthesized implicit string concatenation in collection"
+      ],
+      [
+        "ISC004",
+        "Unparenthesized implicit string concatenation in collection"
+      ],
+      [
+        "ISC004",
+        "Unparenthesized implicit string concatenation in collection"
+      ],
+      [
+        "ISC004",
+        "Unparenthesized implicit string concatenation in collection"
+      ],
+      [
+        "ISC004",
+        "Unparenthesized implicit string concatenation in collection"
+      ],
+      [
+        "ISC004",
+        "Unparenthesized implicit string concatenation in collection"
+      ],
+      [
+        "RUF001",
+        "String contains ambiguous `（` (FULLWIDTH LEFT PARENTHESIS). Did you mean `(` (LEFT PARENTHESIS)?"
+      ],
+      [
+        "RUF001",
+        "String contains ambiguous `）` (FULLWIDTH RIGHT PARENTHESIS). Did you mean `)` (RIGHT PARENTHESIS)?"
+      ],
+      [
+        "RUF001",
+        "String contains ambiguous `；` (FULLWIDTH SEMICOLON). Did you mean `;` (SEMICOLON)?"
+      ],
+      [
+        "RUF001",
+        "String contains ambiguous `（` (FULLWIDTH LEFT PARENTHESIS). Did you mean `(` (LEFT PARENTHESIS)?"
+      ],
+      [
+        "RUF001",
+        "String contains ambiguous `）` (FULLWIDTH RIGHT PARENTHESIS). Did you mean `)` (RIGHT PARENTHESIS)?"
+      ],
+      [
+        "RUF001",
+        "String contains ambiguous `（` (FULLWIDTH LEFT PARENTHESIS). Did you mean `(` (LEFT PARENTHESIS)?"
+      ],
+      [
+        "RUF001",
+        "String contains ambiguous `）` (FULLWIDTH RIGHT PARENTHESIS). Did you mean `)` (RIGHT PARENTHESIS)?"
+      ],
+      [
+        "RUF022",
+        "`__all__` is not sorted"
+      ]
+    ],
+    "baseline_identical": true
+  },
+  "registry_contract": "BASELINE_IDENTICAL_NOT_GREEN",
+  "new_local_tables_links_fences": "PASS",
+  "full_pytest_or_CI_claim": false
+}

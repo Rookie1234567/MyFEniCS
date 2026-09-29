@@ -1,0 +1,1214 @@
+{
+  "schema": "task042.common-states.v5",
+  "source_sha": "5d82651af0f723c73487783deb43969f05d46ed3",
+  "actual_available_count": 12,
+  "registered_count": 12,
+  "missing": [],
+  "operator_sha256": "150f18e26f15783726f2ffeb362ef053450962a16fff13d5241cc93c8d018560",
+  "normalization": "raw original RHS and canonical reduced trace+port; no rescaling",
+  "original_manifest": {
+    "path": "results/task042/task042_v5_d0_shared_20260929T022124379441Z/common_state_manifest.json",
+    "sha256": "0cfe85fb87008608b3917e7e37c0d8576f94737b93de2180cc26a5cd289eced3"
+  },
+  "rhs": [
+    {
+      "index": 0,
+      "path": "benchmarks/artifacts/task042/task042_f4_b0_shared_20260928T125023426273Z/failure_000.npz",
+      "sha256": "1cc24ad8b55b567bb37b909d7a283303dfd585b5032e2a8c7c6f601682b751a7",
+      "label": {
+        "problem_id": "physical_PH_b6",
+        "kind": "actual_fine_physical_coarse_call",
+        "whole_problem": "physical_F1_trajectory"
+      },
+      "reused_source_sha": "7216efa605bae155ee383fd716c0fae422448b52",
+      "canonical_packet_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v5_d0_shared_20260929T022124379441Z/rhs_000.npz",
+      "canonical_packet_sha256": "4c9eb67f526c1f98870288a557a9899d118001ac2180b245700d80d21215f38e",
+      "raw_sha256": "ddfdb151a82e2630c4a1a586e0d6ea65208e19f3691ecc4a9134f5d742a8f3ef",
+      "fe_sha256": "597537edd8b04af15331c7793407a35c90da67c1dae2f7bb8ce8dcc48afb5e6b",
+      "port_sha256": "2ea7786e810e9a96ee3adc1d9e7c8248f27c6c80a41c30944eb055843f5aee6c",
+      "full_rhs_norm": 1.0488435477774558,
+      "port_rhs_norm": 0.0,
+      "Schur_rhs_norm": 1.048843547777456,
+      "initial_audit": {
+        "original_norms": {
+          "native_absolute": 1.048843547777456,
+          "native_scale": 1.0488435477774558,
+          "port_absolute": 0.0,
+          "port_scale": 0.0,
+          "internal_absolute": 8.325832710996873e-29,
+          "internal_scale": 2.1343979306973887e-13,
+          "native_identity_absolute": 1.0622968402425924e-18,
+          "native_identity_scale": 2.0976870955549405,
+          "Schur_port_identity_absolute": 0.0,
+          "Schur_port_identity_scale": 0.0,
+          "submitted_recovery_absolute": 0.0,
+          "submitted_field_norm": 2.690747795770433e-15,
+          "maximum_slave_storage": 0.0,
+          "finite": true
+        },
+        "checks": {
+          "Schur_independent_operation_defect": 0.0,
+          "native_map_operation_defect": 5.064133933481452e-19,
+          "native_identity_relative": 5.064133933481452e-19,
+          "Schur_port_identity_relative": 0.0,
+          "internal_recovery_relative": 3.900787473250833e-16,
+          "submitted_recovery_relative": 0.0
+        },
+        "native_relative": 1.0000000000000002,
+        "Schur_absolute": 1.048843547777456,
+        "Schur_rhs_norm": 1.048843547777456,
+        "Schur_relative_rhs": 1.0,
+        "port_absolute": 0.0,
+        "port_operation_relative": 0.0,
+        "port_initial_reference_scale": 0.0,
+        "port_fixed_reference_value": 0.0,
+        "port_fixed_reference_rule": "exact-zero initial scale: absolute",
+        "original_strict_metrics_pass": false,
+        "full_field_norm": 2.690747795770433e-15,
+        "full_field_sha256": "4047c3a51e522eadb9a6a9756e7f2e5a9641fb7cdbb045403f18324c79ce8b85",
+        "port_state_norm": 0.0,
+        "diagnostic_only_no_solver_qualification": true
+      },
+      "normalization": "raw original full/port RHS, canonical reduced coordinates, no added norm scaling; teacher multiply stored normalization_scale back to raw"
+    },
+    {
+      "index": 10,
+      "path": "benchmarks/artifacts/task042/task042_f4_b0_shared_20260928T125023426273Z/failure_010.npz",
+      "sha256": "1e083e022c99ce7f4014e003f3ee097ba6571e921b83f7fcb99fe82ee3df8aa4",
+      "label": {
+        "problem_id": "unseen_port_only",
+        "kind": "unseen_port_only",
+        "seed": 420400,
+        "whole_problem": "heldout_seed420400_first_full_rhs_family"
+      },
+      "reused_source_sha": "7216efa605bae155ee383fd716c0fae422448b52",
+      "canonical_packet_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v5_d0_shared_20260929T022124379441Z/rhs_010.npz",
+      "canonical_packet_sha256": "c43e949bdf3c016d35bddff7fd6f03069dc611d4776b6bf6de42221f8e8e10f9",
+      "raw_sha256": "d792e996c5fb671fd67a4c03e54a999b4de0c9df170169c53682afb2588b2fd5",
+      "fe_sha256": "a2f8b5190b03dd5439d26cdd7a227414ad82ba8da722880347e7bd3a75b1f567",
+      "port_sha256": "fcd17ab85254eed5b6782bc26f20a97abe8b6edc26b42ccc7f157034eb4a152f",
+      "full_rhs_norm": 0.0,
+      "port_rhs_norm": 0.001,
+      "Schur_rhs_norm": 0.001,
+      "initial_audit": {
+        "original_norms": {
+          "native_absolute": 0.014408291311489812,
+          "native_scale": 0.014408291311489812,
+          "port_absolute": 0.001,
+          "port_scale": 0.001,
+          "internal_absolute": 0.0,
+          "internal_scale": 0.0,
+          "native_identity_absolute": 0.0,
+          "native_identity_scale": 0.028816582622979623,
+          "Schur_port_identity_absolute": 0.0,
+          "Schur_port_identity_scale": 0.001,
+          "submitted_recovery_absolute": 0.0,
+          "submitted_field_norm": 0.0,
+          "maximum_slave_storage": 0.0,
+          "finite": true
+        },
+        "checks": {
+          "Schur_independent_operation_defect": 0.0,
+          "native_map_operation_defect": 0.0,
+          "native_identity_relative": 0.0,
+          "Schur_port_identity_relative": 0.0,
+          "internal_recovery_relative": 0.0,
+          "submitted_recovery_relative": 0.0
+        },
+        "native_relative": 1.0,
+        "Schur_absolute": 0.001,
+        "Schur_rhs_norm": 0.001,
+        "Schur_relative_rhs": 1.0,
+        "port_absolute": 0.001,
+        "port_operation_relative": 1.0,
+        "port_initial_reference_scale": 0.001,
+        "port_fixed_reference_value": 1.0,
+        "port_fixed_reference_rule": "relative to original zero-start scale",
+        "original_strict_metrics_pass": false,
+        "full_field_norm": 0.0,
+        "full_field_sha256": "a2f8b5190b03dd5439d26cdd7a227414ad82ba8da722880347e7bd3a75b1f567",
+        "port_state_norm": 0.0,
+        "diagnostic_only_no_solver_qualification": true
+      },
+      "normalization": "raw original full/port RHS, canonical reduced coordinates, no added norm scaling; teacher multiply stored normalization_scale back to raw"
+    },
+    {
+      "index": 11,
+      "path": "benchmarks/artifacts/task042/task042_f4_b0_shared_20260928T125023426273Z/failure_011.npz",
+      "sha256": "995379f3fd82679b22bfd60fc8b8524514aa2e5cc3be591a77b57c069a1611f8",
+      "label": {
+        "problem_id": "unseen_mixed",
+        "kind": "unseen_mixed",
+        "seed": 420400,
+        "whole_problem": "heldout_seed420400_first_full_rhs_family"
+      },
+      "reused_source_sha": "7216efa605bae155ee383fd716c0fae422448b52",
+      "canonical_packet_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v5_d0_shared_20260929T022124379441Z/rhs_011.npz",
+      "canonical_packet_sha256": "62cd56655ebf3b159c6ab6b0e3c775c31f4c2e5130a5163a642222335298dc31",
+      "raw_sha256": "2597346694a19afcea6b480994758be0eaa29c79c43992d517a4579b2f7ce4a1",
+      "fe_sha256": "8085e2ae67512559ae8a872874dd545c629ff4c802ff18eaac273c2a34e81e87",
+      "port_sha256": "ee78a8ae54cfb9082dd48b504b2593fed20b9f7f0c19f2725ed11966e3339fb0",
+      "full_rhs_norm": 0.0010000000000000009,
+      "port_rhs_norm": 0.001,
+      "Schur_rhs_norm": 0.001875142728036528,
+      "initial_audit": {
+        "original_norms": {
+          "native_absolute": 0.014505621926474681,
+          "native_scale": 0.014440984576310005,
+          "port_absolute": 0.001,
+          "port_scale": 0.001,
+          "internal_absolute": 2.322968207519303e-17,
+          "internal_scale": 0.023653686943477022,
+          "native_identity_absolute": 9.172953538769413e-17,
+          "native_identity_scale": 0.03205503063090194,
+          "Schur_port_identity_absolute": 0.0,
+          "Schur_port_identity_scale": 0.001,
+          "submitted_recovery_absolute": 0.0,
+          "submitted_field_norm": 0.0009597602997262127,
+          "maximum_slave_storage": 0.0,
+          "finite": true
+        },
+        "checks": {
+          "Schur_independent_operation_defect": 0.0,
+          "native_map_operation_defect": 2.8404910597339314e-15,
+          "native_identity_relative": 2.861626820573502e-15,
+          "Schur_port_identity_relative": 0.0,
+          "internal_recovery_relative": 9.820744702803755e-16,
+          "submitted_recovery_relative": 0.0
+        },
+        "native_relative": 1.0044759655979907,
+        "Schur_absolute": 0.001875142728036528,
+        "Schur_rhs_norm": 0.001875142728036528,
+        "Schur_relative_rhs": 1.0,
+        "port_absolute": 0.001,
+        "port_operation_relative": 1.0,
+        "port_initial_reference_scale": 0.001,
+        "port_fixed_reference_value": 1.0,
+        "port_fixed_reference_rule": "relative to original zero-start scale",
+        "original_strict_metrics_pass": false,
+        "full_field_norm": 0.0009597602997262127,
+        "full_field_sha256": "a95b5ebd34cc668aab3d42e7ed58903450ddb2c44f3a2382f412259f86df7d90",
+        "port_state_norm": 0.0,
+        "diagnostic_only_no_solver_qualification": true
+      },
+      "normalization": "raw original full/port RHS, canonical reduced coordinates, no added norm scaling; teacher multiply stored normalization_scale back to raw"
+    }
+  ],
+  "states": [
+    {
+      "state_id": "ZERO-000",
+      "origin": "ZERO",
+      "rhs_index": 0,
+      "packet": null,
+      "missing": false,
+      "original_source_sha": "7216efa605bae155ee383fd716c0fae422448b52",
+      "zero_start_full_field": "original particular recovery, not assumed full zero",
+      "status": "verified",
+      "canonical_state_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v5_d0_shared_20260929T022124379441Z/ZERO-000.npz",
+      "canonical_state_sha256": "7249116a00ae1f0798dd733f642993cece0c5af875cdf0330ca48afb382af69b",
+      "x_sha256": "939aa9eac654b03133aa0954aefef9923040d0c57afd924fa4343cfbeb68c42b",
+      "residual_sha256": "ddfdb151a82e2630c4a1a586e0d6ea65208e19f3691ecc4a9134f5d742a8f3ef",
+      "x_norm": 0.0,
+      "residual_norm": 1.048843547777456,
+      "label": {
+        "problem_id": "physical_PH_b6",
+        "kind": "actual_fine_physical_coarse_call",
+        "whole_problem": "physical_F1_trajectory"
+      },
+      "audit": {
+        "original_norms": {
+          "native_absolute": 1.048843547777456,
+          "native_scale": 1.0488435477774558,
+          "port_absolute": 0.0,
+          "port_scale": 0.0,
+          "internal_absolute": 8.325832710996873e-29,
+          "internal_scale": 2.1343979306973887e-13,
+          "native_identity_absolute": 1.0622968402425924e-18,
+          "native_identity_scale": 2.0976870955549405,
+          "Schur_port_identity_absolute": 0.0,
+          "Schur_port_identity_scale": 0.0,
+          "submitted_recovery_absolute": 0.0,
+          "submitted_field_norm": 2.690747795770433e-15,
+          "maximum_slave_storage": 0.0,
+          "finite": true
+        },
+        "checks": {
+          "Schur_independent_operation_defect": 0.0,
+          "native_map_operation_defect": 5.064133933481452e-19,
+          "native_identity_relative": 5.064133933481452e-19,
+          "Schur_port_identity_relative": 0.0,
+          "internal_recovery_relative": 3.900787473250833e-16,
+          "submitted_recovery_relative": 0.0
+        },
+        "native_relative": 1.0000000000000002,
+        "Schur_absolute": 1.048843547777456,
+        "Schur_rhs_norm": 1.048843547777456,
+        "Schur_relative_rhs": 1.0,
+        "port_absolute": 0.0,
+        "port_operation_relative": 0.0,
+        "port_initial_reference_scale": 0.0,
+        "port_fixed_reference_value": 0.0,
+        "port_fixed_reference_rule": "exact-zero initial scale: absolute",
+        "original_strict_metrics_pass": false,
+        "full_field_norm": 2.690747795770433e-15,
+        "full_field_sha256": "4047c3a51e522eadb9a6a9756e7f2e5a9641fb7cdbb045403f18324c79ce8b85",
+        "port_state_norm": 0.0,
+        "diagnostic_only_no_solver_qualification": true
+      },
+      "role": "consumed diagnostic state; no fresh test",
+      "normalization": "raw original full/port RHS, canonical reduced coordinates, no added norm scaling; teacher multiply stored normalization_scale back to raw"
+    },
+    {
+      "state_id": "ZERO-010",
+      "origin": "ZERO",
+      "rhs_index": 10,
+      "packet": null,
+      "missing": false,
+      "original_source_sha": "7216efa605bae155ee383fd716c0fae422448b52",
+      "zero_start_full_field": "original particular recovery, not assumed full zero",
+      "status": "verified",
+      "canonical_state_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v5_d0_shared_20260929T022124379441Z/ZERO-010.npz",
+      "canonical_state_sha256": "d114247a8d219c58377ecc08f1724fecf463a8db01d98929b1ae6844612fee16",
+      "x_sha256": "939aa9eac654b03133aa0954aefef9923040d0c57afd924fa4343cfbeb68c42b",
+      "residual_sha256": "d792e996c5fb671fd67a4c03e54a999b4de0c9df170169c53682afb2588b2fd5",
+      "x_norm": 0.0,
+      "residual_norm": 0.001,
+      "label": {
+        "problem_id": "unseen_port_only",
+        "kind": "unseen_port_only",
+        "seed": 420400,
+        "whole_problem": "heldout_seed420400_first_full_rhs_family"
+      },
+      "audit": {
+        "original_norms": {
+          "native_absolute": 0.014408291311489812,
+          "native_scale": 0.014408291311489812,
+          "port_absolute": 0.001,
+          "port_scale": 0.001,
+          "internal_absolute": 0.0,
+          "internal_scale": 0.0,
+          "native_identity_absolute": 0.0,
+          "native_identity_scale": 0.028816582622979623,
+          "Schur_port_identity_absolute": 0.0,
+          "Schur_port_identity_scale": 0.001,
+          "submitted_recovery_absolute": 0.0,
+          "submitted_field_norm": 0.0,
+          "maximum_slave_storage": 0.0,
+          "finite": true
+        },
+        "checks": {
+          "Schur_independent_operation_defect": 0.0,
+          "native_map_operation_defect": 0.0,
+          "native_identity_relative": 0.0,
+          "Schur_port_identity_relative": 0.0,
+          "internal_recovery_relative": 0.0,
+          "submitted_recovery_relative": 0.0
+        },
+        "native_relative": 1.0,
+        "Schur_absolute": 0.001,
+        "Schur_rhs_norm": 0.001,
+        "Schur_relative_rhs": 1.0,
+        "port_absolute": 0.001,
+        "port_operation_relative": 1.0,
+        "port_initial_reference_scale": 0.001,
+        "port_fixed_reference_value": 1.0,
+        "port_fixed_reference_rule": "relative to original zero-start scale",
+        "original_strict_metrics_pass": false,
+        "full_field_norm": 0.0,
+        "full_field_sha256": "a2f8b5190b03dd5439d26cdd7a227414ad82ba8da722880347e7bd3a75b1f567",
+        "port_state_norm": 0.0,
+        "diagnostic_only_no_solver_qualification": true
+      },
+      "role": "consumed diagnostic state; no fresh test",
+      "normalization": "raw original full/port RHS, canonical reduced coordinates, no added norm scaling; teacher multiply stored normalization_scale back to raw"
+    },
+    {
+      "state_id": "ZERO-011",
+      "origin": "ZERO",
+      "rhs_index": 11,
+      "packet": null,
+      "missing": false,
+      "original_source_sha": "7216efa605bae155ee383fd716c0fae422448b52",
+      "zero_start_full_field": "original particular recovery, not assumed full zero",
+      "status": "verified",
+      "canonical_state_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v5_d0_shared_20260929T022124379441Z/ZERO-011.npz",
+      "canonical_state_sha256": "b653e685391636030c218e0b36ace249c6acab7350f843097c1717ff2ff6b07a",
+      "x_sha256": "939aa9eac654b03133aa0954aefef9923040d0c57afd924fa4343cfbeb68c42b",
+      "residual_sha256": "2597346694a19afcea6b480994758be0eaa29c79c43992d517a4579b2f7ce4a1",
+      "x_norm": 0.0,
+      "residual_norm": 0.001875142728036528,
+      "label": {
+        "problem_id": "unseen_mixed",
+        "kind": "unseen_mixed",
+        "seed": 420400,
+        "whole_problem": "heldout_seed420400_first_full_rhs_family"
+      },
+      "audit": {
+        "original_norms": {
+          "native_absolute": 0.014505621926474681,
+          "native_scale": 0.014440984576310005,
+          "port_absolute": 0.001,
+          "port_scale": 0.001,
+          "internal_absolute": 2.322968207519303e-17,
+          "internal_scale": 0.023653686943477022,
+          "native_identity_absolute": 9.172953538769413e-17,
+          "native_identity_scale": 0.03205503063090194,
+          "Schur_port_identity_absolute": 0.0,
+          "Schur_port_identity_scale": 0.001,
+          "submitted_recovery_absolute": 0.0,
+          "submitted_field_norm": 0.0009597602997262127,
+          "maximum_slave_storage": 0.0,
+          "finite": true
+        },
+        "checks": {
+          "Schur_independent_operation_defect": 0.0,
+          "native_map_operation_defect": 2.8404910597339314e-15,
+          "native_identity_relative": 2.861626820573502e-15,
+          "Schur_port_identity_relative": 0.0,
+          "internal_recovery_relative": 9.820744702803755e-16,
+          "submitted_recovery_relative": 0.0
+        },
+        "native_relative": 1.0044759655979907,
+        "Schur_absolute": 0.001875142728036528,
+        "Schur_rhs_norm": 0.001875142728036528,
+        "Schur_relative_rhs": 1.0,
+        "port_absolute": 0.001,
+        "port_operation_relative": 1.0,
+        "port_initial_reference_scale": 0.001,
+        "port_fixed_reference_value": 1.0,
+        "port_fixed_reference_rule": "relative to original zero-start scale",
+        "original_strict_metrics_pass": false,
+        "full_field_norm": 0.0009597602997262127,
+        "full_field_sha256": "a95b5ebd34cc668aab3d42e7ed58903450ddb2c44f3a2382f412259f86df7d90",
+        "port_state_norm": 0.0,
+        "diagnostic_only_no_solver_qualification": true
+      },
+      "role": "consumed diagnostic state; no fresh test",
+      "normalization": "raw original full/port RHS, canonical reduced coordinates, no added norm scaling; teacher multiply stored normalization_scale back to raw"
+    },
+    {
+      "state_id": "GEO-000",
+      "origin": "GEO",
+      "rhs_index": 0,
+      "run": {
+        "directory": "results/task042/task042_v3_overlap_shared_20260928T150915809159Z",
+        "source_sha": "7fc3f1434cf4f38f43e5244ebfed3a19d0780a26",
+        "files": [
+          {
+            "path": "results/task042/task042_v3_overlap_shared_20260928T150915809159Z/run_manifest.json",
+            "sha256": "f5bb0798727b149ff71b5aa5a054c7af9032e39cdcdee391dcefe2c000ccecfc"
+          },
+          {
+            "path": "results/task042/task042_v3_overlap_shared_20260928T150915809159Z/run_summary.json",
+            "sha256": "a92a7e2ebe481585e4795cce18a541fbfc5203c0a8e94e82fc04b2a92dd7ca4a"
+          },
+          {
+            "path": "results/task042/task042_v3_overlap_shared_20260928T150915809159Z/numerical_summary.json",
+            "sha256": "ff0dde69e29003af7d60d615e665230e023eadb60c156dab49d4abd2587c764c"
+          }
+        ]
+      },
+      "packet": {
+        "path": "benchmarks/artifacts/task042/task042_v3_overlap_shared_20260928T150915809159Z/failure_000.npz",
+        "sha256": "b0d35e035a695a00e4d680fa6ed31ac400d9d1fb5a643cb8ad7615e10700dd9d"
+      },
+      "missing": false,
+      "original_source_sha": "7fc3f1434cf4f38f43e5244ebfed3a19d0780a26",
+      "saved_native_relative": 0.891957825531469,
+      "recomputed_vs_saved_native_absolute_difference": 0.0,
+      "status": "verified",
+      "canonical_state_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v5_d0_shared_20260929T022124379441Z/GEO-000.npz",
+      "canonical_state_sha256": "2a44a742dfee99a52fd873907f06c8ac4732fd2c5c94c36a251418f7ad112be3",
+      "x_sha256": "9bc589b8f77a3d34bbb16aa65693d99fe38c496c2f75a8db33f8cf924671aa70",
+      "residual_sha256": "e326f78c55c14e123346618a01b073c9be5251bc096dcf586641c2ccf7d4b0cd",
+      "x_norm": 0.897596872468243,
+      "residual_norm": 0.9540537620299453,
+      "label": {
+        "problem_id": "physical_PH_b6",
+        "kind": "actual_fine_physical_coarse_call",
+        "whole_problem": "physical_F1_trajectory"
+      },
+      "audit": {
+        "original_norms": {
+          "native_absolute": 0.9355242101982909,
+          "native_scale": 1.0488435477774558,
+          "port_absolute": 0.1872108746118584,
+          "port_scale": 24.215880580989968,
+          "internal_absolute": 7.198290124025263e-15,
+          "internal_scale": 104.48385028759819,
+          "native_identity_absolute": 3.5332929396084046e-14,
+          "native_identity_scale": 2.3760942002279974,
+          "Schur_port_identity_absolute": 0.0,
+          "Schur_port_identity_scale": 24.215880580989968,
+          "submitted_recovery_absolute": 0.0,
+          "submitted_field_norm": 1.295654167834241,
+          "maximum_slave_storage": 0.0,
+          "finite": true
+        },
+        "checks": {
+          "Schur_independent_operation_defect": 1.2210199008220464e-15,
+          "native_map_operation_defect": 1.3955260899195887e-14,
+          "native_identity_relative": 1.4870171979163824e-14,
+          "Schur_port_identity_relative": 0.0,
+          "internal_recovery_relative": 6.8893806116558e-17,
+          "submitted_recovery_relative": 0.0
+        },
+        "native_relative": 0.891957825531469,
+        "Schur_absolute": 0.9540537620299453,
+        "Schur_rhs_norm": 1.048843547777456,
+        "Schur_relative_rhs": 0.9096244755012562,
+        "port_absolute": 0.1872108746118584,
+        "port_operation_relative": 0.007730913356040553,
+        "port_initial_reference_scale": 0.0,
+        "port_fixed_reference_value": 0.1872108746118584,
+        "port_fixed_reference_rule": "exact-zero initial scale: absolute",
+        "original_strict_metrics_pass": false,
+        "full_field_norm": 1.295654167834241,
+        "full_field_sha256": "c9886e79839b306a2066e86653b77320377ff51a8a07e7c4734c880984644796",
+        "port_state_norm": 0.00967856589596015,
+        "diagnostic_only_no_solver_qualification": true
+      },
+      "role": "consumed diagnostic state; no fresh test",
+      "normalization": "raw original full/port RHS, canonical reduced coordinates, no added norm scaling; teacher multiply stored normalization_scale back to raw"
+    },
+    {
+      "state_id": "GEO-010",
+      "origin": "GEO",
+      "rhs_index": 10,
+      "run": {
+        "directory": "results/task042/task042_v3_overlap_shared_20260928T150915809159Z",
+        "source_sha": "7fc3f1434cf4f38f43e5244ebfed3a19d0780a26",
+        "files": [
+          {
+            "path": "results/task042/task042_v3_overlap_shared_20260928T150915809159Z/run_manifest.json",
+            "sha256": "f5bb0798727b149ff71b5aa5a054c7af9032e39cdcdee391dcefe2c000ccecfc"
+          },
+          {
+            "path": "results/task042/task042_v3_overlap_shared_20260928T150915809159Z/run_summary.json",
+            "sha256": "a92a7e2ebe481585e4795cce18a541fbfc5203c0a8e94e82fc04b2a92dd7ca4a"
+          },
+          {
+            "path": "results/task042/task042_v3_overlap_shared_20260928T150915809159Z/numerical_summary.json",
+            "sha256": "ff0dde69e29003af7d60d615e665230e023eadb60c156dab49d4abd2587c764c"
+          }
+        ]
+      },
+      "packet": {
+        "path": "benchmarks/artifacts/task042/task042_v3_overlap_shared_20260928T150915809159Z/failure_010.npz",
+        "sha256": "0a142bac571f8d38a4d41a6c24a7afc468737315ace04c9179aeb1ee37a9d69f"
+      },
+      "missing": false,
+      "original_source_sha": "7fc3f1434cf4f38f43e5244ebfed3a19d0780a26",
+      "saved_native_relative": 0.9358618773364152,
+      "recomputed_vs_saved_native_absolute_difference": 0.0,
+      "status": "verified",
+      "canonical_state_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v5_d0_shared_20260929T022124379441Z/GEO-010.npz",
+      "canonical_state_sha256": "407d6820b4003c9dfa43170a20f3c9769dffc36c626e27ce327c9fc9f1fb2b96",
+      "x_sha256": "1d0598a61c0ad8743919f8e1277486a816e8b2c041a64aa8624a1248e1702778",
+      "residual_sha256": "93b6d6c77b819c9727e6fde8dfe0443b2069e975bb2333dffe8ec68bd5629e10",
+      "x_norm": 5.3063533386061315e-05,
+      "residual_norm": 0.0009489899030823907,
+      "label": {
+        "problem_id": "unseen_port_only",
+        "kind": "unseen_port_only",
+        "seed": 420400,
+        "whole_problem": "heldout_seed420400_first_full_rhs_family"
+      },
+      "audit": {
+        "original_norms": {
+          "native_absolute": 0.013484170555980815,
+          "native_scale": 0.014408291311489812,
+          "port_absolute": 0.0009350566972545409,
+          "port_scale": 0.0012891306794366008,
+          "internal_absolute": 0.0,
+          "internal_scale": 0.024140400581184156,
+          "native_identity_absolute": 4.565605609577867e-18,
+          "native_identity_scale": 0.028963889452389126,
+          "Schur_port_identity_absolute": 7.799375246291408e-20,
+          "Schur_port_identity_scale": 0.0012891306794366008,
+          "submitted_recovery_absolute": 0.0,
+          "submitted_field_norm": 8.359394784244978e-05,
+          "maximum_slave_storage": 0.0,
+          "finite": true
+        },
+        "checks": {
+          "Schur_independent_operation_defect": 7.554262438905924e-17,
+          "native_map_operation_defect": 1.5714071492170392e-16,
+          "native_identity_relative": 1.5763095688798338e-16,
+          "Schur_port_identity_relative": 6.05010443914036e-17,
+          "internal_recovery_relative": 0.0,
+          "submitted_recovery_relative": 0.0
+        },
+        "native_relative": 0.9358618773364152,
+        "Schur_absolute": 0.0009489899030823907,
+        "Schur_rhs_norm": 0.001,
+        "Schur_relative_rhs": 0.9489899030823906,
+        "port_absolute": 0.0009350566972545409,
+        "port_operation_relative": 0.7253389529626245,
+        "port_initial_reference_scale": 0.001,
+        "port_fixed_reference_value": 0.9350566972545409,
+        "port_fixed_reference_rule": "relative to original zero-start scale",
+        "original_strict_metrics_pass": false,
+        "full_field_norm": 8.359394784244978e-05,
+        "full_field_sha256": "43a8f35cf2c1f6aa878709efc739b01732e566efe7f009ed864e13c0ab2e6dc8",
+        "port_state_norm": 1.4898363386122314e-06,
+        "diagnostic_only_no_solver_qualification": true
+      },
+      "role": "consumed diagnostic state; no fresh test",
+      "normalization": "raw original full/port RHS, canonical reduced coordinates, no added norm scaling; teacher multiply stored normalization_scale back to raw"
+    },
+    {
+      "state_id": "GEO-011",
+      "origin": "GEO",
+      "rhs_index": 11,
+      "run": {
+        "directory": "results/task042/task042_v3_overlap_shared_20260928T150915809159Z",
+        "source_sha": "7fc3f1434cf4f38f43e5244ebfed3a19d0780a26",
+        "files": [
+          {
+            "path": "results/task042/task042_v3_overlap_shared_20260928T150915809159Z/run_manifest.json",
+            "sha256": "f5bb0798727b149ff71b5aa5a054c7af9032e39cdcdee391dcefe2c000ccecfc"
+          },
+          {
+            "path": "results/task042/task042_v3_overlap_shared_20260928T150915809159Z/run_summary.json",
+            "sha256": "a92a7e2ebe481585e4795cce18a541fbfc5203c0a8e94e82fc04b2a92dd7ca4a"
+          },
+          {
+            "path": "results/task042/task042_v3_overlap_shared_20260928T150915809159Z/numerical_summary.json",
+            "sha256": "ff0dde69e29003af7d60d615e665230e023eadb60c156dab49d4abd2587c764c"
+          }
+        ]
+      },
+      "packet": {
+        "path": "benchmarks/artifacts/task042/task042_v3_overlap_shared_20260928T150915809159Z/failure_011.npz",
+        "sha256": "85a5056b5c86bf8925066b60d7e8d001795c6c5701d6dce714dfc8cc4a03291e"
+      },
+      "missing": false,
+      "original_source_sha": "7fc3f1434cf4f38f43e5244ebfed3a19d0780a26",
+      "saved_native_relative": 0.9320107018386657,
+      "recomputed_vs_saved_native_absolute_difference": 0.0,
+      "status": "verified",
+      "canonical_state_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v5_d0_shared_20260929T022124379441Z/GEO-011.npz",
+      "canonical_state_sha256": "0c3680a37fe8be8f3e49d096b79076fcb22a6c63f816369274d1cc9be292879d",
+      "x_sha256": "d982c45fead112c501785315e8f7ce1296485e62bee24d63fc77bc05d317e95f",
+      "residual_sha256": "3d464b8fb44e3764a0239935dee656e13defc4c06c29d5db67646bd8d2906308",
+      "x_norm": 8.691323914673913e-05,
+      "residual_norm": 0.001826845740155211,
+      "label": {
+        "problem_id": "unseen_mixed",
+        "kind": "unseen_mixed",
+        "seed": 420400,
+        "whole_problem": "heldout_seed420400_first_full_rhs_family"
+      },
+      "audit": {
+        "original_norms": {
+          "native_absolute": 0.013459152170208035,
+          "native_scale": 0.014440984576310005,
+          "port_absolute": 0.0009512559173680396,
+          "port_scale": 0.0014031952241416756,
+          "internal_absolute": 2.4862954006299318e-17,
+          "internal_scale": 0.07300321250555583,
+          "native_identity_absolute": 9.30874720237717e-17,
+          "native_identity_scale": 0.031231715028629533,
+          "Schur_port_identity_absolute": 9.011078110297829e-20,
+          "Schur_port_identity_scale": 0.0014031952241416756,
+          "submitted_recovery_absolute": 0.0,
+          "submitted_field_norm": 0.0009889218222585887,
+          "maximum_slave_storage": 0.0,
+          "finite": true
+        },
+        "checks": {
+          "Schur_independent_operation_defect": 5.904819964368203e-17,
+          "native_map_operation_defect": 2.9466746923315093e-15,
+          "native_identity_relative": 2.9805430773955303e-15,
+          "Schur_port_identity_relative": 6.421827807894544e-17,
+          "internal_recovery_relative": 3.405734234559493e-16,
+          "submitted_recovery_relative": 0.0
+        },
+        "native_relative": 0.9320107018386657,
+        "Schur_absolute": 0.001826845740155211,
+        "Schur_rhs_norm": 0.001875142728036528,
+        "Schur_relative_rhs": 0.9742435670846832,
+        "port_absolute": 0.0009512559173680396,
+        "port_operation_relative": 0.6779212906385966,
+        "port_initial_reference_scale": 0.001,
+        "port_fixed_reference_value": 0.9512559173680396,
+        "port_fixed_reference_rule": "relative to original zero-start scale",
+        "original_strict_metrics_pass": false,
+        "full_field_norm": 0.0009889218222585887,
+        "full_field_sha256": "2497cab16f6992cffd718652b7db12e24592e8903ce2d9c60004e79ce82e6019",
+        "port_state_norm": 1.7750926463318556e-06,
+        "diagnostic_only_no_solver_qualification": true
+      },
+      "role": "consumed diagnostic state; no fresh test",
+      "normalization": "raw original full/port RHS, canonical reduced coordinates, no added norm scaling; teacher multiply stored normalization_scale back to raw"
+    },
+    {
+      "state_id": "OLDPOD-000",
+      "origin": "OLDPOD",
+      "rhs_index": 0,
+      "run": {
+        "directory": "results/task042/task042_v4_p3_oldpod_shared_20260929T004342223559Z",
+        "source_sha": "5691d79abe87d3582ede5bbaf8369c5487e7c392",
+        "files": [
+          {
+            "path": "results/task042/task042_v4_p3_oldpod_shared_20260929T004342223559Z/run_manifest.json",
+            "sha256": "8394fd7e59b8f715d7f91650970e4884256ab9e2f15710febcf64d582da8c79a"
+          },
+          {
+            "path": "results/task042/task042_v4_p3_oldpod_shared_20260929T004342223559Z/run_summary.json",
+            "sha256": "2e85d4cf3c41d33d3c713710965c40c625675f228d1c9f6ba20664a2644ac7ae"
+          },
+          {
+            "path": "results/task042/task042_v4_p3_oldpod_shared_20260929T004342223559Z/numerical_summary.json",
+            "sha256": "36f1cf203a0f3da6fc8792b8db712f35da0847900ab59923e7dd348b88960f90"
+          }
+        ]
+      },
+      "packet": {
+        "path": "benchmarks/artifacts/task042/task042_v4_p3_oldpod_shared_20260929T004342223559Z/failure_000.npz",
+        "sha256": "a84a15c258ba5bae28007c6bb3f7b635bd76cb162591fa643f549c06c01c9034"
+      },
+      "missing": false,
+      "original_source_sha": "5691d79abe87d3582ede5bbaf8369c5487e7c392",
+      "saved_native_relative": 0.9985881872697462,
+      "recomputed_vs_saved_native_absolute_difference": 0.0,
+      "status": "verified",
+      "canonical_state_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v5_d0_shared_20260929T022124379441Z/OLDPOD-000.npz",
+      "canonical_state_sha256": "036480e4dfc607aad7926345969daaa3920e1950bad36ddf64dbf3d8d757f959",
+      "x_sha256": "c926a49372a8e8331c4c79fefbc0021bb1e4ded6268967947b9699a2f9b9787f",
+      "residual_sha256": "731484222cb162a44c84d42e077ac4a841196476a74f529ba02d24a1a9aa4c94",
+      "x_norm": 0.13832500088887492,
+      "residual_norm": 1.0478920549482,
+      "label": {
+        "problem_id": "physical_PH_b6",
+        "kind": "actual_fine_physical_coarse_call",
+        "whole_problem": "physical_F1_trajectory"
+      },
+      "audit": {
+        "original_norms": {
+          "native_absolute": 1.047362777104659,
+          "native_scale": 1.0488435477774558,
+          "port_absolute": 0.03330305463743038,
+          "port_scale": 0.5085252508216291,
+          "internal_absolute": 4.81403600767625e-16,
+          "internal_scale": 31.768082929688802,
+          "native_identity_absolute": 4.05715648485097e-15,
+          "native_identity_scale": 2.1369715395657276,
+          "Schur_port_identity_absolute": 0.0,
+          "Schur_port_identity_scale": 0.5085252508216291,
+          "submitted_recovery_absolute": 0.0,
+          "submitted_field_norm": 0.20547635273603168,
+          "maximum_slave_storage": 0.0,
+          "finite": true
+        },
+        "checks": {
+          "Schur_independent_operation_defect": 5.770646001027165e-17,
+          "native_map_operation_defect": 1.8725104273073665e-15,
+          "native_identity_relative": 1.8985542903746203e-15,
+          "Schur_port_identity_relative": 0.0,
+          "internal_recovery_relative": 1.5153687486685894e-17,
+          "submitted_recovery_relative": 0.0
+        },
+        "native_relative": 0.9985881872697462,
+        "Schur_absolute": 1.0478920549482,
+        "Schur_rhs_norm": 1.048843547777456,
+        "Schur_relative_rhs": 0.99909281719731,
+        "port_absolute": 0.03330305463743038,
+        "port_operation_relative": 0.06548948077528562,
+        "port_initial_reference_scale": 0.0,
+        "port_fixed_reference_value": 0.03330305463743038,
+        "port_fixed_reference_rule": "exact-zero initial scale: absolute",
+        "original_strict_metrics_pass": false,
+        "full_field_norm": 0.20547635273603168,
+        "full_field_sha256": "19aa6390e4386b92663783cda84754bc8a968e76ee05fca685085f0db18c2d60",
+        "port_state_norm": 0.0003937512812444937,
+        "diagnostic_only_no_solver_qualification": true
+      },
+      "role": "consumed diagnostic state; no fresh test",
+      "normalization": "raw original full/port RHS, canonical reduced coordinates, no added norm scaling; teacher multiply stored normalization_scale back to raw"
+    },
+    {
+      "state_id": "OLDPOD-010",
+      "origin": "OLDPOD",
+      "rhs_index": 10,
+      "run": {
+        "directory": "results/task042/task042_v4_p3_oldpod_shared_20260929T004342223559Z",
+        "source_sha": "5691d79abe87d3582ede5bbaf8369c5487e7c392",
+        "files": [
+          {
+            "path": "results/task042/task042_v4_p3_oldpod_shared_20260929T004342223559Z/run_manifest.json",
+            "sha256": "8394fd7e59b8f715d7f91650970e4884256ab9e2f15710febcf64d582da8c79a"
+          },
+          {
+            "path": "results/task042/task042_v4_p3_oldpod_shared_20260929T004342223559Z/run_summary.json",
+            "sha256": "2e85d4cf3c41d33d3c713710965c40c625675f228d1c9f6ba20664a2644ac7ae"
+          },
+          {
+            "path": "results/task042/task042_v4_p3_oldpod_shared_20260929T004342223559Z/numerical_summary.json",
+            "sha256": "36f1cf203a0f3da6fc8792b8db712f35da0847900ab59923e7dd348b88960f90"
+          }
+        ]
+      },
+      "packet": {
+        "path": "benchmarks/artifacts/task042/task042_v4_p3_oldpod_shared_20260929T004342223559Z/failure_010.npz",
+        "sha256": "7413df4873b30cc271f8e178944aed8bbb78722e850a56bb7c0982d9d4524666"
+      },
+      "missing": false,
+      "original_source_sha": "5691d79abe87d3582ede5bbaf8369c5487e7c392",
+      "saved_native_relative": 0.9492426096629456,
+      "recomputed_vs_saved_native_absolute_difference": 0.0,
+      "status": "verified",
+      "canonical_state_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v5_d0_shared_20260929T022124379441Z/OLDPOD-010.npz",
+      "canonical_state_sha256": "a3ad31c75eb6d1e152cb52e12c623862b594712bbbc0abe084955642fb9da183",
+      "x_sha256": "cdcbc86335e0c047edebfe3c6c727f040c3f0d112321bc78c52c4c2b4abf221e",
+      "residual_sha256": "e2613af4deb26bc485dc58f1c34d59b9a7f559cf3677996886d989f784954e0b",
+      "x_norm": 0.00031482676960059537,
+      "residual_norm": 0.0009716342451870605,
+      "label": {
+        "problem_id": "unseen_port_only",
+        "kind": "unseen_port_only",
+        "seed": 420400,
+        "whole_problem": "heldout_seed420400_first_full_rhs_family"
+      },
+      "audit": {
+        "original_norms": {
+          "native_absolute": 0.013676964045302534,
+          "native_scale": 0.014408291311489812,
+          "port_absolute": 0.0009547071500827892,
+          "port_scale": 0.0019873866199488837,
+          "internal_absolute": 0.0,
+          "internal_scale": 0.08365158020711182,
+          "native_identity_absolute": 1.0246673537420966e-17,
+          "native_identity_scale": 0.029011450664357112,
+          "Schur_port_identity_absolute": 7.456175611815823e-20,
+          "Schur_port_identity_scale": 0.0019873866199488837,
+          "submitted_recovery_absolute": 0.0,
+          "submitted_field_norm": 0.0004584230030357707,
+          "maximum_slave_storage": 0.0,
+          "finite": true
+        },
+        "checks": {
+          "Schur_independent_operation_defect": 1.7371695161218551e-16,
+          "native_map_operation_defect": 3.52445877254091e-16,
+          "native_identity_relative": 3.5319411138615776e-16,
+          "Schur_port_identity_relative": 3.751748923421653e-17,
+          "internal_recovery_relative": 0.0,
+          "submitted_recovery_relative": 0.0
+        },
+        "native_relative": 0.9492426096629456,
+        "Schur_absolute": 0.0009716342451870605,
+        "Schur_rhs_norm": 0.001,
+        "Schur_relative_rhs": 0.9716342451870605,
+        "port_absolute": 0.0009547071500827892,
+        "port_operation_relative": 0.48038320299617626,
+        "port_initial_reference_scale": 0.001,
+        "port_fixed_reference_value": 0.9547071500827893,
+        "port_fixed_reference_rule": "relative to original zero-start scale",
+        "original_strict_metrics_pass": false,
+        "full_field_norm": 0.0004584230030357707,
+        "full_field_sha256": "bdd7b8617981f33e48249f241829f4053e3a8b0a21fd913fcd929ff06a137dcf",
+        "port_state_norm": 1.0603151770901704e-06,
+        "diagnostic_only_no_solver_qualification": true
+      },
+      "role": "consumed diagnostic state; no fresh test",
+      "normalization": "raw original full/port RHS, canonical reduced coordinates, no added norm scaling; teacher multiply stored normalization_scale back to raw"
+    },
+    {
+      "state_id": "OLDPOD-011",
+      "origin": "OLDPOD",
+      "rhs_index": 11,
+      "run": {
+        "directory": "results/task042/task042_v4_p3_oldpod_shared_20260929T004342223559Z",
+        "source_sha": "5691d79abe87d3582ede5bbaf8369c5487e7c392",
+        "files": [
+          {
+            "path": "results/task042/task042_v4_p3_oldpod_shared_20260929T004342223559Z/run_manifest.json",
+            "sha256": "8394fd7e59b8f715d7f91650970e4884256ab9e2f15710febcf64d582da8c79a"
+          },
+          {
+            "path": "results/task042/task042_v4_p3_oldpod_shared_20260929T004342223559Z/run_summary.json",
+            "sha256": "2e85d4cf3c41d33d3c713710965c40c625675f228d1c9f6ba20664a2644ac7ae"
+          },
+          {
+            "path": "results/task042/task042_v4_p3_oldpod_shared_20260929T004342223559Z/numerical_summary.json",
+            "sha256": "36f1cf203a0f3da6fc8792b8db712f35da0847900ab59923e7dd348b88960f90"
+          }
+        ]
+      },
+      "packet": {
+        "path": "benchmarks/artifacts/task042/task042_v4_p3_oldpod_shared_20260929T004342223559Z/failure_011.npz",
+        "sha256": "b2a60447920eb43d3eb79cf1943adb85eb90b92a41c713383040149336c8beda"
+      },
+      "missing": false,
+      "original_source_sha": "5691d79abe87d3582ede5bbaf8369c5487e7c392",
+      "saved_native_relative": 0.9050737390843291,
+      "recomputed_vs_saved_native_absolute_difference": 0.0,
+      "status": "verified",
+      "canonical_state_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v5_d0_shared_20260929T022124379441Z/OLDPOD-011.npz",
+      "canonical_state_sha256": "eef04663524f279d67bcb87e8001b30c85d1489eade10d704e00510e1da0ee34",
+      "x_sha256": "41dffd9c0ab3c1fc20819e2dfc80f36047f814f174762f3b7d14ca354934227c",
+      "residual_sha256": "0944756a772aba6c3567173334868ae7168ab031e1f41ae5f4e68d5bb2e503d5",
+      "x_norm": 0.0006166175035713399,
+      "residual_norm": 0.0018324208536939141,
+      "label": {
+        "problem_id": "unseen_mixed",
+        "kind": "unseen_mixed",
+        "seed": 420400,
+        "whole_problem": "heldout_seed420400_first_full_rhs_family"
+      },
+      "audit": {
+        "original_norms": {
+          "native_absolute": 0.013070155906540022,
+          "native_scale": 0.014440984576310005,
+          "port_absolute": 0.0009492976175958651,
+          "port_scale": 0.004026365139366833,
+          "internal_absolute": 2.5914054902992017e-17,
+          "internal_scale": 0.17755998686421803,
+          "native_identity_absolute": 9.575216057219181e-17,
+          "native_identity_scale": 0.031090783586934186,
+          "Schur_port_identity_absolute": 9.923127448590231e-20,
+          "Schur_port_identity_scale": 0.004026365139366833,
+          "submitted_recovery_absolute": 0.0,
+          "submitted_field_norm": 0.0013408339686465664,
+          "maximum_slave_storage": 0.0,
+          "finite": true
+        },
+        "checks": {
+          "Schur_independent_operation_defect": 1.9153840736819497e-16,
+          "native_map_operation_defect": 3.033285656116272e-15,
+          "native_identity_relative": 3.0797602866603654e-15,
+          "Schur_port_identity_relative": 2.4645373941794795e-17,
+          "internal_recovery_relative": 1.4594535267007406e-16,
+          "submitted_recovery_relative": 0.0
+        },
+        "native_relative": 0.9050737390843291,
+        "Schur_absolute": 0.0018324208536939141,
+        "Schur_rhs_norm": 0.001875142728036528,
+        "Schur_relative_rhs": 0.9772167346496615,
+        "port_absolute": 0.0009492976175958651,
+        "port_operation_relative": 0.23577037470206866,
+        "port_initial_reference_scale": 0.001,
+        "port_fixed_reference_value": 0.9492976175958651,
+        "port_fixed_reference_rule": "relative to original zero-start scale",
+        "original_strict_metrics_pass": false,
+        "full_field_norm": 0.0013408339686465664,
+        "full_field_sha256": "d1e798f3c5c252f0b4e4cf8a0d90d0e498d73e1a04bd9001f9ac893df5673557",
+        "port_state_norm": 2.8682321221771275e-06,
+        "diagnostic_only_no_solver_qualification": true
+      },
+      "role": "consumed diagnostic state; no fresh test",
+      "normalization": "raw original full/port RHS, canonical reduced coordinates, no added norm scaling; teacher multiply stored normalization_scale back to raw"
+    },
+    {
+      "state_id": "ERROR-000",
+      "origin": "ERROR",
+      "rhs_index": 0,
+      "run": {
+        "directory": "results/task042/task042_v4_p3_error_shared_20260929T005031745803Z",
+        "source_sha": "5691d79abe87d3582ede5bbaf8369c5487e7c392",
+        "files": [
+          {
+            "path": "results/task042/task042_v4_p3_error_shared_20260929T005031745803Z/run_manifest.json",
+            "sha256": "1d327fa47eeaf511eeea31655ad6ca2f6339e0e01edea2d8ead3c137ef38c470"
+          },
+          {
+            "path": "results/task042/task042_v4_p3_error_shared_20260929T005031745803Z/run_summary.json",
+            "sha256": "8e06a3f77f347815a3d8881298f1d9c0471ce4eff4bfd76d9e5f409204927b44"
+          },
+          {
+            "path": "results/task042/task042_v4_p3_error_shared_20260929T005031745803Z/numerical_summary.json",
+            "sha256": "74e935112b21ee943f65e8bcdb47aedc393852eb9ad659183bb828f458c24433"
+          }
+        ]
+      },
+      "packet": {
+        "path": "benchmarks/artifacts/task042/task042_v4_p3_error_shared_20260929T005031745803Z/failure_000.npz",
+        "sha256": "fdb07ee01cf22ccde4f616bf8a09cd93ea497a46980caf009eee17a13e735312"
+      },
+      "missing": false,
+      "original_source_sha": "5691d79abe87d3582ede5bbaf8369c5487e7c392",
+      "saved_native_relative": 0.9998636499356556,
+      "recomputed_vs_saved_native_absolute_difference": 0.0,
+      "status": "verified",
+      "canonical_state_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v5_d0_shared_20260929T022124379441Z/ERROR-000.npz",
+      "canonical_state_sha256": "8f98636b48756b4fb7a3386bba44492a74f4d0c5dd6d37d21f50a59b27e0e330",
+      "x_sha256": "34e84ad9709d8a09ae756bdc70c95b9d9c41a9718d8c6679a8a444718f62d61d",
+      "residual_sha256": "1129e400f2a80c4a3ecf6b7309b9e663663437724e3cbbc87d61dc95169e2abb",
+      "x_norm": 0.045991892247401925,
+      "residual_norm": 1.0484429940590263,
+      "label": {
+        "problem_id": "physical_PH_b6",
+        "kind": "actual_fine_physical_coarse_call",
+        "whole_problem": "physical_F1_trajectory"
+      },
+      "audit": {
+        "original_norms": {
+          "native_absolute": 1.0487005378922292,
+          "native_scale": 1.0488435477774558,
+          "port_absolute": 0.0256415022840554,
+          "port_scale": 0.3016899521749029,
+          "internal_absolute": 2.134947699595494e-16,
+          "internal_scale": 13.822896542716167,
+          "native_identity_absolute": 1.5786232890214697e-15,
+          "native_identity_scale": 2.171888826779649,
+          "Schur_port_identity_absolute": 0.0,
+          "Schur_port_identity_scale": 0.3016899521749029,
+          "submitted_recovery_absolute": 0.0,
+          "submitted_field_norm": 0.06513507986512344,
+          "maximum_slave_storage": 0.0,
+          "finite": true
+        },
+        "checks": {
+          "Schur_independent_operation_defect": 3.478854349293672e-17,
+          "native_map_operation_defect": 7.088103862784027e-16,
+          "native_identity_relative": 7.26843505780248e-16,
+          "Schur_port_identity_relative": 0.0,
+          "internal_recovery_relative": 1.5445009611393515e-17,
+          "submitted_recovery_relative": 0.0
+        },
+        "native_relative": 0.9998636499356556,
+        "Schur_absolute": 1.0484429940590263,
+        "Schur_rhs_norm": 1.048843547777456,
+        "Schur_relative_rhs": 0.9996180996495821,
+        "port_absolute": 0.0256415022840554,
+        "port_operation_relative": 0.08499289452367939,
+        "port_initial_reference_scale": 0.0,
+        "port_fixed_reference_value": 0.0256415022840554,
+        "port_fixed_reference_rule": "exact-zero initial scale: absolute",
+        "original_strict_metrics_pass": false,
+        "full_field_norm": 0.06513507986512344,
+        "full_field_sha256": "27ba6f1c00a03f8b2b20a614ad53810bbd143398a56b3a05885c2e909b60d227",
+        "port_state_norm": 0.00017080651681881118,
+        "diagnostic_only_no_solver_qualification": true
+      },
+      "role": "consumed diagnostic state; no fresh test",
+      "normalization": "raw original full/port RHS, canonical reduced coordinates, no added norm scaling; teacher multiply stored normalization_scale back to raw"
+    },
+    {
+      "state_id": "ERROR-010",
+      "origin": "ERROR",
+      "rhs_index": 10,
+      "run": {
+        "directory": "results/task042/task042_v4_p3_error_shared_20260929T005031745803Z",
+        "source_sha": "5691d79abe87d3582ede5bbaf8369c5487e7c392",
+        "files": [
+          {
+            "path": "results/task042/task042_v4_p3_error_shared_20260929T005031745803Z/run_manifest.json",
+            "sha256": "1d327fa47eeaf511eeea31655ad6ca2f6339e0e01edea2d8ead3c137ef38c470"
+          },
+          {
+            "path": "results/task042/task042_v4_p3_error_shared_20260929T005031745803Z/run_summary.json",
+            "sha256": "8e06a3f77f347815a3d8881298f1d9c0471ce4eff4bfd76d9e5f409204927b44"
+          },
+          {
+            "path": "results/task042/task042_v4_p3_error_shared_20260929T005031745803Z/numerical_summary.json",
+            "sha256": "74e935112b21ee943f65e8bcdb47aedc393852eb9ad659183bb828f458c24433"
+          }
+        ]
+      },
+      "packet": {
+        "path": "benchmarks/artifacts/task042/task042_v4_p3_error_shared_20260929T005031745803Z/failure_010.npz",
+        "sha256": "8e0b1ecaef1f791dbd1ec496ae854afc732d28374de6f0456d56a7c42a892da9"
+      },
+      "missing": false,
+      "original_source_sha": "5691d79abe87d3582ede5bbaf8369c5487e7c392",
+      "saved_native_relative": 0.9371758124990321,
+      "recomputed_vs_saved_native_absolute_difference": 0.0,
+      "status": "verified",
+      "canonical_state_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v5_d0_shared_20260929T022124379441Z/ERROR-010.npz",
+      "canonical_state_sha256": "15c756201f3d48ee5d7724d926ee64e1d0e20e956e1b80442903faf698b62220",
+      "x_sha256": "a644505c9888ac9462f8d9ed8f628c21e8a94f994543eb749ec901aa33544387",
+      "residual_sha256": "6a435e48edac3e3bc77a48a5690829cf6b303361cfd4bbabdda8fe3f7ce9e308",
+      "x_norm": 0.0007909160241260429,
+      "residual_norm": 0.0009574742749811891,
+      "label": {
+        "problem_id": "unseen_port_only",
+        "kind": "unseen_port_only",
+        "seed": 420400,
+        "whole_problem": "heldout_seed420400_first_full_rhs_family"
+      },
+      "audit": {
+        "original_norms": {
+          "native_absolute": 0.01350310211656821,
+          "native_scale": 0.014408291311489812,
+          "port_absolute": 0.0009275122669364205,
+          "port_scale": 0.0027719924303443765,
+          "internal_absolute": 0.0,
+          "internal_scale": 0.1762918979211389,
+          "native_identity_absolute": 2.204707386548949e-17,
+          "native_identity_scale": 0.029087675020716,
+          "Schur_port_identity_absolute": 8.161130578601839e-20,
+          "Schur_port_identity_scale": 0.0027719924303443765,
+          "submitted_recovery_absolute": 0.0,
+          "submitted_field_norm": 0.0011843420506774107,
+          "maximum_slave_storage": 0.0,
+          "finite": true
+        },
+        "checks": {
+          "Schur_independent_operation_defect": 3.535879891698533e-16,
+          "native_map_operation_defect": 7.574763391541608e-16,
+          "native_identity_relative": 7.579524265788775e-16,
+          "Schur_port_identity_relative": 2.944138840086207e-17,
+          "internal_recovery_relative": 0.0,
+          "submitted_recovery_relative": 0.0
+        },
+        "native_relative": 0.9371758124990321,
+        "Schur_absolute": 0.0009574742749811891,
+        "Schur_rhs_norm": 0.001,
+        "Schur_relative_rhs": 0.9574742749811891,
+        "port_absolute": 0.0009275122669364205,
+        "port_operation_relative": 0.33460129861220134,
+        "port_initial_reference_scale": 0.001,
+        "port_fixed_reference_value": 0.9275122669364204,
+        "port_fixed_reference_rule": "relative to original zero-start scale",
+        "original_strict_metrics_pass": false,
+        "full_field_norm": 0.0011843420506774107,
+        "full_field_sha256": "53dd2740d7c42eae5c5a21dcf6da8f7ec6cf6072a4f29851acefd9216c76d02d",
+        "port_state_norm": 4.4866796801683535e-06,
+        "diagnostic_only_no_solver_qualification": true
+      },
+      "role": "consumed diagnostic state; no fresh test",
+      "normalization": "raw original full/port RHS, canonical reduced coordinates, no added norm scaling; teacher multiply stored normalization_scale back to raw"
+    },
+    {
+      "state_id": "ERROR-011",
+      "origin": "ERROR",
+      "rhs_index": 11,
+      "run": {
+        "directory": "results/task042/task042_v4_p3_error_shared_20260929T005031745803Z",
+        "source_sha": "5691d79abe87d3582ede5bbaf8369c5487e7c392",
+        "files": [
+          {
+            "path": "results/task042/task042_v4_p3_error_shared_20260929T005031745803Z/run_manifest.json",
+            "sha256": "1d327fa47eeaf511eeea31655ad6ca2f6339e0e01edea2d8ead3c137ef38c470"
+          },
+          {
+            "path": "results/task042/task042_v4_p3_error_shared_20260929T005031745803Z/run_summary.json",
+            "sha256": "8e06a3f77f347815a3d8881298f1d9c0471ce4eff4bfd76d9e5f409204927b44"
+          },
+          {
+            "path": "results/task042/task042_v4_p3_error_shared_20260929T005031745803Z/numerical_summary.json",
+            "sha256": "74e935112b21ee943f65e8bcdb47aedc393852eb9ad659183bb828f458c24433"
+          }
+        ]
+      },
+      "packet": {
+        "path": "benchmarks/artifacts/task042/task042_v4_p3_error_shared_20260929T005031745803Z/failure_011.npz",
+        "sha256": "e5a4f29578790895cab4f6546ae9eac880903b7a213c12c19f6e89385da4e673"
+      },
+      "missing": false,
+      "original_source_sha": "5691d79abe87d3582ede5bbaf8369c5487e7c392",
+      "saved_native_relative": 0.9010848227253928,
+      "recomputed_vs_saved_native_absolute_difference": 0.0,
+      "status": "verified",
+      "canonical_state_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v5_d0_shared_20260929T022124379441Z/ERROR-011.npz",
+      "canonical_state_sha256": "d44c603c1630ac17eba554750151bc58e9cbecc66cb75ed019eedb142bbe80e4",
+      "x_sha256": "f506bb3c924a8628d7a55658d9a54e46703219b7701a7fe32737592ae1bcc2c3",
+      "residual_sha256": "4eba4150b7ba10474c079523ff4a93c2f208b1ce9d9da43772ab5ef605f78f72",
+      "x_norm": 0.0012236537857016703,
+      "residual_norm": 0.0018067649435482235,
+      "label": {
+        "problem_id": "unseen_mixed",
+        "kind": "unseen_mixed",
+        "seed": 420400,
+        "whole_problem": "heldout_seed420400_first_full_rhs_family"
+      },
+      "audit": {
+        "original_norms": {
+          "native_absolute": 0.013012552026924433,
+          "native_scale": 0.014440984576310005,
+          "port_absolute": 0.0009466981880979533,
+          "port_scale": 0.0046473567798516755,
+          "internal_absolute": 2.9115687409832174e-17,
+          "internal_scale": 0.311992266690257,
+          "native_identity_absolute": 1.0265530262447362e-16,
+          "native_identity_scale": 0.031062920386421666,
+          "Schur_port_identity_absolute": 1.0362921080455596e-19,
+          "Schur_port_identity_scale": 0.0046473567798516755,
+          "submitted_recovery_absolute": 0.0,
+          "submitted_field_norm": 0.002085900444185543,
+          "maximum_slave_storage": 0.0,
+          "finite": true
+        },
+        "checks": {
+          "Schur_independent_operation_defect": 3.185472350595236e-16,
+          "native_map_operation_defect": 3.2001505222747653e-15,
+          "native_identity_relative": 3.304753749726206e-15,
+          "Schur_port_identity_relative": 2.2298527036666073e-17,
+          "internal_recovery_relative": 9.33218240269332e-17,
+          "submitted_recovery_relative": 0.0
+        },
+        "native_relative": 0.9010848227253928,
+        "Schur_absolute": 0.0018067649435482235,
+        "Schur_rhs_norm": 0.001875142728036528,
+        "Schur_relative_rhs": 0.9635346240763746,
+        "port_absolute": 0.0009466981880979533,
+        "port_operation_relative": 0.20370680215521736,
+        "port_initial_reference_scale": 0.001,
+        "port_fixed_reference_value": 0.9466981880979533,
+        "port_fixed_reference_rule": "relative to original zero-start scale",
+        "original_strict_metrics_pass": false,
+        "full_field_norm": 0.002085900444185543,
+        "full_field_sha256": "1f5ab57610664df74c2a17f13f4313f3d0ad13c65c775b4a3e7c1fa15281003c",
+        "port_state_norm": 7.426544994060311e-06,
+        "diagnostic_only_no_solver_qualification": true
+      },
+      "role": "consumed diagnostic state; no fresh test",
+      "normalization": "raw original full/port RHS, canonical reduced coordinates, no added norm scaling; teacher multiply stored normalization_scale back to raw"
+    }
+  ],
+  "spaces": {
+    "OLDPOD": {
+      "run": {
+        "directory": "results/task042/task042_v4_p2_oldpod_shared_20260929T004119466018Z",
+        "source_sha": "5691d79abe87d3582ede5bbaf8369c5487e7c392",
+        "files": [
+          {
+            "path": "results/task042/task042_v4_p2_oldpod_shared_20260929T004119466018Z/run_manifest.json",
+            "sha256": "8972430762ed2ecb184f783dd75dfc44564fa255e955d924b8d4c5a5f992cce2"
+          },
+          {
+            "path": "results/task042/task042_v4_p2_oldpod_shared_20260929T004119466018Z/run_summary.json",
+            "sha256": "a97e88130ff601b06208644db3f0f5c647f9953e5ec2d5b238fbb20f181397d8"
+          },
+          {
+            "path": "results/task042/task042_v4_p2_oldpod_shared_20260929T004119466018Z/numerical_summary.json",
+            "sha256": "bb20656f9252c96e26e7031aadc5a79056d678e88333500054796995e5860136"
+          }
+        ]
+      },
+      "basis": {
+        "path": "benchmarks/artifacts/task042/task042_v4_p2_oldpod_shared_20260929T004119466018Z/basis.npz",
+        "sha256": "c5b30559b158c5cfcbbad7c59d8012cb271d36f94c890f6a7f756301851cf9cc"
+      },
+      "rank": 128
+    },
+    "ERROR": {
+      "run": {
+        "directory": "results/task042/task042_v4_p2_error_shared_20260929T003312791454Z",
+        "source_sha": "5691d79abe87d3582ede5bbaf8369c5487e7c392",
+        "files": [
+          {
+            "path": "results/task042/task042_v4_p2_error_shared_20260929T003312791454Z/run_manifest.json",
+            "sha256": "5cdf44f7ed08637a3104f54e1bc57e1627486a06c2ed38efe31191684ce11dfe"
+          },
+          {
+            "path": "results/task042/task042_v4_p2_error_shared_20260929T003312791454Z/run_summary.json",
+            "sha256": "6ed73c7752dde12fecb3a20f221023d1f851e428ef19aeb0c69c8011f029af8d"
+          },
+          {
+            "path": "results/task042/task042_v4_p2_error_shared_20260929T003312791454Z/numerical_summary.json",
+            "sha256": "32960f5655e8ba4d3c68319a13ecf98d44c2ab455a8f240bf31dad779cbe9ee2"
+          }
+        ]
+      },
+      "basis": {
+        "path": "benchmarks/artifacts/task042/task042_v4_p2_error_shared_20260929T003312791454Z/basis.npz",
+        "sha256": "971fab4201c3e679c4a3e7ade6dd96c93062edf6cea50c93df61c84139a13756"
+      },
+      "rank": 128
+    }
+  },
+  "units": "algebraic Euclidean vector norms; relative ratios dimensionless, no physical R/T/A values"
+}

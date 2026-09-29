@@ -2912,3 +2912,12 @@ F3同basis/B0/归一化/FP64，线性小解码基线与一个2hidden64 residual 
 两路线均strict0/3，native/固定Schur没有同时达到physical和mixed各0.1；BOUNDED_TWOLEVEL_NEGATIVE，P4未解锁，seed420620计划16项仍未消费；不进入F5/p6/短波/official结果。六阶段wall1534.00828393s、同时整树RSS峰1128828928B、own swap0；每次现场核实选CPU0/MPI1/math1，own lock/16GiB树监督、独立cache，只降低自身nice/I/O，无cgroup委派不冒充内核限制。未观察持续压力，邻阶段缺可比指标，无零影响或无争用加速声明，全部shared-workstation/performance inconclusive。
 
 用户Task042受控共享授权仍有效；Review替代V3局部停滞禁止空间研究前提，旧负结果原文/raw不改。新teacher/NN/GPU not_run，神经贡献不归因。P0/P1 source8b792d78…、P2/P3 source5691d79…、文档HEAD不代替运行SHA；仅本分支推送等待review，不merge。[Response V4](task042_neural_coarse_inverse/response_v4.md)、[全局空间结果/费用](task042_neural_coarse_inverse/outcomes/two_level_global_error_v4.md)、[source/资源](task042_neural_coarse_inverse/outcomes/records/run_index_v4.json)。
+
+
+## 2026-09-29 Task042 V5：冻结对象失效定位完成，未取得新的严格解
+
+按Review V2在相同S、R-GEO-CELL80-v3 B、OLDPOD/ERROR rank128 Z/U/R上完成D0–D4，12/12共同states和3已消费准确参考离线资格核验，24同r作用/192原方程审核与每空间16个有效补空间探针。残差与解误差覆盖分开，两个空间都不覆盖大部分当前物理残差；部分固定组合未利用保留Br＋Z的Schur下降能力，但原A4/port未严格通过。完整TV最小奇异值4.771224799/3.034800156，没有near-null证据，真实全局奇异与唯一根因未确定。
+
+终态FIXED_OPERATOR_LOCALIZATION_COMPLETE，仍NOT_QUALIFIED；原V1–V4负结果不改。新训练/空间/长KSP、fresh seed420620、F5/p6/短波/GPU/official均not_run；只提出一个保留局部搜索方向的有界组织对照建议，未实现。四正式run source5d82651af0f723c73487783deb43969f05d46ed3，wall1144.401529s、整树RSS峰1135407104B/own swap0，MPI1/BLAS1、逐次现场CPU0/0/0/13、自有16GiB树监督/独立cache，全部shared-workstation/performance inconclusive；无cgroup委派不冒充内核连续上限。邻任务只读观察，没发现持续压力，缺可比阶段耗时，不承诺零干扰。无global p4 factor/private audit CSR/fallback，不改原A4/A6/MPC/full80/1e-10。
+
+[Response V5](task042_neural_coarse_inverse/response_v5.md)、[同向量结果](task042_neural_coarse_inverse/outcomes/failure_localization_v5.md)、[hash/source/完整费用](task042_neural_coarse_inverse/outcomes/records/run_index_v5.json)。仅原执行分支交付等待review，不merge。

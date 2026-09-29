@@ -58,3 +58,18 @@ V3治理/文档表格定向测试28 passed；registry当前继承两项错误与
 | GitHub实际表格/公式 | Review333f的7表/5math-renderer检查已通过；V4发布后按实际提交检查 | [Review render](records/review_render_check_v4.json)；publication记录与原源码/Markdown哈希绑定 |
 
 所有测试/聚合/后处理顺序在Task042 own lock、现场单核/math1、2GiB有界辅助监督中执行，own swap0；费用与原失败尝试见[本批辅助账](records/post_checks_v4.json)，不叠加嵌套timer。静态helper首次因相对Path不符合checker接口失败，保留1.98289s/38633472B/清场证据；只修正绝对路径并重查静态，没有数值重放。正式六阶段整树wall1534.00828393s、最大同时RSS1128828928B；共享工作站成本，不宣称CI、全仓pytest或无争用加速。正常数值停滞没有当bug，未重试、未扩参数或重跑旧昂贵Gate。full repository pytest/MPI2/MPI4/新teacher/训练/P4/F5均not_run，本批数值入口仅MPI1。
+
+
+## V5 固定对象诊断检查（历史正文逐字保留）
+
+| 检查 | 真实结果 / 限制 | evidence |
+|---|---|---|
+| 执行前相关pure/core/适配/协议 | 55 passed in1.50s；另9 adapter/准入/monitor/orphan监督通过，原default/full80/source不改 | [前检](records/pre_run_checks_v5.json) |
+| 反例与正常例 | 旧四恒等式不保证补空间；复杂相位/尺度/零/不可变/精确小LS验证 | 新test_task042_fixed_localization.py；不把toy当FE结论 |
+| 真实D0/D1 | 12可用，9历史native exact；3旧参考原A4/port/恢复<=1e-10 | [状态](records/common_state_manifest_v5.json)、[teacher](records/teacher_exception_v5.json) |
+| 原同向量独立审核 | 24作用/192原方程审核/2补空间full-image重算合格，solver strict0/192 | [独立Gate](records/independent_checks_v5.json) |
+| 最终文档/静态 | Markdown5；新8文件Ruff与5新文件format、9compileall、diff；继承schema及registry错误同Review91 | [static](records/static_checks_v5.json)、[baseline](records/registry_contract_baseline_v5.json) |
+| 历史/隐私保护 | 原task/review/response/records逐字；summary旧suffix、test/总账旧prefix；基与冻结核hash不变、seed420620未消费 | static与原unconsumed plan；无全仓cleanup |
+| 真实GitHub表格/公式 | Review91的5表/7math-renderer通过；新文档发布后实际HTML绑定推送HEAD | [review](records/review_render_check_v5.json)、[publication](records/publication_checks_v5.json) |
+
+早期FE .venv无ruff模块，子命令真实失败；改用已有只读ruff0.16.6后修复一处新RUF005风格，未安装/重放数值。失败尝试全部保留[辅助成本](records/post_checks_v5.json)。四新FE阶段wall1144.401529s、最大同时树RSS1135407104B/own swap0，源`5d82651af0f723c73487783deb43969f05d46ed3`；所有成本shared-workstation，嵌套计时不相加，总会话编辑/Git/RSS未持续采样。full pytest/CI/MPI2/MPI4、旧teacher384、训练/新KSP/fresh/F5均not_run。

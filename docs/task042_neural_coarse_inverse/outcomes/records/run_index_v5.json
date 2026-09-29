@@ -1,0 +1,4004 @@
+{
+  "schema": "task042.run-index.v5",
+  "source_sha": "5d82651af0f723c73487783deb43969f05d46ed3",
+  "operator_sha256": "150f18e26f15783726f2ffeb362ef053450962a16fff13d5241cc93c8d018560",
+  "review_sha": "91c4a0dbfa2e8a14df273eab5e27726059d7c835",
+  "original_base_sha": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "runs": {
+    "V5-D0": {
+      "directory": "results/task042/task042_v5_d0_shared_20260929T022124379441Z",
+      "artifacts": "benchmarks/artifacts/task042/task042_v5_d0_shared_20260929T022124379441Z",
+      "source_sha": "5d82651af0f723c73487783deb43969f05d46ed3",
+      "clean_source": true,
+      "manifest": {
+        "source_sha": "5d82651af0f723c73487783deb43969f05d46ed3",
+        "git_status": "",
+        "stage": "V5-D0",
+        "formal_pde": false,
+        "formal_fe_stage": true,
+        "input_sha256": "cdeb711bcfffb50487bf038f3471e48c42e90ef96bcfd391dacfad1cfebdd798",
+        "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle"
+      },
+      "status": "COMMON_STATES_VERIFIED",
+      "run_summary": {
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "elapsed_seconds": 143.13887413300108,
+        "sampled_process_tree_rss_peak_bytes": 628998144,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "rss_hard_limit_bytes": 17179869184,
+        "rss_warning_bytes": 12884901888,
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 334
+          },
+          "end": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 334
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 949379211264,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 949379211264,
+          "reserve_bytes": 353748992000,
+          "launch_cap_bytes": 17179869184,
+          "planning_cap_bytes": 17179869184,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 137438953472,
+          "shared_workstation": true
+        }
+      },
+      "actual_threads": {
+        "pools": [
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          }
+        ],
+        "affinity": [
+          0
+        ],
+        "nice": 10
+      },
+      "costs": {
+        "runtime_setup_seconds_inclusive": 101.02007331489585,
+        "local_setup_seconds": 0.0,
+        "original_audit_calls": 12,
+        "original_audit_seconds_inclusive": 32.430122001096606,
+        "exact_S_action_calls": 14,
+        "exact_S_action_seconds_inclusive": 1.2648242091527209,
+        "release_seconds": 0.020979642984457314,
+        "worker_seconds": 139.96012983296532
+      },
+      "timing_policy": "runtime/setup and audit/probe parents inclusive; nested B/C/S children never added to parent",
+      "resource_baseline_identity": {
+        "path": "results/task042/task042_v5_d0_shared_20260929T022124379441Z/resource_baseline.json",
+        "sha256": "4bc5961b42d7d4a7d50a5ec9a850d9c8445cadbfe39b47237a7136eef168ed6f"
+      },
+      "baseline": {
+        "cpu": 0,
+        "memory": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 949378691072,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 949378691072,
+          "reserve_bytes": 353748992000,
+          "launch_cap_bytes": 17179869184,
+          "planning_cap_bytes": 17179869184,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 137438953472,
+          "shared_workstation": true
+        },
+        "cgroup": {
+          "path": "/sys/fs/cgroup/user.slice/user-1000.slice/session-129.scope",
+          "delegated_writable": false,
+          "ancestors": [
+            {
+              "path": "/sys/fs/cgroup/user.slice/user-1000.slice/session-129.scope",
+              "memory.max": "max",
+              "memory.current": "1175817322496",
+              "memory.high": "max",
+              "memory.swap.max": "max"
+            },
+            {
+              "path": "/sys/fs/cgroup/user.slice/user-1000.slice",
+              "memory.max": "max",
+              "memory.current": "1228940840960",
+              "memory.high": "max",
+              "memory.swap.max": "max"
+            },
+            {
+              "path": "/sys/fs/cgroup/user.slice",
+              "memory.max": "max",
+              "memory.current": "1229129637888",
+              "memory.high": "max",
+              "memory.swap.max": "max"
+            },
+            {
+              "path": "/sys/fs/cgroup"
+            }
+          ],
+          "implementation": "process-tree sampled enforcement; no kernel cgroup limit claimed"
+        },
+        "memory_pressure": {
+          "some": {
+            "avg10": 0.0,
+            "avg60": 0.0,
+            "avg300": 0.0,
+            "total": 381472.0
+          },
+          "full": {
+            "avg10": 0.0,
+            "avg60": 0.0,
+            "avg300": 0.0,
+            "total": 380661.0
+          }
+        },
+        "disk_free_bytes": 3449118212096,
+        "admission_policy": "V3 observed CPU/thread activity",
+        "selected_cpu_topology": {
+          "cpu": 0,
+          "core": 0,
+          "socket": 0,
+          "siblings": [
+            0
+          ]
+        },
+        "neighbor_processes": [
+          {
+            "pid": 341799,
+            "ppid": 1,
+            "start_ticks": 17196977,
+            "ticks": 37235022,
+            "cpu": 9,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 40407040,
+            "swap_bytes": 0,
+            "affinity": [
+              9
+            ],
+            "source_input_paths": [
+              "scripts/run_case.py",
+              "input/task39extra_para_workstation_capacity/v5_node1_2nm_p6h1p5_q4.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 1
+          },
+          {
+            "pid": 341830,
+            "ppid": 341799,
+            "start_ticks": 17197099,
+            "ticks": 31,
+            "cpu": 24,
+            "name": "mpiexec",
+            "state": "S (sleeping)",
+            "rss_bytes": 24838144,
+            "swap_bytes": 0,
+            "affinity": [
+              24
+            ],
+            "source_input_paths": [],
+            "public_phase_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z/workflow_phase.json",
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 341839,
+            "ppid": 341830,
+            "start_ticks": 17197130,
+            "ticks": 27340373,
+            "cpu": 24,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 1149925203968,
+            "swap_bytes": 0,
+            "affinity": [
+              24
+            ],
+            "source_input_paths": [],
+            "public_phase_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z/workflow_phase.json",
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 341987,
+            "ppid": 1,
+            "start_ticks": 17219061,
+            "ticks": 41914,
+            "cpu": 10,
+            "name": "python",
+            "state": "S (sleeping)",
+            "rss_bytes": 20942848,
+            "swap_bytes": 0,
+            "affinity": [
+              10
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/scripts/task39extra_event_observer.py",
+              "/home/fenics/Projects/Maxwell3D-Lab/task-control/codex-thread-notify-v2.py"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 1
+          },
+          {
+            "pid": 527794,
+            "ppid": 2818,
+            "start_ticks": 51092431,
+            "ticks": 1084265,
+            "cpu": 47,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 41693184,
+            "swap_bytes": 0,
+            "affinity": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              42,
+              43,
+              44,
+              45,
+              46,
+              47
+            ],
+            "source_input_paths": [],
+            "public_phase_path": null,
+            "thread_snapshot_count": 1
+          },
+          {
+            "pid": 527799,
+            "ppid": 527794,
+            "start_ticks": 51092465,
+            "ticks": 1086587,
+            "cpu": 41,
+            "name": "python",
+            "state": "S (sleeping)",
+            "rss_bytes": 102461440,
+            "swap_bytes": 0,
+            "affinity": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              42,
+              43,
+              44,
+              45,
+              46,
+              47
+            ],
+            "source_input_paths": [
+              "scripts/run_case.py",
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527801,
+            "ppid": 527799,
+            "start_ticks": 51092489,
+            "ticks": 9,
+            "cpu": 25,
+            "name": "orted",
+            "state": "S (sleeping)",
+            "rss_bytes": 24743936,
+            "swap_bytes": 0,
+            "affinity": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              42,
+              43,
+              44,
+              45,
+              46,
+              47
+            ],
+            "source_input_paths": [],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527817,
+            "ppid": 527799,
+            "start_ticks": 51092672,
+            "ticks": 12,
+            "cpu": 47,
+            "name": "mpiexec",
+            "state": "S (sleeping)",
+            "rss_bytes": 24997888,
+            "swap_bytes": 0,
+            "affinity": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              42,
+              43,
+              44,
+              45,
+              46,
+              47
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527820,
+            "ppid": 527817,
+            "start_ticks": 51092704,
+            "ticks": 6254974,
+            "cpu": 1,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 5445709824,
+            "swap_bytes": 0,
+            "affinity": [
+              1
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527821,
+            "ppid": 527817,
+            "start_ticks": 51092705,
+            "ticks": 6254667,
+            "cpu": 2,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 4632047616,
+            "swap_bytes": 0,
+            "affinity": [
+              2
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527822,
+            "ppid": 527817,
+            "start_ticks": 51092705,
+            "ticks": 6254998,
+            "cpu": 3,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 5355888640,
+            "swap_bytes": 0,
+            "affinity": [
+              3
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527823,
+            "ppid": 527817,
+            "start_ticks": 51092706,
+            "ticks": 6255019,
+            "cpu": 4,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 5801299968,
+            "swap_bytes": 0,
+            "affinity": [
+              4
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527824,
+            "ppid": 527817,
+            "start_ticks": 51092706,
+            "ticks": 6255012,
+            "cpu": 5,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 5638385664,
+            "swap_bytes": 0,
+            "affinity": [
+              5
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527825,
+            "ppid": 527817,
+            "start_ticks": 51092707,
+            "ticks": 6255019,
+            "cpu": 6,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 4894937088,
+            "swap_bytes": 0,
+            "affinity": [
+              6
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527826,
+            "ppid": 527817,
+            "start_ticks": 51092707,
+            "ticks": 6255021,
+            "cpu": 7,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 4935143424,
+            "swap_bytes": 0,
+            "affinity": [
+              7
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527827,
+            "ppid": 527817,
+            "start_ticks": 51092707,
+            "ticks": 6253526,
+            "cpu": 8,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 6239731712,
+            "swap_bytes": 0,
+            "affinity": [
+              8
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 610787,
+            "ppid": 610784,
+            "start_ticks": 57191782,
+            "ticks": 156464,
+            "cpu": 32,
+            "name": "metrology",
+            "state": "R (running)",
+            "rss_bytes": 1533222912,
+            "swap_bytes": 0,
+            "affinity": [
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32
+            ],
+            "source_input_paths": [],
+            "public_phase_path": null,
+            "thread_snapshot_count": 23
+          }
+        ],
+        "full_thread_activity_evidence": "hash-bound resource_baseline.json only; no copied per-thread histories in compact record",
+        "CPU_topology_counts": {
+          "logical": 48,
+          "physical": 48,
+          "sockets": 2,
+          "SMT_siblings_of_selected": [
+            0
+          ]
+        }
+      },
+      "shared_health": {
+        "samples": 27,
+        "some_avg10_max": 0.0,
+        "full_avg10_max": 0.0,
+        "pressure_consecutive_max": 0,
+        "disk_free_min_bytes": 3449099816960,
+        "artifact_max_bytes": 1406685323,
+        "same_identity_neighbor_observations": [
+          {
+            "pid": 341799,
+            "start_ticks": 17196977,
+            "cpu_ticks_delta": 13691,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 341830,
+            "start_ticks": 17197099,
+            "cpu_ticks_delta": 0,
+            "phase_first": "solve_started",
+            "phase_last": "solve_started"
+          },
+          {
+            "pid": 341839,
+            "start_ticks": 17197130,
+            "cpu_ticks_delta": 13577,
+            "phase_first": "solve_started",
+            "phase_last": "solve_started"
+          },
+          {
+            "pid": 341987,
+            "start_ticks": 17219061,
+            "cpu_ticks_delta": 13,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527794,
+            "start_ticks": 51092431,
+            "cpu_ticks_delta": 2488,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527799,
+            "start_ticks": 51092465,
+            "cpu_ticks_delta": 2491,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527801,
+            "start_ticks": 51092489,
+            "cpu_ticks_delta": 0,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527817,
+            "start_ticks": 51092672,
+            "cpu_ticks_delta": 0,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527820,
+            "start_ticks": 51092704,
+            "cpu_ticks_delta": 14166,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527821,
+            "start_ticks": 51092705,
+            "cpu_ticks_delta": 14167,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527822,
+            "start_ticks": 51092705,
+            "cpu_ticks_delta": 14166,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527823,
+            "start_ticks": 51092706,
+            "cpu_ticks_delta": 14167,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527824,
+            "start_ticks": 51092706,
+            "cpu_ticks_delta": 14167,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527825,
+            "start_ticks": 51092707,
+            "cpu_ticks_delta": 14167,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527826,
+            "start_ticks": 51092707,
+            "cpu_ticks_delta": 14167,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527827,
+            "start_ticks": 51092707,
+            "cpu_ticks_delta": 14158,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 610787,
+            "start_ticks": 57191782,
+            "cpu_ticks_delta": 14183,
+            "phase_first": null,
+            "phase_last": null
+          }
+        ],
+        "comparable_neighbor_duration_available": false,
+        "absolute_zero_interference_claim": false
+      },
+      "files": {
+        "input_original.dat": {
+          "path": "results/task042/task042_v5_d0_shared_20260929T022124379441Z/input_original.dat",
+          "sha256": "cdeb711bcfffb50487bf038f3471e48c42e90ef96bcfd391dacfad1cfebdd798"
+        },
+        "resolved_config.json": {
+          "path": "results/task042/task042_v5_d0_shared_20260929T022124379441Z/resolved_config.json",
+          "sha256": "65d35df3510ba44bc630677103122b87094dddacbc09d2c69b1f98195b888508"
+        },
+        "run_manifest.json": {
+          "path": "results/task042/task042_v5_d0_shared_20260929T022124379441Z/run_manifest.json",
+          "sha256": "091273fcae331b00f2c397d266e239f0e6ab1b5e6248088c8a4dd570eceaec31"
+        },
+        "run_summary.json": {
+          "path": "results/task042/task042_v5_d0_shared_20260929T022124379441Z/run_summary.json",
+          "sha256": "543a89d235896d5c480dc23dbdd02e3bcb5a27b1bd3f7d0b1cb3ad50a41bd7c2"
+        },
+        "numerical_summary.json": {
+          "path": "results/task042/task042_v5_d0_shared_20260929T022124379441Z/numerical_summary.json",
+          "sha256": "366d55cf3680cf5de9e9b8c6bd56823a4dbbceb61bdbc6a7ef8e7e3666ae9cf9"
+        },
+        "resource_baseline.json": {
+          "path": "results/task042/task042_v5_d0_shared_20260929T022124379441Z/resource_baseline.json",
+          "sha256": "4bc5961b42d7d4a7d50a5ec9a850d9c8445cadbfe39b47237a7136eef168ed6f"
+        },
+        "actual_threads.json": {
+          "path": "results/task042/task042_v5_d0_shared_20260929T022124379441Z/actual_threads.json",
+          "sha256": "89a03edbbafab967d9fc993c0e3e88b0765bfdcd9a47f625df7a1a8ccbfcc42d"
+        },
+        "shared_health.jsonl": {
+          "path": "results/task042/task042_v5_d0_shared_20260929T022124379441Z/shared_health.jsonl",
+          "sha256": "909cc0f5ad771d467330056602193caf59792f45fbd6e49dfa0332bdc87be7fb"
+        },
+        "qualified_original_operator.json": {
+          "path": "results/task042/task042_v5_d0_shared_20260929T022124379441Z/qualified_original_operator.json",
+          "sha256": "b2e096984048b79b530aba9580448178a694151348e50469386ccd70aa2101da"
+        },
+        "diagnostic_preconstruction_budget.json": {
+          "path": "results/task042/task042_v5_d0_shared_20260929T022124379441Z/diagnostic_preconstruction_budget.json",
+          "sha256": "9c999443b5935482d4f0ffd3a54cda77eae45c932652cd58217d5ddb1b80cce2"
+        },
+        "source_sha.txt": {
+          "path": "results/task042/task042_v5_d0_shared_20260929T022124379441Z/source_sha.txt",
+          "sha256": "cf610318e532e2b8f2750a23492b88115d69d24809dbe8e614ec1b8a14371b70"
+        }
+      },
+      "diagnostic_capacity": {
+        "allocation_envelopes_bytes": {
+          "owned_Z_U": 89391104,
+          "archive_extraction_reserve": 89391104,
+          "diagnostic_PC_vectors_and_two_column_LS": 27934720,
+          "probe_input_output_QR_SVD_workspace": 44695552,
+          "original_audit_full_vectors": 33973760,
+          "small_129_column_LAPACK_and_R": 3195072,
+          "streamed_RHS_state_and_residual": 4643136,
+          "geometry_indices_weights_buffers": 3010048
+        },
+        "representation_workspace_bound_bytes": 296234496,
+        "all_factor_bound_bytes": 302309536,
+        "representation_cap_bytes": 536870912,
+        "factor_cap_bytes": 536870912,
+        "ZB_LS_storage": "compressed <=129x129; no second tall n x129 array",
+        "probe_max_columns": 16,
+        "common_state_streamed": true,
+        "private_audit_CSR": false
+      },
+      "factor_inventory": {
+        "local_factor_payload_bytes": 3469728
+      },
+      "official_result": null,
+      "no_new_KSP": true,
+      "teacher_loaded": false,
+      "qualified_launch_command": "source scripts/activate_task042.sh fe\npython scripts/run_case.py input/task042_neural_coarse_inverse/v5_d0_shared.dat",
+      "launch_cwd": "/home/fenics/Projects/NN-Lab",
+      "space_construction": "not_run; fixed basis only streamed load/identity verification included in worker wall, not separately timed",
+      "cgroup_enforcement": "not delegated; sampled0.5s own whole-tree stop, not continuous kernel hard limit"
+    },
+    "V5-D1": {
+      "directory": "results/task042/task042_v5_d1_shared_20260929T022428745481Z",
+      "artifacts": "benchmarks/artifacts/task042/task042_v5_d1_shared_20260929T022428745481Z",
+      "source_sha": "5d82651af0f723c73487783deb43969f05d46ed3",
+      "clean_source": true,
+      "manifest": {
+        "source_sha": "5d82651af0f723c73487783deb43969f05d46ed3",
+        "git_status": "",
+        "stage": "V5-D1",
+        "formal_pde": false,
+        "formal_fe_stage": true,
+        "input_sha256": "8238e41996b0aba4e22924cae29c51cd45c3b2c439d7871f98c91f0fa325498d",
+        "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle"
+      },
+      "status": "OFFLINE_COVERAGE_COMPLETE",
+      "run_summary": {
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "elapsed_seconds": 117.35641916596796,
+        "sampled_process_tree_rss_peak_bytes": 706514944,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "rss_hard_limit_bytes": 17179869184,
+        "rss_warning_bytes": 12884901888,
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 334
+          },
+          "end": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 334
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 949444911104,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 949444911104,
+          "reserve_bytes": 353748992000,
+          "launch_cap_bytes": 17179869184,
+          "planning_cap_bytes": 17179869184,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 137438953472,
+          "shared_workstation": true
+        }
+      },
+      "actual_threads": {
+        "pools": [
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          }
+        ],
+        "affinity": [
+          0
+        ],
+        "nice": 10
+      },
+      "costs": {
+        "runtime_setup_seconds_inclusive": 100.92789692804217,
+        "local_setup_seconds": 0.0,
+        "original_audit_calls": 3,
+        "original_audit_seconds_inclusive": 9.354902965947986,
+        "exact_S_action_calls": 27,
+        "exact_S_action_seconds_inclusive": 2.122100405045785,
+        "release_seconds": 0.02018925698939711,
+        "worker_seconds": 114.68568737397436
+      },
+      "timing_policy": "runtime/setup and audit/probe parents inclusive; nested B/C/S children never added to parent",
+      "resource_baseline_identity": {
+        "path": "results/task042/task042_v5_d1_shared_20260929T022428745481Z/resource_baseline.json",
+        "sha256": "6eb5c18c262cdc85b42b5b47a51c329935065570fdf5014d57392de7cb77fdd8"
+      },
+      "baseline": {
+        "cpu": 0,
+        "memory": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 949453168640,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 949453168640,
+          "reserve_bytes": 353748992000,
+          "launch_cap_bytes": 17179869184,
+          "planning_cap_bytes": 17179869184,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 137438953472,
+          "shared_workstation": true
+        },
+        "cgroup": {
+          "path": "/sys/fs/cgroup/user.slice/user-1000.slice/session-129.scope",
+          "delegated_writable": false,
+          "ancestors": [
+            {
+              "path": "/sys/fs/cgroup/user.slice/user-1000.slice/session-129.scope",
+              "memory.max": "max",
+              "memory.current": "1175843700736",
+              "memory.high": "max",
+              "memory.swap.max": "max"
+            },
+            {
+              "path": "/sys/fs/cgroup/user.slice/user-1000.slice",
+              "memory.max": "max",
+              "memory.current": "1228972085248",
+              "memory.high": "max",
+              "memory.swap.max": "max"
+            },
+            {
+              "path": "/sys/fs/cgroup/user.slice",
+              "memory.max": "max",
+              "memory.current": "1229160882176",
+              "memory.high": "max",
+              "memory.swap.max": "max"
+            },
+            {
+              "path": "/sys/fs/cgroup"
+            }
+          ],
+          "implementation": "process-tree sampled enforcement; no kernel cgroup limit claimed"
+        },
+        "memory_pressure": {
+          "some": {
+            "avg10": 0.0,
+            "avg60": 0.0,
+            "avg300": 0.0,
+            "total": 381472.0
+          },
+          "full": {
+            "avg10": 0.0,
+            "avg60": 0.0,
+            "avg300": 0.0,
+            "total": 380661.0
+          }
+        },
+        "disk_free_bytes": 3449098543104,
+        "admission_policy": "V3 observed CPU/thread activity",
+        "selected_cpu_topology": {
+          "cpu": 0,
+          "core": 0,
+          "socket": 0,
+          "siblings": [
+            0
+          ]
+        },
+        "neighbor_processes": [
+          {
+            "pid": 341799,
+            "ppid": 1,
+            "start_ticks": 17196977,
+            "ticks": 37252835,
+            "cpu": 9,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 40407040,
+            "swap_bytes": 0,
+            "affinity": [
+              9
+            ],
+            "source_input_paths": [
+              "scripts/run_case.py",
+              "input/task39extra_para_workstation_capacity/v5_node1_2nm_p6h1p5_q4.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 1
+          },
+          {
+            "pid": 341830,
+            "ppid": 341799,
+            "start_ticks": 17197099,
+            "ticks": 31,
+            "cpu": 24,
+            "name": "mpiexec",
+            "state": "S (sleeping)",
+            "rss_bytes": 24838144,
+            "swap_bytes": 0,
+            "affinity": [
+              24
+            ],
+            "source_input_paths": [],
+            "public_phase_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z/workflow_phase.json",
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 341839,
+            "ppid": 341830,
+            "start_ticks": 17197130,
+            "ticks": 27358221,
+            "cpu": 24,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 1149946429440,
+            "swap_bytes": 0,
+            "affinity": [
+              24
+            ],
+            "source_input_paths": [],
+            "public_phase_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z/workflow_phase.json",
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 341987,
+            "ppid": 1,
+            "start_ticks": 17219061,
+            "ticks": 41932,
+            "cpu": 10,
+            "name": "python",
+            "state": "S (sleeping)",
+            "rss_bytes": 20942848,
+            "swap_bytes": 0,
+            "affinity": [
+              10
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/scripts/task39extra_event_observer.py",
+              "/home/fenics/Projects/Maxwell3D-Lab/task-control/codex-thread-notify-v2.py"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 1
+          },
+          {
+            "pid": 527794,
+            "ppid": 2818,
+            "start_ticks": 51092431,
+            "ticks": 1087483,
+            "cpu": 47,
+            "name": "python",
+            "state": "S (sleeping)",
+            "rss_bytes": 41693184,
+            "swap_bytes": 0,
+            "affinity": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              42,
+              43,
+              44,
+              45,
+              46,
+              47
+            ],
+            "source_input_paths": [],
+            "public_phase_path": null,
+            "thread_snapshot_count": 1
+          },
+          {
+            "pid": 527799,
+            "ppid": 527794,
+            "start_ticks": 51092465,
+            "ticks": 1089798,
+            "cpu": 41,
+            "name": "python",
+            "state": "S (sleeping)",
+            "rss_bytes": 102461440,
+            "swap_bytes": 0,
+            "affinity": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              42,
+              43,
+              44,
+              45,
+              46,
+              47
+            ],
+            "source_input_paths": [
+              "scripts/run_case.py",
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527801,
+            "ppid": 527799,
+            "start_ticks": 51092489,
+            "ticks": 9,
+            "cpu": 25,
+            "name": "orted",
+            "state": "S (sleeping)",
+            "rss_bytes": 24743936,
+            "swap_bytes": 0,
+            "affinity": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              42,
+              43,
+              44,
+              45,
+              46,
+              47
+            ],
+            "source_input_paths": [],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527817,
+            "ppid": 527799,
+            "start_ticks": 51092672,
+            "ticks": 12,
+            "cpu": 47,
+            "name": "mpiexec",
+            "state": "S (sleeping)",
+            "rss_bytes": 24997888,
+            "swap_bytes": 0,
+            "affinity": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              42,
+              43,
+              44,
+              45,
+              46,
+              47
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527820,
+            "ppid": 527817,
+            "start_ticks": 51092704,
+            "ticks": 6273411,
+            "cpu": 1,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 5445709824,
+            "swap_bytes": 0,
+            "affinity": [
+              1
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527821,
+            "ppid": 527817,
+            "start_ticks": 51092705,
+            "ticks": 6273103,
+            "cpu": 2,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 4632047616,
+            "swap_bytes": 0,
+            "affinity": [
+              2
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527822,
+            "ppid": 527817,
+            "start_ticks": 51092705,
+            "ticks": 6273435,
+            "cpu": 3,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 5355888640,
+            "swap_bytes": 0,
+            "affinity": [
+              3
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527823,
+            "ppid": 527817,
+            "start_ticks": 51092706,
+            "ticks": 6273457,
+            "cpu": 4,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 5801299968,
+            "swap_bytes": 0,
+            "affinity": [
+              4
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527824,
+            "ppid": 527817,
+            "start_ticks": 51092706,
+            "ticks": 6273450,
+            "cpu": 5,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 5638385664,
+            "swap_bytes": 0,
+            "affinity": [
+              5
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527825,
+            "ppid": 527817,
+            "start_ticks": 51092707,
+            "ticks": 6273457,
+            "cpu": 6,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 4894937088,
+            "swap_bytes": 0,
+            "affinity": [
+              6
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527826,
+            "ppid": 527817,
+            "start_ticks": 51092707,
+            "ticks": 6273459,
+            "cpu": 7,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 4935143424,
+            "swap_bytes": 0,
+            "affinity": [
+              7
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527827,
+            "ppid": 527817,
+            "start_ticks": 51092707,
+            "ticks": 6271953,
+            "cpu": 8,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 6239731712,
+            "swap_bytes": 0,
+            "affinity": [
+              8
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 610787,
+            "ppid": 610784,
+            "start_ticks": 57191782,
+            "ticks": 174923,
+            "cpu": 32,
+            "name": "metrology",
+            "state": "R (running)",
+            "rss_bytes": 1533362176,
+            "swap_bytes": 0,
+            "affinity": [
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32
+            ],
+            "source_input_paths": [],
+            "public_phase_path": null,
+            "thread_snapshot_count": 23
+          }
+        ],
+        "full_thread_activity_evidence": "hash-bound resource_baseline.json only; no copied per-thread histories in compact record",
+        "CPU_topology_counts": {
+          "logical": 48,
+          "physical": 48,
+          "sockets": 2,
+          "SMT_siblings_of_selected": [
+            0
+          ]
+        }
+      },
+      "shared_health": {
+        "samples": 22,
+        "some_avg10_max": 0.0,
+        "full_avg10_max": 0.0,
+        "pressure_consecutive_max": 0,
+        "disk_free_min_bytes": 3449092620288,
+        "artifact_max_bytes": 1406685323,
+        "same_identity_neighbor_observations": [
+          {
+            "pid": 341799,
+            "start_ticks": 17196977,
+            "cpu_ticks_delta": 10997,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 341830,
+            "start_ticks": 17197099,
+            "cpu_ticks_delta": 0,
+            "phase_first": "solve_started",
+            "phase_last": "solve_started"
+          },
+          {
+            "pid": 341839,
+            "start_ticks": 17197130,
+            "cpu_ticks_delta": 8997,
+            "phase_first": "solve_started",
+            "phase_last": "solve_started"
+          },
+          {
+            "pid": 341987,
+            "start_ticks": 17219061,
+            "cpu_ticks_delta": 12,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527794,
+            "start_ticks": 51092431,
+            "cpu_ticks_delta": 1958,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527799,
+            "start_ticks": 51092465,
+            "cpu_ticks_delta": 1959,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527801,
+            "start_ticks": 51092489,
+            "cpu_ticks_delta": 0,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527817,
+            "start_ticks": 51092672,
+            "cpu_ticks_delta": 0,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527820,
+            "start_ticks": 51092704,
+            "cpu_ticks_delta": 11398,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527821,
+            "start_ticks": 51092705,
+            "cpu_ticks_delta": 11397,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527822,
+            "start_ticks": 51092705,
+            "cpu_ticks_delta": 11398,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527823,
+            "start_ticks": 51092706,
+            "cpu_ticks_delta": 11397,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527824,
+            "start_ticks": 51092706,
+            "cpu_ticks_delta": 11397,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527825,
+            "start_ticks": 51092707,
+            "cpu_ticks_delta": 11397,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527826,
+            "start_ticks": 51092707,
+            "cpu_ticks_delta": 11398,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527827,
+            "start_ticks": 51092707,
+            "cpu_ticks_delta": 11391,
+            "phase_first": null,
+            "phase_last": null
+          }
+        ],
+        "comparable_neighbor_duration_available": false,
+        "absolute_zero_interference_claim": false
+      },
+      "files": {
+        "input_original.dat": {
+          "path": "results/task042/task042_v5_d1_shared_20260929T022428745481Z/input_original.dat",
+          "sha256": "8238e41996b0aba4e22924cae29c51cd45c3b2c439d7871f98c91f0fa325498d"
+        },
+        "resolved_config.json": {
+          "path": "results/task042/task042_v5_d1_shared_20260929T022428745481Z/resolved_config.json",
+          "sha256": "6ec0f69afc60532132463f4501808c797eae22234663750aff269c70af685069"
+        },
+        "run_manifest.json": {
+          "path": "results/task042/task042_v5_d1_shared_20260929T022428745481Z/run_manifest.json",
+          "sha256": "850a0703a77bd910852df8c7710eb3e015763e26a00fbf3cbaa64b372121496b"
+        },
+        "run_summary.json": {
+          "path": "results/task042/task042_v5_d1_shared_20260929T022428745481Z/run_summary.json",
+          "sha256": "9dba8e3f79c137b7000b5c7e1206e1c41628ccb1e8d54eea699d67454f7bfa93"
+        },
+        "numerical_summary.json": {
+          "path": "results/task042/task042_v5_d1_shared_20260929T022428745481Z/numerical_summary.json",
+          "sha256": "b192ee74eac855f9f078a1318f5b0a64c321492087b3d8db2a23ea50b253527c"
+        },
+        "resource_baseline.json": {
+          "path": "results/task042/task042_v5_d1_shared_20260929T022428745481Z/resource_baseline.json",
+          "sha256": "6eb5c18c262cdc85b42b5b47a51c329935065570fdf5014d57392de7cb77fdd8"
+        },
+        "actual_threads.json": {
+          "path": "results/task042/task042_v5_d1_shared_20260929T022428745481Z/actual_threads.json",
+          "sha256": "89a03edbbafab967d9fc993c0e3e88b0765bfdcd9a47f625df7a1a8ccbfcc42d"
+        },
+        "shared_health.jsonl": {
+          "path": "results/task042/task042_v5_d1_shared_20260929T022428745481Z/shared_health.jsonl",
+          "sha256": "9845e2f4d716da90929eeb8c6be941256f6f8dfc1afba1f7359ba5fc56f50395"
+        },
+        "qualified_original_operator.json": {
+          "path": "results/task042/task042_v5_d1_shared_20260929T022428745481Z/qualified_original_operator.json",
+          "sha256": "b2e096984048b79b530aba9580448178a694151348e50469386ccd70aa2101da"
+        },
+        "diagnostic_preconstruction_budget.json": {
+          "path": "results/task042/task042_v5_d1_shared_20260929T022428745481Z/diagnostic_preconstruction_budget.json",
+          "sha256": "9c999443b5935482d4f0ffd3a54cda77eae45c932652cd58217d5ddb1b80cce2"
+        },
+        "source_sha.txt": {
+          "path": "results/task042/task042_v5_d1_shared_20260929T022428745481Z/source_sha.txt",
+          "sha256": "cf610318e532e2b8f2750a23492b88115d69d24809dbe8e614ec1b8a14371b70"
+        }
+      },
+      "diagnostic_capacity": {
+        "allocation_envelopes_bytes": {
+          "owned_Z_U": 89391104,
+          "archive_extraction_reserve": 89391104,
+          "diagnostic_PC_vectors_and_two_column_LS": 27934720,
+          "probe_input_output_QR_SVD_workspace": 44695552,
+          "original_audit_full_vectors": 33973760,
+          "small_129_column_LAPACK_and_R": 3195072,
+          "streamed_RHS_state_and_residual": 4643136,
+          "geometry_indices_weights_buffers": 3010048
+        },
+        "representation_workspace_bound_bytes": 296234496,
+        "all_factor_bound_bytes": 302309536,
+        "representation_cap_bytes": 536870912,
+        "factor_cap_bytes": 536870912,
+        "ZB_LS_storage": "compressed <=129x129; no second tall n x129 array",
+        "probe_max_columns": 16,
+        "common_state_streamed": true,
+        "private_audit_CSR": false
+      },
+      "factor_inventory": {
+        "local_factor_payload_bytes": 3469728
+      },
+      "official_result": null,
+      "no_new_KSP": true,
+      "teacher_loaded": true,
+      "qualified_launch_command": "source scripts/activate_task042.sh fe\npython scripts/run_case.py input/task042_neural_coarse_inverse/v5_d1_shared.dat",
+      "launch_cwd": "/home/fenics/Projects/NN-Lab",
+      "space_construction": "not_run; fixed basis only streamed load/identity verification included in worker wall, not separately timed",
+      "cgroup_enforcement": "not delegated; sampled0.5s own whole-tree stop, not continuous kernel hard limit"
+    },
+    "V5-OLDPOD": {
+      "directory": "results/task042/task042_v5_oldpod_shared_20260929T023129917343Z",
+      "artifacts": "benchmarks/artifacts/task042/task042_v5_oldpod_shared_20260929T023129917343Z",
+      "source_sha": "5d82651af0f723c73487783deb43969f05d46ed3",
+      "clean_source": true,
+      "manifest": {
+        "source_sha": "5d82651af0f723c73487783deb43969f05d46ed3",
+        "git_status": "",
+        "stage": "V5-OLDPOD",
+        "formal_pde": false,
+        "formal_fe_stage": true,
+        "input_sha256": "024da5eb1f1b7d9f50285aa10e6c33615e57fda351e7b0bd554527081e421014",
+        "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle"
+      },
+      "status": "FIXED_OBJECT_DIAGNOSTICS_COMPLETE",
+      "run_summary": {
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "elapsed_seconds": 433.4105782409897,
+        "sampled_process_tree_rss_peak_bytes": 1077854208,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "rss_hard_limit_bytes": 17179869184,
+        "rss_warning_bytes": 12884901888,
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 334
+          },
+          "end": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 334
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 948553281536,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 948553281536,
+          "reserve_bytes": 353748992000,
+          "launch_cap_bytes": 17179869184,
+          "planning_cap_bytes": 17179869184,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 137438953472,
+          "shared_workstation": true
+        }
+      },
+      "actual_threads": {
+        "pools": [
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          }
+        ],
+        "affinity": [
+          0
+        ],
+        "nice": 10
+      },
+      "costs": {
+        "runtime_setup_seconds_inclusive": 96.46427758899517,
+        "local_setup_seconds": 1.2453969930065796,
+        "original_audit_calls": 96,
+        "original_audit_seconds_inclusive": 273.29242842970416,
+        "exact_S_action_calls": 461,
+        "exact_S_action_seconds_inclusive": 48.41652321955189,
+        "local_B_calls_including_audit": 82,
+        "local_B_seconds_including_audit": 11.574751400738023,
+        "probe_seconds_inclusive": 11.036898763966747,
+        "release_seconds": 0.04124840209260583,
+        "worker_seconds": 430.4544575350592,
+        "two_level": {
+          "B2_calls": 29,
+          "C_calls": 82,
+          "B_calls": 29,
+          "S_calls_in_B2": 29,
+          "B2_seconds_inclusive": 8.437280029174872,
+          "C_seconds_child": 2.1316403751261532,
+          "B_seconds_child": 4.105717939790338,
+          "S_seconds_child": 2.677880968316458,
+          "nested_timers_not_additive": true
+        },
+        "same_vector_algebra_seconds_inclusive": 18.890202141017653,
+        "action_packet_IO_seconds_inclusive": 0.5200690948404372
+      },
+      "timing_policy": "runtime/setup and audit/probe parents inclusive; nested B/C/S children never added to parent",
+      "resource_baseline_identity": {
+        "path": "results/task042/task042_v5_oldpod_shared_20260929T023129917343Z/resource_baseline.json",
+        "sha256": "30ef5e62c593b4c980bb5e87c5ac581234fecaeeaba41e5482153d664b7cd602"
+      },
+      "baseline": {
+        "cpu": 0,
+        "memory": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 948556480512,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 948556480512,
+          "reserve_bytes": 353748992000,
+          "launch_cap_bytes": 17179869184,
+          "planning_cap_bytes": 17179869184,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 137438953472,
+          "shared_workstation": true
+        },
+        "cgroup": {
+          "path": "/sys/fs/cgroup/user.slice/user-1000.slice/session-129.scope",
+          "delegated_writable": false,
+          "ancestors": [
+            {
+              "path": "/sys/fs/cgroup/user.slice/user-1000.slice/session-129.scope",
+              "memory.max": "max",
+              "memory.current": "1177573998592",
+              "memory.high": "max",
+              "memory.swap.max": "max"
+            },
+            {
+              "path": "/sys/fs/cgroup/user.slice/user-1000.slice",
+              "memory.max": "max",
+              "memory.current": "1229632557056",
+              "memory.high": "max",
+              "memory.swap.max": "max"
+            },
+            {
+              "path": "/sys/fs/cgroup/user.slice",
+              "memory.max": "max",
+              "memory.current": "1229821353984",
+              "memory.high": "max",
+              "memory.swap.max": "max"
+            },
+            {
+              "path": "/sys/fs/cgroup"
+            }
+          ],
+          "implementation": "process-tree sampled enforcement; no kernel cgroup limit claimed"
+        },
+        "memory_pressure": {
+          "some": {
+            "avg10": 0.0,
+            "avg60": 0.0,
+            "avg300": 0.0,
+            "total": 381472.0
+          },
+          "full": {
+            "avg10": 0.0,
+            "avg60": 0.0,
+            "avg300": 0.0,
+            "total": 380661.0
+          }
+        },
+        "disk_free_bytes": 3449083224064,
+        "admission_policy": "V3 observed CPU/thread activity",
+        "selected_cpu_topology": {
+          "cpu": 0,
+          "core": 0,
+          "socket": 0,
+          "siblings": [
+            0
+          ]
+        },
+        "neighbor_processes": [
+          {
+            "pid": 28229,
+            "ppid": 1,
+            "start_ticks": 4105475,
+            "ticks": 1485413,
+            "cpu": 25,
+            "name": "codex",
+            "state": "S (sleeping)",
+            "rss_bytes": 555225088,
+            "swap_bytes": 0,
+            "affinity": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              42,
+              43,
+              44,
+              45,
+              46,
+              47
+            ],
+            "source_input_paths": [],
+            "public_phase_path": null,
+            "thread_snapshot_count": 67
+          },
+          {
+            "pid": 31243,
+            "ppid": 28229,
+            "start_ticks": 4208867,
+            "ticks": 22473,
+            "cpu": 30,
+            "name": "codex-code-mode",
+            "state": "S (sleeping)",
+            "rss_bytes": 31629312,
+            "swap_bytes": 0,
+            "affinity": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              42,
+              43,
+              44,
+              45,
+              46,
+              47
+            ],
+            "source_input_paths": [],
+            "public_phase_path": null,
+            "thread_snapshot_count": 20
+          },
+          {
+            "pid": 341799,
+            "ppid": 1,
+            "start_ticks": 17196977,
+            "ticks": 37293523,
+            "cpu": 9,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 40407040,
+            "swap_bytes": 0,
+            "affinity": [
+              9
+            ],
+            "source_input_paths": [
+              "scripts/run_case.py",
+              "input/task39extra_para_workstation_capacity/v5_node1_2nm_p6h1p5_q4.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 1
+          },
+          {
+            "pid": 341830,
+            "ppid": 341799,
+            "start_ticks": 17197099,
+            "ticks": 31,
+            "cpu": 24,
+            "name": "mpiexec",
+            "state": "S (sleeping)",
+            "rss_bytes": 24838144,
+            "swap_bytes": 0,
+            "affinity": [
+              24
+            ],
+            "source_input_paths": [],
+            "public_phase_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z/workflow_phase.json",
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 341839,
+            "ppid": 341830,
+            "start_ticks": 17197130,
+            "ticks": 27395874,
+            "cpu": 24,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 1151674052608,
+            "swap_bytes": 0,
+            "affinity": [
+              24
+            ],
+            "source_input_paths": [],
+            "public_phase_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z/workflow_phase.json",
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 341987,
+            "ppid": 1,
+            "start_ticks": 17219061,
+            "ticks": 41973,
+            "cpu": 10,
+            "name": "python",
+            "state": "S (sleeping)",
+            "rss_bytes": 20942848,
+            "swap_bytes": 0,
+            "affinity": [
+              10
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/scripts/task39extra_event_observer.py",
+              "/home/fenics/Projects/Maxwell3D-Lab/task-control/codex-thread-notify-v2.py"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 1
+          },
+          {
+            "pid": 527794,
+            "ppid": 2818,
+            "start_ticks": 51092431,
+            "ticks": 1094746,
+            "cpu": 47,
+            "name": "python",
+            "state": "S (sleeping)",
+            "rss_bytes": 41693184,
+            "swap_bytes": 0,
+            "affinity": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              42,
+              43,
+              44,
+              45,
+              46,
+              47
+            ],
+            "source_input_paths": [],
+            "public_phase_path": null,
+            "thread_snapshot_count": 1
+          },
+          {
+            "pid": 527799,
+            "ppid": 527794,
+            "start_ticks": 51092465,
+            "ticks": 1097089,
+            "cpu": 39,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 102461440,
+            "swap_bytes": 0,
+            "affinity": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              42,
+              43,
+              44,
+              45,
+              46,
+              47
+            ],
+            "source_input_paths": [
+              "scripts/run_case.py",
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527801,
+            "ppid": 527799,
+            "start_ticks": 51092489,
+            "ticks": 9,
+            "cpu": 25,
+            "name": "orted",
+            "state": "S (sleeping)",
+            "rss_bytes": 24743936,
+            "swap_bytes": 0,
+            "affinity": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              42,
+              43,
+              44,
+              45,
+              46,
+              47
+            ],
+            "source_input_paths": [],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527817,
+            "ppid": 527799,
+            "start_ticks": 51092672,
+            "ticks": 12,
+            "cpu": 47,
+            "name": "mpiexec",
+            "state": "S (sleeping)",
+            "rss_bytes": 24997888,
+            "swap_bytes": 0,
+            "affinity": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              42,
+              43,
+              44,
+              45,
+              46,
+              47
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527820,
+            "ppid": 527817,
+            "start_ticks": 51092704,
+            "ticks": 6315526,
+            "cpu": 1,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 5445709824,
+            "swap_bytes": 0,
+            "affinity": [
+              1
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527821,
+            "ppid": 527817,
+            "start_ticks": 51092705,
+            "ticks": 6315215,
+            "cpu": 2,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 4632047616,
+            "swap_bytes": 0,
+            "affinity": [
+              2
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527822,
+            "ppid": 527817,
+            "start_ticks": 51092705,
+            "ticks": 6315549,
+            "cpu": 3,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 5355888640,
+            "swap_bytes": 0,
+            "affinity": [
+              3
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527823,
+            "ppid": 527817,
+            "start_ticks": 51092706,
+            "ticks": 6315571,
+            "cpu": 4,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 5801299968,
+            "swap_bytes": 0,
+            "affinity": [
+              4
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527824,
+            "ppid": 527817,
+            "start_ticks": 51092706,
+            "ticks": 6315564,
+            "cpu": 5,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 5638385664,
+            "swap_bytes": 0,
+            "affinity": [
+              5
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527825,
+            "ppid": 527817,
+            "start_ticks": 51092707,
+            "ticks": 6315570,
+            "cpu": 6,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 4894937088,
+            "swap_bytes": 0,
+            "affinity": [
+              6
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527826,
+            "ppid": 527817,
+            "start_ticks": 51092707,
+            "ticks": 6315574,
+            "cpu": 7,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 4935143424,
+            "swap_bytes": 0,
+            "affinity": [
+              7
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527827,
+            "ppid": 527817,
+            "start_ticks": 51092707,
+            "ticks": 6314043,
+            "cpu": 8,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 6239731712,
+            "swap_bytes": 0,
+            "affinity": [
+              8
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          }
+        ],
+        "full_thread_activity_evidence": "hash-bound resource_baseline.json only; no copied per-thread histories in compact record",
+        "CPU_topology_counts": {
+          "logical": 48,
+          "physical": 48,
+          "sockets": 2,
+          "SMT_siblings_of_selected": [
+            0
+          ]
+        }
+      },
+      "shared_health": {
+        "samples": 79,
+        "some_avg10_max": 0.0,
+        "full_avg10_max": 0.0,
+        "pressure_consecutive_max": 0,
+        "disk_free_min_bytes": 3448945135616,
+        "artifact_max_bytes": 1524095267,
+        "same_identity_neighbor_observations": [
+          {
+            "pid": 28229,
+            "start_ticks": 4105475,
+            "cpu_ticks_delta": 2626,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 31243,
+            "start_ticks": 4208867,
+            "cpu_ticks_delta": 30,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 341799,
+            "start_ticks": 17196977,
+            "cpu_ticks_delta": 41408,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 341830,
+            "start_ticks": 17197099,
+            "cpu_ticks_delta": 0,
+            "phase_first": "solve_started",
+            "phase_last": "solve_started"
+          },
+          {
+            "pid": 341839,
+            "start_ticks": 17197130,
+            "cpu_ticks_delta": 41615,
+            "phase_first": "solve_started",
+            "phase_last": "solve_started"
+          },
+          {
+            "pid": 341987,
+            "start_ticks": 17219061,
+            "cpu_ticks_delta": 45,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527794,
+            "start_ticks": 51092431,
+            "cpu_ticks_delta": 7550,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527799,
+            "start_ticks": 51092465,
+            "cpu_ticks_delta": 7529,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527801,
+            "start_ticks": 51092489,
+            "cpu_ticks_delta": 0,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527817,
+            "start_ticks": 51092672,
+            "cpu_ticks_delta": 0,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527820,
+            "start_ticks": 51092704,
+            "cpu_ticks_delta": 42858,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527821,
+            "start_ticks": 51092705,
+            "cpu_ticks_delta": 42858,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527822,
+            "start_ticks": 51092705,
+            "cpu_ticks_delta": 42859,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527823,
+            "start_ticks": 51092706,
+            "cpu_ticks_delta": 42858,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527824,
+            "start_ticks": 51092706,
+            "cpu_ticks_delta": 42858,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527825,
+            "start_ticks": 51092707,
+            "cpu_ticks_delta": 42859,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527826,
+            "start_ticks": 51092707,
+            "cpu_ticks_delta": 42859,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527827,
+            "start_ticks": 51092707,
+            "cpu_ticks_delta": 42834,
+            "phase_first": null,
+            "phase_last": null
+          }
+        ],
+        "comparable_neighbor_duration_available": false,
+        "absolute_zero_interference_claim": false
+      },
+      "files": {
+        "input_original.dat": {
+          "path": "results/task042/task042_v5_oldpod_shared_20260929T023129917343Z/input_original.dat",
+          "sha256": "024da5eb1f1b7d9f50285aa10e6c33615e57fda351e7b0bd554527081e421014"
+        },
+        "resolved_config.json": {
+          "path": "results/task042/task042_v5_oldpod_shared_20260929T023129917343Z/resolved_config.json",
+          "sha256": "f5e1b2f118438cfdda349b7acac3b00f75c3ce02112cc425f63fdbdf6e7d5855"
+        },
+        "run_manifest.json": {
+          "path": "results/task042/task042_v5_oldpod_shared_20260929T023129917343Z/run_manifest.json",
+          "sha256": "cd418ebd593932d32fc35258f2e0b50cf6629efcc1535c235dd735efd5aab5f4"
+        },
+        "run_summary.json": {
+          "path": "results/task042/task042_v5_oldpod_shared_20260929T023129917343Z/run_summary.json",
+          "sha256": "e69de80641355814050bea59d34839235b41e471a86ba013f565b71772bc2f16"
+        },
+        "numerical_summary.json": {
+          "path": "results/task042/task042_v5_oldpod_shared_20260929T023129917343Z/numerical_summary.json",
+          "sha256": "168b39ad069d187047e6bec5237ba30c58b547f2579bd8222c662ef5625b5b30"
+        },
+        "resource_baseline.json": {
+          "path": "results/task042/task042_v5_oldpod_shared_20260929T023129917343Z/resource_baseline.json",
+          "sha256": "30ef5e62c593b4c980bb5e87c5ac581234fecaeeaba41e5482153d664b7cd602"
+        },
+        "actual_threads.json": {
+          "path": "results/task042/task042_v5_oldpod_shared_20260929T023129917343Z/actual_threads.json",
+          "sha256": "89a03edbbafab967d9fc993c0e3e88b0765bfdcd9a47f625df7a1a8ccbfcc42d"
+        },
+        "shared_health.jsonl": {
+          "path": "results/task042/task042_v5_oldpod_shared_20260929T023129917343Z/shared_health.jsonl",
+          "sha256": "fa48353226019c4d6f58d8ae8852c7c9bebf433c5b8fc98b53520bc2d39d18a4"
+        },
+        "qualified_original_operator.json": {
+          "path": "results/task042/task042_v5_oldpod_shared_20260929T023129917343Z/qualified_original_operator.json",
+          "sha256": "b2e096984048b79b530aba9580448178a694151348e50469386ccd70aa2101da"
+        },
+        "diagnostic_preconstruction_budget.json": {
+          "path": "results/task042/task042_v5_oldpod_shared_20260929T023129917343Z/diagnostic_preconstruction_budget.json",
+          "sha256": "9c999443b5935482d4f0ffd3a54cda77eae45c932652cd58217d5ddb1b80cce2"
+        },
+        "source_sha.txt": {
+          "path": "results/task042/task042_v5_oldpod_shared_20260929T023129917343Z/source_sha.txt",
+          "sha256": "cf610318e532e2b8f2750a23492b88115d69d24809dbe8e614ec1b8a14371b70"
+        }
+      },
+      "diagnostic_capacity": {
+        "allocation_envelopes_bytes": {
+          "owned_Z_U": 89391104,
+          "archive_extraction_reserve": 89391104,
+          "diagnostic_PC_vectors_and_two_column_LS": 27934720,
+          "probe_input_output_QR_SVD_workspace": 44695552,
+          "original_audit_full_vectors": 33973760,
+          "small_129_column_LAPACK_and_R": 3195072,
+          "streamed_RHS_state_and_residual": 4643136,
+          "geometry_indices_weights_buffers": 3010048
+        },
+        "representation_workspace_bound_bytes": 296234496,
+        "all_factor_bound_bytes": 302309536,
+        "representation_cap_bytes": 536870912,
+        "factor_cap_bytes": 536870912,
+        "ZB_LS_storage": "compressed <=129x129; no second tall n x129 array",
+        "probe_max_columns": 16,
+        "common_state_streamed": true,
+        "private_audit_CSR": false
+      },
+      "factor_inventory": {
+        "global_p4_factor_created": false,
+        "original_S_borrowed": true,
+        "private_audit_CSR": false,
+        "geometry_patch_factor_bytes": 298577664,
+        "R_payload_bytes": 262144,
+        "patch_count": 252,
+        "maximum_patch_rows": 272,
+        "R_rows": 128,
+        "Z_U_payload_bytes": 89391104,
+        "Z_U_R_array_hashes": {
+          "Z": "bed52fc212b2c94a5d705a1b5354e063ce6591146e546fd645eebdacc7ed9b39",
+          "U": "20568e89df71bf85fee0e540dbdadf9bfe982121a4f713b5893a0204475fb564",
+          "R": "24510d118be73b12fe629b23a065bda6af323a58c5dcf6d65a272836727c73e2"
+        }
+      },
+      "official_result": null,
+      "no_new_KSP": true,
+      "teacher_loaded": false,
+      "qualified_launch_command": "source scripts/activate_task042.sh fe\npython scripts/run_case.py input/task042_neural_coarse_inverse/v5_oldpod_shared.dat",
+      "launch_cwd": "/home/fenics/Projects/NN-Lab",
+      "space_construction": "not_run; fixed basis only streamed load/identity verification included in worker wall, not separately timed",
+      "cgroup_enforcement": "not delegated; sampled0.5s own whole-tree stop, not continuous kernel hard limit"
+    },
+    "V5-ERROR": {
+      "directory": "results/task042/task042_v5_error_shared_20260929T023919394810Z",
+      "artifacts": "benchmarks/artifacts/task042/task042_v5_error_shared_20260929T023919394810Z",
+      "source_sha": "5d82651af0f723c73487783deb43969f05d46ed3",
+      "clean_source": true,
+      "manifest": {
+        "source_sha": "5d82651af0f723c73487783deb43969f05d46ed3",
+        "git_status": "",
+        "stage": "V5-ERROR",
+        "formal_pde": false,
+        "formal_fe_stage": true,
+        "input_sha256": "531e71b089b38b7b86ac098ad80996cf9c9c888e114569e35b2b3cc15e070df3",
+        "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+        "shared_workstation": true,
+        "cpu": 13,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle"
+      },
+      "status": "FIXED_OBJECT_DIAGNOSTICS_COMPLETE",
+      "run_summary": {
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "elapsed_seconds": 450.49565714306664,
+        "sampled_process_tree_rss_peak_bytes": 1135407104,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "rss_hard_limit_bytes": 17179869184,
+        "rss_warning_bytes": 12884901888,
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 334
+          },
+          "end": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 14287
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 13953
+          }
+        },
+        "job_swap_activity": "UNRESOLVED_global_activity_cannot_be_attributed",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 945415831552,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 945415831552,
+          "reserve_bytes": 353748992000,
+          "launch_cap_bytes": 17179869184,
+          "planning_cap_bytes": 17179869184,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 137438953472,
+          "shared_workstation": true
+        }
+      },
+      "actual_threads": {
+        "pools": [
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          }
+        ],
+        "affinity": [
+          13
+        ],
+        "nice": 10
+      },
+      "costs": {
+        "runtime_setup_seconds_inclusive": 103.78343805798795,
+        "local_setup_seconds": 1.298016830929555,
+        "original_audit_calls": 96,
+        "original_audit_seconds_inclusive": 281.67641788348556,
+        "exact_S_action_calls": 461,
+        "exact_S_action_seconds_inclusive": 45.59199417056516,
+        "local_B_calls_including_audit": 82,
+        "local_B_seconds_including_audit": 12.610170574509539,
+        "probe_seconds_inclusive": 11.831038317992352,
+        "release_seconds": 0.02210838394239545,
+        "worker_seconds": 447.5098883570172,
+        "two_level": {
+          "B2_calls": 29,
+          "C_calls": 82,
+          "B_calls": 29,
+          "S_calls_in_B2": 29,
+          "B2_seconds_inclusive": 9.174753830302507,
+          "C_seconds_child": 2.4329387192847207,
+          "B_seconds_child": 4.6658600377850235,
+          "S_seconds_child": 2.723767341230996,
+          "nested_timers_not_additive": true
+        },
+        "same_vector_algebra_seconds_inclusive": 20.454028588952497,
+        "action_packet_IO_seconds_inclusive": 0.5384504389949143
+      },
+      "timing_policy": "runtime/setup and audit/probe parents inclusive; nested B/C/S children never added to parent",
+      "resource_baseline_identity": {
+        "path": "results/task042/task042_v5_error_shared_20260929T023919394810Z/resource_baseline.json",
+        "sha256": "44e0372888c7c355a815673467168320e70b92951c59316acabdcbf53106f777"
+      },
+      "baseline": {
+        "cpu": 13,
+        "memory": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 945408393216,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 945408393216,
+          "reserve_bytes": 353748992000,
+          "launch_cap_bytes": 17179869184,
+          "planning_cap_bytes": 17179869184,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 137438953472,
+          "shared_workstation": true
+        },
+        "cgroup": {
+          "path": "/sys/fs/cgroup/user.slice/user-1000.slice/session-129.scope",
+          "delegated_writable": false,
+          "ancestors": [
+            {
+              "path": "/sys/fs/cgroup/user.slice/user-1000.slice/session-129.scope",
+              "memory.max": "max",
+              "memory.current": "1178567004160",
+              "memory.high": "max",
+              "memory.swap.max": "max"
+            },
+            {
+              "path": "/sys/fs/cgroup/user.slice/user-1000.slice",
+              "memory.max": "max",
+              "memory.current": "1233095749632",
+              "memory.high": "max",
+              "memory.swap.max": "max"
+            },
+            {
+              "path": "/sys/fs/cgroup/user.slice",
+              "memory.max": "max",
+              "memory.current": "1233284546560",
+              "memory.high": "max",
+              "memory.swap.max": "max"
+            },
+            {
+              "path": "/sys/fs/cgroup"
+            }
+          ],
+          "implementation": "process-tree sampled enforcement; no kernel cgroup limit claimed"
+        },
+        "memory_pressure": {
+          "some": {
+            "avg10": 0.0,
+            "avg60": 0.0,
+            "avg300": 0.0,
+            "total": 381544.0
+          },
+          "full": {
+            "avg10": 0.0,
+            "avg60": 0.0,
+            "avg300": 0.0,
+            "total": 380732.0
+          }
+        },
+        "disk_free_bytes": 3448918908928,
+        "admission_policy": "V3 observed CPU/thread activity",
+        "selected_cpu_topology": {
+          "cpu": 13,
+          "core": 17,
+          "socket": 0,
+          "siblings": [
+            13
+          ]
+        },
+        "neighbor_processes": [
+          {
+            "pid": 28229,
+            "ppid": 1,
+            "start_ticks": 4105475,
+            "ticks": 1488266,
+            "cpu": 25,
+            "name": "codex",
+            "state": "S (sleeping)",
+            "rss_bytes": 545050624,
+            "swap_bytes": 0,
+            "affinity": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              42,
+              43,
+              44,
+              45,
+              46,
+              47
+            ],
+            "source_input_paths": [],
+            "public_phase_path": null,
+            "thread_snapshot_count": 69
+          },
+          {
+            "pid": 31243,
+            "ppid": 28229,
+            "start_ticks": 4208867,
+            "ticks": 22507,
+            "cpu": 15,
+            "name": "codex-code-mode",
+            "state": "S (sleeping)",
+            "rss_bytes": 31608832,
+            "swap_bytes": 0,
+            "affinity": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              42,
+              43,
+              44,
+              45,
+              46,
+              47
+            ],
+            "source_input_paths": [],
+            "public_phase_path": null,
+            "thread_snapshot_count": 20
+          },
+          {
+            "pid": 341799,
+            "ppid": 1,
+            "start_ticks": 17196977,
+            "ticks": 37338867,
+            "cpu": 9,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 40407040,
+            "swap_bytes": 0,
+            "affinity": [
+              9
+            ],
+            "source_input_paths": [
+              "scripts/run_case.py",
+              "input/task39extra_para_workstation_capacity/v5_node1_2nm_p6h1p5_q4.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 1
+          },
+          {
+            "pid": 341830,
+            "ppid": 341799,
+            "start_ticks": 17197099,
+            "ticks": 31,
+            "cpu": 24,
+            "name": "mpiexec",
+            "state": "S (sleeping)",
+            "rss_bytes": 24838144,
+            "swap_bytes": 0,
+            "affinity": [
+              24
+            ],
+            "source_input_paths": [],
+            "public_phase_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z/workflow_phase.json",
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 341839,
+            "ppid": 341830,
+            "start_ticks": 17197130,
+            "ticks": 27441575,
+            "cpu": 24,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 1152509272064,
+            "swap_bytes": 0,
+            "affinity": [
+              24
+            ],
+            "source_input_paths": [],
+            "public_phase_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z/workflow_phase.json",
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 341987,
+            "ppid": 1,
+            "start_ticks": 17219061,
+            "ticks": 42024,
+            "cpu": 10,
+            "name": "python",
+            "state": "S (sleeping)",
+            "rss_bytes": 20942848,
+            "swap_bytes": 0,
+            "affinity": [
+              10
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/scripts/task39extra_event_observer.py",
+              "/home/fenics/Projects/Maxwell3D-Lab/task-control/codex-thread-notify-v2.py"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 1
+          },
+          {
+            "pid": 527794,
+            "ppid": 2818,
+            "start_ticks": 51092431,
+            "ticks": 1103036,
+            "cpu": 47,
+            "name": "python",
+            "state": "S (sleeping)",
+            "rss_bytes": 41705472,
+            "swap_bytes": 0,
+            "affinity": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              42,
+              43,
+              44,
+              45,
+              46,
+              47
+            ],
+            "source_input_paths": [],
+            "public_phase_path": null,
+            "thread_snapshot_count": 1
+          },
+          {
+            "pid": 527799,
+            "ppid": 527794,
+            "start_ticks": 51092465,
+            "ticks": 1105332,
+            "cpu": 42,
+            "name": "python",
+            "state": "S (sleeping)",
+            "rss_bytes": 102461440,
+            "swap_bytes": 0,
+            "affinity": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              42,
+              43,
+              44,
+              45,
+              46,
+              47
+            ],
+            "source_input_paths": [
+              "scripts/run_case.py",
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527801,
+            "ppid": 527799,
+            "start_ticks": 51092489,
+            "ticks": 9,
+            "cpu": 25,
+            "name": "orted",
+            "state": "S (sleeping)",
+            "rss_bytes": 24743936,
+            "swap_bytes": 0,
+            "affinity": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              42,
+              43,
+              44,
+              45,
+              46,
+              47
+            ],
+            "source_input_paths": [],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527817,
+            "ppid": 527799,
+            "start_ticks": 51092672,
+            "ticks": 12,
+            "cpu": 47,
+            "name": "mpiexec",
+            "state": "S (sleeping)",
+            "rss_bytes": 24997888,
+            "swap_bytes": 0,
+            "affinity": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              42,
+              43,
+              44,
+              45,
+              46,
+              47
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527820,
+            "ppid": 527817,
+            "start_ticks": 51092704,
+            "ticks": 6362471,
+            "cpu": 1,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 5445709824,
+            "swap_bytes": 0,
+            "affinity": [
+              1
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527821,
+            "ppid": 527817,
+            "start_ticks": 51092705,
+            "ticks": 6362160,
+            "cpu": 2,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 4632047616,
+            "swap_bytes": 0,
+            "affinity": [
+              2
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527822,
+            "ppid": 527817,
+            "start_ticks": 51092705,
+            "ticks": 6362495,
+            "cpu": 3,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 5355888640,
+            "swap_bytes": 0,
+            "affinity": [
+              3
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527823,
+            "ppid": 527817,
+            "start_ticks": 51092706,
+            "ticks": 6362517,
+            "cpu": 4,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 5801299968,
+            "swap_bytes": 0,
+            "affinity": [
+              4
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527824,
+            "ppid": 527817,
+            "start_ticks": 51092706,
+            "ticks": 6362509,
+            "cpu": 5,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 5638385664,
+            "swap_bytes": 0,
+            "affinity": [
+              5
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527825,
+            "ppid": 527817,
+            "start_ticks": 51092707,
+            "ticks": 6362516,
+            "cpu": 6,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 4894937088,
+            "swap_bytes": 0,
+            "affinity": [
+              6
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527826,
+            "ppid": 527817,
+            "start_ticks": 51092707,
+            "ticks": 6362519,
+            "cpu": 7,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 4935143424,
+            "swap_bytes": 0,
+            "affinity": [
+              7
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 527827,
+            "ppid": 527817,
+            "start_ticks": 51092707,
+            "ticks": 6360961,
+            "cpu": 8,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 6239731712,
+            "swap_bytes": 0,
+            "affinity": [
+              8
+            ],
+            "source_input_paths": [
+              "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+            ],
+            "public_phase_path": null,
+            "thread_snapshot_count": 3
+          },
+          {
+            "pid": 618735,
+            "ppid": 618732,
+            "start_ticks": 57424068,
+            "ticks": 341,
+            "cpu": 30,
+            "name": "pt_elastic",
+            "state": "S (sleeping)",
+            "rss_bytes": 548999168,
+            "swap_bytes": 0,
+            "affinity": [
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32
+            ],
+            "source_input_paths": [],
+            "public_phase_path": null,
+            "thread_snapshot_count": 12
+          },
+          {
+            "pid": 618760,
+            "ppid": 618735,
+            "start_ticks": 57424242,
+            "ticks": 31214,
+            "cpu": 32,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 1528938496,
+            "swap_bytes": 0,
+            "affinity": [
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32
+            ],
+            "source_input_paths": [],
+            "public_phase_path": null,
+            "thread_snapshot_count": 14
+          },
+          {
+            "pid": 618761,
+            "ppid": 618735,
+            "start_ticks": 57424242,
+            "ticks": 31218,
+            "cpu": 25,
+            "name": "python",
+            "state": "R (running)",
+            "rss_bytes": 1528954880,
+            "swap_bytes": 0,
+            "affinity": [
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32
+            ],
+            "source_input_paths": [],
+            "public_phase_path": null,
+            "thread_snapshot_count": 14
+          }
+        ],
+        "full_thread_activity_evidence": "hash-bound resource_baseline.json only; no copied per-thread histories in compact record",
+        "CPU_topology_counts": {
+          "logical": 48,
+          "physical": 48,
+          "sockets": 2,
+          "SMT_siblings_of_selected": [
+            13
+          ]
+        }
+      },
+      "shared_health": {
+        "samples": 82,
+        "some_avg10_max": 0.0,
+        "full_avg10_max": 0.0,
+        "pressure_consecutive_max": 0,
+        "disk_free_min_bytes": 3448758755328,
+        "artifact_max_bytes": 1689706599,
+        "same_identity_neighbor_observations": [
+          {
+            "pid": 28229,
+            "start_ticks": 4105475,
+            "cpu_ticks_delta": 4178,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 31243,
+            "start_ticks": 4208867,
+            "cpu_ticks_delta": 41,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 341799,
+            "start_ticks": 17196977,
+            "cpu_ticks_delta": 43320,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 341830,
+            "start_ticks": 17197099,
+            "cpu_ticks_delta": 0,
+            "phase_first": "solve_started",
+            "phase_last": "solve_started"
+          },
+          {
+            "pid": 341839,
+            "start_ticks": 17197130,
+            "cpu_ticks_delta": 32618,
+            "phase_first": "solve_started",
+            "phase_last": "solve_started"
+          },
+          {
+            "pid": 341987,
+            "start_ticks": 17219061,
+            "cpu_ticks_delta": 47,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527794,
+            "start_ticks": 51092431,
+            "cpu_ticks_delta": 7937,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527799,
+            "start_ticks": 51092465,
+            "cpu_ticks_delta": 7918,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527801,
+            "start_ticks": 51092489,
+            "cpu_ticks_delta": 0,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527817,
+            "start_ticks": 51092672,
+            "cpu_ticks_delta": 0,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527820,
+            "start_ticks": 51092704,
+            "cpu_ticks_delta": 44848,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527821,
+            "start_ticks": 51092705,
+            "cpu_ticks_delta": 44843,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527822,
+            "start_ticks": 51092705,
+            "cpu_ticks_delta": 44847,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527823,
+            "start_ticks": 51092706,
+            "cpu_ticks_delta": 44848,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527824,
+            "start_ticks": 51092706,
+            "cpu_ticks_delta": 44847,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527825,
+            "start_ticks": 51092707,
+            "cpu_ticks_delta": 44847,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527826,
+            "start_ticks": 51092707,
+            "cpu_ticks_delta": 44847,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 527827,
+            "start_ticks": 51092707,
+            "cpu_ticks_delta": 44820,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 618735,
+            "start_ticks": 57424068,
+            "cpu_ticks_delta": 158,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 618760,
+            "start_ticks": 57424242,
+            "cpu_ticks_delta": 44924,
+            "phase_first": null,
+            "phase_last": null
+          },
+          {
+            "pid": 618761,
+            "start_ticks": 57424242,
+            "cpu_ticks_delta": 44922,
+            "phase_first": null,
+            "phase_last": null
+          }
+        ],
+        "comparable_neighbor_duration_available": false,
+        "absolute_zero_interference_claim": false
+      },
+      "files": {
+        "input_original.dat": {
+          "path": "results/task042/task042_v5_error_shared_20260929T023919394810Z/input_original.dat",
+          "sha256": "531e71b089b38b7b86ac098ad80996cf9c9c888e114569e35b2b3cc15e070df3"
+        },
+        "resolved_config.json": {
+          "path": "results/task042/task042_v5_error_shared_20260929T023919394810Z/resolved_config.json",
+          "sha256": "e2f4424f55b81798ac2e05e07fa9534a75987ee9b46395d1e53d13382d785622"
+        },
+        "run_manifest.json": {
+          "path": "results/task042/task042_v5_error_shared_20260929T023919394810Z/run_manifest.json",
+          "sha256": "6996b3b5851a15d09dc9386705a9f262d46ec2b7400a32ed1588f607bce56e7b"
+        },
+        "run_summary.json": {
+          "path": "results/task042/task042_v5_error_shared_20260929T023919394810Z/run_summary.json",
+          "sha256": "f46117734140f06a36a47e91d220ec820ef61cbc95b1fc550254a5daa4fdb780"
+        },
+        "numerical_summary.json": {
+          "path": "results/task042/task042_v5_error_shared_20260929T023919394810Z/numerical_summary.json",
+          "sha256": "95a70acdce488145981036bf608404c5d288d2a0e925b3e4fd86289c8c4a1c48"
+        },
+        "resource_baseline.json": {
+          "path": "results/task042/task042_v5_error_shared_20260929T023919394810Z/resource_baseline.json",
+          "sha256": "44e0372888c7c355a815673467168320e70b92951c59316acabdcbf53106f777"
+        },
+        "actual_threads.json": {
+          "path": "results/task042/task042_v5_error_shared_20260929T023919394810Z/actual_threads.json",
+          "sha256": "b7bfed42d3552964b4eeabefe2e3127c301f8ee4989fb4b3efd02e19ed59c3b4"
+        },
+        "shared_health.jsonl": {
+          "path": "results/task042/task042_v5_error_shared_20260929T023919394810Z/shared_health.jsonl",
+          "sha256": "3bcd4b87339fa94bd0f67f3e15a4d744f5a6734934f726a370c393ecb574c69b"
+        },
+        "qualified_original_operator.json": {
+          "path": "results/task042/task042_v5_error_shared_20260929T023919394810Z/qualified_original_operator.json",
+          "sha256": "b2e096984048b79b530aba9580448178a694151348e50469386ccd70aa2101da"
+        },
+        "diagnostic_preconstruction_budget.json": {
+          "path": "results/task042/task042_v5_error_shared_20260929T023919394810Z/diagnostic_preconstruction_budget.json",
+          "sha256": "9c999443b5935482d4f0ffd3a54cda77eae45c932652cd58217d5ddb1b80cce2"
+        },
+        "source_sha.txt": {
+          "path": "results/task042/task042_v5_error_shared_20260929T023919394810Z/source_sha.txt",
+          "sha256": "cf610318e532e2b8f2750a23492b88115d69d24809dbe8e614ec1b8a14371b70"
+        }
+      },
+      "diagnostic_capacity": {
+        "allocation_envelopes_bytes": {
+          "owned_Z_U": 89391104,
+          "archive_extraction_reserve": 89391104,
+          "diagnostic_PC_vectors_and_two_column_LS": 27934720,
+          "probe_input_output_QR_SVD_workspace": 44695552,
+          "original_audit_full_vectors": 33973760,
+          "small_129_column_LAPACK_and_R": 3195072,
+          "streamed_RHS_state_and_residual": 4643136,
+          "geometry_indices_weights_buffers": 3010048
+        },
+        "representation_workspace_bound_bytes": 296234496,
+        "all_factor_bound_bytes": 302309536,
+        "representation_cap_bytes": 536870912,
+        "factor_cap_bytes": 536870912,
+        "ZB_LS_storage": "compressed <=129x129; no second tall n x129 array",
+        "probe_max_columns": 16,
+        "common_state_streamed": true,
+        "private_audit_CSR": false
+      },
+      "factor_inventory": {
+        "global_p4_factor_created": false,
+        "original_S_borrowed": true,
+        "private_audit_CSR": false,
+        "geometry_patch_factor_bytes": 298577664,
+        "R_payload_bytes": 262144,
+        "patch_count": 252,
+        "maximum_patch_rows": 272,
+        "R_rows": 128,
+        "Z_U_payload_bytes": 89391104,
+        "Z_U_R_array_hashes": {
+          "Z": "f416835a519125363e8a4351d6fb5922e198e4ba1553e07294c266cba9a23b8e",
+          "U": "96a21950ca05bca85759dbdd9d4dd1d6e03489df2b9c471cf45c08813bbf1992",
+          "R": "7809c93c9ea46acd00e9d118f8bc7e0870fb54aec55f3b64b8033a7a9c40ffa2"
+        }
+      },
+      "official_result": null,
+      "no_new_KSP": true,
+      "teacher_loaded": false,
+      "qualified_launch_command": "source scripts/activate_task042.sh fe\npython scripts/run_case.py input/task042_neural_coarse_inverse/v5_error_shared.dat",
+      "launch_cwd": "/home/fenics/Projects/NN-Lab",
+      "space_construction": "not_run; fixed basis only streamed load/identity verification included in worker wall, not separately timed",
+      "cgroup_enforcement": "not delegated; sampled0.5s own whole-tree stop, not continuous kernel hard limit"
+    }
+  },
+  "formal_wall_seconds_sum": 1144.4015286830254,
+  "sampled_process_tree_peak_bytes_max": 1135407104,
+  "own_swap_peak_bytes_max": 0,
+  "shared_workstation": true,
+  "performance_conclusion": "inconclusive under shared load",
+  "new_training_cost_seconds": 0,
+  "new_teacher_factor_cost_seconds": 0,
+  "fresh_pool_seed420620": "unconsumed; neither generated nor read",
+  "full_KSP_F5_p6_shortwave_GPU_official_results": "not_run",
+  "memory_scope": "simultaneous dedicated launcher/subreaper and all descendant RSS, sampled0.5s; no delegated kernel cgroup",
+  "timing_scope": "sum of four disjoint supervised formal stages; nested setup/audit/probe/B/C/S timers are attribution only and never summed into wall",
+  "session_edit_git_review_wall_and_RSS": "not continuously measured; auxiliary costs reported separately",
+  "auxiliary_costs": "post_checks_v5.json (disjoint checks including failed attempts; outer admission helper not continuously sampled)"
+}

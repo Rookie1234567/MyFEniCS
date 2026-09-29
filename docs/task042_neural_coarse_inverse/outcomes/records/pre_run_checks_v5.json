@@ -1,0 +1,445 @@
+{
+  "schema": "task042.pre-run-checks.v5",
+  "source_sha": "5d82651af0f723c73487783deb43969f05d46ed3",
+  "checks": {
+    "ruff_version": {
+      "command": [
+        "/home/fenics/Projects/Metrology/.venv/bin/ruff",
+        "--version"
+      ],
+      "returncode": 0,
+      "stdout": "ruff 0.16.6\n",
+      "stderr": ""
+    },
+    "format": {
+      "command": [
+        "/home/fenics/Projects/Metrology/.venv/bin/ruff",
+        "format",
+        "src/solvers/learned_fixed_localization.py",
+        "src/runners/task042_localization.py",
+        "src/io/task042_v5_gate.py",
+        "src/test/test_task042_fixed_localization.py",
+        "src/test/test_task042_v5_adapter.py"
+      ],
+      "returncode": 0,
+      "stdout": "1 file reformatted, 4 files left unchanged\n",
+      "stderr": ""
+    },
+    "ruff": {
+      "command": [
+        "/home/fenics/Projects/Metrology/.venv/bin/ruff",
+        "check",
+        "--select",
+        "E4,E7,E9,F,I,B,ISC,RUF",
+        "src/solvers/learned_fixed_localization.py",
+        "src/runners/task042_localization.py",
+        "src/io/task042_v5_gate.py",
+        "src/test/test_task042_fixed_localization.py",
+        "src/test/test_task042_v5_adapter.py",
+        "src/io/task042_profile.py",
+        "src/runners/task042_shared.py",
+        "src/runners/task042_experiment.py"
+      ],
+      "returncode": 0,
+      "stdout": "All checks passed!\n",
+      "stderr": ""
+    },
+    "compile": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "compileall",
+        "-q",
+        "src/solvers/learned_fixed_localization.py",
+        "src/runners/task042_localization.py",
+        "src/io/task042_v5_gate.py",
+        "src/test/test_task042_fixed_localization.py",
+        "src/test/test_task042_v5_adapter.py",
+        "src/io/task042_profile.py",
+        "src/runners/task042_shared.py",
+        "src/runners/task042_experiment.py",
+        "src/io/input_schema.py"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "schema_inherited_diagnostics_unchanged": {
+      "count": 20,
+      "codes": [
+        "ISC004",
+        "ISC004",
+        "ISC004",
+        "ISC004",
+        "ISC004",
+        "RUF001",
+        "ISC004",
+        "ISC004",
+        "ISC004",
+        "ISC004",
+        "ISC004",
+        "ISC004",
+        "RUF001",
+        "RUF001",
+        "RUF001",
+        "RUF001",
+        "RUF001",
+        "RUF001",
+        "RUF001",
+        "RUF022"
+      ]
+    },
+    "focused_tests": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "src/test/test_task042_fixed_localization.py",
+        "src/test/test_task042_two_level.py",
+        "src/test/test_task042_v5_adapter.py",
+        "src/test/test_task042_v4_gates.py",
+        "src/test/test_task042_coarse_inverse_protocol.py"
+      ],
+      "returncode": 0,
+      "stdout": ".......................................................                  [100%]\n55 passed in 1.50s\n",
+      "stderr": ""
+    },
+    "diff": {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  },
+  "environment": {
+    "schema": "task042.environment.v1",
+    "utc": "2026-09-29T01:54:47.500534+00:00",
+    "mode": "fe",
+    "python": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+    "prefix": "/home/fenics/Projects/NN-Lab/.venv",
+    "python_version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+    "host": "fenics-ws01",
+    "kernel": "7.0.0-31-generic",
+    "cwd": "/home/fenics/Projects/NN-Lab",
+    "source_sha": "91c4a0dbfa2e8a14df273eab5e27726059d7c835",
+    "git_status": "",
+    "affinity": [
+      0
+    ],
+    "caches": {
+      "TMPDIR": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/tmp",
+      "TMP": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/tmp",
+      "TEMP": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/tmp",
+      "XDG_CACHE_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/xdg",
+      "XDG_CONFIG_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/config",
+      "FFCX_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/xdg/fenics",
+      "PYTHONPYCACHEPREFIX": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/pycache",
+      "MPLCONFIGDIR": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/matplotlib",
+      "TORCH_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/torch",
+      "HF_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/huggingface",
+      "HUGGINGFACE_HUB_CACHE": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/huggingface/hub",
+      "TRANSFORMERS_CACHE": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/huggingface/transformers",
+      "TRITON_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/triton",
+      "CUDA_CACHE_PATH": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/cuda",
+      "NUMBA_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/numba",
+      "PIP_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/pip",
+      "UV_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/uv",
+      "RUFF_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/ruff",
+      "TASK042_RESULTS_ROOT": "/home/fenics/Projects/NN-Lab/results/task042",
+      "TASK042_ARTIFACT_ROOT": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042"
+    },
+    "threads": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "BLIS_NUM_THREADS": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "modules": {
+      "numpy": {
+        "path": "/usr/lib/python3/dist-packages/numpy/__init__.py",
+        "version": "1.26.4"
+      },
+      "src": {
+        "path": "/home/fenics/Projects/NN-Lab/src/__init__.py",
+        "version": null
+      },
+      "src.solvers.coarse_inverse_protocol": {
+        "path": "/home/fenics/Projects/NN-Lab/src/solvers/coarse_inverse_protocol.py",
+        "version": null
+      },
+      "scipy": {
+        "path": "/usr/lib/python3/dist-packages/scipy/__init__.py",
+        "version": "1.11.4"
+      },
+      "basix": {
+        "path": "/usr/lib/python3/dist-packages/basix/__init__.py",
+        "version": "0.10.0"
+      },
+      "ufl": {
+        "path": "/usr/lib/python3/dist-packages/ufl/__init__.py",
+        "version": "2025.2.1"
+      },
+      "ffcx": {
+        "path": "/usr/lib/python3/dist-packages/ffcx/__init__.py",
+        "version": "0.10.1.post0"
+      },
+      "mpi4py": {
+        "path": "/usr/lib/python3/dist-packages/mpi4py/__init__.py",
+        "version": "3.1.5"
+      },
+      "petsc4py": {
+        "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+        "version": "3.19.6"
+      },
+      "dolfinx": {
+        "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+        "version": "0.10.0"
+      },
+      "dolfinx_mpc": {
+        "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py",
+        "version": null
+      },
+      "setuptools": {
+        "path": "/home/fenics/Projects/NN-Lab/.venv/lib/python3.12/site-packages/setuptools/__init__.py",
+        "version": "78.1.0"
+      },
+      "cffi": {
+        "path": "/usr/lib/python3/dist-packages/cffi/__init__.py",
+        "version": "1.16.0"
+      },
+      "pyvista": {
+        "path": "/home/fenics/Projects/NN-Lab/.venv/lib/python3.12/site-packages/pyvista/__init__.py",
+        "version": "0.48.4"
+      },
+      "src.solvers.dtn_port_3d": {
+        "path": "/home/fenics/Projects/NN-Lab/src/solvers/dtn_port_3d.py",
+        "version": null
+      },
+      "src.runners.task042_experiment": {
+        "path": "/home/fenics/Projects/NN-Lab/src/runners/task042_experiment.py",
+        "version": null
+      }
+    },
+    "fe_jit": false,
+    "gpu_context": false,
+    "abi": {
+      "scalar": "complex128",
+      "integer": "int64",
+      "mpi_size": 1,
+      "petsc_version": [
+        3,
+        19,
+        6
+      ],
+      "mpi_library": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+      "jit_cache": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/xdg/fenics"
+    },
+    "loaded_libraries": [
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so",
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx/lib/libdolfinx.so.0.10.0",
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-int64/lib/libdolfinx_mpc.so.0.10.1",
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/cpp.cpython-312-x86_64-linux-gnu.so",
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/petsc/lib/libscalapack.so.2.2.1",
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/libpetsc.so.3.19.6",
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/lib/PETSc.cpython-312-x86_64-linux-gnu.so",
+      "/usr/lib/python3/dist-packages/basix/_basixcpp.cpython-312-x86_64-linux-gnu.so",
+      "/usr/lib/python3/dist-packages/scipy/linalg/_fblas.cpython-312-x86_64-linux-gnu.so",
+      "/usr/lib/python3/dist-packages/scipy/linalg/cython_blas.cpython-312-x86_64-linux-gnu.so",
+      "/usr/lib/x86_64-linux-gnu/libbasix.so.0.10.0",
+      "/usr/lib/x86_64-linux-gnu/libcuda.so.595.91.07",
+      "/usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6",
+      "/usr/lib/x86_64-linux-gnu/libmpi_cxx.so.40.30.1",
+      "/usr/lib/x86_64-linux-gnu/libmpi_mpifh.so.40.30.0",
+      "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+      "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+      "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so"
+    ],
+    "status": "IMPORT_PATH_ABI_PASS"
+  },
+  "preceding_static_module_failure": {
+    "format": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "ruff",
+        "format",
+        "src/solvers/learned_fixed_localization.py",
+        "src/runners/task042_localization.py",
+        "src/io/task042_v5_gate.py",
+        "src/test/test_task042_fixed_localization.py",
+        "src/test/test_task042_v5_adapter.py"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "/home/fenics/Projects/NN-Lab/.venv/bin/python: No module named ruff\n"
+    },
+    "ruff_new_and_adapters": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "ruff",
+        "check",
+        "--select",
+        "E4,E7,E9,F,I,B,ISC,RUF",
+        "--output-format",
+        "json",
+        "src/solvers/learned_fixed_localization.py",
+        "src/runners/task042_localization.py",
+        "src/io/task042_v5_gate.py",
+        "src/test/test_task042_fixed_localization.py",
+        "src/test/test_task042_v5_adapter.py",
+        "src/io/task042_profile.py",
+        "src/runners/task042_shared.py",
+        "src/runners/task042_experiment.py"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "/home/fenics/Projects/NN-Lab/.venv/bin/python: No module named ruff\n"
+    },
+    "schema_baseline": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "ruff",
+        "check",
+        "--select",
+        "E4,E7,E9,F,I,B,ISC,RUF",
+        "--output-format",
+        "json",
+        "tmp/task042/v5/schema_baseline.py"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "/home/fenics/Projects/NN-Lab/.venv/bin/python: No module named ruff\n"
+    },
+    "schema_current": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "ruff",
+        "check",
+        "--select",
+        "E4,E7,E9,F,I,B,ISC,RUF",
+        "--output-format",
+        "json",
+        "src/io/input_schema.py"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "/home/fenics/Projects/NN-Lab/.venv/bin/python: No module named ruff\n"
+    },
+    "compile": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "compileall",
+        "-q",
+        "src/solvers/learned_fixed_localization.py",
+        "src/runners/task042_localization.py",
+        "src/io/task042_v5_gate.py",
+        "src/test/test_task042_fixed_localization.py",
+        "src/test/test_task042_v5_adapter.py",
+        "src/io/task042_profile.py",
+        "src/runners/task042_shared.py",
+        "src/runners/task042_experiment.py",
+        "src/io/input_schema.py"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  },
+  "preceding_static_style_failure": {
+    "format": {
+      "command": [
+        "/home/fenics/Projects/Metrology/.venv/bin/ruff",
+        "format",
+        "src/solvers/learned_fixed_localization.py",
+        "src/runners/task042_localization.py",
+        "src/io/task042_v5_gate.py",
+        "src/test/test_task042_fixed_localization.py",
+        "src/test/test_task042_v5_adapter.py"
+      ],
+      "returncode": 0,
+      "stdout": "5 files reformatted\n",
+      "stderr": ""
+    },
+    "ruff_new_and_adapters": {
+      "command": [
+        "/home/fenics/Projects/Metrology/.venv/bin/ruff",
+        "check",
+        "--select",
+        "E4,E7,E9,F,I,B,ISC,RUF",
+        "--output-format",
+        "json",
+        "src/solvers/learned_fixed_localization.py",
+        "src/runners/task042_localization.py",
+        "src/io/task042_v5_gate.py",
+        "src/test/test_task042_fixed_localization.py",
+        "src/test/test_task042_v5_adapter.py",
+        "src/io/task042_profile.py",
+        "src/runners/task042_shared.py",
+        "src/runners/task042_experiment.py"
+      ],
+      "returncode": 1,
+      "stdout": "[\n  {\n    \"cell\": null,\n    \"code\": \"RUF005\",\n    \"end_location\": {\n      \"column\": 36,\n      \"row\": 382\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/src/solvers/learned_fixed_localization.py\",\n    \"fix\": {\n      \"applicability\": \"unsafe\",\n      \"edits\": [\n        {\n          \"content\": \"[*checks, decomposition]\",\n          \"end_location\": {\n            \"column\": 36,\n            \"row\": 382\n          },\n          \"location\": {\n            \"column\": 12,\n            \"row\": 382\n          }\n        }\n      ],\n      \"message\": \"Replace with `[*checks, decomposition]`\"\n    },\n    \"location\": {\n      \"column\": 12,\n      \"row\": 382\n    },\n    \"message\": \"Consider `[*checks, decomposition]` instead of concatenation\",\n    \"name\": \"collection-literal-concatenation\",\n    \"noqa_row\": 382,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/collection-literal-concatenation\"\n  }\n]",
+      "stderr": ""
+    },
+    "schema_baseline": {
+      "command": [
+        "/home/fenics/Projects/Metrology/.venv/bin/ruff",
+        "check",
+        "--select",
+        "E4,E7,E9,F,I,B,ISC,RUF",
+        "--output-format",
+        "json",
+        "tmp/task042/v5/schema_baseline.py"
+      ],
+      "returncode": 1,
+      "stdout": "[\n  {\n    \"cell\": null,\n    \"code\": \"ISC004\",\n    \"end_location\": {\n      \"column\": 51,\n      \"row\": 186\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/tmp/task042/v5/schema_baseline.py\",\n    \"fix\": {\n      \"applicability\": \"unsafe\",\n      \"edits\": [\n        {\n          \"content\": \"(\",\n          \"end_location\": {\n            \"column\": 13,\n            \"row\": 185\n          },\n          \"location\": {\n            \"column\": 13,\n            \"row\": 185\n          }\n        },\n        {\n          \"content\": \")\",\n          \"end_location\": {\n            \"column\": 51,\n            \"row\": 186\n          },\n          \"location\": {\n            \"column\": 51,\n            \"row\": 186\n          }\n        }\n      ],\n      \"message\": \"Did you forget a comma?\"\n    },\n    \"location\": {\n      \"column\": 13,\n      \"row\": 185\n    },\n    \"message\": \"Unparenthesized implicit string concatenation in collection\",\n    \"name\": \"implicit-string-concatenation-in-collection-literal\",\n    \"noqa_row\": 185,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"ISC004\",\n    \"end_location\": {\n      \"column\": 35,\n      \"row\": 276\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/tmp/task042/v5/schema_baseline.py\",\n    \"fix\": {\n      \"applicability\": \"unsafe\",\n      \"edits\": [\n        {\n          \"content\": \"(\",\n          \"end_location\": {\n            \"column\": 13,\n            \"row\": 275\n          },\n          \"location\": {\n            \"column\": 13,\n            \"row\": 275\n          }\n        },\n        {\n          \"content\": \")\",\n          \"end_location\": {\n            \"column\": 35,\n            \"row\": 276\n          },\n          \"location\": {\n            \"column\": 35,\n            \"row\": 276\n          }\n        }\n      ],\n      \"message\": \"Did you forget a comma?\"\n    },\n    \"location\": {\n      \"column\": 13,\n      \"row\": 275\n    },\n    \"message\": \"Unparenthesized implicit string concatenation in collection\",\n    \"name\": \"implicit-string-concatenation-in-collection-literal\",\n    \"noqa_row\": 275,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"ISC004\",\n    \"end_location\": {\n      \"column\": 35,\n      \"row\": 301\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/tmp/task042/v5/schema_baseline.py\",\n    \"fix\": {\n      \"applicability\": \"unsafe\",\n      \"edits\": [\n        {\n          \"content\": \"(\",\n          \"end_location\": {\n            \"column\": 13,\n            \"row\": 300\n          },\n          \"location\": {\n            \"column\": 13,\n            \"row\": 300\n          }\n        },\n        {\n          \"content\": \")\",\n          \"end_location\": {\n            \"column\": 35,\n            \"row\": 301\n          },\n          \"location\": {\n            \"column\": 35,\n            \"row\": 301\n          }\n        }\n      ],\n      \"message\": \"Did you forget a comma?\"\n    },\n    \"location\": {\n      \"column\": 13,\n      \"row\": 300\n    },\n    \"message\": \"Unparenthesized implicit string concatenation in collection\",\n    \"name\": \"implicit-string-concatenation-in-collection-literal\",\n    \"noqa_row\": 300,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"ISC004\",\n    \"end_location\": {\n      \"column\": 44,\n      \"row\": 387\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/tmp/task042/v5/schema_baseline.py\",\n    \"fix\": {\n      \"applicability\": \"unsafe\",\n      \"edits\": [\n        {\n          \"content\": \"(\",\n          \"end_location\": {\n            \"column\": 13,\n            \"row\": 386\n          },\n          \"location\": {\n            \"column\": 13,\n            \"row\": 386\n          }\n        },\n        {\n          \"content\": \")\",\n          \"end_location\": {\n            \"column\": 44,\n            \"row\": 387\n          },\n          \"location\": {\n            \"column\": 44,\n            \"row\": 387\n          }\n        }\n      ],\n      \"message\": \"Did you forget a comma?\"\n    },\n    \"location\": {\n      \"column\": 13,\n      \"row\": 386\n    },\n    \"message\": \"Unparenthesized implicit string concatenation in collection\",\n    \"name\": \"implicit-string-concatenation-in-collection-literal\",\n    \"noqa_row\": 386,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"ISC004\",\n    \"end_location\": {\n      \"column\": 37,\n      \"row\": 400\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/tmp/task042/v5/schema_baseline.py\",\n    \"fix\": {\n      \"applicability\": \"unsafe\",\n      \"edits\": [\n        {\n          \"content\": \"(\",\n          \"end_location\": {\n            \"column\": 13,\n            \"row\": 399\n          },\n          \"location\": {\n            \"column\": 13,\n            \"row\": 399\n          }\n        },\n        {\n          \"content\": \")\",\n          \"end_location\": {\n            \"column\": 37,\n            \"row\": 400\n          },\n          \"location\": {\n            \"column\": 37,\n            \"row\": 400\n          }\n        }\n      ],\n      \"message\": \"Did you forget a comma?\"\n    },\n    \"location\": {\n      \"column\": 13,\n      \"row\": 399\n    },\n    \"message\": \"Unparenthesized implicit string concatenation in collection\",\n    \"name\": \"implicit-string-concatenation-in-collection-literal\",\n    \"noqa_row\": 399,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"RUF001\",\n    \"end_location\": {\n      \"column\": 26,\n      \"row\": 419\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/tmp/task042/v5/schema_baseline.py\",\n    \"fix\": null,\n    \"location\": {\n      \"column\": 25,\n      \"row\": 419\n    },\n    \"message\": \"String contains ambiguous `；` (FULLWIDTH SEMICOLON). Did you mean `;` (SEMICOLON)?\",\n    \"name\": \"ambiguous-unicode-character-string\",\n    \"noqa_row\": 419,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/ambiguous-unicode-character-string\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"ISC004\",\n    \"end_location\": {\n      \"column\": 71,\n      \"row\": 685\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/tmp/task042/v5/schema_baseline.py\",\n    \"fix\": {\n      \"applicability\": \"unsafe\",\n      \"edits\": [\n        {\n          \"content\": \"(\",\n          \"end_location\": {\n            \"column\": 13,\n            \"row\": 684\n          },\n          \"location\": {\n            \"column\": 13,\n            \"row\": 684\n          }\n        },\n        {\n          \"content\": \")\",\n          \"end_location\": {\n            \"column\": 71,\n            \"row\": 685\n          },\n          \"location\": {\n            \"column\": 71,\n            \"row\": 685\n          }\n        }\n      ],\n      \"message\": \"Did you forget a comma?\"\n    },\n    \"location\": {\n      \"column\": 13,\n      \"row\": 684\n    },\n    \"message\": \"Unparenthesized implicit string concatenation in collection\",\n    \"name\": \"implicit-string-concatenation-in-collection-literal\",\n    \"noqa_row\": 684,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"ISC004\",\n    \"end_location\": {\n      \"column\": 32,\n      \"row\": 749\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/tmp/task042/v5/schema_baseline.py\",\n    \"fix\": {\n      \"applicability\": \"unsafe\",\n      \"edits\": [\n        {\n          \"content\": \"(\",\n          \"end_location\": {\n            \"column\": 13,\n            \"row\": 745\n          },\n          \"location\": {\n            \"column\": 13,\n            \"row\": 745\n          }\n        },\n        {\n          \"content\": \")\",\n          \"end_location\": {\n            \"column\": 32,\n            \"row\": 749\n          },\n          \"location\": {\n            \"column\": 32,\n            \"row\": 749\n          }\n        }\n      ],\n      \"message\": \"Did you forget a comma?\"\n    },\n    \"location\": {\n      \"column\": 13,\n      \"row\": 745\n    },\n    \"message\": \"Unparenthesized implicit string concatenation in collection\",\n    \"name\": \"implicit-string-concatenation-in-collection-literal\",\n    \"noqa_row\": 745,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"ISC004\",\n    \"end_location\": {\n      \"column\": 60,\n      \"row\": 763\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/tmp/task042/v5/schema_baseline.py\",\n    \"fix\": {\n      \"applicability\": \"unsafe\",\n      \"edits\": [\n        {\n          \"content\": \"(\",\n          \"end_location\": {\n            \"column\": 13,\n            \"row\": 762\n          },\n          \"location\": {\n            \"column\": 13,\n            \"row\": 762\n          }\n        },\n        {\n          \"content\": \")\",\n          \"end_location\": {\n            \"column\": 60,\n            \"row\": 763\n          },\n          \"location\": {\n            \"column\": 60,\n            \"row\": 763\n          }\n        }\n      ],\n      \"message\": \"Did you forget a comma?\"\n    },\n    \"location\": {\n      \"column\": 13,\n      \"row\": 762\n    },\n    \"message\": \"Unparenthesized implicit string concatenation in collection\",\n    \"name\": \"implicit-string-concatenation-in-collection-literal\",\n    \"noqa_row\": 762,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"ISC004\",\n    \"end_location\": {\n      \"column\": 47,\n      \"row\": 780\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/tmp/task042/v5/schema_baseline.py\",\n    \"fix\": {\n      \"applicability\": \"unsafe\",\n      \"edits\": [\n        {\n          \"content\": \"(\",\n          \"end_location\": {\n            \"column\": 13,\n            \"row\": 776\n          },\n          \"location\": {\n            \"column\": 13,\n            \"row\": 776\n          }\n        },\n        {\n          \"content\": \")\",\n          \"end_location\": {\n            \"column\": 47,\n            \"row\": 780\n          },\n          \"location\": {\n            \"column\": 47,\n            \"row\": 780\n          }\n        }\n      ],\n      \"message\": \"Did you forget a comma?\"\n    },\n    \"location\": {\n      \"column\": 13,\n      \"row\": 776\n    },\n    \"message\": \"Unparenthesized implicit string concatenation in collection\",\n    \"name\": \"implicit-string-concatenation-in-collection-literal\",\n    \"noqa_row\": 776,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"ISC004\",\n    \"end_location\": {\n      \"column\": 31,\n      \"row\": 850\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/tmp/task042/v5/schema_baseline.py\",\n    \"fix\": {\n      \"applicability\": \"unsafe\",\n      \"edits\": [\n        {\n          \"content\": \"(\",\n          \"end_location\": {\n            \"column\": 13,\n            \"row\": 848\n          },\n          \"location\": {\n            \"column\": 13,\n            \"row\": 848\n          }\n        },\n        {\n          \"content\": \")\",\n          \"end_location\": {\n            \"column\": 31,\n            \"row\": 850\n          },\n          \"location\": {\n            \"column\": 31,\n            \"row\": 850\n          }\n        }\n      ],\n      \"message\": \"Did you forget a comma?\"\n    },\n    \"location\": {\n      \"column\": 13,\n      \"row\": 848\n    },\n    \"message\": \"Unparenthesized implicit string concatenation in collection\",\n    \"name\": \"implicit-string-concatenation-in-collection-literal\",\n    \"noqa_row\": 848,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"ISC004\",\n    \"end_location\": {\n      \"column\": 50,\n      \"row\": 968\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/tmp/task042/v5/schema_baseline.py\",\n    \"fix\": {\n      \"applicability\": \"unsafe\",\n      \"edits\": [\n        {\n          \"content\": \"(\",\n          \"end_location\": {\n            \"column\": 13,\n            \"row\": 967\n          },\n          \"location\": {\n            \"column\": 13,\n            \"row\": 967\n          }\n        },\n        {\n          \"content\": \")\",\n          \"end_location\": {\n            \"column\": 50,\n            \"row\": 968\n          },\n          \"location\": {\n            \"column\": 50,\n            \"row\": 968\n          }\n        }\n      ],\n      \"message\": \"Did you forget a comma?\"\n    },\n    \"location\": {\n      \"column\": 13,\n      \"row\": 967\n    },\n    \"message\": \"Unparenthesized implicit string concatenation in collection\",\n    \"name\": \"implicit-string-concatenation-in-collection-literal\",\n    \"noqa_row\": 967,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"RUF001\",\n    \"end_location\": {\n      \"column\": 45,\n      \"row\": 1030\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/tmp/task042/v5/schema_baseline.py\",\n    \"fix\": null,\n    \"location\": {\n      \"column\": 44,\n      \"row\": 1030\n    },\n    \"message\": \"String contains ambiguous `（` (FULLWIDTH LEFT PARENTHESIS). Did you mean `(` (LEFT PARENTHESIS)?\",\n    \"name\": \"ambiguous-unicode-character-string\",\n    \"noqa_row\": 1030,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/ambiguous-unicode-character-string\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"RUF001\",\n    \"end_location\": {\n      \"column\": 51,\n      \"row\": 1030\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/tmp/task042/v5/schema_baseline.py\",\n    \"fix\": null,\n    \"location\": {\n      \"column\": 50,\n      \"row\": 1030\n    },\n    \"message\": \"String contains ambiguous `）` (FULLWIDTH RIGHT PARENTHESIS). Did you mean `)` (RIGHT PARENTHESIS)?\",\n    \"name\": \"ambiguous-unicode-character-string\",\n    \"noqa_row\": 1030,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/ambiguous-unicode-character-string\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"RUF001\",\n    \"end_location\": {\n      \"column\": 38,\n      \"row\": 1217\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/tmp/task042/v5/schema_baseline.py\",\n    \"fix\": null,\n    \"location\": {\n      \"column\": 37,\n      \"row\": 1217\n    },\n    \"message\": \"String contains ambiguous `；` (FULLWIDTH SEMICOLON). Did you mean `;` (SEMICOLON)?\",\n    \"name\": \"ambiguous-unicode-character-string\",\n    \"noqa_row\": 1217,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/ambiguous-unicode-character-string\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"RUF001\",\n    \"end_location\": {\n      \"column\": 23,\n      \"row\": 1341\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/tmp/task042/v5/schema_baseline.py\",\n    \"fix\": null,\n    \"location\": {\n      \"column\": 22,\n      \"row\": 1341\n    },\n    \"message\": \"String contains ambiguous `（` (FULLWIDTH LEFT PARENTHESIS). Did you mean `(` (LEFT PARENTHESIS)?\",\n    \"name\": \"ambiguous-unicode-character-string\",\n    \"noqa_row\": 1341,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/ambiguous-unicode-character-string\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"RUF001\",\n    \"end_location\": {\n      \"column\": 46,\n      \"row\": 1341\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/tmp/task042/v5/schema_baseline.py\",\n    \"fix\": null,\n    \"location\": {\n      \"column\": 45,\n      \"row\": 1341\n    },\n    \"message\": \"String contains ambiguous `）` (FULLWIDTH RIGHT PARENTHESIS). Did you mean `)` (RIGHT PARENTHESIS)?\",\n    \"name\": \"ambiguous-unicode-character-string\",\n    \"noqa_row\": 1341,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/ambiguous-unicode-character-string\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"RUF001\",\n    \"end_location\": {\n      \"column\": 23,\n      \"row\": 1352\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/tmp/task042/v5/schema_baseline.py\",\n    \"fix\": null,\n    \"location\": {\n      \"column\": 22,\n      \"row\": 1352\n    },\n    \"message\": \"String contains ambiguous `（` (FULLWIDTH LEFT PARENTHESIS). Did you mean `(` (LEFT PARENTHESIS)?\",\n    \"name\": \"ambiguous-unicode-character-string\",\n    \"noqa_row\": 1352,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/ambiguous-unicode-character-string\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"RUF001\",\n    \"end_location\": {\n      \"column\": 46,\n      \"row\": 1352\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/tmp/task042/v5/schema_baseline.py\",\n    \"fix\": null,\n    \"location\": {\n      \"column\": 45,\n      \"row\": 1352\n    },\n    \"message\": \"String contains ambiguous `）` (FULLWIDTH RIGHT PARENTHESIS). Did you mean `)` (RIGHT PARENTHESIS)?\",\n    \"name\": \"ambiguous-unicode-character-string\",\n    \"noqa_row\": 1352,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/ambiguous-unicode-character-string\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"RUF022\",\n    \"end_location\": {\n      \"column\": 2,\n      \"row\": 1459\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/tmp/task042/v5/schema_baseline.py\",\n    \"fix\": {\n      \"applicability\": \"safe\",\n      \"edits\": [\n        {\n          \"content\": \"[\\n    \\\"FIELD_SPECS\\\",\\n    \\\"FIELD_SPECS_BY_KEY\\\",\\n    \\\"IDENTITY_FIELD_SPECS\\\",\\n    \\\"IDENTITY_KEYS\\\",\\n    \\\"METHOD_KINDS\\\",\\n    \\\"PUBLIC_FIELD_KEYS\\\",\\n    \\\"PUBLIC_FIELD_SPECS\\\",\\n    \\\"SCHEMA_VERSION\\\",\\n    \\\"SECTION_FIELD_KEYS\\\",\\n    \\\"SECTION_NAMES\\\",\\n    \\\"FieldSpec\\\",\\n]\",\n          \"end_location\": {\n            \"column\": 2,\n            \"row\": 1459\n          },\n          \"location\": {\n            \"column\": 11,\n            \"row\": 1447\n          }\n        }\n      ],\n      \"message\": \"Apply an isort-style sorting to `__all__`\"\n    },\n    \"location\": {\n      \"column\": 11,\n      \"row\": 1447\n    },\n    \"message\": \"`__all__` is not sorted\",\n    \"name\": \"unsorted-dunder-all\",\n    \"noqa_row\": 1447,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/unsorted-dunder-all\"\n  }\n]",
+      "stderr": ""
+    },
+    "schema_current": {
+      "command": [
+        "/home/fenics/Projects/Metrology/.venv/bin/ruff",
+        "check",
+        "--select",
+        "E4,E7,E9,F,I,B,ISC,RUF",
+        "--output-format",
+        "json",
+        "src/io/input_schema.py"
+      ],
+      "returncode": 1,
+      "stdout": "[\n  {\n    \"cell\": null,\n    \"code\": \"ISC004\",\n    \"end_location\": {\n      \"column\": 51,\n      \"row\": 186\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/src/io/input_schema.py\",\n    \"fix\": {\n      \"applicability\": \"unsafe\",\n      \"edits\": [\n        {\n          \"content\": \"(\",\n          \"end_location\": {\n            \"column\": 13,\n            \"row\": 185\n          },\n          \"location\": {\n            \"column\": 13,\n            \"row\": 185\n          }\n        },\n        {\n          \"content\": \")\",\n          \"end_location\": {\n            \"column\": 51,\n            \"row\": 186\n          },\n          \"location\": {\n            \"column\": 51,\n            \"row\": 186\n          }\n        }\n      ],\n      \"message\": \"Did you forget a comma?\"\n    },\n    \"location\": {\n      \"column\": 13,\n      \"row\": 185\n    },\n    \"message\": \"Unparenthesized implicit string concatenation in collection\",\n    \"name\": \"implicit-string-concatenation-in-collection-literal\",\n    \"noqa_row\": 185,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"ISC004\",\n    \"end_location\": {\n      \"column\": 35,\n      \"row\": 276\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/src/io/input_schema.py\",\n    \"fix\": {\n      \"applicability\": \"unsafe\",\n      \"edits\": [\n        {\n          \"content\": \"(\",\n          \"end_location\": {\n            \"column\": 13,\n            \"row\": 275\n          },\n          \"location\": {\n            \"column\": 13,\n            \"row\": 275\n          }\n        },\n        {\n          \"content\": \")\",\n          \"end_location\": {\n            \"column\": 35,\n            \"row\": 276\n          },\n          \"location\": {\n            \"column\": 35,\n            \"row\": 276\n          }\n        }\n      ],\n      \"message\": \"Did you forget a comma?\"\n    },\n    \"location\": {\n      \"column\": 13,\n      \"row\": 275\n    },\n    \"message\": \"Unparenthesized implicit string concatenation in collection\",\n    \"name\": \"implicit-string-concatenation-in-collection-literal\",\n    \"noqa_row\": 275,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"ISC004\",\n    \"end_location\": {\n      \"column\": 35,\n      \"row\": 301\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/src/io/input_schema.py\",\n    \"fix\": {\n      \"applicability\": \"unsafe\",\n      \"edits\": [\n        {\n          \"content\": \"(\",\n          \"end_location\": {\n            \"column\": 13,\n            \"row\": 300\n          },\n          \"location\": {\n            \"column\": 13,\n            \"row\": 300\n          }\n        },\n        {\n          \"content\": \")\",\n          \"end_location\": {\n            \"column\": 35,\n            \"row\": 301\n          },\n          \"location\": {\n            \"column\": 35,\n            \"row\": 301\n          }\n        }\n      ],\n      \"message\": \"Did you forget a comma?\"\n    },\n    \"location\": {\n      \"column\": 13,\n      \"row\": 300\n    },\n    \"message\": \"Unparenthesized implicit string concatenation in collection\",\n    \"name\": \"implicit-string-concatenation-in-collection-literal\",\n    \"noqa_row\": 300,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"ISC004\",\n    \"end_location\": {\n      \"column\": 44,\n      \"row\": 387\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/src/io/input_schema.py\",\n    \"fix\": {\n      \"applicability\": \"unsafe\",\n      \"edits\": [\n        {\n          \"content\": \"(\",\n          \"end_location\": {\n            \"column\": 13,\n            \"row\": 386\n          },\n          \"location\": {\n            \"column\": 13,\n            \"row\": 386\n          }\n        },\n        {\n          \"content\": \")\",\n          \"end_location\": {\n            \"column\": 44,\n            \"row\": 387\n          },\n          \"location\": {\n            \"column\": 44,\n            \"row\": 387\n          }\n        }\n      ],\n      \"message\": \"Did you forget a comma?\"\n    },\n    \"location\": {\n      \"column\": 13,\n      \"row\": 386\n    },\n    \"message\": \"Unparenthesized implicit string concatenation in collection\",\n    \"name\": \"implicit-string-concatenation-in-collection-literal\",\n    \"noqa_row\": 386,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"ISC004\",\n    \"end_location\": {\n      \"column\": 37,\n      \"row\": 400\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/src/io/input_schema.py\",\n    \"fix\": {\n      \"applicability\": \"unsafe\",\n      \"edits\": [\n        {\n          \"content\": \"(\",\n          \"end_location\": {\n            \"column\": 13,\n            \"row\": 399\n          },\n          \"location\": {\n            \"column\": 13,\n            \"row\": 399\n          }\n        },\n        {\n          \"content\": \")\",\n          \"end_location\": {\n            \"column\": 37,\n            \"row\": 400\n          },\n          \"location\": {\n            \"column\": 37,\n            \"row\": 400\n          }\n        }\n      ],\n      \"message\": \"Did you forget a comma?\"\n    },\n    \"location\": {\n      \"column\": 13,\n      \"row\": 399\n    },\n    \"message\": \"Unparenthesized implicit string concatenation in collection\",\n    \"name\": \"implicit-string-concatenation-in-collection-literal\",\n    \"noqa_row\": 399,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"RUF001\",\n    \"end_location\": {\n      \"column\": 26,\n      \"row\": 419\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/src/io/input_schema.py\",\n    \"fix\": null,\n    \"location\": {\n      \"column\": 25,\n      \"row\": 419\n    },\n    \"message\": \"String contains ambiguous `；` (FULLWIDTH SEMICOLON). Did you mean `;` (SEMICOLON)?\",\n    \"name\": \"ambiguous-unicode-character-string\",\n    \"noqa_row\": 419,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/ambiguous-unicode-character-string\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"ISC004\",\n    \"end_location\": {\n      \"column\": 71,\n      \"row\": 685\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/src/io/input_schema.py\",\n    \"fix\": {\n      \"applicability\": \"unsafe\",\n      \"edits\": [\n        {\n          \"content\": \"(\",\n          \"end_location\": {\n            \"column\": 13,\n            \"row\": 684\n          },\n          \"location\": {\n            \"column\": 13,\n            \"row\": 684\n          }\n        },\n        {\n          \"content\": \")\",\n          \"end_location\": {\n            \"column\": 71,\n            \"row\": 685\n          },\n          \"location\": {\n            \"column\": 71,\n            \"row\": 685\n          }\n        }\n      ],\n      \"message\": \"Did you forget a comma?\"\n    },\n    \"location\": {\n      \"column\": 13,\n      \"row\": 684\n    },\n    \"message\": \"Unparenthesized implicit string concatenation in collection\",\n    \"name\": \"implicit-string-concatenation-in-collection-literal\",\n    \"noqa_row\": 684,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"ISC004\",\n    \"end_location\": {\n      \"column\": 32,\n      \"row\": 749\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/src/io/input_schema.py\",\n    \"fix\": {\n      \"applicability\": \"unsafe\",\n      \"edits\": [\n        {\n          \"content\": \"(\",\n          \"end_location\": {\n            \"column\": 13,\n            \"row\": 745\n          },\n          \"location\": {\n            \"column\": 13,\n            \"row\": 745\n          }\n        },\n        {\n          \"content\": \")\",\n          \"end_location\": {\n            \"column\": 32,\n            \"row\": 749\n          },\n          \"location\": {\n            \"column\": 32,\n            \"row\": 749\n          }\n        }\n      ],\n      \"message\": \"Did you forget a comma?\"\n    },\n    \"location\": {\n      \"column\": 13,\n      \"row\": 745\n    },\n    \"message\": \"Unparenthesized implicit string concatenation in collection\",\n    \"name\": \"implicit-string-concatenation-in-collection-literal\",\n    \"noqa_row\": 745,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"ISC004\",\n    \"end_location\": {\n      \"column\": 60,\n      \"row\": 763\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/src/io/input_schema.py\",\n    \"fix\": {\n      \"applicability\": \"unsafe\",\n      \"edits\": [\n        {\n          \"content\": \"(\",\n          \"end_location\": {\n            \"column\": 13,\n            \"row\": 762\n          },\n          \"location\": {\n            \"column\": 13,\n            \"row\": 762\n          }\n        },\n        {\n          \"content\": \")\",\n          \"end_location\": {\n            \"column\": 60,\n            \"row\": 763\n          },\n          \"location\": {\n            \"column\": 60,\n            \"row\": 763\n          }\n        }\n      ],\n      \"message\": \"Did you forget a comma?\"\n    },\n    \"location\": {\n      \"column\": 13,\n      \"row\": 762\n    },\n    \"message\": \"Unparenthesized implicit string concatenation in collection\",\n    \"name\": \"implicit-string-concatenation-in-collection-literal\",\n    \"noqa_row\": 762,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"ISC004\",\n    \"end_location\": {\n      \"column\": 47,\n      \"row\": 780\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/src/io/input_schema.py\",\n    \"fix\": {\n      \"applicability\": \"unsafe\",\n      \"edits\": [\n        {\n          \"content\": \"(\",\n          \"end_location\": {\n            \"column\": 13,\n            \"row\": 776\n          },\n          \"location\": {\n            \"column\": 13,\n            \"row\": 776\n          }\n        },\n        {\n          \"content\": \")\",\n          \"end_location\": {\n            \"column\": 47,\n            \"row\": 780\n          },\n          \"location\": {\n            \"column\": 47,\n            \"row\": 780\n          }\n        }\n      ],\n      \"message\": \"Did you forget a comma?\"\n    },\n    \"location\": {\n      \"column\": 13,\n      \"row\": 776\n    },\n    \"message\": \"Unparenthesized implicit string concatenation in collection\",\n    \"name\": \"implicit-string-concatenation-in-collection-literal\",\n    \"noqa_row\": 776,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"ISC004\",\n    \"end_location\": {\n      \"column\": 31,\n      \"row\": 850\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/src/io/input_schema.py\",\n    \"fix\": {\n      \"applicability\": \"unsafe\",\n      \"edits\": [\n        {\n          \"content\": \"(\",\n          \"end_location\": {\n            \"column\": 13,\n            \"row\": 848\n          },\n          \"location\": {\n            \"column\": 13,\n            \"row\": 848\n          }\n        },\n        {\n          \"content\": \")\",\n          \"end_location\": {\n            \"column\": 31,\n            \"row\": 850\n          },\n          \"location\": {\n            \"column\": 31,\n            \"row\": 850\n          }\n        }\n      ],\n      \"message\": \"Did you forget a comma?\"\n    },\n    \"location\": {\n      \"column\": 13,\n      \"row\": 848\n    },\n    \"message\": \"Unparenthesized implicit string concatenation in collection\",\n    \"name\": \"implicit-string-concatenation-in-collection-literal\",\n    \"noqa_row\": 848,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"ISC004\",\n    \"end_location\": {\n      \"column\": 50,\n      \"row\": 968\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/src/io/input_schema.py\",\n    \"fix\": {\n      \"applicability\": \"unsafe\",\n      \"edits\": [\n        {\n          \"content\": \"(\",\n          \"end_location\": {\n            \"column\": 13,\n            \"row\": 967\n          },\n          \"location\": {\n            \"column\": 13,\n            \"row\": 967\n          }\n        },\n        {\n          \"content\": \")\",\n          \"end_location\": {\n            \"column\": 50,\n            \"row\": 968\n          },\n          \"location\": {\n            \"column\": 50,\n            \"row\": 968\n          }\n        }\n      ],\n      \"message\": \"Did you forget a comma?\"\n    },\n    \"location\": {\n      \"column\": 13,\n      \"row\": 967\n    },\n    \"message\": \"Unparenthesized implicit string concatenation in collection\",\n    \"name\": \"implicit-string-concatenation-in-collection-literal\",\n    \"noqa_row\": 967,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"RUF001\",\n    \"end_location\": {\n      \"column\": 45,\n      \"row\": 1032\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/src/io/input_schema.py\",\n    \"fix\": null,\n    \"location\": {\n      \"column\": 44,\n      \"row\": 1032\n    },\n    \"message\": \"String contains ambiguous `（` (FULLWIDTH LEFT PARENTHESIS). Did you mean `(` (LEFT PARENTHESIS)?\",\n    \"name\": \"ambiguous-unicode-character-string\",\n    \"noqa_row\": 1032,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/ambiguous-unicode-character-string\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"RUF001\",\n    \"end_location\": {\n      \"column\": 51,\n      \"row\": 1032\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/src/io/input_schema.py\",\n    \"fix\": null,\n    \"location\": {\n      \"column\": 50,\n      \"row\": 1032\n    },\n    \"message\": \"String contains ambiguous `）` (FULLWIDTH RIGHT PARENTHESIS). Did you mean `)` (RIGHT PARENTHESIS)?\",\n    \"name\": \"ambiguous-unicode-character-string\",\n    \"noqa_row\": 1032,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/ambiguous-unicode-character-string\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"RUF001\",\n    \"end_location\": {\n      \"column\": 38,\n      \"row\": 1219\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/src/io/input_schema.py\",\n    \"fix\": null,\n    \"location\": {\n      \"column\": 37,\n      \"row\": 1219\n    },\n    \"message\": \"String contains ambiguous `；` (FULLWIDTH SEMICOLON). Did you mean `;` (SEMICOLON)?\",\n    \"name\": \"ambiguous-unicode-character-string\",\n    \"noqa_row\": 1219,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/ambiguous-unicode-character-string\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"RUF001\",\n    \"end_location\": {\n      \"column\": 23,\n      \"row\": 1343\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/src/io/input_schema.py\",\n    \"fix\": null,\n    \"location\": {\n      \"column\": 22,\n      \"row\": 1343\n    },\n    \"message\": \"String contains ambiguous `（` (FULLWIDTH LEFT PARENTHESIS). Did you mean `(` (LEFT PARENTHESIS)?\",\n    \"name\": \"ambiguous-unicode-character-string\",\n    \"noqa_row\": 1343,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/ambiguous-unicode-character-string\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"RUF001\",\n    \"end_location\": {\n      \"column\": 46,\n      \"row\": 1343\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/src/io/input_schema.py\",\n    \"fix\": null,\n    \"location\": {\n      \"column\": 45,\n      \"row\": 1343\n    },\n    \"message\": \"String contains ambiguous `）` (FULLWIDTH RIGHT PARENTHESIS). Did you mean `)` (RIGHT PARENTHESIS)?\",\n    \"name\": \"ambiguous-unicode-character-string\",\n    \"noqa_row\": 1343,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/ambiguous-unicode-character-string\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"RUF001\",\n    \"end_location\": {\n      \"column\": 23,\n      \"row\": 1354\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/src/io/input_schema.py\",\n    \"fix\": null,\n    \"location\": {\n      \"column\": 22,\n      \"row\": 1354\n    },\n    \"message\": \"String contains ambiguous `（` (FULLWIDTH LEFT PARENTHESIS). Did you mean `(` (LEFT PARENTHESIS)?\",\n    \"name\": \"ambiguous-unicode-character-string\",\n    \"noqa_row\": 1354,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/ambiguous-unicode-character-string\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"RUF001\",\n    \"end_location\": {\n      \"column\": 46,\n      \"row\": 1354\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/src/io/input_schema.py\",\n    \"fix\": null,\n    \"location\": {\n      \"column\": 45,\n      \"row\": 1354\n    },\n    \"message\": \"String contains ambiguous `）` (FULLWIDTH RIGHT PARENTHESIS). Did you mean `)` (RIGHT PARENTHESIS)?\",\n    \"name\": \"ambiguous-unicode-character-string\",\n    \"noqa_row\": 1354,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/ambiguous-unicode-character-string\"\n  },\n  {\n    \"cell\": null,\n    \"code\": \"RUF022\",\n    \"end_location\": {\n      \"column\": 2,\n      \"row\": 1461\n    },\n    \"filename\": \"/home/fenics/Projects/NN-Lab/src/io/input_schema.py\",\n    \"fix\": {\n      \"applicability\": \"safe\",\n      \"edits\": [\n        {\n          \"content\": \"[\\n    \\\"FIELD_SPECS\\\",\\n    \\\"FIELD_SPECS_BY_KEY\\\",\\n    \\\"IDENTITY_FIELD_SPECS\\\",\\n    \\\"IDENTITY_KEYS\\\",\\n    \\\"METHOD_KINDS\\\",\\n    \\\"PUBLIC_FIELD_KEYS\\\",\\n    \\\"PUBLIC_FIELD_SPECS\\\",\\n    \\\"SCHEMA_VERSION\\\",\\n    \\\"SECTION_FIELD_KEYS\\\",\\n    \\\"SECTION_NAMES\\\",\\n    \\\"FieldSpec\\\",\\n]\",\n          \"end_location\": {\n            \"column\": 2,\n            \"row\": 1461\n          },\n          \"location\": {\n            \"column\": 11,\n            \"row\": 1449\n          }\n        }\n      ],\n      \"message\": \"Apply an isort-style sorting to `__all__`\"\n    },\n    \"location\": {\n      \"column\": 11,\n      \"row\": 1449\n    },\n    \"message\": \"`__all__` is not sorted\",\n    \"name\": \"unsorted-dunder-all\",\n    \"noqa_row\": 1449,\n    \"severity\": \"error\",\n    \"url\": \"https://docs.astral.sh/ruff/rules/unsorted-dunder-all\"\n  }\n]",
+      "stderr": ""
+    },
+    "compile": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "compileall",
+        "-q",
+        "src/solvers/learned_fixed_localization.py",
+        "src/runners/task042_localization.py",
+        "src/io/task042_v5_gate.py",
+        "src/test/test_task042_fixed_localization.py",
+        "src/test/test_task042_v5_adapter.py",
+        "src/io/task042_profile.py",
+        "src/runners/task042_shared.py",
+        "src/runners/task042_experiment.py",
+        "src/io/input_schema.py"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  },
+  "numeric_source_clean_before_all_FE": true
+}

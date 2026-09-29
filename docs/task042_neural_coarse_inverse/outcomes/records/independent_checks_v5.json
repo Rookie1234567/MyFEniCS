@@ -1,0 +1,176 @@
+{
+  "schema": "task042.independent-raw-checks.v5",
+  "source_sha": "5d82651af0f723c73487783deb43969f05d46ed3",
+  "same_states_for_both_spaces": true,
+  "state_count": 12,
+  "action_audit_count": 192,
+  "routes": {
+    "OLDPOD": [
+      {
+        "state_id": "ZERO-000",
+        "passed": true,
+        "max_defect_or_inclusion_violation": 4.693465569561476e-14,
+        "limit": 1e-10
+      },
+      {
+        "state_id": "ZERO-010",
+        "passed": true,
+        "max_defect_or_inclusion_violation": 2.70061113031505e-15,
+        "limit": 1e-10
+      },
+      {
+        "state_id": "ZERO-011",
+        "passed": true,
+        "max_defect_or_inclusion_violation": 3.4333411953647027e-15,
+        "limit": 1e-10
+      },
+      {
+        "state_id": "GEO-000",
+        "passed": true,
+        "max_defect_or_inclusion_violation": 4.663839559601351e-14,
+        "limit": 1e-10
+      },
+      {
+        "state_id": "GEO-010",
+        "passed": true,
+        "max_defect_or_inclusion_violation": 2.7096358255663717e-15,
+        "limit": 1e-10
+      },
+      {
+        "state_id": "GEO-011",
+        "passed": true,
+        "max_defect_or_inclusion_violation": 3.3762062672694226e-15,
+        "limit": 1e-10
+      },
+      {
+        "state_id": "OLDPOD-000",
+        "passed": true,
+        "max_defect_or_inclusion_violation": 4.7382668446727704e-14,
+        "limit": 1e-10
+      },
+      {
+        "state_id": "OLDPOD-010",
+        "passed": true,
+        "max_defect_or_inclusion_violation": 2.7654747248399053e-15,
+        "limit": 1e-10
+      },
+      {
+        "state_id": "OLDPOD-011",
+        "passed": true,
+        "max_defect_or_inclusion_violation": 3.4512285902020767e-15,
+        "limit": 1e-10
+      },
+      {
+        "state_id": "ERROR-000",
+        "passed": true,
+        "max_defect_or_inclusion_violation": 4.6750957715844774e-14,
+        "limit": 1e-10
+      },
+      {
+        "state_id": "ERROR-010",
+        "passed": true,
+        "max_defect_or_inclusion_violation": 2.8116695482912597e-15,
+        "limit": 1e-10
+      },
+      {
+        "state_id": "ERROR-011",
+        "passed": true,
+        "max_defect_or_inclusion_violation": 3.646174238188266e-15,
+        "limit": 1e-10
+      },
+      {
+        "probe": {
+          "passed": true,
+          "max_complete_image_defect": 1.4028815883010531e-14,
+          "limit": 1e-10,
+          "global_singularity_inferred": false
+        }
+      }
+    ],
+    "ERROR": [
+      {
+        "state_id": "ZERO-000",
+        "passed": true,
+        "max_defect_or_inclusion_violation": 2.745105023617778e-14,
+        "limit": 1e-10
+      },
+      {
+        "state_id": "ZERO-010",
+        "passed": true,
+        "max_defect_or_inclusion_violation": 7.872024236155285e-15,
+        "limit": 1e-10
+      },
+      {
+        "state_id": "ZERO-011",
+        "passed": true,
+        "max_defect_or_inclusion_violation": 9.062186038113765e-15,
+        "limit": 1e-10
+      },
+      {
+        "state_id": "GEO-000",
+        "passed": true,
+        "max_defect_or_inclusion_violation": 2.928583753646398e-14,
+        "limit": 1e-10
+      },
+      {
+        "state_id": "GEO-010",
+        "passed": true,
+        "max_defect_or_inclusion_violation": 8.059840727050479e-15,
+        "limit": 1e-10
+      },
+      {
+        "state_id": "GEO-011",
+        "passed": true,
+        "max_defect_or_inclusion_violation": 9.318753677067834e-15,
+        "limit": 1e-10
+      },
+      {
+        "state_id": "OLDPOD-000",
+        "passed": true,
+        "max_defect_or_inclusion_violation": 2.7409963370195438e-14,
+        "limit": 1e-10
+      },
+      {
+        "state_id": "OLDPOD-010",
+        "passed": true,
+        "max_defect_or_inclusion_violation": 7.909232335406045e-15,
+        "limit": 1e-10
+      },
+      {
+        "state_id": "OLDPOD-011",
+        "passed": true,
+        "max_defect_or_inclusion_violation": 9.326496657246326e-15,
+        "limit": 1e-10
+      },
+      {
+        "state_id": "ERROR-000",
+        "passed": true,
+        "max_defect_or_inclusion_violation": 2.7521267506378424e-14,
+        "limit": 1e-10
+      },
+      {
+        "state_id": "ERROR-010",
+        "passed": true,
+        "max_defect_or_inclusion_violation": 8.123409814358831e-15,
+        "limit": 1e-10
+      },
+      {
+        "state_id": "ERROR-011",
+        "passed": true,
+        "max_defect_or_inclusion_violation": 9.428507921406477e-15,
+        "limit": 1e-10
+      },
+      {
+        "probe": {
+          "passed": true,
+          "max_complete_image_defect": 1.8187659916217574e-14,
+          "limit": 1e-10,
+          "global_singularity_inferred": false
+        }
+      }
+    ]
+  },
+  "all_passed": true,
+  "norm_defect_limit": 1e-10,
+  "no_solver_qualification": true
+}
