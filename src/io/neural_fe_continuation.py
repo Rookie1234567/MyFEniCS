@@ -14,6 +14,9 @@ from src.io.task042_profile import ROOT
 DESIGN_PATH = ROOT / "input/task042_neural_coarse_inverse/neural_fe_design_v7.json"
 V7_ROOT = ROOT / "benchmarks/artifacts/task042/v7"
 STAGES = {
+    "neural_trace": ("task042_v7_neural_trace", "V7-M2-NEURAL", "ml", 7200),
+    "free_fe_opt": ("task042_v7_free_fe_opt", "V7-M2-FREE", "ml", 7200),
+    "fe_lsqr": ("task042_v7_fe_lsqr", "V7-M2-LSQR", "fe", 7200),
     "material_inventory": ("task042_v7_material_inventory", "V7-M0", "fe", 600),
     "real_fe_interface": ("task042_v7_real_fe_interface", "V7-M1-FE", "fe", 1800),
     "real_equation_gradient": (

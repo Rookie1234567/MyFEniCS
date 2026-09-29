@@ -135,6 +135,7 @@ class ActionPacket:
     def audit(self, value):
         """Independent original/native/port audit of a scattered iterate."""
         began = perf_counter()
+        action_seconds_before = self.costs["S"]
         a = self.a
         field = self.recover(value)
         alpha = value[self.nt :]
@@ -210,7 +211,9 @@ class ActionPacket:
             and result["slave_storage_max"] == 0.0
         )
         self.counts["audit"] += 1
-        self.costs["audit"] += perf_counter() - began
+        self.costs["audit"] += (
+            perf_counter() - began - (self.costs["S"] - action_seconds_before)
+        )
         return result
 
 

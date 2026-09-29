@@ -151,6 +151,57 @@ def main():
             costs_exclusive_seconds=packet.costs,
             counts=packet.counts,
         )
+    elif stage.startswith("V7-M2-"):
+        from src.solvers.neural_fe_optimization import optimize_route
+        from src.solvers.neural_fe_pilot import load_packet
+
+        grad, _ = read_index("qualified_real_gradient")
+        fe, fe_path = read_index("qualified_real_fe")
+        if (
+            grad["status"] != "PASS"
+            or fe["status"] != "PASS"
+            or grad["design_sha256"] != specification.derived["design_sha256"]
+        ):
+            raise RuntimeError("both true N1 Gates required before optimization")
+        record = fe["packet"]
+        path = Path(record["path"]).resolve()
+        if (
+            not path.is_relative_to(fe_path.parent)
+            or file_hash(path) != record["sha256"]
+        ):
+            raise RuntimeError("frozen operator/RHS packet ownership/hash failure")
+        threads = None
+        if stage != "V7-M2-LSQR":
+            from src.solvers.neural_trace_torch import qualify_threads
+
+            threads = qualify_threads()
+        else:
+            from src.runners.task042_experiment import thread_qualification
+
+            threads = thread_qualification()
+        packet = load_packet(path)
+        moments, provenance = read_moments()
+        route = {
+            "V7-M2-NEURAL": "NEURAL-TRACE",
+            "V7-M2-FREE": "FREE-FE-OPT",
+            "V7-M2-LSQR": "FE-LSQR",
+        }[stage]
+        result = optimize_route(
+            design,
+            packet,
+            moments,
+            route,
+            artifact,
+            wall_seconds=min(7200, budget["remaining_seconds"]),
+        )
+        result.update(
+            threads=threads,
+            moment_packet=provenance,
+            physical=fe["physical"],
+            operator_packet=record,
+            operator_source_sha=fe["source_sha"],
+            real_gradient_source_sha=grad["source_sha"],
+        )
     else:
         raise RuntimeError("unregistered V7 stage")
     result.update(
@@ -171,6 +222,15 @@ def main():
     write_json(directory / "stage_result.json", result)
     if stage == "V7-M0":
         publish("material_inventory", path)
+    elif stage.startswith("V7-M2-"):
+        publish(
+            {
+                "V7-M2-NEURAL": "frozen_neural",
+                "V7-M2-FREE": "frozen_free",
+                "V7-M2-LSQR": "frozen_lsqr",
+            }[stage],
+            path,
+        )
     elif result["status"] == "PASS":
         publish(
             "qualified_real_fe" if stage == "V7-M1-FE" else "qualified_real_gradient",
@@ -187,7 +247,11 @@ def main():
         ),
         flush=True,
     )
-    if stage != "V7-M0" and result["status"] != "PASS":
+    if (
+        stage != "V7-M0"
+        and not stage.startswith("V7-M2-")
+        and result["status"] != "PASS"
+    ):
         raise SystemExit(3)
 
 

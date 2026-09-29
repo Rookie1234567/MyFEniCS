@@ -1,0 +1,5 @@
+schema_version = 1
+[task042_v7]
+stage = "fe_lsqr"
+run_id = "task042_v7_fe_lsqr"
+material_table_id = "SI_OPTICAL_CONSTANTS_USER_20260929_V1"
