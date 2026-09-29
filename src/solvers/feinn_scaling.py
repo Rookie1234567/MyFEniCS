@@ -7,12 +7,9 @@ from time import perf_counter
 
 import numpy as np
 from scipy import sparse
-import torch
 
 from src.solvers.feinn_native import ResidualMetric, load_native
 from src.solvers.feinn_riesz import SparseRiesz
-from src.solvers.feinn_torch import CompleteMomentMap, CoordinateField
-from src.solvers.feinn_validation import assign, load_moments, parameters
 from src.solvers.neural_fe_action_packet import array_hash
 
 
@@ -163,6 +160,11 @@ def _history(index):
 
 def state_diagnostic(design, native_index, grad_index, route_indices, artifact, marker):
     """Evaluate only zero and three saved V1 final states; never load reference."""
+    import torch
+
+    from src.solvers.feinn_torch import CompleteMomentMap, CoordinateField
+    from src.solvers.feinn_validation import assign, load_moments, parameters
+
     torch.set_num_threads(1)
     torch.set_num_interop_threads(1)
     began = perf_counter()
@@ -324,7 +326,10 @@ def _synthetic_checks():
 
 def scaling_checks(design, native_index, grad_index, scale_index, artifact, marker):
     """Synthetic and fixed-M5 algebra/gradient/transaction qualification."""
+    import torch
+
     from src.solvers.feinn_optimization import transactional_step
+    from src.solvers.feinn_validation import load_moments
 
     torch.set_num_threads(1)
     torch.set_num_interop_threads(1)
