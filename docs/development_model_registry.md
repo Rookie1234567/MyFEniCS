@@ -1,15 +1,20 @@
-# Task40extra 当前模型登记：B 线 N0–N6 首批状态
+# Task40extra 当前模型登记：B 线 N0–N6 受限收口
 
-| Model ID / stage | source / model identity | 方法与实际结果 | 状态、资格与证据 |
+| Model ID / stage | source / model identity | 方法与实测 | 状态与资格边界 |
 |---|---|---|---|
-| `task40extra_n2_tiny_p2_diagnostic` | source `036dec55beb0fdb1f3cae7693fddfc0225921eb9`；0.7 nm 材料身份；60 cells、p2、MPI1 | static-condensed diagnostic；residual `1.772707454694957e-12`；R/T/A_balance/A_volume=`0.999983627560756 / 1.570950234381809e-5 / 6.629369001986763e-7 / 8.856354534342745e-8`；8.608 s | `diagnostic_pass_only`；非 G0/G1 p6 official 解；[`N2 record`](task40extra_0p7nm_engineering/outcomes/records/n2_tiny_static_condensed_diagnostic.json) |
-| `task40extra_0p7nm_nonseparable_g0_iterative_v1` attempt 1 | source `e694452f2f9287135f046af45592e3665f8b6c71`；input SHA `8e00fb6495845902a8113d982242d39ad0f4999b563c2c8049ecc3750b82ac9c` | startup `RuntimeError: parent ledger batch identity changed`；3.896 s；数值工作未开始；tree RSS `142209024 B` | `WORKER_FAILED_IMPLEMENTATION_BUG`；worker/run/watchdog evidence SHA 见 [`run index`](task40extra_0p7nm_engineering/outcomes/records/run_index.json) |
-| `task40extra_0p7nm_nonseparable_g0_iterative_v1` attempt 2 | source `1ee85bc2133b783da419d31dbe429643eb2c1191`；G0 plan SHA `d621678ed8f144246133a98a71a2805bf55d09104d3aa6ceeb55e3f16fb864f1` | 336 cells、p6 rows 229680、q4 rows 69856、80 modes；native projection errors `9.5841e-15 / 2.7511e-15`；cleanup 时缺少 `rectangular_air_void_audit`；worker settled 87.897 s；tree RSS `1538707456 B` | `WORKER_FAILED_IMPLEMENTATION_BUG_REPLAY_EXHAUSTED`；不是 outer solve、无 KSP/residual/RTA；[`replay record`](task40extra_0p7nm_engineering/outcomes/records/g0_startup_bug_replay.json) |
-| Task40 final repair fixture | source `59bad0d977f0e23555098d923a95afbf2e9f5bf4` | same-mesh wrapper 保留 air-void audit/axes/material metadata；一个真实 G0 mesh/FE/MPC fixture 通过 | `component_pass_only`；**无修复后 PDE 验证**，普通默认不变 |
-| `task40extra_0p7nm_nonseparable_g1_iterative_v1` | planned G1 10×4×22、880 cells | h-refined solve / field comparison | `not_run` |
-| `task40extra_0p7nm_nonseparable_g0_direct_reference_v1` | planned same-discrete reference | direct safety preflight / factor / solve | `not_run`；G0 iterative subject 未完成 |
+| task40extra_n2_tiny_p2_diagnostic | source 036dec55beb0fdb1f3cae7693fddfc0225921eb9；0.7 nm identity；60 cells、p2、MPI1 | residual 1.772707454694957e-12；R/T/A与原诊断记录一致；solver 8.608 s | diagnostic_pass_only；不是G0/G1 p6 official解 |
+| G0 attempt1 | source e694452f2f9287135f046af45592e3665f8b6c71；冻结input SHA 8e00fb6495845902a8113d982242d39ad0f4999b563c2c8049ecc3750b82ac9c | ledger batch identity异常；3.896 s；数值工作未开始；RSS 142,209,024 B | WORKER_FAILED_IMPLEMENTATION_BUG |
+| G0 attempt2 | source 1ee85bc2133b783da419d31dbe429643eb2c1191；336 cells、p6 229,680 rows、q4 69,856 rows | native projection checks 9.5841e-15 / 2.7511e-15通过；cleanup缺rectangular_air_void_audit；87.897 s；RSS 1,538,707,456 B | WORKER_FAILED_IMPLEMENTATION_BUG；未进入outer KSP |
+| G0 attempt3 | source 8c862db3bb47e3a885ffc9f6b8bb42f348fd504b | Task40 worktree未找到Task39相对JIT cache路径，FileNotFoundError；单次elapsed未独立持久化 | WORKER_FAILED_IMPLEMENTATION_BUG；未进入分解/KSP |
+| G0 attempt4 | source de44f5bb4da48cd076df2b295ef6fe08b83d52fa；336 cells、80 modes；FGMRES restart32/max_it2048 | 实际8步；A6=0.1666729575；native identity=3.074810498e-10，限值1e-10；RSS 2,954,866,688 B | V20_RELEASE_GATE_FAIL；不是资源停机，也不是max_it耗尽 |
+| G1 / N4 | planned 10×4×22、880 cells | 未运行 | NOT_RUN；无h agreement结论 |
+| G0 direct / N5 | same-discrete reference | 未运行 | NOT_RUN；没有合格的G0 iterative subject |
 
-Attempt 2 的 `1,538,707,456 B` 是 sampled simultaneous process-tree RSS；live cgroup `memory.peak` 是 `1,673,117,696 B`，两种 scope 分列。PSS disabled，swap=0，OOM-kill=0，descendants cleared。G0 p4 factor、full p6 matrix、KSP、官方场与 R/T/A 均未生成。Phase II 方向待新的审查合同，不从失败 worker 或 N2 tiny 结果外推。
+attempt4的worker summary原始分类保留为V20_RELEASE_GATE_FAIL；launcher wrapper另记exit 4 / WORKER_FAILED。主控独立离线复核保存数组：identity difference范数1.0129916171163611e-9，operation scale 3.29448470971699，重算relative 3.0748104980683956e-10。源码按每8步检查条件推导callback RECOVERY_IDENTITY_GATE_FAIL / PETSc DIVERGED_BREAKDOWN；raw callback status与reason未持久化。第8步identity Gate是源码推导的首个停止原因，final release packet随后也记录A6超限。详情及artifact SHA见 [attempt4 compact record](task40extra_0p7nm_engineering/outcomes/records/g0_attempt4_identity_gate_stop.json) 与 [run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)。
+
+累计ledger elapsed 530.8867869906425 s，bug failure/replay count 3，fresh worker count 4，active attempt null。attempt4 monotonic workflow 356.928689 s、conservative realtime 392.257232 s、ledger debit 392.262382 s；不可把差异解释为KSP时间。attempt3单次时长和必要人工修复工时unknown。G0–G1 h agreement、direct comparison、official R/T/A/A_volume、energy closure与2 TB容量推断均未完成；N6仅为受限收口，不选择未经精度证明有效的PC。
+
+Task40保持研究分支，ordinary default不变，不合并master。N2、三次实现错误、attempt4数值Gate与未运行阶段分别分类，不相互替代。
 
 ---
 

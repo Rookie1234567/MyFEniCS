@@ -1,46 +1,44 @@
-# Task40extra 精度与容量判断
+# Task40extra 精度与容量结论：N6 受限结果
 
-## 数值精度状态
+## 精度 Gate
 
-| Gate/指标 | 目标 | G0/G1 实际证据 | 状态 |
-|---|---:|---|---|
-| G0 p6 原 A6 full explicit true residual | `≤1e-6` | 两次 worker 都在外层 KSP 前失败；残差 `null` | `not_run` |
-| G0 official R/T/A、`A_volume`、R00_s/p 与衍射级 | A6 通过后计算 | 无完整 p6 场和 official packet | `not_run` |
-| energy closure | `≤1e-5` | G0 未产出正式功率与体吸收 | `not_run` |
-| G0–G1 E/H/scaled-curl 变化 | `≤1%` 工程观察目标 | G1 未运行 | `not_run` |
-| G0–G1 R/T/A/`A_volume` 变化 | `≤1e-3` 绝对变化目标 | G1 未运行 | `not_run` |
-| G0–direct 同离散比较 | 场 `≤1e-4`，R/T/A `≤1e-5` | direct 预检和求解均未运行 | `not_run` |
-| 外部通道截断 | 独立 cutoff convergence | 80 模式仅由当前规则枚举，未做收敛研究 | `CHANNEL_TRUNCATION_UNQUALIFIED` |
+恢复 identity 检查把凝聚后未知量还原为完整场，再核对原方程与凝聚计算是否一致。
 
-唯一 measured 数值求解是 60-cell p2 N2 diagnostic：残差 `1.772707454694957e-12`、Rtotal `0.999983627560756`、Ttotal `1.570950234381809e-05`、Avolume `8.856354534342745e-08`。它验证的是缩小诊断链路，不能代替 336-cell G0 p6 的精度证据。
+| Gate | 门槛 | G0 attempt4 | 判定 |
+|---|---:|---:|---|
+| 原 A6 full explicit true residual | ≤1e-6 | 第8步0.16667295750232392；release packet 0.16667295750232333 | 未通过 |
+| native recovery identity | ≤1e-10 | difference norm 1.0129916171163611e-9 / operation scale 3.29448470971699 = 3.0748104980683956e-10 | 未通过，约3.07倍限值 |
+| internal residual | ≤1e-10 | 6.4490341352469694e-18 | 通过 |
+| port closure | ≤1e-8 | 1.4794093427202804e-15 | 通过 |
+| Schur-port identity | ≤1e-10 | 1.3094474052481446e-29 | 通过 |
+| energy closure / official output | ≤1e-5 / A6通过后生成 | official packet未生成 | NOT_RUN |
+| G0–G1 field/power agreement | E/H/scaled curl ≤1%；R/T/A/volume ≤1e-3 | G1未运行 | NOT_RUN |
+| G0 direct same-discrete reference | field ≤1e-4；R/T/A ≤1e-5 | direct未运行 | NOT_RUN |
 
-## 已到达的 G0 规模与未到达对象
+原 A6 是物理离散系统的显式真残差；reported Schur relative 0.16667295750382732 只能说明压缩方程的进度。第8步 native identity 为 e_FE - B*H_p^-1*e_p。主控离线数组核验与记录一致。该值超门槛，不能自动称为舍入噪声；也不凭一次停步指定更深根因。
 
-| 对象 | G0 实际/导出事实 | 后续未到达项 | 数据身份 |
-|---|---|---|---|
-| 网格 | 轴区间 `6×4×14`；336 owned cells | G1 的 880 cells 未构建 | G0 measured; G1 derived |
-| p6 FE | 229,680 full rows；68,256 active trace；10,224 slave；151,200 interior；局部维度 `882/450/432` | global p6 matrix未组装；没有 solver rows/NNZ 完整报告 | setup measured |
-| q4 FE | 69,856 rows；28,992 active trace；4,576 slave；36,288 interior | q4 global factorization未开始；没有 NNZ/factor memory | setup measured |
-| modal manifest | 80 modes；SHA `c3ff9c0cf35e2d183f44ed3fb7448d4aa586bb6fdf7f9dc9ba78dc25011c693a` | 没有正式通道功率或 official fields | setup measured |
-| native AQ projection | DtN relative `9.584104029325266e-15`；volume relative `2.7510630979502593e-15`；限值 `1e-10` | 这不是 outer solve 的 residual | component/setup check pass |
+源码 callback 每8步执行snapshot；物理残差未过且 identity 超限时，源码推导状态为 RECOVERY_IDENTITY_GATE_FAIL / DIVERGED_BREAKDOWN。raw KSP status/reason 未持久化。worker summary 的 V20_RELEASE_GATE_FAIL 与 launcher wrapper 的 exit 4 / WORKER_FAILED 均保留，但后者不代表资源失败。
 
-## 资源观测口径
+## 实测规模与成本
 
-| 统计量 | G0 attempt 2 | 含义 |
+| 项目 | 实际值 | 口径 |
 |---|---:|---|
-| watchdog simultaneous process-tree RSS peak | `1,538,707,456 B` | 在 322 个 watchdog 样本中采到的同时进程树 RSS 峰值 |
-| live cgroup `memory.current` | `1,080,860,800 B` | 同一活动快照下的当前 cgroup 用量 |
-| live cgroup `memory.peak` | `1,673,117,696 B` | cgroup high-water；不同于 process-tree RSS，不能相加 |
-| process-tree swap / OOM kill | `0 B / 0` | 没有观测到 Task swap 或 OOM kill |
-| PSS | disabled by profile | 不提供 PSS 峰值 |
-| N2 RSS | `368.8008 MiB` | 各 rank 历史峰值求和的上界，不是 simultaneous tree RSS |
+| G0 mesh | 336 cells，6×4×14 | measured |
+| p6/q4 rows | 229,680 / 69,856 | measured setup |
+| modes | 80 | channel cutoff 未资格化 |
+| outer solver | FGMRES restart32 / max_it2048；8 iterations | Gate stop；未到max_it |
+| p6/p4 cold JIT | 58.575 / 18.047 s | 单个compiler events |
+| x1 setup-check / p6 build audit | 22.907 / 15.216 s | 不同计时范围 |
+| retained outer elapsed through terminal snapshot | 54.222 s | KSP-only时间未持久化 |
+| process-tree RSS peak | 2,954,866,688 B | watchdog同时进程树采样峰 |
+| swap / PSS | 0 B / disabled | 无资源Gate stop |
+| workflow time | monotonic 356.929 s；conservative realtime 392.257 s | 差异35.330 s |
+| shared ledger | debit 392.262 s；cumulative 530.887 s | 账本口径，不是KSP-only时间 |
 
-尝试 2 在 setup/cleanup 阶段失败。观察到的 RSS/cgroup 数值不能当成求解峰、容量 Gate 或成功内存成绩。Attempt 1 RSS 峰值为 `142,209,024 B`，同样只对应 3.896 s 的失败启动流程。
+外层计数为8 matvec、8 PC apply。setup-inclusive bridge=13、p4=26；terminal packet另报native=6、Schur=11、Hp solves=44。它们有不同计数范围，不能折算成外层PC次数。104个 qualified JIT hardlinks共1,400,533,851 B，是文件payload，不是RSS。attempt3单次耗时和必要人工修复工时unknown，不以时间差回填。
 
-`shared_workflow_ledger.json` 最终 SHA256=`d70e23cd1cb7461408ff9872242ba646f0a9e517330108069bfe993532656e84`；累计账面 `91.793057 s`，bug replay 计数 `1`，时间策略是 `observe_only`。任务的 `43,200 s` 字段仅用于参考/记账，**不是硬性 12 小时 timeout**。
+## 容量和离散结论
 
-## 容量结论与下一步
+attempt4 给出这个 G0 输入的一次真实setup、迭代、Gate、时间及 watchdog RSS 观测。它没有通过恢复/物理解算 Gate，也没有G1、匹配参考、official observables或完整容量闭环。没有证据选择有效的Phase II preconditioner；2 TB可行性保持unknown，不能从一个小规模RSS峰外推。
 
-本轮没有足够数据对 p4 factor、端口数组、局部消元缓存、Krylov basis 或全流程峰值作容量归因：p4 全局因子和 outer Krylov 从未建立，所有 official accuracy Gate 也没有运行。因此不估算 2 TB 目标可容纳规模，不选择 Phase II 算法，也不声称某一对象已被证实为主瓶颈。
-
-唯一授权的实现错误重放已经用完。新增 G0/G1/direct 数值运行必须先由后续 review 明确新范围与授权；当前留下的最近修复只完成了 targeted G0 mesh/FE/MPC fixture。
+N2仍是独立的60-cell p2诊断，不代替G0。细节与artifact SHA见 [attempt4 compact record](records/g0_attempt4_identity_gate_stop.json)、[run index](records/run_index.json) 与 [phase-I results](records/phase_I_results.json)。

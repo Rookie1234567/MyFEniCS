@@ -1,8 +1,8 @@
 {
   "schema": "task40extra.phase_i_results.v1",
-  "overall_status": "USER_AUTHORIZED_BUG_CONTINUATION_PENDING_RUN",
+  "overall_status": "N6_LIMITED_CLOSEOUT_RECOVERY_IDENTITY_GATE_STOP",
   "official_0p7nm_nonseparable_p6_result": false,
-  "numerical_gate_status": "not_run",
+  "numerical_gate_status": "RECOVERY_IDENTITY_GATE_FAIL",
   "stages": {
     "N0": {
       "status": "complete",
@@ -24,44 +24,96 @@
       "evidence": "docs/task40extra_0p7nm_engineering/outcomes/records/n2_tiny_static_condensed_diagnostic.json"
     },
     "N3_G0": {
-      "status": "WORKER_FAILED",
-      "attempts": 3,
-      "unique_bug_replay_count": 2,
-      "latest_error": "qualified JIT cache source does not exist: /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/euv_grazing1_phi0/task39extra_v22_b_capacity_original_h7p5__full3d_iterative__mpi1__Mna/20260919T174436.599741Z/v20_jit_cache/fenics",
+      "status": "V20_RELEASE_GATE_FAIL",
+      "attempts": 4,
+      "unique_bug_replay_count": 3,
+      "latest_error": "RECOVERY_IDENTITY_GATE_FAIL at iteration 8: native identity relative 3.0748104980683956e-10 > 1e-10; raw worker classification V20_RELEASE_GATE_FAIL",
       "actual_cells_constructed": 336,
       "p6_rows": 229680,
       "q4_rows": 69856,
-      "full_residual": null,
-      "KSP_iterations": null,
-      "factorization": null,
+      "full_residual": 0.16667295750232392,
+      "KSP_iterations": 8,
+      "factorization": "setup and p4 actions were recorded; no successful full solve qualification",
       "R_T_A": null,
-      "evidence": "docs/task40extra_0p7nm_engineering/outcomes/records/g0_jit_path_failure.json"
+      "evidence": [
+        "docs/task40extra_0p7nm_engineering/outcomes/records/run_index.json",
+        "docs/task40extra_0p7nm_engineering/outcomes/records/g0_attempt4_identity_gate_stop.json"
+      ],
+      "implementation_bug_failures": 3,
+      "latest_attempt": {
+        "attempt": 4,
+        "source_sha": "de44f5bb4da48cd076df2b295ef6fe08b83d52fa",
+        "worker_status": "RELEASE_GATE_STOP",
+        "full_residual_relative": 0.16667295750232392,
+        "native_identity_relative": 3.0748104980683956e-10,
+        "native_identity_limit": 1e-10,
+        "outer_iterations": 8,
+        "restart": 32,
+        "max_iterations": 2048,
+        "official_result": false,
+        "evidence": "docs/task40extra_0p7nm_engineering/outcomes/records/g0_attempt4_identity_gate_stop.json"
+      },
+      "latest_error_evidence": "docs/task40extra_0p7nm_engineering/outcomes/records/g0_attempt4_identity_gate_stop.json",
+      "prior_implementation_bug_failures": [
+        {
+          "attempt": 1,
+          "error": "RuntimeError: parent ledger batch identity changed",
+          "evidence": "docs/task40extra_0p7nm_engineering/outcomes/records/g0_startup_bug_replay.json"
+        },
+        {
+          "attempt": 2,
+          "error": "AttributeError: rectangular_air_void_audit missing",
+          "evidence": "docs/task40extra_0p7nm_engineering/outcomes/records/g0_startup_bug_replay.json"
+        },
+        {
+          "attempt": 3,
+          "error": "FileNotFoundError: qualified Task39 JIT cache source path did not exist in the Task40 worktree",
+          "evidence": "docs/task40extra_0p7nm_engineering/outcomes/records/g0_jit_path_failure.json"
+        }
+      ]
     },
     "N4_G1": {
-      "status": "not_run",
-      "reason": "N3 did not produce a qualified G0 result"
+      "status": "NOT_RUN",
+      "reason": "G0 stopped at the native/recovery identity Gate; no h-refinement run follows"
     },
     "N5_G0_direct_reference": {
-      "status": "not_run",
-      "reason": "N3 iterative reference subject was not completed"
+      "status": "NOT_RUN",
+      "reason": "No qualified G0 iterative reference exists; direct reference was not run"
     },
     "N6": {
-      "status": "incomplete",
-      "reason": "No G0/G1 accuracy, direct comparison, official physical observables or completed capacity stage"
+      "status": "closed_limited",
+      "reason": "The attempt4 numerical consistency stop and costs are documented; accuracy comparison, official observables and target-capacity conclusions remain unavailable",
+      "evidence": "docs/task40extra_0p7nm_engineering/outcomes/summary.md"
     }
   },
   "resource_outcome": {
-    "workflow_status": "WORKER_FAILED",
+    "workflow_status": "V20_RELEASE_GATE_FAIL",
+    "launcher_wrapper_classification": "WORKER_FAILED",
     "failure_is_resource_stop": false,
-    "watchdog_process_tree_peak_rss_bytes": 1538707456,
+    "watchdog_process_tree_peak_rss_bytes": 2954866688,
     "watchdog_process_tree_swap_peak_bytes": 0,
+    "pss_status": "DISABLED_BY_PROFILE",
     "watchdog_descendants_cleared": true,
     "watchdog_identity_coverage": "complete",
+    "watchdog_process_tree_samples": 1397,
+    "time_policy": "observe_only",
+    "launcher_monotonic_workflow_seconds": 356.92868909594836,
+    "conservative_realtime_workflow_seconds": 392.2572318669767,
+    "ledger_total_elapsed_seconds": 530.8867869906425,
     "memory_events_oom_kill": 0,
-    "note": "Peak is sampled simultaneous process-tree RSS; PSS is disabled. Active cgroup memory.peak snapshot is reported separately in run_index.json."
+    "note": "No resource stop or OOM; RSS is sampled simultaneous process-tree peak. PSS is disabled."
   },
   "accuracy_outcome": {
-    "full_explicit_residual": "not_run",
+    "full_explicit_residual": {
+      "status": "measured_gate_fail",
+      "relative": 0.16667295750232392,
+      "limit": 1e-06
+    },
+    "native_identity": {
+      "status": "measured_gate_fail",
+      "relative": 3.0748104980683956e-10,
+      "limit": 1e-10
+    },
     "official_R_T_A": "not_run",
     "A_volume": "not_run",
     "energy_closure": "not_run",
@@ -69,6 +121,6 @@
     "G0_direct_reference": "not_run",
     "channel_truncation": "CHANNEL_TRUNCATION_UNQUALIFIED"
   },
-  "next_step": "Repair Task40 inherited JIT cache path and continue the explicitly authorized G0 attempt; all previous costs and numerical/resource gates remain.",
+  "next_step": "Stop this authorized B-line batch at the numerical consistency Gate and submit the limited result for review; no G1/direct/reference rerun is initiated.",
   "prior_overall_status": "INCOMPLETE_WORKER_FAILED_REPLAY_BUDGET_EXHAUSTED"
 }

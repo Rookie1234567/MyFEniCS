@@ -2,7 +2,7 @@
   "schema": "task40extra.run_index.v1",
   "branch": "task40extra_0p7nm_engineering",
   "repair_base_sha": "e694452f2f9287135f046af45592e3665f8b6c71",
-  "current_code_sha": "59bad0d977f0e23555098d923a95afbf2e9f5bf4",
+  "current_code_sha": "de44f5bb4da48cd076df2b295ef6fe08b83d52fa",
   "input": {
     "path": "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4.dat",
     "sha256": "8e00fb6495845902a8113d982242d39ad0f4999b563c2c8049ecc3750b82ac9c",
@@ -158,18 +158,78 @@
       "stage": "N5_G0_DIRECT_REFERENCE",
       "status": "not_run",
       "reason": "G0 iterative did not complete; no direct factor preflight was authorized by the gate"
+    },
+    {
+      "run_id": "task40extra_0p7nm_nonseparable_g0_iterative_v1",
+      "stage": "N3_G0_Q4_ORIGINAL",
+      "attempt": 4,
+      "classification": "V20_RELEASE_GATE_FAIL",
+      "worker_status": "RELEASE_GATE_STOP",
+      "launcher_wrapper_classification": "WORKER_FAILED",
+      "source_sha": "de44f5bb4da48cd076df2b295ef6fe08b83d52fa",
+      "input_sha256": "8e00fb6495845902a8113d982242d39ad0f4999b563c2c8049ecc3750b82ac9c",
+      "physical_model_sha256": "51854af3fb60c7ffebb166e1f06ff0a89e2e184dcbd9ba06ab4beb321b920661",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_iterative_v1__full3d_iterative__mpi1__Mna/20260929T230709.246850Z",
+      "launcher_monotonic_seconds": 356.92868909594836,
+      "watchdog_monotonic_seconds": 356.76399504300207,
+      "conservative_realtime_seconds": 392.2572318669767,
+      "ledger_increment_seconds": 392.262381815568,
+      "official_result": false,
+      "field_packet_saved": true,
+      "actual_setup_facts": {
+        "mesh_id": "G0",
+        "axis_cell_counts": [
+          6,
+          4,
+          14
+        ],
+        "owned_cells": 336,
+        "p6_rows": 229680,
+        "q4_rows": 69856,
+        "ordered_mode_count": 80,
+        "geometry_audit": "PASS",
+        "native_projection_dtn_relative": 9.584104029325266e-15,
+        "native_projection_volume_relative": 2.7510630979502593e-15
+      },
+      "solver": {
+        "type": "FGMRES",
+        "restart": 32,
+        "max_iterations": 2048,
+        "outer_iterations": 8,
+        "outer_matvec_count": 8,
+        "outer_pc_apply_count": 8,
+        "A6_relative": 0.16667295750232392,
+        "native_identity_relative": 3.0748104980683956e-10,
+        "native_identity_limit": 1e-10,
+        "native_identity_difference_norm": 1.0129916171163611e-09,
+        "native_identity_operation_scale": 3.29448470971699,
+        "source_derived_callback_status": "RECOVERY_IDENTITY_GATE_FAIL",
+        "source_derived_petsc_reason": "DIVERGED_BREAKDOWN",
+        "ksp_status_or_reason_persisted": false
+      },
+      "resources": {
+        "watchdog_process_tree_rss_peak_bytes": 2954866688,
+        "watchdog_process_tree_swap_peak_bytes": 0,
+        "pss_status": "DISABLED_BY_PROFILE",
+        "process_tree_samples": 1397,
+        "identity_coverage": "complete",
+        "descendants_cleared": true,
+        "resource_gate_stop": false
+      },
+      "evidence": "docs/task40extra_0p7nm_engineering/outcomes/records/g0_attempt4_identity_gate_stop.json"
     }
   ],
   "ledger": {
     "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/task40_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_iterative_v1/shared_workflow_ledger.json",
     "sha256_after_attempt_2": "d70e23cd1cb7461408ff9872242ba646f0a9e517330108069bfe993532656e84",
-    "unique_bug_replay_count": 2,
-    "fresh_worker_count": 3,
-    "elapsed_seconds": 138.62440517507468,
+    "unique_bug_replay_count": 3,
+    "fresh_worker_count": 4,
+    "elapsed_seconds": 530.8867869906425,
     "active_attempt": null,
     "time_policy": "observe_only",
     "workflow_seconds_field_semantics": "reference/accounting value; not an enforced wall timeout",
-    "sha256_after_attempt_3": "0b115f140fa3523195967059b1f86fce0ce5a2d4b0f39d259c8abb280c67fa6a"
+    "sha256_after_attempt_3": "0b115f140fa3523195967059b1f86fce0ce5a2d4b0f39d259c8abb280c67fa6a",
+    "sha256_after_attempt_4": "78bea86b5f546530bd195daeccc8fc548032e9241bf2a4ff44635deb6b48e0df"
   },
   "current_code_repairs": [
     {
@@ -181,6 +241,12 @@
       "sha": "59bad0d977f0e23555098d923a95afbf2e9f5bf4",
       "fix": "preserve rectangular air-void audit, axis stats and material-plane alignment in same-mesh FE levels wrapper",
       "validation": "targeted real G0 mesh/MPC fixture passed; no PDE replay due exhausted budget"
+    },
+    {
+      "sha": "de44f5bb4da48cd076df2b295ef6fe08b83d52fa",
+      "fix": "bind the Task40 qualified JIT cache source to the explicit absolute Task39 artifact path; keep the legacy V31 relative profile unchanged",
+      "validation": "five focused mock/path/ledger tests passed before attempt4; attempt4 reached outer iteration and stopped at the identity Gate",
+      "pde_validation": "V20_RELEASE_GATE_FAIL; no successful G0 qualification"
     }
   ]
 }

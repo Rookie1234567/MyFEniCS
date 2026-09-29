@@ -37,3 +37,18 @@ source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_tas
 ## G0 JIT 缓存路径修复
 
 最终组合执行 `python -m pytest -q src/test/test_task40_qualified_jit_cache.py src/test/test_task40_bug_continuation.py src/test/test_task40_nonseparable_geometry.py::test_task40_worker_identity_opens_the_reserved_v14_runtime_ledger`：**5 passed in 1.15 s**；compileall、diff 检查通过。此前隔壁单独路径 fixture 为 **1 passed in 0.19 s**，成本保留。测试只核对显式父 artifact 绑定、旧 V31 配置与账本，不建立 FE 矩阵/因子。父缓存路径是本笔记本显式配置，不声称跨机器自动可用；新 FFCx 表单仍按签名编译。
+
+
+## 2026-09-30 attempt4 N6 evidence closeout
+
+本轮只整理已落盘 attempt4 数值 Gate 和主控离线数组复核；没有改数值源码、重跑 FE/KSP/PDE，也没有新增测试。raw KSP status/reason 未持久化，callback因果为source-derived。
+
+Task40 仓库根执行以下轻量检查，输出为：PASS: 3 JSON parse; 9 raw SHA match; identity normalization consistent.
+
+命令1：
+python3 -c 'import json,hashlib; from pathlib import Path; d=Path("docs/task40extra_0p7nm_engineering/outcomes/records"); [json.loads((d/n).read_text()) for n in ("g0_attempt4_identity_gate_stop.json","run_index.json","phase_I_results.json")]; r=Path("results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_iterative_v1__full3d_iterative__mpi1__Mna/20260929T230709.246850Z"); c=json.loads((d/"g0_attempt4_identity_gate_stop.json").read_text()); a={"worker_summary_sha256":"task40extra_nonseparable_0p7nm_p6q4_summary.json","run_manifest_sha256":"run_manifest.json","run_summary_sha256":"run_summary.json","watchdog_summary_sha256":"watchdog/summary.json","release_gate_packet_sha256":"release_gate_failure/v20_release_gate.json","monitor_residuals_sha256":"monitor_residuals.jsonl","iterations_sha256":"iterations.jsonl","x2_retained_final_npz_sha256":"x2_retained_final.npz","x2_terminal_residual_npz_sha256":"x2_residual_0008_0002.npz"}; assert all(hashlib.sha256((r/v).read_bytes()).hexdigest()==c["artifacts"][k] for k,v in a.items()); assert abs(c["gate_metrics"]["native_identity_difference_norm"]/c["gate_metrics"]["native_identity_operation_scale"]-c["gate_metrics"]["native_identity_relative_recomputed"])<1e-25; print("PASS: 3 JSON parse; 9 raw SHA match; identity normalization consistent.")'
+
+命令2：
+git diff --cached --check
+
+结果：两条命令均通过。该检查不是pytest、MPI、Ruff或CI。此前targeted tests的source SHA和范围仍按历史记录保存，不归到attempt4。

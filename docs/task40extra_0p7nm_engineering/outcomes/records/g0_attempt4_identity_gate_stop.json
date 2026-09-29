@@ -1,0 +1,135 @@
+{
+  "schema": "task40extra.g0_attempt4_identity_gate_stop.v1",
+  "attempt": 4,
+  "run_id": "task40extra_0p7nm_nonseparable_g0_iterative_v1",
+  "classification": "V20_RELEASE_GATE_FAIL",
+  "worker_status": "RELEASE_GATE_STOP",
+  "launcher_wrapper_classification": "WORKER_FAILED",
+  "launcher_exit_status": 4,
+  "official_result": false,
+  "diagnostic_field_packet_saved": true,
+  "source_sha": "de44f5bb4da48cd076df2b295ef6fe08b83d52fa",
+  "input_sha256": "8e00fb6495845902a8113d982242d39ad0f4999b563c2c8049ecc3750b82ac9c",
+  "physical_model_sha256": "51854af3fb60c7ffebb166e1f06ff0a89e2e184dcbd9ba06ab4beb321b920661",
+  "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_iterative_v1__full3d_iterative__mpi1__Mna/20260929T230709.246850Z",
+  "solver": {
+    "type": "FGMRES",
+    "restart": 32,
+    "max_iterations": 2048,
+    "observed_iterations": 8,
+    "outer_matvec_count": 8,
+    "outer_pc_apply_count": 8,
+    "monitor_snapshots": [
+      {
+        "iteration": 0,
+        "A6_relative": 1.0,
+        "native_identity_relative": 6.423012179218052e-26
+      },
+      {
+        "iteration": 8,
+        "A6_relative": 0.16667295750232392,
+        "native_identity_relative": 3.0748104980683956e-10
+      },
+      {
+        "iteration": 8,
+        "terminal_snapshot": true,
+        "A6_relative": 0.16667295750232392,
+        "native_identity_relative": 3.0748104980683956e-10
+      }
+    ],
+    "source_derived_callback_status": "RECOVERY_IDENTITY_GATE_FAIL",
+    "callback_status_persisted": false,
+    "source_derived_petsc_reason": "DIVERGED_BREAKDOWN",
+    "petsc_reason_persisted": false,
+    "raw_ksp_reason": "unknown",
+    "source_rule": "src/solvers/physical_retained_fgmres.py:122-134 checks every 8 iterations; with physical residual failing and native identity above 1e-10 the callback returns DIVERGED_BREAKDOWN. max_it remains 2048."
+  },
+  "gate_metrics": {
+    "A6_relative": 0.16667295750232392,
+    "A6_limit": 1e-06,
+    "native_identity_formula": "e_FE-B*H_p^{-1}*e_p",
+    "native_identity_difference_norm": 1.0129916171163611e-09,
+    "native_identity_operation_scale": 3.29448470971699,
+    "native_identity_relative_recomputed": 3.0748104980683956e-10,
+    "native_identity_limit": 1e-10,
+    "native_identity_ratio_to_limit": 3.0748104980683957,
+    "native_rhs_norm": 1.5304071041133256,
+    "internal_residual_relative": 6.4490341352469694e-18,
+    "port_closure_relative": 1.4794093427202804e-15,
+    "schur_port_identity_relative": 1.3094474052481446e-29,
+    "release_packet_A6_relative": 0.16667295750232333,
+    "release_packet_classification": "V20_RELEASE_GATE_FAIL",
+    "release_packet_reason": "finite-but-over-limit residual/identity",
+    "stop_order": "iteration-8 recovery/native identity check is the source-derived first stop; release packet is downstream and also records A6 above limit",
+    "array_review": "Main-controller offline review confirmed difference vector equals native residual minus derived native residual; norm and ratio match. Saved-array check only, no FE/factorization/solve. Not labeled as roundoff."
+  },
+  "setup_and_cost": {
+    "mesh_cells": 336,
+    "p6_rows": 229680,
+    "q4_rows": 69856,
+    "ordered_modes": 80,
+    "geometry_audit": "PASS",
+    "native_projection_dtn_relative": 9.584104029325266e-15,
+    "native_projection_volume_relative": 2.7510630979502593e-15,
+    "qualified_jit_hardlinked_files": 104,
+    "qualified_jit_eligible_bytes": 1400533851,
+    "p6_condensation_cold_jit_seconds": 58.57471378298942,
+    "p4_condensation_cold_jit_seconds": 18.046504927042406,
+    "compiler_event_count": 11,
+    "p6_build_audit_seconds": 15.216454581008293,
+    "x1_setup_check_seconds": 22.907159049995244,
+    "retained_outer_clock_through_terminal_snapshot_seconds": 54.222499764084965,
+    "ksp_only_elapsed_seconds": null,
+    "ksp_only_elapsed_note": "not persisted; do not infer by subtracting other clocks",
+    "reported_action_counts": {
+      "bridge_including_setup_scope": 13,
+      "p4_including_setup_scope": 26,
+      "terminal_native_action": 6,
+      "terminal_schur_action": 11,
+      "terminal_hp_solve_count": 44,
+      "scope": "these counters do not equal the 8 outer PC applications"
+    }
+  },
+  "time": {
+    "launcher_monotonic_workflow_seconds": 356.92868909594836,
+    "watchdog_monotonic_seconds": 356.76399504300207,
+    "conservative_realtime_workflow_seconds": 392.2572318669767,
+    "utc_minus_monotonic_seconds": 35.32987444599706,
+    "ledger_attempt4_increment_seconds": 392.262381815568,
+    "ledger_total_seconds": 530.8867869906425,
+    "ledger_sha256_after_attempt4": "78bea86b5f546530bd195daeccc8fc548032e9241bf2a4ff44635deb6b48e0df",
+    "time_policy": "observe_only",
+    "time_gate_exceeded": false,
+    "attempt3_elapsed_seconds": null,
+    "necessary_engineering_effort": "unknown"
+  },
+  "resources": {
+    "watchdog_process_tree_rss_peak_bytes": 2954866688,
+    "watchdog_process_tree_swap_peak_bytes": 0,
+    "pss_status": "DISABLED_BY_PROFILE",
+    "samples": 1397,
+    "identity_coverage": "complete",
+    "all_status_readable": true,
+    "descendants_cleared": true,
+    "resource_gate_stop": false,
+    "cgroup_peak": "not reported"
+  },
+  "downstream": {
+    "N4_G1": "NOT_RUN",
+    "N5_G0_direct_reference": "NOT_RUN",
+    "official_R_T_A_A_volume_energy_closure": "NOT_RUN",
+    "h_agreement": "NOT_RUN",
+    "phase_II_preconditioner": "none selected; no candidate earned accuracy/effectiveness qualification"
+  },
+  "artifacts": {
+    "worker_summary_sha256": "07dda5575b8666c3ff4895844b5ccddb3422e9d4bbc2abd80f4d4ddac0bbd17c",
+    "run_manifest_sha256": "9e1b9d69a4aff8852611ae1fd9777a205e9890766c4809262c80d5f91113d36a",
+    "run_summary_sha256": "5c5155f1976316dde9290662ac9a984b17e06de460c39e43dd7a626ca0eeda3a",
+    "watchdog_summary_sha256": "84c2dc0cebf82d7d12d5da0ac1793a30587b70e57cf7882e68497226c2843d36",
+    "release_gate_packet_sha256": "ae7c68c3afa4e3ce867cd2679bc280fdfbfe1f45d78387abae007eaf14e3b01e",
+    "monitor_residuals_sha256": "e1ea3320db350f717c3b83b85672f8efe9ad5fe634845f1de4e63bf6db7f3a71",
+    "iterations_sha256": "9be43017864a355623605317c5adeadb13380f1c62ab78783a810a7cffec3774",
+    "x2_retained_final_npz_sha256": "58dc271acc5e33ad5b206e60c0cc9a083cd63f10f7481ac7364a718d5de12488",
+    "x2_terminal_residual_npz_sha256": "058b4832505428da041b9cc11cb72d8aed1c8afc6bd3fd969a99ec4ec4c29303"
+  }
+}

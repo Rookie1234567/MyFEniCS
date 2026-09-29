@@ -1,31 +1,24 @@
-# Task40extra：0.7 nm 非可分三维 Maxwell 工程起步
+# Task40extra：0.7 nm 非可分三维 Maxwell 工程起步（B 线 N0–N6 受限收口）
 
 ### 最终状态
 
-- 执行分支：`task40extra_0p7nm_engineering`；canonical linked worktree 在 `/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering`。
-- 当前分类：`INCOMPLETE_WORKER_FAILED_REPLAY_BUDGET_EXHAUSTED`；G0 两次在外层求解前发生实现异常，唯一错误重放已耗尽。
-- 没有得到官方 0.7 nm p6 完整解；G1、G0 direct reference、h agreement 和容量 Gate 为 `not_run` / `incomplete`。
-- ordinary default 未改变，未合并 `master`；需要后续 review 决定能否继续数值运行。
+G0 attempt4以source de44f5bb4da48cd076df2b295ef6fe08b83d52fa实际建立336-cell、p6 rows 229,680、q4 rows 69,856、80-mode空间并进入FGMRES。第8步native recovery identity为3.0748104980683956e-10，高于1e-10 Gate；原A6 true residual为0.16667295750232392，高于1e-6。原始worker summary分类为V20_RELEASE_GATE_FAIL，official R/T/A与A_volume未生成。源码callback的RECOVERY_IDENTITY_GATE_FAIL / DIVERGED_BREAKDOWN是根据保存指标推导；raw KSP status/reason未持久化。
 
-### 为什么启动与冻结基线
+| 范围 | 状态 | 证据边界 |
+|---|---|---|
+| N0/N1 | complete | 分支、材料、有限三维缺口几何、G0/G1 plan与mode身份已冻结 |
+| N2 | diagnostic_pass_only | 60-cell p2 fixture，不代表G0/G1 p6 |
+| N3/G0 | V20_RELEASE_GATE_FAIL | 三次实现异常保留；第四次进入8步外层求解后触发identity Gate |
+| N4/G1、N5/direct | NOT_RUN | 不作h agreement或同离散reference结论 |
+| N6 | closed_limited | 保存数值Gate、可用setup/KSP计时、watchdog和累计ledger；精度/容量闭环仍缺 |
 
-Task39 收口推荐 p6 物理离散、p4 纠错的双凝聚路线，但其 13.5 nm、原几何结果不能回答真实 0.7 nm、三维有限缺口单胞的误差与容量问题。Task40 B 线冻结 0.7 nm Si/air、1° grazing、双 Floquet、上下 Fourier-DtN、同一几何的 G0/G1 网格和 p6/q4 路线；本任务不承诺目标尺寸可行，也不自动选择 Phase II 算法。
+### 停止原因与成本范围
 
-### 方法与实施
+第8步保存的identity difference范数为1.0129916171163611e-9，operation scale为3.29448470971699，主控对保存arrays独立重算relative=3.0748104980683956e-10。该值超过门槛约3.07倍；不先验归类为roundoff。源码每8步snapshot，物理残差未过且恢复/native identity超限时触发identity保护路径；max_it仍为2048，因此不是max_it exhausted。release packet保留V20_RELEASE_GATE_FAIL与A6=0.16667295750232333。run wrapper另报WORKER_FAILED/exit4，该状态不等于资源故障。
 
-Si 复折射率由公开散射因子与密度推导，输入与材料/几何/模式各有独立身份。G0 计划 336 cells、G1 880 cells。N2 用 60-cell p2 tiny diagnostic 验证小模型路径；其 `1.772707454694957e-12` residual 只是诊断结果。N3 第一次因 ledger identity 不一致失败，修复后唯一重放实际建成 G0 336-cell 网格、p6/q4 空间与 80-mode manifest，native projection check 通过到舍入精度，随后因 same-mesh wrapper 未保留缺口 audit 字段而在 cleanup 失败。最终 metadata 修复只通过 component fixture，没有 PDE 重放。
+p6/p4 cold JIT分别58.575/18.047秒；x1 setup-check 22.907秒，p6 build audit 15.216秒。保存的retained outer clock至terminal snapshot为54.222秒，KSP-only elapsed未持久化。外层8次matvec/8次PC apply；setup-inclusive bridge=13/p4=26及终态native/Schur/Hp计数按原记录范围列示，不折算成外层PC次数。workflow monotonic 356.929秒、conservative realtime 392.257秒、本次ledger debit 392.262秒、累计530.887秒。进程树RSS peak 2,954,866,688 B，swap 0，PSS disabled，后代清场；无资源Gate stop。attempt3单次时长及必要人工工时unknown，不由累计时间倒推。
 
-### 结果解释与负结果
-
-两次 G0 状态都是 `WORKER_FAILED` implementation errors，不是 `NUMERICAL_FAIL` 或资源 Gate。外层 KSP、p4 factor、full explicit A6 residual、恢复场、official R/T/A 和吸收均未到达。watchdog simultaneous process-tree RSS 峰为 `1,538,707,456 B`；活动 cgroup memory peak 单列 `1,673,117,696 B`，不能互换。先前称 RSS 为 cgroup peak 已在 Task40 response 中更正。
-
-N4/G1、N5/direct 和 N6 精度/容量闭环未运行，因此不能判断 p4 全局因子、端口或局部缓存哪个限制扩展，也不能从当前数据推算 2 TB 目标规模。Task39 V31 首次 geometry instrumentation failure 的注释仍在父任务记录，没有覆盖。
-
-### 最终决策、局限与下一步
-
-当前阶段以 `INCOMPLETE_WORKER_FAILED_REPLAY_BUDGET_EXHAUSTED` 记录。`workflow_seconds=43,200` 是 observe-only 参考账目，不是硬性 12 小时停止线。唯一 bug replay 已用完；任何额外 G0/G1/direct PDE 需 superseding review/authorization。由于没有正式解、h 对照或因子容量实测，Phase II 没有选出唯一算法。Task40 代码保持研究分支，未进入 ordinary default 或 `master`。
-
-详细证据：[Task40 结果总结](task40extra_0p7nm_engineering/outcomes/summary.md)、[Response V1](task40extra_0p7nm_engineering/response_v1.md)、[材料/几何身份](task40extra_0p7nm_engineering/outcomes/material_and_geometry_identity.md)、[精度与容量](task40extra_0p7nm_engineering/outcomes/accuracy_and_capacity.md)、[测试摘要](task40extra_0p7nm_engineering/outcomes/test_summary.md)。
+本批不追加G1、direct reference、工作站或目标规模运行，不选择未经accuracy evidence证明有效的PC。official R/T/A、A_volume、energy closure、h agreement、同离散reference和2 TB容量判断均未完成。结果及hash见 [Task40 summary](task40extra_0p7nm_engineering/outcomes/summary.md)、[attempt4 record](task40extra_0p7nm_engineering/outcomes/records/g0_attempt4_identity_gate_stop.json)、[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)。ordinary default不变，本研究分支不合并master。
 
 ---
 
