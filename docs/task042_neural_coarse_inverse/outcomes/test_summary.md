@@ -129,3 +129,19 @@ V3治理/文档表格定向测试28 passed；registry当前继承两项错误与
 | 静态/历史/显示 | task新文件Ruff/compileall、one-run输入、diff、Markdown/链接、旧authority/结果byte保护；Review V7真实3表/5公式 | records/static_checks_v10.json、review_render_check_v10.json、publication_checks_v10.json |
 
 一次ABI CLI错误、post线程探针库数量断言及compact括号/嵌套选核错误都记录失败并局部收口。没有重跑V7/V8、旧teacher/F0/长KSP；本批数值停滞不当作bug。新checker加入raw selected样本重算后最终25项重跑，之前24项费用保留；ML无新代码变更不重复昂贵Gate。共享工作站单核/mathTorch1/自有树监督，full repository pytest/MPI2/4/CI not_run。
+
+
+## V11：稳定头、真实回收与独立 Gate
+
+| 检查 | 结果／范围 | 证据或边界 |
+|---|---|---|
+| pure-array targeted | 最终 `12 passed in 0.24s`，覆盖复数头／端口小代数、V11固定数值协议、独立raw checker；checker最终source `c6c650ad18f278aa1a33cddd9395f899104b3bc2` | 命令 `source scripts/activate_task042.sh pure && python -m pytest -q src/test/test_task042_v11_checker.py src/test/test_task042_v11_stable_varpro.py src/test/test_neural_linear_head.py src/test/test_neural_port_closed_head.py` |
+| 损坏证据反例 | saved success 标签不能覆盖坏制造残差；满秩不能覆盖实际残差差；坏散射场、缺端口、坏体吸收差均判失败 | [原始字段独立判决](records/qualification_and_dispatch_v11.json)，`src/io/stable_head_varpro_check.py` |
+| ML矩与真实输出层 | V11实装前原 `test_neural_linear_head_ml.py` 小脚本通过，ML环境无pytest；真实主路径在MAIN中三个非零映射见证先于LS，回写及M1/M2另由原作用审核 | [进度](records/varpro_progress_v11.jsonl)、[制造](records/manufactured_recovery_v11.json) |
+| 真实数值 Gate | M1通过；M2修正后2.89518e-8＞1e-8；S2实际网络对薄模型差3.95983e-8＞1e-8，S3真实FD0、S4接受0；REF7后验证原方程/场/功率失败 | [完整结果](stable_head_varpro_v11.md)、[run index](records/run_index_v11.json) |
+| 静态与文档 | 受影响Python `compileall`、`git diff --check`及本地表格/链接/公式检查；Review V8实际GitHub richText5表／5数学块、列数一致。资格化环境无Ruff，未声称通过 | [静态检查](records/static_checks_v11.json)、[review渲染](records/review_render_check_v11.json)；结果页面发布检查单独记录 |
+| 未运行 | full repository pytest、MPI2/MPI4、CI、真实FD/隐藏更新、p4 enrichment/最大模型 | 前两者超出本批局部验证需求；后者因数值Gate或范围不准入，不能写成通过 |
+
+MAIN `stage_result` 的同名 `physical` 元数据覆盖数值键由已保存journal与下一REPLAY before找回；代码在REPLAY source只修序列化名，不改变原数组或旧raw。一个同分解数值修正仍失败，不把数值停滞伪装实现bug再重跑。最终相关测试在checker改动后重跑；不声明GitHub Actions或全仓测试通过。
+
+本地历史字节核验的首次临时helper误把本轮尚未提交的`response_v11.md`列入`git show HEAD`而报路径不存在；修正筛选后，原task、全部旧review与旧response共19文件逐字节等于本轮前HEAD。该辅助错误没有修改历史、数值数据或重跑正式阶段，见[静态记录](records/static_checks_v11.json)。

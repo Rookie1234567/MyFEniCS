@@ -1,0 +1,193 @@
+{
+  "A_rank": 1560,
+  "A_singular_range": [
+    0.005474006766698276,
+    995.7084842932156
+  ],
+  "Hhat_condition": 13284.16302612138,
+  "Hhat_port_pair": 0.0,
+  "MAIN_serialization_caveat": "MAIN stage_result physical numeric row was shadowed by physical identity metadata; original numeric row remains in MAIN varpro_progress.jsonl and part of it in REPLAY physical_before. REPLAY serialization fixed without changing MAIN raw.",
+  "P_rank": 1560,
+  "P_reassembly": 8.139731507999139e-16,
+  "P_singular_range": [
+    8.027524479292013e-10,
+    20.20004615505261
+  ],
+  "Z_orthogonality": 6.47418173488035e-16,
+  "basis_timing_nested_seconds": {
+    "A_economic_qr_for_stationarity": 32.91266686399467,
+    "P_economic_householder_qr": 31.7017015600577,
+    "fresh_original_S_on_Z": 142.13833891192917
+  },
+  "corrected_actual_physical": {
+    "Pgamma_vs_Zc_trace_relative": 5.2810172216514175e-11,
+    "Phi": 0.3181799855089551,
+    "Schur_relative_fixed_physical_b": 0.7977217378371424,
+    "actual_AHr_absolute": 5.27827523483462e-07,
+    "actual_gamma_norm": 127781.66063167299,
+    "actual_port_norm": 0.24645856426300863,
+    "actual_stationarity_UHr_fixed_physical_b": 9.622400469913324e-09,
+    "actual_vs_thin_residual_fixed_physical_b": 3.959830233542188e-08,
+    "full_rhs_residual": {
+      "absolute": 0.0659542587687516,
+      "port_absolute": 4.3724871210770795e-20,
+      "relative": 0.7977217378371424,
+      "rhs_port_norm": 0.0,
+      "rhs_trace_norm": 0.0826782769485171
+    },
+    "name": "physical",
+    "network_vs_Pgamma_trace_relative": 2.4605473699487417e-11,
+    "original_audit": {
+      "augmented_relative": 0.3093595065905437,
+      "field_norm": 2.2353894101335805,
+      "native_relative": 0.3093595065905437,
+      "original_total_augmented_relative": 0.10734755896382206,
+      "port_absolute": 4.3724871210770795e-20,
+      "port_full_rhs_relative": 2.050922083883329e-19,
+      "port_operation_relative": 6.039199153065171e-20,
+      "port_unknown_norm": 0.24645856426300863,
+      "recovery_relative": 6.103737553196044e-13,
+      "schur_original_identity_operation_relative": 6.626816677634183e-13,
+      "schur_relative": 0.7977217378371424,
+      "slave_storage_max": 0.0,
+      "strict_pass": false
+    },
+    "original_gate": {
+      "rho": 0.7977217378371424,
+      "status": "ORIGINAL_EQUATION_FAILED",
+      "thresholds": {
+        "equation": 1e-06,
+        "identity": 1e-10,
+        "recovery": 1e-10,
+        "slave_zero": 0
+      }
+    },
+    "port_fixed_physical_b": 5.288556175160474e-19
+  },
+  "correction": {
+    "action_costs_seconds": {
+      "S": 0.5368254939094186,
+      "SH": 0.0,
+      "audit": 0.0
+    },
+    "action_counts": {
+      "S": 3,
+      "SH": 0,
+      "audit": 0
+    },
+    "corrections": {
+      "M2": {
+        "A_singular_range": [
+          0.005474006766698276,
+          995.7084842932156
+        ],
+        "delta_c_norm": 2.867178587371292e-08,
+        "delta_gamma_norm": 0.039297699036543884,
+        "new_global_factor_constructed": false,
+        "one_correction_only": true,
+        "rank_A": 1560,
+        "same_space_P_reassembly": 8.139731507999139e-16,
+        "saved_A_three_fresh_original_action_checks": [
+          1.0488244965768677e-16,
+          2.702155562751747e-17,
+          0.0
+        ]
+      },
+      "physical": {
+        "A_singular_range": [
+          0.005474006766698276,
+          995.7084842932156
+        ],
+        "delta_c_norm": 3.333217714902483e-08,
+        "delta_gamma_norm": 0.038933212230525024,
+        "new_global_factor_constructed": false,
+        "one_correction_only": true,
+        "rank_A": 1560,
+        "same_space_P_reassembly": 8.139731507999139e-16,
+        "saved_A_three_fresh_original_action_checks": [
+          1.0488244965768677e-16,
+          2.702155562751747e-17,
+          0.0
+        ]
+      }
+    },
+    "full_A_rebuilds": 0,
+    "prior_source_sha": "a2cba71533edafb4fa1c701eae503e7ab526eac4",
+    "same_A_sha256": "5d8956da9feeacde865a00986df02baa0563f78ee75fc25c004132b16b981ab2",
+    "source_sha": "036e36ec637488b1baddd9b061c80c6f34cde254",
+    "status": "PASS",
+    "thin_LS_resolves": 2,
+    "threads": [
+      {
+        "function": "openblas_get_num_threads",
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+        "threads": 1
+      },
+      {
+        "function": "openblas_get_num_threads",
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+        "threads": 1
+      },
+      {
+        "function": "openblas_get_num_threads",
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+        "threads": 1
+      }
+    ],
+    "wall_seconds": 99.43402607203461
+  },
+  "derived_S1_gate": false,
+  "derived_S2_gate": false,
+  "initial_actual_physical_from_MAIN_progress": {
+    "Pgamma_vs_Zc_trace_relative": 5.3199685993942906e-11,
+    "Phi": 0.31817998560266914,
+    "Schur_relative_fixed_physical_b": 0.7977217379546193,
+    "actual_AHr_absolute": 3.1738173972340105e-06,
+    "actual_gamma_norm": 127781.66770929689,
+    "actual_port_norm": 0.24645856476702319,
+    "actual_stationarity_UHr_fixed_physical_b": 1.3291484920583565e-07,
+    "actual_vs_thin_residual_fixed_physical_b": 3.879003087989711e-08,
+    "full_rhs_residual": {
+      "absolute": 0.06595425877846439,
+      "port_absolute": 2.7755583755157647e-17,
+      "relative": 0.7977217379546193,
+      "rhs_port_norm": 0.0,
+      "rhs_trace_norm": 0.0826782769485171
+    },
+    "name": "physical",
+    "network_vs_Pgamma_trace_relative": 2.497408735353732e-11,
+    "original_audit": {
+      "augmented_relative": 0.30935950663609857,
+      "field_norm": 2.2353894280224913,
+      "native_relative": 0.30935950663609857,
+      "original_total_augmented_relative": 0.10734755897963752,
+      "port_absolute": 2.7755583755157647e-17,
+      "port_full_rhs_relative": 1.301880099317569e-16,
+      "port_operation_relative": 3.8335504009845414e-17,
+      "port_unknown_norm": 0.24645856476702319,
+      "recovery_relative": 6.191679730195941e-13,
+      "schur_original_identity_operation_relative": 6.701888889676284e-13,
+      "schur_relative": 0.7977217379546193,
+      "slave_storage_max": 0.0,
+      "strict_pass": false
+    },
+    "original_gate": {
+      "rho": 0.7977217379546193,
+      "status": "ORIGINAL_EQUATION_FAILED",
+      "thresholds": {
+        "equation": 1e-06,
+        "identity": 1e-10,
+        "recovery": 1e-10,
+        "slave_zero": 0
+      }
+    },
+    "port_fixed_physical_b": 3.357058804266175e-16
+  },
+  "method": "economic nonpivoting Householder QR(P)=ZR; A=fresh barS(Z); GELSD cond=1e-12; Hhat40 port closure; R triangular solve",
+  "rank_means": "numerical_full_column_rank only; not exact optimum",
+  "thresholds": {
+    "actual_UHr_fixed_physical_b": 1e-08,
+    "actual_vs_thin_fixed_physical_b": 1e-08,
+    "trace_relative": 1e-08
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "FD_perturbed_points": 0,
+  "hidden_gradient_used_for_training": false,
+  "hidden_updates_accepted": 0,
+  "qualification_not_claimed_from_synthetic_test": true,
+  "reason": "M2 stable manufactured 2.8951808764191922e-8 > 1e-8 and actual-vs-thin physical residual 3.959830233542188e-8 > 1e-8 after one permitted correction",
+  "synthetic_complex_nonhermitian_port_and_affine_rhs_test": "PASS (targeted unit tests)",
+  "true_FE_full_varpro_FD": "NOT_RUN_DEPENDENT_GATE"
+}

@@ -1,0 +1,153 @@
+{
+  "result_hashes_verified": true,
+  "schema": "task042.run-index.v11",
+  "source_is_not_document_HEAD": true,
+  "source_precommitted_clean": true,
+  "stages": {
+    "MAIN": {
+      "action_costs_seconds_nested": {
+        "S": 1.073445466114208,
+        "SH": 0.0,
+        "audit": 0.42475928890053183
+      },
+      "action_counts_stage": {
+        "S": 14,
+        "SH": 0,
+        "audit": 1
+      },
+      "budget_counts_cumulative": {
+        "FD_perturbed_points": 0,
+        "accepted_updates": 0,
+        "equivalent_S_SH": 1566,
+        "full_PA_builds": 1,
+        "thin_LS_head_resolves": 5,
+        "trial_points": 0
+      },
+      "cpu": 0,
+      "dat": "input/task042_neural_coarse_inverse/v11_main.dat",
+      "descendants_cleared": true,
+      "formal_fe_stage": false,
+      "input_sha256": "7d01b9b93c6e359ee241ddb0eed08a6314410f7b9c85280ebf84bc7cd394ca47",
+      "math_threads": 1,
+      "mpi": 1,
+      "no_global_S_or_CSR": true,
+      "no_global_p4_factor": true,
+      "no_hidden_fallback": true,
+      "outer_launch_wall_seconds": 427.8562062990386,
+      "packet_sha256": "9196edb807b534217d0c0eb78882125341342784a48ef20ebe2d9421fe636454",
+      "physical_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+      "plan_sha256": "e664baf0a1c38d406dadbe1b35d05de5d68d3c3f12daf306c1e7a1c5829778fe",
+      "reference_arrays_read": false,
+      "resolved_config_sha256": "727277ed5413266f039083e5cb9bb7c74ae1ec623031eb07d975486093ff6204",
+      "result": "benchmarks/artifacts/task042/v11/task042_v11_main_20260929T231737588343Z/stage_result.json",
+      "result_sha256": "892986ab1beba3171abaa48cbe1688b9a7e4eda53296e3e25da88e2b59c430e2",
+      "run_dir": "results/task042/task042_v11_main_20260929T231737588343Z",
+      "run_manifest_sha256": "b11d2bfb79f67004a7d88466fff1e79bd198f1f6ff5b4abe4dbfba524eed8ed7",
+      "run_summary_sha256": "07c00afde01362cf0b1c2d2cfd1fb5f0fae8cdcd879d34b92c370108397ff1e4",
+      "shared_workstation": true,
+      "source_sha": "a2cba71533edafb4fa1c701eae503e7ab526eac4",
+      "stage": "V11-MAIN",
+      "status": "STABLE_RECOVERY_OR_HEAD_GATE_FAILED",
+      "supervised_wall_seconds": 426.51150141400285,
+      "tree_sampled_peak_rss_bytes": 4668329984,
+      "tree_sampled_peak_swap_bytes": 0
+    },
+    "REPLAY": {
+      "action_costs_seconds_nested": {
+        "S": 1.2593017349718139,
+        "SH": 0.0,
+        "audit": 0.3731440339470282
+      },
+      "action_counts_stage": {
+        "S": 15,
+        "SH": 0,
+        "audit": 1
+      },
+      "budget_counts_cumulative": {
+        "FD_perturbed_points": 0,
+        "accepted_updates": 0,
+        "equivalent_S_SH": 1583,
+        "full_PA_builds": 1,
+        "thin_LS_head_resolves": 7,
+        "trial_points": 0
+      },
+      "cpu": 0,
+      "dat": "input/task042_neural_coarse_inverse/v11_replay.dat",
+      "descendants_cleared": true,
+      "formal_fe_stage": false,
+      "input_sha256": "5d6ed5f1968a50bc4f1fd2e479372d535d20fae770e5a6972fefec583f52732c",
+      "math_threads": 1,
+      "mpi": 1,
+      "no_global_S_or_CSR": true,
+      "no_global_p4_factor": true,
+      "no_hidden_fallback": true,
+      "outer_launch_wall_seconds": 137.31449510890525,
+      "packet_sha256": "9196edb807b534217d0c0eb78882125341342784a48ef20ebe2d9421fe636454",
+      "physical_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+      "plan_sha256": "e664baf0a1c38d406dadbe1b35d05de5d68d3c3f12daf306c1e7a1c5829778fe",
+      "reference_arrays_read": false,
+      "resolved_config_sha256": "8a92f597237124855de056a72b75bdf704d86f36615db78368580c1e411049b4",
+      "result": "benchmarks/artifacts/task042/v11/task042_v11_replay_20260929T233008912821Z/stage_result.json",
+      "result_sha256": "451792fbee50cbde75a967962524f37650864967dee8b5fc1883bde3ceb9521c",
+      "run_dir": "results/task042/task042_v11_replay_20260929T233008912821Z",
+      "run_manifest_sha256": "a8971721c91f65c1167e94a185457ca75f53b52b3f69069148122013c83e65e4",
+      "run_summary_sha256": "3ee453b0340e13d31a6bde4f0c420397e146376b1335936903a5eb7aaa3ea917",
+      "shared_workstation": true,
+      "source_sha": "036e36ec637488b1baddd9b061c80c6f34cde254",
+      "stage": "V11-REPLAY",
+      "status": "SAME_DECOMPOSITION_CORRECTION_STILL_FAILED",
+      "supervised_wall_seconds": 135.92512766295113,
+      "tree_sampled_peak_rss_bytes": 3764645888,
+      "tree_sampled_peak_swap_bytes": 0
+    },
+    "VERIFY": {
+      "action_costs_seconds_nested": {
+        "S": 0.15363018901553005,
+        "SH": 0.0,
+        "audit": 0.857530073961243
+      },
+      "action_counts_stage": {
+        "S": 2,
+        "SH": 0,
+        "audit": 2
+      },
+      "budget_counts_cumulative": {
+        "FD_perturbed_points": 0,
+        "accepted_updates": 0,
+        "equivalent_S_SH": 0,
+        "full_PA_builds": 0,
+        "thin_LS_head_resolves": 0,
+        "trial_points": 0
+      },
+      "cpu": 0,
+      "dat": "input/task042_neural_coarse_inverse/v11_verify.dat",
+      "descendants_cleared": true,
+      "formal_fe_stage": true,
+      "input_sha256": "d41380f6dbfb57e78daf31d229448d99954c3c052dc816ee12b2115092e3839c",
+      "math_threads": 1,
+      "mpi": 1,
+      "no_global_S_or_CSR": true,
+      "no_global_p4_factor": true,
+      "no_hidden_fallback": true,
+      "outer_launch_wall_seconds": 13.912690295022912,
+      "packet_sha256": "9196edb807b534217d0c0eb78882125341342784a48ef20ebe2d9421fe636454",
+      "physical_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+      "plan_sha256": "e664baf0a1c38d406dadbe1b35d05de5d68d3c3f12daf306c1e7a1c5829778fe",
+      "reference_arrays_read": true,
+      "resolved_config_sha256": "e6d52abaf06de1732dac6a6c215fb1b3d8db14b45337329fcbaed13be30999c3",
+      "result": "benchmarks/artifacts/task042/v11/task042_v11_verify_20260929T233321678241Z/stage_result.json",
+      "result_sha256": "5a1afe7ae695fc63c18e073418befdc9bcba5a6172bd65b017d167afe717eedf",
+      "run_dir": "results/task042/task042_v11_verify_20260929T233321678241Z",
+      "run_manifest_sha256": "533c50210e2a1d068591162520272cbc410ea3b4c1e303875659494abac0c5df",
+      "run_summary_sha256": "e4c5cd4030798b1d7ae6085c8e7b1b991eaffdb4838f9936547ee1eeba60a7f9",
+      "shared_workstation": true,
+      "source_sha": "036e36ec637488b1baddd9b061c80c6f34cde254",
+      "stage": "V11-VERIFY",
+      "status": "NEGATIVE_OR_PARTIAL",
+      "supervised_wall_seconds": 12.543487690971233,
+      "tree_sampled_peak_rss_bytes": 683417600,
+      "tree_sampled_peak_swap_bytes": 0
+    }
+  },
+  "total_distinct_stage_count": 3
+}

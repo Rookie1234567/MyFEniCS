@@ -1,0 +1,179 @@
+{
+  "M1": {
+    "known_z_sha256": "816619553b6d8ffbd41e5f37318c69eb2a95a5564215e9db4d38485ad4bdb620",
+    "manufactured_rhs_sha256": "a01e391ca5ec6b0a43d44a712243f8ef9508f807f36e8ed9c4f68ddaf17a9959",
+    "raw": {
+      "absolute": 1.0350135968392062e-13,
+      "homogeneous_recovery_pair": 8.788454457810923e-17,
+      "known_z_relative": 1.1873778957651562e-13,
+      "port_absolute": 4.06626755314072e-15,
+      "relative": 3.821705663379416e-15,
+      "rhs_port_norm": 1.2330431850534729,
+      "rhs_trace_norm": 27.054419940326298
+    },
+    "stable": {
+      "Pgamma_vs_Zc_trace_relative": 1.2579971888458557e-15,
+      "Phi": 8.167003305946364e-24,
+      "Schur_relative_fixed_physical_b": 4.044442620157545e-12,
+      "actual_AHr_absolute": 1.236255995510837e-10,
+      "actual_gamma_norm": 0.999999987847904,
+      "actual_port_norm": 0.9999999999999956,
+      "actual_stationarity_UHr_fixed_physical_b": 3.997482930099702e-12,
+      "actual_vs_thin_residual_fixed_physical_b": 1.0024274193548455e-12,
+      "full_rhs_residual": {
+        "absolute": 3.343875470517717e-13,
+        "port_absolute": 8.228515941976642e-17,
+        "relative": 1.2346995114208521e-14,
+        "rhs_port_norm": 1.2330431850534729,
+        "rhs_trace_norm": 27.054419940326298
+      },
+      "homogeneous_recovery_pair": 9.258445522896247e-17,
+      "known_z_relative": 5.536498354724123e-13,
+      "name": "M1",
+      "network_vs_Pgamma_trace_relative": 6.316139960856119e-16,
+      "port_fixed_physical_b": 9.95245213818432e-16
+    },
+    "stable_gate": true
+  },
+  "M2_after_one_same_decomposition_correction": {
+    "Pgamma_vs_Zc_trace_relative": 5.062311508615281e-11,
+    "Phi": 1.5266860342695002e-16,
+    "Schur_relative_fixed_physical_b": 1.7473900881010476e-08,
+    "actual_AHr_absolute": 2.402342134071767e-07,
+    "actual_gamma_norm": 129585.36817609615,
+    "actual_port_norm": 0.24645069413871717,
+    "actual_stationarity_UHr_fixed_physical_b": 6.656783000046382e-09,
+    "actual_vs_thin_residual_fixed_physical_b": 3.839161769388542e-08,
+    "full_rhs_residual": {
+      "absolute": 1.444712016411121e-09,
+      "port_absolute": 2.7755869159796525e-17,
+      "relative": 2.8951808764191922e-08,
+      "rhs_port_norm": 0.0012413273739560503,
+      "rhs_trace_norm": 0.04988513683483973
+    },
+    "homogeneous_recovery_pair": 8.636386523360632e-17,
+    "known_z_relative": 4.0987914703579184e-10,
+    "name": "M2",
+    "network_vs_Pgamma_trace_relative": 2.460779748624247e-11,
+    "port_fixed_physical_b": 3.3570933241726625e-16
+  },
+  "M2_initial": {
+    "known_z_sha256": "d3668025a3faedf28740d1bdcbd05b274e02ceb3b8ad8d9d206d10b9541e5c65",
+    "manufactured_rhs_sha256": "89e0cfbce72687b2edbe87c50192712ec357e9eac4dc01dbc2faff780f311077",
+    "raw": {
+      "absolute": 6.445097415557034e-09,
+      "homogeneous_recovery_pair": 8.831378114863656e-17,
+      "known_z_relative": 1.0776008739514397e-08,
+      "port_absolute": 2.4991126991799325e-10,
+      "relative": 1.2915877055230014e-07,
+      "rhs_port_norm": 0.0012413273739560503,
+      "rhs_trace_norm": 0.04988513683483973
+    },
+    "stable": {
+      "Pgamma_vs_Zc_trace_relative": 5.084258211492859e-11,
+      "Phi": 1.7701702271653087e-14,
+      "Schur_relative_fixed_physical_b": 1.8815792388818882e-07,
+      "actual_AHr_absolute": 8.589659735126576e-06,
+      "actual_gamma_norm": 129585.37558859265,
+      "actual_port_norm": 0.24645069423294824,
+      "actual_stationarity_UHr_fixed_physical_b": 1.874137568315401e-07,
+      "actual_vs_thin_residual_fixed_physical_b": 3.84523414422588e-08,
+      "full_rhs_residual": {
+        "absolute": 1.5556572941285676e-08,
+        "port_absolute": 3.1031995305180234e-17,
+        "relative": 3.117513523152825e-07,
+        "rhs_port_norm": 0.0012413273739560503,
+        "rhs_trace_norm": 0.04988513683483973
+      },
+      "homogeneous_recovery_pair": 8.903373781735127e-17,
+      "known_z_relative": 1.7412079057067782e-08,
+      "name": "M2",
+      "network_vs_Pgamma_trace_relative": 2.4933463541424175e-11,
+      "port_fixed_physical_b": 3.7533432541783057e-16
+    },
+    "stable_gate": false
+  },
+  "correction": {
+    "action_costs_seconds": {
+      "S": 0.5368254939094186,
+      "SH": 0.0,
+      "audit": 0.0
+    },
+    "action_counts": {
+      "S": 3,
+      "SH": 0,
+      "audit": 0
+    },
+    "corrections": {
+      "M2": {
+        "A_singular_range": [
+          0.005474006766698276,
+          995.7084842932156
+        ],
+        "delta_c_norm": 2.867178587371292e-08,
+        "delta_gamma_norm": 0.039297699036543884,
+        "new_global_factor_constructed": false,
+        "one_correction_only": true,
+        "rank_A": 1560,
+        "same_space_P_reassembly": 8.139731507999139e-16,
+        "saved_A_three_fresh_original_action_checks": [
+          1.0488244965768677e-16,
+          2.702155562751747e-17,
+          0.0
+        ]
+      },
+      "physical": {
+        "A_singular_range": [
+          0.005474006766698276,
+          995.7084842932156
+        ],
+        "delta_c_norm": 3.333217714902483e-08,
+        "delta_gamma_norm": 0.038933212230525024,
+        "new_global_factor_constructed": false,
+        "one_correction_only": true,
+        "rank_A": 1560,
+        "same_space_P_reassembly": 8.139731507999139e-16,
+        "saved_A_three_fresh_original_action_checks": [
+          1.0488244965768677e-16,
+          2.702155562751747e-17,
+          0.0
+        ]
+      }
+    },
+    "full_A_rebuilds": 0,
+    "prior_source_sha": "a2cba71533edafb4fa1c701eae503e7ab526eac4",
+    "same_A_sha256": "5d8956da9feeacde865a00986df02baa0563f78ee75fc25c004132b16b981ab2",
+    "source_sha": "036e36ec637488b1baddd9b061c80c6f34cde254",
+    "status": "PASS",
+    "thin_LS_resolves": 2,
+    "threads": [
+      {
+        "function": "openblas_get_num_threads",
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+        "threads": 1
+      },
+      {
+        "function": "openblas_get_num_threads",
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+        "threads": 1
+      },
+      {
+        "function": "openblas_get_num_threads",
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+        "threads": 1
+      }
+    ],
+    "wall_seconds": 99.43402607203461
+  },
+  "derived_gate": {
+    "M1": true,
+    "M2": false
+  },
+  "physical_b_not_overwritten": true,
+  "rhs_from_original_action_not_cached_W": true,
+  "thresholds": {
+    "homogeneous_recovery_pair": 1e-10,
+    "known_z_relative": 1e-06,
+    "manufactured_original_relative": 1e-08
+  }
+}

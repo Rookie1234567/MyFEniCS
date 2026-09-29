@@ -107,3 +107,18 @@ C1 `64c128c3541887e22788343692cc4f7832a45696`；唯一正式坐标修复／成�
 | do-not-merge | P/W/参数/field/action/raw分项、环境/JIT/监控/tmp helper及大日志 | ignored NN-Lab，保留hash-bound数据，不入Git；无global p4部署/hidden fallback |
 
 建议审阅依赖顺序：窗口/监督→薄LS→原矩输出映射→Hhat精确端口与原V诊断→研究IO/stage/显式dispatch→checker/tests→compact证据。全部待review，不merge；E/P/最大模型未运行，不提升普通默认。最初B一见证、三个见证后补，原时序偏差及首次D2失败保留；后续文档source不冒充正式1fb8/6e56/6cba运行source。
+
+
+## V11：稳定头与变量投影研究依赖组
+
+| Selective merge组 | 本批必要文件、行为与依赖 | 验证／边界／建议顺序 |
+|---|---|---|
+| production numerical/core | 无新增合格production路径；原A4/A6、S、MPC、材料、40端口、普通默认与旧p4负结果不改 | M2内部门限与原物理场失败，禁止提升默认或合并master |
+| research numerical/core | `src/solvers/stable_head_varpro.py`、`stable_head_varpro_torch.py`、`stable_head_window.py`：P=ZR、原S对Z重算A、Hhat40闭合、原方程loss及有界变量投影导数／接受状态 | 依赖原action/q15/batch8/port helpers；合成复数梯度与事务测试通过，但真实FD因S1/S2失败未运行；仅research-only |
+| reusable runner/watchdog | `src/runners/task042_shared.py` 的V11窗口/整树监督沿用与最小字段；`src/runners/stable_head_varpro.py` 薄阶段编排（仍较长，后续审查应关注） | 单独one-run MAIN/REPLAY/VERIFY、own lock/CPU0/MPI1/math1/16GiB树监督，真实后代清场；不改邻任务 |
+| research input/dispatch | `input/task042_neural_coarse_inverse/stable_head_varpro_v11.json`及三个`v11_*.dat`；`src/io/stable_head_varpro.py`、`task042_profile.py`、`scripts/run_case.py`仅显式V11入口 | 预登记seed/预算/物理hash/参考屏障；干净实际source a2cba715…、036e36ec…；旧默认不受影响 |
+| checker/tests | `src/io/stable_head_varpro_check.py`、`src/test/test_task042_v11_checker.py`、`test_task042_v11_stable_varpro.py`；从raw重算S1/S2/场门限，拒绝坏saved status | 最终12 pure pytest＋3 ML小断言、compileall、真实S1/S2/FE；checker源码c6c650ad…是后置审计，不冒充正式计算源码 |
+| compact evidence/docs | `response_v11.md`、`outcomes/stable_head_varpro_v11.md`、Review要求的9项compact记录，另加40复通道CSV及Review／静态／发布显示；README最新导航、summary新前缀、tests/changed及两项目总账 | 保留历史原字节与失败源／MAIN序列化缺陷，文档只说明真实结果；最后归档审阅 |
+| do-not-merge | ignored P/Z/R/A、trial/workspace、参数/场/action packet、FE JIT/cache、原raw stage和tmp collect helper | 只在NN-Lab ignored目录，hash绑定不入Git；无在线global p4 factor、完整S/CSR、ILU/Riesz、正规方程或隐藏fallback |
+
+建议审阅依赖次序：已有action／q15／Hhat→研究solver→窗口／stage／显式输入→独立checker/tests→compact负结果。真实 S3 FD、S4 hidden update、p4 enrichment 与目标大模型未运行，不能把已写的研究代码视为经过这些阶段的数值资格。原 task/review/response 及 V1–V10 raw 保留；无master合并授权。

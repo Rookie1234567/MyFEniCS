@@ -2974,3 +2974,12 @@ NEURAL_OPTIMIZATION_NEGATIVE、神经增量NOT_DEMONSTRATED、最终0.7nm/48h NO
 12正式launch共650.093757705s，整树同时采样峰2.213718GiB/own swap0；B1继承NN7原7142.986s及必要FE/moment设置，历史carry10209.145962639828s不重置。共享CPU现场核11/13/0、MPI1/mathTorch1、自有锁/16-12GiB采样watchdog/原单个7h总截止；未观测持续PSI压力，缺可比邻速率，影响/正式加速INCONCLUSIVE。无cgroup委派不称连续kernel cap，邻任务不操作。D2序列化一次最小修复只审核保存向量，失败保留，未重做FE分项；B三见证后补时序偏差披露。
 
 原task/review/response及全部负结果/材料/算子/普通default保留；无global p4 factor/完整S或CSR/正规方程/ILU/Riesz/fallback，无新隐藏训练/GPU/最大模型。最终25相关pytest和ML三见证通过，Review V7实际3表5公式；不声明CI。唯一下一建议是固定随机特征空间的非零已知系数制造RHS回收，进一步区分数值链稳定性与目标表示/弱响应；未自动实施。全部可执行路径耗尽后提前交付，不填满7h，不merge。[Response V10](task042_neural_coarse_inverse/response_v10.md)、[完整结果](task042_neural_coarse_inverse/outcomes/autonomous_neural_head_v10.md)、[费用](task042_neural_coarse_inverse/outcomes/records/resource_costs_v10.json)。
+
+
+## Task042 V11：稳定头内部门限失败，真实隐藏更新未准入
+
+Review V8取消“固定空间无P/P+就不准改变hidden”的旧限制，改为先用原action制造的已知解验证线性头，再做真实完整VarPro梯度和有界隐藏更新。本批固定0.7nm/384hex/p3、原Si canonical表、完整40端口及seed420906随机hidden；采用economic QR `P=ZR`，原S逐列作用于Z、gelsd/cond1e-12与Hhat40闭合，写回真实网络并审核。M1小系数制造残差1.23470e-14、已知z差5.53650e-13通过；M2约1.30e5系数的稳定头初始残差3.11751e-7，一次同分解修正后仍2.89518e-8＞1e-8。物理基线真实网络对薄预测残差差3.95983e-8＞1e-8，即使P/A都数值rank1560，S1/S2仍失败；数值满秩不称精确最优。
+
+因此真实S3三方向FD0、S4试探0/接受0，不绕过Gate用Adam，不能把未测隐藏学习写成负证明。求解队列冻结后独立S5验证：原Schur/native0.797721738/0.309359507＞1e-6，散射E/curl差0.734256809/0.734361587＞1e-4，端口闭合2.051e-19及恢复6.104e-13虽通过却不能使全场合格。R/T/A_balance/A_volume0.0849663/0.7980459/0.1169878/0.00485487、能量闭合0.112133，全部仅未资格化诊断，无新official结果。M2修正与大系数敏感性相关但唯一根因INCONCLUSIVE，固定空间原残差平台也未突破。
+
+MAIN clean source a2cba71533edafb4fa1c701eae503e7ab526eac4；唯一同分解修正与独立FE VERIFY source036e36ec637488b1baddd9b061c80c6f34cde254。三正式监督wall574.980116768s、最大同时采样树RSS4668329984B、own swap0；V6–V10有载carry11159.165418899036s不清零，正式wall累加下界11734.145535666961s。MPI1/mathTorch1/CPU0现场选核、自有锁/16-12GiB树监督、独立环境缓存、无GPU或邻任务操作；没有cgroup委派，性能/干扰INCONCLUSIVE shared-workstation。无global p4因子/完整S或CSR/ILU/Riesz/fallback，旧路线关闭；最终0.7nm/48h NOT_QUALIFIED，不扩大模型。Review V8真实GitHub5表5数学块；最终12 pure-array pytest、ML三断言与raw checker通过，结果发布显示另核。唯一建议下一review考虑对冻结M2作一次有界浮点来源归因，未实施。[Response V11](task042_neural_coarse_inverse/response_v11.md)、[完整负结果](task042_neural_coarse_inverse/outcomes/stable_head_varpro_v11.md)、[source/费用](task042_neural_coarse_inverse/outcomes/records/run_index_v11.json)。只推送本分支待review，不merge。

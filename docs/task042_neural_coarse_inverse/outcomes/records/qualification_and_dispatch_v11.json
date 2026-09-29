@@ -1,0 +1,32 @@
+{
+  "P_or_larger_geometry": "NOT_RUN_OUT_OF_SCOPE",
+  "S1": "FAILED_M2_AFTER_ONE_CORRECTION",
+  "S2": "FAILED_ACTUAL_VS_THIN_PHYSICAL_RESIDUAL",
+  "S3": "NOT_RUN_DEPENDENT_GATE",
+  "S4": "NOT_RUN_DEPENDENT_GATE",
+  "S5": "RUN_INDEPENDENTLY_AFTER_SOLVER_FROZEN_NEGATIVE",
+  "checker_source_sha": "c6c650ad18f278aa1a33cddd9395f899104b3bc2",
+  "derived_from_raw": {
+    "corrected_manufactured": {
+      "M1": true,
+      "M2": false
+    },
+    "corrected_stable_head_gate": false,
+    "formal_solver_qualification": false,
+    "hidden_updates": 0,
+    "initial_manufactured": {
+      "M1": true,
+      "M2": false
+    },
+    "mismatches": [],
+    "same_discrete": {
+      "S2_BASELINE": false
+    },
+    "saved_statuses_not_trusted": true,
+    "status": "PASS"
+  },
+  "field_gate": "FAILED",
+  "formal_solver_qualified": false,
+  "official_R_T_A": "NONE",
+  "single_next_suggestion": "One bounded, same-operator precision/conditioning audit of M2 and actual network writeback versus thin residual, without changing rank, loss, architecture or gate; next review required before running."
+}

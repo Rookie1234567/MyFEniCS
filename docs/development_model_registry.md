@@ -1774,3 +1774,14 @@ production model。
 以上新R/T/A全部未资格化诊断、不是official物理结果；原限值方程1e-6/场1e-4不变。R00_s/p与完整40复通道及参考面见[候选](task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v10.csv)、[通道](task042_neural_coarse_inverse/outcomes/records/channel_observables_v10.csv)。原材料表及physical/mode/action identity不变，p/h/MPI/波长影响未扫描；原NN7接受unknown保持，reference在冻结后独立验证，D后禁回训。
 
 12正式含失败/replay wall650.093757705s、同时树峰2.213718GiB/own swap0；全aux/继承训练/设置及历史费用见[resource](task042_neural_coarse_inverse/outcomes/records/resource_costs_v10.json)。共享CPU MPI1/线程1、独立cache/自有监督/原25200s总窗口，无GPU/邻任务修改，性能与影响INCONCLUSIVE。无global p4 LU/新global S/CSR或hidden inverse；旧路线关闭，旧Task/results不改。全部可执行路径完成后提前收口，唯一下一制造RHS建议仅建议未执行，待review不merge。[Response](task042_neural_coarse_inverse/response_v10.md)、[完整证据](task042_neural_coarse_inverse/outcomes/autonomous_neural_head_v10.md)。
+
+
+### Task042 V11：稳定输出头与有界变量投影准入
+
+| 模型／状态 | 固定数据及方法 | 真实数值与判定 | source／资源与资格 |
+|---|---|---|---|
+| M1/M2 原算子制造见证 | 同0.7nm/384hex/p3、完整40端口、seed420906随机hidden；M1小非零γ/α，M2历史B0无标签大γ；原action产生完整RHS | M1稳定残差1.23470e-14≤1e-8；M2 raw1.29159e-7、初始稳定3.11751e-7、同分解唯一修正2.89518e-8＞1e-8；已知z/齐次恢复通过 | MAIN a2cba71533edafb4fa1c701eae503e7ab526eac4，REPLAY 036e36ec637488b1baddd9b061c80c6f34cde254；`S1_FAILED`，[见证](task042_neural_coarse_inverse/outcomes/records/manufactured_recovery_v11.json) |
+| RANDOM-HIDDEN-PORT-CLOSED-VARPRO／稳定基线 | 原q15边面矩、P=ZR、原S对Z构A、gelsd/cond1e-12，40维Hhat精确闭合，真实Torch头回写；P/A rank1560/1560 | 实际网络与薄预测残差差3.95983e-8＞1e-8；原Schur/native0.797721738/0.309359507，port2.051e-19；散射E/curl差0.734256809/0.734361587，R/T/A/Avol仅未资格化诊断 | `S2_FAILED`／same-discrete FAIL；VERIFY同036e source。三阶段监督wall574.980116768s、同时树峰4668329984B/own swap0；[结果](task042_neural_coarse_inverse/outcomes/stable_head_varpro_v11.md) |
+| 真正可变hidden VarPro／最终目标 | 同8576实hidden参数，review限40次P/A、48头、65000 S/Sᴴ、18FD、最多5接受更新 | 小型复非Hermitian梯度测试通过；真实FD0、trial0、accepted0，因S1/S2失败停止。无新p4参考、p6、最大目标或official R/T/A | `NOT_RUN_DEPENDENT_GATE`；最终0.7nm／48h `NOT_QUALIFIED`，不是对隐藏自适应本身的负证明；[分流](task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v11.json) |
+
+V11不修改原物理/MPC/材料/普通默认，旧p4强逆持续关闭；没有构造候选global p4 LU、完整S/global CSR、正规方程、ILU/Riesz或hidden fallback。REF7仅在求解冻结后独立验证，非训练或选择输入。V6–V10历史有载11159.165418899036s照记，V11正式wall后可核下界11734.145535666961s；全aux在原14400s总elapsed窗口内，不伪称精确有载。shared-workstation CPU0现场选核、MPI1/math1、16/12GiB采样整树监督/own swap0、无GPU/邻任务修改；无cgroup委派不能称内核连续限额，邻影响和无争用加速INCONCLUSIVE。p/h、Hybrid、M、MPI、最终几何尺度均未扫描。唯一下一建议为冻结M2的有界浮点来源归因，需后续review，未实施；不merge。[Response V11](task042_neural_coarse_inverse/response_v11.md)、[run index](task042_neural_coarse_inverse/outcomes/records/run_index_v11.json)。

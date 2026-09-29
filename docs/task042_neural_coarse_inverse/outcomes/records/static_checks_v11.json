@@ -1,0 +1,37 @@
+{
+  "status": "PASS",
+  "table_counts": {
+    "docs/task042_neural_coarse_inverse/response_v11.md": 2,
+    "docs/task042_neural_coarse_inverse/outcomes/stable_head_varpro_v11.md": 5,
+    "docs/task042_neural_coarse_inverse/README.md": 1,
+    "docs/task042_neural_coarse_inverse/outcomes/summary.md": 21,
+    "docs/task042_neural_coarse_inverse/outcomes/test_summary.md": 7,
+    "docs/task042_neural_coarse_inverse/outcomes/changed_files.md": 8,
+    "docs/development_progress.md": 49,
+    "docs/development_model_registry.md": 128
+  },
+  "math_block_counts": {
+    "docs/task042_neural_coarse_inverse/response_v11.md": 0,
+    "docs/task042_neural_coarse_inverse/outcomes/stable_head_varpro_v11.md": 1,
+    "docs/task042_neural_coarse_inverse/README.md": 0,
+    "docs/task042_neural_coarse_inverse/outcomes/summary.md": 0,
+    "docs/task042_neural_coarse_inverse/outcomes/test_summary.md": 0,
+    "docs/task042_neural_coarse_inverse/outcomes/changed_files.md": 0,
+    "docs/development_progress.md": 5,
+    "docs/development_model_registry.md": 0
+  },
+  "broken_relative_links": [],
+  "compact_csv_parsed": true,
+  "full_complex_channels": 40,
+  "json_records_parsed": true,
+  "review_render": "RENDERED_HTML_PASS",
+  "new_response_and_outcomes_github_render": "PENDING_PUBLICATION",
+  "ruff": "NOT_AVAILABLE_IN_QUALIFIED_ENVIRONMENT",
+  "compileall": "PASS",
+  "git_diff_check": "PASS",
+  "history_authority_files_modified": false,
+  "history_authority_file_count_checked": 19,
+  "history_authority_byte_equal_to_pre_V11_HEAD": true,
+  "initial_local_history_helper_issue": "First scope accidentally included new untracked response_v11 in git show HEAD; fixed file selection; no numerical execution or history edit.",
+  "csv_line_endings": "LF, no CR after initial local git diff --check found Python csv default CRLF; helper corrected without changing numeric rows"
+}

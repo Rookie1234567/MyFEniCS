@@ -1,3 +1,21 @@
+# V11 最新交付：稳定头大系数回收未过 Gate，未启动隐藏更新
+
+本批对同一0.7 nm、384hex／p3、40复端口三维缺口micro，先检验“答案已经在当前网络空间里时能否从原Maxwell方程稳定地找回”，再计划改变隐藏特征。小系数见证通过，大系数失败；一次原分解修正改善残差但未到1e-8，因此不使用该不可靠头训练。下列功率均仅是未资格化诊断，完整解释见[Response V11](../response_v11.md)和[结果](stable_head_varpro_v11.md)。此前V1–V10全部历史正文保留。
+
+| 固定模型／方法与比较目的 | 原Schur／native／port固定RHS相对残差；限1e-6 | 同mesh散射E／scaled-curl差；限1e-4 | 能量闭合；限1e-5 | 状态、原因、证据 |
+|---|---|---|---:|---|
+| V10-B0随机hidden原薄头，历史对照 | 0.797324／10.964503／0.00582247 | 0.732080／0.732146 | 0.111831 | 旧负结果，无神经增量；[历史CSV](records/candidate_comparison_v10.csv) |
+| V11小系数M1制造RHS，测试数值接线，不是物理求解 | 原制造残差1.2347e-14、已知z差5.5365e-13、齐次恢复9.2584e-17 | 不产生物理场资格 | 不计算 | 三项内部门限通过；[见证](records/manufactured_recovery_v11.json) |
+| V11大系数M2制造RHS，测试约1.30e5输出权重 | 初始3.1175e-7、同分解修正后**2.8952e-8＞1e-8** | 不产生物理场资格 | 不计算 | S1失败，raw头1.2916e-7亦失败；不使用其梯度训练 |
+| V11随机hidden正交头＋原Hhat40闭合，唯一物理基线 | **0.797721738／0.309359507／2.051e-19** | **0.734256809／0.734361587** | **0.112132956** | 真实网络与薄残差差3.9598e-8＞1e-8，原方程／场仍失败；[独立Gate](records/qualification_and_dispatch_v11.json) |
+| V11真实VarPro FD／L-BFGS隐藏更新／最终目标 | FD0、试探0、接受0 | 无可验新隐藏状态 | 无official R/T/A | 因S1/S2未过停止；新p4参考、p6、最大0.7nm模型未运行，48小时资格unknown |
+
+V11物理基线的R_total/T_total/A_balance/A_volume为0.0849662553/0.7980459227/0.1169878220/0.0048548661；R00_s/R00_p为0.0849640599/1.28216e-7。原p3参考R/T/A≈0.117645819/0.877047783/0.005306398；新功率差与能量闭合远超门限，**无新official结果**。[40复通道](records/channel_observables_v11.csv)、[完整候选CSV](records/candidate_comparison_v11.csv)。未做p/h、Full3D/Hybrid、M或MPI的本批对照，不能以同一micro估计这些影响。
+
+正式三stage均clean source：MAIN `a2cba71533edafb4fa1c701eae503e7ab526eac4`，REPLAY／VERIFY `036e36ec637488b1baddd9b061c80c6f34cde254`，后续文档HEAD不冒充运行源码。监督wall **574.980116768s**、同时采样过程树RSS峰 **4668329984B**、own swap0；V6–V10有载carry11159.165418899036s，正式wall累加下界11734.145535666961s，辅助工作另在四小时elapsed内。[全部费用](records/resource_costs_v11.json)、[数据／源码](records/run_index_v11.json)。现场CPU0/MPI1/mathTorch1、自有锁/16GiB hard/12GiB warn、独立缓存、无GPU/cgroup委派；邻任务不操作，影响和无争用速度 **INCONCLUSIVE shared-workstation**。
+
+真实目标仍缺合格micro原方程／散射场与独立离散精度、目标规模存储/通道/单步和迭代预算证据；旧global p4逆关闭，候选无global p4 factor/完整S或CSR/隐藏fallback。Review V8实际GitHub5表5公式通过；结果页发布核验另列。唯一下一建议是下一review若批准，对冻结M2及相同P/A/真实回写作一次有界浮点误差来源归因；本轮不自动训练/改rank/放宽Gate。下方所有“最新”字样仅为历史标题。
+
 # V10 最新交付：输出头／精确端口多路径负结果，有限诊断完成
 
 固定原0.7nm／384hex／p3／40复通道。网络隐藏层提供空间函数，本批直接由原有限元方程求线性组合，检验是否可免去线性输出层长训练；同时用随机隐藏函数区分已学习特征与线性代数收益。薄矩阵和稳定分解增加设置内存，仍不能外推最终大模型。所有原V1–V9正文按字节保留。

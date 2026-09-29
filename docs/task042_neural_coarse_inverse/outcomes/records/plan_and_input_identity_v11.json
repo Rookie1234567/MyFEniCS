@@ -1,0 +1,174 @@
+{
+  "action_packet": {
+    "file_bytes": 209248356,
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v7/V7-M1-FE/task042_v7_real_fe_interface_20260929T053615881143Z/physical_action_packet.npz",
+    "sha256": "9196edb807b534217d0c0eb78882125341342784a48ef20ebe2d9421fe636454"
+  },
+  "batch": "V11_STABLE_HEAD_VARIABLE_PROJECTION",
+  "full_channel_inventory_count": 40,
+  "full_channel_inventory_raw_path": "benchmarks/artifacts/task042/v11/task042_v11_replay_20260929T233008912821Z/stage_result.json",
+  "manufactured_identity": {
+    "M1_alpha_norm": 1.0,
+    "M1_gamma_norm": 1.0,
+    "M1_seed": 421101,
+    "M2_gamma_norm": 129585.36835483271,
+    "M2_reproduced_relative": 1.3806497128657254e-16,
+    "M2_saved_B0_state": {
+      "arrays": {
+        "gamma": {
+          "sha256": "4f7ab3fe6297d90645a6364e24428446c7cdee6f0ea49ec2c91ad3bb0167d35e",
+          "shape": [
+            1560
+          ]
+        },
+        "network_parameters": {
+          "sha256": "f72c5a4d7d41330132abda619d4af1de98a659cdb301ab3f8c59f27baef958c1",
+          "shape": [
+            11696
+          ]
+        },
+        "port_coefficients": {
+          "sha256": "99ba1ef3158fe5f17b242ecefa642fcbf2c3a663bcf7f54f04fb68e5e38f161e",
+          "shape": [
+            40
+          ]
+        }
+      },
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v10/task042_v10_b0_20260929T141312370707Z/B0_state.npz",
+      "sha256": "3d72419f1e754cd078b17555660347c07f7c211dfce7c519538dc42c29747b86",
+      "shape": [
+        18184
+      ],
+      "z_kind": "physical_canonical_trace_plus_original_forty_ports",
+      "z_sha256": "96b1ce53ec1b9b99ad36a2de2a0870a354a98bcdf41371e64540187364d70ecb"
+    },
+    "physical_packet_b_overwritten": false,
+    "reference_arrays_read": false,
+    "rhs_from_original_action_apply": true
+  },
+  "material_path": "input/materials/si_optical_constants_v1.json",
+  "material_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+  "physical_identity": {
+    "bottom_channels": 20,
+    "capacity_before_allocation": {
+      "full_rows": 34050,
+      "global_FE_matrix": false,
+      "global_p4_factor": false,
+      "hard_bytes": 17179869184,
+      "independent_trace_rows": 18144,
+      "libraries_compiler_upper_bytes": 3221225472,
+      "local_arrays_upper_bytes": 254803968,
+      "maximum_unique_classes": 384,
+      "optimizer_activations_upper_bytes": 1073741824,
+      "packet_copies_and_transient_upper_bytes": 1818492928,
+      "port_arrays_upper_bytes": 132710400,
+      "ports": 40,
+      "private_audit_CSR": false,
+      "scope": "p3 single-degree candidate and independent native cell audit",
+      "status": "PREALLOCATION_PASS",
+      "total_upper_bytes": 6113460224,
+      "warning_bytes": 12884901888
+    },
+    "derived_fe_inventory": {
+      "cell_dimension": 144,
+      "cells": 384,
+      "degree": 3,
+      "edges": 1494,
+      "faces": 1312,
+      "full_fe_rows": 34050,
+      "full_trace_rows": 20226,
+      "independent_trace_rows": 18144,
+      "interior_rows": 13824,
+      "periodic_slaves": 2082
+    },
+    "material": {
+      "air_n": [
+        1.0,
+        0.0
+      ],
+      "alias_reason": "Review V4 explicitly authorizes source 0.699999988 for nominal 0.7; no interpolation; solve uses nominal 0.7",
+      "beta": "4.32477054E-06",
+      "canonical_path": "/home/fenics/Projects/NN-Lab/input/materials/si_optical_constants_v1.json",
+      "delta": "0.000114859526",
+      "epsilon_decimal": [
+        "0.9997702941220070727210241084",
+        "0.00000864854759781143367192"
+      ],
+      "epsilon_loaded": [
+        0.9997702941220071,
+        8.648547597811433e-06
+      ],
+      "external_dataset_version": "not_provided",
+      "material_table_id": "SI_OPTICAL_CONSTANTS_USER_20260929_V1",
+      "material_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "mu_r": [
+        1.0,
+        0.0
+      ],
+      "n_decimal": [
+        "0.999885140474",
+        "0.00000432477054"
+      ],
+      "n_loaded": [
+        0.999885140474,
+        4.32477054e-06
+      ],
+      "nominal_wavelength_nm": "0.7",
+      "query_wavelength_nm": "0.7",
+      "source": {
+        "review_blob": "a0e0c106970eab91271d61981810544146c4a32f",
+        "review_commit": "18084a6213570e26a0a0941e628717f2c63fd00a",
+        "review_path": "docs/task042_neural_coarse_inverse/review_report_v4.md"
+      },
+      "source_kind": "user_supplied/user_authorized",
+      "source_wavelength_nm": "0.699999988",
+      "status": "MATERIAL_READY_USER_SUPPLIED",
+      "time_convention": "exp(-i omega t)"
+    },
+    "mode_manifest_sha256": "93795b53d7c5aef69af66b4ff0a56fa46515771f1ec43332ec929970270ea262",
+    "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+    "status": "MATERIAL_READY_USER_SUPPLIED",
+    "top_channels": 20,
+    "total_channels": 40
+  },
+  "plan_path": "input/task042_neural_coarse_inverse/stable_head_varpro_v11.json",
+  "plan_sha256": "e664baf0a1c38d406dadbe1b35d05de5d68d3c3f12daf306c1e7a1c5829778fe",
+  "q15_moment_packet": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v6/V6-FE-INTERFACE/task042_v6_geometry_interface_20260929T040548954409Z/packet_q15.npz",
+    "q15_q30_qualification_reused": true,
+    "sha256": "72ec5a28dd073b4217fdb36d4bbfe2383c6cda7b232d239da0ae4392292abd42",
+    "source_sha": "2a2cb4af78ba869a26a1254b4b4b76c9ac158366",
+    "target_material_independent": true
+  },
+  "reference_boundary": "no REF7 in MAIN; read only in independent VERIFY after solver queue frozen",
+  "reference_only_in_VERIFY": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v7/V7-M3-REFERENCE/task042_v7_same_mesh_p3_reference_20260929T081232010551Z/accurate_reference_state.npz",
+    "sha256": "a0610a5a55e7508196b17277e706595c33e4398ace82b245f70b656e6b9ed355",
+    "z_sha256": "4a681a75950ac8087ee8265f34e10363fef99b523c8eecf434f30fafecc09936"
+  },
+  "reused_random_P": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v10/task042_v10_b0_20260929T141312370707Z/P.npy",
+    "reused_verified_V10_B0_P": true,
+    "sha256": "a64b74da8014aa929c9bfcf5675c10ca531cc0667de5161459bb7c81e253a0f0"
+  },
+  "review_commit": "38a68de138fc01537dc8a63f122e25c64b820a37",
+  "source_shas": {
+    "MAIN": "a2cba71533edafb4fa1c701eae503e7ab526eac4",
+    "REPLAY": "036e36ec637488b1baddd9b061c80c6f34cde254",
+    "VERIFY": "036e36ec637488b1baddd9b061c80c6f34cde254"
+  },
+  "window": {
+    "carry_in_V6_to_V10_onload_seconds": 11159.165418899036,
+    "cleanup_reserve_seconds": 900,
+    "deadline_utc": "2026-09-30T02:58:57+00:00",
+    "heavy_limit_seconds": 13500,
+    "observed_monotonic": 647771.486479858,
+    "observed_utc_ns": 1790722776625613774,
+    "review_expected_commit": "38a68de138fc01537dc8a63f122e25c64b820a37",
+    "schema": "task042.autonomous-window.v11",
+    "start_utc": "2026-09-29T22:58:57+00:00",
+    "start_utc_ns": 1790722737000000000,
+    "stop_heavy_utc": "2026-09-30T02:43:57+00:00",
+    "total_limit_seconds": 14400
+  }
+}

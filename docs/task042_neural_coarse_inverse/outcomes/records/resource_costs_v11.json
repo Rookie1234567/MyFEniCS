@@ -1,0 +1,97 @@
+{
+  "V11_equivalent_S_SH_including_two_VERIFY_original_S_checks": 1585,
+  "auxiliary_development_test_and_publication_wall": "inside elapsed window; not falsely reconstructed as exact onload",
+  "baseline_disk_free_bytes": 3441577926656,
+  "baseline_mem_available_bytes": 948914786304,
+  "baseline_memory_psi_some_avg10": 0.0,
+  "baseline_system_plus_neighbor_reserve_bytes": 353748992000,
+  "cpu": 0,
+  "cumulative_V11_builds": {
+    "FD_perturbed_points": 0,
+    "accepted_updates": 0,
+    "equivalent_S_SH": 1583,
+    "full_PA_builds": 1,
+    "thin_LS_head_resolves": 7,
+    "trial_points": 0
+  },
+  "deadline_utc": "2026-09-30T02:58:57+00:00",
+  "elapsed_since_start_seconds_at_record": 3167.116851,
+  "formal_outer_launch_wall_seconds_sum": 579.0833917029668,
+  "formal_supervised_wall_seconds_sum": 574.9801167679252,
+  "gpu_used": false,
+  "heavy_stop_utc": "2026-09-30T02:43:57+00:00",
+  "neighbor_impact": "INCONCLUSIVE_SHARED_WORKSTATION_NO_MATCHED_CONTROL",
+  "nested_timing_not_summed_into_stage_wall": true,
+  "nonformal_elapsed_seconds_at_record_including_reading_implementation_tests_and_waiting": 2588.0334592970335,
+  "prior_V6_to_V10_onload_seconds": 11159.165418899036,
+  "prior_plus_V11_formal_supervised_floor_seconds": 11734.145535666961,
+  "recorded_utc": "2026-09-29T23:51:44.116851+00:00",
+  "resident_plan_bytes": 6092700024,
+  "sampled_tree_peak_swap_bytes_max": 0,
+  "schema": "task042.resource-costs.v11",
+  "shared_workstation": true,
+  "simultaneous_sampled_tree_peak_rss_bytes_max": 4668329984,
+  "source_stages": {
+    "MAIN": {
+      "action_costs_seconds_nested": {
+        "S": 1.073445466114208,
+        "SH": 0.0,
+        "audit": 0.42475928890053183
+      },
+      "budget_counts_cumulative": {
+        "FD_perturbed_points": 0,
+        "accepted_updates": 0,
+        "equivalent_S_SH": 1566,
+        "full_PA_builds": 1,
+        "thin_LS_head_resolves": 5,
+        "trial_points": 0
+      },
+      "outer_launch_wall_seconds": 427.8562062990386,
+      "supervised_wall_seconds": 426.51150141400285,
+      "tree_sampled_peak_rss_bytes": 4668329984,
+      "tree_sampled_peak_swap_bytes": 0
+    },
+    "REPLAY": {
+      "action_costs_seconds_nested": {
+        "S": 1.2593017349718139,
+        "SH": 0.0,
+        "audit": 0.3731440339470282
+      },
+      "budget_counts_cumulative": {
+        "FD_perturbed_points": 0,
+        "accepted_updates": 0,
+        "equivalent_S_SH": 1583,
+        "full_PA_builds": 1,
+        "thin_LS_head_resolves": 7,
+        "trial_points": 0
+      },
+      "outer_launch_wall_seconds": 137.31449510890525,
+      "supervised_wall_seconds": 135.92512766295113,
+      "tree_sampled_peak_rss_bytes": 3764645888,
+      "tree_sampled_peak_swap_bytes": 0
+    },
+    "VERIFY": {
+      "action_costs_seconds_nested": {
+        "S": 0.15363018901553005,
+        "SH": 0.0,
+        "audit": 0.857530073961243
+      },
+      "budget_counts_cumulative": {
+        "FD_perturbed_points": 0,
+        "accepted_updates": 0,
+        "equivalent_S_SH": 0,
+        "full_PA_builds": 0,
+        "thin_LS_head_resolves": 0,
+        "trial_points": 0
+      },
+      "outer_launch_wall_seconds": 13.912690295022912,
+      "supervised_wall_seconds": 12.543487690971233,
+      "tree_sampled_peak_rss_bytes": 683417600,
+      "tree_sampled_peak_swap_bytes": 0
+    }
+  },
+  "task_memory_hard_bytes": 17179869184,
+  "task_memory_warning_bytes": 12884901888,
+  "watchdog": "own process-tree, 0.5 s sampled RSS/swap, stop own descendants; no delegated kernel cgroup, not continuous hard cap",
+  "window_start_utc": "2026-09-29T22:58:57+00:00"
+}
