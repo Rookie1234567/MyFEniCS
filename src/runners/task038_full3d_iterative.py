@@ -7,6 +7,26 @@ from pathlib import Path
 from typing import Any, Mapping
 
 
+def _task40_worker_batch_identity(resolved_payload: Mapping[str, Any]) -> str:
+    """Use the input run identity that the Task40 launcher records in its ledger."""
+
+    from src.geometry.task40_nonseparable_plan import (
+        TASK40_COMPARISON_GROUP,
+        TASK40_RUNS,
+    )
+
+    run_id = str(resolved_payload.get("run_id", ""))
+    method = resolved_payload.get("method", {})
+    if (
+        not isinstance(method, Mapping)
+        or method.get("kind") != "full3d_iterative"
+        or run_id not in TASK40_RUNS
+        or resolved_payload.get("comparison_group") != TASK40_COMPARISON_GROUP
+    ):
+        raise ValueError("Task40 worker identity is not a frozen iterative case")
+    return run_id
+
+
 def run_full3d_iterative(
     resolved_payload: Mapping[str, Any],
     run_directory: str | Path,
@@ -397,7 +417,7 @@ def run_full3d_iterative(
         if int(resolved_payload["solver"].get("coarse_degree", -1)) != 4:
             raise ValueError(f"{profile} Q4_ORIGINAL requires coarse_degree=4")
         batch_identity = (
-            "task40extra_0p7nm_nonseparable_p6q4_v1"
+            _task40_worker_batch_identity(resolved_payload)
             if task40_profile
             else "review_v29_evidence_and_projection_v31"
             if v31_profile

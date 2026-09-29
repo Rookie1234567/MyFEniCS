@@ -408,3 +408,210 @@ def test_task40_launcher_mock_keeps_service_scope_and_task_tree_swap_gate(
         "process_tree_swap_gate_enforced"
     ] is True
     assert manifest["requested_legacy_resource_fields"]["terminate_memory_gib"] == 10.0
+
+
+def test_task40_worker_identity_opens_the_reserved_v14_runtime_ledger(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
+    from src.runners.physical_p4_schur_v14 import _V14Runtime
+    from src.runners.task038_full3d_iterative import _task40_worker_batch_identity
+    from src.runners.workflow_timebase import clock_sample
+
+    specification = load_and_resolve(G0)
+    payload = specification.as_jsonable()
+    run_id = str(specification.identity["run_id"])
+    assert _task40_worker_batch_identity(payload) == run_id
+    with pytest.raises(ValueError, match="frozen iterative case"):
+        _task40_worker_batch_identity(load_and_resolve(G0_DIRECT).as_jsonable())
+
+    service_cgroup = Path(
+        "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/"
+        "app.slice/myfenics-case-task40-fixture.service"
+    )
+    source_sha = "a" * 40
+    reservation = launcher._reserve_task40_0p7nm_budget(
+        tmp_path,
+        tmp_path / "reserved-run",
+        source_sha=source_sha,
+        stage="Q4_ORIGINAL",
+        stage_budget={"workflow_seconds": 43200.0},
+        workflow_clock_start=clock_sample(),
+        time_policy="observe_only",
+        run_id=run_id,
+        comparison_group=str(specification.identity["comparison_group"]),
+        service_cgroup_path=service_cgroup,
+    )
+    ledger = json.loads(Path(reservation["path"]).read_text(encoding="utf-8"))
+    assert ledger["batch_identity"] == run_id
+    assert reservation["replay"] is False
+    monkeypatch.setenv("PHYSICAL_WATCHDOG_SHARED_LEDGER_PATH", reservation["path"])
+    monkeypatch.setenv(
+        "PHYSICAL_WATCHDOG_SHARED_ATTEMPT_INDEX",
+        str(reservation["attempt_index"]),
+    )
+    monkeypatch.setenv(
+        "PHYSICAL_WATCHDOG_MEMORY_POLICY",
+        "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+    )
+    monkeypatch.setenv("PHYSICAL_WATCHDOG_PSS_POLICY", "disabled_by_profile")
+    contract = {
+        "resources": {
+            "watchdog_memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+            "pss_sampling_policy": "disabled_by_profile",
+        }
+    }
+    runtime = _V14Runtime(
+        tmp_path / "runtime",
+        "Q4_ORIGINAL",
+        contract,
+        root=tmp_path,
+        source_sha=source_sha,
+        batch_identity=_task40_worker_batch_identity(payload),
+        evidence_prefix="task40q4",
+        require_zero_swap=True,
+    )
+    assert runtime.shared_attempt["source_sha"] == source_sha
+    assert runtime.shared_attempt["status"] == "RESERVED"
+    with pytest.raises(RuntimeError, match="parent ledger batch identity changed"):
+        _V14Runtime(
+            tmp_path / "wrong-runtime",
+            "Q4_ORIGINAL",
+            contract,
+            root=tmp_path,
+            source_sha=source_sha,
+            batch_identity="task40extra_0p7nm_nonseparable_p6q4_v1",
+            evidence_prefix="task40q4",
+            require_zero_swap=True,
+        )
+
+
+def _task40_capacity_carrier(global_rows: int, sides: tuple[str, ...]):
+    entries = []
+    for side in sides:
+        entries.append(
+            SimpleNamespace(
+                mode_identity={"side": side},
+                coupling_rows=np.asarray([0], dtype=np.int32),
+                coupling_values=np.asarray([1.0 + 0.0j], dtype=np.complex128),
+                projection_rows=np.asarray([0], dtype=np.int32),
+                projection_values=np.asarray([1.0 + 0.0j], dtype=np.complex128),
+            )
+        )
+    return SimpleNamespace(global_rows=global_rows, entries=entries)
+
+
+@pytest.mark.parametrize(
+    ("input_path", "expected_mesh_id", "raw_classes", "oriented_classes"),
+    ((G0, "G0", 3, 7), (G1, "G1", 5, 11)),
+)
+def test_task40_capacity_context_binds_frozen_axes_and_live_class_metadata(
+    input_path: Path,
+    expected_mesh_id: str,
+    raw_classes: int,
+    oriented_classes: int,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    from src.runners import physical_p4_schur_v14 as v14
+    from src.runners import physical_dual_cell_condensed_lowmem_v20 as condensed
+    from src.runners import physical_retained_outer_adapter as retained_outer
+    from src.solvers import hcurl_assembly_time_condensation as capacity
+
+    specification = load_and_resolve(input_path)
+    cfg = simulation_config_3d_from_normalized(specification.as_jsonable())
+    fine = _task40_capacity_carrier(100, ("top", "top", "bottom", "bottom"))
+    coarse = _task40_capacity_carrier(20, ())
+    common = {
+        "cfg": cfg,
+        "coarse_degree": 4,
+        "fine": {"dtn_action": SimpleNamespace(carrier=fine)},
+        "p4": {"dtn_action": SimpleNamespace(carrier=coarse)},
+    }
+    p6_space_facts = {
+        "full_rows": 100,
+        "trace_rows": 12,
+        "active_rows": 10,
+        "slave_rows": 2,
+        "slave_master_entry_count": 2,
+        "appended_rows": 4,
+        "local_tensor_dimension": 882,
+        "local_interior_dimension": 450,
+        "local_trace_dimension": 432,
+    }
+    p4_metadata = {
+        "q4_raw_class_count": raw_classes,
+        "q4_oriented_class_count": oriented_classes,
+        "xiB_payload_estimate_bytes": 32,
+    }
+    captured_capacity_facts: dict[str, object] = {}
+    monkeypatch.setattr(
+        v14,
+        "_v14_balanced_apply_workspace_bytes",
+        lambda *_args: 100,
+    )
+    monkeypatch.setattr(
+        v14,
+        "_v14_balanced_h6_setup_facts",
+        lambda _common: {"component_payload_bytes": 40, "setup_estimate_bytes": 80},
+    )
+    monkeypatch.setattr(
+        v14,
+        "_v14_outer_krylov_workspace_bytes",
+        lambda *_args, **_kwargs: 300,
+    )
+    monkeypatch.setattr(
+        retained_outer,
+        "_retained_outer_scratch_workspace_bytes",
+        lambda *_args: 200,
+    )
+
+    def capacity_facts(**kwargs):
+        captured_capacity_facts.update(kwargs)
+        return {"retained_numeric_bytes_upper": 123, "workspace_bytes_upper": 456}
+
+    monkeypatch.setattr(capacity, "assembly_time_condensation_capacity_facts", capacity_facts)
+    context = condensed.v22_capacity_context(
+        common,
+        cfg=cfg,
+        p6_space_facts=p6_space_facts,
+        p4_metadata=p4_metadata,
+        coarse_degree=4,
+        evidence_prefix="task40q4",
+        task40_profile=True,
+    )
+    identity = context["identity"]
+    assert context["schema"] == "task40extra.nonseparable-0p7nm.capacity-context.v1"
+    assert identity["geometry_identity"] == TASK40_GEOMETRY_IDENTITY
+    assert identity["mesh_plan_id"] == f"task40extra.{expected_mesh_id.lower()}.exact_planes.v1"
+    assert identity["mesh_plan_sha256"] == cfg.mesh_plan_sha256
+    assert identity["mesh_axis_cell_counts"] == list(cfg.mesh_axis_cell_counts_requested)
+    assert identity["owned_cell_count"] == int(np.prod(cfg.mesh_axis_cell_counts_requested))
+    assert identity["n6"] == 100 and identity["n4"] == 20
+    assert identity["p6_port_count"] == 4
+    assert identity["p6_full_rows"] == 100
+    assert identity["p6_trace_rows"] == 12
+    assert identity["p6_active_trace_rows"] == 10
+    assert identity["p6_slave_rows"] == 2
+    assert identity["coarse_class_counts"] == {
+        "raw": raw_classes,
+        "oriented": oriented_classes,
+    }
+    assert captured_capacity_facts["dimension"] == 882
+    assert captured_capacity_facts["interior_dimension"] == 450
+    assert captured_capacity_facts["trace_dimension"] == 432
+    assert captured_capacity_facts["raw_class_count"] == raw_classes
+    assert captured_capacity_facts["oriented_class_count"] == oriented_classes
+    assert context["derived_sources"]["p6_class_capacity"]["classification"] == (
+        "derived_estimate_from_live_q4_material_geometry_classes"
+    )
+
+    wrong_plan_cfg = replace(cfg, mesh_plan_sha256="0" * 64)
+    with pytest.raises(ValueError, match="mesh plan SHA differs"):
+        condensed.v22_capacity_context(
+            common,
+            cfg=wrong_plan_cfg,
+            p6_space_facts=p6_space_facts,
+            p4_metadata=p4_metadata,
+            coarse_degree=4,
+            evidence_prefix="task40q4",
+            task40_profile=True,
+        )

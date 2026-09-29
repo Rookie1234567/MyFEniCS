@@ -350,6 +350,60 @@ def _v22_direct_term_payload_upper_bound(
     }
 
 
+def _task40_capacity_mesh_plan(cfg):
+    """Return the exact Task40 mesh plan after checking the live config binding."""
+
+    from src.geometry.task40_nonseparable_plan import (
+        TASK40_GEOMETRY_IDENTITY,
+        task40_mesh_plan,
+    )
+
+    if getattr(cfg, "geometry_identity", None) != TASK40_GEOMETRY_IDENTITY:
+        raise ValueError("Task40 capacity context requires its frozen geometry identity")
+    mesh_id_by_plan = {
+        "task40extra.g0.exact_planes.v1": "G0",
+        "task40extra.g1.exact_planes.v1": "G1",
+    }
+    mesh_plan_id = str(getattr(cfg, "mesh_plan_id", ""))
+    mesh_id = mesh_id_by_plan.get(mesh_plan_id)
+    if mesh_id is None:
+        raise ValueError("Task40 capacity mesh plan id is not in the frozen G0/G1 allowlist")
+    plan = task40_mesh_plan(mesh_id)
+    if getattr(cfg, "mesh_plan_sha256", None) != plan["mesh_plan_sha256"]:
+        raise ValueError("Task40 capacity mesh plan SHA differs from the frozen axis plan")
+    if int(getattr(cfg, "nedelec_degree", -1)) != 6:
+        raise ValueError("Task40 capacity context requires the frozen p6 space")
+    try:
+        target_h = float(cfg.mesh_target_size)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("Task40 capacity mesh target is missing") from exc
+    if not np.isclose(target_h, plan["target_h_nm"], rtol=0.0, atol=1.0e-13):
+        raise ValueError("Task40 capacity mesh target differs from the frozen axis plan")
+    expected_counts = tuple(
+        int(plan["axis_interval_counts"][axis]) for axis in ("x", "y", "z")
+    )
+    actual_counts = tuple(
+        int(value) for value in (getattr(cfg, "mesh_axis_cell_counts_requested", None) or ())
+    )
+    if actual_counts != expected_counts:
+        raise ValueError("Task40 capacity mesh axis counts differ from the frozen plan")
+    for axis in ("x", "y", "z"):
+        try:
+            actual_values = tuple(
+                float(value)
+                for value in (getattr(cfg, f"mesh_axis_{axis}_values", None) or ())
+            )
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"Task40 capacity {axis} axis values are invalid") from exc
+        expected_values = tuple(float(value) for value in plan["axis_coordinates_nm"][axis])
+        if len(actual_values) != len(expected_values) or any(
+            not np.isclose(actual, expected, rtol=0.0, atol=1.0e-12)
+            for actual, expected in zip(actual_values, expected_values, strict=True)
+        ):
+            raise ValueError(f"Task40 capacity {axis} axis differs from the frozen plan")
+    return plan
+
+
 def v22_capacity_context(
     common: Mapping[str, object],
     *,
@@ -358,6 +412,7 @@ def v22_capacity_context(
     p4_metadata: Mapping[str, object],
     coarse_degree: int = 4,
     evidence_prefix: str = "v22",
+    task40_profile: bool = False,
 ) -> dict:
     """Derive the fixed-B future ledger from live common/class metadata.
 
@@ -374,6 +429,7 @@ def v22_capacity_context(
         raise TypeError("V22 requires live p6 FE/MPC space facts")
     if not isinstance(p4_metadata, Mapping):
         raise TypeError("V22 requires assembled p4 capacity metadata")
+    task40_plan = _task40_capacity_mesh_plan(cfg) if task40_profile else None
 
     fine_carrier = common["fine"]["dtn_action"].carrier
     p4_carrier = common["p4"]["dtn_action"].carrier
@@ -385,23 +441,39 @@ def v22_capacity_context(
     n6 = int(fine_carrier.global_rows)
     n4 = int(p4_carrier.global_rows)
     port_count = int(len(fine_carrier.entries))
-    if n6 != _V22_BOUND_B_IDENTITY["n6"]:
-        raise ValueError("V22 live p6 carrier rows do not match original B")
-    if coarse_degree == 4 and n4 != _V22_BOUND_B_IDENTITY["n4"]:
-        raise ValueError("V22 live q4 carrier rows do not match original B")
+    if task40_profile:
+        if min(n6, n4, port_count) <= 0:
+            raise ValueError("Task40 live carrier dimensions and port count must be positive")
+    else:
+        if n6 != _V22_BOUND_B_IDENTITY["n6"]:
+            raise ValueError("V22 live p6 carrier rows do not match original B")
+        if coarse_degree == 4 and n4 != _V22_BOUND_B_IDENTITY["n4"]:
+            raise ValueError("V22 live q4 carrier rows do not match original B")
+        if port_count != _V22_BOUND_B_IDENTITY["p6_port_count"]:
+            raise ValueError("V22 live p6 carrier port count does not match original B")
     if n4 <= 0:
         raise ValueError("live coarse carrier rows must be positive")
-    if port_count != _V22_BOUND_B_IDENTITY["p6_port_count"]:
-        raise ValueError("V22 live p6 carrier port count does not match original B")
 
     axis_counts = tuple(
         int(value) for value in (cfg.mesh_axis_cell_counts_requested or ())
     )
-    if axis_counts != _V22_BOUND_B_IDENTITY["axis_cell_counts"]:
+    if task40_plan is not None:
+        expected_axis_counts = tuple(
+            int(task40_plan["axis_interval_counts"][axis])
+            for axis in ("x", "y", "z")
+        )
+        if axis_counts != expected_axis_counts:
+            raise ValueError("Task40 live mesh cell counts differ from the frozen plan")
+    elif axis_counts != _V22_BOUND_B_IDENTITY["axis_cell_counts"]:
         raise ValueError("V22 live mesh cell counts do not match the frozen original B")
+    if not axis_counts or any(value <= 0 for value in axis_counts):
+        raise ValueError("live mesh axis cell counts must be positive")
     cell_count = int(np.prod(axis_counts, dtype=np.int64))
     surface_cells_per_side = int(axis_counts[0] * axis_counts[1])
-    if surface_cells_per_side != _V22_BOUND_B_IDENTITY["surface_cells_per_side"]:
+    if task40_plan is not None:
+        if cell_count != int(task40_plan["expected_hexahedra"]):
+            raise ValueError("Task40 live owned-cell count differs from the frozen plan")
+    elif surface_cells_per_side != _V22_BOUND_B_IDENTITY["surface_cells_per_side"]:
         raise ValueError("V22 live boundary cell count does not match original B")
 
     side_counts: dict[str, int] = {}
@@ -455,7 +527,12 @@ def v22_capacity_context(
             (f"q{coarse_degree}_oriented_class_count", "p4_oriented_class_count"),
         )
     )
-    if coarse_degree == 4:
+    if task40_profile:
+        if coarse_degree != 4 or any(value <= 0 for value in p4_class_counts):
+            raise ValueError(
+                "Task40 q4 build_audit must provide positive live class counts"
+            )
+    elif coarse_degree == 4:
         expected_class_counts = (
             _V22_BOUND_B_IDENTITY["p6_raw_class_count"],
             _V22_BOUND_B_IDENTITY["p6_oriented_class_count"],
@@ -491,12 +568,24 @@ def v22_capacity_context(
     if (scalar_bytes, index_bytes, real_bytes) != (16, 4, 8):
         raise ValueError("V22 B capacity formulas require the qualified complex128/int32 ABI")
 
+    if task40_profile:
+        p6_capacity_raw_class_count, p6_capacity_oriented_class_count = p4_class_counts
+        p6_capacity_class_source = (
+            "live q4 build_audit material/geometry classes used as a derived "
+            "p6 local-cache estimate; p6 matrices are not built for this estimate"
+        )
+    else:
+        p6_capacity_raw_class_count = _V22_BOUND_B_IDENTITY["p6_raw_class_count"]
+        p6_capacity_oriented_class_count = _V22_BOUND_B_IDENTITY[
+            "p6_oriented_class_count"
+        ]
+        p6_capacity_class_source = "frozen V22 original-B p6 class inventory"
     p6_class_capacity = assembly_time_condensation_capacity_facts(
-        dimension=_V22_BOUND_B_IDENTITY["p6_local_dimension"],
-        interior_dimension=_V22_BOUND_B_IDENTITY["p6_interior_dimension"],
-        trace_dimension=_V22_BOUND_B_IDENTITY["p6_trace_dimension"],
-        raw_class_count=_V22_BOUND_B_IDENTITY["p6_raw_class_count"],
-        oriented_class_count=_V22_BOUND_B_IDENTITY["p6_oriented_class_count"],
+        dimension=p6_local_dimensions[0],
+        interior_dimension=p6_local_dimensions[1],
+        trace_dimension=p6_local_dimensions[2],
+        raw_class_count=p6_capacity_raw_class_count,
+        oriented_class_count=p6_capacity_oriented_class_count,
         identity_class_count=1,
         retain_local_schur=True,
         scalar_bytes=scalar_bytes,
@@ -516,7 +605,7 @@ def v22_capacity_context(
     # payloads.  Sum k^2 using the live top/bottom carrier counts; this is a
     # shape-derived upper estimate for Hlocal without assuming every cell has
     # an 80-port block.  Each side's arrays exist for every boundary cell, so
-    # the per-side payload is multiplied by the live 9*5 surface count.
+    # the per-side payload is multiplied by the live mesh surface count.
     # Existing carrier row/value arrays are common-cache inventory and are
     # intentionally not charged again here; their newly-created direct-term
     # copies are bounded separately below.
@@ -566,9 +655,23 @@ def v22_capacity_context(
     outer_krylov = _v14_outer_krylov_workspace_bytes(retained_rows, restart=32)
     solve_workspace = bal_workspace + p6_scratch + outer_krylov
     return {
-        "schema": f"task039extra.{evidence_prefix}.capacity-context.v2",
+        "schema": (
+            "task40extra.nonseparable-0p7nm.capacity-context.v1"
+            if task40_profile
+            else f"task039extra.{evidence_prefix}.capacity-context.v2"
+        ),
         "classification": "derived_pre_numeric_payload_estimates_live_RSS_separate",
         "identity": {
+            **(
+                {
+                    "geometry_identity": cfg.geometry_identity,
+                    "mesh_plan_id": task40_plan["mesh_plan_id"],
+                    "mesh_plan_sha256": task40_plan["mesh_plan_sha256"],
+                    "p6_capacity_class_source": p6_capacity_class_source,
+                }
+                if task40_profile
+                else {}
+            ),
             "coarse_degree": coarse_degree,
             "n6": n6,
             "n4": n4,
@@ -635,7 +738,15 @@ def v22_capacity_context(
             },
         },
         "derived_sources": {
-            "p6_class_capacity": dict(p6_class_capacity),
+            "p6_class_capacity": {
+                **dict(p6_class_capacity),
+                "class_count_basis": p6_capacity_class_source,
+                "classification": (
+                    "derived_estimate_from_live_q4_material_geometry_classes"
+                    if task40_profile
+                    else "derived_from_frozen_v22_original_b_p6_class_inventory"
+                ),
+            },
             "h6_setup_estimate": {
                 **dict(h6_facts),
                 "common_fine_payload_bytes_live_reference": common_fine_payload,
@@ -692,7 +803,11 @@ def v22_capacity_context(
             "h6_field_and_mode_inventory_bytes": "full derived H6 setup estimate; common fine remains live",
             "p6_retained_cache_inventory_bytes": "existing condensation class-shape formula; local LU/recovery/Schur plus shared identity",
             "p6_port_terms_inventory_bytes": "actual carrier port count and top/bottom side counts over each boundary cell; payload estimate",
-            "p6_mapping_inventory_bytes": "actual 990 cells and existing p6 cell-map array shapes, including per-side port maps; payload estimate",
+            "p6_mapping_inventory_bytes": (
+                f"actual frozen {cell_count}-cell mesh and live p6 cell-map array shapes, including per-side port maps; payload estimate"
+                if task40_profile
+                else "actual 990 cells and existing p6 cell-map array shapes, including per-side port maps; payload estimate"
+            ),
             "p6_global_trace_map_inventory_bytes": "trace_original/active_original plus expansion_by_original IDs/values from live trace rows and existing MPC master-link lengths; payload estimate",
             "p6_direct_term_resident_inventory_bytes": "two resident original/active PETSc index/value map sets from carrier row/value lengths; source carrier excluded",
             "p4_xib_recovery_inventory_bytes": "actual assembled p4 port_terms Bi.nbytes; XiB shape estimate",
@@ -738,6 +853,7 @@ def _v22_capacity_callbacks(
     memory_policy: str = "CAPACITY_CONTROLLED_LOCAL_MUMPS_V22",
     native_quota_mb: int = 4687,
     evidence_prefix: str = "v22",
+    task40_profile: bool = False,
 ):
     """Build the production V22 factor callbacks from final live facts.
 
@@ -777,6 +893,7 @@ def _v22_capacity_callbacks(
             p4_metadata=p4_metadata,
             coarse_degree=coarse_degree,
             evidence_prefix=evidence_prefix,
+            task40_profile=task40_profile,
         )
         # This is frozen before any post-numeric RSS or allocated-memory gate.
         write_json(directory / f"{evidence_prefix}_capacity_context.json", capacity_context)
@@ -1588,6 +1705,7 @@ def _run_physical_dual_cell_condensed_lowmem(
                 memory_policy=capacity_policy,
                 native_quota_mb=4687,
                 evidence_prefix=evidence_prefix,
+                task40_profile=(profile_identity == TASK40_0P7NM_PROFILE),
             )
 
         def stack_factory(runtime_, common_, resolved_, *, stage):
