@@ -498,11 +498,391 @@
       "target capacity 06_table_02.png"
     ],
     "scope_visual_limitation": "progress/registry screenshots scrolled to old sections despite correct scoped DOM; browser helper corrected for targeted rerun",
-    "supervision_summary_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/e5_github_render_c4_20260929T183101002596Z/summary.json"
+    "supervision_summary_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/e5_github_render_c4_20260929T183101002596Z/summary.json",
+    "supervision_summary_sha256": "5fd9bb50f470b5ccec7b10b3f3e5061710f36c15af0331b5bab05fb83b536e5c",
+    "sampled_process_tree_rss_peak_bytes": 2095390720,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "descendants_cleared": true
   },
-  "corrected_method_mapping_browser": "PENDING_AFTER_PUSH",
-  "corrected_scoped_registry_browser": "PENDING_AFTER_PUSH",
-  "final_blob_consistency": "PENDING_FINAL_PUSH",
+  "corrected_method_mapping_browser": "RENDERED_MATH_PASS_C5_BOTH_BLOCKS",
+  "corrected_scoped_registry_browser": "RENDERED_SCOPE_AND_TABLE_PASS_C5",
+  "final_blob_consistency": "C5 reviewed Markdown bound by exact commit URLs and HTTP raw byte comparison; final evidence-only commit must leave these Markdown blob OIDs unchanged, verified after push",
   "task_file_unmodified": true,
-  "task_math_correction_suggested": "Replace \\operatorname{Re} with GitHub-allowed \\mathrm{Re} and recheck; task maintained by publisher"
+  "task_math_correction_suggested": "Replace \\operatorname{Re} with GitHub-allowed \\mathrm{Re} and recheck; task maintained by publisher",
+  "second_browser_pass": {
+    "source_commit": "4450434188a4f4e68ee613beb02f6db3805af83d",
+    "raw_render_records_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/c5_4450434/render_records.json",
+    "raw_render_records_sha256": "8f6a300f4c438e8b07574390f73692bf342cdb9bf52d6c36bd07c4ef9e2a8ff0",
+    "pages": [
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/4450434188a4f4e68ee613beb02f6db3805af83d/docs/task042extra_feinn_5nm/outcomes/method_and_paper_mapping.md",
+        "heading_prefix": "",
+        "scope_heading": "entire task document",
+        "article_text_head": "方法与论文映射\n\n网络输出连续坐标场，再用有限元的完整积分矩把它变成离散电场。这样残差审核仍针对原有限元方程，网络负责限制可达的系数集合。Riesz 度量用正定 H(curl) 内积衡量残差，代价是另一个稀疏辅助系统的因子与求解；直接优化 ",
+        "table_count": 1,
+        "all_table_columns_consistent": true,
+        "math_count": 2,
+        "math_errors": [],
+        "screenshots": [
+          {
+            "name": "00_top.png",
+            "sha256": "813d9446062c7eaee2c26066ca5ab137d1d92eddc6db8891e6ab1861415bf1c9"
+          },
+          {
+            "name": "00_table_00.png",
+            "sha256": "cbfa52fdac42c3c97bba3ef96cf0043dfcd996461c1d813375ef2902eeb079e8"
+          },
+          {
+            "name": "00_math-renderer_00.png",
+            "sha256": "cbfa52fdac42c3c97bba3ef96cf0043dfcd996461c1d813375ef2902eeb079e8"
+          },
+          {
+            "name": "00_math-renderer_01.png",
+            "sha256": "cbfa52fdac42c3c97bba3ef96cf0043dfcd996461c1d813375ef2902eeb079e8"
+          }
+        ]
+      },
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/4450434188a4f4e68ee613beb02f6db3805af83d/docs/task042extra_feinn_5nm/response_v1.md",
+        "heading_prefix": "",
+        "scope_heading": "entire task document",
+        "article_text_head": "Task42extra Response V1\n\n分支 task42extra_feinn_5nm；本响应生成前HEAD 7a79b3007d92a9b699e0451d0c8b6dfdacee7ad9（数值阶段source分别见下面run",
+        "table_count": 7,
+        "all_table_columns_consistent": true,
+        "math_count": 0,
+        "math_errors": [],
+        "screenshots": [
+          {
+            "name": "01_top.png",
+            "sha256": "d1c59c083f0bb2df2b9696c8e6fb1f28e5373dedbe083d61e8db58f6b032b449"
+          },
+          {
+            "name": "01_table_00.png",
+            "sha256": "815c417bb85d9aafbc0bb83cc02362e51bae05feceb4b849a906ea09e6ce92cc"
+          },
+          {
+            "name": "01_table_01.png",
+            "sha256": "cb49ec0ff05cd4d61809924773b4a8311d1b5ad8089efa542056101912ef838a"
+          },
+          {
+            "name": "01_table_02.png",
+            "sha256": "718df33491d33845473012a4c2024ac1d24208ad409e73338caca6c8284ff1c0"
+          },
+          {
+            "name": "01_table_03.png",
+            "sha256": "1a41cc89cad388957c5d07463727da62b6dce295d67fbbac5b815f32d2dc5cc7"
+          },
+          {
+            "name": "01_table_04.png",
+            "sha256": "97c7104c5479281d179e63ba4ce5984bbc9c60d7c16ed2bffe2d5a3b29ddaa13"
+          },
+          {
+            "name": "01_table_05.png",
+            "sha256": "9a29ec50b1285449ce708b1f41fcfbc68edef0bf6c9fc51b4e1aecbfc7c8eef6"
+          },
+          {
+            "name": "01_table_06.png",
+            "sha256": "9a29ec50b1285449ce708b1f41fcfbc68edef0bf6c9fc51b4e1aecbfc7c8eef6"
+          }
+        ]
+      },
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/4450434188a4f4e68ee613beb02f6db3805af83d/docs/task042extra_feinn_5nm/outcomes/summary.md",
+        "heading_prefix": "",
+        "scope_heading": "entire task document",
+        "article_text_head": "Task42extra 首轮执行总结\n\n本轮完整接口资格为 True，三路线同离散资格 0/3。结果以原方程、独立完整FE场和功率审核为准。本轮比较的是同一M5、同全部独立FE、同原方程/材料/模式/初值的三条路线。坐标网络通过积分产生边、",
+        "table_count": 18,
+        "all_table_columns_consistent": true,
+        "math_count": 0,
+        "math_errors": [],
+        "screenshots": [
+          {
+            "name": "02_top.png",
+            "sha256": "291954a91db7a6a968dc950219059cbb5ba4817a1a87435ed9b75467c0501572"
+          },
+          {
+            "name": "02_table_00.png",
+            "sha256": "3cc3645ea4fa962a4255479faad4efca68fd1d3e1180b8139f79a544f1d6d75e"
+          },
+          {
+            "name": "02_table_01.png",
+            "sha256": "c2cb0e9b3f60e885d0fa1cf00fd95ea55f0caf404768f7d89e78e4486637b4b3"
+          },
+          {
+            "name": "02_table_02.png",
+            "sha256": "080319d2c239dd3345f7a19f9f300210a9a984db7f78a947d6b306b88e7fc0c7"
+          },
+          {
+            "name": "02_table_03.png",
+            "sha256": "2175cf609f80da861f8f9829ec12d9b6db7a54563708a5519d58560880fa4c60"
+          },
+          {
+            "name": "02_table_04.png",
+            "sha256": "8a03de45654c4d21e9979a802732ffd05144568b23e3044358af90aff6ce7a0e"
+          },
+          {
+            "name": "02_table_05.png",
+            "sha256": "b0a4db9be81bdf5d4b95bf135f2561cfb6e7537acab4834b9933f49b0cf488cb"
+          },
+          {
+            "name": "02_table_06.png",
+            "sha256": "24e195a9f9b0b49d46387a8d66dc4ba5fc038330446437453d84b66c9e2fa973"
+          },
+          {
+            "name": "02_table_07.png",
+            "sha256": "55163021466fbd1c19b7f9d3a38dc45b8c28b5d7fbeb80b1fbd02a92e84460b3"
+          },
+          {
+            "name": "02_table_08.png",
+            "sha256": "cb40b2da20dacfdb344e40428e4563b9dede28bf0c055aee8505df50976d462c"
+          },
+          {
+            "name": "02_table_09.png",
+            "sha256": "d465bbac979d8d24cf076fd81d340dd0cf0df98959fcbca8f0c70938df320c8d"
+          },
+          {
+            "name": "02_table_10.png",
+            "sha256": "02b9b766c5937676fb38278cd8dd483dafc477af661139d571eea28932ebfabb"
+          },
+          {
+            "name": "02_table_11.png",
+            "sha256": "fbc940770febb4df4b6b16ab78986e4aaa5bb2f4b36e83dcd6d9cc97e8602b81"
+          },
+          {
+            "name": "02_table_12.png",
+            "sha256": "b26e798dec1f29bda5360b834d8cc181126f869db7d5b3bfcaf652000d33624a"
+          },
+          {
+            "name": "02_table_13.png",
+            "sha256": "6bf2cef7584aa17b38c3b736168f0c8938bb3bb45439d10dd9081c4ac11f71c9"
+          },
+          {
+            "name": "02_table_14.png",
+            "sha256": "57b3dcaf32d4f48dfaffd8bb9bbd2a8679f5dbff9fa8a32cffb774cc620a92de"
+          },
+          {
+            "name": "02_table_15.png",
+            "sha256": "68b90d43423ec022c982c4ca0b18ece657faa6e799426655dcee15f2d5c93709"
+          },
+          {
+            "name": "02_table_16.png",
+            "sha256": "0729fda278cfc751fe45b930b63767c5fdc78b8e44d86c6442fc8a5d0fd9a186"
+          },
+          {
+            "name": "02_table_17.png",
+            "sha256": "25d9bd846a007d2f04b5123c5ef7b77fbac9a1567d2aa0ea93b181d41607a3b6"
+          }
+        ]
+      },
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/4450434188a4f4e68ee613beb02f6db3805af83d/docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+        "heading_prefix": "",
+        "scope_heading": "entire task document",
+        "article_text_head": "Targeted tests 与文档复核\n\n本页保留首次失败与修复后结果。完整suite与CI没有运行；检查限定于新增full-FE数学/事务/Riesz及本任务文档，不重跑旧heavy。\n\n检查/尝试\t监督状态/exit\twall / s",
+        "table_count": 1,
+        "all_table_columns_consistent": true,
+        "math_count": 0,
+        "math_errors": [],
+        "screenshots": [
+          {
+            "name": "03_top.png",
+            "sha256": "13b2535198ef6b8f6c9238a1ba634a0ec78b96f51193005b933af368945207df"
+          },
+          {
+            "name": "03_table_00.png",
+            "sha256": "f8d1ba835c5241e9af8cccf6a82c7af962933b22be4e8ca27cf7d2e0aaaaa56d"
+          }
+        ]
+      },
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/4450434188a4f4e68ee613beb02f6db3805af83d/docs/development_progress.md",
+        "heading_prefix": "2026-09-29 Task42extra",
+        "scope_heading": "2026-09-29 Task42extra：完整FEINN/Riesz独立5nm首轮",
+        "article_text_head": "2026-09-29 Task42extra：完整FEINN/Riesz独立5nm首轮\n本任务是新支线，检验完整坐标网络的Nédélec边/面/内部矩和Riesz弱残差能否求得真实5nm FE解。旧Task042粗逆/trace负结果只作技",
+        "table_count": 1,
+        "all_table_columns_consistent": true,
+        "math_count": 0,
+        "math_errors": [],
+        "screenshots": [
+          {
+            "name": "04_top.png",
+            "sha256": "f141efea0046c49d51f507d0aa0b6f04ab8ac85c3a1c79d8256815085977c172"
+          },
+          {
+            "name": "04_table_00.png",
+            "sha256": "7d90bc79f57ef1a1075187d64f3f2c4ec6573be69c412da46b158d220d5e984e"
+          }
+        ]
+      },
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/4450434188a4f4e68ee613beb02f6db3805af83d/docs/development_model_registry.md",
+        "heading_prefix": "3.44 Task42extra",
+        "scope_heading": "3.44 Task42extra：5nm三维完整compatible FEINN模型",
+        "article_text_head": "3.44 Task42extra：5nm三维完整compatible FEINN模型\n本任务是新支线，检验完整坐标网络的Nédélec边/面/内部矩和Riesz弱残差能否求得真实5nm FE解。旧Task042粗逆/trace负结果只作技术",
+        "table_count": 2,
+        "all_table_columns_consistent": true,
+        "math_count": 0,
+        "math_errors": [],
+        "screenshots": [
+          {
+            "name": "05_top.png",
+            "sha256": "38b93d0b881d3216ea9525053a638e3b0d52ca71cdc1aa2dea16099aac8916ff"
+          },
+          {
+            "name": "05_table_00.png",
+            "sha256": "f2a5e0c263c96328077b04b43e5ec3088f2b9fbfd13751158a928b079cc6a52e"
+          },
+          {
+            "name": "05_table_01.png",
+            "sha256": "f80d2a45c55b05069dfc1c95df8ccb1faf713e7135eb8fdcdd6c401b1def44e7"
+          }
+        ]
+      }
+    ],
+    "all_tables_consistent": true,
+    "all_math_rendered": true,
+    "visual_review": [
+      "C5 method formula screenshot 00_math-renderer_00.png visibly rendered",
+      "C5 progress Task42extra heading/table screenshots 04_top.png and 04_table_00.png checked",
+      "C5 registry 3.44 heading/tables screenshots 05_top.png, 05_table_00.png, 05_table_01.png checked",
+      "C4 task error screenshot 00_math-renderer_06.png checked"
+    ],
+    "supervision_summary_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/e5_github_render_c5_targeted_20260929T183755397977Z/summary.json",
+    "supervision_summary_sha256": "04db7856768db3bedabb9d20d6a9064c9720d169a829a96454308ba5b47d8ee6",
+    "sampled_process_tree_rss_peak_bytes": 2046427136,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "descendants_cleared": true
+  },
+  "unchanged_C4_to_C5_pages_reused_by_blob_identity": [
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/environment_and_isolation.md",
+      "blob_oid": "351512e963f1eaf88d628087e2238c7bef79fe13"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/accuracy_performance_memory.md",
+      "blob_oid": "449e4013c5d03b44ecd495312ad59ca12bf1ad6f"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/target_5nm_scale_plan.md",
+      "blob_oid": "bd447e7c05822f45d5d7af8d2ae6935452ab6bbc"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+      "blob_oid": "4c380a0acdace89fda58816df67ee5981f18d320"
+    }
+  ],
+  "remote_raw_blob_byte_comparison": {
+    "status": "HTTP_200_BYTE_EQUAL_11_OF_11",
+    "comparison_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/c5_remote_raw_blobs.json",
+    "comparison_sha256": "c24b9072012e486c86d5f0a8618f180a258c9420399e4c7d595031b506f4f73f",
+    "pages": [
+      {
+        "path": "docs/task042extra_feinn_5nm/task.md",
+        "commit": "3b8474bff1b3cb9321a89afbca36868a9b95153d",
+        "http": 200,
+        "git_sha256": "49007ef3ad8231cdeb59d5ca7f4c2aba4b698862a7f3b44e68e4cbefb35d4873",
+        "raw_sha256": "49007ef3ad8231cdeb59d5ca7f4c2aba4b698862a7f3b44e68e4cbefb35d4873",
+        "byte_equal": true,
+        "bytes": 33526
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/response_v1.md",
+        "commit": "4450434188a4f4e68ee613beb02f6db3805af83d",
+        "http": 200,
+        "git_sha256": "ada2883a474b61e5e837aa49df2657399902dd50fb8769899ac7ef58ba879840",
+        "raw_sha256": "ada2883a474b61e5e837aa49df2657399902dd50fb8769899ac7ef58ba879840",
+        "byte_equal": true,
+        "bytes": 8285
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+        "commit": "4450434188a4f4e68ee613beb02f6db3805af83d",
+        "http": 200,
+        "git_sha256": "98d7abb85b91c7fdebdd4f0325be1faab15b14a870fae460bc349bcef1e21295",
+        "raw_sha256": "98d7abb85b91c7fdebdd4f0325be1faab15b14a870fae460bc349bcef1e21295",
+        "byte_equal": true,
+        "bytes": 17140
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/method_and_paper_mapping.md",
+        "commit": "4450434188a4f4e68ee613beb02f6db3805af83d",
+        "http": 200,
+        "git_sha256": "eb672749cb027ea52191d1bba12f4cfb41de0564486b4388690ebf98f35f627e",
+        "raw_sha256": "eb672749cb027ea52191d1bba12f4cfb41de0564486b4388690ebf98f35f627e",
+        "byte_equal": true,
+        "bytes": 2377
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/environment_and_isolation.md",
+        "commit": "4450434188a4f4e68ee613beb02f6db3805af83d",
+        "http": 200,
+        "git_sha256": "daae367ed926115ee1c8bce1a99d0cd2291a5c8ee51b5cae7e201bc897f4f868",
+        "raw_sha256": "daae367ed926115ee1c8bce1a99d0cd2291a5c8ee51b5cae7e201bc897f4f868",
+        "byte_equal": true,
+        "bytes": 4734
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/accuracy_performance_memory.md",
+        "commit": "4450434188a4f4e68ee613beb02f6db3805af83d",
+        "http": 200,
+        "git_sha256": "b87b512e2058cd50bed50c9f3859f6096f31f06da1cb4f2617bc6bdd215e1681",
+        "raw_sha256": "b87b512e2058cd50bed50c9f3859f6096f31f06da1cb4f2617bc6bdd215e1681",
+        "byte_equal": true,
+        "bytes": 4164
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/target_5nm_scale_plan.md",
+        "commit": "4450434188a4f4e68ee613beb02f6db3805af83d",
+        "http": 200,
+        "git_sha256": "4a5cf6eb7a1ad1efb4c3ea359c7e55ff5769821716629c630daaa4523e3c3381",
+        "raw_sha256": "4a5cf6eb7a1ad1efb4c3ea359c7e55ff5769821716629c630daaa4523e3c3381",
+        "byte_equal": true,
+        "bytes": 6371
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+        "commit": "4450434188a4f4e68ee613beb02f6db3805af83d",
+        "http": 200,
+        "git_sha256": "dcc42d4e9c6041bbff0b154f04bf40eb3807bdca9c43f574f56229c16fc0fdd9",
+        "raw_sha256": "dcc42d4e9c6041bbff0b154f04bf40eb3807bdca9c43f574f56229c16fc0fdd9",
+        "byte_equal": true,
+        "bytes": 4335
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+        "commit": "4450434188a4f4e68ee613beb02f6db3805af83d",
+        "http": 200,
+        "git_sha256": "2b0087eb7d4c3931da7210fd8fb6605cde7845c6caad55c3638ed73b28ffbba6",
+        "raw_sha256": "2b0087eb7d4c3931da7210fd8fb6605cde7845c6caad55c3638ed73b28ffbba6",
+        "byte_equal": true,
+        "bytes": 3393
+      },
+      {
+        "path": "docs/development_progress.md",
+        "commit": "4450434188a4f4e68ee613beb02f6db3805af83d",
+        "http": 200,
+        "git_sha256": "2528b9bdac73cb96c675efd3dbfcd7fbe1459f935a9cae13dd94067ca2a38fbf",
+        "raw_sha256": "2528b9bdac73cb96c675efd3dbfcd7fbe1459f935a9cae13dd94067ca2a38fbf",
+        "byte_equal": true,
+        "bytes": 178153
+      },
+      {
+        "path": "docs/development_model_registry.md",
+        "commit": "4450434188a4f4e68ee613beb02f6db3805af83d",
+        "http": 200,
+        "git_sha256": "55021120b324306775a0b56a8fd5e6aa2cadb834d97b856c66888e149be4fbde",
+        "raw_sha256": "55021120b324306775a0b56a8fd5e6aa2cadb834d97b856c66888e149be4fbde",
+        "byte_equal": true,
+        "bytes": 212656
+      }
+    ]
+  },
+  "task_math_error": {
+    "path": "docs/task042extra_feinn_5nm/task.md",
+    "line": 217,
+    "macro": "\\operatorname{Re}",
+    "github_message": "The following macros are not allowed: operatorname",
+    "state": "RENDERED_VIEW_FAIL_TASK_MATH",
+    "task_modified": false
+  }
 }
