@@ -269,6 +269,92 @@
       "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
     },
     {
+      "name": "publication_progress_probe",
+      "summary_path": "tmp/task042/v5/publication_progress_probe/summary.json",
+      "summary_sha256": "e06ed2eaaac9003cde32b1b631069ed4d75063b1932c855438d914b16628d1c6",
+      "source_state": {
+        "source_sha": "4d8ef7857e94414e8b9f4d95c749701df57e5657",
+        "git_status": "",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "tmp/task042/v5/publication_progress_probe.py"
+        ],
+        "utc": "2026-09-29T02:54:41.809829+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "elapsed_seconds": 3.3727992040803656,
+      "sampled_tree_rss_peak_bytes": 45248512,
+      "sampled_tree_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 14287
+        },
+        "end": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 14287
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    },
+    {
+      "name": "publication_render",
+      "summary_path": "tmp/task042/v5/publication_render/summary.json",
+      "summary_sha256": "60f3a669003c7fb1aa5b1ee2d38fbaf6dd65b05d2949ce8e2e63bb59461de4dc",
+      "source_state": {
+        "source_sha": "4d8ef7857e94414e8b9f4d95c749701df57e5657",
+        "git_status": "",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "tmp/task042/v5/publication_render.py"
+        ],
+        "utc": "2026-09-29T02:53:33.601375+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "elapsed_seconds": 19.503719176049344,
+      "sampled_tree_rss_peak_bytes": 61546496,
+      "sampled_tree_swap_peak_bytes": 0,
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "descendants_cleared": true,
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 14287
+        },
+        "end": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 14287
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+    },
+    {
       "name": "pure_initial",
       "summary_path": "tmp/task042/v5/pure_initial/summary.json",
       "summary_sha256": "1c0fc62930407f73d4c2b0ffb4a3e4a00051ee639e7a4613b2bf243c5b07b614",
@@ -445,7 +531,7 @@
       "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
     }
   ],
-  "auxiliary_supervised_wall_sum_seconds": 34.02071783738211,
+  "auxiliary_supervised_wall_sum_seconds": 56.89723621751182,
   "auxiliary_sampled_tree_rss_peak_bytes_max": 227508224,
   "own_swap_peak_bytes": 0,
   "cost_scope": "bounded auxiliary subreaper+descendants; outer aux admission helper not continuously sampled; per-check baseline identity retained",
