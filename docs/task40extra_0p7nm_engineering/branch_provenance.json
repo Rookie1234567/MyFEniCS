@@ -40,5 +40,14 @@
   "delivery_package_manifest_sha256": "743c30dbbea510d465f4239f96322d7c0aba87f5ee0457da32721d7512f7e2b1",
   "supplied_task40_readme_sha256": "6ee8ec113579ba08da95d4dd3183a3ea579e087d4efb9f440e353385343c53d7",
   "supplied_task40_task_sha256": "3e032f20c0af415cc09a99e98f48e011c006f82a49563c3a03db2e32044bb8df",
-  "provenance_recorded_at_utc": "2026-09-29T10:16:26Z"
+  "provenance_recorded_at_utc": "2026-09-29T10:16:26Z",
+  "parent_followup_document_correction": {
+    "commit_sha": "3804ede8acfd120d0d8d312415ec5e7a2c296cd7",
+    "remote_branch": "task39extra",
+    "path": "docs/development_model_registry.md",
+    "correction": "首次V31停止由Codex误停；原始记录中的枚举USER_CONTROLLED_STOP仍照录。",
+    "task40_merge_commit_sha": "b1a456bf97083a799431053c45b3e62de40ad2a7",
+    "task40_merge_second_parent_sha": "3804ede8acfd120d0d8d312415ec5e7a2c296cd7",
+    "recorded_at_utc": "2026-09-29T10:27:57Z"
+  }
 }
