@@ -859,6 +859,157 @@ def body_balance_diagnostic(stage):
     return result
 
 
+def body_balance_replay(stage):
+    """One saved-vector audit after D2's metadata-only serialization failure."""
+    from src.io.neural_fe_calibration import V8_ROOT, read_v8_index
+
+    directories = sorted(
+        (ROOT / "results/task042").glob("task042_v10_d2_*/run_summary.json")
+    )
+    if len(directories) != 1:
+        raise ValueError(
+            "exactly one original failed D2 run required; no best-run selection"
+        )
+    path = directories[0]
+    run = json.loads(path.read_text())
+    manifest = json.loads((path.parent / "run_manifest.json").read_text())
+    log = (path.parent / "supervision/worker.log").read_text()
+    if (
+        run["classification"] != "WORKER_FAILED"
+        or not run["descendants_cleared"]
+        or "TypeError: mappingproxy" not in log
+        or manifest["plan_sha256"] != file_hash(PLAN_PATH)
+    ):
+        raise ValueError("replay restricted to saved complete D2 serialization failure")
+    old_artifact = V10_ROOT / path.parent.name
+    files = {
+        name: old_artifact / (name.lower() + "_volume_actions.npz")
+        for name in ("REF7_SCATTERED", "LSQR8_ERROR", "C_ERROR")
+    }
+    inventory = {
+        name: {"path": str(file), "sha256": file_hash(file)}
+        for name, file in files.items()
+    }
+    write_json(stage.artifact / "raw_inventory_before_decode.json", inventory)
+    reference, ref_identity = saved_reference()
+    reference_field = stage.packet.recover(reference)
+    old = json.loads(
+        (ROOT / "input/task042_neural_coarse_inverse/frozen_error_v9.json").read_text()
+    )
+    row = next(x for x in old["states"] if x["id"] == "LSQR8")
+    scaled, _ = read_v8_index(row["index"])
+    with np.load(owned(scaled["state"], V8_ROOT), allow_pickle=False) as data:
+        scaled_z = np.array(data["z"])
+    C, _ = read_result("C")
+    with np.load(owned(C["state"], V10_ROOT), allow_pickle=False) as data:
+        C_z = np.array(data["z"])
+    expected = {"REF7_SCATTERED": reference_field}
+    homogeneous = {}
+    for name, z in (("LSQR8", scaled_z), ("C", C_z)):
+        field = stage.packet.recover(
+            reference - z, rhs_i=np.zeros_like(stage.packet.a["i_rhs"])
+        )
+        full_difference = reference_field - stage.packet.recover(z)
+        pair = float(
+            np.linalg.norm(field - full_difference) / max(np.linalg.norm(field), 1e-12)
+        )
+        if pair > 1e-10:
+            raise ValueError("saved-vector replay homogeneous identity failed")
+        expected[name + "_ERROR"] = field
+        homogeneous[name] = {
+            "homogeneous_recovery_pair": pair,
+            "error_z_sha256": array_hash(reference - z),
+        }
+    rows = []
+    for name, record in inventory.items():
+        with np.load(owned(record, old_artifact), allow_pickle=False) as data:
+            field = np.array(data["field"])
+            curl = np.array(data["curl"])
+            mass = np.array(data["negative_epsilon_mass"])
+            original = np.array(data["original_V"])
+        arrays = (field, curl, mass, original)
+        if not all(
+            a.shape == (stage.packet.full_rows,)
+            and a.dtype == np.complex128
+            and np.isfinite(a).all()
+            for a in arrays
+        ):
+            raise ValueError("saved original full FE split action inventory differs")
+        field_pair = float(
+            np.linalg.norm(field - expected[name]) / max(np.linalg.norm(field), 1e-12)
+        )
+        total = curl + mass
+        cross = np.vdot(curl, mass)
+        norms = [
+            float(np.linalg.norm(value)) for value in (curl, mass, original, total)
+        ]
+        pair = float(np.linalg.norm(total - original) / max(sum(norms[:3]), 1e-12))
+        expanded = float(norms[0] ** 2 + norms[1] ** 2 + 2 * cross.real)
+        square_pair = abs(expanded - norms[3] ** 2) / max(
+            norms[0] ** 2 + norms[1] ** 2 + 2 * abs(cross), 1e-24
+        )
+        if max(pair, square_pair, field_pair) > 1e-10:
+            raise ValueError("saved split action/field identity failed")
+        rows.append(
+            {
+                "state": name,
+                "field_coefficient_norm": float(np.linalg.norm(field)),
+                "curl_norm": norms[0],
+                "negative_epsilon_mass_norm": norms[1],
+                "original_V_norm": norms[2],
+                "combined_norm": norms[3],
+                "complex_curl_mass_inner_product": cross,
+                "expanded_square": expanded,
+                "combined_square": norms[3] ** 2,
+                "split_original_V_operation_relative": pair,
+                "cross_identity_operation_relative": square_pair,
+                "split_original_V_result_relative": float(
+                    np.linalg.norm(total - original) / max(norms[2], 1e-12)
+                ),
+                "cancellation_ratio": norms[3] / max(norms[0] + norms[1], 1e-12),
+                "saved_field_recovery_pair": field_pair,
+                "raw": record,
+                "array_sha256": {
+                    k: array_hash(a)
+                    for k, a in zip(
+                        ("field", "curl", "mass", "original_V"), arrays, strict=True
+                    )
+                },
+                "original_boundary_body_norm": 0.0,
+                "boundary_reason": "original no-PML/no-Robin DtN body; port coupling retained separately",
+                "shared_contributions_assembled_before_norm": True,
+                "condition_number_claimed": False,
+            }
+        )
+    stage.meta["reference_arrays_read"] = True
+    return {
+        "status": "DIAGNOSTIC_REPLAYED_FROM_SAVED_VECTORS",
+        "rows": rows,
+        "homogeneous_recovery": homogeneous,
+        "failed_original_run": {
+            "path": str(path),
+            "sha256": file_hash(path),
+            "manifest": manifest,
+        },
+        "original_numerical_source_sha": manifest["source_sha"],
+        "raw_hash_anchor": "first frozen during replay; original JSON publication failed",
+        "operator_actions_original": {
+            "curl": 3,
+            "mass": 3,
+            "packet_V": 3,
+            "kind": "derived from complete saved inventory and source loop",
+        },
+        "operator_actions_replay": {"curl": 0, "mass": 0, "packet_V": 0},
+        "component_original_costs_seconds": "UNKNOWN_NOT_PERSISTED_BEFORE_METADATA_FAILURE",
+        "original_inclusive_supervised_seconds": run["elapsed_seconds"],
+        "reference_identity": ref_identity,
+        "FE_environment_rebuilt": False,
+        "global_factor_constructed": False,
+        "numerical_vectors_changed": False,
+        "accurate_reference_feedback": False,
+    }
+
+
 def main():
     if sys.argv[1] == "--linear-solve":
         solve_child(Path(sys.argv[2]).resolve())
@@ -901,6 +1052,8 @@ def main():
         result, name = representation_diagnostic(stage), "D1"
     elif stage.stage == "D2":
         result, name = body_balance_diagnostic(stage), "D2"
+    elif stage.stage == "D2_REPLAY":
+        result, name = body_balance_replay(stage), "D2_REPLAY"
     else:
         raise RuntimeError(
             "backup interface not yet implemented; never start unimplemented stage"

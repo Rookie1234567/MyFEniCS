@@ -1,11 +1,21 @@
 """Small offline split of original uncondensed Maxwell body action."""
 
+from collections.abc import Mapping
 from pathlib import Path
 from time import perf_counter
 
 import numpy as np
 
 from src.solvers.neural_fe_action_packet import array_hash, file_hash
+
+
+def plain_mapping(value):
+    """Serialize nested read-only metadata without changing an FE action."""
+    if isinstance(value, Mapping):
+        return {key: plain_mapping(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [plain_mapping(item) for item in value]
+    return value
 
 
 def volume_balance(design, packet, reference, states, artifact, *, heartbeat):
@@ -165,7 +175,7 @@ def volume_balance(design, packet, reference, states, artifact, *, heartbeat):
             "global_factor_constructed": False,
             "accurate_reference_feedback": False,
             "full_region_integral_campaign_repeated": False,
-            "borrowed_split_operator_audit": dict(volume.audit),
+            "borrowed_split_operator_audit": plain_mapping(volume.audit),
         }
     finally:
         source.destroy()
