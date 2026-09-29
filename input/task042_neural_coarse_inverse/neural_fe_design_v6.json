@@ -1,0 +1,37 @@
+{
+  "schema": "task042.neural-fe-design.v6",
+  "batch": "V6_NEURAL_FE_SINGLE_SOLVE_PILOT",
+  "review_source": "d5f45787168123a1680523ccf8e73c33de7c7a34",
+  "old_route": "CLOSED_RESEARCH_NEGATIVE",
+  "old_augmentation": "NOT_IMPLEMENTED_ROUTE_CLOSED_BY_REVIEW_V3",
+  "wavelength_nm": 0.7,
+  "geometry": {
+    "bounds_nm": [[-0.7, 0.7], [-0.525, 0.525], [-0.175, 1.225]],
+    "substrate_z_nm": 0.0,
+    "block_bounds_nm": [[-0.35, 0.35], [-0.525, 0.525], [0.0, 1.05]],
+    "notch_bounds_nm": [[0.0, 0.35], [-0.175, 0.175], [0.35, 0.70]],
+    "cells": [8, 6, 8],
+    "step_nm": 0.175,
+    "material_tag_labels": {"1": "air", "2": "Si substrate, optical index unknown", "3": "Si block, optical index unknown"}
+  },
+  "materials": {
+    "air_n": [1.0, 0.0], "si_n": null, "si_epsilon": null,
+    "mu_r": [1.0, 0.0], "status": "MATERIAL_0P7NM_BLOCKED",
+    "time_convention": "exp(-i omega t); passive n has positive imaginary part",
+    "source": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/task39_boundary_audit.md",
+    "audited_task039_source": "f4073adabb91bffe5c3954b8ae8b63270efa3e15",
+    "source_object_available_locally": false,
+    "prohibition": "No fallback to air, 13.5nm/2nm Si, guessed dispersion or material-free formal PDE"
+  },
+  "incidence": {"grazing_deg": 1.0, "azimuth_deg": 0.0, "polarization": "s", "amplitude": 1.0, "background": "layered"},
+  "boundary": {"floquet_xy": true, "dtn": "full original auto_propagating, pending Si index", "pml": false},
+  "finite_element": {"family": "N1curl", "cell": "hexahedron", "degree": 3, "operator_quadrature_degree": 15, "full_rows_limit": 200000, "trace_rows_limit": 100000},
+  "network": {"hidden": [64, 64, 64], "activation": "tanh", "outputs_real": 48, "carriers": 8, "carrier_directions": ["+x", "+y", "+z", "-x", "-y", "-z", "incident", "specular"], "seed": 420906, "dtype": "float64-real-imag", "final_layer": "zero", "per_dof_embeddings": false},
+  "moments": {"quadrature_sequence": [15, 30, 60], "relative_tolerance": 1e-8, "near_zero_absolute_tolerance": 1e-12, "chunk": "one affine cell per autograd graph", "owner": "first native cell incident to each independent master trace row", "transform": "native inverse-transpose T; original MPC expansion only after independent coefficients"},
+  "optimizer": {"adam_updates": 500, "adam_lr": 0.001, "weight_decay": 0, "lbfgs_history": 20, "lbfgs_initial_step": 1.0, "line_search": "strong-Wolfe", "total_closures_limit": 2000, "route_wall_seconds": 7200},
+  "lsqr": {"paired_actions_limit": 2000, "wall_seconds": 7200, "preconditioner": null},
+  "gates": {"identity": 1e-10, "real_parameter_gradient_relative": 1e-5, "schur_native_augmented_relative": 1e-6, "reference_field_relative": 1e-4, "power_absolute": 1e-5, "per_channel_power_absolute": 1e-6, "enrichment_relative": 0.001},
+  "interface_only": {"stages": ["V6-FE-INTERFACE", "V6-ML-INTERFACE"], "stage_wall_limit_seconds": 600, "synthetic_ports": 3, "synthetic_ports_are_physical_inventory": false, "real_operator_built": false, "long_training_enabled": false},
+  "resources": {"shared_workstation": true, "mpi": 1, "math_threads": 1, "torch_intraop": 1, "torch_interop": 1, "data_loader_workers": 0, "rss_hard_gib": 16, "rss_warn_gib": 12, "own_swap_bytes": 0, "numerical_batch_wall_seconds": 36000, "gpu": false},
+  "target": {"status": "TARGET_IDENTITY_NOT_FROZEN", "wall_seconds": 172800, "qualification": "NOT_QUALIFIED", "missing": ["target geometry dimensions", "target discretization and precision", "qualified Si0.7nm source/version", "complete target channels", "actual target resource allocation", "target complete-step cost and steps required"]}
+}

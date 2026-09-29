@@ -1,0 +1,6 @@
+# One real mesh/space/moment/MPC check, without a material-qualified operator.
+schema_version = 1
+[task042_v6_interface]
+stage = "geometry_trace_interface"
+run_id = "task042_v6_geometry_interface"
+material_status = "MATERIAL_0P7NM_BLOCKED"

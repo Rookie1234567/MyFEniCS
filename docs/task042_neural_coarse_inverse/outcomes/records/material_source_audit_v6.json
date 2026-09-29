@@ -1,0 +1,24 @@
+{
+  "status": "MATERIAL_0P7NM_BLOCKED",
+  "repository_source": "d5f45787168123a1680523ccf8e73c33de7c7a34",
+  "audited_source_sha": "f4073adabb91bffe5c3954b8ae8b63270efa3e15",
+  "audited_commit_object_local": false,
+  "audit_path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/task39_boundary_audit.md",
+  "audit_sha256": "1a4c20c03b79c241dd87ba2765ece7f0bd7ef32dd8950cc918933ee6b2e84641",
+  "evidence": "audit section4.2 explicitly records missing Si0.7nm delta/beta",
+  "current_material_inputs": "No 0.7nm material input found under tracked input or src/common",
+  "existing_material_values_only_nm": [
+    13.5,
+    5.0,
+    2.0
+  ],
+  "si_n": null,
+  "si_epsilon": null,
+  "photon_energy_eV": null,
+  "energy_reason": "no audited source/unit conversion supplied; not guessed",
+  "unit": "vacuum wavelength nm",
+  "complex_time_convention": "exp(-i omega t)",
+  "target_physical_operator_constructed": false,
+  "replacement_index_used": false,
+  "authority": "ReviewV3 section5 allows material-independent interfaces and requires material blocker"
+}

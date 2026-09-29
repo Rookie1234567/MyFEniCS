@@ -1,0 +1,6 @@
+# One CPU FP64 network packet/gradient check; synthetic operator explicitly labelled.
+schema_version = 1
+[task042_v6_interface]
+stage = "neural_packet_vjp"
+run_id = "task042_v6_neural_vjp_interface"
+material_status = "MATERIAL_0P7NM_BLOCKED"

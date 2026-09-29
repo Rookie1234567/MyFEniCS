@@ -1,0 +1,122 @@
+{
+  "source_before_implementation": "d5f45787168123a1680523ccf8e73c33de7c7a34",
+  "shared_workstation": true,
+  "checks": [
+    {
+      "name": "fe_preflight",
+      "summary": "tmp/task042/v6/fe_preflight/summary.json",
+      "summary_sha256": "cce23101109c572b43719486051a9d4403b5e1fb2e51319e789ddecc3d2bef21",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 3.7385491620516405,
+      "sampled_process_tree_rss_peak_bytes": 227766272,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "review_render",
+      "summary": "tmp/task042/v6/review_render/summary.json",
+      "summary_sha256": "e6dba5992732fd5932c3d9fcc47873aae6d281a77340e4726a4868c78bb51d9c",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 3.3597093400312588,
+      "sampled_process_tree_rss_peak_bytes": 45309952,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "ml_preflight",
+      "summary": "tmp/task042/v6/ml_preflight/summary.json",
+      "summary_sha256": "16f9eb2b376387b36337b6d0250119cb65e2891637d710b042015a62c6cbf4d4",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 5.310555075993761,
+      "sampled_process_tree_rss_peak_bytes": 236797952,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "array_basix_tests",
+      "summary": "tmp/task042/v6/array_basix_tests/summary.json",
+      "summary_sha256": "822af514d9451ae8c9c67857c34072e3c08c4b9e830e991b1e01cae4fb35e526",
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 3.357037686975673,
+      "sampled_process_tree_rss_peak_bytes": 151138304,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "ml_tests",
+      "summary": "tmp/task042/v6/ml_tests/summary.json",
+      "summary_sha256": "a89757d58f84772584fafe0800490f870178678c3db1bbe4341ad719cd5eb220",
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 1.5549126989208162,
+      "sampled_process_tree_rss_peak_bytes": 21012480,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "ml_assertions",
+      "summary": "tmp/task042/v6/ml_assertions/summary.json",
+      "summary_sha256": "a8868c183e304c97a1c2b72f6a94741597f0c1b2f095ea8c094060a3c7e35f67",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 5.239731444977224,
+      "sampled_process_tree_rss_peak_bytes": 255606784,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "final_pre_tests",
+      "summary": "tmp/task042/v6/final_pre_tests/summary.json",
+      "summary_sha256": "e1b7c2bd8c57bf351f489c79952f1d0715cd035cd3cc05fc5a52845a320d7c68",
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 6.0169931929558516,
+      "sampled_process_tree_rss_peak_bytes": 327528448,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "precommit_verified",
+      "summary": "tmp/task042/v6/precommit_verified/summary.json",
+      "summary_sha256": "f50884093fa87c3d604ec8ddf3d557b8c9402d72a0d3d96ea541a5ce8136f0bc",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 6.575598141993396,
+      "sampled_process_tree_rss_peak_bytes": 345317376,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "ml_thread_assertions",
+      "summary": "tmp/task042/v6/ml_thread_assertions/summary.json",
+      "summary_sha256": "3656788ced9661a019776b1df30c91279d30f4b4aa3f48e1eca95b2f44907e6b",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 5.266793656977825,
+      "sampled_process_tree_rss_peak_bytes": 254214144,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "static_pre",
+      "summary": "tmp/task042/v6/static_pre/summary.json",
+      "summary_sha256": "a663f61fc8ce689314cce3b5c2394a143eaeeae0f28da277203af975f3a3fe6e",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.087707942002453,
+      "sampled_process_tree_rss_peak_bytes": 75350016,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    }
+  ],
+  "initial_failures_preserved": [
+    "unknown config quadrature_degree keyword, fixed before formal run",
+    "air wavevector complex type in comparison, use original propagation predicate",
+    "ML pytest unavailable, same two assertions passed using stdlib without install"
+  ],
+  "no_formal_runs_yet": true
+}

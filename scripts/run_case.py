@@ -47,7 +47,10 @@ def main(argv: list[str] | None = None) -> int:
             raise InputError('--setup-only cannot be combined with diagnostic profile options')
         if args.physical_pc_profile is None and (args.profile_variant != 'R0' or args.profile_r0_reference is not None):
             raise InputError('fast profile options require --physical-pc-profile')
-        specification = load_and_resolve(args.input_path)
+        from src.io.neural_fe_interface import load_interface
+        specification = load_interface(args.input_path)
+        if specification is None:
+            specification = load_and_resolve(args.input_path)
         from src.io.task042_profile import TASK042_PROFILES
         if specification.solver.get('preconditioner') in TASK042_PROFILES:
             if args.validate_only or args.dry_run:

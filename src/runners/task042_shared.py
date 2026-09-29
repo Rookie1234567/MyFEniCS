@@ -431,7 +431,7 @@ def launch(specification):
         raise RuntimeError("Formal Task042 stage requires clean committed source")
     profile = specification.solver["preconditioner"]
     stage = TASK042_PROFILES[profile]
-    expected_mode = "ml" if stage == "F3-train" else "fe"
+    expected_mode = "ml" if stage in ("F3-train", "V6-ML-INTERFACE") else "fe"
     if os.environ.get("TASK042_ENV_MODE") != expected_mode:
         raise RuntimeError(
             f"Task042 {stage} requires independent {expected_mode} environment"
@@ -441,7 +441,7 @@ def launch(specification):
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         baseline = audit(
             observed_activity=stage in ("V3-reuse", "V3-overlap")
-            or stage.startswith(("V4-", "V5-"))
+            or stage.startswith(("V4-", "V5-", "V6-"))
         )
         os.sched_setaffinity(0, {baseline["cpu"]})
         os.nice(10)
@@ -464,7 +464,7 @@ def launch(specification):
             "git_status": status,
             "stage": stage,
             "formal_pde": False,
-            "formal_fe_stage": stage != "F3-train",
+            "formal_fe_stage": expected_mode == "fe",
             "input_sha256": specification.input_sha256,
             "physical_model_sha256": specification.physical_model_sha256,
             "shared_workstation": True,
@@ -478,6 +478,10 @@ def launch(specification):
                 ["ionice", "-p", str(os.getpid())], text=True
             ).strip(),
         }
+        if stage.startswith("V6-"):
+            state.update(physical_model_complete=False, physical_operator_sha256=None,
+                         physical_hash_meaning="unresolved material-blocked design only",
+                         material_status="MATERIAL_0P7NM_BLOCKED", operator_constructed=False)
         write_json(directory / "run_manifest.json", state)
         for filename, text in (
             ("source_sha.txt", source),
@@ -490,6 +494,8 @@ def launch(specification):
             "-m",
             "src.runners.task042_training"
             if stage == "F3-train"
+            else "src.runners.neural_fe_interface"
+            if stage.startswith("V6-")
             else "src.runners.task042_experiment",
             str(specification.source_path),
             str(directory),
@@ -497,7 +503,7 @@ def launch(specification):
         result = supervise(
             command,
             directory / "supervision",
-            wall_seconds=10800,
+            wall_seconds=600 if stage.startswith("V6-") else 10800,
             interval=0.5,
             source_state=state,
             worker_environment={"TASK042_WATCHDOG_PARENT_PID": str(os.getpid())},
