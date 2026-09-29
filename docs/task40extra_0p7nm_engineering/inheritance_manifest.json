@@ -3,7 +3,7 @@
   "status": "TASK_AUTHORED_NOT_RUN",
   "branch": "task40extra_0p7nm_engineering",
   "base_branch": "task39extra",
-  "base_sha": "95dacd01e86f0f7f1d29ee2d5e5a16039bb41871",
+  "base_sha": "7bb3243e657cbeecfff974f985f09569bfa6e094",
   "reviewed_numerical_head": "e09bd1612c4f6ca5fb5cf3572835748ad5c16207",
   "v31_formal_source": "d9b545e824296fce1b489c32a5d96e5e9303ff3c",
   "v29_performance_baseline_source": "780f58918b0e5a9868cd2ea3de26d451bc6b5d86",
@@ -11,10 +11,21 @@
   "old_task_closure": "CLOSED_WITH_QUALIFICATIONS",
   "master_merge_approved": false,
   "workstation_changes_authorized": false,
-  "initial_execution": "laptop_A0_through_A6",
+  "initial_execution": "laptop_N0_through_N6",
   "notes": [
-    "Explicit user-authorized stacked branch; not the existing Task040 Hybrid task.",
-    "No new numerical run has been executed at task creation.",
-    "Existing V31 field-comparison and runtime-metadata gaps remain explicit."
-  ]
+    "B-line continuation of the existing Task40 remote branch; its original base and pre-handoff head are recorded separately from the Task39 closeout merge.",
+    "Task39 closeout is a verified ancestor of the current Task40 branch; no history was reset, rebased, or force-pushed.",
+    "No new numerical run has been executed at Task40 task setup.",
+    "Offline V31–V29/V30 saved-field comparisons are recorded in response_v34; independent same-discrete reference and five field-reference checkpoints remain NOT_ATTEMPTED, and the original V31 manifest still lacks per-thread environment fields.",
+    "The GitHub rendered parent report could not be verified because the browser returned Failed to fetch/Cache miss."
+  ],
+  "original_task40_base_sha": "95dacd01e86f0f7f1d29ee2d5e5a16039bb41871",
+  "preexisting_task40_remote_head_sha": "ffd89005096590c106324b6bb39a8d17c96a87ff",
+  "preexisting_task40_branch_retained": true,
+  "new_branch_created": false,
+  "closeout_merge_commit_sha": "3e961a2bf3f547dce5b8829c6cfab74befb26dd4",
+  "closeout_merge_second_parent_sha": "7bb3243e657cbeecfff974f985f09569bfa6e094",
+  "branch_provenance": "docs/task40extra_0p7nm_engineering/branch_provenance.json",
+  "parent_closeout_response": "docs/task039_extra_physical_multilevel/response_v34.md",
+  "parent_github_render_status": "NOT_VERIFIED"
 }

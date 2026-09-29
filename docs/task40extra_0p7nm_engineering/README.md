@@ -1,11 +1,20 @@
-# Task40extra：0.7 nm可计算工程路线
+# Task40extra：0.7 nm工程方法（笔记本起步）
 
-执行分支：`task40extra_0p7nm_engineering`。初始base：`95dacd01e86f0f7f1d29ee2d5e5a16039bb41871`，来自已收口的Task39extra，不是既有Task040 Hybrid。
+**先取得真实0.7nm、三维非可分缩小模型的完整FE解；再以误差与资源证据决定面向约2TB目标规模的下一项工程方法。**
 
-先读[任务书](task.md)，再读继承的[双凝聚最终报告](../task039_extra_physical_multilevel/final_report.md)。
+执行分支：`task40extra_0p7nm_engineering`。B线沿用既有远端分支，不创建新分支。该分支原始base为`95dacd01e86f0f7f1d29ee2d5e5a16039bb41871`，续作前远端HEAD为`ffd89005096590c106324b6bb39a8d17c96a87ff`；Task39收口提交`7bb3243e657cbeecfff974f985f09569bfa6e094`已作为第二父提交合并，成为祖先。完整关系记录在`branch_provenance.json`中。
 
-首批目标是笔记本上真实0.7 nm材料、非可分三维缩小几何的完整有限元解及误差/容量证据。先用准确p4双凝聚取得可靠锚点；最终目标规模的路线转向有界局部求解、多层全局纠错和分布式trace/mode，不依赖无限增长的全局粗因子。
+| 先读什么 | 用途 |
+|---|---|
+| [Task39extra最终报告](../task039_extra_physical_multilevel/final_report.md) | 双凝聚准确p4推荐路线、速度/内存、负结果与适用边界 |
+| [Task39extra收口review](../task039_extra_physical_multilevel/review_report_v30.md) | 父任务收口范围与证据资格边界 |
+| [Task39extra收口response](../task039_extra_physical_multilevel/response_v34.md) | 实际离线对照和仍未具备的证据 |
+| [本任务书](task.md) | N0–N6首批实施、0.7nm材料/几何/网格、真实PDE与Gate |
 
-初始状态：`TASK_AUTHORED_NOT_RUN`。没有新PDE、没有新增性能结果、没有工作站迁移或master合并。材料值、网格实际行数、通道及资源合同由Codex在A1冻结，不能用旧13.5 nm常数代替。
+首批模型：0.7nm正式Si/air、双Floquet、完整Fourier-DtN、带三维缺口的解析单胞；G0计划336cells、G1计划880cells，均p6+同网格p4双凝聚。cell数为计划推导，正式实测另记。最多两场iterative和条件性一场G0直接reference，不重跑父13.5nm性能场。
 
-按A0–A6连续执行，结果写`response_v1.md`和本目录`outcomes/`。旧PDE不因收口补账而重跑。合法资源或数值停止需要保存证据，不能以历史8 GiB或126步作为新硬线。
+首批执行只在笔记本；不改MUMPS参数，不删A4完整检查，不热改工作站，不自动开启Phase II或merge master。首个结果必须区分：离散方程解出、同离散reference、h/通道精度、目标尺度可扩展性。
+
+本机现有路线是可靠起点，不是承诺全域p4因子能直接扩大到0.7nm目标尺寸。新任务总体生产方向是有界局部处理、多层全局波动纠错、分布式matrix-free和受控端口/缓存库存；具体下一候选由首批真实证据支持。
+
+提交后生成的 `response_v1.md` 与 `outcomes/summary.md` 是新结果入口，文档尚未生成时不得链接虚构PASS或填写预计数值为实测。
