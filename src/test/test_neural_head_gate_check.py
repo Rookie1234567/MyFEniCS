@@ -28,6 +28,8 @@ def fixture():
         "ordered_complex_port_vector": port,
         "ordered_complex_scattered_port_vector": scatter,
         "ordered_per_channel_power": [0.0] * 40,
+        "selected_E": [[{"real": 1.0, "imag": 0.0}]],
+        "selected_H_code": [[{"real": 1.0, "imag": 0.0}]],
         "port": {"R_total": 0.0, "T_total": 1.0, "A_balance": 0.0},
         "volume": {"A_volume_total": 0.0, "energy_closure_error_port_volume": 0.0},
     }
@@ -82,3 +84,13 @@ def test_progress_checks_use_original_native_and_frozen_baseline():
     result = check_candidate(candidate, record)
     assert result["progress_signal"] == "NEGATIVE"
     assert not result["E_admitted"]
+
+
+def test_saved_zero_selected_error_does_not_override_complex_samples():
+    candidate, record = fixture()
+    row = record["physics"]["rows"]["B0"]
+    row["selected_E"][0][0]["real"] = 2.0
+    assert row["selected_E_relative"] == 0.0
+    result = check_candidate(candidate, record)
+    assert result["original_field_errors"]["selected_E_relative"] == 1.0
+    assert result["status"] == "NOT_QUALIFIED"

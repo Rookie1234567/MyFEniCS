@@ -4,15 +4,7 @@ import math
 
 import numpy as np
 
-
-def complex_vector(items):
-    return np.asarray(
-        [
-            complex(x["real"], x["imag"]) if isinstance(x, dict) else complex(x)
-            for x in items
-        ],
-        dtype=np.complex128,
-    )
+from benchmarks.neural_fe_gate_check import complex_values as complex_vector
 
 
 def relative_difference(value, reference):
@@ -65,8 +57,17 @@ def check_candidate(candidate, verification):
         "selected_E_relative",
         "selected_H_relative",
     )
+    errors = {key: row[key] for key in field_keys}
+    for key, vector in (
+        ("selected_E_relative", "selected_E"),
+        ("selected_H_relative", "selected_H_code"),
+    ):
+        errors[key] = relative_difference(
+            complex_vector(row[vector]), complex_vector(reference[vector])
+        )
     fields = {
-        key: math.isfinite(row[key]) and 0 <= row[key] <= 1e-4 for key in field_keys
+        key: math.isfinite(errors[key]) and 0 <= errors[key] <= 1e-4
+        for key in field_keys
     }
     channel_checks = {}
     for key in ("ordered_complex_port_vector", "ordered_complex_scattered_port_vector"):
@@ -127,7 +128,7 @@ def check_candidate(candidate, verification):
         "original_equation": equation,
         "reference_pass": bool(reference_pass),
         "field_checks": fields,
-        "original_field_errors": {key: row[key] for key in field_keys},
+        "original_field_errors": errors,
         "channel_checks": channel_checks,
         "power_differences": powers,
         "max_channel_power_difference": power_error,
