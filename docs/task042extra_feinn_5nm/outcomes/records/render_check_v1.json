@@ -1,6 +1,6 @@
 {
   "schema": "task42extra.render-check.v1",
-  "status": "BROWSER_PENDING",
+  "status": "RENDERED_VIEW_FAIL_TASK_MATH",
   "published_task_rich_text_check": {
     "status": "RENDERED_HTML_PASS",
     "url": "https://github.com/Rookie1234567/MyFEniCS/blob/3b8474bff1b3cb9321a89afbca36868a9b95153d/docs/task042extra_feinn_5nm/task.md",
@@ -73,6 +73,436 @@
     "evidence": "Actual published GitHub richText HTML, table elements and math-renderer. No browser pixels captured.",
     "task_modified": false
   },
-  "final_docs_browser": "not_run",
-  "final_blob_consistency": "not_run"
+  "first_browser_pass": {
+    "source_commit": "705654eb06f4dc6dfe355785ae2f9035a7ce3b17",
+    "raw_render_records_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/c4_705654e/render_records.json",
+    "raw_render_records_sha256": "056f8f9f58f627c76cecbe978f60604bbc4da9e299625bd1fbb2892f34df0c71",
+    "pages": [
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/3b8474bff1b3cb9321a89afbca36868a9b95153d/docs/task042extra_feinn_5nm/task.md",
+        "heading_prefix": "",
+        "scope_heading": "entire task document",
+        "article_text_head": "Task42extra：5 nm 三维 compatible FEINN 独立支线\n0. 身份、授权与要消除的 blocker\n\n本任务检验：完整 Nédélec 插值的神经场，加上正确的弱残差度量，能否从零求得一个真实 5 nm 三维 M",
+        "table_count": 6,
+        "all_table_columns_consistent": true,
+        "math_count": 7,
+        "math_errors": [
+          {
+            "index": 6,
+            "message": "The following macros are not allowed: operatorname"
+          }
+        ],
+        "screenshots": [
+          {
+            "name": "00_top.png",
+            "sha256": "f1dda6e342229124f82cc7e0410ca90330f6744d58440b1ca5ce890e932e694b"
+          },
+          {
+            "name": "00_table_00.png",
+            "sha256": "ed83ded2523994f738817d1dffcbc8407ae5517416f2f3f84dab4fcdfaca50ca"
+          },
+          {
+            "name": "00_table_01.png",
+            "sha256": "8e3150afc685ada1e8082da8d7f303721358f4379eb9664d1124102367774d61"
+          },
+          {
+            "name": "00_table_02.png",
+            "sha256": "34075ff30c4a560317b0f268cff835e861f7425677a5f91264f60ef9faccdd2b"
+          },
+          {
+            "name": "00_table_03.png",
+            "sha256": "c29ab88671de5ef024e6e1f5887020e9275db18b71f776dd66ca66b08e83443e"
+          },
+          {
+            "name": "00_table_04.png",
+            "sha256": "9be25f2104ae13ad86669caad36d3f39a7771931e0791fc1ee0bcd395398a22f"
+          },
+          {
+            "name": "00_table_05.png",
+            "sha256": "ce2c164f1d7118b3cc5d571632ddc7ccc5c414343e244142ccc6eef93615f92a"
+          },
+          {
+            "name": "00_math-renderer_00.png",
+            "sha256": "c5afc832629f78b881b6149473d3f56f41034a678028cff20f96ecc244c7a5cb"
+          },
+          {
+            "name": "00_math-renderer_01.png",
+            "sha256": "b834e518c58a34d7852e675578b4289ed834709aeb31573808af14b6b64caae9"
+          },
+          {
+            "name": "00_math-renderer_02.png",
+            "sha256": "b3689c80df8de98dd2dcee3166e6e74af6854517e02dc002e51b2f0b82db73e8"
+          },
+          {
+            "name": "00_math-renderer_03.png",
+            "sha256": "2e3d09ab43c84e1e1817a3421a3d595ce110f32496f0829dfd9816abadf5226a"
+          },
+          {
+            "name": "00_math-renderer_04.png",
+            "sha256": "59522e115c78ea7c78573ed8480e54cd09d7f5989e69f5ff9f25c89e0224de48"
+          },
+          {
+            "name": "00_math-renderer_05.png",
+            "sha256": "feaed3c98e9a5c63dbb3c8474baea54e69711b46bba3c69a0af1fbe2325b4030"
+          },
+          {
+            "name": "00_math-renderer_06.png",
+            "sha256": "506d606d7a842201e4cea400336e6532f91607531e9c1b80d65a70fb8d61ff9f"
+          }
+        ]
+      },
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/705654eb06f4dc6dfe355785ae2f9035a7ce3b17/docs/task042extra_feinn_5nm/response_v1.md",
+        "heading_prefix": "",
+        "scope_heading": "entire task document",
+        "article_text_head": "Task42extra Response V1\n\n分支 task42extra_feinn_5nm；本响应生成前HEAD 7a79b3007d92a9b699e0451d0c8b6dfdacee7ad9（数值阶段source分别见下面run",
+        "table_count": 7,
+        "all_table_columns_consistent": true,
+        "math_count": 0,
+        "math_errors": [],
+        "screenshots": [
+          {
+            "name": "01_top.png",
+            "sha256": "ea5292865ed93d2c24026d7f9bd13938af8c21ef0f6a5d875757f2858c83dd10"
+          },
+          {
+            "name": "01_table_00.png",
+            "sha256": "38c290ba5c6fcaa8b5a9b1cdce8484735a1a99016dace11b46d0fc9fef4ba59e"
+          },
+          {
+            "name": "01_table_01.png",
+            "sha256": "826a92ce756e9537f9929e938cf241c2550f1b0e2408fafe383dbb784d3e9af6"
+          },
+          {
+            "name": "01_table_02.png",
+            "sha256": "1fc47c82ece38410d55cf14dc3a2ea8d57c44c03765ccdc593bf4dc38b9f9816"
+          },
+          {
+            "name": "01_table_03.png",
+            "sha256": "b985896d695210da8aa6c45cafe2df94e1f45f1fe45c764da537151e8d476b69"
+          },
+          {
+            "name": "01_table_04.png",
+            "sha256": "395d238059c7575c3041ce8dad023881be6b623efb2c38b9efda84442ff92558"
+          },
+          {
+            "name": "01_table_05.png",
+            "sha256": "fd18bb62a10c7ed749e8acb2133f0b3ab327ac8cbe3e6e0503894a18f835ca52"
+          },
+          {
+            "name": "01_table_06.png",
+            "sha256": "dd3ecb16aef26c6422c8a08e57a9810353cf98a7056ed611db2b2a0e4f8a7c9f"
+          }
+        ]
+      },
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/705654eb06f4dc6dfe355785ae2f9035a7ce3b17/docs/task042extra_feinn_5nm/outcomes/summary.md",
+        "heading_prefix": "",
+        "scope_heading": "entire task document",
+        "article_text_head": "Task42extra 首轮执行总结\n\n本轮完整接口资格为 True，三路线同离散资格 0/3。结果以原方程、独立完整FE场和功率审核为准。本轮比较的是同一M5、同全部独立FE、同原方程/材料/模式/初值的三条路线。坐标网络通过积分产生边、",
+        "table_count": 18,
+        "all_table_columns_consistent": true,
+        "math_count": 0,
+        "math_errors": [],
+        "screenshots": [
+          {
+            "name": "02_top.png",
+            "sha256": "0a907de398969719e40e0fc84ddd473f1b9611cfdf2516b6a5e50cb8e1c9f341"
+          },
+          {
+            "name": "02_table_00.png",
+            "sha256": "6efbdba561fcfc3b165f20d1cd29b0e2c9cfcf5274db7864e252e75fb86f336e"
+          },
+          {
+            "name": "02_table_01.png",
+            "sha256": "217c987c751eb15d7e893ddc3faa19bf126e36d1f1161e603b5fe27b3959ed38"
+          },
+          {
+            "name": "02_table_02.png",
+            "sha256": "dfa1939ce3b9603854bfd0a5805b83ecd8e19d14e04a97e06e51faa1727fd7ba"
+          },
+          {
+            "name": "02_table_03.png",
+            "sha256": "13168dba3233a53210a21467d5cbf6e1989f120e0fe68af5ea4071b2ffe79939"
+          },
+          {
+            "name": "02_table_04.png",
+            "sha256": "78200535792a7d8010f692a2973d889dc2b3fc0cb98f8591f9b2eece0237a3f2"
+          },
+          {
+            "name": "02_table_05.png",
+            "sha256": "ddbf1e37802cb0b76c8b8db1d0b57e559ba7d6418fc9222c36bcec9873d70dd3"
+          },
+          {
+            "name": "02_table_06.png",
+            "sha256": "f8f36a8a95fc560a64d7f5588720f83d4e3e08fad8febfe5a7213f8985fd8daf"
+          },
+          {
+            "name": "02_table_07.png",
+            "sha256": "d52bb9eaaea14d1e6bc406a6a3b7b8bcd1af455f267221543c79f6426ecb3fd2"
+          },
+          {
+            "name": "02_table_08.png",
+            "sha256": "f2cccaf97c076efe9d78dcdd9a21cc6539510ca74c832b58d441ea63089a918d"
+          },
+          {
+            "name": "02_table_09.png",
+            "sha256": "2ebbafdd32623524208653f11bd5b089623b250d59fdc6cec2e8f7f76f4287ce"
+          },
+          {
+            "name": "02_table_10.png",
+            "sha256": "9ca1d288373a985d0d3755f16093404abfa5a3d4ca11f3463f6c81107bbb0f5d"
+          },
+          {
+            "name": "02_table_11.png",
+            "sha256": "1999ccb23c3bb1a702c747a9dd6e95b342802c35dbc4de9eaaf8cf99af7d382a"
+          },
+          {
+            "name": "02_table_12.png",
+            "sha256": "4e0e542b30a8f4750903d6bc53cdfb377b87fc3ed6b77433a0b00b715ae6ad29"
+          },
+          {
+            "name": "02_table_13.png",
+            "sha256": "d237612ce377ca03abcbdd36637882b6cd36b924fa7e6eeeacafae553e1e68ca"
+          },
+          {
+            "name": "02_table_14.png",
+            "sha256": "4da58aa2d824021c88ac84ddd9376d9635e706e84f302392c8b547dcb551313a"
+          },
+          {
+            "name": "02_table_15.png",
+            "sha256": "182e0f9edc3e5e2e2c08c763646b1405e33d6d8a9a302701fde608a38c14b4c0"
+          },
+          {
+            "name": "02_table_16.png",
+            "sha256": "9e6ff16f4d4b5bfd7d0a386969b50955a2642bdecc2b4d4fac4318a5c45c1ae6"
+          },
+          {
+            "name": "02_table_17.png",
+            "sha256": "d37ddcf5f88a12768c6b3e43212246f5ba707057cb4881dd425e8e8963302120"
+          }
+        ]
+      },
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/705654eb06f4dc6dfe355785ae2f9035a7ce3b17/docs/task042extra_feinn_5nm/outcomes/method_and_paper_mapping.md",
+        "heading_prefix": "",
+        "scope_heading": "entire task document",
+        "article_text_head": "方法与论文映射\n\n网络输出连续坐标场，再用有限元的完整积分矩把它变成离散电场。这样残差审核仍针对原有限元方程，网络负责限制可达的系数集合。Riesz 度量用正定 H(curl) 内积衡量残差，代价是另一个稀疏辅助系统的因子与求解；直接优化 ",
+        "table_count": 1,
+        "all_table_columns_consistent": true,
+        "math_count": 2,
+        "math_errors": [
+          {
+            "index": 0,
+            "message": "The following macros are not allowed: operatorname"
+          }
+        ],
+        "screenshots": [
+          {
+            "name": "03_top.png",
+            "sha256": "59de274590d58ea5a731f84fe4145541e1764e2b720962f1fb4314d7a6f4419c"
+          },
+          {
+            "name": "03_table_00.png",
+            "sha256": "0eb96d5ad47b1d55bdb294595bfebe2de32afce3cd13c4d8ae4c14bee1c337e9"
+          },
+          {
+            "name": "03_math-renderer_00.png",
+            "sha256": "846a89dffa83b52708e8048568cc62b46915a4c820ad656b041e12f4665a5989"
+          },
+          {
+            "name": "03_math-renderer_01.png",
+            "sha256": "8c0904b8dc514915f82b99bc30de2286d9e065fc1d442f2da2ee83a09a1fd231"
+          }
+        ]
+      },
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/705654eb06f4dc6dfe355785ae2f9035a7ce3b17/docs/task042extra_feinn_5nm/outcomes/environment_and_isolation.md",
+        "heading_prefix": "",
+        "scope_heading": "entire task document",
+        "article_text_head": "原生环境与隔离\n\n本任务在工作站原生 Linux 的 /home/fenics/Projects/NN-Lab-V2 计算。新目录已登记为现场核对过的 bare canonical 库 /home/fenics/Projects/Maxwe",
+        "table_count": 2,
+        "all_table_columns_consistent": true,
+        "math_count": 0,
+        "math_errors": [],
+        "screenshots": [
+          {
+            "name": "04_top.png",
+            "sha256": "9dc201e8306195930239c82ab0d3649bdc18305f4e7bc22cd21c18a17e1e15c2"
+          },
+          {
+            "name": "04_table_00.png",
+            "sha256": "e664f43fa68303a168b276ae42961f04c55dc531ece428b5ca663fcb504600bb"
+          },
+          {
+            "name": "04_table_01.png",
+            "sha256": "93d35ef885eddad6f094ad9329dfe81d0e631eb33ccb7502cc7bc2803c8b6644"
+          }
+        ]
+      },
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/705654eb06f4dc6dfe355785ae2f9035a7ce3b17/docs/task042extra_feinn_5nm/outcomes/accuracy_performance_memory.md",
+        "heading_prefix": "",
+        "scope_heading": "entire task document",
+        "article_text_head": "精度、全过程性能与内存\n\n本轮比较的是同一M5、同全部独立FE、同原方程/材料/模式/初值的三条路线。坐标网络通过积分产生边、面和内部矩；FREE直接优化完整复系数。DUAL用正定测试内积衡量弱残差，增加真实稀疏Gram因子成本。LE与LD",
+        "table_count": 4,
+        "all_table_columns_consistent": true,
+        "math_count": 0,
+        "math_errors": [],
+        "screenshots": [
+          {
+            "name": "05_top.png",
+            "sha256": "7b0aa9d71700e53652f6d64382267cf24f54d2f82571725d4e6589504ff876a4"
+          },
+          {
+            "name": "05_table_00.png",
+            "sha256": "f1d831beaea29cfc47ce3b38f0a349f35bab96005b02705673954c4a889aaef2"
+          },
+          {
+            "name": "05_table_01.png",
+            "sha256": "d32b570cf40c4942f461e5878677d317d643f9ca7e1d509bdee7e913af008350"
+          },
+          {
+            "name": "05_table_02.png",
+            "sha256": "d524ff2d5941b61c77b86cfec65d91f8c19446b783ad9c36622d1247b89dc002"
+          },
+          {
+            "name": "05_table_03.png",
+            "sha256": "29a8371c0995e2bba7a8223e3d2ede7e767293aa40bbf6d10990ce30027f4891"
+          }
+        ]
+      },
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/705654eb06f4dc6dfe355785ae2f9035a7ce3b17/docs/task042extra_feinn_5nm/outcomes/target_5nm_scale_plan.md",
+        "heading_prefix": "",
+        "scope_heading": "entire task document",
+        "article_text_head": "目标尺寸 5 nm 的下一步容量设计\n\n本页是 E5 的尺寸与成本推算。目标 PDE 未运行，几何尚待 review 冻结；0.7 nm、48 h 和生产资格仍为 not_run/not_qualified。这里的“5 nm”是波长，区别于",
+        "table_count": 4,
+        "all_table_columns_consistent": true,
+        "math_count": 0,
+        "math_errors": [],
+        "screenshots": [
+          {
+            "name": "06_top.png",
+            "sha256": "c81216172ad271c387ac5788f98d6bac97da034896635aa04fd7dd808716da11"
+          },
+          {
+            "name": "06_table_00.png",
+            "sha256": "e91a70d7be08a2e292bda89a2e47ae4fada179b097faf683900795657bacabb0"
+          },
+          {
+            "name": "06_table_01.png",
+            "sha256": "2ba365fde498421622da9c40e9c79d0ec62131a568854014785376b72f5def71"
+          },
+          {
+            "name": "06_table_02.png",
+            "sha256": "6f207f7c7d115f1951cbc835a9fd0d4aee4963a68c649bee8ae348bb93f09750"
+          },
+          {
+            "name": "06_table_03.png",
+            "sha256": "fcb549e661f22d6bc9e0b29ce18cffb26027c5e3e577cc676fbb96839842d8a6"
+          }
+        ]
+      },
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/705654eb06f4dc6dfe355785ae2f9035a7ce3b17/docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+        "heading_prefix": "",
+        "scope_heading": "entire task document",
+        "article_text_head": "Targeted tests 与文档复核\n\n本页保留首次失败与修复后结果。完整suite与CI没有运行；检查限定于新增full-FE数学/事务/Riesz及本任务文档，不重跑旧heavy。\n\n检查/尝试\t监督状态/exit\twall / s",
+        "table_count": 1,
+        "all_table_columns_consistent": true,
+        "math_count": 0,
+        "math_errors": [],
+        "screenshots": [
+          {
+            "name": "07_top.png",
+            "sha256": "04ee5a9119c875333eb9fc041a14a3c8d7fb754d3f0deb2f79dbbbcc0c1bf87b"
+          },
+          {
+            "name": "07_table_00.png",
+            "sha256": "e9dc6b718538e4f4b50f821452b6b8e52c08be3e15d6b1d98d265e120d48ea1d"
+          }
+        ]
+      },
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/705654eb06f4dc6dfe355785ae2f9035a7ce3b17/docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+        "heading_prefix": "",
+        "scope_heading": "entire task document",
+        "article_text_head": "改动范围与合并边界\n\n当前实现改动从发布提交起核对；最后的response/outcomes和总账追加另在交付commit中。实现未修改旧Task042历史、任务书或review。正式source hashes见run index。\n\n依赖",
+        "table_count": 1,
+        "all_table_columns_consistent": true,
+        "math_count": 0,
+        "math_errors": [],
+        "screenshots": [
+          {
+            "name": "08_top.png",
+            "sha256": "170fd7b8373c0c2226bdf3f1616c0e8ff147c169c509d5945af2153c41441ec8"
+          },
+          {
+            "name": "08_table_00.png",
+            "sha256": "a1cb795dbadf3bf997204ab0da2c76d8e759a89ae3dd8d34b54d89dc1f2ddeae"
+          }
+        ]
+      },
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/705654eb06f4dc6dfe355785ae2f9035a7ce3b17/docs/development_progress.md",
+        "heading_prefix": "2026-09-29 Task42extra",
+        "scope_heading": "2026-09-29 Task42extra：完整FEINN/Riesz独立5nm首轮",
+        "article_text_head": "2026-09-29 Task42extra：完整FEINN/Riesz独立5nm首轮\n本任务是新支线，检验完整坐标网络的Nédélec边/面/内部矩和Riesz弱残差能否求得真实5nm FE解。旧Task042粗逆/trace负结果只作技",
+        "table_count": 1,
+        "all_table_columns_consistent": true,
+        "math_count": 0,
+        "math_errors": [],
+        "screenshots": [
+          {
+            "name": "09_top.png",
+            "sha256": "069a7cdb5c9a8963b0e0752dc2cd867c99d4ce8fa46fd70a0aa762f52df88f2e"
+          },
+          {
+            "name": "09_table_00.png",
+            "sha256": "aed8f2ceb4e582fa74f60702e68ad5ca09350bb421546505ea2bb16892a52312"
+          }
+        ]
+      },
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/705654eb06f4dc6dfe355785ae2f9035a7ce3b17/docs/development_model_registry.md",
+        "heading_prefix": "3.44 Task42extra",
+        "scope_heading": "3.44 Task42extra：5nm三维完整compatible FEINN模型",
+        "article_text_head": "3.44 Task42extra：5nm三维完整compatible FEINN模型\n本任务是新支线，检验完整坐标网络的Nédélec边/面/内部矩和Riesz弱残差能否求得真实5nm FE解。旧Task042粗逆/trace负结果只作技术",
+        "table_count": 2,
+        "all_table_columns_consistent": true,
+        "math_count": 0,
+        "math_errors": [],
+        "screenshots": [
+          {
+            "name": "10_top.png",
+            "sha256": "058f1e185bc9908037c52e813a108cdbfdfe7097ef0016cd676491d641722a33"
+          },
+          {
+            "name": "10_table_00.png",
+            "sha256": "920d4dab4abfafb1ff1b9541288520aace0bfdc59caf13fe52f84cbc00bb2132"
+          },
+          {
+            "name": "10_table_01.png",
+            "sha256": "0e38a34d719c2ba069ad52df7d5a1c2df932d73c883bc5c80943bad3087a40dd"
+          }
+        ]
+      }
+    ],
+    "observed_issue": "GitHub rejects \\operatorname in task §5.4 and first method mapping equation",
+    "visual_sampling": [
+      "task gradient error screenshot 00_math-renderer_06.png",
+      "response numeric table 01_table_01.png",
+      "summary numeric/energy 02_table_05.png",
+      "method macro error 03_math-renderer_00.png",
+      "target capacity 06_table_02.png"
+    ],
+    "scope_visual_limitation": "progress/registry screenshots scrolled to old sections despite correct scoped DOM; browser helper corrected for targeted rerun",
+    "supervision_summary_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/e5_github_render_c4_20260929T183101002596Z/summary.json"
+  },
+  "corrected_method_mapping_browser": "PENDING_AFTER_PUSH",
+  "corrected_scoped_registry_browser": "PENDING_AFTER_PUSH",
+  "final_blob_consistency": "PENDING_FINAL_PUSH",
+  "task_file_unmodified": true,
+  "task_math_correction_suggested": "Replace \\operatorname{Re} with GitHub-allowed \\mathrm{Re} and recheck; task maintained by publisher"
 }

@@ -17,7 +17,7 @@
 | 研究判断 | EUC、DUAL、FREE同预算、同原方程/场/功率Gate | loss数值不能直接跨度量比较 |
 
 ```math
-\alpha=\operatorname{solve}(H,g_p+Dc),\quad A=V+B\operatorname{solve}(H,D),\quad f=g-B\operatorname{solve}(H,g_p).
+\alpha=\mathrm{solve}(H,g_p+Dc),\quad A=V+B\mathrm{solve}(H,D),\quad f=g-B\mathrm{solve}(H,g_p).
 ```
 
 ```math

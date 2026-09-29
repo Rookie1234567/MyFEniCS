@@ -71,6 +71,8 @@ E0环境与Git完成，E1完整接口通过，E2三条独立路线已冻结；E3
 
 本任务文档实际render证据见outcomes/records/render_check_v1.json：已检查GitHub发布task实际rich-text HTML；浏览器/公式/表格视图与最终blob一致性以该记录为准，失败明确保留，不伪造截图。详细复验见[outcomes/summary](outcomes/summary.md)、[测试](outcomes/test_summary.md)、[成本](outcomes/accuracy_performance_memory.md)、[目标设计](outcomes/target_5nm_scale_plan.md)。
 
+实际无头 Firefox 在 GitHub 发布版[任务书 §5.4](task.md)看到了红色公式错误：`\operatorname{Re}` 被拒绝为 “macro not allowed: operatorname”。因此任务书的 rendered-view Gate **失败**，尽管任务书六张表列数一致、其余六个数学区块可见正常渲染。任务书由发布方维护，本轮没有改写；建议后续 review 将该处改为 `\mathrm{Re}` 并重新看 GitHub 页面。本支线可修改的[方法映射](outcomes/method_and_paper_mapping.md)也曾因 `\operatorname{solve}` 显示同类错误，已改用 `\mathrm{solve}`，最终浏览器复核状态以 render 记录为准。
+
 建议后续review只授权固定M5的一条FREE-FE-DUAL变量尺度诊断：用正定Gram对角给全部FE系数统一单位尺度，原loss、零初值、closure/wall和全部验收不变。该诊断不使用目标准确解训练、不调用Maxwell逆、不扩大模型；用于先区分优化条件问题与神经表示问题。本轮未实施。
 
 只提交/推送本执行分支；不修改Task042历史，不amend/强推、不merge，不启动更大模型或更多波长。本轮交付后停止等待review。

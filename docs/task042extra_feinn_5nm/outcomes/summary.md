@@ -204,6 +204,8 @@ p4判定：DISCRETIZATION_NOT_QUALIFIED。目标大5nm、0.7nm/48h、更多几�
 
 只测一个固定小模型、单seed、p3/h1.25/M40/MPI1及当前共享工作站；未扫描这些影响。native Linux证据见ABI，通用watchdog旧raw label `WSL-global diagnostic`仅为复用标签，不表示运行于WSL。没有cgroup委派，使用目标0.5 s同时子树RSS采样，不冒称连续内核限额；自身swap按样本VmSwap，全球swap仅诊断。性能/邻任务影响为inconclusive。近零规则E0冻结，没有事后调分母或相位。
 
+GitHub rendered-view 检查实际发现[发布任务书](../task.md) §5.4 使用的 `\operatorname{Re}` 被拒绝；该文档 Gate 为 `RENDERED_VIEW_FAIL_TASK_MATH`，不记为通过。本支线可修改的方法映射中的同类 `\operatorname{solve}` 已修正，复核证据及截图 hash 见[render记录](records/render_check_v1.json)。这不改变冻结数值实验和其失败判断。
+
 ## 15. 下一步决定
 
 建议后续review只授权固定M5的一条FREE-FE-DUAL变量尺度诊断：用正定Gram对角给全部FE系数统一单位尺度，原loss、零初值、closure/wall和全部验收不变。该诊断不使用目标准确解训练、不调用Maxwell逆、不扩大模型；用于先区分优化条件问题与神经表示问题。本轮未实施。

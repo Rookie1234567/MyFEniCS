@@ -134,9 +134,11 @@ try:
 const a=document.querySelector('article.markdown-body');
 if(!a) return null;
 let nodes=[a],scope='entire task document';
+window.__taskScopeHeading=null;
 if(arguments[0]) {
  const h=[...a.querySelectorAll('h1,h2,h3,h4,h5,h6')].find(x=>x.innerText.startsWith(arguments[0]));
  if(!h) return null;
+ window.__taskScopeHeading=h;
  const children=[...a.children];let first=h;
  while(first.parentElement!==a) first=first.parentElement;
  const start=children.indexOf(first),level=Number(h.tagName.slice(1));let end=children.length;
@@ -164,6 +166,17 @@ height:e.getBoundingClientRect().height}))};
             time.sleep(0.5)
         if dom is None:
             raise RuntimeError("actual GitHub markdown article not available")
+        script(
+            """
+document.documentElement.style.scrollBehavior='auto';
+document.body.style.scrollBehavior='auto';
+const h=window.__taskScopeHeading;
+if(h) document.scrollingElement.scrollTop+=h.getBoundingClientRect().top-180;
+else document.scrollingElement.scrollTop=0;
+return {scrollY:window.scrollY,scopeTop:h?.getBoundingClientRect().top??null};
+"""
+        )
+        time.sleep(0.35)
         shots = [screenshot(f"{number:02d}_top")]
         for kind, count in [
             ("table", len(dom["tables"])),
@@ -171,7 +184,7 @@ height:e.getBoundingClientRect().height}))};
         ]:
             for index in range(count):
                 script(
-                    "(arguments[0]==='table'?window.__taskTables:window.__taskMath)[arguments[1]].scrollIntoView({block:'center'});",
+                    "const e=(arguments[0]==='table'?window.__taskTables:window.__taskMath)[arguments[1]]; document.scrollingElement.scrollTop+=e.getBoundingClientRect().top-160; return e.getBoundingClientRect().top;",
                     kind,
                     index,
                 )

@@ -34,4 +34,6 @@ python benchmarks/check_feinn_pilot.py --evidence docs/task042extra_feinn_5nm/ou
 
 本任务Markdown逐页检查closed fences、math fence、表格列数、UTF-8 replacement及本地相对链接；summary按回顾标准16节且至少8张表。总账只运行相关3项Markdown检查，不宣称历史模型/COMSOL数值重验。解析、实际GitHub rendered view、raw blob一致性、浏览器DOM/截图和明确blocked原因分别见[render记录](records/render_check_v1.json)，本地解析不替代浏览器视图。
 
+实际 GitHub Firefox 首轮检查 11 页（任务书、8页本任务文档、两份总账新节），每张表的浏览器 DOM 列数一致。它发现发布任务书 §5.4 的 `\operatorname{Re}` 和本任务方法映射原式的 `\operatorname{solve}` 均被 GitHub 数学渲染器拒绝。任务书由发布方维护，记录为 `RENDERED_VIEW_FAIL_TASK_MATH`；方法映射已改成 `\mathrm{solve}`，其复核随最终 render 记录提交。截图和完整 DOM 留在本任务 ignored 目录，compact 文件保留 hash，不称该失败检查为通过。
+
 实际数值source是E1 C1、E2 C2及E3/E4各run index；之后证据提交HEAD不会冒充运行源码。运行中的HEAD未移动，提交前与推送后clean核验。
