@@ -25,9 +25,9 @@
     },
     "N3_G0": {
       "status": "WORKER_FAILED",
-      "attempts": 2,
-      "unique_bug_replay_count": 1,
-      "latest_error": "'types.SimpleNamespace' object has no attribute 'rectangular_air_void_audit'",
+      "attempts": 3,
+      "unique_bug_replay_count": 2,
+      "latest_error": "qualified JIT cache source does not exist: /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/euv_grazing1_phi0/task39extra_v22_b_capacity_original_h7p5__full3d_iterative__mpi1__Mna/20260919T174436.599741Z/v20_jit_cache/fenics",
       "actual_cells_constructed": 336,
       "p6_rows": 229680,
       "q4_rows": 69856,
@@ -35,7 +35,7 @@
       "KSP_iterations": null,
       "factorization": null,
       "R_T_A": null,
-      "evidence": "docs/task40extra_0p7nm_engineering/outcomes/records/g0_startup_bug_replay.json"
+      "evidence": "docs/task40extra_0p7nm_engineering/outcomes/records/g0_jit_path_failure.json"
     },
     "N4_G1": {
       "status": "not_run",
@@ -69,6 +69,6 @@
     "G0_direct_reference": "not_run",
     "channel_truncation": "CHANNEL_TRUNCATION_UNQUALIFIED"
   },
-  "next_step": "G0 implementation-bug continuation authorized by direct user confirmation; preserve previous failures/costs, then conditional G1/reference under unchanged numerical/resource gates.",
+  "next_step": "Repair Task40 inherited JIT cache path and continue the explicitly authorized G0 attempt; all previous costs and numerical/resource gates remain.",
   "prior_overall_status": "INCOMPLETE_WORKER_FAILED_REPLAY_BUDGET_EXHAUSTED"
 }

@@ -1,0 +1,21 @@
+{
+  "schema": "task40extra.g0_jit_path_failure.v1",
+  "classification": "WORKER_FAILED_IMPLEMENTATION_BUG",
+  "attempt": 3,
+  "source_sha": "8c862db3bb47e3a885ffc9f6b8bb42f348fd504b",
+  "run_directory": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_iterative_v1__full3d_iterative__mpi1__Mna/20260929T224910.050837Z",
+  "error": {
+    "message": "qualified JIT cache source does not exist: /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/euv_grazing1_phi0/task39extra_v22_b_capacity_original_h7p5__full3d_iterative__mpi1__Mna/20260919T174436.599741Z/v20_jit_cache/fenics",
+    "type": "FileNotFoundError"
+  },
+  "worker_summary_sha256": "e090faf4da6ba331c094a033763b5e9e123b02a75cd9fe85660b0fc143388d35",
+  "ledger_sha256": "0b115f140fa3523195967059b1f86fce0ce5a2d4b0f39d259c8abb280c67fa6a",
+  "cumulative_elapsed_seconds": 138.62440517507468,
+  "prior_elapsed_seconds": 91.79305701722132,
+  "numerical_gate": "NOT_REACHED",
+  "factorization": "NOT_REACHED",
+  "fix_status": "MINIMAL_PROFILE_FIX_TESTED_PENDING_PDE",
+  "continuation_authorization": "g0_user_authorized_continuation_v1.json",
+  "fix": "Task40 alone explicitly binds the existing qualified Task39 V22 cache; existing absolute-path launcher handling and FFCx signature/cache checks unchanged.",
+  "validation": "5 passed in 1.15s: cache profile binding, unchanged V31, continuation mock and worker ledger identity. No new FE fixture."
+}

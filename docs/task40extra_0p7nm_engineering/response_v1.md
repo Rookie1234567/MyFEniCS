@@ -44,3 +44,7 @@ ledger 的 `workflow_seconds=43,200` 是 observe-only reference/accounting 值�
 当前 N0–N6 结果按 `INCOMPLETE_WORKER_FAILED_REPLAY_BUDGET_EXHAUSTED` 收口。不得由失败启动推断 Maxwell 离散不收敛，也不得据此判断 2 TB 目标可行或不可行。G1、direct reference 和任意进一步数值重跑均不在当前一次 replay 合同内；若继续，需要后续 review 明确新的运行许可。Phase II 不选算法，生产默认不变，当前分支不合并到 `master`。
 
 详细指标与依赖组边界见 [`outcomes/summary.md`](outcomes/summary.md)；材料/几何身份、精度/容量边界及测试分别见 [`material_and_geometry_identity.md`](outcomes/material_and_geometry_identity.md)、[`accuracy_and_capacity.md`](outcomes/accuracy_and_capacity.md) 和 [`test_summary.md`](outcomes/test_summary.md)。原始运行 artifact 留在 ignored `results/`，其可追溯 SHA 记录于 [`records/run_index.json`](outcomes/records/run_index.json)。
+
+## G0 第三次启动失败与继续修复
+
+第三次启动已通过原先缺失的几何审计字段，随后因 Task40 新 worktree 不含 Task39 的相对 JIT 缓存目录而发生 `FileNotFoundError`。尚未分解或进入 KSP，不是数值 Gate。全部后代已清场，累计正式成本为 **138.62440517507468 s**，原 91.79305701722132 s 保留。用户已授权修复实现 bug 后继续；本次仅修正 Task40 的合格缓存位置，缓存不命中的新表单仍在正式监督和计时内编译。新结果尚未取得。详见 `g0_jit_path_failure.json` 和增量授权记录。

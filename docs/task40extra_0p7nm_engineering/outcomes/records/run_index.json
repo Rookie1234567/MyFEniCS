@@ -128,6 +128,26 @@
       }
     },
     {
+      "run_id": "task40extra_0p7nm_nonseparable_g0_iterative_v1",
+      "stage": "N3_G0_Q4_ORIGINAL",
+      "attempt": 3,
+      "classification": "WORKER_FAILED_IMPLEMENTATION_BUG",
+      "source_sha": "8c862db3bb47e3a885ffc9f6b8bb42f348fd504b",
+      "run_directory": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_iterative_v1__full3d_iterative__mpi1__Mna/20260929T224910.050837Z",
+      "error": {
+        "message": "qualified JIT cache source does not exist: /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/euv_grazing1_phi0/task39extra_v22_b_capacity_original_h7p5__full3d_iterative__mpi1__Mna/20260919T174436.599741Z/v20_jit_cache/fenics",
+        "type": "FileNotFoundError"
+      },
+      "official_result": false,
+      "not_reached": {
+        "condensed_factorization": false,
+        "outer_ksp_solve": false,
+        "official_R_T_A": null
+      },
+      "worker_summary_sha256": "e090faf4da6ba331c094a033763b5e9e123b02a75cd9fe85660b0fc143388d35",
+      "evidence": "docs/task40extra_0p7nm_engineering/outcomes/records/g0_jit_path_failure.json"
+    },
+    {
       "run_id": "task40extra_0p7nm_nonseparable_g1_iterative_v1",
       "stage": "N4_G1",
       "status": "not_run",
@@ -143,12 +163,13 @@
   "ledger": {
     "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/task40_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_iterative_v1/shared_workflow_ledger.json",
     "sha256_after_attempt_2": "d70e23cd1cb7461408ff9872242ba646f0a9e517330108069bfe993532656e84",
-    "unique_bug_replay_count": 1,
-    "fresh_worker_count": 2,
-    "elapsed_seconds": 91.79305701722132,
+    "unique_bug_replay_count": 2,
+    "fresh_worker_count": 3,
+    "elapsed_seconds": 138.62440517507468,
     "active_attempt": null,
     "time_policy": "observe_only",
-    "workflow_seconds_field_semantics": "reference/accounting value; not an enforced wall timeout"
+    "workflow_seconds_field_semantics": "reference/accounting value; not an enforced wall timeout",
+    "sha256_after_attempt_3": "0b115f140fa3523195967059b1f86fce0ce5a2d4b0f39d259c8abb280c67fa6a"
   },
   "current_code_repairs": [
     {

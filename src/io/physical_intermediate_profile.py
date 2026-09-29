@@ -63,6 +63,14 @@ V23_QUALIFIED_JIT_CACHE_SOURCE = (
     "task39extra_v22_b_capacity_original_h7p5__full3d_iterative__mpi1__Mna/"
     "20260919T174436.599741Z/v20_jit_cache/fenics"
 )
+TASK40_CANONICAL_PARENT_WORKTREE = "/home/shenjh/Projects/MyFEniCSx_task37_extra"
+TASK40_QUALIFIED_JIT_CACHE_SOURCE = (
+    TASK40_CANONICAL_PARENT_WORKTREE + "/" + V23_QUALIFIED_JIT_CACHE_SOURCE
+)
+TASK40_QUALIFIED_JIT_CACHE_ORIGIN = (
+    "Task39extra canonical worktree; V22 formal run cache root; "
+    "11 observed compiler modules; explicitly bound for the Task40 notebook run"
+)
 V23_QUALIFIED_JIT_CACHE_ORIGIN = (
     "V22 formal run cache root; 11 observed compiler modules"
 )
@@ -171,6 +179,8 @@ def profile_facts(identity=PROFILE) -> dict:
         facts["resources"].update(
             require_zero_swap=True,
             pss_sampling_policy="disabled_by_profile",
+            qualified_jit_cache_source=TASK40_QUALIFIED_JIT_CACHE_SOURCE,
+            qualified_jit_cache_origin=TASK40_QUALIFIED_JIT_CACHE_ORIGIN,
             stage_budgets={
                 "Q4_ORIGINAL": {
                     "workflow_seconds": 43200,

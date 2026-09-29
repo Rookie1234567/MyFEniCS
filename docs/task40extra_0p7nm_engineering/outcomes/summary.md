@@ -171,3 +171,7 @@ N2 表中的 `R/T/A` 仅是这个 tiny diagnostic 自己完成的输出；正式
 | 4. production numerical/core | Task40 mesh/config/io/solver/runner 文件，见第 11 节 | Task40 profile 会改变几何构造、身份和 PC 工作区；默认路径受 guard | geometry/identity/capacity/metadata fixtures | **无修复后 G0 fresh PDE** | 当前不合入；须经 review、依赖测试及获批的新数值资格 |
 | 5. research-only | Task40 双凝聚显式 profile 与局部 capacity 估算路径 | 改变研究 profile 的内核路径，不改变 ordinary default | focused algebraic/mesh fixtures | G0 未到 full matrix/KSP | 仅留本分支，任何提升必须新审查 |
 | 6. do-not-merge | whole branch、whole-tree merge、ordinary-default 切换、`master` | 范围过宽或无授权 | 不适用 | 无 | 不合并；等待 ChatGPT final review 与用户授权 |
+
+## G0 第三次启动失败与继续修复
+
+第三次启动已通过原先缺失的几何审计字段，随后因 Task40 新 worktree 不含 Task39 的相对 JIT 缓存目录而发生 `FileNotFoundError`。尚未分解或进入 KSP，不是数值 Gate。全部后代已清场，累计正式成本为 **138.62440517507468 s**，原 91.79305701722132 s 保留。用户已授权修复实现 bug 后继续；本次仅修正 Task40 的合格缓存位置，缓存不命中的新表单仍在正式监督和计时内编译。新结果尚未取得。详见 `g0_jit_path_failure.json` 和增量授权记录。
