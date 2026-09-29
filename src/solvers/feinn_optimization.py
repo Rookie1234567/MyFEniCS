@@ -11,6 +11,7 @@ import torch
 
 from src.solvers.feinn_native import load_native, ResidualMetric
 from src.solvers.feinn_riesz import SparseRiesz
+from src.solvers.feinn_scaling import read_frozen_scale
 from src.solvers.feinn_torch import CoordinateField, CompleteMomentMap
 from src.solvers.feinn_validation import assign, parameters, load_moments
 from src.solvers.neural_fe_action_packet import array_hash
@@ -31,7 +32,8 @@ def transactional_step(step, closure, read, restore):
     return result
 
 
-def run_route(route, design, operator_index, qualification, artifact, marker):
+def run_route(route, design, operator_index, qualification, artifact, marker,
+              *, scale_index=None, route_wall_seconds=None):
     began = perf_counter()
     if qualification["result"]["status"] != "INTERFACE_PASS_ONLY":
         raise RuntimeError("full actual interface prerequisite failed")
@@ -47,6 +49,12 @@ def run_route(route, design, operator_index, qualification, artifact, marker):
     mapping = None
     model = None
     free = None
+    scaling = None
+    scaled = route == "FREE-FE-DUAL-GRAM-DIAG"
+    if scaled and scale_index is None:
+        raise ValueError("frozen Gram-diagonal scale index required")
+    if scale_index is not None and not scaled:
+        raise ValueError("scale is opt-in only for the single V2 FREE route")
     costs = dict(
         packet_and_model_setup=0.0,
         metric_setup_excluding_Gsolve=0.0,
@@ -71,12 +79,18 @@ def run_route(route, design, operator_index, qualification, artifact, marker):
     vjp_wall_total = 0.0
     deadline = (
         began
-        + design["optimizer"]["route_wall_seconds"]
+        + (route_wall_seconds or design["optimizer"]["route_wall_seconds"])
         - design["optimizer"]["final_reserve_seconds"]
     )
     t = perf_counter()
     packet = load_native(operator_index["files"]["native"]["path"])
-    if route == "FREE-FE-DUAL":
+    if scaled:
+        G = sparse.load_npz(operator_index["files"]["gram"]["path"])
+        scaling = read_frozen_scale(scale_index["files"]["scale"]["path"], G)
+        if scaling.D.shape != (packet.size,):
+            raise ValueError("scaling and native full-FE dimensions differ")
+        del G
+    if route in ("FREE-FE-DUAL", "FREE-FE-DUAL-GRAM-DIAG"):
         free = torch.nn.Parameter(torch.zeros((2, packet.size), dtype=torch.float64))
         optimizer_parameters = [free]
 
@@ -89,7 +103,8 @@ def run_route(route, design, operator_index, qualification, artifact, marker):
 
         def coefficients():
             v = free.detach().numpy()
-            return v[0] + 1j * v[1]
+            y = v[0] + 1j * v[1]
+            return scaling.to_c(y) if scaled else y
     else:
         model = CoordinateField(
             design["geometry"]["bounds_nm"], design["network"]["seed"]
@@ -207,8 +222,9 @@ def run_route(route, design, operator_index, qualification, artifact, marker):
                     raise RouteStop
                 tgrad = perf_counter()
                 if mapping is None:
+                    actual_gradient = scaling.gradient(gradient) if scaled else gradient
                     free.grad = torch.as_tensor(
-                        np.stack((gradient.real, gradient.imag))
+                        np.stack((actual_gradient.real, actual_gradient.imag))
                     ).clone()
                     parameter_gradient = free.grad.numpy().ravel()
                 else:
@@ -226,6 +242,10 @@ def run_route(route, design, operator_index, qualification, artifact, marker):
                         parameter_gradient_norm=float(
                             np.linalg.norm(parameter_gradient)
                         ),
+                        coefficient_gradient_norm=float(np.linalg.norm(gradient))
+                        if scaled else None,
+                        scaled_gradient_norm=float(np.linalg.norm(actual_gradient))
+                        if scaled else None,
                         parameters_sha256=array_hash(trial),
                         A=packet.counts["A"],
                         AH=packet.counts["AH"],
@@ -265,6 +285,11 @@ def run_route(route, design, operator_index, qualification, artifact, marker):
             counts["committed_outer_steps"] += 1
             counts["adam_updates"] += 1
             committed = read()
+            if scaled:
+                emit(dict(kind="committed_update", phase="Adam", closure=counts["closures"],
+                          y_delta_norm=float(np.linalg.norm(committed-before)),
+                          y_relative_delta=float(np.linalg.norm(committed-before)/max(np.linalg.norm(before), 1e-12)),
+                          c_delta_norm=float(np.linalg.norm(coefficients()-scaling.to_c(before[:packet.size]+1j*before[packet.size:])))))
             if counts["adam_updates"] % 25 == 0:
                 c = coefficients()
                 checkpoint(
@@ -301,6 +326,14 @@ def run_route(route, design, operator_index, qualification, artifact, marker):
                 lbfgs.state[optimizer_parameters[0]].get("n_iter", 0)
             )
             committed = read()
+            if scaled:
+                state = lbfgs.state[optimizer_parameters[0]]
+                emit(dict(kind="committed_update", phase="LBFGS", closure=counts["closures"],
+                          y_delta_norm=float(np.linalg.norm(committed-before)),
+                          y_relative_delta=float(np.linalg.norm(committed-before)/max(np.linalg.norm(before), 1e-12)),
+                          c_delta_norm=float(np.linalg.norm(coefficients()-scaling.to_c(before[:packet.size]+1j*before[packet.size:]))),
+                          torch_last_inner_step_length=float(state["t"]) if "t" in state else None,
+                          torch_last_inner_step_scope="last inner state only; not all accepted line-search steps"))
             c = coefficients()
             checkpoint(
                 artifact / "last_committed_checkpoint.npz",
@@ -389,6 +422,10 @@ def run_route(route, design, operator_index, qualification, artifact, marker):
         parameter_only_checkpoint=True,
         consistent_optimizer_resume_supported=False,
         last_trial_is_final=False,
+        coordinate_mapping=scaling.record() if scaling else None,
+        frozen_scale_file_sha256=scale_index["files"]["scale"]["sha256"] if scaled else None,
+        fixed_dual_denominator=metric.denominator if "metric" in locals() else None,
+        saved_c_equals_Dy=bool(np.array_equal(final_c, scaling.to_c(committed[:packet.size]+1j*committed[packet.size:]))) if scaled else None,
         global_Maxwell_factor_created=False,
         global_Maxwell_CSR_created=False,
         target_reference_loaded=False,
@@ -418,7 +455,7 @@ def run_route(route, design, operator_index, qualification, artifact, marker):
         costs_exclusive_seconds=costs,
         route_worker_wall_seconds=wall,
         closure_wall_seconds_nested_not_additive=closure_seconds,
-        wall_limit_seconds=10800,
+        wall_limit_seconds=route_wall_seconds or 10800,
         closure_limit=4000,
         optimizer=dict(
             adam_updates=500,

@@ -82,10 +82,17 @@ def budget():
             item = json.loads(path.read_text())
             entries.append(dict(path=str(path), seconds=item.get("elapsed_seconds", 0)))
     used = sum(e["seconds"] for e in entries)
+    v2_used = sum(e["seconds"] for e in entries if
+                  "/task42extra_v2_" in e["path"] or
+                  "/v2_" in e["path"].split("/checks/")[-1])
     return dict(
         limit_seconds=57600,
         used_seconds=used,
-        remaining_seconds=57600 - used,
+        remaining_seconds=57600 - max(used, 26240.100355625153 + v2_used),
+        conservative_V1_base_seconds=26240.100355625153,
+        v2_limit_seconds=14400,
+        v2_used_seconds=v2_used,
+        v2_remaining_seconds=14400 - v2_used,
         entries=entries,
     )
 
@@ -100,6 +107,8 @@ def launch(spec):
     if branch != "task42extra_feinn_5nm" or status:
         raise RuntimeError("formal stage requires clean committed task42extra source")
     mode, stage = spec.derived["environment_mode"], spec.derived["stage"]
+    if index_path(stage).exists():
+        raise RuntimeError("STAGE_ALREADY_PUBLISHED: no duplicate candidate or overwrite")
     if os.environ.get("TASK42EXTRA_ENV_MODE") != mode:
         raise RuntimeError("independent FE/ML environment mismatch")
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
@@ -125,6 +134,10 @@ def launch(spec):
         authorization="Task42extra controlled shared native Linux: own tree 16 GiB/zero swap",
         source_is_later_documentation_HEAD=False,
     )
+    if stage.startswith("v2_") or stage == "FREE-FE-DUAL-GRAM-DIAG":
+        pre = ROOT / "docs/task042extra_feinn_5nm/outcomes/records/scaling_design_v2.json"
+        state["v2_pre_registered_design_sha256"] = sha(pre)
+        state["v2_review_sha"] = "0b61816c0189a2c05812044ab8e1d1513ef0407d"
     # Never capture secrets: environment whitelist, not the entire process environment.
     state["environment"] = {
         k: v
@@ -159,8 +172,10 @@ def launch(spec):
             write_json(directory / "run_summary.json", result)
             return result
         ledger = budget()
-        if ledger["remaining_seconds"] <= 120:
-            raise RuntimeError("first-round 16h budget exhausted")
+        if ledger["remaining_seconds"] <= 120 or (
+            stage.startswith("v2_") or stage == "FREE-FE-DUAL-GRAM-DIAG"
+        ) and ledger["v2_remaining_seconds"] <= 120:
+            raise RuntimeError("Task42extra V1/V2 supervised wall budget exhausted")
         write_json(directory / "budget_at_launch.json", ledger)
         os.sched_setaffinity(0, {baseline["cpu"]})
         os.nice(10)
@@ -169,17 +184,19 @@ def launch(spec):
         write_json(directory / "resource_baseline.json", baseline)
         state["resource_baseline_sha256"] = sha(directory / "resource_baseline.json")
         dependencies = {}
-        prerequisite_stages = (
-            ["e1_fe", "e1_grad"]
-            if stage in ("FEINN-EUC", "FEINN-DUAL", "FREE-FE-DUAL")
-            else ["e1_fe", "FEINN-EUC", "FEINN-DUAL", "FREE-FE-DUAL"]
-            if stage == "e3_reference"
-            else ["e1_fe", "e3_reference"]
-            if stage == "e4_p4"
-            else ["e1_fe"]
-            if stage == "e1_grad"
-            else []
-        )
+        prereqs = {
+            "e1_grad": ["e1_fe"],
+            "FEINN-EUC": ["e1_fe", "e1_grad"],
+            "FEINN-DUAL": ["e1_fe", "e1_grad"],
+            "FREE-FE-DUAL": ["e1_fe", "e1_grad"],
+            "e3_reference": ["e1_fe", "FEINN-EUC", "FEINN-DUAL", "FREE-FE-DUAL"],
+            "e4_p4": ["e1_fe", "e3_reference"],
+            "v2_state_diagnostic": ["e1_fe", "e1_grad", "FEINN-EUC", "FEINN-DUAL", "FREE-FE-DUAL"],
+            "v2_scaling_checks": ["e1_fe", "e1_grad", "v2_state_diagnostic"],
+            "FREE-FE-DUAL-GRAM-DIAG": ["e1_fe", "e1_grad", "v2_state_diagnostic", "v2_scaling_checks"],
+            "v2_compare_only": ["e1_fe", "e3_reference", "v2_state_diagnostic", "FREE-FE-DUAL-GRAM-DIAG"],
+        }
+        prerequisite_stages = prereqs.get(stage, [])
         for dependency in prerequisite_stages:
             item = load_index(dependency)
             dependencies[dependency] = dict(
@@ -199,7 +216,9 @@ def launch(spec):
                 gram_sha256=operator["files"]["gram"]["sha256"]
                 if stage != "FEINN-EUC"
                 else None,
-                gram_loaded_by_route=stage in ("FEINN-DUAL", "FREE-FE-DUAL", "e1_grad"),
+                gram_loaded_by_route=stage in ("FEINN-DUAL", "FREE-FE-DUAL", "e1_grad",
+                                               "v2_state_diagnostic", "v2_scaling_checks",
+                                               "FREE-FE-DUAL-GRAM-DIAG", "v2_compare_only"),
                 physical_hash_meaning="actual original full independent FE packet and fixed affine rhs",
             )
             (directory / "physical_model_sha256.txt").write_text(
@@ -219,6 +238,14 @@ def launch(spec):
         }
         write_json(directory / "run_manifest.json", state)
         limit = min(spec.execution["timeout_seconds"], ledger["remaining_seconds"])
+        if stage.startswith("v2_") or stage == "FREE-FE-DUAL-GRAM-DIAG":
+            limit = min(limit, ledger["v2_remaining_seconds"])
+            if stage == "FREE-FE-DUAL-GRAM-DIAG":
+                limit = min(limit, ledger["v2_remaining_seconds"] - 900)
+            if limit <= 120:
+                raise RuntimeError("V2_BUDGET_RESERVE_UNAVAILABLE")
+        state["supervised_limit_seconds"] = limit
+        write_json(directory / "run_manifest.json", state)
         result = supervise(
             [sys.executable, "-m", "src.runners.feinn_workflow", str(directory)],
             directory / "supervision",
@@ -358,6 +385,39 @@ def worker(directory):
             from src.solvers.feinn_validation import qualify
 
             result, files = qualify(design, load_index("e1_fe"), artifact, marker)
+        elif stage == "v2_state_diagnostic":
+            from src.solvers.feinn_scaling import state_diagnostic
+
+            result, files = state_diagnostic(
+                design, load_index("e1_fe"), load_index("e1_grad"),
+                {r: load_index(r) for r in design["routes"]}, artifact, marker,
+            )
+        elif stage == "v2_scaling_checks":
+            from src.solvers.feinn_scaling import scaling_checks
+
+            result, files = scaling_checks(
+                design, load_index("e1_fe"), load_index("e1_grad"),
+                load_index("v2_state_diagnostic"),
+                artifact, marker,
+            )
+        elif stage == "FREE-FE-DUAL-GRAM-DIAG":
+            from src.solvers.feinn_optimization import run_route
+
+            if load_index("v2_scaling_checks")["result"]["status"] != "SCALING_CHECKS_PASS":
+                raise RuntimeError("V2 scaling interface did not qualify")
+            result, files = run_route(
+                stage, design, load_index("e1_fe"), load_index("e1_grad"),
+                artifact, marker, scale_index=load_index("v2_state_diagnostic"),
+                route_wall_seconds=manifest["supervised_limit_seconds"],
+            )
+        elif stage == "v2_compare_only":
+            from src.solvers.feinn_reference import compare_frozen_without_solve
+
+            result, files = compare_frozen_without_solve(
+                design, load_index("e1_fe"),
+                load_index("FREE-FE-DUAL-GRAM-DIAG"), load_index("e3_reference"),
+                load_index("v2_state_diagnostic"), artifact, marker,
+            )
         elif stage in design["routes"]:
             from src.solvers.feinn_optimization import run_route
 

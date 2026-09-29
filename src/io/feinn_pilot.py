@@ -19,6 +19,10 @@ STAGES = {
     "FREE-FE-DUAL": ("ml", 10800),
     "e3_reference": ("fe", 3600),
     "e4_p4": ("fe", 3600),
+    "v2_state_diagnostic": ("ml", 1800),
+    "v2_scaling_checks": ("ml", 1800),
+    "FREE-FE-DUAL-GRAM-DIAG": ("ml", 10800),
+    "v2_compare_only": ("fe", 3600),
 }
 
 

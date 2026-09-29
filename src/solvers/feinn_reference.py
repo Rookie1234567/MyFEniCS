@@ -539,6 +539,78 @@ def validate_candidates(design, index, frozen, artifact, marker):
         destroy_same_mesh_physical_action(model["bundle"])
 
 
+def compare_frozen_without_solve(design, native_index, scaled_index,
+                                 reference_index, scale_index, artifact, marker):
+    """Rebuild only local postprocessing objects; load the frozen V1 p3 state."""
+    from src.solvers.feinn_fem import build_model
+    from src.solvers.feinn_scaling import read_frozen_scale
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
+        destroy_same_mesh_physical_action,
+    )
+    from src.runners.feinn_workflow import sha
+
+    if reference_index["result"]["status"] != "INDEPENDENT_REFERENCE_PASS":
+        raise ValueError("V1 same-p3 reference was not qualified")
+    packet = load_native(native_index["files"]["native"]["path"])
+    G = sparse.load_npz(native_index["files"]["gram"]["path"])
+    scaling = read_frozen_scale(scale_index["files"]["scale"]["path"], G)
+    frozen = scaled_index["files"]["checkpoint"]
+    previous = reference_index["files"]["reference"]
+    for entry in (frozen, previous):
+        if sha(entry["path"]) != entry["sha256"]:
+            raise ValueError("candidate or reference changed after freeze")
+    with np.load(frozen["path"], allow_pickle=False) as item:
+        y = np.array(item["parameters"]).reshape(2, packet.size)
+        c = np.array(item["c"])
+    actual_c = scaling.to_c(y[0] + 1j * y[1])
+    if not np.array_equal(c, actual_c):
+        raise ValueError("scaled checkpoint c is not D*y")
+    with np.load(previous["path"], allow_pickle=False) as item:
+        reference = np.array(item["c"])
+        reference_alpha = np.array(item["alpha"])
+    if reference.shape != c.shape or reference_alpha.shape != (packet.np,):
+        raise ValueError("same-p3 reference shape mismatch")
+    marker("v2_candidate_and_v1_reference_frozen", dict(
+        scaled_checkpoint=frozen, reference_state=previous,
+        scaled_source=scaled_index["source_sha"],
+        V1_reference_source=reference_index["source_sha"],
+        no_reference_solve=True,
+    ))
+    model = build_model(design, marker=marker)
+    try:
+        identity = native_index["result"]["identity"]
+        if (model["record"]["mesh_coordinates_sha256"] != identity["mesh_coordinates_sha256"]
+                or model["record"]["mode_manifest_sha256"] != identity["mode_manifest_sha256"]):
+            raise ValueError("compare-only physical identity mismatch")
+        alpha_mismatch = np.linalg.norm(packet.alpha(reference) - reference_alpha) / max(
+            np.linalg.norm(reference_alpha), 1e-12
+        )
+        if alpha_mismatch > 1e-10:
+            raise ValueError("V1 reference saved port state differs")
+        physics, comparisons = field_physics(
+            model, packet, reference,
+            {"FREE-FE-DUAL-GRAM-DIAG": c}, artifact, marker,
+        )
+        result = dict(
+            status="COMPARE_ONLY_COMPLETE" if physics["reference_pass"] else "REFERENCE_REUSE_FAILED",
+            physics=physics,
+            comparisons=comparisons,
+            reused_reference=previous,
+            reused_reference_source_sha=reference_index["source_sha"],
+            reference_port_recovery_relative=float(alpha_mismatch),
+            candidate_checkpoint=frozen,
+            candidate_source_sha=scaled_index["source_sha"],
+            candidate_c_equals_Dy=True,
+            global_Maxwell_CSR_created=False,
+            MUMPS_symbolic_numeric_solve_count=0,
+            reference_recomputed=False,
+            reference_state_loaded_only_after_candidate_freeze=True,
+        )
+        return result, {}
+    finally:
+        destroy_same_mesh_physical_action(model["bundle"])
+
+
 def p_check(design, index, reference_index, artifact, marker):
     qualified = [
         name
