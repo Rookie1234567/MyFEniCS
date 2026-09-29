@@ -47,6 +47,8 @@ class N1ESumFactorizedAction:
         *,
         batch_size: int,
         reuse_projection_work: bool = False,
+        natural_order_internal: bool = False,
+        continuous_projection_matmul: bool = False,
         shared_contractions: bool = False,
         combine_real_imag_transforms: bool = False,
         reference_bundle=None,
@@ -226,9 +228,11 @@ class N1ESumFactorizedAction:
         self.share_reference = bool(share_reference)
         self.shape = shape
         self.points = points
-        # Keep FFCx's native point order for metric multiplication.  The
-        # field conversion helpers alone cross the natural tensor ordering.
-        self.weights = np.ascontiguousarray(weights)
+        # Preserve source-order weights; candidate weights are a private copy.
+        self._weights_input_order = np.ascontiguousarray(weights)
+        self.weights = self._weights_input_order
+        self.natural_order_internal = False
+        self.continuous_projection_matmul = False
         self.natural_to_input = natural_to_input
         self.input_to_natural = input_to_natural
         self.coefficient_matrix = coefficient_matrix
@@ -295,6 +299,9 @@ class N1ESumFactorizedAction:
             self._projection_first = None
             self._projection_second = None
             self._projection_result = None
+        self._projection_y_input = None
+        self._projection_x_input = None
+        self._projection_x_result = None
         # These four contiguous real arrays are reused for both coefficient
         # transforms.  They avoid stride-2 complex views as BLAS operands and
         # avoid promoting the real coefficient matrix to a complex temporary.
@@ -348,6 +355,13 @@ class N1ESumFactorizedAction:
             "reference_forward": 0.0,
             "metric": 0.0,
             "reference_backward": 0.0,
+            "projection_input_pack_or_reorder": 0.0,
+            "projection_y_pack": 0.0,
+            "projection_z_matmul": 0.0,
+            "projection_y_matmul": 0.0,
+            "projection_x_pack": 0.0,
+            "projection_x_matmul": 0.0,
+            "projection_result_copy": 0.0,
         }
         self.audit = {
             "backend": "isotropic_sum_factorized_n1e_v26",
@@ -417,6 +431,12 @@ class N1ESumFactorizedAction:
                 self.combine_real_imag_transforms
             ),
             "reuse_projection_work_opt_in": self.reuse_projection_work,
+            "projection_layout_v31_candidate": {
+                "natural_order_internal": False,
+                "continuous_projection_matmul": False,
+            },
+            "projection_layout_v31_scratch_bytes": 0,
+            "projection_layout_v31_blas_pack_upper_bound_bytes": 0,
             "shared_contractions_opt_in": self.shared_contractions,
             "shared_contraction_scratch_bytes": int(
                 sum(
@@ -438,6 +458,135 @@ class N1ESumFactorizedAction:
             "backward_tensor_contraction_count": 0,
             "backward_tensor_contraction_counts": {"x": 0, "y": 0, "z": 0},
         }
+        self._base_batch_workspace_bytes = int(self.audit["batch_workspace_bytes"])
+        if natural_order_internal or continuous_projection_matmul:
+            self.configure_projection_layout_v31_candidate(
+                natural_order_internal=natural_order_internal,
+                continuous_projection_matmul=continuous_projection_matmul,
+            )
+
+    def configure_projection_layout_v31_candidate(
+        self,
+        *,
+        natural_order_internal: bool,
+        continuous_projection_matmul: bool,
+    ) -> None:
+        """Select the bounded R3 diagnostic variant without changing defaults."""
+        natural_order_internal = bool(natural_order_internal)
+        continuous_projection_matmul = bool(continuous_projection_matmul)
+        if continuous_projection_matmul and not natural_order_internal:
+            raise ValueError("fixed projection matmul requires natural internal order")
+        if natural_order_internal and self.reuse_projection_work:
+            raise ValueError(
+                "natural internal order cannot use the legacy reordered projection workspace"
+            )
+        self.natural_order_internal = natural_order_internal
+        self.continuous_projection_matmul = continuous_projection_matmul
+        self.weights = (
+            np.ascontiguousarray(
+                self._weights_input_order[self.natural_to_input],
+                dtype=np.float64,
+            )
+            if natural_order_internal
+            else self._weights_input_order
+        )
+        if continuous_projection_matmul:
+            width = self.degree + 1
+            qx, qy, _ = self.shape
+            if self._projection_first is None:
+                self._projection_first = np.empty(
+                    (self.batch_size, qx, qy, width), dtype=np.complex128
+                )
+                self._projection_second = np.empty(
+                    (self.batch_size, qx, width, width), dtype=np.complex128
+                )
+                self._projection_result = np.empty(
+                    (self.batch_size, self.polynomial_dimension),
+                    dtype=np.complex128,
+                )
+            if self._projection_y_input is None:
+                self._projection_y_input = np.empty(
+                    (self.batch_size, qx, width, qy), dtype=np.complex128
+                )
+                self._projection_x_input = np.empty(
+                    (self.batch_size, width, width, qx), dtype=np.complex128
+                )
+                self._projection_x_result = np.empty(
+                    (self.batch_size, width, width, width), dtype=np.complex128
+                )
+        auxiliary = (
+            self._projection_y_input,
+            self._projection_x_input,
+            self._projection_x_result,
+        )
+        scratch_arrays = tuple(array for array in auxiliary if array is not None)
+        if not self.reuse_projection_work:
+            scratch_arrays += tuple(
+                array
+                for array in (
+                    self._projection_first,
+                    self._projection_second,
+                    self._projection_result,
+                )
+                if array is not None
+            )
+        scratch_bytes = sum(array.nbytes for array in scratch_arrays)
+        permutation = self.natural_to_input
+        expected = np.arange(len(permutation), dtype=np.int64)
+        permutation_verified = (
+            permutation.shape == expected.shape
+            and np.array_equal(np.sort(permutation), expected)
+            and np.array_equal(self.input_to_natural[permutation], expected)
+        )
+        if not permutation_verified:
+            raise ValueError("quadrature point-order maps are not inverse permutations")
+        internal_points = (
+            self.points[permutation] if natural_order_internal else self.points
+        )
+        internal_weights = self.weights
+        self.audit["natural_order_internal_opt_in"] = natural_order_internal
+        self.audit["continuous_projection_matmul_opt_in"] = (
+            continuous_projection_matmul
+        )
+        self.audit["points_sha256"] = hashlib.sha256(
+            self.points.tobytes()
+        ).hexdigest()
+        self.audit["weights_sha256"] = hashlib.sha256(
+            self._weights_input_order.tobytes()
+        ).hexdigest()
+        self.audit["internal_points_sha256"] = hashlib.sha256(
+            internal_points.tobytes()
+        ).hexdigest()
+        self.audit["internal_weights_sha256"] = hashlib.sha256(
+            internal_weights.tobytes()
+        ).hexdigest()
+        self.audit["internal_quadrature_order"] = (
+            "natural_tensor_order_v31"
+            if natural_order_internal
+            else "source_input_order"
+        )
+        self.audit["point_permutation_bijection_verified"] = True
+        self.audit["weights_permuted_with_points"] = natural_order_internal
+        self.audit["backward_projection_kernel"] = (
+            "continuous_z_y_x_matmul_v31"
+            if continuous_projection_matmul
+            else "einsum_z_y_x_legacy"
+        )
+        self.audit["projection_workspace_bytes"] = int(scratch_bytes)
+        self.audit["projection_layout_v31_candidate"] = {
+            "natural_order_internal": natural_order_internal,
+            "continuous_projection_matmul": continuous_projection_matmul,
+        }
+        self.audit["projection_layout_v31_scratch_bytes"] = int(scratch_bytes)
+        self.audit["projection_layout_v31_blas_pack_upper_bound_bytes"] = int(
+            self.batch_size
+            * max(self.shape)
+            * (self.degree + 1) ** 2
+            * np.dtype(np.complex128).itemsize
+        )
+        self.audit["batch_workspace_bytes"] = int(
+            self._base_batch_workspace_bytes + scratch_bytes
+        )
 
     @staticmethod
     def _evaluate(
@@ -470,13 +619,80 @@ class N1ESumFactorizedAction:
 
     def _field_from_polynomial(self, coefficients: np.ndarray, tables) -> np.ndarray:
         natural = self._evaluate(coefficients, *tables)
+        if self.natural_order_internal:
+            return natural
         return natural[:, self.input_to_natural]
 
     def _polynomial_from_field(self, values: np.ndarray, tables) -> np.ndarray:
-        natural = values[:, self.natural_to_input].reshape(
+        started = time.perf_counter()
+        if self.natural_order_internal:
+            natural = np.ascontiguousarray(values).reshape(
+                values.shape[0], *self.shape
+            )
+        else:
+            natural = values[:, self.natural_to_input].reshape(
+                values.shape[0], *self.shape
+            )
+        self.timing["projection_input_pack_or_reorder"] += time.perf_counter() - started
+        return self._project(natural, *tables)
+
+    def _polynomial_from_field_matmul(
+        self, values: np.ndarray, tables
+    ) -> np.ndarray:
+        if not self.continuous_projection_matmul or not self.natural_order_internal:
+            raise RuntimeError("R3 fixed projection matmul is not configured")
+        started = time.perf_counter()
+        natural = np.ascontiguousarray(values).reshape(
             values.shape[0], *self.shape
         )
-        return self._project(natural, *tables)
+        self.timing["projection_input_pack_or_reorder"] += time.perf_counter() - started
+        x_table, y_table, z_table = tables
+        count = int(values.shape[0])
+        qx, qy, qz = self.shape
+        width = self.degree + 1
+        first = self._projection_first[:count]
+        second = self._projection_second[:count]
+        result = self._projection_result[:count]
+
+        started = time.perf_counter()
+        np.matmul(
+            natural.reshape(count * qx * qy, qz),
+            z_table,
+            out=first.reshape(count * qx * qy, width),
+        )
+        self.timing["projection_z_matmul"] += time.perf_counter() - started
+
+        started = time.perf_counter()
+        y_input = self._projection_y_input[:count]
+        np.copyto(y_input, first.transpose(0, 1, 3, 2))
+        self.timing["projection_y_pack"] += time.perf_counter() - started
+        started = time.perf_counter()
+        np.matmul(
+            y_input.reshape(count * qx * width, qy),
+            y_table,
+            out=second.reshape(count * qx * width, width),
+        )
+        self.timing["projection_y_matmul"] += time.perf_counter() - started
+
+        started = time.perf_counter()
+        x_input = self._projection_x_input[:count]
+        np.copyto(x_input, second.transpose(0, 2, 3, 1))
+        self.timing["projection_x_pack"] += time.perf_counter() - started
+        started = time.perf_counter()
+        x_result = self._projection_x_result[:count]
+        np.matmul(
+            x_input.reshape(count * width * width, qx),
+            x_table,
+            out=x_result.reshape(count * width * width, width),
+        )
+        self.timing["projection_x_matmul"] += time.perf_counter() - started
+        started = time.perf_counter()
+        np.copyto(
+            result.reshape(count, width, width, width),
+            x_result.transpose(0, 3, 2, 1),
+        )
+        self.timing["projection_result_copy"] += time.perf_counter() - started
+        return result
 
     def _polynomial_from_field_reuse(
         self, values: np.ndarray, tables
@@ -528,12 +744,15 @@ class N1ESumFactorizedAction:
         np.einsum(
             "zk,bxyk->bxyz", z_table, intermediate, out=tensor, optimize=True
         )
-        np.take(
-            tensor.reshape(count, -1),
-            self.input_to_natural,
-            axis=1,
-            out=destination,
-        )
+        if self.natural_order_internal:
+            np.copyto(destination, tensor.reshape(count, -1))
+        else:
+            np.take(
+                tensor.reshape(count, -1),
+                self.input_to_natural,
+                axis=1,
+                out=destination,
+            )
         self._contraction_counts["z"] += 1
 
     def _evaluate_shared_fields(
@@ -744,9 +963,16 @@ class N1ESumFactorizedAction:
         started = time.perf_counter()
         self._poly_result[:count] = 0.0
         backward_projection = (
-            self._polynomial_from_field_reuse
-            if self.reuse_projection_work
-            else self._polynomial_from_field
+            self._polynomial_from_field_matmul
+            if self.continuous_projection_matmul
+            else (
+                self._polynomial_from_field_reuse
+                if self.reuse_projection_work and not self.natural_order_internal
+                else self._polynomial_from_field
+            )
+        )
+        projection_result_is_reused = (
+            self.reuse_projection_work or self.continuous_projection_matmul
         )
         for vector_component in range(3):
             if component != "curl":
@@ -755,7 +981,7 @@ class N1ESumFactorizedAction:
                 )
         if component != "mass":
             fx, fy, fz = (self._curl_flux[:count, :, k] for k in range(3))
-            if self.reuse_projection_work:
+            if projection_result_is_reused:
                 self._poly_result[:count, 0] += backward_projection(
                     fy, (self.values_1d[0], self.values_1d[1], self.derivatives_1d[2])
                 )

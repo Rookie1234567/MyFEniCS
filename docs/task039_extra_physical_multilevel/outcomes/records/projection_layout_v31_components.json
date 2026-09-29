@@ -1,0 +1,2817 @@
+{
+  "algebraic_and_power10_gates": {
+    "B6_and_fixed_window_H6_relative_difference_le_1e-10": true,
+    "complete_A6_A4_relative_difference_le_1e-10": true,
+    "fresh_candidate_power10_all_variants_pass": true
+  },
+  "attempt_history": [
+    {
+      "b6_h6_and_power10_recorded_before_failure": true,
+      "error": "FullspacePhysicalAction has no matrix attribute; vector layout is now taken from its native volume component.",
+      "error_type": "AttributeError",
+      "stage": "complete_A6_A4_first_attempt",
+      "status": "FAILED"
+    }
+  ],
+  "b6_h6_pair": {
+    "fresh_window": {
+      "inverse_sqrt_diagonal_sha256": "a037b5233f26ed36df4cd2eadb37956f80b86a7796f73dea63386af1587bf06f",
+      "lambda_hi": 14.648596475283673,
+      "lambda_lo": 1.4648596475283675,
+      "power10_matvec_count": 20,
+      "power10_seed_sha256": "3b7d31071626a258d3750bc5c0b20dd4d6817451aef098b1b46ad70bc8592d0a"
+    },
+    "output_differences": {
+      "legacy": {
+        "early_iter0": {
+          "b6": {
+            "absolute_difference_norm": 0.0,
+            "relative_difference_to_legacy": 0.0
+          },
+          "h6": {
+            "absolute_difference_norm": 0.0,
+            "relative_difference_to_legacy": 0.0
+          }
+        },
+        "late_iter126": {
+          "b6": {
+            "absolute_difference_norm": 0.0,
+            "relative_difference_to_legacy": 0.0
+          },
+          "h6": {
+            "absolute_difference_norm": 0.0,
+            "relative_difference_to_legacy": 0.0
+          }
+        }
+      },
+      "natural_order": {
+        "early_iter0": {
+          "b6": {
+            "absolute_difference_norm": 0.0,
+            "relative_difference_to_legacy": 0.0
+          },
+          "h6": {
+            "absolute_difference_norm": 0.0,
+            "relative_difference_to_legacy": 0.0
+          }
+        },
+        "late_iter126": {
+          "b6": {
+            "absolute_difference_norm": 0.0,
+            "relative_difference_to_legacy": 0.0
+          },
+          "h6": {
+            "absolute_difference_norm": 0.0,
+            "relative_difference_to_legacy": 0.0
+          }
+        }
+      },
+      "natural_order_fixed_matmul": {
+        "early_iter0": {
+          "b6": {
+            "absolute_difference_norm": 1.0444167681617857e-13,
+            "relative_difference_to_legacy": 6.189591810092462e-17
+          },
+          "h6": {
+            "absolute_difference_norm": 4.089044729525052e-18,
+            "relative_difference_to_legacy": 7.518230046022513e-17
+          }
+        },
+        "late_iter126": {
+          "b6": {
+            "absolute_difference_norm": 6.381002089890125e-19,
+            "relative_difference_to_legacy": 1.0450928685457763e-16
+          },
+          "h6": {
+            "absolute_difference_norm": 1.9921301377529786e-24,
+            "relative_difference_to_legacy": 5.815374242079478e-17
+          }
+        }
+      }
+    },
+    "three_interleaved_rounds": {
+      "legacy": [
+        {
+          "b6_cpu_seconds": 2.7436328779999997,
+          "b6_kernel_timing_seconds": {
+            "coefficient_transform": 0.8041896068607457,
+            "metric": 0.10232881823321804,
+            "projection_input_pack_or_reorder": 0.014971759461332113,
+            "projection_result_copy": 0.0,
+            "projection_x_matmul": 0.0,
+            "projection_x_pack": 0.0,
+            "projection_y_matmul": 0.0,
+            "projection_y_pack": 0.0,
+            "projection_z_matmul": 0.0,
+            "reference_backward": 1.2790466006845236,
+            "reference_forward": 0.27982367092045024
+          },
+          "b6_sha256": "b718f63808d46fffb90aa25e5712e0231ce1e4f634cc924a1e3c223371ff1ac7",
+          "b6_wall_seconds": 2.5150625680107623,
+          "h6_cpu_seconds": 5.658823337000001,
+          "h6_kernel_timing_seconds": {
+            "coefficient_transform": 1.6252803851966746,
+            "metric": 0.21538693160982803,
+            "projection_input_pack_or_reorder": 0.031087303650565445,
+            "projection_result_copy": 0.0,
+            "projection_x_matmul": 0.0,
+            "projection_x_pack": 0.0,
+            "projection_y_matmul": 0.0,
+            "projection_y_pack": 0.0,
+            "projection_z_matmul": 0.0,
+            "reference_backward": 2.607471040915698,
+            "reference_forward": 0.5868873854633421
+          },
+          "h6_matrix_mult_count": 2,
+          "h6_sha256": "06ccae92d2ea51a7885126f8c052cbe375edcb4550ecd3fc9f3fd029ad9d5aea",
+          "h6_wall_seconds": 5.187477956991643,
+          "round": 1,
+          "vector": "early_iter0"
+        },
+        {
+          "b6_cpu_seconds": 2.7364449690000043,
+          "b6_kernel_timing_seconds": {
+            "coefficient_transform": 0.7980748368427157,
+            "metric": 0.09995532158063725,
+            "projection_input_pack_or_reorder": 0.014204328355845064,
+            "projection_result_copy": 0.0,
+            "projection_x_matmul": 0.0,
+            "projection_x_pack": 0.0,
+            "projection_y_matmul": 0.0,
+            "projection_y_pack": 0.0,
+            "projection_z_matmul": 0.0,
+            "reference_backward": 1.2778158025466837,
+            "reference_forward": 0.2846703072427772
+          },
+          "b6_sha256": "18b62651991f43ce2baaeb171a0402e0e2d82cf6c13d6117560bd81f4b9a11e0",
+          "b6_wall_seconds": 2.5085590130183846,
+          "h6_cpu_seconds": 5.747909792999991,
+          "h6_kernel_timing_seconds": {
+            "coefficient_transform": 1.6895584122394212,
+            "metric": 0.21598799602361396,
+            "projection_input_pack_or_reorder": 0.0297705334960483,
+            "projection_result_copy": 0.0,
+            "projection_x_matmul": 0.0,
+            "projection_x_pack": 0.0,
+            "projection_y_matmul": 0.0,
+            "projection_y_pack": 0.0,
+            "projection_z_matmul": 0.0,
+            "reference_backward": 2.6340655398671515,
+            "reference_forward": 0.573180643026717
+          },
+          "h6_matrix_mult_count": 2,
+          "h6_sha256": "677e9fcf42d01ecdd0ca77bffa63411c99326ae75b1c0f82b0239058b65a1d0f",
+          "h6_wall_seconds": 5.269233896979131,
+          "round": 1,
+          "vector": "late_iter126"
+        },
+        {
+          "b6_cpu_seconds": 2.2899304470000175,
+          "b6_kernel_timing_seconds": {
+            "coefficient_transform": 0.6528315914329141,
+            "metric": 0.08899482036940753,
+            "projection_input_pack_or_reorder": 0.010642492794431746,
+            "projection_result_copy": 0.0,
+            "projection_x_matmul": 0.0,
+            "projection_x_pack": 0.0,
+            "projection_y_matmul": 0.0,
+            "projection_y_pack": 0.0,
+            "projection_z_matmul": 0.0,
+            "reference_backward": 1.0637033715611324,
+            "reference_forward": 0.25224163016537204
+          },
+          "b6_sha256": "b718f63808d46fffb90aa25e5712e0231ce1e4f634cc924a1e3c223371ff1ac7",
+          "b6_wall_seconds": 2.099103932036087,
+          "h6_cpu_seconds": 5.119043340000019,
+          "h6_kernel_timing_seconds": {
+            "coefficient_transform": 1.4757075037341565,
+            "metric": 0.19513006799388677,
+            "projection_input_pack_or_reorder": 0.025710332207381725,
+            "projection_result_copy": 0.0,
+            "projection_x_matmul": 0.0,
+            "projection_x_pack": 0.0,
+            "projection_y_matmul": 0.0,
+            "projection_y_pack": 0.0,
+            "projection_z_matmul": 0.0,
+            "reference_backward": 2.3395465977373533,
+            "reference_forward": 0.548111415351741
+          },
+          "h6_matrix_mult_count": 2,
+          "h6_sha256": "06ccae92d2ea51a7885126f8c052cbe375edcb4550ecd3fc9f3fd029ad9d5aea",
+          "h6_wall_seconds": 4.695601214014459,
+          "round": 2,
+          "vector": "early_iter0"
+        },
+        {
+          "b6_cpu_seconds": 2.369053506,
+          "b6_kernel_timing_seconds": {
+            "coefficient_transform": 0.6851646644063294,
+            "metric": 0.09383041760884225,
+            "projection_input_pack_or_reorder": 0.011179289314895868,
+            "projection_result_copy": 0.0,
+            "projection_x_matmul": 0.0,
+            "projection_x_pack": 0.0,
+            "projection_y_matmul": 0.0,
+            "projection_y_pack": 0.0,
+            "projection_z_matmul": 0.0,
+            "reference_backward": 1.0843563814414665,
+            "reference_forward": 0.26560017227893695
+          },
+          "b6_sha256": "18b62651991f43ce2baaeb171a0402e0e2d82cf6c13d6117560bd81f4b9a11e0",
+          "b6_wall_seconds": 2.173172937007621,
+          "h6_cpu_seconds": 5.677876878000006,
+          "h6_kernel_timing_seconds": {
+            "coefficient_transform": 1.6549289943068288,
+            "metric": 0.20085669524269179,
+            "projection_input_pack_or_reorder": 0.030346194631420076,
+            "projection_result_copy": 0.0,
+            "projection_x_matmul": 0.0,
+            "projection_x_pack": 0.0,
+            "projection_y_matmul": 0.0,
+            "projection_y_pack": 0.0,
+            "projection_z_matmul": 0.0,
+            "reference_backward": 2.62658694939455,
+            "reference_forward": 0.5635753200622275
+          },
+          "h6_matrix_mult_count": 2,
+          "h6_sha256": "677e9fcf42d01ecdd0ca77bffa63411c99326ae75b1c0f82b0239058b65a1d0f",
+          "h6_wall_seconds": 5.204860244994052,
+          "round": 2,
+          "vector": "late_iter126"
+        },
+        {
+          "b6_cpu_seconds": 2.542299665999991,
+          "b6_kernel_timing_seconds": {
+            "coefficient_transform": 0.7504894339945167,
+            "metric": 0.0942317572189495,
+            "projection_input_pack_or_reorder": 0.012559761991724372,
+            "projection_result_copy": 0.0,
+            "projection_x_matmul": 0.0,
+            "projection_x_pack": 0.0,
+            "projection_y_matmul": 0.0,
+            "projection_y_pack": 0.0,
+            "projection_z_matmul": 0.0,
+            "reference_backward": 1.1739001225214452,
+            "reference_forward": 0.26940333866514266
+          },
+          "b6_sha256": "b718f63808d46fffb90aa25e5712e0231ce1e4f634cc924a1e3c223371ff1ac7",
+          "b6_wall_seconds": 2.330505801946856,
+          "h6_cpu_seconds": 5.078424868000013,
+          "h6_kernel_timing_seconds": {
+            "coefficient_transform": 1.4705676659941673,
+            "metric": 0.1905171805410646,
+            "projection_input_pack_or_reorder": 0.024051702697761357,
+            "projection_result_copy": 0.0,
+            "projection_x_matmul": 0.0,
+            "projection_x_pack": 0.0,
+            "projection_y_matmul": 0.0,
+            "projection_y_pack": 0.0,
+            "projection_z_matmul": 0.0,
+            "reference_backward": 2.3481224685092457,
+            "reference_forward": 0.5262677110149525
+          },
+          "h6_matrix_mult_count": 2,
+          "h6_sha256": "06ccae92d2ea51a7885126f8c052cbe375edcb4550ecd3fc9f3fd029ad9d5aea",
+          "h6_wall_seconds": 4.655352608999237,
+          "round": 3,
+          "vector": "early_iter0"
+        },
+        {
+          "b6_cpu_seconds": 2.434447490000025,
+          "b6_kernel_timing_seconds": {
+            "coefficient_transform": 0.7112105304840952,
+            "metric": 0.09161380905425176,
+            "projection_input_pack_or_reorder": 0.010756618634331971,
+            "projection_result_copy": 0.0,
+            "projection_x_matmul": 0.0,
+            "projection_x_pack": 0.0,
+            "projection_y_matmul": 0.0,
+            "projection_y_pack": 0.0,
+            "projection_z_matmul": 0.0,
+            "reference_backward": 1.1267688543302938,
+            "reference_forward": 0.25727737322449684
+          },
+          "b6_sha256": "18b62651991f43ce2baaeb171a0402e0e2d82cf6c13d6117560bd81f4b9a11e0",
+          "b6_wall_seconds": 2.231672517955303,
+          "h6_cpu_seconds": 4.724411447999984,
+          "h6_kernel_timing_seconds": {
+            "coefficient_transform": 1.347709062276408,
+            "metric": 0.17950050521176308,
+            "projection_input_pack_or_reorder": 0.02198296569986269,
+            "projection_result_copy": 0.0,
+            "projection_x_matmul": 0.0,
+            "projection_x_pack": 0.0,
+            "projection_y_matmul": 0.0,
+            "projection_y_pack": 0.0,
+            "projection_z_matmul": 0.0,
+            "reference_backward": 2.172325730090961,
+            "reference_forward": 0.5062111202860251
+          },
+          "h6_matrix_mult_count": 2,
+          "h6_sha256": "677e9fcf42d01ecdd0ca77bffa63411c99326ae75b1c0f82b0239058b65a1d0f",
+          "h6_wall_seconds": 4.3307791980332695,
+          "round": 3,
+          "vector": "late_iter126"
+        }
+      ],
+      "natural_order": [
+        {
+          "b6_cpu_seconds": 3.037520642000004,
+          "b6_kernel_timing_seconds": {
+            "coefficient_transform": 0.9056326689315028,
+            "metric": 0.11019915685756132,
+            "projection_input_pack_or_reorder": 0.011545394198037684,
+            "projection_result_copy": 0.0,
+            "projection_x_matmul": 0.0,
+            "projection_x_pack": 0.0,
+            "projection_y_matmul": 0.0,
+            "projection_y_pack": 0.0,
+            "projection_z_matmul": 0.0,
+            "reference_backward": 1.4231746610603295,
+            "reference_forward": 0.29148931184317917
+          },
+          "b6_sha256": "b718f63808d46fffb90aa25e5712e0231ce1e4f634cc924a1e3c223371ff1ac7",
+          "b6_wall_seconds": 2.78447461995529,
+          "h6_cpu_seconds": 4.831898002999992,
+          "h6_kernel_timing_seconds": {
+            "coefficient_transform": 1.3849690965143964,
+            "metric": 0.18921851215418428,
+            "projection_input_pack_or_reorder": 0.014552788168657571,
+            "projection_result_copy": 0.0,
+            "projection_x_matmul": 0.0,
+            "projection_x_pack": 0.0,
+            "projection_y_matmul": 0.0,
+            "projection_y_pack": 0.0,
+            "projection_z_matmul": 0.0,
+            "reference_backward": 2.2400750902597792,
+            "reference_forward": 0.49227548617636785
+          },
+          "h6_matrix_mult_count": 2,
+          "h6_sha256": "06ccae92d2ea51a7885126f8c052cbe375edcb4550ecd3fc9f3fd029ad9d5aea",
+          "h6_wall_seconds": 4.429292435001116,
+          "round": 1,
+          "vector": "early_iter0"
+        },
+        {
+          "b6_cpu_seconds": 2.3670653249999987,
+          "b6_kernel_timing_seconds": {
+            "coefficient_transform": 0.6767274421290495,
+            "metric": 0.09614214702742174,
+            "projection_input_pack_or_reorder": 0.007248707348480821,
+            "projection_result_copy": 0.0,
+            "projection_x_matmul": 0.0,
+            "projection_x_pack": 0.0,
+            "projection_y_matmul": 0.0,
+            "projection_y_pack": 0.0,
+            "projection_z_matmul": 0.0,
+            "reference_backward": 1.1120141563587822,
+            "reference_forward": 0.24520154763013124
+          },
+          "b6_sha256": "18b62651991f43ce2baaeb171a0402e0e2d82cf6c13d6117560bd81f4b9a11e0",
+          "b6_wall_seconds": 2.1699603290180676,
+          "h6_cpu_seconds": 4.9081487229999965,
+          "h6_kernel_timing_seconds": {
+            "coefficient_transform": 1.4279751654248685,
+            "metric": 0.1888650649925694,
+            "projection_input_pack_or_reorder": 0.01420037419302389,
+            "projection_result_copy": 0.0,
+            "projection_x_matmul": 0.0,
+            "projection_x_pack": 0.0,
+            "projection_y_matmul": 0.0,
+            "projection_y_pack": 0.0,
+            "projection_z_matmul": 0.0,
+            "reference_backward": 2.2536852486082353,
+            "reference_forward": 0.49955118203070015
+          },
+          "h6_matrix_mult_count": 2,
+          "h6_sha256": "677e9fcf42d01ecdd0ca77bffa63411c99326ae75b1c0f82b0239058b65a1d0f",
+          "h6_wall_seconds": 4.499549569969531,
+          "round": 1,
+          "vector": "late_iter126"
+        },
+        {
+          "b6_cpu_seconds": 2.3023265399999957,
+          "b6_kernel_timing_seconds": {
+            "coefficient_transform": 0.6774946832447313,
+            "metric": 0.08958636788884178,
+            "projection_input_pack_or_reorder": 0.006106286367867142,
+            "projection_result_copy": 0.0,
+            "projection_x_matmul": 0.0,
+            "projection_x_pack": 0.0,
+            "projection_y_matmul": 0.0,
+            "projection_y_pack": 0.0,
+            "projection_z_matmul": 0.0,
+            "reference_backward": 1.0702821922604926,
+            "reference_forward": 0.23463574016932398
+          },
+          "b6_sha256": "b718f63808d46fffb90aa25e5712e0231ce1e4f634cc924a1e3c223371ff1ac7",
+          "b6_wall_seconds": 2.1105564939789474,
+          "h6_cpu_seconds": 4.597305075999998,
+          "h6_kernel_timing_seconds": {
+            "coefficient_transform": 1.3479431033483706,
+            "metric": 0.18355719308601692,
+            "projection_input_pack_or_reorder": 0.012419031700119376,
+            "projection_result_copy": 0.0,
+            "projection_x_matmul": 0.0,
+            "projection_x_pack": 0.0,
+            "projection_y_matmul": 0.0,
+            "projection_y_pack": 0.0,
+            "projection_z_matmul": 0.0,
+            "reference_backward": 2.1013479504035786,
+            "reference_forward": 0.4711012882180512
+          },
+          "h6_matrix_mult_count": 2,
+          "h6_sha256": "06ccae92d2ea51a7885126f8c052cbe375edcb4550ecd3fc9f3fd029ad9d5aea",
+          "h6_wall_seconds": 4.214266625000164,
+          "round": 2,
+          "vector": "early_iter0"
+        },
+        {
+          "b6_cpu_seconds": 2.3609552210000118,
+          "b6_kernel_timing_seconds": {
+            "coefficient_transform": 0.6682662559323944,
+            "metric": 0.09522524423664436,
+            "projection_input_pack_or_reorder": 0.007706738659180701,
+            "projection_result_copy": 0.0,
+            "projection_x_matmul": 0.0,
+            "projection_x_pack": 0.0,
+            "projection_y_matmul": 0.0,
+            "projection_y_pack": 0.0,
+            "projection_z_matmul": 0.0,
+            "reference_backward": 1.1069214367307723,
+            "reference_forward": 0.24845532973995432
+          },
+          "b6_sha256": "18b62651991f43ce2baaeb171a0402e0e2d82cf6c13d6117560bd81f4b9a11e0",
+          "b6_wall_seconds": 2.164289357024245,
+          "h6_cpu_seconds": 4.5996470139999985,
+          "h6_kernel_timing_seconds": {
+            "coefficient_transform": 1.3105813880101778,
+            "metric": 0.180127375992015,
+            "projection_input_pack_or_reorder": 0.01321387937059626,
+            "projection_result_copy": 0.0,
+            "projection_x_matmul": 0.0,
+            "projection_x_pack": 0.0,
+            "projection_y_matmul": 0.0,
+            "projection_y_pack": 0.0,
+            "projection_z_matmul": 0.0,
+            "reference_backward": 2.1500539092812687,
+            "reference_forward": 0.4644373854389414
+          },
+          "h6_matrix_mult_count": 2,
+          "h6_sha256": "677e9fcf42d01ecdd0ca77bffa63411c99326ae75b1c0f82b0239058b65a1d0f",
+          "h6_wall_seconds": 4.216442081029527,
+          "round": 2,
+          "vector": "late_iter126"
+        },
+        {
+          "b6_cpu_seconds": 2.259932503999977,
+          "b6_kernel_timing_seconds": {
+            "coefficient_transform": 0.6470377238583751,
+            "metric": 0.09018670523073524,
+            "projection_input_pack_or_reorder": 0.006816851499024779,
+            "projection_result_copy": 0.0,
+            "projection_x_matmul": 0.0,
+            "projection_x_pack": 0.0,
+            "projection_y_matmul": 0.0,
+            "projection_y_pack": 0.0,
+            "projection_z_matmul": 0.0,
+            "reference_backward": 1.0561629312578589,
+            "reference_forward": 0.23683382896706462
+          },
+          "b6_sha256": "b718f63808d46fffb90aa25e5712e0231ce1e4f634cc924a1e3c223371ff1ac7",
+          "b6_wall_seconds": 2.072054816992022,
+          "h6_cpu_seconds": 4.798943039000022,
+          "h6_kernel_timing_seconds": {
+            "coefficient_transform": 1.3680818636203185,
+            "metric": 0.18905132537474856,
+            "projection_input_pack_or_reorder": 0.01511389430379495,
+            "projection_result_copy": 0.0,
+            "projection_x_matmul": 0.0,
+            "projection_x_pack": 0.0,
+            "projection_y_matmul": 0.0,
+            "projection_y_pack": 0.0,
+            "projection_z_matmul": 0.0,
+            "reference_backward": 2.2106650852947496,
+            "reference_forward": 0.5042808848083951
+          },
+          "h6_matrix_mult_count": 2,
+          "h6_sha256": "06ccae92d2ea51a7885126f8c052cbe375edcb4550ecd3fc9f3fd029ad9d5aea",
+          "h6_wall_seconds": 4.402815291949082,
+          "round": 3,
+          "vector": "early_iter0"
+        },
+        {
+          "b6_cpu_seconds": 2.3281750769999974,
+          "b6_kernel_timing_seconds": {
+            "coefficient_transform": 0.6651202695211396,
+            "metric": 0.0947933021816425,
+            "projection_input_pack_or_reorder": 0.00734949141042307,
+            "projection_result_copy": 0.0,
+            "projection_x_matmul": 0.0,
+            "projection_x_pack": 0.0,
+            "projection_y_matmul": 0.0,
+            "projection_y_pack": 0.0,
+            "projection_z_matmul": 0.0,
+            "reference_backward": 1.0818451527738944,
+            "reference_forward": 0.2479942962527275
+          },
+          "b6_sha256": "18b62651991f43ce2baaeb171a0402e0e2d82cf6c13d6117560bd81f4b9a11e0",
+          "b6_wall_seconds": 2.1342149160336703,
+          "h6_cpu_seconds": 4.653110448999996,
+          "h6_kernel_timing_seconds": {
+            "coefficient_transform": 1.327894130081404,
+            "metric": 0.18339714995818213,
+            "projection_input_pack_or_reorder": 0.013708703278098255,
+            "projection_result_copy": 0.0,
+            "projection_x_matmul": 0.0,
+            "projection_x_pack": 0.0,
+            "projection_y_matmul": 0.0,
+            "projection_y_pack": 0.0,
+            "projection_z_matmul": 0.0,
+            "reference_backward": 2.1583257882739417,
+            "reference_forward": 0.48036781343398616
+          },
+          "h6_matrix_mult_count": 2,
+          "h6_sha256": "677e9fcf42d01ecdd0ca77bffa63411c99326ae75b1c0f82b0239058b65a1d0f",
+          "h6_wall_seconds": 4.265401481010485,
+          "round": 3,
+          "vector": "late_iter126"
+        }
+      ],
+      "natural_order_fixed_matmul": [
+        {
+          "b6_cpu_seconds": 2.3043807699999945,
+          "b6_kernel_timing_seconds": {
+            "coefficient_transform": 0.6941392968874425,
+            "metric": 0.0935355139663443,
+            "projection_input_pack_or_reorder": 0.006105397187639028,
+            "projection_result_copy": 0.004660540434997529,
+            "projection_x_matmul": 0.02924625971354544,
+            "projection_x_pack": 0.004183020151685923,
+            "projection_y_matmul": 0.032896357064601034,
+            "projection_y_pack": 0.00533965154318139,
+            "projection_z_matmul": 0.038695984228979796,
+            "reference_backward": 1.037720468477346,
+            "reference_forward": 0.24504614452598616
+          },
+          "b6_sha256": "aa20780c5a53d8300e75b6791ca6d63b929426008d7ef0a2e871917c4b71c3a0",
+          "b6_wall_seconds": 2.112381693033967,
+          "h6_cpu_seconds": 4.728723649999992,
+          "h6_kernel_timing_seconds": {
+            "coefficient_transform": 1.418419499997981,
+            "metric": 0.19526301912264898,
+            "projection_input_pack_or_reorder": 0.012830704916268587,
+            "projection_result_copy": 0.008585131785366684,
+            "projection_x_matmul": 0.059156197763513774,
+            "projection_x_pack": 0.008982089580968022,
+            "projection_y_matmul": 0.06711584428558126,
+            "projection_y_pack": 0.011046660307329148,
+            "projection_z_matmul": 0.07795597147196531,
+            "reference_backward": 2.0932927650865167,
+            "reference_forward": 0.5008902753470466
+          },
+          "h6_matrix_mult_count": 2,
+          "h6_sha256": "41699a7d79501f5459fb6ff4f621cf9b68321d37b9863c6488be3137f656a8b6",
+          "h6_wall_seconds": 4.3373498630244285,
+          "round": 1,
+          "vector": "early_iter0"
+        },
+        {
+          "b6_cpu_seconds": 2.3881434370000107,
+          "b6_kernel_timing_seconds": {
+            "coefficient_transform": 0.7178327856236137,
+            "metric": 0.09735724603524432,
+            "projection_input_pack_or_reorder": 0.006481962976977229,
+            "projection_result_copy": 0.004386265471111983,
+            "projection_x_matmul": 0.02866347332019359,
+            "projection_x_pack": 0.004466676618903875,
+            "projection_y_matmul": 0.03304855426540598,
+            "projection_y_pack": 0.005510341841727495,
+            "projection_z_matmul": 0.03877151565393433,
+            "reference_backward": 1.0673106751637533,
+            "reference_forward": 0.2581301588215865
+          },
+          "b6_sha256": "d8ee636574d030fd39a2f7b6988f42e7b3f2797578641b7e79cc3e2539a0a24e",
+          "b6_wall_seconds": 2.18917839799542,
+          "h6_cpu_seconds": 4.874559747999996,
+          "h6_kernel_timing_seconds": {
+            "coefficient_transform": 1.4725611731992103,
+            "metric": 0.19446235842769966,
+            "projection_input_pack_or_reorder": 0.013752245577052236,
+            "projection_result_copy": 0.008732395828701556,
+            "projection_x_matmul": 0.05950053595006466,
+            "projection_x_pack": 0.008715877891518176,
+            "projection_y_matmul": 0.06672589021036401,
+            "projection_y_pack": 0.011131960432976484,
+            "projection_z_matmul": 0.07888117735274136,
+            "reference_backward": 2.152632054698188,
+            "reference_forward": 0.5205498244613409
+          },
+          "h6_matrix_mult_count": 2,
+          "h6_sha256": "5269e76e3efe3efae2e7478646f283c51b2ea8360b71835c2ec47c6697dde9d0",
+          "h6_wall_seconds": 4.468418336007744,
+          "round": 1,
+          "vector": "late_iter126"
+        },
+        {
+          "b6_cpu_seconds": 2.5955496349999976,
+          "b6_kernel_timing_seconds": {
+            "coefficient_transform": 0.8145075959619135,
+            "metric": 0.10193216986954212,
+            "projection_input_pack_or_reorder": 0.00756443856516853,
+            "projection_result_copy": 0.004386147775221616,
+            "projection_x_matmul": 0.029500360949896276,
+            "projection_x_pack": 0.004253063176292926,
+            "projection_y_matmul": 0.03356896119657904,
+            "projection_y_pack": 0.0055173239088617265,
+            "projection_z_matmul": 0.03937662224052474,
+            "reference_backward": 1.1409833621582948,
+            "reference_forward": 0.27633050782606006
+          },
+          "b6_sha256": "aa20780c5a53d8300e75b6791ca6d63b929426008d7ef0a2e871917c4b71c3a0",
+          "b6_wall_seconds": 2.379235252039507,
+          "h6_cpu_seconds": 4.878590715999991,
+          "h6_kernel_timing_seconds": {
+            "coefficient_transform": 1.478541477350518,
+            "metric": 0.19582888000877574,
+            "projection_input_pack_or_reorder": 0.013650160864926875,
+            "projection_result_copy": 0.0088367938878946,
+            "projection_x_matmul": 0.059620531217660755,
+            "projection_x_pack": 0.0085483284201473,
+            "projection_y_matmul": 0.06693621719023213,
+            "projection_y_pack": 0.010584395844489336,
+            "projection_z_matmul": 0.07893013930879533,
+            "reference_backward": 2.1368918501539156,
+            "reference_forward": 0.5368291094782762
+          },
+          "h6_matrix_mult_count": 2,
+          "h6_sha256": "41699a7d79501f5459fb6ff4f621cf9b68321d37b9863c6488be3137f656a8b6",
+          "h6_wall_seconds": 4.476197194017004,
+          "round": 2,
+          "vector": "early_iter0"
+        },
+        {
+          "b6_cpu_seconds": 2.6010388359999865,
+          "b6_kernel_timing_seconds": {
+            "coefficient_transform": 0.7704910583561286,
+            "metric": 0.10541366075631231,
+            "projection_input_pack_or_reorder": 0.007683074451051652,
+            "projection_result_copy": 0.004459092451725155,
+            "projection_x_matmul": 0.029604727344121784,
+            "projection_x_pack": 0.004627664107829332,
+            "projection_y_matmul": 0.034170161467045546,
+            "projection_y_pack": 0.005708851444069296,
+            "projection_z_matmul": 0.04131322121247649,
+            "reference_backward": 1.1974850769038312,
+            "reference_forward": 0.26376235153293237
+          },
+          "b6_sha256": "d8ee636574d030fd39a2f7b6988f42e7b3f2797578641b7e79cc3e2539a0a24e",
+          "b6_wall_seconds": 2.3842834919923916,
+          "h6_cpu_seconds": 4.7711799319999955,
+          "h6_kernel_timing_seconds": {
+            "coefficient_transform": 1.4096688567078672,
+            "metric": 0.19368602382019162,
+            "projection_input_pack_or_reorder": 0.013317411416210234,
+            "projection_result_copy": 0.008595139544922858,
+            "projection_x_matmul": 0.058739000698551536,
+            "projection_x_pack": 0.008746970794163644,
+            "projection_y_matmul": 0.06638934096554294,
+            "projection_y_pack": 0.010566169919911772,
+            "projection_z_matmul": 0.07739091874100268,
+            "reference_backward": 2.1385413499665447,
+            "reference_forward": 0.504805663775187
+          },
+          "h6_matrix_mult_count": 2,
+          "h6_sha256": "5269e76e3efe3efae2e7478646f283c51b2ea8360b71835c2ec47c6697dde9d0",
+          "h6_wall_seconds": 4.373677751980722,
+          "round": 2,
+          "vector": "late_iter126"
+        },
+        {
+          "b6_cpu_seconds": 2.200154189000017,
+          "b6_kernel_timing_seconds": {
+            "coefficient_transform": 0.6663099229917862,
+            "metric": 0.08711141673848033,
+            "projection_input_pack_or_reorder": 0.00579034088877961,
+            "projection_result_copy": 0.003955633437726647,
+            "projection_x_matmul": 0.027331709919963032,
+            "projection_x_pack": 0.004017095372546464,
+            "projection_y_matmul": 0.03140786703443155,
+            "projection_y_pack": 0.005021269433200359,
+            "projection_z_matmul": 0.03712228045333177,
+            "reference_backward": 0.9862083230400458,
+            "reference_forward": 0.23597998765762895
+          },
+          "b6_sha256": "aa20780c5a53d8300e75b6791ca6d63b929426008d7ef0a2e871917c4b71c3a0",
+          "b6_wall_seconds": 2.0168660689960234,
+          "h6_cpu_seconds": 4.402455902000014,
+          "h6_kernel_timing_seconds": {
+            "coefficient_transform": 1.311893514415715,
+            "metric": 0.17727194947656244,
+            "projection_input_pack_or_reorder": 0.011184793431311846,
+            "projection_result_copy": 0.007959042326547205,
+            "projection_x_matmul": 0.05479288747301325,
+            "projection_x_pack": 0.00800620426889509,
+            "projection_y_matmul": 0.06231800408568233,
+            "projection_y_pack": 0.009459329943638295,
+            "projection_z_matmul": 0.07267727912403643,
+            "reference_backward": 1.9676480657653883,
+            "reference_forward": 0.46501406090101227
+          },
+          "h6_matrix_mult_count": 2,
+          "h6_sha256": "41699a7d79501f5459fb6ff4f621cf9b68321d37b9863c6488be3137f656a8b6",
+          "h6_wall_seconds": 4.035626364988275,
+          "round": 3,
+          "vector": "early_iter0"
+        },
+        {
+          "b6_cpu_seconds": 2.2031975550000027,
+          "b6_kernel_timing_seconds": {
+            "coefficient_transform": 0.6717240441939794,
+            "metric": 0.0899919192888774,
+            "projection_input_pack_or_reorder": 0.005599053169135004,
+            "projection_result_copy": 0.0038727112696506083,
+            "projection_x_matmul": 0.027319097833242267,
+            "projection_x_pack": 0.0039202640182338655,
+            "projection_y_matmul": 0.031059698667377234,
+            "projection_y_pack": 0.004851381294429302,
+            "projection_z_matmul": 0.03646191320149228,
+            "reference_backward": 0.9829894540016539,
+            "reference_forward": 0.2361005575512536
+          },
+          "b6_sha256": "d8ee636574d030fd39a2f7b6988f42e7b3f2797578641b7e79cc3e2539a0a24e",
+          "b6_wall_seconds": 2.0196510230307467,
+          "h6_cpu_seconds": 4.4669149679999975,
+          "h6_kernel_timing_seconds": {
+            "coefficient_transform": 1.3370134319993667,
+            "metric": 0.1800394189194776,
+            "projection_input_pack_or_reorder": 0.011713289364706725,
+            "projection_result_copy": 0.00812739145476371,
+            "projection_x_matmul": 0.055864066584035754,
+            "projection_x_pack": 0.008220480813179165,
+            "projection_y_matmul": 0.06308410182828084,
+            "projection_y_pack": 0.009841428429353982,
+            "projection_z_matmul": 0.07402728474698961,
+            "reference_backward": 1.9823229955509305,
+            "reference_forward": 0.48025414446601644
+          },
+          "h6_matrix_mult_count": 2,
+          "h6_sha256": "5269e76e3efe3efae2e7478646f283c51b2ea8360b71835c2ec47c6697dde9d0",
+          "h6_wall_seconds": 4.094713576021604,
+          "round": 3,
+          "vector": "late_iter126"
+        }
+      ]
+    },
+    "warmups": {
+      "legacy": {
+        "b6_output_sha256": "b718f63808d46fffb90aa25e5712e0231ce1e4f634cc924a1e3c223371ff1ac7",
+        "b6_wall_seconds": 2.0834250450134277,
+        "h6_output_sha256": "06ccae92d2ea51a7885126f8c052cbe375edcb4550ecd3fc9f3fd029ad9d5aea",
+        "h6_wall_seconds": 4.048963823996019,
+        "included_in_samples": false
+      },
+      "natural_order": {
+        "b6_output_sha256": "b718f63808d46fffb90aa25e5712e0231ce1e4f634cc924a1e3c223371ff1ac7",
+        "b6_wall_seconds": 2.6153856530436315,
+        "h6_output_sha256": "06ccae92d2ea51a7885126f8c052cbe375edcb4550ecd3fc9f3fd029ad9d5aea",
+        "h6_wall_seconds": 4.9963294649496675,
+        "included_in_samples": false
+      },
+      "natural_order_fixed_matmul": {
+        "b6_output_sha256": "aa20780c5a53d8300e75b6791ca6d63b929426008d7ef0a2e871917c4b71c3a0",
+        "b6_wall_seconds": 2.3683833480463363,
+        "h6_output_sha256": "41699a7d79501f5459fb6ff4f621cf9b68321d37b9863c6488be3137f656a8b6",
+        "h6_wall_seconds": 4.934677792945877,
+        "included_in_samples": false
+      }
+    }
+  },
+  "candidate_workspace_after_reservation": {
+    "backend": "isotropic_sum_factorized_n1e_v26",
+    "backward_projection_count": 22320,
+    "backward_tensor_contraction_count": 66960,
+    "backward_tensor_contraction_counts": {
+      "x": 22320,
+      "y": 22320,
+      "z": 22320
+    },
+    "batch_workspace_bytes": 2300032,
+    "coefficient_matrix_bytes": 7260624,
+    "coefficient_matrix_sha256": "cd4160e6ec6da0cc50738183c8f0544098f70695f2a8cdd4b867b49210db3799",
+    "coefficient_matrix_shape": [
+      882,
+      1029
+    ],
+    "coefficient_transform_real_imag": true,
+    "coefficient_transform_real_imag_layout": "separate_real_and_imag_real_gemms",
+    "combined_real_imag_transform_opt_in": false,
+    "contraction_count_scope": "forward reference evaluation and backward field projection; coefficient transforms and metric products excluded",
+    "degree": 6,
+    "element_dimension": 882,
+    "element_family": "N1E",
+    "element_variant": "legendre",
+    "embedded_superdegree": 6,
+    "forward_tensor_contraction_count": 66960,
+    "forward_tensor_contraction_counts": {
+      "x": 22320,
+      "y": 22320,
+      "z": 22320
+    },
+    "map_type": "covariantPiola",
+    "native_tensor_product_api": false,
+    "one_dimensional_reference_tables_bytes": 2688,
+    "polyset_type": "standard",
+    "projection_layout_v31_blas_pack_upper_bound_bytes": 50176,
+    "projection_layout_v31_candidate": {
+      "continuous_projection_matmul": false,
+      "natural_order_internal": false
+    },
+    "projection_layout_v31_scratch_bytes": 302848,
+    "quadrature_order": "actual_points_to_tensor_grid_checked",
+    "quadrature_points": 512,
+    "quadrature_shape": [
+      8,
+      8,
+      8
+    ],
+    "quadrature_weights_sha256": "5eedb32c5e648bf31a102add0c230ccd7513f59b75fc28b21dd2c613db1ef09d",
+    "reuse_projection_work_opt_in": false,
+    "shared_contraction_scratch_bytes": 0,
+    "shared_contractions_opt_in": false,
+    "temporary_einsum_workspace_upper_bound_bytes": 347136,
+    "temporary_local_intermediate_upper_bound_bytes": 9456592,
+    "temporary_workspace_upper_bound_bytes": 9803728,
+    "workspace_scope": "one fixed local batch; no global matrix or cell tensor"
+  },
+  "command": "source scripts/activate_myfenics_wsl.sh && python -m benchmarks.run_task39extra_v31_projection_layout --input /home/shenjh/Projects/MyFEniCSx_task37_extra/input/task39extra/v30_workstation_guided_original_h7p5.dat --early-vector /home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/x2_residual_0000_0000.npz --late-vector /home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/x2_residual_0126_0020.npz --output /home/shenjh/Projects/MyFEniCSx_task37_extra/docs/task039_extra_physical_multilevel/outcomes/records/projection_layout_v31_components.json",
+  "complete_A6_A4": {
+    "A4_probe_source": "fixed_seed_nonzero_strict_slave_zero",
+    "action_roles": {
+      "A4": "full physical verification action compared with independent native FFCx volume and DtN",
+      "A6": "full physical action compared with independent native FFCx volume and DtN"
+    },
+    "passes_1e-10": true,
+    "variants": {
+      "legacy": {
+        "A4": {
+          "candidate_kernel_audits": [
+            {
+              "backend": "isotropic_sum_factorized_n1e_v26",
+              "backward_projection_count": 2232,
+              "backward_tensor_contraction_count": 6696,
+              "backward_tensor_contraction_counts": {
+                "x": 2232,
+                "y": 2232,
+                "z": 2232
+              },
+              "batch_workspace_bytes": 801408,
+              "coefficient_matrix_bytes": 900000,
+              "coefficient_matrix_sha256": "fdf0b9544b06147ff9d0d1830620b38edb76842dffd337dee9601b70bf660243",
+              "coefficient_matrix_shape": [
+                300,
+                375
+              ],
+              "coefficient_transform_real_imag": true,
+              "coefficient_transform_real_imag_layout": "separate_real_and_imag_real_gemms",
+              "combined_real_imag_transform_opt_in": false,
+              "contraction_count_scope": "forward reference evaluation and backward field projection; coefficient transforms and metric products excluded",
+              "degree": 4,
+              "element_dimension": 300,
+              "element_family": "N1E",
+              "element_variant": "legendre",
+              "embedded_superdegree": 4,
+              "forward_tensor_contraction_count": 6696,
+              "forward_tensor_contraction_counts": {
+                "x": 2232,
+                "y": 2232,
+                "z": 2232
+              },
+              "map_type": "covariantPiola",
+              "native_tensor_product_api": false,
+              "one_dimensional_reference_tables_bytes": 1440,
+              "polyset_type": "standard",
+              "projection_layout_v31_blas_pack_upper_bound_bytes": 19200,
+              "projection_layout_v31_candidate": {
+                "continuous_projection_matmul": false,
+                "natural_order_internal": false
+              },
+              "projection_layout_v31_scratch_bytes": 0,
+              "quadrature_order": "actual_points_to_tensor_grid_checked",
+              "quadrature_points": 216,
+              "quadrature_shape": [
+                6,
+                6,
+                6
+              ],
+              "quadrature_weights_sha256": "13d2d97a176260b03dbe412ebb2a28a40102e7c76dd40fb5e907709ebc83594e",
+              "reuse_projection_work_opt_in": false,
+              "shared_contraction_scratch_bytes": 0,
+              "shared_contractions_opt_in": false,
+              "temporary_einsum_workspace_upper_bound_bytes": 140544,
+              "temporary_local_intermediate_upper_bound_bytes": 1762720,
+              "temporary_workspace_upper_bound_bytes": 1903264,
+              "workspace_scope": "one fixed local batch; no global matrix or cell tensor"
+            },
+            {
+              "backend": "isotropic_sum_factorized_n1e_v26",
+              "backward_projection_count": 1116,
+              "backward_tensor_contraction_count": 3348,
+              "backward_tensor_contraction_counts": {
+                "x": 1116,
+                "y": 1116,
+                "z": 1116
+              },
+              "batch_workspace_bytes": 801408,
+              "coefficient_matrix_bytes": 900000,
+              "coefficient_matrix_sha256": "fdf0b9544b06147ff9d0d1830620b38edb76842dffd337dee9601b70bf660243",
+              "coefficient_matrix_shape": [
+                300,
+                375
+              ],
+              "coefficient_transform_real_imag": true,
+              "coefficient_transform_real_imag_layout": "separate_real_and_imag_real_gemms",
+              "combined_real_imag_transform_opt_in": false,
+              "contraction_count_scope": "forward reference evaluation and backward field projection; coefficient transforms and metric products excluded",
+              "degree": 4,
+              "element_dimension": 300,
+              "element_family": "N1E",
+              "element_variant": "legendre",
+              "embedded_superdegree": 4,
+              "forward_tensor_contraction_count": 3348,
+              "forward_tensor_contraction_counts": {
+                "x": 1116,
+                "y": 1116,
+                "z": 1116
+              },
+              "map_type": "covariantPiola",
+              "native_tensor_product_api": false,
+              "one_dimensional_reference_tables_bytes": 1440,
+              "polyset_type": "standard",
+              "projection_layout_v31_blas_pack_upper_bound_bytes": 19200,
+              "projection_layout_v31_candidate": {
+                "continuous_projection_matmul": false,
+                "natural_order_internal": false
+              },
+              "projection_layout_v31_scratch_bytes": 0,
+              "quadrature_order": "actual_points_to_tensor_grid_checked",
+              "quadrature_points": 216,
+              "quadrature_shape": [
+                6,
+                6,
+                6
+              ],
+              "quadrature_weights_sha256": "13d2d97a176260b03dbe412ebb2a28a40102e7c76dd40fb5e907709ebc83594e",
+              "reuse_projection_work_opt_in": false,
+              "shared_contraction_scratch_bytes": 0,
+              "shared_contractions_opt_in": false,
+              "temporary_einsum_workspace_upper_bound_bytes": 140544,
+              "temporary_local_intermediate_upper_bound_bytes": 1762720,
+              "temporary_workspace_upper_bound_bytes": 1903264,
+              "workspace_scope": "one fixed local batch; no global matrix or cell tensor"
+            }
+          ],
+          "passes_1e-10": true,
+          "timing_scope": "one warmed diagnostic apply per action/vector; not used for performance adoption",
+          "vectors": {
+            "fixed_seed_probe": {
+              "absolute_difference_norm": 1.0698772692075153e-09,
+              "candidate_cpu_seconds": 0.7027454479999946,
+              "candidate_output_sha256": "2da7d64d2eb6b98d4cdb178f89d03ac7944602b01f5c234e7b965c0af06de227",
+              "candidate_wall_seconds": 0.6442692830460146,
+              "candidate_warmup_calls_excluded": 2,
+              "input_unchanged": true,
+              "native_timing": {
+                "cpu_seconds": 0.7148269859999985,
+                "wall_seconds": 0.6553096720017493,
+                "warmup_calls_excluded": 1
+              },
+              "relative_difference": 3.037586810399479e-15
+            }
+          }
+        },
+        "A6": {
+          "candidate_kernel_audits": [
+            {
+              "backend": "isotropic_sum_factorized_n1e_v26",
+              "backward_projection_count": 4464,
+              "backward_tensor_contraction_count": 13392,
+              "backward_tensor_contraction_counts": {
+                "x": 4464,
+                "y": 4464,
+                "z": 4464
+              },
+              "batch_workspace_bytes": 1997184,
+              "coefficient_matrix_bytes": 7260624,
+              "coefficient_matrix_sha256": "cd4160e6ec6da0cc50738183c8f0544098f70695f2a8cdd4b867b49210db3799",
+              "coefficient_matrix_shape": [
+                882,
+                1029
+              ],
+              "coefficient_transform_real_imag": true,
+              "coefficient_transform_real_imag_layout": "separate_real_and_imag_real_gemms",
+              "combined_real_imag_transform_opt_in": false,
+              "contraction_count_scope": "forward reference evaluation and backward field projection; coefficient transforms and metric products excluded",
+              "degree": 6,
+              "element_dimension": 882,
+              "element_family": "N1E",
+              "element_variant": "legendre",
+              "embedded_superdegree": 6,
+              "forward_tensor_contraction_count": 13392,
+              "forward_tensor_contraction_counts": {
+                "x": 4464,
+                "y": 4464,
+                "z": 4464
+              },
+              "map_type": "covariantPiola",
+              "native_tensor_product_api": false,
+              "one_dimensional_reference_tables_bytes": 2688,
+              "polyset_type": "standard",
+              "projection_layout_v31_blas_pack_upper_bound_bytes": 50176,
+              "projection_layout_v31_candidate": {
+                "continuous_projection_matmul": false,
+                "natural_order_internal": false
+              },
+              "projection_layout_v31_scratch_bytes": 0,
+              "quadrature_order": "actual_points_to_tensor_grid_checked",
+              "quadrature_points": 512,
+              "quadrature_shape": [
+                8,
+                8,
+                8
+              ],
+              "quadrature_weights_sha256": "5eedb32c5e648bf31a102add0c230ccd7513f59b75fc28b21dd2c613db1ef09d",
+              "reuse_projection_work_opt_in": false,
+              "shared_contraction_scratch_bytes": 0,
+              "shared_contractions_opt_in": false,
+              "temporary_einsum_workspace_upper_bound_bytes": 347136,
+              "temporary_local_intermediate_upper_bound_bytes": 9456592,
+              "temporary_workspace_upper_bound_bytes": 9803728,
+              "workspace_scope": "one fixed local batch; no global matrix or cell tensor"
+            },
+            {
+              "backend": "isotropic_sum_factorized_n1e_v26",
+              "backward_projection_count": 2232,
+              "backward_tensor_contraction_count": 6696,
+              "backward_tensor_contraction_counts": {
+                "x": 2232,
+                "y": 2232,
+                "z": 2232
+              },
+              "batch_workspace_bytes": 1997184,
+              "coefficient_matrix_bytes": 7260624,
+              "coefficient_matrix_sha256": "cd4160e6ec6da0cc50738183c8f0544098f70695f2a8cdd4b867b49210db3799",
+              "coefficient_matrix_shape": [
+                882,
+                1029
+              ],
+              "coefficient_transform_real_imag": true,
+              "coefficient_transform_real_imag_layout": "separate_real_and_imag_real_gemms",
+              "combined_real_imag_transform_opt_in": false,
+              "contraction_count_scope": "forward reference evaluation and backward field projection; coefficient transforms and metric products excluded",
+              "degree": 6,
+              "element_dimension": 882,
+              "element_family": "N1E",
+              "element_variant": "legendre",
+              "embedded_superdegree": 6,
+              "forward_tensor_contraction_count": 6696,
+              "forward_tensor_contraction_counts": {
+                "x": 2232,
+                "y": 2232,
+                "z": 2232
+              },
+              "map_type": "covariantPiola",
+              "native_tensor_product_api": false,
+              "one_dimensional_reference_tables_bytes": 2688,
+              "polyset_type": "standard",
+              "projection_layout_v31_blas_pack_upper_bound_bytes": 50176,
+              "projection_layout_v31_candidate": {
+                "continuous_projection_matmul": false,
+                "natural_order_internal": false
+              },
+              "projection_layout_v31_scratch_bytes": 0,
+              "quadrature_order": "actual_points_to_tensor_grid_checked",
+              "quadrature_points": 512,
+              "quadrature_shape": [
+                8,
+                8,
+                8
+              ],
+              "quadrature_weights_sha256": "5eedb32c5e648bf31a102add0c230ccd7513f59b75fc28b21dd2c613db1ef09d",
+              "reuse_projection_work_opt_in": false,
+              "shared_contraction_scratch_bytes": 0,
+              "shared_contractions_opt_in": false,
+              "temporary_einsum_workspace_upper_bound_bytes": 347136,
+              "temporary_local_intermediate_upper_bound_bytes": 9456592,
+              "temporary_workspace_upper_bound_bytes": 9803728,
+              "workspace_scope": "one fixed local batch; no global matrix or cell tensor"
+            }
+          ],
+          "passes_1e-10": true,
+          "timing_scope": "one warmed diagnostic apply per action/vector; not used for performance adoption",
+          "vectors": {
+            "early_iter0": {
+              "absolute_difference_norm": 1.5912785658262103e-11,
+              "candidate_cpu_seconds": 2.651594788000004,
+              "candidate_output_sha256": "ce7969ca900e4aca8b158f8f69802e7e8ee5e35f89e12081c32fda3823b5ec6e",
+              "candidate_wall_seconds": 2.431170383002609,
+              "candidate_warmup_calls_excluded": 2,
+              "input_unchanged": true,
+              "native_timing": {
+                "cpu_seconds": 5.988847570000001,
+                "wall_seconds": 5.491895858955104,
+                "warmup_calls_excluded": 1
+              },
+              "relative_difference": 9.523808032998395e-15
+            },
+            "late_iter126": {
+              "absolute_difference_norm": 3.943430906581676e-17,
+              "candidate_cpu_seconds": 3.2840264470000022,
+              "candidate_output_sha256": "760628980a0a25d3d956c98786954044c2460b79754ed77e39f724fe85abf326",
+              "candidate_wall_seconds": 3.0106401649536565,
+              "candidate_warmup_calls_excluded": 2,
+              "input_unchanged": true,
+              "native_timing": {
+                "cpu_seconds": 7.0564096489999955,
+                "wall_seconds": 6.469058757007588,
+                "warmup_calls_excluded": 1
+              },
+              "relative_difference": 6.519993281892955e-15
+            }
+          }
+        }
+      },
+      "natural_order": {
+        "A4": {
+          "candidate_kernel_audits": [
+            {
+              "backend": "isotropic_sum_factorized_n1e_v26",
+              "backward_projection_count": 4464,
+              "backward_tensor_contraction_count": 13392,
+              "backward_tensor_contraction_counts": {
+                "x": 4464,
+                "y": 4464,
+                "z": 4464
+              },
+              "batch_workspace_bytes": 801408,
+              "coefficient_matrix_bytes": 900000,
+              "coefficient_matrix_sha256": "fdf0b9544b06147ff9d0d1830620b38edb76842dffd337dee9601b70bf660243",
+              "coefficient_matrix_shape": [
+                300,
+                375
+              ],
+              "coefficient_transform_real_imag": true,
+              "coefficient_transform_real_imag_layout": "separate_real_and_imag_real_gemms",
+              "combined_real_imag_transform_opt_in": false,
+              "contraction_count_scope": "forward reference evaluation and backward field projection; coefficient transforms and metric products excluded",
+              "degree": 4,
+              "element_dimension": 300,
+              "element_family": "N1E",
+              "element_variant": "legendre",
+              "embedded_superdegree": 4,
+              "forward_tensor_contraction_count": 13392,
+              "forward_tensor_contraction_counts": {
+                "x": 4464,
+                "y": 4464,
+                "z": 4464
+              },
+              "map_type": "covariantPiola",
+              "native_tensor_product_api": false,
+              "one_dimensional_reference_tables_bytes": 1440,
+              "polyset_type": "standard",
+              "projection_layout_v31_blas_pack_upper_bound_bytes": 19200,
+              "projection_layout_v31_candidate": {
+                "continuous_projection_matmul": false,
+                "natural_order_internal": true
+              },
+              "projection_layout_v31_scratch_bytes": 0,
+              "quadrature_order": "actual_points_to_tensor_grid_checked",
+              "quadrature_points": 216,
+              "quadrature_shape": [
+                6,
+                6,
+                6
+              ],
+              "quadrature_weights_sha256": "13d2d97a176260b03dbe412ebb2a28a40102e7c76dd40fb5e907709ebc83594e",
+              "reuse_projection_work_opt_in": false,
+              "shared_contraction_scratch_bytes": 0,
+              "shared_contractions_opt_in": false,
+              "temporary_einsum_workspace_upper_bound_bytes": 140544,
+              "temporary_local_intermediate_upper_bound_bytes": 1762720,
+              "temporary_workspace_upper_bound_bytes": 1903264,
+              "workspace_scope": "one fixed local batch; no global matrix or cell tensor"
+            },
+            {
+              "backend": "isotropic_sum_factorized_n1e_v26",
+              "backward_projection_count": 2232,
+              "backward_tensor_contraction_count": 6696,
+              "backward_tensor_contraction_counts": {
+                "x": 2232,
+                "y": 2232,
+                "z": 2232
+              },
+              "batch_workspace_bytes": 801408,
+              "coefficient_matrix_bytes": 900000,
+              "coefficient_matrix_sha256": "fdf0b9544b06147ff9d0d1830620b38edb76842dffd337dee9601b70bf660243",
+              "coefficient_matrix_shape": [
+                300,
+                375
+              ],
+              "coefficient_transform_real_imag": true,
+              "coefficient_transform_real_imag_layout": "separate_real_and_imag_real_gemms",
+              "combined_real_imag_transform_opt_in": false,
+              "contraction_count_scope": "forward reference evaluation and backward field projection; coefficient transforms and metric products excluded",
+              "degree": 4,
+              "element_dimension": 300,
+              "element_family": "N1E",
+              "element_variant": "legendre",
+              "embedded_superdegree": 4,
+              "forward_tensor_contraction_count": 6696,
+              "forward_tensor_contraction_counts": {
+                "x": 2232,
+                "y": 2232,
+                "z": 2232
+              },
+              "map_type": "covariantPiola",
+              "native_tensor_product_api": false,
+              "one_dimensional_reference_tables_bytes": 1440,
+              "polyset_type": "standard",
+              "projection_layout_v31_blas_pack_upper_bound_bytes": 19200,
+              "projection_layout_v31_candidate": {
+                "continuous_projection_matmul": false,
+                "natural_order_internal": true
+              },
+              "projection_layout_v31_scratch_bytes": 0,
+              "quadrature_order": "actual_points_to_tensor_grid_checked",
+              "quadrature_points": 216,
+              "quadrature_shape": [
+                6,
+                6,
+                6
+              ],
+              "quadrature_weights_sha256": "13d2d97a176260b03dbe412ebb2a28a40102e7c76dd40fb5e907709ebc83594e",
+              "reuse_projection_work_opt_in": false,
+              "shared_contraction_scratch_bytes": 0,
+              "shared_contractions_opt_in": false,
+              "temporary_einsum_workspace_upper_bound_bytes": 140544,
+              "temporary_local_intermediate_upper_bound_bytes": 1762720,
+              "temporary_workspace_upper_bound_bytes": 1903264,
+              "workspace_scope": "one fixed local batch; no global matrix or cell tensor"
+            }
+          ],
+          "passes_1e-10": true,
+          "timing_scope": "one warmed diagnostic apply per action/vector; not used for performance adoption",
+          "vectors": {
+            "fixed_seed_probe": {
+              "absolute_difference_norm": 1.0698772692075153e-09,
+              "candidate_cpu_seconds": 0.5456059460000091,
+              "candidate_output_sha256": "2da7d64d2eb6b98d4cdb178f89d03ac7944602b01f5c234e7b965c0af06de227",
+              "candidate_wall_seconds": 0.500145448022522,
+              "candidate_warmup_calls_excluded": 2,
+              "input_unchanged": true,
+              "native_timing": {
+                "cpu_seconds": 0.7148269859999985,
+                "wall_seconds": 0.6553096720017493,
+                "warmup_calls_excluded": 1
+              },
+              "relative_difference": 3.037586810399479e-15
+            }
+          }
+        },
+        "A6": {
+          "candidate_kernel_audits": [
+            {
+              "backend": "isotropic_sum_factorized_n1e_v26",
+              "backward_projection_count": 8928,
+              "backward_tensor_contraction_count": 26784,
+              "backward_tensor_contraction_counts": {
+                "x": 8928,
+                "y": 8928,
+                "z": 8928
+              },
+              "batch_workspace_bytes": 1997184,
+              "coefficient_matrix_bytes": 7260624,
+              "coefficient_matrix_sha256": "cd4160e6ec6da0cc50738183c8f0544098f70695f2a8cdd4b867b49210db3799",
+              "coefficient_matrix_shape": [
+                882,
+                1029
+              ],
+              "coefficient_transform_real_imag": true,
+              "coefficient_transform_real_imag_layout": "separate_real_and_imag_real_gemms",
+              "combined_real_imag_transform_opt_in": false,
+              "contraction_count_scope": "forward reference evaluation and backward field projection; coefficient transforms and metric products excluded",
+              "degree": 6,
+              "element_dimension": 882,
+              "element_family": "N1E",
+              "element_variant": "legendre",
+              "embedded_superdegree": 6,
+              "forward_tensor_contraction_count": 26784,
+              "forward_tensor_contraction_counts": {
+                "x": 8928,
+                "y": 8928,
+                "z": 8928
+              },
+              "map_type": "covariantPiola",
+              "native_tensor_product_api": false,
+              "one_dimensional_reference_tables_bytes": 2688,
+              "polyset_type": "standard",
+              "projection_layout_v31_blas_pack_upper_bound_bytes": 50176,
+              "projection_layout_v31_candidate": {
+                "continuous_projection_matmul": false,
+                "natural_order_internal": true
+              },
+              "projection_layout_v31_scratch_bytes": 0,
+              "quadrature_order": "actual_points_to_tensor_grid_checked",
+              "quadrature_points": 512,
+              "quadrature_shape": [
+                8,
+                8,
+                8
+              ],
+              "quadrature_weights_sha256": "5eedb32c5e648bf31a102add0c230ccd7513f59b75fc28b21dd2c613db1ef09d",
+              "reuse_projection_work_opt_in": false,
+              "shared_contraction_scratch_bytes": 0,
+              "shared_contractions_opt_in": false,
+              "temporary_einsum_workspace_upper_bound_bytes": 347136,
+              "temporary_local_intermediate_upper_bound_bytes": 9456592,
+              "temporary_workspace_upper_bound_bytes": 9803728,
+              "workspace_scope": "one fixed local batch; no global matrix or cell tensor"
+            },
+            {
+              "backend": "isotropic_sum_factorized_n1e_v26",
+              "backward_projection_count": 4464,
+              "backward_tensor_contraction_count": 13392,
+              "backward_tensor_contraction_counts": {
+                "x": 4464,
+                "y": 4464,
+                "z": 4464
+              },
+              "batch_workspace_bytes": 1997184,
+              "coefficient_matrix_bytes": 7260624,
+              "coefficient_matrix_sha256": "cd4160e6ec6da0cc50738183c8f0544098f70695f2a8cdd4b867b49210db3799",
+              "coefficient_matrix_shape": [
+                882,
+                1029
+              ],
+              "coefficient_transform_real_imag": true,
+              "coefficient_transform_real_imag_layout": "separate_real_and_imag_real_gemms",
+              "combined_real_imag_transform_opt_in": false,
+              "contraction_count_scope": "forward reference evaluation and backward field projection; coefficient transforms and metric products excluded",
+              "degree": 6,
+              "element_dimension": 882,
+              "element_family": "N1E",
+              "element_variant": "legendre",
+              "embedded_superdegree": 6,
+              "forward_tensor_contraction_count": 13392,
+              "forward_tensor_contraction_counts": {
+                "x": 4464,
+                "y": 4464,
+                "z": 4464
+              },
+              "map_type": "covariantPiola",
+              "native_tensor_product_api": false,
+              "one_dimensional_reference_tables_bytes": 2688,
+              "polyset_type": "standard",
+              "projection_layout_v31_blas_pack_upper_bound_bytes": 50176,
+              "projection_layout_v31_candidate": {
+                "continuous_projection_matmul": false,
+                "natural_order_internal": true
+              },
+              "projection_layout_v31_scratch_bytes": 0,
+              "quadrature_order": "actual_points_to_tensor_grid_checked",
+              "quadrature_points": 512,
+              "quadrature_shape": [
+                8,
+                8,
+                8
+              ],
+              "quadrature_weights_sha256": "5eedb32c5e648bf31a102add0c230ccd7513f59b75fc28b21dd2c613db1ef09d",
+              "reuse_projection_work_opt_in": false,
+              "shared_contraction_scratch_bytes": 0,
+              "shared_contractions_opt_in": false,
+              "temporary_einsum_workspace_upper_bound_bytes": 347136,
+              "temporary_local_intermediate_upper_bound_bytes": 9456592,
+              "temporary_workspace_upper_bound_bytes": 9803728,
+              "workspace_scope": "one fixed local batch; no global matrix or cell tensor"
+            }
+          ],
+          "passes_1e-10": true,
+          "timing_scope": "one warmed diagnostic apply per action/vector; not used for performance adoption",
+          "vectors": {
+            "early_iter0": {
+              "absolute_difference_norm": 1.5912785658262103e-11,
+              "candidate_cpu_seconds": 2.073726277999995,
+              "candidate_output_sha256": "ce7969ca900e4aca8b158f8f69802e7e8ee5e35f89e12081c32fda3823b5ec6e",
+              "candidate_wall_seconds": 1.9009634100366384,
+              "candidate_warmup_calls_excluded": 2,
+              "input_unchanged": true,
+              "native_timing": {
+                "cpu_seconds": 5.988847570000001,
+                "wall_seconds": 5.491895858955104,
+                "warmup_calls_excluded": 1
+              },
+              "relative_difference": 9.523808032998395e-15
+            },
+            "late_iter126": {
+              "absolute_difference_norm": 3.943430906581676e-17,
+              "candidate_cpu_seconds": 2.0241789020000027,
+              "candidate_output_sha256": "760628980a0a25d3d956c98786954044c2460b79754ed77e39f724fe85abf326",
+              "candidate_wall_seconds": 1.8555596669903025,
+              "candidate_warmup_calls_excluded": 2,
+              "input_unchanged": true,
+              "native_timing": {
+                "cpu_seconds": 7.0564096489999955,
+                "wall_seconds": 6.469058757007588,
+                "warmup_calls_excluded": 1
+              },
+              "relative_difference": 6.519993281892955e-15
+            }
+          }
+        }
+      },
+      "natural_order_fixed_matmul": {
+        "A4": {
+          "candidate_kernel_audits": [
+            {
+              "backend": "isotropic_sum_factorized_n1e_v26",
+              "backward_projection_count": 6696,
+              "backward_tensor_contraction_count": 20088,
+              "backward_tensor_contraction_counts": {
+                "x": 6696,
+                "y": 6696,
+                "z": 6696
+              },
+              "batch_workspace_bytes": 917888,
+              "coefficient_matrix_bytes": 900000,
+              "coefficient_matrix_sha256": "fdf0b9544b06147ff9d0d1830620b38edb76842dffd337dee9601b70bf660243",
+              "coefficient_matrix_shape": [
+                300,
+                375
+              ],
+              "coefficient_transform_real_imag": true,
+              "coefficient_transform_real_imag_layout": "separate_real_and_imag_real_gemms",
+              "combined_real_imag_transform_opt_in": false,
+              "contraction_count_scope": "forward reference evaluation and backward field projection; coefficient transforms and metric products excluded",
+              "degree": 4,
+              "element_dimension": 300,
+              "element_family": "N1E",
+              "element_variant": "legendre",
+              "embedded_superdegree": 4,
+              "forward_tensor_contraction_count": 20088,
+              "forward_tensor_contraction_counts": {
+                "x": 6696,
+                "y": 6696,
+                "z": 6696
+              },
+              "map_type": "covariantPiola",
+              "native_tensor_product_api": false,
+              "one_dimensional_reference_tables_bytes": 1440,
+              "polyset_type": "standard",
+              "projection_layout_v31_blas_pack_upper_bound_bytes": 19200,
+              "projection_layout_v31_candidate": {
+                "continuous_projection_matmul": true,
+                "natural_order_internal": true
+              },
+              "projection_layout_v31_scratch_bytes": 116480,
+              "quadrature_order": "actual_points_to_tensor_grid_checked",
+              "quadrature_points": 216,
+              "quadrature_shape": [
+                6,
+                6,
+                6
+              ],
+              "quadrature_weights_sha256": "13d2d97a176260b03dbe412ebb2a28a40102e7c76dd40fb5e907709ebc83594e",
+              "reuse_projection_work_opt_in": false,
+              "shared_contraction_scratch_bytes": 0,
+              "shared_contractions_opt_in": false,
+              "temporary_einsum_workspace_upper_bound_bytes": 140544,
+              "temporary_local_intermediate_upper_bound_bytes": 1762720,
+              "temporary_workspace_upper_bound_bytes": 1903264,
+              "workspace_scope": "one fixed local batch; no global matrix or cell tensor"
+            },
+            {
+              "backend": "isotropic_sum_factorized_n1e_v26",
+              "backward_projection_count": 3348,
+              "backward_tensor_contraction_count": 10044,
+              "backward_tensor_contraction_counts": {
+                "x": 3348,
+                "y": 3348,
+                "z": 3348
+              },
+              "batch_workspace_bytes": 917888,
+              "coefficient_matrix_bytes": 900000,
+              "coefficient_matrix_sha256": "fdf0b9544b06147ff9d0d1830620b38edb76842dffd337dee9601b70bf660243",
+              "coefficient_matrix_shape": [
+                300,
+                375
+              ],
+              "coefficient_transform_real_imag": true,
+              "coefficient_transform_real_imag_layout": "separate_real_and_imag_real_gemms",
+              "combined_real_imag_transform_opt_in": false,
+              "contraction_count_scope": "forward reference evaluation and backward field projection; coefficient transforms and metric products excluded",
+              "degree": 4,
+              "element_dimension": 300,
+              "element_family": "N1E",
+              "element_variant": "legendre",
+              "embedded_superdegree": 4,
+              "forward_tensor_contraction_count": 10044,
+              "forward_tensor_contraction_counts": {
+                "x": 3348,
+                "y": 3348,
+                "z": 3348
+              },
+              "map_type": "covariantPiola",
+              "native_tensor_product_api": false,
+              "one_dimensional_reference_tables_bytes": 1440,
+              "polyset_type": "standard",
+              "projection_layout_v31_blas_pack_upper_bound_bytes": 19200,
+              "projection_layout_v31_candidate": {
+                "continuous_projection_matmul": true,
+                "natural_order_internal": true
+              },
+              "projection_layout_v31_scratch_bytes": 116480,
+              "quadrature_order": "actual_points_to_tensor_grid_checked",
+              "quadrature_points": 216,
+              "quadrature_shape": [
+                6,
+                6,
+                6
+              ],
+              "quadrature_weights_sha256": "13d2d97a176260b03dbe412ebb2a28a40102e7c76dd40fb5e907709ebc83594e",
+              "reuse_projection_work_opt_in": false,
+              "shared_contraction_scratch_bytes": 0,
+              "shared_contractions_opt_in": false,
+              "temporary_einsum_workspace_upper_bound_bytes": 140544,
+              "temporary_local_intermediate_upper_bound_bytes": 1762720,
+              "temporary_workspace_upper_bound_bytes": 1903264,
+              "workspace_scope": "one fixed local batch; no global matrix or cell tensor"
+            }
+          ],
+          "passes_1e-10": true,
+          "timing_scope": "one warmed diagnostic apply per action/vector; not used for performance adoption",
+          "vectors": {
+            "fixed_seed_probe": {
+              "absolute_difference_norm": 1.0698772692075153e-09,
+              "candidate_cpu_seconds": 0.39893254400000444,
+              "candidate_output_sha256": "2da7d64d2eb6b98d4cdb178f89d03ac7944602b01f5c234e7b965c0af06de227",
+              "candidate_wall_seconds": 0.365694317035377,
+              "candidate_warmup_calls_excluded": 2,
+              "input_unchanged": true,
+              "native_timing": {
+                "cpu_seconds": 0.7148269859999985,
+                "wall_seconds": 0.6553096720017493,
+                "warmup_calls_excluded": 1
+              },
+              "relative_difference": 3.037586810399479e-15
+            }
+          }
+        },
+        "A6": {
+          "candidate_kernel_audits": [
+            {
+              "backend": "isotropic_sum_factorized_n1e_v26",
+              "backward_projection_count": 13392,
+              "backward_tensor_contraction_count": 40176,
+              "backward_tensor_contraction_counts": {
+                "x": 13392,
+                "y": 13392,
+                "z": 13392
+              },
+              "batch_workspace_bytes": 2300032,
+              "coefficient_matrix_bytes": 7260624,
+              "coefficient_matrix_sha256": "cd4160e6ec6da0cc50738183c8f0544098f70695f2a8cdd4b867b49210db3799",
+              "coefficient_matrix_shape": [
+                882,
+                1029
+              ],
+              "coefficient_transform_real_imag": true,
+              "coefficient_transform_real_imag_layout": "separate_real_and_imag_real_gemms",
+              "combined_real_imag_transform_opt_in": false,
+              "contraction_count_scope": "forward reference evaluation and backward field projection; coefficient transforms and metric products excluded",
+              "degree": 6,
+              "element_dimension": 882,
+              "element_family": "N1E",
+              "element_variant": "legendre",
+              "embedded_superdegree": 6,
+              "forward_tensor_contraction_count": 40176,
+              "forward_tensor_contraction_counts": {
+                "x": 13392,
+                "y": 13392,
+                "z": 13392
+              },
+              "map_type": "covariantPiola",
+              "native_tensor_product_api": false,
+              "one_dimensional_reference_tables_bytes": 2688,
+              "polyset_type": "standard",
+              "projection_layout_v31_blas_pack_upper_bound_bytes": 50176,
+              "projection_layout_v31_candidate": {
+                "continuous_projection_matmul": true,
+                "natural_order_internal": true
+              },
+              "projection_layout_v31_scratch_bytes": 302848,
+              "quadrature_order": "actual_points_to_tensor_grid_checked",
+              "quadrature_points": 512,
+              "quadrature_shape": [
+                8,
+                8,
+                8
+              ],
+              "quadrature_weights_sha256": "5eedb32c5e648bf31a102add0c230ccd7513f59b75fc28b21dd2c613db1ef09d",
+              "reuse_projection_work_opt_in": false,
+              "shared_contraction_scratch_bytes": 0,
+              "shared_contractions_opt_in": false,
+              "temporary_einsum_workspace_upper_bound_bytes": 347136,
+              "temporary_local_intermediate_upper_bound_bytes": 9456592,
+              "temporary_workspace_upper_bound_bytes": 9803728,
+              "workspace_scope": "one fixed local batch; no global matrix or cell tensor"
+            },
+            {
+              "backend": "isotropic_sum_factorized_n1e_v26",
+              "backward_projection_count": 6696,
+              "backward_tensor_contraction_count": 20088,
+              "backward_tensor_contraction_counts": {
+                "x": 6696,
+                "y": 6696,
+                "z": 6696
+              },
+              "batch_workspace_bytes": 2300032,
+              "coefficient_matrix_bytes": 7260624,
+              "coefficient_matrix_sha256": "cd4160e6ec6da0cc50738183c8f0544098f70695f2a8cdd4b867b49210db3799",
+              "coefficient_matrix_shape": [
+                882,
+                1029
+              ],
+              "coefficient_transform_real_imag": true,
+              "coefficient_transform_real_imag_layout": "separate_real_and_imag_real_gemms",
+              "combined_real_imag_transform_opt_in": false,
+              "contraction_count_scope": "forward reference evaluation and backward field projection; coefficient transforms and metric products excluded",
+              "degree": 6,
+              "element_dimension": 882,
+              "element_family": "N1E",
+              "element_variant": "legendre",
+              "embedded_superdegree": 6,
+              "forward_tensor_contraction_count": 20088,
+              "forward_tensor_contraction_counts": {
+                "x": 6696,
+                "y": 6696,
+                "z": 6696
+              },
+              "map_type": "covariantPiola",
+              "native_tensor_product_api": false,
+              "one_dimensional_reference_tables_bytes": 2688,
+              "polyset_type": "standard",
+              "projection_layout_v31_blas_pack_upper_bound_bytes": 50176,
+              "projection_layout_v31_candidate": {
+                "continuous_projection_matmul": true,
+                "natural_order_internal": true
+              },
+              "projection_layout_v31_scratch_bytes": 302848,
+              "quadrature_order": "actual_points_to_tensor_grid_checked",
+              "quadrature_points": 512,
+              "quadrature_shape": [
+                8,
+                8,
+                8
+              ],
+              "quadrature_weights_sha256": "5eedb32c5e648bf31a102add0c230ccd7513f59b75fc28b21dd2c613db1ef09d",
+              "reuse_projection_work_opt_in": false,
+              "shared_contraction_scratch_bytes": 0,
+              "shared_contractions_opt_in": false,
+              "temporary_einsum_workspace_upper_bound_bytes": 347136,
+              "temporary_local_intermediate_upper_bound_bytes": 9456592,
+              "temporary_workspace_upper_bound_bytes": 9803728,
+              "workspace_scope": "one fixed local batch; no global matrix or cell tensor"
+            }
+          ],
+          "passes_1e-10": true,
+          "timing_scope": "one warmed diagnostic apply per action/vector; not used for performance adoption",
+          "vectors": {
+            "early_iter0": {
+              "absolute_difference_norm": 1.5912785658262103e-11,
+              "candidate_cpu_seconds": 2.547607749000008,
+              "candidate_output_sha256": "ce7969ca900e4aca8b158f8f69802e7e8ee5e35f89e12081c32fda3823b5ec6e",
+              "candidate_wall_seconds": 2.335486171010416,
+              "candidate_warmup_calls_excluded": 2,
+              "input_unchanged": true,
+              "native_timing": {
+                "cpu_seconds": 5.988847570000001,
+                "wall_seconds": 5.491895858955104,
+                "warmup_calls_excluded": 1
+              },
+              "relative_difference": 9.523808032998395e-15
+            },
+            "late_iter126": {
+              "absolute_difference_norm": 3.943430906581676e-17,
+              "candidate_cpu_seconds": 2.2631642220000003,
+              "candidate_output_sha256": "760628980a0a25d3d956c98786954044c2460b79754ed77e39f724fe85abf326",
+              "candidate_wall_seconds": 2.074600560008548,
+              "candidate_warmup_calls_excluded": 2,
+              "input_unchanged": true,
+              "native_timing": {
+                "cpu_seconds": 7.0564096489999955,
+                "wall_seconds": 6.469058757007588,
+                "warmup_calls_excluded": 1
+              },
+              "relative_difference": 6.519993281892955e-15
+            }
+          }
+        }
+      }
+    }
+  },
+  "diagnostic_only": true,
+  "fresh_candidate_power10": {
+    "passes": true,
+    "required_matvecs": 20,
+    "same_random_seed_recipe": true,
+    "same_reference_metric_diagonal": true,
+    "variants": {
+      "legacy": {
+        "h6_outputs": {
+          "early_iter0": {
+            "relative_difference_to_legacy_fresh_window": 0.0,
+            "sha256": "06ccae92d2ea51a7885126f8c052cbe375edcb4550ecd3fc9f3fd029ad9d5aea"
+          },
+          "late_iter126": {
+            "relative_difference_to_legacy_fresh_window": 0.0,
+            "sha256": "677e9fcf42d01ecdd0ca77bffa63411c99326ae75b1c0f82b0239058b65a1d0f"
+          }
+        },
+        "lambda_hi": 14.648596475283673,
+        "lambda_lo": 1.4648596475283675,
+        "passes_fresh_power10_gate": true,
+        "power10_b6_matvec_count": 20,
+        "power10_cpu_seconds": 45.10926992000003,
+        "power10_wall_seconds": 41.361814811010845,
+        "power_history": [
+          3.113333803755276,
+          7.453982463619662,
+          10.231696394515394,
+          11.626758319212435,
+          12.367787889277304,
+          12.769076691536691,
+          12.997813229824029,
+          13.141050525688538,
+          13.240809428202297,
+          13.31690588662152
+        ],
+        "seed_sha256": "3b7d31071626a258d3750bc5c0b20dd4d6817451aef098b1b46ad70bc8592d0a",
+        "window_relative_difference_to_legacy": {
+          "lambda_hi": 0.0,
+          "lambda_lo": 0.0
+        }
+      },
+      "natural_order": {
+        "h6_outputs": {
+          "early_iter0": {
+            "relative_difference_to_legacy_fresh_window": 0.0,
+            "sha256": "06ccae92d2ea51a7885126f8c052cbe375edcb4550ecd3fc9f3fd029ad9d5aea"
+          },
+          "late_iter126": {
+            "relative_difference_to_legacy_fresh_window": 0.0,
+            "sha256": "677e9fcf42d01ecdd0ca77bffa63411c99326ae75b1c0f82b0239058b65a1d0f"
+          }
+        },
+        "lambda_hi": 14.648596475283673,
+        "lambda_lo": 1.4648596475283675,
+        "passes_fresh_power10_gate": true,
+        "power10_b6_matvec_count": 20,
+        "power10_cpu_seconds": 40.660963815,
+        "power10_wall_seconds": 37.30990166898118,
+        "power_history": [
+          3.113333803755276,
+          7.453982463619662,
+          10.231696394515394,
+          11.626758319212435,
+          12.367787889277304,
+          12.769076691536691,
+          12.997813229824029,
+          13.141050525688538,
+          13.240809428202297,
+          13.31690588662152
+        ],
+        "seed_sha256": "3b7d31071626a258d3750bc5c0b20dd4d6817451aef098b1b46ad70bc8592d0a",
+        "window_relative_difference_to_legacy": {
+          "lambda_hi": 0.0,
+          "lambda_lo": 0.0
+        }
+      },
+      "natural_order_fixed_matmul": {
+        "h6_outputs": {
+          "early_iter0": {
+            "relative_difference_to_legacy_fresh_window": 7.518230046022513e-17,
+            "sha256": "41699a7d79501f5459fb6ff4f621cf9b68321d37b9863c6488be3137f656a8b6"
+          },
+          "late_iter126": {
+            "relative_difference_to_legacy_fresh_window": 5.815374242079478e-17,
+            "sha256": "5269e76e3efe3efae2e7478646f283c51b2ea8360b71835c2ec47c6697dde9d0"
+          }
+        },
+        "lambda_hi": 14.648596475283673,
+        "lambda_lo": 1.4648596475283675,
+        "passes_fresh_power10_gate": true,
+        "power10_b6_matvec_count": 20,
+        "power10_cpu_seconds": 38.004769512999985,
+        "power10_wall_seconds": 34.84054956998443,
+        "power_history": [
+          3.1133338037552756,
+          7.453982463619658,
+          10.231696394515398,
+          11.62675831921244,
+          12.3677878892773,
+          12.76907669153669,
+          12.997813229824027,
+          13.14105052568853,
+          13.240809428202297,
+          13.31690588662152
+        ],
+        "seed_sha256": "3b7d31071626a258d3750bc5c0b20dd4d6817451aef098b1b46ad70bc8592d0a",
+        "window_relative_difference_to_legacy": {
+          "lambda_hi": 0.0,
+          "lambda_lo": 0.0
+        }
+      }
+    }
+  },
+  "full_action_setup": {
+    "A4_native_audit": {
+      "apply_count": 0,
+      "dtn_action": {
+        "apply_count": 0,
+        "apply_modal_allreduce_count": 0,
+        "batch_count": 10,
+        "batch_size": 8,
+        "bounded_work_bytes_global_max": 256,
+        "bounded_work_bytes_global_sum": 256,
+        "bounded_work_bytes_local": 256,
+        "bounded_work_scales_with": "fixed_modal_batch_size",
+        "explicit_c_matrix_count": 0,
+        "explicit_d_matrix_count": 0,
+        "global_aij_materialized": false,
+        "global_schur_materialized": false,
+        "ksp_created": false,
+        "matrix_type": "python",
+        "modal_allreduce_count": 0,
+        "modal_allreduce_count_per_apply": 10,
+        "mode_count": 80,
+        "mode_manifest_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+        "normalization": "explicit_diagonal_projection_denominator_H",
+        "normalization_h_max": 1250.0000000000002,
+        "normalization_h_min": 0.3807331130650235,
+        "normalization_nonidentity": true,
+        "numeric_allgather": false,
+        "owner_local_surface_functionals": true,
+        "pde_solved": false,
+        "profile": "full3d_scalable_v1",
+        "recovery_modal_allreduce_count": 0,
+        "recovery_output_bytes": 1280,
+        "retained_identity_bytes": 86377,
+        "retained_numeric_bytes_global_max": 3304520,
+        "retained_numeric_bytes_global_sum": 3304520,
+        "retained_numeric_bytes_local": 3304520,
+        "schema": "fullspace-dtn.carrier.v1",
+        "slave_functional_rows_global": 0,
+        "slave_functional_rows_local": 0,
+        "slave_rows_local": 10000,
+        "trace_matrix_materialized": false
+      },
+      "global_aij_materialized": false,
+      "global_schur_materialized": false,
+      "ksp_created": false,
+      "numeric_allgather": false,
+      "operation_seconds_cumulative": {
+        "dtn": 0.0,
+        "total": 0.0,
+        "volume": 0.0
+      },
+      "operator": "A_volume_plus_dynamic_DtN",
+      "owns_dtn": true,
+      "schema": "task038.fullspace-physical-action.v1",
+      "t4_transmission_included": false,
+      "volume_action": {
+        "apply_count": 0,
+        "component_count": 2,
+        "components": {
+          "complex_material_mass": {
+            "apply_count": 0,
+            "backend": "dolfinx.fem.assemble_vector + owner-local MPC R^H",
+            "cell_schur_matrix_materialized": false,
+            "cell_schur_matrix_nnz": 0,
+            "coefficient_count": 1,
+            "compiled_coefficient_count": 1,
+            "constraint_count": 10000,
+            "constraint_nnz": 10000,
+            "constraint_nnz_closes": true,
+            "constraint_row_metadata_entries": 201520,
+            "dense_cell_tensor_materialized_per_apply": false,
+            "dtn_used": false,
+            "factor_count": 0,
+            "form_rank": 1,
+            "fresh_packed_arrays_released": true,
+            "global_condensed_schur_materialized": false,
+            "global_constraint_matrix_materialized": false,
+            "global_matrix_materialized": false,
+            "global_rows": 201520,
+            "jit_options_explicit": true,
+            "ksp_created": false,
+            "last_packed_coefficient_bytes": 0,
+            "last_packed_coefficient_entry_count": 0,
+            "last_packed_coefficient_shapes": [],
+            "local_ghost_rows": 0,
+            "local_owned_rows": 201520,
+            "local_storage_entries": 201520,
+            "matrix_type": "python",
+            "mpc_enabled": true,
+            "numeric_allgather": false,
+            "operator": "uncondensed_fullspace_curl_mass_form",
+            "ordinary_default_changed": false,
+            "orientation": "dolfinx_n1curl_form_kernel",
+            "owned_constraint_count": 10000,
+            "owner_local": true,
+            "per_apply_bounded_temporary_bytes": 0,
+            "phase_application": "finalized_floquet_mpc_once",
+            "replicated_global_numeric_vector": false,
+            "retained_dense_cell_tensor_count": 0,
+            "retained_numeric_payload_components": {
+              "coefficient_function_local_array_bytes": 3224320,
+              "conjugated_master_coefficients_bytes": 160000,
+              "constraint_work_bytes": 160000,
+              "flat_slave_indices_bytes": 40000,
+              "master_indices_bytes": 40000,
+              "output_vector_local_storage_bytes": 3224320,
+              "owned_slave_indices_bytes": 40000,
+              "owned_slave_work_bytes": 160000,
+              "packed_constants_bytes": 0,
+              "slave_indices_bytes": 40000
+            },
+            "retained_numeric_payload_global_max_bytes": 7088640,
+            "retained_numeric_payload_global_sum_bytes": 7088640,
+            "retained_numeric_payload_local_bytes": 7088640,
+            "schema": "task038.fullspace-mpc-form-action.v1",
+            "slab_matrix_materialized": false,
+            "slab_matrix_nnz": 0,
+            "slave_row_identity": false,
+            "timing_cumulative": {
+              "apply_seconds": 0.2893903519725427,
+              "ghost_seconds": 4.047603579238057e-05,
+              "input_mpc_seconds": 0.001862450037151575,
+              "restriction_rh_seconds": 0.0007763400208204985,
+              "volume_seconds": 0.2866835739114322
+            },
+            "ufl_coefficient_count": 1
+          },
+          "curl_curl": {
+            "apply_count": 0,
+            "backend": "dolfinx.fem.assemble_vector + owner-local MPC R^H",
+            "cell_schur_matrix_materialized": false,
+            "cell_schur_matrix_nnz": 0,
+            "coefficient_count": 1,
+            "compiled_coefficient_count": 1,
+            "constraint_count": 10000,
+            "constraint_nnz": 10000,
+            "constraint_nnz_closes": true,
+            "constraint_row_metadata_entries": 201520,
+            "dense_cell_tensor_materialized_per_apply": false,
+            "dtn_used": false,
+            "factor_count": 0,
+            "form_rank": 1,
+            "fresh_packed_arrays_released": true,
+            "global_condensed_schur_materialized": false,
+            "global_constraint_matrix_materialized": false,
+            "global_matrix_materialized": false,
+            "global_rows": 201520,
+            "jit_options_explicit": true,
+            "ksp_created": false,
+            "last_packed_coefficient_bytes": 0,
+            "last_packed_coefficient_entry_count": 0,
+            "last_packed_coefficient_shapes": [],
+            "local_ghost_rows": 0,
+            "local_owned_rows": 201520,
+            "local_storage_entries": 201520,
+            "matrix_type": "python",
+            "mpc_enabled": true,
+            "numeric_allgather": false,
+            "operator": "uncondensed_fullspace_curl_mass_form",
+            "ordinary_default_changed": false,
+            "orientation": "dolfinx_n1curl_form_kernel",
+            "owned_constraint_count": 10000,
+            "owner_local": true,
+            "per_apply_bounded_temporary_bytes": 0,
+            "phase_application": "finalized_floquet_mpc_once",
+            "replicated_global_numeric_vector": false,
+            "retained_dense_cell_tensor_count": 0,
+            "retained_numeric_payload_components": {
+              "coefficient_function_local_array_bytes": 3224320,
+              "conjugated_master_coefficients_bytes": 160000,
+              "constraint_work_bytes": 160000,
+              "flat_slave_indices_bytes": 40000,
+              "master_indices_bytes": 40000,
+              "output_vector_local_storage_bytes": 3224320,
+              "owned_slave_indices_bytes": 40000,
+              "owned_slave_work_bytes": 160000,
+              "packed_constants_bytes": 0,
+              "slave_indices_bytes": 40000
+            },
+            "retained_numeric_payload_global_max_bytes": 7088640,
+            "retained_numeric_payload_global_sum_bytes": 7088640,
+            "retained_numeric_payload_local_bytes": 7088640,
+            "schema": "task038.fullspace-mpc-form-action.v1",
+            "slab_matrix_materialized": false,
+            "slab_matrix_nnz": 0,
+            "slave_row_identity": true,
+            "timing_cumulative": {
+              "apply_seconds": 1.036432238004636,
+              "ghost_seconds": 0.0005237110308371484,
+              "input_mpc_seconds": 0.00417889398522675,
+              "restriction_rh_seconds": 0.0007925049867480993,
+              "volume_seconds": 1.0309147710213438
+            },
+            "ufl_coefficient_count": 1
+          }
+        },
+        "constraint_identity_rows_exactly_once": true,
+        "destroyed": false,
+        "operator": "A_curl_curl_plus_A_complex_material_mass",
+        "phase_application": "each_component_finalized_floquet_mpc_once_no_wrapper_reapply",
+        "schema": "task038.fullspace-split-volume-action.v1",
+        "slave_row_identity_owner": "curl_curl",
+        "sum_output_buffer": "curl_curl_action_output",
+        "third_persistent_sum_vector": false
+      }
+    },
+    "A6_native_audit": {
+      "apply_count": 0,
+      "dtn_action": {
+        "apply_count": 0,
+        "apply_modal_allreduce_count": 0,
+        "batch_count": 10,
+        "batch_size": 8,
+        "bounded_work_bytes_global_max": 256,
+        "bounded_work_bytes_global_sum": 256,
+        "bounded_work_bytes_local": 256,
+        "bounded_work_scales_with": "fixed_modal_batch_size",
+        "explicit_c_matrix_count": 0,
+        "explicit_d_matrix_count": 0,
+        "global_aij_materialized": false,
+        "global_schur_materialized": false,
+        "ksp_created": false,
+        "matrix_type": "python",
+        "modal_allreduce_count": 0,
+        "modal_allreduce_count_per_apply": 10,
+        "mode_count": 80,
+        "mode_manifest_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+        "normalization": "explicit_diagonal_projection_denominator_H",
+        "normalization_h_max": 1250.0000000000002,
+        "normalization_h_min": 0.3807331130650235,
+        "normalization_nonidentity": true,
+        "numeric_allgather": false,
+        "owner_local_surface_functionals": true,
+        "pde_solved": false,
+        "profile": "full3d_scalable_v1",
+        "recovery_modal_allreduce_count": 0,
+        "recovery_output_bytes": 1280,
+        "retained_identity_bytes": 86377,
+        "retained_numeric_bytes_global_max": 7346248,
+        "retained_numeric_bytes_global_sum": 7346248,
+        "retained_numeric_bytes_local": 7346248,
+        "schema": "fullspace-dtn.carrier.v1",
+        "slave_functional_rows_global": 0,
+        "slave_functional_rows_local": 0,
+        "slave_rows_local": 22392,
+        "trace_matrix_materialized": false
+      },
+      "global_aij_materialized": false,
+      "global_schur_materialized": false,
+      "ksp_created": false,
+      "numeric_allgather": false,
+      "operation_seconds_cumulative": {
+        "dtn": 0.0,
+        "total": 0.0,
+        "volume": 0.0
+      },
+      "operator": "A_volume_plus_dynamic_DtN",
+      "owns_dtn": true,
+      "schema": "task038.fullspace-physical-action.v1",
+      "t4_transmission_included": false,
+      "volume_action": {
+        "apply_count": 0,
+        "component_count": 2,
+        "components": {
+          "complex_material_mass": {
+            "apply_count": 0,
+            "backend": "dolfinx.fem.assemble_vector + owner-local MPC R^H",
+            "cell_schur_matrix_materialized": false,
+            "cell_schur_matrix_nnz": 0,
+            "coefficient_count": 1,
+            "compiled_coefficient_count": 1,
+            "constraint_count": 22392,
+            "constraint_nnz": 22392,
+            "constraint_nnz_closes": true,
+            "constraint_row_metadata_entries": 667152,
+            "dense_cell_tensor_materialized_per_apply": false,
+            "dtn_used": false,
+            "factor_count": 0,
+            "form_rank": 1,
+            "fresh_packed_arrays_released": true,
+            "global_condensed_schur_materialized": false,
+            "global_constraint_matrix_materialized": false,
+            "global_matrix_materialized": false,
+            "global_rows": 667152,
+            "jit_options_explicit": true,
+            "ksp_created": false,
+            "last_packed_coefficient_bytes": 0,
+            "last_packed_coefficient_entry_count": 0,
+            "last_packed_coefficient_shapes": [],
+            "local_ghost_rows": 0,
+            "local_owned_rows": 667152,
+            "local_storage_entries": 667152,
+            "matrix_type": "python",
+            "mpc_enabled": true,
+            "numeric_allgather": false,
+            "operator": "uncondensed_fullspace_curl_mass_form",
+            "ordinary_default_changed": false,
+            "orientation": "dolfinx_n1curl_form_kernel",
+            "owned_constraint_count": 22392,
+            "owner_local": true,
+            "per_apply_bounded_temporary_bytes": 0,
+            "phase_application": "finalized_floquet_mpc_once",
+            "replicated_global_numeric_vector": false,
+            "retained_dense_cell_tensor_count": 0,
+            "retained_numeric_payload_components": {
+              "coefficient_function_local_array_bytes": 10674432,
+              "conjugated_master_coefficients_bytes": 358272,
+              "constraint_work_bytes": 358272,
+              "flat_slave_indices_bytes": 89568,
+              "master_indices_bytes": 89568,
+              "output_vector_local_storage_bytes": 10674432,
+              "owned_slave_indices_bytes": 89568,
+              "owned_slave_work_bytes": 358272,
+              "packed_constants_bytes": 0,
+              "slave_indices_bytes": 89568
+            },
+            "retained_numeric_payload_global_max_bytes": 22781952,
+            "retained_numeric_payload_global_sum_bytes": 22781952,
+            "retained_numeric_payload_local_bytes": 22781952,
+            "schema": "task038.fullspace-mpc-form-action.v1",
+            "slab_matrix_materialized": false,
+            "slab_matrix_nnz": 0,
+            "slave_row_identity": false,
+            "timing_cumulative": {
+              "apply_seconds": 3.9562859110883437,
+              "ghost_seconds": 0.0001358820009045303,
+              "input_mpc_seconds": 0.007751918048597872,
+              "restriction_rh_seconds": 0.0022296529496088624,
+              "volume_seconds": 3.9460935910465196
+            },
+            "ufl_coefficient_count": 1
+          },
+          "curl_curl": {
+            "apply_count": 0,
+            "backend": "dolfinx.fem.assemble_vector + owner-local MPC R^H",
+            "cell_schur_matrix_materialized": false,
+            "cell_schur_matrix_nnz": 0,
+            "coefficient_count": 1,
+            "compiled_coefficient_count": 1,
+            "constraint_count": 22392,
+            "constraint_nnz": 22392,
+            "constraint_nnz_closes": true,
+            "constraint_row_metadata_entries": 667152,
+            "dense_cell_tensor_materialized_per_apply": false,
+            "dtn_used": false,
+            "factor_count": 0,
+            "form_rank": 1,
+            "fresh_packed_arrays_released": true,
+            "global_condensed_schur_materialized": false,
+            "global_constraint_matrix_materialized": false,
+            "global_matrix_materialized": false,
+            "global_rows": 667152,
+            "jit_options_explicit": true,
+            "ksp_created": false,
+            "last_packed_coefficient_bytes": 0,
+            "last_packed_coefficient_entry_count": 0,
+            "last_packed_coefficient_shapes": [],
+            "local_ghost_rows": 0,
+            "local_owned_rows": 667152,
+            "local_storage_entries": 667152,
+            "matrix_type": "python",
+            "mpc_enabled": true,
+            "numeric_allgather": false,
+            "operator": "uncondensed_fullspace_curl_mass_form",
+            "ordinary_default_changed": false,
+            "orientation": "dolfinx_n1curl_form_kernel",
+            "owned_constraint_count": 22392,
+            "owner_local": true,
+            "per_apply_bounded_temporary_bytes": 0,
+            "phase_application": "finalized_floquet_mpc_once",
+            "replicated_global_numeric_vector": false,
+            "retained_dense_cell_tensor_count": 0,
+            "retained_numeric_payload_components": {
+              "coefficient_function_local_array_bytes": 10674432,
+              "conjugated_master_coefficients_bytes": 358272,
+              "constraint_work_bytes": 358272,
+              "flat_slave_indices_bytes": 89568,
+              "master_indices_bytes": 89568,
+              "output_vector_local_storage_bytes": 10674432,
+              "owned_slave_indices_bytes": 89568,
+              "owned_slave_work_bytes": 358272,
+              "packed_constants_bytes": 0,
+              "slave_indices_bytes": 89568
+            },
+            "retained_numeric_payload_global_max_bytes": 22781952,
+            "retained_numeric_payload_global_sum_bytes": 22781952,
+            "retained_numeric_payload_local_bytes": 22781952,
+            "schema": "task038.fullspace-mpc-form-action.v1",
+            "slab_matrix_materialized": false,
+            "slab_matrix_nnz": 0,
+            "slave_row_identity": true,
+            "timing_cumulative": {
+              "apply_seconds": 21.287399563996587,
+              "ghost_seconds": 0.00132273806957528,
+              "input_mpc_seconds": 0.010030853096395731,
+              "restriction_rh_seconds": 0.0023548089084215462,
+              "volume_seconds": 21.273561344016343
+            },
+            "ufl_coefficient_count": 1
+          }
+        },
+        "constraint_identity_rows_exactly_once": true,
+        "destroyed": false,
+        "operator": "A_curl_curl_plus_A_complex_material_mass",
+        "phase_application": "each_component_finalized_floquet_mpc_once_no_wrapper_reapply",
+        "schema": "task038.fullspace-split-volume-action.v1",
+        "slave_row_identity_owner": "curl_curl",
+        "sum_output_buffer": "curl_curl_action_output",
+        "third_persistent_sum_vector": false
+      }
+    },
+    "cpu_seconds": 2.976343215,
+    "p4_global_matrix_or_factor": false,
+    "wall_seconds": 2.7292681119870394
+  },
+  "global_p4_factor_created": false,
+  "h6_fresh_setup": {
+    "cpu_seconds": 55.678169732,
+    "light_facts": {
+      "apply_action_backend": "packed_partial_assembly",
+      "apply_preallocated_work_opt_in": false,
+      "batched_target_grouping_opt_in": true,
+      "calls_per_PC": {
+        "B6": 4,
+        "H6": 2,
+        "S6": 0,
+        "positive_p1": 0,
+        "positive_p3": 0
+      },
+      "diagonal_build_audit": {
+        "actual_cell_T_apply_before_reference_integration": true,
+        "cells_using_reference_metric": 990,
+        "geometry_rounding_or_approximation": false,
+        "identity": "reference_energy_actual_affine_metric_v1",
+        "metric_cache_bypasses": 586,
+        "metric_cache_entries": 64,
+        "metric_cache_hits": 340,
+        "metric_cache_limit": 64,
+        "metric_cache_misses": 650,
+        "metric_cache_storage_bytes": 903168,
+        "orientation_build_input_copy_bytes": 21676032,
+        "orientation_build_input_copy_bytes_cumulative": 108380160,
+        "orientation_build_input_copy_bytes_per_build": 21676032,
+        "orientation_build_known_array_peak_bytes": 43479072,
+        "orientation_tabulation_retained_after_tensor_build": false,
+        "orientation_tensor_build_count": 5,
+        "orientation_tensor_cache_bypasses": 0,
+        "orientation_tensor_cache_entries": 5,
+        "orientation_tensor_cache_hits": 985,
+        "orientation_tensor_cache_limit": 64,
+        "orientation_tensor_cache_misses": 5,
+        "orientation_tensor_cache_storage_bytes": 635040,
+        "orientation_tensor_pair_bytes": 127008,
+        "owned_cells": 990,
+        "per_cell_physical_basis_table_builds": 0,
+        "points_sha256": "dfd7f88ca358f9ef5a1a48bbd8b09e080b0bc24ce6215cb74718bd13dd5e2fc0",
+        "quadrature_degree": 15,
+        "quadrature_rule": "default",
+        "reference_basis_curls_bytes": 10838016,
+        "reference_basis_values_bytes": 10838016,
+        "retained_cache_ndarray_storage_bytes": 1538208,
+        "target_cross_terms_preserved_by_fallback": true,
+        "target_merge_fallbacks": 0,
+        "weights_sha256": "5eedb32c5e648bf31a102add0c230ccd7513f59b75fc28b21dd2c613db1ef09d"
+      },
+      "diagonal_builder": "reference_energy_actual_affine_metric_v1",
+      "diagonal_local_type_reuse": {
+        "actual_cell_T_apply_before_reference_integration": true,
+        "cells_using_reference_metric": 990,
+        "geometry_rounding_or_approximation": false,
+        "identity": "reference_energy_actual_affine_metric_v1",
+        "metric_cache_bypasses": 586,
+        "metric_cache_entries": 64,
+        "metric_cache_hits": 340,
+        "metric_cache_limit": 64,
+        "metric_cache_misses": 650,
+        "metric_cache_storage_bytes": 903168,
+        "orientation_build_input_copy_bytes": 21676032,
+        "orientation_build_input_copy_bytes_cumulative": 108380160,
+        "orientation_build_input_copy_bytes_per_build": 21676032,
+        "orientation_build_known_array_peak_bytes": 43479072,
+        "orientation_tabulation_retained_after_tensor_build": false,
+        "orientation_tensor_build_count": 5,
+        "orientation_tensor_cache_bypasses": 0,
+        "orientation_tensor_cache_entries": 5,
+        "orientation_tensor_cache_hits": 985,
+        "orientation_tensor_cache_limit": 64,
+        "orientation_tensor_cache_misses": 5,
+        "orientation_tensor_cache_storage_bytes": 635040,
+        "orientation_tensor_pair_bytes": 127008,
+        "owned_cells": 990,
+        "per_cell_physical_basis_table_builds": 0,
+        "points_sha256": "dfd7f88ca358f9ef5a1a48bbd8b09e080b0bc24ce6215cb74718bd13dd5e2fc0",
+        "quadrature_degree": 15,
+        "quadrature_rule": "default",
+        "reference_basis_curls_bytes": 10838016,
+        "reference_basis_values_bytes": 10838016,
+        "retained_cache_ndarray_storage_bytes": 1538208,
+        "target_cross_terms_preserved_by_fallback": true,
+        "target_merge_fallbacks": 0,
+        "weights_sha256": "5eedb32c5e648bf31a102add0c230ccd7513f59b75fc28b21dd2c613db1ef09d"
+      },
+      "diagonal_sha256": "a2c14585351a357084fdefe68da5c186a379a6839b0ffd4ac084fa3791d85606",
+      "direct_selected_backend_opt_in": true,
+      "direct_selected_backend_used": true,
+      "h6_degree": 3,
+      "inverse_sqrt_diagonal_sha256": "a037b5233f26ed36df4cd2eadb37956f80b86a7796f73dea63386af1587bf06f",
+      "kernel": {
+        "authority": "same-ABI FFCx analysis and create_quadrature",
+        "backend": "isotropic_sum_factorized_n1e_v26",
+        "batch_size": 8,
+        "batch_workspace_scope": "one fixed local batch; no global matrix/tensor",
+        "cell_metadata_bytes": 3647160,
+        "coefficient_matrix_bytes": 7260624,
+        "combined_real_imag_transform_opt_in": false,
+        "component": "positive_sum",
+        "contiguous_real_imag_work": true,
+        "dense_cell_tensor": false,
+        "full_reference_tabulation_performed": false,
+        "packing_workspace_upper_bound_bytes": 0,
+        "physical_basis_materialized": false,
+        "points": 512,
+        "points_sha256": "dfd7f88ca358f9ef5a1a48bbd8b09e080b0bc24ce6215cb74718bd13dd5e2fc0",
+        "preallocated_batch_capacity": 8,
+        "preallocated_batch_workspace_bytes": 2110080,
+        "preallocated_work_opt_in": false,
+        "quadrature_degree": 15,
+        "quadrature_rule": "default",
+        "reference_initialization_array_upper_bound_bytes": 7375312,
+        "reference_table_bytes": 7386192,
+        "reference_table_components": {
+          "coefficient_matrix_bytes": 7260624,
+          "geometry_derivatives_bytes": 98304,
+          "one_dimensional_reference_tables_bytes": 2688,
+          "points_bytes": 12288,
+          "quadrature_order_indices_bytes": 8192,
+          "weights_bytes": 4096
+        },
+        "reference_tables_retained": false,
+        "reuse_projection_work_opt_in": false,
+        "shared_contractions_opt_in": false,
+        "sum_factorized_audit": {
+          "backend": "isotropic_sum_factorized_n1e_v26",
+          "backward_projection_count": 172980,
+          "backward_tensor_contraction_count": 518940,
+          "backward_tensor_contraction_counts": {
+            "x": 172980,
+            "y": 172980,
+            "z": 172980
+          },
+          "batch_workspace_bytes": 2300032,
+          "coefficient_matrix_bytes": 7260624,
+          "coefficient_matrix_sha256": "cd4160e6ec6da0cc50738183c8f0544098f70695f2a8cdd4b867b49210db3799",
+          "coefficient_matrix_shape": [
+            882,
+            1029
+          ],
+          "coefficient_transform_real_imag": true,
+          "coefficient_transform_real_imag_layout": "separate_real_and_imag_real_gemms",
+          "combined_real_imag_transform_opt_in": false,
+          "contraction_count_scope": "forward reference evaluation and backward field projection; coefficient transforms and metric products excluded",
+          "degree": 6,
+          "element_dimension": 882,
+          "element_family": "N1E",
+          "element_variant": "legendre",
+          "embedded_superdegree": 6,
+          "forward_tensor_contraction_count": 518940,
+          "forward_tensor_contraction_counts": {
+            "x": 172980,
+            "y": 172980,
+            "z": 172980
+          },
+          "map_type": "covariantPiola",
+          "native_tensor_product_api": false,
+          "one_dimensional_reference_tables_bytes": 2688,
+          "polyset_type": "standard",
+          "projection_layout_v31_blas_pack_upper_bound_bytes": 50176,
+          "projection_layout_v31_candidate": {
+            "continuous_projection_matmul": true,
+            "natural_order_internal": true
+          },
+          "projection_layout_v31_scratch_bytes": 302848,
+          "quadrature_order": "actual_points_to_tensor_grid_checked",
+          "quadrature_points": 512,
+          "quadrature_shape": [
+            8,
+            8,
+            8
+          ],
+          "quadrature_weights_sha256": "5eedb32c5e648bf31a102add0c230ccd7513f59b75fc28b21dd2c613db1ef09d",
+          "reuse_projection_work_opt_in": false,
+          "shared_contraction_scratch_bytes": 0,
+          "shared_contractions_opt_in": false,
+          "temporary_einsum_workspace_upper_bound_bytes": 347136,
+          "temporary_local_intermediate_upper_bound_bytes": 9456592,
+          "temporary_workspace_upper_bound_bytes": 9803728,
+          "workspace_scope": "one fixed local batch; no global matrix or cell tensor"
+        },
+        "sum_factorized_opt_in": true,
+        "temporary_budget_bytes": 9803728,
+        "timing_cumulative_seconds": {
+          "apply": 321.5534421815537,
+          "coefficient_transform": 103.36607308889506,
+          "gather": 0.7494959545438178,
+          "metric": 13.983611714444123,
+          "projection_input_pack_or_reorder": 1.2774657514528371,
+          "projection_result_copy": 0.17579076066613197,
+          "projection_x_matmul": 1.231415766174905,
+          "projection_x_pack": 0.17425414605531842,
+          "projection_y_matmul": 1.3946343359421007,
+          "projection_y_pack": 0.21172892290633172,
+          "projection_z_matmul": 1.631503805227112,
+          "reference_backward": 162.20086153567536,
+          "reference_forward": 36.96267517952947,
+          "scatter": 0.9173844257602468
+        },
+        "timing_scope": "opt-in local-kernel path only; cumulative local-kernel wall clock",
+        "weights_sha256": "5eedb32c5e648bf31a102add0c230ccd7513f59b75fc28b21dd2c613db1ef09d"
+      },
+      "lambda_hi": 14.648596475283673,
+      "lambda_lo": 1.4648596475283675,
+      "lambda_power10": 13.31690588662152,
+      "packed_apply_opt_in": true,
+      "packed_power10_opt_in": true,
+      "positive_factor_count": 0,
+      "positive_p3_p1_constructed": false,
+      "power10_action_backend": "packed_partial_assembly",
+      "power10_kernel": {
+        "authority": "same-ABI FFCx analysis and create_quadrature",
+        "backend": "isotropic_sum_factorized_n1e_v26",
+        "batch_size": 8,
+        "batch_workspace_scope": "one fixed local batch; no global matrix/tensor",
+        "cell_metadata_bytes": 3647160,
+        "coefficient_matrix_bytes": 7260624,
+        "combined_real_imag_transform_opt_in": false,
+        "component": "positive_sum",
+        "contiguous_real_imag_work": true,
+        "dense_cell_tensor": false,
+        "full_reference_tabulation_performed": false,
+        "packing_workspace_upper_bound_bytes": 0,
+        "physical_basis_materialized": false,
+        "points": 512,
+        "points_sha256": "dfd7f88ca358f9ef5a1a48bbd8b09e080b0bc24ce6215cb74718bd13dd5e2fc0",
+        "preallocated_batch_capacity": 8,
+        "preallocated_batch_workspace_bytes": 2110080,
+        "preallocated_work_opt_in": false,
+        "quadrature_degree": 15,
+        "quadrature_rule": "default",
+        "reference_initialization_array_upper_bound_bytes": 7375312,
+        "reference_table_bytes": 7386192,
+        "reference_table_components": {
+          "coefficient_matrix_bytes": 7260624,
+          "geometry_derivatives_bytes": 98304,
+          "one_dimensional_reference_tables_bytes": 2688,
+          "points_bytes": 12288,
+          "quadrature_order_indices_bytes": 8192,
+          "weights_bytes": 4096
+        },
+        "reference_tables_retained": false,
+        "reuse_projection_work_opt_in": false,
+        "shared_contractions_opt_in": false,
+        "sum_factorized_audit": {
+          "backend": "isotropic_sum_factorized_n1e_v26",
+          "backward_projection_count": 172980,
+          "backward_tensor_contraction_count": 518940,
+          "backward_tensor_contraction_counts": {
+            "x": 172980,
+            "y": 172980,
+            "z": 172980
+          },
+          "batch_workspace_bytes": 2300032,
+          "coefficient_matrix_bytes": 7260624,
+          "coefficient_matrix_sha256": "cd4160e6ec6da0cc50738183c8f0544098f70695f2a8cdd4b867b49210db3799",
+          "coefficient_matrix_shape": [
+            882,
+            1029
+          ],
+          "coefficient_transform_real_imag": true,
+          "coefficient_transform_real_imag_layout": "separate_real_and_imag_real_gemms",
+          "combined_real_imag_transform_opt_in": false,
+          "contraction_count_scope": "forward reference evaluation and backward field projection; coefficient transforms and metric products excluded",
+          "degree": 6,
+          "element_dimension": 882,
+          "element_family": "N1E",
+          "element_variant": "legendre",
+          "embedded_superdegree": 6,
+          "forward_tensor_contraction_count": 518940,
+          "forward_tensor_contraction_counts": {
+            "x": 172980,
+            "y": 172980,
+            "z": 172980
+          },
+          "map_type": "covariantPiola",
+          "native_tensor_product_api": false,
+          "one_dimensional_reference_tables_bytes": 2688,
+          "polyset_type": "standard",
+          "projection_layout_v31_blas_pack_upper_bound_bytes": 50176,
+          "projection_layout_v31_candidate": {
+            "continuous_projection_matmul": true,
+            "natural_order_internal": true
+          },
+          "projection_layout_v31_scratch_bytes": 302848,
+          "quadrature_order": "actual_points_to_tensor_grid_checked",
+          "quadrature_points": 512,
+          "quadrature_shape": [
+            8,
+            8,
+            8
+          ],
+          "quadrature_weights_sha256": "5eedb32c5e648bf31a102add0c230ccd7513f59b75fc28b21dd2c613db1ef09d",
+          "reuse_projection_work_opt_in": false,
+          "shared_contraction_scratch_bytes": 0,
+          "shared_contractions_opt_in": false,
+          "temporary_einsum_workspace_upper_bound_bytes": 347136,
+          "temporary_local_intermediate_upper_bound_bytes": 9456592,
+          "temporary_workspace_upper_bound_bytes": 9803728,
+          "workspace_scope": "one fixed local batch; no global matrix or cell tensor"
+        },
+        "sum_factorized_opt_in": true,
+        "temporary_budget_bytes": 9803728,
+        "timing_cumulative_seconds": {
+          "apply": 321.5534421815537,
+          "coefficient_transform": 103.36607308889506,
+          "gather": 0.7494959545438178,
+          "metric": 13.983611714444123,
+          "projection_input_pack_or_reorder": 1.2774657514528371,
+          "projection_result_copy": 0.17579076066613197,
+          "projection_x_matmul": 1.231415766174905,
+          "projection_x_pack": 0.17425414605531842,
+          "projection_y_matmul": 1.3946343359421007,
+          "projection_y_pack": 0.21172892290633172,
+          "projection_z_matmul": 1.631503805227112,
+          "reference_backward": 162.20086153567536,
+          "reference_forward": 36.96267517952947,
+          "scatter": 0.9173844257602468
+        },
+        "timing_scope": "opt-in local-kernel path only; cumulative local-kernel wall clock",
+        "weights_sha256": "5eedb32c5e648bf31a102add0c230ccd7513f59b75fc28b21dd2c613db1ef09d"
+      },
+      "power10_preallocated_work_opt_in": false,
+      "power_history": [
+        3.113333803755276,
+        7.453982463619662,
+        10.231696394515394,
+        11.626758319212435,
+        12.367787889277304,
+        12.769076691536691,
+        12.997813229824029,
+        13.141050525688538,
+        13.240809428202297,
+        13.31690588662152
+      ],
+      "power_matrix_mult_count": 20,
+      "power_matrix_mult_seconds": 46.04677644302137,
+      "reference_metric_diagonal_opt_in": true,
+      "reuse_projection_work_opt_in": false,
+      "schema": "physical-intermediate.light-h6-setup.v1",
+      "seed_recipe": "build_frozen_fullspace_primal_source random",
+      "seed_sha256": "3b7d31071626a258d3750bc5c0b20dd4d6817451aef098b1b46ad70bc8592d0a",
+      "setup_timing_seconds": {
+        "b6_shell_seconds": 6.483995821326971e-05,
+        "diagonal_seconds": 3.071551013039425,
+        "positive_selected_action_seconds": 0.4859491889947094,
+        "power10_seconds": 46.20015367597807
+      },
+      "shared_contractions_opt_in": false,
+      "shared_mesh_levels": [
+        6
+      ],
+      "sum_factorized_power10_opt_in": true,
+      "sum_factorized_work_opt_in": true
+    },
+    "wall_seconds": 51.070269707008265
+  },
+  "input_path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/input/task39extra/v30_workstation_guided_original_h7p5.dat",
+  "input_sha256": "ba2c0745221a017d71f606325c20e98a3a57611887929fe55c18180f308f544b",
+  "maximum_interleaved_rounds": 3,
+  "mesh_build": {
+    "cell_count": 990,
+    "cpu_seconds": 4.602490124999999,
+    "p4_rows": 201520,
+    "p6_rows": 667152,
+    "wall_seconds": 4.2463569669635035
+  },
+  "mpi_size": 1,
+  "outer_ksp": false,
+  "p4_global_matrix_or_factor": false,
+  "pde_solve": false,
+  "performance_summary": {
+    "per_vector_h6_medians": {
+      "legacy": {
+        "early_iter0": {
+          "b6": {
+            "cpu_seconds": 2.542299665999991,
+            "wall_seconds": 2.330505801946856
+          },
+          "h6": {
+            "cpu_seconds": 5.119043340000019,
+            "wall_seconds": 4.695601214014459
+          }
+        },
+        "late_iter126": {
+          "b6": {
+            "cpu_seconds": 2.434447490000025,
+            "wall_seconds": 2.231672517955303
+          },
+          "h6": {
+            "cpu_seconds": 5.677876878000006,
+            "wall_seconds": 5.204860244994052
+          }
+        }
+      },
+      "natural_order": {
+        "early_iter0": {
+          "b6": {
+            "cpu_seconds": 2.3023265399999957,
+            "wall_seconds": 2.1105564939789474
+          },
+          "h6": {
+            "cpu_seconds": 4.798943039000022,
+            "wall_seconds": 4.402815291949082
+          }
+        },
+        "late_iter126": {
+          "b6": {
+            "cpu_seconds": 2.3609552210000118,
+            "wall_seconds": 2.164289357024245
+          },
+          "h6": {
+            "cpu_seconds": 4.653110448999996,
+            "wall_seconds": 4.265401481010485
+          }
+        }
+      },
+      "natural_order_fixed_matmul": {
+        "early_iter0": {
+          "b6": {
+            "cpu_seconds": 2.3043807699999945,
+            "wall_seconds": 2.112381693033967
+          },
+          "h6": {
+            "cpu_seconds": 4.728723649999992,
+            "wall_seconds": 4.3373498630244285
+          }
+        },
+        "late_iter126": {
+          "b6": {
+            "cpu_seconds": 2.3881434370000107,
+            "wall_seconds": 2.18917839799542
+          },
+          "h6": {
+            "cpu_seconds": 4.7711799319999955,
+            "wall_seconds": 4.373677751980722
+          }
+        }
+      }
+    },
+    "qualification": {
+      "legacy": {
+        "h6_median_ratios_to_legacy": {
+          "early_iter0": {
+            "cpu_seconds": 1.0,
+            "wall_seconds": 1.0
+          },
+          "late_iter126": {
+            "cpu_seconds": 1.0,
+            "wall_seconds": 1.0
+          }
+        },
+        "paired_h6_cpu_wins": 0,
+        "paired_h6_wall_wins": 0,
+        "reliable_h6_gain": false
+      },
+      "natural_order": {
+        "h6_median_ratios_to_legacy": {
+          "early_iter0": {
+            "cpu_seconds": 0.9374687261389751,
+            "wall_seconds": 0.9376467658302136
+          },
+          "late_iter126": {
+            "cpu_seconds": 0.8195159121941057,
+            "wall_seconds": 0.819503556337152
+          }
+        },
+        "paired_h6_cpu_wins": 6,
+        "paired_h6_wall_wins": 6,
+        "reliable_h6_gain": true
+      },
+      "natural_order_fixed_matmul": {
+        "h6_median_ratios_to_legacy": {
+          "early_iter0": {
+            "cpu_seconds": 0.9237514386818954,
+            "wall_seconds": 0.9237049028097198
+          },
+          "late_iter126": {
+            "cpu_seconds": 0.8403105658185056,
+            "wall_seconds": 0.8403064724335784
+          }
+        },
+        "paired_h6_cpu_wins": 6,
+        "paired_h6_wall_wins": 6,
+        "reliable_h6_gain": true
+      }
+    },
+    "scope": "three interleaved rounds; H6 is primary; A6/A4 single warmed apply timings are descriptive only"
+  },
+  "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+  "resource": {
+    "a6_a4_resume_process_peak_rss_bytes": 681226240
+  },
+  "resume_command": "source scripts/activate_myfenics_wsl.sh && python -m benchmarks.run_task39extra_v31_projection_layout --complete-actions-only --input /home/shenjh/Projects/MyFEniCSx_task37_extra/input/task39extra/v30_workstation_guided_original_h7p5.dat --early-vector /home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/x2_residual_0000_0000.npz --late-vector /home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/x2_residual_0126_0020.npz --output /home/shenjh/Projects/MyFEniCSx_task37_extra/docs/task039_extra_physical_multilevel/outcomes/records/projection_layout_v31_components.json",
+  "saved_vectors": {
+    "early_iter0": {
+      "array_key": "array_0",
+      "dtype": "complex128",
+      "metadata_json": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/x2_residual_0000_0000.json",
+      "metadata_sha256": "db692b7826755d3bb09166372c3f7ec5cb4d408366f56567b02536742873fc6b",
+      "npz": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/x2_residual_0000_0000.npz",
+      "npz_sha256": "8491fda44c880bd123a6f8f241fb8ffa3ecc1424a1f34135e954e1232e2df5e1",
+      "rhs_is_mpc_dual": true,
+      "shape": [
+        667152
+      ],
+      "solution_source": "live_buildSolution",
+      "strict_zero_slave_storage": true,
+      "vector_sha256": "ebc3fcdbf111970a217680c7e5b7b833dfae723026ca92ba6edea26c84daa83b"
+    },
+    "late_iter126": {
+      "array_key": "array_0",
+      "dtype": "complex128",
+      "metadata_json": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/x2_residual_0126_0020.json",
+      "metadata_sha256": "2082848711d8a0ca1e5ff8250b604724a560f2d7b4f4dcc49dfb2450d656a00c",
+      "npz": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/x2_residual_0126_0020.npz",
+      "npz_sha256": "10151a63f79cc5a50d594985a0ca39c6a2a6dc36cb6d11d6cef56059dd2f29cc",
+      "rhs_is_mpc_dual": true,
+      "shape": [
+        667152
+      ],
+      "solution_source": "terminal_vec_sol",
+      "strict_zero_slave_storage": true,
+      "vector_sha256": "ffa5ecbbf692eb39301a8d3f47b27f7ace115b0dd0cc84a642f83ef24f520553"
+    }
+  },
+  "schema": "task039extra.projection-layout-v31.components.v1",
+  "selection": {
+    "r4": "REQUIRES_ONE_FORMAL_RUN",
+    "reason": "candidate passed correctness and achieved at least 5% median H6 wall/CPU improvement on both saved vectors with at least 5 of 6 paired wins",
+    "selected_variant": "natural_order",
+    "status": "H6_CANDIDATE_SELECTED"
+  },
+  "source": {
+    "diagnostic_script_sha256": "5f3342037500af25ac236fe99f8067f535d5eb720ef88c42462075b3013433fa",
+    "head_sha_before_diagnostic": "4b58e25306b8e75baed9c6030d8eb053893e13b9",
+    "solver_sha256": "297c472920a1aa8f80a022ec01b30492ace0ae14568a44b048e448d67e3cb5de",
+    "test_sha256": "1853bd502da8232ac730064dccfab6317a9016f6b941b6a90dff86d90a7be74e",
+    "tracked_worktree_diff_sha256": "01d6f6523a7fe059e032478736321aeafe36c0b5dcb764f9675c7479ced26eed"
+  },
+  "status": "PASS",
+  "threads": {
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "variant_order_by_round": [
+    [
+      "legacy",
+      "natural_order",
+      "natural_order_fixed_matmul"
+    ],
+    [
+      "natural_order_fixed_matmul",
+      "natural_order",
+      "legacy"
+    ],
+    [
+      "legacy",
+      "natural_order",
+      "natural_order_fixed_matmul"
+    ]
+  ],
+  "warmup_included_in_pair_samples": false
+}

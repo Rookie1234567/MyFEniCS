@@ -76,6 +76,8 @@ class IsotropicPartialAssembly:
         preallocated_work=False,
         sum_factorized_work=False,
         reuse_projection_work=False,
+        natural_order_internal=False,
+        continuous_projection_matmul=False,
         shared_contractions=False,
         combine_real_imag_transforms=False,
         geometry_bundle=None,
@@ -86,6 +88,10 @@ class IsotropicPartialAssembly:
         self.preallocated_work = bool(preallocated_work)
         self.sum_factorized_work = bool(sum_factorized_work)
         self.reuse_projection_work = bool(reuse_projection_work)
+        self.natural_order_internal = bool(natural_order_internal)
+        self.continuous_projection_matmul = bool(continuous_projection_matmul)
+        if (self.natural_order_internal or self.continuous_projection_matmul) and not self.sum_factorized_work:
+            raise ValueError("V31 projection layout requires the sum-factorized backend")
         self.shared_contractions = bool(shared_contractions)
         self.combine_real_imag_transforms = bool(combine_real_imag_transforms)
         if self.combine_real_imag_transforms and not self.sum_factorized_work:
@@ -270,6 +276,8 @@ class IsotropicPartialAssembly:
                 self.basis,
                 batch_size=self.batch_size,
                 reuse_projection_work=self.reuse_projection_work,
+                natural_order_internal=self.natural_order_internal,
+                continuous_projection_matmul=self.continuous_projection_matmul,
                 shared_contractions=self.shared_contractions,
                 combine_real_imag_transforms=self.combine_real_imag_transforms,
                 reference_bundle=reference_bundle,

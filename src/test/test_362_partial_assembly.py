@@ -767,3 +767,130 @@ def test_mpi2_double_floquet_owned_and_shared_ghosts():
             np.testing.assert_array_equal(source.array, before)
             print('MPI2 rank', comm.rank, 'degree', degree, 'owned', index.size_local,
                   'ghosts', index.num_ghosts, 'slaves', len(slaves), flush=True)
+
+
+def test_v31_projection_layout_non_equal_axes_and_readonly_reference():
+    """Keep axis permutation and shared reference identities visible to R3."""
+    from types import SimpleNamespace
+
+    from src.solvers.fullspace_n1e_sum_factor import N1ESumFactorizedAction
+
+    domain = mesh.create_box(
+        MPI.COMM_SELF,
+        [np.zeros(3), np.ones(3)],
+        [1, 1, 1],
+        cell_type=mesh.CellType.hexahedron,
+    )
+    space = fem.functionspace(domain, ("N1curl", 6))
+    dg = fem.functionspace(domain, ("DG", 0))
+    positive_mu, positive_mass = fem.Function(dg), fem.Function(dg)
+    positive_mu.x.array[:] = 1.25
+    positive_mass.x.array[:] = 0.75
+    reference = PositiveCellBasis(
+        space,
+        positive_mu,
+        positive_mass,
+        action_rule=True,
+        store_reference_tables=False,
+    )
+    axes = (
+        np.array([0.19, 0.73]),
+        np.array([0.11, 0.47, 0.88]),
+        np.array([0.07, 0.31, 0.62, 0.93]),
+    )
+    natural_points = np.stack(
+        np.meshgrid(*axes, indexing="ij"), axis=-1
+    ).reshape(-1, 3)
+    natural_weights = np.linspace(0.35, 1.25, len(natural_points))
+    permutation = np.random.default_rng(391).permutation(len(natural_points))
+    points = natural_points[permutation].copy()
+    weights = natural_weights[permutation].copy()
+    synthetic_basis = SimpleNamespace(
+        points=points,
+        weights=weights,
+        coefficient_matrix=reference.coefficient_matrix,
+        audit=reference.audit,
+    )
+    action = N1ESumFactorizedAction(
+        space, synthetic_basis, batch_size=2, share_reference=True
+    )
+    original_arrays = {
+        key: np.array(action.reference_bundle[key], copy=True)
+        for key in ("points", "weights", "natural_to_input", "input_to_natural")
+    }
+    assert action.shape == (2, 3, 4)
+    assert not np.array_equal(
+        action.natural_to_input, np.arange(len(natural_points))
+    )
+
+    rng = np.random.default_rng(392)
+    local = rng.normal(size=(2, space.element.space_dimension)) + 1j * rng.normal(
+        size=(2, space.element.space_dimension)
+    )
+    metrics = np.broadcast_to(np.eye(3), (2, 2, 3, 3)).copy()
+    materials = np.array(
+        [[1.2 + 0.3j, 0.7 - 0.2j], [0.9 - 0.1j, 1.4 + 0.25j]],
+        dtype=np.complex128,
+    )
+    expected = action.apply(local, metrics, materials).copy()
+    coefficient_probe = (
+        rng.normal(size=(2, 7, 7, 7))
+        + 1j * rng.normal(size=(2, 7, 7, 7))
+    )
+    field_probe = N1ESumFactorizedAction._evaluate(
+        coefficient_probe, *action.values_1d
+    ).reshape(2, *action.shape)
+    dual_probe = rng.normal(size=field_probe.shape) + 1j * rng.normal(
+        size=field_probe.shape
+    )
+    projected_probe = N1ESumFactorizedAction._project(
+        dual_probe, *action.values_1d
+    ).reshape(coefficient_probe.shape)
+    adjoint_left = np.vdot(field_probe, dual_probe)
+    adjoint_right = np.vdot(coefficient_probe, projected_probe)
+    adjoint_scale = max(abs(adjoint_left), abs(adjoint_right), 1.0)
+    assert abs(adjoint_left - adjoint_right) <= 2.0e-13 * adjoint_scale
+    for use_matmul in (False, True):
+        action.configure_projection_layout_v31_candidate(
+            natural_order_internal=True,
+            continuous_projection_matmul=use_matmul,
+        )
+        observed = action.apply(local, metrics, materials).copy()
+        relative = np.linalg.norm(observed - expected) / np.linalg.norm(expected)
+        assert relative <= 1.0e-11
+        assert action.audit["projection_layout_v31_candidate"] == {
+            "natural_order_internal": True,
+            "continuous_projection_matmul": use_matmul,
+        }
+        assert action.audit["natural_order_internal_opt_in"] is True
+        assert action.audit["continuous_projection_matmul_opt_in"] is use_matmul
+        assert action.audit["quadrature_order"] == (
+            "actual_points_to_tensor_grid_checked"
+        )
+        assert action.audit["internal_quadrature_order"] == (
+            "natural_tensor_order_v31"
+        )
+        assert action.audit["points_sha256"] == hashlib.sha256(
+            points.tobytes()
+        ).hexdigest()
+        assert action.audit["weights_sha256"] == hashlib.sha256(
+            weights.tobytes()
+        ).hexdigest()
+        assert action.audit["internal_points_sha256"] == hashlib.sha256(
+            natural_points.tobytes()
+        ).hexdigest()
+        assert action.audit["internal_weights_sha256"] == hashlib.sha256(
+            natural_weights.tobytes()
+        ).hexdigest()
+        assert action.audit["point_permutation_bijection_verified"] is True
+        assert action.audit["weights_permuted_with_points"] is True
+        assert action.audit["backward_projection_kernel"] == (
+            "continuous_z_y_x_matmul_v31"
+            if use_matmul
+            else "einsum_z_y_x_legacy"
+        )
+        assert action.audit["projection_workspace_bytes"] == (
+            0 if not use_matmul else action.audit["projection_layout_v31_scratch_bytes"]
+        )
+        for key, original in original_arrays.items():
+            np.testing.assert_array_equal(action.reference_bundle[key], original)
