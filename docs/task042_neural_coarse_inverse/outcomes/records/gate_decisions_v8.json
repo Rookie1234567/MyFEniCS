@@ -221,5 +221,7 @@
     "official R/T/A"
   ],
   "input_scope": "initial C2 adapter additionally loaded an unused 3369888B moment packet; fixed afterward; negative result/RSS unchanged; targeted input-boundary tests only",
-  "next_minimal_experiment": "固定pilot上仅对已经冻结的误差方向做原S/恢复/端口分量审核，复用已有p3参考作离线核对，定位残差下降为何没有恢复散射；不训练、不建新PC、不扫描。"
+  "next_minimal_experiment": "固定pilot上仅对已经冻结的误差方向做原S/恢复/端口分量审核，复用已有p3参考作离线核对，定位残差下降为何没有恢复散射；不训练、不建新PC、不扫描。",
+  "independent_raw_gate_recomputation": "independent_calibration_gates_v8.json",
+  "performance_verdict": "OBSERVED_SHARED_WORKSTATION_MICRO_POSITIVE; uncontended solver acceleration INCONCLUSIVE"
 }
