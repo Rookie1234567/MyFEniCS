@@ -6,7 +6,12 @@ import json
 import numpy as np
 import pytest
 
-from src.geometry.neural_micro_pilot import air_orders, hexa_inventory, material_tags
+from src.geometry.neural_micro_pilot import (
+    air_orders,
+    geometry_config,
+    hexa_inventory,
+    material_tags,
+)
 from src.io.input_loader import InputError
 from src.io.neural_fe_interface import DESIGN_PATH, load_interface
 from src.io.task042_profile import ROOT
@@ -64,6 +69,19 @@ def test_unknown_si_never_becomes_a_complete_port_inventory():
     assert inventory["top_channels"] > 0
     assert inventory["bottom_channels"] is None and inventory["total_channels"] is None
     assert design["materials"]["si_n"] is None
+
+
+def test_new_centered_geometry_carrier_keeps_native_default_unchanged():
+    from src.common.config_3d import SimulationConfig3D
+
+    design = json.loads(DESIGN_PATH.read_text())
+    cfg = geometry_config(design)
+    assert [cfg.x_min, cfg.x_max] == [-0.7, 0.7]
+    assert np.allclose([cfg.y_min, cfg.y_max], [-0.525, 0.525], atol=1e-14, rtol=0)
+    assert [cfg.domain_z_min, cfg.domain_z_max] == [-0.175, 1.225]
+    ordinary = SimulationConfig3D(period_x=1.4, period_y=1.05)
+    assert ordinary.x_min == ordinary.y_min == 0.0
+    assert ordinary.x_max == 1.4 and ordinary.y_max == 1.05
 
 
 @pytest.mark.parametrize(

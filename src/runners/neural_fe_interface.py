@@ -175,8 +175,12 @@ def ml_stage(design, artifact, source):
     from src.solvers.neural_trace_torch import qualify_threads
 
     threads = qualify_threads()
-    parent = ARTIFACTS / "v6" / "V6-FE-INTERFACE"
-    index = json.loads((parent / "interface_result.json").read_text())
+    entry = json.loads((ARTIFACTS / "v6" / "qualified_fe_interface.json").read_text())
+    path = Path(entry["path"]).resolve()
+    if not path.is_relative_to(ARTIFACTS / "v6") or file_hash(path) != entry["sha256"]:
+        raise ValueError("qualified FE result index mismatch")
+    parent = path.parent
+    index = json.loads(path.read_text())
     if index["source_sha"] != source or index["design_sha256"] != file_hash(
         DESIGN_PATH
     ):
@@ -243,7 +247,7 @@ def main():
     if source != manifest["source_sha"] or manifest["physical_model_complete"]:
         raise RuntimeError("clean source/unresolved material identity mismatch")
     stage = specification.derived["stage"]
-    artifact = ARTIFACTS / "v6" / stage
+    artifact = ARTIFACTS / "v6" / stage / directory.name
     artifact.mkdir(parents=True, exist_ok=False)
     began = time.perf_counter()
     design = json.loads(DESIGN_PATH.read_text())
@@ -267,6 +271,17 @@ def main():
     )
     write_json(artifact / "interface_result.json", result)
     write_json(directory / "interface_result.json", result)
+    if stage == "V6-FE-INTERFACE":
+        index_path = ARTIFACTS / "v6" / "qualified_fe_interface.json"
+        with index_path.open("x") as stream:
+            json.dump(
+                dict(
+                    path=str(artifact / "interface_result.json"),
+                    sha256=file_hash(artifact / "interface_result.json"),
+                ),
+                stream,
+                indent=2,
+            )
     print(
         json.dumps(
             dict(

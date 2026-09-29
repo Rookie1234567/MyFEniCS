@@ -59,9 +59,28 @@ def geometry_config(design):
     """
     from src.common.config_3d import SimulationConfig3D
 
+    class CenteredMicroConfig(SimulationConfig3D):
+        """Offset carrier for the reviewed centered box; ordinary cfg unchanged."""
+
+        @property
+        def x_min(self):
+            return -self.period_x / 2
+
+        @property
+        def x_max(self):
+            return self.period_x / 2
+
+        @property
+        def y_min(self):
+            return -self.period_y / 2
+
+        @property
+        def y_max(self):
+            return self.period_y / 2
+
     g = design["geometry"]
     block = g["block_bounds_nm"]
-    return SimulationConfig3D(
+    return CenteredMicroConfig(
         case_name="task042_v6_geometry_only",
         stage_case="stage4_block_grating",
         geometry_kind="rectangular_block_grating",

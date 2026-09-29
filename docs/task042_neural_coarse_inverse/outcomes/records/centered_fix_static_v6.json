@@ -1,0 +1,124 @@
+{
+  "checks": [
+    {
+      "name": "ruff_new",
+      "command": [
+        "/home/fenics/Projects/Metrology/.venv/bin/ruff",
+        "check",
+        "--select",
+        "E4,E7,E9,F,I,B,ISC,RUF",
+        "src/geometry/neural_micro_pilot.py",
+        "src/io/neural_fe_interface.py",
+        "src/solvers/neural_trace.py",
+        "src/solvers/neural_trace_torch.py",
+        "src/solvers/neural_trace_dolfinx.py",
+        "src/solvers/neural_trace_checks.py",
+        "src/runners/neural_fe_interface.py",
+        "src/test/test_task042_neural_trace.py",
+        "src/test/test_task042_neural_trace_ml.py",
+        "src/test/test_task042_neural_trace_basix.py"
+      ],
+      "returncode": 0,
+      "stdout": "All checks passed!\n",
+      "stderr": ""
+    },
+    {
+      "name": "ruff_format_new",
+      "command": [
+        "/home/fenics/Projects/Metrology/.venv/bin/ruff",
+        "format",
+        "--check",
+        "src/geometry/neural_micro_pilot.py",
+        "src/io/neural_fe_interface.py",
+        "src/solvers/neural_trace.py",
+        "src/solvers/neural_trace_torch.py",
+        "src/solvers/neural_trace_dolfinx.py",
+        "src/solvers/neural_trace_checks.py",
+        "src/runners/neural_fe_interface.py",
+        "src/test/test_task042_neural_trace.py",
+        "src/test/test_task042_neural_trace_ml.py",
+        "src/test/test_task042_neural_trace_basix.py"
+      ],
+      "returncode": 0,
+      "stdout": "10 files already formatted\n",
+      "stderr": ""
+    },
+    {
+      "name": "compileall",
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "compileall",
+        "-q",
+        "src/geometry/neural_micro_pilot.py",
+        "src/io/neural_fe_interface.py",
+        "src/solvers/neural_trace.py",
+        "src/solvers/neural_trace_torch.py",
+        "src/solvers/neural_trace_dolfinx.py",
+        "src/solvers/neural_trace_checks.py",
+        "src/runners/neural_fe_interface.py",
+        "src/test/test_task042_neural_trace.py",
+        "src/test/test_task042_neural_trace_ml.py",
+        "src/test/test_task042_neural_trace_basix.py",
+        "scripts/run_case.py",
+        "src/io/task042_profile.py",
+        "src/runners/task042_shared.py"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "diff_check",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "validate_fe_dat",
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v6_geometry_interface.dat",
+        "--validate-only"
+      ],
+      "returncode": 0,
+      "stdout": "{\"status\": \"valid\", \"profile\": \"task042_v6_geometry_trace_interface\", \"stage\": \"V6-FE-INTERFACE\", \"input_sha256\": \"b1812689c27c8f9a7896c6b9ba125ab9d3e694c07b8e704e893ca58cc57ae458\", \"physical_model_sha256\": \"18ea629790245764460eb7aad331b5ce7d042a4e4707de17112507b677742445\"}\n",
+      "stderr": ""
+    },
+    {
+      "name": "validate_ml_dat",
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v6_neural_vjp_interface.dat",
+        "--validate-only"
+      ],
+      "returncode": 0,
+      "stdout": "{\"status\": \"valid\", \"profile\": \"task042_v6_neural_packet_vjp\", \"stage\": \"V6-ML-INTERFACE\", \"input_sha256\": \"501b28ce2303eba0489b4419e5b14f07a99bb0e1ed4ba81274532cf680afa372\", \"physical_model_sha256\": \"18ea629790245764460eb7aad331b5ce7d042a4e4707de17112507b677742445\"}\n",
+      "stderr": ""
+    }
+  ],
+  "numerical_file_sha256": {
+    "src/geometry/neural_micro_pilot.py": "855bdc893de8c229fe21f634cf8d40a4da80734a3291825db895776fd39639d6",
+    "src/io/neural_fe_interface.py": "fb2cb7e9b78d7490e9bd14782916fc529eaabc8eaddea59a35d1e9591e8f357b",
+    "src/solvers/neural_trace.py": "49c4b4673c0ee12e06af5bb4c92c07fcee53b534e07c31c9c5aadfe4085be4b9",
+    "src/solvers/neural_trace_torch.py": "7e43e9add6fd7a6ce742d961fb2a29052ef3f964d240123be372ae12905902f4",
+    "src/solvers/neural_trace_dolfinx.py": "c07f982f3d800cbcf4d761171fe434dce0a28bdd4d70b2d477359b4287e93dc5",
+    "src/solvers/neural_trace_checks.py": "cca9394736f57b56bcb4b43134007d70c34c124ffd34d7e87438b803dc2e0646",
+    "src/runners/neural_fe_interface.py": "ca7c68232544c3e652c09b9388184f45a85c24d20669a3873b3af5f2f52562de",
+    "src/test/test_task042_neural_trace.py": "dab42afe6c15698050a964042f1b83d52f3bb45e293206c0a86e93dbd7ffcb44",
+    "src/test/test_task042_neural_trace_ml.py": "5a0b5c3a35568259b6305c14651564cad562a0fd8995941f2f02ba268e981e36",
+    "src/test/test_task042_neural_trace_basix.py": "57868f989fab835bb39e665c7781aa16d773bd6a08f40585c6d084a224ea21f7",
+    "scripts/run_case.py": "be693d6e8d0c5893d9dd36ede7cb7aea62aa0d46d47857c44e0a597a3dada868",
+    "src/io/task042_profile.py": "9c45c0c136dd303a4e8d9066fe8b848b67061a522e065217d3e3de9edb7a18fc",
+    "src/runners/task042_shared.py": "9b4f11730c08ffa67377d2c94c0d963edc1e13382d136106c9655c76d69a80f8"
+  },
+  "protected_existing_numeric": "Only dispatcher/profile/admission registration changed; original numeric kernels unchanged",
+  "source_state": "precommit working implementation; formal source recorded only after clean commit"
+}

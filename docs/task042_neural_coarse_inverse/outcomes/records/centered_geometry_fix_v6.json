@@ -1,0 +1,18 @@
+{
+  "status": "ONE_MINIMAL_IMPLEMENTATION_FIX_BEFORE_INTERFACE_REPLAY",
+  "failed_source_sha": "64c128c3541887e22788343692cc4f7832a45696",
+  "failed_run": "results/task042/task042_v6_geometry_interface_20260929T040135385260Z",
+  "error": "Distributed periodic entity pairing is not one-to-one: global_error_count=110",
+  "cause": "Existing SimulationConfig3D.x_min/y_min are 0, x_max/y_max are period; new review geometry is centered. New adapter initially reused those bounds without offset.",
+  "fix": "Research-only CenteredMicroConfig overrides four x/y boundary properties; original config and Floquet algorithms unchanged. Artifacts now use unique run directories plus hash-bound qualified FE pointer, preserving failed output.",
+  "targeted_test": "23 passed in 3.86s; added explicit centered-boundary and ordinary-default regression",
+  "targeted_test_evidence": "tmp/task042/v6/centered_fix_tests/summary.json",
+  "failed_wall_seconds": 3.3299306120024994,
+  "failed_tree_peak_rss_bytes": 184963072,
+  "failed_own_swap_bytes": 0,
+  "failed_descendants_cleared": true,
+  "budget_reset": false,
+  "physical_operator_constructed": false,
+  "numerical_stagnation_parameter_change": false,
+  "original_failure_preserved": true
+}
