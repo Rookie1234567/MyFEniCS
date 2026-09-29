@@ -193,6 +193,7 @@ def _build_same_mesh_levels(
     from src.geometry.mesh_builder_3d import (
         _mark_boundary_facets,
         _mark_cells,
+        _rectangular_air_void_audit,
         _stage4_axis_plan,
         _structured_hexa_mesh,
     )
@@ -209,7 +210,14 @@ def _build_same_mesh_levels(
     facet_tags, _ = _mark_boundary_facets(mesh, cfg)
     cell_tags = _mark_cells(mesh, cfg)
     mesh_data = SimpleNamespace(
-        mesh=mesh, cell_tags=cell_tags, facet_tags=facet_tags
+        mesh=mesh,
+        cell_tags=cell_tags,
+        facet_tags=facet_tags,
+        rectangular_air_void_audit=_rectangular_air_void_audit(
+            mesh, cell_tags, cfg
+        ),
+        mesh_axis_cell_stats=plan.axis_cell_stats,
+        material_plane_alignment=plan.material_plane_alignment,
     )
     spaces: dict[int, Any] = {}
     floquets: dict[int, Any] = {}

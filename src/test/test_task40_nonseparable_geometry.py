@@ -202,6 +202,30 @@ def test_actual_mesh_builder_preserves_task40_void_and_material_counts(
     assert all(audit["nonseparable_extent_axes"].values())
 
 
+def test_task40_same_mesh_levels_preserve_air_void_audit_metadata():
+    from mpi4py import MPI
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
+
+    specification = load_and_resolve(G0)
+    cfg = simulation_config_3d_from_normalized(specification.as_jsonable())
+    levels = _build_same_mesh_levels(
+        cfg, MPI.COMM_WORLD, (6, 4), include_positive_coefficients=False
+    )
+    mesh_data = levels["mesh_data"]
+    audit = mesh_data.rectangular_air_void_audit
+
+    assert audit["status"] == "PASS"
+    assert audit["geometry_identity"] == TASK40_GEOMETRY_IDENTITY
+    assert audit["owned_void_box_cell_count"] == 8
+    assert audit["non_air_tagged_void_box_cell_count"] == 0
+    assert {axis: stats["num_cells"] for axis, stats in mesh_data.mesh_axis_cell_stats.items()} == {
+        "x": 6,
+        "y": 4,
+        "z": 14,
+    }
+    assert mesh_data.material_plane_alignment["all_aligned"] is True
+
+
 def test_process_tree_snapshot_records_stable_process_identities():
     sample = process_tree_snapshot(
         os.getpid(), "task40_identity_test", pss_sampling_policy="disabled_by_profile"
