@@ -5,6 +5,31 @@ import subprocess
 import sys
 
 
+def test_deadline_clears_own_detached_child_and_preserves_sibling(tmp_path):
+    directory = tmp_path / "deadline"
+    script = tmp_path / "deadline_supervisor.py"
+    script.write_text("""import sys
+from pathlib import Path
+from benchmarks.subreaper_watchdog import supervise
+command=[sys.executable,'-c',"import subprocess,sys,time;subprocess.Popen([sys.executable,'-c','import os,time;os.setsid();time.sleep(30)']);time.sleep(30)"]
+summary=supervise(command,Path(sys.argv[1]),wall_seconds=.6,interval=.05,timebase_guard=True,hard_stop_immediate=True,rss_hard_limit_bytes=128*1024**2,include_pss=False)
+assert summary['classification']=='PERFORMANCE_CONTROLLED_STOP',summary
+assert summary['descendants_cleared'] and not summary['remaining_child_pids']
+assert summary['elapsed_seconds']<5
+""")
+    sibling = subprocess.Popen([sys.executable, "-c", "import time;time.sleep(30)"])
+    try:
+        result = subprocess.run([sys.executable, str(script), str(directory)],
+                                capture_output=True, text=True, timeout=10)
+        assert result.returncode == 0, result.stdout+result.stderr
+        assert sibling.poll() is None
+        summary = json.loads((directory / "summary.json").read_text())
+        assert summary["descendants_cleared"]
+    finally:
+        sibling.terminate()
+        sibling.wait(timeout=5)
+
+
 def test_opt_in_tree_limit_clears_orphan_without_signalling_sibling(tmp_path):
     root = tmp_path / "tree"
     script = tmp_path / "supervisor.py"
