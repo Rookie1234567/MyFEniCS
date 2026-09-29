@@ -1,0 +1,21 @@
+{
+  "schema": "task40extra.user_bug_continuation.v1",
+  "authorization_id": "task40_g0_continuation_main_user_20260930",
+  "classification": "USER_AUTHORIZED_IMPLEMENTATION_BUG_CONTINUATION",
+  "recorded_at_utc": "2026-09-29T22:40:17.918809+00:00",
+  "user_instruction": "主控询问：批准主控直接修改 Task40 续算入口，保留安全检查并继续执行。用户在本主控任务直接回复：批准你所说的。承接2026-09-29用户修复实现bug后继续原N0–N6的授权。",
+  "scope": "此次增量绑定G0 attempt 2后的实现bug续算；不授权数值失败重试，不改变资源安全线或普通profile；历史和成本保留。",
+  "run_id": "task40extra_0p7nm_nonseparable_g0_iterative_v1",
+  "comparison_group": "task40extra_0p7nm_nonseparable_n0_n6",
+  "stage": "Q4_ORIGINAL",
+  "prior_ledger_sha256": "d70e23cd1cb7461408ff9872242ba646f0a9e517330108069bfe993532656e84",
+  "input_sha256": "8e00fb6495845902a8113d982242d39ad0f4999b563c2c8049ecc3750b82ac9c",
+  "previous_bug_replay_count": 1,
+  "additional_bug_replays": 1,
+  "prior_elapsed_seconds": 91.79305701722132,
+  "prior_attempts": 2,
+  "failed_source_sha": "1ee85bc2133b783da419d31dbe429643eb2c1191",
+  "failed_worker_summary_sha256": "a65aa9a97e96c7e9ceaaf31753b582ba850e73b05c4209078fc0faf5b1d5b575",
+  "numerical_and_resource_gates": "UNCHANGED",
+  "old_ledger_and_costs": "PRESERVED"
+}

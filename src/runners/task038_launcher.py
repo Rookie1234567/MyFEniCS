@@ -2978,6 +2978,7 @@ def _reserve_a4_tensor_h6_budget(
     ledger_task_directory: str = "task39extra",
     require_user_service_cgroup: bool = True,
     bug_replay_limit: int = 1,
+    user_bug_continuation: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Reserve one fresh original-model attempt in an independent batch ledger."""
 
@@ -3021,6 +3022,10 @@ def _reserve_a4_tensor_h6_budget(
         "numeric_cache_mode": "build",
         "r1_probe_replay": False,
     }
+    if user_bug_continuation is not None:
+        if error_prefix != "Task40":
+            raise InputError("Only Task40 accepts this continuation record")
+        prerequisite["user_bug_continuation"] = dict(user_bug_continuation)
     path.parent.mkdir(parents=True, exist_ok=True)
     if authorized_repeat is not None and not path.is_file():
         raise InputError("V31 completion rerun requires the preserved original ledger")
@@ -3245,6 +3250,42 @@ def _reserve_task40_0p7nm_budget(
             prior_ledger.get("unique_bug_replay_count", 0)
         )
     replay_limit = 0 if completed_replays >= 1 else 1
+    continuation = None
+    record_path = repo_root / (
+        "docs/task40extra_0p7nm_engineering/outcomes/records/"
+        "g0_user_authorized_continuation_v1.json"
+    )
+    if run_id == "task40extra_0p7nm_nonseparable_g0_iterative_v1" and record_path.is_file():
+        ledger_path = run_ledger_root / run_id / "shared_workflow_ledger.json"
+        input_path = repo_root / "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4.dat"
+        try:
+            record_bytes = record_path.read_bytes()
+            record = json.loads(record_bytes)
+            ledger_bytes = ledger_path.read_bytes()
+            ledger = json.loads(ledger_bytes)
+        except (OSError, ValueError) as exc:
+            raise InputError("Task40 continuation evidence is unreadable") from exc
+        if (
+            record.get("classification") != "USER_AUTHORIZED_IMPLEMENTATION_BUG_CONTINUATION"
+            or record.get("run_id") != run_id
+            or record.get("stage") != kwargs.get("stage")
+            or record.get("comparison_group") != comparison_group
+            or record.get("prior_ledger_sha256") != hashlib.sha256(ledger_bytes).hexdigest()
+            or record.get("input_sha256") != hashlib.sha256(input_path.read_bytes()).hexdigest()
+            or record.get("previous_bug_replay_count") != ledger.get("unique_bug_replay_count")
+            or record.get("additional_bug_replays") != 1
+            or not record.get("authorization_id")
+            or not record.get("user_instruction")
+        ):
+            raise InputError("Task40 continuation identity changed or authorization already consumed")
+        # The common reservation still verifies a genuine worker exception,
+        # changed source and per-attempt bug evidence before mutating the ledger.
+        replay_limit = int(ledger["unique_bug_replay_count"]) + 1
+        continuation = {
+            "path": str(record_path),
+            "sha256": hashlib.sha256(record_bytes).hexdigest(),
+            "authorization": record,
+        }
     return _reserve_a4_tensor_h6_budget(
         repo_root,
         run_directory,
@@ -3258,6 +3299,7 @@ def _reserve_task40_0p7nm_budget(
         ledger_task_directory="task40extra_0p7nm_engineering",
         require_user_service_cgroup=True,
         bug_replay_limit=replay_limit,
+        user_bug_continuation=continuation,
     )
 
 

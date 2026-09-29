@@ -1,6 +1,6 @@
 {
   "schema": "task40extra.phase_i_results.v1",
-  "overall_status": "INCOMPLETE_WORKER_FAILED_REPLAY_BUDGET_EXHAUSTED",
+  "overall_status": "USER_AUTHORIZED_BUG_CONTINUATION_PENDING_RUN",
   "official_0p7nm_nonseparable_p6_result": false,
   "numerical_gate_status": "not_run",
   "stages": {
@@ -69,5 +69,6 @@
     "G0_direct_reference": "not_run",
     "channel_truncation": "CHANNEL_TRUNCATION_UNQUALIFIED"
   },
-  "next_step": "No Phase II algorithm is selected. Any further numerical G0 run is outside the current one-replay contract and requires a superseding review/authorization."
+  "next_step": "G0 implementation-bug continuation authorized by direct user confirmation; preserve previous failures/costs, then conditional G1/reference under unchanged numerical/resource gates.",
+  "prior_overall_status": "INCOMPLETE_WORKER_FAILED_REPLAY_BUDGET_EXHAUSTED"
 }

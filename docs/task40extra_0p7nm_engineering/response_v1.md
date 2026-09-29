@@ -1,5 +1,7 @@
 # Response V1：Task40extra B 线 N0–N6 执行结果
 
+> **2026-09-30 续算更新：** 用户已直接批准主控修复 Task40 续算入口。前述两次 G0 失败和 91.79305701722132 秒成本保留；本次仅增加一个绑定旧账本、输入和真实实现失败的 G0 attempt。字段修复已通过针对性检查，新增 4 项纯 mock/账本测试通过；正式续算尚未启动，未取得新数值结果。原数值/资源安全 Gate 不变，后续按原 N0–N6 条件执行。授权见 [增量记录](outcomes/records/g0_user_authorized_continuation_v1.json)。下文失败收口为此次授权前的历史状态。
+
 ## 结论先行
 
 **没有得到真实 0.7 nm、非可分三维 p6 Maxwell 的完整 FE 解。** G0 的 336-cell 网格、p6/q4 空间与模式准备确实建立到部分 setup 阶段，但 worker 在 geometry audit 清理路径抛出实现异常；原 A6 求解、完整真残差、恢复、E/H 与 official R/T/A 都没有发生。该结论是 `WORKER_FAILED` 实现错误，不是 `NUMERICAL_FAIL`，也不是 `RESOURCE_BLOCKED`。

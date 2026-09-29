@@ -29,3 +29,7 @@ source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_tas
 | whitespace/diff check | `PASS`；`git diff --check` 与新增文本行尾空白检查通过 | 本轮文档与 metadata |
 | Markdown fenced math / 表格 / 相对链接 | `PASS`；8 个相关 Markdown 的表格列数、围栏、相对链接检查通过；修复一条原模型登记表中指向 ignored artifact 的旧链接 | 新建/修改 Task40 Markdown 与项目索引 |
 | GitHub rendered view | `NOT_VERIFIED` | 推送后尝试打开 summary、response 与 material identity 页面；页面读取返回 `Cache miss`，因此未确认 GitHub 渲染结果 |
+
+## 2026-09-30 主控续算入口验证
+
+资格化 complex128 / PETSc 3.19.6 环境下，`python -m pytest -q src/test/test_task40_bug_continuation.py src/test/test_task40_nonseparable_geometry.py::test_task40_worker_identity_opens_the_reserved_v14_runtime_ledger`：**4 passed in 1.10 s**。仅 mock/账本测试，无 FE/FFCx/因子：验证第三次预约保留两次历史和累计成本、授权只能消费一次、G1不获额外额度，以及授权不匹配/数值失败保持拒绝。未重跑已合格的字段修复网格 fixture。

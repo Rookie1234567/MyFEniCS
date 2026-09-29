@@ -73,5 +73,12 @@
     "N4_G1": "not_run",
     "N5_G0_direct_reference": "not_run",
     "N6": "incomplete"
+  },
+  "user_continuation": {
+    "record": "g0_user_authorized_continuation_v1.json",
+    "status": "AUTHORIZED_PENDING_RUN",
+    "additional_bug_replays": 1,
+    "original_replay_contract": "preserved as historical; explicit increment applies only to bound G0 attempt",
+    "numerical_and_resource_gates": "UNCHANGED"
   }
 }
