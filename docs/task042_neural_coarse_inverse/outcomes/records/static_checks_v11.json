@@ -25,7 +25,7 @@
   "full_complex_channels": 40,
   "json_records_parsed": true,
   "review_render": "RENDERED_HTML_PASS",
-  "new_response_and_outcomes_github_render": "PENDING_PUBLICATION",
+  "new_response_and_outcomes_github_render": "RENDERED_HTML_PASS",
   "ruff": "NOT_AVAILABLE_IN_QUALIFIED_ENVIRONMENT",
   "compileall": "PASS",
   "git_diff_check": "PASS",
@@ -33,5 +33,8 @@
   "history_authority_file_count_checked": 19,
   "history_authority_byte_equal_to_pre_V11_HEAD": true,
   "initial_local_history_helper_issue": "First scope accidentally included new untracked response_v11 in git show HEAD; fixed file selection; no numerical execution or history edit.",
-  "csv_line_endings": "LF, no CR after initial local git diff --check found Python csv default CRLF; helper corrected without changing numeric rows"
+  "csv_line_endings": "LF, no CR after initial local git diff --check found Python csv default CRLF; helper corrected without changing numeric rows",
+  "published_result_documentation_head": "fb2be307a090095b7803e36e5f3270d8040bc820",
+  "published_rendered_tables_total": 28,
+  "published_math_renderer_blocks_total": 1
 }
