@@ -2945,3 +2945,10 @@ Review V4按用户原表永久固化SI_OPTICAL_CONSTANTS_USER_20260929_V1于inpu
 8正式run wall8579.825040766s、最大同时树采样RSS1073967104B、own swap0/GPU0、全部后代清场；V6 carry101.861302031s＋全部辅助费计入10h。用户受控共享授权/现场选核/MPI1/math/Torch1/own lock/16GiB树监督及独立缓存继续，无cgroup委派不称内核连续限额，无邻环境/affinity/watchdog/锁变更；未见持续PSI，影响与性能inconclusive。N1source70f5f543…、三路线7c4037a2…、参考19adac7e…、验证1ff6f8ba…完整hash在run index，文档HEAD不冒充运行source。
 
 NEURAL_OPTIMIZATION_NEGATIVE、神经增量NOT_DEMONSTRATED、最终0.7nm/48h NOT_QUALIFIED；p4 enrichment无合格候选不准入，旧p4路线关闭，seed420620/旧teacher/GPU/F5/p6/最大模型/四波长扫描not_run。唯一建议固定pilot目标解无关的对角变量尺度均衡LSQR对照，原loss/验算不变，未实施需review。32相关pytest、Ruff/format/compileall、Review V4 GitHub4表1math通过，无ABI安装/全仓清理/CI声明。[Response V7](task042_neural_coarse_inverse/response_v7.md)、[结果](task042_neural_coarse_inverse/outcomes/neural_fe_single_solve_v7.md)、[完整资源/source](task042_neural_coarse_inverse/outcomes/records/run_index_v7.json)。只原执行分支待review，不merge。
+
+
+## 2026-09-29 Task042 V8：尺度负结果，等价批量化工程观测
+
+本轮固定原0.7nm/384hex/p3/40port对象，只将列单位均衡以及同网络八单元同时计算，另修复异常保存边界，三项独立。C1七测试PASS；C2唯一D由原组装S列范数、setup无factor，1915步/S1999/Sᴴ1919最终Schur0.068283273738/native0.026675035784/scattered L2差0.998598490718，严格/研究均失败。C3三状态full trace/loss/grad/clone Adam/FD等价PASS，固定参数三pair中位降幅48.55%，35107584B缓存，不训练、不把成本收益写成解通过。初次C2额外未用3369888B moment包在新source最小收口，原真实RSS/数值保留，无完整重放。
+
+11正式supervised wall791.658916180s/树峰816152576B/own swap0/无GPU；全aux/失败/V6+carry不重置，最终资源账linked。受控共享CPU/MPI1/mathTorch1/DataLoader0/自有锁/16-12GiB树监督/独立cache保持，无cgroup内核连续保证，邻任务不操作；无持续PSI压力，影响与无争用加速INCONCLUSIVE。旧p4仍关闭，最终0.7nm/48h、神经数值增量未资格化，target单步/步数/存储unknown。唯一下一建议：固定pilot上仅对已经冻结的误差方向做原S/恢复/端口分量审核，复用已有p3参考作离线核对，定位残差下降为何没有恢复散射；不训练、不建新PC、不扫描。 未实施，停止等review，不merge。[Response V8](task042_neural_coarse_inverse/response_v8.md)、[完整结果](task042_neural_coarse_inverse/outcomes/scaling_and_execution_v8.md)、[最终费用](task042_neural_coarse_inverse/outcomes/records/resource_costs_v8.json)。

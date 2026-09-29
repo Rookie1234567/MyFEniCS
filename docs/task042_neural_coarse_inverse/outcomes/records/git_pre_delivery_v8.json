@@ -1,0 +1,18 @@
+{
+  "pwd": "/home/fenics/Projects/NN-Lab",
+  "toplevel": "/home/fenics/Projects/NN-Lab",
+  "branch": "task42_neural_coarse_inverse",
+  "HEAD": "5067a5ea390d7f4064f70cd3cb5774a2549a0e43",
+  "upstream": "origin/task42_neural_coarse_inverse",
+  "common_git_directory": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+  "origin": "git@github-myfenics:Rookie1234567/MyFEniCS.git",
+  "worktrees": "worktree /home/fenics/Projects/Maxwell3D-Lab/task-repository.git\nHEAD 64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa\nbranch refs/heads/task39extra_para_workstation_capacity\n\nworktree /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity\nHEAD 64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa\nbranch refs/heads/task39extra_para_workstation_capacity\n\nworktree /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity-docs-20260920\nHEAD 47cb73bf083072ed03788f67830f6ca1e933b60c\ndetached\n\nworktree /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity-docs-20260928\nHEAD ccd357885f7f9be84efe3be07868cc94f13d93fc\ndetached\n\nworktree /home/fenics/Projects/NN-Lab\nHEAD 5067a5ea390d7f4064f70cd3cb5774a2549a0e43\nbranch refs/heads/task42_neural_coarse_inverse\n\nworktree /home/fenics/Projects/NN-Lab-V2\nHEAD 3b8474bff1b3cb9321a89afbca36868a9b95153d\nbranch refs/heads/task42extra_feinn_5nm",
+  "ahead_behind": "6\t0",
+  "own_lock": "FREE",
+  "formal_runs_all_cleared": true,
+  "other_worktree_HEADs_unchanged": true,
+  "worktree_status": "M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042_neural_coarse_inverse/README.md\n M docs/task042_neural_coarse_inverse/outcomes/changed_files.md\n M docs/task042_neural_coarse_inverse/outcomes/summary.md\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n M input/task042_neural_coarse_inverse/README.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/batch_costs_v8.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/batch_equivalence_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/column_scaling_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/convergence_checkpoints_v8.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/independent_calibration_gates_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/optimizer_stop_semantics_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/review_render_check_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/scaled_blind_validation_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/scaled_lsqr_comparison_v8.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/scaling_and_execution_v8.md\n?? docs/task042_neural_coarse_inverse/response_v8.md",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "review_v5": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "final_doc_head_reported_after_push": true
+}

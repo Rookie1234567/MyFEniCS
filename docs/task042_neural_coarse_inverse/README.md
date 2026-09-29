@@ -1,3 +1,7 @@
+# 当前 V8 交付导航
+
+[Response V8](response_v8.md)、[尺度与执行对照](outcomes/scaling_and_execution_v8.md)、[最新summary](outcomes/summary.md)。列尺度负结果、batch等价与共享微基准成本正信号分别记录；旧p4路线关闭，不自动长训练／p6／大目标。Review V5为本轮合同，原文及以下历史导航保留。
+
 # V7 当前入口：材料已授权，继续神经FE单次求解
 
 最新执行合同为 [Review V4](review_report_v4.md)，数值方法／精度／资源沿用 [Review V3](review_report_v3.md)。0.7／2nm用户原值已固化，5／13.5nm旧输入核验值同表保存；唯一canonical材料为 [si_optical_constants_v1.json](../../input/materials/si_optical_constants_v1.json)，ID `SI_OPTICAL_CONSTANTS_USER_20260929_V1`。nominal0.7使用source标签0.699999988原行，不插值；外部数据库元数据缺失不再阻塞。

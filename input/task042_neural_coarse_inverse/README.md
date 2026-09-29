@@ -64,3 +64,8 @@ P4的制造解只存在于独立RHS生成worker；清场后验证worker只读`rh
 ## V7当前入口：用户材料固定后续跑
 
 [Review V4](../../docs/task042_neural_coarse_inverse/review_report_v4.md)解除V6材料定义缺失。canonical材料为 [../materials/si_optical_constants_v1.json](../materials/si_optical_constants_v1.json)，ID `SI_OPTICAL_CONSTANTS_USER_20260929_V1`；0.7／2nm用户原值与5／13.5nm冻结旧输入均可离线读取，仅使用已授权alias。V7新输入另命名，V6 unresolved设计／dat和全部旧结果不覆盖。真实N1通过才运行三条路线，不重装环境或复活旧p4路线；每run须保存材料ID/hash、有效n／epsilon、完整端口与physical/source identity。
+
+
+## V8 单次尺度与执行校准 opt-in
+
+唯一冻结计划为 [calibration_v8.json](calibration_v8.json)。v8_reuse_inventory／v8_column_setup／v8_scaled_lsqr／v8_scaled_verification／v8_batch_equivalence各dat一stage；另六个v8_pair1–3_batch1或8按计划顺序各一独立micro。入口仍scripts/run_case.py＋Task042独立activation，canonical材料表复用；不扩模型或训练，结果见 [Response V8](../../docs/task042_neural_coarse_inverse/response_v8.md)。

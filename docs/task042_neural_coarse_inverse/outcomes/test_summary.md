@@ -98,3 +98,10 @@ V3治理/文档表格定向测试28 passed；registry当前继承两项错误与
 | Review V4实际GitHub显示 | 4表/1math-renderer、列一致，review未修改；新文档发布绑定实际commit和Markdown hash另列 | [review](records/review_render_check_v7.json) |
 
 测试命令一次不存在文件名no tests ran/2.281s，随后更正真实路径并通过，费用保留；一个纯metadata查询把epsilon属性误称epsilon_r已更正，loader/材料/FE未变化。所有正式source/失败/修复/训练预算及辅助成本见[run index](records/run_index_v7.json)、[费用](records/resource_costs_v7.json)。32测试不代表三路线收敛或CI；本批MPI1 only，无full repository pytest/MPI2/4、环境安装、旧campaign或继承checker全仓清理。旧封存seed420620未生成/读取/消费。
+
+
+## V8：停机事务、列尺度、batch等价与raw Gate
+
+最终16个pure-array/输入边界pytest通过；另2个compact损坏状态反例通过，7个实际strong-Wolfe/初始/非有限/Adam/一致磁盘重载测试通过，tiny矩/VJP batch测试及原2000 closure预算小数组回归通过。真实C3三参数状态、非零端口、full trace/loss/grad/clone Adam/FD通过；C2原方程和独立物理资格均失败。新checker从raw absolute/norm/复observable/FD重算，未信任status。任务范围Ruff/format/compileall/差异/本地新文档合同/历史字节保护结果见static_checks_v8.json；Review V5实际GitHub4表/2公式，新文档publication见publication_checks_v8.json。原无关checker问题不全仓清理；full pytest/CI/MPI2/4及旧campaign均not_run。
+
+所有测试、CLI参数错误与C4字段重名汇总失败均计入resource_costs_v8.json；修复仅局部元数据/IO，无昂贵FE重放。C2初次额外未用moment包披露且保存实际RSS，修正输入边界不改数值结论。16pytest不包含ML环境中没有pytest的7事务测试；各自不同环境分列，不夸大CI。

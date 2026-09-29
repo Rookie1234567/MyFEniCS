@@ -1731,3 +1731,17 @@ production model。
 8正式stage wall8579.825040766s、同时树采样峰1073967104B/own swap0；V6 carry101.861302031s和全部辅助/失败/后续检查费不重置。用户Task042受控共享授权继续，MPI1/math/Torch1/实时核/own lock/16GiB hard与12GiB warn/独立缓存，CPU-only/GPU0；无cgroup委派不称内核连续限额，邻任务/其锁环境监督不改，无持续PSI触线，影响和性能inconclusive，全部shared-workstation。
 
 神经场有部分信号，仍方程/场/功率0/3，神经增量NOT_DEMONSTRATED；NEURAL_OPTIMIZATION_NEGATIVE。p4 enrichment/final目标/48h/F5/p6/旧teacher/seed420620/四波长扫描not_run；目标尺度/通道/配额/步cost/所需步数unknown，材料已ready。唯一下一建议为固定pilot目标解无关的对角变量尺度均衡LSQR对照，原loss/验算保持，未实施/需review，不回旧p4或自动更大模型。32相关pytest及局部静态/Markdown通过，Review V4实际GitHub4表1math，历史原文保留。[Response V7](task042_neural_coarse_inverse/response_v7.md)、[全费用/source](task042_neural_coarse_inverse/outcomes/records/run_index_v7.json)。
+
+
+### 3.43.7 V8：尺度负结果，等价批量化工程观测
+
+本轮固定原0.7nm/384hex/p3/40port对象，只将列单位均衡以及同网络八单元同时计算，另修复异常保存边界，三项独立。C1七测试PASS；C2唯一D由原组装S列范数、setup无factor，1915步/S1999/Sᴴ1919最终Schur0.068283273738/native0.026675035784/scattered L2差0.998598490718，严格/研究均失败。C3三状态full trace/loss/grad/clone Adam/FD等价PASS，固定参数三pair中位降幅48.55%，35107584B缓存，不训练、不把成本收益写成解通过。初次C2额外未用3369888B moment包在新source最小收口，原真实RSS/数值保留，无完整重放。
+
+11正式supervised wall791.658916180s/树峰816152576B/own swap0/无GPU；全aux/失败/V6+carry不重置，最终资源账linked。受控共享CPU/MPI1/mathTorch1/DataLoader0/自有锁/16-12GiB树监督/独立cache保持，无cgroup内核连续保证，邻任务不操作；无持续PSI压力，影响与无争用加速INCONCLUSIVE。旧p4仍关闭，最终0.7nm/48h、神经数值增量未资格化，target单步/步数/存储unknown。唯一下一建议：固定pilot上仅对已经冻结的误差方向做原S/恢复/端口分量审核，复用已有p3参考作离线核对，定位残差下降为何没有恢复散射；不训练、不建新PC、不扫描。 未实施，停止等review，不merge。[Response V8](task042_neural_coarse_inverse/response_v8.md)、[完整结果](task042_neural_coarse_inverse/outcomes/scaling_and_execution_v8.md)、[最终费用](task042_neural_coarse_inverse/outcomes/records/resource_costs_v8.json)。
+
+
+| 新登记模型／角色 | 固定库存与来源 | 数值／工程状态 | 时间与内存口径 |
+|---|---|---|---|
+| FE-LSQR-COLUMN-SCALED | 同384hex/p3/0.7nm，D来自原S列范数，18184 rows/40port；source1a2984a完整见run index | Schur0.068283273738/native0.026675035784/scattered差0.998598490718，严格及研究FAIL | setup树wall6.818829s/RSS641200128B；solve树563.163265s/RSS553803776B，shared-workstation |
+| NEURAL-TRACE-BATCH8-EXECUTION | 同11696参数/8载波，全q15矩与MPC，source52d47d3完整见run index | 三状态等价PASS，三pair中位降幅48.55%；工程观测，未新训练/无数值增量 | cache35107584B，含warmups/全部样本与cold setup见batch_costs_v8；本批最大树RSS816152576B |
+| TARGET-0P7NM-48H | micro不是最终目标，目标规模/通道/步数/误差预算unknown | NOT_QUALIFIED，不扩大模型 | 无外推／预测冒充实测 |

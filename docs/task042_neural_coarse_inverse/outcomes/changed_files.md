@@ -64,3 +64,17 @@ C1 `64c128c3541887e22788343692cc4f7832a45696`；唯一正式坐标修复／成�
 | do-not-merge | 209MB packet、model/checkpoints、accurate reference、global p3 reference临时CSR/LU、JIT/cache/大日志与临时helper | ignored NN-Lab，不把global参考逆放候选、不上传大型数组 |
 
 正式source完整表在[response_v7](../response_v7.md)／[run index](records/run_index_v7.json)：N1 70f5f543…、三路线7c4037a2…、参考19adac7e…、后处理1ff6f8ba…。后续compact checker/docs HEAD不替代这些source；普通default/原方程/MPC/材料旧输入/旧80通道模型/Task与Review及V1–V6负结果保持。不amend/强推/merge，只原执行分支待review。
+
+
+## V8：有界尺度与等价计算校准
+
+| 依赖组 | 必要Task042变化／行为 | 验证／边界 |
+|---|---|---|
+| research numerical/core | optimizer_step_transaction、neural_fe_column_scaling及原optimization显式包装 | 事务/稳定列范数/非Hermitian adjoint/原LSQR递推；严格负结果，非production默认 |
+| research neural execution | neural_trace_batched、neural_fe_batch_calibration | 原3×64/8载波/FP64/完整矩，batch8＋固定缓存；真实等价与三对micro，无训练 |
+| runner/profile/input | calibration_v8 plan＋独立dat、neural_fe_calibration IO/薄stage、原run_case/shared dispatcher | clean source/自有锁/原watchdog/预算；C2未用moment读入最小修复后边界回归，原运行保留 |
+| checker/tests | neural_fe_calibration_gate_check复用原物理checker，新增raw损坏反例、C1/C2/C3/输入边界tests | 不含FE求解；从raw标量/复observable重算，不信PASS标签 |
+| compact docs/records | response_v8、scaling_and_execution_v8、所需CSV/JSON、summary及两总账新段 | source/hash/真实负结果/全过程费用及not_run；旧历史逐字保护 |
+| do-not-merge | D/state/packet/网络参数、raw日志/监控/缓存/环境和临时helper | ignored NN-Lab；无global p4部署，setup小CSR释放，参考只验证 |
+
+建议合入顺序：事务→列尺度/包装→batch数学核→研究profile/runner→checker/compact证据，全部依赖组待review，不提升默认、不merge。原action、LSQR递推、原FE／A4/A6/MPC、material和旧task/review/response/records不改。正式source仅1a2984a44ca48573bbe18ffe8a7f8c5d6bdacc05和52d47d35656c5a763bed07e07f827fb6fb285bb7，后续所有权及checker/docs source另列。

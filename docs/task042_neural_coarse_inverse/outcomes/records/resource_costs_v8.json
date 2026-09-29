@@ -1,0 +1,913 @@
+{
+  "budget": {
+    "carry_in_seconds": 8751.379832064034,
+    "new_seconds": 1045.796396112536,
+    "cumulative_seconds": 9797.17622817657,
+    "records": [
+      {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v8_batch_equivalence_20260929T101920440073Z/run_summary.json",
+        "seconds": 41.91198393399827,
+        "supervised_seconds": 40.554180181003176
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v8_column_setup_20260929T100559009668Z/run_summary.json",
+        "seconds": 8.428235654952005,
+        "supervised_seconds": 6.818828723975457
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v8_pair1_batch1_20260929T102033587361Z/run_summary.json",
+        "seconds": 35.58328896597959,
+        "supervised_seconds": 34.234501735074446
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v8_pair1_batch8_20260929T102109513862Z/run_summary.json",
+        "seconds": 22.212312637013383,
+        "supervised_seconds": 20.851759020937607
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v8_pair2_batch1_20260929T102214716635Z/run_summary.json",
+        "seconds": 34.86275815195404,
+        "supervised_seconds": 33.47019719693344
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v8_pair2_batch8_20260929T102152015690Z/run_summary.json",
+        "seconds": 22.25750315899495,
+        "supervised_seconds": 20.859676755033433
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v8_pair3_batch1_20260929T102311867080Z/run_summary.json",
+        "seconds": 35.48284469801001,
+        "supervised_seconds": 34.10424592602067
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v8_pair3_batch8_20260929T102348176493Z/run_summary.json",
+        "seconds": 22.909638828015886,
+        "supervised_seconds": 20.956636557006277
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v8_reuse_inventory_20260929T100537323529Z/run_summary.json",
+        "seconds": 6.847639565938152,
+        "supervised_seconds": 4.083593531977385
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v8_scaled_lsqr_20260929T100657355878Z/run_summary.json",
+        "seconds": 565.5089172660373,
+        "supervised_seconds": 563.1632653810084
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v8_scaled_verification_20260929T101640372022Z/run_summary.json",
+        "seconds": 13.982617944013327,
+        "supervised_seconds": 12.56203117093537
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/aggregate_c4/summary.json",
+        "seconds": 3.5716930279741064,
+        "supervised_seconds": 2.0521369639318436
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/aggregate_c4_fix/summary.json",
+        "seconds": 3.2690807939507067,
+        "supervised_seconds": 1.8046791130909696
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/batch_array_equivalence/summary.json",
+        "seconds": 6.628806269029155,
+        "supervised_seconds": 5.171280177892186
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/batch_final_pre_gate/summary.json",
+        "seconds": 7.269711590954103,
+        "supervised_seconds": 5.795797281083651
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/calibration_targeted_final/summary.json",
+        "seconds": 4.973654649918899,
+        "supervised_seconds": 3.499990336014889
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/cli_preflight_argument_error/summary.json",
+        "seconds": 1.001621851,
+        "supervised_seconds": 0.0
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/column_scaling_tests/summary.json",
+        "seconds": 2.2590534589253366,
+        "supervised_seconds": 2.2590534589253366
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/compact_gate_recomputation/summary.json",
+        "seconds": 3.2181992219993845,
+        "supervised_seconds": 1.741173265967518
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/fe_abi_final/summary.json",
+        "seconds": 4.849710859009065,
+        "supervised_seconds": 3.4063553489977494
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/fe_preflight/summary.json",
+        "seconds": 4.2073939620750025,
+        "supervised_seconds": 4.2073939620750025
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/final_record_aggregation/summary.json",
+        "seconds": 3.4927326909964904,
+        "supervised_seconds": 2.0289521269733086
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/final_static_docs/summary.json",
+        "seconds": 3.22831541497726,
+        "supervised_seconds": 1.7923747249878943
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/final_static_docs_fix/summary.json",
+        "seconds": 3.223050636006519,
+        "supervised_seconds": 1.767698599025607
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/final_task_focused/summary.json",
+        "seconds": 4.9181408949662,
+        "supervised_seconds": 2.4061520540853962
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/independent_compact_gates/summary.json",
+        "seconds": 3.012468264088966,
+        "supervised_seconds": 1.5508990990929306
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/ml_preflight/summary.json",
+        "seconds": 4.998934110975824,
+        "supervised_seconds": 4.998934110975824
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/optimizer_budget_regression/summary.json",
+        "seconds": 20.90753882494755,
+        "supervised_seconds": 19.444073764025234
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/optimizer_stop_final_pre_gate/summary.json",
+        "seconds": 10.145082869916223,
+        "supervised_seconds": 8.703592480975203
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/optimizer_transaction_final/summary.json",
+        "seconds": 9.299221297027543,
+        "supervised_seconds": 7.809450577944517
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/optimizer_transaction_tests/summary.json",
+        "seconds": 8.264156123972498,
+        "supervised_seconds": 8.264156123972498
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/outside_supervision_metadata_allowance/summary.json",
+        "seconds": 120.0,
+        "supervised_seconds": 0.0
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/review_render/summary.json",
+        "seconds": 3.070088494918309,
+        "supervised_seconds": 3.070088494918309
+      }
+    ],
+    "remaining_seconds": 13354.203603887465,
+    "batch_limit_seconds": 14400,
+    "cumulative_limit_seconds": 36000,
+    "shared_workstation": true
+  },
+  "formal_run_costs": [
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v8_batch_equivalence_20260929T101920440073Z",
+      "stage": "V8-C3-EQUIVALENCE",
+      "source_sha": "52d47d35656c5a763bed07e07f827fb6fb285bb7",
+      "launch_wall_seconds": 41.91198393399827,
+      "supervised_seconds": 40.554180181003176,
+      "sampled_process_tree_rss_peak_bytes": 816152576,
+      "sampled_process_tree_swap_peak_bytes": 0
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v8_column_setup_20260929T100559009668Z",
+      "stage": "V8-C2-SETUP",
+      "source_sha": "1a2984a44ca48573bbe18ffe8a7f8c5d6bdacc05",
+      "launch_wall_seconds": 8.428235654952005,
+      "supervised_seconds": 6.818828723975457,
+      "sampled_process_tree_rss_peak_bytes": 641200128,
+      "sampled_process_tree_swap_peak_bytes": 0
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v8_pair1_batch1_20260929T102033587361Z",
+      "stage": "V8-C3-MICRO",
+      "source_sha": "52d47d35656c5a763bed07e07f827fb6fb285bb7",
+      "launch_wall_seconds": 35.58328896597959,
+      "supervised_seconds": 34.234501735074446,
+      "sampled_process_tree_rss_peak_bytes": 595218432,
+      "sampled_process_tree_swap_peak_bytes": 0
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v8_pair1_batch8_20260929T102109513862Z",
+      "stage": "V8-C3-MICRO",
+      "source_sha": "52d47d35656c5a763bed07e07f827fb6fb285bb7",
+      "launch_wall_seconds": 22.212312637013383,
+      "supervised_seconds": 20.851759020937607,
+      "sampled_process_tree_rss_peak_bytes": 623734784,
+      "sampled_process_tree_swap_peak_bytes": 0
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v8_pair2_batch1_20260929T102214716635Z",
+      "stage": "V8-C3-MICRO",
+      "source_sha": "52d47d35656c5a763bed07e07f827fb6fb285bb7",
+      "launch_wall_seconds": 34.86275815195404,
+      "supervised_seconds": 33.47019719693344,
+      "sampled_process_tree_rss_peak_bytes": 669622272,
+      "sampled_process_tree_swap_peak_bytes": 0
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v8_pair2_batch8_20260929T102152015690Z",
+      "stage": "V8-C3-MICRO",
+      "source_sha": "52d47d35656c5a763bed07e07f827fb6fb285bb7",
+      "launch_wall_seconds": 22.25750315899495,
+      "supervised_seconds": 20.859676755033433,
+      "sampled_process_tree_rss_peak_bytes": 691138560,
+      "sampled_process_tree_swap_peak_bytes": 0
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v8_pair3_batch1_20260929T102311867080Z",
+      "stage": "V8-C3-MICRO",
+      "source_sha": "52d47d35656c5a763bed07e07f827fb6fb285bb7",
+      "launch_wall_seconds": 35.48284469801001,
+      "supervised_seconds": 34.10424592602067,
+      "sampled_process_tree_rss_peak_bytes": 540078080,
+      "sampled_process_tree_swap_peak_bytes": 0
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v8_pair3_batch8_20260929T102348176493Z",
+      "stage": "V8-C3-MICRO",
+      "source_sha": "52d47d35656c5a763bed07e07f827fb6fb285bb7",
+      "launch_wall_seconds": 22.909638828015886,
+      "supervised_seconds": 20.956636557006277,
+      "sampled_process_tree_rss_peak_bytes": 705351680,
+      "sampled_process_tree_swap_peak_bytes": 0
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v8_reuse_inventory_20260929T100537323529Z",
+      "stage": "V8-C0",
+      "source_sha": "1a2984a44ca48573bbe18ffe8a7f8c5d6bdacc05",
+      "launch_wall_seconds": 6.847639565938152,
+      "supervised_seconds": 4.083593531977385,
+      "sampled_process_tree_rss_peak_bytes": 373006336,
+      "sampled_process_tree_swap_peak_bytes": 0
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v8_scaled_lsqr_20260929T100657355878Z",
+      "stage": "V8-C2-LSQR",
+      "source_sha": "1a2984a44ca48573bbe18ffe8a7f8c5d6bdacc05",
+      "launch_wall_seconds": 565.5089172660373,
+      "supervised_seconds": 563.1632653810084,
+      "sampled_process_tree_rss_peak_bytes": 553803776,
+      "sampled_process_tree_swap_peak_bytes": 0
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v8_scaled_verification_20260929T101640372022Z",
+      "stage": "V8-C2-VERIFY",
+      "source_sha": "1a2984a44ca48573bbe18ffe8a7f8c5d6bdacc05",
+      "launch_wall_seconds": 13.982617944013327,
+      "supervised_seconds": 12.56203117093537,
+      "sampled_process_tree_rss_peak_bytes": 615325696,
+      "sampled_process_tree_swap_peak_bytes": 0
+    }
+  ],
+  "formal_run_identity_authority": "run_index_v8.json",
+  "auxiliary": [
+    {
+      "name": "aggregate_c4",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/aggregate_c4/summary.json",
+      "summary_sha256": "504d7dfc8469e777785a92539d54908c93f31c70c5d5eb7b8ee7fcf998e93da0",
+      "source_state": {
+        "source_sha": "52d47d35656c5a763bed07e07f827fb6fb285bb7",
+        "git_status": "",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "tmp/task042/v8/aggregate.py"
+        ],
+        "utc": "2026-09-29T10:24:32.794263+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "supervised_seconds": 2.0521369639318436,
+      "sampled_process_tree_rss_peak_bytes": 65441792,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "aggregate_c4_fix",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/aggregate_c4_fix/summary.json",
+      "summary_sha256": "0faa5be8cb3c1fdb700fdca596fe306eaac26e751854d71796e11f29d7a78101",
+      "source_state": {
+        "source_sha": "52d47d35656c5a763bed07e07f827fb6fb285bb7",
+        "git_status": "?? docs/task042_neural_coarse_inverse/outcomes/records/batch_equivalence_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/column_scaling_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/convergence_checkpoints_v8.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/optimizer_stop_semantics_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/review_render_check_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/scaled_blind_validation_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/scaled_lsqr_comparison_v8.csv\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "tmp/task042/v8/aggregate.py"
+        ],
+        "utc": "2026-09-29T10:25:17.965017+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "supervised_seconds": 1.8046791130909696,
+      "sampled_process_tree_rss_peak_bytes": 66871296,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "batch_array_equivalence",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/batch_array_equivalence/summary.json",
+      "summary_sha256": "abb5afd68cad4bf63f9b08b9d4036e330da45b06fad12543713e4de97ac75810",
+      "source_state": {
+        "source_sha": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+        "git_status": " M scripts/run_case.py\n M src/io/task042_profile.py\n M src/runners/neural_fe_continuation.py\n M src/runners/task042_shared.py\n M src/solvers/neural_fe_optimization.py\n?? input/task042_neural_coarse_inverse/calibration_v8.json\n?? input/task042_neural_coarse_inverse/v8_batch_equivalence.dat\n?? input/task042_neural_coarse_inverse/v8_column_setup.dat\n?? input/task042_neural_coarse_inverse/v8_pair1_batch1.dat\n?? input/task042_neural_coarse_inverse/v8_pair1_batch8.dat\n?? input/task042_neural_coarse_inverse/v8_pair2_batch1.dat\n?? input/task042_neural_coarse_inverse/v8_pair2_batch8.dat\n?? input/task042_neural_coarse_inverse/v8_pair3_batch1.dat\n?? input/task042_neural_coarse_inverse/v8_pair3_batch8.dat\n?? input/task042_neural_coarse_inverse/v8_reuse_inventory.dat\n?? input/task042_neural_coarse_inverse/v8_scaled_lsqr.dat\n?? input/task042_neural_coarse_inverse/v8_scaled_verification.dat\n?? src/io/neural_fe_calibration.py\n?? src/runners/neural_fe_calibration.py\n?? src/solvers/neural_fe_batch_calibration.py\n?? src/solvers/neural_fe_column_scaling.py\n?? src/solvers/neural_trace_batched.py\n?? src/solvers/optimizer_step_transaction.py\n?? src/test/test_neural_fe_column_scaling.py\n?? src/test/test_neural_trace_batched_ml.py\n?? src/test/test_optimizer_step_transaction_ml.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "src/test/test_neural_trace_batched_ml.py",
+          "tmp/task042/v8/batch_array_equivalence.json"
+        ],
+        "utc": "2026-09-29T10:04:08.079355+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "ml",
+        "gpu_visible": false
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "supervised_seconds": 5.171280177892186,
+      "sampled_process_tree_rss_peak_bytes": 255340544,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "batch_final_pre_gate",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/batch_final_pre_gate/summary.json",
+      "summary_sha256": "0b82e7f995a3b229ce86691a01a1e2f73ba1defcc11f0a3c72f3d5f2ab49aa40",
+      "source_state": {
+        "source_sha": "1a2984a44ca48573bbe18ffe8a7f8c5d6bdacc05",
+        "git_status": " M src/runners/neural_fe_calibration.py\n M src/solvers/neural_fe_batch_calibration.py\n M src/solvers/neural_trace_batched.py\n M src/solvers/optimizer_step_transaction.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "src/test/test_neural_trace_batched_ml.py",
+          "tmp/task042/v8/batch_final_pre_gate.json"
+        ],
+        "utc": "2026-09-29T10:17:57.747021+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "ml",
+        "gpu_visible": false
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "supervised_seconds": 5.795797281083651,
+      "sampled_process_tree_rss_peak_bytes": 255295488,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "calibration_targeted_final",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/calibration_targeted_final/summary.json",
+      "summary_sha256": "2d99408b64c76164637cf17ba20872891bae8de764495d8db69b6d6711c0a080",
+      "source_state": {
+        "source_sha": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+        "git_status": " M scripts/run_case.py\n M src/io/task042_profile.py\n M src/runners/neural_fe_continuation.py\n M src/runners/task042_shared.py\n M src/solvers/neural_fe_optimization.py\n?? input/task042_neural_coarse_inverse/calibration_v8.json\n?? input/task042_neural_coarse_inverse/v8_batch_equivalence.dat\n?? input/task042_neural_coarse_inverse/v8_column_setup.dat\n?? input/task042_neural_coarse_inverse/v8_pair1_batch1.dat\n?? input/task042_neural_coarse_inverse/v8_pair1_batch8.dat\n?? input/task042_neural_coarse_inverse/v8_pair2_batch1.dat\n?? input/task042_neural_coarse_inverse/v8_pair2_batch8.dat\n?? input/task042_neural_coarse_inverse/v8_pair3_batch1.dat\n?? input/task042_neural_coarse_inverse/v8_pair3_batch8.dat\n?? input/task042_neural_coarse_inverse/v8_reuse_inventory.dat\n?? input/task042_neural_coarse_inverse/v8_scaled_lsqr.dat\n?? input/task042_neural_coarse_inverse/v8_scaled_verification.dat\n?? src/io/neural_fe_calibration.py\n?? src/runners/neural_fe_calibration.py\n?? src/solvers/neural_fe_batch_calibration.py\n?? src/solvers/neural_fe_column_scaling.py\n?? src/solvers/neural_trace_batched.py\n?? src/solvers/optimizer_step_transaction.py\n?? src/test/test_neural_fe_column_scaling.py\n?? src/test/test_neural_trace_batched_ml.py\n?? src/test/test_optimizer_step_transaction_ml.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "src/test/test_neural_fe_column_scaling.py",
+          "src/test/test_bounded_complex_lsqr.py",
+          "src/test/test_neural_fe_action_packet.py",
+          "src/test/test_neural_fe_gate_check.py",
+          "src/test/test_task042_v4_monitor.py"
+        ],
+        "utc": "2026-09-29T10:04:46.560258+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "supervised_seconds": 3.499990336014889,
+      "sampled_process_tree_rss_peak_bytes": 151949312,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "cli_preflight_argument_error",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/cli_preflight_argument_error/summary.json",
+      "summary_sha256": "5df5a9098ac9da00b88ef984d138278979f6f572fc5c6cf5190196925d27e6bc",
+      "source_state": {
+        "source_sha": "1a2984a44ca48573bbe18ffe8a7f8c5d6bdacc05",
+        "stage": "CLI_ARGUMENT_CHECK",
+        "git_status": ""
+      },
+      "classification": "ARGUMENT_PARSER_FAILED_NO_NUMERICS",
+      "leader_exit_code": 2,
+      "supervised_seconds": 0.0,
+      "sampled_process_tree_rss_peak_bytes": null,
+      "sampled_process_tree_swap_peak_bytes": null,
+      "descendants_cleared": true
+    },
+    {
+      "name": "column_scaling_tests",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/column_scaling_tests/summary.json",
+      "summary_sha256": "785aa11648ce8f3229cc60270192dcb23f248ab10986d3ef7eb673a8172b5306",
+      "source_state": {
+        "source_sha": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+        "git_status": " M src/solvers/neural_fe_optimization.py\n?? input/task042_neural_coarse_inverse/calibration_v8.json\n?? src/io/neural_fe_calibration.py\n?? src/solvers/neural_fe_column_scaling.py\n?? src/solvers/optimizer_step_transaction.py\n?? src/test/test_neural_fe_column_scaling.py\n?? src/test/test_optimizer_step_transaction_ml.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "src/test/test_neural_fe_column_scaling.py",
+          "src/test/test_bounded_complex_lsqr.py",
+          "src/test/test_neural_fe_action_packet.py"
+        ],
+        "utc": "2026-09-29T09:50:52.149735+00:00",
+        "affinity": [
+          13
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "supervised_seconds": 2.2590534589253366,
+      "sampled_process_tree_rss_peak_bytes": 82923520,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "compact_gate_recomputation",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/compact_gate_recomputation/summary.json",
+      "summary_sha256": "077be4bd8c3a313b66fef30006dd237095e8220bc8ea6d61eb629aa72593c579",
+      "source_state": {
+        "source_sha": "9915f6168ec4035470870a5d8c3c3bbfe0e6277a",
+        "git_status": "?? benchmarks/neural_fe_calibration_gate_check.py\n?? docs/task042_neural_coarse_inverse/outcomes/records/batch_costs_v8.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/batch_equivalence_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/column_scaling_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/convergence_checkpoints_v8.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/optimizer_stop_semantics_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/review_render_check_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/scaled_blind_validation_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/scaled_lsqr_comparison_v8.csv\n?? src/test/test_neural_fe_calibration_gate_check.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "--junitxml=tmp/task042/v8/compact_gate_recomputation.xml",
+          "src/test/test_neural_fe_calibration_gate_check.py"
+        ],
+        "utc": "2026-09-29T10:31:35.061468+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "supervised_seconds": 1.741173265967518,
+      "sampled_process_tree_rss_peak_bytes": 66584576,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "fe_abi_final",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/fe_abi_final/summary.json",
+      "summary_sha256": "a10314b8b37055eadb37b6b9787648c54f5859516cc3ec47751fa7799d17b6e9",
+      "source_state": {
+        "source_sha": "1a2984a44ca48573bbe18ffe8a7f8c5d6bdacc05",
+        "git_status": "",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "scripts/task042_preflight.py",
+          "--output",
+          "tmp/task042/v8/fe_abi_final.json"
+        ],
+        "utc": "2026-09-29T10:06:30.569567+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "fe",
+        "gpu_visible": false
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "supervised_seconds": 3.4063553489977494,
+      "sampled_process_tree_rss_peak_bytes": 227602432,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "fe_preflight",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/fe_preflight/summary.json",
+      "summary_sha256": "74ee78b274c28a150ee42ef95a9338c1885c6600eece86caacbe758fa50be34e",
+      "source_state": {
+        "source_sha": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+        "git_status": "",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "scripts/task042_preflight.py",
+          "--output",
+          "tmp/task042/v8/fe_abi.json"
+        ],
+        "utc": "2026-09-29T09:37:17.577352+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "fe",
+        "gpu_visible": false
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "supervised_seconds": 4.2073939620750025,
+      "sampled_process_tree_rss_peak_bytes": 227512320,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "final_record_aggregation",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/final_record_aggregation/summary.json",
+      "summary_sha256": "f0ea3d4ea2bfbb7aa34fa83866eb978f773b8aeea8b967d88938622bfdf8136f",
+      "source_state": {
+        "source_sha": "9915f6168ec4035470870a5d8c3c3bbfe0e6277a",
+        "git_status": "?? docs/task042_neural_coarse_inverse/outcomes/records/batch_costs_v8.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/batch_equivalence_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/column_scaling_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/convergence_checkpoints_v8.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/optimizer_stop_semantics_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/review_render_check_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/scaled_blind_validation_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/scaled_lsqr_comparison_v8.csv\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "tmp/task042/v8/aggregate.py"
+        ],
+        "utc": "2026-09-29T10:29:57.613430+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "supervised_seconds": 2.0289521269733086,
+      "sampled_process_tree_rss_peak_bytes": 65716224,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "final_static_docs",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/final_static_docs/summary.json",
+      "summary_sha256": "f90990750b9de398f96a1604108b0f8eee427b02acfde0b78cfcbb04b1aaef63",
+      "source_state": {
+        "source_sha": "5067a5ea390d7f4064f70cd3cb5774a2549a0e43",
+        "git_status": " M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042_neural_coarse_inverse/README.md\n M docs/task042_neural_coarse_inverse/outcomes/changed_files.md\n M docs/task042_neural_coarse_inverse/outcomes/summary.md\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n M input/task042_neural_coarse_inverse/README.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/batch_costs_v8.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/batch_equivalence_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/column_scaling_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/convergence_checkpoints_v8.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/independent_calibration_gates_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/optimizer_stop_semantics_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/review_render_check_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/scaled_blind_validation_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/scaled_lsqr_comparison_v8.csv\n?? docs/task042_neural_coarse_inverse/outcomes/scaling_and_execution_v8.md\n?? docs/task042_neural_coarse_inverse/response_v8.md\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "tmp/task042/v8/static_check.py"
+        ],
+        "utc": "2026-09-29T10:44:00.420585+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "supervised_seconds": 1.7923747249878943,
+      "sampled_process_tree_rss_peak_bytes": 54034432,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "final_static_docs_fix",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/final_static_docs_fix/summary.json",
+      "summary_sha256": "dbbe3188d35f9e1f197794d194eb5001722d623df7a45f738348ff3e2a24fb92",
+      "source_state": {
+        "source_sha": "5067a5ea390d7f4064f70cd3cb5774a2549a0e43",
+        "git_status": " M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042_neural_coarse_inverse/README.md\n M docs/task042_neural_coarse_inverse/outcomes/changed_files.md\n M docs/task042_neural_coarse_inverse/outcomes/summary.md\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n M input/task042_neural_coarse_inverse/README.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/batch_costs_v8.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/batch_equivalence_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/column_scaling_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/convergence_checkpoints_v8.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/independent_calibration_gates_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/optimizer_stop_semantics_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/review_render_check_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/scaled_blind_validation_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/scaled_lsqr_comparison_v8.csv\n?? docs/task042_neural_coarse_inverse/outcomes/scaling_and_execution_v8.md\n?? docs/task042_neural_coarse_inverse/response_v8.md\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "tmp/task042/v8/static_check.py"
+        ],
+        "utc": "2026-09-29T10:44:51.489096+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "supervised_seconds": 1.767698599025607,
+      "sampled_process_tree_rss_peak_bytes": 41160704,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "final_task_focused",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/final_task_focused/summary.json",
+      "summary_sha256": "52f9d4bcf52ee795166fc6572199233d892df33ddc4334007bf5e013a5008d5e",
+      "source_state": {
+        "source_sha": "52d47d35656c5a763bed07e07f827fb6fb285bb7",
+        "git_status": " M src/runners/neural_fe_calibration.py\n?? docs/task042_neural_coarse_inverse/outcomes/records/batch_costs_v8.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/batch_equivalence_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/column_scaling_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/convergence_checkpoints_v8.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/optimizer_stop_semantics_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/review_render_check_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/scaled_blind_validation_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/scaled_lsqr_comparison_v8.csv\n?? src/test/test_neural_fe_calibration_inputs.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "--junitxml=tmp/task042/v8/final_task_focused.xml",
+          "src/test/test_neural_fe_calibration_inputs.py",
+          "src/test/test_neural_fe_column_scaling.py",
+          "src/test/test_bounded_complex_lsqr.py",
+          "src/test/test_neural_fe_action_packet.py",
+          "src/test/test_neural_fe_gate_check.py"
+        ],
+        "utc": "2026-09-29T10:28:11.014510+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "supervised_seconds": 2.4061520540853962,
+      "sampled_process_tree_rss_peak_bytes": 86249472,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "independent_compact_gates",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/independent_compact_gates/summary.json",
+      "summary_sha256": "e63ffedadfa3d4ab656654dea0fab118b384e2e5e8808aa6ead1ec2ea08c9670",
+      "source_state": {
+        "source_sha": "9915f6168ec4035470870a5d8c3c3bbfe0e6277a",
+        "git_status": "?? benchmarks/neural_fe_calibration_gate_check.py\n?? docs/task042_neural_coarse_inverse/outcomes/records/batch_costs_v8.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/batch_equivalence_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/column_scaling_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/convergence_checkpoints_v8.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/optimizer_stop_semantics_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/review_render_check_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/scaled_blind_validation_v8.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/scaled_lsqr_comparison_v8.csv\n?? src/test/test_neural_fe_calibration_gate_check.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "tmp/task042/v8/recompute_gates.py"
+        ],
+        "utc": "2026-09-29T10:32:25.520685+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "supervised_seconds": 1.5508990990929306,
+      "sampled_process_tree_rss_peak_bytes": 45150208,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "ml_preflight",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/ml_preflight/summary.json",
+      "summary_sha256": "d0799fa0fe74f0d08ab40e73e528f4215a92375c63ee118dab8756f653a8029c",
+      "source_state": {
+        "source_sha": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+        "git_status": " M src/solvers/neural_fe_optimization.py\n?? src/solvers/optimizer_step_transaction.py\n?? src/test/test_optimizer_step_transaction_ml.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "scripts/task042_preflight.py",
+          "--output",
+          "tmp/task042/v8/ml_abi.json"
+        ],
+        "utc": "2026-09-29T09:42:57.315976+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "ml",
+        "gpu_visible": false
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "supervised_seconds": 4.998934110975824,
+      "sampled_process_tree_rss_peak_bytes": 236711936,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "optimizer_budget_regression",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/optimizer_budget_regression/summary.json",
+      "summary_sha256": "c176f2e899e9dfca1facd90f0df6b23ac9704650592a261cb38fe0fe4a732d03",
+      "source_state": {
+        "source_sha": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+        "git_status": " M scripts/run_case.py\n M src/io/task042_profile.py\n M src/runners/neural_fe_continuation.py\n M src/runners/task042_shared.py\n M src/solvers/neural_fe_optimization.py\n?? input/task042_neural_coarse_inverse/calibration_v8.json\n?? input/task042_neural_coarse_inverse/v8_batch_equivalence.dat\n?? input/task042_neural_coarse_inverse/v8_column_setup.dat\n?? input/task042_neural_coarse_inverse/v8_pair1_batch1.dat\n?? input/task042_neural_coarse_inverse/v8_pair1_batch8.dat\n?? input/task042_neural_coarse_inverse/v8_pair2_batch1.dat\n?? input/task042_neural_coarse_inverse/v8_pair2_batch8.dat\n?? input/task042_neural_coarse_inverse/v8_pair3_batch1.dat\n?? input/task042_neural_coarse_inverse/v8_pair3_batch8.dat\n?? input/task042_neural_coarse_inverse/v8_reuse_inventory.dat\n?? input/task042_neural_coarse_inverse/v8_scaled_lsqr.dat\n?? input/task042_neural_coarse_inverse/v8_scaled_verification.dat\n?? src/io/neural_fe_calibration.py\n?? src/runners/neural_fe_calibration.py\n?? src/solvers/neural_fe_column_scaling.py\n?? src/solvers/optimizer_step_transaction.py\n?? src/test/test_neural_fe_column_scaling.py\n?? src/test/test_optimizer_step_transaction_ml.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "-c",
+          "from tempfile import TemporaryDirectory; from pathlib import Path; from src.solvers.neural_trace_torch import qualify_threads; qualify_threads(); from src.test.test_neural_fe_optimizer_ml import test_frozen_optimizer_budget_has_no_gradient_success_exit as test; directory=TemporaryDirectory(dir=\"tmp/task042/v8\"); test(Path(directory.name)); print(\"toy2000 PASS\"); directory.cleanup()"
+        ],
+        "utc": "2026-09-29T10:00:51.142943+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "ml",
+        "gpu_visible": false
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "supervised_seconds": 19.444073764025234,
+      "sampled_process_tree_rss_peak_bytes": 322928640,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "optimizer_stop_final_pre_gate",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/optimizer_stop_final_pre_gate/summary.json",
+      "summary_sha256": "cabeb0a060ed86dc9ec2a3a21f49bc1b50cddc79a5d3dfea34a32958467764af",
+      "source_state": {
+        "source_sha": "1a2984a44ca48573bbe18ffe8a7f8c5d6bdacc05",
+        "git_status": " M src/runners/neural_fe_calibration.py\n M src/solvers/neural_fe_batch_calibration.py\n M src/solvers/neural_trace_batched.py\n M src/solvers/optimizer_step_transaction.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "src/test/test_optimizer_step_transaction_ml.py",
+          "tmp/task042/v8/optimizer_stop_semantics_final.json"
+        ],
+        "utc": "2026-09-29T10:18:19.596313+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "ml",
+        "gpu_visible": false
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "supervised_seconds": 8.703592480975203,
+      "sampled_process_tree_rss_peak_bytes": 323141632,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "optimizer_transaction_final",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/optimizer_transaction_final/summary.json",
+      "summary_sha256": "e17e64b0138b5d2cece8360fb1f04ef950fcb39bbe5991c7f52f9bab2d2328d0",
+      "source_state": {
+        "source_sha": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+        "git_status": " M scripts/run_case.py\n M src/io/task042_profile.py\n M src/runners/neural_fe_continuation.py\n M src/runners/task042_shared.py\n M src/solvers/neural_fe_optimization.py\n?? input/task042_neural_coarse_inverse/calibration_v8.json\n?? input/task042_neural_coarse_inverse/v8_batch_equivalence.dat\n?? input/task042_neural_coarse_inverse/v8_column_setup.dat\n?? input/task042_neural_coarse_inverse/v8_pair1_batch1.dat\n?? input/task042_neural_coarse_inverse/v8_pair1_batch8.dat\n?? input/task042_neural_coarse_inverse/v8_pair2_batch1.dat\n?? input/task042_neural_coarse_inverse/v8_pair2_batch8.dat\n?? input/task042_neural_coarse_inverse/v8_pair3_batch1.dat\n?? input/task042_neural_coarse_inverse/v8_pair3_batch8.dat\n?? input/task042_neural_coarse_inverse/v8_reuse_inventory.dat\n?? input/task042_neural_coarse_inverse/v8_scaled_lsqr.dat\n?? input/task042_neural_coarse_inverse/v8_scaled_verification.dat\n?? src/io/neural_fe_calibration.py\n?? src/runners/neural_fe_calibration.py\n?? src/solvers/neural_fe_column_scaling.py\n?? src/solvers/optimizer_step_transaction.py\n?? src/test/test_neural_fe_column_scaling.py\n?? src/test/test_optimizer_step_transaction_ml.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "src/test/test_optimizer_step_transaction_ml.py",
+          "tmp/task042/v8/optimizer_stop_semantics_final.json"
+        ],
+        "utc": "2026-09-29T10:00:16.684069+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "ml",
+        "gpu_visible": false
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "supervised_seconds": 7.809450577944517,
+      "sampled_process_tree_rss_peak_bytes": 323190784,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "optimizer_transaction_tests",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/optimizer_transaction_tests/summary.json",
+      "summary_sha256": "f57cf954b3ea551d9c0f49642b39dddefec0ab237897c6f38397b682a814920c",
+      "source_state": {
+        "source_sha": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+        "git_status": " M src/solvers/neural_fe_optimization.py\n?? src/solvers/optimizer_step_transaction.py\n?? src/test/test_optimizer_step_transaction_ml.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "src/test/test_optimizer_step_transaction_ml.py",
+          "tmp/task042/v8/optimizer_stop_semantics.json"
+        ],
+        "utc": "2026-09-29T09:43:15.465771+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "ml",
+        "gpu_visible": false
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "supervised_seconds": 8.264156123972498,
+      "sampled_process_tree_rss_peak_bytes": 323006464,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "outside_supervision_metadata_allowance",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/outside_supervision_metadata_allowance/summary.json",
+      "summary_sha256": "33992e605284b78c6ee88e72b5952f8ee1df4bb6d8a0c4219882d9f7c6c3ba5e",
+      "source_state": {
+        "source_sha": "5067a5ea390d7f4064f70cd3cb5774a2549a0e43",
+        "stage": "LOW_COST_METADATA_ACCOUNTING",
+        "git_status": "not a run"
+      },
+      "classification": "BUDGET_RESERVATION_NOT_AN_EXECUTION",
+      "leader_exit_code": null,
+      "supervised_seconds": 0.0,
+      "sampled_process_tree_rss_peak_bytes": null,
+      "sampled_process_tree_swap_peak_bytes": null,
+      "descendants_cleared": true
+    },
+    {
+      "name": "review_render",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v8/review_render/summary.json",
+      "summary_sha256": "275655eb419a69ac33a10854127e3dfc2b66cd80e059a3bba591d21e41937830",
+      "source_state": {
+        "source_sha": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+        "git_status": "",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "python",
+          "tmp/task042/v8/review_render.py"
+        ],
+        "utc": "2026-09-29T09:35:45.985931+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "supervised_seconds": 3.070088494918309,
+      "sampled_process_tree_rss_peak_bytes": 45006848,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    }
+  ],
+  "formal_launch_wall_seconds": 809.9877408049069,
+  "formal_supervised_seconds": 791.6589161799056,
+  "sampled_simultaneous_tree_peak_bytes": 816152576,
+  "peak_scope": "maximum of separately sampled simultaneous process-tree peaks, not sum of stage peaks",
+  "own_swap_peak_bytes": 0,
+  "new_gpu_vram_bytes": 0,
+  "shared_workstation": true,
+  "formal_health": {
+    "samples": 149,
+    "max_pressure_samples": 0,
+    "stop_reasons": [],
+    "min_disk_free_bytes": 3447286996992,
+    "max_artifact_bytes": 1920639057
+  },
+  "cgroup_kernel_limit_enforced": false,
+  "watchdog_interval_seconds": 0.5,
+  "rss_hard_bytes": 17179869184,
+  "rss_warn_bytes": 12884901888,
+  "neighbor_impact": "INCONCLUSIVE; no sustained resource pressure observed; comparable neighbor stage throughput not available",
+  "performance": "shared-workstation only; V7/V8 long-route speed comparison INCONCLUSIVE",
+  "full_interactive_session_wall_and_RSS": "NOT_CONTINUOUSLY_SAMPLED; numerical stages and bounded auxiliaries billed explicitly",
+  "arithmetic": "launch wall includes supervision and worker; worker/exclusive/nested times are not added again",
+  "outside_sampled_accounting": "120s budget reservation for short untimed metadata commands plus 1.001622s CLI-error upper charge; these are not measured runtime or RSS"
+}

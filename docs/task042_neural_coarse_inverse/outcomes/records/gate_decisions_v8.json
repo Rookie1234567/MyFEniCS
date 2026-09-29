@@ -1,0 +1,225 @@
+{
+  "optimizer_stop": "PASS",
+  "old_optimizer_acceptance": "V7_ACCEPTANCE_STATE_UNKNOWN",
+  "scaling_setup": "COLUMN_SCALING_READY",
+  "strict_qualification": "NOT_QUALIFIED",
+  "scaling_research_signal": "NO_REVIEW_DEFINED_POSITIVE",
+  "same_or_fewer_actions": true,
+  "raw_thresholds": {
+    "action_relative": 1e-10,
+    "equivalence_relative": 1e-10,
+    "equivalence_absolute_near_zero": 1e-12,
+    "finite_difference_stable_relative": 1e-05,
+    "research_schur": 0.007160258,
+    "research_native": 0.0028727752,
+    "research_scattered_L2": 0.5,
+    "strict_scattered_L2": 0.0001,
+    "performance_median_fraction": 0.8
+  },
+  "independent_gate": {
+    "reference_accuracy_pass": true,
+    "routes": {
+      "FE-LSQR-COLUMN-SCALED": {
+        "equation_pass": false,
+        "field_pass": false,
+        "power_pass": false,
+        "reference_accuracy_pass": true,
+        "status": "NOT_QUALIFIED",
+        "computed": {
+          "selected_E_relative": 0.10450726710174488,
+          "selected_H_relative": 0.10450729414218808,
+          "ordered_complex_ports_relative": 0.10432008574617901,
+          "max_channel_power_difference": 0.008472826341095474,
+          "energy_closure_absolute": 0.004434912809960334
+        },
+        "power_absolute_differences": {
+          "R_total": 0.004045877810684315,
+          "T_total": 0.00847270584710913,
+          "A_balance": 0.004426828036424801,
+          "A_volume": 8.084770629178742e-06
+        },
+        "full_FE_norms": "independent DOLFINx integral measurement, no FE replay",
+        "saved_status_trusted": false
+      }
+    },
+    "near_zero_absolute_threshold": 1e-12,
+    "reference_feedback": false
+  },
+  "strict_scattered_pass": false,
+  "batch_equivalence": "PASS",
+  "micro_pairs": [
+    {
+      "pair": 1,
+      "order": [
+        1,
+        8
+      ],
+      "baseline": {
+        "batch": 1,
+        "median": 4.756739935022779,
+        "cpu": [
+          0
+        ],
+        "cache": {
+          "new_persistent_cache_bytes": 0,
+          "batch_size": 1
+        },
+        "stage_sha256": "99842e10b7de5d224ecc9935a737f45c9a40aa72713f5deb8dea4e9b64f6f401"
+      },
+      "candidate": {
+        "batch": 8,
+        "median": 2.2858769379090518,
+        "cpu": [
+          0
+        ],
+        "cache": {
+          "batch_size": 8,
+          "owner_cells": 384,
+          "all_points_retained": true,
+          "points_per_cell": 507,
+          "full_local_moments": 144,
+          "cache_upper_bytes": 36138240,
+          "new_persistent_cache_bytes": 35107584,
+          "cache_limit_bytes": 536870912,
+          "transient_batch_graph_upper_bytes": 107078400,
+          "allocation_upper_bytes": 246463744,
+          "resource_sample_before_allocation": {
+            "rss_bytes": 456073216,
+            "swap_bytes": 0,
+            "timestamp_ns": 1790677272548273110,
+            "launch_cap_bytes": 17179869184
+          },
+          "setup_seconds": 0.22012982703745365,
+          "original_orientation_and_owner": true,
+          "MPC_mapping": "unchanged canonical masters; original action expands complex slave phases",
+          "no_autograd_graph_retained_between_batches": true
+        },
+        "stage_sha256": "6a7e67ff778f62b61d4ec1534515f1651ad07958bf037ef20c2664aceb5457c2"
+      },
+      "ratio": 0.4805553738766896,
+      "reduction": 0.5194446261233103
+    },
+    {
+      "pair": 2,
+      "order": [
+        8,
+        1
+      ],
+      "baseline": {
+        "batch": 1,
+        "median": 4.891868880018592,
+        "cpu": [
+          0
+        ],
+        "cache": {
+          "new_persistent_cache_bytes": 0,
+          "batch_size": 1
+        },
+        "stage_sha256": "26fd7228193844d7c1763664153b2a3411a344dd8901d59d80a066c58b77e031"
+      },
+      "candidate": {
+        "batch": 8,
+        "median": 2.5167294091079384,
+        "cpu": [
+          0
+        ],
+        "cache": {
+          "batch_size": 8,
+          "owner_cells": 384,
+          "all_points_retained": true,
+          "points_per_cell": 507,
+          "full_local_moments": 144,
+          "cache_upper_bytes": 36138240,
+          "new_persistent_cache_bytes": 35107584,
+          "cache_limit_bytes": 536870912,
+          "transient_batch_graph_upper_bytes": 107078400,
+          "allocation_upper_bytes": 246463744,
+          "resource_sample_before_allocation": {
+            "rss_bytes": 461283328,
+            "swap_bytes": 0,
+            "timestamp_ns": 1790677315054031783,
+            "launch_cap_bytes": 17179869184
+          },
+          "setup_seconds": 0.20262539200484753,
+          "original_orientation_and_owner": true,
+          "MPC_mapping": "unchanged canonical masters; original action expands complex slave phases",
+          "no_autograd_graph_retained_between_batches": true
+        },
+        "stage_sha256": "b30eb51835d8e5e63dc30d770826a9396cdafc6f8c5dc5f58154cd0ca6cf7315"
+      },
+      "ratio": 0.514471967837857,
+      "reduction": 0.485528032162143
+    },
+    {
+      "pair": 3,
+      "order": [
+        1,
+        8
+      ],
+      "baseline": {
+        "batch": 1,
+        "median": 4.5942448660498485,
+        "cpu": [
+          0
+        ],
+        "cache": {
+          "new_persistent_cache_bytes": 0,
+          "batch_size": 1
+        },
+        "stage_sha256": "c3aaa52fc4c27024540f7d4a5a5402c7dc8a0a41ecf15c983f3463d02e8484bc"
+      },
+      "candidate": {
+        "batch": 8,
+        "median": 2.4514982419786975,
+        "cpu": [
+          0
+        ],
+        "cache": {
+          "batch_size": 8,
+          "owner_cells": 384,
+          "all_points_retained": true,
+          "points_per_cell": 507,
+          "full_local_moments": 144,
+          "cache_upper_bytes": 36138240,
+          "new_persistent_cache_bytes": 35107584,
+          "cache_limit_bytes": 536870912,
+          "transient_batch_graph_upper_bytes": 107078400,
+          "allocation_upper_bytes": 246463744,
+          "resource_sample_before_allocation": {
+            "rss_bytes": 445325312,
+            "swap_bytes": 0,
+            "timestamp_ns": 1790677431202948808,
+            "launch_cap_bytes": 17179869184
+          },
+          "setup_seconds": 0.1786679730284959,
+          "original_orientation_and_owner": true,
+          "MPC_mapping": "unchanged canonical masters; original action expands complex slave phases",
+          "no_autograd_graph_retained_between_batches": true
+        },
+        "stage_sha256": "f8d193575dd27631397d64b975700139b101c8d53156ad4025b3ac4c69884b58"
+      },
+      "ratio": 0.5336019984686855,
+      "reduction": 0.4663980015313145
+    }
+  ],
+  "paired_median_fraction": 0.514471967837857,
+  "micro_observed_20percent_reduction": true,
+  "micro_performance_identity": "shared-workstation; observational microbenchmark, not formal uncontended solver acceleration",
+  "final_0p7nm_48h": "NOT_QUALIFIED",
+  "neural_numerical_increment": "NOT_DEMONSTRATED",
+  "large_target_step_cost": "UNKNOWN",
+  "large_target_required_steps": "UNKNOWN",
+  "large_target_channel_storage": "UNKNOWN",
+  "not_run": [
+    "V7 continuation/long NN training",
+    "new p4 enrichment",
+    "GPU",
+    "seed420620",
+    "old teacher campaign",
+    "F5/p6",
+    "larger model",
+    "official R/T/A"
+  ],
+  "input_scope": "initial C2 adapter additionally loaded an unused 3369888B moment packet; fixed afterward; negative result/RSS unchanged; targeted input-boundary tests only",
+  "next_minimal_experiment": "固定pilot上仅对已经冻结的误差方向做原S/恢复/端口分量审核，复用已有p3参考作离线核对，定位残差下降为何没有恢复散射；不训练、不建新PC、不扫描。"
+}

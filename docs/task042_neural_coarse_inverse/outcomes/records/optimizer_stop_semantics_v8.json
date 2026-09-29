@@ -1,0 +1,78 @@
+{
+  "status": "PASS",
+  "tests": 7,
+  "observations": [
+    {
+      "stop_at": 2,
+      "nonfinite": false,
+      "counts": {
+        "closures": 2,
+        "S": 1,
+        "SH": 1,
+        "optimizer_updates": 0
+      },
+      "distinct_real_line_search_trial": true,
+      "parameters_restored": true,
+      "optimizer_restored": true
+    },
+    {
+      "stop_at": 1,
+      "nonfinite": false,
+      "counts": {
+        "closures": 1,
+        "S": 0,
+        "SH": 0,
+        "optimizer_updates": 0
+      },
+      "distinct_real_line_search_trial": false,
+      "parameters_restored": true,
+      "optimizer_restored": true
+    },
+    {
+      "stop_at": 3,
+      "nonfinite": false,
+      "counts": {
+        "closures": 3,
+        "S": 2,
+        "SH": 2,
+        "optimizer_updates": 0
+      },
+      "distinct_real_line_search_trial": true,
+      "parameters_restored": true,
+      "optimizer_restored": true
+    },
+    {
+      "stop_at": 2,
+      "nonfinite": true,
+      "counts": {
+        "closures": 2,
+        "S": 2,
+        "SH": 2,
+        "optimizer_updates": 0
+      },
+      "distinct_real_line_search_trial": true,
+      "parameters_restored": true,
+      "optimizer_restored": true
+    }
+  ],
+  "torch_version": "2.7.1+cpu",
+  "torch_lbfgs_path": "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/torch/optim/lbfgs.py",
+  "torch_lbfgs_sha256": "5be8478f3dbd6b1973c3fdb9f4c2230ea99265cd7e3ffec7aad1996159e13a50",
+  "threads": {
+    "intraop": 1,
+    "interop": 1,
+    "cuda_build": null,
+    "data_loader_workers": 0,
+    "actual_blas_pools": [
+      {
+        "path": "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/numpy.libs/libopenblas64_p-r0-0cf96a72.3.23.dev.so",
+        "function": "openblas_get_num_threads64_",
+        "threads": 1
+      }
+    ]
+  },
+  "actual_strong_wolfe_exercised": true,
+  "V7_acceptance_state": "V7_ACCEPTANCE_STATE_UNKNOWN",
+  "long_physical_training_replayed": false,
+  "V7_old_vectors_remain_audited_negative": true
+}

@@ -1,0 +1,209 @@
+{
+  "status": "COLUMN_SCALING_READY",
+  "kind": "SCALING_SETUP_USES_SMALL_ASSEMBLED_S",
+  "definition": "c_j=norm(S e_j); D_jj=1/c_j; original canonical coordinate/order",
+  "matrix": {
+    "shape": [
+      18184,
+      18184
+    ],
+    "nnz": 3901384,
+    "indptr_sha256": "cbaf7339e4ecb13cd9127b4167412d5f0889ced974016bf70e413ec63ada1c36",
+    "indices_sha256": "8402ee50c650a0de4a1279bfbd6de73ae2d42012d77cedcc1a69617365585867",
+    "values_sha256": "00666136df757dfc05399d9dcb0255595396f22b45f152629b1691c0b3c945a0"
+  },
+  "capacity": {
+    "allocation_upper_bytes": 1541300224,
+    "tree_rss_before_bytes": 391163904,
+    "planning_cap_bytes": 12884901888,
+    "admitted": true,
+    "includes_COO_CSR_CSC_duplicates_and_norm_workspace": true
+  },
+  "column_pairs": [
+    {
+      "column": 0,
+      "kind": "trace",
+      "assembled_norm": 33.19453290742372,
+      "action_norm": 33.194532907423714,
+      "relative": 2.1405414492251896e-16
+    },
+    {
+      "column": 3628,
+      "kind": "trace",
+      "assembled_norm": 413.01290461729593,
+      "action_norm": 413.01290461729593,
+      "relative": 0.0
+    },
+    {
+      "column": 6048,
+      "kind": "trace",
+      "assembled_norm": 602.6514888654318,
+      "action_norm": 602.6514888654316,
+      "relative": 3.7728883051677506e-16
+    },
+    {
+      "column": 9072,
+      "kind": "trace",
+      "assembled_norm": 69.1299603459413,
+      "action_norm": 69.1299603459413,
+      "relative": 0.0
+    },
+    {
+      "column": 18142,
+      "kind": "trace",
+      "assembled_norm": 40.55525081565142,
+      "action_norm": 40.55525081565142,
+      "relative": 0.0
+    },
+    {
+      "column": 18143,
+      "kind": "trace",
+      "assembled_norm": 40.5552721177059,
+      "action_norm": 40.55527211770588,
+      "relative": 3.504070857657427e-16
+    },
+    {
+      "column": 18144,
+      "kind": "port",
+      "assembled_norm": 9.671682890811242,
+      "action_norm": 9.671682890811246,
+      "relative": 3.6733148914299297e-16
+    },
+    {
+      "column": 18183,
+      "kind": "port",
+      "assembled_norm": 17.13903821085431,
+      "action_norm": 17.139038210854306,
+      "relative": 2.0728780898280132e-16
+    }
+  ],
+  "vector_pairs": [
+    {
+      "seed": 420910,
+      "operation_relative": 4.3705467235907796e-16
+    },
+    {
+      "seed": 420911,
+      "operation_relative": 4.455571748581443e-16
+    },
+    {
+      "seed": 420912,
+      "operation_relative": 4.478431158800514e-16
+    }
+  ],
+  "column_statistics": {
+    "all": {
+      "min": 1.475620298093755,
+      "max": 1125.4062745377782,
+      "median": 413.01290461729576,
+      "dynamic_range": 762.6665721470541
+    },
+    "trace": {
+      "min": 33.19425853150982,
+      "max": 1125.4062745377782,
+      "median": 413.0129046172958,
+      "dynamic_range": 33.90364250701611
+    },
+    "port": {
+      "min": 1.475620298093755,
+      "max": 17.27358377527225,
+      "median": 17.130543287539133,
+      "dynamic_range": 11.705981408351946
+    }
+  },
+  "diagonal_statistics": {
+    "min": 0.0008885679977310554,
+    "max": 0.6776811089491154,
+    "median": 0.0024212318521296947,
+    "dynamic_range": 762.6665721470541
+  },
+  "scale": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v8/V8-C2-SETUP/task042_v8_column_setup_20260929T100559009668Z/column_scale.npz",
+    "sha256": "347ccef3aa5d52a35cea933c7d73142818697ae71b8186b4bd2dce9a232d13d4",
+    "c_sha256": "8987e34ce326ebe94795368ed6c505bfcd7cc39f38352c2bb062e3609c6ed0cd",
+    "D_sha256": "176c40775d6e7538e511f758bea953e48fd95886196d5a0b31b8629784e5ea02",
+    "rows": 18184,
+    "trace_rows": 18144,
+    "port_rows": 40,
+    "payload_bytes": 290944
+  },
+  "CSR_released": true,
+  "symbolic_calls": 0,
+  "numeric_calls": 0,
+  "solve_calls": 0,
+  "dense_S": false,
+  "normal_matrix": false,
+  "reference_loaded": false,
+  "row_scaling": false,
+  "clipping": false,
+  "damping": false,
+  "assembly_dependency": "original V7 local Schur/MPC/complex phase and complete port packet; unchanged reference_csr assembly function",
+  "assembled_CSR_saved": false,
+  "action_counts": {
+    "S": 11,
+    "SH": 0,
+    "audit": 0
+  },
+  "costs_exclusive_seconds": {
+    "assembly": 0.9413373640272766,
+    "column_norms": 0.3795800380175933,
+    "pairs": 1.111716895014979,
+    "io": 0.0038409229600802064
+  },
+  "setup_wall_seconds": 2.76430324499961,
+  "actual_threads": [
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+      "function": "openblas_get_num_threads",
+      "threads": 1
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+      "function": "openblas_get_num_threads",
+      "threads": 1
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+      "function": "openblas_get_num_threads",
+      "threads": 1
+    }
+  ],
+  "stage": "V8-C2-SETUP",
+  "source_sha": "1a2984a44ca48573bbe18ffe8a7f8c5d6bdacc05",
+  "input_sha256": "a67561afd94a2157a2e580e2b699703e560a75fa9d87c040bedce92bfcf86851",
+  "input_path": "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v8_column_setup.dat",
+  "plan_sha256": "ad70294d311268012e2801562ad5c37035c93e1b90188627ac4693f2b1169296",
+  "design_sha256": "17792c1b5f003e7114d9a69fea8481cd195e92666e46ef950302e3dc85308c3b",
+  "physical": {
+    "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+    "mode_manifest_sha256": "93795b53d7c5aef69af66b4ff0a56fa46515771f1ec43332ec929970270ea262",
+    "material_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+    "original_full_inventory": "docs/task042_neural_coarse_inverse/outcomes/records/material_geometry_identity_v7.json"
+  },
+  "operator_packet": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v7/V7-M1-FE/task042_v7_real_fe_interface_20260929T053615881143Z/physical_action_packet.npz",
+    "sha256": "9196edb807b534217d0c0eb78882125341342784a48ef20ebe2d9421fe636454",
+    "file_bytes": 209248356
+  },
+  "operator_source_sha": "70f5f5437533693e343ede67a37363e89b062330",
+  "moment_packet": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v6/V6-FE-INTERFACE/task042_v6_geometry_interface_20260929T040548954409Z/packet_q15.npz",
+    "sha256": "72ec5a28dd073b4217fdb36d4bbfe2383c6cda7b232d239da0ae4392292abd42",
+    "source_sha": "2a2cb4af78ba869a26a1254b4b4b76c9ac158366",
+    "q15_q30_qualification_reused": true,
+    "target_material_independent": true
+  },
+  "worker_wall_seconds": 4.841725311940536,
+  "affinity": [
+    0
+  ],
+  "math_threads": 1,
+  "mpi_size": 1,
+  "shared_workstation": true,
+  "artifact_directory": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v8/V8-C2-SETUP/task042_v8_column_setup_20260929T100559009668Z",
+  "original_full_result": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v8/V8-C2-SETUP/task042_v8_column_setup_20260929T100559009668Z/stage_result.json",
+    "sha256": "7d21149f3d70c56069fed185001213373e6e6ecf0a55508decb098e80e839732",
+    "omitted_only_repeated_inventory_and_monitor_metadata": true
+  }
+}

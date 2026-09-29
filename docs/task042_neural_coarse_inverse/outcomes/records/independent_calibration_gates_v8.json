@@ -1,0 +1,77 @@
+{
+  "batch": {
+    "status": "PASS",
+    "states": [
+      {
+        "state": "ZERO_INITIALIZATION",
+        "pairs": {
+          "trace": true,
+          "loss": true,
+          "gradient": true,
+          "one_clone_Adam_update": true
+        },
+        "finite_difference_stable": [],
+        "passed": true
+      },
+      {
+        "state": "REGISTERED_NONZERO_INTERFACE_FALLBACK",
+        "pairs": {
+          "trace": true,
+          "loss": true,
+          "gradient": true,
+          "one_clone_Adam_update": true
+        },
+        "finite_difference_stable": [
+          true,
+          true,
+          true
+        ],
+        "passed": true
+      },
+      {
+        "state": "V7_FROZEN_NEURAL",
+        "pairs": {
+          "trace": true,
+          "loss": true,
+          "gradient": true,
+          "one_clone_Adam_update": true
+        },
+        "finite_difference_stable": [],
+        "passed": true
+      }
+    ],
+    "capacity_pass": true,
+    "recorded_status_trusted": false
+  },
+  "scaled": {
+    "reference_accuracy_pass": true,
+    "routes": {
+      "FE-LSQR-COLUMN-SCALED": {
+        "equation_pass": false,
+        "field_pass": false,
+        "power_pass": false,
+        "reference_accuracy_pass": true,
+        "status": "NOT_QUALIFIED",
+        "computed": {
+          "selected_E_relative": 0.10450726710174488,
+          "selected_H_relative": 0.10450729414218808,
+          "ordered_complex_ports_relative": 0.10432008574617901,
+          "max_channel_power_difference": 0.008472826341095474,
+          "energy_closure_absolute": 0.004434912809960334
+        },
+        "power_absolute_differences": {
+          "R_total": 0.004045877810684315,
+          "T_total": 0.00847270584710913,
+          "A_balance": 0.004426828036424801,
+          "A_volume": 8.084770629178742e-06
+        },
+        "full_FE_norms": "independent DOLFINx integral measurement, no FE replay",
+        "saved_status_trusted": false
+      }
+    },
+    "near_zero_absolute_threshold": 1e-12,
+    "reference_feedback": false,
+    "strict_scattered_pass": false,
+    "strict_status": "NOT_QUALIFIED"
+  }
+}

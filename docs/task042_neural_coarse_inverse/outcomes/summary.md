@@ -1,3 +1,20 @@
+# V8 最新交付：列尺度仍未收敛，等价批量计算降低单步成本
+
+列均衡把未知量换成作用大小相近的单位；batch8把相同网络／边面矩同时算八个单元。前者是数值假设，后者是实现成本，两者分别验收；停机事务另修复保存边界。
+
+| 固定micro／measured | 结果／限值／边界 | 证据 |
+|---|---|---|
+| 对象 | 原0.7nm／384hex／p3／h0.175nm／Full3D，40port／MPI1；FE34050/reduced18184，材料canonical表不变；Hybrid/p/h/M/MPI影响未新测试 | [身份](records/run_index_v8.json) |
+| C1 | 7强Wolfe／一致checkpoint测试PASS；V7接受点unknown，旧负结果不改 | [停机](records/optimizer_stop_semantics_v8.json) |
+| C2原方程 | Schur0.068283273738/native0.026675035784/port op0.049261505581，全部>1e-6；恢复2.86e-15、slave0 | [对照](records/scaled_lsqr_comparison_v8.csv) |
+| C2真实散射 | L2相对差0.998598490718（限1e-4，研究限0.5），严格及研究正信号FAIL；R/T/A仅diagnostic | [全场/40channel](records/scaled_blind_validation_v8.json) |
+| C3 | 三状态等价＋非零FD通过；全步三pair中位降幅48.55%，新增缓存33.48MiB，无训练 | [样本](records/batch_costs_v8.csv) |
+| 费用／shared-workstation | 11正式树wall791.658916s，树峰816152576B/own swap0/GPU不用；所有aux及历史累计见最终账，不重复累加嵌套 | [资源](records/resource_costs_v8.json) |
+| 所有权限制 | C2初次额外读未用3.21MiB moment包，已修adapter/边界回归，无完整重放；无CSR/参考/global p4因子部署 | [完整说明](scaling_and_execution_v8.md) |
+| 未运行／目标 | 长训练/p4 enrichment/F5/p6/大模型/GPU/seed420620皆not_run，0.7nm/48h NOT_QUALIFIED，神经数值增量未证明 | [独立Gate](records/gate_decisions_v8.json) |
+
+候选source `1a2984a44ca48573bbe18ffe8a7f8c5d6bdacc05`，C3 source `52d47d35656c5a763bed07e07f827fb6fb285bb7`；后续文档HEAD不是run source。Review V5实际GitHub4表/2公式，新响应见[Response V8](../response_v8.md)。邻影响及无争用加速INCONCLUSIVE。唯一下一建议：固定pilot上仅对已经冻结的误差方向做原S/恢复/端口分量审核，复用已有p3参考作离线核对，定位残差下降为何没有恢复散射；不训练、不建新PC、不扫描。 未实施，停止等review，不合并。下文V1–V7全部历史正文按字节保留。
+
 # V7 最新交付：材料解除，真实 N1 通过，三路线数值负结果
 
 网络通过原有限元边／面矩产生当前问题的trace，再由原局部方程恢复内部未知量，尝试避免全局分解；代价是网络优化与原S/Sᴴ作用。材料已经永久登记，本轮实际做了同一三维缺口micro的三路线和盲参考，不能把梯度正确、loss下降或参数少当成合格解。
