@@ -1,0 +1,226 @@
+{
+  "schema": "task042.neural-fe-design.v7",
+  "batch": "V7_MATERIAL_FIXED_NEURAL_FE_CONTINUATION",
+  "review_source": "18084a6213570e26a0a0941e628717f2c63fd00a",
+  "old_route": "CLOSED_RESEARCH_NEGATIVE",
+  "old_augmentation": "NOT_IMPLEMENTED_ROUTE_CLOSED_BY_REVIEW_V3",
+  "wavelength_nm": 0.7,
+  "geometry": {
+    "bounds_nm": [
+      [
+        -0.7,
+        0.7
+      ],
+      [
+        -0.525,
+        0.525
+      ],
+      [
+        -0.175,
+        1.225
+      ]
+    ],
+    "substrate_z_nm": 0.0,
+    "block_bounds_nm": [
+      [
+        -0.35,
+        0.35
+      ],
+      [
+        -0.525,
+        0.525
+      ],
+      [
+        0.0,
+        1.05
+      ]
+    ],
+    "notch_bounds_nm": [
+      [
+        0.0,
+        0.35
+      ],
+      [
+        -0.175,
+        0.175
+      ],
+      [
+        0.35,
+        0.7
+      ]
+    ],
+    "cells": [
+      8,
+      6,
+      8
+    ],
+    "step_nm": 0.175,
+    "material_tag_labels": {
+      "1": "air",
+      "2": "Si substrate",
+      "3": "Si block"
+    }
+  },
+  "materials": {
+    "status": "MATERIAL_READY_USER_SUPPLIED",
+    "material_table_id": "SI_OPTICAL_CONSTANTS_USER_20260929_V1",
+    "canonical_path": "/home/fenics/Projects/NN-Lab/input/materials/si_optical_constants_v1.json",
+    "material_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+    "query_wavelength_nm": "0.7",
+    "nominal_wavelength_nm": "0.7",
+    "source_wavelength_nm": "0.699999988",
+    "delta": "0.000114859526",
+    "beta": "4.32477054E-06",
+    "n_decimal": [
+      "0.999885140474",
+      "0.00000432477054"
+    ],
+    "epsilon_decimal": [
+      "0.9997702941220070727210241084",
+      "0.00000864854759781143367192"
+    ],
+    "source_kind": "user_supplied/user_authorized",
+    "source": {
+      "review_path": "docs/task042_neural_coarse_inverse/review_report_v4.md",
+      "review_commit": "18084a6213570e26a0a0941e628717f2c63fd00a",
+      "review_blob": "a0e0c106970eab91271d61981810544146c4a32f"
+    },
+    "alias_reason": "Review V4 explicitly authorizes source 0.699999988 for nominal 0.7; no interpolation; solve uses nominal 0.7",
+    "time_convention": "exp(-i omega t)",
+    "external_dataset_version": "not_provided",
+    "n_loaded": [
+      0.999885140474,
+      4.32477054e-06
+    ],
+    "epsilon_loaded": [
+      0.9997702941220071,
+      8.648547597811433e-06
+    ],
+    "air_n": [
+      1.0,
+      0.0
+    ],
+    "mu_r": [
+      1.0,
+      0.0
+    ],
+    "si_n": [
+      0.999885140474,
+      4.32477054e-06
+    ],
+    "si_epsilon": [
+      0.9997702941220071,
+      8.648547597811433e-06
+    ]
+  },
+  "incidence": {
+    "grazing_deg": 1.0,
+    "azimuth_deg": 0.0,
+    "polarization": "s",
+    "amplitude": 1.0,
+    "background": "layered"
+  },
+  "boundary": {
+    "floquet_xy": true,
+    "dtn": "full original auto_propagating for selected air/Si media",
+    "pml": false
+  },
+  "finite_element": {
+    "family": "N1curl",
+    "cell": "hexahedron",
+    "degree": 3,
+    "operator_quadrature_degree": 15,
+    "full_rows_limit": 200000,
+    "trace_rows_limit": 100000
+  },
+  "network": {
+    "hidden": [
+      64,
+      64,
+      64
+    ],
+    "activation": "tanh",
+    "outputs_real": 48,
+    "carriers": 8,
+    "carrier_directions": [
+      "+x",
+      "+y",
+      "+z",
+      "-x",
+      "-y",
+      "-z",
+      "incident",
+      "specular"
+    ],
+    "seed": 420906,
+    "dtype": "float64-real-imag",
+    "final_layer": "zero",
+    "per_dof_embeddings": false
+  },
+  "moments": {
+    "quadrature_sequence": [
+      15,
+      30,
+      60
+    ],
+    "relative_tolerance": 1e-08,
+    "near_zero_absolute_tolerance": 1e-12,
+    "chunk": "one affine cell per autograd graph",
+    "owner": "first native cell incident to each independent master trace row",
+    "transform": "native inverse-transpose T; original MPC expansion only after independent coefficients"
+  },
+  "optimizer": {
+    "adam_updates": 500,
+    "adam_lr": 0.001,
+    "weight_decay": 0,
+    "lbfgs_history": 20,
+    "lbfgs_initial_step": 1.0,
+    "line_search": "strong-Wolfe",
+    "total_closures_limit": 2000,
+    "route_wall_seconds": 7200
+  },
+  "lsqr": {
+    "paired_actions_limit": 2000,
+    "wall_seconds": 7200,
+    "preconditioner": null
+  },
+  "gates": {
+    "identity": 1e-10,
+    "real_parameter_gradient_relative": 1e-05,
+    "schur_native_augmented_relative": 1e-06,
+    "reference_field_relative": 0.0001,
+    "power_absolute": 1e-05,
+    "per_channel_power_absolute": 1e-06,
+    "enrichment_relative": 0.001
+  },
+  "resources": {
+    "shared_workstation": true,
+    "mpi": 1,
+    "math_threads": 1,
+    "torch_intraop": 1,
+    "torch_interop": 1,
+    "data_loader_workers": 0,
+    "rss_hard_gib": 16,
+    "rss_warn_gib": 12,
+    "own_swap_bytes": 0,
+    "numerical_batch_wall_seconds": 36000,
+    "gpu": false
+  },
+  "target": {
+    "status": "TARGET_IDENTITY_NOT_FROZEN",
+    "wall_seconds": 172800,
+    "qualification": "NOT_QUALIFIED",
+    "missing": [
+      "target geometry dimensions",
+      "target discretization and precision",
+      "complete target channels",
+      "actual target resource allocation",
+      "target complete-step cost and steps required"
+    ]
+  },
+  "budget_carry_in": {
+    "V6_supervised_seconds": 101.86130203097127,
+    "source": "docs/task042_neural_coarse_inverse/outcomes/records/post_checks_v6.json",
+    "policy": "all V7 auxiliary and formal numerical costs append to this; no version reset"
+  }
+}

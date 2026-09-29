@@ -1,0 +1,15 @@
+{
+  "status": "RENDERED_HTML_PASS",
+  "review_head": "18084a6213570e26a0a0941e628717f2c63fd00a",
+  "url": "https://github.com/Rookie1234567/MyFEniCS/blob/18084a6213570e26a0a0941e628717f2c63fd00a/docs/task042_neural_coarse_inverse/review_report_v4.md",
+  "http": 200,
+  "utc": "2026-09-29T05:08:46.479281+00:00",
+  "review_sha256": "e9c0340d30b863f63b944b0c7e1de67b211c850d471a4b55b412ac039f4ab74f",
+  "local_table_count": 4,
+  "rendered_table_count": 4,
+  "math_blocks": 1,
+  "github_math_renderer_blocks": 1,
+  "table_columns_consistent": true,
+  "review_modified": false,
+  "render_evidence": "Actual published GitHub richText HTML and math-renderer; browser pixels not captured"
+}

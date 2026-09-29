@@ -59,3 +59,8 @@ P4的制造解只存在于独立RHS生成worker；清场后验证worker只读`rh
 | `v5_error_shared.dat` / V5-ERROR | 原ERROR，完全同库和规则，另一个worker | 上条同样的Gate；一次一个Task042阶段，先退出再换空间 |
 
 四个dat均使用既有`run_case.py`、own lock和16GiB整树监督；候选不会读取seed420620新池、训练、重编码基、调用长KSP或进入F5。诊断最小二乘最多129列，以固定相对1e-10处理依赖方向，仅作反事实，不能反馈给求解器。全部成本为shared-workstation，完成后等待review，下一试验只建议而不实施。
+
+
+## V7当前入口：用户材料固定后续跑
+
+[Review V4](../../docs/task042_neural_coarse_inverse/review_report_v4.md)解除V6材料定义缺失。canonical材料为 [../materials/si_optical_constants_v1.json](../materials/si_optical_constants_v1.json)，ID `SI_OPTICAL_CONSTANTS_USER_20260929_V1`；0.7／2nm用户原值与5／13.5nm冻结旧输入均可离线读取，仅使用已授权alias。V7新输入另命名，V6 unresolved设计／dat和全部旧结果不覆盖。真实N1通过才运行三条路线，不重装环境或复活旧p4路线；每run须保存材料ID/hash、有效n／epsilon、完整端口与physical/source identity。

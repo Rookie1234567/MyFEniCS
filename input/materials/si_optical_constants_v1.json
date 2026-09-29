@@ -1,0 +1,145 @@
+{
+  "schema": "myfenics.si-optical-constants.v1",
+  "material_table_id": "SI_OPTICAL_CONSTANTS_USER_20260929_V1",
+  "canonical_path": "input/materials/si_optical_constants_v1.json",
+  "wavelength_unit": "vacuum nm",
+  "delta_beta_n_epsilon_unit": "dimensionless",
+  "time_convention": "exp(-i omega t)",
+  "formula": "n=(1-Delta)+i*Beta; epsilon_r=n*n; mu_r=1",
+  "air_n_decimal": [
+    "1",
+    "0"
+  ],
+  "mu_r_decimal": [
+    "1",
+    "0"
+  ],
+  "user_original_table": "Wavelength (nm), Delta, Beta\n0.699999988  0.000114859526  4.32477054E-06\n2            0.00119851693   0.000213688647\n",
+  "external_dataset_version": "not_provided",
+  "density": "not_provided",
+  "measurement_uncertainty": "not_provided",
+  "authorization": "Review V4 and user current instruction; external database not required for this pilot",
+  "hash_policy": "SHA256 of file bytes stored in resolved selection and run manifest; no self hash field",
+  "entries": [
+    {
+      "nominal_wavelength_nm": "0.7",
+      "source_wavelength_nm": "0.699999988",
+      "delta": "0.000114859526",
+      "beta": "4.32477054E-06",
+      "n_decimal": [
+        "0.999885140474",
+        "0.00000432477054"
+      ],
+      "epsilon_decimal": [
+        "0.9997702941220070727210241084",
+        "0.00000864854759781143367192"
+      ],
+      "source_kind": "user_supplied/user_authorized",
+      "source_date": "2026-09-29",
+      "source": {
+        "review_path": "docs/task042_neural_coarse_inverse/review_report_v4.md",
+        "review_commit": "18084a6213570e26a0a0941e628717f2c63fd00a",
+        "review_blob": "a0e0c106970eab91271d61981810544146c4a32f"
+      },
+      "historical_evidence": [],
+      "delta_derivation": "user original decimal",
+      "accepted_source_aliases_nm": [
+        "0.699999988"
+      ],
+      "alias_reason": "Review V4 explicitly authorizes source 0.699999988 for nominal 0.7; no interpolation; solve uses nominal 0.7"
+    },
+    {
+      "nominal_wavelength_nm": "2",
+      "source_wavelength_nm": "2",
+      "delta": "0.00119851693",
+      "beta": "0.000213688647",
+      "n_decimal": [
+        "0.99880148307",
+        "0.000213688647"
+      ],
+      "epsilon_decimal": [
+        "0.997604356919993639934291",
+        "0.00042686507507764341258"
+      ],
+      "source_kind": "user_supplied/user_authorized",
+      "source_date": "2026-09-29",
+      "source": {
+        "review_path": "docs/task042_neural_coarse_inverse/review_report_v4.md",
+        "review_commit": "18084a6213570e26a0a0941e628717f2c63fd00a",
+        "review_blob": "a0e0c106970eab91271d61981810544146c4a32f"
+      },
+      "historical_evidence": [
+        {
+          "path": "input/task39extra_para_workstation_capacity/original_2nm_si_p6h1p5_native.dat",
+          "commit": "255ca88e6f4aa2c15252a512d1d499f34c95f042",
+          "blob": "0861dc4f55be67463561012c6b8a5c7556f08df9"
+        }
+      ],
+      "delta_derivation": "user original decimal",
+      "accepted_source_aliases_nm": [],
+      "alias_reason": "exact registered wavelength"
+    },
+    {
+      "nominal_wavelength_nm": "5",
+      "source_wavelength_nm": "5",
+      "delta": "0.00603145547",
+      "beta": "0.00435380777",
+      "n_decimal": [
+        "0.99396854453",
+        "0.00435380777"
+      ],
+      "epsilon_decimal": [
+        "0.9879545118729884805480",
+        "0.0086550959446206099962"
+      ],
+      "source_kind": "repository_input/user_authorized",
+      "source_date": "2026-09-29",
+      "source": {
+        "review_path": "docs/task042_neural_coarse_inverse/review_report_v4.md",
+        "review_commit": "18084a6213570e26a0a0941e628717f2c63fd00a",
+        "review_blob": "a0e0c106970eab91271d61981810544146c4a32f"
+      },
+      "historical_evidence": [
+        {
+          "path": "input/task39extra_para_workstation_capacity/original_5nm_si_p6h4_native.dat",
+          "commit": "255ca88e6f4aa2c15252a512d1d499f34c95f042",
+          "blob": "a17c4aadf07272d882773b24fa961fd2f349dabe"
+        }
+      ],
+      "delta_derivation": "exact Decimal(1)-historical n_real",
+      "accepted_source_aliases_nm": [],
+      "alias_reason": "exact registered wavelength"
+    },
+    {
+      "nominal_wavelength_nm": "13.5",
+      "source_wavelength_nm": "13.5",
+      "delta": "0.000997695141",
+      "beta": "0.00182649365",
+      "n_decimal": [
+        "0.999002304859",
+        "0.00182649365"
+      ],
+      "epsilon_decimal": [
+        "0.998002269034540884687381",
+        "0.00364934273232065529070"
+      ],
+      "source_kind": "repository_input/user_authorized",
+      "source_date": "2026-09-29",
+      "source": {
+        "review_path": "docs/task042_neural_coarse_inverse/review_report_v4.md",
+        "review_commit": "18084a6213570e26a0a0941e628717f2c63fd00a",
+        "review_blob": "a0e0c106970eab91271d61981810544146c4a32f"
+      },
+      "historical_evidence": [
+        {
+          "path": "input/task39extra/original_13p5nm_p6h10_balanced_h6_p4_v5.dat",
+          "commit": "255ca88e6f4aa2c15252a512d1d499f34c95f042",
+          "blob": "0c5211a0e99b4f1b74ad5e4223b5d91066b57816"
+        }
+      ],
+      "delta_derivation": "exact Decimal(1)-historical n_real",
+      "accepted_source_aliases_nm": [],
+      "alias_reason": "exact registered wavelength"
+    }
+  ]
+}

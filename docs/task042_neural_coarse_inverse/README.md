@@ -1,3 +1,11 @@
+# V7 当前入口：材料已授权，继续神经FE单次求解
+
+最新执行合同为 [Review V4](review_report_v4.md)，数值方法／精度／资源沿用 [Review V3](review_report_v3.md)。0.7／2nm用户原值已固化，5／13.5nm旧输入核验值同表保存；唯一canonical材料为 [si_optical_constants_v1.json](../../input/materials/si_optical_constants_v1.json)，ID `SI_OPTICAL_CONSTANTS_USER_20260929_V1`。nominal0.7使用source标签0.699999988原行，不插值；外部数据库元数据缺失不再阻塞。
+
+本批 `V7_MATERIAL_FIXED_NEURAL_FE_CONTINUATION` 在已有384-cell/p3三维缺口几何上续跑真实S/Sᴴ、完整上下端口和恢复；真实N1通过后顺序NEURAL-TRACE／FREE-FE-OPT／FE-LSQR，再按条件独立验证。旧p4路线关闭，旧teacher／seed420620封存；不做四波长扫描、不启动最终规模。累计10小时预算包含V6已有费用，各路线仍最多2小时／2000完整closure或算子配对。Git、受控共享CPU、独立环境／缓存、自有锁和16/12GiB树监督继续；无合并授权。
+
+以下首次创建说明仅为历史，不代表当前状态，原文保留。
+
 # Task042：NN-Lab 入口
 
 唯一初始执行合同是 [task.md](task.md)。本目录目前只有任务文档，没有新实现、训练、PDE或性能结果。后续review、response、outcomes均留在同一分支。

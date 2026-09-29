@@ -340,3 +340,8 @@ T2 已提供 schema 解析、严格字段与 cross-field 校验、角度派生�
 ## 7. 维护规则
 
 新增 public 字段必须同时修改 `src/io/input_schema.py`、本手册、至少一个适用模板和 focused coverage test；不能从 dataclass、argparse、PETSc option 或 preset 自动导出。保留的 legacy/research 入口只能在后续任务按已审 call graph 处理，不能因普通 dat 迁移而静默改变其 replay 行为。
+
+
+## Task042 V7：固定Si材料的神经FE续跑
+
+唯一canonical材料表为 [materials/si_optical_constants_v1.json](materials/si_optical_constants_v1.json)，ID `SI_OPTICAL_CONSTANTS_USER_20260929_V1`，原始十进制与来源见 [材料入口](materials/README.md)。仅显式0.699999988→nominal0.7 alias，不插值或匹配近邻；采用n=(1-Delta)+i Beta、epsilon=n*n。Task042独立输入绑定所选条目和文件hash；普通输入、其他任务及旧值不会自动变更。四行登记不授权四波长扫描；续跑合同见 [Review V4](../docs/task042_neural_coarse_inverse/review_report_v4.md)。
