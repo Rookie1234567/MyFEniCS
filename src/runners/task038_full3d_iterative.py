@@ -371,6 +371,7 @@ def run_full3d_iterative(
         "physical_p6_trace_fused_kernel_v28",
         "physical_p6_trace_a4_tensor_h6_v29",
         "physical_p6_trace_workstation_guided_v30",
+        "physical_p6_trace_projection_layout_v31",
     }:
         from .physical_dual_cell_condensed_lowmem_v20 import (
             _run_physical_dual_cell_condensed_lowmem,
@@ -380,45 +381,58 @@ def run_full3d_iterative(
             FUSED_KERNEL_PROFILE,
             PHYSICAL_MEMORY_POLICY_V23,
             WORKSTATION_GUIDED_LOCAL_V30_PROFILE,
+            PROJECTION_LAYOUT_V31_PROFILE,
         )
 
         profile = str(resolved_payload["solver"]["preconditioner"])
         v29_profile = profile == A4_TENSOR_H6_PROFILE
         v30_profile = profile == WORKSTATION_GUIDED_LOCAL_V30_PROFILE
+        v31_profile = profile == PROJECTION_LAYOUT_V31_PROFILE
         stage = str(resolved_payload["solver"]["stage"])
         if stage != "Q4_ORIGINAL":
             raise ValueError(f"{profile} allows only Q4_ORIGINAL")
         if int(resolved_payload["solver"].get("coarse_degree", -1)) != 4:
             raise ValueError(f"{profile} Q4_ORIGINAL requires coarse_degree=4")
         batch_identity = (
-            "review_v28_workstation_guided_local_v30"
+            "review_v29_evidence_and_projection_v31"
+            if v31_profile
+            else "review_v28_workstation_guided_local_v30"
             if v30_profile
             else "review_v27_a4_tensor_h6_continue_outer"
             if v29_profile
             else "review_v26_fused_A6_H6_optional_setup_threads"
         )
-        evidence_prefix = "v30q4" if v30_profile else "v29q4" if v29_profile else "v28q4"
+        evidence_prefix = (
+            "v31q4" if v31_profile else "v30q4" if v30_profile
+            else "v29q4" if v29_profile else "v28q4"
+        )
         summary_schema = (
-            "task039extra.v30.workstation-guided-local.worker-summary.v1"
+            "task039extra.v31.projection-layout.worker-summary.v1"
+            if v31_profile
+            else "task039extra.v30.workstation-guided-local.worker-summary.v1"
             if v30_profile
             else "task039extra.v29.a4-tensor-h6.worker-summary.v1"
             if v29_profile
             else "task039extra.v28.fused-kernel.worker-summary.v1"
         )
         summary_filename = (
-            "physical_dual_condensed_workstation_guided_local_v30_summary.json"
+            "physical_dual_condensed_projection_layout_v31_summary.json"
+            if v31_profile
+            else "physical_dual_condensed_workstation_guided_local_v30_summary.json"
             if v30_profile
             else "physical_dual_condensed_a4_tensor_h6_v29_summary.json"
             if v29_profile
             else "physical_dual_condensed_fused_kernel_v28_summary.json"
         )
         accepted_route_key = (
-            "accepted_v29_route" if v30_profile
+            "accepted_v30_route" if v31_profile
+            else "accepted_v29_route" if v30_profile
             else "accepted_v28_route" if v29_profile
             else "accepted_v27_route"
         )
         accepted_route = (
-            A4_TENSOR_H6_PROFILE if v30_profile
+            WORKSTATION_GUIDED_LOCAL_V30_PROFILE if v31_profile
+            else A4_TENSOR_H6_PROFILE if v30_profile
             else FUSED_KERNEL_PROFILE if v29_profile
             else "physical_p6_trace_workingset_efficiency_v27"
         )

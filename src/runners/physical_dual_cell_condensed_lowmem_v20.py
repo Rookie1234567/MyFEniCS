@@ -24,6 +24,7 @@ from src.io.physical_intermediate_profile import (
     SETUP_EFFICIENCY_PROFILE,
     WORKINGSET_SETUP_PROFILE,
     WORKSTATION_GUIDED_LOCAL_V30_PROFILE,
+    PROJECTION_LAYOUT_V31_PROFILE,
     FUSED_KERNEL_PROFILES,
     LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE,
     LOWMEM_DUAL_CELL_CONDENSED_PROFILE,
@@ -1865,7 +1866,13 @@ def _run_physical_dual_cell_condensed_lowmem(
                 direct_selected_backend=direct_selected_backend,
                 reuse_projection_work=reuse_projection_work,
                 reference_metric_diagonal=(
-                    profile == WORKSTATION_GUIDED_LOCAL_V30_PROFILE
+                    profile in {
+                        WORKSTATION_GUIDED_LOCAL_V30_PROFILE,
+                        PROJECTION_LAYOUT_V31_PROFILE,
+                    }
+                ),
+                projection_layout_v31_natural_order_internal=(
+                    profile == PROJECTION_LAYOUT_V31_PROFILE
                 ),
                 formal_release_timing=(
                     v24_owner_apply

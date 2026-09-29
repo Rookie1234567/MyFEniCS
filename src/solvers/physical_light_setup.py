@@ -28,6 +28,7 @@ def build_light_h6_setup(
     reuse_projection_work=False,
     batched_target_grouping=False,
     reference_metric_diagonal=False,
+    projection_layout_v31_natural_order_internal=False,
 ):
     if sum_factorized_power10 is None:
         sum_factorized_power10 = bool(sum_factorized_work)
@@ -48,6 +49,7 @@ def build_light_h6_setup(
         reuse_projection_work=reuse_projection_work,
         batched_target_grouping=batched_target_grouping,
         reference_metric_diagonal=reference_metric_diagonal,
+        projection_layout_v31_natural_order_internal=projection_layout_v31_natural_order_internal,
     )
 
 
@@ -69,11 +71,20 @@ def build_light_level_setup(
     reuse_projection_work=False,
     batched_target_grouping=False,
     reference_metric_diagonal=False,
+    projection_layout_v31_natural_order_internal=False,
 ):
     if degree not in (4, 6):
         raise ValueError('physical pilot smoother supports p6/p4 only')
     if reference_metric_diagonal and degree != 6:
         raise ValueError("reference-metric diagonal is qualified for H6 only")
+    if projection_layout_v31_natural_order_internal and (
+        degree != 6
+        or not sum_factorized_work
+        or reuse_projection_work
+    ):
+        raise ValueError(
+            "V31 natural ordering is qualified only for H6 sum-factorized work without legacy projection reuse"
+        )
     if preallocated_power10 is None:
         preallocated_power10 = bool(preallocated_work)
     if sum_factorized_power10 is None:
@@ -103,6 +114,8 @@ def build_light_level_setup(
             and bool(preallocated_power10) == bool(preallocated_work)
             and bool(sum_factorized_power10) == bool(sum_factorized_work)
         )
+        if projection_layout_v31_natural_order_internal and not direct_backend:
+            raise ValueError("V31 natural ordering requires the direct selected H6 backend")
         if direct_backend:
             action = FullspaceMpcFormAction(
                 form,
@@ -118,6 +131,7 @@ def build_light_level_setup(
                     shared_contractions=shared_contractions,
                     combine_real_imag_transforms=combine_real_imag_transforms,
                     reuse_projection_work=reuse_projection_work,
+                    natural_order_internal=projection_layout_v31_natural_order_internal,
                     share_geometry=direct_backend,
                 ),
             )
@@ -174,6 +188,7 @@ def build_light_level_setup(
                     shared_contractions=shared_contractions,
                     combine_real_imag_transforms=combine_real_imag_transforms,
                     reuse_projection_work=reuse_projection_work,
+                    natural_order_internal=projection_layout_v31_natural_order_internal,
                     share_geometry=direct_backend,
                 ),
             )
@@ -206,6 +221,7 @@ def build_light_level_setup(
                     shared_contractions=shared_contractions,
                     combine_real_imag_transforms=combine_real_imag_transforms,
                     reuse_projection_work=reuse_projection_work,
+                    natural_order_internal=projection_layout_v31_natural_order_internal,
                     share_geometry=direct_backend,
                 ),
             )
@@ -233,6 +249,7 @@ def build_light_level_setup(
                     shared_contractions=shared_contractions,
                     combine_real_imag_transforms=combine_real_imag_transforms,
                     reuse_projection_work=reuse_projection_work,
+                    natural_order_internal=projection_layout_v31_natural_order_internal,
                     share_geometry=direct_backend,
                 ),
             )
@@ -286,6 +303,9 @@ def build_light_level_setup(
             direct_selected_backend_opt_in=bool(direct_selected_backend),
             direct_selected_backend_used=bool(direct_backend),
             reuse_projection_work_opt_in=bool(reuse_projection_work),
+            projection_layout_v31_natural_order_internal_opt_in=bool(
+                projection_layout_v31_natural_order_internal
+            ),
             batched_target_grouping_opt_in=bool(
                 batched_target_grouping and direct_backend
             ),

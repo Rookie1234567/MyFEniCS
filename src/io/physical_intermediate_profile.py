@@ -42,9 +42,17 @@ A4_TENSOR_H6_PROFILE = "physical_p6_trace_a4_tensor_h6_v29"
 WORKSTATION_GUIDED_LOCAL_V30_PROFILE = (
     "physical_p6_trace_workstation_guided_v30"
 )
-A4_TENSOR_H6_PROFILES = (A4_TENSOR_H6_PROFILE, WORKSTATION_GUIDED_LOCAL_V30_PROFILE)
+PROJECTION_LAYOUT_V31_PROFILE = "physical_p6_trace_projection_layout_v31"
+A4_TENSOR_H6_PROFILES = (
+    A4_TENSOR_H6_PROFILE,
+    WORKSTATION_GUIDED_LOCAL_V30_PROFILE,
+    PROJECTION_LAYOUT_V31_PROFILE,
+)
 FUSED_KERNEL_PROFILES = (
-    FUSED_KERNEL_PROFILE, A4_TENSOR_H6_PROFILE, WORKSTATION_GUIDED_LOCAL_V30_PROFILE
+    FUSED_KERNEL_PROFILE,
+    A4_TENSOR_H6_PROFILE,
+    WORKSTATION_GUIDED_LOCAL_V30_PROFILE,
+    PROJECTION_LAYOUT_V31_PROFILE,
 )
 PHYSICAL_MEMORY_POLICY_V23 = "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23"
 V23_QUALIFIED_JIT_CACHE_SOURCE = (
@@ -61,7 +69,7 @@ P4_BLR_TRADEOFF_THRESHOLDS = {
     "T2_BLR_CONTROL": 1.0e-4,
 }
 
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE, LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE, COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE, FUSED_KERNEL_PROFILE, A4_TENSOR_H6_PROFILE, WORKSTATION_GUIDED_LOCAL_V30_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE, LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE, COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE, FUSED_KERNEL_PROFILE, A4_TENSOR_H6_PROFILE, WORKSTATION_GUIDED_LOCAL_V30_PROFILE, PROJECTION_LAYOUT_V31_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
 
 
 def p4_blr_tradeoff_threshold(stage: str) -> float:
@@ -144,6 +152,32 @@ def profile_facts(identity=PROFILE) -> dict:
             "true affine-cell metrics; exact MPC target cross terms"
         )
         facts["resources"]["pss_sampling_policy"] = "disabled_by_profile"
+        return facts
+    if identity == PROJECTION_LAYOUT_V31_PROFILE:
+        facts = profile_facts(WORKSTATION_GUIDED_LOCAL_V30_PROFILE)
+        facts.update(
+            identity=identity,
+            scope="review_v29_h6_natural_order_projection_layout_v31",
+            qualification=(
+                "opt-in V31 batch; one fresh original 990-cell p6/h7.5 q4 "
+                "formal run; inherits V30 full numerical and resource gates; "
+                "enables natural point order only inside H6 and keeps the "
+                "fixed-shape matmul projection disabled"
+            ),
+        )
+        facts["route_selection"].update(
+            h6_projection_layout_v31="natural_order_internal",
+            h6_projection_layout_scope="H6_setup_power10_and_apply_only",
+            h6_fixed_projection_matmul=False,
+            a6_projection_layout="unchanged_v30_route",
+            a4_projection_layout="unchanged_v30_route",
+        )
+        facts["gates"].update(
+            h6_natural_order_internal=True,
+            h6_fresh_power10_same_seed_twenty_b6=True,
+            h6_projection_matmul_disabled=True,
+            a6_a4_native_authority_unchanged=True,
+        )
         return facts
     if identity in (
         SETUP_EFFICIENCY_PROFILE,

@@ -45,6 +45,8 @@ _V29_A4_TENSOR_H6_RUN_ID = "task39extra_v29_a4_tensor_h6_original_h7p5_v1"
 _V29_A4_TENSOR_H6_COMPARISON_GROUP = "review_v27_a4_tensor_h6_continue_outer"
 _V30_WORKSTATION_GUIDED_RUN_ID = "task39extra_v30_workstation_guided_original_h7p5_v1"
 _V30_WORKSTATION_GUIDED_COMPARISON_GROUP = "review_v28_workstation_guided_local_v30"
+_V31_PROJECTION_LAYOUT_RUN_ID = "task39extra_v31_projection_layout_original_h7p5_v1"
+_V31_PROJECTION_LAYOUT_COMPARISON_GROUP = "review_v29_evidence_and_projection_v31"
 
 
 def _error(path: str, message: str) -> InputError:
@@ -590,6 +592,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "physical_p6_trace_fused_kernel_v28",
                 "physical_p6_trace_a4_tensor_h6_v29",
                 "physical_p6_trace_workstation_guided_v30",
+                "physical_p6_trace_projection_layout_v31",
             }:
                 raise _error(
                     "solver.preconditioner",
@@ -1021,6 +1024,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "physical_p6_trace_fused_kernel_v28",
                 "physical_p6_trace_a4_tensor_h6_v29",
                 "physical_p6_trace_workstation_guided_v30",
+                "physical_p6_trace_projection_layout_v31",
             ):
                 is_v27_workingset = (
                     preconditioner == "physical_p6_trace_workingset_efficiency_v27"
@@ -1033,6 +1037,9 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 )
                 is_v30_workstation_guided = (
                     preconditioner == "physical_p6_trace_workstation_guided_v30"
+                )
+                is_v31_projection_layout = (
+                    preconditioner == "physical_p6_trace_projection_layout_v31"
                 )
                 if is_v27_workingset and (
                     config["run_id"] != _V27_WORKINGSET_RUN_ID
@@ -1073,6 +1080,15 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     raise _error(
                         "identity",
                         "V30 profile requires its frozen run_id and comparison_group",
+                    )
+                if is_v31_projection_layout and (
+                    config["run_id"] != _V31_PROJECTION_LAYOUT_RUN_ID
+                    or config.get("comparison_group")
+                    != _V31_PROJECTION_LAYOUT_COMPARISON_GROUP
+                ):
+                    raise _error(
+                        "identity",
+                        "V31 profile requires its frozen run_id and comparison_group",
                     )
                 stage = solver.get("stage")
                 if stage != "Q4_ORIGINAL":

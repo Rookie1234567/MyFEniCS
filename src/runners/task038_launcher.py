@@ -3056,6 +3056,23 @@ def _reserve_v30_workstation_guided_local_budget(
     )
 
 
+def _reserve_v31_projection_layout_budget(
+    repo_root: Path,
+    run_directory: Path,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    return _reserve_a4_tensor_h6_budget(
+        repo_root,
+        run_directory,
+        **kwargs,
+        batch_identity="review_v29_evidence_and_projection_v31",
+        artifact_directory="projection_layout_v31",
+        schema="task039extra.v31.projection-layout.shared-workflow-ledger.v1",
+        error_prefix="V31",
+        summary_filename="physical_dual_condensed_projection_layout_v31_summary.json",
+    )
+
+
 def _is_v28_user_service_cgroup(path: Path | None) -> bool:
     """Accept only the existing V28 user-service unit's actual cgroup."""
 
@@ -3787,6 +3804,7 @@ def launch_specification(
         FUSED_KERNEL_PROFILE,
         A4_TENSOR_H6_PROFILE,
         WORKSTATION_GUIDED_LOCAL_V30_PROFILE,
+        PROJECTION_LAYOUT_V31_PROFILE,
         profile_facts,
     )
     from src.io.physical_balanced_profile import BALANCED_PROFILES, BOUNDED_PROFILES
@@ -3813,12 +3831,17 @@ def launch_specification(
         specification.solver.get('preconditioner')
         == WORKSTATION_GUIDED_LOCAL_V30_PROFILE
     )
+    projection_layout_v31_profile = (
+        specification.solver.get('preconditioner')
+        == PROJECTION_LAYOUT_V31_PROFILE
+    )
     setup_efficiency_profile = (
         setup_efficiency_v26_profile
         or setup_efficiency_v27_profile
         or fused_kernel_v28_profile
         or a4_tensor_h6_v29_profile
         or workstation_guided_local_v30_profile
+        or projection_layout_v31_profile
     )
     if v24_p4_prefix_target is not None:
         try:
@@ -3842,6 +3865,7 @@ def launch_specification(
         FUSED_KERNEL_PROFILE,
         A4_TENSOR_H6_PROFILE,
         WORKSTATION_GUIDED_LOCAL_V30_PROFILE,
+        PROJECTION_LAYOUT_V31_PROFILE,
     }
     cell_stage = str(specification.solver.get('stage', ''))
     v25_authorized_performance_repeat = None
@@ -3888,7 +3912,9 @@ def launch_specification(
         require_zero_swap=bool(specification.execution.get("require_zero_swap", True)),
     )
     v30_swap_observe = _is_setup_swap_observation_only(
-        setup_efficiency_profile=workstation_guided_local_v30_profile,
+        setup_efficiency_profile=(
+            workstation_guided_local_v30_profile or projection_layout_v31_profile
+        ),
         stage=cell_stage,
         require_zero_swap=bool(specification.execution.get("require_zero_swap", True)),
     )
@@ -4079,9 +4105,17 @@ def launch_specification(
             stage_budget=cell_stage_budget, workflow_clock_start=full_clock.start,
             time_policy=v14_time_policy,
         )
-    elif (a4_tensor_h6_v29_profile or workstation_guided_local_v30_profile) and physical_candidate:
+    elif (
+        a4_tensor_h6_v29_profile
+        or workstation_guided_local_v30_profile
+        or projection_layout_v31_profile
+    ) and physical_candidate:
         service_cgroup_path = current_cgroup_path()
-        profile_label = "V30" if workstation_guided_local_v30_profile else "V29"
+        profile_label = (
+            "V31" if projection_layout_v31_profile
+            else "V30" if workstation_guided_local_v30_profile
+            else "V29"
+        )
         if not _is_v28_user_service_cgroup(service_cgroup_path):
             raise InputError(
                 f"{profile_label} Q4 formal launch requires the existing "
@@ -4089,7 +4123,9 @@ def launch_specification(
             )
         run_directory = _timestamp_directory(specification, timestamp)
         reserve_profile_budget = (
-            _reserve_v30_workstation_guided_local_budget
+            _reserve_v31_projection_layout_budget
+            if projection_layout_v31_profile
+            else _reserve_v30_workstation_guided_local_budget
             if workstation_guided_local_v30_profile
             else _reserve_v29_a4_tensor_h6_budget
         )

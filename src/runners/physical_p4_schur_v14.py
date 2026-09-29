@@ -4273,6 +4273,7 @@ def _v14_balanced_adapter(
     direct_selected_backend=False,
     reuse_projection_work=False,
     reference_metric_diagonal=False,
+    projection_layout_v31_natural_order_internal=False,
     port_closure_carrier=None,
 ):
     """Own H6 and its audit buffers; borrow the existing fixed interface stack."""
@@ -4370,6 +4371,9 @@ def _v14_balanced_adapter(
             reuse_projection_work=reuse_projection_work,
             batched_target_grouping=direct_selected_backend,
             reference_metric_diagonal=reference_metric_diagonal,
+            projection_layout_v31_natural_order_internal=(
+                projection_layout_v31_natural_order_internal
+            ),
         )
         h6, shell = positive["h6"], positive["p6_shell"]
         transfer = AlgebraicOwnerTransfer(common["transfer"])
@@ -6593,7 +6597,10 @@ def _v14_history_facts(
 
 def _v14_worker_pss_sampling_policy(worker: Mapping[str, Any]) -> str:
     """Read the persisted worker ``profile`` field used by V14 summaries."""
-    if worker.get("profile") == "physical_p6_trace_workstation_guided_v30":
+    if worker.get("profile") in {
+        "physical_p6_trace_workstation_guided_v30",
+        "physical_p6_trace_projection_layout_v31",
+    }:
         return "disabled_by_profile"
     return "sampled"
 
@@ -7006,6 +7013,7 @@ def _v14_q4_q5_fullspace(
     direct_selected_backend=False,
     reuse_projection_work=False,
     reference_metric_diagonal=False,
+    projection_layout_v31_natural_order_internal=False,
     formal_release_timing=False,
 ) -> dict[str, Any]:
     """Run one fresh p6 outer solve with the live interface BAL_H stack.
@@ -7946,10 +7954,16 @@ def _v14_q4_q5_fullspace(
             direct_selected_backend=direct_selected_backend,
             reuse_projection_work=reuse_projection_work,
             reference_metric_diagonal=reference_metric_diagonal,
+            projection_layout_v31_natural_order_internal=(
+                projection_layout_v31_natural_order_internal
+            ),
             port_closure_carrier=(
                 common["p4"]["dtn_action"].carrier
                 if resolved_payload.get("solver", {}).get("preconditioner")
-                == "physical_p6_trace_workstation_guided_v30"
+                in {
+                    "physical_p6_trace_workstation_guided_v30",
+                    "physical_p6_trace_projection_layout_v31",
+                }
                 else None
             ),
         ) as (pc, positive):
