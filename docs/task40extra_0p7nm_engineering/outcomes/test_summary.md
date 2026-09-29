@@ -20,4 +20,4 @@
 | 证据 JSON parse 与 identity/hash 对照 | `PASS`；10 个 JSON 可解析，G1 hash 与 geometry plan 一致；input、ledger 及当前可见的 9 个 raw run files 逐项复核 | `outcomes/records/*.json` 与 ignored raw runs |
 | whitespace/diff check | `PASS`；`git diff --check` 与新增文本行尾空白检查通过 | 本轮文档与 metadata |
 | Markdown fenced math / 表格 / 相对链接 | `PASS`；8 个相关 Markdown 的表格列数、围栏、相对链接检查通过；修复一条原模型登记表中指向 ignored artifact 的旧链接 | 新建/修改 Task40 Markdown 与项目索引 |
-| GitHub rendered view | 尚未核验 | 推送后查看；若 GitHub 无法取回页面，将明确报告 `NOT_VERIFIED` |
+| GitHub rendered view | `NOT_VERIFIED` | 推送后尝试打开 summary、response 与 material identity 页面；页面读取返回 `Cache miss`，因此未确认 GitHub 渲染结果 |
