@@ -1,3 +1,34 @@
+# Task40extra：0.7 nm 非可分三维 Maxwell 工程起步
+
+### 最终状态
+
+- 执行分支：`task40extra_0p7nm_engineering`；canonical linked worktree 在 `/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering`。
+- 当前分类：`INCOMPLETE_WORKER_FAILED_REPLAY_BUDGET_EXHAUSTED`；G0 两次在外层求解前发生实现异常，唯一错误重放已耗尽。
+- 没有得到官方 0.7 nm p6 完整解；G1、G0 direct reference、h agreement 和容量 Gate 为 `not_run` / `incomplete`。
+- ordinary default 未改变，未合并 `master`；需要后续 review 决定能否继续数值运行。
+
+### 为什么启动与冻结基线
+
+Task39 收口推荐 p6 物理离散、p4 纠错的双凝聚路线，但其 13.5 nm、原几何结果不能回答真实 0.7 nm、三维有限缺口单胞的误差与容量问题。Task40 B 线冻结 0.7 nm Si/air、1° grazing、双 Floquet、上下 Fourier-DtN、同一几何的 G0/G1 网格和 p6/q4 路线；本任务不承诺目标尺寸可行，也不自动选择 Phase II 算法。
+
+### 方法与实施
+
+Si 复折射率由公开散射因子与密度推导，输入与材料/几何/模式各有独立身份。G0 计划 336 cells、G1 880 cells。N2 用 60-cell p2 tiny diagnostic 验证小模型路径；其 `1.772707454694957e-12` residual 只是诊断结果。N3 第一次因 ledger identity 不一致失败，修复后唯一重放实际建成 G0 336-cell 网格、p6/q4 空间与 80-mode manifest，native projection check 通过到舍入精度，随后因 same-mesh wrapper 未保留缺口 audit 字段而在 cleanup 失败。最终 metadata 修复只通过 component fixture，没有 PDE 重放。
+
+### 结果解释与负结果
+
+两次 G0 状态都是 `WORKER_FAILED` implementation errors，不是 `NUMERICAL_FAIL` 或资源 Gate。外层 KSP、p4 factor、full explicit A6 residual、恢复场、official R/T/A 和吸收均未到达。watchdog simultaneous process-tree RSS 峰为 `1,538,707,456 B`；活动 cgroup memory peak 单列 `1,673,117,696 B`，不能互换。先前称 RSS 为 cgroup peak 已在 Task40 response 中更正。
+
+N4/G1、N5/direct 和 N6 精度/容量闭环未运行，因此不能判断 p4 全局因子、端口或局部缓存哪个限制扩展，也不能从当前数据推算 2 TB 目标规模。Task39 V31 首次 geometry instrumentation failure 的注释仍在父任务记录，没有覆盖。
+
+### 最终决策、局限与下一步
+
+当前阶段以 `INCOMPLETE_WORKER_FAILED_REPLAY_BUDGET_EXHAUSTED` 记录。`workflow_seconds=43,200` 是 observe-only 参考账目，不是硬性 12 小时停止线。唯一 bug replay 已用完；任何额外 G0/G1/direct PDE 需 superseding review/authorization。由于没有正式解、h 对照或因子容量实测，Phase II 没有选出唯一算法。Task40 代码保持研究分支，未进入 ordinary default 或 `master`。
+
+详细证据：[Task40 结果总结](task40extra_0p7nm_engineering/outcomes/summary.md)、[Response V1](task40extra_0p7nm_engineering/response_v1.md)、[材料/几何身份](task40extra_0p7nm_engineering/outcomes/material_and_geometry_identity.md)、[精度与容量](task40extra_0p7nm_engineering/outcomes/accuracy_and_capacity.md)、[测试摘要](task40extra_0p7nm_engineering/outcomes/test_summary.md)。
+
+---
+
 # Task39extra 当前进展：Review V30 / Response V34 C0–C2 离线收口
 
 用户选择 B 线后，包内 Task39 final report / Review V30 成为当前文档权威，Task40 N0–N6 成为下一任务唯一活动合同。Task39 canonical worktree 在确认 clean、无活跃旧 solver 后从 `e09bd1612c4f6ca5fb5cf3572835748ad5c16207` 快进到远端直接后继 `95dacd01e86f0f7f1d29ee2d5e5a16039bb41871`；原始 `95dacd0` 文档版本留在 Git 历史。

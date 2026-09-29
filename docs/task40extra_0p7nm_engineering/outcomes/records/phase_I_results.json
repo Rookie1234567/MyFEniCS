@@ -1,0 +1,73 @@
+{
+  "schema": "task40extra.phase_i_results.v1",
+  "overall_status": "INCOMPLETE_WORKER_FAILED_REPLAY_BUDGET_EXHAUSTED",
+  "official_0p7nm_nonseparable_p6_result": false,
+  "numerical_gate_status": "not_run",
+  "stages": {
+    "N0": {
+      "status": "complete",
+      "evidence": "docs/task40extra_0p7nm_engineering/branch_provenance.json"
+    },
+    "N1": {
+      "status": "complete",
+      "evidence": [
+        "docs/task40extra_0p7nm_engineering/outcomes/records/material_identity.json",
+        "docs/task40extra_0p7nm_engineering/outcomes/records/geometry_plan.json",
+        "docs/task40extra_0p7nm_engineering/outcomes/records/mode_inventory.json"
+      ]
+    },
+    "N2": {
+      "status": "diagnostic_pass_only",
+      "input": "G0 physics/material identity on 60-cell p2 scaled diagnostic mesh",
+      "residual": 1.772707454694957e-12,
+      "official_G0_or_G1": false,
+      "evidence": "docs/task40extra_0p7nm_engineering/outcomes/records/n2_tiny_static_condensed_diagnostic.json"
+    },
+    "N3_G0": {
+      "status": "WORKER_FAILED",
+      "attempts": 2,
+      "unique_bug_replay_count": 1,
+      "latest_error": "'types.SimpleNamespace' object has no attribute 'rectangular_air_void_audit'",
+      "actual_cells_constructed": 336,
+      "p6_rows": 229680,
+      "q4_rows": 69856,
+      "full_residual": null,
+      "KSP_iterations": null,
+      "factorization": null,
+      "R_T_A": null,
+      "evidence": "docs/task40extra_0p7nm_engineering/outcomes/records/g0_startup_bug_replay.json"
+    },
+    "N4_G1": {
+      "status": "not_run",
+      "reason": "N3 did not produce a qualified G0 result"
+    },
+    "N5_G0_direct_reference": {
+      "status": "not_run",
+      "reason": "N3 iterative reference subject was not completed"
+    },
+    "N6": {
+      "status": "incomplete",
+      "reason": "No G0/G1 accuracy, direct comparison, official physical observables or completed capacity stage"
+    }
+  },
+  "resource_outcome": {
+    "workflow_status": "WORKER_FAILED",
+    "failure_is_resource_stop": false,
+    "watchdog_process_tree_peak_rss_bytes": 1538707456,
+    "watchdog_process_tree_swap_peak_bytes": 0,
+    "watchdog_descendants_cleared": true,
+    "watchdog_identity_coverage": "complete",
+    "memory_events_oom_kill": 0,
+    "note": "Peak is sampled simultaneous process-tree RSS; PSS is disabled. Active cgroup memory.peak snapshot is reported separately in run_index.json."
+  },
+  "accuracy_outcome": {
+    "full_explicit_residual": "not_run",
+    "official_R_T_A": "not_run",
+    "A_volume": "not_run",
+    "energy_closure": "not_run",
+    "G0_G1_h_agreement": "not_run",
+    "G0_direct_reference": "not_run",
+    "channel_truncation": "CHANNEL_TRUNCATION_UNQUALIFIED"
+  },
+  "next_step": "No Phase II algorithm is selected. Any further numerical G0 run is outside the current one-replay contract and requires a superseding review/authorization."
+}

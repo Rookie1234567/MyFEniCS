@@ -1,0 +1,77 @@
+{
+  "schema": "task40extra.phase_i_contract.v1",
+  "task": "Task40extra_0p7nm_engineering",
+  "branch": "task40extra_0p7nm_engineering",
+  "repair_base_sha": "e694452f2f9287135f046af45592e3665f8b6c71",
+  "code_sha_after_fixes": "59bad0d977f0e23555098d923a95afbf2e9f5bf4",
+  "physical_identity": {
+    "wavelength_nm": 0.7,
+    "geometry_identity": "task40extra_nonseparable_0p7nm_v1",
+    "geometry_identity_sha256": "29b5839216ec96e4cdaaf7ffcf2418a6d61a0a61c731f387be2e4e3e33ec4d12",
+    "material_model_sha256": "7d21c0c1f964c2fe2bf44d2e724fc62e0f68aa9ebc4352c1616e763e7fc11aea",
+    "mode_inventory_identity_sha256": "40e80da12f352c80bf941aa5736c8910e69ea39e230afcf87737b2fbd92b8a78",
+    "input_sha256": "8e00fb6495845902a8113d982242d39ad0f4999b563c2c8049ecc3750b82ac9c",
+    "runner_physical_model_sha256": "51854af3fb60c7ffebb166e1f06ff0a89e2e184dcbd9ba06ab4beb321b920661"
+  },
+  "mesh_plan": {
+    "G0": {
+      "axes": [
+        6,
+        4,
+        14
+      ],
+      "expected_cells": 336,
+      "mesh_plan_sha256": "d621678ed8f144246133a98a71a2805bf55d09104d3aa6ceeb55e3f16fb864f1",
+      "classification": "derived plan; G0 same-mesh FE/MPC fixture built this mesh"
+    },
+    "G1": {
+      "axes": [
+        10,
+        4,
+        22
+      ],
+      "expected_cells": 880,
+      "mesh_plan_sha256": "2e7e0a76c2161bfc0651c89d8c5e6edfa2a1ed37d1e2b5a674e314c6c5f5c27d"
+    }
+  },
+  "method": {
+    "fine_degree": 6,
+    "coarse_preconditioner_degree": 4,
+    "solver": "right FGMRES, restart 32, max 2048, zero initial vector",
+    "plain_language": "The intended method solves the original p6 discrete Maxwell equations; it compresses element-interior unknowns into boundary traces for local work, uses a p4 solve as an approximate correction, then recovers p6 interior fields. This changes the preconditioner and assembly lifecycle, not the physical material equation. The official G0 attempts failed before the condensed solve."
+  },
+  "acceptance_gates": {
+    "full_explicit_A6_relative_residual_max": 1e-06,
+    "energy_closure_absolute_max": 1e-05,
+    "G0_G1_field_relative_change_target": 0.01,
+    "G0_G1_R_T_A_absolute_change_target": 0.001,
+    "G0_direct_reference_field_relative_difference_max": 0.0001,
+    "G0_direct_reference_R_T_A_absolute_difference_max": 1e-05,
+    "channel_truncation": "requires separate cutoff convergence; currently unqualified"
+  },
+  "resources": {
+    "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+    "task_process_tree_swap": "require_zero_swap",
+    "pss": "disabled_by_profile",
+    "time_policy": "observe_only",
+    "reference_workflow_seconds": 43200,
+    "reference_seconds_are_hard_timeout": false,
+    "legacy_warning_memory_gib_8_and_terminate_memory_gib_10": "record-only, not Task40 hard-stop authority"
+  },
+  "replay_contract": {
+    "maximum_implementation_bug_replays": 1,
+    "replays_consumed": 1,
+    "automatic_retry": false,
+    "numerical_retry": false,
+    "cross_case_recycling": false
+  },
+  "phase_status": {
+    "N0": "complete",
+    "N1": "complete",
+    "N2": "diagnostic pass only",
+    "N3_G0": "WORKER_FAILED after one implementation-bug replay; no numerical solve",
+    "N4_G1": "not_run",
+    "N5_G0_direct_reference": "not_run",
+    "N6": "incomplete"
+  }
+}

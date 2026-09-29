@@ -1,0 +1,44 @@
+{
+  "schema": "task40extra.g0_startup_bug_replay.v1",
+  "classification": "IMPLEMENTATION_BUG_REPLAY_EXHAUSTED_AFTER_SECOND_WORKER_FAILURE",
+  "input": {
+    "path": "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4.dat",
+    "sha256": "8e00fb6495845902a8113d982242d39ad0f4999b563c2c8049ecc3750b82ac9c"
+  },
+  "attempt_1": {
+    "source_sha": "e694452f2f9287135f046af45592e3665f8b6c71",
+    "error": "RuntimeError: parent ledger batch identity changed",
+    "elapsed_seconds": 3.8960978750794864,
+    "worker_summary_sha256": "1a4fdc71bb5ab945d82d11a8a2759cdffffdbe35617fd2761e86e4994b56e94c",
+    "run_summary_sha256": "4d9de42622f73975885fdf991c508ec1e923cfdef1c41bc3db14b951cde49db8",
+    "watchdog_summary_sha256": "d5c10459320eb421800a18e5be3fbe8e82531334123b86a996fc9e2ee2487ec2",
+    "replay_evidence_sha256": "6b5d3d6d962e55ef2b1e358001f0c2aec16f36a3827b4f351f4de60f76536e49",
+    "worker_log_sha256": "477ea563737561666e7f1bec64e9717f6b6d59fb9860e8a2c4d4e855b4d85916"
+  },
+  "attempt_2": {
+    "source_sha": "1ee85bc2133b783da419d31dbe429643eb2c1191",
+    "replay": true,
+    "error": "AttributeError: 'types.SimpleNamespace' object has no attribute 'rectangular_air_void_audit'",
+    "elapsed_seconds": 87.89695914214182,
+    "worker_summary_sha256": "a65aa9a97e96c7e9ceaaf31753b582ba850e73b05c4209078fc0faf5b1d5b575",
+    "run_summary_sha256": "c75b345dc91bf32c911df31fe760a0fdbe5feb3a51d388591c6fb867a1306f91",
+    "watchdog_summary_sha256": "3528da5e5c15e97778b693465bc975e8260f6c885797680249e8729a18b8ae33",
+    "events_sha256": "843bd207de94caa20967115cdb732b67fbee4ec4b06f8c0bdc3615ec8d167f21",
+    "worker_resources_sha256": "65d90a289637b66c50889246cc97db9dcbfc19e021aff0a4d7335bed2fdc9653",
+    "worker_log_sha256": "2e46c3bbe9fc57b071c692e38cdf0baf7be734537a6daa169118583514d8c9a7"
+  },
+  "fix_after_attempt_2": {
+    "source_sha": "59bad0d977f0e23555098d923a95afbf2e9f5bf4",
+    "change": "Task40 same-mesh mesh_data now retains computed rectangular-air-void audit and axis/material-plane metadata",
+    "test": "test_task40_same_mesh_levels_preserve_air_void_audit_metadata: 1 passed in 3.89 s",
+    "formal_pde_replayed": false
+  },
+  "ledger": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/task40_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_iterative_v1/shared_workflow_ledger.json",
+    "sha256": "d70e23cd1cb7461408ff9872242ba646f0a9e517330108069bfe993532656e84",
+    "unique_bug_replay_count": 1,
+    "active_attempt": null,
+    "elapsed_seconds": 91.79305701722132
+  },
+  "interpretation": "Both failures are worker implementation exceptions, not numerical nonconvergence or resource stops. Attempt 2 exhausted the sole replay. Source 59bad0d fixes its geometry-audit defect, but the official G0 numerical path remains unverified; G1 and direct reference remain not_run."
+}
