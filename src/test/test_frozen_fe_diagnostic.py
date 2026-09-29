@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from benchmarks.frozen_fe_error_check import check_report
+from benchmarks.frozen_fe_error_check import check_report, square_sum_check
 from src.io.frozen_fe_diagnostic import owned_vector
 from src.solvers.frozen_fe_error import FrozenActions, error_diagnostics, state_audits
 from src.solvers.neural_fe_action_packet import array_hash, file_hash
@@ -81,3 +81,15 @@ def test_checker_does_not_accept_raw_status_or_zeroed_reference_residual():
     assert not check_report(report, bad)["identities_pass"]
     report["action_counts"]["S"] = 129
     assert not check_report(report, raw)["action_budget_pass"]
+
+
+def test_cross_square_audit_uses_terms_before_strong_cancellation():
+    left = np.array([0.17 + 0.11j, 0.12 - 0.03j])
+    right = -left + np.array([1e-6 - 2e-6j, -3e-6j])
+    result = square_sum_check(left, right)
+    assert result["operation_scale"] > 0.1
+    assert result["operation_relative"] < 1e-14
+    # A tiny result is not the scale of the operations used to check the
+    # identity. Its absolute roundoff remains reported, never hidden.
+    assert result["absolute"] >= 0
+    assert np.linalg.norm(left + right) ** 2 < 1e-10

@@ -14,8 +14,23 @@ def relative_difference(left, right):
     return absolute / scale if scale > 1e-12 else absolute
 
 
+def square_sum_check(left, right):
+    """Operation scale is the terms before cancellation, never their small sum."""
+    cross = np.vdot(left, right)
+    terms = np.linalg.norm(left) ** 2 + np.linalg.norm(right) ** 2
+    squared = terms + 2 * cross.real
+    absolute = float(abs(squared - np.linalg.norm(left + right) ** 2))
+    scale = float(terms + 2 * abs(cross))
+    return dict(
+        absolute=absolute,
+        operation_scale=scale,
+        operation_relative=absolute / scale if scale > 1e-12 else absolute,
+    )
+
+
 def check_report(report, raw):
     checks = {}
+    square_details = {}
     audits = report["audits"]
     for name, audit in audits.items():
         checks[name + ".r=b-Sz"] = relative_difference(
@@ -114,12 +129,9 @@ def check_report(report, raw):
                 np.array([cross.real, cross.imag]),
                 np.array([row["cross_real"], row["cross_imag"]]),
             )
-            squares = (
-                np.linalg.norm(left) ** 2 + np.linalg.norm(right) ** 2 + 2 * cross.real
-            )
-            checks[name + "." + category + ".squares"] = relative_difference(
-                np.array([squares]), np.array([np.linalg.norm(left + right) ** 2])
-            )
+            square_key = name + "." + category + ".squares"
+            square_details[square_key] = square_sum_check(left, right)
+            checks[square_key] = square_details[square_key]["operation_relative"]
     field = report.get("fields")
     if field:
         for row in field["fields"]:
@@ -178,6 +190,7 @@ def check_report(report, raw):
         if identities_pass and bounded
         else "DIAGNOSTIC_SELF_CHECK_FAILED",
         independent_checks=checks,
+        square_identity_absolute_and_operation_scales=square_details,
         max_operation_scaled_defect=max(checks.values(), default=0),
         identities_pass=identities_pass,
         reference_original_equations_pass=reference_pass,
