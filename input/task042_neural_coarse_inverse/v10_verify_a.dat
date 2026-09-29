@@ -1,0 +1,6 @@
+schema_version = 1
+[task042_v10]
+stage = "VERIFY"
+candidate = "A"
+run_id = "task042_v10_verify_a"
+material_table_id = "SI_OPTICAL_CONSTANTS_USER_20260929_V1"
