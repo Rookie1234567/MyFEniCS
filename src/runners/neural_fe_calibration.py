@@ -33,6 +33,13 @@ def publish(name, path):
         json.dump(dict(path=str(path), sha256=file_hash(path)), stream, indent=2)
 
 
+def stage_moments(stage, fe):
+    """Column setup/solve/verification do not need the neural moment arrays."""
+    if stage == "V8-C0" or stage.startswith("V8-C3-"):
+        return read_moments()
+    return None, fe["moment_packet"]
+
+
 def reuse_inventory(packet, moments, moment_record, fe):
     rows = []
     for route, name in (
@@ -151,7 +158,7 @@ def run(specification, directory):
     _, fe_path = read_index("qualified_real_fe")
     packet_path = owned_file(fe["packet"], fe_path.parent)
     packet = load_packet(packet_path)
-    moments, provenance = read_moments()
+    moments, provenance = stage_moments(stage, fe)
     if stage == "V8-C0":
         result = reuse_inventory(packet, moments, provenance, fe)
         index_name = "reuse_inventory"
@@ -302,6 +309,7 @@ def run(specification, directory):
         operator_packet=fe["packet"],
         operator_source_sha=fe["source_sha"],
         moment_packet=provenance,
+        moment_arrays_loaded=moments is not None,
         worker_wall_seconds=time.perf_counter() - began,
         affinity=sorted(os.sched_getaffinity(0)),
         math_threads=1,
