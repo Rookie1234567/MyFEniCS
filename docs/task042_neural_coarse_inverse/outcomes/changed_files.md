@@ -49,3 +49,18 @@ V3新增research-only `learned_geometry_overlap.py`、几何/预算/phase测试�
 | do-not-merge | FE packets／零初始与非零接口witness checkpoint、mesh／日志／缓存／临时helper | ignored只在NN-Lab，无旧大型结果复制 |
 
 C1 `64c128c3541887e22788343692cc4f7832a45696`；唯一正式坐标修复／成功接口C2 `2a2cb4af78ba869a26a1254b4b4b76c9ac158366`。模型11696参数并非合格解，未建真实S/Sᴴ／物理port／内部恢复，三求解路线尚未运行。新材料独立loader是必要显式研究例外，普通schema的Si材料要求保留。所有权威／历史及原结果不改，不merge。
+
+
+## V7：四波长材料与真实单次FE求解对照
+
+| Selective merge依赖组 | 必要Task042改动／数值行为 | 对应测试／边界／顺序 |
+|---|---|---|
+| material/core独立组 | input/materials/si_optical_constants_v1.json、optical_material_table.py及离线回归；唯一来源/精确alias/complex square | 7材料回归，先审材料/loader；不自动改变普通case输入 |
+| research numerical/core | hcurl_assembly_time_condensation仅可选保留原局部张量审计；neural_fe_action_packet/pilot/gradient_check/optimization/bounded_complex_lsqr | 默认False不改旧求解；真实N1/三路线源绑定，未资格化research-only，不能默认部署 |
+| reference-only组 | neural_fe_blind_reference.py，单次p3 symbolicGate/LU，原FE/EH/power；一个范数Form修复后只验证重放 | complex CSR/valid UFL 4 targeted、实际参考；依赖三状态先冻结，不进入候选/loss，不回旧p4 |
+| runner/watchdog组 | 原run_case/profile/shared与薄neural_fe_continuation opt-in、独立one-run dat、cumulative V6+V7预算 | 复用原监督器/own lock，MPI1、整树16/12GiB/swap0；无复制watchdog、无ABI/邻任务修改 |
+| checker/benchmark组 | neural_fe_gate_check.py与两个反例；复E/H和完整40channel重算、不相信status | 最终32相关pytest，checker无solver/FE重放 |
+| compact evidence/docs组 | material/geometry/gradient/三路线/全channels/226audit/source/model/budget/response_v7及summary/两个项目总账新增 | 先数值依赖再轻证据；历史byte/prefix/suffix保护，Review V4不改 |
+| do-not-merge | 209MB packet、model/checkpoints、accurate reference、global p3 reference临时CSR/LU、JIT/cache/大日志与临时helper | ignored NN-Lab，不把global参考逆放候选、不上传大型数组 |
+
+正式source完整表在[response_v7](../response_v7.md)／[run index](records/run_index_v7.json)：N1 70f5f543…、三路线7c4037a2…、参考19adac7e…、后处理1ff6f8ba…。后续compact checker/docs HEAD不替代这些source；普通default/原方程/MPC/材料旧输入/旧80通道模型/Task与Review及V1–V6负结果保持。不amend/强推/merge，只原执行分支待review。

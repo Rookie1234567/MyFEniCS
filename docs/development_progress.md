@@ -2932,3 +2932,16 @@ N1局部FE矩／orientation／MPC插值差约1.8e-15；固定11696参数FP64 3×
 一次[0,L]原配置与新居中坐标接口修复后成功，source2a2cb4af78ba869a26a1254b4b4b76c9ac158366；初次失败source64c128c3541887e22788343692cc4f7832a45696原证据保留，预算不重置。三正式run总wall26.136697164s、整树同时采样峰314408960B/own swap0，现场CPU0/0/12、MPI1/数学1、既有FE/ML独立cache、自有锁/16GiB树监督，无cgroup委派不称内核连续限额。用户Task042受控共享授权继续；两GPU持续负载，本任务GPU/VRAM0；无邻任务修改，未发现持续压力，影响与无争用性能inconclusive，成本shared-workstation。无真实目标／p4全局因子、private audit CSR、hidden inverse/fallback或准确目标解读取，无旧teacher／seed420620消费。23相关pytest＋两ML断言及局部静态／输入通过；Review V3 GitHub4表4math通过。
 
 目标尺寸／材料／通道／精度／实际配额／完整步成本和所需步数unknown，最终0.7nm／48h NOT_QUALIFIED。唯一下一最小步骤是审核Si0.7nm原始材料源／版本／单位／符号／数值，本批不自动实施、不回旧p4、不启动最大模型、不merge。[Response V6](task042_neural_coarse_inverse/response_v6.md)、[完整结果](task042_neural_coarse_inverse/outcomes/neural_fe_single_solve_v6.md)、[source和资源](task042_neural_coarse_inverse/outcomes/records/run_index_v6.json)。
+
+
+## 2026-09-29 Task042 V7：材料解除后的真实单次神经FE对照
+
+Review V4按用户原表永久固化SI_OPTICAL_CONSTANTS_USER_20260929_V1于input/materials/si_optical_constants_v1.json，四行离线转换／历史／alias／未知拒绝回归通过；0.699999988原行明确alias至nominal0.7，不插值、不伪造数据库版本，实际n=0.999885140474+4.32477054e-6i、epsilon=n*n。V6 blocked档案原样，本轮MATERIAL_READY_USER_SUPPLIED。
+
+原384cell/p3/h0.175、三维缺口、双Floquet/DtN真实库存top20+bottom20=40，FE34050/trace18144/内部13824/slave2082；physical2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de。真实S/Sᴴ/native/非零内部与port/恢复身份差<=8.491e-15，真实FD最大1.8213e-9，完整N1通过；复用V6材料独立矩，不重跑F0。
+
+顺序NEURAL1611closure(wall)/FREE2000closure/LSQR1921步(action)，原Schur0.913263/0.797339/0.071603、native0.661163/2.179411/0.028728、port op0.003140/0.446120/0.656568，全失败。NN/非神经全场L2差0.06920/0.10551/0.10464、闭合0.07034/0.00734/0.00337，不合格；LSQR散射误差近1，loss下降不能代替场。三状态冻结后独立p3一次LU，释放再验算，参考Schur6.424e-12、native3.018e-12、独立native1.437e-12、R/T/A0.117645819/0.877047783/0.005306398、A_volume同、闭合2.906e-12。一次UFL后处理表达式修复仅重放验证，新增LU/solve0，失败费用保留。
+
+8正式run wall8579.825040766s、最大同时树采样RSS1073967104B、own swap0/GPU0、全部后代清场；V6 carry101.861302031s＋全部辅助费计入10h。用户受控共享授权/现场选核/MPI1/math/Torch1/own lock/16GiB树监督及独立缓存继续，无cgroup委派不称内核连续限额，无邻环境/affinity/watchdog/锁变更；未见持续PSI，影响与性能inconclusive。N1source70f5f543…、三路线7c4037a2…、参考19adac7e…、验证1ff6f8ba…完整hash在run index，文档HEAD不冒充运行source。
+
+NEURAL_OPTIMIZATION_NEGATIVE、神经增量NOT_DEMONSTRATED、最终0.7nm/48h NOT_QUALIFIED；p4 enrichment无合格候选不准入，旧p4路线关闭，seed420620/旧teacher/GPU/F5/p6/最大模型/四波长扫描not_run。唯一建议固定pilot目标解无关的对角变量尺度均衡LSQR对照，原loss/验算不变，未实施需review。32相关pytest、Ruff/format/compileall、Review V4 GitHub4表1math通过，无ABI安装/全仓清理/CI声明。[Response V7](task042_neural_coarse_inverse/response_v7.md)、[结果](task042_neural_coarse_inverse/outcomes/neural_fe_single_solve_v7.md)、[完整资源/source](task042_neural_coarse_inverse/outcomes/records/run_index_v7.json)。只原执行分支待review，不merge。

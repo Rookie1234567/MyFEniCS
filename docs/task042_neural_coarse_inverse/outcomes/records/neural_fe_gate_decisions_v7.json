@@ -1,0 +1,92 @@
+{
+  "batch": "V7_MATERIAL_FIXED_NEURAL_FE_CONTINUATION",
+  "material": "MATERIAL_READY_USER_SUPPLIED",
+  "real_N1": "PASS",
+  "independent": {
+    "reference_accuracy_pass": true,
+    "routes": {
+      "NEURAL-TRACE": {
+        "equation_pass": false,
+        "field_pass": false,
+        "power_pass": false,
+        "reference_accuracy_pass": true,
+        "status": "NOT_QUALIFIED",
+        "computed": {
+          "selected_E_relative": 0.0691494575314569,
+          "selected_H_relative": 0.06942873235982629,
+          "ordered_complex_ports_relative": 0.06903299713720969,
+          "max_channel_power_difference": 0.04148581414748087,
+          "energy_closure_absolute": 0.07034118224222974
+        },
+        "power_absolute_differences": {
+          "R_total": 0.028578771632793654,
+          "T_total": 0.04148576765708134,
+          "A_balance": 0.070064539289875,
+          "A_volume": 0.00027664295526113637
+        },
+        "full_FE_norms": "independent DOLFINx integral measurement, no FE replay",
+        "saved_status_trusted": false
+      },
+      "FREE-FE-OPT": {
+        "equation_pass": false,
+        "field_pass": false,
+        "power_pass": false,
+        "reference_accuracy_pass": true,
+        "status": "NOT_QUALIFIED",
+        "computed": {
+          "selected_E_relative": 0.10500655105910443,
+          "selected_H_relative": 0.10558820014644078,
+          "ordered_complex_ports_relative": 0.10423452949289742,
+          "max_channel_power_difference": 0.010063194705097422,
+          "energy_closure_absolute": 0.0073396760605071165
+        },
+        "power_absolute_differences": {
+          "R_total": 0.0028280901576630962,
+          "T_total": 0.010151293581295961,
+          "A_balance": 0.007323203423632907,
+          "A_volume": 1.647263396786086e-05
+        },
+        "full_FE_norms": "independent DOLFINx integral measurement, no FE replay",
+        "saved_status_trusted": false
+      },
+      "FE-LSQR": {
+        "equation_pass": false,
+        "field_pass": false,
+        "power_pass": false,
+        "reference_accuracy_pass": true,
+        "status": "NOT_QUALIFIED",
+        "computed": {
+          "selected_E_relative": 0.1046445296434671,
+          "selected_H_relative": 0.10464820922041444,
+          "ordered_complex_ports_relative": 0.1045079348435799,
+          "max_channel_power_difference": 0.007761552051778975,
+          "energy_closure_absolute": 0.0033713276755937827
+        },
+        "power_absolute_differences": {
+          "R_total": 0.004396974661680111,
+          "T_total": 0.007760732788558156,
+          "A_balance": 0.003363758126878058,
+          "A_volume": 7.569545809367126e-06
+        },
+        "full_FE_norms": "independent DOLFINx integral measurement, no FE replay",
+        "saved_status_trusted": false
+      }
+    },
+    "near_zero_absolute_threshold": 1e-12,
+    "reference_feedback": false
+  },
+  "terminal": "NEURAL_OPTIMIZATION_NEGATIVE",
+  "p4_enrichment": "NOT_RUN_NO_SAME_DISCRETE_QUALIFIED_ROUTE",
+  "old_p4_route": "CLOSED_RESEARCH_NEGATIVE",
+  "old_p4_gate": 1e-10,
+  "final_0p7nm_48h": "NOT_QUALIFIED",
+  "neural_increment": "NOT_DEMONSTRATED",
+  "performance": "INCONCLUSIVE_SHARED_WORKSTATION_NO_QUALIFIED_CANDIDATE",
+  "sealed_seed420620": "NOT_GENERATED_NOT_READ_NOT_CONSUMED",
+  "candidate_equation_gate": 1e-06,
+  "recovery_gate": 1e-10,
+  "same_discrete_field_gate": 0.0001,
+  "power_absolute_gate": 1e-05,
+  "per_channel_power_gate": 1e-06,
+  "only_next_suggestion": "One preregistered target-solution-independent diagonal variable-scale LSQR control on this same pilot; original loss and full audits unchanged. Not implemented; requires review."
+}

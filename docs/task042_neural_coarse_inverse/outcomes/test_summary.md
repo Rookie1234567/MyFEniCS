@@ -82,3 +82,19 @@ V3治理/文档表格定向测试28 passed；registry当前继承两项错误与
 实际FE矩／MPC配对约1.8e-15，非平凡orientation96 cell／5类；NN q15/30差1.1695e-15，非零合成非Hermitian192trace＋3port的三实方向FD最大9.7612e-9，chunk／一体梯度差6.8049e-16。真实0.7nm S/Sᴴ、native/port/恢复、NEURAL/FREE/LSQR／参考／场／功率not_run：材料缺失；不称完整N1或物理解通过。独立聚合只重算已存FD字段、canonical tags和hash，不重放FE或网络。
 
 [pre-run](records/pre_run_checks_v6.json)、[C1静态](records/precommit_static_v6.json)、[唯一正式修复](records/centered_geometry_fix_v6.json)、[C2静态](records/centered_fix_static_v6.json)、[接口](records/adjoint_gradient_checks_v6.json)、[源／资源](records/run_index_v6.json)、[精简checker](records/independent_evidence_checks_v6.json)。Review V3实际GitHub4表／4math渲染通过。最终文档／原权威保护／继承registry baseline及发布检查另列；不执行full pytest、MPI2/4或旧campaign，不声明CI。
+
+
+## V7：真实材料、真实N1、三路线及盲验证
+
+| 检查／实际范围 | 真实结果／边界 | evidence |
+|---|---|---|
+| 四波长材料回归 | 7通过；原decimal/复平方/正吸收符号/历史一致/单alias/未知拒绝/离线；无四波长PDE | input/materials/si_optical_constants_v1.json、test_optical_material_table.py |
+| 真实N1 | 原S/SH/native/nonzero内部+port/恢复配对<=8.491e-15；三方向9FD最大1.8213e-9、chunk0 | [real检查](records/adjoint_gradient_checks_v7.json) |
+| 固定预算／ML回归 | CPU-only FP64完整2000closure/Adam500断言，small gradient不作pass；既有ML无pytest用标准库执行原断言，不安装 | tmp/task042/v7/optimizer_final_regression/worker.log |
+| p3参考接线与最小修复 | 首次29相关pytest；UFL Form除法后4个targeted通过，恢复后仅FE/EH/功率25.633s，无新LU/solve；14.456s失败保留 | [原参考／重放](records/independent_blind_validation_v7.json) |
+| 最终相关pytest | 32 passed in1.85s；真实材料/complex action/LSQR/CSR/有效UFL forms/独立Gate反例/trace/basix | tmp/task042/v7/final_focused_tests/worker.log |
+| 独立数值checker | 忽略saved status，从原审核字段/复E/H/全port重算；0/3方程/场/功率通过，参考准确；未重复FE | benchmarks/neural_fe_gate_check.py、[独立决策](records/neural_fe_gate_decisions_v7.json) |
+| 静态／历史／文档 | 新增相关Ruff/format/compileall、局部表格/链接/公式及原authority/records byte保护，最终记录另列 | records/static_checks_v7.json；无全仓清理/昂贵回放 |
+| Review V4实际GitHub显示 | 4表/1math-renderer、列一致，review未修改；新文档发布绑定实际commit和Markdown hash另列 | [review](records/review_render_check_v7.json) |
+
+测试命令一次不存在文件名no tests ran/2.281s，随后更正真实路径并通过，费用保留；一个纯metadata查询把epsilon属性误称epsilon_r已更正，loader/材料/FE未变化。所有正式source/失败/修复/训练预算及辅助成本见[run index](records/run_index_v7.json)、[费用](records/resource_costs_v7.json)。32测试不代表三路线收敛或CI；本批MPI1 only，无full repository pytest/MPI2/4、环境安装、旧campaign或继承checker全仓清理。旧封存seed420620未生成/读取/消费。

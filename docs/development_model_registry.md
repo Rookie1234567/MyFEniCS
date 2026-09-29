@@ -1713,3 +1713,21 @@ production model。
 | FE-LSQR-V6／not_run | 同一未完整冻结micro operator | 计划原S/Sᴴ、无PC、最多2000配对和2h，从零；实际0 | 未构造真实S；无solver／参考／E/H／功率或离散资格 | not_run，最终目标48h NOT_QUALIFIED；[预算](task042_neural_coarse_inverse/outcomes/records/target_48h_budget_v6.json) |
 
 成功接口run source2a2cb4af78ba869a26a1254b4b4b76c9ac158366，首次居中坐标载体错误source64c128c3541887e22788343692cc4f7832a45696保留；一次最小research修复，普通默认/原FEM/Floquet不改。用户Task042受控共享CPU授权继续，既有FE/ML独立环境/缓存、MPI1/实际线程1、自有锁/16GiB树监督、GPU0；无cgroup委派不冒称连续内核限额，只监督自身树，未发现持续压力，邻影响／性能inconclusive，全部shared-workstation。无global目标/p4 factor、Riesz/ILU hidden inverse、private audit CSR或目标准确解读取，旧teacher和seed420620不消费。参考/enrichment/F5/p6/最大目标均not_run；目标材料／尺寸／通道／实际配额／完整步成本／所需步数unknown。唯一下一最小步骤为核验Si0.7nm材料来源和数值身份，不自动实施或merge。[运行源／全过程成本](task042_neural_coarse_inverse/outcomes/records/run_index_v6.json)、[Response V6](task042_neural_coarse_inverse/response_v6.md)。
+
+
+### 3.43.6 V7：用户材料下三路线单次求解micro，全部未资格化
+
+网络通过原Nédélec边/面矩生成当前目标trace，单元内部用原局部方程恢复，全部端口单独优化，尝试省去global分解；代价是新增训练和原S/Sᴴ作用。材料已经永久ready，原V6阻塞和旧p4负结果不回写。唯一canonical四波长表SI_OPTICAL_CONSTANTS_USER_20260929_V1在input/materials/si_optical_constants_v1.json，0.699999988→nominal0.7明确alias，Si n=0.999885140474+4.32477054e-6i、epsilon=n*n，空气1。模型固定384hex/p3/h0.175nm、三维缺口、MPI1、full40DtN；FE34050/trace18144/interior13824/slave2082，physical2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de。
+
+| Model ID／source及数据身份 | 未知量／算法 | 原残差／同离散场／功率 | 全树费用／具体停止 | 状态／evidence |
+|---|---|---|---|---|
+| NEURAL-TRACE-V7／7c4037a279cefd8546c51e8ae6cf0172c3eab89d | 固定11696 FP64网络参数＋40复port；完整原矩→trace；Adam500、L-BFGS history20 | Schur0.913263145、native0.661163226、port op0.003140447；全场L2差0.069196457、闭合0.07034118 | wall7149.384082808s、RSS760279040B、1611closure/48完整L-BFGS外层，时间预算停；swap0 | CONTROLLED_NUMERICAL_NEGATIVE；[对照](task042_neural_coarse_inverse/outcomes/records/neural_fe_comparison_v7.csv) |
+| FREE-FE-OPT-V7／同7c4037a2完整source | 18184复trace/port自由参数，同loss/optimizer/zero start | Schur0.797338565、native2.179411163、port op0.446120482；L2差0.105509404、闭合0.00733968 | wall592.483452100s、RSS753737728B、2000closure/69外层，closure预算停；swap0 | CONTROLLED_NUMERICAL_NEGATIVE；[全审核轨迹](task042_neural_coarse_inverse/outcomes/records/convergence_checkpoints_v7.csv) |
+| FE-LSQR-V7／同7c4037a2完整source | 原S/Sᴴ、无PC/逆、零初值；包含审核的2000作用限额 | Schur0.071602580、native0.028727752、port op0.656567941；L2差0.104639933、scattered差0.999953257、闭合0.00337133 | wall564.795250180s、RSS560558080B、1921步/S1999/SH1922，action预算停；swap0 | CONTROLLED_NUMERICAL_NEGATIVE；[独立Gate](task042_neural_coarse_inverse/outcomes/records/neural_fe_gate_decisions_v7.json) |
+| BLIND-P3-REFERENCE-V7／factor19adac7e3babb50c0028714684c220b713979196，验证1ff6f8ba3dcb48dee0fd41f762bf624822ea1457 | 三候选冻结后独立18184行/3901384NNZ一次p3 LU；销毁后原FE/EH/功率 | Schur6.424e-12、native3.018e-12、独立native1.437e-12；R/T/A0.117645819/0.877047783/0.005306398、A_volume0.005306398、闭合2.906e-12 | 初次14.456428306s后处理Form错误，最小修复仅验证25.633409183s、无新LU/solve；树峰1073967104B | SAME_DISCRETE_REFERENCE_ONLY；非部署/训练依赖、p-enrichment未准入；[复E/H/全通道/功率](task042_neural_coarse_inverse/outcomes/records/independent_blind_validation_v7.json) |
+
+真实N1 source70f5f5437533693e343ede67a37363e89b062330，原S/adjoint/native/恢复最大8.491e-15、真实FD最大1.8213e-9，完整40通道与原MPC不改。三候选从构建起无global p4层/factor、global FE CSR/LU、Riesz/ILU inverse、私有audit CSR或hidden fallback/准确目标解初始化。保存局部原张量/恢复和padded端口packet209239672B、网络/optimizer/激活/工作区，并非只有93568B模型参数。完整复振幅与逐级功率在[channel CSV](task042_neural_coarse_inverse/outcomes/records/channel_observables_v7.csv)；候选RTA只为未资格化诊断，参考未证明continuum。p/h/M/MPI未扫描。
+
+8正式stage wall8579.825040766s、同时树采样峰1073967104B/own swap0；V6 carry101.861302031s和全部辅助/失败/后续检查费不重置。用户Task042受控共享授权继续，MPI1/math/Torch1/实时核/own lock/16GiB hard与12GiB warn/独立缓存，CPU-only/GPU0；无cgroup委派不称内核连续限额，邻任务/其锁环境监督不改，无持续PSI触线，影响和性能inconclusive，全部shared-workstation。
+
+神经场有部分信号，仍方程/场/功率0/3，神经增量NOT_DEMONSTRATED；NEURAL_OPTIMIZATION_NEGATIVE。p4 enrichment/final目标/48h/F5/p6/旧teacher/seed420620/四波长扫描not_run；目标尺度/通道/配额/步cost/所需步数unknown，材料已ready。唯一下一建议为固定pilot目标解无关的对角变量尺度均衡LSQR对照，原loss/验算保持，未实施/需review，不回旧p4或自动更大模型。32相关pytest及局部静态/Markdown通过，Review V4实际GitHub4表1math，历史原文保留。[Response V7](task042_neural_coarse_inverse/response_v7.md)、[全费用/source](task042_neural_coarse_inverse/outcomes/records/run_index_v7.json)。

@@ -1,0 +1,98 @@
+{
+  "dataset": "none; original physical RHS only, no target accurate solution used in training",
+  "design": {
+    "path": "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/neural_fe_design_v7.json",
+    "sha256": "17792c1b5f003e7114d9a69fea8481cd195e92666e46ef950302e3dc85308c3b"
+  },
+  "operator_packet": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v7/V7-M1-FE/task042_v7_real_fe_interface_20260929T053615881143Z/physical_action_packet.npz",
+    "sha256": "9196edb807b534217d0c0eb78882125341342784a48ef20ebe2d9421fe636454",
+    "file_bytes": 209248356
+  },
+  "g_scattered_sha256": "8b9d6a05674d1461f615690f3c182829f8bed18db7c7ba3be9a3e8e9c05b71de",
+  "rhs_schur_sha256": "b3a366ccb183d1a6ca401a178ff4c4ecee8786d601ea38d865d55f8f6648e56b",
+  "model": {
+    "seed": 420906,
+    "hidden_layers": 3,
+    "width": 64,
+    "carrier_count": 8,
+    "real_parameters": 11696,
+    "complex_ports": 40,
+    "trace": 18144,
+    "precision": "float64 real/imag, complex128 FE",
+    "initialization": "normal hidden, zero final layer, zero trace/port; exact original local particular recovery",
+    "source_sha": "7c4037a279cefd8546c51e8ae6cf0172c3eab89d",
+    "state": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v7/V7-M2-NEURAL/task042_v7_neural_trace_20260929T054849523464Z/frozen_state.npz",
+      "sha256": "7dc49c3838be81c060e47596e11c67cb31d13c403ae216f8e4701605d8a82dab",
+      "z_sha256": "2dfad272d425d532710e43fd1abf1ee95f6b5890818c5dddd6e7bbaa6d63e6f5"
+    },
+    "counts": {
+      "closures": 1611,
+      "optimizer_updates": 548,
+      "adam_updates": 500,
+      "lbfgs_updates": 48,
+      "lsqr_iterations": 0,
+      "network_forward": 1613,
+      "network_backward": 1611
+    },
+    "history": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v7/V7-M2-NEURAL/task042_v7_neural_trace_20260929T054849523464Z/scalar_history.jsonl",
+      "sha256": "0989cc762b867a943b3ba49a95810f73ef8891c9d704d22726970d2fa8921a22"
+    },
+    "stop_reason": "WALL_BUDGET"
+  },
+  "frozen_routes": {
+    "NEURAL-TRACE": {
+      "source": "7c4037a279cefd8546c51e8ae6cf0172c3eab89d",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v7/V7-M2-NEURAL/task042_v7_neural_trace_20260929T054849523464Z/frozen_state.npz",
+        "sha256": "7dc49c3838be81c060e47596e11c67cb31d13c403ae216f8e4701605d8a82dab",
+        "z_sha256": "2dfad272d425d532710e43fd1abf1ee95f6b5890818c5dddd6e7bbaa6d63e6f5"
+      },
+      "history": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v7/V7-M2-NEURAL/task042_v7_neural_trace_20260929T054849523464Z/scalar_history.jsonl",
+        "sha256": "0989cc762b867a943b3ba49a95810f73ef8891c9d704d22726970d2fa8921a22"
+      },
+      "reference_loaded": false,
+      "warm_start_loaded": false
+    },
+    "FREE-FE-OPT": {
+      "source": "7c4037a279cefd8546c51e8ae6cf0172c3eab89d",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v7/V7-M2-FREE/task042_v7_free_fe_opt_20260929T074836760185Z/frozen_state.npz",
+        "sha256": "a051dd45b22af580168785810bb49fcbd2a6064b2969e105ed551e587fb68dd4",
+        "z_sha256": "db6ab455769357ee5d27b7073ee9d49b60a959619b905888a40a60d0e7c1719b"
+      },
+      "history": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v7/V7-M2-FREE/task042_v7_free_fe_opt_20260929T074836760185Z/scalar_history.jsonl",
+        "sha256": "024082d95272df5077165c005b59e13676e97cdf8902f85eb98cd4c961455582"
+      },
+      "reference_loaded": false,
+      "warm_start_loaded": false
+    },
+    "FE-LSQR": {
+      "source": "7c4037a279cefd8546c51e8ae6cf0172c3eab89d",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v7/V7-M2-LSQR/task042_v7_fe_lsqr_20260929T075859426043Z/frozen_state.npz",
+        "sha256": "f30d7508c73311eab4e9fcf6404fa5c4622ac00aaf2bd87ba2601329648e9b9e",
+        "z_sha256": "c7fb603b16df58f0f2853f493cde5bd7e68c0f0218e9f65b21c7922dcc1410a0"
+      },
+      "history": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v7/V7-M2-LSQR/task042_v7_fe_lsqr_20260929T075859426043Z/scalar_history.jsonl",
+        "sha256": "7a6803ce209c94ac8beaddcb47b0b9dcff893abe6f467bababf151eb0e323590"
+      },
+      "reference_loaded": false,
+      "warm_start_loaded": false
+    }
+  },
+  "accurate_reference_created_only_after_three_frozen": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v7/V7-M3-REFERENCE/task042_v7_same_mesh_p3_reference_20260929T081232010551Z/accurate_reference_state.npz",
+    "sha256": "a0610a5a55e7508196b17277e706595c33e4398ace82b245f70b656e6b9ed355",
+    "z_sha256": "4a681a75950ac8087ee8265f34e10363fef99b523c8eecf434f30fafecc09936"
+  },
+  "reference_source": "19adac7e3babb50c0028714684c220b713979196",
+  "verification_source": "1ff6f8ba3dcb48dee0fd41f762bf624822ea1457",
+  "sealed_pool": "seed420620 remains ungenerated/unread/unconsumed",
+  "four_wave_scan": false
+}

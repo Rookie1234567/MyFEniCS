@@ -1,0 +1,361 @@
+{
+  "formal_runs": [
+    {
+      "source": "7c4037a279cefd8546c51e8ae6cf0172c3eab89d",
+      "stage": "V7-M2-LSQR",
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_fe_lsqr_20260929T075859426043Z",
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_fe_lsqr_20260929T075859426043Z/run_summary.json",
+        "sha256": "d6b31270bba67e8dde816fbdcd02cad4985c590e8bf9a9cbe3e1dee720dc441e"
+      },
+      "manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_fe_lsqr_20260929T075859426043Z/run_manifest.json",
+        "sha256": "f44daef7bb1b2fa0ce18667c5b81071cc6488b6bce04e52906ad66c3f5ea8593"
+      },
+      "input_sha256": "c5601629ab8a2cddb51029ff90419b096e66c0b1acf2e0d1b1e87ccc69496e85",
+      "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+      "cpu": 0,
+      "MPI": 1,
+      "math_threads": 1,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 564.795250180061,
+      "tree_rss_peak_bytes": 560558080,
+      "tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_fe_lsqr_20260929T075859426043Z/resource_baseline.json",
+        "sha256": "f186c5c1595cb65cf5b689bb5250854b6eea90a58012b49fc840602c28992e06"
+      },
+      "cgroup_delegated": false,
+      "stage_result": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_fe_lsqr_20260929T075859426043Z/stage_result.json",
+        "sha256": "c2f4ba3b5795db41c8ce6f5a7d6d7ba81d2c3ddea6342fc50b2419d0d86b66a6"
+      },
+      "numerical_status": "CONTROLLED_NUMERICAL_NEGATIVE",
+      "costs_exclusive_seconds": {
+        "setup": 1.962995156645775e-06,
+        "network_forward": 0.0,
+        "network_backward": 0.0,
+        "parameter_gradient_assignment": 0.0,
+        "optimizer_excluding_closures": 0.0,
+        "io": 0.3347738344455138,
+        "S_all": 176.42189484427217,
+        "SH_all": 349.301651894697,
+        "audit_excluding_S": 28.482348252320662,
+        "other_control": 6.059927253169008
+      }
+    },
+    {
+      "source": "7c4037a279cefd8546c51e8ae6cf0172c3eab89d",
+      "stage": "V7-M2-FREE",
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_free_fe_opt_20260929T074836760185Z",
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_free_fe_opt_20260929T074836760185Z/run_summary.json",
+        "sha256": "b3a82d09a39a77da128946ec931127dda1fe030a4ee828101db12f27c4673776"
+      },
+      "manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_free_fe_opt_20260929T074836760185Z/run_manifest.json",
+        "sha256": "ffd885a82efca0fb2764de43cec98c19754ca653338a9cd9faaa0eb69bfa868a"
+      },
+      "input_sha256": "9744f1505bf28362a8630151cb781de679c30939e772ddb074bc2acf13a1a7c4",
+      "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+      "cpu": 0,
+      "MPI": 1,
+      "math_threads": 1,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 592.4834521000739,
+      "tree_rss_peak_bytes": 753737728,
+      "tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_free_fe_opt_20260929T074836760185Z/resource_baseline.json",
+        "sha256": "e8d383790b312e5b52b12366e584402e6a9530439d376761b5fab3b76e6d6cd0"
+      },
+      "cgroup_delegated": false,
+      "stage_result": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_free_fe_opt_20260929T074836760185Z/stage_result.json",
+        "sha256": "3eb3283e133abe6ac4b81620ecef5e526d5ff01daaec037cf2635572fdba9387"
+      },
+      "numerical_status": "CONTROLLED_NUMERICAL_NEGATIVE",
+      "costs_exclusive_seconds": {
+        "setup": 0.0011204320471733809,
+        "network_forward": 0.0,
+        "network_backward": 0.0,
+        "parameter_gradient_assignment": 0.8429144035326317,
+        "optimizer_excluding_closures": 14.101274101994932,
+        "io": 0.3847396170021966,
+        "S_all": 184.58241960185114,
+        "SH_all": 348.82386877108365,
+        "audit_excluding_S": 29.930443865363486,
+        "other_control": 7.878108152188361
+      }
+    },
+    {
+      "source": "70f5f5437533693e343ede67a37363e89b062330",
+      "stage": "V7-M0",
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_material_inventory_20260929T053554582439Z",
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_material_inventory_20260929T053554582439Z/run_summary.json",
+        "sha256": "e7d523faed13d9124561f03796704fb87bbfee37540b0d0909b0d29293dde368"
+      },
+      "manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_material_inventory_20260929T053554582439Z/run_manifest.json",
+        "sha256": "fc9b7b61053acd533b544318cdad9a6089bf0523ab890f2adccc3deaa54afb35"
+      },
+      "input_sha256": "391b5d01ca42c211e221a9a5c521200d245ba137c4c722746116b71325b388fb",
+      "physical_model_sha256": "17792c1b5f003e7114d9a69fea8481cd195e92666e46ef950302e3dc85308c3b",
+      "cpu": 12,
+      "MPI": 1,
+      "math_threads": 1,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 3.4182782139396295,
+      "tree_rss_peak_bytes": 243851264,
+      "tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_material_inventory_20260929T053554582439Z/resource_baseline.json",
+        "sha256": "8efc9af2f1156637939e5b3580f61e360932537b17998b6092d8bfa51e5b0bb8"
+      },
+      "cgroup_delegated": false,
+      "stage_result": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_material_inventory_20260929T053554582439Z/stage_result.json",
+        "sha256": "ab8c4ff1b3d89f94964072d23b39fbdc82ed625941a0176a119e6c10d28cfa11"
+      },
+      "numerical_status": "MATERIAL_READY_USER_SUPPLIED",
+      "costs_exclusive_seconds": {}
+    },
+    {
+      "source": "7c4037a279cefd8546c51e8ae6cf0172c3eab89d",
+      "stage": "V7-M2-NEURAL",
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_neural_trace_20260929T054849523464Z",
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_neural_trace_20260929T054849523464Z/run_summary.json",
+        "sha256": "d1c2b8b9fa561704d1018fe64a732b61f1a2e8228d60239ad7e4c5d360704984"
+      },
+      "manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_neural_trace_20260929T054849523464Z/run_manifest.json",
+        "sha256": "23542d7332565ad5ecd29e2a1fa772fbdeb7ce746b5e7c0989f29e3cb9996cdd"
+      },
+      "input_sha256": "5938ab6fe25510f617619db38210437e509bad1c79a67bc114953b25d26b1dbf",
+      "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+      "cpu": 0,
+      "MPI": 1,
+      "math_threads": 1,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 7149.3840828079265,
+      "tree_rss_peak_bytes": 760279040,
+      "tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_neural_trace_20260929T054849523464Z/resource_baseline.json",
+        "sha256": "959e6849a2f7c0f1b85f2f28f23f0f04d6a62009c38f17f137328173b0c7e729"
+      },
+      "cgroup_delegated": false,
+      "stage_result": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_neural_trace_20260929T054849523464Z/stage_result.json",
+        "sha256": "22b6b9c5973bb1d32d4f184d0f4f57c409ff6f735f7f88e08c79356382880c1f"
+      },
+      "numerical_status": "CONTROLLED_NUMERICAL_NEGATIVE",
+      "costs_exclusive_seconds": {
+        "setup": 0.003310807980597019,
+        "network_forward": 1600.5259217880666,
+        "network_backward": 5051.039604330901,
+        "parameter_gradient_assignment": 0.40544274903368205,
+        "optimizer_excluding_closures": 4.080166238360107,
+        "io": 0.4954925049096346,
+        "S_all": 156.68176976498216,
+        "SH_all": 299.6053826258285,
+        "audit_excluding_S": 24.26045703550335,
+        "other_control": 5.888532316428609
+      }
+    },
+    {
+      "source": "70f5f5437533693e343ede67a37363e89b062330",
+      "stage": "V7-M1-GRAD",
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_real_equation_gradient_20260929T053957547060Z",
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_real_equation_gradient_20260929T053957547060Z/run_summary.json",
+        "sha256": "eff411bee6608becee823c8dbe8d32806bffe23bd7a4ea5d0577f05b4700525a"
+      },
+      "manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_real_equation_gradient_20260929T053957547060Z/run_manifest.json",
+        "sha256": "ee59d012bc6d844d2d5d273c7c4a7ce03f45aac57dd4555c1c82f29a0a111154"
+      },
+      "input_sha256": "b7ab3cf66fea5248e660a391eae47a4136fcea82ae875be63ad9f666abe87739",
+      "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+      "cpu": 0,
+      "MPI": 1,
+      "math_threads": 1,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 30.491336454986595,
+      "tree_rss_peak_bytes": 682270720,
+      "tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_real_equation_gradient_20260929T053957547060Z/resource_baseline.json",
+        "sha256": "7060ae4a931dd1dee1ad8e52b5f376a696c27cb52d055e963556ff41bafe6c87"
+      },
+      "cgroup_delegated": false,
+      "stage_result": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_real_equation_gradient_20260929T053957547060Z/stage_result.json",
+        "sha256": "559637ff121131b6b67508ec925ae5fd80c8c3f16ce1e077bbda47bfba3d1d9d"
+      },
+      "numerical_status": "PASS",
+      "costs_exclusive_seconds": {
+        "S": 1.6538094845600426,
+        "SH": 0.4543854129733518,
+        "audit": 0.0
+      }
+    },
+    {
+      "source": "70f5f5437533693e343ede67a37363e89b062330",
+      "stage": "V7-M1-FE",
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_real_fe_interface_20260929T053615881143Z",
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_real_fe_interface_20260929T053615881143Z/run_summary.json",
+        "sha256": "985833cf2206cd07d93c63dc449b85637ebd00094501297a473a5ddc2e31581a"
+      },
+      "manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_real_fe_interface_20260929T053615881143Z/run_manifest.json",
+        "sha256": "e408b9677a9fef15aef7944639208cb3144a84e094c96cccfd077fde77088f36"
+      },
+      "input_sha256": "6b200ed86d6c65bef1723b58fa1a07a93336c066e10633e2e353136f5c7a8fd5",
+      "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+      "cpu": 0,
+      "MPI": 1,
+      "math_threads": 1,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 199.16280351998284,
+      "tree_rss_peak_bytes": 820604928,
+      "tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_real_fe_interface_20260929T053615881143Z/resource_baseline.json",
+        "sha256": "e45c1ecd15b1f7e903647c6cf2be359e90edfbf1200a1dcb82028b719edb4e10"
+      },
+      "cgroup_delegated": false,
+      "stage_result": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_real_fe_interface_20260929T053615881143Z/stage_result.json",
+        "sha256": "3cdea103da890e59f92b1e173f417bc20cb4c1ad6245b61a41fcf7a9cea6978b"
+      },
+      "numerical_status": "PASS",
+      "costs_exclusive_seconds": {
+        "mesh_space_mpc": 0.6628885730169713,
+        "original_physical_actions_jit": 12.739351734984666,
+        "p3_local_condensation_port_setup": 169.6345302729169,
+        "rhs_analytic_background_packet_export": 2.3729719310067594,
+        "independent_original_FE_checks": 8.332895159022883,
+        "packet_io_hash": 1.3254689970053732
+      }
+    },
+    {
+      "source": "19adac7e3babb50c0028714684c220b713979196",
+      "stage": "V7-M3-REFERENCE",
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_same_mesh_p3_reference_20260929T081232010551Z",
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_same_mesh_p3_reference_20260929T081232010551Z/run_summary.json",
+        "sha256": "06e378b410ea4a9d2f90e89c1b53866c9037a5aec4481c3bfca29210ae03539b"
+      },
+      "manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_same_mesh_p3_reference_20260929T081232010551Z/run_manifest.json",
+        "sha256": "f29c9994a29fc6bba7a3b7bfb8d718687c6d644d64a369355a66a9d9ce014b0f"
+      },
+      "input_sha256": "6ec76729519b83edbbc4cf17e454489956f2427c0b0b0648f209f8d9546490d1",
+      "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+      "cpu": 0,
+      "MPI": 1,
+      "math_threads": 1,
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 14.456428306060843,
+      "tree_rss_peak_bytes": 1073967104,
+      "tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_same_mesh_p3_reference_20260929T081232010551Z/resource_baseline.json",
+        "sha256": "35ee99463adfeb60d42a06007149c7171b56b6557386cd88ef01d4c9c255e072"
+      },
+      "cgroup_delegated": false,
+      "numerical_status": "POSTPROCESS_IMPLEMENTATION_FAILED_REPAIRED",
+      "internal_phase_timers": "not_persisted_due_exception; no refactor to recover timers"
+    },
+    {
+      "source": "1ff6f8ba3dcb48dee0fd41f762bf624822ea1457",
+      "stage": "V7-M3-VERIFY",
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_same_mesh_p3_verification_20260929T081727862414Z",
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_same_mesh_p3_verification_20260929T081727862414Z/run_summary.json",
+        "sha256": "dd63fd704aed0ef9b0830c937159527c4f649d10117a0c64854419293f52d6eb"
+      },
+      "manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_same_mesh_p3_verification_20260929T081727862414Z/run_manifest.json",
+        "sha256": "4604b6db826414677b9bb61e3c21702fc373a50f74133fcb326c4608ebfc1f5a"
+      },
+      "input_sha256": "9e6e4395e12c86529ee4c189b0f0dc221a9c2b36317cc52dda2873986b26555f",
+      "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+      "cpu": 0,
+      "MPI": 1,
+      "math_threads": 1,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 25.633409183006734,
+      "tree_rss_peak_bytes": 700133376,
+      "tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_same_mesh_p3_verification_20260929T081727862414Z/resource_baseline.json",
+        "sha256": "e20197db4d6d21a33dea21bd02d6889730e97dd4ade752db0524b6dc1ed8071c"
+      },
+      "cgroup_delegated": false,
+      "stage_result": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v7_same_mesh_p3_verification_20260929T081727862414Z/stage_result.json",
+        "sha256": "74e248cbc26461f3fe5888472da6472f657e2cfece707f6cc9f8293e7094abf7"
+      },
+      "numerical_status": "BLIND_REFERENCE_COMPLETE",
+      "costs_exclusive_seconds": {
+        "saved_identity_and_original_recheck": 0.3255655390676111,
+        "independent_FE_rebuild_all_fields_power_and_io": 20.868419526028447
+      }
+    }
+  ],
+  "shared_workstation": true,
+  "all_run_sources_clean": true,
+  "reference_failure_preserved": true,
+  "operator_packet": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v7/V7-M1-FE/task042_v7_real_fe_interface_20260929T053615881143Z/physical_action_packet.npz",
+    "sha256": "9196edb807b534217d0c0eb78882125341342784a48ef20ebe2d9421fe636454",
+    "file_bytes": 209248356
+  },
+  "operator_source_sha": "70f5f5437533693e343ede67a37363e89b062330",
+  "moment_reuse": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v6/V6-FE-INTERFACE/task042_v6_geometry_interface_20260929T040548954409Z/packet_q15.npz",
+    "sha256": "72ec5a28dd073b4217fdb36d4bbfe2383c6cda7b232d239da0ae4392292abd42",
+    "source_sha": "2a2cb4af78ba869a26a1254b4b4b76c9ac158366",
+    "q15_q30_qualification_reused": true,
+    "target_material_independent": true
+  },
+  "route_states": {
+    "NEURAL-TRACE": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v7/V7-M2-NEURAL/task042_v7_neural_trace_20260929T054849523464Z/frozen_state.npz",
+      "sha256": "7dc49c3838be81c060e47596e11c67cb31d13c403ae216f8e4701605d8a82dab",
+      "z_sha256": "2dfad272d425d532710e43fd1abf1ee95f6b5890818c5dddd6e7bbaa6d63e6f5"
+    },
+    "FREE-FE-OPT": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v7/V7-M2-FREE/task042_v7_free_fe_opt_20260929T074836760185Z/frozen_state.npz",
+      "sha256": "a051dd45b22af580168785810bb49fcbd2a6064b2969e105ed551e587fb68dd4",
+      "z_sha256": "db6ab455769357ee5d27b7073ee9d49b60a959619b905888a40a60d0e7c1719b"
+    },
+    "FE-LSQR": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v7/V7-M2-LSQR/task042_v7_fe_lsqr_20260929T075859426043Z/frozen_state.npz",
+      "sha256": "f30d7508c73311eab4e9fcf6404fa5c4622ac00aaf2bd87ba2601329648e9b9e",
+      "z_sha256": "c7fb603b16df58f0f2853f493cde5bd7e68c0f0218e9f65b21c7922dcc1410a0"
+    }
+  },
+  "canonical_common_directory": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git"
+}

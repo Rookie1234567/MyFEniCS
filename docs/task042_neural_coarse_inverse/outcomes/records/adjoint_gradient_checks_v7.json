@@ -1,0 +1,178 @@
+{
+  "real_FE": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v7/V7-M1-FE/task042_v7_real_fe_interface_20260929T053615881143Z/stage_result.json",
+    "sha256": "3cdea103da890e59f92b1e173f417bc20cb4c1ad6245b61a41fcf7a9cea6978b"
+  },
+  "real_gradient": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v7/V7-M1-GRAD/task042_v7_real_equation_gradient_20260929T053957547060Z/stage_result.json",
+    "sha256": "559637ff121131b6b67508ec925ae5fd80c8c3f16ce1e077bbda47bfba3d1d9d"
+  },
+  "source_sha": "70f5f5437533693e343ede67a37363e89b062330",
+  "FE_tests": [
+    {
+      "index": 0,
+      "S_pair": 2.604857773617411e-16,
+      "SH_dot": 8.386701103348007e-16,
+      "recovery_pair": 2.2878183702797976e-16,
+      "native_independent_pair": 8.483103255436016e-15,
+      "D_pair": 8.187577885656917e-16,
+      "schur_native_identity": 1.7539401668783534e-15,
+      "recovery_original": 1.5434247778857663e-15,
+      "slave_zero": 0.0,
+      "port_unknown_norm": 9.352568985962787
+    },
+    {
+      "index": 1,
+      "S_pair": 2.5565728420245496e-16,
+      "SH_dot": 1.916894460568039e-15,
+      "recovery_pair": 2.249264996209791e-16,
+      "native_independent_pair": 8.301245478579676e-15,
+      "D_pair": 1.0430677291616347e-15,
+      "schur_native_identity": 1.682895203721684e-15,
+      "recovery_original": 1.4689245164024034e-15,
+      "slave_zero": 0.0,
+      "port_unknown_norm": 8.871201234897038
+    },
+    {
+      "index": 2,
+      "S_pair": 2.5293965434224397e-16,
+      "SH_dot": 1.0969463776695699e-15,
+      "recovery_pair": 2.2959842812687035e-16,
+      "native_independent_pair": 8.484325214621167e-15,
+      "D_pair": 8.864639291314332e-16,
+      "schur_native_identity": 1.7421883168583722e-15,
+      "recovery_original": 1.5265020925870455e-15,
+      "slave_zero": 0.0,
+      "port_unknown_norm": 9.02543805960767
+    }
+  ],
+  "nonzero_internal_and_port_rhs": {
+    "interior_rhs_norm": 164.9959638363053,
+    "port_rhs_norm": 8.105586540209591,
+    "native_independent_pair": 8.491300737167162e-15,
+    "recovery_pair": 2.301141947622926e-16,
+    "original_audit": {
+      "native_residual_relative": 1.06979588182342,
+      "port_residual_relative": 0.5967648497973819,
+      "internal_residual_relative": 7.212896507995069e-18,
+      "schur_residual_relative": 0.9977157422969545,
+      "native_identity_relative": 1.1787223080288785e-15,
+      "schur_port_identity_relative": 5.098521090568121e-17,
+      "native_rhs_norm": 252.32666365781384,
+      "port_action_norm": 13.071349219679492,
+      "port_hp_solution_norm": 10.663760466851,
+      "hp_solve_count": 7,
+      "native_identity_formula": "e_FE-B*H_p^{-1}*e_p",
+      "strict_zero_slave_storage": true,
+      "rhs_is_mpc_dual": true,
+      "reduced_residual_supplied": false,
+      "native_rhs_operation_scale": 296884.0400933334,
+      "port_operation_scale": 31.840696226740086,
+      "internal_operation_scale": 15646631.692954648,
+      "schur_operation_scale": 113511.42544493146,
+      "schur_port_identity_operation_scale": 31.840696226740086,
+      "native_identity_operation_scale": 820157.5061809197
+    }
+  },
+  "finite_difference": [
+    {
+      "direction": 0,
+      "analytic": 57454.18578187561,
+      "samples": [
+        {
+          "h": 0.0001,
+          "finite_difference": 57454.18567723391,
+          "absolute_error": 0.00010464170190971345,
+          "relative_error": 1.8213068462406707e-09,
+          "passed": true
+        },
+        {
+          "h": 1e-05,
+          "finite_difference": 57454.18578007956,
+          "absolute_error": 1.7960483091883361e-06,
+          "relative_error": 3.1260530190211383e-11,
+          "passed": true
+        },
+        {
+          "h": 1e-06,
+          "finite_difference": 57454.185787719325,
+          "absolute_error": 5.843714461661875e-06,
+          "relative_error": 1.017108567833072e-10,
+          "passed": true
+        }
+      ]
+    },
+    {
+      "direction": 1,
+      "analytic": 415269.55726512545,
+      "samples": [
+        {
+          "h": 0.0001,
+          "finite_difference": 415269.5572651646,
+          "absolute_error": 3.9173755794763565e-08,
+          "relative_error": 9.433331942932046e-14,
+          "passed": true
+        },
+        {
+          "h": 1e-05,
+          "finite_difference": 415269.5572651282,
+          "absolute_error": 2.735760062932968e-09,
+          "relative_error": 6.587913838303212e-15,
+          "passed": true
+        },
+        {
+          "h": 1e-06,
+          "finite_difference": 415269.5572702214,
+          "absolute_error": 5.0959642976522446e-06,
+          "relative_error": 1.2271461291824885e-11,
+          "passed": true
+        }
+      ]
+    },
+    {
+      "direction": 2,
+      "analytic": 33306.21763202094,
+      "samples": [
+        {
+          "h": 0.0001,
+          "finite_difference": 33306.21763201634,
+          "absolute_error": 4.598405212163925e-09,
+          "relative_error": 1.3806446781104832e-13,
+          "passed": true
+        },
+        {
+          "h": 1e-05,
+          "finite_difference": 33306.21763234376,
+          "absolute_error": 3.2281968742609024e-07,
+          "relative_error": 9.692475170633847e-12,
+          "passed": true
+        },
+        {
+          "h": 1e-06,
+          "finite_difference": 33306.21763416275,
+          "absolute_error": 2.1418090909719467e-06,
+          "relative_error": 6.430658427310549e-11,
+          "passed": true
+        }
+      ]
+    }
+  ],
+  "independently_recomputed": {
+    "pass_all_directions": true,
+    "maximum_recomputed_relative_error": 1.8213068462406707e-09,
+    "physical_operator": true,
+    "synthetic_operator": false,
+    "target_solution_loaded": false
+  },
+  "chunk_real_dual_monolithic_relative": 0.0,
+  "reused_material_independent_moments": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v6/V6-FE-INTERFACE/task042_v6_geometry_interface_20260929T040548954409Z/packet_q15.npz",
+    "sha256": "72ec5a28dd073b4217fdb36d4bbfe2383c6cda7b232d239da0ae4392292abd42",
+    "source_sha": "2a2cb4af78ba869a26a1254b4b4b76c9ac158366",
+    "q15_q30_qualification_reused": true,
+    "target_material_independent": true
+  },
+  "S_is_original": true,
+  "SH_is_conjugate_transpose_action_not_solve": true,
+  "reference_loaded_before_routes": false
+}

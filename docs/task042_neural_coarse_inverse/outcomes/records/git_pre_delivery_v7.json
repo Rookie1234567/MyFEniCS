@@ -1,0 +1,18 @@
+{
+  "pwd": "/home/fenics/Projects/NN-Lab",
+  "toplevel": "/home/fenics/Projects/NN-Lab",
+  "branch": "task42_neural_coarse_inverse",
+  "HEAD": "1ff6f8ba3dcb48dee0fd41f762bf624822ea1457",
+  "upstream": "origin/task42_neural_coarse_inverse",
+  "common_git_directory": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+  "origin": "git@github-myfenics:Rookie1234567/MyFEniCS.git",
+  "worktrees": "worktree /home/fenics/Projects/Maxwell3D-Lab/task-repository.git\nHEAD 64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa\nbranch refs/heads/task39extra_para_workstation_capacity\n\nworktree /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity\nHEAD 64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa\nbranch refs/heads/task39extra_para_workstation_capacity\n\nworktree /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity-docs-20260920\nHEAD 47cb73bf083072ed03788f67830f6ca1e933b60c\ndetached\n\nworktree /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity-docs-20260928\nHEAD ccd357885f7f9be84efe3be07868cc94f13d93fc\ndetached\n\nworktree /home/fenics/Projects/NN-Lab\nHEAD 1ff6f8ba3dcb48dee0fd41f762bf624822ea1457\nbranch refs/heads/task42_neural_coarse_inverse\n\n",
+  "ahead_behind": "5\t0",
+  "task_own_lock": "FREE",
+  "formal_runs_all_cleared": true,
+  "other_worktree_HEADs_unchanged": true,
+  "worktree_state": "only Task042 current source/checker/docs before delivery commit",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "initial_task_doc": "f8c51c8e614edc806cf72120ac2cfd14ae8b62f7",
+  "review_v4": "18084a6213570e26a0a0941e628717f2c63fd00a"
+}

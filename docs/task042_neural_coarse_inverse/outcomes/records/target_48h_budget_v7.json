@@ -1,0 +1,239 @@
+{
+  "target_identity": "TARGET_IDENTITY_NOT_FROZEN",
+  "material": "MATERIAL_READY_USER_SUPPLIED",
+  "target_material": {
+    "status": "MATERIAL_READY_USER_SUPPLIED",
+    "material_table_id": "SI_OPTICAL_CONSTANTS_USER_20260929_V1",
+    "canonical_path": "/home/fenics/Projects/NN-Lab/input/materials/si_optical_constants_v1.json",
+    "material_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+    "query_wavelength_nm": "0.7",
+    "nominal_wavelength_nm": "0.7",
+    "source_wavelength_nm": "0.699999988",
+    "delta": "0.000114859526",
+    "beta": "4.32477054E-06",
+    "n_decimal": [
+      "0.999885140474",
+      "0.00000432477054"
+    ],
+    "epsilon_decimal": [
+      "0.9997702941220070727210241084",
+      "0.00000864854759781143367192"
+    ],
+    "source_kind": "user_supplied/user_authorized",
+    "source": {
+      "review_path": "docs/task042_neural_coarse_inverse/review_report_v4.md",
+      "review_commit": "18084a6213570e26a0a0941e628717f2c63fd00a",
+      "review_blob": "a0e0c106970eab91271d61981810544146c4a32f"
+    },
+    "alias_reason": "Review V4 explicitly authorizes source 0.699999988 for nominal 0.7; no interpolation; solve uses nominal 0.7",
+    "time_convention": "exp(-i omega t)",
+    "external_dataset_version": "not_provided",
+    "n_loaded": [
+      0.999885140474,
+      4.32477054e-06
+    ],
+    "epsilon_loaded": [
+      0.9997702941220071,
+      8.648547597811433e-06
+    ],
+    "air_n": [
+      1.0,
+      0.0
+    ],
+    "mu_r": [
+      1.0,
+      0.0
+    ]
+  },
+  "final_48h_gate": "NOT_QUALIFIED",
+  "target_seconds_limit": 172800,
+  "target_geometry": null,
+  "target_channels": null,
+  "target_resource_allocation": null,
+  "target_complete_step_seconds": null,
+  "target_steps_to_qualification": null,
+  "affordable_steps": null,
+  "extrapolation_used": false,
+  "measured_micro": {
+    "cells": 384,
+    "full_FE": 34050,
+    "trace": 18144,
+    "ports": 40,
+    "neural_closures": 1611,
+    "neural_route_seconds": 7142.986080161994,
+    "closure_nested_seconds": 7134.94517353212,
+    "cost_breakdown": {
+      "setup": 0.003310807980597019,
+      "network_forward": 1600.5259217880666,
+      "network_backward": 5051.039604330901,
+      "parameter_gradient_assignment": 0.40544274903368205,
+      "optimizer_excluding_closures": 4.080166238360107,
+      "io": 0.4954925049096346,
+      "S_all": 156.68176976498216,
+      "SH_all": 299.6053826258285,
+      "audit_excluding_S": 24.26045703550335,
+      "other_control": 5.888532316428609
+    },
+    "operator_packet_payload_bytes": 209239672,
+    "network_real_parameter_bytes": 93568,
+    "port_real_parameter_bytes": 640,
+    "capacity_bound_bytes": 6113460224
+  },
+  "memory_moved_to": [
+    "local original/Schur/recovery arrays",
+    "padded full-port arrays",
+    "Torch/NumPy runtime",
+    "Adam states",
+    "LBFGS20 histories",
+    "chunk activations and recomputation",
+    "S/S^H work buffers",
+    "original audit/recovery"
+  ],
+  "not_constructed": [
+    "candidate global target FE CSR",
+    "candidate global FE LU",
+    "global p4 layer or factor",
+    "Riesz inverse",
+    "ILU",
+    "private audit CSR",
+    "whole-mesh autograd graph"
+  ],
+  "reference_only_global_p3_LU": {
+    "global_p3_reference_factor": true,
+    "global_p4_factor": false,
+    "reference_only": true,
+    "deployed_in_candidates": false,
+    "rows": 18184,
+    "nnz": 3901384,
+    "matrix_action_pair": 4.3558043467396467e-16,
+    "symbolic_calls": 1,
+    "numeric_calls": 1,
+    "solve_calls": 1,
+    "factor_released": true,
+    "symbolic_info": {
+      "infog": {
+        "1": 0,
+        "2": 0,
+        "3": 24787664,
+        "4": 210672,
+        "5": 1710,
+        "6": 226,
+        "7": 4,
+        "8": 100,
+        "9": 0,
+        "10": 0,
+        "11": 0,
+        "12": 0,
+        "13": 0,
+        "14": 0,
+        "15": 0,
+        "16": 603,
+        "17": 603,
+        "18": 0,
+        "19": 0,
+        "20": 24787664,
+        "22": 0,
+        "29": 0
+      },
+      "rinfog": {
+        "1": 23734169244.0,
+        "2": 0.0,
+        "3": 0.0,
+        "4": 0.0,
+        "5": 0.0,
+        "6": 0.0,
+        "7": 0.0,
+        "8": 0.0,
+        "9": 0.0,
+        "10": 0.0,
+        "11": 0.0,
+        "12": 0.0,
+        "13": 0.0,
+        "14": 0.0,
+        "15": 396.602624,
+        "16": 0.0,
+        "17": 16.348626,
+        "18": 16.346321,
+        "19": 0.0,
+        "20": 0.0
+      }
+    },
+    "mumps_memory_settings": {
+      "icntl": {
+        "7": 7,
+        "10": 0,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 0
+      },
+      "modified": false
+    },
+    "numeric_admission": {
+      "status": "ADMISSIBLE",
+      "baseline_tree_rss_bytes": 598945792,
+      "dynamic_cap_bytes": 12884901888,
+      "hard_cap_bytes": 17179869184,
+      "numeric_planning_cap_bytes": 12884901888,
+      "future_bytes": 2156200448,
+      "engineering_reserve_bytes": 536870912,
+      "icntl23_mb": 9592,
+      "symbolic_estimate_mb": 603,
+      "units": "decimal MB",
+      "classification": "bounded_allocation_policy_not_peak_prediction",
+      "uncertainty": "symbolic baseline can overlap MUMPS estimate; allocator/pivot/workspaces remain uncertain",
+      "verification_lifecycle": "LU released before native A6/RHS compilation and verification"
+    },
+    "numeric_info": {
+      "infog": {
+        "1": 0,
+        "2": 0,
+        "3": 24787664,
+        "4": 210672,
+        "5": 1710,
+        "6": 226,
+        "7": 4,
+        "8": 100,
+        "9": 24797752,
+        "10": 210688,
+        "11": 1710,
+        "12": 35,
+        "13": 8,
+        "14": 0,
+        "15": 0,
+        "16": 603,
+        "17": 603,
+        "18": 5097,
+        "19": 5097,
+        "20": 24787664,
+        "22": 516,
+        "29": 24797752
+      },
+      "rinfog": {
+        "1": 23734169244.0,
+        "2": 45104864.0,
+        "3": 23757971888.0,
+        "4": 0.0,
+        "5": 0.0,
+        "6": 0.0,
+        "7": 0.0,
+        "8": 0.0,
+        "9": 0.0,
+        "10": 0.0,
+        "11": 0.0,
+        "12": 0.0,
+        "13": 0.0,
+        "14": 0.0,
+        "15": 396.602624,
+        "16": 0.0,
+        "17": 414.249062,
+        "18": 5035.124761,
+        "19": 0.00035355863110663344,
+        "20": 0.00035355863110663344
+      }
+    },
+    "initial_schur_relative": 6.4241465032853714e-12
+  },
+  "neural_increment": "NOT_DEMONSTRATED",
+  "shared_workstation": true
+}

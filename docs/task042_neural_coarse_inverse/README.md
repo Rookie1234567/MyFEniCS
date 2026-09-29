@@ -4,6 +4,10 @@
 
 本批 `V7_MATERIAL_FIXED_NEURAL_FE_CONTINUATION` 在已有384-cell/p3三维缺口几何上续跑真实S/Sᴴ、完整上下端口和恢复；真实N1通过后顺序NEURAL-TRACE／FREE-FE-OPT／FE-LSQR，再按条件独立验证。旧p4路线关闭，旧teacher／seed420620封存；不做四波长扫描、不启动最终规模。累计10小时预算包含V6已有费用，各路线仍最多2小时／2000完整closure或算子配对。Git、受控共享CPU、独立环境／缓存、自有锁和16/12GiB树监督继续；无合并授权。
 
+本批已实际完成材料固化、真实N1、三条路线和独立p3盲验证。三候选全部未通过原方程／同离散场／功率Gate，p4 enrichment未准入；材料不再阻塞，最终目标仍未资格化。见 [Response V7](response_v7.md)、[完整结果](outcomes/neural_fe_single_solve_v7.md)、[summary](outcomes/summary.md)。只有等待review的一个最小建议，未启动最大模型或旧p4路线。
+
+所有正式运行使用独立V7 one-run dat，经 `scripts/run_case.py`；唯一参考后处理错误只修复范数表达式、复用原参考重放验证，没有重分解或训练。源码／输入／模型／数据hash与全部费用见 [run index](outcomes/records/run_index_v7.json)、[resource costs](outcomes/records/resource_costs_v7.json)。
+
 以下首次创建说明仅为历史，不代表当前状态，原文保留。
 
 # Task042：NN-Lab 入口

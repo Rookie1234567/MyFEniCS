@@ -1,3 +1,31 @@
+# V7 最新交付：材料解除，真实 N1 通过，三路线数值负结果
+
+网络通过原有限元边／面矩产生当前问题的trace，再由原局部方程恢复内部未知量，尝试避免全局分解；代价是网络优化与原S/Sᴴ作用。材料已经永久登记，本轮实际做了同一三维缺口micro的三路线和盲参考，不能把梯度正确、loss下降或参数少当成合格解。
+
+| 项目／统一对象 | measured结论／边界 | 证据 |
+|---|---|---|
+| 材料／身份 | MATERIAL_READY_USER_SUPPLIED；四行canonical表，0.699999988→nominal0.7专用alias，n=0.999885140474+4.32477054e-6i、epsilon=n*n | [来源／载入](records/material_loaded_v7.json) |
+| 唯一真实模型 | 384hex／p3／h0.175nm／MPI1；FE34050、trace18144、内部13824、slave2082；air200／substrate48／block136／notch8；完整top20＋bottom20=40 | [物理hash与库存](records/material_geometry_identity_v7.json)、[全部通道](records/channel_inventory_v7.csv) |
+| N1真实接口 | S差2.605e-16、Sᴴ dot1.917e-15、native8.491e-15；非零内部/port；FD9项最大1.8213e-9、chunk0 | [真实N1](records/adjoint_gradient_checks_v7.json) |
+| 三路线／资格 | NN wall stop1611closure、FREE2000closure、LSQR1921步；原方程／同离散场／功率全部0/3合格 | [对照](records/neural_fe_comparison_v7.csv)、[独立Gate](records/neural_fe_gate_decisions_v7.json) |
+| 独立p3参考 | 三状态冻结后一次LU，释放后审核；Schur/native6.424e-12/3.018e-12，独立native1.437e-12；R/T/A0.117645819/0.877047783/0.005306398，A_volume0.005306398、闭合2.906e-12 | [E/H／功率](records/independent_blind_validation_v7.json) |
+| 全过程费用 | 8正式阶段含后处理失败wall8579.825040766s，树同时采样峰1073967104B、own swap0；V6 carry＋全部辅助费继续计入10h，GPU/VRAM0 | [run index](records/run_index_v7.json)、[最终费用账](records/resource_costs_v7.json) |
+| 未运行 | p4 enrichment因无合格候选不准入；p/h/M/MPI扫描、F5/p6、最大目标、四波长扫描、GPU、旧teacher和seed420620均not_run | [48h unknown](records/target_48h_budget_v7.json) |
+
+| 路线／完整负结果 | Schur（限1e-6） | 原native（限1e-6） | port operation-relative（限1e-6） | 全场L2相对差（限1e-4） | 能量闭合（限1e-5） |
+|---|---|---|---|---|---|
+| NEURAL-TRACE | 0.913263145 | 0.661163226 | 0.003140447 | 0.069196457 | 0.07034118 |
+| FREE-FE-OPT | 0.797338565 | 2.179411163 | 0.446120482 | 0.105509404 | 0.00733968 |
+| FE-LSQR | 0.071602580 | 0.028727752 | 0.656567941 | 0.104639933 | 0.00337133 |
+
+参考scattered L2=0.200411、total L2=1.91515；NN散射相对差0.6613，FREE/LSQR约1.0083/0.99995。NN得到部分真实信号但未合格；LSQR loss下降不等于完整散射响应，不能以弱材料对比或接近某项体吸收宣称通过。三候选RTA只作未资格化诊断；原完整E/H、复通道、逐级功率见[CSV](records/channel_observables_v7.csv)，恢复与slave-zero通过，其他Gate失败。神经增量NOT_DEMONSTRATED，shared-workstation性能和邻影响INCONCLUSIVE。
+
+正式source：N1 70f5f5437533693e343ede67a37363e89b062330；三路线7c4037a279cefd8546c51e8ae6cf0172c3eab89d；参考19adac7e3babb50c0028714684c220b713979196；后处理最小修复1ff6f8ba3dcb48dee0fd41f762bf624822ea1457。一个UFL Form除法错误只重放FE/E/H/功率，无第二次LU／solve或训练，失败费用不删除。候选无global p4层/因子、global FE CSR/LU、Riesz/ILU逆、私有audit CSR或hidden fallback；不是只用网络参数内存，局部/端口packet209239672B、工作区/optimizer/激活另计。
+
+用户Task042受控共享CPU授权继续，仅覆盖本任务§2.3独占限制；实时选核、MPI1/数学/Torch1、自有锁/整树16GiB hard/12GiB warn/swap0、独立cache。无cgroup委派不称连续内核限制，只停止自身树，邻任务不改；未观测持续PSI压力，缺可比阶段速率，不承诺零干扰。Review V4 GitHub4表1math通过，最终32相关pytest通过，不重装环境，不重跑旧campaign或full pytest，不宣称CI。
+
+最终0.7nm／48h NOT_QUALIFIED：目标geometry/channels/配额/完整步cost/所需步数unknown，材料已ready。唯一下一建议为固定pilot上预登记、目标解无关的对角变量尺度均衡LSQR对照，原loss/验算不变；未实施，待review，不自动扩大模型或回旧p4。[Response V7](../response_v7.md)、[完整结果](neural_fe_single_solve_v7.md)、[模型/source身份](records/dataset_model_provenance_v7.json)。以下V1–V6全部历史按字节保留。
+
 # V6 最新交付：材料阻塞，神经FE接口部分完成
 
 按Review V3关闭旧小块／低秩／系数网络p4路线，V5 augmentation不执行，全部历史正文保留。本批新网络把三维复向量变为原有限元边／面矩，尝试直接求当前场；实际只完成材料独立接口，尚无原方程、物理场或神经收益资格。
