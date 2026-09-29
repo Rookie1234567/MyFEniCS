@@ -46,3 +46,16 @@ python scripts/run_case.py input/task042_neural_coarse_inverse/f4_linear_shared.
 唯一配置为 `two_level_v4.json`；原task/review、V3几何PC及普通默认不改。每个worker退出、整树清场后才发布hash-bound阶段索引；P4消费标记采用独占创建防止重复终测。所有成本shared-workstation，monitor每步只保存廉价KSP标量，原方程在0/restart/final/异常及真正成功返回时检查；无NN/GPU/F5/短波。
 
 P4的制造解只存在于独立RHS生成worker；清场后验证worker只读`rhs_fe/rhs_port`，packet中出现solution或initial_guess键即拒绝。该实施隔离在P1清场后、任何fresh数组生成前补齐，不改变随机序列、候选、16项库存或预算；已完成P0/P1的数值核心blob不变，不重跑它们。
+
+## Review V2 的 V5 固定对象诊断输入
+
+本批把同一保存状态留下的残差分别交给局部作用、粗空间和原两层作用，判断空间覆盖与投影是否分别限制效果；它测有限修正和最多16个补空间方向，增加审核成本，不开发或资格化新求解器。原S、B与两套Z/U/R逐字节冻结，数值诊断在`learned_fixed_localization.py`，唯一预登记为`localization_v5.json`。
+
+| 单一dat / stage | 固定库存与进程边界 | Gate |
+|---|---|---|
+| `v5_d0_shared.dat` / V5-D0 | 原0/10/11的零初值particular recovery、V3 GEO和两V4最终状态，最多12项 | Git/ABI/资源；从保存向量独立重算，缺项不重跑KSP |
+| `v5_d1_shared.dat` / V5-D1 | 同12项、逐个加载旧空间；仅三个已消费teacher离线检查误差覆盖 | D0释放；无新因子，只输出标量和hash，不输出准确解/系数 |
+| `v5_oldpod_shared.dat` / V5-OLDPOD | 原OLDPOD，同D0库的B/C/B2及两小LS；固定补空间探针 | D0释放，固定对象/512MiB容量；不加载teacher或D1参考输出 |
+| `v5_error_shared.dat` / V5-ERROR | 原ERROR，完全同库和规则，另一个worker | 上条同样的Gate；一次一个Task042阶段，先退出再换空间 |
+
+四个dat均使用既有`run_case.py`、own lock和16GiB整树监督；候选不会读取seed420620新池、训练、重编码基、调用长KSP或进入F5。诊断最小二乘最多129列，以固定相对1e-10处理依赖方向，仅作反事实，不能反馈给求解器。全部成本为shared-workstation，完成后等待review，下一试验只建议而不实施。

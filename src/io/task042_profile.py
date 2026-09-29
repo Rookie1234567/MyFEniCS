@@ -24,6 +24,10 @@ TASK042_PROFILES = {
     "task042_shared_v4_oldpod_diagnostic": "V4-P3-OLDPOD",
     "task042_shared_v4_fresh_qualification": "V4-P4",
     "task042_shared_v4_fresh_generation": "V4-P4-GENERATE",
+    "task042_shared_v5_common_states": "V5-D0",
+    "task042_shared_v5_offline_coverage": "V5-D1",
+    "task042_shared_v5_oldpod_localization": "V5-OLDPOD",
+    "task042_shared_v5_error_localization": "V5-ERROR",
 }
 
 

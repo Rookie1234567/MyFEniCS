@@ -497,6 +497,15 @@ def main():
     write_json(directory / "numerical_summary.json", result)
     started = time.perf_counter()
     try:
+        if stage.startswith("V5-"):
+            from src.runners.task042_localization import run_localization_stage
+
+            result.update(
+                run_localization_stage(
+                    cfg, MPI.COMM_WORLD, stage, directory, artifact, source, marker
+                )
+            )
+            return 0
         if stage.startswith("V4-"):
             from src.runners.task042_two_level import run_two_level_stage
 

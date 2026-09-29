@@ -441,7 +441,7 @@ def launch(specification):
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         baseline = audit(
             observed_activity=stage in ("V3-reuse", "V3-overlap")
-            or stage.startswith("V4-")
+            or stage.startswith(("V4-", "V5-"))
         )
         os.sched_setaffinity(0, {baseline["cpu"]})
         os.nice(10)
@@ -516,6 +516,12 @@ def launch(specification):
             from src.io.task042_v4_gate import publish
 
             publish(stage, directory)
+        if stage.startswith("V5-"):
+            from src.io.task042_v4_gate import publish
+
+            index = ROOT / "tmp/task042/v5/stage_index.json"
+            index.parent.mkdir(parents=True, exist_ok=True)
+            publish(stage, directory, index_file=index)
         return {
             key: result[key]
             for key in (
