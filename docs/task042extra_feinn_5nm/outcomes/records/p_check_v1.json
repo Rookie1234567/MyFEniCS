@@ -1,0 +1,8 @@
+{
+  "status": "DISCRETIZATION_NOT_QUALIFIED",
+  "p4_reference": "not_run",
+  "reason": "No p3 candidate passed same-discrete equations, fields and power",
+  "target_5nm": "not_run",
+  "target_0p7nm": "not_run",
+  "worker_elapsed_seconds": 0.2381773089291528
+}

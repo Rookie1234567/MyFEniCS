@@ -2945,3 +2945,30 @@ Review V4按用户原表永久固化SI_OPTICAL_CONSTANTS_USER_20260929_V1于inpu
 8正式run wall8579.825040766s、最大同时树采样RSS1073967104B、own swap0/GPU0、全部后代清场；V6 carry101.861302031s＋全部辅助费计入10h。用户受控共享授权/现场选核/MPI1/math/Torch1/own lock/16GiB树监督及独立缓存继续，无cgroup委派不称内核连续限额，无邻环境/affinity/watchdog/锁变更；未见持续PSI，影响与性能inconclusive。N1source70f5f543…、三路线7c4037a2…、参考19adac7e…、验证1ff6f8ba…完整hash在run index，文档HEAD不冒充运行source。
 
 NEURAL_OPTIMIZATION_NEGATIVE、神经增量NOT_DEMONSTRATED、最终0.7nm/48h NOT_QUALIFIED；p4 enrichment无合格候选不准入，旧p4路线关闭，seed420620/旧teacher/GPU/F5/p6/最大模型/四波长扫描not_run。唯一建议固定pilot目标解无关的对角变量尺度均衡LSQR对照，原loss/验算不变，未实施需review。32相关pytest、Ruff/format/compileall、Review V4 GitHub4表1math通过，无ABI安装/全仓清理/CI声明。[Response V7](task042_neural_coarse_inverse/response_v7.md)、[结果](task042_neural_coarse_inverse/outcomes/neural_fe_single_solve_v7.md)、[完整资源/source](task042_neural_coarse_inverse/outcomes/records/run_index_v7.json)。只原执行分支待review，不merge。
+
+
+## 2026-09-29 Task42extra：完整FEINN/Riesz独立5nm首轮
+
+本任务是新支线，检验完整坐标网络的Nédélec边/面/内部矩和Riesz弱残差能否求得真实5nm FE解。旧Task042粗逆/trace负结果只作技术依据，未修改或重跑。分支task42extra_feinn_5nm，base fbac3d8777fcfd897d93b898cb9f460f79ddd6ff，review pending、master未merge，ordinary default solver数学不改。
+
+冻结M5：lambda5nm、Si/air、grazing1°/phi0/s/amp1；盒[-5,5]×[-3.75,3.75]×[-1.25,8.75]nm、真正三维空气缺口；h1.25、384hex、N1curl p3、q15、双Floquet/完整原Fourier-DtN。材料唯一SHA256 55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2。实测native34050/slave2082/full-independent31968，其中edge3744/face14400/interior13824，全部内部量保留；完整40通道fresh inventory/hash，不沿用旧结果。
+
+E0原生LinuxGit/environment/isolation完成；E1完整矩/原A/Aᴴ/准确端口/Gram/非零梯度与batch/q接口通过，仅INTERFACE_PASS_ONLY。E2三条独立零散射初值，Adam500→LBFGS20/strong-Wolfe，每条3h/4000完整closure停止预算；没有调参/目标准确解/teacher/global Maxwell训练factor。E3全部checkpoint冻结后独立同p3原增广MUMPS authority及完整原场/功率验收，参考资格为True；E4 DISCRETIZATION_NOT_QUALIFIED。三路线同离散资格0/3，不把loss降低、total背景主导或optimizer success当通过。
+
+| 路线 / 实参数 | native / augmented | 散射E L2 / curl | selected total E/H | R/T/A_balance/A_volume | wall / s；峰GiB | 实际终态 |
+| --- | --- | --- | --- | --- | --- | --- |
+| FEINN-EUC / 8966 | 0.928287/0.928287 | 0.999215/0.999234 | 0.678586/0.671902 | 0.837415/0.113261/0.0493242/0.465089 | 10690.7；0.65601 | FEINN_OPTIMIZATION_NEGATIVE / WALL_BUDGET |
+| FEINN-DUAL / 8966 | 1.10264/1.10264 | 0.998885/0.998906 | 0.678322/0.671303 | 0.837391/0.113257/0.0493519/0.464992 | 10688.1；1.31262 | FEINN_OPTIMIZATION_NEGATIVE / WALL_BUDGET |
+| FREE-FE-DUAL / 63936 | 0.596914/0.596914 | 0.991925/0.991755 | 0.672954/0.670815 | 0.845194/0.115246/0.0395601/0.459627 | 2901.91；1.27242 | FEINN_OPTIMIZATION_NEGATIVE / CLOSURE_BUDGET |
+
+RTA和字段未资格化时为diagnostic。六点total/scattered复E/H逐点与整体、L2/curl、全40级原port/真实boundary出射/scattered复幅、逐级功率及R00_s/p/total保留在新task compact physics记录；没有由功率反推复幅或phase fitting。闭合使用独立A_volume，A_balance自身定义不作独立通过证据。
+
+Riesz为同约束p3正质量+25nm² curl内积；RESEARCH_ONLY_GLOBAL_RIESZ_FACTOR。Gram31968/NNZ7336179/payload146851456B、装配648.765474s；资格LLᴴ/AMD symbolic填充18839705、numeric108.8385s、current544918864B/peak633592648B，24个资格solve最大真实相对9.1334e-12。训练DUAL/FREE各自fresh factor和全部Gsolve实账，从零各计完整assembly；EUC不加载Gram。准确Maxwell因子仅参考，用后释放、RSS下降确认再后处理。
+
+实际研究监督25985.9s；完整启动至summary的UTC/mtime derived实账26016.6s；参考、首次失败、安装/ABI/light费用包含。from-zero归属另列，不加进实际研究时间。C2首个H除法setup/port重叠用compact粗化互斥账消除，rawport仅diagnostic。峰取全过程同时整树RSS，不加阶段峰、不以payload替代RSS。parameter-only checkpoint无一致optimizer resume；raw内层计数截至最后完整outer，异常partial inner未另存，完整closures/A/Aᴴ/Gsolve费用照计。
+
+原生Linux独立linked worktree NN-Lab-V2；旧NN-Lab和Task39/Task041/Metrology只读。MPI1、数学/Torch1、CPU-only、fresh选闲物理核；own lock/env/cache/output，warn12/hard16GiB、轻测试2GiB、自身swap0；系统max128GiB/10%+384GiB邻增长+own预算。无cgroup委派，0.5s目标采样监督自身树；不冒称连续内核限制或零干扰。邻任务配置/锁/affinity/watchdog和全机swap/BLAS/CUDA不改，shared-workstation性能和影响inconclusive。
+
+度量信号inconclusive_not_equal_accuracy，神经增量inconclusive_not_equal_accuracy。固定配置的负结果不能唯一归因于表示、优化或离散，也不证明所有FEINN无效。E5仅推导目标50×25×120nm级非可分候选：h1.25/78400cell/6364800独立复FE，完整模式由原API解析fresh计数；当前全cell临时约24.22GiB已超过16GiB，Gram CSR粗推约30GB，全局Rieszfactor预测约0.5TB且不具准入资格。matrix-free/multilevel向量/动作/未知迭代成本分别给出，不把预测当实测。目标尺寸5nm和0.7nm/48h均not_run/not_qualified。
+
+证据：[Response V1](task042extra_feinn_5nm/response_v1.md)、[16节总结](task042extra_feinn_5nm/outcomes/summary.md)、[run/source/hash](task042extra_feinn_5nm/outcomes/records/run_index_v1.json)、[完整物理](task042extra_feinn_5nm/outcomes/records/blind_physics_v1.json)、[Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v1.json)、[资源全账](task042extra_feinn_5nm/outcomes/records/resource_costs_v1.json)、[目标容量](task042extra_feinn_5nm/outcomes/target_5nm_scale_plan.md)。只推执行支线，不amend/强推/merge；交付后停止等待review，唯一下一最小建议见response，未自动实施。

@@ -1,0 +1,78 @@
+{
+  "schema": "task42extra.render-check.v1",
+  "status": "BROWSER_PENDING",
+  "published_task_rich_text_check": {
+    "status": "RENDERED_HTML_PASS",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/3b8474bff1b3cb9321a89afbca36868a9b95153d/docs/task042extra_feinn_5nm/task.md",
+    "publication_sha": "3b8474bff1b3cb9321a89afbca36868a9b95153d",
+    "http": 200,
+    "utc": "2026-09-29T11:14:39.700559+00:00",
+    "task_sha256": "49007ef3ad8231cdeb59d5ca7f4c2aba4b698862a7f3b44e68e4cbefb35d4873",
+    "response_html_sha256": "6194e99fc6e13e281e1b6ec7e34e193e311997cd02d089d36913ec24773b1cec",
+    "richText_html_sha256": "aff5e0613a66994b9c8d50a2e00c7fee6f0350ea1db89e49855d2dc101eeccd0",
+    "table_rows_columns": [
+      [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      [
+        3,
+        3,
+        3,
+        3
+      ],
+      [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2
+      ]
+    ],
+    "rendered_tables": 6,
+    "table_columns_consistent": true,
+    "local_math_blocks": 7,
+    "github_math_renderer_blocks": 7,
+    "evidence": "Actual published GitHub richText HTML, table elements and math-renderer. No browser pixels captured.",
+    "task_modified": false
+  },
+  "final_docs_browser": "not_run",
+  "final_blob_consistency": "not_run"
+}

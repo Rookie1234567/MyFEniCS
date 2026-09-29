@@ -1,0 +1,98 @@
+{
+  "schema": "task42extra.markdown-local-check.v1",
+  "status": "LOCAL_MARKDOWN_PASS",
+  "parser": "markdown-it-py commonmark+table; independent raw fence/table/link checks",
+  "principles_unchanged_sha256": "223c7883951eec6b79aca7c66472d315f547012bc34085534309b1bb0235a6d0",
+  "pages": [
+    {
+      "path": "docs/task042extra_feinn_5nm/response_v1.md",
+      "sha256": "2bff6320c1f538382e61aaebffe7221c0a6a247eb9dae129477e5c2a5bf36a85",
+      "checked_scope": "entire page",
+      "markdown_tables": 7,
+      "parsed_tables": 7,
+      "math_fences": 0,
+      "links": 4
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+      "sha256": "7abc3663e9302c3554e88352d0ca7443ca72745853b50f8a046e3d0f99db9ac4",
+      "checked_scope": "entire page",
+      "markdown_tables": 18,
+      "parsed_tables": 18,
+      "math_fences": 0,
+      "links": 18
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/method_and_paper_mapping.md",
+      "sha256": "97faabfbaf22e87a5964dc3ce6dbbd4c40fda718789918581ac3c120c9868189",
+      "checked_scope": "entire page",
+      "markdown_tables": 1,
+      "parsed_tables": 1,
+      "math_fences": 2,
+      "links": 1
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/environment_and_isolation.md",
+      "sha256": "daae367ed926115ee1c8bce1a99d0cd2291a5c8ee51b5cae7e201bc897f4f868",
+      "checked_scope": "entire page",
+      "markdown_tables": 2,
+      "parsed_tables": 2,
+      "math_fences": 0,
+      "links": 1
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/accuracy_performance_memory.md",
+      "sha256": "b87b512e2058cd50bed50c9f3859f6096f31f06da1cb4f2617bc6bdd215e1681",
+      "checked_scope": "entire page",
+      "markdown_tables": 4,
+      "parsed_tables": 4,
+      "math_fences": 0,
+      "links": 3
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/target_5nm_scale_plan.md",
+      "sha256": "4a5cf6eb7a1ad1efb4c3ea359c7e55ff5769821716629c630daaa4523e3c3381",
+      "checked_scope": "entire page",
+      "markdown_tables": 4,
+      "parsed_tables": 4,
+      "math_fences": 0,
+      "links": 1
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+      "sha256": "b8aec20a5738351ee1e236c2ede976c8711b1675b67092731583f799340829f5",
+      "checked_scope": "entire page",
+      "markdown_tables": 1,
+      "parsed_tables": 1,
+      "math_fences": 0,
+      "links": 4
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+      "sha256": "2b0087eb7d4c3931da7210fd8fb6605cde7845c6caad55c3638ed73b28ffbba6",
+      "checked_scope": "entire page",
+      "markdown_tables": 1,
+      "parsed_tables": 1,
+      "math_fences": 0,
+      "links": 1
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "2528b9bdac73cb96c675efd3dbfcd7fbe1459f935a9cae13dd94067ca2a38fbf",
+      "checked_scope": "appended Task42extra section",
+      "markdown_tables": 1,
+      "parsed_tables": 1,
+      "math_fences": 0,
+      "links": 7
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "55021120b324306775a0b56a8fd5e6aa2cadb834d97b856c66888e149be4fbde",
+      "checked_scope": "appended Task42extra section",
+      "markdown_tables": 2,
+      "parsed_tables": 2,
+      "math_fences": 0,
+      "links": 7
+    }
+  ]
+}
