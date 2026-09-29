@@ -1,0 +1,302 @@
+{
+  "batch": "V6_NEURAL_FE_SINGLE_SOLVE_PILOT",
+  "shared_workstation": true,
+  "successful_interface_source_sha": "2a2cb4af78ba869a26a1254b4b4b76c9ac158366",
+  "runs": [
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v6_geometry_interface_20260929T040135385260Z",
+      "stage": "V6-FE-INTERFACE",
+      "source_sha": "64c128c3541887e22788343692cc4f7832a45696",
+      "source_clean_at_launch": true,
+      "cpu": 0,
+      "mpi_size": 1,
+      "math_threads": 1,
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "descendants_cleared": true,
+      "wall_seconds": 3.3299306120024994,
+      "simultaneous_tree_rss_peak_bytes": 184963072,
+      "own_swap_peak_bytes": 0,
+      "input_sha256": "b1812689c27c8f9a7896c6b9ba125ab9d3e694c07b8e704e893ca58cc57ae458",
+      "design_sha256": "18ea629790245764460eb7aad331b5ce7d042a4e4707de17112507b677742445",
+      "physical_operator_sha256": null,
+      "physical_model_complete": false,
+      "command": [
+        "source scripts/activate_task042.sh fe",
+        "python scripts/run_case.py /home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v6_geometry_interface.dat"
+      ],
+      "file_evidence": {
+        "input_original.dat": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v6_geometry_interface_20260929T040135385260Z/input_original.dat",
+          "sha256": "b1812689c27c8f9a7896c6b9ba125ab9d3e694c07b8e704e893ca58cc57ae458"
+        },
+        "resolved_config.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v6_geometry_interface_20260929T040135385260Z/resolved_config.json",
+          "sha256": "c313c0ca0e31d7a5fafbc610b47b17990ae40a035eab6de5916e70e32e0d3ada"
+        },
+        "run_manifest.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v6_geometry_interface_20260929T040135385260Z/run_manifest.json",
+          "sha256": "4be665c2082e8a501fada786a80e38d2abd65c7877f48d906cdf3eb3faf96535"
+        },
+        "run_summary.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v6_geometry_interface_20260929T040135385260Z/run_summary.json",
+          "sha256": "9ce46c9ae5c41aedd2aa51ca066ecc38a48af8960b0b8d9d1d0f87cb5ccaae94"
+        },
+        "resource_baseline.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v6_geometry_interface_20260929T040135385260Z/resource_baseline.json",
+          "sha256": "d0355c1d975473751b0da174b2946ece8c6c051109b0367b576eb8c81d8dbe28"
+        },
+        "supervision/summary.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v6_geometry_interface_20260929T040135385260Z/supervision/summary.json",
+          "sha256": "0a0ceebda35f88b391a918344b784fc891934d0087af08b9f0bb4e942caea9f3"
+        }
+      },
+      "resource_baseline": {
+        "memory": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 947997995008,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 947997995008,
+          "reserve_bytes": 353748992000,
+          "launch_cap_bytes": 17179869184,
+          "planning_cap_bytes": 17179869184,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 137438953472,
+          "shared_workstation": true
+        },
+        "disk_free_bytes": 3448613711872,
+        "cgroup_delegated": false,
+        "neighbor_processes_observed": 21,
+        "gpu_snapshot": "0, Quadro RTX 8000, Default, 100 %, 3424 MiB, 46080 MiB\n1, Quadro RTX 8000, Default, 100 %, 3496 MiB, 49152 MiB"
+      },
+      "health": {
+        "samples": 1,
+        "stop_observed": false,
+        "memory_some_avg10_max": 0.0,
+        "neighbor_effect": "INCONCLUSIVE; no comparable neighbor-stage duration"
+      },
+      "enforcement": "16GiB/12GiB whole tree, 0.5s sampling; no delegated kernel cgroup"
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v6_geometry_interface_20260929T040548954409Z",
+      "stage": "V6-FE-INTERFACE",
+      "source_sha": "2a2cb4af78ba869a26a1254b4b4b76c9ac158366",
+      "source_clean_at_launch": true,
+      "cpu": 0,
+      "mpi_size": 1,
+      "math_threads": 1,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "wall_seconds": 11.031095667975023,
+      "simultaneous_tree_rss_peak_bytes": 314408960,
+      "own_swap_peak_bytes": 0,
+      "input_sha256": "b1812689c27c8f9a7896c6b9ba125ab9d3e694c07b8e704e893ca58cc57ae458",
+      "design_sha256": "18ea629790245764460eb7aad331b5ce7d042a4e4707de17112507b677742445",
+      "physical_operator_sha256": null,
+      "physical_model_complete": false,
+      "command": [
+        "source scripts/activate_task042.sh fe",
+        "python scripts/run_case.py /home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v6_geometry_interface.dat"
+      ],
+      "file_evidence": {
+        "input_original.dat": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v6_geometry_interface_20260929T040548954409Z/input_original.dat",
+          "sha256": "b1812689c27c8f9a7896c6b9ba125ab9d3e694c07b8e704e893ca58cc57ae458"
+        },
+        "resolved_config.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v6_geometry_interface_20260929T040548954409Z/resolved_config.json",
+          "sha256": "c313c0ca0e31d7a5fafbc610b47b17990ae40a035eab6de5916e70e32e0d3ada"
+        },
+        "run_manifest.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v6_geometry_interface_20260929T040548954409Z/run_manifest.json",
+          "sha256": "fa3716047e205badac790d5efd9d6436a7ecb9a7c47e82a255f34633a0a0b95d"
+        },
+        "run_summary.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v6_geometry_interface_20260929T040548954409Z/run_summary.json",
+          "sha256": "a85e162d0044493e15b28fb8edd34a63e1bb5818ab01076c9fc375317c217b97"
+        },
+        "resource_baseline.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v6_geometry_interface_20260929T040548954409Z/resource_baseline.json",
+          "sha256": "03ffc51ff589139130ad911458c3085ef6640bcfc3007f652b1da1b682ac2a80"
+        },
+        "supervision/summary.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v6_geometry_interface_20260929T040548954409Z/supervision/summary.json",
+          "sha256": "4a7e55165da94fb7616ed4eeb7bccd13826106ce297c5865b82ab4466bb2984f"
+        }
+      },
+      "resource_baseline": {
+        "memory": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 946726842368,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 946726842368,
+          "reserve_bytes": 353748992000,
+          "launch_cap_bytes": 17179869184,
+          "planning_cap_bytes": 17179869184,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 137438953472,
+          "shared_workstation": true
+        },
+        "disk_free_bytes": 3448605233152,
+        "cgroup_delegated": false,
+        "neighbor_processes_observed": 19,
+        "gpu_snapshot": "0, Quadro RTX 8000, Default, 100 %, 3424 MiB, 46080 MiB\n1, Quadro RTX 8000, Default, 100 %, 3496 MiB, 49152 MiB"
+      },
+      "health": {
+        "samples": 3,
+        "stop_observed": false,
+        "memory_some_avg10_max": 0.0,
+        "neighbor_effect": "INCONCLUSIVE; no comparable neighbor-stage duration"
+      },
+      "enforcement": "16GiB/12GiB whole tree, 0.5s sampling; no delegated kernel cgroup",
+      "result": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v6_geometry_interface_20260929T040548954409Z/interface_result.json",
+        "sha256": "7efebb3c0bfc64cfaa01c6058b334671cd390ebb6973f4235b950dcac17be20b"
+      },
+      "worker_wall_seconds": 9.151104568038136,
+      "costs_exclusive_seconds": {
+        "mesh_and_space": 0.017014069017022848,
+        "floquet_mpc": 0.7133088739356026,
+        "packets_interpolation_io": {
+          "15": 1.4733389560133219,
+          "30": 6.187553299940191
+        }
+      },
+      "actual_math_pools": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v6_neural_vjp_interface_20260929T040622794907Z",
+      "stage": "V6-ML-INTERFACE",
+      "source_sha": "2a2cb4af78ba869a26a1254b4b4b76c9ac158366",
+      "source_clean_at_launch": true,
+      "cpu": 12,
+      "mpi_size": 1,
+      "math_threads": 1,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "wall_seconds": 11.775670884060673,
+      "simultaneous_tree_rss_peak_bytes": 304984064,
+      "own_swap_peak_bytes": 0,
+      "input_sha256": "501b28ce2303eba0489b4419e5b14f07a99bb0e1ed4ba81274532cf680afa372",
+      "design_sha256": "18ea629790245764460eb7aad331b5ce7d042a4e4707de17112507b677742445",
+      "physical_operator_sha256": null,
+      "physical_model_complete": false,
+      "command": [
+        "source scripts/activate_task042.sh ml",
+        "python scripts/run_case.py /home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v6_neural_vjp_interface.dat"
+      ],
+      "file_evidence": {
+        "input_original.dat": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v6_neural_vjp_interface_20260929T040622794907Z/input_original.dat",
+          "sha256": "501b28ce2303eba0489b4419e5b14f07a99bb0e1ed4ba81274532cf680afa372"
+        },
+        "resolved_config.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v6_neural_vjp_interface_20260929T040622794907Z/resolved_config.json",
+          "sha256": "7cbde847aee22ac2cd3397eac668d0d078b896e434f5c9624d6c78542766a5c2"
+        },
+        "run_manifest.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v6_neural_vjp_interface_20260929T040622794907Z/run_manifest.json",
+          "sha256": "22ac5f1cbbd7a9744e7d6953a66c56aacf0313380ea9f32c0b8513f3fc3f5f17"
+        },
+        "run_summary.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v6_neural_vjp_interface_20260929T040622794907Z/run_summary.json",
+          "sha256": "1f3e8bb48e78cd296d58a87f41375d87b857a61b1722553619d6309e3be5108c"
+        },
+        "resource_baseline.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v6_neural_vjp_interface_20260929T040622794907Z/resource_baseline.json",
+          "sha256": "3a141f696b4eb7afe4f16c828844419788f8403f0e7d78504d725610b28a8d4c"
+        },
+        "supervision/summary.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v6_neural_vjp_interface_20260929T040622794907Z/supervision/summary.json",
+          "sha256": "e52ec338b241acea31c8d602739d7cdfa4ac1e40bb303b55179002ca4252ac68"
+        }
+      },
+      "resource_baseline": {
+        "memory": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 947014283264,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 947014283264,
+          "reserve_bytes": 353748992000,
+          "launch_cap_bytes": 17179869184,
+          "planning_cap_bytes": 17179869184,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 137438953472,
+          "shared_workstation": true
+        },
+        "disk_free_bytes": 3448592805888,
+        "cgroup_delegated": false,
+        "neighbor_processes_observed": 21,
+        "gpu_snapshot": "0, Quadro RTX 8000, Default, 100 %, 3176 MiB, 46080 MiB\n1, Quadro RTX 8000, Default, 100 %, 3496 MiB, 49152 MiB"
+      },
+      "health": {
+        "samples": 3,
+        "stop_observed": false,
+        "memory_some_avg10_max": 0.0,
+        "neighbor_effect": "INCONCLUSIVE; no comparable neighbor-stage duration"
+      },
+      "enforcement": "16GiB/12GiB whole tree, 0.5s sampling; no delegated kernel cgroup",
+      "result": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v6_neural_vjp_interface_20260929T040622794907Z/interface_result.json",
+        "sha256": "9a4be06cdd32889ffc90e5bc1624aa1161c9930127d4a57c8040bbb5a6cac2ea"
+      },
+      "worker_wall_seconds": 9.343405062914826,
+      "costs_exclusive_seconds": {
+        "network_initialization": 0.005486429086886346,
+        "network_moments_q15": 1.0793167549418285,
+        "higher_quadrature_witness_q30": 5.591783779906109,
+        "synthetic_gradient_checks": 0.10726260591764003,
+        "independent_numpy_packet": 0.7810878719901666
+      },
+      "actual_threads": {
+        "intraop": 1,
+        "interop": 1,
+        "cuda_build": null,
+        "data_loader_workers": 0,
+        "actual_blas_pools": [
+          {
+            "path": "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/numpy.libs/libopenblas64_p-r0-0cf96a72.3.23.dev.so",
+            "function": "openblas_get_num_threads64_",
+            "threads": 1
+          }
+        ]
+      }
+    }
+  ],
+  "formal_active_wall_seconds": 26.136697164038196,
+  "formal_simultaneous_tree_rss_peak_bytes": 314408960,
+  "formal_own_swap_peak_bytes": 0,
+  "budget_seconds": 36000,
+  "failure_included_in_budget": true,
+  "source_document_HEAD_is_not_run_source": true,
+  "memory_scope": "simultaneous dedicated subreaper parent plus ALL descendants; sampled RSS, peak=max across sequential runs",
+  "timer_scope": "supervised wall includes spawn/init/check/I/O/teardown. Detailed worker timers nested inside it; never add them again.",
+  "native_FE_qualification": "NOT_RUN_MATERIAL_BLOCKED",
+  "gpu_allocated": false,
+  "no_global_target_or_p4_factor": true,
+  "no_real_S_or_private_audit_CSR": true,
+  "no_teacher_or_exact_target_read": true,
+  "old_route": "CLOSED_RESEARCH_NEGATIVE",
+  "old_pool_seed420620": "SEALED_NOT_GENERATED_NOT_READ"
+}

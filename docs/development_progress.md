@@ -2921,3 +2921,14 @@ F3同basis/B0/归一化/FP64，线性小解码基线与一个2hidden64 residual 
 终态FIXED_OPERATOR_LOCALIZATION_COMPLETE，仍NOT_QUALIFIED；原V1–V4负结果不改。新训练/空间/长KSP、fresh seed420620、F5/p6/短波/GPU/official均not_run；只提出一个保留局部搜索方向的有界组织对照建议，未实现。四正式run source5d82651af0f723c73487783deb43969f05d46ed3，wall1144.401529s、整树RSS峰1135407104B/own swap0，MPI1/BLAS1、逐次现场CPU0/0/0/13、自有16GiB树监督/独立cache，全部shared-workstation/performance inconclusive；无cgroup委派不冒充内核连续上限。邻任务只读观察，没发现持续压力，缺可比阶段耗时，不承诺零干扰。无global p4 factor/private audit CSR/fallback，不改原A4/A6/MPC/full80/1e-10。
 
 [Response V5](task042_neural_coarse_inverse/response_v5.md)、[同向量结果](task042_neural_coarse_inverse/outcomes/failure_localization_v5.md)、[hash/source/完整费用](task042_neural_coarse_inverse/outcomes/records/run_index_v5.json)。仅原执行分支交付等待review，不merge。
+
+
+## 2026-09-29 Task042 V6：旧p4路线关闭，材料阻塞下完成神经FE接口
+
+Review V3正式转向由网络生成原Nédélec边／面矩、用原方程求当前场；期望避免全局分解，成本增加优化与正反向作用，收益尚unknown。旧小块／固定低秩／系数网络路线CLOSED_RESEARCH_NEGATIVE，V5 augmentation不实施，历史负结果保留。本批N0真实384-cell p3居中缺口网格，FE34050／独立trace18144／slave2082，air200／substrate48／block136／notch8，y/z变化；但Si0.7nm源／复n缺失，MATERIAL_0P7NM_BLOCKED。空气top20通道仅derived，底侧／总库存unknown。
+
+N1局部FE矩／orientation／MPC插值差约1.8e-15；固定11696参数FP64 3×64网络生成18144 master trace，15/30求积差1.1695e-15，合成非Hermitian梯度FD最大9.7612e-9、chunk配对6.8049e-16。真实S/Sᴴ/native/port/恢复未构造，完整N1不通过，NEURAL-TRACE／FREE-FE-OPT／FE-LSQR、参考／enrichment、E/H／RTA／能量验算均not_run；没有物理解／神经增量或48h能力证据，不由梯度或参数量判成功。
+
+一次[0,L]原配置与新居中坐标接口修复后成功，source2a2cb4af78ba869a26a1254b4b4b76c9ac158366；初次失败source64c128c3541887e22788343692cc4f7832a45696原证据保留，预算不重置。三正式run总wall26.136697164s、整树同时采样峰314408960B/own swap0，现场CPU0/0/12、MPI1/数学1、既有FE/ML独立cache、自有锁/16GiB树监督，无cgroup委派不称内核连续限额。用户Task042受控共享授权继续；两GPU持续负载，本任务GPU/VRAM0；无邻任务修改，未发现持续压力，影响与无争用性能inconclusive，成本shared-workstation。无真实目标／p4全局因子、private audit CSR、hidden inverse/fallback或准确目标解读取，无旧teacher／seed420620消费。23相关pytest＋两ML断言及局部静态／输入通过；Review V3 GitHub4表4math通过。
+
+目标尺寸／材料／通道／精度／实际配额／完整步成本和所需步数unknown，最终0.7nm／48h NOT_QUALIFIED。唯一下一最小步骤是审核Si0.7nm原始材料源／版本／单位／符号／数值，本批不自动实施、不回旧p4、不启动最大模型、不merge。[Response V6](task042_neural_coarse_inverse/response_v6.md)、[完整结果](task042_neural_coarse_inverse/outcomes/neural_fe_single_solve_v6.md)、[source和资源](task042_neural_coarse_inverse/outcomes/records/run_index_v6.json)。

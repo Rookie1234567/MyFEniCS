@@ -1,0 +1,48 @@
+{
+  "schema": "task042.target-budget.v6",
+  "status": "TARGET_IDENTITY_NOT_FROZEN",
+  "qualification": "NOT_QUALIFIED",
+  "wall_limit_seconds": 172800,
+  "micro_is_final_target": false,
+  "material_Si0p7nm": "UNKNOWN",
+  "target_dimensions": "UNKNOWN",
+  "target_full_trace_rows": "UNKNOWN",
+  "target_channels": "UNKNOWN",
+  "target_resource_allocation": "UNKNOWN",
+  "target_setup_seconds": "UNKNOWN",
+  "target_complete_step_seconds": "UNKNOWN",
+  "target_required_steps": "UNKNOWN",
+  "target_full_audit_recovery_output_seconds": "UNKNOWN",
+  "N_affordable": "UNKNOWN_NOT_COMPUTED",
+  "micro_partial_forward_seconds_measured": 1.0793167549418285,
+  "forward_cost_is_complete_training_step": false,
+  "target_extrapolation_attempted": false,
+  "interface_parameter_bytes": 93568,
+  "interface_packet_payload_bytes": 11082816,
+  "operator_approximation": "NONE; real operator not constructed",
+  "objects_not_constructed": [
+    "global target/p4 FE LU",
+    "global Schur/target CSR",
+    "local FE physical LU",
+    "physical port cache",
+    "Riesz inverse",
+    "optimizer states",
+    "full-mesh autograd graph",
+    "teacher or exact target reference"
+  ],
+  "objects_present": [
+    "native p3 mesh/space/MPC",
+    "upgraded exact polynomial moment rule",
+    "q15/q30 packets",
+    "zero-init MLP and deterministic nonzero interface copy",
+    "one-cell recomputation graph; two-cell monolithic comparator"
+  ],
+  "future_memory_to_account": [
+    "all full physical channels and nport squared terms",
+    "local physical factors/recovery",
+    "full operator work vectors",
+    "Adam/L-BFGS history",
+    "complete gradient/closures and checkpoint I/O"
+  ],
+  "next_single_minimum": "Audit real Si0.7nm source/version/value before real S/interface continuation"
+}

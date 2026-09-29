@@ -1,3 +1,23 @@
+# V6 最新交付：材料阻塞，神经FE接口部分完成
+
+按Review V3关闭旧小块／低秩／系数网络p4路线，V5 augmentation不执行，全部历史正文保留。本批新网络把三维复向量变为原有限元边／面矩，尝试直接求当前场；实际只完成材料独立接口，尚无原方程、物理场或神经收益资格。
+
+| 项目／数据身份 | 结果／资源／未完成原因 | 证据 |
+|---|---|---|
+| 批次／终态 | V6_NEURAL_FE_SINGLE_SOLVE_PILOT；MATERIAL_0P7NM_BLOCKED，旧路线CLOSED_RESEARCH_NEGATIVE | [Response V6](../response_v6.md) |
+| N0 geometry measured | 0.7nm设计、384-cell p3、FE34050／独立trace18144／slave2082；air200／substrate48／block136／notch8，y/z变化 | [材料／几何](records/material_geometry_identity_v6.json) |
+| 材料／端口 not_run / derived | Si0.7nm源和复n缺失；已知top空气20通道derived，底侧／总量unknown，完整物理身份未冻结 | [source审计](records/material_source_audit_v6.json) |
+| N1 interface measured | 完整p3矩／Piola／orientation／原MPC，FE插值相对差约1.8e-15；NN求积15/30差1.1695e-15；合成梯度FD最大9.7612e-9 | [分开Gate](records/adjoint_gradient_checks_v6.json) |
+| 全部三路线 not_run | NEURAL-TRACE／FREE-FE-OPT／FE-LSQR均未启动，真实S/Sᴴ、native/port/recovery Gate不足；参数11696，未训练 | [对照CSV](records/neural_fe_comparison_v6.csv) |
+| R/T/A/A_volume、全通道、E/H、误差 not_run | 无真实物理operator及参考，不产生official结果或成功残差；p/h、MPI、M影响未试验 | [独立决策](records/neural_fe_gate_decisions_v6.json) |
+| 正式资源 measured / shared-workstation | 含失败三run总wall26.136697164s，树RSS同时峰314408960B，own swap0；实时CPU0/0/12、MPI1／线程1、16/12GiB树监督，无GPU | [完整账](records/run_index_v6.json) |
+| 神经增量／48h unknown | 无求解对照；目标尺度／材料／通道／资源配额／完整步成本和所需步数unknown，最终NOT_QUALIFIED | [48h预算](records/target_48h_budget_v6.json) |
+| 停止／唯一下一步 | 补齐并审核真实Si0.7nm来源／版本／单位／符号／数值；本批不自动实施、不回旧p4、不merge | [详细结果](neural_fe_single_solve_v6.md) |
+
+成功接口真实source `2a2cb4af78ba869a26a1254b4b4b76c9ac158366`，首次失败source `64c128c3541887e22788343692cc4f7832a45696`；一次居中坐标载体最小修复后通过，失败保留／预算不重置。原A4/A6/default/旧结果不改，未建全局目标或p4因子、私有CSR或隐藏逆，未用目标准确解。用户Task042受控共享授权保留，只监督自身后代，无cgroup委派不冒称内核限制；未观察持续压力，邻影响／无争用性能inconclusive。旧seed420620池封存；正式目标、参考／enrichment、F5／p6未运行。23相关pytest＋两ML断言、局部静态／输入检查通过；Review V3 GitHub4表／4math通过，后续发布证据另列。
+
+以下原V1–V5历史按字节保留。
+
 # Task042 V5 最新状态：固定对象失效定位完成，严格粗逆仍未资格化
 
 同一个残差分别测局部B、粗空间C与原两层B2，再做有限方向的最小二乘，区分空间覆盖与组合失效；这不是新的求解器或训练。所有数值比例dimensionless，绝对port为原数组欧氏范数，无新物理R/T/A。

@@ -1,0 +1,73 @@
+{
+  "schema": "task042.post-costs.v6",
+  "utc": "2026-09-29T04:35:20.545836+00:00",
+  "shared_workstation": true,
+  "initial_auxiliary_snapshot": "auxiliary_costs_v6.json",
+  "post_checks": [
+    {
+      "name": "collect_evidence",
+      "path": "tmp/task042/v6/collect_evidence/summary.json",
+      "sha256": "54b7d38ed2e84ad44ecaaaf219babfd29a871d28375f9c6bbadd45902a079c36",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 1.5856409940170124,
+      "sampled_process_tree_rss_peak_bytes": 44126208,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "final_documents",
+      "path": "tmp/task042/v6/final_documents/summary.json",
+      "sha256": "92ebaa07cb83fbb49a919e8486ccb3362c2313062c4ff191ab432a31515a6e60",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 1.823777546058409,
+      "sampled_process_tree_rss_peak_bytes": 41869312,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "final_static",
+      "path": "tmp/task042/v6/final_static/summary.json",
+      "sha256": "dd5d8a01a7b90094f07bfe818c73f493c3f67ba9943b3b165022dcdea70fad5c",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 3.121402196935378,
+      "sampled_process_tree_rss_peak_bytes": 68161536,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "final_static_updated",
+      "path": "tmp/task042/v6/final_static_updated/summary.json",
+      "sha256": "6c426d7104a700b5b383f29cad5153352ff36641ae3df35c90caa6c7d9efaddb",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.6737730379682034,
+      "sampled_process_tree_rss_peak_bytes": 68210688,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "historical_source",
+      "path": "tmp/task042/v6/historical_source/summary.json",
+      "sha256": "e1595f8a35ef33a0a6db9bbccca67a2bdd57eaa29b28010f6e442d153791e331",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.0246298420242965,
+      "sampled_process_tree_rss_peak_bytes": 44097536,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    }
+  ],
+  "all_auxiliary_supervised_wall_seconds": 61.7368624699302,
+  "all_auxiliary_sampled_simultaneous_tree_rss_peak_bytes": 386977792,
+  "formal_supervised_wall_seconds": 26.136697164038196,
+  "formal_sampled_simultaneous_tree_rss_peak_bytes": 314408960,
+  "sequential_supervised_wall_seconds_including_formal_and_auxiliary": 87.8735596339684,
+  "sampled_simultaneous_tree_rss_peak_bytes_across_all_supervised_checks_and_formal": 386977792,
+  "own_swap_peak_bytes": 0,
+  "all_auxiliary_descendants_cleared": true,
+  "nested_worker_timers_not_added_again": true,
+  "not_measured": "interactive editing, metadata writer, Git and ad hoc read tool process trees were not continuously supervised; no exact full-session peak/wall claim"
+}

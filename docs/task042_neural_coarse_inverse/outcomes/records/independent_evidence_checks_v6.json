@@ -1,0 +1,20 @@
+{
+  "status": "COMPACT_EVIDENCE_CONSISTENT",
+  "formal_runs": 3,
+  "source_input_packet_checkpoint_hash_pairs_verified": true,
+  "canonical_cells_and_tag_counts_recomputed": true,
+  "fd_relative_errors_recomputed_from_analytic_and_difference_values": [
+    2.136094526555894e-09,
+    6.0942815821142e-10,
+    9.761170440769134e-09,
+    6.1285148413007875e-12,
+    1.636904730377859e-11,
+    5.788117568074608e-10,
+    8.707845823458744e-12,
+    1.7937941981732787e-10,
+    4.993016491313175e-09
+  ],
+  "max_fd_relative_error": 9.761170440769134e-09,
+  "no_replay_of_FE_or_network": true,
+  "limits": "reported vector-norm defects have no separate raw difference vectors; these are measured N1 checks, not independently qualified target equation/field/physics"
+}

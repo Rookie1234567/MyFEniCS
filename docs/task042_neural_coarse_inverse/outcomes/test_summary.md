@@ -73,3 +73,12 @@ V3治理/文档表格定向测试28 passed；registry当前继承两项错误与
 | 真实GitHub表格/公式 | Review91的5表/7math-renderer通过；新文档发布后实际HTML绑定推送HEAD | [review](records/review_render_check_v5.json)、[publication](records/publication_checks_v5.json) |
 
 早期FE .venv无ruff模块，子命令真实失败；改用已有只读ruff0.16.6后修复一处新RUF005风格，未安装/重放数值。失败尝试全部保留[辅助成本](records/post_checks_v5.json)。四新FE阶段wall1144.401529s、最大同时树RSS1135407104B/own swap0，源`5d82651af0f723c73487783deb43969f05d46ed3`；所有成本shared-workstation，嵌套计时不相加，总会话编辑/Git/RSS未持续采样。full pytest/CI/MPI2/MPI4、旧teacher384、训练/新KSP/fresh/F5均not_run。
+
+
+## V6：材料独立的神经FE接口检查
+
+最终23相关pytest通过（几何／未知材料／input opt-in／复数梯度／Basix完整矩／原shared组件与orphan监督）；两项CPU-only ML无fixture断言通过，实际OpenBLAS和Torch intra/inter-op1。新增代码Ruff/format、compileall及两dat校验通过。初次预检查2项配置字段失败、2项complex空气波数失败、ML缺pytest均保留；标准库执行相同两断言，未安装环境。正式FE第一次因原[0,L]载体与新居中范围不符失败，唯一research坐标修复后FE／ML各一次成功，不扩大数值预算。
+
+实际FE矩／MPC配对约1.8e-15，非平凡orientation96 cell／5类；NN q15/30差1.1695e-15，非零合成非Hermitian192trace＋3port的三实方向FD最大9.7612e-9，chunk／一体梯度差6.8049e-16。真实0.7nm S/Sᴴ、native/port/恢复、NEURAL/FREE/LSQR／参考／场／功率not_run：材料缺失；不称完整N1或物理解通过。独立聚合只重算已存FD字段、canonical tags和hash，不重放FE或网络。
+
+[pre-run](records/pre_run_checks_v6.json)、[C1静态](records/precommit_static_v6.json)、[唯一正式修复](records/centered_geometry_fix_v6.json)、[C2静态](records/centered_fix_static_v6.json)、[接口](records/adjoint_gradient_checks_v6.json)、[源／资源](records/run_index_v6.json)、[精简checker](records/independent_evidence_checks_v6.json)。Review V3实际GitHub4表／4math渲染通过。最终文档／原权威保护／继承registry baseline及发布检查另列；不执行full pytest、MPI2/4或旧campaign，不声明CI。

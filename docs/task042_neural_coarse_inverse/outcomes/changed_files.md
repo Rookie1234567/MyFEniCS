@@ -36,3 +36,16 @@
 V3新增research-only `learned_geometry_overlap.py`、几何/预算/phase测试和`task042_diagnostics.py`；旧backend只可选observer，默认不变。两独立dat/diagnostic_v3.json显式opt-in、V3活动样本准入、CPU纠正和compact CSV/JSON/response/两总账新增段。numeric SHA与文件hash见[运行账](records/run_index_v3.json)。原task/review/response_v1/v2、原v2JSON/CSV和raw保护，未修改邻任务或共享配置；未获production/merge资格。
 
 最终仅修正Task042 watchdog测试从原始整树样本断言后代；未改变监督器/数值源码，原失败记录保留。冻结numeric source仍7fc3f1434cf4f38f43e5244ebfed3a19d0780a26。
+
+
+## V6：关闭旧路线，材料独立神经trace接口
+
+| 依赖组 | Task042实际变化／数值行为 | 测试与边界 |
+|---|---|---|
+| research-only geometry/core | 新`neural_micro_pilot.py`参数化box/notch标签＋居中坐标载体；`neural_trace*.py`完整moment/Piola/orientation packet、复数loss/VJP、固定FP64 MLP／局部checker | 23相关pytest、两ML断言、真实FE／ML接口；无目标S、物理恢复或solver资格 |
+| reusable runner/watchdog | 新薄`neural_fe_interface.py`接线，原run_case／profile／shared仅两个显式material-blocked入口、实时V6准入；原subreaper复用 | 普通PDE仍要求材料，默认不变；source clean／一dat一stage／独立artifact，唯一坐标修复保留失败 |
+| compact evidence/docs | 新V6 design／2dat、material blocker、原字段聚合／source与资源／response和两总账新增段 | 原task/review/response/records保护，旧augmentation不实施，seed420620不消费 |
+| production numerical/core | 无新增资格化路径；原A4/A6/S/Floquet与默认不改 | 不提升新表示为production |
+| do-not-merge | FE packets／零初始与非零接口witness checkpoint、mesh／日志／缓存／临时helper | ignored只在NN-Lab，无旧大型结果复制 |
+
+C1 `64c128c3541887e22788343692cc4f7832a45696`；唯一正式坐标修复／成功接口C2 `2a2cb4af78ba869a26a1254b4b4b76c9ac158366`。模型11696参数并非合格解，未建真实S/Sᴴ／物理port／内部恢复，三求解路线尚未运行。新材料独立loader是必要显式研究例外，普通schema的Si材料要求保留。所有权威／历史及原结果不改，不merge。

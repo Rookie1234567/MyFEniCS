@@ -1,0 +1,47 @@
+{
+  "schema": "task042.neural-fe-design-index.v6",
+  "batch": "V6_NEURAL_FE_SINGLE_SOLVE_PILOT",
+  "review_source_sha": "d5f45787168123a1680523ccf8e73c33de7c7a34",
+  "design_path": "input/task042_neural_coarse_inverse/neural_fe_design_v6.json",
+  "design_sha256": "18ea629790245764460eb7aad331b5ce7d042a4e4707de17112507b677742445",
+  "implementation_source_sha": "2a2cb4af78ba869a26a1254b4b4b76c9ac158366",
+  "old_route": "CLOSED_RESEARCH_NEGATIVE",
+  "augmentation_implemented": false,
+  "scope": "material-independent N0/N1 interfaces only; N2/N3 not_run",
+  "network": {
+    "hidden": [
+      64,
+      64,
+      64
+    ],
+    "activation": "tanh",
+    "outputs_real": 48,
+    "carriers": 8,
+    "carrier_directions": [
+      "+x",
+      "+y",
+      "+z",
+      "-x",
+      "-y",
+      "-z",
+      "incident",
+      "specular"
+    ],
+    "seed": 420906,
+    "dtype": "float64-real-imag",
+    "final_layer": "zero",
+    "per_dof_embeddings": false
+  },
+  "parameters": 11696,
+  "full_native_loss_plan": "complete assembled b-Sz norm, fixed RHS denominator; no weighting/inverse/sampling",
+  "data": "no dataset/teacher/reference; deterministic nonzero interface witness is not trained",
+  "stage_order": [
+    "V6-FE-INTERFACE",
+    "V6-ML-INTERFACE"
+  ],
+  "active_numerical_wall_budget_seconds": 36000,
+  "candidate_route_wall_limit_seconds": 7200,
+  "optimizer_total_closures_limit": 2000,
+  "lsqr_paired_actions_limit": 2000,
+  "no_online_S_or_S_adjoint_qualification_claim": true
+}

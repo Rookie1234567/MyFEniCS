@@ -1,0 +1,9 @@
+{
+  "status": "LF_ONLY_METADATA_FIX",
+  "path": "docs/task042_neural_coarse_inverse/outcomes/records/neural_fe_comparison_v6.csv",
+  "original_sha256": "3fbefe5ec4764cc64630cee265e01234b869f46f10614c232b9d757975f5c607",
+  "normalized_sha256": "0f1de61ab5ec4af66d8deebf42be1345c808bf67a0bbcb6a8d1b06c245105eb3",
+  "values_unchanged": true,
+  "formal_numerical_replay": false,
+  "cause": "CSV writer default CRLF caught by cached Git whitespace check before commit"
+}

@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "utc": "2026-09-29T04:34:51.497803+00:00",
+  "checks": "tables, relative links, new JSON parsing, original Task039 source hash, diff whitespace, protected history, scoped Git status",
+  "numerical_source_unchanged_since_static_checks": "2a2cb4af78ba869a26a1254b4b4b76c9ac158366",
+  "document_hashes": {
+    "docs/task042_neural_coarse_inverse/response_v6.md": "18e6bbc196183088810bf25a11ce35911e281232ac3fffc566a35dd0252b10ff",
+    "docs/task042_neural_coarse_inverse/outcomes/neural_fe_single_solve_v6.md": "7b25772869c80563053e2aa6ba84301551c6113f7c48d998b80f90dadd324ebd",
+    "docs/task042_neural_coarse_inverse/outcomes/v6_preregistration.md": "36cea415cbe946b65891c357f0257b5c32ba5c42a07f681ea2bb127d9b83c0c3",
+    "docs/task042_neural_coarse_inverse/outcomes/summary.md": "f3f0d54835c9a0c21589a5a673f362634bc2ae408cdf701aa967af6ae2a9ff3a",
+    "docs/task042_neural_coarse_inverse/outcomes/test_summary.md": "5575e444aacd41ba4c38674bcbdcb1b7e52b0e42b6e81d6d992a7ad08018460e",
+    "docs/task042_neural_coarse_inverse/outcomes/changed_files.md": "8cd00579b8e579d1d8df8be711ded775e070d84e60d726cc1cb37af391d021e7",
+    "docs/development_progress.md": "91ab06073cd1e8369b468fe988dc8129c74a49d279fed21bb3e6dc3785ea3956",
+    "docs/development_model_registry.md": "1bf8b0843fa49eb2b05e9d5c83143da97baa688dcb81292652811515e8e2c0ee"
+  },
+  "protected_history_files": 121
+}

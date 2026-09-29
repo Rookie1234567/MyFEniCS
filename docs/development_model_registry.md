@@ -1699,3 +1699,17 @@ production model。
 
 
 四正式阶段wall1144.401529s、整树同时峰1135407104B/own swap0；两空间有效rank128/128，补空间16/16。shared-workstation、performance/邻影响inconclusive，MPI1/math1、实时CPU0/0/0/13/own lock/16GiB监督/独立cache；不动邻任务，未委派cgroup不声称内核连续限额。物理eta_r接近1、OLDPOD eta_e≈.222 vsERROR≈.713；port-only保留Z＋Br的Schur反事实较好，但原A4/port失败，未确定唯一根因或真实奇异。唯一建议需后续review、未实施；seed420620 fresh/F5/p6/短波/GPU/NN/official RTA/A_volume/场/衍射均not_run，无神经收益归因。[hash/source/分阶段账](task042_neural_coarse_inverse/outcomes/records/run_index_v5.json)、[原独立Gate](task042_neural_coarse_inverse/outcomes/records/independent_checks_v5.json)。
+
+
+### 3.43.5 V6：神经FE单次求解micro接口，材料阻塞
+
+本批让坐标网络通过原有限元边／面矩生成trace，尝试直接求目标场；增加优化与反向作用成本，尚无solver收益。Review V3关闭原小局部块／固定低秩／系数网络p4路线，V5 augmentation未实施；本条新增阶段，原模型／负结果全部保留。
+
+| Model ID／数据身份 | 物理／几何与离散 | 实际unknowns／算法 | 数值／资源／具体阻塞 | 状态与证据 |
+|---|---|---|---|---|
+| NEURAL-FE-MICRO-INTERFACE-V6／measured geometry+interface | 0.7nm设计，居中micro三维缺口；Si n/epsilon/source unknown；384 hexa p3、MPI1；FE34050／trace18144／slave2082 | FP64、3×64 tanh、8三分量复载波、11696参数；完整边／面矩和原MPC，仅trace表示；内部13824/完整物理port未构造 | FE插值差约1.8e-15、q15/q30差1.1695e-15；合成梯度FD9.7612e-9；原S/NNZ/完整原残差/EH/RTA/A_volume/通道功率均not_run。三formal wall26.136697164s，树RSS314408960B/own swap0，CPU0/0/12 | MATERIAL_0P7NM_BLOCKED、局部N1接口通过、完整N1未通过；[结果](task042_neural_coarse_inverse/outcomes/neural_fe_single_solve_v6.md) |
+| NEURAL-TRACE-V6／not_run | 同一review目标Si材料和完整DtN不足，top20通道仅derived、bottom/total unknown | 计划网络trace＋全部复port；Adam500＋L-BFGS／最多2000 closure和2h，实际0 | 原S/Sᴴ/native/port/恢复Gate未具备；无准确解／teacher／训练／物理解 | not_run、神经增量unknown；[三路线](task042_neural_coarse_inverse/outcomes/records/neural_fe_comparison_v6.csv) |
+| FREE-FE-OPT-V6／not_run | 同一未完整冻结micro operator | 计划全部独立trace＋port自由实虚参数，同loss/optimizer/zero start，实际0 | 材料／完整N1阻塞，不能形成可比基线 | not_run；[独立Gate](task042_neural_coarse_inverse/outcomes/records/neural_fe_gate_decisions_v6.json) |
+| FE-LSQR-V6／not_run | 同一未完整冻结micro operator | 计划原S/Sᴴ、无PC、最多2000配对和2h，从零；实际0 | 未构造真实S；无solver／参考／E/H／功率或离散资格 | not_run，最终目标48h NOT_QUALIFIED；[预算](task042_neural_coarse_inverse/outcomes/records/target_48h_budget_v6.json) |
+
+成功接口run source2a2cb4af78ba869a26a1254b4b4b76c9ac158366，首次居中坐标载体错误source64c128c3541887e22788343692cc4f7832a45696保留；一次最小research修复，普通默认/原FEM/Floquet不改。用户Task042受控共享CPU授权继续，既有FE/ML独立环境/缓存、MPI1/实际线程1、自有锁/16GiB树监督、GPU0；无cgroup委派不冒称连续内核限额，只监督自身树，未发现持续压力，邻影响／性能inconclusive，全部shared-workstation。无global目标/p4 factor、Riesz/ILU hidden inverse、private audit CSR或目标准确解读取，旧teacher和seed420620不消费。参考/enrichment/F5/p6/最大目标均not_run；目标材料／尺寸／通道／实际配额／完整步成本／所需步数unknown。唯一下一最小步骤为核验Si0.7nm材料来源和数值身份，不自动实施或merge。[运行源／全过程成本](task042_neural_coarse_inverse/outcomes/records/run_index_v6.json)、[Response V6](task042_neural_coarse_inverse/response_v6.md)。

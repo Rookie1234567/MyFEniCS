@@ -1,0 +1,4 @@
+route,status,source_sha,loss,Schur_relative,native_relative,port_absolute,port_operation_relative,EH_reference_relative,power_absolute_difference,wall_seconds,tree_RSS_peak_bytes,optimizer_updates,full_closures,S_actions,S_adjoint_actions,reason
+NEURAL-TRACE,not_run,,,,,,,,,,,0,0,0,0,MATERIAL_0P7NM_BLOCKED; actual S/S^H/native/port/recovery Gate incomplete; no surrogate PDE or reference
+FREE-FE-OPT,not_run,,,,,,,,,,,0,0,0,0,MATERIAL_0P7NM_BLOCKED; actual S/S^H/native/port/recovery Gate incomplete; no surrogate PDE or reference
+FE-LSQR,not_run,,,,,,,,,,,0,0,0,0,MATERIAL_0P7NM_BLOCKED; actual S/S^H/native/port/recovery Gate incomplete; no surrogate PDE or reference

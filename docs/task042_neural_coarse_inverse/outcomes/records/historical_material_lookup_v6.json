@@ -1,0 +1,29 @@
+{
+  "source_sha": "f4073adabb91bffe5c3954b8ae8b63270efa3e15",
+  "source_path": "docs/task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/feasibility_0p7nm.md",
+  "url": "https://raw.githubusercontent.com/Rookie1234567/MyFEniCS/f4073adabb91bffe5c3954b8ae8b63270efa3e15/docs/task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/feasibility_0p7nm.md",
+  "utc": "2026-09-29T04:20:30.640190+00:00",
+  "no_git_fetch_or_worktree_operation": true,
+  "http": 200,
+  "status": "READ_ONLY_ORIGINAL_SOURCE_OBTAINED",
+  "sha256": "bea19b69512acacad72d4b22cdadbec8af61ad0d8cfd4ad88d6b0ab203162cd9",
+  "local_path": "tmp/task042/v6/task039_feasibility_readonly.md",
+  "matching_lines": [
+    {
+      "line": 3,
+      "text": "本页只做组件容量和架构审计，不创建网格、不组装矩阵，也不启动完整 0.7 nm PDE。`static condensation`（静态凝聚）先消去单元内部未知量，减少全局系统；它能降低主系统规模，但不能替代材料输入或外部通道存储。`W` 是外部 DtN 通道到有限元迹空间的耦合矩阵，`K` 是通道之间的稠密矩阵；`PSS/USS` 在本审计中没有被伪造为 0.7 nm 实测值。"
+    },
+    {
+      "line": 11,
+      "text": "| 0.7 nm 材料 | `0P7NM_MATERIAL_INPUT_INCOMPLETE` |"
+    },
+    {
+      "line": 15,
+      "text": "| 完整 PDE launch | 禁止；`0P7NM_MATERIAL_INPUT_INCOMPLETE` |"
+    },
+    {
+      "line": 79,
+      "text": "最终分类：`0P7NM_MATERIAL_INPUT_INCOMPLETE`、`0P7NM_FE_FACTOR_OR_CACHE_EXCEEDS_256GIB_BUDGET`、`0P7NM_REQUIRES_EXTERNAL_DTN_WOODBURY_REDESIGN`、`0P7NM_REQUIRES_INTERNAL_MODAL_SCHUR_REDESIGN`、`0P7NM_CONVERGENCE_RISK_UNRESOLVED`。`CURRENT_ARCHITECTURE_PLAUSIBLE` 不适用；T6–T8 仍 not_run/blocked，T9 为 component-only，不能升级为 production qualification。"
+    }
+  ]
+}

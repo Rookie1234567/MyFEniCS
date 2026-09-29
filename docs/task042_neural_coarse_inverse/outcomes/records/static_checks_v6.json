@@ -1,0 +1,136 @@
+{
+  "status": "LOCAL_STATIC_AND_HISTORY_PASS",
+  "run_source": "2a2cb4af78ba869a26a1254b4b4b76c9ac158366",
+  "checks": {
+    "ruff_new": {
+      "command": [
+        "/home/fenics/Projects/Metrology/.venv/bin/ruff",
+        "check",
+        "--select",
+        "E4,E7,E9,F,I,B,ISC,RUF",
+        "src/geometry/neural_micro_pilot.py",
+        "src/io/neural_fe_interface.py",
+        "src/solvers/neural_trace.py",
+        "src/solvers/neural_trace_torch.py",
+        "src/solvers/neural_trace_dolfinx.py",
+        "src/solvers/neural_trace_checks.py",
+        "src/runners/neural_fe_interface.py",
+        "src/test/test_task042_neural_trace.py",
+        "src/test/test_task042_neural_trace_ml.py",
+        "src/test/test_task042_neural_trace_basix.py"
+      ],
+      "returncode": 0,
+      "stdout": "All checks passed!\n",
+      "stderr": ""
+    },
+    "format_new": {
+      "command": [
+        "/home/fenics/Projects/Metrology/.venv/bin/ruff",
+        "format",
+        "--check",
+        "src/geometry/neural_micro_pilot.py",
+        "src/io/neural_fe_interface.py",
+        "src/solvers/neural_trace.py",
+        "src/solvers/neural_trace_torch.py",
+        "src/solvers/neural_trace_dolfinx.py",
+        "src/solvers/neural_trace_checks.py",
+        "src/runners/neural_fe_interface.py",
+        "src/test/test_task042_neural_trace.py",
+        "src/test/test_task042_neural_trace_ml.py",
+        "src/test/test_task042_neural_trace_basix.py"
+      ],
+      "returncode": 0,
+      "stdout": "10 files already formatted\n",
+      "stderr": ""
+    },
+    "compileall": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "compileall",
+        "-q",
+        "src/geometry/neural_micro_pilot.py",
+        "src/io/neural_fe_interface.py",
+        "src/solvers/neural_trace.py",
+        "src/solvers/neural_trace_torch.py",
+        "src/solvers/neural_trace_dolfinx.py",
+        "src/solvers/neural_trace_checks.py",
+        "src/runners/neural_fe_interface.py",
+        "src/test/test_task042_neural_trace.py",
+        "src/test/test_task042_neural_trace_ml.py",
+        "src/test/test_task042_neural_trace_basix.py",
+        "scripts/run_case.py",
+        "src/io/task042_profile.py",
+        "src/runners/task042_shared.py"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "diff_check": {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "markdown_tests": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "src/test/test_183_development_model_registry_markdown.py"
+      ],
+      "returncode": 0,
+      "stdout": ".....                                                                    [100%]\n5 passed in 0.06s\n",
+      "stderr": ""
+    }
+  },
+  "protected_before_count": 121,
+  "history": "116 authorities/responses/records exact; summary old suffix and four ledger old prefixes",
+  "numerical_files_identical_to_actual_successful_run_source": [
+    "src/geometry/neural_micro_pilot.py",
+    "src/io/neural_fe_interface.py",
+    "src/solvers/neural_trace.py",
+    "src/solvers/neural_trace_torch.py",
+    "src/solvers/neural_trace_dolfinx.py",
+    "src/solvers/neural_trace_checks.py",
+    "src/runners/neural_fe_interface.py",
+    "src/test/test_task042_neural_trace.py",
+    "src/test/test_task042_neural_trace_ml.py",
+    "src/test/test_task042_neural_trace_basix.py",
+    "scripts/run_case.py",
+    "src/io/task042_profile.py",
+    "src/runners/task042_shared.py"
+  ],
+  "tables_links_math_fences": "PASS",
+  "registry_contract": "BASELINE_IDENTICAL_NOT_GREEN",
+  "inherited_lint": [
+    {
+      "path": "scripts/run_case.py",
+      "baseline_diagnostics": 4,
+      "unchanged": true
+    },
+    {
+      "path": "src/io/task042_profile.py",
+      "baseline_diagnostics": 0,
+      "unchanged": true
+    },
+    {
+      "path": "src/runners/task042_shared.py",
+      "baseline_diagnostics": 0,
+      "unchanged": true
+    },
+    {
+      "path": "src/io/input_schema.py",
+      "baseline_diagnostics": 20,
+      "unchanged": true
+    }
+  ],
+  "fresh_pool_sealed": true,
+  "full_pytest_MPI2_MPI4_CI": false
+}

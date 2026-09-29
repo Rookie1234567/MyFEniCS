@@ -1,0 +1,13 @@
+{
+  "status": "BASELINE_IDENTICAL_NOT_GREEN",
+  "baseline_review_sha": "d5f45787168123a1680523ccf8e73c33de7c7a34",
+  "baseline_errors": [
+    "Task sections are not the exact continuous 3.1–3.40 sequence",
+    "missing evidence path: docs/task038_extra_full3d_iterative_0p7nm/outcomes/memory_first_small_v2_checker.json"
+  ],
+  "current_errors": [
+    "Task sections are not the exact continuous 3.1–3.40 sequence",
+    "missing evidence path: docs/task038_extra_full3d_iterative_0p7nm/outcomes/memory_first_small_v2_checker.json"
+  ],
+  "task_sequence_unchanged": true
+}

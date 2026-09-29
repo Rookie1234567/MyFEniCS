@@ -1,0 +1,32 @@
+{
+  "batch": "V6_NEURAL_FE_SINGLE_SOLVE_PILOT",
+  "terminal": "MATERIAL_0P7NM_BLOCKED",
+  "old_route": "CLOSED_RESEARCH_NEGATIVE",
+  "N0_geometry": "PASS_GEOMETRY_ONLY",
+  "N0_material": "BLOCKED",
+  "N0_full_channel_inventory": "BLOCKED",
+  "N0_total_solver_capacity": "UNKNOWN_PORTS_BLOCKED",
+  "N1_interpolation_MPC": "PASS_MATERIAL_INDEPENDENT",
+  "N1_nonzero_synthetic_gradient": "PASS_SYNTHETIC_ONLY",
+  "N1_original_S_adjoint_native_port_recovery": "NOT_RUN_MATERIAL_BLOCKED",
+  "N1_complete_gate": "NOT_PASSED_INCOMPLETE",
+  "N2_neural_free_lsqr": "NOT_RUN_MATERIAL_AND_REAL_S_GATE_BLOCKED",
+  "N3_p3_reference": "NOT_RUN_CANDIDATE_STATES_NOT_EXIST",
+  "N3_p4_enrichment": "NOT_RUN_NO_QUALIFIED_ROUTE",
+  "original_equation_residual": "NOT_RUN",
+  "E_H_same_discrete": "NOT_RUN",
+  "power_absorption": "NOT_RUN",
+  "neural_increment": "UNKNOWN_NOT_EVALUATED",
+  "N4_budget": "UNKNOWN_TARGET_NOT_FROZEN",
+  "final_0p7nm_48h": "NOT_QUALIFIED",
+  "next_single_minimum": "Supply/version-bind and audit the Si0.7nm complex optical constant; do not launch target model",
+  "do_not_continue": [
+    "closed p4 route",
+    "V5 augmentation",
+    "GPU",
+    "old teacher campaign",
+    "sealed seed420620",
+    "target scale",
+    "F5/p6"
+  ]
+}

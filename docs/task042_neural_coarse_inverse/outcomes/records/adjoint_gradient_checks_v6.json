@@ -1,0 +1,149 @@
+{
+  "schema": "task042.neural-fe-interface-checks.v6",
+  "source_sha": "2a2cb4af78ba869a26a1254b4b4b76c9ac158366",
+  "FE_interpolation": {
+    "15": {
+      "status": "PASS",
+      "interpolation_relative": 1.7485296523676736e-15,
+      "mpc_expansion_relative": 0.0,
+      "slave_zero_before_expansion": 0.0,
+      "nonzero_master_norm": 10.417789528656703,
+      "nontrivial_orientation_cells": 96,
+      "orientation_classes": 5,
+      "interpolation_basis_relative": 5.995575211716268e-16,
+      "test_field": "nonzero complex polynomial, not the target solution",
+      "true_S_gate": "NOT_RUN_MATERIAL_BLOCKED",
+      "local_recovery_gate": "NOT_RUN_MATERIAL_BLOCKED"
+    },
+    "30": {
+      "status": "PASS",
+      "interpolation_relative": 1.854285004833433e-15,
+      "mpc_expansion_relative": 0.0,
+      "slave_zero_before_expansion": 0.0,
+      "nonzero_master_norm": 10.41778952865671,
+      "nontrivial_orientation_cells": 96,
+      "orientation_classes": 5,
+      "interpolation_basis_relative": 8.442945942527006e-16,
+      "test_field": "nonzero complex polynomial, not the target solution",
+      "true_S_gate": "NOT_RUN_MATERIAL_BLOCKED",
+      "local_recovery_gate": "NOT_RUN_MATERIAL_BLOCKED"
+    }
+  },
+  "FE_mpc_slave_count": 2082,
+  "network_numpy_torch_relative": 3.3320599344001886e-16,
+  "network_moment_quadrature": {
+    "selected": 15,
+    "comparison": 30,
+    "norm": 0.8288171675839338,
+    "absolute_difference": 9.693238990052835e-16,
+    "relative_difference": 1.1695268111191975e-15,
+    "tolerance": 1e-08,
+    "passed": true,
+    "degree60": "not_run; 15 passed"
+  },
+  "nonphysical_gradient": {
+    "status": "PASS",
+    "identity": "SYNTHETIC_NON_HERMITIAN_NOT_PHYSICAL_S",
+    "trace_rows": 192,
+    "synthetic_nonzero_ports": 3,
+    "physical_ports_known": false,
+    "matrix_nonhermitian_relative": 0.8178470075017356,
+    "adjoint_dot_relative": 1.2322479608186888e-15,
+    "real_parameter_directions": [
+      {
+        "direction": 0,
+        "analytic": 0.007885328757363867,
+        "samples": [
+          {
+            "h": 0.0001,
+            "finite_difference": 0.007885328740520059,
+            "absolute_error": 1.6843807598698746e-11,
+            "relative_error": 2.136094526555894e-09,
+            "passed": true
+          },
+          {
+            "h": 1e-05,
+            "finite_difference": 0.007885328762169408,
+            "absolute_error": 4.805541381491807e-12,
+            "relative_error": 6.0942815821142e-10,
+            "passed": true
+          },
+          {
+            "h": 1e-06,
+            "finite_difference": 0.007885328834333905,
+            "absolute_error": 7.697003798212698e-11,
+            "relative_error": 9.761170440769134e-09,
+            "passed": true
+          }
+        ]
+      },
+      {
+        "direction": 1,
+        "analytic": 0.04934828398614189,
+        "samples": [
+          {
+            "h": 0.0001,
+            "finite_difference": 0.04934828398583946,
+            "absolute_error": 3.0243169080179655e-13,
+            "relative_error": 6.1285148413007875e-12,
+            "passed": true
+          },
+          {
+            "h": 1e-05,
+            "finite_difference": 0.049348283986949674,
+            "absolute_error": 8.077843949294561e-13,
+            "relative_error": 1.636904730377859e-11,
+            "passed": true
+          },
+          {
+            "h": 1e-06,
+            "finite_difference": 0.04934828401470526,
+            "absolute_error": 2.8563366949452274e-11,
+            "relative_error": 5.788117568074608e-10,
+            "passed": true
+          }
+        ]
+      },
+      {
+        "direction": 2,
+        "analytic": 0.011805412644014142,
+        "samples": [
+          {
+            "h": 0.0001,
+            "finite_difference": 0.011805412644116942,
+            "absolute_error": 1.0279971318638559e-13,
+            "relative_error": 8.707845823458744e-12,
+            "passed": true
+          },
+          {
+            "h": 1e-05,
+            "finite_difference": 0.011805412641896494,
+            "absolute_error": 2.1176480707874035e-12,
+            "relative_error": 1.7937941981732787e-10,
+            "passed": true
+          },
+          {
+            "h": 1e-06,
+            "finite_difference": 0.011805412702958762,
+            "absolute_error": 5.894462001831968e-11,
+            "relative_error": 4.993016491313175e-09,
+            "passed": true
+          }
+        ]
+      }
+    ],
+    "chunk_monolithic_gradient_relative": 6.804866967924144e-16,
+    "single_update_comparison_absolute": 1.751595803190623e-18,
+    "loss_numpy": 0.5004701366531241,
+    "loss_autograd": 0.5004701366531241,
+    "residual_norm": 19.668238580035613,
+    "diagnostic_loss_evaluations": 18,
+    "optimizer_updates": 0,
+    "target_S_calls": 0,
+    "target_adjoint_calls": 0,
+    "no_true_S_qualification_claim": true
+  },
+  "real_S_forward_adjoint_dot": "NOT_RUN_MATERIAL_BLOCKED",
+  "original_S_native_port_recovery_identity": "NOT_RUN_MATERIAL_BLOCKED",
+  "qualification": "PARTIAL_N1_INTERFACE_ONLY; pure/synthetic checks are not actual S Gate"
+}

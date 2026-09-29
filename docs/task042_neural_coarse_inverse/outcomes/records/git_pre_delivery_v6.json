@@ -1,0 +1,21 @@
+{
+  "utc": "2026-09-29T04:35:20.618415+00:00",
+  "pwd": "/home/fenics/Projects/NN-Lab",
+  "toplevel": "/home/fenics/Projects/NN-Lab",
+  "branch": "task42_neural_coarse_inverse",
+  "head": "2a2cb4af78ba869a26a1254b4b4b76c9ac158366",
+  "upstream": "origin/task42_neural_coarse_inverse",
+  "common_git_directory": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+  "origin": "git@github-myfenics:Rookie1234567/MyFEniCS.git",
+  "worktree_registration": "worktree /home/fenics/Projects/Maxwell3D-Lab/task-repository.git\nHEAD 64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa\nbranch refs/heads/task39extra_para_workstation_capacity\n\nworktree /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity\nHEAD 64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa\nbranch refs/heads/task39extra_para_workstation_capacity\n\nworktree /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity-docs-20260920\nHEAD 47cb73bf083072ed03788f67830f6ca1e933b60c\ndetached\n\nworktree /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity-docs-20260928\nHEAD ccd357885f7f9be84efe3be07868cc94f13d93fc\ndetached\n\nworktree /home/fenics/Projects/NN-Lab\nHEAD 2a2cb4af78ba869a26a1254b4b4b76c9ac158366\nbranch refs/heads/task42_neural_coarse_inverse",
+  "ahead_behind": "2\t0",
+  "status_porcelain": "M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042_neural_coarse_inverse/outcomes/changed_files.md\n M docs/task042_neural_coarse_inverse/outcomes/summary.md\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n?? docs/task042_neural_coarse_inverse/outcomes/neural_fe_single_solve_v6.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/adjoint_gradient_checks_v6.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/auxiliary_costs_v6.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/final_document_checks_v6.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/git_pre_delivery_v6.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/historical_material_lookup_v6.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/independent_evidence_checks_v6.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/material_geometry_identity_v6.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/neural_fe_comparison_v6.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/neural_fe_design_v6.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/neural_fe_gate_decisions_v6.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/post_checks_v6.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/protected_history_v6.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/registry_contract_baseline_v6.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v6.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v6.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/target_48h_budget_v6.json\n?? docs/task042_neural_coarse_inverse/response_v6.md",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "initial_task_anchor": "f8c51c8e614edc806cf72120ac2cfd14ae8b62f7",
+  "review_v3": "d5f45787168123a1680523ccf8e73c33de7c7a34",
+  "all_three_are_ancestors": true,
+  "foreign_worktrees_unchanged": true,
+  "active_Task042": [],
+  "own_lock": "free; nonblocking acquisition succeeded and released",
+  "successful_interface_source": "2a2cb4af78ba869a26a1254b4b4b76c9ac158366"
+}

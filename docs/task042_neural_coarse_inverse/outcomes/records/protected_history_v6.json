@@ -1,0 +1,9 @@
+{
+  "checked_against_readonly_before": 121,
+  "all_original_task_review_response_records_unchanged": true,
+  "before_snapshot_path": "tmp/task042/v6/protected_before.json",
+  "before_snapshot_sha256": "314fce6d5c1d5d95c0b1baeb412d803da3420cf72bbc46f7e8bdde125ff2d287",
+  "old_summary_test_changedfiles_ledgers": "unchanged now; subsequent delivery adds prefix/append without removing historical bytes",
+  "foreign_worktree_HEADs_untouched_by_this_task": true,
+  "sealed_pool_not_created": true
+}
