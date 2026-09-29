@@ -202,6 +202,85 @@ def main():
             operator_source_sha=fe["source_sha"],
             real_gradient_source_sha=grad["source_sha"],
         )
+    elif stage == "V7-M3-REFERENCE":
+        from src.runners.task042_experiment import thread_qualification
+        from src.solvers.neural_fe_blind_reference import blind_reference
+        from src.solvers.neural_fe_pilot import load_packet
+
+        fe, fe_path = read_index("qualified_real_fe")
+        record = fe["packet"]
+        path = Path(record["path"]).resolve()
+        if (
+            fe["status"] != "PASS"
+            or not path.is_relative_to(fe_path.parent)
+            or file_hash(path) != record["sha256"]
+        ):
+            raise RuntimeError("qualified reference operator packet identity failure")
+        routes = {}
+        for route, index in (
+            ("NEURAL-TRACE", "frozen_neural"),
+            ("FREE-FE-OPT", "frozen_free"),
+            ("FE-LSQR", "frozen_lsqr"),
+        ):
+            frozen, _ = read_index(index)
+            if (
+                frozen["route"] != route
+                or frozen["design_sha256"] != specification.derived["design_sha256"]
+                or frozen["physical"]["physical_model_sha256"]
+                != specification.physical_model_sha256
+                or frozen["operator_packet"] != record
+            ):
+                raise RuntimeError(
+                    "three frozen candidates must share the same operator/RHS"
+                )
+            routes[route] = frozen
+
+        def save(name, value):
+            write_json(artifact / (name + ".json"), value)
+
+        def marker(name, value):
+            save(name, value)
+            print(json.dumps(dict(phase=name)), flush=True)
+
+        def sample():
+            # Reuse our supervisor's recent whole-tree RSS, bounded tail only.
+            sample_path = directory / "supervision/resources.jsonl"
+            with sample_path.open("rb") as stream:
+                stream.seek(max(0, sample_path.stat().st_size - 65536))
+                lines = stream.read().splitlines()
+            for line in reversed(lines):
+                try:
+                    observed = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if time.time_ns() - observed["timestamp_ns"] > 5_000_000_000:
+                    raise RuntimeError("own process-tree supervision sample is stale")
+                if observed["swap_bytes"] != 0:
+                    raise RuntimeError(
+                        "own swap Gate failed before reference factorization"
+                    )
+                return dict(
+                    rss_bytes=observed["rss_bytes"],
+                    launch_cap_bytes=observed["launch_cap_bytes"],
+                    timestamp_ns=observed["timestamp_ns"],
+                )
+            raise RuntimeError("no complete own process-tree supervision sample")
+
+        packet = load_packet(path)
+        result = blind_reference(
+            design, packet, routes, artifact, sample=sample, marker=marker, save=save
+        )
+        if not any(
+            value["status"] == "SAME_DISCRETE_QUALIFIED"
+            for value in result["comparisons"].values()
+        ):
+            result["p4_enrichment"] = "NOT_RUN_NO_SAME_DISCRETE_QUALIFIED_ROUTE"
+        result.update(
+            actual_blas_pools=thread_qualification(),
+            physical=fe["physical"],
+            operator_packet=record,
+            operator_source_sha=fe["source_sha"],
+        )
     else:
         raise RuntimeError("unregistered V7 stage")
     result.update(
@@ -222,6 +301,8 @@ def main():
     write_json(directory / "stage_result.json", result)
     if stage == "V7-M0":
         publish("material_inventory", path)
+    elif stage == "V7-M3-REFERENCE":
+        publish("blind_reference", path)
     elif stage.startswith("V7-M2-"):
         publish(
             {
@@ -249,6 +330,7 @@ def main():
     )
     if (
         stage != "V7-M0"
+        and stage != "V7-M3-REFERENCE"
         and not stage.startswith("V7-M2-")
         and result["status"] != "PASS"
     ):
