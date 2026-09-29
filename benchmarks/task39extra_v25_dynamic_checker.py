@@ -17,6 +17,7 @@ from typing import Any, Mapping
 
 
 CHECKER_SCHEMA = "task039extra.v25.dynamic-checker.v1"
+VERSIONED_CHECKER_SCHEMA = "task039extra.versioned-dynamic-checker.v2"
 TRUE_RESIDUAL_LIMIT = 1.0e-6
 NATIVE_AQ_LIMIT = 1.0e-10
 BEST_FINITE_EXHAUSTION_PROFILE = "physical_p6_trace_a4_tensor_h6_v29"
@@ -27,6 +28,20 @@ NATIVE_A4_IMPLEMENTATION = "native_ffcx_full_A4"
 BACKEND = "isotropic_sum_factorized_n1e_v26"
 H6_BACKEND = "isotropic_sum_factorized_n1e_v26_apply_and_power10"
 THREAD_CONTRACT = "mpi1_omp1_blas1_v25"
+V30_PROFILE = "physical_p6_trace_workstation_guided_v30"
+V31_PROFILE = "physical_p6_trace_projection_layout_v31"
+VERSIONED_PROFILES = {V30_PROFILE, V31_PROFILE}
+# Frozen V30/V31 original-h7.5 N1E-hex identity from the reviewed compact audit.
+V30_V31_COMPONENT_IDENTITY = {
+    "quadrature_degree": 15,
+    "quadrature_rule": "default",
+    "points": 512,
+    "quadrature_shape": [8, 8, 8],
+    "points_sha256": "dfd7f88ca358f9ef5a1a48bbd8b09e080b0bc24ce6215cb74718bd13dd5e2fc0",
+    "weights_sha256": "5eedb32c5e648bf31a102add0c230ccd7513f59b75fc28b21dd2c613db1ef09d",
+    "coefficient_matrix_shape": [882, 1029],
+    "coefficient_matrix_sha256": "cd4160e6ec6da0cc50738183c8f0544098f70695f2a8cdd4b867b49210db3799",
+}
 
 
 def _finite(value: Any) -> bool:
@@ -734,14 +749,481 @@ def _first_arnoldi_facts(summary: Mapping[str, Any], stage: str | None) -> dict[
     return {"status": "derived", "passed": all(checks.values()), "checks": checks}
 
 
+
+def _valid_sha256(value: Any) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(character in "0123456789abcdef" for character in value.lower())
+    )
+
+
+def _count_or_none(value: Any) -> int | None:
+    try:
+        return _number(value, "count")
+    except ValueError:
+        return None
+
+
+def _runtime_thread_facts(environment: Mapping[str, Any] | None) -> dict[str, Any]:
+    """Check recorded runtime thread values without treating absence as proof."""
+
+    environment = environment if isinstance(environment, Mapping) else {}
+    keys = ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS")
+    present = {key: environment[key] for key in keys if key in environment}
+    mismatches = {key: value for key, value in present.items() if str(value) != "1"}
+    all_present = len(present) == len(keys)
+    status = (
+        "mismatch"
+        if mismatches
+        else "measured"
+        if all_present
+        else "EVIDENCE_LIMITED: runtime thread variables are incomplete"
+    )
+    return {
+        "passed": not mismatches,
+        "status": status,
+        "values": present,
+        "mismatches": mismatches,
+    }
+
+
+def _versioned_backend_facts(
+    summary: Mapping[str, Any],
+    resolved_config: Mapping[str, Any],
+    stage: str | None,
+    *,
+    run_manifest: Mapping[str, Any] | None,
+    resolved_config_sha256: str | None,
+    raw_bal_h: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    solver = resolved_config.get("solver")
+    if not isinstance(solver, Mapping):
+        return {"status": "failed", "passed": False, "reason": "resolved config has no solver section"}
+    profile = solver.get("preconditioner")
+    expected_backend = BACKEND
+    expected_h6 = "direct_selected_backend_same_apply_and_power10"
+    expected_thread = "mpi1_omp1_blas1_v26"
+    expected_degree = {"Q4_ORIGINAL": 4, "Q3_ORIGINAL": 3, "Q2_ORIGINAL": 2}.get(stage)
+
+    release = summary.get("formal_release_timing")
+    release = release if isinstance(release, Mapping) else {}
+    candidate = release.get("candidate_pc_internal_A6")
+    candidate = candidate if isinstance(candidate, Mapping) else {}
+    live_candidate = candidate.get("live_audit")
+    live_candidate = live_candidate if isinstance(live_candidate, Mapping) else {}
+    volume = live_candidate.get("volume_action")
+    volume = volume if isinstance(volume, Mapping) else {}
+    components = volume.get("components")
+    components = components if isinstance(components, Mapping) else {}
+
+    component_checks: dict[str, dict[str, bool]] = {}
+    quadrature_matches: dict[str, bool] = {}
+    for name, component_name in (("curl_curl", "curl"), ("complex_material_mass", "mass")):
+        component = components.get(name)
+        component = component if isinstance(component, Mapping) else {}
+        audit = component.get("sum_factorized_audit")
+        audit = audit if isinstance(audit, Mapping) else {}
+        shape = audit.get("quadrature_shape")
+        coeff_shape = audit.get("coefficient_matrix_shape")
+        component_checks[name] = {
+            "backend": component.get("backend") == expected_backend,
+            "component": component.get("component") == component_name,
+            "sum_factorized_opt_in": component.get("sum_factorized_opt_in") is True,
+            "element_identity": (
+                audit.get("element_family") == "N1E"
+                and audit.get("degree") == 6
+                and audit.get("element_dimension") == 882
+                and audit.get("element_variant") == "legendre"
+                and audit.get("map_type") == "covariantPiola"
+                and audit.get("polyset_type") == "standard"
+                and coeff_shape == V30_V31_COMPONENT_IDENTITY["coefficient_matrix_shape"]
+                and audit.get("backend") == expected_backend
+            ),
+            "coefficient_hash": _valid_sha256(audit.get("coefficient_matrix_sha256")),
+            "quadrature_identity": (
+                _positive_integer(component.get("quadrature_degree"))
+                and isinstance(component.get("quadrature_rule"), str)
+                and bool(component.get("quadrature_rule"))
+                and _valid_sha256(component.get("points_sha256"))
+                and _valid_sha256(component.get("weights_sha256"))
+                and component.get("quadrature_degree") == V30_V31_COMPONENT_IDENTITY["quadrature_degree"]
+                and component.get("quadrature_rule") == V30_V31_COMPONENT_IDENTITY["quadrature_rule"]
+                and component.get("points") == V30_V31_COMPONENT_IDENTITY["points"]
+                and component.get("points_sha256") == V30_V31_COMPONENT_IDENTITY["points_sha256"]
+                and component.get("weights_sha256") == V30_V31_COMPONENT_IDENTITY["weights_sha256"]
+                and audit.get("coefficient_matrix_sha256") == V30_V31_COMPONENT_IDENTITY["coefficient_matrix_sha256"]
+                and audit.get("quadrature_weights_sha256") == V30_V31_COMPONENT_IDENTITY["weights_sha256"]
+                and audit.get("quadrature_points") == V30_V31_COMPONENT_IDENTITY["points"]
+                and audit.get("quadrature_order") == "actual_points_to_tensor_grid_checked"
+                and shape == V30_V31_COMPONENT_IDENTITY["quadrature_shape"]
+                and isinstance(shape, list)
+                and len(shape) == 3
+                and all(_positive_integer(value) for value in shape)
+                and math.prod(shape) == component.get("points")
+            ),
+        }
+
+    fused = volume.get("fused_local_kernel")
+    fused = fused if isinstance(fused, Mapping) else {}
+    fused_quadrature = fused.get("component_quadrature_identities")
+    fused_quadrature = fused_quadrature if isinstance(fused_quadrature, Mapping) else {}
+    for qname, component_name in (("curl", "curl_curl"), ("mass", "complex_material_mass")):
+        component = components.get(component_name)
+        component = component if isinstance(component, Mapping) else {}
+        identity = fused_quadrature.get(qname)
+        identity = identity if isinstance(identity, Mapping) else {}
+        quadrature_matches[qname] = (
+            identity.get("degree") == component.get("quadrature_degree")
+            and identity.get("rule") == component.get("quadrature_rule")
+            and identity.get("points_sha256") == component.get("points_sha256")
+            and identity.get("weights_sha256") == component.get("weights_sha256")
+            and _valid_sha256(identity.get("points_sha256"))
+            and _valid_sha256(identity.get("weights_sha256"))
+        )
+
+    h6 = release.get("h6")
+    h6 = h6 if isinstance(h6, Mapping) else {}
+    h6_facts = h6.get("light_facts")
+    h6_facts = h6_facts if isinstance(h6_facts, Mapping) else {}
+    live_h6 = h6_facts.get("live_kernel_audit")
+    live_h6 = live_h6 if isinstance(live_h6, Mapping) else {}
+    h6_sum = live_h6.get("sum_factorized_audit")
+    h6_sum = h6_sum if isinstance(h6_sum, Mapping) else {}
+    h6_shape = h6_sum.get("quadrature_shape")
+    h6_identity = (
+        live_h6.get("backend") == expected_backend
+        and live_h6.get("sum_factorized_opt_in") is True
+        and live_h6.get("quadrature_degree") == V30_V31_COMPONENT_IDENTITY["quadrature_degree"]
+        and live_h6.get("quadrature_rule") == V30_V31_COMPONENT_IDENTITY["quadrature_rule"]
+        and live_h6.get("points") == V30_V31_COMPONENT_IDENTITY["points"]
+        and live_h6.get("points_sha256") == V30_V31_COMPONENT_IDENTITY["points_sha256"]
+        and live_h6.get("weights_sha256") == V30_V31_COMPONENT_IDENTITY["weights_sha256"]
+        and h6_sum.get("backend") == expected_backend
+        and h6_sum.get("degree") == 6
+        and h6_sum.get("element_dimension") == 882
+        and h6_sum.get("coefficient_matrix_shape") == V30_V31_COMPONENT_IDENTITY["coefficient_matrix_shape"]
+        and h6_sum.get("coefficient_matrix_sha256") == V30_V31_COMPONENT_IDENTITY["coefficient_matrix_sha256"]
+        and h6_sum.get("quadrature_weights_sha256") == V30_V31_COMPONENT_IDENTITY["weights_sha256"]
+        and h6_sum.get("quadrature_points") == live_h6.get("points")
+        and isinstance(h6_shape, list)
+        and len(h6_shape) == 3
+        and all(_positive_integer(value) for value in h6_shape)
+        and math.prod(h6_shape) == live_h6.get("points")
+    )
+
+    pc = summary.get("pc")
+    pc = pc if isinstance(pc, Mapping) else {}
+    bal = release.get("BAL_H")
+    bal = bal if isinstance(bal, Mapping) else {}
+    bal_counts = bal.get("counts")
+    bal_counts = bal_counts if isinstance(bal_counts, Mapping) else {}
+    p4 = release.get("p4")
+    p4 = p4 if isinstance(p4, Mapping) else {}
+    a4 = release.get("a4_verification")
+    a4 = a4 if isinstance(a4, Mapping) else {}
+    pc_apply = _count_or_none(pc.get("apply_count"))
+    logical_c = _count_or_none(p4.get("logical_p4_call_count"))
+    mat_solves = _count_or_none(p4.get("actual_mat_solve_count"))
+    physical_f4 = _count_or_none(p4.get("physical_f4_call_count"))
+    a4_actions = _count_or_none(a4.get("action_count"))
+    h6_apply = _count_or_none(h6.get("apply_count"))
+    h6_top_apply = _count_or_none(release.get("h6_apply_count"))
+    matrix_mults = _count_or_none(h6.get("matrix_mult_count"))
+    power10_mults = _count_or_none(h6.get("power_matrix_mult_count"))
+    facts_power10_mults = _count_or_none(h6_facts.get("power_matrix_mult_count"))
+    candidate_apply = _count_or_none(live_candidate.get("apply_count"))
+    fused_apply = _count_or_none(fused.get("apply_count"))
+    fused_full_apply = _count_or_none(fused.get("full_apply_count"))
+    volume_apply = _count_or_none(volume.get("apply_count"))
+
+    checks: dict[str, bool] = {
+        "profile_is_explicit_v30_or_v31": profile in VERSIONED_PROFILES,
+        "physical_operator_backend": solver.get("physical_operator_backend") == expected_backend,
+        "h6_backend_rule": solver.get("h6_backend_rule") == expected_h6,
+        "thread_contract_declaration": solver.get("thread_contract") == expected_thread,
+        "stage": stage is None or solver.get("stage") == stage,
+        "coarse_degree": expected_degree is None or solver.get("coarse_degree") == expected_degree,
+        "candidate_a6_live": bool(live_candidate),
+        "candidate_a6_backend_and_component": all(
+            item["backend"] and item["component"] for item in component_checks.values()
+        ),
+        "candidate_a6_element_and_coefficient_identity": all(
+            item["element_identity"] and item["coefficient_hash"]
+            for item in component_checks.values()
+        ),
+        "candidate_a6_quadrature_identity": all(
+            item["quadrature_identity"] for item in component_checks.values()
+        ),
+        "candidate_a6_sum_factorized": all(
+            item["sum_factorized_opt_in"] for item in component_checks.values()
+        ),
+        "fused_volume_schema": volume.get("schema") == "task039extra.fused-split-volume-action.v1",
+        "fused_local_kernel_schema": fused.get("schema") == "task039extra.fused-isotropic-split-kernel.v1",
+        "fused_quadrature_identity_matches_components": all(quadrature_matches.values()),
+        "fused_integral_rules_preserved": fused.get("distinct_integral_rules_preserved") is True,
+        "ordinary_default_unchanged": fused.get("ordinary_default_changed") is False,
+        "fused_batch_and_apply_counts_close": _fused_batch_counts_close(volume, fused),
+        "candidate_and_fused_full_apply_scope_matches": (
+            candidate_apply is not None
+            and candidate_apply == fused_apply == fused_full_apply == volume_apply
+        ),
+        "h6_apply_and_power10_backend": (
+            h6_facts.get("apply_action_backend") == "packed_partial_assembly"
+            and h6_facts.get("sum_factorized_work_opt_in") is True
+            and h6_facts.get("power10_action_backend") == "packed_partial_assembly"
+            and h6_facts.get("sum_factorized_power10_opt_in") is True
+            and h6_facts.get("direct_selected_backend_used") is True
+        ),
+        "h6_live_kernel_identity": h6_identity,
+        "h6_apply_count_scope_matches": (
+            h6_apply is not None
+            and h6_apply == h6_top_apply == pc.get("h6_apply_count")
+            and h6_apply == pc_apply == _count_or_none(bal_counts.get("smoother"))
+        ),
+        "logical_C_count_scope_matches": (
+            logical_c is not None
+            and logical_c == _count_or_none(bal_counts.get("C"))
+            and logical_c == _count_or_none(bal_counts.get("A_structure"))
+            and pc_apply is not None
+            and logical_c == 2 * pc_apply
+        ),
+        "actual_A4_mat_solve_scope_matches": (
+            mat_solves is not None
+            and mat_solves == physical_f4 == a4_actions
+        ),
+        "actual_B6_and_power10_scopes_close": (
+            matrix_mults is not None
+            and power10_mults is not None
+            and logical_c is not None
+            and matrix_mults == logical_c + power10_mults
+            and power10_mults == 20
+            and power10_mults == facts_power10_mults
+        ),
+    }
+    call_scope = {
+        "logical_C": logical_c,
+        "actual_F4_MatSolve": mat_solves,
+        "H6_apply": h6_apply,
+        "B6_matrix_mult_including_power10": matrix_mults,
+        "power10_B6": power10_mults,
+        "legacy_calls_per_PC_template": {
+            "value": h6_facts.get("calls_per_PC"),
+            "authoritative": False,
+            "note": "Historical metadata only; live C, H6, B6, MatSolve and power10 counters are checked by scope.",
+        },
+    }
+
+    projection: dict[str, Any] | None = None
+    if profile == V31_PROFILE:
+        # V31 is a frozen H6-only profile. The resolved input schema binds the
+        # choice through its profile identity; the checker compares that choice
+        # to the live kernel audit instead of requiring unsupported ad hoc keys
+        # in the .dat solver section.
+        expected_natural = True
+        expected_projection = False
+        expected_scope = "h6"
+        h6_natural = live_h6.get("natural_order_internal_opt_in")
+        h6_projection = live_h6.get("continuous_projection_matmul_opt_in")
+        projection_checks = {
+            "natural_order_flag_explicit": isinstance(expected_natural, bool),
+            "continuous_projection_flag_explicit": isinstance(expected_projection, bool),
+            "layout_flags_are_explicit": isinstance(expected_natural, bool) and isinstance(expected_projection, bool),
+            "scope_explicit": expected_scope in {"h6", "shared_a6_h6"},
+            "live_h6_flags_match_config": h6_natural is expected_natural and h6_projection is expected_projection,
+            "projection_kernel_identity": (
+                h6_sum.get("backward_projection_kernel") == "continuous_z_y_x_matmul_v31"
+                if expected_projection is True
+                else h6_sum.get("backward_projection_kernel") == "einsum_z_y_x_legacy"
+            ),
+            "source_tensor_grid_identity_preserved": (
+                h6_sum.get("quadrature_order")
+                == "actual_points_to_tensor_grid_checked"
+                and h6_sum.get("points_sha256")
+                == V30_V31_COMPONENT_IDENTITY["points_sha256"]
+                and h6_sum.get("weights_sha256")
+                == V30_V31_COMPONENT_IDENTITY["weights_sha256"]
+            ),
+            "natural_tensor_order_identity": (
+                h6_sum.get("internal_quadrature_order")
+                == "natural_tensor_order_v31"
+                if expected_natural is True
+                else h6_sum.get("internal_quadrature_order")
+                == "source_input_order"
+            ),
+            "point_weight_permutation_identity": (
+                _valid_sha256(h6_sum.get("internal_points_sha256"))
+                and _valid_sha256(h6_sum.get("internal_weights_sha256"))
+                and h6_sum.get("point_permutation_bijection_verified") is True
+                and h6_sum.get("weights_permuted_with_points") is expected_natural
+            ),
+            "projection_workspace_is_bounded": (
+                _positive_integer(h6_sum.get("projection_workspace_bytes"))
+                if expected_projection is True
+                else h6_sum.get("projection_workspace_bytes") == 0
+            ),
+        }
+        if expected_scope == "shared_a6_h6":
+            projection_checks["a6_flags_match_shared_scope"] = all(
+                isinstance(components.get(name), Mapping)
+                and components[name].get("natural_order_internal_opt_in") is expected_natural
+                and components[name].get("continuous_projection_matmul_opt_in") is expected_projection
+                for name in ("curl_curl", "complex_material_mass")
+            )
+        elif expected_scope == "h6":
+            projection_checks["a6_unchanged_for_h6_scope"] = all(
+                isinstance(components.get(name), Mapping)
+                and components[name].get("natural_order_internal_opt_in") is False
+                and components[name].get("continuous_projection_matmul_opt_in") is False
+                for name in ("curl_curl", "complex_material_mass")
+            )
+        else:
+            projection_checks["a6_scope_invalid"] = False
+        checks["v31_projection_layout_contract"] = all(projection_checks.values())
+        projection = {
+            "status": "derived",
+            "passed": all(projection_checks.values()),
+            "checks": projection_checks,
+        }
+
+    manifest = run_manifest if isinstance(run_manifest, Mapping) else {}
+    manifest_env = manifest.get("environment")
+    manifest_env = manifest_env if isinstance(manifest_env, Mapping) else {}
+    runtime_threads = _runtime_thread_facts(manifest_env)
+    checks["runtime_thread_environment_matches_one"] = runtime_threads["passed"]
+    raw_bal = raw_bal_h if isinstance(raw_bal_h, Mapping) else {}
+    raw_setup = _count_or_none(raw_bal.get("setup_bal_h"))
+    raw_check = _count_or_none(raw_bal.get("check_bal_h"))
+    raw_outer = _count_or_none(raw_bal.get("iteration_bal_h"))
+    raw_total = _count_or_none(raw_bal.get("total_bal_h"))
+    raw_boundaries = _count_or_none(raw_bal.get("raw_boundary_records"))
+    raw_logical_c = _count_or_none(raw_bal.get("logical_units"))
+    solver_outer = _count_or_none(_path(summary, "solver", "pc_apply_count"))
+    checks["raw_bal_h_phase_and_pc_scope_closure"] = (
+        raw_bal.get("passed") is True
+        and raw_setup == 1
+        and raw_check == 4
+        and raw_outer is not None
+        and raw_outer == solver_outer
+        and raw_total == raw_setup + raw_check + raw_outer
+        and raw_boundaries == raw_total
+        and pc_apply == raw_total
+        and h6_apply == pc_apply
+        and raw_logical_c == logical_c == 2 * raw_total
+    )
+    checks["resolved_config_hash_matches_manifest"] = (
+        run_manifest is not None
+        and resolved_config_sha256 is not None
+        and manifest.get("resolved_config_sha256") == resolved_config_sha256
+    )
+    return {
+        "status": "derived",
+        "passed": all(checks.values()),
+        "checks": checks,
+        "candidate_component_checks": component_checks,
+        "quadrature_identity_matches": quadrature_matches,
+        "call_scope": call_scope,
+        "projection_layout": projection,
+        "runtime_thread_evidence": runtime_threads["status"],
+        "runtime_thread_values": runtime_threads["values"],
+        "raw_pc_scope": {
+            "setup_BAL_H": raw_setup,
+            "check_BAL_H": raw_check,
+            "outer_iteration_BAL_H": raw_outer,
+            "cumulative_PC_apply": raw_total,
+            "raw_boundary_records": raw_boundaries,
+            "logical_C": raw_logical_c,
+        },
+    }
+
+
+def _monitoring_facts(
+    run_manifest: Mapping[str, Any] | None,
+    run_summary: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    manifest = run_manifest if isinstance(run_manifest, Mapping) else {}
+    summary = run_summary if isinstance(run_summary, Mapping) else {}
+    environment = manifest.get("environment")
+    environment = environment if isinstance(environment, Mapping) else {}
+    authority = summary.get("resource_authority")
+    authority = authority if isinstance(authority, Mapping) else {}
+    source_state = authority.get("source_state")
+    source_state = source_state if isinstance(source_state, Mapping) else {}
+    pss_peak = authority.get("sampled_process_tree_pss_peak_bytes")
+    pss_status = authority.get("pss_status")
+    # V30/V31 explicitly disabled PSS to avoid an expensive per-sample scan.
+    # A positive PSS value here would indicate a changed monitoring profile.
+    pss_ok = pss_status == "DISABLED_BY_PROFILE" and pss_peak is None
+    pss_interpretation = "explicitly_disabled_not_zero" if pss_ok else "profile_mismatch"
+    runtime_threads = _runtime_thread_facts(environment)
+    swap_peak = _count_or_none(authority.get("sampled_process_tree_swap_peak_bytes"))
+    checks = {
+        "manifest_mpi1": manifest.get("mpi_size") == 1,
+        "manifest_qualified_linux_environment": (
+            environment.get("qualified_activation") == "1"
+            and isinstance(environment.get("platform"), str)
+            and "linux" in environment.get("platform", "").lower()
+            and isinstance(environment.get("python_executable"), str)
+            and ".venv" in environment.get("python_executable", "")
+        ),
+        "run_finished_exit0": summary.get("status") == "finished" and summary.get("exit_status") == 0,
+        "watchdog_completed": authority.get("classification") == "COMPLETED",
+        "watchdog_leader_exit0": authority.get("leader_exit_code") == 0,
+        "watchdog_descendants_cleared": (
+            authority.get("descendants_cleared") is True
+            and authority.get("remaining_child_pids") == []
+        ),
+        "rss_peak_recorded": _positive_integer(authority.get("sampled_process_tree_rss_peak_bytes")),
+        "swap_observed_only": (
+            summary.get("swap_policy") == "observe_only"
+            and authority.get("swap_policy") == "observe_only"
+            and authority.get("process_tree_swap_gate_enforced") is False
+            and swap_peak is not None
+        ),
+        "pss_status_explicit_and_disabled_by_profile": pss_ok,
+        "runtime_thread_environment_matches_one": runtime_threads["passed"],
+        "source_identity_matches_manifest": (
+            isinstance(manifest.get("source_sha"), str)
+            and manifest.get("source_sha") == source_state.get("source_sha")
+            and source_state.get("tracked_and_nonignored_untracked_clean") is True
+        ),
+    }
+    return {
+        "status": "derived",
+        "passed": all(checks.values()),
+        "checks": checks,
+        "pss_interpretation": pss_interpretation,
+        "swap_interpretation": "observed_only_not_enforced",
+        "thread_runtime_evidence": runtime_threads["status"],
+        "thread_runtime_values": runtime_threads["values"],
+        "sampled_rss_peak_bytes": authority.get("sampled_process_tree_rss_peak_bytes"),
+        "sampled_swap_peak_bytes": authority.get("sampled_process_tree_swap_peak_bytes"),
+    }
+
+
 def _backend_facts(
-    summary: Mapping[str, Any], resolved_config: Mapping[str, Any] | None, stage: str | None
+    summary: Mapping[str, Any],
+    resolved_config: Mapping[str, Any] | None,
+    stage: str | None,
+    *,
+    run_manifest: Mapping[str, Any] | None = None,
+    resolved_config_sha256: str | None = None,
+    raw_bal_h: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     if resolved_config is None:
         return {"status": "not_run", "passed": False, "reason": "resolved config was not supplied"}
     solver = resolved_config.get("solver")
     if not isinstance(solver, Mapping):
         return {"status": "failed", "passed": False, "reason": "resolved config has no solver section"}
+    if solver.get("preconditioner") in VERSIONED_PROFILES:
+        return _versioned_backend_facts(
+            summary,
+            resolved_config,
+            stage,
+            run_manifest=run_manifest,
+            resolved_config_sha256=resolved_config_sha256,
+            raw_bal_h=raw_bal_h,
+        )
     workingset_profile = (
         solver.get("preconditioner")
         == "physical_p6_trace_workingset_efficiency_v27"
@@ -970,6 +1452,9 @@ def check_summary(
     *,
     resolved_config: Mapping[str, Any] | None = None,
     stage: str | None = None,
+    run_manifest: Mapping[str, Any] | None = None,
+    run_summary: Mapping[str, Any] | None = None,
+    resolved_config_sha256: str | None = None,
 ) -> dict[str, Any]:
     """Return only the dynamic accounting/wiring audit."""
 
@@ -979,8 +1464,8 @@ def check_summary(
         and isinstance(resolved_config.get("solver"), Mapping)
         else {}
     )
-    allow_soft_return = (
-        solver_config.get("preconditioner") == BEST_FINITE_EXHAUSTION_PROFILE
+    allow_soft_return = solver_config.get("preconditioner") in (
+        {BEST_FINITE_EXHAUSTION_PROFILE} | VERSIONED_PROFILES
     )
     bal_h = _raw_bal_h_facts(
         summary, stage, allow_soft_return=allow_soft_return
@@ -988,7 +1473,23 @@ def check_summary(
     residual = _residual_facts(summary)
     aq = _aq_facts(summary)
     arnoldi = _first_arnoldi_facts(summary, stage)
-    backend = _backend_facts(summary, resolved_config, stage)
+    backend = _backend_facts(
+        summary,
+        resolved_config,
+        stage,
+        run_manifest=run_manifest,
+        resolved_config_sha256=resolved_config_sha256,
+        raw_bal_h=bal_h,
+    )
+    versioned = (
+        isinstance(solver_config, Mapping)
+        and solver_config.get("preconditioner") in VERSIONED_PROFILES
+    )
+    monitoring = (
+        _monitoring_facts(run_manifest, run_summary)
+        if versioned
+        else {"status": "not_applicable", "passed": True, "checks": {}}
+    )
     dynamic_gates = {
         "raw_bal_h_and_p4": bal_h["passed"],
         "true_residual": residual["passed"],
@@ -996,11 +1497,24 @@ def check_summary(
         "actual_first_arnoldi": arnoldi["passed"],
         "backend_identity": backend["passed"],
     }
+    if versioned:
+        dynamic_gates["run_monitoring_identity"] = monitoring["passed"]
     dynamic_failures = [name for name, passed in dynamic_gates.items() if not passed]
+    evidence_limited = versioned and (
+        str(backend.get("runtime_thread_evidence", "")).startswith("EVIDENCE_LIMITED")
+        or str(monitoring.get("thread_runtime_evidence", "")).startswith("EVIDENCE_LIMITED")
+    )
+    dynamic_status = (
+        "DYNAMIC_FAIL"
+        if dynamic_failures
+        else "DYNAMIC_PASS_EVIDENCE_LIMITED"
+        if evidence_limited
+        else "DYNAMIC_PASS"
+    )
     return {
-        "schema": CHECKER_SCHEMA,
+        "schema": VERSIONED_CHECKER_SCHEMA if versioned else CHECKER_SCHEMA,
         "scope": "dynamic_accounting_and_wiring_only",
-        "status": "DYNAMIC_PASS" if not dynamic_failures else "DYNAMIC_FAIL",
+        "status": dynamic_status,
         "partial": True,
         "dynamic_passed": not dynamic_failures,
         "gate_failures": dynamic_failures,
@@ -1011,6 +1525,7 @@ def check_summary(
             "native_aq": aq,
             "actual_first_arnoldi": arnoldi,
             "backend": backend,
+            "monitoring": monitoring,
         },
         "gates": dynamic_gates,
     }
@@ -1027,12 +1542,22 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("summary", type=Path)
     parser.add_argument("--resolved-config", type=Path)
+    parser.add_argument("--run-manifest", type=Path)
+    parser.add_argument("--run-summary", type=Path)
     parser.add_argument("--stage")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
+    config_sha256 = (
+        __import__("hashlib").sha256(args.resolved_config.read_bytes()).hexdigest()
+        if args.resolved_config
+        else None
+    )
     result = check_summary(
         _read(args.summary),
         resolved_config=_read(args.resolved_config) if args.resolved_config else None,
+        run_manifest=_read(args.run_manifest) if args.run_manifest else None,
+        run_summary=_read(args.run_summary) if args.run_summary else None,
+        resolved_config_sha256=config_sha256,
         stage=args.stage,
     )
     encoded = json.dumps(result, indent=2, sort_keys=True) + "\n"

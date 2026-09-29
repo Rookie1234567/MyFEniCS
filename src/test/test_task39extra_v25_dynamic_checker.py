@@ -18,8 +18,13 @@ from benchmarks.task39extra_v25_dynamic_checker import (
     THREAD_CONTRACT,
     V29_A4_IMPLEMENTATION,
     V29_A4_ORACLE,
+    V30_PROFILE,
+    V31_PROFILE,
+    V30_V31_COMPONENT_IDENTITY,
+    _monitoring_facts,
     _raw_bal_h_facts,
     _raw_call_facts,
+    _runtime_thread_facts,
     check_summary,
 )
 
@@ -290,6 +295,193 @@ def _v25_fixture() -> tuple[dict, dict]:
     return summary, config
 
 
+def _versioned_fixture(profile: str = V30_PROFILE):
+    summary, config = _v25_fixture()
+    summary["pc"]["boundary_records"].extend(_boundary() for _ in range(4))
+    for boundary in summary["pc"]["boundary_records"]:
+        for index, _call_record in enumerate(boundary["pc"]["inexact_balance"]["calls"]):
+            boundary["pc"]["inexact_balance"]["calls"][index] = _soft_call((0.0,))
+    # Keep one extra MatSolve in the synthetic V30/V31 accounting closure.
+    summary["pc"]["boundary_records"][4]["pc"]["inexact_balance"]["calls"][0] = _soft_call(
+        (1.0, 1.0e-12)
+    )
+    summary["solver"]["pc_apply_count"] = 126
+    summary["pc"]["apply_count"] = 131
+    summary["pc"]["h6_apply_count"] = 131
+
+    release = summary["formal_release_timing"]
+    release["p4"].update(
+        logical_p4_call_count=262,
+        actual_mat_solve_count=263,
+        physical_f4_call_count=263,
+    )
+    release["BAL_H"] = {"counts": {"C": 262, "A_structure": 262, "smoother": 131}}
+    release["h6_apply_count"] = 131
+    h6 = release["h6"]
+    h6.update(apply_count=131, matrix_mult_count=282, power_matrix_mult_count=20)
+    h6_facts = h6["light_facts"]
+    h6_facts.update(
+        power_matrix_mult_count=20,
+        direct_selected_backend_used=True,
+        apply_action_backend="packed_partial_assembly",
+        power10_action_backend="packed_partial_assembly",
+        sum_factorized_power10_opt_in=True,
+    )
+
+    identity = V30_V31_COMPONENT_IDENTITY
+    q_identity = {
+        "degree": identity["quadrature_degree"],
+        "rule": identity["quadrature_rule"],
+        "points_sha256": identity["points_sha256"],
+        "weights_sha256": identity["weights_sha256"],
+    }
+    components = {}
+    for component_name, qname in (("curl_curl", "curl"), ("complex_material_mass", "mass")):
+        components[component_name] = {
+            "backend": BACKEND,
+            "component": qname,
+            "sum_factorized_opt_in": True,
+            "quadrature_degree": identity["quadrature_degree"],
+            "quadrature_rule": identity["quadrature_rule"],
+            "points": identity["points"],
+            "points_sha256": identity["points_sha256"],
+            "weights_sha256": identity["weights_sha256"],
+            "natural_order_internal_opt_in": False,
+            "continuous_projection_matmul_opt_in": False,
+            "sum_factorized_audit": {
+                "backend": BACKEND,
+                "element_family": "N1E",
+                "degree": 6,
+                "element_dimension": 882,
+                "element_variant": "legendre",
+                "map_type": "covariantPiola",
+                "polyset_type": "standard",
+                "coefficient_matrix_shape": list(identity["coefficient_matrix_shape"]),
+                "coefficient_matrix_sha256": identity["coefficient_matrix_sha256"],
+                "quadrature_weights_sha256": identity["weights_sha256"],
+                "quadrature_points": identity["points"],
+                "quadrature_order": "actual_points_to_tensor_grid_checked",
+                "quadrature_shape": list(identity["quadrature_shape"]),
+            },
+        }
+    fused = {
+        "schema": "task039extra.fused-isotropic-split-kernel.v1",
+        "cell_count": 990,
+        "batch_size": 8,
+        "apply_count": 2,
+        "full_apply_count": 2,
+        "component_apply_count": 0,
+        "curl_component_apply_count": 0,
+        "mass_component_apply_count": 0,
+        "gather_count": 248,
+        "coefficient_forward_count": 248,
+        "coefficient_backward_count": 248,
+        "scatter_count": 248,
+        "curl_integral_count": 248,
+        "mass_integral_count": 248,
+        "component_quadrature_identities": {"curl": q_identity, "mass": q_identity},
+        "distinct_integral_rules_preserved": True,
+        "ordinary_default_changed": False,
+    }
+    live_candidate = release["candidate_pc_internal_A6"]["live_audit"]
+    live_candidate["apply_count"] = 2
+    live_candidate["volume_action"] = {
+        "schema": "task039extra.fused-split-volume-action.v1",
+        "apply_count": 2,
+        "components": components,
+        "fused_local_kernel": fused,
+    }
+
+    natural_v31 = profile == V31_PROFILE
+    natural_points = (
+        "b" * 64 if natural_v31 else identity["points_sha256"]
+    )
+    natural_weights = (
+        "c" * 64 if natural_v31 else identity["weights_sha256"]
+    )
+    live_h6 = {
+        "backend": BACKEND,
+        "sum_factorized_opt_in": True,
+        "quadrature_degree": identity["quadrature_degree"],
+        "quadrature_rule": identity["quadrature_rule"],
+        "points": identity["points"],
+        "points_sha256": identity["points_sha256"],
+        "weights_sha256": identity["weights_sha256"],
+        "natural_order_internal_opt_in": natural_v31,
+        "continuous_projection_matmul_opt_in": False,
+        "sum_factorized_audit": {
+            "backend": BACKEND,
+            "degree": 6,
+            "element_dimension": 882,
+            "coefficient_matrix_shape": list(identity["coefficient_matrix_shape"]),
+            "coefficient_matrix_sha256": identity["coefficient_matrix_sha256"],
+            "quadrature_weights_sha256": identity["weights_sha256"],
+            "quadrature_points": identity["points"],
+            "quadrature_shape": list(identity["quadrature_shape"]),
+            "points_sha256": identity["points_sha256"],
+            "weights_sha256": identity["weights_sha256"],
+            "quadrature_order": "actual_points_to_tensor_grid_checked",
+            "points_sha256": identity["points_sha256"],
+            "weights_sha256": identity["weights_sha256"],
+            "internal_points_sha256": natural_points,
+            "internal_weights_sha256": natural_weights,
+            "internal_quadrature_order": (
+                "natural_tensor_order_v31" if natural_v31 else "source_input_order"
+            ),
+            "natural_order_internal_opt_in": natural_v31,
+            "continuous_projection_matmul_opt_in": False,
+            "backward_projection_kernel": "einsum_z_y_x_legacy",
+            "point_permutation_bijection_verified": True,
+            "weights_permuted_with_points": natural_v31,
+            "projection_workspace_bytes": 0,
+        },
+    }
+    h6_facts["live_kernel_audit"] = live_h6
+    _set_v29_a4_identity(summary)
+
+    config["solver"].update(
+        preconditioner=profile,
+        physical_operator_backend=BACKEND,
+        h6_backend_rule="direct_selected_backend_same_apply_and_power10",
+        thread_contract="mpi1_omp1_blas1_v26",
+        stage="Q4_ORIGINAL",
+        coarse_degree=4,
+    )
+    sha = "a" * 64
+    manifest = {
+        "mpi_size": 1,
+        "source_sha": "fixture-source-sha",
+        "resolved_config_sha256": sha,
+        "environment": {
+            "qualified_activation": "1",
+            "platform": "Linux fixture",
+            "python_executable": "/fixture/.venv/bin/python",
+        },
+    }
+    run_summary = {
+        "status": "finished",
+        "exit_status": 0,
+        "swap_policy": "observe_only",
+        "resource_authority": {
+            "classification": "COMPLETED",
+            "leader_exit_code": 0,
+            "descendants_cleared": True,
+            "remaining_child_pids": [],
+            "sampled_process_tree_rss_peak_bytes": 100,
+            "sampled_process_tree_swap_peak_bytes": 0,
+            "sampled_process_tree_pss_peak_bytes": None,
+            "pss_status": "DISABLED_BY_PROFILE",
+            "swap_policy": "observe_only",
+            "process_tree_swap_gate_enforced": False,
+            "source_state": {
+                "source_sha": "fixture-source-sha",
+                "tracked_and_nonignored_untracked_clean": True,
+            },
+        },
+    }
+    return summary, config, manifest, run_summary, sha
+
+
 def test_counts_are_recomputed_from_raw_calls_and_four_diagnostics() -> None:
     summary, config = _v25_fixture()
     result = check_summary(summary, resolved_config=config, stage="Q4_ORIGINAL")
@@ -408,6 +600,188 @@ def test_v28_fused_backend_selects_a6_fusion_and_nonshared_a6_h6_kernels():
     assert rejected["recomputed"]["backend"]["checks"][
         "h6_apply_shared_contractions_disabled"
     ] is False
+
+
+def test_versioned_v30_and_v31_fixture_closes_live_counts_with_limited_threads():
+    for profile in (V30_PROFILE, V31_PROFILE):
+        summary, config, manifest, run_summary, sha = _versioned_fixture(profile)
+        result = check_summary(
+            summary,
+            resolved_config=config,
+            stage="Q4_ORIGINAL",
+            run_manifest=manifest,
+            run_summary=run_summary,
+            resolved_config_sha256=sha,
+        )
+        assert result["dynamic_passed"] is True
+        assert result["status"] == "DYNAMIC_PASS_EVIDENCE_LIMITED"
+        backend = result["recomputed"]["backend"]
+        assert backend["call_scope"]["logical_C"] == 262
+        assert backend["call_scope"]["H6_apply"] == 131
+        assert backend["call_scope"]["B6_matrix_mult_including_power10"] == 282
+        assert backend["raw_pc_scope"] == {
+            "setup_BAL_H": 1,
+            "check_BAL_H": 4,
+            "outer_iteration_BAL_H": 126,
+            "cumulative_PC_apply": 131,
+            "raw_boundary_records": 131,
+            "logical_C": 262,
+        }
+
+
+def test_versioned_negative_fixtures_reject_backend_threads_integral_identity_and_missing_fields():
+    summary, config, manifest, run_summary, sha = _versioned_fixture(V31_PROFILE)
+    config["solver"]["physical_operator_backend"] = "wrong_backend"
+    result = check_summary(
+        summary,
+        resolved_config=config,
+        stage="Q4_ORIGINAL",
+        run_manifest=manifest,
+        run_summary=run_summary,
+        resolved_config_sha256=sha,
+    )
+    assert result["dynamic_passed"] is False
+    assert result["recomputed"]["backend"]["checks"]["physical_operator_backend"] is False
+
+    summary, config, manifest, run_summary, sha = _versioned_fixture(V30_PROFILE)
+    manifest["environment"]["OPENBLAS_NUM_THREADS"] = "8"
+    result = check_summary(
+        summary,
+        resolved_config=config,
+        stage="Q4_ORIGINAL",
+        run_manifest=manifest,
+        run_summary=run_summary,
+        resolved_config_sha256=sha,
+    )
+    assert result["dynamic_passed"] is False
+    assert result["recomputed"]["backend"]["checks"]["runtime_thread_environment_matches_one"] is False
+
+    summary, config, manifest, run_summary, sha = _versioned_fixture(V30_PROFILE)
+    components = summary["formal_release_timing"]["candidate_pc_internal_A6"]["live_audit"]["volume_action"]["components"]
+    components["curl_curl"]["points_sha256"] = "0" * 64
+    summary["formal_release_timing"]["candidate_pc_internal_A6"]["live_audit"]["volume_action"]["fused_local_kernel"]["component_quadrature_identities"]["curl"]["points_sha256"] = "0" * 64
+    result = check_summary(
+        summary,
+        resolved_config=config,
+        stage="Q4_ORIGINAL",
+        run_manifest=manifest,
+        run_summary=run_summary,
+        resolved_config_sha256=sha,
+    )
+    assert result["dynamic_passed"] is False
+    assert result["recomputed"]["backend"]["candidate_component_checks"]["curl_curl"]["quadrature_identity"] is False
+
+    summary, config, manifest, run_summary, sha = _versioned_fixture(V31_PROFILE)
+    audit = summary["formal_release_timing"]["candidate_pc_internal_A6"]["live_audit"]["volume_action"]["components"]["curl_curl"]["sum_factorized_audit"]
+    audit.pop("coefficient_matrix_sha256")
+    result = check_summary(
+        summary,
+        resolved_config=config,
+        stage="Q4_ORIGINAL",
+        run_manifest=manifest,
+        run_summary=run_summary,
+        resolved_config_sha256=sha,
+    )
+    assert result["dynamic_passed"] is False
+    assert result["recomputed"]["backend"]["checks"]["candidate_a6_quadrature_identity"] is False
+
+    summary, config, manifest, run_summary, sha = _versioned_fixture(V31_PROFILE)
+    summary["formal_release_timing"]["candidate_pc_internal_A6"]["live_audit"]["volume_action"]["components"]["curl_curl"] = None
+    result = check_summary(
+        summary,
+        resolved_config=config,
+        stage="Q4_ORIGINAL",
+        run_manifest=manifest,
+        run_summary=run_summary,
+        resolved_config_sha256=sha,
+    )
+    assert result["dynamic_passed"] is False
+
+
+def test_versioned_pcscope_and_disabled_pss_contract_reject_scope_drift():
+    summary, config, manifest, run_summary, sha = _versioned_fixture(V30_PROFILE)
+    summary["formal_release_timing"]["h6"]["matrix_mult_count"] -= 2
+    result = check_summary(
+        summary,
+        resolved_config=config,
+        stage="Q4_ORIGINAL",
+        run_manifest=manifest,
+        run_summary=run_summary,
+        resolved_config_sha256=sha,
+    )
+    assert result["dynamic_passed"] is False
+    assert result["recomputed"]["backend"]["checks"]["actual_B6_and_power10_scopes_close"] is False
+
+    summary, config, manifest, run_summary, sha = _versioned_fixture(V30_PROFILE)
+    run_summary["resource_authority"]["pss_status"] = "MEASURED"
+    run_summary["resource_authority"]["sampled_process_tree_pss_peak_bytes"] = 100
+    result = check_summary(
+        summary,
+        resolved_config=config,
+        stage="Q4_ORIGINAL",
+        run_manifest=manifest,
+        run_summary=run_summary,
+        resolved_config_sha256=sha,
+    )
+    assert result["dynamic_passed"] is False
+    assert result["recomputed"]["monitoring"]["checks"]["pss_status_explicit_and_disabled_by_profile"] is False
+
+
+def test_v31_best_state_continue_checks_selected_attempt_and_two_refinements():
+    for selected, residuals in ((0, (0.3, 0.4, 0.5)), (1, (0.4, 0.3, 0.5))):
+        summary, config, manifest, run_summary, sha = _versioned_fixture(V31_PROFILE)
+        call = _soft_call(residuals)
+        summary["pc"]["boundary_records"][4]["pc"]["inexact_balance"]["calls"][0] = call
+        summary["formal_release_timing"]["p4"].update(
+            actual_mat_solve_count=264,
+            physical_f4_call_count=264,
+        )
+        _set_v29_a4_identity(summary)
+        result = check_summary(
+            summary,
+            resolved_config=config,
+            stage="Q4_ORIGINAL",
+            run_manifest=manifest,
+            run_summary=run_summary,
+            resolved_config_sha256=sha,
+        )
+        raw = result["recomputed"]["bal_h_and_p4"]
+        assert raw["passed"] is True
+        assert raw["coarse_unmet_continued_count"] == 1
+        assert raw["actual_mat_solve"] == 264
+        assert raw["rows"][8]["selected_attempt"] == selected
+
+        broken = deepcopy(summary)
+        broken_call = broken["pc"]["boundary_records"][4]["pc"]["inexact_balance"]["calls"][0]
+        if selected == 0:
+            broken_call["inner"]["repair"]["selected_attempt"] = 1
+        else:
+            broken_call["inner"]["repair"].pop("selected_attempt")
+        rejected = check_summary(
+            broken,
+            resolved_config=config,
+            stage="Q4_ORIGINAL",
+            run_manifest=manifest,
+            run_summary=run_summary,
+            resolved_config_sha256=sha,
+        )
+        assert rejected["recomputed"]["bal_h_and_p4"]["passed"] is False
+
+
+def test_runtime_thread_and_monitoring_evidence_boundaries_are_explicit():
+    assert _runtime_thread_facts({})["status"].startswith("EVIDENCE_LIMITED")
+    assert _runtime_thread_facts(
+        {"OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1", "MKL_NUM_THREADS": "1"}
+    )["status"] == "measured"
+    assert _runtime_thread_facts({"OMP_NUM_THREADS": "1", "MKL_NUM_THREADS": "8"})["passed"] is False
+
+    _summary, _config, manifest, run_summary, _sha = _versioned_fixture(V30_PROFILE)
+    monitoring = _monitoring_facts(manifest, run_summary)
+    assert monitoring["passed"] is True
+    assert monitoring["thread_runtime_evidence"].startswith("EVIDENCE_LIMITED")
+    run_summary["resource_authority"]["pss_status"] = "MEASURED"
+    run_summary["resource_authority"]["sampled_process_tree_pss_peak_bytes"] = 1
+    assert _monitoring_facts(manifest, run_summary)["passed"] is False
 
 
 def test_v25_checker_defaults_remain_the_historical_contract():
