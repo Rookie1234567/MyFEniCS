@@ -1,0 +1,104 @@
+{
+  "design": {
+    "path": "input/task042_neural_coarse_inverse/neural_fe_design_v7.json",
+    "sha256": "17792c1b5f003e7114d9a69fea8481cd195e92666e46ef950302e3dc85308c3b"
+  },
+  "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+  "mode_manifest_sha256": "93795b53d7c5aef69af66b4ff0a56fa46515771f1ec43332ec929970270ea262",
+  "material_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+  "schema": "task042.frozen-error.v9",
+  "batch": "V9_FROZEN_ERROR_PHYSICS_LOCALIZATION",
+  "review_commit": "0071b97cc60996010c97671c5a1e620783af412e",
+  "reviewed_head": "ba5ec813cc16a90adde1433ecb91e4b822b9d601",
+  "action_packet_sha256": "9196edb807b534217d0c0eb78882125341342784a48ef20ebe2d9421fe636454",
+  "states": [
+    {
+      "id": "NN7",
+      "version": 7,
+      "index": "frozen_neural",
+      "source_sha": "7c4037a279cefd8546c51e8ae6cf0172c3eab89d",
+      "npz_sha256": "7dc49c3838be81c060e47596e11c67cb31d13c403ae216f8e4701605d8a82dab",
+      "z_sha256": "2dfad272d425d532710e43fd1abf1ee95f6b5890818c5dddd6e7bbaa6d63e6f5"
+    },
+    {
+      "id": "FREE7",
+      "version": 7,
+      "index": "frozen_free",
+      "source_sha": "7c4037a279cefd8546c51e8ae6cf0172c3eab89d",
+      "npz_sha256": "a051dd45b22af580168785810bb49fcbd2a6064b2969e105ed551e587fb68dd4",
+      "z_sha256": "db6ab455769357ee5d27b7073ee9d49b60a959619b905888a40a60d0e7c1719b"
+    },
+    {
+      "id": "LSQR7",
+      "version": 7,
+      "index": "frozen_lsqr",
+      "source_sha": "7c4037a279cefd8546c51e8ae6cf0172c3eab89d",
+      "npz_sha256": "f30d7508c73311eab4e9fcf6404fa5c4622ac00aaf2bd87ba2601329648e9b9e",
+      "z_sha256": "c7fb603b16df58f0f2853f493cde5bd7e68c0f0218e9f65b21c7922dcc1410a0"
+    },
+    {
+      "id": "LSQR8",
+      "version": 8,
+      "index": "frozen_scaled_lsqr",
+      "source_sha": "1a2984a44ca48573bbe18ffe8a7f8c5d6bdacc05",
+      "npz_sha256": "9721eab0c6ab52de1531837e4479a94eebcacf068498bd2af5ac7a76ba6a3f42",
+      "z_sha256": "86ba2e0488010cebf876fe5fd38ed9559630bf74e68157a38c16582a9b876c27"
+    },
+    {
+      "id": "REF7",
+      "version": 7,
+      "index": "blind_reference",
+      "source_sha": "1ff6f8ba3dcb48dee0fd41f762bf624822ea1457",
+      "npz_sha256": "a0610a5a55e7508196b17277e706595c33e4398ace82b245f70b656e6b9ed355",
+      "z_sha256": "4a681a75950ac8087ee8265f34e10363fef99b523c8eecf434f30fafecc09936"
+    }
+  ],
+  "inventory_order": [
+    "Z0",
+    "NN7",
+    "FREE7",
+    "LSQR7",
+    "LSQR8",
+    "REF7"
+  ],
+  "scope": "same physical/operator/background/RHS; fixed saved physical z only; no additional snapshots",
+  "LSQR8_coordinate_evidence": {
+    "source": "1a2984a44ca48573bbe18ffe8a7f8c5d6bdacc05",
+    "module": "src/solvers/neural_fe_optimization.py",
+    "meaning": "current = scaled_operator.recover(y); saved z=current; state_kind LSQR_ITERATE; D not reapplied"
+  },
+  "budgets": {
+    "carry_in_seconds": 9804.434395463672,
+    "new_seconds": 3600,
+    "cumulative_seconds": 36000,
+    "S_plus_SH_limit": 128,
+    "recover_limit": 128,
+    "uncondensed_limit": 128,
+    "Hp_audit_limit": 128
+  },
+  "gates": {
+    "operation_scaled": 1e-10,
+    "near_zero_absolute": 1e-12,
+    "reference_original": 1e-10,
+    "field_partition": 1e-10
+  },
+  "region_inventory": {
+    "air_excluding_notch": 192,
+    "notch_air": 8,
+    "substrate": 48,
+    "Si_block": 136
+  },
+  "memory_preallocation": {
+    "packet_decode_copies_upper_bytes": 627745068,
+    "gathered_cell_tensor_upper_bytes": 509607936,
+    "fields_and_raw_vectors_upper_bytes": 268435456,
+    "libraries_JIT_upper_bytes": 4294967296
+  },
+  "reference_role": "offline fixed diagnostic only; never training/basis/PC/loss weight/initial guess",
+  "fresh_test_pool": "seed420620 UNCONSUMED_NOT_READ",
+  "new_solver": false,
+  "new_training": false,
+  "new_global_CSR": false,
+  "new_global_factor": false,
+  "shared_workstation": true
+}

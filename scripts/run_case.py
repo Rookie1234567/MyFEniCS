@@ -50,7 +50,8 @@ def main(argv: list[str] | None = None) -> int:
         from src.io.neural_fe_interface import load_interface
         from src.io.neural_fe_continuation import load_continuation
         from src.io.neural_fe_calibration import load_calibration
-        specification = load_calibration(args.input_path) or load_continuation(args.input_path) or load_interface(args.input_path)
+        from src.io.frozen_fe_diagnostic import load_diagnostic
+        specification = load_diagnostic(args.input_path) or load_calibration(args.input_path) or load_continuation(args.input_path) or load_interface(args.input_path)
         if specification is None:
             specification = load_and_resolve(args.input_path)
         from src.io.task042_profile import TASK042_PROFILES

@@ -139,6 +139,8 @@ def state_audits(actions, states):
             native_absolute=float(np.linalg.norm(native)),
             native_rhs_norm=float(np.linalg.norm(native_rhs)),
             native_relative=float(np.linalg.norm(native) / np.linalg.norm(native_rhs)),
+            total_augmented_absolute=float(np.linalg.norm(total_residual)),
+            total_rhs_norm=float(np.linalg.norm(a["total_g"])),
             total_augmented_relative=float(
                 np.linalg.norm(total_residual) / np.linalg.norm(a["total_g"])
             ),
@@ -151,7 +153,16 @@ def state_audits(actions, states):
             schur_body_identity=defect(rfe, injected),
             schur_port_identity=defect(rp, r[p.nt :]),
         )
-        cache[name] = dict(z=z, field=field, Sz=Sz, r=r, rfe=rfe, rp=rp, native=native)
+        cache[name] = dict(
+            z=z,
+            field=field,
+            Sz=Sz,
+            r=r,
+            rfe=rfe,
+            rp=rp,
+            native=native,
+            total_residual=total_residual,
+        )
     return cache, records
 
 
@@ -237,5 +248,6 @@ def error_diagnostics(actions, cache, reference_name="REF7"):
             h=h,
             native_port=native_port,
             augmented=original_error_response,
+            default_error=default_error,
         )
     return errors, records

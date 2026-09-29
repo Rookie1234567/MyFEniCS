@@ -44,6 +44,7 @@ TASK042_PROFILES = {
     "task042_v8_scaled_verification": "V8-C2-VERIFY",
     "task042_v8_batch_equivalence": "V8-C3-EQUIVALENCE",
     "task042_v8_batch_microbenchmark": "V8-C3-MICRO",
+    "task042_v9_frozen_error_localization": "V9-D0-D3",
 }
 
 

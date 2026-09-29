@@ -78,6 +78,14 @@ def read_moments():
 
 
 def main():
+    from src.io.frozen_fe_diagnostic import load_diagnostic
+
+    diagnostic = load_diagnostic(sys.argv[1])
+    if diagnostic is not None:
+        from src.runners.frozen_fe_diagnostic import run
+
+        run(diagnostic, Path(sys.argv[2]).resolve())
+        return
     from src.io.neural_fe_calibration import load_calibration
 
     calibration = load_calibration(sys.argv[1])

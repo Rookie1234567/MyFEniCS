@@ -1,0 +1,6 @@
+schema_version = 1
+
+[task042_v9]
+stage = "frozen_error_localization"
+run_id = "task042_v9_frozen_error"
+material_table_id = "SI_OPTICAL_CONSTANTS_USER_20260929_V1"
