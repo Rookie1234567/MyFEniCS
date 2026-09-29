@@ -112,13 +112,6 @@
       "rewritten_output_trace_pair": 2.924798798301525e-11,
       "total_S_calls": 1564,
       "source_sha": "1fb8a949bbed81f34645d96e80c7025a3b22ef4d",
-      "original_moments": {
-        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v6/V6-FE-INTERFACE/task042_v6_geometry_interface_20260929T040548954409Z/packet_q15.npz",
-        "sha256": "72ec5a28dd073b4217fdb36d4bbfe2383c6cda7b232d239da0ae4392292abd42",
-        "source_sha": "2a2cb4af78ba869a26a1254b4b4b76c9ac158366",
-        "q15_q30_qualification_reused": true,
-        "target_material_independent": true
-      },
       "cache": {
         "batch_size": 8,
         "owner_cells": 384,
@@ -672,7 +665,8 @@
         "MPC_mapping": "unchanged canonical masters; original action expands complex slave phases",
         "no_autograd_graph_retained_between_batches": true
       },
-      "reference_arrays_read": false
+      "reference_arrays_read": false,
+      "original_moments_identity": "common_original_moments; unchanged original packet"
     },
     "B0": {
       "least_squares": {
@@ -783,13 +777,6 @@
       "rewritten_output_trace_pair": 2.4899081337755915e-11,
       "total_S_calls": 1564,
       "source_sha": "1fb8a949bbed81f34645d96e80c7025a3b22ef4d",
-      "original_moments": {
-        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v6/V6-FE-INTERFACE/task042_v6_geometry_interface_20260929T040548954409Z/packet_q15.npz",
-        "sha256": "72ec5a28dd073b4217fdb36d4bbfe2383c6cda7b232d239da0ae4392292abd42",
-        "source_sha": "2a2cb4af78ba869a26a1254b4b4b76c9ac158366",
-        "q15_q30_qualification_reused": true,
-        "target_material_independent": true
-      },
       "cache": {
         "batch_size": 8,
         "owner_cells": 384,
@@ -1322,7 +1309,8 @@
         "MPC_mapping": "unchanged canonical masters; original action expands complex slave phases",
         "no_autograd_graph_retained_between_batches": true
       },
-      "reference_arrays_read": false
+      "reference_arrays_read": false,
+      "original_moments_identity": "common_original_moments; unchanged original packet"
     }
   },
   "actual_pilot_supplemental_witnesses": [
@@ -1464,5 +1452,12 @@
   "raw_exact_full_space_optimum_flag_interpretation": "Flag records full numerical rank only. Floating-point least squares and reported first-order residual do not prove exact global optimum or nonlinear network representation bound.",
   "B0_boundary": "seed420906; original hidden initialization, zero output/ports; NN7 weights and accurate reference not read",
   "moment_batch8_unchanged": true,
-  "file_backed_views": "P/W .npy read-only memory maps; resident pages and dense LAPACK copies included in measured tree RSS; no OOC factor"
+  "file_backed_views": "P/W .npy read-only memory maps; resident pages and dense LAPACK copies included in measured tree RSS; no OOC factor",
+  "common_original_moments": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v6/V6-FE-INTERFACE/task042_v6_geometry_interface_20260929T040548954409Z/packet_q15.npz",
+    "sha256": "72ec5a28dd073b4217fdb36d4bbfe2383c6cda7b232d239da0ae4392292abd42",
+    "source_sha": "2a2cb4af78ba869a26a1254b4b4b76c9ac158366",
+    "q15_q30_qualification_reused": true,
+    "target_material_independent": true
+  }
 }
