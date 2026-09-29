@@ -8,15 +8,19 @@ import numpy as np
 
 from src.solvers.bounded_complex_lsqr import lsqr_steps
 from src.solvers.neural_fe_action_packet import array_hash, file_hash
+from src.solvers.optimizer_step_transaction import OptimizerTransaction
 
 
 class RouteStop(Exception):
     pass
 
 
-def optimize_route(design, action, moments, route, artifact, *, wall_seconds=7200):
+def optimize_route(
+    design, action, moments, route, artifact, *, wall_seconds=7200, column_scale=None
+):
     """One zero-scattered run, strict audits and exact work accounting."""
     began = perf_counter()
+    pre_route_action_costs = dict(action.costs)
     artifact = Path(artifact)
     costs = dict(
         setup=0.0,
@@ -28,6 +32,7 @@ def optimize_route(design, action, moments, route, artifact, *, wall_seconds=720
     )
     counts = dict(
         closures=0,
+        closure_calls=0,
         optimizer_updates=0,
         adam_updates=0,
         lbfgs_updates=0,
@@ -40,12 +45,22 @@ def optimize_route(design, action, moments, route, artifact, *, wall_seconds=720
     audits = []
     history = (artifact / "scalar_history.jsonl").open("w", buffering=1)
     current = np.zeros(action.size, dtype=np.complex128)
-    stop_reason = "CLOSURE_BUDGET" if route != "FE-LSQR" else "ACTION_BUDGET"
+    is_lsqr = route in ("FE-LSQR", "FE-LSQR-COLUMN-SCALED")
+    if (route == "FE-LSQR-COLUMN-SCALED") != (column_scale is not None):
+        raise ValueError("column scale is an explicit reviewed LSQR opt-in")
+    scaled_operator = None
+    scaled_y = None
+    if column_scale is not None:
+        from src.solvers.neural_fe_column_scaling import ColumnScaledOperator
+
+        scaled_operator = ColumnScaledOperator(action, column_scale)
+    stop_reason = "ACTION_BUDGET" if is_lsqr else "CLOSURE_BUDGET"
     parameters = None
     model = None
     free = None
     port_parameters = None
     closure_seconds = 0.0
+    transaction = None
 
     def emit(row):
         start = perf_counter()
@@ -68,12 +83,17 @@ def optimize_route(design, action, moments, route, artifact, *, wall_seconds=720
             return values[0] + 1j * values[1]
         return current
 
-    def save_checkpoint(z, *, final=False):
+    def save_checkpoint(z, *, final=False, state_kind="LAST_COMPLETED_OUTER_STEP"):
         start = perf_counter()
         data = dict(
             z=np.asarray(z),
             closures=np.array(counts["closures"]),
             optimizer_updates=np.array(counts["optimizer_updates"]),
+            state_kind=np.array(state_kind),
+            closure_count_meaning=np.array("CONSUMED_NOT_PARAMETER_BOUNDARY"),
+            checkpoint_qualification=np.array(
+                "PARAMETER_ONLY_CHECKPOINT_NOT_RESUMABLE"
+            ),
         )
         if model is not None:
             from src.solvers.neural_trace_checks import parameters as model_parameters
@@ -82,16 +102,29 @@ def optimize_route(design, action, moments, route, artifact, *, wall_seconds=720
             data["port_parameters"] = port_parameters.detach().numpy()
         elif free is not None:
             data["free_parameters"] = free.detach().numpy()
-        path = artifact / ("frozen_state.npz" if final else "latest_checkpoint.npz")
+        if scaled_y is not None:
+            data["scaled_y"] = scaled_y
+        path = artifact / (
+            "frozen_state.npz"
+            if final
+            else "latest_trial_checkpoint.npz"
+            if state_kind == "TRIAL_CLOSURE_OBSERVATION"
+            else "latest_checkpoint.npz"
+        )
         np.savez(path, **data)
         costs["io"] += perf_counter() - start
         return path
 
-    def full_audit(z, tag):
+    def full_audit(z, tag, state_kind="LAST_COMPLETED_OUTER_STEP"):
         result = action.audit(z)
         audits.append(
             dict(
                 tag=tag,
+                state_kind=state_kind,
+                outer_id=transaction.attempts if transaction else 0,
+                acceptance="UNKNOWN_NOT_COMMITTED"
+                if state_kind == "TRIAL_CLOSURE_OBSERVATION"
+                else "DECLARED_BOUNDARY",
                 closures=counts["closures"],
                 updates=counts["optimizer_updates"],
                 lsqr_iterations=counts["lsqr_iterations"],
@@ -100,7 +133,7 @@ def optimize_route(design, action, moments, route, artifact, *, wall_seconds=720
             )
         )
         emit(dict(kind="audit", **audits[-1]))
-        save_checkpoint(z)
+        save_checkpoint(z, state_kind=state_kind)
         print(
             json.dumps(
                 dict(
@@ -119,7 +152,7 @@ def optimize_route(design, action, moments, route, artifact, *, wall_seconds=720
 
     try:
         setup_start = perf_counter()
-        if route != "FE-LSQR":
+        if not is_lsqr:
             import torch
 
             if route == "NEURAL-TRACE":
@@ -153,14 +186,16 @@ def optimize_route(design, action, moments, route, artifact, *, wall_seconds=720
                 "all routes must start at zero scattered trace and zero ports"
             )
         initial_z_sha256 = array_hash(current)
-        if full_audit(current, "initial"):
+        if full_audit(current, "initial", "INITIAL_COMMITTED_STATE"):
             stop_reason = "STRICT_RESIDUAL_PASS"
             raise RouteStop
-        if route != "FE-LSQR":
+        if not is_lsqr:
             adam = torch.optim.Adam(parameters, lr=0.001, weight_decay=0)
+            transaction = OptimizerTransaction(parameters)
 
             def closure():
                 nonlocal current, closure_seconds, stop_reason
+                counts["closure_calls"] += 1
                 if counts["closures"] >= 2000 or perf_counter() >= deadline:
                     stop_reason = (
                         "WALL_BUDGET"
@@ -212,6 +247,9 @@ def optimize_route(design, action, moments, route, artifact, *, wall_seconds=720
                     emit(
                         dict(
                             kind="closure",
+                            state_kind="TRIAL_CLOSURE_OBSERVATION",
+                            outer_id=transaction.attempts,
+                            acceptance="UNKNOWN_NOT_COMMITTED",
                             closure=counts["closures"],
                             updates=counts["optimizer_updates"],
                             loss=loss,
@@ -222,20 +260,35 @@ def optimize_route(design, action, moments, route, artifact, *, wall_seconds=720
                             elapsed_seconds=perf_counter() - began,
                         )
                     )
-                    if counts["closures"] % 25 == 0 and full_audit(current, "closure"):
+                    if counts["closures"] % 25 == 0 and full_audit(
+                        current, "closure", "TRIAL_CLOSURE_OBSERVATION"
+                    ):
                         stop_reason = "STRICT_RESIDUAL_PASS"
                         raise RouteStop
                     return torch.tensor(loss, dtype=torch.float64)
                 finally:
                     closure_seconds += perf_counter() - start
 
-            for _ in range(500):
+            def adam_operation():
                 closure()
-                start = perf_counter()
                 adam.step()
-                costs["optimizer_excluding_closures"] += perf_counter() - start
                 counts["optimizer_updates"] += 1
                 counts["adam_updates"] += 1
+
+            for _ in range(500):
+                start = perf_counter()
+                old_closure_seconds = closure_seconds
+                try:
+                    transaction.step(
+                        adam, adam_operation, phase="ADAM", counts=lambda: counts
+                    )
+                finally:
+                    costs["optimizer_excluding_closures"] += max(
+                        0.0,
+                        perf_counter()
+                        - start
+                        - (closure_seconds - old_closure_seconds),
+                    )
             lbfgs = torch.optim.LBFGS(
                 parameters,
                 lr=1.0,
@@ -246,11 +299,20 @@ def optimize_route(design, action, moments, route, artifact, *, wall_seconds=720
                 tolerance_grad=1e-7,
                 tolerance_change=1e-9,
             )
+
+            def lbfgs_operation():
+                value = lbfgs.step(closure)
+                counts["optimizer_updates"] += 1
+                counts["lbfgs_updates"] += 1
+                return value
+
             while counts["closures"] < 2000:
                 start = perf_counter()
                 old_closure_seconds = closure_seconds
                 try:
-                    lbfgs.step(closure)
+                    transaction.step(
+                        lbfgs, lbfgs_operation, phase="LBFGS", counts=lambda: counts
+                    )
                 finally:
                     costs["optimizer_excluding_closures"] += max(
                         0.0,
@@ -258,17 +320,24 @@ def optimize_route(design, action, moments, route, artifact, *, wall_seconds=720
                         - start
                         - (closure_seconds - old_closure_seconds),
                     )
-                counts["optimizer_updates"] += 1
-                counts["lbfgs_updates"] += 1
         else:
-            for iteration, z, estimated in lsqr_steps(
-                action.apply, lambda x: action.apply(x, adjoint=True), action.a["b"]
-            ):
-                current = z
+            forward = scaled_operator.apply if scaled_operator else action.apply
+            adjoint = (
+                scaled_operator.adjoint
+                if scaled_operator
+                else lambda x: action.apply(x, adjoint=True)
+            )
+            for iteration, z, estimated in lsqr_steps(forward, adjoint, action.a["b"]):
+                scaled_y = z if scaled_operator else None
+                current = scaled_operator.recover(z) if scaled_operator else z
                 counts["lsqr_iterations"] = iteration
                 emit(
                     dict(
                         kind="lsqr",
+                        state_kind="LSQR_ITERATE",
+                        outer_id=0,
+                        closure_id=None,
+                        acceptance="RECURRENCE_COMPLETED",
                         iteration=iteration,
                         estimated_relative=estimated / action.bnorm,
                         S=action.counts["S"],
@@ -276,7 +345,7 @@ def optimize_route(design, action, moments, route, artifact, *, wall_seconds=720
                         elapsed_seconds=perf_counter() - began,
                     )
                 )
-                if iteration % 25 == 0 and full_audit(current, "lsqr"):
+                if iteration % 25 == 0 and full_audit(current, "lsqr", "LSQR_ITERATE"):
                     stop_reason = "STRICT_RESIDUAL_PASS"
                     break
                 # Includes audits and initial S^H, leaving one final S audit.
@@ -294,16 +363,28 @@ def optimize_route(design, action, moments, route, artifact, *, wall_seconds=720
         pass
     finally:
         current = state_z()
-        final_pass = full_audit(current, "final")
-        frozen = save_checkpoint(current, final=True)
+        final_kind = (
+            "LSQR_ITERATE"
+            if is_lsqr
+            else transaction.committed["state_kind"]
+            if transaction and transaction.committed
+            else "INITIAL_COMMITTED_STATE"
+        )
+        final_pass = full_audit(current, "final", final_kind)
+        frozen = save_checkpoint(current, final=True, state_kind=final_kind)
+        start_io = perf_counter()
+        optimizer_states = transaction.save(artifact) if transaction else None
+        costs["io"] += perf_counter() - start_io
         history.close()
     if final_pass:
         stop_reason = "STRICT_RESIDUAL_PASS"
+    elif stop_reason == "STRICT_RESIDUAL_PASS":
+        stop_reason = "STRICT_TRIAL_OBSERVED_COMMITTED_STATE_NOT_QUALIFIED"
     wall = perf_counter() - began
     costs.update(
-        S_all=action.costs["S"],
-        SH_all=action.costs["SH"],
-        audit_excluding_S=action.costs["audit"],
+        S_all=action.costs["S"] - pre_route_action_costs["S"],
+        SH_all=action.costs["SH"] - pre_route_action_costs["SH"],
+        audit_excluding_S=action.costs["audit"] - pre_route_action_costs["audit"],
     )
     costs["other_control"] = max(0.0, wall - sum(costs.values()))
     return dict(
@@ -325,13 +406,19 @@ def optimize_route(design, action, moments, route, artifact, *, wall_seconds=720
             path=str(artifact / "scalar_history.jsonl"),
             sha256=file_hash(artifact / "scalar_history.jsonl"),
         ),
+        state_kind=final_kind,
+        optimizer_states=optimizer_states,
+        stopped_trial_never_promoted_to_committed=True,
+        V7_acceptance_semantics="V7_ACCEPTANCE_STATE_UNKNOWN; old vectors and audits unchanged",
         costs_exclusive_seconds=costs,
         closure_wall_seconds_nested_not_additive=closure_seconds,
         route_wall_seconds=wall,
         wall_limit_seconds=7200,
         finalization_reserve_seconds=60,
         closure_limit=2000,
-        paired_action_limit=2000 if route == "FE-LSQR" else None,
+        paired_action_limit=2000 if is_lsqr else None,
+        column_scaling=column_scale is not None,
+        pre_route_action_costs_seconds=pre_route_action_costs,
         full_complex_ports=action.np,
         independent_complex_trace=action.nt,
         global_FE_matrix=False,

@@ -38,6 +38,12 @@ TASK042_PROFILES = {
     "task042_v7_fe_lsqr": "V7-M2-LSQR",
     "task042_v7_same_mesh_p3_reference": "V7-M3-REFERENCE",
     "task042_v7_same_mesh_p3_verification": "V7-M3-VERIFY",
+    "task042_v8_reuse_inventory": "V8-C0",
+    "task042_v8_column_setup": "V8-C2-SETUP",
+    "task042_v8_scaled_lsqr": "V8-C2-LSQR",
+    "task042_v8_scaled_verification": "V8-C2-VERIFY",
+    "task042_v8_batch_equivalence": "V8-C3-EQUIVALENCE",
+    "task042_v8_batch_microbenchmark": "V8-C3-MICRO",
 }
 
 

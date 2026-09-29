@@ -78,6 +78,14 @@ def read_moments():
 
 
 def main():
+    from src.io.neural_fe_calibration import load_calibration
+
+    calibration = load_calibration(sys.argv[1])
+    if calibration is not None:
+        from src.runners.neural_fe_calibration import run
+
+        run(calibration, Path(sys.argv[2]).resolve())
+        return
     specification = load_continuation(sys.argv[1])
     directory = Path(sys.argv[2]).resolve()
     source = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()

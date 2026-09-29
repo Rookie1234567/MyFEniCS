@@ -1,0 +1,98 @@
+{
+  "schema": "task042.calibration.v8",
+  "batch": "V8_SCALING_AND_EXECUTION_CALIBRATION",
+  "review_commit": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "design": {
+    "path": "input/task042_neural_coarse_inverse/neural_fe_design_v7.json",
+    "sha256": "17792c1b5f003e7114d9a69fea8481cd195e92666e46ef950302e3dc85308c3b"
+  },
+  "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+  "mode_manifest_sha256": "93795b53d7c5aef69af66b4ff0a56fa46515771f1ec43332ec929970270ea262",
+  "material_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+  "budget": {
+    "V7_cumulative_seconds": 8751.379832064034,
+    "V8_limit_seconds": 14400,
+    "cumulative_limit_seconds": 36000,
+    "setup_seconds": 3600,
+    "scaled_lsqr_seconds": 7200
+  },
+  "scaling": {
+    "candidate": "FE-LSQR-COLUMN-SCALED",
+    "definition": "assembled-column 2-norm; D=1/c; z=Dy; adjoint=D^H S^H",
+    "columns": [
+      0,
+      3628,
+      6048,
+      9072,
+      18142,
+      18143,
+      18144,
+      18183
+    ],
+    "csr_vector_seeds": [
+      420910,
+      420911,
+      420912
+    ],
+    "scaled_action_seed": 420913,
+    "paired_action_limit": 2000,
+    "audit_interval": 25,
+    "zero_start": true,
+    "row_scaling": false,
+    "clipping": false,
+    "damping": false,
+    "reference_in_setup": false,
+    "reference_in_candidate": false
+  },
+  "batch_execution": {
+    "candidate_batch": 8,
+    "baseline_batch": 1,
+    "new_persistent_cache_limit_bytes": 536870912,
+    "precision": "float64/complex128",
+    "points_deleted": false,
+    "state_order": [
+      "ZERO_INITIALIZATION",
+      "V6_NONZERO_INTERFACE_OR_REGISTERED_FALLBACK",
+      "V7_FROZEN_NEURAL"
+    ],
+    "fallback_nonzero_seed": 420908,
+    "fallback_scale": 0.005,
+    "nonzero_port_seed": 420914,
+    "nonzero_port_scale": 0.002,
+    "FD_direction_seed": 420907,
+    "FD_steps": [
+      0.0001,
+      1e-05,
+      1e-06
+    ],
+    "benchmark_state": "V7_FROZEN_NEURAL",
+    "pair_orders": [
+      [
+        1,
+        8
+      ],
+      [
+        8,
+        1
+      ],
+      [
+        1,
+        8
+      ]
+    ],
+    "warmups": 1,
+    "measured_closures": 5,
+    "parameter_updates_in_benchmark": 0
+  },
+  "gates": {
+    "action_relative": 1e-10,
+    "equivalence_relative": 1e-10,
+    "equivalence_absolute_near_zero": 1e-12,
+    "finite_difference_stable_relative": 1e-05,
+    "research_schur": 0.007160258,
+    "research_native": 0.0028727752,
+    "research_scattered_L2": 0.5,
+    "strict_scattered_L2": 0.0001,
+    "performance_median_fraction": 0.8
+  }
+}

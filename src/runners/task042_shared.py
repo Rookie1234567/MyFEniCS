@@ -419,6 +419,7 @@ class SharedHealth:
 
 
 def launch(specification):
+    launch_began = time.perf_counter()
     if Path.cwd().resolve() != ROOT or os.environ.get("TASK042_ACTIVATION") != "1":
         raise RuntimeError("Task042 local activation required")
     if (
@@ -438,6 +439,12 @@ def launch(specification):
         remaining_budget = budget_snapshot()["remaining_seconds"]
         if remaining_budget <= 0:
             raise RuntimeError("V6+V7 cumulative numerical budget exhausted")
+    if stage.startswith("V8-"):
+        expected_mode = specification.derived["environment_mode"]
+        from src.io.neural_fe_calibration import budget_snapshot
+        remaining_budget = budget_snapshot()["remaining_seconds"]
+        if remaining_budget <= 0:
+            raise RuntimeError("V8/cumulative numerical budget exhausted")
     if os.environ.get("TASK042_ENV_MODE") != expected_mode:
         raise RuntimeError(
             f"Task042 {stage} requires independent {expected_mode} environment"
@@ -447,7 +454,7 @@ def launch(specification):
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         baseline = audit(
             observed_activity=stage in ("V3-reuse", "V3-overlap")
-            or stage.startswith(("V4-", "V5-", "V6-", "V7-"))
+            or stage.startswith(("V4-", "V5-", "V6-", "V7-", "V8-"))
         )
         os.sched_setaffinity(0, {baseline["cpu"]})
         os.nice(10)
@@ -494,6 +501,13 @@ def launch(specification):
                          physical_hash_meaning=specification.derived["identity_hash_meaning"],
                          material_status="MATERIAL_READY_USER_SUPPLIED",
                          formal_pde=stage != "V7-M0")
+        if stage.startswith("V8-"):
+            state.update(physical_model_complete=True,
+                         physical_operator_sha256=specification.physical_model_sha256,
+                         physical_hash_meaning=specification.derived["identity_hash_meaning"],
+                         material_status="MATERIAL_READY_USER_SUPPLIED",
+                         plan_sha256=specification.derived["plan_sha256"],
+                         formal_pde=False, formal_fe_stage=expected_mode == "fe")
         write_json(directory / "run_manifest.json", state)
         for filename, text in (
             ("source_sha.txt", source),
@@ -509,7 +523,7 @@ def launch(specification):
             else "src.runners.neural_fe_interface"
             if stage.startswith("V6-")
             else "src.runners.neural_fe_continuation"
-            if stage.startswith("V7-")
+            if stage.startswith(("V7-", "V8-"))
             else "src.runners.task042_experiment",
             str(specification.source_path),
             str(directory),
@@ -517,7 +531,7 @@ def launch(specification):
         result = supervise(
             command,
             directory / "supervision",
-            wall_seconds=min(specification.execution["timeout_seconds"], remaining_budget) if stage.startswith("V7-") else 600 if stage.startswith("V6-") else 10800,
+            wall_seconds=min(specification.execution["timeout_seconds"], remaining_budget) if stage.startswith(("V7-", "V8-")) else 600 if stage.startswith("V6-") else 10800,
             interval=0.5,
             source_state=state,
             worker_environment={"TASK042_WATCHDOG_PARENT_PID": str(os.getpid())},
@@ -531,6 +545,8 @@ def launch(specification):
             stop_on_global_swap=False,
         )
         result.update(directory=str(directory), stage=stage, shared_workstation=True)
+        if stage.startswith("V8-"):
+            result["launch_wall_seconds"] = time.perf_counter() - launch_began
         write_json(directory / "run_summary.json", result)
         if stage.startswith("V4-"):
             from src.io.task042_v4_gate import publish
