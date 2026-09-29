@@ -1,0 +1,180 @@
+{
+  "schema": "task42extra.full-feinn-design.v1",
+  "task": "Task42extra",
+  "base_sha": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "wavelength_nm": 5.0,
+  "geometry": {
+    "bounds_nm": [
+      [
+        -5,
+        5
+      ],
+      [
+        -3.75,
+        3.75
+      ],
+      [
+        -1.25,
+        8.75
+      ]
+    ],
+    "substrate_z_nm": 0,
+    "block_bounds_nm": [
+      [
+        -2.5,
+        2.5
+      ],
+      [
+        -3.75,
+        3.75
+      ],
+      [
+        0,
+        7.5
+      ]
+    ],
+    "notch_bounds_nm": [
+      [
+        0,
+        2.5
+      ],
+      [
+        -1.25,
+        1.25
+      ],
+      [
+        2.5,
+        5
+      ]
+    ],
+    "cells": [
+      8,
+      6,
+      8
+    ],
+    "step_nm": 1.25
+  },
+  "materials": {
+    "material_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+    "si_n": [
+      0.99396854453,
+      0.00435380777
+    ]
+  },
+  "incidence": {
+    "grazing_deg": 1.0,
+    "azimuth_deg": 0.0,
+    "polarization": "s",
+    "amplitude": 1.0,
+    "background": "layered"
+  },
+  "finite_element": {
+    "family": "N1curl",
+    "cell": "hexahedron",
+    "degree": 3,
+    "operator_quadrature_degree": 15
+  },
+  "boundary": {
+    "floquet_xy": true,
+    "dtn": "complete original auto_propagating Fourier-DtN",
+    "pml": false
+  },
+  "network": {
+    "sizes": [
+      3,
+      64,
+      64,
+      64,
+      6
+    ],
+    "seed": 421001,
+    "witness_seed": 421002,
+    "dtype": "float64",
+    "activation": "tanh",
+    "last_layer": "zero",
+    "carriers": 0,
+    "expected_parameters": 8966
+  },
+  "moments": {
+    "quadrature_sequence": [
+      15,
+      30,
+      60
+    ],
+    "relative_tolerance": 1e-08,
+    "batch_cells": 8,
+    "owner": "first native cell for every independent edge/face/interior coefficient"
+  },
+  "riesz": {
+    "ell_nm": 5.0,
+    "label": "RESEARCH_ONLY_GLOBAL_RIESZ_FACTOR",
+    "solve_relative_tolerance": 1e-11,
+    "planning_cap_bytes": 12884901888,
+    "factor_payload_cap_bytes": 6442450944,
+    "backend": "CHOLMOD sparse Hermitian Cholesky; symbolic gate before numeric"
+  },
+  "optimizer": {
+    "adam_updates": 500,
+    "adam_lr": 0.001,
+    "weight_decay": 0.0,
+    "lbfgs_history": 20,
+    "lbfgs_initial_step": 1.0,
+    "line_search": "strong_wolfe",
+    "total_closures_limit": 4000,
+    "route_wall_seconds": 10800,
+    "final_reserve_seconds": 120,
+    "lbfgs_outer_max_iter": 20
+  },
+  "routes": [
+    "FEINN-EUC",
+    "FEINN-DUAL",
+    "FREE-FE-DUAL"
+  ],
+  "near_zero": {
+    "vector_denominator": "max(norm(reference), 1e-12*nonzero natural scale)",
+    "E_natural_scale": "incident amplitude 1 times sqrt(domain volume in nm^3)",
+    "scaled_curl_natural_scale": "same incident E scale",
+    "selected_E_scale": 1.0,
+    "selected_H_code_scale": 1.0,
+    "port_scale": "incident ordered amplitude norm",
+    "report_absolute_and_denominator": true,
+    "phase_fit": false
+  },
+  "resources": {
+    "mpi": 1,
+    "math_threads": 1,
+    "torch_intraop": 1,
+    "torch_interop": 1,
+    "cpu_only": true,
+    "rss_hard_gib": 16,
+    "rss_warn_gib": 12,
+    "own_swap_bytes": 0,
+    "numerical_batch_wall_seconds": 57600,
+    "neighbor_growth_gib": 384,
+    "light_rss_gib": 2,
+    "sample_seconds": 0.5
+  },
+  "capacity_derived": {
+    "cells": 384,
+    "full_fe_rows": 34050,
+    "independent_all_fe_rows": 31968,
+    "independent_trace_rows": 18144,
+    "interior_rows": 13824,
+    "periodic_slaves": 2082,
+    "local_tensor_bytes_upper": 127401984,
+    "moment_q15_reference_points_upper": 992,
+    "factor_is_not_Maxwell": true,
+    "Gram_CSR_symbolic_counts_not_yet_measured": true
+  },
+  "target": {
+    "status": "TARGET_IDENTITY_NOT_FROZEN",
+    "wavelength_nm": 5,
+    "period_nm": [
+      50,
+      25
+    ],
+    "height_nm": 120,
+    "current_round_target_PDE_authorized": false,
+    "0p7nm_qualification": "NOT_QUALIFIED"
+  }
+}

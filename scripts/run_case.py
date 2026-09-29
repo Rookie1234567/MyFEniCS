@@ -36,6 +36,18 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
+        from src.io.feinn_pilot import load_pilot
+        pilot = load_pilot(args.input_path)
+        if pilot is not None:
+            if args.setup_only or args.physical_pc_profile or args.profile_budget_ledger:
+                raise InputError('Task42extra requires one explicit dat stage')
+            if args.validate_only or args.dry_run:
+                print(json.dumps(pilot.as_jsonable(),sort_keys=True))
+                return 0
+            from src.runners.feinn_workflow import launch
+            result = launch(pilot)
+            print(json.dumps(result,sort_keys=True))
+            return 0 if result['classification']=='COMPLETED' and result['leader_exit_code']==0 else 3
         if args.profile_recovery_from is not None and args.physical_pc_profile is None:
             raise InputError('--profile-recovery-from requires --physical-pc-profile')
         if args.setup_only and (

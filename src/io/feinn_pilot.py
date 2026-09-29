@@ -1,0 +1,86 @@
+"""Strict opt-in one-run inputs for the frozen full-FE 5 nm experiment."""
+
+import hashlib
+import json
+from pathlib import Path
+import tomllib
+
+from src.io.input_loader import InputError
+from src.io.run_specification import RunSpecification
+
+ROOT = Path(__file__).resolve().parents[2]
+DESIGN = ROOT / "input/task042extra_feinn_5nm/design_v1.json"
+STAGES = {
+    "e1_smoke": ("fe", 1800),
+    "e1_fe": ("fe", 3600),
+    "e1_grad": ("ml", 7200),
+    "FEINN-EUC": ("ml", 10800),
+    "FEINN-DUAL": ("ml", 10800),
+    "FREE-FE-DUAL": ("ml", 10800),
+    "e3_reference": ("fe", 3600),
+    "e4_p4": ("fe", 3600),
+}
+
+
+def load_pilot(path):
+    path = Path(path).resolve()
+    try:
+        raw = path.read_bytes()
+    except OSError:
+        return None
+    if b"[task42extra]" not in raw:
+        return None
+    try:
+        config = tomllib.loads(raw.decode())
+    except (UnicodeError, tomllib.TOMLDecodeError) as error:
+        raise InputError(str(error)) from error
+    if (
+        set(config) != {"schema_version", "task42extra"}
+        or config["schema_version"] != 1
+    ):
+        raise InputError("Task42extra accepts only one frozen explicit stage")
+    item = config["task42extra"]
+    if set(item) != {"stage", "run_id", "design_sha256"} or item["stage"] not in STAGES:
+        raise InputError("Task42extra stage inventory mismatch")
+    if (
+        not isinstance(item["run_id"], str)
+        or not item["run_id"].startswith("task42extra_")
+        or Path(item["run_id"]).name != item["run_id"]
+    ):
+        raise InputError("Task42extra local run_id required")
+    digest = hashlib.sha256(DESIGN.read_bytes()).hexdigest()
+    if item["design_sha256"] != digest:
+        raise InputError("frozen design SHA mismatch")
+    design = json.loads(DESIGN.read_text())
+    mode, seconds = STAGES[item["stage"]]
+    return RunSpecification(
+        identity=dict(model_id="M5-full-p3", run_id=item["run_id"]),
+        geometry=design["geometry"],
+        materials=design["materials"],
+        incidence=design["incidence"],
+        discretization=design["finite_element"],
+        boundary=design["boundary"],
+        method=dict(kind="research_full_FEINN", stage=item["stage"]),
+        solver=dict(preconditioner="task42extra_full_fe_opt_in"),
+        execution=dict(
+            mpi_size=1,
+            math_threads=1,
+            timeout_seconds=seconds,
+            warning_memory_gib=12,
+            terminate_memory_gib=16,
+            require_zero_swap=True,
+        ),
+        output=dict(results_root="results/task42extra"),
+        derived=dict(
+            stage=item["stage"],
+            environment_mode=mode,
+            design_path=str(DESIGN),
+            design_sha256=digest,
+            identity_hash_meaning="frozen design; actual mesh/operator hashes bound after export",
+        ),
+        source_path=path,
+        raw_input_bytes=raw,
+        input_sha256=hashlib.sha256(raw).hexdigest(),
+        physical_model_sha256=digest,
+        expected_output_parent=ROOT / "results/task42extra",
+    )
