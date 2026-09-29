@@ -47,6 +47,12 @@ _V30_WORKSTATION_GUIDED_RUN_ID = "task39extra_v30_workstation_guided_original_h7
 _V30_WORKSTATION_GUIDED_COMPARISON_GROUP = "review_v28_workstation_guided_local_v30"
 _V31_PROJECTION_LAYOUT_RUN_ID = "task39extra_v31_projection_layout_original_h7p5_v1"
 _V31_PROJECTION_LAYOUT_COMPARISON_GROUP = "review_v29_evidence_and_projection_v31"
+_V31_AUTHORIZED_FRESH_RUN_ID = (
+    "task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1"
+)
+_V31_AUTHORIZED_FRESH_COMPARISON_GROUP = (
+    "review_v29_evidence_and_projection_v31_user_authorized_fresh_20260929"
+)
 
 
 def _error(path: str, message: str) -> InputError:
@@ -1082,13 +1088,21 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                         "V30 profile requires its frozen run_id and comparison_group",
                     )
                 if is_v31_projection_layout and (
-                    config["run_id"] != _V31_PROJECTION_LAYOUT_RUN_ID
-                    or config.get("comparison_group")
-                    != _V31_PROJECTION_LAYOUT_COMPARISON_GROUP
+                    (config["run_id"], config.get("comparison_group"))
+                    not in {
+                        (
+                            _V31_PROJECTION_LAYOUT_RUN_ID,
+                            _V31_PROJECTION_LAYOUT_COMPARISON_GROUP,
+                        ),
+                        (
+                            _V31_AUTHORIZED_FRESH_RUN_ID,
+                            _V31_AUTHORIZED_FRESH_COMPARISON_GROUP,
+                        ),
+                    }
                 ):
                     raise _error(
                         "identity",
-                        "V31 profile requires its frozen run_id and comparison_group",
+                        "V31 profile requires an explicitly allowed run_id and comparison_group",
                     )
                 stage = solver.get("stage")
                 if stage != "Q4_ORIGINAL":

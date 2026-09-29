@@ -46,6 +46,24 @@ PopenFactory = Callable[..., Any]
 SampleFactory = Callable[[int], dict[str, Any]]
 TerminateFactory = Callable[[Any], dict[str, Any]]
 
+V31_PROJECTION_LAYOUT_RUN_ID = "task39extra_v31_projection_layout_original_h7p5_v1"
+V31_PROJECTION_LAYOUT_COMPARISON_GROUP = "review_v29_evidence_and_projection_v31"
+V31_AUTHORIZED_COMPLETION_RUN_ID = (
+    "task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1"
+)
+V31_AUTHORIZED_COMPLETION_COMPARISON_GROUP = (
+    "review_v29_evidence_and_projection_v31_user_authorized_fresh_20260929"
+)
+V31_AUTHORIZED_COMPLETION_RECORD = Path(
+    "docs/task039_extra_physical_multilevel/outcomes/records/"
+    "v31_user_authorized_completion_rerun_20260929.json"
+)
+V31_PROJECTION_LAYOUT_LEDGER_SCHEMA = (
+    "task039extra.v31.projection-layout.shared-workflow-ledger.v1"
+)
+V31_PROJECTION_LAYOUT_BATCH_IDENTITY = "review_v29_evidence_and_projection_v31"
+V31_WORKFLOW_BUDGET_SECONDS = 43200.0
+
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -2956,6 +2974,7 @@ def _reserve_a4_tensor_h6_budget(
     schema: str,
     error_prefix: str,
     summary_filename: str,
+    authorized_performance_repeat: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Reserve one fresh original-model attempt in an independent batch ledger."""
 
@@ -2967,6 +2986,22 @@ def _reserve_a4_tensor_h6_budget(
         raise InputError(
             f"{error_prefix} formal reservation requires the existing user service cgroup"
         )
+    authorized_repeat = (
+        dict(authorized_performance_repeat)
+        if authorized_performance_repeat is not None
+        else None
+    )
+    if authorized_repeat is not None and (
+        error_prefix != "V31"
+        or authorized_repeat.get("authorization_id")
+        != "user_authorized_v31_completion_rerun_20260929"
+        or authorized_repeat.get("classification")
+        != "USER_AUTHORIZED_COMPLETION_RERUN"
+        or authorized_repeat.get("run_id") != V31_AUTHORIZED_COMPLETION_RUN_ID
+        or authorized_repeat.get("reserved_workflow_seconds") != V31_WORKFLOW_BUDGET_SECONDS
+        or authorized_repeat.get("budget_extension_seconds") != 0.0
+    ):
+        raise InputError(f"{error_prefix} completion rerun reservation authorization is invalid")
     repo_root = Path(repo_root).resolve()
     path = (
         repo_root / "benchmarks" / "artifacts" / "task39extra"
@@ -2982,12 +3017,14 @@ def _reserve_a4_tensor_h6_budget(
         "r1_probe_replay": False,
     }
     path.parent.mkdir(parents=True, exist_ok=True)
+    if authorized_repeat is not None and not path.is_file():
+        raise InputError("V31 completion rerun requires the preserved original ledger")
     if path.exists():
         ledger = json.loads(path.read_text(encoding="utf-8"))
         if (
             ledger.get("schema") != schema
             or ledger.get("batch_identity") != batch_identity
-            or ledger.get("total_budget_seconds") != 43200.0
+            or ledger.get("total_budget_seconds") != V31_WORKFLOW_BUDGET_SECONDS
             or ledger.get("allowed_stages") != ["Q4_ORIGINAL"]
         ):
             raise InputError(f"{error_prefix} shared ledger identity or budget changed")
@@ -3019,6 +3056,7 @@ def _reserve_a4_tensor_h6_budget(
         summary_filename=summary_filename,
         prerequisite=prerequisite,
         bug_replay_limit=1,
+        authorized_performance_repeat=authorized_repeat,
     )
 
 
@@ -3061,15 +3099,102 @@ def _reserve_v31_projection_layout_budget(
     run_directory: Path,
     **kwargs: Any,
 ) -> dict[str, Any]:
+    repo_root = Path(repo_root).resolve()
+    run_id = kwargs.pop("run_id", None)
+    comparison_group = kwargs.pop("comparison_group", None)
+    input_sha256 = kwargs.pop("input_sha256", None)
+    authorized_repeat = None
+    if run_id == V31_PROJECTION_LAYOUT_RUN_ID:
+        if comparison_group != V31_PROJECTION_LAYOUT_COMPARISON_GROUP:
+            raise InputError("V31 original run identity changed")
+    elif run_id == V31_AUTHORIZED_COMPLETION_RUN_ID:
+        record_path = repo_root / V31_AUTHORIZED_COMPLETION_RECORD
+        try:
+            record = json.loads(record_path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise InputError("V31 completion rerun authorization record is unavailable") from exc
+        if (
+            record.get("authorization_id") != "user_authorized_v31_completion_rerun_20260929"
+            or record.get("classification") != "USER_AUTHORIZED_COMPLETION_RERUN"
+            or record.get("run_id") != run_id
+            or record.get("comparison_group") != comparison_group
+            or comparison_group != V31_AUTHORIZED_COMPLETION_COMPARISON_GROUP
+            or record.get("new_input_sha256") != input_sha256
+            or record.get("allowed_runs") != 1
+            or record.get("workflow_reservation_seconds") != V31_WORKFLOW_BUDGET_SECONDS
+            or record.get("budget_extension_seconds") != 0.0
+            or record.get("bug_replay") is not False
+        ):
+            raise InputError("V31 completion rerun identity or one-run authorization changed")
+        ledger_path = (
+            repo_root / "benchmarks/artifacts/task39extra/projection_layout_v31"
+            / V31_PROJECTION_LAYOUT_BATCH_IDENTITY / "shared_workflow_ledger.json"
+        )
+        try:
+            ledger_bytes = ledger_path.read_bytes()
+            ledger = json.loads(ledger_bytes.decode("utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise InputError("V31 completion rerun requires the original shared ledger") from exc
+        if hashlib.sha256(ledger_bytes).hexdigest() != record.get("prior_ledger_sha256"):
+            raise InputError("V31 original ledger identity changed")
+        stage_record = ledger.get("stages", {}).get("Q4_ORIGINAL", {})
+        attempts = stage_record.get("attempts", [])
+        if (
+            ledger.get("schema") != V31_PROJECTION_LAYOUT_LEDGER_SCHEMA
+            or ledger.get("batch_identity") != V31_PROJECTION_LAYOUT_BATCH_IDENTITY
+            or ledger.get("total_budget_seconds") != V31_WORKFLOW_BUDGET_SECONDS
+            or ledger.get("fresh_worker_count") != 1
+            or ledger.get("unique_bug_replay_count") != 0
+            or ledger.get("authorized_performance_repeats")
+            or stage_record.get("active_attempt") is not None
+            or not isinstance(attempts, list)
+            or len(attempts) != 1
+        ):
+            raise InputError("V31 ledger no longer has the one settled original attempt")
+        previous = attempts[0]
+        if (
+            previous.get("status") != "USER_CONTROLLED_STOP"
+            or previous.get("watchdog_classification") != "USER_CONTROLLED_STOP"
+            or previous.get("replay") is not False
+            or previous.get("bug_replay_count_before") != 0
+            or previous.get("settled_seconds") != ledger.get("elapsed_seconds")
+            or previous.get("settled_seconds")
+            != record.get("prior_attempt", {}).get("measured_elapsed_seconds")
+        ):
+            raise InputError("V31 prior USER_CONTROLLED_STOP or measured cost changed")
+        if run_id not in str(run_directory):
+            raise InputError("V31 completion rerun needs a distinct output identity")
+        authorized_repeat = {
+            "authorization_id": record["authorization_id"],
+            "classification": record["classification"],
+            "scope": "completion_rerun_after_user_controlled_stop",
+            "run_id": run_id,
+            "comparison_group": comparison_group,
+            "reason": record.get("reason"),
+            "prior_ledger_sha256": record["prior_ledger_sha256"],
+            "previous_status": "USER_CONTROLLED_STOP",
+            "previous_measured_elapsed_seconds": previous["settled_seconds"],
+            "input_sha256": input_sha256,
+            "authorization_record_sha256": hashlib.sha256(
+                record_path.read_bytes()
+            ).hexdigest(),
+            "bug_replay": False,
+            "performance_comparison": False,
+            "reserved_workflow_seconds": V31_WORKFLOW_BUDGET_SECONDS,
+            "budget_extension_seconds": 0.0,
+        }
+    else:
+        raise InputError("V31 input run_id is not in the explicit run whitelist")
     return _reserve_a4_tensor_h6_budget(
         repo_root,
         run_directory,
         **kwargs,
-        batch_identity="review_v29_evidence_and_projection_v31",
+        batch_identity=V31_PROJECTION_LAYOUT_BATCH_IDENTITY,
         artifact_directory="projection_layout_v31",
-        schema="task039extra.v31.projection-layout.shared-workflow-ledger.v1",
+        schema=V31_PROJECTION_LAYOUT_LEDGER_SCHEMA,
         error_prefix="V31",
         summary_filename="physical_dual_condensed_projection_layout_v31_summary.json",
+        authorized_performance_repeat=authorized_repeat,
     )
 
 
@@ -4138,6 +4263,11 @@ def launch_specification(
             workflow_clock_start=full_clock.start,
             service_cgroup_path=service_cgroup_path,
             time_policy=v14_time_policy,
+            **({
+                "run_id": specification.identity.get("run_id"),
+                "comparison_group": specification.identity.get("comparison_group"),
+                "input_sha256": specification.input_sha256,
+            } if projection_layout_v31_profile else {}),
         )
     elif fused_kernel_v28_profile and physical_candidate:
         service_cgroup_path = current_cgroup_path()
