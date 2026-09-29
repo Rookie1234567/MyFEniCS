@@ -1,10 +1,10 @@
 {
   "formal_seconds": 8579.825040766038,
-  "auxiliary_seconds": 61.934282226953655,
+  "auxiliary_seconds": 63.68211352196522,
   "carry_in_V6_seconds": 101.86130203097127,
-  "cumulative_seconds": 8743.620625023963,
+  "cumulative_seconds": 8745.368456318974,
   "limit_seconds": 36000,
-  "remaining_seconds": 27256.379374976037,
+  "remaining_seconds": 27254.631543681026,
   "formal_simultaneous_tree_peak_bytes": 1073967104,
   "all_supervised_simultaneous_tree_peak_bytes": 1073967104,
   "auxiliary": [
@@ -41,6 +41,18 @@
       "seconds": 3.727109243045561,
       "classification": "COMPLETED",
       "peak_bytes": 227749888,
+      "swap_bytes": 0,
+      "cleared": true
+    },
+    {
+      "name": "final_evidence_hygiene",
+      "evidence": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v7/final_evidence_hygiene/summary.json",
+        "sha256": "ff2b342943811f480898d3e35c8f1c276a05f67c78a0dfcfcd477226c70f710f"
+      },
+      "seconds": 1.747831295011565,
+      "classification": "COMPLETED",
+      "peak_bytes": 41152512,
       "swap_bytes": 0,
       "cleared": true
     },

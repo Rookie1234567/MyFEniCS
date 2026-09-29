@@ -60,4 +60,6 @@ NN 散射场相对差0.6613，FREE/LSQR约1.0083/0.99995；参考散射 L2=0.200
 
 最终32相关pytest、CPU-only完整closure预算回归、Ruff/format/compileall及局部文档／身份检查见[test_summary](outcomes/test_summary.md)。一次测试文件名误写已局部修正，失败费保留，无环境安装／ABI变化。没有full pytest、MPI2/4或CI通过声明，不清理继承旧checker问题。
 
+首次交付提交的四份新 CSV 使用默认 CRLF，staged whitespace 检查返回2后仍被提交，尚未推送即发现并在后续提交统一为LF。独立解析确认40／160／226／3行的全部单元格不变；检查范围已覆盖相对Review V4的全部V7改动与staged diff。[修正记录](outcomes/records/evidence_hygiene_v7.json)。仅压缩重复的40项模式JSON，完整原始模式／归一化向量仍在hash绑定artifact，物理身份不变，未重放数值。
+
 唯一建议的下一最小试验：**只在这个固定pilot预登记一个不依赖目标准确解的对角变量尺度均衡 FE-LSQR 对照，原loss和完整验算不变**，检验残差下降却遗漏散射响应的尺度／病态因素；这是待review建议，未实施，不增加网络或重开p4路线。目标级几何、通道库存、资源配额、完整步成本和所需步数仍unknown，不由这个几个波长的micro模型外推48h。[48h账](outcomes/records/target_48h_budget_v7.json)。只推送执行分支后停止等待review，不merge。

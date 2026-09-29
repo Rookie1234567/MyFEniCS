@@ -1,6 +1,6 @@
 {
   "status": "TASK_FOCUSED_STATIC_PASS",
-  "source_at_check": "1ff6f8ba3dcb48dee0fd41f762bf624822ea1457",
+  "source_at_check": "efc291aaba33e46be7272f49f2752a587f76cf5e",
   "ruff_files": [
     "src/common/optical_material_table.py",
     "src/io/neural_fe_continuation.py",
@@ -40,6 +40,13 @@
   "compileall": true,
   "format": true,
   "diff_check": true,
+  "diff_scope": "all V7 changes against Review V4 plus staged diff",
+  "csv_lf_files": [
+    "channel_inventory_v7.csv",
+    "channel_observables_v7.csv",
+    "convergence_checkpoints_v7.csv",
+    "neural_fe_comparison_v7.csv"
+  ],
   "protected_exact_count": 143,
   "protected_exact": [
     "AGENTS.md",

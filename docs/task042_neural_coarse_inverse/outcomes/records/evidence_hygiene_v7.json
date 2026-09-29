@@ -1,0 +1,43 @@
+{
+  "status": "CSV_LF_NORMALIZED_WITH_IDENTICAL_CELLS",
+  "first_staged_diff_check": {
+    "exit_code": 2,
+    "cause": "Four new CSV files used default CRLF. Commit proceeded after the failed staged whitespace check; no push occurred. Corrected by a later commit; no history rewrite.",
+    "implementation_HEAD_at_check": "1ff6f8ba3dcb48dee0fd41f762bf624822ea1457",
+    "commit_created_despite_failed_check": "efc291aaba33e46be7272f49f2752a587f76cf5e"
+  },
+  "csv": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/channel_inventory_v7.csv",
+      "rows": 40,
+      "before_sha256": "dd9257930dbc249c6f6c7046f22b0a8b782689ef04222f9c033418cedf40451b",
+      "after_sha256": "1e959a19b626a1efe709d0654505ee3419bbb684104d2b18bb7e85dac24e9235",
+      "parsed_cells_unchanged": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/channel_observables_v7.csv",
+      "rows": 160,
+      "before_sha256": "880a6f34b4b3d9b76885acd302bb3decdd164d89b0d75a1683994383b3a9e172",
+      "after_sha256": "c179ad0d6822e085ccb76c59da26a177e8f4782193a86504fd50e5ee771cf8f1",
+      "parsed_cells_unchanged": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/convergence_checkpoints_v7.csv",
+      "rows": 226,
+      "before_sha256": "357f69a18ba67dcd753de0d849e9643f20230751ca9118be2157645c8b11894d",
+      "after_sha256": "99122bfeaecdc0d54692c1433fab3f4e6d6683f44bfb468c1fe7a8fb96c8dc32",
+      "parsed_cells_unchanged": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/neural_fe_comparison_v7.csv",
+      "rows": 3,
+      "before_sha256": "358262f4ca892f926b379c49a46ba13b17294fcfb02db4a545385edb0f275871",
+      "after_sha256": "e5a56a53913d3e5172e0007f07c53289f9c2ccabed606f9cb1cb6f8f3d330b1c",
+      "parsed_cells_unchanged": true
+    }
+  ],
+  "physical_recipe_canonical_sha256_unchanged": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+  "duplicate_mode_array_removed_from_compact_record": true,
+  "numerical_source_modified": false,
+  "formal_run_replayed": false
+}
