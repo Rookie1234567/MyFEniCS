@@ -168,6 +168,55 @@ def launch(spec):
         state.update(cpu=baseline["cpu"], resource_baseline_sha256=None)
         write_json(directory / "resource_baseline.json", baseline)
         state["resource_baseline_sha256"] = sha(directory / "resource_baseline.json")
+        dependencies = {}
+        prerequisite_stages = (
+            ["e1_fe", "e1_grad"]
+            if stage in ("FEINN-EUC", "FEINN-DUAL", "FREE-FE-DUAL")
+            else ["e1_fe", "FEINN-EUC", "FEINN-DUAL", "FREE-FE-DUAL"]
+            if stage == "e3_reference"
+            else ["e1_fe", "e3_reference"]
+            if stage == "e4_p4"
+            else ["e1_fe"]
+            if stage == "e1_grad"
+            else []
+        )
+        for dependency in prerequisite_stages:
+            item = load_index(dependency)
+            dependencies[dependency] = dict(
+                index_sha256=sha(index_path(dependency)),
+                source_sha=item["source_sha"],
+                files=item["files"],
+            )
+        if "e1_fe" in dependencies:
+            operator = load_index("e1_fe")
+            identity = operator["result"]["identity"]
+            state.update(
+                physical_model_sha256=operator["files"]["native"]["sha256"],
+                actual_operator_packet_sha256=operator["files"]["native"]["sha256"],
+                mesh_sha256=identity["mesh_coordinates_sha256"],
+                cell_tags_sha256=identity["cell_tags_sha256"],
+                mode_sha256=identity["mode_manifest_sha256"],
+                gram_sha256=operator["files"]["gram"]["sha256"]
+                if stage != "FEINN-EUC"
+                else None,
+                gram_loaded_by_route=stage in ("FEINN-DUAL", "FREE-FE-DUAL", "e1_grad"),
+                physical_hash_meaning="actual original full independent FE packet and fixed affine rhs",
+            )
+            (directory / "physical_model_sha256.txt").write_text(
+                state["physical_model_sha256"] + "\n"
+            )
+        state["frozen_dependencies_before_worker_launch"] = dependencies
+        state["qualified_environment_record"] = {
+            mode: dict(
+                path=str(ROOT / "tmp/task42extra/setup" / f"{mode}_abi.json"),
+                sha256=sha(ROOT / "tmp/task42extra/setup" / f"{mode}_abi.json"),
+            )
+        }
+        state["numerical_module_sha256"] = {
+            str(path.relative_to(ROOT)): sha(path)
+            for path in sorted((ROOT / "src/solvers").glob("feinn_*"))
+            if path.is_file()
+        }
         write_json(directory / "run_manifest.json", state)
         limit = min(spec.execution["timeout_seconds"], ledger["remaining_seconds"])
         result = supervise(
@@ -340,6 +389,11 @@ def worker(directory):
         else:
             raise RuntimeError("unknown explicit stage")
         result.update(worker_elapsed_seconds=perf_counter() - began)
+        manifest = json.loads((directory / "run_manifest.json").read_text())
+        manifest["completed_outputs"] = {
+            key: dict(path=str(path), sha256=sha(path)) for key, path in files.items()
+        }
+        write_json(directory / "run_manifest.json", manifest)
         path = artifact / "result.json"
         write_json(path, result)
         files["result"] = path

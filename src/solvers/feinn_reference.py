@@ -1,0 +1,643 @@
+"""Independent original augmented authority, imported only after routes freeze."""
+
+import ctypes
+import gc
+from time import perf_counter
+
+import numpy as np
+from scipy import sparse
+
+from src.solvers.feinn_native import load_native
+from src.solvers.feinn_riesz import rss_bytes
+from src.solvers.neural_fe_action_packet import array_hash
+
+
+def original_augmented_matrix(model, packet):
+    """Independent DOLFINx assembly of V; preserve original unnormalized ports."""
+    import dolfinx_mpc
+    from dolfinx import fem
+
+    matrix = dolfinx_mpc.assemble_matrix(
+        fem.form(model["bundle"]["volume_action"].bilinear_form), model["floquet"].mpc
+    )
+    try:
+        matrix.assemble()
+        p, i, x = matrix.getValuesCSR()
+        full = sparse.csr_matrix((x.copy(), i.copy(), p.copy()), shape=matrix.getSize())
+    finally:
+        matrix.destroy()
+    ids = packet.a["masters"]
+    V = full[ids, :][:, ids].tocsr()
+    a = packet.a
+    B = sparse.coo_matrix(
+        (a["bv"], (a["br"], a["bp"])), shape=(packet.size, packet.np)
+    ).tocsr()
+    D = sparse.coo_matrix(
+        (a["dv"], (a["dp"], a["dr"])), shape=(packet.np, packet.size)
+    ).tocsr()
+    augmented = sparse.bmat([[V, B], [-D, sparse.diags(a["H"])]], format="csr")
+    augmented.eliminate_zeros()
+    augmented.sort_indices()
+    rng = np.random.default_rng(421003)
+    c = rng.standard_normal(packet.size) + 1j * rng.standard_normal(packet.size)
+    alpha = rng.standard_normal(packet.np) + 1j * rng.standard_normal(packet.np)
+    original = np.r_[packet.volume(c) + packet.B(alpha), -packet.D(c) + a["H"] * alpha]
+    difference = np.linalg.norm(
+        augmented @ np.r_[c, alpha] - original
+    ) / np.linalg.norm(original)
+    if difference > 1e-10:
+        raise ValueError(f"independent augmented CSR/action mismatch {difference}")
+    return augmented, float(difference)
+
+
+def exact_solve(model, packet, artifact, marker):
+    """Reference-only MUMPS with symbolic capacity, destruction before physics."""
+    from mpi4py import MPI
+    from petsc4py import PETSc
+    from src.solvers.fullspace_v17_p3_oracle import _MumpsFactor
+
+    start = perf_counter()
+    n = packet.size + packet.np
+    nnz_upper = (
+        packet.nc * packet.dim**2
+        + len(packet.a["bv"])
+        + len(packet.a["dv"])
+        + packet.np
+    )
+    allocation = nnz_upper * 80 + 512 * 2**20
+    pre = dict(
+        kind="derived reference assembly/conversion reserve, not RSS",
+        rows=n,
+        upper_triplets=nnz_upper,
+        allocation_upper_bytes=allocation,
+        own_rss_bytes=rss_bytes(),
+        planning_cap_bytes=12 * 2**30,
+    )
+    marker("reference_pre_assembly_capacity", pre)
+    if rss_bytes() + allocation >= 12 * 2**30:
+        raise RuntimeError("REFERENCE_RESOURCE_BLOCKED_BEFORE_ASSEMBLY")
+    csr, pair = original_augmented_matrix(model, packet)
+    record = dict(
+        role="independent reference ONLY",
+        global_Maxwell_factor=True,
+        training_fallback=False,
+        preassembly=pre,
+        rows=n,
+        nnz=csr.nnz,
+        independent_augmented_action_relative=pair,
+        csr_payload_bytes=sum(v.nbytes for v in (csr.indptr, csr.indices, csr.data)),
+        CSR_hashes={
+            k: array_hash(v)
+            for k, v in [
+                ("indptr", csr.indptr),
+                ("indices", csr.indices),
+                ("data", csr.data),
+            ]
+        },
+    )
+    matrix = PETSc.Mat().createAIJ(
+        size=csr.shape,
+        csr=(
+            csr.indptr.astype(PETSc.IntType),
+            csr.indices.astype(PETSc.IntType),
+            csr.data,
+        ),
+        comm=MPI.COMM_WORLD,
+    )
+    matrix.assemble()
+    del csr
+    gc.collect()
+    record["assembly_and_pair_seconds"] = perf_counter() - start
+    factor = None
+    b = x = residual = None
+    try:
+        factor = _MumpsFactor(matrix)
+        t = perf_counter()
+        factor.symbolic(matrix)
+        info = factor.info((21, 22, 29))
+        record["symbolic_info"] = info
+        estimate = (int(info["infog"]["17"]) + 1) * 1_000_000
+        conversion_reserve = record["nnz"] * 32 + 128 * n + 256 * 2**20
+        record.update(
+            symbolic_seconds=perf_counter() - t,
+            estimated_factor_bytes=estimate,
+            conversion_and_workspace_reserve_bytes=conversion_reserve,
+            rss_after_symbolic_bytes=rss_bytes(),
+        )
+        marker("reference_symbolic_capacity", record)
+        if estimate <= 0 or rss_bytes() + estimate + conversion_reserve >= 12 * 2**30:
+            raise RuntimeError("REFERENCE_RESOURCE_BLOCKED_AFTER_SYMBOLIC")
+        factor.set_memory_limit_mb(
+            int((12 * 2**30 - rss_bytes() - conversion_reserve) // 1_000_000)
+        )
+        t = perf_counter()
+        factor.numeric(matrix)
+        record.update(
+            numeric_seconds=perf_counter() - t, numeric_info=factor.info((21, 22, 29))
+        )
+        marker("reference_numeric", record)
+        b = matrix.createVecLeft()
+        b.array[:] = np.r_[packet.a["g"], packet.a["gp"]]
+        x = matrix.createVecRight()
+        t = perf_counter()
+        factor.solve(b, x)
+        residual = matrix.createVecLeft()
+        matrix.mult(x, residual)
+        residual.axpy(-1, b)
+        relative = residual.norm() / b.norm()
+        record.update(
+            solve_seconds=perf_counter() - t,
+            original_augmented_relative=relative,
+            rss_with_numeric_factor_bytes=rss_bytes(),
+        )
+        if relative > 1e-10 or not np.isfinite(x.array).all():
+            raise RuntimeError(f"INDEPENDENT_REFERENCE_RESIDUAL_FAILED: {relative}")
+        c = x.array[: packet.size].copy()
+        alpha = x.array[packet.size :].copy()
+        recovered = packet.alpha(c)
+        record["original_port_recovery_relative"] = float(
+            np.linalg.norm(recovered - alpha) / max(np.linalg.norm(alpha), 1e-12)
+        )
+        if record["original_port_recovery_relative"] > 1e-10:
+            raise RuntimeError("REFERENCE_PORT_RECOVERY_FAILED")
+        record["original_full_equation_audit"] = packet.audit(c)
+        if (
+            max(
+                record["original_full_equation_audit"][k]
+                for k in (
+                    "native_relative",
+                    "augmented_relative",
+                    "original_total_augmented_relative",
+                )
+            )
+            > 1e-10
+        ):
+            raise RuntimeError("REFERENCE_NATIVE_RESIDUAL_FAILED")
+        np.savez(artifact / "reference_state.npz", c=c, alpha=alpha)
+    finally:
+        record["rss_before_release_bytes"] = rss_bytes()
+        if factor is not None:
+            factor.destroy()
+        for obj in (b, x, residual, matrix):
+            if obj is not None:
+                obj.destroy()
+        del factor, b, x, residual, matrix
+        gc.collect()
+        ctypes.CDLL(None).malloc_trim(0)
+        record.update(
+            rss_after_release_bytes=rss_bytes(),
+            factor_released=True,
+            matrix_released=True,
+            total_reference_setup_solve_seconds=perf_counter() - start,
+        )
+        marker("reference_release_before_postprocessing", record)
+    if record["rss_after_release_bytes"] >= record["rss_before_release_bytes"]:
+        raise RuntimeError("REFERENCE_RELEASE_RSS_NOT_CONFIRMED")
+    return c, record
+
+
+def field_physics(model, packet, reference, states, artifact, marker):
+    import ufl
+    from dolfinx import fem
+    from src.common.modes_3d import incident_power_3d
+    from src.postprocessing.rta_3d import compute_volume_absorption_3d
+    from src.solvers.dtn_port_3d import (
+        _port_power_metrics,
+        _mode_power_at_boundary,
+        _mode_carries_outward_power,
+        _outgoing_projection,
+    )
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import restore_p0_full_field
+    from src.solvers.learned_coarse_inverse import native_numpy_apply
+
+    cfg, data, floquet = model["cfg"], model["data"], model["floquet"]
+    modes = model["bundle"]["modes"]
+    inc = model["bundle"]["incident_projections"]
+    native = native_numpy_apply(model["bundle"])
+    dx = ufl.Measure("dx", domain=data.mesh, metadata={"quadrature_degree": 15})
+    incident_scale = np.sqrt(
+        np.prod([b - a for a, b in json_design_bounds(packet, model)])
+    )
+
+    def field(c):
+        return restore_p0_full_field(floquet, packet.storage(c))
+
+    def norms(E):
+        forms = [
+            ufl.inner(E, E) * dx,
+            ufl.inner(ufl.curl(E), ufl.curl(E)) / cfg.k0**2 * dx,
+        ]
+        return np.asarray(
+            [np.sqrt(max(0, fem.assemble_scalar(fem.form(f)).real)) for f in forms]
+        )
+
+    ref_total, ref_scat = field(packet.a["background"] + reference), field(reference)
+    ref_norms, ref_scat_norms = norms(ref_total), norms(ref_scat)
+    # Predeclared representative cell centers: substrate, air, block, notch, top.
+    points = np.array(
+        [
+            [-4.375, -3.125, -0.625],
+            [-4.375, -3.125, 0.625],
+            [-1.875, -0.625, 3.125],
+            [0.625, -0.625, 3.125],
+            [1.875, 3.125, 6.875],
+            [-0.625, -1.875, 8.125],
+        ]
+    )
+    cells = np.argmin(
+        np.linalg.norm(model["centers"][:, None, :] - points[None, :, :], axis=2),
+        axis=0,
+    ).astype(np.int32)
+    if np.max(np.linalg.norm(model["centers"][cells] - points, axis=1)) > 1e-12:
+        raise ValueError("selected complex E/H must be predeclared cell centers")
+
+    def samples(E):
+        H = fem.Expression(
+            ufl.curl(E) / (1j * cfg.k0 * cfg.mu_r), np.array([[0.5, 0.5, 0.5]])
+        )
+        return E.eval(points, cells), np.asarray(H.eval(data.mesh, cells)).reshape(
+            len(cells), 3
+        )
+
+    refE, refH = samples(ref_total)
+    refSE, refSH = samples(ref_scat)
+    records = {}
+
+    def error(diff, scale, natural):
+        absolute = float(np.linalg.norm(diff))
+        denominator = float(max(np.linalg.norm(scale), 1e-12 * natural))
+        return dict(
+            absolute=absolute, denominator=denominator, relative=absolute / denominator
+        )
+
+    for name, c in {"REFERENCE": reference, **states}.items():
+        start = perf_counter()
+        total = packet.a["background"] + c
+        E, SE = field(total), field(c)
+        alpha, sc_alpha = (
+            packet.a["background_alpha"] + packet.alpha(c),
+            packet.alpha(c),
+        )
+        port = _port_power_metrics(cfg, list(modes), alpha, list(inc))
+        volume = compute_volume_absorption_3d(
+            data,
+            cfg,
+            E,
+            artifact / ("diagnostic_" + name.lower()),
+            incident_power=incident_power_3d(cfg),
+            port_metrics=port,
+        )
+        es, hs = samples(E)
+        ses, shs = samples(SE)
+        powers = np.asarray(
+            [
+                _mode_power_at_boundary(m, cfg, _outgoing_projection(z, i, m.side))
+                / incident_power_3d(cfg)
+                if _mode_carries_outward_power(m)
+                else 0.0
+                for m, z, i in zip(modes, alpha, inc, strict=True)
+            ]
+        )
+        audit = packet.audit(c)
+        audit["independent_DOLFINx_total_native_relative"] = float(
+            np.linalg.norm(
+                native(packet.storage(total))[packet.a["masters"]] - packet.a["total_g"]
+            )
+            / np.linalg.norm(packet.a["total_g"])
+        )
+        value = dict(
+            audit=audit,
+            port=port,
+            volume=volume,
+            points_nm=points,
+            selected_total_E=es,
+            selected_total_H_code=hs,
+            selected_scattered_E=ses,
+            selected_scattered_H_code=shs,
+            ordered_complex_total_channels=alpha,
+            ordered_complex_scattered_channels=sc_alpha,
+            ordered_per_channel_power=powers,
+            total_L2_scaled_curl_norms=norms(E),
+            scattered_L2_scaled_curl_norms=norms(SE),
+            official_candidate_results=False,
+            output_role="independent authority"
+            if name == "REFERENCE"
+            else "diagnostic until every Gate passes",
+        )
+        if name != "REFERENCE":
+            differences = norms(field(c - reference))
+            errors = {}
+            for j, key in enumerate(("L2", "scaled_curl")):
+                errors["total_" + key] = error(
+                    differences[j], ref_norms[j], incident_scale
+                )
+                errors["scattered_" + key] = error(
+                    differences[j], ref_scat_norms[j], incident_scale
+                )
+            for key, diff, scale in [
+                ("selected_total_E", es - refE, refE),
+                ("selected_total_H", hs - refH, refH),
+                ("selected_scattered_E", ses - refSE, refSE),
+                ("selected_scattered_H", shs - refSH, refSH),
+            ]:
+                errors[key] = error(diff, scale, 1)
+            value["field_errors"] = errors
+        value["postprocess_seconds"] = perf_counter() - start
+        records[name] = value
+        marker(
+            "physics_" + name,
+            dict(native=audit["native_relative"], seconds=value["postprocess_seconds"]),
+        )
+    ref = records["REFERENCE"]
+    reference_pass = (
+        max(
+            ref["audit"][k]
+            for k in (
+                "native_relative",
+                "augmented_relative",
+                "independent_DOLFINx_total_native_relative",
+            )
+        )
+        <= 1e-10
+    )
+    comparisons = {}
+    for name in states:
+        record = records[name]
+        errors = dict(record["field_errors"])
+        errors["ordered_total_channels"] = error(
+            record["ordered_complex_total_channels"]
+            - ref["ordered_complex_total_channels"],
+            ref["ordered_complex_total_channels"],
+            1,
+        )
+        errors["ordered_scattered_channels"] = error(
+            record["ordered_complex_scattered_channels"]
+            - ref["ordered_complex_scattered_channels"],
+            ref["ordered_complex_scattered_channels"],
+            1,
+        )
+        deltas = {
+            k: abs(record["port"][k] - ref["port"][k])
+            for k in ("R_total", "T_total", "A_balance")
+        }
+        deltas["A_volume"] = abs(
+            record["volume"]["A_volume_total"] - ref["volume"]["A_volume_total"]
+        )
+        closure = abs(
+            record["port"]["R_total"]
+            + record["port"]["T_total"]
+            + record["volume"]["A_volume_total"]
+            - 1
+        )
+        absorption = abs(
+            record["port"]["A_balance"] - record["volume"]["A_volume_total"]
+        )
+        power_error = float(
+            np.max(
+                abs(
+                    record["ordered_per_channel_power"]
+                    - ref["ordered_per_channel_power"]
+                )
+            )
+        )
+        passed = (
+            reference_pass
+            and record["audit"]["strict_pass"]
+            and record["audit"]["independent_DOLFINx_total_native_relative"] <= 1e-6
+        )
+        passed &= all(e["relative"] <= 1e-4 for e in errors.values())
+        passed &= (
+            all(x <= 1e-5 for x in deltas.values())
+            and max(closure, absorption) <= 1e-5
+            and power_error <= 1e-6
+        )
+        record["official_candidate_results"] = bool(passed)
+        comparisons[name] = dict(
+            status="FEINN_DISCRETE_PASS" if passed else "FEINN_OPTIMIZATION_NEGATIVE",
+            errors=errors,
+            power_absolute_differences=deltas,
+            max_channel_power_absolute=power_error,
+            energy_closure_absolute=closure,
+            absorption_balance_volume_absolute=absorption,
+            equation_audit=record["audit"],
+            qualified=bool(passed),
+        )
+    return dict(
+        reference_pass=reference_pass,
+        reference_norms=ref_norms,
+        reference_scattered_norms=ref_scat_norms,
+        natural_E_scale=incident_scale,
+        records=records,
+        mode_manifest_sha256=model["record"]["mode_manifest_sha256"],
+    ), comparisons
+
+
+def json_design_bounds(packet, model):
+    return [[axis.min(), axis.max()] for axis in model["axes"]]
+
+
+def validate_candidates(design, index, frozen, artifact, marker):
+    from src.solvers.feinn_fem import build_model
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
+        destroy_same_mesh_physical_action,
+    )
+    from src.runners.feinn_workflow import sha
+
+    packet = load_native(index["files"]["native"]["path"])
+    states = {}
+    for name, item in frozen.items():
+        entry = item["files"]["checkpoint"]
+        if sha(entry["path"]) != entry["sha256"]:
+            raise ValueError("candidate changed after freeze")
+        with np.load(entry["path"], allow_pickle=False) as data:
+            states[name] = np.array(data["c"])
+        if states[name].shape != (packet.size,) or not np.isfinite(states[name]).all():
+            raise ValueError("invalid frozen full candidate")
+    marker(
+        "all_candidates_frozen_before_reference",
+        {
+            name: dict(checkpoint=x["files"]["checkpoint"], source_sha=x["source_sha"])
+            for name, x in frozen.items()
+        },
+    )
+    model = build_model(design, marker=marker)
+    try:
+        if (
+            model["record"]["mesh_coordinates_sha256"]
+            != index["result"]["identity"]["mesh_coordinates_sha256"]
+            or model["record"]["mode_manifest_sha256"]
+            != index["result"]["identity"]["mode_manifest_sha256"]
+        ):
+            raise ValueError("independent reference physical identity mismatch")
+        reference, authority = exact_solve(model, packet, artifact, marker)
+        physics, comparisons = field_physics(
+            model, packet, reference, states, artifact, marker
+        )
+        result = dict(
+            status="INDEPENDENT_REFERENCE_PASS"
+            if physics["reference_pass"]
+            else "REFERENCE_FAILED",
+            reference=authority,
+            physics=physics,
+            comparisons=comparisons,
+            all_candidates_frozen_before_reference=True,
+            reference_feedback=False,
+            candidate_sources={r: x["source_sha"] for r, x in frozen.items()},
+        )
+        return result, dict(reference=artifact / "reference_state.npz")
+    finally:
+        destroy_same_mesh_physical_action(model["bundle"])
+
+
+def p_check(design, index, reference_index, artifact, marker):
+    qualified = [
+        name
+        for name, item in reference_index["result"]["comparisons"].items()
+        if item["qualified"]
+    ]
+    if not qualified:
+        return dict(
+            status="DISCRETIZATION_NOT_QUALIFIED",
+            p4_reference="not_run",
+            reason="No p3 candidate passed same-discrete equations, fields and power",
+            target_5nm="not_run",
+            target_0p7nm="not_run",
+        ), {}
+    import basix.ufl
+    import ufl
+    from dolfinx import fem
+    from src.constraints.floquet_3d import build_double_floquet_mpc
+    from src.solvers.feinn_fem import build_model, export_native
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
+        destroy_same_mesh_physical_action,
+        restore_p0_full_field,
+    )
+    from src.runners.feinn_workflow import budget
+
+    if budget()["remaining_seconds"] < 3600:
+        return dict(
+            status="DISCRETIZATION_NOT_QUALIFIED",
+            p4_reference="not_run",
+            reason="Remaining first-round wall budget below one bounded p4 stage",
+        ), {}
+    packet3 = load_native(index["files"]["native"]["path"])
+    with np.load(
+        reference_index["files"]["reference"]["path"], allow_pickle=False
+    ) as data:
+        c3 = np.array(data["c"])
+    model = build_model(design, degree=4, marker=marker)
+    try:
+        packet4, identity4 = export_native(model, marker)
+        c4, authority4 = exact_solve(model, packet4, artifact, marker)
+        space3 = fem.functionspace(
+            model["data"].mesh, basix.ufl.element("N1curl", "hexahedron", 3)
+        )
+        if not np.array_equal(space3.dofmap.list, packet3.a["cell_dofs"]):
+            raise ValueError("same geometry p3/p4 transfer native numbering mismatch")
+        floquet3 = build_double_floquet_mpc(space3, model["data"], model["cfg"])
+        E3 = restore_p0_full_field(
+            floquet3, packet3.storage(packet3.a["background"] + c3)
+        )
+        S3 = restore_p0_full_field(floquet3, packet3.storage(c3))
+        liftedE = fem.Function(model["space"])
+        liftedE.interpolate(E3)
+        liftedS = fem.Function(model["space"])
+        liftedS.interpolate(S3)
+        E4 = restore_p0_full_field(
+            model["floquet"], packet4.storage(packet4.a["background"] + c4)
+        )
+        S4 = restore_p0_full_field(model["floquet"], packet4.storage(c4))
+        dx = ufl.Measure(
+            "dx", domain=model["data"].mesh, metadata={"quadrature_degree": 15}
+        )
+        k0 = model["cfg"].k0
+
+        def norms(E):
+            return np.asarray(
+                [
+                    np.sqrt(max(0, fem.assemble_scalar(fem.form(f)).real))
+                    for f in (
+                        ufl.inner(E, E) * dx,
+                        ufl.inner(ufl.curl(E), ufl.curl(E)) / k0**2 * dx,
+                    )
+                ]
+            )
+
+        errors = {}
+        for kind, left, right in [("total", liftedE, E4), ("scattered", liftedS, S4)]:
+            diff = norms(left - right)
+            scale = norms(right)
+            for j, key in enumerate(("L2", "scaled_curl")):
+                denominator = float(max(scale[j], 1e-12 * np.sqrt(750)))
+                errors[kind + "_" + key] = dict(
+                    absolute=float(diff[j]),
+                    denominator=denominator,
+                    relative=float(diff[j] / denominator),
+                )
+        alpha3 = packet3.a["background_alpha"] + packet3.alpha(c3)
+        alpha4 = packet4.a["background_alpha"] + packet4.alpha(c4)
+        if (
+            model["record"]["mode_manifest_sha256"]
+            != index["result"]["identity"]["mode_manifest_sha256"]
+        ):
+            raise ValueError("p4 changed complete ordered channel inventory")
+        for name, left, right in [
+            ("total_channels", alpha3, alpha4),
+            ("scattered_channels", packet3.alpha(c3), packet4.alpha(c4)),
+        ]:
+            denominator = float(max(np.linalg.norm(right), 1e-12))
+            absolute = float(np.linalg.norm(left - right))
+            errors[name] = dict(
+                absolute=absolute,
+                denominator=denominator,
+                relative=absolute / denominator,
+            )
+        points = np.array(
+            [
+                [-4.375, -3.125, -0.625],
+                [-4.375, -3.125, 0.625],
+                [-1.875, -0.625, 3.125],
+                [0.625, -0.625, 3.125],
+                [1.875, 3.125, 6.875],
+                [-0.625, -1.875, 8.125],
+            ]
+        )
+        cells = np.argmin(
+            np.linalg.norm(model["centers"][:, None, :] - points[None, :, :], axis=2),
+            axis=0,
+        ).astype(np.int32)
+
+        def samples(E):
+            H = fem.Expression(ufl.curl(E) / (1j * k0), np.array([[0.5, 0.5, 0.5]]))
+            return E.eval(points, cells), np.asarray(
+                H.eval(model["data"].mesh, cells)
+            ).reshape(-1, 3)
+
+        for kind, left, right in [("total", liftedE, E4), ("scattered", liftedS, S4)]:
+            for key, left_sample, right_sample in zip(
+                ("selected_E", "selected_H"), samples(left), samples(right), strict=True
+            ):
+                absolute = float(np.linalg.norm(left_sample - right_sample))
+                denominator = float(max(np.linalg.norm(right_sample), 1e-12))
+                errors[kind + "_" + key] = dict(
+                    absolute=absolute,
+                    denominator=denominator,
+                    relative=absolute / denominator,
+                )
+        passed = all(v["relative"] <= 1e-3 for v in errors.values())
+        np.savez(artifact / "p4_reference.npz", c=c4, alpha=alpha4)
+        return dict(
+            status="P4_CHECK_PASS_LIMITED_DISCRETE"
+            if passed
+            else "DISCRETIZATION_NOT_QUALIFIED",
+            p4_reference="measured",
+            qualified_p3_candidates=qualified,
+            identity=identity4,
+            reference=authority4,
+            errors=errors,
+            continuum_convergence_claim=False,
+            target_5nm="not_run",
+            target_0p7nm="not_run",
+        ), dict(reference=artifact / "p4_reference.npz")
+    finally:
+        destroy_same_mesh_physical_action(model["bundle"])
