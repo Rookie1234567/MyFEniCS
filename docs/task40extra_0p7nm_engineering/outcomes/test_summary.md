@@ -4,12 +4,20 @@
 
 | 范围 | 命令/输入 | 结果 | 证据边界 |
 |---|---|---|---|
-| N2 tiny p2 diagnostic | `source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_task40_nonseparable_geometry.py::test_n2_tiny_task40_stage4_static_condensed_diagnostic` | `1 passed`；solver `8.608 s` | source `036dec55beb0fdb1f3cae7693fddfc0225921eb9`；60-cell p2 diagnostic，不是 G0/G1 official |
-| Task40 profile smoke/identity suite（历史阶段） | Task40-focused suite，修复前 source 范围 | `41 passed, 1 deselected in 9.20 s` | 历史测试；未覆盖其后的两项修复 |
+| N2 tiny p2 diagnostic | `source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_task40_nonseparable_geometry.py::test_n2_tiny_task40_stage4_static_condensed_diagnostic` | `1 passed`；solver `8.608 s` | source commit/base `036dec55beb0fdb1f3cae7693fddfc0225921eb9` 加未提交实现 diff `7cd587b76d90670bc396dc3e82f4641fbd1cce3b1f65d2f4c71058bb6dd977e1`；60-cell p2 diagnostic，不是 G0/G1 official |
+| Task40 focused regression suite（历史阶段；并非 profile smoke） | 5 个目标文件，精确命令见下方 | `41 passed, 1 deselected in 9.20 s` | 含 Task40 几何/launcher 与 Task038 staging/watchdog 回归，也含 V19 真实 FFCx/MPC 小 FE action、V18 小 FE 的真实 LU factor/solve；`-k` 排除 N2 测试。额外执行的 V19/V18 真实 FE/factor 测试超出 N2 单一 tiny fixture 范围；总耗时为 9.20 s，各 fixture 次数与单独耗时均 `unknown`。这不是 G0/G1 正式 PDE。该运行早于 `1ee85bc`，精确 HEAD 与未提交 diff 身份未保留，记为 `unknown` |
 | ledger identity 与 G0/G1 capacity fixtures | `source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_task40_nonseparable_geometry.py::test_task40_worker_identity_opens_the_reserved_v14_runtime_ledger src/test/test_task40_nonseparable_geometry.py::test_task40_capacity_context_binds_frozen_axes_and_live_class_metadata` | `3 passed, 10 deselected in 0.76 s` | source `1ee85bc2133b783da419d31dbe429643eb2c1191`；一个 ledger fixture、G0/G1 两个 capacity fixture；不包含 PDE |
 | final mesh metadata fixture | `source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_task40_nonseparable_geometry.py::test_task40_same_mesh_levels_preserve_air_void_audit_metadata` | `1 passed in 3.89 s` | source `59bad0d977f0e23555098d923a95afbf2e9f5bf4`；真实 G0 mesh/FE/MPC fixture，不装全局矩阵或因子 |
 | compileall / diff whitespace | compileall for modified solver modules；`git diff --check` | `PASS` | 在最终 source 修复后完成；不等于 full test suite |
 | full repository / MPI2/4 / Ruff / CI | 未运行 | `not_run` | 不声称 full pytest、Ruff 或 CI 通过 |
+
+历史 focused regression suite 的原始命令（该运行早于 `1ee85bc2133b783da419d31dbe429643eb2c1191`）：
+
+```bash
+source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_task40_nonseparable_geometry.py src/test/test_337_task038_full3d_jit_staging.py src/test/test_task39extra_v30_monitor_policy.py src/test/test_task39extra_v19_p6_cell_condensed_action.py src/test/test_task39extra_v18_cell_condensed_core.py -k 'not n2_tiny_task40_stage4_static_condensed_diagnostic'
+```
+
+该 41 项 suite 的精确 HEAD 与未提交实现 diff SHA 未保留，因此 source identity 为 `unknown`；不能把它归到 `1ee85bc`。N2 diagnostic 则有独立运行记录：`source_head=036dec55beb0fdb1f3cae7693fddfc0225921eb9`，另绑定未提交实现 diff SHA256 `7cd587b76d90670bc396dc3e82f4641fbd1cce3b1f65d2f4c71058bb6dd977e1`。
 
 两个 systemd service-log SHA 保留在原始 Task40 run records；日志未作为独立文件出现在本工作树，因此本轮只校验可见 artifact，不声称重新计算了这两项。 Task39 V31 首个 instrumentation failure 的原始注释仍保存在父任务记录 [`projection_layout_v31_resource_reaudit.json`](../../task039_extra_physical_multilevel/outcomes/records/projection_layout_v31_resource_reaudit.json)；该事件属于父任务。Task40 仅记录自身两次 G0 worker implementation failures，不覆盖或重分类父任务记录。
 
