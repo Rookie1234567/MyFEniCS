@@ -1,3 +1,22 @@
+# Review V30 C0–C2 离线收口验证
+
+| 核查 | 结果 | 口径 |
+|---|---|---|
+| B 线 zip 校验 | **18 个 payload hash 全部 PASS** | 与包内 SHA256SUMS 对照；不代表远端提交 |
+| C0 分支与运行检查 | **PASS** | clean canonical worktree 快进到远端直接后继；非交互远端探针成功；无旧求解器进程 |
+| C1 数组输入与报告 | **PASS** | JSON 解析通过；V29/V30/V31 各 8 个实际输入文件均写入 SHA256；已发布比较脚本与实际运行脚本逐字节相同 |
+| qualified ABI preflight | **PASS** | venv + qualified marker、PETSc complex128/int32、PETSc/SLEPc complex 3.19 SONAME、Open MPI 4.1.6；模块目录经系统链接路径解析，不以路径字符串作 ABI 判据 |
+| 额外 preflight 探针 | **实现错误，已纠正** | 三次临时探针分别错误要求模块必须在 venv 内、模块父目录一致、或 `ldd` 文本含 `/usr/lib/petscdir` 前缀；实际同栈库经链接解析到 `/lib`。这些是探针断言实现错误；未改包、环境或 ABI，修正后按 SONAME/版本核对通过 |
+| 文档合同定向测试 | **21 passed in 0.09 s** | `test_26_documentation_contract.py`、`test_183_development_model_registry_markdown.py`、`test_development_model_registry_contract.py`；本节写入后最终复核为 21 passed in 0.07 s |
+| full repository pytest / Ruff / MPI2/4 / CI | `not_run / not_run / not_run / not_claimed` | 本次仅做离线 Task39 收口和文档定向检查 |
+| 新 PDE / matrix assembly / factorization | **0 / 0 / 0** | C1 只读取已保存数组 |
+
+最终命令：
+
+```bash
+source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_183_development_model_registry_markdown.py src/test/test_development_model_registry_contract.py
+```
+
 ## V31 用户授权完成重跑与 checker 修复
 
 | 验证 | 结果 | 范围与限制 |

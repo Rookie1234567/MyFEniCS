@@ -1,3 +1,13 @@
+# Task39extra 当前进展：Review V30 / Response V34 C0–C2 离线收口
+
+用户选择 B 线后，包内 Task39 final report / Review V30 成为当前文档权威，Task40 N0–N6 成为下一任务唯一活动合同。Task39 canonical worktree 在确认 clean、无活跃旧 solver 后从 `e09bd1612c4f6ca5fb5cf3572835748ad5c16207` 快进到远端直接后继 `95dacd01e86f0f7f1d29ee2d5e5a16039bb41871`；原始 `95dacd0` 文档版本留在 Git 历史。
+
+V31 completion rerun 与 V30 已保存数组逐项一致；与 V29 的 E/H 采样、官方向量和模态差异在舍入量级。FE L2/scaled-curl 从已有 V30–V29 record 传递，因为 V31/V30 full-field archives byte-identical；不是新 FE 范数计算。V31 没有独立 direct reference，仍为 authority-limited。无新 PDE、factor、工作站迁移、默认改变或 master merge。
+
+完整身份、输入哈希和数值见 [Response V34](task039_extra_physical_multilevel/response_v34.md)、[offline comparison record](task039_extra_physical_multilevel/outcomes/records/projection_layout_v31_offline_comparison_v34.json)、[V31 outcome](task039_extra_physical_multilevel/outcomes/projection_layout_v31.md) 和 [run index](task039_extra_physical_multilevel/outcomes/records/run_index.json)。
+
+---
+
 # Task39extra 当前进展：Review V29 / V31 单次授权完成重跑，结果有资格限制
 
 用户于 2026-09-29 明确授权在原 43,200 秒共享预算内额外完成一场 V31 原始模型运行。新 run 使用独立 run_id，数值输入除 run_id、comparison_group 和描述注释外保持一致；分类为 completion rerun，不是 bug replay 或性能对照。源码 SHA 为 d9b545e824296fce1b489c32a5d96e5e9303ff3c，输入 SHA 为 4a8dc8f5459ef385c5f58f58ee507d19255b871d8f96987966db728619863ba0。

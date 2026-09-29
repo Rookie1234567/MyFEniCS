@@ -81,3 +81,11 @@ worker 的 field-reference 检查在第 32、64、96 步均记为 `NOT_ATTEMPTED
 自然序布局仍只属于显式 V31 profile，ordinary default 未变。首次运行未完成；之后的授权重跑通过本机离散残差和输出一致性 Gate，但没有匹配参考场，仍不能宣称场误差等价、连续极限收敛或工作站可迁移。completion-only 运行不构成性能对照。固定矩阵乘法、局部批处理和流式端口路线仍未采用；没有更多 PDE 授权。
 
 机器可读总账见 [compact record](records/projection_layout_v31_compact.json)、[checker record](records/projection_layout_v31_checker.json)、[selection record](records/projection_layout_v31_selection.json) 和 [run index](records/run_index.json)。前置 R1/R2/R3 证据及保留的 V30 对照见 [V30 re-audit](records/projection_layout_v31_v30_reaudit.json)、[components](records/projection_layout_v31_components.json) 和 [Review V29](../review_report_v29.md)。
+
+## V34 补充：C1 跨版本离线场与模态核对
+
+Review V30 要求用已有文件比较 V31 completion rerun 与 V29/V30。现已核对三次运行的物理模型、网格、p4/p6 DoF 映射、80 模态及 p4 CSR 矩阵身份一致。V31 与 V30 已保存的全场、同坐标 E/H、官方向量和逐模态数组逐项相同；V31 与 V29 的全场系数欧氏相对差为 `2.2153725762e-14`，同坐标 E/H 与界面采样、官方向量和逐模态量均在 Review V30 的离线阈值内。
+
+V31–V29 的 FE 质量加权 L2/scaled-curl 相对差 `1.4028635388e-14 / 3.3312391900e-14` 是从已有 V30–V29 compact record 传递的：V31 与 V30 full-field NPZ SHA 完全相同，且离散身份相同；此项没有在 V34 新算。系数向量的欧氏差不能替代 FE 范数。V31 仍没有独立 direct reference，原 field-reference checkpoints 仍 `NOT_ATTEMPTED`，故保持 `DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED`。
+
+逐文件哈希和限制见 [V34 offline comparison record](records/projection_layout_v31_offline_comparison_v34.json)。这次补充只读已有数组，不重跑 PDE 或重建 factor。

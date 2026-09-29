@@ -1,0 +1,545 @@
+{
+  "schema": "task39extra.v31.offline-cross-version-comparison.v1",
+  "recorded_date": "2026-09-29",
+  "classification": "OFFLINE_CROSS_VERSION_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+  "scope": {
+    "operation": "read-only comparison of already-saved V29, V30 and V31 arrays",
+    "new_pde_runs": 0,
+    "matrix_assembly_or_factorization": false,
+    "matched_independent_direct_reference": false,
+    "interpretation": "cross-version consistency evidence only; does not change V31 authority-limited classification or establish continuum convergence"
+  },
+  "comparator": {
+    "executed_command": "source scripts/activate_myfenics_wsl.sh && python benchmarks/artifacts/task39extra/projection_layout_v31/review_v29_evidence_and_projection_v31/compare_existing_arrays_20260929.py",
+    "executed_script_path": "benchmarks/artifacts/task39extra/projection_layout_v31/review_v29_evidence_and_projection_v31/compare_existing_arrays_20260929.py",
+    "published_script_path": "docs/task039_extra_physical_multilevel/outcomes/records/projection_layout_v31_offline_compare_v34.py",
+    "sha256": "e8d4ecda36ff76df9a4beb81935373b559efa0f26383abdd5e4abf693ad4dedb",
+    "byte_identical_to_executed_script": true,
+    "published_reproduction_command": "source scripts/activate_myfenics_wsl.sh && python docs/task039_extra_physical_multilevel/outcomes/records/projection_layout_v31_offline_compare_v34.py",
+    "method": "NumPy comparison of saved field coefficients, same-coordinate samples, official vector and ordered modal records; no solver imports"
+  },
+  "runs": {
+    "V29": {
+      "run_id": "task39extra_v29_a4_tensor_h6_original_h7p5_v1",
+      "raw_root": "results/euv_grazing1_phi0/task39extra_v29_a4_tensor_h6_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260924T125506.302465Z",
+      "status": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+      "source_sha": "780f58918b0e5a9868cd2ea3de26d451bc6b5d86",
+      "input_sha256": "977111a9a65693d90b3c8fb874f738d8ef8e5d3c314ea3b318f4dfc978ae24b5",
+      "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+      "mesh_cells": 990,
+      "p4_native_map_sha256": "c1f135c85518941ff356a2d26c9c88ba624688b842f77080392fc5e767d0ea08",
+      "p6_native_map_sha256": "54647a99c97786af88364d6e3f8c6c1d3c7893bbf79afc2888a63cf47be6c06e",
+      "ordered_mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+      "condensed_matrix": {
+        "csr_sha256": "857bc8bb5f04b28a55283fb960a2b695e1078983e55ff151687780de5dab8ee0",
+        "shape": [
+          84680,
+          84680
+        ],
+        "nnz": 32320342
+      },
+      "full_field": {
+        "descriptor_path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v29_a4_tensor_h6_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260924T125506.302465Z/x2_retained_final.json",
+        "array_key": "array_20",
+        "shape": [
+          667152
+        ],
+        "dtype": "complex128",
+        "archive_sha256": "bbf6cdcb4bf086c6172b38a851cf79896ac58bfbe1aeee611c3fda101d585fb5"
+      },
+      "ordered_mode_manifest": {
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v29_a4_tensor_h6_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260924T125506.302465Z/v29q4_ordered_mode_manifest.json",
+        "count": 80,
+        "raw_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+        "canonical_mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
+      },
+      "comparison_inputs": [
+        {
+          "path": "results/euv_grazing1_phi0/task39extra_v29_a4_tensor_h6_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260924T125506.302465Z/x2_retained_final.json",
+          "sha256": "d0be0f6858013214be05a2b873791c0890722a914e133cb8b24eec99f7388a5b",
+          "bytes": 94196,
+          "purpose": "script reads full_solution array key and descriptor"
+        },
+        {
+          "path": "results/euv_grazing1_phi0/task39extra_v29_a4_tensor_h6_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260924T125506.302465Z/x2_retained_final.npz",
+          "sha256": "bbf6cdcb4bf086c6172b38a851cf79896ac58bfbe1aeee611c3fda101d585fb5",
+          "bytes": 120356466,
+          "purpose": "script reads saved full-field coefficient vector"
+        },
+        {
+          "path": "results/euv_grazing1_phi0/task39extra_v29_a4_tensor_h6_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260924T125506.302465Z/numerical_output/full3d_reference_samples.json",
+          "sha256": "860e30052a14e39363b9d9fbf38cddcbfb2a830e0c7f054126c41f88e4541d28",
+          "bytes": 1972,
+          "purpose": "sample archive descriptor and hash binding"
+        },
+        {
+          "path": "results/euv_grazing1_phi0/task39extra_v29_a4_tensor_h6_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260924T125506.302465Z/numerical_output/full3d_reference_samples.npz",
+          "sha256": "568a98aa8ac3a254bd20ccd76a3b562b0d754df1f8c0b6697ef449ce3b6c2633",
+          "bytes": 408581,
+          "purpose": "script reads coordinate and E/H sample arrays"
+        },
+        {
+          "path": "results/euv_grazing1_phi0/task39extra_v29_a4_tensor_h6_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260924T125506.302465Z/official_output/q4_output.json",
+          "sha256": "3a5a8d928b7ae0ec01bd4471bb233c29e355e46aba0daaf4f3ca9dd1abe124ee",
+          "bytes": 99862,
+          "purpose": "script reads the official identity packet"
+        },
+        {
+          "path": "results/euv_grazing1_phi0/task39extra_v29_a4_tensor_h6_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260924T125506.302465Z/official_output/q4_output.npz",
+          "sha256": "1047d1af2051dcd96309f139de617899a9e49421a4bd1c25e2896bb6d99b4cef",
+          "bytes": 1548,
+          "purpose": "script reads the official 80-element vector"
+        },
+        {
+          "path": "results/euv_grazing1_phi0/task39extra_v29_a4_tensor_h6_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260924T125506.302465Z/numerical_output/dtn_port_diffraction_orders_3d.json",
+          "sha256": "788accdb82d3378f6656745fbd0513ed4218fa1fb128cb2bccda97755df84920",
+          "bytes": 112723,
+          "purpose": "script reads ordered per-mode power and outgoing amplitudes"
+        },
+        {
+          "path": "results/euv_grazing1_phi0/task39extra_v29_a4_tensor_h6_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260924T125506.302465Z/v29q4_ordered_mode_manifest.json",
+          "sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+          "bytes": 86377,
+          "purpose": "ordered mode manifest used for the separate mode-identity cross-check"
+        }
+      ]
+    },
+    "V30": {
+      "run_id": "task39extra_v30_workstation_guided_original_h7p5_v1",
+      "raw_root": "results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z",
+      "status": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED_WITH_LEGACY_CHECKER_INCOMPATIBILITY",
+      "source_sha": "254f0cf78f950246655dc86af9409139b9a97680",
+      "input_sha256": "ba2c0745221a017d71f606325c20e98a3a57611887929fe55c18180f308f544b",
+      "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+      "mesh_cells": 990,
+      "p4_native_map_sha256": "c1f135c85518941ff356a2d26c9c88ba624688b842f77080392fc5e767d0ea08",
+      "p6_native_map_sha256": "54647a99c97786af88364d6e3f8c6c1d3c7893bbf79afc2888a63cf47be6c06e",
+      "ordered_mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+      "condensed_matrix": {
+        "csr_sha256": "857bc8bb5f04b28a55283fb960a2b695e1078983e55ff151687780de5dab8ee0",
+        "shape": [
+          84680,
+          84680
+        ],
+        "nnz": 32320342
+      },
+      "full_field": {
+        "descriptor_path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/x2_retained_final.json",
+        "array_key": "array_20",
+        "shape": [
+          667152
+        ],
+        "dtype": "complex128",
+        "archive_sha256": "9079b62bef274b2714069c96580f21301d2e1b176c9c20a6f7005214e7242591"
+      },
+      "ordered_mode_manifest": {
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/v30q4_ordered_mode_manifest.json",
+        "count": 80,
+        "raw_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+        "canonical_mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
+      },
+      "comparison_inputs": [
+        {
+          "path": "results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/x2_retained_final.json",
+          "sha256": "cd79839e5c4bdf2bef8233edce0d7bbbf0711dfc5140d2f5c523f9cee6c36202",
+          "bytes": 95299,
+          "purpose": "script reads full_solution array key and descriptor"
+        },
+        {
+          "path": "results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/x2_retained_final.npz",
+          "sha256": "9079b62bef274b2714069c96580f21301d2e1b176c9c20a6f7005214e7242591",
+          "bytes": 120356466,
+          "purpose": "script reads saved full-field coefficient vector"
+        },
+        {
+          "path": "results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/numerical_output/full3d_reference_samples.json",
+          "sha256": "c07f442cfaab25e4f21b839083f38e0117d9f00a1ff56890b4df8fe1e96991ac",
+          "bytes": 1975,
+          "purpose": "sample archive descriptor and hash binding"
+        },
+        {
+          "path": "results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/numerical_output/full3d_reference_samples.npz",
+          "sha256": "b394edc31522e7a715c636f250fa76661fba4b107a6695a653ada185c40c0192",
+          "bytes": 408647,
+          "purpose": "script reads coordinate and E/H sample arrays"
+        },
+        {
+          "path": "results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/official_output/q4_output.json",
+          "sha256": "75feb98d32c0b2bc9229f3a0818d2846096a2b8d242c2a446b79fb2ea36a5b41",
+          "bytes": 100867,
+          "purpose": "script reads the official identity packet"
+        },
+        {
+          "path": "results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/official_output/q4_output.npz",
+          "sha256": "d4c327710b20df4dc6d176996abd695affb9d9c2adc0f554370823a0bfc2005c",
+          "bytes": 1548,
+          "purpose": "script reads the official 80-element vector"
+        },
+        {
+          "path": "results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/numerical_output/dtn_port_diffraction_orders_3d.json",
+          "sha256": "e333fa352f1cc22e46752cd80ac881c3c12430299c43d88ee546a91a337252c9",
+          "bytes": 112752,
+          "purpose": "script reads ordered per-mode power and outgoing amplitudes"
+        },
+        {
+          "path": "results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/v30q4_ordered_mode_manifest.json",
+          "sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+          "bytes": 86377,
+          "purpose": "ordered mode manifest used for the separate mode-identity cross-check"
+        }
+      ]
+    },
+    "V31": {
+      "run_id": "task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1",
+      "raw_root": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z",
+      "status": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+      "source_sha": "d9b545e824296fce1b489c32a5d96e5e9303ff3c",
+      "input_sha256": "4a8dc8f5459ef385c5f58f58ee507d19255b871d8f96987966db728619863ba0",
+      "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+      "mesh_cells": 990,
+      "p4_native_map_sha256": "c1f135c85518941ff356a2d26c9c88ba624688b842f77080392fc5e767d0ea08",
+      "p6_native_map_sha256": "54647a99c97786af88364d6e3f8c6c1d3c7893bbf79afc2888a63cf47be6c06e",
+      "ordered_mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+      "condensed_matrix": {
+        "csr_sha256": "857bc8bb5f04b28a55283fb960a2b695e1078983e55ff151687780de5dab8ee0",
+        "shape": [
+          84680,
+          84680
+        ],
+        "nnz": 32320342
+      },
+      "full_field": {
+        "descriptor_path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/x2_retained_final.json",
+        "array_key": "array_20",
+        "shape": [
+          667152
+        ],
+        "dtype": "complex128",
+        "archive_sha256": "9079b62bef274b2714069c96580f21301d2e1b176c9c20a6f7005214e7242591"
+      },
+      "ordered_mode_manifest": {
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/v31q4_ordered_mode_manifest.json",
+        "count": 80,
+        "raw_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+        "canonical_mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
+      },
+      "comparison_inputs": [
+        {
+          "path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/x2_retained_final.json",
+          "sha256": "173dc666250b6ac743ede6645805a710de9c1bb5eec65695f3c3343368342572",
+          "bytes": 95495,
+          "purpose": "script reads full_solution array key and descriptor"
+        },
+        {
+          "path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/x2_retained_final.npz",
+          "sha256": "9079b62bef274b2714069c96580f21301d2e1b176c9c20a6f7005214e7242591",
+          "bytes": 120356466,
+          "purpose": "script reads saved full-field coefficient vector"
+        },
+        {
+          "path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/numerical_output/full3d_reference_samples.json",
+          "sha256": "c07f442cfaab25e4f21b839083f38e0117d9f00a1ff56890b4df8fe1e96991ac",
+          "bytes": 1975,
+          "purpose": "sample archive descriptor and hash binding"
+        },
+        {
+          "path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/numerical_output/full3d_reference_samples.npz",
+          "sha256": "b394edc31522e7a715c636f250fa76661fba4b107a6695a653ada185c40c0192",
+          "bytes": 408647,
+          "purpose": "script reads coordinate and E/H sample arrays"
+        },
+        {
+          "path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/official_output/q4_output.json",
+          "sha256": "d73a730343a135e678b25ac2c045c9c9095ff9be268d9cbff05fad2796e34a66",
+          "bytes": 101012,
+          "purpose": "script reads the official identity packet"
+        },
+        {
+          "path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/official_output/q4_output.npz",
+          "sha256": "d4c327710b20df4dc6d176996abd695affb9d9c2adc0f554370823a0bfc2005c",
+          "bytes": 1548,
+          "purpose": "script reads the official 80-element vector"
+        },
+        {
+          "path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/numerical_output/dtn_port_diffraction_orders_3d.json",
+          "sha256": "e333fa352f1cc22e46752cd80ac881c3c12430299c43d88ee546a91a337252c9",
+          "bytes": 112752,
+          "purpose": "script reads ordered per-mode power and outgoing amplitudes"
+        },
+        {
+          "path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/v31q4_ordered_mode_manifest.json",
+          "sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+          "bytes": 86377,
+          "purpose": "ordered mode manifest used for the separate mode-identity cross-check"
+        }
+      ]
+    }
+  },
+  "identity_conclusion": {
+    "shared_physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+    "shared_cell_count": 990,
+    "shared_p6_full_dofs": 667152,
+    "shared_p4_map_sha256": "c1f135c85518941ff356a2d26c9c88ba624688b842f77080392fc5e767d0ea08",
+    "shared_p6_map_sha256": "54647a99c97786af88364d6e3f8c6c1d3c7893bbf79afc2888a63cf47be6c06e",
+    "shared_ordered_mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+    "shared_condensed_matrix_csr_sha256": "857bc8bb5f04b28a55283fb960a2b695e1078983e55ff151687780de5dab8ee0",
+    "input_sha_difference_explanation": "run identifiers and explicit profile/backend choices differ; physical, mesh and discrete operator identities were checked equal"
+  },
+  "comparisons": {
+    "V31_vs_V29": {
+      "binding_identity_checks": {
+        "physical_model_sha256": true,
+        "p4_native_map_sha256": true,
+        "p6_native_map_sha256": true,
+        "ordered_mode_sha256": true,
+        "p4_condensed_matrix_csr_sha256": true
+      },
+      "all_binding_identities_equal": true,
+      "input_sha_equal": false,
+      "sample_coordinates_exact": {
+        "x_nm": true,
+        "y_nm": true,
+        "z_nm": true,
+        "interface_z_nm": true
+      },
+      "all_sample_coordinates_exact": true,
+      "same_coordinate_E_H_samples": {
+        "E_V_per_m": {
+          "shape": [
+            5,
+            20,
+            40,
+            3
+          ],
+          "relative_l2": 1.4636905245251295e-14,
+          "max_absolute": 3.212344293119109e-14
+        },
+        "H_A_per_m": {
+          "shape": [
+            5,
+            20,
+            40,
+            3
+          ],
+          "relative_l2": 5.966308861980466e-14,
+          "max_absolute": 1.1488631563653907e-15
+        },
+        "E_t_interface_V_per_m": {
+          "shape": [
+            2,
+            20,
+            40,
+            2
+          ],
+          "relative_l2": 1.0970606150437768e-14,
+          "max_absolute": 1.3557909752913235e-14
+        },
+        "H_t_interface_A_per_m": {
+          "shape": [
+            2,
+            20,
+            40,
+            2
+          ],
+          "relative_l2": 1.430675144001785e-13,
+          "max_absolute": 1.913156459843507e-17
+        }
+      },
+      "full_FE_coefficient_vector_euclidean": {
+        "shape": [
+          667152
+        ],
+        "dtype": "complex128",
+        "relative_l2": 2.2153725761916238e-14,
+        "max_absolute": 1.298795195268632e-13,
+        "is_FE_mass_weighted_L2_or_curl": false
+      },
+      "official_80_vector": {
+        "shape": [
+          80
+        ],
+        "relative_l2": 1.3897028322557472e-14,
+        "max_absolute": 1.0940767701745408e-14
+      },
+      "ordered_mode_keys": {
+        "current_count": 80,
+        "reference_count": 80,
+        "exact_order_match": true
+      },
+      "per_mode_absolute_power_differences": {
+        "R": 7.827072323607354e-15,
+        "T": 2.2898349882893854e-16,
+        "power_ratio": 7.827072323607354e-15,
+        "modal_power_code_units": 8.570921750106208e-14
+      },
+      "outgoing_modal_amplitudes": {
+        "relative_l2": 1.9013904912668762e-14,
+        "max_absolute": 1.0988964840103694e-14
+      },
+      "RTA_absolute_differences": {
+        "R_total": 7.827072323607354e-15,
+        "T_total": 2.220446049250313e-16,
+        "A_balance": 7.66053886991358e-15,
+        "A_volume_total": 5.551115123125783e-15,
+        "R00_s": 7.827072323607354e-15,
+        "R00_p": 3.1210214595537733e-27,
+        "R00_total": 7.827072323607354e-15
+      }
+    },
+    "V31_vs_V30": {
+      "binding_identity_checks": {
+        "physical_model_sha256": true,
+        "p4_native_map_sha256": true,
+        "p6_native_map_sha256": true,
+        "ordered_mode_sha256": true,
+        "p4_condensed_matrix_csr_sha256": true
+      },
+      "all_binding_identities_equal": true,
+      "input_sha_equal": false,
+      "sample_coordinates_exact": {
+        "x_nm": true,
+        "y_nm": true,
+        "z_nm": true,
+        "interface_z_nm": true
+      },
+      "all_sample_coordinates_exact": true,
+      "same_coordinate_E_H_samples": {
+        "E_V_per_m": {
+          "shape": [
+            5,
+            20,
+            40,
+            3
+          ],
+          "relative_l2": 0.0,
+          "max_absolute": 0.0
+        },
+        "H_A_per_m": {
+          "shape": [
+            5,
+            20,
+            40,
+            3
+          ],
+          "relative_l2": 0.0,
+          "max_absolute": 0.0
+        },
+        "E_t_interface_V_per_m": {
+          "shape": [
+            2,
+            20,
+            40,
+            2
+          ],
+          "relative_l2": 0.0,
+          "max_absolute": 0.0
+        },
+        "H_t_interface_A_per_m": {
+          "shape": [
+            2,
+            20,
+            40,
+            2
+          ],
+          "relative_l2": 0.0,
+          "max_absolute": 0.0
+        }
+      },
+      "full_FE_coefficient_vector_euclidean": {
+        "shape": [
+          667152
+        ],
+        "dtype": "complex128",
+        "relative_l2": 0.0,
+        "max_absolute": 0.0,
+        "is_FE_mass_weighted_L2_or_curl": false
+      },
+      "official_80_vector": {
+        "shape": [
+          80
+        ],
+        "relative_l2": 0.0,
+        "max_absolute": 0.0
+      },
+      "ordered_mode_keys": {
+        "current_count": 80,
+        "reference_count": 80,
+        "exact_order_match": true
+      },
+      "per_mode_absolute_power_differences": {
+        "R": 0.0,
+        "T": 0.0,
+        "power_ratio": 0.0,
+        "modal_power_code_units": 0.0
+      },
+      "outgoing_modal_amplitudes": {
+        "relative_l2": 0.0,
+        "max_absolute": 0.0
+      },
+      "RTA_absolute_differences": {
+        "R_total": 0.0,
+        "T_total": 0.0,
+        "A_balance": 0.0,
+        "A_volume_total": 0.0,
+        "R00_s": 0.0,
+        "R00_p": 0.0,
+        "R00_total": 0.0
+      }
+    }
+  },
+  "aggregate_RTA_by_run": {
+    "V29": {
+      "R_total": 0.36509755369517294,
+      "T_total": 0.013016803348172958,
+      "A_balance": 0.621885642956654,
+      "A_volume_total": 0.6218856421420225,
+      "R00_s": 0.36506086288159717,
+      "R00_p": 4.8132151055651866e-23,
+      "R00_total": 0.36506086288159717
+    },
+    "V30": {
+      "R_total": 0.36509755369518077,
+      "T_total": 0.013016803348172736,
+      "A_balance": 0.6218856429566464,
+      "A_volume_total": 0.6218856421420169,
+      "R00_s": 0.365060862881605,
+      "R00_p": 4.812903003419231e-23,
+      "R00_total": 0.365060862881605
+    },
+    "V31": {
+      "R_total": 0.36509755369518077,
+      "T_total": 0.013016803348172736,
+      "A_balance": 0.6218856429566464,
+      "A_volume_total": 0.6218856421420169,
+      "R00_s": 0.365060862881605,
+      "R00_p": 4.812903003419231e-23,
+      "R00_total": 0.365060862881605
+    }
+  },
+  "inherited_FE_metric": {
+    "V30_vs_V29_full_FE_L2_relative": 1.4028635388466484e-14,
+    "V30_vs_V29_scaled_curl_relative": 3.3312391899680165e-14,
+    "status": "derived_for V31_vs_V29 from existing V30 record because V31/V30 full-field archives are byte-identical and map/model identities match",
+    "recomputed_in_this_closeout": false,
+    "source_record": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_compact.json"
+  },
+  "qualification_and_preserved_limits": {
+    "V31_solver_status": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+    "final_and_post_release_true_residual": 9.283162411158934e-07,
+    "true_residual_gate": 1e-06,
+    "matched_direct_reference": "not available; five field-reference checkpoints remain NOT_ATTEMPTED",
+    "V31_manifest_thread_variables": "not recorded individually; worker summary reports MPI1 and OMP/BLAS/NumExpr/MKL thread counts of 1",
+    "PSS": "disabled/null",
+    "swap": "observe-only",
+    "generic_physical_intermediate_checker": "EVIDENCE_INCOMPLETE because V31 does not emit physical_intermediate_summary.json; not a V31 solve gate",
+    "first_V31_attempt": "Codex manually stopped the first attempt after misapplying an 8 GiB cgroup threshold; original status enum USER_CONTROLLED_STOP, last complete i112 residual 2.713995416229632e-6, no final arrays; preserved in its original run directory and historical records"
+  },
+  "package_B_line": {
+    "user_selected_authority": "package N0-N6 task files and parent closeout docs",
+    "package_review_v30_sha256": "faaf35725ea8f11830f31e0acbe408300f0f55ddc92fe8cde16caa4c1537d337",
+    "previous_remote_review_v30_sha256": "d8a3e712b7e44d1d84cef4e4200b368e1f456e4b2592a4ae776aa752fcaf92ed",
+    "previous_remote_final_report_sha256": "b9dbe27879f73624e0cce8e4f243c6dfeca7ed39a969483644320a69ae8e737a",
+    "previous_remote_parent_commit": "95dacd01e86f0f7f1d29ee2d5e5a16039bb41871",
+    "history": "previous parent documents remain reachable in the 95dacd0 Git history; the selected package versions are active on this closeout line"
+  }
+}

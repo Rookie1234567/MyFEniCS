@@ -1,3 +1,30 @@
+# Task39extra 最终收口摘要：Review V30 / Response V34
+
+| 项目 | 最终结果 | 边界 |
+|---|---|---|
+| 本机阶段 | `CLOSED_WITH_QUALIFICATIONS` | 固定 13.5 nm 离散模型，不代表任意几何或连续极限 |
+| V31 authorized completion run | 126 iterations；原 A6 final/release 后残差 `9.283162411158934e-7`；R/T/A/`A_volume`=`0.36509755369518077 / 0.013016803348172736 / 0.6218856429566464 / 0.6218856421420169` | `DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED`；无独立 direct reference |
+| V31/V30 | 已保存完整场、同坐标采样、官方向量和逐模态数组完全一致 | input SHA 因运行标识和显式 profile/backend 选择不同 |
+| V31/V29 | 同一物理、网格、映射、模态和凝聚矩阵身份；系数欧氏相对差 `2.22e-14`；FE L2/scaled-curl 从 V30 既有记录传递为 `1.40e-14 / 3.33e-14` | 传递项不是新计算；字段来源和 hashes 见 JSON record |
+| V31 时间/资源 | workflow monotonic `2313.526 s`，settled conservative realtime `2534.117 s`；tree RSS `7,331,401,728 B` | 不作为受控性能配对；PSS disabled/null，swap observe-only |
+| 保留缺口/负证据 | 首次 V31 Codex 误停（原始状态枚举 `USER_CONTROLLED_STOP`）、通用 checker `EVIDENCE_INCOMPLETE`、五个 reference checkpoint `NOT_ATTEMPTED` | 均不改写为通过或独立参考 |
+| Task40 交接 | 用户选 B：附件 N0–N6 为唯一活动任务合同 | 远端 A0–A6 提交保留为历史；不改 master/default/工作站 |
+
+## 收口解释
+
+同一离散身份下，V31 与 V30 的保存数组完全相同；与 V29 的差异处于舍入量级。这说明这些版本实现对照稳定，但不能替代独立 direct reference，也不构成跨网格或连续极限误差证明。V31 结果仍按 authority-limited 离散通过报告。
+
+- [最终技术报告](../final_report.md)
+- [Review V30](../review_report_v30.md)
+- [Response V34](../response_v34.md)
+- [V31 outcome 与 C1 补充](projection_layout_v31.md)
+- [离线比较 JSON](records/projection_layout_v31_offline_comparison_v34.json)
+- [历史完整运行索引](records/run_index.json)
+
+下文为前序阶段的完整历史汇总，负结果、受控停止和未运行项继续有效。
+
+---
+
 ## V31 用户单次授权完成重跑：离散求解与输出一致性通过，参考权威受限
 
 H6 自然序只改变显式 V31 profile 的局部数据排列，不改变矩阵、积分点、权重或物理方程。首次被人工停止的运行仍按 USER_CONTROLLED_STOP 保留；后续用户明确授权的一场 completion rerun 已完成。本次结果只说明该固定 Full3D 离散系统通过真残差和输出一致性检查。
