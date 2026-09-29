@@ -19,7 +19,26 @@
     "pre_run_git_tree_must_be_clean": true,
     "service_wrapper": "bash scripts/run_case_in_user_service.sh input/task39extra/v31_projection_layout_original_h7p5.dat --v14-time-policy observe_only",
     "source_commit_before_selection_record": "410764d619dafdf6b66447b68dd484de7d67b2e9",
-    "worker_command": "python scripts/run_case.py input/task39extra/v31_projection_layout_original_h7p5.dat --v14-time-policy observe_only"
+    "worker_command": "python scripts/run_case.py input/task39extra/v31_projection_layout_original_h7p5.dat --v14-time-policy observe_only",
+    "execution_result": {
+      "classification": "USER_CONTROLLED_STOP",
+      "raw_root": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260929T022451.109239Z",
+      "source_sha": "baeb0b3a7e74e3b77705e70918772d1dcacb9639",
+      "iterations": 113,
+      "last_explicit_true_residual": 2.713995416229632e-06,
+      "residual_limit": 1e-06,
+      "final_residual": null,
+      "official_physical_result": false,
+      "reason": "Codex manually stopped after misinterpreting 8 GiB cgroup memory.current as a hard review Gate; Review V29 does not define this threshold.",
+      "process_tree_rss_peak_bytes": 7324389376,
+      "actual_launch_cap_bytes": 13358809088,
+      "dynamic_checker": "NOT_RUN_MISSING_FINAL_WORKER_SUMMARY",
+      "compact_record": "docs/task039_extra_physical_multilevel/outcomes/records/projection_layout_v31_compact.json",
+      "checker_record": "docs/task039_extra_physical_multilevel/outcomes/records/projection_layout_v31_checker.json",
+      "additional_formal_runs_within_this_review": 0,
+      "last_residual_checkpoint": 112,
+      "iterations_log_last_row": 113
+    }
   },
   "input": {
     "comparison_group": "review_v29_evidence_and_projection_v31",
@@ -167,7 +186,7 @@
     "variant": "natural_order"
   },
   "selected_route_commit": "410764d619dafdf6b66447b68dd484de7d67b2e9",
-  "status": "H6_CANDIDATE_SELECTED_REQUIRES_ONE_FORMAL_RUN",
+  "status": "H6_CANDIDATE_FORMAL_RUN_USER_CONTROLLED_STOP_UNQUALIFIED",
   "verification": {
     "abi_preflight": {
       "math_threads": 1,
@@ -181,5 +200,6 @@
     "run_case_dry_run": "passed",
     "run_case_validate_only": "passed",
     "targeted_tests": "63 passed, 1 skipped in 29.84s"
-  }
+  },
+  "pre_run_status": "H6_CANDIDATE_SELECTED_REQUIRES_ONE_FORMAL_RUN"
 }

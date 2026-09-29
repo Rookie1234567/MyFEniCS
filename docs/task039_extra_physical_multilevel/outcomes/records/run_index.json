@@ -3034,6 +3034,74 @@
         "qualified_MPI2_or_MPI4",
         "additional_PDE_after_V29"
       ]
+    },
+    {
+      "id": "V31_projection_layout_original_h7p5_formal_attempt",
+      "source_sha": "baeb0b3a7e74e3b77705e70918772d1dcacb9639",
+      "stage": "Q4_ORIGINAL_H7P5",
+      "raw_root": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260929T022451.109239Z",
+      "status": "USER_CONTROLLED_STOP_FORMAL_RESULT_INCOMPLETE",
+      "official_result": false,
+      "profile": "physical_p6_trace_projection_layout_v31",
+      "input": "input/task39extra/v31_projection_layout_original_h7p5.dat",
+      "input_sha256": "b19bf2d6a0a5f7a45a9910e3d3f25b1e3a896daa2205e78327be8f169cc9c7d0",
+      "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+      "parent_classification": "USER_CONTROLLED_STOP",
+      "worker_classification": "USER_CONTROLLED_STOP",
+      "worker_exit_status": null,
+      "solver": {
+        "iterations": 113,
+        "outer_matvec_count": 116,
+        "outer_pc_count": 113,
+        "last_explicit_relative_residual": 2.713995416229632e-06,
+        "residual_limit": 1e-06,
+        "final_explicit_relative_residual": null,
+        "post_release_explicit_relative_residual": null,
+        "solve_seconds_at_last_checkpoint": 1681.6660313247644,
+        "official_field_or_physical_result": false
+      },
+      "resources": {
+        "process_tree_rss_peak_bytes": 7324389376,
+        "process_tree_pss_peak_bytes": null,
+        "pss_status": "DISABLED_BY_PROFILE",
+        "process_tree_swap_peak_bytes": 0,
+        "swap_policy": "observe_only",
+        "actual_launch_cap_bytes": 13358809088,
+        "watchdog_sample_count": 8279,
+        "descendants_cleared": true,
+        "cgroup_current_and_peak_at_operator_stop_bytes": [
+          8602890240,
+          8603148288
+        ],
+        "cgroup_snapshot_not_equal_to_watchdog_process_tree_rss": true
+      },
+      "timing": {
+        "watchdog_monotonic_elapsed_seconds": 2107.0475069790264,
+        "conservative_realtime_budget_seconds": 2298.396986144017,
+        "clock_discrepancy_seconds": 191.28343893900455,
+        "time_policy": "observe_only",
+        "time_limit_seconds": 43200.0
+      },
+      "evidence": {
+        "compact": "docs/task039_extra_physical_multilevel/outcomes/records/projection_layout_v31_compact.json",
+        "checker": "docs/task039_extra_physical_multilevel/outcomes/records/projection_layout_v31_checker.json",
+        "outcome": "docs/task039_extra_physical_multilevel/outcomes/projection_layout_v31.md",
+        "response": "docs/task039_extra_physical_multilevel/response_v32.md",
+        "selective_handoff": "docs/task039_extra_physical_multilevel/outcomes/selective_workstation_handoff_v31.md",
+        "run_summary_sha256": "c3135eff02545f9c70a53cd6fc635fbb1638187f29b4f632c3c9118ba52337cf",
+        "watchdog_summary_sha256": "59c6be033b05d61ae028e194356ab09ab7248dc6a585f2a8c3202c85ddee6d6a",
+        "worker_resources_sha256": "93285e6466839c8b03de8c7ed88f2d8d6ec8e6bd30acef2dc4db2459dbbf484b",
+        "residual_packet_npz_sha256": "a11d135f93ebbbb50b32fa077f18dc0b5cccd43d9ec71176873ec90fc99d5ae8"
+      },
+      "not_run": [
+        "final_and_post_release_residual",
+        "official_field",
+        "R_T_A",
+        "full_worker_dynamic_checker",
+        "full_formal_solver_gate",
+        "additional_fresh_pde_under_review_v29"
+      ],
+      "operator_error": "Codex manually stopped the service after incorrectly treating 8 GiB cgroup current memory as a hard review threshold; the active review instead uses the recorded physical-memory-pressure launch cap. Preserve USER_CONTROLLED_STOP."
     }
   ],
   "limitations": [
@@ -3678,7 +3746,7 @@
       "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_memory_liveness.json": "bf94adb607a11a9eb76c616f56e57c7e2298cb646ab263375b8283c392802a5d"
     }
   },
-  "current_review_record": "review_v21_dual_condensed_geometry_h7p5",
+  "current_review_record": "review_v29_projection_layout_v31",
   "v13_continuation": {
     "id": "V13_512MiB_three_input_continuation",
     "status": "P4_DIRECTION_DIAGNOSIS_COMPLETED",
@@ -5118,7 +5186,7 @@
     "status": "COMPLETED_ORIGINAL_THEN_SUPERSEDED_BY_USER_STOP",
     "previous_bug_replay_count": 1
   },
-  "current_scope": "Review V22 / Response V25: V24 original h7.5 formal B completed with discrete/physical consistency pass, no matched reference, single-core only; old V23 negative and authority-limited records retained.",
+  "current_scope": "Review V29 / Response V32: V31 H6 natural-order candidate; formal attempt user-stopped at i112 after Codex misread a cgroup reading; no formal result.",
   "review_v21_dual_condensed_geometry_h7p5": {
     "base_sha": "f9e16c21b936673b5a2dadcf52d2c344e61aabe8",
     "current_pre_z5_head": "f8d0fbf3da48fd3cbe5cc3a226dbff3feb1d9b48",
@@ -5919,5 +5987,21 @@
     "workstation_process_or_source_touched": false,
     "master_merge_approved": false,
     "additional_pde_run": false
+  },
+  "review_v29_projection_layout_v31": {
+    "review": "review_report_v29.md",
+    "response": "docs/task039_extra_physical_multilevel/response_v32.md",
+    "profile": "physical_p6_trace_projection_layout_v31",
+    "status": "USER_CONTROLLED_STOP_FORMAL_RESULT_INCOMPLETE",
+    "formal_run_count": 1,
+    "official_result": false,
+    "dynamic_checker": "NOT_RUN_MISSING_FINAL_WORKER_SUMMARY",
+    "compact": "docs/task039_extra_physical_multilevel/outcomes/records/projection_layout_v31_compact.json",
+    "checker": "docs/task039_extra_physical_multilevel/outcomes/records/projection_layout_v31_checker.json",
+    "outcome": "docs/task039_extra_physical_multilevel/outcomes/projection_layout_v31.md",
+    "handoff": "docs/task039_extra_physical_multilevel/outcomes/selective_workstation_handoff_v31.md",
+    "ordinary_default_changed": false,
+    "workstation_migrated": false,
+    "master_merge_approved": false
   }
 }

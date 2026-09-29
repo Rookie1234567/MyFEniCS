@@ -1,0 +1,228 @@
+{
+  "schema": "task039extra.v31.projection-layout.run-compact.v1",
+  "review": "review_report_v29.md",
+  "run_id": "task39extra_v31_projection_layout_original_h7p5_v1",
+  "status": "USER_CONTROLLED_STOP_AFTER_I112_RESIDUAL_CHECKPOINT",
+  "result_classification": "USER_CONTROLLED_STOP",
+  "interpretation": "Formal solve incomplete; this is neither a numerical pass nor a solver failure. The Codex operator stopped the service after misreading cgroup current memory as an 8 GiB hard stop line, which the active review did not define. The last full residual checkpoint is i112; the ordinary iterations log contains a subsequent i113 row before shutdown.",
+  "source": {
+    "sha": "baeb0b3a7e74e3b77705e70918772d1dcacb9639",
+    "clean_at_launch": true,
+    "input": "input/task39extra/v31_projection_layout_original_h7p5.dat",
+    "input_sha256": "b19bf2d6a0a5f7a45a9910e3d3f25b1e3a896daa2205e78327be8f169cc9c7d0",
+    "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+    "resolved_config_sha256": "dee4ac73a3d032968ed5f4c99292f6d758d4fc69dbe800ea34c39e005e10b4b7",
+    "run_manifest_sha256": "2846df6dcfd8110472d36730098d86c1890f18c35bf99a40921755e73bee83a7",
+    "profile": "physical_p6_trace_projection_layout_v31",
+    "mpi_size": 1,
+    "qualified_linux_environment": true,
+    "petsc_scalar_type": "complex128",
+    "petsc_int_type": "int32",
+    "math_threads": 1
+  },
+  "solver": {
+    "last_iteration": 113,
+    "outer_matvec_count": 116,
+    "outer_pc_count": 113,
+    "last_checkpoint_iteration": 112,
+    "last_explicit_true_residual": 2.713995416229632e-06,
+    "residual_pass_limit": 1e-06,
+    "residual_pass_at_last_checkpoint": false,
+    "port_closure_relative": 9.562953779306238e-16,
+    "native_identity_relative": 1.1290252664778043e-11,
+    "solve_seconds_at_checkpoint": 1681.6660313247644,
+    "final_residual": null,
+    "post_release_residual": null,
+    "official_field": false,
+    "official_R_T_A": false,
+    "worker_final_summary_present": false,
+    "field_reference_checkpoints": [
+      {
+        "iteration": 0,
+        "status": "NOT_ATTEMPTED",
+        "field_metrics": {}
+      },
+      {
+        "iteration": 32,
+        "status": "NOT_ATTEMPTED",
+        "field_metrics": {}
+      },
+      {
+        "iteration": 64,
+        "status": "NOT_ATTEMPTED",
+        "field_metrics": {}
+      },
+      {
+        "iteration": 96,
+        "status": "NOT_ATTEMPTED",
+        "field_metrics": {}
+      }
+    ],
+    "selected_residual_checkpoints": [
+      {
+        "iteration": 0,
+        "explicit_true_residual": 1.0
+      },
+      {
+        "iteration": 16,
+        "explicit_true_residual": 0.004143722297481332
+      },
+      {
+        "iteration": 32,
+        "explicit_true_residual": 0.0003352917963109143
+      },
+      {
+        "iteration": 48,
+        "explicit_true_residual": 0.00019419221355594445
+      },
+      {
+        "iteration": 64,
+        "explicit_true_residual": 3.0233523304734462e-05
+      },
+      {
+        "iteration": 80,
+        "explicit_true_residual": 1.760946830461265e-05
+      },
+      {
+        "iteration": 96,
+        "explicit_true_residual": 3.7766999152003817e-06
+      },
+      {
+        "iteration": 112,
+        "explicit_true_residual": 2.713995416229632e-06
+      }
+    ],
+    "iterations_log_row_count": 117
+  },
+  "timing": {
+    "watchdog_monotonic_elapsed_seconds": 2107.0475069790264,
+    "full_workflow_monotonic_seconds": 2107.1145965990145,
+    "conservative_realtime_budget_seconds": 2298.396986144017,
+    "monotonic_realtime_discrepancy_seconds": 191.28343893900455,
+    "time_limit_seconds": 43200.0,
+    "time_policy": "observe_only",
+    "time_gate_triggered": false,
+    "setup_subphase_timings": null,
+    "release_and_postprocess_timings": null
+  },
+  "resources": {
+    "scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+    "process_tree_rss_peak_bytes": 7324389376,
+    "process_tree_rss_samples": 8279,
+    "actual_launch_cap_bytes": 13358809088,
+    "process_tree_swap_peak_bytes": 0,
+    "swap_policy": "observe_only",
+    "pss_status": "DISABLED_BY_PROFILE",
+    "pss_peak_bytes": null,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "cgroup_stop_snapshot": {
+      "measurement_scope": "Codex live read of the unit cgroup at the stop event; not part of the watchdog raw record",
+      "memory_current_bytes": 8602890240,
+      "memory_peak_bytes": 8603148288,
+      "memory_swap_current_bytes": 0,
+      "memory_events": {
+        "low": 0,
+        "high": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_kill": 0,
+        "oom_group_kill": 0
+      },
+      "operator_interpretation_at_the_time": "incorrectly treated 8 GiB as a hard stop threshold",
+      "review_v29_hard_stop_threshold": null
+    },
+    "resource_cap_reached": false,
+    "stop_reason": "USER_CONTROLLED_STOP initiated by Codex operator error; not a watchdog resource stop"
+  },
+  "independent_checkpoint_recheck": {
+    "status": "PASS_FOR_SAVED_I112_PACKET_ONLY",
+    "method": "numpy.linalg.norm(saved complex vector) divided by its saved operation scale/RHS norm",
+    "checks": [
+      {
+        "quantity": "native_residual_relative",
+        "array_key": "array_0",
+        "denominator_field": "native_rhs_norm",
+        "recomputed": 2.713995416229632e-06,
+        "saved_scalar": 2.713995416229632e-06,
+        "absolute_difference": 0.0,
+        "exact_float_match": true
+      },
+      {
+        "quantity": "port_closure_relative",
+        "array_key": "array_1",
+        "denominator_field": "port_operation_scale",
+        "recomputed": 9.562953779306238e-16,
+        "saved_scalar": 9.562953779306238e-16,
+        "absolute_difference": 0.0,
+        "exact_float_match": true
+      },
+      {
+        "quantity": "internal_residual_relative",
+        "array_key": "array_2",
+        "denominator_field": "internal_operation_scale",
+        "recomputed": 9.692906997762977e-18,
+        "saved_scalar": 9.692906997762977e-18,
+        "absolute_difference": 0.0,
+        "exact_float_match": true
+      },
+      {
+        "quantity": "native_identity_relative",
+        "array_key": "array_4",
+        "denominator_field": "native_identity_operation_scale",
+        "recomputed": 1.1290252664778043e-11,
+        "saved_scalar": 1.1290252664778043e-11,
+        "absolute_difference": 0.0,
+        "exact_float_match": true
+      },
+      {
+        "quantity": "schur_port_identity_relative",
+        "array_key": "array_5",
+        "denominator_field": "schur_port_identity_operation_scale",
+        "recomputed": 6.344842929585312e-29,
+        "saved_scalar": 6.344842929585312e-29,
+        "absolute_difference": 0.0,
+        "exact_float_match": true
+      }
+    ],
+    "does_not_establish": [
+      "final residual",
+      "post-release residual",
+      "official field",
+      "physical outputs",
+      "full dynamic checker pass"
+    ]
+  },
+  "dynamic_checker": {
+    "status": "NOT_RUN_MISSING_FINAL_WORKER_SUMMARY",
+    "tool": "benchmarks/task39extra_v25_dynamic_checker.py",
+    "tool_sha256": "ae7ea1784acd7c7a202f8cbd00593c4db2be52bae92aa8f3e053a84a752bc49c",
+    "reason": "The stopped run did not produce the worker summary required by the checker; watchdog/run_summary.json is not a substitute."
+  },
+  "operator_error": {
+    "acknowledged": true,
+    "incorrect_assumption": "8 GiB cgroup memory.current was a review-mandated hard stop threshold",
+    "correction": "Review V29 says V29/V30 RSS results are not run stop lines; the run uses the existing dynamic physical-memory-pressure launch cap recorded above.",
+    "cgroup_snapshot_scope": "different from the watchdog process-tree simultaneous RSS scope",
+    "additional_pde_runs_authorized": 0
+  },
+  "raw_artifact_hashes": {
+    "input_original.dat": "b19bf2d6a0a5f7a45a9910e3d3f25b1e3a896daa2205e78327be8f169cc9c7d0",
+    "resolved_config.json": "dee4ac73a3d032968ed5f4c99292f6d758d4fc69dbe800ea34c39e005e10b4b7",
+    "run_manifest.json": "2846df6dcfd8110472d36730098d86c1890f18c35bf99a40921755e73bee83a7",
+    "run_summary.json": "c3135eff02545f9c70a53cd6fc635fbb1638187f29b4f632c3c9118ba52337cf",
+    "watchdog/summary.json": "59c6be033b05d61ae028e194356ab09ab7248dc6a585f2a8c3202c85ddee6d6a",
+    "iterations.jsonl": "27d6052b5541d6501040e6198438b14cce768a6759af2d89d3d39f0e4499a823",
+    "monitor_residuals.jsonl": "9b7c1aff9eaf0638969ae91dcf26c12fb97f5d353b8261af0ad7d352b325b73a",
+    "field_checkpoint_metrics.jsonl": "f4a8d720978d521756ded2e2f03e581ccbf59ae2747fbac20ce317eea91c41b1",
+    "v31q4_events.jsonl": "040675c5cb9275f3c74a6d7784d1c7d8205b17278a6330e51724cd7cf13e713b",
+    "v31q4_worker_resources.jsonl": "93285e6466839c8b03de8c7ed88f2d8d6ec8e6bd30acef2dc4db2459dbbf484b",
+    "x2_residual_0112_0017.json": "3edf4b0b3ef1cfe28d3f65a73951e5a7ea2a60bd8dd38bb605ddf706768f4405",
+    "x2_residual_0112_0017.npz": "a11d135f93ebbbb50b32fa077f18dc0b5cccd43d9ec71176873ec90fc99d5ae8",
+    "benchmarks/task39extra_v25_dynamic_checker.py": "ae7ea1784acd7c7a202f8cbd00593c4db2be52bae92aa8f3e053a84a752bc49c",
+    "src/test/test_task39extra_v25_dynamic_checker.py": "48068d1208ccdfb331e5d6235534152b86a4edb2dad1fec7e23b42822a4c6b88"
+  },
+  "raw_root": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260929T022451.109239Z",
+  "watchdog_log": "benchmarks/artifacts/user_services/myfenics-case-20260929T022450-1134512.log",
+  "watchdog_log_sha256": "0f436d4db732bf3880ef2136f585fc1aae3ea34ee84809f0a183abc86a18b672"
+}

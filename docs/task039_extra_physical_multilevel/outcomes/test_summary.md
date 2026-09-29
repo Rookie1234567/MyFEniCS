@@ -1,3 +1,19 @@
+## Review V29 / V31 正式运行中断与证据复核
+
+| 验证 | 实际结果 | 范围与边界 |
+|---|---|---|
+| V31 正式场 | `USER_CONTROLLED_STOP`；完整残差检查到 i112，普通迭代日志到 i113 | Codex 将 cgroup `memory.current` 错当作 8 GiB 硬 Gate 而手动停止；review 没有该停止线。不是资源停止或 solver negative |
+| 最后显式残差 | `2.713995416229632e-6` | 大于 `1e-6`；无 final/release residual、场、R/T/A |
+| i112 raw residual packet | **5 项独立向量范数全部一致，差=0** | 复核 native A6、端口闭合、内部残差、native identity、Schur-port identity；只验证已存 checkpoint，不补成 final solve |
+| dynamic checker | **not_run** | 中止目录没有 worker final summary；不能从 watchdog wrapper summary 代替 worker 数据，也不能声称 PASS/FAIL |
+| 运行前 focused tests | **63 passed, 1 skipped in 29.84 s** | 在正式场前通过；不是正式场通过，也未在文档修改后重跑 |
+| checker focused tests | **17 passed in 0.13 s** | checker 源码未改变；不等于本次完整动态 checker 通过 |
+| compileall / validate-only / dry-run / ABI | **PASS** | 正式场前完成；qualified WSL，PETSc complex128/int32，MPI1/thread1 |
+| 最终文档检查 | **JSON parse、artifact SHA、`git diff --check`** | 文档改动后执行；不运行 PDE 或 pytest |
+| 未运行/未声称 | full repository pytest、Ruff、MPI2/4、CI | Ruff 在 qualified 环境中未安装；其余不声称通过 |
+
+资源事实与错误停止原因见 [V31 outcome](projection_layout_v31.md)；检查字段见 [checker record](records/projection_layout_v31_checker.json)。
+
 ## Review V28 / V30 收口验证（没有文档后 pytest 重跑）
 
 | 验证 | 实际结果 | 范围与边界 |

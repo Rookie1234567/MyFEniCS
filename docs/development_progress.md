@@ -1,3 +1,11 @@
+# Task39extra 当前进展：Review V29 / V31 正式场中止，误停已披露
+
+V31 H6 自然序组件配对通过，选择的自然序路线仍只在显式 profile 中。唯一 fresh formal PDE 完整残差检查至 i112、普通迭代日志至 i113，最后完整 A6 相对残差=`2.713995416229632e-6`，高于 `1e-6`；没有 final/release residual、场或物理量。运行原始分类为 `USER_CONTROLLED_STOP`。
+
+我误把 cgroup `memory.current` 的 8 GiB 当成硬停止线并手动停止作业。Review V29 并无该硬线；正式 watchdog 整树 RSS peak=`7,324,389,376 B`，实际启动 cap=`13,358,809,088 B`。不能把此次事件写成资源 Gate stop。停止时 cgroup current/peak=`8,602,890,240/8,603,148,288 B`，属不同的内存口径。停止前 i112 残差包五项向量范数离线复核均与保存数值一致；完整动态 checker 因没有 worker final summary 而未运行。
+
+review 授权的一场 PDE 已消耗，没有新授权不重跑。普通默认未变、工作站未迁移、master 未合并；Ruff 不可用，完整测试/CI/MPI2/4未运行。完整复盘见 [Response V32](task039_extra_physical_multilevel/response_v32.md)、[V31 outcome](task039_extra_physical_multilevel/outcomes/projection_layout_v31.md)、[交接清单](task039_extra_physical_multilevel/outcomes/selective_workstation_handoff_v31.md) 与 [run index](task039_extra_physical_multilevel/outcomes/records/run_index.json)。
+
 # Task39extra 当前进展：Review V28 / V30 笔记本正式验证完成，工作站未迁移
 
 V30 original p6/h7.5 唯一 formal run 于 source 254f0cf78f950246655dc86af9409139b9a97680 完成126步；独立 final/post-release 真残差=9.283162411158622e-7，classification=DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED_WITH_LEGACY_CHECKER_INCOMPATIBILITY。离线同 V29 离散 full FE L2/scaled-curl=1.4029e-14/3.3312e-14，80 mode、同坐标场与官方物理量一致。worker field checkpoints仍为not attempted。V25旧动态checker的backend_identity fail原样保留；独立V30 checker pass带authority limitation。

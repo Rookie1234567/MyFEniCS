@@ -1,3 +1,11 @@
+## Review V29 / V31：H6 自然序组件通过，唯一正式运行被 Codex 误停
+
+V31 H6 自然序调整只重排局部计算的积分点内存访问次序，不改数学方程。组件配对六组均胜出，但唯一正式场在 i112 完整残差检查后、普通迭代日志记到 i113 时被我错误地按“8 GiB cgroup current”阈值手动停止；Review V29 并未设该硬停止线。watchdog 记录的整树 RSS 峰值为 `7,324,389,376 B`，低于实际启动 cap `13,358,809,088 B`。原始分类 `USER_CONTROLLED_STOP` 保留，不能写成资源 Gate 停止或求解器失败。
+
+最后显式原 A6 残差为 `2.713995416229632e-6`，高于 `1e-6`，没有 final/release 残差、最终场和 R/T/A。i112 保存残差数组的五个范数经离线重算与记录完全相符；完整动态 checker 因缺少 worker final summary 未运行。Review V29 只授权一场 fresh PDE，该额度已消耗；没有新授权前不重跑。V31 保留显式 profile，ordinary default 不变，工作站未迁移，master 未合并。
+
+完整误停说明、残差表和 SHA 见 [V31 outcome](projection_layout_v31.md)、[Response V32](../response_v32.md)、[compact/checker](records/projection_layout_v31_compact.json)、[选择性交接](selective_workstation_handoff_v31.md) 与 [run index](records/run_index.json)。
+
 ## Review V28 / V30：工作站引导型笔记本验证已完成，等待主控 review
 
 V30 在 original p6/h7.5、coarse p4、990 cells、80 modes、MPI1 下完成唯一正式场：126 步，独立最终及 release 后真残差均为 9.283162411158622e-7，分类为 authority-limited discrete pass。离线与 V29 同离散全 FE、坐标 E/H、80 mode 和 R/T/A/A_volume 复核均通过；worker 内五个 reference checkpoints 仍保持 NOT_ATTEMPTED / MATCHED_REFERENCE_NOT_AVAILABLE。

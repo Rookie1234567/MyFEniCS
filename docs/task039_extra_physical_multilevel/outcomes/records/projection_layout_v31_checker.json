@@ -1,0 +1,87 @@
+{
+  "schema": "task039extra.v31.projection-layout.partial-checker.v1",
+  "status": "CHECKPOINT_RECHECK_PASS_FORMAL_DYNAMIC_CHECKER_NOT_RUN",
+  "input_identity": {
+    "source_sha": "baeb0b3a7e74e3b77705e70918772d1dcacb9639",
+    "input_sha256": "b19bf2d6a0a5f7a45a9910e3d3f25b1e3a896daa2205e78327be8f169cc9c7d0",
+    "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+    "run_manifest_sha256": "2846df6dcfd8110472d36730098d86c1890f18c35bf99a40921755e73bee83a7",
+    "run_summary_sha256": "c3135eff02545f9c70a53cd6fc635fbb1638187f29b4f632c3c9118ba52337cf"
+  },
+  "saved_i112_vector_norm_recheck": {
+    "status": "PASS",
+    "json_path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260929T022451.109239Z/x2_residual_0112_0017.json",
+    "json_sha256": "3edf4b0b3ef1cfe28d3f65a73951e5a7ea2a60bd8dd38bb605ddf706768f4405",
+    "npz_path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260929T022451.109239Z/x2_residual_0112_0017.npz",
+    "npz_sha256": "a11d135f93ebbbb50b32fa077f18dc0b5cccd43d9ec71176873ec90fc99d5ae8",
+    "checks": [
+      {
+        "quantity": "native_residual_relative",
+        "array_key": "array_0",
+        "denominator_field": "native_rhs_norm",
+        "recomputed": 2.713995416229632e-06,
+        "saved_scalar": 2.713995416229632e-06,
+        "absolute_difference": 0.0,
+        "exact_float_match": true
+      },
+      {
+        "quantity": "port_closure_relative",
+        "array_key": "array_1",
+        "denominator_field": "port_operation_scale",
+        "recomputed": 9.562953779306238e-16,
+        "saved_scalar": 9.562953779306238e-16,
+        "absolute_difference": 0.0,
+        "exact_float_match": true
+      },
+      {
+        "quantity": "internal_residual_relative",
+        "array_key": "array_2",
+        "denominator_field": "internal_operation_scale",
+        "recomputed": 9.692906997762977e-18,
+        "saved_scalar": 9.692906997762977e-18,
+        "absolute_difference": 0.0,
+        "exact_float_match": true
+      },
+      {
+        "quantity": "native_identity_relative",
+        "array_key": "array_4",
+        "denominator_field": "native_identity_operation_scale",
+        "recomputed": 1.1290252664778043e-11,
+        "saved_scalar": 1.1290252664778043e-11,
+        "absolute_difference": 0.0,
+        "exact_float_match": true
+      },
+      {
+        "quantity": "schur_port_identity_relative",
+        "array_key": "array_5",
+        "denominator_field": "schur_port_identity_operation_scale",
+        "recomputed": 6.344842929585312e-29,
+        "saved_scalar": 6.344842929585312e-29,
+        "absolute_difference": 0.0,
+        "exact_float_match": true
+      }
+    ],
+    "residual_gate": {
+      "limit": 1e-06,
+      "observed": 2.713995416229632e-06,
+      "passed_at_checkpoint": false
+    },
+    "scope_limit": "Recomputes norms of worker-saved residual vectors; does not reconstruct the operator or establish final convergence."
+  },
+  "formal_dynamic_checker": {
+    "status": "NOT_RUN",
+    "tool": "benchmarks/task39extra_v25_dynamic_checker.py",
+    "tool_sha256": "ae7ea1784acd7c7a202f8cbd00593c4db2be52bae92aa8f3e053a84a752bc49c",
+    "focused_test": "src/test/test_task39extra_v25_dynamic_checker.py",
+    "focused_test_sha256": "48068d1208ccdfb331e5d6235534152b86a4edb2dad1fec7e23b42822a4c6b88",
+    "reason": "No final worker summary was emitted after the manual stop. Passing run_summary.json or watchdog/summary.json to the worker-summary slot would be schema misuse.",
+    "status_interpretation": "not_run is not DYNAMIC_PASS and not DYNAMIC_FAIL"
+  },
+  "official_result_checks": {
+    "final_worker_summary": "missing",
+    "final_and_post_release_residual": "not_run",
+    "field_and_physical_outputs": "not_run",
+    "R_T_A": "not_run",
+    "dynamic_accounting_and_wiring": "not_run"
+  }
+}
