@@ -16,7 +16,8 @@
     "V4-P2-OLDPOD": "task042_shared_v4_oldpod_space",
     "V4-P3-ERROR": "task042_shared_v4_error_diagnostic",
     "V4-P3-OLDPOD": "task042_shared_v4_oldpod_diagnostic",
-    "V4-P4": "task042_shared_v4_fresh_qualification"
+    "V4-P4": "task042_shared_v4_fresh_qualification",
+    "V4-P4-GENERATE": "task042_shared_v4_fresh_generation"
   },
   "stage_index": "tmp/task042/v4/stage_index.json",
   "stage_index_policy": "append once only after worker exit0/whole tree cleanup; hash every source, run and numerical record; copy prerequisite index into each run",
@@ -429,7 +430,8 @@
     "generation": "one zero; distinct RNG draws for internal-only, port-only, mixed, two manufactured original A4; generate only after frozen P3 selection",
     "selection": "only P3-eligible routes; descending independent strict pass count, ascending max native, max Schur; exact tie OLDPOD",
     "consumption_marker": "exclusive create tmp/task042/v4/fresh_consumption.json before generating arrays",
-    "F5": false
+    "F5": false,
+    "generation_process": "separate explicit V4-P4-GENERATE worker saves RHS-only packets, destroys all manufactured states and exits; V4-P4 accepts only two RHS keys"
   },
   "resources": {
     "shared_workstation": true,
@@ -460,5 +462,12 @@
     "shortwave"
   ],
   "user_authorization": "latest explicit Task042 controlled shared CPU authorization retained; replaces only Task042 heavy/exclusive lock prohibition, not resource/precision/provenance/stops and not F0 formal review; Review V1 supersedes V3 local-stagnation prohibition on global-space P1/P2",
-  "preregistered_before_V4_numerics": true
+  "preregistered_before_V4_numerics": true,
+  "implementation_privacy_repair": {
+    "identified_after": "P1 completed and worker/tree released",
+    "before_any_fresh_array_generation": true,
+    "original_registration_sha256": "c23ea3919cb63c86decaa92f8b02b0c16121a5c7314d82d459795bde28415ed6",
+    "original_source_sha": "8b792d78b06903ef874fbcf14fa06d951ae9c2ff",
+    "scope": "split previously unexecuted fresh manufacture and qualification; exact RNG/16 RHS/space/threshold/iterations/local PC unchanged; no prior numeric stage rerun"
+  }
 }

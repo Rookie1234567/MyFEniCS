@@ -23,6 +23,7 @@ TASK042_PROFILES = {
     "task042_shared_v4_error_diagnostic": "V4-P3-ERROR",
     "task042_shared_v4_oldpod_diagnostic": "V4-P3-OLDPOD",
     "task042_shared_v4_fresh_qualification": "V4-P4",
+    "task042_shared_v4_fresh_generation": "V4-P4-GENERATE",
 }
 
 

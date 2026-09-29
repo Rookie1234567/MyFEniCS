@@ -1,0 +1,38 @@
+{
+  "status": "PRIVACY_REPAIR_BEFORE_ANY_P4_DATA",
+  "numerical_core_blobs_unchanged_from_P0_P1": true,
+  "affected_numerical_stage_rerun": false,
+  "new_numeric_candidate_or_RHS_or_budget": false,
+  "P0_P1_source_sha": "8b792d78b06903ef874fbcf14fa06d951ae9c2ff",
+  "why": "a manufactured solution must exist only in RHS generation worker; verification process must accept only RHS, frozen spaces/PC and original operator",
+  "original_design_sha256": "c23ea3919cb63c86decaa92f8b02b0c16121a5c7314d82d459795bde28415ed6",
+  "updated_design_sha256": "95844fe31a6a4fdc282dd40d1cae65017b7d8f830f0ccb8f756409fcf0b28d93",
+  "checks": {
+    "privacy_fix_lint": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 1.390819598105736,
+      "sampled_process_tree_rss_peak_bytes": 21123072,
+      "sampled_process_tree_swap_peak_bytes": 0
+    },
+    "privacy_fix_checks": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 2.2253110979218036,
+      "sampled_process_tree_rss_peak_bytes": 82280448,
+      "sampled_process_tree_swap_peak_bytes": 0
+    },
+    "privacy_fix_static": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 1.7325795469805598,
+      "sampled_process_tree_rss_peak_bytes": 38604800,
+      "sampled_process_tree_swap_peak_bytes": 0
+    }
+  },
+  "targeted_tests": "6 passed,1 deselected; RHS-only rejects solution/x_star/initial_guess; no P0/P1 rerun",
+  "static_protected_count": 103
+}

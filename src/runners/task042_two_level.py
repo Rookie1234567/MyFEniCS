@@ -7,7 +7,12 @@ from pathlib import Path
 
 import numpy as np
 
-from src.io.task042_v4_gate import diagnostic_status, select_route, strict_from_norms
+from src.io.task042_v4_gate import (
+    diagnostic_status,
+    rhs_only_packet,
+    select_route,
+    strict_from_norms,
+)
 from src.runners.task042_coarse_stages import build_original
 from src.runners.task042_experiment import digest, scalar_audit
 from src.runners.task042_shared import ROOT, write_json
@@ -887,32 +892,48 @@ def fresh_packets(runtime):
             index += 1
 
 
-def p4(runtime, local, cells, apply, native, design, directory, artifact, marker):
+def frozen_selection():
     selection = ROOT / "tmp/task042/v4/selection.json"
     chosen = json.loads(selection.read_text())
-    reports = {route: completed("V4-P3-" + route)[1] for route in ("OLDPOD", "ERROR")}
+    reports = {}
+    evidence = {}
+    for route in ("OLDPOD", "ERROR"):
+        stage = "V4-P2-" + route
+        path, space = completed(stage)
+        if space["status"] == "COARSE_SPACE_NUMERICAL_BLOCKED":
+            reports[route] = {"rows": []}
+        else:
+            stage = "V4-P3-" + route
+            path, reports[route] = completed(stage)
+        evidence[stage] = file_sha256(path / "numerical_summary.json")
+    if evidence != chosen["selection_inputs_sha256"]:
+        raise ValueError("Frozen diagnostic/blocked-space selection evidence changed")
     if select_route(reports) != chosen["route"]:
         raise ValueError("Frozen candidate does not meet independent P3 selection gate")
-    # Selection is frozen to diagnostic hashes before test generation.
-    for stage in ("V4-P3-OLDPOD", "V4-P3-ERROR"):
-        path, _ = completed(stage)
-        if (
-            file_sha256(path / "numerical_summary.json")
-            != chosen["diagnostic_sha256"][stage]
-        ):
-            raise ValueError("Frozen selection diagnostic changed")
     _, space = completed(chosen["space_stage"])
     if (
         space["basis_sha256"] != chosen["basis_sha256"]
         or file_sha256(space["basis_path"]) != chosen["basis_sha256"]
     ):
         raise ValueError("Frozen selected checkpoint changed")
+    return chosen, space, file_sha256(selection)
+
+
+def generate_fresh(runtime, design, directory, artifact):
+    """Separate offline RHS worker exits before qualification PC exists."""
+    chosen, space, selection_sha = frozen_selection()
+    plan_path = ROOT / design["fresh"]["plan_path"]
+    if file_sha256(plan_path) != design["fresh"]["plan_sha256"]:
+        raise ValueError("Registered fresh pool plan changed")
+    plan = json.loads(plan_path.read_text())
+    if plan["arrays_generated"] or plan["solver_executed"] or plan["seed"] != 420620:
+        raise ValueError("TEST_POOL_CONSUMED")
     consumption = ROOT / "tmp/task042/v4/fresh_consumption.json"
     with consumption.open("x") as stream:
         json.dump(
             {
                 "utc": datetime.now(timezone.utc).isoformat(),
-                "selection_sha256": file_sha256(selection),
+                "selection_sha256": selection_sha,
                 "basis_sha256": chosen["basis_sha256"],
                 "seed": 420620,
                 "consumed": True,
@@ -920,16 +941,59 @@ def p4(runtime, local, cells, apply, native, design, directory, artifact, marker
             stream,
         )
     write_json(directory / "frozen_selection.json", chosen)
+    packets = []
+    for index, label, rhs in fresh_packets(runtime):
+        path = artifact / f"rhs_{index:03d}.npz"
+        np.savez(path, rhs_fe=rhs.fe, rhs_port=rhs.port)
+        packets.append(
+            {
+                "index": index,
+                "label": label,
+                "path": str(path),
+                "sha256": file_sha256(path),
+            }
+        )
+    if len(packets) != 16:
+        raise ValueError("Fresh generation inventory differs")
+    return {
+        "status": "FRESH_RHS_ONLY_GENERATED",
+        "rhs_packets": packets,
+        "selection_sha256": selection_sha,
+        "basis_sha256": space["basis_sha256"],
+        "teacher_solutions_saved": False,
+        "candidate_constructed": False,
+        "generation_requires_worker_exit_before_validation": True,
+    }
+
+
+def p4(runtime, local, cells, apply, native, design, directory, artifact, marker):
+    chosen, space, selection_sha = frozen_selection()
+    _, generated = completed("V4-P4-GENERATE")
+    if (
+        generated["status"] != "FRESH_RHS_ONLY_GENERATED"
+        or generated["selection_sha256"] != selection_sha
+        or generated["teacher_solutions_saved"]
+    ):
+        raise ValueError(
+            "Fresh RHS generation worker must exit without saving solutions"
+        )
+    write_json(directory / "frozen_selection.json", chosen)
     with np.load(space["basis_path"], allow_pickle=False) as packet:
         z, u, r = (np.asfortranarray(packet[key]) for key in ("z", "u", "r"))
     pc = BalancedTwoLevelPC(local, apply, z, u, r)
+
+    def packets():
+        for item in generated["rhs_packets"]:
+            g, p = rhs_only_packet(Path(item["path"]), item["sha256"])
+            yield item["index"], item["label"], CoarseRHS(g, p)
+
     rows = validate_packets(
         runtime,
         pc,
         cells,
         apply,
         native,
-        fresh_packets(runtime),
+        packets(),
         directory,
         artifact,
         marker,
@@ -946,6 +1010,8 @@ def p4(runtime, local, cells, apply, native, design, directory, artifact, marker
         "rows": rows,
         "fresh_consumed": 16,
         "independent_nonzero_families": 5,
+        "RHS_generation_worker_released": True,
+        "test_teacher_or_manufactured_solution_loaded": False,
         "F5": False,
     }
 
@@ -956,6 +1022,15 @@ def run_two_level_stage(cfg, comm, stage, directory, artifact, source, marker):
         raise ValueError("Formal V4 review changed")
     if INDEX.exists() and stage in json.loads(INDEX.read_text()):
         raise ValueError("V4 stage already completed; no numerical retry")
+    if stage in ("V4-P4", "V4-P4-GENERATE"):
+        frozen_selection()
+        if (
+            stage == "V4-P4-GENERATE"
+            and (ROOT / "tmp/task042/v4/fresh_consumption.json").exists()
+        ):
+            raise ValueError("TEST_POOL_CONSUMED")
+        if stage == "V4-P4":
+            completed("V4-P4-GENERATE")
     profile = json.loads(
         (
             ROOT / "input/task042_neural_coarse_inverse/shared_profile_v1.json"
@@ -977,6 +1052,32 @@ def run_two_level_stage(cfg, comm, stage, directory, artifact, source, marker):
                 "full_p6_constructed": False,
             },
         )
+        if stage == "V4-P4-GENERATE":
+            write_json(
+                directory / "preconstruction_budget.json",
+                {
+                    "RHS_packet_count_max": 16,
+                    "RHS_and_manufacturing_vectors_bound_bytes": 128 * 2**20,
+                    "original_runtime_planning_bytes": 4 * 2**30,
+                    "global_p4_factor_created": False,
+                    "candidate_constructed": False,
+                },
+            )
+            result = generate_fresh(runtime, design, directory, artifact)
+            result.update(
+                global_p4_factor_created=False,
+                private_audit_csr=False,
+                original_operator_sha256=runtime.operator_identity["csr_sha256"],
+                local_factor_bytes=sum(
+                    d.payload_bytes for d in cell_declarations(runtime.action)
+                ),
+                local_setup_seconds=0.0,
+                exact_S_action_calls=0,
+                exact_S_action_seconds_inclusive=0.0,
+                F5=False,
+                GPU=False,
+            )
+            return result
         local, cells, cell_bytes = local_pc(runtime, directory, design, marker)
         apply = BorrowedMatrixAction(runtime.p4_system.matrix)
         native = native_numpy_apply(runtime.p4)

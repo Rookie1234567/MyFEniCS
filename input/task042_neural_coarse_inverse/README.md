@@ -40,6 +40,9 @@ python scripts/run_case.py input/task042_neural_coarse_inverse/f4_linear_shared.
 | `v4_p2_oldpod_shared.dat` | 仅旧Q、截取后同Schur编码，一条OLDPOD空间 | ERROR空间审计完成，包括真实blocked |
 | `v4_p3_oldpod_shared.dat` | frozen OLDPOD，已消费0/10/11各一次256上限 | 两个P2均完成；本路线数值合格 |
 | `v4_p3_error_shared.dat` | frozen ERROR，同三题各一次256上限 | 同上；不改patch/shift/rank/预算 |
+| `v4_p4_generate_shared.dat` | 同一已登记16项fresh RHS，只保存RHS数组后退出 | P3选择冻结、测试未消费；无候选PC、无teacher因子 |
 | `v4_p4_shared.dat` | 条件冻结一条路线；seed420620，零+5族×3变体 | P3独立分流/选择通过，测试未消费，先冻结再生成 |
 
 唯一配置为 `two_level_v4.json`；原task/review、V3几何PC及普通默认不改。每个worker退出、整树清场后才发布hash-bound阶段索引；P4消费标记采用独占创建防止重复终测。所有成本shared-workstation，monitor每步只保存廉价KSP标量，原方程在0/restart/final/异常及真正成功返回时检查；无NN/GPU/F5/短波。
+
+P4的制造解只存在于独立RHS生成worker；清场后验证worker只读`rhs_fe/rhs_port`，packet中出现solution或initial_guess键即拒绝。该实施隔离在P1清场后、任何fresh数组生成前补齐，不改变随机序列、候选、16项库存或预算；已完成P0/P1的数值核心blob不变，不重跑它们。

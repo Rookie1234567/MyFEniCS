@@ -4,11 +4,13 @@ import hashlib
 import json
 from copy import deepcopy
 
+import numpy as np
 import pytest
 
 from src.io.task042_v4_gate import (
     diagnostic_status,
     publish,
+    rhs_only_packet,
     select_route,
     strict_from_norms,
 )
@@ -114,3 +116,18 @@ def test_stage_publication_requires_cleanup_and_binds_exact_files(tmp_path):
     )
     with pytest.raises(ValueError, match="already published"):
         publish("V4-P3-ERROR", directory, index)
+
+
+def test_fresh_qualification_refuses_solution_or_initial_guess(tmp_path):
+    path = tmp_path / "packet.npz"
+    rhs = np.ones(4, dtype=np.complex128)
+    for extra in ("solution", "x_star", "initial_guess"):
+        np.savez(path, rhs_fe=rhs, rhs_port=rhs[:1], **{extra: rhs})
+        sha = hashlib.sha256(path.read_bytes()).hexdigest()
+        with pytest.raises(ValueError, match="only RHS"):
+            rhs_only_packet(path, sha)
+    np.savez(path, rhs_fe=rhs, rhs_port=rhs[:1])
+    sha = hashlib.sha256(path.read_bytes()).hexdigest()
+    g, p = rhs_only_packet(path, sha)
+    np.testing.assert_array_equal(g, rhs)
+    np.testing.assert_array_equal(p, rhs[:1])

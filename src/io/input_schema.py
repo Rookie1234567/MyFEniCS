@@ -998,6 +998,7 @@ FIELD_SPECS: Final = (
             "task042_shared_v4_error_space", "task042_shared_v4_oldpod_space",
             "task042_shared_v4_error_diagnostic", "task042_shared_v4_oldpod_diagnostic",
             "task042_shared_v4_fresh_qualification",
+            "task042_shared_v4_fresh_generation",
             "full3d_scalable_v1",
             "fullspace_pml_double_sweep_v19",
             "physical_intermediate_p4_shifted_aux_v1",

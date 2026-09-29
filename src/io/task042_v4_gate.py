@@ -8,6 +8,18 @@ from pathlib import Path
 INDEX = Path(__file__).resolve().parents[2] / "tmp/task042/v4/stage_index.json"
 
 
+def rhs_only_packet(path, expected_sha256):
+    """Reject hidden teacher/initial-state fields before accessing arrays."""
+    import numpy as np
+
+    if hashlib.sha256(path.read_bytes()).hexdigest() != expected_sha256:
+        raise ValueError("Fresh RHS packet identity changed")
+    with np.load(path, allow_pickle=False) as packet:
+        if set(packet.files) != {"rhs_fe", "rhs_port"}:
+            raise ValueError("Qualification accepts only RHS arrays, never a solution")
+        return packet["rhs_fe"], packet["rhs_port"]
+
+
 def publish(stage, directory, index_file=INDEX):
     """Publish after cleanup using only small JSON; no FE import in launcher."""
     index = json.loads(index_file.read_text()) if index_file.exists() else {}
