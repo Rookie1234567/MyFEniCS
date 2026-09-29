@@ -1,10 +1,10 @@
 {
   "formal_seconds": 8579.825040766038,
-  "auxiliary_seconds": 63.68211352196522,
+  "auxiliary_seconds": 69.69348926702514,
   "carry_in_V6_seconds": 101.86130203097127,
-  "cumulative_seconds": 8745.368456318974,
+  "cumulative_seconds": 8751.379832064034,
   "limit_seconds": 36000,
-  "remaining_seconds": 27254.631543681026,
+  "remaining_seconds": 27248.620167935966,
   "formal_simultaneous_tree_peak_bytes": 1073967104,
   "all_supervised_simultaneous_tree_peak_bytes": 1073967104,
   "auxiliary": [
@@ -149,6 +149,18 @@
       "seconds": 10.341501693008468,
       "classification": "COMPLETED",
       "peak_bytes": 321765376,
+      "swap_bytes": 0,
+      "cleared": true
+    },
+    {
+      "name": "publication_render",
+      "evidence": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v7/publication_render/summary.json",
+        "sha256": "f33a5dada5135cd0ecf3aeed2fb9fcd338c130e55cb90c0f4217a2ddc3c7f660"
+      },
+      "seconds": 6.011375745059922,
+      "classification": "COMPLETED",
+      "peak_bytes": 46702592,
       "swap_bytes": 0,
       "cleared": true
     },

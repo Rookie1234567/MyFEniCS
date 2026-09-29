@@ -1,0 +1,54 @@
+{
+  "schema": "task042.publication-checks.v7",
+  "status": "RENDERED_HTML_PASS",
+  "exact_pushed_documentation_head": "3a83bdc032eef8ff43607329f6f39462a40901eb",
+  "utc": "2026-09-29T08:58:32.676805+00:00",
+  "wall_seconds": 4.3946327599696815,
+  "checks": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v7.md",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/3a83bdc032eef8ff43607329f6f39462a40901eb/docs/task042_neural_coarse_inverse/response_v7.md",
+      "source_file_sha256": "999dcc7333fe3f13de3ae7d2286027ee6dcaf6eebb00c26f22e8559681ffea9a",
+      "local_table_count": 3,
+      "fenced_math_blocks": 0,
+      "http": 200,
+      "status": "RENDERED_HTML_PASS",
+      "rendered_table_count": 3,
+      "github_math_renderer_blocks": 0,
+      "columns_consistent": true,
+      "rendered_html_sha256": "7504e69ca92a6a771843fc4a44d720739ac0b89a54e057a868c26a8ec0b51d3a",
+      "cache_path": "tmp/task042/v7/published-html/docs_task042_neural_coarse_inverse_response_v7.md.html"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/neural_fe_single_solve_v7.md",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/3a83bdc032eef8ff43607329f6f39462a40901eb/docs/task042_neural_coarse_inverse/outcomes/neural_fe_single_solve_v7.md",
+      "source_file_sha256": "695d8a3de2aac943671cde1429bbc4d4752d818e8c0e5640a04986815d8823fb",
+      "local_table_count": 8,
+      "fenced_math_blocks": 1,
+      "http": 200,
+      "status": "RENDERED_HTML_PASS",
+      "rendered_table_count": 8,
+      "github_math_renderer_blocks": 1,
+      "columns_consistent": true,
+      "rendered_html_sha256": "52570ee0a438956fe957358e63feb68c7181b3c9904ddd5121d40c0595c65d65",
+      "cache_path": "tmp/task042/v7/published-html/docs_task042_neural_coarse_inverse_outcomes_neural_fe_single_solve_v7.md.html"
+    },
+    {
+      "path": "input/materials/README.md",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/3a83bdc032eef8ff43607329f6f39462a40901eb/input/materials/README.md",
+      "source_file_sha256": "977e3eb2a6cbf546253d88d83898cb3d17af245e1139ca7a7fca2a97e73ebffa",
+      "local_table_count": 0,
+      "fenced_math_blocks": 0,
+      "http": 200,
+      "status": "RENDERED_HTML_PASS",
+      "rendered_table_count": 0,
+      "github_math_renderer_blocks": 0,
+      "columns_consistent": true,
+      "rendered_html_sha256": "79e3502cc8150cbb31dc492903d697da708939141df91115f4ea41f654940173",
+      "cache_path": "tmp/task042/v7/published-html/input_materials_README.md.html"
+    }
+  ],
+  "actual_route_source": "7c4037a279cefd8546c51e8ae6cf0172c3eab89d",
+  "review_v4_render_evidence": "review_render_check_v7.json",
+  "note": "Actual GitHub richText HTML; no browser pixel capture. Later evidence-only commits preserve these document hashes; no qualified FE rerun."
+}

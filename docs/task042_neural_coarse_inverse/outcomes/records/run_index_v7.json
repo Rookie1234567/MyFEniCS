@@ -125,7 +125,9 @@
         "sha256": "ab8c4ff1b3d89f94964072d23b39fbdc82ed625941a0176a119e6c10d28cfa11"
       },
       "numerical_status": "MATERIAL_READY_USER_SUPPLIED",
-      "costs_exclusive_seconds": {}
+      "costs_exclusive_seconds": {},
+      "resolved_physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+      "launcher_identity_meaning": "M0 starts before complete inventory exists; launcher field is frozen design SHA256. Its hash-bound stage_result resolves the full material/channel/operator recipe, subsequently used by all FE and route manifests."
     },
     {
       "source": "7c4037a279cefd8546c51e8ae6cf0172c3eab89d",
