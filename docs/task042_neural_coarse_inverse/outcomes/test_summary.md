@@ -42,3 +42,19 @@ F4 zero路径会直接返回精确零、不调用backend；原报告字段沿用
 全部检查单核math1、nice10/idle I/O、fresh现场核与自身2GiB整树监督；辅助wall/RSS/swap/source/命令/失败均在新v3账，V2记录逐字保护。新数值仅两个分进程阶段，CPU12 reuse、CPU0 structure，真实clean source各自绑定。旧16heldout消费边界、fresh未运行、teacher/训练/误差空间/F5/正式物理/GPU/短波not_run。未运行full pytest、MPI2/4，也没有CI声明。辅助峰为顺序树峰的最大，不是会话总峰；编辑/Git/审阅未持续采样。
 
 V3治理/文档表格定向测试28 passed；registry当前继承两项错误与d42完全一致。首次独立static因其结果文件尚未生成而报告三处自身链接缺失，真实FAIL副本和辅助尝试保留；生成结果文件后仅重查静态链接/Gate，不重跑数值。
+
+## V4 最终有界检查（V1–V3正文逐字保留）
+
+| 检查 / 身份 | 实际结果 | 证据与范围 |
+|---|---|---|
+| 执行前相关协议/局部PC/准入/监督 | 57 passed；affected algebra/Gate 9 passed；FE monitor/ownership/full80/default 6 passed | [pre-run记录](records/pre_run_checks_v4.json)，均有界单核，未重复F0环境安装或旧384 teacher |
+| P4隐私局部修复 | 6 passed、1 deselected；source core blob未改、未生成fresh数组 | [修复记录](records/p4_privacy_repair_v4.json)；不重放P0/P1 |
+| 最终affected + Markdown | 17 passed in 1.04s | `tmp/task042/v4/final_focused/worker.log`；两层5、独立Gate5、monitor2、Markdown5，真实PETSc小fixture无FE JIT |
+| 最终ABI | complex128/int64、MPI1、PETSc3.19.6；资格化activation/独立src与缓存 | `tmp/task042/v4/final_environment_fe.json`；preflight在pytest前，原生prefix仅只读 |
+| 真实P0/P2算法资格 | rank4及双rank128、真实原S/native配对、四恒等式通过 | [空间/真实代数](records/coarse_space_algebra_v4.json)；不是收敛资格 |
+| 真实P1/P3独立checker | 16train/128误差的teacher与S-error关系合格；两路线strict0/3，P4未解锁 | [快照](records/training_snapshot_manifest_v4.json)、[独立范数Gate](records/gate_decisions_v4.json)；六次负结果不改为成功 |
+| 静态检查 / 历史保护 | 新10文件Ruff/format-check、11文件compileall、diff，101旧文件byte-exact；summary旧suffix、test_summary/项目总账旧prefix | [final static](records/static_checks_v4.json)；仅检查V4局部链接/表格，不做全仓清理 |
+| 继承总账checker | Review333f与当前错误、实际41节数一致，BASELINE_IDENTICAL_NOT_GREEN | [基线proof](records/registry_contract_baseline_v4.json)；40节固定序列与旧Task038缺失路径仍继承，不改期待或伪称通过 |
+| GitHub实际表格/公式 | Review333f的7表/5math-renderer检查已通过；V4发布后按实际提交检查 | [Review render](records/review_render_check_v4.json)；publication记录与原源码/Markdown哈希绑定 |
+
+所有测试/聚合/后处理顺序在Task042 own lock、现场单核/math1、2GiB有界辅助监督中执行，own swap0；费用与原失败尝试见[本批辅助账](records/post_checks_v4.json)，不叠加嵌套timer。静态helper首次因相对Path不符合checker接口失败，保留1.98289s/38633472B/清场证据；只修正绝对路径并重查静态，没有数值重放。正式六阶段整树wall1534.00828393s、最大同时RSS1128828928B；共享工作站成本，不宣称CI、全仓pytest或无争用加速。正常数值停滞没有当bug，未重试、未扩参数或重跑旧昂贵Gate。full repository pytest/MPI2/MPI4/新teacher/训练/P4/F5均not_run，本批数值入口仅MPI1。

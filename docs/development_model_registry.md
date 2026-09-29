@@ -1673,3 +1673,16 @@ production model。
 新数值源：reuse b158c5301e7ff59000b15b335672afdb61c5e5e1，结构7fc3f1434cf4f38f43e5244ebfed3a19d0780a26；clean/真实source绑定，文档HEAD不替代。两阶段wall2636.49526309s、整树峰1074900992B、swap0，CPU现场选核/math1/16GiB监督，shared-workstation/perfinconclusive；无零干扰证明。CPU纠正oracle33和F4-B045，旧CPU0概括不准确。固定Q上LIN已精确最小native残差，本轮不训练NN、不扩大rank或迭代。
 
 严格粗逆未合格，量级1末段停滞触停止，实际误差空间对照/新teacher/fresh资格/F5/official RTA、场、通道/短波/GPU全部not_run；BOUNDED_STRUCTURAL_GLOBAL_STAGNATION，research-only待review不merge。[V3 response](task042_neural_coarse_inverse/response_v3.md)、[source/资源](task042_neural_coarse_inverse/outcomes/records/run_index_v3.json)、[实际结构](task042_neural_coarse_inverse/outcomes/records/structure_complete_v3.json)、[旧48项失败](task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv)。
+
+
+### 3.43.3 V4：有界全局误差与平衡两层，真实代数通过而收敛未资格化
+
+局部PC修正相邻区域后仍可能留下全局误差。本批固定原几何局部步骤，再用有限全局解方向处理它可表示的残差，比较旧解POD与真实停滞解误差空间。两条都使用同一完整Schur两层公式/128容量；空间内自检不能代替外部RHS严格验算。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `T42_V4_P1_ERROR_SNAPSHOTS` | source8b792d78b06903ef874fbcf14fa06d951ae9c2ff；原train12–27、16独立whole_problem | 原13.5nm/p6h10对应p4、252cells、80DtN；n21824 | 固定B/RIGHT32，64步，各8快照；准确teacher归一化同坐标，未用诊断/测试解 | 128非零误差；teacher原native最大1.827e-13，误差关系最大7.475e-15；独立candidate无global factor | `TRAINING_ERROR_SNAPSHOTS_COMPLETE`；局部停滞仍允许构建空间 | [快照manifest](task042_neural_coarse_inverse/outcomes/records/training_snapshot_manifest_v4.json) |
+| `TWOLEVEL-OLDPOD-V4` | source5691d79abe87d3582ede5bbaf8369c5487e7c392；旧256train的Q；新Schur U/R | 同原A4/Schur/MPC、full80；53084 FE/21824reduced、8184464NNZ | rank128、C+(I−CS)B(I−SC)，RIGHT32/max256/zero | Rcond334.013；三诊断原native .998588/.949243/.905074；全部256步/strict0/3；302309536B全局部＋R因子，89391104B Z＋U | `BOUNDED_TWOLEVEL_NEGATIVE`；无global p4 LU/私有CSR/fallback，非production | [两层与Gate](task042_neural_coarse_inverse/outcomes/records/gate_decisions_v4.json) |
+| `TWOLEVEL-ERROR-V4` | 同5691source；16 train轨迹、128真实解误差，未泄漏 | 同原physical/operator/mode SHA；无F5/p6外层 | 同rank128/同Schur范数/同B/同两层公式/同256预算 | Rcond586.120；三诊断原native 0.999863649936/0.937175812499/0.901084822725；strict0/3；formal全批wall1534.00828393s、同时整树峰1128828928B、swap0 | `BOUNDED_TWOLEVEL_NEGATIVE`；P4未解锁，既存终测未消费 | [完整结果](task042_neural_coarse_inverse/outcomes/two_level_global_error_v4.md)、[source/成本](task042_neural_coarse_inverse/outcomes/records/run_index_v4.json) |
+
+正式source真实绑定，文档HEAD不替代。六阶段fresh核查后均CPU0/MPI1/math1，own lock/整树16GiB监督/独立cache，只有自有优先级降低，无neighbor或GPU修改；shared-workstation、performance inconclusive。没有把V3昂贵审核成本相减当新加速，没有新teacher/NN训练，G-neural not_run。原V1–V3 task/review/response/负结果逐字保留；Formal Review V1替代V3“局部量级1停滞禁止全局空间”。P4/fresh资格、F5/official RTA/A_volume/场/正式通道/短波均not_run。仅Task042分支待review，不merge。

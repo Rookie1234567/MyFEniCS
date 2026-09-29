@@ -1,0 +1,24 @@
+{
+  "schema": "task042.fresh-qualification.v4",
+  "status": "not_run",
+  "reason": "Both frozen candidates fail the registered P3 strict and global-positive criteria; P4 not unlocked.",
+  "plan": {
+    "path": "docs/task042_neural_coarse_inverse/outcomes/records/unconsumed_test_plan_v3.json",
+    "sha256": "7515a171ac98f17b3fea593549981d56d7fbf69acd762f36b3c33933a0e22b93"
+  },
+  "seed": 420620,
+  "planned_count": 16,
+  "planned_nonzero_independent_families": 5,
+  "variants": [
+    "1",
+    "phase_i",
+    "amplitude_1e3"
+  ],
+  "arrays_generated": false,
+  "solutions_loaded": false,
+  "solver_executed": false,
+  "test_pool_consumed": false,
+  "candidate_selected": null,
+  "qualification": "not_run, not FIXED_OPERATOR_P4_QUALIFIED",
+  "F5": "not_run"
+}

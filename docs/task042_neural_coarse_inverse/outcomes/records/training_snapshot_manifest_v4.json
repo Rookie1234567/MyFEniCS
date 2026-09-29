@@ -1,0 +1,1906 @@
+{
+  "schema": "task042.training-snapshots.v4",
+  "source_sha": "8b792d78b06903ef874fbcf14fa06d951ae9c2ff",
+  "raw_manifest": {
+    "path": "results/task042/task042_v4_p1_shared_20260929T001908354866Z/training_snapshot_manifest.json",
+    "sha256": "54c7a2930a5ec1d5dfa662b0d684cf0f99201323666da46151451b4a352281df"
+  },
+  "dataset_manifest": {
+    "path": "benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/dataset_manifest.json",
+    "sha256": "99c354ea4ce85b2dd8284b8f91dab4f2e453b4b9d426034aa47af43e89a14783"
+  },
+  "teacher_source_sha": "b72448bb2117a0221f041f1b47ac41049750a3c7",
+  "original_split": "train only",
+  "problem_indices": [
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27
+  ],
+  "independent_families": 16,
+  "snapshot_count": 128,
+  "rows": [
+    {
+      "index": 12,
+      "label": {
+        "problem_id": "seed420200_0012",
+        "whole_problem": "seed420200_0012",
+        "kind": "seeded_full_internal_port",
+        "seed": 420200,
+        "phase_real": 1.0,
+        "phase_imag": 0.0,
+        "amplitude": 0.001
+      },
+      "batch_index": 0,
+      "row_in_batch": 12,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      },
+      "normalized_RHS": true,
+      "original_normalization_scale": 0.0018506722779923009,
+      "reference_metrics": {
+        "native_residual_relative": 7.274359480230968e-14,
+        "port_residual_relative": 2.875044030930588e-16,
+        "internal_residual_relative": 3.998855504053146e-17,
+        "native_identity_relative": 4.139807476861371e-14,
+        "schur_port_identity_relative": 1.5345674428731127e-17
+      },
+      "reference_Schur_relative": 2.4246655705758054e-14,
+      "snapshot_file": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v4_p1_shared_20260929T001908354866Z/training_012.npz",
+      "snapshot_sha256": "e19de0008bfec86609501168b690dc856d755a7115a65a88f922767bbef7db89",
+      "snapshots": [
+        {
+          "iteration": 8,
+          "error_norm": 9.164857360324875,
+          "residual_norm": 0.9784419616241007,
+          "S_error_relation_operation_relative": 5.035904709080978e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 16,
+          "error_norm": 9.164592415766307,
+          "residual_norm": 0.9754269805541794,
+          "S_error_relation_operation_relative": 4.108038500477746e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 24,
+          "error_norm": 9.164657509819147,
+          "residual_norm": 0.9679596740274684,
+          "S_error_relation_operation_relative": 5.206580100382681e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 32,
+          "error_norm": 9.16457384623219,
+          "residual_norm": 0.9634856369302355,
+          "S_error_relation_operation_relative": 4.8161750945444496e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 40,
+          "error_norm": 9.164582975414573,
+          "residual_norm": 0.963467459534969,
+          "S_error_relation_operation_relative": 4.963349943849937e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 48,
+          "error_norm": 9.164569063159712,
+          "residual_norm": 0.9634496497313247,
+          "S_error_relation_operation_relative": 5.156865882185702e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 56,
+          "error_norm": 9.164563724620239,
+          "residual_norm": 0.9633819169202407,
+          "S_error_relation_operation_relative": 4.865141834037939e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 64,
+          "error_norm": 9.164570149591794,
+          "residual_norm": 0.9631622914650881,
+          "S_error_relation_operation_relative": 3.934592289490755e-15,
+          "valid": true,
+          "omission_reason": null
+        }
+      ],
+      "valid_count": 8,
+      "family_weight": 0.35355339059327373,
+      "phase_policy": "retain original normalized complex phase; each nonzero error / its 2-norm / sqrt(actual valid family snapshots)",
+      "ksp_reason": -3,
+      "iterations": 64,
+      "cost": {
+        "problem_seconds_inclusive": 22.132355750072747,
+        "teacher_recheck_seconds": 2.40063711500261,
+        "capture_seconds_child": 1.177844556979835,
+        "original_audit_seconds_child": 6.688409489928745,
+        "local_PC_seconds_child": 6.401342816883698,
+        "io_seconds": 0.009459249908104539,
+        "build_solution_seconds": 0.008748161024414003,
+        "explicit_monitor_S_seconds": 0.20492925494909286,
+        "explicit_monitor_S_calls": 3,
+        "ksp_seconds_inclusive": 19.199500852031633,
+        "final_recovery_seconds": 0.04734910500701517,
+        "nested_timers_not_additive": true
+      }
+    },
+    {
+      "index": 13,
+      "label": {
+        "problem_id": "seed420200_0013",
+        "whole_problem": "seed420200_0013",
+        "kind": "manufactured_original_A4",
+        "seed": 420200,
+        "phase_real": 0.0,
+        "phase_imag": 1.0,
+        "amplitude": 1.0
+      },
+      "batch_index": 0,
+      "row_in_batch": 13,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      },
+      "normalized_RHS": true,
+      "original_normalization_scale": 71.3604374295791,
+      "reference_metrics": {
+        "native_residual_relative": 2.688650494283875e-14,
+        "port_residual_relative": 4.1321587617254255e-14,
+        "internal_residual_relative": 2.460919912950982e-17,
+        "native_identity_relative": 6.7458071994266034e-15,
+        "schur_port_identity_relative": 2.507879027040696e-17
+      },
+      "reference_Schur_relative": 7.769136967978331e-14,
+      "snapshot_file": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v4_p1_shared_20260929T001908354866Z/training_013.npz",
+      "snapshot_sha256": "1237915fb29b260c73a613ee246aa39136ee5486f8ef9c091d69c10443e3d5c1",
+      "snapshots": [
+        {
+          "iteration": 8,
+          "error_norm": 0.07753296183253493,
+          "residual_norm": 0.4475623299623587,
+          "S_error_relation_operation_relative": 1.4544971966131246e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 16,
+          "error_norm": 0.07865429485320581,
+          "residual_norm": 0.42624083026740406,
+          "S_error_relation_operation_relative": 1.357645755941322e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 24,
+          "error_norm": 0.08318841510190908,
+          "residual_norm": 0.4059347045575694,
+          "S_error_relation_operation_relative": 1.4136526447685312e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 32,
+          "error_norm": 0.08189900438871833,
+          "residual_norm": 0.38726240274384316,
+          "S_error_relation_operation_relative": 1.500647424531014e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 40,
+          "error_norm": 0.08270650950812633,
+          "residual_norm": 0.3865689290127326,
+          "S_error_relation_operation_relative": 1.3907024368854284e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 48,
+          "error_norm": 0.08330009391190063,
+          "residual_norm": 0.3862840947875746,
+          "S_error_relation_operation_relative": 1.4733530982731808e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 56,
+          "error_norm": 0.08439587544280996,
+          "residual_norm": 0.384346798509184,
+          "S_error_relation_operation_relative": 1.4543785679051657e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 64,
+          "error_norm": 0.08291888096647893,
+          "residual_norm": 0.3799097443885572,
+          "S_error_relation_operation_relative": 1.3958797121018623e-16,
+          "valid": true,
+          "omission_reason": null
+        }
+      ],
+      "valid_count": 8,
+      "family_weight": 0.35355339059327373,
+      "phase_policy": "retain original normalized complex phase; each nonzero error / its 2-norm / sqrt(actual valid family snapshots)",
+      "ksp_reason": -3,
+      "iterations": 64,
+      "cost": {
+        "problem_seconds_inclusive": 22.03365339303855,
+        "teacher_recheck_seconds": 2.30511147598736,
+        "capture_seconds_child": 1.0806087241508067,
+        "original_audit_seconds_child": 6.605461729923263,
+        "local_PC_seconds_child": 6.527441821759567,
+        "io_seconds": 0.00841867201961577,
+        "build_solution_seconds": 0.008777210838161409,
+        "explicit_monitor_S_seconds": 0.27558767795562744,
+        "explicit_monitor_S_calls": 3,
+        "ksp_seconds_inclusive": 19.12146966799628,
+        "final_recovery_seconds": 0.046767730033025146,
+        "nested_timers_not_additive": true
+      }
+    },
+    {
+      "index": 14,
+      "label": {
+        "problem_id": "seed420200_0014",
+        "whole_problem": "seed420200_0014",
+        "kind": "seeded_full_internal_port",
+        "seed": 420200,
+        "phase_real": -1.0,
+        "phase_imag": 0.0,
+        "amplitude": 1000.0
+      },
+      "batch_index": 0,
+      "row_in_batch": 14,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      },
+      "normalized_RHS": true,
+      "original_normalization_scale": 1858.152914039478,
+      "reference_metrics": {
+        "native_residual_relative": 8.597481669280419e-14,
+        "port_residual_relative": 2.227142636425074e-16,
+        "internal_residual_relative": 4.624985786017744e-17,
+        "native_identity_relative": 4.9927496823251074e-14,
+        "schur_port_identity_relative": 2.4677219629136566e-17
+      },
+      "reference_Schur_relative": 1.9277836317978493e-14,
+      "snapshot_file": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v4_p1_shared_20260929T001908354866Z/training_014.npz",
+      "snapshot_sha256": "e0126a7269f499a0503df142fc1efacc9d9f59f7d3fab6d7df69d01b54f629e3",
+      "snapshots": [
+        {
+          "iteration": 8,
+          "error_norm": 14.795324526701298,
+          "residual_norm": 0.9725862621075732,
+          "S_error_relation_operation_relative": 4.566270649739557e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 16,
+          "error_norm": 14.795256082289757,
+          "residual_norm": 0.965403226571002,
+          "S_error_relation_operation_relative": 4.571528813371663e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 24,
+          "error_norm": 14.794515483102618,
+          "residual_norm": 0.9604380539066312,
+          "S_error_relation_operation_relative": 4.557137434150789e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 32,
+          "error_norm": 14.794935839897011,
+          "residual_norm": 0.9567618275916489,
+          "S_error_relation_operation_relative": 5.022837040351147e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 40,
+          "error_norm": 14.794951749122658,
+          "residual_norm": 0.9567483267379171,
+          "S_error_relation_operation_relative": 4.586887652900993e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 48,
+          "error_norm": 14.79494888057262,
+          "residual_norm": 0.956723680085257,
+          "S_error_relation_operation_relative": 4.3930714909004184e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 56,
+          "error_norm": 14.794962312525074,
+          "residual_norm": 0.9566638358146845,
+          "S_error_relation_operation_relative": 4.645337049038768e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 64,
+          "error_norm": 14.794955493626091,
+          "residual_norm": 0.9566135745235999,
+          "S_error_relation_operation_relative": 4.488296302351591e-15,
+          "valid": true,
+          "omission_reason": null
+        }
+      ],
+      "valid_count": 8,
+      "family_weight": 0.35355339059327373,
+      "phase_policy": "retain original normalized complex phase; each nonzero error / its 2-norm / sqrt(actual valid family snapshots)",
+      "ksp_reason": -3,
+      "iterations": 64,
+      "cost": {
+        "problem_seconds_inclusive": 22.21364726498723,
+        "teacher_recheck_seconds": 2.3238470220239833,
+        "capture_seconds_child": 1.012544842204079,
+        "original_audit_seconds_child": 6.740751057979651,
+        "local_PC_seconds_child": 6.711902106762864,
+        "io_seconds": 0.009844658081419766,
+        "build_solution_seconds": 0.015616437187418342,
+        "explicit_monitor_S_seconds": 0.22067149193026125,
+        "explicit_monitor_S_calls": 3,
+        "ksp_seconds_inclusive": 19.30587488191668,
+        "final_recovery_seconds": 0.04764053097460419,
+        "nested_timers_not_additive": true
+      }
+    },
+    {
+      "index": 15,
+      "label": {
+        "problem_id": "seed420200_0015",
+        "whole_problem": "seed420200_0015",
+        "kind": "manufactured_original_A4",
+        "seed": 420200,
+        "phase_real": -0.0,
+        "phase_imag": -1.0,
+        "amplitude": 0.001
+      },
+      "batch_index": 0,
+      "row_in_batch": 15,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      },
+      "normalized_RHS": true,
+      "original_normalization_scale": 0.06649438255330146,
+      "reference_metrics": {
+        "native_residual_relative": 2.349416088359673e-14,
+        "port_residual_relative": 2.7105905625308084e-14,
+        "internal_residual_relative": 2.355031267975561e-17,
+        "native_identity_relative": 6.499776695996871e-15,
+        "schur_port_identity_relative": 1.438666241835064e-17
+      },
+      "reference_Schur_relative": 5.097285366377174e-14,
+      "snapshot_file": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v4_p1_shared_20260929T001908354866Z/training_015.npz",
+      "snapshot_sha256": "0251bc0a2b2d3fe73f8d2cc2696883a68745d0b9281c3446107ba1324a37acc3",
+      "snapshots": [
+        {
+          "iteration": 8,
+          "error_norm": 0.0786967190582387,
+          "residual_norm": 0.474819527195962,
+          "S_error_relation_operation_relative": 1.4472383432092017e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 16,
+          "error_norm": 0.07841425033003775,
+          "residual_norm": 0.4313301600670924,
+          "S_error_relation_operation_relative": 1.497729206500953e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 24,
+          "error_norm": 0.07851820778752727,
+          "residual_norm": 0.41715924134779403,
+          "S_error_relation_operation_relative": 1.4841349616514417e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 32,
+          "error_norm": 0.07990890529259001,
+          "residual_norm": 0.3896008048482422,
+          "S_error_relation_operation_relative": 1.47578026822039e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 40,
+          "error_norm": 0.07807673613270366,
+          "residual_norm": 0.3851674804117528,
+          "S_error_relation_operation_relative": 1.4545236251704984e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 48,
+          "error_norm": 0.07708857349283821,
+          "residual_norm": 0.38080317706983147,
+          "S_error_relation_operation_relative": 1.5102475833575155e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 56,
+          "error_norm": 0.07643370229145181,
+          "residual_norm": 0.3758687195377022,
+          "S_error_relation_operation_relative": 1.5190272150131315e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 64,
+          "error_norm": 0.07527723814334317,
+          "residual_norm": 0.37017111298423944,
+          "S_error_relation_operation_relative": 1.4573924387445197e-16,
+          "valid": true,
+          "omission_reason": null
+        }
+      ],
+      "valid_count": 8,
+      "family_weight": 0.35355339059327373,
+      "phase_policy": "retain original normalized complex phase; each nonzero error / its 2-norm / sqrt(actual valid family snapshots)",
+      "ksp_reason": -3,
+      "iterations": 64,
+      "cost": {
+        "problem_seconds_inclusive": 22.018203524989076,
+        "teacher_recheck_seconds": 2.313780014985241,
+        "capture_seconds_child": 1.0448872820707038,
+        "original_audit_seconds_child": 6.529488489031792,
+        "local_PC_seconds_child": 6.331934573245235,
+        "io_seconds": 0.009095569956116378,
+        "build_solution_seconds": 0.011438764980994165,
+        "explicit_monitor_S_seconds": 0.23551985388621688,
+        "explicit_monitor_S_calls": 3,
+        "ksp_seconds_inclusive": 18.99804130801931,
+        "final_recovery_seconds": 0.04900684696622193,
+        "nested_timers_not_additive": true
+      }
+    },
+    {
+      "index": 16,
+      "label": {
+        "problem_id": "seed420200_0016",
+        "whole_problem": "seed420200_0016",
+        "kind": "seeded_full_internal_port",
+        "seed": 420200,
+        "phase_real": 1.0,
+        "phase_imag": 0.0,
+        "amplitude": 1.0
+      },
+      "batch_index": 0,
+      "row_in_batch": 16,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      },
+      "normalized_RHS": true,
+      "original_normalization_scale": 1.8744857694270276,
+      "reference_metrics": {
+        "native_residual_relative": 1.2818072068214884e-13,
+        "port_residual_relative": 1.597415962752193e-16,
+        "internal_residual_relative": 4.801776895748579e-17,
+        "native_identity_relative": 7.491664381670149e-14,
+        "schur_port_identity_relative": 2.1151462089533806e-17
+      },
+      "reference_Schur_relative": 2.064967927456702e-14,
+      "snapshot_file": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v4_p1_shared_20260929T001908354866Z/training_016.npz",
+      "snapshot_sha256": "bd7ae416ef5f9756820cb5b4b13838fc87d02cbee2cec4d681d1bd218d7869c9",
+      "snapshots": [
+        {
+          "iteration": 8,
+          "error_norm": 17.74671273299571,
+          "residual_norm": 0.9828590577289995,
+          "S_error_relation_operation_relative": 5.323846514449973e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 16,
+          "error_norm": 17.746525347086312,
+          "residual_norm": 0.9769929074835737,
+          "S_error_relation_operation_relative": 5.2340211018985535e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 24,
+          "error_norm": 17.746094255265103,
+          "residual_norm": 0.973528178674143,
+          "S_error_relation_operation_relative": 5.345384395184846e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 32,
+          "error_norm": 17.747730773616585,
+          "residual_norm": 0.9651644455377002,
+          "S_error_relation_operation_relative": 6.2900714819284626e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 40,
+          "error_norm": 17.74769155351762,
+          "residual_norm": 0.9651403861290498,
+          "S_error_relation_operation_relative": 5.1833250855720116e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 48,
+          "error_norm": 17.747624120674292,
+          "residual_norm": 0.9650571894595386,
+          "S_error_relation_operation_relative": 5.4841677000870395e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 56,
+          "error_norm": 17.74771288162588,
+          "residual_norm": 0.9649160965243571,
+          "S_error_relation_operation_relative": 5.8959391182892276e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 64,
+          "error_norm": 17.747809674407954,
+          "residual_norm": 0.9643432313689004,
+          "S_error_relation_operation_relative": 5.221317957961592e-15,
+          "valid": true,
+          "omission_reason": null
+        }
+      ],
+      "valid_count": 8,
+      "family_weight": 0.35355339059327373,
+      "phase_policy": "retain original normalized complex phase; each nonzero error / its 2-norm / sqrt(actual valid family snapshots)",
+      "ksp_reason": -3,
+      "iterations": 64,
+      "cost": {
+        "problem_seconds_inclusive": 22.18639034102671,
+        "teacher_recheck_seconds": 2.323866332997568,
+        "capture_seconds_child": 1.0828846489312127,
+        "original_audit_seconds_child": 6.556673122104257,
+        "local_PC_seconds_child": 6.945222416194156,
+        "io_seconds": 0.009865995962172747,
+        "build_solution_seconds": 0.01170974934939295,
+        "explicit_monitor_S_seconds": 0.30139774503186345,
+        "explicit_monitor_S_calls": 3,
+        "ksp_seconds_inclusive": 19.22886471892707,
+        "final_recovery_seconds": 0.0486643030308187,
+        "nested_timers_not_additive": true
+      }
+    },
+    {
+      "index": 17,
+      "label": {
+        "problem_id": "seed420200_0017",
+        "whole_problem": "seed420200_0017",
+        "kind": "manufactured_original_A4",
+        "seed": 420200,
+        "phase_real": 0.0,
+        "phase_imag": 1.0,
+        "amplitude": 1000.0
+      },
+      "batch_index": 0,
+      "row_in_batch": 17,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      },
+      "normalized_RHS": true,
+      "original_normalization_scale": 73411.94474989628,
+      "reference_metrics": {
+        "native_residual_relative": 1.8459966246675408e-14,
+        "port_residual_relative": 1.6809644040871528e-14,
+        "internal_residual_relative": 2.427238775163074e-17,
+        "native_identity_relative": 6.5505020284206325e-15,
+        "schur_port_identity_relative": 1.091085066367774e-17
+      },
+      "reference_Schur_relative": 3.205392378997443e-14,
+      "snapshot_file": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v4_p1_shared_20260929T001908354866Z/training_017.npz",
+      "snapshot_sha256": "01d79b68f36a093994d4f6d30446583e6410d89a4c9b3a9a38ae5591f9b471fe",
+      "snapshots": [
+        {
+          "iteration": 8,
+          "error_norm": 0.07561931740187537,
+          "residual_norm": 0.46184779776826507,
+          "S_error_relation_operation_relative": 1.4084797316904423e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 16,
+          "error_norm": 0.0784423184377504,
+          "residual_norm": 0.4426601680604561,
+          "S_error_relation_operation_relative": 1.386319871218842e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 24,
+          "error_norm": 0.0839889448260176,
+          "residual_norm": 0.40438760371938,
+          "S_error_relation_operation_relative": 1.4736713754339392e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 32,
+          "error_norm": 0.07943025166254915,
+          "residual_norm": 0.38548200465898586,
+          "S_error_relation_operation_relative": 1.4226884384469896e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 40,
+          "error_norm": 0.07755196035376465,
+          "residual_norm": 0.3825785055169697,
+          "S_error_relation_operation_relative": 1.3908081768336104e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 48,
+          "error_norm": 0.07756193958820276,
+          "residual_norm": 0.38039863402257396,
+          "S_error_relation_operation_relative": 1.4003115297276404e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 56,
+          "error_norm": 0.07669424558034112,
+          "residual_norm": 0.37569101790083864,
+          "S_error_relation_operation_relative": 1.4449365905351292e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 64,
+          "error_norm": 0.07552221594658051,
+          "residual_norm": 0.3709123277609136,
+          "S_error_relation_operation_relative": 1.4157024750549925e-16,
+          "valid": true,
+          "omission_reason": null
+        }
+      ],
+      "valid_count": 8,
+      "family_weight": 0.35355339059327373,
+      "phase_policy": "retain original normalized complex phase; each nonzero error / its 2-norm / sqrt(actual valid family snapshots)",
+      "ksp_reason": -3,
+      "iterations": 64,
+      "cost": {
+        "problem_seconds_inclusive": 22.080403576954268,
+        "teacher_recheck_seconds": 2.345636677928269,
+        "capture_seconds_child": 1.08651452511549,
+        "original_audit_seconds_child": 6.677168573951349,
+        "local_PC_seconds_child": 6.083043992170133,
+        "io_seconds": 0.008301027002744377,
+        "build_solution_seconds": 0.008617543848231435,
+        "explicit_monitor_S_seconds": 0.24746531201526523,
+        "explicit_monitor_S_calls": 3,
+        "ksp_seconds_inclusive": 19.14513848396018,
+        "final_recovery_seconds": 0.04664578300435096,
+        "nested_timers_not_additive": true
+      }
+    },
+    {
+      "index": 18,
+      "label": {
+        "problem_id": "seed420200_0018",
+        "whole_problem": "seed420200_0018",
+        "kind": "seeded_full_internal_port",
+        "seed": 420200,
+        "phase_real": -1.0,
+        "phase_imag": 0.0,
+        "amplitude": 0.001
+      },
+      "batch_index": 0,
+      "row_in_batch": 18,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      },
+      "normalized_RHS": true,
+      "original_normalization_scale": 0.0018678923026987045,
+      "reference_metrics": {
+        "native_residual_relative": 8.621309807122166e-14,
+        "port_residual_relative": 2.1789969029135676e-16,
+        "internal_residual_relative": 4.750062991637648e-17,
+        "native_identity_relative": 4.972787301291768e-14,
+        "schur_port_identity_relative": 2.0662492897240986e-17
+      },
+      "reference_Schur_relative": 3.036288991487803e-14,
+      "snapshot_file": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v4_p1_shared_20260929T001908354866Z/training_018.npz",
+      "snapshot_sha256": "6c83ec15d9dd1309b2309aa7d2c875ee134ab6c1f3ba043c9939322982932e95",
+      "snapshots": [
+        {
+          "iteration": 8,
+          "error_norm": 16.20902976371095,
+          "residual_norm": 0.9855274965767835,
+          "S_error_relation_operation_relative": 5.7470838326335155e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 16,
+          "error_norm": 16.208980782191443,
+          "residual_norm": 0.983186036109878,
+          "S_error_relation_operation_relative": 7.474866002146086e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 24,
+          "error_norm": 16.209640980030052,
+          "residual_norm": 0.9783608224122098,
+          "S_error_relation_operation_relative": 7.243192087556292e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 32,
+          "error_norm": 16.209797179463873,
+          "residual_norm": 0.9730844270851915,
+          "S_error_relation_operation_relative": 6.303516149593019e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 40,
+          "error_norm": 16.209814476539933,
+          "residual_norm": 0.9730231884132831,
+          "S_error_relation_operation_relative": 7.260422096598228e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 48,
+          "error_norm": 16.20976788745038,
+          "residual_norm": 0.9729485201164124,
+          "S_error_relation_operation_relative": 6.378642223514989e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 56,
+          "error_norm": 16.20971830373774,
+          "residual_norm": 0.9725260613931684,
+          "S_error_relation_operation_relative": 7.315526276042958e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 64,
+          "error_norm": 16.21008594186677,
+          "residual_norm": 0.9708062632510784,
+          "S_error_relation_operation_relative": 6.162219930284189e-15,
+          "valid": true,
+          "omission_reason": null
+        }
+      ],
+      "valid_count": 8,
+      "family_weight": 0.35355339059327373,
+      "phase_policy": "retain original normalized complex phase; each nonzero error / its 2-norm / sqrt(actual valid family snapshots)",
+      "ksp_reason": -3,
+      "iterations": 64,
+      "cost": {
+        "problem_seconds_inclusive": 22.316818757914007,
+        "teacher_recheck_seconds": 2.4114302260568365,
+        "capture_seconds_child": 1.1402528311591595,
+        "original_audit_seconds_child": 6.7023705068277195,
+        "local_PC_seconds_child": 6.8104414601111785,
+        "io_seconds": 0.010838926071301103,
+        "build_solution_seconds": 0.01003718702122569,
+        "explicit_monitor_S_seconds": 0.2239346110727638,
+        "explicit_monitor_S_calls": 3,
+        "ksp_seconds_inclusive": 19.386150232050568,
+        "final_recovery_seconds": 0.04794881900306791,
+        "nested_timers_not_additive": true
+      }
+    },
+    {
+      "index": 19,
+      "label": {
+        "problem_id": "seed420200_0019",
+        "whole_problem": "seed420200_0019",
+        "kind": "manufactured_original_A4",
+        "seed": 420200,
+        "phase_real": -0.0,
+        "phase_imag": -1.0,
+        "amplitude": 1.0
+      },
+      "batch_index": 0,
+      "row_in_batch": 19,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      },
+      "normalized_RHS": true,
+      "original_normalization_scale": 75.53127220439092,
+      "reference_metrics": {
+        "native_residual_relative": 1.1938321186056914e-14,
+        "port_residual_relative": 5.91153303040975e-17,
+        "internal_residual_relative": 2.49321698245821e-17,
+        "native_identity_relative": 6.548250535796347e-15,
+        "schur_port_identity_relative": 8.12666725062226e-18
+      },
+      "reference_Schur_relative": 2.589143866599509e-16,
+      "snapshot_file": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v4_p1_shared_20260929T001908354866Z/training_019.npz",
+      "snapshot_sha256": "57a153532d858ddd22727e61fd26875386247997df3260f05d8bcecef5728729",
+      "snapshots": [
+        {
+          "iteration": 8,
+          "error_norm": 0.07720251982718042,
+          "residual_norm": 0.43555872801263956,
+          "S_error_relation_operation_relative": 1.3922860553310305e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 16,
+          "error_norm": 0.07336496885085736,
+          "residual_norm": 0.4092408495874803,
+          "S_error_relation_operation_relative": 1.4276629158816833e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 24,
+          "error_norm": 0.07272006761408067,
+          "residual_norm": 0.40350016140286266,
+          "S_error_relation_operation_relative": 1.360258611400295e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 32,
+          "error_norm": 0.07236374096483035,
+          "residual_norm": 0.38766397233411554,
+          "S_error_relation_operation_relative": 1.4464188664208162e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 40,
+          "error_norm": 0.07198137542056789,
+          "residual_norm": 0.386834828377715,
+          "S_error_relation_operation_relative": 1.3726201467900813e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 48,
+          "error_norm": 0.07183983702416713,
+          "residual_norm": 0.3861086070517344,
+          "S_error_relation_operation_relative": 1.402916206747337e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 56,
+          "error_norm": 0.0720387507340233,
+          "residual_norm": 0.38482591951069856,
+          "S_error_relation_operation_relative": 1.4388017692066837e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 64,
+          "error_norm": 0.07393285106672663,
+          "residual_norm": 0.3795691277383823,
+          "S_error_relation_operation_relative": 1.3929149481325014e-16,
+          "valid": true,
+          "omission_reason": null
+        }
+      ],
+      "valid_count": 8,
+      "family_weight": 0.35355339059327373,
+      "phase_policy": "retain original normalized complex phase; each nonzero error / its 2-norm / sqrt(actual valid family snapshots)",
+      "ksp_reason": -3,
+      "iterations": 64,
+      "cost": {
+        "problem_seconds_inclusive": 22.300227523897775,
+        "teacher_recheck_seconds": 2.1520586980041116,
+        "capture_seconds_child": 1.0979270450770855,
+        "original_audit_seconds_child": 7.022512637078762,
+        "local_PC_seconds_child": 6.837937128264457,
+        "io_seconds": 0.008595024002715945,
+        "build_solution_seconds": 0.011713464045897126,
+        "explicit_monitor_S_seconds": 0.19574523204937577,
+        "explicit_monitor_S_calls": 3,
+        "ksp_seconds_inclusive": 19.53589265793562,
+        "final_recovery_seconds": 0.04706191597506404,
+        "nested_timers_not_additive": true
+      }
+    },
+    {
+      "index": 20,
+      "label": {
+        "problem_id": "seed420200_0020",
+        "whole_problem": "seed420200_0020",
+        "kind": "seeded_full_internal_port",
+        "seed": 420200,
+        "phase_real": 1.0,
+        "phase_imag": 0.0,
+        "amplitude": 1000.0
+      },
+      "batch_index": 0,
+      "row_in_batch": 20,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      },
+      "normalized_RHS": true,
+      "original_normalization_scale": 1859.9942586999432,
+      "reference_metrics": {
+        "native_residual_relative": 6.235475205435935e-14,
+        "port_residual_relative": 2.515728453995184e-16,
+        "internal_residual_relative": 4.414603290785613e-17,
+        "native_identity_relative": 3.6251173164699415e-14,
+        "schur_port_identity_relative": 2.3263480425463507e-17
+      },
+      "reference_Schur_relative": 1.784164691950084e-14,
+      "snapshot_file": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v4_p1_shared_20260929T001908354866Z/training_020.npz",
+      "snapshot_sha256": "f79a939281b8c3ef93f61b9cb5c63c899616882804162a68da94bfb7a18f1fdf",
+      "snapshots": [
+        {
+          "iteration": 8,
+          "error_norm": 11.86510342080074,
+          "residual_norm": 0.9832309871628029,
+          "S_error_relation_operation_relative": 4.639262921284263e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 16,
+          "error_norm": 11.865136499844787,
+          "residual_norm": 0.9794511100959402,
+          "S_error_relation_operation_relative": 4.457819140332301e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 24,
+          "error_norm": 11.86596115431343,
+          "residual_norm": 0.9745730388354962,
+          "S_error_relation_operation_relative": 4.751092385628868e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 32,
+          "error_norm": 11.867308257639507,
+          "residual_norm": 0.9696813816716424,
+          "S_error_relation_operation_relative": 4.715952274982344e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 40,
+          "error_norm": 11.867324031859676,
+          "residual_norm": 0.9696559476309241,
+          "S_error_relation_operation_relative": 4.945758328257404e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 48,
+          "error_norm": 11.867300265424891,
+          "residual_norm": 0.9695948627478684,
+          "S_error_relation_operation_relative": 4.871728095485725e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 56,
+          "error_norm": 11.867643602766291,
+          "residual_norm": 0.9691520589234787,
+          "S_error_relation_operation_relative": 5.1140682827192684e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 64,
+          "error_norm": 11.867792318962296,
+          "residual_norm": 0.9680784810032859,
+          "S_error_relation_operation_relative": 4.6191218161966315e-15,
+          "valid": true,
+          "omission_reason": null
+        }
+      ],
+      "valid_count": 8,
+      "family_weight": 0.35355339059327373,
+      "phase_policy": "retain original normalized complex phase; each nonzero error / its 2-norm / sqrt(actual valid family snapshots)",
+      "ksp_reason": -3,
+      "iterations": 64,
+      "cost": {
+        "problem_seconds_inclusive": 22.189045003033243,
+        "teacher_recheck_seconds": 2.211450670962222,
+        "capture_seconds_child": 1.0906687608221546,
+        "original_audit_seconds_child": 6.935903802048415,
+        "local_PC_seconds_child": 6.1746006404282525,
+        "io_seconds": 0.008217136026360095,
+        "build_solution_seconds": 0.011493951897136867,
+        "explicit_monitor_S_seconds": 0.2304317079251632,
+        "explicit_monitor_S_calls": 3,
+        "ksp_seconds_inclusive": 19.326325719011948,
+        "final_recovery_seconds": 0.04891710891388357,
+        "nested_timers_not_additive": true
+      }
+    },
+    {
+      "index": 21,
+      "label": {
+        "problem_id": "seed420200_0021",
+        "whole_problem": "seed420200_0021",
+        "kind": "manufactured_original_A4",
+        "seed": 420200,
+        "phase_real": 0.0,
+        "phase_imag": 1.0,
+        "amplitude": 0.001
+      },
+      "batch_index": 0,
+      "row_in_batch": 21,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      },
+      "normalized_RHS": true,
+      "original_normalization_scale": 0.0633076874194803,
+      "reference_metrics": {
+        "native_residual_relative": 1.9795355857767355e-14,
+        "port_residual_relative": 1.6315174814628824e-14,
+        "internal_residual_relative": 2.434017537054086e-17,
+        "native_identity_relative": 6.648188997139805e-15,
+        "schur_port_identity_relative": 1.613313729912178e-17
+      },
+      "reference_Schur_relative": 3.066036148504513e-14,
+      "snapshot_file": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v4_p1_shared_20260929T001908354866Z/training_021.npz",
+      "snapshot_sha256": "9ed474ca8f57bd17e422f327216edc69e88c05b3888fe3ddc33f84b75ee4e9e8",
+      "snapshots": [
+        {
+          "iteration": 8,
+          "error_norm": 0.08669851406391703,
+          "residual_norm": 0.48222037223300906,
+          "S_error_relation_operation_relative": 1.5309249687781535e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 16,
+          "error_norm": 0.08492280860983717,
+          "residual_norm": 0.44990989537126125,
+          "S_error_relation_operation_relative": 1.5364055453972625e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 24,
+          "error_norm": 0.08296980242949333,
+          "residual_norm": 0.43356321249784446,
+          "S_error_relation_operation_relative": 1.5069491288004214e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 32,
+          "error_norm": 0.07988809474999911,
+          "residual_norm": 0.4126121502756642,
+          "S_error_relation_operation_relative": 1.4608402658694681e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 40,
+          "error_norm": 0.0789851751700729,
+          "residual_norm": 0.4111306053327867,
+          "S_error_relation_operation_relative": 1.4838056276767747e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 48,
+          "error_norm": 0.07735816663063516,
+          "residual_norm": 0.4099425742756663,
+          "S_error_relation_operation_relative": 1.4903275950245308e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 56,
+          "error_norm": 0.07868251254966652,
+          "residual_norm": 0.40470103666334106,
+          "S_error_relation_operation_relative": 1.508237895131581e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 64,
+          "error_norm": 0.0777972873545395,
+          "residual_norm": 0.402550423710618,
+          "S_error_relation_operation_relative": 1.4920859463992005e-16,
+          "valid": true,
+          "omission_reason": null
+        }
+      ],
+      "valid_count": 8,
+      "family_weight": 0.35355339059327373,
+      "phase_policy": "retain original normalized complex phase; each nonzero error / its 2-norm / sqrt(actual valid family snapshots)",
+      "ksp_reason": -3,
+      "iterations": 64,
+      "cost": {
+        "problem_seconds_inclusive": 22.212407086975873,
+        "teacher_recheck_seconds": 2.2032493409933522,
+        "capture_seconds_child": 1.1046630629571155,
+        "original_audit_seconds_child": 6.841766913072206,
+        "local_PC_seconds_child": 6.5293380012735724,
+        "io_seconds": 0.010229881969280541,
+        "build_solution_seconds": 0.011870313086546957,
+        "explicit_monitor_S_seconds": 0.23270782106555998,
+        "explicit_monitor_S_calls": 3,
+        "ksp_seconds_inclusive": 19.366276875021867,
+        "final_recovery_seconds": 0.05156691500451416,
+        "nested_timers_not_additive": true
+      }
+    },
+    {
+      "index": 22,
+      "label": {
+        "problem_id": "seed420200_0022",
+        "whole_problem": "seed420200_0022",
+        "kind": "seeded_full_internal_port",
+        "seed": 420200,
+        "phase_real": -1.0,
+        "phase_imag": 0.0,
+        "amplitude": 1.0
+      },
+      "batch_index": 0,
+      "row_in_batch": 22,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      },
+      "normalized_RHS": true,
+      "original_normalization_scale": 1.8563685066658515,
+      "reference_metrics": {
+        "native_residual_relative": 5.443731551508205e-14,
+        "port_residual_relative": 2.2345868894156183e-16,
+        "internal_residual_relative": 4.3967982108663715e-17,
+        "native_identity_relative": 3.1229991548087195e-14,
+        "schur_port_identity_relative": 1.6599450489535183e-17
+      },
+      "reference_Schur_relative": 2.1143138059859165e-14,
+      "snapshot_file": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v4_p1_shared_20260929T001908354866Z/training_022.npz",
+      "snapshot_sha256": "94bdd63a468372e7dba51bc29bd361302b0e53d655e3b33aba7292567b41844d",
+      "snapshots": [
+        {
+          "iteration": 8,
+          "error_norm": 12.182418370797727,
+          "residual_norm": 0.9840710869380059,
+          "S_error_relation_operation_relative": 4.44306203684857e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 16,
+          "error_norm": 12.182509186951117,
+          "residual_norm": 0.9808274928030819,
+          "S_error_relation_operation_relative": 4.439526324615717e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 24,
+          "error_norm": 12.182267380569131,
+          "residual_norm": 0.9741956823988723,
+          "S_error_relation_operation_relative": 4.5220832769519966e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 32,
+          "error_norm": 12.182261153137068,
+          "residual_norm": 0.9720444234983928,
+          "S_error_relation_operation_relative": 5.301466725682315e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 40,
+          "error_norm": 12.182238868485799,
+          "residual_norm": 0.9720288651751797,
+          "S_error_relation_operation_relative": 5.638508626223576e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 48,
+          "error_norm": 12.182244986628124,
+          "residual_norm": 0.9720158579406512,
+          "S_error_relation_operation_relative": 4.57664114490517e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 56,
+          "error_norm": 12.182244933236134,
+          "residual_norm": 0.9719592156089452,
+          "S_error_relation_operation_relative": 6.946699967806721e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 64,
+          "error_norm": 12.182254064745463,
+          "residual_norm": 0.9718020040107235,
+          "S_error_relation_operation_relative": 4.564005383553051e-15,
+          "valid": true,
+          "omission_reason": null
+        }
+      ],
+      "valid_count": 8,
+      "family_weight": 0.35355339059327373,
+      "phase_policy": "retain original normalized complex phase; each nonzero error / its 2-norm / sqrt(actual valid family snapshots)",
+      "ksp_reason": -3,
+      "iterations": 64,
+      "cost": {
+        "problem_seconds_inclusive": 22.05975023494102,
+        "teacher_recheck_seconds": 2.259545182925649,
+        "capture_seconds_child": 1.066504004993476,
+        "original_audit_seconds_child": 6.718136415001936,
+        "local_PC_seconds_child": 6.102072399924509,
+        "io_seconds": 0.00826067104935646,
+        "build_solution_seconds": 0.008811619016341865,
+        "explicit_monitor_S_seconds": 0.19978839089162648,
+        "explicit_monitor_S_calls": 3,
+        "ksp_seconds_inclusive": 19.112201345036738,
+        "final_recovery_seconds": 0.048685148009099066,
+        "nested_timers_not_additive": true
+      }
+    },
+    {
+      "index": 23,
+      "label": {
+        "problem_id": "seed420200_0023",
+        "whole_problem": "seed420200_0023",
+        "kind": "manufactured_original_A4",
+        "seed": 420200,
+        "phase_real": -0.0,
+        "phase_imag": -1.0,
+        "amplitude": 1000.0
+      },
+      "batch_index": 0,
+      "row_in_batch": 23,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      },
+      "normalized_RHS": true,
+      "original_normalization_scale": 74577.25126773385,
+      "reference_metrics": {
+        "native_residual_relative": 1.1927576844998385e-14,
+        "port_residual_relative": 6.110581653400903e-17,
+        "internal_residual_relative": 2.4991536390988337e-17,
+        "native_identity_relative": 6.583606536352332e-15,
+        "schur_port_identity_relative": 1.527388211448289e-17
+      },
+      "reference_Schur_relative": 2.586062271938671e-16,
+      "snapshot_file": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v4_p1_shared_20260929T001908354866Z/training_023.npz",
+      "snapshot_sha256": "a71ef6349962c5621dcc4946660320d58368c3e01f0d8e1d6113e4d177f7f1b7",
+      "snapshots": [
+        {
+          "iteration": 8,
+          "error_norm": 0.08054688629902704,
+          "residual_norm": 0.46305323977260926,
+          "S_error_relation_operation_relative": 1.3883040018521188e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 16,
+          "error_norm": 0.08309479583151519,
+          "residual_norm": 0.43406443350740054,
+          "S_error_relation_operation_relative": 1.4378907917989033e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 24,
+          "error_norm": 0.0868116210123754,
+          "residual_norm": 0.41917543808805946,
+          "S_error_relation_operation_relative": 1.422793181996415e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 32,
+          "error_norm": 0.08529501759201318,
+          "residual_norm": 0.3832631088389315,
+          "S_error_relation_operation_relative": 1.420475541004453e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 40,
+          "error_norm": 0.0838598778424026,
+          "residual_norm": 0.3798114356943653,
+          "S_error_relation_operation_relative": 1.4187450354340665e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 48,
+          "error_norm": 0.08233962238375825,
+          "residual_norm": 0.37855811040188586,
+          "S_error_relation_operation_relative": 1.4867928532973768e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 56,
+          "error_norm": 0.08129610468037139,
+          "residual_norm": 0.37407493868367775,
+          "S_error_relation_operation_relative": 1.4269702409740682e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 64,
+          "error_norm": 0.08165643051375251,
+          "residual_norm": 0.3689988852151307,
+          "S_error_relation_operation_relative": 1.4736549859042193e-16,
+          "valid": true,
+          "omission_reason": null
+        }
+      ],
+      "valid_count": 8,
+      "family_weight": 0.35355339059327373,
+      "phase_policy": "retain original normalized complex phase; each nonzero error / its 2-norm / sqrt(actual valid family snapshots)",
+      "ksp_reason": -3,
+      "iterations": 64,
+      "cost": {
+        "problem_seconds_inclusive": 22.05365429201629,
+        "teacher_recheck_seconds": 2.2919126069173217,
+        "capture_seconds_child": 1.1008469709195197,
+        "original_audit_seconds_child": 6.634604374063201,
+        "local_PC_seconds_child": 6.593427551095374,
+        "io_seconds": 0.008275756961666048,
+        "build_solution_seconds": 0.008605072973296046,
+        "explicit_monitor_S_seconds": 0.2811996911186725,
+        "explicit_monitor_S_calls": 3,
+        "ksp_seconds_inclusive": 19.150668603018858,
+        "final_recovery_seconds": 0.046143156941980124,
+        "nested_timers_not_additive": true
+      }
+    },
+    {
+      "index": 24,
+      "label": {
+        "problem_id": "seed420200_0024",
+        "whole_problem": "seed420200_0024",
+        "kind": "seeded_full_internal_port",
+        "seed": 420200,
+        "phase_real": 1.0,
+        "phase_imag": 0.0,
+        "amplitude": 0.001
+      },
+      "batch_index": 0,
+      "row_in_batch": 24,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      },
+      "normalized_RHS": true,
+      "original_normalization_scale": 0.0018793404774514939,
+      "reference_metrics": {
+        "native_residual_relative": 5.379007069793219e-14,
+        "port_residual_relative": 2.226007289216635e-16,
+        "internal_residual_relative": 4.6674042337296626e-17,
+        "native_identity_relative": 3.155519563490341e-14,
+        "schur_port_identity_relative": 2.6166747236329752e-17
+      },
+      "reference_Schur_relative": 1.91328160563965e-14,
+      "snapshot_file": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v4_p1_shared_20260929T001908354866Z/training_024.npz",
+      "snapshot_sha256": "709ba09896cb805af2f18a999e9394dc0787afd605051dd97aafb0645d5627fa",
+      "snapshots": [
+        {
+          "iteration": 8,
+          "error_norm": 15.41215034312393,
+          "residual_norm": 0.9839278028178984,
+          "S_error_relation_operation_relative": 4.476009043271074e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 16,
+          "error_norm": 15.412606155444553,
+          "residual_norm": 0.9819323782552143,
+          "S_error_relation_operation_relative": 4.6262526955115874e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 24,
+          "error_norm": 15.412705339780995,
+          "residual_norm": 0.979017180376551,
+          "S_error_relation_operation_relative": 4.596971864336146e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 32,
+          "error_norm": 15.413380314818866,
+          "residual_norm": 0.973468010668605,
+          "S_error_relation_operation_relative": 4.437506622331175e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 40,
+          "error_norm": 15.413457181985498,
+          "residual_norm": 0.973213129407526,
+          "S_error_relation_operation_relative": 4.974584704356826e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 48,
+          "error_norm": 15.41345451064759,
+          "residual_norm": 0.9730976144254079,
+          "S_error_relation_operation_relative": 4.708159269334744e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 56,
+          "error_norm": 15.413473630442768,
+          "residual_norm": 0.9729314693801719,
+          "S_error_relation_operation_relative": 4.666617020511447e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 64,
+          "error_norm": 15.413585815610467,
+          "residual_norm": 0.9727114106829418,
+          "S_error_relation_operation_relative": 4.599432609617616e-15,
+          "valid": true,
+          "omission_reason": null
+        }
+      ],
+      "valid_count": 8,
+      "family_weight": 0.35355339059327373,
+      "phase_policy": "retain original normalized complex phase; each nonzero error / its 2-norm / sqrt(actual valid family snapshots)",
+      "ksp_reason": -3,
+      "iterations": 64,
+      "cost": {
+        "problem_seconds_inclusive": 22.195866576978005,
+        "teacher_recheck_seconds": 2.323398638982326,
+        "capture_seconds_child": 1.160051362006925,
+        "original_audit_seconds_child": 6.698757753940299,
+        "local_PC_seconds_child": 6.751115080085583,
+        "io_seconds": 0.008111436967737973,
+        "build_solution_seconds": 0.00867126218508929,
+        "explicit_monitor_S_seconds": 0.21465952694416046,
+        "explicit_monitor_S_calls": 3,
+        "ksp_seconds_inclusive": 19.291850693989545,
+        "final_recovery_seconds": 0.04658044595271349,
+        "nested_timers_not_additive": true
+      }
+    },
+    {
+      "index": 25,
+      "label": {
+        "problem_id": "seed420200_0025",
+        "whole_problem": "seed420200_0025",
+        "kind": "manufactured_original_A4",
+        "seed": 420200,
+        "phase_real": 0.0,
+        "phase_imag": 1.0,
+        "amplitude": 1.0
+      },
+      "batch_index": 0,
+      "row_in_batch": 25,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      },
+      "normalized_RHS": true,
+      "original_normalization_scale": 75.23983602731536,
+      "reference_metrics": {
+        "native_residual_relative": 1.2078977040331872e-14,
+        "port_residual_relative": 6.601919609405742e-17,
+        "internal_residual_relative": 2.4301354558434086e-17,
+        "native_identity_relative": 6.639716255107164e-15,
+        "schur_port_identity_relative": 1.2543320206619972e-17
+      },
+      "reference_Schur_relative": 2.648458300838594e-16,
+      "snapshot_file": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v4_p1_shared_20260929T001908354866Z/training_025.npz",
+      "snapshot_sha256": "eea6ecb2d8189c8dcec9c1f0299e5f62e36b3656c89f1f842d23650be8a33db4",
+      "snapshots": [
+        {
+          "iteration": 8,
+          "error_norm": 0.07717869442047201,
+          "residual_norm": 0.44483398123457635,
+          "S_error_relation_operation_relative": 1.4267157553501685e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 16,
+          "error_norm": 0.0826521259909266,
+          "residual_norm": 0.4146389969589511,
+          "S_error_relation_operation_relative": 1.4469835231021675e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 24,
+          "error_norm": 0.07743631290610184,
+          "residual_norm": 0.37846000849683864,
+          "S_error_relation_operation_relative": 1.3538148637139378e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 32,
+          "error_norm": 0.0767577964767892,
+          "residual_norm": 0.36932486473581977,
+          "S_error_relation_operation_relative": 1.4333114001191724e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 40,
+          "error_norm": 0.07613263323478847,
+          "residual_norm": 0.3682211419549891,
+          "S_error_relation_operation_relative": 1.412889411531168e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 48,
+          "error_norm": 0.07624287026104905,
+          "residual_norm": 0.36766921912455247,
+          "S_error_relation_operation_relative": 1.395949652045341e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 56,
+          "error_norm": 0.07718203481041286,
+          "residual_norm": 0.3647058532669024,
+          "S_error_relation_operation_relative": 1.417562431604751e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 64,
+          "error_norm": 0.07747654709896581,
+          "residual_norm": 0.3600757634257666,
+          "S_error_relation_operation_relative": 1.4050308967304413e-16,
+          "valid": true,
+          "omission_reason": null
+        }
+      ],
+      "valid_count": 8,
+      "family_weight": 0.35355339059327373,
+      "phase_policy": "retain original normalized complex phase; each nonzero error / its 2-norm / sqrt(actual valid family snapshots)",
+      "ksp_reason": -3,
+      "iterations": 64,
+      "cost": {
+        "problem_seconds_inclusive": 22.1608940459555,
+        "teacher_recheck_seconds": 2.279596643988043,
+        "capture_seconds_child": 1.058104528230615,
+        "original_audit_seconds_child": 6.793445423129015,
+        "local_PC_seconds_child": 6.396347199915908,
+        "io_seconds": 0.009571818984113634,
+        "build_solution_seconds": 0.014755915035493672,
+        "explicit_monitor_S_seconds": 0.19401612994261086,
+        "explicit_monitor_S_calls": 3,
+        "ksp_seconds_inclusive": 19.194074735045433,
+        "final_recovery_seconds": 0.04956180404406041,
+        "nested_timers_not_additive": true
+      }
+    },
+    {
+      "index": 26,
+      "label": {
+        "problem_id": "seed420200_0026",
+        "whole_problem": "seed420200_0026",
+        "kind": "seeded_full_internal_port",
+        "seed": 420200,
+        "phase_real": -1.0,
+        "phase_imag": 0.0,
+        "amplitude": 1000.0
+      },
+      "batch_index": 0,
+      "row_in_batch": 26,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      },
+      "normalized_RHS": true,
+      "original_normalization_scale": 1871.1601810861507,
+      "reference_metrics": {
+        "native_residual_relative": 1.827367709486779e-13,
+        "port_residual_relative": 1.87752400355959e-16,
+        "internal_residual_relative": 4.2211380931002927e-17,
+        "native_identity_relative": 1.045144262198456e-13,
+        "schur_port_identity_relative": 3.006405776652093e-17
+      },
+      "reference_Schur_relative": 1.6635037630107438e-14,
+      "snapshot_file": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v4_p1_shared_20260929T001908354866Z/training_026.npz",
+      "snapshot_sha256": "3a9d68a4b710407f2ad5dc89b1229b6df175ae7874f26ab46a7fd8b50a4e2989",
+      "snapshots": [
+        {
+          "iteration": 8,
+          "error_norm": 10.002140644793807,
+          "residual_norm": 0.9596781215882779,
+          "S_error_relation_operation_relative": 4.2679189178983826e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 16,
+          "error_norm": 10.001966032460128,
+          "residual_norm": 0.9552426752421425,
+          "S_error_relation_operation_relative": 4.141366366681547e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 24,
+          "error_norm": 10.001674715478476,
+          "residual_norm": 0.9502784721878931,
+          "S_error_relation_operation_relative": 4.1301679427432324e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 32,
+          "error_norm": 10.001547343606424,
+          "residual_norm": 0.9467649651160306,
+          "S_error_relation_operation_relative": 4.231390091696594e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 40,
+          "error_norm": 10.001591217147817,
+          "residual_norm": 0.9467396037113536,
+          "S_error_relation_operation_relative": 4.100879651764983e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 48,
+          "error_norm": 10.001600518118902,
+          "residual_norm": 0.9467190408231766,
+          "S_error_relation_operation_relative": 3.9879274893196396e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 56,
+          "error_norm": 10.001566893374644,
+          "residual_norm": 0.9466732525364405,
+          "S_error_relation_operation_relative": 4.736387583592634e-15,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 64,
+          "error_norm": 10.001549972407808,
+          "residual_norm": 0.9464849946725207,
+          "S_error_relation_operation_relative": 4.1909539759436986e-15,
+          "valid": true,
+          "omission_reason": null
+        }
+      ],
+      "valid_count": 8,
+      "family_weight": 0.35355339059327373,
+      "phase_policy": "retain original normalized complex phase; each nonzero error / its 2-norm / sqrt(actual valid family snapshots)",
+      "ksp_reason": -3,
+      "iterations": 64,
+      "cost": {
+        "problem_seconds_inclusive": 22.14333011501003,
+        "teacher_recheck_seconds": 2.227764894021675,
+        "capture_seconds_child": 1.1396170631051064,
+        "original_audit_seconds_child": 6.836198547971435,
+        "local_PC_seconds_child": 6.570020188926719,
+        "io_seconds": 0.01782363501843065,
+        "build_solution_seconds": 0.008776394068263471,
+        "explicit_monitor_S_seconds": 0.17621657089330256,
+        "explicit_monitor_S_calls": 3,
+        "ksp_seconds_inclusive": 19.18052935996093,
+        "final_recovery_seconds": 0.09550434700213373,
+        "nested_timers_not_additive": true
+      }
+    },
+    {
+      "index": 27,
+      "label": {
+        "problem_id": "seed420200_0027",
+        "whole_problem": "seed420200_0027",
+        "kind": "manufactured_original_A4",
+        "seed": 420200,
+        "phase_real": -0.0,
+        "phase_imag": -1.0,
+        "amplitude": 0.001
+      },
+      "batch_index": 0,
+      "row_in_batch": 27,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      },
+      "normalized_RHS": true,
+      "original_normalization_scale": 0.07210405468516944,
+      "reference_metrics": {
+        "native_residual_relative": 1.2106946493994106e-14,
+        "port_residual_relative": 5.444154731671173e-17,
+        "internal_residual_relative": 2.4540247054212073e-17,
+        "native_identity_relative": 6.6495489762839275e-15,
+        "schur_port_identity_relative": 1.606943650976321e-17
+      },
+      "reference_Schur_relative": 2.7229658036220764e-16,
+      "snapshot_file": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_v4_p1_shared_20260929T001908354866Z/training_027.npz",
+      "snapshot_sha256": "5d1f9e38b4aa60c5ddd52e1eecd2806023e67a89e340b89875f4e21158324b74",
+      "snapshots": [
+        {
+          "iteration": 8,
+          "error_norm": 0.08059559809741855,
+          "residual_norm": 0.44770435202048187,
+          "S_error_relation_operation_relative": 1.4451239491405961e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 16,
+          "error_norm": 0.0793607247782019,
+          "residual_norm": 0.4238670150804129,
+          "S_error_relation_operation_relative": 1.4079033479857342e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 24,
+          "error_norm": 0.07844421272735587,
+          "residual_norm": 0.41457727784322745,
+          "S_error_relation_operation_relative": 1.5687566221617237e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 32,
+          "error_norm": 0.07880016597041278,
+          "residual_norm": 0.38937366841635823,
+          "S_error_relation_operation_relative": 1.4351501647518789e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 40,
+          "error_norm": 0.07896157273494468,
+          "residual_norm": 0.38635689272575235,
+          "S_error_relation_operation_relative": 1.4829514835021114e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 48,
+          "error_norm": 0.07859847680666965,
+          "residual_norm": 0.38331182947413056,
+          "S_error_relation_operation_relative": 1.490217722868356e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 56,
+          "error_norm": 0.07753926367897904,
+          "residual_norm": 0.38122532173295504,
+          "S_error_relation_operation_relative": 1.4665500645096492e-16,
+          "valid": true,
+          "omission_reason": null
+        },
+        {
+          "iteration": 64,
+          "error_norm": 0.07870961622809228,
+          "residual_norm": 0.3786319278547692,
+          "S_error_relation_operation_relative": 1.448578813607086e-16,
+          "valid": true,
+          "omission_reason": null
+        }
+      ],
+      "valid_count": 8,
+      "family_weight": 0.35355339059327373,
+      "phase_policy": "retain original normalized complex phase; each nonzero error / its 2-norm / sqrt(actual valid family snapshots)",
+      "ksp_reason": -3,
+      "iterations": 64,
+      "cost": {
+        "problem_seconds_inclusive": 22.067197046941146,
+        "teacher_recheck_seconds": 2.219653864041902,
+        "capture_seconds_child": 1.1250205667456612,
+        "original_audit_seconds_child": 6.826892940909602,
+        "local_PC_seconds_child": 6.351303451694548,
+        "io_seconds": 0.01036801899317652,
+        "build_solution_seconds": 0.011781439883634448,
+        "explicit_monitor_S_seconds": 0.18923229398205876,
+        "explicit_monitor_S_calls": 3,
+        "ksp_seconds_inclusive": 19.190844730939716,
+        "final_recovery_seconds": 0.10283525299746543,
+        "nested_timers_not_additive": true
+      }
+    }
+  ],
+  "reduced_rows": 21824,
+  "channels": 80,
+  "dtype": "complex128",
+  "normalization": "same normalized canonical trace+port teacher and current trajectory",
+  "error_definition": "accurate normalized reduced solution minus current normalized reduced solution",
+  "weight": "error / norm2(error) / sqrt(actual family valid count)",
+  "phase": "original normalized complex phase; no alignment fitted",
+  "error_relation": "S e = r - teacher_residual; teacher term retained, not treated as exact zero",
+  "max_error_relation_operation_relative": 7.474866002146086e-15,
+  "max_reference_native": 1.827367709486779e-13,
+  "no_diagnostic_or_test_solution_used": true,
+  "new_teacher_factor_created": false,
+  "online_PC_or_initial_guess_teacher_access": false,
+  "original_trajectory_full_audits_and_scalar_history": "raw manifest linked above; not duplicated in compact JSON"
+}

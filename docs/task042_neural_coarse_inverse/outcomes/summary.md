@@ -1,3 +1,30 @@
+# Task042 V4 最新状态：两个全局空间仍未通过严格粗逆
+
+| 最新范围 / 身份 | 实际结果 | 证据 |
+|---|---|---|
+| 合同 / 完成阶段 | 正式Review V1，V4_GLOBAL_ERROR_TWO_LEVEL；P0/P1/两P2/两P3完成，不沿用V3局部停滞禁令 | [response_v4](../response_v4.md) |
+| 两空间 | 旧256训练对Q vs新16轨迹的128解误差；都重建Schur编码，rank均128，四恒等式和真实接口合格 | [空间](records/coarse_space_algebra_v4.json) |
+| 收敛 / 负结果 | 6非零诊断strict0/6，全部256步；physical/mixed未满足预登记native和固定Schur各0.1 | [Gate](records/gate_decisions_v4.json)、[原始字段CSV](records/two_level_comparison_v4.csv) |
+| P4 / F5 | 未解锁16项终测，仍未生成/读取/消费；F5/p6/official RTA/A_volume/field/channels/短波not_run | [fresh](records/fresh_qualification_v4.json) |
+| 无全局因子 | 固定原GEO局部PC＋两层，无global p4 LU/私有CSR/fallback；局部＋R302309536B、Z＋U89391104B | [预算/作用](records/coarse_space_algebra_v4.json) |
+| 全过程资源 | 六阶段整树wall1534.00828393s、同时RSS最大1128828928B、own swap0；MPI1/math1、现场核/own lock/16GiB监督 | [run/cost](records/run_index_v4.json) |
+| 归因 / 边界 | 未训练NN，G-neural not_run；固定局部步骤上的全局空间未获得严格收敛，不否定全部空间/神经路线 | performance inconclusive，全部shared-workstation |
+
+局部修正可能遗留跨模型误差。本批用有限全局解方向在局部步骤前后消除其可表示残差，代价是额外基存储与S作用。两空间的数学作用通过自检，但在规定的已消费问题上没有达到有效研究分流或1e-10严格精度；训练空间内自检不等于泛化成功。
+
+| 路线 / 已消费RHS | 原A4相对残差 | 固定Schur/RHS | port绝对范数 | port operation-relative | 严格返回 |
+| --- | --- | --- | --- | --- | --- |
+| TWOLEVEL-OLDPOD-V4 / 0 | 0.99858818727 | 0.999092817197 | 0.0333030546374 | 0.0654894807753 | False |
+| TWOLEVEL-OLDPOD-V4 / 10 | 0.949242609663 | 0.971634245187 | 0.000954707150083 | 0.480383202996 | False |
+| TWOLEVEL-OLDPOD-V4 / 11 | 0.905073739084 | 0.97721673465 | 0.000949297617596 | 0.235770374702 | False |
+| TWOLEVEL-ERROR-V4 / 0 | 0.999863649936 | 0.99961809965 | 0.0256415022841 | 0.0849928945237 | False |
+| TWOLEVEL-ERROR-V4 / 10 | 0.937175812499 | 0.957474274981 | 0.000927512266936 | 0.334601298612 | False |
+| TWOLEVEL-ERROR-V4 / 11 | 0.901084822725 | 0.963534624076 | 0.000946698188098 | 0.203706802155 | False |
+
+原13.5nm Si、p6/h10对应p4、252cells、80完整通道、A4/A6/MPC和最终验算保持。数据来源/单位/normalization/rank、native与Schur/port分母、实际CPU和邻影响边界、离线/在线/审核/IO/释放费用以及selective merge分组见[中心结果](two_level_global_error_v4.md)。新teacher/NN/GPU未运行；资源未触线，缺邻可比实时阶段指标，不能证明零干扰。原task/review/response_v1–v3和全部历史证据保留；下面V3/V2“当前”均指当时，最新状态以本节为准。
+
+---
+
 # Task042 V3：几何重叠的局部作用，严格全局粗逆仍未合格
 
 | 项目 | 最新实际状态 / 身份 | 证据 |

@@ -1,0 +1,18 @@
+{
+  "status": "CSV_VALUES_UNCHANGED_LF",
+  "reason": "precommit cached whitespace check rejected default CSV CRLF; no commit or numerical replay occurred",
+  "changes": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/two_level_comparison_v4.csv",
+      "cells_identical": true,
+      "before_sha256": "31e275d0adf77047ee24f6ad8b9555de21c34af374c8c070f0c114617696959a",
+      "after_sha256": "b0b9f90866cd88cf435d0a520e8568751f37152ac9e350568f3b0e61bbb84605"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/two_level_history_v4.csv",
+      "cells_identical": true,
+      "before_sha256": "86e407f6c2c627b7b981d9e05f74fd9b098e99db0104ec4e2d61078bd6947180",
+      "after_sha256": "ca15ddb591aa740b613a4adeb62d15e0c1ec697737599ebc01b75f93a9a9fc1d"
+    }
+  ]
+}

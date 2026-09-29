@@ -2894,3 +2894,21 @@ F3同basis/B0/归一化/FP64，线性小解码基线与一个2hidden64 residual 
 局部划分使部分native残差下降，但末周期global方向仍停滞、严格返回未通过，不能把port相对分母增长当绝对改善。按预登记停止teacher/表示扩展/训练；R-LIN固定Q/native范数下精确最优，不能默认同Q MLP胜出。新未消费集合freeze后已选但not_run，F5/official/shortwave/GPU均not_run。两新阶段wall2636.49526309s、同时整树峰1074900992B、swap0；shared-workstation，perfinconclusive，邻身份/CPU推进未能量化影响。整树16GiB/12GiB、MPI1/math1/own lock/独立cache/只清理本树，无cgroup委派不假称内核上限。
 
 终态BOUNDED_STRUCTURAL_GLOBAL_STAGNATION，research-only，待review，无master merge；未扩大网络或扫描。依据真实全局停滞，下一步需review决定新的空间/接口响应方向，不能直接加epoch。[response_v3](task042_neural_coarse_inverse/response_v3.md)、[summary](task042_neural_coarse_inverse/outcomes/summary.md)、[逐步历史](task042_neural_coarse_inverse/outcomes/records/full_residual_history_v3.csv)、[Gate/资源](task042_neural_coarse_inverse/outcomes/records/run_index_v3.json)。
+
+
+## 2026-09-29 Task042 V4：有界全局误差两层实测，严格粗逆仍未资格化
+
+按同分支正式Review V1完成必要P0、16原train问题64步采样128真实x_star−x_m、两条同rank128的完整Schur编码及各三次唯一诊断。局部R-GEO-CELL80-v3、原13.5nm/p6h10对应p4、80完整DtN/A4/A6/MPC不改；旧Q只读取解基，旧native U/R与NN权重不带入。两层C+(I−CS)B(I−SC)通过真实S与四恒等式，实测2C/1B/1S，构造与在线没有global p4 factor/私有audit CSR/fallback。
+
+| 路线 / 已消费RHS | 原A4相对残差 | 固定Schur/RHS | port绝对范数 | port operation-relative | 严格返回 |
+| --- | --- | --- | --- | --- | --- |
+| TWOLEVEL-OLDPOD-V4 / 0 | 0.99858818727 | 0.999092817197 | 0.0333030546374 | 0.0654894807753 | False |
+| TWOLEVEL-OLDPOD-V4 / 10 | 0.949242609663 | 0.971634245187 | 0.000954707150083 | 0.480383202996 | False |
+| TWOLEVEL-OLDPOD-V4 / 11 | 0.905073739084 | 0.97721673465 | 0.000949297617596 | 0.235770374702 | False |
+| TWOLEVEL-ERROR-V4 / 0 | 0.999863649936 | 0.99961809965 | 0.0256415022841 | 0.0849928945237 | False |
+| TWOLEVEL-ERROR-V4 / 10 | 0.937175812499 | 0.957474274981 | 0.000927512266936 | 0.334601298612 | False |
+| TWOLEVEL-ERROR-V4 / 11 | 0.901084822725 | 0.963534624076 | 0.000946698188098 | 0.203706802155 | False |
+
+两路线均strict0/3，native/固定Schur没有同时达到physical和mixed各0.1；BOUNDED_TWOLEVEL_NEGATIVE，P4未解锁，seed420620计划16项仍未消费；不进入F5/p6/短波/official结果。六阶段wall1534.00828393s、同时整树RSS峰1128828928B、own swap0；每次现场核实选CPU0/MPI1/math1，own lock/16GiB树监督、独立cache，只降低自身nice/I/O，无cgroup委派不冒充内核限制。未观察持续压力，邻阶段缺可比指标，无零影响或无争用加速声明，全部shared-workstation/performance inconclusive。
+
+用户Task042受控共享授权仍有效；Review替代V3局部停滞禁止空间研究前提，旧负结果原文/raw不改。新teacher/NN/GPU not_run，神经贡献不归因。P0/P1 source8b792d78…、P2/P3 source5691d79…、文档HEAD不代替运行SHA；仅本分支推送等待review，不merge。[Response V4](task042_neural_coarse_inverse/response_v4.md)、[全局空间结果/费用](task042_neural_coarse_inverse/outcomes/two_level_global_error_v4.md)、[source/资源](task042_neural_coarse_inverse/outcomes/records/run_index_v4.json)。
