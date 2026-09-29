@@ -202,3 +202,15 @@ Task034 的最终证据见 [`task034_workstation_wsl_adaptive_scalability/outcom
 | Task037b | [`task.md`](task037b_hybrid_fem_modal_iterative/task.md)、[`review_report_v7.md`](task037b_hybrid_fem_modal_iterative/review_report_v7.md)、[`outcomes/summary.md`](task037b_hybrid_fem_modal_iterative/outcomes/summary.md)；白名单能力已选择性进入master，frozen M10仍为显式研究入口，ordinary defaults不变、not production-qualified |
 | Task037c | [`response_v3.md`](task037c_hybrid_iterative_robustness/response_v3.md)、[`outcomes/summary.md`](task037c_hybrid_iterative_robustness/outcomes/summary.md)；白名单能力已选择性进入master；S偏振、1°、phi=-5/0/+5、M_robust=120，preferred RSS未过、not production-qualified |
 | Task038 | [`response_v1.md`](task038_input_driven_configuration/response_v1.md)、[`outcomes/summary.md`](task038_input_driven_configuration/outcomes/summary.md)；单一 `.dat` 普通入口、11 migrated/6 retained，ordinary 数值算法不变；source-branch full pytest 1119 passed/48 skipped，integration full 为用户授权 controlled stop |
+
+## Task039extra 收口与 Task40extra 交接
+
+| 入口 | 内容 |
+|---|---|
+| [`task039_extra_physical_multilevel/final_report.md`](task039_extra_physical_multilevel/final_report.md) | Task39 本机双凝聚阶段最终报告及资格边界 |
+| [`task039_extra_physical_multilevel/review_report_v30.md`](task039_extra_physical_multilevel/review_report_v30.md) | C0–C2 离线收口与 Task40 交接授权 |
+| [`task039_extra_physical_multilevel/response_v34.md`](task039_extra_physical_multilevel/response_v34.md) | B 线执行回应与 V31 跨版本数组核验 |
+| [`task039_extra_physical_multilevel/outcomes/summary.md`](task039_extra_physical_multilevel/outcomes/summary.md) | Task39 最终汇总及历史证据入口 |
+| [`task039_extra_physical_multilevel/outcomes/records/projection_layout_v31_offline_comparison_v34.json`](task039_extra_physical_multilevel/outcomes/records/projection_layout_v31_offline_comparison_v34.json) | 已保存 V29/V30/V31 数组比较及文件哈希 |
+
+Task40extra 的活动任务书使用用户选择的 B 线 N0–N6；其正式入口在后续 Task40 分支。

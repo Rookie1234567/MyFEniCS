@@ -1,266 +1,340 @@
-# Task39extra 最终报告：双层单元凝聚路线、实测成本与继承边界
+# Task39extra 最终技术报告：双层单元凝聚的推荐路线与工程交接
 
-> 状态：**CLOSED_WITH_QUALIFICATIONS（笔记本研究阶段收口）**。这不是整个0.7 nm项目完成，也不是批准把研究分支整体合入master。
+> 收口日期：2026-09-29。审阅证据固定于 `task39extra@e09bd1612c4f6ca5fb5cf3572835748ad5c16207`。本报告是 ChatGPT 的阶段总结与推荐，不是一次新计算。**本机研究阶段以 `PASS_WITH_QUALIFICATIONS` 收口；不授权合并 master，不宣称 0.7 nm 目标规模或任意几何已通过。**
 
-## 1. 给其他任务先读的结论
+## 1. 给后续任务的结论
 
-**当前建议采用：p6/p4双层装配时单元凝聚＋p6 trace/端口空间FGMRES＋BAL_H＋准确p4凝聚MUMPS因子。**最终解始终属于p6；p4只提供纠错。保留快速A6融合、快速完整A4验算、blocked Gram局部矩阵生成、正确的H6对角与自然序作用，以及低扰动RSS监督。
+**在本任务已经实测的笔记本案例中，优先推荐：p6/p4 装配时单元凝聚 + p6 trace/端口外层 FGMRES + BAL_H + 一份准确 p4 凝聚 MUMPS 因子 + 快速 matrix-free A6/A4/H6。**
 
-这条路线是本任务中速度、内存与可靠性较平衡的实用方案。不是“内存绝对最少”：同网格p3粗层曾将整树峰值降到约4.03 GB，但耗时约117.77分钟。不是“已经证明最快”：V29是分项和同离散对照较完整的速度基线，V31是最新完整求解的推荐继承实现，V31补跑没有完成受控端到端性能对照。两者都应保留，不能拼接各轮最好分项制造不存在的结果。[E1–E5]
+这条路线保留 p6 的物理离散精度，用 p4 提供强的全局纠错；p6 不建立全局 LU，p4 也不先装完整 A4 再全局提取 Schur。它是当前速度与内存之间最有实际证据的折中，不是已经证明的全局最优算法。[最新回应][S1]、[V29记录][S2]、[V30记录][S3]与[V31记录][S4]
 
-| 选择 | 适用目标 | 实测依据及限制 |
+| 使用目的 | 最终建议 | 已有证据与限制 |
 |---|---|---|
-| **V31准确p4双凝聚，推荐继承实现** | 在已覆盖的几何/材料/环境内兼顾速度和内存，供新任务开发 | 126步；worker workflow 2313.526 s；RSS 7.331 GB；原A6和功率一致性通过。完整参考E/H对照及部分运行时身份仍有缺口 |
-| **V29准确p4双凝聚，冻结比较基线** | 性能分账、同离散完整场比较和回归分母 | workflow 2422.426 s、setup 533.755 s、pure KSP 1837.175 s；126步；RSS 7.326 GB |
-| **历史p3双凝聚，内存优先备选** | 内存不足以承担p4，而能够接受更多迭代 | 361步、7065.949 s、RSS 4.032 GB；采用较早内核，不是最新V31下的p3性能 |
-| p2、42宏块Schur、旧低内存弱逆、BLR及未采用内核 | 历史研究证据 | 不作为推荐生产路径；不能从特定负结果推出所有类似方法不可能 |
+| 速度优先、笔记本内存允许约 7.3 GB 工作集 | 采用上述准确 p4 双凝聚路线；新任务继承 V31 显式实现集合 | V29 有较完整性能/场对照；V31 完整补跑通过，参考场对照与部分运行身份仍有缺口 |
+| 内存优先、可以接受更长时间 | 保留准确 p3 双凝聚备选 | 旧 Q3 实测约 4.03 GB、361 步、117.77 分钟；不是最新 V31 公共内核下的复跑成绩 |
+| 最低内存但尚未收敛的 p2 | 不推荐作为可交付求解路线 | 旧 Q2 受控停止时残差仍约 6.09e-4；不能按其约 2.70 GB 排入成功方案 |
+| 新算法小中规模参考 | 保留准确 p4 路线、独立原 A6 与 native oracle | 参考准确性仍受有限元离散、材料和通道截断限制，不是连续真解 |
+| 0.7 nm、任意非可分三维、约 2 TB 目标 | 复用本任务正确性与内核资产；另行研究有界局部/多层全局纠错及端口存储 | 不将覆盖全域的 p4 LU 无界放大；Hybrid 只作为适用结构的加速器 |
 
-时间均为各记录注明的monotonic口径；RSS统一十进制GB。V31的2313.526 s是记录为worker workflow的字段，V29的2422.426 s为父流程workflow，不能将二者直接当严格配对计算收益百分比。
+**关于“最快”：** V31 补跑记录的 worker workflow 为 38.56 分钟，是这里列出的较短完成记录；但它不是受控性能重复实验，且与 V29 的 parent workflow 边界不完全相同。因此保留 V29 的 40.37 分钟作为有既定比较口径的历史性能分母，不给 V31 颁发未经验证的百分比加速结论。推荐 V31 的理由是已完成离散求解、继承成功内核、H6 自然序有组件正证据，而不是拼接不同运行的最快分项。[V29记录][S2]、[V30记录][S3]与[V31记录][S4]
 
-## 2. 收口身份、权限和未消除的blocker
+## 2. 身份、物理范围与可复现入口
 
-```text
-repository              = Rookie1234567/MyFEniCS
-closed_execution_branch = task39extra
-reviewed_HEAD           = e09bd1612c4f6ca5fb5cf3572835748ad5c16207
-latest_response         = response_v33.md
-latest_execution_review = review_report_v29.md
-latest_formal_source    = d9b545e824296fce1b489c32a5d96e5e9303ff3c
-V29_reference_source    = 780f58918b0e5a9868cd2ea3de26d451bc6b5d86
-closeout_date           = 2026-09-29
-ordinary_default_change = NOT_APPROVED
-master_merge            = NOT_APPROVED
-workstation_migration   = NOT_EXECUTED_BY_THIS_CLOSEOUT
+| 身份 | 固定内容 |
+|---|---|
+| 仓库 / 本机执行分支 | `Rookie1234567/MyFEniCS` / `task39extra` |
+| 收口审阅 HEAD | `e09bd1612c4f6ca5fb5cf3572835748ad5c16207` |
+| 最新 review / response | `review_report_v29.md` / `response_v33.md`，另有用户单次 completion rerun 授权 |
+| V31 正式补跑 source | `d9b545e824296fce1b489c32a5d96e5e9303ff3c` |
+| V31 run_id | `task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1` |
+| V31 profile | `physical_p6_trace_projection_layout_v31` |
+| V31 input SHA256 | `4a8dc8f5459ef385c5f58f58ee507d19255b871d8f96987966db728619863ba0` |
+| V31 physical-model SHA256 | `0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6` |
+| V29 性能参考 source | `780f58918b0e5a9868cd2ea3de26d451bc6b5d86` |
+| V29 run_id | `task39extra_v29_a4_tensor_h6_original_h7p5_v1` |
+
+当前主结果是 13.5 nm 真空波长、1° grazing、azimuth 0°、s 入射、Si/air、original 单胞、p6/h7.5、990 个六面体、80 个有序 DtN 通道、同网格准确 p4、MPI1。**h7.5 是网格目标尺寸，不是波长。** 单元方向、Floquet、通道、积分规则和材料身份均属于模型合同，不能只复制 solver profile 就声称复现。[V29记录][S2]、[V30记录][S3]与[V31记录][S4]
+
+正式运行入口统一为：
+
+```bash
+python scripts/run_case.py input/path/to/case.dat
 ```
 
-用户本轮明确要求：先将笔记本Task39extra收口，留下其他任务可直接阅读的最终报告，再以该路线建立新的Task40extra分支。本报告接受**固定离散问题求解与输出一致性的阶段性成果**，停止本分支常规性能试验；新研究在新任务中开展。不改写旧task、review、失败、误停、账本和`NOT_ATTEMPTED`。
+旧 V31 数学配置入口为 `input/task39extra/v31_projection_layout_original_h7p5.dat`。后续任务建立自己的 `.dat` 和 run_id，不覆盖旧 artifact；不得以改名的旧输出代替新计算。保存 `input_original.dat`、`resolved_config.json`、`run_manifest.json`、input/physical/source SHA、`run_summary.json`、网格与模式身份、ABI/线程、资源记录及 artifact hashes。
 
-已消除的障碍：本机高阶全场求解的部分无效存储、重复局部积分/系数转换、凝聚恢复与粗精化的不一致，以及重型PSS诊断的可避免调用。未消除的障碍：全局p4因子随规模增长、短波长的总迭代工作、一般几何下的独立单元缓存、高通道端口库存、完整离散误差资格和分布式实现。
+## 3. 从头看，本任务解决了哪些问题？
 
-## 3. 物理与离散身份
+下表按方法变化概括，而不是把每个 review 编号当作一种新算法。详细负结果保留在原 response/outcomes，不在这里追溯改写。[历史报告][S5]及[单元凝聚][S6]、[双凝聚][S7]、[粗阶对照][S8]和[最终依赖][S9]
 
-本任务最终主要比较模型为真空波长13.5 nm、grazing 1°、azimuth 0°、s偏振、Si/air、x/y双Floquet周期、z方向Fourier-DtN、complex128 Nédélec H(curl)。`p6/h7.5`中的7.5 nm是网格目标尺寸，不是波长。最终原始模型有990个六面体单元、80个有序端口通道。[E1,E2]
-
-体积及边界弱式离散得到：
-
-```math
-A_6x_6=b_6,\qquad A_6=K_{\mathrm{curl},6}-k_0^2M_{\epsilon,6}+T_{\mathrm{DtN},6}.
-```
-
-完整p6存储坐标667152，独立trace加端口199340；p4完整存储坐标201520，凝聚trace加端口84680。完整存储坐标包含受约束位置，不能当作全部独立未知量。[E2]
-
-已成功的非可分挑战包括历史notch h10案例：材料分布同时随x/y/z变化，146步、RSS约2.298 GB，原A6和匹配参考检查通过。它属于该次notch离散和源码，**不代表V31已经重新验证所有非可分几何**。当前快速内核/凝聚资格主要覆盖轴对齐仿射六面体、已支持的单元材料和约束；曲面、一般畸变、各向异性和单元内变系数不能默认为已通过。[E6]
-
-## 4. 双层凝聚具体做了什么
-
-### 4.1 同一消元思想，两层不同的全局求解方式
-
-将内部自由度记为i，保留trace/端口坐标记为R：
-
-```math
-\begin{bmatrix}A_{ii}&A_{iR}\\A_{Ri}&A_{RR}\end{bmatrix}
-\begin{bmatrix}x_i\\y\end{bmatrix}
-=\begin{bmatrix}f_i\\f_R\end{bmatrix},
-\qquad
-S=A_{RR}-A_{Ri}A_{ii}^{-1}A_{iR},
-\qquad
-\widetilde f_R=f_R-A_{Ri}A_{ii}^{-1}f_i.
-```
-
-实际用局部LU和回代实现内部消元，不要求保存显式逆。先组合完整curl/mass物理矩阵，再凝聚；不能分别凝聚两项后相减。
-
-| 层 | 单元矩阵/分块 | 全局组织 |
+| 阶段 | 当时要解决的问题 | 结果与今天的取舍 |
 |---|---|---|
-| p4 | 300维，内部108，trace192 | **装配时直接形成全局凝聚稀疏矩阵，并做一次MUMPS LU** |
-| p6 | 882维，内部450，trace432 | **不物化全局p6 Schur矩阵，不做p6全局LU**；由局部凝聚数据执行全局作用 |
+| 物理中间层探索 | 正定辅助修正不够强，希望低成本求出真实 p4 修正 | 多种有限工作量内部逆没有获得可推荐的通用强逆；不能因此否定全部迭代法，也不再重复普通 ILU 参数扫描 |
+| 准确 p4 对照与 BAL_H | 分清粗空间表示能力和近似逆质量 | 准确 p4 与 H6 的平衡组合形成完整成功路线；准确粗修正成为研究参考 |
+| 宏块 Schur 与压缩尝试 | 希望减少 p4 全局未知量与因子成本 | 宏块内部因子、填充和临时重叠抵消了预期；不是“Schur 必然稠密或必然省内存” |
+| 装配时单元凝聚 | 不再先装完整全局矩阵再提取块 | 沿单元消去内部自由度；复用相同局部类型；p4 只装凝聚系统；这是最终继承的凝聚方法 |
+| p6/p4 双凝聚与生命周期 | 仅 p4 凝聚时，p6 外层/缓存仍偏大 | p6 转为 trace/端口 Krylov，按类型共享局部 Schur/恢复，清理重复对象；建立当前低内存框架 |
+| 原始/缺口与温和 h 压力 | 验证不仅对某一次规则案例奏效 | 有原版本的非可分挑战和加密结果；不能自动转授为最新版本任意几何/0.7 nm 资格 |
+| p4/p3/p2 比较 | 降粗阶能否同时省内存和时间 | p3 更省内存但步数明显增加；p2 未取得同等最终精度；速度主线固定 p4 |
+| A6/A4/局部矩阵加速 | 凝聚后仍重复执行昂贵局部操作 | A6 curl/mass 融合、快速完整 A4、blocked Gram 矩阵生成取得正结果 |
+| H6 准备、低扰动监控、自然序 | 避免重复积分、PSS 扫描干扰和积分点重排 | 新对角与自然序保留；无收益的共享收缩、实虚堆叠/固定 matmul 等不采用 |
+| 最终 V31 补跑 | 首场错误停止后补齐终态 | 126 步完成；误停不是数值负结果；补跑成本独立记录，原记录不删除 |
 
-不是先装完整大矩阵再从中提取Schur，也不是42个宏块的另一种叫法。相同合格类型的局部数据共享；方向、MPC、端口与原始几何身份仍须正确处理。局部块可以稠密，全局p4仍为稀疏矩阵；凝聚不保证对每种图都降低全局factor内存。[E6,E7]
+过去直接法的某些“凝聚后内存减半”记录属于其他网格、阶段和生命周期，不能直接套用为本任务任何新模型的预期比例。当前报告只对具有绑定证据的运行给出数值。[历史报告][S5]、[单元凝聚][S6]与[双凝聚][S7]
 
-### 4.2 为什么这个组合有效
+## 4. 最终推荐方法：物理方程到矩阵分块
 
-p6凝聚减少了FGMRES的全局坐标数和搜索向量长度；p4凝聚减少了准确粗解的全局输入规模。它们不改变恢复后的原p6方程，但会改变迭代坐标和实际PC组织，不能保证任何案例迭代次数都相同。
+### 4.1 最终始终求解 p6 Maxwell 方程
 
-历史h10对照中，从完整p6外层到p6凝聚外层，外层向量173802降至51272，564步降至112步；随后生命周期版本在同一h10原始案例达到约2.832 GB。该历史结果证明这条组合值得继承，不是所有波长/网格的普遍加速定理。[E6]
-
-## 5. 三大阶段与公式
-
-### 5.1 Setup：只建立一次，因子留给全部迭代使用
-
-```text
-输入/材料/网格/空间/约束/通道
-→ 必要form编译及参考数据
-→ p4局部物理矩阵与单元凝聚、全局稀疏装配
-→ p4 symbolic/numeric，保留同一份因子及依赖矩阵
-→ H6正确对角、规定power10和作用对象
-→ p6局部凝聚、恢复数据、trace/端口桥接
-→ 同对象启动核验，直接进入KSP
-```
-
-优先在大因子常驻前编译后续确实需要的form，避免JIT与大工作集叠峰；这是调度建议，**本次未新增cold-JIT重排试验**。缓存复用须身份合格；不能预热后漏记成本。
-
-### 5.2 KSP：FGMRES外层，BAL_H只负责给方向
-
-粗修正定义为：
+在与仓库一致的时间谐波和归一化约定下，体积电场方程写成：
 
 ```math
-C_4=P_{64}F_4P_{64}^{H},\qquad F_4g_4\approx A_4^{-1}g_4.
+\nabla\times(\mu_r^{-1}\nabla\times\mathbf E)
+-k_0^2\epsilon_r\mathbf E=\mathbf f.
 ```
 
-F4实际包括限制后的RHS缩减、已有凝聚LU的前代/回代、内部恢复、完整原A4验算和按需精化。每次RHS不同，但因子不重建。
+用Nédélec基函数展开电场，并对合法H(curl)测试函数积分：
 
 ```math
-e_4=g_4-A_4c_4,\qquad
-c_4\leftarrow c_4+F_4e_4.
+\begin{aligned}
+\mathbf E_h&=\sum_jx_j\mathbf N_j,\\
+a(\mathbf E_h,\mathbf v_h)&=\int_\Omega\mu_r^{-1}(\nabla\times\mathbf E_h)\cdot
+\overline{\nabla\times\mathbf v_h}\,d\Omega\\
+&\quad-k_0^2\int_\Omega\epsilon_r\mathbf E_h\cdot\overline{\mathbf v_h}\,d\Omega
++t_{\mathrm{DtN}}(\mathbf E_h,\mathbf v_h)=\ell(\mathbf v_h).
+\end{aligned}
 ```
 
-原A4目标1e-10，每次初解及每次精化后都完整检查；最多两次额外同因子精化。仍未达内部目标但状态有限且完整时，返回已验算的最佳一致状态（FE、端口、A4作用、残差来自同一attempt），继续外层。NaN/Inf、因子或映射损坏仍停止。该软返回不降低最终原A6标准。
-
-一次BAL_H：
+外部开放条件由Fourier-DtN加入，入射贡献进入右端项，x/y满足双Floquet；最终系数方程是：
 
 ```math
-z_c=C_4r,\qquad s=H_6(r-A_6z_c),\qquad
-z=z_c+s-C_4A_6s,
-\qquad
+A_6x_6=b_6,\qquad
+A_6=K_{\mathrm{curl},6}-k_0^2M_{\epsilon,6}+T_{\mathrm{DtN},6},
+\qquad k_0=2\pi/\lambda_0.
+```
+
+p4 只是生成纠错方向；最终输出场仍是 p6。H6 的正定辅助算子也不是另一份物理方程，不能用其残差代替原 A6 残差。
+
+### 4.2 单元内部消元，不是 42 个宏块消元
+
+把单元内部系数记为 i，共享边/面 trace 记为 t，端口辅助系数记为 a。示意分块为：
+
+```math
+\begin{bmatrix}
+A_{ii}&A_{it}&B_i\\
+A_{ti}&A_{tt}&B_t\\
+D_i&D_t&H
+\end{bmatrix}
+\begin{bmatrix}x_i\\x_t\\a\end{bmatrix}
+=
+\begin{bmatrix}f_i\\f_t\\g\end{bmatrix}.
+```
+
+内部求解通过局部 LU/三角求解，不要求存显式逆。消元后的块和右端项为：
+
+```math
+\begin{aligned}
+S&=A_{tt}-A_{ti}A_{ii}^{-1}A_{it},
+&\widehat B&=B_t-A_{ti}A_{ii}^{-1}B_i,\\
+\widehat D&=D_t-D_iA_{ii}^{-1}A_{it},
+&\widehat H&=H-D_iA_{ii}^{-1}B_i,\\
+\widehat f_t&=f_t-A_{ti}A_{ii}^{-1}f_i,
+&\widehat g&=g-D_iA_{ii}^{-1}f_i.
+\end{aligned}
+```
+
+各单元贡献按合法方向/MPC/Floquet映射组织为全局作用或矩阵。左右端口耦合一般独立，**不假设 D 是 B 的共轭转置**。必须先合成完整物理体矩阵再凝聚；分别凝聚 curl 与 mass 后相加一般不等价。
+
+两层的关键区别如下：
+
+| 层 | 单元内部处理 | 全局处理 |
+|---|---|---|
+| p4 粗层 | 装配时内部消元，共享合法局部数据 | 装配 trace+port 稀疏矩阵，MUMPS 分解一次，保留因子 |
+| p6 细层 | 准备局部 Schur、LU/恢复及端口数据 | 不物化全局 A6/S6，不做全局 p6 LU；提供凝聚作用供 FGMRES |
+
+主模型局部维数：p4 是 300=108+192，p6 是 882=450+432。全局 trace 包括单元之间的边/面，并非只有计算域外表面。
+
+| 空间 | 完整 FE 存储坐标 | 单元内部 | 独立 trace | trace+80 端口 |
+|---|---:|---:|---:|---:|
+| p6 | 667,152 | 445,500 | 199,260 | 199,340 |
+| p4 | 201,520 | 106,920 | 84,600 | 84,680 |
+
+完整存储包含 Floquet 从属位置，不能全部称独立未知量。[V29分账][S2]与[粗阶对照][S8]
+
+### 4.3 每次准确粗修正 C4
+
+```math
+C_4r=P_{64}F_4P_{64}^{H}r.
+```
+
+F4 是“缩减 RHS → 用已有 p4 凝聚因子前代/回代 → 恢复内部系数”的操作，不是显式逆矩阵。随后每次完整计算：
+
+```math
+e_4=g_4-A_4c_4,\qquad \rho_4=\lVert e_4\rVert/\lVert g_4\rVert.
+```
+
+目标为 1e-10；必要时最多做两次额外同因子精化：
+
+```math
+c_4^{(j+1)}=c_4^{(j)}+F_4\bigl(g_4-A_4c_4^{(j)}\bigr).
+```
+
+每次精化后仍完整验算。不降低检查频率，不使用廉价筛查。精化耗尽后，若状态有限、约束/端口/因子未损坏，返回已完整验算的最佳 FE/端口/A4c/残差一致状态，继续外层 FGMRES；不能无限内循环，也不能只因轻微未达内部目标就误停整场。真正非有限值或实现错误仍拒绝。
+
+### 4.4 一次 BAL_H 以及外层迭代
+
+```math
+\begin{aligned}
+z_c&=C_4r,\\
+r_1&=r-A_6z_c,\\
+s&=H_6r_1,\\
+z&=z_c+s-C_4A_6s.
+\end{aligned}
+```
+
+即：
+
+```math
 M_6=C_4+(I-C_4A_6)H_6(I-A_6C_4).
 ```
 
-即两次粗修正、两次A6作用、一次H6。H6是正定辅助问题的短Chebyshev-Jacobi作用，不是准确A6逆，也没有几百步内层Krylov。FGMRES32随后进行Schur作用、正交化和小最小二乘，最终组合搜索方向；不能把PC公式当成外层全部工作。[E1,E2,E8]
+因此常规一次 PC 用两次 C4、两次真实 A6 和一次 H6。第二次 C 依赖前面的结果，不能当两个独立 RHS 并发。H6 是固定短多项式辅助修正，当前一次 H6 含两次 B6 作用，power10 准备另含20次；不按过时元数据模板修改实际算法次数。
 
-### 5.3 恢复/后处理：先保留最小场，再释放无用求解对象
+外层在 199,340 维 trace+port 空间运行 right FGMRES32，并经已核验桥接调用完整空间 BAL_H。FGMRES组合搜索方向，不是直接把 PC 返回量简单相加。当前 max_it=2048；126 步是实测结果，不是一般保证或停止阈值。
 
-```math
-x_i=A_{ii}^{-1}(f_i-A_{iR}y),\qquad
-\rho_6=\lVert b_6-A_6x_6\rVert/\lVert b_6\rVert\le10^{-6}.
+## 5. 三大阶段的时间与存储：使用同场分账
+
+### 5.1 完整结果比较
+
+以下都是 13.5 nm original p6/h7.5 的完成记录，p3一行来自旧实现。单位为秒、十进制GB。不同运行状态/监控/JIT和时钟边界差异不归因于某一个算法。[V29][S2]、[V30][S3]、[V31][S4]与[旧p3/p2对照][S8]
+
+| 运行 | 完整时间及范围 | setup | pure KSP | 步数 | 树RSS峰值GB | 资格 |
+|---|---:|---:|---:|---:|---:|---|
+| V29 p4 | parent workflow 2422.426；worker 2418.535 | 533.755 | 1837.175 | 126 | 7.32645 | 离散求解及已有跨版本完整场对照通过 |
+| V30 p4 | parent workflow 2532.759 | 626.931 | 1854.603 | 126 | 8.04419 | 离散场通过；峰值含大工作集旁的JIT子进程 |
+| V31 p4 completion | worker workflow 2313.526 | 未在补跑compact独立列出 | 未形成相同pure-KSP分项 | 126 | 7.33140 | 本场真残差、模式功率与能量通过；完整场对照未做 |
+| 旧 Q3 p3 | workflow 7065.949 | 935.058 | 6082.501 | 361 | 4.03182 | 旧公共内核下的低内存成功备选 |
+
+V31 compact另有 `solver_monotonic_seconds=1956.1166`，**不在没有验证区间定义时将它填入上表pure KSP栏**。其 realtime 结算为2534.117秒；V29 realtime parent为2643.635秒。所有时钟分别保留，不与monotonic混加。V31补跑不是性能对照授权，不额外重跑来争一个排名。
+
+### 5.2 Setup：一次性准备
+
+下面以 V29 的可追溯分项说明推荐路线的成本组成，不拼接成V31子计时。[S2][S2]
+
+| 工作 | V29时间（s） | 主要对象/生命周期 | 解释 |
+|---|---:|---|---|
+| 输入、空间、方向、约束、端口、传递、JIT | 未完整独立汇总 | 网格/MPC、参考表、端口、运行库 | 不能把未归因差额命名为Python开销 |
+| p4局部生成/凝聚/装配 | 26.588 | 约24.54MB局部数值缓存；全局凝聚矩阵约0.908GB载荷量级 | 不是完整全局A4再提Schur |
+| p4 symbolic | 0.637 | 排序与填充结构 | 包含在接口setup父区间 |
+| p4 numeric | 216.394 | MUMPS内部used约4.327GB、allocated约4.688GB | 是后端范围，非单独因子RSS；不相加 |
+| p4接口setup父区间 | 250.099 | 同一份矩阵和因子 | 与上述子项不能重复相加 |
+| H6对角 / power10 | 4.799 / 39.087 | 对角、谱窗、固定工作向量 | V31继承的新对角与自然序有自己的独立证据 |
+| p6局部builder | 34.122 | 约325.28MB数值缓存 | 不装全局p6矩阵 |
+| 其中p6矩阵核 / Schur | 20.289 / 11.552 | 固定批次临时数组 | 这两项包含在builder内 |
+| 桥接与启动检查 | 未完整独立汇总 | 工作向量、恢复/原算子检查 | 不为补计时单独重建factor |
+| 完整setup | 533.755 | 所有必要对象逐步共存 | 不是上表已列部分简单之和 |
+
+### 5.3 KSP：重复计算
+
+同一 V29 动作账包含相应setup/审计调用，不能全部加成pure KSP。每次平均按实际计数计算。[S2][S2]
+
+| 动作 | 次数 | 累计时间（s） | 每次平均（s） | 主要使用对象 |
+|---|---:|---:|---:|---|
+| A6快速完整作用 | 263 | 517.156 | 1.966 | 融合体积内核、DtN、批次scratch |
+| H6辅助作用 | 131 | 525.036 | 4.008 | B6、对角/谱窗、固定递推向量 |
+| 完整原A4验算 | 267 | 159.091 | 0.596 | 快速A4体积与端口作用；检查一项未少 |
+| p4缩减-回代-恢复父区间 | 267 | 243.563 | 0.912 | 原有凝聚LU及局部恢复数据 |
+| P延拓 | 263 | 77.895 | 0.296 | 局部传递与p6工作向量 |
+| PH限制 | 269 | 69.326 | 0.258 | 伴随传递与p4工作向量 |
+| 外层Schur、正交化、桥接及固定检查 | 分项不全 | 未独立汇总 | 不推算 | trace Krylov向量与恢复工作区 |
+| 纯KSP父区间 | 126步 | 1837.175 | 14.581/步 | p4因子仍常驻；不是只有Krylov占内存 |
+
+V30更细的同场粗修正账为：PH69.65、RHS缩减76.64、MUMPS求解92.54、内部恢复74.53、完整A4验算160.14、P77.74秒。它说明回代不是整个C；这些数字只属于V30，不能替换V29/V31子项。[S3][S3]
+
+### 5.4 恢复和后处理
+
+```text
+从trace/port恢复完整p6场
+→ 独立原A6最终检查并保存必要解/恢复包
+→ 销毁KSP/PC、p4因子，然后释放依赖矩阵和无用缓存
+→ 释放后残差检查
+→ 用必要场完成E/H、模式、功率与体吸收输出
 ```
 
-恢复完整p6场、原A6独立终检、释放因子再释放依赖矩阵、释放后复核、正式E/H及模式/功率/体吸收输出。因子不能在仍需C4时提前销毁；也不能在因子存活时擅自删除后端依赖的p4矩阵。
+V29最终native检查5.751秒、释放/后验11.461秒、正式物理后处理15.164秒。最后几步目前不是提速重点，但其工作区和编译子进程仍在全过程监控范围内。释放对象不保证allocator立即向OS返还等量RSS，不凭对象字节数推算释放后的实测RSS。
 
-## 6. 可复用的时间账：以V29同一完整场为准
+## 6. 约7.3GB到底包括什么？
 
-V31补跑未提供同样边界的全部子项，因此下表统一使用V29，不拼入其他轮次更好的数字。单位秒，全部为E2中的实测；父子包含项不可重复相加。
-
-| 大阶段/动作 | 本场时间 | 解释 |
-|---|---:|---|
-| **完整workflow** | **2422.426** | 40.37分钟；父流程monotonic |
-| **setup总计** | **533.755** | 8.90分钟 |
-| p4接口栈准备 | 250.099 | 包含局部凝聚与factor |
-| 其中p4 symbolic / numeric | 0.637 / 216.394 | 一次分解，不是每次PC成本 |
-| p4局部矩阵/凝聚/装配 | 26.588 | 12个raw类，26个定向类 |
-| p6局部builder | 34.122 | 包含raw kernel 20.289和局部Schur 11.552 |
-| H6对角 / power10 | 4.799 / 39.087 | V29旧合格对角；不是V31的新对角时间 |
-| 其余空间/端口/JIT/bridge/QA | 未完整独立计时 | 不把父区间差额随意归因 |
-| **pure KSP** | **1837.175** | 30.62分钟、126步 |
-| A6累计作用 | 517.156 / 263次 | 每次约1.966；含相应检查调用 |
-| H6累计作用 | 525.036 / 131次 | 每次约4.008；与B6子项不相加 |
-| p4缩减—回代—恢复 | 243.563 / 267次 | 每次约0.912；复用同一因子 |
-| 完整原A4验算 | 159.091 / 267次 | 每次约0.596；不是LU回代 |
-| P / PH累计 | 77.895 / 69.326 | 不同计数含准备/检查，非126的简单倍数 |
-| 最终native检查 / 释放检查 / 正式物理输出 | 5.751 / 11.461 / 15.164 | 未将其余阶段间差额假定为后处理 |
-
-### 各轮不能混淆的结果
-
-| 版本 | 完整时间记录 | 迭代 | RSS GB | 裁决 |
-|---|---:|---:|---:|---|
-| V25 p4 r2 | 3114.284 s，51.90 min | 126 | 约7.391 | 早期准确p4速度锚点 |
-| V28 A6融合 | 2936.076 s，48.93 min | 126 | 7.356 | 融合有效；完整回归通过 |
-| V29 A4及局部矩阵加速 | 2422.426 s，40.37 min | 126 | 7.326 | 冻结速度/全场对照基线 |
-| V30监控与新H6对角 | 2532.759 s，42.21 min | 126 | 8.044 | 数值通过；未获整场性能改善 |
-| V31首次 | 中断，不列完整用时 | 日志113、完整检查112 | 7.324（仅前缀） | Codex误停；不是资源或solver失败 |
-| V31授权补跑 | worker 2313.526 s，38.56 min；保守结算2534.117 s | 126 | 7.331 | 固定离散求解/输出通过；不是受控性能配对 |
-| V25 p3备选 | 7065.949 s，117.77 min | 361 | 4.032 | 更低内存但更慢，较早源码 |
-
-E1–E5、E8提供运行身份和原始路径。时间受不同scope、缓存和运行状态影响；本报告不对混合分母给严格加速比。
-
-## 7. 内存主要放在哪里
-
-以V29对象记录说明数量级；后端allocated/used、数组载荷和整树RSS不是可直接相加的同口径账。
-
-| 对象 | 记录/推导量级 | 属性 |
-|---|---:|---|
-| MUMPS内部used / allocated | 约4.327 / 4.688 GB | 后端统计，并非同时刻单独因子RSS；不相加 |
-| p4凝聚矩阵分配载荷 | 历史同规模约0.908 GB | 矩阵本身仍保留，不是因子的一部分 |
-| p6局部数值缓存 | 325.283 MB | V29载荷；按合格类型共享 |
-| p4局部数值缓存 | 24.542 MB | V29载荷 |
-| p6完整 / trace单向量 | 10.674 / 3.189 MB | 维数乘complex128的16 B，derived |
-| FGMRES32主要两组trace向量 | 约207.3 MB | 约65条向量的载荷，不含全部工作区 |
-| H6类8条主要向量 | 约85.4 MB | 派生载荷，不是H6总RSS |
-| 网格/映射/端口/其他向量、库与分配器 | 未精确逐项闭合 | 不把RSS减used的差額叫作Python或泄漏 |
-| V29 / V31完整整树RSS峰值 | 7.326 / 7.331 GB | 两场各自完整采样峰值 |
-
-V30的峰值比V29高717742080 B，已有峰值样本对上：FFCx/gcc/cc1后代719687680 B，数值worker差-1912832 B，parent/launcher差-32768 B，合计恰为差额。这解释的是**两次峰值时刻的进程组成**，不是全部生命周期逐对象账。编译必须计入，不能从正式峰值中删除。[E9]
-
-## 8. 任务过程与最后保留的技术
-
-| 研究阶段 | 结论与保留 | 不允许的误读 |
+| 对象 | 量级与身份 | 注意事项 |
 |---|---|---|
-| 物理p4中间层、shift/多层/弱逆试验 | 准确p4对完整纠错非常有用；低内存候选未成为通用强逆 | 不表示所有迭代逆不存在；不继续盲扫ILU |
-| 42宏块Schur与BLR等 | 自由度下降不保证因子或总内存下降 | 不把“Schur”三个字等同省内存 |
-| p4装配时单元凝聚 | 对局部内部DoF就地消元，避免完整全局矩阵后凝聚 | 不是旧宏块库存方案 |
-| p6进一步凝聚 | 外层trace向量变短，h10上迭代显著减少 | 改变表示后不能保证所有案例步数相同 |
-| 类型共享、identity与生命周期 | 复用正确局部对象，避免重复序列化和叠峰 | 不能假设任意几何仍只有几种局部类型 |
-| h10 notch及h7.5原始模型 | 获得有限三维/网格范围的资格 | 不称所有几何、所有波长鲁棒 |
-| p3/p2粗阶对比 | p3是低内存备选，p4是当前速度优先 | 未重测的最新p3速度不能填写 |
-| A6融合、A4快速完整验算、blocked Gram | 保留；不减少物理积分和检查 | 不能把单组件倍数乘整个workflow |
-| reference-metric H6对角、低扰动RSS | 保留为显式工程实现；heavy阶段PSS可关闭 | PSS=null不是0；RSS监督仍需完整 |
-| H6自然序 | 组件有6.24%/18.05%中位改善，补跑完整求解通过 | 固定matmul增量无稳定收益，不采用 |
-| 局部多列批处理、端口流式小试 | 保留负结果；不进入速度优先默认 | 小fixture不足以否定全部大规模策略 |
+| p4 MUMPS内部used / allocated | 约4.327 / 4.688GB，V29后端统计 | 包含后端数据范围，不是同时RSS；两数不相加 |
+| p4凝聚矩阵 | 同规模分配载荷约0.908GB | 矩阵与因子是两个对象，因子依赖关系不随意破坏 |
+| p6局部数值缓存 | 325.28MB，V29数组记录 | LU/Schur/恢复按类型共享，不是每cell复制 |
+| p4局部数值缓存 | 24.54MB，V29数组记录 | 每次缩减和恢复复用 |
+| FGMRES32两组主要向量 | 约207.31MB，维数公式推导 | 约33+32条trace向量，不仅32条，也非完整KSP库存 |
+| H6类8条完整p6向量 | 约85.40MB，源码与尺寸推导 | 额外参考表、B6工作区另计 |
+| 其他向量、约束、端口、几何、库与临时分配 | 未形成峰值时刻的完整逐对象分账 | 不将算术余额叫作实测“Python内存”或泄漏 |
+| V31整树峰值 | 7.33140GB，watchdog测量 | 与以上各对象不同统计口径，不能机械求和闭合 |
 
-详细过程不在本报告重新复制全部review，沿E6、E7、E10和原review链追溯。
+一个complex128向量需要16N字节。这里完整p6向量10.674MB，凝聚p6向量3.189MB，p4完整向量3.224MB。凝聚显著降低外层向量尺寸，但没有消除完整空间PC、恢复和独立检查的工作向量。[V29分账][S2]与[粗阶对照][S8]
 
-## 9. 继承实现、输入和验证入口
+V30相对V29多出的717,742,080B采样峰值，已由同刻进程组成解释：编译子进程719,687,680B，与worker/parent的小差异相抵后精确得到峰值差。**这是编译与大工作集叠峰，不是证明新H6对角永久多占718MB。** 后续可将确定会用到的必要JIT安排在大factor前，仍完整记账，不另存第二套大数值对象。[S10][S10]
 
-| 依赖组 | 阅读入口 | 继承要求 |
+进程树RSS、cgroup `memory.current`、MUMPS used、ndarray载荷是不同口径。旧8GiB容量试验已经被后续合同覆盖，不能变回当前人工停止线；历史7.326GB是性能比较目标，也不是运行上限。新任务必须显式记录自己的真实安全合同。
+
+## 7. 推荐保留的实现与不要顺手启用的候选
+
+| 资产 | 最终决定 | 验证与适用边界 |
 |---|---|---|
-| 正式输入/调用 | `scripts/run_case.py`、`src/io/physical_intermediate_profile.py` | 一个dat对应一次明确计算；新任务另建显式profile |
-| 双凝聚与恢复 | `src/runners/physical_dual_cell_condensed_lowmem_v20.py`、`src/solvers/hcurl_assembly_time_condensation.py` | 不复制大型runner；最小参数化通用路径 |
-| A6/A4/B6快速作用 | `src/solvers/fullspace_n1e_sum_factor.py`、`src/solvers/fullspace_partial_assembly.py` | 保留各项积分规则、复材料、方向与MPC身份 |
-| H6/准备 | `src/solvers/physical_light_setup.py` | 正确约束对角、power10、H6-only自然序 |
-| 准确p4与BAL_H接线 | `src/runners/physical_p4_schur_v14.py`及其已绑定依赖 | 完整A4检查/最佳一致状态返回；原因子与矩阵生命周期不变 |
-| 检查器 | `benchmarks/task39extra_v25_dynamic_checker.py`、`benchmarks/task39extra_v31_output_checker.py` | 用实际schema；旧PASS/FAIL原样保存；新任务避免硬编码旧run_id |
-| 已有输入示例 | `input/task39extra/v31_projection_layout_original_h7p5.dat` | 仅示例；不得直接把波长改成0.7而保留旧材料和通道 |
+| 装配时单元凝聚、类型共享、p6 trace外层、合法端口桥接 | 核心继承 | 精确离散消元；不要求材料全局可分离，但缓存收益依赖局部重复程度 |
+| A6 curl/mass融合 | 保留 | 共享取数/变换/回写，原积分分别保留；不是仅封装两个旧apply |
+| 快速完整A4验算 | 保留 | 降低相同检查的正向成本；不删除检查 |
+| p6 blocked Gram局部矩阵 | 保留 | 按原积分生成完整矩阵；现有快速路径有仿射六面体/材料等适用限制，不覆盖所有曲面单元 |
+| reference-metric H6对角 | 保留 | 保持约束合并及交叉项；不支持情况需正确fallback |
+| H6自然积分点顺序 | 显式保留 | 组件正证据、V31完整离散求解；完整跨版本场对照是离线待补项 |
+| 低扰动RSS监控、PSS禁用状态 | 保留为显式运行策略 | RSS安全链仍在；PSS未采样是null，不是0 |
+| 原A4目标未达后的best-finite外层继续 | 保留 | FE、alpha、A4c、e必须同一已验算状态；不掩盖真实损坏 |
+| 固定matmul投影、实虚堆叠、旧共享收缩 | 不默认启用 | 已测增量收益不足/变慢，保留负结果 |
+| p4局部多RHS批处理、端口流式候选 | research-only | 小例更慢；并未否定所有大规模分块方法 |
+| BLR、MUMPS排序/主元/线程扫描、普通ILU扫描 | 不在收口或新任务首批尝试 | MUMPS作为参考后端保持；不能为性能排序静默改数学/资源身份 |
 
-上表是e09bd161快照中的入口索引，不是授权整体合并研究分支。跨分支/环境需按数值核心、输入/监督、checker和证据分组迁移，验证实际ABI与原Aq关系；不能只抄若干函数名。[E1,E8]
+主要继承入口是 `src/solvers/fullspace_n1e_sum_factor.py`、`fullspace_partial_assembly.py`、`physical_light_setup.py`、`hcurl_assembly_time_condensation.py`、`src/runners/physical_dual_cell_condensed_lowmem_v20.py`、`physical_p4_schur_v14.py` 及 `src/io/physical_intermediate_profile.py` 等依赖。以 pinned source 和既有 selective manifest 为准，**不是整分支cherry-pick/merge名单**。[S9][S9]
 
-## 10. 尚存证据限制及不重跑的收口办法
+## 8. 收口时保留的缺口
 
-V31补跑的独立原A6/功率/体吸收检查通过，但完整FE L2、scaled-curl、同坐标E/H与V29/V30的离线对照本场未执行；部分线程环境字段缺失。新任务第一步可以只读已有artifact补比对，并记录可恢复的旧身份；缺失则写unknown，不用当前shell反填，不为补账重跑Task39extra。
+**本机阶段收口不等于所有科学问题关闭。** 允许Codex只用已存在的本地文件做以下离线补齐，不为报告再运行13.5nm PDE：
 
-本次阶段收口接受以上限制并明确移交，不把它们变成“没有最终结果”，也不把它们改写成“全部PASS”。只有同离散对照补齐后，才能声明对应源码之间的完整场等价；连续误差仍需要独立h/p资格。
-
-历史`USER_CONTROLLED_STOP`为Codex执行误停，不是用户要求停，也不是算法负结果。8 GiB或旧7.326 GB成绩不是当前硬线；每场必须把资源规则、口径、实际系统/cgroup额度和比较目标分别记清，保留系统余量与清场保护。
-
-## 11. 为什么不能直接放大到0.7 nm、2 TB
-
-工作站冻结快照2026-09-28、分支`task39extra_para_workstation_capacity@ccd357885f7f9be84efe3be07868cc94f13d93fc`：2 nm/h1.5已有双凝聚；p4因子4586288行、MUMPS used约916.713 GB；p6端口相关数组库存约106.341 GB；前缀RSS峰约1154.356 GB；64步独立A6残差0.0223587，尚非最终资格。它尚未包含笔记本全部后续加速，既不是本机结果，也不是当前实时进度。[E11]
-
-固定几何、固定阶次且假设h与波长同比缩小时，2/0.7的立方约23.32，只能用作情景计数，不能替代精度合格网格。全局p4因子增长不能线性外推；局部缓存也不能忽略：450×450 complex128内部LU每独立单元约3.24 MB，若约127万单元全部独立，仅此数值载荷约4.1 TB。该极端情景不是当前实测，但说明类型共享不能成为任意几何的唯一容量保障。
-
-后续必要主线：真实0.7 nm材料和非可分缩小PDE → h/p与通道误差资格 → 多尺度电尺寸成本 → 有界局部求解、多层全局纠错、分布式trace/mode与有界缓存。准确p4留作小中规模reference/过渡；最终生产候选不能依赖覆盖全域的无限增长直接因子。Hybrid只在内部可模态传播时作为加速器，不替代一般Full3D。
-
-## 12. 正式收口裁决
-
-| 事项 | 裁决 |
+| 缺口 | 收口处理 |
 |---|---|
-| Task39extra笔记本阶段 | **CLOSED_WITH_QUALIFICATIONS / pass_with_qualifications** |
-| 推荐路线 | **准确p4双层装配时凝聚＋matrix-free p6 trace外层＋BAL_H＋合格快速内核** |
-| 低内存备选 | 历史p3双凝聚，时间代价明确，最新内核复用需再资格化 |
-| 继续旧分支常规PDE/调参 | 不新增；用户明确再授权的资料补充另记 |
-| 研究继续 | 新Task40extra分支，以本次收口提交为base |
-| master/default/工作站迁移 | 未批准；不改变当前工作站运行 |
-| 0.7 nm目标规模通过 | **未建立**；不以本报告或新分支名称代替实测 |
+| V31补跑未与V29/V30完整场比较 | 核对物理/mesh/keys后做同坐标E/H、FE L2/scaled-curl、模式复幅值与功率离线对照；没有原数组则保留AUTHORITY_LIMITED |
+| V31 manifest部分线程/ABI记录缺项 | 仅从该次已有启动/资格记录提取；不能以当前shell回填过去 |
+| V31细阶段时间未完整发布 | 只提取已有计时边界；区分worker/parent、monotonic/realtime、pureKSP/adapter；缺项unknown |
+| 缺少连续精度/完整任意几何资格 | 不靠小残差或能量闭合替代；转交新任务的物理、h/p及非可分验证 |
+| 原misstop与旧checker结果 | 永久保留，追加新检查器证据不覆盖旧分类 |
 
-## 13. 证据索引（固定于reviewed_HEAD，除E11）
+离线结果写 `response_v34.md` 与少量 closeout evidence；最终报告本体保持为这份主控裁决，有新事实以补充结果链接披露。若同离散对照真正失败，应停止受影响继承并报告，不把缺口当成默认通过。单纯旧文件不可得不阻止新分支建立自身小模型参考。
 
-- E1：[Response V33](response_v33.md)；[补跑机器记录](outcomes/records/projection_layout_v31_authorized_rerun.json)。
-- E2：[V29完整compact](outcomes/records/a4_tensor_h6_v29_compact.json)；[Response V30](response_v30.md)。
-- E3：[V30完整compact](outcomes/records/workstation_guided_local_v30_compact.json)；[Response V31](response_v31.md)。
-- E4：[V31组件与选择](outcomes/records/projection_layout_v31_selection.json)；[首次误停compact](outcomes/records/projection_layout_v31_compact.json)。
-- E5：[历史p3完整记录](outcomes/records/a6_h6_coarse_degree_v25_q3.json)；[r2完整记录](outcomes/records/v25_q4_ac_swap_observe_r2_result.json)。
-- E6：[全阶段summary](outcomes/summary.md)；[双凝聚h10](outcomes/dual_condensed_memory_v20.md)；[非可分验证](outcomes/dual_condensed_robustness_v21.md)。
-- E7：[Review V18](review_report_v18.md)、[V19](review_report_v19.md)、[V20](review_report_v20.md)。
-- E8：[最后执行Review V29](review_report_v29.md)；[V31补跑授权](outcomes/records/v31_user_authorized_completion_rerun_20260929.json)。
-- E9：[V30资源重审](outcomes/records/projection_layout_v31_resource_reaudit.json)。
-- E10：[历史经验](prior_attempts_retrospective.md)；[文献与方法边界](literature_review.md)。
-- E11：[工作站冻结交接](https://github.com/Rookie1234567/MyFEniCS/blob/ccd357885f7f9be84efe3be07868cc94f13d93fc/docs/task39extra_para_workstation_capacity/outcomes/f2_running_handoff_20260928.md)。
+## 9. 为什么不能将这条路线直接扩大到0.7nm？
 
-本报告由ChatGPT基于远程只读证据编写；未在本会话重放PDE、完整场数组或性能测试。文档结构检查与远程回读另随交付记录，未完成的视觉/数值检查不得声称通过。
+工作站固定快照 `task39extra_para_workstation_capacity@ccd357885f7f9be84efe3be07868cc94f13d93fc` 对应2026-09-28 10:34 UTC+8，不代表现在实时状态：2nm/h1.5、54,332cells、3,904通道、p4凝聚增广4,586,288行；MUMPS内部used约916.7GB、进程树前缀峰值约1154.4GB，原A6在64步时仍约0.02236。[S11][S11]
+
+在同几何、同p、同h/波长的**情景**下，2→0.7nm的三维单元数量倍率约23.32，不是已经验证的网格需求。约1.27百万单元时，如果每个单元各保存一份450×450的complex128内部LU，仅数值载荷就约4.1TB；当前少量类型共享不能保证在一般曲面/变化材料上继续成立。外层向量、端口和全局粗因子也必须重新建账。
+
+因此下一任务应当：先得到真实0.7nm材料的三维缩小模型与误差证据，再逐步消除覆盖全域的大因子、无界唯一单元缓存和显式大端口派生块。小模型使用准确p4取得结果是合理起点，不能把它命名为最终可扩展生产PC。保持约2TB整机余量、zero-swap目标和全过程资源监督，不从旧256GiB审计直接判定2TB结论。
+
+## 10. 收口和新任务的交接决定
+
+- 本任务本机研究阶段：`CLOSED_WITH_QUALIFICATIONS`。推荐路线为准确p4双凝聚，低内存p3备选留档。
+- 新工程研究分支指定为 `task40extra_0p7nm_engineering`，从**包含本报告和最终收口材料的task39extra真实提交**派生；不是master，不是既有Task040/Hybrid任务。
+- 本次交付文件不意味着远端已经更新。Codex在canonical worktree提交本报告、收口review和离线证据后，回读旧分支HEAD，再从该SHA建立新分支。新任务记录真实`branch_base_sha`，不得填写虚构SHA。
+- 原分支保留为可读参考；旧task/补充/review只作为历史，不继续消耗旧运行批次。新任务授权和资源合同单独冻结。
+- 不批准整个task39extra合并master，不自动推广工作站，不对正在运行的工作站任务发送任何修改或停止操作。
+
+## 11. 证据索引
+
+以下仓库内链接均以本报告页首固定HEAD为阅读基准；其他分支使用完整SHA。记录中的performance、reference、资源限制与数字具有同等权威，不能只摘取PASS。
+
+[S1]: response_v33.md
+[S2]: outcomes/records/a4_tensor_h6_v29_compact.json
+[S3]: outcomes/records/workstation_guided_local_v30_compact.json
+[S4]: outcomes/records/projection_layout_v31_authorized_rerun.json
+[S5]: prior_attempts_retrospective.md
+[S6]: review_report_v18.md
+[S7]: review_report_v20.md
+[S8]: response_v26.md
+[S9]: outcomes/selective_workstation_handoff_v31.md
+[S10]: outcomes/records/projection_layout_v31_resource_reaudit.json
+[S11]: https://github.com/Rookie1234567/MyFEniCS/blob/ccd357885f7f9be84efe3be07868cc94f13d93fc/docs/task39extra_para_workstation_capacity/outcomes/f2_running_handoff_20260928.md
+
+| 入口 | 内容 |
+|---|---|
+| [最新回应][S1]、[补跑记录][S4] | V31真实终态、资源、授权和缺口 |
+| [V29完整分账][S2]、[V30分账][S3] | 主性能参照、逐动作计时与对象载荷 |
+| [p3/p2对照][S8] | 低内存备选的实际代价与未完成边界 |
+| [历史报告][S5]、[单元凝聚review][S6]、[双凝聚review][S7] | 为什么保留当前路线，不重复旧负结果 |
+| [选择性依赖][S9]、[峰值重审][S10] | 新内核、JIT叠峰、原始记录与迁移限制 |
+| [工作站冻结证据][S11] | 2nm大规模限制，不是最新实时进度 |
+
+## 12. 文档与执行验证声明
+
+本文件由远程记录和已核对源码接口整理；本次未执行PDE、未重放大型场数组。配套交付记录本地Markdown结构检查结果。GitHub实际渲染、仓库文档合同测试及远端落库由Codex在提交阶段完成并记录，不能预先写成已通过。软件生产合并资格与本阶段研究收口分开。

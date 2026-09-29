@@ -1,3 +1,15 @@
+# Task39extra 当前模型登记：Review V30 / V31 跨版本离线补证
+
+| 模型/运行 | 方法与结果 | 时间/资源 | 资格边界 |
+|---|---|---|---|
+| V31 authorized completion rerun | 原始 13.5 nm Full3D p6/h7.5，990 cells，80 modes，126 steps；final/release 后原 A6=`9.283162411158934e-7`；R/T/A/`A_volume`=`0.36509755369518077/0.013016803348172736/0.6218856429566464/0.6218856421420169` | workflow `2313.526 s` monotonic / `2534.117 s` settled realtime；tree RSS `7331401728 B` | 离散解与输出一致性通过；无独立 direct reference，authority-limited |
+| V31 vs V30 | full field、同坐标采样、official vector、modal outputs exact identical；相同 physical/map/matrix/mode identity | 不适用：离线 saved-array 比较 | input SHA 因运行标识和显式 profile/backend 选择不同；物理、网格和离散算子身份已核对一致 |
+| V31 vs V29 | full-field coefficient Euclidean relative=`2.2154e-14`；E/H sample约`1.46e-14/5.97e-14`；official vector=`1.3897e-14`；R/T/A最大绝对差约`7.83e-15` | 不适用：离线 saved-array 比较 | FE L2/scaled-curl=`1.4029e-14/3.3312e-14` 从已有 V30–V29 compact record传递，非新算 |
+
+V31 五个 field-reference checkpoints 仍 `NOT_ATTEMPTED`。首次 V31 用户误停、generic checker schema 不兼容、PSS null 和 swap observe-only 均保持原边界。详情见 [Response V34](task039_extra_physical_multilevel/response_v34.md) 和 [hash-bound record](task039_extra_physical_multilevel/outcomes/records/projection_layout_v31_offline_comparison_v34.json)。本记录不提升 ordinary default、生产资格或 0.7 nm 目标规模结论。
+
+---
+
 # Task39extra 当前模型登记：Review V28 / V30 工作站引导型笔记本 profile
 
 | profile / 记录 | 模型与实测 | 当前资格/用途 |

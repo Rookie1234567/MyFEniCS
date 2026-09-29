@@ -1,11 +1,15 @@
-# Task39extra：笔记本双凝聚阶段已收口
+# Task39extra：笔记本双凝聚阶段最终报告与离线收口
 
-**其他任务请先阅读[最终报告](final_report.md)。**报告给出推荐路线、p4/p3取舍、三阶段时间/内存账、已采用/未采用技术、可复用源码入口及0.7 nm边界。
+状态为 `CLOSED_WITH_QUALIFICATIONS`。本阶段证明的是固定离散模型的求解与输出一致性；不代表连续误差、任意几何、0.7 nm 目标规模或全仓生产资格。用户选择 B 线后，本目录以随交付包提供的 final report 与 Review V30 为当前权威；原远端 `95dacd0` 内容仍保留在 Git 历史中。
 
-状态为`CLOSED_WITH_QUALIFICATIONS`：固定案例的离散求解和输出一致性通过，不代表连续误差、所有几何、0.7 nm或全仓生产资格。master和ordinary default未获修改授权；工作站运行不受本次收口影响。
+| 入口 | 用途 |
+|---|---|
+| [最终报告](final_report.md) | Task39 技术结果、适用边界和 Task40 交接 |
+| [Review V30](review_report_v30.md) | C0–C2 离线收口和后续 N0–N6 的授权范围 |
+| [Response V34](response_v34.md) | 本次执行与逐项 C0–C2 回应 |
+| [Outcomes 汇总](outcomes/summary.md) | 当前模型、证据边界和历史负结果入口 |
+| [V31 离线对照](outcomes/records/projection_layout_v31_offline_comparison_v34.json) | V29/V30/V31 数组及文件哈希 |
 
-- [最终审阅 V30](review_report_v30.md)：结束本分支常规笔记本试验，保留全部历史。
-- [最新执行回应](response_v33.md)与[原始结果汇总](outcomes/summary.md)：事实来源，不用总结替代原证据。
-- 后续新任务分支：`task40extra_0p7nm_engineering`，从含本报告的收口提交派生。它不是既有Task040 Hybrid任务；新任务书在该分支的`docs/task40extra_0p7nm_engineering/task.md`。
+V31 首次场为 Codex 误停（原始状态枚举 `USER_CONTROLLED_STOP`）、遗漏的旧 checker 字段、PSS 未采样、swap observe-only、未取得独立 direct reference 等限制均保留。C1 对照只使用已保存数组，不重新运行 13.5 nm PDE 或重建 factor。
 
-遗留的V31完整场离线对照和缺失线程元数据随新任务做只读交接，不为收口重跑旧PDE。新分支建立不构成master合并许可。
+Task40 的 A0–A6 远端历史提交保留；B 线以 N0–N6 为唯一当前任务合同，后续在真实 Task39 收口提交之后整合并记录准确 ancestry。新任务缩小模型的结果不得外推成目标尺寸或生产资格。

@@ -3779,7 +3779,7 @@
       "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_memory_liveness.json": "bf94adb607a11a9eb76c616f56e57c7e2298cb646ab263375b8283c392802a5d"
     }
   },
-  "current_review_record": "review_v29_projection_layout_v31",
+  "current_review_record": "review_v30_closeout_v34",
   "v13_continuation": {
     "id": "V13_512MiB_three_input_continuation",
     "status": "P4_DIRECTION_DIAGNOSIS_COMPLETED",
@@ -6036,5 +6036,46 @@
     "ordinary_default_changed": false,
     "workstation_migrated": false,
     "master_merge_approved": false
+  },
+  "review_v30_closeout_v34": {
+    "review": "review_report_v30.md",
+    "response": "docs/task039_extra_physical_multilevel/response_v34.md",
+    "status": "CLOSED_WITH_QUALIFICATIONS",
+    "user_selected_task40_line": "B: package N0-N6",
+    "parent_docs": {
+      "final_report": "docs/task039_extra_physical_multilevel/final_report.md",
+      "final_report_sha256": "44885117a3e5594a25f8138b3428e2a5d65619357bbadc5771a1997eb478fc13",
+      "review_report_v30_sha256": "faaf35725ea8f11830f31e0acbe408300f0f55ddc92fe8cde16caa4c1537d337",
+      "previous_remote_parent_commit": "95dacd01e86f0f7f1d29ee2d5e5a16039bb41871",
+      "previous_parent_doc_hashes": {
+        "final_report": "b9dbe27879f73624e0cce8e4f243c6dfeca7ed39a969483644320a69ae8e737a",
+        "review_report_v30": "d8a3e712b7e44d1d84cef4e4200b368e1f456e4b2592a4ae776aa752fcaf92ed"
+      },
+      "history_preserved": "previous docs remain reachable at parent commit 95dacd01e86f0f7f1d29ee2d5e5a16039bb41871"
+    },
+    "c0": {
+      "canonical_branch": "task39extra",
+      "pre_fast_forward_head": "e09bd1612c4f6ca5fb5cf3572835748ad5c16207",
+      "fast_forward_parent": "95dacd01e86f0f7f1d29ee2d5e5a16039bb41871",
+      "active_old_solver_processes": false,
+      "noninteractive_remote_probe": "PASS"
+    },
+    "c1": {
+      "new_pde_runs": 0,
+      "record": "docs/task039_extra_physical_multilevel/outcomes/records/projection_layout_v31_offline_comparison_v34.json",
+      "matched_independent_direct_reference": false,
+      "authority_limited": true
+    },
+    "c2": {
+      "updated_indices": [
+        "docs/README.md",
+        "docs/development_progress.md",
+        "docs/development_model_registry.md"
+      ],
+      "test_summary": "docs/task039_extra_physical_multilevel/outcomes/test_summary.md",
+      "ordinary_default_changed": false,
+      "master_merge_approved": false,
+      "workstation_migrated": false
+    }
   }
 }
