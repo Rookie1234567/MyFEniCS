@@ -52,20 +52,20 @@
     },
     {
       "hash_status": "append_only; latest sampled row is identified by sample_elapsed_seconds and row hash",
-      "latest_row_sha256": "1e00e78d40e3720e85397c8c65880084bf9fa9bb2d89169d0c805d06aa6eadfe",
-      "latest_sample_elapsed_seconds": 63736.46195115498,
+      "latest_row_sha256": "4493d3c823ad5071fa67b48f71574b156ae1fd0756d161acd60b77ffd653c531",
+      "latest_sample_elapsed_seconds": 64836.22279279004,
       "name": "outer_memory_stages",
       "path": "results/task041_v8_5nm_cellcond_formal_run_20260928/memory_stages.jsonl",
-      "sampled_at_utc": "2026-09-29T02:40:45Z",
+      "sampled_at_utc": "2026-09-29T02:59:30Z",
       "sha256": null
     },
     {
       "hash_status": "append_only; latest sampled row is identified by wall_seconds and row hash",
-      "latest_event_wall_seconds": 61790.531882226,
-      "latest_row_sha256": "9f4e0d7a2f28bc44d2bea610c2c4e1594c818a4605b536400bda22f49e221bcd",
+      "latest_event_wall_seconds": 64405.94188859698,
+      "latest_row_sha256": "c06e5ce274c3b268be9224242e1cb18dca5b1926fe5e1912ffb371026b0a3ecb",
       "name": "worker_markers",
       "path": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8_cell_condensed/task041_5nm_p6h4_m480_mpi8_cell_condensed__hybrid_iterative__mpi8__M480/20260928T085850.487306Z/consumer/markers.jsonl",
-      "sampled_at_utc": "2026-09-29T02:12:28Z",
+      "sampled_at_utc": "2026-09-29T02:59:30Z",
       "sha256": null
     },
     {
@@ -74,20 +74,20 @@
       "sha256": "ce23d2fe2f90384e4faec63d3c6b1963ab3f487b86640a29f91d41010d214d2b"
     }
   ],
-  "observed_utc": "2026-09-29T02:40:45Z",
+  "observed_utc": "2026-09-29T02:59:30Z",
   "progress": {
     "current_rhs_iterations": "not_run",
     "current_rhs_residual": "not_run",
     "expected_formal_responses": 1920,
     "formal_residuals": "not_run",
-    "latest_sampler_elapsed_seconds": 63736.46195115498,
+    "latest_sampler_elapsed_seconds": 64836.22279279004,
     "latest_sampler_phase": "public_command",
     "latest_worker_event": "modal_batch_begin",
-    "latest_worker_event_wall_seconds": 61790.531882226,
+    "latest_worker_event_wall_seconds": 64405.94188859698,
     "official_R_T_A_E_H": "not_run",
     "phase": "modal_action",
     "process_group_gone_at_latest_sample": false,
-    "progress_signal": "modal batch 25/30; side=bottom; logical_completed=768/960; formal response markers not emitted; global swap/pswpout increased in host-wide observation only, attribution unknown; V8 policy remains observe-only",
+    "progress_signal": "modal_batch_begin; side=bottom; batch=26/30; logical_completed=800/960; formal response markers not emitted; V8 swap observation continues; global event source remains unattributed",
     "time_stop_enforced": false,
     "time_target_met": null,
     "time_target_seconds": 86400
@@ -99,7 +99,7 @@
     "two_nm": "not_started"
   },
   "record_type": "task041_review_v8_formal_progress",
-  "record_written_utc": "2026-09-29T02:40:45Z",
+  "record_written_utc": "2026-09-29T02:59:30Z",
   "repository": {
     "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
     "document_base_head": "d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f",
@@ -110,21 +110,21 @@
   },
   "resources": {
     "latest_sample": {
-      "sampled_at_utc": "2026-09-29T02:40:45Z",
-      "sample_elapsed_seconds": 63736.46195115498,
+      "sampled_at_utc": "2026-09-29T02:59:30Z",
+      "sample_elapsed_seconds": 64836.22279279004,
       "sample_role": "phase_running",
-      "authority_bytes": 43127500800,
+      "authority_bytes": 43127521280,
       "authority_kind": "process_tree",
-      "process_tree_rss_bytes": 43127500800,
+      "process_tree_rss_bytes": 43127521280,
       "process_tree_swap_bytes": 0,
-      "dedicated_cgroup_current_bytes": 41120452608,
+      "dedicated_cgroup_current_bytes": 41147846656,
       "dedicated_cgroup_peak_bytes": 41388503040,
       "dedicated_cgroup_swap_bytes": 0,
       "job_swap_bytes": 0,
       "job_no_swap": true,
       "cap_bytes": 53221163008,
       "warning_bytes": 47899046707,
-      "host_memavailable_bytes": 949377613824,
+      "host_memavailable_bytes": 947148894208,
       "host_memtotal_bytes": 2163100385280,
       "host_reserve_required_bytes": 412316860416,
       "host_reserve_gate_at_start": true,
@@ -232,5 +232,5 @@
   },
   "schema": "task041.v8.formal_progress.v1",
   "status": "running_at_latest_observation",
-  "next_progress_update_due_utc": "2026-09-29T03:40:45Z"
+  "next_progress_update_due_utc": "2026-09-29T03:59:30Z"
 }
