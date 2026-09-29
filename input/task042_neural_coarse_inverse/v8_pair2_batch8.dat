@@ -1,0 +1,7 @@
+schema_version = 1
+[task042_v8]
+stage = "batch_microbenchmark"
+run_id = "task042_v8_pair2_batch8"
+material_table_id = "SI_OPTICAL_CONSTANTS_USER_20260929_V1"
+batch_size = 8
+pair_id = 2
