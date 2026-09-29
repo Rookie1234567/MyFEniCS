@@ -362,6 +362,10 @@ def _versioned_fixture(profile: str = V30_PROFILE):
                 "quadrature_points": identity["points"],
                 "quadrature_order": "actual_points_to_tensor_grid_checked",
                 "quadrature_shape": list(identity["quadrature_shape"]),
+                "projection_layout_v31_candidate": {
+                    "natural_order_internal": False,
+                    "continuous_projection_matmul": False,
+                },
             },
         }
     fused = {
@@ -627,6 +631,10 @@ def test_versioned_v30_and_v31_fixture_closes_live_counts_with_limited_threads()
             "raw_boundary_records": 131,
             "logical_C": 262,
         }
+        if profile == V31_PROFILE:
+            assert backend["projection_layout"]["passed"] is True
+            assert backend["projection_layout"]["checks"]["live_h6_flags_match_config"] is True
+            assert backend["projection_layout"]["checks"]["a6_unchanged_for_h6_scope"] is True
 
 
 def test_versioned_negative_fixtures_reject_backend_threads_integral_identity_and_missing_fields():
@@ -672,7 +680,8 @@ def test_versioned_negative_fixtures_reject_backend_threads_integral_identity_an
     assert result["recomputed"]["backend"]["candidate_component_checks"]["curl_curl"]["quadrature_identity"] is False
 
     summary, config, manifest, run_summary, sha = _versioned_fixture(V31_PROFILE)
-    audit = summary["formal_release_timing"]["candidate_pc_internal_A6"]["live_audit"]["volume_action"]["components"]["curl_curl"]["sum_factorized_audit"]
+    components = summary["formal_release_timing"]["candidate_pc_internal_A6"]["live_audit"]["volume_action"]["components"]
+    audit = components["curl_curl"]["sum_factorized_audit"]
     audit.pop("coefficient_matrix_sha256")
     result = check_summary(
         summary,
@@ -684,6 +693,35 @@ def test_versioned_negative_fixtures_reject_backend_threads_integral_identity_an
     )
     assert result["dynamic_passed"] is False
     assert result["recomputed"]["backend"]["checks"]["candidate_a6_quadrature_identity"] is False
+
+    summary, config, manifest, run_summary, sha = _versioned_fixture(V31_PROFILE)
+    h6_audit = summary["formal_release_timing"]["h6"]["light_facts"]["live_kernel_audit"]["sum_factorized_audit"]
+    h6_audit["natural_order_internal_opt_in"] = False
+    result = check_summary(
+        summary,
+        resolved_config=config,
+        stage="Q4_ORIGINAL",
+        run_manifest=manifest,
+        run_summary=run_summary,
+        resolved_config_sha256=sha,
+    )
+    assert result["dynamic_passed"] is False
+    assert result["recomputed"]["backend"]["projection_layout"]["checks"]["live_h6_flags_match_config"] is False
+
+    summary, config, manifest, run_summary, sha = _versioned_fixture(V31_PROFILE)
+    components = summary["formal_release_timing"]["candidate_pc_internal_A6"]["live_audit"]["volume_action"]["components"]
+    component_audit = components["curl_curl"]["sum_factorized_audit"]
+    component_audit["projection_layout_v31_candidate"]["natural_order_internal"] = True
+    result = check_summary(
+        summary,
+        resolved_config=config,
+        stage="Q4_ORIGINAL",
+        run_manifest=manifest,
+        run_summary=run_summary,
+        resolved_config_sha256=sha,
+    )
+    assert result["dynamic_passed"] is False
+    assert result["recomputed"]["backend"]["projection_layout"]["checks"]["a6_unchanged_for_h6_scope"] is False
 
     summary, config, manifest, run_summary, sha = _versioned_fixture(V31_PROFILE)
     summary["formal_release_timing"]["candidate_pc_internal_A6"]["live_audit"]["volume_action"]["components"]["curl_curl"] = None

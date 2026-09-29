@@ -1,14 +1,14 @@
-# V31 选择性交接清单：正式结果未完成
+# V31 选择性交接清单：本机 authority-limited 完成
 
-本清单记录 V31 组件候选和唯一正式运行的实际边界。工作站迁移未获授权；自然序布局没有完整场资格，因此不能作为默认方案或已验证生产改动推广。
+本清单记录 V31 首次人工中止及其后用户明确授权的一场 completion rerun。第二次运行通过当前离散系统的完整残差和输出一致性 Gate；匹配参考场仍不可用，因此 FE field error 与跨离散误差未获得资格。该结果不构成端到端性能对照或跨机器迁移授权。
 
 | 依赖组 | 内容 | 数值行为 / 证据 | 当前裁决 |
 |---|---|---|---|
-| production numerical/core | V31 H6 积分点自然序内部布局，来源于 `src/solvers/fullspace_n1e_sum_factor.py`、`fullspace_partial_assembly.py`、`physical_light_setup.py` 及显式 profile 接线 | 组件等价与短操作配对通过；完整残差检查只到 i112（普通迭代日志至 i113），残差 `2.714e-6`，没有 final/release/physical Gate | 保留在执行分支供 review；未取得完整场资格，不改 ordinary default、不向工作站推广 |
-| reusable runner/watchdog | 既有 `scripts/run_case_in_user_service.sh` 与 physical-memory-pressure watchdog | 服务正确清理后代、记录整树 RSS；此次 operator 手动 stop 被如实分类 `USER_CONTROLLED_STOP` | 没有新通用 runner；不迁移本机运行结论 |
-| checker/benchmark | `benchmarks/task39extra_v25_dynamic_checker.py` 支持版本化 backend/profile 检查 | 完整 checker 需要 worker final summary；中止运行缺少该文件，故 checker 未运行。另有 i112 residual NPZ 五项范数复核 | 不声称正式 dynamic checker PASS；工具实现留在当前分支，待 review |
-| compact evidence/docs | V31 outcome、response、compact/checker records、run index 与本清单 | 所有状态包括 `USER_CONTROLLED_STOP`、未通过 residual 和 operator mistake 均保留 | 可供主控 review；与数值资格分开 |
-| research-only | 固定形状矩阵乘法、局部批处理、流式端口路线 | 未采用或完整场未测；无生产性能资格 | 不提升为默认或工作站路线 |
-| do-not-merge / do-not-promote | 对 V31 宣称完整离散通过、端到端提速、物理结果通过或跨机器可迁移；任何 master merge | R4 未完成；没有 R/T/A 或 final field | 不合并、不推广；需新的 review/用户授权后再决定 |
+| production numerical/core | V31 H6 积分点自然序内部布局，显式 profile 接线 | 126 步；独立 final/post-release A6 residual=9.283162411158934e-7；80 模态和能量闭合通过 | 仅保留在显式 V31 profile；ordinary default 不变；等待 review，不推广到工作站 |
+| reusable runner/watchdog | 既有 user-service runner 与 physical-memory-pressure watchdog | watchdog COMPLETED；tree RSS peak=7,331,401,728 B；后代清场；PSS disabled/null；swap observe-only | 没有新增通用 runner；不推断固定内存上限 |
+| checker/benchmark | V31 dynamic checker 修正；新增只读 raw-output checker | dynamic=DYNAMIC_PASS_EVIDENCE_LIMITED；raw output=PASS_WITH_AUTHORITY_LIMITATION；19 targeted tests passed | checker 与小测试可审；manifest 线程变量证据缺项继续披露 |
+| compact evidence/docs | response_v33、V31 outcome、test summary、授权重跑机器记录、run index | 首次 USER_CONTROLLED_STOP 及其 2.714e-6 checkpoint 仍保留；第二次 run 独立登记 | 供主控 review；授权账本和原始 output SHA 可复核 |
+| research-only | 固定形状矩阵乘法、局部批处理、流式端口路线 | 未采用或本场未测 | 不提升为生产默认或工作站路线 |
+| do-not-merge / do-not-promote | 端到端提速、连续极限收敛、field error 等价、跨机器资格、master merge | 无性能对照；参考场 unavailable；无最终 merge approval | 不做上述声明，不合并、不推广 |
 
-R3 的六组 H6 配对数据支持组件级候选，但不能外推为整场节省。watchdog RSS 峰值只比既有 V29 数值低约 2.1 MB，且本场中止，不能据此宣称内存收益。正式 run 身份、时间口径、资源误停说明及所有文件 SHA 见 [V31 outcome](projection_layout_v31.md) 与 [compact record](records/projection_layout_v31_compact.json)。
+本次完成 run 的 monotonic workflow 为 2313.526 s、保守 realtime settle 为 2534.117 s。该值是 completion 记录，不和首次停止场直接比较，也不解释为加速或变慢。完整字段与预算边界见 [authorized rerun record](records/projection_layout_v31_authorized_rerun.json)，首次停止证据见 [首场 compact record](records/projection_layout_v31_compact.json)。

@@ -1,8 +1,29 @@
-## Review V29 / V31：H6 自然序组件通过，唯一正式运行被 Codex 误停
+## V31 用户单次授权完成重跑：离散求解与输出一致性通过，参考权威受限
 
-V31 H6 自然序调整只重排局部计算的积分点内存访问次序，不改数学方程。组件配对六组均胜出，但唯一正式场在 i112 完整残差检查后、普通迭代日志记到 i113 时被我错误地按“8 GiB cgroup current”阈值手动停止；Review V29 并未设该硬停止线。watchdog 记录的整树 RSS 峰值为 `7,324,389,376 B`，低于实际启动 cap `13,358,809,088 B`。原始分类 `USER_CONTROLLED_STOP` 保留，不能写成资源 Gate 停止或求解器失败。
+H6 自然序只改变显式 V31 profile 的局部数据排列，不改变矩阵、积分点、权重或物理方程。首次被人工停止的运行仍按 USER_CONTROLLED_STOP 保留；后续用户明确授权的一场 completion rerun 已完成。本次结果只说明该固定 Full3D 离散系统通过真残差和输出一致性检查。
 
-最后显式原 A6 残差为 `2.713995416229632e-6`，高于 `1e-6`，没有 final/release 残差、最终场和 R/T/A。i112 保存残差数组的五个范数经离线重算与记录完全相符；完整动态 checker 因缺少 worker final summary 未运行。Review V29 只授权一场 fresh PDE，该额度已消耗；没有新授权前不重跑。V31 保留显式 profile，ordinary default 不变，工作站未迁移，master 未合并。
+| 指标 | 本次记录 | 含义与证据 |
+|---|---:|---|
+| 离散模型 | original；p6/h7.5；coarse p4；990 cells；MPI1；80 ordered port modes | measured；run manifest、resolved config |
+| 迭代与残差 | 126 步；final 与 release 后独立重算均为 9.283162411158934e-7 | measured/derived；小于 1e-6，基于保存的 RHS、A6 applied 和 residual 向量 |
+| 官方功率 | R=0.36509755369518077；T=0.013016803348172736；A_balance=0.6218856429566464；A_volume=0.6218856421420169 | measured raw JSON；DtN modal outputs 与体吸收记录 |
+| 零级反射 | R00_s=0.365060862881605；R00_p=4.812903003419231e-23；R00_total=0.365060862881605 | measured；极化分列 |
+| 能量闭合 | R+T+A_volume 误差约 8.15e-10；端口 A 与体吸收差约 8.15e-10 | independently recomputed；都小于 1e-5 |
+| 用时 | workflow monotonic=2313.526 s；保守 realtime ledger settled=2534.117 s | measured；分别列出，completion-only，不与中断首场比较提速 |
+| 峰值资源 | process-tree RSS=7,331,401,728 B；PSS=null/disabled；observed swap=0 B/observe-only | measured；watchdog summary，PSS 和 swap 未称作 enforced gate |
+| 共享预算 | 上限=43,200 s；累计实测=4,832.519 s；剩余=38,367.481 s；bug replay=0 | derived from settled shared ledger；无预算扩展 |
+| 独立核查 | dynamic=DYNAMIC_PASS_EVIDENCE_LIMITED；raw output=PASS_WITH_AUTHORITY_LIMITATION | derived；全部动态 Gate 与模态/残差/能量检查通过，manifest 未完整记录运行时线程环境变量 |
+
+worker 将结果标记为 DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED。五个参考检查点仍为 NOT_ATTEMPTED，因为本次没有匹配参考场；因此 FE L2/scaled-curl 和参考场逐项差异没有测量。本结论不是连续极限收敛、跨机器可迁移或端到端性能提升声明。
+
+通用 physical_intermediate_checker.py 因该 V31 worker 未产生它所要求的 physical_intermediate_summary.json 而给出 EVIDENCE_INCOMPLETE；它没有评估此 V31 schema。V31 专用 dynamic 与 raw-output checker 的结果及该旧工具边界都保留在[机器记录](records/projection_layout_v31_authorized_rerun.json)。
+
+
+## 历史记录：V31 首次尝试人工中止，原分类保留
+
+V31 H6 自然序调整只重排局部计算的积分点内存访问次序，不改数学方程。组件配对六组均胜出，但首次正式场在 i112 完整残差检查后、普通迭代日志记到 i113 时被我错误地按“8 GiB cgroup current”阈值手动停止；Review V29 并未设该硬停止线。watchdog 记录的整树 RSS 峰值为 `7,324,389,376 B`，低于实际启动 cap `13,358,809,088 B`。原始分类 `USER_CONTROLLED_STOP` 保留，不能写成资源 Gate 停止或求解器失败。
+
+最后显式原 A6 残差为 `2.713995416229632e-6`，高于 `1e-6`，没有 final/release 残差、最终场和 R/T/A。i112 保存残差数组的五个范数经离线重算与记录完全相符；完整动态 checker 因缺少 worker final summary 未运行。当时 Review V29 的一场授权已消耗；之后用户另行授权且只授权一次 completion rerun，结果见本页最新章节。V31 保留显式 profile，ordinary default 不变，工作站未迁移，master 未合并。
 
 完整误停说明、残差表和 SHA 见 [V31 outcome](projection_layout_v31.md)、[Response V32](../response_v32.md)、[compact/checker](records/projection_layout_v31_compact.json)、[选择性交接](selective_workstation_handoff_v31.md) 与 [run index](records/run_index.json)。
 

@@ -1,0 +1,284 @@
+{
+  "schema": "task039extra.v31.authorized-completion-rerun.v1",
+  "review": "review_report_v29.md",
+  "authorization_record": "docs/task039_extra_physical_multilevel/outcomes/records/v31_user_authorized_completion_rerun_20260929.json",
+  "authorization_record_sha256": "3ccf763a1ec1dff4c5352ccdb498271d05e7e059ff912e147811d483366f6d11",
+  "run_id": "task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1",
+  "comparison_group": "review_v29_evidence_and_projection_v31_user_authorized_fresh_20260929",
+  "result_classification": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+  "worker_status": "Q4_ORIGINAL_AUTHORITY_LIMITED_PASS",
+  "interpretation": "One explicitly user-authorized fresh completion run after the preserved first USER_CONTROLLED_STOP. The new run completed and passed discrete residual/output consistency gates, with matched-reference authority unavailable. This was a completion run, not a performance comparison or bug replay.",
+  "source": {
+    "source_sha": "d9b545e824296fce1b489c32a5d96e5e9303ff3c",
+    "source_clean_at_launch": true,
+    "input_sha256": "4a8dc8f5459ef385c5f58f58ee507d19255b871d8f96987966db728619863ba0",
+    "input_numerically_inherited_from_original": true,
+    "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+    "resolved_config_sha256": "aa641ee5f5ab2dcc3b42fcbcd9f0ae34975e5dacf066ee1421e9a137c384d40d",
+    "profile": "physical_p6_trace_projection_layout_v31",
+    "stage": "Q4_ORIGINAL",
+    "mpi_size": 1,
+    "petsc_scalar_type": null,
+    "petsc_int_type": null
+  },
+  "attempt_history": [
+    {
+      "attempt": 1,
+      "status": "USER_CONTROLLED_STOP",
+      "watchdog_classification": "USER_CONTROLLED_STOP",
+      "run_id": "task39extra_v31_projection_layout_original_h7p5_v1",
+      "source_sha": "baeb0b3a7e74e3b77705e70918772d1dcacb9639",
+      "input_sha256": "b19bf2d6a0a5f7a45a9910e3d3f25b1e3a896daa2205e78327be8f169cc9c7d0",
+      "settled_seconds": 2298.4012360778474,
+      "last_full_explicit_residual": 2.713995416229632e-06,
+      "interpretation": "Original operator USER_CONTROLLED_STOP preserved; not solver failure or pass."
+    },
+    {
+      "attempt": 2,
+      "status": "worker_exit0",
+      "watchdog_classification": "COMPLETED",
+      "run_directory": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z",
+      "source_sha": "d9b545e824296fce1b489c32a5d96e5e9303ff3c",
+      "input_sha256": "4a8dc8f5459ef385c5f58f58ee507d19255b871d8f96987966db728619863ba0",
+      "settled_seconds": 2534.1173508596335,
+      "reserved_seconds": 43200.0,
+      "reservation_exceeded_seconds": 0.0,
+      "authorized_classification": "USER_AUTHORIZED_COMPLETION_RERUN",
+      "bug_replay": false,
+      "performance_comparison": false,
+      "budget_extension_seconds": 0.0
+    }
+  ],
+  "shared_budget_ledger": {
+    "path": "benchmarks/artifacts/task39extra/projection_layout_v31/review_v29_evidence_and_projection_v31/shared_workflow_ledger.json",
+    "sha256": "b78c84d5cc0bdbc8c9c0471a7eb22bffc301246452916dd1600c2f3160878e29",
+    "total_budget_seconds": 43200.0,
+    "cumulative_measured_elapsed_seconds": 4832.518586937481,
+    "remaining_seconds": 38367.48141306252,
+    "fresh_worker_count": 2,
+    "unique_bug_replay_count": 0,
+    "active_attempt": null,
+    "attempt_count": 2,
+    "time_policy": "observe_only",
+    "time_gate_action": "observe_only",
+    "time_gate_evaluated": false,
+    "reservation_semantics": "43,200-second shared workflow reservation; measured worker time accumulates; no budget extension."
+  },
+  "solver": {
+    "iterations": 126,
+    "matvec_count": 129,
+    "pc_apply_count": 126,
+    "reported_true_residual": 9.283162411158622e-07,
+    "independently_recomputed_final_and_post_release_residual": 9.283162411158622e-07,
+    "residual_limit": 1e-06,
+    "release_after_final_residual": true,
+    "field_reference_checkpoints": [
+      {
+        "iteration": 0,
+        "status": "NOT_ATTEMPTED"
+      },
+      {
+        "iteration": 32,
+        "status": "NOT_ATTEMPTED"
+      },
+      {
+        "iteration": 64,
+        "status": "NOT_ATTEMPTED"
+      },
+      {
+        "iteration": 96,
+        "status": "NOT_ATTEMPTED"
+      },
+      {
+        "iteration": 126,
+        "status": "NOT_ATTEMPTED"
+      }
+    ]
+  },
+  "physical_results": {
+    "R_total": 0.36509755369518077,
+    "T_total": 0.013016803348172736,
+    "A_balance": 0.6218856429566464,
+    "A_volume_total": 0.6218856421420169,
+    "R00_s": 0.365060862881605,
+    "R00_p": 4.812903003419231e-23,
+    "R00_total": 0.365060862881605,
+    "R_plus_T": 0.3781143570433535,
+    "R_plus_T_plus_A_volume": 0.9999999991853704,
+    "energy_closure_error": 8.14629586010085e-10,
+    "port_volume_absorption_difference": 8.146294749877825e-10,
+    "modal_R_sum": 0.36509755369518077,
+    "modal_T_sum": 0.013016803348172736,
+    "mode_count": 80
+  },
+  "timing": {
+    "worker_full_workflow_monotonic_seconds": 2313.526259918988,
+    "workflow_conservative_realtime_seconds": 2534.1119751449964,
+    "ledger_settled_seconds": 2534.1173508596335,
+    "solver_monotonic_seconds": 1956.1166279041713,
+    "time_policy": "observe_only",
+    "time_gate_evaluated": false,
+    "performance_comparison": "not_authorized; completion-only rerun"
+  },
+  "resources": {
+    "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+    "process_tree_rss_peak_bytes": 7331401728,
+    "sample_count": 9091,
+    "launch_envelope": {
+      "mem_total_bytes": 14654988288,
+      "mem_available_bytes": 13440258048,
+      "effective_total_bytes": 14654988288,
+      "effective_available_bytes": 13440258048,
+      "reserve_bytes": 134217728,
+      "launch_cap_bytes": 13306040320,
+      "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+      "reserve_reason": "small watchdog/evidence-write reserve; no legacy 4GiB or 15-percent reserve",
+      "static_tree_cap_bytes": null,
+      "cgroup_limits": []
+    },
+    "pss_status": "DISABLED_BY_PROFILE",
+    "process_tree_pss_peak_bytes": null,
+    "observed_swap_peak_bytes": 0,
+    "swap_policy": "observe_only",
+    "descendants_cleared": true
+  },
+  "checker_results": {
+    "dynamic_accounting_and_wiring": {
+      "status": "DYNAMIC_PASS_EVIDENCE_LIMITED",
+      "dynamic_passed": true,
+      "gates": {
+        "actual_first_arnoldi": true,
+        "backend_identity": true,
+        "native_aq": true,
+        "raw_bal_h_and_p4": true,
+        "run_monitoring_identity": true,
+        "true_residual": true
+      },
+      "thread_runtime_evidence": "EVIDENCE_LIMITED: runtime thread variables are incomplete",
+      "record_path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/v31_dynamic_checker_result.json",
+      "record_sha256": "6b6ca68441fcb13298c8e04cd342320e0241be577f6308334c425666d370825c",
+      "tool_path": "benchmarks/task39extra_v25_dynamic_checker.py",
+      "tool_sha256": "10c27dc208e21b001967ed0b47307bf1f4cb0945624c0fe707549ce44d5d4545"
+    },
+    "raw_residual_modal_and_energy_output": {
+      "status": "PASS_WITH_AUTHORITY_LIMITATION",
+      "checks": {
+        "run_finished_exit0": true,
+        "workflow_finished_exit0": true,
+        "run_identity": true,
+        "source_identity": true,
+        "input_identity": true,
+        "worker_authority_classification": true,
+        "final_explicit_residual": true,
+        "post_release_explicit_residual": true,
+        "final_residual_action": true,
+        "post_release_released_after_check": true,
+        "worker_residual_agreement": true,
+        "official_vector_sha": true,
+        "official_vector_finite": true,
+        "ordered_modal_identity": true,
+        "modal_outputs_finite_and_passive": true,
+        "aggregate_power_finite_and_passive": true,
+        "aggregate_power_identity": true,
+        "modal_sums_match_official_R_T": true,
+        "volume_absorption_components": true,
+        "energy_and_absorption_closure": true,
+        "duplicated_port_record_agrees": true,
+        "reference_limit_recorded": true
+      },
+      "failures": [],
+      "record_path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/v31_raw_output_checker.json",
+      "record_sha256": "3a0622873ff21fe61116601633998fcab6781751ab669053b102962927c3a4fc",
+      "tool_path": "benchmarks/task39extra_v31_output_checker.py",
+      "tool_sha256": "ee07253ec9053d445f9ca3a328eaae081bd9c1541159c43406350ec775258ca9"
+    },
+    "legacy_physical_intermediate_checker": {
+      "status": "EVIDENCE_INCOMPLETE",
+      "record_path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/checker.json",
+      "record_sha256": "05edfc42df60108c8378b4336c8e232b68d130a0a67d1dc20fe0ffeb49ef5123",
+      "interpretation": "Inapplicable worker schema: the generic checker requires physical_intermediate_summary.json, which this V31 worker does not emit; it did not evaluate V31 residual or modal gates."
+    }
+  },
+  "verification": {
+    "targeted_tests": "19 passed in 0.23 s",
+    "test_files": [
+      "src/test/test_task39extra_v25_dynamic_checker.py",
+      "src/test/test_task39extra_v31_output_checker.py"
+    ],
+    "full_repository_pytest": "not_run",
+    "ruff": "not_run",
+    "mpi2_mpi4": "not_run",
+    "ci": "not_claimed",
+    "source_and_numerics_unchanged_after_run": true,
+    "test_file_sha256s": {
+      "src/test/test_task39extra_v25_dynamic_checker.py": "8ba3ae696528c3d783f1e18580044dd4b03f43fdf8bddcd3391b25b26c2d72b5",
+      "src/test/test_task39extra_v31_output_checker.py": "63b41a670c5ff9cc65d03aa54459cd378185b1cf85d778e2c745576421ef4b6f"
+    }
+  },
+  "raw_artifacts": {
+    "run_manifest.json": {
+      "path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/run_manifest.json",
+      "sha256": "d88012d9271eba2a6b8821ac9a85d3cd507b338effad2088366d75ce67572779"
+    },
+    "run_summary.json": {
+      "path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/run_summary.json",
+      "sha256": "456a68b0aa9bf836a6bba572282f074ba3b1aa013c7bda501fa4a3ddfa75b6b5"
+    },
+    "watchdog/summary.json": {
+      "path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/watchdog/summary.json",
+      "sha256": "89a6c07d990cc550fb67b9771d66f8f5a52799a594afcf59c1a88ade32ed6a19"
+    },
+    "physical_dual_condensed_projection_layout_v31_summary.json": {
+      "path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/physical_dual_condensed_projection_layout_v31_summary.json",
+      "sha256": "83646c7127d4d03f24a4196df7c826e34f168dd4ef9f094bd2fbfe801684c331"
+    },
+    "final_residual/q4_final.json": {
+      "path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/final_residual/q4_final.json",
+      "sha256": "bd16657cfe2a6b8d26b64655443427f7c280e6d18da687d1feb41229f7b09361"
+    },
+    "final_residual/q4_final.npz": {
+      "path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/final_residual/q4_final.npz",
+      "sha256": "b83289fe575591fb25c2b682d6efe84c5cd601862730fd45bc30addacf322bc8"
+    },
+    "post_release_final_residual/q4_post_release_final.json": {
+      "path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/post_release_final_residual/q4_post_release_final.json",
+      "sha256": "1a63a3372f204888e05dfc3c262dde2b87f449c76700d6ca2391f8d019e2ba22"
+    },
+    "post_release_final_residual/q4_post_release_final.npz": {
+      "path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/post_release_final_residual/q4_post_release_final.npz",
+      "sha256": "b83289fe575591fb25c2b682d6efe84c5cd601862730fd45bc30addacf322bc8"
+    },
+    "official_output/q4_output.json": {
+      "path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/official_output/q4_output.json",
+      "sha256": "d73a730343a135e678b25ac2c045c9c9095ff9be268d9cbff05fad2796e34a66"
+    },
+    "official_output/q4_output.npz": {
+      "path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/official_output/q4_output.npz",
+      "sha256": "d4c327710b20df4dc6d176996abd695affb9d9c2adc0f554370823a0bfc2005c"
+    },
+    "numerical_output/dtn_port_power_metrics_3d.json": {
+      "path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/numerical_output/dtn_port_power_metrics_3d.json",
+      "sha256": "19c9319a8f05195478e24d7b7ef65b1cb832e79be9cca2b7ba90e6812c1b6a11"
+    },
+    "numerical_output/port_power.json": {
+      "path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/numerical_output/port_power.json",
+      "sha256": "1f7b725383c2e51d43c870021da8b3f43babed203d206e211e9e08bff0d3dafd"
+    },
+    "numerical_output/volume_absorption.json": {
+      "path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/numerical_output/volume_absorption.json",
+      "sha256": "a347dffea962b81608616b51906eb92025f0d6e7d871127ceaa1b4ebeac22719"
+    },
+    "numerical_output/dtn_port_diffraction_orders_3d.json": {
+      "path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/numerical_output/dtn_port_diffraction_orders_3d.json",
+      "sha256": "e333fa352f1cc22e46752cd80ac881c3c12430299c43d88ee546a91a337252c9"
+    },
+    "numerical_output/dtn_auxiliary_amplitudes_3d.json": {
+      "path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/numerical_output/dtn_auxiliary_amplitudes_3d.json",
+      "sha256": "bbacd5affa02ea8674f4f247318080decf33905797023e2b982db34151e2faff"
+    },
+    "v31q4_ordered_mode_manifest.json": {
+      "path": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z/v31q4_ordered_mode_manifest.json",
+      "sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
+    }
+  }
+}

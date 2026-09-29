@@ -1023,8 +1023,11 @@ def _versioned_backend_facts(
         expected_natural = True
         expected_projection = False
         expected_scope = "h6"
-        h6_natural = live_h6.get("natural_order_internal_opt_in")
-        h6_projection = live_h6.get("continuous_projection_matmul_opt_in")
+        # V31's live execution audit records these opt-ins on the nested
+        # sum-factorized kernel audit.  The parent live-kernel object carries
+        # backend and quadrature identity, but not the projection-layout flags.
+        h6_natural = h6_sum.get("natural_order_internal_opt_in")
+        h6_projection = h6_sum.get("continuous_projection_matmul_opt_in")
         projection_checks = {
             "natural_order_flag_explicit": isinstance(expected_natural, bool),
             "continuous_projection_flag_explicit": isinstance(expected_projection, bool),
@@ -1071,10 +1074,21 @@ def _versioned_backend_facts(
                 for name in ("curl_curl", "complex_material_mass")
             )
         elif expected_scope == "h6":
+            def a6_layout_unchanged(name: str) -> bool:
+                component = components.get(name)
+                if not isinstance(component, Mapping):
+                    return False
+                audit = component.get("sum_factorized_audit")
+                audit = audit if isinstance(audit, Mapping) else {}
+                layout = audit.get("projection_layout_v31_candidate")
+                layout = layout if isinstance(layout, Mapping) else {}
+                return (
+                    layout.get("natural_order_internal") is False
+                    and layout.get("continuous_projection_matmul") is False
+                )
+
             projection_checks["a6_unchanged_for_h6_scope"] = all(
-                isinstance(components.get(name), Mapping)
-                and components[name].get("natural_order_internal_opt_in") is False
-                and components[name].get("continuous_projection_matmul_opt_in") is False
+                a6_layout_unchanged(name)
                 for name in ("curl_curl", "complex_material_mass")
             )
         else:

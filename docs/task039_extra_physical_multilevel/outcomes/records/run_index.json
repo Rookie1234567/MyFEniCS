@@ -1,11 +1,44 @@
 {
   "schema": "task39extra.run-index.v1",
-  "scope": "Review V28 / Response V31: one local V30 original p6/h7.5 formal solve and offline V29 comparison; earlier rows and limitations retained.",
+  "scope": "Current V31 user-authorized completion rerun; previous rows and limitations retained.",
   "units": {
     "time": "s",
     "memory": "B"
   },
   "memory_scope": "sampled simultaneous watchdog process-tree RSS; swap sampled VmSwap",
+  "review_v29_v31_authorized_completion_rerun": {
+    "review": "review_report_v29.md",
+    "response": "docs/task039_extra_physical_multilevel/response_v33.md",
+    "profile": "physical_p6_trace_projection_layout_v31",
+    "run_id": "task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1",
+    "raw_root": "results/euv_grazing1_phi0/task39extra_v31_projection_layout_original_h7p5_user_authorized_recovery_v1__full3d_iterative__mpi1__Mna/20260929T061422.313883Z",
+    "source_sha": "d9b545e824296fce1b489c32a5d96e5e9303ff3c",
+    "input_sha256": "4a8dc8f5459ef385c5f58f58ee507d19255b871d8f96987966db728619863ba0",
+    "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+    "status": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+    "iterations": 126,
+    "final_explicit_true_residual": 9.283162411158934e-07,
+    "full_workflow_monotonic_seconds": 2313.526259918988,
+    "full_workflow_conservative_realtime_seconds": 2534.1173508596335,
+    "process_tree_rss_peak_bytes": 7331401728,
+    "pss_status": "DISABLED_BY_PROFILE",
+    "pss_peak_bytes": null,
+    "observed_swap_peak_bytes": 0,
+    "ledger_total_budget_seconds": 43200.0,
+    "ledger_cumulative_elapsed_seconds": 4832.518586937481,
+    "ledger_remaining_seconds": 38367.48141306252,
+    "unique_bug_replay_count": 0,
+    "checker_statuses": {
+      "dynamic": "DYNAMIC_PASS_EVIDENCE_LIMITED",
+      "raw_output": "PASS_WITH_AUTHORITY_LIMITATION",
+      "generic_physical_intermediate": "EVIDENCE_INCOMPLETE_SCHEMA_NOT_APPLICABLE"
+    },
+    "evidence": "docs/task039_extra_physical_multilevel/outcomes/records/projection_layout_v31_authorized_rerun.json",
+    "ordinary_default_changed": false,
+    "workstation_migrated": false,
+    "performance_comparison_authorized": false,
+    "master_merge_approved": false
+  },
   "review_v27_a4_tensor_h6_v29": {
     "review": "review_report_v27.md",
     "response": "docs/task039_extra_physical_multilevel/response_v30.md",

@@ -1,10 +1,24 @@
-# Task39extra 当前进展：Review V29 / V31 正式场中止，误停已披露
+# Task39extra 当前进展：Review V29 / V31 单次授权完成重跑，结果有资格限制
 
-V31 H6 自然序组件配对通过，选择的自然序路线仍只在显式 profile 中。唯一 fresh formal PDE 完整残差检查至 i112、普通迭代日志至 i113，最后完整 A6 相对残差=`2.713995416229632e-6`，高于 `1e-6`；没有 final/release residual、场或物理量。运行原始分类为 `USER_CONTROLLED_STOP`。
+用户于 2026-09-29 明确授权在原 43,200 秒共享预算内额外完成一场 V31 原始模型运行。新 run 使用独立 run_id，数值输入除 run_id、comparison_group 和描述注释外保持一致；分类为 completion rerun，不是 bug replay 或性能对照。源码 SHA 为 d9b545e824296fce1b489c32a5d96e5e9303ff3c，输入 SHA 为 4a8dc8f5459ef385c5f58f58ee507d19255b871d8f96987966db728619863ba0。
 
-我误把 cgroup `memory.current` 的 8 GiB 当成硬停止线并手动停止作业。Review V29 并无该硬线；正式 watchdog 整树 RSS peak=`7,324,389,376 B`，实际启动 cap=`13,358,809,088 B`。不能把此次事件写成资源 Gate stop。停止时 cgroup current/peak=`8,602,890,240/8,603,148,288 B`，属不同的内存口径。停止前 i112 残差包五项向量范数离线复核均与保存数值一致；完整动态 checker 因没有 worker final summary 而未运行。
+| 项目 | 结果 |
+|---|---|
+| 求解 | 126 步；独立 final/post-release 原 A6 真残差均为 9.283162411158934e-7，低于 1e-6 |
+| 物理输出 | R/T/A/A_volume = 0.36509755369518077 / 0.013016803348172736 / 0.6218856429566464 / 0.6218856421420169；80 个模态，体吸收闭合差约 8.15e-10 |
+| 资格边界 | discrete solve and consistency pass，matched reference unavailable；field L2/scaled-curl 未测，不外推到连续极限或跨机器 |
+| 用时和资源 | monotonic workflow 2313.526 s；预算账本 settle 2534.117 s；process-tree RSS peak 7,331,401,728 B；PSS disabled/null；swap observe-only |
+| 预算 | 共享上限仍为 43,200 s；累计实测 4,832.519 s、剩余 38,367.481 s；bug replay=0、预算扩展=0 |
+| 独立 checker | dynamic DYNAMIC_PASS_EVIDENCE_LIMITED；raw residual/modal/energy PASS_WITH_AUTHORITY_LIMITATION；线程变量的 manifest 记录不完整 |
+| 后续动作 | ordinary default 未变、工作站未迁移、master 未合并；本次不是性能比较，不据此宣称端到端提速 |
 
-review 授权的一场 PDE 已消耗，没有新授权不重跑。普通默认未变、工作站未迁移、master 未合并；Ruff 不可用，完整测试/CI/MPI2/4未运行。完整复盘见 [Response V32](task039_extra_physical_multilevel/response_v32.md)、[V31 outcome](task039_extra_physical_multilevel/outcomes/projection_layout_v31.md)、[交接清单](task039_extra_physical_multilevel/outcomes/selective_workstation_handoff_v31.md) 与 [run index](task039_extra_physical_multilevel/outcomes/records/run_index.json)。
+详细结果、原始 SHA、checker 结论和首次误停的保留记录见 [Response V33](task039_extra_physical_multilevel/response_v33.md)、[V31 outcome](task039_extra_physical_multilevel/outcomes/projection_layout_v31.md)、[完成重跑记录](task039_extra_physical_multilevel/outcomes/records/projection_layout_v31_authorized_rerun.json)、[run index](task039_extra_physical_multilevel/outcomes/records/run_index.json) 与[选择性交接清单](task039_extra_physical_multilevel/outcomes/selective_workstation_handoff_v31.md)。
+
+## 历史：V31 首次尝试人工中止，USER_CONTROLLED_STOP 原分类保留
+
+首次 V31 正式场在完整残差检查到 i112、普通迭代日志到 i113 时被我手动停止；最后完整 A6 相对残差为 2.713995416229632e-6，高于 1e-6。停止原因为我误把 cgroup memory.current 的 8 GiB 当成硬停止线；Review V29 并没有该硬线。正式 watchdog 整树 RSS peak 为 7,324,389,376 B，实际启动 cap 为 13,358,809,088 B。这不是资源 Gate stop，也不是 solver negative。
+
+i112 residual packet 五项向量范数离线复核都与保存标量一致。首次尝试缺少 worker final summary，因此当时 dynamic checker 未运行；该历史结论不被新尝试覆盖。首次尝试消耗 Review V29 原有的一场授权后，用户另行授权且只授权一次 completion rerun，具体见上述记录。
 
 # Task39extra 当前进展：Review V28 / V30 笔记本正式验证完成，工作站未迁移
 

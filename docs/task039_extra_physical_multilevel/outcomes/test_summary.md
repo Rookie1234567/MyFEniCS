@@ -1,4 +1,20 @@
-## Review V29 / V31 正式运行中断与证据复核
+## V31 用户授权完成重跑与 checker 修复
+
+| 验证 | 结果 | 范围与限制 |
+|---|---|---|
+| V31 源码前置测试 | 5 passed | test_task39extra_v30_profile.py；正式新 run 前运行 |
+| V31 dynamic checker 定向回归 | 17 passed | 覆盖 V31 正向与 backend/layout 等负向 fixture；修正 H6/A6 原始 audit 字段路径 |
+| V31 raw-output checker 定向回归 | 2 passed | 保存 residual vector、80 modes、能量闭合通过；模态顺序篡改 fixture 被拒绝 |
+| 合并 targeted checker suite | **19 passed in 0.23 s** | qualified activation；不是全仓测试 |
+| 本次 V31 dynamic checker | DYNAMIC_PASS_EVIDENCE_LIMITED | 全部 gating checks 通过；manifest 未完整提供运行时线程环境变量证据 |
+| 本次 V31 raw-output checker | PASS_WITH_AUTHORITY_LIMITATION | 独立重算 final/post-release residual、官方模态 R/T 和体吸收闭合 |
+| 通用 physical_intermediate_checker.py | EVIDENCE_INCOMPLETE | 其格式要求的 physical_intermediate_summary.json 不由 V31 worker 生成，故不适用；此结果不计为 V31 numerical fail 或 pass |
+| full repository pytest / Ruff / MPI2/4 / CI | not_run / not_run / not_run / not_claimed | 仅报告 targeted tests；无全仓或 CI 通过声明 |
+
+机器检查结果与文件哈希见 [V31 authorized rerun record](records/projection_layout_v31_authorized_rerun.json)。首次中止运行的测试与 checkpoint 证据留在下文，不被覆盖。
+
+
+## 历史：V31 首次正式运行中断与证据复核
 
 | 验证 | 实际结果 | 范围与边界 |
 |---|---|---|
