@@ -204,6 +204,7 @@ def field_physics(model, packet, reference, states, artifact, marker):
     from src.solvers.dtn_port_3d import (
         _port_power_metrics,
         _mode_power_at_boundary,
+        _mode_boundary_phase,
         _mode_carries_outward_power,
         _outgoing_projection,
     )
@@ -289,6 +290,16 @@ def field_physics(model, packet, reference, states, artifact, marker):
         )
         es, hs = samples(E)
         ses, shs = samples(SE)
+        outgoing = np.asarray(
+            [
+                _outgoing_projection(z, i, mode.side)
+                for mode, z, i in zip(modes, alpha, inc, strict=True)
+            ],
+            dtype=np.complex128,
+        )
+        boundary_outgoing = outgoing * np.asarray(
+            [_mode_boundary_phase(mode, cfg) for mode in modes]
+        )
         powers = np.asarray(
             [
                 _mode_power_at_boundary(m, cfg, _outgoing_projection(z, i, m.side))
@@ -315,6 +326,10 @@ def field_physics(model, packet, reference, states, artifact, marker):
             selected_scattered_E=ses,
             selected_scattered_H_code=shs,
             ordered_complex_total_channels=alpha,
+            ordered_complex_outgoing_channels=outgoing,
+            ordered_complex_boundary_outgoing_channels=boundary_outgoing,
+            total_channel_coefficient_meaning="original FE tangential projection including known incident field",
+            outgoing_channel_coefficient_meaning="outgoing modal coefficient before boundary phase; known incident top projection subtracted",
             ordered_complex_scattered_channels=sc_alpha,
             ordered_per_channel_power=powers,
             total_L2_scaled_curl_norms=norms(E),
@@ -341,6 +356,10 @@ def field_physics(model, packet, reference, states, artifact, marker):
                 ("selected_scattered_H", shs - refSH, refSH),
             ]:
                 errors[key] = error(diff, scale, 1)
+                for point in range(len(points)):
+                    errors[key + "_point_" + str(point)] = error(
+                        diff[point], scale[point], 1
+                    )
             value["field_errors"] = errors
         value["postprocess_seconds"] = perf_counter() - start
         records[name] = value
@@ -360,6 +379,19 @@ def field_physics(model, packet, reference, states, artifact, marker):
         )
         <= 1e-10
     )
+    reference_energy_closure = abs(
+        ref["port"]["R_total"]
+        + ref["port"]["T_total"]
+        + ref["volume"]["A_volume_total"]
+        - 1
+    )
+    reference_absorption_gap = abs(
+        ref["port"]["A_balance"] - ref["volume"]["A_volume_total"]
+    )
+    reference_pass = bool(
+        reference_pass
+        and max(reference_energy_closure, reference_absorption_gap) <= 1e-5
+    )
     comparisons = {}
     for name in states:
         record = records[name]
@@ -368,6 +400,18 @@ def field_physics(model, packet, reference, states, artifact, marker):
             record["ordered_complex_total_channels"]
             - ref["ordered_complex_total_channels"],
             ref["ordered_complex_total_channels"],
+            1,
+        )
+        errors["ordered_outgoing_channels"] = error(
+            record["ordered_complex_outgoing_channels"]
+            - ref["ordered_complex_outgoing_channels"],
+            ref["ordered_complex_outgoing_channels"],
+            1,
+        )
+        errors["ordered_boundary_outgoing_channels"] = error(
+            record["ordered_complex_boundary_outgoing_channels"]
+            - ref["ordered_complex_boundary_outgoing_channels"],
+            ref["ordered_complex_boundary_outgoing_channels"],
             1,
         )
         errors["ordered_scattered_channels"] = error(
@@ -424,10 +468,16 @@ def field_physics(model, packet, reference, states, artifact, marker):
         )
     return dict(
         reference_pass=reference_pass,
+        reference_energy_closure_absolute=reference_energy_closure,
+        reference_absorption_balance_volume_absolute=reference_absorption_gap,
         reference_norms=ref_norms,
         reference_scattered_norms=ref_scat_norms,
         natural_E_scale=incident_scale,
         records=records,
+        ordered_incident_projection=inc,
+        ordered_boundary_phase=np.asarray(
+            [_mode_boundary_phase(mode, cfg) for mode in modes]
+        ),
         mode_manifest_sha256=model["record"]["mode_manifest_sha256"],
     ), comparisons
 
@@ -532,7 +582,9 @@ def p_check(design, index, reference_index, artifact, marker):
         space3 = fem.functionspace(
             model["data"].mesh, basix.ufl.element("N1curl", "hexahedron", 3)
         )
-        if not np.array_equal(space3.dofmap.list, packet3.a["cell_dofs"]):
+        if not np.array_equal(
+            np.asarray(space3.dofmap.list, dtype=np.int64), packet3.a["cell_dofs"]
+        ):
             raise ValueError("same geometry p3/p4 transfer native numbering mismatch")
         floquet3 = build_double_floquet_mpc(space3, model["data"], model["cfg"])
         E3 = restore_p0_full_field(
@@ -581,7 +633,54 @@ def p_check(design, index, reference_index, artifact, marker):
             != index["result"]["identity"]["mode_manifest_sha256"]
         ):
             raise ValueError("p4 changed complete ordered channel inventory")
+        from src.solvers.dtn_port_3d import _outgoing_projection, _mode_boundary_phase
+
+        inc3 = np.asarray(
+            [
+                complex(item["real"], item["imag"])
+                for item in reference_index["result"]["physics"][
+                    "ordered_incident_projection"
+                ]
+            ]
+        )
+        inc4 = np.asarray(model["bundle"]["incident_projections"])
+        if np.linalg.norm(inc3 - inc4) > 1e-10 * max(np.linalg.norm(inc3), 1e-12):
+            raise ValueError("p4 changed the physical incident channel projection")
+        out3 = np.asarray(
+            [
+                _outgoing_projection(z, i, mode.side)
+                for mode, z, i in zip(
+                    model["bundle"]["modes"], alpha3, inc3, strict=True
+                )
+            ]
+        )
+        out4 = np.asarray(
+            [
+                _outgoing_projection(z, i, mode.side)
+                for mode, z, i in zip(
+                    model["bundle"]["modes"], alpha4, inc4, strict=True
+                )
+            ]
+        )
         for name, left, right in [
+            (
+                "boundary_outgoing_channels",
+                out3
+                * np.asarray(
+                    [
+                        _mode_boundary_phase(m, model["cfg"])
+                        for m in model["bundle"]["modes"]
+                    ]
+                ),
+                out4
+                * np.asarray(
+                    [
+                        _mode_boundary_phase(m, model["cfg"])
+                        for m in model["bundle"]["modes"]
+                    ]
+                ),
+            ),
+            ("outgoing_channels", out3, out4),
             ("total_channels", alpha3, alpha4),
             ("scattered_channels", packet3.alpha(c3), packet4.alpha(c4)),
         ]:
@@ -624,6 +723,18 @@ def p_check(design, index, reference_index, artifact, marker):
                     denominator=denominator,
                     relative=absolute / denominator,
                 )
+                for point in range(len(points)):
+                    point_absolute = float(
+                        np.linalg.norm(left_sample[point] - right_sample[point])
+                    )
+                    point_denominator = float(
+                        max(np.linalg.norm(right_sample[point]), 1e-12)
+                    )
+                    errors[kind + "_" + key + "_point_" + str(point)] = dict(
+                        absolute=point_absolute,
+                        denominator=point_denominator,
+                        relative=point_absolute / point_denominator,
+                    )
         passed = all(v["relative"] <= 1e-3 for v in errors.values())
         np.savez(artifact / "p4_reference.npz", c=c4, alpha=alpha4)
         return dict(
