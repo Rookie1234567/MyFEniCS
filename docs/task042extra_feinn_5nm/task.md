@@ -214,7 +214,7 @@ d_G和f*f从固定原载荷一次计算；零载荷只走专门解析测试，�
 对实网络参数、固定G，梯度应满足：
 
 ```math
-\nabla_\theta L_D=\operatorname{Re}\{J_c(\theta)^*A^*q\}/d_G,
+\nabla_\theta L_D=\mathrm{Re}\{J_c(\theta)^*A^*q\}/d_G,
 \qquad J_c=\partial c/\partial\theta.
 ```
 

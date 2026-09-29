@@ -1,0 +1,44 @@
+{
+  "schema": "task42extra.scaling-design.v2",
+  "review_sha": "0b61816c0189a2c05812044ab8e1d1513ef0407d",
+  "frozen_design_sha256": "650af0bade61c4ef89583398624b375245691109a6778c168dd46d8c0e70524e",
+  "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+  "mpc_global_gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+  "qualified_moments_sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e",
+  "material_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+  "reference_state_sha256_compare_only_after_freeze": "0c3c0574a8c1eddcadfb56268e00c08e55d5cb15d44c0c467ff7",
+  "scaling": {
+    "source": "already MPC-constrained global G diagonal",
+    "a_j": "real(G_jj), each strictly positive and finite",
+    "D_j": "1/sqrt(a_j), no epsilon, clipping or extra global factor",
+    "mapping": "c=D*y for both float64 real and imaginary channels",
+    "gradient": "g_y=conj(D)*g_c; D is real positive",
+    "unchanged": ["A", "f", "G", "d_G", "Riesz loss", "original physical equations", "ports", "all 31968 independent complex FE unknowns"]
+  },
+  "candidate": {
+    "route": "FREE-FE-DUAL-GRAM-DIAG",
+    "model": "original M5 5nm 384 hexa p3 q15 40 ports",
+    "initial_y": "exact zero",
+    "Adam": {"updates": 500, "lr": 0.001, "weight_decay": 0},
+    "LBFGS": {"lr": 1, "history_size": 20, "line_search": "strong_wolfe", "max_iter": 20, "max_eval": 25, "tolerance_grad": 1e-7, "tolerance_change": 1e-9},
+    "max_complete_closures": 4000,
+    "route_wall_seconds_including_setup_audit_save": 10800,
+    "reference_loaded_during_training": false
+  },
+  "state_pool": {
+    "zero_c": "evaluated once",
+    "V1_FREE_final_committed": "saved checkpoint",
+    "V1_FEINN_DUAL_final_committed": "saved checkpoint",
+    "V1_FEINN_EUC_final_committed": "saved checkpoint",
+    "Adam500_parameters": "NOT_RETAINED unless an independent stored snapshot is discovered",
+    "last_trial": "separate, never substitute for committed",
+    "max_new_full_loss_gradient_evaluations_D0": 20
+  },
+  "input_whitelist_D0_D2": ["frozen design", "native packet", "MPC Gram", "qualified moments", "V1 route histories", "V1 route checkpoint parameters and c", "material table", "qualified environment and ABI records"],
+  "reference_input_D0_D2": "FORBIDDEN",
+  "reference_input_D3": "V1 same-p3 frozen reference state only after candidate freeze; no MUMPS solve",
+  "near_zero": "unchanged design_v1.json near_zero; no phase fit or denominator tuning",
+  "strict_gates": {"native_augmented_total_relative": 1e-6, "field_channel_relative": 1e-4, "power_total_absolute": 1e-5, "power_channel_absolute": 1e-6},
+  "positive_diagnostic": {"native_and_augmented_max": 0.05969144472114, "scattered_E_L2_relative_max": 0.5, "both_required": true},
+  "resources": {"V1_conservative_elapsed_seconds": 26240.100355625153, "V1_total_cap_seconds": 57600, "V2_added_cap_seconds": 14400, "whole_tree_warn_GiB": 12, "whole_tree_hard_GiB": 16, "light_hard_GiB": 2, "own_swap_bytes": 0, "neighbor_growth_reserve_GiB_min": 384, "system_reserve": "max(128GiB, effective_total/10)", "CPU_only_MPI1_math_Torch_threads": 1}
+}
