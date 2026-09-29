@@ -47,6 +47,8 @@ TASK042_PROFILES = {
     "task042_v9_frozen_error_localization": "V9-D0-D3",
     **{"task042_v10_"+name.lower(): "V10-"+name
        for name in ("A", "B1", "B0", "C", "E1", "E2", "VERIFY", "D1", "D2", "P4", "HEAD_CHECK", "D2_REPLAY")},
+    "task042_v11_main": "V11-MAIN",
+    "task042_v11_verify": "V11-VERIFY",
 }
 
 

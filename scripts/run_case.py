@@ -52,7 +52,8 @@ def main(argv: list[str] | None = None) -> int:
         from src.io.neural_fe_calibration import load_calibration
         from src.io.frozen_fe_diagnostic import load_diagnostic
         from src.io.autonomous_neural_head import load_autonomous
-        specification = load_autonomous(args.input_path) or load_diagnostic(args.input_path) or load_calibration(args.input_path) or load_continuation(args.input_path) or load_interface(args.input_path)
+        from src.io.stable_head_varpro import load_stable_head
+        specification = load_stable_head(args.input_path) or load_autonomous(args.input_path) or load_diagnostic(args.input_path) or load_calibration(args.input_path) or load_continuation(args.input_path) or load_interface(args.input_path)
         if specification is None:
             specification = load_and_resolve(args.input_path)
         from src.io.task042_profile import TASK042_PROFILES

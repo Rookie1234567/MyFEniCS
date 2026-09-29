@@ -1,0 +1,22 @@
+{
+  "schema": "task042.stable-head-varpro.v11",
+  "batch": "V11_STABLE_HEAD_VARIABLE_PROJECTION",
+  "review_commit": "38a68de138fc01537dc8a63f122e25c64b820a37",
+  "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+  "mode_manifest_sha256": "93795b53d7c5aef69af66b4ff0a56fa46515771f1ec43332ec929970270ea262",
+  "original_action_sha256": "9196edb807b534217d0c0eb78882125341342784a48ef20ebe2d9421fe636454",
+  "canonical_material_id": "SI_OPTICAL_CONSTANTS_USER_20260929_V1",
+  "random_hidden_seed": 420906,
+  "witnesses": {"M1_seed": 421101, "M2": "saved V10-B0 unlabelled physical-solve head and port"},
+  "finite_difference": {"direction_seeds": [421111, 421112, 421113], "steps": [0.0001, 0.00001, 0.000001], "max_perturbed_points": 18},
+  "stable_head": {"qr": "economic nonpivoting Householder", "driver": "gelsd", "cond": 1e-12,
+    "head_complex_columns": 1560, "ports": 40, "full_P_and_A_builds": 40,
+    "full_head_resolves": 48, "S_plus_SH_equivalent_calls": 65000},
+  "outer": {"candidate": "RANDOM-HIDDEN-PORT-CLOSED-VARPRO", "min_attempted_accepts": 3,
+    "max_accepted": 5, "max_armijo_trials": 4, "lbfgs_history": 5,
+    "extra_two_requires_Phi_fraction": 0.99, "extra_two_native_factor": 1.05,
+    "extra_two_port_relative": 1e-6},
+  "time_window_file": "tmp/task042/v11/window.json",
+  "reference_boundary": "no REF7 in MAIN; read only in independent VERIFY after solver queue frozen",
+  "old_route": "CLOSED"
+}
