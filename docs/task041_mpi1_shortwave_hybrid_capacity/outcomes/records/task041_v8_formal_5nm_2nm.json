@@ -52,11 +52,11 @@
     },
     {
       "hash_status": "append_only; latest sampled row is identified by sample_elapsed_seconds and row hash",
-      "latest_row_sha256": "ec7efd5bd1aa9bfa849640a4c6b482c17129b05e2d947bbe4d7f42a1b8e25de2",
-      "latest_sample_elapsed_seconds": 62013.372867834056,
+      "latest_row_sha256": "1e00e78d40e3720e85397c8c65880084bf9fa9bb2d89169d0c805d06aa6eadfe",
+      "latest_sample_elapsed_seconds": 63736.46195115498,
       "name": "outer_memory_stages",
       "path": "results/task041_v8_5nm_cellcond_formal_run_20260928/memory_stages.jsonl",
-      "sampled_at_utc": "2026-09-29T02:12:28Z",
+      "sampled_at_utc": "2026-09-29T02:40:45Z",
       "sha256": null
     },
     {
@@ -74,20 +74,20 @@
       "sha256": "ce23d2fe2f90384e4faec63d3c6b1963ab3f487b86640a29f91d41010d214d2b"
     }
   ],
-  "observed_utc": "2026-09-29T02:12:28Z",
+  "observed_utc": "2026-09-29T02:40:45Z",
   "progress": {
     "current_rhs_iterations": "not_run",
     "current_rhs_residual": "not_run",
     "expected_formal_responses": 1920,
     "formal_residuals": "not_run",
-    "latest_sampler_elapsed_seconds": 62013.372867834056,
+    "latest_sampler_elapsed_seconds": 63736.46195115498,
     "latest_sampler_phase": "public_command",
     "latest_worker_event": "modal_batch_begin",
     "latest_worker_event_wall_seconds": 61790.531882226,
     "official_R_T_A_E_H": "not_run",
     "phase": "modal_action",
     "process_group_gone_at_latest_sample": false,
-    "progress_signal": "modal_batch_begin; side=bottom; batch=25/30; logical_completed=768/960; formal response markers not emitted; V8 swap observation continues; latest global swap/pswpout delta increased and is observation-only",
+    "progress_signal": "modal batch 25/30; side=bottom; logical_completed=768/960; formal response markers not emitted; global swap/pswpout increased in host-wide observation only, attribution unknown; V8 policy remains observe-only",
     "time_stop_enforced": false,
     "time_target_met": null,
     "time_target_seconds": 86400
@@ -99,7 +99,7 @@
     "two_nm": "not_started"
   },
   "record_type": "task041_review_v8_formal_progress",
-  "record_written_utc": "2026-09-29T02:12:28Z",
+  "record_written_utc": "2026-09-29T02:40:45Z",
   "repository": {
     "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
     "document_base_head": "d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f",
@@ -110,30 +110,31 @@
   },
   "resources": {
     "latest_sample": {
-      "sampled_at_utc": "2026-09-29T02:12:28Z",
-      "sample_elapsed_seconds": 62013.372867834056,
+      "sampled_at_utc": "2026-09-29T02:40:45Z",
+      "sample_elapsed_seconds": 63736.46195115498,
       "sample_role": "phase_running",
-      "authority_bytes": 43137024000,
+      "authority_bytes": 43127500800,
       "authority_kind": "process_tree",
-      "process_tree_rss_bytes": 43137024000,
-      "dedicated_cgroup_current_bytes": 41346494464,
-      "dedicated_cgroup_peak_bytes": 41346498560,
+      "process_tree_rss_bytes": 43127500800,
+      "process_tree_swap_bytes": 0,
+      "dedicated_cgroup_current_bytes": 41120452608,
+      "dedicated_cgroup_peak_bytes": 41388503040,
       "dedicated_cgroup_swap_bytes": 0,
       "job_swap_bytes": 0,
       "job_no_swap": true,
       "cap_bytes": 53221163008,
       "warning_bytes": 47899046707,
-      "host_memavailable_bytes": 949045284864,
+      "host_memavailable_bytes": 949377613824,
       "host_memtotal_bytes": 2163100385280,
       "host_reserve_required_bytes": 412316860416,
       "host_reserve_gate_at_start": true,
       "global_swap_baseline_bytes": 1224704,
-      "global_swap_bytes": 1359872,
-      "global_swap_delta_bytes": 135168,
+      "global_swap_bytes": 60325888,
+      "global_swap_delta_bytes": 59101184,
       "global_pswpin_pages": 0,
       "global_pswpin_delta_pages": 0,
-      "global_pswpout_pages": 334,
-      "global_pswpout_delta_pages": 35,
+      "global_pswpout_pages": 14287,
+      "global_pswpout_delta_pages": 13988,
       "swap_policy": "observe_only_continue",
       "worker_process_group_gone": false,
       "oom_events": null,
@@ -231,5 +232,5 @@
   },
   "schema": "task041.v8.formal_progress.v1",
   "status": "running_at_latest_observation",
-  "next_progress_update_due_utc": "2026-09-29T03:12:28Z"
+  "next_progress_update_due_utc": "2026-09-29T03:40:45Z"
 }
