@@ -1,0 +1,169 @@
+{
+  "schema": "task039extra.v30.versioned-checker-reaudit.v1",
+  "status": "DYNAMIC_PASS_EVIDENCE_LIMITED",
+  "classification": "offline raw-field re-audit; V30 numerical result and authority scope unchanged",
+  "command": "source scripts/activate_myfenics_wsl.sh && python benchmarks/task39extra_v25_dynamic_checker.py results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/physical_dual_condensed_workstation_guided_local_v30_summary.json --resolved-config results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/resolved_config.json --run-manifest results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/run_manifest.json --run-summary results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/run_summary.json --stage Q4_ORIGINAL --output /tmp/task39extra_v30_reaudit.json",
+  "source_run": {
+    "run_id": "task39extra_v30_workstation_guided_original_h7p5_v1",
+    "profile": "physical_p6_trace_workstation_guided_v30",
+    "source_sha": "254f0cf78f950246655dc86af9409139b9a97680",
+    "input_sha256": "ba2c0745221a017d71f606325c20e98a3a57611887929fe55c18180f308f544b",
+    "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+    "resolved_config_sha256": "6912022c6d8a9c58c6ad63b5a18eea85d2b50223f72efd255ba009433f814adc",
+    "paths_and_sha256": {
+      "worker_summary": {
+        "path": "results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/physical_dual_condensed_workstation_guided_local_v30_summary.json",
+        "sha256": "60df6b8051c410bdbb224886a780d6638a7800d21d198644168a6e822f29c193"
+      },
+      "resolved_config": {
+        "path": "results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/resolved_config.json",
+        "sha256": "6912022c6d8a9c58c6ad63b5a18eea85d2b50223f72efd255ba009433f814adc"
+      },
+      "run_manifest": {
+        "path": "results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/run_manifest.json",
+        "sha256": "bd779d35dfba0906eaea7f700cf5a277d3df5c814810735bd508981d9489e744"
+      },
+      "run_summary": {
+        "path": "results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/run_summary.json",
+        "sha256": "5946c87f591228c4b69ca23873e9e51aab75d4251825065c7ac1245d2115a12a"
+      }
+    }
+  },
+  "checker": {
+    "path": "benchmarks/task39extra_v25_dynamic_checker.py",
+    "sha256": "ae7ea1784acd7c7a202f8cbd00593c4db2be52bae92aa8f3e053a84a752bc49c",
+    "targeted_test_path": "src/test/test_task39extra_v25_dynamic_checker.py",
+    "targeted_test_sha256": "48068d1208ccdfb331e5d6235534152b86a4edb2dad1fec7e23b42822a4c6b88",
+    "targeted_test_result": "17 passed in 0.13s",
+    "profile_rules": [
+      "physical_p6_trace_workstation_guided_v30",
+      "physical_p6_trace_projection_layout_v31"
+    ],
+    "source_commit_sha256": "2315a24e0907e534a98bb91f8049430e34184c69",
+    "offline_output_sha256": "a10a51cc482e202850763e3993aa9732a8226ae09237c95116f8ceb1beed6964"
+  },
+  "legacy_v25_checker": {
+    "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_checker.json",
+    "sha256": "0e79564a38539b83a4f270bfcc10a5d240f861a39eb8771750aff950a9f042b2",
+    "status_preserved": "DYNAMIC_FAIL",
+    "gate_failures_preserved": [
+      "backend_identity"
+    ],
+    "note": "Historical static profile/backend mismatch remains visible and is not overwritten by this re-audit."
+  },
+  "worker_field_reference_evaluation_preserved": [
+    {
+      "iteration": 0,
+      "status": "NOT_ATTEMPTED",
+      "reference_authority": "MATCHED_REFERENCE_NOT_AVAILABLE"
+    },
+    {
+      "iteration": 32,
+      "status": "NOT_ATTEMPTED",
+      "reference_authority": "MATCHED_REFERENCE_NOT_AVAILABLE"
+    },
+    {
+      "iteration": 64,
+      "status": "NOT_ATTEMPTED",
+      "reference_authority": "MATCHED_REFERENCE_NOT_AVAILABLE"
+    },
+    {
+      "iteration": 96,
+      "status": "NOT_ATTEMPTED",
+      "reference_authority": "MATCHED_REFERENCE_NOT_AVAILABLE"
+    },
+    {
+      "iteration": 126,
+      "status": "NOT_ATTEMPTED",
+      "reference_authority": "MATCHED_REFERENCE_NOT_AVAILABLE"
+    }
+  ],
+  "recomputed": {
+    "dynamic_passed": true,
+    "gate_failures": [],
+    "raw_BAL_H": {
+      "passed": true,
+      "setup": 1,
+      "check": 4,
+      "outer_iteration": 126,
+      "cumulative_total": 131,
+      "raw_boundary_records": 131,
+      "logical_C": 262,
+      "actual_MatSolve": 267,
+      "physical_F4": 267,
+      "extra_repairs": 5,
+      "best_state_continue_count": 0
+    },
+    "backend_scope": {
+      "B6_matrix_mult_including_power10": 282,
+      "H6_apply": 131,
+      "actual_F4_MatSolve": 267,
+      "legacy_calls_per_PC_template": {
+        "authoritative": false,
+        "note": "Historical metadata only; live C, H6, B6, MatSolve and power10 counters are checked by scope.",
+        "value": {
+          "B6": 4,
+          "H6": 2,
+          "S6": 0,
+          "positive_p1": 0,
+          "positive_p3": 0
+        }
+      },
+      "logical_C": 262,
+      "power10_B6": 20
+    },
+    "backend_checks": {
+      "actual_A4_mat_solve_scope_matches": true,
+      "actual_B6_and_power10_scopes_close": true,
+      "candidate_a6_backend_and_component": true,
+      "candidate_a6_element_and_coefficient_identity": true,
+      "candidate_a6_live": true,
+      "candidate_a6_quadrature_identity": true,
+      "candidate_a6_sum_factorized": true,
+      "candidate_and_fused_full_apply_scope_matches": true,
+      "coarse_degree": true,
+      "fused_batch_and_apply_counts_close": true,
+      "fused_integral_rules_preserved": true,
+      "fused_local_kernel_schema": true,
+      "fused_quadrature_identity_matches_components": true,
+      "fused_volume_schema": true,
+      "h6_apply_and_power10_backend": true,
+      "h6_apply_count_scope_matches": true,
+      "h6_backend_rule": true,
+      "h6_live_kernel_identity": true,
+      "logical_C_count_scope_matches": true,
+      "ordinary_default_unchanged": true,
+      "physical_operator_backend": true,
+      "profile_is_explicit_v30_or_v31": true,
+      "raw_bal_h_phase_and_pc_scope_closure": true,
+      "resolved_config_hash_matches_manifest": true,
+      "runtime_thread_environment_matches_one": true,
+      "stage": true,
+      "thread_contract_declaration": true
+    },
+    "runtime_thread_evidence": "EVIDENCE_LIMITED: runtime thread variables are incomplete",
+    "monitoring": {
+      "passed": true,
+      "checks": {
+        "manifest_mpi1": true,
+        "manifest_qualified_linux_environment": true,
+        "pss_status_explicit_and_disabled_by_profile": true,
+        "rss_peak_recorded": true,
+        "run_finished_exit0": true,
+        "runtime_thread_environment_matches_one": true,
+        "source_identity_matches_manifest": true,
+        "swap_observed_only": true,
+        "watchdog_completed": true,
+        "watchdog_descendants_cleared": true,
+        "watchdog_leader_exit0": true
+      },
+      "PSS_interpretation": "explicitly_disabled_not_zero",
+      "RSS_peak_bytes": 8044191744,
+      "swap_peak_bytes": 0,
+      "swap_interpretation": "observed_only_not_enforced",
+      "runtime_thread_evidence": "EVIDENCE_LIMITED: runtime thread variables are incomplete"
+    }
+  },
+  "authority_limit": "The saved manifest lacks OMP_NUM_THREADS, OPENBLAS_NUM_THREADS, and MKL_NUM_THREADS runtime values. The checker records EVIDENCE_LIMITED rather than inferring the historical runtime values from the current shell or declaration.",
+  "working_directory": "repository root"
+}

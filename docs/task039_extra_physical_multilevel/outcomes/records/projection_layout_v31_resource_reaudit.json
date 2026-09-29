@@ -1,0 +1,937 @@
+{
+  "first_instrumentation_note": "首轮归约的JSON行输出超出终端显示上限，截断了完整V29摘录；本记录来自紧凑恢复提取，未启动PDE。",
+  "schema": "task039extra.v31.r1.resource-reaudit.v2",
+  "status": "PARTIALLY_ATTRIBUTED",
+  "verbose_reduction_copy": "results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/projection_layout_v31_resource_reaudit_verbose.json",
+  "versions": {
+    "V29": {
+      "event_log": {
+        "bytes": 11360709,
+        "intervals": {
+          "common_setup": {
+            "end_event": "v14_common_setup_complete",
+            "end_line": 10,
+            "end_utc": "2026-09-24T12:56:03.147455+00:00",
+            "seconds": 51.621391852,
+            "start_event": "v14_common_setup_started",
+            "start_line": 3,
+            "start_utc": "2026-09-24T12:55:11.526064+00:00",
+            "status": "derived_wall_interval"
+          },
+          "h6_setup": {
+            "end_event": "h6_original_window_and_packed_action_complete",
+            "end_line": 70,
+            "end_utc": "2026-09-24T13:01:25.898373+00:00",
+            "seconds": 48.278801045,
+            "start_event": "h6_original_setup_started",
+            "start_line": 69,
+            "start_utc": "2026-09-24T13:00:37.619572+00:00",
+            "status": "derived_wall_interval"
+          },
+          "official_postprocess": {
+            "end_event": "q4_official_postprocess_ended",
+            "end_line": 1531,
+            "end_utc": "2026-09-24T13:39:06.047440+00:00",
+            "seconds": 18.144436953,
+            "start_event": "q4_official_postprocess_started",
+            "start_line": 1525,
+            "start_utc": "2026-09-24T13:38:47.903003+00:00",
+            "status": "derived_wall_interval"
+          },
+          "outer_solve_end": {
+            "event": "q4_outer_solve_finished",
+            "line": 1524,
+            "utc": "2026-09-24T13:38:47.898156+00:00"
+          },
+          "outer_solve_start": {
+            "reason": "no matching outer-solve-start event in selected event ledger",
+            "status": "unknown_boundary"
+          },
+          "p4_numeric_observed": {
+            "end_event": "schur_factor_numeric_observed",
+            "end_line": 40,
+            "end_utc": "2026-09-24T13:00:32.806239+00:00",
+            "seconds": 237.146880922,
+            "start_event": "schur_factor_numeric_started",
+            "start_line": 38,
+            "start_utc": "2026-09-24T12:56:35.659358+00:00",
+            "status": "derived_wall_interval"
+          },
+          "p4_numeric_tail": {
+            "end_event": "schur_factor_numeric_complete",
+            "end_line": 46,
+            "end_utc": "2026-09-24T13:00:32.886178+00:00",
+            "seconds": 0.079938872,
+            "start_event": "schur_factor_numeric_observed",
+            "start_line": 40,
+            "start_utc": "2026-09-24T13:00:32.806239+00:00",
+            "status": "derived_wall_interval"
+          },
+          "p4_symbolic": {
+            "end_event": "schur_factor_symbolic_complete",
+            "end_line": 33,
+            "end_utc": "2026-09-24T12:56:35.615464+00:00",
+            "seconds": 0.652859273,
+            "start_event": "schur_factor_symbolic_started",
+            "start_line": 32,
+            "start_utc": "2026-09-24T12:56:34.962605+00:00",
+            "status": "derived_wall_interval"
+          },
+          "p6_local_builder": {
+            "end_event": "v29q4_p6_local_setup_complete",
+            "end_line": 104,
+            "end_utc": "2026-09-24T13:02:12.695313+00:00",
+            "seconds": 45.926667268,
+            "start_event": "v29q4_p6_local_setup_started",
+            "start_line": 84,
+            "start_utc": "2026-09-24T13:01:26.768646+00:00",
+            "status": "derived_wall_interval"
+          },
+          "q4_setup_to_h6_boundary": {
+            "end_event": "q4_h6_outer_setup_start",
+            "end_line": 62,
+            "end_utc": "2026-09-24T13:00:37.551266+00:00",
+            "seconds": 274.00435506,
+            "start_event": "q4_setup_started",
+            "start_line": 16,
+            "start_utc": "2026-09-24T12:56:03.546911+00:00",
+            "status": "derived_wall_interval"
+          },
+          "release_check": {
+            "end_event": "q4_release_check_ended",
+            "end_line": 1522,
+            "end_utc": "2026-09-24T13:38:47.895068+00:00",
+            "seconds": 11.461397558,
+            "start_event": "q4_release_check_started",
+            "start_line": 1498,
+            "start_utc": "2026-09-24T13:38:36.433670+00:00",
+            "status": "derived_wall_interval"
+          }
+        },
+        "line_count": 1534,
+        "path": "results/euv_grazing1_phi0/task39extra_v29_a4_tensor_h6_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260924T125506.302465Z/v29q4_events.jsonl",
+        "selected_events": [
+          {
+            "event": "v14_common_setup_started",
+            "line": 3,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790254511526063524,
+            "utc": "2026-09-24T12:55:11.526064+00:00"
+          },
+          {
+            "event": "v14_p64_transfer_complete",
+            "line": 5,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790254547725554856,
+            "utc": "2026-09-24T12:55:47.725555+00:00"
+          },
+          {
+            "event": "v14_common_setup_complete",
+            "line": 10,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790254563147455376,
+            "utc": "2026-09-24T12:56:03.147455+00:00"
+          },
+          {
+            "event": "q4_setup_started",
+            "line": 16,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790254563546911317,
+            "utc": "2026-09-24T12:56:03.546911+00:00"
+          },
+          {
+            "event": "schur_factor_symbolic_started",
+            "line": 32,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790254594962604531,
+            "utc": "2026-09-24T12:56:34.962605+00:00"
+          },
+          {
+            "event": "schur_factor_symbolic_complete",
+            "line": 33,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790254595615463804,
+            "utc": "2026-09-24T12:56:35.615464+00:00"
+          },
+          {
+            "event": "schur_factor_numeric_started",
+            "line": 38,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790254595659358100,
+            "utc": "2026-09-24T12:56:35.659358+00:00"
+          },
+          {
+            "event": "schur_factor_numeric_observed",
+            "line": 40,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790254832806239022,
+            "utc": "2026-09-24T13:00:32.806239+00:00"
+          },
+          {
+            "event": "schur_factor_numeric_complete",
+            "line": 46,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790254832886177894,
+            "utc": "2026-09-24T13:00:32.886178+00:00"
+          },
+          {
+            "event": "q4_h6_outer_setup_start",
+            "line": 62,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790254837551266377,
+            "utc": "2026-09-24T13:00:37.551266+00:00"
+          },
+          {
+            "event": "h6_original_setup_started",
+            "line": 69,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790254837619572145,
+            "utc": "2026-09-24T13:00:37.619572+00:00"
+          },
+          {
+            "event": "h6_original_window_and_packed_action_complete",
+            "line": 70,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790254885898373190,
+            "utc": "2026-09-24T13:01:25.898373+00:00"
+          },
+          {
+            "event": "v29q4_p6_local_setup_started",
+            "line": 84,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790254886768645762,
+            "utc": "2026-09-24T13:01:26.768646+00:00"
+          },
+          {
+            "event": "v29q4_p6_local_setup_complete",
+            "line": 104,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790254932695313030,
+            "utc": "2026-09-24T13:02:12.695313+00:00"
+          },
+          {
+            "event": "q4_release_check_started",
+            "line": 1498,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790257116433670070,
+            "utc": "2026-09-24T13:38:36.433670+00:00"
+          },
+          {
+            "event": "q4_release_check_ended",
+            "line": 1522,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790257127895067628,
+            "utc": "2026-09-24T13:38:47.895068+00:00"
+          },
+          {
+            "event": "q4_outer_solve_finished",
+            "line": 1524,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790257127898156390,
+            "utc": "2026-09-24T13:38:47.898156+00:00"
+          },
+          {
+            "event": "q4_official_postprocess_started",
+            "line": 1525,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790257127903002755,
+            "utc": "2026-09-24T13:38:47.903003+00:00"
+          },
+          {
+            "event": "q4_official_postprocess_ended",
+            "line": 1531,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790257146047439708,
+            "utc": "2026-09-24T13:39:06.047440+00:00"
+          },
+          {
+            "event": "q4_fullspace_stage_complete",
+            "line": 1532,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790257146049683334,
+            "utc": "2026-09-24T13:39:06.049684+00:00"
+          },
+          {
+            "event": "v29q4_worker_complete",
+            "line": 1534,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790257147536853212,
+            "utc": "2026-09-24T13:39:07.536853+00:00"
+          }
+        ],
+        "sha256": "bda03e9fedf9ec617dfbf733cd6eda5d2accc1c0bdb7e33a87b103f946f6a95b",
+        "clock_basis": {
+          "source_field": "timestamp_ns",
+          "linux_clock": "CLOCK_REALTIME",
+          "meaning": "UTC/realtime wall-clock interval; adjustable and not monotonic"
+        }
+      },
+      "resources": {
+        "bytes": 62193083,
+        "members": [
+          {
+            "command": "python scripts/run_case.py <versioned input> --v14-time-policy observe_only",
+            "identity_status": "not_recorded",
+            "pid": 587866,
+            "ppid": 328,
+            "role": "workflow_parent",
+            "rss_bytes": 36995072,
+            "stage": "workflow",
+            "start_ticks": null,
+            "swap_bytes": 0
+          },
+          {
+            "command": "mpiexec -n 1 python -m src.runners.task038_input_worker",
+            "identity_status": "not_recorded",
+            "pid": 587889,
+            "ppid": 587866,
+            "role": "MPI launcher",
+            "rss_bytes": 14413824,
+            "stage": "workflow",
+            "start_ticks": null,
+            "swap_bytes": 0
+          },
+          {
+            "command": "python -m src.runners.task038_input_worker",
+            "identity_status": "not_recorded",
+            "pid": 587892,
+            "ppid": 587889,
+            "role": "numerical worker",
+            "rss_bytes": 7275040768,
+            "stage": "workflow",
+            "start_ticks": null,
+            "swap_bytes": 0
+          }
+        ],
+        "neighbor_samples": [
+          {
+            "elapsed_seconds": 2384.9364942699904,
+            "line": 8855,
+            "rss_bytes": 7322456064,
+            "stage": "workflow",
+            "swap_bytes": 0,
+            "timestamp_ns": 1790257109485782179,
+            "utc": "2026-09-24T13:38:29.485782+00:00"
+          },
+          {
+            "elapsed_seconds": 2385.2042041139794,
+            "line": 8856,
+            "rss_bytes": 7324778496,
+            "stage": "workflow",
+            "swap_bytes": 0,
+            "timestamp_ns": 1790257109753515794,
+            "utc": "2026-09-24T13:38:29.753516+00:00"
+          },
+          {
+            "elapsed_seconds": 2385.7424260929984,
+            "line": 8858,
+            "rss_bytes": 7326449664,
+            "stage": "workflow",
+            "swap_bytes": 0,
+            "timestamp_ns": 1790257110291730566,
+            "utc": "2026-09-24T13:38:30.291731+00:00"
+          },
+          {
+            "elapsed_seconds": 2386.0163960219943,
+            "line": 8859,
+            "rss_bytes": 7323303936,
+            "stage": "workflow",
+            "swap_bytes": 0,
+            "timestamp_ns": 1790257110565617075,
+            "utc": "2026-09-24T13:38:30.565617+00:00"
+          }
+        ],
+        "peak_elapsed_seconds": 2385.4729343839863,
+        "peak_line": 8857,
+        "peak_member_rss_sum_bytes": 7326449664,
+        "peak_rss_bytes": 7326449664,
+        "peak_utc": "2026-09-24T13:38:30.022215+00:00",
+        "pss_sampling_policy": null,
+        "pss_status": null,
+        "sample_count": 8993,
+        "sha256": "5df4315e467ed4a43c812d2c217865b8e8113c47c3c0a26a1154e125d8a312dc",
+        "source_path": "results/euv_grazing1_phi0/task39extra_v29_a4_tensor_h6_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260924T125506.302465Z/watchdog/resources.jsonl",
+        "stage_peaks": {
+          "workflow/Q4_ORIGINAL/assembly/unknown": {
+            "elapsed_seconds": 79.95429173097364,
+            "line": 313,
+            "rss_bytes": 1904500736,
+            "timestamp_ns": 1790254593589712860
+          },
+          "workflow/Q4_ORIGINAL/cleanup/unknown": {
+            "elapsed_seconds": 2418.7198353419953,
+            "line": 8980,
+            "rss_bytes": 7315034112,
+            "timestamp_ns": 1790257146249842938
+          },
+          "workflow/Q4_ORIGINAL/evaluation/unknown": {
+            "elapsed_seconds": 2418.4508421289793,
+            "line": 8979,
+            "rss_bytes": 7315034112,
+            "timestamp_ns": 1790257145980212650
+          },
+          "workflow/Q4_ORIGINAL/factor/unknown": {
+            "elapsed_seconds": 415.2678174210014,
+            "line": 1563,
+            "rss_bytes": 6945210368,
+            "timestamp_ns": 1790254958434532598
+          },
+          "workflow/Q4_ORIGINAL/preflight/unknown": {
+            "elapsed_seconds": 5.104211716999998,
+            "line": 21,
+            "rss_bytes": 428318720,
+            "timestamp_ns": 1790254511426067899
+          },
+          "workflow/Q4_ORIGINAL/setup/unknown": {
+            "elapsed_seconds": 52.745826400991064,
+            "line": 207,
+            "rss_bytes": 1042812928,
+            "timestamp_ns": 1790254563448442647
+          },
+          "workflow/Q4_ORIGINAL/solve/between_pc": {
+            "elapsed_seconds": 2385.4729343839863,
+            "line": 8857,
+            "rss_bytes": 7326449664,
+            "timestamp_ns": 1790257110022215124
+          },
+          "workflow/Q4_ORIGINAL/solve/pc": {
+            "elapsed_seconds": 2059.8766803259787,
+            "line": 7651,
+            "rss_bytes": 7321653248,
+            "timestamp_ns": 1790256754872592703
+          },
+          "workflow/Q4_ORIGINAL/solve/unknown": {
+            "elapsed_seconds": 540.6564926779829,
+            "line": 2025,
+            "rss_bytes": 7089168384,
+            "timestamp_ns": 1790255095665795293
+          },
+          "workflow/unknown/unknown/unknown": {
+            "elapsed_seconds": 0.5137063629808836,
+            "line": 3,
+            "rss_bytes": 125358080,
+            "timestamp_ns": 1790254506835496655
+          }
+        },
+        "sum_matches": true,
+        "worker_phase": {
+          "active_pc": null,
+          "clock_error": null,
+          "phase": "solve",
+          "phase_started_clock": {
+            "boottime": 168637.65542449,
+            "monotonic": 168637.655423513,
+            "utc_ns": 1790255088744218828
+          },
+          "phase_started_monotonic": 168637.655425268,
+          "schema": "task039extra.v14.workflow-phase.v1",
+          "solve_subphase": "between_pc",
+          "stage": "Q4_ORIGINAL"
+        },
+        "workflow_stage": "workflow"
+      },
+      "workflow_metrics": {
+        "iterations": 126,
+        "pure_ksp_monotonic_seconds": 1837.17495212,
+        "resolved_config_sha256": "5b4689e4c9ed217c38a266418537933cf8ba956c3032806d8a3123c0480e2c93",
+        "setup_monotonic_seconds": 533.7549639960052,
+        "worker_summary_path": "results/euv_grazing1_phi0/task39extra_v29_a4_tensor_h6_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260924T125506.302465Z/physical_dual_condensed_a4_tensor_h6_v29_summary.json",
+        "worker_summary_sha256": "b2b986afd144b17e1c0adc001409c65f2fd282abbcc4076c713354267768a4ce",
+        "workflow_monotonic_seconds": 2422.426388672
+      }
+    },
+    "V30": {
+      "event_log": {
+        "bytes": 12278326,
+        "intervals": {
+          "common_setup": {
+            "end_event": "v14_common_setup_complete",
+            "end_line": 10,
+            "end_utc": "2026-09-28T14:33:03.470149+00:00",
+            "seconds": 129.012606572,
+            "start_event": "v14_common_setup_started",
+            "start_line": 3,
+            "start_utc": "2026-09-28T14:30:54.457542+00:00",
+            "status": "derived_wall_interval"
+          },
+          "h6_setup": {
+            "end_event": "h6_original_window_and_packed_action_complete",
+            "end_line": 70,
+            "end_utc": "2026-09-28T14:38:28.096818+00:00",
+            "seconds": 58.801310342,
+            "start_event": "h6_original_setup_started",
+            "start_line": 69,
+            "start_utc": "2026-09-28T14:37:29.295508+00:00",
+            "status": "derived_wall_interval"
+          },
+          "official_postprocess": {
+            "end_event": "q4_official_postprocess_ended",
+            "end_line": 1531,
+            "end_utc": "2026-09-28T15:16:44.572846+00:00",
+            "seconds": 15.547788608,
+            "start_event": "q4_official_postprocess_started",
+            "start_line": 1525,
+            "start_utc": "2026-09-28T15:16:29.025057+00:00",
+            "status": "derived_wall_interval"
+          },
+          "outer_solve_end": {
+            "event": "q4_outer_solve_finished",
+            "line": 1524,
+            "utc": "2026-09-28T15:16:29.018329+00:00"
+          },
+          "outer_solve_start": {
+            "reason": "no matching outer-solve-start event in selected event ledger",
+            "status": "unknown_boundary"
+          },
+          "p4_numeric_observed": {
+            "end_event": "schur_factor_numeric_observed",
+            "end_line": 40,
+            "end_utc": "2026-09-28T14:37:18.860877+00:00",
+            "seconds": 225.495082845,
+            "start_event": "schur_factor_numeric_started",
+            "start_line": 38,
+            "start_utc": "2026-09-28T14:33:33.365794+00:00",
+            "status": "derived_wall_interval"
+          },
+          "p4_numeric_tail": {
+            "end_event": "schur_factor_numeric_complete",
+            "end_line": 46,
+            "end_utc": "2026-09-28T14:37:18.889354+00:00",
+            "seconds": 0.028476887,
+            "start_event": "schur_factor_numeric_observed",
+            "start_line": 40,
+            "start_utc": "2026-09-28T14:37:18.860877+00:00",
+            "status": "derived_wall_interval"
+          },
+          "p4_symbolic": {
+            "end_event": "schur_factor_symbolic_complete",
+            "end_line": 33,
+            "end_utc": "2026-09-28T14:33:33.347477+00:00",
+            "seconds": 0.596754921,
+            "start_event": "schur_factor_symbolic_started",
+            "start_line": 32,
+            "start_utc": "2026-09-28T14:33:32.750723+00:00",
+            "status": "derived_wall_interval"
+          },
+          "p6_local_builder": {
+            "end_event": "v30q4_p6_local_setup_complete",
+            "end_line": 104,
+            "end_utc": "2026-09-28T14:39:14.591337+00:00",
+            "seconds": 45.459794781,
+            "start_event": "v30q4_p6_local_setup_started",
+            "start_line": 84,
+            "start_utc": "2026-09-28T14:38:29.131542+00:00",
+            "status": "derived_wall_interval"
+          },
+          "q4_setup_to_h6_boundary": {
+            "end_event": "q4_h6_outer_setup_start",
+            "end_line": 62,
+            "end_utc": "2026-09-28T14:37:29.225244+00:00",
+            "seconds": 265.342478397,
+            "start_event": "q4_setup_started",
+            "start_line": 16,
+            "start_utc": "2026-09-28T14:33:03.882766+00:00",
+            "status": "derived_wall_interval"
+          },
+          "release_check": {
+            "end_event": "q4_release_check_ended",
+            "end_line": 1522,
+            "end_utc": "2026-09-28T15:16:29.015800+00:00",
+            "seconds": 10.370654376,
+            "start_event": "q4_release_check_started",
+            "start_line": 1498,
+            "start_utc": "2026-09-28T15:16:18.645146+00:00",
+            "status": "derived_wall_interval"
+          }
+        },
+        "line_count": 1534,
+        "path": "results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/v30q4_events.jsonl",
+        "selected_events": [
+          {
+            "event": "v14_common_setup_started",
+            "line": 3,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790605854457542341,
+            "utc": "2026-09-28T14:30:54.457542+00:00"
+          },
+          {
+            "event": "v14_p64_transfer_complete",
+            "line": 5,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790605935976349642,
+            "utc": "2026-09-28T14:32:15.976350+00:00"
+          },
+          {
+            "event": "v14_common_setup_complete",
+            "line": 10,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790605983470148913,
+            "utc": "2026-09-28T14:33:03.470149+00:00"
+          },
+          {
+            "event": "q4_setup_started",
+            "line": 16,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790605983882765634,
+            "utc": "2026-09-28T14:33:03.882766+00:00"
+          },
+          {
+            "event": "schur_factor_symbolic_started",
+            "line": 32,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790606012750722543,
+            "utc": "2026-09-28T14:33:32.750723+00:00"
+          },
+          {
+            "event": "schur_factor_symbolic_complete",
+            "line": 33,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790606013347477464,
+            "utc": "2026-09-28T14:33:33.347477+00:00"
+          },
+          {
+            "event": "schur_factor_numeric_started",
+            "line": 38,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790606013365793691,
+            "utc": "2026-09-28T14:33:33.365794+00:00"
+          },
+          {
+            "event": "schur_factor_numeric_observed",
+            "line": 40,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790606238860876536,
+            "utc": "2026-09-28T14:37:18.860877+00:00"
+          },
+          {
+            "event": "schur_factor_numeric_complete",
+            "line": 46,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790606238889353423,
+            "utc": "2026-09-28T14:37:18.889354+00:00"
+          },
+          {
+            "event": "q4_h6_outer_setup_start",
+            "line": 62,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790606249225244031,
+            "utc": "2026-09-28T14:37:29.225244+00:00"
+          },
+          {
+            "event": "h6_original_setup_started",
+            "line": 69,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790606249295508133,
+            "utc": "2026-09-28T14:37:29.295508+00:00"
+          },
+          {
+            "event": "h6_original_window_and_packed_action_complete",
+            "line": 70,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790606308096818475,
+            "utc": "2026-09-28T14:38:28.096818+00:00"
+          },
+          {
+            "event": "v30q4_p6_local_setup_started",
+            "line": 84,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790606309131542196,
+            "utc": "2026-09-28T14:38:29.131542+00:00"
+          },
+          {
+            "event": "v30q4_p6_local_setup_complete",
+            "line": 104,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790606354591336977,
+            "utc": "2026-09-28T14:39:14.591337+00:00"
+          },
+          {
+            "event": "q4_release_check_started",
+            "line": 1498,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790608578645146108,
+            "utc": "2026-09-28T15:16:18.645146+00:00"
+          },
+          {
+            "event": "q4_release_check_ended",
+            "line": 1522,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790608589015800484,
+            "utc": "2026-09-28T15:16:29.015800+00:00"
+          },
+          {
+            "event": "q4_outer_solve_finished",
+            "line": 1524,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790608589018328968,
+            "utc": "2026-09-28T15:16:29.018329+00:00"
+          },
+          {
+            "event": "q4_official_postprocess_started",
+            "line": 1525,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790608589025057119,
+            "utc": "2026-09-28T15:16:29.025057+00:00"
+          },
+          {
+            "event": "q4_official_postprocess_ended",
+            "line": 1531,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790608604572845727,
+            "utc": "2026-09-28T15:16:44.572846+00:00"
+          },
+          {
+            "event": "q4_fullspace_stage_complete",
+            "line": 1532,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790608604574482410,
+            "utc": "2026-09-28T15:16:44.574482+00:00"
+          },
+          {
+            "event": "v30q4_worker_complete",
+            "line": 1534,
+            "stage": "Q4_ORIGINAL",
+            "timestamp_ns": 1790608605989238797,
+            "utc": "2026-09-28T15:16:45.989239+00:00"
+          }
+        ],
+        "sha256": "0ce17cb01c5ea383e55351b80420dafcbc5b570ae79c878b8c16f5f1306f87f5",
+        "clock_basis": {
+          "source_field": "timestamp_ns",
+          "linux_clock": "CLOCK_REALTIME",
+          "meaning": "UTC/realtime wall-clock interval; adjustable and not monotonic"
+        }
+      },
+      "resources": {
+        "bytes": 70109738,
+        "members": [
+          {
+            "command": "python scripts/run_case.py <versioned input> --v14-time-policy observe_only",
+            "identity_status": "not_recorded",
+            "pid": 1005025,
+            "ppid": 333,
+            "role": "workflow_parent",
+            "rss_bytes": 36958208,
+            "stage": "workflow",
+            "start_ticks": null,
+            "swap_bytes": 0
+          },
+          {
+            "command": "mpiexec -n 1 python -m src.runners.task038_input_worker",
+            "identity_status": "not_recorded",
+            "pid": 1005048,
+            "ppid": 1005025,
+            "role": "MPI launcher",
+            "rss_bytes": 14417920,
+            "stage": "workflow",
+            "start_ticks": null,
+            "swap_bytes": 0
+          },
+          {
+            "command": "python -m src.runners.task038_input_worker",
+            "identity_status": "not_recorded",
+            "pid": 1005051,
+            "ppid": 1005048,
+            "role": "numerical worker",
+            "rss_bytes": 7273127936,
+            "stage": "workflow",
+            "start_ticks": null,
+            "swap_bytes": 0
+          },
+          {
+            "command": "x86_64-linux-gn compiling generated FFCx form",
+            "identity_status": "not_recorded",
+            "pid": 1007398,
+            "ppid": 1005051,
+            "role": "FFCx JIT compiler child",
+            "rss_bytes": 2846720,
+            "stage": "workflow",
+            "start_ticks": null,
+            "swap_bytes": 0
+          },
+          {
+            "command": "cc1 compiling generated FFCx form",
+            "identity_status": "not_recorded",
+            "pid": 1007399,
+            "ppid": 1007398,
+            "role": "FFCx JIT compiler child",
+            "rss_bytes": 716840960,
+            "stage": "workflow",
+            "start_ticks": null,
+            "swap_bytes": 0
+          }
+        ],
+        "neighbor_samples": [
+          {
+            "elapsed_seconds": 541.6260826039943,
+            "line": 2129,
+            "rss_bytes": 7926743040,
+            "stage": "workflow",
+            "swap_bytes": 0,
+            "timestamp_ns": 1790606437185019681,
+            "utc": "2026-09-28T14:40:37.185020+00:00"
+          },
+          {
+            "elapsed_seconds": 541.8806735970138,
+            "line": 2130,
+            "rss_bytes": 7958216704,
+            "stage": "workflow",
+            "swap_bytes": 0,
+            "timestamp_ns": 1790606437439681907,
+            "utc": "2026-09-28T14:40:37.439682+00:00"
+          },
+          {
+            "elapsed_seconds": 542.390895006014,
+            "line": 2132,
+            "rss_bytes": 7956516864,
+            "stage": "workflow",
+            "swap_bytes": 0,
+            "timestamp_ns": 1790606437949872186,
+            "utc": "2026-09-28T14:40:37.949872+00:00"
+          },
+          {
+            "elapsed_seconds": 542.6457142930012,
+            "line": 2133,
+            "rss_bytes": 7919755264,
+            "stage": "workflow",
+            "swap_bytes": 0,
+            "timestamp_ns": 1790606438204499023,
+            "utc": "2026-09-28T14:40:38.204499+00:00"
+          }
+        ],
+        "peak_elapsed_seconds": 542.1349218020041,
+        "peak_line": 2131,
+        "peak_member_rss_sum_bytes": 8044191744,
+        "peak_rss_bytes": 8044191744,
+        "peak_utc": "2026-09-28T14:40:37.693880+00:00",
+        "pss_sampling_policy": "disabled_by_profile",
+        "pss_status": "DISABLED_BY_PROFILE",
+        "sample_count": 9955,
+        "sha256": "759581d80411128f016592c1ce1727c9bbe3f49dd3c3495f0b2f5bbc0a55b411",
+        "source_path": "results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/watchdog/resources.jsonl",
+        "stage_peaks": {
+          "workflow/Q4_ORIGINAL/assembly/unknown": {
+            "elapsed_seconds": 151.09424217700143,
+            "line": 595,
+            "rss_bytes": 2090020864,
+            "timestamp_ns": 1790606011091102192
+          },
+          "workflow/Q4_ORIGINAL/cleanup/unknown": {
+            "elapsed_seconds": 2528.9350566020003,
+            "line": 9941,
+            "rss_bytes": 7512875008,
+            "timestamp_ns": 1790608604940647740
+          },
+          "workflow/Q4_ORIGINAL/evaluation/unknown": {
+            "elapsed_seconds": 2528.4261085010075,
+            "line": 9939,
+            "rss_bytes": 7512875008,
+            "timestamp_ns": 1790608604431523066
+          },
+          "workflow/Q4_ORIGINAL/factor/unknown": {
+            "elapsed_seconds": 500.1898346969974,
+            "line": 1966,
+            "rss_bytes": 7140896768,
+            "timestamp_ns": 1790606392794428536
+          },
+          "workflow/Q4_ORIGINAL/preflight/unknown": {
+            "elapsed_seconds": 5.088517525000498,
+            "line": 21,
+            "rss_bytes": 425295872,
+            "timestamp_ns": 1790605854263832108
+          },
+          "workflow/Q4_ORIGINAL/setup/unknown": {
+            "elapsed_seconds": 106.8358057650039,
+            "line": 421,
+            "rss_bytes": 1963180032,
+            "timestamp_ns": 1790605963897184874
+          },
+          "workflow/Q4_ORIGINAL/solve/between_pc": {
+            "elapsed_seconds": 542.1349218020041,
+            "line": 2131,
+            "rss_bytes": 8044191744,
+            "timestamp_ns": 1790606437693880030
+          },
+          "workflow/Q4_ORIGINAL/solve/pc": {
+            "elapsed_seconds": 2392.641822083009,
+            "line": 9405,
+            "rss_bytes": 7517224960,
+            "timestamp_ns": 1790608458442671706
+          },
+          "workflow/Q4_ORIGINAL/solve/unknown": {
+            "elapsed_seconds": 640.121218654007,
+            "line": 2514,
+            "rss_bytes": 7368986624,
+            "timestamp_ns": 1790606545893731670
+          },
+          "workflow/unknown/unknown/unknown": {
+            "elapsed_seconds": 0.5121155850065406,
+            "line": 3,
+            "rss_bytes": 125280256,
+            "timestamp_ns": 1790605849687497599
+          }
+        },
+        "sum_matches": true,
+        "worker_phase": {
+          "active_pc": null,
+          "clock_error": null,
+          "phase": "solve",
+          "phase_started_clock": {
+            "boottime": 248158.898310547,
+            "monotonic": 248158.89830735,
+            "utc_ns": 1790606392976917220
+          },
+          "phase_started_monotonic": 248158.898313052,
+          "schema": "task039extra.v14.workflow-phase.v1",
+          "solve_subphase": "between_pc",
+          "stage": "Q4_ORIGINAL"
+        },
+        "workflow_stage": "workflow"
+      },
+      "workflow_metrics": {
+        "iterations": 126,
+        "pure_ksp_monotonic_seconds": 1854.603096447,
+        "resolved_config_sha256": "6912022c6d8a9c58c6ad63b5a18eea85d2b50223f72efd255ba009433f814adc",
+        "setup_monotonic_seconds": 626.9310128289799,
+        "worker_summary_path": "results/euv_grazing1_phi0/task39extra_v30_workstation_guided_original_h7p5_v1__full3d_iterative__mpi1__Mna/20260928T143049.147807Z/physical_dual_condensed_workstation_guided_local_v30_summary.json",
+        "worker_summary_sha256": "60df6b8051c410bdbb224886a780d6638a7800d21d198644168a6e822f29c193",
+        "workflow_monotonic_seconds": 2532.7591178629955
+      }
+    },
+    "comparison": {
+      "peak_attribution": "At these two peak samples V30 includes concurrent FFCx gcc/cc1 descendants of 719687680 B; V30 numerical worker is 1912832 B below V29 and parent+mpiexec are 32768 B below. This exactly explains the difference between the two sampled peaks, not a whole-run allocator attribution.",
+      "peak_member_delta_decomposition_bytes": {
+        "V30_compiler_descendants": 719687680,
+        "matches_rss_peak_delta": true,
+        "numerical_worker_delta_v30_minus_v29": -1912832,
+        "sum": 717742080,
+        "workflow_parent_and_mpiexec_delta": -32768
+      },
+      "peak_scope": "Both are workflow/Q4_ORIGINAL samples with worker_phase=solve, solve_subphase=between_pc and active_pc=null. This phase label is not treated as pure KSP; the outer-solve-start event boundary is missing.",
+      "pure_ksp_delta_seconds": 17.428144327000155,
+      "rss_peak_delta_bytes": 717742080,
+      "setup_attribution": "PARTIALLY_ATTRIBUTED: common-setup interval and selected substage boundaries are measured, but intervals overlap or lack complete coverage. Remaining setup delta is unknown; no single cause is assigned.",
+      "setup_delta_seconds": 93.17604883297463,
+      "start_ticks": "unknown: watchdog member records omit start_ticks; no live /proc backfill was used.",
+      "workflow_delta_seconds": 110.33272919099545
+    }
+  },
+  "timing_basis": {
+    "event_intervals": "Derived by subtracting event timestamp_ns values from CLOCK_REALTIME.",
+    "workflow_setup_and_ksp": "Use the run summaries monotonic counters as a separate timing basis.",
+    "comparison_rule": "Do not add UTC/realtime event intervals to monotonic setup or KSP intervals; overlapping parent/child intervals are not additive."
+  },
+  "component_identity_authority": {
+    "scope": "Pinned floating-point quadrature and coefficient buffer identities; byte hashes do not represent physical shape counts.",
+    "records": [
+      {
+        "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_compact.json",
+        "sha256": "ff41f8b91643cb150df56f45096f633333a0d70d5a4363651b9e4445e59f0318"
+      },
+      {
+        "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_components.json",
+        "sha256": "d37ae3e98b711978b3413cbf940f453be829a4168810f509ca31c25a50674f7e"
+      }
+    ]
+  }
+}
