@@ -1,0 +1,5 @@
+schema_version = 1
+[task042_v7]
+stage = "material_inventory"
+run_id = "task042_v7_material_inventory"
+material_table_id = "SI_OPTICAL_CONSTANTS_USER_20260929_V1"

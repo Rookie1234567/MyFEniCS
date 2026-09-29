@@ -88,6 +88,7 @@ class AssemblyTimeCondensedSystem:
     owned_active_rows: int
     owned_appended_rows: int
     retained_local_schur_by_class: Mapping[tuple[Any, ...], np.ndarray] | None = None
+    retained_local_original_by_class: Mapping[tuple[Any, ...], np.ndarray] | None = None
     _destroyed: bool = field(default=False, init=False, repr=False)
 
     def create_active_vector(self) -> PETSc.Vec:
@@ -1203,6 +1204,7 @@ def build_unconstrained_assembly_time_condensation(
     strict_local_checks: bool = False,
     defer_final_assembly: bool = False,
     retain_local_schur_for_matrix_free: bool = False,
+    retain_local_original_for_native_audit: bool = False,
     materialize_global_matrix: bool = True,
     geometry_tolerance: float = 1.0e-11,
     geometry_identity_policy: str = "rounded_12",
@@ -1216,6 +1218,9 @@ def build_unconstrained_assembly_time_condensation(
 
     ``retain_local_schur_for_matrix_free`` retains one readonly Schur array
     per local class for a later owner-computes action.
+
+    The independent audit opt-in retains original, oriented cell tensors.
+    It allocates no global matrix and leaves ordinary condensation unchanged.
     """
 
     if np.dtype(compiled_form.dtype) != np.dtype(np.complex128):
@@ -1472,6 +1477,7 @@ def build_unconstrained_assembly_time_condensation(
             "mpc_expansion_applied_per_cell": True,
         }
     schur_cache: dict[tuple[Any, ...], np.ndarray] = {}
+    original_audit_cache: dict[tuple[Any, ...], np.ndarray] = {}
     recovery_cache: dict[tuple[Any, ...], np.ndarray] = {}
     lu_cache: dict[tuple[Any, ...], tuple[np.ndarray, np.ndarray]] = {}
     rhs_projection_cache: dict[tuple[Any, ...], np.ndarray] = {}
@@ -1505,6 +1511,10 @@ def build_unconstrained_assembly_time_condensation(
                     dtype=np.uint32,
                 ),
             )
+            if retain_local_original_for_native_audit:
+                original = oriented.copy()
+                original.setflags(write=False)
+                original_audit_cache[class_key] = original
             action_tensor_identities[repr(class_key)] = {
                 "shape": [int(value) for value in tensor.shape],
                 "dtype": "complex128",
@@ -1717,6 +1727,11 @@ def build_unconstrained_assembly_time_condensation(
             if retain_local_schur_for_matrix_free
             else None
         ),
+        retained_local_original_by_class=(
+            MappingProxyType(original_audit_cache)
+            if retain_local_original_for_native_audit
+            else None
+        ),
         build_audit={
             "schema_version": "task035b.assembly-time-cell-condensation.v1",
             "status": "unconstrained_trace_schur_built_without_full_matrix",
@@ -1766,6 +1781,9 @@ def build_unconstrained_assembly_time_condensation(
                 else "none"
             ),
             "retained_local_schur_enabled": bool(retain_local_schur_for_matrix_free),
+            "retained_original_audit_bytes_local": sum(
+                value.nbytes for value in original_audit_cache.values()
+            ),
             "shared_readonly_identity_cache": bool(share_identity_cache),
             "shared_identity_cache_dimensions": sorted(
                 int(value) for value in shared_identity_cache

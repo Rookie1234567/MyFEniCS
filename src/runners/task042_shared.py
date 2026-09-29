@@ -432,6 +432,12 @@ def launch(specification):
     profile = specification.solver["preconditioner"]
     stage = TASK042_PROFILES[profile]
     expected_mode = "ml" if stage in ("F3-train", "V6-ML-INTERFACE") else "fe"
+    if stage.startswith("V7-"):
+        expected_mode = specification.derived["environment_mode"]
+        from src.runners.neural_fe_continuation import budget_snapshot
+        remaining_budget = budget_snapshot()["remaining_seconds"]
+        if remaining_budget <= 0:
+            raise RuntimeError("V6+V7 cumulative numerical budget exhausted")
     if os.environ.get("TASK042_ENV_MODE") != expected_mode:
         raise RuntimeError(
             f"Task042 {stage} requires independent {expected_mode} environment"
@@ -441,7 +447,7 @@ def launch(specification):
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         baseline = audit(
             observed_activity=stage in ("V3-reuse", "V3-overlap")
-            or stage.startswith(("V4-", "V5-", "V6-"))
+            or stage.startswith(("V4-", "V5-", "V6-", "V7-"))
         )
         os.sched_setaffinity(0, {baseline["cpu"]})
         os.nice(10)
@@ -482,6 +488,12 @@ def launch(specification):
             state.update(physical_model_complete=False, physical_operator_sha256=None,
                          physical_hash_meaning="unresolved material-blocked design only",
                          material_status="MATERIAL_0P7NM_BLOCKED", operator_constructed=False)
+        if stage.startswith("V7-"):
+            state.update(physical_model_complete=specification.derived["physical_model_complete"],
+                         physical_operator_sha256=specification.derived["physical_operator_sha256"],
+                         physical_hash_meaning=specification.derived["identity_hash_meaning"],
+                         material_status="MATERIAL_READY_USER_SUPPLIED",
+                         formal_pde=stage != "V7-M0")
         write_json(directory / "run_manifest.json", state)
         for filename, text in (
             ("source_sha.txt", source),
@@ -496,6 +508,8 @@ def launch(specification):
             if stage == "F3-train"
             else "src.runners.neural_fe_interface"
             if stage.startswith("V6-")
+            else "src.runners.neural_fe_continuation"
+            if stage.startswith("V7-")
             else "src.runners.task042_experiment",
             str(specification.source_path),
             str(directory),
@@ -503,7 +517,7 @@ def launch(specification):
         result = supervise(
             command,
             directory / "supervision",
-            wall_seconds=600 if stage.startswith("V6-") else 10800,
+            wall_seconds=min(specification.execution["timeout_seconds"], remaining_budget) if stage.startswith("V7-") else 600 if stage.startswith("V6-") else 10800,
             interval=0.5,
             source_state=state,
             worker_environment={"TASK042_WATCHDOG_PARENT_PID": str(os.getpid())},

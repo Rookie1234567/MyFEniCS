@@ -30,6 +30,9 @@ TASK042_PROFILES = {
     "task042_shared_v5_error_localization": "V5-ERROR",
     "task042_v6_geometry_trace_interface": "V6-FE-INTERFACE",
     "task042_v6_neural_packet_vjp": "V6-ML-INTERFACE",
+    "task042_v7_material_inventory": "V7-M0",
+    "task042_v7_real_fe_interface": "V7-M1-FE",
+    "task042_v7_real_equation_gradient": "V7-M1-GRAD",
 }
 
 

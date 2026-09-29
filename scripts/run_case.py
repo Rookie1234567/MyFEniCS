@@ -48,7 +48,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.physical_pc_profile is None and (args.profile_variant != 'R0' or args.profile_r0_reference is not None):
             raise InputError('fast profile options require --physical-pc-profile')
         from src.io.neural_fe_interface import load_interface
-        specification = load_interface(args.input_path)
+        from src.io.neural_fe_continuation import load_continuation
+        specification = load_continuation(args.input_path) or load_interface(args.input_path)
         if specification is None:
             specification = load_and_resolve(args.input_path)
         from src.io.task042_profile import TASK042_PROFILES
