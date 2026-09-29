@@ -263,7 +263,12 @@ def run(specification, directory):
             path = owned_file(old["state"], parent.parent)
             if stage == "V8-C3-EQUIVALENCE":
                 result = equivalence(
-                    design, packet, moments, path, plan["batch_execution"]
+                    design,
+                    packet,
+                    moments,
+                    path,
+                    plan["batch_execution"],
+                    sample=sample,
                 )
                 index_name = "batch_equivalence" if result["status"] == "PASS" else None
             else:
@@ -273,7 +278,13 @@ def run(specification, directory):
                 batch = specification.derived["batch_size"]
                 pair = specification.derived["pair_id"]
                 result = microbenchmark(
-                    design, packet, moments, path, plan["batch_execution"], batch
+                    design,
+                    packet,
+                    moments,
+                    path,
+                    plan["batch_execution"],
+                    batch,
+                    sample=sample,
                 )
                 result["pair_id"] = pair
                 index_name = f"batch_pair{pair}_size{batch}"

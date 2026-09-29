@@ -11,7 +11,9 @@ import torch
 
 
 class BatchedMoments:
-    def __init__(self, model, packet, batch_size=8, cache_limit=512 * 2**20):
+    def __init__(
+        self, model, packet, batch_size=8, cache_limit=512 * 2**20, resource_sample=None
+    ):
         if batch_size != 8:
             raise ValueError("only the reviewed batch8 candidate")
         began = perf_counter()
@@ -27,6 +29,21 @@ class BatchedMoments:
             packet["transforms"].size * 16 + packet["interpolation"].size * 16
         )
         self.cache_upper_bytes += count * (9 * 16 + packet["owner_rows"].shape[1] * 24)
+        # Conservative one-batch forward/backward tape, hidden activations,
+        # carrier tensors, moment workspaces, and gradient buffers. The
+        # additional allowance covers cache construction and cloned Adam.
+        self.graph_upper_bytes = (
+            min(8, count) * points * ((3 + 3 * 64 + 48) * 8 * 12 + 8 * 3 * 16 * 8)
+        )
+        self.allocation_upper_bytes = (
+            2 * self.cache_upper_bytes + self.graph_upper_bytes + 64 * 2**20
+        )
+        self.resource_sample = resource_sample
+        if (
+            resource_sample is not None
+            and resource_sample["rss_bytes"] + self.allocation_upper_bytes >= 12 * 2**30
+        ):
+            raise ValueError("batch cache/graph/test capacity exceeds planning cap")
         if self.cache_upper_bytes > cache_limit:
             raise ValueError("new persistent batch cache exceeds reviewed 512MiB")
         self.interpolation = torch.as_tensor(
@@ -123,6 +140,9 @@ class BatchedMoments:
             cache_upper_bytes=self.cache_upper_bytes,
             new_persistent_cache_bytes=self.cache_bytes,
             cache_limit_bytes=512 * 2**20,
+            transient_batch_graph_upper_bytes=self.graph_upper_bytes,
+            allocation_upper_bytes=self.allocation_upper_bytes,
+            resource_sample_before_allocation=self.resource_sample,
             setup_seconds=self.setup_seconds,
             original_orientation_and_owner=True,
             MPC_mapping="unchanged canonical masters; original action expands complex slave phases",

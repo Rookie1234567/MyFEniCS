@@ -82,7 +82,7 @@ class OptimizerTransaction:
                 state_kind="LAST_TRIAL_AT_EXCEPTION",
                 phase=phase,
                 outer_attempt_id=self.attempts,
-                closure_id=counts().get("closures"),
+                closure_id=counts().get("closure_calls", counts().get("closures")),
                 counts_at_exception=deepcopy(counts()),
                 exception=type(error).__name__,
                 acceptance="UNKNOWN_NOT_COMMITTED",

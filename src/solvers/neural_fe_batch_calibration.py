@@ -83,11 +83,11 @@ def adam_clone(design, theta, ports, gradient):
     return np.r_[parameters(model), alpha.detach().numpy()]
 
 
-def equivalence(design, packet, moments, frozen_path, plan):
+def equivalence(design, packet, moments, frozen_path, plan, *, sample=None):
     began = perf_counter()
     model = new_model(design)
     zero = parameters(model)
-    cache = BatchedMoments(model, moments)
+    cache = BatchedMoments(model, moments, resource_sample=sample() if sample else None)
     rng = np.random.default_rng(plan["fallback_nonzero_seed"])
     witness = zero + rng.standard_normal(zero.shape) * plan["fallback_scale"]
     ports = (
@@ -101,7 +101,7 @@ def equivalence(design, packet, moments, frozen_path, plan):
         )
     rows = []
     for name, theta, alpha in (
-        ("ZERO_INITIALIZATION", zero, np.zeros(2 * packet.np)),
+        ("ZERO_INITIALIZATION", zero, ports),
         ("REGISTERED_NONZERO_INTERFACE_FALLBACK", witness, ports),
         ("V7_FROZEN_NEURAL", old_theta, old_ports),
     ):
@@ -204,7 +204,7 @@ def equivalence(design, packet, moments, frozen_path, plan):
     )
 
 
-def microbenchmark(design, packet, moments, frozen_path, plan, batch):
+def microbenchmark(design, packet, moments, frozen_path, plan, batch, *, sample=None):
     began = perf_counter()
     model = new_model(design)
     with np.load(frozen_path, allow_pickle=False) as state:
@@ -214,7 +214,11 @@ def microbenchmark(design, packet, moments, frozen_path, plan, batch):
         )
     assign(model, theta)
     setup = perf_counter()
-    cache = BatchedMoments(model, moments) if batch == 8 else None
+    cache = (
+        BatchedMoments(model, moments, resource_sample=sample() if sample else None)
+        if batch == 8
+        else None
+    )
     cold_setup = perf_counter() - setup
     warm = []
     samples = []
