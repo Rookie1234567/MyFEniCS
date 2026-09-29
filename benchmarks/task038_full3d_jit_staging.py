@@ -236,6 +236,10 @@ def _process_fact(
     pid: int, stage: str, *, collect_pss: bool = True
 ) -> dict | None:
     try:
+        stat_before = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()
+        if len(stat_before) <= 19:
+            return None
+        start_ticks = int(stat_before[19])
         values = _status_text(pid)
         ppid_text = values.get("PPid")
         state = values.get("State", "").split(maxsplit=1)[0]
@@ -252,8 +256,12 @@ def _process_fact(
         comm = values.get("Name", "")
         if not comm:
             return None
+        stat_after = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()
+        if len(stat_after) <= 19 or int(stat_after[19]) != start_ticks:
+            return None
         return {
             "pid": pid,
+            "start_ticks": start_ticks,
             "ppid": int(ppid_text),
             "comm": comm,
             "state": state,
@@ -362,9 +370,23 @@ def process_tree_snapshot(
         if collect_pss
         else None
     )
+    identity_pairs = [
+        (int(fact["pid"]), int(fact["start_ticks"]))
+        for fact in members
+        if isinstance(fact.get("pid"), int)
+        and isinstance(fact.get("start_ticks"), int)
+    ]
+    identity_complete = (
+        len(identity_pairs) == len(members)
+        and len({pid for pid, _ in identity_pairs}) == len(identity_pairs)
+        and (int(root_pid), next((ticks for pid, ticks in identity_pairs if pid == int(root_pid)), -1))
+        in identity_pairs
+    )
     sample = {
         "schema": SAMPLE_SCHEMA,
         "root_pid": int(root_pid),
+        "identity_complete": identity_complete,
+        "identity_count": len(identity_pairs),
         "stage": stage,
         "timestamp_ns": time.time_ns(),
         "exit_code": exit_code,

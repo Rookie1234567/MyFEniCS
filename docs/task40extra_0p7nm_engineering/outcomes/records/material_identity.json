@@ -1,0 +1,136 @@
+{
+  "calculation": {
+    "atom_density_per_m3": 4.994095901485108e+28,
+    "atomic_model_limit": "Independent-atom elemental scattering factor is not sample-specific and is weakly supported at atomic-scale feature sizes.",
+    "avogadro_constant_per_mol": 6.02214076e+23,
+    "beta": 4.3236152269189515e-06,
+    "classical_electron_radius_m": 2.8179403205e-15,
+    "cxro_refractive_index": {
+      "expression": "1-delta-i*beta",
+      "imag": -4.3236152269189515e-06,
+      "real": 0.9998851703688496
+    },
+    "delta": 0.00011482963115036948,
+    "density_kg_m3": 2329.1,
+    "density_source_units": "2.3291 g/cm^3 at 20 C converted to 2329.1 kg/m^3",
+    "energy_eV": 1771.2028347600037,
+    "energy_formula": "h*c/(e*lambda)",
+    "f1": 10.462828075875802,
+    "f2": 0.3939509544035157,
+    "hc_over_e_eV_nm": 1239.8419843320025,
+    "interpolation": "linear in photon energy between the two bracketing tabulated points",
+    "interpolation_fraction": 0.5060814482759941,
+    "k0_per_nm": 8.975979010256552,
+    "molar_mass_g_mol": 28.0855,
+    "precision_note": "Reported digits are arithmetic output; f1/f2 and density source precision limit physical significant digits.",
+    "solver_epsilon_r": {
+      "imag": 8.646237495554417e-06,
+      "real": 0.9997703539048498
+    },
+    "solver_refractive_index": {
+      "expression": "conjugate of CXRO n for the solver's exp(-i*omega*t) passive-loss convention",
+      "imag": 4.3236152269189515e-06,
+      "real": 0.9998851703688496
+    },
+    "solver_time_harmonic_convention": "exp(i*k dot r) exp(-i*omega*t)",
+    "wavelength_nm": 0.7
+  },
+  "geometry_identity_sha256": "29b5839216ec96e4cdaaf7ffcf2418a6d61a0a61c731f387be2e4e3e33ec4d12",
+  "material_model_sha256": "7d21c0c1f964c2fe2bf44d2e724fc62e0f68aa9ebc4352c1616e763e7fc11aea",
+  "measurement_status": "published elemental scattering-factor data; not sample-specific measurement",
+  "mode_inventory_identity_sha256": "40e80da12f352c80bf941aa5736c8910e69ea39e230afcf87737b2fbd92b8a78",
+  "physical_model_inputs": {
+    "atom_density_per_m3": 4.994095901485108e+28,
+    "beta": 4.3236152269189515e-06,
+    "delta": 0.00011482963115036948,
+    "density_kg_m3": 2329.1,
+    "energy_eV": 1771.2028347600037,
+    "epsilon_solver": [
+      0.9997703539048498,
+      8.646237495554417e-06
+    ],
+    "f1": 10.462828075875802,
+    "f2": 0.3939509544035157,
+    "molar_mass_kg_mol": 0.0280855,
+    "n_solver": [
+      0.9998851703688496,
+      4.3236152269189515e-06
+    ],
+    "source_rows_sha256": "799cebddbf1f4344a045e1c50e0ac1529d79cc90b1bc6211e8a12c8dacfe629f",
+    "wavelength_nm": 0.7
+  },
+  "physical_model_sha256": "ec0bd05df3c4531ccaadc3475d96b48cb7eebc6dc5aaa4cfe6aac95ebcfcc292",
+  "schema": "task40extra.material_identity.v1",
+  "source": {
+    "absorption_edge_context": {
+      "above_edge": {
+        "energy_eV": 1839.0,
+        "f1": 2.81448,
+        "f2": 4.15734
+      },
+      "below_edge": {
+        "energy_eV": 1838.8,
+        "f1": 2.81266,
+        "f2": 0.366838
+      },
+      "edge_is_not_crossed_by_interpolation": true
+    },
+    "classical_electron_radius_url": "https://physics.nist.gov/cuu/pdf/all.pdf",
+    "density_reference_url": "https://www.nist.gov/document/nistir69692014092620160121revpdf",
+    "excerpt_file_sha256": "2c5d9c77a5fb808b203f909c1dd7b3845129a022d60b33bea22d5f7234237616",
+    "excerpt_path": "docs/task40extra_0p7nm_engineering/outcomes/records/raw/si_nff_excerpt.tsv",
+    "index_convention_url": "https://henke.lbl.gov/optical_constants/pert_form.html",
+    "interpolation_bracket_lines": [
+      576,
+      577
+    ],
+    "molar_mass_url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C7440213&Mask=48&Units=SI",
+    "original_data_path": "docs/task40extra_0p7nm_engineering/outcomes/records/raw/si.nff",
+    "original_data_sha256": "2bbd2aef0292aa392a61942b1c401171b5bc30bb77ab1cab9c08b6264048019a",
+    "raw_excerpt_rows": [
+      {
+        "energy_eV": 1756.82,
+        "f1": 10.6935,
+        "f2": 0.399988
+      },
+      {
+        "energy_eV": 1785.24,
+        "f1": 10.2377,
+        "f2": 0.388059
+      },
+      {
+        "energy_eV": 1814.11,
+        "f1": 9.37605,
+        "f2": 0.376394
+      },
+      {
+        "energy_eV": 1838.8,
+        "f1": 2.81266,
+        "f2": 0.366838
+      },
+      {
+        "energy_eV": 1839.0,
+        "f1": 2.81448,
+        "f2": 4.15734
+      },
+      {
+        "energy_eV": 1843.45,
+        "f1": 7.44375,
+        "f2": 4.14337
+      }
+    ],
+    "retrieved_date": "2026-09-29",
+    "scattering_factor_source_lines": [
+      576,
+      577,
+      578,
+      579,
+      580,
+      581
+    ],
+    "scattering_factors_url": "https://henke.lbl.gov/optical_constants/sf/si.nff",
+    "source_line_number_kind": "1-based physical line numbers in the downloaded .nff file",
+    "source_rows_sha256": "799cebddbf1f4344a045e1c50e0ac1529d79cc90b1bc6211e8a12c8dacfe629f"
+  },
+  "status": "DERIVED_FROM_OFFICIAL_REFERENCE_DATA"
+}

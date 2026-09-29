@@ -1,0 +1,8 @@
+{
+  "classification": "new physical identity; not inherited from 13.5nm Task39",
+  "geometry_identity_sha256": "29b5839216ec96e4cdaaf7ffcf2418a6d61a0a61c731f387be2e4e3e33ec4d12",
+  "material_model_sha256": "7d21c0c1f964c2fe2bf44d2e724fc62e0f68aa9ebc4352c1616e763e7fc11aea",
+  "mode_inventory_identity_sha256": "40e80da12f352c80bf941aa5736c8910e69ea39e230afcf87737b2fbd92b8a78",
+  "physical_model_sha256": "ec0bd05df3c4531ccaadc3475d96b48cb7eebc6dc5aaa4cfe6aac95ebcfcc292",
+  "schema": "task40extra.phase_i_physical_identity.v1"
+}

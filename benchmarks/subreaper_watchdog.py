@@ -288,6 +288,11 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
     stable_since = None
     cache_stamp = None
     observed = set()
+    observed_child_identities: set[tuple[int, int]] = set()
+    sampled_child_identities: set[tuple[int, int]] = set()
+    process_tree_all_status_readable = True
+    process_tree_all_identity_complete = True
+    process_tree_identity_sample_count = 0
     workflow_time_exceeded = False
     solve_time_exceeded = False
     pc_time_exceeded = False
@@ -348,10 +353,31 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                 _reap_adopted(leader.pid)
                 children = _children()
                 observed.update(children)
+                observed_child_identities.update(
+                    (int(pid), int(identity[1])) for pid, identity in children.items()
+                )
                 stage = 'resource_sample'
                 sample = process_tree_snapshot(
                     os.getpid(), 'workflow', exit_code,
                     pss_sampling_policy=pss_sampling_policy,
+                )
+                process_tree_all_status_readable = (
+                    process_tree_all_status_readable
+                    and sample.get('all_status_readable') is True
+                )
+                process_tree_all_identity_complete = (
+                    process_tree_all_identity_complete
+                    and sample.get('identity_complete') is True
+                )
+                process_tree_identity_sample_count += int(
+                    sample.get('identity_count') or 0
+                )
+                sampled_child_identities.update(
+                    (int(member['pid']), int(member['start_ticks']))
+                    for member in sample.get('members', [])
+                    if member.get('pid') != os.getpid()
+                    and isinstance(member.get('pid'), int)
+                    and isinstance(member.get('start_ticks'), int)
                 )
                 current = memory_envelope(memory_policy)
                 elapsed = time.monotonic() - started
@@ -568,8 +594,32 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
             'leader_exit_code': None if leader is None else leader.returncode,
             'descendants_cleared': not remaining, 'remaining_child_pids': sorted(remaining),
             'observed_child_pids': sorted(observed),
+            'observed_child_identities': [
+                {'pid': pid, 'start_ticks': start_ticks}
+                for pid, start_ticks in sorted(observed_child_identities)
+            ],
             'sampled_process_tree_rss_peak_bytes': peak_rss if samples else None,
             'sampled_process_tree_swap_peak_bytes': peak_swap if samples else None,
+            'process_tree_samples': samples,
+            'process_tree_all_status_readable': (
+                bool(samples) and process_tree_all_status_readable
+            ),
+            'process_tree_all_identity_complete': (
+                bool(samples) and process_tree_all_identity_complete
+            ),
+            'process_tree_identity_coverage': (
+                'complete'
+                if samples
+                and process_tree_all_identity_complete
+                and observed_child_identities.issubset(sampled_child_identities)
+                else 'incomplete_or_not_sampled'
+            ),
+            'process_tree_identity_sample_count': process_tree_identity_sample_count,
+            'observed_child_identity_coverage': (
+                'complete'
+                if observed_child_identities.issubset(sampled_child_identities)
+                else 'incomplete'
+            ),
             'memory_scope': 'dedicated subreaper parent plus all descendants; sampled simultaneous RSS',
             'swap_scope': 'same process tree sampled VmSwap; no global swap attribution',
             'global_swap_activity': {'scope': 'WSL-global diagnostic, not dedicated job',

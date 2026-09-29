@@ -27,6 +27,7 @@ class AirBox3DMesh:
     material_plane_alignment: dict[str, object]
     local_refinement_regions: dict[str, list[list[float]]]
     local_h_context: object | None = None
+    rectangular_air_void_audit: dict[str, object] | None = None
 
 
 @dataclass(frozen=True)
@@ -122,6 +123,26 @@ def _mark_cells(msh: mesh.Mesh, cfg: SimulationConfig3D) -> mesh.MeshTags:
         values = apply_v21_frozen_notch(
             midpoints, values, cfg, cell_vertices=cell_vertices
         )
+    elif cfg.air_void_box_nm is not None:
+        if len(cfg.air_void_box_nm) != 6:
+            raise ValueError("air_void_box_nm must contain exactly six coordinates.")
+        x0, x1, y0, y1, z0, z1 = cfg.air_void_box_nm
+        x = midpoints[:, 0]
+        y = midpoints[:, 1]
+        z = midpoints[:, 2]
+        tol_box = 1.0e-10 * max(
+            abs(x1 - x0), abs(y1 - y0), abs(z1 - z0), 1.0
+        )
+        in_void = (
+            (values == cfg.tags.grating)
+            & (x >= x0 - tol_box)
+            & (x <= x1 + tol_box)
+            & (y >= y0 - tol_box)
+            & (y <= y1 + tol_box)
+            & (z >= z0 - tol_box)
+            & (z <= z1 + tol_box)
+        )
+        values[in_void] = cfg.tags.air
     elif cfg.cell_notch is not None:
         from .cell_notch import apply_cell_notch
 
@@ -182,7 +203,107 @@ def _stage4_required_planes_by_axis(cfg: SimulationConfig3D) -> dict[str, list[t
             [("grating_y_min", cfg.grating_y_min), ("grating_y_max", cfg.grating_y_max)]
         )
         planes["z"].append(("grating_z_min", cfg.grating_z_min))
+    if cfg.air_void_box_nm is not None:
+        if len(cfg.air_void_box_nm) != 6:
+            raise ValueError("air_void_box_nm must contain exactly six coordinates.")
+        x0, x1, y0, y1, z0, z1 = cfg.air_void_box_nm
+        planes["x"].extend(
+            [("air_void_x_min", x0), ("air_void_x_max", x1)]
+        )
+        planes["y"].extend(
+            [("air_void_y_min", y0), ("air_void_y_max", y1)]
+        )
+        planes["z"].extend(
+            [("air_void_z_min", z0), ("air_void_z_max", z1)]
+        )
     return planes
+
+
+def _rectangular_air_void_audit(
+    msh: mesh.Mesh,
+    cell_tags: mesh.MeshTags,
+    cfg: SimulationConfig3D,
+) -> dict[str, object] | None:
+    """Check that the explicit air box is meshed and tagged as air."""
+
+    if cfg.air_void_box_nm is None:
+        return None
+    if len(cfg.air_void_box_nm) != 6:
+        raise ValueError("air_void_box_nm must contain exactly six coordinates.")
+    x0, x1, y0, y1, z0, z1 = cfg.air_void_box_nm
+    tdim = msh.topology.dim
+    local_cells = msh.topology.index_map(tdim).size_local
+    cells = np.arange(local_cells, dtype=np.int32)
+    midpoints = mesh.compute_midpoints(msh, tdim, cells)
+    scale = max(abs(x1 - x0), abs(y1 - y0), abs(z1 - z0), 1.0)
+    tol = 1.0e-10 * scale
+    inside = (
+        (midpoints[:, 0] >= x0 - tol)
+        & (midpoints[:, 0] <= x1 + tol)
+        & (midpoints[:, 1] >= y0 - tol)
+        & (midpoints[:, 1] <= y1 + tol)
+        & (midpoints[:, 2] >= z0 - tol)
+        & (midpoints[:, 2] <= z1 + tol)
+    )
+    values = np.asarray(cell_tags.values, dtype=np.int32)
+    if len(values) != local_cells:
+        raise RuntimeError("Cell tags do not cover all owned cells for air-box audit.")
+    invalid_local = int(np.count_nonzero(inside & (values != cfg.tags.air)))
+    count_local = int(np.count_nonzero(inside))
+    grating_local = int(np.count_nonzero(values == cfg.tags.grating))
+    air_local = int(np.count_nonzero(values == cfg.tags.air))
+    comm = msh.comm
+    invalid = int(comm.allreduce(invalid_local, op=MPI.SUM))
+    candidate_count = int(comm.allreduce(count_local, op=MPI.SUM))
+    grating_count = int(comm.allreduce(grating_local, op=MPI.SUM))
+    air_count = int(comm.allreduce(air_local, op=MPI.SUM))
+    aligned = None
+    if comm.size == 1:
+        vertex_coords = np.asarray(msh.geometry.x, dtype=np.float64)
+        aligned = {
+            axis: all(
+                bool(
+                    np.any(
+                        np.isclose(
+                            vertex_coords[:, axis_index],
+                            value,
+                            atol=tol,
+                            rtol=0.0,
+                        )
+                    )
+                )
+                for value in bounds
+            )
+            for axis, axis_index, bounds in (
+                ("x", 0, (x0, x1)),
+                ("y", 1, (y0, y1)),
+                ("z", 2, (z0, z1)),
+            )
+        }
+    return {
+        "schema": "task40extra.rectangular_air_void_mesh_audit.v1",
+        "geometry_identity": cfg.geometry_identity,
+        "air_void_box_nm": [
+            float(x0), float(x1), float(y0), float(y1), float(z0), float(z1)
+        ],
+        "owned_void_box_cell_count": candidate_count,
+        "non_air_tagged_void_box_cell_count": invalid,
+        "owned_air_cell_count": air_count,
+        "owned_remaining_grating_cell_count": grating_count,
+        "box_boundary_vertex_alignment_serial": aligned,
+        "nonseparable_extent_axes": {
+            "x": bool(x1 > x0),
+            "y": bool(y1 > y0),
+            "z": bool(z1 > z0),
+        },
+        "status": (
+            "PASS"
+            if candidate_count > 0
+            and invalid == 0
+            and (aligned is None or all(aligned.values()))
+            else "FAIL"
+        ),
+    }
 
 
 def _axis_stats(values: np.ndarray) -> dict[str, float | int]:
@@ -1060,6 +1181,17 @@ def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh
     msh.name = cfg.case_name
     msh.topology.create_connectivity(msh.topology.dim - 1, msh.topology.dim)
     cell_tags = _mark_cells(msh, cfg)
+    rectangular_air_void_audit = _rectangular_air_void_audit(
+        msh, cell_tags, cfg
+    )
+    if (
+        rectangular_air_void_audit is not None
+        and rectangular_air_void_audit["status"] != "PASS"
+    ):
+        raise RuntimeError(
+            "Explicit rectangular air void failed its mesh/material audit: "
+            f"{rectangular_air_void_audit}"
+        )
     facet_tags, boundary_facets = _mark_boundary_facets(msh, cfg)
 
     if comm.size == 1:
@@ -1090,6 +1222,7 @@ def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh
         if hexa_axis_plan is not None
         else {"all_aligned": None, "missing": [], "checked": {"x": [], "y": [], "z": []}},
         local_refinement_regions=hexa_axis_plan.local_refinement_regions if hexa_axis_plan is not None else {},
+        rectangular_air_void_audit=rectangular_air_void_audit,
     )
 
 
@@ -1120,4 +1253,7 @@ def rebuild_airbox_mesh_data_3d(
         mesh_axis_cell_stats=dict(template.mesh_axis_cell_stats),
         material_plane_alignment=dict(template.material_plane_alignment),
         local_refinement_regions=dict(template.local_refinement_regions),
+        rectangular_air_void_audit=_rectangular_air_void_audit(
+            refined_mesh, cell_tags, cfg
+        ),
     )

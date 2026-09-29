@@ -25,6 +25,7 @@ from src.io.physical_intermediate_profile import (
     WORKINGSET_SETUP_PROFILE,
     WORKSTATION_GUIDED_LOCAL_V30_PROFILE,
     PROJECTION_LAYOUT_V31_PROFILE,
+    TASK40_0P7NM_PROFILE,
     FUSED_KERNEL_PROFILES,
     LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE,
     LOWMEM_DUAL_CELL_CONDENSED_PROFILE,
@@ -979,6 +980,7 @@ def _run_physical_dual_cell_condensed_lowmem(
     reuse_qualified_jit=False,
     write_ordered_mode_manifest=False,
     write_geometry_audit=False,
+    write_rectangular_air_void_audit=False,
     save_complete_field_packet=None,
     capacity_trial=False,
     capacity_context=None,
@@ -1446,6 +1448,48 @@ def _run_physical_dual_cell_condensed_lowmem(
                 f"{evidence_prefix}_actual_mesh_material_entity_audit_complete",
                 summary["geometry_audit"],
             )
+        if write_rectangular_air_void_audit:
+            mesh_data = common["levels"]["mesh_data"]
+            geometry_audit = mesh_data.rectangular_air_void_audit
+            if not isinstance(geometry_audit, Mapping):
+                raise ValueError(
+                    "Task40 requires the explicit rectangular air-void mesh audit"
+                )
+            geometry_audit = {
+                **geometry_audit,
+                "actual_axis_cell_counts": {
+                    axis: int(stats["num_cells"])
+                    for axis, stats in mesh_data.mesh_axis_cell_stats.items()
+                },
+                "material_plane_alignment": mesh_data.material_plane_alignment,
+                "mesh_axis_stats": mesh_data.mesh_axis_cell_stats,
+            }
+            geometry_audit_path = (
+                directory / f"{evidence_prefix}_rectangular_air_void_audit.json"
+            )
+            _write_json(geometry_audit_path, geometry_audit)
+            summary["rectangular_air_void_audit"] = {
+                "schema": geometry_audit["schema"],
+                "path": str(geometry_audit_path),
+                "sha256": hashlib.sha256(
+                    geometry_audit_path.read_bytes()
+                ).hexdigest(),
+                "status": geometry_audit["status"],
+                "geometry_identity": geometry_audit["geometry_identity"],
+                "owned_void_box_cell_count": geometry_audit[
+                    "owned_void_box_cell_count"
+                ],
+                "owned_remaining_grating_cell_count": geometry_audit[
+                    "owned_remaining_grating_cell_count"
+                ],
+                "actual_axis_cell_counts": geometry_audit[
+                    "actual_axis_cell_counts"
+                ],
+            }
+            runtime.marker(
+                f"{evidence_prefix}_rectangular_air_void_audit_complete",
+                summary["rectangular_air_void_audit"],
+            )
         if derive_live_space_identity:
             p6_port_count = int(len(common["fine"]["dtn_action"].carrier.entries))
             coarse_bundle = common.get("coarse")
@@ -1869,10 +1913,14 @@ def _run_physical_dual_cell_condensed_lowmem(
                     profile in {
                         WORKSTATION_GUIDED_LOCAL_V30_PROFILE,
                         PROJECTION_LAYOUT_V31_PROFILE,
+                        TASK40_0P7NM_PROFILE,
                     }
                 ),
                 projection_layout_v31_natural_order_internal=(
-                    profile == PROJECTION_LAYOUT_V31_PROFILE
+                    profile in {
+                        PROJECTION_LAYOUT_V31_PROFILE,
+                        TASK40_0P7NM_PROFILE,
+                    }
                 ),
                 formal_release_timing=(
                     v24_owner_apply

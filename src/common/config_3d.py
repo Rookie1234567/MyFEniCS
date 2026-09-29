@@ -75,6 +75,9 @@ class SimulationConfig3D:
     grating_width_x: float = 0.0
     grating_width_y: float = 0.0
     cell_notch: str | None = None
+    # Explicit axis-aligned air box removed from the rectangular grating.
+    # Ordered as (x_min, x_max, y_min, y_max, z_min, z_max), in nm.
+    air_void_box_nm: tuple[float, ...] | None = None
     # Review V21 carries these identities explicitly so a stage cannot infer
     # geometry from its name or silently fall back to a different mesh plan.
     geometry_model_variant: str | None = None

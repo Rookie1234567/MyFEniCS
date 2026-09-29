@@ -1,0 +1,106 @@
+schema_version = 1
+model_id = "task40extra_nonseparable_0p7nm"
+run_id = "task40extra_0p7nm_nonseparable_g1_iterative_v1"
+comparison_group = "task40extra_0p7nm_nonseparable_n0_n6"
+dimension = 3
+
+[geometry]
+geometry_kind = "rectangular_block_grating"
+model_variant = "original"
+geometry_identity = "task40extra_nonseparable_0p7nm_v1"
+period_x_nm = 2.5925925925925926
+period_y_nm = 1.2962962962962963
+z_min_nm = -0.51851851851851849
+z_max_nm = 6.7407407407407405
+interface_z_nm = 0.0
+air_height_nm = 6.7407407407407405
+substrate_thickness_nm = 0.51851851851851849
+grating_width_x_nm = 0.88148148148148142
+grating_width_y_nm = 1.2962962962962963
+grating_height_nm = 6.2222222222222223
+air_void_box_nm = [1.2962962962962963, 1.7370370370370369, 0.32407407407407407, 0.97222222222222221, 2.074074074074074, 4.1481481481481479]
+
+[materials]
+n_air = [1.0, 0.0]
+mu_r = [1.0, 0.0]
+substrate_name = "Si / silicon"
+n_substrate = [0.99988517036884961, 4.3236152269189515e-06]
+grating_name = "Si / silicon"
+n_grating = [0.99988517036884961, 4.3236152269189515e-06]
+
+[incidence]
+wavelength_nm = 0.7
+grazing_angle_deg = 1.0
+azimuth_deg = 0.0
+polarization = "s"
+electric_amplitude = 1.0
+
+[boundary]
+use_floquet_x = true
+use_floquet_y = true
+vertical_boundary = "dtn_port"
+scattering_background = "layered"
+dtn_order_policy = "auto_propagating"
+dtn_assembly = "auxiliary"
+use_pml = false
+
+[execution]
+mpi_size = 1
+warning_memory_gib = 8.0
+terminate_memory_gib = 10.0
+timeout_seconds = 43200
+memory_limit_gb = 10.0
+require_zero_swap = true
+
+[output]
+results_root = "results"
+unique_output = true
+export_fields = true
+export_diffraction_orders = true
+export_canonical_vectors = true
+export_modal_amplitudes = true
+export_reference_planes = true
+reference_plane_z_nm = [0.51851851851851849, 1.5555555555555556, 3.1111111111111112, 4.666666666666667, 5.7037037037037033]
+sample_count_x = 40
+sample_count_y = 20
+diffraction_sample_count_x = 24
+diffraction_sample_count_y = 24
+top_probe_z_nm = 6.6111111111111107
+bottom_probe_z_nm = -0.3888888888888889
+probe_fraction = 0.75
+diffraction_order_max_m = 7
+diffraction_order_max_n = 1
+
+[discretization]
+nedelec_degree = 6
+visualization_degree = 6
+mesh_target_nm = 0.3888888888888889
+mesh_cell_type = "hexahedron"
+mesh_spacing_mode = "boundary_fitted"
+assembly_backend = "standard_full"
+floquet_constraint_mode = "auto"
+mesh_plan_id = "task40extra.g1.exact_planes.v1"
+mesh_plan_sha256 = "2e7e0a76c2161bfc0651c89d8c5e6edfa2a1ed37d1e2b5a674e314c6c5f5c27d"
+mesh_axis_z_profile = "task40extra.g1.exact_planes.v1"
+mesh_axis_cell_counts = [10, 4, 22]
+mesh_axis_x_values = [0, 0.28518518518518521, 0.57037037037037042, 0.85555555555555551, 1.075925925925926, 1.2962962962962963, 1.5166666666666666, 1.7370370370370369, 2.0222222222222221, 2.3074074074074074, 2.5925925925925926]
+mesh_axis_y_values = [0, 0.32407407407407407, 0.64814814814814814, 0.97222222222222221, 1.2962962962962963]
+mesh_axis_z_values = [-0.51851851851851849, -0.25925925925925924, 0, 0.34567901234567899, 0.69135802469135799, 1.037037037037037, 1.382716049382716, 1.728395061728395, 2.074074074074074, 2.4197530864197532, 2.7654320987654319, 3.1111111111111112, 3.4567901234567899, 3.8024691358024691, 4.1481481481481479, 4.4938271604938276, 4.8395061728395063, 5.1851851851851851, 5.5308641975308639, 5.8765432098765435, 6.2222222222222223, 6.4814814814814818, 6.7407407407407405]
+
+[method]
+kind = "full3d_iterative"
+
+[solver]
+linear_solver = "iterative"
+ksp_type = "fgmres"
+preconditioner = "task40extra_0p7nm_p6trace_p4_v1"
+stage = "Q4_ORIGINAL"
+coarse_degree = 4
+memory_policy = "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23"
+physical_operator_backend = "isotropic_sum_factorized_n1e_v26"
+h6_backend_rule = "direct_selected_backend_same_apply_and_power10"
+thread_contract = "mpi1_omp1_blas1_v26"
+numeric_cache_mode = "build"
+outer_restart = 0
+restart = 32
+max_iterations = 2048

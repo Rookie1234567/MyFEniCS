@@ -599,6 +599,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "physical_p6_trace_a4_tensor_h6_v29",
                 "physical_p6_trace_workstation_guided_v30",
                 "physical_p6_trace_projection_layout_v31",
+                "task40extra_0p7nm_p6trace_p4_v1",
             }:
                 raise _error(
                     "solver.preconditioner",
@@ -1024,6 +1025,61 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     validate_v21_input("Z3_ORIGINAL_H7P5", geometry, discretization)
                 except (OSError, TypeError, ValueError, KeyError) as exc:
                     raise _error("geometry/discretization", str(exc)) from exc
+            elif preconditioner == "task40extra_0p7nm_p6trace_p4_v1":
+                if solver.get("stage") != "Q4_ORIGINAL":
+                    raise _error(
+                        "solver.stage",
+                        "Task40 permits only the G0/G1 Q4_ORIGINAL cases",
+                    )
+                if solver.get("coarse_degree") != 4:
+                    raise _error("solver.coarse_degree", "Task40 fixes coarse_degree=4")
+                for section, key, actual, expected in (
+                    ("solver", "linear_solver", solver.get("linear_solver"), "iterative"),
+                    ("solver", "ksp_type", solver.get("ksp_type"), "fgmres"),
+                    ("solver", "restart", solver.get("restart"), 32),
+                    ("solver", "max_iterations", solver.get("max_iterations"), 2048),
+                    ("solver", "outer_restart", solver.get("outer_restart"), 0),
+                    (
+                        "solver",
+                        "memory_policy",
+                        solver.get("memory_policy"),
+                        "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+                    ),
+                    ("solver", "physical_operator_backend",
+                     solver.get("physical_operator_backend"),
+                     "isotropic_sum_factorized_n1e_v26"),
+                    ("solver", "h6_backend_rule",
+                     solver.get("h6_backend_rule"),
+                     "direct_selected_backend_same_apply_and_power10"),
+                    ("solver", "thread_contract",
+                     solver.get("thread_contract"), "mpi1_omp1_blas1_v26"),
+                    ("solver", "numeric_cache_mode",
+                     solver.get("numeric_cache_mode"), "build"),
+                    ("execution", "mpi_size", execution.get("mpi_size"), 1),
+                    ("execution", "timeout_seconds",
+                     execution.get("timeout_seconds"), 43200),
+                    ("execution", "require_zero_swap",
+                     execution.get("require_zero_swap"), True),
+                    ("discretization", "nedelec_degree",
+                     discretization.get("nedelec_degree"), 6),
+                ):
+                    if actual != expected:
+                        raise _error(
+                            f"{section}.{key}",
+                            f"Task40 fixes {key}={expected}",
+                        )
+                if geometry.get("cell_notch") is not None:
+                    raise _error(
+                        "geometry.cell_notch",
+                        "Task40 uses the explicit air_void_box_nm geometry",
+                    )
+                try:
+                    from src.geometry.task40_nonseparable_plan import (
+                        validate_task40_input,
+                    )
+                    validate_task40_input(config)
+                except (TypeError, ValueError, KeyError) as exc:
+                    raise _error("Task40 physical identity", str(exc)) from exc
             elif preconditioner in (
                 "physical_p6_trace_setup_efficiency_v26",
                 "physical_p6_trace_workingset_efficiency_v27",
@@ -1334,11 +1390,21 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                         "discretization.mesh_target_nm",
                         "fullspace_pml_double_sweep_v19 fixes mesh_target_nm=10",
                     )
-            if incidence["wavelength_nm"] != 13.5:
+            task40_0p7nm = (
+                preconditioner == "task40extra_0p7nm_p6trace_p4_v1"
+            )
+            if task40_0p7nm:
+                if not isclose(
+                    incidence["wavelength_nm"], 0.7, rel_tol=0.0, abs_tol=1.0e-14
+                ):
+                    raise _error(
+                        "incidence.wavelength_nm",
+                        "Task40 profile requires exactly 0.7 nm",
+                    )
+            elif incidence["wavelength_nm"] != 13.5:
                 raise _error(
                     "incidence.wavelength_nm",
-                    "full3d_iterative profile is frozen to 13.5 nm; "
-                    "0.7 nm full-PDE is not authorized",
+                    "existing full3d_iterative profiles remain frozen to 13.5 nm",
                 )
             _require(execution, "memory_limit_gb", "execution.memory_limit_gb")
             if execution["memory_limit_gb"] <= 0.0:
@@ -1696,12 +1762,67 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
         and geometry.get("grating_width_y_nm", 0.0) > geometry["period_y_nm"]
     ):
         raise _error("geometry.grating_width_y_nm", "must not exceed period_y_nm")
+    air_void_box = geometry.get("air_void_box_nm") or ()
+    if air_void_box:
+        if len(air_void_box) != 6:
+            raise _error(
+                "geometry.air_void_box_nm",
+                "requires exactly [x_min, x_max, y_min, y_max, z_min, z_max]",
+            )
+        if dimension != 3 or geometry_kind != "rectangular_block_grating":
+            raise _error(
+                "geometry.air_void_box_nm",
+                "requires a 3D rectangular block grating",
+            )
+        if geometry.get("cell_notch") is not None:
+            raise _error(
+                "geometry.air_void_box_nm",
+                "cannot be combined with the legacy cell_notch recipe",
+            )
+        x0, x1, y0, y1, z0, z1 = air_void_box
+        if not (x0 < x1 and y0 < y1 and z0 < z1):
+            raise _error(
+                "geometry.air_void_box_nm",
+                "each low coordinate must be strictly below its high coordinate",
+            )
+        gx0 = 0.5 * (
+            geometry["period_x_nm"] - geometry["grating_width_x_nm"]
+        )
+        gx1 = 0.5 * (
+            geometry["period_x_nm"] + geometry["grating_width_x_nm"]
+        )
+        gy0 = 0.5 * (
+            geometry["period_y_nm"] - geometry["grating_width_y_nm"]
+        )
+        gy1 = 0.5 * (
+            geometry["period_y_nm"] + geometry["grating_width_y_nm"]
+        )
+        gz0 = geometry["interface_z_nm"]
+        gz1 = gz0 + geometry["grating_height_nm"]
+        if not (
+            gx0 <= x0 < x1 <= gx1
+            and gy0 <= y0 < y1 <= gy1
+            and gz0 <= z0 < z1 <= gz1
+        ):
+            raise _error(
+                "geometry.air_void_box_nm",
+                "must lie fully inside the rectangular grating block",
+            )
     if (
         dimension == 3
         and geometry.get("grating_height_nm", 0.0)
         > geometry["z_max_nm"] - geometry["interface_z_nm"]
     ):
         raise _error("geometry.grating_height_nm", "must fit below z_max_nm")
+    if str(config.get("run_id", "")).startswith(
+        "task40extra_0p7nm_nonseparable_"
+    ):
+        try:
+            from src.geometry.task40_nonseparable_plan import validate_task40_input
+
+            validate_task40_input(config)
+        except (TypeError, ValueError, KeyError) as exc:
+            raise _error("Task40 physical identity", str(exc)) from exc
 
     if dimension == 3:
         trace = discretization.get("nedelec_trace_degree")
@@ -2042,6 +2163,7 @@ def simulation_config_3d_from_normalized(
         grating_width_x=g.get("grating_width_x_nm", 0.0),
         grating_width_y=g.get("grating_width_y_nm", 0.0),
         cell_notch=g.get("cell_notch"),
+        air_void_box_nm=(tuple(g.get("air_void_box_nm") or ()) or None),
         geometry_model_variant=g.get("model_variant"),
         geometry_identity=g.get("geometry_identity"),
         n_substrate=(

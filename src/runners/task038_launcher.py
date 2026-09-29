@@ -2975,6 +2975,9 @@ def _reserve_a4_tensor_h6_budget(
     error_prefix: str,
     summary_filename: str,
     authorized_performance_repeat: Mapping[str, Any] | None = None,
+    ledger_task_directory: str = "task39extra",
+    require_user_service_cgroup: bool = True,
+    bug_replay_limit: int = 1,
 ) -> dict[str, Any]:
     """Reserve one fresh original-model attempt in an independent batch ledger."""
 
@@ -2982,7 +2985,9 @@ def _reserve_a4_tensor_h6_budget(
         raise InputError(f"{error_prefix} permits only Q4_ORIGINAL with observe_only")
     if float(stage_budget.get("workflow_seconds", 0.0)) != 43200.0:
         raise InputError(f"{error_prefix} Q4 requires a 43200-second workflow budget")
-    if not _is_v28_user_service_cgroup(service_cgroup_path):
+    if require_user_service_cgroup and not _is_v28_user_service_cgroup(
+        service_cgroup_path
+    ):
         raise InputError(
             f"{error_prefix} formal reservation requires the existing user service cgroup"
         )
@@ -3004,7 +3009,7 @@ def _reserve_a4_tensor_h6_budget(
         raise InputError(f"{error_prefix} completion rerun reservation authorization is invalid")
     repo_root = Path(repo_root).resolve()
     path = (
-        repo_root / "benchmarks" / "artifacts" / "task39extra"
+        repo_root / "benchmarks" / "artifacts" / ledger_task_directory
         / artifact_directory / batch_identity / "shared_workflow_ledger.json"
     )
     prerequisite = {
@@ -3055,7 +3060,7 @@ def _reserve_a4_tensor_h6_budget(
         error_prefix=error_prefix,
         summary_filename=summary_filename,
         prerequisite=prerequisite,
-        bug_replay_limit=1,
+        bug_replay_limit=bug_replay_limit,
         authorized_performance_repeat=authorized_repeat,
     )
 
@@ -3195,6 +3200,64 @@ def _reserve_v31_projection_layout_budget(
         error_prefix="V31",
         summary_filename="physical_dual_condensed_projection_layout_v31_summary.json",
         authorized_performance_repeat=authorized_repeat,
+    )
+
+
+def _reserve_task40_0p7nm_budget(
+    repo_root: Path,
+    run_directory: Path,
+    *,
+    run_id: str,
+    comparison_group: str,
+    service_cgroup_path: Path,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    allowed_run_ids = {
+        "task40extra_0p7nm_nonseparable_g0_iterative_v1",
+        "task40extra_0p7nm_nonseparable_g1_iterative_v1",
+    }
+    if run_id not in allowed_run_ids or comparison_group != (
+        "task40extra_0p7nm_nonseparable_n0_n6"
+    ):
+        raise InputError("Task40 budget requires one of its two frozen iterative cases")
+    repo_root = Path(repo_root).resolve()
+    run_ledger_root = (
+        repo_root / "benchmarks" / "artifacts"
+        / "task40extra_0p7nm_engineering" / "task40_nonseparable_0p7nm"
+    )
+    completed_replays = 0
+    for prior_run_id in allowed_run_ids:
+        ledger_path = (
+            run_ledger_root / prior_run_id / "shared_workflow_ledger.json"
+        )
+        if not ledger_path.is_file():
+            continue
+        try:
+            prior_ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise InputError("Task40 sibling workflow ledger is unreadable") from exc
+        if (
+            prior_ledger.get("schema")
+            != "task40extra.nonseparable-0p7nm.shared-workflow-ledger.v1"
+        ):
+            raise InputError("Task40 sibling workflow ledger identity changed")
+        completed_replays += int(
+            prior_ledger.get("unique_bug_replay_count", 0)
+        )
+    replay_limit = 0 if completed_replays >= 1 else 1
+    return _reserve_a4_tensor_h6_budget(
+        repo_root,
+        run_directory,
+        **kwargs,
+        service_cgroup_path=service_cgroup_path,
+        batch_identity=run_id,
+        artifact_directory="task40_nonseparable_0p7nm",
+        schema="task40extra.nonseparable-0p7nm.shared-workflow-ledger.v1",
+        error_prefix="Task40",
+        summary_filename="task40extra_nonseparable_0p7nm_p6q4_summary.json",
+        ledger_task_directory="task40extra_0p7nm_engineering",
+        require_user_service_cgroup=True,
+        bug_replay_limit=replay_limit,
     )
 
 
@@ -3765,6 +3828,39 @@ def _swap_bytes(authority: dict[str, Any]) -> int:
     )
 
 
+def _task40_swap_qualification(authority: dict[str, Any]) -> dict[str, Any]:
+    """Qualify zero swap from complete task-tree samples, not WSL-global deltas."""
+
+    sample_count = authority.get("process_tree_samples", authority.get("samples", 0))
+    try:
+        sample_count = int(sample_count)
+    except (TypeError, ValueError):
+        sample_count = 0
+    peak_swap = authority.get("sampled_process_tree_swap_peak_bytes")
+    qualified = bool(
+        authority.get("process_tree_swap_gate_enforced") is True
+        and authority.get("process_tree_all_status_readable") is True
+        and authority.get("process_tree_identity_coverage") == "complete"
+        and authority.get("observed_child_identity_coverage") == "complete"
+        and sample_count > 0
+        and peak_swap == 0
+        and authority.get("descendants_cleared") is True
+    )
+    return {
+        "status": "qualified_zero" if qualified else "UNRESOLVED",
+        "policy": "require_zero_task_process_tree_swap_global_diagnostic_only",
+        "process_tree_peak_swap_bytes": peak_swap,
+        "process_tree_samples": sample_count,
+        "process_tree_identity_coverage": authority.get(
+            "process_tree_identity_coverage", "missing"
+        ),
+        "process_tree_all_status_readable": authority.get(
+            "process_tree_all_status_readable"
+        ),
+        "global_swap_activity": authority.get("global_swap_activity"),
+    }
+
+
 def _is_setup_swap_observation_only(
     *, setup_efficiency_profile: bool, stage: str, require_zero_swap: bool
 ) -> bool:
@@ -3930,6 +4026,7 @@ def launch_specification(
         A4_TENSOR_H6_PROFILE,
         WORKSTATION_GUIDED_LOCAL_V30_PROFILE,
         PROJECTION_LAYOUT_V31_PROFILE,
+        TASK40_0P7NM_PROFILE,
         profile_facts,
     )
     from src.io.physical_balanced_profile import BALANCED_PROFILES, BOUNDED_PROFILES
@@ -3960,6 +4057,9 @@ def launch_specification(
         specification.solver.get('preconditioner')
         == PROJECTION_LAYOUT_V31_PROFILE
     )
+    task40_0p7nm_profile = (
+        specification.solver.get('preconditioner') == TASK40_0P7NM_PROFILE
+    )
     setup_efficiency_profile = (
         setup_efficiency_v26_profile
         or setup_efficiency_v27_profile
@@ -3967,6 +4067,7 @@ def launch_specification(
         or a4_tensor_h6_v29_profile
         or workstation_guided_local_v30_profile
         or projection_layout_v31_profile
+        or task40_0p7nm_profile
     )
     if v24_p4_prefix_target is not None:
         try:
@@ -3991,6 +4092,7 @@ def launch_specification(
         A4_TENSOR_H6_PROFILE,
         WORKSTATION_GUIDED_LOCAL_V30_PROFILE,
         PROJECTION_LAYOUT_V31_PROFILE,
+        TASK40_0P7NM_PROFILE,
     }
     cell_stage = str(specification.solver.get('stage', ''))
     v25_authorized_performance_repeat = None
@@ -4229,6 +4331,28 @@ def launch_specification(
             source_sha=source, stage=cell_stage,
             stage_budget=cell_stage_budget, workflow_clock_start=full_clock.start,
             time_policy=v14_time_policy,
+        )
+    elif task40_0p7nm_profile and physical_candidate:
+        service_cgroup_path = current_cgroup_path()
+        if not _is_v28_user_service_cgroup(service_cgroup_path):
+            raise InputError(
+                "Task40 formal launch requires the existing supervised "
+                "myfenics-case-*.service cgroup"
+            )
+        run_directory = _timestamp_directory(specification, timestamp)
+        v14_lease = _reserve_task40_0p7nm_budget(
+            Path(__file__).resolve().parents[2],
+            run_directory,
+            source_sha=source,
+            stage=cell_stage,
+            stage_budget=cell_stage_budget,
+            workflow_clock_start=full_clock.start,
+            time_policy=v14_time_policy,
+            run_id=str(specification.identity.get("run_id")),
+            comparison_group=str(
+                specification.identity.get("comparison_group")
+            ),
+            service_cgroup_path=service_cgroup_path,
         )
     elif (
         a4_tensor_h6_v29_profile
@@ -4514,6 +4638,11 @@ def launch_specification(
                                 'PHYSICAL_WATCHDOG_PSS_POLICY'
                             ] = pss_sampling_policy
                             watchdog_kwargs['worker_environment'] = watchdog_environment
+                        if task40_0p7nm_profile:
+                            watchdog_kwargs.update(
+                                stop_on_global_swap=False,
+                                allow_swap_observation=False,
+                            )
                         if schur_v14:
                             watchdog_kwargs['active_pc_seconds'] = float(
                                 physical_resources['pc_hard_seconds']
@@ -4589,25 +4718,39 @@ def launch_specification(
                     except (InputError, OSError, subprocess.CalledProcessError) as exc:
                         source_after = {'provenance_passed': False, 'error': str(exc)}
                         result['result_classification'] = 'EVIDENCE_INCOMPLETE'
-                    zero_swap = authority['job_swap_activity'] == 'zero_supported_by_zero_global_activity'
-                    result['swap_policy'] = (
-                        'observe_only' if effective_swap_observe else 'require_zero_swap'
-                    )
-                    result['swap_gate_enforced'] = not effective_swap_observe
-                    if effective_swap_observe:
-                        result['job_swap_qualification'] = (
-                            'observed_zero_not_a_gate'
-                            if zero_swap
-                            else 'observed_not_a_gate'
-                        )
+                    if task40_0p7nm_profile:
+                        task40_swap = _task40_swap_qualification(authority)
+                        result['swap_policy'] = task40_swap['policy']
+                        result['swap_gate_enforced'] = authority.get(
+                            'process_tree_swap_gate_enforced'
+                        ) is True
+                        result['job_swap_qualification'] = task40_swap['status']
+                        result['task40_swap_qualification'] = task40_swap
+                        if (
+                            task40_swap['status'] != 'qualified_zero'
+                            and result['result_classification'] == 'worker_exit0'
+                        ):
+                            result['result_classification'] = 'EVIDENCE_INCOMPLETE'
                     else:
-                        result['job_swap_qualification'] = 'qualified_zero' if zero_swap else 'UNRESOLVED'
-                    if (
-                        not zero_swap
-                        and result['result_classification'] == 'worker_exit0'
-                        and not effective_swap_observe
-                    ):
-                        result['result_classification'] = 'EVIDENCE_INCOMPLETE'
+                        zero_swap = authority['job_swap_activity'] == 'zero_supported_by_zero_global_activity'
+                        result['swap_policy'] = (
+                            'observe_only' if effective_swap_observe else 'require_zero_swap'
+                        )
+                        result['swap_gate_enforced'] = not effective_swap_observe
+                        if effective_swap_observe:
+                            result['job_swap_qualification'] = (
+                                'observed_zero_not_a_gate'
+                                if zero_swap
+                                else 'observed_not_a_gate'
+                            )
+                        else:
+                            result['job_swap_qualification'] = 'qualified_zero' if zero_swap else 'UNRESOLVED'
+                        if (
+                            not zero_swap
+                            and result['result_classification'] == 'worker_exit0'
+                            and not effective_swap_observe
+                        ):
+                            result['result_classification'] = 'EVIDENCE_INCOMPLETE'
                     manifest['requested_legacy_resource_fields'] = {
                         key: specification.execution[key] for key in
                         ('warning_memory_gib', 'terminate_memory_gib', 'memory_limit_gb')}
@@ -4623,6 +4766,11 @@ def launch_specification(
                         ),
                         'global_swap_gate_enforced': authority.get(
                             'global_swap_gate_enforced', not effective_swap_observe
+                        ),
+                        **(
+                            {'task40_swap_qualification': result.get('task40_swap_qualification')}
+                            if task40_0p7nm_profile
+                            else {}
                         ),
                             **(
                             v14_time_policy_facts(v14_time_policy)

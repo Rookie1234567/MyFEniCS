@@ -6600,6 +6600,7 @@ def _v14_worker_pss_sampling_policy(worker: Mapping[str, Any]) -> str:
     if worker.get("profile") in {
         "physical_p6_trace_workstation_guided_v30",
         "physical_p6_trace_projection_layout_v31",
+        "task40extra_0p7nm_p6trace_p4_v1",
     }:
         return "disabled_by_profile"
     return "sampled"
@@ -7963,6 +7964,7 @@ def _v14_q4_q5_fullspace(
                 in {
                     "physical_p6_trace_workstation_guided_v30",
                     "physical_p6_trace_projection_layout_v31",
+        "task40extra_0p7nm_p6trace_p4_v1",
                 }
                 else None
             ),
