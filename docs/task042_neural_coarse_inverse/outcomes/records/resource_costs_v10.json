@@ -1,6 +1,6 @@
 {
   "schema": "task042.resource-costs.v10",
-  "utc": "2026-09-29T15:17:06.785746+00:00",
+  "utc": "2026-09-29T15:21:32.678917+00:00",
   "batch_window": {
     "schema": "task042.autonomous-window.v10",
     "start_utc": "2026-09-29T13:42:33Z",
@@ -16,19 +16,19 @@
     "start_asia_singapore": "2026-09-29T21:42:33+08:00",
     "stop_heavy_asia_singapore": "2026-09-30T04:12:33+08:00",
     "deadline_asia_singapore": "2026-09-30T04:42:33+08:00",
-    "elapsed_seconds": 5673.785733966972,
-    "heavy_remaining_seconds": 17726.21426603303,
-    "total_remaining_seconds": 19526.21426603303,
-    "cumulative_elapsed_including_history": 15882.9316966068,
+    "elapsed_seconds": 5939.678904582048,
+    "heavy_remaining_seconds": 17460.321095417952,
+    "total_remaining_seconds": 19260.321095417952,
+    "cumulative_elapsed_including_history": 16148.824867221876,
     "clock_basis": "max(UTC, monotonic) from immutable original start"
   },
   "carry_in_V6_to_V9_seconds": 10209.145962639828,
   "formal_launch_seconds": 650.0937577050645,
-  "auxiliary_launch_seconds": 108.0396652892232,
+  "auxiliary_launch_seconds": 119.92569855414331,
   "outside_sampled_auxiliary_and_publication_allowance_seconds": 180.0,
   "allowance_kind": "conservative charged bound for short shell/lint/metadata operations and remaining low-load publication; not measured CPU time",
-  "new_charged_onload_seconds": 938.1334229942877,
-  "V6_onward_cumulative_onload_seconds": 11147.279385634116,
+  "new_charged_onload_seconds": 950.0194562592078,
+  "V6_onward_cumulative_onload_seconds": 11159.165418899036,
   "time_accounting": "Parent inclusive launch totals only; child S/LS/network/FE phases are breakdowns, never added again. Batch elapsed including implementation is separately bounded by original start/deadline.",
   "historical_before_V6": "V1-V5 immutable ledgers retained separately; V6 carry is not all-history total",
   "methods": [
@@ -1071,6 +1071,23 @@
       "sampled_tree_swap_peak_bytes": 0
     },
     {
+      "name": "publication_render",
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v10/publication_render/summary.json",
+        "sha256": "e1c41f5f5aa23ba034365d821f28bd74f11aa65d3bd48243c3ffb32bd96ab6ae"
+      },
+      "launcher_cost": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v10/publication_render/launcher_cost.json",
+        "sha256": "91608e3fc0689727643faa24ea0cda63e0ed9f716a4010fc1feb56b4abf73b1a"
+      },
+      "seconds": 6.993350726901554,
+      "supervised_seconds": 5.499258726951666,
+      "classification": "COMPLETED",
+      "source_sha": "28d3f1918fb9fe8a431ae96580d161e9cc284654",
+      "sampled_tree_rss_peak_bytes": 46931968,
+      "sampled_tree_swap_peak_bytes": 0
+    },
+    {
       "name": "review_render",
       "summary": {
         "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v10/review_render/summary.json",
@@ -1102,6 +1119,23 @@
       "classification": "COMPLETED",
       "source_sha": "b6546d762f5749ceca24b28e60ad4c380adc6741",
       "sampled_tree_rss_peak_bytes": 61681664,
+      "sampled_tree_swap_peak_bytes": 0
+    },
+    {
+      "name": "static_docs_check_final",
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v10/static_docs_check_final/summary.json",
+        "sha256": "ea4910ff52dc43df070db38c69dca3f2dd996226e210e6931f9d5cae05667f8b"
+      },
+      "launcher_cost": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v10/static_docs_check_final/launcher_cost.json",
+        "sha256": "26780cd59b4a03d2f0fe813fc83706f2c0df931fba7a6b428fcd3eb6a5c5f612"
+      },
+      "seconds": 4.892682538018562,
+      "supervised_seconds": 3.378831359092146,
+      "classification": "COMPLETED",
+      "source_sha": "28d3f1918fb9fe8a431ae96580d161e9cc284654",
+      "sampled_tree_rss_peak_bytes": 75431936,
       "sampled_tree_swap_peak_bytes": 0
     }
   ],

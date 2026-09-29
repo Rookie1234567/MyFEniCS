@@ -1,6 +1,7 @@
 {
   "status": "TASK_SCOPED_STATIC_AND_HISTORY_PASS",
-  "code_source_sha": "b6546d762f5749ceca24b28e60ad4c380adc6741",
+  "static_check_execution_head": "28d3f1918fb9fe8a431ae96580d161e9cc284654",
+  "numerical_sources_not_rebound": true,
   "local_documents": [
     {
       "path": "docs/task042_neural_coarse_inverse/review_report_v7.md",

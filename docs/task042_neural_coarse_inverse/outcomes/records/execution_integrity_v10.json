@@ -1,6 +1,6 @@
 {
-  "utc": "2026-09-29T15:17:06.803937+00:00",
-  "documentation_precommit_head": "b6546d762f5749ceca24b28e60ad4c380adc6741",
+  "utc": "2026-09-29T15:21:32.688638+00:00",
+  "documentation_precommit_head": "28d3f1918fb9fe8a431ae96580d161e9cc284654",
   "branch": "task42_neural_coarse_inverse",
   "upstream": "origin/task42_neural_coarse_inverse",
   "worktree": "/home/fenics/Projects/NN-Lab",
@@ -23,5 +23,35 @@
   ],
   "observed_admission_failure": "compact_records_corrected final nested audit counted own bound supervisor; no new numerical stage, independent unbound read-only snapshot fixed placement",
   "original_failed_runs_retained": true,
-  "CPU_GPU_neighbor_tasks_modified": false
+  "CPU_GPU_neighbor_tasks_modified": false,
+  "numerical_finish_reason": "ALL_EXECUTABLE_AUTHORIZED_PATHS_EXHAUSTED",
+  "publication_status": "RENDERED_HTML_PASS",
+  "publication_document_HEAD": "28d3f1918fb9fe8a431ae96580d161e9cc284654",
+  "final_delivery_ledger_cutoff": {
+    "schema": "task042.autonomous-window.v10",
+    "start_utc": "2026-09-29T13:42:33Z",
+    "start_utc_ns": 1790689353000000000,
+    "observed_monotonic": 614381.438984011,
+    "observed_utc_ns": 1790689386578117993,
+    "stop_heavy_utc": "2026-09-29T20:12:33+00:00",
+    "deadline_utc": "2026-09-29T20:42:33+00:00",
+    "heavy_limit_seconds": 23400,
+    "total_limit_seconds": 25200,
+    "cleanup_reserve_seconds": 1800,
+    "carry_in_seconds": 10209.145962639828,
+    "start_asia_singapore": "2026-09-29T21:42:33+08:00",
+    "stop_heavy_asia_singapore": "2026-09-30T04:12:33+08:00",
+    "deadline_asia_singapore": "2026-09-30T04:42:33+08:00",
+    "elapsed_seconds": 5987.783746153,
+    "heavy_remaining_seconds": 17412.216253847,
+    "total_remaining_seconds": 19212.216253847,
+    "cumulative_elapsed_including_history": 16196.929708792828,
+    "clock_basis": "max(UTC, monotonic) from immutable original start"
+  },
+  "final_low_load_command_failure": {
+    "kind": "SyntaxError in final journal heredoc: literal patch plus prefixes",
+    "corrected": "metadata-only journal command",
+    "numerical_results_or_source_changed": false,
+    "accounted": "within 180s conservative short-command allowance"
+  }
 }
