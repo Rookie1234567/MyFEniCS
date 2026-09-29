@@ -1,9 +1,9 @@
 {
   "budget": {
     "carry_in_seconds": 9804.434395463672,
-    "new_seconds": 397.53925661509857,
-    "cumulative_seconds": 10201.97365207877,
-    "remaining_seconds": 3202.4607433849014,
+    "new_seconds": 404.7115671761567,
+    "cumulative_seconds": 10209.145962639828,
+    "remaining_seconds": 3195.2884328238433,
     "records": [
       {
         "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/aggregate_records/summary.json",
@@ -64,6 +64,11 @@
         "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/outside_sampled_accounting/summary.json",
         "seconds": 120.0,
         "supervised_seconds": 0
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/publication_render/summary.json",
+        "seconds": 7.1723105610581115,
+        "supervised_seconds": 5.678557188017294
       },
       {
         "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/review_render/summary.json",
@@ -268,6 +273,17 @@
       "tree_rss_peak_bytes": null,
       "tree_swap_peak_bytes": null,
       "measurement_kind": "120s charged, not measured"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/publication_render/summary.json",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "seconds": 7.1723105610581115,
+      "supervised_seconds": 5.678557188017294,
+      "tree_rss_peak_bytes": 47177728,
+      "tree_swap_peak_bytes": 0,
+      "measurement_kind": "measured bounded stage"
     },
     {
       "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/review_render/summary.json",

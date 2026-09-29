@@ -1,4 +1,57 @@
 {
-  "status": "PENDING_FIRST_PUSH_RENDER_CHECK",
-  "no_render_pass_claim": true
+  "schema": "task042.publication-checks.v9",
+  "status": "RENDERED_HTML_PASS",
+  "exact_pushed_documentation_head": "0ac845b6892ffb263ea19cbd38490806c5da777e",
+  "utc": "2026-09-29T12:58:34.588124+00:00",
+  "wall_seconds": 4.056776140932925,
+  "checks": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v9.md",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/0ac845b6892ffb263ea19cbd38490806c5da777e/docs/task042_neural_coarse_inverse/response_v9.md",
+      "source_file_sha256": "3dd4985ef7374e0c6a83bae5ba7f073048137a2594f92c27258ec1b269a4ec13",
+      "local_table_count": 2,
+      "fenced_math_blocks": 0,
+      "http": 200,
+      "status": "RENDERED_HTML_PASS",
+      "rendered_table_count": 2,
+      "github_math_renderer_blocks": 0,
+      "columns_consistent": true,
+      "rendered_html_sha256": "749251cf3c08f34c480333951b2971a565c04511a682dc8c75e276943eb2483a",
+      "cache_path": "tmp/task042/v9/published-html/docs_task042_neural_coarse_inverse_response_v9.md.html"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/frozen_error_localization_v9.md",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/0ac845b6892ffb263ea19cbd38490806c5da777e/docs/task042_neural_coarse_inverse/outcomes/frozen_error_localization_v9.md",
+      "source_file_sha256": "c1be8ee470d3efc0dbb39546e9b50e3cda5e3a4f1b9c538b1066bbbdbdc66fcf",
+      "local_table_count": 6,
+      "fenced_math_blocks": 4,
+      "http": 200,
+      "status": "RENDERED_HTML_PASS",
+      "rendered_table_count": 6,
+      "github_math_renderer_blocks": 4,
+      "columns_consistent": true,
+      "rendered_html_sha256": "2f0504d01b16b710e7c85f91ef19eb67cf822120821d0467157dcb08b5016365",
+      "cache_path": "tmp/task042/v9/published-html/docs_task042_neural_coarse_inverse_outcomes_frozen_error_localization_v9.md.html"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/0ac845b6892ffb263ea19cbd38490806c5da777e/docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "source_file_sha256": "d5674428014da9b41ed18b724c0ac6657201d64647f97490dbfe8e6794830823",
+      "local_table_count": 19,
+      "fenced_math_blocks": 0,
+      "http": 200,
+      "status": "RENDERED_HTML_PASS",
+      "rendered_table_count": 19,
+      "github_math_renderer_blocks": 0,
+      "columns_consistent": true,
+      "rendered_html_sha256": "96d990f19d93e6744ee94480bb7ad88e8946c94fb78a4760a83e9247f6a73dcb",
+      "cache_path": "tmp/task042/v9/published-html/docs_task042_neural_coarse_inverse_outcomes_summary.md.html"
+    }
+  ],
+  "actual_diagnostic_sources": [
+    "a1dc3466294c30b6de292468d6dd1aa9b685b193",
+    "e21af767d3522af531ad83c45eacc1df252566c9"
+  ],
+  "review_v6_render_evidence": "review_render_check_v9.json",
+  "note": "Actual GitHub richText HTML; no browser pixel capture. Later evidence-only commits preserve these document hashes; no qualified FE rerun."
 }
