@@ -14,6 +14,7 @@ from src.solvers.neural_fe_action_packet import file_hash
 PLAN_PATH = ROOT / "input/task042_neural_coarse_inverse/autonomous_head_v10.json"
 V10_ROOT = ROOT / "benchmarks/artifacts/task042/v10"
 STAGES = {
+    "HEAD_CHECK": ("ml", 600),
     "A": ("fe", 900),
     "B1": ("ml", 3600),
     "B0": ("ml", 3600),

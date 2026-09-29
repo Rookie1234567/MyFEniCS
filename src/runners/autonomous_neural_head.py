@@ -20,6 +20,7 @@ from src.io.autonomous_neural_head import (
     read_result,
 )
 from src.io.neural_fe_continuation import V7_ROOT, read_index
+from src.io.task042_profile import ROOT
 from src.runners.task042_shared import write_json
 from src.solvers.autonomous_batch_window import (
     guard_worker_parent,
@@ -525,14 +526,363 @@ def verify_candidate(stage):
     }
 
 
+def head_inventory_checks(stage):
+    from src.runners.neural_fe_continuation import read_moments
+    from src.solvers.neural_linear_head_torch import assign_head, head_coefficients
+    from src.solvers.neural_trace_checks import assign
+    from src.solvers.neural_trace_torch import NeuralTrace, packet_forward
+
+    moments, moment_identity = read_moments()
+    rows = []
+    for name in ("B1", "B0"):
+        try:
+            result, _ = read_result(name)
+        except FileNotFoundError:
+            rows.append({"candidate": name, "status": "UNAVAILABLE"})
+            continue
+        P = np.load(owned(result["P"], V10_ROOT), mmap_mode="r", allow_pickle=False)
+        with np.load(owned(result["state"], V10_ROOT), allow_pickle=False) as data:
+            parameters = np.array(data["network_parameters"])
+            z = np.array(data["z"])
+        model = NeuralTrace(stage.design["geometry"]["bounds_nm"], 0.7, seed=420906)
+        assign(model, parameters)
+        gamma = head_coefficients(model)
+        final_trace = packet_forward(model, moments)
+        final_pair = float(
+            np.linalg.norm(final_trace - z[: stage.packet.nt])
+            / max(np.linalg.norm(final_trace), 1e-12)
+        )
+        final_P_pair = float(
+            np.linalg.norm(final_trace - P @ gamma)
+            / max(np.linalg.norm(final_trace), 1e-12)
+        )
+        witnesses = []
+        for seed in (421011, 421012, 421013):
+            rng = np.random.default_rng(seed)
+            witness = 0.001 * (rng.normal(size=1560) + 1j * rng.normal(size=1560))
+            assign_head(model, witness)
+            actual = packet_forward(model, moments)
+            predicted = P @ witness
+            scale = max(np.linalg.norm(actual), np.linalg.norm(predicted), 1e-12)
+            pair = float(np.linalg.norm(actual - predicted) / scale)
+            witnesses.append(
+                {
+                    "seed": seed,
+                    "nonzero_trace_norm": float(np.linalg.norm(actual)),
+                    "original_moment_relative": pair,
+                    "passed": pair <= 1e-10,
+                }
+            )
+        passed = (
+            all(x["passed"] for x in witnesses)
+            and max(final_pair, final_P_pair) <= 1e-10
+        )
+        rows.append(
+            {
+                "candidate": name,
+                "status": "PASS" if passed else "FAIL",
+                "P_identity": result["P"],
+                "frozen_state": result["state"],
+                "witnesses": witnesses,
+                "regenerated_saved_trace_pair": final_pair,
+                "regenerated_P_gamma_trace_pair": final_P_pair,
+                "original_source_sha": result["source_sha"],
+                "thin_factorization_repeated": False,
+            }
+        )
+        del P, model
+    return {
+        "status": "PASS"
+        if rows and all(r["status"] == "PASS" for r in rows)
+        else "PARTIAL_OR_FAILED",
+        "rows": rows,
+        "original_moments": moment_identity,
+        "threshold": 1e-10,
+        "purpose": "complete three fixed nonzero real witnesses without rerunning B LS",
+    }
+
+
+def rewrite_head(artifact, base_name):
+    from src.runners.neural_fe_continuation import read_moments
+    from src.solvers.neural_linear_head_torch import assign_head
+    from src.solvers.neural_trace_checks import assign, parameters
+    from src.solvers.neural_trace_torch import (
+        NeuralTrace,
+        packet_forward,
+        qualify_threads,
+    )
+
+    threads = qualify_threads()
+    _, design, _, _ = plan_and_operator()
+    base, _ = read_result(base_name)
+    with np.load(owned(base["state"], V10_ROOT), allow_pickle=False) as data:
+        weights = np.array(data["network_parameters"])
+    with np.load(artifact / "head_solution.npz", allow_pickle=False) as data:
+        gamma = np.array(data["gamma"])
+        expected = np.array(data["z"])
+    model = NeuralTrace(design["geometry"]["bounds_nm"], 0.7, seed=420906)
+    assign(model, weights)
+    assign_head(model, gamma)
+    moments, _ = read_moments()
+    trace = packet_forward(model, moments)
+    nt = len(trace)
+    pair = float(
+        np.linalg.norm(trace - expected[:nt])
+        / max(np.linalg.norm(trace), np.linalg.norm(expected[:nt]), 1e-12)
+    )
+    np.savez(
+        artifact / "rewritten_network.npz",
+        network_parameters=parameters(model),
+        trace=trace,
+    )
+    write_json(
+        artifact / "rewrite_check.json",
+        {
+            "status": "PASS" if pair <= 1e-10 else "FAIL",
+            "trace_pair": pair,
+            "threads": threads,
+        },
+    )
+
+
+def closed_candidate(stage):
+    from src.solvers.neural_port_closed_head import (
+        close_ports,
+        real_port_algebra,
+        solve_closed_head,
+    )
+
+    checks, _ = read_result("HEAD_CHECK")
+    if checks["status"] != "PASS":
+        return {"status": "BLOCKED_REAL_HEAD_MAPPING_GATE", "head_checks": checks}
+    try:
+        base, _ = read_result("B1")
+        base_name = "B1"
+    except FileNotFoundError:
+        base, _ = read_result("B0")
+        base_name = "B0"
+    P = np.load(owned(base["P"], V10_ROOT), mmap_mode="r", allow_pickle=False)
+    W = np.load(owned(base["W"], V10_ROOT), mmap_mode="r", allow_pickle=False)
+    with np.load(owned(base["state"], V10_ROOT), allow_pickle=False) as state:
+        gamma0 = np.array(state["gamma"])
+    stage.heartbeat("C_original_Hhat_algebra", base_candidate=base_name)
+    algebra = real_port_algebra(stage.packet, W[:, 1560:])
+    if algebra["status"] != "PASS":
+        return {"status": algebra["status"], "port_closure_checks": algebra}
+    gamma, z, ls = solve_closed_head(
+        stage.packet, P, W, gamma0, heartbeat=stage.heartbeat
+    )
+    del P, W
+    np.savez(stage.artifact / "head_solution.npz", gamma=gamma, z=z)
+    # Original neural output-layer writing in the isolated CPU ML environment.
+    child = subprocess.run(
+        [
+            "bash",
+            "-c",
+            'source scripts/activate_task042.sh ml; exec python -m src.runners.autonomous_neural_head --rewrite-head "$1" "$2"',
+            "task042-qualified-head",
+            str(stage.artifact),
+            base_name,
+        ],
+        check=False,
+        env=dict(os.environ, TASK042_NUMERICAL_PARENT_PID=str(os.getpid())),
+    )
+    if child.returncode:
+        raise RuntimeError("C actual network rewrite child failed")
+    rewrite = json.loads((stage.artifact / "rewrite_check.json").read_text())
+    with np.load(stage.artifact / "rewritten_network.npz", allow_pickle=False) as state:
+        weights = np.array(state["network_parameters"])
+        trace = np.array(state["trace"])
+    z, true_port_seconds = close_ports(stage.packet, trace)
+    ls["real_rewritten_trace_port_closure_seconds"] = true_port_seconds
+    audit = stage.packet.audit(z)
+    frozen = stage.freeze(
+        "C",
+        z,
+        network_parameters=weights,
+        gamma=gamma,
+        port_coefficients=z[stage.packet.nt :],
+    )
+    if stage.packet.counts["S"] > 100:
+        raise RuntimeError("C new original S budget exceeded")
+    return {
+        "status": "CANDIDATE_FROZEN"
+        if rewrite["status"] == "PASS"
+        else "HEAD_REWRITE_IDENTITY_FAILED",
+        "state": frozen,
+        "baseline": {"candidate": base_name, "state": base["state"]},
+        "baseline_audit": base["final_audit"],
+        "final_audit": audit,
+        "original_gate": original_gate(audit),
+        "port_closure_checks": algebra,
+        "rewrite_check": rewrite,
+        "least_squares": ls,
+        "feature_origin": base_name,
+        "P": base["P"],
+        "W": base["W"],
+        "cached_thin_action_reused": True,
+        "Hhat_not_Hp": True,
+    }
+
+
+def saved_reference():
+    result, _ = read_index("blind_reference")
+    path = owned(result["reference_state"], V7_ROOT)
+    if (
+        file_hash(path)
+        != "a0610a5a55e7508196b17277e706595c33e4398ace82b245f70b656e6b9ed355"
+    ):
+        raise ValueError("reviewed reference hash differs")
+    with np.load(path, allow_pickle=False) as data:
+        reference = np.array(data["z"])
+    if array_hash(reference) != result["reference_state"]["z_sha256"]:
+        raise ValueError("reference z array hash differs")
+    return reference, result["reference_state"]
+
+
+def representation_diagnostic(stage):
+    from src.solvers.neural_fe_blind_reference import independent_physics
+    from src.solvers.neural_linear_head import thin_lstsq
+
+    journal("D_REFERENCE_BARRIER", stage="D1", no_more_A_B_C_E_this_batch=True)
+    reference, identity = saved_reference()
+    stage.meta["reference_arrays_read"] = True
+    states = {}
+    records = []
+    for name in ("B1", "B0"):
+        try:
+            base, _ = read_result(name)
+        except FileNotFoundError:
+            records.append({"candidate": name, "status": "P_UNAVAILABLE"})
+            continue
+        P = np.load(owned(base["P"], V10_ROOT), mmap_mode="r", allow_pickle=False)
+        stage.heartbeat("D_reference_trace_fit", feature_origin=name)
+        gamma, ls = thin_lstsq(P, reference[: stage.packet.nt])
+        trace = P @ gamma
+        relative = float(
+            np.linalg.norm(trace - reference[: stage.packet.nt])
+            / np.linalg.norm(reference[: stage.packet.nt])
+        )
+        diagnostic = name + "_REFERENCE_ASSISTED"
+        states[diagnostic] = np.r_[trace, reference[stage.packet.nt :]]
+        records.append(
+            {
+                "candidate": name,
+                "status": "REFERENCE_ASSISTED_DIAGNOSTIC_ONLY",
+                "trace_relative_error": relative,
+                "least_squares": ls,
+                "P_identity": base["P"],
+                "trace_fit_weights_not_published_to_solver": True,
+                "reference_ports_used": True,
+            }
+        )
+        del P, gamma
+    physics, comparison = independent_physics(
+        stage.design, stage.packet, reference, states, stage.artifact
+    )
+    for record in records:
+        if record["candidate"] + "_REFERENCE_ASSISTED" not in states:
+            continue
+        name = record["candidate"] + "_REFERENCE_ASSISTED"
+        row = physics["rows"][name]
+        record["scattered_FE_L2_relative"] = row["scattered_FE_L2_relative"]
+        record["scattered_scaled_curl_relative"] = row["scattered_scaled_curl_relative"]
+        record["diagnostic_state"] = stage.freeze(name, states[name])
+        record["original_audit"] = row["audit"]
+        record["representation_label"] = (
+            "PHYSICS_OBJECTIVE_OR_OPTIMIZATION_LIMITATION_SUPPORTED"
+            if max(
+                row["scattered_FE_L2_relative"], row["scattered_scaled_curl_relative"]
+            )
+            <= 1e-4
+            else "FROZEN_FEATURE_LIMITATION_SUPPORTED"
+        )
+        if record["least_squares"]["effective_rank"] < 1560:
+            record["representation_label"] = "INCONCLUSIVE_NUMERICAL_RANK_TRUNCATION"
+    return {
+        "status": "DIAGNOSTIC_COMPLETED",
+        "records": records,
+        "reference_identity": identity,
+        "physics": physics,
+        "comparison": comparison,
+        "reference_feedback_to_any_solver": False,
+        "new_solve_qualification": False,
+        "frozen_feature_not_entire_nonlinear_network_limit": True,
+    }
+
+
+def body_balance_diagnostic(stage):
+    from src.io.neural_fe_calibration import V8_ROOT, read_v8_index
+    from src.solvers.neural_volume_balance import volume_balance
+
+    reference, identity = saved_reference()
+    stage.meta["reference_arrays_read"] = True
+    old = json.loads(
+        (ROOT / "input/task042_neural_coarse_inverse/frozen_error_v9.json").read_text()
+    )
+    row = next(x for x in old["states"] if x["id"] == "LSQR8")
+    scaled, _ = read_v8_index(row["index"])
+    with np.load(owned(scaled["state"], V8_ROOT), allow_pickle=False) as data:
+        z = np.array(data["z"])
+    if array_hash(z) != row["z_sha256"]:
+        raise ValueError(
+            "original LSQR8 physical z differs; D must not be applied again"
+        )
+    states = {"LSQR8": z}
+    candidates = []
+    for name in ("A", "B1", "B0", "C", "E1", "E2"):
+        try:
+            check, _ = read_result("VERIFY_" + name)
+            candidates.append((check["original_gate"]["rho"], name))
+        except FileNotFoundError:
+            pass
+    if candidates:
+        _, name = min(candidates)
+        result, _ = read_result(name)
+        with np.load(owned(result["state"], V10_ROOT), allow_pickle=False) as data:
+            states[name] = np.array(data["z"])
+    result = volume_balance(
+        stage.design,
+        stage.packet,
+        reference,
+        states,
+        stage.artifact,
+        heartbeat=stage.heartbeat,
+    )
+    result.update(
+        reference_identity=identity,
+        LSQR8_identity=scaled["state"],
+        new_candidate_inventory=list(states)[1:],
+        candidate_selection="lowest original rho only, at most one",
+        accurate_reference_feedback=False,
+    )
+    return result
+
+
 def main():
     if sys.argv[1] == "--linear-solve":
         solve_child(Path(sys.argv[2]).resolve())
+        return
+    if sys.argv[1] == "--rewrite-head":
+        expected = int(os.environ["TASK042_NUMERICAL_PARENT_PID"])
+        library = ctypes.CDLL(None, use_errno=True)
+        if library.prctl(1, signal.SIGTERM, 0, 0, 0) or os.getppid() != expected:
+            raise RuntimeError("own head rewrite parent disappeared")
+        rewrite_head(Path(sys.argv[2]).resolve(), sys.argv[3])
         return
     guard_worker_parent()
     specification = load_autonomous(sys.argv[1])
     directory = Path(sys.argv[2]).resolve()
     stage = Stage(specification, directory)
+    if stage.stage in ("A", "B1", "B0", "C", "E1", "E2"):
+        barrier = ROOT / "tmp/task042/v10/progress_journal.jsonl"
+        if barrier.exists() and any(
+            json.loads(line)["event"] == "D_REFERENCE_BARRIER"
+            for line in barrier.read_text().splitlines()
+        ):
+            raise RuntimeError(
+                "reference diagnostic barrier closed every solver/training path tonight"
+            )
     stage.heartbeat("worker_admitted", original_S_shape=[stage.packet.size] * 2)
     if stage.stage == "A":
         result, name = amplitude_port(stage), "A"
@@ -543,6 +893,14 @@ def main():
             verify_candidate(stage),
             "VERIFY_" + specification.derived["candidate"],
         )
+    elif stage.stage == "HEAD_CHECK":
+        result, name = head_inventory_checks(stage), "HEAD_CHECK"
+    elif stage.stage == "C":
+        result, name = closed_candidate(stage), "C"
+    elif stage.stage == "D1":
+        result, name = representation_diagnostic(stage), "D1"
+    elif stage.stage == "D2":
+        result, name = body_balance_diagnostic(stage), "D2"
     else:
         raise RuntimeError(
             "backup interface not yet implemented; never start unimplemented stage"
