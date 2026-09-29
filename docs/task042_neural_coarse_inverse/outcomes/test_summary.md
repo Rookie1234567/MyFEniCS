@@ -105,3 +105,12 @@ V3治理/文档表格定向测试28 passed；registry当前继承两项错误与
 最终16个pure-array/输入边界pytest通过；另2个compact损坏状态反例通过，7个实际strong-Wolfe/初始/非有限/Adam/一致磁盘重载测试通过，tiny矩/VJP batch测试及原2000 closure预算小数组回归通过。真实C3三参数状态、非零端口、full trace/loss/grad/clone Adam/FD通过；C2原方程和独立物理资格均失败。新checker从raw absolute/norm/复observable/FD重算，未信任status。任务范围Ruff/format/compileall/差异/本地新文档合同/历史字节保护结果见static_checks_v8.json；Review V5实际GitHub4表/2公式，新文档publication见publication_checks_v8.json。原无关checker问题不全仓清理；full pytest/CI/MPI2/4及旧campaign均not_run。
 
 所有测试、CLI参数错误与C4字段重名汇总失败均计入resource_costs_v8.json；修复仅局部元数据/IO，无昂贵FE重放。C2初次额外未用moment包披露且保存实际RSS，修正输入边界不改数值结论。16pytest不包含ML环境中没有pytest的7事务测试；各自不同环境分列，不夸大CI。
+
+
+## V9：固定误差定位的验证与失败记录
+
+最终23相关pure-array/packet/共享监督/列尺度pytest通过，clean e21af767d3522af531ad83c45eacc1df252566c9。7个受影响测试在checker最小修复后通过；初版5 helper测试、一次小fixture total资格错误断言、一次错误文件名no tests ran及随后的有效测试均保存费用。非Hermitian复数、非零内部特解/端口、非零参考残差、物理z不重复缩放、输入不可变、原native/增广符号、强抵消运算尺度、坏raw/status不被信任均有反例。
+
+真实六状态S/恢复/原方程/MPC/全FE区域与交叉项通过1e-10；全部独立最大差1.60056e-11。首次正式stage checker平方恒等式分母错误失败保留，e21只修复运算尺度、只重放数组checker；未重算FE。参考原残差不置零，完整40通道和192/8/48/136区mask真实核验。FE preflight首次sandbox MPI socket失败，随后同只读ABI complex128/int64/MPI1合格，无升级/重装。[状态及独立Gate](records/gate_decisions_v9.json)、[资源](records/resource_costs_v9.json)。
+
+新相关文件Ruff/format、compileall、one-run输入、本地表格/链接/公式、旧authority/response/records字节保护见[静态证据](records/static_checks_v9.json)。Review V6 GitHub实际5表/6math-renderer，review未修改；新文档发布检查见publication_checks_v9.json。旧V7/V8求解仍失败，不重跑teacher/训练/LSQR/参考LU；full repository pytest/MPI2/4/CI not_run。

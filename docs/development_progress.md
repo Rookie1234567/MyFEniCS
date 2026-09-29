@@ -2952,3 +2952,16 @@ NEURAL_OPTIMIZATION_NEGATIVE、神经增量NOT_DEMONSTRATED、最终0.7nm/48h NO
 本轮固定原0.7nm/384hex/p3/40port对象，只将列单位均衡以及同网络八单元同时计算，另修复异常保存边界，三项独立。C1七测试PASS；C2唯一D由原组装S列范数、setup无factor，1915步/S1999/Sᴴ1919最终Schur0.068283273738/native0.026675035784/scattered L2差0.998598490718，严格/研究均失败。C3三状态full trace/loss/grad/clone Adam/FD等价PASS，固定参数三pair中位降幅48.55%，35107584B缓存，不训练、不把成本收益写成解通过。初次C2额外未用3369888B moment包在新source最小收口，原真实RSS/数值保留，无完整重放。
 
 11正式supervised wall791.658916180s/树峰816152576B/own swap0/无GPU；全aux/失败/V6+carry不重置，最终资源账linked。受控共享CPU/MPI1/mathTorch1/DataLoader0/自有锁/16-12GiB树监督/独立cache保持，无cgroup内核连续保证，邻任务不操作；无持续PSI压力，影响与无争用加速INCONCLUSIVE。旧p4仍关闭，最终0.7nm/48h、神经数值增量未资格化，target单步/步数/存储unknown。唯一下一建议：固定pilot上仅对已经冻结的误差方向做原S/恢复/端口分量审核，复用已有p3参考作离线核对，定位残差下降为何没有恢复散射；不训练、不建新PC、不扫描。 未实施，停止等review，不merge。[Response V8](task042_neural_coarse_inverse/response_v8.md)、[完整结果](task042_neural_coarse_inverse/outcomes/scaling_and_execution_v8.md)、[最终费用](task042_neural_coarse_inverse/outcomes/records/resource_costs_v8.json)。
+
+
+## Task042 V9：固定误差定位完成，旧求解负结果保留
+
+| 对象／阶段 | 本分支新增结果与边界 |
+|---|---|
+| 0.7nm/384hex/p3/40端口/MPI1 | Z0/NN7/FREE7/LSQR7/LSQR8/REF7共6状态；D0–D4完成，无新solve/train/LU/PC/loss |
+| 误差与真实场 | Se=r-r_ref≤2.925e-12，齐次恢复≤3.082e-16；NN散射范数比0.457259/相关0.999809，LSQR7/8幅值约0.26%/0.37%，均未资格化 |
+| 区域／原作用 | y分量和上下(0,0,s)主导，全域四区分布；LSQR8方向增益0.0683784、体/port抵消0.059273/0.000209768；根因未唯一确定 |
+| source／共享费用 | a1dc3466294c30b6de292468d6dd1aa9b685b193；唯一stage234.760s、树峰0.939442GiB/swap0；首次checker失败保留，e21仅数组审核修复 |
+| 资格／下一步 | FIXED_ERROR_DIAGNOSTIC_COMPLETE≠solver PASS；原V7/V8及旧p4负结果保留，最大0.7nm/48h仍NOT_QUALIFIED；只建议后续有界原V内部作用平衡检查，未实施 |
+
+身份、40复通道、区域、方程分量与累计资源见[Task042 V9](task042_neural_coarse_inverse/outcomes/frozen_error_localization_v9.md)、[Response V9](task042_neural_coarse_inverse/response_v9.md)。受控共享CPU授权继续，无cgroup委派不冒称连续限额；未观测持续PSI压力，邻影响INCONCLUSIVE。原seed420620封存，不改变其他Task合同/记录，不merge。

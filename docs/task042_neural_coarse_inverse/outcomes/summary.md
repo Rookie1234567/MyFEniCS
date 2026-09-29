@@ -1,3 +1,25 @@
+# V9 最新交付：固定误差定位完成，求解负结果保留
+
+本轮把六个固定向量恢复成真实FE场，定位遗漏散射和原方程响应。完成D0–D4，独立状态FIXED_ERROR_DIAGNOSTIC_COMPLETE，solver_pass=false；没有新增求解、训练、参考LU或神经增量资格。[Response V9](../response_v9.md)、[完整定位](frozen_error_localization_v9.md)。
+
+| 对象／方法／身份 | 实测与边界 | 证据 |
+|---|---|---|
+| 原微型模型 | 0.7nm/384hex/p3/h0.175/MPI1，FE34050/trace18144/内部13824/slave2082；top20＋bottom20完整40通道，原canonical Si | [六状态／全部数组身份](records/frozen_state_inventory_v9.json) |
+| 准确同离散参考 | REF7原Schur/native6.424e-12/3.018e-12；仅offline diagnostic，不升级连续收敛 | [原残差／齐次恢复](records/error_identity_checks_v9.json) |
+| 原方程与恢复配对 | Se=r-r_ref最大2.925e-12；齐次恢复3.082e-16、增广/native1.601e-11/1.589e-11；错误默认recover会多加0.00120339特解 | [独立Gate及最小checker修复](records/gate_decisions_v9.json) |
+| 散射幅值／形状 | NN7范数比0.457259、相关模0.999809，仍有幅值/相位缺口；LSQR7/8范数比0.002574/0.003671、误差约1 | [系数与真实E/H场分开](records/field_error_components_v9.csv) |
+| 区域／端口 | 192/8/48/136互斥区域，主要y分量贯穿全域，误差约50/2/12.5/35.5%；上下(0,0,s)主导，不等于功率差 | [区域](records/region_error_integrals_v9.csv)、[全部40通道复误差](records/port_error_components_v9.csv) |
+| 原体／端口作用 | LSQR8 body/port抵消0.059273/0.000209768，方向增益0.0683784；不推导条件数或唯一病态根因 | [含复交叉项的原分量](records/equation_components_v9.csv) |
+| 资源／source | clean a1dc3466294c30b6de292468d6dd1aa9b685b193；一次正式wall234.760s，整树峰0.939442GiB/swap0；S11/SH0/unc34/recover16，12小Hp solve及16审核乘法 | [run index](records/run_index_v9.json)、[包含失败/辅助/发布的费用账](records/resource_costs_v9.json) |
+| 旧物理量与资格 | 原R/T/A/A_volume/重要衍射级仅引用V7/V8绑定记录；四候选仍不满足原方程1e-6与场1e-4，旧p4路线关闭 | [V7盲验证](records/independent_blind_validation_v7.json)、[V8盲验证](records/scaled_blind_validation_v8.json) |
+| 未运行／原因 | 无新模型、p/h/M/MPI扫描、loss/D/PC/网络变化、p4 enrichment/F5/p6/GPU/最大目标/seed420620；本批只定位 | [停止与唯一建议](records/gate_decisions_v9.json) |
+
+共享CPU授权继续，现场选正式CPU0/单线程、16/12GiB树监督、自有锁及隔离缓存；无cgroup委派，不称内核连续限额。未观察持续PSI压力，缺邻任务可比速率，影响INCONCLUSIVE，全部费用标shared-workstation。初次checker用抵消后的结果当运算尺度导致失败，单次局部修复后仅重放数组checker，原失败raw/source/费用保留。最终23相关pytest通过，Review V6实际GitHub5表/6公式通过。没有新的official物理结果或无争用性能结论。
+
+数据/正确恢复未见错误；主导散射遗漏遍及全域，NN和LSQR结构不同，但表示上限、优化原因和V内部机制仍未确定。唯一下一建议为待review后对冻结LSQR8误差与参考方向，量化原未凝聚V的curl-curl/epsilon质量及必要边界作用平衡；本批未执行。最终0.7nm/48h目标仍NOT_QUALIFIED，目标规模成本/步数unknown。
+
+以下全部历史正文按字节保留。
+
 # V8 最新交付：列尺度仍未收敛，等价批量计算降低单步成本
 
 列均衡把未知量换成作用大小相近的单位；batch8把相同网络／边面矩同时算八个单元。前者是数值假设，后者是实现成本，两者分别验收；停机事务另修复保存边界。

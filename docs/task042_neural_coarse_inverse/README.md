@@ -101,3 +101,8 @@ sed -n '1,100p' docs/task042_neural_coarse_inverse/task.md
 在NN-Lab打开新会话，读取根/目录AGENTS、仓库原则、本README及完整task.md。先F0；若原2 nm或其他heavy运行，只做允许的轻量工作并以`WAITING_FOR_SHARED_WORKSTATION`交付，不能因此改旧watchdog或抢占硬件。资源空闲且各Gate通过后可顺序完成获授权阶段，不逐小步等待确认，不越过真实精度/资源失败。
 
 只提交推送`task42_neural_coarse_inverse`。第一轮结束报告精确HEAD、source/输入/模型身份、无global p4因子证据、线性/NN对照、真实残差、全过程RSS/VRAM/时间及未运行项；不把目录/分支创建等同于环境已隔离或神经方案已通过。
+
+
+## V9 最新有限批次入口
+
+[Review V6](review_report_v6.md)授权固定误差定位；[Response V9](response_v9.md)及[完整结果](outcomes/frozen_error_localization_v9.md)为本轮交付。六状态齐次恢复/物理区域/原方程作用核验完成，没有新求解、训练、PC或loss变更。旧p4路线关闭，V7/V8负结果保留；后续建议等待review，未自动执行。

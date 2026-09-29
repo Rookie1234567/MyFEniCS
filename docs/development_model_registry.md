@@ -1745,3 +1745,16 @@ production model。
 | FE-LSQR-COLUMN-SCALED | 同384hex/p3/0.7nm，D来自原S列范数，18184 rows/40port；source1a2984a完整见run index | Schur0.068283273738/native0.026675035784/scattered差0.998598490718，严格及研究FAIL | setup树wall6.818829s/RSS641200128B；solve树563.163265s/RSS553803776B，shared-workstation |
 | NEURAL-TRACE-BATCH8-EXECUTION | 同11696参数/8载波，全q15矩与MPC，source52d47d3完整见run index | 三状态等价PASS，三pair中位降幅48.55%；工程观测，未新训练/无数值增量 | cache35107584B，含warmups/全部样本与cold setup见batch_costs_v8；本批最大树RSS816152576B |
 | TARGET-0P7NM-48H | micro不是最终目标，目标规模/通道/步数/误差预算unknown | NOT_QUALIFIED，不扩大模型 | 无外推／预测冒充实测 |
+
+
+## Task042 V9：固定误差定位完成，旧求解负结果保留
+
+| 对象／阶段 | 本分支新增结果与边界 |
+|---|---|
+| 0.7nm/384hex/p3/40端口/MPI1 | Z0/NN7/FREE7/LSQR7/LSQR8/REF7共6状态；D0–D4完成，无新solve/train/LU/PC/loss |
+| 误差与真实场 | Se=r-r_ref≤2.925e-12，齐次恢复≤3.082e-16；NN散射范数比0.457259/相关0.999809，LSQR7/8幅值约0.26%/0.37%，均未资格化 |
+| 区域／原作用 | y分量和上下(0,0,s)主导，全域四区分布；LSQR8方向增益0.0683784、体/port抵消0.059273/0.000209768；根因未唯一确定 |
+| source／共享费用 | a1dc3466294c30b6de292468d6dd1aa9b685b193；唯一stage234.760s、树峰0.939442GiB/swap0；首次checker失败保留，e21仅数组审核修复 |
+| 资格／下一步 | FIXED_ERROR_DIAGNOSTIC_COMPLETE≠solver PASS；原V7/V8及旧p4负结果保留，最大0.7nm/48h仍NOT_QUALIFIED；只建议后续有界原V内部作用平衡检查，未实施 |
+
+身份、40复通道、区域、方程分量与累计资源见[Task042 V9](task042_neural_coarse_inverse/outcomes/frozen_error_localization_v9.md)、[Response V9](task042_neural_coarse_inverse/response_v9.md)。受控共享CPU授权继续，无cgroup委派不冒称连续限额；未观测持续PSI压力，邻影响INCONCLUSIVE。原seed420620封存，不改变其他Task合同/记录，不merge。

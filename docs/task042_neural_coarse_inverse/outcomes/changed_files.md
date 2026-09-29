@@ -78,3 +78,17 @@ C1 `64c128c3541887e22788343692cc4f7832a45696`；唯一正式坐标修复／成�
 | do-not-merge | D/state/packet/网络参数、raw日志/监控/缓存/环境和临时helper | ignored NN-Lab；无global p4部署，setup小CSR释放，参考只验证 |
 
 建议合入顺序：事务→列尺度/包装→batch数学核→研究profile/runner→checker/compact证据，全部依赖组待review，不提升默认、不merge。原action、LSQR递推、原FE／A4/A6/MPC、material和旧task/review/response/records不改。正式source仅1a2984a44ca48573bbe18ffe8a7f8c5d6bdacc05和52d47d35656c5a763bed07e07f827fb6fb285bb7，后续所有权及checker/docs source另列。
+
+
+## V9：只读固定误差定位的依赖组
+
+| Selective merge组 | 必要变化／数值行为 | 测试／边界 |
+|---|---|---|
+| research numerical/core | 新frozen_fe_error和frozen_fe_field_localization；齐次误差helper、缓存原作用、一次FE积分；原生产S/F/MPC不改 | 复数非零特解/port、原方程身份和实际区域积分；不生成新解 |
+| research runner/profile/input | 新frozen_fe_diagnostic IO/薄stage、固定六状态plan和one-run dat；run_case/profile/continuation/shared仅显式V9 dispatch | clean source、原自有lock/watchdog、128调用/3600及累计预算；ordinary default不改 |
+| checker/tests | 新frozen_fe_error_check与两个focused test；单次修复交叉平方身份运算尺度 | 23相关最终pytest、真实raw checker，不求解、不信status |
+| compact evidence/docs | response_v9、frozen_error_localization_v9、九必需records及显示/静态/环境；summary新前缀，两总账及测试/变化追加 | 历史按字节保护，首次失败和负结果不改写，完整source/hash/成本 |
+| production numerical/core | 无新资格路径，V8事务和batch8实现保留 | 不改loss/network/PC、不重开p4、不提升默认 |
+| do-not-merge | raw_fixed_error_vectors、原状态/packet、FE积分JIT、日志、环境、tmp helper | ignored NN-Lab；Git只有小CSV/JSON/文档 |
+
+建议依赖顺序为helper→FE积分→研究IO/stage→显式dispatch→checker/tests→compact证据，均待review，不merge。正式FE source a1dc3466294c30b6de292468d6dd1aa9b685b193；最小checker修复source e21af767d3522af531ad83c45eacc1df252566c9，不替代运行source。原task/review/response、旧records和所有负结果保留，不修改邻任务。

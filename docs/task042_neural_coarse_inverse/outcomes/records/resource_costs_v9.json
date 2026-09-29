@@ -1,0 +1,381 @@
+{
+  "budget": {
+    "carry_in_seconds": 9804.434395463672,
+    "new_seconds": 397.53925661509857,
+    "cumulative_seconds": 10201.97365207877,
+    "remaining_seconds": 3202.4607433849014,
+    "records": [
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/aggregate_records/summary.json",
+        "seconds": 3.08625292009674,
+        "supervised_seconds": 1.7937809309223667
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/checker_scale_repair_tests/summary.json",
+        "seconds": 2.8906261440133676,
+        "supervised_seconds": 1.7149455399485305
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/delivery_focused_tests/summary.json",
+        "seconds": 4.471502901986241,
+        "supervised_seconds": 3.3300819889409468
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/fe_preflight/summary.json",
+        "seconds": 2.632071098079905,
+        "supervised_seconds": 1.4691748659824952
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/fe_preflight_native/summary.json",
+        "seconds": 5.581609355984256,
+        "supervised_seconds": 4.129014919977635
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/final_focused_tests/summary.json",
+        "seconds": 2.5567637520143762,
+        "supervised_seconds": 1.3465642438968644
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/final_focused_tests_retry/summary.json",
+        "seconds": 2.9652506900019944,
+        "supervised_seconds": 1.8083695920649916
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/focused_tests/summary.json",
+        "seconds": 2.864908803952858,
+        "supervised_seconds": 1.6863651109160855
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/focused_tests_fixed/summary.json",
+        "seconds": 2.9306870460277423,
+        "supervised_seconds": 1.7060587590094656
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/helper_tests/summary.json",
+        "seconds": 2.7595053570112213,
+        "supervised_seconds": 1.5894270510179922
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/independent_check/summary.json",
+        "seconds": 2.703762526041828,
+        "supervised_seconds": 1.4815149169880897
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/outside_sampled_accounting/summary.json",
+        "seconds": 120.0,
+        "supervised_seconds": 0
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/review_render/summary.json",
+        "seconds": 4.609673004015349,
+        "supervised_seconds": 3.168339925003238
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/static_docs_check/summary.json",
+        "seconds": 2.7266049429308623,
+        "supervised_seconds": 1.5736811610404402
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v9_frozen_error_20260929T123611129007Z/run_summary.json",
+        "seconds": 234.76003807294182,
+        "supervised_seconds": 233.38369697600137
+      }
+    ],
+    "batch_limit_seconds": 3600,
+    "cumulative_limit_seconds": 36000,
+    "shared_workstation": true
+  },
+  "shared_workstation": true,
+  "formal_directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v9_frozen_error_20260929T123611129007Z",
+  "formal_run_summary_sha256": "4b5a22eaf6a068f8bd38614b211ab1a21db360a8280d6d6e8038f0c685d5a31a",
+  "formal_launch_wall_seconds": 234.76003807294182,
+  "formal_supervised_seconds": 233.38369697600137,
+  "formal_classification": "WORKER_FAILED",
+  "formal_checker_original_failed": true,
+  "top_level_exclusive_seconds": {
+    "packet_and_six_states_IO_identity": 1.924114877008833,
+    "original_state_audits_including_actions": 3.92645133996848,
+    "error_identities_and_equation_components_including_actions": 3.486006214050576,
+    "one_FE_environment_and_all_integrals": 220.32457713002805,
+    "raw_vector_save_and_hash": 0.15061272599268705
+  },
+  "actions_nested_not_additive_seconds": {
+    "S": 1.198008731007576,
+    "SH": 0.0,
+    "recover": 0.35109940101392567,
+    "uncondensed": 5.779981263913214,
+    "Hp_audit": 0.0026462520472705364
+  },
+  "action_counts": {
+    "S": 11,
+    "SH": 0,
+    "recover": 16,
+    "uncondensed": 34,
+    "Hp_audit": 12
+  },
+  "FE_counts": {
+    "FE_scalar_integrals": 436,
+    "MPC_field_expansions": 22,
+    "FE_environment_builds": 1,
+    "Maxwell_operator_assemblies": 0,
+    "global_CSR": 0,
+    "new_factor": 0,
+    "target_solves": 0
+  },
+  "additional_Hp_audit_matvec_counts": {
+    "original_state_scale": 6,
+    "initial_raw_checker": 5,
+    "repaired_raw_checker": 5,
+    "total_with_12_audit_solves": 28,
+    "review_cap": 128
+  },
+  "FE_nested_seconds": {
+    "FE_mesh_space_MPC_and_identity": 1.3813226519851014,
+    "FE_scalar_form_JIT_setup": 126.07004741497803,
+    "FE_all_fixed_field_integrals": 84.77738369593862
+  },
+  "FE_initial_expansion_reference_integrals_and_metadata_derived_seconds": 8.095823367126286,
+  "worker_wall_before_final_json_IO_seconds": 229.96594436501618,
+  "auxiliary": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/aggregate_records/summary.json",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "seconds": 3.08625292009674,
+      "supervised_seconds": 1.7937809309223667,
+      "tree_rss_peak_bytes": 59781120,
+      "tree_swap_peak_bytes": 0,
+      "measurement_kind": "measured bounded stage"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/checker_scale_repair_tests/summary.json",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "seconds": 2.8906261440133676,
+      "supervised_seconds": 1.7149455399485305,
+      "tree_rss_peak_bytes": 71655424,
+      "tree_swap_peak_bytes": 0,
+      "measurement_kind": "measured bounded stage"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/delivery_focused_tests/summary.json",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "seconds": 4.471502901986241,
+      "supervised_seconds": 3.3300819889409468,
+      "tree_rss_peak_bytes": 234541056,
+      "tree_swap_peak_bytes": 0,
+      "measurement_kind": "measured bounded stage"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/fe_preflight/summary.json",
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "descendants_cleared": true,
+      "seconds": 2.632071098079905,
+      "supervised_seconds": 1.4691748659824952,
+      "tree_rss_peak_bytes": 85823488,
+      "tree_swap_peak_bytes": 0,
+      "measurement_kind": "measured bounded stage"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/fe_preflight_native/summary.json",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "seconds": 5.581609355984256,
+      "supervised_seconds": 4.129014919977635,
+      "tree_rss_peak_bytes": 227495936,
+      "tree_swap_peak_bytes": 0,
+      "measurement_kind": "measured bounded stage"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/final_focused_tests/summary.json",
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 4,
+      "descendants_cleared": true,
+      "seconds": 2.5567637520143762,
+      "supervised_seconds": 1.3465642438968644,
+      "tree_rss_peak_bytes": 46981120,
+      "tree_swap_peak_bytes": 0,
+      "measurement_kind": "measured bounded stage"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/final_focused_tests_retry/summary.json",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "seconds": 2.9652506900019944,
+      "supervised_seconds": 1.8083695920649916,
+      "tree_rss_peak_bytes": 84312064,
+      "tree_swap_peak_bytes": 0,
+      "measurement_kind": "measured bounded stage"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/focused_tests/summary.json",
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "descendants_cleared": true,
+      "seconds": 2.864908803952858,
+      "supervised_seconds": 1.6863651109160855,
+      "tree_rss_peak_bytes": 83992576,
+      "tree_swap_peak_bytes": 0,
+      "measurement_kind": "measured bounded stage"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/focused_tests_fixed/summary.json",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "seconds": 2.9306870460277423,
+      "supervised_seconds": 1.7060587590094656,
+      "tree_rss_peak_bytes": 84246528,
+      "tree_swap_peak_bytes": 0,
+      "measurement_kind": "measured bounded stage"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/helper_tests/summary.json",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "seconds": 2.7595053570112213,
+      "supervised_seconds": 1.5894270510179922,
+      "tree_rss_peak_bytes": 69124096,
+      "tree_swap_peak_bytes": 0,
+      "measurement_kind": "measured bounded stage"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/independent_check/summary.json",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "seconds": 2.703762526041828,
+      "supervised_seconds": 1.4815149169880897,
+      "tree_rss_peak_bytes": 65208320,
+      "tree_swap_peak_bytes": 0,
+      "measurement_kind": "measured bounded stage"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/outside_sampled_accounting/summary.json",
+      "classification": "CONSERVATIVE_BUDGET_RESERVATION",
+      "leader_exit_code": null,
+      "descendants_cleared": null,
+      "seconds": 120.0,
+      "supervised_seconds": 0,
+      "tree_rss_peak_bytes": null,
+      "tree_swap_peak_bytes": null,
+      "measurement_kind": "120s charged, not measured"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/review_render/summary.json",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "seconds": 4.609673004015349,
+      "supervised_seconds": 3.168339925003238,
+      "tree_rss_peak_bytes": 45051904,
+      "tree_swap_peak_bytes": 0,
+      "measurement_kind": "measured bounded stage"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v9/static_docs_check/summary.json",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "seconds": 2.7266049429308623,
+      "supervised_seconds": 1.5736811610404402,
+      "tree_rss_peak_bytes": 44478464,
+      "tree_swap_peak_bytes": 0,
+      "measurement_kind": "measured bounded stage"
+    }
+  ],
+  "sampled_simultaneous_tree_peak_bytes": 1008717824,
+  "peak_scope": "maximum simultaneous whole-tree RSS across separate supervised stages, not summed historical peaks or full interactive session",
+  "own_swap_peak_bytes": 0,
+  "new_gpu_vram_bytes": 0,
+  "cgroup_kernel_limit_enforced": false,
+  "watchdog_interval_seconds": 0.5,
+  "rss_hard_bytes": 17179869184,
+  "rss_warn_bytes": 12884901888,
+  "baseline": {
+    "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v9_frozen_error_20260929T123611129007Z/resource_baseline.json",
+    "sha256": "0b78dd3d76122aca071b15579b12e1ed39ee210b78ce0ff5eed93cfc8aecfd91",
+    "utc": "2026-09-29T12:36:11.125684+00:00",
+    "cpu": 0,
+    "topology": [
+      {
+        "cpu": 0,
+        "core": 0,
+        "socket": 0,
+        "siblings": [
+          0
+        ]
+      }
+    ],
+    "selected_cpu_busy_fraction": 0.0,
+    "neighbor_process_count": 29,
+    "memory": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 944946569216,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 944946569216,
+      "reserve_bytes": 353748992000,
+      "launch_cap_bytes": 17179869184,
+      "planning_cap_bytes": 17179869184,
+      "cgroup_limits": [],
+      "system_reserve_bytes": 216310038528,
+      "neighbor_growth_allowance_bytes": 137438953472,
+      "shared_workstation": true
+    },
+    "cgroup": {
+      "path": "/sys/fs/cgroup/user.slice/user-1000.slice/session-129.scope",
+      "delegated_writable": false,
+      "ancestors": [
+        {
+          "path": "/sys/fs/cgroup/user.slice/user-1000.slice/session-129.scope",
+          "memory.max": "max",
+          "memory.current": "1179617935360",
+          "memory.high": "max",
+          "memory.swap.max": "max"
+        },
+        {
+          "path": "/sys/fs/cgroup/user.slice/user-1000.slice",
+          "memory.max": "max",
+          "memory.current": "1234203131904",
+          "memory.high": "max",
+          "memory.swap.max": "max"
+        },
+        {
+          "path": "/sys/fs/cgroup/user.slice",
+          "memory.max": "max",
+          "memory.current": "1234369466368",
+          "memory.high": "max",
+          "memory.swap.max": "max"
+        },
+        {
+          "path": "/sys/fs/cgroup"
+        }
+      ],
+      "implementation": "process-tree sampled enforcement; no kernel cgroup limit claimed"
+    },
+    "disk_free_bytes": 3446601150464,
+    "GPU_snapshot": "0, Quadro RTX 8000, Default, 100 %, 3498 MiB, 46080 MiB\n1, Quadro RTX 8000, Default, 99 %, 3106 MiB, 49152 MiB"
+  },
+  "formal_health": {
+    "samples": 43,
+    "stop_reason": null,
+    "peak_pressure_consecutive_samples": 0,
+    "max_PSI_avg10": 0.0,
+    "min_disk_free_bytes": 3445954904064,
+    "max_task042_artifact_bytes": 1962028478,
+    "neighbor_short_record_policy": "read existing compact stage indicators only; no smaps or large log scan"
+  },
+  "neighbor_impact": "INCONCLUSIVE: no persistent pressure observed; comparable same-stage throughput baseline unavailable",
+  "performance": "no solver acceleration claim; shared-workstation diagnostic costs only",
+  "full_interactive_session_wall_and_RSS": "not continuously measured; numerical/auxiliary stage scope listed, editing and dialogue not runtime",
+  "arithmetic": "new = formal launcher + each auxiliary launcher once, including failures/publication and labeled conservative metadata reservation; nested action/FE timers not added again",
+  "outside_sampled_accounting": "120 s conservative budget charge for short unsupervised CLI/static/metadata/hash checks; not measured time or RSS"
+}
