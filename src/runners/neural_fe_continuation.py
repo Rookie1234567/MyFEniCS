@@ -202,9 +202,12 @@ def main():
             operator_source_sha=fe["source_sha"],
             real_gradient_source_sha=grad["source_sha"],
         )
-    elif stage == "V7-M3-REFERENCE":
+    elif stage in {"V7-M3-REFERENCE", "V7-M3-VERIFY"}:
         from src.runners.task042_experiment import thread_qualification
-        from src.solvers.neural_fe_blind_reference import blind_reference
+        from src.solvers.neural_fe_blind_reference import (
+            blind_reference,
+            verify_saved_reference,
+        )
         from src.solvers.neural_fe_pilot import load_packet
 
         fe, fe_path = read_index("qualified_real_fe")
@@ -267,9 +270,21 @@ def main():
             raise RuntimeError("no complete own process-tree supervision sample")
 
         packet = load_packet(path)
-        result = blind_reference(
-            design, packet, routes, artifact, sample=sample, marker=marker, save=save
-        )
+        if stage == "V7-M3-VERIFY":
+            identity, _ = read_index("reference_resume")
+            if identity["physical_model_sha256"] != specification.physical_model_sha256:
+                raise RuntimeError("saved reference operator identity mismatch")
+            result = verify_saved_reference(design, packet, routes, identity, artifact)
+        else:
+            result = blind_reference(
+                design,
+                packet,
+                routes,
+                artifact,
+                sample=sample,
+                marker=marker,
+                save=save,
+            )
         if not any(
             value["status"] == "SAME_DISCRETE_QUALIFIED"
             for value in result["comparisons"].values()
@@ -301,7 +316,7 @@ def main():
     write_json(directory / "stage_result.json", result)
     if stage == "V7-M0":
         publish("material_inventory", path)
-    elif stage == "V7-M3-REFERENCE":
+    elif stage in {"V7-M3-REFERENCE", "V7-M3-VERIFY"}:
         publish("blind_reference", path)
     elif stage.startswith("V7-M2-"):
         publish(
@@ -330,7 +345,7 @@ def main():
     )
     if (
         stage != "V7-M0"
-        and stage != "V7-M3-REFERENCE"
+        and stage not in {"V7-M3-REFERENCE", "V7-M3-VERIFY"}
         and not stage.startswith("V7-M2-")
         and result["status"] != "PASS"
     ):

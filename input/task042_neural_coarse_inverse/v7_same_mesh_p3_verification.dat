@@ -1,0 +1,5 @@
+schema_version = 1
+[task042_v7]
+stage = "same_mesh_p3_verification"
+run_id = "task042_v7_same_mesh_p3_verification"
+material_table_id = "SI_OPTICAL_CONSTANTS_USER_20260929_V1"

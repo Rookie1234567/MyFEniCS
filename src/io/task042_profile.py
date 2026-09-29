@@ -37,6 +37,7 @@ TASK042_PROFILES = {
     "task042_v7_free_fe_opt": "V7-M2-FREE",
     "task042_v7_fe_lsqr": "V7-M2-LSQR",
     "task042_v7_same_mesh_p3_reference": "V7-M3-REFERENCE",
+    "task042_v7_same_mesh_p3_verification": "V7-M3-VERIFY",
 }
 
 

@@ -14,6 +14,12 @@ from src.io.task042_profile import ROOT
 DESIGN_PATH = ROOT / "input/task042_neural_coarse_inverse/neural_fe_design_v7.json"
 V7_ROOT = ROOT / "benchmarks/artifacts/task042/v7"
 STAGES = {
+    "same_mesh_p3_verification": (
+        "task042_v7_same_mesh_p3_verification",
+        "V7-M3-VERIFY",
+        "fe",
+        1800,
+    ),
     "same_mesh_p3_reference": (
         "task042_v7_same_mesh_p3_reference",
         "V7-M3-REFERENCE",

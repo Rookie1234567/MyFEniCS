@@ -252,6 +252,7 @@ def blind_reference(design, packet, route_records, artifact, *, sample, marker, 
             p4_enrichment="NOT_RUN_REFERENCE_ACCURACY",
         )
     marker("factor_released_begin_independent_FE_physics", {})
+    save("reference_costs_before_physics", costs)
     start = perf_counter()
     physics, comparisons = independent_physics(
         design, packet, reference, states, artifact
@@ -267,6 +268,100 @@ def blind_reference(design, packet, route_records, artifact, *, sample, marker, 
         physics=physics,
         comparisons=comparisons,
         candidates_frozen=frozen,
+        costs_exclusive_seconds=costs,
+        worker_numerical_seconds=perf_counter() - began,
+        p4_enrichment="CONDITIONAL_NOT_YET_RUN",
+        reference_before_training=False,
+        no_reference_feedback_to_training=True,
+    )
+
+
+def l2_scaled_curl_forms(field, k0, dx):
+    import ufl
+
+    return (
+        ufl.real(ufl.inner(field, field)) * dx,
+        (ufl.real(ufl.inner(ufl.curl(field), ufl.curl(field))) / k0**2) * dx,
+    )
+
+
+def verify_saved_reference(design, packet, route_records, identity, artifact):
+    """Replay only postprocessing after the single recorded UFL wiring fix."""
+    import json
+
+    began = perf_counter()
+    original = Path(identity["original_artifact"]).resolve()
+    records = {}
+    for name, entry in identity["files"].items():
+        path = Path(entry["path"]).resolve()
+        if file_hash(path) != entry["sha256"]:
+            raise ValueError("saved-reference identity/hash failure")
+        records[name] = path
+    lifecycle = json.loads(records["factor_lifecycle"].read_text())
+    if (
+        not lifecycle["factor_released"]
+        or lifecycle["numeric_calls"] != 1
+        or lifecycle["global_p4_factor"]
+        or lifecycle["rows"] != packet.size
+    ):
+        raise ValueError("released reference-only factor lifecycle required")
+    with np.load(records["reference_vector"], allow_pickle=False) as data:
+        reference = np.array(data["z"])
+    if reference.shape != (packet.size,) or not np.isfinite(reference).all():
+        raise ValueError("invalid saved reference vector")
+    states = {}
+    if set(route_records) != {"NEURAL-TRACE", "FREE-FE-OPT", "FE-LSQR"}:
+        raise ValueError("all three original frozen candidates required")
+    previous = json.loads(records["candidates_frozen"].read_text())
+    for route, record in route_records.items():
+        state = record["state"]
+        if (
+            state != previous[route]["state"]
+            or file_hash(state["path"]) != state["sha256"]
+        ):
+            raise ValueError("candidate was changed after reference")
+        with np.load(state["path"], allow_pickle=False) as data:
+            states[route] = np.array(data["z"])
+        if array_hash(states[route]) != state["z_sha256"]:
+            raise ValueError("original frozen candidate vector hash mismatch")
+    audit = packet.audit(reference)
+    if any(
+        audit[k] > 1e-10
+        for k in (
+            "schur_relative",
+            "native_relative",
+            "augmented_relative",
+            "port_operation_relative",
+            "recovery_relative",
+            "original_total_augmented_relative",
+        )
+    ):
+        raise ValueError("saved accurate reference failed original-equation recheck")
+    costs = dict(saved_identity_and_original_recheck=perf_counter() - began)
+    start = perf_counter()
+    physics, comparisons = independent_physics(
+        design, packet, reference, states, Path(artifact)
+    )
+    costs["independent_FE_rebuild_all_fields_power_and_io"] = perf_counter() - start
+    return dict(
+        status="BLIND_REFERENCE_COMPLETE"
+        if physics["reference_native_pass"]
+        else "REFERENCE_NATIVE_AUDIT_UNRESOLVED",
+        reference_audit=audit,
+        reference_state=dict(
+            path=str(records["reference_vector"]),
+            sha256=file_hash(records["reference_vector"]),
+            z_sha256=array_hash(reference),
+        ),
+        factor=lifecycle,
+        physics=physics,
+        comparisons=comparisons,
+        original_reference=identity,
+        reused_original_artifact=str(original),
+        symbolic_calls_this_run=0,
+        numeric_calls_this_run=0,
+        solve_calls_this_run=0,
+        replay_scope="only FE/E/H/power checks; same saved p3 reference and candidates",
         costs_exclusive_seconds=costs,
         worker_numerical_seconds=perf_counter() - began,
         p4_enrichment="CONDITIONAL_NOT_YET_RUN",
@@ -327,20 +422,9 @@ def independent_physics(design, packet, reference, states, artifact):
         dx = ufl.Measure("dx", domain=data.mesh, metadata={"quadrature_degree": 15})
 
         def norms(field):
-            l2 = float(
-                fem.assemble_scalar(
-                    fem.form(ufl.real(ufl.inner(field, field)) * dx)
-                ).real
-            )
-            curl = float(
-                fem.assemble_scalar(
-                    fem.form(
-                        ufl.real(ufl.inner(ufl.curl(field), ufl.curl(field)))
-                        * dx
-                        / cfg.k0**2
-                    )
-                ).real
-            )
+            l2_form, curl_form = l2_scaled_curl_forms(field, cfg.k0, dx)
+            l2 = float(fem.assemble_scalar(fem.form(l2_form)).real)
+            curl = float(fem.assemble_scalar(fem.form(curl_form)).real)
             return np.sqrt(max(l2, 0)), np.sqrt(max(curl, 0))
 
         ref_norm = np.asarray(norms(refE))
