@@ -1,0 +1,185 @@
+{
+  "component_evidence": {
+    "correctness_gates": {
+      "B6_and_fixed_window_H6_relative_difference_le_1e-10": true,
+      "complete_A6_A4_relative_difference_le_1e-10": true,
+      "fresh_candidate_power10_all_variants_pass": true
+    },
+    "fresh_power10_gate": true,
+    "path": "docs/task039_extra_physical_multilevel/outcomes/records/projection_layout_v31_components.json",
+    "selected_variant": "natural_order",
+    "sha256": "efb744738ebf0dcb8f934e5eb7b20d2097a6db0c934fbdabae030993cd768ebc",
+    "status": "PASS"
+  },
+  "formal_run": {
+    "decision": "REQUIRES_ONE_FORMAL_RUN",
+    "factor_policy": "one fresh existing MUMPS p4 factor in the formal run; no extra engineering factor",
+    "monitoring": "existing watchdog/systemd user-service tree RSS, swap observed-only, PSS disabled by profile",
+    "numeric_cache_mode": "build",
+    "pre_run_git_tree_must_be_clean": true,
+    "service_wrapper": "bash scripts/run_case_in_user_service.sh input/task39extra/v31_projection_layout_original_h7p5.dat --v14-time-policy observe_only",
+    "source_commit_before_selection_record": "410764d619dafdf6b66447b68dd484de7d67b2e9",
+    "worker_command": "python scripts/run_case.py input/task39extra/v31_projection_layout_original_h7p5.dat --v14-time-policy observe_only"
+  },
+  "input": {
+    "comparison_group": "review_v29_evidence_and_projection_v31",
+    "path": "input/task39extra/v31_projection_layout_original_h7p5.dat",
+    "physical_model_sha256": "0875aaf070d88732b09ead8c55a7d4c28dd75f9b329e90f35fea984a0b7464e6",
+    "run_id": "task39extra_v31_projection_layout_original_h7p5_v1",
+    "same_physical_model_as_v30": true,
+    "sha256": "b19bf2d6a0a5f7a45a9910e3d3f25b1e3a896daa2205e78327be8f169cc9c7d0"
+  },
+  "performance": {
+    "a6_a4_timing_role": "one warmed sample per route; correctness evidence only, not performance qualification",
+    "fixed_matmul_incremental_benefit_stable": false,
+    "h6_median_seconds": {
+      "legacy": {
+        "early_iter0": {
+          "b6": {
+            "cpu_seconds": 2.542299665999991,
+            "wall_seconds": 2.330505801946856
+          },
+          "h6": {
+            "cpu_seconds": 5.119043340000019,
+            "wall_seconds": 4.695601214014459
+          }
+        },
+        "late_iter126": {
+          "b6": {
+            "cpu_seconds": 2.434447490000025,
+            "wall_seconds": 2.231672517955303
+          },
+          "h6": {
+            "cpu_seconds": 5.677876878000006,
+            "wall_seconds": 5.204860244994052
+          }
+        }
+      },
+      "natural_order": {
+        "early_iter0": {
+          "b6": {
+            "cpu_seconds": 2.3023265399999957,
+            "wall_seconds": 2.1105564939789474
+          },
+          "h6": {
+            "cpu_seconds": 4.798943039000022,
+            "wall_seconds": 4.402815291949082
+          }
+        },
+        "late_iter126": {
+          "b6": {
+            "cpu_seconds": 2.3609552210000118,
+            "wall_seconds": 2.164289357024245
+          },
+          "h6": {
+            "cpu_seconds": 4.653110448999996,
+            "wall_seconds": 4.265401481010485
+          }
+        }
+      },
+      "natural_order_fixed_matmul": {
+        "early_iter0": {
+          "b6": {
+            "cpu_seconds": 2.3043807699999945,
+            "wall_seconds": 2.112381693033967
+          },
+          "h6": {
+            "cpu_seconds": 4.728723649999992,
+            "wall_seconds": 4.3373498630244285
+          }
+        },
+        "late_iter126": {
+          "b6": {
+            "cpu_seconds": 2.3881434370000107,
+            "wall_seconds": 2.18917839799542
+          },
+          "h6": {
+            "cpu_seconds": 4.7711799319999955,
+            "wall_seconds": 4.373677751980722
+          }
+        }
+      }
+    },
+    "natural_order_median_improvement_percent": {
+      "early_iter0": {
+        "cpu_seconds": 6.253127386102486,
+        "wall_seconds": 6.235323416978645
+      },
+      "late_iter126": {
+        "cpu_seconds": 18.04840878058943,
+        "wall_seconds": 18.049644366284802
+      }
+    },
+    "natural_order_median_ratio_to_legacy": {
+      "early_iter0": {
+        "cpu_seconds": 0.9374687261389751,
+        "wall_seconds": 0.9376467658302136
+      },
+      "late_iter126": {
+        "cpu_seconds": 0.8195159121941057,
+        "wall_seconds": 0.819503556337152
+      }
+    },
+    "paired_wins_over_both_saved_vectors": {
+      "cpu": 6,
+      "pairs": 6,
+      "scope": "three paired rounds across the early and late saved vectors combined",
+      "wall": 6
+    },
+    "reliable_h6_gain": true,
+    "scope": "three interleaved rounds; six paired samples per vector/mode; warmups excluded"
+  },
+  "production_source_sha256": {
+    "benchmarks/task39extra_v25_dynamic_checker.py": "ae7ea1784acd7c7a202f8cbd00593c4db2be52bae92aa8f3e053a84a752bc49c",
+    "scripts/run_case.py": "b8366d300b456876f283146d03a62f22a5fa3d340b2e64a44e386fc66ede491e",
+    "src/io/input_schema.py": "c6ed4555baf1f7d449efdff6857985bb3b7ff9cb8ccb257f724351a9de74e953",
+    "src/io/input_validation.py": "9d68d0022a4006ee0feadc2d577c88eccde0b367fab650ada1815b1bc521e490",
+    "src/io/physical_intermediate_profile.py": "cf1df43ece1c7c2fecdb6040ffef4debe9c8f34c5cba92bdf268b47b48f15031",
+    "src/runners/physical_dual_cell_condensed_lowmem_v20.py": "6c9e239b75b201cf324c02439ae415701a0e8868590e23648fc9d7f143f35282",
+    "src/runners/physical_p4_schur_v14.py": "636f0e8e464ca26a45209adb14f2ab839500fd4e1cd72ec38f4bc842bed5a1f8",
+    "src/runners/task038_full3d_iterative.py": "ba0fc34161937eb1bfdf82ea857e0c950c936f5d2e762747d51322ed682b6098",
+    "src/runners/task038_launcher.py": "93e5db475cd5b51c9f549b86f073282a848a6e367e605c37e248caf2e3ddd150",
+    "src/solvers/fullspace_n1e_sum_factor.py": "bb6908fed61609907a6cea4ccb891b1acc14c2f2d2277067c318413c14656801",
+    "src/solvers/fullspace_partial_assembly.py": "3808bbf3abef68cd3012de0bce4a90e44302b8e6d7c6d81e988233170e12d01d",
+    "src/solvers/physical_light_setup.py": "6ba7c2d0d57810927aad71935ea89c146346c0d20cbeb9abbc4797ae3c70b69c"
+  },
+  "review_batch": "review_v29_evidence_and_projection_v31",
+  "review_contract": {
+    "additional_engineering_p4_factors": 0,
+    "execution_branch": "task39extra",
+    "master_merge_approved": false,
+    "max_fresh_formal_pde_runs": 1,
+    "ordinary_default_change_approved": false,
+    "review": "docs/task039_extra_physical_multilevel/review_report_v29.md",
+    "workstation_changes_authorized": false
+  },
+  "schema": "task039extra.v31.projection-layout.selection.v1",
+  "selected_route": {
+    "a4_route": "unchanged_v30_route",
+    "a6_route": "unchanged_v30_route",
+    "continuous_projection_matmul": false,
+    "natural_order_internal": true,
+    "ordinary_default_changed": false,
+    "profile": "physical_p6_trace_projection_layout_v31",
+    "reference_metric_diagonal": "inherited_from_v30",
+    "scope": "H6_setup_power10_and_apply_only",
+    "selection_reason": "Natural order reduced H6 wall and CPU medians by more than 5% on both saved vectors and won every paired comparison. The fixed-shape matmul variant did not show a stable incremental benefit over natural-order einsum and allocates additional scratch, so it remains disabled.",
+    "variant": "natural_order"
+  },
+  "selected_route_commit": "410764d619dafdf6b66447b68dd484de7d67b2e9",
+  "status": "H6_CANDIDATE_SELECTED_REQUIRES_ONE_FORMAL_RUN",
+  "verification": {
+    "abi_preflight": {
+      "math_threads": 1,
+      "mpi_size": 1,
+      "petsc_int_type": "int32",
+      "petsc_scalar_type": "complex128",
+      "qualified_activation": true
+    },
+    "compileall": "passed",
+    "ruff": "unavailable in the qualified environment; not installed",
+    "run_case_dry_run": "passed",
+    "run_case_validate_only": "passed",
+    "targeted_tests": "63 passed, 1 skipped in 29.84s"
+  }
+}
