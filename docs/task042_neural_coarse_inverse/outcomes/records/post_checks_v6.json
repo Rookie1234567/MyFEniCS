@@ -1,6 +1,6 @@
 {
   "schema": "task042.post-costs.v6",
-  "utc": "2026-09-29T04:35:20.545836+00:00",
+  "utc": "2026-09-29T04:38:32.089074+00:00",
   "shared_workstation": true,
   "initial_auxiliary_snapshot": "auxiliary_costs_v6.json",
   "post_checks": [
@@ -58,13 +58,24 @@
       "sampled_process_tree_rss_peak_bytes": 44097536,
       "sampled_process_tree_swap_peak_bytes": 0,
       "descendants_cleared": true
+    },
+    {
+      "name": "publication_render",
+      "path": "tmp/task042/v6/publication_render/summary.json",
+      "sha256": "df945f1368fcf113793d55b57642f37ffd745fe22786c92ca12832545e0abdbc",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 13.987742397002876,
+      "sampled_process_tree_rss_peak_bytes": 53358592,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
     }
   ],
-  "all_auxiliary_supervised_wall_seconds": 61.7368624699302,
+  "all_auxiliary_supervised_wall_seconds": 75.72460486693308,
   "all_auxiliary_sampled_simultaneous_tree_rss_peak_bytes": 386977792,
   "formal_supervised_wall_seconds": 26.136697164038196,
   "formal_sampled_simultaneous_tree_rss_peak_bytes": 314408960,
-  "sequential_supervised_wall_seconds_including_formal_and_auxiliary": 87.8735596339684,
+  "sequential_supervised_wall_seconds_including_formal_and_auxiliary": 101.86130203097127,
   "sampled_simultaneous_tree_rss_peak_bytes_across_all_supervised_checks_and_formal": 386977792,
   "own_swap_peak_bytes": 0,
   "all_auxiliary_descendants_cleared": true,

@@ -1,0 +1,15 @@
+{
+  "status": "DELIVERY_EVIDENCE_CONSISTENT",
+  "utc": "2026-09-29T04:38:32.167900+00:00",
+  "published_content_head": "8f5073cbe919eca48f6e33228000c8e31d627efb",
+  "actual_successful_interface_source": "2a2cb4af78ba869a26a1254b4b4b76c9ac158366",
+  "all_published_markdown_files_unchanged_after_render": true,
+  "review_v3": "4 tables / 4 math-renderer pass, authority unchanged",
+  "actual_GitHub_render_pass_count": 8,
+  "progress_full_GitHub_render": "SERVER_TRUNCATED; local check pass; historical content retained",
+  "new_json_parsing": "PASS",
+  "supervised_cost_aggregation": "no nested worker timers added again",
+  "numerical_replay": false,
+  "CI_full_pytest_MPI2_MPI4": false,
+  "receipt_only_commit_after_published_content": true
+}
