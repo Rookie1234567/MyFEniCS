@@ -27,3 +27,19 @@ python scripts/run_case.py input/task042_neural_coarse_inverse/f4_linear_shared.
 训练独立`source scripts/activate_task042.sh ml`后使用`f3_train_shared.dat`。本轮交付后停止等待review，不自动执行这些重现命令；heldout16已consumed，不能用重放结果选型后继续称fresh终测。CPU ML Torch显式float64、intra/inter1、DataLoader0；编译/teacher/FE/后处理也限制线程1，只降低Task042自身优先级。
 
 原物理SHA为`9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f`，F1真实p4 Schur CSR身份为`150f18e26f15783726f2ffeb362ef053450962a16fff13d5241cc93c8d018560`。完整branch/source/input/model provenance、失败、时间/内存及资源影响见[实际交付](../../docs/task042_neural_coarse_inverse/outcomes/summary.md)与[response_v2](../../docs/task042_neural_coarse_inverse/response_v2.md)。
+
+## Review V1 的 V4 显式输入（旧输入合同保留）
+
+全局空间保存少量跨域误差方向，并在原几何局部修正前后协调这些方向；它增加有界基存储和一次S作用，不能保证全局收敛。数值算法位于 `learned_two_level.py`，沿用原参数化入口，仅新增研究阶段编排。
+
+| 单一dat / stage | 明确inventory | 运行前Gate |
+|---|---|---|
+| `v4_p0_shared.dat` | 同真实S的3方向配对和rank4复数两层检查 | clean source、ABI、共享资源、own lock |
+| `v4_p1_shared.dat` | 原train固定16题，各最多64步/8误差快照 | P0通过；局部B停滞仍是有效采样 |
+| `v4_p2_error_shared.dat` | 仅P1最多128个误差，固定秩规则，一条ERROR空间 | P1完成，构造前容量检查 |
+| `v4_p2_oldpod_shared.dat` | 仅旧Q、截取后同Schur编码，一条OLDPOD空间 | ERROR空间审计完成，包括真实blocked |
+| `v4_p3_oldpod_shared.dat` | frozen OLDPOD，已消费0/10/11各一次256上限 | 两个P2均完成；本路线数值合格 |
+| `v4_p3_error_shared.dat` | frozen ERROR，同三题各一次256上限 | 同上；不改patch/shift/rank/预算 |
+| `v4_p4_shared.dat` | 条件冻结一条路线；seed420620，零+5族×3变体 | P3独立分流/选择通过，测试未消费，先冻结再生成 |
+
+唯一配置为 `two_level_v4.json`；原task/review、V3几何PC及普通默认不改。每个worker退出、整树清场后才发布hash-bound阶段索引；P4消费标记采用独占创建防止重复终测。所有成本shared-workstation，monitor每步只保存廉价KSP标量，原方程在0/restart/final/异常及真正成功返回时检查；无NN/GPU/F5/短波。

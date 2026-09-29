@@ -1,0 +1,464 @@
+{
+  "schema": "task042.two-level-design.v4",
+  "batch": "V4_GLOBAL_ERROR_TWO_LEVEL",
+  "review_path": "docs/task042_neural_coarse_inverse/review_report_v1.md",
+  "review_sha256": "3c037a0f38982512d85005b0701e590a87550ee8e0157a0ae653c0ce891ad86d",
+  "review_commit": "333f6aa966284831a68d68afd6a231152fbcc824",
+  "reviewed_previous_head": "4503d9dd7bdcd68f2634e31baa5b312eb23fda4f",
+  "base_sha": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "physical_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+  "mode_sha256": "d4380495d912f97f6d303a85756bb9b252a1117bad229b559f0ac8140e745fbb",
+  "operator_sha256": "150f18e26f15783726f2ffeb362ef053450962a16fff13d5241cc93c8d018560",
+  "stages": {
+    "V4-P0": "task042_shared_v4_action_algebra",
+    "V4-P1": "task042_shared_v4_error_snapshots",
+    "V4-P2-ERROR": "task042_shared_v4_error_space",
+    "V4-P2-OLDPOD": "task042_shared_v4_oldpod_space",
+    "V4-P3-ERROR": "task042_shared_v4_error_diagnostic",
+    "V4-P3-OLDPOD": "task042_shared_v4_oldpod_diagnostic",
+    "V4-P4": "task042_shared_v4_fresh_qualification"
+  },
+  "stage_index": "tmp/task042/v4/stage_index.json",
+  "stage_index_policy": "append once only after worker exit0/whole tree cleanup; hash every source, run and numerical record; copy prerequisite index into each run",
+  "geometry": {
+    "name": "R-GEO-CELL80-v3",
+    "evidence_path": "results/task042/task042_v3_overlap_shared_20260928T150915809159Z/preconstruction_budget.json",
+    "evidence_sha256": "6a6d715c0cc791dd8ea7c1dfb8e665a74fbf4c5934ec9e0c3eb26aaa62798061",
+    "implementation_sha256": "c363efda6da9f51d3fa41bbc15e969b67aa1526d200ae29379a37930adfeaa1b",
+    "change_local_PC": false,
+    "all_ports": 80,
+    "patches": 252,
+    "max_rows": 272
+  },
+  "teacher_manifest_sha256": "99c354ea4ce85b2dd8284b8f91dab4f2e453b4b9d426034aa47af43e89a14783",
+  "teacher_source_sha": "b72448bb2117a0221f041f1b47ac41049750a3c7",
+  "train_residual_labels_sha256": "4e91d7a62454ff5ac5cb6e0fd44b891f0582daca2d38e4d4a8f8deeda2bb927c",
+  "training_selector": "stored original train labels: first eight unique whole_problem of each registered category, sorted original index; no fallback needed",
+  "training_problems": [
+    {
+      "index": 12,
+      "label": {
+        "problem_id": "seed420200_0012",
+        "whole_problem": "seed420200_0012",
+        "kind": "seeded_full_internal_port",
+        "seed": 420200,
+        "phase_real": 1.0,
+        "phase_imag": 0.0,
+        "amplitude": 0.001
+      },
+      "batch_index": 0,
+      "row_in_batch": 12,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      }
+    },
+    {
+      "index": 13,
+      "label": {
+        "problem_id": "seed420200_0013",
+        "whole_problem": "seed420200_0013",
+        "kind": "manufactured_original_A4",
+        "seed": 420200,
+        "phase_real": 0.0,
+        "phase_imag": 1.0,
+        "amplitude": 1.0
+      },
+      "batch_index": 0,
+      "row_in_batch": 13,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      }
+    },
+    {
+      "index": 14,
+      "label": {
+        "problem_id": "seed420200_0014",
+        "whole_problem": "seed420200_0014",
+        "kind": "seeded_full_internal_port",
+        "seed": 420200,
+        "phase_real": -1.0,
+        "phase_imag": 0.0,
+        "amplitude": 1000.0
+      },
+      "batch_index": 0,
+      "row_in_batch": 14,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      }
+    },
+    {
+      "index": 15,
+      "label": {
+        "problem_id": "seed420200_0015",
+        "whole_problem": "seed420200_0015",
+        "kind": "manufactured_original_A4",
+        "seed": 420200,
+        "phase_real": -0.0,
+        "phase_imag": -1.0,
+        "amplitude": 0.001
+      },
+      "batch_index": 0,
+      "row_in_batch": 15,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      }
+    },
+    {
+      "index": 16,
+      "label": {
+        "problem_id": "seed420200_0016",
+        "whole_problem": "seed420200_0016",
+        "kind": "seeded_full_internal_port",
+        "seed": 420200,
+        "phase_real": 1.0,
+        "phase_imag": 0.0,
+        "amplitude": 1.0
+      },
+      "batch_index": 0,
+      "row_in_batch": 16,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      }
+    },
+    {
+      "index": 17,
+      "label": {
+        "problem_id": "seed420200_0017",
+        "whole_problem": "seed420200_0017",
+        "kind": "manufactured_original_A4",
+        "seed": 420200,
+        "phase_real": 0.0,
+        "phase_imag": 1.0,
+        "amplitude": 1000.0
+      },
+      "batch_index": 0,
+      "row_in_batch": 17,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      }
+    },
+    {
+      "index": 18,
+      "label": {
+        "problem_id": "seed420200_0018",
+        "whole_problem": "seed420200_0018",
+        "kind": "seeded_full_internal_port",
+        "seed": 420200,
+        "phase_real": -1.0,
+        "phase_imag": 0.0,
+        "amplitude": 0.001
+      },
+      "batch_index": 0,
+      "row_in_batch": 18,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      }
+    },
+    {
+      "index": 19,
+      "label": {
+        "problem_id": "seed420200_0019",
+        "whole_problem": "seed420200_0019",
+        "kind": "manufactured_original_A4",
+        "seed": 420200,
+        "phase_real": -0.0,
+        "phase_imag": -1.0,
+        "amplitude": 1.0
+      },
+      "batch_index": 0,
+      "row_in_batch": 19,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      }
+    },
+    {
+      "index": 20,
+      "label": {
+        "problem_id": "seed420200_0020",
+        "whole_problem": "seed420200_0020",
+        "kind": "seeded_full_internal_port",
+        "seed": 420200,
+        "phase_real": 1.0,
+        "phase_imag": 0.0,
+        "amplitude": 1000.0
+      },
+      "batch_index": 0,
+      "row_in_batch": 20,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      }
+    },
+    {
+      "index": 21,
+      "label": {
+        "problem_id": "seed420200_0021",
+        "whole_problem": "seed420200_0021",
+        "kind": "manufactured_original_A4",
+        "seed": 420200,
+        "phase_real": 0.0,
+        "phase_imag": 1.0,
+        "amplitude": 0.001
+      },
+      "batch_index": 0,
+      "row_in_batch": 21,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      }
+    },
+    {
+      "index": 22,
+      "label": {
+        "problem_id": "seed420200_0022",
+        "whole_problem": "seed420200_0022",
+        "kind": "seeded_full_internal_port",
+        "seed": 420200,
+        "phase_real": -1.0,
+        "phase_imag": 0.0,
+        "amplitude": 1.0
+      },
+      "batch_index": 0,
+      "row_in_batch": 22,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      }
+    },
+    {
+      "index": 23,
+      "label": {
+        "problem_id": "seed420200_0023",
+        "whole_problem": "seed420200_0023",
+        "kind": "manufactured_original_A4",
+        "seed": 420200,
+        "phase_real": -0.0,
+        "phase_imag": -1.0,
+        "amplitude": 1000.0
+      },
+      "batch_index": 0,
+      "row_in_batch": 23,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      }
+    },
+    {
+      "index": 24,
+      "label": {
+        "problem_id": "seed420200_0024",
+        "whole_problem": "seed420200_0024",
+        "kind": "seeded_full_internal_port",
+        "seed": 420200,
+        "phase_real": 1.0,
+        "phase_imag": 0.0,
+        "amplitude": 0.001
+      },
+      "batch_index": 0,
+      "row_in_batch": 24,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      }
+    },
+    {
+      "index": 25,
+      "label": {
+        "problem_id": "seed420200_0025",
+        "whole_problem": "seed420200_0025",
+        "kind": "manufactured_original_A4",
+        "seed": 420200,
+        "phase_real": 0.0,
+        "phase_imag": 1.0,
+        "amplitude": 1.0
+      },
+      "batch_index": 0,
+      "row_in_batch": 25,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      }
+    },
+    {
+      "index": 26,
+      "label": {
+        "problem_id": "seed420200_0026",
+        "whole_problem": "seed420200_0026",
+        "kind": "seeded_full_internal_port",
+        "seed": 420200,
+        "phase_real": -1.0,
+        "phase_imag": 0.0,
+        "amplitude": 1000.0
+      },
+      "batch_index": 0,
+      "row_in_batch": 26,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      }
+    },
+    {
+      "index": 27,
+      "label": {
+        "problem_id": "seed420200_0027",
+        "whole_problem": "seed420200_0027",
+        "kind": "manufactured_original_A4",
+        "seed": 420200,
+        "phase_real": -0.0,
+        "phase_imag": -1.0,
+        "amplitude": 0.001
+      },
+      "batch_index": 0,
+      "row_in_batch": 27,
+      "teacher_packet": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/task042_f2_teacher_shared_20260928T115902548611Z/train/batch_000.npz",
+        "sha256": "51df52d02aa2db14e4662996cea1ed4a4126c2307f88ffe1cfeea4fb63ba8fb2",
+        "rows": 32
+      }
+    }
+  ],
+  "independent_training_families": 16,
+  "training_batch_max": 32,
+  "trajectory": {
+    "start": "zero reduced",
+    "max_iterations": 64,
+    "restart": 32,
+    "capture_iterations": [
+      8,
+      16,
+      24,
+      32,
+      40,
+      48,
+      56,
+      64
+    ],
+    "snapshot_count_max": 128,
+    "early_convergence": "omit unreached snapshots; do not insert zero error",
+    "error": "normalized accurate reduced solution minus normalized current reduced solution",
+    "weight": "nonzero error / norm2 / sqrt(actual valid family snapshots)",
+    "phase": "retain stored normalized complex phase; no fitted alignment",
+    "S_error_relation": "S e = r - teacher_residual, operation scale includes both RHS subtractions",
+    "local_stagnation": "valid sampling, not stopping"
+  },
+  "space": {
+    "rank_max": 128,
+    "fixed_relative_rank_threshold": 1e-10,
+    "dependency_removal": "one deterministic SZ right-singular-vector rotation at same threshold; no shift/regularization/pseudoinverse",
+    "old_Q": "truncate to new snapshot effective rank before SZ audit; if no effective new direction, independent old route cap128",
+    "old_native_U_R_loaded": false,
+    "candidate_names": [
+      "TWOLEVEL-OLDPOD-V4",
+      "TWOLEVEL-ERROR-V4"
+    ],
+    "composition": "C+(I-CS) B (I-SC)",
+    "C": "Z solve(R,U^H r), SZ=UR; full Schur least squares",
+    "B2_calls": "2 C, 1 B, 1 S; use SC=UUH; no online conjugate/transpose basis copies"
+  },
+  "diagnostics": {
+    "indices": [
+      0,
+      10,
+      11
+    ],
+    "old_directory": "results/task042/task042_f4_b0_shared_20260928T125023426273Z",
+    "files": [
+      {
+        "index": 0,
+        "path": "benchmarks/artifacts/task042/task042_f4_b0_shared_20260928T125023426273Z/failure_000.npz",
+        "sha256": "1cc24ad8b55b567bb37b909d7a283303dfd585b5032e2a8c7c6f601682b751a7"
+      },
+      {
+        "index": 10,
+        "path": "benchmarks/artifacts/task042/task042_f4_b0_shared_20260928T125023426273Z/failure_010.npz",
+        "sha256": "1e083e022c99ce7f4014e003f3ee097ba6571e921b83f7fcb99fe82ee3df8aa4"
+      },
+      {
+        "index": 11,
+        "path": "benchmarks/artifacts/task042/task042_f4_b0_shared_20260928T125023426273Z/failure_011.npz",
+        "sha256": "995379f3fd82679b22bfd60fc8b8524514aa2e5cc3be591a77b57c069a1611f8"
+      }
+    ],
+    "role": "already consumed diagnostic RHS only",
+    "baseline": "reuse V3 full histories and original values; no GEO baseline rerun",
+    "solve": "RIGHT FGMRES32/max256/rtol1e-12/atol0/zero/unpreconditioned norm",
+    "gate_positive": "physical and mixed both original native relative <=0.1 and fixed Schur/RHS <=0.1; independent finite/identity/recovery valid",
+    "strict_gate": 1e-10,
+    "retries": "no numerical parameter retries"
+  },
+  "monitoring": {
+    "KSP_scalar": "each step",
+    "full_original": "0, restart multiples32, final, exception; every truly qualified return audited",
+    "port_reference": "initial reduced zero + particular recovery original port operation scale; exact zero uses absolute norm, no fitted denominator",
+    "timers": "inclusive solve and B2 parents; C/B/S/monitor children reported separately, never sum nested costs"
+  },
+  "fresh": {
+    "plan_path": "docs/task042_neural_coarse_inverse/outcomes/records/unconsumed_test_plan_v3.json",
+    "plan_sha256": "7515a171ac98f17b3fea593549981d56d7fbf69acd762f36b3c33933a0e22b93",
+    "seed": 420620,
+    "count": 16,
+    "independent_nonzero_families": 5,
+    "variants": [
+      "1",
+      "phase_i",
+      "amplitude_1e3"
+    ],
+    "generation": "one zero; distinct RNG draws for internal-only, port-only, mixed, two manufactured original A4; generate only after frozen P3 selection",
+    "selection": "only P3-eligible routes; descending independent strict pass count, ascending max native, max Schur; exact tie OLDPOD",
+    "consumption_marker": "exclusive create tmp/task042/v4/fresh_consumption.json before generating arrays",
+    "F5": false
+  },
+  "resources": {
+    "shared_workstation": true,
+    "mpi": 1,
+    "threads": 1,
+    "cpu": "real-time audited independent physical core; not permanently CPU0",
+    "rss_hard_bytes": 17179869184,
+    "rss_warning_bytes": 12884901888,
+    "own_swap_bytes": 0,
+    "system_reserve": "max128GiB or10percent total plus neighbor growth128GiB plus own16GiB",
+    "disk_min_bytes": 53687091200,
+    "artifact_max_bytes": 21474836480,
+    "cgroup": "not delegated; honest0.5s sampled whole-process-tree stop including launcher/compiler/descendants",
+    "nice": 10,
+    "io": "idle",
+    "GPU": false,
+    "lock": "own nonblocking Task042 lock; one numerical stage at a time",
+    "neighbor": "read-only CPU/status/small public phase; never signal/modify neighbor/watchdog/affinity/env/locks",
+    "cost_label": "shared-workstation; performance inconclusive"
+  },
+  "prohibitions": [
+    "new NN training",
+    "global p4 LU online",
+    "hidden fallback",
+    "private audit CSR",
+    "patch/shift/rank/threshold scans",
+    "F5/p6",
+    "shortwave"
+  ],
+  "user_authorization": "latest explicit Task042 controlled shared CPU authorization retained; replaces only Task042 heavy/exclusive lock prohibition, not resource/precision/provenance/stops and not F0 formal review; Review V1 supersedes V3 local-stagnation prohibition on global-space P1/P2",
+  "preregistered_before_V4_numerics": true
+}

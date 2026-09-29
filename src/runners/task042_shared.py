@@ -439,7 +439,10 @@ def launch(specification):
     lock_path = ROOT / "tmp/task042/task042_shared.lock"
     with lock_path.open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        baseline = audit(observed_activity=stage in ("V3-reuse", "V3-overlap"))
+        baseline = audit(
+            observed_activity=stage in ("V3-reuse", "V3-overlap")
+            or stage.startswith("V4-")
+        )
         os.sched_setaffinity(0, {baseline["cpu"]})
         os.nice(10)
         subprocess.run(["ionice", "-c", "3", "-p", str(os.getpid())], check=True)
@@ -509,6 +512,10 @@ def launch(specification):
         )
         result.update(directory=str(directory), stage=stage, shared_workstation=True)
         write_json(directory / "run_summary.json", result)
+        if stage.startswith("V4-"):
+            from src.io.task042_v4_gate import publish
+
+            publish(stage, directory)
         return {
             key: result[key]
             for key in (

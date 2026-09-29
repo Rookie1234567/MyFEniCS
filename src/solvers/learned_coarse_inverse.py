@@ -124,8 +124,23 @@ class OriginalEquationAudit:
 
 class IterativeCoarseBackend:
     def __init__(
-        self, matrix, action, pc, sha, cell_declarations, *, diagnostic_observer=None
+        self,
+        matrix,
+        action,
+        pc,
+        sha,
+        cell_declarations,
+        *,
+        diagnostic_observer=None,
+        observer_stride=1,
+        state_capture=None,
+        capture_stride=8,
+        max_iterations=256,
     ):
+        if max_iterations not in (64, 256) or observer_stride not in (1, 32):
+            raise ValueError(
+                "explicit bounded research iteration/monitoring profile required"
+            )
         self.matrix = matrix
         self.action = action
         self.pc = pc
@@ -139,6 +154,11 @@ class IterativeCoarseBackend:
         self.trajectory = []
         self.last_reason = None
         self.diagnostic_observer = diagnostic_observer
+        self.observer_stride = observer_stride
+        self.state_capture = state_capture
+        self.capture_stride = capture_stride
+        self.max_iterations = max_iterations
+        self.costs = {}
 
     def solve(self, rhs):
         from petsc4py import PETSc
@@ -151,6 +171,7 @@ class IterativeCoarseBackend:
         x.set(0.0)
         ksp = PETSc.KSP().create(self.matrix.getComm())
         temporary = b.duplicate()
+        residual_vector = self.matrix.createVecLeft()
         try:
             ksp.setOperators(self.matrix)
             ksp.setType("fgmres")
@@ -158,53 +179,104 @@ class IterativeCoarseBackend:
             ksp.setPCSide(PETSc.PC.Side.RIGHT)
             ksp.setNormType(PETSc.KSP.NormType.UNPRECONDITIONED)
             ksp.setInitialGuessNonzero(False)
-            ksp.setTolerances(rtol=1.0e-12, atol=0.0, max_it=256)
+            ksp.setTolerances(rtol=1.0e-12, atol=0.0, max_it=self.max_iterations)
             ksp.getPC().setType("python")
             ksp.getPC().setPythonContext(self.pc)
             self.history = []
             self.trajectory = []
+            observed = set()
+            self.costs = {
+                "build_solution_seconds": 0.0,
+                "explicit_monitor_S_seconds": 0.0,
+                "explicit_monitor_S_calls": 0,
+            }
+
+            def observe(iteration, reported, values):
+                started = time.perf_counter()
+                temporary.array[:] = values
+                self.matrix.mult(temporary, residual_vector)
+                residual = b.array - residual_vector.array
+                self.costs["explicit_monitor_S_seconds"] += (
+                    time.perf_counter() - started
+                )
+                self.costs["explicit_monitor_S_calls"] += 1
+                if self.observer_stride == 32 or iteration in (0, 32, 128, 256):
+                    self.trajectory.append((int(iteration), residual.copy()))
+                if self.diagnostic_observer is not None:
+                    self.diagnostic_observer(
+                        int(iteration),
+                        float(reported),
+                        temporary.array,
+                        residual,
+                        b.array,
+                    )
+                observed.add(int(iteration))
 
             def monitor(current, iteration, reported):
                 self.history.append(
                     {"iteration": int(iteration), "reported": float(reported)}
                 )
-                if self.diagnostic_observer is not None or iteration in (
-                    0,
-                    32,
-                    128,
-                    256,
-                ):
+                audit_due = (
+                    self.diagnostic_observer is not None
+                    and iteration % self.observer_stride == 0
+                ) or iteration in (0, 32, 128, 256)
+                capture_due = (
+                    self.state_capture is not None
+                    and iteration > 0
+                    and iteration % self.capture_stride == 0
+                )
+                if audit_due or capture_due:
+                    started = time.perf_counter()
                     if iteration == 0:
                         temporary.set(0.0)
                     else:
                         current.buildSolution(temporary)
-                    v = self.matrix.createVecLeft()
-                    self.matrix.mult(temporary, v)
-                    residual = b.array - v.array
-                    if iteration in (0, 32, 128, 256):
-                        self.trajectory.append((int(iteration), residual.copy()))
-                    if self.diagnostic_observer is not None:
-                        self.diagnostic_observer(
-                            int(iteration),
-                            float(reported),
-                            temporary.array,
-                            residual,
-                            b.array,
-                        )
-                    v.destroy()
+                    self.costs["build_solution_seconds"] += (
+                        time.perf_counter() - started
+                    )
+                    if capture_due:
+                        self.state_capture(int(iteration), temporary.array)
+                    if audit_due:
+                        observe(iteration, reported, temporary.array)
 
             ksp.setMonitor(monitor)
+            started = time.perf_counter()
             ksp.solve(b, x)
+            self.costs["ksp_seconds_inclusive"] = time.perf_counter() - started
             self.last_reduced = x.array.copy()
             self.last_reason = int(ksp.getConvergedReason())
+            if (
+                self.diagnostic_observer is not None
+                and int(ksp.getIterationNumber()) not in observed
+            ):
+                observe(ksp.getIterationNumber(), ksp.getResidualNorm(), x.array)
+            started = time.perf_counter()
             fe = self.action.recover_storage(
                 self.last_reduced, full_rhs=rhs.fe, expand_trace=False
             )
             state = CoarseState(
                 fe, self.last_reduced[self.action.condensed.active_rows :]
             )
+            self.costs["final_recovery_seconds"] = time.perf_counter() - started
             return state, IterationReport(int(ksp.getIterationNumber()))
+        except Exception:
+            # Best available current state, without masking the original
+            # failure. Nonfinite/operator failures may make this audit fail;
+            # record that fact instead of manufacturing a valid witness.
+            if self.diagnostic_observer is not None and self.history:
+                try:
+                    ksp.buildSolution(temporary)
+                    observe(
+                        ksp.getIterationNumber(), ksp.getResidualNorm(), temporary.array
+                    )
+                    self.costs["exception_full_audit_performed"] = True
+                except Exception as audit_error:  # noqa: BLE001 -- preserve the original failure
+                    self.costs["exception_audit_error_type"] = type(
+                        audit_error
+                    ).__name__
+            raise
         finally:
+            residual_vector.destroy()
             temporary.destroy()
             ksp.destroy()
             x.destroy()

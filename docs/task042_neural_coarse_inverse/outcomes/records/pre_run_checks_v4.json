@@ -1,0 +1,419 @@
+{
+  "status": "PRE_RUN_GATES_PASS",
+  "formal_source": "next clean implementation commit; helper metadata is not numerical source",
+  "pure_final_affected_components": "9 passed",
+  "pure_related_regression": "57 passed",
+  "FE_monitor_ownership_modes_profiles": "6 passed",
+  "ABI": {
+    "schema": "task042.environment.v1",
+    "utc": "2026-09-28T23:44:06.611582+00:00",
+    "mode": "fe",
+    "python": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+    "prefix": "/home/fenics/Projects/NN-Lab/.venv",
+    "python_version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+    "host": "fenics-ws01",
+    "kernel": "7.0.0-31-generic",
+    "cwd": "/home/fenics/Projects/NN-Lab",
+    "source_sha": "333f6aa966284831a68d68afd6a231152fbcc824",
+    "git_status": "",
+    "affinity": [
+      0
+    ],
+    "caches": {
+      "TMPDIR": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/tmp",
+      "TMP": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/tmp",
+      "TEMP": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/tmp",
+      "XDG_CACHE_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/xdg",
+      "XDG_CONFIG_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/config",
+      "FFCX_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/xdg/fenics",
+      "PYTHONPYCACHEPREFIX": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/pycache",
+      "MPLCONFIGDIR": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/matplotlib",
+      "TORCH_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/torch",
+      "HF_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/huggingface",
+      "HUGGINGFACE_HUB_CACHE": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/huggingface/hub",
+      "TRANSFORMERS_CACHE": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/huggingface/transformers",
+      "TRITON_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/triton",
+      "CUDA_CACHE_PATH": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/cuda",
+      "NUMBA_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/numba",
+      "PIP_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/pip",
+      "UV_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/uv",
+      "RUFF_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/ruff",
+      "TASK042_RESULTS_ROOT": "/home/fenics/Projects/NN-Lab/results/task042",
+      "TASK042_ARTIFACT_ROOT": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042"
+    },
+    "threads": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "BLIS_NUM_THREADS": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "modules": {
+      "numpy": {
+        "path": "/usr/lib/python3/dist-packages/numpy/__init__.py",
+        "version": "1.26.4"
+      },
+      "src": {
+        "path": "/home/fenics/Projects/NN-Lab/src/__init__.py",
+        "version": null
+      },
+      "src.solvers.coarse_inverse_protocol": {
+        "path": "/home/fenics/Projects/NN-Lab/src/solvers/coarse_inverse_protocol.py",
+        "version": null
+      },
+      "scipy": {
+        "path": "/usr/lib/python3/dist-packages/scipy/__init__.py",
+        "version": "1.11.4"
+      },
+      "basix": {
+        "path": "/usr/lib/python3/dist-packages/basix/__init__.py",
+        "version": "0.10.0"
+      },
+      "ufl": {
+        "path": "/usr/lib/python3/dist-packages/ufl/__init__.py",
+        "version": "2025.2.1"
+      },
+      "ffcx": {
+        "path": "/usr/lib/python3/dist-packages/ffcx/__init__.py",
+        "version": "0.10.1.post0"
+      },
+      "mpi4py": {
+        "path": "/usr/lib/python3/dist-packages/mpi4py/__init__.py",
+        "version": "3.1.5"
+      },
+      "petsc4py": {
+        "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+        "version": "3.19.6"
+      },
+      "dolfinx": {
+        "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+        "version": "0.10.0"
+      },
+      "dolfinx_mpc": {
+        "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py",
+        "version": null
+      },
+      "setuptools": {
+        "path": "/home/fenics/Projects/NN-Lab/.venv/lib/python3.12/site-packages/setuptools/__init__.py",
+        "version": "78.1.0"
+      },
+      "cffi": {
+        "path": "/usr/lib/python3/dist-packages/cffi/__init__.py",
+        "version": "1.16.0"
+      },
+      "pyvista": {
+        "path": "/home/fenics/Projects/NN-Lab/.venv/lib/python3.12/site-packages/pyvista/__init__.py",
+        "version": "0.48.4"
+      },
+      "src.solvers.dtn_port_3d": {
+        "path": "/home/fenics/Projects/NN-Lab/src/solvers/dtn_port_3d.py",
+        "version": null
+      },
+      "src.runners.task042_experiment": {
+        "path": "/home/fenics/Projects/NN-Lab/src/runners/task042_experiment.py",
+        "version": null
+      }
+    },
+    "fe_jit": false,
+    "gpu_context": false,
+    "abi": {
+      "scalar": "complex128",
+      "integer": "int64",
+      "mpi_size": 1,
+      "petsc_version": [
+        3,
+        19,
+        6
+      ],
+      "mpi_library": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+      "jit_cache": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/xdg/fenics"
+    },
+    "loaded_libraries": [
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so",
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx/lib/libdolfinx.so.0.10.0",
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-int64/lib/libdolfinx_mpc.so.0.10.1",
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/cpp.cpython-312-x86_64-linux-gnu.so",
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/petsc/lib/libscalapack.so.2.2.1",
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/libpetsc.so.3.19.6",
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/lib/PETSc.cpython-312-x86_64-linux-gnu.so",
+      "/usr/lib/python3/dist-packages/basix/_basixcpp.cpython-312-x86_64-linux-gnu.so",
+      "/usr/lib/python3/dist-packages/scipy/linalg/_fblas.cpython-312-x86_64-linux-gnu.so",
+      "/usr/lib/python3/dist-packages/scipy/linalg/cython_blas.cpython-312-x86_64-linux-gnu.so",
+      "/usr/lib/x86_64-linux-gnu/libbasix.so.0.10.0",
+      "/usr/lib/x86_64-linux-gnu/libcuda.so.595.91.07",
+      "/usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6",
+      "/usr/lib/x86_64-linux-gnu/libmpi_cxx.so.40.30.1",
+      "/usr/lib/x86_64-linux-gnu/libmpi_mpifh.so.40.30.0",
+      "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+      "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+      "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so"
+    ],
+    "status": "IMPORT_PATH_ABI_PASS"
+  },
+  "static": {
+    "status": "PASS",
+    "protected_exact_files": [
+      "docs/task042_neural_coarse_inverse/README.md",
+      "docs/task042_neural_coarse_inverse/outcomes/accuracy_performance_memory.md",
+      "docs/task042_neural_coarse_inverse/outcomes/architecture_and_oracle.md",
+      "docs/task042_neural_coarse_inverse/outcomes/bounded_diagnostic_design_v3.md",
+      "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "docs/task042_neural_coarse_inverse/outcomes/dataset_and_model_provenance.md",
+      "docs/task042_neural_coarse_inverse/outcomes/environment_and_isolation.md",
+      "docs/task042_neural_coarse_inverse/outcomes/records/README.md",
+      "docs/task042_neural_coarse_inverse/outcomes/records/admission_repair_v3.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/auxiliary_costs_v2.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/auxiliary_costs_v3.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/bounded_f0_runs.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/cffi_build_repair_v2.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/component_metrics.csv",
+      "docs/task042_neural_coarse_inverse/outcomes/records/component_metrics_v2.csv",
+      "docs/task042_neural_coarse_inverse/outcomes/records/cpu_provenance_v3.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/csv_line_endings_attempt1.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/dataset_model_manifest.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/dataset_model_manifest_v2.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/documentation_cpu_audit_v2.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/environment_fe.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/environment_ml.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/environment_pure.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/f1_real_components_v2.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/f4_b0_complete_v2.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/f4_lin_complete_v2.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/f4_nn_complete_v2.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/final_checks_v2.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/first_fe_import_repair_v2.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/full_p6_comparison.csv",
+      "docs/task042_neural_coarse_inverse/outcomes/records/full_p6_comparison_v2.csv",
+      "docs/task042_neural_coarse_inverse/outcomes/records/full_residual_history_v3.csv",
+      "docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v2.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v3.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/git_preparation.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/git_preparation_v2.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/mode_metadata_repair_v2.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/neural_reference_audit.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/oracle_complete_v2.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/p4_witness_adapter_repair_v2.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/pc_probes_v3.csv",
+      "docs/task042_neural_coarse_inverse/outcomes/records/publication_attempt1.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/publication_checks.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v2.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v3.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/pure_component_audit.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/registry_contract_baseline_v2.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/registry_contract_baseline_v3.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/reused_diagnostics_v3.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/run_index.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v2.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v3.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/schema_lint_baseline_v3.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/shared_preimplementation_checks_v2.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/shared_workstation_snapshot.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/shared_workstation_snapshot_v2.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/static_checks.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_attempt1.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v2.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v3.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv",
+      "docs/task042_neural_coarse_inverse/outcomes/records/structure_complete_v3.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/teacher_complete_v2.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/training_complete_v2.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/unconsumed_test_plan_v3.json",
+      "docs/task042_neural_coarse_inverse/outcomes/records/watchdog_test_evidence_v3.json",
+      "docs/task042_neural_coarse_inverse/outcomes/residual_diagnosis_v3.md",
+      "docs/task042_neural_coarse_inverse/outcomes/shared_authorization_v2.md",
+      "docs/task042_neural_coarse_inverse/outcomes/shared_numerical_design_v2.md",
+      "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "docs/task042_neural_coarse_inverse/response_v1.md",
+      "docs/task042_neural_coarse_inverse/response_v2.md",
+      "docs/task042_neural_coarse_inverse/response_v3.md",
+      "docs/task042_neural_coarse_inverse/review_report_v1.md",
+      "docs/task042_neural_coarse_inverse/task.md",
+      "input/task042_neural_coarse_inverse/diagnostic_v3.json",
+      "input/task042_neural_coarse_inverse/f1_b0_shared.dat",
+      "input/task042_neural_coarse_inverse/f1_b0_shared_retry1.dat",
+      "input/task042_neural_coarse_inverse/f1_b0_shared_retry2.dat",
+      "input/task042_neural_coarse_inverse/f1_b0_shared_retry3.dat",
+      "input/task042_neural_coarse_inverse/f1_b0_shared_retry4.dat",
+      "input/task042_neural_coarse_inverse/f1_reference_shared.dat",
+      "input/task042_neural_coarse_inverse/f2_oracle_shared.dat",
+      "input/task042_neural_coarse_inverse/f2_teacher_shared.dat",
+      "input/task042_neural_coarse_inverse/f3_train_shared.dat",
+      "input/task042_neural_coarse_inverse/f4_b0_shared.dat",
+      "input/task042_neural_coarse_inverse/f4_linear_shared.dat",
+      "input/task042_neural_coarse_inverse/f4_neural_shared.dat",
+      "input/task042_neural_coarse_inverse/frozen_model.json",
+      "input/task042_neural_coarse_inverse/pre_size_memory_model.json",
+      "input/task042_neural_coarse_inverse/requirements-fe-tools.lock.txt",
+      "input/task042_neural_coarse_inverse/requirements-fe-tools.txt",
+      "input/task042_neural_coarse_inverse/requirements-ml.lock.txt",
+      "input/task042_neural_coarse_inverse/requirements-ml.txt",
+      "input/task042_neural_coarse_inverse/shared_profile_v1.json",
+      "input/task042_neural_coarse_inverse/v3_overlap_shared.dat",
+      "input/task042_neural_coarse_inverse/v3_reuse_shared.dat",
+      "AGENTS.md",
+      "docs/AGENTS.md",
+      "docs/repository_work_principles.md",
+      "src/solvers/learned_geometry_overlap.py"
+    ],
+    "protected_count": 103,
+    "lint": "ten files pass; schema inherited ISC004/RUF022 isolated, no cleanup",
+    "compileall_files": 11,
+    "new_docs_local_tables_links_fences": "PASS",
+    "review_render": "records/review_render_check_v4.json actual published333f review",
+    "new_source_identity": "formal commits recorded per run, not this dirty precommit helper"
+  },
+  "auxiliary_attempts": [
+    {
+      "name": "abi_check",
+      "path": "tmp/task042/v4/abi_check",
+      "classification": "COMPLETED",
+      "exit": 0,
+      "cleared": true,
+      "wall_seconds": 3.553287628106773,
+      "rss_peak_bytes": 227549184,
+      "swap_peak_bytes": 0,
+      "log_sha256": "48b6523ae64ca1447e4b0a0c521176b10712d37cd06c7d938a01e24682a5d343"
+    },
+    {
+      "name": "review_render_supervision",
+      "path": "tmp/task042/v4/review_render_supervision",
+      "classification": "COMPLETED",
+      "exit": 0,
+      "cleared": true,
+      "wall_seconds": 2.9552263360237703,
+      "rss_peak_bytes": 45182976,
+      "swap_peak_bytes": 0,
+      "log_sha256": "05388e7a22bec80cac16a6eb2876233bd5e5584eaec02d2e2f93526096d7bd39"
+    },
+    {
+      "name": "algebra_test",
+      "path": "tmp/task042/v4/algebra_test",
+      "classification": "COMPLETED",
+      "exit": 0,
+      "cleared": true,
+      "wall_seconds": 1.9967558400239795,
+      "rss_peak_bytes": 83193856,
+      "swap_peak_bytes": 0,
+      "log_sha256": "c45e78d927aa6cc86c3af7ffebe1bb506dc10d7ca7110009debbb589f0b63aac"
+    },
+    {
+      "name": "format_implementation",
+      "path": "tmp/task042/v4/format_implementation",
+      "classification": "COMPLETED",
+      "exit": 0,
+      "cleared": true,
+      "wall_seconds": 1.3989196449983865,
+      "rss_peak_bytes": 21143552,
+      "swap_peak_bytes": 0,
+      "log_sha256": "1f2710bcb91f8781598fe0baa56619fd935f93ea3a1eb3434a930d3f41ac6894"
+    },
+    {
+      "name": "lint_implementation",
+      "path": "tmp/task042/v4/lint_implementation",
+      "classification": "WORKER_FAILED",
+      "exit": 1,
+      "cleared": true,
+      "wall_seconds": 1.4053395160008222,
+      "rss_peak_bytes": 21139456,
+      "swap_peak_bytes": 0,
+      "log_sha256": "226825bb31687eb4b11f9b69a66e472b0ffcc68a23827712d7ef545463049730"
+    },
+    {
+      "name": "lint_fix_imports",
+      "path": "tmp/task042/v4/lint_fix_imports",
+      "classification": "COMPLETED",
+      "exit": 0,
+      "cleared": true,
+      "wall_seconds": 1.390658024000004,
+      "rss_peak_bytes": 21164032,
+      "swap_peak_bytes": 0,
+      "log_sha256": "aac3a0503d8b95052cc85fb9f1717dc82b74aa55853a5aa9749b41e30275d472"
+    },
+    {
+      "name": "format_final",
+      "path": "tmp/task042/v4/format_final",
+      "classification": "COMPLETED",
+      "exit": 0,
+      "cleared": true,
+      "wall_seconds": 1.405693688080646,
+      "rss_peak_bytes": 21118976,
+      "swap_peak_bytes": 0,
+      "log_sha256": "878d50bf4ab752ab41ae942ac518b87e744d994b21bb15dca142ed7a470b3b3a"
+    },
+    {
+      "name": "pure_focused_final",
+      "path": "tmp/task042/v4/pure_focused_final",
+      "classification": "COMPLETED",
+      "exit": 0,
+      "cleared": true,
+      "wall_seconds": 4.20142441499047,
+      "rss_peak_bytes": 248061952,
+      "swap_peak_bytes": 0,
+      "log_sha256": "5bb2b3ec3a2657153ea7784aae60d1b586c9e8182e78e2b42fb032231e090249"
+    },
+    {
+      "name": "format_and_imports",
+      "path": "tmp/task042/v4/format_and_imports",
+      "classification": "COMPLETED",
+      "exit": 0,
+      "cleared": true,
+      "wall_seconds": 1.3812173419864848,
+      "rss_peak_bytes": 21114880,
+      "swap_peak_bytes": 0,
+      "log_sha256": "aac3a0503d8b95052cc85fb9f1717dc82b74aa55853a5aa9749b41e30275d472"
+    },
+    {
+      "name": "fe_monitor_and_ownership",
+      "path": "tmp/task042/v4/fe_monitor_and_ownership",
+      "classification": "COMPLETED",
+      "exit": 0,
+      "cleared": true,
+      "wall_seconds": 3.8756225800607353,
+      "rss_peak_bytes": 234541056,
+      "swap_peak_bytes": 0,
+      "log_sha256": "f8e2eaf0493c1a33810eeacaa28283cee7434d7c98692316747bab3ff2d49eb1"
+    },
+    {
+      "name": "algebra_gates_final",
+      "path": "tmp/task042/v4/algebra_gates_final",
+      "classification": "COMPLETED",
+      "exit": 0,
+      "cleared": true,
+      "wall_seconds": 2.0121486668940634,
+      "rss_peak_bytes": 83984384,
+      "swap_peak_bytes": 0,
+      "log_sha256": "26219f277a95d6f001d1055de72287c60bbf3605602d7725ae571aceb436bad1"
+    },
+    {
+      "name": "pre_run_static",
+      "path": "tmp/task042/v4/pre_run_static",
+      "classification": "WORKER_FAILED",
+      "exit": 1,
+      "cleared": true,
+      "wall_seconds": 1.4627073550364003,
+      "rss_peak_bytes": 40706048,
+      "swap_peak_bytes": 0,
+      "log_sha256": "4e3f4b1f1c6270ac01d86fc6f1fdf379f52709762cf014e0718233475b4c9f4d"
+    },
+    {
+      "name": "pre_run_static_final",
+      "path": "tmp/task042/v4/pre_run_static_final",
+      "classification": "COMPLETED",
+      "exit": 0,
+      "cleared": true,
+      "wall_seconds": 1.7362336739897728,
+      "rss_peak_bytes": 38338560,
+      "swap_peak_bytes": 0,
+      "log_sha256": "b1af5509190c5198af5db0c06189dac2bd412fa2fc5b1b315e91d4f4a38b39fe"
+    }
+  ],
+  "auxiliary_wall_seconds_sum": 28.775234710192308,
+  "simultaneous_tree_rss_peak_bytes": 248061952,
+  "own_swap_peak_bytes": 0,
+  "cost_identity": "shared-workstation; no formal speed claim",
+  "full_repo_tests": "not_run under neighboring heavy; inherited schema diagnostics isolated",
+  "F0_reinstallation": "not_run; existing qualified local ABI reused"
+}

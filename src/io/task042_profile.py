@@ -16,6 +16,13 @@ TASK042_PROFILES = {
     "task042_shared_f4_neural_v1": "F4-NN",
     "task042_shared_v3_reuse_diagnostic": "V3-reuse",
     "task042_shared_v3_cell_port_overlap": "V3-overlap",
+    "task042_shared_v4_action_algebra": "V4-P0",
+    "task042_shared_v4_error_snapshots": "V4-P1",
+    "task042_shared_v4_error_space": "V4-P2-ERROR",
+    "task042_shared_v4_oldpod_space": "V4-P2-OLDPOD",
+    "task042_shared_v4_error_diagnostic": "V4-P3-ERROR",
+    "task042_shared_v4_oldpod_diagnostic": "V4-P3-OLDPOD",
+    "task042_shared_v4_fresh_qualification": "V4-P4",
 }
 
 
