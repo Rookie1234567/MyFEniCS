@@ -139,11 +139,30 @@ def _guard_pure_child():
         raise RuntimeError("V12 heavy deadline reached in pure child")
 
 
+def _pure_blas_threads():
+    """Read actual OpenBLAS pools without importing FE/MPI into a QR child."""
+    pools=[]
+    for path in sorted({line.split()[-1] for line in Path("/proc/self/maps").read_text().splitlines()
+                        if "openblas" in line and line.split()[-1].startswith("/")}):
+        library=ctypes.CDLL(path)
+        for name in ("openblas_get_num_threads","openblas_get_num_threads64_",
+                     "scipy_openblas_get_num_threads","scipy_openblas_get_num_threads64_"):
+            if hasattr(library,name):
+                function=getattr(library,name); function.restype=ctypes.c_int
+                count=function()
+                if count!=1:
+                    raise RuntimeError("V12 pure BLAS pool is not single-threaded")
+                pools.append(dict(path=path,function=name,threads=count))
+                break
+    if not pools:
+        raise RuntimeError("V12 pure BLAS thread probe unavailable")
+    return pools
+
+
 def round_qr_child(work):
     """Original nonpivoting Householder P=ZR, isolated from ML/Torch."""
     _guard_pure_child()
     from scipy.linalg import qr
-    from src.runners.task042_experiment import thread_qualification
 
     request=json.loads((work/"request.json").read_text())
     if file_hash(work/"P.npy")!=request["P_sha256"]:
@@ -156,7 +175,7 @@ def round_qr_child(work):
         raise ValueError("T1 P QR reconstruction failed")
     np.save(work/"Z.npy",Z)
     np.save(work/"R.npy",R)
-    write_json(work/"child_result.json",dict(status="PASS",threads=thread_qualification(),
+    write_json(work/"child_result.json",dict(status="PASS",threads=_pure_blas_threads(),
                P_sha256=request["P_sha256"],Z_sha256=file_hash(work/"Z.npy"),
                R_sha256=file_hash(work/"R.npy"),P_reassembly=reassembly,
                child_wall_seconds=time.perf_counter()-begun,no_new_A_columns=True))
@@ -165,7 +184,6 @@ def round_qr_child(work):
 def head_child(work):
     """Fresh original-action A=barS Z and GELSD; pure SciPy child, no Torch/ref."""
     _guard_pure_child()
-    from src.runners.task042_experiment import thread_qualification
     from src.solvers.stable_head_varpro import StableBasis
 
     request=json.loads((work/"request.json").read_text())
@@ -188,7 +206,7 @@ def head_child(work):
         status="FAILED"
         raise
     finally:
-        record=dict(status=status,threads=thread_qualification(),
+        record=dict(status=status,threads=_pure_blas_threads(),
                     P_sha256=request["P_sha256"],
                     action_counts=packet.counts.copy(),action_costs_seconds=packet.costs.copy(),
                     child_wall_seconds=time.perf_counter()-begun)
