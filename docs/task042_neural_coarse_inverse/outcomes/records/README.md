@@ -1,5 +1,21 @@
 # Task042 记录索引与版本边界
 
+# V12 紧凑记录导航
+
+本批原 0.7 nm／384hex／p3／40 端口对象保持不变。T1 完成、T2 实际固定头 FD 未过 Gate、F 八试探为负、T3 未准入，T4 仅验证旧物理起点；独立 checker 的 `PASS` 表示 raw 证据一致，不表示物理解通过。正式 clean 数值源码 `d9df7068ca3310a0499164251a57841dbdfbc7f5`；旧记录以下按原文保留。
+
+| 本批内容 | 紧凑入口 |
+|---|---|
+| 冻结物理、材料、输入、V11起点与四小时钟 | [身份](plan_and_input_identity_v12.json) |
+| M2/物理同向量三段差及两次失败保留 | [T1](roundoff_decomposition_v12.json) |
+| 同点损失、复数小试验、三方向30点真实 FD | [T2](fixed_head_gradient_checks_v12.json) |
+| T3未准入、F8试探负结果与头建议0 | [journal](block_descent_progress_v12.jsonl)、[头](head_proposals_v12.json) |
+| 原方程／场、未资格化物理量与全部40复通道 | [候选](candidate_comparison_v12.csv)、[通道](channel_observables_v12.csv)、[独立Gate](qualification_and_dispatch_v12.json) |
+| 五次source、输入、监督与历史费用 | [run index](run_index_v12.json)、[资源](resource_costs_v12.json) |
+| Review V9表格/公式本地检查与GitHub未核验 | [渲染](review_render_check_v12.json) |
+
+以下早期“当前”均是各轮当时原文，不代表 V12 现状。
+
 | 记录组 | 当前事实 | 读取入口 |
 |---|---|---|
 | V1无后缀JSON/CSV | 原F0隔离与heavy资源等待历史，逐字保留 | [原run index](run_index.json)、[原Gate](gate_decisions.json)、[原response](../../response_v1.md) |

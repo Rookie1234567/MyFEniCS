@@ -1,4 +1,8 @@
-# 当前 V11 交付导航
+# 当前 V12 交付导航
+
+[Review V9](review_report_v9.md)授权固定头真实残差偏导及有界隐藏更新，明确不要求旧 V11 输出头先过 `1e-8` 驻点 Gate。[Response V12](response_v12.md)、[完整负结果](outcomes/actual_loss_block_descent_v12.md)、[最新 summary](outcomes/summary.md)、[run index](outcomes/records/run_index_v12.json)为本批入口。T1 对 M2/物理残差完成分账；T2 的实际三方向 FD 未出现规定稳定区，故 T3 不运行；有限 F 八次试探均使损失升高，接受隐藏步0、头建议0。T4 独立确认原方程和散射场仍失败。旧 M2/实际头内部门限与全部原结果保留，p4 强逆关闭、最终0.7nm／48小时未合格；只推送本执行分支待 review，不合并 master。以下 V11 与更早“当前”是历史导航原文。
+
+# V11 历史交付导航
 
 [Review V8](review_report_v8.md)是本轮正式合同；[Response V11](response_v11.md)、[完整结果](outcomes/stable_head_varpro_v11.md)、[最新summary](outcomes/summary.md)和[run index](outcomes/records/run_index_v11.json)为当前交付。原0.7 nm／384hex／p3／40端口保持；小系数制造问题通过，大系数在一次同分解修正后仍未过1e-8，实际稳定头的物理残差一致性亦未过1e-8。真实隐藏参数更新0次，独立FE场及原方程仍失败；旧p4路线关闭，最终目标未合格。下方带“当前／最新”的V7/V8及初始说明均是**历史原文**，不代表当前合同或状态。
 

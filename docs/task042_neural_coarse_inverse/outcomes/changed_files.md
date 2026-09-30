@@ -122,3 +122,17 @@ C1 `64c128c3541887e22788343692cc4f7832a45696`；唯一正式坐标修复／成�
 | do-not-merge | ignored P/Z/R/A、trial/workspace、参数/场/action packet、FE JIT/cache、原raw stage和tmp collect helper | 只在NN-Lab ignored目录，hash绑定不入Git；无在线global p4 factor、完整S/CSR、ILU/Riesz、正规方程或隐藏fallback |
 
 建议审阅依赖次序：已有action／q15／Hhat→研究solver→窗口／stage／显式输入→独立checker/tests→compact负结果。真实 S3 FD、S4 hidden update、p4 enrichment 与目标大模型未运行，不能把已写的研究代码视为经过这些阶段的数值资格。原 task/review/response 及 V1–V10 raw 保留；无master合并授权。
+
+## V12：固定头真实损失研究路径的依赖与合入边界
+
+| Selective merge组 | Task042 本批变化／实际行为 | 验证、依赖及审阅建议 |
+|---|---|---|
+| production numerical/core | 无新增合格路径；原A4/A6、S、MPC、Si表、q15、40端口和普通默认未修改 | 原Schur0.7977/native0.3094、散射误差0.734均失败，不提升默认、不合并master |
+| research-only numerical/core | 新 `src/solvers/actual_loss_block_descent.py`：固定γ真实原loss、40维Hhat闭合、共轭转置VJP、分辨率和Armijo规则；`actual_loss_window.py`不刷新四小时钟 | 依赖原action、batch8原矩、V11端口；真实 FD 未资格化，T3代码尚无真实接受更新证据，需保持research-only |
+| runner/watchdog | 新 `src/runners/actual_loss_block_descent.py` 三stage编排，`task042_shared.py`只增加显式V12分流、own supervisor和原16/12GiB采样门 | T1最小两次接线修复及失败记录均保留；第二次后源码`d9df7068…`三正式stage成功；不改变邻任务或共享父cgroup |
+| input/dispatcher | `src/io/actual_loss_block_descent.py`、`task042_profile.py`、`scripts/run_case.py`和三个独立`v12_*.dat` | 同物理hash、材料、输入及one-run身份；旧V1–V11输入／入口不变 |
+| checker/tests | 新`src/io/actual_loss_block_descent_check.py`及两份V12 focused tests，从raw重算T1、FD、state、场及通道，5类坏证据反例 | checker在正式数值后提交`559846ee…`，不冒充run source；ML环境无pytest，纯环境最终26项通过／1排除，ML直接断言通过 |
+| compact evidence/docs | `response_v12.md`、`actual_loss_block_descent_v12.md`、9项规定compact记录、README最新导航、summary/test/changed及两个项目总账 | 旧task/review/response/raw字节保留；所有负结果、未运行项、历史有载下界与source分开记 |
+| do-not-merge | ignored V11/V12 P/Z/R/A、参数NPZ、原packet/REF7、FE JIT/cache、supervision/完整日志 | 只在NN-Lab，hash绑定不入Git；无global p4 LU、global S/CSR、ILU/Riesz或隐藏fallback |
+
+建议审阅顺序：冻结原action和V11状态→研究数学核→自有窗口／one-run分流→独立checker／损坏证据测试→紧凑负结果。T3有界隐藏优化和块末头提议虽已实现，但本批由真实T2门限阻止，不能据未运行代码授予数值资格。若下一轮需要改变该Gate，应另行正式授权；本轮不做变相阈值放宽。

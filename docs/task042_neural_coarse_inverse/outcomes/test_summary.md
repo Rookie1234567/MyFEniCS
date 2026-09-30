@@ -145,3 +145,16 @@ V3治理/文档表格定向测试28 passed；registry当前继承两项错误与
 MAIN `stage_result` 的同名 `physical` 元数据覆盖数值键由已保存journal与下一REPLAY before找回；代码在REPLAY source只修序列化名，不改变原数组或旧raw。一个同分解数值修正仍失败，不把数值停滞伪装实现bug再重跑。最终相关测试在checker改动后重跑；不声明GitHub Actions或全仓测试通过。
 
 本地历史字节核验的首次临时helper误把本轮尚未提交的`response_v11.md`列入`git show HEAD`而报路径不存在；修正筛选后，原task、全部旧review与旧response共19文件逐字节等于本轮前HEAD。该辅助错误没有修改历史、数值数据或重跑正式阶段，见[静态记录](records/static_checks_v11.json)。
+
+## V12：固定头真实损失、受控分流与独立证据检查
+
+| 检查 | 本批实际结果与适用边界 | 证据 |
+|---|---|---|
+| pure-array/已有监督 targeted | 实现 clean 前相关14项通过；最小两次接线修复后受影响5项通过。checker 新增后最终 **26 passed、1 deselected（3.58s）**；排除项是ML专属隐藏赋值测试，在ML环境另直接断言通过。无 full repository pytest、MPI2/4 或 CI 声明 | 命令 `source scripts/activate_task042.sh pure && python -m pytest -q src/test/test_task042_v12_checker.py src/test/test_task042_v12_actual_loss.py -k 'not hidden_assignment' src/test/test_task042_v11_checker.py src/test/test_task042_v11_stable_varpro.py src/test/test_task042_shared_watchdog.py src/test/test_task042_shared_components.py src/test/test_neural_linear_head.py src/test/test_neural_port_closed_head.py` |
+| ML 环境实际检查 | CPU-only PyTorch，intra/inter1、OpenBLAS实际线程1、DataLoader0；同一γ在 `set_hidden` 后重写并 hash 相等，小非Hermitian固定头解析/FD相对差`1.393e-9` | `.venv-ml`未装pytest，使用资格化 activation 的直接断言；不把 pure pytest 算成 ML pytest |
+| 真实物理数值 Gate | batch1/batch8完整loss分辨率`2.22e-14`；三方向真实FD30点未达`1e-5`稳定区；F8试探无下降；T4只验旧基线原方程/40通道/功率仍失败 | [梯度](records/fixed_head_gradient_checks_v12.json)、[分流](records/qualification_and_dispatch_v12.json) |
+| 受控监督与失败保留 | 原自有watchdog测试含超时、setsid后代RSS触线并保护无关sibling；V12五次one-run后代均清场。首次旧探针MPI socket失败、第二次日志参数冲突保留，不改原raw | [逐run索引](records/run_index_v12.json) |
+| 独立checker的坏证据反例 | 坏解析梯度、gamma hash变化、损失不降却标接受、错端口、缺40通道均拒绝；真实raw状态一致性PASS，但梯度与物理资格均false | `src/io/actual_loss_block_descent_check.py`、[raw判决](records/qualification_and_dispatch_v12.json) |
+| 静态、输入与显示 | 三个one-run dat明确验证、`compileall`、`git diff --check`通过；Review V9 本地GFM表格/围栏/相对链接检查见compact记录。隔离环境无 Ruff；GitHub实际网页无法取得，标未核验 | [run source/输入](records/run_index_v12.json)、[渲染记录](records/review_render_check_v12.json) |
+
+V12 的正式计算源码是 `d9df7068ca3310a0499164251a57841dbdfbc7f5`；随后checker和文档提交不冒充该源码。数值目标未过，不能因为单个小测试或checker一致性PASS而称 solver PASS。旧task、review、response和V1–V11 raw未改。

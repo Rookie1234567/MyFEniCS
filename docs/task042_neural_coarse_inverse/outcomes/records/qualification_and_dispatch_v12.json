@@ -1,0 +1,31 @@
+{
+  "F": "EXECUTED_8_TRIALS_NEGATIVE",
+  "F5_p6": "NOT_RUN",
+  "T1": "COMPLETE",
+  "T2": "FIXED_HEAD_PARTIAL_GRADIENT_NOT_QUALIFIED",
+  "T3": "NOT_RUN_DEPENDENT_T2_GATE",
+  "T4": "NO_QUALIFIED_HIDDEN_UPDATE",
+  "actual_head_proposals": 0,
+  "actual_hidden_updates": 0,
+  "initial_V11_M2_gate": "FAIL",
+  "initial_V11_actual_head_gate": "FAIL",
+  "maximum_0p7nm_model": "NOT_RUN",
+  "no_new_official_RTA": true,
+  "raw_checker": {
+    "fixed_head_gradient_qualified": false,
+    "formal_micro_qualification": false,
+    "mismatches": [],
+    "reference_only_after_solver_frozen": true,
+    "roundoff_identity": true,
+    "same_discrete": {
+      "INITIAL_V11_CORRECTED": false
+    },
+    "saved_statuses_not_trusted": true,
+    "state_identity": true,
+    "status": "PASS"
+  },
+  "research_positive_signal": false,
+  "schema": "task042.qualification-dispatch.v12",
+  "strict_micro_FE_qualification": false,
+  "unique_next_recommendation": "A separately authorized fixed-gamma directional JVP/VJP pairing at the same three frozen directions, without training or changing the loss, to distinguish curvature/roundoff from derivative-chain error."
+}

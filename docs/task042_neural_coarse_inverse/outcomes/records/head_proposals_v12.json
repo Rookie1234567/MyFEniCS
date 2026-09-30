@@ -1,0 +1,9 @@
+{
+  "actual": 0,
+  "actual_proposals": [],
+  "allowed_max": 3,
+  "exact_varpro_claim": false,
+  "old_V11_actual_head_1e8": "FAIL_UNCHANGED",
+  "reason": "T2 real FD unqualified; F accepted no hidden state; proposal dependent gate not met",
+  "schema": "task042.head-proposals.v12"
+}

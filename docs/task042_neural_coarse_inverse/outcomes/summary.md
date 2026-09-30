@@ -1,4 +1,18 @@
-# V11 最新交付：稳定头大系数回收未过 Gate，未启动隐藏更新
+# V12 最新交付：真实固定头梯度未取得数值资格，有限函数值备选为负
+
+在相同 0.7 nm、384hex/p3、完整40端口的三维缺口 micro 上，本批尝试先固定输出头，用原 Maxwell 方程的真实残差判断隐藏层改变是否有效。它只在数值可信时才允许有界 L-BFGS；旧 V11 大系数制造与实际头 `1e-8` Gate **仍为 FAIL**。前两次是受影响 T1 接线失败并保留，第三次完成 T1；T2 的真实偏导有限差分未过 Gate，F 的 8 个有限函数值试探均使损失升高，所以**没有接受任何新的隐藏状态**。T4 仅独立重验旧修正后的物理起点。[Response V12](../response_v12.md)、[方法和完整结果](actual_loss_block_descent_v12.md)、[raw Gate](records/qualification_and_dispatch_v12.json)。下方 V11 及更早“最新”标题是保留历史，不代表本轮状态。
+
+| 同一模型／方法、为何比较 | 原 Schur/native/port 相对残差；原门限各 `1e-6` | 散射 E/scaled-curl 同离散误差；限 `1e-4` | 结果与证据 |
+|---|---|---|---|
+| V11 唯一修正后的随机隐藏＋稳定头，V12 原物理起点 | **0.797721738／0.309359507／2.051e-19** | **0.734256809／0.734361587** | 原方程和场仍失败，端口虽合格不代替整方程；[候选CSV](records/candidate_comparison_v12.csv) |
+| T1 已消费 M2 与物理状态的同算子分账 | 两者原作用对薄列组合差 `1.84e-12`／`1.04e-12`；物理网络回写 `3.80e-8`、`Pγ/Zc` `2.36e-7` | 仅诊断，不产生新物理候选 | 旧 M2 `1e-8`失败保留；[残差等式](records/roundoff_decomposition_v12.json) |
+| T2 固定头原 loss 偏导 | 同点损失 `0.318179986`，分辨率 `2.22e-14`；三真实方向 FD 最小步相对差 `0.0635/0.0760/0.1742` | 未准入 L-BFGS，不能据此称隐藏训练失败 | [30点步长表](records/fixed_head_gradient_checks_v12.json) |
+| F 仅函数值两方向×正负×两步长 | 最小试探 loss `2.80461`＞`0.31818`；native `0.91847`＞`0.30936` | 已执行负结果，0个接受 hidden、0个头建议 | [进度](records/block_descent_progress_v12.jsonl) |
+| T4 独立参考和最终目标 | 只读旧 REF7，1个状态；R/T/A_balance/A_volume诊断 `0.0849663/0.798046/0.116988/0.00485487`，能量闭合 `0.112133` | **无 official R/T/A**；p4 enrichment、p6、最大目标、h/p/M/MPI/波长扫描未运行；48小时资格 unknown | [完整40通道/资源](records/run_index_v12.json) |
+
+正式五次 one-run（含两次接线失败）监督 wall 合计 **`182.268 s`**；同时进程树采样 RSS 最大 **`2322427904 B≈2.163 GiB`**、自身 swap0，所有后代已清场。三个成功阶段运行源码均 `d9df7068ca3310a0499164251a57841dbdfbc7f5`，不是后续 checker／文档 HEAD。独立 FE／CPU ML 环境及缓存、自有锁、现场 CPU0、MPI1、线程1、整树16GiB hard/12GiB warn保持；两次修复只涉 Task042 子进程接线与事件名，不改原方程、材料、邻任务或旧负结果。无 cgroup 委派，不宣称连续内核上限或零干扰；共享负载下速度结论 `INCONCLUSIVE`。[全部费用和历史下界](records/resource_costs_v12.json)。候选从未构造 global p4 LU、全局 S/CSR、ILU/Riesz 或隐藏 fallback。唯一下一建议是固定同头／同三方向的 JVP/VJP 与原作用线性化配对，需新 review 授权；本批不实施，不合并 master。
+
+# V11 历史交付：稳定头大系数回收未过 Gate，未启动隐藏更新
 
 本批对同一0.7 nm、384hex／p3、40复端口三维缺口micro，先检验“答案已经在当前网络空间里时能否从原Maxwell方程稳定地找回”，再计划改变隐藏特征。小系数见证通过，大系数失败；一次原分解修正改善残差但未到1e-8，因此不使用该不可靠头训练。下列功率均仅是未资格化诊断，完整解释见[Response V11](../response_v11.md)和[结果](stable_head_varpro_v11.md)。此前V1–V10全部历史正文保留。
 

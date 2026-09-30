@@ -1,0 +1,178 @@
+{
+  "T2_gate_recomputed": false,
+  "actual_directions": {
+    "PA_builds": 0,
+    "derivative_kind": "FIXED_HEAD_PARTIAL_GRADIENT",
+    "directions": [
+      {
+        "analytic": 0.002700067161606961,
+        "direction": "421201",
+        "estimates": [
+          {
+            "analytic": 0.002700067161606961,
+            "h": 0.001,
+            "relative_error": 1.0000005419387654,
+            "signal_over_delta": 448759979547033.6,
+            "slope": -4982.23661823431
+          },
+          {
+            "analytic": 0.002700067161606961,
+            "h": 0.0001,
+            "relative_error": 1.0000541964467653,
+            "signal_over_delta": 448738697410.56,
+            "slope": -49.82000339055048
+          },
+          {
+            "analytic": 0.002700067161606961,
+            "h": 1e-05,
+            "relative_error": 1.0054516877081967,
+            "signal_over_delta": 446101175.04,
+            "slope": -0.49527179584174513
+          },
+          {
+            "analytic": 0.002700067161606961,
+            "h": 1e-06,
+            "relative_error": 1.8712485547277535,
+            "signal_over_delta": 211888.0225,
+            "slope": -0.0023524296122179322
+          },
+          {
+            "analytic": 0.002700067161606961,
+            "h": 1e-07,
+            "relative_error": 0.06345940385413797,
+            "signal_over_delta": 22776.7075,
+            "slope": 0.0025287225091652488
+          }
+        ],
+        "nonzero": true,
+        "qualified": false
+      },
+      {
+        "analytic": -0.0036533594935059107,
+        "direction": "421202",
+        "estimates": [
+          {
+            "analytic": -0.0036533594935059107,
+            "h": 0.001,
+            "relative_error": 1.0000002146837021,
+            "signal_over_delta": 1532791570496225.2,
+            "slope": 17017.40493516263
+          },
+          {
+            "analytic": -0.0036533594935059107,
+            "h": 0.0001,
+            "relative_error": 1.0000214687857285,
+            "signal_over_delta": 1532761904814.08,
+            "slope": 170.17075579929042
+          },
+          {
+            "analytic": -0.0036533594935059107,
+            "h": 1e-05,
+            "relative_error": 1.0021510357438392,
+            "signal_over_delta": 1529799632.64,
+            "slope": 1.698418775220034
+          },
+          {
+            "analytic": -0.0036533594935059107,
+            "h": 1e-06,
+            "relative_error": 1.2745799952095507,
+            "signal_over_delta": 1198431.695,
+            "slope": 0.013305264612295531
+          },
+          {
+            "analytic": -0.0036533594935059107,
+            "h": 1e-07,
+            "relative_error": 0.07598602412214663,
+            "signal_over_delta": 30406.1,
+            "slope": -0.0033757552309054972
+          }
+        ],
+        "nonzero": true,
+        "qualified": false
+      },
+      {
+        "analytic": 0.25291164754375584,
+        "direction": "analytic_gradient",
+        "estimates": [
+          {
+            "analytic": 0.25291164754375584,
+            "h": 0.001,
+            "relative_error": 1.0000000545404786,
+            "signal_over_delta": 4.176761300374153e+17,
+            "slope": -4637136.564038694
+          },
+          {
+            "analytic": 0.25291164754375584,
+            "h": 0.0001,
+            "relative_error": 1.0000054540759966,
+            "signal_over_delta": 417673975331553.25,
+            "slope": -46371.12641998101
+          },
+          {
+            "analytic": 0.25291164754375584,
+            "h": 1e-05,
+            "relative_error": 1.000545697429024,
+            "signal_over_delta": 417452141445.12,
+            "slope": -463.46497911144974
+          },
+          {
+            "analytic": 0.25291164754375584,
+            "h": 1e-06,
+            "relative_error": 1.057808345275438,
+            "signal_over_delta": 394065180.8,
+            "slope": -4.375002369272352
+          },
+          {
+            "analytic": 0.25291164754375584,
+            "h": 1e-07,
+            "relative_error": 0.1742488551056627,
+            "signal_over_delta": 1881082.25,
+            "slope": 0.2088420825163695
+          }
+        ],
+        "nonzero": true,
+        "qualified": false
+      }
+    ],
+    "fixed_gamma_all_points": true,
+    "head_resolves": 0,
+    "perturbation_points": 30,
+    "qualified": false
+  },
+  "fixed_head_not_exact_varpro": true,
+  "initial_gradient": {
+    "Hhat_conjugate_transpose_chain_included": true,
+    "QR_SVD_autograd_graph": false,
+    "adjoint_trace_norm": 73.72010339152949,
+    "derivative_kind": "FIXED_HEAD_PARTIAL_GRADIENT",
+    "head_partial_norm": 0.00046167344073422197,
+    "hidden_norm": 0.25291164754375584,
+    "sha256": "a080b869c424b79d1d3c2d98c9b1198cf47f87c13882192af1a042e25e7e2246"
+  },
+  "reason": "All three real directions lack a stable adjacent-h finite-difference region at the pre-registered h table; no trustworthy gradient training",
+  "run_source_sha": "d9df7068ca3310a0499164251a57841dbdfbc7f5",
+  "same_point_full_loss": {
+    "batch1": 0.31817998550895316,
+    "batch1_batch8_trace_relative": 1.3865730552388439e-16,
+    "batch8_first": 0.3181799855089551,
+    "batch8_repeat": 0.3181799855089551,
+    "delta_eval": 2.220446049250313e-14,
+    "function_value_resolved": true,
+    "gamma_sha256": "8e72c61f69f188ad0f7602f68d8fa058452992c9848e98089602daf3c7ed5140",
+    "port_relative": 5.288556175160474e-19
+  },
+  "schema": "task042.fixed-head-gradient.v12",
+  "stage_result_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v12/task042_v12_descent_20260930T012315959597Z/stage_result.json",
+  "stage_result_sha256": "23272b4f1f830ee1a23d44220dd2339362aa226a947e118c82bb9984c60c6640",
+  "synthetic_nonHermitian": {
+    "actual_loss": 2.23023616075094,
+    "analytic": -0.09603168491467544,
+    "centered_FD": -0.09603168504845883,
+    "non_Hermitian": true,
+    "nonoptimal_head_by_design": true,
+    "nonzero_fixed_gamma": true,
+    "nonzero_port": true,
+    "qualified": true,
+    "relative": 1.3931171475195254e-09
+  }
+}

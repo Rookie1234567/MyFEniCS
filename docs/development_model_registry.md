@@ -1785,3 +1785,14 @@ production model。
 | 真正可变hidden VarPro／最终目标 | 同8576实hidden参数，review限40次P/A、48头、65000 S/Sᴴ、18FD、最多5接受更新 | 小型复非Hermitian梯度测试通过；真实FD0、trial0、accepted0，因S1/S2失败停止。无新p4参考、p6、最大目标或official R/T/A | `NOT_RUN_DEPENDENT_GATE`；最终0.7nm／48h `NOT_QUALIFIED`，不是对隐藏自适应本身的负证明；[分流](task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v11.json) |
 
 V11不修改原物理/MPC/材料/普通默认，旧p4强逆持续关闭；没有构造候选global p4 LU、完整S/global CSR、正规方程、ILU/Riesz或hidden fallback。REF7仅在求解冻结后独立验证，非训练或选择输入。V6–V10历史有载11159.165418899036s照记，V11正式wall后可核下界11734.145535666961s；全aux在原14400s总elapsed窗口内，不伪称精确有载。shared-workstation CPU0现场选核、MPI1/math1、16/12GiB采样整树监督/own swap0、无GPU/邻任务修改；无cgroup委派不能称内核连续限额，邻影响和无争用加速INCONCLUSIVE。p/h、Hybrid、M、MPI、最终几何尺度均未扫描。唯一下一建议为冻结M2的有界浮点来源归因，需后续review，未实施；不merge。[Response V11](task042_neural_coarse_inverse/response_v11.md)、[run index](task042_neural_coarse_inverse/outcomes/records/run_index_v11.json)。
+
+### Task042 V12：固定头真实损失偏导与函数值备选
+
+| 模型／方法身份 | 真实原方程／场／端口 | 数值分类和成本 |
+|---|---|---|
+| 同0.7nm／384hex／Nédélec p3、原Si、q15、40复端口、seed420906随机hidden；V11唯一修正物理网络/头为本批唯一起点 | 原Schur/native/port相对残差0.797721738/0.309359507/2.051e-19；散射E/scaled-curl0.734256809/0.734361587，完整通道相对差0.0494152，能量闭合0.112133 | 原方程1e-6、同离散场1e-4均FAIL，R/T/A/A_volume仅未资格化诊断；无新official结果 |
+| T1同旧P/A／M2制造与物理RHS残差分账 | 物理网络回写3.80478e-8、`Pγ/Zc`2.36230e-7、原作用薄列差1.04273e-12；齐次恢复8.672e-17 | 原M2与实际头1e-8 Gate维持FAIL；分账不能称物理求解 |
+| T2原action＋Hhat40＋真实网络固定γ隐藏偏导；T3预登记三块L-BFGS | 同点loss0.318179986／delta2.22045e-14；三真实FD最小h差0.06346/0.07599/0.17425＞1e-5 | `FIXED_HEAD_PARTIAL_GRADIENT_NOT_QUALIFIED`；T3真实hidden更新0、头建议0，属未准入非训练失败 |
+| F两方向／正负／双步长函数值备选 | 8试探最小实际loss2.80461＞0.31818，native恶化到0.91847 | `FUNCTION_ONLY_POLL_NEGATIVE`，0接受；不再增加seed或扫描 |
+
+原物理／MPC／材料／普通default和旧task/review/response/raw不改，旧global p4逆关闭，无global p4 LU、完整S/CSR、ILU/Riesz或hidden fallback。参考仅T4独立读，未回传训练；无新p4参考／p6／最大目标／p/h/M/MPI对照。三成功run clean source `d9df7068ca3310a0499164251a57841dbdfbc7f5`，两次接线失败source与完整费用另见[run index](task042_neural_coarse_inverse/outcomes/records/run_index_v12.json)。五次监督wall182.268s、同时树峰2322427904B/swap0，历史有载下界11916.413697s、辅助费未知；共享CPU0/MPI1/线程1、独立环境/缓存、自有锁、16/12GiB采样watchdog、GPU0，不操作邻任务、无cgroup连续上限承诺，影响/加速INCONCLUSIVE。最终0.7nm/48h `NOT_QUALIFIED`；唯一未实施下一建议为冻结同头同三方向JVP/VJP与原作用配对。见[Response V12](task042_neural_coarse_inverse/response_v12.md)和[详细负结果](task042_neural_coarse_inverse/outcomes/actual_loss_block_descent_v12.md)。
