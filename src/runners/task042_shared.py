@@ -705,7 +705,7 @@ def launch(specification):
             wall_seconds=min(specification.execution["timeout_seconds"], snapshot()["heavy_remaining_seconds"] if stage.startswith(("V11-", "V12-", "V13-", "V14-", "V15-", "V16-")) else window_snapshot()["heavy_remaining_seconds"] if stage.startswith("V10-") else remaining_budget) if stage.startswith(("V7-", "V8-", "V9-", "V10-", "V11-", "V12-", "V13-", "V14-", "V15-", "V16-")) else 600 if stage.startswith("V6-") else 10800,
             timebase_guard=stage.startswith(("V10-", "V11-", "V12-", "V13-", "V14-", "V15-", "V16-")),
             interval=0.5,
-            source_state=state,
+            source_state=_json_metadata(state) if stage.startswith("V16-") else state,
             worker_environment={"TASK042_WATCHDOG_PARENT_PID": str(os.getpid())},
             hard_stop_immediate=True,
             rss_hard_limit_bytes=HARD,

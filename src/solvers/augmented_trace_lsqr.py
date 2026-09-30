@@ -173,6 +173,13 @@ def projected_checks(operator, rhs, seed=421601):
                             Pr=float(np.linalg.norm(operator.pr(u))/np.linalg.norm(u)))
     else:
         annihilation = dict(Pt=0., Pr=0.)
+    # A random coefficient of order one is an enormous field relative to this
+    # micro's physical forcing.  Keep the prescribed physical-b denominator,
+    # but exercise a nonzero state whose original response has that scale.
+    # The original unscaled stress failure remains in the first run record.
+    response = operator.bar.apply(pt)
+    response_scale = np.linalg.norm(operator.bar.reduced_rhs(rhs)) / max(np.linalg.norm(response), 1e-300)
+    pt = pt * response_scale
     point = operator.restore(pt, rhs)
     explicit = rhs-operator.bar.packet.apply(point['z'])
     projected = operator.rhs(rhs)-operator.apply(pt)
@@ -181,4 +188,7 @@ def projected_checks(operator, rhs, seed=421601):
               and max(v['operation_relative'] for v in idem.values())<=1e-10
               and max(annihilation.values())<=1e-10 and identity<=1e-8)
     return dict(dot_tests=tests, idempotence=idem, annihilation=annihilation,
-                original_residual_identity_relative=identity, qualified=passed)
+                original_residual_identity_relative=identity, qualified=passed,
+                residual_witness_scale=float(response_scale),
+                residual_witness_complement_norm=float(np.linalg.norm(pt)),
+                residual_witness_rule='nonzero projected random state; barS response scaled to norm(barb); denominator norm(physical b) unchanged')

@@ -154,12 +154,23 @@ def preflight(stage):
     bar=BarAction(ports_for(stage));zero=ProjectedTraceOperator(bar,ThinBasis(stage.packet.nt))
     bar_checks=check_bar(stage,bar);zero_checks=projected_checks(zero,stage.packet.a['b'])
     del zero,bar;gc.collect()
-    op,image=build_image(stage,'GPOLY')
+    previous = None
+    if (ARTIFACT_ROOT/'PREFLIGHT.json').exists():
+        previous, previous_path = read_result('PREFLIGHT')
+        image = dict(previous['augmented_setup'])
+        if not image['qualified']:
+            raise ValueError('failed image cannot be reused for an interface replay')
+        op, loading = load_image(stage,image)
+        image['setup_reuse'] = dict(path=str(previous_path),sha256=file_hash(previous_path),
+            source_sha=previous['source_sha'],loading_seconds=loading,
+            original_setup_seconds=image['setup_seconds'],A_or_QR_recomputed=False)
+    else:
+        op,image=build_image(stage,'GPOLY')
     checks=projected_checks(op,stage.packet.a['b']);witness=algebra_witness(stage,op)
     qualified=bool(zero_checks['qualified'] and image['qualified'] and checks['qualified'] and witness['qualified'])
     image['setup_seconds_with_projected_checks']=image['setup_seconds']
     # Account every POLY-specific check in its route wall, not only assembly.
-    image['setup_seconds']=time.perf_counter()-stage.began
+    image['setup_seconds']=(previous['augmented_setup']['setup_seconds'] if previous else 0.)+time.perf_counter()-stage.began
     return dict(status='PROJECTED_OPERATOR_QUALIFIED' if qualified else 'PROJECTED_OPERATOR_FAILED',
                 empty_Q_checks=zero_checks,bar_checks=bar_checks,augmented_setup=image,
                 augmented_checks=checks,algebra_witness=witness,qualified=qualified,queue_frozen=True)

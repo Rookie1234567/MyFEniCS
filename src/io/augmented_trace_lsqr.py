@@ -72,6 +72,8 @@ def load_augmented_trace(path):
 
 
 def previous_name(stage):
+    if stage == 'PREFLIGHT' and (ARTIFACT_ROOT/'PREFLIGHT.json').exists():
+        return 'PREFLIGHT'  # A bounded wiring replay retains all previous fees.
     if stage != 'VERIFY':
         return CHAIN.get(stage)
     for name in ('GNN','GPOLY','ZERO','PREFLIGHT'):

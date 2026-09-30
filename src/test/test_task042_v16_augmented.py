@@ -81,6 +81,25 @@ def test_callback_exposes_completed_state_without_changing_legacy_recurrence():
         assert np.array_equal(states[-1]['x'],b[1])
 
 
+def test_physical_rhs_identity_retains_fixed_denominator_and_nonzero_witness():
+    op, _, rhs=problem(True)
+    tiny_rhs=rhs*1e-9
+    checks=projected_checks(op,tiny_rhs)
+    assert checks['qualified']
+    assert checks['residual_witness_scale']>0
+    assert checks['residual_witness_complement_norm']>0
+    assert checks['original_residual_identity_relative']<=1e-8
+
+
+def test_supervisor_metadata_accepts_frozen_route_budget_without_strings():
+    import json
+    from types import MappingProxyType
+    from src.runners.task042_shared import _json_metadata
+    original=MappingProxyType(dict(route_budget=MappingProxyType(dict(uniform_route_wall_seconds=2700))))
+    value=json.loads(json.dumps(_json_metadata(original),allow_nan=False))
+    assert value=={'route_budget':{'uniform_route_wall_seconds':2700}}
+
+
 def test_explicit_five_inputs_preserve_original_physics_and_reference_barrier(tmp_path,monkeypatch):
     from src.io import augmented_trace_lsqr as io
     from src.io.input_loader import InputError
