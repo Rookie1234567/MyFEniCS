@@ -495,7 +495,13 @@ def field_physics(
                 power_check_pass=power_check_pass,
             )
         comparisons[name] = dict(
-            status="FEINN_DISCRETE_PASS" if passed else "FEINN_OPTIMIZATION_NEGATIVE",
+            status=(
+                "SUPERVISED_DISCRETE_RECONSTRUCTION_PASS"
+                if passed
+                else "SUPERVISED_DISCRETE_RECONSTRUCTION_NOT_QUALIFIED"
+            )
+            if diagnostic_only
+            else ("FEINN_DISCRETE_PASS" if passed else "FEINN_OPTIMIZATION_NEGATIVE"),
             errors=errors,
             power_absolute_differences=deltas,
             max_channel_power_absolute=power_error,
@@ -743,6 +749,7 @@ def _region_field_errors(model, packet, reference, candidate):
             )
         result[name] = dict(
             cells=int(len(cells)),
+            cell_ids=np.asarray(cells, dtype=np.int32).tolist(),
             cell_ids_sha256=array_hash(np.asarray(cells, dtype=np.int32)),
             scattered_L2=values[0],
             scattered_scaled_curl=values[1],
@@ -822,20 +829,31 @@ def compare_reference_fit_without_solve(
         e_l2 = comp["errors"]["scattered_L2"]["relative"]
         e_curl = comp["errors"]["scattered_scaled_curl"]["relative"]
         if q30_relative > 1e-8:
-            category = "QUADRATURE_DRIFT"
+            snapshot_category = "QUADRATURE_DRIFT"
         elif max(G_error, e_l2, e_curl) <= 1e-3:
-            category = "REPRESENTATION_WITNESS_POSITIVE"
+            snapshot_category = "REPRESENTATION_WITNESS_POSITIVE"
         elif max(G_error, e_l2, e_curl) <= 1e-2:
-            category = "PARTIAL_REPRESENTATION_WITNESS"
+            snapshot_category = "PARTIAL_REPRESENTATION_WITNESS"
         else:
-            category = "REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED"
-        if comp["numerical_reconstruction_pass"] and category != "QUADRATURE_DRIFT":
+            snapshot_category = "REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED"
+        retained_only = (
+            fit_index["result"]["status"]
+            == "INTERRUPTED_FIT_ADAM500_RETAINED_SNAPSHOT"
+        )
+        category = (
+            "INTERRUPTED_FIT_NO_FINAL_STATE" if retained_only else snapshot_category
+        )
+        if comp["numerical_reconstruction_pass"] and snapshot_category != "QUADRATURE_DRIFT":
             supervised_reconstruction = "SUPERVISED_DISCRETE_RECONSTRUCTION_PASS"
         else:
             supervised_reconstruction = "NOT_QUALIFIED"
         result = dict(
-            status="REFERENCE_EXPOSED_COMPARE_ONLY_COMPLETE",
+            status="RETAINED_ADAM500_COMPARE_ONLY_COMPLETE"
+            if retained_only
+            else "REFERENCE_EXPOSED_COMPARE_ONLY_COMPLETE",
             category=category,
+            snapshot_threshold_category=snapshot_category,
+            final_fit_parameters_retained=not retained_only,
             supervised_reconstruction=supervised_reconstruction,
             G_field_error=G_error,
             d_ref=d_ref,
@@ -848,7 +866,10 @@ def compare_reference_fit_without_solve(
             label_identity=label,
             fit_checkpoint=frozen,
             reconstruction=rec,
-            fit_source_sha=fit_index["source_sha"],
+            fit_source_sha=fit_index["result"].get(
+                "original_fit_source_sha", fit_index["source_sha"]
+            ),
+            snapshot_registration_source_sha=fit_index["source_sha"],
             MUMPS_symbolic_numeric_solve_count=0,
             reference_recomputed=False,
             global_Maxwell_factor_created=False,

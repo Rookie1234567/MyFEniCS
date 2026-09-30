@@ -1615,6 +1615,19 @@ V2 对偶loss `0.0990053` 比旧 `0.1038991` 低，原方程却更差，说明 l
 
 本次来源：[Response V2](task042extra_feinn_5nm/response_v2.md)、[详细诊断](task042extra_feinn_5nm/outcomes/scaling_diagnostic_v2.md)、[同口径结果](task042extra_feinn_5nm/outcomes/records/scaled_route_comparison_v2.csv)、[run/source/hash](task042extra_feinn_5nm/outcomes/records/run_index_v2.json)、[独立 Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v2.json)、[资源账](task042extra_feinn_5nm/outcomes/records/resource_costs_v2.json)。旧3.44正文保留，只登记新固定设置的负结果，不把V1三路线重新记为本批新测。
 
+## 3.44.2 Task42extra Review V2 后续：参考暴露的固定网络表示诊断
+
+V3 沿用3.44相同 M5、384hex/p3/q15、31968个独立复FE系数、40端口、材料和原矩。与 V1/V2 的无标签残差优化不同，新路线 `FEINN-REFERENCE-FIT-G` 明确读取 V1 已保存的准确散射 master 系数作为训练标签；完整边/面/内部矩与网络3×64 tanh、8966实参数、FP64、seed421001不变。目标改为场误差的正定 G 范数平方，只用于诊断网络能否重构**这个已知场**。它不是 PDE-only 求解，标签权重禁止作为旧路线、Task042或0.7nm初始化；原V1/V2负结果不改。
+
+| V3 / measured | 场和原方程 | 资格与资源 |
+| --- | --- | --- |
+| P0 已保存 FREE / scaled FREE | E_G `0.991760/0.954121`，native `0.596914/0.607772`，原负梯度与参考修正余弦 `0.02306/0.00508` | `A(e)=r-r_ref`最大差`3.45e-13`；Gram factor一次setup`96.880s`、11 solve`3.466s`；P0树峰`1,038,958,592B`/own swap0 |
+| P1 唯一 FEINN-REFERENCE-FIT-G | `EXECUTION_SESSION_LOST_NO_FINAL_CHECKPOINT`；观察825 closure，最后保留Adam500参数 | reference-exposed、pde-only=false、production-initialization=false；第817次审核数值有日志但参数未留存，不续训 |
+| P2 独立完整FE场复验 | `PENDING_RETAINED_SNAPSHOT_COMPARE` | 仅审核Adam500保存态；V1同p3参考复用、不再MUMPS；不能自动升级 official solver pass |
+| p4、目标尺寸5nm、0.7nm | `not_run` | 本批未获授权；原容量阻塞和未资格化状态保留 |
+
+P0 的残差与场误差显著不一致，两个 FREE 终态的原负梯度方向各一次解析最优实步长几乎不改变场；这不是算子全局条件数。P1 的逐25 closure Adam `parameter_update_norm` 在更新前采样，0 不代表真实接受更新；该中间遥测标 `NOT_RETAINED`，不重放训练。唯一训练在执行会话消失时失去最终参数，实测采样至少3097.314s、保守计费3284s、树RSS峰697479168B/own swap0；恢复检查只读取Adam500存盘态，最终表示分流保持未解决。严格原方程/场/功率和资源全账待快照独立审核。[Response V3](task042extra_feinn_5nm/response_v3.md)、[详细诊断](task042extra_feinn_5nm/outcomes/representation_diagnostic_v3.md)、[中断](task042extra_feinn_5nm/outcomes/records/fit_interruption_v3.json)。
+
 # 4. 今后新增模型的登记模板
 
 每次正式计算至少新增一行主表，并按可用性新增衍射级和复振幅表。

@@ -472,6 +472,10 @@ def run_fit(
 
 def reconstruct(design, native_index, grad_index, fit_index, artifact, marker):
     """Separate ML process: frozen parameter -> q15/q30 complete moments."""
+    retained_only = (
+        fit_index["result"]["status"]
+        == "INTERRUPTED_FIT_ADAM500_RETAINED_SNAPSHOT"
+    )
     torch.set_num_threads(1)
     torch.set_num_interop_threads(1)
     if len(os.sched_getaffinity(0)) != 1 or torch.version.cuda is not None:
@@ -501,8 +505,11 @@ def reconstruct(design, native_index, grad_index, fit_index, artifact, marker):
     path = Path(artifact) / "reconstructed_full_coefficients.npz"
     np.savez(path, c_q15=actual, c_q30=higher)
     result = dict(
-        status="FROZEN_NETWORK_RECONSTRUCTED",
+        status="RETAINED_ADAM500_NETWORK_RECONSTRUCTED"
+        if retained_only
+        else "FROZEN_NETWORK_RECONSTRUCTED",
         fit_checkpoint=entry,
+        final_fit_parameters_retained=not retained_only,
         parameter_to_saved_c_relative=saved_relative,
         q30_to_q15_relative=quadrature_relative,
         quadrature_status="PASS" if quadrature_relative <= 1e-8 else "QUADRATURE_DRIFT",
@@ -513,3 +520,143 @@ def reconstruct(design, native_index, grad_index, fit_index, artifact, marker):
     )
     marker("frozen_network_reconstruction", result)
     return result, dict(reconstructed=path)
+
+
+def retained_interrupted_snapshot(
+    design, native_index, grad_index, reference_index, artifact, marker
+):
+    """Register only the saved Adam500 state after the unique fit disappeared.
+
+    No optimizer is constructed or stepped here. The logged later L-BFGS states
+    have no retained parameters and cannot be reconstructed from this snapshot.
+    """
+    root = Path(__file__).resolve().parents[2]
+    record_path = (
+        root
+        / "docs/task042extra_feinn_5nm/outcomes/records/fit_interruption_v3.json"
+    )
+    interruption = json.loads(record_path.read_text())
+    run_name = interruption["run_directory_name"]
+    if (
+        Path(run_name).name != run_name
+        or not run_name.startswith("task42extra_v3_reference_fit_")
+        or interruption["classification"]
+        != "EXECUTION_SESSION_LOST_NO_FINAL_CHECKPOINT"
+    ):
+        raise ValueError("INTERRUPTED_FIT_RECORD_IDENTITY_FAILED")
+    old_run = root / "results/task42extra" / run_name
+    old_artifact = root / "benchmarks/artifacts/task42extra" / run_name
+    if (
+        root / "benchmarks/artifacts/task42extra/index_feinn_reference_fit_g.json"
+    ).exists():
+        raise ValueError("INTERRUPTED_FIT_ALREADY_HAS_FORMAL_FINAL_INDEX")
+    paths = dict(
+        manifest=old_run / "run_manifest.json",
+        resources_jsonl=old_run / "supervision/resources.jsonl",
+        history_jsonl=old_artifact / "history.jsonl",
+        zero_checkpoint=old_artifact / "zero_checkpoint.npz",
+        adam500_checkpoint=old_artifact / "adam500_checkpoint.npz",
+    )
+    if (
+        (old_run / "run_summary.json").exists()
+        or (old_artifact / "frozen_checkpoint.npz").exists()
+        or (old_artifact / "last_trial.npz").exists()
+    ):
+        raise ValueError("INTERRUPTED_FIT_UNEXPECTED_FINAL_STATE")
+    for key, path in paths.items():
+        if sha(path) != interruption[key + "_sha256"]:
+            raise ValueError(f"INTERRUPTED_FIT_RAW_HASH_CHANGED: {key}")
+    original_manifest = json.loads(paths["manifest"].read_text())
+    if (
+        original_manifest["source_sha"]
+        != interruption["original_fit_source_sha"]
+        or original_manifest["stage"] != "FEINN-REFERENCE-FIT-G"
+        or not original_manifest["reference_used_for_training"]
+        or original_manifest["pde_only_solve"]
+        or original_manifest["production_initialization_allowed"]
+    ):
+        raise ValueError("INTERRUPTED_FIT_MANIFEST_CHANGED")
+    history = [json.loads(line) for line in paths["history_jsonl"].read_text().splitlines()]
+    observed_closures = max(
+        row["closure"] for row in history if row["kind"] == "closure"
+    )
+    last_audit = max(
+        row["closure"] for row in history if row["kind"] == "committed_audit"
+    )
+    if (
+        observed_closures != interruption["observed_complete_closures"]
+        or last_audit != interruption["last_logged_committed_audit_closure"]
+    ):
+        raise ValueError("INTERRUPTED_FIT_HISTORY_CHANGED")
+    packet, metric, mapping, model, label = load_problem(
+        design, native_index, grad_index, reference_index
+    )
+    with np.load(paths["zero_checkpoint"], allow_pickle=False) as item:
+        zero_p = np.array(item["parameters"])
+        zero_c = np.array(item["c"])
+        if int(item["closures"]) != 0 or str(item["state_kind"]) != "zero_parameter_only":
+            raise ValueError("INTERRUPTED_FIT_ZERO_CHECKPOINT_INVALID")
+    if (
+        array_hash(zero_p) != label["parameter_initialization_sha256"]
+        or np.any(zero_c)
+    ):
+        raise ValueError("INTERRUPTED_FIT_ZERO_INITIALIZATION_CHANGED")
+    with np.load(paths["adam500_checkpoint"], allow_pickle=False) as item:
+        p = np.array(item["parameters"])
+        c = np.array(item["c"])
+        if (
+            p.shape != (8966,)
+            or c.shape != (31968,)
+            or int(item["closures"]) != 500
+            or int(item["committed_steps"]) != 500
+            or str(item["state_kind"]) != "adam500_parameter_only"
+            or str(item["reference_c_sha256"]) != label["reference_c_sha256"]
+            or not bool(item["reference_used_for_training"])
+            or bool(item["pde_only_solve"])
+            or bool(item["production_initialization_allowed"])
+        ):
+            raise ValueError("INTERRUPTED_FIT_ADAM500_CHECKPOINT_INVALID")
+    assign(model, p)
+    actual = mapping.forward(model, 8)
+    identity_relative = _relative(actual, c)
+    if identity_relative > 1e-12:
+        raise ValueError("INTERRUPTED_FIT_PARAMETERS_DO_NOT_GENERATE_SAVED_C")
+    loss = metric.value(c)[0]
+    result = dict(
+        status="INTERRUPTED_FIT_ADAM500_RETAINED_SNAPSHOT",
+        route="FEINN-REFERENCE-FIT-G",
+        stop_reason=interruption["classification"],
+        original_fit_source_sha=interruption["original_fit_source_sha"],
+        original_run_directory=str(old_run),
+        interruption_record_sha256=sha(record_path),
+        observed_complete_closures=observed_closures,
+        last_logged_committed_audit_closure=last_audit,
+        retained_committed_closure=500,
+        later_parameters="NOT_RETAINED",
+        final_checkpoint="NOT_RETAINED",
+        optimizer_state="NOT_RETAINED",
+        parameter_to_saved_c_relative=identity_relative,
+        retained_parameters_sha256=array_hash(p),
+        retained_c_sha256=array_hash(c),
+        retained_fit_loss=loss,
+        retained_E_G=float(np.sqrt(2 * loss)),
+        retained_native_audit=packet.audit(c),
+        no_training_or_optimizer_step=True,
+        no_Gram_factor=True,
+        Gsolve_count=0,
+        MUMPS_symbolic_numeric_solve_count=0,
+        **LABELS,
+    )
+    marker(
+        "retained_interrupted_fit_snapshot",
+        dict(
+            retained_closure=500,
+            observed_closures=observed_closures,
+            retained_E_G=result["retained_E_G"],
+        ),
+    )
+    return result, dict(
+        checkpoint=paths["adam500_checkpoint"],
+        zero=paths["zero_checkpoint"],
+        history=paths["history_jsonl"],
+    )

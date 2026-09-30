@@ -1,0 +1,15 @@
+# Task42extra Response V3：参考已暴露的固定网络表示诊断
+
+执行分支 `task42extra_feinn_5nm`，canonical linked worktree 为原生 Linux `/home/fenics/Projects/NN-Lab-V2`，common Git directory 为 `/home/fenics/Projects/Maxwell3D-Lab/task-repository.git`。本轮从审阅基线 `01a092ffc0cea8a62c26e4dd6f872ba2c2efc6ea` 安全快进到 Review V2 发布提交 `a668fb20dcf49f105cc4c7dfeeda145ee492ae14`，冻结 base `fbac3d8777fcfd897d93b898cb9f460f79ddd6ff` 保持祖先。共享 `origin.fetch` 未映射本分支；命令级精确 refspec 更新并显式核对 `refs/remotes/origin/task42extra_feinn_5nm`，不把无法解析的 `@{upstream}` 当通过，也不改共享 Git 配置。本轮 P0、资格检查和唯一拟合尝试的 clean source 为 `d9e5a7d00a1cac82390b058384e0cd9193b472d4`；拟合后恢复接线另有 source。最终交付 HEAD、推送后远端 SHA 与工作树状态：**PENDING_RETAINED_SNAPSHOT_COMPARE**。
+
+本轮只执行 Review V2 的 P0–P2。模型仍是原 M5：5 nm、Si/air、384 hexa、Nédélec p3/q15、31968 独立复 FE（边3744/面14400/内部13824）、2082 slave、完整40端口、原材料与背景。原V1准确参考只按已冻结 hash 加载，不再次求 MUMPS；没有 p4、目标尺寸 5 nm、0.7 nm，未续训旧两条 FEINN 或重跑 FREE 长训练。新路线是 `FEINN-REFERENCE-FIT-G`，清楚标记 `reference_used_for_training=true`、`pde_only_solve=false`、`production_initialization_allowed=false`。它回答固定网络能否重构一个**已知**离散参考，不产生无标签 solver 资格，也不改V1/V2的盲试验负结果。
+
+P0 的四个保存态 `A(c-c_ref)=r-r_ref` 均通过，最大 operation-scaled 差约 `3.45e-13`；参考原残差实算 `6.78884e-12`，没有被视为零。V1 FREE、V2 scaled FREE 的相对 G 场误差分别 `0.9917596652/0.9541206754`，G 对偶残差差 `0.4558488595/0.4449837296`；原 native 相对残差 `0.5969144472/0.6077719288`。原负梯度与参考误差修正的实余弦仅 `0.0230567/0.0050790`。各一次解析最优实步长见证后场误差几乎不动（分别变 `1.28e-10/5.98e-9`），不能把这两次局部见证推广为所有可行方向或全局条件数。P0 只建一次稀疏 Gram 因子，setup `96.8800 s`、11 Gsolve `3.46563 s`、真实残差最大 `2.15e-13`，A/Aᴴ `11/4`，worker `102.974 s`、正式监督 `104.833 s`、树峰 `1,038,958,592 B`、自身swap0；因子进程结束释放。[P0完整记录](outcomes/records/error_residual_geometry_v3.json)。
+
+P1 的固定目标是完整系数误差的 G 范数平方，梯度先算 `G(c-c_ref)/(c_ref*Gc_ref)`，再经原边/面/内部矩的实参数 VJP；每个 closure 不用 Gsolve 或 A/Aᴴ。一个 closure 是一次完整前向、loss 和反向梯度评价，不是 epoch。合成复数目标、真实非零网络三方向 `1e-4/1e-5/1e-6` 中心差分、batch1/8 和异常事务均通过，真实方向最佳相对误差均小于 `1e-5`，batch差至多 `7.96e-16`。固定 seed421001、零末层、Adam500＋原 L-BFGS 只启动一次；执行会话意外消失，没有 supervisor summary、final/last_trial checkpoint或可恢复 optimizer state。日志最多观察到825次完整closure，最近一次已提交参数审核在817次（`E_G=0.0603363`、native `8.19881`），但这些后期参数没有保存。最后可重建的已提交态只有Adam500（`E_G=0.200821`、native `14.26346`）；不把它冒充最终拟合结论，也不重启或续训。[中断原始身份与保守费用](outcomes/records/fit_interruption_v3.json)。
+
+P1 历史中 Adam 的 `parameter_update_norm` 位于参数更新前，0 不能作为真实接受更新范数。逐25 closure实际更新范数 `NOT_RETAINED`，不可事后回放旧训练补造；此遥测缺口在[详细诊断](outcomes/representation_diagnostic_v3.md)保留，不将其当成通过项。零态和Adam500参数-only checkpoint已保存；final与last_trial均`NOT_RETAINED`，不能一致续训。
+
+P2 限于Adam500留存态的独立 q15/q30 网络矩复核、同p3 FE场与原方程/端口/功率审核、区域积分和数据策略 Gate：**PENDING_RETAINED_SNAPSHOT_COMPARE**。预登记拟合阈值 `E_G` 与独立散射 E L2/curl 全部≤`1e-3` 才有正表示见证，全部≤`1e-2` 才有部分见证；本次缺最终参数，快照结果不升级为完整候选的表示结论。原 native `1e-6`、场 `1e-4`、功率/能量 `1e-5` 及逐通道功率 `1e-6` 仍独立报告，`official_candidate_results=false` 和 `pde_only_solver_qualified=false` 固定。
+
+完整本批 wall、Gram/网络/FE/浏览器成本、同时树 RSS 与自身 swap、失败尝试、原16h剩余额度和最后一个由证据支持的下一建议：**PENDING_RETAINED_SNAPSHOT_COMPARE**。失联训练至少被监督采样3097.314s，保守计费3284s，峰值697479168B、自身swap0；无证据归因于数值或资源触线。运行源码与之后文档 HEAD 分开；本分支仅按精确 `HEAD:refs/heads/task42extra_feinn_5nm` 推送，完成后等 review，不合并 master。

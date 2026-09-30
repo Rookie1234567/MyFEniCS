@@ -1,3 +1,19 @@
+# Task42extra Review V2 后续：V3 参考暴露表示诊断
+
+本节追加 V3，下面的 V2 与 V1 历史及其负结果原文保留。固定 M5 的同一 5 nm Si/air、384 hex、p3/q15、31968 独立复 FE 系数和 40 端口不变。P0 用已保存四态考察场误差与原方程残差的关系；P1 唯一新路线 `FEINN-REFERENCE-FIT-G` **读取 V1 准确散射系数训练**，P2 冻结后独立 FE 审核。因此这项试验只探查固定网络能否表示已知参考，`reference_used_for_training=true`、`pde_only_solve=false`、`production_initialization_allowed=false`；V1/V2 无标签路线仍为原来的负结果，不能把监督拟合提升为独立求解成功。[详细方法与结果](representation_diagnostic_v3.md)、[Response V3](../response_v3.md)、[run index](records/run_index_v3.json)。
+
+| V3 阶段 / measured | 数值或状态 | 解释 |
+| --- | --- | --- |
+| P0 四态 `A(c−c_ref)=r−r_ref` | 最大 operation-scaled 差 `3.45e-13`，参考原残差 `6.79e-12` | 恒等式和保存的参考均实算；未把参考残差设零 |
+| P0 V1 FREE / V2 scaled FREE | `E_G=0.991760/0.954121`、原 native `0.596914/0.607772`、负梯度方向余弦 `0.02306/0.00508` | 两次解析最优实步长只作离线见证，场误差几乎不变 |
+| P0 Gram 成本 | setup `96.880 s`、11 Gsolve `3.466 s`；A/Aᴴ `11/4`；树峰 `1,038,958,592 B`、自身swap0 | 仅 P0 进程一个研究用稀疏因子，结束释放 |
+| P1 梯度/事务资格 | 三条非零实方向、batch1/8、合成复数目标与回滚通过 | fit 闭包只用 G matvec和完整矩 VJP，无 Gsolve/A/Aᴴ |
+| P1 唯一拟合 | `EXECUTION_SESSION_LOST_NO_FINAL_CHECKPOINT`；观察825 closure，仅Adam500参数保存 | 受监督会话意外消失；没有final/last_trial/optimizer状态，不重启训练；不是 PDE-only 解 |
+| P2 独立场/原方程/功率审核 | `PENDING_RETAINED_SNAPSHOT_COMPARE` | 只审核Adam500留存态并复用V1 p3参考，不再MUMPS求解；不得当完整候选终态 |
+| p4 / 目标尺寸5nm / 0.7nm | `not_run` | 本批无放大授权 |
+
+中间 Adam 日志的 `parameter_update_norm` 在更新前采样，0 不是接受更新幅度；每25 closure 的真实更新范数标 `NOT_RETAINED`，不重放唯一训练补历史。第817次已提交参数审核只留有`E_G=0.0603363`和原残差`8.19881`，相应参数未保存，不能用于P2；唯一可重建的Adam500态为`E_G=0.200821`、native`14.26346`。失联训练采样时长至少3097.314s、保守按3284s计入本批账，树RSS峰697479168B、自身swap0。[中断身份和账](records/fit_interruption_v3.json)。区域误差和独立审核待留存态P2完成。
+
 # Task42extra Review V1 后续：V2 固定尺度诊断
 
 本节追加 Review V1 的唯一后续试验，下面的 V1 16节原文完整保留。原模型 M5、全部 31968 复 FE 系数、40端口、材料与弱残差未改。V2 把原 Gram 对角用于优化变量 `c=Dy`，用于检查各类系数尺度是否让旧 FREE 优化困难；它没有训练新网络。D0既有状态诊断、D1梯度资格、D2唯一候选及D3独立复验均完成。[详细解释和完整表](scaling_diagnostic_v2.md)、[Response V2](../response_v2.md)、[独立Gate](records/gate_decisions_v2.json)。

@@ -2983,3 +2983,12 @@ Review V1 仅授权固定 M5 全部31968复 FE 变量的一次 FREE-FE-DUAL-GRAM
 D0/D1/候选 fresh Gram factor setup `97.197/96.927/101.073s`，候选4003次Gsolve `1214.979s`；候选监督wall `2539.810s`、整树RSS峰 `1365712896B`、自身swap0。V1 G装配648.765s已实耗复用，候选从零成本另归属3188.576s，不与本批实耗相加。首次compare-only FE环境误导入Torch和第二次沙箱MPI socket失败均保留、计费；最小修复后完成。V1“出射复通道”0.27518和CSV原total port 0.573349为不同参考分母，同一分子；p4未准入不是离散误差实测。任务书§5.4仅按Review明示授权修正一个公式宏，GitHub渲染另有独立记录。
 
 [Response V2](task042extra_feinn_5nm/response_v2.md)、[完整诊断](task042extra_feinn_5nm/outcomes/scaling_diagnostic_v2.md)、[V2 run/source/hash](task042extra_feinn_5nm/outcomes/records/run_index_v2.json)、[独立 Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v2.json)、[资源全账](task042extra_feinn_5nm/outcomes/records/resource_costs_v2.json)。固定缩放不足以获合格解，也不能推论所有优化或神经方法无效。只交付执行支线等待review，不merge或开展下一试验。
+
+
+## 2026-09-30 Task42extra V3：参考暴露的固定网络表示诊断
+
+Review V2 接受固定对角尺度负结果，关闭重复 FREE 尺度扫描，只授权 P0 四个已保存态的误差—残差几何、P1 一次固定网络的**监督**参考场拟合、P2 冻结后独立 FE 审核。本批只用原 M5：5nm Si/air、非可分三维缺口、384hex、p3/q15、31968独立复FE、40端口和既有准确同p3参考；无新MUMPS、p4、目标尺寸5nm或0.7nm计算。新拟合读取参考标签，所以它不再是 V1/V2 的无标签 Maxwell 求解研究，checkpoint仅可用于这个表示诊断。
+
+P0实算参考残差，不设零；四态 `A(c-c_ref)=r-r_ref` 差≤`3.45e-13`。旧FREE/缩放FREE 的 G 场误差 `0.991760/0.954121`、native原残差 `0.596914/0.607772`、负梯度与参考修正实余弦 `0.02306/0.00508`；各一次解析最优实步长仅极小改变场，说明保存态的残差优化方向与参考场修正不一致，不能称全局条件数。唯一P0 Gram因子setup`96.880s`、11 solve`3.466s`，worker`102.974s`、监督`104.833s`、同时树峰`1,038,958,592B`/own swap0，结束释放。
+
+P1 合成复数目标、真实固定网络三方向FD、batch1/8及事务回滚通过；唯一拟合执行会话在观察825 closure后消失，final/last_trial/optimizer state未留存，最后可重建的已提交态为Adam500。失联的原始采样至少3097.314s、保守计费3284s、树峰697479168B/own swap0；不重启、续训或补造后期参数。fit闭包仅作原G稀疏乘法和完整矩网络VJP，不用Gsolve/Maxwell逆或A/Aᴴ；checkpoint/manifest固定`reference_used_for_training=true`、`pde_only_solve=false`、`production_initialization_allowed=false`。Adam每25 closure的更新范数在更新前取值，真实逐步更新`NOT_RETAINED`。P2独立L2/curl/native/复通道/功率只审核留存态：`PENDING_RETAINED_SNAPSHOT_COMPARE`。所有源、标签、资源和后处理以[Response V3](task042extra_feinn_5nm/response_v3.md)、[诊断](task042extra_feinn_5nm/outcomes/representation_diagnostic_v3.md)、[中断](task042extra_feinn_5nm/outcomes/records/fit_interruption_v3.json)为准；文档 HEAD 不代替数值 source。

@@ -81,6 +81,23 @@ def budget():
         for path in base.glob(pattern):
             item = json.loads(path.read_text())
             entries.append(dict(path=str(path), seconds=item.get("elapsed_seconds", 0)))
+    interruption_path = (
+        ROOT
+        / "docs/task042extra_feinn_5nm/outcomes/records/fit_interruption_v3.json"
+    )
+    if interruption_path.exists():
+        interrupted = json.loads(interruption_path.read_text())
+        original = (
+            ROOT / "results/task42extra" / interrupted["run_directory_name"]
+        )
+        if not (original / "run_summary.json").exists():
+            entries.append(
+                dict(
+                    path=str(interruption_path),
+                    seconds=interrupted["conservative_charged_seconds"],
+                    classification=interrupted["classification"],
+                )
+            )
     used = sum(e["seconds"] for e in entries)
     v2_used = sum(
         e["seconds"]
@@ -90,7 +107,9 @@ def budget():
     v3_used = sum(
         e["seconds"]
         for e in entries
-        if "/task42extra_v3_" in e["path"] or "/checks/v3_" in e["path"]
+        if "/task42extra_v3_" in e["path"]
+        or "/checks/v3_" in e["path"]
+        or e["path"].endswith("/fit_interruption_v3.json")
     )
     return dict(
         limit_seconds=57600,
@@ -167,6 +186,12 @@ def launch(spec):
             production_initialization_allowed=False,
             data_role="REFERENCE_EXPOSED_DIAGNOSTIC_ONLY",
         )
+        interruption = (
+            ROOT
+            / "docs/task042extra_feinn_5nm/outcomes/records/fit_interruption_v3.json"
+        )
+        if interruption.exists():
+            state["fit_interruption_record_sha256"] = sha(interruption)
     # Never capture secrets: environment whitelist, not the entire process environment.
     state["environment"] = {
         k: v
@@ -258,11 +283,17 @@ def launch(spec):
                 "e3_reference",
                 "v3_fit_checks",
             ],
-            "v3_fit_reconstruct": ["e1_fe", "e1_grad", "FEINN-REFERENCE-FIT-G"],
+            "v3_retained_snapshot": [
+                "e1_fe",
+                "e1_grad",
+                "e3_reference",
+                "v3_fit_checks",
+            ],
+            "v3_fit_reconstruct": ["e1_fe", "e1_grad", "v3_retained_snapshot"],
             "v3_fit_compare_only": [
                 "e1_fe",
                 "e3_reference",
-                "FEINN-REFERENCE-FIT-G",
+                "v3_retained_snapshot",
                 "v3_fit_reconstruct",
             ],
         }
@@ -562,6 +593,17 @@ def worker(directory):
                 marker,
                 manifest["supervised_limit_seconds"],
             )
+        elif stage == "v3_retained_snapshot":
+            from src.solvers.feinn_reference_fit import retained_interrupted_snapshot
+
+            result, files = retained_interrupted_snapshot(
+                design,
+                load_index("e1_fe"),
+                load_index("e1_grad"),
+                load_index("e3_reference"),
+                artifact,
+                marker,
+            )
         elif stage == "v3_fit_reconstruct":
             from src.solvers.feinn_reference_fit import reconstruct
 
@@ -569,7 +611,7 @@ def worker(directory):
                 design,
                 load_index("e1_fe"),
                 load_index("e1_grad"),
-                load_index("FEINN-REFERENCE-FIT-G"),
+                load_index("v3_retained_snapshot"),
                 artifact,
                 marker,
             )
@@ -580,7 +622,7 @@ def worker(directory):
                 design,
                 load_index("e1_fe"),
                 load_index("e3_reference"),
-                load_index("FEINN-REFERENCE-FIT-G"),
+                load_index("v3_retained_snapshot"),
                 load_index("v3_fit_reconstruct"),
                 artifact,
                 marker,

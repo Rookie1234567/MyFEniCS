@@ -47,3 +47,11 @@ V2 复用原生FE/ML资格环境及V1 native/Gram/历史/checkpoint，不重新�
 Markdown局部检查范围扩展到新review、获授权修正的task、Response V2、V2诊断、summary和两份总账新增节；检查fence、表格列数、相对链接、UTF-8及解析结果。GitHub渲染只复查review与修正task，浏览器DOM/截图与失败原因见[render记录](records/render_check_v2.json)。本地解析不等于浏览器PASS，也不宣称CI或全仓测试。
 
 实际GitHub预览在首轮Firefox完整页面加载策略下导航60秒超时，无DOM可判；改用 `pageLoadStrategy=eager` 后只对同两页复核成功。Review V1 的6表/3公式和修正task的6表/7公式均无列错或数学报错，全部24张截图hash一致，抽看review首页/公式和task修正公式/表格。[render记录](records/render_check_v2.json)区分失败与成功两次监督，不能用首次失败代替最终结果，也不声称逐张截图人工精读。
+
+## Review V2 后续 V3 定向资格与保留失败
+
+本批没有重装 FE/ML ABI、BLAS/CUDA，也不重跑整套 E0/E1 或 full pytest。实现源 `d9e5a7d00a1cac82390b058384e0cd9193b472d4` 的轻量 `src/test/test_feinn_reference_fit_ml.py`、事务和完整非 Hermitian 代数共 8 项通过；Ruff、compileall及Git diff空白检查通过。首次 `ruff` 在ML环境因可执行文件不在该环境而于启动前失败，改用原资格化FE环境的Ruff检查通过，没有安装或修改环境。FE import/ABI预检在默认执行沙箱被 MPI 本机 socket 拒绝；依既有最小执行权限重试后，PETSc complex128/int64、FE进程未导入Torch及本任务单核/树RSS/zero swap通过。两次费用保留在[V3资源账](records/resource_costs_v3.json)，不把默认沙箱拒绝记为 ABI 或物理失败。
+
+正式 one-run `v3_fit_checks` 实测合成复数目标相对差`3.01e-11`，真实固定 M5 的 batch1/8 c/loss/梯度差`4.22e-16/0/7.96e-16`；三非零实方向、h=`1e-4/1e-5/1e-6`的全部误差均≤`1e-5`，异常事务参数逐位恢复，训练标签hash与master/背景/port身份锁定。P0 `A(c-c_ref)=r-r_ref` 四态差≤`3.45e-13`、真实Gsolve最大相对`2.15e-13`，不重放未保存的旧状态。[资格原始记录](records/reference_fit_checks_v3.json)、[P0记录](records/error_residual_geometry_v3.json)。
+
+P1 唯一训练被执行会话意外中断；最后完整观察825 closure，第817次已提交参数审核只有指标没有checkpoint，最后保留参数为Adam500。原运行没有`run_summary`/final/last_trial，按[中断记录](records/fit_interruption_v3.json)保守计费，不伪造正常停止。恢复接线的轻量8项pytest、Ruff、compileall及新one-run输入解析通过；P2 q30/独立FE留存态审核`PENDING_RETAINED_SNAPSHOT_COMPARE`。最终checker从保存参数/完整c、原Gram、原复E/H样本、40级复通道及独立R/T/A_volume重算，并断言监督路线的`pde_only_solver_qualified=false`与`official_candidate_results=false`。GitHub实际渲染只检查新Review V2与新/修改文档，旧task/V1不重复全套浏览器检查；结果与失败费用待[V3渲染记录](records/render_check_v3.json)填入。没有CI或全仓测试通过的声明。

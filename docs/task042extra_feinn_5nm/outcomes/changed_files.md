@@ -68,3 +68,16 @@ src/test/test_feinn_transaction_ml.py
 | do-not-merge | ignored原数组/场/history/checkpoint、浏览器profile/cache | 研究数据本机保留；新FREE路线未获solver/production资格，不允许据此合并master |
 
 V2实现提交 `19c725efd27ae5daedba8e77d2ad98375711bb71` 绑定D0/D1/D2正式阶段；局部FE导入修复提交 `bfff1458a389b2c4a4d57112cc771bb33847c20a` 绑定完成的D3。后续证据与文档HEAD不替代这两个实际source。新一行task公式修改已由review明确授权，不推广为一般修改任务书权限。
+
+## Review V2 后续 V3 文件级边界
+
+| 依赖组 | V3 文件 / source | 数值行为与审查边界 |
+| --- | --- | --- |
+| research-only P0 | `src/solvers/feinn_error_geometry.py`；实现 `d9e5a7d00a1cac82390b058384e0cd9193b472d4` | 只读既存四态和V1参考；一次 Gram 因子、有限 A/Aᴴ/Gsolve，原算子和旧结果不改 |
+| research-only P1 | `src/solvers/feinn_reference_fit.py`、`src/test/test_feinn_reference_fit_ml.py`；同实现source | 明确参考暴露的完整矩 G 场拟合；只用原架构/初始化/Adam500＋LBFGS，参数-only checkpoint，不设生产默认 |
+| 中断后留存态/P2 compare-only | `src/solvers/feinn_reference.py`、`feinn_reference_fit.py`、workflow、`v3_retained_snapshot.dat`；实际复验source `PENDING_RETAINED_SNAPSHOT_COMPARE` | 唯一训练缺final，只登记Adam500字节哈希与参数对应完整c，独立q30和原FE场/端口/功率；参考不再MUMPS求解；监督结果不得自动升级为official |
+| one-run/资源编排 | `src/io/feinn_pilot.py`、`src/runners/feinn_workflow.py`、`input/task042extra_feinn_5nm/v3_*.dat` | 新唯一stage/index和V3 4h/原16h预算；clean source、CPU-only/MPI1/自有锁与整树采样监督 |
+| checker/文档 | `benchmarks/check_task42extra_v3.py`、`check_task42extra_docs_v3.py`、`finalize_task42extra_render_v3.py`；本目录V3 compact records/response/summary、两份总账追加 | 从原c、G、复E/H、全40复通道与功率重算；旧V1/V2文档和负结果保留，GitHub新review及新增文档实际渲染单列 |
+| do-not-merge | `.venv*`、`tmp/`、`results/`、`benchmarks/artifacts/task42extra/` | 忽略的大数组、场、checkpoints、浏览器截图/profile；研究权重不得用于旧路线、Task042或0.7nm |
+
+本批新路线即使拟合成功也属参考已暴露研究，不是 production numerical/core、ordinary default 或目标尺寸资格。最终source、测试和fresh PDE证据以[run index V3](records/run_index_v3.json)与[Response V3](../response_v3.md)为准；本轮没有fresh PDE求解，只有原M5固定数据上的监督表示及独立同离散复验。
