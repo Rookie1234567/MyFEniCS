@@ -52,20 +52,20 @@
     },
     {
       "hash_status": "append_only; SHA-256 is over the latest complete JSONL row excluding its line terminator; whole-file hash intentionally null",
-      "latest_row_sha256": "56ff658157cedb38ea4cfccb644ad60b5ef15346e26596b246cc490c07aa4fc1",
-      "latest_sample_elapsed_seconds": 139213.85737992206,
+      "latest_row_sha256": "41382e513180f4574c78aa1502d2e331ec732335a1cf0f1a97fd3dfd3ec993b3",
+      "latest_sample_elapsed_seconds": 142838.65114981798,
       "name": "outer_memory_stages",
       "path": "results/task041_v8_5nm_cellcond_formal_run_20260928/memory_stages.jsonl",
-      "sampled_at_utc": "2026-09-29T23:39:03Z",
+      "sampled_at_utc": "2026-09-30T00:39:28Z",
       "sha256": null
     },
     {
       "hash_status": "append_only; SHA-256 is over the latest complete JSONL row excluding its line terminator; whole-file hash intentionally null",
-      "latest_event_wall_seconds": 56616.77457121096,
-      "latest_row_sha256": "4d984bca71ef16b3f0e0e8114cbca7fa0fd6c0aca0fef13a7604c8f2c150cac0",
+      "latest_event_wall_seconds": 60062.736596905976,
+      "latest_row_sha256": "a6ebe5969f150cb737d61b2bd03ba21e44f0681357b045c12e304fff32ea4e18",
       "name": "worker_markers",
       "path": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8_cell_condensed/task041_5nm_p6h4_m480_mpi8_cell_condensed__hybrid_iterative__mpi8__M480/20260928T085850.487306Z/consumer/markers.jsonl",
-      "sampled_at_utc": "2026-09-29T23:39:03Z",
+      "sampled_at_utc": "2026-09-30T00:39:28Z",
       "sha256": null
     },
     {
@@ -74,20 +74,20 @@
       "sha256": "ce23d2fe2f90384e4faec63d3c6b1963ab3f487b86640a29f91d41010d214d2b"
     }
   ],
-  "observed_utc": "2026-09-29T23:39:03Z",
+  "observed_utc": "2026-09-30T00:39:28Z",
   "progress": {
     "current_rhs_iterations": "not_run",
     "current_rhs_residual": "not_run",
     "expected_formal_responses": 1920,
     "formal_residuals": "not_run",
-    "latest_sampler_elapsed_seconds": 139213.85737992206,
+    "latest_sampler_elapsed_seconds": 142838.65114981798,
     "latest_sampler_phase": "public_command",
     "latest_worker_event": "modal_batch_begin",
-    "latest_worker_event_wall_seconds": 56616.77457121096,
+    "latest_worker_event_wall_seconds": 60062.736596905976,
     "official_R_T_A_E_H": "not_run",
     "phase": "modal_action",
     "process_group_gone_at_latest_sample": false,
-    "progress_signal": "modal_batch_begin; side=top; batch=17/30; logical_completed=512/960; formal response markers not emitted; global swap/pswp are observation-only",
+    "progress_signal": "modal_batch_begin; side=top; batch=18/30; logical_completed=544/960; formal response markers not emitted; global swap/pswp are observation-only",
     "time_stop_enforced": false,
     "time_target_met": null,
     "time_target_seconds": 86400
@@ -99,7 +99,7 @@
     "two_nm": "not_started"
   },
   "record_type": "task041_review_v8_formal_progress",
-  "record_written_utc": "2026-09-29T23:39:03Z",
+  "record_written_utc": "2026-09-30T00:39:28Z",
   "repository": {
     "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
     "document_base_head": "d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f",
@@ -110,29 +110,29 @@
   },
   "resources": {
     "latest_sample": {
-      "sampled_at_utc": "2026-09-29T23:39:03Z",
-      "sample_elapsed_seconds": 139213.85737992206,
+      "sampled_at_utc": "2026-09-30T00:39:28Z",
+      "sample_elapsed_seconds": 142838.65114981798,
       "sample_role": "phase_running",
-      "authority_bytes": 43132911616,
+      "authority_bytes": 43132944384,
       "authority_kind": "process_tree",
-      "process_tree_rss_bytes": 43132911616,
+      "process_tree_rss_bytes": 43132944384,
       "process_tree_swap_bytes": 0,
-      "dedicated_cgroup_current_bytes": 42576846848,
-      "dedicated_cgroup_peak_bytes": 42576855040,
+      "dedicated_cgroup_current_bytes": 42668789760,
+      "dedicated_cgroup_peak_bytes": 42668793856,
       "dedicated_cgroup_swap_bytes": 0,
       "job_swap_bytes": 0,
       "job_no_swap": true,
       "cap_bytes": 53221163008,
       "warning_bytes": 47899046707,
-      "host_memavailable_bytes": 947749937152,
+      "host_memavailable_bytes": 951468220416,
       "host_memtotal_bytes": 2163100385280,
       "host_reserve_required_bytes": 412316860416,
       "host_reserve_gate_at_start": true,
       "global_swap_baseline_bytes": 1224704,
-      "global_swap_bytes": 809230336,
-      "global_swap_delta_bytes": 808005632,
-      "global_pswpin_pages": 50822,
-      "global_pswpin_delta_pages": 50822,
+      "global_swap_bytes": 809226240,
+      "global_swap_delta_bytes": 808001536,
+      "global_pswpin_pages": 50846,
+      "global_pswpin_delta_pages": 50846,
       "global_pswpout_pages": 172433,
       "global_pswpout_delta_pages": 172134,
       "swap_policy": "observe_only_continue",
@@ -232,5 +232,5 @@
   },
   "schema": "task041.v8.formal_progress.v1",
   "status": "running_at_latest_observation",
-  "next_progress_update_due_utc": "2026-09-30T00:39:03Z"
+  "next_progress_update_due_utc": "2026-09-30T01:39:28Z"
 }
