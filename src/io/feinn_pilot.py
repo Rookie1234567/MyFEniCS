@@ -45,6 +45,8 @@ STAGES = {
     "v5_readout_reconstruct": ("ml", 900),
     "v5_readout_compare_only": ("fe", 900),
 }
+from src.runners.feinn_campaign import STAGES as CAMPAIGN_STAGES, AUTHORITY
+STAGES.update({name: (entry[0], entry[1]) for name, entry in CAMPAIGN_STAGES.items()})
 
 
 def load_pilot(path):
@@ -65,7 +67,7 @@ def load_pilot(path):
     ):
         raise InputError("Task42extra accepts only one frozen explicit stage")
     item = config["task42extra"]
-    authority = item.get("stage", "").startswith("v7_")
+    authority = item.get("stage", "").startswith("v7_") or item.get("stage") in AUTHORITY
     authority_policy = dict(audit_kind="DISCRETIZATION_AUTHORITY_AUDIT", reference_role="REFERENCE_ONLY", training_reference_allowed=False)
     residual_readout = item.get("stage", "").startswith("v6_") or item.get("stage") == "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT"
     readout = residual_readout or (

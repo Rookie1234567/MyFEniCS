@@ -264,7 +264,7 @@ def checks(design, native_index, reference_index, artifact, marker, manifest):
         destroy_same_mesh_physical_action(model["bundle"])
 
 
-def reference(design, native_index, reference_index, checks_index, artifact, marker, manifest):
+def reference(design, native_index, reference_index, checks_index, artifact, marker, manifest, *, assembler=None, independent_factory=None):
     from src.solvers.feinn_fem import build_model
     from src.solvers.feinn_reference import exact_solve, field_physics
     from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import destroy_same_mesh_physical_action, restore_p0_full_field
@@ -285,8 +285,18 @@ def reference(design, native_index, reference_index, checks_index, artifact, mar
                        source_sha=np.asarray(manifest["source_sha"]), input_sha256=np.asarray(manifest["input_sha256"]),
                        native_sha256=np.asarray(checks_index["files"]["native"]["sha256"]),
                        metadata_json=np.asarray(json.dumps(dict(facts=facts, **POLICY))), **{k: np.asarray(v) for k, v in POLICY.items()})
-        c, direct = exact_solve(model, packet, artifact, marker,
-                                audit_options=dict(check_budget=tick, save_packet=save))
+        options = dict(check_budget=tick, save_packet=save)
+        if assembler is not None:
+            options["assembler"] = assembler
+        c, direct = exact_solve(model, packet, artifact, marker, audit_options=options)
+        independent_total = None
+        if independent_factory is not None:
+            integration = independent_factory(model, packet)
+            independent_total = integration.total_residual(c)
+            marker("independent_Basix_final_total", dict(relative=independent_total, scope=integration.scope))
+            del integration
+            if independent_total > 1e-10:
+                raise ValueError("REFERENCE_INDEPENDENCE_UNRESOLVED_FINAL")
         recovered_field = restore_p0_full_field(model["floquet"], packet.storage(c))
         actual_local = recovered_field.x.array[packet.a["cell_dofs"]]
         expected_local = packet.expand(c)
@@ -305,6 +315,7 @@ def reference(design, native_index, reference_index, checks_index, artifact, mar
                     alpha_total_meaning="background_alpha + alpha_scattered; includes known top incident projection",
                     identity=checks_index["result"]["identity"], independent_families=checks_index["result"]["independent_families"],
                     MPC_recovery_relative=MPC_recovery_relative,
+                    independent_Basix_total_relative=independent_total,
                     physics_equivalence_fields=equivalence, p4_native_sha256=checks_index["files"]["native"]["sha256"],
                     p4_reference_sha256=sha(reference_path), numeric_cutoff_monotonic=cutoff,
                     MUMPS_symbolic_numeric_solve_count=[1, 1, 1], new_Gram_matrix_count=0, new_Gram_factor_count=0,

@@ -40,6 +40,8 @@ def main():
             "task42extra-v5-compare",
         ),
     }
+    from src.runners.feinn_campaign import STAGES
+    stages.update({name: (name, "task42extra-" + name.replace("_", "-")) for name in STAGES})
     if spec is None or spec.derived["stage"] not in stages:
         raise ValueError("ONLY_EXPLICIT_REVIEWED_DURABLE_STAGES_ARE_AUTHORIZED")
     if subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT):

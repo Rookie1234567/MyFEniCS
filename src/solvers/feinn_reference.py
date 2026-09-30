@@ -24,22 +24,29 @@ def candidate_policy(numerical_pass, *, reference_exposed=False):
     )
 
 
-def original_augmented_matrix(model, packet):
+def original_augmented_matrix(model, packet, marker=lambda *_: None):
     """Independent DOLFINx assembly of V; preserve original unnormalized ports."""
     import dolfinx_mpc
     from dolfinx import fem
 
-    matrix = dolfinx_mpc.assemble_matrix(
-        fem.form(model["bundle"]["volume_action"].bilinear_form), model["floquet"].mpc
-    )
+    marker("authority_form_begin", {})
+    compiled = fem.form(model["bundle"]["volume_action"].bilinear_form)
+    marker("authority_form_end", {})
+    marker("authority_MPC_assembly_begin", {})
+    matrix = dolfinx_mpc.assemble_matrix(compiled, model["floquet"].mpc)
+    marker("authority_MPC_assembly_end", {})
     try:
+        marker("authority_Mat_assemble_begin", {})
         matrix.assemble()
+        marker("authority_Mat_assemble_end", {})
+        marker("authority_CSR_conversion_begin", {})
         p, i, x = matrix.getValuesCSR()
         full = sparse.csr_matrix((x.copy(), i.copy(), p.copy()), shape=matrix.getSize())
     finally:
         matrix.destroy()
     ids = packet.a["masters"]
     V = full[ids, :][:, ids].tocsr()
+    marker("authority_CSR_conversion_end", {})
     a = packet.a
     B = sparse.coo_matrix(
         (a["bv"], (a["br"], a["bp"])), shape=(packet.size, packet.np)
@@ -47,9 +54,11 @@ def original_augmented_matrix(model, packet):
     D = sparse.coo_matrix(
         (a["dv"], (a["dp"], a["dr"])), shape=(packet.np, packet.size)
     ).tocsr()
+    marker("authority_port_join_begin", {})
     augmented = sparse.bmat([[V, B], [-D, sparse.diags(a["H"])]], format="csr")
     augmented.eliminate_zeros()
     augmented.sort_indices()
+    marker("authority_port_join_end", {})
     rng = np.random.default_rng(421003)
     c = rng.standard_normal(packet.size) + 1j * rng.standard_normal(packet.size)
     alpha = rng.standard_normal(packet.np) + 1j * rng.standard_normal(packet.np)
@@ -92,7 +101,8 @@ def exact_solve(model, packet, artifact, marker, *, audit_options=None):
     marker("reference_pre_assembly_capacity", pre)
     if rss_bytes() + allocation >= 12 * 2**30:
         raise RuntimeError("REFERENCE_RESOURCE_BLOCKED_BEFORE_ASSEMBLY")
-    csr, pair = original_augmented_matrix(model, packet)
+    assembler = (audit_options or {}).get("assembler", original_augmented_matrix)
+    csr, pair = assembler(model, packet, marker)
     record = dict(
         role="independent reference ONLY",
         global_Maxwell_factor=True,
@@ -111,6 +121,7 @@ def exact_solve(model, packet, artifact, marker, *, audit_options=None):
             ]
         },
     )
+    marker("reference_PETSc_conversion_begin", {})
     matrix = PETSc.Mat().createAIJ(
         size=csr.shape,
         csr=(
@@ -121,6 +132,7 @@ def exact_solve(model, packet, artifact, marker, *, audit_options=None):
         comm=MPI.COMM_WORLD,
     )
     matrix.assemble()
+    marker("reference_PETSc_conversion_end", {})
     del csr
     gc.collect()
     record["assembly_and_pair_seconds"] = perf_counter() - start
@@ -130,6 +142,7 @@ def exact_solve(model, packet, artifact, marker, *, audit_options=None):
         check_budget("reference symbolic")
         factor = _MumpsFactor(matrix)
         t = perf_counter()
+        marker("reference_symbolic_begin", {})
         factor.symbolic(matrix)
         info = factor.info((21, 22, 29))
         record["symbolic_info"] = info
@@ -159,6 +172,7 @@ def exact_solve(model, packet, artifact, marker, *, audit_options=None):
             record["symbolic_estimate_source"] = "https://www.mcs.anl.gov/petsc/petsc-3.10/src/mat/impls/aij/mpi/mumps/mumps.c.html"
         check_budget("reference numeric")
         t = perf_counter()
+        marker("reference_numeric_begin", {})
         factor.numeric(matrix)
         record.update(
             numeric_seconds=perf_counter() - t, numeric_info=factor.info((21, 22, 29))
@@ -169,6 +183,7 @@ def exact_solve(model, packet, artifact, marker, *, audit_options=None):
         b.array[:] = np.r_[packet.a["g"], packet.a["gp"]]
         x = matrix.createVecRight()
         t = perf_counter()
+        marker("reference_solve_begin", {})
         factor.solve(b, x)
         residual = matrix.createVecLeft()
         matrix.mult(x, residual)

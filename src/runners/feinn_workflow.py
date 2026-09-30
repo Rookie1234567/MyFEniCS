@@ -239,6 +239,17 @@ def launch(spec):
     v5 = stage.startswith("v5_") or stage == "FEINN-FROZEN-HIDDEN-READOUT-G"
     v6 = stage.startswith("v6_") or stage == "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT"
     v7 = stage.startswith("v7_")
+    v8 = stage.startswith("v8_")
+    if v8:
+        from src.runners.feinn_campaign import AUTHORITY, REVIEW_SHA
+        from src.solvers.feinn_discretization_audit import POLICY
+        proof = ROOT / "tmp/task42extra/durable" / stage / "terminal_identity.json"
+        if not proof.exists():
+            raise RuntimeError("DURABLE_TERMINAL_PROOF_REQUIRED")
+        state.update(run_id=directory.name, v8_review_sha=REVIEW_SHA,
+                     v8_campaign_design_sha256=sha(ROOT / "docs/task042extra_feinn_5nm/outcomes/records/campaign_design_v8.json"),
+                     supervision_budget_origin_monotonic=launch_origin,
+                     durable_terminal_identity_sha256=sha(proof), **(POLICY if stage in AUTHORITY else {}))
     if v7:
         from src.solvers.feinn_discretization_audit import POLICY
         pre = ROOT / "docs/task042extra_feinn_5nm/outcomes/records/discretization_design_v7.json"
@@ -333,6 +344,10 @@ def launch(spec):
             write_json(directory / "run_summary.json", result)
             return result
         ledger = budget()
+        if v8:
+            from src.runners.feinn_campaign import campaign_budget
+            ledger["V8"] = campaign_budget(ledger["entries"])
+            ledger["remaining_seconds"] = ledger["V8"]["new_remaining_seconds"]
         if (
             ledger["remaining_seconds"] <= 120
             or (stage.startswith("v2_") or stage == "FREE-FE-DUAL-GRAM-DIAG")
@@ -424,6 +439,9 @@ def launch(spec):
             "v5_readout_compare_only": ["e1_fe", "e3_reference", "FEINN-FROZEN-HIDDEN-READOUT-G", "v5_readout_reconstruct"],
         }
         prerequisite_stages = prereqs.get(stage, [])
+        if v8:
+            from src.runners.feinn_campaign import DEPENDENCIES
+            prerequisite_stages = DEPENDENCIES[stage]
         for dependency in prerequisite_stages:
             item = load_index(dependency)
             dependencies[dependency] = dict(
@@ -441,7 +459,7 @@ def launch(spec):
                 cell_tags_sha256=identity["cell_tags_sha256"],
                 mode_sha256=identity["mode_manifest_sha256"],
                 gram_sha256=operator["files"]["gram"]["sha256"]
-                if stage != "FEINN-EUC" and not v7
+                if stage != "FEINN-EUC" and not v7 and not (v8 and stage in AUTHORITY)
                 else None,
                 gram_loaded_by_route=stage
                 in (
@@ -470,6 +488,10 @@ def launch(spec):
         if v7 and "v7_p_transfer_checks" in dependencies:
             bind_authority_packet(state, load_index("v7_p_transfer_checks"))
             (directory / "physical_model_sha256.txt").write_text(state["physical_model_sha256"] + "\n")
+        if v8 and stage in AUTHORITY:
+            bind_authority_packet(state, load_index("v7_p_transfer_checks"))
+            state.update(physics_identity=dict(design_sha256=state["design_sha256"], material_sha256=state["material_table_sha256"], mesh_sha256=state["mesh_sha256"], mode_sha256=state["mode_sha256"]), discretization_identity=dict(degree=4, volume_quadrature_degree=15, DtN_quadrature_degree=15, independent_complex_FE=75264), operator_packet_sha256=state["actual_operator_packet_sha256"])
+            (directory / "physical_model_sha256.txt").write_text(state["physical_model_sha256"] + "\n")
         state["frozen_dependencies_before_worker_launch"] = dependencies
         state["qualified_environment_record"] = {
             mode: dict(
@@ -484,6 +506,12 @@ def launch(spec):
         }
         write_json(directory / "run_manifest.json", state)
         limit = min(spec.execution["timeout_seconds"], ledger["remaining_seconds"])
+        if v8:
+            from src.runners.feinn_campaign import STAGES as V8_STAGES
+            group = V8_STAGES[stage][2]
+            limit = min(limit, ledger["V8"]["groups_remaining_seconds"][group])
+            if limit <= 150 or launch_origin+limit-150 <= perf_counter():
+                raise RuntimeError("V8_BUDGET_RESERVE_UNAVAILABLE")
         if stage.startswith("v2_") or stage == "FREE-FE-DUAL-GRAM-DIAG":
             limit = min(limit, ledger["v2_remaining_seconds"])
             if stage == "FREE-FE-DUAL-GRAM-DIAG":
@@ -533,14 +561,14 @@ def launch(spec):
             state["supervision_budget_origin_monotonic"] = perf_counter()
         write_json(directory / "run_manifest.json", state)
         command = [sys.executable, "-m", "src.runners.feinn_workflow", str(directory)]
-        if v4 or v5 or v6 or v7:
+        if v4 or v5 or v6 or v7 or v8:
             from src.runners.guarded_exec import ticks
             command = [sys.executable, "-m", "src.runners.guarded_exec", str(os.getpid()), str(ticks(os.getpid())), *command]
         watchdog_seconds = (
             authority_watchdog_window(state, perf_counter())
-            if v7 else limit - (perf_counter() - launch_origin) if v5 or v6 else limit
+            if v7 or v8 else limit - (perf_counter() - launch_origin) if v5 or v6 else limit
         )
-        if v7:
+        if v7 or v8:
             state["watchdog_terminal_cutoff_reserve_seconds"] = 150
             write_json(directory / "run_manifest.json", state)
         result = supervise(
@@ -558,7 +586,7 @@ def launch(spec):
             source_state=state,
         )
     result.update(directory=str(directory), stage=stage)
-    if v5 or v6 or v7:
+    if v5 or v6 or v7 or v8:
         result.update(launch_to_summary_seconds_monotonic=perf_counter() - launch_origin,
                       launch_exit_remaining_seconds=limit - (perf_counter() - launch_origin))
     write_json(directory / "run_summary.json", result)
@@ -571,7 +599,7 @@ def worker(directory):
     directory = Path(directory)
     manifest = json.loads((directory / "run_manifest.json").read_text())
     stage = manifest["stage"]
-    if stage.startswith(("v4_", "v5_", "v6_", "v7_")) or stage in ("FEINN-REFERENCE-FIT-G-ADAM500-REPLAY", "FEINN-FROZEN-HIDDEN-READOUT-G", "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT"):
+    if stage.startswith(("v4_", "v5_", "v6_", "v7_", "v8_")) or stage in ("FEINN-REFERENCE-FIT-G-ADAM500-REPLAY", "FEINN-FROZEN-HIDDEN-READOUT-G", "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT"):
         from src.runners.guarded_exec import ticks
         manifest["worker_lifecycle"] = dict(pid=os.getpid(), ppid=os.getppid(), start_ticks=ticks(os.getpid()), session=os.getsid(0), process_group=os.getpgrp(), stdout=os.readlink(f"/proc/{os.getpid()}/fd/1"), cgroup=Path("/proc/self/cgroup").read_text(), parent_death_guard=os.environ.get("TASK42EXTRA_PARENT_DEATH_GUARD"))
         write_json(directory / "run_manifest.json", manifest)
@@ -599,7 +627,10 @@ def worker(directory):
         design = json.loads(DESIGN.read_text())
         if sha(DESIGN) != manifest["design_sha256"]:
             raise RuntimeError("design changed after admission")
-        if stage.startswith("v7_"):
+        if stage.startswith("v8_"):
+            from src.runners.feinn_campaign import dispatch
+            result, files = dispatch(stage, design, artifact, marker, manifest, load_index)
+        elif stage.startswith("v7_"):
             from src.solvers.feinn_discretization_audit import checks, reference, compare
             args = (design, load_index("e1_fe"), load_index("e3_reference"))
             if stage == "v7_p_transfer_checks":

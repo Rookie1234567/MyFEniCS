@@ -1,0 +1,49 @@
+{
+  "schema": "task42extra.campaign.v8",
+  "review_sha": "cee68ef5e8219858e3a9b733ffe454334683836b",
+  "old_cumulative_seconds": 49007.27663535159,
+  "new_budget_seconds": 43200,
+  "allocations_seconds": {
+    "A": 7200,
+    "B": 3600,
+    "C": 21600,
+    "D": 7200,
+    "E": 3600
+  },
+  "memory_warn_hard_gib": [
+    12,
+    16
+  ],
+  "light_memory_gib": 2,
+  "neighbor_growth_gib": 384,
+  "cpu_only": true,
+  "mpi_size": 1,
+  "math_torch_threads": 1,
+  "own_swap_bytes": 0,
+  "p4_new_numeric_attempt_limit": 3,
+  "root_cause_repair_retry_limit": 3,
+  "NN_fault_resume_limit": 2,
+  "C_routes": [
+    "V8-PLAIN-DUAL",
+    "V8-PHASE-DUAL"
+  ],
+  "C_from_zero": true,
+  "C_closure_limit": 4000,
+  "D_closure_limit": 1500,
+  "physics_base": "M5/p3/q15/384hex/31968complex/40ports",
+  "phase_k_inc_nm_inverse": [
+    1.2564456695248023,
+    0,
+    -0.02193134074032823
+  ],
+  "phase_reference_point_nm": [
+    0,
+    0,
+    3.75
+  ],
+  "phase_buffers_fixed": true,
+  "A_independent_audit": "direct Basix physical value/derivative quadrature with oriented basis; shared MPC/material/ports explicit",
+  "old_negative_records_immutable": true,
+  "production_initialization_allowed": false,
+  "target_5nm_0p7nm_run_authorized": false
+}
