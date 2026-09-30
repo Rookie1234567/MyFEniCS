@@ -1,0 +1,248 @@
+{
+  "schema": "task40extra.h_agreement.v1",
+  "status": "H_AGREEMENT_PASS_ENGINEERING_ONLY",
+  "note": "Two-mesh engineering agreement only; not continuum convergence, a matched direct reference, or mode-cutoff qualification.",
+  "source_sha": "b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672",
+  "physical_model_sha256": "51854af3fb60c7ffebb166e1f06ff0a89e2e184dcbd9ba06ab4beb321b920661",
+  "g0_input_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e",
+  "g1_input_sha256": "989a351fb27fe5320942ca2392d0e7e872909f0354509e5d59c8c25e43061c86",
+  "ordered_mode_sha256": "c3ff9c0cf35e2d183f44ed3fb7448d4aa586bb6fdf7f9dc9ba78dc25011c693a",
+  "mesh_pair": {
+    "G0_cells": 336,
+    "G1_cells": 880,
+    "same_physical_geometry_material_and_modes": true,
+    "channel_key_count": 80,
+    "channel_keys_equal": true
+  },
+  "sample_method": {
+    "grid": "periodic-cell-centered x/y; identical requested z planes",
+    "point_count": 4000,
+    "shape_z_y_x_component": [
+      5,
+      20,
+      40,
+      3
+    ],
+    "z_nm": [
+      0.5185185185185185,
+      1.5555555555555556,
+      3.111111111111111,
+      4.666666666666667,
+      5.703703703703703
+    ],
+    "interface_planes_nm": [
+      0.5185185185185185,
+      5.703703703703703
+    ],
+    "interface_tangential_points_per_plane": 800,
+    "E_unit": "V/m",
+    "H_unit": "A/m",
+    "relative_norm_denominator": "G1 sampled field norm; incident-normalized differences divide by common analytic incident norm",
+    "scattered_field": "total minus identical analytically evaluated incident plane wave",
+    "scaled_curl": "derived from sampled H using exp(-i omega t) Maxwell convention; not a separately interpolated curl(E) evaluation",
+    "limitation": "fixed samples are not an FE volume-L2 integral; interface tangential traces are reported separately."
+  },
+  "sample_archives": {
+    "G0_sha256": "6dbac6769641427fb02d693a549058840bb39d81d0d6f8d5f561e09a6e74fbea",
+    "G1_sha256": "bf788513da583dba8646929839c643ce8289f23389e064afdb6f2982cc88548c",
+    "coordinate_arrays_equal": true,
+    "coordinate_vector_sha256": {
+      "x_nm": "74c3ed4e2a1a3e3a147bd0118dafc715280a65c0ed80e50fe88b395f6df995c5",
+      "y_nm": "57b9b97198d16e892a46ca8307f792d6d3e5ff846f4b9f2d875271204251b50a",
+      "z_nm": "8b46543753666ed59009bbbb29ca83d9d7c55ff605f48efa389f8d148fa4403f",
+      "interface_z_nm": "5022fe08d06952a4934ec2e14035449331ce0cf012cfbf7fa5876cc992554dc2"
+    }
+  },
+  "fixed_sample_field_changes": {
+    "E_total_relative_l2": 0.0037395253589648865,
+    "E_scattered_relative_l2": 0.002914454665686697,
+    "E_difference_over_incident_l2": 0.004741794146059015,
+    "H_total_relative_l2": 0.003927184832218389,
+    "H_scattered_relative_l2": 0.003060610720391174,
+    "H_difference_over_incident_l2": 0.004979279962698381,
+    "scaled_curl_from_H_total_relative_l2": 0.003927184832218384,
+    "scaled_curl_from_H_scattered_relative_l2": 0.0030606107203911864,
+    "scaled_curl_difference_over_incident_l2": 0.004979279962698133,
+    "max_per_z_plane_relative_l2": {
+      "E_total": 0.003839,
+      "H_total": 0.004031,
+      "scaled_curl_from_H": 0.004031
+    },
+    "relative_limit": 0.01,
+    "pass": true
+  },
+  "interface_tangential_changes": {
+    "aggregate_relative_l2": {
+      "E_total": 0.0037707605951826065,
+      "E_scattered": 0.002920771322233826,
+      "H_total": 0.003459696842078457,
+      "H_scattered": 0.002205096993963598
+    },
+    "difference_over_incident_l2": {
+      "E": 0.004704894910998958,
+      "H": 0.002839180624009449
+    },
+    "per_interface_plane_rounded_relative_l2": {
+      "positive_z_0.5185185185_nm": {
+        "E_total": 0.003722,
+        "E_scattered_difference_over_incident": 0.005041,
+        "H_total": 0.002093
+      },
+      "negative_z_5.7037037037_nm": {
+        "E_total": 0.003839,
+        "E_scattered_difference_over_incident": 0.004343,
+        "H_total": 0.003977
+      }
+    },
+    "relative_limit": 0.01,
+    "pass": true
+  },
+  "official_integrated_power": {
+    "R_G0": 0.07565196449717393,
+    "R_G1": 0.07612406206792088,
+    "delta_R": 0.00047209757074695435,
+    "T_G0": 0.9062068564432124,
+    "T_G1": 0.905769220572286,
+    "delta_T": -0.00043763587092637835,
+    "A_balance_G0": 0.018141179059613655,
+    "A_balance_G1": 0.01810671735979308,
+    "delta_A_balance": -3.446169982057601e-05,
+    "A_volume_G0": 0.01814125705170932,
+    "A_volume_G1": 0.018106712729780598,
+    "delta_A_volume": -3.454432192872073e-05,
+    "absolute_limit": 0.001,
+    "pass": true
+  },
+  "diffraction_changes_largest_12_by_absolute_power_delta": [
+    {
+      "side": "top",
+      "m": 0,
+      "n": 0,
+      "polarization": "s",
+      "G0_power_ratio": 0.07565149041679828,
+      "G1_power_ratio": 0.07612358848843093,
+      "delta_G1_minus_G0": 0.0004720980716326484,
+      "absolute_delta": 0.0004720980716326484
+    },
+    {
+      "side": "bottom",
+      "m": 0,
+      "n": 0,
+      "polarization": "s",
+      "G0_power_ratio": 0.9062066000865279,
+      "G1_power_ratio": 0.9057689645333413,
+      "delta_G1_minus_G0": -0.0004376355531865439,
+      "absolute_delta": 0.0004376355531865439
+    },
+    {
+      "side": "bottom",
+      "m": -1,
+      "n": 0,
+      "polarization": "s",
+      "G0_power_ratio": 1.2065172843190256e-08,
+      "G1_power_ratio": 1.2362856436470987e-08,
+      "delta_G1_minus_G0": 2.976835932807313e-10,
+      "absolute_delta": 2.976835932807313e-10
+    },
+    {
+      "side": "top",
+      "m": -7,
+      "n": 0,
+      "polarization": "s",
+      "G0_power_ratio": 3.5883349858840924e-08,
+      "G1_power_ratio": 3.559842951762374e-08,
+      "delta_G1_minus_G0": -2.84920341217184e-10,
+      "absolute_delta": 2.84920341217184e-10
+    },
+    {
+      "side": "bottom",
+      "m": -2,
+      "n": 0,
+      "polarization": "s",
+      "G0_power_ratio": 9.80554552701107e-08,
+      "G1_power_ratio": 9.779291423188034e-08,
+      "delta_G1_minus_G0": -2.6254103823036525e-10,
+      "absolute_delta": 2.6254103823036525e-10
+    },
+    {
+      "side": "top",
+      "m": -1,
+      "n": -1,
+      "polarization": "s",
+      "G0_power_ratio": 6.264051869817326e-08,
+      "G1_power_ratio": 6.251232234673365e-08,
+      "delta_G1_minus_G0": -1.2819635143960374e-10,
+      "absolute_delta": 1.2819635143960374e-10
+    },
+    {
+      "side": "top",
+      "m": -1,
+      "n": 1,
+      "polarization": "s",
+      "G0_power_ratio": 6.26405187274247e-08,
+      "G1_power_ratio": 6.25123224058053e-08,
+      "delta_G1_minus_G0": -1.2819632161941179e-10,
+      "absolute_delta": 1.2819632161941179e-10
+    },
+    {
+      "side": "bottom",
+      "m": -1,
+      "n": 1,
+      "polarization": "s",
+      "G0_power_ratio": 4.695095849759893e-08,
+      "G1_power_ratio": 4.683187112029906e-08,
+      "delta_G1_minus_G0": -1.190873772998684e-10,
+      "absolute_delta": 1.190873772998684e-10
+    },
+    {
+      "side": "bottom",
+      "m": -1,
+      "n": -1,
+      "polarization": "s",
+      "G0_power_ratio": 4.695095846050847e-08,
+      "G1_power_ratio": 4.6831871096225485e-08,
+      "delta_G1_minus_G0": -1.190873642829837e-10,
+      "absolute_delta": 1.190873642829837e-10
+    },
+    {
+      "side": "top",
+      "m": -1,
+      "n": 0,
+      "polarization": "s",
+      "G0_power_ratio": 2.2344454539100168e-07,
+      "G1_power_ratio": 2.2355123744762586e-07,
+      "delta_G1_minus_G0": 1.0669205662418891e-10,
+      "absolute_delta": 1.0669205662418891e-10
+    },
+    {
+      "side": "top",
+      "m": -2,
+      "n": 0,
+      "polarization": "s",
+      "G0_power_ratio": 4.142714111018589e-08,
+      "G1_power_ratio": 4.145987313423535e-08,
+      "delta_G1_minus_G0": 3.2732024049460675e-11,
+      "absolute_delta": 3.2732024049460675e-11
+    },
+    {
+      "side": "top",
+      "m": -5,
+      "n": 0,
+      "polarization": "s",
+      "G0_power_ratio": 9.320333248621505e-09,
+      "G1_power_ratio": 9.292463610008174e-09,
+      "delta_G1_minus_G0": -2.7869638613330424e-11,
+      "absolute_delta": 2.7869638613330424e-11
+    }
+  ],
+  "reference_and_cutoff": {
+    "same_discrete_direct_reference": "NOT_RUN",
+    "reason": "No Task40-bound symbolic MUMPS preflight established safe direct resource use; validate-only does not measure symbolic factor or recovery-space needs. No direct symbolic/numeric factor or solve was launched.",
+    "channel_truncation": "CHANNEL_TRUNCATION_UNQUALIFIED",
+    "continuum_convergence": "NOT_ESTABLISHED"
+  },
+  "limits": {
+    "field_relative_change": 0.01,
+    "R_T_A_volume_absolute_change": 0.001
+  }
+}

@@ -217,6 +217,40 @@
         "resource_gate_stop": false
       },
       "evidence": "docs/task40extra_0p7nm_engineering/outcomes/records/g0_attempt4_identity_gate_stop.json"
+    },
+    {
+      "run_id": "task40extra_0p7nm_nonseparable_g0_iterative_review_v1",
+      "stage": "R4_G0_REVIEW_V1_STRICT",
+      "source_sha": "b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672",
+      "input_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e",
+      "physical_model_sha256": "51854af3fb60c7ffebb166e1f06ff0a89e2e184dcbd9ba06ab4beb321b920661",
+      "ordered_mode_sha256": "c3ff9c0cf35e2d183f44ed3fb7448d4aa586bb6fdf7f9dc9ba78dc25011c693a",
+      "classification": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+      "official_result": true,
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_iterative_review_v1__full3d_iterative__mpi1__Mna/20260930T102148.356966Z",
+      "record": "identity_recovery_v1_results.json#runs.G0"
+    },
+    {
+      "run_id": "task40extra_0p7nm_nonseparable_g1_iterative_review_v1",
+      "stage": "R4_G1_REVIEW_V1_STRICT",
+      "source_sha": "b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672",
+      "input_sha256": "989a351fb27fe5320942ca2392d0e7e872909f0354509e5d59c8c25e43061c86",
+      "physical_model_sha256": "8fcb53abe4123e75599eed0ffae278e93fb0549f38b1f5235d0eac2f4cfc73fb",
+      "ordered_mode_sha256": "c3ff9c0cf35e2d183f44ed3fb7448d4aa586bb6fdf7f9dc9ba78dc25011c693a",
+      "classification": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+      "official_result": true,
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g1_iterative_review_v1__full3d_iterative__mpi1__Mna/20260930T105500.302324Z",
+      "record": "identity_recovery_v1_results.json#runs.G1"
+    },
+    {
+      "run_id": "task40extra_0p7nm_nonseparable_g0_direct_reference_review_v1",
+      "stage": "R4_CONDITIONAL_G0_DIRECT_REFERENCE",
+      "status": "NOT_RUN",
+      "input_sha256": "c80c921834cb268a9251459795fbda5acf4e9f25347d16ee24dec3b9d85c6c56",
+      "reason": "No Task40-bound qualified symbolic MUMPS preflight binding actual rows/NNZ, symbolic storage, available memory and recovery space. No direct symbolic or numeric factor or solve was launched. This is NOT_RUN, not a measured resource failure.",
+      "symbolic_factorization": "not_run",
+      "numeric_factorization": "not_run",
+      "direct_solve": "not_run"
     }
   ],
   "ledger": {
@@ -248,5 +282,13 @@
       "validation": "five focused mock/path/ledger tests passed before attempt4; attempt4 reached outer iteration and stopped at the identity Gate",
       "pde_validation": "V20_RELEASE_GATE_FAIL; no successful G0 qualification"
     }
-  ]
+  ],
+  "last_formal_run_source_sha": "b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672",
+  "review_v1_continuation": {
+    "review": "docs/task40extra_0p7nm_engineering/review_report_v1.md",
+    "source_sha": "b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672",
+    "result_record": "docs/task40extra_0p7nm_engineering/outcomes/records/identity_recovery_v1_results.json",
+    "h_agreement_record": "docs/task40extra_0p7nm_engineering/outcomes/records/h_agreement_v1.json",
+    "status": "G0/G1 strict discrete and physical pass with authority limitation; direct reference NOT_RUN"
+  }
 }

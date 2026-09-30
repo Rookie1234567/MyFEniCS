@@ -1,8 +1,8 @@
 {
   "schema": "task40extra.phase_i_results.v1",
-  "overall_status": "N6_LIMITED_CLOSEOUT_RECOVERY_IDENTITY_GATE_STOP",
-  "official_0p7nm_nonseparable_p6_result": false,
-  "numerical_gate_status": "RECOVERY_IDENTITY_GATE_FAIL",
+  "overall_status": "N6_LIMITED_CLOSEOUT_G0_G1_STRICT_PASS_H_AGREEMENT_REFERENCE_NOT_RUN",
+  "official_0p7nm_nonseparable_p6_result": true,
+  "numerical_gate_status": "STRICT_IDENTITY_REPAIRED_G0_G1_DISCRETE_PASS_AUTHORITY_LIMITED",
   "stages": {
     "N0": {
       "status": "complete",
@@ -70,57 +70,78 @@
           "error": "FileNotFoundError: qualified Task39 JIT cache source path did not exist in the Task40 worktree",
           "evidence": "docs/task40extra_0p7nm_engineering/outcomes/records/g0_jit_path_failure.json"
         }
-      ]
+      ],
+      "current_status": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+      "historical_attempt4_classification": "V20_RELEASE_GATE_FAIL",
+      "review_v1_run_id": "task40extra_0p7nm_nonseparable_g0_iterative_review_v1",
+      "review_v1_source_sha": "b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672",
+      "review_v1_final_post_release_A6": 9.798664008005796e-07,
+      "review_v1_native_identity": 1.520588963522625e-11,
+      "review_v1_official_R_T_A_Avolume": {
+        "R_total": 0.07565196449717393,
+        "T_total": 0.9062068564432124,
+        "A_balance": 0.018141179059613655,
+        "A_volume_total": 0.01814125705170932
+      },
+      "result_record": "identity_recovery_v1_results.json#runs.G0"
     },
     "N4_G1": {
-      "status": "NOT_RUN",
-      "reason": "G0 stopped at the native/recovery identity Gate; no h-refinement run follows"
+      "status": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED_H_AGREEMENT_PASS_ENGINEERING_ONLY",
+      "run_id": "task40extra_0p7nm_nonseparable_g1_iterative_review_v1",
+      "source_sha": "b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672",
+      "final_post_release_A6": 9.901397191660007e-07,
+      "native_identity": 3.2542694546811876e-11,
+      "h_agreement": "PASS_ENGINEERING_FIXED_SAMPLE_AND_POWER_THRESHOLDS",
+      "reference_authority": "MATCHED_REFERENCE_NOT_AVAILABLE",
+      "evidence": "identity_recovery_v1_results.json#runs.G1"
     },
     "N5_G0_direct_reference": {
       "status": "NOT_RUN",
-      "reason": "No qualified G0 iterative reference exists; direct reference was not run"
+      "reason": "No Task40-bound qualified symbolic MUMPS preflight binding actual rows/NNZ, symbolic storage, available memory and recovery space. No direct symbolic or numeric factor or solve was launched. This is NOT_RUN, not a measured resource failure.",
+      "symbolic_factorization": "not_run",
+      "numeric_factorization": "not_run",
+      "direct_solve": "not_run"
     },
     "N6": {
       "status": "closed_limited",
-      "reason": "The attempt4 numerical consistency stop and costs are documented; accuracy comparison, official observables and target-capacity conclusions remain unavailable",
-      "evidence": "docs/task40extra_0p7nm_engineering/outcomes/summary.md"
+      "reason": "G0/G1 pass strict discrete/physical checks and meet two-grid engineering h-agreement thresholds; same-discrete reference, mode-cutoff convergence, continuum limit and target capacity remain unavailable.",
+      "evidence": [
+        "docs/task40extra_0p7nm_engineering/outcomes/summary.md",
+        "docs/task40extra_0p7nm_engineering/outcomes/records/identity_recovery_v1_results.json",
+        "docs/task40extra_0p7nm_engineering/outcomes/records/h_agreement_v1.json"
+      ]
     }
   },
   "resource_outcome": {
-    "workflow_status": "V20_RELEASE_GATE_FAIL",
-    "launcher_wrapper_classification": "WORKER_FAILED",
-    "failure_is_resource_stop": false,
-    "watchdog_process_tree_peak_rss_bytes": 2954866688,
-    "watchdog_process_tree_swap_peak_bytes": 0,
-    "pss_status": "DISABLED_BY_PROFILE",
-    "watchdog_descendants_cleared": true,
-    "watchdog_identity_coverage": "complete",
-    "watchdog_process_tree_samples": 1397,
-    "time_policy": "observe_only",
-    "launcher_monotonic_workflow_seconds": 356.92868909594836,
-    "conservative_realtime_workflow_seconds": 392.2572318669767,
-    "ledger_total_elapsed_seconds": 530.8867869906425,
-    "memory_events_oom_kill": 0,
-    "note": "No resource stop or OOM; RSS is sampled simultaneous process-tree peak. PSS is disabled."
+    "source_sha": "b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672",
+    "G0_tree_RSS_peak_bytes": 3776098304,
+    "G0_peak_phase": "evaluation / packet_q4_output_projected (max-RSS sample)",
+    "G0_swap_peak_bytes": 0,
+    "G0_PSS": "DISABLED_BY_PROFILE",
+    "G0_workflow_monotonic_seconds": 1204.0178907530499,
+    "G1_tree_RSS_peak_bytes": 6855741440,
+    "G1_peak_phase": "evaluation / packet_q4_output_projected (max-RSS sample)",
+    "G1_swap_peak_bytes": 0,
+    "G1_PSS": "DISABLED_BY_PROFILE",
+    "G1_workflow_monotonic_seconds": 4097.993754097028,
+    "watchdog": "both COMPLETED, exit 0, descendants cleared, task swap 0",
+    "scope": "dedicated watchdog tree simultaneous RSS; PSS disabled"
   },
   "accuracy_outcome": {
-    "full_explicit_residual": {
-      "status": "measured_gate_fail",
-      "relative": 0.16667295750232392,
-      "limit": 1e-06
-    },
-    "native_identity": {
-      "status": "measured_gate_fail",
-      "relative": 3.0748104980683956e-10,
-      "limit": 1e-10
-    },
-    "official_R_T_A": "not_run",
-    "A_volume": "not_run",
-    "energy_closure": "not_run",
-    "G0_G1_h_agreement": "not_run",
-    "G0_direct_reference": "not_run",
-    "channel_truncation": "CHANNEL_TRUNCATION_UNQUALIFIED"
+    "strict_identity_repaired": true,
+    "identity_policy": "strict",
+    "identity_limit": 1e-10,
+    "G0_G1_discrete_solver_and_physical_checks": "PASS_AUTHORITY_LIMITED",
+    "G0_G1_h_agreement": "PASS_ENGINEERING_FIXED_SAMPLE_AND_POWER_THRESHOLDS",
+    "field_relative_limit": 0.01,
+    "R_T_A_volume_absolute_limit": 0.001,
+    "same_discrete_reference": "not_run",
+    "official_R_T_A": "measured from DtN port modal amplitudes",
+    "A_volume": "measured physical-material volume integral",
+    "energy_closure": "passed under 1e-5",
+    "channel_truncation": "CHANNEL_TRUNCATION_UNQUALIFIED",
+    "continuum_convergence": "not_established"
   },
-  "next_step": "Stop this authorized B-line batch at the numerical consistency Gate and submit the limited result for review; no G1/direct/reference rerun is initiated.",
+  "next_step": "提交 compact results、h-agreement 和 response_v2 到同一执行分支并等待 review；不启动新 PDE，不合并 master。",
   "prior_overall_status": "INCOMPLETE_WORKER_FAILED_REPLAY_BUDGET_EXHAUSTED"
 }
