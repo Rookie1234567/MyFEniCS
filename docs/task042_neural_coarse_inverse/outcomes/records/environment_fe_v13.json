@@ -1,0 +1,147 @@
+{
+  "schema": "task042.environment.v1",
+  "utc": "2026-09-30T03:42:10.056345+00:00",
+  "mode": "fe",
+  "python": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+  "prefix": "/home/fenics/Projects/NN-Lab/.venv",
+  "python_version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "host": "fenics-ws01",
+  "kernel": "7.0.0-31-generic",
+  "cwd": "/home/fenics/Projects/NN-Lab",
+  "source_sha": "7615baae2f0d75fbc47c05be392b35ef2878c431",
+  "git_status": "",
+  "affinity": [
+    0
+  ],
+  "caches": {
+    "TMPDIR": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/tmp",
+    "TMP": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/tmp",
+    "TEMP": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/tmp",
+    "XDG_CACHE_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/xdg",
+    "XDG_CONFIG_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/config",
+    "FFCX_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/xdg/fenics",
+    "PYTHONPYCACHEPREFIX": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/pycache",
+    "MPLCONFIGDIR": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/matplotlib",
+    "TORCH_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/torch",
+    "HF_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/huggingface",
+    "HUGGINGFACE_HUB_CACHE": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/huggingface/hub",
+    "TRANSFORMERS_CACHE": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/huggingface/transformers",
+    "TRITON_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/triton",
+    "CUDA_CACHE_PATH": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/cuda",
+    "NUMBA_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/numba",
+    "PIP_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/pip",
+    "UV_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/uv",
+    "RUFF_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/ruff",
+    "TASK042_RESULTS_ROOT": "/home/fenics/Projects/NN-Lab/results/task042",
+    "TASK042_ARTIFACT_ROOT": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042"
+  },
+  "threads": {
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1",
+    "BLIS_NUM_THREADS": "1",
+    "VECLIB_MAXIMUM_THREADS": "1"
+  },
+  "modules": {
+    "numpy": {
+      "path": "/usr/lib/python3/dist-packages/numpy/__init__.py",
+      "version": "1.26.4"
+    },
+    "src": {
+      "path": "/home/fenics/Projects/NN-Lab/src/__init__.py",
+      "version": null
+    },
+    "src.solvers.coarse_inverse_protocol": {
+      "path": "/home/fenics/Projects/NN-Lab/src/solvers/coarse_inverse_protocol.py",
+      "version": null
+    },
+    "scipy": {
+      "path": "/usr/lib/python3/dist-packages/scipy/__init__.py",
+      "version": "1.11.4"
+    },
+    "basix": {
+      "path": "/usr/lib/python3/dist-packages/basix/__init__.py",
+      "version": "0.10.0"
+    },
+    "ufl": {
+      "path": "/usr/lib/python3/dist-packages/ufl/__init__.py",
+      "version": "2025.2.1"
+    },
+    "ffcx": {
+      "path": "/usr/lib/python3/dist-packages/ffcx/__init__.py",
+      "version": "0.10.1.post0"
+    },
+    "mpi4py": {
+      "path": "/usr/lib/python3/dist-packages/mpi4py/__init__.py",
+      "version": "3.1.5"
+    },
+    "petsc4py": {
+      "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+      "version": "3.19.6"
+    },
+    "dolfinx": {
+      "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+      "version": "0.10.0"
+    },
+    "dolfinx_mpc": {
+      "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py",
+      "version": null
+    },
+    "setuptools": {
+      "path": "/home/fenics/Projects/NN-Lab/.venv/lib/python3.12/site-packages/setuptools/__init__.py",
+      "version": "78.1.0"
+    },
+    "cffi": {
+      "path": "/usr/lib/python3/dist-packages/cffi/__init__.py",
+      "version": "1.16.0"
+    },
+    "pyvista": {
+      "path": "/home/fenics/Projects/NN-Lab/.venv/lib/python3.12/site-packages/pyvista/__init__.py",
+      "version": "0.48.4"
+    },
+    "src.solvers.dtn_port_3d": {
+      "path": "/home/fenics/Projects/NN-Lab/src/solvers/dtn_port_3d.py",
+      "version": null
+    },
+    "src.runners.task042_experiment": {
+      "path": "/home/fenics/Projects/NN-Lab/src/runners/task042_experiment.py",
+      "version": null
+    }
+  },
+  "fe_jit": false,
+  "gpu_context": false,
+  "abi": {
+    "scalar": "complex128",
+    "integer": "int64",
+    "mpi_size": 1,
+    "petsc_version": [
+      3,
+      19,
+      6
+    ],
+    "mpi_library": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+    "jit_cache": "/home/fenics/Projects/NN-Lab/tmp/task042/fe/xdg/fenics"
+  },
+  "loaded_libraries": [
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so",
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx/lib/libdolfinx.so.0.10.0",
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-int64/lib/libdolfinx_mpc.so.0.10.1",
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/cpp.cpython-312-x86_64-linux-gnu.so",
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/petsc/lib/libscalapack.so.2.2.1",
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/libpetsc.so.3.19.6",
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/lib/PETSc.cpython-312-x86_64-linux-gnu.so",
+    "/usr/lib/python3/dist-packages/basix/_basixcpp.cpython-312-x86_64-linux-gnu.so",
+    "/usr/lib/python3/dist-packages/scipy/linalg/_fblas.cpython-312-x86_64-linux-gnu.so",
+    "/usr/lib/python3/dist-packages/scipy/linalg/cython_blas.cpython-312-x86_64-linux-gnu.so",
+    "/usr/lib/x86_64-linux-gnu/libbasix.so.0.10.0",
+    "/usr/lib/x86_64-linux-gnu/libcuda.so.595.91.07",
+    "/usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6",
+    "/usr/lib/x86_64-linux-gnu/libmpi_cxx.so.40.30.1",
+    "/usr/lib/x86_64-linux-gnu/libmpi_mpifh.so.40.30.0",
+    "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+    "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+    "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so"
+  ],
+  "status": "IMPORT_PATH_ABI_PASS"
+}

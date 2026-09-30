@@ -1,0 +1,174 @@
+{
+  "schema": "task042.static.v13",
+  "utc": "2026-09-30T04:39:02.355999+00:00",
+  "status": "PASS",
+  "modified_sections": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v13.md",
+      "sha256": "8da62a90bc2a01261bc03fbe8d9c78d952d0ae0c50088b40362887dc6c1ea8d3",
+      "new_section_only": true,
+      "table_columns": [
+        2,
+        5
+      ],
+      "math_fences": 0,
+      "errors": []
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/tangent_scale_head_compensation_v13.md",
+      "sha256": "d70ef50c4c7d907b46f1d67b3f5dec0a45b0342512d2b06e8d1be0c38716db9b",
+      "new_section_only": true,
+      "table_columns": [
+        3,
+        2,
+        5,
+        6,
+        6,
+        5,
+        5,
+        4,
+        2
+      ],
+      "math_fences": 2,
+      "errors": []
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "sha256": "25e565b2e5d0dce3840ca6b0fdf607d8e5a36d8948800627be40ffd861b75c02",
+      "new_section_only": true,
+      "table_columns": [],
+      "math_fences": 0,
+      "errors": []
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "1dcd08af2f4cbe6bc93407b607184aa4cd7b584c3ad2ee7871064dac3261f0ef",
+      "new_section_only": true,
+      "table_columns": [
+        4,
+        2
+      ],
+      "math_fences": 0,
+      "errors": []
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "9a28caf6a8735db60181bde5576eaab35656d2317c4339e9ce5b06b8ee285f57",
+      "new_section_only": true,
+      "table_columns": [
+        3
+      ],
+      "math_fences": 0,
+      "errors": []
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "a07f2791210dff4449739ac3c28715fb3d11ee25b9e26c55aa79e592be4aa4da",
+      "new_section_only": true,
+      "table_columns": [
+        4
+      ],
+      "math_fences": 0,
+      "errors": []
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "8103e0434007d2dfa39a45df78e6eceabc7fb44c83434f719427fb5e4d48df64",
+      "new_section_only": true,
+      "table_columns": [
+        2
+      ],
+      "math_fences": 0,
+      "errors": []
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "f33e4df138c2d400e5f65caa91a5449a48c73f4550090739fde0a16f3935327a",
+      "new_section_only": true,
+      "table_columns": [
+        3
+      ],
+      "math_fences": 0,
+      "errors": []
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v10.md",
+      "sha256": "c3871285b6a13a72e37338a761eb68f1cde64bf82a8582d1839709a5aa953d46",
+      "new_section_only": true,
+      "table_columns": [
+        3,
+        2,
+        3
+      ],
+      "math_fences": 8,
+      "errors": []
+    }
+  ],
+  "old_navigation_and_ledger_body_byte_preserved": true,
+  "compile_files": [
+    "src/solvers/neural_trace_tangent.py",
+    "src/solvers/tangent_head_model.py",
+    "src/solvers/tangent_head_study.py",
+    "src/solvers/tangent_head_window.py",
+    "src/io/tangent_head_compensation.py",
+    "src/io/tangent_head_evidence_check.py",
+    "src/runners/tangent_head_compensation.py",
+    "src/runners/task042_shared.py",
+    "scripts/run_case.py",
+    "src/io/task042_profile.py",
+    "src/test/test_task042_v13_model.py",
+    "src/test/test_task042_v13_checker.py",
+    "src/test/test_task042_v13_tangent_ml.py",
+    "benchmarks/check_task042_v13.py"
+  ],
+  "compile_returncode": 0,
+  "compile_stdout": "",
+  "compile_stderr": "",
+  "diff_check_returncode": 0,
+  "diff_check_output": "",
+  "four_original_dat_validation": [
+    {
+      "input": "input/task042_neural_coarse_inverse/v13_tangent_check.dat",
+      "input_sha256": "a0581735c1e792b196912ba7ba024d0f584e66f1e1bededc00654b0564c1f16b",
+      "returncode": 0,
+      "stdout": "{\"status\": \"valid\", \"profile\": \"task042_v13_tangent\", \"stage\": \"V13-TANGENT\", \"input_sha256\": \"a0581735c1e792b196912ba7ba024d0f584e66f1e1bededc00654b0564c1f16b\", \"physical_model_sha256\": \"2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de\"}",
+      "stderr": "",
+      "formal_run": false
+    },
+    {
+      "input": "input/task042_neural_coarse_inverse/v13_response_step.dat",
+      "input_sha256": "81024b14b5516d6f61ea45091daab104c492afcc0e172c46d8c83f7405cbe0c6",
+      "returncode": 0,
+      "stdout": "{\"status\": \"valid\", \"profile\": \"task042_v13_response\", \"stage\": \"V13-RESPONSE\", \"input_sha256\": \"81024b14b5516d6f61ea45091daab104c492afcc0e172c46d8c83f7405cbe0c6\", \"physical_model_sha256\": \"2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de\"}",
+      "stderr": "",
+      "formal_run": false
+    },
+    {
+      "input": "input/task042_neural_coarse_inverse/v13_head_compensation.dat",
+      "input_sha256": "bcd517cc86705593d6d5f01722dfcea0650e0f81456159b3416346dfd6c8ed87",
+      "returncode": 0,
+      "stdout": "{\"status\": \"valid\", \"profile\": \"task042_v13_compensate\", \"stage\": \"V13-COMPENSATE\", \"input_sha256\": \"bcd517cc86705593d6d5f01722dfcea0650e0f81456159b3416346dfd6c8ed87\", \"physical_model_sha256\": \"2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de\"}",
+      "stderr": "",
+      "formal_run": false
+    },
+    {
+      "input": "input/task042_neural_coarse_inverse/v13_verify.dat",
+      "input_sha256": "1a1b1cdf5915a948a06d76ba00bd4873e7e455e902e096dfbdc80f8c6d78fac4",
+      "returncode": 0,
+      "stdout": "{\"status\": \"valid\", \"profile\": \"task042_v13_verify\", \"stage\": \"V13-VERIFY\", \"input_sha256\": \"1a1b1cdf5915a948a06d76ba00bd4873e7e455e902e096dfbdc80f8c6d78fac4\", \"physical_model_sha256\": \"2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de\"}",
+      "stderr": "",
+      "formal_run": false
+    }
+  ],
+  "refinement_and_recovery": "prior validation + targeted tests; frozen inputs intentionally refuse another numerical run",
+  "JSON_files_checked": 14,
+  "CSV_rows": {
+    "candidate_comparison_v13.csv": 3,
+    "directional_scale_v13.csv": 3,
+    "channel_observables_v13.csv": 120
+  },
+  "Ruff_executable": null,
+  "Ruff_run": false,
+  "full_repository_cleanup": false,
+  "no_numerical_recompute": true
+}

@@ -1,3 +1,17 @@
+# V13 最新测试与证据核验（历史检查完整保留）
+
+| 检查范围／目的 | 实际结果／限制 | 证据 |
+|---|---|---|
+| 非Hermitian、非零port、非最优head、实hidden复head独立切向 | CPU ML四个小测试通过：手推层递推／原forward／VJP／向量FD、完整矩Piola/orientation、真实joint非linear-only、set_hidden后重写头 | [ML断言与实际线程](records/final_checks_v13.json)；ML环境无pytest，不称pytest通过 |
+| 最终相关pure-array／head／watchdog回归 | **25 passed，1 deselected**，排除ML专属hidden_assignment并另有ML测试；原生主机现场选核，树345440256B、swap0、wall8.168026s，清场 | [完整命令／stdout／源码hash](records/final_checks_v13.json) |
+| checker反例 | 实hidden被复更新、linear-only伪候选、无下降仍接受／错port、真实dual错误、补偿符号错误、缺通道、head清零均拒绝；不只信status | [独立raw Gate](records/qualification_and_dispatch_v13.json) |
+| 实际数值Gate | A三方向新向量Gate通过；初次C联合Taylor失败，一次预登记复核后仅2方向通过；实际C接受1步而物理失败 | [真实切向](records/tangent_identity_checks_v13.json)、[全部试探](records/coupled_step_history_v13.jsonl) |
+| 最小writer修复 | 复现mappingproxy TypeError、转换dict后通过；只恢复已保存记录，必要前向/audit计费，不重做优化 | [失败及source](records/run_index_v13.json) |
+| 输入／compile／文档 | 定向compileall、四基础dat validate-only、diff、JSON/CSV／表列／链接／围栏；旧232项保护核对 | [最终静态](records/static_checks_v13.json)、[历史保护](records/protected_history_v13.json) |
+| GitHub实际网页／公式 | Review V10 HTTP200 richText含3表／8数学renderer；server结构与本地检查分列；结果页面发布另核。没有浏览器像素／JS字形证据 | [Review显示](records/review_render_check_v13.json)、[发布显示](records/publication_checks_v13.json) |
+
+纯数组／ML小测试与正式阶段均数学1、自身nice/I/O。收尾第一次沙箱轻测试可验证自身树，但沙箱PID视图不足以核对主机邻任务；费用保留，最后在原生主机重新审计并立即绑所选CPU0后重做同一25项。另一轮审计曾选CPU13，说明编号不能固化；活动检查最初按task042子串误匹配邻Task042extra，改用精确NN-Lab cwd排除该邻任务，未修改它。无GPU测试、全仓pytest、MPI2/4或CI声明。Ruff未安装不冒称通过；一次preflight误加`--mode pure`被argparse立即拒绝，按activation选择mode后通过，无数值启动。首次静态链接检查在生成自身记录前发现该文件不存在，原失败保留，之后只修正记录生成顺序；这些命令／文档检查不是数值核心的另一项修复。
+
 # 本轮实际测试、失败与文档检查
 
 | 检查 | 真实结果及范围 | 证据 |

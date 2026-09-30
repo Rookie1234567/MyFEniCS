@@ -2989,3 +2989,20 @@ MAIN clean source a2cba71533edafb4fa1c701eae503e7ab526eac4；唯一同分解修�
 Review V9 明确允许不依赖旧头驻点的普通隐藏偏导，旧 V11 M2／实际输出头 `1e-8` Gate 仍 FAIL。沿原0.7nm/384hex/p3/40复端口、canonical Si/q15/action/seed420906，T1复用旧P/A完成M2与物理RHS的三段残差向量分账；物理网络回写、`Pγ/Zc`、原作用对薄列组合差分别3.80478e-8/2.36230e-7/1.04273e-12，不能解释0.7977原残差平台。T2真实完整loss同点分辨率2.22045e-14、复数小测试通过；但三物理hidden方向在规定h最小1e-7时相对FD差0.06346/0.07599/0.17425，未达1e-5稳定区，故T3 L-BFGS未准入。F8次两方向函数值试探最小loss2.80461＞起点0.31818，0接受更新／0头提议。独立T4只验原V11修正物理状态，Schur/native0.797721738/0.309359507、散射E/curl0.734256809/0.734361587，仍无micro同离散资格、official R/T/A或最终48h资格。
 
 两个受影响T1接线失败原证据保留，分别为纯QR子进程旧探针附带MPI遭沙箱socket拒绝、事件字段重名；两次最小修复后 clean `d9df7068ca3310a0499164251a57841dbdfbc7f5` 用于三个成功one-run。五次监督wall合计182.268s（成功109.503s）、最大同时树RSS2322427904B/own swap0、全部后代清场；V6–V12正式有载可核下界11916.413697s，历史辅助费未知。现场CPU0/MPI1/数学Torch1、自有锁/缓存与16/12GiB采样树监督、GPU0；无cgroup委派不冒称连续限额，邻任务未修改，共享影响/速度INCONCLUSIVE。独立raw checker一致性PASS只说明证据自洽，梯度及物理资格false；旧p4路线仍关闭，无global因子/完整S/CSR/hidden inverse。唯一下一建议是固定同头同三方向的JVP/VJP及原作用线性化配对，未实施。见[Response V12](task042_neural_coarse_inverse/response_v12.md)、[完整负结果](task042_neural_coarse_inverse/outcomes/actual_loss_block_descent_v12.md)、[逐run资源](task042_neural_coarse_inverse/outcomes/records/resource_costs_v12.json)。只推送本执行分支待review，不merge。
+
+
+## Task042 V13：独立切向与有限隐藏／输出头补偿完成，物理资格仍失败
+
+本批先直接计算隐藏参数变化如何改变全部有限元边／面积分量，再同步调整输出头以保持大系数抵消；代价是一套薄QR和一次三RHS最小二乘。相同0.7nm、384hex/p3、40复端口和canonical Si材料不变，原Maxwell/MPC/DtN与普通default不改，旧p4强逆继续关闭。新的向量切向Gate不追溯改变V11头1e-8或V12标量FD的历史FAIL。
+
+| 阶段／与何种基线比较；measured/derived、无量纲 | 结果、负信号及决策 |
+|---|---|
+| A固定头三方向，独立逐层JVP与原VJP | 向量FD相对差约1e-10，真实dual运算差约1e-17；新TANGENT_VECTOR_VERIFIED，不是solver资格 |
+| B同原点固定头响应 | 最佳线性gain1.3e-17至1.8e-16＜2.03e-11分辨率门，0试探／0接受，继续C |
+| C真实联合hidden/head，从同起点独立运行 | 首次联合Taylor失败；一次有界预登记复核后2方向合格。5试探／1接受，hidden改变量3.26e-6，J从0.3181799855降至0.3181797580，相对下降7.149e-7＜后续1e-4门限，停止第二／第三步 |
+| head-only twin，检验只有输出头是否解释收益 | loss282.766917，Schur/native23.780955/9.222344，明显恶化；同步补偿维持抵消，但无有用的神经场增量 |
+| D冻结后独立3状态、旧REF7只作验证 | 接受点Schur/native0.797721453/0.309359396，散射E/curl0.734256339/0.734361116，能量误差0.112132933；严格原方程1e-6／场1e-4均FAIL，OBJECTIVE_ONLY_IMPROVEMENT |
+
+实际候选source `33f7d613b1341fa585f0324ead6039bf28211fff`；A/B/首次C source `978a59efeae9891a848c5fac581ec32e4fc9a5b8`；一次末尾JSON writer错误最小修复后，已保存记录恢复和D source `7615baae2f0d75fbc47c05be392b35ef2878c431`。没有重做优化或将恢复source冒充候选source；失落的小实LS系数和失败逐作用计时unknown，失败S/SH44次source-derived分账。六正式wall243.725626s，同时采样树RSS最大2852761600B/own swap0/GPU0，全部清场；V6起可核有载下界12160.139323s，历史辅助unknown保留。每run现场CPU0、MPI1/数学Torch1、自有锁/独立cache/16-12GiB树监督，无cgroup连续内核保证。未见持续PSI压力，邻影响与无争用性能INCONCLUSIVE shared-workstation，未改邻任务。
+
+所有R/T/A仅未资格化诊断，无official结果、无global p4因子/全局S/CSR/正规方程/hidden inverse/fallback；一次薄分解P/A rank1560/1560，新P/A构建0。最终25相关pytest与4个CPU ML手动小测试通过，无全仓pytest/MPI2/4/CI声明。最终0.7nm/48h仍NOT_QUALIFIED，p4新参考、最大模型、GPU/网络或rank扫描未运行；旧数据与历史保护。唯一下一建议是改变输出正向坐标避免病态R回写成巨大的相消系数，未实施需新review；此批收口不自动重复同配置诊断。见[Response V13](task042_neural_coarse_inverse/response_v13.md)、[完整结果](task042_neural_coarse_inverse/outcomes/tangent_scale_head_compensation_v13.md)、[raw与资源](task042_neural_coarse_inverse/outcomes/records/run_index_v13.json)。只推送执行分支待review，不merge。

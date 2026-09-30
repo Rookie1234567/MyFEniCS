@@ -1,3 +1,17 @@
+# V13 变化与selective merge依赖边界
+
+| 分组 | 本批变化／数值行为 | 依赖、测试及fresh证据 | 建议合入顺序／边界 |
+|---|---|---|---|
+| production numerical/core | 无生产方程／默认改变，原材料、Maxwell、MPC、DtN及恢复不改 | 所有新入口显式V13 opt-in | 不提升失败研究为production |
+| research-only numerical | `src/solvers/neural_trace_tangent.py`、`tangent_head_model.py`、`tangent_head_study.py`：手推JVP、实小LS、补偿／实际试探、有限记录恢复 | 原batch8/action/Hhat/stable_head；小型复数与真实A/B/C/D资格 | 核心→局部模型→study；极小J下降，非精确VarPro或solver资格 |
+| reusable runner/watchdog | `tangent_head_window.py`不可刷新deadline／journal，复用既有tree/subreaper，无永久后台等待器 | 超时、setsid清场、sibling保护；六run清场 | 先审窗口／ownership；无cgroup连续限额声明 |
+| research入口／接线 | `src/io/tangent_head_compensation.py`、薄runner及run_case/profile/shared的最小显式分支，六独立dat | identity／预算／参考屏障；四基础validate及有限复核／恢复 | 核心之后；普通default不变，不复制每方向脚本 |
+| checker／benchmark／tests | `src/io/tangent_head_evidence_check.py`、`benchmarks/check_task042_v13.py`、三组V13测试 | raw与NPZ状态hash重算，反例、25pytest＋4ML小断言 | 证据一致性可单独审阅；不等于solver PASS |
+| compact evidence/docs | Response V13／outcome／JSON/CSV/journal、README导航及summary/test_summary、Task042两总账追加 | 初始／失败／接受／恢复／审核source与measured/derived/unknown分开 | 可保留负证据，master merge未批准 |
+| do-not-merge | results/artifacts、P/Z/R/A、参数／moment/action/REF7、venv与JIT/TMP/cache | ignored只在NN-Lab；Git只有轻量指标／hash | 不提交大数组或环境，历史失败不删除 |
+
+实际接受source `33f7d613b1341fa585f0324ead6039bf28211fff`；writer最小修复及记录恢复／D source `7615baae2f0d75fbc47c05be392b35ef2878c431`，没有重新优化。[Run index](records/run_index_v13.json)、[完整研究](tangent_scale_head_compensation_v13.md)。以下旧分组与失败历史正文保留。
+
 # Task042 实际变化与依赖分组
 
 | Selective merge组 | 变化与数值行为 | 依赖/验证/fresh证据 | 建议顺序和边界 |

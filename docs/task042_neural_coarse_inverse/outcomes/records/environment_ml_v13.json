@@ -1,0 +1,80 @@
+{
+  "schema": "task042.environment.v1",
+  "utc": "2026-09-30T03:06:49.567419+00:00",
+  "mode": "ml",
+  "python": "/home/fenics/Projects/NN-Lab/.venv-ml/bin/python",
+  "prefix": "/home/fenics/Projects/NN-Lab/.venv-ml",
+  "python_version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "host": "fenics-ws01",
+  "kernel": "7.0.0-31-generic",
+  "cwd": "/home/fenics/Projects/NN-Lab",
+  "source_sha": "fb994b337960c89d2e70afc93707595258b3bb60",
+  "git_status": " M scripts/run_case.py\n M src/io/task042_profile.py\n M src/runners/task042_shared.py\n?? input/task042_neural_coarse_inverse/v13_head_compensation.dat\n?? input/task042_neural_coarse_inverse/v13_response_step.dat\n?? input/task042_neural_coarse_inverse/v13_tangent_check.dat\n?? input/task042_neural_coarse_inverse/v13_verify.dat\n?? src/io/tangent_head_compensation.py\n?? src/runners/tangent_head_compensation.py\n?? src/solvers/neural_trace_tangent.py\n?? src/solvers/tangent_head_model.py\n?? src/solvers/tangent_head_study.py\n?? src/solvers/tangent_head_window.py\n?? src/test/test_task042_v13_model.py\n?? src/test/test_task042_v13_tangent_ml.py\n",
+  "affinity": [
+    0
+  ],
+  "caches": {
+    "TMPDIR": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/tmp",
+    "TMP": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/tmp",
+    "TEMP": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/tmp",
+    "XDG_CACHE_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/xdg",
+    "XDG_CONFIG_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/config",
+    "FFCX_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/xdg/fenics",
+    "PYTHONPYCACHEPREFIX": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/pycache",
+    "MPLCONFIGDIR": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/matplotlib",
+    "TORCH_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/torch",
+    "HF_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/huggingface",
+    "HUGGINGFACE_HUB_CACHE": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/huggingface/hub",
+    "TRANSFORMERS_CACHE": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/huggingface/transformers",
+    "TRITON_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/triton",
+    "CUDA_CACHE_PATH": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/cuda",
+    "NUMBA_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/numba",
+    "PIP_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/pip",
+    "UV_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/uv",
+    "RUFF_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/ml/ruff",
+    "TASK042_RESULTS_ROOT": "/home/fenics/Projects/NN-Lab/results/task042",
+    "TASK042_ARTIFACT_ROOT": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042"
+  },
+  "threads": {
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1",
+    "BLIS_NUM_THREADS": "1",
+    "VECLIB_MAXIMUM_THREADS": "1"
+  },
+  "modules": {
+    "numpy": {
+      "path": "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/numpy/__init__.py",
+      "version": "1.26.4"
+    },
+    "src": {
+      "path": "/home/fenics/Projects/NN-Lab/src/__init__.py",
+      "version": null
+    },
+    "src.solvers.coarse_inverse_protocol": {
+      "path": "/home/fenics/Projects/NN-Lab/src/solvers/coarse_inverse_protocol.py",
+      "version": null
+    },
+    "torch": {
+      "path": "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/torch/__init__.py",
+      "version": "2.7.1+cpu"
+    }
+  },
+  "fe_jit": false,
+  "gpu_context": false,
+  "ml": {
+    "torch_version": "2.7.1+cpu",
+    "cuda_build": null,
+    "default_dtype": "torch.float32",
+    "candidate_dtype": "float64 real/imag; no model created"
+  },
+  "loaded_libraries": [
+    "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/numpy.libs/libopenblas64_p-r0-0cf96a72.3.23.dev.so",
+    "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/torch/lib/libtorch.so",
+    "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/torch/lib/libtorch_cpu.so",
+    "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/torch/lib/libtorch_global_deps.so",
+    "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/torch/lib/libtorch_python.so"
+  ],
+  "status": "IMPORT_PATH_PASS"
+}

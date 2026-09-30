@@ -1,0 +1,218 @@
+{
+  "schema": "task042.final-checks.v13",
+  "utc": "2026-09-30T04:41:43.195209+00:00",
+  "source_sha": "7615baae2f0d75fbc47c05be392b35ef2878c431",
+  "source_sha_is_record_preparation_head_not_candidate": true,
+  "source_files_sha256": {
+    "src/io/tangent_head_evidence_check.py": "e38bfcb6ff4c3ba64e0869011e2aa8f6a0035f9025607af9db6bfe37343bf975",
+    "benchmarks/check_task042_v13.py": "90d4523595f0d0687087d9fe71f3925d6e75f52f3e7f26621d16894b78059f31",
+    "src/test/test_task042_v13_checker.py": "81fd11ca7874a2b3654f0b274818056b693b4d9aeb30082f1d60c91d30c70c01",
+    "src/test/test_task042_v13_model.py": "987e7ae6f0bd42143c32b8ba480536d41cf548918779503e06aaccc6a1d03395",
+    "src/solvers/neural_trace_tangent.py": "ffabcca183ff3019c776895619bddf7a671b35d7c7ab2f458135ab62fda9fce7",
+    "src/solvers/tangent_head_model.py": "7b44cd2f21088dd6d578c002a4b525c1d2d2743c576ce6a5dca15ec9c23605e2",
+    "src/solvers/tangent_head_study.py": "6880073e02472390d4a9ea60b81aca6e92f4d7786731509bce9837f146732288",
+    "src/io/tangent_head_compensation.py": "6b5f9cb4ef31d8234fcd347e36ed3453b5291cb6565245125615b8ba21cc5e08",
+    "src/runners/tangent_head_compensation.py": "cb173b655432be8627a90f9c154900433dc32c40134f1e7784d9899541628490",
+    "src/solvers/tangent_head_window.py": "e80d4fadbd2548ad6a8b29fd7daa5fc81eb1d884b6ae4d7f0f6ce2a980ce66d5"
+  },
+  "final_pure_tests": {
+    "summary": {
+      "workflow_deadline_seconds": 180.0,
+      "solve_deadline_seconds": null,
+      "time_limit_mode": "bounded",
+      "resource_stop_policy": "legacy",
+      "rss_hard_limit_bytes": 2147483648,
+      "rss_warning_bytes": 1610612736,
+      "startup_headroom_bytes": null,
+      "swap_policy": "legacy_stop",
+      "global_swap_delta_policy": "observe_only",
+      "cache_metadata_stable": true,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "observed_child_pids": [
+        787836,
+        787838,
+        787839,
+        787840,
+        787841,
+        787842,
+        787843,
+        787844,
+        787845
+      ],
+      "sampled_process_tree_rss_peak_bytes": 345440256,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+      "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 88955,
+          "pswpout_pages": 274007
+        },
+        "end": {
+          "pswpin_pages": 88955,
+          "pswpout_pages": 274007
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "job_swap_activity": "zero_supported_by_zero_global_activity",
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 948363497472,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 948363497472,
+        "reserve_bytes": 324465057792,
+        "launch_cap_bytes": 12000000000,
+        "planning_cap_bytes": 12000000000,
+        "cgroup_limits": []
+      },
+      "samples": 29,
+      "elapsed_seconds": 8.168025566032156,
+      "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_state": {
+        "source_sha": "7615baae2f0d75fbc47c05be392b35ef2878c431",
+        "git_status": " M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042_neural_coarse_inverse/README.md\n M docs/task042_neural_coarse_inverse/outcomes/changed_files.md\n M docs/task042_neural_coarse_inverse/outcomes/summary.md\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n?? benchmarks/check_task042_v13.py\n?? docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v13.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/channel_observables_v13.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/coupled_step_history_v13.jsonl\n?? docs/task042_neural_coarse_inverse/outcomes/records/directional_scale_v13.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/environment_fe_v13.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/environment_ml_v13.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/environment_pure_v13.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/final_checks_v13.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/progress_journal_v13.jsonl\n?? docs/task042_neural_coarse_inverse/outcomes/records/protected_history_v13.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v13.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v13.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v13.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/review_render_check_v13.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v13.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/selected_fields_v13.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v13.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/tangent_identity_checks_v13.json\n?? docs/task042_neural_coarse_inverse/outcomes/tangent_scale_head_compensation_v13.md\n?? docs/task042_neural_coarse_inverse/response_v13.md\n?? src/io/tangent_head_evidence_check.py\n?? src/test/test_task042_v13_checker.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "src/test/test_task042_v13_model.py",
+          "src/test/test_task042_v13_checker.py",
+          "src/test/test_task042_shared_watchdog.py",
+          "src/test/test_task042_shared_components.py",
+          "src/test/test_task042_v12_actual_loss.py",
+          "-k",
+          "not hidden_assignment"
+        ],
+        "utc": "2026-09-30T04:37:36.609702+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      }
+    },
+    "summary_sha256": "ba169a71f4937de013543018889c23fa0625073ee11d1a74328887cf29daf8bb",
+    "stdout": ".........................                                                [100%]\n25 passed, 1 deselected in 5.95s\n",
+    "worker_log_sha256": "a12185dfef5a180d25738c395edf1557619b33ce39348ead062e98cae94fd07b",
+    "passed": 25,
+    "deselected": 1
+  },
+  "native_host_resource_selection": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v13/resource_baseline_native_tests_immediate.json",
+    "sha256": "e8dec14cecd82e63dc1cf461d8b28db2568f221a6cf97a46819a25a3bb7152ba",
+    "utc": "2026-09-30T04:37:36.449487+00:00",
+    "CPU": 0,
+    "admission_policy": "V3 observed CPU/thread activity",
+    "selected_topology": [
+      {
+        "cpu": 0,
+        "core": 0,
+        "socket": 0,
+        "siblings": [
+          0
+        ]
+      }
+    ],
+    "neighbor_process_count": 21,
+    "memory": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 948364443648,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 948364443648,
+      "reserve_bytes": 353748992000,
+      "launch_cap_bytes": 17179869184,
+      "planning_cap_bytes": 17179869184,
+      "cgroup_limits": [],
+      "system_reserve_bytes": 216310038528,
+      "neighbor_growth_allowance_bytes": 137438953472,
+      "shared_workstation": true
+    },
+    "disk_free_bytes": 3438156115968,
+    "scope": "native host visibility; selected affinity immediately applied, no neighbor modifications"
+  },
+  "initial_sandbox_test_scope": {
+    "summary_path": "tmp/task042/v13/final_focused_tests/summary.json",
+    "status": "25 tests passed; test tree monitored, host neighbor PID visibility incomplete",
+    "reused_for_numerical_pass_only_not_final_host_admission": true,
+    "costs_retained": true,
+    "replayed_on_current_native_host_spare_cpu": true
+  },
+  "initial_false_positive_active_check": {
+    "path": "tmp/task042/v13/active_state_before_commit.json",
+    "reason": "substring task042 matched neighboring Task042extra; corrected to exact NN-Lab cwd",
+    "neighboring_task_modified": false
+  },
+  "first_static_failure": {
+    "path": "tmp/task042/v13/static_checks_first_failure.json",
+    "sha256": "d244536e4d27e145345bdbf73d745ee8dc965c58324d98ae802f9f4869cede9c",
+    "reason": "self-linked static output not created when its own links were checked; generation order only",
+    "expensive_or_numerical_replay": false
+  },
+  "ML_small_tests": {
+    "tests": [
+      {
+        "name": "test_full_moment_joint_tangent_and_complex_dual",
+        "passed": true
+      },
+      {
+        "name": "test_layerwise_joint_tangent_independent_backward_and_fd",
+        "passed": true
+      },
+      {
+        "name": "test_nonhermitian_nonzero_port_nonoptimal_head_loss_chain",
+        "passed": true
+      },
+      {
+        "name": "test_real_hidden_rejects_complex_and_head_restores_after_clear",
+        "passed": true
+      }
+    ],
+    "threads": {
+      "intraop": 1,
+      "interop": 1,
+      "cuda_build": null,
+      "data_loader_workers": 0,
+      "actual_blas_pools": [
+        {
+          "path": "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/numpy.libs/libopenblas64_p-r0-0cf96a72.3.23.dev.so",
+          "function": "openblas_get_num_threads64_",
+          "threads": 1
+        }
+      ]
+    },
+    "wall_seconds": 0.023941181018017232,
+    "pytest_used": false,
+    "source_files_sha256": {
+      "src/solvers/neural_trace_tangent.py": "ffabcca183ff3019c776895619bddf7a671b35d7c7ab2f458135ab62fda9fce7",
+      "src/test/test_task042_v13_tangent_ml.py": "3936630d80c1546ff10243911afb1dd1dd6919fbbc80f42014ab11e0d7cd445b"
+    },
+    "reference_arrays_read": false,
+    "nonHermitian_nonzero_port_nonoptimal_head": true
+  },
+  "ML_test_files_unchanged": true,
+  "preflight_command_error": {
+    "command": "task042_preflight.py --mode pure --output ...",
+    "exit_code": 2,
+    "reason": "mode is selected by qualified activation; argparse rejects extra option",
+    "numerical_or_test_work_started": false,
+    "elapsed_seconds": 0.109718982
+  },
+  "FE_repeated": false,
+  "full_repository_pytest": false,
+  "MPI2_MPI4": false,
+  "GPU_used": false,
+  "Ruff_qualification": "NOT_RUN_NOT_INSTALLED_IN_QUALIFIED_ENVIRONMENT",
+  "CI_claim": false,
+  "checker_clean_commit_sha": "6fcb8930228833f45bb002b3970602298253ae89",
+  "checked_file_hashes_match_clean_checker_commit": true
+}

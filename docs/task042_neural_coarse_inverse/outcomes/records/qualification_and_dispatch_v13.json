@@ -1,0 +1,199 @@
+{
+  "checker": {
+    "status": "EVIDENCE_CONSISTENT",
+    "errors": [],
+    "tangent_directions": {
+      "421201": true,
+      "421202": true,
+      "analytic_gradient": true
+    },
+    "coupled_rounds": [
+      {
+        "head_compensation": true,
+        "joint_directions": {
+          "421201": false,
+          "421202": true,
+          "analytic_gradient": true
+        }
+      }
+    ],
+    "accepted_C_from_raw": 1,
+    "frozen_network_identity": true,
+    "same_discrete": {
+      "INITIAL_V12_PHYSICAL": false,
+      "C_1_ACCEPTED": false,
+      "C_1_HEAD_ONLY_TWIN": false
+    },
+    "formal_micro_qualified": false,
+    "research_positive": false,
+    "outcome": "OBJECTIVE_ONLY_IMPROVEMENT",
+    "exact_VarPro_qualified": false,
+    "saved_success_labels_not_trusted": true
+  },
+  "accepted_B": 0,
+  "accepted_C": 1,
+  "C_progress": 7.149076228069719e-07,
+  "next_round_threshold": 0.0001,
+  "next_round_run": false,
+  "stopped_for": "NEXT_ROUND_PROGRESS_GATE_FAILED",
+  "head_only_twins": [
+    {
+      "name": "C_1_HEAD_ONLY_TWIN",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v13/task042_v13_compensate_record_recovery_20260930T034107776460Z/C_1_HEAD_ONLY_TWIN.npz",
+        "sha256": "ff1393cc6f4fd130885b8dc0898214735c8ff0a2f9d58a0986e53719fcc7475a",
+        "z_sha256": "6113bf01be21ab2fc7617d22a4fd83435b9d0d91a9ac903d432abb4ff535db69",
+        "hidden_sha256": "27ff1fee5fa9a7ea2fab190faa993ef98c3c5cb547140507752e7a5cc0bb7885",
+        "gamma_sha256": "1a850800bc5319dc95a4e7a70ca2b731172c1be786a2a8ee159d4a3f1a747401",
+        "port_sha256": "617724aedc5b116356b363a16dc9cdaa43509a85a3802cc0deb2b52e9c328447",
+        "network_parameters_sha256": "6de7ee87610e2fe5fb7e831b16eb03a6757abd82038f71612356f7392ceb94dd"
+      },
+      "loss": 282.7669171458213,
+      "audit": {
+        "schur_relative": 23.780955285514548,
+        "augmented_relative": 9.222344389567505,
+        "native_relative": 9.222344389567507,
+        "original_total_augmented_relative": 3.2001478443797304,
+        "port_absolute": 4.163336814970863e-17,
+        "port_full_rhs_relative": 1.9528197979837347e-16,
+        "port_operation_relative": 5.759960416402216e-17,
+        "recovery_relative": 6.087630085953484e-13,
+        "schur_original_identity_operation_relative": 7.469066407738208e-14,
+        "slave_storage_max": 0.0,
+        "field_norm": 2.23392418700611,
+        "port_unknown_norm": 0.27147683967828656,
+        "strict_pass": false
+      },
+      "diagnostic_only": true,
+      "joint_loss": 0.31817975803965803,
+      "head_only_loss": 282.7669171458213,
+      "previous_loss": 0.3181799855089551,
+      "hidden_incremental_loss_gain": 282.44873738778165
+    }
+  ],
+  "reference_arrays_first_opened_in": "VERIFY after solver queue freeze",
+  "reference_feedback": false,
+  "missing_metadata": {
+    "original_small_real_LS_coefficients": "lost at post-computation serialization; not guessed",
+    "failed_S_SH_timers": "unknown; not reconstructed"
+  },
+  "implementation_repair_count": 1,
+  "finite_joint_Taylor_scale_refinement_count": 1,
+  "strict_field_states": {
+    "INITIAL_V12_PHYSICAL": {
+      "status": "NOT_QUALIFIED",
+      "fields": {
+        "full_FE_L2_relative": 0.07683617457202188,
+        "full_FE_scaled_curl_relative": 0.07684859742100993,
+        "scattered_FE_L2_relative": 0.7342568092603733,
+        "scattered_scaled_curl_relative": 0.7343615868865214,
+        "selected_E_relative": 0.08553102202339279,
+        "selected_H_relative": 0.06698674064413555
+      },
+      "audit": {
+        "schur_relative": 0.7977217378371424,
+        "augmented_relative": 0.3093595065905437,
+        "native_relative": 0.3093595065905437,
+        "original_total_augmented_relative": 0.10734755896382206,
+        "port_absolute": 4.3724871210770795e-20,
+        "port_full_rhs_relative": 2.050922083883329e-19,
+        "port_operation_relative": 6.039199153065171e-20,
+        "recovery_relative": 6.103737553196044e-13,
+        "schur_original_identity_operation_relative": 6.626816677634183e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 2.2353894101335805,
+        "port_unknown_norm": 0.24645856426300863,
+        "strict_pass": false,
+        "independent_DOLFINx_total_native_relative": 0.10734755896482856
+      },
+      "power_absolute_differences": {
+        "R_total": 0.03267956406200305,
+        "T_total": 0.07900186022870237,
+        "A_balance": 0.11168142429070538,
+        "A_volume": 0.00045153169473233917
+      },
+      "energy_closure": 0.11213295598253137,
+      "complex_channel_relative": 0.04941515245132451
+    },
+    "C_1_ACCEPTED": {
+      "status": "NOT_QUALIFIED",
+      "fields": {
+        "full_FE_L2_relative": 0.07683612534852145,
+        "full_FE_scaled_curl_relative": 0.07684854818605773,
+        "scattered_FE_L2_relative": 0.7342563388739887,
+        "scattered_scaled_curl_relative": 0.7343611163996311,
+        "selected_E_relative": 0.08553096809669554,
+        "selected_H_relative": 0.06698669854871925
+      },
+      "audit": {
+        "schur_relative": 0.7977214526884149,
+        "augmented_relative": 0.3093593960087894,
+        "native_relative": 0.3093593960087894,
+        "original_total_augmented_relative": 0.10734752059202202,
+        "port_absolute": 3.1031693432945486e-17,
+        "port_full_rhs_relative": 1.4555465482136806e-16,
+        "port_operation_relative": 4.2860418953701204e-17,
+        "recovery_relative": 6.09741447101504e-13,
+        "schur_original_identity_operation_relative": 6.604112600316793e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 2.2353886037417166,
+        "port_unknown_norm": 0.2464584949219305,
+        "strict_pass": false,
+        "independent_DOLFINx_total_native_relative": 0.10734752059302383
+      },
+      "power_absolute_differences": {
+        "R_total": 0.03267956711529872,
+        "T_total": 0.07900183414689232,
+        "A_balance": 0.11168140126219106,
+        "A_volume": 0.00045153160951929595
+      },
+      "energy_closure": 0.11213293286880399,
+      "complex_channel_relative": 0.04941512862183908
+    },
+    "C_1_HEAD_ONLY_TWIN": {
+      "status": "NOT_QUALIFIED",
+      "fields": {
+        "full_FE_L2_relative": 0.07654198155928968,
+        "full_FE_scaled_curl_relative": 0.07655286842663815,
+        "scattered_FE_L2_relative": 0.731445461297794,
+        "scattered_scaled_curl_relative": 0.7315356145085814,
+        "selected_E_relative": 0.08518389326106489,
+        "selected_H_relative": 0.06679870667573995
+      },
+      "audit": {
+        "schur_relative": 23.780955285514548,
+        "augmented_relative": 9.222344389567505,
+        "native_relative": 9.222344389567507,
+        "original_total_augmented_relative": 3.2001478443797304,
+        "port_absolute": 4.163336814970863e-17,
+        "port_full_rhs_relative": 1.9528197979837347e-16,
+        "port_operation_relative": 5.759960416402216e-17,
+        "recovery_relative": 6.087630085953484e-13,
+        "schur_original_identity_operation_relative": 7.469066407738208e-14,
+        "slave_storage_max": 0.0,
+        "field_norm": 2.23392418700611,
+        "port_unknown_norm": 0.27147683967828656,
+        "strict_pass": false,
+        "independent_DOLFINx_total_native_relative": 3.2001478443797486
+      },
+      "power_absolute_differences": {
+        "R_total": 0.03042683751100067,
+        "T_total": 0.07220458473639857,
+        "A_balance": 0.10263142224739918,
+        "A_volume": 0.00044647206723672124
+      },
+      "energy_closure": 0.10307789431172953,
+      "complex_channel_relative": 0.07786158074634295
+    }
+  },
+  "not_run": {
+    "second_third_C": "relative loss gain 7.149e-7 below 1e-4 continuation gate",
+    "B_trials": "linear prediction below observed resolution threshold",
+    "precise_VarPro": "not this method; old gates remain FAIL",
+    "new_p4_reference": "not authorized in V13",
+    "maximum_target": "not authorized; identity/cost/convergence unknown",
+    "GPU": "CPU-only authorized batch",
+    "old_p4_PC": "closed historical negative",
+    "seed420620": "sealed; untouched"
+  }
+}

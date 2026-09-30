@@ -1,0 +1,51 @@
+{
+  "schema": "task042.github-review-render.v13",
+  "checked_utc": "2026-09-30T04:39:01.495287+00:00",
+  "commit": "fb994b337960c89d2e70afc93707595258b3bb60",
+  "URL": "https://github.com/Rookie1234567/MyFEniCS/blob/fb994b337960c89d2e70afc93707595258b3bb60/docs/task042_neural_coarse_inverse/review_report_v10.md",
+  "HTTP_status": 200,
+  "full_page_sha256": "c8dc6564b410a81921ad99d67fdc5ed0139db3e5c91ab4c6aa2b3b1815ddb7c4",
+  "richText_sha256": "975112909eb35760d2e6859337f0172771af85e09dfccbb25cbada9826938a11",
+  "richText_truncated": false,
+  "table_count": 3,
+  "table_row_widths": [
+    [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    [
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2
+    ],
+    [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ]
+  ],
+  "math_renderer_count": 8,
+  "server_render_structure": "PASS",
+  "raw_markdown_fences_instead_of_math": false,
+  "browser_pixel_or_JS_glyph_render": "NOT_OBSERVED_NO_BROWSER_TOOL",
+  "review_modified": false,
+  "obvious_document_problem": false,
+  "limitation": "server richText confirms table structure/math-renderer; no pixel proof of browser LaTeX glyphs"
+}

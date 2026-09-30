@@ -1,3 +1,27 @@
+# V13 最新交付：独立切向可信，联合更新只有极小目标函数改善
+
+本批在原0.7nm、384hex/p3、完整40复端口模型上，先核对“隐藏参数改变时，全部边／面有限元积分量的一阶变化”，再同步改变输出系数以补偿大项抵消。代价是一套薄基QR和一次三RHS最小二乘；实际网络与原方程决定接受，不构造全局逆，也不是精确变量投影。新切向资格不改变V11头1e-8或V12标量FD的旧FAIL。[Response V13](../response_v13.md)、[完整方法和结果](tangent_scale_head_compensation_v13.md)。下方旧“最新”标题是历史原文。
+
+| 固定模型／方法与比较目的；measured/derived、无量纲 | 原Schur／native／port；限1e-6 | 散射E／scaled-curl；限1e-4 | 结论与证据 |
+|---|---|---|---|
+| V12唯一修正物理网络，B/C共同起点 | 0.797721738／0.309359507／2.05e-19 | 0.734256809／0.734361587 | 不合格基线；[候选CSV](records/candidate_comparison_v13.csv) |
+| A独立逐层JVP与原反向链 | 三方向新向量Gate通过，端口／齐次恢复约1e-16 | 数值接口资格，不产生物理解 | 真实dual运算差约1e-17；[完整尺度表](records/tangent_identity_checks_v13.json) |
+| B固定头按原响应选步 | pred1.3e-17至1.8e-16＜要求2.03e-11 | 0试探／0接受，继续独立C | `PREDICTED_GAIN_UNRESOLVED`；[尺度CSV](records/directional_scale_v13.csv) |
+| C联合一步，实际hidden改变3.26e-6 | **0.797721453／0.309359396／1.46e-16** | **0.734256339／0.734361116** | 5试探／1接受；J下降7.149e-7＜继续1e-4，`OBJECTIVE_ONLY_IMPROVEMENT`；[试探历史](records/coupled_step_history_v13.jsonl) |
+| 同head改变、hidden不变twin，贡献对照 | 23.7809553／9.22234439／1.95e-16 | 0.731445461／0.731535615 | 方程明显恶化，不能按参考场稍好而选择它 |
+| D独立3状态／最终资格 | 同离散0/3；接受点40复通道差0.049415129、能量误差0.112132933 | 无研究正信号／微型FE资格／最终48小时资格 | [独立Gate](records/qualification_and_dispatch_v13.json)、[通道原键](records/channel_observables_v13.csv) |
+
+接受点R00_s/R00_p/R00_total为0.08496405695／1.28142e-7／0.08496418509；R_total/T_total/A_balance/A_volume为0.084966252／0.798045949／0.116987799／0.004854866，全部仅**未资格化诊断，无official R/T/A**。p/h、Full3D/Hybrid、通道、MPI和波长影响未扫描；只沿同micro续研，不能外推最大三维目标。
+
+| 费用／边界／停止与合并 | 实际口径及原因 |
+|---|---|
+| 正式成本 | 六one-run含writer失败、记录恢复、独立验证：监督wall243.725626s；同时树RSS最大2852761600B≈2.657GiB，own swap0／VRAM0，全部后代清场；[完整账](records/resource_costs_v13.json) |
+| 内存／source | P/A rank1560/1560，新构建0，薄分解1／RHS3。全部薄数组/workspace计入；实际接受source33f7d613…，记录／D source7615baae…分开；没有global p4因子、全局S/CSR、正规方程或fallback |
+| shared-workstation | 每run现场CPU0、MPI1／数学Torch1／Loader0；独立cache、自有锁、16/12GiB采样树监督，无cgroup连续限额声明；未见持续PSI压力，邻影响与无争用加速INCONCLUSIVE |
+| 失败／历史 | 首次C联合Taylor负结果及writer失败保留；最小修复只恢复已有记录，失落小LS系数／失败逐作用计时unknown；旧232项合同／记录未改 |
+| 未运行 | B真实试探因gain不可分辨；C第2/3步因进展门限；新p4参考/p6/GPU/最大模型/网络或rank扫描未授权。seed420620封存，旧p4路线关闭 |
+| 唯一下一建议／merge | 若后续授权，改变输出正向坐标避免病态R回写成巨大的相消系数；仅建议未实施。数值代码research-only；只提交执行分支待review，master merge未批准 |
+
 # V12 最新交付：真实固定头梯度未取得数值资格，有限函数值备选为负
 
 在相同 0.7 nm、384hex/p3、完整40端口的三维缺口 micro 上，本批尝试先固定输出头，用原 Maxwell 方程的真实残差判断隐藏层改变是否有效。它只在数值可信时才允许有界 L-BFGS；旧 V11 大系数制造与实际头 `1e-8` Gate **仍为 FAIL**。前两次是受影响 T1 接线失败并保留，第三次完成 T1；T2 的真实偏导有限差分未过 Gate，F 的 8 个有限函数值试探均使损失升高，所以**没有接受任何新的隐藏状态**。T4 仅独立重验旧修正后的物理起点。[Response V12](../response_v12.md)、[方法和完整结果](actual_loss_block_descent_v12.md)、[raw Gate](records/qualification_and_dispatch_v12.json)。下方 V11 及更早“最新”标题是保留历史，不代表本轮状态。

@@ -1796,3 +1796,17 @@ V11不修改原物理/MPC/材料/普通默认，旧p4强逆持续关闭；没有
 | F两方向／正负／双步长函数值备选 | 8试探最小实际loss2.80461＞0.31818，native恶化到0.91847 | `FUNCTION_ONLY_POLL_NEGATIVE`，0接受；不再增加seed或扫描 |
 
 原物理／MPC／材料／普通default和旧task/review/response/raw不改，旧global p4逆关闭，无global p4 LU、完整S/CSR、ILU/Riesz或hidden fallback。参考仅T4独立读，未回传训练；无新p4参考／p6／最大目标／p/h/M/MPI对照。三成功run clean source `d9df7068ca3310a0499164251a57841dbdfbc7f5`，两次接线失败source与完整费用另见[run index](task042_neural_coarse_inverse/outcomes/records/run_index_v12.json)。五次监督wall182.268s、同时树峰2322427904B/swap0，历史有载下界11916.413697s、辅助费未知；共享CPU0/MPI1/线程1、独立环境/缓存、自有锁、16/12GiB采样watchdog、GPU0，不操作邻任务、无cgroup连续上限承诺，影响/加速INCONCLUSIVE。最终0.7nm/48h `NOT_QUALIFIED`；唯一未实施下一建议为冻结同头同三方向JVP/VJP与原作用配对。见[Response V12](task042_neural_coarse_inverse/response_v12.md)和[详细负结果](task042_neural_coarse_inverse/outcomes/actual_loss_block_descent_v12.md)。
+
+
+### Task042 V13：固定0.7nm micro的切向尺度／隐藏头补偿
+
+| 模型／方法；measured/derived、无量纲 | 实际原方程与场／功率 | 数值分类／成本 |
+|---|---|---|
+| 原Full3D三维缺口384hex/p3/q15，原Si，40复端口，V12唯一修正网络为B/C共同起点 | 原Schur/native0.797721738/0.309359507，散射E/H0.734256809/0.734361587 | 旧头1e-8／V12标量FD均FAIL保留，不重跑旧campaign |
+| A独立逐层tanh及全部矩映射切向、B实际响应尺度 | A三固定头方向通过新向量Gate；B预测gain小于分辨率，0试探／0接受 | 不是旧Gate通过或求解资格；继续独立C |
+| C同步改变hidden/head，P/A rank1560/1560、固定gelsd cond1e-12 | 5试探／1接受，hidden变化3.26e-6；原Schur/native0.797721453/0.309359396、port1.46e-16；散射E/H0.734256339/0.734361116，40复通道差0.049415129，能量差0.112132933 | OBJECTIVE_ONLY_IMPROVEMENT，J相对下降7.149e-7不准入下一步；严格残差1e-6／场1e-4失败，神经增量NOT_DEMONSTRATED |
+| 同head更新、hidden不变twin，贡献对照 | Schur/native23.780955/9.222344，scatter0.731445461/0.731535615；loss282.766917 | 方程明显恶化，不能按参考场稍好而选择；没有参考反馈 |
+
+接受点R00_s/p/total=0.08496405695/1.28142e-7/0.08496418509；R_total/T_total/A_balance/A_volume=0.084966252/0.798045949/0.116987799/0.004854866，全部仅UNQUALIFIED_DIAGNOSTIC，无official R/T/A。完整40复通道原键/极化/reference plane在[通道CSV](task042_neural_coarse_inverse/outcomes/records/channel_observables_v13.csv)，selected复场与total/scattered E/H及curl另有hash绑定验证；同离散0/3状态合格，最终目标0.7nm/48h仍NOT_QUALIFIED。p/h/Hybrid/M/MPI/波长影响未扫描；没有新p4参考、p6或最大模型。
+
+六次one-run含JSON writer失败及仅已保存记录恢复：wall243.725626s、同时树RSS最大2852761600B、swap0/VRAM0、全部自身后代清场；实际接受source33f7d613…、恢复/D source7615baae…分列，旧历史有载下界加formal为12160.139323s，辅助unknown仍unknown。shared-workstation每run现场CPU0、MPI1/mathTorch1/Loader0、自有锁/cache/16-12GiB采样监督，无cgroup连续限额声明；不改邻任务、无零干扰或无争用加速结论。未构造global p4 LU、全局S/CSR、正规方程或hidden逆，旧p4路线关闭。一次小实LS系数及失败逐作用计时unknown不补造，失败与旧合同/raw不改。[Response V13](task042_neural_coarse_inverse/response_v13.md)、[方法及资格](task042_neural_coarse_inverse/outcomes/tangent_scale_head_compensation_v13.md)、[source/资源](task042_neural_coarse_inverse/outcomes/records/run_index_v13.json)。唯一未实施建议为稳定输出正向坐标的表示调整，需新review，不继续同配置循环、不merge。

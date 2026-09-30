@@ -1,3 +1,9 @@
+# 当前 V13 交付导航
+
+[Review V10](review_report_v10.md)是本批正式合同；[Response V13](response_v13.md)、[切向／响应／联合补偿结果](outcomes/tangent_scale_head_compensation_v13.md)、[summary](outcomes/summary.md)、[run index](outcomes/records/run_index_v13.json)为最新入口。三个固定头切向通过新向量Gate；B收益不可分辨后继续C，两个合格联合方向实际接受1步，J相对改善仅7.149e-7，按门限不再继续。独立一次FE验证3个冻结状态，原Schur约0.798、native约0.309、散射误差约0.734，仍不合格。旧V11头1e-8、V12标量FD及全部负结果保留，不称精确VarPro或神经求解成功。一次末尾JSON错误仅恢复已保存证据，实际候选source与恢复source分列。
+
+四个规定V13入口均已实现并经 `scripts/run_case.py` 实际one-run；有限Taylor复核及记录恢复各有显式独立dat，不表示无限重执行。求解／验证队列已经冻结，无新p4参考、GPU、最大模型或merge；等待review。以下V12及更早“当前／最新”全部是保留的历史导航，不能作为新的待执行合同。
+
 # 当前 V12 交付导航
 
 [Review V9](review_report_v9.md)授权固定头真实残差偏导及有界隐藏更新，明确不要求旧 V11 输出头先过 `1e-8` 驻点 Gate。[Response V12](response_v12.md)、[完整负结果](outcomes/actual_loss_block_descent_v12.md)、[最新 summary](outcomes/summary.md)、[run index](outcomes/records/run_index_v12.json)为本批入口。T1 对 M2/物理残差完成分账；T2 的实际三方向 FD 未出现规定稳定区，故 T3 不运行；有限 F 八次试探均使损失升高，接受隐藏步0、头建议0。T4 独立确认原方程和散射场仍失败。旧 M2/实际头内部门限与全部原结果保留，p4 强逆关闭、最终0.7nm／48小时未合格；只推送本执行分支待 review，不合并 master。以下 V11 与更早“当前”是历史导航原文。

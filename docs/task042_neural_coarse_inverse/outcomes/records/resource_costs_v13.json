@@ -1,0 +1,179 @@
+{
+  "schema": "task042.resources.v13",
+  "record_utc": "2026-09-30T04:45:59.711665+00:00",
+  "window": {
+    "schema": "task042.autonomous-window.v13",
+    "start_utc": "2026-09-30T02:38:38.674705+00:00",
+    "start_monotonic": 660913.535589948,
+    "stop_heavy_utc": "2026-09-30T06:23:38.674705+00:00",
+    "deadline_utc": "2026-09-30T06:38:38.674705+00:00",
+    "total_limit_seconds": 14400,
+    "heavy_limit_seconds": 13500,
+    "cleanup_reserve_seconds": 900,
+    "review_expected_commit": "fb994b337960c89d2e70afc93707595258b3bb60",
+    "prior_v12_head": "0b81d4cdad2dd2e3c21a68e60b14c35fdc897337",
+    "elapsed_seconds": 7641.037066698074,
+    "heavy_remaining_seconds": 5858.962933301926,
+    "total_remaining_seconds": 6758.962933301926
+  },
+  "supervised_formal_wall_seconds_sum": 243.72562610998284,
+  "simultaneous_sampled_tree_RSS_peak_bytes_max": 2852761600,
+  "peak_is_max_not_sum": true,
+  "own_swap_peak_bytes": 0,
+  "VRAM_allocated_bytes": 0,
+  "GPU_used": false,
+  "MPI_size": 1,
+  "math_Torch_threads": 1,
+  "DataLoader_workers": 0,
+  "planning_upper_bytes": 7600000000,
+  "hard_bytes": 17179869184,
+  "warning_bytes": 12884901888,
+  "cgroup_delegation": false,
+  "supervision": "0.5s independent process tree/subreaper; no continuous kernel limit claim",
+  "shared_workstation": true,
+  "neighbor_impact": "No sustained sampled memory PSI pressure; no comparable neighbor stage timing, INCONCLUSIVE",
+  "performance_acceleration_claim": false,
+  "historical_onload_lower_bound_seconds": 11916.413697244832,
+  "new_formal_plus_historical_lower_bound_seconds": 12160.139323354815,
+  "historical_auxiliary_seconds": "unknown_preserved",
+  "auxiliary_supervised_checks": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v13/checker_tests/summary.json",
+      "sha256": "86206964acbd73bc7c6baae389f45dba1ef61a511fb6b6aa5c4aced7a072f434",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 1.600866665947251,
+      "RSS_peak_bytes": 68874240,
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v13/final_focused_tests/summary.json",
+      "sha256": "c99539f00ca5e2f7a63c5a287b8679b233fb691d04f1c4dc7816ac983cb4859e",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 6.224422533065081,
+      "RSS_peak_bytes": 344965120,
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v13/final_native_focused_tests/summary.json",
+      "sha256": "ba169a71f4937de013543018889c23fa0625073ee11d1a74328887cf29daf8bb",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 8.168025566032156,
+      "RSS_peak_bytes": 345440256,
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v13/final_pre_pure_tests/summary.json",
+      "sha256": "1d6c6ef4709a639f252a21c859a021b57302e0e67c84e6554593af1cb9ac7866",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 5.456894887029193,
+      "RSS_peak_bytes": 254840832,
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v13/final_static_checks/summary.json",
+      "sha256": "08c6161d79be7b0479363845484829d53fd6521b4362aaab7f34b84a8b1265bf",
+      "classification": "WORKER_FAILED",
+      "elapsed_seconds": 3.8020892969798297,
+      "RSS_peak_bytes": 100913152,
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v13/final_static_recheck/summary.json",
+      "sha256": "04fce92d9c04f6ada3a258d1fd8d1dcd3c7bcd8dfdb9e1b8e905b22e25b83a58",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 2.130442681023851,
+      "RSS_peak_bytes": 100880384,
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v13/pre_ml_tests/summary.json",
+      "sha256": "60122d883bf722a1fe3d6c06339df921daba150ea84f8292da2dd697ac9ae574",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 3.6293443919857964,
+      "RSS_peak_bytes": 257961984,
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v13/pre_pure_tests/summary.json",
+      "sha256": "0f8c10e9816142ac6b497dbd1161e60dc1446c45908bf8052793626f6b715717",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 6.057423906982876,
+      "RSS_peak_bytes": 242733056,
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v13/refinement_final_tests/summary.json",
+      "sha256": "cc7c792cb8b9cfb0a9af7257c9dbf24315c81a45b4746fe055ffbb6e71c725ac",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 1.6759584300452843,
+      "RSS_peak_bytes": 84819968,
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v13/refinement_tests/summary.json",
+      "sha256": "2c91f0d46e7b6932bcdad260c74a5e216821ad32c4e0a2bcc506e77ef94a63cb",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 1.799554904922843,
+      "RSS_peak_bytes": 84824064,
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v13/serialization_repair_tests/summary.json",
+      "sha256": "a09deedd88acbbc85ba70874cf4003d58d9530dd993a8eb862b105beb2798299",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 1.6976443809689954,
+      "RSS_peak_bytes": 84824064,
+      "descendants_cleared": true
+    }
+  ],
+  "auxiliary_supervised_wall_seconds_sum": 42.24266764498316,
+  "other_unisolated_preflight_static_development_costs": "included in batch elapsed; separate onload seconds unknown",
+  "current_formal_cumulative_counts": {
+    "forward": 93,
+    "JVP": 9,
+    "VJP": 9,
+    "FD_points": 48,
+    "PA_builds": 0,
+    "thin_decompositions": 1,
+    "thin_RHS_columns": 3,
+    "small_real_LS": 1,
+    "original_audits": 24
+  },
+  "pilot_original_action_counts": {
+    "total": 149,
+    "measured": 105,
+    "derived_from_failed_run_source_and_journal": 44,
+    "failed_per_action_seconds": "unknown"
+  },
+  "small_ML_pretest_counts": {
+    "JVP": 4,
+    "VJP": 3,
+    "vector_FD_points": 2,
+    "original_pilot_S_SH": 0,
+    "scope": "layerwise/moment tiny array witnesses; no original pilot operator"
+  },
+  "including_small_pretest_counts": {
+    "JVP": 13,
+    "VJP": 12,
+    "FD_points": 50
+  },
+  "one_GELSD_three_RHS": {
+    "reused_P_A": true,
+    "new_PA_builds": 0,
+    "P_rank": 1560,
+    "A_rank": 1560,
+    "child_wall_seconds": 69.90250413899776,
+    "basis_seconds_nested": 44.75430000491906,
+    "QR_and_LS_total_seconds_nested": 69.75630156591069
+  },
+  "nested_times_not_added_to_formal_wall": true,
+  "all_formal_descendants_cleared": true,
+  "CPU_selection_by_run": {
+    "task042_v13_compensate_20260930T032053696021Z": 0,
+    "task042_v13_compensate_record_recovery_20260930T034107776460Z": 0,
+    "task042_v13_compensate_refine1_20260930T033125055428Z": 0,
+    "task042_v13_response_20260930T032005667663Z": 0,
+    "task042_v13_tangent_20260930T031852990115Z": 0,
+    "task042_v13_verify_20260930T034240499808Z": 0
+  }
+}
