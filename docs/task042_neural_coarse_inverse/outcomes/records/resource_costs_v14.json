@@ -187,9 +187,20 @@
       "RSS_peak_bytes": 199081984,
       "own_swap_peak_bytes": 0,
       "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v14/committed_final_checks/summary.json",
+      "sha256": "a4aef57b537076095031a3843d36c7528aac407a89d0f48a764f17893043329e",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 7.677469637943432,
+      "RSS_peak_bytes": 515821568,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "clean_check_source": "c98e8fa8d6bc60e0f8af2805a070295f176c7faf",
+      "formal_PDE": false
     }
   ],
-  "aux_supervised_wall_lower_bound_seconds": 23.81006754504051,
+  "aux_supervised_wall_lower_bound_seconds": 31.487537182983942,
   "thin_child_costs": [
     {
       "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v14/task042_v14_decoder_20260930T062524338233Z/ORIGIN/child_result.json",
@@ -443,9 +454,11 @@
     "cleanup_reserve_seconds": 900,
     "review_expected_commit": "52bfe9ca622481df8f686a92cbb632885610d0e8",
     "prior_v13_head": "a81c5e49e37c0c3623f77565af448b40bb9fb296",
-    "elapsed_seconds": 8179.341991186142,
-    "heavy_remaining_seconds": 5320.658008813858,
-    "total_remaining_seconds": 6220.658008813858
+    "elapsed_seconds": 9691.29497885704,
+    "heavy_remaining_seconds": 3808.7050211429596,
+    "total_remaining_seconds": 4708.70502114296,
+    "snapshot_utc": "2026-09-30T08:19:39.294989+00:00",
+    "scope": "elapsed through final metadata preparation; final git push time adds to elapsed, no budget refresh"
   },
   "new_artifact_storage": {
     "logical_regular_bytes": 922132825,
@@ -457,7 +470,7 @@
     "allocated_unique_regular_bytes": 6720589824,
     "symlink_targets_not_recopied": true
   },
-  "publication_and_docs_cost": "included in total elapsed; not final yet",
+  "publication_and_docs_cost": "included in elapsed snapshot; final record commit/push/check time remains included by immutable deadline",
   "performance_conclusion": "INCONCLUSIVE shared-workstation; load inventory changed; no zero interference claim",
   "resource_pressure_observed": "no own warning/swap/PSI stop; neighbor comparable phase throughput unknown",
   "auxiliary_deviation": "first C2 small test used stale CPU0 instead of audited CPU13, ended/cleared; retest dynamically selected CPU16; formal stages independently re-audited",
@@ -465,5 +478,7 @@
     "initial integer-key metadata pretest (before C1 commit)",
     "first C2 floating equality assertion;15 other tests passed; corrected without changing gate"
   ],
-  "formal_implementation_replays": 0
+  "formal_implementation_replays": 0,
+  "formal_numeric_queue_completed_utc": "2026-09-30T07:10:32.482089+00:00",
+  "final_stop_reason": "AUTHORIZED_QUEUE_COMPLETED; no further same-ray profiles or solver work"
 }

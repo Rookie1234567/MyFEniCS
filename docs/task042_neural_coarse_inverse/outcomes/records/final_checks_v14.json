@@ -1,0 +1,114 @@
+{
+  "schema": "task042.final-checks.v14",
+  "utc": "2026-09-30T08:19:39.292777+00:00",
+  "formal_numerical_source": "87940891c12ccdec35fca39cd453ab9a29eeeda5",
+  "committed_focused_checks_source": "c98e8fa8d6bc60e0f8af2805a070295f176c7faf",
+  "clean_at_check_launch": true,
+  "focused_tests_passed": 22,
+  "test_worker_log": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v14/committed_final_checks/worker.log",
+    "sha256": "cba902c30e8f28b109a6bb427d2eaed94c0b447e7d9725f636bf4cba239d04c4"
+  },
+  "supervised_summary": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v14/committed_final_checks/summary.json",
+    "sha256": "a4aef57b537076095031a3843d36c7528aac407a89d0f48a764f17893043329e",
+    "elapsed_seconds": 7.677469637943432,
+    "RSS_peak_bytes": 515821568,
+    "own_swap_peak_bytes": 0,
+    "descendants_cleared": true
+  },
+  "raw_checker": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v14/committed_checker_result.json",
+    "sha256": "dfb1bc0ed0d49c52a48f5c93a2ed9db4dc7b61b29d6a1d22794a349e0cac5227",
+    "output": {
+      "status": "EVIDENCE_CONSISTENT",
+      "mismatches": [],
+      "decoder_qualified": true,
+      "state_identity": {
+        "ORIGIN": true,
+        "TRIAL_4": true,
+        "TRIAL_3": true,
+        "TRIAL_2": true,
+        "TRIAL_1": true,
+        "TRIAL_0": true,
+        "NEW_S_2p0": true,
+        "NEW_S_4p0": true
+      },
+      "retained_Qc_identity": {
+        "ORIGIN": {
+          "qualified": true,
+          "actual_Qc_relative": 0.0,
+          "original_action_calls": 0,
+          "Q_sha256": "a60fa21eae281049db72f3b27989f31f2a9d0fdd89820e35a3011c05c23dfc36"
+        },
+        "NEW_S_4p0": {
+          "qualified": true,
+          "actual_Qc_relative": 0.0,
+          "original_action_calls": 0,
+          "Q_sha256": "d6d445ec15aab4845e715687de95f361e4f6e7cf04673b19576ef1e6562f1c91"
+        }
+      },
+      "strict_same_discrete": {
+        "V13_ORIGIN": false,
+        "V13_ACCEPTED": false,
+        "ORIGIN": false,
+        "TRIAL_4": false,
+        "TRIAL_3": false,
+        "TRIAL_2": false,
+        "TRIAL_1": false,
+        "TRIAL_0": false,
+        "NEW_S_2p0": false,
+        "NEW_S_4p0": false
+      },
+      "physical_qualified_candidates": 0,
+      "saved_statuses_not_trusted": true,
+      "micro_qualified": false,
+      "global_p4_factor_allowed": false,
+      "comparison_margin_observed_basis": 8.985839294872733e-08,
+      "new_reference_native_scalar": "not persisted by reused verifier; no candidate qualified; old REF7 qualification remains bound"
+    }
+  },
+  "checked_modules_unchanged_since_C3": {
+    "src/solvers/orthonormal_trace_reprofile.py": "80096b0de7a0b28702ff5a5a4b61eaaee591ac4e386e49e6b61951b0a6f8d875",
+    "src/solvers/orthonormal_trace_study.py": "944bf3e1feb237676e4e175ab0a3df40e63dc2851d8cd9ed1941e70ff54ca0b5",
+    "src/solvers/orthonormal_trace_window.py": "f62b26496ecf5107b2ab1960311d4fca4873f1935654a22a98f127dc07008f1c",
+    "src/io/orthonormal_trace_reprofile.py": "b2f111a9717f1f11609b36e8d24f83fe76cb6ac9dd46e20990b73c2599850c64",
+    "src/runners/orthonormal_trace_reprofile.py": "e8aee70f0ec7ff3f5dbc4b612e375c096d6c5e624b2e73a56ebec31271e4d867",
+    "src/io/orthonormal_trace_evidence_check.py": "c163e8616d55ecda2a9bcab3b8802366afa67cbffc02ea6bde86233cd6d6f512",
+    "src/test/test_task042_v14_orthonormal.py": "eea30d237d9c2ebade36e6abf76e406f085f6c2f0982cb92665f7062d41be346",
+    "src/test/test_task042_v14_checker.py": "8a1a260510af870b69fec1b0cd926b1d455677ab317ada582ce63896f0ad9c1b",
+    "src/test/test_task042_metadata_writer.py": "eac8c7083a0022cfe85228138b09d3a010ac3461b80e4c758b930b88eaa6bfa6"
+  },
+  "own_final_process_check": {
+    "scope": "native /proc cwd equals exact NN-Lab; never neighboring worktree",
+    "own_control_processes": [
+      {
+        "pid": 825292,
+        "argv": [
+          "/bin/bash",
+          "-c",
+          "source scripts/activate_task042.sh pure\npython tmp/task042/v14/finalize_records.py\npython tmp/task042/v14/check_static.py\ngit diff --check\ngit status --short"
+        ],
+        "formal_or_bounded_worker": false
+      },
+      {
+        "pid": 825338,
+        "argv": [
+          "python",
+          "tmp/task042/v14/finalize_records.py"
+        ],
+        "formal_or_bounded_worker": false
+      }
+    ],
+    "formal_or_bounded_workers_remaining": 0,
+    "inaccessible_cwd_entries": 576,
+    "independent_supervisor_records_all_descendants_cleared": true,
+    "own_lock_available": true,
+    "lock_deleted_or_replaced": false,
+    "neighbor_signals_or_settings_changed": false
+  },
+  "numerical_replay_for_document_changes": 0,
+  "new_reference_native_scalar": "NOT_PERSISTED by reused verifier; no invented value or replay",
+  "publication_record": "publication_checks_v14.json",
+  "final_changes_only": "compact publication/test/cost records; unchanged checked code and documents"
+}

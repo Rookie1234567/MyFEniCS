@@ -271,10 +271,10 @@
       "control_characters": []
     }
   ],
-  "checked_v14_JSON_files": 12,
-  "journal_rows": 69,
-  "local_source_sha": "4efc94aff427bfbc6d77852ddfe4cc55bff9fd34",
-  "current_git_status": " M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042_neural_coarse_inverse/README.md\n M docs/task042_neural_coarse_inverse/outcomes/changed_files.md\n M docs/task042_neural_coarse_inverse/outcomes/summary.md\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n?? docs/task042_neural_coarse_inverse/outcomes/orthonormal_trace_reprofile_v14.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/basis_sensitivity_v14.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v14.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/channel_observables_v14.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/decoder_checks_v14.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/legacy_body_preservation_v14.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/plan_and_input_identity_v14.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/profile_points_v14.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/progress_journal_v14.jsonl\n?? docs/task042_neural_coarse_inverse/outcomes/records/protected_history_v14.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v14.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v14.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v14.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v14.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/selected_fields_v14.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v14.json\n?? docs/task042_neural_coarse_inverse/response_v14.md\n",
+  "checked_v14_JSON_files": 13,
+  "journal_rows": 70,
+  "local_source_sha": "c98e8fa8d6bc60e0f8af2805a070295f176c7faf",
+  "current_git_status": " M docs/task042_neural_coarse_inverse/outcomes/records/progress_journal_v14.jsonl\n M docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v14.json\n M docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v14.json\n M docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v14.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/final_checks_v14.json\n",
   "compileall": "PASS",
   "bash_activation_syntax": "PASS",
   "diff_check": "PASS",
