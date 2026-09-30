@@ -1,5 +1,300 @@
 {
   "schema": "task42extra.render-check.v6",
-  "status": "PENDING_RENDERED_VIEW",
-  "scope": "Review V5 and necessary new V6 pages only; structure checks do not qualify visual review"
+  "status": "GITHUB_RENDERED_VIEW_PASS_DOM_AND_SAMPLED_VISUAL",
+  "published_commit": "6f00f0dfc9a744067616f597995dadcbac9d6a86",
+  "raw_directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v6_published",
+  "raw_DOM_sha256": "36c2777b51230c620d49096ad6726cd0dbb013cd91ddb47a0dd235f37af4b546",
+  "screenshots_hashed": 38,
+  "pages": [
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/6f00f0dfc9a744067616f597995dadcbac9d6a86/docs/task042extra_feinn_5nm/review_report_v5.md",
+      "git_blob_sha": "bc0612b245570b345f6421fe7ef4e67649b24822",
+      "heading": "entire task document",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/review_report_v5.md at 6f00f0dfc9a744067616f597995dadcbac9d6a86 · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 3,
+      "columns": [
+        4,
+        2,
+        2
+      ],
+      "math": 4,
+      "screenshots": [
+        {
+          "name": "00_top.png",
+          "sha256": "7c31662e7b6ce9fc0752fddb2d85556fd34bfb8ca29596618e2efa4006ca5575"
+        },
+        {
+          "name": "00_table_00.png",
+          "sha256": "e62051646d7227dc45b8a1a8013c23eb813fc9f324615e32a087457df44e2bac"
+        },
+        {
+          "name": "00_table_01.png",
+          "sha256": "17a8eca207d5e918dc9a6d6023447f2bac183257c7609136ac15583eeed3b980"
+        },
+        {
+          "name": "00_table_02.png",
+          "sha256": "6adcfe2d89e229b961bb4d429792b818a50f55c88875b6a1c5a44b9fcaceef49"
+        },
+        {
+          "name": "00_math-renderer_00.png",
+          "sha256": "e96198c8e6a1a5438fe765ef27bb5fd48dbc031f76fd9da89a641b500fda6464"
+        },
+        {
+          "name": "00_math-renderer_01.png",
+          "sha256": "7045c9a3b29d67fa55f2fb969b4209756cf5bb670de5f805f8980accc588033b"
+        },
+        {
+          "name": "00_math-renderer_02.png",
+          "sha256": "5a7988585cc48b76d26414f8c5659a3c9c94241882f87f9bc5ca05c967cb3410"
+        },
+        {
+          "name": "00_math-renderer_03.png",
+          "sha256": "c8ac279990c421c37ce0d66866166037aee734662ce84131b53ec709d005064f"
+        }
+      ],
+      "visual_review": "sampled screenshots only"
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/6f00f0dfc9a744067616f597995dadcbac9d6a86/docs/task042extra_feinn_5nm/response_v6.md",
+      "git_blob_sha": "621d9207ec614fb852f10ef132c733781703eace",
+      "heading": "entire task document",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/response_v6.md at 6f00f0dfc9a744067616f597995dadcbac9d6a86 · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 4,
+      "columns": [
+        2,
+        3,
+        5,
+        4
+      ],
+      "math": 1,
+      "screenshots": [
+        {
+          "name": "01_top.png",
+          "sha256": "d75c17c81010f23c4d53d9546db38743f17ee5e35cf1085cbdf3aab0bd57ddfe"
+        },
+        {
+          "name": "01_table_00.png",
+          "sha256": "75ffe4dfd72898d942f39dcf7c0961b99e251f9acb78aa119b3bd2a801c3f03a"
+        },
+        {
+          "name": "01_table_01.png",
+          "sha256": "5aeb5141b5b592f14c55fd70eb8f0479504b116ab6ed1026bc74f5b2c4159d1a"
+        },
+        {
+          "name": "01_table_02.png",
+          "sha256": "d2f2b15702bd066183d3a340022bf496cf2bcd148a3c5ae4d9a6a74e648b8587"
+        },
+        {
+          "name": "01_table_03.png",
+          "sha256": "1438bd4d9a8d5dd1574ea57d3b4e7bcd973233b3fd7978c6a1af4c6d650917c1"
+        },
+        {
+          "name": "01_math-renderer_00.png",
+          "sha256": "b70fd4a95183a88bfc5fe53ea5516632f1669743d08a446eb38abbdfd1028c5f"
+        }
+      ],
+      "visual_review": "sampled screenshots only"
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/6f00f0dfc9a744067616f597995dadcbac9d6a86/docs/task042extra_feinn_5nm/outcomes/frozen_feature_residual_v6.md",
+      "git_blob_sha": "c185609f65c927f1ac540af7d53fe50b903c5193",
+      "heading": "entire task document",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/outcomes/frozen_feature_residual_v6.md at 6f00f0dfc9a744067616f597995dadcbac9d6a86 · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 7,
+      "columns": [
+        2,
+        3,
+        5,
+        6,
+        4,
+        5,
+        5
+      ],
+      "math": 2,
+      "screenshots": [
+        {
+          "name": "02_top.png",
+          "sha256": "103394dca475bdd87dbb0216ee9609e5194c11d67e9b6ab339e8b9982c58aef7"
+        },
+        {
+          "name": "02_table_00.png",
+          "sha256": "6b28c7659b010ea622c318298ff8f9b1b2bc35c662aa3137460c9de4b21e41db"
+        },
+        {
+          "name": "02_table_01.png",
+          "sha256": "4991409336090ff18969727a420068a09de735df3ccd78be3f894c57fb33cd16"
+        },
+        {
+          "name": "02_table_02.png",
+          "sha256": "37896c850484d71efa8e3f8eaca3eb3a964a95ec1c348772c399614aa0892b7b"
+        },
+        {
+          "name": "02_table_03.png",
+          "sha256": "e906e758e714e2569a4dfce528f1117c0b555be9252b37993da55c2d6fe48082"
+        },
+        {
+          "name": "02_table_04.png",
+          "sha256": "34802e797e16cd60a72935ddb921f59cd2f48f8f4965e99375cbb2b5f4724966"
+        },
+        {
+          "name": "02_table_05.png",
+          "sha256": "badee32844c8ee8620d2aee022aaac8e99aed6cc02ef0f1f0c3ee008042a17d8"
+        },
+        {
+          "name": "02_table_06.png",
+          "sha256": "a4001da50fe1c7f5a68ba5cc5940f0262fc9b15d62db0f8b904ade6dd5484fe2"
+        },
+        {
+          "name": "02_math-renderer_00.png",
+          "sha256": "c593e90e24bff8891b1cfda8798cec1678f46d80d3663867689a61f6f1ae4388"
+        },
+        {
+          "name": "02_math-renderer_01.png",
+          "sha256": "3bf6c0f3023e439b46376b1d822a210a9dd45af0725959f16170ce4f7cd43311"
+        }
+      ],
+      "visual_review": "sampled screenshots only"
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/6f00f0dfc9a744067616f597995dadcbac9d6a86/docs/task042extra_feinn_5nm/outcomes/summary.md",
+      "git_blob_sha": "7eedbf57137d9984bf22ffd1ef926db3106a4939",
+      "heading": "Task42extra Review V5 后续：V6 固定特征原方程残差下限",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/outcomes/summary.md at 6f00f0dfc9a744067616f597995dadcbac9d6a86 · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 3,
+      "columns": [
+        5,
+        4,
+        5
+      ],
+      "math": 0,
+      "screenshots": [
+        {
+          "name": "03_top.png",
+          "sha256": "9ac404eb3d383addd5b4416a717303ccdc0b5ccffd79983db5e8243097ef793e"
+        },
+        {
+          "name": "03_table_00.png",
+          "sha256": "84b50223a7688a013a4f7c624b2534fa6dc2072fe31d0b8b09c57bc8f86d3281"
+        },
+        {
+          "name": "03_table_01.png",
+          "sha256": "da01e1bec22bf94d816881142551ba569c4791f47864966b118f8d6fbf8c7c10"
+        },
+        {
+          "name": "03_table_02.png",
+          "sha256": "d25b2de7f6650672c0c2dfc4da85ae7be7f7c9fccde8db998e3ca0449ef71967"
+        }
+      ],
+      "visual_review": "sampled screenshots only"
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/6f00f0dfc9a744067616f597995dadcbac9d6a86/docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+      "git_blob_sha": "c10c50040c01ef175c5d269e7e4e1b7398019894",
+      "heading": "Review V5 后续 V6 定向资格",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/outcomes/test_summary.md at 6f00f0dfc9a744067616f597995dadcbac9d6a86 · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 1,
+      "columns": [
+        3
+      ],
+      "math": 0,
+      "screenshots": [
+        {
+          "name": "04_top.png",
+          "sha256": "ee60fa1ae0a8795ba0dee3fb3361394bbfe0d918922c7d3901030eefd2c297b6"
+        },
+        {
+          "name": "04_table_00.png",
+          "sha256": "ee60fa1ae0a8795ba0dee3fb3361394bbfe0d918922c7d3901030eefd2c297b6"
+        }
+      ],
+      "visual_review": "sampled screenshots only"
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/6f00f0dfc9a744067616f597995dadcbac9d6a86/docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+      "git_blob_sha": "5ff33b8bc19c59fb660e721a6e06455616ea78a9",
+      "heading": "Review V5 后续 V6 文件级边界",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/outcomes/changed_files.md at 6f00f0dfc9a744067616f597995dadcbac9d6a86 · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 1,
+      "columns": [
+        3
+      ],
+      "math": 0,
+      "screenshots": [
+        {
+          "name": "05_top.png",
+          "sha256": "c50d2e21c114d345842c63c694d81b48a3b8af45b91d2240988c2ace9847824b"
+        },
+        {
+          "name": "05_table_00.png",
+          "sha256": "c50d2e21c114d345842c63c694d81b48a3b8af45b91d2240988c2ace9847824b"
+        }
+      ],
+      "visual_review": "sampled screenshots only"
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/6f00f0dfc9a744067616f597995dadcbac9d6a86/docs/development_progress.md",
+      "git_blob_sha": "d3fa3596fa24dbb21095168bbc2b127fa3eab66a",
+      "heading": "2026-09-30 Task42extra V6：冻结特征原方程残差下限",
+      "title": "MyFEniCS/docs/development_progress.md at 6f00f0dfc9a744067616f597995dadcbac9d6a86 · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 2,
+      "columns": [
+        5,
+        4
+      ],
+      "math": 0,
+      "screenshots": [
+        {
+          "name": "06_top.png",
+          "sha256": "30085be94384c5f65a0d564b7172b2452cf4ad365dbbff1337f7f38c684965ed"
+        },
+        {
+          "name": "06_table_00.png",
+          "sha256": "e9d1990b2a3e87c48da7cf3a512234ecdc2ac695da7a2a94a6939d4eb3b5d48e"
+        },
+        {
+          "name": "06_table_01.png",
+          "sha256": "a1fc42e1a0854e05b1b6313ee954141d7bf5f52f4a7bfa5927bc80c30c005de7"
+        }
+      ],
+      "visual_review": "sampled screenshots only"
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/6f00f0dfc9a744067616f597995dadcbac9d6a86/docs/development_model_registry.md",
+      "git_blob_sha": "475462da8e69327a32243197b7ecc33b631e9bba",
+      "heading": "3.44.5 Task42extra Review V5 后续：固定特征残差诊断",
+      "title": "MyFEniCS/docs/development_model_registry.md at 6f00f0dfc9a744067616f597995dadcbac9d6a86 · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 2,
+      "columns": [
+        5,
+        4
+      ],
+      "math": 0,
+      "screenshots": [
+        {
+          "name": "07_top.png",
+          "sha256": "40051592aca2475335a0784cf7390fe460e5727d23a6dad50f4ed0ebe6755cba"
+        },
+        {
+          "name": "07_table_00.png",
+          "sha256": "f98997013e795a13fd8d87b4c4479190c07519c48820cf3b6ce58c08b12c87bf"
+        },
+        {
+          "name": "07_table_01.png",
+          "sha256": "eea0b004bc22354a0dc72cb6199f065bd540979d2e4055f57fbba2d40cf54b8b"
+        }
+      ],
+      "visual_review": "sampled screenshots only"
+    }
+  ],
+  "scope": "new Review V5 and V6/newly edited sections only; no historical batch rerender",
+  "actual_visual_sample_record": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v6_published/visual_samples.json",
+    "sha256": "c7e6b83308c7b75c73f273f14f34a776078ce7b3d5ada948d769fdc802d09427"
+  },
+  "actual_sampled_screenshots": [
+    "00_math-renderer_00.png",
+    "02_table_01.png",
+    "02_math-renderer_01.png",
+    "03_table_00.png"
+  ]
 }

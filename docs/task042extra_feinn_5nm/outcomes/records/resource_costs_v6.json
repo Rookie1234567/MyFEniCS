@@ -3,12 +3,12 @@
   "previous_conservative_seconds": 44815.22461795143,
   "old_lost_attempt_charged_seconds": 3284,
   "V6_formal_seconds": 114.20814009197056,
-  "V6_auxiliary_seconds": 23.569067096104845,
+  "V6_auxiliary_seconds": 112.38389394106343,
   "direct_current_and_final_allowance_seconds_conservative": 120,
-  "V6_batch_seconds": 257.7772071880754,
-  "V6_remaining_seconds": 3342.2227928119246,
-  "original_total_conservative_seconds": 45073.00182513951,
-  "original_16h_remaining_seconds": 12526.998174860491,
+  "V6_batch_seconds": 346.592034033034,
+  "V6_remaining_seconds": 3253.407965966966,
+  "original_total_conservative_seconds": 45161.81665198447,
+  "original_16h_remaining_seconds": 12438.183348015533,
   "formal_stages": {
     "v6_operator_readout_checks": {
       "directory": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v6_operator_readout_checks_20260930T100855003854Z",
@@ -267,6 +267,26 @@
       "descendants_cleared": true
     },
     {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v6_render_20260930T102137567383Z",
+      "summary_sha256": "0593896e9bf40d42c3cd3243e91bf6a1b4b96d689439df940e56592b8a861357",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "charged_seconds": 85.4943025209941,
+      "peak_simultaneous_tree_RSS_bytes": 2082050048,
+      "own_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v6_render_finalize_20260930T102400429808Z",
+      "summary_sha256": "18abf43a118d8bd9ceccb0ceeb2dae2f6e0e01674e6d72df4874688fe08624ba",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "charged_seconds": 3.3205243239644915,
+      "peak_simultaneous_tree_RSS_bytes": 89169920,
+      "own_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
       "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v6_t0_final_20260930T100755948201Z",
       "summary_sha256": "dec36b9b0c1cda9ca6c240ec083f7a2d816c4efc36ddab2fa9cb048d45324244",
       "classification": "COMPLETED",
@@ -298,7 +318,7 @@
     }
   ],
   "numerical_peak_RSS_bytes": 1290457088,
-  "all_supervised_peak_RSS_bytes": 1290457088,
+  "all_supervised_peak_RSS_bytes": 2082050048,
   "own_sampled_swap_zero": true,
   "management_server_launch_samples": [
     {
@@ -350,5 +370,15 @@
   ],
   "historical_Gram_and_reference_costs_preserved": true,
   "timer_scope": "phase walls sum; nested G/QR/SVD/storage/supervisor timers are included and never added again",
-  "cutoff": "all completed own V6 summaries plus conservative direct/current/final 120s allowance"
+  "cutoff": "all completed own V6 summaries plus conservative direct/current/final 120s allowance",
+  "V6_T0_cumulative_seconds": 31.18476395099424,
+  "V6_T0_limit_seconds": 600,
+  "V6_T0_budget_pass": true,
+  "total_operator_column_counts": {
+    "A": 206,
+    "AH": 3,
+    "native_audit": 4,
+    "G": 16
+  },
+  "component_nested_timings": "NOT_RETAINED; all load/hash/action/QR/SVD/save/audit costs included in complete launcher wall; no replay to recover timers"
 }

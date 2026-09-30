@@ -11,6 +11,7 @@
   "numerical_reruns_for_publication": 0,
   "probe_lookup": "case-sensitive raw route filename failed; corrected to load_index; no duplicate run",
   "static_checks": "Ruff compileall diff PASS",
-  "render_status": "PENDING_RENDERED_VIEW",
-  "direct_helper_cost_included_in_conservative_120s_allowance": true
+  "render_status": "GITHUB_RENDERED_VIEW_PASS_DOM_AND_SAMPLED_VISUAL",
+  "direct_helper_cost_included_in_conservative_120s_allowance": true,
+  "published_document_commit": "6f00f0dfc9a744067616f597995dadcbac9d6a86"
 }
