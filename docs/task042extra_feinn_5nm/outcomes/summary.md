@@ -9,10 +9,23 @@
 | P0 Gram 成本 | setup `96.880 s`、11 Gsolve `3.466 s`；A/Aᴴ `11/4`；树峰 `1,038,958,592 B`、自身swap0 | 仅 P0 进程一个研究用稀疏因子，结束释放 |
 | P1 梯度/事务资格 | 三条非零实方向、batch1/8、合成复数目标与回滚通过 | fit 闭包只用 G matvec和完整矩 VJP，无 Gsolve/A/Aᴴ |
 | P1 唯一拟合 | `EXECUTION_SESSION_LOST_NO_FINAL_CHECKPOINT`；观察825 closure，仅Adam500参数保存 | 受监督会话意外消失；没有final/last_trial/optimizer状态，不重启训练；不是 PDE-only 解 |
-| P2 独立场/原方程/功率审核 | `PENDING_RETAINED_SNAPSHOT_COMPARE` | 只审核Adam500留存态并复用V1 p3参考，不再MUMPS求解；不得当完整候选终态 |
+| P2 独立场/原方程/功率审核 | 留存态compare-only完成；严格Gate均失败 | 只审核Adam500并复用V1 p3参考，新MUMPS计数0；不得当完整候选终态 |
 | p4 / 目标尺寸5nm / 0.7nm | `not_run` | 本批无放大授权 |
 
-中间 Adam 日志的 `parameter_update_norm` 在更新前采样，0 不是接受更新幅度；每25 closure 的真实更新范数标 `NOT_RETAINED`，不重放唯一训练补历史。第817次已提交参数审核只留有`E_G=0.0603363`和原残差`8.19881`，相应参数未保存，不能用于P2；唯一可重建的Adam500态为`E_G=0.200821`、native`14.26346`。失联训练采样时长至少3097.314s、保守按3284s计入本批账，树RSS峰697479168B、自身swap0。[中断身份和账](records/fit_interruption_v3.json)。区域误差和独立审核待留存态P2完成。
+中间 Adam 日志的 `parameter_update_norm` 在更新前采样，0 不是接受更新幅度；每25 closure 的真实更新范数标 `NOT_RETAINED`，不重放唯一训练补历史。第817次已提交参数审核只留有`E_G=0.0603363`和原残差`8.19881`，相应参数未保存，不能用于P2；唯一可重建的Adam500态为`E_G=0.200821`、native`14.26346`。失联训练采样时长至少3097.314s、保守按3284s计入本批账，树RSS峰697479168B、自身swap0。[中断身份和账](records/fit_interruption_v3.json)。
+
+| 同一 M5、同p3参考 / measured | 准确参考 | Adam500留存网络态 | 严格资格 |
+| --- | ---: | ---: | --- |
+| G场误差 | 0 | 0.200821 | 完整拟合研究正阈值0.001；缺final不得作最终分类 |
+| 原native / augmented残差 | 约6.79e-12 | 14.263463 / 14.263463 | 各≤1e-6，未通过 |
+| 散射E L2 / scaled-curl相对差 | 0 | 0.162013 / 0.201705 | 各≤1e-4，未通过 |
+| total E L2 / scaled-curl相对差 | 0 | 0.111101 / 0.137924 | 各≤1e-4，未通过 |
+| 40级原total / 真出射 / scattered复幅相对差 | 0 | 0.137244 / 0.0658706 / 0.243664 | 各≤1e-4，未通过 |
+| R/T/A_balance/A_volume | 0.812426/0.0324624/0.155111/0.155111 | 0.828087/0.0419968/0.129916/0.171617 | 功率差与体吸收、能量均未过；候选仅diagnostic |
+| `R00_s/R00_p/R00_total` | 0.812257/约1.26e-26/0.812257 | 0.806827/0.00138799/0.808215 | 单列极化，避免“R00”歧义 |
+| `abs(R+T+A_volume−1)` / 最大逐通道功率差 | 约2.98e-13 / reference | 0.0417012 / 0.0130081 | 限值1e-5 / 1e-6，未通过 |
+
+完整网络参数确实产生保存的全部FE系数，q30/q15差`2.85841e-12`、无求积漂移。六点复E/H、全40有序复通道及其分母、air/substrate/grating/interface-near双侧单元的场积分与cell集合hash见[完整诊断](representation_diagnostic_v3.md)和[独立Gate](records/gate_decisions_v3.json)。审核source为`7c2bffe4dff7b2c9a918ade6ec02a45e168b4890`；它不生成新的准确参考或MUMPS求解，`pde_only_solver_qualified=false`、`official_candidate_results=false`。快照未达研究阈值，但完整拟合最终参数已丢失，最终表示能力保持`INTERRUPTED_FIT_NO_FINAL_STATE`。
 
 # Task42extra Review V1 后续：V2 固定尺度诊断
 

@@ -513,6 +513,9 @@ def main():
             )
         power = candidate["port"]
         ref_power = reference["port"]
+        for item in (power, ref_power):
+            if not close(item["R00_s"] + item["R00_p"], item["R00_total"]):
+                raise ValueError("R00 polarization inventory does not sum")
         volume = candidate["volume"]["A_volume_total"]
         ref_volume = reference["volume"]["A_volume_total"]
         deltas = {
@@ -696,6 +699,9 @@ def main():
                 "relative"
             ],
             R=power["R_total"],
+            R00_s=power["R00_s"],
+            R00_p=power["R00_p"],
+            R00_total=power["R00_total"],
             T=power["T_total"],
             A_balance=power["A_balance"],
             A_volume=volume,
@@ -732,6 +738,25 @@ def main():
             key: reference[raw_key] for key, raw_key in sample_fields.items()
         }
         gate["power_differences"] = deltas
+        gate["port_power_observables"] = {
+            role: {
+                key: item["port"][key]
+                for key in (
+                    "R00_s",
+                    "R00_p",
+                    "R00_total",
+                    "R_total",
+                    "T_total",
+                    "A_balance",
+                )
+            }
+            | {"A_volume": item["volume"]["A_volume_total"]}
+            for role, item in (("candidate", candidate), ("reference", reference))
+        }
+        gate["ordered_per_channel_power"] = {
+            "candidate": candidate["ordered_per_channel_power"],
+            "reference": reference["ordered_per_channel_power"],
+        }
     write("gate_decisions_v3.json", gate)
     path = RECORDS / "representation_comparison_v3.csv"
     if comparison_row is None:
@@ -742,7 +767,9 @@ def main():
             pde_only_solver_qualified=False,
         )
     with path.open("w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=list(comparison_row))
+        writer = csv.DictWriter(
+            f, fieldnames=list(comparison_row), lineterminator="\n"
+        )
         writer.writeheader()
         writer.writerow(comparison_row)
     print(

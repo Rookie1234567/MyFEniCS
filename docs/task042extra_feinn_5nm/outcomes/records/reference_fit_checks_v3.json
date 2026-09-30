@@ -1,0 +1,111 @@
+{
+  "schema": "task42extra.fit-checks.v3",
+  "source": "d9e5a7d00a1cac82390b058384e0cd9193b472d4",
+  "status": "REFERENCE_FIT_CHECKS_PASS",
+  "synthetic_error": 3.011967088425503e-11,
+  "batch": {
+    "c_relative": 4.2225189812796006e-16,
+    "loss_relative": 0.0,
+    "gradient_relative": 7.955728627034701e-16
+  },
+  "finite_differences": [
+    {
+      "direction": 0,
+      "analytic": 0.0877478185538908,
+      "observations": [
+        {
+          "h": 0.0001,
+          "value": 0.08774781872944448,
+          "relative": 2.000661504697444e-09
+        },
+        {
+          "h": 1e-05,
+          "value": 0.08774781857234791,
+          "relative": 2.1034267454025079e-10
+        },
+        {
+          "h": 1e-06,
+          "value": 0.0877478184557745,
+          "relative": 1.1181621889311919e-09
+        }
+      ]
+    },
+    {
+      "direction": 1,
+      "analytic": 0.750416411377298,
+      "observations": [
+        {
+          "h": 0.0001,
+          "value": 0.750416411376964,
+          "relative": 4.450263623556862e-13
+        },
+        {
+          "h": 1e-05,
+          "value": 0.750416411382515,
+          "relative": 6.952205383462782e-12
+        },
+        {
+          "h": 1e-06,
+          "value": 0.7504164111771239,
+          "relative": 2.6675069532519983e-10
+        }
+      ]
+    },
+    {
+      "direction": 2,
+      "analytic": -0.0049274542195187005,
+      "observations": [
+        {
+          "h": 0.0001,
+          "value": -0.004927454227421357,
+          "relative": 1.6038011669873588e-09
+        },
+        {
+          "h": 1e-05,
+          "value": -0.004927454239078699,
+          "relative": 3.96959519352279e-09
+        },
+        {
+          "h": 1e-06,
+          "value": -0.004927454333447656,
+          "relative": 2.3121261122619133e-08
+        }
+      ]
+    }
+  ],
+  "transaction_exception_restored": true,
+  "label_isolation": {
+    "reference_state": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_e3_reference_20260929T180549681297Z/reference_state.npz",
+      "sha256": "0c3c0574a8c1eddcadfb56268e00c08e55d5cb15d44c0c76e873fcea0c467ff7"
+    },
+    "source_sha": "7a79b3007d92a9b699e0451d0c8b6dfdacee7ad9",
+    "port_recovery_relative": 4.4596663759104176e-13,
+    "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+    "gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+    "mesh_sha256": "78e294e0337292d2750f587ddf394aaa868bd726f8b1104d4eae6a68db039086",
+    "cell_tags_sha256": "4c3e6d3a6dedeba8a995bb69487c52e25ae41528ee03bb237d6e2edb1643e65b",
+    "mode_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e",
+    "material_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+    "independent_master_count": 31968,
+    "slave_count": 2082,
+    "reference_used_for_training": true,
+    "pde_only_solve": false,
+    "production_initialization_allowed": false,
+    "data_role": "REFERENCE_EXPOSED_DIAGNOSTIC_ONLY",
+    "moments_sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e",
+    "background_sha256": "d8f4578545d2dfdc92d6121ac3aca85a17ef5056bd2e37128b3b192cb9ef9a0e",
+    "masters_sha256": "b2a990df4805c82816a71220c3331d43585f1aa051883671743dcb7e3d9360c6",
+    "parameter_initialization_sha256": "11d8cd454281fab85cfc59f04cee6aa7b864157d9f98513830947a0223d64103",
+    "reference_c_sha256": "b0840a6a73255a6a85611e6002ac620ab16db2e375832704dac211b5e80bb38e"
+  },
+  "old_pde_only_routes_unchanged": true,
+  "no_Gsolve": true,
+  "no_Gram_factor": true,
+  "no_A_or_AH": true,
+  "reference_used_for_training": true,
+  "pde_only_solve": false,
+  "production_initialization_allowed": false,
+  "data_role": "REFERENCE_EXPOSED_DIAGNOSTIC_ONLY",
+  "worker_elapsed_seconds": 27.832163728075102
+}

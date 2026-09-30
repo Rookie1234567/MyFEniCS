@@ -1,0 +1,7 @@
+{
+  "schema": "task42extra.render-check.v3",
+  "status": "PENDING_PUBLICATION_RENDER",
+  "review_commit": "a668fb20dcf49f105cc4c7dfeeda145ee492ae14",
+  "scope": "new Review V2 and V3/newly edited sections only",
+  "note": "Actual GitHub rendered view is checked only after the V3 documents have a published branch commit. This record must be replaced with the browser result or a truthful failure before final delivery."
+}

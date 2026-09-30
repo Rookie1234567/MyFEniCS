@@ -1623,10 +1623,10 @@ V3 沿用3.44相同 M5、384hex/p3/q15、31968个独立复FE系数、40端口、
 | --- | --- | --- |
 | P0 已保存 FREE / scaled FREE | E_G `0.991760/0.954121`，native `0.596914/0.607772`，原负梯度与参考修正余弦 `0.02306/0.00508` | `A(e)=r-r_ref`最大差`3.45e-13`；Gram factor一次setup`96.880s`、11 solve`3.466s`；P0树峰`1,038,958,592B`/own swap0 |
 | P1 唯一 FEINN-REFERENCE-FIT-G | `EXECUTION_SESSION_LOST_NO_FINAL_CHECKPOINT`；观察825 closure，最后保留Adam500参数 | reference-exposed、pde-only=false、production-initialization=false；第817次审核数值有日志但参数未留存，不续训 |
-| P2 独立完整FE场复验 | `PENDING_RETAINED_SNAPSHOT_COMPARE` | 仅审核Adam500保存态；V1同p3参考复用、不再MUMPS；不能自动升级 official solver pass |
+| P2 独立完整FE场复验 | Adam500态E_G`0.200821`、散射E L2/curl`0.162013/0.201705`、native`14.263463`、能量闭合`0.0417012` | 只审核保存态；V1同p3参考复用，新MUMPS0；严格Gate未过，official/pde-only固定false |
 | p4、目标尺寸5nm、0.7nm | `not_run` | 本批未获授权；原容量阻塞和未资格化状态保留 |
 
-P0 的残差与场误差显著不一致，两个 FREE 终态的原负梯度方向各一次解析最优实步长几乎不改变场；这不是算子全局条件数。P1 的逐25 closure Adam `parameter_update_norm` 在更新前采样，0 不代表真实接受更新；该中间遥测标 `NOT_RETAINED`，不重放训练。唯一训练在执行会话消失时失去最终参数，实测采样至少3097.314s、保守计费3284s、树RSS峰697479168B/own swap0；恢复检查只读取Adam500存盘态，最终表示分流保持未解决。严格原方程/场/功率和资源全账待快照独立审核。[Response V3](task042extra_feinn_5nm/response_v3.md)、[详细诊断](task042extra_feinn_5nm/outcomes/representation_diagnostic_v3.md)、[中断](task042extra_feinn_5nm/outcomes/records/fit_interruption_v3.json)。
+P0 的残差与场误差显著不一致，两个 FREE 终态的原负梯度方向各一次解析最优实步长几乎不改变场；这不是算子全局条件数。P1 的逐25 closure Adam `parameter_update_norm` 在更新前采样，0 不代表真实接受更新；该中间遥测标 `NOT_RETAINED`，不重放训练。唯一训练在执行会话消失时失去最终参数，实测采样至少3097.314s、保守计费3284s、树RSS峰697479168B/own swap0；恢复检查只读取Adam500存盘态，最终表示分流保持未解决。留存态完整网络矩q30差`2.86e-12`，独立场/原方程/功率均未过；R/T/A_balance/A_volume=`0.828087/0.0419968/0.129916/0.171617`仅diagnostic。最终资源账、原40复通道及材料区误差见[Response V3](task042extra_feinn_5nm/response_v3.md)、[详细诊断](task042extra_feinn_5nm/outcomes/representation_diagnostic_v3.md)、[独立Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v3.json)。
 
 # 4. 今后新增模型的登记模板
 

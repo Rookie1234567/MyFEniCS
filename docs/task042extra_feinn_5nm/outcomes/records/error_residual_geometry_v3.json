@@ -1,0 +1,149 @@
+{
+  "schema": "task42extra.error-residual-geometry.v3",
+  "source": "d9e5a7d00a1cac82390b058384e0cd9193b472d4",
+  "data_role": "reference exposed offline diagnostic",
+  "status": "ERROR_RESIDUAL_GEOMETRY_COMPLETE",
+  "reference": {
+    "reference_state": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_e3_reference_20260929T180549681297Z/reference_state.npz",
+      "sha256": "0c3c0574a8c1eddcadfb56268e00c08e55d5cb15d44c0c76e873fcea0c467ff7"
+    },
+    "source_sha": "7a79b3007d92a9b699e0451d0c8b6dfdacee7ad9",
+    "port_recovery_relative": 4.4596663759104176e-13,
+    "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+    "gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+    "mesh_sha256": "78e294e0337292d2750f587ddf394aaa868bd726f8b1104d4eae6a68db039086",
+    "cell_tags_sha256": "4c3e6d3a6dedeba8a995bb69487c52e25ae41528ee03bb237d6e2edb1643e65b",
+    "mode_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e",
+    "material_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+    "independent_master_count": 31968,
+    "slave_count": 2082,
+    "reference_used_for_training": false,
+    "pde_only_solve": false,
+    "production_initialization_allowed": false,
+    "data_role": "REFERENCE_EXPOSED_DIAGNOSTIC_ONLY"
+  },
+  "d_ref": 984.610790300809,
+  "d_G": 0.0011981303656879406,
+  "reference_native_relative": 6.788836191983643e-12,
+  "states": {
+    "ZERO": {
+      "status": "MEASURED",
+      "state_source": "exact zero",
+      "error_residual_operation_relative": 3.058070103580635e-29,
+      "G_field_error": 1.0,
+      "G_dual_error_residual": 0.9999999999999171,
+      "native_relative": 1.0,
+      "original_dual_loss": 0.5,
+      "coefficient_gradient_norm": 55.11875610050992,
+      "negative_gradient_reference_correction_real_cosine": 0.001212676335438941,
+      "gradient_angle_status": "MEASURED"
+    },
+    "FREE-FE-DUAL": {
+      "status": "MEASURED",
+      "state_source": "saved committed checkpoint",
+      "error_residual_operation_relative": 3.444891383936665e-13,
+      "G_field_error": 0.9917596651710099,
+      "G_dual_error_residual": 0.45584885947412607,
+      "native_relative": 0.5969144472113995,
+      "original_dual_loss": 0.103899091341843,
+      "coefficient_gradient_norm": 0.6066316273925706,
+      "negative_gradient_reference_correction_real_cosine": 0.02305668715245914,
+      "gradient_angle_status": "MEASURED",
+      "single_real_step_witness": {
+        "status": "MEASURED_OFFLINE_NOT_SOLVER",
+        "t_star": 1.4461876914840937e-07,
+        "positive_denominator": 3048.804046543352,
+        "dual_loss": 0.1038990647318498,
+        "native_relative": 0.5969090680607516,
+        "G_field_error": 0.9917596650430011
+      }
+    },
+    "FREE-FE-DUAL-GRAM-DIAG": {
+      "status": "MEASURED",
+      "state_source": "saved committed checkpoint",
+      "error_residual_operation_relative": 3.363833138748481e-13,
+      "G_field_error": 0.9541206754381362,
+      "G_dual_error_residual": 0.4449837296064009,
+      "native_relative": 0.6077719287799421,
+      "original_dual_loss": 0.09900525980714023,
+      "coefficient_gradient_norm": 2.727092726975703,
+      "negative_gradient_reference_correction_real_cosine": 0.005078966632609751,
+      "gradient_angle_status": "MEASURED",
+      "single_real_step_witness": {
+        "status": "MEASURED_OFFLINE_NOT_SOLVER",
+        "t_star": 2.3712027422262645e-07,
+        "positive_denominator": 37578.13280078245,
+        "dual_loss": 0.09900437807128153,
+        "native_relative": 0.6069073806970338,
+        "G_field_error": 0.9541206694544423
+      }
+    },
+    "FEINN-DUAL": {
+      "status": "MEASURED",
+      "state_source": "saved committed checkpoint",
+      "error_residual_operation_relative": 1.8603145752751588e-13,
+      "G_field_error": 0.9989057752282225,
+      "G_dual_error_residual": 0.8102492909748856,
+      "native_relative": 1.1026449758943957,
+      "original_dual_loss": 0.32825195676263325,
+      "coefficient_gradient_norm": 53.32104248876361,
+      "negative_gradient_reference_correction_real_cosine": 0.0008238845322724555,
+      "gradient_angle_status": "MEASURED"
+    }
+  },
+  "actions": {
+    "A": 11,
+    "AH": 4,
+    "audit": 0,
+    "port_solve": 17
+  },
+  "Gram_factor": {
+    "label": "RESEARCH_ONLY_GLOBAL_RIESZ_FACTOR",
+    "c_source_sha256": "f885039b8880b5cc088c1a843e5027af9e5021f97668f4f5b025459d6d1033a5",
+    "library_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/ml/cholmod/f885039b8880b5cc088c1a843e5027af9e5021f97668f4f5b025459d6d1033a5.so",
+    "library_sha256": "6ac17fbb78b7a1009e06bf625cc44979fcf186500fa73de29a2d5ab0eb1a1d47",
+    "backend": "installed CHOLMOD int64 complex FP64 simplicial LLH/AMD",
+    "rows": 31968,
+    "nnz": 7336179,
+    "hermitian_relative": 8.087084937051904e-17,
+    "csr_payload_bytes": 146851456,
+    "rss_before_symbolic_bytes": 399093760,
+    "symbolic_seconds": 0.23117310204543173,
+    "symbolic": {
+      "symbolic_l_nnz": 18839705.0,
+      "symbolic_flops": 27589531225.0,
+      "cholmod_current_bytes": 91231456.0,
+      "cholmod_peak_bytes": 180160984.0,
+      "factor_allocated_nnz": 0.0,
+      "positive_pivots": 31968.0,
+      "status": 0.0
+    },
+    "factor_workspace_budget_bytes": 747384196,
+    "rss_after_symbolic_bytes": 458297344,
+    "prediction_kind": "symbolic fill plus conservative workspace reserve",
+    "numeric_seconds": 95.63237508805469,
+    "numeric": {
+      "symbolic_l_nnz": 18839705.0,
+      "symbolic_flops": 27589531225.0,
+      "cholmod_current_bytes": 544918864.0,
+      "cholmod_peak_bytes": 633592648.0,
+      "factor_allocated_nnz": 18839705.0,
+      "positive_pivots": 31968.0,
+      "status": 0.0
+    },
+    "rss_after_numeric_bytes": 939974656,
+    "setup_seconds": 96.88001827895641,
+    "rss_before_release_bytes": 819957760,
+    "rss_after_release_bytes": 227557376,
+    "solve_count": 11,
+    "solve_seconds": 3.4656262609642,
+    "max_solve_true_relative": 2.1456283999531994e-13
+  },
+  "Gram_setup_seconds": 96.88001827895641,
+  "Gram_solve_seconds": 3.4656262609642,
+  "worker_wall_seconds": 102.97432336094789,
+  "global_Maxwell_factor_created": false,
+  "no_parameter_updates": true,
+  "worker_elapsed_seconds": 103.29073826398235
+}

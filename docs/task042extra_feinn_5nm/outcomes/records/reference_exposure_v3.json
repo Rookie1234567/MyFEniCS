@@ -1,0 +1,30 @@
+{
+  "schema": "task42extra.reference-exposure.v3",
+  "data_role": "REFERENCE_EXPOSED_DIAGNOSTIC_ONLY",
+  "reference_used_for_training": true,
+  "pde_only_solve": false,
+  "production_initialization_allowed": false,
+  "V1_V2_blind_results_unchanged": true,
+  "reference_state": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_e3_reference_20260929T180549681297Z/reference_state.npz",
+    "sha256": "0c3c0574a8c1eddcadfb56268e00c08e55d5cb15d44c0c76e873fcea0c467ff7"
+  },
+  "fit_status": "EXECUTION_SESSION_LOST_NO_FINAL_CHECKPOINT",
+  "retained_snapshot_status": "INTERRUPTED_FIT_ADAM500_RETAINED_SNAPSHOT",
+  "checkpoint": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v3_reference_fit_20260930T011610665979Z/adam500_checkpoint.npz",
+    "sha256": "4e818a16b876ffd0776e74438654ca7de5632b1e17269a38e87749b5b3ad6a97"
+  },
+  "not_a_held_out_or_fresh_solution": true,
+  "not_authorized_as_Task042_or_0p7nm_initialization": true,
+  "final_parameters": "NOT_RETAINED",
+  "final_checkpoint": "NOT_RETAINED",
+  "optimizer_state": "NOT_RETAINED",
+  "retained_committed_closure": 500,
+  "observed_complete_closures": 825,
+  "last_logged_committed_audit_closure": 817,
+  "retained_parameters_sha256": "262088dae91a74c3d4a66b648bb3a1bc3c742794cd1cb0f392f878b6c16f44eb",
+  "retained_c_sha256": "8c30b1e86c98fb70f70c76ad29ad4ea6cda66d5b586c155f7d6e343962ed12b6",
+  "per_25_closure_accepted_parameter_update_norm": "NOT_RETAINED",
+  "parameter_only_nonresumable": true
+}
