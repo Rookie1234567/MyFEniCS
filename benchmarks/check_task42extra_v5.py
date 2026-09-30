@@ -47,7 +47,7 @@ def policy(item):
         raise ValueError("REFERENCE_EXPOSURE_POLICY_LOST")
 
 
-def resources(indices):
+def resources(indices, *, version=5, old_seconds=OLD_SECONDS, batch_limit=7200, main_limit=3600, main_route=ROUTE):
     stages = {}
     for stage, item in indices.items():
         directory = Path(item["run_directory"])
@@ -88,7 +88,7 @@ def resources(indices):
             raise ValueError("RESOURCE_SUMMARY_NOT_REPRODUCED")
         stages[stage] = row
     auxiliary = []
-    for directory in sorted(CHECKS.glob("v5_*")):
+    for directory in sorted(CHECKS.glob(f"v{version}_*")):
         p = directory / "summary.json"
         if not p.exists():
             auxiliary.append(
@@ -119,7 +119,7 @@ def resources(indices):
     batch = formal + aux + 120
     samples = []
     for path in sorted(
-        (ROOT / "tmp/task42extra/durable").glob("v5_*/terminal_identity.json")
+        (ROOT / "tmp/task42extra/durable").glob(f"v{version}_*/terminal_identity.json")
     ):
         identity = read(path)
         status = {}
@@ -137,16 +137,16 @@ def resources(indices):
             )
         )
     out = dict(
-        schema="task42extra.resource-costs.v5",
-        previous_conservative_seconds=OLD_SECONDS,
+        schema=f"task42extra.resource-costs.v{version}",
+        previous_conservative_seconds=old_seconds,
         old_lost_attempt_charged_seconds=3284,
         V5_formal_seconds=formal,
         V5_auxiliary_seconds=aux,
         direct_current_and_final_allowance_seconds_conservative=120,
         V5_batch_seconds=batch,
-        V5_remaining_seconds=7200 - batch,
-        original_total_conservative_seconds=OLD_SECONDS + batch,
-        original_16h_remaining_seconds=57600 - OLD_SECONDS - batch,
+        V5_remaining_seconds=batch_limit - batch,
+        original_total_conservative_seconds=old_seconds + batch,
+        original_16h_remaining_seconds=57600 - old_seconds - batch,
         formal_stages=stages,
         auxiliary_attempts=auxiliary,
         numerical_peak_RSS_bytes=max(
@@ -162,10 +162,10 @@ def resources(indices):
         ),
         management_server_launch_samples=samples,
         management_scope="own tmux servers outside numeric tree; sparse observations, not continuous peak; wall included",
-        main_numeric_cutoff_monotonic=indices[ROUTE]["result"][
+        main_numeric_cutoff_monotonic=indices[main_route]["result"][
             "numeric_cutoff_monotonic"
         ],
-        reserve_120s_met=stages[ROUTE]["launch_exit_remaining_seconds"] >= 120,
+        reserve_120s_met=stages[main_route]["launch_exit_remaining_seconds"] >= 120,
         no_continuous_kernel_cgroup_limit_claim=True,
         shared_workstation=True,
         new_Gram_factor_Gsolve_Maxwell_factor_counts=[0, 0, 0],
@@ -174,12 +174,14 @@ def resources(indices):
         cutoff="all completed own V5 summaries plus conservative direct/current/final 120s allowance",
     )
     if (
-        batch > 7200
-        or OLD_SECONDS + batch > 57600
-        or stages[ROUTE]["charged_seconds"] > 3600
+        batch > batch_limit
+        or old_seconds + batch > 57600
+        or stages[main_route]["charged_seconds"] > main_limit
     ):
         raise ValueError("READOUT_CUMULATIVE_BUDGET_FAILED")
-    write("resource_costs_v5.json", out)
+    if version != 5:
+        out = {k.replace("V5_", f"V{version}_"):v for k,v in out.items()}
+    write(f"resource_costs_v{version}.json", out)
     return out
 
 

@@ -11,13 +11,13 @@ from benchmarks.check_task42extra_v2 import ROOT, sha, write
 def main():
     if len(sys.argv) not in (3, 4):
         raise SystemExit(
-            "usage: finalize_task42extra_render_v3.py <raw-directory> <published-SHA> [3|4|5]"
+            "usage: finalize_task42extra_render_v3.py <raw-directory> <published-SHA> [3|4|5|6]"
         )
     version = int(sys.argv[3]) if len(sys.argv) == 4 else 3
-    if version not in (3, 4, 5):
+    if version not in (3, 4, 5, 6):
         raise ValueError("unsupported evidence version")
     review_name = f"review_report_v{version-1}.md"
-    review_commit = {3:"a668fb20dcf49f105cc4c7dfeeda145ee492ae14",4:"4dc7c38b60acf2a5ee3d9c6b9770b084a874fb04",5:"28fabffd41f042c8a4bdda6339810bb1f98a887d"}[version]
+    review_commit = {3:"a668fb20dcf49f105cc4c7dfeeda145ee492ae14",4:"4dc7c38b60acf2a5ee3d9c6b9770b084a874fb04",5:"28fabffd41f042c8a4bdda6339810bb1f98a887d",6:"3ab4a251c76208897729473add43f1e91c9d634a"}[version]
     record_name = f"render_check_v{version}.json"
     raw = (ROOT / "tmp/task42extra/render" / sys.argv[1]).resolve()
     if not raw.is_relative_to((ROOT / "tmp/task42extra/render").resolve()):
@@ -43,7 +43,7 @@ def main():
         print(json.dumps(dict(status=out["status"], pages=0)))
         return
     captured = json.loads(source.read_text())
-    if version in (4, 5):
+    if version in (4, 5, 6):
         expected = json.loads((raw / "expected_urls.json").read_text())
         actual = [entry["url"] for entry in captured["records"]]
         if actual != [entry["url"] for entry in expected] or (raw / "render_failure.json").exists():
@@ -106,6 +106,10 @@ def main():
             len(cols) != 3 or len(dom["mathAfterScroll"]) != 3
         ):
             raise ValueError("Review V4 table/math DOM inventory incomplete")
+        if relative.endswith("review_report_v5.md") and (
+            len(cols) != 3 or len(dom["mathAfterScroll"]) != 5
+        ):
+            raise ValueError("Review V5 table/math DOM inventory incomplete")
         if relative.endswith("representation_diagnostic_v3.md") and (
             len(cols) != 3 or len(dom["mathAfterScroll"]) != 2
         ):

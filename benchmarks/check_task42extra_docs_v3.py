@@ -21,7 +21,15 @@ PAGES = [
 
 def main():
     version = int(sys.argv[1]) if len(sys.argv)>1 else 3
-    if version == 5:
+    if version == 6:
+        pages = [(TASK/"review_report_v5.md",None), (TASK/"response_v6.md",None),
+                 (TASK/"outcomes/frozen_feature_residual_v6.md",None),
+                 (TASK/"outcomes/summary.md","Task42extra Review V5 后续：V6"),
+                 (TASK/"outcomes/test_summary.md","Review V5 后续 V6 定向资格"),
+                 (TASK/"outcomes/changed_files.md","Review V5 后续 V6 文件级边界"),
+                 (ROOT/"docs/development_progress.md","2026-09-30 Task42extra V6"),
+                 (ROOT/"docs/development_model_registry.md","3.44.5 Task42extra Review V5 后续")]
+    elif version == 5:
         pages = [(TASK/"review_report_v4.md",None), (TASK/"response_v5.md",None),
                  (TASK/"outcomes/frozen_hidden_readout_v5.md",None),
                  (TASK/"outcomes/summary.md","Task42extra Review V4 后续：V5"),

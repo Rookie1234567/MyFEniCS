@@ -1,0 +1,124 @@
+{
+  "schema": "task42extra.residual-readout-checks.v6",
+  "targeted": {
+    "schema": "task42extra.targeted-tests.v6",
+    "status": "TARGETED_PASS",
+    "distinct_tests": 10,
+    "pure_tests": 8,
+    "ML_tests": 2,
+    "whole_repository_pytest": false,
+    "qualified_environment_reused": true,
+    "light_supervision_seconds": 11.6827331520617,
+    "artifacts": [
+      {
+        "path": "src/solvers/feinn_restricted_residual.py",
+        "sha256": "f707986de38713e65f679aae26023a3221a9a104950ef4bc470faa8d0693c036"
+      },
+      {
+        "path": "src/solvers/feinn_residual_readout.py",
+        "sha256": "b878ac5e4f8dbd76ba299b3af4e2e5a9550fee42254a79376500e9d648c454b9"
+      },
+      {
+        "path": "src/test/test_feinn_restricted_residual.py",
+        "sha256": "7f5510612b48f015ad2af4055ba5ead5970d9b15515a1b92880601f3586c9c6f"
+      },
+      {
+        "path": "src/test/test_feinn_residual_readout_ml.py",
+        "sha256": "9ffb3c85a1808ccf5d9afde278b41180561bc0c26b923296e6dced3b5c344ef6"
+      },
+      {
+        "path": "tmp/task42extra/development/abi_v6.json",
+        "sha256": "3e3938f5ab3d6a0845dfa1e8b69fef0a8b09244740bae7dd192c58048540408d"
+      },
+      {
+        "path": "tmp/task42extra/development/targeted_v6_final.log",
+        "sha256": "3dac977b410a8f9c78c094a7d8e2d7367983a80c024a98ee9aca2b6feb0351ec"
+      },
+      {
+        "path": "tmp/task42extra/development/targeted_ml_v6.log",
+        "sha256": "25fce719ee07c708bf1e926645ef52886550d280c1be39c825a17f24b6a3ab82"
+      }
+    ],
+    "static_Ruff_compileall_diff_check": "PASS",
+    "prior_Ruff_failure": "unused import corrected before formal commit; no numerical run"
+  },
+  "real_T0": {
+    "status": "RESIDUAL_READOUT_CHECKS_PASS",
+    "directions": [
+      {
+        "Phi_Q_relative": 2.2727613959274552e-11,
+        "network_Q_relative": 2.2723068979676144e-11,
+        "network_G_relative": 1.2593018746695466e-11,
+        "reused_G_orthogonality_random_defect": 5.786304558979946e-16,
+        "conjugate_transpose_operation_relative": 4.0003191417823633e-19,
+        "all_three_component_readout_norms": [
+          431.9340434196651,
+          371.24164859258605,
+          296.0368452449657
+        ],
+        "batch1_8_relative": 3.8442196932259295e-16
+      },
+      {
+        "Phi_Q_relative": 1.623089231817528e-11,
+        "network_Q_relative": 1.6232463729543675e-11,
+        "network_G_relative": 9.196786619204463e-12,
+        "reused_G_orthogonality_random_defect": 1.3240892051113075e-16,
+        "conjugate_transpose_operation_relative": 7.855163210030697e-19,
+        "all_three_component_readout_norms": [
+          371.21629989199596,
+          155.67173991714267,
+          185.49504716938205
+        ]
+      },
+      {
+        "Phi_Q_relative": 2.7250322820441328e-11,
+        "network_Q_relative": 2.724710874973243e-11,
+        "network_G_relative": 1.464867762148469e-11,
+        "reused_G_orthogonality_random_defect": 9.395539377004457e-16,
+        "conjugate_transpose_operation_relative": 7.696212132555929e-19,
+        "all_three_component_readout_norms": [
+          466.8383178873135,
+          240.37778353980377,
+          198.86320727156635
+        ]
+      }
+    ],
+    "seed": 421601,
+    "projection_members_loaded": [
+      "Q_eff",
+      "Q",
+      "R",
+      "left",
+      "vh",
+      "singular_values",
+      "permutation",
+      "scales"
+    ],
+    "target_reference_loaded": false,
+    "hidden_buffers_unchanged": true,
+    "native_action_counts": {
+      "A": 3,
+      "AH": 3,
+      "audit": 0,
+      "port_solve": 7
+    },
+    "G_action_columns": 6,
+    "wall_seconds": 9.503849991015159,
+    "reference_used_for_training": true,
+    "features_reference_exposed": true,
+    "readout_rhs_uses_reference": false,
+    "pde_only_solve": false,
+    "production_initialization_allowed": false,
+    "pde_only_solver_qualified": false,
+    "official_candidate_results": false,
+    "worker_elapsed_seconds": 12.429686912917532
+  },
+  "actual_source_sha": "a2f6ea85a24cb5e7c233d266aaab9911fc695dcc",
+  "reference_used_for_training": true,
+  "features_reference_exposed": true,
+  "readout_rhs_uses_reference": false,
+  "pde_only_solve": false,
+  "production_initialization_allowed": false,
+  "pde_only_solver_qualified": false,
+  "official_candidate_results": false
+}

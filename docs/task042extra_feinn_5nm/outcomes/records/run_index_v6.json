@@ -1,0 +1,82 @@
+{
+  "schema": "task42extra.run-index.v6",
+  "stages": {
+    "v6_operator_readout_checks": {
+      "source_sha": "a2f6ea85a24cb5e7c233d266aaab9911fc695dcc",
+      "run_directory": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v6_operator_readout_checks_20260930T100855003854Z",
+      "files": {
+        "checks": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v6_operator_readout_checks_20260930T100855003854Z/operator_readout_checks.json",
+          "sha256": "e9f7fdc12e775a5baec08e5b70a55fb07c7c03435569d21de67c8970a8a1daac"
+        },
+        "result": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v6_operator_readout_checks_20260930T100855003854Z/result.json",
+          "sha256": "2956899a960bc03352668e05101759a9c6af97f3931214c6433267958530c750"
+        }
+      },
+      "index_sha256": "2052a5d0d78f2e674fefc1cf9ef74c4eb999f37669d07394b247b6f0232de5b3"
+    },
+    "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT": {
+      "source_sha": "a2f6ea85a24cb5e7c233d266aaab9911fc695dcc",
+      "run_directory": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v6_frozen_feature_residual_20260930T100944546363Z",
+      "files": {
+        "checkpoint": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v6_frozen_feature_residual_20260930T100944546363Z/frozen_checkpoint.npz",
+          "sha256": "ac78cb50e8f7525454e88555b9d510e243f461a0b3b40bda59321ee18ac18c68"
+        },
+        "parameter_only_model": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v6_frozen_feature_residual_20260930T100944546363Z/frozen_model_parameter_only.pt",
+          "sha256": "364e9986aa465e3e9253a91dd9111765150566fb672c27d4be8ec9e14d68edf6"
+        },
+        "projection_arrays": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v6_frozen_feature_residual_20260930T100944546363Z/residual_projection_arrays.npz",
+          "sha256": "4696e466275168a3a3b13c4978f46a6d6d1b28c10dc8e25f7ed4e0adb940949b"
+        },
+        "projection": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v6_frozen_feature_residual_20260930T100944546363Z/residual_projection.json",
+          "sha256": "64f1d05bd0d8df1e9d96cd45c6ad2ef4e2b987fc97a80a2696ec18907023ce3a"
+        },
+        "result": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v6_frozen_feature_residual_20260930T100944546363Z/result.json",
+          "sha256": "1b5eaf63e8351d6f64c0514a28154368a4d845ad07f1ad822de1c02a70e04c39"
+        }
+      },
+      "index_sha256": "c49b562ad37dc34f7403b9a5940e0b1ed2e0a718c47d6da2f56812fb87994b01"
+    },
+    "v6_residual_readout_reconstruct": {
+      "source_sha": "a2f6ea85a24cb5e7c233d266aaab9911fc695dcc",
+      "run_directory": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v6_residual_readout_reconstruct_20260930T101102289042Z",
+      "files": {
+        "reconstructed": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v6_residual_readout_reconstruct_20260930T101102289042Z/reconstructed_full_coefficients.npz",
+          "sha256": "333ad494998bf71adb3387ec2a9c20d30c3752e6aedaeab4ec5a0940e05ee838"
+        },
+        "result": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v6_residual_readout_reconstruct_20260930T101102289042Z/result.json",
+          "sha256": "b2ad987ed1e28d21eb0191b31d754c5fcb1ddb4db463fab45a4e1cf5d4026ad7"
+        }
+      },
+      "index_sha256": "48d74b74428d3cec4f17f0bd4d1712650dd94805b7a091c9719fc3eae269e3f1"
+    },
+    "v6_residual_readout_compare_only": {
+      "source_sha": "a2f6ea85a24cb5e7c233d266aaab9911fc695dcc",
+      "run_directory": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v6_residual_readout_compare_only_20260930T101143802750Z",
+      "files": {
+        "result": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v6_residual_readout_compare_only_20260930T101143802750Z/result.json",
+          "sha256": "4584b08de91e648167570d6916922ce14ac9a1b3c6d78bcf6b7bf23b9cb03bff"
+        }
+      },
+      "index_sha256": "2cb532630b29753d82a6982bc4c4d7fa6a9cf8f752d0818c4a807fe0905e5a82"
+    }
+  },
+  "main_start_count": 1,
+  "source_is_documentation_HEAD": false,
+  "reference_used_for_training": true,
+  "features_reference_exposed": true,
+  "readout_rhs_uses_reference": false,
+  "pde_only_solve": false,
+  "production_initialization_allowed": false,
+  "pde_only_solver_qualified": false,
+  "official_candidate_results": false
+}
