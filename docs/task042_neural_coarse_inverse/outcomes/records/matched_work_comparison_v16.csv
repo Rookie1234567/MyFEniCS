@@ -1,0 +1,44 @@
+scope,target,route,iteration,actions,wall,Schur,native,measurement
+same_iteration_actual_online_actions_reported,0,ZERO,0,5,0.5993487450759858,1.0,0.38780378159093604,exact saved audit; cold setup actions/cost separately included
+same_iteration_actual_online_actions_reported,0,GPOLY,0,5,681.6409574599238,0.5177138382992059,0.20077138427439287,exact saved audit; cold setup actions/cost separately included
+same_iteration_actual_online_actions_reported,0,GNN,0,5,377.24947995098773,0.5799857922051803,0.22492068348618455,exact saved audit; cold setup actions/cost separately included
+same_iteration_actual_online_actions_reported,64,ZERO,64,139,19.445233945036307,0.3072336142037165,0.119146357420052,exact saved audit; cold setup actions/cost separately included
+same_iteration_actual_online_actions_reported,64,GPOLY,64,139,840.3303443068871,0.11089600657806521,0.04300589071430737,exact saved audit; cold setup actions/cost separately included
+same_iteration_actual_online_actions_reported,64,GNN,64,139,458.0418035489274,0.12236373162696525,0.04745311785451601,exact saved audit; cold setup actions/cost separately included
+same_online_original_actions_audit_bracket,128,ZERO,0,5,0.5993487450759858,1.0,0.38780378159093604,preceding actual audit; no interpolation; cold setup separately counted
+same_online_original_actions_audit_bracket,128,ZERO,64,139,19.445233945036307,0.3072336142037165,0.119146357420052,following actual audit; no interpolation; cold setup separately counted
+same_online_original_actions_audit_bracket,128,GPOLY,0,5,681.6409574599238,0.5177138382992059,0.20077138427439287,preceding actual audit; no interpolation; cold setup separately counted
+same_online_original_actions_audit_bracket,128,GPOLY,64,139,840.3303443068871,0.11089600657806521,0.04300589071430737,following actual audit; no interpolation; cold setup separately counted
+same_online_original_actions_audit_bracket,128,GNN,0,5,377.24947995098773,0.5799857922051803,0.22492068348618455,preceding actual audit; no interpolation; cold setup separately counted
+same_online_original_actions_audit_bracket,128,GNN,64,139,458.0418035489274,0.12236373162696525,0.04745311785451601,following actual audit; no interpolation; cold setup separately counted
+same_online_original_actions_audit_bracket,512,ZERO,192,405,57.78425230702851,0.11668490578627629,0.04525084771850003,preceding actual audit; no interpolation; cold setup separately counted
+same_online_original_actions_audit_bracket,512,ZERO,256,538,76.44881418906152,0.09614604774953783,0.037285800902293484,following actual audit; no interpolation; cold setup separately counted
+same_online_original_actions_audit_bracket,512,GPOLY,192,405,1142.027455868898,0.057444445058953846,0.022277173025254834,preceding actual audit; no interpolation; cold setup separately counted
+same_online_original_actions_audit_bracket,512,GPOLY,256,538,1305.28877066297,0.046948247649301465,0.018206707977470007,following actual audit; no interpolation; cold setup separately counted
+same_online_original_actions_audit_bracket,512,GNN,64,139,458.0418035489274,0.12236373162696525,0.04745311785451601,preceding actual audit; no interpolation; cold setup separately counted
+same_online_original_actions_audit_bracket,1024,ZERO,448,937,133.1385044270428,0.08236742833949792,0.03194240018997768,preceding actual audit; no interpolation; cold setup separately counted
+same_online_original_actions_audit_bracket,1024,ZERO,512,1070,152.00613173109014,0.08026118770174101,0.031125592105715118,following actual audit; no interpolation; cold setup separately counted
+same_online_original_actions_audit_bracket,1024,GPOLY,448,937,1793.2355714959558,0.0279616327107833,0.010843626904698506,preceding actual audit; no interpolation; cold setup separately counted
+same_online_original_actions_audit_bracket,1024,GPOLY,512,1070,1945.3989029319491,0.023483208720091093,0.009106877145539899,following actual audit; no interpolation; cold setup separately counted
+same_online_original_actions_audit_bracket,1024,GNN,64,139,458.0418035489274,0.12236373162696525,0.04745311785451601,preceding actual audit; no interpolation; cold setup separately counted
+same_online_original_actions_audit_bracket,2048,ZERO,960,2001,287.70392416906543,0.07582154418338662,0.02940388156038159,preceding actual audit; no interpolation; cold setup separately counted
+same_online_original_actions_audit_bracket,2048,ZERO,1024,2134,307.1889625850599,0.07567113497932194,0.029345552302259218,following actual audit; no interpolation; cold setup separately counted
+same_online_original_actions_audit_bracket,2048,GPOLY,768,1602,2551.2735040759435,0.012617895799949694,0.0048932677069404495,preceding actual audit; no interpolation; cold setup separately counted
+same_online_original_actions_audit_bracket,2048,GNN,64,139,458.0418035489274,0.12236373162696525,0.04745311785451601,preceding actual audit; no interpolation; cold setup separately counted
+same_online_original_actions_audit_bracket,4096,ZERO,1920,3996,591.6902188120876,0.07174043217064252,0.027821210888743224,preceding actual audit; no interpolation; cold setup separately counted
+same_online_original_actions_audit_bracket,4096,ZERO,1984,4129,611.0415937880753,0.07164621901247821,0.027784674669731484,following actual audit; no interpolation; cold setup separately counted
+same_online_original_actions_audit_bracket,4096,GPOLY,768,1602,2551.2735040759435,0.012617895799949694,0.0048932677069404495,preceding actual audit; no interpolation; cold setup separately counted
+same_online_original_actions_audit_bracket,4096,GNN,64,139,458.0418035489274,0.12236373162696525,0.04745311785451601,preceding actual audit; no interpolation; cold setup separately counted
+same_cold_wall_audit_bracket,900,ZERO,2880,5991,894.1347059489926,0.07033313984651127,0.02727545760364122,preceding actual audit; no interpolation or speedup claim
+same_cold_wall_audit_bracket,900,ZERO,2944,6124,915.9024470390286,0.07027769370928962,0.02725395538195206,following actual audit; no interpolation or speedup claim
+same_cold_wall_audit_bracket,900,GPOLY,64,139,840.3303443068871,0.11089600657806521,0.04300589071430737,preceding actual audit; no interpolation or speedup claim
+same_cold_wall_audit_bracket,900,GPOLY,128,272,993.7301775378874,0.07633215749433661,0.02960189933329968,following actual audit; no interpolation or speedup claim
+same_cold_wall_audit_bracket,900,GNN,64,139,458.0418035489274,0.12236373162696525,0.04745311785451601,preceding actual audit; no interpolation or speedup claim
+same_cold_wall_audit_bracket,1800,ZERO,4096,8518,1295.502835137071,0.06941907305449851,0.02692097904507199,preceding actual audit; no interpolation or speedup claim
+same_cold_wall_audit_bracket,1800,GPOLY,448,937,1793.2355714959558,0.0279616327107833,0.010843626904698506,preceding actual audit; no interpolation or speedup claim
+same_cold_wall_audit_bracket,1800,GPOLY,512,1070,1945.3989029319491,0.023483208720091093,0.009106877145539899,following actual audit; no interpolation or speedup claim
+same_cold_wall_audit_bracket,1800,GNN,64,139,458.0418035489274,0.12236373162696525,0.04745311785451601,preceding actual audit; no interpolation or speedup claim
+same_cold_wall_audit_bracket,2400,ZERO,4096,8518,1295.502835137071,0.06941907305449851,0.02692097904507199,preceding actual audit; no interpolation or speedup claim
+same_cold_wall_audit_bracket,2400,GPOLY,640,1336,2249.213698837906,0.017106991663241446,0.006634156058650145,preceding actual audit; no interpolation or speedup claim
+same_cold_wall_audit_bracket,2400,GPOLY,704,1469,2402.6854039978934,0.014647609638981578,0.005680398409265079,following actual audit; no interpolation or speedup claim
+same_cold_wall_audit_bracket,2400,GNN,64,139,458.0418035489274,0.12236373162696525,0.04745311785451601,preceding actual audit; no interpolation or speedup claim

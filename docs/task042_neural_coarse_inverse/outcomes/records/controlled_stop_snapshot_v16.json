@@ -1,0 +1,220 @@
+{
+  "routes": {
+    "GPOLY": {
+      "status": "RESOURCE_CONTROLLED_STOP",
+      "iteration_count": 816,
+      "last_observed_completed_iteration": 816,
+      "final_state_semantics": "LAST_PERSISTED_CHECKPOINT_256; actual terminal vector absent; no vector reconstructed from scalars",
+      "terminal_vector_missing": true,
+      "last_original_audit": {
+        "iteration": 768,
+        "elapsed_seconds": 2551.2735040759435,
+        "current_process_wall_seconds": 1881.2863445639377,
+        "iteration_wall_seconds": 1872.8345361920074,
+        "equivalent_actions_since_iteration_start": 1602,
+        "cumulative_packet_actions": 1602,
+        "estimated_residual_relative": 0.01261789579995043,
+        "original_residual_identity_relative": 5.803042211117781e-13,
+        "original_equation_gate": {
+          "status": "ORIGINAL_EQUATION_FAILED",
+          "rho": 0.012617895799949694,
+          "thresholds": {
+            "equation": 1e-06,
+            "recovery": 1e-10,
+            "slave_zero": 0,
+            "identity": 1e-10
+          }
+        },
+        "audit": {
+          "schur_relative": 0.012617895799949694,
+          "augmented_relative": 0.0048932677069404495,
+          "native_relative": 0.0048932677069404495,
+          "original_total_augmented_relative": 0.0016979608918475484,
+          "port_absolute": 3.080431902948317e-20,
+          "port_full_rhs_relative": 1.4448815154198094e-19,
+          "port_operation_relative": 5.3433281687071017e-20,
+          "recovery_relative": 4.690645304234172e-13,
+          "schur_original_identity_operation_relative": 5.323199803687205e-13,
+          "slave_storage_max": 0.0,
+          "field_norm": 1.6218573051793983,
+          "port_unknown_norm": 0.19624262957575217,
+          "strict_pass": false
+        },
+        "Qc_norm": 1.1834804005137465,
+        "complement_norm": 0.0007356069007350565,
+        "Phi": 7.960564720919408e-05,
+        "source_sha": "ef60675dada2556a5527101f90fc83540d60e242",
+        "basis_identity": {
+          "G0": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v14/task042_v14_decoder_20260930T062524338233Z/ORIGIN/Q.npy",
+            "sha256": "a60fa21eae281049db72f3b27989f31f2a9d0fdd89820e35a3011c05c23dfc36",
+            "shape": [
+              18144,
+              1560
+            ]
+          },
+          "complement": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v15/task042_v15_union_poly_20260930T094454893111Z/POLY_complement.npy",
+            "sha256": "4f879b18460a4987f8627c7ccedecb86692505274277d56a972f179046960cc7",
+            "shape": [
+              18144,
+              1538
+            ],
+            "take_columns": 1538
+          },
+          "columns": 3098,
+          "canonical_master_sha256": "edb31a5bbf505f1e3916d8491865905ab9a41a6254dcedf751e80607b8c38d0a",
+          "both_contain_random_neural_G0": true
+        },
+        "state": null,
+        "checkpoint_semantics": "COMPLETE_GK_SNAPSHOT_NO_RESUME_ADAPTER",
+        "resumable_claimed": false,
+        "final": false
+      },
+      "action_counter_scope": "complete logged combined calls lower bound; +16 conservative reserve for unlogged interrupted work; component counters unavailable",
+      "budget_count_scope": "last prior counts + completed audit rows + one interrupted-audit reserve; cap accounting upper bound",
+      "iteration_equivalent_actions_lower_bound": 1698,
+      "iteration_equivalent_actions": 1714,
+      "all_batch_equivalent_actions_lower_bound": 13386,
+      "all_batch_equivalent_actions": 13402,
+      "leaf_timers_lost_with_killed_worker": true
+    },
+    "GNN": {
+      "status": "RESOURCE_CONTROLLED_STOP",
+      "iteration_count": 85,
+      "last_observed_completed_iteration": 85,
+      "final_state_semantics": "LAST_PERSISTED_CHECKPOINT_0; actual terminal vector absent; no vector reconstructed from scalars",
+      "terminal_vector_missing": true,
+      "last_original_audit": {
+        "iteration": 64,
+        "elapsed_seconds": 458.0418035489274,
+        "current_process_wall_seconds": 458.04180558002554,
+        "iteration_wall_seconds": 82.58386173495091,
+        "equivalent_actions_since_iteration_start": 139,
+        "cumulative_packet_actions": 3257,
+        "estimated_residual_relative": 0.12236373162696869,
+        "original_residual_identity_relative": 1.0708092326617401e-12,
+        "original_equation_gate": {
+          "status": "ORIGINAL_EQUATION_FAILED",
+          "rho": 0.12236373162696525,
+          "thresholds": {
+            "equation": 1e-06,
+            "recovery": 1e-10,
+            "slave_zero": 0,
+            "identity": 1e-10
+          }
+        },
+        "audit": {
+          "schur_relative": 0.12236373162696525,
+          "augmented_relative": 0.04745311785451601,
+          "native_relative": 0.04745311785451601,
+          "original_total_augmented_relative": 0.016466202778328342,
+          "port_absolute": 1.734608907678687e-20,
+          "port_full_rhs_relative": 8.136210850136531e-20,
+          "port_operation_relative": 2.3329844697260815e-20,
+          "recovery_relative": 5.978981173583745e-13,
+          "schur_original_identity_operation_relative": 6.759116628226822e-13,
+          "slave_storage_max": 0.0,
+          "field_norm": 2.0989739638951237,
+          "port_unknown_norm": 0.2530968646225281,
+          "strict_pass": false
+        },
+        "Qc_norm": 1.5316189765711297,
+        "complement_norm": 0.0002715842448138283,
+        "Phi": 0.007486441408837988,
+        "source_sha": "ef60675dada2556a5527101f90fc83540d60e242",
+        "basis_identity": {
+          "G0": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v14/task042_v14_decoder_20260930T062524338233Z/ORIGIN/Q.npy",
+            "sha256": "a60fa21eae281049db72f3b27989f31f2a9d0fdd89820e35a3011c05c23dfc36",
+            "shape": [
+              18144,
+              1560
+            ]
+          },
+          "complement": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v15/task042_v15_union_poly_20260930T094454893111Z/NN_complement.npy",
+            "sha256": "6d853ae086b8b2a33df010c93b3bd09e3ea77aa96f70ff3922f0a4f0e4366c1d",
+            "shape": [
+              18144,
+              1544
+            ],
+            "take_columns": 1538
+          },
+          "columns": 3098,
+          "canonical_master_sha256": "edb31a5bbf505f1e3916d8491865905ab9a41a6254dcedf751e80607b8c38d0a",
+          "both_contain_random_neural_G0": true
+        },
+        "state": null,
+        "checkpoint_semantics": "COMPLETE_GK_SNAPSHOT_NO_RESUME_ADAPTER",
+        "resumable_claimed": false,
+        "final": false
+      },
+      "action_counter_scope": "complete logged combined calls lower bound; +16 conservative reserve for unlogged interrupted work; component counters unavailable",
+      "budget_count_scope": "last prior counts + completed audit rows + one interrupted-audit reserve; cap accounting upper bound",
+      "iteration_equivalent_actions_lower_bound": 181,
+      "iteration_equivalent_actions": 197,
+      "all_batch_equivalent_actions_lower_bound": 16685,
+      "all_batch_equivalent_actions": 16717,
+      "leaf_timers_lost_with_killed_worker": true
+    }
+  },
+  "resource_recheck_once": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v16/resource_recheck_once.json",
+    "sha256": "3d6ca5c2b2de1131ede783cf6b21af068821bf26e7ab0f00adea0d06c014abb9",
+    "cpu": 0,
+    "pressure": {
+      "some": {
+        "avg10": 0.04,
+        "avg60": 0.38,
+        "avg300": 0.14,
+        "total": 1191876.0
+      },
+      "full": {
+        "avg10": 0.04,
+        "avg60": 0.38,
+        "avg300": 0.14,
+        "total": 1190172.0
+      }
+    },
+    "available_bytes": 993664020480,
+    "reserve_bytes": 353748992000,
+    "stopped_route_restarted": false
+  },
+  "verify_only_resource_recheck": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v16/verify_resource_recheck_once.json",
+    "sha256": "04352aa10fa04329a932662b1ccbcb8113a799452eaa4426002e21fdc0935cb5",
+    "cpu": 0,
+    "pressure": {
+      "some": {
+        "avg10": 0.0,
+        "avg60": 0.0,
+        "avg300": 0.0,
+        "total": 1624712.0
+      },
+      "full": {
+        "avg10": 0.0,
+        "avg60": 0.0,
+        "avg300": 0.0,
+        "total": 1622611.0
+      }
+    },
+    "available_bytes": 991248650240,
+    "solver_restart_allowed": false
+  },
+  "recovery_metadata_helpers": {
+    "GPOLY": {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v16/recover_gpoly_metadata.py",
+      "sha256": "45032a00cebecb329d7b9f211a20868836a83127126d4ca52d2f151de6a4c50b",
+      "kind": "metadata only; no vector fabricated; no numerical replay"
+    },
+    "GNN": {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v16/recover_gnn_metadata.py",
+      "sha256": "08f491d174030db9b4bce62a7b893af7af5bcff8b004d06bac2dc132648af7e0",
+      "kind": "metadata only; no vector fabricated; no numerical replay"
+    }
+  },
+  "cause_attribution": "INCONCLUSIVE; global PSI reached configured threshold; only own tree stopped; no neighbor workload intervention",
+  "no_stopped_route_restart": true,
+  "no_vector_fabrication": true
+}

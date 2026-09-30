@@ -1,3 +1,9 @@
+# 最新执行导航：V16 / Review V13
+
+本批为原有限元全空间校正，固定随机神经／多项式基只作辅助。三路线均实际启动，GPOLY/GNN资源中断、终态证据缺失；一次独立FE验证已收口；完整资格0/6。先读[Response V16](response_v16.md)、[正式Review V13](review_report_v13.md)、[完整结果](outcomes/augmented_full_trace_lsqr_v16.md)、[run/source](outcomes/records/run_index_v16.json)与[费用](outcomes/records/resource_costs_v16.json)。
+
+五项one-run dat位于input/task042_neural_coarse_inverse/v16_*.dat，均显式opt-in；本轮已执行项不能在新的review前自行重跑。以下旧导航／初始化命令为历史，现工作树已正确登记于canonical common git。
+
 # 当前入口：V15局部表示配对已完成
 
 最新正式合同[Review V12](review_report_v12.md)，回应[Response V15](response_v15.md)，[结果](outcomes/local_trace_representation_v15.md)、[summary](outcomes/summary.md)、[run index](outcomes/records/run_index_v15.json)。六个规定V15 dat已实现并实际执行；局部1544/组合3098、8状态0合格，多项式组合更好，无神经训练增量。旧p4路线关闭；全部有限队列已完成，等待review。以下“当前/最新”和初始化命令都是保留历史，不是待执行步骤。

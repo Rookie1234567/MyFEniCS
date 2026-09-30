@@ -1,3 +1,16 @@
+# V16 变更与selective merge依赖组
+
+| 依赖组 | 文件／数值影响／资格与顺序 |
+|---|---|
+| production numerical/core | bounded_complex_lsqr仅新增可选完成步callback，旧默认递推bit一致；不把V16研究路径提升默认 |
+| reusable runner/watchdog | 复用Stage与既有Task042监督；V16 opt-in dispatch、deadline/counter、source Mapping结构化；独立缓存／锁／整树停止小回归；先审核边界 |
+| checker/benchmark | 新V16 raw checker从保存数组/norm/hash重算；不重实现求解、不读参考反馈；依赖冻结schema与相关小测试 |
+| compact evidence/docs | response/outcomes/records、README导航、summary/test/changed与两总账；保留旧正文／失败；后于冻结数值证据 |
+| research-only | augmented_trace_lsqr/study/window、五dat与冻结plan；Q/U双投影和完整补空间数值核心；仅原micro与本批Gate，未获生产或目标资格 |
+| do-not-merge | ignored大基／U/R／完整resources／迭代快照／本地缓存，普通默认改动、旧p4路线、GPU或最大模型均无授权 |
+
+新增算法在src/solvers，runner保持薄入口；普通默认未改变。新source/test/hash见run_index与final_checks。实际依赖文件按git diff相对Review V13列入最终记录；master merge未批准，顺序建议不是合并授权。以下为旧变更记录。
+
 # V15变更与selective merge依赖
 
 | 组 | 数值/文件变化与依赖 | 验证/顺序与边界 |

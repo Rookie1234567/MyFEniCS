@@ -1,0 +1,29 @@
+{
+  "formula": "norm((I-U UH) barb)/norm(b); floating estimate, not certified exact lower bound",
+  "fixed_space_initials": {
+    "ZERO": {
+      "Phi": 0.5,
+      "Schur": 1.0,
+      "native": 0.38780378159093604,
+      "Qc_norm": 0.0,
+      "outside_norm": 0.0
+    },
+    "GPOLY": {
+      "Phi": 0.13401380918324815,
+      "Schur": 0.5177138382992059,
+      "native": 0.20077138427439287,
+      "Qc_norm": 1.2487328897754097,
+      "outside_norm": 0.0
+    },
+    "GNN": {
+      "Phi": 0.16819175957993532,
+      "Schur": 0.5799857922051803,
+      "native": 0.22492068348618455,
+      "Qc_norm": 1.6076918201025931,
+      "outside_norm": 0.0
+    }
+  },
+  "weighted_fixed_space_trial_not_run": true,
+  "full_space_dimension": 18144,
+  "complement_dimension": 15046
+}

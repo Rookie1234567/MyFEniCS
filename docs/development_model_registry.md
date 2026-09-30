@@ -1,3 +1,12 @@
+# Task042 V16模型登记：固定基辅助全空间LSQR，research-only
+
+| 模型／方法 | 容量与身份 | measured资格／资源 |
+|---|---|---|
+| task042_v16_fixed_0p7nm_p3_micro | 原384hex/p3/q15/双Floquet/40ports/canonical USER Si；physical2b532f…；source ef60675dada2556a5527101f90fc83540d60e242 | 同离散0/6；不表示最终目标48h资格 |
+| CLOSED-0／GPOLY／GNN | Q=0／3098／3098＋完整18144／15046／15046维补空间；G0共同随机神经1560，local POLY／NN补充1538；无hidden训练或新dataset | formal监督新增下界4447.81145s、树峰4003057664B、ownswap/VRAM0、shared-workstation；大基/QR/workspace计入，无训练；GPOLY/GNN资源partial不冒充完整数值失败 |
+
+[basis/hash](task042_neural_coarse_inverse/outcomes/records/basis_identity_v16.json)、[配对](task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v16.csv)、[Response](task042_neural_coarse_inverse/response_v16.md)。旧p4逆关闭，未改默认、未批准merge。以下模型总账历史原样保留。
+
 # Task042 V15模型登记：局部随机特征/多项式与配对组合，research-only
 
 | 模型/身份 | 方法与容量 | measured资格 |

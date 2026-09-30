@@ -1,3 +1,16 @@
+# V16 本地测试与证据
+
+| 检查 | 实测／限制 |
+|---|---|
+| 小型复数全空间／空Q／非零port／错误映射与共轭 | 初期focused21项通过；有限接线修复后23项通过，旧默认LSQR递推bit一致；最终checker及总账回归见final_checks_v16.json |
+| 监督清场 | 0.75s低成本超时含孙进程，受控停止并清场；正式stage尾部失败另保留，不将JSON失败改写为数值成功 |
+| 真实接口／物理 | 原A/QR两库合格，空Q/GPOLY dot/projector合格，GNN该标量证据丢失列unknown；物理资格0/6；制造资格不能冒充原物理通过 |
+| 输入／ABI／静态 | 五dat validate、定向compileall、diff检查；native complex128/int64/MPI1，所有实际正式source与数组hash绑定 |
+| checker／Markdown／GitHub | [最终本地记录](records/final_checks_v16.json)、[静态与历史保护](records/static_checks_v16.json)、[发布显示](records/publication_checks_v16.json)；browser glyph未观察 |
+| 未执行 | full repository/MPI2/4/CI、GPU、旧campaign与新p4参考；Ruff按当前资格环境的实际可用性记录，未安装依赖 |
+
+下面旧测试正文原样保留。
+
 # V15测试与执行证据
 
 | 本地检查/阶段 | 实测结果/限制 |

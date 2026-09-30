@@ -1,0 +1,111 @@
+{
+  "checker": {
+    "status": "EVIDENCE_CONSISTENT_RESOURCE_PARTIAL",
+    "mismatches": [],
+    "missing_evidence": [
+      "GNN M/MH dot/projector numbers lost with killed worker; image raw qualified=True"
+    ],
+    "original_and_projected_interfaces": {
+      "ZERO": true,
+      "GPOLY": true,
+      "GNN": null
+    },
+    "raw_residual_and_decoder_recomputed": {
+      "ZERO-0": {
+        "Schur": 1.0,
+        "Phi": 0.5000000000000008,
+        "decoded_trace_relative": 0.0
+      },
+      "ZERO-256": {
+        "Schur": 0.09614604774953783,
+        "Phi": 0.004622031248928194,
+        "decoded_trace_relative": 0.0
+      },
+      "ZERO-1024": {
+        "Schur": 0.07567113497932194,
+        "Phi": 0.0028630603345293814,
+        "decoded_trace_relative": 0.0
+      },
+      "ZERO-2048": {
+        "Schur": 0.07151270898901821,
+        "Phi": 0.002557033773474003,
+        "decoded_trace_relative": 0.0
+      },
+      "ZERO-4096-FINAL": {
+        "Schur": 0.06941907305449851,
+        "Phi": 0.0024095038518729024,
+        "decoded_trace_relative": 0.0
+      },
+      "GPOLY-0": {
+        "Schur": 0.5177138382992059,
+        "Phi": 0.1340138091832483,
+        "decoded_trace_relative": 0.0
+      },
+      "GPOLY-256": {
+        "Schur": 0.046948247649301465,
+        "Phi": 0.0011020689786700683,
+        "decoded_trace_relative": 0.0
+      },
+      "GPOLY-256-FINAL": {
+        "Schur": 0.046948247649301465,
+        "Phi": 0.0011020689786700683,
+        "decoded_trace_relative": 0.0
+      },
+      "GNN-0": {
+        "Schur": 0.5799857922051803,
+        "Phi": 0.16819175957993518,
+        "decoded_trace_relative": 0.0
+      },
+      "GNN-0-FINAL": {
+        "Schur": 0.5799857922051803,
+        "Phi": 0.16819175957993518,
+        "decoded_trace_relative": 0.0
+      }
+    },
+    "strict_same_discrete": {
+      "V15-UNION-POLY": false,
+      "V15-UNION-NN": false,
+      "ZERO-FINAL": false,
+      "ZERO-1024": false,
+      "GPOLY-FINAL": false,
+      "GNN-FINAL": false
+    },
+    "strict_qualified_states": 0,
+    "no_saved_status_trusted": true,
+    "no_hidden_training_claimed": true
+  },
+  "paired_terminal_evidence": "INCOMPLETE_RESOURCE_STOPS",
+  "terminal_vectors_missing": [
+    "GPOLY816",
+    "GNN85"
+  ],
+  "reference_verified_saved_iterations": {
+    "ZERO": 4096,
+    "GPOLY": 256,
+    "GNN": 0
+  },
+  "solver_stops": {
+    "ZERO": "STAGNATION_CONTROLLED_STOP",
+    "GPOLY": "RESOURCE_CONTROLLED_STOP",
+    "GNN": "RESOURCE_CONTROLLED_STOP"
+  },
+  "numerical_interfaces": {
+    "ZERO": true,
+    "GPOLY": true,
+    "GNN": null
+  },
+  "strict_qualified": 0,
+  "hidden_training": false,
+  "reference_feedback": false,
+  "maximum_model_or_new_p4_reference": false,
+  "missing": [
+    {
+      "name": "GPOLY-1024",
+      "reason": "iteration checkpoint not reached"
+    },
+    {
+      "name": "GNN-1024",
+      "reason": "iteration checkpoint not reached"
+    }
+  ]
+}

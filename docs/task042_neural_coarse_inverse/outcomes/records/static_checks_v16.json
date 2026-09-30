@@ -1,0 +1,85 @@
+{
+  "schema": "task042.delivery-contract.v16",
+  "utc": "2026-09-30T14:21:30.848822+00:00",
+  "all_static_pass": true,
+  "errors": [],
+  "protected_prior_task_files_changed": [],
+  "numerical_source_files_changed_after_run": [],
+  "numerical_source": "ef60675dada2556a5527101f90fc83540d60e242",
+  "docs": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v16.md",
+      "sha256": "309246c551cd97a525af4323947c024109c19fd20564c2465d543a77d1859beb",
+      "errors": [],
+      "math_fences": 0,
+      "old_body_byte_preserved": false,
+      "status": "PASS"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/augmented_full_trace_lsqr_v16.md",
+      "sha256": "7853043f37342364773d115a76e6ce2d487258334b6a02b3814d4364da29a0cc",
+      "errors": [],
+      "math_fences": 2,
+      "old_body_byte_preserved": false,
+      "status": "PASS"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "d6d930cb5222d3c06bccff0fe2e908569e5dc534c0bf6bacca766c18c3394318",
+      "errors": [],
+      "math_fences": 0,
+      "old_body_byte_preserved": true,
+      "status": "PASS"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "sha256": "0d200b0d9481e163a649e5b18488b8836c26a19da0862f83fca4a04c5713a0b6",
+      "errors": [],
+      "math_fences": 0,
+      "old_body_byte_preserved": true,
+      "status": "PASS"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "93c331946d2b1ef28f6df5ed771e5c85e28b0c768831e7b9778f33e3d0a7d60a",
+      "errors": [],
+      "math_fences": 0,
+      "old_body_byte_preserved": true,
+      "status": "PASS"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "3870c947914e733ad3f0074c4c9d6210fd46d79108b7186b5b24411770c182ff",
+      "errors": [],
+      "math_fences": 0,
+      "old_body_byte_preserved": true,
+      "status": "PASS"
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "7da19a339056f73e7e169124970d13d77983fc565c36bee240fbb83ced352aa7",
+      "errors": [],
+      "math_fences": 5,
+      "old_body_byte_preserved": true,
+      "status": "PASS"
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "e6d0ed5f5a59b1948c1f632ed4485a8aec9c5e66c6cc06078b52d13bda4208c4",
+      "errors": [],
+      "math_fences": 0,
+      "old_body_byte_preserved": true,
+      "status": "PASS"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v13.md",
+      "sha256": "cf8e9be7f8206111b64d4b69dc6691d2f4b8b1d02c2479d99e3a6d67c5a3f1ec",
+      "errors": [],
+      "math_fences": 5,
+      "old_body_byte_preserved": true,
+      "status": "PASS"
+    }
+  ],
+  "browser_glyph_visual_status": "NOT_OBSERVED",
+  "shared_workstation": true
+}

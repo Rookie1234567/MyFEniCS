@@ -1,3 +1,16 @@
+# Task042 V16：全空间校正三路线收口
+
+| 路线／同一0.7nm micro | 维数Q＋完整补空间 | GK更新／原作用次数 | 原Schur／native残差 | 停止原因 |
+|---|---|---|---|---|
+| CLOSED-LSQR-0 | 0+18144 | 4096／8523 | 0.0694190731／0.026920979 | STAGNATION_CONTROLLED_STOP |
+| AUG-LSQR-GPOLY | 3098+15046 | 816／1698..1714上界 | 0.0126178958／0.00489326771 | RESOURCE_CONTROLLED_STOP；原审核768／向量仅256 |
+| AUG-LSQR-GNN | 3098+15046 | 85／181..197上界 | 0.122363732／0.0474531179 | RESOURCE_CONTROLLED_STOP；原审核64／向量仅0 |
+
+
+固定0.7nm/384hex/p3/q15/40端口，完整同离散0/6；formal监督wall新增下界4447.81145s、树峰4003057664B、swap/VRAM0、shared-workstation。神经仅提供冻结部分方向，不再限制准确解；没有hidden训练。唯一下一建议：在新的review授权和稳定资源准入下，仅做一次冻结GPOLY/GNN的有界配对复试，每64步审核以两个滚动槽先原子保存完整递推／候选，再写汇总，补齐中断终态及同工作量证据；算子、基、精度和迭代预算保持，本批不实施。
+
+[Response V16](task042_neural_coarse_inverse/response_v16.md)、[结果](task042_neural_coarse_inverse/outcomes/augmented_full_trace_lsqr_v16.md)、[费用](task042_neural_coarse_inverse/outcomes/records/resource_costs_v16.json)。以下旧总账原样保留。
+
 # Task042 V15：局部配对与组合完成，多项式组合更好
 
 | 分支/固定模型 | 实际结果与贡献 | 资源/边界 |

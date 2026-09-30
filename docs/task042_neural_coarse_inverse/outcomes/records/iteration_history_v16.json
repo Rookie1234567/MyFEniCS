@@ -1,0 +1,35 @@
+{
+  "ZERO": {
+    "scalars": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v16/task042_v16_zero_20260930T123929377036Z/iteration_history.jsonl",
+      "rows": 4096,
+      "sha256": "98f383594ad119762d4cec647f4570c321079e2f2fbaee99e7192dd328f9de68"
+    },
+    "audits": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v16/task042_v16_zero_20260930T123929377036Z/audit_history.jsonl",
+      "sha256": "738fb52d249d469043db3b581d41654eb25270028e2505ff3eefd7054cff00fd"
+    }
+  },
+  "GPOLY": {
+    "scalars": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v16/task042_v16_gpoly_20260930T130138961792Z/iteration_history.jsonl",
+      "rows": 816,
+      "sha256": "9a4f8ecf44a74783ef06cd656ba7b0aa7381ac1295f9fdfec7e9464fa6e1f9fd"
+    },
+    "audits": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v16/task042_v16_gpoly_20260930T130138961792Z/audit_history.jsonl",
+      "sha256": "eb0ba1c9ed85bb1726c70e5b3fcedc2213b1f8a523649efca226ece1e03a649a"
+    }
+  },
+  "GNN": {
+    "scalars": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v16/task042_v16_gnn_20260930T134318940453Z/iteration_history.jsonl",
+      "rows": 85,
+      "sha256": "4baea82875115c2a414f86b13b84b2295ff2d815cc210d0f31d50424ad02a908"
+    },
+    "audits": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v16/task042_v16_gnn_20260930T134318940453Z/audit_history.jsonl",
+      "sha256": "6e60114ee0eb51fde2af15485a47d5fab5b579894b9d6c4a86370e7f60f0a03a"
+    }
+  }
+}
