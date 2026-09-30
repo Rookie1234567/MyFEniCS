@@ -32,7 +32,7 @@ RUN = (
 RECORD = OUTCOMES / "records/identity_localization_v1.json"
 ARTIFACT_ROOT = (
     ROOT / "benchmarks/artifacts/task40extra_0p7nm_engineering/"
-    "identity_localization_v1"
+    "identity_localization_v1_rerun_01"
 )
 IDENTITY_LIMIT = 1.0e-10
 WATCHDOG_WALL_SECONDS = 3600.0
@@ -326,7 +326,7 @@ def worker() -> None:
         write_record(record)
 
         resolved = load_and_resolve(INPUT)
-        if resolved.provenance["physical_model_sha256"] != compact["physical_model_sha256"]:
+        if resolved.physical_model_sha256 != compact["physical_model_sha256"]:
             raise ValueError("resolved physical model differs from attempt4")
         cfg = simulation_config_3d_from_normalized(resolved.as_jsonable())
         levels = _build_same_mesh_levels(
