@@ -1,0 +1,412 @@
+{
+  "GPOLY": {
+    "resume_mode": {
+      "mode": "CONTINUOUS_LEGACY_GK",
+      "epoch": 0,
+      "legacy_persisted_iteration": 256,
+      "legacy_observed_iteration": 816
+    },
+    "last_audit": {
+      "logical_iteration": 6347,
+      "epoch_iteration": 6347,
+      "mode": {
+        "mode": "CONTINUOUS_LEGACY_GK",
+        "epoch": 0,
+        "legacy_persisted_iteration": 256,
+        "legacy_observed_iteration": 816
+      },
+      "source_sha": "59feb6570a74d72aa501853807013711d89279cd",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GPOLY/states/task042_v17_gpoly_6656_a0_run25_20260930T204048249415Z/E0_ITER_6347.npz",
+        "sha256": "e4b8495c6cd9fdc1e2f0723b64ecbc0732f911e62cb74c04307f13678e1d8602",
+        "y_sha256": "3a95e3a1761f020947f20b0d2c97ec4e5a77a7548b2d15657d89574a2a77c8d9",
+        "v_sha256": "481a149fec20be6ebea5a308bc4511c56fa7f0cb6a674d5985be74b81428812f",
+        "c_sha256": "d3a4c7fd045b26773bbb6c3c18586e9429d53d706187de944ecc3612d3d752a3",
+        "trace_sha256": "ff447bc2a6aa5fb9051ca33491c41d7e3bf2d8ea445560af29d058c098f5e650",
+        "port_sha256": "cc67bf7069a7c0ab8c8f2dc178ad774f6de04e0a991e8f9d1e4eafd38c9b5c4a",
+        "z_sha256": "d997814774a360fd952172d7d0b29088cfb02cca1c32ea60b4890ba79ba6037e",
+        "residual_sha256": "62960692a9d6d2a1f04f15adb7a08e118443288cf29494ddf1161673652d52a7"
+      },
+      "original_residual_identity_relative": 5.466748556711976e-13,
+      "estimated_residual_norm": 4.053058369082648e-05,
+      "true_projected_residual_norm": 4.0530583690826785e-05,
+      "recurrence_gap": 7.52350036055767e-15,
+      "audit_pending": false,
+      "new_updates_this_run": 203,
+      "Phi": 1.2015805404831957e-07,
+      "action_counts": {
+        "S": 227,
+        "SH": 203,
+        "audit": 4
+      },
+      "audit": {
+        "schur_relative": 0.000490220468867467,
+        "augmented_relative": 0.0001901093516400638,
+        "native_relative": 0.0001901093516400638,
+        "original_total_augmented_relative": 6.59678283643863e-05,
+        "port_absolute": 3.9405348057058653e-17,
+        "port_full_rhs_relative": 1.8483141588630411e-16,
+        "port_operation_relative": 6.793627681290528e-17,
+        "recovery_relative": 4.636854969634494e-13,
+        "schur_original_identity_operation_relative": 5.261117236718547e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.631473861305276,
+        "port_unknown_norm": 0.19744539779035541,
+        "strict_pass": false
+      },
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 0.000490220468867467,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      }
+    },
+    "logical_iteration": 6347,
+    "new_updates_measured_lower": 6091,
+    "new_updates_charged_upper": 6091,
+    "recomputed_legacy_updates_derived": 560,
+    "raw_recomputed_counter": 560,
+    "raw_counter_history": [
+      {
+        "source_sha": "86c7efa8f86d2d326c6080253e25edd3bb0f13a8",
+        "logical_iteration": 512,
+        "value": 256
+      },
+      {
+        "source_sha": "86c7efa8f86d2d326c6080253e25edd3bb0f13a8",
+        "logical_iteration": 1024,
+        "value": 560
+      },
+      {
+        "source_sha": "50a8e9fafa529b6766b06b47ec340fb3245d783a",
+        "logical_iteration": 2048,
+        "value": 560
+      },
+      {
+        "source_sha": "50a8e9fafa529b6766b06b47ec340fb3245d783a",
+        "logical_iteration": 2560,
+        "value": 560
+      },
+      {
+        "source_sha": "50a8e9fafa529b6766b06b47ec340fb3245d783a",
+        "logical_iteration": 3072,
+        "value": 560
+      },
+      {
+        "source_sha": "50a8e9fafa529b6766b06b47ec340fb3245d783a",
+        "logical_iteration": 3584,
+        "value": 560
+      },
+      {
+        "source_sha": "59feb6570a74d72aa501853807013711d89279cd",
+        "logical_iteration": 4096,
+        "value": 560
+      },
+      {
+        "source_sha": "59feb6570a74d72aa501853807013711d89279cd",
+        "logical_iteration": 4608,
+        "value": 560
+      },
+      {
+        "source_sha": "59feb6570a74d72aa501853807013711d89279cd",
+        "logical_iteration": 5120,
+        "value": 560
+      },
+      {
+        "source_sha": "59feb6570a74d72aa501853807013711d89279cd",
+        "logical_iteration": 5632,
+        "value": 560
+      },
+      {
+        "source_sha": "59feb6570a74d72aa501853807013711d89279cd",
+        "logical_iteration": 6144,
+        "value": 560
+      },
+      {
+        "source_sha": "59feb6570a74d72aa501853807013711d89279cd",
+        "logical_iteration": 6347,
+        "value": 560
+      }
+    ],
+    "raw_counter_note": "early GNN auxiliary field missed legacy85 replay; later source fixes label; actual update/action/wall budget always charged all steps",
+    "rolling_generations": [
+      {
+        "commit": {
+          "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GPOLY/rolling/slot0.commit.json",
+          "sha256": "f74a9c3db104afe8eb21986dc150a076641caa4c938441ef8ef8a9385ad76397",
+          "bytes": 113
+        },
+        "commit_metadata": {
+          "generation": 606,
+          "manifest_sha256": "4aa11eed7119ab866b5833d00c1f3343d40f44690020ac8c072bed84c2ae7382"
+        }
+      },
+      {
+        "commit": {
+          "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GPOLY/rolling/slot1.commit.json",
+          "sha256": "2394570f77bf8063150d5884380c32e4775b0375e6035a92ae9cfe1277736b5f",
+          "bytes": 113
+        },
+        "commit_metadata": {
+          "generation": 607,
+          "manifest_sha256": "5b8e6ead76998b2889695e2d9e1c7265e9ca972f042efb515385da5557eb9d41"
+        }
+      }
+    ],
+    "rolling_write_history": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GPOLY/rolling/write_history.jsonl",
+      "sha256": "aa4d1e7800d6cdc5387178d18de61f0e954e1c48d739037c9c01f587bd389875",
+      "bytes": 133405
+    },
+    "complete_checkpoint_protocol": "commit-marked two generation NPZ; complete GK every16; actual point before audit every64",
+    "old_snapshot": {
+      "result_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v16/task042_v16_gpoly_20260930T130138961792Z/stage_result_resource_stop.json",
+      "result_sha256": "4a83f6e7b39cbf4603f5314e951f531fb751b2cd36662c74f2c36fe3d2c8cef5",
+      "source_sha": "ef60675dada2556a5527101f90fc83540d60e242",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v16/task042_v16_gpoly_20260930T130138961792Z/ITER_256.npz",
+        "sha256": "f5fabf2ed7f7b07fec457d74e926988af52d203dab7f803e14bff5720a4e46cf",
+        "y_sha256": "84dee787c7246e7ae3c8bfa95c7d89dff55caa33d27e1a85c8e3786c5d1dffbe",
+        "v_sha256": "a8e4e9c434b37ba05078614d4026bf4afda88a7e71eb448faf7b453d106d1182",
+        "c_sha256": "10ecbd441796282e685f7e95e38c5554dc95c19185f6536329db6aa63f4413ca",
+        "trace_sha256": "7e3c43b880d142e460641645d1bae64307850eed909655a2d4e98565b87f73e0",
+        "port_sha256": "841c6d3a9ec0199e926d170003b06b6288b6fa3c106b58e4655b711043dfc45d",
+        "z_sha256": "4757b1d6f3a8114dc1963925ff487312c1c01a061397969fe893cfb1b74b096a",
+        "residual_sha256": "e370d67e3ff20312b4e185d95dd2bb6440fd96bff489a76e1561bd9089a403ca",
+        "GK_iteration_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "GK_x_sha256": "84dee787c7246e7ae3c8bfa95c7d89dff55caa33d27e1a85c8e3786c5d1dffbe",
+        "GK_u_sha256": "d5f06946cd2a7cda435c223eeb6f1208213a3165a6c4c2f1178b518972500d78",
+        "GK_v_sha256": "b07db5a5ac4c3f8960ffe7523cc9848c6e8e06139dda8357dac69fe7a605ce2f",
+        "GK_w_sha256": "a5c2031f4ad8f04ec9a6bfd9bb19a191314170b026618cdf22a1fadd0790a904",
+        "GK_alpha_sha256": "cfdb198129526763dac14368cfe675b88eb11b58b54112b499de94d071d4c1c4",
+        "GK_beta_sha256": "0dce112930768f6f21f7d1a8bfe717dc8900033b74ef555b55769d98b3f24521",
+        "GK_phibar_sha256": "fd94921037c154673ab7b870a49e24e19d8e998a2ef0966730c4b833ea9730d9",
+        "GK_rhobar_sha256": "566364c20208292ba26ad256a212b1157abf6398442239cbd19c5ea9e5337d64",
+        "iteration_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "S_count_sha256": "8fbd9582f8a4756ac71f853f1e6d4236de58969f864633825d4773c99d5f9fef",
+        "SH_count_sha256": "4adeb4453cb2e0d4f186667f3052bf6c34b102cf0fa25910f6964f4f8a55ab84"
+      },
+      "observed_iteration": 816,
+      "persisted_iteration": 256,
+      "last_audit": {
+        "schur_relative": 0.046948247649301465,
+        "augmented_relative": 0.018206707977470007,
+        "native_relative": 0.018206707977470007,
+        "original_total_augmented_relative": 0.006317716496695388,
+        "port_absolute": 1.627958696673106e-20,
+        "port_full_rhs_relative": 7.635966328093702e-20,
+        "port_operation_relative": 2.5851171532333784e-20,
+        "recovery_relative": 5.18598990234667e-13,
+        "schur_original_identity_operation_relative": 5.846522104283168e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.7812340634866066,
+        "port_unknown_norm": 0.21436646298216985,
+        "strict_pass": false
+      },
+      "setup_source": "01ed98655c9eb2949ea29a35fd82d1881a5a2508"
+    },
+    "continuity_restart_count": 0
+  },
+  "GNN": {
+    "resume_mode": {
+      "mode": "INITIALIZE_ORIGINAL_F",
+      "epoch": 0,
+      "legacy_persisted_iteration": 0,
+      "legacy_observed_iteration": 85
+    },
+    "last_audit": {
+      "logical_iteration": 6119,
+      "epoch_iteration": 6119,
+      "mode": {
+        "mode": "INITIALIZE_ORIGINAL_F",
+        "epoch": 0,
+        "legacy_persisted_iteration": 0,
+        "legacy_observed_iteration": 85
+      },
+      "source_sha": "59feb6570a74d72aa501853807013711d89279cd",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GNN/states/task042_v17_gnn_6144_a0_run24_20260930T203007859896Z/E0_ITER_6119.npz",
+        "sha256": "4006c7946e318f86e5fd785ccdc078fb819b70be5b32b3ef97743eeeabcecd32",
+        "y_sha256": "2bbbc9a46481f2316d4d77de8760c381cdf7649f5bda0972810a4546ff136dcd",
+        "v_sha256": "d5199a56c8dc01105f3656ebfd8db8e46965885e0619192c859d7fd25bfa5a08",
+        "c_sha256": "f3b7ef8b453357374901a4f8b958e6be158d8ff6028e0f6ff41c121e9f3f446c",
+        "trace_sha256": "cb42a6f6f860a0b12550bf9cf4e9a9ebd5f6d633ba2441337e531a23adca0586",
+        "port_sha256": "ae9142162743df8402458c26ce5162c58783f8f510b7227bc8fdeb5e982e700c",
+        "z_sha256": "ecb1acbca6207b5383e4916776da49d5d956f802051fc39972b27207c4868f72",
+        "residual_sha256": "f0e40fc7ef6085abf30a5babfaa45e27617d5b777ed882b52864f7a83c48d1a0"
+      },
+      "original_residual_identity_relative": 5.377050309273817e-13,
+      "estimated_residual_norm": 4.9150340798466774e-05,
+      "true_projected_residual_norm": 4.915034079847105e-05,
+      "recurrence_gap": 8.699476439587005e-14,
+      "audit_pending": false,
+      "new_updates_this_run": 487,
+      "Phi": 1.7670150031932354e-07,
+      "action_counts": {
+        "S": 531,
+        "SH": 487,
+        "audit": 8
+      },
+      "audit": {
+        "schur_relative": 0.0005944770816765329,
+        "augmented_relative": 0.00023054046034317802,
+        "native_relative": 0.000230540460343178,
+        "original_total_augmented_relative": 7.999739826397562e-05,
+        "port_absolute": 3.940534276780315e-17,
+        "port_full_rhs_relative": 1.848313910769665e-16,
+        "port_operation_relative": 6.794510672861405e-17,
+        "recovery_relative": 4.6800131549809e-13,
+        "schur_original_identity_operation_relative": 5.302067774624818e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.631267952849584,
+        "port_unknown_norm": 0.19741971176158027,
+        "strict_pass": false
+      },
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 0.0005944770816765329,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      }
+    },
+    "logical_iteration": 6119,
+    "new_updates_measured_lower": 6119,
+    "new_updates_charged_upper": 6135,
+    "recomputed_legacy_updates_derived": 85,
+    "raw_recomputed_counter": 85,
+    "raw_counter_history": [
+      {
+        "source_sha": "86c7efa8f86d2d326c6080253e25edd3bb0f13a8",
+        "logical_iteration": 512,
+        "value": 0
+      },
+      {
+        "source_sha": "50a8e9fafa529b6766b06b47ec340fb3245d783a",
+        "logical_iteration": 1024,
+        "value": 0
+      },
+      {
+        "source_sha": "50a8e9fafa529b6766b06b47ec340fb3245d783a",
+        "logical_iteration": 2048,
+        "value": 0
+      },
+      {
+        "source_sha": "50a8e9fafa529b6766b06b47ec340fb3245d783a",
+        "logical_iteration": 2560,
+        "value": 0
+      },
+      {
+        "source_sha": "50a8e9fafa529b6766b06b47ec340fb3245d783a",
+        "logical_iteration": 3072,
+        "value": 0
+      },
+      {
+        "source_sha": "59feb6570a74d72aa501853807013711d89279cd",
+        "logical_iteration": 3584,
+        "value": 85
+      },
+      {
+        "source_sha": "59feb6570a74d72aa501853807013711d89279cd",
+        "logical_iteration": 4096,
+        "value": 85
+      },
+      {
+        "source_sha": "59feb6570a74d72aa501853807013711d89279cd",
+        "logical_iteration": 4608,
+        "value": 85
+      },
+      {
+        "source_sha": "59feb6570a74d72aa501853807013711d89279cd",
+        "logical_iteration": 5120,
+        "value": 85
+      },
+      {
+        "source_sha": "59feb6570a74d72aa501853807013711d89279cd",
+        "logical_iteration": 5632,
+        "value": 85
+      },
+      {
+        "source_sha": "59feb6570a74d72aa501853807013711d89279cd",
+        "logical_iteration": 6119,
+        "value": 85
+      }
+    ],
+    "raw_counter_note": "early GNN auxiliary field missed legacy85 replay; later source fixes label; actual update/action/wall budget always charged all steps",
+    "rolling_generations": [
+      {
+        "commit": {
+          "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GNN/rolling/slot0.commit.json",
+          "sha256": "c27982596a6c30f1be6a388186385843c43d77c956ad4a584014caaa1a725d9f",
+          "bytes": 113
+        },
+        "commit_metadata": {
+          "generation": 606,
+          "manifest_sha256": "167c407a865e47ee97df1f5f3179900b7126d6769f751cb89c54ffa8e43d9fe0"
+        }
+      },
+      {
+        "commit": {
+          "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GNN/rolling/slot1.commit.json",
+          "sha256": "f37ec24239aba19753054f582c6d1fb4c6c1f6aa8be900488c8eb17709e84569",
+          "bytes": 113
+        },
+        "commit_metadata": {
+          "generation": 605,
+          "manifest_sha256": "b5b57dc93d43394884e2d90367067904accaf660474325bb79b4522908a06e9f"
+        }
+      }
+    ],
+    "rolling_write_history": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GNN/rolling/write_history.jsonl",
+      "sha256": "9b5d89299c0dc24e01a23d62c41938451f12119d6c7db04607d93e7d145a4a6f",
+      "bytes": 138852
+    },
+    "complete_checkpoint_protocol": "commit-marked two generation NPZ; complete GK every16; actual point before audit every64",
+    "old_snapshot": {
+      "result_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v16/task042_v16_gnn_20260930T134318940453Z/stage_result_resource_stop.json",
+      "result_sha256": "513bc289dc0940b7bf12548ea1466967ccdead6fec326ee3004fb1f97e91fab3",
+      "source_sha": "ef60675dada2556a5527101f90fc83540d60e242",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v16/task042_v16_gnn_20260930T134318940453Z/ITER_0.npz",
+        "sha256": "cfb0475ef307a3a08ba2f225df58e5dd65dc2304933521bae3196f1492e0dc00",
+        "y_sha256": "f826dc70f8de00f2f5ae22ee500b4bb6e7395af1c32b957868377b5df337c88a",
+        "v_sha256": "f826dc70f8de00f2f5ae22ee500b4bb6e7395af1c32b957868377b5df337c88a",
+        "c_sha256": "60dc5371224df8f2559ba3778d067969f344380469c8e8eea7b7447a84ac56b5",
+        "trace_sha256": "27ea5828addc0f2716c783dc10a84734e8b3036549f2b4005db47fad5b8679ab",
+        "port_sha256": "ffbf441a013449e48bd00ab9869aebed69e6d367fe222290ba2acbe95ce5eda4",
+        "z_sha256": "ba580fd8bc8acdb27d7c38b23fd9418d6e78ae61fc0abcffe0cb8ea28e72f95b",
+        "residual_sha256": "74d6ddca35e4262427ea14c24fcdfea9b1994db60c6a664c120d4add01b8d518",
+        "iteration_sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc",
+        "S_count_sha256": "7a0c893ddb1b65c46d204fe1e40870908e98fc6f4ab16f5c0d44eaae8af091a0",
+        "SH_count_sha256": "6cc16abd70eefb90dc0ba0d14fb088630873b2c6ad943f7442356735984c35a3"
+      },
+      "observed_iteration": 85,
+      "persisted_iteration": 0,
+      "last_audit": {
+        "schur_relative": 0.5799857922051803,
+        "augmented_relative": 0.22492068348618455,
+        "native_relative": 0.22492068348618455,
+        "original_total_augmented_relative": 0.07804733915825246,
+        "port_absolute": 3.1031732427624044e-17,
+        "port_full_rhs_relative": 1.455548377265321e-16,
+        "port_operation_relative": 4.699998155228998e-17,
+        "recovery_relative": 5.975974468972256e-13,
+        "schur_original_identity_operation_relative": 6.592624563346902e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 2.2032189116341003,
+        "port_unknown_norm": 0.22475283371959145,
+        "strict_pass": false
+      },
+      "setup_source": "ef60675dada2556a5527101f90fc83540d60e242"
+    },
+    "continuity_restart_count": 0
+  }
+}

@@ -1,3 +1,22 @@
+# V17：恢复、冻结证据与接线的实际检查
+
+| 检查／范围 | 实际结果 | 证据和限制 |
+|---|---|---|
+| 小复数恢复协议／旧递推／投影全空间／G周期单元 | 最终35 passed in 1.91s；监督5.425998s／231088128B／swap0 | `tmp/task042/v17/final_core_tests`；含独立reader、半写/kill、hash/已终止/计数上界和bit-identical旧20步；G算法小测试不等于正式G接线合格 |
+| 每库真实32对16+reader+16 | 两库GK/z/原作用差0，qualified；原S164+SH133=297 | [R1](records/resume_qualification_v17.json)；监督193.188007s，无生产warm start |
+| 独立原数字／hash／状态与完整Gate | EVIDENCE_CONSISTENT，0/8严格资格 | [checker](records/qualification_and_dispatch_v17.json)；监督20.110744s／965443584B／swap0，0新S/SH/求解 |
+| 低成本独立watchdog超时／孤儿／失效清场 | 3 passed，8.549s | 原准备阶段自有证据，未操作邻任务，未为文档重跑 |
+| 第3／4编号修复 | 26／32相关小测试PASS，失败源码和加载记录保留 | [修复账](records/repair_journal_v17.json)，最后35项覆盖最终实现 |
+| 正式G接口 | 两库首周期后trace/port shape失败，0完整周期 | [真实错误](records/gmres_interface_stop_v17.json)；小G测试未覆盖该消费API，不能包装为G数值通过，四修复额度用尽后未第五修复 |
+| 原FE独立验证 | 8去重状态、REF7原hash/native1.437444866e-12、0/8资格 | source59feb657…，监督29.445640s／760164352B，旧准确解仅读取，无新LU |
+| 新入口schema | 六个base dat及真实slice均validate／实际manifest绑定 | 生产正式source clean；冻结后非VERIFY入口按reference barrier拒绝，不绕过屏障重验证旧输入 |
+| final compileall／Markdown／历史保护 | 结果由下列最终record保存 | [最终检查](records/final_checks_v17.json)、[source table/math/link](records/static_checks_v17.json)、[旧blob](records/protected_history_v17.json) |
+| GitHub rendering | NOT_VERIFIED；exact-review页面Cache miss，无浏览器像素 | [publication](records/publication_checks_v17.json)；不把源码静态检查冒称视觉PASS |
+
+所有数值run MPI1/数学1/GPU0，现场选核、own swap0与独立整树监督；轻量tests使用qualified FE import ABI complex128/int64但不建mesh/form/JIT。最终checker源74a3f2643862a3fd73fc7b6b417cbc910a335388，formal求解/验证源59feb6570a74d72aa501853807013711d89279cd；输入和源码dirty状态如实在辅助证据中。Ruff、CI、full repository pytest、MPI2/4未运行；不因无关旧checker扩大全仓测试。
+
+以下历史正文逐字保留；旧版本的“当前”只指其当时阶段。
+
 # V16 本地测试与证据
 
 | 检查 | 实测／限制 |

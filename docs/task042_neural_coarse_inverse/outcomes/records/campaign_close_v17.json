@@ -1,0 +1,40 @@
+{
+  "window": {
+    "schema": "task042.campaign-window.v17",
+    "start_utc": "2026-09-30T15:10:06+00:00",
+    "start_monotonic": 706000.860878275,
+    "heavy_limit_seconds": 23400,
+    "total_limit_seconds": 25200,
+    "heavy_stop_utc": "2026-09-30T21:40:06+00:00",
+    "deadline_utc": "2026-09-30T22:10:06+00:00",
+    "start_scope": "initial inspection included; immutable across context, repairs, waits, resumes",
+    "review_expected_commit": "f834c008110131433de0f269195de394a6856871",
+    "prior_head": "c6cca7187c0d6d21f68b46bdb49435f213c1da68",
+    "elapsed_seconds": 21739.220771074295,
+    "heavy_remaining_seconds": 1660.779228925705,
+    "total_remaining_seconds": 3460.779228925705
+  },
+  "ledger_closed": true,
+  "own_active_numerical_workers": [],
+  "own_lock_released": true,
+  "solver_queue_summary_sha256": "beabd0756e9ff5c2a1d2cc8f03d8e6d34d050408696615e321312d370b538eba",
+  "verify_queue_summary_sha256": "ffc6ad2d2bff5e4db0a624a552500cfa85353ad1b7ec363da6976d68030ead43",
+  "no_reference_feedback_or_further_solve": true,
+  "source_before_delivery": "74a3f2643862a3fd73fc7b6b417cbc910a335388",
+  "window_at_final_publication": {
+    "schema": "task042.campaign-window.v17",
+    "start_utc": "2026-09-30T15:10:06+00:00",
+    "start_monotonic": 706000.860878275,
+    "heavy_limit_seconds": 23400,
+    "total_limit_seconds": 25200,
+    "heavy_stop_utc": "2026-09-30T21:40:06+00:00",
+    "deadline_utc": "2026-09-30T22:10:06+00:00",
+    "start_scope": "initial inspection included; immutable across context, repairs, waits, resumes",
+    "review_expected_commit": "f834c008110131433de0f269195de394a6856871",
+    "prior_head": "c6cca7187c0d6d21f68b46bdb49435f213c1da68",
+    "elapsed_seconds": 22352.83845448494,
+    "heavy_remaining_seconds": 1047.1615455150604,
+    "total_remaining_seconds": 2847.1615455150604
+  },
+  "final_host_check_utc": "2026-09-30T21:22:38.838468+00:00"
+}

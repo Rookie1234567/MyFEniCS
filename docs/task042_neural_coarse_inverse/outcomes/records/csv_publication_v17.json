@@ -1,0 +1,66 @@
+{
+  "schema": "task042.v17.publication-newlines",
+  "initial_git_diff_check": "FAIL: CRLF CSV line endings reported as trailing whitespace",
+  "normalization": "CRLF to LF only",
+  "numerical_replay": false,
+  "numerical_repair_quota_used": 4,
+  "raw_and_historical_files_modified": false,
+  "files": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v17.csv",
+      "original_sha256": "3a0aa1cfce75ed1c6ffd567ff9e4c871f1b5261f5be3f892cd21b3e585f04e73",
+      "published_sha256": "88ee5c35e9247f0bee6bb4598b3bddc213d0695a56ba8259bccdc843e4ecbe88",
+      "row_count_including_header": 9,
+      "rows_exactly_equal": true,
+      "original_bytes": 5927,
+      "published_bytes": 5918,
+      "scope": "new V17 publication CSV only; ignored original bytes retained"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/channel_observables_v17.csv",
+      "original_sha256": "f2768bf282330516ea1ee8719eb4aafa0436bdc683bb8a19732794da26a2c192",
+      "published_sha256": "799fbb4e94a86b5fc7f96f9d6b2b569ae29204e0b392a92b351d3e9eb8e7c1eb",
+      "row_count_including_header": 321,
+      "rows_exactly_equal": true,
+      "original_bytes": 450161,
+      "published_bytes": 449840,
+      "scope": "new V17 publication CSV only; ignored original bytes retained"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/iteration_history_v17.csv",
+      "original_sha256": "f2be371254ff81e051bc10ab5741d32643e3ea04db257377b635b592d38f225b",
+      "published_sha256": "6608c7b2c9e7221b0c6fe94b632c20dcf97851dd14a909bb1f1cbe378f45b8fa",
+      "row_count_including_header": 195,
+      "rows_exactly_equal": true,
+      "original_bytes": 107448,
+      "published_bytes": 107253,
+      "scope": "new V17 publication CSV only; ignored original bytes retained"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/recurrence_gap_v17.csv",
+      "original_sha256": "3a776869ea9772ac3a995adfa58d5d1f402e969c15effb95dc35b58f23e44716",
+      "published_sha256": "fa7d5ab69b5b49fa745f56a82bf1bea13e672049b44f487759b1fe9f919e907d",
+      "row_count_including_header": 195,
+      "rows_exactly_equal": true,
+      "original_bytes": 10714,
+      "published_bytes": 10519,
+      "scope": "new V17 publication CSV only; ignored original bytes retained"
+    }
+  ],
+  "recorded_utc": "2026-09-30T21:19:41.050893+00:00",
+  "window": {
+    "schema": "task042.campaign-window.v17",
+    "start_utc": "2026-09-30T15:10:06+00:00",
+    "start_monotonic": 706000.860878275,
+    "heavy_limit_seconds": 23400,
+    "total_limit_seconds": 25200,
+    "heavy_stop_utc": "2026-09-30T21:40:06+00:00",
+    "deadline_utc": "2026-09-30T22:10:06+00:00",
+    "start_scope": "initial inspection included; immutable across context, repairs, waits, resumes",
+    "review_expected_commit": "f834c008110131433de0f269195de394a6856871",
+    "prior_head": "c6cca7187c0d6d21f68b46bdb49435f213c1da68",
+    "elapsed_seconds": 22175.050999879837,
+    "heavy_remaining_seconds": 1224.949000120163,
+    "total_remaining_seconds": 3024.949000120163
+  }
+}

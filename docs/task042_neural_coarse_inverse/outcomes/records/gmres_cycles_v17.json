@@ -1,0 +1,16 @@
+{
+  "GPOLY": {
+    "cycles": [],
+    "raw_history": null,
+    "status": "RUN_FAILED",
+    "no_Q_U_R_loaded": true,
+    "rule": "original barS/restart64/noPC/cycle-boundary only; expected info1 not solver success"
+  },
+  "GNN": {
+    "cycles": [],
+    "raw_history": null,
+    "status": "RUN_FAILED",
+    "no_Q_U_R_loaded": true,
+    "rule": "original barS/restart64/noPC/cycle-boundary only; expected info1 not solver success"
+  }
+}

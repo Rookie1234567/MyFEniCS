@@ -1,0 +1,276 @@
+{
+  "points": [
+    {
+      "library": "GPOLY",
+      "logical_iteration": 512,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GPOLY/states/task042_v17_gpoly_1024_a0_20260930T161025104759Z/E0_ITER_512.npz",
+        "sha256": "7dfd0b568afcfed84ef414442ff0e875f6515360a97761cdd2709f99feca955f",
+        "y_sha256": "12eccbfbe99fe50ed8fbee24375e5c73946c4562ea6f9b77c649b659a39c4f9c",
+        "v_sha256": "b2563a80a76630a38c3d1135118339b29a9d73bd3ea79ee1c092a786aaa7dee1",
+        "c_sha256": "3f4556471aa4b6d05deb7f4fb21be8d89a93228a11dc72444da7de405543933f",
+        "trace_sha256": "e3c50ce6e817d9002419547b733fa3d761552230fdf89e5bb9529bea2cdc511a",
+        "port_sha256": "8d74c5d3365f9909d21fc1afff0089d38bdf92c3f8ff379e2a9d36329acd23ae",
+        "z_sha256": "91af39e2138e26ee24bbf0f4247eff6268f2ef64d3430a2d343f511fc6ba7db8",
+        "residual_sha256": "042a031babe805cd8ff261a6f8343abbea0d957f55f719f930d043afab4bde5e"
+      },
+      "source_sha": "86c7efa8f86d2d326c6080253e25edd3bb0f13a8",
+      "audit": {
+        "schur_relative": 0.023483208720091093,
+        "augmented_relative": 0.009106877145539899,
+        "native_relative": 0.009106877145539899,
+        "original_total_augmented_relative": 0.003160080781476892,
+        "port_absolute": 2.775557963036265e-17,
+        "port_full_rhs_relative": 1.3018799058433993e-16,
+        "port_operation_relative": 4.96904536369348e-17,
+        "recovery_relative": 4.3878369121683514e-13,
+        "schur_original_identity_operation_relative": 4.964797589406938e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.5721976019758974,
+        "port_unknown_norm": 0.19013892794000734,
+        "strict_pass": false
+      },
+      "Phi": 0.00027573054589568116,
+      "rho": 0.023483208720091093
+    },
+    {
+      "library": "GPOLY",
+      "logical_iteration": 1024,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GPOLY/states/task042_v17_gpoly_2048_a0_run5_20260930T163454110899Z/E0_ITER_1024.npz",
+        "sha256": "d4c9985dc40966492b4f95fd4ae66fedc3b4d704ebcf116a5c019cea09f772df",
+        "y_sha256": "680b13924f1c8ab18c1586ca31a55cb060b5722f1b1d3d849f3961be6e68bf8e",
+        "v_sha256": "ad3a995d73a6e924c18536377cd8342182840426e8b85c0be69c26ce63c673a3",
+        "c_sha256": "8e9e163d13e30971720cc45e90bd2646135ba1cb54a8d808f62669a01c92e69e",
+        "trace_sha256": "469d2814401814ffebfa45bc6d150aeb234fb1edeb6da17b3c3d6fde3cf88776",
+        "port_sha256": "4fb01efd4a69f5dbc23b518fba68479613d4792cd81b95e606763a0b7d304132",
+        "z_sha256": "2222d3b47196e39e4804e7eac2828a7075babe945d06a84afce6e5b5c037636a",
+        "residual_sha256": "92f690bdd77715189221c64b98d656fbdc506764a75d5c7cc339ebe6b104bfdd"
+      },
+      "source_sha": "50a8e9fafa529b6766b06b47ec340fb3245d783a",
+      "audit": {
+        "schur_relative": 0.008719224937593572,
+        "augmented_relative": 0.0033813484033407316,
+        "native_relative": 0.0033813484033407316,
+        "original_total_augmented_relative": 0.0011733258211204323,
+        "port_absolute": 4.0011619109156106e-17,
+        "port_full_rhs_relative": 1.8767513996172128e-16,
+        "port_operation_relative": 6.924177671397115e-17,
+        "recovery_relative": 4.743135449793951e-13,
+        "schur_original_identity_operation_relative": 5.375592942256402e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.6254373758482654,
+        "port_unknown_norm": 0.19670323482322571,
+        "strict_pass": false
+      },
+      "Phi": 3.801244175617681e-05,
+      "rho": 0.008719224937593572
+    },
+    {
+      "library": "GPOLY",
+      "logical_iteration": 2048,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GPOLY/states/task042_v17_gpoly_2560_a0_run7_20260930T171951971272Z/E0_ITER_2048.npz",
+        "sha256": "caee486c8ba47797e69abd0c8bc8e18af316ca6d97763a02fb1ef5a324a11e79",
+        "y_sha256": "0953ee837dbd77ec7765c1953f4966ec63f739442a9f25bc3a8790138512a3f6",
+        "v_sha256": "5329414ae4b49165a75116bdcf005e9c8010c7ce4dcf093929c20576ee7bd74c",
+        "c_sha256": "ba25838d61fe4d3d9a292dffc6d6cdeec3d92c63fd997e360bf585ced7199577",
+        "trace_sha256": "efdc2a102f992a4cf05f47d6002ee2b2e4e6557009d84478809fd00c6ae7d171",
+        "port_sha256": "acc891894e2941a235637a49fd2c4d1be16ed69741367f7c9048092e8e697f9a",
+        "z_sha256": "d2437f7fb49052d0f8d83f29d727b564d2b2ecdd1b8a78b8f885443b0a74a3e7",
+        "residual_sha256": "64cf2f9e6b2015f4cefcb9d801f4e58a5844b4a9cd372dfce5d68d06ad4db1b1"
+      },
+      "source_sha": "50a8e9fafa529b6766b06b47ec340fb3245d783a",
+      "audit": {
+        "schur_relative": 0.0030442021698838585,
+        "augmented_relative": 0.0011805531134081474,
+        "native_relative": 0.0011805531134081474,
+        "original_total_augmented_relative": 0.0004096512059309009,
+        "port_absolute": 2.7971583246658794e-17,
+        "port_full_rhs_relative": 1.3120115900449366e-16,
+        "port_operation_relative": 4.841043522639811e-17,
+        "recovery_relative": 4.683680036600058e-13,
+        "schur_original_identity_operation_relative": 5.290367896557642e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.6252293421867785,
+        "port_unknown_norm": 0.19668520100456113,
+        "strict_pass": false
+      },
+      "Phi": 4.633583425562796e-06,
+      "rho": 0.0030442021698838585
+    },
+    {
+      "library": "GPOLY",
+      "logical_iteration": 4096,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GPOLY/states/task042_v17_gpoly_4608_a0_run17_20260930T191120083407Z/E0_ITER_4096.npz",
+        "sha256": "4284a0beee3a24574bd53a518836e9fc0297d1423a42d902d79314925d989c65",
+        "y_sha256": "62ec9f7a8cc3df138fb5133a9d8fa35d66743a761a1cf186ce6fd75df84a9f19",
+        "v_sha256": "2f20e19ade978f9608fefeaafc7deee07fa8d787bb56bbc3bce1410d2a284f11",
+        "c_sha256": "056ec8d8baa0bf8518dae7e30940e3d1f8c19a063bd1276d5e6c9c9770738e76",
+        "trace_sha256": "972d9b39683354bbf36221ccadfed39e0f4f3b1f801efa96cf4326095ccd2ffa",
+        "port_sha256": "a0a020e76bce47d391280c7e13a25eb60770420609ebb8799ce6944ebfbd7b37",
+        "z_sha256": "fd15de1d7dd57491dd455d5c43432b31348bcf78978cee62a805f1b6e57ff89f",
+        "residual_sha256": "64b6b0145f7d6a4f53b25cd3a8150d4250b112e17dbbbc6e8946d6217aa41ba7"
+      },
+      "source_sha": "59feb6570a74d72aa501853807013711d89279cd",
+      "audit": {
+        "schur_relative": 0.0010247125250464435,
+        "augmented_relative": 0.00039738739225630504,
+        "native_relative": 0.00039738739225630504,
+        "original_total_augmented_relative": 0.00013789318126301457,
+        "port_absolute": 2.881941053460565e-17,
+        "port_full_rhs_relative": 1.3517790647114095e-16,
+        "port_operation_relative": 4.971471668189159e-17,
+        "recovery_relative": 4.700127377105007e-13,
+        "schur_original_identity_operation_relative": 5.31890720329948e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.6305249852594483,
+        "port_unknown_norm": 0.19733027257011768,
+        "strict_pass": false
+      },
+      "Phi": 5.25017879493529e-07,
+      "rho": 0.0010247125250464435
+    },
+    {
+      "library": "GNN",
+      "logical_iteration": 512,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GNN/states/task042_v17_gnn_1024_a0_run4_20260930T162345025576Z/E0_ITER_512.npz",
+        "sha256": "86723abd512379f7747144851c27d1976cd4fed13d8d4fe7fba767148defcee9",
+        "y_sha256": "a012958e85f7e910291731f759efd22143be53ab2c63cc3deb52318cc3ec1809",
+        "v_sha256": "8f39da3d5768dc433dc343cab522fdc78b62fb9d293b129ae586a3e93f4ae928",
+        "c_sha256": "8645634854496bed9a73e0ca02525997ec5bc3e560a21815a7c9029b66e4635e",
+        "trace_sha256": "886c26a4e3aeeb9e4831b699ab7c7f378225a4c44128185aae460a3826d9bb4a",
+        "port_sha256": "5ae27c460468e248f31b37ff9ff4309b1d5de45c0e1d967e054ffe460310911b",
+        "z_sha256": "ef1d9a684e15fa8d295ab31f6f383cce39001035a3fe4a8acf418372768a9e96",
+        "residual_sha256": "a822995fdbee742e7e371eac15fb298d4d853d2623b7d8b343af49d4706ba051"
+      },
+      "source_sha": "50a8e9fafa529b6766b06b47ec340fb3245d783a",
+      "audit": {
+        "schur_relative": 0.0254729935506368,
+        "augmented_relative": 0.009878523227379482,
+        "native_relative": 0.009878523227379482,
+        "original_total_augmented_relative": 0.003427841498424343,
+        "port_absolute": 2.775559297455189e-17,
+        "port_full_rhs_relative": 1.301880531754732e-16,
+        "port_operation_relative": 4.980875670178952e-17,
+        "recovery_relative": 4.4155314843701726e-13,
+        "schur_original_identity_operation_relative": 4.987993449445138e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.5701176149901293,
+        "port_unknown_norm": 0.1896873774494923,
+        "strict_pass": false
+      },
+      "Phi": 0.00032443670021539196,
+      "rho": 0.0254729935506368
+    },
+    {
+      "library": "GNN",
+      "logical_iteration": 1024,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GNN/states/task042_v17_gnn_2048_a0_run6_20260930T165723824834Z/E0_ITER_1024.npz",
+        "sha256": "304e02bc586d86a4df596176c14ffb45f77a5324d9b6ad241d79a183e1ddcd68",
+        "y_sha256": "5bed8e027c3827181ca352f7e6923cb44756713192eae64b675fa715318f3c2b",
+        "v_sha256": "62d5d3ad1c6ae8b320b68249c5b66d87d772f499cd7a01bfff13a8c7c288aea7",
+        "c_sha256": "01d141845ade6b805b7b88dab00ed6a03811c717bf9699fd70f37dbcd3bb2d7a",
+        "trace_sha256": "da24964abc440032aaf3b284dcfc098061f55683191494872154412a3e93870b",
+        "port_sha256": "777bef422a3d7e1f2369c1e30ef667c1c668befd1a1b7a7ba87238e020a436c4",
+        "z_sha256": "636d1dea13f05aff1c6039b26e8dc1292daed214fdefa72c78df821ce2ae3b3f",
+        "residual_sha256": "731270d9254fca6a293fc49b218adddf900e1d495f6384803ae32b7450dff8ad"
+      },
+      "source_sha": "50a8e9fafa529b6766b06b47ec340fb3245d783a",
+      "audit": {
+        "schur_relative": 0.008967874973901712,
+        "augmented_relative": 0.0034777758277125654,
+        "native_relative": 0.0034777758277125654,
+        "original_total_augmented_relative": 0.0012067860782419366,
+        "port_absolute": 2.797159237748877e-17,
+        "port_full_rhs_relative": 1.3120120183279784e-16,
+        "port_operation_relative": 4.832067300717208e-17,
+        "recovery_relative": 4.714063901634668e-13,
+        "schur_original_identity_operation_relative": 5.346399806075878e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.6283994913387358,
+        "port_unknown_norm": 0.19705061730352968,
+        "strict_pass": false
+      },
+      "Phi": 4.021139077376632e-05,
+      "rho": 0.008967874973901712
+    },
+    {
+      "library": "GNN",
+      "logical_iteration": 2048,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GNN/states/task042_v17_gnn_2560_a0_run8_20260930T173120070299Z/E0_ITER_2048.npz",
+        "sha256": "1e87ae58d5e2dc363944fca25b46962db36cccca7e263f87eccced5db1935719",
+        "y_sha256": "c02022329f49099a2fc127b1c9de90572d7d66b187b241d36520a7276b21c396",
+        "v_sha256": "f80793288a162e4ffaf10932c93dbb43bbf8c82b802fc278fb26fb417b756830",
+        "c_sha256": "a8f494a6febd603db38c5d72eac195820ac6d08a74995289661514da0feefd18",
+        "trace_sha256": "0911d5d2e047708a1ab68dcd2c55ff3809b72d35939ae3809b417dc1c1239527",
+        "port_sha256": "4cce67a680f6d9dcdea9941ee74c4721cd0527796b14ae65c9a83687e9d29948",
+        "z_sha256": "5ec2a5bef6847956e0a91a8d05b6e392b97c50acd0ef64fb18376b8ae182dd3f",
+        "residual_sha256": "d61a325a8495879453f04dbaa050be94596533e645218f7d8111ca77ff6acd51"
+      },
+      "source_sha": "50a8e9fafa529b6766b06b47ec340fb3245d783a",
+      "audit": {
+        "schur_relative": 0.003200831522894748,
+        "augmented_relative": 0.0012412945688146982,
+        "native_relative": 0.0012412945688146982,
+        "original_total_augmented_relative": 0.00043072845369121043,
+        "port_absolute": 7.757923254194622e-18,
+        "port_full_rhs_relative": 3.6388663217332525e-17,
+        "port_operation_relative": 1.3428962575249133e-17,
+        "recovery_relative": 4.678837510481688e-13,
+        "schur_original_identity_operation_relative": 5.284563631205921e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.6249291462032156,
+        "port_unknown_norm": 0.19665120388585713,
+        "strict_pass": false
+      },
+      "Phi": 5.122661218978355e-06,
+      "rho": 0.003200831522894748
+    },
+    {
+      "library": "GNN",
+      "logical_iteration": 4096,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GNN/states/task042_v17_gnn_4608_a0_run18_20260930T192237892307Z/E0_ITER_4096.npz",
+        "sha256": "3c0030d60a5e412bbb64575f3859f5b150ffc2b04a1546a255865708f1917ae3",
+        "y_sha256": "61a014707757adecad38e8a772ccc6877e6f2c31890b0f4075f7a902ede8e04f",
+        "v_sha256": "c4c6097ac7111ca00d35945bcd568e24b4cc910c94f6f888011faf7c3b50ea9f",
+        "c_sha256": "06b01f6cb14fb7e45cef5dbbc09f02c75962460ee53de6271a07332ddc3b4d0f",
+        "trace_sha256": "b674b8951690008da492b8e3e9ee56f0a5df2c678f6751ca97d1c60f4cbc9a68",
+        "port_sha256": "e9e84dc424b373ef314f1e8d5d4f0bafad686da8a4fe20e8b1cb7a0c4ef017b3",
+        "z_sha256": "5dd14e15c4b3c2eaad79cc2779f4d259bbdea54b4367598a9ebb11eb458373da",
+        "residual_sha256": "84b290148fa6fc78767eb76c0aaa713eb05f3186cf9d27ffc0feb40c743ae2ca"
+      },
+      "source_sha": "59feb6570a74d72aa501853807013711d89279cd",
+      "audit": {
+        "schur_relative": 0.0011714181363772635,
+        "augmented_relative": 0.00045428038311157463,
+        "native_relative": 0.00045428038311157463,
+        "original_total_augmented_relative": 0.0001576350141480491,
+        "port_absolute": 2.797157675481258e-17,
+        "port_full_rhs_relative": 1.3120112855438506e-16,
+        "port_operation_relative": 4.8284843137378844e-17,
+        "recovery_relative": 4.704156091889709e-13,
+        "schur_original_identity_operation_relative": 5.315654133589267e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.629430847367245,
+        "port_unknown_norm": 0.19719673110952532,
+        "strict_pass": false
+      },
+      "Phi": 6.861102251167906e-07,
+      "rho": 0.0011714181363772635
+    }
+  ],
+  "interpolated": false,
+  "equal_logical_updates_requires_no_correction_restart": true,
+  "measured_continuity_restart_counts": {
+    "GPOLY": 0,
+    "GNN": 0
+  },
+  "cold_lineage_cost_note": "GP inherits legal old256; GN starts0; old cold setup/failed work retained in prior ledger; new wall alone is not complete cold end-to-end comparison",
+  "no_same_strict_accuracy_speedup_claim": true
+}

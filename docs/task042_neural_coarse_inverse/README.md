@@ -1,3 +1,8 @@
+# 当前导航：V17可恢复全空间续算已完成
+
+最新合同为[Review V14](review_report_v14.md)，执行结果[Response V17](response_v17.md)、[完整证据](outcomes/resumable_full_trace_campaign_v17.md)、[run index](outcomes/records/run_index_v17.json)。旧版本导航仅为历史，不构成继续运行授权；当前清场等待review，不merge。
+以下历史正文逐字保留；旧版本的“当前”只指其当时阶段。
+
 # 最新执行导航：V16 / Review V13
 
 本批为原有限元全空间校正，固定随机神经／多项式基只作辅助。三路线均实际启动，GPOLY/GNN资源中断、终态证据缺失；一次独立FE验证已收口；完整资格0/6。先读[Response V16](response_v16.md)、[正式Review V13](review_report_v13.md)、[完整结果](outcomes/augmented_full_trace_lsqr_v16.md)、[run/source](outcomes/records/run_index_v16.json)与[费用](outcomes/records/resource_costs_v16.json)。

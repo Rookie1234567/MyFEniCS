@@ -1,3 +1,17 @@
+# Task042 V17模型登记：冻结基辅助可恢复全空间与GMRES，research-only
+
+| 同一0.7nm micro／固定Q3098 | 最终LSQR逻辑步 | 新GK measured..charged | G周期 | Arnoldi步 | 最终Schur | 最终native | 散射E误差 | 散射curl误差 | LSQR停止／G停止 |
+|---|---|---|---|---|---|---|---|---|---|
+| GPOLY | 6347 | 6091..6091 | 0 | unknown; discarded 0..64 | 0.000490220469 | 0.000190109352 | 0.000265162174 | 0.0002631196 | LSQR_RESERVED_G_BOUNDARY / GMRES_INTERFACE_FAILED |
+| GNN | 6119 | 6119..6135 | 0 | unknown; discarded 0..64 | 0.000594477082 | 0.00023054046 | 0.000249203787 | 0.000245918456 | LSQR_RESERVED_G_BOUNDARY / GMRES_INTERFACE_FAILED |
+
+原物理micro与两库Q3098保持；不是新NN训练、监督拟合、p4预条件逆或最终目标资格。
+
+新增正式数值监督wall **16284.035028s**；V6起formal累计下界 **37508.426009s**。同时整树采样峰 **2577092608B（2.400105GiB）**，own swap **0B**、GPU分配0；全部成本为shared-workstation。
+
+[完整数据/source/hash](task042_neural_coarse_inverse/outcomes/records/run_index_v17.json)、[Response](task042_neural_coarse_inverse/response_v17.md)。未改变production default，未批准merge。
+以下历史正文逐字保留；旧版本的“当前”只指其当时阶段。
+
 # Task042 V16模型登记：固定基辅助全空间LSQR，research-only
 
 | 模型／方法 | 容量与身份 | measured资格／资源 |

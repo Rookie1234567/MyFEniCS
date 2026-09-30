@@ -1,0 +1,250 @@
+{
+  "anchor_review_SHA": "f834c008110131433de0f269195de394a6856871",
+  "changed_files": [
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "8bfd0ed7723bb97a21c3141d2b0855821be951f46bef619d2513367817763195",
+      "bytes": 225720
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "d1b2de28f23cf36a2341843d18be34fbff2944a5e4c662fde9f4ca47bcd25b06",
+      "bytes": 190999
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "sha256": "e2176f076eb2320c351e6253ba8bb2432ffb07a76783f1bb8f1b7c5e2c1caa0c",
+      "bytes": 13343
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "32e4222d265dab418f18966982ca0801e04caa96377baf0be66f455d756c1813",
+      "bytes": 30093
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v17.csv",
+      "sha256": "88ee5c35e9247f0bee6bb4598b3bddc213d0695a56ba8259bccdc843e4ecbe88",
+      "bytes": 5918
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/channel_observables_v17.csv",
+      "sha256": "799fbb4e94a86b5fc7f96f9d6b2b569ae29204e0b392a92b351d3e9eb8e7c1eb",
+      "bytes": 449840
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/checkpoint_inventory_v17.json",
+      "sha256": "79156790f17287254133c53e91c28825ea9d7183db15433432ceb5a52f0feac1",
+      "bytes": 17691
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/field_channel_checks_v17.json",
+      "sha256": "ed23b9d9fb74c66540fafacb3b1421fb9c8315a72687a41bcbbe522ef0bcf825",
+      "bytes": 188151
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/gmres_cycles_v17.json",
+      "sha256": "925ed7a4e3c0ed5d88ce433bcbbd898d9f14b464b82230cd392d3e77e7b932c5",
+      "bytes": 433
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/gmres_interface_stop_v17.json",
+      "sha256": "f1c6649dce11bfcbee75820d8b3f7993b1f0cab417548f6efc4d7939b2541e48",
+      "bytes": 4299
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/iteration_history_v17.csv",
+      "sha256": "6608c7b2c9e7221b0c6fe94b632c20dcf97851dd14a909bb1f1cbe378f45b8fa",
+      "bytes": 107253
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/iteration_history_v17.json",
+      "sha256": "f2885d74cf61539e0be4806cd1f03c942f2b25efa5eccc0e49807f6426dbeb01",
+      "bytes": 1151
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/paired_workload_v17.json",
+      "sha256": "c9542f4230255ed463599acc57d935412c1c0ec319d73152f633651939a1206d",
+      "bytes": 14828
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/projected_operator_checks_v17.json",
+      "sha256": "c2d5186ec07ff05373ea079ccd588fd86d46e287940bfc46fbb85940fe6fd8b0",
+      "bytes": 12546
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v17.json",
+      "sha256": "4ddf75bc019b524ccdf49d8ec8763bc2a97d3cc44dfe5ae2755fceddfd995f92",
+      "bytes": 1922
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v17.json",
+      "sha256": "52d0b5611a93df43e389bf20be99ff3fca92f21ceac1e21cc1c0443fb27bf03e",
+      "bytes": 2804
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/recurrence_gap_v17.csv",
+      "sha256": "fa7d5ab69b5b49fa745f56a82bf1bea13e672049b44f487759b1fe9f919e907d",
+      "bytes": 10519
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/repair_journal_v17.json",
+      "sha256": "205569ca841fdaf2f90dbb1e76c1872257375916f7ee6b36ae6c452a9a79fe3c",
+      "bytes": 4423
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v17.json",
+      "sha256": "ef7467e85166bfc4af04127dffd76d7ffeac2caef55ca8f6e5020fa2132688c4",
+      "bytes": 133884
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_reentry_journal_v17.json",
+      "sha256": "16d671391a225a308ffad94dadbbf788feeed6e3b6ab4d786f49d8598bd97cc0",
+      "bytes": 105
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resume_qualification_v17.json",
+      "sha256": "35c7da90002b136ea26737e56f84a5806f0f9e89660dafe3f22f85ed9cd3d907",
+      "bytes": 16354
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v17.json",
+      "sha256": "29513e619cd775f4d69ffacd8321ada92ba7d9b4dc5703f9f018f166246569c3",
+      "bytes": 144208
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/resumable_full_trace_campaign_v17.md",
+      "sha256": "607e5e0cb9aae6707169b58410f8d3fcbd1ef205eec1fc75da0399fd2ad0a810",
+      "bytes": 16799
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "d56f05de7ffb167a6a233ef9701f3a16d8b7692048021332fc5840420b851c3d",
+      "bytes": 58742
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "7bd7deaa8a6b31711dc9f398df055af16ad1daea4fe8d64a0b6112116c7833d9",
+      "bytes": 37343
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v17.md",
+      "sha256": "2b29a49921f6083c4edbd1b7e66faaf420db8f098fd5a68059ed524b355a5164",
+      "bytes": 4216
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/resumable_full_trace_v17.json",
+      "sha256": "08a9512681e14b4fe0d0ade1322e152662d6b58a18a03a1d370387e59c17a6ce",
+      "bytes": 20013
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v17_checkpoint_preflight.dat",
+      "sha256": "86fd282aea6930ffb71cce3921ea28dfaeec84729136e1c06be246b7ea96cab7",
+      "bytes": 216
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v17_continue_gnn.dat",
+      "sha256": "eb908dd2f0be01ee35de6b216c52c5d8258e12bc4909b68e26d8f7a4843436d1",
+      "bytes": 206
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v17_continue_gpoly.dat",
+      "sha256": "b2fa9bb30685d9711e22f44a88bffe792061a760fc28ca5e49a44f9484b21dbf",
+      "bytes": 210
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v17_gmres_gnn.dat",
+      "sha256": "44b2436ff82a3bfcc0585b557580aea4404d233cb747d62273a12c9e72bc68ef",
+      "bytes": 216
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v17_gmres_gpoly.dat",
+      "sha256": "594aa7062450b874aa4cc0ab51ca6bad7186bf0326fa261d06052bfcb7f934cc",
+      "bytes": 220
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v17_verify.dat",
+      "sha256": "eb32bbb3427c07d219266bada46859d52d638697eb4548b3ea59b9f9914df07e",
+      "bytes": 210
+    },
+    {
+      "path": "scripts/run_case.py",
+      "sha256": "726dcc81841a373018903ac2b9042792cabac3ffcfcb9531d91155b257fed97e",
+      "bytes": 10302
+    },
+    {
+      "path": "scripts/task042_v17_campaign.py",
+      "sha256": "af431274e057990fdbc7b5cf9569adcdb97d48463ebdbd0b6d37c468fc6634a6",
+      "bytes": 8552
+    },
+    {
+      "path": "scripts/task042_v17_queue_watchdog.py",
+      "sha256": "36ef917d319ce2359312d08e5a7a217bbcb2d7d82f4a244a1cfb4db92ee71af3",
+      "bytes": 1882
+    },
+    {
+      "path": "src/io/resumable_trace_campaign.py",
+      "sha256": "c430bae7a4316ced0c0b357ab1be1a326283d1a3ef3d54a805e6593cb4d72b4e",
+      "bytes": 4867
+    },
+    {
+      "path": "src/io/resumable_trace_evidence_check.py",
+      "sha256": "50794b5958a06ad6bca36558471c55182d21c5d2bac6c62d4b1df50ac25ff3b4",
+      "bytes": 6761
+    },
+    {
+      "path": "src/io/task042_profile.py",
+      "sha256": "fc1d70c12f14cec2d22f38bbf6f0958d5ccf02302d04ab0555dbc8996a363905",
+      "bytes": 4617
+    },
+    {
+      "path": "src/runners/resumable_trace_campaign.py",
+      "sha256": "b2f098a2ff697993a803c337735cf34e14bfc8aecdb8b23545292739dc4e8a3c",
+      "bytes": 7260
+    },
+    {
+      "path": "src/runners/task042_shared.py",
+      "sha256": "aba3d02c7c60e6cf8c2fc7019085f39c29d7c44ed506fd98d977df3a5f7d3172",
+      "bytes": 37474
+    },
+    {
+      "path": "src/solvers/bounded_complex_lsqr.py",
+      "sha256": "c6ca4961da430297c652131531ae18480f84b5a7a3ecee61dee1ac8e4315906a",
+      "bytes": 4434
+    },
+    {
+      "path": "src/solvers/resumable_lsqr_checkpoint.py",
+      "sha256": "ea3f3c23b766657537c66ba01082b305b9541d61f2896deacabcc014ef582fc0",
+      "bytes": 4461
+    },
+    {
+      "path": "src/solvers/resumable_trace_gmres.py",
+      "sha256": "2a8d27de2a63b03347815f1e58a761a69b03ec28b5bfb498ea443b00ba22c72c",
+      "bytes": 1720
+    },
+    {
+      "path": "src/solvers/resumable_trace_study.py",
+      "sha256": "d3725bfae375f7f586596e536fda14ca29a87a23fe51d0166ab460e12e47ddce",
+      "bytes": 22861
+    },
+    {
+      "path": "src/solvers/resumable_trace_window.py",
+      "sha256": "e5fa6ce0c5f73e1e5fbc16b81cb1ee7fdb852fc3a7586000f06ea416bb1b4490",
+      "bytes": 5350
+    },
+    {
+      "path": "src/test/test_task042_v17_evidence.py",
+      "sha256": "d84a27865ebfe205218237420af4cf5d4a11e2a2e2365a7306718459783d30ab",
+      "bytes": 4173
+    },
+    {
+      "path": "src/test/test_task042_v17_resume.py",
+      "sha256": "3ddc575ceb561f8f3c8145af0f82f11f74cb36f31bb169e588989767da30ea7d",
+      "bytes": 13536
+    }
+  ],
+  "production_default_unchanged": true,
+  "G_candidate_interface_known_failed": true,
+  "master_merge_approved": false,
+  "note": "Content snapshot refreshed after metadata-only CSV newline normalization; this manifest excludes its own hash and later receipt metadata. Runtime arrays and historical bytes unchanged.",
+  "csv_normalization_record": "csv_publication_v17.json"
+}

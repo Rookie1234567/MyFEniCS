@@ -1,0 +1,30 @@
+{
+  "GPOLY": {
+    "original_audit_history": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GPOLY/audit_history.jsonl",
+      "sha256": "99a0571de96d88235fb8831fc34a196b2260d54789c76259c2d1c7a83b5e4532",
+      "bytes": 232995
+    },
+    "scalar_history": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GPOLY/iteration_history.jsonl",
+      "sha256": "ffca98271baf6b6e77894b625e2631cd296649ab1f854b343c50a071ab4bfb75",
+      "bytes": 1097559
+    },
+    "complete_audits": 108,
+    "distinct_logical_points": 97
+  },
+  "GNN": {
+    "original_audit_history": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GNN/audit_history.jsonl",
+      "sha256": "d9650343f640bdae922ffcbf0f0a58acab5f93edb74016d58783bf6e5a23f535",
+      "bytes": 230026
+    },
+    "scalar_history": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GNN/iteration_history.jsonl",
+      "sha256": "948b394a38474f6f89b5309f4fe6c1a08abe29bee0ff5aecdeaf3fda31bfacd3",
+      "bytes": 1101792
+    },
+    "complete_audits": 107,
+    "distinct_logical_points": 97
+  }
+}

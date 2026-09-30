@@ -1,3 +1,19 @@
+# Task042 V17：完整递推续算、全空间与原方程GMRES对照
+
+| 同一0.7nm micro／固定Q3098 | 最终LSQR逻辑步 | 新GK measured..charged | G周期 | Arnoldi步 | 最终Schur | 最终native | 散射E误差 | 散射curl误差 | LSQR停止／G停止 |
+|---|---|---|---|---|---|---|---|---|---|
+| GPOLY | 6347 | 6091..6091 | 0 | unknown; discarded 0..64 | 0.000490220469 | 0.000190109352 | 0.000265162174 | 0.0002631196 | LSQR_RESERVED_G_BOUNDARY / GMRES_INTERFACE_FAILED |
+| GNN | 6119 | 6119..6135 | 0 | unknown; discarded 0..64 | 0.000594477082 | 0.00023054046 | 0.000249203787 | 0.000245918456 | LSQR_RESERVED_G_BOUNDARY / GMRES_INTERFACE_FAILED |
+
+新增正式数值监督wall **16284.035028s**；V6起formal累计下界 **37508.426009s**。同时整树采样峰 **2577092608B（2.400105GiB）**，own swap **0B**、GPU分配0；全部成本为shared-workstation。
+
+完整资格0/8；无hidden训练，GPOLY/GNN共同G0，micro不代表目标48小时。
+
+[Response V17](../response_v17.md)、[完整结果](resumable_full_trace_campaign_v17.md)、[原场](records/candidate_comparison_v17.csv)、[费用](records/resource_costs_v17.json)。
+
+唯一下一建议：仅在下一份review重新授权后，修复GMRES入口对BarAction.close完整z返回值的接线，并增加一个覆盖真实端口闭合／原audit的最小回归；从当前两库最后可信LSQR trace各完成同一固定GMRES64对照，补齐本批因实现失败而缺失的证据，不增加基、PC、迭代预算或读取参考选点。本批不实施。
+以下历史正文逐字保留；旧版本的“当前”只指其当时阶段。
+
 # V16 全空间校正：正式队列已收口
 
 本轮让原有限元的每个独立trace系数都参与求解：先处理已有基Q能表达的方向，再迭代求空间外部分。这样消除了“小表示库必须包办完整准确场”的限制，代价是薄基投影、三角求解和设置成本。网络只提供固定随机特征方向，没有hidden训练。

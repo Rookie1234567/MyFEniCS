@@ -1,0 +1,87 @@
+{
+  "status": "EVIDENCE_CONSISTENT",
+  "mismatches": [],
+  "recovered_interfaces": {
+    "GPOLY": true,
+    "GNN": true
+  },
+  "raw_state_checks": {
+    "V16-GPOLY-256": {
+      "Schur_raw": 0.046948247649301465,
+      "Phi_raw": 0.0011020689786700683,
+      "decoded_trace_relative": 5.056315668301077e-19,
+      "raw_vectors_finite": true,
+      "actual_z_composition": true
+    },
+    "GPOLY-1024": {
+      "Schur_raw": 0.008719224937593572,
+      "Phi_raw": 3.801244175617688e-05,
+      "decoded_trace_relative": 6.676154631423991e-18,
+      "raw_vectors_finite": true,
+      "actual_z_composition": true
+    },
+    "GPOLY-2048": {
+      "Schur_raw": 0.0030442021698838585,
+      "Phi_raw": 4.63358342556279e-06,
+      "decoded_trace_relative": 4.25520442403865e-18,
+      "raw_vectors_finite": true,
+      "actual_z_composition": true
+    },
+    "GPOLY-LSQR-FINAL": {
+      "Schur_raw": 0.000490220468867467,
+      "Phi_raw": 1.201580540483196e-07,
+      "decoded_trace_relative": 5.0721582954715556e-18,
+      "raw_vectors_finite": true,
+      "actual_z_composition": true
+    },
+    "V16-GNN-0": {
+      "Schur_raw": 0.5799857922051803,
+      "Phi_raw": 0.16819175957993518,
+      "decoded_trace_relative": 0.0,
+      "raw_vectors_finite": true,
+      "actual_z_composition": true
+    },
+    "GNN-1024": {
+      "Schur_raw": 0.008967874973901712,
+      "Phi_raw": 4.021139077376639e-05,
+      "decoded_trace_relative": 2.9721266851153795e-18,
+      "raw_vectors_finite": true,
+      "actual_z_composition": true
+    },
+    "GNN-2048": {
+      "Schur_raw": 0.003200831522894748,
+      "Phi_raw": 5.1226612189783525e-06,
+      "decoded_trace_relative": 8.85306658768481e-19,
+      "raw_vectors_finite": true,
+      "actual_z_composition": true
+    },
+    "GNN-LSQR-FINAL": {
+      "Schur_raw": 0.0005944770816765329,
+      "Phi_raw": 1.7670150031932327e-07,
+      "decoded_trace_relative": 3.1235779763752237e-18,
+      "raw_vectors_finite": true,
+      "actual_z_composition": true
+    }
+  },
+  "strict_same_discrete": {
+    "V16-GPOLY-256": false,
+    "V16-GNN-0": false,
+    "GPOLY-1024": false,
+    "GPOLY-2048": false,
+    "GPOLY-LSQR-FINAL": false,
+    "GNN-1024": false,
+    "GNN-2048": false,
+    "GNN-LSQR-FINAL": false
+  },
+  "strict_qualified_states": 0,
+  "no_saved_status_trusted": true,
+  "new_equation_solves_in_checker": 0,
+  "no_hidden_training_claimed": true,
+  "checker_source_SHA": "74a3f2643862a3fd73fc7b6b417cbc910a335388",
+  "checker_file_sha256": "50794b5958a06ad6bca36558471c55182d21c5d2bac6c62d4b1df50ac25ff3b4",
+  "formal_solver_source_sha": "59feb6570a74d72aa501853807013711d89279cd",
+  "solver_queue_frozen_before_reference": true,
+  "GMRES_complete_cycles": 0,
+  "GMRES_physical_qualification": "NOT_RUN_INTERFACE_FAILED",
+  "GMRES_interface_failure_preserved": true
+}

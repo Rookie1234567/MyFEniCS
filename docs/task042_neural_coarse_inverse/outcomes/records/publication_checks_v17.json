@@ -1,0 +1,62 @@
+{
+  "review_path": "docs/task042_neural_coarse_inverse/review_report_v14.md",
+  "review_commit": "f834c008110131433de0f269195de394a6856871",
+  "source_review_check": {
+    "review_path": "docs/task042_neural_coarse_inverse/review_report_v14.md",
+    "review_sha256": "570ce39b6ad2aea68bc380c19327c9ab9d9e137d7d5787cc1ddf63ad6ddc7283",
+    "review_commit": "f834c008110131433de0f269195de394a6856871",
+    "source_check": "PASS",
+    "tables": 3,
+    "math_blocks": 4,
+    "issues": [],
+    "local_links": [
+      {
+        "line": 35,
+        "target": "response_v16.md",
+        "exists": true
+      },
+      {
+        "line": 35,
+        "target": "outcomes/augmented_full_trace_lsqr_v16.md",
+        "exists": true
+      },
+      {
+        "line": 35,
+        "target": "outcomes/records/controlled_stop_snapshot_v16.json",
+        "exists": true
+      },
+      {
+        "line": 35,
+        "target": "outcomes/records/run_index_v16.json",
+        "exists": true
+      },
+      {
+        "line": 35,
+        "target": "outcomes/records/resource_costs_v16.json",
+        "exists": true
+      },
+      {
+        "line": 35,
+        "target": "../../src/solvers/bounded_complex_lsqr.py",
+        "exists": true
+      },
+      {
+        "line": 35,
+        "target": "../../src/solvers/augmented_trace_study.py",
+        "exists": true
+      }
+    ],
+    "github_rendered_visual_check": "NOT_VERIFIED",
+    "github_fetch": "web.run failed: Cache miss; no rendered pixels",
+    "review_not_modified": true
+  },
+  "result_source_static_record": "static_checks_v17.json",
+  "GitHub_rendered_visual": "NOT_VERIFIED: exact-review web request Cache miss; no browser pixels available",
+  "no_authoritative_review_edit": true,
+  "static_is_not_visual": true,
+  "source_result_static": "PASS",
+  "protected_old_files": 342,
+  "visual_status": "NOT_VERIFIED",
+  "initial_static_failure_preserved": "static_checks_v17_initial.json",
+  "new_CSV_newline_normalization": "csv_publication_v17.json; no data changes or numerical replay"
+}

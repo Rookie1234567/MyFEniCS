@@ -1,0 +1,71 @@
+{
+  "status": "FAIL",
+  "issues": [
+    "docs/task042_neural_coarse_inverse/outcomes/test_summary.md:missing local link records/static_checks_v17.json",
+    "docs/task042_neural_coarse_inverse/outcomes/test_summary.md:missing local link records/protected_history_v17.json"
+  ],
+  "new_content": {
+    "docs/task042_neural_coarse_inverse/README.md": {
+      "issues": [],
+      "tables": 0,
+      "math_blocks": 0,
+      "local_links": 4
+    },
+    "docs/task042_neural_coarse_inverse/outcomes/summary.md": {
+      "issues": [],
+      "tables": 1,
+      "math_blocks": 0,
+      "local_links": 4
+    },
+    "docs/task042_neural_coarse_inverse/outcomes/test_summary.md": {
+      "issues": [
+        "missing local link records/static_checks_v17.json",
+        "missing local link records/protected_history_v17.json"
+      ],
+      "tables": 1,
+      "math_blocks": 0,
+      "local_links": 8
+    },
+    "docs/task042_neural_coarse_inverse/outcomes/changed_files.md": {
+      "issues": [],
+      "tables": 1,
+      "math_blocks": 0,
+      "local_links": 2
+    },
+    "docs/development_progress.md": {
+      "issues": [],
+      "tables": 1,
+      "math_blocks": 0,
+      "local_links": 3
+    },
+    "docs/development_model_registry.md": {
+      "issues": [],
+      "tables": 1,
+      "math_blocks": 0,
+      "local_links": 2
+    },
+    "docs/task042_neural_coarse_inverse/response_v17.md": {
+      "issues": [],
+      "tables": 1,
+      "math_blocks": 0,
+      "local_links": 3
+    },
+    "docs/task042_neural_coarse_inverse/outcomes/resumable_full_trace_campaign_v17.md": {
+      "issues": [],
+      "tables": 7,
+      "math_blocks": 0,
+      "local_links": 15
+    }
+  },
+  "review_source_checks": {
+    "issues": [],
+    "tables": 3,
+    "math_blocks": 4,
+    "local_links": 7
+  },
+  "review_sha256": "570ce39b6ad2aea68bc380c19327c9ab9d9e137d7d5787cc1ddf63ad6ddc7283",
+  "protected_old_files": 342,
+  "prefix_historical_bodies_preserved": true,
+  "GitHub_visual_status": "NOT_VERIFIED: web.open exact-review page Cache miss; no observed browser pixels",
+  "local_lexical_checks_are_not_visual_rendering": true
+}

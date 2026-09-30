@@ -1,0 +1,94 @@
+{
+  "repairs": [
+    {
+      "number": 1,
+      "root_cause": "qualified SciPy names relative tolerance tol not rtol",
+      "scope": "new GMRES adapter/test only",
+      "budget_seconds": 1200,
+      "old_evidence": "tmp/task042/v17/pure_resume_tests/worker.log",
+      "failure_artifact_mtime_utc": "2026-09-30T15:27:25.413932+00:00",
+      "first_success_artifact_mtime_utc": "2026-09-30T15:28:53.202985+00:00",
+      "repair_elapsed_exact": "unknown; within one bounded preparation cycle, no numerical replay"
+    },
+    {
+      "number": 2,
+      "root_cause": "new numeric I/O totals and nested projected costs not durably accumulated",
+      "scope": "telemetry/count/serialization only; finish current slice unchanged",
+      "start_utc": "2026-09-30T16:10:51.368143+00:00",
+      "start_monotonic": 709646.230824859,
+      "budget_seconds": 1200,
+      "numerical_child_finished_unchanged": true,
+      "intentional_queue_pause_raw": "tmp/task042/v17/queue_solve/summary.json",
+      "end_utc": "2026-09-30T16:23:43.203265+00:00",
+      "elapsed_seconds": 771.8313857680187,
+      "numerical_replay": false
+    },
+    {
+      "number": 3,
+      "root_cause": "early loading/failure counter attribution missing before active registration",
+      "scope": "route wall/actions and incomplete work count only; no numerical change",
+      "start_utc": "2026-09-30T18:09:07.102812+00:00",
+      "start_monotonic": 716741.963691873,
+      "budget_seconds": 1200,
+      "proof": "tmp/task042/v17/repair3_probe/proof.json",
+      "owned_driver_pid": 899292,
+      "owned_driver_start_ticks": 71041824,
+      "signal": "SIGTERM only exact owned finite scheduler; independent watchdog finishes numerical slice",
+      "source": "50a8e9fafa529b6766b06b47ec340fb3245d783a",
+      "end_utc": "2026-09-30T18:21:29.942915+00:00",
+      "elapsed_seconds": 742.840127244941,
+      "new_source_sha": "bd3ab93a1da234d3aa18ff43b5c0942831935e39",
+      "pure_tests_passed": 26,
+      "numerical_replay": false,
+      "descendants_cleared": true,
+      "intentional_queue_pause_raw": "tmp/task042/v17/queue_solve_r2/summary.json"
+    },
+    {
+      "number": 4,
+      "root_cause": "early active registration used prefixed stage as library key; failure attribution missing audit defaults",
+      "same_cause_prior_cycle": 3,
+      "start_utc": "2026-09-30T18:27:41+00:00",
+      "start_monotonic": 717855.860865852,
+      "budget_seconds": 1200,
+      "scope": "normalize actual one-run name, preserve failed accounting, six real input regressions",
+      "failed_source_sha": "bd3ab93a1da234d3aa18ff43b5c0942831935e39",
+      "exact_new_GK_observed": 0,
+      "conservative_failed_actions_upper": 128,
+      "conservative_failed_GK_upper": 16,
+      "replay_from": "GNN3072 and GPOLY3584 legal GK generations unchanged",
+      "failure_accounting": "raw summary costs charged; missing counts keep upper bounds; no clear/reset budgets",
+      "end_utc": "2026-09-30T18:37:38.344503+00:00",
+      "elapsed_seconds": 597.344521090039,
+      "elapsed_scope": "derived from recorded UTC diagnosis onset; onset rounded to seconds, <=1s uncertainty",
+      "new_source_sha": "59feb6570a74d72aa501853807013711d89279cd",
+      "pure_tests_passed": 32,
+      "previous_numeric_GK_replayed": false,
+      "descendants_cleared": true
+    }
+  ],
+  "repair4_onset_bound": {
+    "earliest_possible_diagnosis_utc": "2026-09-30T18:24:44+00:00",
+    "latest_confirmed_diagnosis_utc": "2026-09-30T18:27:41+00:00",
+    "end_utc": "2026-09-30T18:37:38.344503+00:00",
+    "whole_diagnosis_repair_elapsed_upper_seconds": 775.344503,
+    "scope": "bounded from last monitor clock before error-log inspection; not invented exact onset"
+  },
+  "all_events": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v17/progress_journal.jsonl",
+    "sha256": "ce94b57d8aed0aee6f37f2f2c5162a33019163cde343eac8c37e33a1ecc371f8",
+    "bytes": 194702
+  },
+  "intentional_driver_pauses": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v17/queue_solve/summary.json",
+      "sha256": "8abf82420a2a6173806492b8cdb7ae479341d80713d682319e34d185fb655fb2",
+      "bytes": 4407
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v17/queue_solve_r2/summary.json",
+      "sha256": "5127e1e6be7142277d50df5dbf4b6e91e716e93523c26a95dd75699cd91c6916",
+      "bytes": 4522
+    }
+  ],
+  "intentional_pause_is_not_resource_or_Krylov_restart": true
+}

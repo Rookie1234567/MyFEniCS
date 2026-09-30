@@ -1,0 +1,107 @@
+{
+  "failures": [
+    {
+      "run": {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v17_gmres_gpoly_a0_run26_20260930T204526035994Z",
+        "stage": "GMRES_GPOLY",
+        "family": "GPOLY",
+        "classification": "WORKER_FAILED",
+        "source_sha": "59feb6570a74d72aa501853807013711d89279cd",
+        "actions_lower": 67,
+        "actions_upper": 131,
+        "audits_lower": 0,
+        "audits_upper": 2,
+        "updates_lower": 0,
+        "updates_upper": 0,
+        "launch_wall_seconds": 8.553056634031236,
+        "descendants_cleared": true,
+        "rss_peak_bytes": 442363904,
+        "swap_peak_bytes": 0,
+        "numeric_io": {
+          "started": 0,
+          "completed": 0,
+          "bytes_completed": 0,
+          "wall_completed_seconds": 0.0
+        },
+        "exact_counts": false
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/task042_v17_gmres_gpoly_a0_run26_20260930T204526035994Z/stage_result.json",
+        "sha256": "c9d91e3e89e54d51fcf2b291d924947ca544c230dada66482dfa4a8817a041c7"
+      },
+      "error": "ValueError: trace/port input inventory mismatch",
+      "worker_log": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v17_gmres_gpoly_a0_run26_20260930T204526035994Z/supervision/worker.log",
+        "sha256": "cf1f1c15aa41ef785789c6dc26000b3128ea8af34ed4f3c1201bd02cc9b0b96d"
+      },
+      "completed_original_S": 67,
+      "completed_original_SH": 0,
+      "committed_cycles": 0,
+      "committed_GMRES_vectors": 0,
+      "Arnoldi_measured": null,
+      "Arnoldi_upper_bound": 64,
+      "attempted_original_input_shape": [
+        36328
+      ],
+      "expected_original_input_shape": [
+        18184
+      ],
+      "attempt_shape_evidence": "derived from original nt18144 plus BarAction.close full18184; stack reaches shape guard before action evaluation"
+    },
+    {
+      "run": {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v17_gmres_gnn_a0_run27_20260930T204534888815Z",
+        "stage": "GMRES_GNN",
+        "family": "GNN",
+        "classification": "WORKER_FAILED",
+        "source_sha": "59feb6570a74d72aa501853807013711d89279cd",
+        "actions_lower": 67,
+        "actions_upper": 131,
+        "audits_lower": 0,
+        "audits_upper": 2,
+        "updates_lower": 0,
+        "updates_upper": 0,
+        "launch_wall_seconds": 8.544723086990416,
+        "descendants_cleared": true,
+        "rss_peak_bytes": 442335232,
+        "swap_peak_bytes": 0,
+        "numeric_io": {
+          "started": 0,
+          "completed": 0,
+          "bytes_completed": 0,
+          "wall_completed_seconds": 0.0
+        },
+        "exact_counts": false
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/task042_v17_gmres_gnn_a0_run27_20260930T204534888815Z/stage_result.json",
+        "sha256": "f54cea56e8bcce6be996f94a68f581e3633ae79a0e1872879f357cc6d2132402"
+      },
+      "error": "ValueError: trace/port input inventory mismatch",
+      "worker_log": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v17_gmres_gnn_a0_run27_20260930T204534888815Z/supervision/worker.log",
+        "sha256": "f637c482cb6c7d87729b84c4768e2ef88c10f327cb775d971b8dafe590cb03b8"
+      },
+      "completed_original_S": 67,
+      "completed_original_SH": 0,
+      "committed_cycles": 0,
+      "committed_GMRES_vectors": 0,
+      "Arnoldi_measured": null,
+      "Arnoldi_upper_bound": 64,
+      "attempted_original_input_shape": [
+        36328
+      ],
+      "expected_original_input_shape": [
+        18184
+      ],
+      "attempt_shape_evidence": "derived from original nt18144 plus BarAction.close full18184; stack reaches shape guard before action evaluation"
+    }
+  ],
+  "actual_source_sha": "59feb6570a74d72aa501853807013711d89279cd",
+  "root_cause": "gmres_route treats full z returned by BarAction.close as port, duplicating trace",
+  "original_LSQR_restore_uses_full_z_correctly": true,
+  "affected": "G interface only, not original S nor stored LSQR states",
+  "failed_hypothesis": "full G candidate equation/physics NOT_EVALUATED",
+  "minimal_repair_not_executed_because_numbered_quota_used": 4,
+  "repair_5_or_G_replay": false
+}

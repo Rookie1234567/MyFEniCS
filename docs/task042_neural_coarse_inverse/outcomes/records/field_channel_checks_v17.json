@@ -1,0 +1,5813 @@
+{
+  "raw_rows": {
+    "V16-GPOLY-256": {
+      "status": "NOT_QUALIFIED",
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 0.046948247649301465,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      },
+      "audit": {
+        "schur_relative": 0.046948247649301465,
+        "augmented_relative": 0.018206707977470007,
+        "native_relative": 0.018206707977470007,
+        "original_total_augmented_relative": 0.006317716496695388,
+        "port_absolute": 1.627958696673106e-20,
+        "port_full_rhs_relative": 7.635966328093702e-20,
+        "port_operation_relative": 2.5851171532333784e-20,
+        "recovery_relative": 5.18598990234667e-13,
+        "schur_original_identity_operation_relative": 5.846522104283168e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.7812340634866066,
+        "port_unknown_norm": 0.21436646298216985,
+        "strict_pass": false,
+        "independent_DOLFINx_total_native_relative": 0.006317716496615836
+      },
+      "fields": {
+        "full_FE_L2_relative": 0.015382478344039854,
+        "full_FE_scaled_curl_relative": 0.015384786576461544,
+        "scattered_FE_L2_relative": 0.14699703011404466,
+        "scattered_scaled_curl_relative": 0.14701629780313924,
+        "selected_E_relative": 0.015939558836398013,
+        "selected_H_relative": 0.014827671187646978
+      },
+      "comparison": {
+        "status": "NOT_QUALIFIED",
+        "equation_audit": {
+          "schur_relative": 0.046948247649301465,
+          "augmented_relative": 0.018206707977470007,
+          "native_relative": 0.018206707977470007,
+          "original_total_augmented_relative": 0.006317716496695388,
+          "port_absolute": 1.627958696673106e-20,
+          "port_full_rhs_relative": 7.635966328093702e-20,
+          "port_operation_relative": 2.5851171532333784e-20,
+          "recovery_relative": 5.18598990234667e-13,
+          "schur_original_identity_operation_relative": 5.846522104283168e-13,
+          "slave_storage_max": 0.0,
+          "field_norm": 1.7812340634866066,
+          "port_unknown_norm": 0.21436646298216985,
+          "strict_pass": false,
+          "independent_DOLFINx_total_native_relative": 0.006317716496615836
+        },
+        "full_FE_L2_relative": 0.015382478344039854,
+        "full_FE_scaled_curl_relative": 0.015384786576461544,
+        "selected_E_relative": 0.015939558836398013,
+        "selected_H_relative": 0.014827671187646978,
+        "scattered_FE_L2_relative": 0.14699703011404466,
+        "ordered_complex_ports_relative": 0.009613502247700705,
+        "power_absolute_differences": {
+          "R_total": 0.000975523043253837,
+          "T_total": 0.006295012596357341,
+          "A_balance": 0.007270535639611109,
+          "A_volume": 3.232831232496871e-05
+        },
+        "max_channel_power_difference": 0.00629535932307046,
+        "energy_closure_absolute": 0.007302863949029792
+      },
+      "ordered_complex_total_ports": [
+        {
+          "real": -2.0565921732135764e-05,
+          "imag": 5.476898788301159e-06
+        },
+        {
+          "real": -4.657904379714697e-06,
+          "imag": -2.3385896955198317e-06
+        },
+        {
+          "real": -3.929214392273425e-05,
+          "imag": 5.441167640759075e-06
+        },
+        {
+          "real": -4.208923184334921e-06,
+          "imag": -7.535247983953927e-06
+        },
+        {
+          "real": 7.69537216218824e-06,
+          "imag": 1.5252207086826695e-05
+        },
+        {
+          "real": -2.417210929536944e-07,
+          "imag": 1.7128130364342066e-05
+        },
+        {
+          "real": 2.8061809135287498e-06,
+          "imag": 4.638261067069891e-06
+        },
+        {
+          "real": 2.7681580756594428e-05,
+          "imag": -4.371865575679778e-06
+        },
+        {
+          "real": 3.869774536955313e-05,
+          "imag": 5.183647096648773e-06
+        },
+        {
+          "real": -5.966576095221042e-07,
+          "imag": -6.181254693478075e-06
+        },
+        {
+          "real": -9.318908253615608e-06,
+          "imag": -1.4010648858827445e-06
+        },
+        {
+          "real": -4.0781062780152424e-06,
+          "imag": 7.769827082615996e-06
+        },
+        {
+          "real": -9.213560595230721e-08,
+          "imag": -1.192436393078586e-05
+        },
+        {
+          "real": 7.584102189465459e-06,
+          "imag": -1.1292720129558007e-05
+        },
+        {
+          "real": -9.924967925516017e-05,
+          "imag": -6.908244088091206e-05
+        },
+        {
+          "real": 2.2440154192155772e-06,
+          "imag": 2.300785316470994e-06
+        },
+        {
+          "real": 1.7858723493157163e-05,
+          "imag": -1.10703891351789e-05
+        },
+        {
+          "real": -1.7543128617261865e-05,
+          "imag": 1.6021761603492963e-05
+        },
+        {
+          "real": 1.2226832957881826,
+          "imag": -0.5458741259887215
+        },
+        {
+          "real": 6.937360103520108e-05,
+          "imag": -0.00010863736571447212
+        },
+        {
+          "real": 4.5165685781135474e-07,
+          "imag": -2.117014382945119e-05
+        },
+        {
+          "real": -4.122406382819115e-06,
+          "imag": -1.5919592087779373e-05
+        },
+        {
+          "real": 5.849343213373311e-06,
+          "imag": -6.014821173009494e-05
+        },
+        {
+          "real": -1.1672121178726892e-06,
+          "imag": -4.563649668548503e-06
+        },
+        {
+          "real": -3.1399530969120704e-05,
+          "imag": 3.392070620807765e-05
+        },
+        {
+          "real": 2.2167812361769673e-05,
+          "imag": -6.657066473843263e-06
+        },
+        {
+          "real": 1.039560459967277e-05,
+          "imag": 9.933771805771806e-06
+        },
+        {
+          "real": -3.1208448038545145e-05,
+          "imag": -5.816795554266868e-06
+        },
+        {
+          "real": -2.4016726546258325e-05,
+          "imag": -9.235807755242349e-07
+        },
+        {
+          "real": -3.909973524899903e-06,
+          "imag": -7.187067233035038e-06
+        },
+        {
+          "real": -1.2683531451962477e-05,
+          "imag": -9.21325459672001e-06
+        },
+        {
+          "real": 3.4818380102729368e-06,
+          "imag": 6.273312859212751e-06
+        },
+        {
+          "real": 7.655291827909716e-06,
+          "imag": -2.3510877796107882e-05
+        },
+        {
+          "real": 9.754652519388557e-06,
+          "imag": 2.4244732262743253e-05
+        },
+        {
+          "real": 0.00010289150213636252,
+          "imag": -8.15795477651514e-05
+        },
+        {
+          "real": 1.305886663940417e-06,
+          "imag": 4.364332113884641e-06
+        },
+        {
+          "real": 3.159221114139047e-05,
+          "imag": -1.5487213469634462e-05
+        },
+        {
+          "real": 1.2607771252494601e-05,
+          "imag": -1.7192476465038496e-05
+        },
+        {
+          "real": 1.3134514643610995,
+          "imag": -0.17563282916164347
+        },
+        {
+          "real": 6.434956998872338e-05,
+          "imag": -0.00012715319982705128
+        }
+      ],
+      "ordered_complex_scattered_ports": [
+        {
+          "real": -2.0565921732157004e-05,
+          "imag": 5.4768987882716565e-06
+        },
+        {
+          "real": -4.6579043797378815e-06,
+          "imag": -2.3385896954792596e-06
+        },
+        {
+          "real": -3.9292143922977346e-05,
+          "imag": 5.4411676406540475e-06
+        },
+        {
+          "real": -4.208923184334921e-06,
+          "imag": -7.535247983953927e-06
+        },
+        {
+          "real": 7.69537216218352e-06,
+          "imag": 1.5252207086833776e-05
+        },
+        {
+          "real": -2.417210929305103e-07,
+          "imag": 1.7128130364361385e-05
+        },
+        {
+          "real": 2.8061809135287544e-06,
+          "imag": 4.638261067069889e-06
+        },
+        {
+          "real": 2.7681580756534952e-05,
+          "imag": -4.371865575679778e-06
+        },
+        {
+          "real": 3.8697745369875866e-05,
+          "imag": 5.183647096526635e-06
+        },
+        {
+          "real": -5.966576095221042e-07,
+          "imag": -6.181254693478075e-06
+        },
+        {
+          "real": -9.318908253615608e-06,
+          "imag": -1.4010648858827434e-06
+        },
+        {
+          "real": -4.078106278078967e-06,
+          "imag": 7.769827082615996e-06
+        },
+        {
+          "real": -9.213560598534957e-08,
+          "imag": -1.192436393078586e-05
+        },
+        {
+          "real": 7.584102189372815e-06,
+          "imag": -1.1292720129585027e-05
+        },
+        {
+          "real": -9.924967925476838e-05,
+          "imag": -6.908244088036038e-05
+        },
+        {
+          "real": 2.2440154192155772e-06,
+          "imag": 2.300785316470994e-06
+        },
+        {
+          "real": 1.7858723493172504e-05,
+          "imag": -1.1070389135158838e-05
+        },
+        {
+          "real": -1.754312861734293e-05,
+          "imag": 1.6021761603481383e-05
+        },
+        {
+          "real": -0.04017538797671218,
+          "imag": -0.14598459131171834
+        },
+        {
+          "real": 6.937360103573246e-05,
+          "imag": -0.00010863736571464039
+        },
+        {
+          "real": 4.5165685781253487e-07,
+          "imag": -2.117014382943467e-05
+        },
+        {
+          "real": -4.1224063828693745e-06,
+          "imag": -1.591959208775231e-05
+        },
+        {
+          "real": 5.849343213577469e-06,
+          "imag": -6.0148211730578776e-05
+        },
+        {
+          "real": -1.1672121178726892e-06,
+          "imag": -4.563649668548503e-06
+        },
+        {
+          "real": -3.1399530969153745e-05,
+          "imag": 3.392070620808945e-05
+        },
+        {
+          "real": 2.2167812361816067e-05,
+          "imag": -6.6570664738277985e-06
+        },
+        {
+          "real": 1.0395604599672779e-05,
+          "imag": 9.933771805771811e-06
+        },
+        {
+          "real": -3.120844803850265e-05,
+          "imag": -5.816795554266868e-06
+        },
+        {
+          "real": -2.4016726546517998e-05,
+          "imag": -9.235807752156388e-07
+        },
+        {
+          "real": -3.909973524899903e-06,
+          "imag": -7.187067233035038e-06
+        },
+        {
+          "real": -1.2683531451962472e-05,
+          "imag": -9.213254596720013e-06
+        },
+        {
+          "real": 3.4818380102389436e-06,
+          "imag": 6.273312859246744e-06
+        },
+        {
+          "real": 7.655291827916797e-06,
+          "imag": -2.351087779611732e-05
+        },
+        {
+          "real": 9.754652519421386e-06,
+          "imag": 2.4244732262658282e-05
+        },
+        {
+          "real": 0.00010289150213583973,
+          "imag": -8.157954776500035e-05
+        },
+        {
+          "real": 1.305886663940417e-06,
+          "imag": 4.364332113884641e-06
+        },
+        {
+          "real": 3.1592211141385746e-05,
+          "imag": -1.5487213469648035e-05
+        },
+        {
+          "real": 1.2607771252455978e-05,
+          "imag": -1.719247646504429e-05
+        },
+        {
+          "real": -0.022145462321063736,
+          "imag": -0.1501229783629817
+        },
+        {
+          "real": 6.43495699733643e-05,
+          "imag": -0.00012715319982587267
+        }
+      ],
+      "selected_E": [
+        [
+          {
+            "real": 1.1029035900394701e-05,
+            "imag": -3.118698464207062e-05
+          },
+          {
+            "real": 1.059140967853087,
+            "imag": 0.8099580812497452
+          },
+          {
+            "real": 0.00016718266454539686,
+            "imag": -1.2114698679550034e-06
+          }
+        ],
+        [
+          {
+            "real": -3.9189953477426184e-05,
+            "imag": -7.450710660660803e-05
+          },
+          {
+            "real": 1.0712959893222056,
+            "imag": 0.7966980735692661
+          },
+          {
+            "real": 0.00015940147698208213,
+            "imag": -3.9130525289356656e-05
+          }
+        ],
+        [
+          {
+            "real": -3.783606572980303e-05,
+            "imag": -5.4133035396005745e-05
+          },
+          {
+            "real": -1.0958810957171519,
+            "imag": -0.7694765999740647
+          },
+          {
+            "real": -0.0001405049108021858,
+            "imag": 2.0094969071422836e-05
+          }
+        ],
+        [
+          {
+            "real": -1.8056491914551e-05,
+            "imag": 6.389650039579584e-06
+          },
+          {
+            "real": 1.0963863579908104,
+            "imag": 0.7687892264226609
+          },
+          {
+            "real": 0.00013874995134813007,
+            "imag": -5.636648554193045e-05
+          }
+        ],
+        [
+          {
+            "real": -1.4126511634930559e-05,
+            "imag": -3.5794547466791834e-05
+          },
+          {
+            "real": -0.7265069816232765,
+            "imag": 1.099979122943429
+          },
+          {
+            "real": -1.7845093033886797e-05,
+            "imag": 0.00011546691142982015
+          }
+        ],
+        [
+          {
+            "real": 2.2315869220984597e-07,
+            "imag": -1.7554677617922594e-05
+          },
+          {
+            "real": 0.7132783284091719,
+            "imag": -1.1110761405599763
+          },
+          {
+            "real": 2.8268801755412357e-05,
+            "imag": -0.00013724184062264636
+          }
+        ]
+      ],
+      "selected_H_code": [
+        [
+          {
+            "real": 0.008476588462335373,
+            "imag": 0.007558405999025714
+          },
+          {
+            "real": -0.00015710081873560543,
+            "imag": 9.992616853202803e-05
+          },
+          {
+            "real": 1.0291280274927086,
+            "imag": 0.811212327499223
+          }
+        ],
+        [
+          {
+            "real": 0.008453267627765697,
+            "imag": 0.007784917312367485
+          },
+          {
+            "real": -0.00014592620265034559,
+            "imag": 6.458142467456239e-05
+          },
+          {
+            "real": 1.0413141212803665,
+            "imag": 0.7979958069597787
+          }
+        ],
+        [
+          {
+            "real": -0.008638539768339023,
+            "imag": -0.007581521227189839
+          },
+          {
+            "real": 0.00016961761397351073,
+            "imag": 1.344523001014891e-05
+          },
+          {
+            "real": -1.0658711467163295,
+            "imag": -0.7703989198944214
+          }
+        ],
+        [
+          {
+            "real": 0.008454025071564107,
+            "imag": 0.007656000118440989
+          },
+          {
+            "real": -0.00011282960896678767,
+            "imag": 2.412697550478707e-05
+          },
+          {
+            "real": 1.066573730199081,
+            "imag": 0.7698716938236715
+          }
+        ],
+        [
+          {
+            "real": -0.007441007282440814,
+            "imag": 0.008792734863000157
+          },
+          {
+            "real": -3.125669846028899e-05,
+            "imag": -0.0001381681630968626
+          },
+          {
+            "real": -0.7282072013042011,
+            "imag": 1.1341148488184283
+          }
+        ],
+        [
+          {
+            "real": 0.007219121551282232,
+            "imag": -0.009021299583182782
+          },
+          {
+            "real": 2.3463831235607376e-05,
+            "imag": 0.00011500217171783365
+          },
+          {
+            "real": 0.7148080781048285,
+            "imag": -1.145379501389676
+          }
+        ]
+      ],
+      "power": {
+        "R_total": 0.1166702962796625,
+        "R00_total": 0.1166692809012641,
+        "R00_s": 0.11666926428649035,
+        "R00_p": 1.6614773749970625e-08,
+        "R00_by_polarization": {
+          "s": 0.11666926428649035,
+          "p": 1.6614773749970625e-08
+        },
+        "T_total": 0.8707527703374759,
+        "R_plus_T": 0.9874230666171384,
+        "A_balance": 0.012576933382861588,
+        "R_total_dtn_port_modal": 0.1166702962796625,
+        "T_total_dtn_port_modal": 0.8707527703374759,
+        "R_plus_T_dtn_port_modal": 0.9874230666171384,
+        "A_balance_dtn_port_modal": 0.012576933382861588,
+        "R_plus_T_plus_A_volume": null,
+        "R_plus_T_plus_A_volume_dtn_port_modal": null,
+        "energy_closure_error_dtn_port_modal_volume": null,
+        "power_source": "dtn_port_modal_amplitudes",
+        "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+        "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+        "dtn_port_top_reference_z": 1.225,
+        "dtn_port_bottom_reference_z": -0.175,
+        "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+        "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+        "incident_power_code_units": 0.012827518731403281,
+        "stage4_dtn_order_policy": "auto_propagating",
+        "stage4_dtn_assembly": "auxiliary",
+        "dtn_port_mode_count": 40,
+        "dtn_port_top_mode_count": 20,
+        "dtn_port_bottom_mode_count": 20,
+        "dtn_port_propagating_mode_count": 40,
+        "dtn_port_rayleigh_warning_count": 0,
+        "port_power_file": "port_power.json",
+        "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+        "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+        "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+        "port_power_csv": "port_power.csv",
+        "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+      },
+      "volume_absorption": {
+        "method": "volume_absorption",
+        "role": "absorption_check",
+        "status": "ok",
+        "power_source": "volume_integral_Im_epsilon_E2",
+        "field_model_for_absorption": "total_field",
+        "incident_power_code_units": 0.012827518731403281,
+        "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
+        "pml_cells_excluded": true,
+        "air_cells_excluded": true,
+        "normalization_note": "A_volume uses the current Stage-4 code-unit normalization: P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV over physical material cells, divided by incident_power_code_units. PML cells and air cells are deliberately excluded from material volume absorption. The k0 factor follows from H_code=curl(E)/(i*k0*mu_r) and the corresponding Poynting balance.",
+        "regions": {
+          "grating": {
+            "name": "grating",
+            "tag": 3,
+            "cell_count": 136,
+            "volume_nm3": 0.7288750000000053,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 5.012743523596126e-05,
+            "A_volume": 0.003907804485464783
+          },
+          "substrate": {
+            "name": "substrate",
+            "tag": 2,
+            "cell_count": 48,
+            "volume_nm3": 0.2572500000000009,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 1.7525789217238253e-05,
+            "A_volume": 0.0013662649483670642
+          }
+        },
+        "A_grating": 0.003907804485464783,
+        "A_substrate": 0.0013662649483670642,
+        "A_volume_grating": 0.003907804485464783,
+        "A_volume_substrate": 0.0013662649483670642,
+        "A_volume_total": 0.005274069433831847,
+        "A_port_balance_minus_A_volume_total": 0.007302863949029741,
+        "A_probe_balance_minus_A_volume_total": null,
+        "A_flux_minus_A_volume_total": null,
+        "energy_closure_error_port_volume": -0.007302863949029792
+      },
+      "official_candidate_results": false
+    },
+    "V16-GNN-0": {
+      "status": "NOT_QUALIFIED",
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 0.5799857922051803,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      },
+      "audit": {
+        "schur_relative": 0.5799857922051803,
+        "augmented_relative": 0.22492068348618455,
+        "native_relative": 0.22492068348618455,
+        "original_total_augmented_relative": 0.07804733915825246,
+        "port_absolute": 3.1031732427624044e-17,
+        "port_full_rhs_relative": 1.455548377265321e-16,
+        "port_operation_relative": 4.699998155228998e-17,
+        "recovery_relative": 5.975974468972256e-13,
+        "schur_original_identity_operation_relative": 6.592624563346902e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 2.2032189116341003,
+        "port_unknown_norm": 0.22475283371959145,
+        "strict_pass": false,
+        "independent_DOLFINx_total_native_relative": 0.07804733915903309
+      },
+      "fields": {
+        "full_FE_L2_relative": 0.08016532039254251,
+        "full_FE_scaled_curl_relative": 0.08018466357081341,
+        "scattered_FE_L2_relative": 0.7660705740834346,
+        "scattered_scaled_curl_relative": 0.7662408782977439,
+        "selected_E_relative": 0.07445275801820243,
+        "selected_H_relative": 0.0856340027266441
+      },
+      "comparison": {
+        "status": "NOT_QUALIFIED",
+        "equation_audit": {
+          "schur_relative": 0.5799857922051803,
+          "augmented_relative": 0.22492068348618455,
+          "native_relative": 0.22492068348618455,
+          "original_total_augmented_relative": 0.07804733915825246,
+          "port_absolute": 3.1031732427624044e-17,
+          "port_full_rhs_relative": 1.455548377265321e-16,
+          "port_operation_relative": 4.699998155228998e-17,
+          "recovery_relative": 5.975974468972256e-13,
+          "schur_original_identity_operation_relative": 6.592624563346902e-13,
+          "slave_storage_max": 0.0,
+          "field_norm": 2.2032189116341003,
+          "port_unknown_norm": 0.22475283371959145,
+          "strict_pass": false,
+          "independent_DOLFINx_total_native_relative": 0.07804733915903309
+        },
+        "full_FE_L2_relative": 0.08016532039254251,
+        "full_FE_scaled_curl_relative": 0.08018466357081341,
+        "selected_E_relative": 0.07445275801820243,
+        "selected_H_relative": 0.0856340027266441,
+        "scattered_FE_L2_relative": 0.7660705740834346,
+        "ordered_complex_ports_relative": 0.02580876947147207,
+        "power_absolute_differences": {
+          "R_total": 0.0161460347900043,
+          "T_total": 0.03921364756050527,
+          "A_balance": 0.05535968235050959,
+          "A_volume": 0.00020105967132962987
+        },
+        "max_channel_power_difference": 0.039216377190337215,
+        "energy_closure_absolute": 0.055560742018932796
+      },
+      "ordered_complex_total_ports": [
+        {
+          "real": -7.629166789353447e-05,
+          "imag": 0.00011519869895928309
+        },
+        {
+          "real": 9.044939781331973e-06,
+          "imag": -2.5921942306903664e-05
+        },
+        {
+          "real": -4.0676634120264566e-05,
+          "imag": -3.8286270713810634e-05
+        },
+        {
+          "real": -8.612441700049938e-06,
+          "imag": 1.5082931744657588e-05
+        },
+        {
+          "real": 2.157087355624741e-05,
+          "imag": 8.4605522369244e-06
+        },
+        {
+          "real": 5.5180519487889104e-05,
+          "imag": 3.920266739265386e-05
+        },
+        {
+          "real": 7.692999479271687e-05,
+          "imag": 3.760152240610649e-05
+        },
+        {
+          "real": 5.741582586133442e-05,
+          "imag": -3.918184665538566e-05
+        },
+        {
+          "real": 8.347555736272353e-05,
+          "imag": 1.1502031679160869e-05
+        },
+        {
+          "real": 1.0018307296983093e-06,
+          "imag": 1.3948789723279593e-05
+        },
+        {
+          "real": -3.6099575122133675e-05,
+          "imag": -8.483225181879247e-06
+        },
+        {
+          "real": -4.207744828067726e-05,
+          "imag": 6.202054962819288e-06
+        },
+        {
+          "real": 9.283669738749514e-05,
+          "imag": -1.495297871207476e-05
+        },
+        {
+          "real": 4.040013932765891e-05,
+          "imag": -1.734330410623518e-05
+        },
+        {
+          "real": -0.00010510455822231514,
+          "imag": -1.6342045132849508e-05
+        },
+        {
+          "real": -5.897155550177781e-06,
+          "imag": -1.7054984904182766e-05
+        },
+        {
+          "real": 7.859662336017406e-05,
+          "imag": -7.616566430317867e-05
+        },
+        {
+          "real": -5.410423341382311e-05,
+          "imag": 2.4421957357018915e-05
+        },
+        {
+          "real": 1.1968110329359074,
+          "imag": -0.5442456040379418
+        },
+        {
+          "real": 0.0006237244855074188,
+          "imag": -0.0003454999920808142
+        },
+        {
+          "real": -3.2634764241722735e-05,
+          "imag": -2.5972780915130132e-05
+        },
+        {
+          "real": 5.590291982456098e-06,
+          "imag": -3.2055443264613095e-05
+        },
+        {
+          "real": -8.445391271544058e-08,
+          "imag": -8.981546367222191e-05
+        },
+        {
+          "real": 3.7101239882024134e-06,
+          "imag": 1.3700177176106866e-05
+        },
+        {
+          "real": -0.0001233382708062056,
+          "imag": 0.00014703821091322105
+        },
+        {
+          "real": 7.342804269875817e-05,
+          "imag": -4.823297743483827e-06
+        },
+        {
+          "real": 2.6785596518690507e-05,
+          "imag": -3.145901645485794e-05
+        },
+        {
+          "real": 3.489140837339202e-05,
+          "imag": 5.968800072577491e-06
+        },
+        {
+          "real": -7.455793984305272e-05,
+          "imag": -1.9931793369578542e-05
+        },
+        {
+          "real": 1.899252310975582e-05,
+          "imag": -1.011477200409671e-05
+        },
+        {
+          "real": -4.492381470126849e-05,
+          "imag": -8.899106163527895e-06
+        },
+        {
+          "real": -1.9254544156535287e-05,
+          "imag": 7.162531103978702e-05
+        },
+        {
+          "real": -4.132116577045099e-06,
+          "imag": -2.0724470100167147e-05
+        },
+        {
+          "real": 5.556029473496212e-06,
+          "imag": 2.839747587988615e-05
+        },
+        {
+          "real": 8.374987695211441e-05,
+          "imag": -8.530614110370836e-05
+        },
+        {
+          "real": 8.001766782702354e-06,
+          "imag": 1.4273119671933233e-05
+        },
+        {
+          "real": 5.1229062463396516e-05,
+          "imag": 4.742318838048013e-05
+        },
+        {
+          "real": 3.5113649727983696e-05,
+          "imag": -9.892251214758236e-06
+        },
+        {
+          "real": 1.2877115577833531,
+          "imag": -0.17722974696683055
+        },
+        {
+          "real": 0.0004883992429342169,
+          "imag": -7.51912563407487e-05
+        }
+      ],
+      "ordered_complex_scattered_ports": [
+        {
+          "real": -7.62916678935557e-05,
+          "imag": 0.00011519869895925358
+        },
+        {
+          "real": 9.04493978130879e-06,
+          "imag": -2.592194230686309e-05
+        },
+        {
+          "real": -4.0676634120507665e-05,
+          "imag": -3.828627071391566e-05
+        },
+        {
+          "real": -8.612441700049938e-06,
+          "imag": 1.5082931744657588e-05
+        },
+        {
+          "real": 2.157087355624269e-05,
+          "imag": 8.460552236931482e-06
+        },
+        {
+          "real": 5.5180519487912286e-05,
+          "imag": 3.920266739267318e-05
+        },
+        {
+          "real": 7.692999479271687e-05,
+          "imag": 3.760152240610649e-05
+        },
+        {
+          "real": 5.741582586127495e-05,
+          "imag": -3.918184665538566e-05
+        },
+        {
+          "real": 8.347555736304627e-05,
+          "imag": 1.150203167903873e-05
+        },
+        {
+          "real": 1.0018307296983093e-06,
+          "imag": 1.3948789723279593e-05
+        },
+        {
+          "real": -3.6099575122133675e-05,
+          "imag": -8.483225181879245e-06
+        },
+        {
+          "real": -4.207744828074098e-05,
+          "imag": 6.202054962819288e-06
+        },
+        {
+          "real": 9.28366973874621e-05,
+          "imag": -1.495297871207476e-05
+        },
+        {
+          "real": 4.040013932756626e-05,
+          "imag": -1.73433041062622e-05
+        },
+        {
+          "real": -0.00010510455822192335,
+          "imag": -1.634204513229782e-05
+        },
+        {
+          "real": -5.897155550177781e-06,
+          "imag": -1.7054984904182766e-05
+        },
+        {
+          "real": 7.85966233601894e-05,
+          "imag": -7.616566430315861e-05
+        },
+        {
+          "real": -5.4104233413904174e-05,
+          "imag": 2.4421957357007335e-05
+        },
+        {
+          "real": -0.06604765082898734,
+          "imag": -0.14435606936093856
+        },
+        {
+          "real": 0.0006237244855079501,
+          "imag": -0.00034549999208098245
+        },
+        {
+          "real": -3.2634764241721556e-05,
+          "imag": -2.5972780915113612e-05
+        },
+        {
+          "real": 5.5902919824058385e-06,
+          "imag": -3.205544326458603e-05
+        },
+        {
+          "real": -8.445391251128285e-08,
+          "imag": -8.981546367270575e-05
+        },
+        {
+          "real": 3.7101239882024134e-06,
+          "imag": 1.3700177176106866e-05
+        },
+        {
+          "real": -0.00012333827080623864,
+          "imag": 0.00014703821091323284
+        },
+        {
+          "real": 7.342804269880456e-05,
+          "imag": -4.823297743468363e-06
+        },
+        {
+          "real": 2.6785596518690517e-05,
+          "imag": -3.1459016454857935e-05
+        },
+        {
+          "real": 3.489140837343452e-05,
+          "imag": 5.968800072577491e-06
+        },
+        {
+          "real": -7.455793984331239e-05,
+          "imag": -1.9931793369269945e-05
+        },
+        {
+          "real": 1.899252310975582e-05,
+          "imag": -1.011477200409671e-05
+        },
+        {
+          "real": -4.492381470126848e-05,
+          "imag": -8.899106163527899e-06
+        },
+        {
+          "real": -1.925454415656928e-05,
+          "imag": 7.162531103982101e-05
+        },
+        {
+          "real": -4.132116577038018e-06,
+          "imag": -2.0724470100176587e-05
+        },
+        {
+          "real": 5.556029473529041e-06,
+          "imag": 2.8397475879801178e-05
+        },
+        {
+          "real": 8.374987695159163e-05,
+          "imag": -8.53061411035573e-05
+        },
+        {
+          "real": 8.001766782702354e-06,
+          "imag": 1.4273119671933233e-05
+        },
+        {
+          "real": 5.122906246339179e-05,
+          "imag": 4.742318838046656e-05
+        },
+        {
+          "real": 3.511364972794507e-05,
+          "imag": -9.89225121476403e-06
+        },
+        {
+          "real": -0.047885368898810184,
+          "imag": -0.15171989616816878
+        },
+        {
+          "real": 0.0004883992429188578,
+          "imag": -7.519125633957007e-05
+        }
+      ],
+      "selected_E": [
+        [
+          {
+            "real": -0.0001482348860987181,
+            "imag": 2.245061940551282e-05
+          },
+          {
+            "real": 1.1224394066726537,
+            "imag": 0.8211895157050336
+          },
+          {
+            "real": 0.0005401578088267133,
+            "imag": 0.0004806486463080184
+          }
+        ],
+        [
+          {
+            "real": -0.00012575066360357446,
+            "imag": -0.00017075080984257728
+          },
+          {
+            "real": 1.134400119032534,
+            "imag": 0.8078161226186884
+          },
+          {
+            "real": 0.0004971729432846517,
+            "imag": 0.00037245026691747117
+          }
+        ],
+        [
+          {
+            "real": -6.406086313027914e-05,
+            "imag": 4.378309224468396e-06
+          },
+          {
+            "real": -1.1588954619420089,
+            "imag": -0.780609349304495
+          },
+          {
+            "real": -0.0006856614700884298,
+            "imag": -0.0003583745606973782
+          }
+        ],
+        [
+          {
+            "real": -0.00021342934050387163,
+            "imag": -3.171218542957281e-05
+          },
+          {
+            "real": 1.1593886128464552,
+            "imag": 0.7796669651226246
+          },
+          {
+            "real": 0.0004880131671528747,
+            "imag": 0.00021408312037164294
+          }
+        ],
+        [
+          {
+            "real": -0.00032090354020150255,
+            "imag": -1.1738880483817741e-05
+          },
+          {
+            "real": -0.675988346811059,
+            "imag": 1.0030847347322083
+          },
+          {
+            "real": -0.00034685925329998606,
+            "imag": 0.0005558614712957009
+          }
+        ],
+        [
+          {
+            "real": 0.00010881103231572914,
+            "imag": -7.03468898097267e-05
+          },
+          {
+            "real": 0.6625691869424257,
+            "imag": -1.0142815132984582
+          },
+          {
+            "real": 0.00035691564377865785,
+            "imag": -0.0005504656091921279
+          }
+        ]
+      ],
+      "selected_H_code": [
+        [
+          {
+            "real": 0.008548155477192865,
+            "imag": 0.007587796813841058
+          },
+          {
+            "real": -0.00044759404260508786,
+            "imag": -5.5151852057597446e-05
+          },
+          {
+            "real": 0.9320102436547705,
+            "imag": 0.7610423066441272
+          }
+        ],
+        [
+          {
+            "real": 0.008570214205851901,
+            "imag": 0.007679878260186397
+          },
+          {
+            "real": -0.0005054381482368204,
+            "imag": -0.00018041265512555078
+          },
+          {
+            "real": 0.943881987575686,
+            "imag": 0.7481652784780127
+          }
+        ],
+        [
+          {
+            "real": -0.00878970721649082,
+            "imag": -0.007793715838713231
+          },
+          {
+            "real": 0.0007036532640747313,
+            "imag": 0.000275604427842984
+          },
+          {
+            "real": -0.9681940398269107,
+            "imag": -0.7202892672930402
+          }
+        ],
+        [
+          {
+            "real": 0.008601483605759097,
+            "imag": 0.007595722877573685
+          },
+          {
+            "real": -0.0006711934960234384,
+            "imag": -0.0003509736113780083
+          },
+          {
+            "real": 0.9690353876935849,
+            "imag": 0.719886026623639
+          }
+        ],
+        [
+          {
+            "real": -0.007419495081593054,
+            "imag": 0.008990583949186365
+          },
+          {
+            "real": 0.00020261394990025736,
+            "imag": -0.0007612037082315926
+          },
+          {
+            "real": -0.7388892208950212,
+            "imag": 1.1982204761090118
+          }
+        ],
+        [
+          {
+            "real": 0.007430280286677504,
+            "imag": -0.009367688401426025
+          },
+          {
+            "real": -0.00034089228851026426,
+            "imag": 0.0006015587770905736
+          },
+          {
+            "real": 0.7247440739648058,
+            "imag": -1.2100977088119877
+          }
+        ]
+      ],
+      "power": {
+        "R_total": 0.10149978453291203,
+        "R00_total": 0.1014963405879253,
+        "R00_s": 0.10149583218544694,
+        "R00_p": 5.084024783493189e-07,
+        "R00_by_polarization": {
+          "s": 0.10149583218544694,
+          "p": 5.084024783493189e-07
+        },
+        "T_total": 0.837834135373328,
+        "R_plus_T": 0.93933391990624,
+        "A_balance": 0.060666080093760066,
+        "R_total_dtn_port_modal": 0.10149978453291203,
+        "T_total_dtn_port_modal": 0.837834135373328,
+        "R_plus_T_dtn_port_modal": 0.93933391990624,
+        "A_balance_dtn_port_modal": 0.060666080093760066,
+        "R_plus_T_plus_A_volume": null,
+        "R_plus_T_plus_A_volume_dtn_port_modal": null,
+        "energy_closure_error_dtn_port_modal_volume": null,
+        "power_source": "dtn_port_modal_amplitudes",
+        "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+        "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+        "dtn_port_top_reference_z": 1.225,
+        "dtn_port_bottom_reference_z": -0.175,
+        "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+        "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+        "incident_power_code_units": 0.012827518731403281,
+        "stage4_dtn_order_policy": "auto_propagating",
+        "stage4_dtn_assembly": "auxiliary",
+        "dtn_port_mode_count": 40,
+        "dtn_port_top_mode_count": 20,
+        "dtn_port_bottom_mode_count": 20,
+        "dtn_port_propagating_mode_count": 40,
+        "dtn_port_rayleigh_warning_count": 0,
+        "port_power_file": "port_power.json",
+        "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+        "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+        "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+        "port_power_csv": "port_power.csv",
+        "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+      },
+      "volume_absorption": {
+        "method": "volume_absorption",
+        "role": "absorption_check",
+        "status": "ok",
+        "power_source": "volume_integral_Im_epsilon_E2",
+        "field_model_for_absorption": "total_field",
+        "incident_power_code_units": 0.012827518731403281,
+        "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
+        "pml_cells_excluded": true,
+        "air_cells_excluded": true,
+        "normalization_note": "A_volume uses the current Stage-4 code-unit normalization: P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV over physical material cells, divided by incident_power_code_units. PML cells and air cells are deliberately excluded from material volume absorption. The k0 factor follows from H_code=curl(E)/(i*k0*mu_r) and the corresponding Poynting balance.",
+        "regions": {
+          "grating": {
+            "name": "grating",
+            "tag": 3,
+            "cell_count": 136,
+            "volume_nm3": 0.7288750000000053,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 4.852749640640214e-05,
+            "A_volume": 0.003783077415244859
+          },
+          "substrate": {
+            "name": "substrate",
+            "tag": 2,
+            "cell_count": 48,
+            "volume_nm3": 0.2572500000000009,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 1.696132337858996e-05,
+            "A_volume": 0.0013222606595823274
+          }
+        },
+        "A_grating": 0.003783077415244859,
+        "A_substrate": 0.0013222606595823274,
+        "A_volume_grating": 0.003783077415244859,
+        "A_volume_substrate": 0.0013222606595823274,
+        "A_volume_total": 0.005105338074827186,
+        "A_port_balance_minus_A_volume_total": 0.05556074201893288,
+        "A_probe_balance_minus_A_volume_total": null,
+        "A_flux_minus_A_volume_total": null,
+        "energy_closure_error_port_volume": -0.055560742018932796
+      },
+      "official_candidate_results": false
+    },
+    "GPOLY-1024": {
+      "status": "NOT_QUALIFIED",
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 0.008719224937593572,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      },
+      "audit": {
+        "schur_relative": 0.008719224937593572,
+        "augmented_relative": 0.0033813484033407316,
+        "native_relative": 0.0033813484033407316,
+        "original_total_augmented_relative": 0.0011733258211204323,
+        "port_absolute": 4.0011619109156106e-17,
+        "port_full_rhs_relative": 1.8767513996172128e-16,
+        "port_operation_relative": 6.924177671397115e-17,
+        "recovery_relative": 4.743135449793951e-13,
+        "schur_original_identity_operation_relative": 5.375592942256402e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.6254373758482654,
+        "port_unknown_norm": 0.19670323482322571,
+        "strict_pass": false,
+        "independent_DOLFINx_total_native_relative": 0.0011733258211791648
+      },
+      "fields": {
+        "full_FE_L2_relative": 0.0008520539510303799,
+        "full_FE_scaled_curl_relative": 0.0008516938836945515,
+        "scattered_FE_L2_relative": 0.008142342052893775,
+        "scattered_scaled_curl_relative": 0.008138746743092552,
+        "selected_E_relative": 0.0009521179445347699,
+        "selected_H_relative": 0.0007415608617343611
+      },
+      "comparison": {
+        "status": "NOT_QUALIFIED",
+        "equation_audit": {
+          "schur_relative": 0.008719224937593572,
+          "augmented_relative": 0.0033813484033407316,
+          "native_relative": 0.0033813484033407316,
+          "original_total_augmented_relative": 0.0011733258211204323,
+          "port_absolute": 4.0011619109156106e-17,
+          "port_full_rhs_relative": 1.8767513996172128e-16,
+          "port_operation_relative": 6.924177671397115e-17,
+          "recovery_relative": 4.743135449793951e-13,
+          "schur_original_identity_operation_relative": 5.375592942256402e-13,
+          "slave_storage_max": 0.0,
+          "field_norm": 1.6254373758482654,
+          "port_unknown_norm": 0.19670323482322571,
+          "strict_pass": false,
+          "independent_DOLFINx_total_native_relative": 0.0011733258211791648
+        },
+        "full_FE_L2_relative": 0.0008520539510303799,
+        "full_FE_scaled_curl_relative": 0.0008516938836945515,
+        "selected_E_relative": 0.0009521179445347699,
+        "selected_H_relative": 0.0007415608617343611,
+        "scattered_FE_L2_relative": 0.008142342052893775,
+        "ordered_complex_ports_relative": 0.0004428715357238712,
+        "power_absolute_differences": {
+          "R_total": 0.00026210371774175456,
+          "T_total": 0.000360903257018097,
+          "A_balance": 0.0006230069747598099,
+          "A_volume": 2.3535111126227887e-06
+        },
+        "max_channel_power_difference": 0.00036089124144755846,
+        "energy_closure_absolute": 0.0006253604829661308
+      },
+      "ordered_complex_total_ports": [
+        {
+          "real": -2.577853797385861e-06,
+          "imag": -1.0816989108120772e-05
+        },
+        {
+          "real": 2.0088484614289083e-06,
+          "imag": 3.915259520407317e-06
+        },
+        {
+          "real": -4.485994686629491e-05,
+          "imag": -9.558704145973685e-06
+        },
+        {
+          "real": -7.476515991771754e-07,
+          "imag": 2.3329939367452288e-07
+        },
+        {
+          "real": -4.4851311053451025e-06,
+          "imag": -6.0600824363541615e-06
+        },
+        {
+          "real": -2.4713242715369613e-06,
+          "imag": -7.071627415880998e-06
+        },
+        {
+          "real": 2.7939058980809455e-06,
+          "imag": 1.2610718168491996e-06
+        },
+        {
+          "real": 1.449649184826444e-05,
+          "imag": -8.889009911265738e-06
+        },
+        {
+          "real": 6.65701932391817e-06,
+          "imag": 1.5043509150936206e-05
+        },
+        {
+          "real": 5.628690714642962e-07,
+          "imag": 5.501661782606699e-08
+        },
+        {
+          "real": 1.2002637107541622e-06,
+          "imag": 1.1633830237846118e-06
+        },
+        {
+          "real": -1.3368182384245459e-05,
+          "imag": 9.649509679830984e-06
+        },
+        {
+          "real": 2.5281869734752924e-05,
+          "imag": -1.2841734744320545e-05
+        },
+        {
+          "real": 1.7655044320906692e-05,
+          "imag": -1.0824390893045353e-05
+        },
+        {
+          "real": -0.00010790167644771128,
+          "imag": -7.168217225533305e-05
+        },
+        {
+          "real": -1.6771184837971807e-08,
+          "imag": -5.048059486062458e-07
+        },
+        {
+          "real": 2.4475629768606688e-05,
+          "imag": -1.0566871084148731e-05
+        },
+        {
+          "real": -2.0328685831312707e-05,
+          "imag": 1.0842505344455435e-05
+        },
+        {
+          "real": 1.2299824327332658,
+          "imag": -0.5348669993200917
+        },
+        {
+          "real": -2.585016518627072e-05,
+          "imag": 7.923702137502864e-06
+        },
+        {
+          "real": -1.046465632496013e-05,
+          "imag": -3.3699688006711684e-06
+        },
+        {
+          "real": -6.265762442874801e-06,
+          "imag": -1.0938618073738762e-06
+        },
+        {
+          "real": 2.137892465744538e-05,
+          "imag": -3.865691967979074e-05
+        },
+        {
+          "real": -6.216584193390086e-08,
+          "imag": -8.142432739227154e-07
+        },
+        {
+          "real": -9.195341759505801e-06,
+          "imag": -1.5201721427760628e-06
+        },
+        {
+          "real": 8.054535658379628e-06,
+          "imag": 2.0162786902433005e-06
+        },
+        {
+          "real": 1.8909328781634386e-06,
+          "imag": -2.2312441355752493e-06
+        },
+        {
+          "real": -1.4980795283971726e-05,
+          "imag": -3.0197472747802955e-06
+        },
+        {
+          "real": -5.268936126901739e-06,
+          "imag": -1.4461926091146863e-05
+        },
+        {
+          "real": 1.0984170541760062e-06,
+          "imag": -4.695660638217088e-08
+        },
+        {
+          "real": -3.3101096797765652e-06,
+          "imag": -1.2291325867489407e-06
+        },
+        {
+          "real": 1.524088822735997e-05,
+          "imag": 3.7702926157993036e-06
+        },
+        {
+          "real": 2.579843740746485e-06,
+          "imag": -3.048496641745403e-05
+        },
+        {
+          "real": 5.587912366584197e-07,
+          "imag": 2.2472800774793267e-05
+        },
+        {
+          "real": 9.848631060605455e-05,
+          "imag": -7.606139342951237e-05
+        },
+        {
+          "real": 1.143335186255429e-06,
+          "imag": -8.963643912795938e-07
+        },
+        {
+          "real": -1.4804604578956513e-07,
+          "imag": -2.73647654993523e-05
+        },
+        {
+          "real": 3.5890177619961804e-06,
+          "imag": -2.0294087110428455e-05
+        },
+        {
+          "real": 1.3195179105640007,
+          "imag": -0.16383489882170976
+        },
+        {
+          "real": -2.6328745479905155e-05,
+          "imag": 9.0437894057834e-06
+        }
+      ],
+      "ordered_complex_scattered_ports": [
+        {
+          "real": -2.5778537974071026e-06,
+          "imag": -1.0816989108150274e-05
+        },
+        {
+          "real": 2.008848461405724e-06,
+          "imag": 3.915259520447889e-06
+        },
+        {
+          "real": -4.485994686653801e-05,
+          "imag": -9.558704146078712e-06
+        },
+        {
+          "real": -7.476515991771754e-07,
+          "imag": 2.3329939367452288e-07
+        },
+        {
+          "real": -4.485131105349823e-06,
+          "imag": -6.060082436347081e-06
+        },
+        {
+          "real": -2.471324271513777e-06,
+          "imag": -7.071627415861678e-06
+        },
+        {
+          "real": 2.79390589808095e-06,
+          "imag": 1.261071816849198e-06
+        },
+        {
+          "real": 1.4496491848204963e-05,
+          "imag": -8.889009911265738e-06
+        },
+        {
+          "real": 6.657019324240905e-06,
+          "imag": 1.5043509150814068e-05
+        },
+        {
+          "real": 5.628690714642962e-07,
+          "imag": 5.501661782606699e-08
+        },
+        {
+          "real": 1.2002637107541622e-06,
+          "imag": 1.1633830237846129e-06
+        },
+        {
+          "real": -1.3368182384309183e-05,
+          "imag": 9.649509679830984e-06
+        },
+        {
+          "real": 2.5281869734719883e-05,
+          "imag": -1.2841734744320545e-05
+        },
+        {
+          "real": 1.7655044320814047e-05,
+          "imag": -1.0824390893072373e-05
+        },
+        {
+          "real": -0.00010790167644731949,
+          "imag": -7.168217225478137e-05
+        },
+        {
+          "real": -1.6771184837971807e-08,
+          "imag": -5.048059486062458e-07
+        },
+        {
+          "real": 2.447562976862203e-05,
+          "imag": -1.056687108412867e-05
+        },
+        {
+          "real": -2.032868583139377e-05,
+          "imag": 1.0842505344443854e-05
+        },
+        {
+          "real": -0.03287625103162905,
+          "imag": -0.13497746464308852
+        },
+        {
+          "real": -2.5850165185739343e-05,
+          "imag": 7.9237021373346e-06
+        },
+        {
+          "real": -1.046465632495895e-05,
+          "imag": -3.369968800654647e-06
+        },
+        {
+          "real": -6.265762442925061e-06,
+          "imag": -1.0938618073468133e-06
+        },
+        {
+          "real": 2.1378924657649538e-05,
+          "imag": -3.865691968027458e-05
+        },
+        {
+          "real": -6.216584193390086e-08,
+          "imag": -8.142432739227154e-07
+        },
+        {
+          "real": -9.195341759538844e-06,
+          "imag": -1.5201721427642618e-06
+        },
+        {
+          "real": 8.054535658426021e-06,
+          "imag": 2.0162786902587652e-06
+        },
+        {
+          "real": 1.890932878163448e-06,
+          "imag": -2.2312441355752442e-06
+        },
+        {
+          "real": -1.4980795283929234e-05,
+          "imag": -3.0197472747802955e-06
+        },
+        {
+          "real": -5.268936127161411e-06,
+          "imag": -1.4461926090838267e-05
+        },
+        {
+          "real": 1.0984170541760062e-06,
+          "imag": -4.695660638217088e-08
+        },
+        {
+          "real": -3.3101096797765606e-06,
+          "imag": -1.2291325867489445e-06
+        },
+        {
+          "real": 1.5240888227325976e-05,
+          "imag": 3.7702926158332968e-06
+        },
+        {
+          "real": 2.579843740753566e-06,
+          "imag": -3.048496641746347e-05
+        },
+        {
+          "real": 5.587912366912491e-07,
+          "imag": 2.2472800774708296e-05
+        },
+        {
+          "real": 9.848631060553177e-05,
+          "imag": -7.606139342936132e-05
+        },
+        {
+          "real": 1.143335186255429e-06,
+          "imag": -8.963643912795938e-07
+        },
+        {
+          "real": -1.480460457942856e-07,
+          "imag": -2.7364765499365872e-05
+        },
+        {
+          "real": 3.589017761957558e-06,
+          "imag": -2.029408711043425e-05
+        },
+        {
+          "real": -0.016079016118162516,
+          "imag": -0.138325048023048
+        },
+        {
+          "real": -2.6328745495264237e-05,
+          "imag": 9.043789406962019e-06
+        }
+      ],
+      "selected_E": [
+        [
+          {
+            "real": -9.826202020855892e-06,
+            "imag": -1.1018937993596393e-05
+          },
+          {
+            "real": 1.0385705326325936,
+            "imag": 0.8231300155598539
+          },
+          {
+            "real": -5.1554392915246405e-06,
+            "imag": 2.5736434428709003e-06
+          }
+        ],
+        [
+          {
+            "real": -9.955251160816368e-06,
+            "imag": 1.115594603752403e-05
+          },
+          {
+            "real": 1.0507661297098045,
+            "imag": 0.8099198436340205
+          },
+          {
+            "real": 2.886871325462629e-06,
+            "imag": -1.5288943460013554e-05
+          }
+        ],
+        [
+          {
+            "real": -2.4330918521360363e-05,
+            "imag": -6.08262539231303e-06
+          },
+          {
+            "real": -1.0752178767087748,
+            "imag": -0.7826062870225758
+          },
+          {
+            "real": 2.1695768905742253e-05,
+            "imag": 1.7111837773505286e-05
+          }
+        ],
+        [
+          {
+            "real": 2.1316478943447826e-05,
+            "imag": -1.6247302183955324e-05
+          },
+          {
+            "real": 1.075708325974288,
+            "imag": 0.7818902791661788
+          },
+          {
+            "real": -2.0248735463662695e-05,
+            "imag": -3.8400339292421204e-05
+          }
+        ],
+        [
+          {
+            "real": -2.2746622584351713e-06,
+            "imag": -7.724973236916909e-06
+          },
+          {
+            "real": -0.7381286006878762,
+            "imag": 1.111881057032408
+          },
+          {
+            "real": -2.4874159170340195e-06,
+            "imag": -4.65673647694314e-05
+          }
+        ],
+        [
+          {
+            "real": 3.529789223842146e-05,
+            "imag": -5.289845659896165e-06
+          },
+          {
+            "real": 0.724834542223473,
+            "imag": -1.1227710404704725
+          },
+          {
+            "real": -3.6108769833865414e-06,
+            "imag": 4.3364208327498603e-05
+          }
+        ]
+      ],
+      "selected_H_code": [
+        [
+          {
+            "real": 0.008451907919572699,
+            "imag": 0.007662395107753325
+          },
+          {
+            "real": 2.8374089441749542e-05,
+            "imag": 9.651426334496794e-06
+          },
+          {
+            "real": 1.0414154625543028,
+            "imag": 0.8230567413605742
+          }
+        ],
+        [
+          {
+            "real": 0.008454139765078183,
+            "imag": 0.007745905503978381
+          },
+          {
+            "real": 2.8555794779950654e-05,
+            "imag": 8.909337469945603e-06
+          },
+          {
+            "real": 1.0537053588319365,
+            "imag": 0.8098193874953843
+          }
+        ],
+        [
+          {
+            "real": -0.008645621074383368,
+            "imag": -0.0075242391419638064
+          },
+          {
+            "real": -1.7787019968187288e-05,
+            "imag": -1.3112504105831798e-05
+          },
+          {
+            "real": -1.0782010312381307,
+            "imag": -0.7821536027240898
+          }
+        ],
+        [
+          {
+            "real": 0.008570958134872337,
+            "imag": 0.007549087161487116
+          },
+          {
+            "real": 3.079523448579888e-05,
+            "imag": 1.1885243420246878e-05
+          },
+          {
+            "real": 1.078793159834814,
+            "imag": 0.7816413486683046
+          }
+        ],
+        [
+          {
+            "real": -0.007288860808106729,
+            "imag": 0.00881799307114119
+          },
+          {
+            "real": -1.2817783240773091e-05,
+            "imag": 1.788239642243094e-05
+          },
+          {
+            "real": -0.7412943414817597,
+            "imag": 1.1128969119861019
+          }
+        ],
+        [
+          {
+            "real": 0.007031029129608609,
+            "imag": -0.00903033693496006
+          },
+          {
+            "real": 1.5621885488594302e-05,
+            "imag": -2.283237948550386e-05
+          },
+          {
+            "real": 0.7278906334607831,
+            "imag": -1.1238556414425518
+          }
+        ]
+      ],
+      "power": {
+        "R_total": 0.11738371560517458,
+        "R00_total": 0.11738265187681358,
+        "R00_s": 0.11738265114579749,
+        "R00_p": 7.310160957213244e-10,
+        "R00_by_polarization": {
+          "s": 0.11738265114579749,
+          "p": 7.310160957213244e-10
+        },
+        "T_total": 0.8766868796768151,
+        "R_plus_T": 0.9940705952819897,
+        "A_balance": 0.005929404718010289,
+        "R_total_dtn_port_modal": 0.11738371560517458,
+        "T_total_dtn_port_modal": 0.8766868796768151,
+        "R_plus_T_dtn_port_modal": 0.9940705952819897,
+        "A_balance_dtn_port_modal": 0.005929404718010289,
+        "R_plus_T_plus_A_volume": null,
+        "R_plus_T_plus_A_volume_dtn_port_modal": null,
+        "energy_closure_error_dtn_port_modal_volume": null,
+        "power_source": "dtn_port_modal_amplitudes",
+        "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+        "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+        "dtn_port_top_reference_z": 1.225,
+        "dtn_port_bottom_reference_z": -0.175,
+        "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+        "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+        "incident_power_code_units": 0.012827518731403281,
+        "stage4_dtn_order_policy": "auto_propagating",
+        "stage4_dtn_assembly": "auxiliary",
+        "dtn_port_mode_count": 40,
+        "dtn_port_top_mode_count": 20,
+        "dtn_port_bottom_mode_count": 20,
+        "dtn_port_propagating_mode_count": 40,
+        "dtn_port_rayleigh_warning_count": 0,
+        "port_power_file": "port_power.json",
+        "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+        "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+        "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+        "port_power_csv": "port_power.csv",
+        "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+      },
+      "volume_absorption": {
+        "method": "volume_absorption",
+        "role": "absorption_check",
+        "status": "ok",
+        "power_source": "volume_integral_Im_epsilon_E2",
+        "field_model_for_absorption": "total_field",
+        "incident_power_code_units": 0.012827518731403281,
+        "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
+        "pml_cells_excluded": true,
+        "air_cells_excluded": true,
+        "normalization_note": "A_volume uses the current Stage-4 code-unit normalization: P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV over physical material cells, divided by incident_power_code_units. PML cells and air cells are deliberately excluded from material volume absorption. The k0 factor follows from H_code=curl(E)/(i*k0*mu_r) and the corresponding Poynting balance.",
+        "regions": {
+          "grating": {
+            "name": "grating",
+            "tag": 3,
+            "cell_count": 136,
+            "volume_nm3": 0.7288750000000053,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 5.039631323567349e-05,
+            "A_volume": 0.003928765515056109
+          },
+          "substrate": {
+            "name": "substrate",
+            "tag": 2,
+            "cell_count": 48,
+            "volume_nm3": 0.2572500000000009,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 1.7641413541547488e-05,
+            "A_volume": 0.001375278719988085
+          }
+        },
+        "A_grating": 0.003928765515056109,
+        "A_substrate": 0.001375278719988085,
+        "A_volume_grating": 0.003928765515056109,
+        "A_volume_substrate": 0.001375278719988085,
+        "A_volume_total": 0.005304044235044193,
+        "A_port_balance_minus_A_volume_total": 0.0006253604829660961,
+        "A_probe_balance_minus_A_volume_total": null,
+        "A_flux_minus_A_volume_total": null,
+        "energy_closure_error_port_volume": -0.0006253604829661308
+      },
+      "official_candidate_results": false
+    },
+    "GPOLY-2048": {
+      "status": "NOT_QUALIFIED",
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 0.0030442021698838585,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      },
+      "audit": {
+        "schur_relative": 0.0030442021698838585,
+        "augmented_relative": 0.0011805531134081474,
+        "native_relative": 0.0011805531134081474,
+        "original_total_augmented_relative": 0.0004096512059309009,
+        "port_absolute": 2.7971583246658794e-17,
+        "port_full_rhs_relative": 1.3120115900449366e-16,
+        "port_operation_relative": 4.841043522639811e-17,
+        "recovery_relative": 4.683680036600058e-13,
+        "schur_original_identity_operation_relative": 5.290367896557642e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.6252293421867785,
+        "port_unknown_norm": 0.19668520100456113,
+        "strict_pass": false,
+        "independent_DOLFINx_total_native_relative": 0.00040965120597814716
+      },
+      "fields": {
+        "full_FE_L2_relative": 0.0007962377645720397,
+        "full_FE_scaled_curl_relative": 0.0007962705670910917,
+        "scattered_FE_L2_relative": 0.007608955074660398,
+        "scattered_scaled_curl_relative": 0.0076091241332164805,
+        "selected_E_relative": 0.000903653149204981,
+        "selected_H_relative": 0.0006713510039765972
+      },
+      "comparison": {
+        "status": "NOT_QUALIFIED",
+        "equation_audit": {
+          "schur_relative": 0.0030442021698838585,
+          "augmented_relative": 0.0011805531134081474,
+          "native_relative": 0.0011805531134081474,
+          "original_total_augmented_relative": 0.0004096512059309009,
+          "port_absolute": 2.7971583246658794e-17,
+          "port_full_rhs_relative": 1.3120115900449366e-16,
+          "port_operation_relative": 4.841043522639811e-17,
+          "recovery_relative": 4.683680036600058e-13,
+          "schur_original_identity_operation_relative": 5.290367896557642e-13,
+          "slave_storage_max": 0.0,
+          "field_norm": 1.6252293421867785,
+          "port_unknown_norm": 0.19668520100456113,
+          "strict_pass": false,
+          "independent_DOLFINx_total_native_relative": 0.00040965120597814716
+        },
+        "full_FE_L2_relative": 0.0007962377645720397,
+        "full_FE_scaled_curl_relative": 0.0007962705670910917,
+        "selected_E_relative": 0.000903653149204981,
+        "selected_H_relative": 0.0006713510039765972,
+        "scattered_FE_L2_relative": 0.007608955074660398,
+        "ordered_complex_ports_relative": 0.00040689968065657083,
+        "power_absolute_differences": {
+          "R_total": 8.18188059349273e-05,
+          "T_total": 1.1197063418122433e-05,
+          "A_balance": 7.062174251681874e-05,
+          "A_volume": 8.275434439011103e-08
+        },
+        "max_channel_power_difference": 8.182633227082903e-05,
+        "energy_closure_absolute": 7.070449395474299e-05
+      },
+      "ordered_complex_total_ports": [
+        {
+          "real": -3.492087678475283e-06,
+          "imag": -8.056989954345827e-06
+        },
+        {
+          "real": 2.5811647242055663e-06,
+          "imag": 5.574677987730068e-06
+        },
+        {
+          "real": -4.144857128112735e-05,
+          "imag": -1.1518614124362695e-05
+        },
+        {
+          "real": 1.0530112978206468e-07,
+          "imag": -5.175448482900099e-09
+        },
+        {
+          "real": -3.650609552467699e-06,
+          "imag": -8.533770090416074e-06
+        },
+        {
+          "real": -3.0450330058839994e-06,
+          "imag": -6.3351564334527854e-06
+        },
+        {
+          "real": -4.608259320115853e-07,
+          "imag": 8.582580261917134e-07
+        },
+        {
+          "real": 1.4149149471181535e-05,
+          "imag": -8.566367469890797e-06
+        },
+        {
+          "real": 4.5056651655180204e-06,
+          "imag": 1.5714516643435582e-05
+        },
+        {
+          "real": 1.6036215832137318e-07,
+          "imag": 1.448013771575717e-07
+        },
+        {
+          "real": 6.443357014421489e-07,
+          "imag": -4.562675695698422e-07
+        },
+        {
+          "real": -1.3433943264369641e-05,
+          "imag": 8.918767702043416e-06
+        },
+        {
+          "real": 2.464084035356673e-05,
+          "imag": -1.2647009540572487e-05
+        },
+        {
+          "real": 1.820688027997401e-05,
+          "imag": -9.271075834057919e-06
+        },
+        {
+          "real": -0.00010803484139111667,
+          "imag": -7.30519841108517e-05
+        },
+        {
+          "real": 9.022132210914343e-08,
+          "imag": 3.6127511066557473e-07
+        },
+        {
+          "real": 2.6594992212256506e-05,
+          "imag": -1.2638039213233468e-05
+        },
+        {
+          "real": -1.9831651737420424e-05,
+          "imag": 8.621390409350401e-06
+        },
+        {
+          "real": 1.230254554306635,
+          "imag": -0.5349151472627025
+        },
+        {
+          "real": -3.55677966678222e-05,
+          "imag": 3.727155848998468e-05
+        },
+        {
+          "real": -8.90214807273225e-06,
+          "imag": -7.366702153024935e-07
+        },
+        {
+          "real": -7.384775853215958e-06,
+          "imag": -4.991305887760321e-07
+        },
+        {
+          "real": 2.2615292610011836e-05,
+          "imag": -3.5741028756088184e-05
+        },
+        {
+          "real": 4.072887732297922e-07,
+          "imag": -1.985436826704028e-07
+        },
+        {
+          "real": -1.0631229988791163e-05,
+          "imag": -9.435015161419247e-07
+        },
+        {
+          "real": 7.042399894815038e-06,
+          "imag": -1.6009981178247124e-07
+        },
+        {
+          "real": 8.414879815162984e-07,
+          "imag": -2.22151712313559e-07
+        },
+        {
+          "real": -1.6456353673408935e-05,
+          "imag": -3.059794775116139e-06
+        },
+        {
+          "real": -3.5346975300186592e-06,
+          "imag": -1.6118711577853875e-05
+        },
+        {
+          "real": 2.5559100824132814e-07,
+          "imag": 4.6061396731395703e-08
+        },
+        {
+          "real": 5.989608426180626e-07,
+          "imag": -8.510471802890846e-08
+        },
+        {
+          "real": 1.592545459232956e-05,
+          "imag": 3.1636160607144713e-06
+        },
+        {
+          "real": -2.084550498285039e-07,
+          "imag": -2.9033624447916056e-05
+        },
+        {
+          "real": -8.06628020341066e-07,
+          "imag": 2.0942313015319932e-05
+        },
+        {
+          "real": 9.886436853850793e-05,
+          "imag": -7.699859660416002e-05
+        },
+        {
+          "real": 3.1869384517988535e-08,
+          "imag": 3.6525904328767023e-07
+        },
+        {
+          "real": 1.952684669723381e-06,
+          "imag": -2.9090625021831784e-05
+        },
+        {
+          "real": 1.2594465363482288e-06,
+          "imag": -2.0484734609906606e-05
+        },
+        {
+          "real": 1.3197992203618771,
+          "imag": -0.16385907069631434
+        },
+        {
+          "real": -3.9921161759872464e-05,
+          "imag": 3.116151952390091e-05
+        }
+      ],
+      "ordered_complex_scattered_ports": [
+        {
+          "real": -3.4920876784965243e-06,
+          "imag": -8.05698995437533e-06
+        },
+        {
+          "real": 2.581164724182382e-06,
+          "imag": 5.57467798777064e-06
+        },
+        {
+          "real": -4.144857128137045e-05,
+          "imag": -1.1518614124467722e-05
+        },
+        {
+          "real": 1.0530112978206468e-07,
+          "imag": -5.175448482900099e-09
+        },
+        {
+          "real": -3.6506095524724197e-06,
+          "imag": -8.533770090408992e-06
+        },
+        {
+          "real": -3.0450330058608153e-06,
+          "imag": -6.3351564334334655e-06
+        },
+        {
+          "real": -4.608259320115807e-07,
+          "imag": 8.582580261917119e-07
+        },
+        {
+          "real": 1.4149149471122058e-05,
+          "imag": -8.566367469890797e-06
+        },
+        {
+          "real": 4.505665165840755e-06,
+          "imag": 1.5714516643313443e-05
+        },
+        {
+          "real": 1.6036215832137318e-07,
+          "imag": 1.448013771575717e-07
+        },
+        {
+          "real": 6.443357014421489e-07,
+          "imag": -4.56267569569841e-07
+        },
+        {
+          "real": -1.3433943264433365e-05,
+          "imag": 8.918767702043416e-06
+        },
+        {
+          "real": 2.464084035353369e-05,
+          "imag": -1.2647009540572487e-05
+        },
+        {
+          "real": 1.8206880279881365e-05,
+          "imag": -9.271075834084939e-06
+        },
+        {
+          "real": -0.00010803484139072488,
+          "imag": -7.305198411030002e-05
+        },
+        {
+          "real": 9.022132210914343e-08,
+          "imag": 3.6127511066557473e-07
+        },
+        {
+          "real": 2.6594992212271847e-05,
+          "imag": -1.2638039213213407e-05
+        },
+        {
+          "real": -1.983165173750149e-05,
+          "imag": 8.62139040933882e-06
+        },
+        {
+          "real": -0.03260412945825968,
+          "imag": -0.13502561258569934
+        },
+        {
+          "real": -3.5567796667290825e-05,
+          "imag": 3.727155848981642e-05
+        },
+        {
+          "real": -8.902148072731069e-06,
+          "imag": -7.366702152859719e-07
+        },
+        {
+          "real": -7.384775853266218e-06,
+          "imag": -4.991305887489692e-07
+        },
+        {
+          "real": 2.2615292610215994e-05,
+          "imag": -3.574102875657202e-05
+        },
+        {
+          "real": 4.072887732297922e-07,
+          "imag": -1.985436826704028e-07
+        },
+        {
+          "real": -1.0631229988824206e-05,
+          "imag": -9.435015161301235e-07
+        },
+        {
+          "real": 7.042399894861432e-06,
+          "imag": -1.600998117670067e-07
+        },
+        {
+          "real": 8.414879815163076e-07,
+          "imag": -2.221517123135538e-07
+        },
+        {
+          "real": -1.6456353673366445e-05,
+          "imag": -3.059794775116139e-06
+        },
+        {
+          "real": -3.534697530278332e-06,
+          "imag": -1.6118711577545277e-05
+        },
+        {
+          "real": 2.5559100824132814e-07,
+          "imag": 4.6061396731395703e-08
+        },
+        {
+          "real": 5.989608426180673e-07,
+          "imag": -8.51047180289122e-08
+        },
+        {
+          "real": 1.5925454592295567e-05,
+          "imag": 3.1636160607484645e-06
+        },
+        {
+          "real": -2.0845504982142324e-07,
+          "imag": -2.9033624447925495e-05
+        },
+        {
+          "real": -8.066280203082366e-07,
+          "imag": 2.094231301523496e-05
+        },
+        {
+          "real": 9.886436853798514e-05,
+          "imag": -7.699859660400896e-05
+        },
+        {
+          "real": 3.1869384517988535e-08,
+          "imag": 3.6525904328767023e-07
+        },
+        {
+          "real": 1.9526846697186606e-06,
+          "imag": -2.9090625021845356e-05
+        },
+        {
+          "real": 1.259446536309606e-06,
+          "imag": -2.04847346099124e-05
+        },
+        {
+          "real": -0.01579770632028618,
+          "imag": -0.13834921989765256
+        },
+        {
+          "real": -3.992116177523155e-05,
+          "imag": 3.116151952507953e-05
+        }
+      ],
+      "selected_E": [
+        [
+          {
+            "real": -1.4870396068614071e-05,
+            "imag": -7.776846538056344e-06
+          },
+          {
+            "real": 1.0389091459383948,
+            "imag": 0.8233243343482229
+          },
+          {
+            "real": -3.128923966817836e-05,
+            "imag": 3.743241171308049e-06
+          }
+        ],
+        [
+          {
+            "real": -1.4035716165889328e-05,
+            "imag": 2.849227380323959e-06
+          },
+          {
+            "real": 1.051116594224529,
+            "imag": 0.8101215434149592
+          },
+          {
+            "real": -3.069792659888105e-05,
+            "imag": -1.1518172093493666e-05
+          }
+        ],
+        [
+          {
+            "real": -1.3925979158053188e-05,
+            "imag": -1.8203829449893804e-05
+          },
+          {
+            "real": -1.0755637455301525,
+            "imag": -0.782805277721469
+          },
+          {
+            "real": 4.8584633585876575e-05,
+            "imag": 8.722359954312129e-06
+          }
+        ],
+        [
+          {
+            "real": 2.4922097755731945e-05,
+            "imag": -2.7088643581623045e-05
+          },
+          {
+            "real": 1.0760561974410379,
+            "imag": 0.7820779299259252
+          },
+          {
+            "real": -4.94026674676102e-05,
+            "imag": -3.2526437175862785e-05
+          }
+        ],
+        [
+          {
+            "real": -3.323775583542241e-06,
+            "imag": -1.0073251317286592e-05
+          },
+          {
+            "real": -0.7383348015000333,
+            "imag": 1.1119527990869322
+          },
+          {
+            "real": -1.653913669584591e-05,
+            "imag": -7.419934022896699e-05
+          }
+        ],
+        [
+          {
+            "real": 4.313777264943387e-05,
+            "imag": -5.758259840827019e-06
+          },
+          {
+            "real": 0.7250527255966971,
+            "imag": -1.1228368016376074
+          },
+          {
+            "real": 2.505221113733508e-06,
+            "imag": 7.879278302981026e-05
+          }
+        ]
+      ],
+      "selected_H_code": [
+        [
+          {
+            "real": 0.008448573196224336,
+            "imag": 0.007665645807415609
+          },
+          {
+            "real": 4.977620316424312e-05,
+            "imag": 6.1824985344266146e-06
+          },
+          {
+            "real": 1.041513305982858,
+            "imag": 0.8232427045103451
+          }
+        ],
+        [
+          {
+            "real": 0.008453946391676891,
+            "imag": 0.007748291417780135
+          },
+          {
+            "real": 5.1114290073917386e-05,
+            "imag": 4.945009871222592e-06
+          },
+          {
+            "real": 1.053798531062639,
+            "imag": 0.8100029068666197
+          }
+        ],
+        [
+          {
+            "real": -0.008647860154198573,
+            "imag": -0.007518008357969174
+          },
+          {
+            "real": -5.0351567484329154e-05,
+            "imag": -4.630942132614281e-06
+          },
+          {
+            "real": -1.0782766827916614,
+            "imag": -0.7823471222268356
+          }
+        ],
+        [
+          {
+            "real": 0.008567741706628556,
+            "imag": 0.007554322273368146
+          },
+          {
+            "real": 5.012475187887118e-05,
+            "imag": 5.148852010867063e-06
+          },
+          {
+            "real": 1.0788786960495236,
+            "imag": 0.7818324485011129
+          }
+        ],
+        [
+          {
+            "real": -0.00728708054810258,
+            "imag": 0.008813093332730212
+          },
+          {
+            "real": -7.1247788129206195e-06,
+            "imag": 5.137099283339018e-05
+          },
+          {
+            "real": -0.7414763515309543,
+            "imag": 1.1132256458329959
+          }
+        ],
+        [
+          {
+            "real": 0.007026373808343041,
+            "imag": -0.009024698958332286
+          },
+          {
+            "real": 8.402910631296488e-06,
+            "imag": -5.1238979859993715e-05
+          },
+          {
+            "real": 0.7280595199134983,
+            "imag": -1.1241771413598625
+          }
+        ]
+      ],
+      "power": {
+        "R_total": 0.1175640005169814,
+        "R00_total": 0.11756293870921113,
+        "R00_s": 0.1175629360549739,
+        "R00_p": 2.6542372320758e-09,
+        "R00_by_polarization": {
+          "s": 0.1175629360549739,
+          "p": 2.6542372320758e-09
+        },
+        "T_total": 0.8770589799972514,
+        "R_plus_T": 0.9946229805142328,
+        "A_balance": 0.005377019485767298,
+        "R_total_dtn_port_modal": 0.1175640005169814,
+        "T_total_dtn_port_modal": 0.8770589799972514,
+        "R_plus_T_dtn_port_modal": 0.9946229805142328,
+        "A_balance_dtn_port_modal": 0.005377019485767298,
+        "R_plus_T_plus_A_volume": null,
+        "R_plus_T_plus_A_volume_dtn_port_modal": null,
+        "energy_closure_error_dtn_port_modal_volume": null,
+        "power_source": "dtn_port_modal_amplitudes",
+        "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+        "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+        "dtn_port_top_reference_z": 1.225,
+        "dtn_port_bottom_reference_z": -0.175,
+        "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+        "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+        "incident_power_code_units": 0.012827518731403281,
+        "stage4_dtn_order_policy": "auto_propagating",
+        "stage4_dtn_assembly": "auxiliary",
+        "dtn_port_mode_count": 40,
+        "dtn_port_top_mode_count": 20,
+        "dtn_port_bottom_mode_count": 20,
+        "dtn_port_propagating_mode_count": 40,
+        "dtn_port_rayleigh_warning_count": 0,
+        "port_power_file": "port_power.json",
+        "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+        "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+        "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+        "port_power_csv": "port_power.csv",
+        "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+      },
+      "volume_absorption": {
+        "method": "volume_absorption",
+        "role": "absorption_check",
+        "status": "ok",
+        "power_source": "volume_integral_Im_epsilon_E2",
+        "field_model_for_absorption": "total_field",
+        "incident_power_code_units": 0.012827518731403281,
+        "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
+        "pml_cells_excluded": true,
+        "air_cells_excluded": true,
+        "normalization_note": "A_volume uses the current Stage-4 code-unit normalization: P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV over physical material cells, divided by incident_power_code_units. PML cells and air cells are deliberately excluded from material volume absorption. The k0 factor follows from H_code=curl(E)/(i*k0*mu_r) and the corresponding Poynting balance.",
+        "regions": {
+          "grating": {
+            "name": "grating",
+            "tag": 3,
+            "cell_count": 136,
+            "volume_nm3": 0.7288750000000053,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 5.041788661026179e-05,
+            "A_volume": 0.00393044731923352
+          },
+          "substrate": {
+            "name": "substrate",
+            "tag": 2,
+            "cell_count": 48,
+            "volume_nm3": 0.2572500000000009,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 1.764896834193815e-05,
+            "A_volume": 0.0013758676725789058
+          }
+        },
+        "A_grating": 0.00393044731923352,
+        "A_substrate": 0.0013758676725789058,
+        "A_volume_grating": 0.00393044731923352,
+        "A_volume_substrate": 0.0013758676725789058,
+        "A_volume_total": 0.005306314991812426,
+        "A_port_balance_minus_A_volume_total": 7.070449395487222e-05,
+        "A_probe_balance_minus_A_volume_total": null,
+        "A_flux_minus_A_volume_total": null,
+        "energy_closure_error_port_volume": -7.070449395474299e-05
+      },
+      "official_candidate_results": false
+    },
+    "GPOLY-LSQR-FINAL": {
+      "status": "NOT_QUALIFIED",
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 0.000490220468867467,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      },
+      "audit": {
+        "schur_relative": 0.000490220468867467,
+        "augmented_relative": 0.0001901093516400638,
+        "native_relative": 0.0001901093516400638,
+        "original_total_augmented_relative": 6.59678283643863e-05,
+        "port_absolute": 3.9405348057058653e-17,
+        "port_full_rhs_relative": 1.8483141588630411e-16,
+        "port_operation_relative": 6.793627681290528e-17,
+        "recovery_relative": 4.636854969634494e-13,
+        "schur_original_identity_operation_relative": 5.261117236718547e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.631473861305276,
+        "port_unknown_norm": 0.19744539779035541,
+        "strict_pass": false,
+        "independent_DOLFINx_total_native_relative": 6.596782836848425e-05
+      },
+      "fields": {
+        "full_FE_L2_relative": 2.7747848997041662e-05,
+        "full_FE_scaled_curl_relative": 2.7534626747689237e-05,
+        "scattered_FE_L2_relative": 0.0002651621737012555,
+        "scattered_scaled_curl_relative": 0.00026311959972392425,
+        "selected_E_relative": 2.6720264836586978e-05,
+        "selected_H_relative": 2.8374610582310596e-05
+      },
+      "comparison": {
+        "status": "NOT_QUALIFIED",
+        "equation_audit": {
+          "schur_relative": 0.000490220468867467,
+          "augmented_relative": 0.0001901093516400638,
+          "native_relative": 0.0001901093516400638,
+          "original_total_augmented_relative": 6.59678283643863e-05,
+          "port_absolute": 3.9405348057058653e-17,
+          "port_full_rhs_relative": 1.8483141588630411e-16,
+          "port_operation_relative": 6.793627681290528e-17,
+          "recovery_relative": 4.636854969634494e-13,
+          "schur_original_identity_operation_relative": 5.261117236718547e-13,
+          "slave_storage_max": 0.0,
+          "field_norm": 1.631473861305276,
+          "port_unknown_norm": 0.19744539779035541,
+          "strict_pass": false,
+          "independent_DOLFINx_total_native_relative": 6.596782836848425e-05
+        },
+        "full_FE_L2_relative": 2.7747848997041662e-05,
+        "full_FE_scaled_curl_relative": 2.7534626747689237e-05,
+        "selected_E_relative": 2.6720264836586978e-05,
+        "selected_H_relative": 2.8374610582310596e-05,
+        "scattered_FE_L2_relative": 0.0002651621737012555,
+        "ordered_complex_ports_relative": 2.9610588157634407e-06,
+        "power_absolute_differences": {
+          "R_total": 5.027246834377053e-07,
+          "T_total": 8.352429838875963e-07,
+          "A_balance": 3.3251830044989106e-07,
+          "A_volume": 4.398569251884421e-10
+        },
+        "max_channel_power_difference": 8.344997757259165e-07,
+        "energy_closure_absolute": 3.3208134975204473e-07
+      },
+      "ordered_complex_total_ports": [
+        {
+          "real": -3.982229485910381e-06,
+          "imag": -8.50771962637161e-06
+        },
+        {
+          "real": 3.043708091521388e-06,
+          "imag": 6.363629673348032e-06
+        },
+        {
+          "real": -4.1584455331518245e-05,
+          "imag": -1.1519063335857535e-05
+        },
+        {
+          "real": 2.53792298163086e-08,
+          "imag": 6.840298677977462e-09
+        },
+        {
+          "real": -4.084839689790292e-06,
+          "imag": -8.483485519444529e-06
+        },
+        {
+          "real": -3.0627968170981274e-06,
+          "imag": -6.366870954086581e-06
+        },
+        {
+          "real": -1.5837937083293325e-08,
+          "imag": -2.9106659857481487e-08
+        },
+        {
+          "real": 1.3878198846823891e-05,
+          "imag": -9.002477889484713e-06
+        },
+        {
+          "real": 3.291355378795154e-06,
+          "imag": 1.5753106663570046e-05
+        },
+        {
+          "real": -6.934589190098007e-08,
+          "imag": 1.6334933263473664e-08
+        },
+        {
+          "real": 1.3047963837149368e-08,
+          "imag": -4.223928095466624e-08
+        },
+        {
+          "real": -1.3866028529265932e-05,
+          "imag": 8.912684157823595e-06
+        },
+        {
+          "real": 2.5527174629424244e-05,
+          "imag": -1.2389505577113885e-05
+        },
+        {
+          "real": 1.8875198269694328e-05,
+          "imag": -9.146346223616122e-06
+        },
+        {
+          "real": -0.00010773672838592758,
+          "imag": -7.26121626498464e-05
+        },
+        {
+          "real": -5.605911428405576e-08,
+          "imag": -1.892074929578021e-08
+        },
+        {
+          "real": 2.554692254473038e-05,
+          "imag": -1.2469193178378386e-05
+        },
+        {
+          "real": -1.883086952139033e-05,
+          "imag": 9.172079481493081e-06
+        },
+        {
+          "real": 1.2301134268974299,
+          "imag": -0.5354341236705074
+        },
+        {
+          "real": 1.932877755353935e-06,
+          "imag": 1.5903791530284012e-07
+        },
+        {
+          "real": -9.57299371638351e-06,
+          "imag": -4.3543106325153747e-07
+        },
+        {
+          "real": -6.878470634534008e-06,
+          "imag": -3.754314939905027e-07
+        },
+        {
+          "real": 2.2536936001458797e-05,
+          "imag": -3.554127283936729e-05
+        },
+        {
+          "real": -1.9224308833513434e-08,
+          "imag": -1.8246024591133055e-08
+        },
+        {
+          "real": -9.479843373610168e-06,
+          "imag": -4.3246349268475415e-07
+        },
+        {
+          "real": 7.141392777211723e-06,
+          "imag": 3.410167731471082e-07
+        },
+        {
+          "real": -6.553550315349915e-08,
+          "imag": 4.018388957639579e-08
+        },
+        {
+          "real": -1.6423386239349906e-05,
+          "imag": -2.836354593698993e-06
+        },
+        {
+          "real": -3.4266746768866883e-06,
+          "imag": -1.597028173129126e-05
+        },
+        {
+          "real": 4.8301307253166864e-08,
+          "imag": -1.457378172478729e-08
+        },
+        {
+          "real": 2.4303350988679344e-08,
+          "imag": 3.583432170072746e-08
+        },
+        {
+          "real": 1.6635988016619263e-05,
+          "imag": 2.799714058122257e-06
+        },
+        {
+          "real": 1.4314235542478205e-06,
+          "imag": -2.85150368823867e-05
+        },
+        {
+          "real": -1.0161706157730467e-06,
+          "imag": 2.106671232340938e-05
+        },
+        {
+          "real": 9.9298878173991e-05,
+          "imag": -7.78591546074416e-05
+        },
+        {
+          "real": 1.345806979345e-08,
+          "imag": 3.906156402232313e-08
+        },
+        {
+          "real": 1.403226040683005e-06,
+          "imag": -2.8679772891111142e-05
+        },
+        {
+          "real": 1.0133532780378666e-06,
+          "imag": -2.1163828608088485e-05
+        },
+        {
+          "real": 1.319725073311041,
+          "imag": -0.1643915928222064
+        },
+        {
+          "real": 2.0199613340727807e-06,
+          "imag": 2.9245839047361683e-07
+        }
+      ],
+      "ordered_complex_scattered_ports": [
+        {
+          "real": -3.982229485931623e-06,
+          "imag": -8.507719626401112e-06
+        },
+        {
+          "real": 3.043708091498204e-06,
+          "imag": 6.363629673388604e-06
+        },
+        {
+          "real": -4.158445533176134e-05,
+          "imag": -1.1519063335962562e-05
+        },
+        {
+          "real": 2.53792298163086e-08,
+          "imag": 6.840298677977462e-09
+        },
+        {
+          "real": -4.084839689795012e-06,
+          "imag": -8.483485519437447e-06
+        },
+        {
+          "real": -3.0627968170749433e-06,
+          "imag": -6.366870954067261e-06
+        },
+        {
+          "real": -1.5837937083288716e-08,
+          "imag": -2.9106659857482926e-08
+        },
+        {
+          "real": 1.3878198846764414e-05,
+          "imag": -9.002477889484713e-06
+        },
+        {
+          "real": 3.2913553791178883e-06,
+          "imag": 1.5753106663447907e-05
+        },
+        {
+          "real": -6.934589190098007e-08,
+          "imag": 1.6334933263473664e-08
+        },
+        {
+          "real": 1.3047963837149368e-08,
+          "imag": -4.223928095466509e-08
+        },
+        {
+          "real": -1.3866028529329656e-05,
+          "imag": 8.912684157823595e-06
+        },
+        {
+          "real": 2.5527174629391203e-05,
+          "imag": -1.2389505577113885e-05
+        },
+        {
+          "real": 1.8875198269601683e-05,
+          "imag": -9.146346223643142e-06
+        },
+        {
+          "real": -0.00010773672838553579,
+          "imag": -7.261216264929472e-05
+        },
+        {
+          "real": -5.605911428405576e-08,
+          "imag": -1.892074929578021e-08
+        },
+        {
+          "real": 2.554692254474572e-05,
+          "imag": -1.2469193178358325e-05
+        },
+        {
+          "real": -1.8830869521471394e-05,
+          "imag": 9.1720794814815e-06
+        },
+        {
+          "real": -0.03274525686746481,
+          "imag": -0.13554458899350413
+        },
+        {
+          "real": 1.9328777558853125e-06,
+          "imag": 1.5903791513457718e-07
+        },
+        {
+          "real": -9.572993716382329e-06,
+          "imag": -4.354310632350159e-07
+        },
+        {
+          "real": -6.8784706345842675e-06,
+          "imag": -3.754314939634397e-07
+        },
+        {
+          "real": 2.2536936001662956e-05,
+          "imag": -3.5541272839851126e-05
+        },
+        {
+          "real": -1.9224308833513434e-08,
+          "imag": -1.8246024591133055e-08
+        },
+        {
+          "real": -9.47984337364321e-06,
+          "imag": -4.32463492672953e-07
+        },
+        {
+          "real": 7.141392777258117e-06,
+          "imag": 3.4101677316257274e-07
+        },
+        {
+          "real": -6.553550315348992e-08,
+          "imag": 4.0183889576400976e-08
+        },
+        {
+          "real": -1.6423386239307415e-05,
+          "imag": -2.836354593698993e-06
+        },
+        {
+          "real": -3.426674677146361e-06,
+          "imag": -1.597028173098266e-05
+        },
+        {
+          "real": 4.8301307253166864e-08,
+          "imag": -1.457378172478729e-08
+        },
+        {
+          "real": 2.4303350988683953e-08,
+          "imag": 3.583432170072372e-08
+        },
+        {
+          "real": 1.663598801658527e-05,
+          "imag": 2.79971405815625e-06
+        },
+        {
+          "real": 1.4314235542549013e-06,
+          "imag": -2.8515036882396138e-05
+        },
+        {
+          "real": -1.0161706157402174e-06,
+          "imag": 2.1066712323324408e-05
+        },
+        {
+          "real": 9.929887817346821e-05,
+          "imag": -7.785915460729054e-05
+        },
+        {
+          "real": 1.345806979345e-08,
+          "imag": 3.906156402232313e-08
+        },
+        {
+          "real": 1.4032260406782845e-06,
+          "imag": -2.8679772891124715e-05
+        },
+        {
+          "real": 1.0133532779992438e-06,
+          "imag": -2.116382860809428e-05
+        },
+        {
+          "real": -0.015871853371122263,
+          "imag": -0.1388817420235446
+        },
+        {
+          "real": 2.0199613187136975e-06,
+          "imag": 2.924583916522356e-07
+        }
+      ],
+      "selected_E": [
+        [
+          {
+            "real": -1.1184622720675684e-05,
+            "imag": -5.9260225108070015e-06
+          },
+          {
+            "real": 1.0396101056379055,
+            "imag": 0.8220272959137506
+          },
+          {
+            "real": 2.022542855748826e-05,
+            "imag": 1.296111411490911e-05
+          }
+        ],
+        [
+          {
+            "real": -1.3676857061200387e-05,
+            "imag": 5.679525392932679e-06
+          },
+          {
+            "real": 1.0518154482295154,
+            "imag": 0.808824716832713
+          },
+          {
+            "real": 1.9694730123746765e-05,
+            "imag": -3.5474278948160056e-06
+          }
+        ],
+        [
+          {
+            "real": -1.5767916995453905e-05,
+            "imag": -1.5851308318102858e-05
+          },
+          {
+            "real": -1.0762556033888495,
+            "imag": -0.7815051633243584
+          },
+          {
+            "real": -1.8858917587994125e-06,
+            "imag": 8.742815910520032e-07
+          }
+        ],
+        [
+          {
+            "real": 2.3709311013774935e-05,
+            "imag": -2.5806118324574615e-05
+          },
+          {
+            "real": 1.0767478241391184,
+            "imag": 0.7807798960291612
+          },
+          {
+            "real": -6.316429436321153e-07,
+            "imag": -2.322848409876716e-05
+          }
+        ],
+        [
+          {
+            "real": -3.890254164987579e-06,
+            "imag": -9.686959464896981e-06
+          },
+          {
+            "real": -0.7387908631530392,
+            "imag": 1.1119173594509886
+          },
+          {
+            "real": -2.5524707095616598e-05,
+            "imag": -2.2249756147642513e-05
+          }
+        ],
+        [
+          {
+            "real": 4.1644129520166886e-05,
+            "imag": -1.9977158357720903e-06
+          },
+          {
+            "real": 0.7255097274846468,
+            "imag": -1.122814388480655
+          },
+          {
+            "real": 1.1610558698811138e-05,
+            "imag": 2.621887894397793e-05
+          }
+        ]
+      ],
+      "selected_H_code": [
+        [
+          {
+            "real": 0.00845185949875484,
+            "imag": 0.007662049482694858
+          },
+          {
+            "real": -1.109275425740179e-06,
+            "imag": -1.7865951130610685e-06
+          },
+          {
+            "real": 1.0414698433763108,
+            "imag": 0.8236918601112504
+          }
+        ],
+        [
+          {
+            "real": 0.008455206023144176,
+            "imag": 0.007749328553159724
+          },
+          {
+            "real": -9.514553161490333e-07,
+            "imag": -1.8305344520681228e-06
+          },
+          {
+            "real": 1.0537527565927063,
+            "imag": 0.8104481359310443
+          }
+        ],
+        [
+          {
+            "real": -0.008644865916601088,
+            "imag": -0.0075174185029612435
+          },
+          {
+            "real": 1.020979931194693e-06,
+            "imag": 1.6658216525534735e-06
+          },
+          {
+            "real": -1.0782304138364494,
+            "imag": -0.782789488515322
+          }
+        ],
+        [
+          {
+            "real": 0.008568592462322678,
+            "imag": 0.007555347919388556
+          },
+          {
+            "real": -1.0532742832710553e-06,
+            "imag": -1.5325248823582608e-06
+          },
+          {
+            "real": 1.078829853651852,
+            "imag": 0.782272910004801
+          }
+        ],
+        [
+          {
+            "real": -0.0072900147383456486,
+            "imag": 0.008810480535869945
+          },
+          {
+            "real": 1.3913365645652062e-06,
+            "imag": -9.944071664992223e-07
+          },
+          {
+            "real": -0.7401893336271962,
+            "imag": 1.113929806793923
+          }
+        ],
+        [
+          {
+            "real": 0.00703239056540062,
+            "imag": -0.009022920838895138
+          },
+          {
+            "real": -1.6033530376074647e-06,
+            "imag": 1.09162633220003e-06
+          },
+          {
+            "real": 0.7267821593920681,
+            "imag": -1.1248928541482737
+          }
+        ]
+      ],
+      "power": {
+        "R_total": 0.1176453165982329,
+        "R00_total": 0.11764426068495924,
+        "R00_s": 0.11764426068119793,
+        "R00_p": 3.761309475645807e-12,
+        "R00_by_polarization": {
+          "s": 0.11764426068119793,
+          "p": 3.761309475645807e-12
+        },
+        "T_total": 0.8770486181768171,
+        "R_plus_T": 0.99469393477505,
+        "A_balance": 0.0053060652249500295,
+        "R_total_dtn_port_modal": 0.1176453165982329,
+        "T_total_dtn_port_modal": 0.8770486181768171,
+        "R_plus_T_dtn_port_modal": 0.99469393477505,
+        "A_balance_dtn_port_modal": 0.0053060652249500295,
+        "R_plus_T_plus_A_volume": null,
+        "R_plus_T_plus_A_volume_dtn_port_modal": null,
+        "energy_closure_error_dtn_port_modal_volume": null,
+        "power_source": "dtn_port_modal_amplitudes",
+        "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+        "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+        "dtn_port_top_reference_z": 1.225,
+        "dtn_port_bottom_reference_z": -0.175,
+        "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+        "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+        "incident_power_code_units": 0.012827518731403281,
+        "stage4_dtn_order_policy": "auto_propagating",
+        "stage4_dtn_assembly": "auxiliary",
+        "dtn_port_mode_count": 40,
+        "dtn_port_top_mode_count": 20,
+        "dtn_port_bottom_mode_count": 20,
+        "dtn_port_propagating_mode_count": 40,
+        "dtn_port_rayleigh_warning_count": 0,
+        "port_power_file": "port_power.json",
+        "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+        "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+        "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+        "port_power_csv": "port_power.csv",
+        "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+      },
+      "volume_absorption": {
+        "method": "volume_absorption",
+        "role": "absorption_check",
+        "status": "ok",
+        "power_source": "volume_integral_Im_epsilon_E2",
+        "field_model_for_absorption": "total_field",
+        "incident_power_code_units": 0.012827518731403281,
+        "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
+        "pml_cells_excluded": true,
+        "air_cells_excluded": true,
+        "normalization_note": "A_volume uses the current Stage-4 code-unit normalization: P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV over physical material cells, divided by incident_power_code_units. PML cells and air cells are deliberately excluded from material volume absorption. The k0 factor follows from H_code=curl(E)/(i*k0*mu_r) and the corresponding Poynting balance.",
+        "regions": {
+          "grating": {
+            "name": "grating",
+            "tag": 3,
+            "cell_count": 136,
+            "volume_nm3": 0.7288750000000053,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 5.041914364885996e-05,
+            "A_volume": 0.003930545314693475
+          },
+          "substrate": {
+            "name": "substrate",
+            "tag": 2,
+            "cell_count": 48,
+            "volume_nm3": 0.2572500000000009,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 1.7648767193969816e-05,
+            "A_volume": 0.0013758519916064163
+          }
+        },
+        "A_grating": 0.003930545314693475,
+        "A_substrate": 0.0013758519916064163,
+        "A_volume_grating": 0.003930545314693475,
+        "A_volume_substrate": 0.0013758519916064163,
+        "A_volume_total": 0.005306397306299891,
+        "A_port_balance_minus_A_volume_total": -3.320813498613323e-07,
+        "A_probe_balance_minus_A_volume_total": null,
+        "A_flux_minus_A_volume_total": null,
+        "energy_closure_error_port_volume": 3.3208134975204473e-07
+      },
+      "official_candidate_results": false
+    },
+    "GNN-1024": {
+      "status": "NOT_QUALIFIED",
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 0.008967874973901712,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      },
+      "audit": {
+        "schur_relative": 0.008967874973901712,
+        "augmented_relative": 0.0034777758277125654,
+        "native_relative": 0.0034777758277125654,
+        "original_total_augmented_relative": 0.0012067860782419366,
+        "port_absolute": 2.797159237748877e-17,
+        "port_full_rhs_relative": 1.3120120183279784e-16,
+        "port_operation_relative": 4.832067300717208e-17,
+        "recovery_relative": 4.714063901634668e-13,
+        "schur_original_identity_operation_relative": 5.346399806075878e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.6283994913387358,
+        "port_unknown_norm": 0.19705061730352968,
+        "strict_pass": false,
+        "independent_DOLFINx_total_native_relative": 0.0012067860782703998
+      },
+      "fields": {
+        "full_FE_L2_relative": 0.001258782579879739,
+        "full_FE_scaled_curl_relative": 0.0012587236022976048,
+        "scattered_FE_L2_relative": 0.012029095485339137,
+        "scattered_scaled_curl_relative": 0.012028303613282004,
+        "selected_E_relative": 0.0013826442986328946,
+        "selected_H_relative": 0.0011171469343092693
+      },
+      "comparison": {
+        "status": "NOT_QUALIFIED",
+        "equation_audit": {
+          "schur_relative": 0.008967874973901712,
+          "augmented_relative": 0.0034777758277125654,
+          "native_relative": 0.0034777758277125654,
+          "original_total_augmented_relative": 0.0012067860782419366,
+          "port_absolute": 2.797159237748877e-17,
+          "port_full_rhs_relative": 1.3120120183279784e-16,
+          "port_operation_relative": 4.832067300717208e-17,
+          "recovery_relative": 4.714063901634668e-13,
+          "schur_original_identity_operation_relative": 5.346399806075878e-13,
+          "slave_storage_max": 0.0,
+          "field_norm": 1.6283994913387358,
+          "port_unknown_norm": 0.19705061730352968,
+          "strict_pass": false,
+          "independent_DOLFINx_total_native_relative": 0.0012067860782703998
+        },
+        "full_FE_L2_relative": 0.001258782579879739,
+        "full_FE_scaled_curl_relative": 0.0012587236022976048,
+        "selected_E_relative": 0.0013826442986328946,
+        "selected_H_relative": 0.0011171469343092693,
+        "scattered_FE_L2_relative": 0.012029095485339137,
+        "ordered_complex_ports_relative": 0.00047134641058462417,
+        "power_absolute_differences": {
+          "R_total": 0.0004212901889356774,
+          "T_total": 0.0007409689301710598,
+          "A_balance": 0.0011622591191067233,
+          "A_volume": 4.605897212421953e-06
+        },
+        "max_channel_power_difference": 0.0007409713484290981,
+        "energy_closure_absolute": 0.0011668650134127878
+      },
+      "ordered_complex_total_ports": [
+        {
+          "real": -4.863389140536529e-06,
+          "imag": -9.336313613829194e-06
+        },
+        {
+          "real": 2.1776466792315226e-06,
+          "imag": 5.472434323567729e-06
+        },
+        {
+          "real": -4.094328506111905e-05,
+          "imag": -9.909255454009059e-06
+        },
+        {
+          "real": 1.276835756419995e-07,
+          "imag": 7.600140463339422e-07
+        },
+        {
+          "real": -5.2248330458017114e-06,
+          "imag": -8.645735438938521e-06
+        },
+        {
+          "real": -5.498138251144779e-07,
+          "imag": -5.199366488685344e-06
+        },
+        {
+          "real": 1.801921204651773e-06,
+          "imag": 9.092533514607767e-07
+        },
+        {
+          "real": 1.3199301120067903e-05,
+          "imag": -9.06280576210853e-06
+        },
+        {
+          "real": 7.0012961149739425e-06,
+          "imag": 1.597858960164513e-05
+        },
+        {
+          "real": 3.0251120821451995e-07,
+          "imag": 1.6151541128739324e-06
+        },
+        {
+          "real": 1.2255783986644808e-06,
+          "imag": 8.062282797675868e-07
+        },
+        {
+          "real": -1.372760238107143e-05,
+          "imag": 9.130532978101004e-06
+        },
+        {
+          "real": 2.3110016799311803e-05,
+          "imag": -1.5081687744681026e-05
+        },
+        {
+          "real": 1.9257154512252926e-05,
+          "imag": -1.036285923736275e-05
+        },
+        {
+          "real": -0.00010666762102859139,
+          "imag": -7.414709918791783e-05
+        },
+        {
+          "real": 3.600088132875755e-08,
+          "imag": -2.9920643226447504e-07
+        },
+        {
+          "real": 2.162297922726948e-05,
+          "imag": -1.003008542719917e-05
+        },
+        {
+          "real": -1.9248072683971048e-05,
+          "imag": 1.0221153109454695e-05
+        },
+        {
+          "real": 1.2296309936224576,
+          "imag": -0.5350336331230828
+        },
+        {
+          "real": 1.1131943040309006e-05,
+          "imag": -3.0548980194543655e-05
+        },
+        {
+          "real": -9.606933274037896e-06,
+          "imag": 1.2621692447555873e-06
+        },
+        {
+          "real": -7.795155127868956e-06,
+          "imag": -6.617139658884421e-07
+        },
+        {
+          "real": 2.1822553529973748e-05,
+          "imag": -3.687824772772914e-05
+        },
+        {
+          "real": 3.4283926966286857e-07,
+          "imag": 1.0163568958564519e-06
+        },
+        {
+          "real": -9.121341835982605e-06,
+          "imag": -1.01135177095325e-06
+        },
+        {
+          "real": 7.976211005940401e-06,
+          "imag": -7.714694235596812e-07
+        },
+        {
+          "real": 1.9947946657463126e-06,
+          "imag": -1.7733516521632122e-06
+        },
+        {
+          "real": -1.6853787738034273e-05,
+          "imag": -1.2434871601091127e-06
+        },
+        {
+          "real": -5.092893081982155e-06,
+          "imag": -1.560168200370625e-05
+        },
+        {
+          "real": -5.626777008646447e-07,
+          "imag": 2.6853599555263567e-06
+        },
+        {
+          "real": -1.6375318202654182e-06,
+          "imag": -3.929869533007756e-07
+        },
+        {
+          "real": 1.5032166645838899e-05,
+          "imag": 3.6566425496320754e-06
+        },
+        {
+          "real": -4.196475000588194e-07,
+          "imag": -2.980976460215877e-05
+        },
+        {
+          "real": -2.8766521254678034e-07,
+          "imag": 2.0234946482287158e-05
+        },
+        {
+          "real": 9.900888146035494e-05,
+          "imag": -7.876956286312924e-05
+        },
+        {
+          "real": -2.2555616624235667e-07,
+          "imag": 2.7390472847361028e-08
+        },
+        {
+          "real": 1.8174425626817825e-06,
+          "imag": -2.4962048934286286e-05
+        },
+        {
+          "real": 3.429423871753355e-06,
+          "imag": -1.967614834378158e-05
+        },
+        {
+          "real": 1.3192012865376899,
+          "imag": -0.16404532018514198
+        },
+        {
+          "real": 1.8408836709846482e-05,
+          "imag": -3.191848211721771e-05
+        }
+      ],
+      "ordered_complex_scattered_ports": [
+        {
+          "real": -4.863389140557771e-06,
+          "imag": -9.336313613858697e-06
+        },
+        {
+          "real": 2.1776466792083385e-06,
+          "imag": 5.472434323608301e-06
+        },
+        {
+          "real": -4.094328506136215e-05,
+          "imag": -9.909255454114086e-06
+        },
+        {
+          "real": 1.276835756419995e-07,
+          "imag": 7.600140463339422e-07
+        },
+        {
+          "real": -5.224833045806432e-06,
+          "imag": -8.64573543893144e-06
+        },
+        {
+          "real": -5.498138250912937e-07,
+          "imag": -5.199366488666024e-06
+        },
+        {
+          "real": 1.8019212046517776e-06,
+          "imag": 9.092533514607752e-07
+        },
+        {
+          "real": 1.3199301120008426e-05,
+          "imag": -9.06280576210853e-06
+        },
+        {
+          "real": 7.001296115296677e-06,
+          "imag": 1.597858960152299e-05
+        },
+        {
+          "real": 3.0251120821451995e-07,
+          "imag": 1.6151541128739324e-06
+        },
+        {
+          "real": 1.2255783986644808e-06,
+          "imag": 8.062282797675879e-07
+        },
+        {
+          "real": -1.3727602381135154e-05,
+          "imag": 9.130532978101004e-06
+        },
+        {
+          "real": 2.3110016799278762e-05,
+          "imag": -1.5081687744681026e-05
+        },
+        {
+          "real": 1.925715451216028e-05,
+          "imag": -1.036285923738977e-05
+        },
+        {
+          "real": -0.0001066676210281996,
+          "imag": -7.414709918736615e-05
+        },
+        {
+          "real": 3.600088132875755e-08,
+          "imag": -2.9920643226447504e-07
+        },
+        {
+          "real": 2.162297922728482e-05,
+          "imag": -1.0030085427179108e-05
+        },
+        {
+          "real": -1.9248072684052112e-05,
+          "imag": 1.0221153109443114e-05
+        },
+        {
+          "real": -0.033227690142437136,
+          "imag": -0.13514409844607964
+        },
+        {
+          "real": 1.1131943040840383e-05,
+          "imag": -3.0548980194711916e-05
+        },
+        {
+          "real": -9.606933274036715e-06,
+          "imag": 1.2621692447721088e-06
+        },
+        {
+          "real": -7.795155127919215e-06,
+          "imag": -6.617139658613791e-07
+        },
+        {
+          "real": 2.1822553530177906e-05,
+          "imag": -3.687824772821298e-05
+        },
+        {
+          "real": 3.4283926966286857e-07,
+          "imag": 1.0163568958564519e-06
+        },
+        {
+          "real": -9.121341836015648e-06,
+          "imag": -1.0113517709414489e-06
+        },
+        {
+          "real": 7.976211005986795e-06,
+          "imag": -7.714694235442167e-07
+        },
+        {
+          "real": 1.994794665746322e-06,
+          "imag": -1.7733516521632071e-06
+        },
+        {
+          "real": -1.6853787737991783e-05,
+          "imag": -1.2434871601091127e-06
+        },
+        {
+          "real": -5.092893082241827e-06,
+          "imag": -1.5601682003397653e-05
+        },
+        {
+          "real": -5.626777008646447e-07,
+          "imag": 2.6853599555263567e-06
+        },
+        {
+          "real": -1.6375318202654135e-06,
+          "imag": -3.9298695330077937e-07
+        },
+        {
+          "real": 1.5032166645804906e-05,
+          "imag": 3.6566425496660685e-06
+        },
+        {
+          "real": -4.1964750005173874e-07,
+          "imag": -2.980976460216821e-05
+        },
+        {
+          "real": -2.87665212513951e-07,
+          "imag": 2.0234946482202187e-05
+        },
+        {
+          "real": 9.900888145983215e-05,
+          "imag": -7.876956286297818e-05
+        },
+        {
+          "real": -2.2555616624235667e-07,
+          "imag": 2.7390472847361028e-08
+        },
+        {
+          "real": 1.817442562677062e-06,
+          "imag": -2.496204893429986e-05
+        },
+        {
+          "real": 3.4294238717147324e-06,
+          "imag": -1.9676148343787374e-05
+        },
+        {
+          "real": -0.01639564014447342,
+          "imag": -0.1385354693864802
+        },
+        {
+          "real": 1.84088366944874e-05,
+          "imag": -3.1918482116039096e-05
+        }
+      ],
+      "selected_E": [
+        [
+          {
+            "real": -1.0246994927635143e-05,
+            "imag": -4.418345234413665e-06
+          },
+          {
+            "real": 1.037507852593285,
+            "imag": 0.8224261680491696
+          },
+          {
+            "real": 6.0467726108138536e-05,
+            "imag": 7.354533083932233e-06
+          }
+        ],
+        [
+          {
+            "real": -1.1252146474686934e-05,
+            "imag": 4.535360672040423e-06
+          },
+          {
+            "real": 1.0497114832405803,
+            "imag": 0.8092281143071113
+          },
+          {
+            "real": 5.783867921220962e-05,
+            "imag": -1.3376783008544888e-05
+          }
+        ],
+        [
+          {
+            "real": -1.821065449239411e-05,
+            "imag": 1.3569020962460966e-06
+          },
+          {
+            "real": -1.074147835495896,
+            "imag": -0.7818950474918975
+          },
+          {
+            "real": -3.866053606152629e-05,
+            "imag": 9.905712992894286e-06
+          }
+        ],
+        [
+          {
+            "real": 2.1289270767552526e-05,
+            "imag": -1.4388501315566516e-05
+          },
+          {
+            "real": 1.0746395074552682,
+            "imag": 0.7811823774915414
+          },
+          {
+            "real": 3.059318452132981e-05,
+            "imag": -3.763450062118402e-05
+          }
+        ],
+        [
+          {
+            "real": 1.819382748602188e-06,
+            "imag": -5.609937546665401e-06
+          },
+          {
+            "real": -0.7380832272342126,
+            "imag": 1.112791847179741
+          },
+          {
+            "real": -1.389171836222832e-05,
+            "imag": 1.0655850185524558e-05
+          }
+        ],
+        [
+          {
+            "real": 3.666343752005743e-05,
+            "imag": -9.056957762252814e-06
+          },
+          {
+            "real": 0.724795256450817,
+            "imag": -1.123683497111319
+          },
+          {
+            "real": 6.826621509540569e-06,
+            "imag": -9.597870644511225e-06
+          }
+        ]
+      ],
+      "selected_H_code": [
+        [
+          {
+            "real": 0.008448112849667882,
+            "imag": 0.007664262335454926
+          },
+          {
+            "real": -3.796235598365396e-05,
+            "imag": 7.995248081942917e-06
+          },
+          {
+            "real": 1.0423279815358253,
+            "imag": 0.8230228536667734
+          }
+        ],
+        [
+          {
+            "real": 0.008459680475387478,
+            "imag": 0.00775109589842948
+          },
+          {
+            "real": -4.027529498487773e-05,
+            "imag": 7.0968290326954825e-06
+          },
+          {
+            "real": 1.0546238144788167,
+            "imag": 0.80978140490879
+          }
+        ],
+        [
+          {
+            "real": -0.008653943925511443,
+            "imag": -0.0075205889556181444
+          },
+          {
+            "real": 3.836939913931188e-05,
+            "imag": -1.63652676964512e-05
+          },
+          {
+            "real": -1.079106502702104,
+            "imag": -0.7821029050625637
+          }
+        ],
+        [
+          {
+            "real": 0.008566915977436286,
+            "imag": 0.007560441714858519
+          },
+          {
+            "real": -3.324702447281559e-05,
+            "imag": 4.511608897746636e-06
+          },
+          {
+            "real": 1.0797105763996326,
+            "imag": 0.7815861462773619
+          }
+        ],
+        [
+          {
+            "real": -0.007292403021491163,
+            "imag": 0.00881633970963848
+          },
+          {
+            "real": -6.212579546602002e-06,
+            "imag": -2.8453355691280273e-05
+          },
+          {
+            "real": -0.740577610666505,
+            "imag": 1.1118375275215755
+          }
+        ],
+        [
+          {
+            "real": 0.00702854912224526,
+            "imag": -0.009037756378870379
+          },
+          {
+            "real": 3.427519004915526e-06,
+            "imag": 2.053624624747208e-05
+          },
+          {
+            "real": 0.7271617603813985,
+            "imag": -1.1228186445546247
+          }
+        ]
+      ],
+      "power": {
+        "R_total": 0.11722452913398065,
+        "R00_total": 0.1172234821119388,
+        "R00_s": 0.11722348105477845,
+        "R00_p": 1.0571603467792677e-09,
+        "R00_by_polarization": {
+          "s": 0.11722348105477845,
+          "p": 1.0571603467792677e-09
+        },
+        "T_total": 0.8763068140036622,
+        "R_plus_T": 0.9935313431376428,
+        "A_balance": 0.006468656862357203,
+        "R_total_dtn_port_modal": 0.11722452913398065,
+        "T_total_dtn_port_modal": 0.8763068140036622,
+        "R_plus_T_dtn_port_modal": 0.9935313431376428,
+        "A_balance_dtn_port_modal": 0.006468656862357203,
+        "R_plus_T_plus_A_volume": null,
+        "R_plus_T_plus_A_volume_dtn_port_modal": null,
+        "energy_closure_error_dtn_port_modal_volume": null,
+        "power_source": "dtn_port_modal_amplitudes",
+        "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+        "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+        "dtn_port_top_reference_z": 1.225,
+        "dtn_port_bottom_reference_z": -0.175,
+        "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+        "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+        "incident_power_code_units": 0.012827518731403281,
+        "stage4_dtn_order_policy": "auto_propagating",
+        "stage4_dtn_assembly": "auxiliary",
+        "dtn_port_mode_count": 40,
+        "dtn_port_top_mode_count": 20,
+        "dtn_port_bottom_mode_count": 20,
+        "dtn_port_propagating_mode_count": 40,
+        "dtn_port_rayleigh_warning_count": 0,
+        "port_power_file": "port_power.json",
+        "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+        "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+        "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+        "port_power_csv": "port_power.csv",
+        "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+      },
+      "volume_absorption": {
+        "method": "volume_absorption",
+        "role": "absorption_check",
+        "status": "ok",
+        "power_source": "volume_integral_Im_epsilon_E2",
+        "field_model_for_absorption": "total_field",
+        "incident_power_code_units": 0.012827518731403281,
+        "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
+        "pml_cells_excluded": true,
+        "air_cells_excluded": true,
+        "normalization_note": "A_volume uses the current Stage-4 code-unit normalization: P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV over physical material cells, divided by incident_power_code_units. PML cells and air cells are deliberately excluded from material volume absorption. The k0 factor follows from H_code=curl(E)/(i*k0*mu_r) and the corresponding Poynting balance.",
+        "regions": {
+          "grating": {
+            "name": "grating",
+            "tag": 3,
+            "cell_count": 136,
+            "volume_nm3": 0.7288750000000053,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 5.0375039684346756e-05,
+            "A_volume": 0.003927107084320423
+          },
+          "substrate": {
+            "name": "substrate",
+            "tag": 2,
+            "cell_count": 48,
+            "volume_nm3": 0.2572500000000009,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 1.7633794567988697e-05,
+            "A_volume": 0.0013746847646239708
+          }
+        },
+        "A_grating": 0.003927107084320423,
+        "A_substrate": 0.0013746847646239708,
+        "A_volume_grating": 0.003927107084320423,
+        "A_volume_substrate": 0.0013746847646239708,
+        "A_volume_total": 0.005301791848944394,
+        "A_port_balance_minus_A_volume_total": 0.0011668650134128086,
+        "A_probe_balance_minus_A_volume_total": null,
+        "A_flux_minus_A_volume_total": null,
+        "energy_closure_error_port_volume": -0.0011668650134127878
+      },
+      "official_candidate_results": false
+    },
+    "GNN-2048": {
+      "status": "NOT_QUALIFIED",
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 0.003200831522894748,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      },
+      "audit": {
+        "schur_relative": 0.003200831522894748,
+        "augmented_relative": 0.0012412945688146982,
+        "native_relative": 0.0012412945688146982,
+        "original_total_augmented_relative": 0.00043072845369121043,
+        "port_absolute": 7.757923254194622e-18,
+        "port_full_rhs_relative": 3.6388663217332525e-17,
+        "port_operation_relative": 1.3428962575249133e-17,
+        "recovery_relative": 4.678837510481688e-13,
+        "schur_original_identity_operation_relative": 5.284563631205921e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.6249291462032156,
+        "port_unknown_norm": 0.19665120388585713,
+        "strict_pass": false,
+        "independent_DOLFINx_total_native_relative": 0.0004307284537308414
+      },
+      "fields": {
+        "full_FE_L2_relative": 0.0005859799527138632,
+        "full_FE_scaled_curl_relative": 0.0005858682388364553,
+        "scattered_FE_L2_relative": 0.005599703170632532,
+        "scattered_scaled_curl_relative": 0.005598529368354173,
+        "selected_E_relative": 0.0006473649672092273,
+        "selected_H_relative": 0.0005176908737480071
+      },
+      "comparison": {
+        "status": "NOT_QUALIFIED",
+        "equation_audit": {
+          "schur_relative": 0.003200831522894748,
+          "augmented_relative": 0.0012412945688146982,
+          "native_relative": 0.0012412945688146982,
+          "original_total_augmented_relative": 0.00043072845369121043,
+          "port_absolute": 7.757923254194622e-18,
+          "port_full_rhs_relative": 3.6388663217332525e-17,
+          "port_operation_relative": 1.3428962575249133e-17,
+          "recovery_relative": 4.678837510481688e-13,
+          "schur_original_identity_operation_relative": 5.284563631205921e-13,
+          "slave_storage_max": 0.0,
+          "field_norm": 1.6249291462032156,
+          "port_unknown_norm": 0.19665120388585713,
+          "strict_pass": false,
+          "independent_DOLFINx_total_native_relative": 0.0004307284537308414
+        },
+        "full_FE_L2_relative": 0.0005859799527138632,
+        "full_FE_scaled_curl_relative": 0.0005858682388364553,
+        "selected_E_relative": 0.0006473649672092273,
+        "selected_H_relative": 0.0005176908737480071,
+        "scattered_FE_L2_relative": 0.005599703170632532,
+        "ordered_complex_ports_relative": 0.0004257509884267574,
+        "power_absolute_differences": {
+          "R_total": 0.0001422249525517283,
+          "T_total": 8.654740270763739e-05,
+          "A_balance": 0.00022877235525931017,
+          "A_volume": 7.220293572534828e-07
+        },
+        "max_channel_power_difference": 0.0001422352773434027,
+        "energy_closure_absolute": 0.00022949438171027126
+      },
+      "ordered_complex_total_ports": [
+        {
+          "real": -3.9689361636033875e-06,
+          "imag": -7.949367365631579e-06
+        },
+        {
+          "real": 2.4820347329851424e-06,
+          "imag": 5.808676009617174e-06
+        },
+        {
+          "real": -4.220266921820493e-05,
+          "imag": -1.1424134511000534e-05
+        },
+        {
+          "real": -3.154792486266185e-07,
+          "imag": -2.7234085531019203e-07
+        },
+        {
+          "real": -3.334835500148569e-06,
+          "imag": -8.371996455679815e-06
+        },
+        {
+          "real": -3.416733404305351e-06,
+          "imag": -5.97665344052016e-06
+        },
+        {
+          "real": -2.2687173503754578e-07,
+          "imag": -5.580962770232864e-07
+        },
+        {
+          "real": 1.4049013450704296e-05,
+          "imag": -9.406432117492819e-06
+        },
+        {
+          "real": 4.412749466332001e-06,
+          "imag": 1.5430334622867077e-05
+        },
+        {
+          "real": -2.5433053374367632e-08,
+          "imag": -3.835841049894362e-07
+        },
+        {
+          "real": -1.8038668477005537e-07,
+          "imag": -3.822995826317621e-07
+        },
+        {
+          "real": -1.3592017442627527e-05,
+          "imag": 8.503259447419147e-06
+        },
+        {
+          "real": 2.4944457472840087e-05,
+          "imag": -1.2803079848112926e-05
+        },
+        {
+          "real": 1.9349411976900443e-05,
+          "imag": -8.842157022960414e-06
+        },
+        {
+          "real": -0.00010827773324693921,
+          "imag": -7.328167804116134e-05
+        },
+        {
+          "real": 1.427567148716618e-07,
+          "imag": 2.6508526889022055e-07
+        },
+        {
+          "real": 2.590953826175398e-05,
+          "imag": -1.208452409428547e-05
+        },
+        {
+          "real": -1.8634911371754087e-05,
+          "imag": 8.121609154081012e-06
+        },
+        {
+          "real": 1.2301778231836238,
+          "imag": -0.534871784597595
+        },
+        {
+          "real": -1.5215371423932732e-06,
+          "imag": -4.113839369425188e-06
+        },
+        {
+          "real": -9.733269003041359e-06,
+          "imag": -1.5971045631655063e-06
+        },
+        {
+          "real": -7.2313402373834025e-06,
+          "imag": 3.231095023918764e-07
+        },
+        {
+          "real": 2.1907828864650437e-05,
+          "imag": -3.4877846468165063e-05
+        },
+        {
+          "real": 7.16203133068963e-08,
+          "imag": -3.707278296713575e-07
+        },
+        {
+          "real": -9.615517884925357e-06,
+          "imag": -1.3351774639884015e-06
+        },
+        {
+          "real": 6.766353670374046e-06,
+          "imag": 3.369217813984195e-07
+        },
+        {
+          "real": 9.18128546720848e-07,
+          "imag": 1.1786302218734958e-07
+        },
+        {
+          "real": -1.6152236314188653e-05,
+          "imag": -1.9602729276694786e-06
+        },
+        {
+          "real": -4.095578991285528e-06,
+          "imag": -1.6172547077930734e-05
+        },
+        {
+          "real": 1.728882182582764e-07,
+          "imag": -3.921901193411151e-07
+        },
+        {
+          "real": 5.952039130571286e-07,
+          "imag": -3.9025932907237066e-07
+        },
+        {
+          "real": 1.622090472060933e-05,
+          "imag": 3.2381669356325377e-06
+        },
+        {
+          "real": 5.556227412381275e-07,
+          "imag": -2.739054669254325e-05
+        },
+        {
+          "real": -7.706814705358088e-07,
+          "imag": 2.156244712698888e-05
+        },
+        {
+          "real": 9.864093690350988e-05,
+          "imag": -7.81487206615063e-05
+        },
+        {
+          "real": -1.2414734808553037e-07,
+          "imag": -8.138721166259367e-07
+        },
+        {
+          "real": 2.9984338757246745e-06,
+          "imag": -2.834605198626411e-05
+        },
+        {
+          "real": 1.6194331396768828e-06,
+          "imag": -2.1407676564757187e-05
+        },
+        {
+          "real": 1.3197285392186056,
+          "imag": -0.16382687829556464
+        },
+        {
+          "real": -2.564082377863058e-06,
+          "imag": -7.048810347561691e-06
+        }
+      ],
+      "ordered_complex_scattered_ports": [
+        {
+          "real": -3.9689361636246294e-06,
+          "imag": -7.949367365661081e-06
+        },
+        {
+          "real": 2.4820347329619583e-06,
+          "imag": 5.808676009657746e-06
+        },
+        {
+          "real": -4.2202669218448025e-05,
+          "imag": -1.1424134511105561e-05
+        },
+        {
+          "real": -3.154792486266185e-07,
+          "imag": -2.7234085531019203e-07
+        },
+        {
+          "real": -3.3348355001532895e-06,
+          "imag": -8.371996455672734e-06
+        },
+        {
+          "real": -3.416733404282167e-06,
+          "imag": -5.97665344050084e-06
+        },
+        {
+          "real": -2.2687173503754117e-07,
+          "imag": -5.580962770232878e-07
+        },
+        {
+          "real": 1.4049013450644819e-05,
+          "imag": -9.406432117492819e-06
+        },
+        {
+          "real": 4.412749466654736e-06,
+          "imag": 1.5430334622744938e-05
+        },
+        {
+          "real": -2.5433053374367632e-08,
+          "imag": -3.835841049894362e-07
+        },
+        {
+          "real": -1.8038668477005537e-07,
+          "imag": -3.8229958263176095e-07
+        },
+        {
+          "real": -1.3592017442691251e-05,
+          "imag": 8.503259447419147e-06
+        },
+        {
+          "real": 2.4944457472807046e-05,
+          "imag": -1.2803079848112926e-05
+        },
+        {
+          "real": 1.93494119768078e-05,
+          "imag": -8.842157022987435e-06
+        },
+        {
+          "real": -0.00010827773324654742,
+          "imag": -7.328167804060965e-05
+        },
+        {
+          "real": 1.427567148716618e-07,
+          "imag": 2.6508526889022055e-07
+        },
+        {
+          "real": 2.5909538261769322e-05,
+          "imag": -1.2084524094265409e-05
+        },
+        {
+          "real": -1.863491137183515e-05,
+          "imag": 8.121609154069432e-06
+        },
+        {
+          "real": -0.032680860581270905,
+          "imag": -0.1349822499205917
+        },
+        {
+          "real": -1.5215371418618957e-06,
+          "imag": -4.113839369593451e-06
+        },
+        {
+          "real": -9.733269003040178e-06,
+          "imag": -1.5971045631489847e-06
+        },
+        {
+          "real": -7.231340237433662e-06,
+          "imag": 3.2310950241893935e-07
+        },
+        {
+          "real": 2.1907828864854595e-05,
+          "imag": -3.48778464686489e-05
+        },
+        {
+          "real": 7.16203133068963e-08,
+          "imag": -3.707278296713575e-07
+        },
+        {
+          "real": -9.6155178849584e-06,
+          "imag": -1.3351774639766004e-06
+        },
+        {
+          "real": 6.76635367042044e-06,
+          "imag": 3.3692178141388405e-07
+        },
+        {
+          "real": 9.181285467208572e-07,
+          "imag": 1.1786302218735477e-07
+        },
+        {
+          "real": -1.6152236314146163e-05,
+          "imag": -1.9602729276694786e-06
+        },
+        {
+          "real": -4.0955789915452e-06,
+          "imag": -1.6172547077622137e-05
+        },
+        {
+          "real": 1.728882182582764e-07,
+          "imag": -3.921901193411151e-07
+        },
+        {
+          "real": 5.952039130571333e-07,
+          "imag": -3.902593290723744e-07
+        },
+        {
+          "real": 1.6220904720575336e-05,
+          "imag": 3.238166935666531e-06
+        },
+        {
+          "real": 5.556227412452081e-07,
+          "imag": -2.7390546692552688e-05
+        },
+        {
+          "real": -7.706814705029794e-07,
+          "imag": 2.156244712690391e-05
+        },
+        {
+          "real": 9.86409369029871e-05,
+          "imag": -7.814872066135524e-05
+        },
+        {
+          "real": -1.2414734808553037e-07,
+          "imag": -8.138721166259367e-07
+        },
+        {
+          "real": 2.998433875719954e-06,
+          "imag": -2.834605198627768e-05
+        },
+        {
+          "real": 1.61943313963826e-06,
+          "imag": -2.140767656476298e-05
+        },
+        {
+          "real": -0.015868387463557638,
+          "imag": -0.13831702749690286
+        },
+        {
+          "real": -2.5640823932221413e-06,
+          "imag": -7.0488103463830726e-06
+        }
+      ],
+      "selected_E": [
+        [
+          {
+            "real": -1.726679586083225e-05,
+            "imag": -5.6405346987798886e-06
+          },
+          {
+            "real": 1.0392539461677686,
+            "imag": 0.82298469840773
+          },
+          {
+            "real": 1.965301204051468e-05,
+            "imag": 4.896961846329777e-06
+          }
+        ],
+        [
+          {
+            "real": -1.64836175868737e-05,
+            "imag": 3.495825614989402e-06
+          },
+          {
+            "real": 1.0514640481779591,
+            "imag": 0.809783699517992
+          },
+          {
+            "real": 2.2477107285077725e-05,
+            "imag": -8.109211941534406e-06
+          }
+        ],
+        [
+          {
+            "real": -1.2454086384008163e-05,
+            "imag": -1.9380775951346004e-05
+          },
+          {
+            "real": -1.0759005159141652,
+            "imag": -0.7824623952141927
+          },
+          {
+            "real": -5.217046491409366e-06,
+            "imag": 6.557526492674611e-06
+          }
+        ],
+        [
+          {
+            "real": 2.485243884789689e-05,
+            "imag": -2.741461862530831e-05
+          },
+          {
+            "real": 1.0763954387014794,
+            "imag": 0.7817373033012397
+          },
+          {
+            "real": 2.3127221773012466e-06,
+            "imag": -2.8520812159238934e-05
+          }
+        ],
+        [
+          {
+            "real": -4.9563462178537666e-06,
+            "imag": -9.215348052173417e-06
+          },
+          {
+            "real": -0.738611995168398,
+            "imag": 1.1114540237759416
+          },
+          {
+            "real": -2.1989680625409876e-05,
+            "imag": -1.9366878026798868e-05
+          }
+        ],
+        [
+          {
+            "real": 4.014708727598599e-05,
+            "imag": -1.1747184987921189e-06
+          },
+          {
+            "real": 0.7253249919294109,
+            "imag": -1.1223404683319325
+          },
+          {
+            "real": 5.701336076557296e-06,
+            "imag": 2.7333240698873333e-05
+          }
+        ]
+      ],
+      "selected_H_code": [
+        [
+          {
+            "real": 0.00845075290205383,
+            "imag": 0.007667548183561958
+          },
+          {
+            "real": -2.760533937416567e-06,
+            "imag": 6.283695000820117e-06
+          },
+          {
+            "real": 1.0410240449887815,
+            "imag": 0.8235266278451998
+          }
+        ],
+        [
+          {
+            "real": 0.008457872392143325,
+            "imag": 0.007748954424842279
+          },
+          {
+            "real": -2.9345350593537513e-06,
+            "imag": 5.810579244463738e-06
+          },
+          {
+            "real": 1.053309200984153,
+            "imag": 0.8102892560165758
+          }
+        ],
+        [
+          {
+            "real": -0.008648402012018762,
+            "imag": -0.007514560600521365
+          },
+          {
+            "real": 1.975889707116118e-06,
+            "imag": -2.945268283635386e-06
+          },
+          {
+            "real": -1.0777855093502218,
+            "imag": -0.7826286074443367
+          }
+        ],
+        [
+          {
+            "real": 0.008568220623545501,
+            "imag": 0.007553327635503655
+          },
+          {
+            "real": -3.840313859259859e-06,
+            "imag": 5.019459222684385e-06
+          },
+          {
+            "real": 1.0783837158483085,
+            "imag": 0.7821123115700775
+          }
+        ],
+        [
+          {
+            "real": -0.0072857347276434215,
+            "imag": 0.00881527407255453
+          },
+          {
+            "real": -4.355718564840009e-06,
+            "imag": -1.979666135038133e-06
+          },
+          {
+            "real": -0.7411313135745001,
+            "imag": 1.1135636583155006
+          }
+        ],
+        [
+          {
+            "real": 0.007024773039426159,
+            "imag": -0.009027949871996146
+          },
+          {
+            "real": 3.71205325496516e-06,
+            "imag": 2.5330588486264352e-06
+          },
+          {
+            "real": 0.7277134159553307,
+            "imag": -1.124513320557768
+          }
+        ]
+      ],
+      "power": {
+        "R_total": 0.1175035943703646,
+        "R00_total": 0.11750252712914007,
+        "R00_s": 0.11750252710990132,
+        "R00_p": 1.923874963311424e-11,
+        "R00_by_polarization": {
+          "s": 0.11750252710990132,
+          "p": 1.923874963311424e-11
+        },
+        "T_total": 0.8769612355311256,
+        "R_plus_T": 0.9944648299014902,
+        "A_balance": 0.00553517009850979,
+        "R_total_dtn_port_modal": 0.1175035943703646,
+        "T_total_dtn_port_modal": 0.8769612355311256,
+        "R_plus_T_dtn_port_modal": 0.9944648299014902,
+        "A_balance_dtn_port_modal": 0.00553517009850979,
+        "R_plus_T_plus_A_volume": null,
+        "R_plus_T_plus_A_volume_dtn_port_modal": null,
+        "energy_closure_error_dtn_port_modal_volume": null,
+        "power_source": "dtn_port_modal_amplitudes",
+        "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+        "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+        "dtn_port_top_reference_z": 1.225,
+        "dtn_port_bottom_reference_z": -0.175,
+        "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+        "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+        "incident_power_code_units": 0.012827518731403281,
+        "stage4_dtn_order_policy": "auto_propagating",
+        "stage4_dtn_assembly": "auxiliary",
+        "dtn_port_mode_count": 40,
+        "dtn_port_top_mode_count": 20,
+        "dtn_port_bottom_mode_count": 20,
+        "dtn_port_propagating_mode_count": 40,
+        "dtn_port_rayleigh_warning_count": 0,
+        "port_power_file": "port_power.json",
+        "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+        "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+        "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+        "port_power_csv": "port_power.csv",
+        "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+      },
+      "volume_absorption": {
+        "method": "volume_absorption",
+        "role": "absorption_check",
+        "status": "ok",
+        "power_source": "volume_integral_Im_epsilon_E2",
+        "field_model_for_absorption": "total_field",
+        "incident_power_code_units": 0.012827518731403281,
+        "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
+        "pml_cells_excluded": true,
+        "air_cells_excluded": true,
+        "normalization_note": "A_volume uses the current Stage-4 code-unit normalization: P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV over physical material cells, divided by incident_power_code_units. PML cells and air cells are deliberately excluded from material volume absorption. The k0 factor follows from H_code=curl(E)/(i*k0*mu_r) and the corresponding Poynting balance.",
+        "regions": {
+          "grating": {
+            "name": "grating",
+            "tag": 3,
+            "cell_count": 136,
+            "volume_nm3": 0.7288750000000053,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 5.0411672232320064e-05,
+            "A_volume": 0.003929962862490806
+          },
+          "substrate": {
+            "name": "substrate",
+            "tag": 2,
+            "cell_count": 48,
+            "volume_nm3": 0.2572500000000009,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 1.7646982407677855e-05,
+            "A_volume": 0.001375712854308757
+          }
+        },
+        "A_grating": 0.003929962862490806,
+        "A_substrate": 0.001375712854308757,
+        "A_volume_grating": 0.003929962862490806,
+        "A_volume_substrate": 0.001375712854308757,
+        "A_volume_total": 0.0053056757167995626,
+        "A_port_balance_minus_A_volume_total": 0.00022949438171022702,
+        "A_probe_balance_minus_A_volume_total": null,
+        "A_flux_minus_A_volume_total": null,
+        "energy_closure_error_port_volume": -0.00022949438171027126
+      },
+      "official_candidate_results": false
+    },
+    "GNN-LSQR-FINAL": {
+      "status": "NOT_QUALIFIED",
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 0.0005944770816765329,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      },
+      "audit": {
+        "schur_relative": 0.0005944770816765329,
+        "augmented_relative": 0.00023054046034317802,
+        "native_relative": 0.000230540460343178,
+        "original_total_augmented_relative": 7.999739826397562e-05,
+        "port_absolute": 3.940534276780315e-17,
+        "port_full_rhs_relative": 1.848313910769665e-16,
+        "port_operation_relative": 6.794510672861405e-17,
+        "recovery_relative": 4.6800131549809e-13,
+        "schur_original_identity_operation_relative": 5.302067774624818e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.631267952849584,
+        "port_unknown_norm": 0.19741971176158027,
+        "strict_pass": false,
+        "independent_DOLFINx_total_native_relative": 7.999739828143049e-05
+      },
+      "fields": {
+        "full_FE_L2_relative": 2.6077886409939547e-05,
+        "full_FE_scaled_curl_relative": 2.5734581933323152e-05,
+        "scattered_FE_L2_relative": 0.0002492037868135736,
+        "scattered_scaled_curl_relative": 0.0002459184560374249,
+        "selected_E_relative": 2.793271578373284e-05,
+        "selected_H_relative": 2.318052531169104e-05
+      },
+      "comparison": {
+        "status": "NOT_QUALIFIED",
+        "equation_audit": {
+          "schur_relative": 0.0005944770816765329,
+          "augmented_relative": 0.00023054046034317802,
+          "native_relative": 0.000230540460343178,
+          "original_total_augmented_relative": 7.999739826397562e-05,
+          "port_absolute": 3.940534276780315e-17,
+          "port_full_rhs_relative": 1.848313910769665e-16,
+          "port_operation_relative": 6.794510672861405e-17,
+          "recovery_relative": 4.6800131549809e-13,
+          "schur_original_identity_operation_relative": 5.302067774624818e-13,
+          "slave_storage_max": 0.0,
+          "field_norm": 1.631267952849584,
+          "port_unknown_norm": 0.19741971176158027,
+          "strict_pass": false,
+          "independent_DOLFINx_total_native_relative": 7.999739828143049e-05
+        },
+        "full_FE_L2_relative": 2.6077886409939547e-05,
+        "full_FE_scaled_curl_relative": 2.5734581933323152e-05,
+        "selected_E_relative": 2.793271578373284e-05,
+        "selected_H_relative": 2.318052531169104e-05,
+        "scattered_FE_L2_relative": 0.0002492037868135736,
+        "ordered_complex_ports_relative": 2.037772366785793e-05,
+        "power_absolute_differences": {
+          "R_total": 1.4212736334243137e-05,
+          "T_total": 2.0968749344318915e-05,
+          "A_balance": 3.518148567849266e-05,
+          "A_volume": 1.3779271095491763e-07
+        },
+        "max_channel_power_difference": 2.096828081210589e-05,
+        "energy_closure_absolute": 3.531927548305891e-05
+      },
+      "ordered_complex_total_ports": [
+        {
+          "real": -3.958729735878426e-06,
+          "imag": -8.60587847986342e-06
+        },
+        {
+          "real": 3.072736708494993e-06,
+          "imag": 6.325883979681086e-06
+        },
+        {
+          "real": -4.149276980415852e-05,
+          "imag": -1.1380779561304787e-05
+        },
+        {
+          "real": 1.0802504649496094e-09,
+          "imag": 6.407815297038715e-09
+        },
+        {
+          "real": -4.325582289879722e-06,
+          "imag": -8.498902651913175e-06
+        },
+        {
+          "real": -2.902153283063032e-06,
+          "imag": -6.2012404712951156e-06
+        },
+        {
+          "real": -7.64073821190028e-08,
+          "imag": 4.673693286372036e-08
+        },
+        {
+          "real": 1.3951417388270745e-05,
+          "imag": -9.02495658913938e-06
+        },
+        {
+          "real": 3.209015735190146e-06,
+          "imag": 1.5804500850432966e-05
+        },
+        {
+          "real": 4.510553495510676e-08,
+          "imag": 1.4075838921439472e-08
+        },
+        {
+          "real": 8.697394417693678e-08,
+          "imag": -3.051877408520388e-08
+        },
+        {
+          "real": -1.387443501395948e-05,
+          "imag": 8.917921210179295e-06
+        },
+        {
+          "real": 2.5527357463787735e-05,
+          "imag": -1.259254678632731e-05
+        },
+        {
+          "real": 1.873931298398163e-05,
+          "imag": -9.226857497433661e-06
+        },
+        {
+          "real": -0.00010778657164114878,
+          "imag": -7.253191749221855e-05
+        },
+        {
+          "real": 3.9511711068821924e-08,
+          "imag": 2.7143571079250103e-10
+        },
+        {
+          "real": 2.5672633318093173e-05,
+          "imag": -1.2427145955812625e-05
+        },
+        {
+          "real": -1.8936809728851755e-05,
+          "imag": 9.196845255108634e-06
+        },
+        {
+          "real": 1.2301020910786642,
+          "imag": -0.5354128670584302
+        },
+        {
+          "real": -3.542063061802638e-06,
+          "imag": -3.665795144693773e-06
+        },
+        {
+          "real": -9.496696046653097e-06,
+          "imag": -4.80822480686264e-07
+        },
+        {
+          "real": -6.942698851183897e-06,
+          "imag": -3.469115194314992e-07
+        },
+        {
+          "real": 2.249837612699892e-05,
+          "imag": -3.5531818916569365e-05
+        },
+        {
+          "real": -4.806994020918954e-08,
+          "imag": -6.220230514963643e-09
+        },
+        {
+          "real": -9.45229272283382e-06,
+          "imag": -4.7364421001251366e-07
+        },
+        {
+          "real": 7.013737884753076e-06,
+          "imag": 3.4059714821760774e-07
+        },
+        {
+          "real": 3.755476019377837e-08,
+          "imag": 7.384420674321108e-08
+        },
+        {
+          "real": -1.6405401028674674e-05,
+          "imag": -2.873690213876101e-06
+        },
+        {
+          "real": -3.2707856265460252e-06,
+          "imag": -1.6043850190820132e-05
+        },
+        {
+          "real": -6.090937433474028e-10,
+          "imag": 2.5327440338412083e-08
+        },
+        {
+          "real": 2.916242501964275e-08,
+          "imag": 5.905217586961725e-08
+        },
+        {
+          "real": 1.6609226838977347e-05,
+          "imag": 2.7007108658238142e-06
+        },
+        {
+          "real": 1.33614013621287e-06,
+          "imag": -2.8606398462555137e-05
+        },
+        {
+          "real": -8.967920786069401e-07,
+          "imag": 2.1094573802937468e-05
+        },
+        {
+          "real": 9.922414099578351e-05,
+          "imag": -7.780399576037784e-05
+        },
+        {
+          "real": 1.71782454743686e-08,
+          "imag": 9.918800506156191e-09
+        },
+        {
+          "real": 1.4014655563846978e-06,
+          "imag": -2.8704919301603044e-05
+        },
+        {
+          "real": 1.0836564213092664e-06,
+          "imag": -2.1097514986905603e-05
+        },
+        {
+          "real": 1.3197109141578613,
+          "imag": -0.1643715284705799
+        },
+        {
+          "real": -3.589937856680448e-06,
+          "imag": -4.331662108850042e-06
+        }
+      ],
+      "ordered_complex_scattered_ports": [
+        {
+          "real": -3.958729735899668e-06,
+          "imag": -8.605878479892921e-06
+        },
+        {
+          "real": 3.0727367084718088e-06,
+          "imag": 6.325883979721658e-06
+        },
+        {
+          "real": -4.1492769804401615e-05,
+          "imag": -1.1380779561409814e-05
+        },
+        {
+          "real": 1.0802504649496094e-09,
+          "imag": 6.407815297038715e-09
+        },
+        {
+          "real": -4.325582289884442e-06,
+          "imag": -8.498902651906094e-06
+        },
+        {
+          "real": -2.902153283039848e-06,
+          "imag": -6.201240471275796e-06
+        },
+        {
+          "real": -7.640738211899819e-08,
+          "imag": 4.6736932863718916e-08
+        },
+        {
+          "real": 1.3951417388211268e-05,
+          "imag": -9.02495658913938e-06
+        },
+        {
+          "real": 3.2090157355128803e-06,
+          "imag": 1.5804500850310827e-05
+        },
+        {
+          "real": 4.510553495510676e-08,
+          "imag": 1.4075838921439472e-08
+        },
+        {
+          "real": 8.697394417693678e-08,
+          "imag": -3.051877408520273e-08
+        },
+        {
+          "real": -1.3874435014023204e-05,
+          "imag": 8.917921210179295e-06
+        },
+        {
+          "real": 2.5527357463754694e-05,
+          "imag": -1.259254678632731e-05
+        },
+        {
+          "real": 1.8739312983888984e-05,
+          "imag": -9.226857497460682e-06
+        },
+        {
+          "real": -0.00010778657164075699,
+          "imag": -7.253191749166687e-05
+        },
+        {
+          "real": 3.9511711068821924e-08,
+          "imag": 2.7143571079250103e-10
+        },
+        {
+          "real": 2.5672633318108515e-05,
+          "imag": -1.2427145955792564e-05
+        },
+        {
+          "real": -1.893680972893282e-05,
+          "imag": 9.196845255097053e-06
+        },
+        {
+          "real": -0.03275659268623064,
+          "imag": -0.135523332381427
+        },
+        {
+          "real": -3.5420630612712603e-06,
+          "imag": -3.665795144862036e-06
+        },
+        {
+          "real": -9.496696046651916e-06,
+          "imag": -4.808224806697424e-07
+        },
+        {
+          "real": -6.942698851234157e-06,
+          "imag": -3.4691151940443624e-07
+        },
+        {
+          "real": 2.249837612720308e-05,
+          "imag": -3.5531818917053204e-05
+        },
+        {
+          "real": -4.806994020918954e-08,
+          "imag": -6.220230514963643e-09
+        },
+        {
+          "real": -9.452292722866863e-06,
+          "imag": -4.7364421000071254e-07
+        },
+        {
+          "real": 7.0137378847994696e-06,
+          "imag": 3.405971482330723e-07
+        },
+        {
+          "real": 3.755476019378759e-08,
+          "imag": 7.384420674321626e-08
+        },
+        {
+          "real": -1.6405401028632183e-05,
+          "imag": -2.873690213876101e-06
+        },
+        {
+          "real": -3.270785626805698e-06,
+          "imag": -1.6043850190511534e-05
+        },
+        {
+          "real": -6.090937433474028e-10,
+          "imag": 2.5327440338412083e-08
+        },
+        {
+          "real": 2.916242501964736e-08,
+          "imag": 5.905217586961351e-08
+        },
+        {
+          "real": 1.6609226838943354e-05,
+          "imag": 2.7007108658578074e-06
+        },
+        {
+          "real": 1.3361401362199509e-06,
+          "imag": -2.8606398462564576e-05
+        },
+        {
+          "real": -8.967920785741107e-07,
+          "imag": 2.1094573802852497e-05
+        },
+        {
+          "real": 9.922414099526073e-05,
+          "imag": -7.780399576022678e-05
+        },
+        {
+          "real": 1.71782454743686e-08,
+          "imag": 9.918800506156191e-09
+        },
+        {
+          "real": 1.4014655563799773e-06,
+          "imag": -2.8704919301616617e-05
+        },
+        {
+          "real": 1.0836564212706436e-06,
+          "imag": -2.1097514986911396e-05
+        },
+        {
+          "real": -0.01588601252430184,
+          "imag": -0.13886167767191812
+        },
+        {
+          "real": -3.5899378720395313e-06,
+          "imag": -4.331662107671424e-06
+        }
+      ],
+      "selected_E": [
+        [
+          {
+            "real": -1.1882773833446095e-05,
+            "imag": -5.670167896324001e-06
+          },
+          {
+            "real": 1.0395466540646117,
+            "imag": 0.8220462076204054
+          },
+          {
+            "real": 1.9046938217485527e-05,
+            "imag": 6.5431915381918e-06
+          }
+        ],
+        [
+          {
+            "real": -1.366063955236408e-05,
+            "imag": 5.736266592435121e-06
+          },
+          {
+            "real": 1.0517527943397031,
+            "imag": 0.8088443068040544
+          },
+          {
+            "real": 1.9484175275967787e-05,
+            "imag": -1.031452239657526e-05
+          }
+        ],
+        [
+          {
+            "real": -1.597486827210035e-05,
+            "imag": -1.572702663935478e-05
+          },
+          {
+            "real": -1.0761935243068368,
+            "imag": -0.7815241050655196
+          },
+          {
+            "real": -1.4116201826121476e-06,
+            "imag": 7.75199178757939e-06
+          }
+        ],
+        [
+          {
+            "real": 2.3288820336843212e-05,
+            "imag": -2.5427655784212228e-05
+          },
+          {
+            "real": 1.0766847533679702,
+            "imag": 0.7807992134053794
+          },
+          {
+            "real": -1.253413425694222e-06,
+            "imag": -3.013648358083988e-05
+          }
+        ],
+        [
+          {
+            "real": -3.1423721150351e-06,
+            "imag": -9.523673161883788e-06
+          },
+          {
+            "real": -0.7387789369180886,
+            "imag": 1.1119330965502225
+          },
+          {
+            "real": -1.8692570280160788e-05,
+            "imag": -2.2213465707379618e-05
+          }
+        ],
+        [
+          {
+            "real": 4.192853038703541e-05,
+            "imag": -2.2435351136070833e-06
+          },
+          {
+            "real": 0.7254966829495204,
+            "imag": -1.1228305801838976
+          },
+          {
+            "real": 5.13240776405395e-06,
+            "imag": 2.6028791954396724e-05
+          }
+        ]
+      ],
+      "selected_H_code": [
+        [
+          {
+            "real": 0.00845218188568679,
+            "imag": 0.007662326133460681
+          },
+          {
+            "real": -5.418504750985626e-07,
+            "imag": 5.4771941315555476e-06
+          },
+          {
+            "real": 1.0414843460563008,
+            "imag": 0.8236791429247395
+          }
+        ],
+        [
+          {
+            "real": 0.008455293876076892,
+            "imag": 0.007749324602942133
+          },
+          {
+            "real": -3.0591425269992016e-08,
+            "imag": 5.421501913100055e-06
+          },
+          {
+            "real": 1.0537670071098568,
+            "imag": 0.810436000558481
+          }
+        ],
+        [
+          {
+            "real": -0.008644718601921697,
+            "imag": -0.0075176010655568955
+          },
+          {
+            "real": 5.479013276301366e-07,
+            "imag": -5.535911662703491e-06
+          },
+          {
+            "real": -1.078245762074092,
+            "imag": -0.782777098281422
+          }
+        ],
+        [
+          {
+            "real": 0.008568775867894835,
+            "imag": 0.007555228187673433
+          },
+          {
+            "real": -6.597515655822852e-07,
+            "imag": 5.171349287882313e-06
+          },
+          {
+            "real": 1.078845207492809,
+            "imag": 0.7822604269108914
+          }
+        ],
+        [
+          {
+            "real": -0.007289640662318963,
+            "imag": 0.008810744977863737
+          },
+          {
+            "real": -4.788943771075938e-06,
+            "imag": -7.885913668328753e-07
+          },
+          {
+            "real": -0.7402075461444254,
+            "imag": 1.1138664615357954
+          }
+        ],
+        [
+          {
+            "real": 0.007032488678823644,
+            "imag": -0.009022996169829685
+          },
+          {
+            "real": 5.130360707960194e-06,
+            "imag": 9.19665971157495e-07
+          },
+          {
+            "real": 0.7268000807359547,
+            "imag": -1.124829387657585
+          }
+        ]
+      ],
+      "power": {
+        "R_total": 0.11763160658658209,
+        "R00_total": 0.11763055070062746,
+        "R00_s": 0.11763055067464319,
+        "R00_p": 2.598426477664621e-11,
+        "R00_by_polarization": {
+          "s": 0.11763055067464319,
+          "p": 2.598426477664621e-11
+        },
+        "T_total": 0.8770268141844889,
+        "R_plus_T": 0.994658420771071,
+        "A_balance": 0.005341579228928972,
+        "R_total_dtn_port_modal": 0.11763160658658209,
+        "T_total_dtn_port_modal": 0.8770268141844889,
+        "R_plus_T_dtn_port_modal": 0.994658420771071,
+        "A_balance_dtn_port_modal": 0.005341579228928972,
+        "R_plus_T_plus_A_volume": null,
+        "R_plus_T_plus_A_volume_dtn_port_modal": null,
+        "energy_closure_error_dtn_port_modal_volume": null,
+        "power_source": "dtn_port_modal_amplitudes",
+        "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+        "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+        "dtn_port_top_reference_z": 1.225,
+        "dtn_port_bottom_reference_z": -0.175,
+        "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+        "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+        "incident_power_code_units": 0.012827518731403281,
+        "stage4_dtn_order_policy": "auto_propagating",
+        "stage4_dtn_assembly": "auxiliary",
+        "dtn_port_mode_count": 40,
+        "dtn_port_top_mode_count": 20,
+        "dtn_port_bottom_mode_count": 20,
+        "dtn_port_propagating_mode_count": 40,
+        "dtn_port_rayleigh_warning_count": 0,
+        "port_power_file": "port_power.json",
+        "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+        "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+        "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+        "port_power_csv": "port_power.csv",
+        "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+      },
+      "volume_absorption": {
+        "method": "volume_absorption",
+        "role": "absorption_check",
+        "status": "ok",
+        "power_source": "volume_integral_Im_epsilon_E2",
+        "field_model_for_absorption": "total_field",
+        "incident_power_code_units": 0.012827518731403281,
+        "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
+        "pml_cells_excluded": true,
+        "air_cells_excluded": true,
+        "normalization_note": "A_volume uses the current Stage-4 code-unit normalization: P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV over physical material cells, divided by incident_power_code_units. PML cells and air cells are deliberately excluded from material volume absorption. The k0 factor follows from H_code=curl(E)/(i*k0*mu_r) and the corresponding Poynting balance.",
+        "regions": {
+          "grating": {
+            "name": "grating",
+            "tag": 3,
+            "cell_count": 136,
+            "volume_nm3": 0.7288750000000053,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 5.041782276425384e-05,
+            "A_volume": 0.003930442341964783
+          },
+          "substrate": {
+            "name": "substrate",
+            "tag": 2,
+            "cell_count": 48,
+            "volume_nm3": 0.2572500000000009,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 1.764832618226805e-05,
+            "A_volume": 0.001375817611481078
+          }
+        },
+        "A_grating": 0.003930442341964783,
+        "A_substrate": 0.001375817611481078,
+        "A_volume_grating": 0.003930442341964783,
+        "A_volume_substrate": 0.001375817611481078,
+        "A_volume_total": 0.005306259953445861,
+        "A_port_balance_minus_A_volume_total": 3.531927548311095e-05,
+        "A_probe_balance_minus_A_volume_total": null,
+        "A_flux_minus_A_volume_total": null,
+        "energy_closure_error_port_volume": -3.531927548305891e-05
+      },
+      "official_candidate_results": false
+    }
+  },
+  "state_sources": {
+    "V16-GPOLY-256": {
+      "name": "V16-GPOLY-256",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v16/task042_v16_gpoly_20260930T130138961792Z/ITER_256.npz",
+        "sha256": "f5fabf2ed7f7b07fec457d74e926988af52d203dab7f803e14bff5720a4e46cf",
+        "y_sha256": "84dee787c7246e7ae3c8bfa95c7d89dff55caa33d27e1a85c8e3786c5d1dffbe",
+        "v_sha256": "a8e4e9c434b37ba05078614d4026bf4afda88a7e71eb448faf7b453d106d1182",
+        "c_sha256": "10ecbd441796282e685f7e95e38c5554dc95c19185f6536329db6aa63f4413ca",
+        "trace_sha256": "7e3c43b880d142e460641645d1bae64307850eed909655a2d4e98565b87f73e0",
+        "port_sha256": "841c6d3a9ec0199e926d170003b06b6288b6fa3c106b58e4655b711043dfc45d",
+        "z_sha256": "4757b1d6f3a8114dc1963925ff487312c1c01a061397969fe893cfb1b74b096a",
+        "residual_sha256": "e370d67e3ff20312b4e185d95dd2bb6440fd96bff489a76e1561bd9089a403ca",
+        "GK_iteration_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "GK_x_sha256": "84dee787c7246e7ae3c8bfa95c7d89dff55caa33d27e1a85c8e3786c5d1dffbe",
+        "GK_u_sha256": "d5f06946cd2a7cda435c223eeb6f1208213a3165a6c4c2f1178b518972500d78",
+        "GK_v_sha256": "b07db5a5ac4c3f8960ffe7523cc9848c6e8e06139dda8357dac69fe7a605ce2f",
+        "GK_w_sha256": "a5c2031f4ad8f04ec9a6bfd9bb19a191314170b026618cdf22a1fadd0790a904",
+        "GK_alpha_sha256": "cfdb198129526763dac14368cfe675b88eb11b58b54112b499de94d071d4c1c4",
+        "GK_beta_sha256": "0dce112930768f6f21f7d1a8bfe717dc8900033b74ef555b55769d98b3f24521",
+        "GK_phibar_sha256": "fd94921037c154673ab7b870a49e24e19d8e998a2ef0966730c4b833ea9730d9",
+        "GK_rhobar_sha256": "566364c20208292ba26ad256a212b1157abf6398442239cbd19c5ea9e5337d64",
+        "iteration_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "S_count_sha256": "8fbd9582f8a4756ac71f853f1e6d4236de58969f864633825d4773c99d5f9fef",
+        "SH_count_sha256": "4adeb4453cb2e0d4f186667f3052bf6c34b102cf0fa25910f6964f4f8a55ab84"
+      },
+      "source_sha": "ef60675dada2556a5527101f90fc83540d60e242"
+    },
+    "V16-GNN-0": {
+      "name": "V16-GNN-0",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v16/task042_v16_gnn_20260930T134318940453Z/ITER_0.npz",
+        "sha256": "cfb0475ef307a3a08ba2f225df58e5dd65dc2304933521bae3196f1492e0dc00",
+        "y_sha256": "f826dc70f8de00f2f5ae22ee500b4bb6e7395af1c32b957868377b5df337c88a",
+        "v_sha256": "f826dc70f8de00f2f5ae22ee500b4bb6e7395af1c32b957868377b5df337c88a",
+        "c_sha256": "60dc5371224df8f2559ba3778d067969f344380469c8e8eea7b7447a84ac56b5",
+        "trace_sha256": "27ea5828addc0f2716c783dc10a84734e8b3036549f2b4005db47fad5b8679ab",
+        "port_sha256": "ffbf441a013449e48bd00ab9869aebed69e6d367fe222290ba2acbe95ce5eda4",
+        "z_sha256": "ba580fd8bc8acdb27d7c38b23fd9418d6e78ae61fc0abcffe0cb8ea28e72f95b",
+        "residual_sha256": "74d6ddca35e4262427ea14c24fcdfea9b1994db60c6a664c120d4add01b8d518",
+        "iteration_sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc",
+        "S_count_sha256": "7a0c893ddb1b65c46d204fe1e40870908e98fc6f4ab16f5c0d44eaae8af091a0",
+        "SH_count_sha256": "6cc16abd70eefb90dc0ba0d14fb088630873b2c6ad943f7442356735984c35a3"
+      },
+      "source_sha": "ef60675dada2556a5527101f90fc83540d60e242"
+    },
+    "GPOLY-1024": {
+      "logical_iteration": 1024,
+      "epoch_iteration": 1024,
+      "mode": {
+        "mode": "CONTINUOUS_LEGACY_GK",
+        "epoch": 0,
+        "legacy_persisted_iteration": 256,
+        "legacy_observed_iteration": 816
+      },
+      "source_sha": "50a8e9fafa529b6766b06b47ec340fb3245d783a",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GPOLY/states/task042_v17_gpoly_2048_a0_run5_20260930T163454110899Z/E0_ITER_1024.npz",
+        "sha256": "d4c9985dc40966492b4f95fd4ae66fedc3b4d704ebcf116a5c019cea09f772df",
+        "y_sha256": "680b13924f1c8ab18c1586ca31a55cb060b5722f1b1d3d849f3961be6e68bf8e",
+        "v_sha256": "ad3a995d73a6e924c18536377cd8342182840426e8b85c0be69c26ce63c673a3",
+        "c_sha256": "8e9e163d13e30971720cc45e90bd2646135ba1cb54a8d808f62669a01c92e69e",
+        "trace_sha256": "469d2814401814ffebfa45bc6d150aeb234fb1edeb6da17b3c3d6fde3cf88776",
+        "port_sha256": "4fb01efd4a69f5dbc23b518fba68479613d4792cd81b95e606763a0b7d304132",
+        "z_sha256": "2222d3b47196e39e4804e7eac2828a7075babe945d06a84afce6e5b5c037636a",
+        "residual_sha256": "92f690bdd77715189221c64b98d656fbdc506764a75d5c7cc339ebe6b104bfdd"
+      },
+      "original_residual_identity_relative": 5.874821924334236e-13,
+      "estimated_residual_norm": 0.0007208904941668018,
+      "true_projected_residual_norm": 0.0007208904941668029,
+      "recurrence_gap": 1.503976236694053e-15,
+      "audit_pending": false,
+      "new_updates_this_run": 0,
+      "Phi": 3.801244175617681e-05,
+      "action_counts": {
+        "S": 4,
+        "SH": 0,
+        "audit": 0
+      },
+      "audit": {
+        "schur_relative": 0.008719224937593572,
+        "augmented_relative": 0.0033813484033407316,
+        "native_relative": 0.0033813484033407316,
+        "original_total_augmented_relative": 0.0011733258211204323,
+        "port_absolute": 4.0011619109156106e-17,
+        "port_full_rhs_relative": 1.8767513996172128e-16,
+        "port_operation_relative": 6.924177671397115e-17,
+        "recovery_relative": 4.743135449793951e-13,
+        "schur_original_identity_operation_relative": 5.375592942256402e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.6254373758482654,
+        "port_unknown_norm": 0.19670323482322571,
+        "strict_pass": false
+      },
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 0.008719224937593572,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      },
+      "name": "GPOLY-1024"
+    },
+    "GPOLY-2048": {
+      "logical_iteration": 2048,
+      "epoch_iteration": 2048,
+      "mode": {
+        "mode": "CONTINUOUS_LEGACY_GK",
+        "epoch": 0,
+        "legacy_persisted_iteration": 256,
+        "legacy_observed_iteration": 816
+      },
+      "source_sha": "50a8e9fafa529b6766b06b47ec340fb3245d783a",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GPOLY/states/task042_v17_gpoly_2560_a0_run7_20260930T171951971272Z/E0_ITER_2048.npz",
+        "sha256": "caee486c8ba47797e69abd0c8bc8e18af316ca6d97763a02fb1ef5a324a11e79",
+        "y_sha256": "0953ee837dbd77ec7765c1953f4966ec63f739442a9f25bc3a8790138512a3f6",
+        "v_sha256": "5329414ae4b49165a75116bdcf005e9c8010c7ce4dcf093929c20576ee7bd74c",
+        "c_sha256": "ba25838d61fe4d3d9a292dffc6d6cdeec3d92c63fd997e360bf585ced7199577",
+        "trace_sha256": "efdc2a102f992a4cf05f47d6002ee2b2e4e6557009d84478809fd00c6ae7d171",
+        "port_sha256": "acc891894e2941a235637a49fd2c4d1be16ed69741367f7c9048092e8e697f9a",
+        "z_sha256": "d2437f7fb49052d0f8d83f29d727b564d2b2ecdd1b8a78b8f885443b0a74a3e7",
+        "residual_sha256": "64cf2f9e6b2015f4cefcb9d801f4e58a5844b4a9cd372dfce5d68d06ad4db1b1"
+      },
+      "original_residual_identity_relative": 5.747838400988489e-13,
+      "estimated_residual_norm": 0.00025168939008906715,
+      "true_projected_residual_norm": 0.0002516893900890609,
+      "recurrence_gap": 2.4769270129287222e-14,
+      "audit_pending": false,
+      "new_updates_this_run": 0,
+      "Phi": 4.633583425562796e-06,
+      "action_counts": {
+        "S": 4,
+        "SH": 0,
+        "audit": 0
+      },
+      "audit": {
+        "schur_relative": 0.0030442021698838585,
+        "augmented_relative": 0.0011805531134081474,
+        "native_relative": 0.0011805531134081474,
+        "original_total_augmented_relative": 0.0004096512059309009,
+        "port_absolute": 2.7971583246658794e-17,
+        "port_full_rhs_relative": 1.3120115900449366e-16,
+        "port_operation_relative": 4.841043522639811e-17,
+        "recovery_relative": 4.683680036600058e-13,
+        "schur_original_identity_operation_relative": 5.290367896557642e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.6252293421867785,
+        "port_unknown_norm": 0.19668520100456113,
+        "strict_pass": false
+      },
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 0.0030442021698838585,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      },
+      "name": "GPOLY-2048"
+    },
+    "GPOLY-LSQR-FINAL": {
+      "logical_iteration": 6347,
+      "epoch_iteration": 6347,
+      "mode": {
+        "mode": "CONTINUOUS_LEGACY_GK",
+        "epoch": 0,
+        "legacy_persisted_iteration": 256,
+        "legacy_observed_iteration": 816
+      },
+      "source_sha": "59feb6570a74d72aa501853807013711d89279cd",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GPOLY/states/task042_v17_gpoly_6656_a0_run25_20260930T204048249415Z/E0_ITER_6347.npz",
+        "sha256": "e4b8495c6cd9fdc1e2f0723b64ecbc0732f911e62cb74c04307f13678e1d8602",
+        "y_sha256": "3a95e3a1761f020947f20b0d2c97ec4e5a77a7548b2d15657d89574a2a77c8d9",
+        "v_sha256": "481a149fec20be6ebea5a308bc4511c56fa7f0cb6a674d5985be74b81428812f",
+        "c_sha256": "d3a4c7fd045b26773bbb6c3c18586e9429d53d706187de944ecc3612d3d752a3",
+        "trace_sha256": "ff447bc2a6aa5fb9051ca33491c41d7e3bf2d8ea445560af29d058c098f5e650",
+        "port_sha256": "cc67bf7069a7c0ab8c8f2dc178ad774f6de04e0a991e8f9d1e4eafd38c9b5c4a",
+        "z_sha256": "d997814774a360fd952172d7d0b29088cfb02cca1c32ea60b4890ba79ba6037e",
+        "residual_sha256": "62960692a9d6d2a1f04f15adb7a08e118443288cf29494ddf1161673652d52a7"
+      },
+      "original_residual_identity_relative": 5.466748556711976e-13,
+      "estimated_residual_norm": 4.053058369082648e-05,
+      "true_projected_residual_norm": 4.0530583690826785e-05,
+      "recurrence_gap": 7.52350036055767e-15,
+      "audit_pending": false,
+      "new_updates_this_run": 203,
+      "Phi": 1.2015805404831957e-07,
+      "action_counts": {
+        "S": 227,
+        "SH": 203,
+        "audit": 4
+      },
+      "audit": {
+        "schur_relative": 0.000490220468867467,
+        "augmented_relative": 0.0001901093516400638,
+        "native_relative": 0.0001901093516400638,
+        "original_total_augmented_relative": 6.59678283643863e-05,
+        "port_absolute": 3.9405348057058653e-17,
+        "port_full_rhs_relative": 1.8483141588630411e-16,
+        "port_operation_relative": 6.793627681290528e-17,
+        "recovery_relative": 4.636854969634494e-13,
+        "schur_original_identity_operation_relative": 5.261117236718547e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.631473861305276,
+        "port_unknown_norm": 0.19744539779035541,
+        "strict_pass": false
+      },
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 0.000490220468867467,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      },
+      "name": "GPOLY-LSQR-FINAL"
+    },
+    "GNN-1024": {
+      "logical_iteration": 1024,
+      "epoch_iteration": 1024,
+      "mode": {
+        "mode": "INITIALIZE_ORIGINAL_F",
+        "epoch": 0,
+        "legacy_persisted_iteration": 0,
+        "legacy_observed_iteration": 85
+      },
+      "source_sha": "50a8e9fafa529b6766b06b47ec340fb3245d783a",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GNN/states/task042_v17_gnn_2048_a0_run6_20260930T165723824834Z/E0_ITER_1024.npz",
+        "sha256": "304e02bc586d86a4df596176c14ffb45f77a5324d9b6ad241d79a183e1ddcd68",
+        "y_sha256": "5bed8e027c3827181ca352f7e6923cb44756713192eae64b675fa715318f3c2b",
+        "v_sha256": "62d5d3ad1c6ae8b320b68249c5b66d87d772f499cd7a01bfff13a8c7c288aea7",
+        "c_sha256": "01d141845ade6b805b7b88dab00ed6a03811c717bf9699fd70f37dbcd3bb2d7a",
+        "trace_sha256": "da24964abc440032aaf3b284dcfc098061f55683191494872154412a3e93870b",
+        "port_sha256": "777bef422a3d7e1f2369c1e30ef667c1c668befd1a1b7a7ba87238e020a436c4",
+        "z_sha256": "636d1dea13f05aff1c6039b26e8dc1292daed214fdefa72c78df821ce2ae3b3f",
+        "residual_sha256": "731270d9254fca6a293fc49b218adddf900e1d495f6384803ae32b7450dff8ad"
+      },
+      "original_residual_identity_relative": 5.85834648548581e-13,
+      "estimated_residual_norm": 0.0007414484507319097,
+      "true_projected_residual_norm": 0.0007414484507319053,
+      "recurrence_gap": 5.9953310345480215e-15,
+      "audit_pending": false,
+      "new_updates_this_run": 0,
+      "Phi": 4.021139077376632e-05,
+      "action_counts": {
+        "S": 4,
+        "SH": 0,
+        "audit": 0
+      },
+      "audit": {
+        "schur_relative": 0.008967874973901712,
+        "augmented_relative": 0.0034777758277125654,
+        "native_relative": 0.0034777758277125654,
+        "original_total_augmented_relative": 0.0012067860782419366,
+        "port_absolute": 2.797159237748877e-17,
+        "port_full_rhs_relative": 1.3120120183279784e-16,
+        "port_operation_relative": 4.832067300717208e-17,
+        "recovery_relative": 4.714063901634668e-13,
+        "schur_original_identity_operation_relative": 5.346399806075878e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.6283994913387358,
+        "port_unknown_norm": 0.19705061730352968,
+        "strict_pass": false
+      },
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 0.008967874973901712,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      },
+      "name": "GNN-1024"
+    },
+    "GNN-2048": {
+      "logical_iteration": 2048,
+      "epoch_iteration": 2048,
+      "mode": {
+        "mode": "INITIALIZE_ORIGINAL_F",
+        "epoch": 0,
+        "legacy_persisted_iteration": 0,
+        "legacy_observed_iteration": 85
+      },
+      "source_sha": "50a8e9fafa529b6766b06b47ec340fb3245d783a",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GNN/states/task042_v17_gnn_2560_a0_run8_20260930T173120070299Z/E0_ITER_2048.npz",
+        "sha256": "1e87ae58d5e2dc363944fca25b46962db36cccca7e263f87eccced5db1935719",
+        "y_sha256": "c02022329f49099a2fc127b1c9de90572d7d66b187b241d36520a7276b21c396",
+        "v_sha256": "f80793288a162e4ffaf10932c93dbb43bbf8c82b802fc278fb26fb417b756830",
+        "c_sha256": "a8f494a6febd603db38c5d72eac195820ac6d08a74995289661514da0feefd18",
+        "trace_sha256": "0911d5d2e047708a1ab68dcd2c55ff3809b72d35939ae3809b417dc1c1239527",
+        "port_sha256": "4cce67a680f6d9dcdea9941ee74c4721cd0527796b14ae65c9a83687e9d29948",
+        "z_sha256": "5ec2a5bef6847956e0a91a8d05b6e392b97c50acd0ef64fb18376b8ae182dd3f",
+        "residual_sha256": "d61a325a8495879453f04dbaa050be94596533e645218f7d8111ca77ff6acd51"
+      },
+      "original_residual_identity_relative": 5.867703064290319e-13,
+      "estimated_residual_norm": 0.0002646392351155092,
+      "true_projected_residual_norm": 0.00026463923511551316,
+      "recurrence_gap": 1.4953708311032343e-14,
+      "audit_pending": false,
+      "new_updates_this_run": 0,
+      "Phi": 5.122661218978355e-06,
+      "action_counts": {
+        "S": 4,
+        "SH": 0,
+        "audit": 0
+      },
+      "audit": {
+        "schur_relative": 0.003200831522894748,
+        "augmented_relative": 0.0012412945688146982,
+        "native_relative": 0.0012412945688146982,
+        "original_total_augmented_relative": 0.00043072845369121043,
+        "port_absolute": 7.757923254194622e-18,
+        "port_full_rhs_relative": 3.6388663217332525e-17,
+        "port_operation_relative": 1.3428962575249133e-17,
+        "recovery_relative": 4.678837510481688e-13,
+        "schur_original_identity_operation_relative": 5.284563631205921e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.6249291462032156,
+        "port_unknown_norm": 0.19665120388585713,
+        "strict_pass": false
+      },
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 0.003200831522894748,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      },
+      "name": "GNN-2048"
+    },
+    "GNN-LSQR-FINAL": {
+      "logical_iteration": 6119,
+      "epoch_iteration": 6119,
+      "mode": {
+        "mode": "INITIALIZE_ORIGINAL_F",
+        "epoch": 0,
+        "legacy_persisted_iteration": 0,
+        "legacy_observed_iteration": 85
+      },
+      "source_sha": "59feb6570a74d72aa501853807013711d89279cd",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GNN/states/task042_v17_gnn_6144_a0_run24_20260930T203007859896Z/E0_ITER_6119.npz",
+        "sha256": "4006c7946e318f86e5fd785ccdc078fb819b70be5b32b3ef97743eeeabcecd32",
+        "y_sha256": "2bbbc9a46481f2316d4d77de8760c381cdf7649f5bda0972810a4546ff136dcd",
+        "v_sha256": "d5199a56c8dc01105f3656ebfd8db8e46965885e0619192c859d7fd25bfa5a08",
+        "c_sha256": "f3b7ef8b453357374901a4f8b958e6be158d8ff6028e0f6ff41c121e9f3f446c",
+        "trace_sha256": "cb42a6f6f860a0b12550bf9cf4e9a9ebd5f6d633ba2441337e531a23adca0586",
+        "port_sha256": "ae9142162743df8402458c26ce5162c58783f8f510b7227bc8fdeb5e982e700c",
+        "z_sha256": "ecb1acbca6207b5383e4916776da49d5d956f802051fc39972b27207c4868f72",
+        "residual_sha256": "f0e40fc7ef6085abf30a5babfaa45e27617d5b777ed882b52864f7a83c48d1a0"
+      },
+      "original_residual_identity_relative": 5.377050309273817e-13,
+      "estimated_residual_norm": 4.9150340798466774e-05,
+      "true_projected_residual_norm": 4.915034079847105e-05,
+      "recurrence_gap": 8.699476439587005e-14,
+      "audit_pending": false,
+      "new_updates_this_run": 487,
+      "Phi": 1.7670150031932354e-07,
+      "action_counts": {
+        "S": 531,
+        "SH": 487,
+        "audit": 8
+      },
+      "audit": {
+        "schur_relative": 0.0005944770816765329,
+        "augmented_relative": 0.00023054046034317802,
+        "native_relative": 0.000230540460343178,
+        "original_total_augmented_relative": 7.999739826397562e-05,
+        "port_absolute": 3.940534276780315e-17,
+        "port_full_rhs_relative": 1.848313910769665e-16,
+        "port_operation_relative": 6.794510672861405e-17,
+        "recovery_relative": 4.6800131549809e-13,
+        "schur_original_identity_operation_relative": 5.302067774624818e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.631267952849584,
+        "port_unknown_norm": 0.19741971176158027,
+        "strict_pass": false
+      },
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 0.0005944770816765329,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      },
+      "name": "GNN-LSQR-FINAL"
+    }
+  },
+  "reference_audit": {
+    "schur_relative": 6.4241465032853714e-12,
+    "augmented_relative": 2.5438195219817865e-12,
+    "native_relative": 3.0179630439596658e-12,
+    "original_total_augmented_relative": 5.603871795512029e-12,
+    "port_absolute": 8.723611222112326e-15,
+    "port_full_rhs_relative": 4.09182380901682e-14,
+    "port_operation_relative": 1.5039466315151165e-14,
+    "recovery_relative": 4.728274022027856e-13,
+    "schur_original_identity_operation_relative": 5.352280622536047e-13,
+    "slave_storage_max": 0.0,
+    "field_norm": 1.631513757018415,
+    "port_unknown_norm": 0.1974501489758752,
+    "strict_pass": true,
+    "independent_DOLFINx_total_native_relative": 1.4374448661883937e-12
+  },
+  "reference_identity": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v7/V7-M3-REFERENCE/task042_v7_same_mesh_p3_reference_20260929T081232010551Z/accurate_reference_state.npz",
+    "sha256": "a0610a5a55e7508196b17277e706595c33e4398ace82b245f70b656e6b9ed355",
+    "z_sha256": "4a681a75950ac8087ee8265f34e10363fef99b523c8eecf434f30fafecc09936"
+  },
+  "reference_native_pass": true,
+  "missing": [],
+  "states_read": 8,
+  "reference_feedback_to_solver": false,
+  "no_new_LU": true
+}

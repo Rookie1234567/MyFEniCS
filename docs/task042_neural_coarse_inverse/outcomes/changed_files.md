@@ -1,3 +1,20 @@
+# V17：按依赖组列本批变化（research-only）
+
+| 依赖组 | 实际文件／行为 | 对应证据及建议顺序 |
+|---|---|---|
+| production numerical/core候选 | `src/solvers/bounded_complex_lsqr.py`增加initialize/step/export/restore，原generator沿同一recurrence | 旧20步bit-identical、小80对32+48、真实32恢复；只是可复用接口，无新production Maxwell资格；先审纯core |
+| reusable runner/watchdog | `resumable_lsqr_checkpoint.py`两代原子NPZ/hash/commit；`resumable_trace_window.py`不可刷新窗口与保守账；`scripts/task042_v17_queue_watchdog.py`复用subreaper | kill/半写/错identity/计数与.5s整树监督，先core再持久化和监督；不改变全机策略 |
+| research-only数值 | `resumable_trace_study.py`复用原ProjectedTraceOperator/BarAction/原audit；`resumable_trace_gmres.py`已安装SciPy固定64周期 | LSQR真实R1和6347/6119；G算法pure测试PASS、正式消费close接线FAIL，不能合入production default；下一review才修 |
+| research-only接线 | `src/io/resumable_trace_campaign.py`、`src/runners/resumable_trace_campaign.py`、六one-run dat/frozen plan、有限foreground milestone queue | 一dat一stage、slice继承预算、不自动永久等机；每库B9000/G900、ref barrier；只显式opt-in |
+| inherited opt-in seams | `scripts/run_case.py`、`src/io/task042_profile.py`、`src/runners/task042_shared.py`仅登记V17、自己的准入／持久计数 | 普通默认/其他Task合同不变，不改原方程/材料/MPC/modes；旧测试覆盖默认行为 |
+| checker/benchmark | 新`resumable_trace_evidence_check.py`和两V17 test文件 | 最终35PASS及原数组Gate/hash重算，拒绝status伪成功；不新求解 |
+| compact evidence/docs | Response17、V17结果/JSON/CSV、README/summary/test_summary/changed_files与两项目总账的新前缀 | 旧正文及旧task/review/response/records blob逐字保护；只当前分支，不merge |
+| do-not-merge | `benchmarks/artifacts/task042/v17`滚动递推／完整状态、`results/task042/task042_v17_*`与`tmp/task042/v17`监督／资源／草稿 | ignored；大Q/U/R只读原目录、不复制Git；失败向量不存在时unknown，不猜造 |
+
+实现源顺序7defb5…→8350647…→86c7efa…→50a8e9…→bd3ab93…（真实加载失败）→59feb657…（续算/VERIFY及真实G失败）；独立checker源74a3f264…，最终文档HEAD另列。完整源码/hash文件清单见[本批manifest](records/changed_manifest_v17.json)；正式source与leaf费用见[run index](records/run_index_v17.json)。未改旧Task/review/response/raw、原材料表、相邻任务或共享环境；没有获准master merge。
+
+以下历史正文逐字保留；旧版本的“当前”只指其当时阶段。
+
 # V16 变更与selective merge依赖组
 
 | 依赖组 | 文件／数值影响／资格与顺序 |
