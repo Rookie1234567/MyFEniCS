@@ -66,6 +66,14 @@ def settle_run(directory,summary,launch_wall_seconds):
                     actions_lower=0,actions_upper=64,audits_lower=0,audits_upper=2,
                     updates_lower=0,updates_upper=0,
                     source_sha=summary.get('source_state',{}).get('source_sha'))
+    # Older failed-loading metadata may still carry the formal V17 prefix.
+    # Preserve its exact directory/source and charged bounds while normalizing
+    # only the library key; a different live owner remains an error above.
+    active['stage']=active['stage'].removeprefix('V17-')
+    name=active['stage'].removeprefix('GMRES_')
+    active['family']=name if name in row['routes'] else None
+    active.setdefault('audits_lower',0)
+    active.setdefault('audits_upper',active['audits_lower']+2)
     clean=summary['classification']=='COMPLETED' and summary['leader_exit_code']==0
     upper=active['actions_lower'] if clean else active['actions_upper']
     audits=active['audits_lower'] if clean else active['audits_upper']

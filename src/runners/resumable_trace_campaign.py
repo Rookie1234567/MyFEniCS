@@ -12,11 +12,19 @@ from src.solvers import resumable_trace_window as window
 LIMITS=dict(new_A_columns=6196,image_QR=2,original_audits=420,field_states=12)
 
 
+def stage_identity(derived_stage):
+    """Normalize the formal one-run stage before assigning a library key."""
+    if not derived_stage.startswith('V17-'):
+        raise ValueError('formal V17 stage prefix required')
+    name=derived_stage.removeprefix('V17-')
+    if name not in io.STAGES:raise ValueError('unregistered V17 stage')
+    return name,name.removeprefix('GMRES_') if name not in ('PREFLIGHT','VERIFY') else None
+
+
 class CampaignStage(Stage):
     def __init__(self,specification,directory):
         self.run_started=time.monotonic()
-        name=specification.derived['stage']
-        self.family_name=name.removeprefix('GMRES_') if name not in ('PREFLIGHT','VERIFY') else None
+        name,self.family_name=stage_identity(specification.derived['stage'])
         self.base=window.ledger()
         if self.base.get('active') is not None:
             raise ValueError('another owned V17 worker is still active')
@@ -33,7 +41,8 @@ class CampaignStage(Stage):
         self.numeric_io=dict(started=0,completed=0,bytes_completed=0,wall_completed_seconds=0.);self.started=dict(S=0,SH=0);self.new_updates=0;self.last_written=0;self.reservation=64
         self.base['active']=dict(directory=str(directory),stage=self.name,family=self.family_name,
                                 start_monotonic=self.run_started,reserved_actions=64,reserved_audits=2,
-                                actions_lower=0,actions_upper=64,updates_lower=0,updates_upper=16,
+                                actions_lower=0,actions_upper=64,audits_lower=0,audits_upper=2,
+                                updates_lower=0,updates_upper=16 if self.family_name and not self.name.startswith('GMRES_') else 0,
                                 source_sha=self.source)
         write_json(window.LEDGER_PATH,self.base)
         original=self.packet.apply

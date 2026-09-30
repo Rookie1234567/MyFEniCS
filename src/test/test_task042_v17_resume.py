@@ -190,7 +190,7 @@ def test_stage_registers_loading_before_constructor_can_fail(tmp_path,monkeypatc
     def fail(*a,**k):raise ValueError('test loading failure')
     monkeypatch.setattr(Stage,'__init__',fail)
     with pytest.raises(ValueError,match='test loading failure'):
-        CampaignStage(SimpleNamespace(derived={'stage':'GNN'}),tmp_path)
+        CampaignStage(SimpleNamespace(derived={'stage':'V17-GNN'}),tmp_path)
     active=w.ledger()['active']
     assert active['family']=='GNN' and active['actions_upper']==64 and active['updates_upper']==0
 
@@ -202,3 +202,34 @@ def test_failure_finish_keeps_incomplete_work_reserve(monkeypatch):
     monkeypatch.setattr(Stage,'finish',lambda *a,**k:None)
     stage.finish(dict(status='FAILED'));stage.finish(dict(status='SLICE_COMPLETE'))
     assert seen==[64,0]
+
+
+@pytest.mark.parametrize('stage',['PREFLIGHT','GPOLY','GNN','GMRES_GPOLY','GMRES_GNN','VERIFY'])
+def test_stage_registration_uses_actual_one_run_prefix(tmp_path,monkeypatch,stage):
+    from types import SimpleNamespace
+    from src.io.resumable_trace_campaign import ROOT,load_resumable_trace
+    from src.io import resumable_trace_campaign as io
+    from src.solvers import resumable_trace_window as w
+    from src.runners.resumable_trace_campaign import CampaignStage,Stage,stage_identity
+    names=dict(PREFLIGHT='checkpoint_preflight',GPOLY='continue_gpoly',GNN='continue_gnn',
+               GMRES_GPOLY='gmres_gpoly',GMRES_GNN='gmres_gnn',VERIFY='verify')
+    monkeypatch.setattr(io,'ARTIFACT_ROOT',tmp_path/'unconsumed_schema_fixture')
+    spec=load_resumable_trace(ROOT/('input/task042_neural_coarse_inverse/v17_'+names[stage]+'.dat'))
+    assert spec.derived['stage']=='V17-'+stage
+    expected=stage.removeprefix('GMRES_') if stage not in ('PREFLIGHT','VERIFY') else None
+    assert stage_identity(spec.derived['stage'])==(stage,expected)
+    with pytest.raises(ValueError,match='stage prefix'):stage_identity(stage)
+    monkeypatch.setattr(w,'LEDGER_PATH',tmp_path/'ledger.json');monkeypatch.setattr(w,'journal',lambda *a,**k:None)
+    monkeypatch.setattr(w,'BUDGET_PATH',tmp_path/'budget.json')
+    (tmp_path/'budget.json').write_text(json.dumps(dict(uniform_route_wall_seconds=9000,GMRES_reserved_seconds=900)))
+    (tmp_path/'source_sha.txt').write_text('a'*40)
+    def small_stage(self,specification,directory,**kwargs):
+        self.name=specification.derived['stage'].split('-',1)[1];self.source='a'*40
+        self.packet=SimpleNamespace(counts=dict(S=0,SH=0,audit=0),apply=lambda x,**k:x)
+    monkeypatch.setattr(Stage,'__init__',small_stage);monkeypatch.setattr(Stage,'guard',lambda *a,**k:None)
+    obj=CampaignStage(spec,tmp_path)
+    assert obj.family_name==expected
+    assert w.ledger()['active']['audits_upper']==2
+    assert obj.packet.apply(np.ones(1,complex))[0]==1
+    obj.durable_counts(reserve=64)
+    assert w.ledger()['active']['family']==expected
