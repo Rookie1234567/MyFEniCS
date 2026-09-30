@@ -337,7 +337,7 @@ def run_round(stage):
                     homogeneous_recovery_N_vs_P=homogeneous_recovery_pair(stage.packet, rN["z"], rP["z"]),
                     relative_original_rhs_residual=rN["full_residual_relative"],
                     reference_arrays_read=False)
-                stage.event("T1_case_done", name=name, norms=result["rows"][name]["residual_norms"])
+                stage.event("T1_case_done", case=name, norms=result["rows"][name]["residual_norms"])
         result["status"] = "COMPLETE"
     except (FileNotFoundError, OSError, ValueError, RuntimeError) as error:
         result["status"] = "PARTIAL"
