@@ -72,102 +72,104 @@
       "name": "preparation_index",
       "path": "results/task041_review_v8_swap_observe_continue/s1_preparation_20260928T084551Z/preparation_index.json",
       "sha256": "ce23d2fe2f90384e4faec63d3c6b1963ab3f487b86640a29f91d41010d214d2b"
+    },
+    {
+      "name": "outer_summary",
+      "path": "results/task041_v8_5nm_cellcond_formal_run_20260928/summary.json",
+      "sha256": "bf631728528652d727d8a4f10060de33f7790c2f36c393cbfa70aca82bbdc55f"
+    },
+    {
+      "name": "finalizer_summary",
+      "path": "results/task041_v8_5nm_cellcond_formal_run_20260928/finalizer/finalizer_summary.json",
+      "sha256": "5683a4fab1d172f330fdf14a1e7acff94f7eda86770431bc4fbc95b6138c6fc4"
+    },
+    {
+      "name": "offline_exact_comparison",
+      "path": "results/task041_v8_5nm_cellcond_formal_run_20260928/exact_comparison_offline_v1.json",
+      "sha256": "d3eabe7076bb93a9147d214f2474dc1651a07c9a9858ae20698d19ec439ce605"
     }
   ],
-  "observed_utc": "2026-09-30T12:52:36Z",
+  "observed_utc": "2026-09-30T14:21:04Z",
   "progress": {
-    "current_rhs_iterations": "not_run",
-    "current_rhs_residual": "not_run",
+    "phase": "terminal",
+    "formal_responses_completed": 1920,
     "expected_formal_responses": 1920,
-    "formal_residuals": "not_run",
-    "latest_sampler_elapsed_seconds": 186823.65306105197,
-    "latest_sampler_phase": "public_command",
-    "latest_worker_event": "outer_solve_progress",
-    "latest_worker_event_wall_seconds": 184869.194674743,
-    "official_R_T_A_E_H": "not_run",
-    "phase": "outer_solve_progress",
-    "process_group_gone_at_latest_sample": false,
-    "progress_signal": "outer_solve_progress; outer_iteration=3; decision=ITERATING; global_true_rel=5.749284664374346e-07; top_true_rel=5.327547946755306e-07; bottom_true_rel=7.039609324249103e-07; modal_true_rel=2.5139915905048297e-09; official response completion not established; global swap/pswp observation-only",
+    "outer_fgmres_iterations": 5,
+    "outer_fgmres_converged_reason": 2,
+    "five_true_residuals": {
+      "global": 4.778176984237293e-11,
+      "top": 4.426765008148852e-11,
+      "bottom": 6.221702926229589e-11,
+      "modal": 6.670844795489501e-13,
+      "reported": 4.7779406982531886e-11,
+      "limit": 5e-09,
+      "all_pass": true
+    },
+    "official_R_T_A_A_volume": {
+      "R": 0.7331842733877258,
+      "T": 0.00022009869572838214,
+      "A": 0.2665956279165458,
+      "A_volume": 0.2665962726230213,
+      "closure_abs": 6.447064755388254e-07,
+      "pass": true
+    },
+    "recovery_and_physics_gates_pass": true,
+    "rta_eh_diffraction_completed": true,
+    "time_target_seconds": 86400,
+    "time_target_met": false,
     "time_stop_enforced": false,
-    "time_target_met": null,
-    "time_target_seconds": 86400
+    "two_nm": "not_started"
   },
   "qualification": {
-    "formal_consumer_complete": false,
-    "next_progress_update_due_utc": "2026-09-29T17:30:26Z",
-    "numeric_status": "not_run",
+    "numerical_and_physics_status": "pass",
+    "formal_consumer_complete": true,
+    "resource_safety_status": "pass_under_v8_non_swap_gates",
+    "public_service_status": "failed_git_identity_exit3_preserved",
+    "time_target_met": false,
+    "overall": "numerical_pass_but_public_identity_exit3_and_24h_target_missed",
+    "exact_reference_resource_comparison": "inconclusive_inherited_producer_raw_phase_not_measured",
     "two_nm": "not_started"
   },
   "record_type": "task041_review_v8_formal_progress",
-  "record_written_utc": "2026-09-30T12:52:36Z",
+  "record_written_utc": "2026-09-30T14:21:04Z",
   "repository": {
     "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
-    "document_base_head": "d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f",
-    "document_changes": "hourly_progress_record_update; runtime source unchanged",
     "runtime_source_sha": "d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f",
-    "source_changes_during_run": false,
-    "upstream": "origin/codex/20260902-task41-mpi1-shortwave-hybrid-capacity"
+    "end_head_at_public_git_check": "499c25de74c30ed0bdee17180f5315765f35efbe",
+    "end_head_diff_paths": [
+      "docs/development_model_registry.md",
+      "docs/development_progress.md",
+      "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/formal_5nm_2nm_v8.md",
+      "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v8_formal_5nm_2nm.json",
+      "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md"
+    ],
+    "runtime_code_and_input_binding_changed": false,
+    "public_end_git_identity": "failed_exact_sha_check_docs_only_commits",
+    "worktree_at_snapshot_preparation": "documentation_changes_only"
   },
   "resources": {
-    "latest_sample": {
-      "sampled_at_utc": "2026-09-30T12:52:36Z",
-      "sample_elapsed_seconds": 186823.65306105197,
-      "sample_role": "phase_running",
-      "authority_bytes": 43798740992,
-      "authority_kind": "process_tree",
-      "process_tree_rss_bytes": 43153858560,
-      "process_tree_swap_bytes": 0,
-      "dedicated_cgroup_current_bytes": 43798740992,
-      "dedicated_cgroup_peak_bytes": 43798749184,
-      "dedicated_cgroup_swap_bytes": 0,
-      "job_swap_bytes": 0,
-      "job_no_swap": true,
-      "cap_bytes": 53221163008,
+    "limits": {
+      "hard_cap_bytes": 53221163008,
       "warning_bytes": 47899046707,
-      "host_memavailable_bytes": 945746751488,
-      "host_memtotal_bytes": 2163100385280,
-      "host_reserve_required_bytes": 412316860416,
-      "host_reserve_gate_at_start": true,
-      "global_swap_baseline_bytes": 1224704,
-      "global_swap_bytes": 4521119744,
-      "global_swap_delta_bytes": 4519895040,
-      "global_pswpin_pages": 868525,
-      "global_pswpin_delta_pages": 868525,
-      "global_pswpout_pages": 1209192,
-      "global_pswpout_delta_pages": 1208893,
-      "swap_policy": "observe_only_continue",
-      "worker_process_group_gone": false,
-      "oom_events": null,
-      "oom_events_status": "not_observed_in_this_sample"
+      "host_reserve_required_bytes": 412316860416
     },
-    "neighbor_context_at_start": {
-      "cpu_sets_do_not_overlap_task041_cpu1_to_8": true,
-      "metrology_pids": [
-        509381,
-        509439,
-        509440
-      ],
-      "task39_pids": [
-        341799,
-        341839,
-        341987
-      ]
+    "measured_peaks": {
+      "authority_bytes": 43858726912,
+      "process_tree_rss_bytes": 43153915904,
+      "cgroup_memory_peak_bytes": 43867639808,
+      "cgroup_memory_peak_semantics": "historical memory.peak counter, not sampled memory.current peak",
+      "job_swap_bytes": 0,
+      "dedicated_cgroup_swap_bytes": 0,
+      "oom_gate_pass": true,
+      "process_group_gone": true
     },
-    "performance_isolation": "not_isolated; authorized neighbor tasks have non-overlapping CPU sets and were not touched",
-    "startup_sample": {
-      "dedicated_cgroup_memory_events": {
-        "high": 0,
-        "low": 0,
-        "max": 0,
-        "oom": 0,
-        "oom_group_kill": 0,
-        "oom_kill": 0,
-        "sock_throttled": 0
-      },
-      "observed_utc": "2026-09-28T09:01:35Z",
-      "scope": "startup_identity_sample_only; not attributed to the later resource sample",
-      "source_path": "results/task041_review_v8_swap_observe_continue/s1_preparation_20260928T084551Z/startup_identity.json"
-    }
+    "global_swap_observation": {
+      "policy": "observe_only_continue",
+      "swap_delta_bytes": 5925543936,
+      "pswpout_delta_pages": 1561808,
+      "qualification_effect": "observation_only; not attributed as a job resource failure"
+    },
+    "performance_isolation": "not_isolated; authorized neighboring jobs were not touched"
   },
   "review": {
     "path": "docs/task041_mpi1_shortwave_hybrid_capacity/review_report_v8.md",
@@ -176,7 +178,7 @@
   },
   "run": {
     "backend_factor_audit": "not_yet_emitted",
-    "completed_formal_responses": "not_emitted",
+    "completed_formal_responses": 1920,
     "completed_probe_samples": "not_emitted",
     "control_group": "/user.slice/user-1000.slice/user@1000.service/app.slice/task041-v8-5nm-cellcond-formal-20260928.service",
     "dat": {
@@ -228,9 +230,90 @@
     "target_passed_to_worker": true,
     "threads_per_rank": 1,
     "unit": "task041-v8-5nm-cellcond-formal-20260928.service",
-    "worker_root": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8_cell_condensed/task041_5nm_p6h4_m480_mpi8_cell_condensed__hybrid_iterative__mpi8__M480/20260928T085850.487306Z/consumer"
+    "worker_root": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8_cell_condensed/task041_5nm_p6h4_m480_mpi8_cell_condensed__hybrid_iterative__mpi8__M480/20260928T085850.487306Z/consumer",
+    "actual_backend": "cell_condensed",
+    "actual_refinement_target_tolerance": 5e-13,
+    "worker_exit_status": 0,
+    "public_exit_status": 3,
+    "public_result_classification": "task041_public_command_nonzero",
+    "time_target_seconds": 86400,
+    "time_target_met": false,
+    "consumer_classification": "TASK041_CONSUMER_PASS",
+    "finalizer_status": "failed",
+    "finalizer_unit_elapsed_seconds": 189323.841971047,
+    "process_group_gone": true,
+    "ledger_entry_id": "task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8_cell_condensed:task041_v8_5nm_cellcond_formal_run_20260928",
+    "ledger_entry_seconds": 189323.841971047,
+    "ledger_used_after_seconds": 234521.53289325302,
+    "public_failure_stage": "git_identity",
+    "finalizer_result_classification": "service_boundary_failure"
   },
   "schema": "task041.v8.formal_progress.v1",
-  "status": "running_at_latest_observation",
-  "next_progress_update_due_utc": "2026-09-30T13:52:36Z"
+  "status": "numerical_consumer_pass_public_identity_exit3_time_target_missed",
+  "next_progress_update_due_utc": "2026-09-30T13:52:36Z",
+  "performance": {
+    "worker_wall_seconds": 189308.766050059,
+    "worker_wall_hours": 52.585768347239,
+    "public_workflow_wall_seconds": 189317.508984718,
+    "public_to_finalizer_wall_seconds": 189323.841971047,
+    "public_to_finalizer_wall_hours": 52.589956103069,
+    "time_target_seconds": 86400,
+    "time_target_met": false,
+    "historical_worker_wall_hours": 53.239672,
+    "same_scope_worker_reduction_hours": 0.653903652761,
+    "same_scope_worker_reduction_percent": 1.228226,
+    "cross_scope_public_to_finalizer_vs_old_worker": "rough comparison only; not same wall definition",
+    "performance_qualification": "not_isolated",
+    "cross_scope_reduction_percent_rough_only": 1.22036,
+    "cross_scope_comparison_note": "old value is worker wall; current comparison uses public-to-finalizer wall and is not like-for-like"
+  },
+  "result": {
+    "consumer": "TASK041_CONSUMER_PASS",
+    "public_and_finalizer": "failed_exit3_due_to_end_head_mismatch; preserved",
+    "runtime_source_sha": "d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f",
+    "end_head": "499c25de74c30ed0bdee17180f5315765f35efbe",
+    "end_head_mismatch_paths_are_only_authorized_docs": true,
+    "official_results": {
+      "R": 0.7331842733877258,
+      "T": 0.00022009869572838214,
+      "A": 0.2665956279165458,
+      "A_volume": 0.2665962726230213,
+      "closure_abs": 6.447064755388254e-07
+    },
+    "five_residuals_max": 6.221702926229589e-11,
+    "five_residual_limit": 5e-09,
+    "exact_reference_comparison": {
+      "artifact": "results/task041_v8_5nm_cellcond_formal_run_20260928/exact_comparison_offline_v1.json",
+      "sha256": "d3eabe7076bb93a9147d214f2474dc1651a07c9a9858ae20698d19ec439ce605",
+      "numerical_comparison_pass": true,
+      "resource_comparison": "inconclusive: inherited exact producer lacks exact_raw_phase_measured",
+      "rta_max_abs_delta": 5.65603119895286e-13,
+      "canonical_e_h_pass": true,
+      "significant_diffraction_pass": true,
+      "normal_flux_relative_delta": 2.023156750530393e-12
+    },
+    "finalizer_checks": {
+      "closed_artifact_hashes": true,
+      "invocation_matches": true,
+      "ledger_written": true,
+      "parent_summary_present": true,
+      "post_cgroup_finalizer_only": true,
+      "post_hash_phase_completed": true,
+      "pre_exit_members_clean": true,
+      "pre_exit_membership_record": true,
+      "public_result_completed": false,
+      "service_terminal_normal": false
+    },
+    "ledger": {
+      "path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_load_ledger_20260920.json",
+      "entry_count": 56,
+      "entry_id": "task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8_cell_condensed:task041_v8_5nm_cellcond_formal_run_20260928",
+      "entry_seconds": 189323.841971047,
+      "used_after_seconds": 234521.53289325302,
+      "verified_existing_entry_not_appended": true
+    },
+    "public_result_classification": "task041_public_command_nonzero",
+    "public_failure_stage": "git_identity",
+    "finalizer_result_classification": "service_boundary_failure"
+  }
 }

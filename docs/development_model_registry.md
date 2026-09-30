@@ -1,12 +1,12 @@
 # 开发阶段研究对象与计算结果总账
 
-## Task041 V8：5 nm 完整 consumer 运行中
+## Task041 V8：5 nm 完整 consumer 终态
 
 | 模型/阶段 | 当前状态 | 资格边界与证据 |
 |---|---|---|
-| W 5 nm，p6/h4，M480，MPI8×1，registered cell-condensed 正式 consumer | unit `task041-v8-5nm-cellcond-formal-20260928.service`；runtime source `d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f`；worker 最近 marker `system_setup_stage / one_cell_factor_destroyed` | target `5e-13` 已传入，实际 factor audit 尚未输出；正式残差/RTA/全场 `not_run`，24 h 目标 `null`；不提前登记数值通过 |
-| 当前资源样本 | wall `653.757583 s`；authority/tree RSS `32,041,730,048 B`，cgroup current/peak `30,164,492,288/30,228,844,544 B`；cap/warning/reserve `53,221,163,008/47,899,046,707/412,316,860,416 B` | job/cgroup swap `0 B`；global swap `1,224,704 B`、pswpout `299` 页，均无启动后增量；V8 swap 只观察。并行性能非独占 |
-| 身份与进度 | Invocation `755aeb44c48a4d1cbc8bbf6db9f6fd3e`；public runroot 后缀 `20260928T085850.487306Z`；CPU1–8/node0 | [V8 outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/formal_5nm_2nm_v8.md)、[record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v8_formal_5nm_2nm.json)；文档 HEAD 与 runtime SHA 分开登记 |
+| W 5 nm，p6/h4，M480，MPI8×1，registered cell-condensed 正式 consumer | worker自然exit0，1920/1920响应、RTA/EH/衍射完成；runtime source `d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f`；结束HEAD `499c25de74c30ed0bdee17180f5315765f35efbe` | 五项true residual与恢复/物理门通过；R/T/A/A_volume=`.7331842733877258/.00022009869572838214/.2665956279165458/.2665962726230213`；24 h未达。public/finalizer保留exit3/failed：差异仅获准文档提交 |
+| 时间与性能边界 | worker wall `189308.766050059 s`（52.585768 h）；public-to-finalizer `189323.841971047 s`（52.589956 h） | 旧`53.239672 h` worker基线与本场worker同口径约改善1.23%；并行运行，不是无竞争性能资格 |
+| 资源与身份 | authority/tree峰 `43,858,726,912/43,153,915,904 B`；cgroup `memory.peak=43,867,639,808 B`（历史计数器峰）；cap/warning/reserve `53,221,163,008/47,899,046,707/412,316,860,416 B` | job/cgroup swap峰0；global swap/pswp仅观察。unit Invocation `755aeb44c48a4d1cbc8bbf6db9f6fd3e`，CPU1–8/node0。详情见[V8 outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/formal_5nm_2nm_v8.md)与[record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v8_formal_5nm_2nm.json) |
 
 ## Task041 V7 历史资格快照
 

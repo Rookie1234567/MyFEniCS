@@ -1,10 +1,10 @@
 # 项目开发进度：Task000–Task041
 
-## 2026-09-28：Task041 Review V8 5 nm 正式 consumer 启动（09:09:29Z 快照）
+## 2026-09-30：Task041 Review V8 5 nm 正式 consumer 终态
 
-运行源码冻结在 `d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f`；registered 5 nm cell-condensed 完整 consumer 已进入 worker `system_setup_stage`。单元内部自由度先被消去，解完成后仍要恢复完整场并检查原物理方程；本轮的内部精化目标是 `5e-13`、最多两次修正，最终原 A4/物理及完整场门没有放宽。worker 命令已收到 target 和 V8 swap-observe policy，但实际因子审计与数值结果尚未输出。最新进度记录的累计 wall 为 `403.645936 s`，formal RHS/residual 和 R/T/A/E/H 仍为 `not_run`，24 h `time_target_met=null`。
+运行源码 `d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f` 完成注册的 W、5 nm、p6/h4、M480、MPI8×1 cell-condensed consumer，1920/1920正式响应及RTA/EH/衍射输出完成；五项true residual和恢复/物理门通过，`R/T/A/A_volume=0.7331842733877258/0.00022009869572838214/0.2665956279165458/0.2665962726230213`，closure `6.447064755388254e-7`。worker自然exit0；public和finalizer因结束HEAD `499c25de74c30ed0bdee17180f5315765f35efbe` 与运行SHA不相等而保留exit3/failed，差异仅是运行中获准的五条文档路径，属于身份合同冲突，不是数值失败。24 h目标未达到。
 
-本场为 MPI8×1，rank 0–7 绑定 CPU1–8、membind node0；hard RSS cap `53,221,163,008 B`、warning `47,899,046,707 B`、host reserve `412,316,860,416 B`。最新 authority/tree RSS `32,041,730,048 B`、专属 cgroup current `30,164,492,288 B`、job/cgroup swap `0 B`；global swap `1,224,704 B`、pswpout `299` 页均与启动基线相同。V8 仅观测 swap，不用其单独停止或否决结果；其他内存、OOM、磁盘和数值门保留。启动期间与邻任务并行但 CPU 集未重叠，性能不作为无竞争基准。unit、Invocation、runroot、输入绑定及小时更新记录见 [Task041 V8 outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/formal_5nm_2nm_v8.md) 和 [progress record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v8_formal_5nm_2nm.json)。
+worker wall `189308.766050059 s`（`52.585768 h`），public-to-finalizer wall `189323.841971047 s`（`52.589956 h`）；旧`53.239672 h`是worker口径，与当前worker同口径约低`1.23%`。process-tree/authority峰分别`43,153,915,904/43,858,726,912 B`；cgroup `memory.peak=43,867,639,808 B`是历史计数器峰，不能称采样到的`memory.current`峰。cap/warning/reserve为`53,221,163,008/47,899,046,707/412,316,860,416 B`，job/cgroup swap为0；global swap与pswp按V8保留为观察值。并行邻任务未触碰，性能不作无竞争资格。详见[终态outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/formal_5nm_2nm_v8.md)与[record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v8_formal_5nm_2nm.json)。
 
 ## Task041 V7 快照（进入 Review V8 前）
 

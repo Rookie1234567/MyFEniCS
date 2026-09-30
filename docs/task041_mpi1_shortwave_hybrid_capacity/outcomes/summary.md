@@ -1,8 +1,8 @@
 # Task041 outcomes summary
 
-## Task041 V8 启动快照（截至 2026-09-28T09:09:29Z）
+## Task041 V8 5 nm 完整 consumer 终态
 
-运行源码 SHA `d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f`，registered 5 nm `cell_condensed` 完整 consumer 已启动；本场在单个生命周期内验证正式两侧流程、完整响应与物理结果。最近 worker marker 为 `system_setup_stage / one_cell_factor_destroyed`；尚未输出正式残差或响应，不能报告数值通过。当前 unit 为 `task041-v8-5nm-cellcond-formal-20260928.service`，Invocation `755aeb44c48a4d1cbc8bbf6db9f6fd3e`，public runroot 后缀 `20260928T085850.487306Z`。最新资源样本（wall `653.757583 s`）authority/tree RSS `32,041,730,048 B`，cgroup current/peak `30,164,492,288/30,228,844,544 B`，job swap `0 B`；global swap `1,224,704 B`、增量 `0 B`，pswpout `299` 页、增量 `0`。V8 将 swap 作为观测；原 cap `53,221,163,008 B`、warning `47,899,046,707 B` 和 reserve `412,316,860,416 B` 仍有效。target `5e-13` 与 V8 policy 已传入 worker；因子审计尚未输出，正式响应、残差、R/T/A/E/H 和 `time_target_met` 仍为 `not_run/null`。详情见 [V8 progress outcome](formal_5nm_2nm_v8.md) 与 [机器记录](records/task041_v8_formal_5nm_2nm.json)。
+运行源码 SHA `d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f`；结束 HEAD `499c25de74c30ed0bdee17180f5315765f35efbe` 与之不同，差异仅为运行中获准的五条文档路径。registered W 5 nm `cell_condensed` consumer完成1920/1920正式响应，RTA/EH/衍射、五项 true residual、恢复和物理门通过：`R/T/A/A_volume=0.7331842733877258/0.00022009869572838214/0.2665956279165458/0.2665962726230213`，五残差最大`6.221702926229589e-11`，closure `6.447064755388254e-7`。24 h目标未达到；worker自然exit0，但public/finalizer因严格结束SHA检查以exit3/failed保留，数值通过不覆盖该历史。authority/tree RSS峰`43,858,726,912/43,153,915,904 B`；cgroup `memory.peak=43,867,639,808 B`是历史计数器峰，不是采样current峰；job/cgroup swap峰0，global swap/pswp按V8仅观察。consumer worker wall `189,308.766050059 s`，public至finalizer `189,323.841971047 s`；旧`53.239672 h` worker基线同口径比较约改善`1.23%`，跨worker/public口径约`1.22%`仅是粗比。完整细节见[终态outcome](formal_5nm_2nm_v8.md)及[机器record](records/task041_v8_formal_5nm_2nm.json)。
 
 ## Task041 V7 快照（进入 Review V8 前）
 
