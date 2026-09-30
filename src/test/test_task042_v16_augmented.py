@@ -103,6 +103,9 @@ def test_supervisor_metadata_accepts_frozen_route_budget_without_strings():
 def test_explicit_five_inputs_preserve_original_physics_and_reference_barrier(tmp_path,monkeypatch):
     from src.io import augmented_trace_lsqr as io
     from src.io.input_loader import InputError
+    # Isolate both pre-VERIFY parsing and the deliberately closed queue from
+    # the real batch's immutable post-reference marker.
+    monkeypatch.setattr(io,'ARTIFACT_ROOT',tmp_path)
     stages=['complement_preflight','closed_lsqr_zero','augmented_gpoly','augmented_gnn','verify']
     cases=[io.load_augmented_trace('input/task042_neural_coarse_inverse/v16_'+n+'.dat') for n in stages]
     assert len({c.physical_model_sha256 for c in cases})==1
