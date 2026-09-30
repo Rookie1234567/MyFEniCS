@@ -156,7 +156,8 @@ def audit_point(stage,op,state,base,mode,store,*,name=None):
     estimate=abs(state.values['phibar']);truth=float(np.linalg.norm(projected))
     gap=abs(estimate-truth)/max(truth,estimate,1e-300)
     k=state.values['iteration'];logical=k+mode.get('base_logical_iteration',mode['legacy_persisted_iteration']) if mode['epoch'] else k
-    directory=ARTIFACT_ROOT/stage.family_name;directory.mkdir(exist_ok=True)
+    family_directory=ARTIFACT_ROOT/stage.family_name
+    directory=family_directory/'states'/stage.directory.name;directory.mkdir(parents=True,exist_ok=True)
     label=name or 'E'+str(mode['epoch'])+'_ITER_'+str(logical)
     arrays={key:point[key] for key in ('y','v','c','trace','port','z')};arrays['residual']=actual
     saved=atomic_arrays(directory/(label+'.npz'),**arrays)
@@ -169,8 +170,8 @@ def audit_point(stage,op,state,base,mode,store,*,name=None):
     save_gk(stage,store,state,base,mode,dict(row))
     audit=stage.audit(point['z']);gate=original_gate(audit)
     row.update(audit=audit,original_equation_gate=gate,audit_pending=False)
-    write_json(directory/(label+'.json'),row);write_json(directory/'last_audit.json',row)
-    with (directory/'audit_history.jsonl').open('a') as stream:stream.write(json.dumps(row)+'\n');stream.flush()
+    write_json(directory/(label+'.json'),row);write_json(family_directory/'last_audit.json',row)
+    with (family_directory/'audit_history.jsonl').open('a') as stream:stream.write(json.dumps(row)+'\n');stream.flush()
     save_gk(stage,store,state,base,mode,dict(row))
     stage.event('original_checkpoint_audit',library=stage.family_name,logical_iteration=logical,
                 schur=audit['schur_relative'],native=audit['native_relative'],rho=gate['rho'],gap=gap)
@@ -190,6 +191,10 @@ def continue_route(stage):
     row=audit_point(stage,op,state,base,mode,store);status='SLICE_COMPLETE'
     saved=row
     while logical()<target:
+        budget=json.loads(stage.window.BUDGET_PATH.read_text())
+        used=stage.base['routes'][family]['wall_seconds']+time.monotonic()-stage.run_started
+        if used>budget['uniform_route_wall_seconds']-budget['GMRES_reserved_seconds']-60:
+            status='LSQR_RESERVED_G_BOUNDARY';break
         stage.guard(extra_actions=8)
         if stage.base['routes'][family]['new_updates']+stage.new_updates>=8192:
             status='NEW_GK_BUDGET_STOP';break
@@ -247,6 +252,9 @@ def gmres_route(stage):
     original_rho=cycle_history[0]['start_rho'] if cycle_history else source['original_equation_gate']['rho']
     status='GMRES_CYCLE_LIMIT';final=source
     for cycle in range(len(cycle_history)+1,17):
+        budget=json.loads(stage.window.BUDGET_PATH.read_text())
+        if stage.base['routes'][family]['wall_seconds']+time.monotonic()-stage.run_started>budget['uniform_route_wall_seconds']-60:
+            status='GMRES_WALL_CONTROLLED_STOP';break
         if cycle>8 and (1-cycle_history[7]['original_equation_gate']['rho']/original_rho<.1):status='GMRES_NO_EXTENSION_PROGRESS';break
         stage.guard(extra_actions=70)
         stage.durable_counts(reserve=72)
@@ -281,7 +289,7 @@ def verify(stage):
     for family in ('GPOLY','GNN'):
         directory=ARTIFACT_ROOT/family
         for k in (1024,2048):
-            paths=sorted(directory.glob('E*_ITER_'+str(k)+'.json'))
+            paths=sorted(directory.glob('states/*/E*_ITER_'+str(k)+'.json'))
             if paths:items.append(dict(json.loads(paths[-1].read_text()),name=family+'-'+str(k)))
             else:missing.append(family+'-'+str(k))
         for path,label in ((directory/'last_audit.json',family+'-LSQR-FINAL'),(ARTIFACT_ROOT/('GMRES_'+family)/'last_cycle.json',family+'-GMRES-FINAL')):

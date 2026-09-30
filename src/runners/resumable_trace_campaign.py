@@ -28,6 +28,8 @@ class CampaignStage(Stage):
         write_json(window.LEDGER_PATH,self.base)
         original=self.packet.apply
         def apply(x,adjoint=False):
+            if self.packet.counts['S']+self.packet.counts['SH']-self.last_written>=32:
+                self.durable_counts()
             self.guard(extra_actions=1)
             self.started['SH' if adjoint else 'S']+=1
             return original(x,adjoint=adjoint)
@@ -58,6 +60,7 @@ class CampaignStage(Stage):
                              field_states=self.counts['field_states']-self.base['field_states'],
                              correction_restarts=(self.base['routes'][self.family_name]['correction_restarts'] if self.family_name else 0))
         write_json(window.LEDGER_PATH,row)
+        self.last_written=total
 
     def finish(self,result):
         self.durable_counts(reserve=0)

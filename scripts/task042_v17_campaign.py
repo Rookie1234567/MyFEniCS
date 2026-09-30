@@ -28,9 +28,10 @@ target_iteration = {target}
 def run(stage,target,label):
     path=dat(stage,target,label);mode='fe' if stage=='VERIFY' else 'pure'
     journal('one_run_dispatch',stage=stage,target=target,input_path=str(path))
+    before=len(ledger()['runs'])
     p=subprocess.run(['bash','-c',f'set -e;source scripts/activate_task042.sh {mode};exec python scripts/run_case.py "$1"','task042-v17',str(path)])
     latest=ledger()['runs'][-1] if ledger()['runs'] else {}
-    if latest.get('stage')!=stage:
+    if len(ledger()['runs'])<=before or latest.get('stage')!=stage:
         return dict(status='ADMISSION_BLOCKED',exit_code=p.returncode)
     if latest['classification']=='COMPLETED' and p.returncode==0:
         result,_=read_result(stage);return result
