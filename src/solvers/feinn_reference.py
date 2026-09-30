@@ -896,6 +896,58 @@ def compare_reference_fit_without_solve(
         destroy_same_mesh_physical_action(model["bundle"])
 
 
+def compare_residual_readout_without_solve(
+    design, native, reference, candidate, reconstructed, previous, artifact, marker
+):
+    """T2 only: labelled physics plus the fixed-space G projection identity."""
+    from src.solvers.feinn_restricted_residual import POLICY, ROUTE
+    from src.runners.feinn_workflow import sha
+
+    result, files = compare_reference_fit_without_solve(
+        design, native, reference, candidate, reconstructed, artifact, marker,
+        route=ROUTE,
+    )
+    entries = [candidate["files"]["checkpoint"], previous["files"]["checkpoint"],
+               reference["files"]["reference"]]
+    vectors = []
+    for entry in entries:
+        if sha(entry["path"]) != entry["sha256"]:
+            raise ValueError("T2_FIELD_IDENTITY_FAILED")
+        with np.load(entry["path"], allow_pickle=False) as data:
+            vectors.append(np.array(data["c"]))
+    cR, cG, cref = vectors
+    G = sparse.load_npz(native["files"]["gram"]["path"])
+    d = result["d_ref"]
+    energies = [float(np.vdot(v, G @ v).real / d)
+                for v in (cR-cref, cG-cref, cR-cG)]
+    NE, NC = np.square(result["physics"]["reference_scattered_norms"])
+    curl_weight = (2*np.pi)**2
+    comp = result["comparisons"][ROUTE]
+    eL = comp["errors"]["scattered_L2"]["relative"]
+    eC = comp["errors"]["scattered_scaled_curl"]["relative"]
+    expected = (NE*eL**2 + curl_weight*NC*eC**2)/(NE+curl_weight*NC)
+    result.update(
+        norm_identity=dict(reference_L2_energy=float(NE),
+                           reference_scaled_curl_energy=float(NC), ell_nm=5,
+                           k0_per_nm=2*np.pi/5, ell_k0=2*np.pi,
+                           G_reference_energy_from_FE=float(NE+curl_weight*NC),
+                           G_reference_energy_from_CSR=d,
+                           E_G_squared_from_FE=float(expected),
+                           E_G_squared_from_CSR=energies[0],
+                           relative_reference_energy_defect=abs(NE+curl_weight*NC-d)/d,
+                           absolute_error_squared_defect=abs(expected-energies[0])),
+        V5_G_pythagorean=dict(new_error_squared=energies[0], V5_error_squared=energies[1],
+                             distance_to_V5_squared=energies[2],
+                             normalized_absolute_defect=abs(energies[0]-energies[1]-energies[2])),
+        G_action_columns=5, native_action_columns=0, native_adjoint_columns=0,
+        full_native_audits=2, independent_DOLFINx_actions_within_audits=2,
+        Gram_factor_count=0, Gsolve_count=0, Maxwell_factor_count=0, **POLICY,
+    )
+    result["physics"]["records"][ROUTE].update(POLICY)
+    result["comparisons"][ROUTE].update(POLICY)
+    return result, files
+
+
 def p_check(design, index, reference_index, artifact, marker):
     qualified = [
         name

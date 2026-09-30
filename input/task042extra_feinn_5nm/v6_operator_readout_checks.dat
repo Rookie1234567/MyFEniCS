@@ -1,0 +1,13 @@
+schema_version = 1
+
+[task42extra]
+stage = "v6_operator_readout_checks"
+run_id = "task42extra_v6_operator_readout_checks"
+design_sha256 = "650af0bade61c4ef89583398624b375245691109a6778c168dd46d8c0e70524e"
+reference_used_for_training = true
+features_reference_exposed = true
+readout_rhs_uses_reference = false
+pde_only_solve = false
+production_initialization_allowed = false
+pde_only_solver_qualified = false
+official_candidate_results = false

@@ -11,6 +11,10 @@ from src.io.run_specification import RunSpecification
 ROOT = Path(__file__).resolve().parents[2]
 DESIGN = ROOT / "input/task042extra_feinn_5nm/design_v1.json"
 STAGES = {
+    "v6_operator_readout_checks": ("ml", 600),
+    "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT": ("ml", 1800),
+    "v6_residual_readout_reconstruct": ("ml", 600),
+    "v6_residual_readout_compare_only": ("fe", 600),
     "e1_smoke": ("fe", 1800),
     "e1_fe": ("fe", 3600),
     "e1_grad": ("ml", 7200),
@@ -58,7 +62,8 @@ def load_pilot(path):
     ):
         raise InputError("Task42extra accepts only one frozen explicit stage")
     item = config["task42extra"]
-    readout = (
+    residual_readout = item.get("stage", "").startswith("v6_") or item.get("stage") == "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT"
+    readout = residual_readout or (
         item.get("stage", "").startswith("v5_")
         or item.get("stage") == "FEINN-FROZEN-HIDDEN-READOUT-G"
     )
@@ -69,6 +74,8 @@ def load_pilot(path):
         pde_only_solver_qualified=False,
         official_candidate_results=False,
     )
+    if residual_readout:
+        policy.update(features_reference_exposed=True, readout_rhs_uses_reference=False)
     allowed = {"stage", "run_id", "design_sha256"} | (set(policy) if readout else set())
     if set(item) != allowed or item["stage"] not in STAGES:
         raise InputError("Task42extra stage inventory mismatch")

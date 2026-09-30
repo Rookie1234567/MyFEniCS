@@ -508,7 +508,13 @@ def reconstruct(design, native_index, grad_index, fit_index, artifact, marker):
         raise ValueError("FROZEN_PARAMETERS_DO_NOT_GENERATE_SAVED_FULL_FE_COEFFICIENTS")
     path = Path(artifact) / "reconstructed_full_coefficients.npz"
     policy = dict(LABELS, pde_only_solver_qualified=False, official_candidate_results=False)
-    np.savez(path, c_q15=actual, c_q30=higher, **policy)
+    if fit_index["result"].get("features_reference_exposed"):
+        from src.solvers.feinn_restricted_residual import POLICY
+        from src.solvers.optimization_checkpoint import atomic_write
+        policy.update(POLICY)
+        atomic_write(path, lambda stream: np.savez(stream, c_q15=actual, c_q30=higher, **policy))
+    else:
+        np.savez(path, c_q15=actual, c_q30=higher, **policy)
     result = dict(
         status="RETAINED_ADAM500_NETWORK_RECONSTRUCTED"
         if retained_only

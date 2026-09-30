@@ -1,0 +1,79 @@
+{
+  "schema": "task42extra.residual-readout-design.v6",
+  "route": "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT",
+  "status": "PREREGISTERED_NOT_RUN",
+  "review_release": "3ab4a251c76208897729473add43f1e91c9d634a",
+  "reviewed_result": "b5be93b130a6102d89511a345cbaf54341cd345d",
+  "original_base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "model": {
+    "cells": 384,
+    "p": 3,
+    "q": 15,
+    "wavelength_nm": 5,
+    "complex_FE": 31968,
+    "ports": 40
+  },
+  "algorithm": {
+    "economic_pivoted_Householder_QR": true,
+    "small_R_SVD_rcond": 1e-12,
+    "normal_equations": false,
+    "ridge": false,
+    "main_RHS": "original_native_f_only",
+    "basis": "reuse_V5_Phi_Q_eff_only",
+    "projection_whitelist": [
+      "Q_eff",
+      "Q",
+      "R",
+      "left",
+      "vh",
+      "singular_values",
+      "permutation",
+      "scales"
+    ]
+  },
+  "budget": {
+    "previous_seconds": 44815.22461795143,
+    "batch_seconds": 3600,
+    "T0_seconds": 600,
+    "main_seconds": 1800,
+    "A_columns": 256,
+    "AH_columns": 8,
+    "native_audits": 12,
+    "G_columns": 512,
+    "numeric_cutoff_reserve": 150,
+    "safe_save_reserve": 120,
+    "direct_final_allowance_seconds": 120
+  },
+  "resource": {
+    "CPU_only": true,
+    "MPI": 1,
+    "math_Torch_threads": 1,
+    "light_GiB": 2,
+    "numeric_warn_GiB": 12,
+    "numeric_hard_GiB": 16,
+    "own_swap": 0,
+    "neighbor_growth_GiB": 384
+  },
+  "gates": {
+    "QR_relative": 1e-10,
+    "QR_orthogonal": 1e-10,
+    "opt": 1e-09,
+    "A_pair": 1e-10,
+    "writeback_Euclid": 1e-10,
+    "writeback_G": 1e-09,
+    "native_pair": 1e-09,
+    "pythagorean": 1e-08,
+    "native": 1e-06,
+    "field_channel": 0.0001,
+    "power_energy": 1e-05,
+    "per_channel_power": 1e-06,
+    "q30": 1e-08
+  },
+  "reference_used_for_training": true,
+  "features_reference_exposed": true,
+  "readout_rhs_uses_reference": false,
+  "pde_only_solve": false,
+  "production_initialization_allowed": false,
+  "pde_only_solver_qualified": false,
+  "official_candidate_results": false
+}

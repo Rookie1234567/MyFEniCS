@@ -15,6 +15,10 @@ def main():
         raise SystemExit("usage: launch_task42extra_durable.py <one-run.dat>")
     spec = load_pilot(sys.argv[1])
     stages = {
+        "v6_operator_readout_checks": ("v6_operator_readout_checks", "task42extra-v6-checks"),
+        "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT": ("v6_frozen_feature_residual", "task42extra-v6-readout"),
+        "v6_residual_readout_reconstruct": ("v6_residual_readout_reconstruct", "task42extra-v6-reconstruct"),
+        "v6_residual_readout_compare_only": ("v6_residual_readout_compare_only", "task42extra-v6-compare"),
         "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY": (
             "v4_formal_replay",
             "task42extra-v4-replay",
