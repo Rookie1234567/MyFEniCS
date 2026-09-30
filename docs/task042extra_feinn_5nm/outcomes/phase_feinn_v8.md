@@ -93,8 +93,8 @@ D 的训练 closure 只有G乘法和完整矩VJP；G逆、Gram factor、A/A*均�
 
 | D终态 / measured | G误差 | 散射E L2相对 | 散射curl相对 | native / 原rhs | 计费 / committed closure | launcher wall / s | 表示分类 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| plain | 0.02509159227 | 0.02572950659 | 0.02507527061 | 3.524097926 | 1500 / 1480 | 2847.717009 | REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED |
-| phase | 0.01040885398 | 0.01005721383 | 0.01041758155 | 0.7662824909 | 1500 / 1480 | 2954.236851 | REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED |
+| plain | 0.02509159227 | 0.02572950659 | 0.02507527061 | 3.524097926 | 1500 / 1480 | 2850.139041 | REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED |
+| phase | 0.01040885398 | 0.01005721383 | 0.01041758155 | 0.7662824909 | 1500 / 1480 | 2956.519787 | REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED |
 
 | D功率 / diagnostic | R | T | A_balance | A_volume | 能量闭合绝对 | 最大逐级功率差 |
 | --- | --- | --- | --- | --- | --- | --- |

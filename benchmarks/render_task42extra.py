@@ -193,7 +193,7 @@ return {scrollY:window.scrollY,scopeTop:h?.getBoundingClientRect().top??null};
                 shots.append(screenshot(f"{number:02d}_{kind}_{index:02d}"))
                 if kind == "table":
                     overflow = script(
-                        "const t=window.__taskTables[arguments[0]]; const p=t.parentElement; const full=p.scrollWidth>p.clientWidth+1; if(full)p.scrollLeft=p.scrollWidth; return full;",
+                        "const t=window.__taskTables[arguments[0]]; const p=t.scrollWidth>t.clientWidth+1?t:t.parentElement; const full=p.scrollWidth>p.clientWidth+1; window.__taskHorizontalHost=p; if(full)p.scrollLeft=p.scrollWidth; return full;",
                         index,
                     )
                     if overflow:
@@ -201,7 +201,7 @@ return {scrollY:window.scrollY,scopeTop:h?.getBoundingClientRect().top??null};
                             screenshot(f"{number:02d}_{kind}_{index:02d}_right")
                         )
                         script(
-                            "window.__taskTables[arguments[0]].parentElement.scrollLeft=0;",
+                            "window.__taskHorizontalHost.scrollLeft=0;",
                             index,
                         )
         dom["mathAfterScroll"] = script(

@@ -3,18 +3,18 @@
   "previous_conservative_seconds": 49007.27663535159,
   "old_lost_attempt_charged_seconds": 3284,
   "V8_formal_seconds": 25049.592198546277,
-  "V8_auxiliary_seconds": 63.21380502777174,
+  "V8_auxiliary_seconds": 113.27661173779052,
   "direct_current_and_final_allowance_seconds_conservative": 120,
-  "V8_batch_seconds": 25232.80600357405,
-  "V8_remaining_seconds": 17967.19399642595,
-  "original_total_conservative_seconds": 74240.08263892564,
+  "V8_batch_seconds": 25282.868810284068,
+  "V8_remaining_seconds": 17917.131189715932,
+  "original_total_conservative_seconds": 74290.14544563566,
   "original_16h_applies_to_V8": false,
   "group_seconds": {
     "A": 709.7902576149208,
     "B": 428.68762609909754,
     "C": 18041.45831126708,
     "D": 5806.658827921958,
-    "E": 246.21098067099229
+    "E": 296.27378738101106
   },
   "group_limits_seconds": {
     "A": 7200,
@@ -1198,6 +1198,17 @@
       "group": "E"
     },
     {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v8_e_github_render_20260930T232443975304Z",
+      "summary_sha256": "36afe4f694cc764e8fb5767e195f82edf4f6453ba82b79d31788746c3a852e30",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "charged_seconds": 48.17326775297988,
+      "peak_simultaneous_tree_RSS_bytes": 1940381696,
+      "own_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "group": "E"
+    },
+    {
       "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v8_e_markdown_20260930T231332594621Z",
       "summary_sha256": "85b9f9361f0afaddd6b733fa0728f6f1c944af0eea01985c54f05a78427202a1",
       "classification": "COMPLETED",
@@ -1226,6 +1237,17 @@
       "leader_exit_code": 0,
       "charged_seconds": 5.811684104963206,
       "peak_simultaneous_tree_RSS_bytes": 97132544,
+      "own_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "group": "E"
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v8_e_render_fix_qualified_20260930T233040691286Z",
+      "summary_sha256": "63a5ef0dce257bbbdbb265676d4b6309e496ebd08d81cb3ced1ccb1240b8f8aa",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "charged_seconds": 1.8895389570388943,
+      "peak_simultaneous_tree_RSS_bytes": 42868736,
       "own_tree_swap_peak_bytes": 0,
       "descendants_cleared": true,
       "group": "E"

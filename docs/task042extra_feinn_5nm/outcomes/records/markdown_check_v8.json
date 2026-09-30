@@ -32,7 +32,7 @@
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/phase_feinn_v8.md",
-      "sha256": "a05f7e0c5a87544ca95ed1d5f5b8ea954aea81ddfed5553479cbf3e07dacbf7e",
+      "sha256": "c34f882d9c3e5ef0bf7f618ef795e5f7d49234b5249523bf41fbdcd87cfada06",
       "checked_scope": "entire page",
       "markdown_tables": 5,
       "parsed_tables": 5,
@@ -41,7 +41,7 @@
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
-      "sha256": "f92e9f8c6d26928912d941c2d97afd20c75f91bdb8c01c68cdb34dd2dd2cf3ef",
+      "sha256": "28511dc3cd24004817d56b704323acfa813a1a915affd5cdcd32a1636342c2e8",
       "checked_scope": "Task42extra Review V7 后续：V8",
       "markdown_tables": 2,
       "parsed_tables": 2,

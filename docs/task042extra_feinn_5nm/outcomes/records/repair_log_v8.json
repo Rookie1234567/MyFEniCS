@@ -45,6 +45,15 @@
       "test": "final local Markdown/diff and original-index source comparison",
       "retry": "documentation only; no numerical replay or factor",
       "old_costs_preserved": true
+    },
+    {
+      "root_cause": "wide_table_capture_and_full_stage_cost_attribution",
+      "failure": "first browser DOM captured all columns but screenshots missed table-owned horizontal scroll; two draft cost tables used freeze-time elapsed rather than closed run_summary wall (about2s less)",
+      "hypothesis": "scroll host is table not parent; training result snapshot precedes final save/exit",
+      "change": "scroll overflowing table itself, fallback parent; use closed-stage charged_seconds in summary and D wall table",
+      "test": "Ruff/compile/local Markdown, corrected actual browser table right-side captures",
+      "retry": "one bounded corrected browser attempt on only new V7/V8 key pages; no numerical replay",
+      "old_costs_preserved": true
     }
   ]
 }

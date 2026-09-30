@@ -77,10 +77,11 @@
         "src/test/test_feinn_campaign.py",
         "src/test/test_feinn_phase_ml.py",
         "src/test/test_feinn_phase_routes.py",
-        "src/test/test_task42extra_v8_records.py"
+        "src/test/test_task42extra_v8_records.py",
+        "benchmarks/render_task42extra.py"
       ],
       "numerical_behavior": "original JSON/complex sample/power/denominator/label/resource recomputation; no solver; scoped v8 docs/render",
-      "evidence": "10 E negative witnesses + prior targeted pure/ML; frozen-field checker; actual browser pending",
+      "evidence": "10 E synthetic tests, raw checker, local Markdown; table-owned overflow capture correction qualified statically and awaits corrected browser",
       "dependencies": [
         "qualified original raw record schemas",
         "research-only",
@@ -149,7 +150,7 @@
     "docs/development_progress.md": "770c4f88c99ecd60aa1f2b9ec2bbd507c78fea540111d30d6d996ad066617c20",
     "docs/task042extra_feinn_5nm/outcomes/authority_recovery_v8.md": "9b8a22c58769ac6a40090914875ab2371b12ed615fc0020f54c9850f3cf890bc",
     "docs/task042extra_feinn_5nm/outcomes/changed_files.md": "8693a4439df9be83524f37e5e8adc9c85d34b15b4471006180418333c8ac0312",
-    "docs/task042extra_feinn_5nm/outcomes/phase_feinn_v8.md": "a05f7e0c5a87544ca95ed1d5f5b8ea954aea81ddfed5553479cbf3e07dacbf7e",
+    "docs/task042extra_feinn_5nm/outcomes/phase_feinn_v8.md": "c34f882d9c3e5ef0bf7f618ef795e5f7d49234b5249523bf41fbdcd87cfada06",
     "docs/task042extra_feinn_5nm/outcomes/records/PDE_comparison_channels_v8.csv": "5db69965d6a4c6374d660ed17571e705f8d1d6e2cfcd56d24159a2a5daff0e62",
     "docs/task042extra_feinn_5nm/outcomes/records/PDE_comparison_v8.csv": "ae9c6a1daed888b062908a45b8ca32e215b99e0013cc01715f649b0370b858bb",
     "docs/task042extra_feinn_5nm/outcomes/records/PDE_comparison_v8.json": "a3e2b910ea5917fcde953129ace28d964787c7237a6bbfce59e26b0287a12d66",
@@ -158,15 +159,15 @@
     "docs/task042extra_feinn_5nm/outcomes/records/campaign_design_v8.json": "5bd35f13590d95188aa0643cba57db65dce564ba6647014e23e18bd5d8499035",
     "docs/task042extra_feinn_5nm/outcomes/records/common_work_comparison_v8.json": "2c1b3cd0bda168497b9cf36f14fa006157eea57224541f841e63e3cc620e66e1",
     "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v8.json": "15b05c5c1788fb589e5e5be0605d5fd92a0b42b0633b773324a678f31e26b920",
-    "docs/task042extra_feinn_5nm/outcomes/records/markdown_check_v8.json": "814ac8924dbed881562caa0f6d7ca8db41bb1eb229efd2fd05088fe9b1e6502c",
+    "docs/task042extra_feinn_5nm/outcomes/records/markdown_check_v8.json": "52a985e7864bca0aa0ecb6f870c19d786aca2cd111a35604116064da82f9005a",
     "docs/task042extra_feinn_5nm/outcomes/records/phase_checks_v8.json": "f0aed1426d59083074744b7cec4452f957bf24e64faaee4a6adf66575f274cf2",
-    "docs/task042extra_feinn_5nm/outcomes/records/repair_log_v8.json": "b8d54a701311daf0d2a59c6ceeea315afce36c517955003c0d24aa8a4611016b",
+    "docs/task042extra_feinn_5nm/outcomes/records/repair_log_v8.json": "157f87a817a3c75d308020ee12178d7efe04f80808f02ee17620ca4d7d687363",
     "docs/task042extra_feinn_5nm/outcomes/records/representation_comparison_channels_v8.csv": "32ef0d43a3a25a401a7a254f93b6ff24a5e4a0f12f671a94cb7ceaf3d957cccf",
     "docs/task042extra_feinn_5nm/outcomes/records/representation_comparison_v8.csv": "9fff127aaeccabc3d9263aa0e89c76a808cc2ed3f590b711e4744f346dba78b6",
     "docs/task042extra_feinn_5nm/outcomes/records/representation_comparison_v8.json": "6386a92d872fe79b5667fab2ddb06d58f1557105ba78de9367a6c30ddbc7664b",
     "docs/task042extra_feinn_5nm/outcomes/records/run_index_v8.json": "d9b4778919722ae85704b74ef5f2df5c5a406a1e5fc8e8b7c3dd16d351b7aaac",
     "docs/task042extra_feinn_5nm/outcomes/records/training_v8.json": "4cf30be2892a2798dec84192be3c049dce3d69d58dd5db1e20ba002cef3f7fac",
-    "docs/task042extra_feinn_5nm/outcomes/summary.md": "f92e9f8c6d26928912d941c2d97afd20c75f91bdb8c01c68cdb34dd2dd2cf3ef",
+    "docs/task042extra_feinn_5nm/outcomes/summary.md": "28511dc3cd24004817d56b704323acfa813a1a915affd5cdcd32a1636342c2e8",
     "docs/task042extra_feinn_5nm/outcomes/test_summary.md": "7ca7ef25dce62a0806c94a4bd9656c7023da0537414d98a6e648e5181f1ed78d",
     "docs/task042extra_feinn_5nm/response_v8.md": "73af4f08cdcf88d78c73b44ff9befb9a441d94bdcacc938881751f935cb65541",
     "input/task042extra_feinn_5nm/v8_authority_assembly_checks.dat": "62c8e78d5169e866217c203e9c20871fe05ac70da7051f51f784dbe9b5d3f0ca",
@@ -198,7 +199,8 @@
     "src/test/test_feinn_campaign.py": "8133242ed8a05b35d2efa0f6b3f145d946dd999737300824a209dac6da5de87c",
     "src/test/test_feinn_phase_ml.py": "37472ee95c8572ec2847dd23178c1718f2f69f373c58f6f00810826f0f5c8b59",
     "src/test/test_feinn_phase_routes.py": "47db492b9ff2ebdddaaa0f7bcef9d986e58fcf1e979e7ee5a4f52dae74ad611b",
-    "src/test/test_task42extra_v8_records.py": "ba99bb503b6a2adf6ff3c543b927a2cf42ad3eaa9b4f541f9985cec8cb179db1"
+    "src/test/test_task42extra_v8_records.py": "ba99bb503b6a2adf6ff3c543b927a2cf42ad3eaa9b4f541f9985cec8cb179db1",
+    "benchmarks/render_task42extra.py": "98d02ccf32b0b57c55e650c01e92fcfbd2b6f90ea06da52b28eb224aa906161e"
   },
   "mutable_tail_records": [
     "docs/task042extra_feinn_5nm/outcomes/records/publication_manifest_v8.json",
@@ -210,6 +212,7 @@
   "p4_new_numeric_attempts": 1,
   "NN_fault_recoveries": 0,
   "old_history_preserved": true,
-  "status": "EVIDENCE_READY_BROWSER_PENDING",
-  "local_markdown_qualified": true
+  "status": "CORRECTED_COST_AND_VIEW_PUBLICATION_READY",
+  "local_markdown_qualified": true,
+  "first_publication_commit": "3fc0a6a884c87399ca9dfdb8f1c0ae1dcb8a4f9d"
 }
