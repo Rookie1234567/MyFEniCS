@@ -1,0 +1,101 @@
+{
+  "schema": "task40.identity-policy-decision.v1",
+  "task_id": "Task40extra_0p7nm_engineering",
+  "branch": "task40extra_0p7nm_engineering",
+  "review": "docs/task40extra_0p7nm_engineering/review_report_v1.md",
+  "decision": {
+    "selected_route": "A_STRICT_IDENTITY_REPAIRED",
+    "native_identity_policy": "strict",
+    "strict_native_identity_limit": 1e-10,
+    "finite_precision_budget_B": "NOT_ENABLED",
+    "rationale": "R1 located a geometry-key error: the p6 local-action cache rounded actual cell widths to 12 decimal places, allowing distinct exact widths to share an operator. The Task40 exact-geometry path now preserves the actual mesh geometry. On the saved iteration-8 vector, an independent raw-FFCx replay under that path passes the original strict identity limit. No unexplained residual remains that would justify enabling the separately defined budget B."
+  },
+  "frozen_physical_identity": {
+    "physical_model_sha256": "51854af3fb60c7ffebb166e1f06ff0a89e2e184dcbd9ba06ab4beb321b920661",
+    "g0_review_input": {
+      "path": "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4_review_v1.dat",
+      "sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e"
+    },
+    "g1_review_input": {
+      "path": "input/task40extra_0p7nm_engineering/nonseparable_g1_p6_q4_review_v1.dat",
+      "sha256": "989a351fb27fe5320942ca2392d0e7e872909f0354509e5d59c8c25e43061c86"
+    },
+    "identity_check": "The added review inputs resolve to the same frozen physical-model hashes as their respective original G0/G1 inputs; only run identity and review accounting are new. Both run_case --validate-only invocations passed."
+  },
+  "evidence": {
+    "r1_localization": {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/identity_localization_v1.json",
+      "sha256": "9cf5959b2872017d138343a1dc1f7a61fc48bb3c9ae488be90ac54fe11b1a1cb",
+      "source_sha": "21707084d89ed1d66865d029933d0b55ac6b5b2c",
+      "status": "R0_R1_diagnostic_complete",
+      "scope": "One G0 p6 operator diagnostic; no full p4 factor. The diagnostic located the rounded-width cache identity mismatch."
+    },
+    "attempt4_historical_stop": {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/g0_attempt4_identity_gate_stop.json",
+      "strict_identity_relative": 3.0748104980683956e-10,
+      "strict_limit": 1e-10,
+      "classification": "V20_RELEASE_GATE_FAIL",
+      "preservation": "Historical failure remains unchanged; it is not relabeled as a pass."
+    },
+    "exact_geometry_replay": {
+      "source_sha": "b11dfe5fe83e2bdd088d2ad73c90dd5063ecfe1e",
+      "replay_record": "benchmarks/artifacts/task40extra_0p7nm_engineering/exact_geometry_iteration8_replay_v2/replay_summary.json",
+      "replay_record_sha256": "15c06d80e174bb80d70a22aa901c3b3c6490c4cdc16401c3376d6597a8e3c070",
+      "original_replay_status": "strict_fail",
+      "recheck": "benchmarks/artifacts/task40extra_0p7nm_engineering/exact_geometry_iteration8_replay_v2/numerical_gate_recheck.json",
+      "recheck_sha256": "4882dffa6517c375442e1c942c62f44906d3d68c766a36df9d3be52933df981b",
+      "rechecked_numeric_values": {
+        "native_identity_relative": 1.3369675137611322e-11,
+        "native_identity_limit": 1e-10,
+        "internal_residual_relative": 6.207153842462271e-18,
+        "schur_port_identity_relative": 8.484168951217582e-30,
+        "maximum_raw_tensor_block_relative_error": 2.2403142129255687e-15
+      },
+      "recomputed_classification": "numerical_pass_with_local_input_coverage_gap",
+      "coverage_gap": "The three geometry-dominant spot-check cells have zero local RHS and zero Bi*alpha terms. The recheck correctly records this as a coverage gap, not a numerical failure. The full R1 inventory has 984 nonzero Bi and 984 nonzero Di entries; the existing nonzero-RHS and non-Hermitian fixtures listed below were run under the current qualified ABI.",
+      "iteration8_limit": "Saved mid-iteration vector only. The replay did not run KSP, a full G0 solve, a p4 factorization, or a direct reference; its A6 residual is not a convergence result."
+    },
+    "current_abi_fixtures": [
+      {
+        "command": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_task39extra_v19_p6_cell_condensed_action.py::test_real_ffcx_mpc_action_only_matches_augmented_schur_and_nonzero_rhs",
+        "result": "3 passed in 1.03 s",
+        "scope": "Real FFCx/MPC action fixture with nonzero RHS; no global engineering factor."
+      },
+      {
+        "command": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_task39extra_v19_p6_cell_condensed_action.py -k 'action_rhs_recovery_and_native_residual_identity_match_oracle or nonhermitian'",
+        "result": "2 passed, 9 deselected in 0.37 s",
+        "scope": "Local recovery/native-residual oracle and non-Hermitian port fixture; no global engineering factor."
+      }
+    ]
+  },
+  "repair_and_compatibility": {
+    "repair_commit": "33b773d161b5e5dc218a29b122cdb4044ca01800",
+    "repair_summary": "Task40 p6 production and conditional p6 direct-reference setup both select exact mesh geometry. The legacy profile default remains unchanged.",
+    "unchanged_contract": [
+      "0.7 nm Si/air material, G0/G1 geometry, 80 ordered modes and p6/q4 double condensation",
+      "BAL_H, FGMRES restart 32/max 2048, zero initial vector and unchanged MUMPS controls",
+      "Full A4 check, up to two same-factor refinements, and the original full explicit A6 checks",
+      "Strict identity threshold 1e-10; final and post-release full A6 threshold 1e-6",
+      "Observe-only timing, task-scope zero-swap policy, process-tree RSS supervision and descendant cleanup"
+    ],
+    "source_file_sha256": {
+      "src/geometry/task40_nonseparable_plan.py": "1a19f9e965aa348aed42da506ff6cd2cc794a051627fd0b0198ecd2fbf9db5b5",
+      "src/runners/task038_launcher.py": "6fefa3d812d70fc88e7941c69ee7e86f574a7f400e353b8e9313121be72ba4fe",
+      "src/test/test_task40_nonseparable_geometry.py": "f527cd442b0b0003b002efc85d07ddaf748be967d13e884416d48cc846b3ec35"
+    },
+    "test_and_run_entry": {
+      "review_batch_launcher_worker_fixtures": "4 passed across the targeted review_v1 batch, launcher/watchdog, worker-ledger, and physical-identity tests; the corrected identity test includes both new inputs.",
+      "run_case_cli": "G0 and G1 review_v1 --validate-only both returned status=valid with the expected run_id."
+    }
+  },
+  "authorization_and_order": {
+    "next": "Commit the clean policy, source, tests, and two hash-bound inputs, then launch one fresh G0 iterative run through the existing user service and watchdog.",
+    "strict_route_order": [
+      "G0 iterative",
+      "G1 iterative only if G0 passes the original numerical/physical gates and G1 passes the resource preflight",
+      "At most one same-discrete G0 direct reference after G1; run only if its resource preflight is safe and no equivalent reference can be reused"
+    ],
+    "bug_replay_allowance": "One shared hash-bound true-implementation-bug replay across review_v1 G0/G1; performance, numerical nonconvergence, and resource stops do not consume or qualify for a replay.",
+    "full_solve_status": "NOT_RUN_AT_POLICY_FREEZE"
+  }
+}

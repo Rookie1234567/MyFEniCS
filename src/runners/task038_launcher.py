@@ -3217,10 +3217,15 @@ def _reserve_task40_0p7nm_budget(
     service_cgroup_path: Path,
     **kwargs: Any,
 ) -> dict[str, Any]:
-    allowed_run_ids = {
+    legacy_run_ids = {
         "task40extra_0p7nm_nonseparable_g0_iterative_v1",
         "task40extra_0p7nm_nonseparable_g1_iterative_v1",
     }
+    review_v1_run_ids = {
+        "task40extra_0p7nm_nonseparable_g0_iterative_review_v1",
+        "task40extra_0p7nm_nonseparable_g1_iterative_review_v1",
+    }
+    allowed_run_ids = legacy_run_ids | review_v1_run_ids
     if run_id not in allowed_run_ids or comparison_group != (
         "task40extra_0p7nm_nonseparable_n0_n6"
     ):
@@ -3230,7 +3235,26 @@ def _reserve_task40_0p7nm_budget(
         repo_root / "benchmarks" / "artifacts"
         / "task40extra_0p7nm_engineering" / "task40_nonseparable_0p7nm"
     )
-    completed_replays = 0
+    replay_accounting = {
+        "legacy": {
+            "run_ids": sorted(legacy_run_ids),
+            "ledger_count": 0,
+            "unique_bug_replay_count": 0,
+            "elapsed_seconds": 0.0,
+            "conservative_allowance_seconds": 0.0,
+            "fresh_worker_count": 0,
+            "ledger_sha256": {},
+        },
+        "review_v1": {
+            "run_ids": sorted(review_v1_run_ids),
+            "ledger_count": 0,
+            "unique_bug_replay_count": 0,
+            "elapsed_seconds": 0.0,
+            "conservative_allowance_seconds": 0.0,
+            "fresh_worker_count": 0,
+            "ledger_sha256": {},
+        },
+    }
     for prior_run_id in allowed_run_ids:
         ledger_path = (
             run_ledger_root / prior_run_id / "shared_workflow_ledger.json"
@@ -3246,10 +3270,29 @@ def _reserve_task40_0p7nm_budget(
             != "task40extra.nonseparable-0p7nm.shared-workflow-ledger.v1"
         ):
             raise InputError("Task40 sibling workflow ledger identity changed")
-        completed_replays += int(
+        group = "review_v1" if prior_run_id in review_v1_run_ids else "legacy"
+        group_facts = replay_accounting[group]
+        group_facts["ledger_count"] += 1
+        group_facts["unique_bug_replay_count"] += int(
             prior_ledger.get("unique_bug_replay_count", 0)
         )
-    replay_limit = 0 if completed_replays >= 1 else 1
+        group_facts["elapsed_seconds"] += float(
+            prior_ledger.get("elapsed_seconds", 0.0)
+        )
+        group_facts["conservative_allowance_seconds"] += float(
+            prior_ledger.get("conservative_allowance_seconds", 0.0)
+        )
+        group_facts["fresh_worker_count"] += int(
+            prior_ledger.get("fresh_worker_count", 0)
+        )
+        group_facts["ledger_sha256"][prior_run_id] = hashlib.sha256(
+            ledger_path.read_bytes()
+        ).hexdigest()
+    selected_batch = "review_v1" if run_id in review_v1_run_ids else "legacy"
+    selected_history = replay_accounting[selected_batch]
+    replay_limit = (
+        0 if selected_history["unique_bug_replay_count"] >= 1 else 1
+    )
     continuation = None
     record_path = repo_root / (
         "docs/task40extra_0p7nm_engineering/outcomes/records/"
@@ -3286,7 +3329,21 @@ def _reserve_task40_0p7nm_budget(
             "sha256": hashlib.sha256(record_bytes).hexdigest(),
             "authorization": record,
         }
-    return _reserve_a4_tensor_h6_budget(
+    replay_accounting["selected_batch"] = selected_batch
+    replay_accounting["selected_bug_replay_limit"] = replay_limit
+    replay_accounting["old_history_preserved_separately"] = True
+    run_directory = Path(run_directory)
+    accounting_path = run_directory / "task40_batch_replay_accounting.json"
+    if accounting_path.exists():
+        raise InputError("Task40 run replay accounting already exists")
+    accounting_path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = accounting_path.with_suffix(".json.tmp")
+    temporary.write_text(
+        json.dumps(replay_accounting, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    temporary.replace(accounting_path)
+    reservation = _reserve_a4_tensor_h6_budget(
         repo_root,
         run_directory,
         **kwargs,
@@ -3301,6 +3358,9 @@ def _reserve_task40_0p7nm_budget(
         bug_replay_limit=replay_limit,
         user_bug_continuation=continuation,
     )
+    reservation["task40_batch_replay_accounting_path"] = str(accounting_path)
+    reservation["task40_batch_replay_accounting"] = replay_accounting
+    return reservation
 
 
 def _is_v28_user_service_cgroup(path: Path | None) -> bool:

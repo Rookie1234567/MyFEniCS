@@ -12,6 +12,8 @@ TASK40_GEOMETRY_IDENTITY = "task40extra_nonseparable_0p7nm_v1"
 TASK40_RUNS = {
     "task40extra_0p7nm_nonseparable_g0_iterative_v1": "G0",
     "task40extra_0p7nm_nonseparable_g1_iterative_v1": "G1",
+    "task40extra_0p7nm_nonseparable_g0_iterative_review_v1": "G0",
+    "task40extra_0p7nm_nonseparable_g1_iterative_review_v1": "G1",
     "task40extra_0p7nm_nonseparable_g0_direct_reference_v1": "G0",
 }
 TASK40_SI_N = complex(0.9998851703688496, 4.3236152269189515e-6)

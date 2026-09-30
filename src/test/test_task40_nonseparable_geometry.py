@@ -38,11 +38,16 @@ ROOT = Path(__file__).resolve().parents[2]
 INPUT_ROOT = ROOT / "input/task40extra_0p7nm_engineering"
 G0 = INPUT_ROOT / "nonseparable_g0_p6_q4.dat"
 G1 = INPUT_ROOT / "nonseparable_g1_p6_q4.dat"
+G0_REVIEW_V1 = INPUT_ROOT / "nonseparable_g0_p6_q4_review_v1.dat"
+G1_REVIEW_V1 = INPUT_ROOT / "nonseparable_g1_p6_q4_review_v1.dat"
 G0_DIRECT = INPUT_ROOT / "nonseparable_g0_p6_direct_reference.dat"
 
 
 def test_all_task40_inputs_resolve_to_the_frozen_physical_identity():
-    resolved = [load_and_resolve(path) for path in (G0, G1, G0_DIRECT)]
+    resolved = [
+        load_and_resolve(path)
+        for path in (G0, G1, G0_DIRECT, G0_REVIEW_V1, G1_REVIEW_V1)
+    ]
     for specification in resolved:
         validate_task40_input(specification.as_jsonable())
         assert specification.geometry["geometry_identity"] == TASK40_GEOMETRY_IDENTITY
@@ -59,6 +64,11 @@ def test_all_task40_inputs_resolve_to_the_frozen_physical_identity():
         "assembly_time_static_condensed"
     )
     assert resolved[0].solver["preconditioner"] == TASK40_PROFILE
+    assert resolved[3].physical_model_sha256 == resolved[0].physical_model_sha256
+    assert resolved[4].physical_model_sha256 == resolved[1].physical_model_sha256
+    assert resolved[3].method["kind"] == resolved[4].method["kind"] == (
+        "full3d_iterative"
+    )
 
 
 def test_direct_reference_selects_exact_mesh_geometry_without_changing_old_profiles():
@@ -361,7 +371,7 @@ def test_task40_swap_qualification_uses_task_tree_and_keeps_global_delta_diagnos
 def test_task40_launcher_mock_keeps_service_scope_and_task_tree_swap_gate(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ):
-    specification = load_and_resolve(G0)
+    specification = load_and_resolve(G0_REVIEW_V1)
     run_directory = tmp_path / "task40-launch"
     service_cgroup = Path(
         "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/"
@@ -445,6 +455,89 @@ def test_task40_launcher_mock_keeps_service_scope_and_task_tree_swap_gate(
     assert manifest["requested_legacy_resource_fields"]["terminate_memory_gib"] == 10.0
 
 
+def test_task40_review_v1_batch_separates_old_cost_and_shares_one_replay(
+    tmp_path: Path,
+):
+    from src.runners.task038_full3d_iterative import _task40_worker_batch_identity
+    from src.runners.workflow_timebase import clock_sample
+
+    old_run_id = "task40extra_0p7nm_nonseparable_g0_iterative_v1"
+    old_ledger_path = (
+        tmp_path / "benchmarks/artifacts/task40extra_0p7nm_engineering/"
+        "task40_nonseparable_0p7nm" / old_run_id / "shared_workflow_ledger.json"
+    )
+    old_ledger_path.parent.mkdir(parents=True)
+    old_ledger_path.write_text(
+        json.dumps(
+            {
+                "schema": "task40extra.nonseparable-0p7nm.shared-workflow-ledger.v1",
+                "batch_identity": old_run_id,
+                "unique_bug_replay_count": 3,
+                "elapsed_seconds": 900.0,
+                "conservative_allowance_seconds": 120.0,
+                "fresh_worker_count": 4,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    g0 = load_and_resolve(G0_REVIEW_V1)
+    assert g0.physical_model_sha256 == load_and_resolve(G0).physical_model_sha256
+    assert _task40_worker_batch_identity(g0.as_jsonable()) == g0.identity["run_id"]
+    service_cgroup = Path(
+        "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/"
+        "app.slice/myfenics-case-task40-fixture.service"
+    )
+
+    def reserve(specification, directory: str, source: str):
+        return launcher._reserve_task40_0p7nm_budget(
+            tmp_path,
+            tmp_path / directory,
+            source_sha=source,
+            stage="Q4_ORIGINAL",
+            stage_budget={"workflow_seconds": 43200.0},
+            workflow_clock_start=clock_sample(),
+            time_policy="observe_only",
+            run_id=str(specification.identity["run_id"]),
+            comparison_group=str(specification.identity["comparison_group"]),
+            service_cgroup_path=service_cgroup,
+        )
+
+    g0_reservation = reserve(g0, "review-g0-run", "a" * 40)
+    g0_ledger = json.loads(Path(g0_reservation["path"]).read_text(encoding="utf-8"))
+    g0_accounting = json.loads(
+        Path(g0_reservation["task40_batch_replay_accounting_path"]).read_text(
+            encoding="utf-8"
+        )
+    )
+    assert g0_ledger["batch_identity"] == g0.identity["run_id"]
+    assert g0_reservation["replay"] is False
+    assert g0_accounting["legacy"]["unique_bug_replay_count"] == 3
+    assert g0_accounting["legacy"]["elapsed_seconds"] == 900.0
+    assert g0_accounting["review_v1"]["unique_bug_replay_count"] == 0
+    assert g0_accounting["selected_bug_replay_limit"] == 1
+
+    # Consume the one shared review-v1 repair allowance in G0.  G1 must see
+    # this count, while the old 3-replay history stays in its own accounting.
+    g0_ledger["unique_bug_replay_count"] = 1
+    Path(g0_reservation["path"]).write_text(
+        json.dumps(g0_ledger), encoding="utf-8"
+    )
+    g1 = load_and_resolve(G1_REVIEW_V1)
+    assert g1.physical_model_sha256 == load_and_resolve(G1).physical_model_sha256
+    assert _task40_worker_batch_identity(g1.as_jsonable()) == g1.identity["run_id"]
+    g1_reservation = reserve(g1, "review-g1-run", "b" * 40)
+    g1_accounting = json.loads(
+        Path(g1_reservation["task40_batch_replay_accounting_path"]).read_text(
+            encoding="utf-8"
+        )
+    )
+    assert g1_reservation["replay"] is False
+    assert g1_accounting["legacy"]["unique_bug_replay_count"] == 3
+    assert g1_accounting["review_v1"]["unique_bug_replay_count"] == 1
+    assert g1_accounting["selected_bug_replay_limit"] == 0
+
+
 def test_task40_worker_identity_opens_the_reserved_v14_runtime_ledger(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ):
@@ -452,7 +545,8 @@ def test_task40_worker_identity_opens_the_reserved_v14_runtime_ledger(
     from src.runners.task038_full3d_iterative import _task40_worker_batch_identity
     from src.runners.workflow_timebase import clock_sample
 
-    specification = load_and_resolve(G0)
+    specification = load_and_resolve(G0_REVIEW_V1)
+    assert specification.physical_model_sha256 == load_and_resolve(G0).physical_model_sha256
     payload = specification.as_jsonable()
     run_id = str(specification.identity["run_id"])
     assert _task40_worker_batch_identity(payload) == run_id
