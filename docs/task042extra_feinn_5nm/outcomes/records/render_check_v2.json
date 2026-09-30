@@ -1,5 +1,177 @@
 {
   "schema": "task42extra.render-check.v2",
-  "status": "PENDING_GITHUB_RENDERED_VIEW_CHECK",
-  "pages": []
+  "status": "GITHUB_RENDERED_VIEW_PASS_AFTER_BOUNDED_RETRY",
+  "browser": "native Linux Firefox/geckodriver; GitHub Preview rich HTML",
+  "published_commit": "11ba4d46bee4fc2a8b06e28c191b35091f759782",
+  "task_authorized_one_line_replacement": {
+    "old_blob": "e231804fd8173acf7fc48cb17fc752e9b505c7ab",
+    "new_blob": "a0d3606aedbbce37066338de3763fe802590dedb",
+    "old_macro": "\\operatorname{Re}",
+    "new_macro": "\\mathrm{Re}",
+    "exact_other_bytes_unchanged": true
+  },
+  "pages": [
+    {
+      "path": "docs/task042extra_feinn_5nm/review_report_v1.md",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/11ba4d46bee4fc2a8b06e28c191b35091f759782/docs/task042extra_feinn_5nm/review_report_v1.md",
+      "git_blob_sha": "b9241d638c0e680957b0cfc7c1a7b84d68373e14",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/review_report_v1.md at 11ba4d46bee4fc2a8b06e28c191b35091f759782 · Rookie1234567/MyFEniCS · GitHub",
+      "heading": "Review V1：接受首轮负结果，执行一次固定 M5 变量尺度诊断",
+      "table_count": 6,
+      "table_columns": [
+        6,
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "math_count": 3,
+      "math_error_count": 0,
+      "screenshot_count": 10,
+      "screenshots": [
+        {
+          "name": "00_top.png",
+          "sha256": "3cdcc9903096bc97fda29b28e6980f85306b9932ca04aa91f9fc15fc6c7120b4"
+        },
+        {
+          "name": "00_table_00.png",
+          "sha256": "88bb2c59138d89cf2575e1793e224c6916fb2258dbd74d00c643bb8899d5ac68"
+        },
+        {
+          "name": "00_table_01.png",
+          "sha256": "828ae5207dc308783188f19c46b3a10417183672e241e785f284bf613b63ed3b"
+        },
+        {
+          "name": "00_table_02.png",
+          "sha256": "d950957653d36744871dfb5ee2aa5424f1f1819637af764a8c731ef94476f03f"
+        },
+        {
+          "name": "00_table_03.png",
+          "sha256": "fc88ef8445c16b9e60749ed077acb97aef18fe07766856a8a7bd3d2e223bbedc"
+        },
+        {
+          "name": "00_table_04.png",
+          "sha256": "0fadbbbbf2733b728559cbcf77eb0e84e044583fb5aa8b3f80d1d2190a78d40c"
+        },
+        {
+          "name": "00_table_05.png",
+          "sha256": "3faf345ca4a11169a31f90462eb89a06bfc05b80d458f311c389977380173829"
+        },
+        {
+          "name": "00_math-renderer_00.png",
+          "sha256": "d17d0d01cc759bc503c2fb848b4b929258ea415b4e5bba239c0a01d840ff9af4"
+        },
+        {
+          "name": "00_math-renderer_01.png",
+          "sha256": "d3ae62a482390300129a1cd6509c6f302e9f12d7906b74cdcbc8fedb812541a0"
+        },
+        {
+          "name": "00_math-renderer_02.png",
+          "sha256": "6aa6e257d4c9d39cf4b05df8315d0619dfc833e4d1e35c4939d93a9b10929482"
+        }
+      ]
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/task.md",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/11ba4d46bee4fc2a8b06e28c191b35091f759782/docs/task042extra_feinn_5nm/task.md",
+      "git_blob_sha": "a0d3606aedbbce37066338de3763fe802590dedb",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/task.md at 11ba4d46bee4fc2a8b06e28c191b35091f759782 · Rookie1234567/MyFEniCS · GitHub",
+      "heading": "Task42extra：5 nm 三维 compatible FEINN 独立支线",
+      "table_count": 6,
+      "table_columns": [
+        2,
+        2,
+        2,
+        2,
+        3,
+        2
+      ],
+      "math_count": 7,
+      "math_error_count": 0,
+      "screenshot_count": 14,
+      "screenshots": [
+        {
+          "name": "01_top.png",
+          "sha256": "4d900a59c88159a72cdd8702e0c1f900696d465047bde821ae5e4a90de5e2a2a"
+        },
+        {
+          "name": "01_table_00.png",
+          "sha256": "b86fc8296207f2da29925c9ca06070b2918f499584bb2d670d1d3ce66fed35f7"
+        },
+        {
+          "name": "01_table_01.png",
+          "sha256": "54092162e75bc50110ed00496b669accefdeee13bd9e1f6a192b49e4a2b648a7"
+        },
+        {
+          "name": "01_table_02.png",
+          "sha256": "42821422922b8070aee130d98babc71c37b35f760f2ce45bf9f79f30654cfea8"
+        },
+        {
+          "name": "01_table_03.png",
+          "sha256": "f9e665e13ec41097b6bd1cec572dffd23879c99cdcbace6e29b92d4e95f8f3f3"
+        },
+        {
+          "name": "01_table_04.png",
+          "sha256": "55ba132000f10352f64e0fa1692ddeaa6f42e9434a8f623de2534888b4a02441"
+        },
+        {
+          "name": "01_table_05.png",
+          "sha256": "431488c1ac97be05285e173408fa5555b647365abace4eb25331e454090f1a5c"
+        },
+        {
+          "name": "01_math-renderer_00.png",
+          "sha256": "45b71fee6d2f79bb5dc3ad34a95c54bf32384fd2f7069d095c658369e6444068"
+        },
+        {
+          "name": "01_math-renderer_01.png",
+          "sha256": "f4521dfbbe62d0248ff3891c591ab47c04b4bc63430b4e190ce4e17139b19852"
+        },
+        {
+          "name": "01_math-renderer_02.png",
+          "sha256": "8ccfecedfb797ef0c3b29e7e7d14f78c2b1f5a69f7e541ce3fa079a347eaccb3"
+        },
+        {
+          "name": "01_math-renderer_03.png",
+          "sha256": "af21fe0f7705cdda00b6d68fa2cd8c9ee90fca2ba1bd8c8c6f35c98330377086"
+        },
+        {
+          "name": "01_math-renderer_04.png",
+          "sha256": "316103470ab8f80ed287c96e25db1fbe4a6de167110d75b439dea464476b9d46"
+        },
+        {
+          "name": "01_math-renderer_05.png",
+          "sha256": "0ca30443069b089d4b5e3665e352122e5d7b98741a2aa6bfd87a2e30f406b40a"
+        },
+        {
+          "name": "01_math-renderer_06.png",
+          "sha256": "2f43c971b9de2bc95710ab7ffcf88e4595949badce18bef7aad67798a72b8a84"
+        }
+      ]
+    }
+  ],
+  "first_attempt": {
+    "status": "RENDERED_VIEW_BLOCKED",
+    "reason": "WebDriver GitHub navigation timed out after 60000 ms before any DOM capture",
+    "completed_pages": 0,
+    "supervised_seconds": 67.63493741094135,
+    "peak_tree_RSS_bytes": 1408933888,
+    "own_swap_peak_bytes": 0
+  },
+  "successful_retry": {
+    "change": "Firefox pageLoadStrategy=eager; no page content or numerical changes",
+    "supervised_seconds": 91.1850112490356,
+    "peak_tree_RSS_bytes": 1741213696,
+    "own_swap_peak_bytes": 0,
+    "descendants_cleared": true,
+    "raw_DOM_sha256": "db9d1a23193739d757128f539a74d065c4379817f7d3d6d9b541ed054ab18911",
+    "raw_directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v2_review_task_eager_sha11ba4d"
+  },
+  "sampled_visual_inspection": [
+    "00_top.png",
+    "00_math-renderer_01.png",
+    "01_math-renderer_06.png",
+    "01_table_05.png"
+  ],
+  "visual_scope": "four sampled screenshots viewed; all 24 screenshots hash-checked and DOM inspected"
 }

@@ -338,6 +338,26 @@
       "summary_sha256": "a13a8c10fd1bd0bddabe0899d47714ac72785f360eeefe2f246cda800468c781"
     },
     {
+      "label": "v2_compact_checker_lf_20260930T000745752116Z",
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v2_compact_checker_lf_20260930T000745752116Z",
+      "supervised_seconds": 2.0234328820370138,
+      "peak_tree_RSS_bytes": 113627136,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "summary_sha256": "044955fc45b8255ec76785ce01229725d1278ed7fd649f4de53294170859e6ee"
+    },
+    {
+      "label": "v2_compact_checker_postrender_20260930T001431311098Z",
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v2_compact_checker_postrender_20260930T001431311098Z",
+      "supervised_seconds": 2.0262806869577616,
+      "peak_tree_RSS_bytes": 141996032,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "summary_sha256": "043aa19ca17768fcdde710341cd2e84cbee45058bccb924cec8618edaeaa9231"
+    },
+    {
       "label": "v2_compare_fe_import_repair_20260929T235608859230Z",
       "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v2_compare_fe_import_repair_20260929T235608859230Z",
       "supervised_seconds": 2.0270487209782004,
@@ -398,6 +418,16 @@
       "summary_sha256": "3967eeeca359d079ee21fa9ebce0e4370313ddb09711c4262092dd0a63185e3b"
     },
     {
+      "label": "v2_final_postrender_static_docs_20260930T001604948503Z",
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v2_final_postrender_static_docs_20260930T001604948503Z",
+      "supervised_seconds": 1.5192380989901721,
+      "peak_tree_RSS_bytes": 40804352,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "summary_sha256": "14fbf00096839f06d7cd14e7fc832c90d48422f324a93c60d6a7296109c3755d"
+    },
+    {
       "label": "v2_final_static_docs_20260930T000623131983Z",
       "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v2_final_static_docs_20260930T000623131983Z",
       "supervised_seconds": 1.5228875169996172,
@@ -448,6 +478,46 @@
       "summary_sha256": "dbd83fa4ca31cb0b77b8eef39365835032d61e1ddac01e42cadb630b84a47b1f"
     },
     {
+      "label": "v2_render_finalize_20260930T001350915408Z",
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v2_render_finalize_20260930T001350915408Z",
+      "supervised_seconds": 1.5215454439166933,
+      "peak_tree_RSS_bytes": 43319296,
+      "own_swap_peak_bytes": 0,
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "summary_sha256": "843f6e199c52c00721263d3e0d5618529e04c4e6092eafff38c2842a1e49ff87"
+    },
+    {
+      "label": "v2_render_finalize_retry_20260930T001414169948Z",
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v2_render_finalize_retry_20260930T001414169948Z",
+      "supervised_seconds": 1.5212574420729652,
+      "peak_tree_RSS_bytes": 39133184,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "summary_sha256": "9a04ff11058d8a14fc793070e92724f35f3f4b3e24f61df2552e94018c0841ed"
+    },
+    {
+      "label": "v2_render_review_task_20260930T000905990354Z",
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v2_render_review_task_20260930T000905990354Z",
+      "supervised_seconds": 67.63493741094135,
+      "peak_tree_RSS_bytes": 1408933888,
+      "own_swap_peak_bytes": 0,
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "summary_sha256": "5b5e8c1d6bf139bf575d69e4114f1ee786a63f9703bbf0956216fa2bd0843e1f"
+    },
+    {
+      "label": "v2_render_review_task_eager_20260930T001036304660Z",
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v2_render_review_task_eager_20260930T001036304660Z",
+      "supervised_seconds": 91.1850112490356,
+      "peak_tree_RSS_bytes": 1741213696,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "summary_sha256": "f4593e0d38f2f92cde085b93466b3ba4bba76f01ad44d7f7838e13f8085473ee"
+    },
+    {
       "label": "v2_scaling_ruff_20260929T230532134386Z",
       "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v2_scaling_ruff_20260929T230532134386Z",
       "supervised_seconds": 1.51516619999893,
@@ -489,13 +559,13 @@
     }
   ],
   "V2_formal_supervised_seconds": 2778.420113602071,
-  "V2_light_supervised_seconds": 39.96009803307243,
-  "V2_total_supervised_seconds": 2818.3802116351435,
+  "V2_light_supervised_seconds": 207.39180124702398,
+  "V2_total_supervised_seconds": 2985.811914849095,
   "V2_cap_seconds": 14400,
   "conservative_V1_derived_base_seconds": 26240.100355625153,
-  "conservative_V1_plus_V2_seconds": 29058.480567260296,
+  "conservative_V1_plus_V2_seconds": 29225.912270474248,
   "original_16h_cap_seconds": 57600,
-  "entire_V2_session_sampled_tree_RSS_peak_bytes": 1365712896,
+  "entire_V2_session_sampled_tree_RSS_peak_bytes": 1741213696,
   "own_swap_peak_bytes": 0,
   "candidate_exclusive_costs_seconds": {
     "packet_and_model_setup": 0.4227503340225667,
@@ -533,5 +603,6 @@
   "attribution_is_not_added_to_actual_research_wall": true,
   "global_swap_candidate_observation": "25 host pswpin pages; unresolved attribution; own sampled VmSwap zero",
   "memory_scope": "simultaneous supervised process tree sampled at approximately 0.5 s; no cgroup continuous claim",
-  "host_kind": "native Linux; historical WSL-global label is inherited only"
+  "host_kind": "native Linux; historical WSL-global label is inherited only",
+  "evidence_snapshot_excludes_current_checker_supervision": true
 }

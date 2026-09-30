@@ -97,6 +97,7 @@ try:
             capabilities=dict(
                 alwaysMatch={
                     "browserName": "firefox",
+                    "pageLoadStrategy": "eager",
                     "moz:firefoxOptions": dict(
                         binary="/snap/firefox/current/usr/lib/firefox/firefox",
                         args=["-headless", "-no-remote", "-profile", str(profile)],

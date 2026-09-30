@@ -45,3 +45,5 @@ V2 复用原生FE/ML资格环境及V1 native/Gram/历史/checkpoint，不重新�
 首次compare-only因FE进程顶层导入Torch失败于物理前；最小延迟导入修复提交后，默认沙箱在MPI_Init本地socket处失败；在任务自身监督下完成第三次compare-only。两次失败均保留于[run index](records/run_index_v2.json)与[资源账](records/resource_costs_v2.json)，不是数值失败或参考重算。第三次compare-only复用V1准确同p3参考，MUMPS symbolic/numeric/solve=0。独立checker逐字段复算原40级复通道、参考分母、功率、energy、原方程及`D`来源、冻结物理`c`，结果[严格/研究 Gate](records/gate_decisions_v2.json)均未通过。这是固定优化设置的真实负结果，不能被9项接口测试的通过覆盖。
 
 Markdown局部检查范围扩展到新review、获授权修正的task、Response V2、V2诊断、summary和两份总账新增节；检查fence、表格列数、相对链接、UTF-8及解析结果。GitHub渲染只复查review与修正task，浏览器DOM/截图与失败原因见[render记录](records/render_check_v2.json)。本地解析不等于浏览器PASS，也不宣称CI或全仓测试。
+
+实际GitHub预览在首轮Firefox完整页面加载策略下导航60秒超时，无DOM可判；改用 `pageLoadStrategy=eager` 后只对同两页复核成功。Review V1 的6表/3公式和修正task的6表/7公式均无列错或数学报错，全部24张截图hash一致，抽看review首页/公式和task修正公式/表格。[render记录](records/render_check_v2.json)区分失败与成功两次监督，不能用首次失败代替最终结果，也不声称逐张截图人工精读。

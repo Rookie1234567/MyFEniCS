@@ -369,6 +369,7 @@ def main():
         global_swap_candidate_observation="25 host pswpin pages; unresolved attribution; own sampled VmSwap zero",
         memory_scope="simultaneous supervised process tree sampled at approximately 0.5 s; no cgroup continuous claim",
         host_kind="native Linux; historical WSL-global label is inherited only",
+        evidence_snapshot_excludes_current_checker_supervision=True,
     ))
     print(json.dumps(dict(status=status, strict=strict, positive=positive,
                           V2_supervised_seconds=V2, candidate_native=audit["native_relative"],
