@@ -1,0 +1,6 @@
+schema_version = 1
+[task042_v15]
+stage = "LOCAL_POLY"
+run_id = "task042_v15_local_poly"
+material_table_id = "SI_OPTICAL_CONSTANTS_USER_20260929_V1"
+decoder_family = "LOCAL_TRACE_REPRESENTATION_COMPARISON"

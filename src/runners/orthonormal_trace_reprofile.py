@@ -50,24 +50,32 @@ def atomic_arrays(path, **arrays):
 
 
 class Stage:
-    def __init__(self, specification, directory):
+    def __init__(self, specification, directory, *, io_module=None, window_module=None,
+                 limits=None, action_limit=18000, family=FAMILY):
+        if io_module is None:
+            from src.io import orthonormal_trace_reprofile as io_module
+        if window_module is None:
+            from src.solvers import orthonormal_trace_window as window_module
+        self.io, self.window = io_module, window_module
+        self.limits = LIMITS if limits is None else limits
+        self.action_limit, self.family = action_limit, family
         self.specification, self.directory = specification, directory
         self.name = specification.derived["stage"].split("-",1)[1]
         self.plan, self.design, self.material, self.fe = plan_and_operator()
-        self.own_plan = json.loads(PLAN_PATH.read_text())
+        self.own_plan = json.loads(self.io.PLAN_PATH.read_text())
         self.packet = original_packet(self.fe)
         self.source = (directory/"source_sha.txt").read_text().strip()
-        self.artifact = V14_ROOT/directory.name; self.artifact.mkdir(parents=True)
-        self.counts = dict.fromkeys(LIMITS,0); self.carry_actions = 0
+        self.artifact = getattr(self.io,"ARTIFACT_ROOT",V14_ROOT)/directory.name; self.artifact.mkdir(parents=True)
+        self.counts = dict.fromkeys(self.limits,0); self.carry_actions = 0
         self.began = time.perf_counter()
-        previous = {"PROFILE":"DECODER", "VERIFY":"PROFILE"}.get(self.name)
+        previous = self.io.previous_name(self.name) if hasattr(self.io,"previous_name") else {"PROFILE":"DECODER", "VERIFY":"PROFILE"}.get(self.name)
         if previous:
-            prior, _ = read_result(previous)
+            prior, _ = self.io.read_result(previous)
             self.counts = prior["budget_counts"].copy()
             self.carry_actions = prior["all_batch_equivalent_actions"]
         self.meta = dict(source_sha=self.source, input_sha256=specification.input_sha256,
-            plan_sha256=file_hash(PLAN_PATH), physical_identity=self.fe["physical"],
-            operator_packet=self.fe["packet"], decoder_family=FAMILY, complete_ports=40,
+            plan_sha256=file_hash(self.io.PLAN_PATH), physical_identity=self.fe["physical"],
+            operator_packet=self.fe["packet"], decoder_family=self.family, complete_ports=40,
             shared_workstation=True, reference_arrays_read=False,
             global_p4_factor_constructed=False, global_S_or_CSR_constructed=False,
             normal_equations_constructed=False, hidden_fallback=False)
@@ -77,19 +85,19 @@ class Stage:
 
     def guard(self, *, extra_actions=0, large=False):
         self.sample()
-        if snapshot()["heavy_remaining_seconds"] < (300 if large else 10):
+        if self.window.snapshot()["heavy_remaining_seconds"] < (300 if large else 10):
             raise RuntimeError("V14 deadline/cleanup margin reached")
-        if self.carry_actions+self.packet.counts["S"]+self.packet.counts["SH"]+extra_actions > 18000:
+        if self.carry_actions+self.packet.counts["S"]+self.packet.counts["SH"]+extra_actions > self.action_limit:
             raise RuntimeError("V14 original 18000 equivalent actions reached")
 
     def count(self,key,n=1):
         self.guard()
-        if self.counts[key]+n > LIMITS[key]:
+        if self.counts[key]+n > self.limits[key]:
             raise RuntimeError("V14 "+key+" budget reached")
         self.counts[key] += n
 
     def event(self,event,**fields):
-        row = journal(event,stage=self.name,source_sha=self.source,counts=self.counts.copy(),
+        row = self.window.journal(event,stage=self.name,source_sha=self.source,counts=self.counts.copy(),
                       rss_bytes=self.sample()["rss_bytes"],**fields)
         print(json.dumps(row,ensure_ascii=False),flush=True)
 
@@ -125,7 +133,7 @@ class Stage:
             action_counts=self.packet.counts.copy(),action_costs_seconds=self.packet.costs.copy(),
             all_batch_equivalent_actions=self.carry_actions+self.packet.counts["S"]+self.packet.counts["SH"],
             worker_wall_seconds=time.perf_counter()-self.began)
-        path = self.artifact/"stage_result.json"; write_json(path,result); publish(self.name,path)
+        path = self.artifact/"stage_result.json"; write_json(path,result); self.io.publish(self.name,path)
         write_json(self.directory/"artifact_index.json",dict(path=str(path),sha256=file_hash(path)))
         self.event("stage_frozen",status=result["status"],artifact=str(path))
 

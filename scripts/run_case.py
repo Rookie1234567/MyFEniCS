@@ -56,7 +56,8 @@ def main(argv: list[str] | None = None) -> int:
         from src.io.actual_loss_block_descent import load_actual_loss
         from src.io.tangent_head_compensation import load_tangent_head
         from src.io.orthonormal_trace_reprofile import load_orthonormal_trace
-        specification = load_orthonormal_trace(args.input_path) or load_tangent_head(args.input_path) or load_actual_loss(args.input_path) or load_stable_head(args.input_path) or load_autonomous(args.input_path) or load_diagnostic(args.input_path) or load_calibration(args.input_path) or load_continuation(args.input_path) or load_interface(args.input_path)
+        from src.io.local_trace_representation import load_local_trace
+        specification = load_local_trace(args.input_path) or load_orthonormal_trace(args.input_path) or load_tangent_head(args.input_path) or load_actual_loss(args.input_path) or load_stable_head(args.input_path) or load_autonomous(args.input_path) or load_diagnostic(args.input_path) or load_calibration(args.input_path) or load_continuation(args.input_path) or load_interface(args.input_path)
         if specification is None:
             specification = load_and_resolve(args.input_path)
         from src.io.task042_profile import TASK042_PROFILES

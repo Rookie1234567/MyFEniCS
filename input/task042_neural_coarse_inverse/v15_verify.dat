@@ -1,0 +1,6 @@
+schema_version = 1
+[task042_v15]
+stage = "VERIFY"
+run_id = "task042_v15_verify"
+material_table_id = "SI_OPTICAL_CONSTANTS_USER_20260929_V1"
+decoder_family = "LOCAL_TRACE_REPRESENTATION_COMPARISON"
