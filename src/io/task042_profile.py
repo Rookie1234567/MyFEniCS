@@ -50,6 +50,9 @@ TASK042_PROFILES = {
     "task042_v11_main": "V11-MAIN",
     "task042_v11_replay": "V11-REPLAY",
     "task042_v11_verify": "V11-VERIFY",
+    "task042_v12_round": "V12-ROUND",
+    "task042_v12_descent": "V12-DESCENT",
+    "task042_v12_verify": "V12-VERIFY",
 }
 
 
