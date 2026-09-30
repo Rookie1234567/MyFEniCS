@@ -9,6 +9,24 @@
       "test": "ABI and 7 new targeted tests passed; serializer checked with complex facts",
       "retry": "v8_authority_profile; one corrected retry; profile cumulative <=600s",
       "old_costs_preserved": true
+    },
+    {
+      "root_cause": "MPC_sparse_assembly_runtime",
+      "failure": "original path profile did not return within300s after authority_MPC_assembly_begin",
+      "hypothesis": "MPC assemble_matrix call dominates; JIT completed in0.001683193s; internal subcause unknown",
+      "change": "saved local F/P exact COO/CSR assembly, no dropped interior unknowns; independent oriented Basix quadrature",
+      "test": "eight-cell and M5 p4 independent integration passed; p3 saved reference checks passed; CSR/raw3 complex directions passed",
+      "retry": "p4 recovery consumes saved CSR; no duplicate assembly/factor",
+      "old_costs_preserved": true
+    },
+    {
+      "root_cause": "static_tool_environment",
+      "failure": "Ruff absent in qualified ML environment; then lint E402 for thread setup placement",
+      "hypothesis": "tool routing and import ordering only; numerical tests not yet run in failed calls",
+      "change": "Ruff/compile in pure activation then explicit ML activation; place thread setup after imports",
+      "test": "targeted phase core pytest plus lint",
+      "retry": "no numerical solver retry",
+      "old_costs_preserved": true
     }
   ]
 }
