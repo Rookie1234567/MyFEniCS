@@ -472,10 +472,10 @@ def run_fit(
 
 def reconstruct(design, native_index, grad_index, fit_index, artifact, marker):
     """Separate ML process: frozen parameter -> q15/q30 complete moments."""
-    retained_only = (
-        fit_index["result"]["status"]
-        == "INTERRUPTED_FIT_ADAM500_RETAINED_SNAPSHOT"
-    )
+    retained_only = fit_index["result"]["status"] in {
+        "INTERRUPTED_FIT_ADAM500_RETAINED_SNAPSHOT",
+        "INTERRUPTED_REPLAY_RETAINED_BOUNDARY",
+    }
     torch.set_num_threads(1)
     torch.set_num_interop_threads(1)
     if len(os.sched_getaffinity(0)) != 1 or torch.version.cuda is not None:
@@ -507,7 +507,8 @@ def reconstruct(design, native_index, grad_index, fit_index, artifact, marker):
     if saved_relative > 1e-12:
         raise ValueError("FROZEN_PARAMETERS_DO_NOT_GENERATE_SAVED_FULL_FE_COEFFICIENTS")
     path = Path(artifact) / "reconstructed_full_coefficients.npz"
-    np.savez(path, c_q15=actual, c_q30=higher)
+    policy = dict(LABELS, pde_only_solver_qualified=False, official_candidate_results=False)
+    np.savez(path, c_q15=actual, c_q30=higher, **policy)
     result = dict(
         status="RETAINED_ADAM500_NETWORK_RECONSTRUCTED"
         if retained_only
@@ -520,7 +521,7 @@ def reconstruct(design, native_index, grad_index, fit_index, artifact, marker):
         complete_moments=True,
         full_FE_coefficients=len(actual),
         MUMPS_symbolic_numeric_solve_count=0,
-        **LABELS,
+        **policy,
     )
     marker("frozen_network_reconstruction", result)
     return result, dict(reconstructed=path)

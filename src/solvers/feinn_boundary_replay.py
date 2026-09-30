@@ -25,7 +25,7 @@ from src.solvers.optimization_checkpoint import (
     capture,
     optimizer_step,
 )
-from src.runners.feinn_workflow import ROOT, sha
+from src.runners.feinn_workflow import ROOT, sha, replay_closure_deadline
 
 ROUTE = "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY"
 ADAM_SHA = "4e818a16b876ffd0776e74438654ca7de5632b1e17269a38e87749b5b3ad6a97"
@@ -239,7 +239,7 @@ def run_replay(
     trial_p, trial_c = initial.copy(), actual.copy()
     trial_loss = metric.value(actual)[0]
     closure_wall = 0.0
-    deadline = began + min(10800, wall_seconds) - 120
+    deadline = replay_closure_deadline(manifest)
     checkpoint_seconds = 0.0
     failure = None
     stop_requested = False
@@ -263,7 +263,9 @@ def run_replay(
             committed_complete_fit_closures=bound_count,
             elapsed_seconds=perf_counter() - began,
             wall_limit_seconds=min(10800, wall_seconds),
-            final_reserve_seconds=120,
+            supervision_budget_origin_monotonic=manifest["supervision_budget_origin_monotonic"],
+            closure_cutoff_monotonic=deadline,
+            final_reserve_seconds=150,
             closure_limit=3500,
             RNG_policy="torch, numpy and Python RNG state captured; no stochastic operations in fit/line search",
             **(update or {}),

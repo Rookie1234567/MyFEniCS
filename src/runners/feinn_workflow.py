@@ -41,6 +41,19 @@ def sha(path):
     return digest.hexdigest()
 
 
+def replay_closure_deadline(manifest):
+    """Charge worker import/loading to the launch clock; leave 150s for exit.
+
+    The extra 30s covers a closure already in flight at the 120s save boundary.
+    This does not authorize another formal replay.
+    """
+    origin = float(manifest["supervision_budget_origin_monotonic"])
+    limit = min(10800.0, float(manifest["supervised_limit_seconds"]))
+    if not origin > 0 or limit <= 150:
+        raise ValueError("REPLAY_SAVE_RESERVE_UNAVAILABLE")
+    return origin + limit - 150
+
+
 def index_path(stage):
     return ARTIFACTS / ("index_" + stage.lower().replace("-", "_") + ".json")
 
@@ -395,6 +408,8 @@ def launch(spec):
             if limit <= 120:
                 raise RuntimeError("V4_BUDGET_RESERVE_UNAVAILABLE")
         state["supervised_limit_seconds"] = limit
+        if v4:
+            state["supervision_budget_origin_monotonic"] = perf_counter()
         write_json(directory / "run_manifest.json", state)
         command = [sys.executable, "-m", "src.runners.feinn_workflow", str(directory)]
         if v4:
