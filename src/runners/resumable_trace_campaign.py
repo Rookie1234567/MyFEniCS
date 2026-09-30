@@ -20,7 +20,7 @@ class CampaignStage(Stage):
         self.base=window.ledger();self.carry_actions=self.base['actions_upper']
         self.counts=dict(new_A_columns=self.base['new_A_columns'],image_QR=self.base['image_QR'],
                          original_audits=self.base['audits_upper'],field_states=self.base['field_states'])
-        self.started=dict(S=0,SH=0);self.new_updates=0;self.last_written=0;self.reservation=64
+        self.numeric_io=dict(started=0,completed=0,bytes_completed=0,wall_completed_seconds=0.);self.started=dict(S=0,SH=0);self.new_updates=0;self.last_written=0;self.reservation=64
         self.base['active']=dict(directory=str(directory),stage=self.name,family=self.family_name,
                                 start_monotonic=self.run_started,reserved_actions=64,reserved_audits=2,
                                 actions_lower=0,actions_upper=64,updates_lower=0,updates_upper=16,
@@ -51,7 +51,8 @@ class CampaignStage(Stage):
     def durable_counts(self,*,reserve=64):
         row=window.ledger();total=self.packet.counts['S']+self.packet.counts['SH']
         row['active'].update(actions_lower=total,actions_upper=total+reserve,updates_lower=self.new_updates,
-                             updates_upper=self.new_updates+(16 if reserve else 0),
+                             updates_upper=self.new_updates+(16 if reserve and self.name in ('GPOLY','GNN') else 0),
+                             numeric_io=self.numeric_io.copy(),
                              started=self.started.copy(),completed=self.packet.counts.copy(),
                              audits_lower=self.counts['original_audits']-self.base['audits_upper'],
                              audits_upper=self.counts['original_audits']-self.base['audits_upper']+(2 if reserve else 0),
@@ -62,7 +63,18 @@ class CampaignStage(Stage):
         write_json(window.LEDGER_PATH,row)
         self.last_written=total
 
+    def begin_numeric_io(self):
+        self.numeric_io['started']+=1
+        self.durable_counts()
+        return time.perf_counter()
+
+    def complete_numeric_io(self,began,path):
+        self.numeric_io['completed']+=1
+        self.numeric_io['bytes_completed']+=Path(path).stat().st_size
+        self.numeric_io['wall_completed_seconds']+=time.perf_counter()-began
+
     def finish(self,result):
+        result['numeric_io']=dict(self.numeric_io,scope='this worker; atomic numeric save plus hashes; wall already included in worker total')
         self.durable_counts(reserve=0)
         super().finish(result)
 

@@ -78,6 +78,6 @@ def settle_run(directory,summary,launch_wall_seconds):
         actions_lower=active['actions_lower'],actions_upper=upper,audits_lower=active['audits_lower'],audits_upper=audits,
         updates_lower=active['updates_lower'],updates_upper=updates,launch_wall_seconds=launch_wall_seconds,
         descendants_cleared=summary['descendants_cleared'],rss_peak_bytes=summary['sampled_process_tree_rss_peak_bytes'],
-        swap_peak_bytes=summary['sampled_process_tree_swap_peak_bytes'],exact_counts=clean))
+        swap_peak_bytes=summary['sampled_process_tree_swap_peak_bytes'],numeric_io=active.get('numeric_io',{}),exact_counts=clean))
     write_json(LEDGER_PATH,row);journal('run_accounted',run=row['runs'][-1])
     return row

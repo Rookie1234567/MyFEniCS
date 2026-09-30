@@ -79,6 +79,11 @@ class RollingCheckpoint:
         write_json(prefix.with_suffix('.commit.json'),dict(generation=generation,
                    manifest_sha256=file_hash(prefix.with_suffix('.json'))))
         sync_directory(self.directory)
-        return dict(generation=generation,path=str(prefix.with_suffix('.npz')),
+        result=dict(generation=generation,path=str(prefix.with_suffix('.npz')),
                     sha256=record['arrays_sha256'],bytes=record['arrays_bytes'],
                     write_seconds=time.perf_counter()-began)
+        # Separate compact history survives rotation. Its unfinished last line
+        # can be ignored; the committed numeric slot is the recovery authority.
+        with (self.directory/'write_history.jsonl').open('a') as stream:
+            stream.write(json.dumps(result)+'\n');stream.flush();os.fsync(stream.fileno())
+        return result

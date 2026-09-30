@@ -26,6 +26,7 @@ target_iteration = {target}
 
 
 def run(stage,target,label):
+    label=label+'_run'+str(len(ledger()['runs']))
     path=dat(stage,target,label);mode='fe' if stage=='VERIFY' else 'pure'
     journal('one_run_dispatch',stage=stage,target=target,input_path=str(path))
     before=len(ledger()['runs'])
@@ -75,7 +76,10 @@ def launch_with_reentry(stage,target,label):
     while True:
         result=run(stage,target,label+'_a'+str(attempt))
         if result['status']!='RESOURCE_STOP':return result
-        runrow=result['run'];summary=json.loads((Path(runrow['directory'])/'run_summary.json').read_text())
+        runrow=result['run']
+        if runrow.get('swap_peak_bytes',0) or runrow.get('rss_peak_bytes',0)>=16*2**30:
+            return dict(result,status='RESOURCE_NON_PSI_BLOCKED')
+        summary=json.loads((Path(runrow['directory'])/'run_summary.json').read_text())
         health=summary.get('external_health',summary.get('health',{}))
         # Only the original PSI trigger can authorize automatic reentry.
         rows=[json.loads(s) for s in (Path(runrow['directory'])/'supervision/resources.jsonl').read_text().splitlines()[-8:]]
@@ -97,6 +101,13 @@ def solve_queue():
         for family in ('GPOLY','GNN'):
             row=ledger()['routes'][family]
             if row['status'] not in ('READY','SLICE_COMPLETE'):continue
+            latest=ARTIFACT_ROOT/family/'last_audit.json'
+            if latest.exists():
+                saved=json.loads(latest.read_text())
+                if saved['original_equation_gate']['status']=='ORIGINAL_EQUATION_PASS':
+                    set_status(family,'ORIGINAL_EQUATION_PASS');continue
+                if saved['logical_iteration']>=target:
+                    journal('completed_milestone_reused_no_replay',library=family,target=target);continue
             if snapshot()['heavy_remaining_seconds']<600:set_status(family,'TOTAL_WINDOW_STOP');continue
             if row['wall_seconds']>=budget['uniform_route_wall_seconds']-budget['GMRES_reserved_seconds']-60:
                 set_status(family,'LSQR_RESERVED_G_BOUNDARY');continue

@@ -157,3 +157,12 @@ def test_v17_budget_freezes_G_reserve_without_refresh(tmp_path,monkeypatch):
     first=w.freeze_route_budget();assert first['uniform_route_wall_seconds']==6550 and first['GMRES_reserved_seconds']==900
     monkeypatch.setattr(w,'snapshot',lambda:dict(heavy_remaining_seconds=20000))
     assert w.freeze_route_budget()==first
+
+
+def test_numeric_write_history_survives_rotation(tmp_path):
+    store=RollingCheckpoint(tmp_path,dict(rhs='r',Q='q'))
+    for k in range(5):store.save(dict(x=np.ones(8,complex)*k),dict(iteration=k*16))
+    rows=[json.loads(s) for s in (tmp_path/'write_history.jsonl').read_text().splitlines()]
+    assert [r['generation'] for r in rows]==list(range(5))
+    assert all(r['write_seconds']>=0 and r['bytes']>0 for r in rows)
+    manifest,arrays,_=store.read();assert manifest['generation']==4 and np.all(arrays['x']==4)

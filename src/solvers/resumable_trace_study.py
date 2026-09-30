@@ -144,7 +144,10 @@ def save_gk(stage,store,state,base,mode,last_audit=None):
                   source_sha=stage.source,build_sources=stage.own_plan['legacy'][stage.family_name]['setup_source'],
                   last_audit=last_audit,counts=stage.packet.counts.copy(),audit_pending=bool(last_audit and last_audit.get('audit_pending')), 
                   started=stage.started.copy(),ledger_upper_reserved_actions=64)
-    return store.save(arrays,metadata)
+    began=stage.begin_numeric_io()
+    saved=store.save(arrays,metadata)
+    stage.complete_numeric_io(began,saved['path'])
+    return saved
 
 
 def audit_point(stage,op,state,base,mode,store,*,name=None):
@@ -160,7 +163,9 @@ def audit_point(stage,op,state,base,mode,store,*,name=None):
     directory=family_directory/'states'/stage.directory.name;directory.mkdir(parents=True,exist_ok=True)
     label=name or 'E'+str(mode['epoch'])+'_ITER_'+str(logical)
     arrays={key:point[key] for key in ('y','v','c','trace','port','z')};arrays['residual']=actual
+    began=stage.begin_numeric_io()
     saved=atomic_arrays(directory/(label+'.npz'),**arrays)
+    stage.complete_numeric_io(began,saved['path'])
     row=dict(logical_iteration=logical,epoch_iteration=k,mode=mode,source_sha=stage.source,state=saved,
              original_residual_identity_relative=identity_relative,estimated_residual_norm=estimate,
              true_projected_residual_norm=truth,recurrence_gap=gap,audit_pending=True,
@@ -233,6 +238,8 @@ def continue_route(stage):
         legacy_persisted_iteration=mode['legacy_persisted_iteration'],resume_mode=mode,final=saved,
         new_updates_executed=stage.new_updates,recomputed_updates_in_this_lineage=recomputed,
         generation_errors_ignored=errors,loading_seconds=loading,route_accounted_wall_seconds=time.perf_counter()-began,
+        bar_action_costs_inclusive_seconds=op.bar.costs.copy(),projection_triangular_inclusive_seconds=op.costs.copy(),
+        nested_timers_additive=False,
         all_solver_states_frozen=True,queue_frozen=True,reference_read=False,hidden_training=False)
 
 
@@ -260,7 +267,9 @@ def gmres_route(stage):
         stage.durable_counts(reserve=72)
         t,inner=correction_cycle(bar.apply,t,barb,stage.packet.bnorm)
         port=bar.close(t,rhs);z=np.r_[t,port];residual=rhs-stage.packet.apply(z)
+        began=stage.begin_numeric_io()
         saved=atomic_arrays(work/('CYCLE_'+str(cycle)+'.npz'),trace=t,port=port,z=z,residual=residual)
+        stage.complete_numeric_io(began,saved['path'])
         row=dict(cycle=cycle,source_sha=stage.source,state=saved,inner=inner,audit_pending=True,start_rho=original_rho)
         write_json(work/'last_cycle.json',row)
         # Bound a killed uncommitted cycle by 70 actions, not a 16-step GK gap.
@@ -276,7 +285,8 @@ def gmres_route(stage):
             if all(recent[j+1]['original_equation_gate']['rho']>recent[j]['original_equation_gate']['rho']*(1+1e-8) for j in range(2)):
                 status='GMRES_TWO_CYCLE_INCREASE';break
     return dict(status=status,route='GMRES64-AFTER-'+family,final=final,cycles=cycle_history,
-                Q_U_R_loaded=False,reference_read=False,queue_frozen=True,hidden_training=False)
+                Q_U_R_loaded=False,bar_action_costs_inclusive_seconds=bar.costs.copy(),
+                nested_timers_additive=False,reference_read=False,queue_frozen=True,hidden_training=False)
 
 
 def verify(stage):
