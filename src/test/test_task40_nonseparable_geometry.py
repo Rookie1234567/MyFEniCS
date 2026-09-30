@@ -32,6 +32,7 @@ from src.io.physical_intermediate_profile import (
     profile_facts,
 )
 from src.runners import task038_launcher as launcher
+from src.solvers.dtn_port_3d import _stage4_preserve_exact_geometry
 
 ROOT = Path(__file__).resolve().parents[2]
 INPUT_ROOT = ROOT / "input/task40extra_0p7nm_engineering"
@@ -58,6 +59,16 @@ def test_all_task40_inputs_resolve_to_the_frozen_physical_identity():
         "assembly_time_static_condensed"
     )
     assert resolved[0].solver["preconditioner"] == TASK40_PROFILE
+
+
+def test_direct_reference_selects_exact_mesh_geometry_without_changing_old_profiles():
+    specification = load_and_resolve(G0_DIRECT)
+    cfg = simulation_config_3d_from_normalized(specification.as_jsonable())
+
+    assert cfg.geometry_identity == TASK40_GEOMETRY_IDENTITY
+    assert cfg.stage4_full3d_assembly_backend == ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
+    assert _stage4_preserve_exact_geometry(cfg) is True
+    assert _stage4_preserve_exact_geometry(replace(cfg, geometry_identity=None)) is False
 
 
 def _task40_tiny_n2_config():
@@ -549,6 +560,9 @@ def test_task40_capacity_context_binds_frozen_axes_and_live_class_metadata(
         "coarse_degree": 4,
         "fine": {"dtn_action": SimpleNamespace(carrier=fine)},
         "p4": {"dtn_action": SimpleNamespace(carrier=coarse)},
+        "levels": {
+            "mesh_data": SimpleNamespace(mesh=object(), cell_tags=object())
+        },
     }
     p6_space_facts = {
         "full_rows": 100,
@@ -567,6 +581,7 @@ def test_task40_capacity_context_binds_frozen_axes_and_live_class_metadata(
         "xiB_payload_estimate_bytes": 32,
     }
     captured_capacity_facts: dict[str, object] = {}
+    captured_geometry_count: dict[str, object] = {}
     monkeypatch.setattr(
         v14,
         "_v14_balanced_apply_workspace_bytes",
@@ -593,6 +608,23 @@ def test_task40_capacity_context_binds_frozen_axes_and_live_class_metadata(
         return {"retained_numeric_bytes_upper": 123, "workspace_bytes_upper": 456}
 
     monkeypatch.setattr(capacity, "assembly_time_condensation_capacity_facts", capacity_facts)
+
+    def geometry_class_counts(mesh, cell_tags, *, preserve_exact_geometry):
+        captured_geometry_count.update(
+            {
+                "mesh": mesh,
+                "cell_tags": cell_tags,
+                "preserve_exact_geometry": preserve_exact_geometry,
+            }
+        )
+        return {
+            "raw_class_count": raw_classes + 2,
+            "oriented_class_count": oriented_classes + 3,
+        }
+
+    monkeypatch.setattr(
+        capacity, "assembly_time_geometry_class_counts", geometry_class_counts
+    )
     context = condensed.v22_capacity_context(
         common,
         cfg=cfg,
@@ -619,13 +651,20 @@ def test_task40_capacity_context_binds_frozen_axes_and_live_class_metadata(
         "raw": raw_classes,
         "oriented": oriented_classes,
     }
+    assert identity["p6_capacity_class_counts"] == {
+        "raw": raw_classes + 2,
+        "oriented": oriented_classes + 3,
+    }
+    assert captured_geometry_count["mesh"] is common["levels"]["mesh_data"].mesh
+    assert captured_geometry_count["cell_tags"] is common["levels"]["mesh_data"].cell_tags
+    assert captured_geometry_count["preserve_exact_geometry"] is True
     assert captured_capacity_facts["dimension"] == 882
     assert captured_capacity_facts["interior_dimension"] == 450
     assert captured_capacity_facts["trace_dimension"] == 432
-    assert captured_capacity_facts["raw_class_count"] == raw_classes
-    assert captured_capacity_facts["oriented_class_count"] == oriented_classes
+    assert captured_capacity_facts["raw_class_count"] == raw_classes + 2
+    assert captured_capacity_facts["oriented_class_count"] == oriented_classes + 3
     assert context["derived_sources"]["p6_class_capacity"]["classification"] == (
-        "derived_estimate_from_live_q4_material_geometry_classes"
+        "derived_estimate_from_live_exact_mesh_geometry_classes"
     )
 
     wrong_plan_cfg = replace(cfg, mesh_plan_sha256="0" * 64)

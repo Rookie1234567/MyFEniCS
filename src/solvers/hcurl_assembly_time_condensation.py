@@ -881,6 +881,7 @@ def _canonical_axis_aligned_coordinates(
     cell: int,
     *,
     tolerance: float,
+    preserve_exact_geometry: bool = False,
 ) -> tuple[np.ndarray, tuple[float, float, float]]:
     geometry_dofs = np.asarray(mesh.geometry.dofmap[cell], dtype=np.int32)
     coordinates = np.asarray(
@@ -914,10 +915,61 @@ def _canonical_axis_aligned_coordinates(
     }
     if len(vertices) != 8:
         raise ValueError("hexahedral geometry does not contain all box vertices")
-    rounded_widths = tuple(float(np.round(value, 12)) for value in widths)
-    for axis, width in enumerate(rounded_widths):
-        canonical[canonical[:, axis] != 0.0, axis] = width
-    return np.ascontiguousarray(canonical.ravel()), rounded_widths
+    geometry_widths = tuple(float(value) for value in widths)
+    if not preserve_exact_geometry:
+        # Preserve the historical grouping for existing profiles.  Task40's
+        # physical A6 cache opts into exact mesh widths so its local tensors
+        # represent the same coordinates as the native assembled operator.
+        geometry_widths = tuple(
+            float(np.round(value, 12)) for value in geometry_widths
+        )
+        for axis, width in enumerate(geometry_widths):
+            canonical[canonical[:, axis] != 0.0, axis] = width
+    return np.ascontiguousarray(canonical.ravel()), geometry_widths
+
+
+def assembly_time_geometry_class_counts(
+    mesh,
+    cell_tags,
+    *,
+    tolerance: float = 1.0e-11,
+    preserve_exact_geometry: bool = False,
+) -> dict[str, int]:
+    """Count global raw/oriented cache keys without constructing local tensors."""
+
+    comm = mesh.comm
+    tdim = int(mesh.topology.dim)
+    owned_cells = int(mesh.topology.index_map(tdim).size_local)
+    tags = _cell_tag_array(cell_tags, owned_cells)
+    mesh.topology.create_entity_permutations()
+    permutations = mesh.topology.get_cell_permutation_info()
+    local_raw_classes = set()
+    local_oriented_classes = set()
+    for cell in range(owned_cells):
+        _coordinates, widths = _canonical_axis_aligned_coordinates(
+            mesh,
+            cell,
+            tolerance=tolerance,
+            preserve_exact_geometry=preserve_exact_geometry,
+        )
+        raw_key = (int(tags[cell]), *widths)
+        local_raw_classes.add(raw_key)
+        local_oriented_classes.add(
+            (raw_key, int(permutations[cell]))
+        )
+    packets = comm.allgather(
+        (tuple(local_raw_classes), tuple(local_oriented_classes))
+    )
+    raw_classes = {key for raw_packet, _ in packets for key in raw_packet}
+    oriented_classes = {
+        key for _, oriented_packet in packets for key in oriented_packet
+    }
+    return {
+        "raw_class_count": len(raw_classes),
+        "oriented_class_count": len(oriented_classes),
+        "local_raw_class_count": len(local_raw_classes),
+        "local_oriented_class_count": len(local_oriented_classes),
+    }
 
 
 def _tabulate_cell_tensor(
@@ -1351,6 +1403,7 @@ def build_unconstrained_assembly_time_condensation(
     share_identity_cache: bool = False,
     materialize_global_matrix: bool = True,
     geometry_tolerance: float = 1.0e-11,
+    preserve_exact_geometry: bool = False,
     allocation_gate: Callable[[str, Mapping[str, Any]], None] | None = None,
     raw_tensor_evaluator: Callable[..., np.ndarray] | None = None,
 ) -> AssemblyTimeCondensedSystem:
@@ -1518,6 +1571,7 @@ def build_unconstrained_assembly_time_condensation(
                 mesh,
                 cell,
                 tolerance=geometry_tolerance,
+                preserve_exact_geometry=preserve_exact_geometry,
             )
             tag = int(tags[cell])
             raw_key = (tag, *widths)
@@ -1962,6 +2016,12 @@ def build_unconstrained_assembly_time_condensation(
                 comm.allreduce(local_lu_residual_max, op=MPI.MAX)
             ),
             "axis_aligned_affine_geometry_verified": True,
+            "preserve_exact_geometry": bool(preserve_exact_geometry),
+            "geometry_identity_policy": (
+                "exact_mesh_widths"
+                if preserve_exact_geometry
+                else "legacy_rounded_12_decimal_widths"
+            ),
             "retained_local_schur_enabled": bool(retain_local_schur_for_matrix_free),
             "retained_local_schur_class_count_local": retained_class_count_local,
             "retained_local_schur_class_count_sum": retained_class_count_sum,

@@ -86,6 +86,58 @@ def _two_cell_problem(*, distinct_materials: bool, degree: int = 2):
 
 
 class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
+    def test_canonical_geometry_can_preserve_exact_mesh_widths(self) -> None:
+        widths = (
+            0.44074074074074077,
+            0.32407407407407407,
+            0.5185185185185185,
+        )
+        coordinates = np.asarray(
+            [
+                [x, y, z]
+                for x in (0.0, widths[0])
+                for y in (0.0, widths[1])
+                for z in (0.0, widths[2])
+            ],
+            dtype=np.float64,
+        )
+        synthetic_mesh = mock.Mock()
+        synthetic_mesh.geometry.dofmap = np.arange(8, dtype=np.int32).reshape(1, 8)
+        synthetic_mesh.geometry.x = coordinates
+
+        exact_coordinates, exact_widths = (
+            assembly_time._canonical_axis_aligned_coordinates(
+                synthetic_mesh, 0, tolerance=1.0e-11, preserve_exact_geometry=True
+            )
+        )
+        legacy_coordinates, legacy_widths = (
+            assembly_time._canonical_axis_aligned_coordinates(
+                synthetic_mesh, 0, tolerance=1.0e-11
+            )
+        )
+
+        self.assertEqual(exact_widths, widths)
+        self.assertEqual(
+            legacy_widths, tuple(float(np.round(value, 12)) for value in widths)
+        )
+        np.testing.assert_array_equal(exact_coordinates.reshape(8, 3), coordinates)
+        self.assertFalse(np.array_equal(exact_coordinates, legacy_coordinates))
+
+        synthetic_mesh.comm.allgather.side_effect = lambda packet: [packet]
+        synthetic_mesh.topology.dim = 3
+        synthetic_mesh.topology.index_map.return_value.size_local = 1
+        synthetic_mesh.topology.get_cell_permutation_info.return_value = np.asarray(
+            [7], dtype=np.uint32
+        )
+        tags = mock.Mock()
+        tags.indices = np.asarray([0], dtype=np.int32)
+        tags.values = np.asarray([4], dtype=np.int32)
+        class_counts = assembly_time.assembly_time_geometry_class_counts(
+            synthetic_mesh, tags, preserve_exact_geometry=True
+        )
+        self.assertEqual(class_counts["raw_class_count"], 1)
+        self.assertEqual(class_counts["oriented_class_count"], 1)
+
     def test_fixed_p5_trace_p6_interior_kernel_condenses_exactly(
         self,
     ) -> None:

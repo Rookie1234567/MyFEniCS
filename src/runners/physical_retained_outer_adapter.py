@@ -303,6 +303,8 @@ class RetainedOuterAdapter:
         compiled_form=None,
         raw_tensor_evaluator=None,
         identity_cache_mode="per_oriented_class",
+        preserve_exact_geometry=False,
+        persist_native_stop_records=False,
         evidence_prefix="v19",
         expected_space_counts=(173802, 51192, 113400, 80),
         expected_space_facts=None,
@@ -319,6 +321,11 @@ class RetainedOuterAdapter:
         self.raw_tensor_evaluator = raw_tensor_evaluator
         self.raw_tensor_candidate_gate_facts = None
         self.identity_cache_mode = str(identity_cache_mode)
+        self.preserve_exact_geometry = bool(preserve_exact_geometry)
+        self.persist_native_stop_records = bool(persist_native_stop_records)
+        self._append_record = None
+        self.primary_stop_record = None
+        self.ksp_solve_phase_record = None
         self.evidence_prefix = str(evidence_prefix)
         self.save_complete_field_packet = (
             self.evidence_prefix in {"v20", "v21"}
@@ -432,6 +439,7 @@ class RetainedOuterAdapter:
             sum_duplicate_cell_integrals=True, strict_local_checks=True,
             materialize_global_matrix=False, retain_local_schur_for_matrix_free=True,
             share_identity_cache=(self.identity_cache_mode == "shared_read_only_per_interior_shape"),
+            preserve_exact_geometry=self.preserve_exact_geometry,
             allocation_gate=allocation_gate,
             raw_tensor_evaluator=self.raw_tensor_evaluator,
         )
@@ -1155,22 +1163,32 @@ class RetainedOuterAdapter:
                 self.residual_packets.append(packet)
                 row = {**row, "packet": packet}
             append(name, row)
+            if name == "primary_stop.jsonl":
+                self.primary_stop_record = dict(row)
+            elif name == "ksp_solve_phase.jsonl":
+                self.ksp_solve_phase_record = dict(row)
 
         def full_checkpoint(iteration, y, row):
             # save_retained has already committed y, including terminal exits.
             self.full_target.array[:] = self.last_evaluation["storage_solution"]
             return checkpoint(iteration, self.full_target, row["original_A6_relative"])
 
+        self._append_record = save_row if self.persist_native_stop_records else None
         try:
             result = run_retained_fgmres(
                 self.rhs, self._apply, self._pc, evaluate=self._evaluate,
                 checkpoint=full_checkpoint, save_retained=save_retained, append=save_row, seconds=seconds,
                 resource_sample=resource_sample, stop_requested=stop_requested,
+                persist_native_stop_records=self.persist_native_stop_records,
             )
+        except BaseException:
+            self._append_record = None
+            raise
         finally:
             self._active_role = previous_role
         post_ksp_started_ns = time.perf_counter_ns()
         y = result.pop("final_solution")
+        post_ksp_error = None
         try:
             cache_after = _cache_identity(
                 self.action,
@@ -1230,8 +1248,27 @@ class RetainedOuterAdapter:
                 )
             result["final_solution"] = self.full_rhs.duplicate()
             result["final_solution"].array[:] = self.last_evaluation["storage_solution"]
+        except BaseException as exc:
+            post_ksp_error = exc
+            self._record_post_ksp_failure("outer_adapter_post_ksp", exc)
+            raise
         finally:
-            y.destroy()
+            release_error = None
+            try:
+                y.destroy()
+            except BaseException as exc:
+                release_error = exc
+                self._record_post_ksp_failure("retained_solution_vector_destroy", exc)
+            if release_error is not None and post_ksp_error is not None:
+                if hasattr(post_ksp_error, "add_note"):
+                    post_ksp_error.add_note(
+                        "retained solution vector destroy also failed: "
+                        f"{type(release_error).__name__}: {release_error}"
+                    )
+            if post_ksp_error is not None or release_error is not None:
+                self._append_record = None
+            if release_error is not None and post_ksp_error is None:
+                raise release_error
         post_ksp_end_ns = time.perf_counter_ns()
         result["outer_adapter_return_tail"] = {
             "scope": (
@@ -1264,6 +1301,8 @@ class RetainedOuterAdapter:
                 "core_counts": dict(self.action.audit),
                 "retained_checkpoints": self.retained_checkpoints,
                 "residual_packets": self.residual_packets,
+                "primary_stop_record": self.primary_stop_record,
+                "ksp_solve_phase_record": self.ksp_solve_phase_record,
                 "orthogonalization_seconds": None,
                 "orthogonalization_timing_status": "not separately instrumented; included in KSP total",
                 "factor_lifetime": "p4 LU and p6 caches retained through final native field evaluation"}
@@ -1278,38 +1317,82 @@ class RetainedOuterAdapter:
                 "cannot release p6 cache before the complete field packet is saved"
             )
         snapshot = self.facts()
-        self.runtime.marker(
-            "v20_p6_release_started",
-            {
-                "field_packet_saved": True,
-                "pre_release_A6_checked": True,
-                "identity_cache_mode": self.identity_cache_mode,
-            },
-        )
-        self.destroy()
+        try:
+            self.runtime.marker(
+                "v20_p6_release_started",
+                {
+                    "field_packet_saved": True,
+                    "pre_release_A6_checked": True,
+                    "identity_cache_mode": self.identity_cache_mode,
+                },
+            )
+        except BaseException as exc:
+            self._record_post_ksp_failure("release_started_marker", exc)
+            self._append_record = None
+            raise
+        try:
+            self.destroy()
+        except BaseException as exc:
+            self._record_post_ksp_failure("p6_owner_release", exc)
+            self._append_record = None
+            raise
         self._released_after_final_residual = True
         snapshot["factor_lifetime"] = "p6 caches released after pre-release A6 and before official output"
         snapshot["released_after_final_residual"] = True
         snapshot["release_owner_refs_cleared"] = True
         self._released_facts = snapshot
         inventory_label = f"{self.evidence_prefix}_p6_local_caches"
-        self.runtime.marker(
-            "v20_p6_release_complete",
-            {
-                "released_after_final_residual": True,
-                "owner_refs_cleared": True,
-                "workspace_labels_released": [
-                    f"{self.evidence_prefix}_p6_setup",
-                    f"{self.evidence_prefix}_p6_full_scratch",
-                ],
-                "inventory_label_released": inventory_label,
-            },
-        )
+        try:
+            self.runtime.marker(
+                "v20_p6_release_complete",
+                {
+                    "released_after_final_residual": True,
+                    "owner_refs_cleared": True,
+                    "workspace_labels_released": [
+                        f"{self.evidence_prefix}_p6_setup",
+                        f"{self.evidence_prefix}_p6_full_scratch",
+                    ],
+                    "inventory_label_released": inventory_label,
+                },
+            )
+        except BaseException as exc:
+            self._record_post_ksp_failure("release_complete_marker", exc)
+            self._append_record = None
+            raise
+        self._append_record = None
         return {
             "status": "RELEASED",
             "released_after_final_residual": True,
             "owner_refs_cleared": True,
         }
+
+    def _record_post_ksp_failure(self, phase, exc):
+        if not self.persist_native_stop_records or self._append_record is None:
+            return
+        record = {
+            "schema": "task40extra.retained_outer_followup_failure.v1",
+            "phase": str(phase),
+            "error_type": type(exc).__name__,
+            "error": str(exc),
+            "primary_stop_record": (
+                self.primary_stop_record
+                if self.primary_stop_record is not None
+                else "unknown_or_not_reached"
+            ),
+            "ksp_solve_phase_record": (
+                self.ksp_solve_phase_record
+                if self.ksp_solve_phase_record is not None
+                else "unknown_or_not_reached"
+            ),
+        }
+        try:
+            self._append_record("ksp_followup_failures.jsonl", record)
+        except BaseException as write_exc:
+            if hasattr(exc, "add_note"):
+                exc.add_note(
+                    "failed to append outer follow-up failure record: "
+                    f"{type(write_exc).__name__}: {write_exc}"
+                )
 
     def destroy(self):
         self.last_evaluation = None

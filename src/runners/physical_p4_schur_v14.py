@@ -6855,6 +6855,19 @@ def _run_v20_release_after_final_residual(
         and value <= release_gate_facts["identity_limits"][key]
         for key, value in release_gate_facts["identity_values"].items()
     )
+    if bool(getattr(outer_adapter, "persist_native_stop_records", False)):
+        release_gate_facts["retained_ksp_evidence"] = {
+            "primary_stop_record": (
+                getattr(outer_adapter, "primary_stop_record", None)
+                if getattr(outer_adapter, "primary_stop_record", None) is not None
+                else "unknown_or_not_reached"
+            ),
+            "ksp_solve_phase_record": (
+                getattr(outer_adapter, "ksp_solve_phase_record", None)
+                if getattr(outer_adapter, "ksp_solve_phase_record", None) is not None
+                else "unknown_or_not_reached"
+            ),
+        }
     release_gate_facts["passed"] = bool(
         release_gate_facts["field_packet_saved"]
         and release_gate_facts["pre_release_A6_passed"]
@@ -6868,6 +6881,13 @@ def _run_v20_release_after_final_residual(
             if release_gate_facts["pre_release_A6_finite"]
             else "nonfinite pre-release A6"
         )
+        release_gate_failure = V20ReleaseGateStop(release_gate_facts)
+        if bool(getattr(outer_adapter, "persist_native_stop_records", False)):
+            record_failure = getattr(
+                outer_adapter, "_record_post_ksp_failure", None
+            )
+            if callable(record_failure):
+                record_failure("final_release_gate", release_gate_failure)
         _save_packet(
             runtime.directory / "release_gate_failure",
             "v20_release_gate",
@@ -6875,7 +6895,7 @@ def _run_v20_release_after_final_residual(
             runtime=runtime,
         )
         runtime.marker("v20_release_gate_failed", release_gate_facts)
-        raise V20ReleaseGateStop(release_gate_facts)
+        raise release_gate_failure
 
     runtime.marker(
         "v20_preconditioner_release_started",

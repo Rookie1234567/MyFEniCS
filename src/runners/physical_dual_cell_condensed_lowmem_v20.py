@@ -559,6 +559,7 @@ def v22_capacity_context(
     )
     from src.solvers.hcurl_assembly_time_condensation import (
         assembly_time_condensation_capacity_facts,
+        assembly_time_geometry_class_counts,
     )
     from petsc4py import PETSc
 
@@ -569,16 +570,31 @@ def v22_capacity_context(
         raise ValueError("V22 B capacity formulas require the qualified complex128/int32 ABI")
 
     if task40_profile:
-        p6_capacity_raw_class_count, p6_capacity_oriented_class_count = p4_class_counts
+        mesh_data = common["levels"]["mesh_data"]
+        p6_capacity_class_counts = assembly_time_geometry_class_counts(
+            mesh_data.mesh,
+            mesh_data.cell_tags,
+            preserve_exact_geometry=True,
+        )
+        p6_capacity_raw_class_count = p6_capacity_class_counts[
+            "raw_class_count"
+        ]
+        p6_capacity_oriented_class_count = p6_capacity_class_counts[
+            "oriented_class_count"
+        ]
         p6_capacity_class_source = (
-            "live q4 build_audit material/geometry classes used as a derived "
-            "p6 local-cache estimate; p6 matrices are not built for this estimate"
+            "live Task40 mesh/tag/permutation keys with exact mesh widths; "
+            "counted before p6 tensors are built"
         )
     else:
         p6_capacity_raw_class_count = _V22_BOUND_B_IDENTITY["p6_raw_class_count"]
         p6_capacity_oriented_class_count = _V22_BOUND_B_IDENTITY[
             "p6_oriented_class_count"
         ]
+        p6_capacity_class_counts = {
+            "raw_class_count": p6_capacity_raw_class_count,
+            "oriented_class_count": p6_capacity_oriented_class_count,
+        }
         p6_capacity_class_source = "frozen V22 original-B p6 class inventory"
     p6_class_capacity = assembly_time_condensation_capacity_facts(
         dimension=p6_local_dimensions[0],
@@ -668,6 +684,10 @@ def v22_capacity_context(
                     "mesh_plan_id": task40_plan["mesh_plan_id"],
                     "mesh_plan_sha256": task40_plan["mesh_plan_sha256"],
                     "p6_capacity_class_source": p6_capacity_class_source,
+                    "p6_capacity_class_counts": {
+                        "raw": p6_capacity_raw_class_count,
+                        "oriented": p6_capacity_oriented_class_count,
+                    },
                 }
                 if task40_profile
                 else {}
@@ -742,7 +762,7 @@ def v22_capacity_context(
                 **dict(p6_class_capacity),
                 "class_count_basis": p6_capacity_class_source,
                 "classification": (
-                    "derived_estimate_from_live_q4_material_geometry_classes"
+                    "derived_estimate_from_live_exact_mesh_geometry_classes"
                     if task40_profile
                     else "derived_from_frozen_v22_original_b_p6_class_inventory"
                 ),
@@ -1749,6 +1769,12 @@ def _run_physical_dual_cell_condensed_lowmem(
                 compiled_form=p6_holder["form"],
                 raw_tensor_evaluator=raw_tensor_evaluator,
                 identity_cache_mode="shared_read_only_per_interior_shape",
+                preserve_exact_geometry=(
+                    profile_identity == TASK40_0P7NM_PROFILE
+                ),
+                persist_native_stop_records=(
+                    profile_identity == TASK40_0P7NM_PROFILE
+                ),
                 evidence_prefix=evidence_prefix,
                 expected_space_counts=expected_space_counts,
                 expected_space_facts=expected_space_facts,

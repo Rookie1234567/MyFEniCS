@@ -35,6 +35,7 @@ from ..common.modes_3d import (
     outgoing_port_modes_3d,
 )
 from ..constraints.floquet_3d import DoubleFloquet3DData
+from ..geometry.task40_nonseparable_plan import TASK40_GEOMETRY_IDENTITY
 from .common_3d_solve import (
     DirectSolveFailure,
     _petsc_factor_inventory,
@@ -75,6 +76,12 @@ from .static_local_schur_action import create_static_local_schur_action
 
 DTN_PORT_MODAL_POWER_SOURCE = "dtn_port_modal_amplitudes"
 DTN_PORT_MODAL_REFERENCE = "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation"
+
+
+def _stage4_preserve_exact_geometry(cfg: SimulationConfig3D) -> bool:
+    """Keep Task40's local cache geometry identical to its native mesh."""
+
+    return cfg.geometry_identity == TASK40_GEOMETRY_IDENTITY
 
 
 class Stage4VariablePLiveObserverError(RuntimeError):
@@ -3008,6 +3015,7 @@ def _solve_stage4_dtn_port_total_field_impl(
                     static_retain_local_schur_for_matrix_free or never_materialized_port
                 ),
                 materialize_global_matrix=not never_materialized_port,
+                preserve_exact_geometry=_stage4_preserve_exact_geometry(cfg),
             )
             reduction_system = assembly_time_system
         A_base = None
