@@ -1,0 +1,131 @@
+{
+  "checker": {
+    "status": "EVIDENCE_CONSISTENT",
+    "mismatches": [],
+    "decoder_qualified": true,
+    "state_identity": {
+      "ORIGIN": true,
+      "TRIAL_4": true,
+      "TRIAL_3": true,
+      "TRIAL_2": true,
+      "TRIAL_1": true,
+      "TRIAL_0": true,
+      "NEW_S_2p0": true,
+      "NEW_S_4p0": true
+    },
+    "retained_Qc_identity": {
+      "ORIGIN": {
+        "qualified": true,
+        "actual_Qc_relative": 0.0,
+        "original_action_calls": 0,
+        "Q_sha256": "a60fa21eae281049db72f3b27989f31f2a9d0fdd89820e35a3011c05c23dfc36"
+      },
+      "NEW_S_4p0": {
+        "qualified": true,
+        "actual_Qc_relative": 0.0,
+        "original_action_calls": 0,
+        "Q_sha256": "d6d445ec15aab4845e715687de95f361e4f6e7cf04673b19576ef1e6562f1c91"
+      }
+    },
+    "strict_same_discrete": {
+      "V13_ORIGIN": false,
+      "V13_ACCEPTED": false,
+      "ORIGIN": false,
+      "TRIAL_4": false,
+      "TRIAL_3": false,
+      "TRIAL_2": false,
+      "TRIAL_1": false,
+      "TRIAL_0": false,
+      "NEW_S_2p0": false,
+      "NEW_S_4p0": false
+    },
+    "physical_qualified_candidates": 0,
+    "saved_statuses_not_trusted": true,
+    "micro_qualified": false,
+    "global_p4_factor_allowed": false,
+    "comparison_margin_observed_basis": 8.985839294872733e-08,
+    "new_reference_native_scalar": "not persisted by reused verifier; no candidate qualified; old REF7 qualification remains bound"
+  },
+  "classification": "OBJECTIVE_ONLY_IMPROVEMENT",
+  "same_space_origin": "EXPECTED_SAME_SPACE_LIMITATION",
+  "full_head_reoptimization": "FINITE_HEAD_REOPTIMIZATION_ALGEBRA_SIGNAL_ONLY",
+  "relative_original_Phi_gain": 0.0008892214205529751,
+  "relative_rho_gain": 0.00044470959358833273,
+  "scattering_E_relative_gain": 0.0009411601291374749,
+  "scattering_curl_relative_gain": 0.0009411317411005538,
+  "research_positive_signal": false,
+  "strict_qualified_states": 0,
+  "independent_states": 10,
+  "new_profile_points": 2,
+  "O3": {
+    "status": "O3_ADMITTED",
+    "progress": {
+      "relative_gain": 0.00022521942047792106,
+      "absolute_gain": 7.166031234595582e-05,
+      "comparison_margin": 8.985839294872733e-08,
+      "qualified_for_selection": true,
+      "O3_admitted": true
+    },
+    "ray_checks": [
+      {
+        "s": 1.0,
+        "absolute_difference": 0.0,
+        "rounding_scale": 1.85322284084689e-13,
+        "consistent": true,
+        "derived_ray_not_recovered_old_LS": true
+      },
+      {
+        "s": 0.25,
+        "absolute_difference": 4.91638571870299e-16,
+        "rounding_scale": 1.85322284084689e-13,
+        "consistent": true,
+        "derived_ray_not_recovered_old_LS": true
+      },
+      {
+        "s": 0.0625,
+        "absolute_difference": 2.3747594439872653e-16,
+        "rounding_scale": 1.85322284084689e-13,
+        "consistent": true,
+        "derived_ray_not_recovered_old_LS": true
+      },
+      {
+        "s": 0.015625,
+        "absolute_difference": 1.0654878251900124e-16,
+        "rounding_scale": 1.85322284084689e-13,
+        "consistent": true,
+        "derived_ray_not_recovered_old_LS": true
+      },
+      {
+        "s": 0.00390625,
+        "absolute_difference": 3.9719143962168326e-17,
+        "rounding_scale": 1.85322284084689e-13,
+        "consistent": true,
+        "derived_ray_not_recovered_old_LS": true
+      }
+    ],
+    "no_reference_used_for_selection": true,
+    "requested_s": [
+      2.0,
+      4.0
+    ],
+    "evaluated_s": [
+      2.0,
+      4.0
+    ]
+  },
+  "reference_feedback": false,
+  "new_reference_native_scalar": "not persisted by reused verifier; prior qualified REF7 hash retained",
+  "actual_stopping_reason": "FINITE_PROFILE_INVENTORY_AND_TWO_NEW_POINTS_COMPLETE; strict and research physics gates failed",
+  "not_run": {
+    "extra_ray_points": "contract limit reached; closed continuation",
+    "new_p4_reference": "not authorized",
+    "maximum_0p7nm": "not authorized and capacity/discrete accuracy unknown",
+    "new_hidden_training": "finite profiles only",
+    "gradients_and_FD": "no new campaign",
+    "GPU": "CPU-only batch",
+    "old_p4_inverse": "closed",
+    "seed420620": "sealed"
+  },
+  "next_single_suggestion": "replace highly correlated global tanh features by one geometry-local orthonormal trace representation at the same finite dimension; only after a new review; no p4 inverse",
+  "suggestion_implemented": false
+}

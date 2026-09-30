@@ -1,0 +1,68 @@
+{
+  "review": {
+    "path": "docs/task042_neural_coarse_inverse/review_report_v11.md",
+    "actual_remote_oid": "52bfe9ca622481df8f686a92cbb632885610d0e8",
+    "server_structure_status": "PASS",
+    "tables": [
+      [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
+      ],
+      [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
+      ],
+      [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2
+      ]
+    ],
+    "math_renderers": 3,
+    "truncated": false,
+    "glyph_browser_visual_status": "NOT_OBSERVED",
+    "web_tool": "cache_miss",
+    "native_readonly_HTTP": 200,
+    "review_modified": false
+  },
+  "results_status": "PENDING_PUSH",
+  "browser_glyph_visual_status": "NOT_OBSERVED"
+}

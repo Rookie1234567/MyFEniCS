@@ -1,0 +1,294 @@
+{
+  "source": "87940891c12ccdec35fca39cd453ab9a29eeeda5",
+  "family": "ORTHONORMAL_NEURAL_FE_BASIS",
+  "basis": {
+    "family": "ORTHONORMAL_NEURAL_FE_BASIS",
+    "main_forward": "trace_EQUALS_Q_times_c",
+    "raw_gamma_writeback": false,
+    "reverse_row_QR": false,
+    "P_reconstruction": 8.139731508007171e-16,
+    "Q_orthogonality": 6.47418173488035e-16,
+    "rank_P": 1560,
+    "P_singular_range": [
+      8.027524479292013e-10,
+      20.20004615505261
+    ],
+    "saved_A_pairing": [
+      1.0488244965768677e-16,
+      2.702155562751747e-17,
+      0.0,
+      1.3845524249379399e-15,
+      1.0953326651413989e-15
+    ],
+    "saved_A_rejected": false,
+    "fresh_A_columns": 0,
+    "Hhat_condition": 13284.16302612138,
+    "basis_times_seconds": {
+      "P_householder_QR": 34.86304481001571,
+      "original_barS_columns": 1.932296436280012e-05,
+      "A_economic_QR_stationarity": 33.88533124199603
+    },
+    "numerical_full_column_rank": true,
+    "exact_full_space_optimum_claimed": false,
+    "payload_bytes": {
+      "Q": 452874240,
+      "R": 38937600,
+      "A": 452874240,
+      "U": 452874240,
+      "RA": 38937600
+    }
+  },
+  "original_point": {
+    "name": "ORIGIN",
+    "source_sha": "87940891c12ccdec35fca39cd453ab9a29eeeda5",
+    "state": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v14/task042_v14_decoder_20260930T062524338233Z/ORIGIN/physical_state.npz",
+      "sha256": "5011defeebb367feb4135db9d4af1257978b61ab88bc8d74e450727de6481e9b",
+      "hidden_sha256": "27ff1fee5fa9a7ea2fab190faa993ef98c3c5cb547140507752e7a5cc0bb7885",
+      "c_sha256": "6de56166709625ab24927e59ef9c6e2c8b69b4a0f3b09baf14136ca2518c26d9",
+      "trace_sha256": "cd41d8a6bca59f3ab779d6dcded7a81b808cceb21b035f8380cd729d8f6dc1bd",
+      "port_sha256": "ce2daafd1da08fe6aefcfa79f20fa52f2980155ff538942383948a2b57133b4f",
+      "z_sha256": "0408f6e3628cea8f1b0a348d5665cda009c0d5ae2178b7332beb95d8ff6b0ab2",
+      "residual_sha256": "e5a7c8591870276e71136b40647537597d59cf1f8ee365cc828db55e46693bfb",
+      "thin_residual_sha256": "f7d8202a37cfb310bd6512ee6442201800fc35873e16eec0e0b5ea2f44a4b291"
+    },
+    "numeric": {
+      "Phi": 0.31817998729368413,
+      "schur_relative": 0.7977217400744252,
+      "c_norm": 1.631097660359618,
+      "rhs_sha256": null,
+      "actual_vs_thin_fixed_rhs": 1.03266341959809e-12,
+      "stationarity_UHr_fixed_rhs": 1.7715670787227724e-12,
+      "AHr_absolute": 1.0829457593488602e-11,
+      "Hhat_solve_operation_relative": 1.8775730595557318e-17,
+      "port_absolute": 4.163337751203396e-17,
+      "rank_A": 1560,
+      "A_singular_range": [
+        0.005474006766698276,
+        995.7084842932156
+      ],
+      "numerical_full_column_rank": true,
+      "exact_optimum_claimed": false,
+      "correction_count": 0,
+      "initial_checks": {
+        "Phi": 0.31817998729368413,
+        "schur_relative": 0.7977217400744252,
+        "c_norm": 1.631097660359618,
+        "rhs_sha256": null,
+        "actual_vs_thin_fixed_rhs": 1.03266341959809e-12,
+        "stationarity_UHr_fixed_rhs": 1.7715670787227724e-12,
+        "AHr_absolute": 1.0829457593488602e-11,
+        "Hhat_solve_operation_relative": 1.8775730595557318e-17,
+        "port_absolute": 4.163337751203396e-17
+      },
+      "least_squares_seconds": 30.714645714033395,
+      "driver": "gelsd",
+      "cond": 1e-12,
+      "repeated_Phi": 0.31817998729368413,
+      "repeated_residual_difference": 0.0,
+      "thin_induced_Phi_scale": 8.237780599935279e-13,
+      "delta_i": 8.237780599935279e-13,
+      "decoder_gate": true
+    },
+    "audit": {
+      "schur_relative": 0.7977217400744252,
+      "augmented_relative": 0.3093595074581685,
+      "native_relative": 0.3093595074581685,
+      "original_total_augmented_relative": 0.10734755926488711,
+      "port_absolute": 4.163337751203396e-17,
+      "port_full_rhs_relative": 1.9528202371251032e-16,
+      "port_operation_relative": 5.750325860881535e-17,
+      "recovery_relative": 6.17480470860825e-13,
+      "schur_original_identity_operation_relative": 6.689649065308931e-13,
+      "slave_storage_max": 0.0,
+      "field_norm": 2.235389428082278,
+      "port_unknown_norm": 0.2464585647742384,
+      "strict_pass": false
+    },
+    "decoder_identity": {
+      "sha256": "a60fa21eae281049db72f3b27989f31f2a9d0fdd89820e35a3011c05c23dfc36",
+      "shape": [
+        18144,
+        1560
+      ],
+      "canonical_rows_restored": true,
+      "reverse_rows": false,
+      "source_P_sha256": "a64b74da8014aa929c9bfcf5675c10ca531cc0667de5161459bb7c81e253a0f0",
+      "temporary_regenerable_workspace": true
+    },
+    "historical": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v13/task042_v13_tangent_20260930T031852990115Z/INITIAL_V12_PHYSICAL.npz",
+      "sha256": "1fd18e562b9bdf2dbf248dfaccde35a5812a32ed3d071647022e21296c05cf15",
+      "z_sha256": "d03b29176483da60046755647f8bd8bb880137ab34b23a064e32f718929e3a7d",
+      "hidden_sha256": "27ff1fee5fa9a7ea2fab190faa993ef98c3c5cb547140507752e7a5cc0bb7885",
+      "gamma_sha256": "8e72c61f69f188ad0f7602f68d8fa058452992c9848e98089602daf3c7ed5140",
+      "port_sha256": "08bda2b51c091600814c7bf9c17c847c815c6e20d4ec34c658318927e542c313",
+      "network_parameters_sha256": "562efdd063ecabe99c45f507bd1224eeed7e993e617e0601c1085a63fbd70bee"
+    },
+    "historical_raw_Phi": 0.3181799855089551,
+    "s": 0.0
+  },
+  "manufactured": [
+    {
+      "name": "ORTHO-M1",
+      "numeric": {
+        "Phi": 2.860744132278772e-29,
+        "schur_relative": 7.564051999132175e-15,
+        "c_norm": 0.9999999999999972,
+        "rhs_sha256": null,
+        "actual_vs_thin_fixed_rhs": 1.2003229009092366e-15,
+        "stationarity_UHr_fixed_rhs": 7.521563592314707e-15,
+        "AHr_absolute": 2.438379927928994e-10,
+        "Hhat_solve_operation_relative": 1.3329600574228116e-17,
+        "port_absolute": 1.3838973300387967e-16,
+        "rank_A": 1560,
+        "A_singular_range": [
+          0.005474006766698276,
+          995.7084842932156
+        ],
+        "numerical_full_column_rank": true,
+        "exact_optimum_claimed": false,
+        "correction_count": 0,
+        "initial_checks": {
+          "Phi": 2.860744132278772e-29,
+          "schur_relative": 7.564051999132175e-15,
+          "c_norm": 0.9999999999999972,
+          "rhs_sha256": null,
+          "actual_vs_thin_fixed_rhs": 1.2003229009092366e-15,
+          "stationarity_UHr_fixed_rhs": 7.521563592314707e-15,
+          "AHr_absolute": 2.438379927928994e-10,
+          "Hhat_solve_operation_relative": 1.3329600574228116e-17,
+          "port_absolute": 1.3838973300387967e-16
+        },
+        "least_squares_seconds": 30.11109617492184,
+        "driver": "gelsd",
+        "cond": 1e-12,
+        "repeated_Phi": 2.860744132278772e-29,
+        "repeated_residual_difference": 0.0,
+        "thin_induced_Phi_scale": 9.799692371450225e-30,
+        "delta_i": 2.220446049250313e-14,
+        "decoder_gate": true
+      },
+      "known_z_relative": 2.313041974261292e-13,
+      "homogeneous_recovery_operation_relative": 9.054631301742115e-17,
+      "full_manufactured_RHS_from_original_action": true,
+      "reference_used": false,
+      "physical_b_overwritten": false,
+      "qualified": true,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v14/task042_v14_decoder_20260930T062524338233Z/ORIGIN/ORTHO-M1.npz",
+        "sha256": "27adf35b4c7a06351bffbd68494ef90b1d078a8c726c7ebbba182883636468a3",
+        "known_sha256": "100a73456aa8dfde4815ab7856d5e4d388fb27b7acaab1aab58140ec9c2ee1f9",
+        "rhs_sha256": "a3a633b7c6cc09184ec5a766ceb89a59ed48a1067fe81f2ac2d2fd76b63c9347",
+        "z_sha256": "17e66f1665294df2ee959fe6f95407d91b6b656c7ca9125851dc817e6fffff6c",
+        "c_sha256": "71de5b95952ce5b055feb33a871c95ca25b237994ae94ef3c15dc09ac4058fa9"
+      }
+    },
+    {
+      "name": "ORTHO-M2",
+      "numeric": {
+        "Phi": 6.983764051841157e-29,
+        "schur_relative": 1.1818429719587245e-14,
+        "c_norm": 1.6310976603595941,
+        "rhs_sha256": null,
+        "actual_vs_thin_fixed_rhs": 5.95712347793642e-15,
+        "stationarity_UHr_fixed_rhs": 1.0667495235555607e-14,
+        "AHr_absolute": 1.2861392284994293e-11,
+        "Hhat_solve_operation_relative": 1.3446221825226685e-17,
+        "port_absolute": 1.0414144237097668e-16,
+        "rank_A": 1560,
+        "A_singular_range": [
+          0.005474006766698276,
+          995.7084842932156
+        ],
+        "numerical_full_column_rank": true,
+        "exact_optimum_claimed": false,
+        "correction_count": 0,
+        "initial_checks": {
+          "Phi": 6.983764051841157e-29,
+          "schur_relative": 1.1818429719587245e-14,
+          "c_norm": 1.6310976603595941,
+          "rhs_sha256": null,
+          "actual_vs_thin_fixed_rhs": 5.95712347793642e-15,
+          "stationarity_UHr_fixed_rhs": 1.0667495235555607e-14,
+          "AHr_absolute": 1.2861392284994293e-11,
+          "Hhat_solve_operation_relative": 1.3446221825226685e-17,
+          "port_absolute": 1.0414144237097668e-16
+        },
+        "least_squares_seconds": 30.0151617230149,
+        "driver": "gelsd",
+        "cond": 1e-12,
+        "repeated_Phi": 6.983764051841157e-29,
+        "repeated_residual_difference": 0.0,
+        "thin_induced_Phi_scale": 8.814750522058536e-29,
+        "delta_i": 2.220446049250313e-14,
+        "decoder_gate": true
+      },
+      "known_z_relative": 3.520738055842119e-13,
+      "homogeneous_recovery_operation_relative": 7.856920354008874e-17,
+      "full_manufactured_RHS_from_original_action": true,
+      "reference_used": false,
+      "physical_b_overwritten": false,
+      "qualified": true,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v14/task042_v14_decoder_20260930T062524338233Z/ORIGIN/ORTHO-M2.npz",
+        "sha256": "fd11ac75600e54ecb1550a1f132a65da0d4f1af50b799cb2a83f1040d46d4393",
+        "known_sha256": "a47910bbae8c53b22bfc64b5dd04a0b616c521c8a4b1ad7fac389ec0ad5c4a7d",
+        "rhs_sha256": "75d5f8f6a77172abfd2afe5eda9b8ce7a7602812b7dcc351bd2da3c89cccfce8",
+        "z_sha256": "10e24a5a11fe513b7d6223d2afd25ac6cb48d000988775d0d4e1c47939e25da2",
+        "c_sha256": "18a3edab8d3905d69129deb7dc1e09578b8ee28fb3a20aed347f246e53cbd98d"
+      }
+    }
+  ],
+  "checker": {
+    "status": "EVIDENCE_CONSISTENT",
+    "mismatches": [],
+    "decoder_qualified": true,
+    "state_identity": {
+      "ORIGIN": true,
+      "TRIAL_4": true,
+      "TRIAL_3": true,
+      "TRIAL_2": true,
+      "TRIAL_1": true,
+      "TRIAL_0": true,
+      "NEW_S_2p0": true,
+      "NEW_S_4p0": true
+    },
+    "retained_Qc_identity": {
+      "ORIGIN": {
+        "qualified": true,
+        "actual_Qc_relative": 0.0,
+        "original_action_calls": 0,
+        "Q_sha256": "a60fa21eae281049db72f3b27989f31f2a9d0fdd89820e35a3011c05c23dfc36"
+      },
+      "NEW_S_4p0": {
+        "qualified": true,
+        "actual_Qc_relative": 0.0,
+        "original_action_calls": 0,
+        "Q_sha256": "d6d445ec15aab4845e715687de95f361e4f6e7cf04673b19576ef1e6562f1c91"
+      }
+    },
+    "strict_same_discrete": {
+      "V13_ORIGIN": false,
+      "V13_ACCEPTED": false,
+      "ORIGIN": false,
+      "TRIAL_4": false,
+      "TRIAL_3": false,
+      "TRIAL_2": false,
+      "TRIAL_1": false,
+      "TRIAL_0": false,
+      "NEW_S_2p0": false,
+      "NEW_S_4p0": false
+    },
+    "physical_qualified_candidates": 0,
+    "saved_statuses_not_trusted": true,
+    "micro_qualified": false,
+    "global_p4_factor_allowed": false,
+    "comparison_margin_observed_basis": 8.985839294872733e-08,
+    "new_reference_native_scalar": "not persisted by reused verifier; no candidate qualified; old REF7 qualification remains bound"
+  },
+  "old_V11_head_and_M2_gate": "FAIL_UNCHANGED",
+  "old_V12_scalar_FD": "FAIL_UNCHANGED",
+  "new_witnesses_not_old_M2": true,
+  "exact_VarPro_or_raw_MLP_writeback_claimed": false
+}

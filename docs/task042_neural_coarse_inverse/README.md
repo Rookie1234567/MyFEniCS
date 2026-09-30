@@ -1,3 +1,8 @@
+# 当前入口：V14正交trace与有限hidden位置重求
+
+最新正式执行合同：[Review V11](review_report_v11.md)；本轮已完成：[Response V14](response_v14.md)、[方法与结果](outcomes/orthonormal_trace_reprofile_v14.md)、[统一summary](outcomes/summary.md)、[raw Gate/分流](outcomes/records/qualification_and_dispatch_v14.json)、[run index](outcomes/records/run_index_v14.json)。新家族ORTHONORMAL_NEURAL_FE_BASIS，6固定+2有界新点、独立10状态，decoder合格但物理全部失败；等待review。下方旧最新导航/初始化命令为历史，不需要再执行Git准备或旧campaign。
+
+
 # 当前 V13 交付导航
 
 [Review V10](review_report_v10.md)是本批正式合同；[Response V13](response_v13.md)、[切向／响应／联合补偿结果](outcomes/tangent_scale_head_compensation_v13.md)、[summary](outcomes/summary.md)、[run index](outcomes/records/run_index_v13.json)为最新入口。三个固定头切向通过新向量Gate；B收益不可分辨后继续C，两个合格联合方向实际接受1步，J相对改善仅7.149e-7，按门限不再继续。独立一次FE验证3个冻结状态，原Schur约0.798、native约0.309、散射误差约0.734，仍不合格。旧V11头1e-8、V12标量FD及全部负结果保留，不称精确VarPro或神经求解成功。一次末尾JSON错误仅恢复已保存证据，实际候选source与恢复source分列。

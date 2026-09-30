@@ -1,0 +1,26 @@
+{
+  "docs/task042_neural_coarse_inverse/outcomes/summary.md": {
+    "before_sha256": "1dcd08af2f4cbe6bc93407b607184aa4cd7b584c3ad2ee7871064dac3261f0ef",
+    "legacy_body_preserved": true
+  },
+  "docs/task042_neural_coarse_inverse/outcomes/test_summary.md": {
+    "before_sha256": "9a28caf6a8735db60181bde5576eaab35656d2317c4339e9ce5b06b8ee285f57",
+    "legacy_body_preserved": true
+  },
+  "docs/task042_neural_coarse_inverse/outcomes/changed_files.md": {
+    "before_sha256": "a07f2791210dff4449739ac3c28715fb3d11ee25b9e26c55aa79e592be4aa4da",
+    "legacy_body_preserved": true
+  },
+  "docs/task042_neural_coarse_inverse/README.md": {
+    "before_sha256": "25e565b2e5d0dce3840ca6b0fdf607d8e5a36d8948800627be40ffd861b75c02",
+    "legacy_body_preserved": true
+  },
+  "docs/development_progress.md": {
+    "before_sha256": "8103e0434007d2dfa39a45df78e6eceabc7fb44c83434f719427fb5e4d48df64",
+    "legacy_body_preserved": true
+  },
+  "docs/development_model_registry.md": {
+    "before_sha256": "f33e4df138c2d400e5f65caa91a5449a48c73f4550090739fde0a16f3935327a",
+    "legacy_body_preserved": true
+  }
+}

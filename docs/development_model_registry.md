@@ -1,3 +1,13 @@
+# Task042 V14模型登记：ORTHONORMAL_NEURAL_FE_BASIS，research-only
+
+| 模型／物理身份 | 实际方法和目的 | measured结果／资格 |
+|---|---|---|
+| task042_v14_fixed_0p7nm_p3_micro；0.7nm/384hex/p3/q15、true3D notch、40ports、full34050/trace18144 | 8576实hidden生成1560复方向，QR直接Qc；同位置重求头与有限射线对照；不是纯MLP推理或准确场监督拟合 | 6+2profile/10audit，rank1560；最终Phi.317897055，Schur.797366986/native.309221932，散射E/curl.733565775/.733670474，**NOT_QUALIFIED** |
+| canonical材料与成本 | Si n=.999885140474+4.32477054e-6i、epsilon=n*n、USER V1；source 87940891c12ccdec35fca39cd453ab9a29eeeda5；Q/c与全部state hash登记 | formal2510.272780s/树peak3.021GiB、ownswap0、shared-workstation；R/T/A仅diagnostic，目标48小时unknown |
+
+[身份与数组](task042_neural_coarse_inverse/outcomes/records/plan_and_input_identity_v14.json)、[原字段比较](task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v14.csv)、[Response](task042_neural_coarse_inverse/response_v14.md)。old p4路线closed；不覆盖旧模型、不改生产default，master merge未批准。以下历史原文保留。
+
+
 # Task39extra V6最新结果：递归粗逆未资格化，V5双模型成功基线保留
 
 G1/G2已完成，旧新C真实负结果保留；用户补充授权继续有依据的p4/p2诊断，G5与response_v8尚未最终收口。该授权超出V6原停止分流，不改变物理、精度或安全线；不复跑G1/G2。

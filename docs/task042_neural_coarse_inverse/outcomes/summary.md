@@ -1,3 +1,26 @@
+# V14最新交付：新decoder合格，六固定点与两延伸点仍无物理资格
+
+直接正交decoder把高相关神经特征变成稳定的有限元trace组合，再由原方程求c及40端口。它保持原空间/方程，付出薄矩阵构造、QR/LS与Q存储成本；不是纯MLP推理，也不是旧头Gate通过。[Response V14](../response_v14.md)、[完整方法与结果](orthonormal_trace_reprofile_v14.md)。下方旧“最新”标题保留为历史。
+
+| 同一0.7nm／384hex／p3／q15模型；measured/derived、无量纲 | 原Phi／Schur／native | 散射E／scaled-curl | 资格／原因与证据 |
+|---|---|---|---|
+| 同hidden主正交原点 | 0.318179987／0.797721740／0.309359507 | 0.734256828／0.734361605 | decoder PASS，原方程/场FAIL；换坐标不扩大空间 |
+| O1两个新制造见证 | 已知z差2.31e-13／3.52e-13，齐次恢复约1e-16 | 只验证数值链，不是物理解 | PASS；[decoder raw](records/decoder_checks_v14.json)；旧M2/头/FD FAIL不改 |
+| 六固定点完整头重求，trial0 | 0.318108327／0.797631904／0.309324669 | 0.734081674／0.734186432 | 消除旧一阶头过冲；相对新原点Phi降2.25e-4，准入O3 |
+| O3实际s2/s4，最终s4 | **0.317897055／0.797366986／0.309221932** | **0.733565775／0.733670474** | 只约0.0889%Phi与0.0941%场改善；研究25%/0.5及严格1e-6/1e-4均FAIL |
+| O4十去重状态 | 原增广0.309222、独立native0.107300；最终40复通道0.0493651 | total E/curl0.0767639/0.0767763、selected E/H0.08545/0.066925 | 0/10合格，`OBJECTIVE_ONLY_IMPROVEMENT`；[对照CSV](records/candidate_comparison_v14.csv) |
+
+| 资源／身份／边界 | 实际值与限制 |
+|---|---|
+| 方法与数据 | 新ORTHONORMAL_NEURAL_FE_BASIS；P/A rank1560/1560，trace18144、内部13824、slave2082、full34050、40端口；材料canonical USER V1，Si0.999885140474+4.32477054e-6i；[身份](records/plan_and_input_identity_v14.json) |
+| R/T/A | R00_s/R00_p/R00_total0.0849740887/1.27274e-7/0.0849742160；R_total/T_total/A_balance/A_volume0.0849762742/0.7981065222/0.1169172036/0.00485516192，能量误差0.112062，**全部未资格化诊断** |
+|全过程正式成本 | wall2510.272780s、采样同时树峰3243409408B≈3.021GiB，ownswap0/VRAM0；9套基/11LS/12551作用/20audit；所有后代清场，16/12GiB采样监督、无cgroup连续限额声明 |
+| provenance | 三run真实source`87940891c12ccdec35fca39cd453ab9a29eeeda5`；formal历史下界14670.412103s，辅助未知仍未知；未用文档HEAD代运行源码。REF7仅全队列冻结后读取 |
+| 系统影响 | shared-workstation、实时单核/MPI1/数学Torch1/Loader0，未见压力stop，邻任务可比阶段速率unknown/性能INCONCLUSIVE；邻任务未调整 |
+| 未运行 | 新p4参考/最大模型/GPU/全hidden训练/同射线更多点/旧FD与p4逆/seed420620；p/h、Hybrid、M、MPI、波长未扫描，micro不可外推48小时 |
+| 收口／merge | 坐标稳定与有限头重求有效，实际场无实质进展；关闭这条同射线继续。唯一建议为未来同容量几何局部trace表示对照，未实施。全部研究-only，master merge未批准 |
+
+
 # V13 最新交付：独立切向可信，联合更新只有极小目标函数改善
 
 本批在原0.7nm、384hex/p3、完整40复端口模型上，先核对“隐藏参数改变时，全部边／面有限元积分量的一阶变化”，再同步改变输出系数以补偿大项抵消。代价是一套薄基QR和一次三RHS最小二乘；实际网络与原方程决定接受，不构造全局逆，也不是精确变量投影。新切向资格不改变V11头1e-8或V12标量FD的旧FAIL。[Response V13](../response_v13.md)、[完整方法和结果](tangent_scale_head_compensation_v13.md)。下方旧“最新”标题是历史原文。

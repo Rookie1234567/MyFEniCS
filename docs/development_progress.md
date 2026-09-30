@@ -1,3 +1,13 @@
+# Task042 V14：正交decoder完成，物理资格仍为负
+
+| 执行分支／固定0.7nm micro | 完成／实际结果 | 时间／内存／后续 |
+|---|---|---|
+| task42_neural_coarse_inverse；Review V11→V14 | O0–O4，6+2 profile、10状态，直接Qc decoder与2制造PASS；Schur/native0.797366986/0.309221932，散射E/curl0.733565775/0.733670474，0/10严格合格 | formal2510.272780s、sampled tree3243409408B、swap0/VRAM0、shared-workstation；source 87940891c12ccdec35fca39cd453ab9a29eeeda5 |
+| 神经/表示贡献 | 同hidden完整头避免旧一阶过冲，有限hidden原Phi仅降0.088922%，场约0.0941%，无研究正信号；原约0.798平台未突破 | 本射线队列收口；未来仅建议同维几何局部trace表示对照，未实施、merge未批准 |
+
+[Response V14](task042_neural_coarse_inverse/response_v14.md)、[完整证据](task042_neural_coarse_inverse/outcomes/orthonormal_trace_reprofile_v14.md)。canonical材料/原方程/40端口保留，无global p4因子或fallback；旧负结果与账不清零。以下总账历史原文保留。
+
+
 # Task39extra V6最新结果：递归粗逆未资格化，V5双模型成功基线保留
 
 G1/G2已完成，旧新C真实负结果保留；用户补充授权继续有依据的p4/p2诊断，G5与response_v8尚未最终收口。该授权超出V6原停止分流，不改变物理、精度或安全线；不复跑G1/G2。

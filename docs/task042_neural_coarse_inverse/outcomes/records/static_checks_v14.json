@@ -1,0 +1,287 @@
+{
+  "status": "PASS",
+  "issues": [],
+  "files": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v11.md",
+      "sha256": "de7a6e5ee10049aa68d30e9e512081f3157459bfecaf17640a0c5e1ee43e8a62",
+      "scope": "complete_file",
+      "tables": [
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4
+        ],
+        [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ]
+      ],
+      "math_fences": 3,
+      "missing_links": [],
+      "control_characters": []
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v14.md",
+      "sha256": "fc4cca32ce70924041c7f350f348eb06bcdb69dd025cb095573597e7090b246f",
+      "scope": "complete_file",
+      "tables": [
+        [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      ],
+      "math_fences": 0,
+      "missing_links": [],
+      "control_characters": []
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/orthonormal_trace_reprofile_v14.md",
+      "sha256": "9f7b8296e32fe22d5ebefc668a0f501e8dd50920e8964b8c671df68f16d33b99",
+      "scope": "complete_file",
+      "tables": [
+        [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        [
+          4,
+          4,
+          4,
+          4
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ]
+      ],
+      "math_fences": 2,
+      "missing_links": [],
+      "control_characters": []
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "a79fa1894fa452961a8097b334e6f2d9e16d9c99a7f398a7877f9fdc96f744b9",
+      "scope": "new_V14_prefix; inherited_body_byte_preserved_not_recleaned",
+      "tables": [
+        [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4
+        ],
+        [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ]
+      ],
+      "math_fences": 0,
+      "missing_links": [],
+      "control_characters": []
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "sha256": "6fce4bf6c7cd66689410e366073997dbc63ea4c231279f034303009795ccf784",
+      "scope": "new_V14_prefix; inherited_body_byte_preserved_not_recleaned",
+      "tables": [],
+      "math_fences": 0,
+      "missing_links": [],
+      "control_characters": []
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "aa1a1cceb1907e0abf76159dc3c31c93330c5f2837dbe42b29bce42a092f4c40",
+      "scope": "new_V14_prefix; inherited_body_byte_preserved_not_recleaned",
+      "tables": [
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ]
+      ],
+      "math_fences": 0,
+      "missing_links": [],
+      "control_characters": []
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "cee1eb33755925698e3abc0ad35f725261ed696700ad727f98425e51caf4cbbe",
+      "scope": "new_V14_prefix; inherited_body_byte_preserved_not_recleaned",
+      "tables": [
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ]
+      ],
+      "math_fences": 0,
+      "missing_links": [],
+      "control_characters": []
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "6deafc01c625fcdaf09d2c317bbdf0298a34941d6ba7e612d8d27d05d317487e",
+      "scope": "new_V14_prefix; inherited_body_byte_preserved_not_recleaned",
+      "tables": [
+        [
+          3,
+          3,
+          3,
+          3
+        ]
+      ],
+      "math_fences": 0,
+      "missing_links": [],
+      "control_characters": []
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "41164847927e31f5c559c4d0cf9d640b1efb1f2f2d9990bab9fc1da9934a62bd",
+      "scope": "new_V14_prefix; inherited_body_byte_preserved_not_recleaned",
+      "tables": [
+        [
+          3,
+          3,
+          3,
+          3
+        ]
+      ],
+      "math_fences": 0,
+      "missing_links": [],
+      "control_characters": []
+    }
+  ],
+  "checked_v14_JSON_files": 12,
+  "journal_rows": 69,
+  "local_source_sha": "4efc94aff427bfbc6d77852ddfe4cc55bff9fd34",
+  "current_git_status": " M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042_neural_coarse_inverse/README.md\n M docs/task042_neural_coarse_inverse/outcomes/changed_files.md\n M docs/task042_neural_coarse_inverse/outcomes/summary.md\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n?? docs/task042_neural_coarse_inverse/outcomes/orthonormal_trace_reprofile_v14.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/basis_sensitivity_v14.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v14.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/channel_observables_v14.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/decoder_checks_v14.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/legacy_body_preservation_v14.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/plan_and_input_identity_v14.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/profile_points_v14.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/progress_journal_v14.jsonl\n?? docs/task042_neural_coarse_inverse/outcomes/records/protected_history_v14.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v14.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v14.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v14.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v14.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/selected_fields_v14.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v14.json\n?? docs/task042_neural_coarse_inverse/response_v14.md\n",
+  "compileall": "PASS",
+  "bash_activation_syntax": "PASS",
+  "diff_check": "PASS",
+  "ruff": "NOT_AVAILABLE",
+  "full_repository_pytest": "NOT_RUN_scoped_shared_MPI1_batch",
+  "MPI2_MPI4": "NOT_RUN_not_authorized",
+  "CI": "NOT_CLAIMED",
+  "owned_doc_prepublication_fix": "Python TeX string escaping control characters corrected in two new math fences; no review changed",
+  "reviewer_document_modified": false
+}

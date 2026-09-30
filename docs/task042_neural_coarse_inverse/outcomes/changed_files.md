@@ -1,3 +1,16 @@
+# V14变化与selective merge依赖
+
+| 依赖组 | 变化／数值行为 | 验证／推荐顺序与边界 |
+|---|---|---|
+| production numerical/core | 原Maxwell/材料/MPC/Floquet/DtN/恢复/普通默认无改变 | 没有新生产求解资格，不能提升研究decoder为default |
+| reusable runner/writer | task042_shared原子小元数据边界，V14显式分支与独立deadline/tree监督 | C1及22 focused tests；先审writer，再opt-in窗口；不改邻任务合同 |
+| research-only numerical | orthonormal_trace_reprofile/study/window：直接Qc、固定薄LS、有限profile | core→study→入口；source8794089…的O1–O4；场FAIL，不是精确VarPro |
+| research IO/runner | orthonormal_trace_reprofile IO/薄runner，run_case/profile最小dispatcher，固定plan与3dat | 显式新family/schema/source/hash；一套workspace，6+2固定库存，无隐式参数扫描 |
+| checker/tests | orthonormal_trace_evidence_check、薄check_task042_v14、两组pure反例 | C3只从raw/哈希/Qc重算，无PDE；22 tests，EVIDENCE_CONSISTENT不是solver PASS |
+| compact evidence/docs | response_v14、outcome、records/journal、README/summary/tests以及Task042两总账新条目 | 旧正文/历史原文保留；审批后仅按依赖选择，当前merge未批准 |
+| do-not-merge | P/Q/A/workspace/action/moment/REF7、results/artifacts、env/JIT/TMP/cache | 全ignored NN-Lab；保留origin/selected Q，历史负结果不删除，不提交大数组 |
+
+
 # V13 变化与selective merge依赖边界
 
 | 分组 | 本批变化／数值行为 | 依赖、测试及fresh证据 | 建议合入顺序／边界 |

@@ -1,0 +1,469 @@
+{
+  "formal_runs": [
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v14_decoder_20260930T062524338233Z",
+      "stage": "V14-DECODER",
+      "source_sha": "87940891c12ccdec35fca39cd453ab9a29eeeda5",
+      "cpu": 0,
+      "input_sha256": "0c3cb05860013e67eb18587299a655e6e0a3fc1582675fcceefb9fb24c3d8e57",
+      "resolved_sha256": "412c7376ad0c499807fbd436837507484b04ae56ea6d5334cb36a17860d5a5bc",
+      "manifest_sha256": "cbc64c24b8b80a85feed837c71a5abcdf78b6902d03bcce78b0bda5afc694f5e",
+      "summary_sha256": "d98e17b1e1a6e1f9db43598413d4abdf46f9eb1a9edb07a504160cdf0d1802a1",
+      "resource_baseline_sha256": "92b4521bb633861528dc5ab0a5dea751157a625c8bfcf83681158e97b75970fd",
+      "result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v14/task042_v14_decoder_20260930T062524338233Z/stage_result.json",
+        "sha256": "dc6911d11410157422e47e97cff9da3d48cf1c322e5a63cb9e5380582a158ca6"
+      },
+      "classification": "COMPLETED",
+      "supervised_wall_seconds": 507.13022444199305,
+      "RSS_peak_bytes": 3052736512,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "budget_counts": {
+        "basis_evaluations": 2,
+        "thin_LS_calls": 4,
+        "thin_RHS": 4,
+        "original_audits": 2,
+        "new_profiles": 0,
+        "field_states": 0
+      },
+      "actions": {
+        "S": 0,
+        "SH": 0,
+        "audit": 0
+      },
+      "all_batch_equivalent_actions": 1585,
+      "action_costs_seconds": {
+        "S": 0.0,
+        "SH": 0.0,
+        "audit": 0.0
+      },
+      "worker_wall_seconds": 503.6388760609552,
+      "MemAvailable_min_bytes": 946424692736,
+      "PSI_avg10_max": 0.0,
+      "warnings": 0,
+      "shared_workstation": true
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v14_profile_20260930T063428471748Z",
+      "stage": "V14-PROFILE",
+      "source_sha": "87940891c12ccdec35fca39cd453ab9a29eeeda5",
+      "cpu": 0,
+      "input_sha256": "7d0034ee44bf58543212102f6a79f6034d6cf42fccd46620013eee595bc3369d",
+      "resolved_sha256": "08b22d084defacb768cba43102b9d09425907c568a4a231e554f7ac297374d01",
+      "manifest_sha256": "b4276791d3b5a2e66ffd7b781741503154e5c463eb65881be243069b9cf7ddac",
+      "summary_sha256": "541eaeb4d69ebe9eef5a47b8f225ed6ab2f5620ee8dcd9ba00699b0136da7338",
+      "resource_baseline_sha256": "7ff3ba8f002335ade7ed38900179e0621b965b6a27dc55df5afc47f916aa6e52",
+      "result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v14/task042_v14_profile_20260930T063428471748Z/stage_result.json",
+        "sha256": "a767afc8f1ffd0c4a93d3ff2f018a95be98ad97679cc816ceda13cf9f99ac2be"
+      },
+      "classification": "COMPLETED",
+      "supervised_wall_seconds": 1965.4700913910056,
+      "RSS_peak_bytes": 3243409408,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "budget_counts": {
+        "basis_evaluations": 9,
+        "thin_LS_calls": 11,
+        "thin_RHS": 11,
+        "original_audits": 9,
+        "new_profiles": 2,
+        "field_states": 0
+      },
+      "actions": {
+        "S": 0,
+        "SH": 0,
+        "audit": 0
+      },
+      "all_batch_equivalent_actions": 12540,
+      "action_costs_seconds": {
+        "S": 0.0,
+        "SH": 0.0,
+        "audit": 0.0
+      },
+      "worker_wall_seconds": 1961.548668778967,
+      "MemAvailable_min_bytes": 943196012544,
+      "PSI_avg10_max": 0.0,
+      "warnings": 0,
+      "shared_workstation": true
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v14_verify_20260930T070954751422Z",
+      "stage": "V14-VERIFY",
+      "source_sha": "87940891c12ccdec35fca39cd453ab9a29eeeda5",
+      "cpu": 0,
+      "input_sha256": "340883369722eeaeb351b56740bcdf2bb544ecdff98d8121ee190953f45f2aa8",
+      "resolved_sha256": "c11e0e5c4ad5b72810474f8e2ce67e2b0722bbbcd561c610afc314650d9e673a",
+      "manifest_sha256": "2fef7009ca4e176cc0c54e14b79d6fddf33b083c200a6636fd4f284e0673be25",
+      "summary_sha256": "24e5771ac3b2108c551f61c8c907ec1f91b0770034412c93b7cb6d586d36754b",
+      "resource_baseline_sha256": "7a350bc5c34187cd81d73862f2aef66b0e9788ece8389c80be05cdd968c470a6",
+      "result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v14/task042_v14_verify_20260930T070954751422Z/stage_result.json",
+        "sha256": "c400c247f8df528098c329fe4abfe7629b9457edefd568e8ab699a576f7821bf"
+      },
+      "classification": "COMPLETED",
+      "supervised_wall_seconds": 37.67246428702492,
+      "RSS_peak_bytes": 682049536,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "budget_counts": {
+        "basis_evaluations": 9,
+        "thin_LS_calls": 11,
+        "thin_RHS": 11,
+        "original_audits": 20,
+        "new_profiles": 2,
+        "field_states": 10
+      },
+      "actions": {
+        "S": 11,
+        "SH": 0,
+        "audit": 11
+      },
+      "all_batch_equivalent_actions": 12551,
+      "action_costs_seconds": {
+        "S": 1.185205091140233,
+        "SH": 0.0,
+        "audit": 5.241152230766602
+      },
+      "worker_wall_seconds": 33.59519431798253,
+      "MemAvailable_min_bytes": 947080900608,
+      "PSI_avg10_max": 0.0,
+      "warnings": 0,
+      "shared_workstation": true
+    }
+  ],
+  "formal_supervised_wall_seconds": 2510.2727801200235,
+  "simultaneous_sampled_tree_peak_bytes": 3243409408,
+  "scope": "launcher+ML+pure/FE+JIT/compiler+all descendants; .5s sampled, not continuous kernel cap",
+  "own_swap_peak_bytes": 0,
+  "own_VRAM_bytes": 0,
+  "cgroup_delegated": false,
+  "resident_planning_upper_bytes": 7600000000,
+  "RSS_warning_bytes": 12884901888,
+  "RSS_hard_bytes": 17179869184,
+  "auxiliary_runs": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v14/final_focused_checks/summary.json",
+      "sha256": "76c84f9bc219449de02ee304b0aa11747913348606efd96145b60a645297bd76",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 2.796301969094202,
+      "RSS_peak_bytes": 88506368,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v14/final_focused_checks_Qc/summary.json",
+      "sha256": "6d67584e2a2e7474e8f74ff544ae23dc57a807f8567608c0fec7da4b4a464995",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 7.885403199004941,
+      "RSS_peak_bytes": 515796992,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v14/tests_decoder_C2/summary.json",
+      "sha256": "95f1efd6221e1736fa8542dd8dd4c336d45894e8843c0388d5106697622580e0",
+      "classification": "WORKER_FAILED",
+      "elapsed_seconds": 3.4142213170416653,
+      "RSS_peak_bytes": 84963328,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v14/tests_decoder_C2_retest/summary.json",
+      "sha256": "70593a226576067a5644b1aa4629b677f7265433b87dfbf66b8e8620b509428e",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 2.2092484770109877,
+      "RSS_peak_bytes": 84623360,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v14/tests_writer_watchdog/summary.json",
+      "sha256": "c335d390c4ce01322b9a03f5e25ef42f1665853a52726d9f102bfae5de9ee1f1",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 7.504892582888715,
+      "RSS_peak_bytes": 199081984,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    }
+  ],
+  "aux_supervised_wall_lower_bound_seconds": 23.81006754504051,
+  "thin_child_costs": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v14/task042_v14_decoder_20260930T062524338233Z/ORIGIN/child_result.json",
+      "sha256": "ca7ddebb0ad2ed5646986ab9828cd309225b2be772e6f7e0604ae5e596e8734a",
+      "name": "ORIGIN",
+      "child_wall_seconds": 205.23131290089805,
+      "basis_times_seconds": {
+        "P_householder_QR": 34.86304481001571,
+        "original_barS_columns": 1.932296436280012e-05,
+        "A_economic_QR_stationarity": 33.88533124199603
+      },
+      "physical_LS_seconds": 30.714645714033395,
+      "action_seconds": {
+        "S": 1.8772506422828883,
+        "SH": 0.0,
+        "audit": 0.4449379720026627
+      },
+      "counts": {
+        "basis_evaluations": 1,
+        "thin_LS_calls": 3,
+        "thin_RHS": 3,
+        "original_audits": 1,
+        "new_profiles": 0,
+        "field_states": 0
+      },
+      "action_calls": 20
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v14/task042_v14_decoder_20260930T062524338233Z/REVERSE_ROWS/child_result.json",
+      "sha256": "786c48e4b40b1bf3558b29a24eec3f37af3e47045930ff3ac4600134bcbb3c24",
+      "name": "REVERSE_ROWS",
+      "child_wall_seconds": 283.5223714350723,
+      "basis_times_seconds": {
+        "P_householder_QR": 33.65135159809142,
+        "original_barS_columns": 161.5147205219837,
+        "A_economic_QR_stationarity": 28.769247542019002
+      },
+      "physical_LS_seconds": 24.607168343034573,
+      "action_seconds": {
+        "S": 151.8036062536994,
+        "SH": 0.0,
+        "audit": 0.9975498770363629
+      },
+      "counts": {
+        "basis_evaluations": 2,
+        "thin_LS_calls": 4,
+        "thin_RHS": 4,
+        "original_audits": 2,
+        "new_profiles": 0,
+        "field_states": 0
+      },
+      "action_calls": 1565
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v14/task042_v14_profile_20260930T063428471748Z/NEW_S_2p0/child_result.json",
+      "sha256": "03f1641f0862315ddf547cf8500ff1a943b12c7a228942093b91720d1f1b1f06",
+      "name": "NEW_S_2p0",
+      "child_wall_seconds": 260.32897649507504,
+      "basis_times_seconds": {
+        "P_householder_QR": 28.980968776042573,
+        "original_barS_columns": 147.08973874605726,
+        "A_economic_QR_stationarity": 28.275167897925712
+      },
+      "physical_LS_seconds": 25.09185627195984,
+      "action_seconds": {
+        "S": 138.59659015771467,
+        "SH": 0.0,
+        "audit": 0.19998307002242655
+      },
+      "counts": {
+        "basis_evaluations": 8,
+        "thin_LS_calls": 10,
+        "thin_RHS": 10,
+        "original_audits": 8,
+        "new_profiles": 1,
+        "field_states": 0
+      },
+      "action_calls": 1565
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v14/task042_v14_profile_20260930T063428471748Z/NEW_S_4p0/child_result.json",
+      "sha256": "e447c093e8781352b27840fd1f6ccab2806565f8bcddf9f6f4393c49f38ea967",
+      "name": "NEW_S_4p0",
+      "child_wall_seconds": 264.2764576089103,
+      "basis_times_seconds": {
+        "P_householder_QR": 28.305626356974244,
+        "original_barS_columns": 151.4204134370666,
+        "A_economic_QR_stationarity": 28.436675630044192
+      },
+      "physical_LS_seconds": 25.12654757592827,
+      "action_seconds": {
+        "S": 143.01632232347038,
+        "SH": 0.0,
+        "audit": 0.19890413689427078
+      },
+      "counts": {
+        "basis_evaluations": 9,
+        "thin_LS_calls": 11,
+        "thin_RHS": 11,
+        "original_audits": 9,
+        "new_profiles": 2,
+        "field_states": 0
+      },
+      "action_calls": 1565
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v14/task042_v14_profile_20260930T063428471748Z/TRIAL_0/child_result.json",
+      "sha256": "008d8beb1e7fae5f7073d3e7723ac976280435c47fd4835bd80f2d65a0616aba",
+      "name": "TRIAL_0",
+      "child_wall_seconds": 263.28408223495353,
+      "basis_times_seconds": {
+        "P_householder_QR": 28.482469576061703,
+        "original_barS_columns": 147.55674692709,
+        "A_economic_QR_stationarity": 31.145279241958633
+      },
+      "physical_LS_seconds": 24.569180571008474,
+      "action_seconds": {
+        "S": 139.60772887594067,
+        "SH": 0.0,
+        "audit": 0.23203489603474736
+      },
+      "counts": {
+        "basis_evaluations": 7,
+        "thin_LS_calls": 9,
+        "thin_RHS": 9,
+        "original_audits": 7,
+        "new_profiles": 0,
+        "field_states": 0
+      },
+      "action_calls": 1565
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v14/task042_v14_profile_20260930T063428471748Z/TRIAL_1/child_result.json",
+      "sha256": "41d04444d02f21b5eae98ad03db4da685f489783aa3b394eeafc7f632901ade1",
+      "name": "TRIAL_1",
+      "child_wall_seconds": 257.23084192501847,
+      "basis_times_seconds": {
+        "P_householder_QR": 29.19825076602865,
+        "original_barS_columns": 144.51880684506614,
+        "A_economic_QR_stationarity": 29.378546871012077
+      },
+      "physical_LS_seconds": 23.848144512972794,
+      "action_seconds": {
+        "S": 137.14643410255667,
+        "SH": 0.0,
+        "audit": 0.24773670092690736
+      },
+      "counts": {
+        "basis_evaluations": 6,
+        "thin_LS_calls": 8,
+        "thin_RHS": 8,
+        "original_audits": 6,
+        "new_profiles": 0,
+        "field_states": 0
+      },
+      "action_calls": 1565
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v14/task042_v14_profile_20260930T063428471748Z/TRIAL_2/child_result.json",
+      "sha256": "3272466490d18e6295bbc77d7bfa3174e386c61849cd67087095f12c2026cdde",
+      "name": "TRIAL_2",
+      "child_wall_seconds": 264.51743828400504,
+      "basis_times_seconds": {
+        "P_householder_QR": 29.045409105019644,
+        "original_barS_columns": 151.52765553304926,
+        "A_economic_QR_stationarity": 28.41608615696896
+      },
+      "physical_LS_seconds": 24.49874137691222,
+      "action_seconds": {
+        "S": 143.10996627958957,
+        "SH": 0.0,
+        "audit": 0.3953777590068057
+      },
+      "counts": {
+        "basis_evaluations": 5,
+        "thin_LS_calls": 7,
+        "thin_RHS": 7,
+        "original_audits": 5,
+        "new_profiles": 0,
+        "field_states": 0
+      },
+      "action_calls": 1565
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v14/task042_v14_profile_20260930T063428471748Z/TRIAL_3/child_result.json",
+      "sha256": "f7ded0ed1e186e272ea8bfff41cc5d3ee279b496901128c5f3be84b824674580",
+      "name": "TRIAL_3",
+      "child_wall_seconds": 263.25217201106716,
+      "basis_times_seconds": {
+        "P_householder_QR": 28.653520422056317,
+        "original_barS_columns": 149.52529485698324,
+        "A_economic_QR_stationarity": 28.78858702396974
+      },
+      "physical_LS_seconds": 24.90967467892915,
+      "action_seconds": {
+        "S": 141.15795134624932,
+        "SH": 0.0,
+        "audit": 0.9169946799520403
+      },
+      "counts": {
+        "basis_evaluations": 4,
+        "thin_LS_calls": 6,
+        "thin_RHS": 6,
+        "original_audits": 4,
+        "new_profiles": 0,
+        "field_states": 0
+      },
+      "action_calls": 1565
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v14/task042_v14_profile_20260930T063428471748Z/TRIAL_4/child_result.json",
+      "sha256": "dea20a395d780a69ea1815e5e3c1b630e6a90d7845d252068bfe60319764ca4b",
+      "name": "TRIAL_4",
+      "child_wall_seconds": 262.11214697698597,
+      "basis_times_seconds": {
+        "P_householder_QR": 29.209682438056916,
+        "original_barS_columns": 148.1926988409832,
+        "A_economic_QR_stationarity": 29.355137230013497
+      },
+      "physical_LS_seconds": 24.066531385062262,
+      "action_seconds": {
+        "S": 139.9830878970679,
+        "SH": 0.0,
+        "audit": 0.2514693330740556
+      },
+      "counts": {
+        "basis_evaluations": 3,
+        "thin_LS_calls": 5,
+        "thin_RHS": 5,
+        "original_audits": 3,
+        "new_profiles": 0,
+        "field_states": 0
+      },
+      "action_calls": 1565
+    }
+  ],
+  "nested_times_not_added_to_formal_wall": true,
+  "assembly_or_factor_this_batch": "no new global S/p4 factor; original action reused; independent native FE action setup included in VERIFY wall",
+  "V6_to_V13_formal_lower_bound_seconds": 12160.139323354815,
+  "V6_to_V14_formal_lower_bound_seconds": 14670.412103474839,
+  "historical_auxiliary_unknown_preserved": true,
+  "unmeasured_helpers_included_in_total_elapsed_not_fabricated": true,
+  "window": {
+    "schema": "task042.autonomous-window.v14",
+    "start_utc": "2026-09-30T05:38:08+00:00",
+    "start_monotonic": 671682.8608856611,
+    "stop_heavy_utc": "2026-09-30T09:23:08+00:00",
+    "deadline_utc": "2026-09-30T09:38:08+00:00",
+    "heavy_limit_seconds": 13500,
+    "total_limit_seconds": 14400,
+    "cleanup_reserve_seconds": 900,
+    "review_expected_commit": "52bfe9ca622481df8f686a92cbb632885610d0e8",
+    "prior_v13_head": "a81c5e49e37c0c3623f77565af448b40bb9fb296",
+    "elapsed_seconds": 8179.341991186142,
+    "heavy_remaining_seconds": 5320.658008813858,
+    "total_remaining_seconds": 6220.658008813858
+  },
+  "new_artifact_storage": {
+    "logical_regular_bytes": 922132825,
+    "allocated_unique_regular_bytes": 922353664,
+    "symlink_targets_not_recopied": true
+  },
+  "total_task042_artifact_storage": {
+    "logical_regular_bytes": 6718962750,
+    "allocated_unique_regular_bytes": 6720589824,
+    "symlink_targets_not_recopied": true
+  },
+  "publication_and_docs_cost": "included in total elapsed; not final yet",
+  "performance_conclusion": "INCONCLUSIVE shared-workstation; load inventory changed; no zero interference claim",
+  "resource_pressure_observed": "no own warning/swap/PSI stop; neighbor comparable phase throughput unknown",
+  "auxiliary_deviation": "first C2 small test used stale CPU0 instead of audited CPU13, ended/cleared; retest dynamically selected CPU16; formal stages independently re-audited",
+  "preflight_failures": [
+    "initial integer-key metadata pretest (before C1 commit)",
+    "first C2 floating equality assertion;15 other tests passed; corrected without changing gate"
+  ],
+  "formal_implementation_replays": 0
+}

@@ -1,3 +1,18 @@
+# V14最终测试与证据资格
+
+| 组件／目的 | 真实检查与结果 | 证据／限制 |
+|---|---|---|
+| writer与整树清场 | 初期9项小测试PASS：Mapping/NumPy/complex/整数key/原子中断、timeout/setsid own descendants，sibling未控制 | [资源辅助](records/resource_costs_v14.json)；早期key失败保留 |
+| 正交数值核 | complex非Hermitian/非零40port，正确制造rhs/齐次恢复，逆序行恢复、错误旧A与Q、rank失败、比较余量/射线、reference屏障、元数据overwrite、缺port | 16项最终C2pure PASS；首次严格浮点断言改为approx，数值Gate未改 |
+| C3 raw checker反例 | 强行pass、rank/driver阈值、raw gamma冒充、参考反馈、缺复通道/能量失败、FP32快照被拒 | 最终combined **22 passed**；[raw Gate](records/qualification_and_dispatch_v14.json) |
+| 保留Q身份 | 原点及最终Q×c重新生成trace差0，完整state/hash均一致 | checker不启动FE、不重建P/A、不调用S；其余Q预声明可再生workspace |
+| 真实资格 | 两新制造见证PASS；原点配对与逆序QR、6+2真实profile全执行；一次FE10状态全部FAIL | solver失败不改写；制造与记录PASS不能称物理PASS |
+| 环境与静态 | pure/ML/FE activation/preflight；CPU Torch intra/inter1/BLAS1，FE complex128/int64；3dat validate、compileall、bash -n、diff检查 | [静态](records/static_checks_v14.json)；实际source 87940891c12ccdec35fca39cd453ab9a29eeeda5，C3 4efc94a… |
+| 未执行 | Ruff未安装、无CI；full repository/MPI2/4未运行 | 本批MPI1固定pilot，不扩大共享负载或清理无关旧检查器 |
+
+GitHub检查区分server richText表格/math-renderer与未观察的浏览器字形；当前参考native数值未落入复用验证器最终JSON，标明缺项，旧合格REF7身份保留。下方旧测试为历史。
+
+
 # V13 最新测试与证据核验（历史检查完整保留）
 
 | 检查范围／目的 | 实际结果／限制 | 证据 |
