@@ -148,7 +148,12 @@
       ]
     }
   },
-  "GitHub_render": "PENDING_PUBLISHED_BROWSER",
+  "GitHub_render": {
+    "status": "GITHUB_RENDERED_VIEW_PASS_DOM_AND_SAMPLED_VISUAL",
+    "published_commit": "1b9d6dd9c095a4e4de0b33587a705e4054a014d3",
+    "record": "render_check_v7.json",
+    "sha256": "2a585708c7d5444ab60357296b1b0e333ddf4ef2ba5042904add316c66fa0151"
+  },
   "auxiliary_admission_block": {
     "status": "RESOURCE_WINDOW_UNAVAILABLE_LIGHT_ADMISSION",
     "worker_started": false,
@@ -161,5 +166,9 @@
       "full_avg10": 0.01
     },
     "followup": "one new admission passed unchanged thresholds; document contract completed"
+  },
+  "final_resource_record": {
+    "path": "resource_costs_v7.json",
+    "sha256": "a761e496742ca426edf9e4abb10e840a98fa8086528213b7246f4266dc23d251"
   }
 }

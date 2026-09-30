@@ -1,6 +1,328 @@
 {
   "schema": "task42extra.render-check.v7",
-  "status": "PENDING_PUBLISHED_BROWSER",
-  "scope": "Review V6 and new V7 pages/sections only",
-  "local_structure_is_visual_pass": false
+  "status": "GITHUB_RENDERED_VIEW_PASS_DOM_AND_SAMPLED_VISUAL",
+  "published_commit": "1b9d6dd9c095a4e4de0b33587a705e4054a014d3",
+  "raw_directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v7_published",
+  "raw_DOM_sha256": "1dc99211885c0a71cc4cb765d4d2bf321e3f8a9747c3720487a26fbe80ef2ca6",
+  "screenshots_hashed": 37,
+  "pages": [
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/1b9d6dd9c095a4e4de0b33587a705e4054a014d3/docs/task042extra_feinn_5nm/review_report_v6.md",
+      "git_blob_sha": "ac00c57b71ff7a028a7aa80a08c1598827108412",
+      "heading": "entire task document",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/review_report_v6.md at 1b9d6dd9c095a4e4de0b33587a705e4054a014d3 · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 3,
+      "columns": [
+        5,
+        2,
+        2
+      ],
+      "math": 2,
+      "screenshots": [
+        {
+          "name": "00_top.png",
+          "sha256": "91777c388a658551c964577d2cd44ce70160621170d106676bba16f710f3f2b6"
+        },
+        {
+          "name": "00_table_00.png",
+          "sha256": "e12ac928e33cce0693f63e343e073c817a982c030c6e7c5c7bd478169c49ee59"
+        },
+        {
+          "name": "00_table_01.png",
+          "sha256": "8152e8e74b54fdba688b9a3e7e7ac38c7f111d136de5a813d2ffbf27c01ec960"
+        },
+        {
+          "name": "00_table_02.png",
+          "sha256": "23fff710e365a707f5ff8ca46599bf8b13b966c81fc58070055c03cb86b3277a"
+        },
+        {
+          "name": "00_math-renderer_00.png",
+          "sha256": "53017645089fe92c0a0e89621507b142f8f6bf17e842aab737f2a2e69826c2e3"
+        },
+        {
+          "name": "00_math-renderer_01.png",
+          "sha256": "6dd895ac68b7a6d0eb98af14e38f0a2d221dca0dd424de4b6e51ab57787f56b2"
+        }
+      ],
+      "visual_review": "sampled screenshots only"
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/1b9d6dd9c095a4e4de0b33587a705e4054a014d3/docs/task042extra_feinn_5nm/response_v7.md",
+      "git_blob_sha": "40befe381738e9855ea7bb17cf0f8d487c527e27",
+      "heading": "entire task document",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/response_v7.md at 1b9d6dd9c095a4e4de0b33587a705e4054a014d3 · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 5,
+      "columns": [
+        2,
+        3,
+        5,
+        4,
+        6
+      ],
+      "math": 0,
+      "screenshots": [
+        {
+          "name": "01_top.png",
+          "sha256": "4104dbaaf5c91a09e58a3adbc453366a75fefa1de698fb02d280a651a7ea6df4"
+        },
+        {
+          "name": "01_table_00.png",
+          "sha256": "a795d4142f0a415636c040c333f181bc161e6f614f5b4296d5f3940212aa8c9f"
+        },
+        {
+          "name": "01_table_01.png",
+          "sha256": "12bec0d6e9652f4e0b959a149d9a1b92288dc60bed7c74ec376138aab22f30b0"
+        },
+        {
+          "name": "01_table_02.png",
+          "sha256": "13aab34a75b1f02cca5222aee3882b19fa999d07ffb7f336e5fd845a71b61d9a"
+        },
+        {
+          "name": "01_table_03.png",
+          "sha256": "9e235e4c6ed4b750270f4041acc3fd716dd8964da5a40e68168010f97661e07a"
+        },
+        {
+          "name": "01_table_04.png",
+          "sha256": "7882b63a2ab9e8f8f7fe83c8daf8b830c75fac1fb4e59d246c17ec14ce97be5e"
+        }
+      ],
+      "visual_review": "sampled screenshots only"
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/1b9d6dd9c095a4e4de0b33587a705e4054a014d3/docs/task042extra_feinn_5nm/outcomes/p3_p4_authority_v7.md",
+      "git_blob_sha": "130809c5bbdfd20dffd7ad34e7b7d7fc29c91d25",
+      "heading": "entire task document",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/outcomes/p3_p4_authority_v7.md at 1b9d6dd9c095a4e4de0b33587a705e4054a014d3 · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 6,
+      "columns": [
+        3,
+        5,
+        3,
+        4,
+        3,
+        6
+      ],
+      "math": 0,
+      "screenshots": [
+        {
+          "name": "02_top.png",
+          "sha256": "2e4f5757f7e0a45a7543db31eea671a2f7515844c0495755e50f9deade852905"
+        },
+        {
+          "name": "02_table_00.png",
+          "sha256": "f2801d30194ff8660d1d5d6f51f20661556a9f680978fc43cd3a2562ad2ae165"
+        },
+        {
+          "name": "02_table_01.png",
+          "sha256": "7f3b2e61386838bc4e9bfd43017662ef2d91e6e22af70a5489efe3fc103b60ad"
+        },
+        {
+          "name": "02_table_02.png",
+          "sha256": "b5cf6584e7b991671aba553bbd7772acf3187bf6e6b1d9650902b416241d559a"
+        },
+        {
+          "name": "02_table_03.png",
+          "sha256": "83b3874325cba02bc906417edcafb9e1b172f70b475eae4bdca3edf9c2fdf848"
+        },
+        {
+          "name": "02_table_04.png",
+          "sha256": "ba0c1d1f966867dbc872fb8f67dbe3663fd7fa11764d25821078808702ccbe3f"
+        },
+        {
+          "name": "02_table_05.png",
+          "sha256": "bafe29af2f73c9f263d4b900ada8d5777047210d37fb6178f30050ce43f042c9"
+        }
+      ],
+      "visual_review": "sampled screenshots only"
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/1b9d6dd9c095a4e4de0b33587a705e4054a014d3/docs/task042extra_feinn_5nm/outcomes/phase_representation_plan_v7.md",
+      "git_blob_sha": "6af0e3a8a98b9e175cd31c151f312957e5616be0",
+      "heading": "entire task document",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/outcomes/phase_representation_plan_v7.md at 1b9d6dd9c095a4e4de0b33587a705e4054a014d3 · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 2,
+      "columns": [
+        2,
+        2
+      ],
+      "math": 1,
+      "screenshots": [
+        {
+          "name": "03_top.png",
+          "sha256": "0006316462aba77c6996ac24c4c293f1c251ee0408512f65fcba2e4f7be39748"
+        },
+        {
+          "name": "03_table_00.png",
+          "sha256": "b345999c976a5f083f63cfa4174c31d829c5befa117d493b1472862928eb14cf"
+        },
+        {
+          "name": "03_table_01.png",
+          "sha256": "95922bb8636fc0fd7e1dacce5a7c30a7e7ac59a679983d46beef827ccfa27f02"
+        },
+        {
+          "name": "03_math-renderer_00.png",
+          "sha256": "04fd4ac301e470fe51c1a1d8950f1d6ac0e6298818a13af8cbb690895b297f9f"
+        }
+      ],
+      "visual_review": "sampled screenshots only"
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/1b9d6dd9c095a4e4de0b33587a705e4054a014d3/docs/task042extra_feinn_5nm/outcomes/summary.md",
+      "git_blob_sha": "3465ec113634a4c734e5e45569405c86349b69c9",
+      "heading": "Task42extra Review V6 后续：V7 p4装配受控停止",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/outcomes/summary.md at 1b9d6dd9c095a4e4de0b33587a705e4054a014d3 · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 2,
+      "columns": [
+        4,
+        6
+      ],
+      "math": 0,
+      "screenshots": [
+        {
+          "name": "04_top.png",
+          "sha256": "5b36a47739ff252add92389d07e0a07d4682f0cc60408ea7e5d2fa28c7d37f91"
+        },
+        {
+          "name": "04_table_00.png",
+          "sha256": "453d2b69212777cc3aeca377576eec4c81ba483f73852284763a431c89e52001"
+        },
+        {
+          "name": "04_table_01.png",
+          "sha256": "fe97c42b0b973ab4837ccb4d9ae7544b21311e967b26a9a4ef170cc5d2330bf7"
+        }
+      ],
+      "visual_review": "sampled screenshots only"
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/1b9d6dd9c095a4e4de0b33587a705e4054a014d3/docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+      "git_blob_sha": "4d373e5ac57b39b3b77e6f538ed7b204567046b5",
+      "heading": "Review V6 后续 V7 定向资格",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/outcomes/test_summary.md at 1b9d6dd9c095a4e4de0b33587a705e4054a014d3 · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 1,
+      "columns": [
+        3
+      ],
+      "math": 0,
+      "screenshots": [
+        {
+          "name": "05_top.png",
+          "sha256": "c79e753448f742023addc8b796947153c83236b28878a51b0047f3ee2ffc0036"
+        },
+        {
+          "name": "05_table_00.png",
+          "sha256": "c79e753448f742023addc8b796947153c83236b28878a51b0047f3ee2ffc0036"
+        }
+      ],
+      "visual_review": "sampled screenshots only"
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/1b9d6dd9c095a4e4de0b33587a705e4054a014d3/docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+      "git_blob_sha": "c86e99bbbe2cac9592da0f8ec46ee333ef8704d9",
+      "heading": "Review V6 后续 V7 文件级边界",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/outcomes/changed_files.md at 1b9d6dd9c095a4e4de0b33587a705e4054a014d3 · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 1,
+      "columns": [
+        3
+      ],
+      "math": 0,
+      "screenshots": [
+        {
+          "name": "06_top.png",
+          "sha256": "3dc306535dc1e3c66af29e400f7dc676f5fd3fb6a14810b5b5dfbf8cc7a303ff"
+        },
+        {
+          "name": "06_table_00.png",
+          "sha256": "3dc306535dc1e3c66af29e400f7dc676f5fd3fb6a14810b5b5dfbf8cc7a303ff"
+        }
+      ],
+      "visual_review": "sampled screenshots only"
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/1b9d6dd9c095a4e4de0b33587a705e4054a014d3/docs/development_progress.md",
+      "git_blob_sha": "601a665303804290dbb4bb706bd11b484541f895",
+      "heading": "2026-09-30 Task42extra V7：p4authority装配时间阻塞",
+      "title": "MyFEniCS/docs/development_progress.md at 1b9d6dd9c095a4e4de0b33587a705e4054a014d3 · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 2,
+      "columns": [
+        4,
+        6
+      ],
+      "math": 0,
+      "screenshots": [
+        {
+          "name": "07_top.png",
+          "sha256": "62756e25bd7c621322eb8b15d477fb786e96ec70bb9dcf7807398e8a9cc6aa72"
+        },
+        {
+          "name": "07_table_00.png",
+          "sha256": "680a53bcc4ea3f231b6b48882e997656e373dbb2eccbae56aa165983dc0e25eb"
+        },
+        {
+          "name": "07_table_01.png",
+          "sha256": "680a53bcc4ea3f231b6b48882e997656e373dbb2eccbae56aa165983dc0e25eb"
+        }
+      ],
+      "visual_review": "sampled screenshots only"
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/1b9d6dd9c095a4e4de0b33587a705e4054a014d3/docs/development_model_registry.md",
+      "git_blob_sha": "f282d5882a60e5206d41d86926b50d8d3ca5c82b",
+      "heading": "3.44.6 Task42extra Review V6 后续：p4authority装配预算阻塞",
+      "title": "MyFEniCS/docs/development_model_registry.md at 1b9d6dd9c095a4e4de0b33587a705e4054a014d3 · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 3,
+      "columns": [
+        3,
+        4,
+        6
+      ],
+      "math": 0,
+      "screenshots": [
+        {
+          "name": "08_top.png",
+          "sha256": "5786f523e40592e58978f79db0c32805446615b92b243adeae17bc1d6ff7c5a3"
+        },
+        {
+          "name": "08_table_00.png",
+          "sha256": "1a7380da4bb320ad6a7415e6420e5673fb558ce2d7c207bb0fc09cf8257e677c"
+        },
+        {
+          "name": "08_table_01.png",
+          "sha256": "b99c0ced76b02562b984a2e73330b495d2500029160968d4888bc46307436ec1"
+        },
+        {
+          "name": "08_table_02.png",
+          "sha256": "09b2ea3ccdadbd2157b65c210cb0344ec3dd97394787eb04dbc4e69a24377f39"
+        }
+      ],
+      "visual_review": "sampled screenshots only"
+    }
+  ],
+  "scope": "new Review V6 and V7/newly edited sections only; no historical batch rerender",
+  "sampled_visual_evidence": [
+    {
+      "name": "00_math-renderer_00.png",
+      "sha256": "53017645089fe92c0a0e89621507b142f8f6bf17e842aab737f2a2e69826c2e3"
+    },
+    {
+      "name": "00_math-renderer_01.png",
+      "sha256": "6dd895ac68b7a6d0eb98af14e38f0a2d221dca0dd424de4b6e51ab57787f56b2"
+    },
+    {
+      "name": "02_table_02.png",
+      "sha256": "b5cf6584e7b991671aba553bbd7772acf3187bf6e6b1d9650902b416241d559a"
+    },
+    {
+      "name": "02_table_03.png",
+      "sha256": "83b3874325cba02bc906417edcafb9e1b172f70b475eae4bdca3edf9c2fdf848"
+    },
+    {
+      "name": "03_math-renderer_00.png",
+      "sha256": "04fd4ac301e470fe51c1a1d8950f1d6ac0e6298818a13af8cbb690895b297f9f"
+    },
+    {
+      "name": "04_table_00.png",
+      "sha256": "453d2b69212777cc3aeca377576eec4c81ba483f73852284763a431c89e52001"
+    }
+  ],
+  "sampled_visual_findings": "Review V6 both equations rendered; audit capacity/NOT_RUN result and summary tables align; phase equation rendered. Sampled screenshots, not every screenshot inspected."
 }

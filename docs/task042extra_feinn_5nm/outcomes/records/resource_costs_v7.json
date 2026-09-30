@@ -3,12 +3,12 @@
   "previous_conservative_seconds": 45161.81665198447,
   "old_lost_attempt_charged_seconds": 3284,
   "V7_formal_seconds": 3611.3428064921172,
-  "V7_auxiliary_seconds": 36.017432313994505,
+  "V7_auxiliary_seconds": 114.11717687500641,
   "direct_current_and_final_allowance_seconds_conservative": 120,
-  "V7_batch_seconds": 3767.3602388061117,
-  "V7_remaining_seconds": 3432.6397611938883,
-  "original_total_conservative_seconds": 48929.17689079058,
-  "original_16h_remaining_seconds": 8670.823109209421,
+  "V7_batch_seconds": 3845.4599833671236,
+  "V7_remaining_seconds": 3354.5400166328764,
+  "original_total_conservative_seconds": 49007.27663535159,
+  "original_16h_remaining_seconds": 8592.72336464841,
   "formal_stages": {
     "v7_p_transfer_checks": {
       "directory": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v7_p_transfer_checks_20260930T121554990434Z",
@@ -130,7 +130,10 @@
         "input_original.dat": "9dffd50ab299b81dc6b7b9944ffe01be73ae19f55c351b10980b544d689a3046",
         "resolved_config.json": "512aa65dc4bbf9a0c411e45febe7b197227401fd76db82e2b44af88dda7d2cae",
         "supervision/resources.jsonl": "d99b44261b51b01b28e1ed22fa6974514cec9548775eea72569ea8c4a3d2e27a"
-      }
+      },
+      "raw_manifest_hash_valid_for_p4": false,
+      "actual_operator_packet_sha256_independent_binding": "062137c4c5be83b62be6a5373cfa24244f203f0b37244aeb4fb0b8feb75eb9ad",
+      "provenance_correction_source": "p4_reference_v7.json; raw failed manifest unchanged"
     }
   },
   "auxiliary_attempts": [
@@ -156,8 +159,14 @@
     },
     {
       "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v7_document_contract_20260930T133944949517Z",
-      "status": "RUNNING_OR_NO_SUMMARY",
-      "charged_seconds": 0
+      "status": "RESOURCE_WINDOW_UNAVAILABLE_LIGHT_ADMISSION_NO_WORKER",
+      "charged_seconds": 0,
+      "elapsed_seconds": "NOT_RETAINED_PRE_WORKER_NO_SUMMARY",
+      "accounting": "included in conservative direct/current/final 120s allowance; no double charge",
+      "log": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/development/document_contract_v7.log",
+        "sha256": "b5e5e1f9b04cd59602b90cbca1a6bf2d2862ddc8c0acfbf4e8223634834d556c"
+      }
     },
     {
       "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v7_document_contract_after_pressure_20260930T134040192693Z",
@@ -170,9 +179,24 @@
       "descendants_cleared": true
     },
     {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v7_final_evidence_20260930T134506685662Z",
+      "summary_sha256": "42da32f0cff07da4e1a45b43326aa6919a4d00c09a0fa9a84b263b0d69e36b63",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "charged_seconds": 2.621501290006563,
+      "peak_simultaneous_tree_RSS_bytes": 142016512,
+      "own_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
       "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v7_local_evidence_freeze_20260930T134133607725Z",
-      "status": "RUNNING_OR_NO_SUMMARY",
-      "charged_seconds": 0
+      "summary_sha256": "38871d513cb530631893e94a8ed134b57f90303d9981af34b089fede2a2ae647",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "charged_seconds": 2.56668907799758,
+      "peak_simultaneous_tree_RSS_bytes": 43180032,
+      "own_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
     },
     {
       "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v7_post_guard_checker_20260930T132554955039Z",
@@ -191,6 +215,16 @@
       "leader_exit_code": 0,
       "charged_seconds": 3.0421640089480206,
       "peak_simultaneous_tree_RSS_bytes": 43229184,
+      "own_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v7_published_browser_20260930T134302024957Z",
+      "summary_sha256": "b748e8b2766cf6b2e08794ea6cb43a1ed9ab8b1d79bfcf73e986879325a6c01a",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "charged_seconds": 72.91155419300776,
+      "peak_simultaneous_tree_RSS_bytes": 2033565696,
       "own_tree_swap_peak_bytes": 0,
       "descendants_cleared": true
     },
@@ -246,7 +280,7 @@
     }
   ],
   "numerical_peak_RSS_bytes": 1586601984,
-  "all_supervised_peak_RSS_bytes": 1586601984,
+  "all_supervised_peak_RSS_bytes": 2033565696,
   "own_sampled_swap_zero": true,
   "management_server_launch_samples": [
     {
@@ -296,5 +330,8 @@
   ],
   "raw_p4_manifest_operator_hash_is_unfinalized": true,
   "authoritative_p4_native_sha256": "062137c4c5be83b62be6a5373cfa24244f203f0b37244aeb4fb0b8feb75eb9ad",
-  "reference_assembly_completion_timer": "NOT_RETAINED"
+  "reference_assembly_completion_timer": "NOT_RETAINED",
+  "all_completed_formal_descendants_cleared": true,
+  "new_Maxwell_factor_count_meaning": "completed factors; symbolic START not retained, completed0, numeric/solve0",
+  "final_resource_record_scope": "all closed formal and light summaries incl browser; current metadata-only refresh plus final Git operations covered by conservative allowance"
 }

@@ -85,7 +85,7 @@
       "evidence": "hash bound by compact records"
     }
   ],
-  "published_document_commit": "PENDING",
+  "published_document_commit": "1b9d6dd9c095a4e4de0b33587a705e4054a014d3",
   "all_changed_paths_at_document_publication": [
     "benchmarks/check_task42extra_docs_v3.py",
     "benchmarks/check_task42extra_v5.py",
@@ -161,5 +161,30 @@
     "src/test/test_feinn_authority_runner.py": "3090275208b1d7c401d7aa125fe07c74d261d3b89ad7510134c731aae97c7685",
     "src/test/test_feinn_discretization_audit.py": "ff344c48a7b50f691043403b9299c4a5a46767dfcb185015486a75ee40c6bde8",
     "src/test/test_feinn_p_transfer_fe.py": "69867a2e727d372d6661fbcac4726a3b9ce991c7333d1fd9a68ae3666fdba83d"
-  }
+  },
+  "final_evidence_parent_sha": "1b9d6dd9c095a4e4de0b33587a705e4054a014d3",
+  "published_document_sha256": {
+    "docs/task042extra_feinn_5nm/review_report_v6.md": "373b67b1450cc8db6d3eb82f4c892a0986c8f7650a98447cb0ba94b0021deadb",
+    "docs/task042extra_feinn_5nm/response_v7.md": "cfe248c7897536a8e667edec8d141e5d8bf3aa741adca889864efdf92be4c2af",
+    "docs/task042extra_feinn_5nm/outcomes/p3_p4_authority_v7.md": "bba6862658f0d75de1ec9ca5f25460fa2459714195b96c8e4bf9352fe58cc052",
+    "docs/task042extra_feinn_5nm/outcomes/phase_representation_plan_v7.md": "518cb2ff53eb5fc113d2b418263177de1d8591d35d178de7e474a3f76f5f75bd",
+    "docs/task042extra_feinn_5nm/outcomes/summary.md": "338d64975f6dbd25b2252ad69341c62bfcc38a2b576831b826f8e12954c3818d",
+    "docs/task042extra_feinn_5nm/outcomes/test_summary.md": "0ca72a0572bf4a575dfca62da48464527119bcff441508d86220c37cfda9dd6b",
+    "docs/task042extra_feinn_5nm/outcomes/changed_files.md": "76aec7d9d93dbe3fec834b2c0f108f6035fd1a0145ced1502e28314001dcdb5b",
+    "docs/development_progress.md": "2605748081d293d278b78a84e569de90e865f351196b6d57ecc1be96ad6e10a0",
+    "docs/development_model_registry.md": "796189ed54f3a4e839a0511a388e7c7f4dcb42861e85365bf836afac19735eb0"
+  },
+  "render_status": "GITHUB_RENDERED_VIEW_PASS_DOM_AND_SAMPLED_VISUAL",
+  "final_compact_record_sha256": {
+    "discretization_design_v7.json": "5bc751bc38253cdfbf927c2576088f46ce4aa5fc4d1ee632a7cef8fb0f757c30",
+    "gate_decisions_v7.json": "a0cf070ca76e5b1fe1fc3d0614f674288117b77ea7208996cc78edfd415f0d5e",
+    "p3_p4_comparison_v7.csv": "dcfbb74dfb510003d7304a4991bbcb45232bb0107783897f044182f5ba9cb2a4",
+    "p4_reference_v7.json": "31be66e215e1228046fc10dc9fca8c8eef994f35bbd285cd4686b8e76684cbe0",
+    "p_transfer_checks_v7.json": "8c0607a4360f33e650ebfe022c3167df4f445b8491f23697707e23a1177b4806",
+    "render_check_v7.json": "2a585708c7d5444ab60357296b1b0e333ddf4ef2ba5042904add316c66fa0151",
+    "resource_costs_v7.json": "a761e496742ca426edf9e4abb10e840a98fa8086528213b7246f4266dc23d251",
+    "run_index_v7.json": "cb70cb156388450fff780b104df3b3cfb363201cb6b4ba089ba60ceffe50be07",
+    "targeted_tests_v7.json": "6e308511d9561aa6fd004fcccbd47026398242b45f9f48e87c3fa486f0a49a48"
+  },
+  "final_git_state_reported_after_evidence_commit": true
 }
