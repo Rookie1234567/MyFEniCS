@@ -27,6 +27,15 @@
       "test": "targeted phase core pytest plus lint",
       "retry": "no numerical solver retry",
       "old_costs_preserved": true
+    },
+    {
+      "root_cause": "local_source_format_order",
+      "failure": "targeted lint ran before formatting new dense source and reported E701/E702; existing campaign import below stage map reported E402",
+      "hypothesis": "local static code order/style; no formal run started",
+      "change": "move campaign import to imports, format changed modules before lint",
+      "test": "9 pure/authority targeted tests,6 ML/durable/data-boundary tests,FE complex128 no-Torch import passed; worker tree cleared",
+      "retry": "one corrected light check plus final changed-code regression; no solver restart",
+      "old_costs_preserved": true
     }
   ]
 }

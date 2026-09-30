@@ -7,6 +7,7 @@ import tomllib
 
 from src.io.input_loader import InputError
 from src.io.run_specification import RunSpecification
+from src.runners.feinn_campaign import STAGES as CAMPAIGN_STAGES, AUTHORITY
 
 ROOT = Path(__file__).resolve().parents[2]
 DESIGN = ROOT / "input/task042extra_feinn_5nm/design_v1.json"
@@ -45,7 +46,6 @@ STAGES = {
     "v5_readout_reconstruct": ("ml", 900),
     "v5_readout_compare_only": ("fe", 900),
 }
-from src.runners.feinn_campaign import STAGES as CAMPAIGN_STAGES, AUTHORITY
 STAGES.update({name: (entry[0], entry[1]) for name, entry in CAMPAIGN_STAGES.items()})
 
 
@@ -67,9 +67,18 @@ def load_pilot(path):
     ):
         raise InputError("Task42extra accepts only one frozen explicit stage")
     item = config["task42extra"]
-    authority = item.get("stage", "").startswith("v7_") or item.get("stage") in AUTHORITY
-    authority_policy = dict(audit_kind="DISCRETIZATION_AUTHORITY_AUDIT", reference_role="REFERENCE_ONLY", training_reference_allowed=False)
-    residual_readout = item.get("stage", "").startswith("v6_") or item.get("stage") == "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT"
+    authority = (
+        item.get("stage", "").startswith("v7_") or item.get("stage") in AUTHORITY
+    )
+    authority_policy = dict(
+        audit_kind="DISCRETIZATION_AUTHORITY_AUDIT",
+        reference_role="REFERENCE_ONLY",
+        training_reference_allowed=False,
+    )
+    residual_readout = (
+        item.get("stage", "").startswith("v6_")
+        or item.get("stage") == "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT"
+    )
     readout = residual_readout or (
         item.get("stage", "").startswith("v5_")
         or item.get("stage") == "FEINN-FROZEN-HIDDEN-READOUT-G"
@@ -83,10 +92,30 @@ def load_pilot(path):
     )
     if residual_readout:
         policy.update(features_reference_exposed=True, readout_rhs_uses_reference=False)
-    allowed = {"stage", "run_id", "design_sha256"} | (set(policy) if readout else set()) | (set(authority_policy) if authority else set())
+    v8_neural = item.get("stage") in CAMPAIGN_STAGES and not authority
+    if v8_neural:
+        supervised = item["stage"] in (
+            "v8_plain_reference_fit",
+            "v8_phase_reference_fit",
+            "v8_representation_reconstruct",
+            "v8_representation_compare",
+        )
+        policy.update(
+            reference_used_for_training=supervised,
+            features_reference_exposed=supervised,
+            pde_only_solve=not supervised,
+            benchmark_previously_seen=True,
+        )
+    allowed = (
+        {"stage", "run_id", "design_sha256"}
+        | (set(policy) if readout or v8_neural else set())
+        | (set(authority_policy) if authority else set())
+    )
     if set(item) != allowed or item["stage"] not in STAGES:
         raise InputError("Task42extra stage inventory mismatch")
-    if readout and any(item[k] is not value for k, value in policy.items()):
+    if (readout or v8_neural) and any(
+        item[k] is not value for k, value in policy.items()
+    ):
         raise InputError("reference-exposed readout policy required")
     if authority and any(item[k] != value for k, value in authority_policy.items()):
         raise InputError("explicit DISCRETIZATION_AUTHORITY_AUDIT required")
@@ -102,11 +131,16 @@ def load_pilot(path):
     design = json.loads(DESIGN.read_text())
     mode, seconds = STAGES[item["stage"]]
     return RunSpecification(
-        identity=dict(model_id="M5-p3-p4-authority-audit" if authority else "M5-full-p3", run_id=item["run_id"]),
+        identity=dict(
+            model_id="M5-p3-p4-authority-audit" if authority else "M5-full-p3",
+            run_id=item["run_id"],
+        ),
         geometry=design["geometry"],
         materials=design["materials"],
         incidence=design["incidence"],
-        discretization=dict(design["finite_element"], degree=4) if authority else design["finite_element"],
+        discretization=dict(design["finite_element"], degree=4)
+        if authority
+        else design["finite_element"],
         boundary=design["boundary"],
         method=dict(kind="research_full_FEINN", stage=item["stage"]),
         solver=dict(preconditioner="task42extra_full_fe_opt_in"),
@@ -125,7 +159,7 @@ def load_pilot(path):
             design_path=str(DESIGN),
             design_sha256=digest,
             identity_hash_meaning="frozen design; actual mesh/operator hashes bound after export",
-            **(policy if readout else {}),
+            **(policy if readout or v8_neural else {}),
             **(authority_policy if authority else {}),
         ),
         source_path=path,

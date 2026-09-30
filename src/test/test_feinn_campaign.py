@@ -5,7 +5,13 @@ import json
 
 import numpy as np
 
-from src.runners.feinn_campaign import campaign_budget, OLD_SECONDS, STAGES
+from src.runners.feinn_campaign import (
+    campaign_budget,
+    OLD_SECONDS,
+    AUTHORITY,
+    STAGES,
+    DEPENDENCIES,
+)
 from src.io.feinn_pilot import load_pilot
 from src.solvers.feinn_authority_assembly import packet_csr
 from src.solvers.feinn_native import FullNativePacket
@@ -42,11 +48,23 @@ def test_new_budget_does_not_reuse_old_16h_remaining():
 
 def test_new_inputs_have_explicit_reference_only_identity():
     root = Path(__file__).resolve().parents[2]
-    for stage in STAGES:
+    for stage in AUTHORITY:
         spec = load_pilot(root / "input/task042extra_feinn_5nm" / (stage + ".dat"))
         assert spec.derived["audit_kind"] == "DISCRETIZATION_AUTHORITY_AUDIT"
         assert spec.discretization["degree"] == 4
         assert spec.derived["environment_mode"] == "fe"
+
+
+def test_neural_inputs_keep_label_routes_separate_and_PDE_has_no_reference_dependency():
+    root = Path(__file__).resolve().parents[2]
+    for stage in STAGES.keys() - AUTHORITY:
+        spec = load_pilot(root / "input/task042extra_feinn_5nm" / (stage + ".dat"))
+        supervised = "reference_fit" in stage or "representation" in stage
+        assert spec.derived["reference_used_for_training"] == supervised
+        assert spec.derived["pde_only_solve"] != supervised
+        assert not spec.derived["production_initialization_allowed"]
+    for stage in ("v8_plain_dual", "v8_phase_dual"):
+        assert "e3_reference" not in DEPENDENCIES[stage]
 
 
 def test_CSR_multimaster_complex_MPC_and_ports():

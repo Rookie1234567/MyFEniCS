@@ -119,16 +119,21 @@ def budget():
     ]:
         for path in base.glob(pattern):
             item = json.loads(path.read_text())
-            entries.append(dict(path=str(path), seconds=max(item.get("elapsed_seconds", 0), item.get("launch_to_summary_seconds_monotonic", 0))))
+            entries.append(
+                dict(
+                    path=str(path),
+                    seconds=max(
+                        item.get("elapsed_seconds", 0),
+                        item.get("launch_to_summary_seconds_monotonic", 0),
+                    ),
+                )
+            )
     interruption_path = (
-        ROOT
-        / "docs/task042extra_feinn_5nm/outcomes/records/fit_interruption_v3.json"
+        ROOT / "docs/task042extra_feinn_5nm/outcomes/records/fit_interruption_v3.json"
     )
     if interruption_path.exists():
         interrupted = json.loads(interruption_path.read_text())
-        original = (
-            ROOT / "results/task42extra" / interrupted["run_directory_name"]
-        )
+        original = ROOT / "results/task42extra" / interrupted["run_directory_name"]
         if not (original / "run_summary.json").exists():
             entries.append(
                 dict(
@@ -150,21 +155,64 @@ def budget():
         or "/checks/v3_" in e["path"]
         or e["path"].endswith("/fit_interruption_v3.json")
     )
-    v4_used = sum(e["seconds"] for e in entries if "/task42extra_v4_" in e["path"] or "/checks/v4_" in e["path"])
-    v5_used = sum(e["seconds"] for e in entries if "/task42extra_v5_" in e["path"] or "/checks/v5_" in e["path"])
-    s0_used = sum(e["seconds"] for e in entries if "/task42extra_v5_readout_checks_" in e["path"] or "/checks/v5_s0_" in e["path"])
-    v6_used = sum(e["seconds"] for e in entries if "/task42extra_v6_" in e["path"] or "/checks/v6_" in e["path"])
-    t0_used = sum(e["seconds"] for e in entries if "/task42extra_v6_operator_readout_checks_" in e["path"] or "/checks/v6_t0_" in e["path"])
-    v7_used = sum(e["seconds"] for e in entries if "/task42extra_v7_" in e["path"] or "/checks/v7_" in e["path"])
-    u0_used = sum(e["seconds"] for e in entries if "/task42extra_v7_p_transfer_checks_" in e["path"] or "/checks/v7_u0_" in e["path"])
+    v4_used = sum(
+        e["seconds"]
+        for e in entries
+        if "/task42extra_v4_" in e["path"] or "/checks/v4_" in e["path"]
+    )
+    v5_used = sum(
+        e["seconds"]
+        for e in entries
+        if "/task42extra_v5_" in e["path"] or "/checks/v5_" in e["path"]
+    )
+    s0_used = sum(
+        e["seconds"]
+        for e in entries
+        if "/task42extra_v5_readout_checks_" in e["path"]
+        or "/checks/v5_s0_" in e["path"]
+    )
+    v6_used = sum(
+        e["seconds"]
+        for e in entries
+        if "/task42extra_v6_" in e["path"] or "/checks/v6_" in e["path"]
+    )
+    t0_used = sum(
+        e["seconds"]
+        for e in entries
+        if "/task42extra_v6_operator_readout_checks_" in e["path"]
+        or "/checks/v6_t0_" in e["path"]
+    )
+    v7_used = sum(
+        e["seconds"]
+        for e in entries
+        if "/task42extra_v7_" in e["path"] or "/checks/v7_" in e["path"]
+    )
+    u0_used = sum(
+        e["seconds"]
+        for e in entries
+        if "/task42extra_v7_p_transfer_checks_" in e["path"]
+        or "/checks/v7_u0_" in e["path"]
+    )
     return dict(
-        v7_used_seconds=v7_used, v7_remaining_seconds=7200-v7_used-120,
-        v7_u0_remaining_seconds=1200-u0_used, conservative_through_V6_seconds=45161.81665198447,
-        v6_used_seconds=v6_used, v6_remaining_seconds=3600-v6_used-120,
-        v6_t0_remaining_seconds=600-t0_used, conservative_through_V5_seconds=44815.22461795143,
+        v7_used_seconds=v7_used,
+        v7_remaining_seconds=7200 - v7_used - 120,
+        v7_u0_remaining_seconds=1200 - u0_used,
+        conservative_through_V6_seconds=45161.81665198447,
+        v6_used_seconds=v6_used,
+        v6_remaining_seconds=3600 - v6_used - 120,
+        v6_t0_remaining_seconds=600 - t0_used,
+        conservative_through_V5_seconds=44815.22461795143,
         limit_seconds=57600,
         used_seconds=used,
-        remaining_seconds=57600 - max(used, 29227.93927047425 + v3_used, 33070.52670758043 + v4_used + 120, 44119.848638203344 + v5_used + 120, 44815.22461795143 + v6_used + 120, 45161.81665198447 + v7_used + 120),
+        remaining_seconds=57600
+        - max(
+            used,
+            29227.93927047425 + v3_used,
+            33070.52670758043 + v4_used + 120,
+            44119.848638203344 + v5_used + 120,
+            44815.22461795143 + v6_used + 120,
+            45161.81665198447 + v7_used + 120,
+        ),
         conservative_V1_V2_V3_V4_base_seconds=44119.848638203344,
         v5_used_seconds=v5_used,
         v5_limit_seconds=7200,
@@ -243,50 +291,122 @@ def launch(spec):
     if v8:
         from src.runners.feinn_campaign import AUTHORITY, REVIEW_SHA
         from src.solvers.feinn_discretization_audit import POLICY
+
         proof = ROOT / "tmp/task42extra/durable" / stage / "terminal_identity.json"
         if not proof.exists():
             raise RuntimeError("DURABLE_TERMINAL_PROOF_REQUIRED")
-        state.update(run_id=directory.name, v8_review_sha=REVIEW_SHA,
-                     v8_campaign_design_sha256=sha(ROOT / "docs/task042extra_feinn_5nm/outcomes/records/campaign_design_v8.json"),
-                     supervision_budget_origin_monotonic=launch_origin,
-                     durable_terminal_identity_sha256=sha(proof), **(POLICY if stage in AUTHORITY else {}))
+        state.update(
+            run_id=directory.name,
+            v8_review_sha=REVIEW_SHA,
+            v8_campaign_design_sha256=sha(
+                ROOT
+                / "docs/task042extra_feinn_5nm/outcomes/records/campaign_design_v8.json"
+            ),
+            supervision_budget_origin_monotonic=launch_origin,
+            durable_terminal_identity_sha256=sha(proof),
+            **(POLICY if stage in AUTHORITY else {}),
+        )
+        if stage not in AUTHORITY:
+            supervised = stage in (
+                "v8_plain_reference_fit",
+                "v8_phase_reference_fit",
+                "v8_representation_reconstruct",
+                "v8_representation_compare",
+            )
+            state.update(
+                reference_used_for_training=supervised,
+                features_reference_exposed=supervised,
+                pde_only_solve=not supervised,
+                benchmark_previously_seen=True,
+                production_initialization_allowed=False,
+                pde_only_solver_qualified=False,
+                official_candidate_results=False,
+            )
     if v7:
         from src.solvers.feinn_discretization_audit import POLICY
-        pre = ROOT / "docs/task042extra_feinn_5nm/outcomes/records/discretization_design_v7.json"
+
+        pre = (
+            ROOT
+            / "docs/task042extra_feinn_5nm/outcomes/records/discretization_design_v7.json"
+        )
         proof = ROOT / "tmp/task42extra/durable" / stage / "terminal_identity.json"
         if not proof.exists():
             raise RuntimeError("DURABLE_TERMINAL_PROOF_REQUIRED")
-        state.update(run_id=directory.name, v7_pre_registered_design_sha256=sha(pre),
-                     v7_review_sha="ecabef960cdf1ac194ef293ff83c65b14e8b7ba3",
-                     supervision_budget_origin_monotonic=launch_origin,
-                     durable_terminal_identity_sha256=sha(proof), **POLICY)
+        state.update(
+            run_id=directory.name,
+            v7_pre_registered_design_sha256=sha(pre),
+            v7_review_sha="ecabef960cdf1ac194ef293ff83c65b14e8b7ba3",
+            supervision_budget_origin_monotonic=launch_origin,
+            durable_terminal_identity_sha256=sha(proof),
+            **POLICY,
+        )
     if v6:
         from src.solvers.feinn_restricted_residual import POLICY
-        pre = ROOT / "docs/task042extra_feinn_5nm/outcomes/records/residual_readout_design_v6.json"
-        state.update(run_id=directory.name, v6_pre_registered_design_sha256=sha(pre),
-                     v6_review_sha="3ab4a251c76208897729473add43f1e91c9d634a",
-                     supervision_budget_origin_monotonic=launch_origin, **POLICY)
-        namespace = "v6_frozen_feature_residual" if stage == "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT" else stage
+
+        pre = (
+            ROOT
+            / "docs/task042extra_feinn_5nm/outcomes/records/residual_readout_design_v6.json"
+        )
+        state.update(
+            run_id=directory.name,
+            v6_pre_registered_design_sha256=sha(pre),
+            v6_review_sha="3ab4a251c76208897729473add43f1e91c9d634a",
+            supervision_budget_origin_monotonic=launch_origin,
+            **POLICY,
+        )
+        namespace = (
+            "v6_frozen_feature_residual"
+            if stage == "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT"
+            else stage
+        )
         proof = ROOT / "tmp/task42extra/durable" / namespace / "terminal_identity.json"
         if not proof.exists():
             raise RuntimeError("DURABLE_TERMINAL_PROOF_REQUIRED")
         state["durable_terminal_identity_sha256"] = sha(proof)
     if v5:
-        pre = ROOT / "docs/task042extra_feinn_5nm/outcomes/records/readout_design_v5.json"
-        state.update(run_id=directory.name, v5_pre_registered_design_sha256=sha(pre), v5_review_sha="28fabffd41f042c8a4bdda6339810bb1f98a887d",
-                     reference_used_for_training=True, pde_only_solve=False, production_initialization_allowed=False,
-                     pde_only_solver_qualified=False, official_candidate_results=False, data_role="REFERENCE_EXPOSED_DIAGNOSTIC_ONLY",
-                     supervision_budget_origin_monotonic=launch_origin)
-        namespace = "v5_frozen_hidden_readout" if stage == "FEINN-FROZEN-HIDDEN-READOUT-G" else stage
+        pre = (
+            ROOT / "docs/task042extra_feinn_5nm/outcomes/records/readout_design_v5.json"
+        )
+        state.update(
+            run_id=directory.name,
+            v5_pre_registered_design_sha256=sha(pre),
+            v5_review_sha="28fabffd41f042c8a4bdda6339810bb1f98a887d",
+            reference_used_for_training=True,
+            pde_only_solve=False,
+            production_initialization_allowed=False,
+            pde_only_solver_qualified=False,
+            official_candidate_results=False,
+            data_role="REFERENCE_EXPOSED_DIAGNOSTIC_ONLY",
+            supervision_budget_origin_monotonic=launch_origin,
+        )
+        namespace = (
+            "v5_frozen_hidden_readout"
+            if stage == "FEINN-FROZEN-HIDDEN-READOUT-G"
+            else stage
+        )
         proof = ROOT / "tmp/task42extra/durable" / namespace / "terminal_identity.json"
         if not proof.exists():
             raise RuntimeError("DURABLE_TERMINAL_PROOF_REQUIRED")
         state["durable_terminal_identity_sha256"] = sha(proof)
     if v4:
-        pre = ROOT / "docs/task042extra_feinn_5nm/outcomes/records/replay_design_v4.json"
-        state.update(run_id=directory.name, v4_pre_registered_design_sha256=sha(pre), v4_review_sha="4dc7c38b60acf2a5ee3d9c6b9770b084a874fb04", reference_used_for_training=True, pde_only_solve=False, production_initialization_allowed=False, pde_only_solver_qualified=False, official_candidate_results=False, data_role="REFERENCE_EXPOSED_DIAGNOSTIC_ONLY")
+        pre = (
+            ROOT / "docs/task042extra_feinn_5nm/outcomes/records/replay_design_v4.json"
+        )
+        state.update(
+            run_id=directory.name,
+            v4_pre_registered_design_sha256=sha(pre),
+            v4_review_sha="4dc7c38b60acf2a5ee3d9c6b9770b084a874fb04",
+            reference_used_for_training=True,
+            pde_only_solve=False,
+            production_initialization_allowed=False,
+            pde_only_solver_qualified=False,
+            official_candidate_results=False,
+            data_role="REFERENCE_EXPOSED_DIAGNOSTIC_ONLY",
+        )
         if stage == "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY":
-            proof = ROOT / "tmp/task42extra/durable/v4_formal_replay/terminal_identity.json"
+            proof = (
+                ROOT / "tmp/task42extra/durable/v4_formal_replay/terminal_identity.json"
+            )
             if not proof.exists():
                 raise RuntimeError("DURABLE_TERMINAL_PROOF_REQUIRED")
             state["durable_terminal_identity_sha256"] = sha(proof)
@@ -329,7 +449,12 @@ def launch(spec):
     write_json(directory / "run_manifest.json", state)
     with (ROOT / "tmp/task42extra/numerical.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        tree_limit = 2 * 2**30 if stage in ("v4_boundary_checks", "v5_readout_checks", "v6_operator_readout_checks") else 16 * 2**30
+        tree_limit = (
+            2 * 2**30
+            if stage
+            in ("v4_boundary_checks", "v5_readout_checks", "v6_operator_readout_checks")
+            else 16 * 2**30
+        )
         try:
             baseline = admission(tree_limit)
         except RuntimeError as error:
@@ -346,6 +471,7 @@ def launch(spec):
         ledger = budget()
         if v8:
             from src.runners.feinn_campaign import campaign_budget
+
             ledger["V8"] = campaign_budget(ledger["entries"])
             ledger["remaining_seconds"] = ledger["V8"]["new_remaining_seconds"]
         if (
@@ -354,10 +480,14 @@ def launch(spec):
             and ledger["v2_remaining_seconds"] <= 120
             or v3
             and ledger["v3_remaining_seconds"] <= 120
-            or v4 and ledger["v4_remaining_seconds"] <= 120
-            or v5 and ledger["v5_remaining_seconds"] <= 150
-            or v6 and ledger["v6_remaining_seconds"] <= 150
-            or v7 and ledger["v7_remaining_seconds"] <= 150
+            or v4
+            and ledger["v4_remaining_seconds"] <= 120
+            or v5
+            and ledger["v5_remaining_seconds"] <= 150
+            or v6
+            and ledger["v6_remaining_seconds"] <= 150
+            or v7
+            and ledger["v7_remaining_seconds"] <= 150
         ):
             raise RuntimeError("Task42extra V1/V2 supervised wall budget exhausted")
         write_json(directory / "budget_at_launch.json", ledger)
@@ -371,11 +501,37 @@ def launch(spec):
         prereqs = {
             "v7_p_transfer_checks": ["e1_fe", "e3_reference"],
             "v7_p4_reference": ["e1_fe", "e3_reference", "v7_p_transfer_checks"],
-            "v7_p3_p4_compare": ["e1_fe", "e3_reference", "v7_p_transfer_checks", "v7_p4_reference"],
-            "v6_operator_readout_checks": ["e1_fe", "e1_grad", "v5_readout_checks", "FEINN-FROZEN-HIDDEN-READOUT-G"],
-            "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT": ["e1_fe", "e1_grad", "v5_readout_checks", "FEINN-FROZEN-HIDDEN-READOUT-G", "v6_operator_readout_checks"],
-            "v6_residual_readout_reconstruct": ["e1_fe", "e1_grad", "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT"],
-            "v6_residual_readout_compare_only": ["e1_fe", "e3_reference", "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT", "v6_residual_readout_reconstruct", "FEINN-FROZEN-HIDDEN-READOUT-G"],
+            "v7_p3_p4_compare": [
+                "e1_fe",
+                "e3_reference",
+                "v7_p_transfer_checks",
+                "v7_p4_reference",
+            ],
+            "v6_operator_readout_checks": [
+                "e1_fe",
+                "e1_grad",
+                "v5_readout_checks",
+                "FEINN-FROZEN-HIDDEN-READOUT-G",
+            ],
+            "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT": [
+                "e1_fe",
+                "e1_grad",
+                "v5_readout_checks",
+                "FEINN-FROZEN-HIDDEN-READOUT-G",
+                "v6_operator_readout_checks",
+            ],
+            "v6_residual_readout_reconstruct": [
+                "e1_fe",
+                "e1_grad",
+                "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT",
+            ],
+            "v6_residual_readout_compare_only": [
+                "e1_fe",
+                "e3_reference",
+                "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT",
+                "v6_residual_readout_reconstruct",
+                "FEINN-FROZEN-HIDDEN-READOUT-G",
+            ],
             "e1_grad": ["e1_fe"],
             "FEINN-EUC": ["e1_fe", "e1_grad"],
             "FEINN-DUAL": ["e1_fe", "e1_grad"],
@@ -429,18 +585,60 @@ def launch(spec):
                 "v3_retained_snapshot",
                 "v3_fit_reconstruct",
             ],
-            "v4_boundary_checks": ["e1_fe", "e1_grad", "e3_reference", "v3_retained_snapshot", "v3_fit_checks"],
-            "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY": ["e1_fe", "e1_grad", "e3_reference", "v3_retained_snapshot", "v4_boundary_checks"],
-            "v4_fit_reconstruct": ["e1_fe", "e1_grad", "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY"],
-            "v4_fit_compare_only": ["e1_fe", "e3_reference", "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY", "v4_fit_reconstruct"],
-            "v5_readout_checks": ["e1_fe", "e1_grad", "e3_reference", "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY"],
-            "FEINN-FROZEN-HIDDEN-READOUT-G": ["e1_fe", "e1_grad", "e3_reference", "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY", "v5_readout_checks"],
-            "v5_readout_reconstruct": ["e1_fe", "e1_grad", "FEINN-FROZEN-HIDDEN-READOUT-G"],
-            "v5_readout_compare_only": ["e1_fe", "e3_reference", "FEINN-FROZEN-HIDDEN-READOUT-G", "v5_readout_reconstruct"],
+            "v4_boundary_checks": [
+                "e1_fe",
+                "e1_grad",
+                "e3_reference",
+                "v3_retained_snapshot",
+                "v3_fit_checks",
+            ],
+            "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY": [
+                "e1_fe",
+                "e1_grad",
+                "e3_reference",
+                "v3_retained_snapshot",
+                "v4_boundary_checks",
+            ],
+            "v4_fit_reconstruct": [
+                "e1_fe",
+                "e1_grad",
+                "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY",
+            ],
+            "v4_fit_compare_only": [
+                "e1_fe",
+                "e3_reference",
+                "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY",
+                "v4_fit_reconstruct",
+            ],
+            "v5_readout_checks": [
+                "e1_fe",
+                "e1_grad",
+                "e3_reference",
+                "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY",
+            ],
+            "FEINN-FROZEN-HIDDEN-READOUT-G": [
+                "e1_fe",
+                "e1_grad",
+                "e3_reference",
+                "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY",
+                "v5_readout_checks",
+            ],
+            "v5_readout_reconstruct": [
+                "e1_fe",
+                "e1_grad",
+                "FEINN-FROZEN-HIDDEN-READOUT-G",
+            ],
+            "v5_readout_compare_only": [
+                "e1_fe",
+                "e3_reference",
+                "FEINN-FROZEN-HIDDEN-READOUT-G",
+                "v5_readout_reconstruct",
+            ],
         }
         prerequisite_stages = prereqs.get(stage, [])
         if v8:
             from src.runners.feinn_campaign import DEPENDENCIES
+
             prerequisite_stages = DEPENDENCIES[stage]
         for dependency in prerequisite_stages:
             item = load_index(dependency)
@@ -477,8 +675,12 @@ def launch(spec):
                     "v4_boundary_checks",
                     "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY",
                     "v4_fit_compare_only",
-                    "v5_readout_checks", "FEINN-FROZEN-HIDDEN-READOUT-G", "v5_readout_compare_only",
-                    "v6_operator_readout_checks", "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT", "v6_residual_readout_compare_only",
+                    "v5_readout_checks",
+                    "FEINN-FROZEN-HIDDEN-READOUT-G",
+                    "v5_readout_compare_only",
+                    "v6_operator_readout_checks",
+                    "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT",
+                    "v6_residual_readout_compare_only",
                 ),
                 physical_hash_meaning="actual original full independent FE packet and fixed affine rhs",
             )
@@ -487,11 +689,65 @@ def launch(spec):
             )
         if v7 and "v7_p_transfer_checks" in dependencies:
             bind_authority_packet(state, load_index("v7_p_transfer_checks"))
-            (directory / "physical_model_sha256.txt").write_text(state["physical_model_sha256"] + "\n")
+            (directory / "physical_model_sha256.txt").write_text(
+                state["physical_model_sha256"] + "\n"
+            )
         if v8 and stage in AUTHORITY:
             bind_authority_packet(state, load_index("v7_p_transfer_checks"))
-            state.update(physics_identity=dict(design_sha256=state["design_sha256"], material_sha256=state["material_table_sha256"], mesh_sha256=state["mesh_sha256"], mode_sha256=state["mode_sha256"]), discretization_identity=dict(degree=4, volume_quadrature_degree=15, DtN_quadrature_degree=15, independent_complex_FE=75264), operator_packet_sha256=state["actual_operator_packet_sha256"])
-            (directory / "physical_model_sha256.txt").write_text(state["physical_model_sha256"] + "\n")
+            state.update(
+                physics_identity=dict(
+                    design_sha256=state["design_sha256"],
+                    material_sha256=state["material_table_sha256"],
+                    mesh_sha256=state["mesh_sha256"],
+                    mode_sha256=state["mode_sha256"],
+                ),
+                discretization_identity=dict(
+                    degree=4,
+                    volume_quadrature_degree=15,
+                    DtN_quadrature_degree=15,
+                    independent_complex_FE=75264,
+                ),
+                operator_packet_sha256=state["actual_operator_packet_sha256"],
+            )
+            (directory / "physical_model_sha256.txt").write_text(
+                state["physical_model_sha256"] + "\n"
+            )
+        if v8 and stage not in AUTHORITY:
+            state["gram_loaded_by_route"] = stage in (
+                "v8_phase_checks",
+                "v8_plain_dual",
+                "v8_phase_dual",
+                "v8_pde_compare",
+                "v8_plain_reference_fit",
+                "v8_phase_reference_fit",
+                "v8_representation_compare",
+            )
+            state.update(
+                physics_identity=dict(
+                    design_sha256=state["design_sha256"],
+                    material_sha256=state["material_table_sha256"],
+                    mesh_sha256=state["mesh_sha256"],
+                    mode_sha256=state["mode_sha256"],
+                ),
+                discretization_identity=dict(
+                    degree=3,
+                    volume_quadrature_degree=15,
+                    DtN_quadrature_degree=15,
+                    independent_complex_FE=31968,
+                ),
+                operator_packet_sha256=state["actual_operator_packet_sha256"],
+            )
+            if "v8_phase_checks" in dependencies:
+                qualification = load_index("v8_phase_checks")
+                state.update(
+                    network_quadrature_degree=qualification["result"][
+                        "network_quadrature_degree"
+                    ],
+                    network_moments_sha256=qualification["files"]["moments"]["sha256"],
+                    initial_parameters_sha256=qualification["result"][
+                        "initial_parameters_sha256"
+                    ],
+                )
         state["frozen_dependencies_before_worker_launch"] = dependencies
         state["qualified_environment_record"] = {
             mode: dict(
@@ -508,9 +764,10 @@ def launch(spec):
         limit = min(spec.execution["timeout_seconds"], ledger["remaining_seconds"])
         if v8:
             from src.runners.feinn_campaign import STAGES as V8_STAGES
+
             group = V8_STAGES[stage][2]
             limit = min(limit, ledger["V8"]["groups_remaining_seconds"][group])
-            if limit <= 150 or launch_origin+limit-150 <= perf_counter():
+            if limit <= 150 or launch_origin + limit - 150 <= perf_counter():
                 raise RuntimeError("V8_BUDGET_RESERVE_UNAVAILABLE")
         if stage.startswith("v2_") or stage == "FREE-FE-DUAL-GRAM-DIAG":
             limit = min(limit, ledger["v2_remaining_seconds"])
@@ -546,7 +803,7 @@ def launch(spec):
                 limit = min(limit, ledger["v6_remaining_seconds"] - 900)
             if stage == "v6_operator_readout_checks":
                 limit = min(limit, ledger["v6_t0_remaining_seconds"])
-            if limit <= 150 or launch_origin+limit-150 <= perf_counter():
+            if limit <= 150 or launch_origin + limit - 150 <= perf_counter():
                 raise RuntimeError("V6_BUDGET_RESERVE_UNAVAILABLE")
         if v7:
             limit = min(limit, ledger["v7_remaining_seconds"])
@@ -554,7 +811,7 @@ def launch(spec):
                 limit = min(limit, ledger["v7_u0_remaining_seconds"])
             if stage == "v7_p4_reference":
                 limit = min(limit, ledger["v7_remaining_seconds"] - 1200)
-            if limit <= 150 or launch_origin+limit-150 <= perf_counter():
+            if limit <= 150 or launch_origin + limit - 150 <= perf_counter():
                 raise RuntimeError("V7_BUDGET_RESERVE_UNAVAILABLE")
         state["supervised_limit_seconds"] = limit
         if v4 and not v5:
@@ -563,10 +820,21 @@ def launch(spec):
         command = [sys.executable, "-m", "src.runners.feinn_workflow", str(directory)]
         if v4 or v5 or v6 or v7 or v8:
             from src.runners.guarded_exec import ticks
-            command = [sys.executable, "-m", "src.runners.guarded_exec", str(os.getpid()), str(ticks(os.getpid())), *command]
+
+            command = [
+                sys.executable,
+                "-m",
+                "src.runners.guarded_exec",
+                str(os.getpid()),
+                str(ticks(os.getpid())),
+                *command,
+            ]
         watchdog_seconds = (
             authority_watchdog_window(state, perf_counter())
-            if v7 or v8 else limit - (perf_counter() - launch_origin) if v5 or v6 else limit
+            if v7 or v8
+            else limit - (perf_counter() - launch_origin)
+            if v5 or v6
+            else limit
         )
         if v7 or v8:
             state["watchdog_terminal_cutoff_reserve_seconds"] = 150
@@ -577,7 +845,9 @@ def launch(spec):
             wall_seconds=watchdog_seconds,
             interval=0.5,
             rss_hard_limit_bytes=tree_limit,
-            rss_warning_bytes=int(1.75 * 2**30) if tree_limit == 2 * 2**30 else 12 * 2**30,
+            rss_warning_bytes=int(1.75 * 2**30)
+            if tree_limit == 2 * 2**30
+            else 12 * 2**30,
             hard_stop_immediate=True,
             memory_envelope_provider=lambda: envelope(tree_limit),
             health_check=Health(directory, tree_limit, baseline["neighbor_processes"]),
@@ -587,8 +857,10 @@ def launch(spec):
         )
     result.update(directory=str(directory), stage=stage)
     if v5 or v6 or v7 or v8:
-        result.update(launch_to_summary_seconds_monotonic=perf_counter() - launch_origin,
-                      launch_exit_remaining_seconds=limit - (perf_counter() - launch_origin))
+        result.update(
+            launch_to_summary_seconds_monotonic=perf_counter() - launch_origin,
+            launch_exit_remaining_seconds=limit - (perf_counter() - launch_origin),
+        )
     write_json(directory / "run_summary.json", result)
     return result
 
@@ -599,9 +871,23 @@ def worker(directory):
     directory = Path(directory)
     manifest = json.loads((directory / "run_manifest.json").read_text())
     stage = manifest["stage"]
-    if stage.startswith(("v4_", "v5_", "v6_", "v7_", "v8_")) or stage in ("FEINN-REFERENCE-FIT-G-ADAM500-REPLAY", "FEINN-FROZEN-HIDDEN-READOUT-G", "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT"):
+    if stage.startswith(("v4_", "v5_", "v6_", "v7_", "v8_")) or stage in (
+        "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY",
+        "FEINN-FROZEN-HIDDEN-READOUT-G",
+        "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT",
+    ):
         from src.runners.guarded_exec import ticks
-        manifest["worker_lifecycle"] = dict(pid=os.getpid(), ppid=os.getppid(), start_ticks=ticks(os.getpid()), session=os.getsid(0), process_group=os.getpgrp(), stdout=os.readlink(f"/proc/{os.getpid()}/fd/1"), cgroup=Path("/proc/self/cgroup").read_text(), parent_death_guard=os.environ.get("TASK42EXTRA_PARENT_DEATH_GUARD"))
+
+        manifest["worker_lifecycle"] = dict(
+            pid=os.getpid(),
+            ppid=os.getppid(),
+            start_ticks=ticks(os.getpid()),
+            session=os.getsid(0),
+            process_group=os.getpgrp(),
+            stdout=os.readlink(f"/proc/{os.getpid()}/fd/1"),
+            cgroup=Path("/proc/self/cgroup").read_text(),
+            parent_death_guard=os.environ.get("TASK42EXTRA_PARENT_DEATH_GUARD"),
+        )
         write_json(directory / "run_manifest.json", manifest)
     artifact = ARTIFACTS / directory.name
     artifact.mkdir(parents=True)
@@ -629,21 +915,53 @@ def worker(directory):
             raise RuntimeError("design changed after admission")
         if stage.startswith("v8_"):
             from src.runners.feinn_campaign import dispatch
-            result, files = dispatch(stage, design, artifact, marker, manifest, load_index)
+
+            result, files = dispatch(
+                stage, design, artifact, marker, manifest, load_index
+            )
         elif stage.startswith("v7_"):
-            from src.solvers.feinn_discretization_audit import checks, reference, compare
+            from src.solvers.feinn_discretization_audit import (
+                checks,
+                reference,
+                compare,
+            )
+
             args = (design, load_index("e1_fe"), load_index("e3_reference"))
             if stage == "v7_p_transfer_checks":
                 result, files = checks(*args, artifact, marker, manifest)
             elif stage == "v7_p4_reference":
-                result, files = reference(*args, load_index("v7_p_transfer_checks"), artifact, marker, manifest)
+                result, files = reference(
+                    *args,
+                    load_index("v7_p_transfer_checks"),
+                    artifact,
+                    marker,
+                    manifest,
+                )
             else:
-                result, files = compare(*args, load_index("v7_p_transfer_checks"), load_index("v7_p4_reference"), artifact, marker, manifest)
+                result, files = compare(
+                    *args,
+                    load_index("v7_p_transfer_checks"),
+                    load_index("v7_p4_reference"),
+                    artifact,
+                    marker,
+                    manifest,
+                )
             packet_entry = files.get("native")
-            native_sha = sha(packet_entry) if packet_entry is not None else load_index("v7_p_transfer_checks")["files"]["native"]["sha256"]
-            manifest.update(actual_operator_packet_sha256=native_sha, physical_model_sha256=native_sha,
-                            physical_hash_meaning="actual p4 full independent FE packet; separate explicit physics_equivalence_fields prove same physical model",
-                            gram_sha256=None, gram_loaded_by_route=False, mode_sha256=result.get("identity", {}).get("mode_manifest_sha256", manifest.get("mode_sha256")))
+            native_sha = (
+                sha(packet_entry)
+                if packet_entry is not None
+                else load_index("v7_p_transfer_checks")["files"]["native"]["sha256"]
+            )
+            manifest.update(
+                actual_operator_packet_sha256=native_sha,
+                physical_model_sha256=native_sha,
+                physical_hash_meaning="actual p4 full independent FE packet; separate explicit physics_equivalence_fields prove same physical model",
+                gram_sha256=None,
+                gram_loaded_by_route=False,
+                mode_sha256=result.get("identity", {}).get(
+                    "mode_manifest_sha256", manifest.get("mode_sha256")
+                ),
+            )
             write_json(directory / "run_manifest.json", manifest)
             (directory / "physical_model_sha256.txt").write_text(native_sha + "\n")
         elif stage == "e1_smoke":
@@ -862,47 +1180,161 @@ def worker(directory):
             )
         elif stage == "v4_boundary_checks":
             from src.solvers.feinn_boundary_replay import boundary_checks
-            result, files = boundary_checks(design, load_index("e1_fe"), load_index("e1_grad"), load_index("e3_reference"), load_index("v3_retained_snapshot"), artifact, marker)
+
+            result, files = boundary_checks(
+                design,
+                load_index("e1_fe"),
+                load_index("e1_grad"),
+                load_index("e3_reference"),
+                load_index("v3_retained_snapshot"),
+                artifact,
+                marker,
+            )
         elif stage == "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY":
             from src.solvers.feinn_boundary_replay import run_replay
-            result, files = run_replay(design, load_index("e1_fe"), load_index("e1_grad"), load_index("e3_reference"), load_index("v3_retained_snapshot"), load_index("v4_boundary_checks"), artifact, marker, manifest["supervised_limit_seconds"], manifest)
+
+            result, files = run_replay(
+                design,
+                load_index("e1_fe"),
+                load_index("e1_grad"),
+                load_index("e3_reference"),
+                load_index("v3_retained_snapshot"),
+                load_index("v4_boundary_checks"),
+                artifact,
+                marker,
+                manifest["supervised_limit_seconds"],
+                manifest,
+            )
         elif stage == "v4_fit_reconstruct":
             from src.solvers.feinn_reference_fit import reconstruct
-            result, files = reconstruct(design, load_index("e1_fe"), load_index("e1_grad"), load_index("FEINN-REFERENCE-FIT-G-ADAM500-REPLAY"), artifact, marker)
+
+            result, files = reconstruct(
+                design,
+                load_index("e1_fe"),
+                load_index("e1_grad"),
+                load_index("FEINN-REFERENCE-FIT-G-ADAM500-REPLAY"),
+                artifact,
+                marker,
+            )
         elif stage == "v4_fit_compare_only":
             from src.solvers.feinn_reference import compare_reference_fit_without_solve
-            result, files = compare_reference_fit_without_solve(design, load_index("e1_fe"), load_index("e3_reference"), load_index("FEINN-REFERENCE-FIT-G-ADAM500-REPLAY"), load_index("v4_fit_reconstruct"), artifact, marker, route="FEINN-REFERENCE-FIT-G-ADAM500-REPLAY")
+
+            result, files = compare_reference_fit_without_solve(
+                design,
+                load_index("e1_fe"),
+                load_index("e3_reference"),
+                load_index("FEINN-REFERENCE-FIT-G-ADAM500-REPLAY"),
+                load_index("v4_fit_reconstruct"),
+                artifact,
+                marker,
+                route="FEINN-REFERENCE-FIT-G-ADAM500-REPLAY",
+            )
         elif stage == "v5_readout_checks":
             from src.solvers.feinn_readout import checks
-            result, files = checks(design, load_index("e1_fe"), load_index("e1_grad"), load_index("e3_reference"), load_index("FEINN-REFERENCE-FIT-G-ADAM500-REPLAY"), artifact, marker, manifest)
+
+            result, files = checks(
+                design,
+                load_index("e1_fe"),
+                load_index("e1_grad"),
+                load_index("e3_reference"),
+                load_index("FEINN-REFERENCE-FIT-G-ADAM500-REPLAY"),
+                artifact,
+                marker,
+                manifest,
+            )
         elif stage == "FEINN-FROZEN-HIDDEN-READOUT-G":
             from src.solvers.feinn_readout import run
-            result, files = run(design, load_index("e1_fe"), load_index("e1_grad"), load_index("e3_reference"), load_index("FEINN-REFERENCE-FIT-G-ADAM500-REPLAY"), load_index("v5_readout_checks"), artifact, marker, manifest)
+
+            result, files = run(
+                design,
+                load_index("e1_fe"),
+                load_index("e1_grad"),
+                load_index("e3_reference"),
+                load_index("FEINN-REFERENCE-FIT-G-ADAM500-REPLAY"),
+                load_index("v5_readout_checks"),
+                artifact,
+                marker,
+                manifest,
+            )
         elif stage == "v5_readout_reconstruct":
             from src.solvers.feinn_reference_fit import reconstruct
+
             candidate = load_index("FEINN-FROZEN-HIDDEN-READOUT-G")
             if candidate["result"]["status"] != "FROZEN_HIDDEN_READOUT_COMPLETE":
                 raise RuntimeError("READOUT_STABILITY_NOT_QUALIFIED")
-            result, files = reconstruct(design, load_index("e1_fe"), load_index("e1_grad"), candidate, artifact, marker)
+            result, files = reconstruct(
+                design,
+                load_index("e1_fe"),
+                load_index("e1_grad"),
+                candidate,
+                artifact,
+                marker,
+            )
         elif stage == "v5_readout_compare_only":
             from src.solvers.feinn_reference import compare_reference_fit_without_solve
+
             candidate = load_index("FEINN-FROZEN-HIDDEN-READOUT-G")
             if candidate["result"]["status"] != "FROZEN_HIDDEN_READOUT_COMPLETE":
                 raise RuntimeError("READOUT_STABILITY_NOT_QUALIFIED")
-            result, files = compare_reference_fit_without_solve(design, load_index("e1_fe"), load_index("e3_reference"), candidate, load_index("v5_readout_reconstruct"), artifact, marker, route="FEINN-FROZEN-HIDDEN-READOUT-G")
-        elif stage in ("v6_operator_readout_checks", "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT"):
+            result, files = compare_reference_fit_without_solve(
+                design,
+                load_index("e1_fe"),
+                load_index("e3_reference"),
+                candidate,
+                load_index("v5_readout_reconstruct"),
+                artifact,
+                marker,
+                route="FEINN-FROZEN-HIDDEN-READOUT-G",
+            )
+        elif stage in (
+            "v6_operator_readout_checks",
+            "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT",
+        ):
             from src.solvers.feinn_residual_readout import checks, run
-            args = (design, load_index("e1_fe"), load_index("e1_grad"), load_index("v5_readout_checks"), load_index("FEINN-FROZEN-HIDDEN-READOUT-G"))
+
+            args = (
+                design,
+                load_index("e1_fe"),
+                load_index("e1_grad"),
+                load_index("v5_readout_checks"),
+                load_index("FEINN-FROZEN-HIDDEN-READOUT-G"),
+            )
             if stage == "v6_operator_readout_checks":
                 result, files = checks(*args, artifact, marker, manifest)
             else:
-                result, files = run(*args, load_index("v6_operator_readout_checks"), artifact, marker, manifest)
+                result, files = run(
+                    *args,
+                    load_index("v6_operator_readout_checks"),
+                    artifact,
+                    marker,
+                    manifest,
+                )
         elif stage == "v6_residual_readout_reconstruct":
             from src.solvers.feinn_reference_fit import reconstruct
-            result, files = reconstruct(design, load_index("e1_fe"), load_index("e1_grad"), load_index("FEINN-FROZEN-FEATURE-RESIDUAL-READOUT"), artifact, marker)
+
+            result, files = reconstruct(
+                design,
+                load_index("e1_fe"),
+                load_index("e1_grad"),
+                load_index("FEINN-FROZEN-FEATURE-RESIDUAL-READOUT"),
+                artifact,
+                marker,
+            )
         elif stage == "v6_residual_readout_compare_only":
-            from src.solvers.feinn_reference import compare_residual_readout_without_solve
-            result, files = compare_residual_readout_without_solve(design, load_index("e1_fe"), load_index("e3_reference"), load_index("FEINN-FROZEN-FEATURE-RESIDUAL-READOUT"), load_index("v6_residual_readout_reconstruct"), load_index("FEINN-FROZEN-HIDDEN-READOUT-G"), artifact, marker)
+            from src.solvers.feinn_reference import (
+                compare_residual_readout_without_solve,
+            )
+
+            result, files = compare_residual_readout_without_solve(
+                design,
+                load_index("e1_fe"),
+                load_index("e3_reference"),
+                load_index("FEINN-FROZEN-FEATURE-RESIDUAL-READOUT"),
+                load_index("v6_residual_readout_reconstruct"),
+                load_index("FEINN-FROZEN-HIDDEN-READOUT-G"),
+                artifact,
+                marker,
+            )
         elif stage in design["routes"]:
             from src.solvers.feinn_optimization import run_route
 

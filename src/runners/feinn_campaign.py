@@ -7,6 +7,16 @@ STAGES = {
     "v8_authority_assembly_checks": ("fe", 1200, "A"),
     "v8_p4_reference_recovery": ("fe", 3600, "A"),
     "v8_p3_p4_compare": ("fe", 1200, "A"),
+    "v8_phase_moment_checks": ("fe", 1800, "B"),
+    "v8_phase_checks": ("ml", 1800, "B"),
+    "v8_plain_dual": ("ml", 10800, "C"),
+    "v8_phase_dual": ("ml", 10800, "C"),
+    "v8_pde_reconstruct": ("ml", 900, "E"),
+    "v8_pde_compare": ("fe", 900, "E"),
+    "v8_plain_reference_fit": ("ml", 3600, "D"),
+    "v8_phase_reference_fit": ("ml", 3600, "D"),
+    "v8_representation_reconstruct": ("ml", 900, "E"),
+    "v8_representation_compare": ("fe", 900, "E"),
 }
 DEPENDENCIES = {
     "v8_authority_profile": [
@@ -27,8 +37,52 @@ DEPENDENCIES = {
         "v7_p_transfer_checks",
         "v8_p4_reference_recovery",
     ],
+    "v8_phase_moment_checks": ["e1_fe"],
+    "v8_phase_checks": ["e1_fe", "v8_phase_moment_checks"],
+    "v8_plain_dual": ["e1_fe", "v8_phase_checks"],
+    "v8_phase_dual": ["e1_fe", "v8_phase_checks"],
+    "v8_pde_reconstruct": [
+        "e1_fe",
+        "v8_phase_checks",
+        "v8_plain_dual",
+        "v8_phase_dual",
+    ],
+    "v8_pde_compare": [
+        "e1_fe",
+        "e3_reference",
+        "v8_phase_checks",
+        "v8_plain_dual",
+        "v8_phase_dual",
+        "v8_pde_reconstruct",
+    ],
+    "v8_plain_reference_fit": [
+        "e1_fe",
+        "e3_reference",
+        "v8_phase_checks",
+        "v8_pde_compare",
+    ],
+    "v8_phase_reference_fit": [
+        "e1_fe",
+        "e3_reference",
+        "v8_phase_checks",
+        "v8_pde_compare",
+    ],
+    "v8_representation_reconstruct": [
+        "e1_fe",
+        "v8_phase_checks",
+        "v8_plain_reference_fit",
+        "v8_phase_reference_fit",
+    ],
+    "v8_representation_compare": [
+        "e1_fe",
+        "e3_reference",
+        "v8_phase_checks",
+        "v8_plain_reference_fit",
+        "v8_phase_reference_fit",
+        "v8_representation_reconstruct",
+    ],
 }
-AUTHORITY = set(STAGES)
+AUTHORITY = {name for name, entry in STAGES.items() if entry[2] == "A"}
 LIMITS = dict(A=7200, B=3600, C=21600, D=7200, E=3600)
 OLD_SECONDS = 49007.27663535159
 REVIEW_SHA = "cee68ef5e8219858e3a9b733ffe454334683836b"
@@ -68,6 +122,84 @@ def campaign_budget(entries):
 
 
 def dispatch(stage, design, artifact, marker, manifest, load_index):
+    if stage == "v8_phase_moment_checks":
+        from src.solvers.feinn_phase_moments import prepare
+
+        return prepare(design, load_index("e1_fe"), artifact, marker, manifest)
+    if stage == "v8_phase_checks":
+        from src.solvers.feinn_phase_training import qualify
+
+        return qualify(
+            design,
+            load_index("e1_fe"),
+            load_index("v8_phase_moment_checks"),
+            artifact,
+            marker,
+            manifest,
+        )
+    if stage in (
+        "v8_plain_dual",
+        "v8_phase_dual",
+        "v8_plain_reference_fit",
+        "v8_phase_reference_fit",
+    ):
+        from src.solvers.feinn_phase_training import run
+
+        supervised = stage.endswith("reference_fit")
+        if supervised:
+            comparison = load_index("v8_pde_compare")
+            if comparison["result"]["phase_strict_qualified"]:
+                raise ValueError("CONDITIONAL_D_NOT_AUTHORIZED_AFTER_PHASE_PASS")
+        return run(
+            design,
+            load_index("e1_fe"),
+            load_index("v8_phase_checks"),
+            artifact,
+            marker,
+            manifest,
+            phase=stage.startswith("v8_phase_"),
+            supervised=supervised,
+            reference_index=load_index("e3_reference") if supervised else None,
+        )
+    if stage in ("v8_pde_reconstruct", "v8_representation_reconstruct"):
+        from src.solvers.feinn_phase_verification import reconstruct
+
+        return reconstruct(
+            design,
+            load_index("v8_phase_checks"),
+            {
+                name: load_index(name)
+                for name in DEPENDENCIES[stage]
+                if name.startswith(
+                    ("v8_plain_", "v8_phase_dual", "v8_phase_reference_fit")
+                )
+            },
+            artifact,
+            marker,
+            manifest,
+        )
+    if stage in ("v8_pde_compare", "v8_representation_compare"):
+        from src.solvers.feinn_phase_compare import compare
+
+        supervised = stage == "v8_representation_compare"
+        names = (
+            ["v8_plain_reference_fit", "v8_phase_reference_fit"]
+            if supervised
+            else ["v8_plain_dual", "v8_phase_dual"]
+        )
+        return compare(
+            design,
+            load_index("e1_fe"),
+            load_index("e3_reference"),
+            {n: load_index(n) for n in names},
+            load_index(
+                "v8_representation_reconstruct" if supervised else "v8_pde_reconstruct"
+            ),
+            artifact,
+            marker,
+            manifest,
+            supervised=supervised,
+        )
     from src.solvers import feinn_authority_assembly as authority
     from src.solvers.feinn_discretization_audit import compare
 
