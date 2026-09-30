@@ -6,6 +6,8 @@ import tomllib
 
 ROOT = Path(__file__).resolve().parents[2]
 TASK042_PROFILES = {
+    **{"task042_v17_"+name.lower(): "V17-"+name
+       for name in ("PREFLIGHT", "GPOLY", "GNN", "GMRES_GPOLY", "GMRES_GNN", "VERIFY")},
     "task042_shared_f1_reference_v1": "F1-reference",
     "task042_shared_f1_b0_v1": "F1-B0",
     "task042_shared_f2_teacher_v1": "F2-teacher",

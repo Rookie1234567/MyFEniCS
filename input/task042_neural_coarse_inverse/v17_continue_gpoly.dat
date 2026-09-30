@@ -1,0 +1,7 @@
+schema_version = 1
+[task042_v17]
+stage = "GPOLY"
+run_id = "task042_v17_gpoly"
+material_table_id = "SI_OPTICAL_CONSTANTS_USER_20260929_V1"
+decoder_family = "RESUMABLE_FULL_TRACE_CAMPAIGN"
+target_iteration = 512

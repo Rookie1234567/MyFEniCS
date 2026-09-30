@@ -53,3 +53,31 @@ def guard_worker_parent(variable='TASK042_WATCHDOG_PARENT_PID'):
     if lib.prctl(1,signal.SIGTERM,0,0,0) or os.getppid()!=expected:
         raise RuntimeError('own V17 supervisor disappeared')
     if snapshot()['heavy_remaining_seconds']<=0:raise RuntimeError('immutable V17 heavy deadline reached')
+
+
+def settle_run(directory,summary,launch_wall_seconds):
+    """Supervisor-owned accounting survives worker kill; upper bounds charged."""
+    row=ledger();active=row.pop('active',None)
+    if active is not None and active['directory']!=str(directory):raise ValueError('V17 active ledger ownership differs')
+    active=active or dict(stage=summary['stage'].removeprefix('V17-'),family=None,
+                         actions_lower=0,actions_upper=64,audits_lower=0,audits_upper=2,
+                         updates_lower=0,updates_upper=16)
+    clean=summary['classification']=='COMPLETED' and summary['leader_exit_code']==0
+    upper=active['actions_lower'] if clean else active['actions_upper']
+    audits=active['audits_lower'] if clean else active['audits_upper']
+    updates=active['updates_lower'] if clean else active['updates_upper']
+    row['actions_upper']+=upper;row['audits_upper']+=audits
+    for key in ('new_A_columns','image_QR','field_states'):row[key]+=active.get(key,0)
+    family=active['family']
+    if family:
+        route=row['routes'][family];route['wall_seconds']+=launch_wall_seconds
+        route['actions_upper']+=upper;route['new_updates']+=updates
+        route['correction_restarts']=max(route['correction_restarts'],active.get('correction_restarts',0))
+    row['runs'].append(dict(directory=str(directory),stage=active['stage'],family=family,
+        classification=summary['classification'],source_sha=active.get('source_sha'),
+        actions_lower=active['actions_lower'],actions_upper=upper,audits_lower=active['audits_lower'],audits_upper=audits,
+        updates_lower=active['updates_lower'],updates_upper=updates,launch_wall_seconds=launch_wall_seconds,
+        descendants_cleared=summary['descendants_cleared'],rss_peak_bytes=summary['sampled_process_tree_rss_peak_bytes'],
+        swap_peak_bytes=summary['sampled_process_tree_swap_peak_bytes'],exact_counts=clean))
+    write_json(LEDGER_PATH,row);journal('run_accounted',run=row['runs'][-1])
+    return row

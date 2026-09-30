@@ -115,3 +115,45 @@ def test_gmres_complex_cycle_boundary_resume_and_counts(tmp_path):
     assert np.linalg.norm(rhs-A@first)<np.linalg.norm(rhs-A@base)
     assert np.linalg.norm(rhs-A@full)<=np.linalg.norm(rhs-A@first)*(1+1e-8)
     assert counts[-1]==counts[-2]
+
+
+def test_explicit_v17_inputs_and_unchanged_v16_barrier(tmp_path,monkeypatch):
+    from src.io import resumable_trace_campaign as io
+    from src.io.input_loader import InputError
+    monkeypatch.setattr(io,'ARTIFACT_ROOT',tmp_path)
+    files=['checkpoint_preflight','continue_gpoly','continue_gnn','gmres_gpoly','gmres_gnn','verify']
+    cases=[io.load_resumable_trace('input/task042_neural_coarse_inverse/v17_'+n+'.dat') for n in files]
+    assert len({c.physical_model_sha256 for c in cases})==1
+    assert [c.derived['environment_mode'] for c in cases]==['pure']*5+['fe']
+    assert all(c.execution['terminate_memory_gib']==16 and c.execution['mpi_size']==1 for c in cases)
+    (tmp_path/'FROZEN.json').write_text('{}')
+    with pytest.raises(InputError,match='queue frozen'):io.load_resumable_trace('input/task042_neural_coarse_inverse/v17_continue_gnn.dat')
+    assert io.load_resumable_trace('input/task042_neural_coarse_inverse/v17_verify.dat')
+
+
+def test_campaign_counts_kill_upper_bound_and_clean_exact(tmp_path,monkeypatch):
+    from src.solvers import resumable_trace_window as w
+    from src.runners.task042_shared import write_json
+    monkeypatch.setattr(w,'LEDGER_PATH',tmp_path/'ledger.json');monkeypatch.setattr(w,'journal',lambda *a,**k:None)
+    row=w.ledger();row['active']=dict(directory='owned',stage='GPOLY',family='GPOLY',
+        actions_lower=32,actions_upper=96,audits_lower=1,audits_upper=3,updates_lower=16,updates_upper=32)
+    write_json(w.LEDGER_PATH,row)
+    summary=dict(stage='V17-GPOLY',classification='RESOURCE_CONTROLLED_STOP',leader_exit_code=-9,
+                 descendants_cleared=True,sampled_process_tree_rss_peak_bytes=100,sampled_process_tree_swap_peak_bytes=0)
+    row=w.settle_run('owned',summary,20)
+    assert row['actions_upper']==96 and row['audits_upper']==3 and row['routes']['GPOLY']['new_updates']==32
+    row['active']=dict(directory='owned2',stage='GPOLY',family='GPOLY',actions_lower=5,actions_upper=69,
+                       audits_lower=1,audits_upper=3,updates_lower=2,updates_upper=18)
+    write_json(w.LEDGER_PATH,row);summary.update(classification='COMPLETED',leader_exit_code=0)
+    row=w.settle_run('owned2',summary,10)
+    assert row['actions_upper']==101 and row['audits_upper']==4 and row['routes']['GPOLY']['new_updates']==34
+    assert row['routes']['GPOLY']['wall_seconds']==30
+
+
+def test_v17_budget_freezes_G_reserve_without_refresh(tmp_path,monkeypatch):
+    from src.solvers import resumable_trace_window as w
+    monkeypatch.setattr(w,'BUDGET_PATH',tmp_path/'b.json');monkeypatch.setattr(w,'journal',lambda *a,**k:None)
+    monkeypatch.setattr(w,'snapshot',lambda:dict(heavy_remaining_seconds=14000))
+    first=w.freeze_route_budget();assert first['uniform_route_wall_seconds']==6550 and first['GMRES_reserved_seconds']==900
+    monkeypatch.setattr(w,'snapshot',lambda:dict(heavy_remaining_seconds=20000))
+    assert w.freeze_route_budget()==first
