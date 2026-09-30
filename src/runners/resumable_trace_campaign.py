@@ -15,9 +15,19 @@ LIMITS=dict(new_A_columns=6196,image_QR=2,original_audits=420,field_states=12)
 class CampaignStage(Stage):
     def __init__(self,specification,directory):
         self.run_started=time.monotonic()
+        name=specification.derived['stage']
+        self.family_name=name.removeprefix('GMRES_') if name not in ('PREFLIGHT','VERIFY') else None
+        self.base=window.ledger()
+        if self.base.get('active') is not None:
+            raise ValueError('another owned V17 worker is still active')
+        self.base['active']=dict(directory=str(directory),stage=name,family=self.family_name,
+                                start_monotonic=self.run_started,reserved_actions=64,reserved_audits=2,
+                                actions_lower=0,actions_upper=64,audits_lower=0,audits_upper=2,
+                                updates_lower=0,updates_upper=0,
+                                source_sha=(directory/'source_sha.txt').read_text().strip())
+        write_json(window.LEDGER_PATH,self.base)
         super().__init__(specification,directory,io_module=io,window_module=window,limits=LIMITS,action_limit=56000,family=io.FAMILY)
-        self.family_name=self.name.removeprefix('GMRES_') if self.name not in ('PREFLIGHT','VERIFY') else None
-        self.base=window.ledger();self.carry_actions=self.base['actions_upper']
+        self.carry_actions=self.base['actions_upper']
         self.counts=dict(new_A_columns=self.base['new_A_columns'],image_QR=self.base['image_QR'],
                          original_audits=self.base['audits_upper'],field_states=self.base['field_states'])
         self.numeric_io=dict(started=0,completed=0,bytes_completed=0,wall_completed_seconds=0.);self.started=dict(S=0,SH=0);self.new_updates=0;self.last_written=0;self.reservation=64
@@ -75,7 +85,9 @@ class CampaignStage(Stage):
 
     def finish(self,result):
         result['numeric_io']=dict(self.numeric_io,scope='this worker; atomic numeric save plus hashes; wall already included in worker total')
-        self.durable_counts(reserve=0)
+        # An exception may leave an incomplete action/GK update. Retain its
+        # bounded reserve; only a completed normal worker releases it.
+        self.durable_counts(reserve=64 if result.get('status')=='FAILED' else 0)
         super().finish(result)
 
 

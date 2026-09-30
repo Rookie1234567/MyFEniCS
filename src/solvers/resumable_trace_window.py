@@ -59,9 +59,13 @@ def settle_run(directory,summary,launch_wall_seconds):
     """Supervisor-owned accounting survives worker kill; upper bounds charged."""
     row=ledger();active=row.pop('active',None)
     if active is not None and active['directory']!=str(directory):raise ValueError('V17 active ledger ownership differs')
-    active=active or dict(stage=summary['stage'].removeprefix('V17-'),family=None,
-                         actions_lower=0,actions_upper=64,audits_lower=0,audits_upper=2,
-                         updates_lower=0,updates_upper=16)
+    if active is None:
+        name=summary['stage'].removeprefix('V17-')
+        library=name.removeprefix('GMRES_')
+        active=dict(stage=name,family=library if library in row['routes'] else None,
+                    actions_lower=0,actions_upper=64,audits_lower=0,audits_upper=2,
+                    updates_lower=0,updates_upper=0,
+                    source_sha=summary.get('source_state',{}).get('source_sha'))
     clean=summary['classification']=='COMPLETED' and summary['leader_exit_code']==0
     upper=active['actions_lower'] if clean else active['actions_upper']
     audits=active['audits_lower'] if clean else active['audits_upper']

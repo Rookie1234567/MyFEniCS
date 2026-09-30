@@ -166,3 +166,39 @@ def test_numeric_write_history_survives_rotation(tmp_path):
     assert [r['generation'] for r in rows]==list(range(5))
     assert all(r['write_seconds']>=0 and r['bytes']>0 for r in rows)
     manifest,arrays,_=store.read();assert manifest['generation']==4 and np.all(arrays['x']==4)
+
+
+def test_loading_kill_charges_library_even_before_active_registration(tmp_path,monkeypatch):
+    from src.solvers import resumable_trace_window as w
+    monkeypatch.setattr(w,'LEDGER_PATH',tmp_path/'ledger.json');monkeypatch.setattr(w,'journal',lambda *a,**k:None)
+    w.ledger()
+    summary=dict(stage='V17-GPOLY',classification='RESOURCE_CONTROLLED_STOP',leader_exit_code=-9,
+                 descendants_cleared=True,sampled_process_tree_rss_peak_bytes=100,sampled_process_tree_swap_peak_bytes=0)
+    row=w.settle_run('owned_loading',summary,10.)
+    assert row['routes']['GPOLY']['wall_seconds']==10.
+    assert row['routes']['GPOLY']['actions_upper']==64
+    assert row['routes']['GPOLY']['new_updates']==0
+    assert row['runs'][-1]['family']=='GPOLY'
+
+
+def test_stage_registers_loading_before_constructor_can_fail(tmp_path,monkeypatch):
+    from types import SimpleNamespace
+    from src.solvers import resumable_trace_window as w
+    from src.runners.resumable_trace_campaign import CampaignStage,Stage
+    monkeypatch.setattr(w,'LEDGER_PATH',tmp_path/'ledger.json');monkeypatch.setattr(w,'journal',lambda *a,**k:None)
+    (tmp_path/'source_sha.txt').write_text('a'*40)
+    def fail(*a,**k):raise ValueError('test loading failure')
+    monkeypatch.setattr(Stage,'__init__',fail)
+    with pytest.raises(ValueError,match='test loading failure'):
+        CampaignStage(SimpleNamespace(derived={'stage':'GNN'}),tmp_path)
+    active=w.ledger()['active']
+    assert active['family']=='GNN' and active['actions_upper']==64 and active['updates_upper']==0
+
+
+def test_failure_finish_keeps_incomplete_work_reserve(monkeypatch):
+    from src.runners.resumable_trace_campaign import CampaignStage,Stage
+    stage=object.__new__(CampaignStage);stage.numeric_io={};seen=[]
+    stage.durable_counts=lambda **k:seen.append(k['reserve'])
+    monkeypatch.setattr(Stage,'finish',lambda *a,**k:None)
+    stage.finish(dict(status='FAILED'));stage.finish(dict(status='SLICE_COMPLETE'))
+    assert seen==[64,0]

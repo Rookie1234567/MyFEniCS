@@ -233,10 +233,12 @@ def continue_route(stage):
                     status='LSQR_STAGNATION';break
     if saved['logical_iteration']!=logical():saved=audit_point(stage,op,state,base,mode,store)
     save_gk(stage,store,state,base,mode,saved)
-    recomputed=max(0,min(logical(),mode['legacy_observed_iteration'])-mode['legacy_persisted_iteration']) if mode['mode']=='CONTINUOUS_LEGACY_GK' else stage.new_updates if mode['epoch'] else 0
+    recomputed=max(0,min(logical(),mode['legacy_observed_iteration'])-mode['legacy_persisted_iteration'])
+    correction_updates_this_run=stage.new_updates if mode['epoch'] else 0
     return dict(status=status,route=family,logical_iteration=logical(),legacy_observed_iteration=mode['legacy_observed_iteration'],
         legacy_persisted_iteration=mode['legacy_persisted_iteration'],resume_mode=mode,final=saved,
         new_updates_executed=stage.new_updates,recomputed_updates_in_this_lineage=recomputed,
+        correction_epoch_updates_this_run=correction_updates_this_run,
         generation_errors_ignored=errors,loading_seconds=loading,route_accounted_wall_seconds=time.perf_counter()-began,
         bar_action_costs_inclusive_seconds=op.bar.costs.copy(),projection_triangular_inclusive_seconds=op.costs.copy(),
         nested_timers_additive=False,
