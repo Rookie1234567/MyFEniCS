@@ -1,0 +1,368 @@
+{
+  "schema": "task42extra.resource-costs.v5",
+  "previous_conservative_seconds": 44119.848638203344,
+  "old_lost_attempt_charged_seconds": 3284,
+  "V5_formal_seconds": 435.4408952149097,
+  "V5_auxiliary_seconds": 22.848872633068822,
+  "direct_current_and_final_allowance_seconds_conservative": 120,
+  "V5_batch_seconds": 578.2897678479785,
+  "V5_remaining_seconds": 6621.7102321520215,
+  "original_total_conservative_seconds": 44698.13840605132,
+  "original_16h_remaining_seconds": 12901.861593948677,
+  "formal_stages": {
+    "v5_readout_checks": {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v5_readout_checks_20260930T082700492832Z",
+      "source_sha": "a6ac769027384525e406537f3069607043bc4a67",
+      "input_sha256": "abc45c7010f98d3a4490b33bd04b2a93357bbcd236ec09e97b953ec64c3e9fcb",
+      "physical_model_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+      "material_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "mesh_sha256": "78e294e0337292d2750f587ddf394aaa868bd726f8b1104d4eae6a68db039086",
+      "mode_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e",
+      "gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+      "cpu": 12,
+      "mpi": 1,
+      "math_threads": 1,
+      "supervised_seconds": 29.10117721906863,
+      "launch_to_summary_seconds_derived": 30.9551522731781,
+      "peak_simultaneous_tree_RSS_bytes": 711270400,
+      "own_tree_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "global_swap_diagnostic": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 216681,
+          "pswpout_pages": 411844
+        },
+        "end": {
+          "pswpin_pages": 216681,
+          "pswpout_pages": 411844
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 946959032320,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 946959032320,
+        "reserve_bytes": 628626898944,
+        "launch_cap_bytes": 2147483648,
+        "planning_cap_bytes": 2147483648,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 412316860416,
+        "shared_workstation": true
+      },
+      "run_summary_sha256": "45a2ddf11dd8b9dfd11e3537a4fd2dc61907c132c115958ca4f35249927a9632",
+      "launch_to_summary_monotonic": 30.969128704979084,
+      "launch_exit_remaining_seconds": 1148.878832703922,
+      "charged_seconds": 30.969128704979084,
+      "raw_hashes": {
+        "run_manifest.json": "9306a55a63af482ec437496f395786071b18405693558da148a371b68900222c",
+        "run_summary.json": "45a2ddf11dd8b9dfd11e3537a4fd2dc61907c132c115958ca4f35249927a9632",
+        "resource_baseline.json": "2aa08521eb8e098eb20e243b8a8ed8627a2be4ec0976b8991a691b234a891458",
+        "budget_at_launch.json": "e80d44cd635c0590ae6a86be58eca7efb231b8fb2da07ae388dac465747d09cd",
+        "input_original.dat": "abc45c7010f98d3a4490b33bd04b2a93357bbcd236ec09e97b953ec64c3e9fcb",
+        "resolved_config.json": "39805b1955600c69d45ee99422f08e4fa59cfa4b60adb51cb2637440b1ff5910",
+        "supervision/resources.jsonl": "4387c5056d5026a39989f6b70f4a4742119ef0b8884650f15e025ccb2ae83cea"
+      }
+    },
+    "FEINN-FROZEN-HIDDEN-READOUT-G": {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v5_frozen_hidden_readout_20260930T082847001186Z",
+      "source_sha": "a6ac769027384525e406537f3069607043bc4a67",
+      "input_sha256": "8b883a960faae96fe7e5c19585f0c30d037d80631a689aa38c276cc047bb608a",
+      "physical_model_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+      "material_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "mesh_sha256": "78e294e0337292d2750f587ddf394aaa868bd726f8b1104d4eae6a68db039086",
+      "mode_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e",
+      "gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+      "cpu": 12,
+      "mpi": 1,
+      "math_threads": 1,
+      "supervised_seconds": 362.1075926600024,
+      "launch_to_summary_seconds_derived": 364.25900530815125,
+      "peak_simultaneous_tree_RSS_bytes": 1673396224,
+      "own_tree_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "global_swap_diagnostic": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 216681,
+          "pswpout_pages": 411844
+        },
+        "end": {
+          "pswpin_pages": 221916,
+          "pswpout_pages": 437174
+        },
+        "delta": {
+          "pswpin_pages": 5235,
+          "pswpout_pages": 25330
+        }
+      },
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 947010801664,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 947010801664,
+        "reserve_bytes": 628626898944,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 412316860416,
+        "shared_workstation": true
+      },
+      "run_summary_sha256": "982517e141cd97b76710dccba18ad97d91d035ca9b095c34d7bfe268e51e366e",
+      "launch_to_summary_monotonic": 364.27269012795296,
+      "launch_exit_remaining_seconds": 3235.7273090970702,
+      "charged_seconds": 364.27269012795296,
+      "raw_hashes": {
+        "run_manifest.json": "dfd5c7fecdfea7838f526c018d22d399927fbf94b6f36dcc11c1c2c7d83d59e6",
+        "run_summary.json": "982517e141cd97b76710dccba18ad97d91d035ca9b095c34d7bfe268e51e366e",
+        "resource_baseline.json": "3b493c43d9ba8e99f9ebb644246fd70b9f19445ab49df6e637c0c67199d595e4",
+        "budget_at_launch.json": "672dc8f095669eaa4df9590305cf308f5fbc005b43773c8fe4444c2ca76916e9",
+        "input_original.dat": "8b883a960faae96fe7e5c19585f0c30d037d80631a689aa38c276cc047bb608a",
+        "resolved_config.json": "756c3f722dbdfdbb09a844cb4d46dff65aaa1f245731130f3c317902e4ef13e5",
+        "supervision/resources.jsonl": "8dd3dc32fd4f882103ee48da343fcf06610a20ebcb306bea537457793adf2f1a"
+      }
+    },
+    "v5_readout_reconstruct": {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v5_readout_reconstruct_20260930T083847532361Z",
+      "source_sha": "a6ac769027384525e406537f3069607043bc4a67",
+      "input_sha256": "6253af82503d3193feaeffee9416b9d43535f6abf1edcfc05699eeb9b764afff",
+      "physical_model_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+      "material_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "mesh_sha256": "78e294e0337292d2750f587ddf394aaa868bd726f8b1104d4eae6a68db039086",
+      "mode_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e",
+      "gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+      "cpu": 12,
+      "mpi": 1,
+      "math_threads": 1,
+      "supervised_seconds": 17.147531563066877,
+      "launch_to_summary_seconds_derived": 19.3861243724823,
+      "peak_simultaneous_tree_RSS_bytes": 517783552,
+      "own_tree_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "global_swap_diagnostic": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 237816,
+          "pswpout_pages": 437174
+        },
+        "end": {
+          "pswpin_pages": 237816,
+          "pswpout_pages": 437174
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 949636165632,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 949636165632,
+        "reserve_bytes": 628626898944,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 412316860416,
+        "shared_workstation": true
+      },
+      "run_summary_sha256": "21e1b2b081e29acad4a8170d0658bd8565f0177d882340744e640b04703e1291",
+      "launch_to_summary_monotonic": 19.40317025699187,
+      "launch_exit_remaining_seconds": 880.5968274601037,
+      "charged_seconds": 19.40317025699187,
+      "raw_hashes": {
+        "run_manifest.json": "61450fbfba00db4aca0d57fa18b5a22f98473c0775983532a048f72bce2330bd",
+        "run_summary.json": "21e1b2b081e29acad4a8170d0658bd8565f0177d882340744e640b04703e1291",
+        "resource_baseline.json": "b1f04609283c161d60ba49a378808e91e338b2a93dcba232e0dea44d449a1aad",
+        "budget_at_launch.json": "222abeb3d6f3dfee213722f52a4be0080b191e97fff4c1bc7505d7aa6cb70835",
+        "input_original.dat": "6253af82503d3193feaeffee9416b9d43535f6abf1edcfc05699eeb9b764afff",
+        "resolved_config.json": "91d56aeee4a89e283752c8a625c7796a09711e334edbf1f47f6628d91fd68a21",
+        "supervision/resources.jsonl": "0646f2a98e897114b62cdc7582fd950ba3b223ea0a58cccedbd983a5d4d1a147"
+      }
+    },
+    "v5_readout_compare_only": {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v5_readout_compare_only_20260930T084029682110Z",
+      "source_sha": "a6ac769027384525e406537f3069607043bc4a67",
+      "input_sha256": "7bc1d0f7a8d9cdb0da6110a3409f33584acde1480c7cabc4837a48ad34ce5d3f",
+      "physical_model_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+      "material_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "mesh_sha256": "78e294e0337292d2750f587ddf394aaa868bd726f8b1104d4eae6a68db039086",
+      "mode_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e",
+      "gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+      "cpu": 12,
+      "mpi": 1,
+      "math_threads": 1,
+      "supervised_seconds": 18.620813943911344,
+      "launch_to_summary_seconds_derived": 20.78018307685852,
+      "peak_simultaneous_tree_RSS_bytes": 462159872,
+      "own_tree_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "global_swap_diagnostic": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 237816,
+          "pswpout_pages": 437174
+        },
+        "end": {
+          "pswpin_pages": 237816,
+          "pswpout_pages": 437174
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 949744058368,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 949744058368,
+        "reserve_bytes": 628626898944,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 412316860416,
+        "shared_workstation": true
+      },
+      "run_summary_sha256": "f4ec64a8efcb011b0fff24a7e64206fe3c7016ce33655d8ed3a720987f07d8c6",
+      "launch_to_summary_monotonic": 20.795906124985777,
+      "launch_exit_remaining_seconds": 879.2040935800178,
+      "charged_seconds": 20.795906124985777,
+      "raw_hashes": {
+        "run_manifest.json": "cccab9092b17239cdf6805aa894f3f850df0598051129477c39183f3e96fe273",
+        "run_summary.json": "f4ec64a8efcb011b0fff24a7e64206fe3c7016ce33655d8ed3a720987f07d8c6",
+        "resource_baseline.json": "6c1f1ab0fc36f8554db9810e5e619f08d8bcf1f7a703e133f22f88f06214c5e1",
+        "budget_at_launch.json": "e00dcea8dd71f29f3550438efde40710dc33b25e0943a45fc1908274f14ae668",
+        "input_original.dat": "7bc1d0f7a8d9cdb0da6110a3409f33584acde1480c7cabc4837a48ad34ce5d3f",
+        "resolved_config.json": "8d257facebd9ccada753ddf02f62fc57cdba86712741936de01998f0aa1ec24f",
+        "supervision/resources.jsonl": "5e462d42f06c1194423ff5465fa20bb81746b15a0c0fd9a734778b75aa458835"
+      }
+    }
+  },
+  "auxiliary_attempts": [
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v5_fe_preflight_20260930T083949945598Z",
+      "summary_sha256": "1104093172c8676530f018b3d29e9db4c174cf555cdf8966b03d752a29e98ae2",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "charged_seconds": 2.696834602043964,
+      "peak_simultaneous_tree_RSS_bytes": 145133568,
+      "own_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v5_projection_physics_checker_20260930T084200685318Z",
+      "status": "RUNNING_OR_NO_SUMMARY",
+      "charged_seconds": 0
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v5_s0_clock_dummy_20260930T082338497335Z",
+      "summary_sha256": "e4ec59ca6e142489b3f18edbeb9e9d29e7369ce638b7b82929c62c0f3b374e14",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "charged_seconds": 10.598033724003471,
+      "peak_simultaneous_tree_RSS_bytes": 295534592,
+      "own_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v5_s0_final_targeted_20260930T082530569765Z",
+      "summary_sha256": "15aa1826ed200f54c03790dde1766778c3c6e2f77bdb4fb645860ff5d5723283",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "charged_seconds": 4.757347824051976,
+      "peak_simultaneous_tree_RSS_bytes": 294051840,
+      "own_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v5_s0_targeted_tests_20260930T082247766108Z",
+      "summary_sha256": "a27da38f17181b836c18a0525297bd4c2198b2b133335323e6ee4687d7bd1e25",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "charged_seconds": 4.796656482969411,
+      "peak_simultaneous_tree_RSS_bytes": 294649856,
+      "own_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    }
+  ],
+  "numerical_peak_RSS_bytes": 1673396224,
+  "all_supervised_peak_RSS_bytes": 1673396224,
+  "own_sampled_swap_zero": true,
+  "management_server_launch_samples": [
+    {
+      "proof": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/durable/v5_clock_dummy/terminal_identity.json",
+      "sha256": "8e88f27dd807724bb56e179d3d0a5b01d80e54133dc6551f78d4578f35af414b",
+      "pid": 826008,
+      "start_ticks": 68161486,
+      "VmRSS": 4702208,
+      "VmSwap": 0,
+      "Threads": 1
+    },
+    {
+      "proof": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/durable/v5_frozen_hidden_readout/terminal_identity.json",
+      "sha256": "284c0e5d2124faa686d0a2663a23788fe698f1bafa1fbafdac5748ce7420152b",
+      "pid": 827351,
+      "start_ticks": 68192158,
+      "VmRSS": 4636672,
+      "VmSwap": 0,
+      "Threads": 1
+    },
+    {
+      "proof": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/durable/v5_readout_checks/terminal_identity.json",
+      "sha256": "494e18dee87156b841e3ede263c8e3224a9e94fe52dcab8b157710f15f39e043",
+      "pid": 826694,
+      "start_ticks": 68181507,
+      "VmRSS": 4677632,
+      "VmSwap": 0,
+      "Threads": 1
+    },
+    {
+      "proof": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/durable/v5_readout_compare_only/terminal_identity.json",
+      "sha256": "a1e368edfdcef50135479d15af67c04a08e57ae531e06f6f16e1e6514f68ce13",
+      "pid": 828337,
+      "start_ticks": 68262425,
+      "VmRSS": 4685824,
+      "VmSwap": 0,
+      "Threads": 1
+    },
+    {
+      "proof": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/durable/v5_readout_reconstruct/terminal_identity.json",
+      "sha256": "469dcbd8af981fa027fe9af2578155afd26f2ba822294e7fb6ba6478a5186d6b",
+      "pid": 827977,
+      "start_ticks": 68252211,
+      "VmRSS": 4755456,
+      "VmSwap": 0,
+      "Threads": 1
+    }
+  ],
+  "management_scope": "own tmux servers outside numeric tree; sparse observations, not continuous peak; wall included",
+  "main_numeric_cutoff_monotonic": 685371.847831859,
+  "reserve_120s_met": true,
+  "no_continuous_kernel_cgroup_limit_claim": true,
+  "shared_workstation": true,
+  "new_Gram_factor_Gsolve_Maxwell_factor_counts": [
+    0,
+    0,
+    0
+  ],
+  "historical_Gram_and_reference_costs_preserved": true,
+  "timer_scope": "phase walls sum; nested G/QR/SVD/storage/supervisor timers are included and never added again",
+  "cutoff": "all completed own V5 summaries plus conservative direct/current/final 120s allowance"
+}

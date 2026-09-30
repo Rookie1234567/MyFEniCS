@@ -1,0 +1,94 @@
+{
+  "schema": "task42extra.run-index.v5",
+  "stages": {
+    "v5_readout_checks": {
+      "source_sha": "a6ac769027384525e406537f3069607043bc4a67",
+      "run_directory": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v5_readout_checks_20260930T082700492832Z",
+      "files": {
+        "columns": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v5_readout_checks_20260930T082700492832Z/qualified_readout_columns.npz",
+          "sha256": "03bb974a41d8043bc5f0c9add72d615bbff9467c4ec0d51b01975fab6943a0ed"
+        },
+        "result": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v5_readout_checks_20260930T082700492832Z/result.json",
+          "sha256": "72fabbb214d3a950e56c73012bc24f8165c0a587f1dde1d38def1a686467b430"
+        }
+      },
+      "index_sha256": "ed12528beb4ce0b3ef7d42c1b0c9d94764a26a6de8ccde56bf1d700c4c4d7904"
+    },
+    "FEINN-FROZEN-HIDDEN-READOUT-G": {
+      "source_sha": "a6ac769027384525e406537f3069607043bc4a67",
+      "run_directory": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v5_frozen_hidden_readout_20260930T082847001186Z",
+      "files": {
+        "anchor": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v5_frozen_hidden_readout_20260930T082847001186Z/readout_anchor.npz",
+          "sha256": "0e04a4fc83feb2f9079a00b3bffea1a3151dd6abfb9b85e533510a29f5e08acd"
+        },
+        "projection_arrays": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v5_frozen_hidden_readout_20260930T082847001186Z/projection_arrays.npz",
+          "sha256": "80e28887f2d77e6900514d4f09d57ac22baf8e1beb700b1b4461687ab0f6705d"
+        },
+        "checkpoint": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v5_frozen_hidden_readout_20260930T082847001186Z/frozen_checkpoint.npz",
+          "sha256": "2d166478509bbf14638c7beb0afcff321a5330b37f34f72c2e8737477d9cd58c"
+        },
+        "parameter_only_model": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v5_frozen_hidden_readout_20260930T082847001186Z/frozen_model_parameter_only.pt",
+          "sha256": "9d81e01df9aab13bd4e03dfb2ceebbd0e9ba7b459365356ec5ca4abcaf6909eb"
+        },
+        "projection": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v5_frozen_hidden_readout_20260930T082847001186Z/readout_projection.json",
+          "sha256": "8c433e7eab938e3073de7c6444d9f3df5063119ab478e8b68a4a05ed949aa497"
+        },
+        "result": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v5_frozen_hidden_readout_20260930T082847001186Z/result.json",
+          "sha256": "0c944ac786fab1d6cf6ca000d375f612247334f31c1abb4737665c4c0868a0ab"
+        }
+      },
+      "index_sha256": "1e231073892d34b9153ab85c5486c81e2322d86083abaab7098de4c5c702bedd"
+    },
+    "v5_readout_reconstruct": {
+      "source_sha": "a6ac769027384525e406537f3069607043bc4a67",
+      "run_directory": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v5_readout_reconstruct_20260930T083847532361Z",
+      "files": {
+        "reconstructed": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v5_readout_reconstruct_20260930T083847532361Z/reconstructed_full_coefficients.npz",
+          "sha256": "b825a2ca84e91aab059982b1d9c2e651b7f7075f05cb8dd1bc2fe3dd0e04d4cb"
+        },
+        "result": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v5_readout_reconstruct_20260930T083847532361Z/result.json",
+          "sha256": "3bd209d6092644cd6888ce485f131f2ba1f2d2d4cc0206ca3c22ee8de3c94460"
+        }
+      },
+      "index_sha256": "f3f9f033ac8ff5b2f529396c51d9986d39de0403c287368bce1e51f5925e91ae"
+    },
+    "v5_readout_compare_only": {
+      "source_sha": "a6ac769027384525e406537f3069607043bc4a67",
+      "run_directory": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v5_readout_compare_only_20260930T084029682110Z",
+      "files": {
+        "result": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v5_readout_compare_only_20260930T084029682110Z/result.json",
+          "sha256": "bb20b0a60f18da84e63e7bab30d501774f226ccb37fc8737b8be69cf254cf552"
+        }
+      },
+      "index_sha256": "f75432b12e857327e24e655aee9768894acb583c82ae62e68052d33fd551158a"
+    }
+  },
+  "main_start_count": 1,
+  "source_is_documentation_HEAD": false,
+  "reference_used_for_training": true,
+  "pde_only_solve": false,
+  "production_initialization_allowed": false,
+  "pde_only_solver_qualified": false,
+  "official_candidate_results": false,
+  "checker_source": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/check_task42extra_v5.py",
+    "sha256": "99e4024a327ea1823225d9d2264e52b1225496292b88a7f377bace290a58da47",
+    "kind": "bounded read-only arithmetic checker; tested byte identity; formal solve source separately recorded"
+  },
+  "checker_raw_evidence": {
+    "summary": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v5_projection_physics_checker_20260930T084200685318Z/summary.json",
+    "summary_sha256": "8d8199ae06752a3933d32f3d4d783bb97a627a7ed327d0cfc27602da5234e504",
+    "worker_log_sha256": "590fcac7e5dc9bcc45f730bf50e5bfcf50a7099fdae61fe78f0b11497991d05a"
+  }
+}
