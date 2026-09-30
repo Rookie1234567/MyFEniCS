@@ -55,5 +55,12 @@
     "kernel": "7.0.0-31-generic",
     "microsoft_wsl_kernel": false
   },
-  "runtime_source_is_documentation_head": false
+  "runtime_source_is_documentation_head": false,
+  "published_markdown_commit": "6aab856204b24f79d8636947b2e4b5dd04b4819b",
+  "rendered_markdown_unchanged_in_final_records_commit": true,
+  "GitHub_render_status": "GITHUB_RENDERED_VIEW_PASS_DOM_AND_SAMPLED_VISUAL",
+  "final_record_commit_parent": "6aab856204b24f79d8636947b2e4b5dd04b4819b",
+  "resource_costs_sha256": "d6a7eaf0428e18d56fdc008d76c401bd454f7d79eb9458139f928ca62ff56810",
+  "render_check_sha256": "dfc59f066a030c28c69f42de53dd566bc882c280901d0049898dd1deb1ccefbf",
+  "local_and_published_markdown_bytes_identical": true
 }

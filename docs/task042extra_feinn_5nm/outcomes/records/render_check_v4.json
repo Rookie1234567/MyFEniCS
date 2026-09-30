@@ -1,5 +1,315 @@
 {
   "schema": "task42extra.render-check.v4",
-  "status": "PENDING_PUBLISHED_VIEW",
-  "scope": "new Review V3 and necessary V4 sections; no historical batch rerender"
+  "status": "GITHUB_RENDERED_VIEW_PASS_DOM_AND_SAMPLED_VISUAL",
+  "published_commit": "6aab856204b24f79d8636947b2e4b5dd04b4819b",
+  "raw_directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v4_publish_6aab856_native",
+  "raw_DOM_sha256": "0bace159ed585f6fd143a82630aa473e58083ed4107a2e3928fbc62b162a03c7",
+  "screenshots_hashed": 34,
+  "pages": [
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/6aab856204b24f79d8636947b2e4b5dd04b4819b/docs/task042extra_feinn_5nm/review_report_v3.md",
+      "git_blob_sha": "626acc60aa34649c3daa8adea6006ba0e50ce657",
+      "heading": "Review V3：保全已提交状态，从 Adam500 阶段边界补全固定拟合",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/review_report_v3.md at 6aab856204b24f79d8636947b2e4b5dd04b4819b · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 4,
+      "columns": [
+        3,
+        2,
+        2,
+        2
+      ],
+      "math": 1,
+      "screenshots": [
+        {
+          "name": "00_top.png",
+          "sha256": "61943f71876dd531685a077b74627071abb80696037b31162dd26481e41a0c7a"
+        },
+        {
+          "name": "00_table_00.png",
+          "sha256": "017232824c38720e0592e9fde098910afbddb102765d070fd562ca0d377e8eb0"
+        },
+        {
+          "name": "00_table_01.png",
+          "sha256": "1912637091532f08b3e690deb9c7a2546d296100960322e79cd79fa9cb64db76"
+        },
+        {
+          "name": "00_table_02.png",
+          "sha256": "ff8bd036ae8a39991b28892d156ff07bcb0df1fe9800b608a61dfc3da3e03ba1"
+        },
+        {
+          "name": "00_table_03.png",
+          "sha256": "def77176495a9ae29a4803eb5dfcadd95b51131d792fc3afb6e234ce098ead5f"
+        },
+        {
+          "name": "00_math-renderer_00.png",
+          "sha256": "7773577a69fea533bf4bf1c9adc0e684b82362d91603bbcb5f198660cdac4615"
+        }
+      ],
+      "visual_review": "sampled named screenshots viewed by model",
+      "visually_inspected_screenshots": [
+        "00_math-renderer_00.png"
+      ]
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/6aab856204b24f79d8636947b2e4b5dd04b4819b/docs/task042extra_feinn_5nm/response_v4.md",
+      "git_blob_sha": "cd1eeafdb84b34a9472bf773e29d1a35baf0f46a",
+      "heading": "Task42extra Response V4：持久检查点与 Adam500 后段重放",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/response_v4.md at 6aab856204b24f79d8636947b2e4b5dd04b4819b · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 4,
+      "columns": [
+        2,
+        3,
+        4,
+        3
+      ],
+      "math": 0,
+      "screenshots": [
+        {
+          "name": "01_top.png",
+          "sha256": "58b0e0ffeac67749ccbe168e5026626b026bead774d7cc24b0ae43d1834694b4"
+        },
+        {
+          "name": "01_table_00.png",
+          "sha256": "c5c9248d058079433fc399cde545ba2a767ad452723bb5e57800d426b28cbf01"
+        },
+        {
+          "name": "01_table_01.png",
+          "sha256": "afcdb2476a6db63484db272c1b30a34f8a8de7d6d209359b74490384b0626804"
+        },
+        {
+          "name": "01_table_02.png",
+          "sha256": "73a42baab8fb329bddf5370086b631b4654c72650fdfa902e8fb41d68e87770a"
+        },
+        {
+          "name": "01_table_03.png",
+          "sha256": "f5636494c95cb0b000da24206ab45ddcebf3d6591c7951ceb33f6e406ab37dd7"
+        }
+      ],
+      "visual_review": "sampled named screenshots viewed by model",
+      "visually_inspected_screenshots": [
+        "01_table_03.png"
+      ]
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/6aab856204b24f79d8636947b2e4b5dd04b4819b/docs/task042extra_feinn_5nm/outcomes/durable_replay_v4.md",
+      "git_blob_sha": "b113f834a02383819b0a8d06165a48bb9c656899",
+      "heading": "Task42extra V4：保全阶段边界的监督场拟合",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/outcomes/durable_replay_v4.md at 6aab856204b24f79d8636947b2e4b5dd04b4819b · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 9,
+      "columns": [
+        2,
+        2,
+        3,
+        3,
+        3,
+        4,
+        4,
+        4,
+        4
+      ],
+      "math": 1,
+      "screenshots": [
+        {
+          "name": "02_top.png",
+          "sha256": "4c82f840bcd9d914b3db00b0d95d2751b846f0b40973e92d370249e6904cc6b2"
+        },
+        {
+          "name": "02_table_00.png",
+          "sha256": "df9b15b431d8f6e26288ec3b2127c824b2b90aead6a75c4bed52e8f9b66282f1"
+        },
+        {
+          "name": "02_table_01.png",
+          "sha256": "5e16ff501dc2854af25a30da3415f8e41f939d9d03db39e4cd0cb54cfe41fd3f"
+        },
+        {
+          "name": "02_table_02.png",
+          "sha256": "c2842adacc2d7730ea03cc38c67f1fe81b72301c85c2bfb045c2136be9955901"
+        },
+        {
+          "name": "02_table_03.png",
+          "sha256": "a91ee53c95df53e4a518da5e2ab3f6a7575a97cb2a8bdc0b316e3e5f08316481"
+        },
+        {
+          "name": "02_table_04.png",
+          "sha256": "8fb2688ec84dcf30b12cf2182b1c9cd0542c3656767e8f50d8cfec2461b3082f"
+        },
+        {
+          "name": "02_table_05.png",
+          "sha256": "e38e6f7d319124500955a40e5f4215710d5e0c15a1d957ff2801da3b0b236136"
+        },
+        {
+          "name": "02_table_06.png",
+          "sha256": "b42f59e4dbd70c9c4082bc0f3c004930b5534c7a965c819672d169ed42b07fe5"
+        },
+        {
+          "name": "02_table_07.png",
+          "sha256": "c2135feb042029fee8dcc077fe25b9523768a8a83d0872bf0290500adf6c4e88"
+        },
+        {
+          "name": "02_table_08.png",
+          "sha256": "20c1ef432070add32d74b4100ad76818224c3f08ed8590131cb3be5b555bf2c6"
+        },
+        {
+          "name": "02_math-renderer_00.png",
+          "sha256": "8413f1d5603382fe2b2b614fd2188d30cc05f40c4f8154722b49ee113a6e044b"
+        }
+      ],
+      "visual_review": "sampled named screenshots viewed by model",
+      "visually_inspected_screenshots": [
+        "02_math-renderer_00.png",
+        "02_table_05.png"
+      ]
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/6aab856204b24f79d8636947b2e4b5dd04b4819b/docs/task042extra_feinn_5nm/outcomes/summary.md",
+      "git_blob_sha": "82991f96c087ba0b4fd2e9326fcb6ef4305684c8",
+      "heading": "Task42extra Review V3 后续：V4 持久 Adam500 边界重放",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/outcomes/summary.md at 6aab856204b24f79d8636947b2e4b5dd04b4819b · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 3,
+      "columns": [
+        3,
+        4,
+        4
+      ],
+      "math": 0,
+      "screenshots": [
+        {
+          "name": "03_top.png",
+          "sha256": "c61b279f3d395999e5563b850effb00148c188f7a9bdfe2e48e16f7c067ad4b2"
+        },
+        {
+          "name": "03_table_00.png",
+          "sha256": "0d489a33eda6635c4a41a966c24cac6b0d2a5e67d942b5dd05454d529bf3e67e"
+        },
+        {
+          "name": "03_table_01.png",
+          "sha256": "b19c6be22e38e27d9106464b6651dbb333c8875c6f8c00becfb0330c367c1127"
+        },
+        {
+          "name": "03_table_02.png",
+          "sha256": "566c2af1dc6ce1e428411afbaa226bb4bd24c0dbc2056215a65dbcd2ea90a889"
+        }
+      ],
+      "visual_review": "DOM verified and screenshot hashes checked; this page not individually viewed",
+      "visually_inspected_screenshots": []
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/6aab856204b24f79d8636947b2e4b5dd04b4819b/docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+      "git_blob_sha": "53d4a0a2a4669c90c38c5f87335ac83d566a046a",
+      "heading": "Review V3 后续 V4 定向资格",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/outcomes/test_summary.md at 6aab856204b24f79d8636947b2e4b5dd04b4819b · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 1,
+      "columns": [
+        3
+      ],
+      "math": 0,
+      "screenshots": [
+        {
+          "name": "04_top.png",
+          "sha256": "8e9dfc4aeb60a5154d70c7c384ade11bacced218b3fc2d1eef3aa031b62b244e"
+        },
+        {
+          "name": "04_table_00.png",
+          "sha256": "8e9dfc4aeb60a5154d70c7c384ade11bacced218b3fc2d1eef3aa031b62b244e"
+        }
+      ],
+      "visual_review": "DOM verified and screenshot hashes checked; this page not individually viewed",
+      "visually_inspected_screenshots": []
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/6aab856204b24f79d8636947b2e4b5dd04b4819b/docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+      "git_blob_sha": "c38bd98cf318f2b203d796689335702b177d0639",
+      "heading": "Review V3 后续 V4 文件级边界",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/outcomes/changed_files.md at 6aab856204b24f79d8636947b2e4b5dd04b4819b · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 1,
+      "columns": [
+        3
+      ],
+      "math": 0,
+      "screenshots": [
+        {
+          "name": "05_top.png",
+          "sha256": "d2aee5f5e1ef7d821535aea73b870fc3a0013941af73dedfc260c1e0f29c9195"
+        },
+        {
+          "name": "05_table_00.png",
+          "sha256": "50de7acd62d93958d04f32751c82c2631a0427eabab70614acb684abe33e8cab"
+        }
+      ],
+      "visual_review": "DOM verified and screenshot hashes checked; this page not individually viewed",
+      "visually_inspected_screenshots": []
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/6aab856204b24f79d8636947b2e4b5dd04b4819b/docs/development_progress.md",
+      "git_blob_sha": "228dd13a261e541ee650e97f5ea85ce11eca1fdf",
+      "heading": "2026-09-30 Task42extra V4：持久 Adam500 阶段边界重放",
+      "title": "MyFEniCS/docs/development_progress.md at 6aab856204b24f79d8636947b2e4b5dd04b4819b · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 1,
+      "columns": [
+        2
+      ],
+      "math": 0,
+      "screenshots": [
+        {
+          "name": "06_top.png",
+          "sha256": "b7f938d9f4f2cbb747e61f79a9dab11f15227147cb9a32ee46013133208e4059"
+        },
+        {
+          "name": "06_table_00.png",
+          "sha256": "b7f938d9f4f2cbb747e61f79a9dab11f15227147cb9a32ee46013133208e4059"
+        }
+      ],
+      "visual_review": "DOM verified and screenshot hashes checked; this page not individually viewed",
+      "visually_inspected_screenshots": []
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/6aab856204b24f79d8636947b2e4b5dd04b4819b/docs/development_model_registry.md",
+      "git_blob_sha": "5c5f950ef56e8e517142d0aaad8e02eb6f4c4b89",
+      "heading": "3.44.3 Task42extra Review V3 后续：持久监督表示终态",
+      "title": "MyFEniCS/docs/development_model_registry.md at 6aab856204b24f79d8636947b2e4b5dd04b4819b · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 1,
+      "columns": [
+        3
+      ],
+      "math": 0,
+      "screenshots": [
+        {
+          "name": "07_top.png",
+          "sha256": "d0f9ea822172586f50d9e027e01055e92d58343108e4f7b1e2d070d81ae7794c"
+        },
+        {
+          "name": "07_table_00.png",
+          "sha256": "978fa51e7f19543ccd032621426d9ed06959742658c5812fac29e613f5cff435"
+        }
+      ],
+      "visual_review": "DOM verified and screenshot hashes checked; this page not individually viewed",
+      "visually_inspected_screenshots": []
+    }
+  ],
+  "scope": "new Review V3 and V4/newly edited sections only; no historical batch rerender",
+  "visually_inspected": [
+    {
+      "name": "00_math-renderer_00.png",
+      "sha256": "7773577a69fea533bf4bf1c9adc0e684b82362d91603bbcb5f198660cdac4615"
+    },
+    {
+      "name": "01_table_03.png",
+      "sha256": "f5636494c95cb0b000da24206ab45ddcebf3d6591c7951ceb33f6e406ab37dd7"
+    },
+    {
+      "name": "02_math-renderer_00.png",
+      "sha256": "8413f1d5603382fe2b2b614fd2188d30cc05f40c4f8154722b49ee113a6e044b"
+    },
+    {
+      "name": "02_table_05.png",
+      "sha256": "e38e6f7d319124500955a40e5f4215710d5e0c15a1d957ff2801da3b0b236136"
+    }
+  ],
+  "prior_failed_attempt": {
+    "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v4_github_render_20260930T072050316760Z",
+    "cause": "FileExistsError: prepared OUT collided with renderer exclusive creation; browser NOT_STARTED",
+    "worker_log_sha256": "2e1893a2cb5c661e22a71b605c2e5e056f361823b18a504d38e0f95dfaa76ced",
+    "negative_evidence_retained": true
+  },
+  "retry_scope": "only same 8 new Review/V4 sections; no numerical rerun or renderer source change"
 }

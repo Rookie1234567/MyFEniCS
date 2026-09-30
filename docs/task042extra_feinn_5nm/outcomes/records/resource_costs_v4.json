@@ -1,15 +1,15 @@
 {
   "schema": "task42extra.resource-costs.v4",
-  "cutoff": "all available summaries plus conservative 120s direct/current-check/final allowance",
+  "cutoff": "all completed V4 supervised summaries including final ledger; conservative 120s allowance covers direct final record verification/Git receipt/publication",
   "previous_conservative_seconds": 33070.52670758043,
   "old_lost_attempt_charged_seconds": 3284,
   "V4_formal_seconds": 10751.744428873062,
-  "V4_auxiliary_seconds": 82.14597865892574,
+  "V4_auxiliary_seconds": 177.57750174985267,
   "direct_and_final_allowance_seconds_conservative": 120,
-  "V4_batch_seconds": 10953.890407531988,
-  "V4_remaining_seconds": 3446.109592468012,
-  "original_total_conservative_seconds": 44024.41711511242,
-  "original_16h_remaining_seconds": 13575.582884887583,
+  "V4_batch_seconds": 11049.321930622915,
+  "V4_remaining_seconds": 3350.678069377085,
+  "original_total_conservative_seconds": 44119.848638203344,
+  "original_16h_remaining_seconds": 13480.151361796656,
   "formal_stages": {
     "v4_boundary_checks": {
       "directory": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v4_boundary_checks_20260930T033203050181Z",
@@ -300,6 +300,17 @@
       "descendants_cleared": true
     },
     {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v4_final_ledger_20260930T073014189967Z",
+      "summary_sha256": "1e2a8cbacfeb554c7ccc00a6454eda6d230a2b7abc8a7efd5fa84ca540459738",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.6761837089434266,
+      "charged_seconds": 2.6761837089434266,
+      "peak_simultaneous_tree_RSS_bytes": 89583616,
+      "own_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
       "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v4_format_20260930T031726990279Z",
       "summary_sha256": "07ee9d4e548abe5b95e1517757628474085793e04e82fb68edd647e175ee5949",
       "classification": "COMPLETED",
@@ -307,6 +318,28 @@
       "elapsed_seconds": 1.9399515530094504,
       "charged_seconds": 1.9399515530094504,
       "peak_simultaneous_tree_RSS_bytes": 39288832,
+      "own_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v4_github_render_20260930T072050316760Z",
+      "summary_sha256": "d748a7a26f40db1e23d634d3dae9ab3231fb40f94be4bfcf4cb6d74996ac9efc",
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 2.7508151890942827,
+      "charged_seconds": 2.7508151890942827,
+      "peak_simultaneous_tree_RSS_bytes": 77664256,
+      "own_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v4_github_render_native_20260930T072342668132Z",
+      "summary_sha256": "b5eb28511f3587f53d533bc9db113f588e210c91aedfe901c9c6f88b886fadd7",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 84.73268631799147,
+      "charged_seconds": 84.73268631799147,
+      "peak_simultaneous_tree_RSS_bytes": 2054807552,
       "own_tree_swap_peak_bytes": 0,
       "descendants_cleared": true
     },
@@ -389,8 +422,14 @@
     },
     {
       "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v4_prepublication_ledger_20260930T071612584204Z",
-      "status": "RUNNING_OR_NO_SUMMARY",
-      "charged_seconds": 0
+      "summary_sha256": "1fc306e96086332962bb3f77cefeaa635d4b928ccaec825d1a89e8e2798a48e6",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 3.2767005369532853,
+      "charged_seconds": 3.2767005369532853,
+      "peak_simultaneous_tree_RSS_bytes": 92700672,
+      "own_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
     },
     {
       "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v4_publication_static_20260930T071459991064Z",
@@ -400,6 +439,17 @@
       "elapsed_seconds": 2.016284318990074,
       "charged_seconds": 2.016284318990074,
       "peak_simultaneous_tree_RSS_bytes": 59764736,
+      "own_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v4_render_finalize_20260930T072722827577Z",
+      "summary_sha256": "15cf8b88584a3a804d58bd7615a53162f77bfa3f12b84cf0e4ec59ce7294ca48",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 1.9951373379444703,
+      "charged_seconds": 1.9951373379444703,
+      "peak_simultaneous_tree_RSS_bytes": 65564672,
       "own_tree_swap_peak_bytes": 0,
       "descendants_cleared": true
     },
@@ -426,7 +476,7 @@
       "descendants_cleared": true
     }
   ],
-  "all_supervised_peak_RSS_bytes": 764751872,
+  "all_supervised_peak_RSS_bytes": 2054807552,
   "own_sampled_swap_zero": true,
   "management_server_samples": [
     {
