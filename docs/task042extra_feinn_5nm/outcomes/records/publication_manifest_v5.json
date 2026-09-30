@@ -1,0 +1,123 @@
+{
+  "schema": "task42extra.publication-manifest.v5",
+  "status": "V5_COMPLETE_SUPERVISED_DIAGNOSTIC_NOT_SOLVER_QUALIFIED",
+  "branch": "task42extra_feinn_5nm",
+  "worktree": "/home/fenics/Projects/NN-Lab-V2",
+  "canonical_common_git_directory": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+  "published_Markdown_commit": "c09e29c730c27c0b362a8eefa88fc29649e26f55",
+  "actual_all_four_numerical_stage_source": "a6ac769027384525e406537f3069607043bc4a67",
+  "review_release": "28fabffd41f042c8a4bdda6339810bb1f98a887d",
+  "review_baseline": "653acdf15e8484ce3df211ca2dfb8114a107f315",
+  "original_base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "document_HEAD_is_not_numerical_source": true,
+  "rendered_Markdown_blobs": [
+    {
+      "path": "docs/task042extra_feinn_5nm/review_report_v4.md",
+      "sha256": "152d03e13e21d256fc1fbb1e110143cd86e0dda3dfdf11609f5c348fbbe53f46",
+      "git_blob_sha": "38049019a99b686f67c3e593adc70f1ebf7c372c",
+      "checked_scope": "entire page"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/response_v5.md",
+      "sha256": "493644127d8ff6b8b4bcea380217c80e138aa4d750eaf164ddb33c490173af51",
+      "git_blob_sha": "c05b2d64d2ba9888cd69d7d5ca6253fd9df34636",
+      "checked_scope": "entire page"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/frozen_hidden_readout_v5.md",
+      "sha256": "283f9345c31d0cf00eec00a5627287e92bb32223f5a9824b33ecd2377658b819",
+      "git_blob_sha": "d9544621ad1909e3c49ef39d191133c06243edc9",
+      "checked_scope": "entire page"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+      "sha256": "a8674ed6211ccfe8c11410d33332325db27dd0e7f3b5b461ed39d3ac7ecf6775",
+      "git_blob_sha": "8c6c5e5c02a2d0fa2c1c83764a6da33aa4efce88",
+      "checked_scope": "Task42extra Review V4 后续：V5"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+      "sha256": "4931b612e6a86d2527e7f4c67502697056139fdef05e2cd36e5ad0f2124e3112",
+      "git_blob_sha": "0decf975e8fbe16d86c147356b865b94f3dfa175",
+      "checked_scope": "Review V4 后续 V5 定向资格"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+      "sha256": "498a16a0b585b9b106ba998f9de2d43b2d6b150532b3482bbdd2fdb7c1cd3b00",
+      "git_blob_sha": "91e5529cf6c3b235d0aa047af16eed5bb6f64ba4",
+      "checked_scope": "Review V4 后续 V5 文件级边界"
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "2f8e0db8aa0efd6fa533de11a8f58708305b9e52944c7711fc6493f3a4b83a6d",
+      "git_blob_sha": "0103c69a516499f4071b71a8f77458d320f0a432",
+      "checked_scope": "2026-09-30 Task42extra V5"
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "c8e03974344e8beae36f86509780b63107eeb903b5a3b9a9d2cba3aed6fd854b",
+      "git_blob_sha": "4f1738330d5836f7fc2425742d5645970b7805cd",
+      "checked_scope": "3.44.4 Task42extra Review V4 后续"
+    }
+  ],
+  "local_markdown_check": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/development/markdown_check_v5.json",
+    "sha256": "0d3f4a8e444ce9608854ee20b7f321e261d1052f38ad40d69d930f50c44d276a",
+    "status": "LOCAL_MARKDOWN_PASS",
+    "pages": 8,
+    "tables": 25
+  },
+  "final_static_checks": {
+    "log": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/development/v5_docs_final_static.log",
+    "log_sha256": "b175224d418a45f48209afd8c30e1874578963a58fb190d9bbfdd764f93b0e4a",
+    "supervisor_summary": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v5_docs_final_static_20260930T091129534280Z/summary.json",
+    "supervisor_sha256": "660426518c019154ce820c867d687730a7895559d2ad3971898ae2c77ca84e37",
+    "Ruff_compileall_local_Markdown_diff_and_base_ancestry_pass": true,
+    "full_pytest_run": false,
+    "CI_claim": false
+  },
+  "V1_V4_history_preservation": {
+    "docs/task042extra_feinn_5nm/outcomes/summary.md": true,
+    "docs/task042extra_feinn_5nm/outcomes/test_summary.md": true,
+    "docs/task042extra_feinn_5nm/outcomes/changed_files.md": true,
+    "docs/development_progress.md": true,
+    "docs/development_model_registry.md": true
+  },
+  "one_off_metadata_probe_error_retained": {
+    "status": "METADATA_PROBE_ERROR_CORRECTED",
+    "reason": "initial preservation probe expected a three-hash registry heading; actual existing heading has two hashes; ValueError before any file mutation",
+    "scope": "metadata lookup only, not numerical/physical failure",
+    "charge": "within direct 120s allowance"
+  },
+  "render_record": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/render_check_v5.json",
+    "sha256": "f5d07e283f1c7f36b65952893e1a9dc9bbcfc33a0cdf7eb30a7db6486f7085fa",
+    "status": "GITHUB_RENDERED_VIEW_PASS_DOM_AND_SAMPLED_VISUAL",
+    "pages": 8,
+    "tables": 25,
+    "math": 4,
+    "screenshots": 37
+  },
+  "resource_record": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v5.json",
+    "sha256": "5538dde8606d430093d069d40f8415fd649c6f88e444529f7dcd2dae2083a9fc",
+    "conservative_batch_seconds": 695.3759797480889,
+    "conservative_total_seconds": 44815.22461795143
+  },
+  "checker_file_sha256": "99e4024a327ea1823225d9d2264e52b1225496292b88a7f377bace290a58da47",
+  "renderer_finalizer_sha256": "27c8c1d34f499e78f113937164f039e7c662a5c1860e1f88ab49c11531ccd8ef",
+  "metadata_writer_sha256": "f9b85c84f9ffa08a3d4bd9a14b8e719cead114666ea443a8a7b8b2bdfb804395",
+  "own_metadata_admission_CPU": 0,
+  "metadata_process_RSS_scope": "direct standard-library publication writer; covered by conservative direct allowance, not a numerical peak",
+  "direct_metadata_seconds": 1.3725203019566834,
+  "exact_push_ref": "HEAD:refs/heads/task42extra_feinn_5nm",
+  "upstream_verification": "configured origin and merge ref; shared fetch does not map branch; explicit refs/remotes/origin/task42extra_feinn_5nm fetch and ahead/behind required",
+  "final_git_receipt": "final records commit HEAD/upstream/ahead-behind/clean state are reported after push; published Markdown bytes above stay unchanged",
+  "next_action": "STOP_AWAIT_REVIEW",
+  "p4_target_5nm_0p7nm": "NOT_RUN",
+  "reference_used_for_training": true,
+  "pde_only_solve": false,
+  "production_initialization_allowed": false,
+  "pde_only_solver_qualified": false,
+  "official_candidate_results": false
+}
