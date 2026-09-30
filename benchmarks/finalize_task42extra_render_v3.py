@@ -11,13 +11,20 @@ from benchmarks.check_task42extra_v2 import ROOT, sha, write
 def main():
     if len(sys.argv) not in (3, 4):
         raise SystemExit(
-            "usage: finalize_task42extra_render_v3.py <raw-directory> <published-SHA> [3|4|5|6|7]"
+            "usage: finalize_task42extra_render_v3.py <raw-directory> <published-SHA> [3|4|5|6|7|8]"
         )
     version = int(sys.argv[3]) if len(sys.argv) == 4 else 3
-    if version not in (3, 4, 5, 6, 7):
+    if version not in (3, 4, 5, 6, 7, 8):
         raise ValueError("unsupported evidence version")
-    review_name = f"review_report_v{version-1}.md"
-    review_commit = {3:"a668fb20dcf49f105cc4c7dfeeda145ee492ae14",4:"4dc7c38b60acf2a5ee3d9c6b9770b084a874fb04",5:"28fabffd41f042c8a4bdda6339810bb1f98a887d",6:"3ab4a251c76208897729473add43f1e91c9d634a",7:"ecabef960cdf1ac194ef293ff83c65b14e8b7ba3"}[version]
+    review_name = f"review_report_v{version - 1}.md"
+    review_commit = {
+        3: "a668fb20dcf49f105cc4c7dfeeda145ee492ae14",
+        4: "4dc7c38b60acf2a5ee3d9c6b9770b084a874fb04",
+        5: "28fabffd41f042c8a4bdda6339810bb1f98a887d",
+        6: "3ab4a251c76208897729473add43f1e91c9d634a",
+        7: "ecabef960cdf1ac194ef293ff83c65b14e8b7ba3",
+        8: "cee68ef5e8219858e3a9b733ffe454334683836b",
+    }[version]
     record_name = f"render_check_v{version}.json"
     raw = (ROOT / "tmp/task42extra/render" / sys.argv[1]).resolve()
     if not raw.is_relative_to((ROOT / "tmp/task42extra/render").resolve()):
@@ -43,14 +50,25 @@ def main():
         print(json.dumps(dict(status=out["status"], pages=0)))
         return
     captured = json.loads(source.read_text())
-    if version in (4, 5, 6, 7):
+    if version in (4, 5, 6, 7, 8):
         expected = json.loads((raw / "expected_urls.json").read_text())
         actual = [entry["url"] for entry in captured["records"]]
-        if actual != [entry["url"] for entry in expected] or (raw / "render_failure.json").exists():
-            write(record_name, dict(schema=f"task42extra.render-check.v{version}", status="RENDERED_VIEW_BLOCKED",
-                                    published_commit=commit, raw_directory=str(raw),
-                                    raw_DOM_sha256=sha(source), captured_pages=len(actual),
-                                    reason="partial browser capture or render failure; incomplete pages not qualified"))
+        if (
+            actual != [entry["url"] for entry in expected]
+            or (raw / "render_failure.json").exists()
+        ):
+            write(
+                record_name,
+                dict(
+                    schema=f"task42extra.render-check.v{version}",
+                    status="RENDERED_VIEW_BLOCKED",
+                    published_commit=commit,
+                    raw_directory=str(raw),
+                    raw_DOM_sha256=sha(source),
+                    captured_pages=len(actual),
+                    reason="partial browser capture or render failure; incomplete pages not qualified",
+                ),
+            )
             return
     pages = []
     for entry in captured["records"]:
@@ -72,7 +90,9 @@ def main():
         git_blob = subprocess.check_output(
             ["git", "rev-parse", f"{commit}:{relative}"], cwd=ROOT, text=True
         ).strip()
-        if relative.endswith(review_name) and published_bytes != subprocess.check_output(
+        if relative.endswith(
+            review_name
+        ) and published_bytes != subprocess.check_output(
             ["git", "show", f"{review_commit}:{relative}"],
             cwd=ROOT,
         ):
@@ -114,6 +134,10 @@ def main():
             len(cols) != 3 or len(dom["mathAfterScroll"]) != 2
         ):
             raise ValueError("Review V6 table/math DOM inventory incomplete")
+        if relative.endswith("review_report_v7.md") and (
+            len(cols) != 5 or len(dom["mathAfterScroll"]) != 4
+        ):
+            raise ValueError("Review V7 table/math DOM inventory incomplete")
         if relative.endswith("representation_diagnostic_v3.md") and (
             len(cols) != 3 or len(dom["mathAfterScroll"]) != 2
         ):
@@ -159,7 +183,7 @@ def main():
         scope=(
             "new Review V2 and V3/newly edited document sections only"
             if version == 3
-            else f"new Review V{version-1} and V{version}/newly edited sections only; no historical batch rerender"
+            else f"new Review V{version - 1} and V{version}/newly edited sections only; no historical batch rerender"
         ),
     )
     write(record_name, out)
