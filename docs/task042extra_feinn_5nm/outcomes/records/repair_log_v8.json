@@ -36,6 +36,15 @@
       "test": "9 pure/authority targeted tests,6 ML/durable/data-boundary tests,FE complex128 no-Torch import passed; worker tree cleared",
       "retry": "one corrected light check plus final changed-code regression; no solver restart",
       "old_costs_preserved": true
+    },
+    {
+      "root_cause": "prepublication_B_FE_source_label",
+      "failure": "draft source summary associated B FE qualification with earlier p4 implementation; actual formal index is bc052a3",
+      "hypothesis": "draft attribution differs from immutable run_manifest/index, not a numerical failure",
+      "change": "label B FE/ML separately under actual bc052a3744528277f00a7a9a5566aa4a6d7393ed; explicit measured/predicted and D setup counters",
+      "test": "final local Markdown/diff and original-index source comparison",
+      "retry": "documentation only; no numerical replay or factor",
+      "old_costs_preserved": true
     }
   ]
 }

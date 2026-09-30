@@ -1,0 +1,6 @@
+{
+  "schema": "task42extra.render-check.v8",
+  "status": "PENDING_PUBLICATION_NOT_VISUALLY_PASSED",
+  "scope": "new Review V7 and necessary V8 key pages only",
+  "local_structure_is_not_GitHub_visual_pass": true
+}

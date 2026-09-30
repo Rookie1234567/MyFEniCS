@@ -1,0 +1,57 @@
+{
+  "schema": "task42extra.assembly-profile.v8",
+  "initial_profile": {
+    "seconds": 2.531118456972763,
+    "events": [],
+    "stop": "CHILD_ERROR",
+    "source": "a48add6cbb7d553ffeb7245c1e66e734e042d21d",
+    "run": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v8_authority_assembly_checks_20260930T151811546026Z"
+  },
+  "corrected_profile": {
+    "seconds": 300.1217733870726,
+    "events": [
+      {
+        "name": "physical_model",
+        "seconds": 1.9912738871062174,
+        "facts": {
+          "degree": 4,
+          "cells": 384,
+          "channels": 40,
+          "mesh_coordinates_sha256": "78e294e0337292d2750f587ddf394aaa868bd726f8b1104d4eae6a68db039086",
+          "mode_manifest_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e",
+          "material_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2"
+        }
+      },
+      {
+        "name": "authority_form_begin",
+        "seconds": 2.0820799550274387,
+        "facts": {}
+      },
+      {
+        "name": "authority_form_end",
+        "seconds": 2.0837631480535492,
+        "facts": {}
+      },
+      {
+        "name": "authority_MPC_assembly_begin",
+        "seconds": 2.0838287750957534,
+        "facts": {}
+      }
+    ],
+    "unfinished_calls": [
+      "authority_MPC_assembly_begin"
+    ],
+    "child_stop": "BOUNDED_PROFILE_STOP",
+    "source": "d11209490a144679ec2e91525d18915cfef8583f",
+    "run": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v8_authority_profile_20260930T152352933445Z"
+  },
+  "cumulative_profile_seconds": 302.65289184404537,
+  "limit_seconds": 600,
+  "located_call": "dolfinx_mpc.assemble_matrix",
+  "internal_subcause": "UNKNOWN",
+  "form_JIT_returned_seconds": 0.0016831930261114612,
+  "later_original_Mat_assemble_CSR_port_PETSc_symbolic_calls": "NOT_ENTERED_DURING_PROFILE",
+  "numerical_new_factor_in_profile": false,
+  "full_exact_alternative": "authority_v8.json",
+  "old_V7_costs_preserved": true
+}

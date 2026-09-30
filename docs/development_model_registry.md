@@ -1720,6 +1720,21 @@ U0非零复场跨阶E/curl、orientation/MPC、原action/port≤1e-10；p4真实
 
 [Response V7](task042extra_feinn_5nm/response_v7.md)、[完整审计](task042extra_feinn_5nm/outcomes/p3_p4_authority_v7.md)、[Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v7.json)。唯一后续建议先review解除authority时间阻塞并冻结基准，再决定[同规模单载波方案](task042extra_feinn_5nm/outcomes/phase_representation_plan_v7.md)；本批只写计划，无新训练/第二次factor/更大模型或merge。
 
+## 3.44.7 Task42extra Review V7 后续：p4敏感性与相位对照
+
+完成Review V7的A–E矩阵：独立等价装配解决p4长MPC装配路径，唯一参考合格并测得p3/p4敏感；同8966参数固定相位网络与plain各从零4000closure，均未解出原p3。phase散射误差改善约4.7倍但native1.3193较plain1.0554更大，强PHASE_RESEARCH_SIGNAL未成立。自动条件D各1500closure，phase为REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED、plain为REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED，不提供PDE-only资格或生产初始化。
+
+| 新路线 / measured、功率diagnostic | native | G误差 | 散射E L2 | 散射curl | R | T | A_balance | A_volume | 结论 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| V8-PLAIN-DUAL | 1.055409537 | 0.9989650389 | 0.998945184 | 0.9989655403 | 0.837397101 | 0.1132687865 | 0.0493341125 | 0.4650227017 | PDE_OPTIMIZATION_NEGATIVE |
+| V8-PHASE-DUAL | 1.319288666 | 0.2145123712 | 0.2134667998 | 0.2145387128 | 0.7784899564 | 0.04143373838 | 0.1800763052 | 0.2070765764 | PDE_OPTIMIZATION_NEGATIVE |
+| V8-PLAIN-REFERENCE-FIT | 3.524097926 | 0.02509159227 | 0.02572950659 | 0.02507527061 | 0.8154647648 | 0.03390513729 | 0.1506300979 | 0.1552334771 | REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED |
+| V8-PHASE-REFERENCE-FIT | 0.7662824909 | 0.01040885398 | 0.01005721383 | 0.01041758155 | 0.8125474719 | 0.03261911224 | 0.1548334159 | 0.155181753 | REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED |
+
+M5/5nm/384hex/双Floquet/40port原材料和边界不变；C/D p3/q15/31968独立复FE，A p4/75264。native/场/功率strict门限不放宽，所有候选功率diagnostic。旧保守49007.27663535159s及失联/重放永久保留，新增12h独立预算；freshGramB1+C2，全部已计费释放。数值source bc052a3744528277f00a7a9a5566aa4a6d7393ed，p4source d0b82d7a165be89d9fa90b03be3151db9a9c3869，文档HEAD独立。保护邻任务、单物理核、树16GiB/轻2GiB、自身swap0；不p5/h/更多port/大模型或master merge。
+
+详见[Response V8](task042extra_feinn_5nm/response_v8.md)、[相位完整对照](task042extra_feinn_5nm/outcomes/phase_feinn_v8.md)、[authority](task042extra_feinn_5nm/outcomes/authority_recovery_v8.md)、[run/source](task042extra_feinn_5nm/outcomes/records/run_index_v8.json)、[最终资源账](task042extra_feinn_5nm/outcomes/records/resource_costs_v8.json)。完成授权矩阵后只推送当前分支并等待review。
+
 # 4. 今后新增模型的登记模板
 
 每次正式计算至少新增一行主表，并按可用性新增衍射级和复振幅表。

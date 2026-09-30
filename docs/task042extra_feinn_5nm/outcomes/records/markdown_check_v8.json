@@ -1,0 +1,88 @@
+{
+  "schema": "task42extra.markdown-local-check.v8",
+  "status": "LOCAL_MARKDOWN_PASS",
+  "scope": "new Review V7 and only new V8 sections; historical Markdown contracts reused",
+  "pages": [
+    {
+      "path": "docs/task042extra_feinn_5nm/review_report_v7.md",
+      "sha256": "a7393edbee50897861ab1aa3356972188ea29103071c78021045c15d6549f06e",
+      "checked_scope": "entire page",
+      "markdown_tables": 5,
+      "parsed_tables": 5,
+      "math_fences": 4,
+      "links": 8
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/response_v8.md",
+      "sha256": "73af4f08cdcf88d78c73b44ff9befb9a441d94bdcacc938881751f935cb65541",
+      "checked_scope": "entire page",
+      "markdown_tables": 6,
+      "parsed_tables": 6,
+      "math_fences": 0,
+      "links": 13
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/authority_recovery_v8.md",
+      "sha256": "9b8a22c58769ac6a40090914875ab2371b12ed615fc0020f54c9850f3cf890bc",
+      "checked_scope": "entire page",
+      "markdown_tables": 4,
+      "parsed_tables": 4,
+      "math_fences": 1,
+      "links": 5
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/phase_feinn_v8.md",
+      "sha256": "a05f7e0c5a87544ca95ed1d5f5b8ea954aea81ddfed5553479cbf3e07dacbf7e",
+      "checked_scope": "entire page",
+      "markdown_tables": 5,
+      "parsed_tables": 5,
+      "math_fences": 3,
+      "links": 10
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+      "sha256": "f92e9f8c6d26928912d941c2d97afd20c75f91bdb8c01c68cdb34dd2dd2cf3ef",
+      "checked_scope": "Task42extra Review V7 后续：V8",
+      "markdown_tables": 2,
+      "parsed_tables": 2,
+      "math_fences": 0,
+      "links": 11
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+      "sha256": "7ca7ef25dce62a0806c94a4bd9656c7023da0537414d98a6e648e5181f1ed78d",
+      "checked_scope": "Review V7 后续 V8 定向资格",
+      "markdown_tables": 1,
+      "parsed_tables": 1,
+      "math_fences": 0,
+      "links": 4
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+      "sha256": "8693a4439df9be83524f37e5e8adc9c85d34b15b4471006180418333c8ac0312",
+      "checked_scope": "Review V7 后续 V8 文件级边界",
+      "markdown_tables": 1,
+      "parsed_tables": 1,
+      "math_fences": 0,
+      "links": 1
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "770c4f88c99ecd60aa1f2b9ec2bbd507c78fea540111d30d6d996ad066617c20",
+      "checked_scope": "2026-10-01 Task42extra V8",
+      "markdown_tables": 1,
+      "parsed_tables": 1,
+      "math_fences": 0,
+      "links": 5
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "22f8da646669bcc5aad2046734f9e917b39568fc11cdd16f1af07a57064b2167",
+      "checked_scope": "3.44.7 Task42extra Review V7 后续",
+      "markdown_tables": 1,
+      "parsed_tables": 1,
+      "math_fences": 0,
+      "links": 5
+    }
+  ]
+}

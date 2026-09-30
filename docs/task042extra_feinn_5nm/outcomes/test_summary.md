@@ -120,3 +120,17 @@ C1正式段的保存留白有计时偏差，作为规则未满足记录；C2已�
 C1资格对应实际源码76d863e43d2fc1b5bed8b1c835aa6f43bb2c93d2；C2资格对应c2bfd3ce2ae5d499b6d8afe6a0b3fc3cf743a2a9。轻测试在提交前完成，最终相关文件字节与指定commit逐项一致，见[targeted tests/source/log hashes](records/targeted_tests_v7.json)。U0第一次FE fixture degree错误、之后Ruff E741、C2 Ruff E731都保留日志与费用，修正后最小定向复测通过；没有full pytest、环境重装、CI或其他项目资格声明。
 
 复用已有Linux complex128/int64 ABI及环境证据；FE未顶层import Torch。已测跨阶配对不代替一次阶次变化的物理差异。本地只解析新Review V6和本轮9页/新节的围栏、表列及链接；[真实GitHub rendered view](records/render_check_v7.json)单独绑定已发布blob、DOM和抽看的截图，无法取得则记录blocked。本地解析结果和最终费用后续写入[tests](records/targeted_tests_v7.json)与[resource](records/resource_costs_v7.json)。
+
+## Review V7 后续 V8 定向资格
+
+| 新定向测试 / 本地 | 实际结果和范围 | 证据 |
+| --- | --- | --- |
+| A装配/独立核/复JSON小tests | 最终8 passed；非零复场、非Hermitian/伴随、内部/port/准确展开CSR与独立Basix核 | 原日志/source在targeted_tests_v8 |
+| B/阶段/预算/标签与事务 | 最终9 pure＋6 ML passed；k=0/固定buffer、数据读审计、真实非零strong-Wolfe异常回滚、完整state和launcher时钟 | 同最终bc052a3文件字节绑定；不同suite不重复加独立数 |
+| B正式M5 | k=0、独立相位、非单位Floquet、3非零实方向VJP、batch1/8、q15→30→60通过 | phase_checks_v8原值/稳定区与hash |
+| C/D实际 | 匹配持久模型/optimizer保存，四条无故障恢复；C各4000/D各1500计费closure | 负结果不是接口PASS或求解通过 |
+| 冻结后独立ML/FE | 参数→完整c、q30、G/L2/curl恒等式、6点复E/H与完整40级通道/功率 | compare-only；无新MUMPS或Gram factor |
+| E原记录checker tests | 10 passed；伪造status、复通道/分母、监督official边界、缺40级、G能量、零方向、共同wall、逐级功率和总R/T配对、当前/其他未完监督隔离 | 最终完整record checker从原字段重算 |
+| Ruff/compileall/Markdown/GitHub | 按本轮source/日志/DOM记录分别核对 | 只改文件/新页，不full pytest或CI声明 |
+
+首次profile JSON复数、Ruff环境位置/unused import/format错误都保留失败成本，定位后最小修复及定向重试，非物理或ABI失败。FE复杂scalar complex128/int64与未导入Torch复用并轻量确认；无重装。所有轻测试/浏览器受自身监督≤2GiB、swap0，长数值MPI1/数学Torch1/CPU-only/单空闲物理核/树warn12-hard16GiB。实际测试文件/bytes/log/summary hash见[tests](records/targeted_tests_v8.json)，[Gate](records/gate_decisions_v8.json)，[资源账](records/resource_costs_v8.json)。本地Markdown与[GitHub实际DOM/抽样截图](records/render_check_v8.json)不互相冒充。

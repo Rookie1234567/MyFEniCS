@@ -134,3 +134,17 @@ V2实现提交 `19c725efd27ae5daedba8e77d2ad98375711bb71` 绑定D0/D1/D2正式�
 | do-not-merge | venv/cache、native/矩阵/场/原日志、tmux sockets、浏览器profile/截图 | 大数组全部ignored；本批相位只有设计，无训练器或权重；任何p4标签训练须新授权 |
 
 本轮只有一次真实p4启动，装配预算受控停止后不自动第二次factor。实际运行source为76d863e43d2fc1b5bed8b1c835aa6f43bb2c93d2；C2修正/checker为c2bfd3ce2ae5d499b6d8afe6a0b3fc3cf743a2a9。后续文档HEAD不替代实算source；保护的task/reviews未修改。文件级清单、依赖、测试和建议顺序见[publication manifest](records/publication_manifest_v7.json)，仅供审阅，master merge未批准。
+
+## Review V7 后续 V8 文件级边界
+
+| 依赖组 / 建议审阅顺序 | 本轮文件和用途 | 数值行为、依赖、tests/fresh evidence |
+| --- | --- | --- |
+| production numerical/core | 无新普通solver默认 | 原物理/材料/p3方程不改；无新NN资格，不生产晋级 |
+| research-only authority，第1组 | feinn_authority_assembly.py（含独立Basix积分核）；discretization/reference明确可选策略 | 原局部张量准确全局CSR及独立Basix审核；A最小tests、一次p4参考和跨阶比较；仅REFERENCE_ONLY |
+| research-only phase，第2组 | feinn_phase.py、feinn_phase_moments.py、feinn_phase_training.py、feinn_phase_verification.py、feinn_phase_compare.py | 完整矩前固定物理相位；同原参数规模、C无标签/D监督隔离；B/C/D与独立ML/FE，严格原残差负结果 |
+| reusable runner/watchdog，第3组 | feinn_campaign.py、feinn_workflow.py、feinn_pilot.py、launch_task42extra_durable.py；独立v8 one-run dat | opt-in阶段、A–E依赖/新12h计费、实际p4预绑定、独立activation/白名单和持久监督；不扩大旧Gate或修改邻任务 |
+| checker/benchmark，第4组 | check_task42extra_v8.py、docs_v3/finalize_render_v3显式8；本轮定向test文件（含既有选定组件） | 原字段/复场/真实分母/功率/标签/状态/资源重算；历史版本默认不变，不实现新求解器 |
+| compact evidence/docs，第5组 | response_v8、authority_recovery_v8、phase_feinn_v8、records、summary/总账/测试追加 | 运行source与文档HEAD分开；完整费用和负结果，不改旧task/reviews/e4/history |
+| do-not-merge | venv/cache、CSR/native/G/矩、PT/NPZ/optimizer/history、tmux socket、Firefox profile/截图 | ignored大数组；D权重禁止反馈C、旧路线、Task042或0.7nm，无master merge approval |
+
+具体路径、每组依赖、源码SHA和资格入口见[publication manifest](records/publication_manifest_v8.json)。先审数值core，再opt-in runner/inputs，再checker，最后compact文档；所有组件均待review，不能整支线自动merge。没有p5/h细化/更多端口/多载波/目标尺寸计算。

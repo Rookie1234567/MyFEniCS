@@ -490,3 +490,34 @@ GitHub rendered-view 检查实际发现[发布任务书](../task.md) §5.4 使�
 | [Gate](records/gate_decisions_v1.json) | stdlib checker独立重算 |
 | [resource](records/resource_costs_v1.json) | 实际/归属/互斥成本及树RSS/释放 |
 | [tests](test_summary.md) | 相关tests、static、Markdown与render记录入口 |
+
+## Task42extra Review V7 后续：V8 相位完整对照与p4恢复
+
+本轮恢复了独立p4准确参考，并完整执行同参数plain/phase从零PDE对照及失败后条件监督拟合。相位把已知传播振荡先乘入网络点值，再经完整FE矩，减少了网络必须学习的振荡；这不提供准确解。C phase场近似好于plain但原残差更大，均未解出p3；D phase为REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED。A与B–D分别验收，没有因一个负结果结束整批。
+
+| 新路线 / measured、功率diagnostic | native | G误差 | 散射E L2 | 散射curl | R | T | A_balance | A_volume | 结论 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| V8-PLAIN-DUAL | 1.055409537 | 0.9989650389 | 0.998945184 | 0.9989655403 | 0.837397101 | 0.1132687865 | 0.0493341125 | 0.4650227017 | PDE_OPTIMIZATION_NEGATIVE |
+| V8-PHASE-DUAL | 1.319288666 | 0.2145123712 | 0.2134667998 | 0.2145387128 | 0.7784899564 | 0.04143373838 | 0.1800763052 | 0.2070765764 | PDE_OPTIMIZATION_NEGATIVE |
+| V8-PLAIN-REFERENCE-FIT | 3.524097926 | 0.02509159227 | 0.02572950659 | 0.02507527061 | 0.8154647648 | 0.03390513729 | 0.1506300979 | 0.1552334771 | REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED |
+| V8-PHASE-REFERENCE-FIT | 0.7662824909 | 0.01040885398 | 0.01005721383 | 0.01041758155 | 0.8125474719 | 0.03261911224 | 0.1548334159 | 0.155181753 | REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED |
+
+p4自身参考残差≤1e-10、能量≤1e-5，完整75264复FE/40port，75304 rows/32891168NNZ，峰3888418816B；p3/p4散射E L2/curl相对差0.0149860/0.0190206、R/T/A/A_volume差0.00372680/0.000773685/0.00295312/0.00295312，超过场1e-3和功率1e-4，P3_P4_SENSITIVITY_OBSERVED。一次p变化不能证明连续/h/端口收敛，也不解释NN未求准同p3。
+
+所有C/D为原M5/5nm/384hex/p3/q15/31968独立复FE/40端口，同8966实参数seed。C与D数据角色分离、从零参数相同，C4000/D1500完整closure各自硬预算；监督权重不回流C。旧e4_p4、V7中断和V1–V7结果永久保留。功率未过方程均diagnostic，不是official。
+
+| 程序成本 / measured | plain C | phase C | plain D | phase D |
+| --- | --- | --- | --- | --- |
+| 全launcher wall / s | 9291.695342 | 8745.018006 | 2847.717009 | 2954.236851 |
+| charged / committed closure | 4000 / 3997 | 4000 / 3986 | 1500 / 1480 | 1500 / 1480 |
+| Gsolve / freshGram | 4043 / 1 | 4043 / 1 | 0 / 0 | 0 / 0 |
+
+C source bc052a3744528277f00a7a9a5566aa4a6d7393ed；p4 actualsource d0b82d7a165be89d9fa90b03be3151db9a9c3869。每阶段树RSS/CPU/zero swap、Gram cost、独立重建/参考身份与所有失败费用见[完整资源账](records/resource_costs_v8.json)和[run/source index](records/run_index_v8.json)。旧保守累计49007.27663535159s保留，V8新增≤43200s；不将nested Gram/IO timer加到父wall。目标尺寸5nm/0.7nm均NOT_RUN、master merge未批准。
+
+监督 phase 的 G/L2/curl 三项分类为 **REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED**，plain 为 **REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED**。相位在相同参数规模和1500完整closure内的G误差改善约2.410600851倍，说明它在这个固定G目标和预算下更容易拟合；C的原方程优化仍未通过，不能把D监督结果等同于无标签求解。两条拟合均使用参考，因此结果只能限定本架构、目标、预算，不能独立证明网络表达能力的数学上限。
+
+已经排除本轮相位符号/单位/完整矩、非单位Floquet、非零实方向VJP、batch一致性、冻结参数重建、求积漂移、标签混入C、资源超限和匹配状态丢失等已测问题。剩余因素包括有限网络对反射/衍射/界面细节的表达、非凸残差目标的优化、G度量与原方程误差的差别，以及p3连续精度；p4对照仅说明离散敏感性，不解释NN未解出同p3。
+
+后续只建议一项设计：在原M5/p3和同8966参数的plain/单相位表示上，预登记受控的网络参数空间Gauss–Newton信赖域对照。它用局部线性近似决定一次参数更新，并限制更新范围，检验当前非凸残差优化是否为瓶颈；仍从零、无标签，保持原Riesz目标/严格验收，不用Maxwell逆或监督权重。先核定JVP/VJP、A/A*、Gsolve、工作内存和完整成本上限，再由新review授权；本批没有实现或启动新优化器、PDE微调、多载波、p5/h细化或更大模型。
+
+证据：[Response V8](../response_v8.md)、[authority](authority_recovery_v8.md)、[phase完整对照](phase_feinn_v8.md)、[设计/白名单](records/campaign_design_v8.json)、[维修](records/repair_log_v8.json)、[Gate](records/gate_decisions_v8.json)、[PDE CSV](records/PDE_comparison_v8.csv)、[D CSV](records/representation_comparison_v8.csv)、[GitHub actual view](records/render_check_v8.json)。同物理量完整分母、原始复样本和40级复通道/功率不省略到单一R/T。

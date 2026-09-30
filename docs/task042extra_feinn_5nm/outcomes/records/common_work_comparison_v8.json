@@ -1,0 +1,481 @@
+{
+  "schema": "task42extra.common-work.v8",
+  "C": {
+    "exact_common_committed_closure_points": {
+      "0": {
+        "plain": {
+          "complete_closures": 0,
+          "committed_complete_closures": 0,
+          "boundary_elapsed_seconds": 71.95516590902116,
+          "checkpoint_sha256": "aedcfc586a36d98dadc587e8bc7fdafd3ad62b71c9b76da295eb075203f11c5b",
+          "native_relative": 1.0,
+          "augmented_relative": 1.0,
+          "loss": 0.5,
+          "G_field_error": null,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        },
+        "phase": {
+          "complete_closures": 0,
+          "committed_complete_closures": 0,
+          "boundary_elapsed_seconds": 74.13042249006685,
+          "checkpoint_sha256": "34c173c7903c20bd2ab71620b44d2409259d59ec99b6991e7c8fd7531148f724",
+          "native_relative": 1.0,
+          "augmented_relative": 1.0,
+          "loss": 0.5,
+          "G_field_error": null,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        }
+      },
+      "100": {
+        "plain": {
+          "complete_closures": 100,
+          "committed_complete_closures": 100,
+          "boundary_elapsed_seconds": 269.7691391319968,
+          "checkpoint_sha256": "9e62d023c64c6c2046aa4f0a55b897f11b014a0d655463b72e5639199a8ef35a",
+          "native_relative": 1.510104172805555,
+          "augmented_relative": 1.510104172805555,
+          "loss": 0.46754219292674176,
+          "G_field_error": null,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        },
+        "phase": {
+          "complete_closures": 100,
+          "committed_complete_closures": 100,
+          "boundary_elapsed_seconds": 291.20730323006865,
+          "checkpoint_sha256": "1714c39a07ad16dee4b5952c7ab6331ddb46b144684b026c186d6e16cf91a986",
+          "native_relative": 1.4123328668603525,
+          "augmented_relative": 1.4123328668603525,
+          "loss": 0.5743954869244842,
+          "G_field_error": null,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        }
+      },
+      "200": {
+        "plain": {
+          "complete_closures": 200,
+          "committed_complete_closures": 200,
+          "boundary_elapsed_seconds": 470.4184015849605,
+          "checkpoint_sha256": "de0d761231260451e1ad04722888acafa4494a21cb8fa659681856cd6540d790",
+          "native_relative": 1.5029781817143646,
+          "augmented_relative": 1.5029781817143646,
+          "loss": 0.4583868993479561,
+          "G_field_error": null,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        },
+        "phase": {
+          "complete_closures": 200,
+          "committed_complete_closures": 200,
+          "boundary_elapsed_seconds": 499.0613161320798,
+          "checkpoint_sha256": "893c8baf2a9d62b380cbf7ce8d235068893ab6d50a1606877065ea54609d532d",
+          "native_relative": 1.2954868188196276,
+          "augmented_relative": 1.2954868188196276,
+          "loss": 0.4080229342963166,
+          "G_field_error": null,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        }
+      },
+      "300": {
+        "plain": {
+          "complete_closures": 300,
+          "committed_complete_closures": 300,
+          "boundary_elapsed_seconds": 667.1823779779952,
+          "checkpoint_sha256": "d93d6dd0204a33b467a27151af791f7ed024b8eea22acf5c354d823f90bc0d80",
+          "native_relative": 1.5029269443560183,
+          "augmented_relative": 1.5029269443560183,
+          "loss": 0.45413487830768584,
+          "G_field_error": null,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        },
+        "phase": {
+          "complete_closures": 300,
+          "committed_complete_closures": 300,
+          "boundary_elapsed_seconds": 706.3748006790411,
+          "checkpoint_sha256": "cfa3d68139d49465d5cccb03630e7beed71bcc66366ae3427f8545748c1faf5b",
+          "native_relative": 1.2235236982053532,
+          "augmented_relative": 1.2235236982053532,
+          "loss": 0.390625219367804,
+          "G_field_error": null,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        }
+      },
+      "400": {
+        "plain": {
+          "complete_closures": 400,
+          "committed_complete_closures": 400,
+          "boundary_elapsed_seconds": 873.4185401250143,
+          "checkpoint_sha256": "7ccfcb0eec7a45f31b4cec0f30decea3a51d7e20f31777edd2899553155aa982",
+          "native_relative": 1.5033309192656887,
+          "augmented_relative": 1.5033309192656887,
+          "loss": 0.4510374648390162,
+          "G_field_error": null,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        },
+        "phase": {
+          "complete_closures": 400,
+          "committed_complete_closures": 400,
+          "boundary_elapsed_seconds": 909.5573515390279,
+          "checkpoint_sha256": "5cc04867caa91502d279797129256bdb93eba1cdf43d849f483ef34f8c0a40a0",
+          "native_relative": 1.1643422000345407,
+          "augmented_relative": 1.1643422000345407,
+          "loss": 0.3773337319935861,
+          "G_field_error": null,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        }
+      },
+      "500": {
+        "plain": {
+          "complete_closures": 500,
+          "committed_complete_closures": 500,
+          "boundary_elapsed_seconds": 1097.6413081260398,
+          "checkpoint_sha256": "e976d3e629c433c1f1dc6b7ae3c343acaa5dfa5cd948818231e93a3a9298f9a0",
+          "native_relative": 1.5046243542789968,
+          "augmented_relative": 1.5046243542789968,
+          "loss": 0.44851876610315383,
+          "G_field_error": null,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        },
+        "phase": {
+          "complete_closures": 500,
+          "committed_complete_closures": 500,
+          "boundary_elapsed_seconds": 1144.8487240300747,
+          "checkpoint_sha256": "07c77c468c175edc9455025651a058ac589f2313fc1f15d9b38c3c6628daffae",
+          "native_relative": 1.1144200928757864,
+          "augmented_relative": 1.1144200928757864,
+          "loss": 0.3653389416485379,
+          "G_field_error": null,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        }
+      },
+      "919": {
+        "plain": {
+          "complete_closures": 919,
+          "committed_complete_closures": 919,
+          "boundary_elapsed_seconds": 2036.887736728997,
+          "checkpoint_sha256": "979a3469d980083febe80bbe2d75cf5aa0b6e9fe0ed7e8373cd71ca81fd2e92e",
+          "native_relative": 1.5107153057308471,
+          "augmented_relative": 1.5107153057308471,
+          "loss": 0.41882471709034297,
+          "G_field_error": null,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        },
+        "phase": {
+          "complete_closures": 919,
+          "committed_complete_closures": 919,
+          "boundary_elapsed_seconds": 2086.8323729659896,
+          "checkpoint_sha256": "ae1b3d3aca48fce5510f75581946020244773bf809a41b7d7141ba983612616c",
+          "native_relative": 1.142191260613605,
+          "augmented_relative": 1.142191260613605,
+          "loss": 0.3494114136469032,
+          "G_field_error": null,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        }
+      },
+      "1920": {
+        "plain": {
+          "complete_closures": 1920,
+          "committed_complete_closures": 1920,
+          "boundary_elapsed_seconds": 4402.70098884101,
+          "checkpoint_sha256": "aca4f1167a7dfe571a0c470403303bdd1676bbfb1f265ae3aa14cf4fa2858630",
+          "native_relative": 1.1327733994414702,
+          "augmented_relative": 1.1327733994414702,
+          "loss": 0.33522694753328985,
+          "G_field_error": null,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        },
+        "phase": {
+          "complete_closures": 1920,
+          "committed_complete_closures": 1920,
+          "boundary_elapsed_seconds": 4330.425217858981,
+          "checkpoint_sha256": "2893ac382be47f028c42fa260d800ce9c78b4a6861bca07371bfc631654c3b92",
+          "native_relative": 1.2444430079990776,
+          "augmented_relative": 1.2444430079990776,
+          "loss": 0.3336634785898561,
+          "G_field_error": null,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        }
+      }
+    },
+    "common_wall_cap_seconds": 8745.018005573074,
+    "common_wall_latest_persisted_audits": {
+      "plain": {
+        "complete_closures": 3714,
+        "committed_complete_closures": 3714,
+        "boundary_elapsed_seconds": 8602.546897012973,
+        "checkpoint_sha256": "2ae684e12aa27de68de4b542c6d5771622e1abd0d190a9d53997ffebbf0f1867",
+        "native_relative": 1.059159616288642,
+        "augmented_relative": 1.059159616288642,
+        "loss": 0.3184691242115398,
+        "G_field_error": null,
+        "field_physics_at_this_wall_point": "NOT_RUN",
+        "used_for_initialization": false,
+        "lag_from_common_cap_seconds": 142.47110856010113
+      },
+      "phase": {
+        "complete_closures": 4000,
+        "committed_complete_closures": 3986,
+        "boundary_elapsed_seconds": 8744.267401584075,
+        "checkpoint_sha256": "9dc927c85c78f4e15baae7c0b09d029f7b2fd6e3598f1c4a8fdab49b6c27c499",
+        "native_relative": 1.3192886662374883,
+        "augmented_relative": 1.3192886662374883,
+        "loss": 0.24996176014191587,
+        "G_field_error": null,
+        "field_physics_at_this_wall_point": "NOT_RUN",
+        "used_for_initialization": false,
+        "lag_from_common_cap_seconds": 0.7506039889995009
+      }
+    },
+    "policy": "latest persisted audit at/before common cap; discrete checkpoint lag explicitly reported; full field metrics available separately at Adam500 and frozen final",
+    "final_charged_vs_committed": {
+      "plain": [
+        4000,
+        3997
+      ],
+      "phase": [
+        4000,
+        3986
+      ]
+    }
+  },
+  "D": {
+    "exact_common_committed_closure_points": {
+      "0": {
+        "plain": {
+          "complete_closures": 0,
+          "committed_complete_closures": 0,
+          "boundary_elapsed_seconds": 17.19874899997376,
+          "checkpoint_sha256": "8e16bd0567338996d67477fca461e2dbf5cdd3c981fc732b49c8f873b22dc3f6",
+          "native_relative": 1.0,
+          "augmented_relative": 1.0,
+          "loss": 0.5,
+          "G_field_error": 1.0,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        },
+        "phase": {
+          "complete_closures": 0,
+          "committed_complete_closures": 0,
+          "boundary_elapsed_seconds": 16.89789009199012,
+          "checkpoint_sha256": "2d1ec09f4354bf172bdfe515991fba4fef9aa5c48d2846b337c039a85c9d6d36",
+          "native_relative": 1.0,
+          "augmented_relative": 1.0,
+          "loss": 0.5,
+          "G_field_error": 1.0,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        }
+      },
+      "100": {
+        "plain": {
+          "complete_closures": 100,
+          "committed_complete_closures": 100,
+          "boundary_elapsed_seconds": 190.31648897798732,
+          "checkpoint_sha256": "54b488e58378edc7f57b4eb5393214ebeaa3b99412d4aeb6156491e62d36a2e4",
+          "native_relative": 30.113664010296638,
+          "augmented_relative": 30.113664010296638,
+          "loss": 0.45810736245119044,
+          "G_field_error": 0.9571910597693549,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        },
+        "phase": {
+          "complete_closures": 100,
+          "committed_complete_closures": 100,
+          "boundary_elapsed_seconds": 215.9571033680113,
+          "checkpoint_sha256": "196eb93666a2670cb6738a5cca44f4f8bcc75fcb2fbdf93a217f2febcdd3cc72",
+          "native_relative": 3.312282360450471,
+          "augmented_relative": 3.312282360450471,
+          "loss": 0.0012740971398902902,
+          "G_field_error": 0.05047964223110719,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        }
+      },
+      "200": {
+        "plain": {
+          "complete_closures": 200,
+          "committed_complete_closures": 200,
+          "boundary_elapsed_seconds": 372.3877879770007,
+          "checkpoint_sha256": "492b3d6a395378d9cb8e5dd14ddb7b68991a1b51a68626e5a36420b68f070798",
+          "native_relative": 30.849316001638098,
+          "augmented_relative": 30.849316001638098,
+          "loss": 0.4362449791639518,
+          "G_field_error": 0.9340717094141667,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        },
+        "phase": {
+          "complete_closures": 200,
+          "committed_complete_closures": 200,
+          "boundary_elapsed_seconds": 413.68997179099824,
+          "checkpoint_sha256": "9ea385c3aaa03d3461a0ba6256f95953c1fe3ca7bb969c9d89377efb8b63a5d8",
+          "native_relative": 2.4302927809543067,
+          "augmented_relative": 2.4302927809543067,
+          "loss": 0.0007164461616545912,
+          "G_field_error": 0.03785356420879258,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        }
+      },
+      "300": {
+        "plain": {
+          "complete_closures": 300,
+          "committed_complete_closures": 300,
+          "boundary_elapsed_seconds": 567.1056925649755,
+          "checkpoint_sha256": "267695eb246632af2bf8e403e9aba99dfa3adb33ad267382687c53f3aa3ea517",
+          "native_relative": 32.27454583216404,
+          "augmented_relative": 32.27454583216404,
+          "loss": 0.2050117192205896,
+          "G_field_error": 0.6403307258293789,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        },
+        "phase": {
+          "complete_closures": 300,
+          "committed_complete_closures": 300,
+          "boundary_elapsed_seconds": 612.867354011978,
+          "checkpoint_sha256": "cd9f25a706e143338176ebb3fe2fbf9b1700ca72bccd57fa6d6ce9148955d0d9",
+          "native_relative": 2.4287167421534637,
+          "augmented_relative": 2.4287167421534637,
+          "loss": 0.00029459543759345847,
+          "G_field_error": 0.024273254318012593,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        }
+      },
+      "400": {
+        "plain": {
+          "complete_closures": 400,
+          "committed_complete_closures": 400,
+          "boundary_elapsed_seconds": 778.0135126629611,
+          "checkpoint_sha256": "b334863bf63edf7e25b1d072b3863028724897b7d4507eb00008e3b663b90eb5",
+          "native_relative": 30.447021222314216,
+          "augmented_relative": 30.447021222314216,
+          "loss": 0.09427797790058542,
+          "G_field_error": 0.4342303027209995,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        },
+        "phase": {
+          "complete_closures": 400,
+          "committed_complete_closures": 400,
+          "boundary_elapsed_seconds": 816.864335949067,
+          "checkpoint_sha256": "385c5751b73d228e5dcfd3b6c836707c385618542785e6dd4f00f4fc1145fbb7",
+          "native_relative": 1.62365748266146,
+          "augmented_relative": 1.62365748266146,
+          "loss": 0.00012482743075483587,
+          "G_field_error": 0.015800470293939727,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        }
+      },
+      "500": {
+        "plain": {
+          "complete_closures": 500,
+          "committed_complete_closures": 500,
+          "boundary_elapsed_seconds": 989.7006693100557,
+          "checkpoint_sha256": "1f3929eacd6afe3b19b5bc6552a37316326bd9b3434f14060cafd81c39716234",
+          "native_relative": 14.263463207213235,
+          "augmented_relative": 14.263463207213235,
+          "loss": 0.020164563944313197,
+          "G_field_error": 0.20082113406866917,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        },
+        "phase": {
+          "complete_closures": 500,
+          "committed_complete_closures": 500,
+          "boundary_elapsed_seconds": 1019.1045315240044,
+          "checkpoint_sha256": "91c7696d34eec5c01e90be6559198bd8983fe81affa8640393a3be532d8041aa",
+          "native_relative": 1.573480689701402,
+          "augmented_relative": 1.573480689701402,
+          "loss": 0.00010657010452116049,
+          "G_field_error": 0.014599322211743974,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        }
+      },
+      "613": {
+        "plain": {
+          "complete_closures": 613,
+          "committed_complete_closures": 613,
+          "boundary_elapsed_seconds": 1216.6581595629686,
+          "checkpoint_sha256": "41e096820f4d1b5e3f4fe3acbf0b0746f1c1deaf1a9bcf0a7e3735dd1f1b6705",
+          "native_relative": 11.834812558373603,
+          "augmented_relative": 11.834812558373603,
+          "loss": 0.006248616755682538,
+          "G_field_error": 0.11179102607707417,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        },
+        "phase": {
+          "complete_closures": 613,
+          "committed_complete_closures": 613,
+          "boundary_elapsed_seconds": 1242.3420907349791,
+          "checkpoint_sha256": "2583bbf7c0606e10f10e184808b599fcb3aaee42bdf8e8d30e4a62a3b2ed2e6b",
+          "native_relative": 1.1226661857857685,
+          "augmented_relative": 1.1226661857857685,
+          "loss": 8.632196836866218e-05,
+          "G_field_error": 0.013139403971920658,
+          "field_physics_at_this_wall_point": "NOT_RUN",
+          "used_for_initialization": false
+        }
+      }
+    },
+    "common_wall_cap_seconds": 2847.717009364045,
+    "common_wall_latest_persisted_audits": {
+      "plain": {
+        "complete_closures": 1500,
+        "committed_complete_closures": 1480,
+        "boundary_elapsed_seconds": 2847.3866665989626,
+        "checkpoint_sha256": "9f947e9b0c81cd52562718cadf957c2ac1fbbb379d4e9119d76f221665051667",
+        "native_relative": 3.5240979258100817,
+        "augmented_relative": 3.5240979258100817,
+        "loss": 0.0003147940014277115,
+        "G_field_error": 0.025091592274214543,
+        "field_physics_at_this_wall_point": "NOT_RUN",
+        "used_for_initialization": false,
+        "lag_from_common_cap_seconds": 0.3303427650826052
+      },
+      "phase": {
+        "complete_closures": 1415,
+        "committed_complete_closures": 1415,
+        "boundary_elapsed_seconds": 2775.093133638031,
+        "checkpoint_sha256": "c09a763a019e41df06ddea68577de19e765500a1c4f0b1b04b1cad0dac5b7daa",
+        "native_relative": 1.0429351418813129,
+        "augmented_relative": 1.0429351418813129,
+        "loss": 5.478378955583124e-05,
+        "G_field_error": 0.010467453325029087,
+        "field_physics_at_this_wall_point": "NOT_RUN",
+        "used_for_initialization": false,
+        "lag_from_common_cap_seconds": 72.62387572601438
+      }
+    },
+    "policy": "latest persisted audit at/before common cap; discrete checkpoint lag explicitly reported; full field metrics available separately at Adam500 and frozen final",
+    "final_charged_vs_committed": {
+      "plain": [
+        1500,
+        1480
+      ],
+      "phase": [
+        1500,
+        1480
+      ]
+    }
+  }
+}
