@@ -1,0 +1,116 @@
+{
+  "schema": "task42extra.run-index.v4",
+  "review_commit": "4dc7c38b60acf2a5ee3d9c6b9770b084a874fb04",
+  "pre_registration_sha256": "e05522929af973c65ee20a4b8a762b6864283b2d516e10142e93c9f04f48e023",
+  "stages": [
+    {
+      "stage": "v4_boundary_checks",
+      "source_sha": "538c6320679d9a3ce3efe5e6d6ebef062963f601",
+      "run_directory": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v4_boundary_checks_20260930T033203050181Z",
+      "files": {
+        "boundary": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v4_boundary_checks_20260930T033203050181Z/qualified_adam500_boundary.npz",
+          "sha256": "fd6a8315746f72cd1cce6a08fe9a70f92e937ce57a4385d2765f806b619a01bd"
+        },
+        "result": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v4_boundary_checks_20260930T033203050181Z/result.json",
+          "sha256": "6235b1c50e2821de565edb73b4b56501aca7ead56042c1d0c903f38ce4392834"
+        }
+      },
+      "index_sha256": "f2f1e030260fe87b7a391d3a80549e5d947b8b936d562d9c9857a75fa1729d10"
+    },
+    {
+      "stage": "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY",
+      "source_sha": "538c6320679d9a3ce3efe5e6d6ebef062963f601",
+      "run_directory": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v4_reference_fit_boundary_replay_20260930T033317909807Z",
+      "files": {
+        "checkpoint": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v4_reference_fit_boundary_replay_20260930T033317909807Z/frozen_checkpoint.npz",
+          "sha256": "e33a2c9eafb50639a36555e159895d62617feda7e4831238a7868887700f9363"
+        },
+        "last_trial": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v4_reference_fit_boundary_replay_20260930T033317909807Z/last_trial.npz",
+          "sha256": "f725f8d57ecd285a7bd3cd9dff0a8a44888fea25f71b9fcf5a03ac52efd3ecbd"
+        },
+        "history": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v4_reference_fit_boundary_replay_20260930T033317909807Z/history.jsonl",
+          "sha256": "51b6ef10ba101875366cc35426d7aad7dcec82ea988a07a591fab3b6d8d73f4b"
+        },
+        "checkpoint_index": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v4_reference_fit_boundary_replay_20260930T033317909807Z/checkpoint_index.json",
+          "sha256": "da80b65265a2dabc897666902670364902b80f7ceb93985a56f7321b8a9d2939"
+        },
+        "durable_final": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v4_reference_fit_boundary_replay_20260930T033317909807Z/durable_checkpoints/committed_000094.pt",
+          "sha256": "e09b94364837bdb72714f7c229d19993836072dd035c85249bfc19376a44a790"
+        },
+        "result": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v4_reference_fit_boundary_replay_20260930T033317909807Z/result.json",
+          "sha256": "9202e6f4d0f2e8bf4977f6a079e552f895e21a9a81d09f3ba5257b1016b653a6"
+        }
+      },
+      "index_sha256": "b5a3177ef5a90c7121ad1429b807747c8e69600bd0f7fd5e7212731eb6d448a6"
+    },
+    {
+      "stage": "v4_fit_reconstruct",
+      "source_sha": "c8a057a46645542aaa17a38b78e64c6add80cb68",
+      "run_directory": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v4_fit_reconstruct_20260930T064056109254Z",
+      "files": {
+        "reconstructed": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v4_fit_reconstruct_20260930T064056109254Z/reconstructed_full_coefficients.npz",
+          "sha256": "16e0c91f62bf185758c1df500279a86404d57f18869e3d27f0e8ffc6815232f4"
+        },
+        "result": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v4_fit_reconstruct_20260930T064056109254Z/result.json",
+          "sha256": "e37725b81e9d62849c5a7982fb97609f5edef88e204aceadc08b49a6c926c494"
+        }
+      },
+      "index_sha256": "b33deafc8e947102b8c083fd75a7cee2684672e76a043ecad3e8c43cf08db1eb"
+    },
+    {
+      "stage": "v4_fit_compare_only",
+      "source_sha": "c8a057a46645542aaa17a38b78e64c6add80cb68",
+      "run_directory": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v4_fit_compare_only_20260930T064220017512Z",
+      "files": {
+        "result": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v4_fit_compare_only_20260930T064220017512Z/result.json",
+          "sha256": "c4fe6b78bb16075ac4f1288ba92a3bfe5da8b9cc120ef1530346b1deddc4e402"
+        }
+      },
+      "index_sha256": "51606544782f0223204e0729a4c113826e2f745ae53d5472acac29f29253da9b"
+    }
+  ],
+  "reused_native": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/native.npz",
+    "sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215"
+  },
+  "reused_Gram": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/gram.npz",
+    "sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9"
+  },
+  "reused_reference": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_e3_reference_20260929T180549681297Z/reference_state.npz",
+    "sha256": "0c3c0574a8c1eddcadfb56268e00c08e55d5cb15d44c0c76e873fcea0c467ff7"
+  },
+  "old_observed_complete_fit_closures_lower_bound": 825,
+  "old817_parameters_optimizer": "NOT_RETAINED",
+  "old_lost_attempt_seconds_retained": 3284,
+  "observed_old_plus_new_complete_fit_closures_lower_bound": 2954,
+  "new_Gsolve_count": 0,
+  "new_Gram_factor_count": 0,
+  "new_Maxwell_factor_count": 0,
+  "new_MUMPS_symbolic_numeric_solve_count": 0,
+  "checkpoint_seconds_nested": 3.8402016094187275,
+  "G_matvec_seconds_nested": 95.41649692074861,
+  "G_matvec_count": 2154,
+  "moment_costs_nested": {
+    "network_forward": 4569.9306764130015,
+    "moment_map": 1132.6518816524185,
+    "VJP_backward": 4799.563412807416
+  },
+  "reference_used_for_training": true,
+  "pde_only_solve": false,
+  "production_initialization_allowed": false,
+  "pde_only_solver_qualified": false,
+  "official_candidate_results": false
+}

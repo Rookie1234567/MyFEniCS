@@ -1,0 +1,85 @@
+{
+  "schema": "task42extra.post-fit-checks.v4",
+  "source": "c8a057a46645542aaa17a38b78e64c6add80cb68",
+  "pytest": {
+    "name": "pytest",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "tests": "11",
+    "time": "4.742",
+    "timestamp": "2026-09-30T14:39:36.914166",
+    "hostname": "fenics-ws01"
+  },
+  "xml_sha256": "020753441e43e39592dfc7c5c02dd743cf52812f746b66b5ff7769a606fa807a",
+  "budget_fix_only_targeted_not_formal": true,
+  "boundary": {
+    "status": "ADAM500_BOUNDARY_REPLAY_QUALIFIED",
+    "durability_checks_sha256": "3ee40ee5ff3eb06a23e71fe9803b9621446cf16c11bcd90ebd4fb401a28ef915",
+    "transition": "ADAM500_TO_FRESH_LBFGS_BOUNDARY_REPLAY",
+    "original_Adam500_checkpoint": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v3_reference_fit_20260930T011610665979Z/adam500_checkpoint.npz",
+      "sha256": "4e818a16b876ffd0776e74438654ca7de5632b1e17269a38e87749b5b3ad6a97"
+    },
+    "inherited_committed_Adam_updates": 500,
+    "real_M5_complete_loss_gradient_evaluations": 2,
+    "boundary_E_G": 0.20082113406866917,
+    "native_audit": {
+      "native_relative": 14.263463207213235,
+      "augmented_relative": 14.263463207213235,
+      "original_total_augmented_relative": 6.75662764215689,
+      "port_absolute": 1.8354073252775667e-15,
+      "port_full_rhs_relative": 6.306331418621742e-15,
+      "port_operation_relative": 5.805780890679487e-17,
+      "augmented_rhs_norm": 0.29104200262261154,
+      "native_rhs_norm": 0.29104200262261154,
+      "slave_storage_max": 0.0,
+      "interior_coefficient_norm": 9.546703340672646,
+      "full_coefficient_norm": 13.966969134550245,
+      "port_unknown_norm": 0.24061494466166145,
+      "strict_pass": false
+    },
+    "pairing": {
+      "c_relative": 0.0,
+      "loss_relative": 0.0,
+      "gradient_relative": 0.0
+    },
+    "definitions_unchanged_from": "d9e5a7d00a1cac82390b058384e0cd9193b472d4",
+    "definition_hashes": {
+      "CoordinateField": "27dee583fd30825bee19f661bf9a8226648de36ce9abf9ca8c802356ae3b6bc3",
+      "CompleteMomentMap": "27dee583fd30825bee19f661bf9a8226648de36ce9abf9ca8c802356ae3b6bc3",
+      "FitMetric": "e38fa153bd5103b3f01696a14ad60b3a73a5ae1188030a515da19fa5c59778a9"
+    },
+    "buffer_policy": "center and half_width deterministically reconstructed from frozen geometry; absent in old parameter-only NPZ",
+    "buffers_sha256": {
+      "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+      "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+    },
+    "fresh_LBFGS_state_empty": true,
+    "optimizer": {
+      "lr": 1,
+      "history_size": 20,
+      "max_iter": 20,
+      "max_eval": 25,
+      "line_search_fn": "strong_wolfe",
+      "tolerance_grad": 1e-07,
+      "tolerance_change": 1e-09
+    },
+    "no_Adam_updates": true,
+    "no_Gsolve": true,
+    "no_Gram_factor": true,
+    "reference_used_for_training": true,
+    "pde_only_solve": false,
+    "production_initialization_allowed": false,
+    "data_role": "REFERENCE_EXPOSED_DIAGNOSTIC_ONLY",
+    "pde_only_solver_qualified": false,
+    "official_candidate_results": false,
+    "worker_elapsed_seconds": 12.88444030797109
+  },
+  "final_checkpoint_sha256": "e09b94364837bdb72714f7c229d19993836072dd035c85249bfc19376a44a790",
+  "reference_used_for_training": true,
+  "pde_only_solve": false,
+  "production_initialization_allowed": false,
+  "pde_only_solver_qualified": false,
+  "official_candidate_results": false
+}

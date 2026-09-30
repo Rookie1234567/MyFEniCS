@@ -55,3 +55,21 @@ Markdown局部检查范围扩展到新review、获授权修正的task、Response
 正式 one-run `v3_fit_checks` 实测合成复数目标相对差`3.01e-11`，真实固定 M5 的 batch1/8 c/loss/梯度差`4.22e-16/0/7.96e-16`；三非零实方向、h=`1e-4/1e-5/1e-6`的全部误差均≤`1e-5`，异常事务参数逐位恢复，训练标签hash与master/背景/port身份锁定。P0 `A(c-c_ref)=r-r_ref` 四态差≤`3.45e-13`、真实Gsolve最大相对`2.15e-13`，不重放未保存的旧状态。[资格原始记录](records/reference_fit_checks_v3.json)、[P0记录](records/error_residual_geometry_v3.json)。
 
 P1 唯一训练被执行会话意外中断；最后完整观察825 closure，第817次已提交参数审核只有指标没有checkpoint，最后保留参数为Adam500。原运行没有`run_summary`/final/last_trial，按[中断记录](records/fit_interruption_v3.json)保守计费，不伪造正常停止。恢复接线的轻量8项pytest、Ruff、compileall及新one-run输入解析通过；P2留存态q30与独立FE审核完成，`q30/q15=2.85841e-12`，MUMPS0、整树峰647409664B/own swap0。独立checker从保存参数/完整c、原Gram、原复E/H样本、40级复通道及独立R/T/A_volume重算，所得场/方程/功率检查均false，并断言监督路线的`pde_only_solver_qualified=false`与`official_candidate_results=false`。[V3 Gate](records/gate_decisions_v3.json)、[资源账](records/resource_costs_v3.json)。首次局部Markdown检查因渲染记录链接尚未落盘而失败；创建明确待发布记录后，Review V2与本轮7页新增/修改文档共8页、38张表的链接/围栏/数学/表列检查通过。精确已发布commit的GitHub实际浏览器渲染8页、11表、7公式，26截图hash一致，抽看Review公式、诊断公式与summary结果表；浏览器树峰2042216448B、own swap0，低于2GiB轻预算。[实际渲染记录](records/render_check_v3.json)保存发布blob与URL，旧task/V1不重复全套检查。没有CI或全仓测试通过的声明。
+
+## Review V3 后续 V4 定向资格
+
+| 检查 / 本地实测 | 结果 | 范围 |
+| --- | --- | --- |
+| C1 optimizer checkpoint＋fit目标/政策 | 9 passed | 小复数loss、完整state加载等价、Adam→fresh L-BFGS、原子写入中断、真实非零strong-Wolfe异常及接受更新量 |
+| 自身进程故障 | 4类通过 | 明确停止、监督报告失效、监督SIGKILL清场、启动端退出/关闭输出管道；未测平台回收路径不声称通过 |
+| M5阶段边界资格 | 2次完整loss/gradient，配对差0 | E_G0.20082113406866917、native14.263463207213235；不重跑原Adam500/P0/旧FE Gate |
+| C2计时修正与fit政策 | 11 passed、0失败/错误/skip | 包含9项复测及2项launch时钟测试；不是20个独立新测试 |
+| FE preflight | complex128/int64、MPI1、Torch未导入 | 复用资格化ABI、task-local activation，无安装 |
+| final q15/q30独立重建 | 参数→c=0；q30/q15=8.5141e-13 | 完整边/面/内部矩；固定网络buffers与8966参数匹配 |
+| independent FE compare-only | 审核完成；严格方程/场/功率失败 | 负结果如实保留，参考复用，新MUMPS0；不把审核完成称solver PASS |
+| compact checker | 冻结state/hash/optimizer与原始复场/功率重算通过 | G matvec仅证据验算，无训练、Gsolve或新因子 |
+| Ruff / compile / Markdown / GitHub | 按本轮实际记录收口 | 本地与远端渲染分列，不推断CI |
+
+初始小测试快照见[durability checks](records/durability_checks_v4.json)，后续边界与11项复测见[post-fit checks](records/post_fit_checks_v4.json)，完整检查点见[checkpoint index](records/checkpoint_index_v4.json)。R0小问题同时树≤2GiB、自身swap0；数值阶段逐个监督并清场。原始Ruff/compile/测试/浏览器尝试及所有失败费用在[资源账](records/resource_costs_v4.json)，不full pytest、不重验整套E0/E1，不宣称GitHub Actions通过。
+
+C1正式段的保存留白有计时偏差，作为规则未满足记录；C2已用launcher时钟和150s cutoff修正，并有定向测试，未再次正式执行。旧V3后段状态未恢复，失联原因仍unknown。[新review及V4页渲染记录](records/render_check_v4.json)分别绑定真实GitHub DOM、published blob和截图，不能用本地Markdown代替。

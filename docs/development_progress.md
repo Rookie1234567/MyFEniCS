@@ -2992,3 +2992,18 @@ Review V2 接受固定对角尺度负结果，关闭重复 FREE 尺度扫描，�
 P0实算参考残差，不设零；四态 `A(c-c_ref)=r-r_ref` 差≤`3.45e-13`。旧FREE/缩放FREE 的 G 场误差 `0.991760/0.954121`、native原残差 `0.596914/0.607772`、负梯度与参考修正实余弦 `0.02306/0.00508`；各一次解析最优实步长仅极小改变场，说明保存态的残差优化方向与参考场修正不一致，不能称全局条件数。唯一P0 Gram因子setup`96.880s`、11 solve`3.466s`，worker`102.974s`、监督`104.833s`、同时树峰`1,038,958,592B`/own swap0，结束释放。
 
 P1 合成复数目标、真实固定网络三方向FD、batch1/8及事务回滚通过；唯一拟合执行会话在观察825 closure后消失，final/last_trial/optimizer state未留存，最后可重建的已提交态为Adam500。失联的原始采样至少3097.314s、保守计费3284s、树峰697479168B/own swap0；不重启、续训或补造后期参数。fit闭包仅作原G稀疏乘法和完整矩网络VJP，不用Gsolve/Maxwell逆或A/Aᴴ；checkpoint/manifest固定`reference_used_for_training=true`、`pde_only_solve=false`、`production_initialization_allowed=false`。Adam每25 closure的更新范数在更新前取值，真实逐步更新`NOT_RETAINED`。P2独立审核只对留存态：q30/q15差`2.85841e-12`，散射E L2/curl`0.162013/0.201705`、native`14.263463`、能量闭合`0.0417012`，全40复通道和四材料区原始数值见Gate；严格场/方程/功率均失败，final训练能力未定，新MUMPS0。所有源、标签、资源和后处理以[Response V3](task042extra_feinn_5nm/response_v3.md)、[诊断](task042extra_feinn_5nm/outcomes/representation_diagnostic_v3.md)、[独立Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v3.json)为准；文档HEAD不代替数值source。
+
+## 2026-09-30 Task42extra V4：持久 Adam500 阶段边界重放
+
+| 实算 / 状态 | 本轮结果 |
+| --- | --- |
+| R0 | 9项小tests＋4类自身进程故障通过；M5仅2次loss/gradient，Adam500配对差0，fresh L-BFGS空历史 |
+| R1唯一后段 | 新2129完整闭包、93完整外层step，WALL_BUDGET回滚保存2122闭包边界；完整模型/buffers/optimizer/RNG和prev保留 |
+| 同一M5 5nm/384hex/p3/31968复FE/40端口 | E_G0.01387169130、散射E L2/curl0.01325124766/0.01388700270、native/aug1.608844720；表示仍UNRESOLVED、严格Gate失败 |
+| R2 | 参数→c差0、q30/q15差8.5141e-13；独立FE审核，新MUMPS0，参考仅复用 |
+| R/T/A_balance/A_volume | 0.8130577901/0.03273817418/0.1542040357/0.1553880257，仅diagnostic；能量闭合0.001183989956 |
+| 资源 / 计时偏差 | R1监督10688.702s、树RSS764751872B、swap0；≥120s留白被C1导入开销侵占，C2修正＋targeted tests，未再次正式启动 |
+
+监督标签仅用于已知场表示诊断，不是无标签求解。reference_used_for_training=true，pde_only_solve、production_initialization_allowed、pde_only_solver_qualified、official_candidate_results全部false；新Gram factor/Gsolve0，2154次G matvec95.4165s和存盘3.8402s包含于父wall。旧817参数/optimizer仍NOT_RETAINED、旧825只是下界、失联原因仍unknown，旧3284s费用保留。没有续训旧FEINN/FREE或做p4/目标5nm/0.7nm。
+
+R0/R1 source538c6320679d9a3ce3efe5e6d6ebef062963f601，R2 sourcec8a057a46645542aaa17a38b78e64c6add80cb68。canonical worktree只安全fetch/ff本分支，显式tracking ref核对，不改共享fetch配置。详细检查点、全部复场/通道分母、原区域、预算及后续浏览器费用见[Response V4](task042extra_feinn_5nm/response_v4.md)、[run index](task042extra_feinn_5nm/outcomes/records/run_index_v4.json)、[最终资源账](task042extra_feinn_5nm/outcomes/records/resource_costs_v4.json)。提交推送同分支后等待review，不merge。

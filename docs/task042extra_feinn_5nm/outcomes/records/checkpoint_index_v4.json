@@ -1,0 +1,2578 @@
+{
+  "schema": "task42extra.checkpoint-index.v4",
+  "raw_index": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v4_reference_fit_boundary_replay_20260930T033317909807Z/checkpoint_index.json",
+    "sha256": "da80b65265a2dabc897666902670364902b80f7ceb93985a56f7321b8a9d2939"
+  },
+  "pointer_sha256": "3c3ba334d99e86b2dea3978e33a7e51fc16224b42130c1832ca818eabd0f61e3",
+  "final": {
+    "generation": 94,
+    "name": "committed_000094.pt",
+    "sha256": "e09b94364837bdb72714f7c229d19993836072dd035c85249bfc19376a44a790",
+    "bytes": 3967347,
+    "pinned": true,
+    "metadata": {
+      "state_kind": "final_committed",
+      "run_id": "task42extra_v4_reference_fit_boundary_replay_20260930T033317909807Z",
+      "stage": "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY",
+      "source_sha": "538c6320679d9a3ce3efe5e6d6ebef062963f601",
+      "input_sha256": "dd2a2cef9adcbfcda34d801bc976fdba20a0ac1555ca07fac7f1a56ee6a25cee",
+      "label_state_sha256": "0c3c0574a8c1eddcadfb56268e00c08e55d5cb15d44c0c76e873fcea0c467ff7",
+      "reference_c_sha256": "b0840a6a73255a6a85611e6002ac620ab16db2e375832704dac211b5e80bb38e",
+      "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+      "Gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+      "moments_sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e",
+      "buffers_sha256": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+      },
+      "original_Adam500_checkpoint_sha256": "4e818a16b876ffd0776e74438654ca7de5632b1e17269a38e87749b5b3ad6a97",
+      "counts": {
+        "new_complete_fit_closures": 2129,
+        "closure_attempts": 2129,
+        "outer_attempts": 94,
+        "committed_outer_steps": 93,
+        "LBFGS_inner_iterations": 1859,
+        "native_audits": 22,
+        "inherited_committed_Adam_updates": 500
+      },
+      "logical_path_closures": 2629,
+      "committed_complete_fit_closures": 2122,
+      "elapsed_seconds": 10682.887309867074,
+      "wall_limit_seconds": 10800,
+      "final_reserve_seconds": 120,
+      "closure_limit": 3500,
+      "RNG_policy": "torch, numpy and Python RNG state captured; no stochastic operations in fit/line search",
+      "reference_used_for_training": true,
+      "pde_only_solve": false,
+      "production_initialization_allowed": false,
+      "data_role": "REFERENCE_EXPOSED_DIAGNOSTIC_ONLY",
+      "pde_only_solver_qualified": false,
+      "official_candidate_results": false,
+      "complete_c_sha256": "33d9727ac8507cb9665652d99a09108b28618e55ef4635e82b01f40cea63bf12"
+    },
+    "model_keys": [
+      "center",
+      "half_width",
+      "envelopes.0.weight",
+      "envelopes.0.bias",
+      "envelopes.2.weight",
+      "envelopes.2.bias",
+      "envelopes.4.weight",
+      "envelopes.4.bias",
+      "envelopes.6.weight",
+      "envelopes.6.bias"
+    ],
+    "parameter_order": [
+      {
+        "name": "envelopes.0.weight",
+        "shape": [
+          64,
+          3
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "name": "envelopes.0.bias",
+        "shape": [
+          64
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "name": "envelopes.2.weight",
+        "shape": [
+          64,
+          64
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "name": "envelopes.2.bias",
+        "shape": [
+          64
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "name": "envelopes.4.weight",
+        "shape": [
+          64,
+          64
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "name": "envelopes.4.bias",
+        "shape": [
+          64
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "name": "envelopes.6.weight",
+        "shape": [
+          6,
+          64
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "name": "envelopes.6.bias",
+        "shape": [
+          6
+        ],
+        "dtype": "torch.float64"
+      }
+    ],
+    "optimizer_class": "LBFGS"
+  },
+  "previous": {
+    "generation": 93,
+    "name": "committed_000093.pt",
+    "sha256": "6713c8289f03895d95d8465420c19111a3c127af90568b023244562c2f0f7d5e",
+    "bytes": 3967475,
+    "pinned": true,
+    "metadata": {
+      "state_kind": "complete_LBFGS_outer_step",
+      "run_id": "task42extra_v4_reference_fit_boundary_replay_20260930T033317909807Z",
+      "stage": "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY",
+      "source_sha": "538c6320679d9a3ce3efe5e6d6ebef062963f601",
+      "input_sha256": "dd2a2cef9adcbfcda34d801bc976fdba20a0ac1555ca07fac7f1a56ee6a25cee",
+      "label_state_sha256": "0c3c0574a8c1eddcadfb56268e00c08e55d5cb15d44c0c76e873fcea0c467ff7",
+      "reference_c_sha256": "b0840a6a73255a6a85611e6002ac620ab16db2e375832704dac211b5e80bb38e",
+      "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+      "Gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+      "moments_sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e",
+      "buffers_sha256": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+      },
+      "original_Adam500_checkpoint_sha256": "4e818a16b876ffd0776e74438654ca7de5632b1e17269a38e87749b5b3ad6a97",
+      "counts": {
+        "new_complete_fit_closures": 2122,
+        "closure_attempts": 2122,
+        "outer_attempts": 93,
+        "committed_outer_steps": 93,
+        "LBFGS_inner_iterations": 1859,
+        "native_audits": 21,
+        "inherited_committed_Adam_updates": 500
+      },
+      "logical_path_closures": 2622,
+      "committed_complete_fit_closures": 2122,
+      "elapsed_seconds": 10639.761937740026,
+      "wall_limit_seconds": 10800,
+      "final_reserve_seconds": 120,
+      "closure_limit": 3500,
+      "RNG_policy": "torch, numpy and Python RNG state captured; no stochastic operations in fit/line search",
+      "accepted_update_norm": 0.015030834577959,
+      "accepted_relative_update": 0.0014741492588620452,
+      "reference_used_for_training": true,
+      "pde_only_solve": false,
+      "production_initialization_allowed": false,
+      "data_role": "REFERENCE_EXPOSED_DIAGNOSTIC_ONLY",
+      "pde_only_solver_qualified": false,
+      "official_candidate_results": false,
+      "complete_c_sha256": "33d9727ac8507cb9665652d99a09108b28618e55ef4635e82b01f40cea63bf12"
+    },
+    "model_keys": [
+      "center",
+      "half_width",
+      "envelopes.0.weight",
+      "envelopes.0.bias",
+      "envelopes.2.weight",
+      "envelopes.2.bias",
+      "envelopes.4.weight",
+      "envelopes.4.bias",
+      "envelopes.6.weight",
+      "envelopes.6.bias"
+    ],
+    "parameter_order": [
+      {
+        "name": "envelopes.0.weight",
+        "shape": [
+          64,
+          3
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "name": "envelopes.0.bias",
+        "shape": [
+          64
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "name": "envelopes.2.weight",
+        "shape": [
+          64,
+          64
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "name": "envelopes.2.bias",
+        "shape": [
+          64
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "name": "envelopes.4.weight",
+        "shape": [
+          64,
+          64
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "name": "envelopes.4.bias",
+        "shape": [
+          64
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "name": "envelopes.6.weight",
+        "shape": [
+          6,
+          64
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "name": "envelopes.6.bias",
+        "shape": [
+          6
+        ],
+        "dtype": "torch.float64"
+      }
+    ],
+    "optimizer_class": "LBFGS"
+  },
+  "checkpoints": [
+    {
+      "generation": 0,
+      "name": "committed_000000.pt",
+      "sha256": "bd86909adee04a7044a956b545b31756db57b77e10206c7868e2ed1190d475d9",
+      "bytes": 857154,
+      "pinned": true,
+      "retained": true,
+      "state_kind": "adam500_to_fresh_lbfgs_boundary",
+      "counts": {
+        "new_complete_fit_closures": 0,
+        "closure_attempts": 0,
+        "outer_attempts": 0,
+        "committed_outer_steps": 0,
+        "LBFGS_inner_iterations": 0,
+        "native_audits": 0,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 0,
+      "logical_path_closures": 500,
+      "accepted_update_norm": null,
+      "complete_c_sha256": "8c30b1e86c98fb70f70c76ad29ad4ea6cda66d5b586c155f7d6e343962ed12b6",
+      "parameters_sha256": "262088dae91a74c3d4a66b648bb3a1bc3c742794cd1cb0f392f878b6c16f44eb",
+      "buffers_sha256": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+      }
+    },
+    {
+      "generation": 1,
+      "name": "committed_000001.pt",
+      "sha256": "cad433e50e2afcccfa2d7ee1fb6c6e4fa95530f955cab99e503075a2f6638d68",
+      "bytes": 3052733,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 22,
+        "closure_attempts": 22,
+        "outer_attempts": 1,
+        "committed_outer_steps": 1,
+        "LBFGS_inner_iterations": 20,
+        "native_audits": 1,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 22,
+      "logical_path_closures": 522,
+      "accepted_update_norm": 0.16894203592576762,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 2,
+      "name": "committed_000002.pt",
+      "sha256": "2a66c0609eae64cfc06b20cfc3f7cf53444dce7a427cb396c72c33fd4fd228d9",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 44,
+        "closure_attempts": 44,
+        "outer_attempts": 2,
+        "committed_outer_steps": 2,
+        "LBFGS_inner_iterations": 40,
+        "native_audits": 1,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 44,
+      "logical_path_closures": 544,
+      "accepted_update_norm": 0.16740757817636512,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 3,
+      "name": "committed_000003.pt",
+      "sha256": "9fb7f7fa98727f9e6625057d9916028d72e26f18e9a73a1628fd1d78c7ba8cd1",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 68,
+        "closure_attempts": 68,
+        "outer_attempts": 3,
+        "committed_outer_steps": 3,
+        "LBFGS_inner_iterations": 60,
+        "native_audits": 1,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 68,
+      "logical_path_closures": 568,
+      "accepted_update_norm": 0.09775775491450553,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 4,
+      "name": "committed_000004.pt",
+      "sha256": "656daf711939c8965ffe9f029fa0c121cdeaa9c15bf42be4b4689f945b037bbd",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 91,
+        "closure_attempts": 91,
+        "outer_attempts": 4,
+        "committed_outer_steps": 4,
+        "LBFGS_inner_iterations": 80,
+        "native_audits": 1,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 91,
+      "logical_path_closures": 591,
+      "accepted_update_norm": 0.1518098711926905,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 5,
+      "name": "committed_000005.pt",
+      "sha256": "18787df1a78ef9dbfad5ef11a73ba143bfdf4c23f85b2c1a61438a99f8ede0c0",
+      "bytes": 3958131,
+      "pinned": true,
+      "retained": true,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 113,
+        "closure_attempts": 113,
+        "outer_attempts": 5,
+        "committed_outer_steps": 5,
+        "LBFGS_inner_iterations": 100,
+        "native_audits": 1,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 113,
+      "logical_path_closures": 613,
+      "accepted_update_norm": 0.10222526926303875,
+      "complete_c_sha256": "6d5ada2930f3c149ead54626b1baee2e23029ff618c1b4851a9ff3e89e15bcd6",
+      "parameters_sha256": "36be0cf897490d78aa816e02e24a50fc735d297fbc60c3bb1e6c5f92cdcabd92",
+      "buffers_sha256": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+      },
+      "optimizer_inner_iterations": 100,
+      "optimizer_func_evals": 113
+    },
+    {
+      "generation": 6,
+      "name": "committed_000006.pt",
+      "sha256": "dfcfc13cced8e1e71c1f11913912cda3bf1f834476782d2a1bad7d7ec7e48f70",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 134,
+        "closure_attempts": 134,
+        "outer_attempts": 6,
+        "committed_outer_steps": 6,
+        "LBFGS_inner_iterations": 120,
+        "native_audits": 2,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 134,
+      "logical_path_closures": 634,
+      "accepted_update_norm": 0.17863280487032165,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 7,
+      "name": "committed_000007.pt",
+      "sha256": "5ddec9731a7a7e4b380c4b18595edb31ee0e8de5dcd565c69c6726ba49ebb31e",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 157,
+        "closure_attempts": 157,
+        "outer_attempts": 7,
+        "committed_outer_steps": 7,
+        "LBFGS_inner_iterations": 140,
+        "native_audits": 2,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 157,
+      "logical_path_closures": 657,
+      "accepted_update_norm": 0.16958760695689815,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 8,
+      "name": "committed_000008.pt",
+      "sha256": "b3373f035687ef1a5ed976714bdf09a62bd981244d8cdc29e6b19b905ac0b905",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 181,
+        "closure_attempts": 181,
+        "outer_attempts": 8,
+        "committed_outer_steps": 8,
+        "LBFGS_inner_iterations": 160,
+        "native_audits": 2,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 181,
+      "logical_path_closures": 681,
+      "accepted_update_norm": 0.09290539313358537,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 9,
+      "name": "committed_000009.pt",
+      "sha256": "c413dccaaee382fd656ee3be2da0811eac4f835ba14461500b8e5221dd4f16e5",
+      "bytes": 3965683,
+      "pinned": true,
+      "retained": true,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 204,
+        "closure_attempts": 204,
+        "outer_attempts": 9,
+        "committed_outer_steps": 9,
+        "LBFGS_inner_iterations": 180,
+        "native_audits": 2,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 204,
+      "logical_path_closures": 704,
+      "accepted_update_norm": 0.1186688862692445,
+      "complete_c_sha256": "769b1bd2398adb2b82aa9196624bb06bfd0a1aec6c8c7b0602b0df969ee1ba49",
+      "parameters_sha256": "2d53a117403978a8a7c94e383895d07f4984b78568e3d1f16c1df7c4c5394f2d",
+      "buffers_sha256": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+      },
+      "optimizer_inner_iterations": 180,
+      "optimizer_func_evals": 204
+    },
+    {
+      "generation": 10,
+      "name": "committed_000010.pt",
+      "sha256": "6419a3ed4578c427d71a06a7c19fbf9a50492ede993efa828bd3c452cc56d5c0",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 227,
+        "closure_attempts": 227,
+        "outer_attempts": 10,
+        "committed_outer_steps": 10,
+        "LBFGS_inner_iterations": 200,
+        "native_audits": 3,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 227,
+      "logical_path_closures": 727,
+      "accepted_update_norm": 0.10234253913805136,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 11,
+      "name": "committed_000011.pt",
+      "sha256": "0178d43ba24fbe9d1966d8aea3d6abf083947d4c502f032634368cd2099ad978",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 249,
+        "closure_attempts": 249,
+        "outer_attempts": 11,
+        "committed_outer_steps": 11,
+        "LBFGS_inner_iterations": 220,
+        "native_audits": 3,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 249,
+      "logical_path_closures": 749,
+      "accepted_update_norm": 0.09280885473005362,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 12,
+      "name": "committed_000012.pt",
+      "sha256": "b49e5545e6a1d34164905d506c6fb365462973ba09092f7eeaa862182c83812f",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 272,
+        "closure_attempts": 272,
+        "outer_attempts": 12,
+        "committed_outer_steps": 12,
+        "LBFGS_inner_iterations": 240,
+        "native_audits": 3,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 272,
+      "logical_path_closures": 772,
+      "accepted_update_norm": 0.05790768571442402,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 13,
+      "name": "committed_000013.pt",
+      "sha256": "77c8c3dfe849009b0ace5826bb47e38b9474a689eebf5cd2b2e14fe614429910",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 294,
+        "closure_attempts": 294,
+        "outer_attempts": 13,
+        "committed_outer_steps": 13,
+        "LBFGS_inner_iterations": 260,
+        "native_audits": 3,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 294,
+      "logical_path_closures": 794,
+      "accepted_update_norm": 0.07887103492610427,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 14,
+      "name": "committed_000014.pt",
+      "sha256": "a68f37cc878b45b7554f8bb184e6b4c77b891c3146a482cc5aa96fb21fc9abd6",
+      "bytes": 3961971,
+      "pinned": true,
+      "retained": true,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 317,
+        "closure_attempts": 317,
+        "outer_attempts": 14,
+        "committed_outer_steps": 14,
+        "LBFGS_inner_iterations": 280,
+        "native_audits": 3,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 317,
+      "logical_path_closures": 817,
+      "accepted_update_norm": 0.09592312863985751,
+      "complete_c_sha256": "810fb466b4d02120e3988175cdf172cc70af265875753cc97d9d3d478dcba8ad",
+      "parameters_sha256": "3010a130f4f8175db7cb90531e33ed446459c50fd56be6cc03a22db6967dd928",
+      "buffers_sha256": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+      },
+      "optimizer_inner_iterations": 280,
+      "optimizer_func_evals": 317
+    },
+    {
+      "generation": 15,
+      "name": "committed_000015.pt",
+      "sha256": "cca982f8095ab560f34634aaaec0596d212889fea2f85891893f99622a5a5ee0",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 339,
+        "closure_attempts": 339,
+        "outer_attempts": 15,
+        "committed_outer_steps": 15,
+        "LBFGS_inner_iterations": 300,
+        "native_audits": 4,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 339,
+      "logical_path_closures": 839,
+      "accepted_update_norm": 0.03592333165465783,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 16,
+      "name": "committed_000016.pt",
+      "sha256": "7f5355eea9b9eed04719ae018c2a80e6460bc0153d099f4eb0ab22a6bda14a43",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 362,
+        "closure_attempts": 362,
+        "outer_attempts": 16,
+        "committed_outer_steps": 16,
+        "LBFGS_inner_iterations": 320,
+        "native_audits": 4,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 362,
+      "logical_path_closures": 862,
+      "accepted_update_norm": 0.026737595335197605,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 17,
+      "name": "committed_000017.pt",
+      "sha256": "4c8de78171b80470efe0183f2057f2ab29a99ef3bb1f83ee307503390a836222",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 384,
+        "closure_attempts": 384,
+        "outer_attempts": 17,
+        "committed_outer_steps": 17,
+        "LBFGS_inner_iterations": 340,
+        "native_audits": 4,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 384,
+      "logical_path_closures": 884,
+      "accepted_update_norm": 0.05009057962670354,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 18,
+      "name": "committed_000018.pt",
+      "sha256": "fdc18feef57d22eb2a8ee8cf66c1ed747d874978bb3727205490cd33549d15ae",
+      "bytes": 3965747,
+      "pinned": true,
+      "retained": true,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 406,
+        "closure_attempts": 406,
+        "outer_attempts": 18,
+        "committed_outer_steps": 18,
+        "LBFGS_inner_iterations": 360,
+        "native_audits": 4,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 406,
+      "logical_path_closures": 906,
+      "accepted_update_norm": 0.08010217704130188,
+      "complete_c_sha256": "8ebb6545e6ce4fea1afbc7d7b58f337d64325124d6e59362b47fe400a587e9da",
+      "parameters_sha256": "ab20de9466221bab8a059c9b86078cc88431732391476aa17a218b6a573029fe",
+      "buffers_sha256": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+      },
+      "optimizer_inner_iterations": 360,
+      "optimizer_func_evals": 406
+    },
+    {
+      "generation": 19,
+      "name": "committed_000019.pt",
+      "sha256": "5d7ffef166ff166900ec9505c7283fe46e3c96b86a31dff5a446e0a7fccab552",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 430,
+        "closure_attempts": 430,
+        "outer_attempts": 19,
+        "committed_outer_steps": 19,
+        "LBFGS_inner_iterations": 380,
+        "native_audits": 5,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 430,
+      "logical_path_closures": 930,
+      "accepted_update_norm": 0.15516895437954628,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 20,
+      "name": "committed_000020.pt",
+      "sha256": "f6cb074dbc19931fa5fdcf8bf56963ec5ad3b3f909ab73a2042922b65ae622ad",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 451,
+        "closure_attempts": 451,
+        "outer_attempts": 20,
+        "committed_outer_steps": 20,
+        "LBFGS_inner_iterations": 400,
+        "native_audits": 5,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 451,
+      "logical_path_closures": 951,
+      "accepted_update_norm": 0.08741209157510894,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 21,
+      "name": "committed_000021.pt",
+      "sha256": "43d2caabdd33a1ee4d730c19855aedc3ad0852990a8fd2bd22c47fcba2a74ed6",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 472,
+        "closure_attempts": 472,
+        "outer_attempts": 21,
+        "committed_outer_steps": 21,
+        "LBFGS_inner_iterations": 420,
+        "native_audits": 5,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 472,
+      "logical_path_closures": 972,
+      "accepted_update_norm": 0.06538960586577158,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 22,
+      "name": "committed_000022.pt",
+      "sha256": "3c3f3969665df712fe9356aeeb12472f4f8ca9c06f882e8c269faeea8381b217",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 495,
+        "closure_attempts": 495,
+        "outer_attempts": 22,
+        "committed_outer_steps": 22,
+        "LBFGS_inner_iterations": 440,
+        "native_audits": 5,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 495,
+      "logical_path_closures": 995,
+      "accepted_update_norm": 0.03148789606519704,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 23,
+      "name": "committed_000023.pt",
+      "sha256": "c711cb03f7fd9a7228d1b7048da73bbfe8c7bb4db22e7559b047a031e49bd3e0",
+      "bytes": 3961075,
+      "pinned": true,
+      "retained": true,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 518,
+        "closure_attempts": 518,
+        "outer_attempts": 23,
+        "committed_outer_steps": 23,
+        "LBFGS_inner_iterations": 460,
+        "native_audits": 5,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 518,
+      "logical_path_closures": 1018,
+      "accepted_update_norm": 0.053107790162884895,
+      "complete_c_sha256": "c2047532c621ec5fa63f17b13f9fde12e2705d87e5a04c504f9b16b77f20d827",
+      "parameters_sha256": "08a4125303ff39cda1ccc4d18579d9ea4df1113e5b6e0259ba7444e94ccdc731",
+      "buffers_sha256": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+      },
+      "optimizer_inner_iterations": 460,
+      "optimizer_func_evals": 518
+    },
+    {
+      "generation": 24,
+      "name": "committed_000024.pt",
+      "sha256": "fe54b20fa97656ab4d54c7ecd7a1556c6707f690d6c102ad49260ef01850951e",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 542,
+        "closure_attempts": 542,
+        "outer_attempts": 24,
+        "committed_outer_steps": 24,
+        "LBFGS_inner_iterations": 480,
+        "native_audits": 6,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 542,
+      "logical_path_closures": 1042,
+      "accepted_update_norm": 0.04393130840904277,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 25,
+      "name": "committed_000025.pt",
+      "sha256": "1cff8b01045b5d126e978d1233f0ea59e6d96a16af344d3f6157d6433809816e",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 565,
+        "closure_attempts": 565,
+        "outer_attempts": 25,
+        "committed_outer_steps": 25,
+        "LBFGS_inner_iterations": 500,
+        "native_audits": 6,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 565,
+      "logical_path_closures": 1065,
+      "accepted_update_norm": 0.047007727268476414,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 26,
+      "name": "committed_000026.pt",
+      "sha256": "619b5b4b915f19f905abeb18e02443c0056e92e41ac3263e0c94d7ea341e9c8f",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 588,
+        "closure_attempts": 588,
+        "outer_attempts": 26,
+        "committed_outer_steps": 26,
+        "LBFGS_inner_iterations": 520,
+        "native_audits": 6,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 588,
+      "logical_path_closures": 1088,
+      "accepted_update_norm": 0.03455108692301685,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 27,
+      "name": "committed_000027.pt",
+      "sha256": "0ef3505898c64e00554772685b650b7238fdaec927e91102f9d0162c244aed12",
+      "bytes": 3964915,
+      "pinned": true,
+      "retained": true,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 612,
+        "closure_attempts": 612,
+        "outer_attempts": 27,
+        "committed_outer_steps": 27,
+        "LBFGS_inner_iterations": 540,
+        "native_audits": 6,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 612,
+      "logical_path_closures": 1112,
+      "accepted_update_norm": 0.06291146692848974,
+      "complete_c_sha256": "29cf257260ba27ba061a9e83ccabb73b27ead17a65549be9a4ff685a668734b8",
+      "parameters_sha256": "3b97e8a24716448ed1fd3c5fdc8aa47709ecb2b3f936d8eb954e484b86efe3a4",
+      "buffers_sha256": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+      },
+      "optimizer_inner_iterations": 540,
+      "optimizer_func_evals": 612
+    },
+    {
+      "generation": 28,
+      "name": "committed_000028.pt",
+      "sha256": "7877a7f651e32f60cbad017758b31e114e9f2e0db5fd4ac9868f9c8f1dd4b01c",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 636,
+        "closure_attempts": 636,
+        "outer_attempts": 28,
+        "committed_outer_steps": 28,
+        "LBFGS_inner_iterations": 560,
+        "native_audits": 7,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 636,
+      "logical_path_closures": 1136,
+      "accepted_update_norm": 0.04480905745049165,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 29,
+      "name": "committed_000029.pt",
+      "sha256": "6930aa71de10bbd2fbdf105557d8d6cd8ecfbfb2dbd170387905db385cab521a",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 658,
+        "closure_attempts": 658,
+        "outer_attempts": 29,
+        "committed_outer_steps": 29,
+        "LBFGS_inner_iterations": 580,
+        "native_audits": 7,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 658,
+      "logical_path_closures": 1158,
+      "accepted_update_norm": 0.06687709594728398,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 30,
+      "name": "committed_000030.pt",
+      "sha256": "750b9f3181a54f84eebea9e245770c7b22d78b951e28d823887992167baf0fcb",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 679,
+        "closure_attempts": 679,
+        "outer_attempts": 30,
+        "committed_outer_steps": 30,
+        "LBFGS_inner_iterations": 600,
+        "native_audits": 7,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 679,
+      "logical_path_closures": 1179,
+      "accepted_update_norm": 0.047742204681530793,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 31,
+      "name": "committed_000031.pt",
+      "sha256": "bb1284bb6dfdc3ca1c96ee8e093c5f2faefbd76728b2374590c334ef5dd9520c",
+      "bytes": 3963955,
+      "pinned": true,
+      "retained": true,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 703,
+        "closure_attempts": 703,
+        "outer_attempts": 31,
+        "committed_outer_steps": 31,
+        "LBFGS_inner_iterations": 620,
+        "native_audits": 7,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 703,
+      "logical_path_closures": 1203,
+      "accepted_update_norm": 0.05154166602942731,
+      "complete_c_sha256": "669f66543dd4db516d65b78d52213306cd07d535e1f8b04bc34e8e5426e9e591",
+      "parameters_sha256": "55ba15f3fe3c031fcd3938774074c39e3d15e256730ca2d9156711066e5935cb",
+      "buffers_sha256": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+      },
+      "optimizer_inner_iterations": 620,
+      "optimizer_func_evals": 703
+    },
+    {
+      "generation": 32,
+      "name": "committed_000032.pt",
+      "sha256": "ae8c84780d8ec9c757e086d4acd9a807b5d4d43b3b1501b6165cb9f4491a3067",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 727,
+        "closure_attempts": 727,
+        "outer_attempts": 32,
+        "committed_outer_steps": 32,
+        "LBFGS_inner_iterations": 640,
+        "native_audits": 8,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 727,
+      "logical_path_closures": 1227,
+      "accepted_update_norm": 0.0310045092956323,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 33,
+      "name": "committed_000033.pt",
+      "sha256": "d188d0a314106ec4ba440c493af6af700d904b324d9b9b3b0f37da8ab4c05fef",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 750,
+        "closure_attempts": 750,
+        "outer_attempts": 33,
+        "committed_outer_steps": 33,
+        "LBFGS_inner_iterations": 660,
+        "native_audits": 8,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 750,
+      "logical_path_closures": 1250,
+      "accepted_update_norm": 0.021723404469516747,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 34,
+      "name": "committed_000034.pt",
+      "sha256": "f6970cfa4c4ddf27d0d21e35ed5612d49266e45f0e38458f1920d7c4db637bd1",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 774,
+        "closure_attempts": 774,
+        "outer_attempts": 34,
+        "committed_outer_steps": 34,
+        "LBFGS_inner_iterations": 680,
+        "native_audits": 8,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 774,
+      "logical_path_closures": 1274,
+      "accepted_update_norm": 0.036398258118770156,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 35,
+      "name": "committed_000035.pt",
+      "sha256": "f027a8f1d100575c01887b9e6dd3897541a5a1c57d0c91d5989c85a0c9cc478a",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 796,
+        "closure_attempts": 796,
+        "outer_attempts": 35,
+        "committed_outer_steps": 35,
+        "LBFGS_inner_iterations": 700,
+        "native_audits": 8,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 796,
+      "logical_path_closures": 1296,
+      "accepted_update_norm": 0.05333591521579218,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 36,
+      "name": "committed_000036.pt",
+      "sha256": "f3deec1677b37b42ea1bed1761304e64bed5465c6189a56546d179056d73e60a",
+      "bytes": 3961715,
+      "pinned": true,
+      "retained": true,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 819,
+        "closure_attempts": 819,
+        "outer_attempts": 36,
+        "committed_outer_steps": 36,
+        "LBFGS_inner_iterations": 720,
+        "native_audits": 8,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 819,
+      "logical_path_closures": 1319,
+      "accepted_update_norm": 0.04851243550931853,
+      "complete_c_sha256": "0675e6f3792ac6f10be6cc566a4730c16c93937e329c4ab30f289f7071b95b25",
+      "parameters_sha256": "d105aae54861113738d6c696503e5c294fdfc929aaf657c01ef0ac1fa99e87ab",
+      "buffers_sha256": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+      },
+      "optimizer_inner_iterations": 720,
+      "optimizer_func_evals": 819
+    },
+    {
+      "generation": 37,
+      "name": "committed_000037.pt",
+      "sha256": "d59486556282c6156a840f744a83336c1742501d51addfaa10f528f25927ab6c",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 843,
+        "closure_attempts": 843,
+        "outer_attempts": 37,
+        "committed_outer_steps": 37,
+        "LBFGS_inner_iterations": 740,
+        "native_audits": 9,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 843,
+      "logical_path_closures": 1343,
+      "accepted_update_norm": 0.036009595650339926,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 38,
+      "name": "committed_000038.pt",
+      "sha256": "39ad02735a3f5e9eea4707590c10a9b5eba2f372ffb9d34cee4e5c5a2dda524d",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 867,
+        "closure_attempts": 867,
+        "outer_attempts": 38,
+        "committed_outer_steps": 38,
+        "LBFGS_inner_iterations": 760,
+        "native_audits": 9,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 867,
+      "logical_path_closures": 1367,
+      "accepted_update_norm": 0.028634049626800512,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 39,
+      "name": "committed_000039.pt",
+      "sha256": "9ebfb527480ef758bf00bb5ba8784f780d74e6d4c8f965f3e1f7b0b66becb9f2",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 890,
+        "closure_attempts": 890,
+        "outer_attempts": 39,
+        "committed_outer_steps": 39,
+        "LBFGS_inner_iterations": 780,
+        "native_audits": 9,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 890,
+      "logical_path_closures": 1390,
+      "accepted_update_norm": 0.029474250451448834,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 40,
+      "name": "committed_000040.pt",
+      "sha256": "02e1c5139c7d236a5c2537a4f805ffbf10587965462cc7329ad4a05b8b52f045",
+      "bytes": 3962675,
+      "pinned": true,
+      "retained": true,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 912,
+        "closure_attempts": 912,
+        "outer_attempts": 40,
+        "committed_outer_steps": 40,
+        "LBFGS_inner_iterations": 800,
+        "native_audits": 9,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 912,
+      "logical_path_closures": 1412,
+      "accepted_update_norm": 0.015206066885535345,
+      "complete_c_sha256": "57d03a7fb07e9180bfa541fa38badf7c3ac5a104d77fb1a2a655551d1553ee84",
+      "parameters_sha256": "e0e3fbff1a361f1fae40068ad79977c68d49101961e3cdf6f455c8e9d9d10c3d",
+      "buffers_sha256": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+      },
+      "optimizer_inner_iterations": 800,
+      "optimizer_func_evals": 912
+    },
+    {
+      "generation": 41,
+      "name": "committed_000041.pt",
+      "sha256": "a676bece666d31244e667114d8a8f73d7453358884902857f1917d9b303a1f39",
+      "bytes": 3197361,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 936,
+        "closure_attempts": 936,
+        "outer_attempts": 41,
+        "committed_outer_steps": 41,
+        "LBFGS_inner_iterations": 820,
+        "native_audits": 10,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 936,
+      "logical_path_closures": 1436,
+      "accepted_update_norm": 0.019373644776964145,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 42,
+      "name": "committed_000042.pt",
+      "sha256": "4d99de3ded6607e642146edb2366c2fa13177ab4fcc864e5c50600288ecd1ead",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 958,
+        "closure_attempts": 958,
+        "outer_attempts": 42,
+        "committed_outer_steps": 42,
+        "LBFGS_inner_iterations": 840,
+        "native_audits": 10,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 958,
+      "logical_path_closures": 1458,
+      "accepted_update_norm": 0.0439649032482359,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 43,
+      "name": "committed_000043.pt",
+      "sha256": "fdaed77b8f5e325b40cad1fe08caaa372f0203b3fbf3854b0d8e7b5fd8183052",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 980,
+        "closure_attempts": 980,
+        "outer_attempts": 43,
+        "committed_outer_steps": 43,
+        "LBFGS_inner_iterations": 860,
+        "native_audits": 10,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 980,
+      "logical_path_closures": 1480,
+      "accepted_update_norm": 0.04271037680263404,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 44,
+      "name": "committed_000044.pt",
+      "sha256": "08fcb130fa6bdc1e33de1e3af9a989654a672de3fb5c6a8ac0fdbd443af2d45c",
+      "bytes": 3962483,
+      "pinned": true,
+      "retained": true,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1002,
+        "closure_attempts": 1002,
+        "outer_attempts": 44,
+        "committed_outer_steps": 44,
+        "LBFGS_inner_iterations": 880,
+        "native_audits": 10,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1002,
+      "logical_path_closures": 1502,
+      "accepted_update_norm": 0.034725628062930884,
+      "complete_c_sha256": "b0e74b391dbc673eef3ff36bbe82ee6fceba5491514c53faa69d7d5db21968ee",
+      "parameters_sha256": "dd5c50d22b8a82b02d807eb5faf8155f69828dcb5143a8af562cd107721acde1",
+      "buffers_sha256": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+      },
+      "optimizer_inner_iterations": 880,
+      "optimizer_func_evals": 1002
+    },
+    {
+      "generation": 45,
+      "name": "committed_000045.pt",
+      "sha256": "946686f4c09017bc72b000f4b3611fa403627a10fbeae2f6fb9ebed35aee0e86",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1026,
+        "closure_attempts": 1026,
+        "outer_attempts": 45,
+        "committed_outer_steps": 45,
+        "LBFGS_inner_iterations": 900,
+        "native_audits": 11,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1026,
+      "logical_path_closures": 1526,
+      "accepted_update_norm": 0.020650744845396866,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 46,
+      "name": "committed_000046.pt",
+      "sha256": "f10835e8694b24e8a635665d527a501d5a7c35ed6b3be001c07411eb6ac382e6",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1049,
+        "closure_attempts": 1049,
+        "outer_attempts": 46,
+        "committed_outer_steps": 46,
+        "LBFGS_inner_iterations": 920,
+        "native_audits": 11,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1049,
+      "logical_path_closures": 1549,
+      "accepted_update_norm": 0.011729092677924342,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 47,
+      "name": "committed_000047.pt",
+      "sha256": "a26fee60c359ee57295ec252828faeb858a395e98315c7bcc9d1f883fa2e1640",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1071,
+        "closure_attempts": 1071,
+        "outer_attempts": 47,
+        "committed_outer_steps": 47,
+        "LBFGS_inner_iterations": 940,
+        "native_audits": 11,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1071,
+      "logical_path_closures": 1571,
+      "accepted_update_norm": 0.021386580342811587,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 48,
+      "name": "committed_000048.pt",
+      "sha256": "32485d8e0f6a7a8348dfd790c8ef6581ec503c61c24c8d5eb33a60451d41c75a",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1092,
+        "closure_attempts": 1092,
+        "outer_attempts": 48,
+        "committed_outer_steps": 48,
+        "LBFGS_inner_iterations": 960,
+        "native_audits": 11,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1092,
+      "logical_path_closures": 1592,
+      "accepted_update_norm": 0.007365511573671686,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 49,
+      "name": "committed_000049.pt",
+      "sha256": "a627e806e4bed202c622a49c4610a2b07c808823402fb3cf8a6c3425fb532642",
+      "bytes": 3963825,
+      "pinned": true,
+      "retained": true,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1117,
+        "closure_attempts": 1117,
+        "outer_attempts": 49,
+        "committed_outer_steps": 49,
+        "LBFGS_inner_iterations": 979,
+        "native_audits": 11,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1117,
+      "logical_path_closures": 1617,
+      "accepted_update_norm": 0.03407535204767536,
+      "complete_c_sha256": "0e6acb51fec21f86caee26a3823ec4609e05a547cf5679565bff6d31e85ebaab",
+      "parameters_sha256": "a896f609a1a7e9c4b48e3faa160b0d7ddd3a182bc6b11c7190b22e651558e270",
+      "buffers_sha256": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+      },
+      "optimizer_inner_iterations": 979,
+      "optimizer_func_evals": 1117
+    },
+    {
+      "generation": 50,
+      "name": "committed_000050.pt",
+      "sha256": "216a1bbacbc0d76be5e1344e44f828e14f1e71b43ef23acbc90ad87ddd9f4e83",
+      "bytes": 3197361,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1142,
+        "closure_attempts": 1142,
+        "outer_attempts": 50,
+        "committed_outer_steps": 50,
+        "LBFGS_inner_iterations": 999,
+        "native_audits": 12,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1142,
+      "logical_path_closures": 1642,
+      "accepted_update_norm": 0.02476271221009689,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 51,
+      "name": "committed_000051.pt",
+      "sha256": "15aa1ab3efd973acf0c45513eef788e59698895666ce932e347a8103508bab01",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1166,
+        "closure_attempts": 1166,
+        "outer_attempts": 51,
+        "committed_outer_steps": 51,
+        "LBFGS_inner_iterations": 1019,
+        "native_audits": 12,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1166,
+      "logical_path_closures": 1666,
+      "accepted_update_norm": 0.0398966036369637,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 52,
+      "name": "committed_000052.pt",
+      "sha256": "95cf2308c609645d278968d850cb6efd7a8957853a1c9622403f68cc4cbbb68d",
+      "bytes": 3197361,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1191,
+        "closure_attempts": 1191,
+        "outer_attempts": 52,
+        "committed_outer_steps": 52,
+        "LBFGS_inner_iterations": 1039,
+        "native_audits": 12,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1191,
+      "logical_path_closures": 1691,
+      "accepted_update_norm": 0.05022089962932178,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 53,
+      "name": "committed_000053.pt",
+      "sha256": "3d975f77ad51ee75909c5c056d58e4523a86e0079a9eb154526863104a830bb3",
+      "bytes": 3964723,
+      "pinned": true,
+      "retained": true,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1213,
+        "closure_attempts": 1213,
+        "outer_attempts": 53,
+        "committed_outer_steps": 53,
+        "LBFGS_inner_iterations": 1059,
+        "native_audits": 12,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1213,
+      "logical_path_closures": 1713,
+      "accepted_update_norm": 0.04709652630324625,
+      "complete_c_sha256": "51b73491531ad9f9011412bcf89d9bc2471ee53b2064063d0107a62f196483a2",
+      "parameters_sha256": "491f5bc2b4d1297e58150088711e17a734edb3eedb95adbf3847a9dd35be1448",
+      "buffers_sha256": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+      },
+      "optimizer_inner_iterations": 1059,
+      "optimizer_func_evals": 1213
+    },
+    {
+      "generation": 54,
+      "name": "committed_000054.pt",
+      "sha256": "f35db789b47418e47d9a383d39d40c0aa921ac0ce07eabe4a1efa8879d357fdb",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1237,
+        "closure_attempts": 1237,
+        "outer_attempts": 54,
+        "committed_outer_steps": 54,
+        "LBFGS_inner_iterations": 1079,
+        "native_audits": 13,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1237,
+      "logical_path_closures": 1737,
+      "accepted_update_norm": 0.04069012216513585,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 55,
+      "name": "committed_000055.pt",
+      "sha256": "ac4fc6b1b09a5a30d43053e12fc0b114b34312f0b36ea9873daa259190a95dfc",
+      "bytes": 3197361,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1262,
+        "closure_attempts": 1262,
+        "outer_attempts": 55,
+        "committed_outer_steps": 55,
+        "LBFGS_inner_iterations": 1099,
+        "native_audits": 13,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1262,
+      "logical_path_closures": 1762,
+      "accepted_update_norm": 0.035025905806136376,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 56,
+      "name": "committed_000056.pt",
+      "sha256": "15a5903c0f61d80e73458c18325187984c6d8a2021b54bd9d56d3cd8e49de163",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1284,
+        "closure_attempts": 1284,
+        "outer_attempts": 56,
+        "committed_outer_steps": 56,
+        "LBFGS_inner_iterations": 1119,
+        "native_audits": 13,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1284,
+      "logical_path_closures": 1784,
+      "accepted_update_norm": 0.05816188334490505,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 57,
+      "name": "committed_000057.pt",
+      "sha256": "b5f54d2607d1af5f6fe9e69e8fdd81f917746098eda81d40e1409720ae8023e9",
+      "bytes": 3968177,
+      "pinned": true,
+      "retained": true,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1308,
+        "closure_attempts": 1308,
+        "outer_attempts": 57,
+        "committed_outer_steps": 57,
+        "LBFGS_inner_iterations": 1139,
+        "native_audits": 13,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1308,
+      "logical_path_closures": 1808,
+      "accepted_update_norm": 0.04900114024109669,
+      "complete_c_sha256": "ea3a5df347d4eac197b45983793531180c5d3398075c0004a6de7491b237597f",
+      "parameters_sha256": "1416a2dadaaa5d49f6639d82d384f248a9cc4ce3e6a3059bc2a0a9cda9a71b6c",
+      "buffers_sha256": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+      },
+      "optimizer_inner_iterations": 1139,
+      "optimizer_func_evals": 1308
+    },
+    {
+      "generation": 58,
+      "name": "committed_000058.pt",
+      "sha256": "3d489feadc5941133e95bb2fb4283ac4da1eb80f907d3a4b74a1e30e2e81eb8a",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1332,
+        "closure_attempts": 1332,
+        "outer_attempts": 58,
+        "committed_outer_steps": 58,
+        "LBFGS_inner_iterations": 1159,
+        "native_audits": 14,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1332,
+      "logical_path_closures": 1832,
+      "accepted_update_norm": 0.03841313757592224,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 59,
+      "name": "committed_000059.pt",
+      "sha256": "6f0f78608acc964852db8cb0ce2e7b0aadbcb28e2db39639da208a5c8ed217e5",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1355,
+        "closure_attempts": 1355,
+        "outer_attempts": 59,
+        "committed_outer_steps": 59,
+        "LBFGS_inner_iterations": 1179,
+        "native_audits": 14,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1355,
+      "logical_path_closures": 1855,
+      "accepted_update_norm": 0.018011268400889947,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 60,
+      "name": "committed_000060.pt",
+      "sha256": "c29ba8a4da573a94ea6b6a40a951d2bd2b78d23dae392b043a65fdef674cf3d7",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1377,
+        "closure_attempts": 1377,
+        "outer_attempts": 60,
+        "committed_outer_steps": 60,
+        "LBFGS_inner_iterations": 1199,
+        "native_audits": 14,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1377,
+      "logical_path_closures": 1877,
+      "accepted_update_norm": 0.011121671593128102,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 61,
+      "name": "committed_000061.pt",
+      "sha256": "22d32d8f8bcbb049cd5edc9a6ea01382e3ff7e5f8d44236308b0488c779ae2dd",
+      "bytes": 3966513,
+      "pinned": true,
+      "retained": true,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1401,
+        "closure_attempts": 1401,
+        "outer_attempts": 61,
+        "committed_outer_steps": 61,
+        "LBFGS_inner_iterations": 1219,
+        "native_audits": 14,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1401,
+      "logical_path_closures": 1901,
+      "accepted_update_norm": 0.017728239446772192,
+      "complete_c_sha256": "af4885bff6aa47287bea441d49d43f2a1c7306e0f58abde3195ca8b8c8405e6c",
+      "parameters_sha256": "afab29c8ccda841b737e8c73cab5a191d8e03e95cca5867b64c6500113370e27",
+      "buffers_sha256": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+      },
+      "optimizer_inner_iterations": 1219,
+      "optimizer_func_evals": 1401
+    },
+    {
+      "generation": 62,
+      "name": "committed_000062.pt",
+      "sha256": "bd4048f961f9119f00313ea27f47e9cb8caebd5313af185317e4cee5ee39fae9",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1422,
+        "closure_attempts": 1422,
+        "outer_attempts": 62,
+        "committed_outer_steps": 62,
+        "LBFGS_inner_iterations": 1239,
+        "native_audits": 15,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1422,
+      "logical_path_closures": 1922,
+      "accepted_update_norm": 0.016115616715343003,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 63,
+      "name": "committed_000063.pt",
+      "sha256": "958dbe7026bb3d6109bf65a90984183c3c30e651998278fd681163e998c3da10",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1443,
+        "closure_attempts": 1443,
+        "outer_attempts": 63,
+        "committed_outer_steps": 63,
+        "LBFGS_inner_iterations": 1259,
+        "native_audits": 15,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1443,
+      "logical_path_closures": 1943,
+      "accepted_update_norm": 0.028772859634324553,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 64,
+      "name": "committed_000064.pt",
+      "sha256": "f088241f0f0f6df740de1c309119b41333f944f510df31913ee0ce3ac70ee298",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1465,
+        "closure_attempts": 1465,
+        "outer_attempts": 64,
+        "committed_outer_steps": 64,
+        "LBFGS_inner_iterations": 1279,
+        "native_audits": 15,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1465,
+      "logical_path_closures": 1965,
+      "accepted_update_norm": 0.0214405257817067,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 65,
+      "name": "committed_000065.pt",
+      "sha256": "c7c77f231a3a27d738b3f8754f9de55675a884552beb70fb869ce71ff523b25e",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1486,
+        "closure_attempts": 1486,
+        "outer_attempts": 65,
+        "committed_outer_steps": 65,
+        "LBFGS_inner_iterations": 1299,
+        "native_audits": 15,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1486,
+      "logical_path_closures": 1986,
+      "accepted_update_norm": 0.009979093530126803,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 66,
+      "name": "committed_000066.pt",
+      "sha256": "07e49b0ec3fa0535ef2d926dde6cee85546e56b3d7b1b8191ce680aeb922c710",
+      "bytes": 3964531,
+      "pinned": true,
+      "retained": true,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1509,
+        "closure_attempts": 1509,
+        "outer_attempts": 66,
+        "committed_outer_steps": 66,
+        "LBFGS_inner_iterations": 1319,
+        "native_audits": 15,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1509,
+      "logical_path_closures": 2009,
+      "accepted_update_norm": 0.04425485315621137,
+      "complete_c_sha256": "1f1b644ab2c11b7c4b18d272d28915eb31fb80255464f5261661faec42823c5b",
+      "parameters_sha256": "0766189afaf8ca9c6799a78f89d48801fe673288b34108231cf04d3c8c898a05",
+      "buffers_sha256": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+      },
+      "optimizer_inner_iterations": 1319,
+      "optimizer_func_evals": 1509
+    },
+    {
+      "generation": 67,
+      "name": "committed_000067.pt",
+      "sha256": "e77202d1e8f73932ff35b9f678611730a9df4479135f39592083f8064475ede1",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1531,
+        "closure_attempts": 1531,
+        "outer_attempts": 67,
+        "committed_outer_steps": 67,
+        "LBFGS_inner_iterations": 1339,
+        "native_audits": 16,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1531,
+      "logical_path_closures": 2031,
+      "accepted_update_norm": 0.04114034411605082,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 68,
+      "name": "committed_000068.pt",
+      "sha256": "ddc6941ba994dcd48f451f9b0a4a9ded5521c7c3131520064de3be3ee6514adb",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1555,
+        "closure_attempts": 1555,
+        "outer_attempts": 68,
+        "committed_outer_steps": 68,
+        "LBFGS_inner_iterations": 1359,
+        "native_audits": 16,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1555,
+      "logical_path_closures": 2055,
+      "accepted_update_norm": 0.025182459216953067,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 69,
+      "name": "committed_000069.pt",
+      "sha256": "083be370593ef6a77cc17d252d19deaf5e39a800941326d857d1828136d71c9f",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1577,
+        "closure_attempts": 1577,
+        "outer_attempts": 69,
+        "committed_outer_steps": 69,
+        "LBFGS_inner_iterations": 1379,
+        "native_audits": 16,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1577,
+      "logical_path_closures": 2077,
+      "accepted_update_norm": 0.033103326914623504,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 70,
+      "name": "committed_000070.pt",
+      "sha256": "771055aa64de0a242436659104739b8db501cf7c088fefc738eb793bd8bed46f",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1599,
+        "closure_attempts": 1599,
+        "outer_attempts": 70,
+        "committed_outer_steps": 70,
+        "LBFGS_inner_iterations": 1399,
+        "native_audits": 16,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1599,
+      "logical_path_closures": 2099,
+      "accepted_update_norm": 0.016563666100727483,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 71,
+      "name": "committed_000071.pt",
+      "sha256": "09bae2582a505e4afddb2f5ed313679c3ca836540143bb8d28384f25c668cc93",
+      "bytes": 3966897,
+      "pinned": true,
+      "retained": true,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1623,
+        "closure_attempts": 1623,
+        "outer_attempts": 71,
+        "committed_outer_steps": 71,
+        "LBFGS_inner_iterations": 1419,
+        "native_audits": 16,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1623,
+      "logical_path_closures": 2123,
+      "accepted_update_norm": 0.028692377305206417,
+      "complete_c_sha256": "83d9edfde2b09b06c49bb04be5f1c09995df0c01bf0ed7aeaaaa931e77c831ce",
+      "parameters_sha256": "fb061ef16823694bcfb787dd9792193b3d3372f873deeb3ed59f139e4f98f969",
+      "buffers_sha256": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+      },
+      "optimizer_inner_iterations": 1419,
+      "optimizer_func_evals": 1623
+    },
+    {
+      "generation": 72,
+      "name": "committed_000072.pt",
+      "sha256": "46ef8e180af14a054f9a5133a64aed8aa8fa25dbeb5fc4c234a762515181ec63",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1645,
+        "closure_attempts": 1645,
+        "outer_attempts": 72,
+        "committed_outer_steps": 72,
+        "LBFGS_inner_iterations": 1439,
+        "native_audits": 17,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1645,
+      "logical_path_closures": 2145,
+      "accepted_update_norm": 0.022009502968581254,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 73,
+      "name": "committed_000073.pt",
+      "sha256": "c168b5923881b835a14ebddaf0734f562dfdd5ad6f19e365272203cf741607ee",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1667,
+        "closure_attempts": 1667,
+        "outer_attempts": 73,
+        "committed_outer_steps": 73,
+        "LBFGS_inner_iterations": 1459,
+        "native_audits": 17,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1667,
+      "logical_path_closures": 2167,
+      "accepted_update_norm": 0.023666843851890836,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 74,
+      "name": "committed_000074.pt",
+      "sha256": "bbba482b6e6500913b59151794e17644d1feb20d11e4d42d52a87706628529d1",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1689,
+        "closure_attempts": 1689,
+        "outer_attempts": 74,
+        "committed_outer_steps": 74,
+        "LBFGS_inner_iterations": 1479,
+        "native_audits": 17,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1689,
+      "logical_path_closures": 2189,
+      "accepted_update_norm": 0.016134208052475913,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 75,
+      "name": "committed_000075.pt",
+      "sha256": "9e35761fbff15d40d2d42f2f61f25a7b93bf85e8c08374501adc4f2487d1ca41",
+      "bytes": 3966515,
+      "pinned": true,
+      "retained": true,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1711,
+        "closure_attempts": 1711,
+        "outer_attempts": 75,
+        "committed_outer_steps": 75,
+        "LBFGS_inner_iterations": 1499,
+        "native_audits": 17,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1711,
+      "logical_path_closures": 2211,
+      "accepted_update_norm": 0.023021184190026984,
+      "complete_c_sha256": "64ac0807ecf6c9069c9cdbedf91bdca0c38549d00d9932a832c1def7e1baeeb8",
+      "parameters_sha256": "067c223cabb34511d92a1e20f16b8b0ff757d0098fba56a74bd38310d98edce5",
+      "buffers_sha256": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+      },
+      "optimizer_inner_iterations": 1499,
+      "optimizer_func_evals": 1711
+    },
+    {
+      "generation": 76,
+      "name": "committed_000076.pt",
+      "sha256": "735e55995db568d0ab57e043bdf0b6859aec2b8ab5708c72c5b8b715d6960597",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1733,
+        "closure_attempts": 1733,
+        "outer_attempts": 76,
+        "committed_outer_steps": 76,
+        "LBFGS_inner_iterations": 1519,
+        "native_audits": 18,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1733,
+      "logical_path_closures": 2233,
+      "accepted_update_norm": 0.018440434363421285,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 77,
+      "name": "committed_000077.pt",
+      "sha256": "291d53b81e3c1c5bacaf51ba7dd10669bfc857971abeb0634ff8a354483b67f4",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1756,
+        "closure_attempts": 1756,
+        "outer_attempts": 77,
+        "committed_outer_steps": 77,
+        "LBFGS_inner_iterations": 1539,
+        "native_audits": 18,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1756,
+      "logical_path_closures": 2256,
+      "accepted_update_norm": 0.007907101495887787,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 78,
+      "name": "committed_000078.pt",
+      "sha256": "b2b62031a545958a30bc18e11033dcaf940e73e811326c99a39d763cc74690d3",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1778,
+        "closure_attempts": 1778,
+        "outer_attempts": 78,
+        "committed_outer_steps": 78,
+        "LBFGS_inner_iterations": 1559,
+        "native_audits": 18,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1778,
+      "logical_path_closures": 2278,
+      "accepted_update_norm": 0.012190145729238157,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 79,
+      "name": "committed_000079.pt",
+      "sha256": "04867b6ca38f96d1e4236d280a4d90df23bded7e3280c5b456e03efde7087b7c",
+      "bytes": 3966131,
+      "pinned": true,
+      "retained": true,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1801,
+        "closure_attempts": 1801,
+        "outer_attempts": 79,
+        "committed_outer_steps": 79,
+        "LBFGS_inner_iterations": 1579,
+        "native_audits": 18,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1801,
+      "logical_path_closures": 2301,
+      "accepted_update_norm": 0.018502804960976907,
+      "complete_c_sha256": "51858d57c4d082f483c5526cd7be26d76144f75fb86f07f65f4bbe67cd6febfc",
+      "parameters_sha256": "a87495aba85000a1bda3b4b6a7b1e2ebb8664eb99c2d0b49d43673d8f0a88c55",
+      "buffers_sha256": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+      },
+      "optimizer_inner_iterations": 1579,
+      "optimizer_func_evals": 1801
+    },
+    {
+      "generation": 80,
+      "name": "committed_000080.pt",
+      "sha256": "8fede5881dc3d10ccd753ab2156d097da7a9186b45c7ffb21f6690e7d96f4af7",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1823,
+        "closure_attempts": 1823,
+        "outer_attempts": 80,
+        "committed_outer_steps": 80,
+        "LBFGS_inner_iterations": 1599,
+        "native_audits": 19,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1823,
+      "logical_path_closures": 2323,
+      "accepted_update_norm": 0.018630902849544828,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 81,
+      "name": "committed_000081.pt",
+      "sha256": "7bae259e037844753789044e14210d405bd6e3959f3803518a0c6d027073e9b9",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1845,
+        "closure_attempts": 1845,
+        "outer_attempts": 81,
+        "committed_outer_steps": 81,
+        "LBFGS_inner_iterations": 1619,
+        "native_audits": 19,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1845,
+      "logical_path_closures": 2345,
+      "accepted_update_norm": 0.020594655718433694,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 82,
+      "name": "committed_000082.pt",
+      "sha256": "a97a8b2ddd40888d77a0d13a25aba3dc40bce017551a9948746fe6e630395c86",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1870,
+        "closure_attempts": 1870,
+        "outer_attempts": 82,
+        "committed_outer_steps": 82,
+        "LBFGS_inner_iterations": 1639,
+        "native_audits": 19,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1870,
+      "logical_path_closures": 2370,
+      "accepted_update_norm": 0.013483668221661589,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 83,
+      "name": "committed_000083.pt",
+      "sha256": "ea88e7e3281859e3f11a0109b36239f0759de988fec245116c2f0794ae4aa9f1",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1891,
+        "closure_attempts": 1891,
+        "outer_attempts": 83,
+        "committed_outer_steps": 83,
+        "LBFGS_inner_iterations": 1659,
+        "native_audits": 19,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1891,
+      "logical_path_closures": 2391,
+      "accepted_update_norm": 0.014164742783736107,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 84,
+      "name": "committed_000084.pt",
+      "sha256": "c46017f93529882ce7f5b722de308effab7e9fda4879bc59c46d7af5e9b1c8ec",
+      "bytes": 3964787,
+      "pinned": true,
+      "retained": true,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1914,
+        "closure_attempts": 1914,
+        "outer_attempts": 84,
+        "committed_outer_steps": 84,
+        "LBFGS_inner_iterations": 1679,
+        "native_audits": 19,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1914,
+      "logical_path_closures": 2414,
+      "accepted_update_norm": 0.013384216756083032,
+      "complete_c_sha256": "290887981d298d1b665e7a72f3ff1bfe40c64f2bd422411d2e91a3a7d9187b8d",
+      "parameters_sha256": "5b63111df4b7bd220507cf8e0f432eeaf64519324b8b68f3560d02c286280d04",
+      "buffers_sha256": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+      },
+      "optimizer_inner_iterations": 1679,
+      "optimizer_func_evals": 1914
+    },
+    {
+      "generation": 85,
+      "name": "committed_000085.pt",
+      "sha256": "6c1b83a16e3ccb173e82ab040ead5ce77a291a69aadf68a6b4f1d8e2af9001c1",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1936,
+        "closure_attempts": 1936,
+        "outer_attempts": 85,
+        "committed_outer_steps": 85,
+        "LBFGS_inner_iterations": 1699,
+        "native_audits": 20,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1936,
+      "logical_path_closures": 2436,
+      "accepted_update_norm": 0.020635259522838394,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 86,
+      "name": "committed_000086.pt",
+      "sha256": "38dee297128ed6fcfbe277f64f09c50082656f7a43177cd81b81505722711def",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1959,
+        "closure_attempts": 1959,
+        "outer_attempts": 86,
+        "committed_outer_steps": 86,
+        "LBFGS_inner_iterations": 1719,
+        "native_audits": 20,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1959,
+      "logical_path_closures": 2459,
+      "accepted_update_norm": 0.009436456183301436,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 87,
+      "name": "committed_000087.pt",
+      "sha256": "274f15302ac36f0f588e7c36b1e15cdf70b6af69bc9741988d9ba185d0c8e373",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 1981,
+        "closure_attempts": 1981,
+        "outer_attempts": 87,
+        "committed_outer_steps": 87,
+        "LBFGS_inner_iterations": 1739,
+        "native_audits": 20,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 1981,
+      "logical_path_closures": 2481,
+      "accepted_update_norm": 0.026106992960436795,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 88,
+      "name": "committed_000088.pt",
+      "sha256": "5f8528b586905d97ce308b8c5c6d604eae4a7a39fa48bc9b0d67717bb8314128",
+      "bytes": 3965811,
+      "pinned": true,
+      "retained": true,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 2006,
+        "closure_attempts": 2006,
+        "outer_attempts": 88,
+        "committed_outer_steps": 88,
+        "LBFGS_inner_iterations": 1759,
+        "native_audits": 20,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 2006,
+      "logical_path_closures": 2506,
+      "accepted_update_norm": 0.0108150713253305,
+      "complete_c_sha256": "27dffd8b69174a5738d318b0903f7e51202b9bbdb86ca8afa0b261ee98e58dc9",
+      "parameters_sha256": "2cab5ce299546396b46563e47617f869b6b503d6446cf8925e4c8f604fc388af",
+      "buffers_sha256": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+      },
+      "optimizer_inner_iterations": 1759,
+      "optimizer_func_evals": 2006
+    },
+    {
+      "generation": 89,
+      "name": "committed_000089.pt",
+      "sha256": "f5d0bf10482b212404ce52ab5fbab201a8135b464d538def71617ecac8b2bb95",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 2030,
+        "closure_attempts": 2030,
+        "outer_attempts": 89,
+        "committed_outer_steps": 89,
+        "LBFGS_inner_iterations": 1779,
+        "native_audits": 21,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 2030,
+      "logical_path_closures": 2530,
+      "accepted_update_norm": 0.006367763967745894,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 90,
+      "name": "committed_000090.pt",
+      "sha256": "c6adfb86042446fe57413de62b99b5330b1c6118871856e31a9cb42e311ee261",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 2053,
+        "closure_attempts": 2053,
+        "outer_attempts": 90,
+        "committed_outer_steps": 90,
+        "LBFGS_inner_iterations": 1799,
+        "native_audits": 21,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 2053,
+      "logical_path_closures": 2553,
+      "accepted_update_norm": 0.014946920384732196,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 91,
+      "name": "committed_000091.pt",
+      "sha256": "1a7b8dd393c2001c1adb588113eb9b509a8afed866e64f1952d762ac2459446b",
+      "bytes": 3197361,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 2077,
+        "closure_attempts": 2077,
+        "outer_attempts": 91,
+        "committed_outer_steps": 91,
+        "LBFGS_inner_iterations": 1819,
+        "native_audits": 21,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 2077,
+      "logical_path_closures": 2577,
+      "accepted_update_norm": 0.015296131960934666,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 92,
+      "name": "committed_000092.pt",
+      "sha256": "819ca6950dc4b1da0c754b851f074bfd773adbefc5b7b2a196e25ef9f5212930",
+      "bytes": 3197107,
+      "pinned": false,
+      "retained": false,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 2099,
+        "closure_attempts": 2099,
+        "outer_attempts": 92,
+        "committed_outer_steps": 92,
+        "LBFGS_inner_iterations": 1839,
+        "native_audits": 21,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 2099,
+      "logical_path_closures": 2599,
+      "accepted_update_norm": 0.009623360273576602,
+      "complete_c_sha256": null
+    },
+    {
+      "generation": 93,
+      "name": "committed_000093.pt",
+      "sha256": "6713c8289f03895d95d8465420c19111a3c127af90568b023244562c2f0f7d5e",
+      "bytes": 3967475,
+      "pinned": true,
+      "retained": true,
+      "state_kind": "complete_LBFGS_outer_step",
+      "counts": {
+        "new_complete_fit_closures": 2122,
+        "closure_attempts": 2122,
+        "outer_attempts": 93,
+        "committed_outer_steps": 93,
+        "LBFGS_inner_iterations": 1859,
+        "native_audits": 21,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 2122,
+      "logical_path_closures": 2622,
+      "accepted_update_norm": 0.015030834577959,
+      "complete_c_sha256": "33d9727ac8507cb9665652d99a09108b28618e55ef4635e82b01f40cea63bf12",
+      "parameters_sha256": "aa2d5357af93a3c1d8c479a940a0e01db62ddfad059d8c338c0b2033062a21aa",
+      "buffers_sha256": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+      },
+      "optimizer_inner_iterations": 1859,
+      "optimizer_func_evals": 2122
+    },
+    {
+      "generation": 94,
+      "name": "committed_000094.pt",
+      "sha256": "e09b94364837bdb72714f7c229d19993836072dd035c85249bfc19376a44a790",
+      "bytes": 3967347,
+      "pinned": true,
+      "retained": true,
+      "state_kind": "final_committed",
+      "counts": {
+        "new_complete_fit_closures": 2129,
+        "closure_attempts": 2129,
+        "outer_attempts": 94,
+        "committed_outer_steps": 93,
+        "LBFGS_inner_iterations": 1859,
+        "native_audits": 22,
+        "inherited_committed_Adam_updates": 500
+      },
+      "committed_complete_fit_closures": 2122,
+      "logical_path_closures": 2629,
+      "accepted_update_norm": null,
+      "complete_c_sha256": "33d9727ac8507cb9665652d99a09108b28618e55ef4635e82b01f40cea63bf12",
+      "parameters_sha256": "aa2d5357af93a3c1d8c479a940a0e01db62ddfad059d8c338c0b2033062a21aa",
+      "buffers_sha256": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+      },
+      "optimizer_inner_iterations": 1859,
+      "optimizer_func_evals": 2122
+    }
+  ],
+  "parameter_order": [
+    {
+      "name": "envelopes.0.weight",
+      "shape": [
+        64,
+        3
+      ],
+      "dtype": "torch.float64"
+    },
+    {
+      "name": "envelopes.0.bias",
+      "shape": [
+        64
+      ],
+      "dtype": "torch.float64"
+    },
+    {
+      "name": "envelopes.2.weight",
+      "shape": [
+        64,
+        64
+      ],
+      "dtype": "torch.float64"
+    },
+    {
+      "name": "envelopes.2.bias",
+      "shape": [
+        64
+      ],
+      "dtype": "torch.float64"
+    },
+    {
+      "name": "envelopes.4.weight",
+      "shape": [
+        64,
+        64
+      ],
+      "dtype": "torch.float64"
+    },
+    {
+      "name": "envelopes.4.bias",
+      "shape": [
+        64
+      ],
+      "dtype": "torch.float64"
+    },
+    {
+      "name": "envelopes.6.weight",
+      "shape": [
+        6,
+        64
+      ],
+      "dtype": "torch.float64"
+    },
+    {
+      "name": "envelopes.6.bias",
+      "shape": [
+        6
+      ],
+      "dtype": "torch.float64"
+    }
+  ],
+  "final_optimizer_matches_last_complete_boundary": true,
+  "original_Adam500_parameter_only": true,
+  "old817_parameters_optimizer": "NOT_RETAINED",
+  "optimizer_state_saved": true,
+  "resumability_qualified_by_small_problem_tests": true,
+  "automatic_resume_authorized": false,
+  "reference_used_for_training": true,
+  "pde_only_solve": false,
+  "production_initialization_allowed": false,
+  "pde_only_solver_qualified": false,
+  "official_candidate_results": false
+}

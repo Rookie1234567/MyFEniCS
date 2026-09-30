@@ -1,3 +1,42 @@
+# Task42extra Review V3 后续：V4 持久 Adam500 边界重放
+
+本节追加V4，下面V1–V3历史原文保留。网络读取已知V1参考场作监督标签；本轮修复的是完整step的运行和存盘保全，让固定模型取得可独立审核终态。它不是PDE-only求解，拟合权重不能接回旧路线、Task042或0.7nm。[Response V4](../response_v4.md)、[详细诊断](durable_replay_v4.md)、[run/source/hash](records/run_index_v4.json)、[检查点](records/checkpoint_index_v4.json)。
+
+| V4阶段 / measured | 结果 | 解释 |
+| --- | --- | --- |
+| R0运行保全 | 9项小tests＋4类进程故障通过；真实M5仅2次loss/gradient | 模拟断开只证明所测路径，SIGKILL只保证先前成功落盘边界 |
+| R0 Adam500切换资格 | c/目标/梯度差0；E_G0.2008211341、native14.2634632 | 旧Adam500参数＋确定性重建buffers，创建fresh L-BFGS；817历史未恢复 |
+| R1唯一正式后段 | WALL_BUDGET；新2129完整闭包、logical2629、93完整外层step | 末次未完成step回滚，final对应2122闭包边界；7次试探费用照计 |
+| R2独立重建与FE compare-only | 参数→q15差0；q30/q15差8.5141e-13；新MUMPS0 | 所有参数、buffer和optimizer保留；V1同p3参考不重求 |
+| 表示分类 | REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED | G/scattered L2/curl三项均未达部分0.01，更未达正0.001；不是数学不可表示证明 |
+| 保存留白规则 | C1遗漏导入，至少120s规则未满足；总wall未超3h | C2已改launcher时钟/150s留白且targeted测试通过；未第二次正式运行 |
+| p4 / 目标尺寸5nm / 0.7nm | not_run | 原无标签三路线负结果与旧V3中断不改 |
+
+| 同一5nm M5、384hex、p3/q15、31968独立复FE、40端口 / measured | Adam500留存 | V4 final | 标准或参考 |
+| --- | ---: | ---: | --- |
+| G场误差 | 0.2008211341 | 0.01387169130 | 三项均≤0.001正 / ≤0.01部分，未达部分 |
+| 散射E L2 / scaled-curl | 0.1620127280 / 0.2017046510 | 0.01325124766 / 0.01388700270 | 严格各≤1e-4，失败 |
+| total E L2 / scaled-curl | 0.111101 / 0.137924 | 0.009087097891 / 0.009495805966 | 严格各≤1e-4，失败；完整H相对差与curl相同 |
+| 六点total E / H_code | 0.112268 / 0.132886 | 0.009751978017 / 0.007167388173 | 全复向量及逐点严格≤1e-4，失败 |
+| native / augmented | 14.2634632 / 14.2634632 | 1.608844720 / 1.608844720 | 各≤1e-6，失败 |
+| 原total / 真出射 / scattered复幅相对差 | 0.137244 / 0.0658706 / 0.243664 | 0.02134370402 / 0.01024394361 / 0.03789375775 | 各≤1e-4；四类40级复值及各自分母见Gate |
+| R/T/A_balance/A_volume | 0.828087/0.0419968/0.129916/0.171617 | 0.8130577901/0.03273817418/0.1542040357/0.1553880257 | 参考0.8124264991/0.03246239610/0.1551111048/0.1551111048；仅diagnostic |
+| R00_s / R00_p / R00_total | 0.806827 / 0.00138799 / 0.808215 | 0.8126081633 / 5.02696e-5 / 0.8126584329 | 分极化完整定义，不用含糊R00 |
+| 能量闭合 / 最大逐通道功率差 | 0.0417012 / 0.0130081 | 0.001183989956 / 0.0003513448473 | ≤1e-5 / ≤1e-6，失败 |
+
+[独立Gate](records/gate_decisions_v4.json)保存全部40通道、六点复E/H及原材料/界面集合、绝对误差和分母。μ_r=1时H_code=curl E/(i k0)，完整H相对L2差等于相应curl相对差。port恢复和slave存储通过不替代体方程失败。五个标签政策字段贯穿manifest/checkpoint/results：reference_used_for_training=true；pde_only_solve/production_initialization_allowed/pde_only_solver_qualified/official_candidate_results全部false。监督场误差下降不等于神经求解增量。
+
+| V4资源 / measured或保守计费 | wall / s | 同时整树RSS峰 / B | 自身swap / B |
+| --- | ---: | ---: | ---: |
+| R0 M5边界 | 15.843932监督 / 22.015435整launcher | 533176320 | 0 |
+| R1唯一后段 | 10688.701736监督 / 10690.413275整launcher | 764751872 | 0 |
+| R2 ML q15/q30 | 17.516962监督 / 19.315401整launcher | 523923456 | 0 |
+| R2 FE compare-only | 18.164625监督 / 20.000318整launcher | 584249344 | 0 |
+
+本页数值冻结时V4全账快照10934.6917s，含120s直接/最终保守费用；后续aux/浏览器与最终费用在[资源账](records/resource_costs_v4.json)追加。旧累计33070.52670758043s和失联3284s保留。新Gram factor/Gsolve均0；G CSR payload146851456B，2154次matvec95.4165s、检查点3.8402s、保留payload88078236B计入R1父wall/RSS，不重复加计，不将payload当RSS。tmux管理服务器在树外一次样本4702208B，不称全过程峰值。系统余量＋至少384GiB邻增长＋自身预算现场准入，内部串行、CPU-only/MPI1/线程1、采样swap0；共享运行性能不作方法速度归因。
+
+保存留白偏差明确留存：C1时钟起点在worker导入后，闭包收口侵占原120s；退出后整launcher余量109.587s（监督111.298s），总3h未超。C2计时接线已修正，仅针对性测试，未重启重放。新review和必要新证据的实际GitHub渲染状态见[记录](records/render_check_v4.json)，历史页面不批量重渲染。本轮不merge，不改变旧负结果，下一步仅提交完整终态和计时偏差供review，未获准再训练或扩展模型。
+
 # Task42extra Review V2 后续：V3 参考暴露表示诊断
 
 本节追加 V3，下面的 V2 与 V1 历史及其负结果原文保留。固定 M5 的同一 5 nm Si/air、384 hex、p3/q15、31968 独立复 FE 系数和 40 端口不变。P0 用已保存四态考察场误差与原方程残差的关系；P1 唯一新路线 `FEINN-REFERENCE-FIT-G` **读取 V1 准确散射系数训练**，P2 冻结后独立 FE 审核。因此这项试验只探查固定网络能否表示已知参考，`reference_used_for_training=true`、`pde_only_solve=false`、`production_initialization_allowed=false`；V1/V2 无标签路线仍为原来的负结果，不能把监督拟合提升为独立求解成功。[详细方法与结果](representation_diagnostic_v3.md)、[Response V3](../response_v3.md)、[run index](records/run_index_v3.json)。

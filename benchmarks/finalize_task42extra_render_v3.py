@@ -1,4 +1,4 @@
-"""Verify exact published V3 GitHub DOM/math/table/screenshot evidence."""
+"""Verify published GitHub DOM/math/table/screenshots for V3 or opt-in V4."""
 
 import json
 from pathlib import Path
@@ -9,10 +9,16 @@ from benchmarks.check_task42extra_v2 import ROOT, sha, write
 
 
 def main():
-    if len(sys.argv) != 3:
+    if len(sys.argv) not in (3, 4):
         raise SystemExit(
-            "usage: finalize_task42extra_render_v3.py <raw-directory> <published-SHA>"
+            "usage: finalize_task42extra_render_v3.py <raw-directory> <published-SHA> [3|4]"
         )
+    version = int(sys.argv[3]) if len(sys.argv) == 4 else 3
+    if version not in (3, 4):
+        raise ValueError("unsupported evidence version")
+    review_name = "review_report_v2.md" if version == 3 else "review_report_v3.md"
+    review_commit = "a668fb20dcf49f105cc4c7dfeeda145ee492ae14" if version == 3 else "4dc7c38b60acf2a5ee3d9c6b9770b084a874fb04"
+    record_name = f"render_check_v{version}.json"
     raw = (ROOT / "tmp/task42extra/render" / sys.argv[1]).resolve()
     if not raw.is_relative_to((ROOT / "tmp/task42extra/render").resolve()):
         raise ValueError("render directory escapes task-local cache")
@@ -27,16 +33,25 @@ def main():
             else "NO_BROWSER_RECORD"
         )
         out = dict(
-            schema="task42extra.render-check.v3",
+            schema=f"task42extra.render-check.v{version}",
             status="RENDERED_VIEW_BLOCKED",
             published_commit=commit,
             raw_directory=str(raw),
             failure=failure,
         )
-        write("render_check_v3.json", out)
+        write(record_name, out)
         print(json.dumps(dict(status=out["status"], pages=0)))
         return
     captured = json.loads(source.read_text())
+    if version == 4:
+        expected = json.loads((raw / "expected_urls.json").read_text())
+        actual = [entry["url"] for entry in captured["records"]]
+        if actual != [entry["url"] for entry in expected] or (raw / "render_failure.json").exists():
+            write(record_name, dict(schema="task42extra.render-check.v4", status="RENDERED_VIEW_BLOCKED",
+                                    published_commit=commit, raw_directory=str(raw),
+                                    raw_DOM_sha256=sha(source), captured_pages=len(actual),
+                                    reason="partial browser capture or render failure; incomplete pages not qualified"))
+            return
     pages = []
     for entry in captured["records"]:
         url = entry["url"]
@@ -57,13 +72,11 @@ def main():
         git_blob = subprocess.check_output(
             ["git", "rev-parse", f"{commit}:{relative}"], cwd=ROOT, text=True
         ).strip()
-        if relative.endswith(
-            "review_report_v2.md"
-        ) and published_bytes != subprocess.check_output(
-            ["git", "show", f"a668fb20dcf49f105cc4c7dfeeda145ee492ae14:{relative}"],
+        if relative.endswith(review_name) and published_bytes != subprocess.check_output(
+            ["git", "show", f"{review_commit}:{relative}"],
             cwd=ROOT,
         ):
-            raise ValueError("Review V2 changed after publication")
+            raise ValueError("review changed after publication")
         dom = entry["DOM"]
         if (
             commit not in dom["title"]
@@ -85,6 +98,10 @@ def main():
             len(cols) != 4 or len(dom["mathAfterScroll"]) != 5
         ):
             raise ValueError("Review V2 table/math DOM inventory incomplete")
+        if relative.endswith("review_report_v3.md") and (
+            len(cols) != 4 or len(dom["mathAfterScroll"]) != 1
+        ):
+            raise ValueError("Review V3 table/math DOM inventory incomplete")
         if relative.endswith("representation_diagnostic_v3.md") and (
             len(cols) != 3 or len(dom["mathAfterScroll"]) != 2
         ):
@@ -117,19 +134,19 @@ def main():
                 visual_review="sampled screenshots only",
             )
         )
-    if not pages or not any("review_report_v2.md" in page["url"] for page in pages):
+    if not pages or not any(review_name in page["url"] for page in pages):
         raise ValueError("new review GitHub page was not captured")
     out = dict(
-        schema="task42extra.render-check.v3",
+        schema=f"task42extra.render-check.v{version}",
         status="GITHUB_RENDERED_VIEW_PASS_DOM_AND_SAMPLED_VISUAL",
         published_commit=commit,
         raw_directory=str(raw),
         raw_DOM_sha256=sha(source),
         screenshots_hashed=sum(len(x["screenshots"]) for x in pages),
         pages=pages,
-        scope="new Review V2 and V3/newly edited document sections only",
+        scope="new Review V2 and V3/newly edited document sections only" if version == 3 else "new Review V3 and V4/newly edited sections only; no historical batch rerender",
     )
-    write("render_check_v3.json", out)
+    write(record_name, out)
     print(
         json.dumps(
             dict(

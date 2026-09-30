@@ -81,3 +81,17 @@ V2实现提交 `19c725efd27ae5daedba8e77d2ad98375711bb71` 绑定D0/D1/D2正式�
 | do-not-merge | `.venv*`、`tmp/`、`results/`、`benchmarks/artifacts/task42extra/` | 忽略的大数组、场、checkpoints、浏览器截图/profile；研究权重不得用于旧路线、Task042或0.7nm |
 
 本批新路线即使拟合成功也属参考已暴露研究，不是 production numerical/core、ordinary default 或目标尺寸资格。最终source、测试和fresh PDE证据以[run index V3](records/run_index_v3.json)与[Response V3](../response_v3.md)为准；本轮没有fresh PDE求解，只有原M5固定数据上的监督表示及独立同离散复验。
+
+## Review V3 后续 V4 文件级边界
+
+| 依赖组 / 建议审阅顺序 | 本轮文件与用途 | 数值行为 / 依赖 / 验证 |
+| --- | --- | --- |
+| production numerical/core | 无新生产默认或Maxwell数学 | 原A/G/矩/材料/几何不变；无fresh无标签PDE资格，不建议生产晋级 |
+| reusable runner/watchdog，第1组 | src/solvers/optimization_checkpoint.py；src/runners/guarded_exec.py、durable_terminal.py；scripts/launch_task42extra_durable.py | 同步完整optimizer事务和原子检查点；独立tmux承载完整launcher；父死亡保护；9/11小tests及4类自身进程故障证据。组件资格限本任务所测路径 |
+| research-only，第2组依赖第1组 | src/solvers/feinn_boundary_replay.py；src/io/feinn_pilot.py；4个V4 one-run dat；src/runners/feinn_workflow.py | 特定Adam500→fresh L-BFGS适配，预算/索引/标签保护；R0 source538c632、R1唯一负结果及R2独立audit。C2时间留白修正仅targeted，没有第二次正式证据 |
+| research-only复验，第3组 | src/solvers/feinn_reference_fit.py、feinn_reference.py | 冻结buffer→完整q15/q30，compare-only路由和标签政策；同V1参考、新MUMPS0；fit数学不改，FE无顶层Torch |
+| checker/benchmark，第4组 | benchmarks/check_task42extra_durability.py、check_task42extra_v4.py；check_task42extra_docs.py、check_task42extra_docs_v3.py、finalize_task42extra_render_v3.py；src/test/test_optimizer_checkpoint_ml.py、test_replay_budget_clock.py | 原始checkpoint/复向量/功率/资源验算；旧文档工具默认保留V3，参数化新增V4，不复制求解器；新增tests、Ruff、compile、只查新节Markdown/渲染 |
+| compact evidence/docs，第5组 | response_v4、durable_replay_v4、required records、summary追加、progress/registry/test/changed_files新节 | 保留全部旧历史；运行source与文档HEAD分开；字段/分母/计数/负结果/预算偏差明确 |
+| do-not-merge | venv/cache/tmux sockets、raw native/G/矩/场/PT/NPZ/完整history、Firefox profile与截图 | ignored大数据；监督权重禁止作为生产或旧路线/Task042/0.7nm初始化；不自动merge |
+
+这些分组仅供文件级审查，没有master merge approval。R1源码为538c6320679d9a3ce3efe5e6d6ebef062963f601，R2为c8a057a46645542aaa17a38b78e64c6add80cb68；后续文档/checker不冒充实算源码。源码变更只影响明确opt-in研究路径，旧V1/V2结果和V3中断原字节未重写。C1提交17文件、C2最小修正4文件，最终本批完整路径清单见[publication manifest](records/publication_manifest_v4.json)。

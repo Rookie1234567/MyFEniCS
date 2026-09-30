@@ -53,10 +53,21 @@ def table_columns(line):
     return count - 1 if line.rstrip().endswith("|") else count
 
 
-def check_page(path):
+def check_page(path, heading_prefix=None):
     raw = path.read_bytes()
     text = raw.decode("utf-8")
-    if path.name in ("development_progress.md", "development_model_registry.md"):
+    if heading_prefix:
+        lines = text.splitlines(keepends=True)
+        start = next((i for i,line in enumerate(lines)
+                      if re.match(r"^#{1,6} ",line) and line.lstrip("# ").startswith(heading_prefix)), None)
+        if start is None:
+            raise ValueError(f"missing requested new section: {path}")
+        level = len(lines[start])-len(lines[start].lstrip("#"))
+        end = next((i for i in range(start+1,len(lines))
+                    if re.match(r"^#{1,6} ",lines[i])
+                    and len(lines[i])-len(lines[i].lstrip("#")) <= level),len(lines))
+        text = "".join(lines[start:end])
+    elif path.name in ("development_progress.md", "development_model_registry.md"):
         marker = (
             "## 2026-09-29 Task42extra"
             if path.name == "development_progress.md"
@@ -135,7 +146,7 @@ def check_page(path):
             target = (path.parent / unquote(parts.path)).resolve()
             if not target.is_file():
                 raise ValueError(f"broken local link: {path} -> {href}")
-    if path.name == "summary.md":
+    if path.name == "summary.md" and not heading_prefix:
         headings = [
             int(m.group(1)) for line in lines if (m := re.match(r"^## (\d+)\. ", line))
         ]
@@ -146,9 +157,9 @@ def check_page(path):
     return dict(
         path=str(path.relative_to(ROOT)),
         sha256=sha(raw),
-        checked_scope="appended Task42extra section"
+        checked_scope=heading_prefix or ("appended Task42extra section"
         if path.parent == ROOT / "docs"
-        else "entire page",
+        else "entire page"),
         markdown_tables=len(tables),
         parsed_tables=parsed_tables,
         math_fences=math_count,

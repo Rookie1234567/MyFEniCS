@@ -1628,6 +1628,22 @@ V3 沿用3.44相同 M5、384hex/p3/q15、31968个独立复FE系数、40端口、
 
 P0 的残差与场误差显著不一致，两个 FREE 终态的原负梯度方向各一次解析最优实步长几乎不改变场；这不是算子全局条件数。P1 的逐25 closure Adam `parameter_update_norm` 在更新前采样，0 不代表真实接受更新；该中间遥测标 `NOT_RETAINED`，不重放训练。唯一训练在执行会话消失时失去最终参数，实测采样至少3097.314s、保守计费3284s、树RSS峰697479168B/own swap0；恢复检查只读取Adam500存盘态，最终表示分流保持未解决。留存态完整网络矩q30差`2.86e-12`，独立场/原方程/功率均未过；R/T/A_balance/A_volume=`0.828087/0.0419968/0.129916/0.171617`仅diagnostic。最终资源账、原40复通道及材料区误差见[Response V3](task042extra_feinn_5nm/response_v3.md)、[详细诊断](task042extra_feinn_5nm/outcomes/representation_diagnostic_v3.md)、[独立Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v3.json)。
 
+## 3.44.3 Task42extra Review V3 后续：持久监督表示终态
+
+仍为3.44原5nm M5三维缺口、384hex/p3/q15、31968独立复FE、40端口和原3×64 tanh/8966实参数/FP64。新路线FEINN-REFERENCE-FIT-G-ADAM500-REPLAY只从已保存Adam500切换边界创建fresh L-BFGS，拟合已知V1散射参考。每个正常外层step同步原子保存模型/buffers/完整optimizer与预算，再发布审核，成本是后段重复计算和存盘；不是从817继续，不是PDE-only求解。
+
+| V4 / measured | 场、方程、功率 | 资格与资源 |
+| --- | --- | --- |
+| R0切换及保全 | 小tests9＋进程故障4类；真实M5两次loss/gradient，c/目标/梯度差0；Adam500 E_G0.200821/native14.263463 | 原NPZ仅参数，确定性buffer重建资格；fresh L-BFGS无历史；C2后11 tests通过 |
+| 唯一R1 / 完整终态 | 新2129闭包，93完整step；final对应2122闭包完整边界；G/scattered E L2/curl=0.01387169130/0.01325124766/0.01388700270 | REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED；均超部分0.01；native/aug1.608844720、total原方程0.7621125774，严格失败 |
+| R2物理诊断 | total E/curl0.00908710/0.00949581；R/T/A_balance/A_volume0.8130577901/0.03273817418/0.1542040357/0.1553880257；R00_s/p/total0.8126081633/5.02696e-5/0.8126584329 | 40类复通道/功率/区域完整保存；能量0.001183989956超1e-5；参数→c0、q30/q15 8.5141e-13通过；新MUMPS0 |
+| 全过程/留白偏差 | R1监督10688.701736s、树RSS764751872B、自身swap0；G因子/Gsolve0 | launcher→summary10690.413275s；C1导入不计入内部120s留白，规则未满足；C2修正和轻测试，未再次正式重放 |
+| p4 / 目标尺寸5nm / 0.7nm | not_run | 无生产/目标资格，旧V1/V2负结果及V3中断不改 |
+
+所有新训练和终态保持reference_used_for_training=true，pde_only_solve/production_initialization_allowed/pde_only_solver_qualified/official_candidate_results=false。完整H相对L2差等于常数mu_r下相应curl相对差，六点复H另存；未用total背景较大的分母掩盖散射误差。2154次G matvec95.4165s、checkpoint3.8402s/payload88078236B包含于父wall/RSS，不重复加计；G CSR146851456B不是新因子。原33070.52670758043s累计及旧失联3284s保留，后续本批light/render费用追加到[资源全账](task042extra_feinn_5nm/outcomes/records/resource_costs_v4.json)，阶段峰不相加。tmux管理单次样本4702208B在数值树外说明，未证明全机零干扰。
+
+源身份R0/R1=538c6320679d9a3ce3efe5e6d6ebef062963f601，R2=c8a057a46645542aaa17a38b78e64c6add80cb68；后续文档HEAD不是实算source。[Response V4](task042extra_feinn_5nm/response_v4.md)、[完整诊断](task042extra_feinn_5nm/outcomes/durable_replay_v4.md)、[独立Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v4.json)、[checkpoint index](task042extra_feinn_5nm/outcomes/records/checkpoint_index_v4.json)。下一步仅提交完整终态及计时偏差供review，不自主扩展。
+
 # 4. 今后新增模型的登记模板
 
 每次正式计算至少新增一行主表，并按可用性新增衍射级和复振幅表。
