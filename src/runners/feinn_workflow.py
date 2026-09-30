@@ -82,17 +82,28 @@ def budget():
             item = json.loads(path.read_text())
             entries.append(dict(path=str(path), seconds=item.get("elapsed_seconds", 0)))
     used = sum(e["seconds"] for e in entries)
-    v2_used = sum(e["seconds"] for e in entries if
-                  "/task42extra_v2_" in e["path"] or
-                  "/checks/v2_" in e["path"])
+    v2_used = sum(
+        e["seconds"]
+        for e in entries
+        if "/task42extra_v2_" in e["path"] or "/checks/v2_" in e["path"]
+    )
+    v3_used = sum(
+        e["seconds"]
+        for e in entries
+        if "/task42extra_v3_" in e["path"] or "/checks/v3_" in e["path"]
+    )
     return dict(
         limit_seconds=57600,
         used_seconds=used,
-        remaining_seconds=57600 - max(used, 26240.100355625153 + v2_used),
+        remaining_seconds=57600 - max(used, 29227.93927047425 + v3_used),
         conservative_V1_base_seconds=26240.100355625153,
         v2_limit_seconds=14400,
         v2_used_seconds=v2_used,
         v2_remaining_seconds=14400 - v2_used,
+        v3_limit_seconds=14400,
+        v3_used_seconds=v3_used,
+        v3_remaining_seconds=14400 - v3_used,
+        conservative_V1_V2_base_seconds=29225.912270474248,
         entries=entries,
     )
 
@@ -108,7 +119,9 @@ def launch(spec):
         raise RuntimeError("formal stage requires clean committed task42extra source")
     mode, stage = spec.derived["environment_mode"], spec.derived["stage"]
     if index_path(stage).exists():
-        raise RuntimeError("STAGE_ALREADY_PUBLISHED: no duplicate candidate or overwrite")
+        raise RuntimeError(
+            "STAGE_ALREADY_PUBLISHED: no duplicate candidate or overwrite"
+        )
     if os.environ.get("TASK42EXTRA_ENV_MODE") != mode:
         raise RuntimeError("independent FE/ML environment mismatch")
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
@@ -135,9 +148,25 @@ def launch(spec):
         source_is_later_documentation_HEAD=False,
     )
     if stage.startswith("v2_") or stage == "FREE-FE-DUAL-GRAM-DIAG":
-        pre = ROOT / "docs/task042extra_feinn_5nm/outcomes/records/scaling_design_v2.json"
+        pre = (
+            ROOT / "docs/task042extra_feinn_5nm/outcomes/records/scaling_design_v2.json"
+        )
         state["v2_pre_registered_design_sha256"] = sha(pre)
         state["v2_review_sha"] = "0b61816c0189a2c05812044ab8e1d1513ef0407d"
+    v3 = stage.startswith("v3_") or stage == "FEINN-REFERENCE-FIT-G"
+    if v3:
+        pre = (
+            ROOT
+            / "docs/task042extra_feinn_5nm/outcomes/records/representation_design_v3.json"
+        )
+        state.update(
+            v3_pre_registered_design_sha256=sha(pre),
+            v3_review_sha="a668fb20dcf49f105cc4c7dfeeda145ee492ae14",
+            reference_used_for_training=stage != "v3_error_geometry",
+            pde_only_solve=False,
+            production_initialization_allowed=False,
+            data_role="REFERENCE_EXPOSED_DIAGNOSTIC_ONLY",
+        )
     # Never capture secrets: environment whitelist, not the entire process environment.
     state["environment"] = {
         k: v
@@ -172,9 +201,13 @@ def launch(spec):
             write_json(directory / "run_summary.json", result)
             return result
         ledger = budget()
-        if ledger["remaining_seconds"] <= 120 or (
-            stage.startswith("v2_") or stage == "FREE-FE-DUAL-GRAM-DIAG"
-        ) and ledger["v2_remaining_seconds"] <= 120:
+        if (
+            ledger["remaining_seconds"] <= 120
+            or (stage.startswith("v2_") or stage == "FREE-FE-DUAL-GRAM-DIAG")
+            and ledger["v2_remaining_seconds"] <= 120
+            or v3
+            and ledger["v3_remaining_seconds"] <= 120
+        ):
             raise RuntimeError("Task42extra V1/V2 supervised wall budget exhausted")
         write_json(directory / "budget_at_launch.json", ledger)
         os.sched_setaffinity(0, {baseline["cpu"]})
@@ -191,10 +224,47 @@ def launch(spec):
             "FREE-FE-DUAL": ["e1_fe", "e1_grad"],
             "e3_reference": ["e1_fe", "FEINN-EUC", "FEINN-DUAL", "FREE-FE-DUAL"],
             "e4_p4": ["e1_fe", "e3_reference"],
-            "v2_state_diagnostic": ["e1_fe", "e1_grad", "FEINN-EUC", "FEINN-DUAL", "FREE-FE-DUAL"],
+            "v2_state_diagnostic": [
+                "e1_fe",
+                "e1_grad",
+                "FEINN-EUC",
+                "FEINN-DUAL",
+                "FREE-FE-DUAL",
+            ],
             "v2_scaling_checks": ["e1_fe", "e1_grad", "v2_state_diagnostic"],
-            "FREE-FE-DUAL-GRAM-DIAG": ["e1_fe", "e1_grad", "v2_state_diagnostic", "v2_scaling_checks"],
-            "v2_compare_only": ["e1_fe", "e3_reference", "v2_state_diagnostic", "FREE-FE-DUAL-GRAM-DIAG"],
+            "FREE-FE-DUAL-GRAM-DIAG": [
+                "e1_fe",
+                "e1_grad",
+                "v2_state_diagnostic",
+                "v2_scaling_checks",
+            ],
+            "v2_compare_only": [
+                "e1_fe",
+                "e3_reference",
+                "v2_state_diagnostic",
+                "FREE-FE-DUAL-GRAM-DIAG",
+            ],
+            "v3_error_geometry": [
+                "e1_fe",
+                "e3_reference",
+                "FREE-FE-DUAL",
+                "FREE-FE-DUAL-GRAM-DIAG",
+                "FEINN-DUAL",
+            ],
+            "v3_fit_checks": ["e1_fe", "e1_grad", "e3_reference"],
+            "FEINN-REFERENCE-FIT-G": [
+                "e1_fe",
+                "e1_grad",
+                "e3_reference",
+                "v3_fit_checks",
+            ],
+            "v3_fit_reconstruct": ["e1_fe", "e1_grad", "FEINN-REFERENCE-FIT-G"],
+            "v3_fit_compare_only": [
+                "e1_fe",
+                "e3_reference",
+                "FEINN-REFERENCE-FIT-G",
+                "v3_fit_reconstruct",
+            ],
         }
         prerequisite_stages = prereqs.get(stage, [])
         for dependency in prerequisite_stages:
@@ -216,9 +286,20 @@ def launch(spec):
                 gram_sha256=operator["files"]["gram"]["sha256"]
                 if stage != "FEINN-EUC"
                 else None,
-                gram_loaded_by_route=stage in ("FEINN-DUAL", "FREE-FE-DUAL", "e1_grad",
-                                               "v2_state_diagnostic", "v2_scaling_checks",
-                                               "FREE-FE-DUAL-GRAM-DIAG", "v2_compare_only"),
+                gram_loaded_by_route=stage
+                in (
+                    "FEINN-DUAL",
+                    "FREE-FE-DUAL",
+                    "e1_grad",
+                    "v2_state_diagnostic",
+                    "v2_scaling_checks",
+                    "FREE-FE-DUAL-GRAM-DIAG",
+                    "v2_compare_only",
+                    "v3_error_geometry",
+                    "v3_fit_checks",
+                    "FEINN-REFERENCE-FIT-G",
+                    "v3_fit_compare_only",
+                ),
                 physical_hash_meaning="actual original full independent FE packet and fixed affine rhs",
             )
             (directory / "physical_model_sha256.txt").write_text(
@@ -244,6 +325,12 @@ def launch(spec):
                 limit = min(limit, ledger["v2_remaining_seconds"] - 900)
             if limit <= 120:
                 raise RuntimeError("V2_BUDGET_RESERVE_UNAVAILABLE")
+        if v3:
+            limit = min(limit, ledger["v3_remaining_seconds"])
+            if stage == "FEINN-REFERENCE-FIT-G":
+                limit = min(limit, ledger["v3_remaining_seconds"] - 900)
+            if limit <= 120:
+                raise RuntimeError("V3_BUDGET_RESERVE_UNAVAILABLE")
         state["supervised_limit_seconds"] = limit
         write_json(directory / "run_manifest.json", state)
         result = supervise(
@@ -389,34 +476,114 @@ def worker(directory):
             from src.solvers.feinn_scaling import state_diagnostic
 
             result, files = state_diagnostic(
-                design, load_index("e1_fe"), load_index("e1_grad"),
-                {r: load_index(r) for r in design["routes"]}, artifact, marker,
+                design,
+                load_index("e1_fe"),
+                load_index("e1_grad"),
+                {r: load_index(r) for r in design["routes"]},
+                artifact,
+                marker,
             )
         elif stage == "v2_scaling_checks":
             from src.solvers.feinn_scaling import scaling_checks
 
             result, files = scaling_checks(
-                design, load_index("e1_fe"), load_index("e1_grad"),
+                design,
+                load_index("e1_fe"),
+                load_index("e1_grad"),
                 load_index("v2_state_diagnostic"),
-                artifact, marker,
+                artifact,
+                marker,
             )
         elif stage == "FREE-FE-DUAL-GRAM-DIAG":
             from src.solvers.feinn_optimization import run_route
 
-            if load_index("v2_scaling_checks")["result"]["status"] != "SCALING_CHECKS_PASS":
+            if (
+                load_index("v2_scaling_checks")["result"]["status"]
+                != "SCALING_CHECKS_PASS"
+            ):
                 raise RuntimeError("V2 scaling interface did not qualify")
             result, files = run_route(
-                stage, design, load_index("e1_fe"), load_index("e1_grad"),
-                artifact, marker, scale_index=load_index("v2_state_diagnostic"),
+                stage,
+                design,
+                load_index("e1_fe"),
+                load_index("e1_grad"),
+                artifact,
+                marker,
+                scale_index=load_index("v2_state_diagnostic"),
                 route_wall_seconds=manifest["supervised_limit_seconds"],
             )
         elif stage == "v2_compare_only":
             from src.solvers.feinn_reference import compare_frozen_without_solve
 
             result, files = compare_frozen_without_solve(
-                design, load_index("e1_fe"),
-                load_index("FREE-FE-DUAL-GRAM-DIAG"), load_index("e3_reference"),
-                load_index("v2_state_diagnostic"), artifact, marker,
+                design,
+                load_index("e1_fe"),
+                load_index("FREE-FE-DUAL-GRAM-DIAG"),
+                load_index("e3_reference"),
+                load_index("v2_state_diagnostic"),
+                artifact,
+                marker,
+            )
+        elif stage == "v3_error_geometry":
+            from src.solvers.feinn_error_geometry import run_geometry
+
+            result, files = run_geometry(
+                design,
+                load_index("e1_fe"),
+                load_index("e3_reference"),
+                {
+                    name: load_index(name)
+                    for name in ("FREE-FE-DUAL", "FREE-FE-DUAL-GRAM-DIAG", "FEINN-DUAL")
+                },
+                artifact,
+                marker,
+            )
+        elif stage == "v3_fit_checks":
+            from src.solvers.feinn_reference_fit import fit_checks
+
+            result, files = fit_checks(
+                design,
+                load_index("e1_fe"),
+                load_index("e1_grad"),
+                load_index("e3_reference"),
+                artifact,
+                marker,
+            )
+        elif stage == "FEINN-REFERENCE-FIT-G":
+            from src.solvers.feinn_reference_fit import run_fit
+
+            result, files = run_fit(
+                design,
+                load_index("e1_fe"),
+                load_index("e1_grad"),
+                load_index("e3_reference"),
+                load_index("v3_fit_checks"),
+                artifact,
+                marker,
+                manifest["supervised_limit_seconds"],
+            )
+        elif stage == "v3_fit_reconstruct":
+            from src.solvers.feinn_reference_fit import reconstruct
+
+            result, files = reconstruct(
+                design,
+                load_index("e1_fe"),
+                load_index("e1_grad"),
+                load_index("FEINN-REFERENCE-FIT-G"),
+                artifact,
+                marker,
+            )
+        elif stage == "v3_fit_compare_only":
+            from src.solvers.feinn_reference import compare_reference_fit_without_solve
+
+            result, files = compare_reference_fit_without_solve(
+                design,
+                load_index("e1_fe"),
+                load_index("e3_reference"),
+                load_index("FEINN-REFERENCE-FIT-G"),
+                load_index("v3_fit_reconstruct"),
+                artifact,
+                marker,
             )
         elif stage in design["routes"]:
             from src.solvers.feinn_optimization import run_route

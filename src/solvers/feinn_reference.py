@@ -12,6 +12,18 @@ from src.solvers.feinn_riesz import rss_bytes
 from src.solvers.neural_fe_action_packet import array_hash
 
 
+def candidate_policy(numerical_pass, *, reference_exposed=False):
+    """A tagged fit cannot be promoted by a numerical field comparison."""
+    return dict(
+        numerical_reconstruction_pass=bool(numerical_pass),
+        pde_only_solver_qualified=bool(numerical_pass and not reference_exposed),
+        official_candidate_results=bool(numerical_pass and not reference_exposed),
+        reference_used_for_training=bool(reference_exposed),
+        pde_only_solve=not reference_exposed,
+        production_initialization_allowed=not reference_exposed,
+    )
+
+
 def original_augmented_matrix(model, packet):
     """Independent DOLFINx assembly of V; preserve original unnormalized ports."""
     import dolfinx_mpc
@@ -196,7 +208,9 @@ def exact_solve(model, packet, artifact, marker):
     return c, record
 
 
-def field_physics(model, packet, reference, states, artifact, marker):
+def field_physics(
+    model, packet, reference, states, artifact, marker, *, diagnostic_only=False
+):
     import ufl
     from dolfinx import fem
     from src.common.modes_3d import incident_power_3d
@@ -455,7 +469,31 @@ def field_physics(model, packet, reference, states, artifact, marker):
             and max(closure, absorption) <= 1e-5
             and power_error <= 1e-6
         )
-        record["official_candidate_results"] = bool(passed)
+        numerical_equation_pass = bool(
+            record["audit"]["strict_pass"]
+            and record["audit"]["independent_DOLFINx_total_native_relative"] <= 1e-6
+        )
+        field_reconstruction_pass = bool(
+            all(e["relative"] <= 1e-4 for e in errors.values())
+        )
+        power_check_pass = bool(
+            all(x <= 1e-5 for x in deltas.values())
+            and max(closure, absorption) <= 1e-5
+            and power_error <= 1e-6
+        )
+        policy = candidate_policy(passed, reference_exposed=diagnostic_only)
+        record["official_candidate_results"] = policy["official_candidate_results"]
+        if diagnostic_only:
+            record.update(
+                reference_used_for_training=True,
+                pde_only_solve=False,
+                production_initialization_allowed=False,
+                data_role="REFERENCE_EXPOSED_DIAGNOSTIC_ONLY",
+                pde_only_solver_qualified=False,
+                numerical_equation_pass=numerical_equation_pass,
+                field_reconstruction_pass=field_reconstruction_pass,
+                power_check_pass=power_check_pass,
+            )
         comparisons[name] = dict(
             status="FEINN_DISCRETE_PASS" if passed else "FEINN_OPTIMIZATION_NEGATIVE",
             errors=errors,
@@ -464,7 +502,16 @@ def field_physics(model, packet, reference, states, artifact, marker):
             energy_closure_absolute=closure,
             absorption_balance_volume_absolute=absorption,
             equation_audit=record["audit"],
-            qualified=bool(passed),
+            qualified=policy["pde_only_solver_qualified"],
+            numerical_reconstruction_pass=policy["numerical_reconstruction_pass"],
+            numerical_equation_pass=numerical_equation_pass,
+            field_reconstruction_pass=field_reconstruction_pass,
+            power_check_pass=power_check_pass,
+            pde_only_solver_qualified=policy["pde_only_solver_qualified"],
+            official_candidate_results=policy["official_candidate_results"],
+            reference_used_for_training=policy["reference_used_for_training"],
+            pde_only_solve=policy["pde_only_solve"],
+            production_initialization_allowed=policy["production_initialization_allowed"],
         )
     return dict(
         reference_pass=reference_pass,
@@ -539,8 +586,9 @@ def validate_candidates(design, index, frozen, artifact, marker):
         destroy_same_mesh_physical_action(model["bundle"])
 
 
-def compare_frozen_without_solve(design, native_index, scaled_index,
-                                 reference_index, scale_index, artifact, marker):
+def compare_frozen_without_solve(
+    design, native_index, scaled_index, reference_index, scale_index, artifact, marker
+):
     """Rebuild only local postprocessing objects; load the frozen V1 p3 state."""
     from src.solvers.feinn_fem import build_model
     from src.solvers.feinn_scaling import read_frozen_scale
@@ -570,29 +618,43 @@ def compare_frozen_without_solve(design, native_index, scaled_index,
         reference_alpha = np.array(item["alpha"])
     if reference.shape != c.shape or reference_alpha.shape != (packet.np,):
         raise ValueError("same-p3 reference shape mismatch")
-    marker("v2_candidate_and_v1_reference_frozen", dict(
-        scaled_checkpoint=frozen, reference_state=previous,
-        scaled_source=scaled_index["source_sha"],
-        V1_reference_source=reference_index["source_sha"],
-        no_reference_solve=True,
-    ))
+    marker(
+        "v2_candidate_and_v1_reference_frozen",
+        dict(
+            scaled_checkpoint=frozen,
+            reference_state=previous,
+            scaled_source=scaled_index["source_sha"],
+            V1_reference_source=reference_index["source_sha"],
+            no_reference_solve=True,
+        ),
+    )
     model = build_model(design, marker=marker)
     try:
         identity = native_index["result"]["identity"]
-        if (model["record"]["mesh_coordinates_sha256"] != identity["mesh_coordinates_sha256"]
-                or model["record"]["mode_manifest_sha256"] != identity["mode_manifest_sha256"]):
+        if (
+            model["record"]["mesh_coordinates_sha256"]
+            != identity["mesh_coordinates_sha256"]
+            or model["record"]["mode_manifest_sha256"]
+            != identity["mode_manifest_sha256"]
+        ):
             raise ValueError("compare-only physical identity mismatch")
-        alpha_mismatch = np.linalg.norm(packet.alpha(reference) - reference_alpha) / max(
-            np.linalg.norm(reference_alpha), 1e-12
-        )
+        alpha_mismatch = np.linalg.norm(
+            packet.alpha(reference) - reference_alpha
+        ) / max(np.linalg.norm(reference_alpha), 1e-12)
         if alpha_mismatch > 1e-10:
             raise ValueError("V1 reference saved port state differs")
         physics, comparisons = field_physics(
-            model, packet, reference,
-            {"FREE-FE-DUAL-GRAM-DIAG": c}, artifact, marker,
+            model,
+            packet,
+            reference,
+            {"FREE-FE-DUAL-GRAM-DIAG": c},
+            artifact,
+            marker,
         )
         result = dict(
-            status="COMPARE_ONLY_COMPLETE" if physics["reference_pass"] else "REFERENCE_REUSE_FAILED",
+            status="COMPARE_ONLY_COMPLETE"
+            if physics["reference_pass"]
+            else "REFERENCE_REUSE_FAILED",
             physics=physics,
             comparisons=comparisons,
             reused_reference=previous,
@@ -605,6 +667,206 @@ def compare_frozen_without_solve(design, native_index, scaled_index,
             MUMPS_symbolic_numeric_solve_count=0,
             reference_recomputed=False,
             reference_state_loaded_only_after_candidate_freeze=True,
+        )
+        return result, {}
+    finally:
+        destroy_same_mesh_physical_action(model["bundle"])
+
+
+def _region_field_errors(model, packet, reference, candidate):
+    """Cell-integrated scattered errors, with both sides of each material jump."""
+    import ufl
+    from dolfinx import fem
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import restore_p0_full_field
+
+    from src.solvers.neural_fe_action_packet import array_hash
+
+    mesh = model["data"].mesh
+    tags = np.asarray(model["tags"])
+    if len(tags) != len(model["centers"]) or set(np.unique(tags)) != {1, 2, 3}:
+        raise ValueError("REGION_TAG_IDENTITY_FAILED")
+    mesh.topology.create_connectivity(2, 3)
+    links = mesh.topology.connectivity(2, 3)
+    touching = set()
+    for facet in range(mesh.topology.index_map(2).size_local):
+        cells = links.links(facet)
+        if len(cells) == 2 and tags[cells[0]] != tags[cells[1]]:
+            touching.update(int(c) for c in cells)
+    if not touching:
+        raise ValueError("INTERFACE_NEAR_REGION_EMPTY")
+    near = np.array(sorted(touching), dtype=np.int32)
+    regions = dict(
+        air=np.flatnonzero(tags == 1),
+        substrate=np.flatnonzero(tags == 2),
+        grating=np.flatnonzero(tags == 3),
+        interface_near=near,
+    )
+    dg0 = fem.functionspace(mesh, ("DG", 0))
+    ref = restore_p0_full_field(model["floquet"], packet.storage(reference))
+    diff = restore_p0_full_field(
+        model["floquet"], packet.storage(candidate - reference)
+    )
+    dx = ufl.Measure("dx", domain=mesh, metadata={"quadrature_degree": 15})
+    incident_scale = np.sqrt(
+        np.prod([b - a for a, b in json_design_bounds(packet, model)])
+    )
+    result = {}
+    for name, cells in regions.items():
+        indicator = fem.Function(dg0)
+        indicator.x.array[:] = 0
+        for cell in cells:
+            indicator.x.array[dg0.dofmap.cell_dofs(int(cell))[0]] = 1
+        values = []
+        for expression in (
+            lambda E: ufl.inner(E, E),
+            lambda E: ufl.inner(ufl.curl(E), ufl.curl(E)) / model["cfg"].k0 ** 2,
+        ):
+            numerator = fem.assemble_scalar(
+                fem.form(indicator * expression(diff) * dx)
+            ).real
+            denominator = fem.assemble_scalar(
+                fem.form(indicator * expression(ref) * dx)
+            ).real
+            absolute = float(np.sqrt(max(0, numerator)))
+            scale = float(
+                max(
+                    np.sqrt(max(0, denominator)),
+                    1e-12 * incident_scale * np.sqrt(len(cells) / len(tags)),
+                )
+            )
+            values.append(
+                dict(
+                    absolute=absolute,
+                    reference_denominator=scale,
+                    relative=absolute / scale,
+                )
+            )
+        result[name] = dict(
+            cells=int(len(cells)),
+            cell_ids_sha256=array_hash(np.asarray(cells, dtype=np.int32)),
+            scattered_L2=values[0],
+            scattered_scaled_curl=values[1],
+        )
+    return result
+
+
+def compare_reference_fit_without_solve(
+    design,
+    native_index,
+    reference_index,
+    fit_index,
+    reconstruct_index,
+    artifact,
+    marker,
+):
+    """Independent FE postprocessing of frozen supervised-fit coefficients only."""
+    from src.solvers.feinn_error_geometry import reference_label
+    from src.solvers.feinn_fem import build_model
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
+        destroy_same_mesh_physical_action,
+    )
+    from src.runners.feinn_workflow import sha
+
+    packet = load_native(native_index["files"]["native"]["path"])
+    reference, label = reference_label(native_index, reference_index, packet, used_for_training=True)
+    frozen = fit_index["files"]["checkpoint"]
+    rec = reconstruct_index["files"]["reconstructed"]
+    for entry in (frozen, rec):
+        if sha(entry["path"]) != entry["sha256"]:
+            raise ValueError("FROZEN_RECONSTRUCTION_IDENTITY_FAILED")
+    with np.load(frozen["path"], allow_pickle=False) as item:
+        c = np.array(item["c"])
+        if (
+            not bool(item["reference_used_for_training"])
+            or bool(item["pde_only_solve"])
+            or bool(item["production_initialization_allowed"])
+        ):
+            raise ValueError("SUPERVISED_LABEL_POLICY_FAILED")
+    with np.load(rec["path"], allow_pickle=False) as item:
+        actual = np.array(item["c_q15"])
+        q30 = np.array(item["c_q30"])
+    reconstruction_relative = float(
+        np.linalg.norm(actual - c) / max(np.linalg.norm(c), 1e-12)
+    )
+    q30_relative = float(
+        np.linalg.norm(q30 - actual) / max(np.linalg.norm(actual), 1e-12)
+    )
+    if reconstruction_relative > 1e-12:
+        raise ValueError("PARAMETERS_TO_COMPLETE_FE_COEFFICIENTS_FAILED")
+    G = sparse.load_npz(native_index["files"]["gram"]["path"])
+    d_ref = float(np.vdot(reference, G @ reference).real)
+    error = c - reference
+    G_error = float(np.sqrt(np.vdot(error, G @ error).real / d_ref))
+    model = build_model(design, marker=marker)
+    try:
+        identity = native_index["result"]["identity"]
+        if (
+            model["record"]["mesh_coordinates_sha256"]
+            != identity["mesh_coordinates_sha256"]
+            or model["record"]["cell_tags_sha256"] != identity["cell_tags_sha256"]
+            or model["record"]["mode_manifest_sha256"]
+            != identity["mode_manifest_sha256"]
+        ):
+            raise ValueError("FIT_COMPARE_PHYSICAL_IDENTITY_FAILED")
+        physics, comparisons = field_physics(
+            model,
+            packet,
+            reference,
+            {"FEINN-REFERENCE-FIT-G": c},
+            artifact,
+            marker,
+            diagnostic_only=True,
+        )
+        region = _region_field_errors(model, packet, reference, c)
+        comp = comparisons["FEINN-REFERENCE-FIT-G"]
+        e_l2 = comp["errors"]["scattered_L2"]["relative"]
+        e_curl = comp["errors"]["scattered_scaled_curl"]["relative"]
+        if q30_relative > 1e-8:
+            category = "QUADRATURE_DRIFT"
+        elif max(G_error, e_l2, e_curl) <= 1e-3:
+            category = "REPRESENTATION_WITNESS_POSITIVE"
+        elif max(G_error, e_l2, e_curl) <= 1e-2:
+            category = "PARTIAL_REPRESENTATION_WITNESS"
+        else:
+            category = "REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED"
+        if comp["numerical_reconstruction_pass"] and category != "QUADRATURE_DRIFT":
+            supervised_reconstruction = "SUPERVISED_DISCRETE_RECONSTRUCTION_PASS"
+        else:
+            supervised_reconstruction = "NOT_QUALIFIED"
+        result = dict(
+            status="REFERENCE_EXPOSED_COMPARE_ONLY_COMPLETE",
+            category=category,
+            supervised_reconstruction=supervised_reconstruction,
+            G_field_error=G_error,
+            d_ref=d_ref,
+            parameters_to_saved_c_relative=reconstruction_relative,
+            q30_to_q15_relative=q30_relative,
+            quadrature_status="PASS" if q30_relative <= 1e-8 else "QUADRATURE_DRIFT",
+            region_field_errors=region,
+            physics=physics,
+            comparisons=comparisons,
+            label_identity=label,
+            fit_checkpoint=frozen,
+            reconstruction=rec,
+            fit_source_sha=fit_index["source_sha"],
+            MUMPS_symbolic_numeric_solve_count=0,
+            reference_recomputed=False,
+            global_Maxwell_factor_created=False,
+            reference_used_for_training=True,
+            pde_only_solve=False,
+            production_initialization_allowed=False,
+            pde_only_solver_qualified=False,
+            official_candidate_results=False,
+            data_role="REFERENCE_EXPOSED_DIAGNOSTIC_ONLY",
+        )
+        marker(
+            "reference_fit_compare_only",
+            dict(
+                category=category,
+                G_error=G_error,
+                scattered_L2=e_l2,
+                scattered_scaled_curl=e_curl,
+            ),
         )
         return result, {}
     finally:

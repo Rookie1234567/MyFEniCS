@@ -23,6 +23,11 @@ STAGES = {
     "v2_scaling_checks": ("ml", 1800),
     "FREE-FE-DUAL-GRAM-DIAG": ("ml", 10800),
     "v2_compare_only": ("fe", 3600),
+    "v3_error_geometry": ("ml", 1200),
+    "v3_fit_checks": ("ml", 1800),
+    "FEINN-REFERENCE-FIT-G": ("ml", 10800),
+    "v3_fit_reconstruct": ("ml", 1800),
+    "v3_fit_compare_only": ("fe", 3600),
 }
 
 
