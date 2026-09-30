@@ -8,7 +8,7 @@ nor any inverse is constructed. The caller owns the hard action/wall budget.
 import numpy as np
 
 
-def lsqr_steps(action, adjoint, rhs):
+def lsqr_steps(action, adjoint, rhs, *, state_callback=None):
     """Yield (iteration,x,estimated residual) from zero; caller decides Gates."""
     rhs = np.asarray(rhs, dtype=np.complex128)
     x = np.zeros_like(rhs)
@@ -45,6 +45,10 @@ def lsqr_steps(action, adjoint, rhs):
         x += (phi / rho) * w
         w = v - (theta / rho) * w
         iteration += 1
+        if state_callback is not None:
+            state_callback(dict(iteration=iteration, x=x.copy(), u=u.copy(),
+                                v=v.copy(), w=w.copy(), alpha=alpha, beta=beta,
+                                phibar=phibar, rhobar=rhobar))
         yield iteration, x.copy(), abs(phibar)
         if beta == 0 or alpha == 0:
             return
