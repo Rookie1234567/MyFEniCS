@@ -1,6 +1,7 @@
 """Only new scope/budget/layout checks; no old FE campaign replay."""
 
 from pathlib import Path
+import json
 
 import numpy as np
 
@@ -8,6 +9,16 @@ from src.runners.feinn_campaign import campaign_budget, OLD_SECONDS, STAGES
 from src.io.feinn_pilot import load_pilot
 from src.solvers.feinn_authority_assembly import packet_csr
 from src.solvers.feinn_native import FullNativePacket
+
+
+def test_profile_logs_complex_and_numpy_physical_facts():
+    from src.solvers.feinn_authority_assembly import profile_fact_json
+
+    record = json.loads(
+        profile_fact_json("form_begin", dict(phase=1 + 2j, array=np.array([1j])), 3.0)
+    )
+    assert record["facts"]["phase"] == "(1+2j)"
+    assert record["facts"]["array"] == ["1j"]
 
 
 def test_new_budget_does_not_reuse_old_16h_remaining():

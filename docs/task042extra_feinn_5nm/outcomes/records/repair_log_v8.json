@@ -1,0 +1,14 @@
+{
+  "schema": "task42extra.repair-log.v8",
+  "entries": [
+    {
+      "root_cause": "profile_json_complex",
+      "failure": "A profile child failed before first marker: complex not JSON serializable; CSR and independent numerical qualification still passed",
+      "hypothesis": "stage facts contain physical complex modes; profile writer lacks conversion",
+      "change": "add explicit default conversion and separate bounded profile-only stage; no repeated CSR/qualification",
+      "test": "ABI and 7 new targeted tests passed; serializer checked with complex facts",
+      "retry": "v8_authority_profile; one corrected retry; profile cumulative <=600s",
+      "old_costs_preserved": true
+    }
+  ]
+}

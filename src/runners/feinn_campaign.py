@@ -3,11 +3,17 @@
 from pathlib import Path
 
 STAGES = {
+    "v8_authority_profile": ("fe", 600, "A"),
     "v8_authority_assembly_checks": ("fe", 1200, "A"),
     "v8_p4_reference_recovery": ("fe", 3600, "A"),
     "v8_p3_p4_compare": ("fe", 1200, "A"),
 }
 DEPENDENCIES = {
+    "v8_authority_profile": [
+        "e1_fe",
+        "v7_p_transfer_checks",
+        "v8_authority_assembly_checks",
+    ],
     "v8_authority_assembly_checks": ["e1_fe", "e3_reference", "v7_p_transfer_checks"],
     "v8_p4_reference_recovery": [
         "e1_fe",
@@ -65,6 +71,8 @@ def dispatch(stage, design, artifact, marker, manifest, load_index):
     from src.solvers import feinn_authority_assembly as authority
     from src.solvers.feinn_discretization_audit import compare
 
+    if stage == "v8_authority_profile":
+        return authority.profile_checks(artifact, marker)
     args = (
         design,
         load_index("e1_fe"),

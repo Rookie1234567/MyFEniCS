@@ -277,6 +277,15 @@ class BasixVolumeAudit:
         return float(np.linalg.norm(r) / np.linalg.norm(p.a["total_g"]))
 
 
+def profile_fact_json(name, facts, seconds):
+    return json.dumps(
+        dict(name=name, seconds=seconds, facts=facts),
+        default=lambda value: value.tolist()
+        if hasattr(value, "tolist")
+        else str(value),
+    )
+
+
 def profile_native(path):
     """Child of the bounded formal checks tree, never a detached worker."""
     from src.solvers.feinn_fem import build_model
@@ -289,10 +298,7 @@ def profile_native(path):
     def mark(name, facts):
         with Path(path).open("a") as stream:
             stream.write(
-                json.dumps(
-                    dict(name=name, seconds=perf_counter() - started, facts=facts)
-                )
-                + "\n"
+                profile_fact_json(name, facts, perf_counter() - started) + "\n"
             )
             stream.flush()
         print(name, flush=True)
@@ -446,6 +452,40 @@ def recover(
         assembler=assembler,
         independent_factory=BasixVolumeAudit,
     )
+
+
+def profile_checks(artifact, marker):
+    path = artifact / "assembly_profile.jsonl"
+    started = perf_counter()
+    child = subprocess.Popen(
+        [sys.executable, "-m", __name__, "profile", str(path)], start_new_session=True
+    )
+    try:
+        code = child.wait(timeout=300)
+        stop = "COMPLETED" if code == 0 else "CHILD_ERROR"
+    except subprocess.TimeoutExpired:
+        os.killpg(child.pid, signal.SIGTERM)
+        child.wait(timeout=20)
+        stop = "BOUNDED_PROFILE_STOP"
+    events = [json.loads(line) for line in path.read_text().splitlines()]
+    names = {event["name"] for event in events}
+    unfinished = [
+        event["name"]
+        for event in events
+        if event["name"].endswith("_begin")
+        and event["name"].removesuffix("_begin") + "_end" not in names
+    ]
+    result = dict(
+        status="BOUNDED_ASSEMBLY_PROFILE_COMPLETE",
+        child_stop=stop,
+        seconds=perf_counter() - started,
+        events=events,
+        unfinished_calls=unfinished,
+        numerical_work="profiling only; no factor",
+        **POLICY,
+    )
+    marker("bounded_profile_complete", result)
+    return result, dict(profile=path)
 
 
 if __name__ == "__main__":
