@@ -53,6 +53,15 @@ from src.io.input_validation import (
 from src.io.resolved_config import resolved_config_sha256
 
 TASK041_BRANCH = "codex/20260902-task41-mpi1-shortwave-hybrid-capacity"
+TASK041_V8_POST_START_DOCUMENT_PATHS = frozenset(
+    {
+        "docs/development_model_registry.md",
+        "docs/development_progress.md",
+        "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/formal_5nm_2nm_v8.md",
+        "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v8_formal_5nm_2nm.json",
+        "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md",
+    }
+)
 TASK041_INPUT = "input/official/task041/5nm_p6h4_m480_mpi1.dat"
 TASK041_MODE_COUNT = 480
 TASK041_MPI_SIZE = 1
@@ -1690,7 +1699,12 @@ def run_task041_supervised_public_command(
     return result
 
 
-def _git_identity(repository_root: Path, source_sha: str) -> dict[str, Any]:
+def _git_identity(
+    repository_root: Path,
+    source_sha: str,
+    *,
+    allow_v8_document_commits: bool = False,
+) -> dict[str, Any]:
     def run_git(*args: str) -> str:
         try:
             completed = subprocess.run(
@@ -1711,7 +1725,7 @@ def _git_identity(repository_root: Path, source_sha: str) -> dict[str, Any]:
     head = run_git("rev-parse", "HEAD")
     branch = run_git("branch", "--show-current")
     status = run_git("status", "--porcelain", "--untracked-files=all")
-    if head != source_sha:
+    if head != source_sha and not allow_v8_document_commits:
         raise Task041SupervisorError(
             f"HEAD {head} does not match source SHA {source_sha}",
             classification="task041_identity_failure",
@@ -1729,12 +1743,92 @@ def _git_identity(repository_root: Path, source_sha: str) -> dict[str, Any]:
             classification="task041_identity_failure",
             stage="git_identity",
         )
+    commit_records: list[dict[str, Any]] = []
+    changed_paths: set[str] = set()
+    if head != source_sha:
+        try:
+            ancestry = subprocess.run(
+                ["git", "merge-base", "--is-ancestor", source_sha, head],
+                cwd=repository_root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+        except OSError as exc:
+            raise Task041SupervisorError(
+                f"local git ancestry probe failed: {exc}",
+                classification="task041_implementation_failure",
+                stage="git_identity",
+            ) from exc
+        if ancestry.returncode != 0:
+            raise Task041SupervisorError(
+                f"runtime source SHA {source_sha} is not an ancestor of HEAD {head}",
+                classification="task041_identity_failure",
+                stage="git_identity",
+            )
+
+        commits = run_git("rev-list", "--reverse", f"{source_sha}..{head}").splitlines()
+        if not commits:
+            raise Task041SupervisorError(
+                "HEAD advanced but no post-start commits were found",
+                classification="task041_identity_failure",
+                stage="git_identity",
+            )
+        for commit_sha in commits:
+            try:
+                path_result = subprocess.run(
+                    [
+                        "git",
+                        "diff-tree",
+                        "--root",
+                        "--no-renames",
+                        "--no-commit-id",
+                        "--name-only",
+                        "-z",
+                        "-r",
+                        "-m",
+                        commit_sha,
+                    ],
+                    cwd=repository_root,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+            except (OSError, subprocess.CalledProcessError) as exc:
+                raise Task041SupervisorError(
+                    f"local git path probe failed for {commit_sha}: {exc}",
+                    classification="task041_implementation_failure",
+                    stage="git_identity",
+                ) from exc
+            paths = sorted(
+                {path for path in path_result.stdout.split("\0") if path}
+            )
+            unexpected = sorted(
+                set(paths) - TASK041_V8_POST_START_DOCUMENT_PATHS
+            )
+            if unexpected:
+                raise Task041SupervisorError(
+                    "post-start commit changed paths outside the V8 document allowlist: "
+                    + ", ".join(unexpected),
+                    classification="task041_identity_failure",
+                    stage="git_identity",
+                )
+            changed_paths.update(paths)
+            commit_records.append({"sha": commit_sha, "paths": paths})
     return {
         "head": head,
         "branch": branch,
         "source_sha": source_sha,
         "worktree_clean": True,
         "status_scope": "nonignored+untracked",
+        "identity_mode": (
+            "exact_source_sha"
+            if head == source_sha
+            else "v8_ancestor_with_allowlisted_document_commits"
+        ),
+        "source_is_ancestor": True,
+        "post_start_commits": commit_records,
+        "post_start_changed_paths": sorted(changed_paths),
     }
 
 
@@ -10345,7 +10439,14 @@ def run_task041_public_supervisor(
                 stage="consumer_result",
             )
         try:
-            git_identity_after = _git_identity(repository_root, source_sha)
+            if resource_policy_binding is None:
+                git_identity_after = _git_identity(repository_root, source_sha)
+            else:
+                git_identity_after = _git_identity(
+                    repository_root,
+                    source_sha,
+                    allow_v8_document_commits=True,
+                )
         except Task041SupervisorError as exc:
             result["git_after"] = {
                 "status": "failed",

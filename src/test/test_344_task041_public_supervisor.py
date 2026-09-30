@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import subprocess
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -2635,6 +2636,173 @@ def test_git_identity_requires_matching_end_source(monkeypatch, tmp_path):
     monkeypatch.setattr(supervisor.subprocess, "run", fake_run)
     with pytest.raises(supervisor.Task041SupervisorError, match="source SHA"):
         supervisor._git_identity(tmp_path, "s" * 40)
+
+
+def _task041_git_identity_test_repo(tmp_path):
+    repository = tmp_path / "git_identity_repo"
+    repository.mkdir()
+    subprocess.run(["git", "init", "--quiet"], cwd=repository, check=True)
+    subprocess.run(
+        ["git", "config", "user.name", "Task041 identity test"],
+        cwd=repository,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.email", "task041-identity@example.invalid"],
+        cwd=repository,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "checkout", "--quiet", "-b", supervisor.TASK041_BRANCH],
+        cwd=repository,
+        check=True,
+    )
+
+    def commit_file(relative_path, content):
+        target = repository / relative_path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content, encoding="utf-8")
+        subprocess.run(
+            ["git", "add", "--", relative_path], cwd=repository, check=True
+        )
+        subprocess.run(
+            ["git", "commit", "--quiet", "-m", "identity test fixture"],
+            cwd=repository,
+            check=True,
+        )
+        return subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=repository,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+
+    return repository, commit_file
+
+
+def test_git_identity_allows_only_the_v8_document_commit_chain(tmp_path):
+    repository, commit_file = _task041_git_identity_test_repo(tmp_path)
+    source_sha = commit_file("src/solver.py", "frozen source\n")
+    commit_file(
+        "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md",
+        "summary update\n",
+    )
+    commit_file(
+        "docs/development_progress.md",
+        "progress update\n",
+    )
+
+    with pytest.raises(supervisor.Task041SupervisorError, match="does not match"):
+        supervisor._git_identity(repository, source_sha)
+
+    identity = supervisor._git_identity(
+        repository,
+        source_sha,
+        allow_v8_document_commits=True,
+    )
+    assert identity["identity_mode"] == (
+        "v8_ancestor_with_allowlisted_document_commits"
+    )
+    assert identity["source_is_ancestor"] is True
+    assert identity["worktree_clean"] is True
+    assert identity["post_start_changed_paths"] == [
+        "docs/development_progress.md",
+        "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md",
+    ]
+    assert len(identity["post_start_commits"]) == 2
+
+
+def test_git_identity_exact_source_and_clean_tree_stays_the_default(tmp_path):
+    repository, commit_file = _task041_git_identity_test_repo(tmp_path)
+    source_sha = commit_file("src/solver.py", "frozen source\n")
+
+    identity = supervisor._git_identity(repository, source_sha)
+
+    assert identity["head"] == source_sha
+    assert identity["identity_mode"] == "exact_source_sha"
+    assert identity["worktree_clean"] is True
+
+
+@pytest.mark.parametrize(
+    "changed_path",
+    [
+        "src/runners/task041_supervisor.py",
+        "input/official/task041/side_balh/2nm_case.dat",
+        "docs/task041_mpi1_shortwave_hybrid_capacity/review_report_v8.md",
+        "docs/unrelated.md",
+    ],
+)
+def test_git_identity_rejects_changes_outside_exact_v8_docs(
+    tmp_path, changed_path
+):
+    repository, commit_file = _task041_git_identity_test_repo(tmp_path)
+    source_sha = commit_file("src/solver.py", "frozen source\n")
+    commit_file(changed_path, "not an authorized progress path\n")
+
+    with pytest.raises(
+        supervisor.Task041SupervisorError,
+        match="outside the V8 document allowlist",
+    ):
+        supervisor._git_identity(
+            repository,
+            source_sha,
+            allow_v8_document_commits=True,
+        )
+
+
+def test_git_identity_rejects_source_edit_even_if_later_reverted(tmp_path):
+    repository, commit_file = _task041_git_identity_test_repo(tmp_path)
+    source_path = "src/solver.py"
+    source_sha = commit_file(source_path, "frozen source\n")
+    commit_file(source_path, "temporary source edit\n")
+    commit_file(source_path, "frozen source\n")
+
+    with pytest.raises(
+        supervisor.Task041SupervisorError,
+        match="outside the V8 document allowlist",
+    ):
+        supervisor._git_identity(
+            repository,
+            source_sha,
+            allow_v8_document_commits=True,
+        )
+
+
+def test_git_identity_rejects_nonancestor_and_dirty_v8_end_state(tmp_path):
+    repository, commit_file = _task041_git_identity_test_repo(tmp_path)
+    source_sha = commit_file("src/solver.py", "frozen source\n")
+    commit_file(
+        "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md",
+        "summary update\n",
+    )
+
+    real_run = supervisor.subprocess.run
+
+    def nonancestor_run(argv, **kwargs):
+        if argv[1:3] == ["merge-base", "--is-ancestor"]:
+            return subprocess.CompletedProcess(argv, 1, "", "")
+        return real_run(argv, **kwargs)
+
+    with pytest.MonkeyPatch.context() as monkeypatch:
+        monkeypatch.setattr(supervisor.subprocess, "run", nonancestor_run)
+        with pytest.raises(
+            supervisor.Task041SupervisorError,
+            match="is not an ancestor",
+        ):
+            supervisor._git_identity(
+                repository,
+                source_sha,
+                allow_v8_document_commits=True,
+            )
+
+    (repository / "untracked.txt").write_text("dirty\n", encoding="utf-8")
+    with pytest.raises(supervisor.Task041SupervisorError, match="not clean"):
+        supervisor._git_identity(
+            repository,
+            source_sha,
+            allow_v8_document_commits=True,
+        )
 
 
 def test_launcher_lazy_dispatch_does_not_build_generic_plan(tmp_path, monkeypatch):
