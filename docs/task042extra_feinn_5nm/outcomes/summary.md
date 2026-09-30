@@ -1,3 +1,29 @@
+# Task42extra Review V1 后续：V2 固定尺度诊断
+
+本节追加 Review V1 的唯一后续试验，下面的 V1 16节原文完整保留。原模型 M5、全部 31968 复 FE 系数、40端口、材料与弱残差未改。V2 把原 Gram 对角用于优化变量 `c=Dy`，用于检查各类系数尺度是否让旧 FREE 优化困难；它没有训练新网络。D0既有状态诊断、D1梯度资格、D2唯一候选及D3独立复验均完成。[详细解释和完整表](scaling_diagnostic_v2.md)、[Response V2](../response_v2.md)、[独立Gate](records/gate_decisions_v2.json)。
+
+| V2 阶段 / measured | 实际结果 | 身份与边界 |
+| --- | --- | --- |
+| D0旧状态 | 4个保存态的loss/gradient；Adam500参数与optimizer state=`NOT_RETAINED` | 原native/Gram/history/checkpoint；不补跑历史 |
+| D1缩放资格 | `diag(D*GD)`最大偏差4.44e-16；3个非零复向量、3个非零实方向及事务恢复通过 | `D`仅从原MPC后全局G对角取值，hash见[设计](records/scaling_design_v2.json) |
+| D2唯一新候选 | 4000 closure停止；native/augmented均0.607772 | `CLOSURE_BUDGET`；相对V1 FREE 0.596914未改善 |
+| D3 compare-only | 散射E L2相对误差0.954209；MUMPS symbolic/numeric/solve=0 | V1同p3参考复用，非新准确解或连续极限 |
+| 严格/研究判定 | 方程、场、功率均未通过；`SCALING_DIAGNOSTIC_NEGATIVE` | 研究正信号需残差≤0.05969144472114且散射E≤0.5，均未满足 |
+| 条件p4/目标 | p4=`not_run`；目标尺寸5nm/0.7nm=`not_run` | V1的`DISCRETIZATION_NOT_QUALIFIED`表示p4未准入 |
+
+| 同口径量 / measured | V1 FREE-FE-DUAL | V2 scaled FREE | 用途 |
+| --- | ---: | ---: | --- |
+| `L_D` / native残差 | 0.103899 / 0.596914 | 0.0990053 / 0.607772 | loss降低不能替代原方程 |
+| 散射E L2 / scaled curl | 0.991925 / 0.991755 | 0.954209 / 0.954118 | 仍远高于严格1e-4和研究0.5 |
+| ordered原total port / 真出射复幅 | 0.573349 / 0.275180 | 0.554439 / 0.266104 | 分母分别是参考原port范数/出射范数 |
+| R/T/A_balance/A_volume | 0.845194/0.115246/0.0395601/0.459627 | 0.841893/0.109807/0.0483005/0.443408 | 均为未资格化diagnostic；准确参考0.812426/0.0324624/0.155111/0.155111 |
+| closure / A / Aᴴ / Gsolve | 4000/4002/4000/4003 | 4000/4002/4000/4003 | 同计算工作数，未隐藏额外closure |
+| 候选监督wall / 树RSS峰 / 自身swap | 2901.906s / 1366249472B / 0 | 2539.810s / 1365712896B / 0 | shared-workstation，时间不可归因于方法 |
+
+首轮“出射复通道”约0.27518确实对应 `ordered_outgoing_channels`，CSV约0.573349对应 `ordered_total_channels`；两者分子相同但参考分母分别0.913080与0.438234，旧V1文件不改。[V2 checker](records/gate_decisions_v2.json)从原40级复数组逐项复算。本批数值阶段最高同时树RSS为1365712896B，V1数值阶段最高约1.313GiB，而V1含浏览器的完整账最高2095390720B；不要混同口径。本批最终辅助/渲染成本与首次compare-only接线失败、默认沙箱MPI socket失败均在[资源全账](records/resource_costs_v2.json)和[run index](records/run_index_v2.json)保留。
+
+本轮从 V1 研究档案延伸，不改变两条FEINN网络的旧负结果，也没有新的神经增量证据。Gram三次fresh factor setup约97.20/96.93/101.07s及全部solve均计入；候选复用G装配实耗为0，从零归属另加648.765s，不把此归属再计进本批实际wall。缩放不足以取得本固定M5的合格解，不能推论所有神经方法无效。下一步只能作为新的review建议，不在本批自动开展p4、目标尺寸5nm、0.7nm或其他尺度扫描。
+
 # Task42extra 首轮执行总结
 
 本轮完整接口资格为 True，三路线同离散资格 0/3。结果以原方程、独立完整FE场和功率审核为准。本轮比较的是同一M5、同全部独立FE、同原方程/材料/模式/初值的三条路线。坐标网络通过积分产生边、面和内部矩；FREE直接优化完整复系数。DUAL用正定测试内积衡量弱残差，增加真实稀疏Gram因子成本。LE与LD不能直接按数字大小比较精度。

@@ -2972,3 +2972,14 @@ Riesz为同约束p3正质量+25nm² curl内积；RESEARCH_ONLY_GLOBAL_RIESZ_FACT
 度量信号inconclusive_not_equal_accuracy，神经增量inconclusive_not_equal_accuracy。固定配置的负结果不能唯一归因于表示、优化或离散，也不证明所有FEINN无效。E5仅推导目标50×25×120nm级非可分候选：h1.25/78400cell/6364800独立复FE，完整模式由原API解析fresh计数；当前全cell临时约24.22GiB已超过16GiB，Gram CSR粗推约30GB，全局Rieszfactor预测约0.5TB且不具准入资格。matrix-free/multilevel向量/动作/未知迭代成本分别给出，不把预测当实测。目标尺寸5nm和0.7nm/48h均not_run/not_qualified。
 
 证据：[Response V1](task042extra_feinn_5nm/response_v1.md)、[16节总结](task042extra_feinn_5nm/outcomes/summary.md)、[run/source/hash](task042extra_feinn_5nm/outcomes/records/run_index_v1.json)、[完整物理](task042extra_feinn_5nm/outcomes/records/blind_physics_v1.json)、[Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v1.json)、[资源全账](task042extra_feinn_5nm/outcomes/records/resource_costs_v1.json)、[目标容量](task042extra_feinn_5nm/outcomes/target_5nm_scale_plan.md)。只推执行支线，不amend/强推/merge；交付后停止等待review，唯一下一最小建议见response，未自动实施。
+
+
+## 2026-09-30 Task42extra V2：Gram 对角尺度诊断负结果
+
+Review V1 仅授权固定 M5 全部31968复 FE 变量的一次 FREE-FE-DUAL-GRAM-DIAG。旧 G 的 MPC 后全局对角给出 `D_j=1/sqrt(real(G_jj))`，新优化变量 `y` 始于零，物理场只取 `c=Dy`；原 A/f/G/d_G、40端口、材料、Adam500+L-BFGS、原方程与物理门限均不变。D0从4个实存态完成4次loss/梯度评价；Adam500末态和optimizer state `NOT_RETAINED`，未重放。D1合成与M5非零向量/方向差分、共轭转置、真实Gsolve和事务恢复通过。
+
+唯一候选4000完整closure/649外层停止，原 native/augmented 残差 `0.607771929`，比旧FREE `0.596914447` 更差；虽对偶loss `0.0990053<0.1038991`、散射E L2 `0.954208584<0.991924899`，却未达到研究正信号的残差各≤`0.05969144472114`和散射E≤`0.5`，更未达到正式资格的原方程≤1e-6、场≤1e-4和功率门限。新R/T/A_balance/A_volume=`0.841893/0.109807/0.0483005/0.443408`，能量闭合绝对差`0.395107`，只作未合格诊断。状态`SCALING_DIAGNOSTIC_NEGATIVE`；两条FEINN网络未续训，神经增量未证明。同p3准确参考直接读取V1已冻结数据，新MUMPS symbolic/numeric/solve=0，p4、目标尺寸5nm及0.7nm均not_run。
+
+D0/D1/候选 fresh Gram factor setup `97.197/96.927/101.073s`，候选4003次Gsolve `1214.979s`；候选监督wall `2539.810s`、整树RSS峰 `1365712896B`、自身swap0。V1 G装配648.765s已实耗复用，候选从零成本另归属3188.576s，不与本批实耗相加。首次compare-only FE环境误导入Torch和第二次沙箱MPI socket失败均保留、计费；最小修复后完成。V1“出射复通道”0.27518和CSV原total port 0.573349为不同参考分母，同一分子；p4未准入不是离散误差实测。任务书§5.4仅按Review明示授权修正一个公式宏，GitHub渲染另有独立记录。
+
+[Response V2](task042extra_feinn_5nm/response_v2.md)、[完整诊断](task042extra_feinn_5nm/outcomes/scaling_diagnostic_v2.md)、[V2 run/source/hash](task042extra_feinn_5nm/outcomes/records/run_index_v2.json)、[独立 Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v2.json)、[资源全账](task042extra_feinn_5nm/outcomes/records/resource_costs_v2.json)。固定缩放不足以获合格解，也不能推论所有优化或神经方法无效。只交付执行支线等待review，不merge或开展下一试验。

@@ -84,7 +84,7 @@ def budget():
     used = sum(e["seconds"] for e in entries)
     v2_used = sum(e["seconds"] for e in entries if
                   "/task42extra_v2_" in e["path"] or
-                  "/v2_" in e["path"].split("/checks/")[-1])
+                  "/checks/v2_" in e["path"])
     return dict(
         limit_seconds=57600,
         used_seconds=used,

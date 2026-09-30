@@ -1597,6 +1597,24 @@ Riesz为同约束p3正质量+25nm² curl内积；RESEARCH_ONLY_GLOBAL_RIESZ_FACT
 
 证据：[Response V1](task042extra_feinn_5nm/response_v1.md)、[16节总结](task042extra_feinn_5nm/outcomes/summary.md)、[run/source/hash](task042extra_feinn_5nm/outcomes/records/run_index_v1.json)、[完整物理](task042extra_feinn_5nm/outcomes/records/blind_physics_v1.json)、[Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v1.json)、[资源全账](task042extra_feinn_5nm/outcomes/records/resource_costs_v1.json)、[目标容量](task042extra_feinn_5nm/outcomes/target_5nm_scale_plan.md)。只推执行支线，不amend/强推/merge；交付后停止等待review，唯一下一最小建议见response，未自动实施。
 
+## 3.44.1 Task42extra Review V1 后续：同 M5 的固定 Gram 对角缩放
+
+V2 沿用3.44的5nm Si/air三维缺口、384hex、p3、31968独立复FE系数（edge3744/face14400/interior13824）、slave2082与40个Floquet/Fourier-DtN端口。材料、原局部A/Aᴴ、MPC后全局G、Riesz loss、背景及原方程完全沿用。唯一新路线 FREE-FE-DUAL-GRAM-DIAG 把每个FE系数按原G的对角范数换单位：`D_j=1/sqrt(real(G_jj))`、`c=Dy`；这改变优化坐标，不是新的物理方程，也不训练网络。旧FREE与新scaled FREE同y/c对应零散射初值、同4000 closure和同准确参考对比。
+
+| 固定 M5 / measured | V1 FREE-FE-DUAL | V2 FREE-FE-DUAL-GRAM-DIAG | 参考或门限 |
+| --- | ---: | ---: | --- |
+| native / augmented残差 | 0.596914/0.596914 | 0.607772/0.607772 | 各≤1e-6；诊断各≤0.0596914 |
+| 散射E L2 / scaled curl相对误差 | 0.991925 / 0.991755 | 0.954209 / 0.954118 | 严格各≤1e-4；诊断E≤0.5 |
+| total E L2 / selected total E/H | 0.680217 / 0.672954 / 0.670815 | 0.654352 / 0.646200 / 0.644657 | 同p3参考，均未过≤1e-4 |
+| 原total port / 真出射复幅 | 0.573349 / 0.275180 | 0.554439 / 0.266104 | 各自参考分母，40级复向量 |
+| R/T/A_balance/A_volume | 0.845194/0.115246/0.0395601/0.459627 | 0.841893/0.109807/0.0483005/0.443408 | 参考0.812426/0.0324624/0.155111/0.155111 |
+| 最大逐级功率差 / 能量闭合差 | 0.0825716 / 0.420067 | 0.0765753 / 0.395107 | ≤1e-6 / ≤1e-5 |
+| closure / 实际监督wall / 同时树RSS峰 | 4000 / 2901.906s / 1366249472B | 4000 / 2539.810s / 1365712896B | 都在原停止预算内；共享工作站时间不可归因 |
+
+V2 对偶loss `0.0990053` 比旧 `0.1038991` 低，原方程却更差，说明 loss 的下降不能代替真实求解成功。新R/T/A_volume只作 diagnostic，未成为official物理解。独立compare-only读取V1同p3准确参考，新MUMPS factor/solve计数0；参考不是连续极限。D0/D1/候选fresh全局Gram因子 setup分别97.1968/96.9274/101.0730s，候选4003次Gsolve1214.979s、Gram CSR payload146851456B、因子peak633592648B；该因子仅是小模型 `RESEARCH_ONLY_GLOBAL_RIESZ_FACTOR`。候选自身swap0，整树峰未触及16GiB，但没有生产或目标尺寸资格。状态`SCALING_DIAGNOSTIC_NEGATIVE`，神经增量未证明，条件p4与更大5nm/0.7nm均not_run。D0实际保存的optimizer中间状态缺失标`NOT_RETAINED`。
+
+本次来源：[Response V2](task042extra_feinn_5nm/response_v2.md)、[详细诊断](task042extra_feinn_5nm/outcomes/scaling_diagnostic_v2.md)、[同口径结果](task042extra_feinn_5nm/outcomes/records/scaled_route_comparison_v2.csv)、[run/source/hash](task042extra_feinn_5nm/outcomes/records/run_index_v2.json)、[独立 Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v2.json)、[资源账](task042extra_feinn_5nm/outcomes/records/resource_costs_v2.json)。旧3.44正文保留，只登记新固定设置的负结果，不把V1三路线重新记为本批新测。
+
 # 4. 今后新增模型的登记模板
 
 每次正式计算至少新增一行主表，并按可用性新增衍射级和复振幅表。

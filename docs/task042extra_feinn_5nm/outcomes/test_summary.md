@@ -37,3 +37,11 @@ python benchmarks/check_feinn_pilot.py --evidence docs/task042extra_feinn_5nm/ou
 实际 GitHub Firefox 首轮检查 11 页（任务书、8页本任务文档、两份总账新节），每张表的浏览器 DOM 列数一致。它发现发布任务书 §5.4 的 `\operatorname{Re}` 和本任务方法映射原式的 `\operatorname{solve}` 均被 GitHub 数学渲染器拒绝。任务书由发布方维护，记录为 `RENDERED_VIEW_FAIL_TASK_MATH`；方法映射已改成 `\mathrm{solve}`，其复核随最终 render 记录提交。截图和完整 DOM 留在本任务 ignored 目录，compact 文件保留 hash，不称该失败检查为通过。
 
 实际数值source是E1 C1、E2 C2及E3/E4各run index；之后证据提交HEAD不会冒充运行源码。运行中的HEAD未移动，提交前与推送后clean核验。
+
+## Review V1 后续 V2 定向测试和保留失败
+
+V2 复用原生FE/ML资格环境及V1 native/Gram/历史/checkpoint，不重新安装或重跑旧E0/E1与full pytest。先运行 `src/test/test_feinn_scaling_ml.py` 的9项定向测试、Ruff/编译/FE环境缩放导入检查，再通过正式one-run的D1资格：合成复数非Hermitian A/Hermitian正定G，固定M5上3个非零复向量、3个非零实参数方向，h=1e-4/1e-5/1e-6中心差分，AD共轭转置、`c=Dy`往返、真实Gsolve、预算/线搜索事务及冻结checkpoint一致性。D1全部通过；原始误差与费用见[scaling checks](records/scaling_checks_v2.json)。D0仅评价4个实存状态，未造Adam500中间状态。
+
+首次compare-only因FE进程顶层导入Torch失败于物理前；最小延迟导入修复提交后，默认沙箱在MPI_Init本地socket处失败；在任务自身监督下完成第三次compare-only。两次失败均保留于[run index](records/run_index_v2.json)与[资源账](records/resource_costs_v2.json)，不是数值失败或参考重算。第三次compare-only复用V1准确同p3参考，MUMPS symbolic/numeric/solve=0。独立checker逐字段复算原40级复通道、参考分母、功率、energy、原方程及`D`来源、冻结物理`c`，结果[严格/研究 Gate](records/gate_decisions_v2.json)均未通过。这是固定优化设置的真实负结果，不能被9项接口测试的通过覆盖。
+
+Markdown局部检查范围扩展到新review、获授权修正的task、Response V2、V2诊断、summary和两份总账新增节；检查fence、表格列数、相对链接、UTF-8及解析结果。GitHub渲染只复查review与修正task，浏览器DOM/截图与失败原因见[render记录](records/render_check_v2.json)。本地解析不等于浏览器PASS，也不宣称CI或全仓测试。

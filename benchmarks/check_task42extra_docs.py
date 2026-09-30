@@ -13,11 +13,15 @@ from markdown_it import MarkdownIt
 ROOT = Path(__file__).resolve().parents[1]
 TASK = ROOT / "docs/task042extra_feinn_5nm"
 PAGES = [
+    TASK / "task.md",
+    TASK / "review_report_v1.md",
     TASK / "response_v1.md",
+    TASK / "response_v2.md",
     *(
         TASK / "outcomes" / name
         for name in (
             "summary.md",
+            "scaling_diagnostic_v2.md",
             "method_and_paper_mapping.md",
             "environment_and_isolation.md",
             "accuracy_performance_memory.md",
