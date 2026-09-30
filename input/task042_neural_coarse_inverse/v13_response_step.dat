@@ -1,0 +1,5 @@
+schema_version = 1
+[task042_v13]
+stage = "RESPONSE"
+run_id = "task042_v13_response"
+material_table_id = "SI_OPTICAL_CONSTANTS_USER_20260929_V1"

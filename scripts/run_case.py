@@ -54,7 +54,8 @@ def main(argv: list[str] | None = None) -> int:
         from src.io.autonomous_neural_head import load_autonomous
         from src.io.stable_head_varpro import load_stable_head
         from src.io.actual_loss_block_descent import load_actual_loss
-        specification = load_actual_loss(args.input_path) or load_stable_head(args.input_path) or load_autonomous(args.input_path) or load_diagnostic(args.input_path) or load_calibration(args.input_path) or load_continuation(args.input_path) or load_interface(args.input_path)
+        from src.io.tangent_head_compensation import load_tangent_head
+        specification = load_tangent_head(args.input_path) or load_actual_loss(args.input_path) or load_stable_head(args.input_path) or load_autonomous(args.input_path) or load_diagnostic(args.input_path) or load_calibration(args.input_path) or load_continuation(args.input_path) or load_interface(args.input_path)
         if specification is None:
             specification = load_and_resolve(args.input_path)
         from src.io.task042_profile import TASK042_PROFILES

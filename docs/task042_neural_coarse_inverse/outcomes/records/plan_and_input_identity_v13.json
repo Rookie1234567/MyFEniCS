@@ -1,0 +1,83 @@
+{
+  "schema": "task042.tangent-head-plan.v13",
+  "batch": "V13_TANGENT_SCALE_AND_HEAD_COMPENSATION",
+  "review_commit": "fb994b337960c89d2e70afc93707595258b3bb60",
+  "review_file": "docs/task042_neural_coarse_inverse/review_report_v10.md",
+  "window": {
+    "schema": "task042.autonomous-window.v13",
+    "start_utc": "2026-09-30T02:38:38.674705+00:00",
+    "start_monotonic": 660913.535589948,
+    "stop_heavy_utc": "2026-09-30T06:23:38.674705+00:00",
+    "deadline_utc": "2026-09-30T06:38:38.674705+00:00",
+    "total_limit_seconds": 14400,
+    "heavy_limit_seconds": 13500,
+    "cleanup_reserve_seconds": 900,
+    "review_expected_commit": "fb994b337960c89d2e70afc93707595258b3bb60",
+    "prior_v12_head": "0b81d4cdad2dd2e3c21a68e60b14c35fdc897337"
+  },
+  "physical_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+  "material_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+  "mode_sha256": "93795b53d7c5aef69af66b4ff0a56fa46515771f1ec43332ec929970270ea262",
+  "action_sha256": "9196edb807b534217d0c0eb78882125341342784a48ef20ebe2d9421fe636454",
+  "origin": "INITIAL_V11_CORRECTED from V12; bitwise compare V11 parent",
+  "directions": [
+    "seed421201",
+    "seed421202",
+    "normalized_same_point_gradient_or_seed421203"
+  ],
+  "random_complex_duals": [
+    421301,
+    421302
+  ],
+  "vector_steps": [
+    0.0001,
+    1e-05,
+    1e-06,
+    1e-07
+  ],
+  "bounded_extra_vector_steps": [
+    1e-08,
+    1e-09
+  ],
+  "extra_rule": "Only if first four pairs have no adjacent stable region; register before evaluating",
+  "limits": {
+    "total_seconds": 14400,
+    "heavy_seconds": 13500,
+    "forward": 400,
+    "JVP": 48,
+    "VJP": 24,
+    "FD_points": 60,
+    "PA_builds": 3,
+    "thin_decompositions": 6,
+    "thin_RHS_columns": 18,
+    "small_real_LS": 3,
+    "original_equivalent_actions": 8000,
+    "original_audits": 60,
+    "B_trials": 4,
+    "B_accepts": 1,
+    "C_round_trials": 6,
+    "C_accepts": 3
+  },
+  "shared_workstation": true,
+  "resources": {
+    "planned_resident_upper_bytes": 7600000000,
+    "hard_bytes": 17179869184,
+    "warning_bytes": 12884901888,
+    "own_swap_bytes": 0,
+    "MPI": 1,
+    "math_threads": 1,
+    "Torch_threads": 1,
+    "Torch_interop_threads": 1,
+    "DataLoader_workers": 0,
+    "GPU_used": false,
+    "supervision": "independent 0.5s tree sampling; no delegated cgroup"
+  },
+  "same_start_for_B_and_C": true,
+  "reference_before_solver_freeze": false,
+  "reference_after_verify_feedback": false,
+  "head_gate_1e8": "FAIL_UNCHANGED",
+  "V12_scalar_FD_gate": "FAIL_UNCHANGED",
+  "exact_VarPro_claim": false,
+  "global_p4_inverse_route": "CLOSED",
+  "numerical_status": "PLANNED_NOT_RUN"
+}

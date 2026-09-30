@@ -53,6 +53,8 @@ TASK042_PROFILES = {
     "task042_v12_round": "V12-ROUND",
     "task042_v12_descent": "V12-DESCENT",
     "task042_v12_verify": "V12-VERIFY",
+    **{"task042_v13_"+name.lower(): "V13-"+name
+       for name in ("TANGENT", "RESPONSE", "COMPENSATE", "VERIFY")},
 }
 
 
