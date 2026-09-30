@@ -1,0 +1,112 @@
+{
+  "family": "LOCAL_TRACE_REPRESENTATION_COMPARISON",
+  "fixed_physics": "0.7nm/384hex/p3/q15/40ports",
+  "incoming_wavevector": [
+    {
+      "real": 8.97461192517716,
+      "imag": 0.0
+    },
+    {
+      "real": 0.0,
+      "imag": 0.0
+    },
+    {
+      "real": -0.15665243385951635,
+      "imag": 0.0
+    }
+  ],
+  "carrier_count": 1,
+  "initialization": {
+    "weights": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v15/task042_v15_setup_20260930T093204740955Z/random_hidden_weights.npz",
+      "sha256": "230b8fd9234b4ebe1a542d18c4079075d0857f1e63240e2770238fcea669b6ca",
+      "w0_sha256": "9d8b9d6d5ed087b2c9d103c287b8148a4e67a99ba38074ae025469c38c2d3852",
+      "b0_sha256": "251a16fd5b10176a20dc42bad650ccb00374a56415b72a353a2c578cfaf793bd",
+      "w1_sha256": "679298c6f16fd7a4a72e5bf435698070f49f1e51c916552922ff518b74c1b64b",
+      "b1_sha256": "511fe43d4f356b9ef8e10e1e35c1ccdbb933259c3c55a5e3249d3e6131cc9122",
+      "w2_sha256": "468c418e47a096103737ebe16306ae1a8554ebf9cf87afd263ea02b6125bd17e",
+      "b2_sha256": "4ad327c9db520bb30e0593c13aeb21ac1605510019e4d95615d41e4340c4ca53"
+    },
+    "seed": 420906,
+    "hidden_real_parameters": 8576,
+    "hidden_trainable": false,
+    "NN7_or_reference_read": false,
+    "numpy_Torch_forward_relative": 2.653594843916428e-16,
+    "source_sha": "db0e68e519767554412c960af14b3c185012f9de",
+    "threads": {
+      "intraop": 1,
+      "interop": 1,
+      "cuda_build": null,
+      "data_loader_workers": 0,
+      "actual_blas_pools": [
+        {
+          "path": "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/numpy.libs/libopenblas64_p-r0-0cf96a72.3.23.dev.so",
+          "function": "openblas_get_num_threads64_",
+          "threads": 1
+        }
+      ]
+    }
+  },
+  "nominal_patch_columns": 195,
+  "nominal_total_columns": 1560,
+  "actual_matched_columns": 1544,
+  "POLY": "lexicographic tensor Legendre(0..3)^3 plus L4(x)",
+  "NN": "seed420906 fixed 3x64 tanh hidden64 plus constant1",
+  "decoders": {
+    "POLY": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v15/task042_v15_setup_20260930T093204740955Z/POLY_block_decoder.npz",
+      "sha256": "c9314cc50305c0bd591e410f8709d0f96d338038e3e16c7a0cd38078dfc15608",
+      "rows0_sha256": "00346a47ed8dea8f5900778832778a81504c84552890e174f292ae30498589ad",
+      "rows1_sha256": "432d5210ec12fc94459ff80efa02cc871514ee42436321ca27b084a90f67c0d0",
+      "rows2_sha256": "78f92dedbdbd12774a2e0626330313c15c91935a703cb867f4091d45d2e2fe68",
+      "rows3_sha256": "ca31753212e05f1b2ef050b6cfb271619938ec8babc387b4eb83eb5176495234",
+      "rows4_sha256": "8f872a53736fbd8db8901924b453b2a658140c2824428c8757ac88649a959ec3",
+      "rows5_sha256": "45783c88109b0060e37afe4b9699e64ac06a8325fed11671c652c587a0a4bc8e",
+      "rows6_sha256": "59b5ba2435af440ece83e83d1b2a646c3aaef8d55abb98619ab1a2e2cbc74386",
+      "rows7_sha256": "624daee5addfad04d59faa43306ea99626bd578c2564789870a23dfa4521e6c7",
+      "Q0_sha256": "20f177b36cc6b7b7038b27e5851e1ddab780ae8a0b70ec6dd5aae495a0473089",
+      "Q1_sha256": "551b83f1353fe4b89635b0dc42c0cacd26a5b32550cc35ddb6cf9a9bfa4a4fea",
+      "Q2_sha256": "1ed340c5bf50beb96ddb8c5ca1bcbdd3ac1d712ea6dc0ec8fb567ba477e89020",
+      "Q3_sha256": "df89bb91ef0e61d639203872c8398dd69a466ec93f65530157d8cd3900ef96a8",
+      "Q4_sha256": "5e736ccece1e44fc08f6c30774affe03bcb97fb91ece945a7b762f618febd1f5",
+      "Q5_sha256": "5dfa5b4ea64d04a3dd7e1c0b4e53329d39daaf0143cf9912e846a28d9292357b",
+      "Q6_sha256": "7a87e34b218c52231c9cd1b818155bfc7fb93ac1d23dc64af20ed303e75680b8",
+      "Q7_sha256": "e3539ad74e63694570da3ad97c91243cbf3e1d3a254aaaa79d4f653399e21144"
+    },
+    "NN": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v15/task042_v15_setup_20260930T093204740955Z/NN_block_decoder.npz",
+      "sha256": "8415c1738b038ea4787fa408775bf6361d3bc9f2b57dfa736ecaed0c09b712c2",
+      "rows0_sha256": "00346a47ed8dea8f5900778832778a81504c84552890e174f292ae30498589ad",
+      "rows1_sha256": "432d5210ec12fc94459ff80efa02cc871514ee42436321ca27b084a90f67c0d0",
+      "rows2_sha256": "78f92dedbdbd12774a2e0626330313c15c91935a703cb867f4091d45d2e2fe68",
+      "rows3_sha256": "ca31753212e05f1b2ef050b6cfb271619938ec8babc387b4eb83eb5176495234",
+      "rows4_sha256": "8f872a53736fbd8db8901924b453b2a658140c2824428c8757ac88649a959ec3",
+      "rows5_sha256": "45783c88109b0060e37afe4b9699e64ac06a8325fed11671c652c587a0a4bc8e",
+      "rows6_sha256": "59b5ba2435af440ece83e83d1b2a646c3aaef8d55abb98619ab1a2e2cbc74386",
+      "rows7_sha256": "624daee5addfad04d59faa43306ea99626bd578c2564789870a23dfa4521e6c7",
+      "Q0_sha256": "0e028517ce2010b0708a03dc850d73cd20db7138aa3c38659df85cbe302132f3",
+      "Q1_sha256": "9ef35761e7de66566813baf50855379b525d986b5f16ca5748130184abca3ffd",
+      "Q2_sha256": "6120fd469b6d42a7e75c090a0eb1a8d7517d7507f0d1c8932ac52c06dc7ab50d",
+      "Q3_sha256": "7475953ee79f68b158dc8805ca8cb7136f213456dcf9f8691a5b1852db0af4f9",
+      "Q4_sha256": "d2fe169b3d2d9c761de1c0c72396bc71d3f76dcfc9577109ac352661c66a7a3a",
+      "Q5_sha256": "44eb95e1af5af555b7d77e477660ae5604a499f9d68e986809b35ef0db85f0d8",
+      "Q6_sha256": "96945211812972ce3a89a40462eaa6bb955b3dd3291e72f1cdec527034a5b796",
+      "Q7_sha256": "dbfd8d0cd75abe67d8ace39adfbed3f8a6e362346dd5e86e09fbc3305af7e574"
+    }
+  },
+  "hidden_training": false,
+  "neural_gain_is_not_hidden_training": true,
+  "random_seeds": {
+    "initialization": 420906,
+    "manufactured": 421501,
+    "block_pairing": 421502,
+    "FE_interpolation": 421503,
+    "NumPy_Torch_forward": 421504,
+    "barS_pairings": [
+      421411,
+      421412
+    ]
+  },
+  "single_carrier_and_localization_changed_together_vs_G0": true,
+  "matched_pair_one_carrier_same_support": true
+}

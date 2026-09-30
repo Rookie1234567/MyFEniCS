@@ -1,0 +1,410 @@
+{
+  "interpolation": [
+    {
+      "family": "POLY",
+      "interpolation_relative": 2.923492302257783e-15,
+      "MPC_expansion_relative": 0.0,
+      "slave_zero_before": 0.0,
+      "orientation_classes": 5,
+      "all_edge_face_moments": true,
+      "global_extension_interpolated_before_row_selection": true,
+      "qualified": true
+    },
+    {
+      "family": "NN",
+      "interpolation_relative": 1.876465904552258e-15,
+      "MPC_expansion_relative": 0.0,
+      "slave_zero_before": 0.0,
+      "orientation_classes": 5,
+      "all_edge_face_moments": true,
+      "global_extension_interpolated_before_row_selection": true,
+      "qualified": true
+    }
+  ],
+  "decoder": {
+    "POLY": {
+      "forward_relative": 0.0,
+      "adjoint_operation_relative": 6.710033344509308e-18,
+      "orthogonality": 2.0890484716814008e-15,
+      "payload_bytes": 56302464,
+      "explicitly_assembled_dense_zero_decoder": false
+    },
+    "NN": {
+      "forward_relative": 0.0,
+      "adjoint_operation_relative": 2.667393900375662e-18,
+      "orthogonality": 1.7968440210884465e-15,
+      "payload_bytes": 56302464,
+      "explicitly_assembled_dense_zero_decoder": false
+    }
+  },
+  "original_moment_construction": {
+    "POLY": {
+      "seconds": 2.4054288970073685,
+      "patches": [
+        {
+          "patch": 0,
+          "rows": 2913,
+          "owner_cells": 48,
+          "full_points_per_cell": 507,
+          "batch_size": 8
+        },
+        {
+          "patch": 1,
+          "rows": 2676,
+          "owner_cells": 48,
+          "full_points_per_cell": 507,
+          "batch_size": 8
+        },
+        {
+          "patch": 2,
+          "rows": 2289,
+          "owner_cells": 48,
+          "full_points_per_cell": 507,
+          "batch_size": 8
+        },
+        {
+          "patch": 3,
+          "rows": 2076,
+          "owner_cells": 48,
+          "full_points_per_cell": 507,
+          "batch_size": 8
+        },
+        {
+          "patch": 4,
+          "rows": 2439,
+          "owner_cells": 48,
+          "full_points_per_cell": 507,
+          "batch_size": 8
+        },
+        {
+          "patch": 5,
+          "rows": 2220,
+          "owner_cells": 48,
+          "full_points_per_cell": 507,
+          "batch_size": 8
+        },
+        {
+          "patch": 6,
+          "rows": 1863,
+          "owner_cells": 48,
+          "full_points_per_cell": 507,
+          "batch_size": 8
+        },
+        {
+          "patch": 7,
+          "rows": 1668,
+          "owner_cells": 48,
+          "full_points_per_cell": 507,
+          "batch_size": 8
+        }
+      ],
+      "interpolation_then_row_selection": true,
+      "integrand_mask": false,
+      "full_q15_moments": true,
+      "global_extension_on_original_master_entities": true,
+      "physical_phase_not_periodically_wrapped": true
+    },
+    "NN": {
+      "seconds": 2.071765524917282,
+      "patches": [
+        {
+          "patch": 0,
+          "rows": 2913,
+          "owner_cells": 48,
+          "full_points_per_cell": 507,
+          "batch_size": 8
+        },
+        {
+          "patch": 1,
+          "rows": 2676,
+          "owner_cells": 48,
+          "full_points_per_cell": 507,
+          "batch_size": 8
+        },
+        {
+          "patch": 2,
+          "rows": 2289,
+          "owner_cells": 48,
+          "full_points_per_cell": 507,
+          "batch_size": 8
+        },
+        {
+          "patch": 3,
+          "rows": 2076,
+          "owner_cells": 48,
+          "full_points_per_cell": 507,
+          "batch_size": 8
+        },
+        {
+          "patch": 4,
+          "rows": 2439,
+          "owner_cells": 48,
+          "full_points_per_cell": 507,
+          "batch_size": 8
+        },
+        {
+          "patch": 5,
+          "rows": 2220,
+          "owner_cells": 48,
+          "full_points_per_cell": 507,
+          "batch_size": 8
+        },
+        {
+          "patch": 6,
+          "rows": 1863,
+          "owner_cells": 48,
+          "full_points_per_cell": 507,
+          "batch_size": 8
+        },
+        {
+          "patch": 7,
+          "rows": 1668,
+          "owner_cells": 48,
+          "full_points_per_cell": 507,
+          "batch_size": 8
+        }
+      ],
+      "interpolation_then_row_selection": true,
+      "integrand_mask": false,
+      "full_q15_moments": true,
+      "global_extension_on_original_master_entities": true,
+      "physical_phase_not_periodically_wrapped": true
+    }
+  },
+  "setup_qualified": true,
+  "local_solves": {
+    "LOCAL_POLY": {
+      "decoder_qualified": true,
+      "basis": {
+        "family": "LOCAL_TRACE_REPRESENTATION_COMPARISON",
+        "actual_columns": 1544,
+        "main_forward": "block_Q_times_c",
+        "raw_gamma_writeback": false,
+        "Q_orthogonality": 2.0890484716814008e-15,
+        "original_action_pairing": [
+          0.0,
+          0.0,
+          0.0,
+          5.691669467664435e-16,
+          5.464614944967162e-16
+        ],
+        "Hhat_condition": 13284.16302612138,
+        "basis_times_seconds": {
+          "original_barS_columns": 149.7768944479758,
+          "A_economic_QR_stationarity": 29.061624814989045
+        },
+        "exact_full_space_optimum_claimed": false,
+        "payload_bytes": {
+          "decoder": 56302464,
+          "A": 448229376,
+          "stationarity_U": 448229376,
+          "RA": 38142976
+        }
+      },
+      "witness": {
+        "name": "LOCAL-POLY-M1",
+        "numeric": {
+          "Phi": 1.2964789651332275e-29,
+          "schur_relative": 5.0921095140093515e-15,
+          "c_norm": 1.0000000000000688,
+          "rhs_sha256": null,
+          "actual_vs_thin_fixed_rhs": 6.211805235443291e-16,
+          "stationarity_UHr_fixed_rhs": 5.072794547988077e-15,
+          "AHr_absolute": 1.2739314097599215e-10,
+          "Hhat_solve_operation_relative": 1.1310082402949472e-17,
+          "port_absolute": 1.0193991475109877e-16,
+          "rank_A": 1544,
+          "A_singular_range": [
+            0.014961263260467223,
+            909.0245233350156
+          ],
+          "numerical_full_column_rank": true,
+          "exact_optimum_claimed": false,
+          "correction_count": 0,
+          "initial_checks": {
+            "Phi": 1.2964789651332275e-29,
+            "schur_relative": 5.0921095140093515e-15,
+            "c_norm": 1.0000000000000688,
+            "rhs_sha256": null,
+            "actual_vs_thin_fixed_rhs": 6.211805235443291e-16,
+            "stationarity_UHr_fixed_rhs": 5.072794547988077e-15,
+            "AHr_absolute": 1.2739314097599215e-10,
+            "Hhat_solve_operation_relative": 1.1310082402949472e-17,
+            "port_absolute": 1.0193991475109877e-16
+          },
+          "least_squares_seconds": 23.66064032097347,
+          "driver": "gelsd",
+          "cond": 1e-12,
+          "repeated_Phi": 1.2964789651332275e-29,
+          "repeated_residual_difference": 0.0,
+          "thin_induced_Phi_scale": 3.356051875272792e-30,
+          "delta_i": 2.220446049250313e-14,
+          "decoder_gate": true
+        },
+        "known_z_relative": 1.8174133612853282e-12,
+        "homogeneous_recovery_operation_relative": 9.254561384722069e-17,
+        "full_manufactured_RHS_from_original_action": true,
+        "reference_used": false,
+        "physical_b_overwritten": false,
+        "qualified": true,
+        "state": {
+          "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v15/task042_v15_local_poly_20260930T093343685279Z/manufactured.npz",
+          "sha256": "7fb9d6c9ed6c279a1fa7f3ba4408215876a31835903bddb33f3bf313e5ecde1b",
+          "known_sha256": "fa6495a68a38981e361de889075867a4d7d1923f5854690ac04765596fc17917",
+          "rhs_sha256": "506c62cae6c750d7add1765837a65dba01fb4b5df8b31f004c3bd7a5019171e6",
+          "z_sha256": "09aa2fa5c337ffe98af6aa0a81eef7896f2ae88a79abdc13f02c829bb96958bc",
+          "c_sha256": "191db21bc34e5116c0ebd8f4e23bd49abc3b7c43ccebe07bd71b29f739d12322"
+        }
+      }
+    },
+    "LOCAL_NN": {
+      "decoder_qualified": true,
+      "basis": {
+        "family": "LOCAL_TRACE_REPRESENTATION_COMPARISON",
+        "actual_columns": 1544,
+        "main_forward": "block_Q_times_c",
+        "raw_gamma_writeback": false,
+        "Q_orthogonality": 1.7968440210884465e-15,
+        "original_action_pairing": [
+          0.0,
+          0.0,
+          0.0,
+          6.531199437792056e-16,
+          6.957982492431221e-16
+        ],
+        "Hhat_condition": 13284.16302612138,
+        "basis_times_seconds": {
+          "original_barS_columns": 151.70694004301913,
+          "A_economic_QR_stationarity": 28.35547824203968
+        },
+        "exact_full_space_optimum_claimed": false,
+        "payload_bytes": {
+          "decoder": 56302464,
+          "A": 448229376,
+          "stationarity_U": 448229376,
+          "RA": 38142976
+        }
+      },
+      "witness": {
+        "name": "LOCAL-NN-M1",
+        "numeric": {
+          "Phi": 9.549645186680593e-30,
+          "schur_relative": 4.37027348953829e-15,
+          "c_norm": 0.9999999999999967,
+          "rhs_sha256": null,
+          "actual_vs_thin_fixed_rhs": 6.916699770701036e-16,
+          "stationarity_UHr_fixed_rhs": 4.334800678886153e-15,
+          "AHr_absolute": 1.0247307524008905e-10,
+          "Hhat_solve_operation_relative": 9.363712354199647e-18,
+          "port_absolute": 7.864345489098516e-17,
+          "rank_A": 1544,
+          "A_singular_range": [
+            0.014237398495028444,
+            952.320575090014
+          ],
+          "numerical_full_column_rank": true,
+          "exact_optimum_claimed": false,
+          "correction_count": 0,
+          "initial_checks": {
+            "Phi": 9.549645186680593e-30,
+            "schur_relative": 4.37027348953829e-15,
+            "c_norm": 0.9999999999999967,
+            "rhs_sha256": null,
+            "actual_vs_thin_fixed_rhs": 6.916699770701036e-16,
+            "stationarity_UHr_fixed_rhs": 4.334800678886153e-15,
+            "AHr_absolute": 1.0247307524008905e-10,
+            "Hhat_solve_operation_relative": 9.363712354199647e-18,
+            "port_absolute": 7.864345489098516e-17
+          },
+          "least_squares_seconds": 23.749713100027293,
+          "driver": "gelsd",
+          "cond": 1e-12,
+          "repeated_Phi": 9.549645186680593e-30,
+          "repeated_residual_difference": 0.0,
+          "thin_induced_Phi_scale": 3.26199064288911e-30,
+          "delta_i": 2.220446049250313e-14,
+          "decoder_gate": true
+        },
+        "known_z_relative": 2.6167433597252115e-13,
+        "homogeneous_recovery_operation_relative": 8.640523847854584e-17,
+        "full_manufactured_RHS_from_original_action": true,
+        "reference_used": false,
+        "physical_b_overwritten": false,
+        "qualified": true,
+        "state": {
+          "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v15/task042_v15_local_nn_20260930T093930862192Z/manufactured.npz",
+          "sha256": "18648bd75fd8b44773a3cd0ea40a12b6f57dae401489ef303f3477c814f7d960",
+          "known_sha256": "3c60aad17a2c5552fc16724fc8edb4b66c2ae32ac03e3026d8788d1ba8dc90fc",
+          "rhs_sha256": "b0dde97e21e4a1523e135d958a0c90f8ca3dccd67ef255691f4d1b008520242a",
+          "z_sha256": "21297f66fb4aa7524cdc4617145827d0e83b30c4f121a11129493215d29255c5",
+          "c_sha256": "012f4623e40043b9d711680b6e5262bb56867b41defbb4c4938799c5aaa88914"
+        }
+      }
+    }
+  },
+  "checker": {
+    "status": "EVIDENCE_CONSISTENT",
+    "mismatches": [],
+    "raw_residual_and_decoder_recomputed": {
+      "LOCAL_POLY": {
+        "Phi": 0.3395741332657368,
+        "Schur": 0.8241045240328885,
+        "decoder_trace_relative": 0.0
+      },
+      "LOCAL_NN": {
+        "Phi": 0.33923978876653466,
+        "Schur": 0.8236987176954139,
+        "decoder_trace_relative": 0.0
+      },
+      "UNION_POLY": {
+        "Phi": 0.13401380918324368,
+        "Schur": 0.517713838299197,
+        "decoder_trace_relative": 0.0
+      },
+      "UNION_NN": {
+        "Phi": 0.16819175957992558,
+        "Schur": 0.5799857922051639,
+        "decoder_trace_relative": 0.0
+      }
+    },
+    "paired_capacity": true,
+    "matched_rank_by_patch": [
+      195,
+      195,
+      195,
+      195,
+      195,
+      195,
+      187,
+      187
+    ],
+    "matched_columns": 1544,
+    "independent_mapping_qualified": true,
+    "block_decoder_qualified": true,
+    "numerical_qualification": {
+      "LOCAL_POLY": true,
+      "LOCAL_NN": true,
+      "UNION_POLY": true,
+      "UNION_NN": true
+    },
+    "frozen_state_identity": {
+      "LOCAL_POLY": true,
+      "LOCAL_NN": true,
+      "UNION_POLY": true,
+      "UNION_NN": true
+    },
+    "strict_same_discrete": {
+      "G0": false,
+      "V14_S4": false,
+      "LOCAL-POLY": false,
+      "LOCAL-NN": false,
+      "UNION-POLY": false,
+      "UNION-NN": false,
+      "PROJECTION-POLY": false,
+      "PROJECTION-NN": false
+    },
+    "strict_qualified_states": 0,
+    "saved_statuses_not_trusted": true,
+    "solver_or_hidden_training_qualification_claimed": false
+  }
+}

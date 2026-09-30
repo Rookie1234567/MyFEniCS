@@ -1,3 +1,12 @@
+# Task042 V15：局部配对与组合完成，多项式组合更好
+
+| 分支/固定模型 | 实际结果与贡献 | 资源/边界 |
+|---|---|---|
+| task42_neural_coarse_inverse；0.7nm/384hex/p3/q15/40ports | L0-L3，局部1544/组合3098，4数值候选合格/8物理状态0严格资格；UNION-POLY Schur/native .517714/.200771、散射E/curl .283235/.283293，优于同容量NN .579986/.224921/.766071/.766241 | formal 2106.167431s、sampled tree4175888384B、swap/VRAM0、shared-workstation；source db0e68e519767554412c960af14b3c185012f9de |
+| 神经与下一步 | 隐藏固定，增维/表示收益不归为hidden训练；两参考投影场约.00113而方程仍差，原因INCONCLUSIVE | 只建议固定POLY空间FE测试函数能量行尺度对照，未实施；目标48h/p4参考/最大模型未合格或未授权，旧p4逆closed |
+
+[Response V15](task042_neural_coarse_inverse/response_v15.md)、[结果](task042_neural_coarse_inverse/outcomes/local_trace_representation_v15.md)、[费用](task042_neural_coarse_inverse/outcomes/records/resource_costs_v15.json)。只提交本分支，等待review，不merge；以下旧总账原文保留。
+
 # Task042 V14：正交decoder完成，物理资格仍为负
 
 | 执行分支／固定0.7nm micro | 完成／实际结果 | 时间／内存／后续 |

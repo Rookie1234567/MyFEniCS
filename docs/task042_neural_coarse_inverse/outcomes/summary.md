@@ -1,3 +1,26 @@
+# V15最新交付：局部与全局＋局部配对完成，物理仍不合格
+
+本批把合法有限元边/面系数按8区独立组合，比较固定随机神经特征和确定多项式；共同实际1544维，组合保留G0并加1538方向为3098。全部仍由原0.7nm/384hex/p3/q15/40通道方程耦合，hidden未训练。
+
+| 固定模型/方法；measured，无量纲 | 复容量 | 原Phi | Schur/native；限1e-6 | 散射E/curl；限1e-4 | 资格 |
+|---|---:|---:|---|---|---|
+| G0 | 1560 | 0.318179987294 | 0.797721740／0.309359507 | 0.734256828／0.734361605 | FAIL |
+| LOCAL-POLY | 1544 | 0.339574133266 | 0.824104524／0.319590851 | 0.578751074／0.578743743 | FAIL |
+| LOCAL-NN | 1544 | 0.339239788767 | 0.823698718／0.319433478 | 0.628221107／0.628213879 | FAIL |
+| UNION-POLY | 3098 | 0.134013809183 | 0.517713838／0.200771384 | 0.283235368／0.283293409 | FAIL |
+| UNION-NN | 3098 | 0.168191759580 | 0.579985792／0.224920683 | 0.766070574／0.766240878 | FAIL |
+
+| 完成/资源/边界 | 最新事实和证据 |
+|---|---|
+| L0/L1/L2/L3 | 完整实体/矩/MPC/制造/原作用与稳定LS合格；4无标签物理候选、8独立状态、0严格资格；[Response](../response_v15.md)、[结果](local_trace_representation_v15.md)、[Gate](records/qualification_and_dispatch_v15.json) |
+| 场/功率 | 最佳UNION-POLY total E/curl .029639/.029646、selected E/H .025817/.033178、复通道 .011884、能量 .030874仍FAIL。R00_s/p/total及全部R/T/A/A_volume是未合格诊断，见[CSV](records/local_candidate_comparison_v15.csv)与[40通道](records/channel_observables_v15.csv)，无official结果 |
+| 表示/神经/增维 | 局部场稍改善但原残差回升；组合POLY residual/field明显改善，增加维数参与；同容量NN更差，没有HIDDEN_TRAINING_GAIN。离线投影场约.00113而Schur>.9，原因仍INCONCLUSIVE |
+| 资源/真实source | formal 2106.167431s、同时采样树4175888384B≈3.889GiB、ownswap/VRAM0；source db0e68e519767554412c960af14b3c185012f9de；[费用](records/resource_costs_v15.json)、[run index](records/run_index_v15.json) |
+| 没有运行 | h/p/MPI/波长扫描、hidden训练、seed420620、新p4参考、最大模型/GPU/旧p4强逆；原最终0.7nm/48h仍未合格，目标规模费用与离散误差unknown |
+| 依赖/下一步 | research-only，新入口显式opt-in，旧历史原文保留；[变更依赖](changed_files.md)。仅建议固定POLY空间的FE测试函数能量行尺度对照，未实施，须下一review；不merge |
+
+以下所有旧“最新”都是历史，原结论与账不改写。
+
 # V14最新交付：新decoder合格，六固定点与两延伸点仍无物理资格
 
 直接正交decoder把高相关神经特征变成稳定的有限元trace组合，再由原方程求c及40端口。它保持原空间/方程，付出薄矩阵构造、QR/LS与Q存储成本；不是纯MLP推理，也不是旧头Gate通过。[Response V14](../response_v14.md)、[完整方法与结果](orthonormal_trace_reprofile_v14.md)。下方旧“最新”标题保留为历史。

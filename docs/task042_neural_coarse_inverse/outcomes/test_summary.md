@@ -1,3 +1,17 @@
+# V15测试与执行证据
+
+| 本地检查/阶段 | 实测结果/限制 |
+|---|---|
+| C1/C2/最终C3 focused pytest | 17/30/33 passed（重叠集合，不相加）；最后33项5.32s，监督7.719236s，包含实体周期/秩/块配对/复数非Hermitian/非零port/仿射恢复/原子writer/超时清场及伪造success反例 |
+| compileall / diffcheck / 六入口 | 通过；数值运行前clean source db0e68e519767554412c960af14b3c185012f9de，每dat独立stage；真实L0插值/MPC及两制造见证合格 |
+| raw checker source 8d6df6926fc6f5c1afc27491dc06255791fcc044 | EVIDENCE_CONSISTENT，实际冻结Phi/Schur/decoder重算、4个trace差0、8资格全部False；监督15.725563s/树520765440B/swap0；不新建S或求解 |
+| preflight偏差 | 额外WSL marker断言错用，shell未set-e；已有native ABI通过且重核_NATIVE/complex128/int64/MPI1通过。后续set-e；无ABI变更或正式重放 |
+| Ruff / full repository / MPI2/4 / CI | Ruff unavailable；其余not_run或未声明，按固定MPI1批次只做相关回归，不重装、不将本地通过称CI |
+| Markdown/GitHub | Review V12精确OID服务端4表3公式结构PASS；新文档本地与推送页另见[发布记录](records/publication_checks_v15.json)；浏览器glyph NOT_OBSERVED |
+| 最终文档合同／总账 | 新文档与新增历史前缀的表格、围栏、相对链接、旧正文逐字保护通过；总账5个小测试passed，监督1.821683s/树48287744B/swap0、后代清场；[本地合同](records/static_checks_v15.json)、[最终检查](records/final_checks_v15.json)。没有重新执行数值队列 |
+
+旧昂贵Gate由相同算子/数组复用，不重复旧campaign；历史测试原文保留。
+
 # V14最终测试与证据资格
 
 | 组件／目的 | 真实检查与结果 | 证据／限制 |

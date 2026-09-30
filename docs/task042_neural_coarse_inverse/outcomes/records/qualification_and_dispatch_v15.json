@@ -1,0 +1,112 @@
+{
+  "checker": {
+    "status": "EVIDENCE_CONSISTENT",
+    "mismatches": [],
+    "raw_residual_and_decoder_recomputed": {
+      "LOCAL_POLY": {
+        "Phi": 0.3395741332657368,
+        "Schur": 0.8241045240328885,
+        "decoder_trace_relative": 0.0
+      },
+      "LOCAL_NN": {
+        "Phi": 0.33923978876653466,
+        "Schur": 0.8236987176954139,
+        "decoder_trace_relative": 0.0
+      },
+      "UNION_POLY": {
+        "Phi": 0.13401380918324368,
+        "Schur": 0.517713838299197,
+        "decoder_trace_relative": 0.0
+      },
+      "UNION_NN": {
+        "Phi": 0.16819175957992558,
+        "Schur": 0.5799857922051639,
+        "decoder_trace_relative": 0.0
+      }
+    },
+    "paired_capacity": true,
+    "matched_rank_by_patch": [
+      195,
+      195,
+      195,
+      195,
+      195,
+      195,
+      187,
+      187
+    ],
+    "matched_columns": 1544,
+    "independent_mapping_qualified": true,
+    "block_decoder_qualified": true,
+    "numerical_qualification": {
+      "LOCAL_POLY": true,
+      "LOCAL_NN": true,
+      "UNION_POLY": true,
+      "UNION_NN": true
+    },
+    "frozen_state_identity": {
+      "LOCAL_POLY": true,
+      "LOCAL_NN": true,
+      "UNION_POLY": true,
+      "UNION_NN": true
+    },
+    "strict_same_discrete": {
+      "G0": false,
+      "V14_S4": false,
+      "LOCAL-POLY": false,
+      "LOCAL-NN": false,
+      "UNION-POLY": false,
+      "UNION-NN": false,
+      "PROJECTION-POLY": false,
+      "PROJECTION-NN": false
+    },
+    "strict_qualified_states": 0,
+    "saved_statuses_not_trusted": true,
+    "solver_or_hidden_training_qualification_claimed": false
+  },
+  "local_to_union": {
+    "admitted": true,
+    "reason": "BOTH_NUMERICALLY_QUALIFIED_PHYSICAL_NEGATIVE",
+    "reference_used": false
+  },
+  "strict_qualified": {
+    "G0": false,
+    "V14_S4": false,
+    "LOCAL-POLY": false,
+    "LOCAL-NN": false,
+    "UNION-POLY": false,
+    "UNION-NN": false,
+    "PROJECTION-POLY": false,
+    "PROJECTION-NN": false
+  },
+  "research_positive_signal": {
+    "LOCAL-POLY": false,
+    "LOCAL-NN": false,
+    "UNION-POLY": false,
+    "UNION-NN": false
+  },
+  "hidden_training": false,
+  "network_or_rank_scans": false,
+  "reference_feedback": false,
+  "stopping_reason": "FINITE_PAIRED_LOCAL_AND_CONDITIONAL_UNION_INVENTORY_COMPLETE",
+  "not_run": {
+    "new_p4_reference": "not authorized",
+    "maximum_0p7nm": "not authorized and discrete/capacity unknown",
+    "hidden_training": "fixed hidden batch",
+    "GPU": "CPU-only",
+    "old_p4_inverse": "closed",
+    "seed420620": "sealed"
+  },
+  "next_single_suggestion": "唯一下一建议（本批未实施）：保持 LOCAL-POLY 的1544维空间及相同物理RHS，预登记一次由原FE测试函数的 H(curl) 能量范数确定的残差行尺度对照；尺度只由网格／算子决定，禁止用REF7选权重，最终仍按原未缩放残差和全部场／功率门限审核。这检验当前系数欧氏残差的衡量方式是否造成场误差取舍，不保证补足遗漏方向；需要下一份review授权，不自动执行或扫描尺度。",
+  "suggestion_implemented": false,
+  "classification": "SPACE_EXPANSION_AND_POLYNOMIAL_FIELD_GAIN_NOT_QUALIFIED",
+  "independent_neural_feature_advantage": false,
+  "hidden_training_gain": false,
+  "interpretation": {
+    "localization": "local scattered fields improve modestly; original residual regresses; single-carrier change confounded against old G0",
+    "union": "larger global-plus-local POLY space improves residual and field; dimension increase contributes",
+    "neural": "LOCAL-NN tiny Schur improvement but worse field; UNION-NN worse than same-capacity POLY in residual and field",
+    "representation": "both local reference projections are close in trace and field but fail original equation; incomplete high-response directions and residual-metric tradeoff remain possible",
+    "unique_root_cause": "INCONCLUSIVE"
+  }
+}

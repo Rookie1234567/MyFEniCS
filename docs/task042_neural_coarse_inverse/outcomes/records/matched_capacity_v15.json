@@ -1,0 +1,193 @@
+{
+  "common_rank_by_patch": [
+    195,
+    195,
+    195,
+    195,
+    195,
+    195,
+    187,
+    187
+  ],
+  "original_rank_by_family": {
+    "POLY": [
+      195,
+      195,
+      195,
+      195,
+      195,
+      195,
+      187,
+      187
+    ],
+    "NN": [
+      195,
+      195,
+      195,
+      195,
+      195,
+      195,
+      195,
+      195
+    ]
+  },
+  "actual_columns": 1544,
+  "relative_local_rank_threshold": 1e-12,
+  "driver": "gesdd",
+  "rank_padding": false,
+  "rank_threshold_scanned": false,
+  "patch_records": {
+    "POLY": [
+      {
+        "patch": 0,
+        "rank": 195,
+        "zero_columns": [],
+        "singular_min": 0.3272249693132518,
+        "singular_max": 1.7116155657307002,
+        "column_norm_min": 0.30164070811093757,
+        "column_norm_max": 3.3818356988311296
+      },
+      {
+        "patch": 1,
+        "rank": 195,
+        "zero_columns": [],
+        "singular_min": 0.1700992683570507,
+        "singular_max": 1.980706243183019,
+        "column_norm_min": 0.2368796994498003,
+        "column_norm_max": 3.3818356988311313
+      },
+      {
+        "patch": 2,
+        "rank": 195,
+        "zero_columns": [],
+        "singular_min": 0.3272249693132522,
+        "singular_max": 1.7116155657307002,
+        "column_norm_min": 0.21811590736387015,
+        "column_norm_max": 3.3094469754778095
+      },
+      {
+        "patch": 3,
+        "rank": 195,
+        "zero_columns": [],
+        "singular_min": 0.1134205733847686,
+        "singular_max": 1.9807062431830191,
+        "column_norm_min": 0.16853191010042207,
+        "column_norm_max": 3.081727354269197
+      },
+      {
+        "patch": 4,
+        "rank": 195,
+        "zero_columns": [],
+        "singular_min": 0.19672618219298135,
+        "singular_max": 1.853283376030039,
+        "column_norm_min": 0.14548941739313037,
+        "column_norm_max": 3.045361413850384
+      },
+      {
+        "patch": 5,
+        "rank": 195,
+        "zero_columns": [],
+        "singular_min": 0.05890235808511445,
+        "singular_max": 2.201232912197876,
+        "column_norm_min": 0.11183039642556769,
+        "column_norm_max": 2.9978092433077936
+      },
+      {
+        "patch": 6,
+        "rank": 187,
+        "zero_columns": [],
+        "singular_min": 4.187845075373777e-16,
+        "singular_max": 1.8532833760300391,
+        "column_norm_min": 0.09559366262029922,
+        "column_norm_max": 2.9263467267218912
+      },
+      {
+        "patch": 7,
+        "rank": 187,
+        "zero_columns": [],
+        "singular_min": 4.0955796885609594e-16,
+        "singular_max": 2.2012329121978738,
+        "column_norm_min": 0.09559366262029913,
+        "column_norm_max": 2.700344305370656
+      }
+    ],
+    "NN": [
+      {
+        "patch": 0,
+        "rank": 195,
+        "zero_columns": [],
+        "singular_min": 2.017684523679581e-05,
+        "singular_max": 5.893072842569589,
+        "column_norm_min": 0.12463617775331748,
+        "column_norm_max": 3.3818356988311296
+      },
+      {
+        "patch": 1,
+        "rank": 195,
+        "zero_columns": [],
+        "singular_min": 1.7499517030308615e-05,
+        "singular_max": 5.993558364368638,
+        "column_norm_min": 0.1059239085104182,
+        "column_norm_max": 3.3818356988311313
+      },
+      {
+        "patch": 2,
+        "rank": 195,
+        "zero_columns": [],
+        "singular_min": 1.564541144957246e-05,
+        "singular_max": 5.996288179271617,
+        "column_norm_min": 0.10169843380783071,
+        "column_norm_max": 3.3094469754778095
+      },
+      {
+        "patch": 3,
+        "rank": 195,
+        "zero_columns": [],
+        "singular_min": 1.200065791343161e-05,
+        "singular_max": 6.100922846721678,
+        "column_norm_min": 0.08414756277689546,
+        "column_norm_max": 3.081727354269197
+      },
+      {
+        "patch": 4,
+        "rank": 195,
+        "zero_columns": [],
+        "singular_min": 1.6315150194434877e-05,
+        "singular_max": 5.971182438544949,
+        "column_norm_min": 0.11596063010557296,
+        "column_norm_max": 3.045361413850384
+      },
+      {
+        "patch": 5,
+        "rank": 195,
+        "zero_columns": [],
+        "singular_min": 1.2567237656626471e-05,
+        "singular_max": 6.110038570161551,
+        "column_norm_min": 0.09515687041697211,
+        "column_norm_max": 2.9978092433077936
+      },
+      {
+        "patch": 6,
+        "rank": 195,
+        "zero_columns": [],
+        "singular_min": 8.885278587638332e-06,
+        "singular_max": 6.129728121829158,
+        "column_norm_min": 0.08928114289042961,
+        "column_norm_max": 2.9263467267218912
+      },
+      {
+        "patch": 7,
+        "rank": 195,
+        "zero_columns": [],
+        "singular_min": 8.885278587661826e-06,
+        "singular_max": 6.129728121829163,
+        "column_norm_min": 0.08414756277689549,
+        "column_norm_max": 2.700344305370656
+      }
+    ]
+  },
+  "raw_setup": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v15/task042_v15_setup_20260930T093204740955Z/stage_result.json",
+    "sha256": "68129044c104847131b34c6dd634296addbeef6714a6125cd1fd86b84dba19d4"
+  }
+}

@@ -1,3 +1,7 @@
+# 当前入口：V15局部表示配对已完成
+
+最新正式合同[Review V12](review_report_v12.md)，回应[Response V15](response_v15.md)，[结果](outcomes/local_trace_representation_v15.md)、[summary](outcomes/summary.md)、[run index](outcomes/records/run_index_v15.json)。六个规定V15 dat已实现并实际执行；局部1544/组合3098、8状态0合格，多项式组合更好，无神经训练增量。旧p4路线关闭；全部有限队列已完成，等待review。以下“当前/最新”和初始化命令都是保留历史，不是待执行步骤。
+
 # 当前入口：V14正交trace与有限hidden位置重求
 
 最新正式执行合同：[Review V11](review_report_v11.md)；本轮已完成：[Response V14](response_v14.md)、[方法与结果](outcomes/orthonormal_trace_reprofile_v14.md)、[统一summary](outcomes/summary.md)、[raw Gate/分流](outcomes/records/qualification_and_dispatch_v14.json)、[run index](outcomes/records/run_index_v14.json)。新家族ORTHONORMAL_NEURAL_FE_BASIS，6固定+2有界新点、独立10状态，decoder合格但物理全部失败；等待review。下方旧最新导航/初始化命令为历史，不需要再执行Git准备或旧campaign。

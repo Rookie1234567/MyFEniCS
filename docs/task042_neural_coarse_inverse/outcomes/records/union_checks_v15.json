@@ -1,0 +1,194 @@
+{
+  "UNION_POLY": {
+    "status": "PHYSICAL_SOLVE_COMPLETE",
+    "decoder_qualified": true,
+    "checks": {
+      "G0_reconstruction": 0.0,
+      "Phi_not_worse_than_G0": true,
+      "origin_Phi": 0.31817998729368413,
+      "margin": 1e-08
+    },
+    "basis": {
+      "family": "LOCAL_TRACE_REPRESENTATION_COMPARISON",
+      "actual_columns": 3098,
+      "main_forward": "block_Q_times_c",
+      "raw_gamma_writeback": false,
+      "Q_orthogonality": 6.922973594510213e-16,
+      "original_action_pairing": [
+        0.0,
+        0.0,
+        0.0,
+        1.3498909220942598e-15,
+        1.3536955995865664e-15
+      ],
+      "Hhat_condition": 13284.16302612138,
+      "basis_times_seconds": {
+        "original_barS_columns": 291.7125295170117,
+        "A_economic_QR_stationarity": 103.02708939800505
+      },
+      "exact_full_space_optimum_claimed": false,
+      "payload_bytes": {
+        "decoder": 899361792,
+        "A": 899361792,
+        "stationarity_U": 899361792,
+        "RA": 153561664
+      }
+    },
+    "union_inventory": {
+      "G0": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v14/task042_v14_decoder_20260930T062524338233Z/ORIGIN/Q.npy",
+        "sha256": "a60fa21eae281049db72f3b27989f31f2a9d0fdd89820e35a3011c05c23dfc36",
+        "shape": [
+          18144,
+          1560
+        ],
+        "canonical_rows": true
+      },
+      "q": 1538,
+      "spaces": {
+        "POLY": {
+          "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v15/task042_v15_union_poly_20260930T094454893111Z/POLY_complement.npy",
+          "sha256": "4f879b18460a4987f8627c7ccedecb86692505274277d56a972f179046960cc7",
+          "shape": [
+            18144,
+            1538
+          ],
+          "decomposition": {
+            "raw_q": 1538,
+            "absolute_threshold": 1e-10,
+            "projection_block_columns": 32,
+            "reorthogonalizations": 1,
+            "full_square_projection_constructed": false,
+            "global_Q_preserved": true,
+            "singular_range": [
+              7.2170036837571075e-16,
+              0.9999999999995298
+            ]
+          },
+          "seconds": 175.8817866849713,
+          "common_q": 1538,
+          "actual_union_columns": 3098
+        },
+        "NN": {
+          "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v15/task042_v15_union_poly_20260930T094454893111Z/NN_complement.npy",
+          "sha256": "6d853ae086b8b2a33df010c93b3bd09e3ea77aa96f70ff3922f0a4f0e4366c1d",
+          "shape": [
+            18144,
+            1544
+          ],
+          "decomposition": {
+            "raw_q": 1544,
+            "absolute_threshold": 1e-10,
+            "projection_block_columns": 32,
+            "reorthogonalizations": 1,
+            "full_square_projection_constructed": false,
+            "global_Q_preserved": true,
+            "singular_range": [
+              6.197451175075472e-08,
+              0.9999995173154365
+            ]
+          },
+          "seconds": 175.7495660330169,
+          "common_q": 1538,
+          "actual_union_columns": 3098
+        }
+      }
+    }
+  },
+  "UNION_NN": {
+    "status": "PHYSICAL_SOLVE_COMPLETE",
+    "decoder_qualified": true,
+    "checks": {
+      "G0_reconstruction": 0.0,
+      "Phi_not_worse_than_G0": true,
+      "origin_Phi": 0.31817998729368413,
+      "margin": 1e-08
+    },
+    "basis": {
+      "family": "LOCAL_TRACE_REPRESENTATION_COMPARISON",
+      "actual_columns": 3098,
+      "main_forward": "block_Q_times_c",
+      "raw_gamma_writeback": false,
+      "Q_orthogonality": 6.919550095279297e-16,
+      "original_action_pairing": [
+        0.0,
+        0.0,
+        0.0,
+        1.2889724673624588e-15,
+        1.2327390691106096e-15
+      ],
+      "Hhat_condition": 13284.16302612138,
+      "basis_times_seconds": {
+        "original_barS_columns": 293.55102887307294,
+        "A_economic_QR_stationarity": 107.99305724794976
+      },
+      "exact_full_space_optimum_claimed": false,
+      "payload_bytes": {
+        "decoder": 899361792,
+        "A": 899361792,
+        "stationarity_U": 899361792,
+        "RA": 153561664
+      }
+    },
+    "union_inventory": {
+      "G0": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v14/task042_v14_decoder_20260930T062524338233Z/ORIGIN/Q.npy",
+        "sha256": "a60fa21eae281049db72f3b27989f31f2a9d0fdd89820e35a3011c05c23dfc36",
+        "shape": [
+          18144,
+          1560
+        ],
+        "canonical_rows": true
+      },
+      "q": 1538,
+      "spaces": {
+        "POLY": {
+          "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v15/task042_v15_union_poly_20260930T094454893111Z/POLY_complement.npy",
+          "sha256": "4f879b18460a4987f8627c7ccedecb86692505274277d56a972f179046960cc7",
+          "shape": [
+            18144,
+            1538
+          ],
+          "decomposition": {
+            "raw_q": 1538,
+            "absolute_threshold": 1e-10,
+            "projection_block_columns": 32,
+            "reorthogonalizations": 1,
+            "full_square_projection_constructed": false,
+            "global_Q_preserved": true,
+            "singular_range": [
+              7.2170036837571075e-16,
+              0.9999999999995298
+            ]
+          },
+          "seconds": 175.8817866849713,
+          "common_q": 1538,
+          "actual_union_columns": 3098
+        },
+        "NN": {
+          "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v15/task042_v15_union_poly_20260930T094454893111Z/NN_complement.npy",
+          "sha256": "6d853ae086b8b2a33df010c93b3bd09e3ea77aa96f70ff3922f0a4f0e4366c1d",
+          "shape": [
+            18144,
+            1544
+          ],
+          "decomposition": {
+            "raw_q": 1544,
+            "absolute_threshold": 1e-10,
+            "projection_block_columns": 32,
+            "reorthogonalizations": 1,
+            "full_square_projection_constructed": false,
+            "global_Q_preserved": true,
+            "singular_range": [
+              6.197451175075472e-08,
+              0.9999995173154365
+            ]
+          },
+          "seconds": 175.7495660330169,
+          "common_q": 1538,
+          "actual_union_columns": 3098
+        }
+      }
+    }
+  }
+}

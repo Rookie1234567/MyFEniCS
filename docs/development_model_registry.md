@@ -1,3 +1,12 @@
+# Task042 V15模型登记：局部随机特征/多项式与配对组合，research-only
+
+| 模型/身份 | 方法与容量 | measured资格 |
+|---|---|---|
+| task042_v15_fixed_0p7nm_p3_micro；原384hex/p3/q15/40ports、canonical USER Si、physical2b532f… | 8盒完整canonical实体，单原入射载波；POLY65与seed420906固定NN65，匹配1544复列；G0+共同补空间各3098列 | LOCAL双方原Schur约.824；UNION-POLY .517714/散射E .283235、UNION-NN .579986/.766071；全部NOT_QUALIFIED，无hidden训练dataset/更新 |
+| decoder/source/资源 | 逐块Qc/精确40Hhat闭合/原仿射恢复；纯方程LS、不参考初始化或训练；source db0e68e519767554412c960af14b3c185012f9de，大Q/U/权重/hash在NN-Lab ignored artifact | formal 2106.167431s/树4175888384B、swap0/VRAM0；新artifact约1.020GB，LS工作区计入；shared-workstation性能INCONCLUSIVE |
+
+[表示及权重身份](task042_neural_coarse_inverse/outcomes/records/basis_inventory_v15.json)、[对照](task042_neural_coarse_inverse/outcomes/records/local_candidate_comparison_v15.csv)、[Response](task042_neural_coarse_inverse/response_v15.md)。不替代旧模型、生产默认或合格FE求解；目标48h仍unknown，merge未批准。以下总账历史原文保留。
+
 # Task042 V14模型登记：ORTHONORMAL_NEURAL_FE_BASIS，research-only
 
 | 模型／物理身份 | 实际方法和目的 | measured结果／资格 |

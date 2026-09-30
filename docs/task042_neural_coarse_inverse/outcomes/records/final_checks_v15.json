@@ -1,0 +1,91 @@
+{
+  "schema": "task042.final-checks.v15",
+  "utc": "2026-09-30T11:03:38.958725+00:00",
+  "focused_numeric_tests": {
+    "final": 33,
+    "C1": 17,
+    "C2": 30,
+    "source": "8d6df6926fc6f5c1afc27491dc06255791fcc044",
+    "not_additive": true
+  },
+  "docs_pytest": {
+    "passed": 5,
+    "worker_output": {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v15/docs_tests/worker.log",
+      "sha256": "ce1f519fa6e1b452010290282332dcf806e510c2abc5a75bbaf2ada555b13993"
+    },
+    "supervisor": {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v15/docs_tests/summary.json",
+      "sha256": "d43c6657732f35f52be537f716bedbd20654ab9517efdee516bef0b479b238a7"
+    },
+    "elapsed_seconds": 1.8216834680642933,
+    "RSS_peak_bytes": 48287744,
+    "own_swap_peak_bytes": 0,
+    "cleared": true
+  },
+  "local_static": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v15.json",
+    "sha256": "9084c5b841c3becc9fea1cb6fbedd332944b0442280d7eaad9ddc8145ec1e092",
+    "status": "PASS"
+  },
+  "no_active_Task042_numerical_processes": true,
+  "remaining_exact_cwd_python_processes": [],
+  "own_lock_released": true,
+  "neighbor_tasks_not_controlled": true,
+  "final_memory": {
+    "mem_total_bytes": 2163100385280,
+    "mem_available_bytes": 953043935232,
+    "effective_total_bytes": 2163100385280,
+    "effective_available_bytes": 953043935232,
+    "reserve_bytes": 353748992000,
+    "launch_cap_bytes": 17179869184,
+    "planning_cap_bytes": 17179869184,
+    "cgroup_limits": [],
+    "system_reserve_bytes": 216310038528,
+    "neighbor_growth_allowance_bytes": 137438953472,
+    "shared_workstation": true
+  },
+  "final_pressure": {
+    "some": {
+      "avg10": 0.0,
+      "avg60": 0.0,
+      "avg300": 0.0,
+      "total": 467897.0
+    },
+    "full": {
+      "avg10": 0.0,
+      "avg60": 0.0,
+      "avg300": 0.0,
+      "total": 466620.0
+    }
+  },
+  "window": {
+    "schema": "task042.autonomous-window.v15",
+    "start_utc": "2026-09-30T08:44:30+00:00",
+    "start_monotonic": 682864.861018633,
+    "start_scope": "conservative anchor before first completed read-only identity observation at 08:44:39 UTC; includes initial inspection",
+    "stop_heavy_utc": "2026-09-30T12:29:30+00:00",
+    "deadline_utc": "2026-09-30T12:44:30+00:00",
+    "heavy_limit_seconds": 13500,
+    "total_limit_seconds": 14400,
+    "cleanup_reserve_seconds": 900,
+    "review_expected_commit": "c0a759c29c08cc377a3fde3b81c5f4c34c24710a",
+    "prior_v14_head": "61947232a135bd9d7ab168c8d88bf849b918c733",
+    "historical_formal_lower_bound_seconds": 14670.412103474839,
+    "historical_auxiliary_unknown_preserved": true,
+    "elapsed_seconds": 8348.959403514862,
+    "heavy_remaining_seconds": 5151.040596485138,
+    "total_remaining_seconds": 6051.040596485138
+  },
+  "numeric_source": "db0e68e519767554412c960af14b3c185012f9de",
+  "final_source_not_changed_by_document_checks": true,
+  "bookkeeping_deviations": [
+    "initial extra preflight WSL marker error retained in resource_costs; actual native ABI valid",
+    "doc test preparation used selected_cpu rather than actual audit cpu key; failed before any pytest launch; corrected using fresh audit and actual cpu; no numerical replay",
+    "read-only record inspection initially requested nonexistent solver.log; actual worker.log retained; no numerical replay"
+  ],
+  "formal_numerical_repairs_or_replays": 0,
+  "ruff": "UNAVAILABLE_NO_INSTALL",
+  "full_repository": "NOT_RUN",
+  "CI": "NOT_CLAIMED"
+}

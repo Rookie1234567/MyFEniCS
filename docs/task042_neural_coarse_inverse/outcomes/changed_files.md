@@ -1,3 +1,17 @@
+# V15变更与selective merge依赖
+
+| 组 | 数值/文件变化与依赖 | 验证/顺序与边界 |
+|---|---|---|
+| production numerical/core | 原Maxwell/FE/材料/MPC/DtN/恢复及普通default保持 | 无新生产求解资格，不提升失败研究路径 |
+| research-only core | local_trace_features/geometry/decoder/head/study/window：完整矩的8组、匹配SVD块decoder、固定原LS与一次配对组合 | features/metadata→decoder→head→study；33相关测试、L0-L3 fresh evidence，物理FAIL |
+| reusable runner/watchdog | 既有V14 Stage仅可注入IO/window/limits，旧默认与门限保持；task042_shared只加V15显式profile，复用原整树监督 | writer/subreaper原子与清场回归；不改邻任务策略 |
+| research IO/runner | local_trace_representation IO与薄runner、run_case/profile显式分派、固定JSON和6dat | 核心之后；验证输入/source/hash/冻结参考屏障，one-run |
+| checker/benchmark | local_trace_evidence_check、check_task042_v15、小证据反例 | 从raw/哈希/残差/真实decoder重算，无新求解；之后审阅compact records |
+| compact evidence/docs | response_v15、outcome/records/journal、最新README/summary/tests/changes及两总账条目 | 保留历史原文，等待review，merge未批准 |
+| do-not-merge | 完整map、raw库/块Q/补U/旧G0/action/moment/REF7、results/venv/cache/JIT/TMP | ignored NN-Lab；A是可再生内存workspace，未删除旧负证据 |
+
+以下历史变更原文保留。
+
 # V14变化与selective merge依赖
 
 | 依赖组 | 变化／数值行为 | 验证／推荐顺序与边界 |
