@@ -54,6 +54,16 @@
       "test": "Ruff/compile/local Markdown, corrected actual browser table right-side captures",
       "retry": "one bounded corrected browser attempt on only new V7/V8 key pages; no numerical replay",
       "old_costs_preserved": true
+    },
+    {
+      "root_cause": "final_process_probe_self_string_match",
+      "failure": "initial metadata probe matched embedded search strings in its own sandbox/bash argv, not numerical workers",
+      "hypothesis": "substring across full cmdline is not executable/argv qualification; default sandbox proc scope unsuitable for native host confirmation",
+      "change": "read-only native host probe filters actual Python executable, run_case/module argv and canonical own cwd; checks own flock nonblocking",
+      "test": "active Task42extra worker list empty and numerical lock free; host inspection pid967155",
+      "retry": "one corrected read-only probe; no signals or numerical retry",
+      "cost_scope": "conservative direct/current/final allowance",
+      "old_costs_preserved": true
     }
   ]
 }

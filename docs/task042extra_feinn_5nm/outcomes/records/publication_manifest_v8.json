@@ -81,7 +81,7 @@
         "benchmarks/render_task42extra.py"
       ],
       "numerical_behavior": "original JSON/complex sample/power/denominator/label/resource recomputation; no solver; scoped v8 docs/render",
-      "evidence": "10 E synthetic tests, raw checker, local Markdown; table-owned overflow capture correction qualified statically and awaits corrected browser",
+      "evidence": "10 E synthetic tests + raw frozen record arithmetic + local Markdown; 5 actual GitHub pages/22 tables/8 formulas/38 screenshot hashes and sampled wide-table/formula visual",
       "dependencies": [
         "qualified original raw record schemas",
         "research-only",
@@ -122,7 +122,7 @@
         "docs/task042extra_feinn_5nm/response_v8.md"
       ],
       "numerical_behavior": "append V8; retain old task/review/negative and interrupted histories; numerical/document sources distinct",
-      "evidence": "hash-bound original records and local Markdown; actual DOM/visual separate",
+      "evidence": "actual numerical/source/artifact identities, preserved negative histories; exact published blob DOM and sampled visual qualified",
       "dependencies": [
         "all previous groups"
       ]
@@ -161,7 +161,7 @@
     "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v8.json": "15b05c5c1788fb589e5e5be0605d5fd92a0b42b0633b773324a678f31e26b920",
     "docs/task042extra_feinn_5nm/outcomes/records/markdown_check_v8.json": "52a985e7864bca0aa0ecb6f870c19d786aca2cd111a35604116064da82f9005a",
     "docs/task042extra_feinn_5nm/outcomes/records/phase_checks_v8.json": "f0aed1426d59083074744b7cec4452f957bf24e64faaee4a6adf66575f274cf2",
-    "docs/task042extra_feinn_5nm/outcomes/records/repair_log_v8.json": "157f87a817a3c75d308020ee12178d7efe04f80808f02ee17620ca4d7d687363",
+    "docs/task042extra_feinn_5nm/outcomes/records/repair_log_v8.json": "2712449f3b7a9bb0ae783bba0460428a50f6b2d7e8907fb47610acdc5d5044e6",
     "docs/task042extra_feinn_5nm/outcomes/records/representation_comparison_channels_v8.csv": "32ef0d43a3a25a401a7a254f93b6ff24a5e4a0f12f671a94cb7ceaf3d957cccf",
     "docs/task042extra_feinn_5nm/outcomes/records/representation_comparison_v8.csv": "9fff127aaeccabc3d9263aa0e89c76a808cc2ed3f590b711e4744f346dba78b6",
     "docs/task042extra_feinn_5nm/outcomes/records/representation_comparison_v8.json": "6386a92d872fe79b5667fab2ddb06d58f1557105ba78de9367a6c30ddbc7664b",
@@ -212,7 +212,15 @@
   "p4_new_numeric_attempts": 1,
   "NN_fault_recoveries": 0,
   "old_history_preserved": true,
-  "status": "CORRECTED_COST_AND_VIEW_PUBLICATION_READY",
+  "status": "V8_AUTHORIZED_MATRIX_COMPLETE",
   "local_markdown_qualified": true,
-  "first_publication_commit": "3fc0a6a884c87399ca9dfdb8f1c0ae1dcb8a4f9d"
+  "first_publication_commit": "3fc0a6a884c87399ca9dfdb8f1c0ae1dcb8a4f9d",
+  "corrected_document_publication_commit": "25301718ef4e96e57b7349d86b582ef1d8411636",
+  "render_qualified_on_exact_published_blob": "25301718ef4e96e57b7349d86b582ef1d8411636",
+  "all_numeric_and_light_descendants_cleared": true,
+  "final_host_worker_check": {
+    "active_task42extra_worker_pids": [],
+    "numerical_lock_free": true,
+    "scope": "native host actual Python argv and canonical cwd; no signals or neighboring changes"
+  }
 }

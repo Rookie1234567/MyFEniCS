@@ -43,6 +43,13 @@
         "benchmarks/finalize_task42extra_render_v3.py": "91300607b7645dae4c0e1b338a74d91c0252bbf350e24207922d6425ee34b1c4"
       },
       "source_binding": "precommit tested working snapshot; formal sources and final blobs distinct; E verified current bytes identical to its clean implementation commit"
+    },
+    {
+      "bound_committed_source": "25301718ef4e96e57b7349d86b582ef1d8411636",
+      "module_sha256": {
+        "benchmarks/render_task42extra.py": "98d02ccf32b0b57c55e650c01e92fcfbd2b6f90ea06da52b28eb224aa906161e"
+      },
+      "source_binding": "static-qualified working snapshot equals published commit; actual corrected browser witnessed own-table scroll and closed-stage costs"
     }
   ],
   "supervised_attempts": [
@@ -542,6 +549,147 @@
         "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "source_state": "development_worktree; not formal PDE provenance"
       }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v8_e_github_render_corrected_20260930T233312867961Z",
+      "summary_sha256": "3b6457d79ee265a15c0e5d9b1f219c09a35ac242e7893ba9bbbb58a4602baf5f",
+      "log": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v8_e_github_render_corrected_20260930T233312867961Z/supervision/worker.log",
+        "sha256": "fa068f4b4533df5e483d29d36a15b045c2914020cd34229f6b0a8471972330b8"
+      },
+      "summary": {
+        "workflow_deadline_seconds": 600.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          965984,
+          966033,
+          966036,
+          966091,
+          966094,
+          966115,
+          966121,
+          966178,
+          966215,
+          966220,
+          966227,
+          966241,
+          966256,
+          966369
+        ],
+        "sampled_process_tree_rss_peak_bytes": 1975857152,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 1655733,
+            "pswpout_pages": 2364290
+          },
+          "end": {
+            "pswpin_pages": 1655733,
+            "pswpout_pages": 2364290
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 992566177792,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 992566177792,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 75,
+        "elapsed_seconds": 48.9710237539839,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": "development_worktree; not formal PDE provenance"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v8_e_render_finalize_20260930T233657243436Z",
+      "summary_sha256": "a29b41efa5e3f1a86e761090d3d5c248b1a8cbd5c6221ee51954d5662ec70d72",
+      "log": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v8_e_render_finalize_20260930T233657243436Z/supervision/worker.log",
+        "sha256": "af9d45455bf9979731a42e8db3dc21dedea136a4e06e0791943353ca20076431"
+      },
+      "summary": {
+        "workflow_deadline_seconds": 600.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          966779
+        ],
+        "sampled_process_tree_rss_peak_bytes": 51458048,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 1655733,
+            "pswpout_pages": 2364290
+          },
+          "end": {
+            "pswpin_pages": 1655733,
+            "pswpout_pages": 2364290
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 992048078848,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 992048078848,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 4,
+        "elapsed_seconds": 1.9041364809963852,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": "development_worktree; not formal PDE provenance"
+      }
     }
   ],
   "formal_interfaces": "phase_checks_v8.json and authority_v8.json",
@@ -648,7 +796,16 @@
       ]
     }
   },
-  "GitHub": "PENDING_CORRECTED_VISUAL_CAPTURE",
+  "GitHub": {
+    "status": "GITHUB_RENDERED_VIEW_PASS_DOM_AND_SAMPLED_VISUAL",
+    "record": "render_check_v8.json",
+    "published_commit": "25301718ef4e96e57b7349d86b582ef1d8411636",
+    "pages": 5,
+    "tables": 22,
+    "math": 8,
+    "screenshots_hashed": 38,
+    "sampled_visual_images": 6
+  },
   "retained_browser_attempt": {
     "status": "DOM_CAPTURED_VISUAL_RIGHT_COLUMNS_INCOMPLETE",
     "published_commit": "3fc0a6a884c87399ca9dfdb8f1c0ae1dcb8a4f9d",

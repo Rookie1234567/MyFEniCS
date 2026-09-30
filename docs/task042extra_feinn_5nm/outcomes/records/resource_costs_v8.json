@@ -3,18 +3,18 @@
   "previous_conservative_seconds": 49007.27663535159,
   "old_lost_attempt_charged_seconds": 3284,
   "V8_formal_seconds": 25049.592198546277,
-  "V8_auxiliary_seconds": 113.27661173779052,
+  "V8_auxiliary_seconds": 164.1517719727708,
   "direct_current_and_final_allowance_seconds_conservative": 120,
-  "V8_batch_seconds": 25282.868810284068,
-  "V8_remaining_seconds": 17917.131189715932,
-  "original_total_conservative_seconds": 74290.14544563566,
+  "V8_batch_seconds": 25333.743970519048,
+  "V8_remaining_seconds": 17866.256029480952,
+  "original_total_conservative_seconds": 74341.02060587064,
   "original_16h_applies_to_V8": false,
   "group_seconds": {
     "A": 709.7902576149208,
     "B": 428.68762609909754,
     "C": 18041.45831126708,
     "D": 5806.658827921958,
-    "E": 296.27378738101106
+    "E": 347.14894761599135
   },
   "group_limits_seconds": {
     "A": 7200,
@@ -1209,6 +1209,17 @@
       "group": "E"
     },
     {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v8_e_github_render_corrected_20260930T233312867961Z",
+      "summary_sha256": "3b6457d79ee265a15c0e5d9b1f219c09a35ac242e7893ba9bbbb58a4602baf5f",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "charged_seconds": 48.9710237539839,
+      "peak_simultaneous_tree_RSS_bytes": 1975857152,
+      "own_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "group": "E"
+    },
+    {
       "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v8_e_markdown_20260930T231332594621Z",
       "summary_sha256": "85b9f9361f0afaddd6b733fa0728f6f1c944af0eea01985c54f05a78427202a1",
       "classification": "COMPLETED",
@@ -1237,6 +1248,17 @@
       "leader_exit_code": 0,
       "charged_seconds": 5.811684104963206,
       "peak_simultaneous_tree_RSS_bytes": 97132544,
+      "own_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "group": "E"
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v8_e_render_finalize_20260930T233657243436Z",
+      "summary_sha256": "a29b41efa5e3f1a86e761090d3d5c248b1a8cbd5c6221ee51954d5662ec70d72",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "charged_seconds": 1.9041364809963852,
+      "peak_simultaneous_tree_RSS_bytes": 51458048,
       "own_tree_swap_peak_bytes": 0,
       "descendants_cleared": true,
       "group": "E"
