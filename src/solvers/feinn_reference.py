@@ -62,13 +62,17 @@ def original_augmented_matrix(model, packet):
     return augmented, float(difference)
 
 
-def exact_solve(model, packet, artifact, marker):
+def exact_solve(model, packet, artifact, marker, *, audit_options=None):
     """Reference-only MUMPS with symbolic capacity, destruction before physics."""
     from mpi4py import MPI
     from petsc4py import PETSc
     from src.solvers.fullspace_v17_p3_oracle import _MumpsFactor
 
     start = perf_counter()
+    # Only the separately reviewed authority audit supplies these hooks.
+    # Existing callers retain their historical lifecycle and packet schema.
+    check_budget = (audit_options or {}).get("check_budget", lambda *_: None)
+    check_budget("reference assembly")
     n = packet.size + packet.np
     nnz_upper = (
         packet.nc * packet.dim**2
@@ -123,11 +127,19 @@ def exact_solve(model, packet, artifact, marker):
     factor = None
     b = x = residual = None
     try:
+        check_budget("reference symbolic")
         factor = _MumpsFactor(matrix)
         t = perf_counter()
         factor.symbolic(matrix)
         info = factor.info((21, 22, 29))
         record["symbolic_info"] = info
+        if audit_options is not None:
+            memory_mb = int(info["infog"]["17"])
+            if memory_mb <= 0:
+                raise RuntimeError("P4_REFERENCE_RESOURCE_BLOCKED_SYMBOLIC_ESTIMATE_UNAVAILABLE")
+            record["symbolic_memory_settings"] = factor.symbolic_memory_settings()
+            record["symbolic_estimate_meaning"] = "MUMPS INFOG(16)/(17): estimated factorization working memory maximum/sum over processes in decimal MB; MPI1; INFOG(17) plus independent conversion/workspace reserve"
+            record["reference_role"] = "REFERENCE_ONLY"
         estimate = (int(info["infog"]["17"]) + 1) * 1_000_000
         conversion_reserve = record["nnz"] * 32 + 128 * n + 256 * 2**20
         record.update(
@@ -142,12 +154,17 @@ def exact_solve(model, packet, artifact, marker):
         factor.set_memory_limit_mb(
             int((12 * 2**30 - rss_bytes() - conversion_reserve) // 1_000_000)
         )
+        if audit_options is not None:
+            record["numeric_memory_limit_decimal_MB"] = factor.get_icntl(23)
+            record["symbolic_estimate_source"] = "https://www.mcs.anl.gov/petsc/petsc-3.10/src/mat/impls/aij/mpi/mumps/mumps.c.html"
+        check_budget("reference numeric")
         t = perf_counter()
         factor.numeric(matrix)
         record.update(
             numeric_seconds=perf_counter() - t, numeric_info=factor.info((21, 22, 29))
         )
         marker("reference_numeric", record)
+        check_budget("reference solve")
         b = matrix.createVecLeft()
         b.array[:] = np.r_[packet.a["g"], packet.a["gp"]]
         x = matrix.createVecRight()
@@ -185,7 +202,11 @@ def exact_solve(model, packet, artifact, marker):
             > 1e-10
         ):
             raise RuntimeError("REFERENCE_NATIVE_RESIDUAL_FAILED")
-        np.savez(artifact / "reference_state.npz", c=c, alpha=alpha)
+        if audit_options is None:
+            np.savez(artifact / "reference_state.npz", c=c, alpha=alpha)
+        else:
+            audit_options["save_packet"](c, alpha, record)
+            record["minimal_recovery_packet_saved_before_factor_release"] = True
     finally:
         record["rss_before_release_bytes"] = rss_bytes()
         if factor is not None:

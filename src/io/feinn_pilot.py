@@ -11,6 +11,9 @@ from src.io.run_specification import RunSpecification
 ROOT = Path(__file__).resolve().parents[2]
 DESIGN = ROOT / "input/task042extra_feinn_5nm/design_v1.json"
 STAGES = {
+    "v7_p_transfer_checks": ("fe", 1200),
+    "v7_p4_reference": ("fe", 3600),
+    "v7_p3_p4_compare": ("fe", 1200),
     "v6_operator_readout_checks": ("ml", 600),
     "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT": ("ml", 1800),
     "v6_residual_readout_reconstruct": ("ml", 600),
@@ -62,6 +65,8 @@ def load_pilot(path):
     ):
         raise InputError("Task42extra accepts only one frozen explicit stage")
     item = config["task42extra"]
+    authority = item.get("stage", "").startswith("v7_")
+    authority_policy = dict(audit_kind="DISCRETIZATION_AUTHORITY_AUDIT", reference_role="REFERENCE_ONLY", training_reference_allowed=False)
     residual_readout = item.get("stage", "").startswith("v6_") or item.get("stage") == "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT"
     readout = residual_readout or (
         item.get("stage", "").startswith("v5_")
@@ -76,11 +81,13 @@ def load_pilot(path):
     )
     if residual_readout:
         policy.update(features_reference_exposed=True, readout_rhs_uses_reference=False)
-    allowed = {"stage", "run_id", "design_sha256"} | (set(policy) if readout else set())
+    allowed = {"stage", "run_id", "design_sha256"} | (set(policy) if readout else set()) | (set(authority_policy) if authority else set())
     if set(item) != allowed or item["stage"] not in STAGES:
         raise InputError("Task42extra stage inventory mismatch")
     if readout and any(item[k] is not value for k, value in policy.items()):
         raise InputError("reference-exposed readout policy required")
+    if authority and any(item[k] != value for k, value in authority_policy.items()):
+        raise InputError("explicit DISCRETIZATION_AUTHORITY_AUDIT required")
     if (
         not isinstance(item["run_id"], str)
         or not item["run_id"].startswith("task42extra_")
@@ -93,11 +100,11 @@ def load_pilot(path):
     design = json.loads(DESIGN.read_text())
     mode, seconds = STAGES[item["stage"]]
     return RunSpecification(
-        identity=dict(model_id="M5-full-p3", run_id=item["run_id"]),
+        identity=dict(model_id="M5-p3-p4-authority-audit" if authority else "M5-full-p3", run_id=item["run_id"]),
         geometry=design["geometry"],
         materials=design["materials"],
         incidence=design["incidence"],
-        discretization=design["finite_element"],
+        discretization=dict(design["finite_element"], degree=4) if authority else design["finite_element"],
         boundary=design["boundary"],
         method=dict(kind="research_full_FEINN", stage=item["stage"]),
         solver=dict(preconditioner="task42extra_full_fe_opt_in"),
@@ -117,6 +124,7 @@ def load_pilot(path):
             design_sha256=digest,
             identity_hash_meaning="frozen design; actual mesh/operator hashes bound after export",
             **(policy if readout else {}),
+            **(authority_policy if authority else {}),
         ),
         source_path=path,
         raw_input_bytes=raw,

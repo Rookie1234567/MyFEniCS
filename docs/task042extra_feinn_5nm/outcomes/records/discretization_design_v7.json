@@ -1,0 +1,83 @@
+{
+  "schema": "task42extra.discretization-design.v7",
+  "status": "PREREGISTERED_NOT_RUN",
+  "review_release": "ecabef960cdf1ac194ef293ff83c65b14e8b7ba3",
+  "reviewed_result": "fa83e9cb751ecd213e04ce79804cda4643fc3232",
+  "original_base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "expected_hashes": {
+    "native": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+    "reference": "0c3c0574a8c1eddcadfb56268e00c08e55d5cb15d44c0c76e873fcea0c467ff7",
+    "material": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+    "mesh": "78e294e0337292d2750f587ddf394aaa868bd726f8b1104d4eae6a68db039086",
+    "modes": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e"
+  },
+  "capacity_derived": {
+    "kind": "derived simultaneous allocation bound, not measured RSS or factor prediction",
+    "inventory": {
+      "cells": 384,
+      "degree": 4,
+      "cell_dimension": 300,
+      "full_fe_rows": 78936,
+      "full_trace_rows": 37464,
+      "independent_trace_rows": 33792,
+      "interior_rows": 41472,
+      "edges": 1494,
+      "faces": 1312,
+      "periodic_slaves": 3672
+    },
+    "independent_rows": 75264,
+    "augmented_rows": 75304,
+    "nnz_upper": 40581160,
+    "full_cell_tensor_bytes": 552960000,
+    "resident_upper_bytes": 663748608,
+    "assembly_conversion_reserve_bytes": 3783363712,
+    "allocation_upper_bytes": 4447112320,
+    "MPI_copies": 1,
+    "factor_bytes": "UNKNOWN_UNTIL_SYMBOLIC",
+    "planning_cap_bytes": 12884901888
+  },
+  "only_change": "N1curl p3->p4; M5/5nm/384hex/h1.25/q15/full40ports unchanged",
+  "gates": {
+    "reference_residual": 1e-10,
+    "recovery": 1e-10,
+    "energy_absorption": 1e-05,
+    "transfer_action": 1e-10,
+    "q_difference": 1e-10,
+    "p_field_samples_channels": 0.001,
+    "p_power": 0.0001
+  },
+  "budget": {
+    "previous_seconds": 45161.81665198447,
+    "batch_seconds": 7200,
+    "U0_seconds": 1200,
+    "main_seconds": 3600,
+    "U2_seconds": 1200,
+    "cutoff_reserve_seconds": 150,
+    "save_reserve_seconds": 120,
+    "direct_final_allowance_seconds": 120
+  },
+  "resource": {
+    "CPU_only": true,
+    "MPI": 1,
+    "math_threads": 1,
+    "light_GiB": 2,
+    "warn_GiB": 12,
+    "hard_GiB": 16,
+    "swap": 0,
+    "neighbor_growth_GiB": 384
+  },
+  "p4_solve_initial_guess": "none; direct fixed original RHS; no p3/NN/Phi/Q",
+  "new_Gram_or_training": false,
+  "q30": "one final difference-only pass; never PDE reassembly",
+  "phase_candidate": "PLAN_ONLY_NO_TRAINER",
+  "historical_e4_not_run_preserved": true,
+  "audit_kind": "DISCRETIZATION_AUTHORITY_AUDIT",
+  "reference_role": "REFERENCE_ONLY",
+  "reference_used_for_training": false,
+  "training_reference_allowed": false,
+  "neural_solver_qualified": false,
+  "production_initialization_allowed": false,
+  "continuum_convergence_claim": false,
+  "mesh_accuracy_qualified": false,
+  "port_truncation_qualified": false
+}

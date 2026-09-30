@@ -33,7 +33,7 @@ def physical_config(design, degree=3):
     ), material
 
 
-def build_model(design, degree=3, marker=lambda *_: None):
+def build_model(design, degree=3, marker=lambda *_: None, *, dtn_quadrature_degree=None):
     from mpi4py import MPI
     from petsc4py import PETSc
     from src.constraints.floquet_3d import build_double_floquet_mpc
@@ -51,6 +51,10 @@ def build_model(design, degree=3, marker=lambda *_: None):
         raise RuntimeError("MPI1 complex128/int64 required")
     start = perf_counter()
     cfg, material = physical_config(design, degree)
+    if dtn_quadrature_degree is not None:
+        # Explicit authority audit freezes the original surface rule while p
+        # changes; ordinary callers retain the original automatic rule.
+        cfg.stage4_dtn_quadrature_degree = int(dtn_quadrature_degree)
     _, data, space, centers, tags, notch, axes = full_space(design, degree)
     floquet = build_double_floquet_mpc(space, data, cfg)
     modes, rows, mode_hash = build_dynamic_mode_inventory(cfg)

@@ -15,6 +15,9 @@ def main():
         raise SystemExit("usage: launch_task42extra_durable.py <one-run.dat>")
     spec = load_pilot(sys.argv[1])
     stages = {
+        "v7_p_transfer_checks": ("v7_p_transfer_checks", "task42extra-v7-checks"),
+        "v7_p4_reference": ("v7_p4_reference", "task42extra-v7-reference"),
+        "v7_p3_p4_compare": ("v7_p3_p4_compare", "task42extra-v7-compare"),
         "v6_operator_readout_checks": ("v6_operator_readout_checks", "task42extra-v6-checks"),
         "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT": ("v6_frozen_feature_residual", "task42extra-v6-readout"),
         "v6_residual_readout_reconstruct": ("v6_residual_readout_reconstruct", "task42extra-v6-reconstruct"),
