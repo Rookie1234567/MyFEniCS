@@ -1,0 +1,165 @@
+{
+  "schema": "task42extra.targeted-tests.v7",
+  "local_only": true,
+  "CI_claim": false,
+  "full_pytest_run": false,
+  "environment_reinstalled": false,
+  "qualified_test_groups": [
+    {
+      "bound_committed_source": "76d863e43d2fc1b5bed8b1c835aa6f43bb2c93d2",
+      "source_binding": "precommit qualified working snapshot; listed final blobs verified identical",
+      "module_sha256": {
+        "src/test/test_feinn_discretization_audit.py": "ff344c48a7b50f691043403b9299c4a5a46767dfcb185015486a75ee40c6bde8",
+        "src/test/test_feinn_p_transfer_fe.py": "69867a2e727d372d6661fbcac4726a3b9ce991c7333d1fd9a68ae3666fdba83d",
+        "src/solvers/feinn_discretization_audit.py": "4ef4c94fe0b839c09ef7826d506fb3baa99fabe8b4844adb09acee7794505f93",
+        "src/solvers/feinn_fem.py": "848c8db7789cee80a4bb00accd43e33eab2f0d50642dbf951b7ec88a926f5d0c"
+      },
+      "tests_passed": 10,
+      "pytest_seconds": 1.47,
+      "Ruff": "PASS",
+      "compileall": "PASS",
+      "supervision_directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v7_u0_surface_targeted_20260930T121456842213Z",
+      "summary_sha256": "9dae9f1a612bed1707f2ab9f44093bf235fb53ced5440a1f51447a47e8a977ff",
+      "log": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/development/tests_v7_qualified.log",
+        "sha256": "ebf51e530387e7396c1044558342f10b4e5f3610ee527f012a223a6ce7a6020e"
+      }
+    },
+    {
+      "bound_committed_source": "c2bfd3ce2ae5d499b6d8afe6a0b3fc3cf743a2a9",
+      "source_binding": "precommit qualified working snapshot; listed final blobs verified identical",
+      "module_sha256": {
+        "src/test/test_feinn_authority_checker.py": "475ddb6cd0285836578f2dffa3eb9493c9061f2095d29ba676d60424e9859dd2",
+        "src/test/test_feinn_authority_runner.py": "3090275208b1d7c401d7aa125fe07c74d261d3b89ad7510134c731aae97c7685",
+        "src/runners/feinn_workflow.py": "e74f17f98d8cfa5a7fb1271234f7e2172b69f570531b648dc80cb0ff5f89bcf7",
+        "benchmarks/check_task42extra_v7.py": "c0ab4e4d36f1d1ac5466116cdd56d9ea805d743e6cf170136c6d3629161544b9"
+      },
+      "tests_passed": 10,
+      "pytest_seconds": 0.18,
+      "Ruff": "PASS",
+      "compileall": "PASS",
+      "supervision_directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v7_post_guard_checker_final_20260930T132648332859Z",
+      "summary_sha256": "5bc073be85fb8374152dd4c6b86f082d8ac25af077cd94afcaaa65e3e1be683c",
+      "log": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v7_post_guard_checker_final_20260930T132648332859Z/supervision/worker.log",
+        "sha256": "b8079e7565140e6d030b508fb11f14f7bd601f3b296b613ecf07e395676d4b78"
+      }
+    }
+  ],
+  "formal_U0": "p_transfer_checks_v7.json",
+  "raw_checker": "gate_decisions_v7.json",
+  "retained_failures": [
+    "U0 fixture degree mismatch: 8 pure tests pass, FE fixture fails; fixed before C1",
+    "U0 Ruff E741: tests passed; variable renamed before C1",
+    "C2 Ruff E731: 10 tests passed; fixture lambda replaced before C2"
+  ],
+  "repaired_launch_formally_replayed": false,
+  "completed_p4_solve": false,
+  "resource_record": "resource_costs_v7.json",
+  "Markdown": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/development/markdown_check_v7.json",
+    "sha256": "592e7251950a21cb29c2b13e1316355a4562cff341a7b2a47a86f7afaa26dc7f",
+    "result": {
+      "schema": "task42extra.markdown-local-check.v7",
+      "status": "LOCAL_MARKDOWN_PASS",
+      "scope": "new Review V6 and only new V7 sections; historical Markdown contracts reused",
+      "pages": [
+        {
+          "path": "docs/task042extra_feinn_5nm/review_report_v6.md",
+          "sha256": "373b67b1450cc8db6d3eb82f4c892a0986c8f7650a98447cb0ba94b0021deadb",
+          "checked_scope": "entire page",
+          "markdown_tables": 3,
+          "parsed_tables": 3,
+          "math_fences": 2,
+          "links": 8
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/response_v7.md",
+          "sha256": "cfe248c7897536a8e667edec8d141e5d8bf3aa741adca889864efdf92be4c2af",
+          "checked_scope": "entire page",
+          "markdown_tables": 5,
+          "parsed_tables": 5,
+          "math_fences": 0,
+          "links": 10
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/p3_p4_authority_v7.md",
+          "sha256": "bba6862658f0d75de1ec9ca5f25460fa2459714195b96c8e4bf9352fe58cc052",
+          "checked_scope": "entire page",
+          "markdown_tables": 6,
+          "parsed_tables": 6,
+          "math_fences": 0,
+          "links": 10
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/phase_representation_plan_v7.md",
+          "sha256": "518cb2ff53eb5fc113d2b418263177de1d8591d35d178de7e474a3f76f5f75bd",
+          "checked_scope": "entire page",
+          "markdown_tables": 2,
+          "parsed_tables": 2,
+          "math_fences": 1,
+          "links": 1
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+          "sha256": "338d64975f6dbd25b2252ad69341c62bfcc38a2b576831b826f8e12954c3818d",
+          "checked_scope": "Task42extra Review V6 后续：V7",
+          "markdown_tables": 2,
+          "parsed_tables": 2,
+          "math_fences": 0,
+          "links": 9
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+          "sha256": "0ca72a0572bf4a575dfca62da48464527119bcff441508d86220c37cfda9dd6b",
+          "checked_scope": "Review V6 后续 V7 定向资格",
+          "markdown_tables": 1,
+          "parsed_tables": 1,
+          "math_fences": 0,
+          "links": 4
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+          "sha256": "76aec7d9d93dbe3fec834b2c0f108f6035fd1a0145ced1502e28314001dcdb5b",
+          "checked_scope": "Review V6 后续 V7 文件级边界",
+          "markdown_tables": 1,
+          "parsed_tables": 1,
+          "math_fences": 0,
+          "links": 1
+        },
+        {
+          "path": "docs/development_progress.md",
+          "sha256": "2605748081d293d278b78a84e569de90e865f351196b6d57ecc1be96ad6e10a0",
+          "checked_scope": "2026-09-30 Task42extra V7",
+          "markdown_tables": 2,
+          "parsed_tables": 2,
+          "math_fences": 0,
+          "links": 5
+        },
+        {
+          "path": "docs/development_model_registry.md",
+          "sha256": "796189ed54f3a4e839a0511a388e7c7f4dcb42861e85365bf836afac19735eb0",
+          "checked_scope": "3.44.6 Task42extra Review V6 后续",
+          "markdown_tables": 3,
+          "parsed_tables": 3,
+          "math_fences": 0,
+          "links": 5
+        }
+      ]
+    }
+  },
+  "GitHub_render": "PENDING_PUBLISHED_BROWSER",
+  "auxiliary_admission_block": {
+    "status": "RESOURCE_WINDOW_UNAVAILABLE_LIGHT_ADMISSION",
+    "worker_started": false,
+    "log_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/development/document_contract_v7.log",
+    "log_sha256": "b5e5e1f9b04cd59602b90cbca1a6bf2d2862ddc8c0acfbf4e8223634834d556c",
+    "elapsed_seconds": "NOT_RETAINED_PRE_WORKER_NO_SUMMARY",
+    "accounting": "contained in conservative 120s direct/current/final allowance; not added twice",
+    "later_pressure_reading": {
+      "some_avg10": 0.01,
+      "full_avg10": 0.01
+    },
+    "followup": "one new admission passed unchanged thresholds; document contract completed"
+  }
+}

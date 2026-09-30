@@ -104,3 +104,19 @@ C1正式段的保存留白有计时偏差，作为规则未满足记录；C2已�
 定向文件、ABI、日志hash见[tests](records/targeted_tests_v6.json)和[真实T0](records/residual_readout_checks_v6.json)。旧资格复用；数值核心与测试文件在C1后无数学改动，后续checker仅去掉无用import，不重复昂贵原算子审核。费用、一次状态探针index大小写错误及纠正保留在V6直接/辅助账；主阶段实际先收尾再启动ML，没有重复主阶段。
 
 [本地文档/实际浏览器证据](records/render_check_v6.json)只覆盖Review V5和新V6小节。
+
+## Review V6 后续 V7 定向资格
+
+提高一次有限元阶次只改变每个单元表达场细节的能力。本轮测试先确认两个阶次描述同一物理场时仍得到相同的电场、旋度和周期恢复，再允许唯一准确参考尝试；接口通过不等于参考求解完成。
+
+| 本地检查 / 实测 | 结果 | 证据和限制 |
+| --- | --- | --- |
+| C1 数组/跨阶 FE targeted tests | 10 passed，1.47s | 非零复场、方向/MPC、体和DtN q15、数组容量、原子packet、显式stage；Ruff/compileall通过 |
+| 正式 U0 公共场/curl/MPC及原action | 全部≤1e-10 | 两种规模、完整边面内部和三非零复方向；实测75264独立复FE/40端口，symbolic容量未取得 |
+| C2 停止后入口/checker targeted tests | 10 passed，0.18s | 原字段故意损坏不能通过；近零分母、导入延迟截止和启动前p4身份；Ruff/compileall通过。没有正式重放修正后的入口 |
+| 独立原记录 checker | U0通过，p4时间阻塞，U2未运行 | 核对唯一启动、原hash、请求时钟、清场摘要、原样本与旧not_run；不求解或造新参考 |
+| p4原残差/物理/U2 q30差值 | NOT_RUN | 唯一参考在数值截止前未取得恢复packet；不是精度超限、OOM或数值通过 |
+
+C1资格对应实际源码76d863e43d2fc1b5bed8b1c835aa6f43bb2c93d2；C2资格对应c2bfd3ce2ae5d499b6d8afe6a0b3fc3cf743a2a9。轻测试在提交前完成，最终相关文件字节与指定commit逐项一致，见[targeted tests/source/log hashes](records/targeted_tests_v7.json)。U0第一次FE fixture degree错误、之后Ruff E741、C2 Ruff E731都保留日志与费用，修正后最小定向复测通过；没有full pytest、环境重装、CI或其他项目资格声明。
+
+复用已有Linux complex128/int64 ABI及环境证据；FE未顶层import Torch。已测跨阶配对不代替一次阶次变化的物理差异。本地只解析新Review V6和本轮9页/新节的围栏、表列及链接；[真实GitHub rendered view](records/render_check_v7.json)单独绑定已发布blob、DOM和抽看的截图，无法取得则记录blocked。本地解析结果和最终费用后续写入[tests](records/targeted_tests_v7.json)与[resource](records/resource_costs_v7.json)。

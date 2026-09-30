@@ -121,3 +121,16 @@ V2实现提交 `19c725efd27ae5daedba8e77d2ad98375711bb71` 绑定D0/D1/D2正式�
 | do-not-merge | Phi/Q/B/QR大数组、NPZ/PT、timelines/browserprofiles | 全部ignored；新参数没有optimizer续训资格 |
 
 四阶段实际source为a2f6ea85a24cb5e7c233d266aaab9911fc695dcc；之后checker/文档HEAD不充当数值源码。旧数学/数据证据保持原source与hash，不声称V6提升production。新stage路径在input/task042extra_feinn_5nm/v6_*.dat；仅当前分支，没有修改旧Task042或其他项目/全机配置。
+
+## Review V6 后续 V7 文件级边界
+
+| 依赖组 / 建议审阅顺序 | 文件与行为 | 测试及fresh证据 / 合入边界 |
+| --- | --- | --- |
+| production numerical/core | 无新生产默认；原p3材料、方程、背景、端口和历史参考不改 | 没有新神经或目标模型资格，不建议生产晋级 |
+| research-only core，第1组 | src/solvers/feinn_discretization_audit.py；feinn_reference.py 的可选 audit hooks；feinn_fem.py 的显式DtN q15参数 | C1 ten targeted tests＋U0；p4参考未完成、比较未运行；新factor仅REFERENCE_ONLY，普通默认行为保留 |
+| reusable runner/watchdog，第2组 | src/io/feinn_pilot.py、src/runners/feinn_workflow.py、scripts/launch_task42extra_durable.py；三个v7 dat | opt-in audit白名单、独立index；C2启动前身份/长原生调用截止修正10项定向tests，没有正式重放；依赖第1组 |
+| checker/benchmark，第3组 | benchmarks/check_task42extra_v7.py；V5资源聚合器可选新factor计数；scoped docs/render显式7参数；四个V7 test文件 | 原字段重算，不实现新求解器；保留失败参考的RESOURCE_ONLY记录，不能伪造qualified index；默认历史版本不变 |
+| compact evidence/docs，第4组 | response_v7、p3_p4_authority_v7、phase_representation_plan_v7及records；summary/进度/模型/tests/changed_files新增节 | C1实际source与C2停止后修正分开，原中断manifest字节保留，旧e4_p4与V1–V6不覆盖；真实渲染另核 |
+| do-not-merge | venv/cache、native/矩阵/场/原日志、tmux sockets、浏览器profile/截图 | 大数组全部ignored；本批相位只有设计，无训练器或权重；任何p4标签训练须新授权 |
+
+本轮只有一次真实p4启动，装配预算受控停止后不自动第二次factor。实际运行source为76d863e43d2fc1b5bed8b1c835aa6f43bb2c93d2；C2修正/checker为c2bfd3ce2ae5d499b6d8afe6a0b3fc3cf743a2a9。后续文档HEAD不替代实算source；保护的task/reviews未修改。文件级清单、依赖、测试和建议顺序见[publication manifest](records/publication_manifest_v7.json)，仅供审阅，master merge未批准。

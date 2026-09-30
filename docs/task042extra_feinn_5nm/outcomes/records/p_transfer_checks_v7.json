@@ -1,0 +1,347 @@
+{
+  "schema": "task42extra.p-transfer.v7",
+  "source_sha": "76d863e43d2fc1b5bed8b1c835aa6f43bb2c93d2",
+  "transfer_pass": true,
+  "action_pass": true,
+  "small_transfer": {
+    "common_points_per_cell": 27,
+    "common_point_E_relative": 4.637202194332173e-16,
+    "common_point_curl_relative": 4.826549688461039e-16,
+    "MPC_embedding_relative": 5.943828711667371e-16,
+    "p3_nonzero_complex_norm": 38.215109924623235,
+    "p4_internal_nonzero_norm": 125.73363376912991,
+    "orientation_classes": 5,
+    "phase_x": [
+      0.9999981684573771,
+      -0.0019139179426754464
+    ],
+    "phase_y": [
+      1.0,
+      0.0
+    ],
+    "passed": true
+  },
+  "M5_transfer": {
+    "common_points_per_cell": 27,
+    "common_point_E_relative": 4.585989825425385e-16,
+    "common_point_curl_relative": 4.866254261666559e-16,
+    "MPC_embedding_relative": 3.340637044953412e-16,
+    "p3_nonzero_complex_norm": 252.8064841234068,
+    "p4_internal_nonzero_norm": 852.7211224155717,
+    "orientation_classes": 5,
+    "phase_x": [
+      0.9999981684573771,
+      -0.0019139179426754464
+    ],
+    "phase_y": [
+      1.0,
+      0.0
+    ],
+    "passed": true
+  },
+  "action": {
+    "status": "PASS",
+    "samples": [
+      {
+        "original_native_relative": 2.2123405178595903e-15,
+        "adjoint_dot_relative": 8.34930552165592e-18,
+        "augmented_native_relative": 0.0,
+        "original_port_operation_relative": 2.2001922081161447e-17,
+        "arbitrary_interior_norm": 288.7522134980029
+      },
+      {
+        "original_native_relative": 2.1553824728274967e-15,
+        "adjoint_dot_relative": 1.1081461796275156e-17,
+        "augmented_native_relative": 0.0,
+        "original_port_operation_relative": 3.9557236915576935e-17,
+        "arbitrary_interior_norm": 287.5162535767326
+      },
+      {
+        "original_native_relative": 2.207033724397619e-15,
+        "adjoint_dot_relative": 2.9800085243043773e-18,
+        "augmented_native_relative": 0.0,
+        "original_port_operation_relative": 4.395641692522324e-17,
+        "arbitrary_interior_norm": 288.2245291318759
+      }
+    ],
+    "nonzero_FE_and_port_load_relative": 6.482039709464761e-18,
+    "nonzero_port_load_operation_relative": 3.0157599571439573e-17,
+    "actual_blocks": "[V B; -D H], A=V+B solve(H,D), f=g-B solve(H,gp)",
+    "port_original_diagonal_min": 0.022843986783899702,
+    "port_original_diagonal_max": 75.00000000000001,
+    "explicit_port_inverse_created": false,
+    "full_FE_retained": 75264
+  },
+  "independent_families": {
+    "edge": 4992,
+    "face": 28800,
+    "interior": 41472
+  },
+  "identity": {
+    "material": {
+      "status": "MATERIAL_READY_USER_SUPPLIED",
+      "material_table_id": "SI_OPTICAL_CONSTANTS_USER_20260929_V1",
+      "canonical_path": "/home/fenics/Projects/NN-Lab-V2/input/materials/si_optical_constants_v1.json",
+      "material_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "query_wavelength_nm": "5.0",
+      "nominal_wavelength_nm": "5",
+      "source_wavelength_nm": "5",
+      "delta": "0.00603145547",
+      "beta": "0.00435380777",
+      "n_decimal": [
+        "0.99396854453",
+        "0.00435380777"
+      ],
+      "epsilon_decimal": [
+        "0.9879545118729884805480",
+        "0.0086550959446206099962"
+      ],
+      "source_kind": "repository_input/user_authorized",
+      "source": {
+        "review_path": "docs/task042_neural_coarse_inverse/review_report_v4.md",
+        "review_commit": "18084a6213570e26a0a0941e628717f2c63fd00a",
+        "review_blob": "a0e0c106970eab91271d61981810544146c4a32f"
+      },
+      "alias_reason": "exact registered wavelength",
+      "time_convention": "exp(-i omega t)",
+      "external_dataset_version": "not_provided",
+      "n_loaded": [
+        0.99396854453,
+        0.00435380777
+      ],
+      "epsilon_loaded": [
+        0.9879545118729887,
+        0.00865509594462061
+      ],
+      "air_n": [
+        1.0,
+        0.0
+      ],
+      "mu_r": [
+        1.0,
+        0.0
+      ]
+    },
+    "mode_manifest_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e",
+    "channels": 40,
+    "degree": 4,
+    "mesh_coordinates_sha256": "78e294e0337292d2750f587ddf394aaa868bd726f8b1104d4eae6a68db039086",
+    "geometry_cell_dofs_sha256": "cf08f3ab6f669fb8e2e8f2b4ec7c8c10885c8940877f6c16ab062ce0ab811599",
+    "cell_tags_sha256": "4c3e6d3a6dedeba8a995bb69487c52e25ae41528ee03bb237d6e2edb1643e65b",
+    "centers_sha256": "7ee6f1a990f09edc233dd713bb47a48f7e189045c18670133ca8871df9d4b417",
+    "cells": 384,
+    "actual_material_cell_counts": {
+      "1": 200,
+      "2": 48,
+      "3": 136
+    },
+    "actual_notch_cells": 8,
+    "nonseparable_y_z_witness": true,
+    "native_rows": 78936,
+    "slaves": 3672,
+    "dtn_quadrature_degree": 15,
+    "full_fe_setup_seconds": 24.325181621010415,
+    "full_independent_rows": 75264,
+    "interior_rows": 41472,
+    "local_tensor_classes": 8,
+    "local_tensor_payload_bytes": 11520000,
+    "packet_payload_bytes": 23295240,
+    "packet_array_hashes": {
+      "F": "6e8c618396cc0fb66f1fb46b84286436d2f5689c123cd486e88d72d70baa7411",
+      "classes": "bbad46f587fe6266103890de9661c0b48e3f25ea29dad626c65edcb2527f0453",
+      "cell_dofs": "f29bf2038f2c1d2b3f9578ec7e6d5376a3c23d89eb18b13140d3bc4d41c085fa",
+      "masters": "d2f0f32fbb6075133a76d1061c6847fa61589b51cae00a10cf64ed2c2ea756c8",
+      "slaves": "a87d1fdc81bfa2a62c475c002b715e30bce50a001b146c7e78f595923e57e448",
+      "erows": "110e38d2417955654dc1349809d48085114aa9874d20b2c9ee31e23dc92d5685",
+      "eids": "02324478cef65259c3b75f07304d391b3f2e7a7fa08e326e1d1b75de7a09b200",
+      "evals": "d2733cc5e003164579fff5d7f6fd4ab6c3e2b421112a0658bbf07a2efce283b9",
+      "br": "bb7be85ef29b1678be57f49350bfadf06efb9fc878b18a52a803436a2b5fbe90",
+      "bp": "98189c8ce8d73e64b6c587432826e2f148030d40d939f79af422f8e7fc04aebd",
+      "bv": "f6f4bf8f13925a1af4c481d4179546d71bd14bc2f703d66c51f2c642799de8c9",
+      "dr": "bb7be85ef29b1678be57f49350bfadf06efb9fc878b18a52a803436a2b5fbe90",
+      "dp": "98189c8ce8d73e64b6c587432826e2f148030d40d939f79af422f8e7fc04aebd",
+      "dv": "71a7b2a601e93e505b35fb91db55dabc381e3d2ff5921f47e7db50e4ee10e592",
+      "H": "3dbacb47276526493d296e426a612d6bc7c631aa5473431d3dc7520bd7cfb531",
+      "full_rows": "daf7a5433f9afe3595912aeb7069e2d210f199b1bdaee3eacdeabad604138175",
+      "idofs": "02ad92a9826b13bd0ed8f3e4e02a66d279fbe2e19a5a2d0f208964919e64bdde",
+      "g": "33414c634fa24750c639596c18b13deeaa8b8c2f84f68df499db9c023514613a",
+      "gp": "9e132485d5107211de325a45e7917cbe3e4b5b9cde3e4ee91d7d2102317759ee",
+      "total_g": "a432dd5064645a226fdcb2f0fbaa76517c80f90b201a56e52b7243aaa68c380b",
+      "background": "0332c5006d136e5fa8c3cad8b073323eaa5f90d2052afd77f9818ec74d207d0d",
+      "background_alpha": "5267c6336faa5009b675c92cd3dc65b44c071f961ee253ef9f18f5f5fff6f1c4"
+    },
+    "rhs": {
+      "generation": "dtn_port_modal_physical_rhs",
+      "role": "physical_maxwell_rhs",
+      "degree": 4,
+      "phase_application": "finalized_floquet_mpc_once",
+      "mode_count": 40,
+      "mode_manifest_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e"
+    },
+    "affine_background_native_relative": 8.381726711575339e-12,
+    "export_seconds": 113.2029074949678,
+    "global_Maxwell_matrix_created": false,
+    "interior_elimination": false
+  },
+  "array_capacity": {
+    "kind": "derived simultaneous allocation bound, not measured RSS or factor prediction",
+    "inventory": {
+      "cells": 384,
+      "degree": 4,
+      "cell_dimension": 300,
+      "full_fe_rows": 78936,
+      "full_trace_rows": 37464,
+      "independent_trace_rows": 33792,
+      "interior_rows": 41472,
+      "edges": 1494,
+      "faces": 1312,
+      "periodic_slaves": 3672
+    },
+    "independent_rows": 75264,
+    "augmented_rows": 75304,
+    "nnz_upper": 40581160,
+    "full_cell_tensor_bytes": 552960000,
+    "resident_upper_bytes": 663748608,
+    "assembly_conversion_reserve_bytes": 3783363712,
+    "allocation_upper_bytes": 4447112320,
+    "MPI_copies": 1,
+    "factor_bytes": "UNKNOWN_UNTIL_SYMBOLIC",
+    "planning_cap_bytes": 12884901888
+  },
+  "physics_equivalence_fields": {
+    "mesh_coordinates_sha256": {
+      "p3": "78e294e0337292d2750f587ddf394aaa868bd726f8b1104d4eae6a68db039086",
+      "p4": "78e294e0337292d2750f587ddf394aaa868bd726f8b1104d4eae6a68db039086",
+      "equal": true
+    },
+    "geometry_cell_dofs_sha256": {
+      "p3": "cf08f3ab6f669fb8e2e8f2b4ec7c8c10885c8940877f6c16ab062ce0ab811599",
+      "p4": "cf08f3ab6f669fb8e2e8f2b4ec7c8c10885c8940877f6c16ab062ce0ab811599",
+      "equal": true
+    },
+    "cell_tags_sha256": {
+      "p3": "4c3e6d3a6dedeba8a995bb69487c52e25ae41528ee03bb237d6e2edb1643e65b",
+      "p4": "4c3e6d3a6dedeba8a995bb69487c52e25ae41528ee03bb237d6e2edb1643e65b",
+      "equal": true
+    },
+    "centers_sha256": {
+      "p3": "7ee6f1a990f09edc233dd713bb47a48f7e189045c18670133ca8871df9d4b417",
+      "p4": "7ee6f1a990f09edc233dd713bb47a48f7e189045c18670133ca8871df9d4b417",
+      "equal": true
+    },
+    "mode_manifest_sha256": {
+      "p3": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e",
+      "p4": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e",
+      "equal": true
+    },
+    "cells": {
+      "p3": 384,
+      "p4": 384,
+      "equal": true
+    },
+    "channels": {
+      "p3": 40,
+      "p4": 40,
+      "equal": true
+    },
+    "actual_material_cell_counts": {
+      "p3": {
+        "1": 200,
+        "2": 48,
+        "3": 136
+      },
+      "p4": {
+        "1": 200,
+        "2": 48,
+        "3": 136
+      },
+      "equal": true
+    },
+    "actual_notch_cells": {
+      "p3": 8,
+      "p4": 8,
+      "equal": true
+    },
+    "dtn_quadrature_degree": {
+      "p3": 15,
+      "p4": 15,
+      "equal": true
+    },
+    "physical_parameters": {
+      "wavelength_nm": 5.0,
+      "kx": {
+        "real": 1.2564456695248023,
+        "imag": 0.0
+      },
+      "ky": {
+        "real": 0.0,
+        "imag": 0.0
+      },
+      "bounds_nm": [
+        [
+          -5.0,
+          5.0
+        ],
+        [
+          -3.75,
+          3.75
+        ],
+        [
+          -1.25,
+          8.75
+        ]
+      ],
+      "n_air": {
+        "real": 1.0,
+        "imag": 0.0
+      },
+      "n_substrate": {
+        "real": 0.99396854453,
+        "imag": 0.00435380777
+      },
+      "n_grating": {
+        "real": 0.99396854453,
+        "imag": 0.00435380777
+      },
+      "mu_r": {
+        "real": 1.0,
+        "imag": 0.0
+      },
+      "incident_theta_deg": 89.0,
+      "incident_phi_deg": 0.0,
+      "polarization_kind": "s",
+      "amplitude": {
+        "real": 1.0,
+        "imag": 0.0
+      },
+      "time_convention": "exp(-i omega t)",
+      "physical_configuration_source": "unchanged hash-bound design_v1 and physical_config; only degree argument=4",
+      "MPC_phase_x": {
+        "real": 0.9999981684573771,
+        "imag": -0.0019139179426754464
+      },
+      "MPC_phase_y": {
+        "real": 1.0,
+        "imag": 0.0
+      },
+      "volume_quadrature_degree": 15,
+      "original_complete_Fourier_DtN": true
+    }
+  },
+  "counts": {
+    "A": 3,
+    "AH": 3,
+    "audit": 0,
+    "port_solve": 10
+  },
+  "old_e4_not_run_index_sha256": "9a5ecf0710bec994f854d05433d7736b54c340e629dfd0a6eedfa2e349c2e34b",
+  "audit_kind": "DISCRETIZATION_AUTHORITY_AUDIT",
+  "reference_role": "REFERENCE_ONLY",
+  "reference_used_for_training": false,
+  "training_reference_allowed": false,
+  "neural_solver_qualified": false,
+  "production_initialization_allowed": false,
+  "continuum_convergence_claim": false,
+  "mesh_accuracy_qualified": false,
+  "port_truncation_qualified": false
+}

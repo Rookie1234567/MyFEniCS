@@ -3088,3 +3088,33 @@ A/A*/native审核/G=206/3/4/16，均在预登记限额内；新factor/Gsolve/opt
 **唯一后续设计建议：在原M5上设计包含物理传播相位的隐藏表示，并先冻结其完整矩/原方程验证方案。** 不在本轮实施，不再扫描同一冻结特征的loss或末层超参，不继续hidden训练/VarPro/PDE微调。目标尺寸5nm需另行冻结几何、网格及可扩展求解设计后才可晋级；本轮p4、目标尺寸5nm与0.7nm均not_run。旧V1/V2负结果、V3中断及失联3284s费用不改。
 
 [Response V6](task042extra_feinn_5nm/response_v6.md)、[详细诊断](task042extra_feinn_5nm/outcomes/frozen_feature_residual_v6.md)、[Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v6.json)。
+
+## 2026-09-30 Task42extra V7：p4authority装配时间阻塞
+
+本轮完成了同网格 p3→p4 的完整场/旋度嵌入、原算子配对与数组容量资格，但唯一 p4 参考在装配阶段耗尽数值工作窗口，状态 **P4_REFERENCE_TIME_BLOCKED**。没有获得 p4 参考场，因此未启动 p3/p4 比较，不能判断阶次变化大小。已按预算主动请求自有 watchdog 停止，原因明确；这不是 OOM 或 p4 精度失败证据。
+
+| 原方程/功率 / measured、原rhs或入射功率归一 | p3原参考 | p4本轮 | 验收 |
+| --- | --- | --- | --- |
+| native_relative | 6.78883619212e-12 | NOT_RUN | 参考各≤1e-10 |
+| augmented_relative | 6.78883897883e-12 | NOT_RUN | 参考各≤1e-10 |
+| original_total_augmented_relative | 3.514516446e-12 | NOT_RUN | 参考各≤1e-10 |
+| independent_DOLFINx_total_native_relative | 3.26041877377e-12 | NOT_RUN | 参考各≤1e-10 |
+| R_total | 0.812426499057 | NOT_RUN | 不能比较 |
+| T_total | 0.0324623960953 | NOT_RUN | 不能比较 |
+| A_balance | 0.155111104848 | NOT_RUN | 不能比较 |
+| R00_s | 0.812256818464 | NOT_RUN | 不能比较 |
+| R00_p | 1.25634444139e-26 | NOT_RUN | 不能比较 |
+| R00_total | 0.812256818464 | NOT_RUN | 不能比较 |
+| A_volume | 0.155111104847 | NOT_RUN | 不能比较 |
+
+| 阶段 / measured | 完整launcher wall / s | 同时树RSS峰 / B | CPU | 自身swap峰 / B | 实际结果 |
+| --- | --- | --- | --- | --- | --- |
+| v7_p_transfer_checks | 158.807494071 | 1586601984 | 12 | 0 | U0资格通过 |
+| v7_p4_reference | 3452.53531242 | 1289834496 | 11 | 0 | 预算受控停止 |
+| v7_p3_p4_compare | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | p4参考未资格化 |
+
+U0完整跨阶/原action≤1e-10，p4测得75264独立复FE/40端口；唯一参考在3450s数值截止经自有watchdog受控停止，完整退出3452.535s/剩147.465s/子树清场。参考树峰1289834496B/swap0；全数值阶段峰1586601984B，无OOM或精度失败证据。p4未合格、U2未运行、旧NN同p3方程失败结论不改。
+
+运行source 76d863e43d2fc1b5bed8b1c835aa6f43bb2c93d2；停止后修正/watchdog/checker source c2bfd3ce2ae5d499b6d8afe6a0b3fc3cf743a2a9，没有正式重放。原manifest旧p3依赖hash保留并披露，实际p4输入以U0和冻结依赖核清；C2启动前绑定修正及10项定向tests通过。费用包含旧45161.81665198447s/失联3284s/本次全部装配，见[最终资源](task042extra_feinn_5nm/outcomes/records/resource_costs_v7.json)。
+
+[Response V7](task042extra_feinn_5nm/response_v7.md)、[审计](task042extra_feinn_5nm/outcomes/p3_p4_authority_v7.md)、[Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v7.json)、[单载波计划](task042extra_feinn_5nm/outcomes/phase_representation_plan_v7.md)。先review参考预算/基准，再决定相位对照；本批只设计不实现/训练，不自动第二次factor、p5/h/更多端口或大5nm/0.7nm，只推当前分支后停止。

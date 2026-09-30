@@ -1,0 +1,16 @@
+quantity,p3_original,p4,absolute_difference,denominator,relative_difference,status,reason
+R_total,0.812426499057056,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN_P4_REFERENCE_NOT_QUALIFIED,p4 unique run stopped at numeric cutoff before retained reference; no comparison started
+T_total,0.03246239609526469,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN_P4_REFERENCE_NOT_QUALIFIED,p4 unique run stopped at numeric cutoff before retained reference; no comparison started
+A_balance,0.15511110484767932,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN_P4_REFERENCE_NOT_QUALIFIED,p4 unique run stopped at numeric cutoff before retained reference; no comparison started
+R00_s,0.812256818464021,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN_P4_REFERENCE_NOT_QUALIFIED,p4 unique run stopped at numeric cutoff before retained reference; no comparison started
+R00_p,1.2563444413870592e-26,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN_P4_REFERENCE_NOT_QUALIFIED,p4 unique run stopped at numeric cutoff before retained reference; no comparison started
+R00_total,0.812256818464021,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN_P4_REFERENCE_NOT_QUALIFIED,p4 unique run stopped at numeric cutoff before retained reference; no comparison started
+A_volume,0.15511110484738158,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN_P4_REFERENCE_NOT_QUALIFIED,p4 unique run stopped at numeric cutoff before retained reference; no comparison started
+total_L2,V1_RETAINED,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN_P4_REFERENCE_NOT_QUALIFIED,no qualified p4; no different-length coefficient subtraction
+scattered_L2,V1_RETAINED,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN_P4_REFERENCE_NOT_QUALIFIED,no qualified p4; no different-length coefficient subtraction
+total_scaled_curl,V1_RETAINED,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN_P4_REFERENCE_NOT_QUALIFIED,no qualified p4; no different-length coefficient subtraction
+scattered_scaled_curl,V1_RETAINED,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN_P4_REFERENCE_NOT_QUALIFIED,no qualified p4; no different-length coefficient subtraction
+six_point_complex_E_H,V1_RETAINED,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN_P4_REFERENCE_NOT_QUALIFIED,no qualified p4; no different-length coefficient subtraction
+four_classes_40_complex_channels,V1_RETAINED,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN_P4_REFERENCE_NOT_QUALIFIED,no qualified p4; no different-length coefficient subtraction
+per_channel_power,V1_RETAINED,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN_P4_REFERENCE_NOT_QUALIFIED,no qualified p4; no different-length coefficient subtraction
+air_substrate_grating_interface_regions,V1_RETAINED,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN,NOT_RUN_P4_REFERENCE_NOT_QUALIFIED,no qualified p4; no different-length coefficient subtraction

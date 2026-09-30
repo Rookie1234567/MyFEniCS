@@ -1,0 +1,63 @@
+{
+  "schema": "task42extra.run-index.v7",
+  "source_sha": "76d863e43d2fc1b5bed8b1c835aa6f43bb2c93d2",
+  "review_release": "ecabef960cdf1ac194ef293ff83c65b14e8b7ba3",
+  "reviewed_baseline": "fa83e9cb751ecd213e04ce79804cda4643fc3232",
+  "original_base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "runs": {
+    "v7_p_transfer_checks": {
+      "index_sha256": "6099dbe67646a28394e0a053663bebedd12e531324b5a09fedc81ce815574152",
+      "source_sha": "76d863e43d2fc1b5bed8b1c835aa6f43bb2c93d2",
+      "run_directory": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v7_p_transfer_checks_20260930T121554990434Z",
+      "files": {
+        "native": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v7_p_transfer_checks_20260930T121554990434Z/p4_native.npz",
+          "sha256": "062137c4c5be83b62be6a5373cfa24244f203f0b37244aeb4fb0b8feb75eb9ad"
+        },
+        "result": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v7_p_transfer_checks_20260930T121554990434Z/result.json",
+          "sha256": "d1bf6099cdc891324c9aad3e5f59f2e311ff92ea55089a755f0a500887a7aacf"
+        }
+      },
+      "status": "P_TRANSFER_CAPACITY_PASS"
+    },
+    "v7_p4_reference": {
+      "index": null,
+      "source_sha": "76d863e43d2fc1b5bed8b1c835aa6f43bb2c93d2",
+      "run_directory": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v7_p4_reference_20260930T122252698495Z",
+      "status": "P4_REFERENCE_TIME_BLOCKED",
+      "request_sha256": "f3f281b344406f33961368996e67d01f479170389972a91d9a1e4f4826e4e947",
+      "raw_manifest_sha256": "681229d3955e21bc3cc7dbd8ac499322ebc3ccd7c38d92b2c6f7a8fcc19ee041",
+      "run_summary_sha256": "e28100d4f5e2396ce0f9f1c2ef91487291d9bc0e1a5e1377e4cd6d1fa0b2c509",
+      "stages_sha256": "7f4215fcea61e78ef0f16897fa020fba864c1f35d7f9465a8afb19b8512645e9",
+      "p4_input": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v7_p_transfer_checks_20260930T121554990434Z/p4_native.npz",
+        "sha256": "062137c4c5be83b62be6a5373cfa24244f203f0b37244aeb4fb0b8feb75eb9ad"
+      },
+      "reference": null
+    },
+    "v7_p3_p4_compare": {
+      "status": "NOT_RUN_P4_REFERENCE_NOT_QUALIFIED",
+      "index": null,
+      "run_directory": null
+    }
+  },
+  "old_reference": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_e3_reference_20260929T180549681297Z/reference_state.npz",
+    "sha256": "0c3c0574a8c1eddcadfb56268e00c08e55d5cb15d44c0c76e873fcea0c467ff7"
+  },
+  "old_native": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/native.npz",
+    "sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215"
+  },
+  "old_e4_index_sha256": "9a5ecf0710bec994f854d05433d7736b54c340e629dfd0a6eedfa2e349c2e34b",
+  "audit_kind": "DISCRETIZATION_AUTHORITY_AUDIT",
+  "reference_role": "REFERENCE_ONLY",
+  "reference_used_for_training": false,
+  "training_reference_allowed": false,
+  "neural_solver_qualified": false,
+  "production_initialization_allowed": false,
+  "continuum_convergence_claim": false,
+  "mesh_accuracy_qualified": false,
+  "port_truncation_qualified": false
+}

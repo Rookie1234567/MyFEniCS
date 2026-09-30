@@ -1679,6 +1679,47 @@ P0 的残差与场误差显著不一致，两个 FREE 终态的原负梯度方�
 
 [Response V5](task042extra_feinn_5nm/response_v5.md)、[完整诊断/区域/通道](task042extra_feinn_5nm/outcomes/frozen_hidden_readout_v5.md)、[Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v5.json)、[run/source](task042extra_feinn_5nm/outcomes/records/run_index_v5.json)。固定特征空间的负门限不能推广为整个网络类不可表示，下一项研究须另审。
 
+## 3.44.6 Task42extra Review V6 后续：p4authority装配预算阻塞
+
+本轮完成了同网格 p3→p4 的完整场/旋度嵌入、原算子配对与数组容量资格，但唯一 p4 参考在装配阶段耗尽数值工作窗口，状态 **P4_REFERENCE_TIME_BLOCKED**。没有获得 p4 参考场，因此未启动 p3/p4 比较，不能判断阶次变化大小。已按预算主动请求自有 watchdog 停止，原因明确；这不是 OOM 或 p4 精度失败证据。
+
+| 模型 / measured身份 | p3原只读参考 | 本批p4 |
+| --- | --- | --- |
+| M5波长 / geometry / h | 5nm / 原Si-air三维缺口 / h1.25nm | 相同 |
+| cell / FE / 积分 | 384hex / N1curl p3 / volume与DtN q15 | 384hex / N1curl p4 / volume与DtN q15 |
+| 含slave / slave / 独立复FE | 34050 / 2082 / 31968 | 78936 / 3672 / 75264 |
+| 独立边 / 面 / 内部 | 3744 / 14400 / 13824 | 4992 / 28800 / 41472 |
+| 增广rows / 完整端口 | 32008 / 40 | 75304 / 40；rows现场核实，完整CSR未取得 |
+| 材料表SHA256 | 55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2 | 同字节，只读 |
+| native packet SHA256 | 2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215 | 062137c4c5be83b62be6a5373cfa24244f203f0b37244aeb4fb0b8feb75eb9ad |
+| p3 reference SHA256 | 0c3c0574a8c1eddcadfb56268e00c08e55d5cb15d44c0c76e873fcea0c467ff7 | p4参考packet NOT_RETAINED_NO_SOLVE |
+
+| 原方程/功率 / measured、原rhs或入射功率归一 | p3原参考 | p4本轮 | 验收 |
+| --- | --- | --- | --- |
+| native_relative | 6.78883619212e-12 | NOT_RUN | 参考各≤1e-10 |
+| augmented_relative | 6.78883897883e-12 | NOT_RUN | 参考各≤1e-10 |
+| original_total_augmented_relative | 3.514516446e-12 | NOT_RUN | 参考各≤1e-10 |
+| independent_DOLFINx_total_native_relative | 3.26041877377e-12 | NOT_RUN | 参考各≤1e-10 |
+| R_total | 0.812426499057 | NOT_RUN | 不能比较 |
+| T_total | 0.0324623960953 | NOT_RUN | 不能比较 |
+| A_balance | 0.155111104848 | NOT_RUN | 不能比较 |
+| R00_s | 0.812256818464 | NOT_RUN | 不能比较 |
+| R00_p | 1.25634444139e-26 | NOT_RUN | 不能比较 |
+| R00_total | 0.812256818464 | NOT_RUN | 不能比较 |
+| A_volume | 0.155111104847 | NOT_RUN | 不能比较 |
+
+| 阶段 / measured | 完整launcher wall / s | 同时树RSS峰 / B | CPU | 自身swap峰 / B | 实际结果 |
+| --- | --- | --- | --- | --- | --- |
+| v7_p_transfer_checks | 158.807494071 | 1586601984 | 12 | 0 | U0资格通过 |
+| v7_p4_reference | 3452.53531242 | 1289834496 | 11 | 0 | 预算受控停止 |
+| v7_p3_p4_compare | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | p4参考未资格化 |
+
+U0非零复场跨阶E/curl、orientation/MPC、原action/port≤1e-10；p4真实参考未完成，所有p场/六点/40通道/功率/材料-界面区域差NOT_RUN，连续/h/端口精度仍未资格化。旧NN及旧e4_p4历史不变，REFERENCE_ONLY无训练许可。
+
+数值source 76d863e43d2fc1b5bed8b1c835aa6f43bb2c93d2，C2保全/checker c2bfd3ce2ae5d499b6d8afe6a0b3fc3cf743a2a9；C1中断manifest依赖hash问题披露，U0 p4输入hash绑定另核实，C2入口修正未正式重放。budget停请求3450.000744s/完整退出3452.535312s/保存余量147.464685s，子树清场；参考树峰1289834496B/swap0；全数值阶段峰1586601984B，非OOM/精度失败。旧45161.81665198447s和失联3284s保留，全账见[resource](task042extra_feinn_5nm/outcomes/records/resource_costs_v7.json)。
+
+[Response V7](task042extra_feinn_5nm/response_v7.md)、[完整审计](task042extra_feinn_5nm/outcomes/p3_p4_authority_v7.md)、[Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v7.json)。唯一后续建议先review解除authority时间阻塞并冻结基准，再决定[同规模单载波方案](task042extra_feinn_5nm/outcomes/phase_representation_plan_v7.md)；本批只写计划，无新训练/第二次factor/更大模型或merge。
+
 # 4. 今后新增模型的登记模板
 
 每次正式计算至少新增一行主表，并按可用性新增衍射级和复振幅表。

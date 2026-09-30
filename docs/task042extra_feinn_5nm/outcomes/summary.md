@@ -1,3 +1,43 @@
+# Task42extra Review V6 后续：V7 p4装配受控停止
+
+本轮完成了同网格 p3→p4 的完整场/旋度嵌入、原算子配对与数组容量资格，但唯一 p4 参考在装配阶段耗尽数值工作窗口，状态 **P4_REFERENCE_TIME_BLOCKED**。没有获得 p4 参考场，因此未启动 p3/p4 比较，不能判断阶次变化大小。已按预算主动请求自有 watchdog 停止，原因明确；这不是 OOM 或 p4 精度失败证据。
+
+提高阶次让同一个单元内的电场能表达更多细节，几何和网格都不变。准确 p3/p4 场的差可检查离散敏感性，不能直接当连续误差上界；代价是更大的有限元系统及一次独立准确参考。原 NN 对同一 p3 方程的失败与这个精度审计是不同问题，旧结论不改。
+
+| 原方程/功率 / measured、原rhs或入射功率归一 | p3原参考 | p4本轮 | 验收 |
+| --- | --- | --- | --- |
+| native_relative | 6.78883619212e-12 | NOT_RUN | 参考各≤1e-10 |
+| augmented_relative | 6.78883897883e-12 | NOT_RUN | 参考各≤1e-10 |
+| original_total_augmented_relative | 3.514516446e-12 | NOT_RUN | 参考各≤1e-10 |
+| independent_DOLFINx_total_native_relative | 3.26041877377e-12 | NOT_RUN | 参考各≤1e-10 |
+| R_total | 0.812426499057 | NOT_RUN | 不能比较 |
+| T_total | 0.0324623960953 | NOT_RUN | 不能比较 |
+| A_balance | 0.155111104848 | NOT_RUN | 不能比较 |
+| R00_s | 0.812256818464 | NOT_RUN | 不能比较 |
+| R00_p | 1.25634444139e-26 | NOT_RUN | 不能比较 |
+| R00_total | 0.812256818464 | NOT_RUN | 不能比较 |
+| A_volume | 0.155111104847 | NOT_RUN | 不能比较 |
+
+| 阶段 / measured | 完整launcher wall / s | 同时树RSS峰 / B | CPU | 自身swap峰 / B | 实际结果 |
+| --- | --- | --- | --- | --- | --- |
+| v7_p_transfer_checks | 158.807494071 | 1586601984 | 12 | 0 | U0资格通过 |
+| v7_p4_reference | 3452.53531242 | 1289834496 | 11 | 0 | 预算受控停止 |
+| v7_p3_p4_compare | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | p4参考未资格化 |
+
+U0现场核实p4含slave78936、slave3672、独立复FE75264（边4992/面28800/内部41472）、40端口，完整矩/非零公共点E/curl/MPC及原action≤1e-10；M5/5nm/384hex/h1.25/体与DtN q15相同，仅p3→p4。数组/转换12GiB规划通过，symbolic/factor容量未完成，不作PASS。
+
+没有p4恢复packet、没有U2或q30差值复核，全部p场/功率/通道/原区域差NOT_RUN，不宣称连续/h/端口收敛。旧e4_p4 not_run、V1–V6所有NN失败和标签血缘保持。新p4仅REFERENCE_ONLY，训练/生产/神经资格仍false。
+
+launcher在 3450.00074385s 到达原3600s的150s收口边界时，由Codex按用户预算请求停止。先核对自有PID/start_ticks和one-run命令，再只向launcher发SIGTERM，由既有watchdog终止/回收自身后代。原分类USER_CONTROLLED_STOP、worker exit−15，descendants_cleared=true；完整退出wall 3452.53531242s，剩余 147.464685061s≥120。本批全部数值阶段树峰 1586601984B（1.47763824463GiB），自身swap0，没有内存硬线、监督失效或OOM证据。
+
+本页冻结前新增全账 3762.8175588s，含正式阶段、全部已完成辅助失败与直接/最终120s保守额度；旧45161.81665198447s及失联3284s/旧Gram/重放费用全部保留。原累计 48924.6342108s，剩 8675.36578922s。浏览器与发布后检查继续补入[最终资源账](records/resource_costs_v7.json)。U0含轻检查181.809311786s≤1200，唯一p4≤3600，新批≤7200/原≤57600均未越线。未取得装配完成timer，写NOT_RETAINED，不重放补计；父wall已包含这段CPU费用，不能重复相加或删除。
+
+C1中断manifest保留p3依赖的provisional operator hash，不能冒充p4；实际输入由U0 hash/冻结依赖与degree4事件核清，原字节不改。C2修正启动前p4身份与长原生调用150s watchdog截止，10项targeted tests通过，未正式重放。[详细审计](p3_p4_authority_v7.md)列明保全与未知因素。
+
+唯一下一步建议：review先决定如何在既定小型authority约束内解除p4装配预算阻塞并冻结比较基准，再决定是否授权[同规模单载波复包络方案](phase_representation_plan_v7.md)的最小完整矩/VJP资格与同预算对照。本批只交计划，不实现训练器、不训练、不自动第二次factor。目标尺寸5nm和0.7nm、p5、h细化、更多端口均未启动；小型p4未完成不能推广为模型不可计算。
+
+[Response V7](../response_v7.md)、[run/source/hash](records/run_index_v7.json)、[U0](records/p_transfer_checks_v7.json)、[p4停止](records/p4_reference_v7.json)、[Gate](records/gate_decisions_v7.json)、[新渲染](records/render_check_v7.json)。实算source 76d863e43d2fc1b5bed8b1c835aa6f43bb2c93d2，后来文档HEAD不替代它。以下V1–V6历史原文原样保留。
+
 # Task42extra Review V5 后续：V6 固定特征原方程残差下限
 
 本轮已测得此固定195维特征空间的原方程最小残差，但没有获得物理解资格。V6实际网络 native/augmented 均为 **0.570577990454**，高于严格1e-6；G场误差 **0.569932119000**，散射E L2 **0.569893933222**，scaled-curl/H **0.569933083410**。相比V5，残差降低而场、功率显著变差。分类 `FROZEN_FEATURE_RESIDUAL_FLOOR_MEASURED` 只说明线性最小二乘子问题已测完，不表示solver通过或整个网络类不可能。
