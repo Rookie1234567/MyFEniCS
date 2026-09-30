@@ -1,0 +1,7 @@
+schema_version = 1
+
+[task042_v13]
+stage = "COMPENSATE"
+run_id = "task042_v13_compensate_refine1"
+material_table_id = "SI_OPTICAL_CONSTANTS_USER_20260929_V1"
+refine_frozen_joint_taylor = true

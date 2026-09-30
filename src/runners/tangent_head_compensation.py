@@ -35,6 +35,8 @@ class Stage:
         self.artifact=V13_ROOT/directory.name;self.artifact.mkdir(parents=True,exist_ok=False)
         self.counts={key:0 for key in LIMITS};self.carry_actions=0
         previous={'RESPONSE':'TANGENT','COMPENSATE':'RESPONSE','VERIFY':'COMPENSATE'}.get(self.name)
+        if specification.derived['refine_frozen_joint_taylor']:
+            previous='COMPENSATE'
         if previous:
             prior,_=read_result(previous)
             self.counts=prior['budget_counts'].copy();self.carry_actions=prior['all_batch_equivalent_actions']
@@ -130,6 +132,19 @@ class Stage:
         self.guard()
         with np.load(work/'directions.npz',allow_pickle=False) as saved:
             answer={key:np.array(saved[key]) for key in saved.files}
+        return answer,record
+
+    def frozen_compensation(self):
+        identity=self.specification.derived['refinement_identity']
+        result_path=Path(identity['result_path']);directions=Path(identity['directions_path'])
+        if file_hash(result_path)!=identity['result_sha256'] or file_hash(directions)!=identity['directions_sha256']:
+            raise ValueError('frozen joint compensation refinement input changed')
+        previous=json.loads(result_path.read_text())
+        record=previous['rounds'][0]['head_compensation'].copy()
+        with np.load(directions,allow_pickle=False) as saved:
+            answer={key:np.array(saved[key]) for key in saved.files}
+        record.update(reused_frozen_compensation=True,new_decompositions=0,
+                      original_source_sha=identity['source_sha'],directions_sha256=identity['directions_sha256'])
         return answer,record
 
     def finish(self,result):

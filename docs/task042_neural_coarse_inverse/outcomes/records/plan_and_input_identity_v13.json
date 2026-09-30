@@ -79,5 +79,25 @@
   "V12_scalar_FD_gate": "FAIL_UNCHANGED",
   "exact_VarPro_claim": false,
   "global_p4_inverse_route": "CLOSED",
-  "numerical_status": "PLANNED_NOT_RUN"
+  "numerical_status": "PLANNED_NOT_RUN",
+  "bounded_C_Taylor_refinement": {
+    "preregistered_utc": "2026-09-30T03:29:34.039755+00:00",
+    "initial_source": "978a59efeae9891a848c5fac581ec32e4fc9a5b8",
+    "initial_status": "C_JOINT_TANGENT_UNRESOLVED",
+    "reason": "Observed cancellation increased at smaller h; extra one adjacent pair moves toward larger h without changing thresholds",
+    "steps_random": [
+      8e-05,
+      4e-05
+    ],
+    "steps_gradient": [
+      2e-05,
+      1e-05
+    ],
+    "threshold_vector_relative": 1e-05,
+    "reused_compensation": true,
+    "new_decompositions": 0,
+    "carry_all_prior_counts": true,
+    "new_reference_access": false,
+    "one_refinement_only": true
+  }
 }

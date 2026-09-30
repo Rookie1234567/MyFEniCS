@@ -257,6 +257,11 @@ class TangentStudy:
         check,payload=self.origin_directions()
         result=self.base_result();result.update(rounds=[],trials=[],accepted_C=0,head_only_twins=[],
                                                B_is_not_warm_start=True)
+        refinement=self.stage.specification.derived['refine_frozen_joint_taylor']
+        if refinement:
+            result['bounded_joint_Taylor_refinement']=self.stage.specification.derived['refinement_identity']
+            self.stage.event('C_frozen_Taylor_refinement',steps_random=[8e-5,4e-5],
+                steps_gradient=[2e-5,1e-5],reason='Observed smaller-h cancellation; one larger adjacent pair, threshold unchanged')
         selected=[i for i,r in enumerate(check['directions']) if r['qualified']]
         if not selected:
             result['status']='C_NOT_RUN_NO_TRUSTWORTHY_TANGENT';return result
@@ -266,6 +271,10 @@ class TangentStudy:
         result['initial_loss']=initial_loss
         initial_main,initial_path=read_v11('MAIN')
         for round_index in range(1,4):
+            if round_index>1 and self.stage.counts['FD_points']+4*len(selected)+2>60:
+                result['status']='C_COMMITTED_FD_BUDGET_STOP'
+                result['stop_reason']='Remaining vector FD budget includes two low-dimensional pretest perturbations'
+                break
             self.stage.guard(large=True)
             pairs,gradient,proposed=self.duals(hidden,gamma,point)
             if round_index==1:
@@ -287,8 +296,11 @@ class TangentStudy:
                      heartbeat=lambda event,**fields:self.stage.event(event,**fields))
                 del P
             try:
-                answer,head_record=self.stage.child_compensation(P_path,A_path,np.column_stack(fixed_v),
-                                                               'compensation_'+str(round_index))
+                if refinement and round_index==1:
+                    answer,head_record=self.stage.frozen_compensation()
+                else:
+                    answer,head_record=self.stage.child_compensation(P_path,A_path,np.column_stack(fixed_v),
+                                                                   'compensation_'+str(round_index))
             except (ValueError,FileNotFoundError) as error:
                 result.update(status='C_HEAD_COMPENSATION_BLOCKED',stop_reason=str(error))
                 self.obj.assign(hidden,gamma)
@@ -305,7 +317,9 @@ class TangentStudy:
                 model_error=float(np.linalg.norm(vjoint-answer['thin'][:,col])/vscale)
                 back={key:dot_pair(q,dt_joint,gback,parameter_direction(d,dg)) for key,q,gback in pairs}
                 h=min(1e-5,1e-3*max(1.,np.linalg.norm(gamma))/max(np.linalg.norm(dg),1e-300))
-                fd=self.vector_fd(hidden,gamma,point,d,dt_joint,dg,[h,h/4],
+                steps=([2e-5,1e-5] if check['directions'][selected[col]]['name']=='analytic_gradient'
+                       else [8e-5,4e-5]) if refinement and round_index==1 else [h,h/4]
+                fd=self.vector_fd(hidden,gamma,point,d,dt_joint,dg,steps,
                                   tag=f'C{round_index}_joint_{col}')
                 trusted=(combination_error<=1e-9 and model_error<=1e-9 and fd['qualified']
                          and all(v['operation_relative']<=1e-9 for v in back.values()))

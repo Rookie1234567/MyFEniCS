@@ -75,6 +75,24 @@ def test_four_v13_inputs_explicit_only():
     assert load_tangent_head(ROOT/'input/task042_neural_coarse_inverse/v12_block_descent.dat') is None
 
 
+def test_refinement_is_bounded_same_frozen_C_and_carries_identity(tmp_path,monkeypatch):
+    from src.io import tangent_head_compensation as loader
+    from src.io.task042_profile import ROOT
+    from src.io.input_loader import InputError
+    (tmp_path/'compensation_1').mkdir()
+    np.savez(tmp_path/'compensation_1/directions.npz',dot_gamma=np.ones((1560,1),complex))
+    old_path=tmp_path/'stage_result.json';old_path.write_text('{}')
+    old=dict(status='C_JOINT_TANGENT_UNRESOLVED',accepted_C=0,trials=[],source_sha='frozen-source')
+    monkeypatch.setattr(loader,'read_result',lambda name:(old,old_path))
+    path=ROOT/'input/task042_neural_coarse_inverse/v13_head_compensation_refine.dat'
+    spec=loader.load_tangent_head(path)
+    assert spec.derived['refine_frozen_joint_taylor'] is True
+    assert spec.derived['refinement_identity']['source_sha']=='frozen-source'
+    old['bounded_joint_Taylor_refinement']={}
+    with pytest.raises(InputError,match='one frozen'):
+        loader.load_tangent_head(path)
+
+
 def test_stable_compensation_minus_sign_original_nonhermitian_action():
     from src.solvers.tangent_head_model import compensation_solve
     rng=np.random.default_rng(421407);nt=6;n=nt+40

@@ -28,9 +28,15 @@ def load_tangent_head(path):
         cfg=tomllib.loads(raw.decode());item=cfg['task042_v13']
         if set(cfg)!={'schema_version','task042_v13'} or cfg['schema_version']!=1:
             raise ValueError('explicit V13 opt-in required')
-        if set(item)!={'stage','run_id','material_table_id'} or item['stage'] not in STAGES:
+        refinement=item.get('refine_frozen_joint_taylor',False)
+        keys={'stage','run_id','material_table_id'} | ({'refine_frozen_joint_taylor'} if refinement else set())
+        if set(item)!=keys or item['stage'] not in STAGES:
             raise ValueError('unregistered V13 stage/keys')
-        if item['run_id']!='task042_v13_'+item['stage'].lower():
+        if refinement is not True and refinement is not False:
+            raise ValueError('explicit Boolean refinement required')
+        if refinement and item['stage']!='COMPENSATE':
+            raise ValueError('Taylor refinement only belongs to frozen C')
+        if item['run_id']!='task042_v13_'+item['stage'].lower()+('_refine1' if refinement else ''):
             raise ValueError('one-stage run ID differs')
         plan,design,material,fe=plan_and_operator()
         if item['material_table_id']!=material.provenance['material_table_id']:
@@ -38,6 +44,16 @@ def load_tangent_head(path):
         if fe['packet']['sha256']!='9196edb807b534217d0c0eb78882125341342784a48ef20ebe2d9421fe636454':
             raise ValueError('original action packet differs')
         mode,timeout=STAGES[item['stage']]
+        refinement_identity=None
+        if refinement:
+            previous,previous_path=read_result('COMPENSATE')
+            if (previous['status']!='C_JOINT_TANGENT_UNRESOLVED' or previous['accepted_C']
+                or previous['trials'] or 'bounded_joint_Taylor_refinement' in previous):
+                raise ValueError('one frozen, unaccepted C tangent inventory required')
+            directions=previous_path.parent/'compensation_1/directions.npz'
+            refinement_identity=dict(result_path=str(previous_path),result_sha256=file_hash(previous_path),
+                                     directions_path=str(directions),directions_sha256=file_hash(directions),
+                                     source_sha=previous['source_sha'])
     except (ValueError,KeyError,OSError,tomllib.TOMLDecodeError) as error:
         raise InputError(f'Task042 V13 identity/input error: {error}') from error
     return RunSpecification(
@@ -52,6 +68,7 @@ def load_tangent_head(path):
         derived={'stage':'V13-'+item['stage'],'environment_mode':mode,
                  'plan_sha256':file_hash(PLAN_PATH),'physical_model_complete':True,
                  'physical_operator_sha256':plan['physical_model_sha256'],
+                 'refine_frozen_joint_taylor':refinement,'refinement_identity':refinement_identity,
                  'identity_hash_meaning':'unchanged V7 physical action and RHS; REF7 excluded before VERIFY'},
         source_path=path,raw_input_bytes=raw,input_sha256=file_hash(path),
         physical_model_sha256=plan['physical_model_sha256'],expected_output_parent=ROOT/'results/task042')
