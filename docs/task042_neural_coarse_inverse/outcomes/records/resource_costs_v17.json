@@ -3774,5 +3774,22 @@
     "elapsed_seconds": 22352.84021472931,
     "heavy_remaining_seconds": 1047.159785270691,
     "total_remaining_seconds": 2847.159785270691
-  }
+  },
+  "window_at_final_delivery_record": {
+    "schema": "task042.campaign-window.v17",
+    "start_utc": "2026-09-30T15:10:06+00:00",
+    "start_monotonic": 706000.860878275,
+    "heavy_limit_seconds": 23400,
+    "total_limit_seconds": 25200,
+    "heavy_stop_utc": "2026-09-30T21:40:06+00:00",
+    "deadline_utc": "2026-09-30T22:10:06+00:00",
+    "start_scope": "initial inspection included; immutable across context, repairs, waits, resumes",
+    "review_expected_commit": "f834c008110131433de0f269195de394a6856871",
+    "prior_head": "c6cca7187c0d6d21f68b46bdb49435f213c1da68",
+    "elapsed_seconds": 22518.529626846313,
+    "heavy_remaining_seconds": 881.4703731536865,
+    "total_remaining_seconds": 2681.4703731536865
+  },
+  "first_result_push_HEAD": "8f1b34b8c14a0d7bb298ffa781146dd855d91b8e",
+  "delivery_metacommit_has_no_numeric_changes": true
 }

@@ -58,5 +58,16 @@
   "protected_old_files": 342,
   "visual_status": "NOT_VERIFIED",
   "initial_static_failure_preserved": "static_checks_v17_initial.json",
-  "new_CSV_newline_normalization": "csv_publication_v17.json; no data changes or numerical replay"
+  "new_CSV_newline_normalization": "csv_publication_v17.json; no data changes or numerical replay",
+  "post_push_exact_result_attempt": {
+    "tested_result_HEAD": "8f1b34b8c14a0d7bb298ffa781146dd855d91b8e",
+    "review_SHA": "f834c008110131433de0f269195de394a6856871",
+    "result_url": "https://github.com/Rookie1234567/MyFEniCS/blob/8f1b34b8c14a0d7bb298ffa781146dd855d91b8e/docs/task042_neural_coarse_inverse/response_v17.md",
+    "review_url": "https://github.com/Rookie1234567/MyFEniCS/blob/f834c008110131433de0f269195de394a6856871/docs/task042_neural_coarse_inverse/review_report_v14.md",
+    "fetch_tool": "web.open",
+    "result": "Cache miss for both exact pages",
+    "rendered_pixels": "NOT_VERIFIED",
+    "observed_utc": "2026-09-30T21:23:55Z",
+    "review_not_modified": true
+  }
 }

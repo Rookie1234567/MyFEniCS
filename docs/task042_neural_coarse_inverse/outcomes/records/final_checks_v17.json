@@ -66,5 +66,7 @@
     "heavy_remaining_seconds": 1047.1555359363556,
     "total_remaining_seconds": 2847.1555359363556
   },
-  "git_staged_diff_check": "PASS after four new CSV CRLF-to-LF publication normalization; initial failure retained in csv_publication_v17.json"
+  "git_staged_diff_check": "PASS after four new CSV CRLF-to-LF publication normalization; initial failure retained in csv_publication_v17.json",
+  "post_push_result_visual_check": "NOT_VERIFIED: exact result HEAD 8f1b34b8c14a0d7bb298ffa781146dd855d91b8e and exact review web.open both Cache miss",
+  "delivery_metadata_update_only": true
 }
