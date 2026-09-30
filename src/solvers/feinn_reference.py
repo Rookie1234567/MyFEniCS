@@ -765,6 +765,8 @@ def compare_reference_fit_without_solve(
     reconstruct_index,
     artifact,
     marker,
+    *,
+    route="FEINN-REFERENCE-FIT-G",
 ):
     """Independent FE postprocessing of frozen supervised-fit coefficients only."""
     from src.solvers.feinn_error_geometry import reference_label
@@ -819,13 +821,13 @@ def compare_reference_fit_without_solve(
             model,
             packet,
             reference,
-            {"FEINN-REFERENCE-FIT-G": c},
+            {route: c},
             artifact,
             marker,
             diagnostic_only=True,
         )
         region = _region_field_errors(model, packet, reference, c)
-        comp = comparisons["FEINN-REFERENCE-FIT-G"]
+        comp = comparisons[route]
         e_l2 = comp["errors"]["scattered_L2"]["relative"]
         e_curl = comp["errors"]["scattered_scaled_curl"]["relative"]
         if q30_relative > 1e-8:
@@ -838,7 +840,7 @@ def compare_reference_fit_without_solve(
             snapshot_category = "REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED"
         retained_only = (
             fit_index["result"]["status"]
-            == "INTERRUPTED_FIT_ADAM500_RETAINED_SNAPSHOT"
+            in ("INTERRUPTED_FIT_ADAM500_RETAINED_SNAPSHOT", "INTERRUPTED_REPLAY_RETAINED_BOUNDARY")
         )
         category = (
             "INTERRUPTED_FIT_NO_FINAL_STATE" if retained_only else snapshot_category
@@ -848,7 +850,7 @@ def compare_reference_fit_without_solve(
         else:
             supervised_reconstruction = "NOT_QUALIFIED"
         result = dict(
-            status="RETAINED_ADAM500_COMPARE_ONLY_COMPLETE"
+            status=("RETAINED_BOUNDARY_COMPARE_ONLY_COMPLETE" if route.endswith("ADAM500-REPLAY") else "RETAINED_ADAM500_COMPARE_ONLY_COMPLETE")
             if retained_only
             else "REFERENCE_EXPOSED_COMPARE_ONLY_COMPLETE",
             category=category,

@@ -1,0 +1,80 @@
+{
+  "schema": "task42extra.durability-checks.v4",
+  "status": "R0_SYNTHETIC_DURABILITY_PASS",
+  "numerical_boundary_status": "NOT_RUN",
+  "review_sha": "4dc7c38b60acf2a5ee3d9c6b9770b084a874fb04",
+  "pytest": {
+    "tests": 9,
+    "failures": 0,
+    "errors": 0,
+    "equivalence_absolute_tolerance": 1e-12
+  },
+  "cases": [
+    {
+      "case": "explicit_stop",
+      "checkpoint_readable": true,
+      "worker_cleared": true,
+      "classification": "USER_CONTROLLED_STOP",
+      "supervisor_exit_code": 0
+    },
+    {
+      "case": "monitor_failure",
+      "checkpoint_readable": true,
+      "worker_cleared": true,
+      "classification": "MONITORING_FAILED",
+      "supervisor_exit_code": 0
+    },
+    {
+      "case": "supervisor_death",
+      "checkpoint_readable": true,
+      "worker_cleared": true,
+      "classification": "SUPERVISOR_SIGKILL_WITH_NO_SUMMARY",
+      "supervisor_exit_code": -9
+    },
+    {
+      "case": "startup_disconnect_and_closed_output_pipe",
+      "checkpoint_readable": true,
+      "worker_cleared": true,
+      "classification": "COMPLETED",
+      "supervisor_exit_code": 0
+    }
+  ],
+  "raw_evidence": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v4_optimizer_tests.xml",
+      "sha256": "423f1bcff827f1dccd1ad40266e4d04fa37f8848b93a710e918aa9a49089d703"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/durable/v4_r0_fault_tests/process_checks.json",
+      "sha256": "04efe73e27ef9415d27bcf3847b8829656c452ef3d98629429fced22e299e1a7"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v4_ml_preflight_20260930T032647507770Z/summary.json",
+      "sha256": "6e9320251129fbbb88b1c525f6bbaa98f6fdd8fa2efb262357f6d601a0c861ef"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v4_optimizer_tests_20260930T032732940481Z/summary.json",
+      "sha256": "bf603aa328535981df35dd84c39d36ecbb3ea8122659b58dbe80d4e1c2fec4f2"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v4_lifecycle_20260930T032816695639Z/summary.json",
+      "sha256": "5a92d0813621f2a3b5f580ded8b6014c0eb87b2ef28fa7838e15463f2af6f28d"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v4_tmux_probe_20260930T025804012352Z/summary.json",
+      "sha256": "8188c51ff05f4fad6dc85d1138c5a362d3b3ba5e02fe577414a0adc010e246d7"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v4_final_code_static_20260930T032917432373Z/summary.json",
+      "sha256": "dce55ecb539114f13166d68c3c36a2177d3268c806374fc2b3a3bebf91c0cdff"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v4_compile_20260930T033010642099Z/summary.json",
+      "sha256": "eff9d3bfe8a300401dd610646d4cb2dc525b0f5388e46e39fd92817fc7ceb21c"
+    }
+  ],
+  "guarantee": "Only successfully fsynced complete boundaries survive; SIGKILL does not guarantee finally or a final summary",
+  "scope": "Own synthetic trees and simulated starter exit/closed pipes only; all platform and cgroup recycling paths NOT_VERIFIED",
+  "only_own_subtrees_signaled": true,
+  "no_services_environment_or_other_projects_modified": true
+}

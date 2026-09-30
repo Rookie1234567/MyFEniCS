@@ -1,0 +1,6 @@
+schema_version = 1
+
+[task42extra]
+stage = "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY"
+run_id = "task42extra_v4_reference_fit_boundary_replay"
+design_sha256 = "650af0bade61c4ef89583398624b375245691109a6778c168dd46d8c0e70524e"

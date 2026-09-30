@@ -486,6 +486,7 @@ def reconstruct(design, native_index, grad_index, fit_index, artifact, marker):
     with np.load(entry["path"], allow_pickle=False) as data:
         p = np.array(data["parameters"])
         saved = np.array(data["c"])
+        saved_buffers = {name: np.array(data[name]) for name in ("center", "half_width") if name in data}
         if (
             not bool(data["reference_used_for_training"])
             or bool(data["pde_only_solve"])
@@ -494,6 +495,9 @@ def reconstruct(design, native_index, grad_index, fit_index, artifact, marker):
             raise ValueError("FIT_LABEL_POLICY_MISSING")
     model = CoordinateField(design["geometry"]["bounds_nm"], design["network"]["seed"])
     assign(model, p)
+    for name, buffer in model.named_buffers():
+        if name in saved_buffers:
+            buffer.copy_(torch.from_numpy(saved_buffers[name]))
     q15 = CompleteMomentMap(load_moments(grad_index["files"]["moments"]["path"]))
     q30 = CompleteMomentMap(load_moments(native_index["files"]["moments_q30"]["path"]))
     actual = q15.forward(model, 8)

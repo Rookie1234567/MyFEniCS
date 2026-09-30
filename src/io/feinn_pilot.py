@@ -29,6 +29,10 @@ STAGES = {
     "v3_retained_snapshot": ("ml", 1800),
     "v3_fit_reconstruct": ("ml", 1800),
     "v3_fit_compare_only": ("fe", 3600),
+    "v4_boundary_checks": ("ml", 1800),
+    "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY": ("ml", 10800),
+    "v4_fit_reconstruct": ("ml", 1800),
+    "v4_fit_compare_only": ("fe", 1800),
 }
 
 

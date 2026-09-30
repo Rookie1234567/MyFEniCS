@@ -111,10 +111,16 @@ def budget():
         or "/checks/v3_" in e["path"]
         or e["path"].endswith("/fit_interruption_v3.json")
     )
+    v4_used = sum(e["seconds"] for e in entries if "/task42extra_v4_" in e["path"] or "/checks/v4_" in e["path"])
     return dict(
         limit_seconds=57600,
         used_seconds=used,
-        remaining_seconds=57600 - max(used, 29227.93927047425 + v3_used),
+        remaining_seconds=57600 - max(used, 29227.93927047425 + v3_used, 33070.52670758043 + v4_used + 120),
+        conservative_V1_V2_V3_base_seconds=33070.52670758043,
+        v4_limit_seconds=14400,
+        v4_used_seconds=v4_used,
+        v4_direct_final_tail_allowance_seconds=120,
+        v4_remaining_seconds=14400 - v4_used - 120,
         conservative_V1_base_seconds=26240.100355625153,
         v2_limit_seconds=14400,
         v2_used_seconds=v2_used,
@@ -173,6 +179,15 @@ def launch(spec):
         state["v2_pre_registered_design_sha256"] = sha(pre)
         state["v2_review_sha"] = "0b61816c0189a2c05812044ab8e1d1513ef0407d"
     v3 = stage.startswith("v3_") or stage == "FEINN-REFERENCE-FIT-G"
+    v4 = stage.startswith("v4_") or stage == "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY"
+    if v4:
+        pre = ROOT / "docs/task042extra_feinn_5nm/outcomes/records/replay_design_v4.json"
+        state.update(run_id=directory.name, v4_pre_registered_design_sha256=sha(pre), v4_review_sha="4dc7c38b60acf2a5ee3d9c6b9770b084a874fb04", reference_used_for_training=True, pde_only_solve=False, production_initialization_allowed=False, pde_only_solver_qualified=False, official_candidate_results=False, data_role="REFERENCE_EXPOSED_DIAGNOSTIC_ONLY")
+        if stage == "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY":
+            proof = ROOT / "tmp/task42extra/durable/v4_formal_replay/terminal_identity.json"
+            if not proof.exists():
+                raise RuntimeError("DURABLE_TERMINAL_PROOF_REQUIRED")
+            state["durable_terminal_identity_sha256"] = sha(proof)
     if v3:
         pre = (
             ROOT
@@ -212,8 +227,9 @@ def launch(spec):
     write_json(directory / "run_manifest.json", state)
     with (ROOT / "tmp/task42extra/numerical.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        tree_limit = 2 * 2**30 if stage == "v4_boundary_checks" else 16 * 2**30
         try:
-            baseline = admission()
+            baseline = admission(tree_limit)
         except RuntimeError as error:
             result = dict(
                 classification="RESOURCE_WINDOW_UNAVAILABLE",
@@ -232,6 +248,7 @@ def launch(spec):
             and ledger["v2_remaining_seconds"] <= 120
             or v3
             and ledger["v3_remaining_seconds"] <= 120
+            or v4 and ledger["v4_remaining_seconds"] <= 120
         ):
             raise RuntimeError("Task42extra V1/V2 supervised wall budget exhausted")
         write_json(directory / "budget_at_launch.json", ledger)
@@ -296,6 +313,10 @@ def launch(spec):
                 "v3_retained_snapshot",
                 "v3_fit_reconstruct",
             ],
+            "v4_boundary_checks": ["e1_fe", "e1_grad", "e3_reference", "v3_retained_snapshot", "v3_fit_checks"],
+            "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY": ["e1_fe", "e1_grad", "e3_reference", "v3_retained_snapshot", "v4_boundary_checks"],
+            "v4_fit_reconstruct": ["e1_fe", "e1_grad", "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY"],
+            "v4_fit_compare_only": ["e1_fe", "e3_reference", "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY", "v4_fit_reconstruct"],
         }
         prerequisite_stages = prereqs.get(stage, [])
         for dependency in prerequisite_stages:
@@ -330,6 +351,9 @@ def launch(spec):
                     "v3_fit_checks",
                     "FEINN-REFERENCE-FIT-G",
                     "v3_fit_compare_only",
+                    "v4_boundary_checks",
+                    "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY",
+                    "v4_fit_compare_only",
                 ),
                 physical_hash_meaning="actual original full independent FE packet and fixed affine rhs",
             )
@@ -362,18 +386,30 @@ def launch(spec):
                 limit = min(limit, ledger["v3_remaining_seconds"] - 900)
             if limit <= 120:
                 raise RuntimeError("V3_BUDGET_RESERVE_UNAVAILABLE")
+        if v4:
+            limit = min(limit, ledger["v4_remaining_seconds"])
+            if stage == "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY":
+                limit = min(limit, ledger["v4_remaining_seconds"] - 900)
+            if stage == "v4_boundary_checks":
+                limit = min(limit, 1800 - ledger["v4_used_seconds"])
+            if limit <= 120:
+                raise RuntimeError("V4_BUDGET_RESERVE_UNAVAILABLE")
         state["supervised_limit_seconds"] = limit
         write_json(directory / "run_manifest.json", state)
+        command = [sys.executable, "-m", "src.runners.feinn_workflow", str(directory)]
+        if v4:
+            from src.runners.guarded_exec import ticks
+            command = [sys.executable, "-m", "src.runners.guarded_exec", str(os.getpid()), str(ticks(os.getpid())), *command]
         result = supervise(
-            [sys.executable, "-m", "src.runners.feinn_workflow", str(directory)],
+            command,
             directory / "supervision",
             wall_seconds=limit,
             interval=0.5,
-            rss_hard_limit_bytes=16 * 2**30,
-            rss_warning_bytes=12 * 2**30,
+            rss_hard_limit_bytes=tree_limit,
+            rss_warning_bytes=int(1.75 * 2**30) if tree_limit == 2 * 2**30 else 12 * 2**30,
             hard_stop_immediate=True,
-            memory_envelope_provider=envelope,
-            health_check=Health(directory, 16 * 2**30, baseline["neighbor_processes"]),
+            memory_envelope_provider=lambda: envelope(tree_limit),
+            health_check=Health(directory, tree_limit, baseline["neighbor_processes"]),
             include_pss=False,
             stop_on_global_swap=False,
             source_state=state,
@@ -389,6 +425,10 @@ def worker(directory):
     directory = Path(directory)
     manifest = json.loads((directory / "run_manifest.json").read_text())
     stage = manifest["stage"]
+    if stage.startswith("v4_") or stage == "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY":
+        from src.runners.guarded_exec import ticks
+        manifest["worker_lifecycle"] = dict(pid=os.getpid(), ppid=os.getppid(), start_ticks=ticks(os.getpid()), session=os.getsid(0), process_group=os.getpgrp(), stdout=os.readlink(f"/proc/{os.getpid()}/fd/1"), cgroup=Path("/proc/self/cgroup").read_text(), parent_death_guard=os.environ.get("TASK42EXTRA_PARENT_DEATH_GUARD"))
+        write_json(directory / "run_manifest.json", manifest)
     artifact = ARTIFACTS / directory.name
     artifact.mkdir(parents=True)
 
@@ -627,6 +667,18 @@ def worker(directory):
                 artifact,
                 marker,
             )
+        elif stage == "v4_boundary_checks":
+            from src.solvers.feinn_boundary_replay import boundary_checks
+            result, files = boundary_checks(design, load_index("e1_fe"), load_index("e1_grad"), load_index("e3_reference"), load_index("v3_retained_snapshot"), artifact, marker)
+        elif stage == "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY":
+            from src.solvers.feinn_boundary_replay import run_replay
+            result, files = run_replay(design, load_index("e1_fe"), load_index("e1_grad"), load_index("e3_reference"), load_index("v3_retained_snapshot"), load_index("v4_boundary_checks"), artifact, marker, manifest["supervised_limit_seconds"], manifest)
+        elif stage == "v4_fit_reconstruct":
+            from src.solvers.feinn_reference_fit import reconstruct
+            result, files = reconstruct(design, load_index("e1_fe"), load_index("e1_grad"), load_index("FEINN-REFERENCE-FIT-G-ADAM500-REPLAY"), artifact, marker)
+        elif stage == "v4_fit_compare_only":
+            from src.solvers.feinn_reference import compare_reference_fit_without_solve
+            result, files = compare_reference_fit_without_solve(design, load_index("e1_fe"), load_index("e3_reference"), load_index("FEINN-REFERENCE-FIT-G-ADAM500-REPLAY"), load_index("v4_fit_reconstruct"), artifact, marker, route="FEINN-REFERENCE-FIT-G-ADAM500-REPLAY")
         elif stage in design["routes"]:
             from src.solvers.feinn_optimization import run_route
 
