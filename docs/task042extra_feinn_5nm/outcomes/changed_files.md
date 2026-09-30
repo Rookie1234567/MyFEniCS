@@ -95,3 +95,17 @@ V2实现提交 `19c725efd27ae5daedba8e77d2ad98375711bb71` 绑定D0/D1/D2正式�
 | do-not-merge | venv/cache/tmux sockets、raw native/G/矩/场/PT/NPZ/完整history、Firefox profile与截图 | ignored大数据；监督权重禁止作为生产或旧路线/Task042/0.7nm初始化；不自动merge |
 
 这些分组仅供文件级审查，没有master merge approval。R1源码为538c6320679d9a3ce3efe5e6d6ebef062963f601，R2为c8a057a46645542aaa17a38b78e64c6add80cb68；后续文档/checker不冒充实算源码。源码变更只影响明确opt-in研究路径，旧V1/V2结果和V3中断原字节未重写。C1提交17文件、C2最小修正4文件，最终本批完整路径清单见[publication manifest](records/publication_manifest_v4.json)。
+
+## Review V4 后续 V5 文件级边界
+
+| 依赖组 / 文件 | 数值行为与依赖 | 测试 / fresh evidence | 建议合入顺序与边界 |
+| --- | --- | --- | --- |
+| research-only core：src/solvers/feinn_gqr.py、feinn_readout.py | 固定特征完整矩列、G-QR＋小R SVD、390实读出回写；依赖原CoordinateField/CompleteMomentMap/G与模型 | 11项定向tests、S0、唯一S1与独立ML/FE；严格Gate失败 | 不进production default；等待review |
+| reusable runner：feinn_workflow.py、launch_task42extra_durable.py | 新明确stage/namespace、label与预算；launcher准入起单调时钟；旧路径默认不改 | persistent短dummy、4个新one-run清场 | 先单独审阅监督组件，不整支merge |
+| input/schema：src/io/feinn_pilot.py、4个v5 dat | opt-in whitelist及5个监督标签；各stage独立环境 | 输入/隔离定向tests及manifest | 依赖core/runner，没有普通solver资格 |
+| checker/benchmark：check_task42extra_v5.py、check_task42extra_clock.py | 只从原数组/记录重算，不实现新的求解器 | G/物理/资源独立checker，clock dummy | 可单独审阅；不改V1–V4结果 |
+| docs/render：两个既有检查器增加显式V5参数 | 默认历史版本不变，只检查新review与新节 | 本地Markdown与实际GitHub新view | evidence/docs与数值core分开审阅 |
+| compact evidence/docs | response_v5、frozen_hidden_readout_v5、7类records及summary/进度/模型/测试追加 | 绑定实际source与artifact hashes | 保留正/负事实，review后再定selective merge |
+| do-not-merge | Phi/Q/G/native/model/fields/venv/cache/log/profile等ignored artifacts | compact hashes可审阅 | 不进Git，不接回旧无标签模型/Task042/0.7nm |
+
+原CoordinateField/CompleteMomentMap及A/G/材料/背景默认数学不改；V1–V4、旧Task042历史不覆盖。本轮无amend/强推、master/其他支线merge或大模型计算。

@@ -1,4 +1,4 @@
-"""Check only Review V2 and V3/newly edited Markdown, without old-page rerender."""
+"""Check the selected review and new Markdown sections without old-page rerender."""
 
 import json
 from pathlib import Path
@@ -21,7 +21,15 @@ PAGES = [
 
 def main():
     version = int(sys.argv[1]) if len(sys.argv)>1 else 3
-    if version == 4:
+    if version == 5:
+        pages = [(TASK/"review_report_v4.md",None), (TASK/"response_v5.md",None),
+                 (TASK/"outcomes/frozen_hidden_readout_v5.md",None),
+                 (TASK/"outcomes/summary.md","Task42extra Review V4 后续：V5"),
+                 (TASK/"outcomes/test_summary.md","Review V4 后续 V5 定向资格"),
+                 (TASK/"outcomes/changed_files.md","Review V4 后续 V5 文件级边界"),
+                 (ROOT/"docs/development_progress.md","2026-09-30 Task42extra V5"),
+                 (ROOT/"docs/development_model_registry.md","3.44.4 Task42extra Review V4 后续")]
+    elif version == 4:
         pages = [(TASK/"review_report_v3.md",None), (TASK/"response_v4.md",None),
                  (TASK/"outcomes/durable_replay_v4.md",None),
                  (TASK/"outcomes/summary.md","Task42extra Review V3 后续：V4"),
@@ -38,7 +46,7 @@ def main():
     result = dict(
         schema=f"task42extra.markdown-local-check.v{version}",
         status="LOCAL_MARKDOWN_PASS",
-        scope="Review V2 and V3 or modified docs only; old task/V1 pages excluded" if version==3 else "new Review V3 and only new V4 sections; historical Markdown contracts reused",
+        scope="Review V2 and V3 or modified docs only; old task/V1 pages excluded" if version==3 else f"new Review V{version-1} and only new V{version} sections; historical Markdown contracts reused",
         pages=records,
     )
     output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n")

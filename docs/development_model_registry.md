@@ -1644,6 +1644,41 @@ P0 的残差与场误差显著不一致，两个 FREE 终态的原负梯度方�
 
 源身份R0/R1=538c6320679d9a3ce3efe5e6d6ebef062963f601，R2=c8a057a46645542aaa17a38b78e64c6add80cb68；后续文档HEAD不是实算source。[Response V4](task042extra_feinn_5nm/response_v4.md)、[完整诊断](task042extra_feinn_5nm/outcomes/durable_replay_v4.md)、[独立Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v4.json)、[checkpoint index](task042extra_feinn_5nm/outcomes/records/checkpoint_index_v4.json)。下一步仅提交完整终态及计时偏差供review，不自主扩展。
 
+## 3.44.4 Task42extra Review V4 后续：固定隐藏特征读出诊断
+
+保持原M5、5nm Si/air、非可分缺口384hex/p3/q15、31968独立复FE、40端口。固定V4 final的8576实隐藏参数及buffers，只有390实末层（195复读出）改变；完整边/面/内部矩仍覆盖全FE。只做一次G-QR＋小R SVD监督投影，reference已暴露，未调用Gsolve/新因子/非线性训练。
+
+| 同p3参考 / measured、无量纲 | V4 final | V5实际网络c1 | 门限 |
+| --- | ---: | ---: | --- |
+| G场误差 | 0.0138716912975 | 0.0115909576376 | 表示正/部分要求三项均≤0.001/0.01，未通过 |
+| 散射E L2 | 0.0132512476647 | 0.0139354062682 | 严格≤1e-4，未通过 |
+| 散射scaled-curl / 完整H_code L2 | 0.0138870027008 | 0.0115255720568 | 严格≤1e-4，未通过 |
+| total E L2 | 0.00908709789134 | 0.00955626248333 | 严格≤1e-4，未通过 |
+| total scaled-curl / 完整H_code L2 | 0.00949580596642 | 0.00788108119955 | 严格≤1e-4，未通过 |
+| 六点total复E | 0.00975197801709 | 0.00979563175999 | 严格≤1e-4，未通过 |
+| 六点total复H_code | 0.00716738817286 | 0.00774628935817 | 严格≤1e-4，未通过 |
+| 六点scattered复E | 0.0144133908755 | 0.0144779109614 | 严格≤1e-4，未通过 |
+| 六点scattered复H_code | 0.0106715966193 | 0.0115335284392 | 严格≤1e-4，未通过 |
+| native / augmented | 1.60884472011 | 1.97790914967 | 各≤1e-6，未通过 |
+| 原total augmented | 0.762112577426 | 0.936939047704 | ≤1e-6，未通过 |
+| 独立DOLFINx total原方程 | 0.762112577426 | 0.936939047704 | ≤1e-6，未通过 |
+
+| 功率 / measured、入射功率归一 | 同p3参考 | V4 final | V5实际网络c1 |
+| --- | ---: | ---: | ---: |
+| R | 0.812426499057 | 0.813057790084 | 0.813166677492 |
+| T | 0.0324623960953 | 0.0327381741782 | 0.0327293240969 |
+| A_balance | 0.155111104848 | 0.154204035738 | 0.154103998411 |
+| A_volume | 0.155111104847 | 0.155388025694 | 0.155420108597 |
+| R00_s | 0.812256818464 | 0.812608163311 | 0.812222944068 |
+| R00_p | 1.25634444139e-26 | 5.02695584979e-05 | 0.000626436218627 |
+| R00_total | 0.812256818464 | 0.81265843287 | 0.812849380286 |
+| abs(R+T+A_volume−1) | 2.97762e-13 | 0.00118398995593 | 0.0013161101857 |
+| 最大逐级功率差 | 0 | 0.000351344847336 | 0.000626436218627 |
+
+数值秩195、G正交/最优性/实际网络回写通过，gamma0.301800。参数→c差0、q30差7.89e-13；G及curl降低但散射L2/native/40复通道与能量变差，表示/严格物理未达标。主阶段364.273s/树峰1673396224B/swap0，总G列1773，Gram因子新增成本0；旧44119.848638203344s保留，后续费用见[最终资源](task042extra_feinn_5nm/outcomes/records/resource_costs_v5.json)。reference_used_for_training=true；pde_only_solve=false；production_initialization_allowed=false；pde_only_solver_qualified=false；official_candidate_results=false。没有神经增量/目标尺寸5nm/0.7nm资格，不做p4或production初始化。
+
+[Response V5](task042extra_feinn_5nm/response_v5.md)、[完整诊断/区域/通道](task042extra_feinn_5nm/outcomes/frozen_hidden_readout_v5.md)、[Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v5.json)、[run/source](task042extra_feinn_5nm/outcomes/records/run_index_v5.json)。固定特征空间的负门限不能推广为整个网络类不可表示，下一项研究须另审。
+
 # 4. 今后新增模型的登记模板
 
 每次正式计算至少新增一行主表，并按可用性新增衍射级和复振幅表。

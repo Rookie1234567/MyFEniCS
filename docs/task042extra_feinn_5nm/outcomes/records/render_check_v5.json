@@ -1,0 +1,5 @@
+{
+  "schema": "task42extra.render-check.v5",
+  "status": "NOT_YET_CHECKED",
+  "reason": "local Markdown is not actual GitHub rendered view; browser inspection follows exact publication commit"
+}

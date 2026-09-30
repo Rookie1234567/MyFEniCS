@@ -73,3 +73,18 @@ P1 唯一训练被执行会话意外中断；最后完整观察825 closure，第
 初始小测试快照见[durability checks](records/durability_checks_v4.json)，后续边界与11项复测见[post-fit checks](records/post_fit_checks_v4.json)，完整检查点见[checkpoint index](records/checkpoint_index_v4.json)。R0小问题同时树≤2GiB、自身swap0；数值阶段逐个监督并清场。原始Ruff/compile/测试/浏览器尝试及所有失败费用在[资源账](records/resource_costs_v4.json)，不full pytest、不重验整套E0/E1，不宣称GitHub Actions通过。
 
 C1正式段的保存留白有计时偏差，作为规则未满足记录；C2已用launcher时钟和150s cutoff修正，并有定向测试，未再次正式执行。旧V3后段状态未恢复，失联原因仍unknown。[新review及V4页渲染记录](records/render_check_v4.json)分别绑定真实GitHub DOM、published blob和截图，不能用本地Markdown代替。
+
+## Review V4 后续 V5 定向资格
+
+本轮复用已资格化的原生FE/ML与V1–V4完整矩/算子证据，没有安装、full pytest或旧heavy重跑。新路径的11项定向tests两次均通过（最终修改后重跑）：小复SPD满秩/重复/近相关/尺度/纯虚配对独立白化SVD、G列计数/预算/负范数拒绝、实际实虚末层/bias和完整矩映射、标签输入与FE顶层Torch隔离、launcher时钟。Ruff和compileall通过，首次静态检查有两个unused import，在正式运行前移除；费用由直接120s保守计费覆盖，失败不记为数值失败。
+
+| 检查 / measured | 实测 | 判定范围 |
+| --- | --- | --- |
+| 持久clock dummy | importdelay0.663786s，退出147.705s，过期数值工作0，watchdog清场 | 150/120s协议通过；不追认旧V4偏差或所有平台断连路径 |
+| S0 M5 | 原a0差3.077e-15，3非零复/纯虚/bias/内部/edge/face/batch1/8≤1e-10 | 新线性接口资格；c0/E_G/native与V4相同 |
+| 独立投影checker | 591次列G复算，orth2.324e-13、实际最优性1.394e-13、回写通过 | 不重求投影或训练；不是strict physics PASS |
+| 独立ML q15/q30 | 参数→c差0，q30差7.893e-13 | 一次最终求积复核，无改q15后重训 |
+| 独立FE compare-only | complex128/int64/MPI1、Torch未导入，原方程/场/功率未通过 | 原参考只读，新MUMPS0；监督官方资格固定false |
+| 新Markdown / GitHub实际view | 以本地解析及render JSON为准 | 不批量重渲染历史，不声明CI |
+
+原始资格：[readout checks](records/readout_checks_v5.json)，独立Gate：[gate](records/gate_decisions_v5.json)，完整费用：[resource](records/resource_costs_v5.json)。run source `a6ac769027384525e406537f3069607043bc4a67`；checker字节hash与light日志独立绑定，不把后来文档HEAD当运行源码。GitHub实际新review及必要新节检查见[render](records/render_check_v5.json)，状态由真实DOM/截图决定。

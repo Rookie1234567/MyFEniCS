@@ -3007,3 +3007,44 @@ P1 合成复数目标、真实固定网络三方向FD、batch1/8及事务回滚�
 监督标签仅用于已知场表示诊断，不是无标签求解。reference_used_for_training=true，pde_only_solve、production_initialization_allowed、pde_only_solver_qualified、official_candidate_results全部false；新Gram factor/Gsolve0，2154次G matvec95.4165s和存盘3.8402s包含于父wall。旧817参数/optimizer仍NOT_RETAINED、旧825只是下界、失联原因仍unknown，旧3284s费用保留。没有续训旧FEINN/FREE或做p4/目标5nm/0.7nm。
 
 R0/R1 source538c6320679d9a3ce3efe5e6d6ebef062963f601，R2 sourcec8a057a46645542aaa17a38b78e64c6add80cb68。canonical worktree只安全fetch/ff本分支，显式tracking ref核对，不改共享fetch配置。详细检查点、全部复场/通道分母、原区域、预算及后续浏览器费用见[Response V4](task042extra_feinn_5nm/response_v4.md)、[run index](task042extra_feinn_5nm/outcomes/records/run_index_v4.json)、[最终资源账](task042extra_feinn_5nm/outcomes/records/resource_costs_v4.json)。提交推送同分支后等待review，不merge。
+
+## 2026-09-30 Task42extra V5：固定隐藏层线性读出诊断
+
+本轮取得了**稳定、实际可回写网络的固定隐藏层投影**，去掉了V4剩余G误差能量的30.180006%，但未获得表示门限或严格物理资格。G场误差 `0.0138716912975` → `0.0115909576376`，散射curl误差下降；散射E L2 `0.0132512476647` → `0.0139354062682`、native `1.60884472011` → `1.97790914967`、复通道和能量闭合反而变差。分类为 `REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED`。固定特征的线性子问题已通过最优性审核；这个分类保留的是整个可变隐藏层网络及PDE求解的未决范围，不表示本轮线性优化又未完成。
+
+本方法先把V4网络中已经学到的64个隐藏特征固定，再加常数1表示bias，只重新组合这65个特征来产生三个复电场分量。它检验现有特征里是否还有联合优化未用好的线性组合，收益是把一个非凸训练环节拆成一次小型线性诊断；代价是保存31968×195的Phi、G内积正交基及小矩阵分解，且需要已知参考标签。它不是新Maxwell求解器，也不实现完整VarPro。完整Nédélec边、面、内部矩、Piola、orientation和原MPC仍保持原接口。
+
+冻结8576个实隐藏参数以及center/half_width坐标buffers，只改变末层390个实参数（195复系数）。6行输出按实虚两两配对，三分量各64权重＋bias。Phi只由V4最终隐藏权重和原完整矩规则构造，没有加入参考场、参考误差、POD或A逆生成的列；参考只在列已冻结后作为拟合右端项。模型始终M5、5nm Si/air、384hex、p3/q15、31968独立复FE（边3744、面14400、内部13824）、40端口。
+
+| 同p3参考 / measured、无量纲 | V4 final | V5实际网络c1 | 门限 |
+| --- | ---: | ---: | --- |
+| G场误差 | 0.0138716912975 | 0.0115909576376 | 表示正/部分要求三项均≤0.001/0.01，未通过 |
+| 散射E L2 | 0.0132512476647 | 0.0139354062682 | 严格≤1e-4，未通过 |
+| 散射scaled-curl / 完整H_code L2 | 0.0138870027008 | 0.0115255720568 | 严格≤1e-4，未通过 |
+| total E L2 | 0.00908709789134 | 0.00955626248333 | 严格≤1e-4，未通过 |
+| total scaled-curl / 完整H_code L2 | 0.00949580596642 | 0.00788108119955 | 严格≤1e-4，未通过 |
+| 六点total复E | 0.00975197801709 | 0.00979563175999 | 严格≤1e-4，未通过 |
+| 六点total复H_code | 0.00716738817286 | 0.00774628935817 | 严格≤1e-4，未通过 |
+| 六点scattered复E | 0.0144133908755 | 0.0144779109614 | 严格≤1e-4，未通过 |
+| 六点scattered复H_code | 0.0106715966193 | 0.0115335284392 | 严格≤1e-4，未通过 |
+| native / augmented | 1.60884472011 | 1.97790914967 | 各≤1e-6，未通过 |
+| 原total augmented | 0.762112577426 | 0.936939047704 | ≤1e-6，未通过 |
+| 独立DOLFINx total原方程 | 0.762112577426 | 0.936939047704 | ≤1e-6，未通过 |
+
+| 功率 / measured、入射功率归一 | 同p3参考 | V4 final | V5实际网络c1 |
+| --- | ---: | ---: | ---: |
+| R | 0.812426499057 | 0.813057790084 | 0.813166677492 |
+| T | 0.0324623960953 | 0.0327381741782 | 0.0327293240969 |
+| A_balance | 0.155111104848 | 0.154204035738 | 0.154103998411 |
+| A_volume | 0.155111104847 | 0.155388025694 | 0.155420108597 |
+| R00_s | 0.812256818464 | 0.812608163311 | 0.812222944068 |
+| R00_p | 1.25634444139e-26 | 5.02695584979e-05 | 0.000626436218627 |
+| R00_total | 0.812256818464 | 0.81265843287 | 0.812849380286 |
+| abs(R+T+A_volume−1) | 2.97762e-13 | 0.00118398995593 | 0.0013161101857 |
+| 最大逐级功率差 | 0 | 0.000351344847336 | 0.000626436218627 |
+
+S0小型白化SVD/clock dummy及实际M5线性配对通过。Phi构造一次14.806s，S1唯一投影保留195方向，orth2.32e-13、回写和最优性通过；独立q30差7.89e-13，FE只读V1参考，新MUMPS0。所有实算source `a6ac769027384525e406537f3069607043bc4a67`，新末层无旧L-BFGS历史；reference_used_for_training=true；pde_only_solve=false；production_initialization_allowed=false；pde_only_solver_qualified=false；official_candidate_results=false。
+
+主阶段364.273s、树RSS1673396224B、自身swap0，总G列作用1773，原G因子成本新增0；全部新辅助/渲染费用在最终资源账追加，旧累计44119.848638203344s与失联3284s保留。系统及384GiB邻增长预留、现场空闲核与整树监督继续有效，没有改其他任务。G下降伴随native/通道变差，不能当神经增量或生产能力。只建议review决定下一项隐藏特征/原方程分流诊断，本轮不实施p4、大5nm或0.7nm。
+
+[Response V5](task042extra_feinn_5nm/response_v5.md)、[详细诊断](task042extra_feinn_5nm/outcomes/frozen_hidden_readout_v5.md)、[Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v5.json)、[资源](task042extra_feinn_5nm/outcomes/records/resource_costs_v5.json)、[run/source](task042extra_feinn_5nm/outcomes/records/run_index_v5.json)。只提交推送同分支后停止等待review，不merge。
