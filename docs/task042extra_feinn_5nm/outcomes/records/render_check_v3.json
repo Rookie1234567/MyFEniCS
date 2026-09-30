@@ -1,7 +1,227 @@
 {
   "schema": "task42extra.render-check.v3",
-  "status": "PENDING_PUBLICATION_RENDER",
-  "review_commit": "a668fb20dcf49f105cc4c7dfeeda145ee492ae14",
-  "scope": "new Review V2 and V3/newly edited sections only",
-  "note": "Actual GitHub rendered view is checked only after the V3 documents have a published branch commit. This record must be replaced with the browser result or a truthful failure before final delivery."
+  "status": "GITHUB_RENDERED_VIEW_PASS_DOM_AND_SAMPLED_VISUAL",
+  "published_commit": "193043796f38413adb5005d857c9193843d59d5c",
+  "raw_directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v3_new_docs_sha1930437",
+  "raw_DOM_sha256": "93e10df7fb03903c92c7eb6b8b31316c3fdf9451b4ff4235f00b45b2f10d3b38",
+  "screenshots_hashed": 26,
+  "pages": [
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/193043796f38413adb5005d857c9193843d59d5c/docs/task042extra_feinn_5nm/review_report_v2.md",
+      "git_blob_sha": "a04edd8cd6d7d66fc25e5aecbf1db0bb9b54d2ed",
+      "heading": "Review V2：停止对角缩放续扫，转入固定网络的参考场表示诊断",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/review_report_v2.md at 193043796f38413adb5005d857c9193843d59d5c · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 4,
+      "columns": [
+        4,
+        2,
+        2,
+        2
+      ],
+      "math": 5,
+      "screenshots": [
+        {
+          "name": "00_top.png",
+          "sha256": "74876386762f59bb874d9be4e6b7af643ed0d6eeb500578b6b4c480d4e9ae95a"
+        },
+        {
+          "name": "00_table_00.png",
+          "sha256": "b22778a31f2e850e20c57cb51ef17130f4a892205a421680c8b93eea0459b541"
+        },
+        {
+          "name": "00_table_01.png",
+          "sha256": "6bb5ac7ec7697496a6c39c34667834b58050907d786ea014d0664e69ea62988c"
+        },
+        {
+          "name": "00_table_02.png",
+          "sha256": "80234f0c296ed4434dd1895167d36a70745c54d1e4cfcbe6d46f395dc3563a22"
+        },
+        {
+          "name": "00_table_03.png",
+          "sha256": "4fc2bb609953b6d9a70e7a1ea0e97e57eee01b939ea29a8193a1c0fe1e6f0077"
+        },
+        {
+          "name": "00_math-renderer_00.png",
+          "sha256": "6bcf9283039875326e40ee377a0f816a18cbfb1da63addd28673931e52560f69"
+        },
+        {
+          "name": "00_math-renderer_01.png",
+          "sha256": "09a6cd1298b3aa0d030d033b42376681ecdf6f762beb27f188534b88767be683"
+        },
+        {
+          "name": "00_math-renderer_02.png",
+          "sha256": "473bfb92dcabef8860be43a8ae3110136127e02d0b77bde8d118fb5b3cc168de"
+        },
+        {
+          "name": "00_math-renderer_03.png",
+          "sha256": "29ffe3f94b07371e34c4f3dfa852ceeeca4f4bc53555af22aab2dc2ff71afce1"
+        },
+        {
+          "name": "00_math-renderer_04.png",
+          "sha256": "61f1a0eb124874948c4a851ca2f039ac690882d1fd22550d0527c845a1083361"
+        }
+      ],
+      "visual_review": "sampled screenshots only"
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/193043796f38413adb5005d857c9193843d59d5c/docs/task042extra_feinn_5nm/response_v3.md",
+      "git_blob_sha": "1e4173d950c58258e2e1fd99f142563bccd15656",
+      "heading": "Task42extra Response V3：参考已暴露的固定网络表示诊断",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/response_v3.md at 193043796f38413adb5005d857c9193843d59d5c · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 0,
+      "columns": [],
+      "math": 0,
+      "screenshots": [
+        {
+          "name": "01_top.png",
+          "sha256": "1c72f8cc9e072673d6aca4d2164a955d326e696e0a87cabc725de252838aea73"
+        }
+      ],
+      "visual_review": "sampled screenshots only"
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/193043796f38413adb5005d857c9193843d59d5c/docs/task042extra_feinn_5nm/outcomes/representation_diagnostic_v3.md",
+      "git_blob_sha": "a80bf6c5c6f07091878686be584f89b50f1762ed",
+      "heading": "Task42extra V3：参考已暴露的固定网络表示诊断",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/outcomes/representation_diagnostic_v3.md at 193043796f38413adb5005d857c9193843d59d5c · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 3,
+      "columns": [
+        3,
+        6,
+        4
+      ],
+      "math": 2,
+      "screenshots": [
+        {
+          "name": "02_top.png",
+          "sha256": "6f60b055f67ef02d051523ada4263cf5798ceccd9f4b1e973f0190262dbe1e7f"
+        },
+        {
+          "name": "02_table_00.png",
+          "sha256": "372431c0953b5240f017736f07339f56f3fe93ae41f2676f75b8c7f2a4ba2c27"
+        },
+        {
+          "name": "02_table_01.png",
+          "sha256": "efdff720b095fbacba92f8956a78b8013028605d53133cbd556c4acbcec79167"
+        },
+        {
+          "name": "02_table_02.png",
+          "sha256": "7d417153d619ace2292ee72875ac45c18fcce10a08e5f224665f79cb9ee31ad2"
+        },
+        {
+          "name": "02_math-renderer_00.png",
+          "sha256": "0380ee47f0235b4f59a62cdc87f3b5d494ca6f551fbdac9a088ed853c9267313"
+        },
+        {
+          "name": "02_math-renderer_01.png",
+          "sha256": "bef366ea00504086adb8894fdc0081e23d9c143dcb39a7f00596821432265187"
+        }
+      ],
+      "visual_review": "sampled screenshots only"
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/193043796f38413adb5005d857c9193843d59d5c/docs/task042extra_feinn_5nm/outcomes/summary.md",
+      "git_blob_sha": "cfde16df2b1094826afe38ac2929301337a583db",
+      "heading": "Task42extra Review V2 后续：V3 参考暴露表示诊断",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/outcomes/summary.md at 193043796f38413adb5005d857c9193843d59d5c · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 2,
+      "columns": [
+        3,
+        4
+      ],
+      "math": 0,
+      "screenshots": [
+        {
+          "name": "03_top.png",
+          "sha256": "a7cc9dbd1eafeab43601039749d43bea294700403bffad8483b5fc3c87239364"
+        },
+        {
+          "name": "03_table_00.png",
+          "sha256": "5ce5090151a52ae4cb4076eac4cd18fad63449b8ece9f7e195c9844659a852e9"
+        },
+        {
+          "name": "03_table_01.png",
+          "sha256": "93d38fdfa84656fa1bc7f1638eaca60448923a5e69a0277b39fe195238363110"
+        }
+      ],
+      "visual_review": "sampled screenshots only"
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/193043796f38413adb5005d857c9193843d59d5c/docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+      "git_blob_sha": "f87ad0cbb723d176d6849145ce13f7b6fd6eaf05",
+      "heading": "Review V2 后续 V3 定向资格与保留失败",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/outcomes/test_summary.md at 193043796f38413adb5005d857c9193843d59d5c · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 0,
+      "columns": [],
+      "math": 0,
+      "screenshots": [
+        {
+          "name": "04_top.png",
+          "sha256": "3e601b68eeded2882a6ba6142dcb299e6921a166e1e1ee4f893a76bb4f17b259"
+        }
+      ],
+      "visual_review": "sampled screenshots only"
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/193043796f38413adb5005d857c9193843d59d5c/docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+      "git_blob_sha": "580afbbc85dc81cbc07543339324daf8ff989660",
+      "heading": "Review V2 后续 V3 文件级边界",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/outcomes/changed_files.md at 193043796f38413adb5005d857c9193843d59d5c · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 1,
+      "columns": [
+        3
+      ],
+      "math": 0,
+      "screenshots": [
+        {
+          "name": "05_top.png",
+          "sha256": "fca98d8c2df74181b775f639e603f6830b120a5a824fa2a6e6991c11b001da2d"
+        },
+        {
+          "name": "05_table_00.png",
+          "sha256": "fca98d8c2df74181b775f639e603f6830b120a5a824fa2a6e6991c11b001da2d"
+        }
+      ],
+      "visual_review": "sampled screenshots only"
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/193043796f38413adb5005d857c9193843d59d5c/docs/development_progress.md",
+      "git_blob_sha": "97f58272cae99e2a6fcdd27027ef0cb4a726e928",
+      "heading": "2026-09-30 Task42extra V3：参考暴露的固定网络表示诊断",
+      "title": "MyFEniCS/docs/development_progress.md at 193043796f38413adb5005d857c9193843d59d5c · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 0,
+      "columns": [],
+      "math": 0,
+      "screenshots": [
+        {
+          "name": "06_top.png",
+          "sha256": "6b77f83720f07cdbeda8fb33c5e06ce3c76a01c304e8084fb8abeccaf1bfc9db"
+        }
+      ],
+      "visual_review": "sampled screenshots only"
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/193043796f38413adb5005d857c9193843d59d5c/docs/development_model_registry.md",
+      "git_blob_sha": "8985d8fb0be825866fa1a24b0a227907b6e6ab40",
+      "heading": "3.44.2 Task42extra Review V2 后续：参考暴露的固定网络表示诊断",
+      "title": "MyFEniCS/docs/development_model_registry.md at 193043796f38413adb5005d857c9193843d59d5c · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 1,
+      "columns": [
+        3
+      ],
+      "math": 0,
+      "screenshots": [
+        {
+          "name": "07_top.png",
+          "sha256": "9f87a292edebfc997d7cec84e26d21d365c2bb55d290e945a97d865d070b46a1"
+        },
+        {
+          "name": "07_table_00.png",
+          "sha256": "157f52222ae5b53b503d4bd4acde60caf07adc24fab80881369da011f8968871"
+        }
+      ],
+      "visual_review": "sampled screenshots only"
+    }
+  ],
+  "scope": "new Review V2 and V3/newly edited document sections only"
 }

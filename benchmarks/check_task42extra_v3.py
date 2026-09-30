@@ -104,8 +104,7 @@ def _stage_resources(indices):
                         )
                         or peak_rss
                         != interruption["peak_sampled_simultaneous_tree_RSS_bytes"]
-                        or peak_swap
-                        != interruption["peak_sampled_own_tree_swap_bytes"]
+                        or peak_swap != interruption["peak_sampled_own_tree_swap_bytes"]
                     ):
                         raise ValueError("interrupted fit sampler accounting changed")
                     attempts.append(
@@ -203,14 +202,14 @@ def main():
         for item in attempts
     )
     auxiliary_seconds = sum(item.get("elapsed_seconds", 0) for item in checks)
-    # Several sub-second direct Ruff/read-only verification commands were not
-    # wrapped in a supervisor. Charge a conservative fixed allowance instead
-    # of silently treating them as free or inventing measured timings.
-    unsupervised_light_allowance = 30.0
+    # Bound direct read-only verification, the current checker invocation,
+    # and final branch publication. These have no self-inclusive supervisor
+    # summary at this snapshot; overcharge a fixed allowance instead of zero.
+    unsupervised_light_allowance = 120.0
     batch_seconds = formal_seconds + auxiliary_seconds + unsupervised_light_allowance
     resources = dict(
         schema="task42extra.resource-costs.v3",
-        cutoff="at this checker invocation; later render/final check appended in final closeout",
+        cutoff="after GitHub browser verification; supervised records present at this checker invocation plus conservative 120-second direct/final tail allowance",
         V1_V2_conservative_base_seconds=29225.912270474248,
         V2_post_final_checker_unledgered_seconds_conservative=2.027,
         original_16h_limit_seconds=57600,
@@ -545,9 +544,7 @@ def main():
         fit_state = indices["v3_retained_snapshot"] or indices[ROUTE]
         if fit_state is None:
             raise ValueError("no retained parameters for independent comparison")
-        with np.load(
-            fit_state["files"]["checkpoint"]["path"], allow_pickle=False
-        ) as x:
+        with np.load(fit_state["files"]["checkpoint"]["path"], allow_pickle=False) as x:
             c = np.array(x["c"])
         reconstructed = indices["v3_fit_reconstruct"]
         if reconstructed is None:
@@ -575,9 +572,7 @@ def main():
         recorded_Eg = fit_state["result"].get(
             "retained_E_G", fit_state["result"].get("final_E_G")
         )
-        if not close(Eg, raw["G_field_error"]) or not close(
-            Eg, recorded_Eg, 1e-8
-        ):
+        if not close(Eg, raw["G_field_error"]) or not close(Eg, recorded_Eg, 1e-8):
             raise ValueError("G error does not match frozen fit and FE compare")
         eL2 = errors["scattered_L2"]["relative"]
         curl = errors["scattered_scaled_curl"]["relative"]
@@ -767,9 +762,7 @@ def main():
             pde_only_solver_qualified=False,
         )
     with path.open("w", newline="") as f:
-        writer = csv.DictWriter(
-            f, fieldnames=list(comparison_row), lineterminator="\n"
-        )
+        writer = csv.DictWriter(f, fieldnames=list(comparison_row), lineterminator="\n")
         writer.writeheader()
         writer.writerow(comparison_row)
     print(

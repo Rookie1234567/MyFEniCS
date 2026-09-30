@@ -1,17 +1,17 @@
 {
   "schema": "task42extra.resource-costs.v3",
-  "cutoff": "at this checker invocation; later render/final check appended in final closeout",
+  "cutoff": "after GitHub browser verification; supervised records present at this checker invocation plus conservative 120-second direct/final tail allowance",
   "V1_V2_conservative_base_seconds": 29225.912270474248,
   "V2_post_final_checker_unledgered_seconds_conservative": 2.027,
   "original_16h_limit_seconds": 57600,
   "V3_limit_seconds": 14400,
   "V3_formal_seconds": 3462.8418645662023,
-  "V3_auxiliary_seconds": 34.044190754997544,
-  "V3_unsupervised_light_allowance_seconds_conservative": 30.0,
-  "V3_batch_seconds": 3526.8860553212,
-  "original_total_conservative_seconds": 32754.825325795446,
-  "V3_remaining_seconds": 10873.1139446788,
-  "original_16h_remaining_seconds": 24845.174674204554,
+  "V3_auxiliary_seconds": 116.44301896588877,
+  "V3_unsupervised_light_allowance_seconds_conservative": 120.0,
+  "V3_batch_seconds": 3699.284883532091,
+  "original_total_conservative_seconds": 32927.22415400634,
+  "V3_remaining_seconds": 10700.715116467909,
+  "original_16h_remaining_seconds": 24672.775845993663,
   "formal_stage_attempts": {
     "v3_error_geometry": [
       {
@@ -352,6 +352,10 @@
       "summary_sha256": "6544635abac550eaa71924e6df96c9c7bfd975c48229604cb33985be148f9dce"
     },
     {
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v3_final_cost_checker_20260930T022730113027Z",
+      "status": "INCOMPLETE_NO_SUMMARY"
+    },
+    {
       "label": "v3_final_static_20260930T022254197687Z",
       "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v3_final_static_20260930T022254197687Z",
       "classification": "COMPLETED",
@@ -385,8 +389,15 @@
       "summary_sha256": "5565845920146bb3d7e0949db74dbfdc48371c9756c76a1607d89388d14500aa"
     },
     {
+      "label": "v3_independent_checker_pre_render_20260930T022352033590Z",
       "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v3_independent_checker_pre_render_20260930T022352033590Z",
-      "status": "INCOMPLETE_NO_SUMMARY"
+      "classification": "COMPLETED",
+      "elapsed_seconds": 2.5309778549708426,
+      "peak_simultaneous_tree_RSS_bytes": 244396032,
+      "own_tree_swap_peak_bytes": 0,
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "summary_sha256": "60ec872a729eea59a258469506832352d0ad31d406d4afc3725d5e6d1df3f220"
     },
     {
       "label": "v3_markdown_local_20260930T022218047003Z",
@@ -442,6 +453,28 @@
       "leader_exit_code": 0,
       "descendants_cleared": true,
       "summary_sha256": "1564442d618e40aab5487de253e3d0b1f7fb94221e36a937d363ba9cc94a756c"
+    },
+    {
+      "label": "v3_render_new_docs_20260930T022515561728Z",
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v3_render_new_docs_20260930T022515561728Z",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 77.84378931799438,
+      "peak_simultaneous_tree_RSS_bytes": 2042216448,
+      "own_tree_swap_peak_bytes": 0,
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "summary_sha256": "540e6b59aae1472892c2307406b3b20f212469ec542b02f89a23caa6fac0ea58"
+    },
+    {
+      "label": "v3_render_verify_20260930T022658654334Z",
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v3_render_verify_20260930T022658654334Z",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 2.0240610379260033,
+      "peak_simultaneous_tree_RSS_bytes": 87191552,
+      "own_tree_swap_peak_bytes": 0,
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "summary_sha256": "007da5d4647ef6d7ef6745c993f429b01827d014bc56e3543b19b468edc99985"
     },
     {
       "label": "v3_ruff_format_20260930T010929178322Z",
@@ -518,7 +551,7 @@
     "v3_fit_reconstruct": 520720384,
     "v3_fit_compare_only": 647409664
   },
-  "all_supervised_peak_RSS_bytes": 1038958592,
+  "all_supervised_peak_RSS_bytes": 2042216448,
   "peak_scope": "maximum sampled simultaneous own process-tree RSS, not summed phase peaks",
   "own_swap_zero": true,
   "system_growth_reserve_bytes": 412316860416,

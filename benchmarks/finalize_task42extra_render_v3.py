@@ -40,9 +40,7 @@ def main():
     pages = []
     for entry in captured["records"]:
         url = entry["url"]
-        prefix = (
-            "https://github.com/Rookie1234567/MyFEniCS/blob/" + commit + "/"
-        )
+        prefix = "https://github.com/Rookie1234567/MyFEniCS/blob/" + commit + "/"
         if not url.startswith(prefix):
             raise ValueError("rendered GitHub URL is not the published commit")
         relative = url[len(prefix) :]
@@ -59,7 +57,9 @@ def main():
         git_blob = subprocess.check_output(
             ["git", "rev-parse", f"{commit}:{relative}"], cwd=ROOT, text=True
         ).strip()
-        if relative.endswith("review_report_v2.md") and published_bytes != subprocess.check_output(
+        if relative.endswith(
+            "review_report_v2.md"
+        ) and published_bytes != subprocess.check_output(
             ["git", "show", f"a668fb20dcf49f105cc4c7dfeeda145ee492ae14:{relative}"],
             cwd=ROOT,
         ):

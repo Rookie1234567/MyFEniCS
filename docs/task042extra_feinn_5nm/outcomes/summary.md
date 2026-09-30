@@ -27,6 +27,15 @@
 
 完整网络参数确实产生保存的全部FE系数，q30/q15差`2.85841e-12`、无求积漂移。六点复E/H、全40有序复通道及其分母、air/substrate/grating/interface-near双侧单元的场积分与cell集合hash见[完整诊断](representation_diagnostic_v3.md)和[独立Gate](records/gate_decisions_v3.json)。审核source为`7c2bffe4dff7b2c9a918ade6ec02a45e168b4890`；它不生成新的准确参考或MUMPS求解，`pde_only_solver_qualified=false`、`official_candidate_results=false`。快照未达研究阈值，但完整拟合最终参数已丢失，最终表示能力保持`INTERRUPTED_FIT_NO_FINAL_STATE`。
 
+| V3资源口径 / measured或保守计费 | wall / s | 同时树RSS峰 / B | 自身swap / B | 说明 |
+| --- | ---: | ---: | ---: | --- |
+| P0误差—残差及唯一Gram因子 | 104.833 | 1,038,958,592 | 0 | 因子setup96.880s、11solve3.466s，结束释放 |
+| 唯一P1训练尝试 | 3284.000保守计费；实际监督采样至少3097.314 | 697,479,168 | 0 | 会话消失无`run_summary`；保守计到首次确认进程不存在 |
+| Adam500留存态登记 / q30重建 / FE独立审核 | 6.043 / 14.101 / 24.169 | 492,134,400 / 520,720,384 / 647,409,664 | 全0 | 各为独立监督阶段，不加RSS峰 |
+| GitHub首轮8页浏览器检查 | 77.844 | 2,042,216,448 | 0 | 轻量2GiB内；26截图hash，抽看关键公式/表格 |
+
+首轮已发布文档在GitHub实渲染8页、11表、7公式通过；Review V2为4表/5公式，V3详细诊断为3表/2公式。[渲染证据](records/render_check_v3.json)绑定精确发布blob与截图。首次本地Markdown检查因尚未生成此渲染记录的链接失败，生成真实待验记录后8页/38表通过，失败费用仍计入资源账。到首轮浏览器及其验算后，本批正式阶段加中断保守计费`3462.842s`、辅助`116.443s`、终端/最终尾段保守预留`120s`，合计`3699.285s`；原16h仍余约`24672.776s`，本批4h仍余约`10700.715s`。最终二次发布渲染与尾段费用以[完整资源账](records/resource_costs_v3.json)为准。最大同时树RSS是浏览器的`2,042,216,448B`，不把阶段峰值相加；所有自有树采样swap为0。目标尺寸5nm与0.7nm均未运行。
+
 # Task42extra Review V1 后续：V2 固定尺度诊断
 
 本节追加 Review V1 的唯一后续试验，下面的 V1 16节原文完整保留。原模型 M5、全部 31968 复 FE 系数、40端口、材料与弱残差未改。V2 把原 Gram 对角用于优化变量 `c=Dy`，用于检查各类系数尺度是否让旧 FREE 优化困难；它没有训练新网络。D0既有状态诊断、D1梯度资格、D2唯一候选及D3独立复验均完成。[详细解释和完整表](scaling_diagnostic_v2.md)、[Response V2](../response_v2.md)、[独立Gate](records/gate_decisions_v2.json)。
