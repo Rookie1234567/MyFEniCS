@@ -47,7 +47,7 @@ def policy(item):
         raise ValueError("REFERENCE_EXPOSURE_POLICY_LOST")
 
 
-def resources(indices, *, version=5, old_seconds=OLD_SECONDS, batch_limit=7200, main_limit=3600, main_route=ROUTE):
+def resources(indices, *, version=5, old_seconds=OLD_SECONDS, batch_limit=7200, main_limit=3600, main_route=ROUTE, new_factor_counts=(0, 0, 0)):
     stages = {}
     for stage, item in indices.items():
         directory = Path(item["run_directory"])
@@ -168,7 +168,7 @@ def resources(indices, *, version=5, old_seconds=OLD_SECONDS, batch_limit=7200, 
         reserve_120s_met=stages[main_route]["launch_exit_remaining_seconds"] >= 120,
         no_continuous_kernel_cgroup_limit_claim=True,
         shared_workstation=True,
-        new_Gram_factor_Gsolve_Maxwell_factor_counts=[0, 0, 0],
+        new_Gram_factor_Gsolve_Maxwell_factor_counts=list(new_factor_counts),
         historical_Gram_and_reference_costs_preserved=True,
         timer_scope="phase walls sum; nested G/QR/SVD/storage/supervisor timers are included and never added again",
         cutoff=f"all completed own V{version} summaries plus conservative direct/current/final 120s allowance",

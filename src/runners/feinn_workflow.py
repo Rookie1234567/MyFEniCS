@@ -54,6 +54,32 @@ def replay_closure_deadline(manifest):
     return origin + limit - 150
 
 
+def authority_watchdog_window(manifest, now):
+    """Bound native calls as well as Python checkpoints; leave 150s to exit."""
+    remaining = replay_closure_deadline(manifest) - float(now)
+    if remaining <= 0:
+        raise RuntimeError("V7_BUDGET_RESERVE_UNAVAILABLE")
+    return remaining
+
+
+def bind_authority_packet(state, operator):
+    """Publish the qualified p4 identity before a potentially interrupted run."""
+    identity = operator["result"]["identity"]
+    if identity["degree"] != 4:
+        raise ValueError("AUTHORITY_PACKET_MUST_BE_P4")
+    state.update(
+        p3_dependency_native_sha256=state.get("actual_operator_packet_sha256"),
+        physical_model_sha256=operator["files"]["native"]["sha256"],
+        actual_operator_packet_sha256=operator["files"]["native"]["sha256"],
+        mesh_sha256=identity["mesh_coordinates_sha256"],
+        cell_tags_sha256=identity["cell_tags_sha256"],
+        mode_sha256=identity["mode_manifest_sha256"],
+        actual_discretization_degree=4,
+        authoritative_packet_stage="v7_p_transfer_checks",
+        physical_hash_meaning="actual original full independent FE packet and fixed affine rhs",
+    )
+
+
 def index_path(stage):
     return ARTIFACTS / ("index_" + stage.lower().replace("-", "_") + ".json")
 
@@ -441,6 +467,9 @@ def launch(spec):
             (directory / "physical_model_sha256.txt").write_text(
                 state["physical_model_sha256"] + "\n"
             )
+        if v7 and "v7_p_transfer_checks" in dependencies:
+            bind_authority_packet(state, load_index("v7_p_transfer_checks"))
+            (directory / "physical_model_sha256.txt").write_text(state["physical_model_sha256"] + "\n")
         state["frozen_dependencies_before_worker_launch"] = dependencies
         state["qualified_environment_record"] = {
             mode: dict(
@@ -507,10 +536,17 @@ def launch(spec):
         if v4 or v5 or v6 or v7:
             from src.runners.guarded_exec import ticks
             command = [sys.executable, "-m", "src.runners.guarded_exec", str(os.getpid()), str(ticks(os.getpid())), *command]
+        watchdog_seconds = (
+            authority_watchdog_window(state, perf_counter())
+            if v7 else limit - (perf_counter() - launch_origin) if v5 or v6 else limit
+        )
+        if v7:
+            state["watchdog_terminal_cutoff_reserve_seconds"] = 150
+            write_json(directory / "run_manifest.json", state)
         result = supervise(
             command,
             directory / "supervision",
-            wall_seconds=limit - (perf_counter() - launch_origin) if v5 or v6 or v7 else limit,
+            wall_seconds=watchdog_seconds,
             interval=0.5,
             rss_hard_limit_bytes=tree_limit,
             rss_warning_bytes=int(1.75 * 2**30) if tree_limit == 2 * 2**30 else 12 * 2**30,
