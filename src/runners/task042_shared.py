@@ -5,12 +5,14 @@ Never inspects another task's smaps, acquires its lock, or sends it a signal.
 """
 
 import fcntl
+from collections.abc import Mapping
 import json
 import os
 import shutil
 import subprocess
 import sys
 import time
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -23,22 +25,46 @@ GROWTH = 128 * 2**30
 ARTIFACTS = ROOT / "benchmarks/artifacts/task042"
 
 
-def write_json(path, value):
-    def convert(item):
-        if isinstance(item, complex):
-            return {"real": float(item.real), "imag": float(item.imag)}
-        if hasattr(item, "tolist"):
-            return item.tolist()
-        if hasattr(item, "item"):
-            return item.item()
-        raise TypeError(type(item).__name__)
+def _json_metadata(item):
+    """Task042 small metadata only; preserve mappings and complex structure."""
+    if isinstance(item, Mapping):
+        if any(not isinstance(key, (str, int)) for key in item):
+            raise TypeError("metadata keys must be strings or integer indices")
+        if len({str(key) for key in item}) != len(item):
+            raise ValueError("metadata key conversion collision")
+        return {str(key): _json_metadata(value) for key, value in item.items()}
+    if isinstance(item, (list, tuple)):
+        return [_json_metadata(value) for value in item]
+    if isinstance(item, complex):
+        return {"real": float(item.real), "imag": float(item.imag)}
+    if hasattr(item, "ndim") and item.ndim != 0:
+        if item.size > 4096 or item.nbytes > 65536:
+            raise ValueError("large arrays require an artifact path and hash")
+        return _json_metadata(item.tolist())
+    if hasattr(item, "item"):
+        return _json_metadata(item.item())
+    if item is None or isinstance(item, (str, int, float, bool)):
+        return item
+    raise TypeError(type(item).__name__)
 
-    path.write_text(
-        json.dumps(
-            value, ensure_ascii=False, indent=2, allow_nan=False, default=convert
-        )
-        + "\n"
-    )
+
+def write_json(path, value):
+    """Encode first, then atomically publish; failure retains the last record."""
+    encoded = json.dumps(_json_metadata(value), ensure_ascii=False, indent=2,
+                         allow_nan=False) + "\n"
+    path = Path(path)
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=path.parent,
+                                         prefix="." + path.name, delete=False) as stream:
+            temporary = Path(stream.name)
+            stream.write(encoded)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+    finally:
+        if temporary is not None and temporary.exists():
+            temporary.unlink()
 
 
 def proc_stats():
