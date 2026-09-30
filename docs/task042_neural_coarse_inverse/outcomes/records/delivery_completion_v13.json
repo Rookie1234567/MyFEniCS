@@ -1,0 +1,43 @@
+{
+  "schema": "task042.delivery-freeze.v13",
+  "utc": "2026-09-30T04:55:27.640532+00:00",
+  "window": {
+    "schema": "task042.autonomous-window.v13",
+    "start_utc": "2026-09-30T02:38:38.674705+00:00",
+    "start_monotonic": 660913.535589948,
+    "stop_heavy_utc": "2026-09-30T06:23:38.674705+00:00",
+    "deadline_utc": "2026-09-30T06:38:38.674705+00:00",
+    "total_limit_seconds": 14400,
+    "heavy_limit_seconds": 13500,
+    "cleanup_reserve_seconds": 900,
+    "review_expected_commit": "fb994b337960c89d2e70afc93707595258b3bb60",
+    "prior_v12_head": "0b81d4cdad2dd2e3c21a68e60b14c35fdc897337",
+    "elapsed_seconds": 8208.965896606445,
+    "heavy_remaining_seconds": 5291.034103393555,
+    "total_remaining_seconds": 6191.034103393555
+  },
+  "source_head_before_final_record_only_commit": "c334fa6900e2ff105919799e6d402fa04e54d1af",
+  "accepted_network_actual_source": "33f7d613b1341fa585f0324ead6039bf28211fff",
+  "record_recovery_and_FE_validation_source": "7615baae2f0d75fbc47c05be392b35ef2878c431",
+  "active_own_numerical_processes": [],
+  "own_lock_free": true,
+  "all_six_formal_descendants_cleared": true,
+  "cleanup_signals_sent": 0,
+  "neighbor_processes_modified": false,
+  "scope": "native host; exact NN-Lab cwd, no recycled-PID signaling",
+  "published_documents_unchanged_sha256": {
+    "docs/task042_neural_coarse_inverse/response_v13.md": "8da62a90bc2a01261bc03fbe8d9c78d952d0ae0c50088b40362887dc6c1ea8d3",
+    "docs/task042_neural_coarse_inverse/outcomes/tangent_scale_head_compensation_v13.md": "d70ef50c4c7d907b46f1d67b3f5dec0a45b0342512d2b06e8d1be0c38716db9b",
+    "docs/task042_neural_coarse_inverse/outcomes/summary.md": "1dcd08af2f4cbe6bc93407b607184aa4cd7b584c3ad2ee7871064dac3261f0ef",
+    "docs/task042_neural_coarse_inverse/README.md": "25e565b2e5d0dce3840ca6b0fdf607d8e5a36d8948800627be40ffd861b75c02"
+  },
+  "final_branch": "task42_neural_coarse_inverse",
+  "awaiting_review_after_final_push": true,
+  "no_new_numerical_work_after_REF7": true,
+  "main_stop_reason": "C_NEXT_ROUND_PROGRESS_GATE_FAILED",
+  "formal_micro_qualified": false,
+  "research_positive": false,
+  "true_hidden_update_count": 1,
+  "head_only_twins_are_diagnostic": true,
+  "final_full_HEAD_reported_after_final_push": true
+}

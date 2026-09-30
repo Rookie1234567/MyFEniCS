@@ -195,5 +195,7 @@
     "GPU": "CPU-only authorized batch",
     "old_p4_PC": "closed historical negative",
     "seed420620": "sealed; untouched"
-  }
+  },
+  "coupled_step_physical_outcome": "BOUNDED_COUPLED_STEP_NEGATIVE",
+  "objective_outcome": "OBJECTIVE_ONLY_IMPROVEMENT"
 }

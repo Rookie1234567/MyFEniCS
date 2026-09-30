@@ -1,8 +1,410 @@
 {
   "schema": "task042.publication.v13",
-  "status": "PENDING_BRANCH_PUSH",
-  "actual_result_pages_checked": false,
-  "server_render_status": "NOT_RUN_YET",
+  "utc": "2026-09-30T04:50:41.437961+00:00",
+  "published_document_commit": "c334fa6900e2ff105919799e6d402fa04e54d1af",
+  "status": "SERVER_STRUCTURE_CHECKED",
+  "actual_result_pages_checked": true,
+  "web_tool_result": "Cache miss for both response/outcome; anonymous native curl fallback",
   "browser_pixel_or_JS_glyph_render": "NOT_OBSERVED_NO_BROWSER_TOOL",
-  "claim_full_visual_PASS": false
+  "claim_full_visual_PASS": false,
+  "unchanged_document_blobs_remain_valid_across_final_record_only_commit": true,
+  "pages": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v13.md",
+      "URL": "https://github.com/Rookie1234567/MyFEniCS/blob/c334fa6900e2ff105919799e6d402fa04e54d1af/docs/task042_neural_coarse_inverse/response_v13.md",
+      "HTTP_status": "200",
+      "curl_returncode": 0,
+      "stderr": "",
+      "actual_rendered_page_fetched": true,
+      "commit": "c334fa6900e2ff105919799e6d402fa04e54d1af",
+      "source_sha256": "8da62a90bc2a01261bc03fbe8d9c78d952d0ae0c50088b40362887dc6c1ea8d3",
+      "source_bytes_unchanged_for_final_record_commit": true,
+      "full_page_sha256": "7dc22569e6e37002c98d273a5f1efee71c77589da2702477afa52ccd7e5d6e99",
+      "richText_sha256": "e1ea4d9524179b465c4f8056c16a078fd6d8c8b0cc304f7c027672e5600b89dc",
+      "richText_truncated": false,
+      "table_count": 2,
+      "table_row_widths": [
+        [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        [
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5
+        ]
+      ],
+      "math_renderer_count": 0,
+      "errors": [],
+      "server_structure_status": "PASS"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/tangent_scale_head_compensation_v13.md",
+      "URL": "https://github.com/Rookie1234567/MyFEniCS/blob/c334fa6900e2ff105919799e6d402fa04e54d1af/docs/task042_neural_coarse_inverse/outcomes/tangent_scale_head_compensation_v13.md",
+      "HTTP_status": "200",
+      "curl_returncode": 0,
+      "stderr": "",
+      "actual_rendered_page_fetched": true,
+      "commit": "c334fa6900e2ff105919799e6d402fa04e54d1af",
+      "source_sha256": "d70ef50c4c7d907b46f1d67b3f5dec0a45b0342512d2b06e8d1be0c38716db9b",
+      "source_bytes_unchanged_for_final_record_commit": true,
+      "full_page_sha256": "aa632b0561751fd03570da45962227a75a5ab99cfe66762b6df8e6d0fde79117",
+      "richText_sha256": "3919f1a101ad941f7095a69e5ae9d392315d2ec654e710262ae3332909051468",
+      "richText_truncated": false,
+      "table_count": 9,
+      "table_row_widths": [
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        [
+          2,
+          2,
+          2,
+          2
+        ],
+        [
+          5,
+          5,
+          5,
+          5,
+          5
+        ],
+        [
+          6,
+          6,
+          6,
+          6
+        ],
+        [
+          6,
+          6,
+          6,
+          6
+        ],
+        [
+          5,
+          5,
+          5,
+          5,
+          5,
+          5
+        ],
+        [
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4
+        ],
+        [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ]
+      ],
+      "math_renderer_count": 2,
+      "errors": [],
+      "server_structure_status": "PASS"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "URL": "https://github.com/Rookie1234567/MyFEniCS/blob/c334fa6900e2ff105919799e6d402fa04e54d1af/docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "HTTP_status": "200",
+      "curl_returncode": 0,
+      "stderr": "",
+      "actual_rendered_page_fetched": true,
+      "commit": "c334fa6900e2ff105919799e6d402fa04e54d1af",
+      "source_sha256": "1dcd08af2f4cbe6bc93407b607184aa4cd7b584c3ad2ee7871064dac3261f0ef",
+      "source_bytes_unchanged_for_final_record_commit": true,
+      "full_page_sha256": "2142536b93b32b66db8e2cbb02801f22c968ecdeb721239b9901592bf0946727",
+      "richText_sha256": "a83dcb9faee258cf24931173d287aeb4bf6bc75c19e095e32b6febb92663a9ce",
+      "richText_truncated": false,
+      "table_count": 24,
+      "table_row_widths": [
+        [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4
+        ],
+        [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4
+        ],
+        [
+          5,
+          5,
+          5,
+          5,
+          5,
+          5
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          6
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        [
+          7,
+          7,
+          7,
+          7
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        [
+          6,
+          6,
+          6
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        [
+          7,
+          7,
+          7,
+          7
+        ]
+      ],
+      "math_renderer_count": 0,
+      "errors": [],
+      "server_structure_status": "PASS"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "URL": "https://github.com/Rookie1234567/MyFEniCS/blob/c334fa6900e2ff105919799e6d402fa04e54d1af/docs/task042_neural_coarse_inverse/README.md",
+      "HTTP_status": "200",
+      "curl_returncode": 0,
+      "stderr": "",
+      "actual_rendered_page_fetched": true,
+      "commit": "c334fa6900e2ff105919799e6d402fa04e54d1af",
+      "source_sha256": "25e565b2e5d0dce3840ca6b0fdf607d8e5a36d8948800627be40ffd861b75c02",
+      "source_bytes_unchanged_for_final_record_commit": true,
+      "full_page_sha256": "2f48ddcaa8ccfc47c7661b67b1a1c898baee43baee7d2dbf8f67304440fc6232",
+      "richText_sha256": "d3f2f647f206837147fc911a0fd3bf512d944451a980ed0cf28aec29416f03c9",
+      "richText_truncated": false,
+      "table_count": 1,
+      "table_row_widths": [
+        [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ]
+      ],
+      "math_renderer_count": 0,
+      "errors": [],
+      "server_structure_status": "PASS"
+    }
+  ]
 }
