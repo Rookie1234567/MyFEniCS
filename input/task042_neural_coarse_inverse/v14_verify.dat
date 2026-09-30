@@ -1,0 +1,6 @@
+schema_version = 1
+[task042_v14]
+stage = "VERIFY"
+run_id = "task042_v14_verify"
+material_table_id = "SI_OPTICAL_CONSTANTS_USER_20260929_V1"
+decoder_family = "ORTHONORMAL_NEURAL_FE_BASIS"

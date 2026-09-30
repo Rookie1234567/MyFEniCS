@@ -55,6 +55,8 @@ TASK042_PROFILES = {
     "task042_v12_verify": "V12-VERIFY",
     **{"task042_v13_"+name.lower(): "V13-"+name
        for name in ("TANGENT", "RESPONSE", "COMPENSATE", "VERIFY")},
+    **{"task042_v14_"+name.lower(): "V14-"+name
+       for name in ("DECODER", "PROFILE", "VERIFY")},
 }
 
 

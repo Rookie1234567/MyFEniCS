@@ -1,0 +1,188 @@
+{
+  "schema": "task042.orthonormal-trace-reprofile.v14",
+  "review_commit": "52bfe9ca622481df8f686a92cbb632885610d0e8",
+  "family": "ORTHONORMAL_NEURAL_FE_BASIS",
+  "action_sha256": "9196edb807b534217d0c0eb78882125341342784a48ef20ebe2d9421fe636454",
+  "physical_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+  "mode_sha256": "93795b53d7c5aef69af66b4ff0a56fa46515771f1ec43332ec929970270ea262",
+  "material_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+  "material_table_id": "SI_OPTICAL_CONSTANTS_USER_20260929_V1",
+  "reference_sha256": "a0610a5a55e7508196b17277e706595c33e4398ace82b245f70b656e6b9ed355",
+  "original_basis_hidden_sha256": "27ff1fee5fa9a7ea2fab190faa993ef98c3c5cb547140507752e7a5cc0bb7885",
+  "frozen_points": [
+    {
+      "name": "ORIGIN",
+      "s": 0.0,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v13/task042_v13_tangent_20260930T031852990115Z/INITIAL_V12_PHYSICAL.npz",
+        "sha256": "1fd18e562b9bdf2dbf248dfaccde35a5812a32ed3d071647022e21296c05cf15",
+        "z_sha256": "d03b29176483da60046755647f8bd8bb880137ab34b23a064e32f718929e3a7d",
+        "hidden_sha256": "27ff1fee5fa9a7ea2fab190faa993ef98c3c5cb547140507752e7a5cc0bb7885",
+        "gamma_sha256": "8e72c61f69f188ad0f7602f68d8fa058452992c9848e98089602daf3c7ed5140",
+        "port_sha256": "08bda2b51c091600814c7bf9c17c847c815c6e20d4ec34c658318927e542c313",
+        "network_parameters_sha256": "562efdd063ecabe99c45f507bd1224eeed7e993e617e0601c1085a63fbd70bee"
+      },
+      "historical_raw_Phi": 0.3181799855089551,
+      "source_sha": "978a59efeae9891a848c5fac581ec32e4fc9a5b8"
+    },
+    {
+      "name": "TRIAL_0",
+      "s": 1.0,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v13/task042_v13_compensate_record_recovery_20260930T034107776460Z/RECORDED_C1_trial_0.npz",
+        "sha256": "a3494323805fe6e63454ec0b86058e16b4445a1557274901c2742dfddaef13a6",
+        "z_sha256": "12a32ba2262806182d83177a92fbbd45b10d7440192d03b4e201fe9a4978036f",
+        "hidden_sha256": "d1395b40a6a95d01cabef865a849bc9b97ce3177631f68335aef1187677642e1",
+        "gamma_sha256": "ef1acf61fa5ce9f8b25a5e6143515ba3c56d65dcdac1fced741c60c5e1750adb",
+        "port_sha256": "7a492be3e1dee701c70121e796470ba817b7b423d1f7abcd10bb955f1bfea599",
+        "network_parameters_sha256": "2c8e449e69aaf850b26386056ce4097332e2e0229cd13c8595a3fffb0eb6abaf"
+      },
+      "historical_raw_Phi": 230.44614448201773,
+      "source_sha": "33f7d613b1341fa585f0324ead6039bf28211fff"
+    },
+    {
+      "name": "TRIAL_1",
+      "s": 0.25,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v13/task042_v13_compensate_record_recovery_20260930T034107776460Z/RECORDED_C1_trial_1.npz",
+        "sha256": "66659972d331506d8e3539286a7f5edc6ea056bebcb4d092eba0e2e084ae2f04",
+        "z_sha256": "7ee864c1e162ea1ed35e95f7795af4466b0f217aaae83faf8dda67ea2e807602",
+        "hidden_sha256": "5206b3415759ffeef0e35ebb7706eb692b4d4b5792698472022af04f7db49a8d",
+        "gamma_sha256": "e682c76db3fadcf777e5b4ad041f8a33743fe1ccfde4256fb614fafc9ee02e78",
+        "port_sha256": "a8440d7345ee2b79a7112d1f186cbe6b03b31582f4fd3f79235bfd05dce615b7",
+        "network_parameters_sha256": "be0a751bcda42bdaa37a6bfafa90b922846dc0bada4e9634c0850e969536cf08"
+      },
+      "historical_raw_Phi": 1.2170618932558823,
+      "source_sha": "33f7d613b1341fa585f0324ead6039bf28211fff"
+    },
+    {
+      "name": "TRIAL_2",
+      "s": 0.0625,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v13/task042_v13_compensate_record_recovery_20260930T034107776460Z/RECORDED_C1_trial_2.npz",
+        "sha256": "8dcbfef07a9b851364d78bc6854acdd81ff5adabc77ec6982f7c6380d86b81d8",
+        "z_sha256": "4b0d8a7a92fba09b501be9b30d66fc5f1ad1a94bc709a2eed1b3d493076c8d1c",
+        "hidden_sha256": "761251997ac7c8cfd5de6c520a573790b5eafbb267a5252edf908b499a57973c",
+        "gamma_sha256": "540d6d8b60942f7ffd959e37eedb7bf6040e45eecedccde10b36dd977e065a08",
+        "port_sha256": "54586d481b64d80ea0d8d93a5137244cbbaea7712837593718d05409d81bb0cc",
+        "network_parameters_sha256": "45ae345bfbc6f3d623e74dd7c2a885141ff9f94dff88d958e76c00db3592a894"
+      },
+      "historical_raw_Phi": 0.3216867803115054,
+      "source_sha": "33f7d613b1341fa585f0324ead6039bf28211fff"
+    },
+    {
+      "name": "TRIAL_3",
+      "s": 0.015625,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v13/task042_v13_compensate_record_recovery_20260930T034107776460Z/RECORDED_C1_trial_3.npz",
+        "sha256": "231e985d0d9f9281bbc2f328665d2ea0b313e9abd6b38292c2bde89b54724f42",
+        "z_sha256": "a25fd558f9d69c85199c5e70b863ad808cc7aafc6e9d936fd8b502213bfb9754",
+        "hidden_sha256": "03fa706fe5eea40bc8c5b223d7f2602cdb32344f85c02701a4df79e16a6ed810",
+        "gamma_sha256": "60a9f8bdda0135b15fd403812a82f6e849dd1e07d976ef83293478a9776e7f04",
+        "port_sha256": "8cb4c60914665283a8ef4c519144467a4e8b4405295d3bfe5eada438276af1f0",
+        "network_parameters_sha256": "749fa3407d7fb7f093a783958c5dd8364afca874e9d33da5b127777a2521f347"
+      },
+      "historical_raw_Phi": 0.3181925772753522,
+      "source_sha": "33f7d613b1341fa585f0324ead6039bf28211fff"
+    },
+    {
+      "name": "TRIAL_4",
+      "s": 0.00390625,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v13/task042_v13_compensate_record_recovery_20260930T034107776460Z/RECORDED_C1_trial_4.npz",
+        "sha256": "468dbbceb14f0e8e24eb34b84158a996c71473623fe6153574bc9096842d34db",
+        "z_sha256": "268d409c5654ea57f329a19ef2dc08f74ff7a9b4123fddd818200362c4aacbb1",
+        "hidden_sha256": "9a519858614eccc39287f25a30c2fdac4db31cc5103a522a8e3d87eea8da2bcd",
+        "gamma_sha256": "1a850800bc5319dc95a4e7a70ca2b731172c1be786a2a8ee159d4a3f1a747401",
+        "port_sha256": "730925939c0361decb06aa23bfe87f7b0fcf6496be900897a1aebe6f50db586f",
+        "network_parameters_sha256": "3423ec52a5e6b00c8144513680f5d574f952747036f4331835e71d18398003ba"
+      },
+      "historical_raw_Phi": 0.31817975803965803,
+      "source_sha": "33f7d613b1341fa585f0324ead6039bf28211fff"
+    }
+  ],
+  "fixed_order": [
+    "ORIGIN",
+    "TRIAL_4",
+    "TRIAL_3",
+    "TRIAL_2",
+    "TRIAL_1",
+    "TRIAL_0"
+  ],
+  "historical_validation_states": [
+    {
+      "name": "V13_ORIGIN",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v13/task042_v13_tangent_20260930T031852990115Z/INITIAL_V12_PHYSICAL.npz",
+        "sha256": "1fd18e562b9bdf2dbf248dfaccde35a5812a32ed3d071647022e21296c05cf15",
+        "z_sha256": "d03b29176483da60046755647f8bd8bb880137ab34b23a064e32f718929e3a7d",
+        "hidden_sha256": "27ff1fee5fa9a7ea2fab190faa993ef98c3c5cb547140507752e7a5cc0bb7885",
+        "gamma_sha256": "8e72c61f69f188ad0f7602f68d8fa058452992c9848e98089602daf3c7ed5140",
+        "port_sha256": "08bda2b51c091600814c7bf9c17c847c815c6e20d4ec34c658318927e542c313",
+        "network_parameters_sha256": "562efdd063ecabe99c45f507bd1224eeed7e993e617e0601c1085a63fbd70bee"
+      },
+      "source_sha": "978a59efeae9891a848c5fac581ec32e4fc9a5b8"
+    },
+    {
+      "name": "V13_ACCEPTED",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v13/task042_v13_compensate_record_recovery_20260930T034107776460Z/C_1_ACCEPTED.npz",
+        "sha256": "468dbbceb14f0e8e24eb34b84158a996c71473623fe6153574bc9096842d34db",
+        "z_sha256": "268d409c5654ea57f329a19ef2dc08f74ff7a9b4123fddd818200362c4aacbb1",
+        "hidden_sha256": "9a519858614eccc39287f25a30c2fdac4db31cc5103a522a8e3d87eea8da2bcd",
+        "gamma_sha256": "1a850800bc5319dc95a4e7a70ca2b731172c1be786a2a8ee159d4a3f1a747401",
+        "port_sha256": "730925939c0361decb06aa23bfe87f7b0fcf6496be900897a1aebe6f50db586f",
+        "network_parameters_sha256": "3423ec52a5e6b00c8144513680f5d574f952747036f4331835e71d18398003ba"
+      },
+      "source_sha": "33f7d613b1341fa585f0324ead6039bf28211fff"
+    }
+  ],
+  "historical_indexes": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v13/task042_v13_tangent_20260930T031852990115Z/stage_result.json",
+      "sha256": "72d91a38bb3d9ef032f8bdc150f5e4aa566cecc9dee931b93e9c8d663722ef6b"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v13/task042_v13_compensate_record_recovery_20260930T034107776460Z/stage_result.json",
+      "sha256": "b6140d232114d4ea1c987847ee2dc1d5a9b93826d2fb7e65bebff16c8c40df9f"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v11/task042_v11_main_20260929T231737588343Z/stage_result.json",
+      "sha256": "892986ab1beba3171abaa48cbe1688b9a7e4eda53296e3e25da88e2b59c430e2"
+    }
+  ],
+  "cond": 1e-12,
+  "driver": "gelsd",
+  "fixed_columns": 1560,
+  "complete_ports": 40,
+  "batch_size": 8,
+  "q": 15,
+  "original_P": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v11/task042_v11_main_20260929T231737588343Z/initial/P.npy",
+    "sha256": "a64b74da8014aa929c9bfcf5675c10ca531cc0667de5161459bb7c81e253a0f0"
+  },
+  "original_A": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v11/task042_v11_main_20260929T231737588343Z/initial/A.npy",
+    "sha256": "5d8956da9feeacde865a00986df02baa0563f78ee75fc25c004132b16b981ab2"
+  },
+  "manufactured_seed": 421401,
+  "reverse_row_QR_count": 1,
+  "new_profiles_limit": 2,
+  "caps": {
+    "basis_evaluations": 10,
+    "thin_LS_calls": 24,
+    "thin_RHS": 28,
+    "equivalent_actions": 18000,
+    "original_audits": 80,
+    "field_states": 10
+  },
+  "resident_upper_bytes": 7600000000,
+  "new_persistent_array_limit_bytes": 8589934592,
+  "window_path": "tmp/task042/v14/window.json",
+  "historical_formal_wall_lower_bound_seconds": 12160.139323354815,
+  "historical_auxiliary_cost": "unknown_not_reset",
+  "reference_arrays_allowed_only_in": "VERIFY",
+  "workspace_policy": "one active decomposition; retain origin and selected Q only; all candidate hidden/c/trace/port/z and hashes persist",
+  "raw_gamma_used_for_new_forward": false,
+  "global_S_or_global_p4_factor_allowed": false
+}
