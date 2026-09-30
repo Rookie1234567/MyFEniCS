@@ -1,0 +1,81 @@
+{
+  "schema": "task42extra.readout-design.v5",
+  "route": "FEINN-FROZEN-HIDDEN-READOUT-G",
+  "status": "PREREGISTERED_NOT_RUN",
+  "review_release": "28fabffd41f042c8a4bdda6339810bb1f98a887d",
+  "frozen_base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "model": {
+    "name": "M5",
+    "wavelength_nm": 5,
+    "cells": 384,
+    "p": 3,
+    "q": 15,
+    "independent_complex_FE": 31968,
+    "ports": 40
+  },
+  "parameters": {
+    "hidden_real_frozen": 8576,
+    "output_real_active": 390,
+    "complex_columns": 195,
+    "feature_count": 65,
+    "buffers_frozen": [
+      "center",
+      "half_width"
+    ],
+    "seed": 421501
+  },
+  "anchor_checkpoint_sha256": "e33a2c9eafb50639a36555e159895d62617feda7e4831238a7868887700f9363",
+  "anchor_durable_final_sha256": "e09b94364837bdb72714f7c229d19993836072dd035c85249bfc19376a44a790",
+  "algorithm": {
+    "QR_threshold": 1e-12,
+    "SVD_rcond": 1e-12,
+    "pivot": "maximum cached residual G norm with actual candidate recheck, ties minimum original column",
+    "reorthogonalization_passes": 2,
+    "normal_equations": false,
+    "ridge": false,
+    "G_column_actions_limit": 2500
+  },
+  "construction": "one bounded hidden forward per <=8 cells and <=8 feature columns per moment batch; full Phi built once in S0, byte/hash qualified and reused for the unique S1 projection",
+  "predicted_payload_bytes": {
+    "Phi": 99740160,
+    "G_CSR": 146851456,
+    "five_Phi_sized_work_arrays": 498700800
+  },
+  "gate_thresholds": {
+    "anchor_mapping": 1e-12,
+    "other_mapping": 1e-10,
+    "orthogonality": 1e-09,
+    "QR_reconstruction": 1e-09,
+    "retained_optimality": 1e-09,
+    "network_G": 1e-09,
+    "network_euclidean": 1e-10,
+    "nonincrease_additive": 1e-10,
+    "pythagorean": 1e-08,
+    "q30": 1e-08
+  },
+  "budget": {
+    "previous_conservative_seconds": 44119.848638203344,
+    "batch_seconds": 7200,
+    "S0_seconds": 1200,
+    "unique_S1_seconds": 3600,
+    "numeric_cutoff_reserve_seconds": 150,
+    "minimum_safe_save_seconds": 120
+  },
+  "resource": {
+    "CPU_only": true,
+    "MPI": 1,
+    "math_threads": 1,
+    "Torch_threads": 1,
+    "light_tree_GiB": 2,
+    "numeric_warning_GiB": 12,
+    "numeric_hard_GiB": 16,
+    "own_swap": 0,
+    "neighbor_growth_reserve_GiB": 384
+  },
+  "fixed_basis_no_reference_generated_columns": true,
+  "production_initialization_allowed": false,
+  "pde_only_solver_qualified": false,
+  "official_candidate_results": false,
+  "reference_used_for_training": true,
+  "pde_only_solve": false
+}

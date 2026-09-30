@@ -1,0 +1,77 @@
+{
+  "schema": "task42extra.readout-checks.v5",
+  "small_checks_status": "PASS",
+  "real_M5_status": "NOT_RUN",
+  "targeted_tests": 11,
+  "synthetic_cases": [
+    "full_rank",
+    "duplicate",
+    "near_correlated",
+    "different_scales",
+    "pure_imaginary"
+  ],
+  "clock": {
+    "origin": 681615.047878994,
+    "worker_entered": 681615.711665304,
+    "import_delay_seconds": 0.6637863100040704,
+    "cutoff": 681619.047878994,
+    "numeric_work_count": 1,
+    "expired_work_count": 0,
+    "finish": 681621.34279822,
+    "declared_reserve_seconds": 150,
+    "exit_remaining_seconds": 147.705079596024,
+    "parent_death_guard": "826009:68161488:SIGKILL"
+  },
+  "small_checks_evidence": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v5_s0_clock_dummy_20260930T082338497335Z/summary.json",
+      "sha256": "e4ec59ca6e142489b3f18edbeb9e9d29e7369ce638b7b82929c62c0f3b374e14"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v5_s0_clock_dummy_20260930T082338497335Z/admission.json",
+      "sha256": "d874e829ccfeebd89475181d1e998f07283cd2a2e15d100761fbc37891ec3bc5"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v5_s0_clock_dummy_20260930T082338497335Z/supervision/worker.log",
+      "sha256": "e10bd3d18e8708df3fbad0474c8c45f0790f17bf2a868287edf72d36c794b22b"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v5_s0_final_targeted_20260930T082530569765Z/summary.json",
+      "sha256": "15aa1826ed200f54c03790dde1766778c3c6e2f77bdb4fb645860ff5d5723283"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v5_s0_final_targeted_20260930T082530569765Z/admission.json",
+      "sha256": "a684c63ced59b89141f9d63e68661a721265e6c747acde6b96375a700ce59397"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v5_s0_final_targeted_20260930T082530569765Z/supervision/worker.log",
+      "sha256": "0530f4844c3984a822d131fddd576b4d06d6b0ca025f7354a5d1b985e7bed427"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v5_s0_targeted_tests_20260930T082247766108Z/summary.json",
+      "sha256": "a27da38f17181b836c18a0525297bd4c2198b2b133335323e6ee4687d7bd1e25"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v5_s0_targeted_tests_20260930T082247766108Z/admission.json",
+      "sha256": "2abe542229479c64f9f06f6f1e13eb00602ca5cb1fd7c063ffc8ecb51e295edc"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v5_s0_targeted_tests_20260930T082247766108Z/supervision/worker.log",
+      "sha256": "d46d283b08011aaab280c0688ad2754cfa2fd9ee6ef20b74ba6187e661a0d189"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/durable/v5_clock_dummy/clock_worker_result.json",
+      "sha256": "5905ba9dd637bce4c54f6a3fb0ff7e668e2eebebbd3c254949010b0c18c5b70b"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/durable/v5_clock_dummy/clock_supervision.json",
+      "sha256": "0290418b9813616a074a4722833da189bc0d0e23b98381b1a9b510edc6b1292b"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/durable/v5_clock_dummy/terminal_identity.json",
+      "sha256": "8e88f27dd807724bb56e179d3d0a5b01d80e54133dc6551f78d4578f35af414b"
+    }
+  ],
+  "scope": "new fixed-feature and G-QR paths only; qualified V1-V4 operator/environment evidence reused",
+  "static_Ruff_compileall": "PASS"
+}

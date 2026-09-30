@@ -93,7 +93,7 @@ def budget():
     ]:
         for path in base.glob(pattern):
             item = json.loads(path.read_text())
-            entries.append(dict(path=str(path), seconds=item.get("elapsed_seconds", 0)))
+            entries.append(dict(path=str(path), seconds=max(item.get("elapsed_seconds", 0), item.get("launch_to_summary_seconds_monotonic", 0))))
     interruption_path = (
         ROOT
         / "docs/task042extra_feinn_5nm/outcomes/records/fit_interruption_v3.json"
@@ -125,10 +125,18 @@ def budget():
         or e["path"].endswith("/fit_interruption_v3.json")
     )
     v4_used = sum(e["seconds"] for e in entries if "/task42extra_v4_" in e["path"] or "/checks/v4_" in e["path"])
+    v5_used = sum(e["seconds"] for e in entries if "/task42extra_v5_" in e["path"] or "/checks/v5_" in e["path"])
+    s0_used = sum(e["seconds"] for e in entries if "/task42extra_v5_readout_checks_" in e["path"] or "/checks/v5_s0_" in e["path"])
     return dict(
         limit_seconds=57600,
         used_seconds=used,
-        remaining_seconds=57600 - max(used, 29227.93927047425 + v3_used, 33070.52670758043 + v4_used + 120),
+        remaining_seconds=57600 - max(used, 29227.93927047425 + v3_used, 33070.52670758043 + v4_used + 120, 44119.848638203344 + v5_used + 120),
+        conservative_V1_V2_V3_V4_base_seconds=44119.848638203344,
+        v5_used_seconds=v5_used,
+        v5_limit_seconds=7200,
+        v5_remaining_seconds=7200 - v5_used - 120,
+        v5_s0_remaining_seconds=1200 - s0_used,
+        v5_direct_final_allowance_seconds=120,
         conservative_V1_V2_V3_base_seconds=33070.52670758043,
         v4_limit_seconds=14400,
         v4_used_seconds=v4_used,
@@ -147,6 +155,7 @@ def budget():
 
 
 def launch(spec):
+    launch_origin = perf_counter()
     if Path.cwd().resolve() != ROOT or os.environ.get("TASK42EXTRA_ACTIVATION") != "1":
         raise RuntimeError("native task-local activation required")
     branch = subprocess.check_output(
@@ -193,6 +202,18 @@ def launch(spec):
         state["v2_review_sha"] = "0b61816c0189a2c05812044ab8e1d1513ef0407d"
     v3 = stage.startswith("v3_") or stage == "FEINN-REFERENCE-FIT-G"
     v4 = stage.startswith("v4_") or stage == "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY"
+    v5 = stage.startswith("v5_") or stage == "FEINN-FROZEN-HIDDEN-READOUT-G"
+    if v5:
+        pre = ROOT / "docs/task042extra_feinn_5nm/outcomes/records/readout_design_v5.json"
+        state.update(run_id=directory.name, v5_pre_registered_design_sha256=sha(pre), v5_review_sha="28fabffd41f042c8a4bdda6339810bb1f98a887d",
+                     reference_used_for_training=True, pde_only_solve=False, production_initialization_allowed=False,
+                     pde_only_solver_qualified=False, official_candidate_results=False, data_role="REFERENCE_EXPOSED_DIAGNOSTIC_ONLY",
+                     supervision_budget_origin_monotonic=launch_origin)
+        namespace = "v5_frozen_hidden_readout" if stage == "FEINN-FROZEN-HIDDEN-READOUT-G" else stage
+        proof = ROOT / "tmp/task42extra/durable" / namespace / "terminal_identity.json"
+        if not proof.exists():
+            raise RuntimeError("DURABLE_TERMINAL_PROOF_REQUIRED")
+        state["durable_terminal_identity_sha256"] = sha(proof)
     if v4:
         pre = ROOT / "docs/task042extra_feinn_5nm/outcomes/records/replay_design_v4.json"
         state.update(run_id=directory.name, v4_pre_registered_design_sha256=sha(pre), v4_review_sha="4dc7c38b60acf2a5ee3d9c6b9770b084a874fb04", reference_used_for_training=True, pde_only_solve=False, production_initialization_allowed=False, pde_only_solver_qualified=False, official_candidate_results=False, data_role="REFERENCE_EXPOSED_DIAGNOSTIC_ONLY")
@@ -240,7 +261,7 @@ def launch(spec):
     write_json(directory / "run_manifest.json", state)
     with (ROOT / "tmp/task42extra/numerical.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        tree_limit = 2 * 2**30 if stage == "v4_boundary_checks" else 16 * 2**30
+        tree_limit = 2 * 2**30 if stage in ("v4_boundary_checks", "v5_readout_checks") else 16 * 2**30
         try:
             baseline = admission(tree_limit)
         except RuntimeError as error:
@@ -262,6 +283,7 @@ def launch(spec):
             or v3
             and ledger["v3_remaining_seconds"] <= 120
             or v4 and ledger["v4_remaining_seconds"] <= 120
+            or v5 and ledger["v5_remaining_seconds"] <= 150
         ):
             raise RuntimeError("Task42extra V1/V2 supervised wall budget exhausted")
         write_json(directory / "budget_at_launch.json", ledger)
@@ -330,6 +352,10 @@ def launch(spec):
             "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY": ["e1_fe", "e1_grad", "e3_reference", "v3_retained_snapshot", "v4_boundary_checks"],
             "v4_fit_reconstruct": ["e1_fe", "e1_grad", "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY"],
             "v4_fit_compare_only": ["e1_fe", "e3_reference", "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY", "v4_fit_reconstruct"],
+            "v5_readout_checks": ["e1_fe", "e1_grad", "e3_reference", "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY"],
+            "FEINN-FROZEN-HIDDEN-READOUT-G": ["e1_fe", "e1_grad", "e3_reference", "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY", "v5_readout_checks"],
+            "v5_readout_reconstruct": ["e1_fe", "e1_grad", "FEINN-FROZEN-HIDDEN-READOUT-G"],
+            "v5_readout_compare_only": ["e1_fe", "e3_reference", "FEINN-FROZEN-HIDDEN-READOUT-G", "v5_readout_reconstruct"],
         }
         prerequisite_stages = prereqs.get(stage, [])
         for dependency in prerequisite_stages:
@@ -367,6 +393,7 @@ def launch(spec):
                     "v4_boundary_checks",
                     "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY",
                     "v4_fit_compare_only",
+                    "v5_readout_checks", "FEINN-FROZEN-HIDDEN-READOUT-G", "v5_readout_compare_only",
                 ),
                 physical_hash_meaning="actual original full independent FE packet and fixed affine rhs",
             )
@@ -407,18 +434,26 @@ def launch(spec):
                 limit = min(limit, 1800 - ledger["v4_used_seconds"])
             if limit <= 120:
                 raise RuntimeError("V4_BUDGET_RESERVE_UNAVAILABLE")
+        if v5:
+            limit = min(limit, ledger["v5_remaining_seconds"])
+            if stage == "FEINN-FROZEN-HIDDEN-READOUT-G":
+                limit = min(limit, ledger["v5_remaining_seconds"] - 900)
+            if stage == "v5_readout_checks":
+                limit = min(limit, ledger["v5_s0_remaining_seconds"])
+            if limit <= 150 or launch_origin + limit - 150 <= perf_counter():
+                raise RuntimeError("V5_BUDGET_RESERVE_UNAVAILABLE")
         state["supervised_limit_seconds"] = limit
-        if v4:
+        if v4 and not v5:
             state["supervision_budget_origin_monotonic"] = perf_counter()
         write_json(directory / "run_manifest.json", state)
         command = [sys.executable, "-m", "src.runners.feinn_workflow", str(directory)]
-        if v4:
+        if v4 or v5:
             from src.runners.guarded_exec import ticks
             command = [sys.executable, "-m", "src.runners.guarded_exec", str(os.getpid()), str(ticks(os.getpid())), *command]
         result = supervise(
             command,
             directory / "supervision",
-            wall_seconds=limit,
+            wall_seconds=limit - (perf_counter() - launch_origin) if v5 else limit,
             interval=0.5,
             rss_hard_limit_bytes=tree_limit,
             rss_warning_bytes=int(1.75 * 2**30) if tree_limit == 2 * 2**30 else 12 * 2**30,
@@ -430,6 +465,9 @@ def launch(spec):
             source_state=state,
         )
     result.update(directory=str(directory), stage=stage)
+    if v5:
+        result.update(launch_to_summary_seconds_monotonic=perf_counter() - launch_origin,
+                      launch_exit_remaining_seconds=limit - (perf_counter() - launch_origin))
     write_json(directory / "run_summary.json", result)
     return result
 
@@ -440,7 +478,7 @@ def worker(directory):
     directory = Path(directory)
     manifest = json.loads((directory / "run_manifest.json").read_text())
     stage = manifest["stage"]
-    if stage.startswith("v4_") or stage == "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY":
+    if stage.startswith(("v4_", "v5_")) or stage in ("FEINN-REFERENCE-FIT-G-ADAM500-REPLAY", "FEINN-FROZEN-HIDDEN-READOUT-G"):
         from src.runners.guarded_exec import ticks
         manifest["worker_lifecycle"] = dict(pid=os.getpid(), ppid=os.getppid(), start_ticks=ticks(os.getpid()), session=os.getsid(0), process_group=os.getpgrp(), stdout=os.readlink(f"/proc/{os.getpid()}/fd/1"), cgroup=Path("/proc/self/cgroup").read_text(), parent_death_guard=os.environ.get("TASK42EXTRA_PARENT_DEATH_GUARD"))
         write_json(directory / "run_manifest.json", manifest)
@@ -694,6 +732,24 @@ def worker(directory):
         elif stage == "v4_fit_compare_only":
             from src.solvers.feinn_reference import compare_reference_fit_without_solve
             result, files = compare_reference_fit_without_solve(design, load_index("e1_fe"), load_index("e3_reference"), load_index("FEINN-REFERENCE-FIT-G-ADAM500-REPLAY"), load_index("v4_fit_reconstruct"), artifact, marker, route="FEINN-REFERENCE-FIT-G-ADAM500-REPLAY")
+        elif stage == "v5_readout_checks":
+            from src.solvers.feinn_readout import checks
+            result, files = checks(design, load_index("e1_fe"), load_index("e1_grad"), load_index("e3_reference"), load_index("FEINN-REFERENCE-FIT-G-ADAM500-REPLAY"), artifact, marker, manifest)
+        elif stage == "FEINN-FROZEN-HIDDEN-READOUT-G":
+            from src.solvers.feinn_readout import run
+            result, files = run(design, load_index("e1_fe"), load_index("e1_grad"), load_index("e3_reference"), load_index("FEINN-REFERENCE-FIT-G-ADAM500-REPLAY"), load_index("v5_readout_checks"), artifact, marker, manifest)
+        elif stage == "v5_readout_reconstruct":
+            from src.solvers.feinn_reference_fit import reconstruct
+            candidate = load_index("FEINN-FROZEN-HIDDEN-READOUT-G")
+            if candidate["result"]["status"] != "FROZEN_HIDDEN_READOUT_COMPLETE":
+                raise RuntimeError("READOUT_STABILITY_NOT_QUALIFIED")
+            result, files = reconstruct(design, load_index("e1_fe"), load_index("e1_grad"), candidate, artifact, marker)
+        elif stage == "v5_readout_compare_only":
+            from src.solvers.feinn_reference import compare_reference_fit_without_solve
+            candidate = load_index("FEINN-FROZEN-HIDDEN-READOUT-G")
+            if candidate["result"]["status"] != "FROZEN_HIDDEN_READOUT_COMPLETE":
+                raise RuntimeError("READOUT_STABILITY_NOT_QUALIFIED")
+            result, files = compare_reference_fit_without_solve(design, load_index("e1_fe"), load_index("e3_reference"), candidate, load_index("v5_readout_reconstruct"), artifact, marker, route="FEINN-FROZEN-HIDDEN-READOUT-G")
         elif stage in design["routes"]:
             from src.solvers.feinn_optimization import run_route
 

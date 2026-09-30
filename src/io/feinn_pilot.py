@@ -33,6 +33,10 @@ STAGES = {
     "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY": ("ml", 10800),
     "v4_fit_reconstruct": ("ml", 1800),
     "v4_fit_compare_only": ("fe", 1800),
+    "v5_readout_checks": ("ml", 1200),
+    "FEINN-FROZEN-HIDDEN-READOUT-G": ("ml", 3600),
+    "v5_readout_reconstruct": ("ml", 900),
+    "v5_readout_compare_only": ("fe", 900),
 }
 
 
@@ -54,8 +58,22 @@ def load_pilot(path):
     ):
         raise InputError("Task42extra accepts only one frozen explicit stage")
     item = config["task42extra"]
-    if set(item) != {"stage", "run_id", "design_sha256"} or item["stage"] not in STAGES:
+    readout = (
+        item.get("stage", "").startswith("v5_")
+        or item.get("stage") == "FEINN-FROZEN-HIDDEN-READOUT-G"
+    )
+    policy = dict(
+        reference_used_for_training=True,
+        pde_only_solve=False,
+        production_initialization_allowed=False,
+        pde_only_solver_qualified=False,
+        official_candidate_results=False,
+    )
+    allowed = {"stage", "run_id", "design_sha256"} | (set(policy) if readout else set())
+    if set(item) != allowed or item["stage"] not in STAGES:
         raise InputError("Task42extra stage inventory mismatch")
+    if readout and any(item[k] is not value for k, value in policy.items()):
+        raise InputError("reference-exposed readout policy required")
     if (
         not isinstance(item["run_id"], str)
         or not item["run_id"].startswith("task42extra_")
@@ -91,6 +109,7 @@ def load_pilot(path):
             design_path=str(DESIGN),
             design_sha256=digest,
             identity_hash_meaning="frozen design; actual mesh/operator hashes bound after export",
+            **(policy if readout else {}),
         ),
         source_path=path,
         raw_input_bytes=raw,
