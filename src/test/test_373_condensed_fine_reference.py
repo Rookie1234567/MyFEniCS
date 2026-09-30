@@ -110,3 +110,45 @@ def test_real_mumps_icntl23_one_factor_two_mat_solve():
     finally:
         if factor is not None:factor.destroy()
         for value in (x,r,d,b,matrix):value.destroy()
+
+
+@pytest.mark.parametrize('full_storage',[False,True])
+def test_pre_numeric_rhs_gate_accepts_legacy_and_g0_full_storage_witness(full_storage):
+    from src.runners.physical_macro_controls import _mapping_identity_sha256
+    from src.solvers.condensed_fine_reference import pre_numeric_rhs_gate
+
+    mapping=dict(
+        dofmap=np.array([[0,1,2]],dtype=np.int32),
+        geometry=np.zeros((1,3),dtype=np.float64),
+        geometry_dofmap=np.array([[0,1,2]],dtype=np.int32),
+        permutations=np.zeros(1,dtype=np.uint32),
+        slaves=np.array([1],dtype=np.int32),
+        masters=np.zeros(0,dtype=np.int32),
+        coefficients=np.zeros(0,dtype=np.complex128),
+        offsets=np.zeros(4,dtype=np.int32),
+        independent_indices=np.array([0,2],dtype=np.int32),
+    )
+    full_rhs=np.array([2+1j,0,5-2j],dtype=np.complex128)
+    independent_rhs=full_rhs[mapping['independent_indices']]
+    witness_rhs=full_rhs if full_storage else independent_rhs
+    witness=dict(map=None,map_identity_sha256=_mapping_identity_sha256(mapping),
+        rhs={'b':witness_rhs},evidence={'fixture':'task40-full-storage'})
+    saved={}
+    facts=pre_numeric_rhs_gate(full_rhs,mapping,witness,8,8,
+        lambda name,record:saved.update({name:record}))
+    assert facts['status']=='RHS_PASS'
+    assert facts['map_match'] is True
+    assert facts['relative_difference']==0.0
+    assert saved['reference_pre_numeric_rhs']['native_independent_rhs'].shape==(2,)
+
+
+@pytest.mark.parametrize('full_storage',[False,True])
+def test_native_control_vector_accepts_legacy_and_full_fe_shapes(full_storage):
+    from src.solvers.condensed_fine_reference import _native_vector_on_independent_rows
+
+    mapping=dict(offsets=np.zeros(4,dtype=np.int32),
+        independent_indices=np.array([0,2],dtype=np.int32))
+    full=np.array([1+2j,0,3-1j],dtype=np.complex128)
+    value=full if full_storage else full[mapping['independent_indices']]
+    result=_native_vector_on_independent_rows(value,mapping,'control solution')
+    np.testing.assert_array_equal(result,full[mapping['independent_indices']])

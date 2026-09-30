@@ -6,7 +6,8 @@ from .workflow_timebase import (checked_interval, clock_sample, ClockBudget, STR
 
 
 def supervise_diagnosis(command, directory, *, phase_path, expected_sha, kind,
-                        remaining_seconds, cache_path=None):
+                        remaining_seconds, cache_path=None, memory_policy=None,
+                        pss_sampling_policy='sampled', time_policy=None):
     """Use the same outer guard for diagnostics and the optional run_case direct.
 
     Caller supplies the already-reviewed command and shared remaining budget;
@@ -14,15 +15,20 @@ def supervise_diagnosis(command, directory, *, phase_path, expected_sha, kind,
     """
     from benchmarks.subreaper_watchdog import supervise
     from .task038_launcher import _physical_source_gate
-    if kind not in ('diagnosis','reference','completion_v4','reference_symbolic','actual_errors','balanced_v5'):
+    if kind not in ('diagnosis','reference','completion_v4','reference_symbolic','actual_errors','balanced_v5','task40_reference'):
         raise ValueError('unknown diagnostic workflow kind')
-    limit = min(remaining_seconds,{'reference':3600,'diagnosis':7200,'completion_v4':5400,'reference_symbolic':1800,'actual_errors':5400,'balanced_v5':5400}[kind])
+    limit = min(remaining_seconds,{'reference':3600,'diagnosis':7200,'completion_v4':5400,'reference_symbolic':1800,'actual_errors':5400,'balanced_v5':5400,'task40_reference':43200}[kind])
     state = _physical_source_gate(Path.cwd(),expected_sha)
+    options={}
+    if memory_policy is not None:options['memory_policy']=memory_policy
+    if time_policy is not None:options['time_policy']=time_policy
     result = supervise(command,Path(directory),wall_seconds=limit,phase_path=Path(phase_path),
                        source_state=state,interval=.25,grace_seconds=2,
                        hard_stop_immediate=True,timebase_guard=True,cache_path=cache_path,
                        timebase_policy=CONSERVATIVE_REALTIME,
-                       worker_environment={} if cache_path is None else {'XDG_CACHE_HOME':str(cache_path)})
+                       pss_sampling_policy=pss_sampling_policy,
+                       worker_environment={} if cache_path is None else {'XDG_CACHE_HOME':str(cache_path)},
+                       **options)
     result['source_after'] = _physical_source_gate(Path.cwd(),expected_sha)
     return result
 

@@ -47,18 +47,43 @@ def project_unconstrained_mpc_dual(values,mapping):
     return result
 
 
+def _native_vector_on_independent_rows(values,mapping,label):
+    value=np.asarray(values)
+    indices=mapping['independent_indices']
+    full_rows=len(mapping['offsets'])-1
+    if value.shape==indices.shape:return value
+    if value.shape==(full_rows,):return value[indices]
+    raise ValueError('frozen '+label+' has neither independent nor full FE shape')
+
+
+def _native_rhs_on_independent_rows(witness,mapping):
+    return _native_vector_on_independent_rows(witness['rhs']['b'],mapping,'RHS')
+
+
 def pre_numeric_rhs_gate(full_rhs,mapping,witness,actual_degree,expected_degree,save):
     """Save the exact load comparison, and reject before symbolic/numeric."""
-    mismatched=[key for key,value in mapping.items() if not np.array_equal(value,witness['map'][key])]
+    if witness.get('map') is not None:
+        mismatched=[key for key,value in mapping.items()
+                    if not np.array_equal(value,witness['map'][key])]
+        map_facts=dict(map_match=not mismatched,mismatched=mismatched)
+    else:
+        from src.runners.physical_macro_controls import _mapping_identity_sha256
+        actual_map_sha256=_mapping_identity_sha256(mapping)
+        expected_map_sha256=witness.get('map_identity_sha256')
+        map_facts=dict(map_match=(actual_map_sha256==expected_map_sha256),
+            actual_map_sha256=actual_map_sha256,
+            expected_map_sha256=expected_map_sha256)
+        mismatched=[] if map_facts['map_match'] else ['map_identity_sha256']
     if mismatched:
-        save('reference_pre_numeric_rhs',dict(status='MAPPING_REJECTED',mismatched=mismatched))
-        raise ValueError('pre-numeric native map mismatch: '+','.join(mismatched))
+        save('reference_pre_numeric_rhs',dict(status='MAPPING_REJECTED',**map_facts))
+        raise ValueError('pre-numeric native map identity mismatch')
     projected=project_unconstrained_mpc_dual(full_rhs,mapping)
-    native=witness['rhs']['b'];indices=mapping['independent_indices']
+    native=_native_rhs_on_independent_rows(witness,mapping)
+    indices=mapping['independent_indices']
     relative=relative_difference(projected[indices],native)
     facts=dict(status='RHS_PASS' if relative<=1e-10 and actual_degree==expected_degree else 'RHS_REJECTED',
         relative_difference=relative,limit=1e-10,actual_incident_quadrature_degree=actual_degree,
-        expected_native_quadrature_degree=expected_degree,map_exact=True,
+        expected_native_quadrature_degree=expected_degree,**map_facts,
         definition='C^H of borrowed unconstrained full RHS compared with frozen native independent b')
     save('reference_pre_numeric_rhs',dict(**facts,projected_full_rhs=projected,
         native_independent_rhs=native,difference=projected[indices]-native,witness=witness['evidence']))
@@ -183,10 +208,12 @@ def residual_packet(x,b,ax,slaves):
 
 
 class MatchedFineReference:
-    def __init__(self,*,sample,save,marker,identity,witness,canonical_export, output_callback=None):
+    def __init__(self,*,sample,save,marker,identity,witness,canonical_export,
+                 output_callback=None,expected_dimensions=None):
         self.sample,self.save,self.marker=sample,save,marker
         self.identity,self.witness,self.canonical_export=identity,witness,canonical_export
         self.output_callback=output_callback
+        self.expected_dimensions=expected_dimensions or (173802,51192,80)
 
     def __call__(self,request):
         from .dtn_port_3d import _assign_fe_solution_from_assembly_time_condensation
@@ -202,9 +229,12 @@ class MatchedFineReference:
             system=request.static_condensed_system
             if request.A.getComm().getSize()!=1 or request.full_rhs is None or request.mesh_data is None:
                 raise ValueError('reference requires borrowed MPI1 mesh and full RHS')
-            if (system.full_rows,request.n_fe,request.n_aux)!=(173802,51192,80):
+            actual_dimensions=(system.full_rows,request.n_fe,request.n_aux)
+            if actual_dimensions!=tuple(self.expected_dimensions):
                 raise ValueError('frozen fine reference dimensions differ')
             record.update(retained_payload=retained_payload(system),matrix_info=request.A.getInfo(),
+                          dimensions=dict(full_rows=actual_dimensions[0],
+                              active_rows=actual_dimensions[1],appended_rows=actual_dimensions[2]),
                           lifecycle='one augmented correction then LU release before recovery/native compile; no native refinement/rebuild')
             self.save('reference_assembled',record)
             from .dtn_port_3d import _dtn_surface_quadrature_degree
@@ -249,13 +279,26 @@ class MatchedFineReference:
             self.marker('fine_reference_native_compile_completed',{});self.sample()
             mapping=native_map_arrays(space,floquet)
             self.save('reference_native_map',dict(**mapping,ownership=list(x.getOwnershipRange()),identity=self.identity))
-            for key,value in mapping.items():
-                if not np.array_equal(value,self.witness['map'][key]):raise ValueError('native frozen map mismatch: '+key)
+            if self.witness.get('map') is not None:
+                mismatched=[key for key,value in mapping.items()
+                            if not np.array_equal(value,self.witness['map'][key])]
+                if mismatched:raise ValueError('native frozen map mismatch: '+','.join(mismatched))
+            else:
+                from src.runners.physical_macro_controls import _mapping_identity_sha256
+                actual_map_sha256=_mapping_identity_sha256(mapping)
+                if actual_map_sha256!=self.witness.get('map_identity_sha256'):
+                    raise ValueError('native frozen map identity mismatch')
+                record['native_map_sha256']=actual_map_sha256
             self.marker('fine_reference_identity_started',{})
-            ax_control=bridge(self.witness['control']['x'])
-            checks=dict(frozen_A6_action=relative_difference(ax_control,self.witness['control']['ax']),
-                        frozen_rhs=relative_difference(b.array[bridge.indices],self.witness['rhs']['b']),
-                        repeated_A6_action=relative_difference(bridge(self.witness['control']['x']),ax_control))
+            control_x=_native_vector_on_independent_rows(
+                self.witness['control']['x'],mapping,'control solution')
+            control_ax=_native_vector_on_independent_rows(
+                self.witness['control']['ax'],mapping,'control A6 action')
+            ax_control=bridge(control_x)
+            witness_rhs=_native_rhs_on_independent_rows(self.witness,mapping)
+            checks=dict(frozen_A6_action=relative_difference(ax_control,control_ax),
+                        frozen_rhs=relative_difference(b.array[bridge.indices],witness_rhs),
+                        repeated_A6_action=relative_difference(bridge(control_x),ax_control))
             self.save('reference_identity',dict(checks=checks,quadrature=quadrature,identity=self.identity,
                 native_control_ax=ax_control,witness=self.witness['evidence']))
             if max(checks.values())>1e-10:raise ValueError('frozen original A6/RHS bridge mismatch')
@@ -281,6 +324,8 @@ class MatchedFineReference:
             record['canonical_qualified']=record['status']=='REFERENCE_PASS'
             if record['status']=='REFERENCE_PASS' and self.output_callback is not None:
                 record['matched_output'] = self.output_callback(native,x)
+                if record['matched_output'].get('status')!='MATCHED_REFERENCE_PASS':
+                    record['status']='REFERENCE_COMPARISON_FAIL'
             self.save('reference_result',record)
         except Exception as exc:
             error=exc

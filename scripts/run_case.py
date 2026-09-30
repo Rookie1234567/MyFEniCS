@@ -78,6 +78,10 @@ def _parser() -> argparse.ArgumentParser:
         default=Path('benchmarks/artifacts/task39extra/v6_recursive/g0_inventory.json'),
     )
     parser.add_argument('--profile-budget-ledger', '--batch-budget-ledger', dest='profile_budget_ledger', type=Path)
+    parser.add_argument(
+        '--task40-reference-from', type=Path, metavar='G0_RUN_DIRECTORY',
+        help='compare the Task40 direct reference with the frozen G0 iterative run',
+    )
     parser.add_argument('--macro-v10-inventory', type=Path,
                         default=Path('benchmarks/artifacts/task39extra/v6_recursive/g0_inventory.json'))
     parser.add_argument('--profile-variant', choices=('R0', 'a2r_equivalent_fast_v1', 'a2r_packed_equivalent_v2'), default='R0')
@@ -122,6 +126,66 @@ def main(argv: list[str] | None = None) -> int:
         if args.physical_pc_profile is None and (args.profile_variant != 'R0' or args.profile_r0_reference is not None):
             raise InputError('fast profile options require --physical-pc-profile')
         specification = load_and_resolve(args.input_path)
+        if args.task40_reference_from is not None:
+            if args.dry_run:
+                raise InputError('--task40-reference-from cannot be combined with --dry-run')
+            from src.runners.fine_reference_preflight import (
+                load_task40_reference_witness,
+            )
+            if args.validate_only:
+                witness, identity = load_task40_reference_witness(
+                    args.input_path, specification.as_jsonable(),
+                    args.task40_reference_from,
+                )
+                print(json.dumps({
+                    'status': 'valid',
+                    'workflow': 'task40_direct_reference_preflight',
+                    'g0_run_directory': identity['g0_run_directory'],
+                    'g0_source_sha': identity['g0_source_sha'],
+                    'g0_input_sha256': identity['g0_input_sha256'],
+                    'direct_input_sha256': identity['direct_input_sha256'],
+                    'physical_model_sha256': identity['physical_model_sha256'],
+                    'g0_physical_model_sha256': identity[
+                        'g0_physical_model_sha256'
+                    ],
+                    'original_physical_sha256': identity[
+                        'original_physical_sha256'
+                    ],
+                    'normalized_physical_sections_sha256': identity[
+                        'normalized_physical_sections_sha256'
+                    ],
+                    'identity_difference': identity['identity_difference'],
+                    'ordered_mode_sha256': identity['ordered_mode_sha256'],
+                    'p6_native_map_sha256': identity['p6_native_map_sha256'],
+                    'expected_dimensions': identity['expected_dimensions'],
+                    'g0_full_A6_residual_relative': identity[
+                        'g0_full_A6_residual_relative'
+                    ],
+                    'witness_vector_rows': int(witness['rhs']['b'].size),
+                }, sort_keys=True, separators=(',', ':')))
+                return 0
+            if any((args.physical_pc_profile, args.macro_v10_controls,
+                    args.macro_v11_controls, args.macro_v11_calibration,
+                    args.macro_v12, args.macro_v12_supplement,
+                    args.p4_direction_diagnosis, args.recover_v15_q0_eio_once,
+                    args.profile_budget_ledger is not None)):
+                raise InputError('--task40-reference-from is a standalone direct-reference workflow')
+            try:
+                source_sha = _source_sha()
+            except (OSError, subprocess.CalledProcessError) as exc:
+                raise InputError(f'cannot determine Task40 reference source SHA: {exc}') from exc
+            output = (Path('benchmarks/artifacts/task40extra_0p7nm_engineering')
+                      / 'direct_reference_v1' / source_sha)
+            cache_path=args.task40_reference_from / 'v20_jit_cache'
+            if not cache_path.is_dir():
+                raise InputError(f'Task40 G0 qualified JIT cache is missing: {cache_path}')
+            from src.runners.fine_reference_preflight import main as reference_main
+            return reference_main([
+                '--input', str(args.input_path), '--directory', str(output),
+                '--expected-sha', source_sha, '--workflow-seconds', '43200',
+                '--task40-witness-run-dir', str(args.task40_reference_from),
+                '--cache-path', str(cache_path),
+            ])
         if (
             args.v14_time_policy == 'observe_only'
             and specification.solver.get('preconditioner') not in {
