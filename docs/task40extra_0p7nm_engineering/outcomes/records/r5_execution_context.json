@@ -1,0 +1,46 @@
+{
+  "schema": "task40extra.r5_execution_context.v1",
+  "source_sha": "393e5c0dddb933848945ab2e18edb73cf69cc224",
+  "official_run_directory": "benchmarks/artifacts/task40extra_0p7nm_engineering/direct_reference_v1/393e5c0dddb933848945ab2e18edb73cf69cc224",
+  "official_entry_command": "python -u scripts/run_case.py input/task40extra_0p7nm_engineering/nonseparable_g0_p6_direct_reference.dat --task40-reference-from results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_iterative_review_v1__full3d_iterative__mpi1__Mna/20260930T102148.356966Z",
+  "actual_outer_process": {
+    "pid": 1489408,
+    "parent_pid": 1449788,
+    "command": "python -u scripts/run_case.py"
+  },
+  "mpi_process": {
+    "pid": 1489447,
+    "parent_pid": 1489408,
+    "command": "mpiexec -n 1"
+  },
+  "worker_process": {
+    "pid": 1489450,
+    "parent_pid": 1489447,
+    "module": "src.runners.fine_reference_preflight --worker"
+  },
+  "launch_route_deviation": {
+    "user_service_wrapper_used": false,
+    "observed_cgroup": "/init.scope",
+    "classification": "LAUNCH_DISCIPLINE_DEVIATION_RECORDED",
+    "handling": "After discovery, the unique direct reference was neither restarted nor killed nor migrated; allowed it to reach terminal outcome."
+  },
+  "watchdog": {
+    "type": "independent subreaper process-tree watchdog",
+    "classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "process_tree_identity_coverage": "complete",
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "simultaneous_process_tree_rss_peak_bytes": 11505573888,
+    "process_tree_swap_peak_bytes": 0,
+    "pss": "DISABLED_BY_PROFILE",
+    "elapsed_seconds": 1647.5270624320256,
+    "charged_seconds": 1801.4672110320269,
+    "time_policy": "observe_only"
+  },
+  "evidence_paths": {
+    "launch": "benchmarks/artifacts/task40extra_0p7nm_engineering/direct_reference_v1/393e5c0dddb933848945ab2e18edb73cf69cc224/launch.json",
+    "watchdog": "benchmarks/artifacts/task40extra_0p7nm_engineering/direct_reference_v1/393e5c0dddb933848945ab2e18edb73cf69cc224/watchdog/summary.json"
+  },
+  "scope_note": "The shell launch did not satisfy the requested user-service boundary. The process-tree watcher remained active and its recorded completion/resource evidence is reported separately from that launch deviation."
+}

@@ -1,6 +1,6 @@
 {
   "schema": "task40extra.identity_recovery_v1_results.v1",
-  "status": "STRICT_IDENTITY_REPAIRED_G0_G1_DISCRETE_PASS_AUTHORITY_LIMITED",
+  "status": "STRICT_IDENTITY_REPAIRED_G0_G1_DISCRETE_AND_MATCHED_REFERENCE_PASS_AUTHORITY_LIMITED",
   "route_decision": {
     "selected": "A_STRICT_IDENTITY_REPAIRED",
     "identity_policy": "strict",
@@ -237,23 +237,172 @@
   },
   "h_agreement_record": "h_agreement_v1.json",
   "conditional_direct_reference": {
-    "status": "NOT_RUN",
-    "attempted": false,
+    "status": "MATCHED_REFERENCE_PASS",
+    "attempted": true,
+    "pre_run_status_snapshot": {
+      "status": "NOT_RUN",
+      "attempted": false,
+      "reason": "No Task40-bound qualified symbolic MUMPS preflight binding actual rows/NNZ, symbolic storage, available memory and recovery space. No direct symbolic or numeric factor or solve was launched. This is NOT_RUN, not a measured resource failure.",
+      "meaning": "R4 preflight snapshot before the authorized direct run; not the terminal state."
+    },
+    "run_id": "task40extra_0p7nm_nonseparable_g0_direct_reference_review_v1",
     "input": "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_direct_reference.dat",
     "input_sha256": "c80c921834cb268a9251459795fbda5acf4e9f25347d16ee24dec3b9d85c6c56",
-    "validate_only": "valid; validates input contract only",
-    "reason": "No Task40-bound qualified symbolic MUMPS preflight binding actual rows/NNZ, symbolic storage, available memory and recovery space. No direct symbolic or numeric factor or solve was launched. This is NOT_RUN, not a measured resource failure.",
-    "symbolic_factorization": "not_run",
-    "numeric_factorization": "not_run",
-    "direct_solve": "not_run"
+    "source_sha": "393e5c0dddb933848945ab2e18edb73cf69cc224",
+    "physical_model_sha256": "1f53e9f90d63a595b1184a975ab1dce12d4fa1362f86f224753584e3992e17bc",
+    "normalized_physical_sections_sha256": "51854af3fb60c7ffebb166e1f06ff0a89e2e184dcbd9ba06ab4beb321b920661",
+    "physical_identity_note": "Normalized physical sections match G0; raw input identity differs only in discretization.assembly_backend: standard_full vs assembly_time_static_condensed.",
+    "g0_subject_run_id": "task40extra_0p7nm_nonseparable_g0_iterative_review_v1",
+    "g0_subject_run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_iterative_review_v1__full3d_iterative__mpi1__Mna/20260930T102148.356966Z",
+    "dimensions": {
+      "full_rows": 229680,
+      "active_rows": 68256,
+      "appended_modes": 80,
+      "p6_retained_plus_port_rows": 68336
+    },
+    "factorization_and_solve": {
+      "symbolic_calls": 1,
+      "numeric_calls": 1,
+      "solve_calls": 2,
+      "correction_calls": 1,
+      "factor_released_before_native_residual_verification": true
+    },
+    "full_explicit_residual": {
+      "relative": 5.055376131651821e-11,
+      "limit": 1e-10,
+      "status": "REFERENCE_PASS"
+    },
+    "independent_residual_audit": {
+      "method": "Recomputed norm(b-Ax)/norm(b) from saved arrays in reference_full_residual.npz; compared recomputed vector with saved residual.",
+      "relative": 5.055376131651821e-11,
+      "max_abs_vector_difference": 0.0,
+      "npz_sha256": "0e8c5b1fc8a8718d56e7b0ab0bc9b7407d941022addbb9b72ada5314c64da630"
+    },
+    "matched_reference": {
+      "status": "MATCHED_REFERENCE_PASS",
+      "all_applicable_gates_passed": true,
+      "FE_L2_relative": 1.0643994068890889e-07,
+      "FE_scaled_curl_relative": 1.0590110456109757e-07,
+      "same_coordinate_EH_interface_max_relative": 4.95900726941708e-07,
+      "field_limit": 0.0001,
+      "outgoing_modal_amplitude_vector_relative": 1.337435981717596e-07,
+      "modal_amplitude_limit": 0.0001,
+      "max_per_mode_power_absolute": 7.507099208936552e-08,
+      "per_mode_power_limit": 1e-06,
+      "max_total_R_T_A_Avolume_absolute": 7.591423312192092e-08,
+      "total_power_limit": 1e-05,
+      "reference_energy_closure": 1.6774137634456565e-11,
+      "energy_closure_limit": 1e-05
+    },
+    "reference_port_power": {
+      "R_total": 0.07565196365429899,
+      "R00_s": 0.07565148957274329,
+      "R00_p": 2.5940427852720315e-23,
+      "R00_total": 0.07565148957274329,
+      "T_total": 0.9062067813718543,
+      "A_balance": 0.018141254973846777,
+      "A_volume_total": 0.018141254990620734,
+      "A_volume_grating": 0.013925878172457823,
+      "A_volume_substrate": 0.004215376818162912,
+      "R_plus_T_plus_Avolume_minus_1": 1.6774137634456565e-11
+    },
+    "timing_seconds": {
+      "watchdog_elapsed": 1647.5270624320256,
+      "launch_charged": 1801.4672110320269,
+      "symbolic_numeric_solve_substage_times": "unknown; not independently persisted"
+    },
+    "resources": {
+      "watchdog_classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "simultaneous_process_tree_rss_peak_bytes": 11505573888,
+      "process_tree_swap_peak_bytes": 0,
+      "PSS": "DISABLED_BY_PROFILE",
+      "process_tree_identity_coverage": "complete",
+      "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+      "symbolic_admission_estimate_decimal_MB": 7932,
+      "symbolic_estimate_is_peak_prediction": false,
+      "rss_peak_outer_stage": "workflow",
+      "rss_peak_worker_stage": "fine_reference_residual_completed",
+      "input_PETSc_matrix_nz_allocated": 56834000,
+      "input_PETSc_matrix_nz_used": 55984880,
+      "input_PETSc_matrix_nnz_unit_note": "PETSc input sparse-matrix entry counts; not factor allocation and not bytes.",
+      "MUMPS_INFOG_inventory": {
+        "16": {
+          "value": 7932,
+          "unit": "million_bytes_decimal_MB",
+          "meaning": "post-analysis in-core full-rank estimate, maximum over processors"
+        },
+        "17": {
+          "value": 7932,
+          "unit": "million_bytes_decimal_MB",
+          "meaning": "post-analysis in-core full-rank estimate, sum over processors"
+        },
+        "18": {
+          "value": 8277,
+          "unit": "million_bytes_decimal_MB",
+          "meaning": "factorization allocated MUMPS internal data, maximum over processors"
+        },
+        "19": {
+          "value": 8277,
+          "unit": "million_bytes_decimal_MB",
+          "meaning": "factorization allocated MUMPS internal data, sum over processors"
+        },
+        "22": {
+          "value": 6798,
+          "unit": "million_bytes_decimal_MB",
+          "meaning": "memory effectively used during factorization, sum over processors"
+        },
+        "29": {
+          "value": 346831808,
+          "unit": "factor_matrix_entries",
+          "meaning": "effective number of entries in factor matrices, sum over processors"
+        }
+      },
+      "native_matrix_nnz_units_note": "The separate input PETSc MatInfo counts above are matrix entries, not MUMPS factor allocation and not bytes."
+    },
+    "execution_context_record": "r5_execution_context.json",
+    "artifact_paths": {
+      "launch.json": "benchmarks/artifacts/task40extra_0p7nm_engineering/direct_reference_v1/393e5c0dddb933848945ab2e18edb73cf69cc224/launch.json",
+      "reference_summary.json": "benchmarks/artifacts/task40extra_0p7nm_engineering/direct_reference_v1/393e5c0dddb933848945ab2e18edb73cf69cc224/reference_summary.json",
+      "reference_full_residual.json": "benchmarks/artifacts/task40extra_0p7nm_engineering/direct_reference_v1/393e5c0dddb933848945ab2e18edb73cf69cc224/reference_full_residual.json",
+      "reference_full_residual.npz": "benchmarks/artifacts/task40extra_0p7nm_engineering/direct_reference_v1/393e5c0dddb933848945ab2e18edb73cf69cc224/reference_full_residual.npz",
+      "reference_result.npz": "benchmarks/artifacts/task40extra_0p7nm_engineering/direct_reference_v1/393e5c0dddb933848945ab2e18edb73cf69cc224/reference_result.npz",
+      "matched_reference.json": "benchmarks/artifacts/task40extra_0p7nm_engineering/direct_reference_v1/393e5c0dddb933848945ab2e18edb73cf69cc224/matched_reference.json",
+      "watchdog/summary.json": "benchmarks/artifacts/task40extra_0p7nm_engineering/direct_reference_v1/393e5c0dddb933848945ab2e18edb73cf69cc224/watchdog/summary.json"
+    },
+    "artifact_sha256": {
+      "launch.json": "dbc9b4777662fa473f22392bdce5a253a127e23414f1d2acd9611a77150a65d9",
+      "reference_summary.json": "0a0b8dca274f5d1ec6ef2aa8dfdf7db2ac1d98d535635f3f42e1938ba1d98ad5",
+      "reference_full_residual.json": "1da5233c16745b518c724e0b69b859ba99d4a89d18b0fb4fdacc1db0f23d7c19",
+      "reference_full_residual.npz": "0e8c5b1fc8a8718d56e7b0ab0bc9b7407d941022addbb9b72ada5314c64da630",
+      "reference_result.npz": "311bf0bdf14b1b1cb0286025336613a4cf7691ae83e0421d20a524a8d92ff13e",
+      "matched_reference.json": "cd84bd2a6077cf871a2fce83a932e261c8483be3f3166845523fe597b4909668",
+      "watchdog/summary.json": "0a37f51604120bacb634f1e146dd8542b524cece4a36b530cba335dd08e3c977",
+      "port_power.json": "39af7ca0ac03a77bd5b82978eae8859f0ed92781921ad6f89d232870f0c17bc2",
+      "volume_absorption.json": "584bd27a885067a3c2f97ec4788c0ca8d287b47f724597858735d58ca2b712c8"
+    }
   },
   "limits": {
     "h_agreement": "PASS_ENGINEERING_FIXED_SAMPLE_AND_POWER_THRESHOLDS",
-    "same_discrete_reference": "NOT_RUN",
+    "same_discrete_reference": "MATCHED_REFERENCE_PASS",
     "channel_truncation": "CHANNEL_TRUNCATION_UNQUALIFIED",
     "continuum_convergence": "NOT_ESTABLISHED",
     "2_TB_capacity": "UNKNOWN",
     "ordinary_default_changed": false,
-    "master_merged": false
-  }
+    "master_merged": false,
+    "same_discrete_reference_evidence": "benchmarks/artifacts/task40extra_0p7nm_engineering/direct_reference_v1/393e5c0dddb933848945ab2e18edb73cf69cc224/matched_reference.json"
+  },
+  "r5_overall_status": "STRICT_IDENTITY_REPAIRED_G0_G1_DISCRETE_PASS_MATCHED_REFERENCE_PASS_AUTHORITY_LIMITED",
+  "next_primary_candidate": {
+    "candidate": "Task40 §8.1: bounded local problems plus multilevel global wave-error correction.",
+    "mechanism_to_freeze": "Define new cross-subdomain propagation/interface/coarse-space corrections and explicit bounds for each local problem and the sum of all local factors. Compare against the accurate p4 reference on fixed physics.",
+    "why_now": "G0/G1 and same-discrete G0 reference gates pass, but current runs do not establish target-scale capacity; this architecture removes dependence on one global full-domain factor.",
+    "distinction_from_old_42_macroblock_PC": "Do not rename/reuse the prior 42-block complete-PC design, whose fresh residual/field evidence was negative. Freeze new propagation/interface/coarse-space mechanisms in a later review.",
+    "status": "PROPOSED_FOR_NEXT_REVIEW_NOT_IMPLEMENTED_OR_RUN",
+    "mode_cutoff_gap": "The frozen 80-mode truncation remains unqualified and is not replaced by this architecture choice.",
+    "phase_II_executed": false
+  },
+  "pre_R5_status": "STRICT_IDENTITY_REPAIRED_G0_G1_DISCRETE_PASS_AUTHORITY_LIMITED"
 }

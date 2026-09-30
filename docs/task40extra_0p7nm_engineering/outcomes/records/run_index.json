@@ -2,7 +2,7 @@
   "schema": "task40extra.run_index.v1",
   "branch": "task40extra_0p7nm_engineering",
   "repair_base_sha": "e694452f2f9287135f046af45592e3665f8b6c71",
-  "current_code_sha": "de44f5bb4da48cd076df2b295ef6fe08b83d52fa",
+  "current_code_sha": "393e5c0dddb933848945ab2e18edb73cf69cc224",
   "input": {
     "path": "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4.dat",
     "sha256": "8e00fb6495845902a8113d982242d39ad0f4999b563c2c8049ecc3750b82ac9c",
@@ -245,12 +245,75 @@
     {
       "run_id": "task40extra_0p7nm_nonseparable_g0_direct_reference_review_v1",
       "stage": "R4_CONDITIONAL_G0_DIRECT_REFERENCE",
-      "status": "NOT_RUN",
+      "status": "MATCHED_REFERENCE_PASS",
       "input_sha256": "c80c921834cb268a9251459795fbda5acf4e9f25347d16ee24dec3b9d85c6c56",
-      "reason": "No Task40-bound qualified symbolic MUMPS preflight binding actual rows/NNZ, symbolic storage, available memory and recovery space. No direct symbolic or numeric factor or solve was launched. This is NOT_RUN, not a measured resource failure.",
-      "symbolic_factorization": "not_run",
-      "numeric_factorization": "not_run",
-      "direct_solve": "not_run"
+      "pre_run_status_snapshot": {
+        "status": "NOT_RUN",
+        "reason": "No Task40-bound qualified symbolic MUMPS preflight binding actual rows/NNZ, symbolic storage, available memory and recovery space. No direct symbolic or numeric factor or solve was launched. This is NOT_RUN, not a measured resource failure.",
+        "symbolic_factorization": "not_run",
+        "numeric_factorization": "not_run",
+        "direct_solve": "not_run"
+      },
+      "source_sha": "393e5c0dddb933848945ab2e18edb73cf69cc224",
+      "physical_model_sha256": "1f53e9f90d63a595b1184a975ab1dce12d4fa1362f86f224753584e3992e17bc",
+      "normalized_physical_sections_sha256": "51854af3fb60c7ffebb166e1f06ff0a89e2e184dcbd9ba06ab4beb321b920661",
+      "classification": "MATCHED_REFERENCE_PASS",
+      "official_result": true,
+      "reference_residual_relative": 5.055376131651821e-11,
+      "matched_reference_status": "MATCHED_REFERENCE_PASS",
+      "run_directory": "benchmarks/artifacts/task40extra_0p7nm_engineering/direct_reference_v1/393e5c0dddb933848945ab2e18edb73cf69cc224",
+      "record": "identity_recovery_v1_results.json#conditional_direct_reference",
+      "watchdog_classification": "COMPLETED",
+      "watchdog_leader_exit_code": 0,
+      "simultaneous_process_tree_rss_peak_bytes": 11505573888,
+      "process_tree_swap_peak_bytes": 0,
+      "PSS": "DISABLED_BY_PROFILE",
+      "launch_discipline_deviation": "user-service wrapper not used; observed cgroup /init.scope; retained original run to terminal outcome",
+      "symbolic_factorization": "completed",
+      "numeric_factorization": "completed",
+      "direct_solve": "completed",
+      "symbolic_calls": 1,
+      "numeric_calls": 1,
+      "solve_calls": 2,
+      "correction_calls": 1,
+      "MUMPS_nz_allocated": 56834000,
+      "MUMPS_nz_used": 55984880,
+      "RSS_peak_worker_stage": "fine_reference_residual_completed",
+      "input_PETSc_matrix_nz_allocated": 56834000,
+      "input_PETSc_matrix_nz_used": 55984880,
+      "MUMPS_INFOG": {
+        "16": {
+          "value": 7932,
+          "unit": "million_bytes_decimal_MB",
+          "meaning": "post-analysis in-core full-rank estimate, maximum over processors"
+        },
+        "17": {
+          "value": 7932,
+          "unit": "million_bytes_decimal_MB",
+          "meaning": "post-analysis in-core full-rank estimate, sum over processors"
+        },
+        "18": {
+          "value": 8277,
+          "unit": "million_bytes_decimal_MB",
+          "meaning": "factorization allocated MUMPS internal data, maximum over processors"
+        },
+        "19": {
+          "value": 8277,
+          "unit": "million_bytes_decimal_MB",
+          "meaning": "factorization allocated MUMPS internal data, sum over processors"
+        },
+        "22": {
+          "value": 6798,
+          "unit": "million_bytes_decimal_MB",
+          "meaning": "memory effectively used during factorization, sum over processors"
+        },
+        "29": {
+          "value": 346831808,
+          "unit": "factor_matrix_entries",
+          "meaning": "effective number of entries in factor matrices, sum over processors"
+        }
+      },
+      "MUMPS_INFOG_unit_note": "INFOG16-22 are decimal MB fields as defined by MUMPS/PETSc; INFOG29 is factor-matrix entry count. They are not process-tree RSS."
     }
   ],
   "ledger": {
@@ -289,6 +352,6 @@
     "source_sha": "b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672",
     "result_record": "docs/task40extra_0p7nm_engineering/outcomes/records/identity_recovery_v1_results.json",
     "h_agreement_record": "docs/task40extra_0p7nm_engineering/outcomes/records/h_agreement_v1.json",
-    "status": "G0/G1 strict discrete and physical pass with authority limitation; direct reference NOT_RUN"
+    "status": "R5_COMPLETE_G0_G1_STRICT_PASS_H_AGREEMENT_AND_MATCHED_REFERENCE_PASS_AUTHORITY_LIMITED"
   }
 }

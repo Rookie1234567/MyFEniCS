@@ -1,8 +1,8 @@
 {
   "schema": "task40extra.phase_i_results.v1",
-  "overall_status": "N6_LIMITED_CLOSEOUT_G0_G1_STRICT_PASS_H_AGREEMENT_REFERENCE_NOT_RUN",
+  "overall_status": "N6_R5_COMPLETE_G0_G1_DISCRETE_PASS_H_AGREEMENT_AND_MATCHED_REFERENCE_PASS_AUTHORITY_LIMITED",
   "official_0p7nm_nonseparable_p6_result": true,
-  "numerical_gate_status": "STRICT_IDENTITY_REPAIRED_G0_G1_DISCRETE_PASS_AUTHORITY_LIMITED",
+  "numerical_gate_status": "STRICT_IDENTITY_REPAIRED_G0_G1_DIRECT_REFERENCE_AND_H_AGREEMENT_PASS_AUTHORITY_LIMITED",
   "stages": {
     "N0": {
       "status": "complete",
@@ -24,10 +24,9 @@
       "evidence": "docs/task40extra_0p7nm_engineering/outcomes/records/n2_tiny_static_condensed_diagnostic.json"
     },
     "N3_G0": {
-      "status": "V20_RELEASE_GATE_FAIL",
+      "status": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
       "attempts": 4,
       "unique_bug_replay_count": 3,
-      "latest_error": "RECOVERY_IDENTITY_GATE_FAIL at iteration 8: native identity relative 3.0748104980683956e-10 > 1e-10; raw worker classification V20_RELEASE_GATE_FAIL",
       "actual_cells_constructed": 336,
       "p6_rows": 229680,
       "q4_rows": 69856,
@@ -41,19 +40,16 @@
       ],
       "implementation_bug_failures": 3,
       "latest_attempt": {
-        "attempt": 4,
-        "source_sha": "de44f5bb4da48cd076df2b295ef6fe08b83d52fa",
-        "worker_status": "RELEASE_GATE_STOP",
-        "full_residual_relative": 0.16667295750232392,
-        "native_identity_relative": 3.0748104980683956e-10,
-        "native_identity_limit": 1e-10,
-        "outer_iterations": 8,
-        "restart": 32,
-        "max_iterations": 2048,
-        "official_result": false,
-        "evidence": "docs/task40extra_0p7nm_engineering/outcomes/records/g0_attempt4_identity_gate_stop.json"
+        "attempt": "review_v1",
+        "run_id": "task40extra_0p7nm_nonseparable_g0_iterative_review_v1",
+        "source_sha": "b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672",
+        "status": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+        "iterations": 152,
+        "full_residual_relative": 9.798664008005796e-07,
+        "native_identity_relative": 1.520588963522625e-11,
+        "official_result": true,
+        "evidence": "identity_recovery_v1_results.json#runs.G0"
       },
-      "latest_error_evidence": "docs/task40extra_0p7nm_engineering/outcomes/records/g0_attempt4_identity_gate_stop.json",
       "prior_implementation_bug_failures": [
         {
           "attempt": 1,
@@ -83,24 +79,65 @@
         "A_balance": 0.018141179059613655,
         "A_volume_total": 0.01814125705170932
       },
-      "result_record": "identity_recovery_v1_results.json#runs.G0"
+      "result_record": "identity_recovery_v1_results.json#runs.G0",
+      "pre_review_v1_latest_attempt": {
+        "attempt": 4,
+        "source_sha": "de44f5bb4da48cd076df2b295ef6fe08b83d52fa",
+        "worker_status": "RELEASE_GATE_STOP",
+        "full_residual_relative": 0.16667295750232392,
+        "native_identity_relative": 3.0748104980683956e-10,
+        "native_identity_limit": 1e-10,
+        "outer_iterations": 8,
+        "restart": 32,
+        "max_iterations": 2048,
+        "official_result": false,
+        "evidence": "docs/task40extra_0p7nm_engineering/outcomes/records/g0_attempt4_identity_gate_stop.json"
+      },
+      "historical_attempt4_latest_error": "RECOVERY_IDENTITY_GATE_FAIL at iteration 8: native identity relative 3.0748104980683956e-10 > 1e-10; raw worker classification V20_RELEASE_GATE_FAIL",
+      "historical_attempt4_latest_error_evidence": "docs/task40extra_0p7nm_engineering/outcomes/records/g0_attempt4_identity_gate_stop.json",
+      "prior_status_snapshot": {
+        "status": "V20_RELEASE_GATE_FAIL",
+        "run_id": "attempt4",
+        "note": "Historical failure remains in latest_attempt history and its compact raw evidence; this snapshot predates review_v1."
+      }
     },
     "N4_G1": {
-      "status": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED_H_AGREEMENT_PASS_ENGINEERING_ONLY",
+      "status": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
       "run_id": "task40extra_0p7nm_nonseparable_g1_iterative_review_v1",
       "source_sha": "b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672",
       "final_post_release_A6": 9.901397191660007e-07,
       "native_identity": 3.2542694546811876e-11,
       "h_agreement": "PASS_ENGINEERING_FIXED_SAMPLE_AND_POWER_THRESHOLDS",
       "reference_authority": "MATCHED_REFERENCE_NOT_AVAILABLE",
-      "evidence": "identity_recovery_v1_results.json#runs.G1"
+      "evidence": "identity_recovery_v1_results.json#runs.G1",
+      "current_status": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED"
     },
     "N5_G0_direct_reference": {
-      "status": "NOT_RUN",
-      "reason": "No Task40-bound qualified symbolic MUMPS preflight binding actual rows/NNZ, symbolic storage, available memory and recovery space. No direct symbolic or numeric factor or solve was launched. This is NOT_RUN, not a measured resource failure.",
-      "symbolic_factorization": "not_run",
-      "numeric_factorization": "not_run",
-      "direct_solve": "not_run"
+      "status": "MATCHED_REFERENCE_PASS",
+      "pre_run_status_snapshot": {
+        "status": "NOT_RUN",
+        "reason": "No Task40-bound qualified symbolic MUMPS preflight binding actual rows/NNZ, symbolic storage, available memory and recovery space. No direct symbolic or numeric factor or solve was launched. This is NOT_RUN, not a measured resource failure.",
+        "meaning": "R4 preflight snapshot before the authorized direct run.",
+        "symbolic_factorization": "not_run",
+        "numeric_factorization": "not_run",
+        "direct_solve": "not_run"
+      },
+      "run_id": "task40extra_0p7nm_nonseparable_g0_direct_reference_review_v1",
+      "source_sha": "393e5c0dddb933848945ab2e18edb73cf69cc224",
+      "input_sha256": "c80c921834cb268a9251459795fbda5acf4e9f25347d16ee24dec3b9d85c6c56",
+      "reference_residual_relative": 5.055376131651821e-11,
+      "matched_reference_evidence": "benchmarks/artifacts/task40extra_0p7nm_engineering/direct_reference_v1/393e5c0dddb933848945ab2e18edb73cf69cc224/matched_reference.json",
+      "watchdog_classification": "COMPLETED",
+      "simultaneous_process_tree_rss_peak_bytes": 11505573888,
+      "process_tree_swap_peak_bytes": 0,
+      "launch_discipline_deviation": "user-service wrapper not used; observed cgroup /init.scope; retained original run to terminal outcome",
+      "symbolic_factorization": "completed",
+      "numeric_factorization": "completed",
+      "direct_solve": "completed",
+      "symbolic_calls": 1,
+      "numeric_calls": 1,
+      "solve_calls": 2,
+      "correction_calls": 1
     },
     "N6": {
       "status": "closed_limited",
@@ -125,7 +162,51 @@
     "G1_PSS": "DISABLED_BY_PROFILE",
     "G1_workflow_monotonic_seconds": 4097.993754097028,
     "watchdog": "both COMPLETED, exit 0, descendants cleared, task swap 0",
-    "scope": "dedicated watchdog tree simultaneous RSS; PSS disabled"
+    "scope": "dedicated watchdog tree simultaneous RSS; PSS disabled",
+    "direct_tree_RSS_peak_bytes": 11505573888,
+    "direct_swap_peak_bytes": 0,
+    "direct_PSS": "DISABLED_BY_PROFILE",
+    "direct_watchdog_elapsed_seconds": 1647.5270624320256,
+    "direct_charged_seconds": 1801.4672110320269,
+    "direct_watchdog": "COMPLETED, exit 0, descendants cleared, task swap 0; launch discipline deviation recorded",
+    "direct_RSS_peak_outer_stage": "workflow",
+    "direct_RSS_peak_worker_stage": "fine_reference_residual_completed",
+    "direct_MUMPS_nz_allocated": 56834000,
+    "direct_MUMPS_nz_used": 55984880,
+    "direct_input_PETSc_matrix_nz_allocated": 56834000,
+    "direct_input_PETSc_matrix_nz_used": 55984880,
+    "direct_MUMPS_INFOG": {
+      "16": {
+        "value": 7932,
+        "unit": "million_bytes_decimal_MB",
+        "meaning": "post-analysis in-core full-rank estimate, maximum over processors"
+      },
+      "17": {
+        "value": 7932,
+        "unit": "million_bytes_decimal_MB",
+        "meaning": "post-analysis in-core full-rank estimate, sum over processors"
+      },
+      "18": {
+        "value": 8277,
+        "unit": "million_bytes_decimal_MB",
+        "meaning": "factorization allocated MUMPS internal data, maximum over processors"
+      },
+      "19": {
+        "value": 8277,
+        "unit": "million_bytes_decimal_MB",
+        "meaning": "factorization allocated MUMPS internal data, sum over processors"
+      },
+      "22": {
+        "value": 6798,
+        "unit": "million_bytes_decimal_MB",
+        "meaning": "memory effectively used during factorization, sum over processors"
+      },
+      "29": {
+        "value": 346831808,
+        "unit": "factor_matrix_entries",
+        "meaning": "effective number of entries in factor matrices, sum over processors"
+      }
+    }
   },
   "accuracy_outcome": {
     "strict_identity_repaired": true,
@@ -135,13 +216,25 @@
     "G0_G1_h_agreement": "PASS_ENGINEERING_FIXED_SAMPLE_AND_POWER_THRESHOLDS",
     "field_relative_limit": 0.01,
     "R_T_A_volume_absolute_limit": 0.001,
-    "same_discrete_reference": "not_run",
+    "same_discrete_reference": "MATCHED_REFERENCE_PASS",
     "official_R_T_A": "measured from DtN port modal amplitudes",
     "A_volume": "measured physical-material volume integral",
     "energy_closure": "passed under 1e-5",
     "channel_truncation": "CHANNEL_TRUNCATION_UNQUALIFIED",
-    "continuum_convergence": "not_established"
+    "continuum_convergence": "not_established",
+    "direct_full_residual_relative": 5.055376131651821e-11,
+    "reference_field_L2_relative": 1.0643994068890889e-07,
+    "reference_field_scaled_curl_relative": 1.0590110456109757e-07
   },
-  "next_step": "提交 compact results、h-agreement 和 response_v2 到同一执行分支并等待 review；不启动新 PDE，不合并 master。",
-  "prior_overall_status": "INCOMPLETE_WORKER_FAILED_REPLAY_BUDGET_EXHAUSTED"
+  "next_step": "R5 evidence and response_v2 submitted for review. No further PDE is run in this closeout; the single proposed next candidate is a controlled higher-mode cutoff qualification. No ordinary-default change or master merge.",
+  "prior_overall_status": "INCOMPLETE_WORKER_FAILED_REPLAY_BUDGET_EXHAUSTED",
+  "next_primary_candidate": {
+    "candidate": "Task40 §8.1: bounded local problems plus multilevel global wave-error correction.",
+    "mechanism_to_freeze": "Define new cross-subdomain propagation/interface/coarse-space corrections and explicit bounds for each local problem and the sum of all local factors. Compare against the accurate p4 reference on fixed physics.",
+    "why_now": "G0/G1 and same-discrete G0 reference gates pass, but current runs do not establish target-scale capacity; this architecture removes dependence on one global full-domain factor.",
+    "distinction_from_old_42_macroblock_PC": "Do not rename/reuse the prior 42-block complete-PC design, whose fresh residual/field evidence was negative. Freeze new propagation/interface/coarse-space mechanisms in a later review.",
+    "status": "PROPOSED_FOR_NEXT_REVIEW_NOT_IMPLEMENTED_OR_RUN",
+    "mode_cutoff_gap": "The frozen 80-mode truncation remains unqualified and is not replaced by this architecture choice.",
+    "phase_II_executed": false
+  }
 }

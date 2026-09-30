@@ -23,7 +23,9 @@
 
 | 文件 | 内容 |
 |---|---|
-| [Response V1](response_v1.md) | B 线 N0–N6 的最终回答、G0 失败分类与决策 |
+| [Response V1](response_v1.md) | 原始 N0–N6 回答与 attempt4 失败分类（历史） |
+| [Response V2](response_v2.md) | R0–R5 收口，含 G0/G1 与 same-discrete direct reference |
+| [Identity recovery](outcomes/identity_recovery_v1.md) | 根因、精确几何修复、strict fresh runs 与 direct 对照 |
 | [结果总结](outcomes/summary.md) | 阶段矩阵、数据、资源、负结果和选择性合并边界 |
 | [精度与容量判断](outcomes/accuracy_and_capacity.md) | G0/G1/direct 状态、误差 Gate 与资源口径 |
 | [测试摘要](outcomes/test_summary.md) | N2、修复 fixture 与文档检查结果 |

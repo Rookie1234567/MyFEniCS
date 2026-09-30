@@ -1,20 +1,22 @@
-# Task40extra 当前模型登记：B 线 N0–N6 受限收口
+# Task40extra 当前模型登记：Review V1 / R5 收口
 
-| Model ID / stage | source / model identity | 方法与实测 | 状态与资格边界 |
+| 模型 / 阶段 | source / identity | 实测结果与资源 | 当前资格边界 |
 |---|---|---|---|
-| task40extra_n2_tiny_p2_diagnostic | source 036dec55beb0fdb1f3cae7693fddfc0225921eb9；0.7 nm identity；60 cells、p2、MPI1 | residual 1.772707454694957e-12；R/T/A与原诊断记录一致；solver 8.608 s | diagnostic_pass_only；不是G0/G1 p6 official解 |
-| G0 attempt1 | source e694452f2f9287135f046af45592e3665f8b6c71；冻结input SHA 8e00fb6495845902a8113d982242d39ad0f4999b563c2c8049ecc3750b82ac9c | ledger batch identity异常；3.896 s；数值工作未开始；RSS 142,209,024 B | WORKER_FAILED_IMPLEMENTATION_BUG |
-| G0 attempt2 | source 1ee85bc2133b783da419d31dbe429643eb2c1191；336 cells、p6 229,680 rows、q4 69,856 rows | native projection checks 9.5841e-15 / 2.7511e-15通过；cleanup缺rectangular_air_void_audit；87.897 s；RSS 1,538,707,456 B | WORKER_FAILED_IMPLEMENTATION_BUG；未进入outer KSP |
-| G0 attempt3 | source 8c862db3bb47e3a885ffc9f6b8bb42f348fd504b | Task40 worktree未找到Task39相对JIT cache路径，FileNotFoundError；单次elapsed未独立持久化 | WORKER_FAILED_IMPLEMENTATION_BUG；未进入分解/KSP |
-| G0 attempt4 | source de44f5bb4da48cd076df2b295ef6fe08b83d52fa；336 cells、80 modes；FGMRES restart32/max_it2048 | 实际8步；A6=0.1666729575；native identity=3.074810498e-10，限值1e-10；RSS 2,954,866,688 B | V20_RELEASE_GATE_FAIL；不是资源停机，也不是max_it耗尽 |
-| G1 / N4 | planned 10×4×22、880 cells | 未运行 | NOT_RUN；无h agreement结论 |
-| G0 direct / N5 | same-discrete reference | 未运行 | NOT_RUN；没有合格的G0 iterative subject |
+| N2 tiny diagnostic | source 036dec55beb0fdb1f3cae7693fddfc0225921eb9；60 cells、p2、MPI1 | residual 1.772707454694957e-12；solver 8.608 s | diagnostic_pass_only；不是 G0/G1 p6 official |
+| G0 attempt1–3 | 历史各自 source 与错误见 run index | ledger identity、mesh wrapper 字段、Task39 JIT 相对路径问题；未完成正式求解 | implementation bugs，分类和成本缺项均保留 |
+| G0 attempt4 | source de44f5bb4da48cd076df2b295ef6fe08b83d52fa；336 cells、p6 229,680 full / 68,256 active；q4 full storage 69,856 rows | 8步；A6=0.1666729575；native identity=3.074810498e-10；树RSS 2,954,866,688 B | 原始 V20_RELEASE_GATE_FAIL 保留；非资源停机 |
+| G0 review_v1 | source b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672；336 cells；p6 trace+port=68,336 rows；q4 factor=29,072 rows / 10,912,592 NNZ | 152步；A6=9.798664008e-7；identity=1.520588964e-11；R/T/A_balance/A_volume=0.0756519645/0.9062068564/0.0181411791/0.0181412571；树RSS 3,776,098,304 B | DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED |
+| G1 review_v1 | source b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672；880 cells；p6 trace+port=177,200 rows；q4 factor=75,280 rows / 28,705,330 NNZ | 127步；A6=9.901397192e-7；identity=3.254269455e-11；R/T/A_balance/A_volume=0.0761240621/0.9057692206/0.0181067174/0.0181067127；树RSS 6,855,741,440 B | DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED |
+| G0 same-discrete direct reference | source 393e5c0dddb933848945ab2e18edb73cf69cc224；p6 trace+port MUMPS LU=68,336 rows；229,680 为 full field storage，不是全局 LU 行数；80 modes | residual=5.055376131651821e-11；MATCHED_REFERENCE_PASS；MUMPS INFOG29=346,831,808 factor entries；R/T/A_balance/A_volume=0.0756519637/0.9062067814/0.0181412550/0.0181412550；树RSS 11,505,573,888 B | 本 G0 离散的 direct authority；不证明连续收敛、mode cutoff 或目标尺度 |
+| G0–G1 fixed-sample comparison | 同物理、80 个 ordered keys、共同坐标样本 | 最大逐 z 平面场变化 0.004031；总功率最大变化 0.000472098 | H_AGREEMENT_PASS_ENGINEERING_ONLY；不是 continuum convergence |
 
-attempt4的worker summary原始分类保留为V20_RELEASE_GATE_FAIL；launcher wrapper另记exit 4 / WORKER_FAILED。主控独立离线复核保存数组：identity difference范数1.0129916171163611e-9，operation scale 3.29448470971699，重算relative 3.0748104980683956e-10。源码按每8步检查条件推导callback RECOVERY_IDENTITY_GATE_FAIL / PETSc DIVERGED_BREAKDOWN；raw callback status与reason未持久化。第8步identity Gate是源码推导的首个停止原因，final release packet随后也记录A6超限。详情及artifact SHA见 [attempt4 compact record](task40extra_0p7nm_engineering/outcomes/records/g0_attempt4_identity_gate_stop.json) 与 [run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)。
+历史工程成本另列：R1 full p6 operator diagnosis 14,039.107309384039 s；v1 builder主动停止约101 s（近似）；v2 exact-geometry replay 198.79226663301233 s；attempt1–4 shared ledger累计530.8867869906425 s。它们与 review_v1 各 run 的 workflow/watchdog/charged 时钟不相加。
 
-累计ledger elapsed 530.8867869906425 s，bug failure/replay count 3，fresh worker count 4，active attempt null。attempt4 monotonic workflow 356.928689 s、conservative realtime 392.257232 s、ledger debit 392.262382 s；不可把差异解释为KSP时间。attempt3单次时长和必要人工修复工时unknown。G0–G1 h agreement、direct comparison、official R/T/A/A_volume、energy closure与2 TB容量推断均未完成；N6仅为受限收口，不选择未经精度证明有效的PC。
+G0/G1/direct 的 watchdog process-tree swap 峰均为0，PSS按profile禁用；direct 因 user-service wrapper 未使用且 cgroup 观察为 /init.scope，记录为 launch-discipline deviation。独立 subreaper watchdog仍记录完整进程身份、exit 0 与 descendants cleared。详细数值、历史attempt证据和 artifact hashes 见 [Task40 Response V2](task40extra_0p7nm_engineering/response_v2.md)、[identity recovery](task40extra_0p7nm_engineering/outcomes/identity_recovery_v1.md)、[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)。
 
-Task40保持研究分支，ordinary default不变，不合并master。N2、三次实现错误、attempt4数值Gate与未运行阶段分别分类，不相互替代。
+R1 定位的缺陷是局部算子缓存键把精确单元宽度舍入到12位；修复按精确几何键索引，未更改方程或 strict Gate。attempt4的负分类不重写。新 G0/G1 与 direct 的官方结果支持本缩小离散模型，不外推约2TB目标。80-mode截断仍未资格化，continuum convergence也未建立。
+
+下一轮唯一主候选按任务书 §8.1 选择有界局部问题加多层全局波动纠错，新增传播/接口/粗空间修正并把全部局部因子总量设上限；不把 Task39 已有42宏块 complete-PC 换名重做。Task39 V11 fresh complete-PC residual/field negative evidence 已将旧方向排除为 production candidate，见 [Task39 selective manifest V11](task039_extra_physical_multilevel/outcomes/selective_merge_manifest_v11.md)。具体粗空间和传播机制、局部边界与p4比较次序需下一 review 冻结；本轮不执行 Phase II、不选 production default、不合并 master。
 
 ---
 

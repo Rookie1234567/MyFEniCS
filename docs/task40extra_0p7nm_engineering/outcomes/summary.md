@@ -1,6 +1,59 @@
 # Task40extra B 线 N0–N6 结果总结：0.7 nm 非可分三维 Maxwell
 
-## 最终状态
+## 当前结果（R5，2026-09-30）
+
+N0–N6 的当前阶段状态是：strict identity 修复后 G0、G1 正式离散解通过；G0 same-discrete direct comparison 通过；G0–G1 fixed-sample/power engineering agreement 通过。N2 与 attempts 1–4 仍按原范围和原分类保留。
+
+| 正式对象 | 方法、模型规模 | Gate / official output | watchdog 资源与时间 |
+|---|---|---|---|
+| G0 review_v1 | 336 cells；p6 完整场 229,680 rows、active trace 68,256；p6 trace+port 68,336 rows；q4 凝聚因子 29,072 rows / 10,912,592 NNZ；80 modes；FGMRES 152步 | A6 9.798664008005796e-7；identity 1.520588963522625e-11；R/T/A_balance/A_volume=0.0756519645/0.9062068564/0.0181411791/0.0181412571 | simultaneous tree RSS 3,776,098,304 B；swap 0；workflow/KSP 1204.018/787.135 s |
+| G1 review_v1 | 880 cells；p6 完整场 595,512 rows、active trace 177,120；p6 trace+port 177,200 rows；q4 凝聚因子 75,280 rows / 28,705,330 NNZ；80 modes；FGMRES 127步 | A6 9.901397191660007e-7；identity 3.2542694546811876e-11；R/T/A_balance/A_volume=0.0761240621/0.9057692206/0.0181067174/0.0181067127 | simultaneous tree RSS 6,855,741,440 B；swap 0；workflow/KSP 4097.994/3135.913 s |
+| G0 direct reference | 同 G0 几何/物理；MUMPS 因子作用于 p6 trace+port 的 68,336 rows；229,680 rows 是恢复完整场的存储维数；80 appended modes | direct residual 5.055376131651821e-11；MATCHED_REFERENCE_PASS；R/T/A_balance/A_volume=0.0756519637/0.9062067814/0.0181412550/0.0181412550 | simultaneous tree RSS 11,505,573,888 B；swap 0；watchdog/charged 1647.527/1801.467 s；PSS disabled |
+
+### 零级 s/p 通道与能量闭合
+
+| 模型 | R00_s | R00_p | R00_total | T00_s | T00_p | T00_total | A_volume grating / substrate | R+T+A_volume−1 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| G0 iterative | 0.07565149041679828 | 2.7428991838613296e-18 | 0.07565149041679828 | 0.9062066000865279 | 1.4515667553444104e-18 | 0.9062066000865279 | 0.013925879883210604 / 0.004215377168498715 | 7.799209567060927e-8 |
+| G1 iterative | 0.07612358848843093 | 7.987426377936068e-16 | 0.07612358848843173 | 0.9057689645333413 | 4.2210952517070463e-16 | 0.9057689645333417 | 0.013893418210626729 / 0.0042132945191538694 | -4.630012484518886e-9 |
+| G0 direct reference | 0.07565148957274329 | 2.5940427852720315e-23 | 0.07565148957274329 | 0.9062065250155358 | 3.476815891411563e-23 | 0.9062065250155358 | 0.013925878172457823 / 0.004215376818162912 | 1.6774137634456565e-11 |
+
+各s/p数值是端口模态功率比。G0–G1变化最大的衍射通道为 top (0,0,s) 的 R 增加 0.0004720981 与 bottom (0,0,s) 的 T 减少 0.0004376359；其余被比较的80-mode功率变化小于 3.0e-10。完整排序与所有模式见 [h-agreement record](records/h_agreement_v1.json)。
+
+正式 G0/G1 source SHA=b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672；inputs 分别为 6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e / 989a351fb27fe5320942ca2392d0e7e872909f0354509e5d59c8c25e43061c86。direct source SHA=393e5c0dddb933848945ab2e18edb73cf69cc224，direct input SHA=c80c921834cb268a9251459795fbda5acf4e9f25347d16ee24dec3b9d85c6c56。direct 规范化 physical sections SHA 与 G0 的 51854af3fb60c7ffebb166e1f06ff0a89e2e184dcbd9ba06ab4beb321b920661 一致；原始 identity 差异只有 assembly backend。mode SHA=c3ff9c0cf35e2d183f44ed3fb7448d4aa586bb6fdf7f9dc9ba78dc25011c693a。
+
+R/T 来自 DtN 端口模态功率，A_volume 来自材料区域体积分吸收。q4 行数和 NNZ 是预条件器的独立 q4 凝聚因子规模，不是 p6 外层维数。direct reference 的完整场 residual 用保存的 b 与 Ax 独立复算，记录值完全一致；详细字段、输入/source 与 artifacts hash 见 [identity recovery compact](records/identity_recovery_v1_results.json)。
+
+同离散比较的 FE L2 / scaled-curl 相对误差为 1.0644e-7 / 1.0590e-7；固定坐标场与界面迹最大相对差 4.9591e-7；80-mode outgoing amplitude 向量整体相对差 1.3374e-7；每模功率最大绝对差 7.5071e-8；R/T/A/A_volume 最大总量差 7.5915e-8。所有 applicable Gate 通过。
+
+G0 到 G1 的共同坐标总场变化约 0.374%（E）与 0.393%（H），总功率各绝对差低于 0.000473，过本任务 1% / 0.001 工程 Gate。这仅表示两张网格在固定样本和当前输出上相符，不是连续极限证明；80-mode channel cutoff 仍未资格化。约 2 TB 目标容量仍 UNKNOWN。
+
+| 其他阶段成本 | 实测 / 近似时间 | 解释 |
+|---|---:|---|
+| R1 full p6 operator diagnosis | 14,039.107309384039 s | 没有全局 p4 factor；诊断阶段 |
+| v1 builder 主动停止 | 约101 s | 近似；审查修正后停止，原分类保留 |
+| v2 exact-geometry replay | 198.79226663301233 s | 保存向量的离线复核，无 fresh PDE/KSP |
+| attempt1–4 shared ledger累计 | 530.8867869906425 s | 历史 ledger scope，与后续 review_v1 分开 |
+
+### Setup、求解和后处理时间
+
+| 模型 | setup | outer adapter | KSP-only | final native / release checks | official postprocess | 主内存对象记录 |
+|---|---:|---:|---:|---:|---:|---|
+| G0 | 373.096 s | 798.552 s | 787.135 s | 2.045 / 8.730 s | 11.707 s | worker inventory peak 4,429,493,610 B；workspace peak 1,731,541,832 B；Krylov workspace upper 80,909,824 B；同时树RSS峰 3,776,098,304 B |
+| G1 | 908.009 s | 3150.090 s | 3135.913 s | 4.890 / 15.448 s | 14.035 s | worker inventory peak 6,627,841,642 B；workspace peak 1,970,721,416 B；Krylov workspace upper 209,804,800 B；同时树RSS峰 6,855,741,440 B |
+| G0 direct | setup/factor阶段无可独立确认的 wall-time 切分 | 不适用 | 不适用 | recovery 0.632 s；其余检查独立阶段时间 unknown | 包含在总 charged 时间内，未独立计时 | PETSc 输入矩阵 MatInfo nz_allocated/nz_used=56,834,000/55,984,880 项；MUMPS INFOG16/17=7,932/7,932 decimal MB、INFOG18/19=8,277/8,277 decimal MB、INFOG22=6,798 decimal MB、INFOG29=346,831,808因子项；同时树RSS峰 11,505,573,888 B，峰值worker stage fine_reference_residual_completed |
+
+outer adapter 已包含 KSP-only；这些时长不能相加当作独立阶段总耗时。direct 计时只报告 watchdog elapsed 1647.527 s 与 launch charged 1801.467 s，不从二者差值分配 symbolic、numeric 或 solve 阶段耗时。NNZ 是矩阵非零项数，不是字节；7,932 MB 是准入估计，不是 RSS 峰值。
+
+direct reference 启动时未使用要求的 user-service wrapper，观察到 cgroup /init.scope。发现偏差后未重启或迁移这唯一运行；独立 subreaper watchdog 完成了后代身份跟踪与清场。该流程偏差在 [execution-context 记录](records/r5_execution_context.json) 中单独保留。
+
+下轮唯一建议候选是任务书 §8.1 的有界局部问题加多层全局波动纠错，重点是新传播/接口/粗空间机制与有界总因子预算；不是重做旧 42 宏块 complete-PC。需在下一 review 冻结机制和准确 p4 对照顺序后再决定是否实施。R5 未执行 Phase II；没有新增 PDE。
+
+## 先前 N6 快照（review_v1 正式运行前）
+
+以下 N0–N6 表和 attempt4 指标是 R4 运行前的历史快照。其当时将 G0/G1/direct 标为未运行，不能解释为当前状态；attempt4 的失败数值与分类仍有效并完整保留。
+
+## attempt4 当时的 N6 状态
 
 G0 attempt4 已真实建立 p6/q4 空间并进入外层迭代。 这里的恢复/native identity 检查，是把凝聚后求出的未知量恢复成完整场后，核对它代回原始方程的作用是否与凝聚代数一致。第 8 步，原 A6 相对真残差为 0.16667295750232392（要求 ≤1e-6），native recovery identity 为 3.0748104980683956e-10（要求 ≤1e-10）。worker 原始 summary 分类为 V20_RELEASE_GATE_FAIL。根据每 8 步检查的源码规则，这是恢复/native identity Gate 停止；raw KSP status/reason 未保存，因此具体 callback/reason 属于源码推导。它不是资源停止，也不是 max_it=2048 后仍未收敛的结论。
 
@@ -16,7 +69,7 @@ G0 attempt4 已真实建立 p6/q4 空间并进入外层迭代。 这里的恢复
 
 p6 高阶有限元用较高次多项式表示复杂电磁场；路线先处理每个单元内部未知量以缩小全局问题，再用 q4/p4 操作纠正解。这样能减少外层未知量，但必须检查恢复后的全场是否仍满足原始 A6 方程和恢复恒等式。小型 p2 诊断、mesh audit 与投影检查仅验证各自环节，不能替代 p6 release Gate。
 
-## 实际模型和结果
+## attempt4 历史模型与结果
 
 | 项目 | attempt4 实测 | 解释 |
 |---|---:|---|
@@ -72,7 +125,7 @@ attempt3 的独立 elapsed 和必要人工修复工时都是 unknown，不能由
 
 共享 ledger、conservative realtime 与 monotonic 是不同观测范围，不相减推造 KSP 或工程工时。cgroup memory peak 未在本次 compact run 记录中报告；不补值。
 
-## 精度、网格与容量边界
+## attempt4 当时的精度、网格与容量边界
 
 | 问题 | 当前结论 |
 |---|---|

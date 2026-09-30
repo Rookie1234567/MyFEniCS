@@ -1,7 +1,7 @@
 {
   "schema": "task40extra.h_agreement.v1",
   "status": "H_AGREEMENT_PASS_ENGINEERING_ONLY",
-  "note": "Two-mesh engineering agreement only; not continuum convergence, a matched direct reference, or mode-cutoff qualification.",
+  "note": "G0/G1 two-mesh engineering agreement only; not continuum convergence or mode-cutoff qualification. The authorized same-discrete G0 direct comparison completed separately and passed; see the direct-reference evidence.",
   "source_sha": "b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672",
   "physical_model_sha256": "51854af3fb60c7ffebb166e1f06ff0a89e2e184dcbd9ba06ab4beb321b920661",
   "g0_input_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e",
@@ -236,10 +236,15 @@
     }
   ],
   "reference_and_cutoff": {
-    "same_discrete_direct_reference": "NOT_RUN",
-    "reason": "No Task40-bound symbolic MUMPS preflight established safe direct resource use; validate-only does not measure symbolic factor or recovery-space needs. No direct symbolic/numeric factor or solve was launched.",
+    "same_discrete_direct_reference": "MATCHED_REFERENCE_PASS",
+    "reason": "The previously NOT_RUN R4 preflight placeholder was superseded by the authorized same-discrete direct run and saved-array comparison; see the compact identity recovery record and matched_reference.json.",
     "channel_truncation": "CHANNEL_TRUNCATION_UNQUALIFIED",
-    "continuum_convergence": "NOT_ESTABLISHED"
+    "continuum_convergence": "NOT_ESTABLISHED",
+    "same_discrete_reference_pre_run_snapshot": {
+      "status": "NOT_RUN",
+      "reason": "No Task40-bound symbolic MUMPS preflight established safe direct resource use; validate-only does not measure symbolic factor or recovery-space needs. No direct symbolic/numeric factor or solve was launched."
+    },
+    "evidence": "benchmarks/artifacts/task40extra_0p7nm_engineering/direct_reference_v1/393e5c0dddb933848945ab2e18edb73cf69cc224/matched_reference.json"
   },
   "limits": {
     "field_relative_change": 0.01,

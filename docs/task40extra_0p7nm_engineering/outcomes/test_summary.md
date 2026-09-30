@@ -52,3 +52,19 @@ python3 -c 'import json,hashlib; from pathlib import Path; d=Path("docs/task40ex
 git diff --cached --check
 
 结果：两条命令均通过。该检查不是pytest、MPI、Ruff或CI。此前targeted tests的source SHA和范围仍按历史记录保存，不归到attempt4。
+
+
+
+
+分组来源补充（不混入上表43项合计）：
+
+- exact-geometry / R3 修复 fixture：15 项通过，提交 source 33b773d161b5e5dc218a29b122cdb4044ca01800；见 identity-recovery root-cause record。
+- 非零 RHS 实算 action fixture：3 项通过，命令与范围见 identity_policy_decision_v1.json 的 current_abi_fixtures[0]，源测试为 test_task39extra_v19_p6_cell_condensed_action.py::test_real_ffcx_mpc_action_only_matches_augmented_schur_and_nonzero_rhs。
+- local recovery/native residual oracle 与 non-Hermitian port fixture：2 项通过、9 项 deselected，见同一 record 的 current_abi_fixtures[1]；它与上一组的3项分开记录。
+
+## R4 review_v1 runs and R5 documentation closeout
+
+- R4 official execution used source SHA 393e5c0dddb933848945ab2e18edb73cf69cc224 for the direct reference; the G0/G1 source SHA is b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672. Targeted code checks recorded before the runs passed 34 cases across test_372, test_373 and test_task40_direct_reference_identity, plus 9 cases in test_374_reference_incident_quadrature.py, total 43. The 15 exact-geometry/R3 repair tests and separate nonzero-RHS groups (3 and 2 cases) are distinct earlier evidence and are not counted in these 43. This is not full-repository pytest, MPI2/4, Ruff or CI.
+- R5 changed compact records and documentation only; no PDE, factorization, solver or new test suite was run for closeout. Final JSON parse, source/artifact identity checks and git diff checks are recorded after the last doc edit.
+- direct reference independent saved-array audit: reference_full_residual.npz SHA256 0e8c5b1fc8a8718d56e7b0ab0bc9b7407d941022addbb9b72ada5314c64da630; recomputed norm(b-Ax)/norm(b)=5.055376131651821e-11 and maxabs(r-(b-Ax))=0.
+- direct execution route deviation: user-service wrapper was not used; the observed cgroup was /init.scope. The independent process-tree watchdog completed with exit 0 and cleared descendants. No rerun was made.
