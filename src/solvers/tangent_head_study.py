@@ -259,7 +259,7 @@ class TangentStudy:
                                                B_is_not_warm_start=True)
         refinement=self.stage.specification.derived['refine_frozen_joint_taylor']
         if refinement:
-            result['bounded_joint_Taylor_refinement']=self.stage.specification.derived['refinement_identity']
+            result['bounded_joint_Taylor_refinement']=dict(self.stage.specification.derived['refinement_identity'])
             self.stage.event('C_frozen_Taylor_refinement',steps_random=[8e-5,4e-5],
                 steps_gradient=[2e-5,1e-5],reason='Observed smaller-h cancellation; one larger adjacent pair, threshold unchanged')
         selected=[i for i,r in enumerate(check['directions']) if r['qualified']]
@@ -384,4 +384,104 @@ class TangentStudy:
                 P_path.unlink(missing_ok=True)
         result['final_loss']=point['loss']
         self.obj.assign(hidden,gamma)
+        return result
+
+    def recover_records(self):
+        """Reaudit saved network states after a writer failure; never optimize."""
+        import json
+        from src.io.task042_profile import ROOT
+        from src.runners.autonomous_neural_head import owned
+        identity=json.loads((ROOT/'tmp/task042/v13/serialization_recovery.json').read_text())
+        failed=Path(identity['failed_artifact']);run=Path(identity['failed_directory'])
+        previous,previous_path=read_result('COMPENSATE')
+        result=self.base_result()
+        point,resolution,audit=self.resolved(self.hidden,self.gamma)
+        result.update(status='C_FROZEN_STATE_RECORDS_RECOVERED',accepted_C=1,states=[],trials=[],rounds=[],
+            head_only_twins=[],initial_loss=point['loss'],B_is_not_warm_start=True,
+            post_computation_serialization_recovery=True,no_new_trials_or_optimization=True,
+            numerical_candidate_source_sha=identity['actual_numerical_source_sha'],
+            bounded_joint_Taylor_refinement=dict(previous_result=str(previous_path),
+                original_refinement_input=str(run/'input_original.dat')),recovery_identity=identity)
+        original_round=previous['rounds'][0]
+        joint=[]
+        for col,old in enumerate(original_round['joint_checks']):
+            new_path=failed/f'C1_joint_{col}.npz'
+            old_path=Path(old['vector_Taylor']['array_path'])
+            with np.load(new_path,allow_pickle=False) as new,np.load(old_path,allow_pickle=False) as prior:
+                for key in ('tangent','direction','head_direction'):
+                    if array_hash(new[key])!=array_hash(prior[key]):
+                        raise ValueError('cached dual/tangent cannot be reused after a changed direction')
+                steps=[2e-5,1e-5] if old['direction']=='analytic_gradient' else [8e-5,4e-5]
+                rows=[]
+                for i,h in enumerate(steps):
+                    plus=new[f'plus_{i}'];minus=new[f'minus_{i}'];dt=new['tangent']
+                    relative=float(np.linalg.norm((plus-minus)/(2*h)-dt)/np.linalg.norm(dt))
+                    plus_point=actual_loss(self.stage.packet,self.obj.ports,plus,self.obj.rhs)
+                    minus_point=actual_loss(self.stage.packet,self.obj.ports,minus,self.obj.rhs)
+                    difference=float(np.linalg.norm(plus-minus));scale=float(np.linalg.norm(plus)+np.linalg.norm(minus))
+                    rows.append(dict(h=h,vector_relative=relative,tangent_norm=float(np.linalg.norm(dt)),
+                        plus_trace_norm=float(np.linalg.norm(plus)),minus_trace_norm=float(np.linalg.norm(minus)),
+                        trace_difference_norm=difference,actual_hidden_difference=float(np.linalg.norm(2*h*new['direction'])),
+                        plus_loss=plus_point['loss'],minus_loss=minus_point['loss'],
+                        plus_Taylor_remainder=float(np.linalg.norm(plus-point['trace']-h*dt)),
+                        minus_Taylor_remainder=float(np.linalg.norm(minus-point['trace']+h*dt)),
+                        parameter_and_trace_resolved=bool(difference>100*np.finfo(float).eps*scale),head_fixed=False))
+                fd=dict(rows=rows,qualified=all(x['vector_relative']<=1e-5 and x['parameter_and_trace_resolved'] for x in rows),
+                        adjacent_stable_pairs=[[0,1]] if all(x['vector_relative']<=1e-5 for x in rows) else [],
+                        array_path=str(new_path),array_sha256=file_hash(new_path),cached_vector_replay=True)
+            rec=dict(old,vector_Taylor=fd,qualified=fd['qualified'],unchanged_dual_and_tangent_verified_by_hash=True)
+            joint.append(rec)
+        events=[]
+        for line in (run/'supervision/worker.log').read_text().splitlines():
+            if line.startswith('{'):
+                try: events.append(json.loads(line))
+                except json.JSONDecodeError: pass
+        trials=[x for x in events if x.get('event')=='actual_trial']
+        if len(trials)!=5 or sum(x['accepted'] for x in trials)!=1:
+            raise ValueError('frozen actual-trial inventory differs')
+        last=None
+        for old in trials:
+            path=failed/(old['tag']+'.npz')
+            with np.load(path,allow_pickle=False) as saved:
+                h=np.array(saved['hidden']);g=np.array(saved['gamma']);z=np.array(saved['z'])
+            new=self.evaluate(h,g);new_audit=self.stage.audit(new['z'])
+            if np.linalg.norm(new['z']-z)/max(np.linalg.norm(z),1e-300)>1e-10:
+                raise ValueError('frozen candidate does not regenerate from its actual network')
+            if abs(new['loss']-old['trial_loss'])>max(1e-12,20*resolution['delta_J']):
+                raise ValueError('saved trial loss no longer repeats')
+            row=dict(old,trial_audit=new_audit,replayed_actual_loss=new['loss'],
+                     state=self.stage.freeze('RECORDED_'+old['tag'],h,g,new))
+            result['trials'].append(row)
+            if old['accepted']:
+                final,final_resolution,final_audit=self.resolved(h,g)
+                acceptance=accept_step(point,final,old['pred'],resolution['delta_J'],
+                                       final_resolution['delta_J'],audit,final_audit)
+                if not acceptance['accepted']:
+                    raise ValueError('saved accepted step does not pass the unchanged actual gate')
+                result['states'].append(self.state_row('C_1_ACCEPTED',h,g,final,final_audit,
+                    pred=old['pred'],ared=old['ared'],actual_numerical_source_sha=identity['actual_numerical_source_sha']))
+                last=(h,g,final,final_audit)
+        if last is None:
+            raise ValueError('missing frozen accepted state')
+        h,g,final,final_audit=last
+        with np.load(failed/'C_1_HEAD_ONLY_TWIN.npz',allow_pickle=False) as saved:
+            twin_hidden=np.array(saved['hidden']);twin_gamma=np.array(saved['gamma']);twin_z=np.array(saved['z'])
+        twin=self.evaluate(twin_hidden,twin_gamma);twin_audit=self.stage.audit(twin['z'])
+        if array_hash(twin_hidden)!=array_hash(self.hidden) or array_hash(twin_gamma)!=array_hash(g):
+            raise ValueError('head-only twin is not the same head update at unchanged hidden')
+        if np.linalg.norm(twin['z']-twin_z)/np.linalg.norm(twin_z)>1e-10:
+            raise ValueError('head-only twin does not regenerate')
+        twin_row=self.state_row('C_1_HEAD_ONLY_TWIN',twin_hidden,twin_gamma,twin,twin_audit,
+            diagnostic_only=True,joint_loss=final['loss'],head_only_loss=twin['loss'],previous_loss=point['loss'],
+            hidden_incremental_loss_gain=twin['loss']-final['loss'])
+        result['states'].append(twin_row);result['head_only_twins'].append(twin_row)
+        progress=(point['loss']-final['loss'])/point['loss']
+        result['rounds'].append(dict(round=1,P=original_round['P'],head_compensation=original_round['head_compensation'],
+            joint_checks=joint,small_real_LS=dict(columns=sum(x['qualified'] for x in joint),
+                coefficient_metadata='lost at serialization; no new LS performed in recovery'),
+            accepted=True,relative_loss_progress=progress,cumulative_loss_progress=progress,
+            actual_joint_loss=final['loss'],head_only_loss=twin['loss'],
+            stop_reason='NEXT_ROUND_PROGRESS_GATE_FAILED',original_progress_event=next(x for x in events if x.get('event')=='C_joint_accepted')))
+        result['final_loss']=final['loss'];result['stop_reason']='Relative gain below the unchanged 1e-4 extension threshold'
+        self.obj.assign(h,g)
         return result

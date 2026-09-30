@@ -93,6 +93,22 @@ def test_refinement_is_bounded_same_frozen_C_and_carries_identity(tmp_path,monke
         loader.load_tangent_head(path)
 
 
+def test_frozen_input_identity_is_converted_before_JSON_writer(tmp_path,monkeypatch):
+    from src.io import tangent_head_compensation as loader
+    from src.io.task042_profile import ROOT
+    from src.runners.task042_shared import write_json
+    (tmp_path/'compensation_1').mkdir()
+    np.savez(tmp_path/'compensation_1/directions.npz',dot_gamma=np.ones((1560,1),complex))
+    old_path=tmp_path/'stage_result.json';old_path.write_text('{}')
+    old=dict(status='C_JOINT_TANGENT_UNRESOLVED',accepted_C=0,trials=[],source_sha='frozen-source')
+    monkeypatch.setattr(loader,'read_result',lambda name:(old,old_path))
+    spec=loader.load_tangent_head(ROOT/'input/task042_neural_coarse_inverse/v13_head_compensation_refine.dat')
+    with pytest.raises(TypeError,match='mappingproxy'):
+        write_json(tmp_path/'bad.json',dict(refinement=spec.derived['refinement_identity']))
+    write_json(tmp_path/'good.json',dict(refinement=dict(spec.derived['refinement_identity'])))
+    assert (tmp_path/'good.json').is_file() and not (tmp_path/'bad.json').exists()
+
+
 def test_stable_compensation_minus_sign_original_nonhermitian_action():
     from src.solvers.tangent_head_model import compensation_solve
     rng=np.random.default_rng(421407);nt=6;n=nt+40

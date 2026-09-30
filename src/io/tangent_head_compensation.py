@@ -29,14 +29,17 @@ def load_tangent_head(path):
         if set(cfg)!={'schema_version','task042_v13'} or cfg['schema_version']!=1:
             raise ValueError('explicit V13 opt-in required')
         refinement=item.get('refine_frozen_joint_taylor',False)
-        keys={'stage','run_id','material_table_id'} | ({'refine_frozen_joint_taylor'} if refinement else set())
+        recovery=item.get('recover_frozen_records',False)
+        keys={'stage','run_id','material_table_id'} | ({'refine_frozen_joint_taylor'} if refinement else set()) | ({'recover_frozen_records'} if recovery else set())
         if set(item)!=keys or item['stage'] not in STAGES:
             raise ValueError('unregistered V13 stage/keys')
         if refinement is not True and refinement is not False:
             raise ValueError('explicit Boolean refinement required')
         if refinement and item['stage']!='COMPENSATE':
             raise ValueError('Taylor refinement only belongs to frozen C')
-        if item['run_id']!='task042_v13_'+item['stage'].lower()+('_refine1' if refinement else ''):
+        if recovery and (recovery is not True or refinement or item['stage']!='COMPENSATE'):
+            raise ValueError('record recovery only belongs to frozen C')
+        if item['run_id']!='task042_v13_'+item['stage'].lower()+('_record_recovery' if recovery else '_refine1' if refinement else ''):
             raise ValueError('one-stage run ID differs')
         plan,design,material,fe=plan_and_operator()
         if item['material_table_id']!=material.provenance['material_table_id']:
@@ -54,6 +57,22 @@ def load_tangent_head(path):
             refinement_identity=dict(result_path=str(previous_path),result_sha256=file_hash(previous_path),
                                      directions_path=str(directions),directions_sha256=file_hash(directions),
                                      source_sha=previous['source_sha'])
+        recovery_identity=None
+        if recovery:
+            control=ROOT/'tmp/task042/v13/serialization_recovery.json'
+            recovery_identity=json.loads(control.read_text())
+            recovery_identity.update(control_sha256=file_hash(control))
+            artifact=Path(recovery_identity['failed_artifact']).resolve()
+            directory=Path(recovery_identity['failed_directory']).resolve()
+            if not artifact.is_relative_to(V13_ROOT) or not directory.is_relative_to(ROOT/'results/task042'):
+                raise ValueError('record recovery is restricted to own frozen V13 run')
+            if (file_hash(artifact/'failure.json')!=recovery_identity['failure_sha256'] or
+                file_hash(directory/'supervision/worker.log')!=recovery_identity['worker_log_sha256'] or
+                file_hash(directory/'run_manifest.json')!=recovery_identity['manifest_sha256']):
+                raise ValueError('frozen failure identity differs')
+            failure=json.loads((artifact/'failure.json').read_text())
+            if failure['error']!='TypeError: mappingproxy' or failure['reference_arrays_read']:
+                raise ValueError('only the post-computation serialization failure can be recovered')
     except (ValueError,KeyError,OSError,tomllib.TOMLDecodeError) as error:
         raise InputError(f'Task042 V13 identity/input error: {error}') from error
     return RunSpecification(
@@ -69,6 +88,7 @@ def load_tangent_head(path):
                  'plan_sha256':file_hash(PLAN_PATH),'physical_model_complete':True,
                  'physical_operator_sha256':plan['physical_model_sha256'],
                  'refine_frozen_joint_taylor':refinement,'refinement_identity':refinement_identity,
+                 'recover_frozen_records':recovery,'recovery_identity':recovery_identity,
                  'identity_hash_meaning':'unchanged V7 physical action and RHS; REF7 excluded before VERIFY'},
         source_path=path,raw_input_bytes=raw,input_sha256=file_hash(path),
         physical_model_sha256=plan['physical_model_sha256'],expected_output_parent=ROOT/'results/task042')

@@ -40,6 +40,12 @@ class Stage:
         if previous:
             prior,_=read_result(previous)
             self.counts=prior['budget_counts'].copy();self.carry_actions=prior['all_batch_equivalent_actions']
+        if specification.derived['recover_frozen_records']:
+            identity=specification.derived['recovery_identity']
+            failure=json.loads((Path(identity['failed_artifact'])/'failure.json').read_text())
+            prior,_=read_result('COMPENSATE')
+            self.counts=failure['counts'].copy()
+            self.carry_actions=prior['all_batch_equivalent_actions']+identity['failed_actions']['S']+identity['failed_actions']['SH']
         self.began=time.perf_counter()
         self.meta=dict(source_sha=self.source,input_sha256=specification.input_sha256,
             plan_sha256=file_hash(PLAN_PATH),operator_packet=self.fe['packet'],
@@ -264,7 +270,10 @@ def main():
         else:
             from src.solvers.tangent_head_study import TangentStudy
             study=TangentStudy(stage)
-            result={'TANGENT':study.check,'RESPONSE':study.response,'COMPENSATE':study.compensate}[stage.name]()
+            if specification.derived['recover_frozen_records']:
+                result=study.recover_records()
+            else:
+                result={'TANGENT':study.check,'RESPONSE':study.response,'COMPENSATE':study.compensate}[stage.name]()
         stage.finish(result)
     except Exception as error:
         write_json(stage.artifact/'failure.json',dict(error=type(error).__name__+': '+str(error),
