@@ -74,11 +74,21 @@ class FullspaceMpcFormAction:
         self._matrix.setUp()
         self._destroyed = False
         self._apply_count = 0
+        local_kernel_backend = (
+            None
+            if local_kernel is None
+            else local_kernel.audit.get("backend")
+        )
         self._audit = {
             "backend": (
                 "FFCx assemble_vector + owner-local C^H"
                 if local_kernel is None
-                else "IsotropicPartialAssembly positive_sum + owner-local C^H"
+                else (
+                    f"{local_kernel_backend} + owner-local C^H"
+                    if local_kernel_backend
+                    == "task041_opt_in_sum_factorized_physical_volume"
+                    else "IsotropicPartialAssembly positive_sum + owner-local C^H"
+                )
             ),
             "local_kernel": None if local_kernel is None else dict(local_kernel.audit),
             "global_matrix_materialized": False,
@@ -146,6 +156,20 @@ class FullspaceMpcFormAction:
         if self._matrix is None:
             raise RuntimeError("BAL_H action has been destroyed")
         return self._matrix
+
+    @property
+    def layout_vector(self) -> PETSc.Vec:
+        """Owned vector exposing this action's distributed FE layout."""
+
+        if self._output_vector is None:
+            raise RuntimeError("BAL_H action has been destroyed")
+        return self._output_vector
+
+    @property
+    def owned_slaves(self) -> np.ndarray:
+        """Local MPC slave rows used by the original wrapper contract."""
+
+        return self._owned_slave_indices
 
     @property
     def audit(self) -> MappingProxyType:

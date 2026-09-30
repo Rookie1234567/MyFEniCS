@@ -23,6 +23,9 @@ from src.solvers.hybrid_local_dtn_action import (
     assemble_hybrid_local_dtn_action_system,
 )
 from src.solvers.hybrid_local_dtn_woodbury import ResearchExactFactorInverse
+from src.solvers.physical_balanced_fused_volume import (
+    build_task041_fused_physical_volume_context,
+)
 from src.solvers.physical_balanced_physical_operator import (
     FullSpacePhysicalDtnActionSystem,
     P4CondensedExactFactor,
@@ -396,6 +399,232 @@ def h1c_fixture():
             system.destroy()
         for system in action_systems.values():
             system.destroy()
+
+
+def test_task041_fused_physical_volume_matches_original_action() -> None:
+    """Compare the explicit sum-factorized slice with UFL on the same p6 MPC."""
+
+    comm = MPI.COMM_WORLD
+    cfg6 = _fixture_config(6, condensed=False)
+    cfg_action = _fixture_config(6, condensed=True)
+    all_material_ids: set[int] = set()
+    has_nonzero_bloch_coefficient = False
+    action_comparisons: list[dict[str, object]] = []
+    for side in ("bottom", "top"):
+        local_mesh = build_hybrid_local_mesh(
+            cfg6,
+            side,
+            bottom_interface_z_nm=0.5,
+            top_interface_z_nm=0.5,
+            comm=comm,
+        )
+        side_system = None
+        reference = None
+        candidate = None
+        source = None
+        reference_volume = None
+        candidate_volume = None
+        reference_full = None
+        candidate_full = None
+        difference = None
+        first_candidate = None
+        first_candidate_volume = None
+        try:
+            side_system = assemble_hybrid_local_dtn_action_system(
+                cfg_action,
+                side,
+                local_mesh_override=local_mesh,
+                comm=comm,
+            )
+            reference = build_fullspace_physical_dtn_action(side_system)
+            candidate = build_fullspace_physical_dtn_action(
+                side_system,
+                volume_action_context_factory=(
+                    build_task041_fused_physical_volume_context
+                ),
+            )
+            source = reference.matrix.createVecRight()
+            reference_volume = source.duplicate()
+            candidate_volume = source.duplicate()
+            reference_full = source.duplicate()
+            candidate_full = source.duplicate()
+            difference = source.duplicate()
+
+            def assert_action_close(
+                left,
+                right,
+                label: str,
+                scratch=difference,
+                action_side=side,
+            ) -> float:
+                left.copy(scratch)
+                scratch.axpy(PETSc.ScalarType(-1.0), right)
+                scale = float(left.norm())
+                error = float(scratch.norm())
+                relative = error / scale if scale != 0.0 else None
+                action_comparisons.append(
+                    {
+                        "side": action_side,
+                        "label": label,
+                        "scale": scale if np.isfinite(scale) else str(scale),
+                        "error": error if np.isfinite(error) else str(error),
+                        "relative": (
+                            relative
+                            if relative is None or np.isfinite(relative)
+                            else str(relative)
+                        ),
+                    }
+                )
+                assert np.isfinite(error), f"{action_side} {label} is non-finite"
+                if scale == 0.0:
+                    assert error <= _STRICT_TOLERANCE, (
+                        f"{action_side} zero {label} error={error:.3e}"
+                    )
+                else:
+                    assert relative <= _STRICT_TOLERANCE, (
+                        f"{action_side} {label} relative error={relative:.3e}"
+                    )
+                return error
+
+            cell_tags = side_system.local_mesh.mesh_data.cell_tags
+            all_material_ids.update(int(value) for value in cell_tags.values)
+            mpc_coefficients, _mpc_offsets = (
+                side_system.floquet_data.mpc.coefficients()
+            )
+            has_nonzero_bloch_coefficient |= bool(
+                np.any(np.asarray(mpc_coefficients).imag != 0.0)
+            )
+
+            for input_index, seed in enumerate((0.7, 3.1, 0.7)):
+                input_label = ("A", "B", "A")[input_index]
+                _fill_algebraic(
+                    source,
+                    reference.action.context.owned_slaves,
+                    seed,
+                )
+                source_before = np.asarray(
+                    source.getArray(readonly=True), dtype=np.complex128
+                ).copy()
+
+                reference.action.context.mult(None, source, reference_volume)
+                candidate.action.context.mult(None, source, candidate_volume)
+                local_input_unchanged = np.array_equal(
+                    np.asarray(source.getArray(readonly=True)), source_before
+                )
+                assert comm.allreduce(
+                    local_input_unchanged, op=MPI.LAND
+                ), f"{side} volume action changed its input"
+
+                assert_action_close(
+                    reference_volume,
+                    candidate_volume,
+                    f"{input_label} volume action",
+                )
+
+                reference.matrix.mult(source, reference_full)
+                candidate.matrix.mult(source, candidate_full)
+                assert_action_close(
+                    reference_full,
+                    candidate_full,
+                    f"{input_label} full DtN action",
+                )
+                local_input_unchanged = np.array_equal(
+                    np.asarray(source.getArray(readonly=True)), source_before
+                )
+                assert comm.allreduce(local_input_unchanged, op=MPI.LAND), (
+                    f"{side} full action changed its input"
+                )
+                if input_index == 0:
+                    first_candidate_volume = candidate_volume.duplicate()
+                    candidate_volume.copy(first_candidate_volume)
+                    first_candidate = candidate_full.duplicate()
+                    candidate_full.copy(first_candidate)
+                elif input_index == 2:
+                    assert_action_close(
+                        first_candidate_volume,
+                        candidate_volume,
+                        "A-B-A repeated volume action",
+                    )
+                    assert_action_close(
+                        first_candidate, candidate_full, "A-B-A repeated action"
+                    )
+
+            source.set(0.0)
+            source.assemble()
+            reference.action.context.mult(None, source, reference_volume)
+            candidate.action.context.mult(None, source, candidate_volume)
+            assert_action_close(
+                reference_volume, candidate_volume, "zero volume action"
+            )
+            reference.matrix.mult(source, reference_full)
+            candidate.matrix.mult(source, candidate_full)
+            assert_action_close(reference_full, candidate_full, "zero full DtN action")
+        finally:
+            if candidate is not None and comm.rank == 0:
+                kernel = candidate.action.context.audit["local_kernel"]
+                print(
+                    "TASK041_FUSED_PHYSICAL_VOLUME_ORACLE "
+                    + json.dumps(
+                        {
+                            "side": side,
+                            "comparisons": [
+                                item
+                                for item in action_comparisons
+                                if item["side"] == side
+                            ],
+                            "kernel_payload_rank0": {
+                                "owned_cells": int(kernel["owned_cells"]),
+                                "batch_size": int(kernel["batch_size"]),
+                                "batch_workspace_bytes": int(
+                                    kernel["batch_workspace_bytes"]
+                                ),
+                                "cell_metadata_bytes": int(
+                                    kernel["cell_metadata_bytes"]
+                                ),
+                                "reference_bytes": int(kernel["reference_bytes"]),
+                                "scope": "rank-0 kernel buffers; not process RSS",
+                            },
+                        },
+                        sort_keys=True,
+                        separators=(",", ":"),
+                        allow_nan=False,
+                    ),
+                    flush=True,
+                )
+            if first_candidate is not None:
+                first_candidate.destroy()
+            if first_candidate_volume is not None:
+                first_candidate_volume.destroy()
+            for vector in (
+                difference,
+                candidate_full,
+                reference_full,
+                candidate_volume,
+                reference_volume,
+                source,
+            ):
+                if vector is not None:
+                    vector.destroy()
+            if candidate is not None:
+                candidate.destroy()
+            if reference is not None:
+                reference.destroy()
+            if side_system is not None:
+                side_system.destroy()
+            candidate = None
+            reference = None
+            side_system = None
+            local_mesh = None
+            source_before = None
+
+    material_ids_by_rank = comm.allgather(sorted(all_material_ids))
+    all_material_ids = {
+        tag for rank_tags in material_ids_by_rank for tag in rank_tags
+    }
+    assert len(all_material_ids) >= 2
+    assert comm.allreduce(has_nonzero_bloch_coefficient, op=MPI.LOR)
+    assert float(cfg6.incident_theta_deg) != 0.0
+    assert float(cfg6.incident_phi_deg) != 0.0
 
 
 def test_task041_h1c_physical_galerkin_factor_and_alternation(h1c_fixture) -> None:

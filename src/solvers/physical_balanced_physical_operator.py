@@ -337,7 +337,7 @@ class _FullSpacePhysicalAction:
     def __init__(
         self,
         *,
-        context: MpcFormActionContext,
+        context: Any,
         modes: tuple[_PhysicalModeEntries, ...],
         full_rows: int,
         comm: MPI.Intracomm,
@@ -524,30 +524,49 @@ def _full_action_inventory(
     matrix_local = tuple(int(value) for value in system.matrix.getLocalSize())
     matrix_global = tuple(int(value) for value in system.matrix.getSize())
     p4_owned = owner == "p4.physical_action"
-    owned_objects = [
-        _payload_vector_inventory(
-            context.input_vector,
-            label=f"{owner}.context.input_vector",
-            ownership=owner,
-        ),
-        _payload_vector_inventory(
-            context.action_vector,
-            label=f"{owner}.context.action_vector",
-            ownership=owner,
-        ),
-        _payload_array_inventory(
-            context.owned_slaves,
-            label=f"{owner}.context.owned_slaves",
-            ownership=owner,
-        ),
-        {
-            "label": f"{owner}.mode_projection_traction_arrays",
-            "kind": "numpy.ndarray aggregate",
-            "ownership": owner,
-            "array_count": 4 * len(system.action.modes),
-            "payload_bytes_local": mode_payload_bytes,
-        },
-    ]
+    input_vector = getattr(context, "input_vector", None)
+    action_vector = getattr(context, "action_vector", None)
+    owned_objects = []
+    if input_vector is None:
+        owned_objects.append(
+            _payload_vector_inventory(
+                context.layout_vector,
+                label=f"{owner}.context.layout_vector",
+                ownership=owner,
+            )
+        )
+    else:
+        owned_objects.append(
+            _payload_vector_inventory(
+                input_vector,
+                label=f"{owner}.context.input_vector",
+                ownership=owner,
+            )
+        )
+    if action_vector is not None:
+        owned_objects.append(
+            _payload_vector_inventory(
+                action_vector,
+                label=f"{owner}.context.action_vector",
+                ownership=owner,
+            )
+        )
+    owned_objects.extend(
+        [
+            _payload_array_inventory(
+                context.owned_slaves,
+                label=f"{owner}.context.owned_slaves",
+                ownership=owner,
+            ),
+            {
+                "label": f"{owner}.mode_projection_traction_arrays",
+                "kind": "numpy.ndarray aggregate",
+                "ownership": owner,
+                "array_count": 4 * len(system.action.modes),
+                "payload_bytes_local": mode_payload_bytes,
+            },
+        ]
+    )
     borrowed_objects = [
         {
             "label": f"{owner}.side_mesh",
@@ -659,6 +678,7 @@ def _wrap_fullspace_action(
     modes: tuple[PortMode3D, ...],
     dtn_quadrature_degree: int,
     volume_quadrature_contract: tuple[_QuadratureSpec, ...],
+    volume_action_context_factory: Callable[..., Any] | None = None,
 ) -> FullSpacePhysicalDtnActionSystem:
     if cfg.use_pml:
         raise ValueError("H1c full physical DtN requires use_pml=False")
@@ -668,8 +688,24 @@ def _wrap_fullspace_action(
         raise RuntimeError(f"H1c {side} physical action selected zero external modes")
     if int(dtn_quadrature_degree) <= 0:
         raise ValueError("H1c DtN quadrature degree must be positive")
-    context = MpcFormActionContext(bilinear_form, floquet_data.mpc, reference=None)
-    full_rows = int(context.input_vector.getSize())
+    if volume_action_context_factory is None:
+        context = MpcFormActionContext(
+            bilinear_form, floquet_data.mpc, reference=None
+        )
+    else:
+        context = volume_action_context_factory(
+            cfg=cfg,
+            side=side,
+            local_mesh=local_mesh,
+            V=V,
+            floquet_data=floquet_data,
+            bilinear_form=bilinear_form,
+            volume_quadrature_contract=volume_quadrature_contract,
+        )
+    layout_vector = getattr(context, "input_vector", None)
+    if layout_vector is None:
+        layout_vector = context.layout_vector
+    full_rows = int(layout_vector.getSize())
     action = None
     try:
         mode_vectors = _build_mode_vectors(
@@ -687,7 +723,7 @@ def _wrap_fullspace_action(
             full_rows=full_rows,
             comm=local_mesh.mesh.comm,
         )
-        local_rows = int(context.input_vector.getLocalSize())
+        local_rows = int(layout_vector.getLocalSize())
         matrix = PETSc.Mat().createPython(
             ((local_rows, full_rows), (local_rows, full_rows)),
             context=action,
@@ -718,8 +754,15 @@ def _wrap_fullspace_action(
 
 def build_fullspace_physical_dtn_action(
     side_system: HybridLocalDtnActionSystem,
+    *,
+    volume_action_context_factory: Callable[..., Any] | None = None,
 ) -> FullSpacePhysicalDtnActionSystem:
-    """Wrap one existing action system in a full-space physical p6 action."""
+    """Wrap one action system in a full-space p6 action.
+
+    ``volume_action_context_factory`` is an explicit research opt-in for a
+    local volume kernel; the default continues to assemble the original UFL
+    form through :class:`MpcFormActionContext`.
+    """
 
     if not isinstance(side_system, HybridLocalDtnActionSystem):
         raise TypeError("H1c full physical action requires HybridLocalDtnActionSystem")
@@ -739,6 +782,7 @@ def build_fullspace_physical_dtn_action(
         volume_quadrature_contract=_actual_volume_quadrature_contract(
             side_system.bilinear_form
         ),
+        volume_action_context_factory=volume_action_context_factory,
     )
 
 
