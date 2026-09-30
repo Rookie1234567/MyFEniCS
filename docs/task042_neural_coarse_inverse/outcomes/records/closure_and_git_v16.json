@@ -1,0 +1,86 @@
+{
+  "schema": "task042.closure-and-git.v16",
+  "utc": "2026-09-30T14:25:41.125020+00:00",
+  "pwd": "/home/fenics/Projects/NN-Lab",
+  "git_toplevel": "/home/fenics/Projects/NN-Lab",
+  "branch": "task42_neural_coarse_inverse",
+  "inspected_document_HEAD": "625c9499fbc5e5f9b81e9f1e21b7cecbe4ee5269",
+  "frozen_base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "initial_task_anchor": "f8c51c8e614edc806cf72120ac2cfd14ae8b62f7",
+  "review": "399c6a0f2568261c4dcaf7cdfb29499986e577bb",
+  "all_anchors_ancestor_of_HEAD": true,
+  "upstream": "refs/remotes/origin/task42_neural_coarse_inverse",
+  "ahead_behind_at_inspection": "0\t0",
+  "origin": "git@github-myfenics:Rookie1234567/MyFEniCS.git",
+  "common_git_directory": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+  "numerical_source": "ef60675dada2556a5527101f90fc83540d60e242",
+  "image_source_GPOLY": "01ed98655c9eb2949ea29a35fd82d1881a5a2508",
+  "active_own_numerical_or_bounded_check_processes": [],
+  "own_lock_path": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+  "own_lock_available": true,
+  "formal_summaries": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v16_gnn_20260930T134318940453Z/run_summary.json",
+      "sha256": "afb1558d3e26b6af7bfb0b6d9400cc96b262e25ebe1ff6691ea28a6f081e462c",
+      "classification": "RESOURCE_CONTROLLED_STOP",
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v16_gpoly_20260930T130138961792Z/run_summary.json",
+      "sha256": "2d18aacdeae600560cccec4a7a7cc82d257a2357e18d5389ddef107c5beae5ed",
+      "classification": "RESOURCE_CONTROLLED_STOP",
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v16_preflight_20260930T122509112987Z/run_summary_recovered.json",
+      "sha256": "f741de9b1609f48b8f7b1c8a6b1b5cdb39dc4333712413e0aa3b43f7e6d96c01",
+      "classification": "EVIDENCE_INCOMPLETE_SUMMARY_WRITE_FAILURE",
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v16_preflight_20260930T123859049825Z/run_summary.json",
+      "sha256": "80244b08ac8a6d96014c77c50fe1f9c8ebea146214fa35e9a7699dacfb4bea76",
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v16_verify_20260930T140436304186Z/run_summary.json",
+      "sha256": "2f2f14ef5345acb96a552a8b0b61ca0b2db9a9e305f40ed7b323118bbe9e5cb2",
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v16_zero_20260930T123929377036Z/run_summary.json",
+      "sha256": "797821ed8ae98daf64c822e0c8fe11f0d56790034ac7bb4529a3b197bf5db8b3",
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    }
+  ],
+  "window": {
+    "schema": "task042.autonomous-window.v16",
+    "start_utc": "2026-09-30T12:02:44.363096+00:00",
+    "start_monotonic": 694759.223963915,
+    "start_scope": "initial read-only inspection and implementation included; clock acquired on acceptance",
+    "stop_heavy_utc": "2026-09-30T15:47:44.363096+00:00",
+    "deadline_utc": "2026-09-30T16:02:44.363096+00:00",
+    "heavy_limit_seconds": 13500,
+    "total_limit_seconds": 14400,
+    "cleanup_reserve_seconds": 900,
+    "review_expected_commit": "399c6a0f2568261c4dcaf7cdfb29499986e577bb",
+    "prior_head": "74fdd6346829c8b66a8dd4a95baa7b4c710dd1cd",
+    "elapsed_seconds": 8576.760353880003,
+    "heavy_remaining_seconds": 4923.239646119997,
+    "total_remaining_seconds": 5823.239646119997
+  },
+  "window_scope": "inclusive elapsed at closure evidence; final metadata commit/push occurs afterward within same immutable deadline",
+  "numerical_queue_permanently_frozen": true,
+  "new_runs_permitted": false,
+  "reference_feedback": false,
+  "final_receipt_commit_only": true,
+  "final_HEAD_and_worktree_reported_after_push": true,
+  "master_merge": false,
+  "render_status": "PARTIAL_UNVERIFIED",
+  "rendered_pages_checked": 7,
+  "unverified_large_ledger": "development_progress richText=null",
+  "browser_glyph": "NOT_OBSERVED"
+}
