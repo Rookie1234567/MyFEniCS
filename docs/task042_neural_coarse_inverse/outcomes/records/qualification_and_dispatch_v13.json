@@ -197,5 +197,8 @@
     "seed420620": "sealed; untouched"
   },
   "coupled_step_physical_outcome": "BOUNDED_COUPLED_STEP_NEGATIVE",
-  "objective_outcome": "OBJECTIVE_ONLY_IMPROVEMENT"
+  "objective_outcome": "OBJECTIVE_ONLY_IMPROVEMENT",
+  "implementation_repair_count_scope": "formal numerical source repairs",
+  "auxiliary_render_reader_repair_count": 1,
+  "total_numerical_plus_render_reader_repairs": 2
 }

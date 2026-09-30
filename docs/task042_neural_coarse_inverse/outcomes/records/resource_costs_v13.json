@@ -1,6 +1,6 @@
 {
   "schema": "task042.resources.v13",
-  "record_utc": "2026-09-30T04:55:27.642672+00:00",
+  "record_utc": "2026-09-30T05:10:53.573543+00:00",
   "window": {
     "schema": "task042.autonomous-window.v13",
     "start_utc": "2026-09-30T02:38:38.674705+00:00",
@@ -12,9 +12,9 @@
     "cleanup_reserve_seconds": 900,
     "review_expected_commit": "fb994b337960c89d2e70afc93707595258b3bb60",
     "prior_v12_head": "0b81d4cdad2dd2e3c21a68e60b14c35fdc897337",
-    "elapsed_seconds": 8208.967959165573,
-    "heavy_remaining_seconds": 5291.032040834427,
-    "total_remaining_seconds": 6191.032040834427
+    "elapsed_seconds": 9134.898830413818,
+    "heavy_remaining_seconds": 4365.101169586182,
+    "total_remaining_seconds": 5265.101169586182
   },
   "supervised_formal_wall_seconds_sum": 243.72562610998284,
   "simultaneous_sampled_tree_RSS_peak_bytes_max": 2852761600,
@@ -176,7 +176,7 @@
     "task042_v13_tangent_20260930T031852990115Z": 0,
     "task042_v13_verify_20260930T034240499808Z": 0
   },
-  "delivery_freeze_elapsed_seconds": 8208.965896606445,
+  "delivery_freeze_elapsed_seconds": 9134.897106409073,
   "delivery_freeze_includes_implementation_tests_numerics_publication": true,
   "last_git_commit_push_report_seconds_after_freeze": "recorded in final terminal report; not numerical load"
 }

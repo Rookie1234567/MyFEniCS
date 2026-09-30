@@ -1,6 +1,6 @@
 {
   "schema": "task042.delivery-freeze.v13",
-  "utc": "2026-09-30T04:55:27.640532+00:00",
+  "utc": "2026-09-30T05:10:53.571741+00:00",
   "window": {
     "schema": "task042.autonomous-window.v13",
     "start_utc": "2026-09-30T02:38:38.674705+00:00",
@@ -12,11 +12,11 @@
     "cleanup_reserve_seconds": 900,
     "review_expected_commit": "fb994b337960c89d2e70afc93707595258b3bb60",
     "prior_v12_head": "0b81d4cdad2dd2e3c21a68e60b14c35fdc897337",
-    "elapsed_seconds": 8208.965896606445,
-    "heavy_remaining_seconds": 5291.034103393555,
-    "total_remaining_seconds": 6191.034103393555
+    "elapsed_seconds": 9134.897106409073,
+    "heavy_remaining_seconds": 4365.102893590927,
+    "total_remaining_seconds": 5265.102893590927
   },
-  "source_head_before_final_record_only_commit": "c334fa6900e2ff105919799e6d402fa04e54d1af",
+  "source_head_before_final_record_only_commit": "c310d81312b8ab8a29be029bbdaa3e1809a9c4b6",
   "accepted_network_actual_source": "33f7d613b1341fa585f0324ead6039bf28211fff",
   "record_recovery_and_FE_validation_source": "7615baae2f0d75fbc47c05be392b35ef2878c431",
   "active_own_numerical_processes": [],
@@ -29,7 +29,11 @@
     "docs/task042_neural_coarse_inverse/response_v13.md": "8da62a90bc2a01261bc03fbe8d9c78d952d0ae0c50088b40362887dc6c1ea8d3",
     "docs/task042_neural_coarse_inverse/outcomes/tangent_scale_head_compensation_v13.md": "d70ef50c4c7d907b46f1d67b3f5dec0a45b0342512d2b06e8d1be0c38716db9b",
     "docs/task042_neural_coarse_inverse/outcomes/summary.md": "1dcd08af2f4cbe6bc93407b607184aa4cd7b584c3ad2ee7871064dac3261f0ef",
-    "docs/task042_neural_coarse_inverse/README.md": "25e565b2e5d0dce3840ca6b0fdf607d8e5a36d8948800627be40ffd861b75c02"
+    "docs/task042_neural_coarse_inverse/README.md": "25e565b2e5d0dce3840ca6b0fdf607d8e5a36d8948800627be40ffd861b75c02",
+    "docs/task042_neural_coarse_inverse/outcomes/test_summary.md": "9a28caf6a8735db60181bde5576eaab35656d2317c4339e9ce5b06b8ee285f57",
+    "docs/task042_neural_coarse_inverse/outcomes/changed_files.md": "a07f2791210dff4449739ac3c28715fb3d11ee25b9e26c55aa79e592be4aa4da",
+    "docs/development_progress.md": "8103e0434007d2dfa39a45df78e6eceabc7fb44c83434f719427fb5e4d48df64",
+    "docs/development_model_registry.md": "f33e4df138c2d400e5f65caa91a5449a48c73f4550090739fde0a16f3935327a"
   },
   "final_branch": "task42_neural_coarse_inverse",
   "awaiting_review_after_final_push": true,
@@ -39,5 +43,9 @@
   "research_positive": false,
   "true_hidden_update_count": 1,
   "head_only_twins_are_diagnostic": true,
-  "final_full_HEAD_reported_after_final_push": true
+  "final_full_HEAD_reported_after_final_push": true,
+  "publication_server_status": "PARTIAL_UNVERIFIED",
+  "unverified_GitHub_pages": [
+    "docs/development_progress.md"
+  ]
 }
