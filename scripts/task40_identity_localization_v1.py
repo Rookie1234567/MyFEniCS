@@ -19,6 +19,8 @@ from typing import Any
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 INPUT = ROOT / "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4.dat"
 OUTCOMES = ROOT / "docs/task40extra_0p7nm_engineering/outcomes"
 COMPACT = OUTCOMES / "records/g0_attempt4_identity_gate_stop.json"
