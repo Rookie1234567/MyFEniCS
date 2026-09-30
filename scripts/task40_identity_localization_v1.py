@@ -32,7 +32,7 @@ RUN = (
 RECORD = OUTCOMES / "records/identity_localization_v1.json"
 ARTIFACT_ROOT = (
     ROOT / "benchmarks/artifacts/task40extra_0p7nm_engineering/"
-    "identity_localization_v1_rerun_01"
+    "identity_localization_v1_rerun_02"
 )
 IDENTITY_LIMIT = 1.0e-10
 WATCHDOG_WALL_SECONDS = 3600.0
@@ -172,14 +172,16 @@ def worker() -> None:
     from src.io import load_and_resolve
     from src.io.input_validation import simulation_config_3d_from_normalized
     from src.solvers.fullspace_physical_intermediate_runtime import (
-        build_physical_intermediate_actions,
-        destroy_physical_intermediate_actions,
         owned_slave_indices,
     )
     from src.solvers.fullspace_same_mesh_hcurl_pmg_global import (
         _build_same_mesh_levels,
     )
     from src.solvers.fullspace_same_mesh_hcurl_pmg_setup import SAME_MESH_JIT_OPTIONS
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
+        build_same_mesh_physical_action,
+        destroy_same_mesh_physical_action,
+    )
     from src.solvers.hcurl_assembly_time_condensation import (
         _canonical_axis_aligned_coordinates,
         _cell_integral_kernels,
@@ -332,10 +334,8 @@ def worker() -> None:
         levels = _build_same_mesh_levels(
             cfg, MPI.COMM_WORLD, (6,), include_positive_coefficients=True
         )
-        physical = build_physical_intermediate_actions(
-            levels, cfg, physical_only_degrees=(6,)
-        )
-        fine = physical["physical"][6]
+        physical = build_same_mesh_physical_action(levels, cfg, 6)
+        fine = physical
         space = levels["spaces"][6]
         floquet = levels["floquets"][6]
         mesh = levels["mesh"]
@@ -1144,7 +1144,7 @@ def worker() -> None:
             except Exception:
                 pass
         if physical is not None:
-            destroy_physical_intermediate_actions(physical)
+            destroy_same_mesh_physical_action(physical)
         if levels is not None:
             levels.clear()
         record["resources"] = {
