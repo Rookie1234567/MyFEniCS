@@ -1,16 +1,16 @@
 {
   "schema": "task42extra.render-check.v3",
   "status": "GITHUB_RENDERED_VIEW_PASS_DOM_AND_SAMPLED_VISUAL",
-  "published_commit": "193043796f38413adb5005d857c9193843d59d5c",
-  "raw_directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v3_new_docs_sha1930437",
-  "raw_DOM_sha256": "93e10df7fb03903c92c7eb6b8b31316c3fdf9451b4ff4235f00b45b2f10d3b38",
-  "screenshots_hashed": 26,
+  "published_commit": "75131308173a06917c71fd1215817d6785cbd0f7",
+  "raw_directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v3_publish_7513130",
+  "raw_DOM_sha256": "581670211386a149d532fdc5323c0f05bbd35952c3de4cb70a341784dc4cc475",
+  "screenshots_hashed": 27,
   "pages": [
     {
-      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/193043796f38413adb5005d857c9193843d59d5c/docs/task042extra_feinn_5nm/review_report_v2.md",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/75131308173a06917c71fd1215817d6785cbd0f7/docs/task042extra_feinn_5nm/review_report_v2.md",
       "git_blob_sha": "a04edd8cd6d7d66fc25e5aecbf1db0bb9b54d2ed",
       "heading": "Review V2：停止对角缩放续扫，转入固定网络的参考场表示诊断",
-      "title": "MyFEniCS/docs/task042extra_feinn_5nm/review_report_v2.md at 193043796f38413adb5005d857c9193843d59d5c · Rookie1234567/MyFEniCS · GitHub",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/review_report_v2.md at 75131308173a06917c71fd1215817d6785cbd0f7 · Rookie1234567/MyFEniCS · GitHub",
       "tables": 4,
       "columns": [
         4,
@@ -22,68 +22,68 @@
       "screenshots": [
         {
           "name": "00_top.png",
-          "sha256": "74876386762f59bb874d9be4e6b7af643ed0d6eeb500578b6b4c480d4e9ae95a"
+          "sha256": "dea1711e2510dd329b8ee5be3e922d92f08ff4f0e446dd98b653ea0ab3ec8d3f"
         },
         {
           "name": "00_table_00.png",
-          "sha256": "b22778a31f2e850e20c57cb51ef17130f4a892205a421680c8b93eea0459b541"
+          "sha256": "01c869b47ac9970c91891c3f43d1dce92c618e33b96157af1cc4c85ed2ef2329"
         },
         {
           "name": "00_table_01.png",
-          "sha256": "6bb5ac7ec7697496a6c39c34667834b58050907d786ea014d0664e69ea62988c"
+          "sha256": "b835c919bd5f5ac0e9411299b45040ee9c6f7c9a4d28f917067b2a8cb927854f"
         },
         {
           "name": "00_table_02.png",
-          "sha256": "80234f0c296ed4434dd1895167d36a70745c54d1e4cfcbe6d46f395dc3563a22"
+          "sha256": "9bbc0fa6a5e282546134657804b61ee44802da9dd55f86c4e3862c82330391cf"
         },
         {
           "name": "00_table_03.png",
-          "sha256": "4fc2bb609953b6d9a70e7a1ea0e97e57eee01b939ea29a8193a1c0fe1e6f0077"
+          "sha256": "9f5c4a732773554485741ade5b528ed36ed5378f6263f4b6d3dd57338e974ef6"
         },
         {
           "name": "00_math-renderer_00.png",
-          "sha256": "6bcf9283039875326e40ee377a0f816a18cbfb1da63addd28673931e52560f69"
+          "sha256": "40ec527a887bc1ffb8e667cf219aea27831406be8bf86d646adb0ed3705ccd29"
         },
         {
           "name": "00_math-renderer_01.png",
-          "sha256": "09a6cd1298b3aa0d030d033b42376681ecdf6f762beb27f188534b88767be683"
+          "sha256": "dd5e350d5032e3798407ba3556897ce94b2987c0579fe8422653b06fa5a201ba"
         },
         {
           "name": "00_math-renderer_02.png",
-          "sha256": "473bfb92dcabef8860be43a8ae3110136127e02d0b77bde8d118fb5b3cc168de"
+          "sha256": "728b3a55bfbc99a709b2fffbb03ae3a94ce609bccc9372afff15aa8eeb850b76"
         },
         {
           "name": "00_math-renderer_03.png",
-          "sha256": "29ffe3f94b07371e34c4f3dfa852ceeeca4f4bc53555af22aab2dc2ff71afce1"
+          "sha256": "c29ccf9e5abf2c9c22319ba08aeaf4adc7948c93a0ced4c50f1eb6a690c0fd6f"
         },
         {
           "name": "00_math-renderer_04.png",
-          "sha256": "61f1a0eb124874948c4a851ca2f039ac690882d1fd22550d0527c845a1083361"
+          "sha256": "e52e79a54cc831cb3d4a9cf76fe4a390e30bd77b061fddda59b68c36a9f6658f"
         }
       ],
       "visual_review": "sampled screenshots only"
     },
     {
-      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/193043796f38413adb5005d857c9193843d59d5c/docs/task042extra_feinn_5nm/response_v3.md",
-      "git_blob_sha": "1e4173d950c58258e2e1fd99f142563bccd15656",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/75131308173a06917c71fd1215817d6785cbd0f7/docs/task042extra_feinn_5nm/response_v3.md",
+      "git_blob_sha": "bd3368a459ebcd4e33796a1030ae91566759ca0a",
       "heading": "Task42extra Response V3：参考已暴露的固定网络表示诊断",
-      "title": "MyFEniCS/docs/task042extra_feinn_5nm/response_v3.md at 193043796f38413adb5005d857c9193843d59d5c · Rookie1234567/MyFEniCS · GitHub",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/response_v3.md at 75131308173a06917c71fd1215817d6785cbd0f7 · Rookie1234567/MyFEniCS · GitHub",
       "tables": 0,
       "columns": [],
       "math": 0,
       "screenshots": [
         {
           "name": "01_top.png",
-          "sha256": "1c72f8cc9e072673d6aca4d2164a955d326e696e0a87cabc725de252838aea73"
+          "sha256": "5d77a342278407bfc4acadec6140069d5f45ba0450f38dbb452b602e5376de97"
         }
       ],
       "visual_review": "sampled screenshots only"
     },
     {
-      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/193043796f38413adb5005d857c9193843d59d5c/docs/task042extra_feinn_5nm/outcomes/representation_diagnostic_v3.md",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/75131308173a06917c71fd1215817d6785cbd0f7/docs/task042extra_feinn_5nm/outcomes/representation_diagnostic_v3.md",
       "git_blob_sha": "a80bf6c5c6f07091878686be584f89b50f1762ed",
       "heading": "Task42extra V3：参考已暴露的固定网络表示诊断",
-      "title": "MyFEniCS/docs/task042extra_feinn_5nm/outcomes/representation_diagnostic_v3.md at 193043796f38413adb5005d857c9193843d59d5c · Rookie1234567/MyFEniCS · GitHub",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/outcomes/representation_diagnostic_v3.md at 75131308173a06917c71fd1215817d6785cbd0f7 · Rookie1234567/MyFEniCS · GitHub",
       "tables": 3,
       "columns": [
         3,
@@ -94,79 +94,84 @@
       "screenshots": [
         {
           "name": "02_top.png",
-          "sha256": "6f60b055f67ef02d051523ada4263cf5798ceccd9f4b1e973f0190262dbe1e7f"
+          "sha256": "82081f6d6949b06f4befadecb1a7ff7ac17c16010b203f5d09414c45f04cc007"
         },
         {
           "name": "02_table_00.png",
-          "sha256": "372431c0953b5240f017736f07339f56f3fe93ae41f2676f75b8c7f2a4ba2c27"
+          "sha256": "dd8fb38d445791c6c09f9c131f2c3c725c26ebf954dfa3868a6fd791887d8604"
         },
         {
           "name": "02_table_01.png",
-          "sha256": "efdff720b095fbacba92f8956a78b8013028605d53133cbd556c4acbcec79167"
+          "sha256": "0d5afaf9f8fafc2a1358af04df533d401f29f786b8cfe7d625cb74b959cb80d5"
         },
         {
           "name": "02_table_02.png",
-          "sha256": "7d417153d619ace2292ee72875ac45c18fcce10a08e5f224665f79cb9ee31ad2"
+          "sha256": "838170ce891e155589dd6a9e2a93a09cf381345ef9e70905031a0ebce1d9871e"
         },
         {
           "name": "02_math-renderer_00.png",
-          "sha256": "0380ee47f0235b4f59a62cdc87f3b5d494ca6f551fbdac9a088ed853c9267313"
+          "sha256": "c632100153f92cde7e73a5fc08eae244b26abda57580f9de598ee061e2e44fea"
         },
         {
           "name": "02_math-renderer_01.png",
-          "sha256": "bef366ea00504086adb8894fdc0081e23d9c143dcb39a7f00596821432265187"
+          "sha256": "52d75d52605c208d04128ce1cc4a3021b1d6f94b95d9f0481e40cf72690d94f7"
         }
       ],
       "visual_review": "sampled screenshots only"
     },
     {
-      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/193043796f38413adb5005d857c9193843d59d5c/docs/task042extra_feinn_5nm/outcomes/summary.md",
-      "git_blob_sha": "cfde16df2b1094826afe38ac2929301337a583db",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/75131308173a06917c71fd1215817d6785cbd0f7/docs/task042extra_feinn_5nm/outcomes/summary.md",
+      "git_blob_sha": "38950474abd0d9a0a94b6c6e86a3c2a61dd025d6",
       "heading": "Task42extra Review V2 后续：V3 参考暴露表示诊断",
-      "title": "MyFEniCS/docs/task042extra_feinn_5nm/outcomes/summary.md at 193043796f38413adb5005d857c9193843d59d5c · Rookie1234567/MyFEniCS · GitHub",
-      "tables": 2,
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/outcomes/summary.md at 75131308173a06917c71fd1215817d6785cbd0f7 · Rookie1234567/MyFEniCS · GitHub",
+      "tables": 3,
       "columns": [
         3,
-        4
+        4,
+        5
       ],
       "math": 0,
       "screenshots": [
         {
           "name": "03_top.png",
-          "sha256": "a7cc9dbd1eafeab43601039749d43bea294700403bffad8483b5fc3c87239364"
+          "sha256": "2465d66b0c343b20834616ddafeaface112f875365c10dc23184765c0dcf7cb8"
         },
         {
           "name": "03_table_00.png",
-          "sha256": "5ce5090151a52ae4cb4076eac4cd18fad63449b8ece9f7e195c9844659a852e9"
+          "sha256": "31ad29bfe0a4cd2de3edf0440959b83b8fcb687f1f8ac9057717110b385c9c21"
         },
         {
           "name": "03_table_01.png",
-          "sha256": "93d38fdfa84656fa1bc7f1638eaca60448923a5e69a0277b39fe195238363110"
+          "sha256": "0f72e01c2c510c68e3cc4565de0160967212d6fa598db06ee9db48fee85ce57a"
+        },
+        {
+          "name": "03_table_02.png",
+          "sha256": "8d3eaa5d729f4240464db85b5b8365cd275ff4788682266025f7b263380bc1b4"
         }
       ],
       "visual_review": "sampled screenshots only"
     },
     {
-      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/193043796f38413adb5005d857c9193843d59d5c/docs/task042extra_feinn_5nm/outcomes/test_summary.md",
-      "git_blob_sha": "f87ad0cbb723d176d6849145ce13f7b6fd6eaf05",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/75131308173a06917c71fd1215817d6785cbd0f7/docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+      "git_blob_sha": "572ed98593c3aca15fa407059d9914a588ff87a9",
       "heading": "Review V2 后续 V3 定向资格与保留失败",
-      "title": "MyFEniCS/docs/task042extra_feinn_5nm/outcomes/test_summary.md at 193043796f38413adb5005d857c9193843d59d5c · Rookie1234567/MyFEniCS · GitHub",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/outcomes/test_summary.md at 75131308173a06917c71fd1215817d6785cbd0f7 · Rookie1234567/MyFEniCS · GitHub",
       "tables": 0,
       "columns": [],
       "math": 0,
       "screenshots": [
         {
           "name": "04_top.png",
-          "sha256": "3e601b68eeded2882a6ba6142dcb299e6921a166e1e1ee4f893a76bb4f17b259"
+          "sha256": "f39c13521b5ceff620f413f71fc105d26e76c2deef8b152921954bc65a617b63"
         }
       ],
       "visual_review": "sampled screenshots only"
     },
     {
-      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/193043796f38413adb5005d857c9193843d59d5c/docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/75131308173a06917c71fd1215817d6785cbd0f7/docs/task042extra_feinn_5nm/outcomes/changed_files.md",
       "git_blob_sha": "580afbbc85dc81cbc07543339324daf8ff989660",
       "heading": "Review V2 后续 V3 文件级边界",
-      "title": "MyFEniCS/docs/task042extra_feinn_5nm/outcomes/changed_files.md at 193043796f38413adb5005d857c9193843d59d5c · Rookie1234567/MyFEniCS · GitHub",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/outcomes/changed_files.md at 75131308173a06917c71fd1215817d6785cbd0f7 · Rookie1234567/MyFEniCS · GitHub",
       "tables": 1,
       "columns": [
         3
@@ -175,36 +180,36 @@
       "screenshots": [
         {
           "name": "05_top.png",
-          "sha256": "fca98d8c2df74181b775f639e603f6830b120a5a824fa2a6e6991c11b001da2d"
+          "sha256": "fd4055d00b1fb1c5e8fac7cd5980465e9947cdffaf63428358f3ec2c633b9821"
         },
         {
           "name": "05_table_00.png",
-          "sha256": "fca98d8c2df74181b775f639e603f6830b120a5a824fa2a6e6991c11b001da2d"
+          "sha256": "fd4055d00b1fb1c5e8fac7cd5980465e9947cdffaf63428358f3ec2c633b9821"
         }
       ],
       "visual_review": "sampled screenshots only"
     },
     {
-      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/193043796f38413adb5005d857c9193843d59d5c/docs/development_progress.md",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/75131308173a06917c71fd1215817d6785cbd0f7/docs/development_progress.md",
       "git_blob_sha": "97f58272cae99e2a6fcdd27027ef0cb4a726e928",
       "heading": "2026-09-30 Task42extra V3：参考暴露的固定网络表示诊断",
-      "title": "MyFEniCS/docs/development_progress.md at 193043796f38413adb5005d857c9193843d59d5c · Rookie1234567/MyFEniCS · GitHub",
+      "title": "MyFEniCS/docs/development_progress.md at 75131308173a06917c71fd1215817d6785cbd0f7 · Rookie1234567/MyFEniCS · GitHub",
       "tables": 0,
       "columns": [],
       "math": 0,
       "screenshots": [
         {
           "name": "06_top.png",
-          "sha256": "6b77f83720f07cdbeda8fb33c5e06ce3c76a01c304e8084fb8abeccaf1bfc9db"
+          "sha256": "f4bcabf6295294f412af98c91b7084a81b624895f81b9b1145e07063d050bc6f"
         }
       ],
       "visual_review": "sampled screenshots only"
     },
     {
-      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/193043796f38413adb5005d857c9193843d59d5c/docs/development_model_registry.md",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/75131308173a06917c71fd1215817d6785cbd0f7/docs/development_model_registry.md",
       "git_blob_sha": "8985d8fb0be825866fa1a24b0a227907b6e6ab40",
       "heading": "3.44.2 Task42extra Review V2 后续：参考暴露的固定网络表示诊断",
-      "title": "MyFEniCS/docs/development_model_registry.md at 193043796f38413adb5005d857c9193843d59d5c · Rookie1234567/MyFEniCS · GitHub",
+      "title": "MyFEniCS/docs/development_model_registry.md at 75131308173a06917c71fd1215817d6785cbd0f7 · Rookie1234567/MyFEniCS · GitHub",
       "tables": 1,
       "columns": [
         3
@@ -213,11 +218,11 @@
       "screenshots": [
         {
           "name": "07_top.png",
-          "sha256": "9f87a292edebfc997d7cec84e26d21d365c2bb55d290e945a97d865d070b46a1"
+          "sha256": "adc3be455886c2d67e0ff1603ae15806b28b6e4bf986b89b0f854a02fd22e5a6"
         },
         {
           "name": "07_table_00.png",
-          "sha256": "157f52222ae5b53b503d4bd4acde60caf07adc24fab80881369da011f8968871"
+          "sha256": "5820d5029440ac9a393a038c830cb4a6bdb20886bf66ffe28e9983c0759d3cff"
         }
       ],
       "visual_review": "sampled screenshots only"
