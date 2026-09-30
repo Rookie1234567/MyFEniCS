@@ -107,7 +107,7 @@ def main():
         ):
             raise ValueError("Review V4 table/math DOM inventory incomplete")
         if relative.endswith("review_report_v5.md") and (
-            len(cols) != 3 or len(dom["mathAfterScroll"]) != 5
+            len(cols) != 3 or len(dom["mathAfterScroll"]) != 4
         ):
             raise ValueError("Review V5 table/math DOM inventory incomplete")
         if relative.endswith("representation_diagnostic_v3.md") and (

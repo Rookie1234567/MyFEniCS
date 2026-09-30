@@ -3926,5 +3926,12 @@
   "pde_only_solve": false,
   "production_initialization_allowed": false,
   "pde_only_solver_qualified": false,
-  "official_candidate_results": false
+  "official_candidate_results": false,
+  "representation_positive": false,
+  "representation_partial": false,
+  "representation_thresholds": [
+    0.001,
+    0.01
+  ],
+  "frozen_feature_residual_excess_over_1e_6": 0.5705769904540879
 }

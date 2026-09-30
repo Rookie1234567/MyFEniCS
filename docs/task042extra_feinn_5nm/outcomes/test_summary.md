@@ -88,3 +88,19 @@ C1正式段的保存留白有计时偏差，作为规则未满足记录；C2已�
 | 新Markdown / GitHub实际view | 以本地解析及render JSON为准 | 不批量重渲染历史，不声明CI |
 
 原始资格：[readout checks](records/readout_checks_v5.json)，独立Gate：[gate](records/gate_decisions_v5.json)，完整费用：[resource](records/resource_costs_v5.json)。run source `a6ac769027384525e406537f3069607043bc4a67`；checker字节hash与light日志独立绑定，不把后来文档HEAD当运行源码。GitHub实际新review及必要新节检查见[render](records/render_check_v5.json)，状态由真实DOM/截图决定。
+
+## Review V5 后续 V6 定向资格
+
+| 新检查 / local | 结果 | 范围 |
+| --- | --- | --- |
+| 纯数值targeted pytest | 8 passed；最后版本0.20s | 复非Hermitian、满秩/重复/近秩亏/尺度、独立SVD、两置换与标签白名单 |
+| ML targeted pytest | 2 passed，1.95s | 新坐标反变换→原实虚bias/三分量；FE顶层Torch隔离 |
+| M5 T0 | PASS；3方向A3/A*3/G6 | seed421601，不重建Phi/GQR |
+| 唯一主阶段 | FROZEN_FEATURE_RESIDUAL_FLOOR_MEASURED | 不是物理合格 |
+| 独立ML/FE/checker | 完成；q30 7.26e-13；总A206/A*3/audit4/G16 | 新MUMPS/Gsolve/因子0 |
+| Ruff/compileall/diff | PASS（两处unused import局部修复后） | 受改文件，无full pytest/CI声明 |
+| 本地Markdown/GitHub view | 记录分别核查 | 不以结构PASS替代视觉审核 |
+
+定向文件、ABI、日志hash见[tests](records/targeted_tests_v6.json)和[真实T0](records/residual_readout_checks_v6.json)。旧资格复用；数值核心与测试文件在C1后无数学改动，后续checker仅去掉无用import，不重复昂贵原算子审核。费用、一次状态探针index大小写错误及纠正保留在V6直接/辅助账；主阶段实际先收尾再启动ML，没有重复主阶段。
+
+[本地文档/实际浏览器证据](records/render_check_v6.json)只覆盖Review V5和新V6小节。

@@ -109,3 +109,15 @@ V2实现提交 `19c725efd27ae5daedba8e77d2ad98375711bb71` 绑定D0/D1/D2正式�
 | do-not-merge | Phi/Q/G/native/model/fields/venv/cache/log/profile等ignored artifacts | compact hashes可审阅 | 不进Git，不接回旧无标签模型/Task042/0.7nm |
 
 原CoordinateField/CompleteMomentMap及A/G/材料/背景默认数学不改；V1–V4、旧Task042历史不覆盖。本轮无amend/强推、master/其他支线merge或大模型计算。
+
+## Review V5 后续 V6 文件级边界
+
+| 依赖组 | 改动 / 数值影响 | 资格与建议顺序 |
+| --- | --- | --- |
+| research-only numerical/core | feinn_restricted_residual.py / feinn_residual_readout.py；固定空间原native残差读出；原默认solver不变 | 10定向tests＋T0＋唯一T1＋T2；不生产default |
+| reusable runner/watchdog | feinn_workflow/pilot/durable launcher；4新stage、7角色字段、3600s/600s/1800s预算 | 复用持久监督/150s时钟；依赖core与4one-run dat |
+| checker/benchmark | check_task42extra_v6.py；V5资源聚合器参数化默认语义不变；scoped docs/render扩展6 | 独立原字段重算；≤256/8/12/512，先core/runner后checker |
+| compact evidence/docs | V6设计/checks/projection/comparison/run/resource/gate、response/诊断及summary/总账追加 | 保留V1–V5历史；review未改；供审阅不自动merge |
+| do-not-merge | Phi/Q/B/QR大数组、NPZ/PT、timelines/browserprofiles | 全部ignored；新参数没有optimizer续训资格 |
+
+四阶段实际source为a2f6ea85a24cb5e7c233d266aaab9911fc695dcc；之后checker/文档HEAD不充当数值源码。旧数学/数据证据保持原source与hash，不声称V6提升production。新stage路径在input/task042extra_feinn_5nm/v6_*.dat；仅当前分支，没有修改旧Task042或其他项目/全机配置。

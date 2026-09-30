@@ -1,0 +1,16 @@
+{
+  "schema": "task42extra.publication-notes.v6",
+  "local_document_status": "LOCAL_MARKDOWN_PASS",
+  "pages": 8,
+  "tables": 23,
+  "local_contract_failures_before_correction": [
+    "generated math control escapes corrected before publication",
+    "table norm(f) text corrected after literal pipes misaligned cells",
+    "new trailing blank line at progress EOF removed"
+  ],
+  "numerical_reruns_for_publication": 0,
+  "probe_lookup": "case-sensitive raw route filename failed; corrected to load_index; no duplicate run",
+  "static_checks": "Ruff compileall diff PASS",
+  "render_status": "PENDING_RENDERED_VIEW",
+  "direct_helper_cost_included_in_conservative_120s_allowance": true
+}

@@ -171,7 +171,7 @@ def resources(indices, *, version=5, old_seconds=OLD_SECONDS, batch_limit=7200, 
         new_Gram_factor_Gsolve_Maxwell_factor_counts=[0, 0, 0],
         historical_Gram_and_reference_costs_preserved=True,
         timer_scope="phase walls sum; nested G/QR/SVD/storage/supervisor timers are included and never added again",
-        cutoff="all completed own V5 summaries plus conservative direct/current/final 120s allowance",
+        cutoff=f"all completed own V{version} summaries plus conservative direct/current/final 120s allowance",
     )
     if (
         batch > batch_limit

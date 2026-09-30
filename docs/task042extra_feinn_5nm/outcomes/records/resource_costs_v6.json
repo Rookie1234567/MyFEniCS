@@ -3,12 +3,12 @@
   "previous_conservative_seconds": 44815.22461795143,
   "old_lost_attempt_charged_seconds": 3284,
   "V6_formal_seconds": 114.20814009197056,
-  "V6_auxiliary_seconds": 11.6827331520617,
+  "V6_auxiliary_seconds": 23.569067096104845,
   "direct_current_and_final_allowance_seconds_conservative": 120,
-  "V6_batch_seconds": 245.89087324403226,
-  "V6_remaining_seconds": 3354.1091267559677,
-  "original_total_conservative_seconds": 45061.115491195465,
-  "original_16h_remaining_seconds": 12538.884508804535,
+  "V6_batch_seconds": 257.7772071880754,
+  "V6_remaining_seconds": 3342.2227928119246,
+  "original_total_conservative_seconds": 45073.00182513951,
+  "original_16h_remaining_seconds": 12526.998174860491,
   "formal_stages": {
     "v6_operator_readout_checks": {
       "directory": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v6_operator_readout_checks_20260930T100855003854Z",
@@ -258,8 +258,13 @@
   "auxiliary_attempts": [
     {
       "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v6_independent_checker_20260930T101430523786Z",
-      "status": "RUNNING_OR_NO_SUMMARY",
-      "charged_seconds": 0
+      "summary_sha256": "6cc5134636f30aa4ff4a6425d0123907cddf5f4069009ecb5c3f7e67582f0dd8",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "charged_seconds": 11.886333944043145,
+      "peak_simultaneous_tree_RSS_bytes": 944672768,
+      "own_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
     },
     {
       "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v6_t0_final_20260930T100755948201Z",
@@ -345,5 +350,5 @@
   ],
   "historical_Gram_and_reference_costs_preserved": true,
   "timer_scope": "phase walls sum; nested G/QR/SVD/storage/supervisor timers are included and never added again",
-  "cutoff": "all completed own V5 summaries plus conservative direct/current/final 120s allowance"
+  "cutoff": "all completed own V6 summaries plus conservative direct/current/final 120s allowance"
 }
