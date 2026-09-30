@@ -1,0 +1,84 @@
+{
+  "schema": "task042.final-delivery.v15",
+  "utc": "2026-09-30T11:13:42.214064+00:00",
+  "recorded_before_final_metadata_commit": true,
+  "document_commit": "eba2c2e77db780bc8a309ccc689a7481e02c8f7c",
+  "actual_numerical_source": "db0e68e519767554412c960af14b3c185012f9de",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "branch": "task42_neural_coarse_inverse",
+  "upstream": "origin/task42_neural_coarse_inverse",
+  "common_directory": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+  "toplevel": "/home/fenics/Projects/NN-Lab",
+  "completed": [
+    "L0",
+    "LOCAL-POLY",
+    "LOCAL-NN",
+    "UNION-POLY",
+    "UNION-NN",
+    "L3"
+  ],
+  "original_equation_and_field_qualification": false,
+  "independent_states": 8,
+  "strict_passes": 0,
+  "original_S_or_global_p4_factor_constructed": false,
+  "hidden_training": false,
+  "GPU_used": false,
+  "final_process_audit": {
+    "remaining_own_numerical_PIDs": [],
+    "own_lock_released": true,
+    "all_supervised_descendants_cleared": true
+  },
+  "final_memory": {
+    "mem_total_bytes": 2163100385280,
+    "mem_available_bytes": 953393381376,
+    "effective_total_bytes": 2163100385280,
+    "effective_available_bytes": 953393381376,
+    "reserve_bytes": 353748992000,
+    "launch_cap_bytes": 17179869184,
+    "planning_cap_bytes": 17179869184,
+    "cgroup_limits": [],
+    "system_reserve_bytes": 216310038528,
+    "neighbor_growth_allowance_bytes": 137438953472,
+    "shared_workstation": true
+  },
+  "final_memory_pressure": {
+    "some": {
+      "avg10": 0.0,
+      "avg60": 0.0,
+      "avg300": 0.0,
+      "total": 467897.0
+    },
+    "full": {
+      "avg10": 0.0,
+      "avg60": 0.0,
+      "avg300": 0.0,
+      "total": 466620.0
+    }
+  },
+  "window": {
+    "schema": "task042.autonomous-window.v15",
+    "start_utc": "2026-09-30T08:44:30+00:00",
+    "start_monotonic": 682864.861018633,
+    "start_scope": "conservative anchor before first completed read-only identity observation at 08:44:39 UTC; includes initial inspection",
+    "stop_heavy_utc": "2026-09-30T12:29:30+00:00",
+    "deadline_utc": "2026-09-30T12:44:30+00:00",
+    "heavy_limit_seconds": 13500,
+    "total_limit_seconds": 14400,
+    "cleanup_reserve_seconds": 900,
+    "review_expected_commit": "c0a759c29c08cc377a3fde3b81c5f4c34c24710a",
+    "prior_v14_head": "61947232a135bd9d7ab168c8d88bf849b918c733",
+    "historical_formal_lower_bound_seconds": 14670.412103474839,
+    "historical_auxiliary_unknown_preserved": true,
+    "elapsed_seconds": 8952.220484495163,
+    "heavy_remaining_seconds": 4547.779515504837,
+    "total_remaining_seconds": 5447.779515504837
+  },
+  "resource_snapshot_sha256": "486836d755ec5466a0cb4233e9a47072a2685888f7e4c84cb6691b233b64cfaa",
+  "publication_record_sha256": "7ed712ee9da0bd2f477293708325bdff5761db9b82beb59a0d7c204fc8444d5a",
+  "expected_final_operation": "metadata-only commit and push of execution branch; final exact HEAD/remote/status reported after successful push",
+  "performance": "INCONCLUSIVE shared-workstation",
+  "historical_unknown_cost_preserved": true,
+  "next_suggestion_implemented": false,
+  "stop_reason": "ALL_AUTHORIZED_FINITE_PATHS_COMPLETE_WAIT_FOR_REVIEW",
+  "merge": false
+}

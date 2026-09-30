@@ -344,9 +344,18 @@
       "RSS_peak_bytes": 48287744,
       "own_swap_peak_bytes": 0,
       "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v15/publication_check/summary.json",
+      "sha256": "079c705f511927f097a51bed8f05c63ac51741dca7b49cec366e845d5e836ea4",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 12.981602367013693,
+      "RSS_peak_bytes": 58331136,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true
     }
   ],
-  "auxiliary_supervised_wall_lower_bound_seconds": 39.91765355714597,
+  "auxiliary_supervised_wall_lower_bound_seconds": 52.89925592415966,
   "historical_formal_lower_bound_seconds": 14670.412103474839,
   "V6_to_V15_formal_lower_bound_seconds": 16776.579534446006,
   "historical_auxiliary_unknown_preserved": true,
@@ -364,9 +373,10 @@
     "prior_v14_head": "61947232a135bd9d7ab168c8d88bf849b918c733",
     "historical_formal_lower_bound_seconds": 14670.412103474839,
     "historical_auxiliary_unknown_preserved": true,
-    "elapsed_seconds": 8428.389368057251,
-    "heavy_remaining_seconds": 5071.610631942749,
-    "total_remaining_seconds": 5971.610631942749
+    "elapsed_seconds": 8952.20447897911,
+    "heavy_remaining_seconds": 4547.795521020889,
+    "total_remaining_seconds": 5447.795521020889,
+    "measurement_scope": "whole new implementation/test/setup/solve/check/publication/cleanup elapsed at final record; final Git operations follow within same immutable window"
   },
   "new_artifact_storage": {
     "logical_regular_bytes": 1019589956,
@@ -499,7 +509,13 @@
     "cache_scope": "pre-existing Task042 FE/ML caches reused locally; no cross-task copy; no separate incremental cache allocation measurement",
     "sampled_watchdog_logical_artifact_max_bytes": 10908673282,
     "new_regular_artifacts_plus_results_bytes": 1055575501,
-    "both_artifact_quota_scopes_below_20GiB": true
+    "both_artifact_quota_scopes_below_20GiB": true,
+    "window_auxiliary_at_final_record": {
+      "regular_logical_bytes": 8088237,
+      "allocated_unique_regular_bytes": 8232960,
+      "regular_files": 58,
+      "symlinks_not_followed": true
+    }
   },
   "union_common_setup_seconds_by_library": {
     "POLY": 175.8817866849713,
@@ -509,5 +525,8 @@
   "final_snapshot": {
     "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/final_checks_v15.json",
     "sha256": "e7b696d3a9f3f72c0e3864a46463b627645746c608fbbd9f1b639dab76213fe7"
-  }
+  },
+  "all_own_processes_cleared_at_final_record": true,
+  "own_lock_released": true,
+  "publication_auxiliary_cost_separate_from_solve_wall": true
 }
