@@ -1826,17 +1826,18 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
         captured.update(kwargs)
         raise SetupReached
 
+    resource_policy_marker_limits_seen = []
+
+    def record_marker_limits(_root, _started, _stage, *, limits=None, **_kwargs):
+        resource_policy_marker_limits_seen.append(dict(limits or {}))
+        return {"stage": _stage, "resource": {}}
+
     monkeypatch.setattr(worker, "_collective_fresh_root", fresh_root)
     monkeypatch.setattr(worker, "_environment_snapshot", lambda: {"test": True})
     monkeypatch.setattr(worker, "_write_rank_pid_affinity", lambda *_a, **_k: None)
     monkeypatch.setattr(worker, "_memavailable_bytes", lambda: 10**15)
-    monkeypatch.setattr(worker, "_check_resource", lambda *_a, **_k: None)
     monkeypatch.setattr(worker, "_write_rank0_json", lambda *_a, **_k: None)
-    monkeypatch.setattr(
-        worker,
-        "_write_marker",
-        lambda _root, _start, stage, **_kwargs: {"stage": stage, "resource": {}},
-    )
+    monkeypatch.setattr(worker, "_write_marker", record_marker_limits)
     monkeypatch.setattr(worker, "_task041_rank_numa_observed_backend", lambda **_k: None)
     monkeypatch.setattr(
         worker,
@@ -1896,6 +1897,84 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
     assert captured["p4_refinement_target_tolerance"] == 5.0e-13
     assert captured["p4_backend_pair_side"] is None
     assert captured["top_causal_replay"] is False
+    assert captured["a6_response_pair"] is False
+
+    formal_cell_condensed_path = (
+        REPOSITORY_ROOT
+        / "input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+    )
+    formal_cell_condensed_spec = _specification(formal_cell_condensed_path)
+    formal_cell_condensed_identity = (
+        task041_balh_workflow.build_task041_balh_packet_identity(
+            formal_cell_condensed_spec,
+            formal_cell_condensed_spec.as_jsonable(),
+            source_sha,
+            worker.resolved_config_sha256(formal_cell_condensed_spec),
+        )
+    )
+    formal_cell_condensed_identity_path = tmp_path / "cell_condensed_identity.json"
+    formal_cell_condensed_identity_path.write_text(
+        json.dumps(formal_cell_condensed_identity, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    formal_manifest_root = tmp_path / "formal_cell_condensed"
+    formal_manifest_root.mkdir()
+    formal_rhs_manifest = _write_task041_fixed_pair_manifest(
+        formal_manifest_root,
+        packet_manifest_sha256=packet_manifest_sha,
+        packet_identity_path=formal_cell_condensed_identity_path,
+        source_sha=source_sha,
+    )
+    actual_manifest_loader = (
+        task041_balh_workflow.load_task041_representative_rhs_manifest
+    )
+    loaded_rhs_manifests = []
+
+    def record_rhs_manifest_load(path):
+        loaded_rhs_manifests.append(Path(path))
+        return actual_manifest_loader(path)
+
+    monkeypatch.setattr(
+        task041_balh_workflow,
+        "load_task041_representative_rhs_manifest",
+        record_rhs_manifest_load,
+    )
+    captured.clear()
+    resource_policy_marker_limits_seen.clear()
+    with pytest.raises(SetupReached):
+        worker.run_task041_consumer(
+            input_path=formal_cell_condensed_path,
+            packet_manifest=packet_manifest_path,
+            packet_identity=formal_cell_condensed_identity_path,
+            packet_manifest_sha256=packet_manifest_sha,
+            run_directory=tmp_path / "worker_a6_response_pair_run",
+            source_sha=source_sha,
+            candidate=True,
+            comm=FakeComm(),
+            task041_rhs_probe_manifest=formal_rhs_manifest,
+            p4_refinement_target_tolerance=5.0e-13,
+            task041_resource_policy=(
+                task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+            ),
+            a6_response_pair=True,
+        )
+    assert loaded_rhs_manifests == [formal_rhs_manifest]
+    assert captured["a6_response_pair"] is True
+    assert captured["p4_refinement_target_tolerance"] == 5.0e-13
+    assert captured["p4_inverse_backend"] == "cell_condensed"
+    assert captured["p4_backend_pair_side"] is None
+    assert captured["performance_profile"] is None
+    assert captured["comparison_mode"] is None
+    assert captured["side_setup_schedule"] is None
+    assert len(captured["representative_rhs_contract"]["entries"]) == 8
+    expected_v8_binding = task041_balh_workflow.task041_v8_resource_policy_binding(
+        task041_balh_workflow.TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
+        task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE,
+    )
+    assert resource_policy_marker_limits_seen
+    assert resource_policy_marker_limits_seen[-1]["task041_resource_policy"] == (
+        expected_v8_binding
+    )
 
     setup_tree = ast.parse(inspect.getsource(candidate_setup_implementation))
     target_configuration = next(
@@ -1940,6 +2019,128 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
         ((0, None), {"refinement_target_tolerance": 5.0e-13})
     ]
     assert run_target_configuration(None) == []
+
+
+@pytest.mark.parametrize(
+    ("side", "fail_at"),
+    (("bottom", None), ("top", 2)),
+)
+def test_task041_a6_response_schedule_checks_abba_and_restores_owned_objects(
+    side, fail_at
+):
+    from benchmarks.task041_exact_side_workflow import (
+        _task041_run_a6_abba_response_schedule,
+    )
+
+    class Action:
+        def __init__(self):
+            self.destroyed = False
+            self.destroy_count = 0
+
+        def destroy(self):
+            self.destroy_count += 1
+            self.destroyed = True
+
+    original_action = Action()
+    fused_action = Action()
+    inverse = SimpleNamespace(
+        _full_action=original_action,
+        _operator=object(),
+        _p4_factor=object(),
+        _ksp=object(),
+    )
+    original_solver = (inverse._operator, inverse._p4_factor, inverse._ksp)
+    calls = []
+    comparisons = []
+    responses = []
+
+    def apply_one(sequence, action_name):
+        expected_action = (
+            original_action if action_name == "original" else fused_action
+        )
+        assert inverse._full_action is expected_action
+        calls.append((sequence, action_name))
+        if sequence == fail_at:
+            raise RuntimeError("synthetic apply failure")
+        response = SimpleNamespace(
+            value=np.zeros(1, dtype=np.complex128),
+            destroyed=False,
+            destroy_count=0,
+        )
+        response.value[0] = 1.0 + 0.0j
+        responses.append(response)
+        return response
+
+    def compare_one(reference, candidate, label, reference_role, candidate_role):
+        return {
+            "label": label,
+            "response_roles": {
+                "reference": reference_role,
+                "candidate": candidate_role,
+            },
+            "pass": bool(
+                np.linalg.norm(candidate.value - reference.value) <= 1.0e-10
+            ),
+        }
+
+    def release_response(response):
+        response.destroy_count += 1
+        response.destroyed = True
+
+    def release_action(action):
+        assert inverse._full_action is original_action
+        action.destroy()
+
+    if fail_at is None:
+        _task041_run_a6_abba_response_schedule(
+            side=side,
+            inverse=inverse,
+            original_action=original_action,
+            fused_action=fused_action,
+            apply_one=apply_one,
+            compare_one=compare_one,
+            comparisons_out=comparisons,
+            release_response=release_response,
+            release_action=release_action,
+        )
+    else:
+        with pytest.raises(RuntimeError, match="synthetic apply failure"):
+            _task041_run_a6_abba_response_schedule(
+                side=side,
+                inverse=inverse,
+                original_action=original_action,
+                fused_action=fused_action,
+                apply_one=apply_one,
+                compare_one=compare_one,
+                comparisons_out=comparisons,
+                release_response=release_response,
+                release_action=release_action,
+            )
+
+    assert calls == (
+        [(0, "original"), (1, "fused"), (2, "fused"), (3, "original")]
+        if fail_at is None
+        else [(0, "original"), (1, "fused"), (2, "fused")]
+    )
+    assert [item["label"] for item in comparisons] == (
+        [
+            "original_first_vs_fused_first",
+            "fused_first_vs_fused_repeat",
+            "original_repeat_vs_fused_repeat",
+            "original_first_vs_original_repeat",
+        ]
+        if fail_at is None
+        else ["original_first_vs_fused_first"]
+    )
+    assert all(item["pass"] for item in comparisons)
+    assert all(response.destroyed for response in responses)
+    assert all(response.destroy_count == 1 for response in responses)
+    assert inverse._full_action is original_action
+    assert not original_action.destroyed
+    assert fused_action.destroyed
+    assert original_action.destroy_count == 0
+    assert fused_action.destroy_count == 1
+    assert (inverse._operator, inverse._p4_factor, inverse._ksp) == original_solver
 
 
 def test_task041_backend_pair_release_reads_post_destroy_diagnostics_cache():

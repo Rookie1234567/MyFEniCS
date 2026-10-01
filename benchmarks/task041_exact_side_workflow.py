@@ -84,6 +84,112 @@ def _task041_form_p4_residual_identity(
     residual_identity.axpy(PETSc.ScalarType(1.0), condensed_residual)
 
 
+def _task041_run_a6_abba_response_schedule(
+    *,
+    side: str,
+    inverse: Any,
+    original_action: Any,
+    fused_action: Any,
+    apply_one: Callable[[int, str], Any],
+    compare_one: Callable[[Any, Any, str, str, str], Mapping[str, Any]],
+    comparisons_out: list[dict[str, Any]],
+    release_response: Callable[[Any], None],
+    release_action: Callable[[Any], None],
+) -> None:
+    """Run the fixed A-B-B-A response order and release only owned objects."""
+    order = ("original", "fused", "fused", "original")
+    responses: dict[int, Any] = {}
+    comparison_specs = {
+        1: (
+            (
+                0,
+                1,
+                "original_first_vs_fused_first",
+                "original_A6_first",
+                "fused_A6_first",
+            ),
+        ),
+        2: (
+            (
+                1,
+                2,
+                "fused_first_vs_fused_repeat",
+                "fused_A6_first",
+                "fused_A6_repeat",
+            ),
+        ),
+        3: (
+            (
+                3,
+                2,
+                "original_repeat_vs_fused_repeat",
+                "original_A6_repeat",
+                "fused_A6_repeat",
+            ),
+            (
+                0,
+                3,
+                "original_first_vs_original_repeat",
+                "original_A6_first",
+                "original_A6_repeat",
+            ),
+        ),
+    }
+
+    def release_at(index: int) -> None:
+        response = responses.pop(index, None)
+        if response is not None:
+            release_response(response)
+
+    try:
+        for sequence, action_name in enumerate(order):
+            inverse._full_action = (
+                original_action if action_name == "original" else fused_action
+            )
+            responses[sequence] = apply_one(sequence, action_name)
+            for (
+                reference_index,
+                candidate_index,
+                label,
+                reference_role,
+                candidate_role,
+            ) in comparison_specs.get(sequence, ()):
+                comparison = dict(
+                    compare_one(
+                        responses[reference_index],
+                        responses[candidate_index],
+                        label,
+                        reference_role,
+                        candidate_role,
+                    )
+                )
+                comparisons_out.append(comparison)
+                if comparison.get("pass") is not True:
+                    error = Task041ModePrepError(
+                        f"{side} A6 pair failed the existing response gates"
+                    )
+                    error.failure_classification = "ACTION_EQUIVALENCE_FAIL"
+                    error.failure_evidence = {
+                        "side": side,
+                        "completed_apply_count": sequence + 1,
+                        "response_comparisons": list(comparisons_out),
+                    }
+                    raise error
+            if sequence == 2:
+                release_at(1)
+            elif sequence == 3:
+                release_at(0)
+                release_at(2)
+                release_at(3)
+    finally:
+        inverse._full_action = original_action
+        try:
+            for index in tuple(responses):
+                release_at(index)
+        finally:
+            release_action(fused_action)
+
+
 def _task041_rank_numa_observed_backend(
     *,
     candidate: bool,
@@ -4327,12 +4433,14 @@ def _run_task041_balh_candidate_setup(
     top_causal_memory_cap_bytes: int | None = None,
     p4_refinement_target_tolerance: float | None = None,
     p4_backend_pair_side: str | None = None,
+    a6_response_pair: bool = False,
 ) -> dict[str, Any]:
     """Build the finite-response BAL_H Schur and run the shared formal path."""
 
     from benchmarks.run_task037b_hybrid_iterative import collective_heap_cleanup
     from benchmarks.task041_balh_workflow import (
         TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
+        TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
         TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE,
         TASK041_P4_BACKEND_PAIR_MODE,
         TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
@@ -4353,12 +4461,35 @@ def _run_task041_balh_candidate_setup(
         inject_active_residual_to_full_p6,
     )
 
+    a6_sequential = bool(a6_response_pair)
+
     if (
         isinstance(p4_response_correction_steps, bool)
         or not isinstance(p4_response_correction_steps, int)
         or p4_response_correction_steps not in (0, 1)
     ):
         raise Task041ModePrepError("P4 response correction steps must be 0 or 1")
+    if not isinstance(a6_response_pair, bool):
+        raise Task041ModePrepError("a6_response_pair must be a boolean")
+    if a6_response_pair and (
+        not isinstance(identity, Mapping)
+        or str(identity.get("model_id"))
+        != TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID
+        or p4_inverse_backend != "cell_condensed"
+        or p4_refinement_target_tolerance != 5.0e-13
+        or representative_rhs_contract is None
+        or performance_profile is not None
+        or side_setup_schedule is not None
+        or comparison_mode is not None
+        or top_causal_replay
+        or p4_correction_replay_from is not None
+        or p4_response_correction_steps != 0
+        or p4_backend_pair_side is not None
+    ):
+        raise Task041ModePrepError(
+            "A6 response pairing requires the registered 5 nm cell-condensed "
+            "target route and the original fixed-eight manifest"
+        )
     if p4_response_correction_steps and (
         not top_causal_replay
         or p4_correction_replay_from is not None
@@ -4383,6 +4514,7 @@ def _run_task041_balh_candidate_setup(
             scope=(
                 str(representative_rhs_contract.get("scope"))
                 if isinstance(representative_rhs_contract, Mapping)
+                and not a6_response_pair
                 else None
             ),
             side_setup_schedule=side_setup_schedule,
@@ -4456,6 +4588,7 @@ def _run_task041_balh_candidate_setup(
     p4_backend_pairs_by_side: dict[str, dict[str, Any]] = {}
     top_causal_by_side: dict[str, dict[str, Any]] = {}
     p4_refinement_target_by_side: dict[str, dict[str, Any]] = {}
+    a6_response_pair_by_side: dict[str, dict[str, Any]] = {}
     sequential_lifecycle_boundaries: list[dict[str, Any]] = []
     sequential_created_totals = {
         "side_inverse": 0,
@@ -4711,6 +4844,7 @@ def _run_task041_balh_candidate_setup(
     ) -> None:
         if not detailed_timing and (
             side_setup_schedule != TASK041_SEQUENTIAL_COMPONENT_SCHEDULE
+            and not a6_sequential
         ):
             return
         marker_callback(
@@ -4784,7 +4918,10 @@ def _run_task041_balh_candidate_setup(
         *,
         p4_backend: str | None = None,
     ) -> dict[str, Any]:
-        if side_setup_schedule != TASK041_SEQUENTIAL_COMPONENT_SCHEDULE:
+        if (
+            side_setup_schedule != TASK041_SEQUENTIAL_COMPONENT_SCHEDULE
+            and not a6_sequential
+        ):
             return {
                 "side": side,
                 "event": event,
@@ -4844,7 +4981,11 @@ def _run_task041_balh_candidate_setup(
         record = {
             "side": side,
             "event": event,
-            "schedule": side_setup_schedule,
+            "schedule": (
+                "a6_response_pair"
+                if a6_sequential
+                else side_setup_schedule
+            ),
             "clock": "CLOCK_MONOTONIC",
             "workflow_started_monotonic_seconds": workflow_started_monotonic,
             "live": live,
@@ -4951,6 +5092,7 @@ def _run_task041_balh_candidate_setup(
                 side_lifecycle_callback(side, p4_backend_override)
                 if detailed_timing
                 or side_setup_schedule == TASK041_SEQUENTIAL_COMPONENT_SCHEDULE
+                or a6_sequential
                 else None
             ),
         )
@@ -5056,7 +5198,10 @@ def _run_task041_balh_candidate_setup(
                 },
             )
         lifecycle_boundary = None
-        if side_setup_schedule == TASK041_SEQUENTIAL_COMPONENT_SCHEDULE:
+        if (
+            side_setup_schedule == TASK041_SEQUENTIAL_COMPONENT_SCHEDULE
+            or a6_sequential
+        ):
             lifecycle_boundary = sequential_boundary(
                 side,
                 "ready",
@@ -6914,6 +7059,11 @@ def _run_task041_balh_candidate_setup(
                 "branch_ordinal": int(entry["branch_ordinal"]),
                 "causal_capture_enabled": bool(causal_capture_enabled),
                 **(
+                    {"a6_response_pair": True}
+                    if a6_response_pair
+                    else {}
+                ),
+                **(
                     {}
                     if p4_backend is None
                     else {
@@ -7019,7 +7169,7 @@ def _run_task041_balh_candidate_setup(
                             op=MPI.MAX,
                         )
                     )
-                    if backend_pair
+                    if backend_pair or a6_response_pair
                     else None
                 )
                 numa_stage = (
@@ -7173,10 +7323,14 @@ def _run_task041_balh_candidate_setup(
                         "apply_audit": _jsonable(apply_audit),
                         **(
                             {}
-                            if not backend_pair
+                            if p4_apply_record is None
+                            else {"p4_factor_audit": _jsonable(p4_apply_record)}
+                        ),
+                        **(
+                            {}
+                            if apply_wall_max_rank is None
                             else {
-                                "p4_factor_audit": _jsonable(p4_apply_record),
-                                "call_wall_max_rank_seconds": apply_wall_max_rank,
+                                "call_wall_max_rank_seconds": apply_wall_max_rank
                             }
                         ),
                     },
@@ -7241,10 +7395,14 @@ def _run_task041_balh_candidate_setup(
                         "audit": _jsonable(apply_audit),
                         **(
                             {}
-                            if not backend_pair
+                            if p4_apply_record is None
+                            else {"p4_factor_audit": _jsonable(p4_apply_record)}
+                        ),
+                        **(
+                            {}
+                            if apply_wall_max_rank is None
                             else {
-                                "p4_factor_audit": _jsonable(p4_apply_record),
-                                "call_wall_max_rank_seconds": apply_wall_max_rank,
+                                "call_wall_max_rank_seconds": apply_wall_max_rank
                             }
                         ),
                         "artifact": packet,
@@ -7300,6 +7458,282 @@ def _run_task041_balh_candidate_setup(
         if retain_responses and retained_responses_out is None:
             result["_retained_responses"] = retained_responses
         return result
+
+    def run_a6_response_pair_probe(
+        entries: Sequence[Mapping[str, Any]], side: str
+    ) -> dict[str, Any]:
+        if not a6_response_pair or len(entries) != 1:
+            raise Task041ModePrepError(
+                "A6 response pairing requires its one selected manifest entry"
+            )
+        entry = dict(entries[0])
+        if str(entry.get("side")) != side:
+            raise Task041ModePrepError("A6 selected manifest entry has the wrong side")
+        from src.solvers.physical_balanced_fused_volume import (
+            build_task041_fused_physical_volume_context,
+        )
+        from src.solvers.physical_balanced_physical_operator import (
+            build_fullspace_physical_dtn_action,
+        )
+
+        inverse = side_inverses[side]
+        original_action = inverse._full_action
+        original_operator = inverse._operator
+        original_factor = inverse._p4_factor
+        original_ksp = inverse._ksp
+        side_system = getattr(setup, side)
+        mode = int(entry["formal_column"])
+        modal = np.zeros(
+            2 * int(setup.coupling.mode_count_per_direction),
+            dtype=PETSc.ScalarType,
+        )
+        modal[mode] = PETSc.ScalarType(1.0)
+        rhs = modal_coupling_action(side, setup.coupling, modal)
+        fused_action = None
+        retained_response_maps: list[dict[int, PETSc.Vec]] = []
+        owned_responses: dict[int, PETSc.Vec] = {}
+        calls: list[dict[str, Any]] = []
+        comparisons: list[dict[str, Any]] = []
+        rhs_identity_by_rank: list[dict[str, Any]] | None = None
+        result: dict[str, Any] = {
+            "schema": "task041.a6_response_pair.side.v1",
+            "side": side,
+            "status": "running",
+            "pass": None,
+            "selected_scope_count": 1,
+            "selected_manifest_entry": entry,
+            "manifest_path": representative_rhs_contract["path"],
+            "manifest_sha256": representative_rhs_contract["sha256"],
+            "manifest_entry_count": len(representative_rhs_contract["entries"]),
+            "target_tolerance": p4_refinement_target_tolerance,
+            "p4_backend": "cell_condensed",
+            "action_order": ["original", "fused", "fused", "original"],
+            "calls": calls,
+            "response_comparisons": comparisons,
+        }
+        a6_response_pair_by_side[side] = result
+
+        def compare_a6_responses(
+            reference: PETSc.Vec,
+            candidate_response: PETSc.Vec,
+            label: str,
+            reference_role: str,
+            candidate_role: str,
+        ) -> dict[str, Any]:
+            comparison = compare_p4_backend_responses(
+                original_operator,
+                rhs,
+                reference,
+                candidate_response,
+                response_role_labels=(reference_role, candidate_role),
+            )
+            comparison.update(
+                {
+                    "label": label,
+                    "response_roles": {
+                        "reference": reference_role,
+                        "candidate": candidate_role,
+                    },
+                }
+            )
+            if comparison.get("pass") is not True:
+                result["status"] = "failed_response_pair_gate"
+                result["pass"] = False
+            return comparison
+
+        def destroy_owned_response(response: PETSc.Vec) -> None:
+            response.destroy()
+            owned_responses.pop(id(response), None)
+
+        try:
+            if original_action is None or original_operator is None or original_factor is None:
+                raise Task041ModePrepError(
+                    f"{side} A6 pairing has no live original action/operator/P4 factor"
+                )
+            started = time.monotonic()
+            fused_action = build_fullspace_physical_dtn_action(
+                side_system,
+                volume_action_context_factory=(
+                    build_task041_fused_physical_volume_context
+                ),
+            )
+            fused_setup_seconds = float(
+                comm.allreduce(time.monotonic() - started, op=MPI.MAX)
+            )
+            if (
+                fused_action.full_rows != original_action.full_rows
+                or fused_action.matrix.getSize() != original_action.matrix.getSize()
+                or fused_action.matrix.getOwnershipRange()
+                != original_action.matrix.getOwnershipRange()
+            ):
+                raise Task041ModePrepError(
+                    f"{side} original/fused complete actions have different layouts"
+                )
+            result["fused_complete_action_setup_seconds_max_rank"] = (
+                fused_setup_seconds
+            )
+            result["original_action_setup_scope"] = (
+                "included in the existing side-inverse construction record"
+            )
+            def apply_a6_response(sequence: int, backend: str) -> PETSc.Vec:
+                nonlocal rhs_identity_by_rank
+                retained: dict[int, PETSc.Vec] = {}
+                retained_response_maps.append(retained)
+                probe = run_representative_rhs_probe(
+                    [entry],
+                    rhs_vectors={int(entry["ordinal"]): rhs},
+                    p4_backend="cell_condensed",
+                    retain_responses=True,
+                    retained_responses_out=retained,
+                    causal_capture_enabled=False,
+                    packet_subdirectory=(
+                        f"a6_response_pair/{sequence:02d}_{backend}"
+                    ),
+                    sequence_index_offset=sequence,
+                )
+                if len(probe["entries"]) != 1:
+                    raise Task041ModePrepError(
+                        f"{side} A6 sequence {sequence} did not produce one apply"
+                    )
+                record = dict(probe["entries"][0])
+                rank_rhs_identity = [
+                    {
+                        "rank": int(row["rank"]),
+                        "ownership_range": list(row["ownership_range"]),
+                        "owned_rhs_sha256": row["owned_rhs_sha256"],
+                        "input_unchanged": row["input_unchanged"],
+                    }
+                    for row in record["rank_shards"]
+                ]
+                if [row["rank"] for row in rank_rhs_identity] != list(
+                    range(comm.size)
+                ):
+                    raise Task041ModePrepError(
+                        f"{side} A6 sequence {sequence} has incomplete RHS rank shards"
+                    )
+                if not all(row["input_unchanged"] is True for row in rank_rhs_identity):
+                    raise Task041ModePrepError(
+                        f"{side} A6 sequence {sequence} changed the shared RHS"
+                    )
+                if rhs_identity_by_rank is None:
+                    rhs_identity_by_rank = rank_rhs_identity
+                elif rank_rhs_identity != rhs_identity_by_rank:
+                    raise Task041ModePrepError(
+                        f"{side} A6 sequence {sequence} used a different RHS identity"
+                    )
+                if (
+                    inverse._operator is not original_operator
+                    or inverse._p4_factor is not original_factor
+                    or inverse._ksp is not original_ksp
+                ):
+                    raise Task041ModePrepError(
+                        f"{side} A6 sequence changed the original operator/P4/KSP"
+                    )
+                response = retained.pop(int(entry["ordinal"]))
+                owned_responses[id(response)] = response
+                if retained:
+                    raise Task041ModePrepError(
+                        f"{side} A6 sequence retained unexpected response vectors"
+                    )
+                calls.append(
+                    {
+                        "apply_sequence_index": sequence,
+                        "action": backend,
+                        "manifest_ordinal": int(entry["ordinal"]),
+                        "formal_column": mode,
+                        "side_apply_audit": {
+                            "path": str(audit_path),
+                            "index": audit_indices[side] - 1,
+                        },
+                        "response_packet": {
+                            "manifest": record["artifact"].get("manifest"),
+                            "manifest_sha256": record["artifact"].get(
+                                "manifest_sha256"
+                            ),
+                        },
+                    }
+                )
+                result["rhs_owned_identity_by_rank"] = rhs_identity_by_rank
+                result["completed_apply_count"] = len(calls)
+                return response
+
+            owned_fused_action = fused_action
+            fused_action = None
+            _task041_run_a6_abba_response_schedule(
+                side=side,
+                inverse=inverse,
+                original_action=original_action,
+                fused_action=owned_fused_action,
+                apply_one=apply_a6_response,
+                compare_one=compare_a6_responses,
+                comparisons_out=comparisons,
+                release_response=destroy_owned_response,
+                release_action=lambda action: action.destroy(),
+            )
+            result["completed_response_comparison_count"] = len(comparisons)
+            result["status"] = "completed"
+            result["pass"] = bool(
+                len(calls) == 4
+                and len(comparisons) == 4
+                and all(item.get("pass") is True for item in comparisons)
+            )
+            result["target_correction_policy"] = {
+                "tolerance": p4_refinement_target_tolerance,
+                "maximum_additional_corrections": 2,
+                "mode": "existing_target_core",
+            }
+            a6_response_pair_by_side[side] = dict(result)
+            return {
+                "scope": "representative_rhs",
+                "status": "completed",
+                "expected_count": 1,
+                "completed_count": 1,
+                "entries": [
+                    {
+                        "ordinal": int(entry["ordinal"]),
+                        "side": side,
+                        "formal_column": mode,
+                        "status": "completed",
+                        "a6_response_pair": dict(result),
+                        "audit_reference": dict(calls[-1]["side_apply_audit"]),
+                        "response_packet": dict(calls[-1]["response_packet"]),
+                    }
+                ],
+                "source_manifest": {
+                    "path": representative_rhs_contract["path"],
+                    "sha256": representative_rhs_contract["sha256"],
+                    "scope": representative_rhs_contract["scope"],
+                },
+                "source_audit": dict(
+                    representative_rhs_contract["source_audit"]
+                ),
+                "packet_binding": dict(
+                    representative_rhs_contract["packet_binding"]
+                ),
+                "full_formal": "not_run",
+            }
+        except BaseException:
+            if result.get("status") == "running":
+                result["status"] = "failed"
+                result["pass"] = False
+            result["completed_apply_count"] = len(calls)
+            result["completed_response_comparison_count"] = len(comparisons)
+            failure_evidence.setdefault("a6_response_pair", {})[side] = dict(
+                result
+            )
+            raise
+        finally:
+            inverse._full_action = original_action
+            for retained in retained_response_maps:
+                for response in tuple(retained.values()):
+                    response.destroy()
+                retained.clear()
+            for response in tuple(owned_responses.values()):
+                response.destroy()
+            owned_responses.clear()
+            if fused_action is not None:
+                fused_action.destroy()
+            rhs.destroy()
 
     def write_common_variant_packet(
         entry: Mapping[str, Any],
@@ -7427,6 +7861,8 @@ def _run_task041_balh_candidate_setup(
         rhs: PETSc.Vec,
         full_response: PETSc.Vec,
         condensed_response: PETSc.Vec,
+        *,
+        response_role_labels: tuple[str, str] = ("full", "cell_condensed"),
     ) -> dict[str, Any]:
         delta = condensed_response.duplicate()
         action_delta = side_operator.createVecLeft()
@@ -7527,6 +7963,7 @@ def _run_task041_balh_candidate_setup(
                 and full_relative <= 1.0e-2
                 and condensed_relative <= 1.0e-2
             )
+            reference_label, candidate_label = response_role_labels
             metrics = {
                 "e_x": e_x,
                 "e_A": e_A,
@@ -7534,21 +7971,24 @@ def _run_task041_balh_candidate_setup(
                 "action_delta_norm": action_delta_norm,
                 "eta_D": eta_D,
                 "residual_identity": {
-                    "definition": "D*(x_condensed-x_full) - (r_full-r_condensed)",
+                    "definition": (
+                        f"D*(x_{candidate_label}-x_{reference_label}) - "
+                        f"(r_{reference_label}-r_{candidate_label})"
+                    ),
                     "absolute_norm": residual_identity_norm,
                     "relative": residual_identity_relative,
                 },
                 "response_norms": {
-                    "full": full_norm,
-                    "cell_condensed": condensed_norm,
+                    reference_label: full_norm,
+                    candidate_label: condensed_norm,
                     "denominator": response_denominator,
                 },
                 "rhs_norm": rhs_norm,
                 "side_residuals": {
-                    "full_norm": full_residual_norm,
-                    "full_relative": full_relative,
-                    "cell_condensed_norm": condensed_residual_norm,
-                    "cell_condensed_relative": condensed_relative,
+                    f"{reference_label}_norm": full_residual_norm,
+                    f"{reference_label}_relative": full_relative,
+                    f"{candidate_label}_norm": condensed_residual_norm,
+                    f"{candidate_label}_relative": condensed_relative,
                 },
                 "limits": {
                     "e_x": 1.0e-8,
@@ -7570,7 +8010,9 @@ def _run_task041_balh_candidate_setup(
             )
             return {
                 "operator_scope": "side_A",
-                "delta_definition": "cell_condensed_response - full_response",
+                "delta_definition": (
+                    f"{candidate_label}_response - {reference_label}_response"
+                ),
                 "action_delta_definition": "side_A.mult(response_delta)",
                 "residual_definition": "rhs - side_A.mult(response)",
                 **metrics,
@@ -8471,6 +8913,8 @@ def _run_task041_balh_candidate_setup(
         top_causal_mode = isinstance(top_causal_result, Mapping)
         refinement_target_result = representative.get("p4_refinement_target")
         refinement_target_mode = isinstance(refinement_target_result, Mapping)
+        a6_response_pair_result = representative.get("a6_response_pair")
+        a6_response_pair_mode = isinstance(a6_response_pair_result, Mapping)
         p4_correction_result = representative.get("p4_correction_replay")
         p4_correction_mode = isinstance(p4_correction_result, Mapping)
         result = {
@@ -8481,6 +8925,8 @@ def _run_task041_balh_candidate_setup(
                 if p4_correction_mode
                 else "task041.side_balh.p4_refinement_target_setup.v1"
                 if refinement_target_mode
+                else "task041.a6_response_pair.setup.v1"
+                if a6_response_pair_mode
                 else "task041.side_balh.top_causal_replay_setup.v1"
                 if top_causal_mode
                 else "task041.side_balh.p4_backend_pair_setup.v1"
@@ -8494,6 +8940,8 @@ def _run_task041_balh_candidate_setup(
                 if p4_correction_mode
                 else "p4_refinement_target_completed"
                 if refinement_target_mode
+                else "a6_response_pair_completed"
+                if a6_response_pair_mode
                 else "top_causal_replay_completed"
                 if top_causal_mode
                 else "p4_backend_pair_completed"
@@ -8511,6 +8959,8 @@ def _run_task041_balh_candidate_setup(
                 if p4_correction_mode
                 else "refinement_target_diagnostic_only"
                 if refinement_target_mode
+                else "bounded_action_equivalence_diagnostic_only"
+                if a6_response_pair_mode
                 else "diagnostic_only"
                 if top_causal_mode
                 else "backend_comparison_only"
@@ -8529,6 +8979,11 @@ def _run_task041_balh_candidate_setup(
             "p4_refinement_target": (
                 dict(refinement_target_result)
                 if refinement_target_mode
+                else None
+            ),
+            "a6_response_pair": (
+                dict(a6_response_pair_result)
+                if a6_response_pair_mode
                 else None
             ),
             "p4_correction_replay": (
@@ -8600,7 +9055,10 @@ def _run_task041_balh_candidate_setup(
             setup.top.b,
             internal_modal_rhs_correction(setup.coupling),
         )
-        if side_setup_schedule == TASK041_SEQUENTIAL_COMPONENT_SCHEDULE:
+        if (
+            side_setup_schedule == TASK041_SEQUENTIAL_COMPONENT_SCHEDULE
+            or a6_sequential
+        ):
             if representative_rhs_contract is None:
                 raise Task041ModePrepError(
                     "sequential_component requires the representative RHS contract"
@@ -8623,7 +9081,21 @@ def _run_task041_balh_candidate_setup(
                 )
             representative_entries_for_run = representative_entries
             sides_for_run = ("bottom", "top")
-            if top_causal_replay:
+            if a6_sequential:
+                selected_entries = [
+                    next(
+                        entry
+                        for entry in representative_entries
+                        if str(entry["side"]) == side
+                    )
+                    for side in sides_for_run
+                ]
+                representative_entries_for_run = selected_entries
+                entries_by_side = {
+                    side: [entry]
+                    for side, entry in zip(sides_for_run, selected_entries)
+                }
+            elif top_causal_replay:
                 top_entries_by_column = {
                     int(entry["formal_column"]): entry
                     for entry in representative_entries
@@ -11394,16 +11866,18 @@ def _run_task041_balh_candidate_setup(
                         common_first_entry_by_side[side] = first_entry
                     admit_side(side)
                     require_global_identity(f"{side}_after_admission")
-                    side_result = (
-                        run_common_layout_equivalence_probe(
+                    if a6_response_pair:
+                        side_result = run_a6_response_pair_probe(
                             entries_by_side[side], side
                         )
-                        if comparison_mode
-                        == TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE
-                        else run_representative_rhs_probe(
+                    elif comparison_mode == TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE:
+                        side_result = run_common_layout_equivalence_probe(
+                            entries_by_side[side], side
+                        )
+                    else:
+                        side_result = run_representative_rhs_probe(
                             entries_by_side[side]
                         )
-                    )
                 if side_result["completed_count"] != len(entries_by_side[side]):
                     raise Task041ModePrepError(
                         f"sequential_component {side} probe is incomplete"
@@ -11463,6 +11937,49 @@ def _run_task041_balh_candidate_setup(
             representative = _merge_representative_parts(
                 representative_parts, representative_entries_for_run
             )
+            if a6_response_pair:
+                a6_pass = bool(
+                    set(a6_response_pair_by_side) == {"bottom", "top"}
+                    and all(
+                        a6_response_pair_by_side[side].get("pass") is True
+                        for side in ("bottom", "top")
+                    )
+                )
+                representative["a6_response_pair"] = {
+                    "schema": "task041.a6_response_pair.result.v1",
+                    "status": "completed" if a6_pass else "failed",
+                    "pass": a6_pass,
+                    "qualification": "bounded_action_equivalence_diagnostic_only",
+                    "formal_qualification": False,
+                    "target_tolerance": p4_refinement_target_tolerance,
+                    "p4_backend": "cell_condensed",
+                    "source_manifest": {
+                        "path": representative_rhs_contract["path"],
+                        "sha256": representative_rhs_contract["sha256"],
+                        "manifest_entry_count": len(
+                            representative_rhs_contract["entries"]
+                        ),
+                    },
+                    "selected_entry_count": len(representative_entries_for_run),
+                    "actual_selected_count_by_side": {
+                        side: len(entries_by_side[side])
+                        for side in ("bottom", "top")
+                    },
+                    "side_order": ["bottom", "top"],
+                    "action_order_per_side": [
+                        "original",
+                        "fused",
+                        "fused",
+                        "original",
+                    ],
+                    "maximum_additional_p4_corrections": 2,
+                    "response_comparison_gate": 1.0e-10,
+                    "sides": {
+                        side: dict(a6_response_pair_by_side[side])
+                        for side in ("bottom", "top")
+                        if side in a6_response_pair_by_side
+                    },
+                }
             if p4_correction_replay_from is not None:
                 representative["p4_correction_replay"] = p4_correction_by_side.get(
                     "top",
@@ -11554,7 +12071,11 @@ def _run_task041_balh_candidate_setup(
             }
             cleanup = release_before_recovery()
             schedule_summary = {
-                "side_setup_schedule": side_setup_schedule,
+                "side_setup_schedule": (
+                    "a6_response_pair"
+                    if a6_sequential
+                    else side_setup_schedule
+                ),
                 "order": (
                     [str(p4_backend_pair_side)]
                     if target_side_mode
@@ -11878,6 +12399,7 @@ def run_task041_consumer(
     p4_refinement_target_tolerance: float | None = None,
     p4_backend_pair_side: str | None = None,
     task041_resource_policy: str | None = None,
+    a6_response_pair: bool = False,
 ) -> dict[str, Any]:
     """Consume one fresh Task041 packet through an exact or BAL_H side path."""
 
@@ -11896,8 +12418,32 @@ def run_task041_consumer(
     normalized = specification.as_jsonable()
     contract = _task041_case_contract(normalized, comm.size, phase="consumer")
     from benchmarks.task041_balh_workflow import (
+        TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
+        TASK041_V8_SWAP_OBSERVE_CONTINUE,
         task041_p4_refinement_target_binding,
     )
+
+    if not isinstance(a6_response_pair, bool):
+        raise Task041ModePrepError("a6_response_pair must be a boolean")
+    if a6_response_pair and (
+        not candidate
+        or normalized.get("model_id")
+        != TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID
+        or task041_resource_policy != TASK041_V8_SWAP_OBSERVE_CONTINUE
+        or performance_profile is not None
+        or side_setup_schedule is not None
+        or comparison_mode is not None
+        or task041_rhs_probe_manifest is None
+        or top_causal_replay
+        or p4_correction_replay_from is not None
+        or p4_response_correction_steps != 0
+        or p4_refinement_target_tolerance != 5.0e-13
+        or p4_backend_pair_side is not None
+    ):
+        raise Task041ModePrepError(
+            "A6 response pairing is restricted to the registered 5 nm "
+            "cell-condensed V8 target probe"
+        )
 
     try:
         refinement_target_binding = task041_p4_refinement_target_binding(
@@ -11909,7 +12455,7 @@ def run_task041_consumer(
                 "representative_rhs"
                 if task041_rhs_probe_manifest is not None
                 else None
-            ),
+            ) if not a6_response_pair else None,
             side_setup_schedule=side_setup_schedule,
             comparison_mode=comparison_mode,
         )
@@ -11930,7 +12476,10 @@ def run_task041_consumer(
             not candidate
             or not contract.get("balh")
             or performance_profile is not None
-            or task041_rhs_probe_manifest is not None
+            or (
+                task041_rhs_probe_manifest is not None
+                and not a6_response_pair
+            )
             or side_setup_schedule is not None
             or comparison_mode is not None
             or top_causal_replay
@@ -12124,7 +12673,24 @@ def run_task041_consumer(
         )
         contract = dict(contract)
         contract["limits"] = effective_limits
-    if task041_rhs_probe_manifest is not None and representative_rhs_contract is None:
+    if a6_response_pair:
+        from benchmarks.task041_balh_workflow import (
+            load_task041_representative_rhs_manifest,
+        )
+
+        try:
+            representative_rhs_contract = load_task041_representative_rhs_manifest(
+                task041_rhs_probe_manifest
+            )
+        except (OSError, TypeError, ValueError) as exc:
+            raise Task041ModePrepError(
+                f"invalid fixed-eight manifest for A6 response pairing: {exc}"
+            ) from exc
+    if (
+        task041_rhs_probe_manifest is not None
+        and representative_rhs_contract is None
+        and not a6_response_pair
+    ):
         raise Task041ModePrepError(
             "representative RHS probe requires task041_schur_speed_v2"
         )
@@ -12200,7 +12766,11 @@ def run_task041_consumer(
             "sha256": representative_rhs_contract["sha256"],
             "scope": representative_rhs_contract["scope"],
             "purpose": representative_rhs_contract["purpose"],
-            "budget_group": performance_contract["budget_group"],
+            "budget_group": (
+                performance_contract["budget_group"]
+                if isinstance(performance_contract, Mapping)
+                else representative_rhs_contract["budget"]["group"]
+            ),
         }
     if candidate:
         result["side_rhs_audit_path"] = str(candidate_audit_path)
@@ -12947,6 +13517,7 @@ def run_task041_consumer(
                     p4_refinement_target_tolerance
                 ),
                 p4_backend_pair_side=p4_backend_pair_side,
+                a6_response_pair=a6_response_pair,
                 p4_correction_replay_packet_identity=(
                     disk_identity
                     if p4_correction_replay_from is not None
@@ -13015,6 +13586,7 @@ def run_task041_consumer(
             p4_correction_result = setup_result.get(
                 "p4_correction_replay"
             )
+            a6_response_pair_result = setup_result.get("a6_response_pair")
             if top_causal_replay:
                 if not isinstance(top_causal_result, Mapping):
                     raise Task041ModePrepError(
@@ -13037,6 +13609,14 @@ def run_task041_consumer(
                 result["p4_correction_replay"] = _jsonable(
                     p4_correction_result
                 )
+            if a6_response_pair:
+                if not isinstance(a6_response_pair_result, Mapping):
+                    raise Task041ModePrepError(
+                        "A6 response pairing returned no explicit diagnostic record"
+                    )
+                result["a6_response_pair"] = _jsonable(
+                    a6_response_pair_result
+                )
             result["gates"] = {
                 "pass": False,
                 "status": (
@@ -13046,6 +13626,8 @@ def run_task041_consumer(
                     if p4_backend_pair_side is not None
                     else "p4_correction_replay_diagnostic_only"
                     if p4_correction_replay_from is not None
+                    else "a6_response_pair_diagnostic_only"
+                    if a6_response_pair
                     else "not_run_common_layout_equivalence_mode"
                     if comparison_mode == "common_layout_equivalence"
                     else "not_run_representative_rhs_scope"
@@ -13146,6 +13728,29 @@ def run_task041_consumer(
                     is False
                 )
             )
+            a6_response_pair_safe = bool(
+                not a6_response_pair
+                or (
+                    isinstance(a6_response_pair_result, Mapping)
+                    and a6_response_pair_result.get("status") == "completed"
+                    and a6_response_pair_result.get("pass") is True
+                    and a6_response_pair_result.get("formal_qualification")
+                    is False
+                    and a6_response_pair_result.get("side_order")
+                    == ["bottom", "top"]
+                    and a6_response_pair_result.get(
+                        "actual_selected_count_by_side"
+                    )
+                    == {"bottom": 1, "top": 1}
+                    and set(a6_response_pair_result.get("sides", {}))
+                    == {"bottom", "top"}
+                    and all(
+                        a6_response_pair_result["sides"][side].get("pass")
+                        is True
+                        for side in ("bottom", "top")
+                    )
+                )
+            )
             if top_causal_replay and not top_causal_safe:
                 failed_gates = (
                     list(top_causal_result.get("failed_action_gates", []))
@@ -13214,6 +13819,24 @@ def run_task041_consumer(
                     "P4 refinement target diagnostic failed required gates: "
                     + ", ".join(str(item) for item in failed_gates)
                 )
+            elif a6_response_pair and not a6_response_pair_safe:
+                result["status"] = (
+                    "task041_a6_response_pair_failed_required_gate"
+                )
+                result["classification"] = (
+                    "TASK041_A6_RESPONSE_PAIR_REQUIRED_GATE_FAILURE"
+                )
+                result["failure_stage"] = "a6_response_pair"
+                result["failure_evidence"] = {
+                    "a6_response_pair": result.get("a6_response_pair")
+                }
+                error = Task041ModePrepError(
+                    "A6 response pairing failed its original action gate"
+                )
+                error.failure_classification = "ACTION_EQUIVALENCE_FAIL"
+                error.failure_evidence = {
+                    "a6_response_pair": result.get("a6_response_pair")
+                }
             else:
                 result["status"] = (
                     "task041_top_causal_replay_completed"
@@ -13222,6 +13845,8 @@ def run_task041_consumer(
                     if p4_backend_pair_side is not None
                     else "task041_p4_correction_replay_completed"
                     if p4_correction_replay_from is not None
+                    else "task041_a6_response_pair_completed"
+                    if a6_response_pair
                     else "task041_common_layout_equivalence_completed"
                     if comparison_mode == "common_layout_equivalence"
                     else "task041_representative_rhs_completed"
@@ -13233,6 +13858,8 @@ def run_task041_consumer(
                     if p4_backend_pair_side is not None
                     else "TASK041_P4_CORRECTION_REPLAY_COMPLETED"
                     if p4_correction_replay_from is not None
+                    else "TASK041_A6_RESPONSE_PAIR_COMPLETED"
+                    if a6_response_pair
                     else "COMMON_LAYOUT_EQUIVALENCE_PASS"
                     if comparison_mode == "common_layout_equivalence"
                     else "TASK041_REPRESENTATIVE_RHS_COMPLETED"
@@ -13413,15 +14040,20 @@ def run_task041_consumer(
     except Exception as exc:  # noqa: BLE001 - preserve worker failure evidence
         error = exc
         classified_failure = getattr(exc, "failure_classification", None)
-        if isinstance(classified_failure, str) and classified_failure in {
+        classified_failures = {
             "PAIRING_SETUP_FAILURE",
             "ACTION_EQUIVALENCE_FAIL",
             "NUMERICAL_GATE_FAIL",
             "RESPONSE_SENSITIVITY_UNRESOLVED",
-        }:
+        }
+        if a6_response_pair:
+            classified_failures.add("REPRESENTATIVE_RHS_NUMERICAL_GATE")
+        if isinstance(classified_failure, str) and classified_failure in classified_failures:
             result["status"] = (
                 "task041_common_layout_equivalence_failed"
                 if comparison_mode == "common_layout_equivalence"
+                else "task041_a6_response_pair_failed"
+                if a6_response_pair
                 else "task041_representative_rhs_failed"
             )
             result["classification"] = classified_failure
@@ -13449,21 +14081,25 @@ def run_task041_consumer(
             "message": str(exc),
             "stage": current_stage,
         }
-        preserve_common_failure = (
-            comparison_mode == "common_layout_equivalence"
+        preserve_candidate_failure = (
+            (
+                comparison_mode == "common_layout_equivalence"
+                or a6_response_pair
+            )
             and result.get("classification")
             in {
                 "PAIRING_SETUP_FAILURE",
                 "NUMERICAL_GATE_FAIL",
                 "ACTION_EQUIVALENCE_FAIL",
                 "RESPONSE_SENSITIVITY_UNRESOLVED",
+                "REPRESENTATIVE_RHS_NUMERICAL_GATE",
             }
         )
         if candidate and candidate_failure_evidence:
             candidate_evidence = {
                 "side_rhs_audits": _jsonable(candidate_failure_evidence),
             }
-            if preserve_common_failure and isinstance(
+            if preserve_candidate_failure and isinstance(
                 result.get("failure_evidence"), Mapping
             ):
                 result["failure_evidence"] = {
@@ -13486,7 +14122,7 @@ def run_task041_consumer(
                 if isinstance(representative_rhs_failures, Mapping)
                 else {}
             )
-            if representative_gate_evidence and not preserve_common_failure:
+            if representative_gate_evidence and not preserve_candidate_failure:
                 result["representative_rhs_gate"] = _jsonable(
                     representative_gate_evidence
                 )
@@ -13501,7 +14137,7 @@ def run_task041_consumer(
                 for audit in candidate_failure_evidence.values()
             }
             if (
-                not preserve_common_failure
+                not preserve_candidate_failure
                 and not representative_gate_evidence
                 and "P4_PHYSICAL_RESIDUAL_GATE" in failure_classes
             ):
@@ -13510,7 +14146,7 @@ def run_task041_consumer(
                     "TASK041_CONSUMER_P4_PHYSICAL_RESIDUAL_GATE"
                 )
             elif (
-                not preserve_common_failure
+                not preserve_candidate_failure
                 and not representative_gate_evidence
                 and "BALANCED_CONSTRAINT_REJECTED" in failure_classes
             ):
@@ -13529,7 +14165,7 @@ def run_task041_consumer(
             ):
                 result["setup_cost_probe"] = _jsonable(cost_payload)
                 cost_evidence = {"cost_probe": _jsonable(cost_payload)}
-                if preserve_common_failure and isinstance(
+                if preserve_candidate_failure and isinstance(
                     result.get("failure_evidence"), Mapping
                 ):
                     result["failure_evidence"] = {
