@@ -20,6 +20,7 @@ from src.solvers.optimization_checkpoint import (
     load_checkpoint,
 )
 from src.solvers.feinn_gn_training import GNProblem, restore_committed_with_spent_pc
+from src.solvers.feinn_gn_budget import GNWorkBudget
 
 torch.set_num_threads(1)
 if torch.get_num_interop_threads() != 1:
@@ -128,6 +129,44 @@ def test_completed_pc_quota_survives_uncommitted_proposal_rollback():
     assert len(opt.pc_builds) == opt.pc_max_builds == 2
     assert opt.pc_builds[-1]["uncommitted_proposal_rolled_back"]
     assert not opt.pc_builds[-1]["new_basis_retained"]
+
+
+def test_measured_gradient_frontier_stops_before_forward_and_counts_events(monkeypatch):
+    import src.solvers.feinn_gn_budget as budget_module
+
+    clock = {"now": 100.0}
+    monkeypatch.setattr(budget_module, "perf_counter", lambda: clock["now"])
+    seen = []
+    problem = GNProblem(
+        None,
+        SimpleNamespace(forward=lambda _: seen.append("forward") or np.array([2j])),
+        None,
+        SimpleNamespace(value=lambda *args: (2.0, np.array([3j]))),
+        supervised=True,
+    )
+    problem.jac = SimpleNamespace(
+        counts=dict(JVP=0, VJP=0), vjp=lambda *args: np.array([3.0])
+    )
+    rows = []
+    stop = RuntimeError
+    frontier = GNWorkBudget(
+        problem, 140, dict(K=100, JVP_VJP=200, trial=10), rows.append, stop,
+        initial_K_seconds=10,
+    )
+    frontier.observe("gradient", 20)
+    problem.frontier = frontier
+    with pytest.raises(RuntimeError, match="GRADIENT_START_SAVE_RESERVE"):
+        problem.value_gradient()
+    assert seen == [] and problem.counts["full_loss_gradient"] == 0
+    assert rows == []
+    frontier.cutoff = 1000
+    loss, g, c = problem.value_gradient()
+    assert loss == 2 and np.array_equal(g, [3]) and np.array_equal(c, [2j])
+    assert seen == ["forward"] and problem.counts["full_loss_gradient"] == 1
+    assert [r["phase"] for r in rows] == ["begin", "end"]
+    assert all(r["operation"] == "GRADIENT" for r in rows)
+    frontier.caps["JVP_VJP"] = 8
+    assert not frontier.allow(gradient=1, K=4, trial=1)
 
 
 def test_nonhermitian_gn_curvature_gradient_three_updates_and_rejections():

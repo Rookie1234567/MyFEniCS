@@ -4,7 +4,8 @@ from pathlib import Path
 
 REVIEW_SHA = "47317bb648d5e2237657f8b6c75c239ab5bf55c5"
 OLD_SECONDS = 99864.4864455976
-LIMITS = dict(A=150, B=15650, C=18600, D=7200, E=1600)
+LIMITS = dict(A=150, B=17050, C=17200, D=7200, E=1600)
+C_EQUAL_ROUTE_SECONDS = LIMITS["C"] / 2
 AUTHORITY = set()
 STAGES = {
     "v10_state_and_work_audit": ("ml", 1800, "A"),

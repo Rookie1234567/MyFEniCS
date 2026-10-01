@@ -106,6 +106,10 @@ class GNProblem:
 
     def value_gradient(self):
         self.guard("gradient")
+        if self.frontier is not None:
+            if not self.frontier.allow(gradient=1, K=4, trial=1):
+                raise self.frontier.stop_exception("GRADIENT_START_SAVE_RESERVE")
+            self.frontier.event("GRADIENT", "begin")
         start = perf_counter()
         c = self.mapping.forward(self.model)
         if self.supervised:
@@ -115,6 +119,9 @@ class GNProblem:
         g = self.jac.vjp(self.model, dual)
         self.counts["full_loss_gradient"] += 1
         self.costs["gradient"] += perf_counter() - start
+        if self.frontier is not None:
+            self.frontier.observe("gradient", perf_counter() - start)
+            self.frontier.event("GRADIENT", "end")
         return loss, g, c
 
     def value(self, theta, restore_only=False):

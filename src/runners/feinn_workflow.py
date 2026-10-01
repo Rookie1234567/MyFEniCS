@@ -929,6 +929,11 @@ def launch(spec):
         if v9:
             group = gn_campaign.STAGES[stage][2]
             limit = min(limit, ledger[gn_version]["groups_remaining_seconds"][group])
+            if v10 and group == "C":
+                limit = min(limit, gn_campaign.C_EQUAL_ROUTE_SECONDS)
+                state["C_preregistered_equal_route_limit_seconds"] = (
+                    gn_campaign.C_EQUAL_ROUTE_SECONDS
+                )
             if group != "E":
                 limit = min(limit, ledger["remaining_seconds"] - 1200)
             if limit <= 150 or launch_origin + limit - 150 <= perf_counter():

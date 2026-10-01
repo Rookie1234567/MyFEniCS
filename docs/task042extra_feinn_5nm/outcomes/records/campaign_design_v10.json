@@ -5,8 +5,8 @@
   "new_batch_limit_seconds": 43200,
   "group_limits_seconds": {
     "A": 150,
-    "B": 15650,
-    "C": 18600,
+    "B": 17050,
+    "C": 17200,
     "D": 7200,
     "E": 1600
   },
@@ -169,6 +169,12 @@
       "to_group": "B",
       "seconds": 3000,
       "reason": "Preregistered existing derivative engineering repair; current both C full-proposal gates failed. C pool18600s; per-route maximum10800s unchanged, actual phase allocation must respect remaining pool. No additional experiment or enlarged network/physics."
+    },
+    {
+      "from_group": "C",
+      "to_group": "B",
+      "seconds": 1400,
+      "reason": "Preregistered after exact four-state qualification and before benchmark/long C. Remaining B2819.704s; observed full fixed-state derivative/proposal costs predict all required warm-up plus alternating three repeats may need about3400s plus reserve. Transfer for existing repair cost verification; equal actual C cap8600s each, maximum10800 unchanged, E1600 including1200 reserve unchanged. No new experiment."
     }
   ],
   "derivative_candidate2": {
@@ -180,6 +186,11 @@
     "arithmetical_repair_number": 2,
     "evidence": "linear_jvp_order_probe_v10.json: five independent Torch linear JVP shapes, native bias-first formula bitwise; prior canonical c/VJP/gradient bitwise, JVP/K rounding retained; mlp_layer_order_probe_v10.json all layer pairs0; phase_jvp_order_probe_v10.json determines tangent operand order",
     "implementation_family_count": 3,
-    "implementation_family_meaning": "old AD baseline, initial detached cached chain, same canonical cached chain with bounded arithmetic-order repair; no new mathematical optimizer"
-  }
+    "implementation_family_meaning": "old AD baseline, initial detached cached chain, same canonical cached chain with bounded arithmetic-order repair; no new mathematical optimizer",
+    "qualified_source_sha": "043b03dda37351835e44e9c86e9b8441b38cb34d",
+    "qualified_derivative_module_sha256": "b9c1fa722f52470212c47751d4f2cc759ce356c9fa8a60d2b878fa84078693d6",
+    "qualified_status": "EXACT_DERIVATIVE_CHECKS_PASS; C proposals direction/pred/ared bitwise0; all four states pass"
+  },
+  "C_preregistered_equal_additional_route_limit_seconds": 8600,
+  "gradient_frontier": "Opt-in measured full-gradient start plus four K and real trial reserve; no numeric change with ample budget or frontier=None. Accepted boundaries retain150s stop growth/120s save windows."
 }
