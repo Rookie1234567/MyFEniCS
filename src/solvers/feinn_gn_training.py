@@ -607,7 +607,9 @@ def run(
             c=final_c,
             source_sha=manifest["source_sha"],
             input_sha256=manifest["input_sha256"],
-            state_kind="final_committed",
+            state_kind="final_committed"
+            if failure is None
+            else "retained_failure_boundary",
             route=route,
             phase=phase,
             durable_checkpoint_sha256=record["sha256"],

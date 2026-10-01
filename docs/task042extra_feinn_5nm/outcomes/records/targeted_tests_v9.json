@@ -489,6 +489,69 @@
         "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "source_state": "development_worktree; not formal PDE provenance"
       }
+    },
+    {
+      "label": "v9_b_acceptance_telemetry_20261001T020239255963Z",
+      "summary_path": "tmp/task42extra/checks/v9_b_acceptance_telemetry_20261001T020239255963Z/summary.json",
+      "summary_sha256": "aaffae8ae6d291228db412c9333bdda32243328c5b6038316ef53873c9d2a2d8",
+      "result": {
+        "workflow_deadline_seconds": 900.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          987249
+        ],
+        "sampled_process_tree_rss_peak_bytes": 377495552,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 1656008,
+            "pswpout_pages": 2364290
+          },
+          "end": {
+            "pswpin_pages": 1656008,
+            "pswpout_pages": 2364290
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 991042670592,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 991042670592,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 11,
+        "elapsed_seconds": 6.471924343961291,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": "development_worktree; not formal PDE provenance"
+      },
+      "pytest": "8 passed in 3.53s",
+      "scope": "nonfinite rejection/rollback, damping trial telemetry, FIT-GN durable runner; JVP/K math unchanged"
     }
   ],
   "tests": "20 targeted tests passed; native FE complex128/int64 MPI1 ABI passed",

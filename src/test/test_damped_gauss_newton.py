@@ -153,3 +153,25 @@ def test_nonlinear_bad_local_model_rejects_then_accepts_true_loss():
     restored = DampedGNState(1.0)
     restored.load_state_dict(state.state_dict())
     assert restored.mu == state.mu and restored.accepted == state.accepted
+
+
+def test_nonfinite_trial_is_rejected_restored_and_records_are_json_finite():
+    import json
+
+    theta = np.array([0.1])
+    live = theta.copy()
+    logs = []
+    state = DampedGNState(1.0)
+
+    def evaluate(t, restore_only=False):
+        live[:] = t
+        return None if restore_only else float("nan")
+
+    updated, row = state.propose(
+        theta, 1.0, np.ones(1), lambda v: v, evaluate, logs.append
+    )
+    assert updated is None and row["stop_reason"] == "GN_MODEL_STAGNATION"
+    assert [r["damping_trial"] for r in logs[:8]] == list(range(8))
+    assert all(r["reason"] == "NONFINITE_TRIAL_REJECTED" for r in logs)
+    json.dumps(logs, allow_nan=False)
+    np.testing.assert_array_equal(live, theta)

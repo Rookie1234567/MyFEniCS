@@ -133,7 +133,7 @@ class DampedGNState:
         theta = np.asarray(theta).copy()
         g = np.asarray(gradient)
 
-        def trial(s, kind, cg=None):
+        def trial(s, kind, cg=None, damping_trial=None):
             Ks = K(s)
             pred = float(-g @ s - 0.5 * s @ Ks)
             row = dict(
@@ -146,6 +146,7 @@ class DampedGNState:
                 cg=cg,
                 PC_build_count=len(self.pc_builds),
                 PC_source_outer=self.last_pc_outer if self.V is not None else None,
+                damping_trial=damping_trial,
             )
             if (
                 pred <= 0
@@ -162,14 +163,18 @@ class DampedGNState:
                 # The caller's evaluate accepts restore_only without objective
                 # work. Trial updates never mutate the committed optimizer.
                 evaluate(theta, restore_only=True)
-            ared = float(loss - new)
-            eta = ared / pred
-            accept = bool(np.isfinite(new) and ared > 0 and eta >= 0.1)
+            finite = bool(np.isfinite(new))
+            ared = float(loss - new) if finite else None
+            eta = ared / pred if finite else None
+            accept = bool(finite and ared > 0 and eta >= 0.1)
             row.update(
                 ared=ared,
                 eta=eta,
-                trial_loss=float(new),
+                trial_loss=float(new) if finite else None,
                 accepted=accept,
+                reason="TRUE_OBJECTIVE_ACCEPTANCE"
+                if finite
+                else "NONFINITE_TRIAL_REJECTED",
                 inexact_linear_solve=bool(cg is not None and not cg["converged"]),
             )
             emit(row)
@@ -201,8 +206,7 @@ class DampedGNState:
                     self.V, self.lam = V, lam
                 self.slow_streak = 0
                 emit(dict(kind="PC_BUILD", **record))
-            accepted, new, row = trial(s, "GN_TRIAL", cg)
-            row["damping_trial"] = damping_trial
+            accepted, new, row = trial(s, "GN_TRIAL", cg, damping_trial)
             if accepted:
                 if row["eta"] > 0.75:
                     self.mu /= 3
