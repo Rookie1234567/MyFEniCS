@@ -115,6 +115,67 @@ def _physical_signature(resolved: dict[str, Any], cfg: Any) -> dict[str, Any]:
     }
 
 
+def _offline_recheck_identity_matches(
+    record: dict[str, Any],
+    manifest: dict[str, Any],
+    run_summary: dict[str, Any],
+    input_sha256: str,
+) -> bool:
+    """Allow only the hash-bound M1 checker-bug recovery as a P3 input."""
+
+    identity = record.get("run_identity", {})
+    original = record.get("original_worker_record_unchanged", {})
+    findings = record.get("offline_findings", {})
+    resources = findings.get("resources", {})
+    return bool(
+        record.get("schema") == "task40extra.g0-m1-offline-recheck.v1"
+        and record.get("offline_recheck_status") == "CHECKER_BUG_RECOVERED_OFFLINE"
+        and record.get("official_result") == "not_reissued_offline"
+        and findings.get("all_required_offline_checks_pass") is True
+        and findings.get("resource_cleanup_pass") is True
+        and manifest.get("run_id")
+        == "task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1"
+        and identity.get("run_id") == manifest.get("run_id")
+        and run_summary.get("run_id") == manifest.get("run_id")
+        and identity.get("run_source_sha") == manifest.get("source_sha")
+        and identity.get("input_sha256") == input_sha256
+        and identity.get("physical_model_sha256") == manifest.get("physical_model_sha256")
+        and original.get("official_result") is False
+        and original.get("output_role") == "diagnostic_only"
+        and original.get("run_summary_status") == run_summary.get("status") == "finished"
+        and original.get("run_summary_classification")
+        == run_summary.get("result_classification")
+        == "WORKER_FAILED"
+        and original.get("run_summary_exit_status") == run_summary.get("exit_status") == 4
+        and resources.get("watchdog_classification") == "WORKER_FAILED"
+        and resources.get("leader_exit_code") == 4
+        and resources.get("sampled_process_tree_swap_peak_bytes") == 0
+        and resources.get("descendants_cleared") is True
+        and resources.get("remaining_child_pids") == []
+    )
+
+
+def _offline_recheck_evidence_matches(record: dict[str, Any], run_root: Path) -> bool:
+    """Check every saved recheck input hash and the checker implementation hash."""
+
+    evidence = record.get("evidence_files")
+    checker_sha256 = record.get("run_identity", {}).get("checker_sha256")
+    if not isinstance(evidence, dict) or not evidence or not checker_sha256:
+        return False
+    root = run_root.resolve()
+    try:
+        for item in evidence.values():
+            relative = Path(item["path"])
+            path = relative.resolve() if relative.is_absolute() else (root / relative).resolve()
+            path.relative_to(root)
+            if not path.is_file() or _sha256(path) != item.get("sha256"):
+                return False
+        checker = Path(__file__).resolve().parents[1] / "benchmarks/check_task40_g0_m1_offline_v1.py"
+        return checker.is_file() and _sha256(checker) == checker_sha256
+    except (KeyError, OSError, ValueError):
+        return False
+
+
 @dataclass
 class RunInput:
     label: str
@@ -136,9 +197,15 @@ class RunInput:
     official_power: dict[str, Any]
     official_volume: dict[str, Any]
     input_signature: dict[str, Any]
+    offline_recheck_record: dict[str, Any] | None = None
 
 
-def _load_run(label: str, run_root: Path) -> RunInput:
+def _load_run(
+    label: str,
+    run_root: Path,
+    *,
+    offline_recheck: Path | None = None,
+) -> RunInput:
     from src.io.input_validation import simulation_config_3d_from_normalized
 
     run_root = run_root.resolve()
@@ -163,13 +230,28 @@ def _load_run(label: str, run_root: Path) -> RunInput:
 
     manifest = _read_json(run_root / "run_manifest.json")
     run_summary = _read_json(run_root / "run_summary.json")
-    if (
-        run_summary.get("run_id") != manifest.get("run_id")
-        or run_summary.get("status") != "finished"
+    if run_summary.get("run_id") != manifest.get("run_id"):
+        raise ValueError(f"{label}: run_summary and manifest run_id differ")
+    worker_exit0 = (
+        run_summary.get("status") != "finished"
         or run_summary.get("result_classification") != "worker_exit0"
         or int(run_summary.get("exit_status", -1)) != 0
-    ):
-        raise ValueError(f"{label}: original run_summary final Gate is not worker_exit0")
+    ) is False
+    offline_recheck_record = None
+    if not worker_exit0:
+        if offline_recheck is None:
+            raise ValueError(f"{label}: original run_summary final Gate is not worker_exit0")
+        offline_recheck_record = _read_json(offline_recheck)
+        input_path = run_root / "input_original.dat"
+        input_sha_for_recheck = _sha256(input_path)
+        if input_sha_for_recheck != manifest.get("input_sha256"):
+            raise ValueError(f"{label}: input_original.dat differs from run manifest SHA")
+        if not _offline_recheck_identity_matches(
+            offline_recheck_record, manifest, run_summary, input_sha_for_recheck
+        ):
+            raise ValueError(f"{label}: offline recheck does not bind the original failed run")
+        if not _offline_recheck_evidence_matches(offline_recheck_record, run_root):
+            raise ValueError(f"{label}: offline recheck evidence/checker hashes do not match")
     swap_gate = run_summary.get("task40_swap_qualification", {})
     if (
         swap_gate.get("status") != "qualified_zero"
@@ -238,6 +320,7 @@ def _load_run(label: str, run_root: Path) -> RunInput:
         official_power=official_power,
         official_volume=official_volume,
         input_signature=_physical_signature(resolved, cfg),
+        offline_recheck_record=offline_recheck_record,
     )
 
 

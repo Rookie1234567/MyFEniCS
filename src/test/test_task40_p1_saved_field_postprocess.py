@@ -3,6 +3,9 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from benchmarks.postprocess_task40_p1_saved_fields_common_subcells import (
+    _offline_recheck_identity_matches,
+)
 from src.postprocessing.task40_saved_field_h_comparison import (
     direct_curl_dg,
     _partition_mesh_exterior_surfaces,
@@ -10,6 +13,71 @@ from src.postprocessing.task40_saved_field_h_comparison import (
     union_axis_points,
     weighted_vector_squared_norm,
 )
+
+
+def _m1_offline_recheck_fixture():
+    manifest = {
+        "run_id": "task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1",
+        "source_sha": "source-sha",
+        "input_sha256": "input-sha",
+        "physical_model_sha256": "physical-sha",
+    }
+    run_summary = {
+        "run_id": manifest["run_id"],
+        "status": "finished",
+        "result_classification": "WORKER_FAILED",
+        "exit_status": 4,
+    }
+    record = {
+        "schema": "task40extra.g0-m1-offline-recheck.v1",
+        "offline_recheck_status": "CHECKER_BUG_RECOVERED_OFFLINE",
+        "official_result": "not_reissued_offline",
+        "run_identity": {
+            "run_id": manifest["run_id"],
+            "run_source_sha": manifest["source_sha"],
+            "input_sha256": manifest["input_sha256"],
+            "physical_model_sha256": manifest["physical_model_sha256"],
+        },
+        "original_worker_record_unchanged": {
+            "official_result": False,
+            "output_role": "diagnostic_only",
+            "run_summary_status": "finished",
+            "run_summary_classification": "WORKER_FAILED",
+            "run_summary_exit_status": 4,
+        },
+        "offline_findings": {
+            "all_required_offline_checks_pass": True,
+            "resource_cleanup_pass": True,
+            "resources": {
+                "watchdog_classification": "WORKER_FAILED",
+                "leader_exit_code": 4,
+                "sampled_process_tree_swap_peak_bytes": 0,
+                "descendants_cleared": True,
+                "remaining_child_pids": [],
+            },
+        },
+    }
+    return record, manifest, run_summary
+
+
+def test_offline_recheck_exception_accepts_only_bound_m1_identity():
+    record, manifest, run_summary = _m1_offline_recheck_fixture()
+
+    assert _offline_recheck_identity_matches(record, manifest, run_summary, "input-sha")
+
+    other_run_manifest = {**manifest, "run_id": "another-run"}
+    record["run_identity"]["run_id"] = "another-run"
+    other_run_summary = {**run_summary, "run_id": "another-run"}
+    assert not _offline_recheck_identity_matches(
+        record, other_run_manifest, other_run_summary, "input-sha"
+    )
+
+
+def test_offline_recheck_exception_rejects_run_summary_manifest_id_mismatch():
+    record, manifest, run_summary = _m1_offline_recheck_fixture()
+    run_summary["run_id"] = "another-run"
+
+    assert not _offline_recheck_identity_matches(record, manifest, run_summary, "input-sha")
 
 
 def test_common_axis_union_preserves_distinct_nearby_coordinates():
