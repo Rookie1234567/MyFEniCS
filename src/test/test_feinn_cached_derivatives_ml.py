@@ -187,7 +187,7 @@ def test_budget_defers_pc_but_commits_verified_direction_and_early_cg():
     opt.accepted = 5
     theta = np.zeros(100)
     rows = []
-    budget = Frontier(3)
+    budget = Frontier(4)
 
     def evaluate(x, restore_only=False):
         return None if restore_only else float(g @ x + 0.5 * x @ (d * x))

@@ -509,6 +509,9 @@ def run(
         problem.frontier = frontier
 
     def save(tag, c, pin, update=None):
+        if continuation is not None:
+            from src.solvers.feinn_cached_derivatives import model_key
+
         meta = dict(
             state_kind=tag,
             route=route,
@@ -563,6 +566,7 @@ def run(
                         for k, v in problem.jac.counts.items()
                     },
                     derivative_cache=problem.jac.record(),
+                    expected_cache_parameter_buffer_key=model_key(model),
                     budget_frontier=frontier.record(),
                 )
                 if continuation is not None
@@ -671,7 +675,10 @@ def run(
                 actual = audit(c, "accepted_outer", record)
                 actual["audit_interval_seconds"] = perf_counter() - last_audit_time
                 last_audit_time = perf_counter()
-                if (supervised and actual["E_G"] <= 1e-3) or (
+                # V10 requires G, scattered L2 and curl together. Sparse native
+                # audit has only G; wait for independent full-field assessment
+                # rather than treating that single quantity as all three.
+                if (supervised and continuation is None and actual["E_G"] <= 1e-3) or (
                     not supervised and actual["strict_pass"]
                 ):
                     stop_reason = (

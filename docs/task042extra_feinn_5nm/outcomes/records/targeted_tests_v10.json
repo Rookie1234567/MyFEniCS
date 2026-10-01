@@ -53,11 +53,39 @@
       "sampled_process_tree_rss_peak_bytes": 43143168,
       "sampled_process_tree_swap_peak_bytes": 0,
       "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_canonical_repair_tests_20261001T121559568999Z",
+      "classification": "WORKER_FAILED",
+      "elapsed_seconds": 2.065452564973384,
+      "leader_exit_code": 1,
+      "sampled_process_tree_rss_peak_bytes": 43409408,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_canonical_repair_tests_fixed_20261001T121736210916Z",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 12.546372757060453,
+      "leader_exit_code": 0,
+      "sampled_process_tree_rss_peak_bytes": 379518976,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_repair_FE_dispatch_20261001T122352993335Z",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 2.6843799520283937,
+      "leader_exit_code": 0,
+      "sampled_process_tree_rss_peak_bytes": 125423616,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
     }
   ],
   "qualified_unit_tests": 19,
-  "final_stage_inventory_count": 11,
+  "final_stage_inventory_count": 12,
   "full_pytest": false,
   "CI_claimed": false,
-  "source_state": "preimplementation_commit_dirty_but_hash-bound logs; formal runs use clean SHA"
+  "source_state": "preimplementation_commit_dirty_but_hash-bound logs; formal runs use clean SHA",
+  "candidate2_test_composition": "18 ML cache/GN/frontier/campaign tests plus 1 pure FE-dispatch Torch-import guard"
 }

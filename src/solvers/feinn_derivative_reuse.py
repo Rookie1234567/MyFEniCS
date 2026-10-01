@@ -350,15 +350,37 @@ def checks(design, native, qualification, reference, artifact, marker, manifest)
             proposal = None
             if not entry["supervised"]:
                 proposal_values = []
-                for problem in (old, new):
+                for implementation, problem in (("old_AD", old), ("cached", new)):
                     optimizer = DampedGNState(saved["optimizer"]["h0"])
                     optimizer.load_state_dict(saved["optimizer"])
                     start = perf_counter()
                     loss, gradient, _ = problem.value_gradient()
                     result, row = optimizer.propose(
-                        base, loss, gradient, problem.K, problem.value
+                        base,
+                        loss,
+                        gradient,
+                        problem.K,
+                        problem.value,
+                        lambda event, label=implementation: marker(
+                            "fixed_state_proposal_event",
+                            dict(
+                                state=name,
+                                implementation=label,
+                                **event,
+                            ),
+                        ),
                     )
                     proposal_values.append((result, row, perf_counter() - start))
+                    path = artifact / (
+                        name
+                        + ("_old" if problem is old else "_cached")
+                        + "_proposal.npz"
+                    )
+                    np.savez(
+                        path,
+                        theta=base,
+                        proposed=np.array([]) if result is None else result,
+                    )
                 po, pn = proposal_values
                 if (po[0] is None) != (pn[0] is None):
                     raise ValueError("OLD_NEW_PROPOSAL_BRANCH_CHANGED")
@@ -376,6 +398,8 @@ def checks(design, native, qualification, reference, artifact, marker, manifest)
                     ),
                     old_seconds=po[2],
                     new_seconds=pn[2],
+                    old_final_trial=po[1],
+                    cached_final_trial=pn[1],
                 )
             maximum = max(
                 [cpair["relative"], Kpair["relative"], gpair["relative"]]
@@ -428,6 +452,7 @@ def checks(design, native, qualification, reference, artifact, marker, manifest)
                     and recovery_ok
                 ),
             )
+            atomic_json(artifact / "partial_cache_checks.json", rows)
             new.jac.invalidate()
             del new, old, model
             gc.collect()
@@ -537,6 +562,8 @@ def benchmark(
                 passed=good,
                 status="EXACT_DERIVATIVE_ACCELERATION_PASS"
                 if good
+                else "CACHE_OR_RECOVERY_UNQUALIFIED"
+                if not chk["passed"]
                 else "DERIVATIVE_REUSE_NO_GAIN",
                 speedup_including_build_release=ratio,
                 old=distribution(old_times),

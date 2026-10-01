@@ -27,7 +27,9 @@ def damped_cg(
     iterations = 0
     early = False
     for iterations in range(1, max_iter + 1):
-        if budget is not None and not budget.allow(K=3, trial=1):
+        # Iteration action, optional convergence verification, final explicit
+        # residual and proposal prediction can require four distinct K calls.
+        if budget is not None and not budget.allow(K=4, trial=1):
             iterations -= 1
             early = True
             break
@@ -219,7 +221,7 @@ class DampedGNState:
                 else None
             )
             if budget is not None:
-                if not budget.allow(K=3, trial=1):
+                if not budget.allow(K=4, trial=1):
                     raise budget.stop_exception("BUDGET_FRONTIER_CG_RESERVE")
                 budget.event("CG", "begin", damping_trial=damping_trial)
             s, cg = damped_cg(

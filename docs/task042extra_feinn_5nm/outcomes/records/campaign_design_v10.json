@@ -4,8 +4,8 @@
   "old_cumulative_seconds": 99864.4864455976,
   "new_batch_limit_seconds": 43200,
   "group_limits_seconds": {
-    "A": 1800,
-    "B": 9000,
+    "A": 150,
+    "B": 10650,
     "C": 21600,
     "D": 7200,
     "E": 3600
@@ -141,5 +141,27 @@
     "v10_phase_cached_fit_gn",
     "v10_fit_reconstruct",
     "v10_fit_compare"
-  ]
+  ],
+  "original_group_limits_seconds": {
+    "A": 1800,
+    "B": 9000,
+    "C": 21600,
+    "D": 7200,
+    "E": 3600
+  },
+  "budget_transfer": [
+    {
+      "from_group": "A",
+      "to_group": "B",
+      "seconds": 1650,
+      "reason": "A qualified at 16.1195113s; reserved150s remains. One evidence-based equivalent arithmetic-order repair after derivatives<=3.82e-15 but full proposals above1e-8. No C/D per-route limits increase, E3600s reserved."
+    }
+  ],
+  "derivative_candidate2": {
+    "change": "canonical Torch fused primal linear and complete mapping operation order; matching analytic tangent/real adjoint; no physics/loss/CG-acceptance/hyperparameter change",
+    "qualification_stage": "v10_derivative_checks_repair",
+    "first_failed_qualification_preserved": "index_v10_derivative_checks.json",
+    "hypothesis": "Floating operation-order differences are tiny in derivatives but may amplify in finite CG; not yet a proven unique cause",
+    "retry_limit_this_repair": 1
+  }
 }

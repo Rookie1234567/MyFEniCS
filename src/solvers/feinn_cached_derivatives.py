@@ -39,7 +39,8 @@ class CachedMomentJacobian:
         self.bytes = 0
         self.builds = 0
         self.implementation = (
-            "detached FP64 analytic tangent/real adjoint; exact oriented CSR moments"
+            "candidate2: detached FP64 analytic tangent/real adjoint; "
+            "canonical Torch linear/Piola/interpolation/orientation order"
         )
         h = hashlib.sha256()
         for name in sorted(mapping.packet):
@@ -102,7 +103,7 @@ class CachedMomentJacobian:
                 x = (coords - model.center) / model.half_width
                 xs, ds = [x], []
                 for w, b in self.weights[:-1]:
-                    x = torch.tanh(x @ w.T + b)
+                    x = torch.tanh(torch.nn.functional.linear(x, w, b))
                     xs.append(x)
                     ds.append(1 - x * x)
                 phase = None
@@ -146,37 +147,37 @@ class CachedMomentJacobian:
 
     def moments(self, values, first, stop):
         m = self.mapping
-        pulled = np.einsum("cqa,cab->cqb", values, m.jacobians[first:stop].numpy())
-        flat = pulled.transpose(0, 2, 1).reshape(stop - first, -1)
-        out = np.empty((stop - first, m.interpolation.shape[0]), np.complex128)
+        values = torch.as_tensor(values)
+        pulled = torch.einsum("cqa,cab->cqb", values, m.jacobians[first:stop])
+        flat = pulled.transpose(1, 2).reshape(stop - first, -1)
+        moments = flat @ m.interpolation.T
         ids = m.packet["orientation_ids"][first:stop]
-        for orient in np.unique(ids):
-            mask = ids == orient
-            out[mask] = (self.operators[orient] @ flat[mask].T).T
-        return out
+        return torch.bmm(m.transforms[ids], moments[:, :, None])[:, :, 0].numpy()
 
     def point_dual(self, dual, first, stop):
         m = self.mapping
         rows = m.packet["owner_rows"][first:stop]
         selected = rows >= 0
-        full = np.zeros(rows.shape, np.complex128)
-        full[selected] = dual[rows[selected]]
+        full = torch.zeros(rows.shape, dtype=torch.complex128)
+        full[torch.as_tensor(selected)] = torch.as_tensor(dual[rows[selected]])
         ids = m.packet["orientation_ids"][first:stop]
-        flat = np.empty((stop - first, m.interpolation.shape[1]), np.complex128)
-        for orient in np.unique(ids):
-            mask = ids == orient
-            flat[mask] = (self.adjoints[orient] @ full[mask].T).T
-        pulled = flat.reshape(stop - first, 3, -1).transpose(0, 2, 1)
-        return np.einsum(
-            "cqb,cab->cqa", pulled, m.jacobians[first:stop].numpy().conjugate()
-        ).reshape(-1, 3)
+        moments = torch.bmm(m.transforms[ids].conj().transpose(1, 2), full[:, :, None])[
+            :, :, 0
+        ]
+        flat = moments @ m.interpolation.conj()
+        pulled = flat.reshape(stop - first, 3, -1).transpose(1, 2)
+        return (
+            torch.einsum("cqb,cab->cqa", pulled, m.jacobians[first:stop].conj())
+            .reshape(-1, 3)
+            .numpy()
+        )
 
     def forward(self, model, batch=8):
         out = np.empty(self.mapping.size, np.complex128)
         with torch.no_grad():
             for first, stop, xs, _, phase in self.chunks(model, batch):
                 w, b = self.weights[-1]
-                value = (xs[-1] @ w.T + b).reshape(-1, 3, 2)
+                value = torch.nn.functional.linear(xs[-1], w, b).reshape(-1, 3, 2)
                 value = torch.complex(value[..., 0], value[..., 1])
                 if phase is not None:
                     value *= phase[:, None]
@@ -204,13 +205,13 @@ class CachedMomentJacobian:
                 dx = torch.zeros_like(xs[0])
                 for k, index in enumerate((0, 2, 4, 6)):
                     prefix = f"envelopes.{index}."
-                    dx = (
-                        dx @ self.weights[k][0].T
-                        + xs[k] @ direction[prefix + "weight"].T
-                        + direction[prefix + "bias"]
+                    dx = torch.nn.functional.linear(
+                        dx, self.weights[k][0], None
+                    ) + torch.nn.functional.linear(
+                        xs[k], direction[prefix + "weight"], direction[prefix + "bias"]
                     )
                     if k != 3:
-                        dx *= ds[k]
+                        dx = torch.ops.aten.tanh_backward(dx, xs[k + 1])
                 dx = dx.reshape(-1, 3, 2)
                 value = torch.complex(dx[..., 0], dx[..., 1])
                 if phase is not None:
@@ -256,7 +257,9 @@ class CachedMomentJacobian:
                     grads[k][0].add_(dy.T @ xs[k])
                     grads[k][1].add_(dy.sum(0))
                     if k:
-                        dy = (dy @ self.weights[k][0]) * ds[k - 1]
+                        dy = torch.ops.aten.tanh_backward(
+                            dy @ self.weights[k][0], xs[k]
+                        )
             out = torch.cat([a.ravel() for pair in grads for a in pair]).numpy().copy()
         self.counts["VJP"] += 1
         self.costs["VJP"] += perf_counter() - started
