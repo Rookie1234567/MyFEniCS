@@ -1,0 +1,6 @@
+{
+  "schema": "task42extra.render-check.v9",
+  "status": "RENDERED_VIEW_PENDING_PUBLICATION",
+  "browser_visual_pass": false,
+  "reason": "new pages not yet pushed; actual browser capture will replace this pending record"
+}

@@ -1,3 +1,39 @@
+# Task42extra Review V8 后续：V9 当前结果导航
+
+本页首先给出最新状态；下方全部V1–V8历史原样保留，历史V7 p4 blocked不代表现状。V8已完成等价装配、合格p4参考、plain/phase无标签与条件监督对照及实际渲染。V9完整A–E也已执行，停止等待review。
+
+| 包 | 实际完成 / measured结果 | 边界 / 证据 |
+|---|---|---|
+| A | p5参考合格；唯一新增numeric；p4/p5仍有curl/H敏感性 | p_ladder_v9.md；p5_authority_v9.json |
+| B | GN/JVP/实伴随/K/真实C500/batch/事务资格通过 | gn_checks_v9.json；targeted_tests_v9.json |
+| C | plain与phase均正常预算冻结；原p3未解合格；GN信号false | pde_comparison_v9.json；inner_solver_history_v9.json |
+| D | 条件自动触发；两条独立监督FIT-GN均正常预算冻结；三项1%门限未过 | fit_comparison_v9.json；D权重不反馈C |
+| E | 独立q15/q30重建、FE compare-only、原字段checker通过；渲染另列 | gate_decisions_v9.json；run_index_v9.json |
+
+| 路线，原V1同p3评分 | native / augmented | 散射E L2 | 散射curl/H | E_G | 独立能量闭合 | 结论 |
+|---|---|---|---|---|---|---|
+| V9-PLAIN-DAMPED-GN | 1.0285051156 / 1.0285051156 | 0.9989232163 | 0.9989423061 | 0.99894183584 | 0.4157492147 | 无标签未合格 |
+| V9-PHASE-DAMPED-GN | 1.0187461988 / 1.0187461988 | 0.43715907484 | 0.43778332738 | 0.43776795997 | 0.12094192809 | 无标签未合格 |
+| V9-PLAIN-FIT-GN-DIAGNOSTIC | 11.001030573 / 11.001030573 | 0.068217087643 | 0.1000521103 | 0.09939045116 | 0.014917309507 | 监督表示门限未过 |
+| V9-PHASE-FIT-GN-DIAGNOSTIC | 0.8082166866 / 0.8082166866 | 0.014403534682 | 0.013024032447 | 0.013059766413 | 0.0028868109962 | 监督表示门限未过 |
+
+严格 native/augmented/原total≤1e-6，场/复通道≤1e-4，功率/独立能量≤1e-5、逐级功率≤1e-6，均未放宽。D的G/L2/curl三项均≤1e-3/1e-2才是表示正/部分见证；本轮未过。
+
+| 当前导航 | 内容 |
+|---|---|
+| [Response V9](../response_v9.md) | 身份/实际source/结论/资源/下一步 |
+| [p5与p序列](p_ladder_v9.md) | 准确参考、p4/p5具体未过量和释放生命周期 |
+| [完整GN结果](damped_gn_v9.md) | 原残差、全场/六点/40复通道/功率/区域、共同时间、Gram与PC |
+| [Gate](records/gate_decisions_v9.json) | 从原字段独立重算，严格/研究/表示分别判定 |
+| [资源](records/resource_costs_v9.json) | 历史74341.02060587064s+本批真实新增；含全部失败和未提交试探 |
+| [run index](records/run_index_v9.json) | 所有14正式attempt与12个完成stage的source/输入/packet/状态hash |
+| [渲染](records/render_check_v9.json) | 新Review及关键页实际浏览器状态；不等同结构检查 |
+| [目标5nm计划](target_5nm_scale_plan.md) | 历史容量设计保留；目标尺寸/0.7nm仍未运行 |
+
+候选功率均diagnostic，未取得神经增量或production资格。p5只是REFERENCE_ONLY，C/D仍按原p3评分。
+
+下一轮仅建议先资格化等价的分块切线/激活复用：在这四个已冻结状态上做有界 JVP/VJP 配对与计时，保持原矩、参数导数和目标完全不变，再决定是否值得开展同预算 GN 对照。本轮实测 JVP＋VJP 占 C 新段约90%、D约97%–98%，是可定位的主要费用；该建议不授权继续训练、换 loss/PC、扩大模型或放宽门限。
+
 # Task42extra Review V6 后续：V7 p4装配受控停止
 
 本轮完成了同网格 p3→p4 的完整场/旋度嵌入、原算子配对与数组容量资格，但唯一 p4 参考在装配阶段耗尽数值工作窗口，状态 **P4_REFERENCE_TIME_BLOCKED**。没有获得 p4 参考场，因此未启动 p3/p4 比较，不能判断阶次变化大小。已按预算主动请求自有 watchdog 停止，原因明确；这不是 OOM 或 p4 精度失败证据。
@@ -521,3 +557,15 @@ C source bc052a3744528277f00a7a9a5566aa4a6d7393ed；p4 actualsource d0b82d7a165b
 后续只建议一项设计：在原M5/p3和同8966参数的plain/单相位表示上，预登记受控的网络参数空间Gauss–Newton信赖域对照。它用局部线性近似决定一次参数更新，并限制更新范围，检验当前非凸残差优化是否为瓶颈；仍从零、无标签，保持原Riesz目标/严格验收，不用Maxwell逆或监督权重。先核定JVP/VJP、A/A*、Gsolve、工作内存和完整成本上限，再由新review授权；本批没有实现或启动新优化器、PDE微调、多载波、p5/h细化或更大模型。
 
 证据：[Response V8](../response_v8.md)、[authority](authority_recovery_v8.md)、[phase完整对照](phase_feinn_v8.md)、[设计/白名单](records/campaign_design_v8.json)、[维修](records/repair_log_v8.json)、[Gate](records/gate_decisions_v8.json)、[PDE CSV](records/PDE_comparison_v8.csv)、[D CSV](records/representation_comparison_v8.csv)、[GitHub actual view](records/render_check_v8.json)。同物理量完整分母、原始复样本和40级复通道/功率不省略到单一R/T。
+
+# V9 完整执行归档
+
+| 包 | 实际完成 / measured结果 | 边界 / 证据 |
+|---|---|---|
+| A | p5参考合格；唯一新增numeric；p4/p5仍有curl/H敏感性 | p_ladder_v9.md；p5_authority_v9.json |
+| B | GN/JVP/实伴随/K/真实C500/batch/事务资格通过 | gn_checks_v9.json；targeted_tests_v9.json |
+| C | plain与phase均正常预算冻结；原p3未解合格；GN信号false | pde_comparison_v9.json；inner_solver_history_v9.json |
+| D | 条件自动触发；两条独立监督FIT-GN均正常预算冻结；三项1%门限未过 | fit_comparison_v9.json；D权重不反馈C |
+| E | 独立q15/q30重建、FE compare-only、原字段checker通过；渲染另列 | gate_decisions_v9.json；run_index_v9.json |
+
+实际数值、source、资源和失败项分别由上述新页与compact记录承载；本轮不删旧负结果、不改任务或review、不merge。

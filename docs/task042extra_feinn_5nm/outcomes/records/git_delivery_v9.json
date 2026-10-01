@@ -1,0 +1,13 @@
+{
+  "schema": "task42extra.git-delivery.v9",
+  "status": "PREPUBLICATION_SNAPSHOT",
+  "implementation_HEAD": "556cb3e608db21c5a2fd44cb97cc553ae5d70e5f",
+  "branch": "task42extra_feinn_5nm",
+  "explicit_tracking_ref": "refs/remotes/origin/task42extra_feinn_5nm",
+  "original_base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "publication_pending": true,
+  "formal_stages_complete": 12,
+  "all_formal_attempts_closed": 14,
+  "tree_clean_now": false,
+  "final_status_reported_after_push": true
+}

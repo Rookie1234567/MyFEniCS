@@ -1,0 +1,86 @@
+{
+  "schema": "task42extra.authority-preservation.v9",
+  "release_sha": "678a1ef5ed5aba9334f05569a6dec04c80e21be4",
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "c20842f43aeecedd6c89f89afc5f602bce546e1245bcbeacd72dbec4ec92a19b",
+      "identical_to_release": true
+    },
+    {
+      "path": "docs/AGENTS.md",
+      "sha256": "11c40619930fd6a7c6e11db84389a2807aea2790a496bc3ab784d677d7528a0a",
+      "identical_to_release": true
+    },
+    {
+      "path": "docs/repository_work_principles.md",
+      "sha256": "223c7883951eec6b79aca7c66472d315f547012bc34085534309b1bb0235a6d0",
+      "identical_to_release": true
+    },
+    {
+      "path": "docs/markdown_rendering_standard.md",
+      "sha256": "e8881d0a7a1b3eb96da805831c8553990a1b4467311e998392aaceaf2175641d",
+      "identical_to_release": true
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/AGENTS.md",
+      "sha256": "a5be69d581d512112f47daa7726aa041dd5f74ce55176ece20a97e49c7759fd9",
+      "identical_to_release": true
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/README.md",
+      "sha256": "3b4594d73ea3a8e87e3d98619b67a365186040aac9ccc14eedca833bbaa1ef4d",
+      "identical_to_release": true
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/task.md",
+      "sha256": "ab20e72a8b50d6617c156834f15bb221cdebf2cbcc08cfe89d801c8f4a16e94a",
+      "identical_to_release": true
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/response_v8.md",
+      "sha256": "73af4f08cdcf88d78c73b44ff9befb9a441d94bdcacc938881751f935cb65541",
+      "identical_to_release": true
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/review_report_v1.md",
+      "sha256": "95bc06097c73748d5e261a598a02e87d216dfb5f1eaca9ee7bab3948a8929c96",
+      "identical_to_release": true
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/review_report_v2.md",
+      "sha256": "1d49b8bd2538e2c7a9a41ca3676ff713cfc55286cc4e1f408881d317f7dcce28",
+      "identical_to_release": true
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/review_report_v3.md",
+      "sha256": "b7f77fabaa16831b547a8d74cb52bc96a1d7fa2b629910a06fcb02a5f5211370",
+      "identical_to_release": true
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/review_report_v4.md",
+      "sha256": "152d03e13e21d256fc1fbb1e110143cd86e0dda3dfdf11609f5c348fbbe53f46",
+      "identical_to_release": true
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/review_report_v5.md",
+      "sha256": "8d6450708c2bcba2d28a7a7c3899dd428bc1092cc0b811ab473553481864c8f1",
+      "identical_to_release": true
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/review_report_v6.md",
+      "sha256": "373b67b1450cc8db6d3eb82f4c892a0986c8f7650a98447cb0ba94b0021deadb",
+      "identical_to_release": true
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/review_report_v7.md",
+      "sha256": "a7393edbee50897861ab1aa3356972188ea29103071c78021045c15d6549f06e",
+      "identical_to_release": true
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/review_report_v8.md",
+      "sha256": "265aa38b2f63be5f722e8198d30953182ee7a05b0763f5c9814e7603c0793b47",
+      "identical_to_release": true
+    }
+  ]
+}

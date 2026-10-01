@@ -148,3 +148,18 @@ V2实现提交 `19c725efd27ae5daedba8e77d2ad98375711bb71` 绑定D0/D1/D2正式�
 | do-not-merge | venv/cache、CSR/native/G/矩、PT/NPZ/optimizer/history、tmux socket、Firefox profile/截图 | ignored大数组；D权重禁止反馈C、旧路线、Task042或0.7nm，无master merge approval |
 
 具体路径、每组依赖、源码SHA和资格入口见[publication manifest](records/publication_manifest_v8.json)。先审数值core，再opt-in runner/inputs，再checker，最后compact文档；所有组件均待review，不能整支线自动merge。没有p5/h细化/更多端口/多载波/目标尺寸计算。
+
+## Review V8 后续 V9 文件级边界
+
+本批增加准确p5审计和全参数GN研究路径。source提交均在正式run前clean；完整修改列表由Review发布到本轮Git diff核对，旧task/review/规则不改。
+
+| 依赖组 / 建议顺序 | 文件与数值行为 | 对应资格 / 合并边界 |
+|---|---|---|
+| production numerical/core（候选，未批准） | feinn_exact_condensation.py、feinn_bounded_field_integrals.py、feinn_reference.py显式reduced_system；feinn_native.py≤8cell等价作用；默认数学不变 | 新p5/full配对/独立作用/参考Gate；先审查通用核，不能整枝合并 |
+| reusable runner/watchdog | feinn_workflow.py、feinn_gn_campaign.py、durable入口白名单/预算/真实source；既有监督与原子保存复用 | targeted FE无Torch分派、事务/预算测试和每run清场；再审查编排 |
+| checker/benchmark | check_task42extra_v9.py；V8 CSV writer只增加version参数默认8；docs/render checker显式version9 | 原字段Gate/故意损坏见证、Ruff/compileall、实际渲染；不重新实现求解 |
+| compact evidence/docs | response9、p_ladder9、damped_gn9、records、summary当前导航、progress/registry/tests | 原始数值/失败/费用/hash保留，可独立审阅；无生产通过声明 |
+| research-only | feinn_parameter_jvp.py、damped_gauss_newton.py、feinn_gn_training.py、新one-run dat与相位比较扩展 | 小/真实GN资格和负结果；不进入ordinary default或自动为其他物理初始化 |
+| do-not-merge | ignored fullFE/矩阵/因子、PC基、全部模型/optimizer/checkpoint、完整资源日志/cache | 本地hash索引；不提交大数组，不迁入production训练权重 |
+
+未来selective merge只能按依赖组取经过审查的最小文件；当前没有merge approval。授权只推送本任务分支，不改Task042历史或其他worktree。

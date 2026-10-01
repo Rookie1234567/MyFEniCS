@@ -68,6 +68,13 @@
       "change": "read path or original summary_path",
       "numerical_replay": false,
       "resolved": true
+    },
+    {
+      "failure": "post-freeze console inspection expected errors key; new raw schema stores comparisons",
+      "change": "read original schema; dependent shells use set -e; gate/launcher independently confirmed C closed and D trigger",
+      "numerical_candidate_failure": false,
+      "numerical_replay": false,
+      "resolved": true
     }
   ]
 }

@@ -1,0 +1,166 @@
+{
+  "schema": "task42extra.uncommitted-work.v9",
+  "rows": [
+    {
+      "stage": "v9_plain_gn",
+      "source_sha": "bc4ecb2192e687273926e1d1f0ce5e7df4b78542",
+      "index_sha256": "df4bb93f3ad6955c4318511db9a7f70bd3694cb3d0cad39ffcf1f1eb5e8c6bd6",
+      "history_sha256": "36bf89e69577bd7c819bcb0b6ee90d29481b0cb88905e83d9881a0bc6bd7f07e",
+      "accepted_outer": 29,
+      "last_complete_accepted_counts": {
+        "K": 2431,
+        "full_loss_gradient": 29,
+        "trial_loss": 37,
+        "G_matvec": 0
+      },
+      "all_spent_final_counts": {
+        "K": 2449,
+        "full_loss_gradient": 30,
+        "trial_loss": 37,
+        "G_matvec": 0
+      },
+      "uncommitted_K_actions": 18,
+      "PC_completed_builds": 2,
+      "uncommitted_inner_subphase": "NOT_RETAINED: no per-K stack/subphase log; do not claim completed PC or discard partial work",
+      "JVP_VJP_nested_seconds": {
+        "JVP": 4462.91576683009,
+        "VJP": 4117.151216288446
+      },
+      "GN_nested_seconds": {
+        "K": 9338.640174707514,
+        "gradient": 66.97385660861619,
+        "trial_loss": 28.62963189603761
+      },
+      "native_nested_seconds": {
+        "A": 71.25566919799894,
+        "AH": 133.0965743487468,
+        "audit": 0.5256019207881764,
+        "port_solve": 0.1167069097282365
+      },
+      "frozen_initial_E_G": null,
+      "failure": null,
+      "stop_reason": "WALL_BUDGET_SAVE_RESERVE"
+    },
+    {
+      "stage": "v9_phase_gn",
+      "source_sha": "ebff76949c78560187d836830483172faf0cfc9a",
+      "index_sha256": "228af99d1f91ce7f9366784447182e60f4185b122f7e656ffa203c4aae6319c2",
+      "history_sha256": "2e07a01d17bee4a730b81c8ef10e1d43e341d63a903206507998c50417c5ec2a",
+      "accepted_outer": 54,
+      "last_complete_accepted_counts": {
+        "K": 1893,
+        "full_loss_gradient": 54,
+        "trial_loss": 75,
+        "G_matvec": 0
+      },
+      "all_spent_final_counts": {
+        "K": 1923,
+        "full_loss_gradient": 55,
+        "trial_loss": 75,
+        "G_matvec": 0
+      },
+      "uncommitted_K_actions": 30,
+      "PC_completed_builds": 0,
+      "uncommitted_inner_subphase": "NOT_RETAINED: no per-K stack/subphase log; do not claim completed PC or discard partial work",
+      "JVP_VJP_nested_seconds": {
+        "JVP": 4493.73634330905,
+        "VJP": 4017.7333797198953
+      },
+      "GN_nested_seconds": {
+        "K": 9133.270083597861,
+        "gradient": 162.35916741832625,
+        "trial_loss": 71.78388416056987
+      },
+      "native_nested_seconds": {
+        "A": 65.21908186539076,
+        "AH": 120.0085514523089,
+        "audit": 0.8786062112776563,
+        "port_solve": 0.08726942702196538
+      },
+      "frozen_initial_E_G": null,
+      "failure": null,
+      "stop_reason": "WALL_BUDGET_SAVE_RESERVE"
+    },
+    {
+      "stage": "v9_plain_fit_gn",
+      "source_sha": "556cb3e608db21c5a2fd44cb97cc553ae5d70e5f",
+      "index_sha256": "c0b8b43b890c68690ec99d2dabac3b40bec98586c1048e200c2e9fda06c525ea",
+      "history_sha256": "93c68abe6cc8aa8358c226101b68b21abd92ee295be4e76070f1607f5a4f6440",
+      "accepted_outer": 6,
+      "last_complete_accepted_counts": {
+        "K": 210,
+        "full_loss_gradient": 6,
+        "trial_loss": 7,
+        "G_matvec": 210
+      },
+      "all_spent_final_counts": {
+        "K": 265,
+        "full_loss_gradient": 7,
+        "trial_loss": 8,
+        "G_matvec": 265
+      },
+      "uncommitted_K_actions": 55,
+      "PC_completed_builds": 0,
+      "uncommitted_inner_subphase": "NOT_RETAINED: no per-K stack/subphase log; do not claim completed PC or discard partial work",
+      "JVP_VJP_nested_seconds": {
+        "JVP": 1347.3866596127627,
+        "VJP": 1028.8909497412387
+      },
+      "GN_nested_seconds": {
+        "K": 2366.6885755141266,
+        "gradient": 37.19402619788889,
+        "trial_loss": 11.866442478843965
+      },
+      "native_nested_seconds": {
+        "A": 0.0,
+        "AH": 0.0,
+        "audit": 0.4147914042696357,
+        "port_solve": 0.0002457610098645091
+      },
+      "frozen_initial_E_G": 0.20082113406866917,
+      "failure": null,
+      "stop_reason": "WALL_BUDGET_SAVE_RESERVE"
+    },
+    {
+      "stage": "v9_phase_fit_gn",
+      "source_sha": "556cb3e608db21c5a2fd44cb97cc553ae5d70e5f",
+      "index_sha256": "b4b773475d285dda68adc48f63cfde8a9c25d0b4d69f39bd93b8e7fdb2337d4e",
+      "history_sha256": "32607cee2b5261bc1b2f33c0018ee69c6bcb812c21be774f34da83bef824b9ab",
+      "accepted_outer": 4,
+      "last_complete_accepted_counts": {
+        "K": 144,
+        "full_loss_gradient": 4,
+        "trial_loss": 4,
+        "G_matvec": 144
+      },
+      "all_spent_final_counts": {
+        "K": 247,
+        "full_loss_gradient": 5,
+        "trial_loss": 4,
+        "G_matvec": 247
+      },
+      "uncommitted_K_actions": 103,
+      "PC_completed_builds": 0,
+      "uncommitted_inner_subphase": "NOT_RETAINED: no per-K stack/subphase log; do not claim completed PC or discard partial work",
+      "JVP_VJP_nested_seconds": {
+        "JVP": 1340.2518669685815,
+        "VJP": 1018.4803057126701
+      },
+      "GN_nested_seconds": {
+        "K": 2354.9888008394046,
+        "gradient": 29.260408654110506,
+        "trial_loss": 4.925354833132587
+      },
+      "native_nested_seconds": {
+        "A": 0.0,
+        "AH": 0.0,
+        "audit": 0.16210544493515044,
+        "port_solve": 0.00011281506158411503
+      },
+      "frozen_initial_E_G": 0.014599322211743974,
+      "failure": null,
+      "stop_reason": "WALL_BUDGET_SAVE_RESERVE"
+    }
+  ],
+  "interpretation": "Work after last DURABLE_ACCEPTED is measured by counter difference; internal PC/CG allocation is not retained. Matching parameters/optimizer rolled back, all costs preserved; no numerical replay performed."
+}

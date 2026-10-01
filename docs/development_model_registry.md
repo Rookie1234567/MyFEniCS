@@ -1735,6 +1735,24 @@ M5/5nm/384hex/双Floquet/40port原材料和边界不变；C/D p3/q15/31968独立
 
 详见[Response V8](task042extra_feinn_5nm/response_v8.md)、[相位完整对照](task042extra_feinn_5nm/outcomes/phase_feinn_v8.md)、[authority](task042extra_feinn_5nm/outcomes/authority_recovery_v8.md)、[run/source](task042extra_feinn_5nm/outcomes/records/run_index_v8.json)、[最终资源账](task042extra_feinn_5nm/outcomes/records/resource_costs_v8.json)。完成授权矩阵后只推送当前分支并等待review。
 
+## 3.44.8 Task42extra Review V8 后续：p5与全参数阻尼GN
+
+保持M5/5nm/384hex/h1.25/Si-air缺口/双Floquet/40端口/q15。p5只作REFERENCE_ONLY；NN全部31968复FE和8966实参数保持。
+
+| 模型/路线，measured | 独立复FE | native | R/T/A_balance | A_volume | 状态 |
+|---|---|---|---|---|---|
+| p5准确参考 | 146400 | 1.22906042e-11 | 0.8086618208 / 0.03324394553 / 0.1580942337 | 0.1580942337 | REFERENCE_QUALIFIED；p4/p5 curl/H敏感 |
+| V9-PLAIN-DAMPED-GN | 31968 | 1.0285051156 | 0.83742149248 / 0.11324361848 / 0.049334889034 | 0.46508410374 | diagnostic，原方程未合格 |
+| V9-PHASE-DAMPED-GN | 31968 | 1.0187461988 | 0.79552935118 / 0.056384531239 / 0.14808611758 | 0.26902804567 | diagnostic，原方程未合格 |
+| V9-PLAIN-FIT-GN-DIAGNOSTIC | 31968 | 11.001030573 | 0.82174534833 / 0.036121409888 / 0.14213324178 | 0.15705055129 | diagnostic，参考暴露表示未达门限 |
+| V9-PHASE-FIT-GN-DIAGNOSTIC | 31968 | 0.8082166866 | 0.81034611294 / 0.032231395236 / 0.15742249183 | 0.15453568083 | diagnostic，参考暴露表示未达门限 |
+
+p4/p5散射L2/curl差2.15910e-4/1.17945e-3，六点total H差1.40896e-3；通道/逐级功率过本次p差门限，但非连续/h/端口收敛。四条GN的R00_s/p/total、完整四类40通道与区域见[GN结果](task042extra_feinn_5nm/outcomes/damped_gn_v9.md)及CSV。
+
+新C source分别bc4ecb2192e687273926e1d1f0ce5e7df4b78542/ebff76949c78560187d836830483172faf0cfc9a，D与独立审核source556cb3e608db21c5a2fd44cb97cc553ae5d70e5f；p5参考sourceee295a30c2631a8f019ba3e435b83d211ea051a7。峰值数值树7190847488B，自身swap0、MPI1/CPU-only/单线程。
+
+本页冻结新增账25370.493464s，旧74341.02060587064s及旧失联/重放保留；后续尾段更新[最终资源账](task042extra_feinn_5nm/outcomes/records/resource_costs_v9.json)。未取得严格解、GN研究信号、监督1%表示见证或神经增量；不是生产0.7nm能力。
+
 # 4. 今后新增模型的登记模板
 
 每次正式计算至少新增一行主表，并按可用性新增衍射级和复振幅表。

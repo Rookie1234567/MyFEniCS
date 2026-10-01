@@ -134,3 +134,19 @@ C1资格对应实际源码76d863e43d2fc1b5bed8b1c835aa6f43bb2c93d2；C2资格对
 | Ruff/compileall/Markdown/GitHub | 按本轮source/日志/DOM记录分别核对 | 只改文件/新页，不full pytest或CI声明 |
 
 首次profile JSON复数、Ruff环境位置/unused import/format错误都保留失败成本，定位后最小修复及定向重试，非物理或ABI失败。FE复杂scalar complex128/int64与未导入Torch复用并轻量确认；无重装。所有轻测试/浏览器受自身监督≤2GiB、swap0，长数值MPI1/数学Torch1/CPU-only/单空闲物理核/树warn12-hard16GiB。实际测试文件/bytes/log/summary hash见[tests](records/targeted_tests_v8.json)，[Gate](records/gate_decisions_v8.json)，[资源账](records/resource_costs_v8.json)。本地Markdown与[GitHub实际DOM/抽样截图](records/render_check_v8.json)不互相冒充。
+
+## Review V8 后续 V9 定向资格
+
+复用已资格化环境与原完整矩/资源保全证据，只检验新增部分；未full pytest或重装。
+
+| 检查 | 结果/具体范围 | 证据 |
+|---|---|---|
+| FE/ABI与p5新增 | complex128/int64/MPI1；20个目标测试；小凝聚/full、MPC、独立能量及真实p5A/AH | records/targeted_tests_v9.json；p5_authority_v9.json |
+| GN小模型 | 12个独立合成/事务测试；复非Hermitian显式J/K、非线性曲率、PC/SPD、保存加载 | 同上 |
+| 真实B资格 | 两C500完整c/原loss/native、3非零JVP方向/伴随/K、batch1/8/固定buffer | records/gn_checks_v9.json |
+| E派发及共同时间 | 5个FE/metadata/PC检查；FE阻止Torch导入；1个ML持久runner fixture | records/targeted_tests_v9.json |
+| 最终checker修改 | 2个原字段checker测试、Ruff/compileall；全部V9原字段checker成功 | records/targeted_tests_v9.json；gate_decisions_v9.json |
+| 独立最终复验 | 四条q15从参数重建相同；q30≤1.85e-12；全域/区域G范数恒等式≤6.17e-14 | PDE/FIT比较记录 |
+| 文档与浏览器 | 新页结构检查与GitHub实际渲染分开；实际状态以记录为准 | records/render_check_v9.json |
+
+lint失败两个未使用名称已局部修复，成本保留。以上是本地证据，不声称CI；数值负结果不改成测试失败或PDE通过。

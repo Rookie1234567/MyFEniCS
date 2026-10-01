@@ -3133,3 +3133,32 @@ U0完整跨阶/原action≤1e-10，p4测得75264独立复FE/40端口；唯一参
 M5/5nm/384hex/双Floquet/40port原材料和边界不变；C/D p3/q15/31968独立复FE，A p4/75264。native/场/功率strict门限不放宽，所有候选功率diagnostic。旧保守49007.27663535159s及失联/重放永久保留，新增12h独立预算；freshGramB1+C2，全部已计费释放。数值source bc052a3744528277f00a7a9a5566aa4a6d7393ed，p4source d0b82d7a165be89d9fa90b03be3151db9a9c3869，文档HEAD独立。保护邻任务、单物理核、树16GiB/轻2GiB、自身swap0；不p5/h/更多port/大模型或master merge。
 
 详见[Response V8](task042extra_feinn_5nm/response_v8.md)、[相位完整对照](task042extra_feinn_5nm/outcomes/phase_feinn_v8.md)、[authority](task042extra_feinn_5nm/outcomes/authority_recovery_v8.md)、[run/source](task042extra_feinn_5nm/outcomes/records/run_index_v8.json)、[最终资源账](task042extra_feinn_5nm/outcomes/records/resource_costs_v8.json)。完成授权矩阵后只推送当前分支并等待review。
+
+## 2026-10-01 Task42extra V9：p5与全参数阻尼GN
+
+V8已取得合格p4并发现p敏感性；两种网络仍未解出同p3，且原L-BFGS后段是否是优化瓶颈不清楚。本轮保留模型和各自无标签Adam500，改用预测残差变化并验证真实下降的全参数GN；独立追加p5审计，失败时自动做隔离监督目标。
+
+| 包 | 实际完成 / measured结果 | 边界 / 证据 |
+|---|---|---|
+| A | p5参考合格；唯一新增numeric；p4/p5仍有curl/H敏感性 | p_ladder_v9.md；p5_authority_v9.json |
+| B | GN/JVP/实伴随/K/真实C500/batch/事务资格通过 | gn_checks_v9.json；targeted_tests_v9.json |
+| C | plain与phase均正常预算冻结；原p3未解合格；GN信号false | pde_comparison_v9.json；inner_solver_history_v9.json |
+| D | 条件自动触发；两条独立监督FIT-GN均正常预算冻结；三项1%门限未过 | fit_comparison_v9.json；D权重不反馈C |
+| E | 独立q15/q30重建、FE compare-only、原字段checker通过；渲染另列 | gate_decisions_v9.json；run_index_v9.json |
+
+| 路线，原V1同p3评分 | native / augmented | 散射E L2 | 散射curl/H | E_G | 独立能量闭合 | 结论 |
+|---|---|---|---|---|---|---|
+| V9-PLAIN-DAMPED-GN | 1.0285051156 / 1.0285051156 | 0.9989232163 | 0.9989423061 | 0.99894183584 | 0.4157492147 | 无标签未合格 |
+| V9-PHASE-DAMPED-GN | 1.0187461988 / 1.0187461988 | 0.43715907484 | 0.43778332738 | 0.43776795997 | 0.12094192809 | 无标签未合格 |
+| V9-PLAIN-FIT-GN-DIAGNOSTIC | 11.001030573 / 11.001030573 | 0.068217087643 | 0.1000521103 | 0.09939045116 | 0.014917309507 | 监督表示门限未过 |
+| V9-PHASE-FIT-GN-DIAGNOSTIC | 0.8082166866 / 0.8082166866 | 0.014403534682 | 0.013024032447 | 0.013059766413 | 0.0028868109962 | 监督表示门限未过 |
+
+p5准确凝聚恢复146400全部独立复FE，残差1.23e-11、体能量7.03e-13；p4/p5散射L2差2.16e-4而curl/H仍略过1e-3。C终态native约1.02851/1.01875，场与能量远未合格；共同时间残差改善约1.009/1.265倍，未达10倍研究信号。D phase比plain更容易近似场，但三项仍未过1%，未能确证表示成功或数学不可表示。
+
+四条均正常保存预留停止，非OOM/失联；两次小资格与一次lint失败自主修复，费用保留。导数和内层作用占主要时间，准确Gram因子仍存在且完整收费。
+
+本页冻结新增保守账25370.493464s（约7.0473592956h），旧账74341.02060587064s全部保留，累计99711.51407s。旧失联3284s和重放未删。后续浏览器、检查器及交付尾段补记[最终资源JSON](task042extra_feinn_5nm/outcomes/records/resource_costs_v9.json)，不改本页数据冻结快照；旧Adam前缀计入各逻辑路径，不在全项目账重复收费。
+
+下一轮仅建议先资格化等价的分块切线/激活复用：在这四个已冻结状态上做有界 JVP/VJP 配对与计时，保持原矩、参数导数和目标完全不变，再决定是否值得开展同预算 GN 对照。本轮实测 JVP＋VJP 占 C 新段约90%、D约97%–98%，是可定位的主要费用；该建议不授权继续训练、换 loss/PC、扩大模型或放宽门限。
+
+[Response V9](task042extra_feinn_5nm/response_v9.md)、[p序列](task042extra_feinn_5nm/outcomes/p_ladder_v9.md)、[GN完整结果](task042extra_feinn_5nm/outcomes/damped_gn_v9.md)与[summary](task042extra_feinn_5nm/outcomes/summary.md)保留全部实际数据、source与限制。普通默认、目标尺寸5nm/0.7nm与合并资格未提升。

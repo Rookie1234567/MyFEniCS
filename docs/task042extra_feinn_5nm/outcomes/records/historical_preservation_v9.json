@@ -1,0 +1,12 @@
+{
+  "schema": "task42extra.historical-preservation.v9",
+  "authority_release": "678a1ef5ed5aba9334f05569a6dec04c80e21be4",
+  "previous_text_sha256": {
+    "docs/task042extra_feinn_5nm/outcomes/summary.md": "28511dc3cd24004817d56b704323acfa813a1a915affd5cdcd32a1636342c2e8",
+    "docs/task042extra_feinn_5nm/outcomes/test_summary.md": "7ca7ef25dce62a0806c94a4bd9656c7023da0537414d98a6e648e5181f1ed78d",
+    "docs/development_progress.md": "770c4f88c99ecd60aa1f2b9ec2bbd507c78fea540111d30d6d996ad066617c20",
+    "docs/development_model_registry.md": "22f8da646669bcc5aad2046734f9e917b39568fc11cdd16f1af07a57064b2167",
+    "docs/task042extra_feinn_5nm/outcomes/changed_files.md": "8693a4439df9be83524f37e5e8adc9c85d34b15b4471006180418333c8ac0312"
+  },
+  "summary_original_text_retained_verbatim": true
+}
