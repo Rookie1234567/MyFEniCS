@@ -31,6 +31,14 @@ def test_full3d_identity_and_notch_contract_retains_interior_and_all_aliases():
     assert "self.apply(source.getArray(readonly=True))" in source
 
 
+def test_phi5_is_a_bounded_real_bloch_case_with_unchanged_notch_gate():
+    runner = (ROOT / "benchmarks/run_y_orbit_reference_probe.py").read_text()
+    source = (ROOT / "src/solvers/task40extra_y_orbit_reference.py").read_text()
+    assert "args.azimuth not in (0.0, 5.0)" in runner
+    assert 'label == "physical" and packet["nonzero_q_primal_relative"]' in source
+    assert 'abs(complex(cfg.ky).imag)' in source
+
+
 @pytest.mark.skipif(not os.environ.get("Y_ORBIT_PILOT_EVIDENCE"), reason="parent-approved numerical pilot evidence not supplied")
 def test_actual_full3d_pilot_evidence_is_independently_checked():
     from benchmarks.check_y_orbit_reference_probe import check

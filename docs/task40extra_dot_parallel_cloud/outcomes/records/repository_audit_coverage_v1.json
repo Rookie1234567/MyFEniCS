@@ -1,0 +1,1542 @@
+{
+  "schema_version": 1,
+  "status": "read_only_audit_complete_no_new_numerics",
+  "repository": "Rookie1234567/MyFEniCS",
+  "snapshot_utc": "2026-10-01T11:17:00Z",
+  "default_branch": "master",
+  "goal": {
+    "deadline_utc": "2026-10-04T10:07:14Z",
+    "paired_project": "MyFEniCSx_task37_extra",
+    "large_run_executor": "user",
+    "remote_updates": "autonomous read-only main branch delta checks; unchanged HEAD does not imply idle"
+  },
+  "branch_heads": [
+    {
+      "branch": "codex/20260714-task32-hybrid-fem-modal-direct-baseline",
+      "commit": "20b433c69578ac2074af5035e57da3653f669d8a"
+    },
+    {
+      "branch": "ChatGPT/20260715-para-task-neural-local-pc",
+      "commit": "d91652dd2d611d6d6bedd10e677c3f7030c07d4f"
+    },
+    {
+      "branch": "chatgpt/20260726-development-model-registry-backfill",
+      "commit": "1b98cd9df2b145528673303af3c41d7ade508df5"
+    },
+    {
+      "branch": "agent/wsl-environment-qualification",
+      "commit": "a90b38a0741ac644682196f274cf43fe684097d9"
+    },
+    {
+      "branch": "chatgpt/20260827-task40-parallel-floquet-envelope-hcurl",
+      "commit": "8481b78ea8b4f23f19995344886a5c40e3ab3ce8"
+    },
+    {
+      "branch": "codex/20260715-task33-high-order-floquet-hybrid-hp",
+      "commit": "625255c6e056c3c66ea31330db78eda61e94ac96"
+    },
+    {
+      "branch": "codex/20260717-task34-workstation-wsl-adaptive-scalability",
+      "commit": "70e8b48e8d5aac3ef39db4ae4d69ddabe29ec280"
+    },
+    {
+      "branch": "codex/20260721-task35-hcurl-goal-oriented-adaptivity",
+      "commit": "81c714b236e9c362df8783382f1d40a5cd888cd5"
+    },
+    {
+      "branch": "codex/20260723-task35b-high-order-local-hp-resource-envelope",
+      "commit": "a810a13b96fa1f4cf1af57ee58b34a84f7ef7d90"
+    },
+    {
+      "branch": "codex/20260726-task35b-high-order-local-hp-resource-envelope",
+      "commit": "ac7bbc03dbf5d63ad5b26a2ca32aec5c09c2e710"
+    },
+    {
+      "branch": "codex/20260726-task35d-goal-oriented-exact-sequence-hp-adaptivity",
+      "commit": "4128100816ff262320370edac2bf91d88554ce31"
+    },
+    {
+      "branch": "codex/20260726-task35b-selective-integration",
+      "commit": "06c3e95eda2a0239ac23ecd4df5e7e7687c5bb25"
+    },
+    {
+      "branch": "codex/20260730-task35e-docs-only-closeout",
+      "commit": "3f334313a55786778de70965585bcaef7c997e89"
+    },
+    {
+      "branch": "codex/20260726-task35c-hybrid-channel-memory-closure",
+      "commit": "900260556ba9a74bc631e8295b08fc1487bd5abc"
+    },
+    {
+      "branch": "codex/20260728-task35e-reference-blind-multilevel-hp-adaptivity",
+      "commit": "f0f10be9268ca9348ed7f40fb2237fbcd5474252"
+    },
+    {
+      "branch": "codex/20260803-task37-matrix-free-iterative-development",
+      "commit": "d8b16c349f7726b4873ce1932668c12a1ba78926"
+    },
+    {
+      "branch": "codex/20260806-task37-iterative-extra-development",
+      "commit": "b8785c53ce12986aa5a63300038c80c7d0ad1798"
+    },
+    {
+      "branch": "codex/20260730-task36-forward-solver-bugfix-hardening",
+      "commit": "7a0334008dc9bbdeefe55dd0ffa535cc756e661c"
+    },
+    {
+      "branch": "codex/20260810-task37c-hybrid-iterative-robustness",
+      "commit": "f82cfe1186ded74e19b5bc8ebb374b6401d46d0a"
+    },
+    {
+      "branch": "codex/20260807-task37b-hybrid-iterative-development",
+      "commit": "00293d95419f0435407c04bc5312ed1e61e20415"
+    },
+    {
+      "branch": "codex/20260812-task39-5nm-hybrid-0p7nm-feasibility",
+      "commit": "9dc9ac58e05e5422498dade503046f9ae87d13d9"
+    },
+    {
+      "branch": "codex/20260812-task38-input-driven-configuration",
+      "commit": "65fcd221a326ea042ee358d418a6be8aca4f3118"
+    },
+    {
+      "branch": "codex/20260820-task38-extra-full3d-iterative-0p7nm",
+      "commit": "2dc2e7305f10dc391a13970c6f0f0340cb87b6ee"
+    },
+    {
+      "branch": "codex/20260812-repository-readability-cleanup",
+      "commit": "cc7ad352d1d6974c08c14984ede3397d66c08edd"
+    },
+    {
+      "branch": "codex/20260822-task40-hybrid-side-factor-pc",
+      "commit": "50897c0c62d1f35abed5b196ae17997b2e7521cc"
+    },
+    {
+      "branch": "master",
+      "commit": "438caf150439343ee7c4c58ad7e02a3da812a23c"
+    },
+    {
+      "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
+      "commit": "f14098cb376ab2a4a1cb698a2169947a5eb3b6c0"
+    },
+    {
+      "branch": "codex/only-one-13p5nm-surrogate-inversion",
+      "commit": "54e13335fe4313a111a33768e7b257a7a49b6541"
+    },
+    {
+      "branch": "codex/archive/20260807-task037b-legacy-checkpoint",
+      "commit": "98046b7297b5de23d121b60898afe9e9007abc6e"
+    },
+    {
+      "branch": "task39extra",
+      "commit": "3804ede8acfd120d0d8d312415ec5e7a2c296cd7"
+    },
+    {
+      "branch": "task39extra_para_workstation_capacity",
+      "commit": "ccd357885f7f9be84efe3be07868cc94f13d93fc"
+    },
+    {
+      "branch": "task40extra_dot_parallel_cloud",
+      "commit": "ea4f955e01a4cf35774a27ab8d1a33f2fa94703a"
+    },
+    {
+      "branch": "task42_neural_coarse_inverse",
+      "commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90"
+    },
+    {
+      "branch": "task42extra_feinn_5nm",
+      "commit": "47317bb648d5e2237657f8b6c75c239ab5bf55c5"
+    }
+  ],
+  "inventory": {
+    "recursive_tree_entries": 128034,
+    "unique_blobs": 8713,
+    "unique_bytes": 383532344,
+    "truncated_trees": 0,
+    "scope": "35 current branch trees; not all historical commits"
+  },
+  "automatic_search": {
+    "selected_blobs": 4773,
+    "selected_bytes": 104291461,
+    "verified_blobs": 4773,
+    "missing_or_failed": [],
+    "matching_lines": {
+      "symmetry_fourier_bloch": 24848,
+      "dtn_phase_gauge": 28142,
+      "reference_schur_condensation": 33320,
+      "full3d_shortwave": 25194,
+      "domain_decomposition": 14728,
+      "hp_dwr_accuracy": 20433,
+      "lowrank_precision": 4403,
+      "checkpoint_resume": 25319,
+      "neural_feinn": 3513,
+      "modal_exact_block_aliases": 417
+    },
+    "topic_blob_counts": {
+      "symmetry_fourier_bloch": 2196,
+      "dtn_phase_gauge": 2281,
+      "reference_schur_condensation": 2260,
+      "full3d_shortwave": 2559,
+      "domain_decomposition": 1553,
+      "hp_dwr_accuracy": 2001,
+      "lowrank_precision": 682,
+      "checkpoint_resume": 2251,
+      "neural_feinn": 552,
+      "modal_exact_block_aliases": 188
+    },
+    "coverage": "automatic content search, not substantive full reading",
+    "patterns": {
+      "modal_exact_block_aliases": "block[-_]circulant|y[-_]extruded|y[-_]invariant|de.?Rham|reference.{0,20}inverse|background.{0,20}inverse|topological_orbit|require_exact_block_diagonal|dropped_coupling|1D.{0,10}z|harmonic.block|Fourier.{0,15}transform|Bloch.{0,15}transform",
+      "symmetry_fourier_bloch": "symmetr|Fourier|Bloch|Floquet|orbit|translation|circulant|DFT|FFT|平移|对称|模态",
+      "reference_schur_condensation": "reference.{0,15}inverse|Schur|condens|static.{0,10}elimin|参考逆|凝聚|p4.{0,20}(factor|inverse)|p.coars",
+      "dtn_phase_gauge": "DtN|Dirichlet.to.Neumann|phase.{0,15}gauge|gauge.{0,15}phase|phase.center|相位|phase.factor|quadrature",
+      "lowrank_precision": "low.rank|lowrank|BLR|HSS|HODLR|hierarchical.{0,15}matrix|mixed.precision|complex64|float32|压缩|低秩",
+      "checkpoint_resume": "checkpoint|restart|resum|interrupt|recover|重启|恢复|断点",
+      "hp_dwr_accuracy": "\\bDWR\\b|dual.weighted|goal.oriented|adjoint|adaptive|hp.adapt|selective.trace|error.estimat|收敛|网格|精度",
+      "domain_decomposition": "FETI|BDDC|GenEO|Schwarz|sweep|PML|wave.aware|coarse.space|multigrid|AMG|HX|AMS|DD4|macro.block",
+      "neural_feinn": "FEINN|PINN|neural|neural.coarse|deep.learning|torch|神经",
+      "full3d_shortwave": "0[._p]7\\s*nm|2\\s*(?:Ti?B|TB)|48\\s*h|full.?3d|N.d.lec|H\\(curl\\)"
+    }
+  },
+  "coverage_records": [
+    {
+      "branch": "master",
+      "commit": "438caf150439343ee7c4c58ad7e02a3da812a23c",
+      "path": "docs/development_progress.md",
+      "blob_sha": "3c5a86363bc62997999f6363e562cdcfcd0a6938",
+      "coverage": "section_read_and_heading_index",
+      "ranges": "heading index and diff metadata; not full read",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/438caf150439343ee7c4c58ad7e02a3da812a23c/docs/development_progress.md"
+    },
+    {
+      "branch": "master",
+      "commit": "438caf150439343ee7c4c58ad7e02a3da812a23c",
+      "path": "docs/development_model_registry.md",
+      "blob_sha": "fecd9d61502d56d57431a921bc2de5bdb18b3fd4",
+      "coverage": "section_read_and_heading_index",
+      "ranges": "heading index and diff metadata; not full read",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/438caf150439343ee7c4c58ad7e02a3da812a23c/docs/development_model_registry.md"
+    },
+    {
+      "branch": "master",
+      "commit": "438caf150439343ee7c4c58ad7e02a3da812a23c",
+      "path": "docs/capability_matrix.md",
+      "blob_sha": "8e8c1571c825a6effbef040baf7f39b7e37a802d",
+      "coverage": "section_read",
+      "ranges": "see report; no independent numeric recomputation",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/438caf150439343ee7c4c58ad7e02a3da812a23c/docs/capability_matrix.md"
+    },
+    {
+      "branch": "master",
+      "commit": "438caf150439343ee7c4c58ad7e02a3da812a23c",
+      "path": "docs/solver_guide.md",
+      "blob_sha": "cc64b4140b838ba5fca7026d45651cb315adf66e",
+      "coverage": "fully_read",
+      "ranges": "see report; no independent numeric recomputation",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/438caf150439343ee7c4c58ad7e02a3da812a23c/docs/solver_guide.md"
+    },
+    {
+      "branch": "master",
+      "commit": "438caf150439343ee7c4c58ad7e02a3da812a23c",
+      "path": "docs/repository_work_principles.md",
+      "blob_sha": "2e40ee689f8df39cbd784b6e04996fb997e32437",
+      "coverage": "fully_read",
+      "ranges": "see report; no independent numeric recomputation",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/438caf150439343ee7c4c58ad7e02a3da812a23c/docs/repository_work_principles.md"
+    },
+    {
+      "branch": "master",
+      "commit": "438caf150439343ee7c4c58ad7e02a3da812a23c",
+      "path": "docs/architecture_overview.md",
+      "blob_sha": "c2fa70ffa0146e86581a9111bfbc1c00d9c0cea4",
+      "coverage": "fully_read",
+      "ranges": "see report; no independent numeric recomputation",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/438caf150439343ee7c4c58ad7e02a3da812a23c/docs/architecture_overview.md"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "docs/development_progress.md",
+      "blob_sha": "4e37472f657b0c1c3fcbe977b2d886c263e96cf0",
+      "coverage": "section_read_and_heading_index",
+      "ranges": "1-73;548-711;3044-3206 plus heading index",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/development_progress.md"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "docs/development_model_registry.md",
+      "blob_sha": "b4f5d12176316469e7e6428c9f240afba0b89a08",
+      "coverage": "section_read_and_heading_index",
+      "ranges": "1-21;981-1358;1408-1515(partial output);1700-1811 plus heading index",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/development_model_registry.md"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "docs/capability_matrix.md",
+      "blob_sha": "8e8c1571c825a6effbef040baf7f39b7e37a802d",
+      "coverage": "section_read",
+      "ranges": "see report; no independent numeric recomputation",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/capability_matrix.md"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "docs/solver_guide.md",
+      "blob_sha": "cc64b4140b838ba5fca7026d45651cb315adf66e",
+      "coverage": "fully_read",
+      "ranges": "see report; no independent numeric recomputation",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/solver_guide.md"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "docs/repository_work_principles.md",
+      "blob_sha": "2e40ee689f8df39cbd784b6e04996fb997e32437",
+      "coverage": "fully_read",
+      "ranges": "see report; no independent numeric recomputation",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/repository_work_principles.md"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "docs/architecture_overview.md",
+      "blob_sha": "c2fa70ffa0146e86581a9111bfbc1c00d9c0cea4",
+      "coverage": "fully_read",
+      "ranges": "see report; no independent numeric recomputation",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/architecture_overview.md"
+    },
+    {
+      "branch": "chatgpt/20260726-development-model-registry-backfill",
+      "path": "AGENTS.md",
+      "commit": "1b98cd9df2b145528673303af3c41d7ade508df5",
+      "blob_sha": "c18e2e9024c85de41a01894ab68477e86b1c4b27",
+      "coverage": "diff_read_against_fully_read_root",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/1b98cd9df2b145528673303af3c41d7ade508df5/AGENTS.md"
+    },
+    {
+      "branch": "chatgpt/20260726-development-model-registry-backfill",
+      "path": "docs/AGENTS.md",
+      "commit": "1b98cd9df2b145528673303af3c41d7ade508df5",
+      "blob_sha": "b0706582d86df78c5a14870b0940fbd9c3f45bf3",
+      "coverage": "fully_read",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/1b98cd9df2b145528673303af3c41d7ade508df5/docs/AGENTS.md"
+    },
+    {
+      "branch": "chatgpt/20260726-development-model-registry-backfill",
+      "path": "docs/task035_hcurl_goal_oriented_adaptivity/AGENTS.md",
+      "commit": "1b98cd9df2b145528673303af3c41d7ade508df5",
+      "blob_sha": "2e331f3b4e7c13c04e78cdf005f886c53646664a",
+      "coverage": "fully_read",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/1b98cd9df2b145528673303af3c41d7ade508df5/docs/task035_hcurl_goal_oriented_adaptivity/AGENTS.md"
+    },
+    {
+      "branch": "chatgpt/20260827-task40-parallel-floquet-envelope-hcurl",
+      "path": "AGENTS.md",
+      "commit": "8481b78ea8b4f23f19995344886a5c40e3ab3ce8",
+      "blob_sha": "652e0992fa27539cfbc3e6d7683763e397610da7",
+      "coverage": "fully_read",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/8481b78ea8b4f23f19995344886a5c40e3ab3ce8/AGENTS.md"
+    },
+    {
+      "branch": "codex/20260717-task34-workstation-wsl-adaptive-scalability",
+      "path": "AGENTS.md",
+      "commit": "70e8b48e8d5aac3ef39db4ae4d69ddabe29ec280",
+      "blob_sha": "c93e7049d83818377537e1ccbb771a6eb56ccb84",
+      "coverage": "diff_read_against_fully_read_root",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/70e8b48e8d5aac3ef39db4ae4d69ddabe29ec280/AGENTS.md"
+    },
+    {
+      "branch": "codex/20260721-task35-hcurl-goal-oriented-adaptivity",
+      "path": "AGENTS.md",
+      "commit": "81c714b236e9c362df8783382f1d40a5cd888cd5",
+      "blob_sha": "eb4d7efde3b5f58db23f57cc702a9b3f547851d7",
+      "coverage": "diff_read_against_fully_read_root",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/81c714b236e9c362df8783382f1d40a5cd888cd5/AGENTS.md"
+    },
+    {
+      "branch": "codex/20260822-task40-hybrid-side-factor-pc",
+      "path": "AGENTS.md",
+      "commit": "50897c0c62d1f35abed5b196ae17997b2e7521cc",
+      "blob_sha": "230ff277b4eac526b560eb94e3e101cbc9cafb01",
+      "coverage": "diff_read_against_fully_read_root",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/50897c0c62d1f35abed5b196ae17997b2e7521cc/AGENTS.md"
+    },
+    {
+      "branch": "codex/only-one-13p5nm-surrogate-inversion",
+      "path": "surrogate_tasks/AGENTS.md",
+      "commit": "54e13335fe4313a111a33768e7b257a7a49b6541",
+      "blob_sha": "0d2bb4dfc487c2091b87ce172e0f5c0176405c2e",
+      "coverage": "fully_read",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/54e13335fe4313a111a33768e7b257a7a49b6541/surrogate_tasks/AGENTS.md"
+    },
+    {
+      "branch": "task40extra_dot_parallel_cloud",
+      "path": "docs/task40extra_dot_parallel_cloud/AGENTS.md",
+      "commit": "ea4f955e01a4cf35774a27ab8d1a33f2fa94703a",
+      "blob_sha": "7bd76d91d360c94239ffcd6afe4df73b8dabf3f3",
+      "coverage": "fully_read",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/ea4f955e01a4cf35774a27ab8d1a33f2fa94703a/docs/task40extra_dot_parallel_cloud/AGENTS.md"
+    },
+    {
+      "branch": "task42extra_feinn_5nm",
+      "path": "docs/task042extra_feinn_5nm/AGENTS.md",
+      "commit": "47317bb648d5e2237657f8b6c75c239ab5bf55c5",
+      "blob_sha": "2a2b94ead338de988fb59b943a193f1326f2bf28",
+      "coverage": "fully_read",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/47317bb648d5e2237657f8b6c75c239ab5bf55c5/docs/task042extra_feinn_5nm/AGENTS.md"
+    },
+    {
+      "branch": "task42",
+      "commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+      "path": "docs/task042_neural_coarse_inverse/task.md",
+      "blob_sha": "05e1dae1feb15ec64c7e5f94fd524bfffd3a33b6",
+      "coverage": "fetched full; reviewed selected sections unless final ledger states full",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5b489b7264b75a9461577303ff0f6bc8907c19dd/docs/task042_neural_coarse_inverse/task.md"
+    },
+    {
+      "branch": "task42",
+      "commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+      "path": "docs/task042_neural_coarse_inverse/review_report_v16.md",
+      "blob_sha": "64c5d188a73e8bca2f32d353bf5f5c26272d7912",
+      "coverage": "fetched full; reviewed selected sections unless final ledger states full",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5b489b7264b75a9461577303ff0f6bc8907c19dd/docs/task042_neural_coarse_inverse/review_report_v16.md"
+    },
+    {
+      "branch": "task42",
+      "commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+      "path": "docs/task042_neural_coarse_inverse/response_v18.md",
+      "blob_sha": "6ace057c39fb06d6266300220d13e0a96713e9a7",
+      "coverage": "fetched full; reviewed selected sections unless final ledger states full",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5b489b7264b75a9461577303ff0f6bc8907c19dd/docs/task042_neural_coarse_inverse/response_v18.md"
+    },
+    {
+      "branch": "task42",
+      "commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "blob_sha": "9a2004e9da24f3c9819e6133a49b77f5211ba6dd",
+      "coverage": "fetched full; reviewed selected sections unless final ledger states full",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5b489b7264b75a9461577303ff0f6bc8907c19dd/docs/task042_neural_coarse_inverse/outcomes/summary.md"
+    },
+    {
+      "branch": "task42extra",
+      "commit": "47317bb648d5e2237657f8b6c75c239ab5bf55c5",
+      "path": "docs/task042extra_feinn_5nm/task.md",
+      "blob_sha": "a0d3606aedbbce37066338de3763fe802590dedb",
+      "coverage": "fetched full; reviewed selected sections unless final ledger states full",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/47317bb648d5e2237657f8b6c75c239ab5bf55c5/docs/task042extra_feinn_5nm/task.md"
+    },
+    {
+      "branch": "task42extra",
+      "commit": "47317bb648d5e2237657f8b6c75c239ab5bf55c5",
+      "path": "docs/task042extra_feinn_5nm/review_report_v9.md",
+      "blob_sha": "91d24c63804511ea1a0e125992b68598fe463416",
+      "coverage": "fetched full; reviewed selected sections unless final ledger states full",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/47317bb648d5e2237657f8b6c75c239ab5bf55c5/docs/task042extra_feinn_5nm/review_report_v9.md"
+    },
+    {
+      "branch": "task42extra",
+      "commit": "47317bb648d5e2237657f8b6c75c239ab5bf55c5",
+      "path": "docs/task042extra_feinn_5nm/response_v9.md",
+      "blob_sha": "d24e52ed4399f812425324b83b37e624a23a0412",
+      "coverage": "fetched full; reviewed selected sections unless final ledger states full",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/47317bb648d5e2237657f8b6c75c239ab5bf55c5/docs/task042extra_feinn_5nm/response_v9.md"
+    },
+    {
+      "branch": "task42extra",
+      "commit": "47317bb648d5e2237657f8b6c75c239ab5bf55c5",
+      "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+      "blob_sha": "34f8cdb51bfa76ca56deadda18f846dfdb7ee0f1",
+      "coverage": "fetched full; reviewed selected sections unless final ledger states full",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/47317bb648d5e2237657f8b6c75c239ab5bf55c5/docs/task042extra_feinn_5nm/outcomes/summary.md"
+    },
+    {
+      "branch": "neuralpc",
+      "commit": "d91652dd2d611d6d6bedd10e677c3f7030c07d4f",
+      "path": "docs/para_task006_zero_copy_audit_architecture/review_report_v1.md",
+      "blob_sha": "94181afcbcfe14671a50a54c9c8c58c901ab89bf",
+      "coverage": "fetched full; reviewed selected sections unless final ledger states full",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/d91652dd2d611d6d6bedd10e677c3f7030c07d4f/docs/para_task006_zero_copy_audit_architecture/review_report_v1.md"
+    },
+    {
+      "branch": "neuralpc",
+      "commit": "d91652dd2d611d6d6bedd10e677c3f7030c07d4f",
+      "path": "docs/para_task006_zero_copy_audit_architecture/outcomes/summary.md",
+      "blob_sha": "90f59946a9bdf94aa9d3f47c4c5304244aa47b35",
+      "coverage": "fetched full; reviewed selected sections unless final ledger states full",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/d91652dd2d611d6d6bedd10e677c3f7030c07d4f/docs/para_task006_zero_copy_audit_architecture/outcomes/summary.md"
+    },
+    {
+      "branch": "task42",
+      "commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+      "path": "src/solvers/learned_coarse_inverse.py",
+      "blob_sha": "9836189c38550e8e8e3f100742381a18e41fd46b",
+      "coverage": "fetched full; targeted code/text review",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5b489b7264b75a9461577303ff0f6bc8907c19dd/src/solvers/learned_coarse_inverse.py"
+    },
+    {
+      "branch": "task42",
+      "commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+      "path": "src/solvers/learned_two_level.py",
+      "blob_sha": "297cefcae06a9129f24c4ec85d52b9852d1bcef0",
+      "coverage": "fetched full; targeted code/text review",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5b489b7264b75a9461577303ff0f6bc8907c19dd/src/solvers/learned_two_level.py"
+    },
+    {
+      "branch": "task42",
+      "commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+      "path": "src/solvers/augmented_trace_lsqr.py",
+      "blob_sha": "9e8cf1c379273495de2bc1960f183b839b94479c",
+      "coverage": "fetched full; targeted code/text review",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5b489b7264b75a9461577303ff0f6bc8907c19dd/src/solvers/augmented_trace_lsqr.py"
+    },
+    {
+      "branch": "task42",
+      "commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+      "path": "src/solvers/gmres_residual_completion.py",
+      "blob_sha": "79d047ebde2cdc15903f37031c481fbb18d68de3",
+      "coverage": "fetched full; targeted code/text review",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5b489b7264b75a9461577303ff0f6bc8907c19dd/src/solvers/gmres_residual_completion.py"
+    },
+    {
+      "branch": "task42extra",
+      "commit": "47317bb648d5e2237657f8b6c75c239ab5bf55c5",
+      "path": "src/solvers/feinn_parameter_jvp.py",
+      "blob_sha": "76702483816fcfd08cfd33a9041da8673345d878",
+      "coverage": "fetched full; targeted code/text review",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/47317bb648d5e2237657f8b6c75c239ab5bf55c5/src/solvers/feinn_parameter_jvp.py"
+    },
+    {
+      "branch": "task42extra",
+      "commit": "47317bb648d5e2237657f8b6c75c239ab5bf55c5",
+      "path": "src/solvers/feinn_gn_training.py",
+      "blob_sha": "55bc6fd623bccdcb7893d5c50164feddc32b0e65",
+      "coverage": "fetched full; targeted code/text review",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/47317bb648d5e2237657f8b6c75c239ab5bf55c5/src/solvers/feinn_gn_training.py"
+    },
+    {
+      "branch": "task42extra",
+      "commit": "47317bb648d5e2237657f8b6c75c239ab5bf55c5",
+      "path": "src/solvers/feinn_riesz.py",
+      "blob_sha": "8857030560bcda464c219efcd6660fd452b61825",
+      "coverage": "fetched full; targeted code/text review",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/47317bb648d5e2237657f8b6c75c239ab5bf55c5/src/solvers/feinn_riesz.py"
+    },
+    {
+      "branch": "task42extra",
+      "commit": "47317bb648d5e2237657f8b6c75c239ab5bf55c5",
+      "path": "src/solvers/feinn_phase.py",
+      "blob_sha": "363a559d0232bfcb8b265843ccee9adc1dcabf7c",
+      "coverage": "fetched full; targeted code/text review",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/47317bb648d5e2237657f8b6c75c239ab5bf55c5/src/solvers/feinn_phase.py"
+    },
+    {
+      "branch": "neuralpc",
+      "commit": "d91652dd2d611d6d6bedd10e677c3f7030c07d4f",
+      "path": "src/solvers/neural_local_pc.py",
+      "blob_sha": "baa9b4d6a4b3c926c01b91f46c22e8ad128295d8",
+      "coverage": "fetched full; targeted code/text review",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/d91652dd2d611d6d6bedd10e677c3f7030c07d4f/src/solvers/neural_local_pc.py"
+    },
+    {
+      "branch": "neuralpc",
+      "commit": "d91652dd2d611d6d6bedd10e677c3f7030c07d4f",
+      "path": "docs/para_task001_neural_local_pc_acceleration/outcomes/summary.md",
+      "blob_sha": "b796f2c1385712a122130a7ec4818cc40ea81fb5",
+      "coverage": "fetched full; targeted code/text review",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/d91652dd2d611d6d6bedd10e677c3f7030c07d4f/docs/para_task001_neural_local_pc_acceleration/outcomes/summary.md"
+    },
+    {
+      "branch": "neuralpc",
+      "commit": "d91652dd2d611d6d6bedd10e677c3f7030c07d4f",
+      "path": "docs/para_task004_full_16_slab_exact_oracle/outcomes/summary.md",
+      "blob_sha": "67be3dfedd414e440383d5e15ad0bf3927f1a829",
+      "coverage": "fetched full; targeted code/text review",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/d91652dd2d611d6d6bedd10e677c3f7030c07d4f/docs/para_task004_full_16_slab_exact_oracle/outcomes/summary.md"
+    },
+    {
+      "branch": "neuralpc",
+      "commit": "d91652dd2d611d6d6bedd10e677c3f7030c07d4f",
+      "path": "docs/para_task005_comprehensive_all_slab_learned_pc/outcomes/summary.md",
+      "blob_sha": "9c658ba67db7f7280f936f09c9fc2aac3c35bdc8",
+      "coverage": "fetched full; targeted code/text review",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/d91652dd2d611d6d6bedd10e677c3f7030c07d4f/docs/para_task005_comprehensive_all_slab_learned_pc/outcomes/summary.md"
+    },
+    {
+      "branch": "task42",
+      "commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v18.csv",
+      "blob_sha": "6c3b915d00cad18973c39f430643dd6d8771f3f7",
+      "coverage": "fetched full; targeted code/text review",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5b489b7264b75a9461577303ff0f6bc8907c19dd/docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v18.csv"
+    },
+    {
+      "branch": "task42extra",
+      "commit": "47317bb648d5e2237657f8b6c75c239ab5bf55c5",
+      "path": "docs/task042extra_feinn_5nm/outcomes/method_and_paper_mapping.md",
+      "blob_sha": "7b5a703cebe44b329045f392bc6584dcdf036550",
+      "coverage": "fetched full; targeted code/text review",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/47317bb648d5e2237657f8b6c75c239ab5bf55c5/docs/task042extra_feinn_5nm/outcomes/method_and_paper_mapping.md"
+    },
+    {
+      "branch": "task42extra",
+      "commit": "47317bb648d5e2237657f8b6c75c239ab5bf55c5",
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v9.json",
+      "blob_sha": "62757ea7dc1f98539773d79cfef67476a2d6c10a",
+      "coverage": "UNAVAILABLE: connector content empty; tree says1572632bytes; not read",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/47317bb648d5e2237657f8b6c75c239ab5bf55c5/docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v9.json"
+    },
+    {
+      "branch": "task42extra",
+      "commit": "47317bb648d5e2237657f8b6c75c239ab5bf55c5",
+      "path": "src/solvers/feinn_torch.py",
+      "blob_sha": "f86e6dde4daf13c8a4b03d4550ce5a269a29a28c",
+      "coverage": "fetched full; targeted code/text review",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/47317bb648d5e2237657f8b6c75c239ab5bf55c5/src/solvers/feinn_torch.py"
+    },
+    {
+      "branch": "neuralpc",
+      "commit": "d91652dd2d611d6d6bedd10e677c3f7030c07d4f",
+      "path": "docs/para_task004_full_16_slab_exact_oracle/review_report_v1.md",
+      "blob_sha": "65b787ece26f98e2a96c725fccd0b8410a1b69c1",
+      "coverage": "fetched full; targeted code/text review",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/d91652dd2d611d6d6bedd10e677c3f7030c07d4f/docs/para_task004_full_16_slab_exact_oracle/review_report_v1.md"
+    },
+    {
+      "branch": "neuralpc",
+      "commit": "d91652dd2d611d6d6bedd10e677c3f7030c07d4f",
+      "path": "docs/para_task005_comprehensive_all_slab_learned_pc/review_report_v1.md",
+      "blob_sha": "6d3c9bd14db8bb3f753b17db126341e2e0ab1c9c",
+      "coverage": "fetched full; targeted code/text review",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/d91652dd2d611d6d6bedd10e677c3f7030c07d4f/docs/para_task005_comprehensive_all_slab_learned_pc/review_report_v1.md"
+    },
+    {
+      "branch": "task42extra",
+      "commit": "47317bb648d5e2237657f8b6c75c239ab5bf55c5",
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/pde_gn_v9.csv",
+      "blob_sha": "2fbb70431128d56356d10adf8f9c0b925cc41a49",
+      "coverage": "full small CSV read",
+      "scope": "neural ledger; selected-section review unless explicitly full",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/47317bb648d5e2237657f8b6c75c239ab5bf55c5/docs/task042extra_feinn_5nm/outcomes/records/pde_gn_v9.csv"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "docs/task039_extra_physical_multilevel/README.md",
+      "blob_sha": "3bdf6b7c213a66ab6426f4da84f9ee40e67a1556",
+      "coverage": "full_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task039_extra_physical_multilevel/README.md"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "docs/task039_extra_physical_multilevel/final_report.md",
+      "blob_sha": "89313fe44105e0a9d7e3db188f72655b733012ce",
+      "coverage": "full_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task039_extra_physical_multilevel/final_report.md"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "docs/task039_extra_physical_multilevel/outcomes/dual_cell_condensed_v19.md",
+      "blob_sha": "2aeb12b49032daab6006a1dcfc233e5ce621386b",
+      "coverage": "partial_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task039_extra_physical_multilevel/outcomes/dual_cell_condensed_v19.md"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "docs/task039_extra_physical_multilevel/outcomes/dual_condensed_memory_v20.md",
+      "blob_sha": "f4523c51c05b79c0d867107e63d1c09104551c5f",
+      "coverage": "full_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task039_extra_physical_multilevel/outcomes/dual_condensed_memory_v20.md"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "docs/task039_extra_physical_multilevel/outcomes/dual_condensed_robustness_v21.md",
+      "blob_sha": "8c25130faee9292d1209a6a0572eeeb9ee19337c",
+      "coverage": "partial_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task039_extra_physical_multilevel/outcomes/dual_condensed_robustness_v21.md"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "docs/task039_extra_physical_multilevel/outcomes/p4_blr_tradeoff_v17.md",
+      "blob_sha": "1ca051463ceb4b7fd249484b6dd2ef5133a7698a",
+      "coverage": "full_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task039_extra_physical_multilevel/outcomes/p4_blr_tradeoff_v17.md"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "docs/task039_extra_physical_multilevel/outcomes/p4_cell_condensed_v18.md",
+      "blob_sha": "f22eeaa0f2f4e9a66bb72b7c5d94d3a9209e7a7d",
+      "coverage": "full_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task039_extra_physical_multilevel/outcomes/p4_cell_condensed_v18.md"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "docs/task039_extra_physical_multilevel/outcomes/p4_schur_v14.md",
+      "blob_sha": "dbabaab9d8873ea7d282b6d18523951d72d73050",
+      "coverage": "partial_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task039_extra_physical_multilevel/outcomes/p4_schur_v14.md"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "docs/task039_extra_physical_multilevel/outcomes/summary_v23.md",
+      "blob_sha": "fc1c741faeed5681c298b549396955ade3925281",
+      "coverage": "full_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task039_extra_physical_multilevel/outcomes/summary_v23.md"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "docs/task039_extra_physical_multilevel/outcomes/summary_v24.md",
+      "blob_sha": "75bade2562990ac7528490a7f3dde76e8b92c20d",
+      "coverage": "full_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task039_extra_physical_multilevel/outcomes/summary_v24.md"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "docs/task039_extra_physical_multilevel/outcomes/workstation_guided_local_v30.md",
+      "blob_sha": "68806000d4a91c699b796805822e76688abaa16b",
+      "coverage": "full_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task039_extra_physical_multilevel/outcomes/workstation_guided_local_v30.md"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "docs/task039_extra_physical_multilevel/prior_attempts_retrospective.md",
+      "blob_sha": "ca86d27b6119a2f2eedd0de3105632ec24192361",
+      "coverage": "partial_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task039_extra_physical_multilevel/prior_attempts_retrospective.md"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "docs/task039_extra_physical_multilevel/response_v19.md",
+      "blob_sha": "f82c6558f469cb9ea42ac593a8c61de1e12c96bb",
+      "coverage": "partial_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task039_extra_physical_multilevel/response_v19.md"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "docs/task039_extra_physical_multilevel/response_v26.md",
+      "blob_sha": "f557bd6d96c5c69adc402a1f5f5d5e523f8de5c1",
+      "coverage": "partial_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task039_extra_physical_multilevel/response_v26.md"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "docs/task039_extra_physical_multilevel/response_v27.md",
+      "blob_sha": "a9bf969f7755f7de4dab7bdef655c4d8df0a2790",
+      "coverage": "full_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task039_extra_physical_multilevel/response_v27.md"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "docs/task039_extra_physical_multilevel/response_v34.md",
+      "blob_sha": "c506662d7a4481c4020b56fe7ce9720eb2c5f174",
+      "coverage": "full_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task039_extra_physical_multilevel/response_v34.md"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "docs/task039_extra_physical_multilevel/review_report_v30.md",
+      "blob_sha": "9927fbecc4c1828adc9cd717b00e3a3d9debe15b",
+      "coverage": "full_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task039_extra_physical_multilevel/review_report_v30.md"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "src/runners/physical_dual_cell_condensed_lowmem_v20.py",
+      "blob_sha": "ddd9e8ba3871565904f8b33f658bf7bd0100e0c8",
+      "coverage": "partial_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/src/runners/physical_dual_cell_condensed_lowmem_v20.py"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "src/runners/physical_p4_schur_v14.py",
+      "blob_sha": "6510cbdc72ee2d68b673a4d0b0f9032f91a1e5cd",
+      "coverage": "partial_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/src/runners/physical_p4_schur_v14.py"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "src/solvers/fullspace_bounded_mumps.py",
+      "blob_sha": "b0709402d18f932ab609df44fc65d5d6d81c0ab7",
+      "coverage": "full_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/src/solvers/fullspace_bounded_mumps.py"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "src/solvers/fullspace_local_factor_certification.py",
+      "blob_sha": "50e904f1247a56f764640755c83f80c0bf30237d",
+      "coverage": "full_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/src/solvers/fullspace_local_factor_certification.py"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "src/solvers/fullspace_p4_blr.py",
+      "blob_sha": "6cc96f40fc4c6ac3860dfee867978cc43e9a525e",
+      "coverage": "full_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/src/solvers/fullspace_p4_blr.py"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "src/solvers/hcurl_assembly_time_condensation.py",
+      "blob_sha": "a0da1e798b29cbc11e6b032719b43951fe0aab8a",
+      "coverage": "partial_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/src/solvers/hcurl_assembly_time_condensation.py"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "src/solvers/mumps_capacity_budget_v22.py",
+      "blob_sha": "573cbc1c9425dc2638e5359fa896e68b437ccac8",
+      "coverage": "full_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/src/solvers/mumps_capacity_budget_v22.py"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "src/solvers/p4_cell_condensed_inverse.py",
+      "blob_sha": "f629efbf41444aadd5017a8267a67912cfc6d2fa",
+      "coverage": "partial_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/src/solvers/p4_cell_condensed_inverse.py"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "src/solvers/p6_cell_condensed_action.py",
+      "blob_sha": "c6272bc477e0dd3e3a974fae342e7ed4c32b85ee",
+      "coverage": "partial_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/src/solvers/p6_cell_condensed_action.py"
+    },
+    {
+      "branch": "task39extra_para_workstation_capacity",
+      "commit": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+      "path": "docs/task39extra_para_workstation_capacity/outcomes/capacity_frontier.md",
+      "blob_sha": "75b1671400be827b605cecc5b8e6be0deac8ea06",
+      "coverage": "full_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/ccd357885f7f9be84efe3be07868cc94f13d93fc/docs/task39extra_para_workstation_capacity/outcomes/capacity_frontier.md"
+    },
+    {
+      "branch": "task39extra_para_workstation_capacity",
+      "commit": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+      "path": "docs/task39extra_para_workstation_capacity/response_v5.md",
+      "blob_sha": "107dbeb0c9f6941ce547e00a38febc4777567d44",
+      "coverage": "full_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/ccd357885f7f9be84efe3be07868cc94f13d93fc/docs/task39extra_para_workstation_capacity/response_v5.md"
+    },
+    {
+      "branch": "task39extra_para_workstation_capacity",
+      "commit": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+      "path": "docs/task39extra_para_workstation_capacity/outcomes/summary.md",
+      "blob_sha": "eb3a54efbbdcb3d28eb9f73dfcf01607aa967edc",
+      "coverage": "partial_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/ccd357885f7f9be84efe3be07868cc94f13d93fc/docs/task39extra_para_workstation_capacity/outcomes/summary.md"
+    },
+    {
+      "branch": "task39extra_para_workstation_capacity",
+      "commit": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+      "path": "docs/task39extra_para_workstation_capacity/outcomes/f2_running_handoff_20260928.md",
+      "blob_sha": "80fdbc7c766d554cd67bd434c3d520089a616d4b",
+      "coverage": "partial_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/ccd357885f7f9be84efe3be07868cc94f13d93fc/docs/task39extra_para_workstation_capacity/outcomes/f2_running_handoff_20260928.md"
+    },
+    {
+      "branch": "task39extra_para_workstation_capacity",
+      "commit": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+      "path": "src/solvers/native_p4_jit.py",
+      "blob_sha": "e2f4b4511cb4f755921eaf0f11494c613d21a854",
+      "coverage": "full_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/ccd357885f7f9be84efe3be07868cc94f13d93fc/src/solvers/native_p4_jit.py"
+    },
+    {
+      "branch": "task39extra_para_workstation_capacity",
+      "commit": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+      "path": "src/solvers/p4_cell_condensed_inverse.py",
+      "blob_sha": "ad9faa8ca171e8178b31ab1ced84289fc2e76a81",
+      "coverage": "partial_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/ccd357885f7f9be84efe3be07868cc94f13d93fc/src/solvers/p4_cell_condensed_inverse.py"
+    },
+    {
+      "branch": "codex/20260822-task40-hybrid-side-factor-pc",
+      "commit": "50897c0c62d1f35abed5b196ae17997b2e7521cc",
+      "path": "src/solvers/floquet_background_hcurl_block_transform.py",
+      "blob_sha": "18117b452450c1289529510b3094e7e2b5336399",
+      "coverage": "full_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/50897c0c62d1f35abed5b196ae17997b2e7521cc/src/solvers/floquet_background_hcurl_block_transform.py"
+    },
+    {
+      "branch": "codex/20260822-task40-hybrid-side-factor-pc",
+      "commit": "50897c0c62d1f35abed5b196ae17997b2e7521cc",
+      "path": "src/solvers/floquet_background_hcurl_block_service.py",
+      "blob_sha": "9cedba110dd5d94271ee0d1665fe669c714b8bf2",
+      "coverage": "full_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/50897c0c62d1f35abed5b196ae17997b2e7521cc/src/solvers/floquet_background_hcurl_block_service.py"
+    },
+    {
+      "branch": "codex/20260822-task40-hybrid-side-factor-pc",
+      "commit": "50897c0c62d1f35abed5b196ae17997b2e7521cc",
+      "path": "src/test/test_319_task040_parallel_background_hcurl_s2c.py",
+      "blob_sha": "08059242dd9a5735b1a1ef6f3a570ecc9996c42d",
+      "coverage": "full_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/50897c0c62d1f35abed5b196ae17997b2e7521cc/src/test/test_319_task040_parallel_background_hcurl_s2c.py"
+    },
+    {
+      "branch": "codex/20260822-task40-hybrid-side-factor-pc",
+      "commit": "50897c0c62d1f35abed5b196ae17997b2e7521cc",
+      "path": "src/test/test_319_task040_parallel_background_hcurl_s2d.py",
+      "blob_sha": "8b336552b54c78c3c06144d1fafd018c7742cb71",
+      "coverage": "full_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/50897c0c62d1f35abed5b196ae17997b2e7521cc/src/test/test_319_task040_parallel_background_hcurl_s2d.py"
+    },
+    {
+      "branch": "codex/20260822-task40-hybrid-side-factor-pc",
+      "commit": "50897c0c62d1f35abed5b196ae17997b2e7521cc",
+      "path": "docs/task040_hybrid_side_factor_pc/response_v10.md",
+      "blob_sha": "93edc4c4f1c2424cbd0230f2a7ee25fa59fa9b13",
+      "coverage": "partial_read",
+      "lane": "p4_capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/50897c0c62d1f35abed5b196ae17997b2e7521cc/docs/task040_hybrid_side_factor_pc/response_v10.md"
+    },
+    {
+      "commit": "1b98cd9df2b145528673303af3c41d7ade508df5",
+      "path": "src/solvers/dtn_surface_vector_cache.py",
+      "blob_sha": "fc1b62e8d2a4cb13fcb5e34163440e30b852d958",
+      "coverage": "relevant_sections_reviewed",
+      "lane": "port_dtn_storage",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/1b98cd9df2b145528673303af3c41d7ade508df5/src/solvers/dtn_surface_vector_cache.py"
+    },
+    {
+      "commit": "8481b78ea8b4f23f19995344886a5c40e3ab3ce8",
+      "path": "src/solvers/condensed_dtn.py",
+      "blob_sha": "4ff6d58c61039a91b8d8a2775044403db71a5f4f",
+      "coverage": "relevant_sections_reviewed",
+      "lane": "port_dtn_storage",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/8481b78ea8b4f23f19995344886a5c40e3ab3ce8/src/solvers/condensed_dtn.py"
+    },
+    {
+      "commit": "a810a13b96fa1f4cf1af57ee58b34a84f7ef7d90",
+      "path": "src/solvers/dtn_port_3d.py",
+      "blob_sha": "990cd8b7cda3e448027ec74f188a7ee00f2419f7",
+      "coverage": "relevant_sections_reviewed",
+      "lane": "port_dtn_storage",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/a810a13b96fa1f4cf1af57ee58b34a84f7ef7d90/src/solvers/dtn_port_3d.py"
+    },
+    {
+      "commit": "a810a13b96fa1f4cf1af57ee58b34a84f7ef7d90",
+      "path": "src/solvers/manufactured_rayleigh_port_authority.py",
+      "blob_sha": "f6a03f1ec77c843c2ae45e16b0b1238ca6ed6739",
+      "coverage": "relevant_sections_reviewed",
+      "lane": "port_dtn_storage",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/a810a13b96fa1f4cf1af57ee58b34a84f7ef7d90/src/solvers/manufactured_rayleigh_port_authority.py"
+    },
+    {
+      "commit": "a810a13b96fa1f4cf1af57ee58b34a84f7ef7d90",
+      "path": "src/test/test_126_task035b_evanescent_port_scaling.py",
+      "blob_sha": "a8cdb8c2ae9ef4d1e59993e82085683e99a64ab9",
+      "coverage": "full_file_read",
+      "lane": "port_dtn_storage",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/a810a13b96fa1f4cf1af57ee58b34a84f7ef7d90/src/test/test_126_task035b_evanescent_port_scaling.py"
+    },
+    {
+      "commit": "2dc2e7305f10dc391a13970c6f0f0340cb87b6ee",
+      "path": "src/solvers/fullspace_dtn_action.py",
+      "blob_sha": "51a34275c8a169e9faafb4a978dbbe50f0f37f0e",
+      "coverage": "relevant_sections_reviewed",
+      "lane": "port_dtn_storage",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/2dc2e7305f10dc391a13970c6f0f0340cb87b6ee/src/solvers/fullspace_dtn_action.py"
+    },
+    {
+      "commit": "f14098cb376ab2a4a1cb698a2169947a5eb3b6c0",
+      "path": "src/test/test_340_task041_surface_quadrature.py",
+      "blob_sha": "cec91b04b25a408cf8d449b6b2b8effd55af2047",
+      "coverage": "full_file_read",
+      "lane": "port_dtn_storage",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/f14098cb376ab2a4a1cb698a2169947a5eb3b6c0/src/test/test_340_task041_surface_quadrature.py"
+    },
+    {
+      "commit": "3804ede8acfd120d0d8d312415ec5e7a2c296cd7",
+      "path": "src/solvers/p6_cell_condensed_action.py",
+      "blob_sha": "c6272bc477e0dd3e3a974fae342e7ed4c32b85ee",
+      "coverage": "relevant_sections_reviewed",
+      "lane": "port_dtn_storage",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/3804ede8acfd120d0d8d312415ec5e7a2c296cd7/src/solvers/p6_cell_condensed_action.py"
+    },
+    {
+      "commit": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+      "path": "src/solvers/p6_cell_condensed_action.py",
+      "blob_sha": "746651a899cb78cc82bac39838195a1d92345f63",
+      "coverage": "relevant_sections_reviewed",
+      "lane": "port_dtn_storage",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/ccd357885f7f9be84efe3be07868cc94f13d93fc/src/solvers/p6_cell_condensed_action.py"
+    },
+    {
+      "commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+      "path": "src/solvers/p6_cell_condensed_action.py",
+      "blob_sha": "724f71344172d19e72832966eefbba852b5d972c",
+      "coverage": "relevant_sections_reviewed",
+      "lane": "port_dtn_storage",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5b489b7264b75a9461577303ff0f6bc8907c19dd/src/solvers/p6_cell_condensed_action.py"
+    },
+    {
+      "commit": "8481b78ea8b4f23f19995344886a5c40e3ab3ce8",
+      "path": "docs/task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v6_port_modal_two_level_side_pc.md",
+      "blob_sha": "be6d01fa7a4d46e1ad8dc5f39d03570b4c2bd037",
+      "coverage": "full_file_read",
+      "lane": "port_dtn_storage",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/8481b78ea8b4f23f19995344886a5c40e3ab3ce8/docs/task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v6_port_modal_two_level_side_pc.md"
+    },
+    {
+      "commit": "8481b78ea8b4f23f19995344886a5c40e3ab3ce8",
+      "path": "docs/task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v7_streamed_petrov_basis.md",
+      "blob_sha": "c7a214d09a03735adc0848cd17c654c5550afe62",
+      "coverage": "full_file_read",
+      "lane": "port_dtn_storage",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/8481b78ea8b4f23f19995344886a5c40e3ab3ce8/docs/task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v7_streamed_petrov_basis.md"
+    },
+    {
+      "commit": "a810a13b96fa1f4cf1af57ee58b34a84f7ef7d90",
+      "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h15_dtn_evanescent_buffer1_scaled_mpi8.json",
+      "blob_sha": "b35bef54ce6a518c551f6b169baec1bf0e480749",
+      "coverage": "relevant_sections_reviewed",
+      "lane": "port_dtn_storage",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/a810a13b96fa1f4cf1af57ee58b34a84f7ef7d90/benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h15_dtn_evanescent_buffer1_scaled_mpi8.json"
+    },
+    {
+      "commit": "a810a13b96fa1f4cf1af57ee58b34a84f7ef7d90",
+      "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_trace_h15_evanescent_buffer1_preflight_controlled_stop.json",
+      "blob_sha": "0fffca1d46280c525e6740853983fd910cdeb569",
+      "coverage": "full_file_read",
+      "lane": "port_dtn_storage",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/a810a13b96fa1f4cf1af57ee58b34a84f7ef7d90/benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_trace_h15_evanescent_buffer1_preflight_controlled_stop.json"
+    },
+    {
+      "commit": "a810a13b96fa1f4cf1af57ee58b34a84f7ef7d90",
+      "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/manufactured_rayleigh_port_authority_v1.json",
+      "blob_sha": "cf4f318ff2ec338514c04872d2f8fa174ff5b74a",
+      "coverage": "relevant_sections_reviewed",
+      "lane": "port_dtn_storage",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/a810a13b96fa1f4cf1af57ee58b34a84f7ef7d90/benchmarks/cases/095_high_order_local_hp_resource_envelope/records/manufactured_rayleigh_port_authority_v1.json"
+    },
+    {
+      "commit": "3804ede8acfd120d0d8d312415ec5e7a2c296cd7",
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_l4_real80_p6.json",
+      "blob_sha": "24439e189edbdc63231a31706a233520d0adbb10",
+      "coverage": "full_file_read",
+      "lane": "port_dtn_storage",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/3804ede8acfd120d0d8d312415ec5e7a2c296cd7/docs/task039_extra_physical_multilevel/outcomes/records/workstation_guided_local_v30_l4_real80_p6.json"
+    },
+    {
+      "commit": "3804ede8acfd120d0d8d312415ec5e7a2c296cd7",
+      "path": "src/coupling/hybrid_one_cell_exact_traction_builder.py",
+      "blob_sha": "0927f5fe9ead433713f8e36c8574131af2f11ee3",
+      "coverage": "relevant_sections_reviewed",
+      "lane": "port_dtn_storage",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/3804ede8acfd120d0d8d312415ec5e7a2c296cd7/src/coupling/hybrid_one_cell_exact_traction_builder.py"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "docs/task40extra_0p7nm_engineering/response_v2.md",
+      "blob_sha": "6d5971e9a2d3db0f9e2c000aeadccab2fdd504af",
+      "coverage": "section_read",
+      "scope": "current objective, accepted baseline, P0-P7 and qualification limits; prior task inspection",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task40extra_0p7nm_engineering/response_v2.md"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "docs/task40extra_0p7nm_engineering/review_report_v2.md",
+      "blob_sha": "14dae58ed20b43111d03dcefc8ec6c9d94256f9a",
+      "coverage": "section_read",
+      "scope": "current objective, accepted baseline, P0-P7 and qualification limits; prior task inspection",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task40extra_0p7nm_engineering/review_report_v2.md"
+    },
+    {
+      "branch": "task40extra_0p7nm_engineering",
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "docs/task40extra_0p7nm_engineering/task.md",
+      "blob_sha": "13f263cd3c2c6adddcaa81f2d8570d4dd12bc863",
+      "coverage": "section_read",
+      "scope": "current objective, accepted baseline, P0-P7 and qualification limits; prior task inspection",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task40extra_0p7nm_engineering/task.md"
+    },
+    {
+      "commit": "50897c0c62d1f35abed5b196ae17997b2e7521cc",
+      "path": "src/test/test_319_task040_parallel_background_hcurl_s2c.py",
+      "blob_sha": "08059242dd9a5735b1a1ef6f3a570ecc9996c42d",
+      "coverage": "substantive_complete",
+      "ranges": [
+        [
+          1,
+          374
+        ]
+      ],
+      "lane": "modal_reference",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/50897c0c62d1f35abed5b196ae17997b2e7521cc/src/test/test_319_task040_parallel_background_hcurl_s2c.py"
+    },
+    {
+      "commit": "50897c0c62d1f35abed5b196ae17997b2e7521cc",
+      "path": "src/test/test_319_task040_parallel_background_hcurl_s2d.py",
+      "blob_sha": "8b336552b54c78c3c06144d1fafd018c7742cb71",
+      "coverage": "substantive_complete",
+      "ranges": [
+        [
+          1,
+          233
+        ],
+        [
+          55,
+          70
+        ]
+      ],
+      "lane": "modal_reference",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/50897c0c62d1f35abed5b196ae17997b2e7521cc/src/test/test_319_task040_parallel_background_hcurl_s2d.py"
+    },
+    {
+      "commit": "50897c0c62d1f35abed5b196ae17997b2e7521cc",
+      "path": "src/solvers/floquet_background_hcurl_single_harmonic.py",
+      "blob_sha": "1200da98187432973a16f0edd60370bea24f70a9",
+      "coverage": "substantive_complete",
+      "ranges": [
+        [
+          1,
+          233
+        ]
+      ],
+      "lane": "modal_reference",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/50897c0c62d1f35abed5b196ae17997b2e7521cc/src/solvers/floquet_background_hcurl_single_harmonic.py"
+    },
+    {
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "docs/task40extra_0p7nm_engineering/review_report_v2.md",
+      "blob_sha": "14dae58ed20b43111d03dcefc8ec6c9d94256f9a",
+      "coverage": "substantive_complete",
+      "ranges": [
+        [
+          1,
+          325
+        ],
+        [
+          57,
+          142
+        ]
+      ],
+      "lane": "modal_reference",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task40extra_0p7nm_engineering/review_report_v2.md"
+    },
+    {
+      "commit": "50897c0c62d1f35abed5b196ae17997b2e7521cc",
+      "path": "src/solvers/floquet_background_hcurl_block_transform.py",
+      "blob_sha": "18117b452450c1289529510b3094e7e2b5336399",
+      "coverage": "substantive_selected_ranges",
+      "ranges": [
+        [
+          245,
+          459
+        ]
+      ],
+      "lane": "modal_reference",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/50897c0c62d1f35abed5b196ae17997b2e7521cc/src/solvers/floquet_background_hcurl_block_transform.py"
+    },
+    {
+      "commit": "50897c0c62d1f35abed5b196ae17997b2e7521cc",
+      "path": "src/solvers/floquet_background_hcurl_block_service.py",
+      "blob_sha": "9cedba110dd5d94271ee0d1665fe669c714b8bf2",
+      "coverage": "substantive_complete",
+      "ranges": [
+        [
+          1,
+          204
+        ],
+        [
+          278,
+          489
+        ],
+        [
+          204,
+          277
+        ]
+      ],
+      "lane": "modal_reference",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/50897c0c62d1f35abed5b196ae17997b2e7521cc/src/solvers/floquet_background_hcurl_block_service.py"
+    },
+    {
+      "commit": "a810a13b96fa1f4cf1af57ee58b34a84f7ef7d90",
+      "path": "src/solvers/condensed_trace_harmonic_pc.py",
+      "blob_sha": "eca7192158ab537e54921fae702f1b888f112f64",
+      "coverage": "substantive_selected_ranges",
+      "ranges": [
+        [
+          1,
+          230
+        ]
+      ],
+      "lane": "modal_reference",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/a810a13b96fa1f4cf1af57ee58b34a84f7ef7d90/src/solvers/condensed_trace_harmonic_pc.py"
+    },
+    {
+      "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "path": "docs/task025_parameter_robust_multilevel_hcurl_pc/review_report.md",
+      "blob_sha": "62d5f03dd6053774cc548eb7c1672002babf2db1",
+      "coverage": "substantive_selected_ranges",
+      "ranges": [
+        [
+          295,
+          337
+        ]
+      ],
+      "lane": "modal_reference",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task025_parameter_robust_multilevel_hcurl_pc/review_report.md"
+    },
+    {
+      "commit": "20b433c69578ac2074af5035e57da3653f669d8a",
+      "path": "docs/task032_hybrid_fem_modal_direct_baseline/review_report_v1_addendum.md",
+      "blob_sha": "a0705dc93abb56252a398e9d0ab82bd64826bc82",
+      "coverage": "substantive_selected_ranges",
+      "ranges": [
+        [
+          1,
+          61
+        ]
+      ],
+      "lane": "modal_reference",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/20b433c69578ac2074af5035e57da3653f669d8a/docs/task032_hybrid_fem_modal_direct_baseline/review_report_v1_addendum.md"
+    },
+    {
+      "commit": "50897c0c62d1f35abed5b196ae17997b2e7521cc",
+      "path": "docs/task040_hybrid_side_factor_pc/outcomes/full_spectrum_floquet_sweep.md",
+      "blob_sha": "3933622a74d1952d3c7f6317ace5552e5d0f17ec",
+      "coverage": "substantive_selected_ranges",
+      "ranges": [
+        [
+          1,
+          160
+        ]
+      ],
+      "lane": "modal_reference",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/50897c0c62d1f35abed5b196ae17997b2e7521cc/docs/task040_hybrid_side_factor_pc/outcomes/full_spectrum_floquet_sweep.md"
+    },
+    {
+      "commit": "50897c0c62d1f35abed5b196ae17997b2e7521cc",
+      "path": "docs/task040_hybrid_side_factor_pc/outcomes/route_signal_ledger.md",
+      "blob_sha": "a1cd2c450789ed9d7a6e3f7740d7e45d94e8f3dd",
+      "coverage": "substantive_selected_ranges",
+      "ranges": [
+        [
+          1,
+          90
+        ]
+      ],
+      "lane": "modal_reference",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/50897c0c62d1f35abed5b196ae17997b2e7521cc/docs/task040_hybrid_side_factor_pc/outcomes/route_signal_ledger.md"
+    },
+    {
+      "commit": "8481b78ea8b4f23f19995344886a5c40e3ab3ce8",
+      "path": "docs/task040_parallel_floquet_envelope_hcurl/feasibility_reassessment.md",
+      "blob_sha": "6c9343a57610a7ab0554a7095ad201bad4f43d01",
+      "coverage": "substantive_complete",
+      "ranges": [
+        [
+          1,
+          293
+        ]
+      ],
+      "lane": "modal_reference",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/8481b78ea8b4f23f19995344886a5c40e3ab3ce8/docs/task040_parallel_floquet_envelope_hcurl/feasibility_reassessment.md"
+    },
+    {
+      "commit": "8481b78ea8b4f23f19995344886a5c40e3ab3ce8",
+      "path": "docs/task040_parallel_floquet_envelope_hcurl/README.md",
+      "blob_sha": "228215a2633dec4373a7e453eb06f36a8da14a14",
+      "coverage": "substantive_complete",
+      "ranges": [
+        [
+          1,
+          197
+        ]
+      ],
+      "lane": "modal_reference",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/8481b78ea8b4f23f19995344886a5c40e3ab3ce8/docs/task040_parallel_floquet_envelope_hcurl/README.md"
+    },
+    {
+      "commit": "8481b78ea8b4f23f19995344886a5c40e3ab3ce8",
+      "path": "docs/task040_parallel_floquet_envelope_hcurl/task.md",
+      "blob_sha": "19987483427897b7121eaeeecdbf2d7a409f93ab",
+      "coverage": "substantive_complete",
+      "ranges": [
+        [
+          1,
+          124
+        ]
+      ],
+      "lane": "modal_reference",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/8481b78ea8b4f23f19995344886a5c40e3ab3ce8/docs/task040_parallel_floquet_envelope_hcurl/task.md"
+    },
+    {
+      "commit": "8481b78ea8b4f23f19995344886a5c40e3ab3ce8",
+      "path": "docs/task040_parallel_floquet_envelope_hcurl/structured_background_fft_hcurl.md",
+      "blob_sha": "73fb463c42bfe42e3b2429fa9f4eda010f2e2ac9",
+      "coverage": "substantive_complete",
+      "ranges": [
+        [
+          1,
+          385
+        ]
+      ],
+      "lane": "modal_reference",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/8481b78ea8b4f23f19995344886a5c40e3ab3ce8/docs/task040_parallel_floquet_envelope_hcurl/structured_background_fft_hcurl.md"
+    },
+    {
+      "commit": "8481b78ea8b4f23f19995344886a5c40e3ab3ce8",
+      "path": "docs/task040_parallel_floquet_envelope_hcurl/outcomes/structured_background_reference_validation.md",
+      "blob_sha": "b511a5d7b72c778b2d96db70b835c608a09fb87a",
+      "coverage": "substantive_complete",
+      "ranges": [
+        [
+          1,
+          90
+        ]
+      ],
+      "lane": "modal_reference",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/8481b78ea8b4f23f19995344886a5c40e3ab3ce8/docs/task040_parallel_floquet_envelope_hcurl/outcomes/structured_background_reference_validation.md"
+    },
+    {
+      "commit": "8481b78ea8b4f23f19995344886a5c40e3ab3ce8",
+      "path": "docs/task040_parallel_floquet_envelope_hcurl/outcomes/lightweight_reference_validation.md",
+      "blob_sha": "f4be642f13d2b387f9f3fdd3cec335cb355a8acd",
+      "coverage": "substantive_complete",
+      "ranges": [
+        [
+          1,
+          69
+        ]
+      ],
+      "lane": "modal_reference",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/8481b78ea8b4f23f19995344886a5c40e3ab3ce8/docs/task040_parallel_floquet_envelope_hcurl/outcomes/lightweight_reference_validation.md"
+    },
+    {
+      "commit": "8481b78ea8b4f23f19995344886a5c40e3ab3ce8",
+      "path": "docs/task040_parallel_floquet_envelope_hcurl/scalability_addendum.md",
+      "blob_sha": "9e85836003e03139460053b8cbf58ed5c28259be",
+      "coverage": "substantive_complete",
+      "ranges": [
+        [
+          1,
+          203
+        ]
+      ],
+      "lane": "modal_reference",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/8481b78ea8b4f23f19995344886a5c40e3ab3ce8/docs/task040_parallel_floquet_envelope_hcurl/scalability_addendum.md"
+    },
+    {
+      "commit": "50897c0c62d1f35abed5b196ae17997b2e7521cc",
+      "path": "src/solvers/hybrid_full_spectrum_screen.py",
+      "blob_sha": "da9ad810c83a35a75fec7ab9877c5cb89c708e4a",
+      "coverage": "substantive_selected_ranges_prior_MCP_output",
+      "ranges": [
+        [
+          145,
+          359
+        ],
+        [
+          1190,
+          1290
+        ]
+      ],
+      "lane": "modal_reference",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/50897c0c62d1f35abed5b196ae17997b2e7521cc/src/solvers/hybrid_full_spectrum_screen.py"
+    },
+    {
+      "commit": "50897c0c62d1f35abed5b196ae17997b2e7521cc",
+      "path": "src/solvers/floquet_background_hcurl_s3_pilot.py",
+      "blob_sha": "bafae8cf162b005613d79671931473e0e7c2587b",
+      "coverage": "substantive_selected_ranges_prior_MCP_output",
+      "ranges": [
+        [
+          162,
+          272
+        ]
+      ],
+      "lane": "modal_reference",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/50897c0c62d1f35abed5b196ae17997b2e7521cc/src/solvers/floquet_background_hcurl_s3_pilot.py"
+    },
+    {
+      "commit": "50897c0c62d1f35abed5b196ae17997b2e7521cc",
+      "path": "src/solvers/floquet_background_hcurl_s3_formal.py",
+      "blob_sha": "25bd888f633896f4b7fe7a939509c39e764fc03a",
+      "coverage": "substantive_selected_ranges_prior_MCP_output",
+      "ranges": [
+        [
+          475,
+          682
+        ]
+      ],
+      "lane": "modal_reference",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/50897c0c62d1f35abed5b196ae17997b2e7521cc/src/solvers/floquet_background_hcurl_s3_formal.py"
+    }
+  ],
+  "pending_lanes": [],
+  "not_read": [
+    "all historical commits",
+    "most numeric JSON/CSV/log bodies",
+    "full field/weight/binary artifacts",
+    "all source imports line by line"
+  ],
+  "source_ledgers": [
+    {
+      "file": "repository_inventory/inventory_worker_coverage.json",
+      "sha256": "d0e1ce6f404859f288fa061cff19c5b7ebdb3a78bdef1e4b746b98ec037d7ceb"
+    },
+    {
+      "file": "neural_review/read_coverage.json",
+      "sha256": "bc4ab12894863107741d516bb4ecd9c73e24ec38f69382f642453d816c069793"
+    },
+    {
+      "file": "experiments/prior_work_audit/p4_capacity_coverage_v1.json",
+      "sha256": "d7d6afe81b31835f45ffcb2d07d1e9014f626f18b69845f8dfcac9045cbfff53",
+      "indexed_searched_records_omitted_from_compact": 316
+    },
+    {
+      "file": "repository_inventory/boundary_audit/coverage.json",
+      "sha256": "d4b95ff956e38ab149aa8026b6a4c0d461e5d7b395e3559c17551f7a18b0c7ad"
+    },
+    {
+      "file": "repository_inventory/modal_audit/coverage_compact.json",
+      "sha256": "a2a6026e84ae185c39587c078346c426331b09e2104fb4449ae32f2ff8e7f795"
+    }
+  ],
+  "lane_counts": {
+    "p4_capacity": {
+      "full_read": 22,
+      "searched_not_fully_read": 316,
+      "partial_read": 15
+    },
+    "port_dtn_storage": {
+      "search_only": 438,
+      "relevant_sections_reviewed": 11,
+      "full_file_read": 6
+    },
+    "modal_reference": {
+      "searched_unique_blobs": 109,
+      "substantive_complete_files": 12,
+      "substantive_partial_files": 9
+    }
+  },
+  "coverage_definitions": {
+    "fully_read": "Full content substantively reviewed; not independently rerun or formally verified",
+    "section_read": "Only identified sections, functions, results or diffs substantively reviewed",
+    "automatic_search": "Every selected text line searched by recorded patterns; no semantic full-read claim",
+    "indexed_not_read": "Path, size and Git identity inventoried; body not substantively reviewed"
+  },
+  "source_reports": [
+    {
+      "file": "repository_inventory/inventory_audit.md",
+      "sha256": "6d69ac81a8a7084189b94b82f51de91c3229942f1a1439e6352e2d255e0299bd"
+    },
+    {
+      "file": "neural_review/findings_zh.md",
+      "sha256": "ba92905f143c479590af344e4c716c95f3f3c98b38b13ffddab7334e009c0e93"
+    },
+    {
+      "file": "experiments/prior_work_audit/p4_capacity_duplication_audit_v1.md",
+      "sha256": "70a63bed0d1d4b2c00a976f7e6c3cd5fc9ecfb496261dc436debe642e6fa3a9d"
+    },
+    {
+      "file": "repository_inventory/boundary_audit/findings_zh.md",
+      "sha256": "86ea6d37f9e7a06d91df825f8da733447fe2908ac7a2b71df768479acdd6523b"
+    },
+    {
+      "file": "repository_inventory/modal_audit/findings_zh.md",
+      "sha256": "00566ce60eff58fc03037a475b63798e71d7b84da51b85c2b2a7440657e8e4df"
+    }
+  ],
+  "source_ledgers_note": "External audit provenance files identified by relative name and hash; bodies intentionally not copied into repository. Substantive SHA/path records below are self-contained."
+}

@@ -58,3 +58,37 @@ DtN 实验检查开放边界通道的编号、物理方向和局部投影积分�
 | 资源/失败 | attempt2 tree RSS638,885,888B、8.839s、swap0；warm JIT；attempt1 readonly Vec API失败保留 | [compact及失败hash](records/y_orbit_full3d_pilot_v1.json) |
 | 独立核验 | 12矩阵/direct残差重算及all-q/aliases/nonzero-q通过；focused3 passed | 未做full pytest/MPI2+/Ruff/CI/rendered view |
 | 后续/目标 | 非零y ky、真实p4/p6、直接单cellblock生成、原尺寸2TB/48h均未资格 | 小p2架构正结果，生产和目标能力unknown；[Response V3](../response_v3.md) |
+
+## 原始端口 H：独立组件资格
+
+端口 H 是每个出射模式的独立归一化。用对角向量代替稠密方阵，可以保持全部三维 DOF/全部模式，仅减少无必要存储和通用求解。production 暂未接线，也不是二维等效。
+
+| 项目 | 结果 | 身份与边界 |
+|---|---|---|
+| 全尺寸真实生成器 | 50×25nm、0.7nm、1°掠入射/Si：32,060模式，31,488个n≠0；包络142/35 | measured inventory；截断未资格，非目标PDE |
+| 实际G0 p4 port | B/D各42,624项、1,536唯一行；无Bi/Di/XiB，carrier1,704,960B | measured saved export scan；不是当前主要内存瓶颈 |
+| 实际80mode原H组件 | 任意complex1285RHS/单列/零向量，solve/action差0；20 targeted tests pass | measured standalone component；production与原A资格未完成 |
+| 资源 | corrected watchdog2.0147s、同时树RSS196,882,432B、swap0；H数组1,280B | measured；独立树RSS与named payload不相加 |
+| Hhat | synthetic factored action差9.1427e-17，无新增LU/方阵 | algebraic supplement；actualp6完整作用/性能未运行 |
+
+详见[组件结果与接线清单](original_port_blocks_component_v1.md)、[原始记录](records/original_port_blocks_component_v1.json)、[全尺寸库存](records/full_size_port_inventory_v1.json)。0.7nm完整目标、全域p4因子、截断/连续精度、2TB/48h仍未解决。
+
+## V3后续：真实非零y Bloch phi5
+
+| 数据身份/范围 | 实际结果 | 证据/限定 |
+|---|---|---|
+| measured；同80cell/p2 scaled full3D，phi5，532 ports/4 blocks/480 interiors | phase_y0.5285127306+0.8489253758i；native covariance3.1047e-16；全部aliases保留 | [phi5详细](y_orbit_phi5_pilot_v1.md) |
+| measured；同2-cell三维notch、原A FGMRES | generic/incident4/3步；原残差1.2852e-13/7.1414e-12；direct差5.4957e-13/5.5650e-11；incident非零q5.5252e-5 | 原门未放宽；独立checker通过 |
+| measured；whole-tree watchdog | 701,861,888B、10.107636026s、swap0，清场；warm JIT；4 focused tests | [compact/hash](records/y_orbit_phi5_pilot_v1.json) |
+| 下一步 | 暂停新实现/数值计算；先远程code/docs/history审计；72小时workstation-ready大型验证方案 | 原尺寸精度/2TB/48h/收敛仍unknown；工作站由用户执行 |
+
+## V4：全分支复用审计（无新数值运行）
+
+| 身份/范围 | 审计结论 | 决策/边界 |
+|---|---|---|
+| indexed；35当前HEAD、8713去重blob | 全树无截断；4773代码/正文blob共104291461B核验并自动检索，缺失0 | 搜索不等于全文精读；SHA/path/范围见[覆盖](records/repository_audit_coverage_v1.json) |
+| historical measured；Task040 S2d | exact背景逆tiny残差serial/MPI2约1.60e-14/2.14e-14已存在 | y-only异质x-z/full-RHS/all-alias/sparse是扩展，不是首次提出 |
+| derived；p4/port/neural复用与负结果 | 复用准确凝聚/恢复、已有gauge和fullspace对角H；避免同对象BLR/神经/streaming重试 | 不改变历史资格；[综合审计](repository_reuse_audit_v1.md) |
+| not_run；新高阶/工作站资格 | 当前p2 phi5已过；p4/p6、跨ABI、目标资源/物理与中断恢复仍缺 | 与本机同一大验证；自主读main新push；用户执行工作站大运行 |
+
+[Response V4](../response_v4.md)。本轮仅compact docs/evidence，无新PDE或生产接线；完整语料不入Git。

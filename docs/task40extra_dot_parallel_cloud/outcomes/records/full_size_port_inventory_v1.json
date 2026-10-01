@@ -1,0 +1,143 @@
+{
+  "schema": "task40extra.structured-port.actual-inventory.staging.v1",
+  "status": "MEASURED_GENERATOR_AND_READ_ONLY_EXPORT_SCAN",
+  "prototype_test_status": "PASS_STANDALONE_COMPONENT_ONLY",
+  "PDE_solved": false,
+  "factor_created": false,
+  "production_qualified": false,
+  "source_head": "c619854a371fdb3330d21747a53a440dd1d427ae",
+  "source_sha256": {
+    "src/common/config_3d.py": "612e615f4aa5ae0411556523b9061ee47a755b8110a7c097d28b8d6f698bfc1b",
+    "src/common/modes_3d.py": "5731dc67d292b2eef854f6afdfa2a951fd5a109150cfa17f35f45c7c41cda2dd"
+  },
+  "generator_configuration": {
+    "configuration_class": "SimulationConfig3D",
+    "lambda0": 0.7,
+    "period_x": 50.0,
+    "period_y": 25.0,
+    "n_air": [
+      1.0,
+      0.0
+    ],
+    "n_substrate": [
+      0.9998851703688496,
+      4.3236152269189515e-06
+    ],
+    "mu_r": [
+      1.0,
+      0.0
+    ],
+    "incident_theta_deg": 89.0,
+    "incident_phi_deg": 0.0,
+    "polarization_kind": "s",
+    "stage4_dtn_order_policy": "auto_propagating",
+    "diffraction_order_max_m": null,
+    "diffraction_order_max_n": null,
+    "nedelec_degree": 6,
+    "z_min": -10.0,
+    "z_max": 130.0,
+    "z_note": "Illustrative 140nm-extent port heights for this mode-count-only call. Counts do not depend on z; these heights do not freeze a physical target geometry or its boundary phase.",
+    "other_configuration_values": "Defaults from the hash-bound config_3d.py; no input mutation"
+  },
+  "full_size_actual_generator": {
+    "automatic_enumeration_envelope": [
+      142,
+      35
+    ],
+    "mode_count": 32060,
+    "distinct_mn": 8015,
+    "actual_m_bounds": [
+      -142,
+      0
+    ],
+    "actual_n_bounds": [
+      -35,
+      35
+    ],
+    "nonzero_n_modes": 31488,
+    "by_side": {
+      "top": {
+        "modes": 16030,
+        "propagating": 16030,
+        "evanescent": 0,
+        "rayleigh_warning": 0
+      },
+      "bottom": {
+        "modes": 16030,
+        "propagating": 16030,
+        "evanescent": 0,
+        "rayleigh_warning": 0
+      }
+    },
+    "ordered_key_hash": null,
+    "ordered_key_hash_status": "Not retained by the count-only read-only audit; reproduce with the configuration and source hashes before integration",
+    "truncation_qualification": false,
+    "derived_p6_production_quadrature_degree": 160,
+    "derived_default_Gauss_points_per_face_axis": 81,
+    "derived_one_dense_complex128_H_bytes": 16445497600,
+    "derived_complex128_H_diagonal_bytes": 512960,
+    "derived_real_float64_normalization_diagonal_bytes": 256480,
+    "byte_scope": "Array shapes only, not RSS or a target-capacity prediction"
+  },
+  "saved_G0_actual_export": {
+    "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/real_p4_g0_phase2_attempt2/operator",
+    "export_manifest_sha256": "0694682ff5e3477f50432a022d4fb9db142e58e3d651d3c53ebd3b0e3811b656",
+    "cells": 336,
+    "degree": 4,
+    "storage_rows": 69856,
+    "all_trace_rows": 33568,
+    "active_trace_rows": 28992,
+    "interior_rows": 36288,
+    "modes": 80,
+    "carrier_index_dtype": "int32",
+    "carrier_B_entries": 42624,
+    "carrier_D_entries": 42624,
+    "carrier_unique_rows_each": 1536,
+    "carrier_unique_rows_per_port_each": 768,
+    "each_port_mode_count": 40,
+    "per_mode_support_count_values": [
+      96,
+      264,
+      768
+    ],
+    "B_row_bytes": 170496,
+    "B_value_bytes": 681984,
+    "D_row_bytes": 170496,
+    "D_value_bytes": 681984,
+    "carrier_array_bytes_total": 1704960,
+    "carrier_B_interior_entries": 0,
+    "carrier_D_interior_entries": 0,
+    "carrier_exact_zero_stored_values": 0,
+    "B_min_abs": 2.632698524524423e-08,
+    "B_max_abs": 4.544081566948141,
+    "D_min_abs": 3.5013001352554604e-09,
+    "D_max_abs": 0.4396338737995023,
+    "Bi_Di_cell_term_count": 0,
+    "XiB_array_count": 0,
+    "CSR_block_stored_nnz": {
+      "trace_trace": 10827264,
+      "trace_port": 42624,
+      "port_trace": 42624,
+      "port_port": 80
+    },
+    "CSR_exact_zero_stored_values": 0,
+    "CSR_H_offdiagonal_max_abs": 0.0,
+    "dense_trace_carrier_copies_retained": false
+  },
+  "audit_execution": {
+    "python_version": "3.12.14",
+    "numpy_version": "2.5.3",
+    "python_path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.venv/bin/python",
+    "threads": {
+      "OPENBLAS_NUM_THREADS": 1,
+      "OMP_NUM_THREADS": 1,
+      "MKL_NUM_THREADS": 1
+    },
+    "elapsed_seconds": 3.9062816690002364,
+    "self_peak_RSS_KiB": 282496,
+    "resource_scope": "getrusage self high-water mark, not whole-tree/cgroup peak",
+    "writes_during_audit": false,
+    "PDE_or_factor_imports": false
+  },
+  "component_receipt": "original_port_blocks_component_v1.json"
+}

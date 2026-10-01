@@ -17,3 +17,13 @@
 第二批真实三维p4算子数据已完成：[Response V2](response_v2.md)、[实际矩阵/资源/负结果](outcomes/real_p4_probe_preparation_v2.md)。新增明确的有界研究范围见 [Phase 2补充](phase2_real_p4_probe.md)。本批没有全局solve或目标能力资格；完整三维原尺寸目标和未来三维缺口能力要求保持。
 
 第三批full3D参考逆架构的小型实测完成：[Response V3](response_v3.md)、[完整数学/结果/失败/容量边界](outcomes/y_orbit_full3d_pilot_v1.md)。缩放p2原三维算子和真实三维缺口均通过，不能作为原尺寸目标解或2TB/48h资格；phi0非零y-wrap仍未测。
+
+新增原始端口H独立组件资格：[结果与接线设计](outcomes/original_port_blocks_component_v1.md)。实际80mode复数作用/求解与dense oracle差0；20targeted checks通过。production未接线，无目标PDE或2TB/48h资格。
+
+real-ky phi5后续已通过：[完整三维y-wrap/参考逆资格](outcomes/y_orbit_phi5_pilot_v1.md)。当前先审计远程repository/history以避免重复，再准备用户自行工作站执行的大型验证方案；不自动继续PDE或承诺目标收敛。
+
+## 当前交付边界（2026-10-01最新用户指令）
+
+本支线补足main Task40extra与用户笔记本MyFEniCSx_task37_extra验证所需证据，不替代其campaign。72小时截至2026-10-04 10:07:14 UTC，交付冻结source/environment/config和用户可自行工作站执行的一条分级资格/资源/大型验证命令；原尺寸50×25×140 nm规则Si光栅、λ0.7nm、≤2TB物理RAM/≤48h solve目标明确，必须保留完整三维缺口能力。先审计远程code/docs/history和main Review V2 P0–P7，避免重复，再决定下一实验。云端小型资格不承诺大型收敛；不写用户机器、其他分支、parent task/review或production default。详见[最新scope](task.md)。
+
+全分支去重复用审计已收口：[Response V4](response_v4.md)、[简明报告](outcomes/repository_reuse_audit_v1.md)。自主只读检查main新推送与增量结果，不依赖用户手动转述；HEAD未变不推断本机idle。

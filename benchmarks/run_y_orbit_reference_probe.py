@@ -101,8 +101,8 @@ def main():
     args.run_directory = args.run_directory.resolve()
     if not args.run_directory.is_relative_to(ARTIFACT_ROOT):
         parser.error("artifacts must remain in the own ignored subtree")
-    if args.azimuth != 0.0:
-        parser.error("v1 is one coherent phi=0 pilot; nonzero Bloch needs a separately coordinated run")
+    if args.azimuth not in (0.0, 5.0):
+        parser.error("only separately coordinated real-ky phi=0 or phi=5 pilots are supported")
     if args.worker:
         return _worker(args)
     source = source_facts(args.expected_head)

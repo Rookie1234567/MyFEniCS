@@ -498,6 +498,8 @@ def run_full3d_pilot(input_path, *, event: Callable, save_array: Callable, azimu
     if int(levels["mesh"].topology.index_map(3).size_local) != 80:
         raise ValueError("pilot requires exactly 80 full-3D hexahedral cells")
     layout = build_y_orbit_layout(space, floquet, cfg, axes)
+    if azimuth_deg == 5.0 and abs(layout.phase_y - 1.0) < 1e-3:
+        raise ValueError("phi5 probe must exercise a genuinely nontrivial real-ky y wrap")
     if len(layout.independent) != 2048 or layout.width != 512:
         raise ValueError("actual full-FE inventory differs from the derived 2048/4x512")
     event("regular_layout_ready", layout.audit)
@@ -610,7 +612,7 @@ def run_full3d_pilot(input_path, *, event: Callable, save_array: Callable, azimu
             if max(packet["augmented_FE_true_residual"], packet["augmented_port_closure_relative"],
                    packet["augmented_vs_original_residual_relative"]) > LIMITS["residual"]:
                 raise ValueError("notched full augmented primal/dual residual Gate fails")
-            if label == "physical" and azimuth_deg == 0.0 and packet["nonzero_q_primal_relative"] < LIMITS["notch_modes"]:
+            if label == "physical" and packet["nonzero_q_primal_relative"] < LIMITS["notch_modes"]:
                 raise ValueError("notch physical forcing must generate nonzero transverse block content")
             notch[label] = packet
             event("notch_" + label + "_solve_pass", {key: packet[key] for key in ("iterations", "full_original_true_residual", "nonzero_q_primal_relative")})

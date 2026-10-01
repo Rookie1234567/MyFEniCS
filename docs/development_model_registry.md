@@ -1992,3 +1992,12 @@ production model。
 | dot_y_orbit_p2_notch | 同source/mesh，真实2cell air notch；PC保持regular A0 inverse | generic/incident原A FGMRES4/3步；原残差5.2744e-15/5.8469e-13；direct场差9.4051e-14/5.0376e-13；incident非零q比例1.4217e-5 | ARCHITECTURE_IDENTITY_AND_NOTCH_PASS；独立checker/targeted3 tests通过 | 同上 |
 
 无official R/T/A/A_volume/energy closure、p2 accuracy、nonzero-y-Bloch、p4/p6、continuum或原尺寸2TB/48h资格。因子payload对照是小型dense LU，不能代替simultaneous RSS或预测稀疏fill。raw完整矩阵/场/失败log在ignored artifact目录，compact绑定hash；无source改写旧负结果。
+
+## Task40extra dot V3 phi5：非零y-wrap的小型full3D资格
+
+| Model ID | source/scope | measured result | resource/status | evidence |
+|---|---|---|---|---|
+| dot_y_orbit_p2_phi5 | source ac1410ca1187352fbe398325c5f7aaa33bf0d0bd；同80cell/p2、2048 independent/480 interiors、532 ports、4完整y块，真实Si，scaled7/135 | phase_y0.5285127306+0.8489253758i；native covariance3.1047e-16；regular generic/incident原A残差1.2029e-13/8.7837e-15 | ARCHITECTURE_IDENTITY_AND_NOTCH_PASS；whole-treeRSS701,861,888B、10.107636026s、swap0、warmJIT | [phi5 outcome](task40extra_dot_parallel_cloud/outcomes/y_orbit_phi5_pilot_v1.md) |
+| dot_y_orbit_p2_phi5_notch | 同source/mesh，两cell真实3D空气缺口，PC保持regular A0 | generic/incident FGMRES4/3步，原残差1.2852e-13/7.1414e-12；direct场差5.4957e-13/5.5650e-11；incident非零q5.5252e-5 | 独立checker12 residual/direct检查＋all-q/alias/augmented/nonzero-q，focused4 tests通过 | [compact](task40extra_dot_parallel_cloud/outcomes/records/y_orbit_phi5_pilot_v1.json) |
+
+这里只资格化本scaled p2 case的real ky/phi5，没有official R/T/A、一般Bloch/complex ky、p4/p6、目标物理精度或2TB/48h资格。后续审计和工作站方案不自动授权运行用户工作站。

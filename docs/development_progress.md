@@ -1,3 +1,15 @@
+# dot Task40extra V4：全分支复用审计与工作站准备
+
+2026-10-01：为避免与MyFEniCSx_task37_extra重复工作，完成35个当前分支树索引和4773个去重代码/正文blob自动检索，104291461B全部核验；专题作定点精读/章节读，未宣称全库全文阅读。本轮没有新数值运行。
+
+Task040 S2d已具tiny准确离散背景逆正结果，当前y-only路线应复用准确凝聚/恢复和有效maps；新增资格限异质x-z、完整内部RHS、全部端口别名与可扩展构造。当前scaled p2 phi5非零y-wrap已通过；高阶/跨ABI/原尺寸仍未资格。已有端口gauge、fullspace对角H、BLR/神经/streaming负历史共同约束下一步，不能重复相同菜单或承诺2TB/48h。
+
+与主线同一次大型验证，截止2026-10-04 10:07:14 UTC准备冻结source/environment/config、分级Gate与用户自行执行的工作站入口。自主只读main新push和结果增量，不依赖手动转述；未push不代表本机idle。solution-only恢复仍须实际中断测试，不能当factor恢复。
+
+证据：[V4审计与限制](task40extra_dot_parallel_cloud/response_v4.md)、[覆盖索引](task40extra_dot_parallel_cloud/outcomes/records/repository_audit_coverage_v1.json)。仅本独占分支文档更新，历史段落不删改。下方Task40 attempt4旧“最终状态”是历史快照；当前main基线以其ResponseV2/ReviewV2及model_registry登记为准。
+
+---
+
 # Task40extra：0.7 nm 非可分三维 Maxwell 工程起步（B 线 N0–N6 受限收口）
 
 ### 最终状态
@@ -3289,3 +3301,17 @@ V26 本轮 Full3D p6/h7.5、coarse p4 场已经完成 126 步并通过残差/物
 本批为缩放p2 full3D架构资格，不是原尺寸50×25×140nm准确解或2TB/48h能力。phi0的非零y-wrap、p4/p6、mesh/电尺寸鲁棒性和可扩展单cellblock装配仍未测。旧full-spectrum为analytic-interface sweep；相关B1平均材料/非均匀topological-orbit路线明确丢off-block且formal停于implementation Gate，所以本批是已有背景逆家族的结构性纠正/扩展。ordinary defaults、其他分支、用户电脑均未操作；仅own branch本地提交，等待协调publication/review。
 
 [Response V3](task40extra_dot_parallel_cloud/response_v3.md)、[详细Gate/容量边界](task40extra_dot_parallel_cloud/outcomes/y_orbit_full3d_pilot_v1.md)、[compact](task40extra_dot_parallel_cloud/outcomes/records/y_orbit_full3d_pilot_v1.json)。
+
+### Task40extra dot：原始端口 H 独立存储组件
+
+原 p6 retained 端口 H 从真实归一化对角项生成，却采用稠密方阵和反复通用求解。本批新增 opt-in `original_port_blocks.py`，保留全部有序mode IDs及complex/non-Hermitian语义；生产代码未接线。真实50×25nm/0.7nm参数生成32,060模式，其中31,488个n≠0；这是实际库存，不是二维等效或目标截断资格。
+
+实际保存G0 p4端口B/D各42,624项，均为active trace，未有Bi/Di/XiB；因此没有虚报当前G0内存瓶颈。实际80mode原H的任意复数5RHS/单列/零向量相对dense complex128作用/求解差0；20 targeted tests通过。独立watchdog2.0147s、同时树RSS196,882,432B、swap0。Hhat借用cachedDi/XiB的9.1427e-17差仅为synthetic algebra，未验证actualp6完整恢复/原A或性能。第一次float64-H oracle限定证据保留，修正complex128后fresh rerun。
+
+结论：standalone原H组件资格通过，production接线/原A/目标解未完成；不声称目标提速、2TB/48h或连续精度。下一步先关闭实际p2/p4/p6完整凝聚作用接线Gate，Fourier tensor面作用仍为后续有界候选。证据见[本批报告](task40extra_dot_parallel_cloud/outcomes/original_port_blocks_component_v1.md)与compact records。
+
+## 2026-10-01：dot V3 phi5关闭real-ky非零y-wrap缺口
+
+同一缩放full3D80-cell/p2系统只改变phi=5°，实测y phase0.5285127306+0.8489253758i。native cycle/covariance、Q^H dual/Q primal、全部532 aliases/4完整块/480 interiors通过，原算子notch generic/incident4/3步残差1.2852e-13/7.1414e-12，incident非零q比例5.5252e-5由独立checker重算。source ac1410ca1187352fbe398325c5f7aaa33bf0d0bd；whole-tree RSS701,861,888B、10.108s、swap0、warm JIT，focused4 tests通过。较大的physical direct场差5.5650e-11仍在1e-9门内，明确保留。
+
+仅关闭此scaled p2 real-ky case的具体身份缺口；p4/p6、复杂mesh/ky、物理精度、原尺寸2TB/48h均未资格。用户要求先读远程code/docs/history避免重复，后续实现和数值任务暂停；72小时结果应为用户在工作站自行执行的大型验证方案，保留冻结source/env/config、one-command分级Gate、checkpoint/restart/fail-fast与缺口，不保证收敛。详见[phi5 outcome](task40extra_dot_parallel_cloud/outcomes/y_orbit_phi5_pilot_v1.md)与[compact](task40extra_dot_parallel_cloud/outcomes/records/y_orbit_phi5_pilot_v1.json)。

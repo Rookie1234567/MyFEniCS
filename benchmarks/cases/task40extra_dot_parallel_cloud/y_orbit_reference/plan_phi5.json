@@ -1,0 +1,15 @@
+{
+  "schema": "task40extra.y-orbit-phi5.plan.v1",
+  "status": "not_run_pending_source_and_parent_run_approval",
+  "base_reference": "phi0 architecture pilot numerical source18d7d0a27f73705366f8cb747c11cb9e68cc0ef6",
+  "scope": "one separately supervised real-ky phi=5-degree pilot, unchanged scaled full3D 80-cell p2 geometry and two-cell notch",
+  "changes": ["CLI allows exactly phi0 or phi5", "physical notch nonzero-q content Gate applies at both azimuths"],
+  "unchanged": ["all 2048 independent FE rows and 480 interiors", "all four y blocks", "fresh full production DtN generator and all physical aliases", "all original-action/direct/augmented residual limits", "real air index and physical Si", "no group averaging or n0 projection"],
+  "required_phase_identity": "native T^Ny=exp(i ky Ly) I with genuinely nonzero phase argument, real ky; canonical unitary shift and Q^H dual/Q primal signs checked",
+  "command": "python -m benchmarks.run_y_orbit_reference_probe --run --azimuth 5 --expected-head COMMITTED_HEAD --run-directory benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_p2_phi5_attempt1",
+  "checker_command": "python -m benchmarks.check_y_orbit_reference_probe benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_p2_phi5_attempt1",
+  "resource": {"tree_cap_bytes": 1610612736, "wall_seconds": 600, "swap_bytes": 0, "threads": 1, "mpi": 1, "one_heavy_case": true},
+  "target_original_size_solution": false,
+  "target_2TB_48h_claim": false,
+  "complex_ky_or_material_broadening": false
+}

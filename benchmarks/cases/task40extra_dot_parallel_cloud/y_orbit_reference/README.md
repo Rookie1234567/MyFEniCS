@@ -16,3 +16,7 @@ Y_ORBIT_PILOT_EVIDENCE=benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orb
 重跑需要协调方明确授权、新artifact目录与真实source HEAD；上述目录已经存在，runner会拒绝覆盖。attempt1保留readonly Vec callback API failure；attempt2复用其JIT cache，所以8.839秒不是cold-success时长。phi0的y phase=1，phi5未运行。
 
 [结果/数学身份/失败与边界](../../../../docs/task40extra_dot_parallel_cloud/outcomes/y_orbit_full3d_pilot_v1.md)；[hash-bound compact](../../../../docs/task40extra_dot_parallel_cloud/outcomes/records/y_orbit_full3d_pilot_v1.json)；[冻结计划](plan.json)。
+
+## real-ky phi5后续
+
+source ac1410ca1187352fbe398325c5f7aaa33bf0d0bd的单次phi5完整三维后续通过：使用同一command加 `--azimuth 5`，artifact目录为 `benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_p2_phi5_attempt1`。phi0/5之外CLI拒绝；所有原残差和nonzero-q门保持。完整结果与hash见[phi5 outcome](../../../../docs/task40extra_dot_parallel_cloud/outcomes/y_orbit_phi5_pilot_v1.md)、[compact](../../../../docs/task40extra_dot_parallel_cloud/outcomes/records/y_orbit_phi5_pilot_v1.json)。当前按用户要求先审计，不自动重跑。

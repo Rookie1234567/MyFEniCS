@@ -1,0 +1,248 @@
+{
+  "schema": "task40extra.original-port-blocks.component-evidence.v1",
+  "status": "PASS_STANDALONE_COMPONENT_ONLY",
+  "source_sha_for_qualified_tests": "ac4d7859b2cae78897c23672c3929490f0415677",
+  "source_files_sha256": {
+    "src/solvers/original_port_blocks.py": "de6940522d97343484851f7abe75dbb6302a3b64be2f0903cee3361bc9816645",
+    "src/test/test_original_port_blocks.py": "2e858027f0371cae3771acb403447bf5c0311e4bf9bd36892bca7b5a98669e22"
+  },
+  "attempts": [
+    {
+      "attempt": "original_H_component_attempt1",
+      "source_sha": "896a5c1f57c7c569f90ac4aa4335b25fa3ba0388",
+      "scope": "Standalone saved actual80mode original-H component; no PDE, no production wiring",
+      "classification": "COMPLETED",
+      "test_result": "....................                                                     [100%]\n20 passed in 0.51s",
+      "elapsed_watchdog_seconds": 2.079941209000026,
+      "simultaneous_tree_rss_peak_bytes": 197144576,
+      "tree_swap_peak_bytes": 0,
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "all_status_readable": true,
+      "all_identity_complete": true,
+      "effective_launch_cap_bytes": 1610612736,
+      "artifacts": {
+        "summary.json": {
+          "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/original_H_component_attempt1/summary.json",
+          "sha256": "f5603fa197f21966145d8c3e1295a2858506eb8979be51951ea497b9b133990e"
+        },
+        "worker.log": {
+          "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/original_H_component_attempt1/worker.log",
+          "sha256": "c77dec125179fc1684ec3b5657bfac705fbf29c45fcb5e5fcc69e0368738a9c7"
+        },
+        "environment.json": {
+          "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/original_H_component_attempt1/environment.json",
+          "sha256": "d6d64baab4559d7cd970393bfb87f58ba9e9c955969a9b1eb078ed3fa3ab432d"
+        },
+        "component_metrics.json": {
+          "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/original_H_component_attempt1/component_metrics.json",
+          "sha256": "380c8a94908c65203c5028c9fb3d4cf4283bff40b5da985479fc42ea596cd2a5"
+        },
+        "resources.jsonl": {
+          "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/original_H_component_attempt1/resources.jsonl",
+          "sha256": "166943854328cd0908a3e34597a97b7eefe940742df02790390a6657fdbcfede"
+        }
+      },
+      "metrics": {
+        "actual_80_mode_H": {
+          "source_sha": "c619854a371fdb3330d21747a53a440dd1d427ae",
+          "manifest_sha256": "0694682ff5e3477f50432a022d4fb9db142e58e3d651d3c53ebd3b0e3811b656",
+          "ordered_modes_sha256": "a6e018984902aef4da3377acaf16128ff1de030de6aebb1405fdb112fe5502d0",
+          "seed": 400701,
+          "defects": [
+            {
+              "RHS_shape": [
+                80,
+                5
+              ],
+              "solve_relative_defect": 0.0,
+              "apply_relative_defect": 0.0
+            },
+            {
+              "RHS_shape": [
+                80
+              ],
+              "solve_relative_defect": 0.0,
+              "apply_relative_defect": 0.0
+            },
+            {
+              "RHS_shape": [
+                80,
+                5
+              ],
+              "solve_relative_defect": 0.0,
+              "apply_relative_defect": 0.0
+            }
+          ],
+          "audit": {
+            "representation": "diagonal_original_H",
+            "mode_count": 80,
+            "identity_sha256": "64fedd9f04c19a3a4c5ec23ae35b1cfa1b95698e631d64c644752ea81202568d",
+            "resident_numeric_bytes": 1280,
+            "resident_square_arrays": 0,
+            "apply_complex_multiplications_per_rhs": 80,
+            "solve_complex_divisions_per_rhs": 80,
+            "dense_factorization_calls": 0,
+            "retained_Hhat": false,
+            "qualified": false
+          },
+          "dense_oracle_bytes": 51200,
+          "PDE_solved": false
+        },
+        "synthetic_Hhat_algebraic_supplement": {
+          "seed": 400702,
+          "relative_action_defect": 9.142689337463832e-17,
+          "audit": {
+            "representation": "original_H_plus_borrowed_cached_Di_XiB",
+            "correction_count": 2,
+            "new_square_Hhat_arrays": 0,
+            "new_correction_factor_copies": 0,
+            "new_local_LU_solves_per_apply": 0,
+            "named_unique_backing_bytes_including_borrowed": 1960,
+            "correction_complex_matmul_terms_per_rhs": 40,
+            "byte_scope": "named backing inventory, not process RSS or added bytes",
+            "qualified": false
+          },
+          "actual_p6_condensation_qualified": false
+        }
+      },
+      "oracle_dtype_scope": "float64 diagonal values, complex RHS; retained as first limited attempt"
+    },
+    {
+      "attempt": "original_H_component_attempt2",
+      "source_sha": "ac4d7859b2cae78897c23672c3929490f0415677",
+      "scope": "Standalone saved actual80mode original-H component; no PDE, no production wiring",
+      "classification": "COMPLETED",
+      "test_result": "....................                                                     [100%]\n20 passed in 0.50s",
+      "elapsed_watchdog_seconds": 2.0146735129983426,
+      "simultaneous_tree_rss_peak_bytes": 196882432,
+      "tree_swap_peak_bytes": 0,
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "all_status_readable": true,
+      "all_identity_complete": true,
+      "effective_launch_cap_bytes": 1610612736,
+      "artifacts": {
+        "summary.json": {
+          "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/original_H_component_attempt2/summary.json",
+          "sha256": "7efcf4e7801d8009e987d6d1811b92bc683f8f61b0d3da2bde19bec55acf780b"
+        },
+        "worker.log": {
+          "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/original_H_component_attempt2/worker.log",
+          "sha256": "31251cbcd1b5d4252a0a1422edef418706eca4e67c5e8b8bd74abb2cbaa85ccc"
+        },
+        "environment.json": {
+          "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/original_H_component_attempt2/environment.json",
+          "sha256": "d6d64baab4559d7cd970393bfb87f58ba9e9c955969a9b1eb078ed3fa3ab432d"
+        },
+        "component_metrics.json": {
+          "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/original_H_component_attempt2/component_metrics.json",
+          "sha256": "040a9f4829ed31c9e8b9dc04c465a79b73fc2ee76418ebe3e11fcff8e52fc707"
+        },
+        "resources.jsonl": {
+          "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/original_H_component_attempt2/resources.jsonl",
+          "sha256": "602538a19268496040142ce28594a54f139d0ac3f574b3670555d9330907383f"
+        }
+      },
+      "metrics": {
+        "actual_80_mode_H": {
+          "source_sha": "c619854a371fdb3330d21747a53a440dd1d427ae",
+          "manifest_sha256": "0694682ff5e3477f50432a022d4fb9db142e58e3d651d3c53ebd3b0e3811b656",
+          "ordered_modes_sha256": "a6e018984902aef4da3377acaf16128ff1de030de6aebb1405fdb112fe5502d0",
+          "seed": 400701,
+          "defects": [
+            {
+              "RHS_shape": [
+                80,
+                5
+              ],
+              "solve_relative_defect": 0.0,
+              "apply_relative_defect": 0.0
+            },
+            {
+              "RHS_shape": [
+                80
+              ],
+              "solve_relative_defect": 0.0,
+              "apply_relative_defect": 0.0
+            },
+            {
+              "RHS_shape": [
+                80,
+                5
+              ],
+              "solve_relative_defect": 0.0,
+              "apply_relative_defect": 0.0
+            }
+          ],
+          "audit": {
+            "representation": "diagonal_original_H",
+            "mode_count": 80,
+            "identity_sha256": "64fedd9f04c19a3a4c5ec23ae35b1cfa1b95698e631d64c644752ea81202568d",
+            "resident_numeric_bytes": 1280,
+            "resident_square_arrays": 0,
+            "apply_complex_multiplications_per_rhs": 80,
+            "solve_complex_divisions_per_rhs": 80,
+            "dense_factorization_calls": 0,
+            "retained_Hhat": false,
+            "qualified": false
+          },
+          "dense_oracle_bytes": 102400,
+          "PDE_solved": false
+        },
+        "synthetic_Hhat_algebraic_supplement": {
+          "seed": 400702,
+          "relative_action_defect": 9.142689337463832e-17,
+          "audit": {
+            "representation": "original_H_plus_borrowed_cached_Di_XiB",
+            "correction_count": 2,
+            "new_square_Hhat_arrays": 0,
+            "new_correction_factor_copies": 0,
+            "new_local_LU_solves_per_apply": 0,
+            "named_unique_backing_bytes_including_borrowed": 1960,
+            "correction_complex_matmul_terms_per_rhs": 40,
+            "byte_scope": "named backing inventory, not process RSS or added bytes",
+            "qualified": false
+          },
+          "actual_p6_condensation_qualified": false
+        }
+      },
+      "oracle_dtype_scope": "complex128 actual-original-H dense oracle"
+    }
+  ],
+  "environment": {
+    "python": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/bin/python",
+    "prefix": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx",
+    "petsc_scalar_type": "complex128",
+    "petsc_int_type": "int32",
+    "petsc_version": [
+      3,
+      25,
+      6
+    ],
+    "qualification_manifest_sha256": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+    "qualification_scope": "separate_serial_cloud_ABI_not_historical_WSL_equivalence"
+  },
+  "thread_contract": {
+    "OMP_NUM_THREADS": 1,
+    "OPENBLAS_NUM_THREADS": 1,
+    "MKL_NUM_THREADS": 1,
+    "NUMEXPR_NUM_THREADS": 1
+  },
+  "limits": {
+    "whole_tree_RSS_bytes": 1610612736,
+    "new_named_payload_bytes": 536870912,
+    "watchdog_wall_seconds": 600,
+    "task_zero_swap": true
+  },
+  "production_wiring_changed": false,
+  "full_PDE_solved": false,
+  "factor_created": false,
+  "large_mode_square_array_constructed": false,
+  "actual_p6_Hhat_qualification": false,
+  "full_original_A4_A6_qualification": false,
+  "target_2TB_48h_qualification": false,
+  "Ruff": "NOT_RUN_tool_not_present",
+  "full_repository_tests": "NOT_RUN",
+  "GitHub_rendered_view": "NOT_RUN_pending_publication"
+}
