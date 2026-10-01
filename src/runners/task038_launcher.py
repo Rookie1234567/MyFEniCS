@@ -1149,6 +1149,30 @@ def _reserve_blr_stage_from_ledger(
         if authorized_performance_repeat is not None
         else None
     )
+    if error_prefix == "Task40":
+        ledger.setdefault("infrastructure_recovery_count", 0)
+    task40_infrastructure_recovery_attempts = 0
+    if error_prefix == "Task40":
+        for previous_attempt in attempts:
+            recovery = (
+                previous_attempt.get("authorized_performance_repeat")
+                if isinstance(previous_attempt, Mapping)
+                else None
+            )
+            if isinstance(recovery, Mapping) and recovery.get("kind") == "STARTUP_INFRASTRUCTURE_REPAIR":
+                if (
+                    recovery.get("scope") != "single_f1_startup_repair_after_outer_timebase_stop"
+                    or recovery.get("run_id")
+                    != "task40extra_0p7nm_nonseparable_g1_reference_metric_f1_v1"
+                ):
+                    raise InputError("Task40 infrastructure recovery attempt identity changed")
+                task40_infrastructure_recovery_attempts += 1
+        if (
+            task40_infrastructure_recovery_attempts > 1
+            or ledger.get("infrastructure_recovery_count")
+            != task40_infrastructure_recovery_attempts
+        ):
+            raise InputError("Task40 infrastructure recovery count does not match its attempts")
     if authorized_repeat is not None:
         history = ledger.get("authorized_performance_repeats", [])
         if not isinstance(history, list):
@@ -1185,7 +1209,8 @@ def _reserve_blr_stage_from_ledger(
                 f"{error_prefix} BLR stage {stage} permits one attempt; "
                 "automatic and bug replay are disabled"
             )
-        if len(attempts) >= bug_replay_limit + 1:
+        bug_relevant_attempt_count = len(attempts) - task40_infrastructure_recovery_attempts
+        if bug_relevant_attempt_count >= bug_replay_limit + 1:
             raise InputError(f"{error_prefix} BLR stage {stage} has exhausted its one repair replay")
         previous = attempts[-1]
         if previous.get("source_sha") == source_sha:
@@ -1293,6 +1318,19 @@ def _reserve_blr_stage_from_ledger(
         source_attempt["authorized_performance_repeat"] = True
     ledger["source_attempts"].append(source_attempt)
     ledger["fresh_worker_count"] = int(ledger.get("fresh_worker_count", 0)) + 1
+    if (
+        error_prefix == "Task40"
+        and authorized_repeat is not None
+        and authorized_repeat.get("kind") == "STARTUP_INFRASTRUCTURE_REPAIR"
+    ):
+        if (
+            authorized_repeat.get("scope") != "single_f1_startup_repair_after_outer_timebase_stop"
+            or authorized_repeat.get("run_id")
+            != "task40extra_0p7nm_nonseparable_g1_reference_metric_f1_v1"
+            or int(ledger.get("infrastructure_recovery_count", 0)) != 0
+        ):
+            raise InputError("Task40 F1 infrastructure recovery can be consumed only once")
+        ledger["infrastructure_recovery_count"] = 1
     if authorized_repeat is not None:
         history = list(ledger.get("authorized_performance_repeats", []))
         history.append(
@@ -3208,6 +3246,182 @@ def _reserve_v31_projection_layout_budget(
     )
 
 
+def _task40_f1_outer_timebase_recovery_repeat(
+    repo_root: Path, *, run_id: str, comparison_group: str, source_sha: str
+) -> dict[str, Any] | None:
+    """Authorize one F1 rerun after the recorded outer strict-clock stop only."""
+
+    from src.geometry.task40_nonseparable_plan import (
+        TASK40_COMPARISON_GROUP,
+        TASK40_F1_REFERENCE_METRIC_RUN_ID,
+    )
+
+    if run_id != TASK40_F1_REFERENCE_METRIC_RUN_ID:
+        return None
+    root = Path(repo_root).resolve()
+    record_path = (
+        root / "benchmarks/artifacts/task40extra_0p7nm_engineering/"
+        "f1_reference_metric_g1/attempt4/recovery/f1_recovery_authorization.json"
+    )
+    if not record_path.is_file():
+        return None
+    try:
+        record_bytes = record_path.read_bytes()
+        record = json.loads(record_bytes.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise InputError("Task40 F1 recovery authorization is unreadable") from exc
+
+    input_path = root / (
+        "input/task40extra_0p7nm_engineering/"
+        "nonseparable_g1_p6_q4_reference_metric_f1.dat"
+    )
+    input_sha256 = hashlib.sha256(input_path.read_bytes()).hexdigest()
+    outer_path = (
+        root / "benchmarks/artifacts/task40extra_0p7nm_engineering/"
+        "f1_reference_metric_g1/attempt4/watchdog/summary.json"
+    )
+    ledger_path = (
+        root / "benchmarks/artifacts/task40extra_0p7nm_engineering/"
+        "task40_nonseparable_0p7nm" / run_id / "shared_workflow_ledger.json"
+    )
+    try:
+        outer_bytes = outer_path.read_bytes()
+        outer = json.loads(outer_bytes.decode("utf-8"))
+        ledger_bytes = ledger_path.read_bytes()
+        ledger = json.loads(ledger_bytes.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise InputError("Task40 F1 recovery evidence or settled ledger is unavailable") from exc
+    outer_sha = hashlib.sha256(outer_bytes).hexdigest()
+    ledger_sha = hashlib.sha256(ledger_bytes).hexdigest()
+    stage = ledger.get("stages", {}).get("Q4_ORIGINAL", {})
+    attempts = stage.get("attempts", [])
+    if not isinstance(attempts, list):
+        raise InputError("Task40 F1 recovery attempt history is invalid")
+    authorization_id = "task40extra_f1_outer_timebase_stop_recovery_20261001"
+    recovery_kind = "STARTUP_INFRASTRUCTURE_REPAIR"
+    recovery_scope = "single_f1_startup_repair_after_outer_timebase_stop"
+    recovery_history = [
+        item
+        for item in ledger.get("authorized_performance_repeats", [])
+        if isinstance(item, Mapping) and item.get("authorization_id") == authorization_id
+    ]
+    recovery_attempts = [
+        (index, item, item.get("authorized_performance_repeat"))
+        for index, item in enumerate(attempts)
+        if isinstance(item, Mapping)
+        and isinstance(item.get("authorized_performance_repeat"), Mapping)
+        and item["authorized_performance_repeat"].get("authorization_id") == authorization_id
+    ]
+    if recovery_history or recovery_attempts:
+        if (
+            len(recovery_history) != 1
+            or len(recovery_attempts) != 1
+            or ledger.get("infrastructure_recovery_count") != 1
+        ):
+            raise InputError("Task40 F1 infrastructure recovery consumption record is inconsistent")
+        history_entry = recovery_history[0]
+        attempt_index, attempt_entry, attempt_authorization = recovery_attempts[0]
+        if (
+            history_entry.get("kind") != recovery_kind
+            or history_entry.get("scope") != recovery_scope
+            or history_entry.get("run_id") != run_id
+            or history_entry.get("stage") != "Q4_ORIGINAL"
+            or history_entry.get("attempt") != attempt_index + 1
+            or attempt_authorization.get("kind") != recovery_kind
+            or attempt_authorization.get("scope") != recovery_scope
+            or attempt_entry.get("source_sha") != attempt_authorization.get("source_sha_after")
+        ):
+            raise InputError("Task40 F1 consumed infrastructure recovery identity changed")
+        return None
+    if len(attempts) != 1:
+        raise InputError("Task40 F1 recovery requires exactly one preserved prior attempt")
+    previous = attempts[0]
+    prior_run_directory = Path(str(previous.get("run_directory", ""))).resolve()
+    if not prior_run_directory.is_relative_to(root):
+        raise InputError("Task40 F1 recovery run directory is outside the repository")
+    worker_manifest_path = prior_run_directory / "run_manifest.json"
+    worker_summary_path = prior_run_directory / "run_summary.json"
+    try:
+        manifest_bytes = worker_manifest_path.read_bytes()
+        manifest = json.loads(manifest_bytes.decode("utf-8"))
+        worker_summary_bytes = worker_summary_path.read_bytes()
+        worker_summary = json.loads(worker_summary_bytes.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise InputError("Task40 F1 prior worker bootstrap evidence is unavailable") from exc
+    manifest_sha = hashlib.sha256(manifest_bytes).hexdigest()
+    worker_summary_sha = hashlib.sha256(worker_summary_bytes).hexdigest()
+    expected_authorization_id = authorization_id
+    valid = (
+        record.get("schema") == "task40extra.f1.outer-timebase-recovery.v1"
+        and record.get("authorization_id") == expected_authorization_id
+        and record.get("classification") == "CONTROLLED_RECOVERY_AFTER_OUTER_TIMEBASE_STOP"
+        and record.get("kind") == recovery_kind
+        and record.get("scope") == recovery_scope
+        and record.get("allowed_repeat_count") == 1
+        and record.get("worker_final_status_claimed") is False
+        and run_id == TASK40_F1_REFERENCE_METRIC_RUN_ID
+        and comparison_group == TASK40_COMPARISON_GROUP
+        and record.get("run_id") == run_id
+        and record.get("comparison_group") == comparison_group
+        and record.get("input_sha256") == input_sha256
+        and record.get("source_sha_before") == previous.get("source_sha")
+        and record.get("source_sha_after") == source_sha
+        and record.get("settled_ledger_sha256") == ledger_sha
+        and record.get("outer_watchdog_summary_path") == str(outer_path)
+        and record.get("outer_watchdog_summary_sha256") == outer_sha
+        and record.get("prior_run_directory") == str(prior_run_directory)
+        and record.get("worker_manifest_sha256") == manifest_sha
+        and record.get("worker_run_summary_sha256") == worker_summary_sha
+        and record.get("prior_worker_result") == {
+            "status": "launching", "result_classification": "not_run", "exit_status": None
+        }
+        and ledger.get("schema") == "task40extra.nonseparable-0p7nm.shared-workflow-ledger.v1"
+        and ledger.get("batch_identity") == run_id
+        and ledger.get("unique_bug_replay_count") == 0
+        and not ledger.get("authorized_performance_repeats")
+        and stage.get("active_attempt") is None
+        and previous.get("status") == "OUTER_WATCHDOG_TIMEBASE_INCONSISTENCY"
+        and previous.get("watchdog_classification") == "TIMEBASE_INCONSISTENCY"
+        and previous.get("hard_kill_included") is True
+        and previous.get("replay") is False
+        and previous.get("parent_workflow_clock_interval", {}).get(
+            "outer_watchdog_summary_sha256"
+        ) == outer_sha
+        and previous.get("settled_seconds") == outer.get("elapsed_seconds")
+        and manifest.get("status") == "launching"
+        and manifest.get("result_classification") == "not_run"
+        and manifest.get("exit_status") is None
+        and worker_summary.get("status") == "launching"
+        and worker_summary.get("result_classification") == "not_run"
+        and worker_summary.get("exit_status") is None
+        and outer.get("classification") == "TIMEBASE_INCONSISTENCY"
+        and outer.get("stop_event", {}).get("reason") == "TIMEBASE_INCONSISTENCY"
+        and outer.get("timebase_policy") == "strict"
+        and outer.get("time_policy") == "observe_only"
+        and outer.get("memory_policy") == "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23"
+        and outer.get("pss_sampling_policy") == "disabled_by_profile"
+        and outer.get("descendants_cleared") is True
+        and outer.get("process_tree_identity_coverage") == "complete"
+        and outer.get("sampled_process_tree_swap_peak_bytes") == 0
+    )
+    if not valid:
+        raise InputError("Task40 F1 one-off recovery evidence or identity changed")
+    return {
+        "authorization_id": record["authorization_id"],
+        "classification": record["classification"],
+        "kind": recovery_kind,
+        "scope": recovery_scope,
+        "run_id": run_id,
+        "comparison_group": comparison_group,
+        "input_sha256": input_sha256,
+        "source_sha_before": previous["source_sha"],
+        "source_sha_after": source_sha,
+        "settled_ledger_sha256": ledger_sha,
+        "outer_watchdog_summary_sha256": outer_sha,
+        "prior_run_directory": str(prior_run_directory),
+    }
+
+
 def _reserve_task40_0p7nm_budget(
     repo_root: Path,
     run_directory: Path,
@@ -3244,6 +3458,7 @@ def _reserve_task40_0p7nm_budget(
             "run_ids": sorted(legacy_run_ids),
             "ledger_count": 0,
             "unique_bug_replay_count": 0,
+            "infrastructure_recovery_count": 0,
             "elapsed_seconds": 0.0,
             "conservative_allowance_seconds": 0.0,
             "fresh_worker_count": 0,
@@ -3253,6 +3468,7 @@ def _reserve_task40_0p7nm_budget(
             "run_ids": sorted(review_v1_run_ids),
             "ledger_count": 0,
             "unique_bug_replay_count": 0,
+            "infrastructure_recovery_count": 0,
             "elapsed_seconds": 0.0,
             "conservative_allowance_seconds": 0.0,
             "fresh_worker_count": 0,
@@ -3262,6 +3478,7 @@ def _reserve_task40_0p7nm_budget(
             "run_ids": sorted(review_v2_f1_run_ids),
             "ledger_count": 0,
             "unique_bug_replay_count": 0,
+            "infrastructure_recovery_count": 0,
             "elapsed_seconds": 0.0,
             "conservative_allowance_seconds": 0.0,
             "fresh_worker_count": 0,
@@ -3293,6 +3510,9 @@ def _reserve_task40_0p7nm_budget(
         group_facts["ledger_count"] += 1
         group_facts["unique_bug_replay_count"] += int(
             prior_ledger.get("unique_bug_replay_count", 0)
+        )
+        group_facts["infrastructure_recovery_count"] += int(
+            prior_ledger.get("infrastructure_recovery_count", 0)
         )
         group_facts["elapsed_seconds"] += float(
             prior_ledger.get("elapsed_seconds", 0.0)
@@ -3355,9 +3575,27 @@ def _reserve_task40_0p7nm_budget(
             "sha256": hashlib.sha256(record_bytes).hexdigest(),
             "authorization": record,
         }
+    recovery_repeat = _task40_f1_outer_timebase_recovery_repeat(
+        repo_root,
+        run_id=run_id,
+        comparison_group=comparison_group,
+        source_sha=str(kwargs["source_sha"]),
+    )
     replay_accounting["selected_batch"] = selected_batch
     replay_accounting["selected_bug_replay_limit"] = replay_limit
     replay_accounting["old_history_preserved_separately"] = True
+    if recovery_repeat is not None:
+        replay_accounting["one_off_infrastructure_recovery"] = {
+            key: recovery_repeat[key]
+            for key in (
+                "authorization_id",
+                "classification",
+                "kind",
+                "scope",
+                "settled_ledger_sha256",
+                "outer_watchdog_summary_sha256",
+            )
+        }
     run_directory = Path(run_directory)
     accounting_path = run_directory / "task40_batch_replay_accounting.json"
     if accounting_path.exists():
@@ -3382,6 +3620,7 @@ def _reserve_task40_0p7nm_budget(
         ledger_task_directory="task40extra_0p7nm_engineering",
         require_user_service_cgroup=True,
         bug_replay_limit=replay_limit,
+        authorized_performance_repeat=recovery_repeat,
         user_bug_continuation=continuation,
     )
     reservation["task40_batch_replay_accounting_path"] = str(accounting_path)
