@@ -1,3 +1,18 @@
+# dot Task40extra V9：centered full3D p4同网格升阶资格通过
+
+2026-10-01，source `ad356715da86ab34fa6b10838cccc8629b3f6e8b` 先完成显式跨HEAD p2 sparse桥接，对不可变7c4410d dense权威的全部2048原列差0，再完成同80三维单元的centered p4；独立checker164/164与148/148通过。全部15872独立原FE自由度、8640内部自由度、4q和532非空端口保留。
+
+| 模型/状态 | 实际结果/资源 | 资格边界 |
+|---|---|---|
+| 新源码p2桥接 / PASS | 原列差0；worker14.8806s/462925824B，checker3.5524s/328343552B | old/new源文件hash显式绑定；没有重做dense求解 |
+| 同网格centered p4 / PASS bounded degree growth | regular最大原残差4.2235259e−12；真实缺口4/4/3/4步，最大7.9668824e−12 | basis300/Gauss23/144点自身live532证明在factor前通过 |
+| p4整树资源 | worker117.4464s/913350656B，checker4.7910s/524525568B；分别swap0/清场 | sampled RSS；无准确相位峰值归因，factor内存未知 |
+| 高阶/目标大型验证 / not_run | p6、强对比、原尺寸精度/截断、跨ABI/MPI/restart及2TB/48h未资格 | full p4 direct未准入；volume权威为保存live FFCx作用向量 |
+
+单元内部精确消去并恢复全部三维未知量，参考结构按全部y平移块求逆；真实原A4 residual和mode输出均保留。小模型弱扰动不外推目标收敛或容量，官方R/T/A仍未资格。历史V8及以前失败、源身份全部保留。[Response V9](task40extra_dot_parallel_cloud/response_v9.md)、[compact](task40extra_dot_parallel_cloud/outcomes/records/centered_p4_v9/centered_p4_v9_compact.json)、[独立核验](task40extra_dot_parallel_cloud/outcomes/records/centered_p4_v9/independent_verification.json)。
+
+---
+
 # dot Task40extra V8：centered full3D p2完整原方程资格通过
 
 2026-10-01，source `7c4410dbc55bce804d148493760d4de68acd8405` 在80真实三维cells、p2、phi5、manual532非空ports上完成新centered dense authority及sparse全q参考逆。全部2048原FE列差0，含480个内部自由度的四类载荷完整恢复通过；同mesh两cell真实三维缺口的原残差最大7.4874051e−12，相对新direct差最大5.8732785e−11，迭代4/4/3/4。

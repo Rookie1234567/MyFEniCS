@@ -86,9 +86,11 @@ def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
     )
     from src.solvers.fullspace_physical_action import FullspacePhysicalAction
     centered = dtn_phase_gauge == "boundary_plane"
-    if live_component_oracle and not centered: raise ValueError("live component oracle requires centered p2")
-    if dtn_phase_gauge not in ("global_z", "boundary_plane") or (centered and (degree != 2 or auxiliary_gauge != "positive-h")):
-        raise ValueError("centered p2 positive-H only; p4 requires separate admission")
+    if live_component_oracle and not centered: raise ValueError("live component oracle requires centered profile")
+    if (dtn_phase_gauge not in ("global_z", "boundary_plane")
+            or (centered and auxiliary_gauge != "positive-h")
+            or (centered and degree == 4 and not live_component_oracle)):
+        raise ValueError("centered p2/p4 requires positive-H and p4's own live oracle")
 
     if degree not in (2, 4) or (degree == 2 and saved_oracle is None):
         raise ValueError("only saved-authority sparse-p2 bridge or same-mesh p4 is admitted")
@@ -115,7 +117,9 @@ def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
     dense_entity_width = max(3 * degree * (degree - 1)**2, 2 * degree * (degree - 1), degree)
     map_nnz_upper = expected_independent * dense_entity_width
     _gate(allocation_gate, "full_Hcurl_orbit_map",
-          payload=map_nnz_upper * 40 + expected_independent * ny * 20,
+          payload=map_nnz_upper * 2*(16+np.dtype(PETSc.IntType).itemsize)
+                  + expected_independent * ny * (16+np.dtype(PETSc.IntType).itemsize)
+                  + 3*(expected_independent+1)*np.dtype(PETSc.IntType).itemsize,
           workspace=map_nnz_upper * 224,
           exact_entity_orientation_no_small_entry_threshold=True)
     layout = build_y_orbit_layout(space, floquet, cfg, axes)
@@ -134,7 +138,7 @@ def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
         if centered:
             from .y_orbit_centered_evidence import (
                 centered_identity, interior_only_rhs, recovered_field_and_modes, save_mpc_inventory,
-                require_output_packet, fixture_interior_positions,
+                require_output_packet, fixture_interior_positions, save_centered_port_inventory,
             )
             if live_component_oracle:
                 from .y_orbit_live_boundary_contract import qualify_live_identity, require_live_carrier_unchanged
@@ -146,6 +150,8 @@ def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
                 centered_facts = centered_identity(base,event=event)
             save_mpc_inventory(base, layout, save_array)
             save_array("actual_interior_positions",fixture_interior_positions(space,layout))
+            if degree == 4:
+                save_centered_port_inventory(base,layout,save_array,allocation_gate=allocation_gate)
         action0 = FullOriginalAction(base["physical_action"], layout)
         rng = np.random.default_rng(SEED)
         generic = rng.standard_normal(expected_independent) + 1j * rng.standard_normal(expected_independent)
@@ -209,7 +215,7 @@ def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
         if centered:
             pre_scale = 7/135
             pre_box = tuple(value*pre_scale for value in (25, 33.5, 6.25, 18.75, 40, 80))
-            pre_cfg = replace(cfg, case_name="y_orbit_p2_algebra_notch", air_void_box_nm=pre_box,
+            pre_cfg = replace(cfg, case_name=f"y_orbit_p{degree}_algebra_notch", air_void_box_nm=pre_box,
                               geometry_identity=cfg.geometry_identity+".notch")
             pre_tags = _mark_cells(levels["mesh"], pre_cfg)
             pre_changed = np.flatnonzero(pre_tags.values != levels["mesh_data"].cell_tags.values)
@@ -220,7 +226,7 @@ def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
             from .y_orbit_centered_evidence import SOURCES
             sources = {name: sources[name] for name in SOURCES}
             for name,rhs in sources.items():
-                if not np.array_equal(rhs, saved_oracle.load(name+"_rhs")):
+                if degree == 2 and not np.array_equal(rhs, saved_oracle.load(name+"_rhs")):
                     raise ValueError("centered sparse full FE forcing differs from fresh dense authority: "+name)
         if degree == 2 and _relative(physical - saved_oracle.load("physical_rhs"), physical) > LIMITS["operator"]:
             raise ValueError("current physical RHS differs from the saved phi5 authority")
@@ -289,7 +295,7 @@ def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
             raise ValueError("actual notch action must couple distinct y blocks in the complete FE space")
         supported, supported_facts = _notch_supported_rhs(space, layout, changed)
         sources["notch_supported"] = supported
-        if centered and not np.array_equal(supported, saved_oracle.load("notch_supported_rhs")):
+        if centered and degree == 2 and not np.array_equal(supported, saved_oracle.load("notch_supported_rhs")):
             raise ValueError("actual centered notch support differs from fresh dense authority")
         save_array("notch_supported_rhs", supported)
         perturbation = {}

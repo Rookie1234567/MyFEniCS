@@ -22,6 +22,24 @@ def _complete_interior_rhs(generic, interior_positions, expected_rows):
                 and np.linalg.norm(generic[interior_positions]) > 0)
 
 
+def _require_operation_scale_binding(saved, expected, name):
+    """Bind each mode's normalization before using it to judge an output.
+
+    The denominator is independently recomputed. Other large modes or an
+    inflated saved scale cannot conceal a discrepancy at a weaker mode.
+    """
+    if (saved.shape!=expected.shape or saved.ndim!=1 or not np.isfinite(saved).all()
+            or not np.isfinite(expected).all() or np.any(saved<0) or np.any(expected<0)):
+        raise ValueError("invalid per-mode operation scale: "+name)
+    error=np.abs(saved-expected)
+    if np.any((expected==0)&(error!=0)):
+        raise ValueError("saved operation scale detached from exact zero: "+name)
+    ratios=np.divide(error,expected,out=np.zeros_like(error),where=expected!=0)
+    if np.any(ratios>1e-12):
+        raise ValueError("saved per-mode operation scale detached from original coefficients: "+name)
+    return True
+
+
 def _bind_worker_dependencies(worker_source, checker_source):
     """Only the reviewed checker/serialization-test edit may differ.
 
@@ -86,20 +104,34 @@ def check(directory, *, checker_source, checker_environment):
     if centered:
         from benchmarks.run_y_orbit_sparse_probe import ROOT, SavedCenteredDenseP2Authority
         from src.solvers.y_orbit_centered_evidence import COMPONENT_IDENTITY, SOURCES
-        receipt = provenance["saved_dense_p2_authority"]
-        centered_authority = SavedCenteredDenseP2Authority(ROOT/receipt["report_path"],receipt["report_sha256"],
+        if report["degree"] == 2:
+            receipt = provenance["saved_dense_p2_authority"]
+            centered_authority = SavedCenteredDenseP2Authority(ROOT/receipt["report_path"],receipt["report_sha256"],
                                                           report["source"],report["environment"],
-                                                          live_component_oracle=report.get("live_component_oracle",False))
-        if (report["degree"] != 2 or report["auxiliary_gauge"] != "positive-h"
+                  live_component_oracle=report.get("live_component_oracle",False),
+                  cross_head_authority=report.get("cross_head_centered_authority",False))
+        elif report["degree"] == 4:
+            from benchmarks.run_y_orbit_sparse_probe import _validate_bridge
+            receipt = provenance["sparse_p2_bridge_receipt"]
+            actual = _validate_bridge(ROOT/receipt["report_path"],receipt["report_sha256"],
+                    report["source"]["head"],report["source"],centered_extension=True,environment=report["environment"])
+            if actual != receipt or report.get("live_component_oracle") is not True:
+                raise ValueError("p4 degree profile requires its exact checked sparse-p2 bridge and own live oracle")
+        if (report["degree"] not in (2,4) or report["auxiliary_gauge"] != "positive-h"
                 or set(report["regular_sources"]) != set(SOURCES) or set(report["notched_sources"]) != set(SOURCES)
                 or (not report.get("live_component_oracle",False) and (report["centered_identity"] != centered_authority.report["identity"]
                     or any(report["centered_identity"].get(k) != v for k,v in COMPONENT_IDENTITY.items())))) :
             raise ValueError("centered sparse/authority/source/load representation identity differs")
         if report.get("live_component_oracle",False):
             from src.solvers.y_orbit_live_boundary_contract import load_bound_live_receipt
-            load_bound_live_receipt(directory,report["centered_identity"],worker_source=report["source"])
-            if report["centered_identity"]["shared_discrete_contract"] != centered_authority.report["identity"]["shared_discrete_contract"]:
-                raise ValueError("separately qualified dense/sparse fixed contract differs")
+            load_bound_live_receipt(directory,report["centered_identity"],worker_source=report["source"],expected_degree=report["degree"])
+            if centered_authority is not None:
+                if report.get("cross_head_centered_authority",False):
+                    from src.solvers.y_orbit_centered_bridge import compare_bridge_discrete_contract
+                    compare_bridge_discrete_contract(centered_authority.report["identity"]["shared_discrete_contract"],
+                        report["centered_identity"]["shared_discrete_contract"],centered_authority.receipt["source_diff_binding"])
+                elif report["centered_identity"]["shared_discrete_contract"] != centered_authority.report["identity"]["shared_discrete_contract"]:
+                    raise ValueError("separately qualified dense/sparse fixed contract differs")
     checks = []
     descriptors = report["artifacts"]
     report_sha = hashlib.sha256((directory / "probe_report.json").read_bytes()).hexdigest()
@@ -173,6 +205,55 @@ def check(directory, *, checker_source, checker_environment):
     slave_zero = True
     centered_mode_checks = {}
     optional_global_outputs = {}
+    original_c = original_d = None
+    if centered and report["degree"] == 4:
+        if (full_n != 15872 or trace_n != 7232 or ports != 532
+                or trace_audit["complete_interior_rows"] != 8640):
+            raise ValueError("same80 p4 full trace/interior/port inventory differs")
+        storage_rows = len(load("regular_generic_solution_storage"))
+        if storage_rows != 17204:
+            raise ValueError("p4 original native storage inventory differs")
+        original_c = sparse.csc_matrix((load("original_port_C_data"),load("original_port_C_indices"),
+                    load("original_port_C_indptr")),shape=(storage_rows,ports),copy=False)
+        original_d = csr("original_port_D",(ports,storage_rows))
+        from types import SimpleNamespace
+        from src.solvers.dtn_boundary_plane_qualification import carrier_numeric_identity
+        ci,cd,cp = load("original_port_C_indices"),load("original_port_C_data"),load("original_port_C_indptr")
+        di,dd,dp = load("original_port_D_indices"),load("original_port_D_data"),load("original_port_D_indptr")
+        entries = [SimpleNamespace(mode_key=(j,*report["mode_keys"][j]),normalization_h=float(original_h[j]),
+             coupling_rows=ci[cp[j]:cp[j+1]],coupling_values=cd[cp[j]:cp[j+1]],
+             projection_rows=di[dp[j]:dp[j+1]],projection_values=dd[dp[j]:dp[j+1]]) for j in range(ports)]
+        identity = report["centered_identity"]
+        exported = SimpleNamespace(entries=entries,global_rows=int(load("original_carrier_global_rows")),
+            ownership_range=tuple(load("original_carrier_ownership_range")),slave_rows=load("original_carrier_slave_rows"),
+            physical_generator_manifest_sha256=identity["physical_generator_manifest_sha256"],
+            mode_manifest_sha256=identity["assembly_mode_manifest_sha256"],assembly_context_sha256=identity["assembly_context_sha256"])
+        if carrier_numeric_identity(exported)["carrier_numeric_sha256"] != identity["carrier_numeric_sha256"]:
+            raise ValueError("p4 exported original functionals detached from its exact live-qualified carrier")
+        if np.any(np.diff(original_c.indptr)==0) or np.any(np.diff(original_d.indptr)==0):
+            raise ValueError("p4 exported original port functional missing")
+        e_vectors,k_vectors = load("original_mode_e_vectors"),load("original_mode_k_vectors")
+        outward = load("original_mode_outward_signs")
+        denominator,area = load("original_mode_magnetic_denominator"),load("original_mode_boundary_area")
+        incident_physical = load("original_mode_incident_projections")
+        if (e_vectors.shape!=(ports,3) or k_vectors.shape!=(ports,3) or outward.shape!=(ports,)
+                or denominator.shape!=() or denominator==0 or area.shape!=() or area<=0
+                or incident_physical.shape!=(ports,)):
+            raise ValueError("p4 mode geometry/output inventory differs")
+        from src.solvers.task40extra_y_orbit_reference import pilot_config
+        from src.common.modes_3d import outgoing_port_modes_3d
+        from src.solvers.dtn_boundary_phase_gauge import incident_projection_in_solver_coordinates, BOUNDARY_PLANE
+        cfg,_,input_sha = pilot_config(ROOT/"input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4_review_v1.dat",azimuth_deg=5.0)
+        physical_modes = outgoing_port_modes_3d(cfg)
+        if (input_sha!=report["input_sha256"]
+                or not np.array_equal(e_vectors,np.asarray([m.e_vector for m in physical_modes]))
+                or not np.array_equal(k_vectors,np.asarray([m.k_vector for m in physical_modes]))
+                or not np.array_equal(outward,np.asarray([1 if m.side=="top" else -1 for m in physical_modes]))
+                or not np.array_equal(incident_physical,np.asarray([
+                    incident_projection_in_solver_coordinates(m,cfg,BOUNDARY_PLANE) for m in physical_modes]))
+                or denominator!=cfg.k0*complex(cfg.mu_r)
+                or area!=(cfg.x_max-cfg.x_min)*(cfg.y_max-cfg.y_min)):
+            raise ValueError("p4 saved physical mode geometry differs from the unchanged optical generator")
 
     for prefix, sources in (("regular", report["regular_sources"]), ("notch", report["notched_sources"])):
         for name in sources:
@@ -208,20 +289,49 @@ def check(directory, *, checker_source, checker_environment):
                 add(label + "_saved_dense_direct_difference_live", sources[name]["saved_dense_direct_difference"], 1e-9)
             if centered:
                 from src.solvers.y_orbit_centered_evidence import compare_mode_evidence, bind_native_packet
-                authority_name = ("A0_direct_" if prefix == "regular" else "notch_direct_")+name
-                direct = centered_authority.load(authority_name)
                 bind_native_packet(field,rhs,load(label+"_solution"),load(name+"_rhs"),independent)
                 if not np.array_equal(load("actual_interior_positions"),interior_positions):
                     raise ValueError("centered full native packet detached from actual solver/RHS/interior inventory")
-                matrix = centered_authority.load("A0_original" if prefix == "regular" else "A_notch_original")
-                add(label+"_fresh_dense_original_residual",relative(rhs[independent]-matrix@active,rhs[independent]),1e-10)
-                add(label+"_native_action_bound_to_fresh_dense_matrix",relative(action[independent]-matrix@active,rhs[independent]),1e-11)
-                add(label+"_fresh_dense_direct_difference",relative(active-direct,direct),1e-9)
-                dense_label = "direct_"+label
-                add(label+"_fresh_dense_recovered_field_difference",relative(load(label+"_recovered_field")-
-                     centered_authority.load(dense_label+"_recovered_field"),centered_authority.load(dense_label+"_recovered_field")),1e-9)
-                centered_mode_checks[label] = compare_mode_evidence(load,
-                    lambda key: centered_authority.load("direct_"+key),label)
+                if centered_authority is not None:
+                    authority_name = ("A0_direct_" if prefix == "regular" else "notch_direct_")+name
+                    direct = centered_authority.load(authority_name)
+                    matrix = centered_authority.load("A0_original" if prefix == "regular" else "A_notch_original")
+                    add(label+"_fresh_dense_original_residual",relative(rhs[independent]-matrix@active,rhs[independent]),1e-10)
+                    add(label+"_native_action_bound_to_fresh_dense_matrix",relative(action[independent]-matrix@active,rhs[independent]),1e-11)
+                    add(label+"_fresh_dense_direct_difference",relative(active-direct,direct),1e-9)
+                    dense_label = "direct_"+label
+                    add(label+"_fresh_dense_recovered_field_difference",relative(load(label+"_recovered_field")-
+                         centered_authority.load(dense_label+"_recovered_field"),centered_authority.load(dense_label+"_recovered_field")),1e-9)
+                    centered_mode_checks[label] = compare_mode_evidence(load,
+                        lambda key: centered_authority.load("direct_"+key),label)
+                else:
+                    projected = np.asarray(original_d@field)
+                    coupled = np.asarray(original_c@alpha)
+                    add(label+"_original_D_full_field_projection",relative(projected-projection,projection),1e-11)
+                    add(label+"_original_C_auxiliary_coupling",relative(coupled-coupling,rhs),1e-11)
+                    add(label+"_original_H_inventory",relative(h-original_h,original_h),1e-12)
+                    total = projected/original_h
+                    incident = incident_physical if name=="physical" else np.zeros(ports,complex)
+                    outgoing = total.copy();outgoing[outward==1] -= incident[outward==1]
+                    electric = outgoing[:,None]*e_vectors
+                    magnetic = np.cross(k_vectors,electric)/denominator
+                    power = np.maximum(.5*np.real(np.cross(electric,np.conj(magnetic)))[:,2]*outward,0)*area
+                    scale = np.sqrt(np.asarray(original_d.multiply(original_d.conj()).sum(axis=1)).real.ravel())/original_h*np.linalg.norm(active)
+                    unit_magnetic = np.cross(k_vectors,e_vectors)/denominator
+                    expected = {label+"_plane_total_auxiliary":total,label+"_plane_outgoing_auxiliary":outgoing,
+                        label+"_plane_electric":electric,label+"_plane_magnetic":magnetic,
+                        label+"_direct_plane_outgoing_power_diagnostic":power,label+"_mode_local_amplitude_scale":scale,
+                        label+"_plane_electric_scale":scale*np.linalg.norm(e_vectors,axis=1),
+                        label+"_plane_magnetic_scale":scale*np.linalg.norm(unit_magnetic,axis=1),
+                        label+"_mode_power_operation_scale":.5*area*(scale+np.abs(incident))**2*
+                            np.linalg.norm(e_vectors,axis=1)*np.linalg.norm(unit_magnetic,axis=1)}
+                    if not np.array_equal(load(label+"_plane_incident_projections"),incident):
+                        raise ValueError("p4 output incident subtraction is detached from physical load")
+                    for scale_name in ("mode_local_amplitude_scale","plane_electric_scale",
+                                       "plane_magnetic_scale","mode_power_operation_scale"):
+                        _require_operation_scale_binding(load(label+"_"+scale_name),
+                                                         expected[label+"_"+scale_name],scale_name)
+                    centered_mode_checks[label] = compare_mode_evidence(load,expected.__getitem__,label)
                 coefficients, offsets = load("full_mpc_coefficients"),load("full_mpc_offsets")
                 masters, saved_slaves = load("full_mpc_masters"),load("full_mpc_slaves")
                 if (offsets.shape != (len(field)+1,) or int(offsets[-1]) != len(coefficients)
@@ -355,6 +465,8 @@ def check(directory, *, checker_source, checker_environment):
             "centered_per_mode_output_checks": centered_mode_checks,
             "optional_global_output_statuses": optional_global_outputs,
             "centered_fresh_dense_authority_verified": centered_authority is not None,
+            "cross_head_centered_authority":report.get("cross_head_centered_authority",False),
+            "p4_original_functionals_bound_to_live_carrier":original_c is not None,
             "live_component_oracle":report.get("live_component_oracle",False),
             "original_full_slave_zeros": slave_zero, "nontrivial_real_ky_wrap": nonzero_wrap,
             "original_FFCx_action_is_saved_live_authority": True,

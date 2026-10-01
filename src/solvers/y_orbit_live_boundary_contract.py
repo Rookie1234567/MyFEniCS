@@ -30,7 +30,7 @@ def file_sha(path):
     return digest.hexdigest()
 
 
-def validate_live_receipt(receipt, *, physical_manifest, ordered_keys, identity=None):
+def validate_live_receipt(receipt, *, physical_manifest, ordered_keys, identity=None, expected_degree=2):
     from .fullspace_dtn_action import _jsonable, _canonical_json_bytes
     receipt=_jsonable(receipt)
     identity=_jsonable(identity) if identity is not None else None
@@ -39,7 +39,7 @@ def validate_live_receipt(receipt, *, physical_manifest, ordered_keys, identity=
     if (receipt.get('status')!='PASS_COMPONENT_ONLY' or receipt.get('full_case_pass') is not True
         or receipt.get('PDE_solved') is not False or receipt.get('official_results') is not False
         or receipt.get('completed_gates')!=list(EXPECTED_GATES) or receipt.get('mode_count')!=532
-        or receipt.get('degree')!=2 or receipt.get('azimuth_deg')!=5.0
+        or expected_degree not in (2,4) or receipt.get('degree')!=expected_degree or receipt.get('azimuth_deg')!=5.0
         or receipt.get('seed')!=4053202 or receipt.get('tolerance')!=1e-10
         or i['physical_generator_manifest_sha256']!=physical_manifest
         or i['mode_count']!=532 or [list(k) for k in i['ordered_mode_keys']]!=keys
@@ -53,6 +53,9 @@ def validate_live_receipt(receipt, *, physical_manifest, ordered_keys, identity=
     for field in ('physical_generator_manifest_sha256','assembly_mode_manifest_sha256','assembly_context_sha256'):
         if receipt.get(field)!=i[field]:raise ValueError('live receipt top-level raw identity detached')
     context=receipt['raw_discrete_context']
+    if (context['element_degree']!=expected_degree
+            or context['gauss']['degree']!={2:19,4:23}[expected_degree]):
+        raise ValueError('live receipt actual degree/Gauss profile differs')
     context_sha=hashlib.sha256(_canonical_json_bytes(context)).hexdigest()
     if context_sha!=i['assembly_context_sha256']:
         raise ValueError('exact raw context canonical hash differs')
@@ -98,6 +101,13 @@ def validate_live_receipt(receipt, *, physical_manifest, ordered_keys, identity=
     if set(gauss)!={'top/0','top/1','bottom/0','bottom/1'}:
         raise ValueError('four exact loaded primary kernels required')
     for record in gauss.values():
+        if len(record['rules'])!=1:
+            raise ValueError('one actual quadrilateral Gauss rule per component required')
+        rule=record['rules'][0]
+        points={2:100,4:144}[expected_degree]
+        if (rule['degree']!={2:19,4:23}[expected_degree]
+                or rule['points']['shape']!=[points,2] or rule['weights']['shape']!=[points]):
+            raise ValueError('actual compiled Gauss point/weight inventory differs from degree profile')
         kernel=record['loaded_kernel']
         if (kernel.get('restoration_exact') is not True or kernel.get('numerical_assembly_during_probe') is not False
             or kernel.get('num_constants')!=3 or [v['role'] for v in kernel['constant_roles']]!=['alpha','gamma','kz']
@@ -143,11 +153,13 @@ def qualify_live_identity(bundle, *, record_path, allocation_gate, event):
     after=carrier_numeric_identity(carrier)
     if bundle['dtn_action'].carrier is not carrier or before!=after:
         raise ValueError('the qualified live carrier object or numeric state changed')
-    validate_live_receipt(receipt,physical_manifest=physical,ordered_keys=keys,identity=after)
+    validate_live_receipt(receipt,physical_manifest=physical,ordered_keys=keys,identity=after,
+                          expected_degree=int(bundle['degree']))
     if receipt['qualification_source_sha256'] != file_sha(Path(__file__).with_name('dtn_boundary_plane_qualification.py')):
         raise ValueError('same-process qualification numerical source identity differs')
     stored=json.loads(Path(record_path).read_text())
-    validate_live_receipt(stored,physical_manifest=physical,ordered_keys=keys,identity=after)
+    validate_live_receipt(stored,physical_manifest=physical,ordered_keys=keys,identity=after,
+                          expected_degree=int(bundle['degree']))
     if _jsonable(receipt)!=stored:raise ValueError('written receipt differs from exact live transaction')
     context=_jsonable(carrier.assembly_context)
     shared=shared_discrete_contract(context)
@@ -171,7 +183,7 @@ def require_live_carrier_unchanged(bundle, identity, *, event, boundary, expecte
     event('qualified_live_carrier_unchanged',{'boundary':boundary,'carrier_numeric_sha256':actual['carrier_numeric_sha256']})
 
 
-def load_bound_live_receipt(directory, identity, *, worker_source=None):
+def load_bound_live_receipt(directory, identity, *, worker_source=None, expected_degree=2):
     directory=Path(directory).resolve();descriptor=identity['live_component_receipt']
     path=(directory/descriptor['filename']).resolve()
     if not path.is_relative_to(directory) or file_sha(path)!=descriptor['sha256']:
@@ -191,7 +203,7 @@ def load_bound_live_receipt(directory, identity, *, worker_source=None):
                 raise ValueError('raw numerical context source differs from worker source: '+basename)
     expected={k:identity[k] for k in receipt['identity']}
     validate_live_receipt(receipt,physical_manifest=identity['physical_generator_manifest_sha256'],
-                          ordered_keys=identity['actual_mode_keys'],identity=expected)
+                          ordered_keys=identity['actual_mode_keys'],identity=expected,expected_degree=expected_degree)
     if receipt['raw_discrete_context']!=identity['actual_context']:
         raise ValueError('fresh raw context was replaced in the saved proof')
     if shared_discrete_contract(receipt['raw_discrete_context'])!=identity['shared_discrete_contract']:

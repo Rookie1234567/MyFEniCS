@@ -106,11 +106,54 @@ def _check_loaded_primary_provenance(primary_gauss):
             assert digest.hexdigest() == kernel[hash_key], (path_key, "loaded provenance artifact changed")
 
 
+def _qualification_degree_profile(bundle):
+    """Admit fixed p2/p4 metadata only; never substitute a live numerical proof."""
+    degree = bundle["degree"]
+    if type(degree) is not int or degree not in (2, 4):
+        raise ValueError("live component profile requires an integer degree 2 or 4")
+    levels, cfg = bundle["setup"], bundle["cfg"]
+    if set(levels["spaces"]) != {degree} or set(levels["floquets"]) != {degree}:
+        raise ValueError("live component profile requires only the requested degree")
+    space, mpc = levels["spaces"][degree], levels["floquets"][degree].mpc
+    dimension = {2: 54, 4: 300}[degree]
+    if (int(cfg.nedelec_degree) != degree
+            or int(space.element.basix_element.degree) != degree
+            or int(space.element.space_dimension) != dimension
+            or int(mpc.function_space.element.basix_element.degree) != degree
+            or int(mpc.function_space.element.space_dimension) != dimension):
+        raise ValueError("actual FE/MPC element differs from the requested degree profile")
+    context = bundle["dtn_action"].carrier.assembly_context
+    qdegree = {2: 19, 4: 23}[degree]
+    point_count = {2: 100, 4: 144}[degree]
+    if (context["element_degree"] != degree
+            or bundle["dtn_quadrature_degree"] != qdegree
+            or context["gauss"]["degree"] != qdegree):
+        raise ValueError("actual element/Gauss context differs from the fixed degree profile")
+    primary = bundle["compiled_surface_gauss_identity"]
+    if set(primary) != {"top/0", "top/1", "bottom/0", "bottom/1"}:
+        raise ValueError("four actual primary Gauss identities are required")
+    for identity in primary.values():
+        rules = identity["rules"]
+        if len(rules) != 1:
+            raise ValueError("one actual exterior-facet Gauss rule is required per primary form")
+        rule = rules[0]
+        if (rule["degree"] != qdegree or rule["facet_cell"] != "quadrilateral"
+                or rule["integral_type"] != "exterior_facet"
+                or tuple(rule["points"]["shape"]) != (point_count, 2)
+                or tuple(rule["weights"]["shape"]) != (point_count,)
+                or rule["points"]["dtype"] != "float64"
+                or rule["weights"]["dtype"] != "float64"):
+            raise ValueError("actual compiled primary Gauss nodes/weights differ from the degree profile")
+    return {"degree": degree, "element_degree": int(space.element.basix_element.degree),
+            "local_space_dimension": int(space.element.space_dimension),
+            "quadrature_degree": qdegree, "primary_facet_points": point_count}
+
+
 def qualify_boundary_plane_bundle(bundle, *, record_path,
                                    expected_physical_manifest, expected_ordered_keys,
                                    seed=4053202, tolerance=1e-10,
                                    optional_legacy_bundle=None):
-    """Qualify exactly this supplied live p2/MPI1/532-mode carrier before factors.
+    """Qualify exactly this supplied live p2/p4/MPI1/532-mode carrier before factors.
 
     ``expected_ordered_keys`` uses complete carrier keys
     ``(index, side, m, n, polarization)``. The fixed physical contract is
@@ -133,7 +176,7 @@ def qualify_boundary_plane_bundle(bundle, *, record_path,
     if __debug__ is False:
         raise RuntimeError("component assertion gates require nonoptimized Python")
     if tolerance != 1e-10 or seed != 4053202:
-        raise ValueError("this admitted p2 component contract fixes tolerance/seed")
+        raise ValueError("this admitted p2/p4 component contract fixes tolerance/seed")
     new, old = bundle, optional_legacy_bundle
     carrier = new["dtn_action"].carrier
     identity_before = carrier_numeric_identity(carrier)
@@ -164,7 +207,9 @@ def qualify_boundary_plane_bundle(bundle, *, record_path,
         assert MPI.COMM_WORLD.size == 1
         cfg, levels = new["cfg"], new["setup"]
         assert new["dtn_phase_gauge"] == BOUNDARY_PLANE
-        assert int(new["degree"]) == 2
+        profile = _qualification_degree_profile(new)
+        degree = profile["degree"]
+        base_identity.update(profile)
         modes = tuple(new["modes"])
         assert len(modes) == len(carrier.entries) == 532
         assert new["mode_sha256"] == expected_physical_manifest == carrier.physical_generator_manifest_sha256
@@ -184,10 +229,11 @@ def qualify_boundary_plane_bundle(bundle, *, record_path,
         new_carrier = carrier
         old_carrier = old["dtn_action"].carrier if old is not None else None
         if old is not None:
+            assert old["degree"] == degree
             assert old["mode_sha256"] == new["mode_sha256"]
             assert tuple(entry.mode_key for entry in old_carrier.entries) == actual_keys
             assert old["dtn_quadrature_degree"] == new["dtn_quadrature_degree"]
-        V, mpc, mesh_data = levels["spaces"][2], levels["floquets"][2].mpc, levels["mesh_data"]
+        V, mpc, mesh_data = levels["spaces"][degree], levels["floquets"][degree].mpc, levels["mesh_data"]
         n = int(V.dofmap.index_map.size_global)
         qdegree = int(new["dtn_quadrature_degree"])
         assert carrier.ownership_range == (0, n)
@@ -495,7 +541,7 @@ def qualify_boundary_plane_bundle(bundle, *, record_path,
         packet = {**base_identity,
             "status": "PASS_COMPONENT_ONLY", "full_case_pass": True,
             "scope": "same-live532 all-DOF coefficient/action/recovery/RHS/output components; no PDE/factor/official result",
-            "degree": 2, "azimuth_deg": cfg.incident_phi_deg, "mode_count": 532,
+            "degree": degree, "azimuth_deg": cfg.incident_phi_deg, "mode_count": 532,
             "carrier_digest_after": after_digest,
             "construction_numeric_inventory": dict(carrier.construction_numeric_inventory),
             "primary_compiled_gauss": primary_gauss, "independent_oracle_compiled_gauss": oracle_gauss,

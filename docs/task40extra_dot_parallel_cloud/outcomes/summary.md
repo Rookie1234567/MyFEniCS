@@ -148,3 +148,20 @@ DtN 实验检查开放边界通道的编号、物理方向和局部投影积分�
 | not_run | p4/p6、强对比、目标精度/截断、跨ABI/MPI/重启、原尺寸2TB/48h | p4仅计划；尚不能启动目标大运行 |
 
 旧clipped到centered全部原FE矩阵相对Frobenius变化0.0061060864，是算子改变诊断；不同于V7五状态action变化0.0308226，也不是坐标等价误差。详见[Response V8](../response_v8.md)、[compact](records/centered_p2_v8/centered_p2_v8_compact.json)与[独立复核事后记录](records/centered_p2_v8/independent_verification.json)；1247源码文件、712产物hash条目，不称712数组。本次仅归档已完成计算，不重跑PDE。
+
+## V9：同80-cell centered p4与显式跨HEAD p2桥接
+
+升阶把每个单元的基函数从p2增至p4，用同一个三维小网格检验更多内部未知量能否完整消去、恢复，并验证全部y块求逆。它检查实现随阶数增长后的可信度；原尺寸、强扰动与目标误差还需要独立资格。
+
+| 身份/范围 | measured/verified结果 | 限定 |
+|---|---|---|
+| sourcead356715；新p2 sparse桥接 | 旧7c4410d dense全部2048原列差0；checker164/164 | old/new源hash与自身live carrier分别绑定；无dense重跑 |
+| 同80-cell p4；15872独立/8640内部/7232trace | checker148/148；basis300、Gauss23/144点自身live532资格 | 4q块1884/1960/1960/1960；全部532实际端口非空 |
+| p4原方程与真实三维缺口 | regular最大4.2235259e−12；notch4/4/3/4步、最大7.9668824e−12 | physical非零q比例3.0887006e−5；无full p4 direct |
+| p4逐模式输出/因子 | 40组×532模式通过；块原残差最大5.0543e−13 | 原C/D digest、入射及局部尺度独立重算；official R/T/A未资格 |
+| p4 worker/checker资源 | 117.4464s/913350656B；4.7910s/524525568B；分别swap0/清场 | sampled同时树RSS；不同run不相加；无phase硬峰归因 |
+| 实际setup成本 | condensation24.9723s（kernel23.7653s）；reference setup7.7761s | 后者含审计/因子/诊断；没有纯factor或PC apply计时 |
+| named payload/支持 | condensed CSR62914140B；局部保留24760944B；8cells非零Bi/Di | 不是RSS；不假定内端口支持为零；fill/workspace未知 |
+| not_run | p6、强对比、原尺寸精度/截断、跨ABI/MPI/restart、2TB/48h | 下一阶段仅两单元参考quotient计划；不将数值块当物理降维 |
+
+缺口的四个采样PC缺陷仅1.8697e−4至2.0507e−3，不是算子范数界或大型收敛证明。原volume authority为保存live FFCx作用，p4未做全局direct对照。详见[Response V9](../response_v9.md)、[compact](records/centered_p4_v9/centered_p4_v9_compact.json)、[独立核验](records/centered_p4_v9/independent_verification.json)：1251源文件、591产物hash条目及48 raw-factor hash。本轮归档不重跑数值，全部历史失败与源身份保留。

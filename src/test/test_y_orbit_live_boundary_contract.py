@@ -63,8 +63,9 @@ def _context():
     names=('schema','source_sha256','mesh','cell_dofmap_sha256','orientation','basix_coefficients','MPC',
       'config_sha256','ABI','element_degree','element_map_type','needs_dof_transformations')
     c={k:k for k in names}
+    c['element_degree']=2
     c['gauss']={'degree':19,'rule':'current','facet_cell':'quadrilateral',
-      'compiled_forms_verified':{name:{'rules':[{'degree':19,'points':{'sha256':'nodes'},'weights':{'sha256':'weights'}}],
+      'compiled_forms_verified':{name:{'rules':[{'degree':19,'points':{'sha256':'nodes','shape':[100,2]},'weights':{'sha256':'weights','shape':[100]}}],
       'compiled_C_sha256':'raw_old','loaded_kernel':{'module_name':'old'}} for name in ('top/0','top/1','bottom/0','bottom/1')}}
     return c
 

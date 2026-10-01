@@ -157,8 +157,10 @@ def fixture_interior_positions(space, layout):
     rows = np.unique(np.concatenate([np.asarray(space.dofmap.cell_dofs(c))[local]
             for c in range(int(space.mesh.topology.index_map(3).size_local))]))
     positions = np.flatnonzero(np.isin(layout.independent, rows))
-    if len(positions) != 480 or len(rows) != 480:
-        raise ValueError("centered p2 authority must retain every actual 480 interior rows")
+    degree = int(space.element.basix_element.degree)
+    expected = {2:480,4:8640}.get(degree)
+    if expected is None or len(positions) != expected or len(rows) != expected:
+        raise ValueError("centered profile must retain every actual p2/p4 interior row")
     return positions
 
 
@@ -181,6 +183,51 @@ def save_mpc_inventory(bundle, layout, save):
     for name, value in (("slaves", mpc.slaves), ("masters", mpc.masters.array),
                         ("coefficients", coefficients), ("offsets", offsets)):
         save("full_mpc_" + name, value)
+
+
+def save_centered_port_inventory(bundle, layout, save, *, allocation_gate):
+    """Export actual original C/D functionals and mode vectors for the p4 checker.
+
+    Column C and row D naturally use CSC/CSR. No global FE square matrix is
+    formed, and every retained functional is exported before temporary release.
+    """
+    from petsc4py import PETSc
+    from .y_orbit_sparse_reference import integer_admission
+    entries = bundle["dtn_action"].carrier.entries
+    carrier = bundle["dtn_action"].carrier
+    ports = len(entries)
+    for kind, row_name, value_name in (("C", "coupling_rows", "coupling_values"),
+                                        ("D", "projection_rows", "projection_values")):
+        count = sum(len(getattr(e, row_name)) for e in entries)
+        integer_admission((layout.full_rows, ports), count, index_dtype=PETSc.IntType)
+        row_dtype = np.asarray(getattr(entries[0],row_name)).dtype
+        if any(np.asarray(getattr(e,row_name)).dtype != row_dtype for e in entries):
+            raise ValueError("original carrier row widths differ across modes")
+        integer_admission((layout.full_rows,ports),count,index_dtype=row_dtype)
+        size = count*(16+row_dtype.itemsize)+(ports+1)*np.dtype(PETSc.IntType).itemsize
+        allocation_gate("original_"+kind+"_checker_export",{
+            "matrix_payload_bytes": size, "workspace_bytes": size,
+            "complete_original_functionals": True, "no_global_FE_square_matrix": True})
+        for e in entries:
+            rows = np.asarray(getattr(e, row_name))
+            if (rows.dtype.kind not in "iu" or not len(rows) or rows.min()<0
+                    or rows.max()>=layout.full_rows):
+                raise ValueError("every original centered port must have valid native support")
+        save("original_port_"+kind+"_indices", np.concatenate(
+             [getattr(e,row_name) for e in entries]))
+        save("original_port_"+kind+"_data", np.concatenate([getattr(e,value_name) for e in entries]))
+        save("original_port_"+kind+"_indptr",np.asarray(
+             [0]+list(np.cumsum([len(getattr(e,row_name)) for e in entries],dtype=np.int64)),dtype=PETSc.IntType))
+    cfg = bundle["cfg"]
+    save("original_mode_e_vectors",np.asarray([m.e_vector for m in bundle["modes"]],dtype=complex))
+    save("original_mode_k_vectors",np.asarray([m.k_vector for m in bundle["modes"]],dtype=complex))
+    save("original_mode_outward_signs",np.asarray([1 if m.side=="top" else -1 for m in bundle["modes"]]))
+    save("original_mode_magnetic_denominator",np.asarray(cfg.k0*complex(cfg.mu_r)))
+    save("original_mode_boundary_area",np.asarray((cfg.x_max-cfg.x_min)*(cfg.y_max-cfg.y_min)))
+    save("original_mode_incident_projections",np.asarray(bundle["incident_projections"]))
+    save("original_carrier_global_rows",np.asarray(carrier.global_rows))
+    save("original_carrier_ownership_range",np.asarray(carrier.ownership_range))
+    save("original_carrier_slave_rows",carrier.slave_rows)
 
 
 def recovered_field_and_modes(bundle, layout, solution, *, physical, label, save):
