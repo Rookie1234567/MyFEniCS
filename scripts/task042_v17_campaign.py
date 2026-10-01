@@ -2,6 +2,7 @@
 import argparse
 import json
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -9,10 +10,16 @@ from src.io.resumable_trace_campaign import ARTIFACT_ROOT,ROOT,read_result
 from src.runners.task042_shared import write_json,pressure,audit
 from src.solvers.resumable_trace_window import ledger,LEDGER_PATH,journal,snapshot,freeze_route_budget
 
+TMP_ROOT=ROOT/'tmp/task042/v17'
+CURRENT_BATCH='v17'
+
 
 def dat(stage,target,label):
-    directory=ROOT/'tmp/task042/v17/inputs';directory.mkdir(exist_ok=True)
+    directory=TMP_ROOT/'inputs';directory.mkdir(exist_ok=True)
     path=directory/(label+'.dat')
+    if CURRENT_BATCH=='v18':
+        from src.io.gmres_residual_completion import write_input
+        return write_input(path,stage,target,'task042_v18_'+label)
     if path.exists():raise ValueError('one-run input already consumed '+str(path))
     path.write_text(f'''schema_version = 1
 [task042_v17]
@@ -53,7 +60,7 @@ def cool(family):
             if time.monotonic()-stable>=60:
                 try:
                     baseline=audit(observed_activity=True)
-                    write_json(ROOT/'tmp/task042/v17'/('reentry_'+str(row['reentries'])+'.json'),baseline)
+                    write_json(TMP_ROOT/('reentry_'+str(row['reentries'])+'.json'),baseline)
                     safe=True;break
                 except RuntimeError as error:journal('reentry_admission_failed',reason=str(error));stable=None
         else:stable=None
@@ -71,8 +78,8 @@ def set_status(family,status):
     journal('library_dispatch_status',library=family,status=status)
 
 
-def launch_with_reentry(stage,target,label):
-    family=stage.removeprefix('GMRES_');attempt=0
+def launch_with_reentry(stage,target,label,*,family=None):
+    family=family or stage.removeprefix('GMRES_');attempt=0
     while True:
         result=run(stage,target,label+'_a'+str(attempt))
         if result['status']!='RESOURCE_STOP':return result
@@ -135,7 +142,12 @@ def solve_queue():
 
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--preflight',action='store_true');parser.add_argument('--solve',action='store_true');parser.add_argument('--verify',action='store_true')
+    parser.add_argument('--batch',choices=('v17','v18'),default='v17')
     args=parser.parse_args()
+    if args.batch=='v18':
+        from src.runners.residual_completion_queue import configure,main_queue
+        configure(sys.modules[__name__])
+        return main_queue(sys.modules[__name__],args)
     if args.preflight:
         result=run('PREFLIGHT',0,'preflight');journal('R1_complete',status=result['status'])
         return 0 if result['status']=='RESUME_QUALIFICATION_COMPLETE' else 1

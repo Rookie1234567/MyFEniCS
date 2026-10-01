@@ -112,7 +112,9 @@ def preflight(stage):
 
 
 def load_production(stage,family,op):
-    store=RollingCheckpoint(ARTIFACT_ROOT/family/'rolling',identity(stage,family,op))
+    if hasattr(stage,'production_loader'):
+        return stage.production_loader(op)
+    store=RollingCheckpoint(stage.io.ARTIFACT_ROOT/family/'rolling',identity(stage,family,op))
     if any(store.directory.glob('*.commit.json')):
         manifest,arrays,errors=store.read();mode=manifest['metadata']['mode'];base=arrays.get('base_trace')
         state=LSQRState.restore({k[3:]:v for k,v in arrays.items() if k.startswith('GK_')})
@@ -130,8 +132,8 @@ def physical_point(op,state,rhs,base=None):
         # Correction rhs above is the already port-closed trace equation, so
         # recompute the complete port using the original unchanged physical b.
         point['trace']+=base
-        point['port']=op.bar.close(point['trace'],rhs)
-        point['z']=np.r_[point['trace'],point['port']]
+        point['z']=op.bar.close(point['trace'],rhs)
+        point['port']=point['z'][op.bar.n:]
     return point
 
 
@@ -159,7 +161,7 @@ def audit_point(stage,op,state,base,mode,store,*,name=None):
     estimate=abs(state.values['phibar']);truth=float(np.linalg.norm(projected))
     gap=abs(estimate-truth)/max(truth,estimate,1e-300)
     k=state.values['iteration'];logical=k+mode.get('base_logical_iteration',mode['legacy_persisted_iteration']) if mode['epoch'] else k
-    family_directory=ARTIFACT_ROOT/stage.family_name
+    family_directory=stage.io.ARTIFACT_ROOT/stage.family_name
     directory=family_directory/'states'/stage.directory.name;directory.mkdir(parents=True,exist_ok=True)
     label=name or 'E'+str(mode['epoch'])+'_ITER_'+str(logical)
     arrays={key:point[key] for key in ('y','v','c','trace','port','z')};arrays['residual']=actual
@@ -192,16 +194,17 @@ def continue_route(stage):
     store,state,base,mode,manifest,errors=load_production(stage,family,op)
     target=stage.specification.derived['target_iteration'];initial_k=state.values['iteration']
     logical=lambda:state.values['iteration']+(mode.get('base_logical_iteration',mode['legacy_persisted_iteration']) if mode['epoch'] else 0)
-    history=ARTIFACT_ROOT/family/'iteration_history.jsonl'
+    history=stage.io.ARTIFACT_ROOT/family/'iteration_history.jsonl'
     row=audit_point(stage,op,state,base,mode,store);status='SLICE_COMPLETE'
     saved=row
     while logical()<target:
         budget=json.loads(stage.window.BUDGET_PATH.read_text())
         used=stage.base['routes'][family]['wall_seconds']+time.monotonic()-stage.run_started
-        if used>budget['uniform_route_wall_seconds']-budget['GMRES_reserved_seconds']-60:
-            status='LSQR_RESERVED_G_BOUNDARY';break
+        reserve=budget.get('GMRES_reserved_seconds',0)
+        if used>budget['uniform_route_wall_seconds']-reserve-60:
+            status='LSQR_RESERVED_G_BOUNDARY' if reserve else 'R_WALL_BOUNDARY';break
         stage.guard(extra_actions=8)
-        if stage.base['routes'][family]['new_updates']+stage.new_updates>=8192:
+        if stage.base['routes'][family]['new_updates']+stage.new_updates>=stage.own_plan.get('max_new_updates_per_library',8192):
             status='NEW_GK_BUDGET_STOP';break
         if row['original_equation_gate']['status']=='ORIGINAL_EQUATION_PASS':status='ORIGINAL_EQUATION_PASS';break
         if state.values['terminated']:status='BREAKDOWN_NOT_SOLVED';break
@@ -214,7 +217,7 @@ def continue_route(stage):
         if logical()%64==0:
             row=audit_point(stage,op,state,base,mode,store);saved=row
             if row['original_equation_gate']['status']=='ORIGINAL_EQUATION_PASS':status='ORIGINAL_EQUATION_PASS';break
-            records=[json.loads(s) for s in (ARTIFACT_ROOT/family/'audit_history.jsonl').read_text().splitlines()]
+            records=[json.loads(s) for s in (stage.io.ARTIFACT_ROOT/family/'audit_history.jsonl').read_text().splitlines()]
             # Gap must recur twice; one validated original-action correction
             # epoch is allowed, never an identity failure workaround.
             unique={a['logical_iteration']:a for a in records if not a['audit_pending']}
@@ -226,7 +229,7 @@ def continue_route(stage):
                 mode=dict(mode,mode='RESIDUAL_CORRECTION_RESTART',epoch=1,base_logical_iteration=logical())
                 stage.base['routes'][family]['correction_restarts']+=1
                 f=op.pr(op.bar.reduced_rhs(stage.packet.a['b'])-op.bar.apply(base));state=LSQRState.initialize(op.adjoint,f)
-                row=audit_point(stage,op,state,base,mode,store);journal('one_residual_correction_epoch',library=family,mode=mode)
+                row=audit_point(stage,op,state,base,mode,store);stage.window.journal('one_residual_correction_epoch',library=family,mode=mode)
             if logical()>=2048 and logical()%256==0:
                 seq=[unique[k] for k in sorted(unique) if k%256==0 and k>=1280][-4:]
                 if len(seq)==4 and all(1-seq[j+1]['original_equation_gate']['rho']/seq[j]['original_equation_gate']['rho']<.01 for j in range(3)):
@@ -268,7 +271,7 @@ def gmres_route(stage):
         stage.guard(extra_actions=70)
         stage.durable_counts(reserve=72)
         t,inner=correction_cycle(bar.apply,t,barb,stage.packet.bnorm)
-        port=bar.close(t,rhs);z=np.r_[t,port];residual=rhs-stage.packet.apply(z)
+        z=bar.close(t,rhs);port=z[stage.packet.nt:];residual=rhs-stage.packet.apply(z)
         began=stage.begin_numeric_io()
         saved=atomic_arrays(work/('CYCLE_'+str(cycle)+'.npz'),trace=t,port=port,z=z,residual=residual)
         stage.complete_numeric_io(began,saved['path'])

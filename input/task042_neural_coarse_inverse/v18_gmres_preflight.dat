@@ -1,0 +1,10 @@
+schema_version = 1
+[task042_v18]
+stage = "PREFLIGHT"
+algorithm = "F0"
+library = "NONE"
+run_id = "task042_v18_gmres_preflight"
+material_table_id = "SI_OPTICAL_CONSTANTS_USER_20260929_V1"
+decoder_family = "GMRES_REPAIR_AND_RESIDUAL_COMPLETION"
+target_iteration = 0
+target_cycles = 0

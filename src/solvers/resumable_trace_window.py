@@ -14,8 +14,8 @@ BUDGET_PATH=ROOT/'tmp/task042/v17/route_budget.json'
 LEDGER_PATH=ROOT/'tmp/task042/v17/ledger.json'
 
 
-def snapshot():
-    row=json.loads(WINDOW_PATH.read_text())
+def snapshot(path=None):
+    row=json.loads((path or WINDOW_PATH).read_text())
     elapsed=max(time.time()-datetime.fromisoformat(row['start_utc']).timestamp(),time.monotonic()-row['start_monotonic'],0.)
     return dict(row,elapsed_seconds=elapsed,heavy_remaining_seconds=max(0.,row['heavy_limit_seconds']-elapsed),
                 total_remaining_seconds=max(0.,row['total_limit_seconds']-elapsed))
