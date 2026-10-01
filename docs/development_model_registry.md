@@ -1980,3 +1980,15 @@ production model。
 | dot_real_g0_p4_attempt2 | sourcec619854a371fdb3330d21747a53a440dd1d427ae；显式新mode identity、独立M0数值/key核验 | 29,072 rows、10,912,592 NNZ、80真实端口；complex128/int32原CSR218,368,132 B；1,486导出array独立核验通过 | ASSEMBLY_EXPORT_COMPLETE；同时树RSS1,199,104,000 B、136.742秒、swap0；有效cap4,020,740,096 B；无global factor/solve | [实际矩阵/边界](task40extra_dot_parallel_cloud/outcomes/real_p4_probe_preparation_v2.md) |
 
 原A4残差、恢复后的全局解、official R/T/A/A_volume均not_run。新mode full-manifest SHA de0e4b79e8ec0741db4e4b08f2f2ce97e78026d18e1c6795da7d6ddd5f3d9ed8，与已有独立M0 keys/flags及E/H/k/alpha/gamma/beta/power最大差0；历史c3ff raw不可用，差异原因unknown，不宣称历史hash同一。危险历史private-FFI在PETSc3.25下未运行，public petsc4py小fixture单独资格。完整三维原尺寸50×25×140 nm、规则无缺口、0.7 nm、约2 TB/≤48小时目标仍unknown；未来三维缺口能力保留，不以二维/2.5D替代。
+
+## Task40extra dot V3：小型full3D y-orbit参考逆与真实三维缺口
+
+本条是新云端scaled p2 full3D algebra architecture authority，不是原尺寸目标模型或物理精度资格。只改变参考逆的完整离散表示，原三维Maxwell算子、所有y模式、单元内部DoF和实际DtN aliases均保留。
+
+| Model ID | source / scope | measured result | resource / status | evidence |
+|---|---|---|---|---|
+| dot_y_orbit_p2_attempt1 | source72b7ff523405411f5927031c5391cd3c47b784f5；80cell三维p2，λ0.7nm scaled7/135，phi0 | regular all-q reference inverse Gate通过；notch FGMRES尚无数值结果 | WORKER_FAILED：PC callback访问readonly Vec为writable；treeRSS695,042,048B，20.437s，swap0，后代清场 | [V3 compact](task40extra_dot_parallel_cloud/outcomes/records/y_orbit_full3d_pilot_v1.json) |
+| dot_y_orbit_p2_regular | source18d7d0a27f73705366f8cb747c11cb9e68cc0ef6；2394storage/2048independent，480interior，4完整y块，532 actual ports | generic/incident原A0残差3.4914e-14/8.2937e-15；完整direct场差≤1.4738e-13 | reference-inverse identity pass；同一个attempt2全过程treeRSS638,885,888B，8.839s，swap0，warmJIT | [真实原算子/Gate](task40extra_dot_parallel_cloud/outcomes/y_orbit_full3d_pilot_v1.md) |
+| dot_y_orbit_p2_notch | 同source/mesh，真实2cell air notch；PC保持regular A0 inverse | generic/incident原A FGMRES4/3步；原残差5.2744e-15/5.8469e-13；direct场差9.4051e-14/5.0376e-13；incident非零q比例1.4217e-5 | ARCHITECTURE_IDENTITY_AND_NOTCH_PASS；独立checker/targeted3 tests通过 | 同上 |
+
+无official R/T/A/A_volume/energy closure、p2 accuracy、nonzero-y-Bloch、p4/p6、continuum或原尺寸2TB/48h资格。因子payload对照是小型dense LU，不能代替simultaneous RSS或预测稀疏fill。raw完整矩阵/场/失败log在ignored artifact目录，compact绑定hash；无source改写旧负结果。

@@ -48,3 +48,13 @@ DtN 实验检查开放边界通道的编号、物理方向和局部投影积分�
 | 失败/ABI边界 | 两次collection失败、一次mode-hash失败保留；危险历史private-FFI未运行；新环境小型资格单独记录 | 同上 |
 | 最终目标 | 完整三维原尺寸50×25×140 nm、无缺口规则基线、0.7 nm、约2 TB/≤48小时；未来三维缺口能力保留；截至2026-10-04 10:07:14 UTC的72小时研究窗口 | 当前目标能力unknown；不以二维/2.5D替代 |
 | 下一步 | 准备公共backend128reference+完整原A4 residual screen；尚未运行；64在其通过后再决定 | [Response V2](../response_v2.md) |
+
+## V3：完整三维 y-orbit 参考逆架构
+
+| 对象/数据身份 | 实际结果 | 资格边界与证据 |
+|---|---|---|
+| scaled p2 full3D规则A0，全部2048独立DoF/4块/532 aliases | 原残差3.4914e-14（generic all-q）、8.2937e-15（incident）；完整direct场差≤1.4738e-13 | measured；[详细结果](y_orbit_full3d_pilot_v1.md) |
+| 同mesh真实nonseparable notch | generic/incident FGMRES4/3步，原A残差5.2744e-15/5.8469e-13；真实incident非零q比例1.4217e-5 | measured；所有y内部通道和端口保留，无n0投影 |
+| 资源/失败 | attempt2 tree RSS638,885,888B、8.839s、swap0；warm JIT；attempt1 readonly Vec API失败保留 | [compact及失败hash](records/y_orbit_full3d_pilot_v1.json) |
+| 独立核验 | 12矩阵/direct残差重算及all-q/aliases/nonzero-q通过；focused3 passed | 未做full pytest/MPI2+/Ruff/CI/rendered view |
+| 后续/目标 | 非零y ky、真实p4/p6、直接单cellblock生成、原尺寸2TB/48h均未资格 | 小p2架构正结果，生产和目标能力unknown；[Response V3](../response_v3.md) |

@@ -15,3 +15,5 @@
 首批组件结果已归档：[Response V1](response_v1.md)。包含局部参考积分复用、DtN 模式/端口规则、精确几何类型计数及容量风险判断。完整 0.7 nm / 2 TB 目标尚未解决，云端并行研究继续。父分支的 G0/G1/direct 成绩只作为历史基线，不是 dot 云端实测。
 
 第二批真实三维p4算子数据已完成：[Response V2](response_v2.md)、[实际矩阵/资源/负结果](outcomes/real_p4_probe_preparation_v2.md)。新增明确的有界研究范围见 [Phase 2补充](phase2_real_p4_probe.md)。本批没有全局solve或目标能力资格；完整三维原尺寸目标和未来三维缺口能力要求保持。
+
+第三批full3D参考逆架构的小型实测完成：[Response V3](response_v3.md)、[完整数学/结果/失败/容量边界](outcomes/y_orbit_full3d_pilot_v1.md)。缩放p2原三维算子和真实三维缺口均通过，不能作为原尺寸目标解或2TB/48h资格；phi0非零y-wrap仍未测。

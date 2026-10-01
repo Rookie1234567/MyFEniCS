@@ -3279,3 +3279,13 @@ V26 本轮 Full3D p6/h7.5、coarse p4 场已经完成 126 步并通过残差/物
 最终目标明确为完整三维原尺寸50×25×140 nm、无缺口规则基线、0.7 nm、约2 TB/单次≤48小时；未来三维缺口能力必须保留，不接受二维/2.5D替代，72小时研究窗口截至2026-10-04 10:07:14 UTC。本批只有真实全局算子数据价值，目标能力仍unknown。下一步先准备complex128 reference-factor和恢复后独立原A4残差控制，通过后再决定64；不重复BLR扫描、不改ordinary default或其他分支。
 
 详细：[Response V2](task40extra_dot_parallel_cloud/response_v2.md)、[结果/资源/负项](task40extra_dot_parallel_cloud/outcomes/real_p4_probe_preparation_v2.md)、[compact](task40extra_dot_parallel_cloud/outcomes/records/real_p4_probe_preparation_v2.json)。
+
+## 2026-10-01：dot V3 完整三维 y-orbit 参考逆架构通过
+
+全域p4因子是目标容量瓶颈，本批先验证一种保留full3D空间的数学表示：只把真正均匀y的cell-index平移转换到完整离散频率块，块内保留x-z材料异质性、所有H(curl)内部通道及实际DtN aliases。真实80-cell/p2、λ0.7nm缩放模型有2048独立DoF，其中480内部DoF；532端口keys与production generator完全一致。由完整FFCx原A0直接转换所得4块逆的原残差≤3.4914e-14，native covariance2.9662e-16，未作材料平均、n0 projection或group averaging。
+
+同一mesh开2-cell真实三维缺口，完整原A FGMRES在generic all-q/incident源分别4/3步通过，原残差5.2744e-15/5.8469e-13；incident产生1.4217e-5非零q相对场分量，独立checker重算确认。成功source18d7d0a27f73705366f8cb747c11cb9e68cc0ef6，whole-tree RSS638,885,888B/8.839s/swap0；这是warm JIT。首次readonly Vec callback API失败保留。4块dense payload16.79MB对full dense oracle67.12MB，仅该小型dense对照，不能预测稀疏MUMPS目标。
+
+本批为缩放p2 full3D架构资格，不是原尺寸50×25×140nm准确解或2TB/48h能力。phi0的非零y-wrap、p4/p6、mesh/电尺寸鲁棒性和可扩展单cellblock装配仍未测。旧full-spectrum为analytic-interface sweep；相关B1平均材料/非均匀topological-orbit路线明确丢off-block且formal停于implementation Gate，所以本批是已有背景逆家族的结构性纠正/扩展。ordinary defaults、其他分支、用户电脑均未操作；仅own branch本地提交，等待协调publication/review。
+
+[Response V3](task40extra_dot_parallel_cloud/response_v3.md)、[详细Gate/容量边界](task40extra_dot_parallel_cloud/outcomes/y_orbit_full3d_pilot_v1.md)、[compact](task40extra_dot_parallel_cloud/outcomes/records/y_orbit_full3d_pilot_v1.json)。

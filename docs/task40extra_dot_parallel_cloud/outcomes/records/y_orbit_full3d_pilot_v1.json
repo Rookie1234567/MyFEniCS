@@ -1,0 +1,852 @@
+{
+  "schema": "task40extra.y_orbit_full3d_pilot.compact.v1",
+  "status": "ARCHITECTURE_IDENTITY_AND_NOTCH_PASS",
+  "data_identity": "measured",
+  "source_sha": "18d7d0a27f73705366f8cb747c11cb9e68cc0ef6",
+  "branch": "task40extra_dot_parallel_cloud",
+  "input_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e",
+  "role": "reduced_geometry_p2_full3d_algebra_architecture_only",
+  "limits": {
+    "mapping": 1e-12,
+    "operator": 1e-11,
+    "residual": 1e-10,
+    "solution": 1e-09,
+    "excitation": 0.001,
+    "notch_modes": 1e-12
+  },
+  "axes_nm": {
+    "x": [
+      0.0,
+      0.8555555555555555,
+      1.2962962962962963,
+      1.737037037037037,
+      2.5925925925925926
+    ],
+    "y": [
+      0.0,
+      0.32407407407407407,
+      0.6481481481481481,
+      0.9722222222222222,
+      1.2962962962962963
+    ],
+    "z": [
+      -0.5185185185185185,
+      0.0,
+      2.074074074074074,
+      4.148148148148148,
+      6.222222222222222,
+      6.7407407407407405
+    ]
+  },
+  "layout": {
+    "independent_rows": 2048,
+    "full_storage_rows": 2394,
+    "ny": 4,
+    "rows_per_q": 512,
+    "all_q": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "dimension_dof_counts": {
+      "1": 544,
+      "2": 1024,
+      "3": 480
+    },
+    "mapping_inverse_relative": 0.0,
+    "orientation_euclidean_defect_max": 4.965068306494546e-16,
+    "canonical_shift_unitarity_relative": 0.0,
+    "translation_cycle_relative": 0.0,
+    "fourier_unitarity_relative": 1.3559257928316587e-16,
+    "q_euclidean_unitary_assumed": false,
+    "native_translation_cycle_relative": 0.0,
+    "fourier_shift_eigen_relative": 2.291104371109381e-16,
+    "primal_dual_pairing_relative": 3.4374893863893007e-16,
+    "phase_y": [
+      1.0,
+      0.0
+    ],
+    "translation_definition": "(Tu)(y)=u(y+h), wrap multiplies phase_y",
+    "y_actual_widths": [
+      0.32407407407407407,
+      0.32407407407407407,
+      0.32407407407407407,
+      0.32407407407407407
+    ],
+    "y_actual_widths_hex": [
+      "0x1.4bda12f684bdap-2",
+      "0x1.4bda12f684bdap-2",
+      "0x1.4bda12f684bdap-2",
+      "0x1.4bda12f684bdap-2"
+    ],
+    "y_width_max_relative_variation": 0.0,
+    "geometry_index_tolerance": 1e-09,
+    "geometry_metric_rounding": false,
+    "sparse_Q_payload_bytes": 178756,
+    "dense_Q_created": false
+  },
+  "ports": {
+    "mode_count": 532,
+    "production_generator_ordered_keys_match": true,
+    "generator_mode_count": 532,
+    "coupling_off_q_relative_max": 1.143069631995641e-14,
+    "projection_off_q_relative_max": 1.1423950238667422e-14,
+    "augmented_C_covariance_relative_max": 1.8800727229485173e-14,
+    "augmented_D_covariance_relative_max": 1.8788991414978417e-14,
+    "augmented_H_covariance_relative_max": 0.0,
+    "augmented_definition": "[V C; -D H], A=V+C H^-1 D, D values already conjugated",
+    "physical_n_aliases_collapsed": false,
+    "all_p_channels_retained": true
+  },
+  "port_alias_counts": {
+    "0": 76,
+    "1": 152,
+    "2": 152,
+    "3": 152
+  },
+  "reference_inverse": {
+    "native_form_covariance_relative": 2.9662320496516976e-16,
+    "canonical_form_covariance_relative": 2.9662320496516365e-16,
+    "modal_off_block_relative": 2.3539226321888756e-16,
+    "modal_off_block_absolute_max": 4.0246751062195213e-13,
+    "dropped_coupling_policy": "only audited roundoff-level off-block entries",
+    "group_averaged_reference_used": false,
+    "all_q_factors": 4,
+    "factor_rows": [
+      512,
+      512,
+      512,
+      512
+    ],
+    "factor_backend": "SciPy public dense LU",
+    "factor_reuse_plus_minus_q": false,
+    "factor_payload_bytes": 16785408,
+    "setup_seconds": 0.9351253550003094
+  },
+  "regular_sources": {
+    "generic": {
+      "full_original_true_residual": 3.4914012130690236e-14,
+      "assembled_true_residual": 3.4091622488676165e-14,
+      "augmented_FE_true_residual": 3.4914424573654354e-14,
+      "augmented_port_closure_relative": 7.378064546651515e-17,
+      "augmented_vs_original_residual_relative": 3.351230188851624e-17,
+      "auxiliary_ports_recovered": 532,
+      "relative_direct_solution_difference": 9.548088150802134e-14,
+      "solution_primal_q_norms": [
+        14.447682753173096,
+        24.227439827559216,
+        12.860316480025654,
+        18.169854490169254
+      ],
+      "rhs_dual_q_norms": [
+        31.70092156403295,
+        32.27210904609357,
+        32.55341565383763,
+        31.33551165118972
+      ],
+      "native_action_calls": 5
+    },
+    "physical": {
+      "full_original_true_residual": 8.2936615906165e-15,
+      "assembled_true_residual": 7.538240503515653e-15,
+      "augmented_FE_true_residual": 8.293870933205076e-15,
+      "augmented_port_closure_relative": 1.0698017197581135e-16,
+      "augmented_vs_original_residual_relative": 4.625109219582065e-17,
+      "auxiliary_ports_recovered": 532,
+      "relative_direct_solution_difference": 1.473801767544348e-13,
+      "solution_primal_q_norms": [
+        0.06851282406258646,
+        8.919915489875937e-18,
+        6.718391854089584e-18,
+        1.5834747596501507e-17
+      ],
+      "rhs_dual_q_norms": [
+        0.4522599524363326,
+        4.348846518725373e-17,
+        5.70799875334582e-17,
+        8.010157120830526e-17
+      ],
+      "native_action_calls": 6
+    }
+  },
+  "notched_sources": {
+    "generic": {
+      "full_original_true_residual": 5.274440462807566e-15,
+      "assembled_true_residual": 9.85329374764176e-15,
+      "augmented_FE_true_residual": 5.275019246510943e-15,
+      "augmented_port_closure_relative": 8.459683449754711e-17,
+      "augmented_vs_original_residual_relative": 3.412278580237321e-17,
+      "auxiliary_ports_recovered": 532,
+      "relative_direct_solution_difference": 9.405058508608203e-14,
+      "solution_primal_q_norms": [
+        14.44687075709949,
+        24.229172554294852,
+        12.860557319499078,
+        18.17149771426241
+      ],
+      "rhs_dual_q_norms": [
+        31.70092156403295,
+        32.27210904609357,
+        32.55341565383763,
+        31.33551165118972
+      ],
+      "native_action_calls": 12,
+      "iterations": 4,
+      "reason": 2,
+      "history": [
+        {
+          "iteration": 0,
+          "internal_residual": 63.938068562205515,
+          "full_original_true_residual": 1.0
+        },
+        {
+          "iteration": 1,
+          "internal_residual": 0.011930764234407545,
+          "full_original_true_residual": 0.00018659875880972713
+        },
+        {
+          "iteration": 2,
+          "internal_residual": 3.2090670791727977e-06,
+          "full_original_true_residual": 5.019024122569342e-08
+        },
+        {
+          "iteration": 3,
+          "internal_residual": 6.575413383590644e-10,
+          "full_original_true_residual": 1.0284066320808454e-11
+        },
+        {
+          "iteration": 4,
+          "internal_residual": 1.8574989158636416e-13,
+          "full_original_true_residual": 5.274440462807566e-15
+        }
+      ],
+      "seconds": 0.11947588899965922,
+      "outer_operator": "full_original_3D_FFCx_form_action_plus_all_DtN_modes",
+      "right_pc": "all_y_blocks_regular_geometry_reference_inverse",
+      "nonzero_q_primal_relative": 0.9156300312449996
+    },
+    "physical": {
+      "full_original_true_residual": 5.846897275185742e-13,
+      "assembled_true_residual": 5.846704552557782e-13,
+      "augmented_FE_true_residual": 5.846897243754859e-13,
+      "augmented_port_closure_relative": 2.3357181186322258e-17,
+      "augmented_vs_original_residual_relative": 4.3952363952102914e-17,
+      "auxiliary_ports_recovered": 532,
+      "relative_direct_solution_difference": 5.037554209542946e-13,
+      "solution_primal_q_norms": [
+        0.06851262375077269,
+        6.887544150401397e-07,
+        1.5401122911321254e-11,
+        6.887544150469316e-07
+      ],
+      "rhs_dual_q_norms": [
+        0.4522599524363326,
+        4.348846518725373e-17,
+        5.70799875334582e-17,
+        8.010157120830526e-17
+      ],
+      "native_action_calls": 21,
+      "iterations": 3,
+      "reason": 2,
+      "history": [
+        {
+          "iteration": 0,
+          "internal_residual": 0.4522599524363326,
+          "full_original_true_residual": 1.0
+        },
+        {
+          "iteration": 1,
+          "internal_residual": 1.5190462660234067e-05,
+          "full_original_true_residual": 3.358790133512611e-05
+        },
+        {
+          "iteration": 2,
+          "internal_residual": 2.1146288140322797e-09,
+          "full_original_true_residual": 4.675693287959198e-09
+        },
+        {
+          "iteration": 3,
+          "internal_residual": 2.644266255589421e-13,
+          "full_original_true_residual": 5.846897275185742e-13
+        }
+      ],
+      "seconds": 0.17583255000045028,
+      "outer_operator": "full_original_3D_FFCx_form_action_plus_all_DtN_modes",
+      "right_pc": "all_y_blocks_regular_geometry_reference_inverse",
+      "nonzero_q_primal_relative": 1.4217027192908356e-05
+    }
+  },
+  "matrix_vs_original_action_relative": 7.124807366570134e-16,
+  "notch_matrix_vs_original_action_relative": 6.960666608528483e-16,
+  "notch_delta_off_q_relative": 0.7062105515392125,
+  "changed_cells": [
+    38,
+    52
+  ],
+  "notch_geometry_audit": {
+    "schema": "task40extra.rectangular_air_void_mesh_audit.v1",
+    "geometry_identity": "task40extra.y-orbit-full3d-reference.v1.notch",
+    "air_void_box_nm": [
+      1.2962962962962963,
+      1.737037037037037,
+      0.32407407407407407,
+      0.9722222222222222,
+      2.074074074074074,
+      4.148148148148148
+    ],
+    "owned_void_box_cell_count": 2,
+    "non_air_tagged_void_box_cell_count": 0,
+    "owned_air_cell_count": 42,
+    "owned_remaining_grating_cell_count": 22,
+    "box_boundary_vertex_alignment_serial": {
+      "x": true,
+      "y": true,
+      "z": true
+    },
+    "nonseparable_extent_axes": {
+      "x": true,
+      "y": true,
+      "z": true
+    },
+    "status": "PASS"
+  },
+  "design_signal": true,
+  "independent_checker": {
+    "schema": "task40extra.y-orbit-checker.v1",
+    "evidence_valid": true,
+    "gate_pass": true,
+    "checks": [
+      {
+        "name": "A0_direct_generic_matrix_true_residual",
+        "measured": 8.810445800791152e-14,
+        "limit": 1e-10,
+        "pass": true
+      },
+      {
+        "name": "A0_candidate_generic_matrix_true_residual",
+        "measured": 3.4091622488676165e-14,
+        "limit": 1e-10,
+        "pass": true
+      },
+      {
+        "name": "A0_generic_direct_difference",
+        "measured": 9.548088150802134e-14,
+        "limit": 1e-09,
+        "pass": true
+      },
+      {
+        "name": "A0_direct_physical_matrix_true_residual",
+        "measured": 3.6616853565183054e-14,
+        "limit": 1e-10,
+        "pass": true
+      },
+      {
+        "name": "A0_candidate_physical_matrix_true_residual",
+        "measured": 7.538240503515653e-15,
+        "limit": 1e-10,
+        "pass": true
+      },
+      {
+        "name": "A0_physical_direct_difference",
+        "measured": 1.473801767544348e-13,
+        "limit": 1e-09,
+        "pass": true
+      },
+      {
+        "name": "notch_direct_generic_matrix_true_residual",
+        "measured": 8.991034636204142e-14,
+        "limit": 1e-10,
+        "pass": true
+      },
+      {
+        "name": "notch_candidate_generic_matrix_true_residual",
+        "measured": 9.85329374764176e-15,
+        "limit": 1e-10,
+        "pass": true
+      },
+      {
+        "name": "notch_generic_direct_difference",
+        "measured": 9.405058508608203e-14,
+        "limit": 1e-09,
+        "pass": true
+      },
+      {
+        "name": "notch_direct_physical_matrix_true_residual",
+        "measured": 3.8139179829224013e-14,
+        "limit": 1e-10,
+        "pass": true
+      },
+      {
+        "name": "notch_candidate_physical_matrix_true_residual",
+        "measured": 5.846704552557782e-13,
+        "limit": 1e-10,
+        "pass": true
+      },
+      {
+        "name": "notch_physical_direct_difference",
+        "measured": 5.037554209542946e-13,
+        "limit": 1e-09,
+        "pass": true
+      }
+    ],
+    "generic_all_q_excitation": true,
+    "all_port_aliases_retained": true,
+    "live_native_residual_authority_present": true,
+    "live_port_symmetry": true,
+    "notch_physical_nonzero_q_content": true,
+    "notch_physical_nonzero_q_relative_recomputed": 1.4217027192908362e-05,
+    "live_augmented_residual_authority": true,
+    "resource_authority": "separate existing whole-tree watchdog, must be reviewed independently",
+    "qualification": "small full3D algebra architecture only, not target field/accuracy/memory"
+  },
+  "source_clean_unchanged": true,
+  "resource": {
+    "classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "elapsed_seconds": 8.839025934999881,
+    "sampled_process_tree_rss_peak_bytes": 638885888,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "process_tree_samples": 36,
+    "process_tree_all_status_readable": true,
+    "process_tree_all_identity_complete": true,
+    "descendants_cleared": true,
+    "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+    "launch_envelope": {
+      "mem_total_bytes": 10451460096,
+      "mem_available_bytes": 8289886208,
+      "effective_total_bytes": 10451460096,
+      "effective_available_bytes": 8289886208,
+      "reserve_bytes": 4294967296,
+      "launch_cap_bytes": 1610612736,
+      "memory_policy": "LEGACY_STATIC_MEMORY_ENVELOPE",
+      "reserve_reason": "legacy max(4GiB,0.15*effective_total) reserve",
+      "static_tree_cap_bytes": 12000000000,
+      "cgroup_limits": [],
+      "dynamic_launch_cap_bytes": 3994918912,
+      "tree_cap_bytes": 1610612736,
+      "cap_policy": "min(dynamic_memory_envelope, explicit_tree_cap)"
+    },
+    "workflow_clock_interval": {
+      "elapsed_seconds": {
+        "monotonic": 8.839031534000242,
+        "boottime": 8.839030864999586,
+        "utc": 8.839030678
+      },
+      "budget_seconds": 8.839031534000242,
+      "discrepancy_seconds": 8.560002413560142e-07,
+      "tolerance_seconds": 5.0,
+      "policy": "strict",
+      "policy_version": 1,
+      "utc_minus_monotonic_seconds": -8.560002413560142e-07,
+      "step": {
+        "elapsed_seconds": {
+          "monotonic": 0.0009068250001291744,
+          "boottime": 0.000905953999790654,
+          "utc": 0.000906169
+        },
+        "budget_seconds": 0.0009068250001291744,
+        "discrepancy_seconds": 8.71000338520389e-07,
+        "tolerance_seconds": 5.0,
+        "policy": "strict",
+        "policy_version": 1,
+        "utc_minus_monotonic_seconds": -6.560001291744779e-07
+      },
+      "utc_positive_excess_seconds": 1.3859994365539308e-06
+    }
+  },
+  "cache_scope": "attempt2 reuses JIT generated during failed attempt1; not cold-success timing",
+  "raw_root": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_p2_attempt2",
+  "raw_file_sha256": {
+    "pilot_report.json": "fc7575319661a8c814df66e782119acc5a100394f979cdf21b46cea094c4ddda",
+    "independent_checker.json": "dd520deb6e4a7b2ddebd90f9a86133d5c89798dd9385c575f22fb11ef54b03cd",
+    "summary.json": "d5d7fe5ef6a2d9578ed9f4b9f5c17d7ce3dc966097dc6426dd31e3b1ac24dca8",
+    "resources.jsonl": "69e7fa0961958e58a2effa25be67207f056afc0db9fca6818f141be3ff2199f3",
+    "pilot_events.jsonl": "38cb46ec6e96a37c2b6d0b71f9fa570957ae47950e3a27c1bc300aaaa94cbadd",
+    "provenance.json": "99e26737ca8fd5fc5fca9db806c74c59af7989a3c1efadd2350c0525505e9832",
+    "abi_manifest.json": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96"
+  },
+  "artifacts": {
+    "Q_data": {
+      "path": "arrays/Q_data.npy",
+      "shape": [
+        8528
+      ],
+      "dtype": "complex128",
+      "payload_bytes": 136448,
+      "file_sha256": "b6c8258ca57d9ef6ab11c2d0e735d3d4bef81678d4708182ecf97eea1401abf7"
+    },
+    "Q_indices": {
+      "path": "arrays/Q_indices.npy",
+      "shape": [
+        8528
+      ],
+      "dtype": "int32",
+      "payload_bytes": 34112,
+      "file_sha256": "29e4f989bc40eefd83fe3145456d03cb673531820b4af9075ac2081794b0a52a"
+    },
+    "Q_indptr": {
+      "path": "arrays/Q_indptr.npy",
+      "shape": [
+        2049
+      ],
+      "dtype": "int32",
+      "payload_bytes": 8196,
+      "file_sha256": "2388a8f408507f7cdf15af900e5077251c3aacfbc3ded71b520aecc3ae8d2838"
+    },
+    "R_inverse_data": {
+      "path": "arrays/R_inverse_data.npy",
+      "shape": [
+        2132
+      ],
+      "dtype": "complex128",
+      "payload_bytes": 34112,
+      "file_sha256": "49f830aae42fe133bae178b726447279f81555ebe831beabe13477a6df2a9c2e"
+    },
+    "R_inverse_indices": {
+      "path": "arrays/R_inverse_indices.npy",
+      "shape": [
+        2132
+      ],
+      "dtype": "int32",
+      "payload_bytes": 8528,
+      "file_sha256": "90f6a06e3c5c1dc33779c7fefddef3b8d5e8306a2cfbf2ba099c00a040ab6bdc"
+    },
+    "R_inverse_indptr": {
+      "path": "arrays/R_inverse_indptr.npy",
+      "shape": [
+        2049
+      ],
+      "dtype": "int32",
+      "payload_bytes": 8196,
+      "file_sha256": "0620b0fc0921656563c5dfa9661dabad4ddaa8257e4dcde9fa60993bbb04ff07"
+    },
+    "F_data": {
+      "path": "arrays/F_data.npy",
+      "shape": [
+        8192
+      ],
+      "dtype": "complex128",
+      "payload_bytes": 131072,
+      "file_sha256": "939b745e47c19f7aec4ecc16f42f6baf37530180b67c347542b9c630b448b13f"
+    },
+    "F_indices": {
+      "path": "arrays/F_indices.npy",
+      "shape": [
+        8192
+      ],
+      "dtype": "int32",
+      "payload_bytes": 32768,
+      "file_sha256": "cb84ec5ab4195c1ddf7850dcb654f7157ec44a89d88dc35561818c23354ec799"
+    },
+    "F_indptr": {
+      "path": "arrays/F_indptr.npy",
+      "shape": [
+        2049
+      ],
+      "dtype": "int32",
+      "payload_bytes": 8196,
+      "file_sha256": "3ff1cf58ea00aafa2dbdfa4c2cedfedd2070b54bfcaeabc515d7ca6e0fe6d7c5"
+    },
+    "independent_storage_rows": {
+      "path": "arrays/independent_storage_rows.npy",
+      "shape": [
+        2048
+      ],
+      "dtype": "int64",
+      "payload_bytes": 16384,
+      "file_sha256": "19935101cbfc4398420ddbbfc26ca2cf5b5b900c884304db6ad43793d99f2f74"
+    },
+    "A0_original": {
+      "path": "arrays/A0_original.npy",
+      "shape": [
+        2048,
+        2048
+      ],
+      "dtype": "complex128",
+      "payload_bytes": 67108864,
+      "file_sha256": "4304a15b679dcab20f7f45623528a7cca8d7283f8948cf4220ca5c683058a6da"
+    },
+    "generic_rhs": {
+      "path": "arrays/generic_rhs.npy",
+      "shape": [
+        2048
+      ],
+      "dtype": "complex128",
+      "payload_bytes": 32768,
+      "file_sha256": "bc7d6b369bba64bcfa5eb0ee9cf27695c97d401240102605efb7e976b17101eb"
+    },
+    "physical_rhs": {
+      "path": "arrays/physical_rhs.npy",
+      "shape": [
+        2048
+      ],
+      "dtype": "complex128",
+      "payload_bytes": 32768,
+      "file_sha256": "18dc7ce1ad4797a5b3df6527d3f6fc178df797205e1c2babb4643ebbaf87737c"
+    },
+    "A0_direct_generic": {
+      "path": "arrays/A0_direct_generic.npy",
+      "shape": [
+        2048
+      ],
+      "dtype": "complex128",
+      "payload_bytes": 32768,
+      "file_sha256": "6f0a7cc79abfa03658c57097c494dcbc5140ba4218892fb65c1a60398b6da906"
+    },
+    "A0_direct_physical": {
+      "path": "arrays/A0_direct_physical.npy",
+      "shape": [
+        2048
+      ],
+      "dtype": "complex128",
+      "payload_bytes": 32768,
+      "file_sha256": "338892cfc088067243fa36d782f7c0977d0d86e058f2ae8c01772aff11591726"
+    },
+    "A0_modal_generic": {
+      "path": "arrays/A0_modal_generic.npy",
+      "shape": [
+        2048
+      ],
+      "dtype": "complex128",
+      "payload_bytes": 32768,
+      "file_sha256": "0b90335535abbf8e1784f76b15b103f7a65efa829c6cc031fa8f60729e067f2c"
+    },
+    "A0_modal_physical": {
+      "path": "arrays/A0_modal_physical.npy",
+      "shape": [
+        2048
+      ],
+      "dtype": "complex128",
+      "payload_bytes": 32768,
+      "file_sha256": "a2845d044e76d203f05e16d3301caa7609927972b9d7efb238965f74b171638a"
+    },
+    "A_notch_original": {
+      "path": "arrays/A_notch_original.npy",
+      "shape": [
+        2048,
+        2048
+      ],
+      "dtype": "complex128",
+      "payload_bytes": 67108864,
+      "file_sha256": "421eea7753c1f89433f700a9f236ce8d4a7c63046d981f2e866e1f7e50938a8f"
+    },
+    "notch_direct_generic": {
+      "path": "arrays/notch_direct_generic.npy",
+      "shape": [
+        2048
+      ],
+      "dtype": "complex128",
+      "payload_bytes": 32768,
+      "file_sha256": "acc2799409c52a80b6fbf87c5fd95974873d81f7f1cdf23eac47544cbd123550"
+    },
+    "notch_direct_physical": {
+      "path": "arrays/notch_direct_physical.npy",
+      "shape": [
+        2048
+      ],
+      "dtype": "complex128",
+      "payload_bytes": 32768,
+      "file_sha256": "fdfe2ef813a90a7b0b5aa8791585f01e5ae72dacd498a602c68b5623f566fc02"
+    },
+    "notch_iterative_generic": {
+      "path": "arrays/notch_iterative_generic.npy",
+      "shape": [
+        2048
+      ],
+      "dtype": "complex128",
+      "payload_bytes": 32768,
+      "file_sha256": "3bc3da0b19ec12005ade14eef04b4aa2fe05a1f4f77f90f0938a846d59c62206"
+    },
+    "notch_iterative_physical": {
+      "path": "arrays/notch_iterative_physical.npy",
+      "shape": [
+        2048
+      ],
+      "dtype": "complex128",
+      "payload_bytes": 32768,
+      "file_sha256": "77b13154b533e716daad4775666c9e7f31818c81880584cdd54bf1ea604feee4"
+    }
+  },
+  "tests": {
+    "before_run": "2 passed / 1 skipped",
+    "after_checker": "3 passed",
+    "compileall": "passed",
+    "full_pytest": "not_run",
+    "MPI2_plus": "not_run",
+    "CI": "not_run",
+    "Ruff": "not_run"
+  },
+  "nonzero_y_bloch_wrap": "not_run; phi0 gives phase_y=1, x Bloch is nontrivial",
+  "target_accuracy": "not_run",
+  "official_RTA": false,
+  "target_2TB_48h": "unknown",
+  "scalable_representative_cell_assembly": "not_implemented",
+  "p4_p6_block_inverse": "not_run",
+  "production_default_changed": false,
+  "publication": "local own-branch commits only; remote equivalent publication coordinated separately",
+  "failed_attempt1": {
+    "source_sha": "72b7ff523405411f5927031c5391cd3c47b784f5",
+    "classification": "WORKER_FAILED",
+    "elapsed_seconds": 20.436735303000205,
+    "sampled_process_tree_rss_peak_bytes": 695042048,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "descendants_cleared": true,
+    "numerical_scope": "regular reference all-q identity completed; notch FGMRES failed before a numerical result",
+    "reason": "PETSc 3.25 readonly-locked callback source Vec was requested writable via source.array; API fix uses getArray(readonly=True)",
+    "raw_root": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_p2_attempt1",
+    "file_sha256": {
+      "pilot_report.json": "a9887365aa1113e9e695527e39083ea219432145f80b6dca665984d0b6b20af0",
+      "summary.json": "be7d0321ddb86ac629c267bfa0fdeada68a9e9fe05dfbe1f37b3ba2503395400",
+      "pilot_traceback.txt": "493eca22127653609d3db76e38b67d7db4adfd7bcb3cc4da0e1f0b5c5496299e",
+      "pilot_events.jsonl": "8c682d4ede7455eda83aa3cfc8a10b335ba3a8e5229079a8acedfe158a0b68bc",
+      "provenance.json": "92e6f47f06e4687295ee175b0c8551dcdc36c5af6ee5e264c266addcfd1d30b6"
+    }
+  },
+  "environment": {
+    "scope": "isolated cloud import-only ABI check; not PDE evidence",
+    "python": {
+      "version": "3.12.13",
+      "executable": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/bin/python3.12",
+      "prefix": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx",
+      "platform": "Linux-6.18.44-x86_64-with-glibc2.41"
+    },
+    "packages": {
+      "dolfinx": {
+        "version": "0.10.0",
+        "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/dolfinx/__init__.py"
+      },
+      "basix": {
+        "version": "0.10.0",
+        "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/basix/__init__.py"
+      },
+      "ffcx": {
+        "version": "0.10.0",
+        "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/ffcx/__init__.py"
+      },
+      "ufl": {
+        "version": "2025.2.1",
+        "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/ufl/__init__.py"
+      },
+      "petsc4py": {
+        "version": "3.25.6",
+        "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/petsc4py/__init__.py"
+      },
+      "slepc4py": {
+        "version": "3.25.2",
+        "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/slepc4py/__init__.py"
+      },
+      "mpi4py": {
+        "version": "4.1.2",
+        "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/mpi4py/__init__.py"
+      },
+      "numpy": {
+        "version": "2.5.3",
+        "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/numpy/__init__.py"
+      },
+      "scipy": {
+        "version": "1.18.1",
+        "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/scipy/__init__.py"
+      },
+      "dolfinx_mpc": {
+        "version": null,
+        "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/dolfinx_mpc/__init__.py"
+      },
+      "pyvista": {
+        "version": "0.49.0",
+        "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/pyvista/__init__.py"
+      },
+      "vtk": {
+        "version": "9.7.1",
+        "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/vtk.py"
+      },
+      "matplotlib": {
+        "version": "3.11.2",
+        "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/matplotlib/__init__.py"
+      }
+    },
+    "distribution_versions": {
+      "fenics-dolfinx": "0.10.0",
+      "fenics-basix": "0.10.0",
+      "fenics-ffcx": "0.10.0",
+      "fenics-ufl": "2025.2.1",
+      "petsc4py": "3.25.6",
+      "slepc4py": "3.25.2",
+      "mpi4py": "4.1.2",
+      "numpy": "2.5.3",
+      "scipy": "1.18.1",
+      "dolfinx_mpc": "0.10.5",
+      "pyvista": "0.49.0",
+      "vtk": "9.7.1",
+      "matplotlib": "3.11.2",
+      "pytest": "9.1.1"
+    },
+    "compiled_extension_paths": {
+      "dolfinx_cpp": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/dolfinx/cpp.abi3.so",
+      "petsc4py_PETSc": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/petsc4py/lib/PETSc.abi3.so",
+      "slepc4py_SLEPc": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/slepc4py/lib/SLEPc.abi3.so",
+      "mpi4py_MPI": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/mpi4py/MPI.cpython-312-x86_64-linux-gnu.so"
+    },
+    "loaded_core_libraries": [
+      "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/libbasix.so",
+      "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/libdolfinx.so.0.10.0",
+      "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/libmpi.so.12.6.1",
+      "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/libpetsc.so.3.25.6",
+      "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/libslepc.so.3.25.2"
+    ],
+    "PETSc": {
+      "version": [
+        3,
+        25,
+        6
+      ],
+      "scalar_dtype": "complex128",
+      "int_dtype": "int32",
+      "precision_dtype": "float64",
+      "external_packages": {
+        "mumps": true,
+        "superlu_dist": true,
+        "parmetis": true,
+        "ptscotch": true
+      }
+    },
+    "SLEPc_version": [
+      3,
+      25,
+      2
+    ],
+    "dolfinx_default_scalar_dtype": "complex128",
+    "MPI": {
+      "rank": 0,
+      "size": 1,
+      "library_version": "MPICH Version:      5.0.1\nMPICH Release date: Fri Apr 10 09:45:31 AM CDT 2026\nMPICH ABI:          18:1:6\nMPICH Device:       ch4:ucx ofi\nMPICH configure:    --prefix=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx --disable-doc --disable-dependency-tracking --enable-cxx --enable-fortran --enable-f08 --enable-mpi-abi --with-wrapper-dl-type=none --disable-static --with-device=ch4:ucx,ofi --with-ucx=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx --with-libfabric=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx --with-hwloc=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx --with-yaksa=embedded --with-pm=hydra:gforker\nMPICH CC:           x86_64-conda-linux-gnu-cc -I/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -fno-merge-constants -isystem /workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -fdebug-prefix-map=/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/work=/usr/local/src/conda/mpich-5.0.1 -fdebug-prefix-map=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx=/usr/local/src/conda-prefix   -O2\nMPICH CXX:          x86_64-conda-linux-gnu-c++ -I/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -fvisibility-inlines-hidden -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -fno-merge-constants -isystem /workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -fdebug-prefix-map=/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/work=/usr/local/src/conda/mpich-5.0.1 -fdebug-prefix-map=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx=/usr/local/src/conda-prefix -O2\nMPICH F77:          x86_64-conda-linux-gnu-gfortran -I/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -fno-merge-constants -isystem /workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -I/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/build_env/include -fdebug-prefix-map=/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/work=/usr/local/src/conda/mpich-5.0.1 -fdebug-prefix-map=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx=/usr/local/src/conda-prefix -O2\nMPICH FC:           x86_64-conda-linux-gnu-gfortran -I/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -fno-merge-constants -isystem /workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -I/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/build_env/include -fdebug-prefix-map=/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/work=/usr/local/src/conda/mpich-5.0.1 -fdebug-prefix-map=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx=/usr/local/src/conda-prefix -O2\nMPICH features:     threadcomm\n"
+    },
+    "threads": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "BLIS_NUM_THREADS": "1",
+      "VECLIB_MAXIMUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1"
+    },
+    "serial_sandbox_runtime": {
+      "UCX_TLS": "self",
+      "HWLOC_COMPONENTS": "-linux",
+      "MPI4PY_RC_THREAD_LEVEL": "single",
+      "PYTHONNOUSERSITE": "1",
+      "LD_LIBRARY_PATH": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib",
+      "MPLBACKEND": "Agg",
+      "PYVISTA_OFF_SCREEN": "true",
+      "VTK_SMP_MAX_THREADS": "1"
+    },
+    "gates": {
+      "petsc_complex128": true,
+      "dolfinx_complex128": true,
+      "all_package_paths_in_prefix": true,
+      "all_loaded_core_libraries_in_prefix": true,
+      "serial_rank": true,
+      "thread_limits_one": true
+    },
+    "status": "pass"
+  }
+}
