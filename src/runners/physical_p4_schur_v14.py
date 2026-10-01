@@ -5779,7 +5779,7 @@ def _v21_authority_limited_checks(
     """Check B/C outputs without inventing a missing reference comparison.
 
     The channel files are read back from disk and compared with the live
-    80-mode inventory.  This keeps the authority-limited branch independent
+    port-mode inventory. This keeps the authority-limited branch independent
     of the worker's aggregate status fields and catches a dropped/reordered
     mode, nonfinite amplitude, bad normalization, or a negative modal power.
     """
@@ -5833,9 +5833,15 @@ def _v21_authority_limited_checks(
         "normalization": False,
         "passivity": False,
     }
+    expected_modes = (
+        list(common["fine"]["modes"])
+        if common is not None and isinstance(common.get("fine"), Mapping)
+        else []
+    )
+    expected_mode_count = len(expected_modes)
     channel_facts: dict[str, Any] = {
         "status": "NOT_AVAILABLE",
-        "expected_count": 80,
+        "expected_count": expected_mode_count,
         "checked_count": 0,
         "failure_keys": [],
     }
@@ -5854,7 +5860,6 @@ def _v21_authority_limited_checks(
             orders_payload = json.loads(orders_path.read_text(encoding="utf-8"))
             amplitude_rows = json.loads(amplitudes_path.read_text(encoding="utf-8"))
             order_rows = orders_payload["orders"]
-            expected_modes = list(common["fine"]["modes"])
             expected_keys = [
                 (str(mode.side), int(mode.m), int(mode.n), str(mode.polarization))
                 for mode in expected_modes
@@ -5877,8 +5882,9 @@ def _v21_authority_limited_checks(
                 and len(amplitude_keys) == len(amplitude_key_set)
             )
             channel_checks["files"] = (
-                len(order_rows) == 80
-                and len(amplitude_rows) == 80
+                expected_mode_count > 0
+                and len(order_rows) == expected_mode_count
+                and len(amplitude_rows) == expected_mode_count
                 and unique_keys
             )
             channel_checks["mode_key_order"] = (
@@ -5957,13 +5963,16 @@ def _v21_authority_limited_checks(
             metrics_incident = float(port.get("incident_power_code_units", np.nan))
             output_aux = np.asarray(output.get("auxiliary", ()), dtype=np.complex128)
             channel_checks["amplitudes_finite"] = bool(
-                len(per_channel) == 80
+                expected_mode_count > 0
+                and len(per_channel) == expected_mode_count
                 and amplitude_finite
-                and output_aux.shape == (80,)
+                and output_aux.shape == (expected_mode_count,)
                 and np.isfinite(output_aux).all()
             )
             channel_checks["powers_finite"] = bool(
-                len(per_channel) == 80 and power_finite
+                expected_mode_count > 0
+                and len(per_channel) == expected_mode_count
+                and power_finite
             )
             channel_checks["modal_sums"] = bool(
                 np.isfinite(modal_r)
@@ -5996,7 +6005,7 @@ def _v21_authority_limited_checks(
             )
             channel_facts = {
                 "status": "CHECKED",
-                "expected_count": 80,
+                "expected_count": expected_mode_count,
                 "checked_count": len(per_channel),
                 "order_keys": [list(key) for key in order_keys],
                 "amplitude_keys": [list(key) for key in amplitude_keys],
@@ -6013,7 +6022,7 @@ def _v21_authority_limited_checks(
         except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
             channel_facts = {
                 "status": "FAILED_TO_READ_OR_VALIDATE",
-                "expected_count": 80,
+                "expected_count": expected_mode_count,
                 "checked_count": 0,
                 "failure_keys": [],
                 "error": {"type": type(exc).__name__, "message": str(exc)},
