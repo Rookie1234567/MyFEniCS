@@ -366,6 +366,7 @@ class SideBalancedInverse:
         record_iteration_history: bool = False,
         diagnostic_callback: Callable[[Mapping[str, Any]], Any] | None = None,
         p4_inverse_backend: str = "full",
+        physical_action_backend: str | None = None,
     ) -> None:
         _validate_ksp_pair(max_it, rtol)
         if p4_inverse_backend not in _P4_INVERSE_BACKENDS:
@@ -389,6 +390,7 @@ class SideBalancedInverse:
         self._full_action: Any | None = full_action
         self._p4_factor: Any | None = p4_factor
         self._p4_inverse_backend = p4_inverse_backend
+        self._physical_action_backend = physical_action_backend
         self._owner_transfer: Any | None = owner_transfer
         self._h6: Any | None = h6
         self._checkpoint_callback = checkpoint_callback or (lambda: None)
@@ -2421,6 +2423,11 @@ class SideBalancedInverse:
             "preconditioner": "J BAL_H JH",
             "p4_inverse_backend": self._p4_inverse_backend,
             **(
+                {"physical_action_backend": self._physical_action_backend}
+                if self._physical_action_backend is not None
+                else {}
+            ),
+            **(
                 {
                     "p4_refinement_target_tolerance": (
                         self._p4_refinement_target_tolerance
@@ -2540,6 +2547,7 @@ def build_side_balanced_inverse(
     performance_profile: str | None = None,
     p4_inverse_backend: str = "full",
     support_policy: str = "legacy",
+    volume_action_context_factory: Callable[..., Any] | None = None,
 ) -> SideBalancedInverse:
     """Build one side adapter and release all partial owned state on failure."""
 
@@ -2552,6 +2560,13 @@ def build_side_balanced_inverse(
         raise ValueError("unsupported Task041 performance profile")
     if not isinstance(side_system, HybridLocalDtnActionSystem):
         raise TypeError("BAL_H side inverse requires a HybridLocalDtnActionSystem")
+    if volume_action_context_factory is not None:
+        from .physical_balanced_fused_volume import (
+            build_task041_fused_physical_volume_context,
+        )
+
+        if volume_action_context_factory is not build_task041_fused_physical_volume_context:
+            raise ValueError("unsupported Task041 physical volume context factory")
     full_action = None
     p4_factor = None
     owner_transfer = None
@@ -2574,7 +2589,32 @@ def build_side_balanced_inverse(
 
     try:
         emit("full_action_begin")
-        full_action = build_fullspace_physical_dtn_action(side_system)
+        if volume_action_context_factory is None:
+            full_action = build_fullspace_physical_dtn_action(side_system)
+            physical_action_backend = "MpcFormActionContext"
+        else:
+            full_action = build_fullspace_physical_dtn_action(
+                side_system,
+                volume_action_context_factory=volume_action_context_factory,
+            )
+            action_context = getattr(
+                getattr(full_action, "action", None), "context", None
+            )
+            action_audit = getattr(action_context, "audit", None)
+            local_kernel = (
+                action_audit.get("local_kernel")
+                if isinstance(action_audit, Mapping)
+                else None
+            )
+            if (
+                not isinstance(local_kernel, Mapping)
+                or local_kernel.get("backend")
+                != "task041_opt_in_sum_factorized_physical_volume"
+            ):
+                raise RuntimeError(
+                    "the requested Task041 physical volume kernel was not built"
+                )
+            physical_action_backend = str(local_kernel["backend"])
         if lifecycle_callback is None:
             emit("full_action_ready")
         else:
@@ -2632,6 +2672,7 @@ def build_side_balanced_inverse(
             record_iteration_history=record_iteration_history,
             diagnostic_callback=diagnostic_callback,
             p4_inverse_backend=p4_inverse_backend,
+            physical_action_backend=physical_action_backend,
         )
         full_action = None
         p4_factor = None

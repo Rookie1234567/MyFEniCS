@@ -122,6 +122,46 @@ def _specification(path: Path):
     return specification
 
 
+def test_task041_formal_a6_volume_factory_is_registered_5nm_only():
+    from src.solvers.physical_balanced_fused_volume import (
+        build_task041_fused_physical_volume_context,
+    )
+
+    options = {
+        "candidate": True,
+        "resource_policy": task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE,
+        "refinement_target_tolerance": 5.0e-13,
+        "p4_inverse_backend": "cell_condensed",
+    }
+    selected_paths = []
+    for path in BALH_INPUTS:
+        specification = _specification(path)
+        factory = task041_balh_workflow.task041_balh_formal_physical_volume_context_factory(
+            specification,
+            **options,
+        )
+        expected = path.name == "5nm_p6h4_m480_mpi8_cell_condensed.dat"
+        assert (factory is build_task041_fused_physical_volume_context) is expected
+        if expected:
+            selected_paths.append(path)
+    assert len(selected_paths) == 1
+
+    formal_specification = _specification(selected_paths[0])
+    for diagnostic_options in (
+        {"candidate": False},
+        {"a6_response_pair": True},
+        {"performance_profile": TASK041_SCHUR_SPEED_V2_PROFILE},
+        {"representative_rhs": True},
+    ):
+        assert (
+            task041_balh_workflow.task041_balh_formal_physical_volume_context_factory(
+                formal_specification,
+                **(options | diagnostic_options),
+            )
+            is None
+        )
+
+
 def test_task041_balh_dat_contracts_and_public_identity():
     assert len(BALH_INPUTS) == 7
     for path in BALH_INPUTS:
@@ -1769,6 +1809,9 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
     from benchmarks import run_task037b_hybrid_iterative as recovery
     from benchmarks import task041_exact_side_workflow as worker
     from src.solvers import hybrid_fem_modal_augmented_direct as layout_module
+    from src.solvers.physical_balanced_fused_volume import (
+        build_task041_fused_physical_volume_context,
+    )
 
     class FakeComm:
         rank = 0
@@ -1879,6 +1922,7 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
     assert captured["top_causal_replay"] is True
     assert captured["p4_response_correction_steps"] == 1
     assert captured["top_causal_memory_cap_bytes"] == 53_221_163_008
+    assert captured["physical_action_context_factory"] is None
 
     captured.clear()
     with pytest.raises(SetupReached):
@@ -1898,6 +1942,7 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
     assert captured["p4_backend_pair_side"] is None
     assert captured["top_causal_replay"] is False
     assert captured["a6_response_pair"] is False
+    assert captured["physical_action_context_factory"] is None
 
     formal_cell_condensed_path = (
         REPOSITORY_ROOT
@@ -1966,6 +2011,7 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
     assert captured["performance_profile"] is None
     assert captured["comparison_mode"] is None
     assert captured["side_setup_schedule"] is None
+    assert captured["physical_action_context_factory"] is None
     assert len(captured["representative_rhs_contract"]["entries"]) == 8
     expected_v8_binding = task041_balh_workflow.task041_v8_resource_policy_binding(
         task041_balh_workflow.TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
@@ -1975,6 +2021,34 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
     assert resource_policy_marker_limits_seen[-1]["task041_resource_policy"] == (
         expected_v8_binding
     )
+
+    captured.clear()
+    with pytest.raises(SetupReached):
+        worker.run_task041_consumer(
+            input_path=formal_cell_condensed_path,
+            packet_manifest=packet_manifest_path,
+            packet_identity=formal_cell_condensed_identity_path,
+            packet_manifest_sha256=packet_manifest_sha,
+            run_directory=tmp_path / "worker_formal_fused_volume_run",
+            source_sha=source_sha,
+            candidate=True,
+            comm=FakeComm(),
+            p4_refinement_target_tolerance=5.0e-13,
+            task041_resource_policy=(
+                task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+            ),
+        )
+    assert captured["physical_action_context_factory"] is (
+        build_task041_fused_physical_volume_context
+    )
+    assert captured["p4_inverse_backend"] == "cell_condensed"
+    assert captured["p4_refinement_target_tolerance"] == 5.0e-13
+    assert resource_policy_marker_limits_seen[-1]["task041_resource_policy"] == (
+        expected_v8_binding
+    )
+    assert captured["performance_profile"] is None
+    assert captured["a6_response_pair"] is False
+    assert loaded_rhs_manifests == [formal_rhs_manifest]
 
     setup_tree = ast.parse(inspect.getsource(candidate_setup_implementation))
     target_configuration = next(

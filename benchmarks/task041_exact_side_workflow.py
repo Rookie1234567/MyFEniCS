@@ -4434,6 +4434,7 @@ def _run_task041_balh_candidate_setup(
     p4_refinement_target_tolerance: float | None = None,
     p4_backend_pair_side: str | None = None,
     a6_response_pair: bool = False,
+    physical_action_context_factory: Callable[..., Any] | None = None,
 ) -> dict[str, Any]:
     """Build the finite-response BAL_H Schur and run the shared formal path."""
 
@@ -5088,6 +5089,11 @@ def _run_task041_balh_candidate_setup(
             ),
             p4_inverse_backend=selected_backend,
             support_policy=selected_support_policy,
+            **(
+                {"volume_action_context_factory": physical_action_context_factory}
+                if physical_action_context_factory is not None
+                else {}
+            ),
             lifecycle_callback=(
                 side_lifecycle_callback(side, p4_backend_override)
                 if detailed_timing
@@ -12420,6 +12426,7 @@ def run_task041_consumer(
     from benchmarks.task041_balh_workflow import (
         TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
         TASK041_V8_SWAP_OBSERVE_CONTINUE,
+        task041_balh_formal_physical_volume_context_factory,
         task041_p4_refinement_target_binding,
     )
 
@@ -12694,6 +12701,24 @@ def run_task041_consumer(
         raise Task041ModePrepError(
             "representative RHS probe requires task041_schur_speed_v2"
         )
+    physical_action_context_factory = (
+        task041_balh_formal_physical_volume_context_factory(
+            specification,
+            candidate=candidate,
+            resource_policy=task041_resource_policy,
+            refinement_target_tolerance=p4_refinement_target_tolerance,
+            p4_inverse_backend=str(contract.get("p4_inverse_backend", "full")),
+            performance_profile=performance_profile,
+            representative_rhs=task041_rhs_probe_manifest is not None,
+            side_setup_schedule=side_setup_schedule,
+            comparison_mode=comparison_mode,
+            top_causal_replay=top_causal_replay,
+            frozen_q_replay=p4_correction_replay_from is not None,
+            p4_response_correction_steps=p4_response_correction_steps,
+            p4_backend_pair_side=p4_backend_pair_side,
+            a6_response_pair=a6_response_pair,
+        )
+    )
     root = _collective_fresh_root(run_directory, comm)
     started = time.monotonic()
     candidate_audit_path = root / "numerical_output" / (
@@ -13518,6 +13543,7 @@ def run_task041_consumer(
                 ),
                 p4_backend_pair_side=p4_backend_pair_side,
                 a6_response_pair=a6_response_pair,
+                physical_action_context_factory=physical_action_context_factory,
                 p4_correction_replay_packet_identity=(
                     disk_identity
                     if p4_correction_replay_from is not None

@@ -1111,11 +1111,26 @@ def _assert_borrowed_stub_system_works(
 
 
 def _install_stub_side_builders(monkeypatch, captured):
-    def fake_full_action(_side_system):
+    def fake_full_action(_side_system, *, volume_action_context_factory=None):
         action = _FullAction(2)
         action.V = object()
         action.floquet_data = object()
         captured["full_action"] = action
+        captured.setdefault("volume_action_context_factory_calls", []).append(
+            volume_action_context_factory
+        )
+        if volume_action_context_factory is not None:
+            action.action = SimpleNamespace(
+                context=SimpleNamespace(
+                    audit={
+                        "local_kernel": {
+                            "backend": (
+                                "task041_opt_in_sum_factorized_physical_volume"
+                            )
+                        }
+                    }
+                )
+            )
         return action
 
     def fake_p4(_side_system, *, lifecycle_callback=None):
@@ -1265,9 +1280,51 @@ def test_side_inverse_builder_selects_explicit_cell_condensed_backend(monkeypatc
             p4_inverse_backend="cell_condensed",
         )
         assert inverse.diagnostics["p4_inverse_backend"] == "cell_condensed"
+        assert inverse.diagnostics["physical_action_backend"] == (
+            "MpcFormActionContext"
+        )
+        assert captured["volume_action_context_factory_calls"] == [None]
         assert "condensed_p4" in captured
         assert "p4" not in captured
         assert captured["condensed_p4_callback"] is None
+    finally:
+        if inverse is not None:
+            inverse.destroy()
+        b.destroy()
+        operator.destroy()
+
+
+def test_side_inverse_builder_forwards_fused_physical_factory_only_when_selected(
+    monkeypatch,
+):
+    from src.solvers.physical_balanced_fused_volume import (
+        build_task041_fused_physical_volume_context,
+    )
+
+    captured = {}
+    side_system, operator, _operator_context, b = _builder_side_system()
+    _install_stub_side_builders(monkeypatch, captured)
+    inverse = None
+    try:
+        inverse = side_inverse_module.build_side_balanced_inverse(
+            side_system,
+            p4_inverse_backend="cell_condensed",
+            volume_action_context_factory=(
+                build_task041_fused_physical_volume_context
+            ),
+        )
+        assert captured["volume_action_context_factory_calls"] == [
+            build_task041_fused_physical_volume_context
+        ]
+        assert inverse.operator is operator
+        ksp_operator, _ = inverse._ksp.getOperators()
+        assert int(ksp_operator.handle) == int(operator.handle)
+        assert inverse._p4_factor is captured["condensed_p4"]
+        assert inverse._h6 is captured["h6"]
+        assert inverse.diagnostics["p4_inverse_backend"] == "cell_condensed"
+        assert inverse.diagnostics["physical_action_backend"] == (
+            "task041_opt_in_sum_factorized_physical_volume"
+        )
     finally:
         if inverse is not None:
             inverse.destroy()

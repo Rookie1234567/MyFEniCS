@@ -1368,6 +1368,55 @@ def task041_balh_candidate_consumer_profile(specification: Any) -> Any:
     )
 
 
+def task041_balh_formal_physical_volume_context_factory(
+    specification: Any,
+    *,
+    candidate: bool,
+    resource_policy: str | None,
+    refinement_target_tolerance: float | None,
+    p4_inverse_backend: str,
+    performance_profile: str | None = None,
+    representative_rhs: bool = False,
+    side_setup_schedule: str | None = None,
+    comparison_mode: str | None = None,
+    top_causal_replay: bool = False,
+    frozen_q_replay: bool = False,
+    p4_response_correction_steps: int = 0,
+    p4_backend_pair_side: str | None = None,
+    a6_response_pair: bool = False,
+) -> Any | None:
+    """Select the fused volume only for the registered formal 5 nm consumer."""
+
+    normalized = specification.as_jsonable()
+    model_id = str(normalized.get("model_id", ""))
+    if model_id != TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID:
+        return None
+    case = _require_case(model_id)
+    if not (
+        candidate is True
+        and case["route"] == "balh"
+        and resource_policy == TASK041_V8_SWAP_OBSERVE_CONTINUE
+        and refinement_target_tolerance
+        == TASK041_P4_REFINEMENT_TARGET_TOLERANCE
+        and p4_inverse_backend == "cell_condensed"
+        and performance_profile is None
+        and representative_rhs is False
+        and side_setup_schedule is None
+        and comparison_mode is None
+        and top_causal_replay is False
+        and frozen_q_replay is False
+        and p4_response_correction_steps == 0
+        and p4_backend_pair_side is None
+        and a6_response_pair is False
+    ):
+        return None
+    from src.solvers.physical_balanced_fused_volume import (
+        build_task041_fused_physical_volume_context,
+    )
+
+    return build_task041_fused_physical_volume_context
+
+
 def task041_balh_consumer_identity_binding(
     producer_identity: Mapping[str, Any],
     specification: Any,
