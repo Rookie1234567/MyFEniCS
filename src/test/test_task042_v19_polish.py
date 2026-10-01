@@ -151,6 +151,7 @@ def test_actual_dat_stage_algorithm_full_save_original_audit(tmp_path,monkeypatc
     from src.runners.post_lsqr_polish import execute_stage
     from src.solvers import post_lsqr_polish as core
     w=isolate_window(tmp_path,monkeypatch)
+    monkeypatch.setattr(io,'ARTIFACT_ROOT',tmp_path/'benchmarks/artifacts/task042/v19')
     spec=io.load_post_lsqr('input/task042_neural_coarse_inverse/v19_post_lsqr_'+('g256_gpoly' if algorithm=='P' else 'lgmres_gpoly')+'.dat')
     packet,bar,_=small_problem();t=np.ones(packet.nt,complex)*(1+.3j)
     arrays,_=close_point(bar,t,packet.a['b']);old=tmp_path/'benchmarks/artifacts/task042/v18';old.mkdir(parents=True)
