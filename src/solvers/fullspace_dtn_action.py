@@ -370,6 +370,12 @@ class FullspaceDtnCarrier:
         )
         return MappingProxyType(
             {
+                **({"phase_gauge": "boundary_plane", "research_gauge_qualified": False,
+                    "physical_generator_manifest_sha256": self.physical_generator_manifest_sha256,
+                    "assembly_mode_manifest_sha256": self._mode_manifest_sha256,
+                    "assembly_context_sha256": self.assembly_context_sha256,
+                    "construction_numeric_inventory": dict(self.construction_numeric_inventory)}
+                   if getattr(self, "phase_gauge", "global_z") == "boundary_plane" else {}),
                 "schema": "fullspace-dtn.carrier.v1",
                 "profile": FULLSPACE_DTN_PROFILE,
                 "mode_count": mode_count,
@@ -622,17 +628,48 @@ def build_fullspace_dtn_carrier_from_surface(
     surface_assemblers: Mapping[tuple[str, int], Any],
     mpc: Any,
     cfg: Any,
+    *,
+    phase_gauge: str = "global_z",
+    assembly_context: Mapping[str, Any] | None = None,
 ) -> FullspaceDtnCarrier:
     """Build the carrier from the current MPC-reduced surface functionals."""
 
     if mpc is None:
         raise ValueError("dynamic DtN surface carrier requires the finalized MPC")
     from .dtn_port_3d import _combine_owned_entries
-
+    from .dtn_boundary_phase_gauge import (
+        BOUNDARY_PLANE, validate_phase_gauge, port_plane_z,
+        assembly_projection_denominator, phase_gauge_descriptor, deep_frozen_identity,
+    )
+    validate_phase_gauge(phase_gauge)
     modes = tuple(modes)
+    for mode in modes:
+        for component in (0, 1):
+            actual_reference = getattr(surface_assemblers[(mode.side, component)], "boundary_reference_z", None)
+            expected_reference = port_plane_z(mode, cfg) if phase_gauge == BOUNDARY_PLANE else None
+            if actual_reference != expected_reference:
+                raise ValueError("surface assembler phase convention differs from the declared gauge")
+    if phase_gauge == BOUNDARY_PLANE:
+        required_context = {"schema", "source_sha256", "mesh", "cell_dofmap_sha256", "orientation",
+                            "basix_coefficients", "MPC", "config_sha256", "gauss", "ABI"}
+        if not isinstance(assembly_context, Mapping) or required_context.difference(assembly_context):
+            raise ValueError("boundary-plane carrier requires complete frozen discrete/source context")
+        assembly_context = deep_frozen_identity(assembly_context)
+        context_sha = hashlib.sha256(_canonical_json_bytes(assembly_context)).hexdigest()
+        for mode in modes:
+            for component in (0, 1):
+                assembler = surface_assemblers[(mode.side, component)]
+                if (getattr(assembler, "quadrature_degree", None) != assembly_context["gauss"]["degree"]
+                        or getattr(assembler, "boundary_tag", None) != int(
+                            cfg.tags.z_max if mode.side == "top" else cfg.tags.z_min)):
+                    raise ValueError("actual Gauss/tag differs from the centered assembly context")
+    elif assembly_context is not None:
+        raise ValueError("assembly context argument belongs to the explicit boundary-plane research path")
     manifest_rows, _manifest_bytes, _manifest_sha = build_ordered_mode_manifest(
         modes, cfg
     )
+    # This pilot keeps the representable legacy physical manifest; primary
+    # centered C/D/H do not use its tiny global values to construct coefficients.
     comm = mpc.function_space.mesh.comm
     index_map = mpc.function_space.dofmap.index_map
     owned_start = int(index_map.local_range[0])
@@ -671,7 +708,21 @@ def build_fullspace_dtn_carrier_from_surface(
         )
         from .dtn_port_3d import _mode_projection_denominator, _traction_vector
 
-        denominator = _mode_projection_denominator(mode, cfg)
+        denominator = (
+            assembly_projection_denominator(mode, cfg, phase_gauge)
+            if phase_gauge == BOUNDARY_PLANE else _mode_projection_denominator(mode, cfg)
+        )
+        assembly_identity = manifest_rows[index]
+        if phase_gauge == BOUNDARY_PLANE:
+            assembly_identity = _mode_identity(index, mode, cfg, denominator)
+            assembly_identity.update({
+                "assembly_identity_schema": "task40extra.fullspace-dtn-plane-assembly.v1",
+                "physical_generator_manifest_sha256": _manifest_sha,
+                "assembly_context_sha256": context_sha,
+                "global_projection_denominator_diagnostic": manifest_rows[index]["projection_denominator"],
+                "phase_gauge": phase_gauge_descriptor(mode, cfg, phase_gauge),
+            })
+            assembly_identity = deep_frozen_identity(assembly_identity)
         traction = _traction_vector(mode, cfg)
         coupling_rows, coupling_values = _combine_owned_entries(
             components,
@@ -688,13 +739,13 @@ def build_fullspace_dtn_carrier_from_surface(
                     np.conjugate(projection_values), np.dtype(np.complex128)
                 ),
                 normalization_h=float(denominator),
-                mode_identity=manifest_rows[index],
+                mode_identity=assembly_identity,
             )
         )
     slaves = np.asarray(mpc.slaves, dtype=np.int32)
     owned_slaves = slaves[slaves < int(index_map.size_local)]
     slave_rows = np.asarray(index_map.local_to_global(owned_slaves), dtype=PETSc.IntType)
-    return FullspaceDtnCarrier(
+    result = FullspaceDtnCarrier(
         entries,
         global_rows=global_rows,
         ownership_range=(owned_start, owned_end),
@@ -702,6 +753,31 @@ def build_fullspace_dtn_carrier_from_surface(
         batch_size=FULLSPACE_DTN_BATCH_SIZE,
         comm=comm,
     )
+    if phase_gauge == BOUNDARY_PLANE:
+        result.phase_gauge = phase_gauge
+        result.physical_generator_manifest_sha256 = _manifest_sha
+        result.assembly_context = assembly_context
+        result.assembly_context_sha256 = context_sha
+        component_arrays = [array for pair in component_cache.values() for component in pair for array in component]
+        staging_arrays = [array for item in entries for array in (
+            item.coupling_rows, item.coupling_values, item.projection_rows, item.projection_values)]
+        retained_arrays = [array for item in result.entries for array in (
+            item.coupling_rows, item.coupling_values, item.projection_rows, item.projection_values)]
+        owners = {}
+        for array in component_arrays + staging_arrays + retained_arrays:
+            owner = array
+            while isinstance(getattr(owner, "base", None), np.ndarray):
+                owner = owner.base
+            owners[id(owner)] = int(owner.nbytes)
+        result.construction_numeric_inventory = MappingProxyType({
+            "component_cache_payload_with_aliases": sum(a.nbytes for a in component_arrays),
+            "staging_functional_payload_with_aliases": sum(a.nbytes for a in staging_arrays),
+            "retained_functional_payload_with_aliases": sum(a.nbytes for a in retained_arrays),
+            "unique_named_numpy_backing_bytes_before_staging_release": sum(owners.values()),
+            "scope": "post-carrier named buffers before release; not RSS/peak; excludes sorting/JIT/MPC/allocator/identity temporaries",
+            "resource_authority": "external whole-tree gate required",
+        })
+    return result
 
 
 __all__ = (

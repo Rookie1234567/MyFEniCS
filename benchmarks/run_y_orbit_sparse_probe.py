@@ -88,6 +88,59 @@ class SavedDenseP2Authority:
         # inverse source SHA is allowed. No historical ABI equivalence is inferred.
 
 
+class SavedCenteredDenseP2Authority(SavedDenseP2Authority):
+    """Fresh same-source centered authority with exact checker/representation binding."""
+    def __init__(self, path, digest, source, environment):
+        from src.solvers.y_orbit_centered_evidence import (
+            COMPONENT_IDENTITY, SOURCES, digest_json, require_centered_dense_inventory,
+        )
+        path = Path(path).resolve()
+        if not path.is_relative_to(ARTIFACT_ROOT.resolve()) or file_sha256(path) != digest:
+            raise RuntimeError("centered authority report path/hash differs")
+        self.directory = path.parent
+        self.report = json.loads(path.read_text())
+        require_centered_dense_inventory(self.report)
+        provenance_path = self.directory/"provenance.json"
+        checker_path = self.directory/"independent_checker.json"
+        provenance, checker = json.loads(provenance_path.read_text()), json.loads(checker_path.read_text())
+        summary = json.loads((self.directory/"summary.json").read_text())
+        if (self.report.get("status") != "CENTERED_DENSE_AUTHORITY_PASS"
+                or self.report.get("dtn_phase_gauge") != "boundary_plane" or self.report.get("degree") != 2
+                or self.report.get("source_clean_unchanged") is not True or self.report.get("source") != source
+                or provenance["source"] != source or self.report.get("environment") != environment
+                or provenance["environment"] != environment or summary.get("classification") != "COMPLETED"
+                or self.report.get("source_names") != list(SOURCES)
+                or checker.get("gate_pass") is not True or checker.get("evidence_valid") is not True
+                or checker.get("report_sha256") != digest or checker.get("provenance_sha256") != file_sha256(provenance_path)
+                or checker.get("artifact_manifest_sha256") != digest_json(self.report["artifacts"])
+                or checker.get("source") != source or checker.get("environment") != environment
+                or checker.get("identity") != self.report.get("identity") or checker.get("degree") != 2
+                or any(self.report["identity"].get(k) != v for k,v in COMPONENT_IDENTITY.items())):
+            raise RuntimeError("fresh centered authority/checker/source/gauge identity has not passed")
+        watched = checker.get("checker_watchdog_receipt", {})
+        wp = (self.directory/watched.get("path", "")).resolve()
+        if not wp.is_relative_to(self.directory) or not wp.is_file() or file_sha256(wp) != watched.get("sha256"):
+            raise RuntimeError("centered independent checker supervision identity differs")
+        ws = json.loads(wp.read_text())
+        for receipt in (summary, ws):
+            if (receipt.get("classification") != "COMPLETED" or receipt.get("source_state") != source
+                    or receipt.get("sampled_process_tree_swap_peak_bytes") != 0
+                    or receipt.get("descendants_cleared") is not True or receipt.get("process_tree_all_identity_complete") is not True
+                    or receipt.get("process_tree_all_status_readable") is not True
+                    or not 0 < receipt["sampled_process_tree_rss_peak_bytes"] < TREE_CAP_BYTES):
+                raise RuntimeError("fresh centered dense/checker whole-tree resource authority fails")
+        self.receipt = {"report_path": str(path.relative_to(ROOT)), "report_sha256": digest,
+            "provenance_sha256": file_sha256(provenance_path), "checker_sha256": file_sha256(checker_path),
+            "artifact_manifest_sha256": digest_json(self.report["artifacts"]), "source_head":source["head"],
+            "identity": self.report["identity"], "dtn_phase_gauge": "boundary_plane", "qualification": "small_p2_only"}
+
+    def require_fixture(self, input_sha, axes, layout, base, generic_rhs):
+        from src.solvers.y_orbit_centered_evidence import centered_identity
+        super().require_fixture(input_sha, axes, layout, base, generic_rhs)
+        if centered_identity(base) != self.report["identity"]:
+            raise RuntimeError("centered actual rebuilt discrete/physical context differs from authority")
+
+
 def _validate_bridge(path, digest, expected_head, source):
     if not path.is_relative_to(ARTIFACT_ROOT.resolve()) or file_sha256(path) != digest:
         raise RuntimeError("sparse-p2 bridge receipt path/hash mismatch")
@@ -145,7 +198,13 @@ def _worker(args):
         raise RuntimeError("worker requires its coordinated 1.5GiB whole-tree watchdog")
     source = source_facts(args.expected_head)
     environment = environment_facts()
-    oracle = SavedDenseP2Authority(environment) if args.degree == 2 else None
+    component_reuse = None
+    if args.dtn_phase_gauge == "boundary_plane":
+        from src.solvers.y_orbit_centered_evidence import verify_component_sources
+        component_reuse = verify_component_sources(ROOT)
+        oracle = SavedCenteredDenseP2Authority(args.dense_authority, args.dense_authority_report_sha256, source, environment)
+    else:
+        oracle = SavedDenseP2Authority(environment) if args.degree == 2 else None
     bridge = (_validate_bridge(args.bridge_report, args.bridge_report_sha256, args.expected_head, source)
               if args.degree == 4 else None)
     events = args.run_directory / "probe_events.jsonl"
@@ -218,6 +277,7 @@ def _worker(args):
     provenance = {"source": source, "environment": environment, "command": sys.argv,
                   "input_sha256": INPUT_SHA, "degree": args.degree,
                   "auxiliary_gauge": args.auxiliary_gauge,
+                  "dtn_phase_gauge": args.dtn_phase_gauge, "component_reuse": component_reuse,
                   "saved_dense_p2_authority": oracle.receipt if oracle is not None else None,
                   "sparse_p2_bridge_receipt": bridge,
                   "resource_contract": {"tree_cap_bytes": cap, "wall_seconds": WALL_SECONDS,
@@ -232,6 +292,7 @@ def _worker(args):
         report = run_sparse_probe(INPUT, degree=args.degree, event=event, save_array=save_array,
                                   allocation_gate=allocation_gate, saved_oracle=oracle,
                                   auxiliary_gauge=args.auxiliary_gauge,
+                                  dtn_phase_gauge=args.dtn_phase_gauge,
                                   save_factor_diagnostic=save_factor_diagnostic)
         if source_facts(args.expected_head) != source:
             raise RuntimeError("source identity changed during the sparse probe")
@@ -258,6 +319,9 @@ def main():
     parser.add_argument("--worker", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--degree", type=int, choices=(2, 4), default=2)
     parser.add_argument("--auxiliary-gauge", choices=("raw", "positive-h"), default="raw")
+    parser.add_argument("--dtn-phase-gauge", choices=("global_z", "boundary_plane"), default="global_z")
+    parser.add_argument("--dense-authority", type=Path)
+    parser.add_argument("--dense-authority-report-sha256")
     parser.add_argument("--expected-head")
     parser.add_argument("--run-directory", type=Path)
     parser.add_argument("--bridge-report", type=Path)
@@ -273,6 +337,11 @@ def main():
         return 0
     if not args.expected_head or not args.run_directory:
         parser.error("run requires the exact clean integrated commit and a new ignored artifact directory")
+    if args.dtn_phase_gauge == "boundary_plane" and (args.degree != 2 or args.auxiliary_gauge != "positive-h"
+            or not args.dense_authority or not args.dense_authority_report_sha256):
+        parser.error("centered extension requires p2 positive-H and a fresh passed dense authority; p4 remains held")
+    if args.dtn_phase_gauge == "global_z" and (args.dense_authority or args.dense_authority_report_sha256):
+        parser.error("centered authority cannot authorize a legacy global-z run")
     args.run_directory = args.run_directory.resolve()
     if not args.run_directory.is_relative_to(ARTIFACT_ROOT.resolve()):
         parser.error("artifacts must remain in the own ignored subtree")
@@ -287,6 +356,8 @@ def main():
             parser.error("p4 requires a same-source passed sparse-p2 bridge and independent checker")
         args.bridge_report = args.bridge_report.resolve()
         _validate_bridge(args.bridge_report, args.bridge_report_sha256, args.expected_head, source)
+    elif args.dtn_phase_gauge == "boundary_plane":
+        SavedCenteredDenseP2Authority(args.dense_authority,args.dense_authority_report_sha256,source,environment)
     else:
         SavedDenseP2Authority(environment)
     if args.worker:
@@ -296,7 +367,11 @@ def main():
     from benchmarks.subreaper_watchdog import supervise
     command = [sys.executable, "-m", "benchmarks.run_y_orbit_sparse_probe", "--run", "--worker",
                "--degree", str(args.degree), "--expected-head", args.expected_head,
-               "--run-directory", str(args.run_directory), "--auxiliary-gauge", args.auxiliary_gauge]
+               "--run-directory", str(args.run_directory), "--auxiliary-gauge", args.auxiliary_gauge,
+               "--dtn-phase-gauge", args.dtn_phase_gauge]
+    if args.dtn_phase_gauge == "boundary_plane":
+        command += ["--dense-authority",str(args.dense_authority),
+                    "--dense-authority-report-sha256",args.dense_authority_report_sha256]
     if args.degree == 4:
         command += ["--bridge-report", str(args.bridge_report),
                     "--bridge-report-sha256", args.bridge_report_sha256]

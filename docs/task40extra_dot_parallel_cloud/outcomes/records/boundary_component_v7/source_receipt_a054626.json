@@ -1,0 +1,27 @@
+{
+  "schema": "task40extra.boundary-plane-source-receipt.v1",
+  "head": "a0546264ae1bcc51e2aeedcac33585f4ffc04025",
+  "clean": true,
+  "base_before_analytic_patch": "74df81b869152dca0d4b2e6406ae9f5acfef4848",
+  "analytic_patch_sha256": "538cf0d1879786a6443aaa0e70a0371a4b687a1f10a01a000c96d56f5ff598e4",
+  "source_files": {
+    "src/solvers/dtn_boundary_phase_gauge.py": "bb0259b2b2da5656aef22d85f9fb2226118b95396276f1032d1ebfb6067bd984",
+    "src/solvers/dtn_port_3d.py": "565a58133d2f86dda985ba2931536e7d63fc3c01b4616d2b4a00d4275767b0a5",
+    "src/solvers/fullspace_dtn_action.py": "777d7ea10d598a7f5abba652b0de896f7040782fe7e421522c8b0e41d3f73c55",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py": "2000062b8b2e09c12166d9b5f7dde97623d188a96895e96a182cf585ee4afc62",
+    "src/test/test_dtn_boundary_phase_gauge.py": "b1ec92d679801580e38ff5abf2ad12ea99eaec71d65100a0434ea7a8af242204",
+    "src/common/modes_3d.py": "5731dc67d292b2eef854f6afdfa2a951fd5a109150cfa17f35f45c7c41cda2dd",
+    "src/common/config_3d.py": "612e615f4aa5ae0411556523b9061ee47a755b8110a7c097d28b8d6f698bfc1b",
+    "src/solvers/task40extra_y_orbit_reference.py": "6a6baecf6a0f9aee76f40aac1dc67f9b68753e89e7bb09cacafc230d272d6749",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_global.py": "9e2dbe3f0f4b918dd3b1d832c14d254e3d8e4e60c99e5beea8520f8afa3877ae",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_setup.py": "0589ad239864c3ea834d07f17593000119f04562e683486cdf54b4170c7e5019",
+    "benchmarks/subreaper_watchdog.py": "9e3d59fbed35813498ce110a234d83bbfffec3e64d1e458ecec1bcbd904630e9",
+    "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4_review_v1.dat": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e"
+  },
+  "activation_sha256": "7ad210458b2aa1ac543bb47ba96c0b391c3273b855517b062f5c9dbc943ba8f0",
+  "ABI_probe_sha256": "c9a069f9ed225f3e74180aa7463f52fd1acd66e19d8c1395ebe88ffa991605f8",
+  "frozen_supervisors": {
+    "supervise_small_attempt4.py": "34117305365bbacbfce7fb51f499ee939a30dbceeee1cbf806ad50056dd3433d",
+    "supervise_532_attempt4.py": "baf732cf158182529dbbe0baf99fe633f52e87e40f183cab2652743d691983c7"
+  }
+}

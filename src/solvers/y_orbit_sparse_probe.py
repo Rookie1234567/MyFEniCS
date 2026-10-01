@@ -74,7 +74,8 @@ def _notch_supported_rhs(space, layout, changed):
 
 
 def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
-                     saved_oracle=None, auxiliary_gauge="raw", save_factor_diagnostic=None):
+                     saved_oracle=None, auxiliary_gauge="raw", save_factor_diagnostic=None,
+                     dtn_phase_gauge="global_z"):
     from mpi4py import MPI
     from petsc4py import PETSc
     from src.geometry.mesh_builder_3d import _mark_cells, _rectangular_air_void_audit
@@ -84,6 +85,9 @@ def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
         destroy_same_mesh_physical_action,
     )
     from src.solvers.fullspace_physical_action import FullspacePhysicalAction
+    centered = dtn_phase_gauge == "boundary_plane"
+    if dtn_phase_gauge not in ("global_z", "boundary_plane") or (centered and (degree != 2 or auxiliary_gauge != "positive-h")):
+        raise ValueError("centered p2 positive-H only; p4 requires separate admission")
 
     if degree not in (2, 4) or (degree == 2 and saved_oracle is None):
         raise ValueError("only saved-authority sparse-p2 bridge or same-mesh p4 is admitted")
@@ -124,7 +128,16 @@ def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
     save_array("independent_storage_rows", layout.independent)
     base = reference = factor = action0 = action1 = notched_action = None
     try:
-        base = build_same_mesh_physical_action(levels, cfg, degree)
+        base = build_same_mesh_physical_action(levels, cfg, degree, dtn_phase_gauge=dtn_phase_gauge)
+        centered_facts = None
+        if centered:
+            from .y_orbit_centered_evidence import (
+                centered_identity, interior_only_rhs, recovered_field_and_modes, save_mpc_inventory,
+                require_output_packet, fixture_interior_positions,
+            )
+            centered_facts = centered_identity(base)
+            save_mpc_inventory(base, layout, save_array)
+            save_array("actual_interior_positions",fixture_interior_positions(space,layout))
         action0 = FullOriginalAction(base["physical_action"], layout)
         rng = np.random.default_rng(SEED)
         generic = rng.standard_normal(expected_independent) + 1j * rng.standard_normal(expected_independent)
@@ -182,6 +195,22 @@ def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
         finally:
             physical_storage.destroy()
         sources = {"generic": generic, "physical": physical}
+        if centered:
+            pre_scale = 7/135
+            pre_box = tuple(value*pre_scale for value in (25, 33.5, 6.25, 18.75, 40, 80))
+            pre_cfg = replace(cfg, case_name="y_orbit_p2_algebra_notch", air_void_box_nm=pre_box,
+                              geometry_identity=cfg.geometry_identity+".notch")
+            pre_tags = _mark_cells(levels["mesh"], pre_cfg)
+            pre_changed = np.flatnonzero(pre_tags.values != levels["mesh_data"].cell_tags.values)
+            if len(pre_changed) != 2:
+                raise ValueError("centered source support must be the actual unchanged two-cell notch")
+            sources["interior_only"] = interior_only_rhs(space, layout)
+            sources["notch_supported"], _ = _notch_supported_rhs(space, layout, pre_changed)
+            from .y_orbit_centered_evidence import SOURCES
+            sources = {name: sources[name] for name in SOURCES}
+            for name,rhs in sources.items():
+                if not np.array_equal(rhs, saved_oracle.load(name+"_rhs")):
+                    raise ValueError("centered sparse full FE forcing differs from fresh dense authority: "+name)
         if degree == 2 and _relative(physical - saved_oracle.load("physical_rhs"), physical) > LIMITS["operator"]:
             raise ValueError("current physical RHS differs from the saved phi5 authority")
         regular = {}
@@ -201,6 +230,10 @@ def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
                 packet["saved_dense_direct_difference"] = _relative(solution - direct, direct)
                 if packet["saved_dense_direct_difference"] > LIMITS["solution"]:
                     raise ValueError("sparse-condensed p2 inverse disagrees with saved original direct control")
+            if centered:
+                packet["outputs"] = recovered_field_and_modes(base, layout, solution, physical=label=="physical",
+                                          label="regular_"+label, save=save_array)
+                require_output_packet(packet["outputs"],label="regular_"+label,event=event)
             regular[label] = packet
             event("regular_recovered_inverse_pass", {"label": label,
                    "original_residual": packet["full_original_true_residual"]})
@@ -245,6 +278,8 @@ def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
             raise ValueError("actual notch action must couple distinct y blocks in the complete FE space")
         supported, supported_facts = _notch_supported_rhs(space, layout, changed)
         sources["notch_supported"] = supported
+        if centered and not np.array_equal(supported, saved_oracle.load("notch_supported_rhs")):
+            raise ValueError("actual centered notch support differs from fresh dense authority")
         save_array("notch_supported_rhs", supported)
         perturbation = {}
         notch = {}
@@ -264,11 +299,15 @@ def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
                 raise ValueError("actual notch physical field must contain nonzero y blocks")
             if packet["reason"] <= 0:
                 raise ValueError("FGMRES did not give a positive converged reason")
-            if degree == 2 and label in ("generic", "physical"):
+            if degree == 2 and (centered or label in ("generic", "physical")):
                 direct = saved_oracle.load("notch_direct_" + label)
                 packet["saved_dense_direct_difference"] = _relative(solution - direct, direct)
                 if packet["saved_dense_direct_difference"] > LIMITS["solution"]:
                     raise ValueError("sparse p2 notched original solve disagrees with saved dense direct")
+            if centered:
+                packet["outputs"] = recovered_field_and_modes(notched_bundle, layout, solution, physical=label=="physical",
+                                           label="notch_"+label, save=save_array)
+                require_output_packet(packet["outputs"],label="notch_"+label,event=event)
             notch[label] = packet
             event("notch_full3D_solve_pass", {"label": label, "iterations": packet["iterations"],
                   "original_residual": packet["full_original_true_residual"],
@@ -279,7 +318,9 @@ def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
         return {"schema": SCHEMA, "status": "SPARSE_CONDENSED_FULL3D_PROBE_PASS",
                 "degree": degree, "azimuth_deg": 5.0, "cells": 80,
                 "auxiliary_gauge": auxiliary_gauge,
-                "reference_scope": "same frozen upstream-clipped FE operator; no lost functional restored",
+                "reference_scope": ("fresh boundary-plane FE operator; original cutoffs and all physical contributions audited"
+                                    if centered else "same frozen upstream-clipped FE operator; no lost functional restored"),
+                "dtn_phase_gauge": dtn_phase_gauge, "centered_identity": centered_facts,
                 "input_sha256": input_sha, "axes_nm": {k: list(v) for k, v in axes.items()},
                 "mode_manifest_sha256": base["mode_sha256"], "mode_keys": coordinates.original_port_keys,
                 "physical_rhs_facts": physical_rhs_facts, "limits": LIMITS,

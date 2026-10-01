@@ -1,3 +1,11 @@
+# dot Task40extra V7：centered边界组件与候选身份分开
+
+source a0546264ae1bcc51e2aeedcac33585f4ffc04025 的sameGauss/fullMPC/532mode组件通过，恢复原空C172、空D174，新空均0。raw gauge差约4.13e-14；五状态旧clipped→新stored作用变化0.03082258966421717，所以V6旧算子不能作新centered权威。三次失败及窄reactive零功率分类证书保留；实际532测试树RSS327430144B、10.3655s、swap0，非目标资源承诺。
+
+后续source2839e7ba2eb91744cd6d6dd0aee519d536f3c237为NOT_RUN_PDE_CANDIDATE，54定点通过/1真实PDE跳过不等于centered PDE通过。本次仅文档/compact归档；官方RTA、p4/p6、目标0.7nm/2TB/48h仍未资格。证据：[V7](task40extra_dot_parallel_cloud/response_v7.md)、[组件receipt](task40extra_dot_parallel_cloud/outcomes/records/boundary_component_v7/component_qualification_a054626.json)。
+
+---
+
 # dot Task40extra V5：sparse-p2失败与端口诊断
 
 为扩展已过的小p2背景逆，source f2bd95ba进行了精确凝聚/逐q稀疏构造。原2048列与对称性通过，但首q0混合FE/aux单位量级载荷残差1.434e12、linearity NaN，故保留失败；未保存因子解向量，不能由NaN范数断言条目非有限。7.320s、树RSS433651712B、swap0、后代清场，非资源停止。保存旧场近零内部载荷见证仅支持符号/映射。H极小和C/D零支撑提示表示尺度及上游截断；same-discrete缩放不能恢复裁掉的泛函。当前没有完整稀疏逆/p4/目标资格；仅云端manual532phi5，不推断本机进展。

@@ -35,9 +35,12 @@ def _surface_assemblers(
     qdegree: int,
     *,
     jit_options: Mapping[str, Any] | None = None,
+    dtn_phase_gauge: str = "global_z",
+    verify_dtn_quadrature: bool = False,
 ) -> dict[tuple[str, int], Any]:
     from .dtn_port_3d import _ReusableSurfaceComponentAssembler
-
+    from .dtn_boundary_phase_gauge import BOUNDARY_PLANE, validate_phase_gauge
+    validate_phase_gauge(dtn_phase_gauge)
     return {
         (side, component): _ReusableSurfaceComponentAssembler(
             function_space,
@@ -46,6 +49,11 @@ def _surface_assemblers(
             component,
             quadrature_degree=qdegree,
             jit_options=jit_options,
+            boundary_reference_z=(
+                float(cfg.physical_z_max if side == "top" else cfg.physical_z_min)
+                if dtn_phase_gauge == BOUNDARY_PLANE else None
+            ),
+            verify_compiled_gauss=verify_dtn_quadrature,
         )
         for side in ("top", "bottom")
         for component in (0, 1)
@@ -96,6 +104,8 @@ def build_same_mesh_physical_action(
     mode_inventory: tuple[Any, Any, Any] | None = None,
     jit_options: Mapping[str, Any] | None = None,
     volume_quadrature_metadata: tuple[Mapping[str, Any], Mapping[str, Any]] | None = None,
+    dtn_phase_gauge: str = "global_z",
+    verify_dtn_quadrature: bool = False,
 ) -> dict[str, Any]:
     """Build one physical action from an existing same-mesh level.
 
@@ -108,6 +118,11 @@ def build_same_mesh_physical_action(
     """
 
     from .common_3d_forms import _validate_physical_split_profile
+    from .dtn_boundary_phase_gauge import (
+        BOUNDARY_PLANE, validate_phase_gauge, incident_projection_in_solver_coordinates,
+        build_gauge_assembly_context,
+    )
+    validate_phase_gauge(dtn_phase_gauge)
     from .dtn_port_3d import _dtn_surface_quadrature_degree
     from .dtn_port_3d import _incident_projection_onto_top_mode
     from .fullspace_dtn_action import (
@@ -148,6 +163,8 @@ def build_same_mesh_physical_action(
         cfg,
         qdegree,
         jit_options=options,
+        dtn_phase_gauge=dtn_phase_gauge,
+        verify_dtn_quadrature=verify_dtn_quadrature,
     )
     carrier = None
     dtn_action = None
@@ -155,11 +172,18 @@ def build_same_mesh_physical_action(
     physical_action = None
     try:
         carrier = build_fullspace_dtn_carrier_from_surface(
-            modes, assemblers, floquet.mpc, cfg
+            modes, assemblers, floquet.mpc, cfg, phase_gauge=dtn_phase_gauge,
+            assembly_context=(build_gauge_assembly_context(function_space, setup["mesh_data"], floquet.mpc, cfg, qdegree, assemblers)
+                              if dtn_phase_gauge == BOUNDARY_PLANE else None),
         )
+        if dtn_phase_gauge == BOUNDARY_PLANE and mode_sha != carrier.physical_generator_manifest_sha256:
+            raise ValueError("physical generator identity differs from supplied inventory")
     finally:
         # The carrier owns copied sparse functionals; assemblers own only the
         # temporary compiled surface forms and their phase constants.
+        compiled_gauss = ({f"{side}/{component}": assembler.compiled_gauss_identity
+                           for (side, component), assembler in assemblers.items()}
+                          if verify_dtn_quadrature or dtn_phase_gauge == BOUNDARY_PLANE else None)
         del assemblers
     try:
         dtn_action = build_fullspace_dtn_action(
@@ -179,10 +203,21 @@ def build_same_mesh_physical_action(
         dtn_action = None
         volume_action = None
         incident_projections = tuple(
-            _incident_projection_onto_top_mode(mode, cfg) for mode in modes
+            incident_projection_in_solver_coordinates(mode, cfg, dtn_phase_gauge)
+            if dtn_phase_gauge == BOUNDARY_PLANE else _incident_projection_onto_top_mode(mode, cfg)
+            for mode in modes
         )
         return {
-            "schema": "task038.same_mesh_hcurl_pmg.physical-action.v1",
+            **({"compiled_surface_gauss_identity": compiled_gauss} if compiled_gauss is not None else {}),
+            **({"dtn_phase_gauge": dtn_phase_gauge,
+                "physical_generator_manifest_sha256": mode_sha,
+                "assembly_mode_manifest_sha256": carrier.mode_manifest_sha256,
+                "assembly_context_sha256": carrier.assembly_context_sha256,
+                "solver_auxiliary_coordinate": "boundary_plane",
+                "global_output_conversion": "explicit-representability-gated"}
+               if dtn_phase_gauge == BOUNDARY_PLANE else {}),
+            "schema": ("task40extra.boundary-plane-physical-action.research.v1"
+                       if dtn_phase_gauge == BOUNDARY_PLANE else "task038.same_mesh_hcurl_pmg.physical-action.v1"),
             "setup": setup,
             "cfg": cfg,
             "degree": degree,
@@ -224,6 +259,7 @@ def build_p6_same_mesh_physical_bundle(
     comm: Any,
     *,
     stage_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
+    dtn_phase_gauge: str = "global_z",
 ) -> dict[str, Any]:
     """Attach the exact p6 volume+DtN operator to the selected positive setup."""
 
@@ -238,6 +274,11 @@ def build_p6_same_mesh_physical_bundle(
         build_p6_same_mesh_setup,
     )
     from .common_3d_forms import _validate_physical_split_profile
+    from .dtn_boundary_phase_gauge import (
+        BOUNDARY_PLANE, validate_phase_gauge, incident_projection_in_solver_coordinates,
+        build_gauge_assembly_context,
+    )
+    validate_phase_gauge(dtn_phase_gauge)
     from .dtn_port_3d import _dtn_surface_quadrature_degree
     from .dtn_port_3d import _incident_projection_onto_top_mode
 
@@ -276,6 +317,7 @@ def build_p6_same_mesh_physical_bundle(
             cfg,
             qdegree,
             jit_options=SAME_MESH_JIT_OPTIONS,
+            dtn_phase_gauge=dtn_phase_gauge,
         )
         _notify_stage(
             stage_callback,
@@ -288,7 +330,9 @@ def build_p6_same_mesh_physical_bundle(
             {"mode_count": int(len(modes))},
         )
         carrier = build_fullspace_dtn_carrier_from_surface(
-            modes, assemblers, p6_floquet.mpc, cfg
+            modes, assemblers, p6_floquet.mpc, cfg, phase_gauge=dtn_phase_gauge,
+            assembly_context=(build_gauge_assembly_context(p6_space, setup["mesh_data"], p6_floquet.mpc, cfg, qdegree, assemblers)
+                              if dtn_phase_gauge == BOUNDARY_PLANE else None),
         )
         _notify_stage(
             stage_callback,
@@ -301,6 +345,8 @@ def build_p6_same_mesh_physical_bundle(
             "dtn_action_complete",
             {"mode_count": int(len(modes))},
         )
+        assembly_mode_sha = carrier.mode_manifest_sha256
+        assembly_context_sha = getattr(carrier, "assembly_context_sha256", None)
         del carrier, assemblers
 
         _notify_stage(
@@ -335,11 +381,20 @@ def build_p6_same_mesh_physical_bundle(
         volume_action = None
         dtn_action = None
         incident_projections = tuple(
-            _incident_projection_onto_top_mode(mode, cfg) for mode in modes
+            incident_projection_in_solver_coordinates(mode, cfg, dtn_phase_gauge)
+            if dtn_phase_gauge == BOUNDARY_PLANE else _incident_projection_onto_top_mode(mode, cfg)
+            for mode in modes
         )
         bundle = {
+            **({"dtn_phase_gauge": dtn_phase_gauge,
+                "physical_generator_manifest_sha256": mode_sha,
+                "assembly_mode_manifest_sha256": assembly_mode_sha,
+                "assembly_context_sha256": assembly_context_sha,
+                "solver_auxiliary_coordinate": "boundary_plane",
+                "global_output_conversion": "explicit-representability-gated"}
+               if dtn_phase_gauge == BOUNDARY_PLANE else {}),
             "schema": PHYSICAL_BUNDLE_SCHEMA,
-            "profile": PHYSICAL_PROFILE,
+            "profile": "boundary_plane_research_unqualified" if dtn_phase_gauge == BOUNDARY_PLANE else PHYSICAL_PROFILE,
             "degree": 6,
             "setup": setup,
             "cfg": cfg,
@@ -387,21 +442,29 @@ def audit_p6_same_mesh_physical_bundle(bundle: Mapping[str, Any]) -> dict[str, A
 
     setup_audit = audit_p6_same_mesh_setup(bundle["setup"])
     physical_audit = dict(bundle["physical_action"].audit)
+    boundary_plane = bundle.get("dtn_phase_gauge", "global_z") == "boundary_plane"
     physical_audit.update(
         {
-            "mode_manifest_sha256": str(bundle["mode_sha256"]),
+            "mode_manifest_sha256": (str(bundle["assembly_mode_manifest_sha256"])
+                                     if boundary_plane else str(bundle["mode_sha256"])),
             "mode_count": int(len(bundle["modes"])),
             "dtn_quadrature_degree": int(bundle["dtn_quadrature_degree"]),
             "physical_form": (
-                "exact_maxwell_split_volume_plus_unchanged_streaming_fourier_dtn"
+                "research_centered_pre_cutoff_fourier_dtn_new_stored_operator"
+                if boundary_plane else "exact_maxwell_split_volume_plus_unchanged_streaming_fourier_dtn"
             ),
             "volume_component_count": 2,
             "volume_components": ["curl_curl", "complex_material_mass"],
         }
     )
+    if boundary_plane:
+        physical_audit.update({"dtn_phase_gauge": "boundary_plane", "research_gauge_qualified": False,
+                               "physical_generator_manifest_sha256": str(bundle["mode_sha256"]),
+                               "assembly_mode_manifest_sha256": str(bundle["assembly_mode_manifest_sha256"]),
+                               "assembly_context_sha256": str(bundle["assembly_context_sha256"])})
     return {
         "schema": PHYSICAL_BUNDLE_SCHEMA,
-        "profile": PHYSICAL_PROFILE,
+        "profile": "boundary_plane_research_unqualified" if boundary_plane else PHYSICAL_PROFILE,
         "setup_audit": setup_audit,
         "physical_action": physical_audit,
         "architecture": {
@@ -452,6 +515,11 @@ def build_physical_rhs(bundle: Mapping[str, Any]) -> tuple[Any, dict[str, Any]]:
     finally:
         base.destroy()
     return rhs, {
+        **({"dtn_phase_gauge": "boundary_plane", "solver_incident_coordinate": "boundary_plane",
+            "physical_generator_manifest_sha256": str(bundle["mode_sha256"]),
+            "assembly_mode_manifest_sha256": str(bundle["assembly_mode_manifest_sha256"]),
+            "assembly_context_sha256": str(bundle["assembly_context_sha256"])}
+           if bundle.get("dtn_phase_gauge", "global_z") == "boundary_plane" else {}),
         "generation": "dtn_port_modal_physical_rhs",
         "role": "physical_maxwell_rhs",
         "degree": degree,
@@ -489,11 +557,26 @@ def recover_p0_outputs(
         recovered_auxiliary = bundle["dtn_action"].recover_auxiliary(solution)
         aux = np.asarray(recovered_auxiliary, dtype=np.complex128)
         del recovered_auxiliary
+        incident_for_output = list(bundle["incident_projections"])
+        plane_power_diagnostic = None
+        if bundle.get("dtn_phase_gauge", "global_z") == "boundary_plane":
+            from .dtn_boundary_phase_gauge import (
+                prepare_boundary_plane_outputs,
+            )
+            output_packet = prepare_boundary_plane_outputs(aux, incident_for_output, bundle["modes"], bundle["cfg"])
+            if output_packet["status"] != "representable_global_output":
+                output_packet.update({"field_model": "total_field",
+                                      "electric_finite": bool(np.all(np.isfinite(field.x.array))),
+                                      "assembly_mode_manifest_sha256": bundle["assembly_mode_manifest_sha256"]})
+                return output_packet
+            plane_power_diagnostic = output_packet["direct_plane_outgoing_power_diagnostic"]
+            aux = output_packet["global_total_auxiliary"]
+            incident_for_output = list(output_packet["global_incident_projections"])
         port_metrics = _port_power_metrics(
             bundle["cfg"],
             list(bundle["modes"]),
             aux,
-            list(bundle["incident_projections"]),
+            incident_for_output,
         )
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -502,7 +585,7 @@ def recover_p0_outputs(
             from .dtn_port_3d import _write_port_outputs
 
             _write_port_outputs(output_dir, bundle['cfg'], list(bundle['modes']), aux,
-                list(bundle['incident_projections']), port_metrics, setup['mesh_data'].mesh.comm)
+                incident_for_output, port_metrics, setup['mesh_data'].mesh.comm)
         field_export = save_airbox_3d_fields(
             setup["mesh_data"], bundle["cfg"], field, output_dir,
             jit_options=jit_options,
@@ -521,6 +604,10 @@ def recover_p0_outputs(
             jit_options=jit_options,
         )
         facts = {
+            **({"direct_plane_outgoing_power_diagnostic": plane_power_diagnostic,
+                "output_auxiliary_coordinate": "global_z",
+                "solver_auxiliary_coordinate": "boundary_plane"}
+               if plane_power_diagnostic is not None else {}),
             "field_model": "total_field",
             "electric_finite": bool(np.all(np.isfinite(field.x.array))),
             "auxiliary_finite": bool(np.all(np.isfinite(aux))),

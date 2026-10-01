@@ -1,0 +1,46 @@
+{
+  "status": "VERIFIED_SAVED_COMPONENT_EVIDENCE_ONLY",
+  "source_head": "a0546264ae1bcc51e2aeedcac33585f4ffc04025",
+  "artifact_hash_checks": 40,
+  "artifact_hash_mismatches": 0,
+  "all532_unique_complete_keys": true,
+  "ordered_indices_0_to_531": true,
+  "compiled_rules_nodes_weights_match_primary_and_both_oracles": true,
+  "resources_recomputed_from_saved_samples": {
+    "small": {
+      "samples": 24,
+      "recomputed_sampled_tree_RSS_peak_bytes": 325484544,
+      "recomputed_sampled_tree_swap_peak_bytes": 0,
+      "summary_source_head": "a0546264ae1bcc51e2aeedcac33585f4ffc04025",
+      "elapsed_supervised_seconds": 5.928820766999706,
+      "descendants_cleared": true
+    },
+    "actual532": {
+      "samples": 42,
+      "recomputed_sampled_tree_RSS_peak_bytes": 327430144,
+      "recomputed_sampled_tree_swap_peak_bytes": 0,
+      "summary_source_head": "a0546264ae1bcc51e2aeedcac33585f4ffc04025",
+      "elapsed_supervised_seconds": 10.36553730399828,
+      "descendants_cleared": true
+    }
+  },
+  "small_test_log": "8 passed, 1 deselected in 1.13s",
+  "actual_test_log": "1 passed in 6.96s",
+  "failures1_to3_hashes_verified_and_preserved": true,
+  "metrics_recomputed_from_ledger": {
+    "old_empty_C": 172,
+    "old_empty_D": 174,
+    "new_empty_C": 0,
+    "new_empty_D": 0,
+    "old_vs_new_stored_five_state_action_change": 0.03082258966421717
+  },
+  "verification_method": "Read existing JSON/log/source, hash bytes and aggregate saved ledger/samples only; no solver imports or numerical rerun",
+  "limits": [
+    "source clean-before/after is producer receipt evidence; individual current source bytes independently hash-checked",
+    "recovery/output gate pass backed by frozen test source and successful whole-test log; individual residual arrays were not archived",
+    "sampled RSS is not a cgroup hard-peak guarantee",
+    "raw gauge equivalence does not imply equality to old clipped stored operator",
+    "no PDE, official RTA, p4, p6 or target qualification"
+  ],
+  "activation_and_ABI_probe_source_hashes_verified": true
+}

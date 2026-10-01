@@ -1,0 +1,62 @@
+{
+  "source_head": "a0546264ae1bcc51e2aeedcac33585f4ffc04025",
+  "immutable_source_files_verified": 12,
+  "publication_manifest_files_verified": 6,
+  "failed_attempts": [
+    {
+      "attempt": 1,
+      "source_head": "8960b71ef7fac0d3d34db904502e4cd34403a889",
+      "status": "FAILED_API: actual cached Form.code tuple(None,None), no coefficient gate completed",
+      "summary_sha256": "1962d5be8bee00d3e9daa27bebec7ce68a00a3c846886eb43fd5efd749c80b56",
+      "resources": {
+        "classification": "WORKER_FAILED",
+        "leader_exit_code": 1,
+        "elapsed_seconds": 5.814225512000121,
+        "sampled_process_tree_rss_peak_bytes": 328318976,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+      },
+      "additional_receipts": {
+        "attempt_receipt.json": "ec983e26d255f1cd0ae86ecd7d9932d826bd82da7d01f7de4186d21f3719cc8d"
+      }
+    },
+    {
+      "attempt": 2,
+      "source_head": "aad8f46a32a71428499526ab6cf383346038ed63",
+      "status": "FAILED_OUTPUT_COMPONENT_GATE: strict positive-plane power to legacy zero guard",
+      "summary_sha256": "fd5e155c332feef5286d5897359e0517a7b153c5167394446d1f726b6183ad55",
+      "resources": {
+        "classification": "WORKER_FAILED",
+        "leader_exit_code": 1,
+        "elapsed_seconds": 16.947155077999923,
+        "sampled_process_tree_rss_peak_bytes": 358445056,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+      },
+      "additional_receipts": {
+        "attempt_receipt.json": "bf5f8c8fcdb162ec1ed831aa74615e1831db29b8ce7cba736fc6bedde3585b9a"
+      }
+    },
+    {
+      "attempt": 3,
+      "source_head": "74df81b869152dca0d4b2e6406ae9f5acfef4848",
+      "status": "FAILED_OUTPUT_COMPONENT_GATE: same semantics, full diagnostic packet and partial coefficient ledger preserved",
+      "summary_sha256": "363a2cef84f56ffa3f11ff3a3efe922e67b7e8b1c47016714564dd769dc821d3",
+      "resources": {
+        "classification": "WORKER_FAILED",
+        "leader_exit_code": 1,
+        "elapsed_seconds": 8.588838945001044,
+        "sampled_process_tree_rss_peak_bytes": 326467584,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS"
+      },
+      "additional_receipts": {
+        "partial_components.json": "5c466963362bbbddfdcc05d9f3dcb0dc4434a8b46f2d6363761307c90e614f51",
+        "failed_output_packet.json": "c7dafe0f45426edfc445ce5a28650f0f7cd450a69fb81a3167faf77e49958719"
+      }
+    }
+  ]
+}

@@ -1,3 +1,11 @@
+# dot Task40extra V7：centered边界组件与候选身份分开
+
+source a0546264ae1bcc51e2aeedcac33585f4ffc04025 的sameGauss/fullMPC/532mode组件通过，恢复原空C172、空D174，新空均0。raw gauge差约4.13e-14；五状态旧clipped→新stored作用变化0.03082258966421717，所以V6旧算子不能作新centered权威。三次失败及窄reactive零功率分类证书保留；实际532测试树RSS327430144B、10.3655s、swap0，非目标资源承诺。
+
+后续source2839e7ba2eb91744cd6d6dd0aee519d536f3c237为NOT_RUN_PDE_CANDIDATE，54定点通过/1真实PDE跳过不等于centered PDE通过。本次仅文档/compact归档；官方RTA、p4/p6、目标0.7nm/2TB/48h仍未资格。证据：[V7](task40extra_dot_parallel_cloud/response_v7.md)、[组件receipt](task40extra_dot_parallel_cloud/outcomes/records/boundary_component_v7/component_qualification_a054626.json)。
+
+---
+
 # dot Task40extra V5：失败模型登记
 
 | 模型/source | 实测状态 | 资源/资格 |

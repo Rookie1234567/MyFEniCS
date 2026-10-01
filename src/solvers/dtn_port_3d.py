@@ -1128,21 +1128,36 @@ class _ReusableSurfaceComponentAssembler:
         *,
         quadrature_degree: int | None = None,
         jit_options: Mapping[str, Any] | None = None,
+        boundary_reference_z: float | None = None,
+        verify_compiled_gauss: bool = False,
     ):
         if component not in {0, 1}:
             raise ValueError(
                 "Stage-4 DtN port component assembly only supports x/y tangential components."
             )
         self.comm = mesh_data.mesh.comm
+        self.quadrature_degree = quadrature_degree
+        self.boundary_tag = int(tag)
         self.alpha = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
         self.gamma = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
         self.kz = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
         x = ufl.SpatialCoordinate(mesh_data.mesh)
-        phase = ufl.exp(
-            PETSc.ScalarType(1j) * self.alpha * x[0]
-            + PETSc.ScalarType(1j) * self.gamma * x[1]
-            + PETSc.ScalarType(1j) * self.kz * x[2]
-        )
+        self.boundary_reference_z = boundary_reference_z
+        if boundary_reference_z is None:
+            phase = ufl.exp(
+                PETSc.ScalarType(1j) * self.alpha * x[0]
+                + PETSc.ScalarType(1j) * self.gamma * x[1]
+                + PETSc.ScalarType(1j) * self.kz * x[2]
+            )
+        else:
+            if not np.isfinite(boundary_reference_z):
+                raise ValueError("boundary reference plane is nonfinite")
+            phase = ufl.exp(
+                PETSc.ScalarType(1j) * self.alpha * x[0]
+                + PETSc.ScalarType(1j) * self.gamma * x[1]
+                + PETSc.ScalarType(1j) * self.kz
+                * (x[2] - PETSc.ScalarType(boundary_reference_z))
+            )
         vector = [PETSc.ScalarType(0.0), PETSc.ScalarType(0.0), PETSc.ScalarType(0.0)]
         vector[component] = phase
         v = ufl.TestFunction(V)
@@ -1157,6 +1172,10 @@ class _ReusableSurfaceComponentAssembler:
             _with_quadrature_degree(form, quadrature_degree),
             **jit_kwargs,
         )
+        if boundary_reference_z is not None or verify_compiled_gauss:
+            from .dtn_boundary_phase_gauge import compiled_surface_quadrature_identity
+            self.compiled_gauss_identity = compiled_surface_quadrature_identity(
+                _with_quadrature_degree(form, quadrature_degree), self.form)
 
     def assemble_entries(self, mode: PortMode3D, mpc) -> tuple[np.ndarray, np.ndarray]:
         _set_scalar_constant(self.alpha, mode.alpha)
@@ -1167,6 +1186,13 @@ class _ReusableSurfaceComponentAssembler:
             return _vec_nonzero_owned_entries(vec)
         finally:
             vec.destroy()
+
+    def assemble_raw_mpc_vector(self, mode: PortMode3D, mpc) -> PETSc.Vec:
+        """Explicit pre-cutoff oracle vector; caller owns and destroys it."""
+        _set_scalar_constant(self.alpha, mode.alpha)
+        _set_scalar_constant(self.gamma, mode.gamma)
+        _set_scalar_constant(self.kz, mode.k_vector[2])
+        return _assemble_mpc_form_vector(self.form, mpc)
 
     def assemble_unconstrained_vector(self, mode: PortMode3D) -> PETSc.Vec:
         _set_scalar_constant(self.alpha, mode.alpha)

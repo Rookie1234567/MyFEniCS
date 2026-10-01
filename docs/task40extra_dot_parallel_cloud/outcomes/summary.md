@@ -119,3 +119,15 @@ DtN 实验检查开放边界通道的编号、物理方向和局部投影积分�
 | not_run | 预sparsification boundary-plane修正、p4、原尺寸accuracy/2TB/48h | p4held；新边界representation须独立p2权威，不把身份数当未裁剪物理贡献 |
 
 [Response V6](../response_v6.md)、[compact及失败/worker-checker身份](records/positive_H_same_discrete_p2_v1.json)。本批补足main Task40extra，ordinary defaults不变。
+
+## V7：boundary-plane完整532模式组件资格
+
+| 身份/范围 | measured/verified结果 | 限定 |
+|---|---|---|
+| a054626组件；80cell/p2/phi5/manual532/fullMPC/sameGauss | 8项小测试＋真实532模式测试通过；恢复空C172/空D174，新空均0 | PASS_COMPONENT_ONLY；无centered PDE/official RTA |
+| 未截断坐标等价 | C/D约4.13e-14；每模式stored损失界最大1.368e-13 | 逐模式组件门，不是累计相对operator norm证书 |
+| 五状态旧stored→new stored | 0.03082258966421717 | 新存储算子改变，V6只保留旧clipped authority |
+| 资源/失败 | actual532树RSS327430144B、10.3655s、swap0；attempt1–3失败保留 | warm/sampled；不推断目标RAM/时间 |
+| 同快照候选2839e7 | 54定点pass/1真实PDE skipped；新centered p2仍NOT_RUN_PDE_CANDIDATE | 不继承组件资格；p4/p6/原尺寸2TB/48h未资格 |
+
+[Response V7](../response_v7.md)、[完整532 ledger](records/boundary_component_v7/all532_compact_ledger.json)。本轮只文档归档，不改变数值源码。

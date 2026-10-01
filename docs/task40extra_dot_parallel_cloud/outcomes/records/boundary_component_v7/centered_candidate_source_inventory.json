@@ -1,0 +1,63 @@
+{
+  "component_qualified_source": "a0546264ae1bcc51e2aeedcac33585f4ffc04025",
+  "candidate_source": "2839e7ba2eb91744cd6d6dd0aee519d536f3c237",
+  "candidate_tree": "9d0d230a56ac784b94df834c522114f35c3b20fd",
+  "status": "NOT_RUN_PDE_CANDIDATE",
+  "reported_pre_run_checks": "54 targeted passed / 1 real-PDE skipped; ABI and compileall passed; no PDE launch",
+  "files": [
+    {
+      "path": "benchmarks/cases/y_orbit_sparse_reference/centered_p2_qualification_plan_v1_zh.md",
+      "blob": "e59e38bba2af481ff82ebef7d33d17eda0778b86",
+      "sha256": "8bc0e634010be25d9129f7ef75cdd54daeeb406b4a7c3efac980ba8d0f2ff558",
+      "bytes": 16075
+    },
+    {
+      "path": "benchmarks/check_y_orbit_reference_probe.py",
+      "blob": "6e21c335c4881dbeb1a34fb54e66afa11311d108",
+      "sha256": "f527ddcbebf329c17165938921235c3875b714c0514959da04341743b569d674",
+      "bytes": 19462
+    },
+    {
+      "path": "benchmarks/check_y_orbit_sparse_probe.py",
+      "blob": "94befcaf0e8227863ad7af2359d188fcc3e0257b",
+      "sha256": "b5176d59e3e8af699501ebc9fae01f750672bd6a45a3129158af1eb316a1092b",
+      "bytes": 28079
+    },
+    {
+      "path": "benchmarks/run_y_orbit_reference_probe.py",
+      "blob": "8d28cc71b73b46ad60557822ffa5c6f2b6479241",
+      "sha256": "93a0e730b79fd83311999333eaae928879f1dfb7d109859bea4be528b1d524d3",
+      "bytes": 9199
+    },
+    {
+      "path": "benchmarks/run_y_orbit_sparse_probe.py",
+      "blob": "b2647df78530e24a66d097955a70c598bab5c52e",
+      "sha256": "cb83dbb0e06fca6f1c8aae2f202a0fb668d60428f5d246534167dda97f7fa78f",
+      "bytes": 25152
+    },
+    {
+      "path": "src/solvers/y_orbit_centered_evidence.py",
+      "blob": "84b921c83f5d8fd1257efff5004060e55e1ec257",
+      "sha256": "112845973c816a0f481c0d3d0faa94d9aae64094a1c29fe96c71da8f7eca1c4b",
+      "bytes": 14720
+    },
+    {
+      "path": "src/solvers/y_orbit_centered_probe.py",
+      "blob": "c1386977503673a6e93a7ce751f16329a3e75fd1",
+      "sha256": "f370662c54fc30b7db572351649327a353520f62c5a697d25b92589c42ea8de7",
+      "bytes": 14493
+    },
+    {
+      "path": "src/solvers/y_orbit_sparse_probe.py",
+      "blob": "9b772af773077bf4796884a7f142393451ecc04b",
+      "sha256": "85bdaebfb9b0e67d15c5eed52b29aeb3e94519d4bba497f8f49f1697143e5acc",
+      "bytes": 22840
+    },
+    {
+      "path": "src/test/test_y_orbit_centered_contracts.py",
+      "blob": "8fc2c8f54dfaca725c761c2490a782477521a45b",
+      "sha256": "0ddb703641b0357fe09b216bff91895a8718637c9d9081e42c313d7d05fe3063",
+      "bytes": 8456
+    }
+  ]
+}

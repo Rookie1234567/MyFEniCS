@@ -81,6 +81,19 @@ def check(directory, *, checker_source, checker_environment):
     if checker_environment != report["environment"]:
         raise RuntimeError("checker ABI/config environment differs from the numerical worker")
     source_binding["worker_and_checker_ABI_manifest_sha256"] = checker_environment["qualification_manifest_sha256"]
+    centered = report.get("dtn_phase_gauge", "global_z") == "boundary_plane"
+    centered_authority = None
+    if centered:
+        from benchmarks.run_y_orbit_sparse_probe import ROOT, SavedCenteredDenseP2Authority
+        from src.solvers.y_orbit_centered_evidence import COMPONENT_IDENTITY, SOURCES
+        receipt = provenance["saved_dense_p2_authority"]
+        centered_authority = SavedCenteredDenseP2Authority(ROOT/receipt["report_path"],receipt["report_sha256"],
+                                                          report["source"],report["environment"])
+        if (report["degree"] != 2 or report["auxiliary_gauge"] != "positive-h"
+                or set(report["regular_sources"]) != set(SOURCES) or set(report["notched_sources"]) != set(SOURCES)
+                or report["centered_identity"] != centered_authority.report["identity"]
+                or any(report["centered_identity"].get(k) != v for k,v in COMPONENT_IDENTITY.items())):
+            raise ValueError("centered sparse/authority/source/load representation identity differs")
     checks = []
     descriptors = report["artifacts"]
     report_sha = hashlib.sha256((directory / "probe_report.json").read_bytes()).hexdigest()
@@ -152,6 +165,8 @@ def check(directory, *, checker_source, checker_environment):
     interior_positions = np.setdiff1d(np.arange(full_n), native_trace_positions)
     complete_interiors = _complete_interior_rhs(generic, interior_positions, trace_audit["complete_interior_rows"])
     slave_zero = True
+    centered_mode_checks = {}
+    optional_global_outputs = {}
 
     for prefix, sources in (("regular", report["regular_sources"]), ("notch", report["notched_sources"])):
         for name in sources:
@@ -182,9 +197,50 @@ def check(directory, *, checker_source, checker_environment):
             add(label + "_full_primal_q_norms_record", relative(computed_q_norms - sources[name]["solution_primal_q_norms"], computed_q_norms), 1e-12)
             if prefix == "notch" and name == "physical":
                 physical_q_relative = float(np.linalg.norm(computed_q_norms[1:]) / np.linalg.norm(computed_q_norms))
-            if report["degree"] == 2 and name in ("generic", "physical"):
+            if report["degree"] == 2 and (centered or name in ("generic", "physical")):
                 # Frozen old authority is separately content-bound by the runner.
                 add(label + "_saved_dense_direct_difference_live", sources[name]["saved_dense_direct_difference"], 1e-9)
+            if centered:
+                from src.solvers.y_orbit_centered_evidence import compare_mode_evidence, bind_native_packet
+                authority_name = ("A0_direct_" if prefix == "regular" else "notch_direct_")+name
+                direct = centered_authority.load(authority_name)
+                bind_native_packet(field,rhs,load(label+"_solution"),load(name+"_rhs"),independent)
+                if not np.array_equal(load("actual_interior_positions"),interior_positions):
+                    raise ValueError("centered full native packet detached from actual solver/RHS/interior inventory")
+                matrix = centered_authority.load("A0_original" if prefix == "regular" else "A_notch_original")
+                add(label+"_fresh_dense_original_residual",relative(rhs[independent]-matrix@active,rhs[independent]),1e-10)
+                add(label+"_native_action_bound_to_fresh_dense_matrix",relative(action[independent]-matrix@active,rhs[independent]),1e-11)
+                add(label+"_fresh_dense_direct_difference",relative(active-direct,direct),1e-9)
+                dense_label = "direct_"+label
+                add(label+"_fresh_dense_recovered_field_difference",relative(load(label+"_recovered_field")-
+                     centered_authority.load(dense_label+"_recovered_field"),centered_authority.load(dense_label+"_recovered_field")),1e-9)
+                centered_mode_checks[label] = compare_mode_evidence(load,
+                    lambda key: centered_authority.load("direct_"+key),label)
+                coefficients, offsets = load("full_mpc_coefficients"),load("full_mpc_offsets")
+                masters, saved_slaves = load("full_mpc_masters"),load("full_mpc_slaves")
+                if (offsets.shape != (len(field)+1,) or int(offsets[-1]) != len(coefficients)
+                        or offsets.dtype.kind not in "iu" or masters.dtype.kind not in "iu" or saved_slaves.dtype.kind not in "iu"
+                        or len(masters)!=len(coefficients) or not np.array_equal(slaves,np.sort(saved_slaves))
+                        or np.any(offsets[1:]<offsets[:-1]) or len(np.intersect1d(saved_slaves,masters))
+                        or (masters.size and (masters.min()<0 or masters.max()>=len(field)))):
+                    raise ValueError("centered actual finalized MPC recovery inventory differs")
+                backsub = field.copy()
+                for slave in saved_slaves:
+                    begin,end = int(offsets[slave]),int(offsets[slave+1])
+                    if end <= begin: raise ValueError("centered MPC slave expansion empty")
+                    backsub[slave] = np.dot(coefficients[begin:end],field[masters[begin:end]])
+                add(label+"_independent_actual_MPC_backsubstitution",relative(load(label+"_recovered_field")-backsub,backsub),1e-12)
+                amplitude_error = np.abs(load(label+"_plane_total_auxiliary")-alpha)
+                amplitude_scale = load(label+"_mode_local_amplitude_scale")
+                if np.any((amplitude_scale == 0)&(amplitude_error != 0)):
+                    raise ValueError("nonzero original alpha recovery error has zero local scale")
+                amplitude_ratios = np.divide(amplitude_error,amplitude_scale,out=np.zeros_like(amplitude_error),where=amplitude_scale != 0)
+                add(label+"_mode_recovery_vs_original_alpha",np.max(amplitude_ratios),1e-10)
+                optional_global_outputs[label] = sources[name]["outputs"]["status"]
+                if (sources[name]["outputs"].get("finite_plane_mode_count") != ports
+                        or sources[name]["outputs"].get("status") != "representable_global_output"
+                        or sources[name]["outputs"].get("global_output_component_consistency_checked") is not True):
+                    raise ValueError("complete required centered finite-plane mode output missing")
             add(label + "_augmented_identity_live", sources[name]["augmented_residual_identity"]["relative"], 1e-10)
             if len(alpha) != ports or len(projection) != ports or len(h) != ports:
                 raise ValueError("full port inventory missing from original residual vectors")
@@ -269,6 +325,11 @@ def check(directory, *, checker_source, checker_environment):
                     and all(max(item["repeated_solve_relative"], item["linearity_relative"]) <= 1e-11
                             and item["block_true_residual_relative_max"] <= 1e-10 for item in factor_audits))
     raw_finite = _raw_factor_inventory(report, directory, ny)
+    centered_outputs = True
+    if centered:
+        centered_outputs = all(item["passed"] for group in centered_mode_checks.values() for item in group.values())
+        nonzero_interior = np.flatnonzero(load("interior_only_rhs"))
+        complete_interiors = complete_interiors and np.array_equal(nonzero_interior,interior_positions)
     return {"schema": "task40extra.y-orbit-sparse-checker.v1", "evidence_valid": True,
             "report_sha256": report_sha, "provenance_sha256": provenance_sha,
             "artifact_manifest_sha256": artifact_sha, "source": report["source"], "degree": report["degree"],
@@ -276,7 +337,7 @@ def check(directory, *, checker_source, checker_environment):
             "gate_pass": bool(all(item["passed"] for item in checks) and all_q_excitation
                               and complete_interiors and exact_ports and resource and live_symmetry
                               and notch_coupling and factor_valid and raw_finite and slave_zero and nonzero_wrap
-                              and physical_q_relative > 1e-12),
+                              and physical_q_relative > 1e-12 and centered_outputs),
             "checks": checks, "generic_all_q_excitation": all_q_excitation,
             "complete_original_interior_RHS": complete_interiors, "all_physical_alias_keys": exact_ports,
             "physical_notch_nonzero_q_relative": physical_q_relative,
@@ -284,7 +345,10 @@ def check(directory, *, checker_source, checker_environment):
             "actual_q_factor_repeated_linear_residual_gates": factor_valid,
             "factor_raw_vectors_finite": raw_finite, "auxiliary_gauge": report["auxiliary_gauge"],
             "representation": report["reference_scope"],
-            "upstream_clipped_functionals_restored": False,
+            "upstream_clipped_functionals_restored": centered,
+            "centered_per_mode_output_checks": centered_mode_checks,
+            "optional_global_output_statuses": optional_global_outputs,
+            "centered_fresh_dense_authority_verified": centered_authority is not None,
             "original_full_slave_zeros": slave_zero, "nontrivial_real_ky_wrap": nonzero_wrap,
             "original_FFCx_action_is_saved_live_authority": True,
             "full_p4_direct_control": "not_run_not_admitted" if report["degree"] == 4 else "saved_p2",

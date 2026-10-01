@@ -1,0 +1,163 @@
+{
+  "schema": "task40extra.boundary-plane-component-qualification.v1",
+  "status": "PASS_COMPONENT_ONLY",
+  "full_case_pass": true,
+  "PDE_solved": false,
+  "official_results": false,
+  "source_head": "a0546264ae1bcc51e2aeedcac33585f4ffc04025",
+  "source_clean_before_and_after": true,
+  "source_receipt_path": "/workspace/scratch/9c465670b46b/task40extra_cloud/staging/dtn_boundary_phase_gauge/source_receipt_a054626.json",
+  "source_receipt_sha256": "1e1bcccc52a3d7e2cb5fdee71dd8405930f3c20f2cb95eed7411d1fe53ac9a10",
+  "input_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e",
+  "configuration": {
+    "cells": 80,
+    "degree": 2,
+    "lambda_nm": 0.7,
+    "azimuth_deg": 5,
+    "manual_m_range": [
+      -9,
+      9
+    ],
+    "manual_n_range": [
+      -3,
+      3
+    ],
+    "mode_count": 532,
+    "seed": 4053202,
+    "arbitrary_full_MPC_states": 5,
+    "quadrature_degree": 19,
+    "Gauss_points_per_quad_facet": 100,
+    "both_cutoffs": "max(1e-30,1e-13*collective/component max); unchanged"
+  },
+  "identity": {
+    "physical_generator_manifest_sha256": "4ace13f47bc6edf8a08e1a1df24309f6326294b6bf9d5ca4ada07208bd50c951",
+    "assembly_mode_manifest_sha256": "6f3985dee573ca05793f81b6dc601971130201f1752af0ec6d61938dde37a820",
+    "assembly_context_sha256": "2ae0fe4a4d314f706429454738439abbfca57fa1492e5a592c1205f203630714"
+  },
+  "measured_metrics": {
+    "all_modes": 532,
+    "restored_previous_empty_C": 172,
+    "restored_previous_empty_D": 174,
+    "new_empty_C": 0,
+    "new_empty_D": 0,
+    "max_raw_C_equivalence": 4.1297284905196704e-14,
+    "max_raw_D_equivalence": 4.13000202319606e-14,
+    "max_raw_H_equivalence": 1.6733030745341933e-16,
+    "max_per_mode_raw_action_equivalence": 4.445246249539174e-14,
+    "max_new_stored_full_DOF_rank_one_relative_operator_bound": 1.3678246950706427e-13,
+    "max_per_mode_power_operation_scaled_defect": 1.3032391769322302e-15,
+    "raw_accumulated_five_state_action_defect": 1.1872958750469111e-15,
+    "new_stored_vs_raw_five_state_action_defect": 3.2698234834320744e-15,
+    "old_clipped_vs_new_stored_five_state_action_change": 0.03082258966421717,
+    "new_named_unique_numpy_backing_bytes_before_staging_release": 6135040
+  },
+  "gates": {
+    "compiled_primary_literal_Gauss_nodes_weights_and_loaded_C": "PASS",
+    "ordered_full_modes_and_generator_identity": "PASS",
+    "all_mode_raw_coefficients_H_before_cutoff": "PASS <=1e-10",
+    "every_mode_full_DOF_rank_one_loss_bound": "PASS <=1e-10",
+    "actual_primary_DtN_action_vs_independent_oracle_5_states": "PASS <=1e-10",
+    "actual_production_recover_auxiliary_full532_by5_vs_stored_and_raw_oracles": "PASS <=1e-10 (per-entry coefficient norm * state norm scale)",
+    "lower_output_components_all532_by5_amplitude_field_power": "PASS; arbitrary test fields, no physical solution claim",
+    "physical_FE_RHS_and_incident_coordinate": "PASS <=1e-10",
+    "arbitrary_nonzero_port_RHS532_by5_transform_roundtrip": "PASS rtol1e-10 atol1e-12",
+    "generic_positive_power_underflow_negatives": "PASS (propagating and lossy)",
+    "analytic_zero_exception": "only outgoing lossless strictly-imaginary-kz transverse Maxwell modes, both signed powers within gamma_n operation bounds"
+  },
+  "limits": {
+    "simultaneous_tree_RSS_bytes": 1610612736,
+    "wall_seconds": 600,
+    "tree_swap_bytes": 0,
+    "MPI_ranks": 1,
+    "math_threads": 1,
+    "new_named_payload_bytes": 536870912,
+    "named_payload_scope": "carrier named unique numpy backing before staging release only, distinct from whole-tree RSS and not peak/transient upper bound"
+  },
+  "runs": {
+    "small": {
+      "artifact_directory": "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/boundary_plane_algebra_attempt4",
+      "external_supervisor": "/workspace/scratch/9c465670b46b/task40extra_cloud/staging/dtn_boundary_phase_gauge/supervise_small_attempt4.py",
+      "external_supervisor_sha256": "34117305365bbacbfce7fb51f499ee939a30dbceeee1cbf806ad50056dd3433d",
+      "invocation": "PYTHONPATH=. python ../staging/dtn_boundary_phase_gauge/supervise_small_attempt4.py",
+      "classification": "COMPLETED",
+      "pytest_log": "........                                                                 [100%]\n8 passed, 1 deselected in 1.13s",
+      "elapsed_supervised_seconds": 5.928820766999706,
+      "sampled_simultaneous_process_tree_RSS_peak_bytes": 325484544,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "artifacts": {
+        "activation_abi.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "activation_abi.stdout": "6dfff36dcf521fdbe4b8059a8dd15e872cf9197e6e89c265ff60d6421a9e3016",
+        "environment.json": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+        "resources.jsonl": "2b4db34cb9f97e72144b116a60dab2ccf1fb9bf8e27683891c3f5544c8ff84af",
+        "summary.json": "9afc135cd36ce26ed61979e5b583931be4c7b0efccf73fc5b5c12cddc748aaca",
+        "worker.log": "6280e5f759bcfb297625bd468f9fd93ee1cdd7e3b418d5514af239d13c084327"
+      }
+    },
+    "actual532": {
+      "artifact_directory": "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/boundary_plane_532_mpc_attempt4",
+      "external_supervisor": "/workspace/scratch/9c465670b46b/task40extra_cloud/staging/dtn_boundary_phase_gauge/supervise_532_attempt4.py",
+      "external_supervisor_sha256": "baf732cf158182529dbbe0baf99fe633f52e87e40f183cab2652743d691983c7",
+      "invocation": "PYTHONPATH=. python ../staging/dtn_boundary_phase_gauge/supervise_532_attempt4.py",
+      "classification": "COMPLETED",
+      "pytest_log": ".                                                                        [100%]\n1 passed in 6.96s",
+      "elapsed_supervised_seconds": 10.36553730399828,
+      "sampled_simultaneous_process_tree_RSS_peak_bytes": 327430144,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "artifacts": {
+        "activation_abi.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "activation_abi.stdout": "bec2204a605bb387f4e538c873044df895a01f473a37b7e441f2799da297665d",
+        "environment.json": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+        "oracle_record.json": "e6277e0d22eaec9cd0e4bbc40d7c44011bba3961aa3b08a081e4e398ca8e9c0b",
+        "partial_components.json": "189838b9cbf02477eda421c4afd5f6a904608a793620a4bbee14749c492cf731",
+        "resources.jsonl": "45db2a58a7193176f80ef16a66472c6b2def2b64c76fa0f3e228e6264cfc513e",
+        "summary.json": "ae8fab31aaf228f2e13a4d21bf5158844ae6bfaa005655fa2f6649468d3e8946",
+        "worker.log": "79819081cfccee9f55dd3f623fef632cf2b6563c5421f07e70851574bcc2ea9d"
+      }
+    }
+  },
+  "preserved_attempts": [
+    {
+      "attempt": 1,
+      "status": "FAILED_API: actual cached Form.code tuple(None,None), no coefficient gate completed",
+      "artifact_directory": "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/boundary_plane_532_mpc_attempt1",
+      "source_head": "8960b71ef7fac0d3d34db904502e4cd34403a889",
+      "summary_sha256": "1962d5be8bee00d3e9daa27bebec7ce68a00a3c846886eb43fd5efd749c80b56",
+      "additional_receipts": {
+        "attempt_receipt.json": "ec983e26d255f1cd0ae86ecd7d9932d826bd82da7d01f7de4186d21f3719cc8d"
+      }
+    },
+    {
+      "attempt": 2,
+      "status": "FAILED_OUTPUT_COMPONENT_GATE: strict positive-plane power to legacy zero guard",
+      "artifact_directory": "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/boundary_plane_532_mpc_attempt2",
+      "source_head": "aad8f46a32a71428499526ab6cf383346038ed63",
+      "summary_sha256": "fd5e155c332feef5286d5897359e0517a7b153c5167394446d1f726b6183ad55",
+      "additional_receipts": {
+        "attempt_receipt.json": "bf5f8c8fcdb162ec1ed831aa74615e1831db29b8ce7cba736fc6bedde3585b9a"
+      }
+    },
+    {
+      "attempt": 3,
+      "status": "FAILED_OUTPUT_COMPONENT_GATE: same semantics, full diagnostic packet and partial coefficient ledger preserved",
+      "artifact_directory": "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/boundary_plane_532_mpc_attempt3",
+      "source_head": "74df81b869152dca0d4b2e6406ae9f5acfef4848",
+      "summary_sha256": "363a2cef84f56ffa3f11ff3a3efe922e67b7e8b1c47016714564dd769dc821d3",
+      "additional_receipts": {
+        "partial_components.json": "5c466963362bbbddfdcc05d9f3dcb0dc4434a8b46f2d6363761307c90e614f51",
+        "failed_output_packet.json": "c7dafe0f45426edfc445ce5a28650f0f7cd450a69fb81a3167faf77e49958719"
+      }
+    }
+  ],
+  "not_qualified": [
+    "centered p2 PDE solve/full original residual/official RTA",
+    "p4/p6",
+    "full default regression",
+    "MPI multi-rank",
+    "CI",
+    "target/2TB/48h/workstation portability/restart",
+    "summed-operator relative norm guarantee from five probes",
+    "global-coordinate conversion of target-scale underflowed amplitudes"
+  ]
+}
