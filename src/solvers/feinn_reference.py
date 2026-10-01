@@ -82,14 +82,15 @@ def exact_solve(model, packet, artifact, marker, *, audit_options=None):
     # Existing callers retain their historical lifecycle and packet schema.
     check_budget = (audit_options or {}).get("check_budget", lambda *_: None)
     check_budget("reference assembly")
-    n = packet.size + packet.np
+    reduced = (audit_options or {}).get("reduced_system")
+    n = len(reduced.rhs) if reduced is not None else packet.size + packet.np
     nnz_upper = (
         packet.nc * packet.dim**2
         + len(packet.a["bv"])
         + len(packet.a["dv"])
         + packet.np
     )
-    allocation = nnz_upper * 80 + 512 * 2**20
+    allocation = (audit_options or {}).get("allocation_upper_bytes", nnz_upper * 80 + 512 * 2**20)
     pre = dict(
         kind="derived reference assembly/conversion reserve, not RSS",
         rows=n,
@@ -180,7 +181,7 @@ def exact_solve(model, packet, artifact, marker, *, audit_options=None):
         marker("reference_numeric", record)
         check_budget("reference solve")
         b = matrix.createVecLeft()
-        b.array[:] = np.r_[packet.a["g"], packet.a["gp"]]
+        b.array[:] = reduced.rhs if reduced is not None else np.r_[packet.a["g"], packet.a["gp"]]
         x = matrix.createVecRight()
         t = perf_counter()
         marker("reference_solve_begin", {})
@@ -196,8 +197,13 @@ def exact_solve(model, packet, artifact, marker, *, audit_options=None):
         )
         if relative > 1e-10 or not np.isfinite(x.array).all():
             raise RuntimeError(f"INDEPENDENT_REFERENCE_RESIDUAL_FAILED: {relative}")
-        c = x.array[: packet.size].copy()
-        alpha = x.array[packet.size :].copy()
+        if reduced is None:
+            c = x.array[: packet.size].copy()
+            alpha = x.array[packet.size :].copy()
+        else:
+            c, alpha = reduced.recover(x.array)
+            record.update(exact_static_condensation=True, recovered_independent_complex_FE=packet.size,
+                          condensed_rows=n, local_interior_factors="exact reference-only; no training use")
         recovered = packet.alpha(c)
         record["original_port_recovery_relative"] = float(
             np.linalg.norm(recovered - alpha) / max(np.linalg.norm(alpha), 1e-12)

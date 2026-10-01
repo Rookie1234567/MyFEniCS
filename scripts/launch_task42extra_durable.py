@@ -41,6 +41,8 @@ def main():
         ),
     }
     from src.runners.feinn_campaign import STAGES
+    from src.runners.feinn_gn_campaign import STAGES as GN_STAGES
+    STAGES = STAGES | GN_STAGES
     stages.update({name: (name, "task42extra-" + name.replace("_", "-")) for name in STAGES})
     if spec is None or spec.derived["stage"] not in stages:
         raise ValueError("ONLY_EXPLICIT_REVIEWED_DURABLE_STAGES_ARE_AUTHORIZED")

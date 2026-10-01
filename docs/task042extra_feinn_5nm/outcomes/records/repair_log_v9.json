@@ -1,0 +1,14 @@
+{
+  "schema": "task42extra.repair-log.v9",
+  "repairs": [
+    {
+      "root_cause": "initial anchor-index inspection schema assumption",
+      "failure": "records/path keys absent in checkpoint row",
+      "hypothesis": "index uses checkpoints plus directory and generation name",
+      "change": "inspect original schema and resolve directory/durable_checkpoints/name",
+      "test": "all four unique Adam500 files byte-hash equal frozen index",
+      "retry": 2,
+      "outcome": "RESOLVED_WITHOUT_NUMERICAL_REPLAY"
+    }
+  ]
+}

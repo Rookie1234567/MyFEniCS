@@ -288,6 +288,41 @@ def launch(spec):
     v6 = stage.startswith("v6_") or stage == "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT"
     v7 = stage.startswith("v7_")
     v8 = stage.startswith("v8_")
+    v9 = stage.startswith("v9_")
+    if v9:
+        from src.runners.feinn_gn_campaign import (
+            AUTHORITY as GN_AUTHORITY,
+            REVIEW_SHA as GN_REVIEW,
+            SUPERVISED,
+        )
+        from src.solvers.feinn_discretization_audit import POLICY
+
+        proof = ROOT / "tmp/task42extra/durable" / stage / "terminal_identity.json"
+        if not proof.exists():
+            raise RuntimeError("DURABLE_TERMINAL_PROOF_REQUIRED")
+        state.update(
+            run_id=directory.name,
+            v9_review_sha=GN_REVIEW,
+            v9_campaign_design_sha256=sha(
+                ROOT
+                / "docs/task042extra_feinn_5nm/outcomes/records/campaign_design_v9.json"
+            ),
+            supervision_budget_origin_monotonic=launch_origin,
+            durable_terminal_identity_sha256=sha(proof),
+        )
+        if stage in GN_AUTHORITY:
+            state.update(**POLICY)
+        else:
+            supervised = stage in SUPERVISED
+            state.update(
+                reference_used_for_training=supervised,
+                features_reference_exposed=supervised,
+                pde_only_solve=not supervised,
+                benchmark_previously_seen=True,
+                production_initialization_allowed=False,
+                pde_only_solver_qualified=False,
+                official_candidate_results=False,
+            )
     if v8:
         from src.runners.feinn_campaign import AUTHORITY, REVIEW_SHA
         from src.solvers.feinn_discretization_audit import POLICY
@@ -474,6 +509,11 @@ def launch(spec):
 
             ledger["V8"] = campaign_budget(ledger["entries"])
             ledger["remaining_seconds"] = ledger["V8"]["new_remaining_seconds"]
+        if v9:
+            from src.runners.feinn_gn_campaign import campaign_budget
+
+            ledger["V9"] = campaign_budget(ledger["entries"])
+            ledger["remaining_seconds"] = ledger["V9"]["new_remaining_seconds"]
         if (
             ledger["remaining_seconds"] <= 120
             or (stage.startswith("v2_") or stage == "FREE-FE-DUAL-GRAM-DIAG")
@@ -640,6 +680,10 @@ def launch(spec):
             from src.runners.feinn_campaign import DEPENDENCIES
 
             prerequisite_stages = DEPENDENCIES[stage]
+        if v9:
+            from src.runners.feinn_gn_campaign import DEPENDENCIES
+
+            prerequisite_stages = DEPENDENCIES[stage]
         for dependency in prerequisite_stages:
             item = load_index(dependency)
             dependencies[dependency] = dict(
@@ -657,7 +701,10 @@ def launch(spec):
                 cell_tags_sha256=identity["cell_tags_sha256"],
                 mode_sha256=identity["mode_manifest_sha256"],
                 gram_sha256=operator["files"]["gram"]["sha256"]
-                if stage != "FEINN-EUC" and not v7 and not (v8 and stage in AUTHORITY)
+                if stage != "FEINN-EUC"
+                and not v7
+                and not (v8 and stage in AUTHORITY)
+                and not (v9 and stage in GN_AUTHORITY)
                 else None,
                 gram_loaded_by_route=stage
                 in (
@@ -749,6 +796,37 @@ def launch(spec):
                     ],
                 )
         state["frozen_dependencies_before_worker_launch"] = dependencies
+        if v9:
+            state.update(
+                discretization_identity=dict(
+                    degree=5 if stage in GN_AUTHORITY else 3,
+                    volume_quadrature_degree=15,
+                    DtN_quadrature_degree=15,
+                ),
+                gram_loaded_by_route=stage not in GN_AUTHORITY
+                and "reconstruct" not in stage,
+                network_quadrature_degree=15,
+            )
+            if stage in GN_AUTHORITY:
+                state.update(
+                    gram_sha256=None,
+                    actual_discretization_degree=5,
+                    physical_hash_meaning="frozen physics plus explicitly distinct p5 operator; initial capacity checks before export",
+                )
+                if "v9_p5_checks" in dependencies:
+                    p5 = load_index("v9_p5_checks")
+                    state.update(
+                        actual_operator_packet_sha256=p5["files"]["native"]["sha256"],
+                        physical_model_sha256=p5["files"]["native"]["sha256"],
+                        authoritative_packet_stage="v9_p5_checks",
+                        physical_hash_meaning="actual p5 full independent FE packet and fixed affine rhs",
+                    )
+            else:
+                q = load_index("v8_phase_checks")
+                state.update(
+                    network_moments_sha256=q["files"]["moments"]["sha256"],
+                    initial_parameters_sha256=q["result"]["initial_parameters_sha256"],
+                )
         state["qualified_environment_record"] = {
             mode: dict(
                 path=str(ROOT / "tmp/task42extra/setup" / f"{mode}_abi.json"),
@@ -769,6 +847,15 @@ def launch(spec):
             limit = min(limit, ledger["V8"]["groups_remaining_seconds"][group])
             if limit <= 150 or launch_origin + limit - 150 <= perf_counter():
                 raise RuntimeError("V8_BUDGET_RESERVE_UNAVAILABLE")
+        if v9:
+            from src.runners.feinn_gn_campaign import STAGES as GN_STAGES
+
+            group = GN_STAGES[stage][2]
+            limit = min(limit, ledger["V9"]["groups_remaining_seconds"][group])
+            if group != "E":
+                limit = min(limit, ledger["remaining_seconds"] - 1200)
+            if limit <= 150 or launch_origin + limit - 150 <= perf_counter():
+                raise RuntimeError("V9_BUDGET_RESERVE_UNAVAILABLE")
         if stage.startswith("v2_") or stage == "FREE-FE-DUAL-GRAM-DIAG":
             limit = min(limit, ledger["v2_remaining_seconds"])
             if stage == "FREE-FE-DUAL-GRAM-DIAG":
@@ -818,7 +905,7 @@ def launch(spec):
             state["supervision_budget_origin_monotonic"] = perf_counter()
         write_json(directory / "run_manifest.json", state)
         command = [sys.executable, "-m", "src.runners.feinn_workflow", str(directory)]
-        if v4 or v5 or v6 or v7 or v8:
+        if v4 or v5 or v6 or v7 or v8 or v9:
             from src.runners.guarded_exec import ticks
 
             command = [
@@ -831,12 +918,12 @@ def launch(spec):
             ]
         watchdog_seconds = (
             authority_watchdog_window(state, perf_counter())
-            if v7 or v8
+            if v7 or v8 or v9
             else limit - (perf_counter() - launch_origin)
             if v5 or v6
             else limit
         )
-        if v7 or v8:
+        if v7 or v8 or v9:
             state["watchdog_terminal_cutoff_reserve_seconds"] = 150
             write_json(directory / "run_manifest.json", state)
         result = supervise(
@@ -856,7 +943,7 @@ def launch(spec):
             source_state=state,
         )
     result.update(directory=str(directory), stage=stage)
-    if v5 or v6 or v7 or v8:
+    if v5 or v6 or v7 or v8 or v9:
         result.update(
             launch_to_summary_seconds_monotonic=perf_counter() - launch_origin,
             launch_exit_remaining_seconds=limit - (perf_counter() - launch_origin),
@@ -871,7 +958,7 @@ def worker(directory):
     directory = Path(directory)
     manifest = json.loads((directory / "run_manifest.json").read_text())
     stage = manifest["stage"]
-    if stage.startswith(("v4_", "v5_", "v6_", "v7_", "v8_")) or stage in (
+    if stage.startswith(("v4_", "v5_", "v6_", "v7_", "v8_", "v9_")) or stage in (
         "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY",
         "FEINN-FROZEN-HIDDEN-READOUT-G",
         "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT",
@@ -913,7 +1000,13 @@ def worker(directory):
         design = json.loads(DESIGN.read_text())
         if sha(DESIGN) != manifest["design_sha256"]:
             raise RuntimeError("design changed after admission")
-        if stage.startswith("v8_"):
+        if stage.startswith("v9_"):
+            from src.runners.feinn_gn_campaign import dispatch
+
+            result, files = dispatch(
+                stage, design, artifact, marker, manifest, load_index
+            )
+        elif stage.startswith("v8_"):
             from src.runners.feinn_campaign import dispatch
 
             result, files = dispatch(

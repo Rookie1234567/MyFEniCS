@@ -8,6 +8,11 @@ import tomllib
 from src.io.input_loader import InputError
 from src.io.run_specification import RunSpecification
 from src.runners.feinn_campaign import STAGES as CAMPAIGN_STAGES, AUTHORITY
+from src.runners.feinn_gn_campaign import (
+    STAGES as GN_STAGES,
+    AUTHORITY as GN_AUTHORITY,
+    SUPERVISED as GN_SUPERVISED,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 DESIGN = ROOT / "input/task042extra_feinn_5nm/design_v1.json"
@@ -47,6 +52,7 @@ STAGES = {
     "v5_readout_compare_only": ("fe", 900),
 }
 STAGES.update({name: (entry[0], entry[1]) for name, entry in CAMPAIGN_STAGES.items()})
+STAGES.update({name: (entry[0], entry[1]) for name, entry in GN_STAGES.items()})
 
 
 def load_pilot(path):
@@ -68,7 +74,8 @@ def load_pilot(path):
         raise InputError("Task42extra accepts only one frozen explicit stage")
     item = config["task42extra"]
     authority = (
-        item.get("stage", "").startswith("v7_") or item.get("stage") in AUTHORITY
+        item.get("stage", "").startswith("v7_")
+        or item.get("stage") in AUTHORITY | GN_AUTHORITY
     )
     authority_policy = dict(
         audit_kind="DISCRETIZATION_AUTHORITY_AUDIT",
@@ -92,9 +99,9 @@ def load_pilot(path):
     )
     if residual_readout:
         policy.update(features_reference_exposed=True, readout_rhs_uses_reference=False)
-    v8_neural = item.get("stage") in CAMPAIGN_STAGES and not authority
+    v8_neural = item.get("stage") in (CAMPAIGN_STAGES | GN_STAGES) and not authority
     if v8_neural:
-        supervised = item["stage"] in (
+        supervised = item["stage"] in GN_SUPERVISED or item["stage"] in (
             "v8_plain_reference_fit",
             "v8_phase_reference_fit",
             "v8_representation_reconstruct",
@@ -132,13 +139,21 @@ def load_pilot(path):
     mode, seconds = STAGES[item["stage"]]
     return RunSpecification(
         identity=dict(
-            model_id="M5-p3-p4-authority-audit" if authority else "M5-full-p3",
+            model_id=(
+                "M5-p5-authority-audit"
+                if item["stage"] in GN_AUTHORITY
+                else "M5-p3-p4-authority-audit"
+            )
+            if authority
+            else "M5-full-p3",
             run_id=item["run_id"],
         ),
         geometry=design["geometry"],
         materials=design["materials"],
         incidence=design["incidence"],
-        discretization=dict(design["finite_element"], degree=4)
+        discretization=dict(
+            design["finite_element"], degree=5 if item["stage"] in GN_AUTHORITY else 4
+        )
         if authority
         else design["finite_element"],
         boundary=design["boundary"],

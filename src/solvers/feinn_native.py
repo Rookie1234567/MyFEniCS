@@ -61,12 +61,16 @@ class FullNativePacket:
     def volume(self, c, adjoint=False):
         a = self.a
         local = self.expand(c)
-        tensors = a["F"][a["classes"]]
-        values = (
-            np.einsum("cij,ci->cj", tensors.conj(), local)
-            if adjoint
-            else np.einsum("cij,cj->ci", tensors, local)
-        )
+        # Bound tensor expansion, including the higher-order authority audit.
+        values = np.empty_like(local)
+        for first in range(0, self.nc, 8):
+            section = slice(first, min(first + 8, self.nc))
+            tensors = a["F"][a["classes"][section]]
+            values[section] = (
+                np.einsum("cij,ci->cj", tensors.conj(), local[section])
+                if adjoint
+                else np.einsum("cij,cj->ci", tensors, local[section])
+            )
         return self.pullback(values)
 
     def B(self, alpha, adjoint=False):

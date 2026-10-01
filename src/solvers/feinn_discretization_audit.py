@@ -135,14 +135,14 @@ def load_p3(native_index, reference_index):
     return packet, c, dict(paths=paths, material_sha256=EXPECTED["material"], identity=identity)
 
 
-def p3_on_same_mesh(model, packet):
+def p3_on_same_mesh(model, packet, *, degree=3):
     import basix.ufl
     from dolfinx import fem
     from src.constraints.floquet_3d import build_double_floquet_mpc
-    space = fem.functionspace(model["data"].mesh, basix.ufl.element("N1curl", "hexahedron", 3))
+    space = fem.functionspace(model["data"].mesh, basix.ufl.element("N1curl", "hexahedron", degree))
     if not np.array_equal(np.asarray(space.dofmap.list, dtype=np.int64), packet.a["cell_dofs"]):
         raise ValueError("P3_REBUILT_NATIVE_ORDER_FAILED")
-    floquet = build_double_floquet_mpc(space, model["data"], replace(model["cfg"], nedelec_degree=3))
+    floquet = build_double_floquet_mpc(space, model["data"], replace(model["cfg"], nedelec_degree=degree))
     if not np.array_equal(np.sort(floquet.mpc.slaves), np.sort(packet.a["slaves"])):
         raise ValueError("P3_REBUILT_MPC_ORDER_FAILED")
     return space, floquet
@@ -264,7 +264,7 @@ def checks(design, native_index, reference_index, artifact, marker, manifest):
         destroy_same_mesh_physical_action(model["bundle"])
 
 
-def reference(design, native_index, reference_index, checks_index, artifact, marker, manifest, *, assembler=None, independent_factory=None):
+def reference(design, native_index, reference_index, checks_index, artifact, marker, manifest, *, assembler=None, independent_factory=None, degree=4, solve_options=None):
     from src.solvers.feinn_fem import build_model
     from src.solvers.feinn_reference import exact_solve, field_physics
     from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import destroy_same_mesh_physical_action, restore_p0_full_field
@@ -274,7 +274,7 @@ def reference(design, native_index, reference_index, checks_index, artifact, mar
         raise RuntimeError("P4_REFERENCE_U0_NOT_QUALIFIED")
     _, _, original = load_p3(native_index, reference_index)
     packet = load_native(checks_index["files"]["native"]["path"])
-    model = build_model(design, degree=4, marker=marker, dtn_quadrature_degree=15)
+    model = build_model(design, degree=degree, marker=marker, dtn_quadrature_degree=15)
     try:
         equivalence = verify_model(model, original)
         if not np.array_equal(model["space"].dofmap.list, packet.a["cell_dofs"]):
@@ -286,6 +286,8 @@ def reference(design, native_index, reference_index, checks_index, artifact, mar
                        native_sha256=np.asarray(checks_index["files"]["native"]["sha256"]),
                        metadata_json=np.asarray(json.dumps(dict(facts=facts, **POLICY))), **{k: np.asarray(v) for k, v in POLICY.items()})
         options = dict(check_budget=tick, save_packet=save)
+        if solve_options is not None:
+            options.update(solve_options(model, packet, artifact, marker))
         if assembler is not None:
             options["assembler"] = assembler
         c, direct = exact_solve(model, packet, artifact, marker, audit_options=options)
@@ -324,7 +326,7 @@ def reference(design, native_index, reference_index, checks_index, artifact, mar
         destroy_same_mesh_physical_action(model["bundle"])
 
 
-def compare(design, native_index, reference_index, checks_index, p4_index, artifact, marker, manifest):
+def compare(design, native_index, reference_index, checks_index, p4_index, artifact, marker, manifest, *, left_degree=3, right_degree=4, left_loader=None, bounded_integrals=False):
     """Freeze-before-load comparison; no new Maxwell CSR or factor."""
     import ufl
     from dolfinx import fem
@@ -333,17 +335,17 @@ def compare(design, native_index, reference_index, checks_index, p4_index, artif
     tick, cutoff = clock(manifest)
     if not p4_index["result"]["reference_qualified"]:
         raise RuntimeError("P4_REFERENCE_NOT_QUALIFIED_FOR_COMPARISON")
-    packet3, c3, original = load_p3(native_index, reference_index)
+    packet3, c3, original = (left_loader or load_p3)(native_index, reference_index)
     packet4 = load_native(checks_index["files"]["native"]["path"])
     with np.load(p4_index["files"]["reference"]["path"], allow_pickle=False) as saved:
         c4 = np.array(saved["c_scattered"])
         alpha4 = np.array(saved["alpha_total"])
     if np.linalg.norm(alpha4 - packet4.a["background_alpha"] - packet4.alpha(c4)) / np.linalg.norm(alpha4) > 1e-10:
         raise ValueError("P4_FROZEN_PORT_IDENTITY_FAILED")
-    model = build_model(design, degree=4, marker=marker, dtn_quadrature_degree=15)
+    model = build_model(design, degree=right_degree, marker=marker, dtn_quadrature_degree=15)
     try:
         equivalence = verify_model(model, original)
-        _, f3 = p3_on_same_mesh(model, packet3)
+        _, f3 = p3_on_same_mesh(model, packet3, degree=left_degree)
         fields = {}
         for kind in ("total", "scattered"):
             left = c3 + packet3.a["background"] if kind == "total" else c3
@@ -353,21 +355,28 @@ def compare(design, native_index, reference_index, checks_index, p4_index, artif
         k0 = model["cfg"].k0
         msh = model["data"].mesh
         natural = float(np.sqrt(np.prod([axis[-1] - axis[0] for axis in model["axes"]])))
+        if bounded_integrals:
+            from src.solvers.feinn_bounded_field_integrals import BoundedFieldIntegrals
+            bounded = BoundedFieldIntegrals(msh, k0)
+        def difference(left, right):
+            return (left, right) if bounded_integrals else left-right
         def energies(E, q=15, indicator=1):
             tick("common energy degree " + str(q))
+            if bounded_integrals:
+                return bounded.energies(E, q=q, indicator=indicator)
             dx = ufl.Measure("dx", domain=msh, metadata={"quadrature_degree": q})
             raw = [fem.assemble_scalar(fem.form(indicator * form * dx)) for form in (ufl.inner(E, E), ufl.inner(ufl.curl(E), ufl.curl(E)) / k0**2)]
             return np.array([positive_energy(v, max(natural**2, abs(v))) for v in raw])
         errors, energy_pairs = {}, {}
         for kind, (left, right) in fields.items():
-            le, re, de = energies(left), energies(right), energies(left - right)
+            le, re, de = energies(left), energies(right), energies(difference(left, right))
             energy_pairs[kind] = dict(p3=le, p4=re, difference=de)
             for j, name in enumerate(("L2", "scaled_curl")):
                 errors[kind + "_" + name] = difference_record(np.sqrt(le[j]), np.sqrt(re[j]), np.sqrt(de[j]), natural)
         # Exactly one q30 difference-only pass for each total/scattered field.
         qchecks = {}
         for kind, (left, right) in fields.items():
-            q30 = energies(left - right, q=30)
+            q30 = energies(difference(left, right), q=30)
             q15 = np.asarray(energy_pairs[kind]["difference"])
             scale = np.maximum(np.asarray(energy_pairs[kind]["p4"]), 1e-24 * natural**2)
             qchecks[kind] = dict(degree15=q15, degree30=q30, denominator_energy=scale,
@@ -405,7 +414,7 @@ def compare(design, native_index, reference_index, checks_index, p4_index, artif
                 indicator.x.array[dg0.dofmap.cell_dofs(int(cell))[0]] = 1
             regional[name] = dict(cells=len(cell_ids), cell_ids=cell_ids, cell_ids_sha256=array_hash(cell_ids.astype(np.int32)), fields={})
             for kind, (left, right) in fields.items():
-                le, re, de = energies(left, indicator=indicator), energies(right, indicator=indicator), energies(left-right, indicator=indicator)
+                le, re, de = energies(left, indicator=indicator), energies(right, indicator=indicator), energies(difference(left, right), indicator=indicator)
                 regional[name]["fields"][kind] = {key: difference_record(np.sqrt(le[j]), np.sqrt(re[j]), np.sqrt(de[j]), natural * np.sqrt(len(cell_ids)/len(tags))) for j, key in enumerate(("L2", "scaled_curl"))}
         # Original reference physical observables are reused by physical key,
         # side, polarization and reference plane, rather than file row number.

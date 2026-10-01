@@ -1,0 +1,155 @@
+{
+  "schema": "task42extra.campaign-design.v9",
+  "review_release": "678a1ef5ed5aba9334f05569a6dec04c80e21be4",
+  "reviewed_baseline": "52e65aa24de3c22ae9af1ae42d25706cf51b395c",
+  "fixed_physics": "M5/5nm/384hex/h1.25/Si-air/notch/double-Floquet/M40/q15",
+  "nn": "3x64 tanh/6/8966real/FP64/seed421001",
+  "stages": {
+    "v9_p5_checks": [
+      "fe",
+      1800,
+      "A"
+    ],
+    "v9_p5_reference": [
+      "fe",
+      3600,
+      "A"
+    ],
+    "v9_p_ladder_compare": [
+      "fe",
+      1800,
+      "A"
+    ],
+    "v9_gn_checks": [
+      "ml",
+      3600,
+      "B"
+    ],
+    "v9_plain_gn": [
+      "ml",
+      9702.35869187396,
+      "C"
+    ],
+    "v9_phase_gn": [
+      "ml",
+      9655.15127597,
+      "C"
+    ],
+    "v9_gn_reconstruct": [
+      "ml",
+      900,
+      "E"
+    ],
+    "v9_gn_compare": [
+      "fe",
+      900,
+      "E"
+    ],
+    "v9_plain_fit_gn": [
+      "ml",
+      2610.2993306899443,
+      "D"
+    ],
+    "v9_phase_fit_gn": [
+      "ml",
+      2580.8954684759956,
+      "D"
+    ],
+    "v9_fit_gn_reconstruct": [
+      "ml",
+      900,
+      "E"
+    ],
+    "v9_fit_gn_compare": [
+      "fe",
+      900,
+      "E"
+    ]
+  },
+  "limits_seconds": {
+    "A": 7200,
+    "B": 3600,
+    "C": 21600,
+    "D": 7200,
+    "E": 3600
+  },
+  "old_project_seconds": 74341.02060587064,
+  "new_seconds": 43200,
+  "reserve_E_seconds": 1200,
+  "GN": {
+    "h0_seed": 421901,
+    "h0_power_actions": 6,
+    "mu_initial_ratio": 0.001,
+    "mu_bounds": [
+      1e-12,
+      1000000.0
+    ],
+    "CG_true_relative": 0.01,
+    "CG_max": 40,
+    "PCG_max": 80,
+    "max_damping_trials": 8,
+    "accept_eta": 0.1,
+    "reject_mu_multiplier": 10,
+    "PC_rank": 32,
+    "PC_seed": 421902,
+    "PC_rcond": 1e-12,
+    "C_caps": {
+      "accepted_outer": 120,
+      "K": 4000,
+      "JVP_plus_VJP": 8000,
+      "trial_loss": 512,
+      "PC_builds": 2
+    },
+    "D_caps": {
+      "accepted_outer": 60,
+      "K": 1000,
+      "JVP_plus_VJP": 2500,
+      "trial_loss": 256,
+      "PC_builds": 1
+    },
+    "Cauchy_scales": [
+      1,
+      0.5,
+      0.25
+    ]
+  },
+  "prefixes": {
+    "plain_dual": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v8_plain_dual_20260930T162035764314Z/durable_checkpoints/committed_000500.pt",
+      "sha256": "e976d3e629c433c1f1dc6b7ae3c343acaa5dfa5cd948818231e93a3a9298f9a0",
+      "attributed_seconds": 1097.6413081260398
+    },
+    "phase_dual": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v8_phase_dual_20260930T185704939802Z/durable_checkpoints/committed_000500.pt",
+      "sha256": "07c77c468c175edc9455025651a058ac589f2313fc1f15d9b38c3c6628daffae",
+      "attributed_seconds": 1144.8487240300747
+    },
+    "plain_reference_fit": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v8_plain_reference_fit_20260930T212620582893Z/durable_checkpoints/committed_000500.pt",
+      "sha256": "1f3929eacd6afe3b19b5bc6552a37316326bd9b3434f14060cafd81c39716234",
+      "attributed_seconds": 989.7006693100557
+    },
+    "phase_reference_fit": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v8_phase_reference_fit_20260930T221435553454Z/durable_checkpoints/committed_000500.pt",
+      "sha256": "91c7696d34eec5c01e90be6559198bd8983fe81affa8640393a3be532d8041aa",
+      "attributed_seconds": 1019.1045315240044
+    }
+  },
+  "PDE_training_whitelist": [
+    "e1_fe/native",
+    "e1_fe/gram",
+    "v8_phase_checks/moments",
+    "own V8-C Adam500"
+  ],
+  "PDE_forbidden": [
+    "reference_state",
+    "V8-D model",
+    "p4/p5",
+    "Phi/Q"
+  ],
+  "reference_only_p5": true,
+  "numeric_retries_max": 3,
+  "root_cause_retries_max": 3,
+  "fault_resumes_per_route_max": 2,
+  "budget_transfers": []
+}

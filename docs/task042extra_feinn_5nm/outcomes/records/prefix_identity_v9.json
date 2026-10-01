@@ -1,0 +1,233 @@
+{
+  "schema": "task42extra.prefix-identity.v9",
+  "checkpoints": {
+    "plain_dual": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v8_plain_dual_20260930T162035764314Z/durable_checkpoints/committed_000500.pt",
+      "sha256": "e976d3e629c433c1f1dc6b7ae3c343acaa5dfa5cd948818231e93a3a9298f9a0",
+      "bytes": 1085218,
+      "metadata": {
+        "state_kind": "Adam500",
+        "route": "V8-PLAIN-DUAL",
+        "stage": "Adam",
+        "source_sha": "bc052a3744528277f00a7a9a5566aa4a6d7393ed",
+        "input_sha256": "d3b2b2e96c553270c23cca184306c0a0a36daeb754404040092fce2c6de926c1",
+        "run_id": "task42extra_v8_plain_dual_20260930T162035764314Z",
+        "counts": {
+          "complete_closures": 500,
+          "closure_attempts": 500,
+          "committed_outer_steps": 500,
+          "Adam_updates": 500,
+          "LBFGS_outer_steps": 0,
+          "LBFGS_inner_iterations": 0,
+          "native_audits": 5
+        },
+        "committed_complete_closures": 500,
+        "initial_parameters_sha256": "11d8cd454281fab85cfc59f04cee6aa7b864157d9f98513830947a0223d64103",
+        "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "Gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+        "moments_sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e",
+        "label_identity": null,
+        "elapsed_charged_seconds": 1097.6413081260398,
+        "closure_limit": 4000,
+        "wall_limit_seconds": 10800,
+        "closure_cutoff_monotonic": 720850.609070212,
+        "buffers_sha256": {
+          "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+          "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+        },
+        "reference_used_for_training": false,
+        "features_reference_exposed": false,
+        "pde_only_solve": true,
+        "benchmark_previously_seen": true,
+        "production_initialization_allowed": false,
+        "pde_only_solver_qualified": false,
+        "official_candidate_results": false,
+        "accepted_update_norm": 0.00014740309014922996,
+        "accepted_relative_update": 1.7607724726473074e-05,
+        "complete_c_sha256": "8b5c52d39914642322dba13d21dcf3be443e75a9b5113bdf33f66dc99390dcd4"
+      }
+    },
+    "phase_dual": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v8_phase_dual_20260930T185704939802Z/durable_checkpoints/committed_000500.pt",
+      "sha256": "07c77c468c175edc9455025651a058ac589f2313fc1f15d9b38c3c6628daffae",
+      "bytes": 1095900,
+      "metadata": {
+        "state_kind": "Adam500",
+        "route": "V8-PHASE-DUAL",
+        "stage": "Adam",
+        "source_sha": "bc052a3744528277f00a7a9a5566aa4a6d7393ed",
+        "input_sha256": "d446c53dbd959bcb06c851bf0084075697456dd8c4404e30765ed47458749d42",
+        "run_id": "task42extra_v8_phase_dual_20260930T185704939802Z",
+        "counts": {
+          "complete_closures": 500,
+          "closure_attempts": 500,
+          "committed_outer_steps": 500,
+          "Adam_updates": 500,
+          "LBFGS_outer_steps": 0,
+          "LBFGS_inner_iterations": 0,
+          "native_audits": 5
+        },
+        "committed_complete_closures": 500,
+        "initial_parameters_sha256": "11d8cd454281fab85cfc59f04cee6aa7b864157d9f98513830947a0223d64103",
+        "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "Gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+        "moments_sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e",
+        "label_identity": null,
+        "elapsed_charged_seconds": 1144.8487240300747,
+        "closure_limit": 4000,
+        "wall_limit_seconds": 10800,
+        "closure_cutoff_monotonic": 730239.784831623,
+        "buffers_sha256": {
+          "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+          "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+          "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+          "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+        },
+        "reference_used_for_training": false,
+        "features_reference_exposed": false,
+        "pde_only_solve": true,
+        "benchmark_previously_seen": true,
+        "production_initialization_allowed": false,
+        "pde_only_solver_qualified": false,
+        "official_candidate_results": false,
+        "accepted_update_norm": 0.0002507410229703214,
+        "accepted_relative_update": 2.9803009228337427e-05,
+        "complete_c_sha256": "84b2dc1e44955197492055a182518b48d256f1d7aded896aa0fcbc1a8e930db5"
+      }
+    },
+    "plain_reference_fit": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v8_plain_reference_fit_20260930T212620582893Z/durable_checkpoints/committed_000500.pt",
+      "sha256": "1f3929eacd6afe3b19b5bc6552a37316326bd9b3434f14060cafd81c39716234",
+      "bytes": 1081570,
+      "metadata": {
+        "state_kind": "Adam500",
+        "route": "V8-PLAIN-REFERENCE-FIT",
+        "stage": "Adam",
+        "source_sha": "bc052a3744528277f00a7a9a5566aa4a6d7393ed",
+        "input_sha256": "89eabc28ad2823f8369bbfd4281c212f7845f92d695167adad6cf111296db0d8",
+        "run_id": "task42extra_v8_plain_reference_fit_20260930T212620582893Z",
+        "counts": {
+          "complete_closures": 500,
+          "closure_attempts": 500,
+          "committed_outer_steps": 500,
+          "Adam_updates": 500,
+          "LBFGS_outer_steps": 0,
+          "LBFGS_inner_iterations": 0,
+          "native_audits": 5
+        },
+        "committed_complete_closures": 500,
+        "initial_parameters_sha256": "11d8cd454281fab85cfc59f04cee6aa7b864157d9f98513830947a0223d64103",
+        "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "Gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+        "moments_sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e",
+        "label_identity": {
+          "reference_state": {
+            "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_e3_reference_20260929T180549681297Z/reference_state.npz",
+            "sha256": "0c3c0574a8c1eddcadfb56268e00c08e55d5cb15d44c0c76e873fcea0c467ff7"
+          },
+          "source_sha": "7a79b3007d92a9b699e0451d0c8b6dfdacee7ad9",
+          "port_recovery_relative": 4.4596663759104176e-13,
+          "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+          "gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+          "mesh_sha256": "78e294e0337292d2750f587ddf394aaa868bd726f8b1104d4eae6a68db039086",
+          "cell_tags_sha256": "4c3e6d3a6dedeba8a995bb69487c52e25ae41528ee03bb237d6e2edb1643e65b",
+          "mode_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e",
+          "material_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+          "independent_master_count": 31968,
+          "slave_count": 2082,
+          "reference_used_for_training": true,
+          "pde_only_solve": false,
+          "production_initialization_allowed": false,
+          "data_role": "REFERENCE_EXPOSED_DIAGNOSTIC_ONLY"
+        },
+        "elapsed_charged_seconds": 989.7006693100557,
+        "closure_limit": 1500,
+        "wall_limit_seconds": 3600,
+        "closure_cutoff_monotonic": 731995.427440068,
+        "buffers_sha256": {
+          "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+          "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+        },
+        "reference_used_for_training": true,
+        "features_reference_exposed": true,
+        "pde_only_solve": false,
+        "benchmark_previously_seen": true,
+        "production_initialization_allowed": false,
+        "pde_only_solver_qualified": false,
+        "official_candidate_results": false,
+        "accepted_update_norm": 0.008949384876855405,
+        "accepted_relative_update": 0.0008884915122131781,
+        "complete_c_sha256": "8c30b1e86c98fb70f70c76ad29ad4ea6cda66d5b586c155f7d6e343962ed12b6"
+      }
+    },
+    "phase_reference_fit": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v8_phase_reference_fit_20260930T221435553454Z/durable_checkpoints/committed_000500.pt",
+      "sha256": "91c7696d34eec5c01e90be6559198bd8983fe81affa8640393a3be532d8041aa",
+      "bytes": 1090524,
+      "metadata": {
+        "state_kind": "Adam500",
+        "route": "V8-PHASE-REFERENCE-FIT",
+        "stage": "Adam",
+        "source_sha": "bc052a3744528277f00a7a9a5566aa4a6d7393ed",
+        "input_sha256": "e68011fd25c2db368bcbb6b94bb59741e07459d3ecc4d5078d1d8ea577b54bc1",
+        "run_id": "task42extra_v8_phase_reference_fit_20260930T221435553454Z",
+        "counts": {
+          "complete_closures": 500,
+          "closure_attempts": 500,
+          "committed_outer_steps": 500,
+          "Adam_updates": 500,
+          "LBFGS_outer_steps": 0,
+          "LBFGS_inner_iterations": 0,
+          "native_audits": 5
+        },
+        "committed_complete_closures": 500,
+        "initial_parameters_sha256": "11d8cd454281fab85cfc59f04cee6aa7b864157d9f98513830947a0223d64103",
+        "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "Gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+        "moments_sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e",
+        "label_identity": {
+          "reference_state": {
+            "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_e3_reference_20260929T180549681297Z/reference_state.npz",
+            "sha256": "0c3c0574a8c1eddcadfb56268e00c08e55d5cb15d44c0c76e873fcea0c467ff7"
+          },
+          "source_sha": "7a79b3007d92a9b699e0451d0c8b6dfdacee7ad9",
+          "port_recovery_relative": 4.4596663759104176e-13,
+          "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+          "gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+          "mesh_sha256": "78e294e0337292d2750f587ddf394aaa868bd726f8b1104d4eae6a68db039086",
+          "cell_tags_sha256": "4c3e6d3a6dedeba8a995bb69487c52e25ae41528ee03bb237d6e2edb1643e65b",
+          "mode_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e",
+          "material_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+          "independent_master_count": 31968,
+          "slave_count": 2082,
+          "reference_used_for_training": true,
+          "pde_only_solve": false,
+          "production_initialization_allowed": false,
+          "data_role": "REFERENCE_EXPOSED_DIAGNOSTIC_ONLY"
+        },
+        "elapsed_charged_seconds": 1019.1045315240044,
+        "closure_limit": 1500,
+        "wall_limit_seconds": 3600,
+        "closure_cutoff_monotonic": 734890.397205552,
+        "buffers_sha256": {
+          "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+          "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+          "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+          "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+        },
+        "reference_used_for_training": true,
+        "features_reference_exposed": true,
+        "pde_only_solve": false,
+        "benchmark_previously_seen": true,
+        "production_initialization_allowed": false,
+        "pde_only_solver_qualified": false,
+        "official_candidate_results": false,
+        "accepted_update_norm": 0.0010957406671839578,
+        "accepted_relative_update": 0.00012808952584016832,
+        "complete_c_sha256": "da97d015a024b86111d92410a3cde38048268ce5e0438ebf517111259d643288"
+      }
+    }
+  },
+  "actual_torch_boundary_checks": "NOT_RUN",
+  "historical_files_unchanged": true
+}
