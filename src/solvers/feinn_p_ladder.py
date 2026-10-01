@@ -43,7 +43,7 @@ def checks(design, native, reference, artifact, marker, manifest):
     small["geometry"]["cells"] = [2, 2, 2]
     cfg, data, s4, *_ = full_space(small, 4)
     s5 = fem.functionspace(data.mesh, basix.ufl.element("N1curl", "hexahedron", 5))
-    f4 = build_double_floquet_mpc(s4, data, cfg)
+    f4 = build_double_floquet_mpc(s4, data, replace(cfg, nedelec_degree=4))
     f5 = build_double_floquet_mpc(s5, data, replace(cfg, nedelec_degree=5))
     transfer = embedding_check(data, s4, f4, s5, f5, seed=421901)
     if not transfer["passed"]:

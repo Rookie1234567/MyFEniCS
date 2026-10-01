@@ -9,6 +9,18 @@
       "test": "all four unique Adam500 files byte-hash equal frozen index",
       "retry": 2,
       "outcome": "RESOLVED_WITHOUT_NUMERICAL_REPLAY"
+    },
+    {
+      "root_cause": "p4 small-space MPC configuration degree metadata",
+      "failure_run": "task42extra_v9_p5_checks_20261001T011116502021Z",
+      "failure": "Config trace degree and function-space edge/face layout disagree",
+      "hypothesis": "full_space(degree=4) returns geometry configuration with default p3",
+      "change": "explicit dataclasses.replace(cfg,nedelec_degree=4) for small p4 MPC",
+      "test": "small p4 FE/MPC targeted probe passed",
+      "retry": 1,
+      "p5_numeric_attempts": 0,
+      "cost_retained": true,
+      "outcome": "QUALIFIED_FOR_RETRY"
     }
   ]
 }

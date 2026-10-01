@@ -297,7 +297,12 @@ def launch(spec):
         )
         from src.solvers.feinn_discretization_audit import POLICY
 
-        proof = ROOT / "tmp/task42extra/durable" / stage / "terminal_identity.json"
+        namespace = os.environ.get("TASK42EXTRA_DURABLE_NAMESPACE", stage)
+        if namespace != stage and namespace not in {
+            stage + "_attempt" + str(k) for k in (2, 3, 4)
+        }:
+            raise RuntimeError("UNAUTHORIZED_DURABLE_ATTEMPT_NAMESPACE")
+        proof = ROOT / "tmp/task42extra/durable" / namespace / "terminal_identity.json"
         if not proof.exists():
             raise RuntimeError("DURABLE_TERMINAL_PROOF_REQUIRED")
         state.update(
@@ -812,6 +817,11 @@ def launch(spec):
                     gram_sha256=None,
                     actual_discretization_degree=5,
                     physical_hash_meaning="frozen physics plus explicitly distinct p5 operator; initial capacity checks before export",
+                )
+                state.update(
+                    p3_dependency_native_sha256=state["actual_operator_packet_sha256"],
+                    actual_operator_packet_sha256=None,
+                    physical_model_sha256=state["design_sha256"],
                 )
                 if "v9_p5_checks" in dependencies:
                     p5 = load_index("v9_p5_checks")
