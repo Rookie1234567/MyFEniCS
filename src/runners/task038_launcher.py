@@ -3217,6 +3217,11 @@ def _reserve_task40_0p7nm_budget(
     service_cgroup_path: Path,
     **kwargs: Any,
 ) -> dict[str, Any]:
+    from src.geometry.task40_nonseparable_plan import (
+        TASK40_COMPARISON_GROUP,
+        TASK40_F1_REFERENCE_METRIC_RUN_ID,
+    )
+
     legacy_run_ids = {
         "task40extra_0p7nm_nonseparable_g0_iterative_v1",
         "task40extra_0p7nm_nonseparable_g1_iterative_v1",
@@ -3225,11 +3230,10 @@ def _reserve_task40_0p7nm_budget(
         "task40extra_0p7nm_nonseparable_g0_iterative_review_v1",
         "task40extra_0p7nm_nonseparable_g1_iterative_review_v1",
     }
-    allowed_run_ids = legacy_run_ids | review_v1_run_ids
-    if run_id not in allowed_run_ids or comparison_group != (
-        "task40extra_0p7nm_nonseparable_n0_n6"
-    ):
-        raise InputError("Task40 budget requires one of its two frozen iterative cases")
+    review_v2_f1_run_ids = {TASK40_F1_REFERENCE_METRIC_RUN_ID}
+    allowed_run_ids = legacy_run_ids | review_v1_run_ids | review_v2_f1_run_ids
+    if run_id not in allowed_run_ids or comparison_group != TASK40_COMPARISON_GROUP:
+        raise InputError("Task40 budget requires a run authorized by its review batch")
     repo_root = Path(repo_root).resolve()
     run_ledger_root = (
         repo_root / "benchmarks" / "artifacts"
@@ -3254,6 +3258,15 @@ def _reserve_task40_0p7nm_budget(
             "fresh_worker_count": 0,
             "ledger_sha256": {},
         },
+        "review_v2_f1": {
+            "run_ids": sorted(review_v2_f1_run_ids),
+            "ledger_count": 0,
+            "unique_bug_replay_count": 0,
+            "elapsed_seconds": 0.0,
+            "conservative_allowance_seconds": 0.0,
+            "fresh_worker_count": 0,
+            "ledger_sha256": {},
+        },
     }
     for prior_run_id in allowed_run_ids:
         ledger_path = (
@@ -3270,7 +3283,12 @@ def _reserve_task40_0p7nm_budget(
             != "task40extra.nonseparable-0p7nm.shared-workflow-ledger.v1"
         ):
             raise InputError("Task40 sibling workflow ledger identity changed")
-        group = "review_v1" if prior_run_id in review_v1_run_ids else "legacy"
+        if prior_run_id in review_v1_run_ids:
+            group = "review_v1"
+        elif prior_run_id in review_v2_f1_run_ids:
+            group = "review_v2_f1"
+        else:
+            group = "legacy"
         group_facts = replay_accounting[group]
         group_facts["ledger_count"] += 1
         group_facts["unique_bug_replay_count"] += int(
@@ -3288,10 +3306,18 @@ def _reserve_task40_0p7nm_budget(
         group_facts["ledger_sha256"][prior_run_id] = hashlib.sha256(
             ledger_path.read_bytes()
         ).hexdigest()
-    selected_batch = "review_v1" if run_id in review_v1_run_ids else "legacy"
+    if run_id in review_v1_run_ids:
+        selected_batch = "review_v1"
+    elif run_id in review_v2_f1_run_ids:
+        selected_batch = "review_v2_f1"
+    else:
+        selected_batch = "legacy"
     selected_history = replay_accounting[selected_batch]
+    used_bug_replays = int(selected_history["unique_bug_replay_count"])
     replay_limit = (
-        0 if selected_history["unique_bug_replay_count"] >= 1 else 1
+        used_bug_replays + 1
+        if selected_batch == "review_v2_f1"
+        else (0 if used_bug_replays >= 1 else 1)
     )
     continuation = None
     record_path = repo_root / (
@@ -4128,7 +4154,7 @@ def launch_specification(
         A4_TENSOR_H6_PROFILE,
         WORKSTATION_GUIDED_LOCAL_V30_PROFILE,
         PROJECTION_LAYOUT_V31_PROFILE,
-        TASK40_0P7NM_PROFILE,
+        TASK40_PROFILES,
         profile_facts,
     )
     from src.io.physical_balanced_profile import BALANCED_PROFILES, BOUNDED_PROFILES
@@ -4160,7 +4186,7 @@ def launch_specification(
         == PROJECTION_LAYOUT_V31_PROFILE
     )
     task40_0p7nm_profile = (
-        specification.solver.get('preconditioner') == TASK40_0P7NM_PROFILE
+        specification.solver.get('preconditioner') in TASK40_PROFILES
     )
     setup_efficiency_profile = (
         setup_efficiency_v26_profile
@@ -4194,7 +4220,7 @@ def launch_specification(
         A4_TENSOR_H6_PROFILE,
         WORKSTATION_GUIDED_LOCAL_V30_PROFILE,
         PROJECTION_LAYOUT_V31_PROFILE,
-        TASK40_0P7NM_PROFILE,
+        *TASK40_PROFILES,
     }
     cell_stage = str(specification.solver.get('stage', ''))
     v25_authorized_performance_repeat = None

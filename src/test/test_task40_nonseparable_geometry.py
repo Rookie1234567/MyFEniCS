@@ -19,6 +19,8 @@ from src.common.config_3d import ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
 from src.constraints.floquet_3d import build_double_floquet_mpc
 from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
 from src.geometry.task40_nonseparable_plan import (
+    TASK40_COMPARISON_GROUP,
+    TASK40_F1_REFERENCE_METRIC_RUN_ID,
     TASK40_GEOMETRY_IDENTITY,
     TASK40_PROFILE,
     task40_mesh_plan,
@@ -40,6 +42,7 @@ G0 = INPUT_ROOT / "nonseparable_g0_p6_q4.dat"
 G1 = INPUT_ROOT / "nonseparable_g1_p6_q4.dat"
 G0_REVIEW_V1 = INPUT_ROOT / "nonseparable_g0_p6_q4_review_v1.dat"
 G1_REVIEW_V1 = INPUT_ROOT / "nonseparable_g1_p6_q4_review_v1.dat"
+F1_REFERENCE_METRIC = INPUT_ROOT / "nonseparable_g1_p6_q4_reference_metric_f1.dat"
 G0_DIRECT = INPUT_ROOT / "nonseparable_g0_p6_direct_reference.dat"
 
 
@@ -368,10 +371,11 @@ def test_task40_swap_qualification_uses_task_tree_and_keeps_global_delta_diagnos
     assert launcher._task40_swap_qualification(authority)["status"] == "UNRESOLVED"
 
 
+@pytest.mark.parametrize("input_path", (G0_REVIEW_V1, F1_REFERENCE_METRIC))
 def test_task40_launcher_mock_keeps_service_scope_and_task_tree_swap_gate(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    input_path: Path, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ):
-    specification = load_and_resolve(G0_REVIEW_V1)
+    specification = load_and_resolve(input_path)
     run_directory = tmp_path / "task40-launch"
     service_cgroup = Path(
         "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/"
@@ -434,6 +438,13 @@ def test_task40_launcher_mock_keeps_service_scope_and_task_tree_swap_gate(
         specification, source_sha="a" * 40, v14_time_policy="observe_only"
     )
     assert reservation["service_cgroup_path"] == service_cgroup
+    assert reservation["run_id"] == specification.identity["run_id"]
+    assert reservation["comparison_group"] == TASK40_COMPARISON_GROUP
+    assert observed["kwargs"]["time_policy"] == "observe_only"
+    assert observed["kwargs"]["memory_policy"] == profile_facts(
+        specification.solver["preconditioner"]
+    )["resources"]["watchdog_memory_policy"]
+    assert observed["kwargs"]["pss_sampling_policy"] == "disabled_by_profile"
     assert observed["kwargs"]["allow_swap_observation"] is False
     assert observed["kwargs"]["stop_on_global_swap"] is False
     assert result["result_classification"] == "worker_exit0"
@@ -536,6 +547,24 @@ def test_task40_review_v1_batch_separates_old_cost_and_shares_one_replay(
     assert g1_accounting["legacy"]["unique_bug_replay_count"] == 3
     assert g1_accounting["review_v1"]["unique_bug_replay_count"] == 1
     assert g1_accounting["selected_bug_replay_limit"] == 0
+
+    f1 = load_and_resolve(F1_REFERENCE_METRIC)
+    assert f1.physical_model_sha256 == load_and_resolve(G1).physical_model_sha256
+    assert _task40_worker_batch_identity(f1.as_jsonable()) == TASK40_F1_REFERENCE_METRIC_RUN_ID
+    f1_reservation = reserve(f1, "review-v2-f1-run", "c" * 40)
+    f1_accounting = json.loads(
+        Path(f1_reservation["task40_batch_replay_accounting_path"]).read_text(
+            encoding="utf-8"
+        )
+    )
+    assert f1_reservation["replay"] is False
+    assert f1_accounting["selected_batch"] == "review_v2_f1"
+    assert f1_accounting["legacy"]["unique_bug_replay_count"] == 3
+    assert f1_accounting["review_v1"]["unique_bug_replay_count"] == 1
+    assert f1_accounting["review_v2_f1"]["run_ids"] == [
+        TASK40_F1_REFERENCE_METRIC_RUN_ID
+    ]
+    assert f1_accounting["selected_bug_replay_limit"] == 1
 
 
 def test_task40_worker_identity_opens_the_reserved_v14_runtime_ledger(

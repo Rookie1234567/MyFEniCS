@@ -7,6 +7,10 @@ from pathlib import Path
 
 import pytest
 
+from src.geometry.task40_nonseparable_plan import (
+    TASK40_COMPARISON_GROUP,
+    TASK40_F1_REFERENCE_METRIC_RUN_ID,
+)
 from src.io import InputError
 from src.runners import task038_launcher as launcher
 
@@ -20,7 +24,7 @@ CLOCK = {"monotonic_seconds": 0.0, "boottime_seconds": 0.0, "utc_seconds": 0.0}
 def reserve(root, name, source, run_id=RUN_ID):
     return launcher._reserve_task40_0p7nm_budget(
         root, root / name, run_id=run_id,
-        comparison_group="task40extra_0p7nm_nonseparable_n0_n6",
+        comparison_group=TASK40_COMPARISON_GROUP,
         source_sha=source, stage="Q4_ORIGINAL",
         stage_budget={"workflow_seconds": 43200.0},
         workflow_clock_start=CLOCK, time_policy="observe_only",
@@ -102,3 +106,65 @@ def test_task40_explicit_bug_continuation_preserves_history(tmp_path, invalid):
     g1 = reserve(tmp_path, "g1", "c" * 40, RUN_ID.replace("g0_", "g1_"))
     assert g1["replay"] is False
     assert "user_bug_continuation" not in g1["prerequisite"]
+
+
+
+def test_task40_review_v2_f1_allows_next_hash_bound_bug_repair_after_one_use(
+    tmp_path,
+):
+    review_v1_run_id = "task40extra_0p7nm_nonseparable_g0_iterative_review_v1"
+    old_path = (
+        tmp_path
+        / "benchmarks/artifacts/task40extra_0p7nm_engineering/"
+        / "task40_nonseparable_0p7nm"
+        / review_v1_run_id
+        / "shared_workflow_ledger.json"
+    )
+    old_path.parent.mkdir(parents=True)
+    old_path.write_text(
+        json.dumps(
+            {
+                "schema": "task40extra.nonseparable-0p7nm.shared-workflow-ledger.v1",
+                "batch_identity": review_v1_run_id,
+                "unique_bug_replay_count": 1,
+                "elapsed_seconds": 900.0,
+                "conservative_allowance_seconds": 120.0,
+                "fresh_worker_count": 2,
+            }
+        ),
+        encoding="utf-8",
+    )
+    old_bytes = old_path.read_bytes()
+
+    first = reserve(
+        tmp_path,
+        "review-v2-f1-first",
+        "a" * 40,
+        run_id=TASK40_F1_REFERENCE_METRIC_RUN_ID,
+    )
+    fail(first, "b" * 40)
+    second = reserve(
+        tmp_path,
+        "review-v2-f1-first-repair",
+        "b" * 40,
+        run_id=TASK40_F1_REFERENCE_METRIC_RUN_ID,
+    )
+    assert second["replay"] is True
+    fail(second, "c" * 40)
+
+    ledger_after_one_replay = json.loads(Path(second["path"]).read_bytes())
+    assert ledger_after_one_replay["unique_bug_replay_count"] == 1
+    third = reserve(
+        tmp_path,
+        "review-v2-f1-second-repair",
+        "c" * 40,
+        run_id=TASK40_F1_REFERENCE_METRIC_RUN_ID,
+    )
+    assert third["replay"] is True
+    assert third["replay_evidence"]["classification"] == "IMPLEMENTATION_BUG"
+    assert third["replay_evidence"]["failed_source_sha"] == "b" * 40
+    assert third["replay_evidence"]["fixed_source_sha"] == "c" * 40
+    assert json.loads(Path(third["path"]).read_bytes())[
+        "unique_bug_replay_count"
+    ] == 2
+    assert old_path.read_bytes() == old_bytes
