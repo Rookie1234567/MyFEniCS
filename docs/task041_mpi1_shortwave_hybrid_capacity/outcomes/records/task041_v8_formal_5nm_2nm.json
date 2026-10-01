@@ -95,9 +95,9 @@
       "classification": "bounded diagnostic; not formal qualification"
     }
   ],
-  "observed_utc": "2026-10-01T14:54:04Z",
+  "observed_utc": "2026-10-01T15:54:56Z",
   "progress": {
-    "phase": "modal_full_build_bottom_256_of_960",
+    "phase": "modal_full_build_bottom_320_of_960",
     "formal_responses_completed": "not_yet_emitted",
     "expected_formal_responses": 1920,
     "outer_fgmres_iterations": "not_yet_emitted",
@@ -122,7 +122,7 @@
     "two_nm": "not_started"
   },
   "record_type": "task041_review_v8_formal_progress",
-  "record_written_utc": "2026-10-01T14:54:04Z",
+  "record_written_utc": "2026-10-01T15:54:56Z",
   "repository": {
     "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
     "runtime_source_sha": "d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f",
@@ -241,7 +241,7 @@
   },
   "schema": "task041.v8.formal_progress.v1",
   "status": "formal_5nm_a6_consumer_running",
-  "next_progress_update_due_utc": "2026-10-01T15:54:04Z",
+  "next_progress_update_due_utc": "2026-10-01T16:54:56Z",
   "performance": {
     "worker_wall_seconds": 189308.766050059,
     "worker_wall_hours": 52.585768347239,
@@ -939,16 +939,16 @@
     "invocation_id": "b00e1993f6a2429185553092fa3ba7e2",
     "latest_supervision_sample": {
       "phase": "public_command",
-      "elapsed_seconds": 32565.25623192091,
-      "authority_bytes": 43413155840,
-      "process_tree_rss_bytes": 43413155840,
-      "cgroup_memory_current_bytes": 41538908160,
+      "elapsed_seconds": 36237.779562111944,
+      "authority_bytes": 43413213184,
+      "process_tree_rss_bytes": 43413213184,
+      "cgroup_memory_current_bytes": 41632825344,
       "job_swap_bytes": 0,
-      "global_swap_used_bytes_delta": 1680101376,
-      "global_pswpin_pages_delta": 570704,
+      "global_swap_used_bytes_delta": 349868032,
+      "global_pswpin_pages_delta": 894251,
       "global_pswpout_pages_delta": 1006992,
       "worker_process_group_gone": false,
-      "retrieved_utc": "2026-10-01T14:54:04Z"
+      "retrieved_utc": "2026-10-01T15:54:56Z"
     },
     "launch_gate_snapshot": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/launch_gate_snapshot.json",
     "main_pid": 1026209,
@@ -959,7 +959,7 @@
     "mpi8_abi_record": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/mpi8_abi_prelaunch_attempt.json",
     "mpi_launcher_pid": 1026232,
     "numa_policy": "fresh MPI8 ABI passed bind node0; each worker /proc/numa_maps showed bind:0",
-    "numerical_setup_marker": "modal_full_build: bottom actions 256/960 completed; next batch is underway; preceding batch cumulative stage wall 24644.608s; formal response outputs not yet emitted",
+    "numerical_setup_marker": "modal_full_build: bottom actions 320/960 completed; next batch is underway; preceding batch cumulative stage wall 30432.178s; formal response outputs not yet emitted",
     "packet_manifest_sha256": "306939dda3b70777204c11fbd65beac2db5dc0637bc9b6803f7794d0d7cbad2f",
     "performance_isolation": "not_isolated; neighbor processes untouched",
     "preparation_path": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z",
