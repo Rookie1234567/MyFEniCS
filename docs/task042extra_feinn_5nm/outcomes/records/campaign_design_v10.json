@@ -192,5 +192,19 @@
     "qualified_status": "EXACT_DERIVATIVE_CHECKS_PASS; C proposals direction/pred/ared bitwise0; all four states pass"
   },
   "C_preregistered_equal_additional_route_limit_seconds": 8600,
-  "gradient_frontier": "Opt-in measured full-gradient start plus four K and real trial reserve; no numeric change with ample budget or frontier=None. Accepted boundaries retain150s stop growth/120s save windows."
+  "gradient_frontier": "Opt-in measured full-gradient start plus four K and real trial reserve; no numeric change with ample budget or frontier=None. Accepted boundaries retain150s stop growth/120s save windows.",
+  "initial_continuation_save_repair": {
+    "failed_source": "902da49ea86f17315382070eff27f5555cdbf572",
+    "failed_run": "task42extra_v10_plain_cached_gn_20261001T234127817479Z",
+    "failed_seconds": 157.15979642001912,
+    "kind": "duplicate initialization_kind in initial checkpoint metadata",
+    "gradient_K_trial_accepted_not_started": true,
+    "history_bytes": 0,
+    "previous_new_checkpoint": "NOT_RETAINED; no new state was committed",
+    "allowed_retry_boundary": "same hash-qualified V9 final, only before any new GN work",
+    "same_route_allocation_seconds": 8600,
+    "remaining_plain_seconds": 8442.84020357998,
+    "all_previous_costs_preserved": true,
+    "full_future_GN_fault_state_requires_own_V10_recovery": true
+  }
 }

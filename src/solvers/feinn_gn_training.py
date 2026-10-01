@@ -511,6 +511,7 @@ def run(
     }
     prefix_seconds = (
         old["metadata"]["logical_path_seconds"]
+        + manifest.get("route_inherited_failed_attempt_seconds", 0)
         if continuation is not None
         else entry["metadata"]["elapsed_charged_seconds"]
     )
@@ -544,7 +545,9 @@ def run(
             accepted_outer=optimizer.accepted,
             inherited_Adam_updates=500,
             new_Adam_updates=0,
-            initialization_kind="REFERENCE_FIT_ADAM500_PREFIX_REUSE"
+            initialization_kind="V9_FULL_COMMITTED_GN_CONTINUATION"
+            if continuation is not None
+            else "REFERENCE_FIT_ADAM500_PREFIX_REUSE"
             if supervised
             else "PDE_ONLY_ADAM500_PREFIX_REUSE",
             prefix_sha256=entry["durable_final"]["sha256"]
@@ -572,7 +575,6 @@ def run(
             **flags,
             **(
                 dict(
-                    initialization_kind="V9_FULL_COMMITTED_GN_CONTINUATION",
                     inherited_counts=inherited_counts,
                     inherited_JVP_VJP_counts=inherited_jac_counts,
                     inherited_accepted_outer=inherited_accepted,
@@ -871,6 +873,9 @@ def run(
             derivative_cache=cache_record,
             budget_frontier=frontier.record(),
             initialization_identity=entry,
+            inherited_prior_attempt_seconds=manifest.get(
+                "route_inherited_failed_attempt_seconds", 0
+            ),
         )
     marker(
         "GN_route_frozen",

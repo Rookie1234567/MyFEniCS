@@ -930,10 +930,41 @@ def launch(spec):
             group = gn_campaign.STAGES[stage][2]
             limit = min(limit, ledger[gn_version]["groups_remaining_seconds"][group])
             if v10 and group == "C":
-                limit = min(limit, gn_campaign.C_EQUAL_ROUTE_SECONDS)
+                inherited_attempt_seconds = gn_campaign.route_spent_seconds(
+                    stage, ledger["entries"]
+                )
+                limit = min(
+                    limit, gn_campaign.C_EQUAL_ROUTE_SECONDS - inherited_attempt_seconds
+                )
                 state["C_preregistered_equal_route_limit_seconds"] = (
                     gn_campaign.C_EQUAL_ROUTE_SECONDS
                 )
+                state["route_inherited_failed_attempt_seconds"] = (
+                    inherited_attempt_seconds
+                )
+                if inherited_attempt_seconds:
+                    prior = [
+                        row
+                        for row in ledger["entries"]
+                        if Path(row["path"]).parent.name.startswith(
+                            "task42extra_" + stage + "_"
+                        )
+                    ]
+                    for row in prior:
+                        previous_artifact = (
+                            ROOT
+                            / "benchmarks/artifacts/task42extra"
+                            / Path(row["path"]).parent.name
+                        )
+                        history = previous_artifact / "history.jsonl"
+                        pointer = previous_artifact / "durable_checkpoints/current.json"
+                        if pointer.exists() or (
+                            history.exists() and history.stat().st_size
+                        ):
+                            raise RuntimeError(
+                                "V10_FULL_STATE_RECOVERY_REQUIRED_NO_V9_REPLAY"
+                            )
+                    state["retry_boundary"] = "SAME_V9_FINAL_BEFORE_ANY_NEW_GN_WORK"
             if group != "E":
                 limit = min(limit, ledger["remaining_seconds"] - 1200)
             if limit <= 150 or launch_origin + limit - 150 <= perf_counter():

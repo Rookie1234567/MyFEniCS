@@ -2,17 +2,20 @@
 
 from time import perf_counter
 import numpy as np
+import pytest
 from scipy import sparse
 
 from src.solvers import feinn_gn_training as training
 from src.solvers.feinn_phase import make_model
 from src.solvers.feinn_validation import assign, parameters
-from src.solvers.optimization_checkpoint import load_checkpoint
+from src.solvers.optimization_checkpoint import load_checkpoint, capture
+from src.solvers.damped_gauss_newton import DampedGNState
 from src.test.test_feinn_jvp_ml import fixture
 
 
+@pytest.mark.parametrize("continued", [False, True])
 def test_real_fit_GN_runner_reconstructs_committed_model_and_optimizer(
-    tmp_path, monkeypatch
+    tmp_path, monkeypatch, continued
 ):
     design = dict(
         geometry=dict(bounds_nm=[[-5, 5], [-3.75, 3.75], [-1.25, 8.75]]),
@@ -28,6 +31,31 @@ def test_real_fit_GN_runner_reconstructs_committed_model_and_optimizer(
     assign(model, p0 + 0.002 * rng.normal(size=len(p0)))
     ref = mapping.forward(model)
     assign(model, p0)
+    continuation = None
+    if continued:
+        optimizer = DampedGNState(1000, pc_max_builds=1)
+        optimizer.accepted = 5
+        optimizer.slow_streak = 1
+        state = capture(
+            model,
+            optimizer,
+            dict(
+                logical_path_seconds=11.0,
+                counts=dict(K=3, full_loss_gradient=2, trial_loss=1, G_matvec=0),
+                JVP_VJP_counts=dict(JVP=3, VJP=5),
+                d_ref=float(np.vdot(ref, ref).real),
+            ),
+        )
+        state["complete_c"] = anchor
+        continuation = {
+            k: dict(path=str(tmp_path / (k + ".dat")), sha256="test-only")
+            for k in ("checkpoint", "durable_final", "checkpoint_index")
+        }
+        from src.solvers import feinn_derivative_reuse
+
+        monkeypatch.setattr(
+            feinn_derivative_reuse, "load_final", lambda *args: (model, None, state)
+        )
     entry = dict(
         path=str(tmp_path / "toy_Adam500.pt"),
         sha256="test-only",
@@ -75,18 +103,24 @@ def test_real_fit_GN_runner_reconstructs_committed_model_and_optimizer(
         run_id="unit-gn",
         supervision_budget_origin_monotonic=perf_counter(),
         supervised_limit_seconds=600,
+        route_inherited_failed_attempt_seconds=17.0 if continued else 0,
     )
     result, files = training.run(
         design,
         native,
         qual,
-        dict(result=dict(status="GN_INTERFACE_PASS")),
+        dict(
+            result=dict(
+                status="GN_INTERFACE_PASS", states=dict(phase_fit_gn=dict(passed=True))
+            )
+        ),
         tmp_path,
         lambda *_: None,
         manifest,
         phase=True,
         supervised=True,
         reference=refs,
+        continuation=continuation,
     )
     assert result["failure"] is None
     assert (
@@ -99,6 +133,17 @@ def test_real_fit_GN_runner_reconstructs_committed_model_and_optimizer(
         files["durable_final"], result["final_checkpoint"]["sha256"]
     )
     assert saved["optimizer_class"] == "DampedGNState"
+    if continued:
+        assert (
+            saved["metadata"]["initialization_kind"]
+            == "V9_FULL_COMMITTED_GN_CONTINUATION"
+        )
+        assert (
+            result["old_optimizer_history_loaded"] and not result["scale_reestimated"]
+        )
+        assert result["inherited_accepted_outer"] == 5 and result["h0"] == 1000
+        assert result["inherited_prefix_seconds"] == 28.0
+        assert result["cumulative_accepted_outer"] == 5 + result["new_accepted_outer"]
     restored = make_model(design, True)
     restored.load_state_dict(saved["model"])
     np.testing.assert_array_equal(fixture().forward(restored), saved["complete_c"])

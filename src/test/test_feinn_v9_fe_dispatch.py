@@ -30,3 +30,25 @@ assert 'src.solvers.feinn_derivative_reuse' not in sys.modules
 """
     # Inherits the caller's qualified activation and library environment.
     subprocess.run([sys.executable, "-c", code], check=True)
+
+
+def test_failed_attempt_wall_is_charged_only_to_its_own_route():
+    from src.runners.feinn_cached_gn_campaign import route_spent_seconds
+
+    rows = [
+        dict(
+            path="/results/task42extra_v10_plain_cached_gn_1/run_summary.json",
+            seconds=157,
+        ),
+        dict(
+            path="/results/task42extra_v10_plain_cached_gn_2/run_summary.json",
+            seconds=31,
+        ),
+        dict(
+            path="/results/task42extra_v10_phase_cached_gn_1/run_summary.json",
+            seconds=80,
+        ),
+        dict(path="/checks/v10_B_test/summary.json", seconds=4),
+    ]
+    assert route_spent_seconds("v10_plain_cached_gn", rows) == 188
+    assert route_spent_seconds("v10_phase_cached_gn", rows) == 80

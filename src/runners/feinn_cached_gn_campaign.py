@@ -6,6 +6,18 @@ REVIEW_SHA = "47317bb648d5e2237657f8b6c75c239ab5bf55c5"
 OLD_SECONDS = 99864.4864455976
 LIMITS = dict(A=150, B=17050, C=17200, D=7200, E=1600)
 C_EQUAL_ROUTE_SECONDS = LIMITS["C"] / 2
+
+
+def route_spent_seconds(stage, entries):
+    """Closed attempts consume the same route's declared allocation."""
+    prefix = "task42extra_" + stage + "_"
+    return sum(
+        row["seconds"]
+        for row in entries
+        if Path(row["path"]).parent.name.startswith(prefix)
+    )
+
+
 AUTHORITY = set()
 STAGES = {
     "v10_state_and_work_audit": ("ml", 1800, "A"),
