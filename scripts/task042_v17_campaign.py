@@ -146,8 +146,11 @@ def solve_queue():
 
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--preflight',action='store_true');parser.add_argument('--solve',action='store_true');parser.add_argument('--verify',action='store_true')
-    parser.add_argument('--batch',choices=('v17','v18','v19'),default='v17')
+    parser.add_argument('--batch',choices=('v17','v18','v19','v20'),default='v17')
     args=parser.parse_args()
+    if args.batch=='v20':
+        from src.runners.fixed_p3_ilu0_queue import main_queue
+        return main_queue(args)
     if args.batch=='v19':
         from src.runners.post_lsqr_queue import configure,main_queue
         configure(sys.modules[__name__])

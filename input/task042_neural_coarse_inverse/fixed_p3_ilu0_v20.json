@@ -1,0 +1,45 @@
+{
+  "batch": "V20_FIXED_P3_ILU0_PORT_QUALIFICATION",
+  "review_commit": "65726494f63a3fa80906e93f12b5b09a1d99ae99",
+  "action_sha256": "9196edb807b534217d0c0eb78882125341342784a48ef20ebe2d9421fe636454",
+  "physical_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+  "reference_sha256": "a0610a5a55e7508196b17277e706595c33e4398ace82b245f70b656e6b9ed355",
+  "initial_states": {
+    "GPOLY": {
+      "name": "L-GPOLY-FINAL",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/L_GPOLY/cycles/CYCLE_0064/numeric/slot0.npz",
+        "sha256": "4b07fd9cbf313a2688925f77beb4e46205b2e203e98b2c9f7d2dcde2a91c10c2",
+        "x_sha256": "ad504efd8d42b5ce125d9407a8575e7fee187df89b9ef707d66954b2f5126a4b",
+        "trace_sha256": "019587f6eda1379ae8198ac628bd785f0d5e0d46453c89d0346a6213de2df8a6",
+        "outer_directions_sha256": "b0e2feeeafdcee7b87d7ae24763645fa139432eb87de3d69b9d97222308efe2e",
+        "port_sha256": "24a1fdcf8ad9c69cdc38da5e979f9f0e3fea30bb45557ea74dc0d8d5ea4fade7",
+        "z_sha256": "2e8d46babbc96b67de71e9ae71ae9b72b4081ac52bcd99e80d44f38ac58b953e",
+        "residual_sha256": "df0db243b44696c3c6d5011882ed04b9a586d375b145a183e7b66728510b3b63"
+      },
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0"
+    },
+    "GNN": {
+      "name": "L-GNN-FINAL",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/L_GNN/cycles/CYCLE_0064/numeric/slot0.npz",
+        "sha256": "f71378e9aa528f6f6f4eddb3a4a1d53c24a54e71c36c932551011ccfffa45450",
+        "x_sha256": "f6cf0b644826cc6f416cb32085607dd0fb21ce85a2ab88995e4f2c865b721030",
+        "trace_sha256": "95b3ab8b157f81296b4757fbdf124620b2e465b6a2493cabb70895e3d7ea3255",
+        "outer_directions_sha256": "cd63c63584f3b94b00404a8dae6758a963506c80618d6ffce9da4e22bb114c05",
+        "port_sha256": "456b4949037938b4f26a40d60ec4975874bf010a0489c465b2a7066b655ac904",
+        "z_sha256": "b891349ff9a718c42c43a897246d633849e7038ce2569f3853e41ec9ddb3ad75",
+        "residual_sha256": "a3dc392c03fc5fefe30655e4b5709e7d1fa9aa5d4964228931a76e7997238428"
+      },
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0"
+    }
+  },
+  "parent_inventory_sha256": "4d779541a05426dbec37ba29b74061c3738efcd9d794a493bc46d871c331fe53",
+  "resident_upper_bytes": 8589934592,
+  "PC": {
+    "type": "native PETSc ILU",
+    "levels": 0,
+    "ordering": "natural",
+    "shift": "NONE"
+  }
+}

@@ -1,0 +1,6 @@
+schema_version = 1
+[task042_v20]
+stage = "P0"
+run_id = "task042_v20_ilu0_gpoly"
+material_table_id = "SI_OPTICAL_CONSTANTS_USER_20260929_V1"
+decoder_family = "FIXED_P3_ILU0_PORT_QUALIFICATION"

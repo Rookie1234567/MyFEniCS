@@ -58,10 +58,11 @@ def main(argv: list[str] | None = None) -> int:
         from src.io.orthonormal_trace_reprofile import load_orthonormal_trace
         from src.io.local_trace_representation import load_local_trace
         from src.io.resumable_trace_campaign import load_resumable_trace
+        from src.io.fixed_p3_ilu0 import load_fixed_ilu0
         from src.io.post_lsqr_polish import load_post_lsqr
         from src.io.gmres_residual_completion import load_residual_completion
         from src.io.augmented_trace_lsqr import load_augmented_trace
-        specification = load_post_lsqr(args.input_path) or load_residual_completion(args.input_path) or load_resumable_trace(args.input_path) or load_augmented_trace(args.input_path) or load_local_trace(args.input_path) or load_orthonormal_trace(args.input_path) or load_tangent_head(args.input_path) or load_actual_loss(args.input_path) or load_stable_head(args.input_path) or load_autonomous(args.input_path) or load_diagnostic(args.input_path) or load_calibration(args.input_path) or load_continuation(args.input_path) or load_interface(args.input_path)
+        specification = load_fixed_ilu0(args.input_path) or load_post_lsqr(args.input_path) or load_residual_completion(args.input_path) or load_resumable_trace(args.input_path) or load_augmented_trace(args.input_path) or load_local_trace(args.input_path) or load_orthonormal_trace(args.input_path) or load_tangent_head(args.input_path) or load_actual_loss(args.input_path) or load_stable_head(args.input_path) or load_autonomous(args.input_path) or load_diagnostic(args.input_path) or load_calibration(args.input_path) or load_continuation(args.input_path) or load_interface(args.input_path)
         if specification is None:
             specification = load_and_resolve(args.input_path)
         from src.io.task042_profile import TASK042_PROFILES

@@ -35,7 +35,8 @@ def close_point(bar, trace, rhs):
 
 
 def cycle_commit(bar, base, rhs, directory, identity, metadata, audit, *, restart=64,
-                 callback=None, returned=None, io_begin=None, io_done=None, fault=None):
+                 callback=None, returned=None, io_begin=None, io_done=None, fault=None,
+                 preconditioner=None):
     """Actual cycle -> proposed -> closed audit-pending -> audited -> commit.
 
     fault is used only by bounded tests at these named return boundaries.
@@ -48,6 +49,8 @@ def cycle_commit(bar, base, rhs, directory, identity, metadata, audit, *, restar
         raise ValueError('GMRES cycle base/RHS inventory differs')
     contract=dict(identity,algorithm='original-barS-GMRES-cycle-v18',restart=restart,
                   parent_trace_sha256=array_hash(base),rhs_sha256=array_hash(rhs))
+    if preconditioner is not None:
+        contract['algorithm']='original-barS-right-PC-GMRES-cycle-v20'
     store=RollingCheckpoint(directory/'numeric',contract)
     committed=directory/'commit.json'
     resumed=False;prior=None;arrays=None;errors=[]
@@ -56,22 +59,38 @@ def cycle_commit(bar, base, rhs, directory, identity, metadata, audit, *, restar
     else:
         write_json(directory/'started.json',dict(identity=contract,metadata=metadata,
             phase='STARTED_NOT_RETURNED',reserve_original_actions=restart+16))
-        proposed,inner=correction_cycle(bar.apply,base,bar.reduced_rhs(rhs),
-                                       float(np.linalg.norm(rhs)),callback,restart=restart)
+        if preconditioner is None:
+            proposed,inner=correction_cycle(bar.apply,base,bar.reduced_rhs(rhs),
+                                           float(np.linalg.norm(rhs)),callback,restart=restart)
+        else:
+            residual=bar.reduced_rhs(rhs)-bar.apply(base)
+            y,inner=correction_cycle(lambda x:bar.apply(preconditioner(x)),
+                np.zeros_like(base),residual,float(np.linalg.norm(rhs)),callback,restart=restart)
         if returned is not None:returned(inner)
-        values=dict(metadata,phase='GMRES_RETURNED_UNAUDITED',inner=inner,audit_pending=True,
-                    proposed_trace_sha256=array_hash(proposed),original_actions_reserve=16)
+        values=dict(metadata,phase='RIGHT_Y_RETURNED' if preconditioner is not None else 'GMRES_RETURNED_UNAUDITED',
+                    inner=inner,audit_pending=True,original_actions_reserve=16)
+        if preconditioner is None:values['proposed_trace_sha256']=array_hash(proposed)
         began=io_begin() if io_begin else None
-        saved=store.save(dict(trace=proposed),values)
+        saved=store.save(dict(y=y) if preconditioner is not None else dict(trace=proposed),values)
         if io_done:io_done(began,saved['path'])
         if fault:fault('after_proposed')
         prior,arrays,errors=store.read()
-    values=prior['metadata'];inner=values['inner'];trace=arrays['trace']
+    values=prior['metadata'];inner=values['inner']
+    if values['phase']=='RIGHT_Y_RETURNED':
+        if preconditioner is None:raise ValueError('returned right variable requires same PC')
+        By=np.asarray(preconditioner(arrays['y']))
+        if By.shape!=base.shape or not np.isfinite(By).all():raise ValueError('invalid right PC correction')
+        arrays=dict(y=arrays['y'],By=By,trace=base+By)
+        values=dict(values,phase='GMRES_RETURNED_UNAUDITED',right_variable_is_trace=False)
+        saved=store.save(arrays,values)
+    trace=arrays['trace']
     if inner['restart']!=restart or not 0<=inner['inner_iterations']<=restart:
         raise ValueError('returned GMRES counter/contract differs')
     if values['phase']=='GMRES_RETURNED_UNAUDITED':
         if fault:fault('before_close')
+        right={k:arrays[k] for k in ('y','By') if k in arrays}
         arrays,identity_relative=close_point(bar,trace,rhs)
+        arrays.update(right)
         values=dict(values,phase='CLOSED_AUDIT_PENDING',original_residual_identity_relative=identity_relative)
         began=io_begin() if io_begin else None
         saved=store.save(arrays,values)
