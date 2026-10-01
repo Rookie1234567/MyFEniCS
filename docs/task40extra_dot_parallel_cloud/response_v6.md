@@ -12,7 +12,7 @@
 
 | 身份/门 | measured结果 | 限定 |
 |---|---|---|
-| 原S0 byte hash | c8ce975d8c467e3b28b7dae2d3421afaf087b1147ccdfe6b52da24bc753ac061 | 与失败raw attempt完全相同 |
+| 原S0 byte hash | [c8ce975d…53ac061（完整身份）](outcomes/records/positive_H_same_discrete_p2_v1.json) | 与失败raw attempt完全相同 |
 | 原A0全部2048列 | 相对差0，32-column panels | 与旧phi5 dense authority相同；未新建global dense矩阵 |
 | native增广covariance / modal off-block | 9.9526e−17 /4.1270e−16 | 全部16个(p,q)块核验 |
 | 每pair相对于两个diagonal块的最坏相对norm | 3.7954e−16 | ≤1e−11；zero diagonal受控停止；未删sector |
