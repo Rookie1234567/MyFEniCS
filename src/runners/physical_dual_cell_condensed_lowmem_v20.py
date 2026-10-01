@@ -314,24 +314,30 @@ def _v24_p4_prefix_diagnostic_payload(
 
 
 def _v22_direct_term_payload_upper_bound(
-    carrier, *, scalar_bytes: int, index_bytes: int
+    carrier,
+    *,
+    scalar_bytes: int,
+    index_bytes: int,
+    bounded_construction: bool = False,
 ) -> dict[str, int | str | bool]:
     """Split resident direct maps from their bounded construction workspace.
 
     ``consume`` first normalizes carrier rows/values, ``P6CellCondensedAction``
     normalizes those direct terms again, and ``_prepare_direct_terms`` retains
-    only the concatenated original/active maps.  Count only the existing
-    carrier shapes here; the carrier itself remains common inventory.  The
-    resident ledger is the two final original/active row/value sets.  A
-    separate four-set shape upper bound covers construction-time normalized
-    and parts arrays; it is checked against the existing 128 MiB p6 action
-    workspace and is not added to the resident inventory.  This is a payload
-    bound, not an RSS claim or a claim that every ``asarray`` path copies.
+    the original/active maps.  Legacy profiles keep their existing four-set
+    temporary bound.  Task40's owned-output path counts a reusable typed chunk
+    and conservative per-port object overhead as extra construction workspace;
+    final maps are reported separately as resident inventory.  The construction
+    peak is the sum of those two bounds and feeds the live pre-allocation
+    pressure sample.  Carrier input arrays remain common inventory.  These are
+    payload bounds, not RSS claims.
     """
 
     row_count = 0
     value_count = 0
-    for entry_index, entry in enumerate(getattr(carrier, "entries", ())):
+    max_entry_count = 0
+    entries = tuple(getattr(carrier, "entries", ()))
+    for entry_index, entry in enumerate(entries):
         for rows_name, values_name in (
             ("coupling_rows", "coupling_values"),
             ("projection_rows", "projection_values"),
@@ -345,25 +351,83 @@ def _v22_direct_term_payload_upper_bound(
                 )
             row_count += int(rows.size)
             value_count += int(values.size)
+            max_entry_count = max(max_entry_count, int(rows.size))
 
     resident_one_payload = (
         row_count * int(index_bytes) + value_count * int(scalar_bytes)
     )
-    temporary_one_payload = (
-        row_count * max(np.dtype(np.int64).itemsize, int(index_bytes))
-        + value_count * int(scalar_bytes)
-    )
+    resident_payload = int(2 * resident_one_payload)
+    if bounded_construction:
+        from src.solvers.p6_cell_condensed_action import (
+            P6_DIRECT_TERM_BUILD_CHUNK_ENTRIES,
+        )
+
+        chunk_payload = P6_DIRECT_TERM_BUILD_CHUNK_ENTRIES * (
+            np.dtype(np.int64).itemsize
+            + int(scalar_bytes)
+            + np.dtype(np.bool_).itemsize
+        )
+        descriptor_upper = len(entries) * 4096
+        temporary_payload_upper = chunk_payload + descriptor_upper
+        construction_peak_upper = resident_payload + temporary_payload_upper
+        temporary_formula = (
+            "32768*(int64+scalar+bool)+carrier_port_count*4096"
+        )
+        construction_details = {
+            "construction_chunk_entries": P6_DIRECT_TERM_BUILD_CHUNK_ENTRIES,
+            "construction_chunk_payload_bytes": int(chunk_payload),
+            "construction_descriptor_upper_bytes": int(descriptor_upper),
+            "construction_owned_output_upper_bytes": resident_payload,
+            "construction_peak_upper_bytes": int(construction_peak_upper),
+            "construction_upper_includes_final_maps": True,
+            "construction_workspace_strategy": "one_reused_typed_chunk_pair",
+            "descriptor_upper_basis": (
+                "per port: direct-term object, four NumPy array views, two row/value "
+                "pair tuples, up to four original/active map entries, and container "
+                "resize slack; 4096 bytes allocated per port"
+            ),
+        }
+    else:
+        temporary_one_payload = (
+            row_count * max(np.dtype(np.int64).itemsize, int(index_bytes))
+            + value_count * int(scalar_bytes)
+        )
+        temporary_payload_upper = int(4 * temporary_one_payload)
+        construction_peak_upper = resident_payload + temporary_payload_upper
+        temporary_formula = (
+            "4*(carrier_rows*max(int64,index)+carrier_values*scalar)"
+        )
+        construction_details = {
+            "construction_chunk_entries": 0,
+            "construction_chunk_payload_bytes": 0,
+            "construction_descriptor_upper_bytes": 0,
+            "construction_owned_output_upper_bytes": 0,
+            "construction_peak_upper_bytes": int(construction_peak_upper),
+            "construction_upper_includes_final_maps": True,
+            "construction_workspace_strategy": "normalized_parts_and_concatenate",
+            "descriptor_upper_basis": "not_applicable",
+        }
+    temporary_window = 128 << 20
     return {
         "carrier_row_count": int(row_count),
         "carrier_value_count": int(value_count),
-        "resident_payload_bytes": int(2 * resident_one_payload),
-        "temporary_payload_upper_bytes": int(4 * temporary_one_payload),
+        "max_carrier_entry_count": int(max_entry_count),
+        "resident_payload_bytes": resident_payload,
+        "temporary_payload_upper_bytes": int(temporary_payload_upper),
+        "construction_peak_upper_bytes": int(construction_peak_upper),
         "resident_formula": "2*(carrier_rows*index+carrier_values*scalar)",
-        "temporary_formula": "4*(carrier_rows*max(int64,index)+carrier_values*scalar)",
-        "temporary_window_bytes": 128 << 20,
-        "temporary_within_existing_window": True,
+        "temporary_formula": temporary_formula,
+        "temporary_window_bytes": int(temporary_window),
+        "temporary_within_existing_window": bool(
+            temporary_payload_upper <= temporary_window
+        ),
         "temporary_counted_in_future_inventory": False,
-        "classification": "derived_resident_payload_plus_bounded_construction_workspace",
+        "classification": (
+            "derived_resident_payload_plus_extra_bounded_workspace"
+            if bounded_construction
+            else "derived_resident_payload_plus_bounded_construction_workspace"
+        ),
+        **construction_details,
     }
 
 
@@ -666,14 +730,19 @@ def v22_capacity_context(
         + (active_rows + slave_master_entry_count) * (index_bytes + scalar_bytes)
     )
     p6_direct_terms = _v22_direct_term_payload_upper_bound(
-        fine_carrier, scalar_bytes=scalar_bytes, index_bytes=index_bytes
+        fine_carrier,
+        scalar_bytes=scalar_bytes,
+        index_bytes=index_bytes,
+        bounded_construction=task40_profile,
     )
     if int(p6_direct_terms["temporary_payload_upper_bytes"]) > int(
         p6_direct_terms["temporary_window_bytes"]
     ):
         raise ValueError(
             "V22 direct-term construction upper bound exceeds the existing "
-            "128 MiB p6 action workspace"
+            "128 MiB p6 action workspace: "
+            f"{p6_direct_terms['temporary_payload_upper_bytes']} > "
+            f"{p6_direct_terms['temporary_window_bytes']} bytes"
         )
 
     xi_b_bytes = p4_metadata.get("xiB_payload_estimate_bytes")
@@ -1795,6 +1864,9 @@ def _run_physical_dual_cell_condensed_lowmem(
                     profile_identity in TASK40_PROFILES
                 ),
                 task40_first_direction_hp_metric=(
+                    profile_identity in TASK40_PROFILES
+                ),
+                bounded_direct_term_build=(
                     profile_identity in TASK40_PROFILES
                 ),
                 evidence_prefix=evidence_prefix,

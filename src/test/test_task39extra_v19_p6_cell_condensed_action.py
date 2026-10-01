@@ -265,6 +265,7 @@ def test_retained_bal_h_bridge_uses_original_hp_and_one_bal_h_call() -> None:
 
 def test_direct_trace_carrier_and_mpc_slave_are_fail_closed() -> None:
     condensed, block, _action = _problem()
+    _action.destroy()
 
     class Entry:
         def __init__(self, port: int) -> None:
@@ -275,11 +276,105 @@ def test_direct_trace_carrier_and_mpc_slave_are_fail_closed() -> None:
             self.projection_values = np.asarray([-0.2 + 0.3j, 0.6 + 0.1j] if port == 0 else [0.7 - 0.2j, 0.2 + 0.3j])
 
     carrier = SimpleNamespace(entries=(Entry(0), Entry(1)))
+    carrier_before = tuple(
+        tuple(
+            np.asarray(getattr(entry, name)).copy()
+            for name in (
+                "coupling_rows",
+                "coupling_values",
+                "projection_rows",
+                "projection_values",
+            )
+        )
+        for entry in carrier.entries
+    )
     carrier_action = build_p6_cell_condensed_action_from_carrier(condensed, carrier)
+    owned_action = build_p6_cell_condensed_action_from_carrier(
+        condensed, carrier, bounded_direct_term_build=True
+    )
     assert carrier_action.audit["direct_trace_B_entry_count"] == 2
     assert carrier_action.audit["direct_trace_D_entry_count"] == 2
+    assert owned_action.audit["direct_term_construction"]["strategy"] == (
+        "bounded_reusable_chunk_owned_outputs"
+    )
+    assert owned_action.audit["direct_term_construction"][
+        "unique_output_backing_bytes"
+    ] <= 2 * sum(
+        np.asarray(getattr(entry, rows_name)).size
+        * (np.dtype(PETSc.IntType).itemsize + np.dtype(np.complex128).itemsize)
+        for entry in carrier.entries
+        for rows_name in ("coupling_rows", "projection_rows")
+    )
+    for name in (
+        "_direct_B_original",
+        "_direct_D_original",
+        "_direct_B_active",
+        "_direct_D_active",
+    ):
+        legacy_map = getattr(carrier_action, name)
+        owned_map = getattr(owned_action, name)
+        assert legacy_map.keys() == owned_map.keys()
+        for port in legacy_map:
+            for legacy_array, owned_array in zip(
+                legacy_map[port], owned_map[port], strict=True
+            ):
+                np.testing.assert_array_equal(legacy_array, owned_array)
+
+    V = np.block([[block["Vii"], block["Vit"]], [block["Vti"], block["Vtt"]]])
+    B = np.zeros((4, 2), dtype=np.complex128)
+    D = np.zeros((2, 4), dtype=np.complex128)
+    hp = np.zeros((2, 2), dtype=np.complex128)
+    for port, entry in enumerate(carrier.entries):
+        np.add.at(B[:, port], entry.coupling_rows, entry.coupling_values)
+        np.add.at(D[port], entry.projection_rows, entry.projection_values)
+        hp[port, port] = entry.normalization_h
+    full_augmented = np.block([[V, B], [-D, hp]])
+    interior = np.asarray([0, 1])
+    retained = np.asarray([2, 3, 4, 5])
+    expected_action = full_augmented[np.ix_(retained, retained)] - (
+        full_augmented[np.ix_(retained, interior)]
+        @ np.linalg.solve(
+            full_augmented[np.ix_(interior, interior)],
+            full_augmented[np.ix_(interior, retained)],
+        )
+    )
+    rng = np.random.default_rng(20261002)
+    reduced = _matrix(rng, 4, 1)[:, 0]
+    full_rhs = _matrix(rng, 4, 1)[:, 0]
+    port_rhs = _matrix(rng, 2, 1)[:, 0]
+    expected_rhs = np.r_[full_rhs[2:], port_rhs] - (
+        full_augmented[np.ix_(retained, interior)]
+        @ np.linalg.solve(
+            full_augmented[np.ix_(interior, interior)], full_rhs[:2]
+        )
+    )
+    storage_expected = np.r_[
+        np.linalg.solve(
+            block["Vii"],
+            full_rhs[:2] - block["Vit"] @ reduced[:2] - B[:2] @ reduced[2:],
+        ),
+        reduced[:2],
+    ]
+    for action in (carrier_action, owned_action):
+        np.testing.assert_allclose(action.apply(reduced), expected_action @ reduced)
+        np.testing.assert_allclose(action.reduce_rhs(full_rhs, port_rhs=port_rhs), expected_rhs)
+        np.testing.assert_allclose(action.recover_storage(reduced, full_rhs=full_rhs), storage_expected)
+        np.testing.assert_allclose(action.apply_B_full(reduced[2:]), B @ reduced[2:])
+        np.testing.assert_allclose(action.apply_D_full(storage_expected), D @ storage_expected)
+    for legacy_value, owned_value in zip(
+        carrier_action.apply(reduced), owned_action.apply(reduced), strict=True
+    ):
+        assert legacy_value == pytest.approx(owned_value)
+    for entry, before in zip(carrier.entries, carrier_before, strict=True):
+        for name, value in zip(
+            ("coupling_rows", "coupling_values", "projection_rows", "projection_values"),
+            before,
+            strict=True,
+        ):
+            np.testing.assert_array_equal(getattr(entry, name), value)
     assert np.all(np.isfinite(carrier_action.Hhat))
     carrier_action.destroy()
+    owned_action.destroy()
 
     slave_constraints = SimpleNamespace(
         owned_active_original_dofs=np.asarray([2], dtype=PETSc.IntType),
@@ -290,8 +385,155 @@ def test_direct_trace_carrier_and_mpc_slave_are_fail_closed() -> None:
         },
     )
     condensed.trace_constraints = slave_constraints
-    with pytest.raises(ValueError, match="MPC slave"):
-        build_p6_cell_condensed_action_from_carrier(condensed, carrier)
+    for bounded in (False, True):
+        with pytest.raises(ValueError, match="MPC slave"):
+            build_p6_cell_condensed_action_from_carrier(
+                condensed, carrier, bounded_direct_term_build=bounded
+            )
+
+    condensed, _block, _action = _problem()
+    _action.destroy()
+    unknown_entry = Entry(0)
+    unknown_entry.coupling_rows = np.asarray([99], dtype=np.int64)
+    unknown_entry.coupling_values = np.asarray([0.3 + 0.4j])
+    unknown_carrier = SimpleNamespace(entries=(unknown_entry, Entry(1)))
+    for bounded in (False, True):
+        with pytest.raises(ValueError, match="unknown trace row"):
+            build_p6_cell_condensed_action_from_carrier(
+                condensed, unknown_carrier, bounded_direct_term_build=bounded
+            )
+
+    nan_entry = Entry(0)
+    nan_entry.projection_values[0] = np.nan + 0j
+    nan_carrier = SimpleNamespace(entries=(nan_entry, Entry(1)))
+    with pytest.raises(ValueError, match="non-finite"):
+        build_p6_cell_condensed_action_from_carrier(
+            condensed, nan_carrier, bounded_direct_term_build=True
+        )
+
+
+def test_bounded_direct_carrier_handles_chunk_boundary_and_task40_local_dimensions() -> None:
+    interior_rows, trace_rows, port_rows = 450, 432, 340
+    trace = np.arange(interior_rows, interior_rows + trace_rows, dtype=PETSc.IntType)
+    class_key = ("task40-450-432",)
+    condensed = SimpleNamespace(
+        matrix=None,
+        active_rows=trace_rows,
+        appended_rows=port_rows,
+        full_rows=interior_rows + trace_rows,
+        owned_active_rows=trace_rows,
+        owned_appended_rows=port_rows,
+        comm=MPI.COMM_SELF,
+        owned_trace_original_dofs=trace.copy(),
+        trace_constraints=SimpleNamespace(
+            owned_active_original_dofs=trace.copy(),
+            original_to_active={int(row): i for i, row in enumerate(trace)},
+            expansion_by_original={
+                int(row): (
+                    np.asarray([i], dtype=PETSc.IntType),
+                    np.asarray([1.0 + 0.0j], dtype=np.complex128),
+                )
+                for i, row in enumerate(trace)
+            },
+        ),
+        cell_recovery_maps=(
+            CellRecoveryMap(
+                interior_original_dofs=np.arange(interior_rows, dtype=PETSc.IntType),
+                trace_original_dofs=trace.copy(),
+                class_key=class_key,
+            ),
+        ),
+        interior_lu_by_class={class_key: lu_factor(np.eye(interior_rows, dtype=np.complex128))},
+        interior_from_trace_by_class={
+            class_key: np.zeros((interior_rows, trace_rows), dtype=np.complex128)
+        },
+        trace_from_interior_rhs_by_class={
+            class_key: np.zeros((trace_rows, interior_rows), dtype=np.complex128)
+        },
+        retained_local_schur_by_class={
+            class_key: np.eye(trace_rows, dtype=np.complex128)
+        },
+        build_audit={},
+    )
+
+    class Entry:
+        def __init__(self, port: int) -> None:
+            self.normalization_h = 1.5 + 0.001j * port
+            self.coupling_rows = np.asarray(
+                [port % interior_rows, interior_rows + port % trace_rows],
+                dtype=PETSc.IntType,
+            )
+            self.coupling_values = np.asarray(
+                [0.2 + 0.01j * port, -0.1 + 0.02j * port], dtype=np.complex128
+            )
+            self.projection_rows = np.asarray(
+                [(port + 1) % interior_rows, interior_rows + port % trace_rows],
+                dtype=PETSc.IntType,
+            )
+            self.projection_values = np.asarray(
+                [0.03 - 0.001j * port, 0.04 + 0.002j * port], dtype=np.complex128
+            )
+
+    carrier = SimpleNamespace(entries=tuple(Entry(port) for port in range(port_rows)))
+    action = build_p6_cell_condensed_action_from_carrier(
+        condensed,
+        carrier,
+        bounded_direct_term_build=True,
+        port_coupling_mode="streamed",
+    )
+    try:
+        assert action.audit["active_trace_rows"] == 432
+        assert action.audit["appended_port_rows"] == 340
+        assert action.audit["direct_term_construction"]["chunk_entries"] == 32 * 1024
+        assert action.audit["direct_term_construction"]["unique_output_backing_bytes"] < 2 * (
+            4 * port_rows * (np.dtype(PETSc.IntType).itemsize + np.dtype(np.complex128).itemsize)
+        )
+    finally:
+        action.destroy()
+
+
+def test_bounded_direct_carrier_slices_across_32768_entry_chunk_boundary() -> None:
+    condensed, _block, base_action = _problem()
+    base_action.destroy()
+
+    class LongEntry:
+        normalization_h = 2.0 + 0.1j
+        coupling_rows = np.resize(
+            np.asarray([2, 3], dtype=PETSc.IntType), 32 * 1024 + 1
+        )
+        coupling_values = (
+            np.arange(32 * 1024 + 1, dtype=np.float64) * (1.0 + 0.25j)
+        ).astype(np.complex128)
+        projection_rows = np.empty(0, dtype=PETSc.IntType)
+        projection_values = np.empty(0, dtype=np.complex128)
+
+    class EmptyEntry:
+        normalization_h = 3.0 - 0.2j
+        coupling_rows = np.empty(0, dtype=PETSc.IntType)
+        coupling_values = np.empty(0, dtype=np.complex128)
+        projection_rows = np.empty(0, dtype=PETSc.IntType)
+        projection_values = np.empty(0, dtype=np.complex128)
+
+    carrier = SimpleNamespace(entries=(LongEntry(), EmptyEntry()))
+    original_rows = carrier.entries[0].coupling_rows.copy()
+    original_values = carrier.entries[0].coupling_values.copy()
+    action = build_p6_cell_condensed_action_from_carrier(
+        condensed, carrier, bounded_direct_term_build=True
+    )
+    try:
+        rows, values = action._direct_B_original[0]
+        np.testing.assert_array_equal(rows, original_rows)
+        np.testing.assert_array_equal(values, original_values)
+        np.testing.assert_array_equal(carrier.entries[0].coupling_rows, original_rows)
+        np.testing.assert_array_equal(carrier.entries[0].coupling_values, original_values)
+        assert action.audit["direct_term_construction"]["chunk_entries"] == 32 * 1024
+        assert action.audit["direct_term_construction"][
+            "unique_output_backing_bytes"
+        ] == 2 * (32 * 1024 + 1) * (
+            np.dtype(PETSc.IntType).itemsize + np.dtype(np.complex128).itemsize
+        )
+    finally:
+        action.destroy()
 
 
 def test_action_cleanup_releases_shell_resources_and_rejects_reuse() -> None:

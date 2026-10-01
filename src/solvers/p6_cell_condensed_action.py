@@ -34,6 +34,19 @@ from .hcurl_assembly_time_condensation import (
 )
 
 
+P6_DIRECT_TERM_BUILD_CHUNK_ENTRIES = 32 * 1024
+
+
+def _unique_numpy_backing_inventory(values: Sequence[np.ndarray]) -> tuple[int, int]:
+    owners: dict[int, int] = {}
+    for value in values:
+        owner = value
+        while isinstance(getattr(owner, "base", None), np.ndarray):
+            owner = owner.base
+        owners[id(owner)] = int(owner.nbytes)
+    return len(owners), int(sum(owners.values()))
+
+
 def _complex_matrix(value: Any, name: str, *, shape: tuple[int, int] | None = None) -> np.ndarray:
     """Copy and validate one finite complex128 matrix."""
 
@@ -356,6 +369,7 @@ class P6CellCondensedAction:
         H_p: Any,
         port_terms: Mapping[int, P6CellPortTerms] | None = None,
         direct_trace_terms: Sequence[P6DirectTracePortTerms] = (),
+        direct_terms_are_owned: bool = False,
         owns_condensed: bool = False,
         port_coupling_mode: str = "cached",
     ) -> None:
@@ -397,15 +411,32 @@ class P6CellCondensedAction:
             if len(cell.ports) and cell.Hlocal is not None:
                 self._H_p[np.ix_(cell.ports, cell.ports)] += cell.Hlocal
         self._direct_terms = tuple(
-            _as_direct_term(term, condensed.appended_rows)
+            term
+            if direct_terms_are_owned
+            else _as_direct_term(term, condensed.appended_rows)
             for term in direct_trace_terms
         )
+        self._direct_terms_are_owned = bool(direct_terms_are_owned)
         self._direct_B_original: dict[int, tuple[np.ndarray, np.ndarray]] = {}
         self._direct_D_original: dict[int, tuple[np.ndarray, np.ndarray]] = {}
         self._direct_B_active: dict[int, tuple[np.ndarray, np.ndarray]] = {}
         self._direct_D_active: dict[int, tuple[np.ndarray, np.ndarray]] = {}
         self._prepare_direct_terms()
         self._direct_terms = ()
+        direct_output_arrays = [
+            value
+            for mapping in (
+                self._direct_B_original,
+                self._direct_D_original,
+                self._direct_B_active,
+                self._direct_D_active,
+            )
+            for pair in mapping.values()
+            for value in pair
+        ]
+        direct_output_storage_count, direct_output_backing_bytes = (
+            _unique_numpy_backing_inventory(direct_output_arrays)
+        )
         if self.port_coupling_mode == "cached":
             self._Hhat = self._H_p.copy()
             for cell in self._cells:
@@ -439,6 +470,33 @@ class P6CellCondensedAction:
             "class_cache_shared_across_cells": True,
             "direct_trace_B_entry_count": int(sum(len(rows) for rows, _values in self._direct_B_original.values())),
             "direct_trace_D_entry_count": int(sum(len(rows) for rows, _values in self._direct_D_original.values())),
+            "direct_term_construction": {
+                "strategy": (
+                    "bounded_reusable_chunk_owned_outputs"
+                    if self._direct_terms_are_owned
+                    else "normalized_parts_and_concatenate"
+                ),
+                "chunk_entries": (
+                    P6_DIRECT_TERM_BUILD_CHUNK_ENTRIES
+                    if self._direct_terms_are_owned
+                    else None
+                ),
+                "reusable_chunk_payload_bytes": (
+                    P6_DIRECT_TERM_BUILD_CHUNK_ENTRIES
+                    * (
+                        np.dtype(np.int64).itemsize
+                        + np.dtype(np.complex128).itemsize
+                        + np.dtype(np.bool_).itemsize
+                    )
+                    if self._direct_terms_are_owned
+                    else None
+                ),
+                "owned_original_arrays_transferred": self._direct_terms_are_owned,
+                "unique_output_backing_storage_count": int(
+                    direct_output_storage_count
+                ),
+                "unique_output_backing_bytes": int(direct_output_backing_bytes),
+            },
             "apply_count": 0,
             "hp_solve_count": 0,
             "streamed_action_lu_solve_count": 0,
@@ -529,6 +587,72 @@ class P6CellCondensedAction:
 
     def _prepare_direct_terms(self) -> None:
         constraints = self.condensed.trace_constraints
+        if self._direct_terms_are_owned:
+            seen_ports: set[int] = set()
+            for term in self._direct_terms:
+                port = int(term.port_index)
+                if port < 0 or port >= self.condensed.appended_rows:
+                    raise ValueError("direct trace port index is outside H_p")
+                if port in seen_ports:
+                    raise ValueError("owned direct trace terms must have one entry per port")
+                seen_ports.add(port)
+                for side, rows, values, original_map, active_map in (
+                    (
+                        "B",
+                        term.B_original_rows,
+                        term.B_values,
+                        self._direct_B_original,
+                        self._direct_B_active,
+                    ),
+                    (
+                        "D",
+                        term.D_original_rows,
+                        term.D_values,
+                        self._direct_D_original,
+                        self._direct_D_active,
+                    ),
+                ):
+                    rows = np.asarray(rows)
+                    values = np.asarray(values)
+                    if (
+                        rows.ndim != 1
+                        or values.ndim != 1
+                        or rows.dtype != np.dtype(PETSc.IntType)
+                        or values.dtype != np.dtype(np.complex128)
+                        or not rows.flags.c_contiguous
+                        or not values.flags.c_contiguous
+                        or rows.size != values.size
+                    ):
+                        raise ValueError(
+                            f"owned direct {side} carrier arrays are not normalized"
+                        )
+                    for start in range(
+                        0, values.size, P6_DIRECT_TERM_BUILD_CHUNK_ENTRIES
+                    ):
+                        stop = min(
+                            start + P6_DIRECT_TERM_BUILD_CHUNK_ENTRIES,
+                            values.size,
+                        )
+                        if not np.isfinite(values[start:stop]).all():
+                            raise ValueError(
+                                f"owned direct {side} carrier contains non-finite values"
+                            )
+                    if rows.size == 0:
+                        continue
+                    active_rows = np.empty(rows.size, dtype=PETSc.IntType)
+                    active_values = np.empty(rows.size, dtype=np.complex128)
+                    for index, original in enumerate(rows):
+                        try:
+                            active_rows[index] = constraints.original_to_active[int(original)]
+                        except KeyError as exc:
+                            raise ValueError(
+                                f"direct {side} carrier contains an MPC slave or unknown trace row"
+                            ) from exc
+                    np.copyto(active_values, values)
+                    original_map[port] = (rows, values)
+                    active_map[port] = (active_rows, active_values)
+            return
+
         original_parts: dict[str, dict[int, list[np.ndarray]]] = {
             "B": defaultdict(list),
             "D": defaultdict(list),
@@ -1368,6 +1492,7 @@ def build_p6_cell_condensed_action_from_carrier(
     H_p: Any | None = None,
     owns_condensed: bool = False,
     port_coupling_mode: str = "cached",
+    bounded_direct_term_build: bool = False,
 ) -> P6CellCondensedAction:
     """Translate a native carrier into local/internal and direct trace terms.
 
@@ -1399,7 +1524,64 @@ def build_p6_cell_condensed_action_from_carrier(
     di_by_cell: dict[int, dict[int, dict[int, complex]]] = defaultdict(lambda: defaultdict(dict))
     direct: list[P6DirectTracePortTerms] = []
 
+    direct_row_chunk = (
+        np.empty(P6_DIRECT_TERM_BUILD_CHUNK_ENTRIES, dtype=np.int64)
+        if bounded_direct_term_build
+        else None
+    )
+    direct_value_chunk = (
+        np.empty(P6_DIRECT_TERM_BUILD_CHUNK_ENTRIES, dtype=np.complex128)
+        if bounded_direct_term_build
+        else None
+    )
+
     def consume(rows: Any, values: Any, port: int, target: dict[int, dict[int, dict[int, complex]]] | None, side: str) -> tuple[np.ndarray, np.ndarray]:
+        if bounded_direct_term_build:
+            if not isinstance(rows, np.ndarray) or not isinstance(values, np.ndarray):
+                raise TypeError("bounded carrier construction requires NumPy row/value arrays")
+            if not rows.flags.c_contiguous or not values.flags.c_contiguous:
+                raise ValueError("bounded carrier construction requires contiguous row/value arrays")
+            row_source = rows.reshape(-1)
+            value_source = values.reshape(-1)
+            if row_source.dtype.kind not in "iu" or value_source.dtype.kind not in "biufc":
+                raise ValueError("bounded carrier row/value arrays must be numeric")
+            if row_source.size != value_source.size:
+                raise ValueError(f"carrier {side} row/value shape mismatch")
+            if direct_row_chunk is None or direct_value_chunk is None:
+                raise RuntimeError("bounded carrier scratch buffers are missing")
+            output_rows = np.empty(row_source.size, dtype=PETSc.IntType)
+            output_values = np.empty(value_source.size, dtype=np.complex128)
+            output_size = 0
+            for start in range(0, row_source.size, P6_DIRECT_TERM_BUILD_CHUNK_ENTRIES):
+                stop = min(start + P6_DIRECT_TERM_BUILD_CHUNK_ENTRIES, row_source.size)
+                count = stop - start
+                rows_chunk = direct_row_chunk[:count]
+                values_chunk = direct_value_chunk[:count]
+                np.copyto(rows_chunk, row_source[start:stop], casting="unsafe")
+                np.copyto(values_chunk, value_source[start:stop], casting="unsafe")
+                if not np.isfinite(values_chunk).all():
+                    raise ValueError(f"carrier {side} values contain non-finite values")
+                for row_value, value in zip(rows_chunk, values_chunk, strict=True):
+                    row = int(row_value)
+                    value = complex(value)
+                    location = interior_locations.get(row)
+                    if location is not None:
+                        if target is None:
+                            raise RuntimeError("internal carrier target is missing")
+                        cell_index, local = location
+                        target[cell_index][port][local] = (
+                            target[cell_index][port].get(local, 0.0) + value
+                        )
+                    else:
+                        if row not in constraints.original_to_active:
+                            raise ValueError(
+                                "carrier includes an MPC slave or unknown trace row"
+                            )
+                        output_rows[output_size] = row
+                        output_values[output_size] = value
+                        output_size += 1
+            return output_rows[:output_size], output_values[:output_size]
+
         row_array = np.asarray(rows, dtype=np.int64).reshape(-1)
         value_array = _complex_vector(values, f"carrier {side} values", size=len(row_array))
         original_rows: list[int] = []
@@ -1445,6 +1627,7 @@ def build_p6_cell_condensed_action_from_carrier(
         H_p=hp,
         port_terms=terms,
         direct_trace_terms=direct,
+        direct_terms_are_owned=bounded_direct_term_build,
         owns_condensed=owns_condensed,
         port_coupling_mode=port_coupling_mode,
     )

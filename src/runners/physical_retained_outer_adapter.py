@@ -470,6 +470,7 @@ class RetainedOuterAdapter:
         first_direction_pair_context=None,
         scale_x1_pc_count_probe=False,
         task40_first_direction_hp_metric=False,
+        bounded_direct_term_build=False,
     ):
         self.runtime, self.common, self.resolved = runtime, common, resolved
         self.full_rhs, self.bal_h = full_rhs, apply_pc
@@ -504,6 +505,7 @@ class RetainedOuterAdapter:
         self.task40_first_direction_hp_metric = bool(
             task40_first_direction_hp_metric
         )
+        self.bounded_direct_term_build = bool(bounded_direct_term_build)
         self.first_direction_pair_context = first_direction_pair_context
         if self.p4_count_policy not in {
             "legacy_one_mat_solve_per_logical",
@@ -612,11 +614,82 @@ class RetainedOuterAdapter:
         setup_phases["condensation_builder_seconds"] = perf_counter() - phase_started
         runtime.release_workspace(f"{prefix}_p6_setup")
         runtime.reserve_workspace(f"{prefix}_p6_setup", 128 << 20)
+        direct_term_preallocation = None
+        if self.bounded_direct_term_build:
+            from petsc4py import PETSc
+            from src.runners.physical_dual_cell_condensed_lowmem_v20 import (
+                _v22_direct_term_payload_upper_bound,
+            )
+
+            carrier = self.common["fine"]["dtn_action"].carrier
+            direct_capacity = _v22_direct_term_payload_upper_bound(
+                carrier,
+                scalar_bytes=int(np.dtype(PETSc.ScalarType).itemsize),
+                index_bytes=int(np.dtype(PETSc.IntType).itemsize),
+                bounded_construction=True,
+            )
+            if not direct_capacity["temporary_within_existing_window"]:
+                raise ValueError(
+                    "Task40 direct-term construction scratch exceeds the existing "
+                    "128 MiB p6 action workspace: "
+                    f"{direct_capacity['temporary_payload_upper_bytes']} > "
+                    f"{direct_capacity['temporary_window_bytes']} bytes"
+                )
+            inventory_projection = runtime.check_inventory_projected(
+                f"{prefix}_p6_direct_terms",
+                int(direct_capacity["resident_payload_bytes"]),
+            )
+            rss_projection = runtime.check_projected(
+                f"{prefix}_p6_direct_terms",
+                int(direct_capacity["resident_payload_bytes"]),
+                workspace_bytes=int(direct_capacity["temporary_payload_upper_bytes"]),
+            )
+            direct_term_preallocation = {
+                key: direct_capacity[key]
+                for key in (
+                    "carrier_row_count",
+                    "carrier_value_count",
+                    "resident_payload_bytes",
+                    "temporary_payload_upper_bytes",
+                    "temporary_window_bytes",
+                    "construction_peak_upper_bytes",
+                    "temporary_formula",
+                    "construction_workspace_strategy",
+                )
+            }
+            direct_term_preallocation["inventory_projection"] = inventory_projection
+            direct_term_preallocation["rss_projection"] = rss_projection
         phase_started = perf_counter()
         self.action = build_p6_cell_condensed_action_from_carrier(
             self.condensed, self.common["fine"]["dtn_action"].carrier,
+            bounded_direct_term_build=self.bounded_direct_term_build,
         )
         setup_phases["p6_action_seconds"] = perf_counter() - phase_started
+        if direct_term_preallocation is not None:
+            actual_direct_bytes = int(
+                self.action.audit["direct_term_construction"][
+                    "unique_output_backing_bytes"
+                ]
+            )
+            resident_upper = int(
+                direct_term_preallocation["resident_payload_bytes"]
+            )
+            direct_term_preallocation.update(
+                {
+                    "actual_output_backing_bytes": actual_direct_bytes,
+                    "resident_upper_headroom_bytes": resident_upper
+                    - actual_direct_bytes,
+                    "resident_upper_covers_actual_output": (
+                        actual_direct_bytes <= resident_upper
+                    ),
+                }
+            )
+            if actual_direct_bytes > resident_upper:
+                raise RuntimeError(
+                    "Task40 direct-term resident upper bound is below the "
+                    f"constructed output backing storage: {actual_direct_bytes} "
+                    f"> {resident_upper} bytes"
+                )
         shared_identity_mode = (
             self.identity_cache_mode == "shared_read_only_per_interior_shape"
         )
@@ -659,6 +732,7 @@ class RetainedOuterAdapter:
             "p6_recipe": dict(self.action.operator_recipe),
             "p6_array_content_sha256": cache["array_content_sha256"],
             "p6_build_audit": self.condensed.build_audit,
+            "p6_direct_term_preallocation": direct_term_preallocation,
         }
         from src.runners.physical_macro_controls import _mapping_identity_sha256
         from src.solvers.condensed_fine_reference import native_map_arrays

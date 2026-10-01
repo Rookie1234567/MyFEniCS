@@ -11,6 +11,7 @@ from petsc4py import PETSc
 
 from src.runners.physical_dual_cell_condensed_lowmem_v20 import (
     _v22_capacity_callbacks,
+    _v22_direct_term_payload_upper_bound,
     _v22_mumps_capacity_failure,
     v22_capacity_context,
 )
@@ -149,6 +150,37 @@ def test_v22_context_charges_live_h6_and_each_boundary_cell_and_direct_copies():
     assert context["future_workspace_phases"]["p6_action_construction"][
         "p6_action_temporary_window_bytes"
     ] == 128 << 20
+
+
+def test_task40_direct_term_capacity_splits_resident_and_extra_workspace():
+    common, _cfg, _p6_space_facts, _p4_metadata = _v22_context_fixture()
+    carrier = common["fine"]["dtn_action"].carrier
+    facts = _v22_direct_term_payload_upper_bound(
+        carrier,
+        scalar_bytes=np.dtype(PETSc.ScalarType).itemsize,
+        index_bytes=np.dtype(PETSc.IntType).itemsize,
+        bounded_construction=True,
+    )
+    entries = len(carrier.entries)
+    chunk = 32 * 1024 * (
+        np.dtype(np.int64).itemsize
+        + np.dtype(PETSc.ScalarType).itemsize
+        + np.dtype(np.bool_).itemsize
+    )
+    descriptor = entries * 4096
+    resident = 2 * (
+        facts["carrier_row_count"] * np.dtype(PETSc.IntType).itemsize
+        + facts["carrier_value_count"] * np.dtype(PETSc.ScalarType).itemsize
+    )
+    assert facts["resident_payload_bytes"] == resident
+    assert facts["construction_chunk_payload_bytes"] == chunk
+    assert facts["construction_descriptor_upper_bytes"] == descriptor
+    assert facts["temporary_payload_upper_bytes"] == chunk + descriptor
+    assert facts["construction_peak_upper_bytes"] == resident + chunk + descriptor
+    assert facts["temporary_within_existing_window"] is True
+    assert facts["temporary_counted_in_future_inventory"] is False
+    assert "four NumPy array views" in facts["descriptor_upper_basis"]
+    assert facts["construction_upper_includes_final_maps"] is True
 
 
 def test_v22_context_rejects_unbound_live_dimensions_and_class_identity():

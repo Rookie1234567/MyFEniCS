@@ -1,0 +1,84 @@
+{
+  "schema": "task40extra.review_v2_f5_pre_numeric_capacity_failure.v1",
+  "batch": "review_v2_growth",
+  "attempt": 1,
+  "run_id": "task40extra_0p7nm_nonseparable_g1_manual_m2_f5_v1",
+  "classification": "WORKER_FAILED_PRE_NUMERIC_CAPACITY_UPPER_BOUND",
+  "worker_status": "FAILED",
+  "worker_launcher_exit_status": 4,
+  "service_unit": "myfenics-case-20261001T231058-1570216.service",
+  "service_exit_status": 3,
+  "official_result": false,
+  "source_sha": "fb9c1847ba0a87a0e17befcaf59b93d4ec4713ad",
+  "input_sha256": "3b0c7bc68cf1f991c1cd364eaf6079bbd4b745895315dcc85a7b2cfb39a8c5c7",
+  "physical_model_sha256": "ad9cb5ec64636755fba5135bc44d9d49940c4ae1de624536f7233da912e83ae7",
+  "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g1_manual_m2_f5_v1__full3d_iterative__mpi1__Mna/20261001T231058.402305Z",
+  "first_cause": {
+    "type": "ValueError",
+    "message": "V22 direct-term construction upper bound exceeds the existing 128 MiB p6 action workspace",
+    "worker_stage": "Q4_ORIGINAL",
+    "numeric_factorization_started": false,
+    "outer_ksp_started": false,
+    "full_explicit_true_residual": null,
+    "official_R_T_A": "not_run",
+    "interpretation": "The conservative direct-term workspace upper-bound gate rejected setup before numeric factorization. No OOM or numerical-solver failure was observed. The failing capacity context was not written, so its exact carrier row count and derived upper-bound bytes were not persisted in this attempt."
+  },
+  "setup": {
+    "axis_cells": [
+      10,
+      4,
+      22
+    ],
+    "owned_cells": 880,
+    "ordered_mode_count": 340,
+    "ordered_mode_manifest_sha256": "7336482596276ee033f211ea84635d91678591f40705b208025622a0a35dd253",
+    "p4_rows": 180240,
+    "p4_active_rows": 75200,
+    "p4_interior_rows": 95040,
+    "p6_rows": 595512,
+    "p6_active_rows": 177120,
+    "p6_interior_rows": 396000,
+    "p6_local_dimensions": [
+      882,
+      450,
+      432
+    ],
+    "rectangular_air_void_audit": "PASS",
+    "last_recorded_factor_phase": "schur_factor_symbolic_complete"
+  },
+  "cost": {
+    "watchdog_monotonic_seconds": 181.401740545989,
+    "conservative_policy_charged_seconds": 199.0616238819469,
+    "time_gate_exceeded": false
+  },
+  "resources": {
+    "scope": "simultaneous process-tree RSS; PSS disabled by profile",
+    "watchdog_process_tree_rss_peak_bytes": 3146706944,
+    "watchdog_process_tree_swap_peak_bytes": 0,
+    "sample_count": 715,
+    "identity_coverage": "complete",
+    "all_status_readable": true,
+    "descendants_cleared": true,
+    "cgroup_limits": []
+  },
+  "prior_cli_rejection": {
+    "service_unit": "myfenics-case-20261001T231025-1570166.service",
+    "exit_status": 2,
+    "classification": "RUN_CASE_ARGUMENT_VALIDATION_STOP",
+    "reason": "The required --v14-time-policy observe_only argument was omitted.",
+    "worker_started": false,
+    "watchdog_started": false,
+    "formal_run_root_created": false
+  },
+  "artifacts": {
+    "run_manifest_sha256": "db59243492dc8fea8573d181c21235e83fc7e11810a6368dc43eb1bfbe37a17c",
+    "run_summary_sha256": "3d1920f8648164bad51db7871420502563f4bd169c3918e46aa768dc46752fc6",
+    "worker_summary_sha256": "0a0d16bb6ed9b721aa647fb6cce2f520e1f3a08fb83517c877db28a2845e6b67",
+    "watchdog_summary_sha256": "61f4a57e6572751ada2f1d37a6a27fa879470fe70bc886ca83196c3ca2591496",
+    "ordered_mode_manifest_sha256": "7336482596276ee033f211ea84635d91678591f40705b208025622a0a35dd253",
+    "rectangular_air_void_audit_sha256": "d991e83df39fedb66af14b157b4d298d27227988de2ad196fdcdf75e01efc10f",
+    "events_sha256": "bc59f8104527702076779db141cdcaaa9d04fe8d2314dc6f3c307b27bd514cc8",
+    "worker_resources_sha256": "e73f3597d56b0287b3782f1340019092d8d13df8ea1c8e8ffbd637a1671b7230",
+    "worker_log_sha256": "09b29b774cbce237bf9a916b1851a4551177e1770d68a9dc3390997fda03429d"
+  }
+}
