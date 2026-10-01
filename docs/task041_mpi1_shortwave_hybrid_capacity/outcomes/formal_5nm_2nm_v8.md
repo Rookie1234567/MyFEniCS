@@ -41,4 +41,27 @@ r1全程authority/process-tree峰为17,303,310,336 B，专属cgroup `memory.peak
 
 紧凑终态compact为`results/task041_review_v8_a6_paired_action/run_20261001T005620Z_r1/r1_terminal_compact.json`（SHA-256 `cbecf6983a05e0b584d23d20c5a7d2f3f870768a1a02b0aa509d76cad1e4fe21`）。V5既有ledger只追加了首次配置失败phase与r1成功phase，各一次，共328.070209秒；ABI、dispatch和内部action计时未重复收费。ledger从59条增至61条，累计236,114.941209秒；完整身份、首次失败和备份哈希见机器记录。
 
+### A6b：冻结真实 RHS 的有限响应对照（2026-10-01）
+
+本次从既有八项 RHS manifest 选 bottom ordinal 0/formal column 207 与 top ordinal 4/column 310；每侧按 original→fused→fused→original 顺序，在同一布局、同一 `cell_condensed` p4 factor 和零初值下完成四个完整响应。它验证两个固定 RHS 的原/融合 A6 响应与重复一致性，不是全部八项诊断、更不是完整 consumer 或正式性能资格。
+
+| 侧/ordinal/column | 动作序号 | packet max-rank wall（秒） | 侧区内层KSP迭代 | 本响应修正数 | p4回代数 |
+|---|---|---:|---:|---:|---:|
+| bottom / 0 / 207 | A1 original | 129.761845 | 17 | 1 | 35 |
+| bottom / 0 / 207 | B1 fused | 119.016090 | 17 | 1 | 35 |
+| bottom / 0 / 207 | B2 fused | 119.222392 | 17 | 1 | 35 |
+| bottom / 0 / 207 | A2 original | 134.307245 | 17 | 2 | 36 |
+| top / 4 / 310 | A1 original | 146.123131 | 17 | 16 | 50 |
+| top / 4 / 310 | B1 fused | 134.487071 | 17 | 17 | 51 |
+| top / 4 / 310 | B2 fused | 132.864741 | 17 | 16 | 50 |
+| top / 4 / 310 | A2 original | 149.679956 | 17 | 16 | 50 |
+
+按 packet 中的 `call_wall_max_rank_seconds`，bottom 原/融合均值为 `132.034545→119.119241 s`（低 `9.782%`），top 为 `147.901544→133.675906 s`（低 `9.618%`）。rank0 closeout 均值另为 bottom `132.029664→119.114478 s`、top `147.895860→133.670318 s`；两种计时口径分别保留。每条侧区响应的内层 KSP 均迭代17次；本场没有完整 Hybrid outer 求解。8个响应共70次p4修正与342次回代；每次 p4 inverse 实际最多修正1次，目标为 `5e-13`，原 physical/augmented 残差门 `1e-10` 均通过。A6/Q/H6 是各响应内按原定义累积的操作计时，区间存在包含/重叠，不能叠加成响应wall。
+
+每侧四项原/融合及重复比较均通过：`max e_x=2.7499208775347377e-14`、`max e_A=7.785694432043024e-14`，各自限值 `1e-8`；bottom/top最大 side relative residual 分别为 `0.008369286568895733 / 0.0092028481537098`，限值 `1e-2`。这些是两个固定 RHS 的 A6 等价结果，不改变 full consumer 的资格状态。
+
+监督 workflow wall 为 `3319.941774289 s`；authority/process-tree共同峰 `38,147,805,184 B`，cgroup历史 `memory.peak=35,880,628,224 B`，cap/warning/reserve 为 `53,221,163,008 / 47,899,046,707 / 412,316,860,416 B`，资源门通过。原/融合 action 同时驻留，因此该峰不是单一 backend 峰。job/cgroup swap为0；global swap原始增量字段是非负增量钳位值 `0 B`，baseline `5,999,333,376 B`、final `5,999,235,072 B` 的派生有符号差为 `-98,304 B`；global `pswpin` 增 `25` 页、`pswpout` 增 `0` 页。global值为整机观察，不归因于本作业。运行标记 `not_isolated`，不能据此宣称无人竞争性能提升。
+
+worker与supervision均 `rc=0`、无受控终止、专属进程组清场；user journal记录自然结束，transient unit随后卸载。终态依据为worker/supervision及journal，不能单看卸载后的默认unit状态。record与原 compact 入口见 [V8 machine record](records/task041_v8_formal_5nm_2nm.json) 及 `results/task041_review_v8_a6_paired_action/run_20261001T030232Z_real_rhs_abba/a6_real_rhs_abba_closeout.json`（SHA-256 `f4f8800b3b5924466580ae6ee6bc0f694abb804835a823bc3edacdb4af3b4f60`）；8个packet manifest路径与hash、逐响应计时/修正数和唯一账本追加均在machine record中。此诊断不构成全八项、全场或正式性能资格。
+
 机器记录见[Task041 V8 record](records/task041_v8_formal_5nm_2nm.json)。

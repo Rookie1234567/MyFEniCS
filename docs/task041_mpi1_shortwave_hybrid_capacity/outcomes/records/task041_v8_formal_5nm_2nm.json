@@ -87,9 +87,15 @@
       "name": "offline_exact_comparison",
       "path": "results/task041_v8_5nm_cellcond_formal_run_20260928/exact_comparison_offline_v1.json",
       "sha256": "d3eabe7076bb93a9147d214f2474dc1651a07c9a9858ae20698d19ec439ce605"
+    },
+    {
+      "name": "a6_real_rhs_abba_closeout",
+      "path": "results/task041_review_v8_a6_paired_action/run_20261001T030232Z_real_rhs_abba/a6_real_rhs_abba_closeout.json",
+      "sha256": "f4f8800b3b5924466580ae6ee6bc0f694abb804835a823bc3edacdb4af3b4f60",
+      "classification": "bounded diagnostic; not formal qualification"
     }
   ],
-  "observed_utc": "2026-10-01T01:25:39Z",
+  "observed_utc": "2026-10-01T04:50:15Z",
   "progress": {
     "phase": "terminal",
     "formal_responses_completed": 1920,
@@ -131,7 +137,7 @@
     "two_nm": "not_started"
   },
   "record_type": "task041_review_v8_formal_progress",
-  "record_written_utc": "2026-10-01T01:25:39Z",
+  "record_written_utc": "2026-10-01T04:50:15Z",
   "repository": {
     "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
     "runtime_source_sha": "d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f",
@@ -317,7 +323,7 @@
     "finalizer_result_classification": "service_boundary_failure"
   },
   "a6_paired_action_observation": {
-    "observed_utc": "2026-10-01T01:25:39Z",
+    "observed_utc": "2026-10-01T04:50:15Z",
     "classification": "bounded_action_equivalence_and_timing_observation",
     "formal_qualification": "not_applicable",
     "input": "deterministic synthetic algebraic p6 vector, global size 425472; not a solved RHS",
@@ -482,6 +488,436 @@
       "r1_worker_result_sha256": "91b7d571c334ce9469df0886519c95cffe972cd3a9b1e5d001f90d93f83aea6f",
       "r1_supervision_summary_path": "/home/fenics/Projects/MyFEniCS/results/task041_review_v8_a6_paired_action/run_20261001T005620Z_r1/supervision_summary.json",
       "r1_supervision_summary_sha256": "f624d9c62a4f4a92ffd64454f6fe1c52f49358cb88acba84fccb3f406592daaf"
+    },
+    "real_rhs_abba": {
+      "classification": "bounded_real_frozen_rhs_a6_response_equivalence_and_timing_observation",
+      "formal_qualification": false,
+      "input_scope": {
+        "manifest_path": "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_representative_rhs_v1.json",
+        "manifest_sha256": "fb68011ed3e55861c59455d082be549cdd9f6c2d5a569015cf88bdc739f5636a",
+        "manifest_entry_count": 8,
+        "selected_entries": [
+          {
+            "side": "bottom",
+            "ordinal": 0,
+            "formal_column": 207
+          },
+          {
+            "side": "top",
+            "ordinal": 4,
+            "formal_column": 310
+          }
+        ],
+        "a6_order_per_side": [
+          "original_A1",
+          "fused_B1",
+          "fused_B2",
+          "original_A2"
+        ],
+        "response_count": 8,
+        "zero_start": true,
+        "p4_backend": "cell_condensed",
+        "target_tolerance": 5e-13,
+        "maximum_corrections_per_inverse": 2,
+        "actual_maximum_corrections_per_inverse": 1,
+        "original_p4_physical_and_augmented_limit": 1e-10,
+        "iteration_scope": "side-zone inner KSP iterations for each RHS; no complete Hybrid outer solve was run"
+      },
+      "responses": [
+        {
+          "side": "bottom",
+          "manifest_ordinal": 0,
+          "formal_column": 207,
+          "sequence": "A1",
+          "action": "original",
+          "packet_call_wall_max_rank_seconds": 129.76184513804037,
+          "rank0_response_wall_seconds": 129.75679892499465,
+          "iterations": 17,
+          "p4_actual_corrections_total": 1,
+          "p4_backsolve_count": 35,
+          "p4_inverse_call_count": 34,
+          "p4_maximum_corrections_in_one_inverse": 1,
+          "p4_target_tolerance": 5e-13,
+          "p4_target_reached": true,
+          "p4_original_gate_tolerance": 1e-10,
+          "p4_step_max_relative_residuals": {
+            "0": {
+              "physical": 2.025697759638072e-12,
+              "augmented": 2.0252671207237285e-12
+            },
+            "1": {
+              "physical": 2.6327079713235813e-14,
+              "augmented": 2.6322924389242568e-14
+            }
+          },
+          "side_relative_residual": 0.008369286568895606,
+          "side_residual_limit": 0.01,
+          "component_seconds_max_rank_accumulated_not_wall": {
+            "A6": 41.41673869814258,
+            "H6": 22.84192169783637,
+            "Q": 51.9749121083878
+          },
+          "response_packet_manifest": "results/task041_review_v8_a6_paired_action/run_20261001T030232Z_real_rhs_abba/consumer/numerical_output/p4_backend_pair/cell_condensed/a6_response_pair/00_original/00/00_bottom_positive/manifest.json",
+          "response_packet_manifest_sha256": "ae9623053bd87fdae255b71135256da2ccf128f0531796fa396e12ce260bdc55"
+        },
+        {
+          "side": "bottom",
+          "manifest_ordinal": 0,
+          "formal_column": 207,
+          "sequence": "B1",
+          "action": "fused",
+          "packet_call_wall_max_rank_seconds": 119.01609006989747,
+          "rank0_response_wall_seconds": 119.01135296397842,
+          "iterations": 17,
+          "p4_actual_corrections_total": 1,
+          "p4_backsolve_count": 35,
+          "p4_inverse_call_count": 34,
+          "p4_maximum_corrections_in_one_inverse": 1,
+          "p4_target_tolerance": 5e-13,
+          "p4_target_reached": true,
+          "p4_original_gate_tolerance": 1e-10,
+          "p4_step_max_relative_residuals": {
+            "0": {
+              "physical": 2.025697759638072e-12,
+              "augmented": 2.0252671207237285e-12
+            },
+            "1": {
+              "physical": 2.6327079713235813e-14,
+              "augmented": 2.6322924389242584e-14
+            }
+          },
+          "side_relative_residual": 0.00836928656889561,
+          "side_residual_limit": 0.01,
+          "component_seconds_max_rank_accumulated_not_wall": {
+            "A6": 30.31524359656032,
+            "H6": 22.896716636954807,
+            "Q": 52.135106198024005
+          },
+          "response_packet_manifest": "results/task041_review_v8_a6_paired_action/run_20261001T030232Z_real_rhs_abba/consumer/numerical_output/p4_backend_pair/cell_condensed/a6_response_pair/01_fused/00/00_bottom_positive/manifest.json",
+          "response_packet_manifest_sha256": "0bbc435aca9cd33777c633e05031118dea41d3168f021108d012ebdeccf43024"
+        },
+        {
+          "side": "bottom",
+          "manifest_ordinal": 0,
+          "formal_column": 207,
+          "sequence": "B2",
+          "action": "fused",
+          "packet_call_wall_max_rank_seconds": 119.22239190910477,
+          "rank0_response_wall_seconds": 119.21760298707522,
+          "iterations": 17,
+          "p4_actual_corrections_total": 1,
+          "p4_backsolve_count": 35,
+          "p4_inverse_call_count": 34,
+          "p4_maximum_corrections_in_one_inverse": 1,
+          "p4_target_tolerance": 5e-13,
+          "p4_target_reached": true,
+          "p4_original_gate_tolerance": 1e-10,
+          "p4_step_max_relative_residuals": {
+            "0": {
+              "physical": 2.025697759638072e-12,
+              "augmented": 2.0252671207237285e-12
+            },
+            "1": {
+              "physical": 2.6327079713235813e-14,
+              "augmented": 2.6322924389242448e-14
+            }
+          },
+          "side_relative_residual": 0.008369286568895516,
+          "side_residual_limit": 0.01,
+          "component_seconds_max_rank_accumulated_not_wall": {
+            "A6": 30.739010176388547,
+            "H6": 22.950317351147532,
+            "Q": 51.903145763790235
+          },
+          "response_packet_manifest": "results/task041_review_v8_a6_paired_action/run_20261001T030232Z_real_rhs_abba/consumer/numerical_output/p4_backend_pair/cell_condensed/a6_response_pair/02_fused/00/00_bottom_positive/manifest.json",
+          "response_packet_manifest_sha256": "7d71b50d138545667537a5675fa967d0fc698457bbfcdb09b455d1125484e857"
+        },
+        {
+          "side": "bottom",
+          "manifest_ordinal": 0,
+          "formal_column": 207,
+          "sequence": "A2",
+          "action": "original",
+          "packet_call_wall_max_rank_seconds": 134.30724481598008,
+          "rank0_response_wall_seconds": 134.30252807599027,
+          "iterations": 17,
+          "p4_actual_corrections_total": 2,
+          "p4_backsolve_count": 36,
+          "p4_inverse_call_count": 34,
+          "p4_maximum_corrections_in_one_inverse": 1,
+          "p4_target_tolerance": 5e-13,
+          "p4_target_reached": true,
+          "p4_original_gate_tolerance": 1e-10,
+          "p4_step_max_relative_residuals": {
+            "0": {
+              "physical": 2.025697759638072e-12,
+              "augmented": 2.0252671207237285e-12
+            },
+            "1": {
+              "physical": 2.6327079713235813e-14,
+              "augmented": 2.6322924389242473e-14
+            }
+          },
+          "side_relative_residual": 0.008369286568895733,
+          "side_residual_limit": 0.01,
+          "component_seconds_max_rank_accumulated_not_wall": {
+            "A6": 42.24881978449412,
+            "H6": 23.73340236605145,
+            "Q": 54.26422813476529
+          },
+          "response_packet_manifest": "results/task041_review_v8_a6_paired_action/run_20261001T030232Z_real_rhs_abba/consumer/numerical_output/p4_backend_pair/cell_condensed/a6_response_pair/03_original/00/00_bottom_positive/manifest.json",
+          "response_packet_manifest_sha256": "0c6489281c888a2fb2b93a946e600b2870dfb210bbd5b45ecebc845ad9864f59"
+        },
+        {
+          "side": "top",
+          "manifest_ordinal": 4,
+          "formal_column": 310,
+          "sequence": "A1",
+          "action": "original",
+          "packet_call_wall_max_rank_seconds": 146.123131225002,
+          "rank0_response_wall_seconds": 146.11752338695806,
+          "iterations": 17,
+          "p4_actual_corrections_total": 16,
+          "p4_backsolve_count": 50,
+          "p4_inverse_call_count": 34,
+          "p4_maximum_corrections_in_one_inverse": 1,
+          "p4_target_tolerance": 5e-13,
+          "p4_target_reached": true,
+          "p4_original_gate_tolerance": 1e-10,
+          "p4_step_max_relative_residuals": {
+            "0": {
+              "physical": 1.26243611723774e-12,
+              "augmented": 8.30751800649073e-13
+            },
+            "1": {
+              "physical": 1.2828797465299515e-14,
+              "augmented": 1.2828797465297008e-14
+            }
+          },
+          "side_relative_residual": 0.009202848153709585,
+          "side_residual_limit": 0.01,
+          "component_seconds_max_rank_accumulated_not_wall": {
+            "A6": 40.643105015857145,
+            "H6": 23.420742225134745,
+            "Q": 68.60681966610719
+          },
+          "response_packet_manifest": "results/task041_review_v8_a6_paired_action/run_20261001T030232Z_real_rhs_abba/consumer/numerical_output/p4_backend_pair/cell_condensed/a6_response_pair/00_original/00/04_top_positive/manifest.json",
+          "response_packet_manifest_sha256": "5aa1c7d0b42fe209643ce0ef2cd101db623904d68c13d4254c4d5c62fef43503"
+        },
+        {
+          "side": "top",
+          "manifest_ordinal": 4,
+          "formal_column": 310,
+          "sequence": "B1",
+          "action": "fused",
+          "packet_call_wall_max_rank_seconds": 134.48707125498913,
+          "rank0_response_wall_seconds": 134.48135546396952,
+          "iterations": 17,
+          "p4_actual_corrections_total": 17,
+          "p4_backsolve_count": 51,
+          "p4_inverse_call_count": 34,
+          "p4_maximum_corrections_in_one_inverse": 1,
+          "p4_target_tolerance": 5e-13,
+          "p4_target_reached": true,
+          "p4_original_gate_tolerance": 1e-10,
+          "p4_step_max_relative_residuals": {
+            "0": {
+              "physical": 9.19416562572199e-13,
+              "augmented": 8.30751800649073e-13
+            },
+            "1": {
+              "physical": 1.2828797465323993e-14,
+              "augmented": 1.282879746532159e-14
+            }
+          },
+          "side_relative_residual": 0.0092028481537098,
+          "side_residual_limit": 0.01,
+          "component_seconds_max_rank_accumulated_not_wall": {
+            "A6": 28.568689807667397,
+            "H6": 23.315350705757737,
+            "Q": 68.92888602544554
+          },
+          "response_packet_manifest": "results/task041_review_v8_a6_paired_action/run_20261001T030232Z_real_rhs_abba/consumer/numerical_output/p4_backend_pair/cell_condensed/a6_response_pair/01_fused/00/04_top_positive/manifest.json",
+          "response_packet_manifest_sha256": "57b98b3cbcd41c2abd23e995d404b6e7c0401dc4c1fddf53a26d5cb9e7d346ff"
+        },
+        {
+          "side": "top",
+          "manifest_ordinal": 4,
+          "formal_column": 310,
+          "sequence": "B2",
+          "action": "fused",
+          "packet_call_wall_max_rank_seconds": 132.86474108800758,
+          "rank0_response_wall_seconds": 132.85928138694726,
+          "iterations": 17,
+          "p4_actual_corrections_total": 16,
+          "p4_backsolve_count": 50,
+          "p4_inverse_call_count": 34,
+          "p4_maximum_corrections_in_one_inverse": 1,
+          "p4_target_tolerance": 5e-13,
+          "p4_target_reached": true,
+          "p4_original_gate_tolerance": 1e-10,
+          "p4_step_max_relative_residuals": {
+            "0": {
+              "physical": 8.727892082642572e-13,
+              "augmented": 8.30751800649073e-13
+            },
+            "1": {
+              "physical": 1.2828797464897497e-14,
+              "augmented": 1.282879746489492e-14
+            }
+          },
+          "side_relative_residual": 0.009202848153709614,
+          "side_residual_limit": 0.01,
+          "component_seconds_max_rank_accumulated_not_wall": {
+            "A6": 28.50486599362921,
+            "H6": 23.22724916494917,
+            "Q": 67.74033851362765
+          },
+          "response_packet_manifest": "results/task041_review_v8_a6_paired_action/run_20261001T030232Z_real_rhs_abba/consumer/numerical_output/p4_backend_pair/cell_condensed/a6_response_pair/02_fused/00/04_top_positive/manifest.json",
+          "response_packet_manifest_sha256": "485c77dc6ddd4a50559d94f50931ab8c700019fbd7e6826e89bc155352b2096b"
+        },
+        {
+          "side": "top",
+          "manifest_ordinal": 4,
+          "formal_column": 310,
+          "sequence": "A2",
+          "action": "original",
+          "packet_call_wall_max_rank_seconds": 149.67995584593154,
+          "rank0_response_wall_seconds": 149.67419633292593,
+          "iterations": 17,
+          "p4_actual_corrections_total": 16,
+          "p4_backsolve_count": 50,
+          "p4_inverse_call_count": 34,
+          "p4_maximum_corrections_in_one_inverse": 1,
+          "p4_target_tolerance": 5e-13,
+          "p4_target_reached": true,
+          "p4_original_gate_tolerance": 1e-10,
+          "p4_step_max_relative_residuals": {
+            "0": {
+              "physical": 9.042410034819664e-13,
+              "augmented": 8.30751800649073e-13
+            },
+            "1": {
+              "physical": 1.2828797464897497e-14,
+              "augmented": 1.282879746489492e-14
+            }
+          },
+          "side_relative_residual": 0.0092028481537097,
+          "side_residual_limit": 0.01,
+          "component_seconds_max_rank_accumulated_not_wall": {
+            "A6": 41.610887170536444,
+            "H6": 23.605220257421024,
+            "Q": 70.87225179793313
+          },
+          "response_packet_manifest": "results/task041_review_v8_a6_paired_action/run_20261001T030232Z_real_rhs_abba/consumer/numerical_output/p4_backend_pair/cell_condensed/a6_response_pair/03_original/00/04_top_positive/manifest.json",
+          "response_packet_manifest_sha256": "a34bd0bbd22f0ee4082191d834fdb30a434fc3ca6d243a87a53dd71defd59341"
+        }
+      ],
+      "side_wall_rollups": {
+        "bottom": {
+          "original_mean_call_wall_max_rank_seconds": 132.03454497701023,
+          "fused_mean_call_wall_max_rank_seconds": 119.11924098950112,
+          "fused_mean_reduction_percent": 9.781761272974364,
+          "rank0_original_mean_response_wall_seconds": 132.02966350049246,
+          "rank0_fused_mean_response_wall_seconds": 119.11447797552682,
+          "rank0_reported_change_percent": -9.78203320567992,
+          "scope": "packet call_wall_max_rank_seconds; two original and two fused responses, not isolated performance qualification"
+        },
+        "top": {
+          "original_mean_call_wall_max_rank_seconds": 147.90154353546677,
+          "fused_mean_call_wall_max_rank_seconds": 133.67590617149835,
+          "fused_mean_reduction_percent": 9.618315687528378,
+          "rank0_original_mean_response_wall_seconds": 147.895859859942,
+          "rank0_fused_mean_response_wall_seconds": 133.6703184254584,
+          "rank0_reported_change_percent": -9.618620458987326,
+          "scope": "packet call_wall_max_rank_seconds; two original and two fused responses, not isolated performance qualification"
+        }
+      },
+      "comparison_gates": {
+        "bottom": {
+          "comparison_count": 4,
+          "all_four_pass": true,
+          "max_e_x": 2.708555755217525e-14,
+          "max_e_A": 7.785694432043024e-14,
+          "e_x_limit": 1e-08,
+          "e_A_limit": 1e-08,
+          "max_side_relative_residual": 0.008369286568895733,
+          "side_relative_residual_limit": 0.01
+        },
+        "top": {
+          "comparison_count": 4,
+          "all_four_pass": true,
+          "max_e_x": 2.7499208775347377e-14,
+          "max_e_A": 2.3432972238209853e-14,
+          "e_x_limit": 1e-08,
+          "e_A_limit": 1e-08,
+          "max_side_relative_residual": 0.0092028481537098,
+          "side_relative_residual_limit": 0.01
+        }
+      },
+      "p4_history_summary": {
+        "responses_all_17_iterations": true,
+        "total_p4_corrections": 70,
+        "total_backsolves": 342,
+        "original_physical_augmented_gate_passed_all_responses": true,
+        "target_reached_all_responses": true,
+        "target_history_semantics": "per inverse call; per-response correction totals sum across 34 inverse calls and are not a per-inverse maximum"
+      },
+      "resources": {
+        "workflow_wall_seconds": 3319.9417742890073,
+        "phase_wall_seconds": 3319.9417129770154,
+        "peak_authority_bytes": 38147805184,
+        "peak_process_tree_rss_bytes": 38147805184,
+        "cgroup_historical_memory_peak_bytes": 35880628224,
+        "hard_cap_bytes": 53221163008,
+        "warning_bytes": 47899046707,
+        "reserve_bytes": 412316860416,
+        "cap_warning_reserve_pass": true,
+        "joint_original_fused_residency_note": "peak includes the original and fused action contexts together; not a single-backend peak"
+      },
+      "swap_observation": {
+        "job_swap_final_bytes": 0,
+        "cgroup_swap_final_bytes": 0,
+        "global_swap_baseline_bytes": 5999333376,
+        "global_swap_final_bytes": 5999235072,
+        "raw_clamped_nonnegative_delta_bytes": 0,
+        "raw_delta_semantics": "clamped nonnegative increase; preserved as recorded, not signed subtraction",
+        "derived_signed_global_swap_delta_bytes": -98304,
+        "global_pswpin_delta_pages": 25,
+        "global_pswpout_delta_pages": 0,
+        "policy": "observe-only; global counters are host-wide and not attributed to this job"
+      },
+      "completion": {
+        "unit": "task041-v8-a6-real-rhs-abba-20261001T030232Z.service",
+        "invocation_id": "7728756e7b9d42f4b2a1007da29c20a9",
+        "runtime_source_sha": "7340a7d9f9eddb46e4514c1622b51836108a085c",
+        "worker_returncode": 0,
+        "supervision_returncode": 0,
+        "termination_reason": null,
+        "worker_process_group_gone": true,
+        "unit_journal_final_line": "Oct 01 12:07:51 fenics-ws01 systemd[2818]: Consumed 7h 32min 19.876s CPU time, 33.4G memory peak, 0B memory swap peak.",
+        "terminal_evidence_note": "transient unit was later unloaded; natural completion is supported by worker/supervision rc0, null termination reason, process-group cleanup and user journal, not by unloaded-unit ExecMainStatus alone"
+      },
+      "performance_scope": "not_isolated; two fixed manifest RHS only, not full consumer or whole-solver qualification",
+      "evidence": {
+        "closeout_path": "results/task041_review_v8_a6_paired_action/run_20261001T030232Z_real_rhs_abba/a6_real_rhs_abba_closeout.json",
+        "closeout_sha256": "f4f8800b3b5924466580ae6ee6bc0f694abb804835a823bc3edacdb4af3b4f60",
+        "supervision_summary_path": "results/task041_review_v8_a6_paired_action/run_20261001T030232Z_real_rhs_abba/supervision_summary.json"
+      },
+      "ledger": {
+        "path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_load_ledger_20260920.json",
+        "entry_id": "task041_v8_a6_real_rhs_abba_20261001",
+        "entries_before_after": [
+          62,
+          63
+        ],
+        "added_seconds": 3319.9417742890073,
+        "charged_seconds_after": 239441.922983714,
+        "backup_path": "results/task041_review_v8_a6_paired_action/ledger_before_real_rhs_abba_append_20261001T044015Z.json",
+        "backup_sha256": "bca357e3923d3b9e4cdc552b462c43b6d684acbf24e0f67d5d479259c5a730dc",
+        "sha256_after_append": "a3aa28e71e66c7ad506295a738f6d8e301bf02a9ade0b718d33f6891c5e18fa3",
+        "charge_note": "workflow parent wall once; no rank, response, component or phase interval added"
+      }
     }
   }
 }

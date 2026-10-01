@@ -7,6 +7,7 @@
 | W 5 nm，p6/h4，M480，MPI8×1，registered cell-condensed 正式 consumer | worker自然exit0，1920/1920响应、RTA/EH/衍射完成；runtime source `d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f`；结束HEAD `499c25de74c30ed0bdee17180f5315765f35efbe` | 五项true residual与恢复/物理门通过；R/T/A/A_volume=`.7331842733877258/.00022009869572838214/.2665956279165458/.2665962726230213`；24 h未达。public/finalizer保留exit3/failed：差异仅获准文档提交 |
 | 时间与性能边界 | worker wall `189308.766050059 s`（52.585768 h）；public-to-finalizer `189323.841971047 s`（52.589956 h） | 旧`53.239672 h` worker基线与本场worker同口径约改善1.23%；并行运行，不是无竞争性能资格 |
 | 资源与身份 | authority/tree峰 `43,858,726,912/43,153,915,904 B`；cgroup `memory.peak=43,867,639,808 B`（历史计数器峰）；cap/warning/reserve `53,221,163,008/47,899,046,707/412,316,860,416 B` | job/cgroup swap峰0；global swap/pswp仅观察。unit Invocation `755aeb44c48a4d1cbc8bbf6db9f6fd3e`，CPU1–8/node0。详情见[V8 outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/formal_5nm_2nm_v8.md)与[record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v8_formal_5nm_2nm.json) |
+| A6 有界真实 RHS action 对照 | bottom formal column 207、top 310，各做 original/fused/fused/original 四响应；四项重复/等价比较均过，`max e_x/e_A=2.74992e-14/7.78569e-14` | max-rank响应均值分别降低9.782%/9.618%；只覆盖两条冻结 RHS，`not_isolated`，不是全场或正式性能资格。见[V8 A6b outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/formal_5nm_2nm_v8.md)及[machine record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v8_formal_5nm_2nm.json) |
 
 ## Task041 V7 历史资格快照
 
