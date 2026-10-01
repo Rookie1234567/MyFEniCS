@@ -60,7 +60,9 @@ def main():
     from src.runners.feinn_campaign import STAGES
     from src.runners.feinn_gn_campaign import STAGES as GN_STAGES
 
-    STAGES = STAGES | GN_STAGES
+    from src.runners.feinn_cached_gn_campaign import STAGES as CACHED_STAGES
+
+    STAGES = STAGES | GN_STAGES | CACHED_STAGES
     stages.update(
         {name: (name, "task42extra-" + name.replace("_", "-")) for name in STAGES}
     )
@@ -71,7 +73,11 @@ def main():
     namespace, session = stages[spec.derived["stage"]]
     if len(sys.argv) == 4:
         attempt = int(sys.argv[3])
-        if not spec.derived["stage"].startswith("v9_") or attempt not in (2, 3, 4):
+        if not spec.derived["stage"].startswith(("v9_", "v10_")) or attempt not in (
+            2,
+            3,
+            4,
+        ):
             raise ValueError("ONLY_REVIEW_V8_EVIDENCED_RETRIES")
         # A prior attempt must be closed and cleared; never replace its files.
         previous = sorted(

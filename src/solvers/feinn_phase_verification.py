@@ -45,7 +45,15 @@ def restore_network(design, entry, durable_entry, *, phase, supervised):
 
 
 def reconstruct(
-    design, qualification, routes, artifact, marker, manifest, *, common_routes=None
+    design,
+    qualification,
+    routes,
+    artifact,
+    marker,
+    manifest,
+    *,
+    common_routes=None,
+    retain_initial=True,
 ):
     configure()
     mapping = CompleteMomentMap(load_moments(qualification["files"]["moments"]["path"]))
@@ -78,7 +86,7 @@ def reconstruct(
             ),
             None,
         )
-        if adam is not None:
+        if adam is not None and retain_initial:
             checkpoint = adam["checkpoint"]
             path = (
                 Path(index["files"]["durable_final"]["path"]).parent

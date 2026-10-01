@@ -20,6 +20,13 @@ with patch('src.solvers.feinn_phase_compare.compare', return_value=({'FE_only': 
         assert result['FE_only']
 assert 'torch' not in sys.modules
 assert 'src.solvers.feinn_gn_training' not in sys.modules
+from src.runners.feinn_cached_gn_campaign import dispatch as cached_dispatch
+with patch('src.solvers.feinn_phase_compare.compare', return_value=({'FE_only': True}, {})), patch('src.runners.feinn_cached_gn_campaign.selected_routes', return_value={}):
+    for stage in ('v10_gn_compare', 'v10_fit_compare'):
+        result, _ = cached_dispatch(stage, {}, None, None, {}, lambda _: {})
+        assert result['FE_only']
+assert 'torch' not in sys.modules
+assert 'src.solvers.feinn_derivative_reuse' not in sys.modules
 """
     # Inherits the caller's qualified activation and library environment.
     subprocess.run([sys.executable, "-c", code], check=True)

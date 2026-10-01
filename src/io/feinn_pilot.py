@@ -14,6 +14,14 @@ from src.runners.feinn_gn_campaign import (
     SUPERVISED as GN_SUPERVISED,
 )
 
+from src.runners.feinn_cached_gn_campaign import (
+    STAGES as CACHED_STAGES,
+    SUPERVISED as CACHED_SUPERVISED,
+)
+
+GN_STAGES = GN_STAGES | CACHED_STAGES
+GN_SUPERVISED = GN_SUPERVISED | CACHED_SUPERVISED
+
 ROOT = Path(__file__).resolve().parents[2]
 DESIGN = ROOT / "input/task042extra_feinn_5nm/design_v1.json"
 STAGES = {

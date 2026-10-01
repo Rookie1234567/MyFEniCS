@@ -9,7 +9,9 @@ from time import perf_counter
 import numpy as np
 
 
-def damped_cg(K, gradient, mu, *, preconditioner=None, max_iter=40, tolerance=0.01):
+def damped_cg(
+    K, gradient, mu, *, preconditioner=None, max_iter=40, tolerance=0.01, budget=None
+):
     rhs = -np.asarray(gradient, np.float64)
     s = np.zeros_like(rhs)
     norm = np.linalg.norm(rhs)
@@ -23,7 +25,12 @@ def damped_cg(K, gradient, mu, *, preconditioner=None, max_iter=40, tolerance=0.
     if not rho > 0:
         raise ValueError("PC_NOT_POSITIVE")
     iterations = 0
+    early = False
     for iterations in range(1, max_iter + 1):
+        if budget is not None and not budget.allow(K=3, trial=1):
+            iterations -= 1
+            early = True
+            break
         Hp = K(p) + mu * p
         curvature = float(p @ Hp)
         if not np.isfinite(curvature) or curvature <= 0:
@@ -45,7 +52,11 @@ def damped_cg(K, gradient, mu, *, preconditioner=None, max_iter=40, tolerance=0.
             raise ValueError("CG_RESIDUAL_OR_PC_INVALID")
         p = z + (rho_next / rho) * p
         rho = rho_next
+    if budget is not None:
+        budget.event("CG_TRUE_RESIDUAL", "begin", iterations=iterations)
     true = rhs - K(s) - mu * s
+    if budget is not None:
+        budget.event("CG_TRUE_RESIDUAL", "end", iterations=iterations)
     relative = float(np.linalg.norm(true) / norm)
     return s, dict(
         iterations=iterations,
@@ -55,19 +66,32 @@ def damped_cg(K, gradient, mu, *, preconditioner=None, max_iter=40, tolerance=0.
         max_iter=max_iter,
         target_true_relative=tolerance,
         finite=bool(np.isfinite(s).all()),
+        budget_frontier_early=early,
     )
 
 
-def range_ritz(K, size, *, rank=32, seed=421902, rcond=1e-12):
+def range_ritz(K, size, *, rank=32, seed=421902, rcond=1e-12, budget=None):
     started = perf_counter()
     rank = min(rank, size)
     omega = np.random.default_rng(seed).normal(size=(size, rank))
+    if budget is not None:
+        budget.event("PC_K_OMEGA", "begin", rank=rank)
     Y = np.column_stack([K(omega[:, j]) for j in range(rank)])
+    if budget is not None:
+        budget.event("PC_K_OMEGA", "end", rank=rank)
     U, _ = np.linalg.qr(Y, mode="reduced")
+    if budget is not None:
+        budget.event("PC_KU", "begin", rank=rank)
     KU = np.column_stack([K(U[:, j]) for j in range(rank)])
+    if budget is not None:
+        budget.event("PC_KU", "end", rank=rank)
     raw = U.T @ KU
     T = (raw + raw.T) / 2
+    if budget is not None:
+        budget.event("PC_EIGH", "begin", rank=rank)
     eigenvalues, W = np.linalg.eigh(T)
+    if budget is not None:
+        budget.event("PC_EIGH", "end", rank=rank)
     scale = float(np.max(abs(eigenvalues), initial=0))
     negative_tolerance = 128 * np.finfo(float).eps * max(scale, np.finfo(float).tiny)
     if np.min(eigenvalues, initial=0) < -negative_tolerance:
@@ -128,12 +152,16 @@ class DampedGNState:
     def clamp(self):
         self.mu = float(np.clip(self.mu, 1e-12 * self.h0, 1e6 * self.h0))
 
-    def propose(self, theta, loss, gradient, K, evaluate, emit=lambda *_: None):
+    def propose(
+        self, theta, loss, gradient, K, evaluate, emit=lambda *_: None, *, budget=None
+    ):
         """A rejected trial always leaves theta/forward state at committed theta."""
         theta = np.asarray(theta).copy()
         g = np.asarray(gradient)
 
         def trial(s, kind, cg=None, damping_trial=None):
+            if budget is not None and not budget.allow(K=1, trial=1):
+                raise budget.stop_exception("BUDGET_FRONTIER_TRIAL_RESERVE")
             Ks = K(s)
             pred = float(-g @ s - 0.5 * s @ Ks)
             row = dict(
@@ -158,11 +186,15 @@ class DampedGNState:
                 emit(row)
                 return False, None, row
             try:
+                if budget is not None:
+                    budget.event("TRUE_TRIAL", "begin", trial_kind=kind)
                 new = evaluate(theta + s)
             finally:
                 # The caller's evaluate accepts restore_only without objective
                 # work. Trial updates never mutate the committed optimizer.
                 evaluate(theta, restore_only=True)
+                if budget is not None:
+                    budget.event("TRUE_TRIAL", "end", trial_kind=kind)
             finite = bool(np.isfinite(new))
             ared = float(loss - new) if finite else None
             eta = ared / pred if finite else None
@@ -186,9 +218,20 @@ class DampedGNState:
                 if self.V is not None
                 else None
             )
+            if budget is not None:
+                if not budget.allow(K=3, trial=1):
+                    raise budget.stop_exception("BUDGET_FRONTIER_CG_RESERVE")
+                budget.event("CG", "begin", damping_trial=damping_trial)
             s, cg = damped_cg(
-                K, g, self.mu, preconditioner=pc, max_iter=80 if pc is not None else 40
+                K,
+                g,
+                self.mu,
+                preconditioner=pc,
+                max_iter=80 if pc is not None else 40,
+                budget=budget,
             )
+            if budget is not None:
+                budget.event("CG", "end", damping_trial=damping_trial, **cg)
             if cg["hit_limit"] and cg["true_relative"] > 0.01:
                 self.slow_streak += 1
             else:
@@ -198,14 +241,27 @@ class DampedGNState:
                 and len(self.pc_builds) < self.pc_max_builds
                 and self.accepted - self.last_pc_outer >= 5
             ):
-                V, lam, record = range_ritz(K, len(theta))
-                record["source_accepted_outer"] = self.accepted
-                self.pc_builds.append(record)
-                self.last_pc_outer = self.accepted
-                if len(lam):
-                    self.V, self.lam = V, lam
-                self.slow_streak = 0
-                emit(dict(kind="PC_BUILD", **record))
+                if budget is not None and not budget.allow(K=67, trial=1):
+                    emit(
+                        dict(
+                            kind="PC_DEFERRED_BY_BUDGET",
+                            retained_PC_builds=len(self.pc_builds),
+                            accepted_outer=self.accepted,
+                        )
+                    )
+                else:
+                    if budget is not None:
+                        budget.event("PC_BUILD", "begin", source_outer=self.accepted)
+                    V, lam, record = range_ritz(K, len(theta), budget=budget)
+                    record["source_accepted_outer"] = self.accepted
+                    self.pc_builds.append(record)
+                    self.last_pc_outer = self.accepted
+                    if len(lam):
+                        self.V, self.lam = V, lam
+                    self.slow_streak = 0
+                    emit(dict(kind="PC_BUILD", **record))
+                    if budget is not None:
+                        budget.event("PC_BUILD", "end", source_outer=self.accepted)
             accepted, new, row = trial(s, "GN_TRIAL", cg, damping_trial)
             if accepted:
                 if row["eta"] > 0.75:

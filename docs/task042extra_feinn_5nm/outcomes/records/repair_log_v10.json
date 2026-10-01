@@ -1,0 +1,24 @@
+{
+  "repairs": [
+    {
+      "root_cause": "LOCAL_LINT_FORMAT_AND_AMBIGUOUS_NAMES",
+      "failure": "65 style errors; after formatting two E741 names remained",
+      "hypothesis": "local style and I/O identifier ambiguity",
+      "change": "Ruff formatting, remove unused import, rename exact CSR variables",
+      "test": "final_targeted Ruff + compile + 19 tests pass",
+      "retries_with_changes": 2,
+      "cost_preserved": true
+    },
+    {
+      "root_cause": "RUFF_ENVIRONMENT_SELECTION",
+      "failure": "ML environment has no Ruff",
+      "hypothesis": "Ruff already qualified in pure environment",
+      "change": "explicit pure activation for lint then ML activation for pytest",
+      "test": "final_targeted complete pass",
+      "retries_with_changes": 1,
+      "dependencies_installed": false,
+      "cost_preserved": true
+    }
+  ],
+  "numerical_restarts": 0
+}

@@ -288,13 +288,17 @@ def launch(spec):
     v6 = stage.startswith("v6_") or stage == "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT"
     v7 = stage.startswith("v7_")
     v8 = stage.startswith("v8_")
-    v9 = stage.startswith("v9_")
+    v10 = stage.startswith("v10_")
+    v9 = stage.startswith(("v9_", "v10_"))
+    gn_version = "V10" if v10 else "V9"
+    if v10:
+        from src.runners import feinn_cached_gn_campaign as gn_campaign
+    elif v9:
+        from src.runners import feinn_gn_campaign as gn_campaign
     if v9:
-        from src.runners.feinn_gn_campaign import (
-            AUTHORITY as GN_AUTHORITY,
-            REVIEW_SHA as GN_REVIEW,
-            SUPERVISED,
-        )
+        GN_AUTHORITY = gn_campaign.AUTHORITY
+        GN_REVIEW = gn_campaign.REVIEW_SHA
+        SUPERVISED = gn_campaign.SUPERVISED
         from src.solvers.feinn_discretization_audit import POLICY
 
         namespace = os.environ.get("TASK42EXTRA_DURABLE_NAMESPACE", stage)
@@ -310,11 +314,43 @@ def launch(spec):
             v9_review_sha=GN_REVIEW,
             v9_campaign_design_sha256=sha(
                 ROOT
-                / "docs/task042extra_feinn_5nm/outcomes/records/campaign_design_v9.json"
+                / (
+                    "docs/task042extra_feinn_5nm/outcomes/records/campaign_design_"
+                    + gn_version.lower()
+                    + ".json"
+                )
             ),
             supervision_budget_origin_monotonic=launch_origin,
             durable_terminal_identity_sha256=sha(proof),
         )
+        if v10:
+            state["v10_review_sha"] = state.pop("v9_review_sha")
+            state["v10_campaign_design_sha256"] = state.pop("v9_campaign_design_sha256")
+            frozen = json.loads(
+                (
+                    ROOT
+                    / "docs/task042extra_feinn_5nm/outcomes/records/campaign_design_v10.json"
+                ).read_text()
+            )["frozen_states"]
+            key = ("phase" if "phase" in stage else "plain") + (
+                "_fit_gn" if "fit" in stage else "_gn"
+            )
+            chosen = (
+                {key: frozen[key]}
+                if stage
+                in (
+                    "v10_plain_cached_gn",
+                    "v10_phase_cached_gn",
+                    "v10_plain_cached_fit_gn",
+                    "v10_phase_cached_fit_gn",
+                )
+                else frozen
+            )
+            for entry in chosen.values():
+                for file_key in ("checkpoint", "durable_final", "checkpoint_index"):
+                    if sha(entry[file_key]["path"]) != entry[file_key]["sha256"]:
+                        raise RuntimeError("V9_FINAL_BYTES_CHANGED_BEFORE_WORKER")
+            state["V9_final_states_bound_before_worker"] = chosen
         if stage in GN_AUTHORITY:
             state.update(**POLICY)
         else:
@@ -515,10 +551,8 @@ def launch(spec):
             ledger["V8"] = campaign_budget(ledger["entries"])
             ledger["remaining_seconds"] = ledger["V8"]["new_remaining_seconds"]
         if v9:
-            from src.runners.feinn_gn_campaign import campaign_budget
-
-            ledger["V9"] = campaign_budget(ledger["entries"])
-            ledger["remaining_seconds"] = ledger["V9"]["new_remaining_seconds"]
+            ledger[gn_version] = gn_campaign.campaign_budget(ledger["entries"])
+            ledger["remaining_seconds"] = ledger[gn_version]["new_remaining_seconds"]
         if (
             ledger["remaining_seconds"] <= 120
             or (stage.startswith("v2_") or stage == "FREE-FE-DUAL-GRAM-DIAG")
@@ -686,9 +720,17 @@ def launch(spec):
 
             prerequisite_stages = DEPENDENCIES[stage]
         if v9:
-            from src.runners.feinn_gn_campaign import DEPENDENCIES
-
-            prerequisite_stages = DEPENDENCIES[stage]
+            prerequisite_stages = gn_campaign.DEPENDENCIES[stage]
+            if v10 and stage in (
+                "v10_gn_reconstruct",
+                "v10_gn_compare",
+                "v10_fit_reconstruct",
+                "v10_fit_compare",
+            ):
+                actual = gn_campaign.selected_routes(
+                    load_index, supervised="fit" in stage
+                )
+                prerequisite_stages = prerequisite_stages + list(actual)
         for dependency in prerequisite_stages:
             item = load_index(dependency)
             dependencies[dependency] = dict(
@@ -885,10 +927,8 @@ def launch(spec):
             if limit <= 150 or launch_origin + limit - 150 <= perf_counter():
                 raise RuntimeError("V8_BUDGET_RESERVE_UNAVAILABLE")
         if v9:
-            from src.runners.feinn_gn_campaign import STAGES as GN_STAGES
-
-            group = GN_STAGES[stage][2]
-            limit = min(limit, ledger["V9"]["groups_remaining_seconds"][group])
+            group = gn_campaign.STAGES[stage][2]
+            limit = min(limit, ledger[gn_version]["groups_remaining_seconds"][group])
             if group != "E":
                 limit = min(limit, ledger["remaining_seconds"] - 1200)
             if limit <= 150 or launch_origin + limit - 150 <= perf_counter():
@@ -995,7 +1035,9 @@ def worker(directory):
     directory = Path(directory)
     manifest = json.loads((directory / "run_manifest.json").read_text())
     stage = manifest["stage"]
-    if stage.startswith(("v4_", "v5_", "v6_", "v7_", "v8_", "v9_")) or stage in (
+    if stage.startswith(
+        ("v4_", "v5_", "v6_", "v7_", "v8_", "v9_", "v10_")
+    ) or stage in (
         "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY",
         "FEINN-FROZEN-HIDDEN-READOUT-G",
         "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT",
@@ -1037,8 +1079,11 @@ def worker(directory):
         design = json.loads(DESIGN.read_text())
         if sha(DESIGN) != manifest["design_sha256"]:
             raise RuntimeError("design changed after admission")
-        if stage.startswith("v9_"):
-            from src.runners.feinn_gn_campaign import dispatch
+        if stage.startswith(("v9_", "v10_")):
+            if stage.startswith("v10_"):
+                from src.runners.feinn_cached_gn_campaign import dispatch
+            else:
+                from src.runners.feinn_gn_campaign import dispatch
 
             result, files = dispatch(
                 stage, design, artifact, marker, manifest, load_index

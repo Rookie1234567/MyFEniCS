@@ -1,0 +1,145 @@
+{
+  "review_sha": "47317bb648d5e2237657f8b6c75c239ab5bf55c5",
+  "reviewed_SHA": "0277bddd50c910fb3b04fa276191872776728942",
+  "old_cumulative_seconds": 99864.4864455976,
+  "new_batch_limit_seconds": 43200,
+  "group_limits_seconds": {
+    "A": 1800,
+    "B": 9000,
+    "C": 21600,
+    "D": 7200,
+    "E": 3600
+  },
+  "E_reserved_seconds": 1200,
+  "frozen_states": {
+    "plain_gn": {
+      "checkpoint": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_plain_gn_20261001T020335735420Z/frozen_checkpoint.npz",
+        "sha256": "21ed65cec10c377bf18d4e06ff6621e4c892a0ba804a9d53f2d1e2d01b194fa9"
+      },
+      "durable_final": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_plain_gn_20261001T020335735420Z/durable_checkpoints/committed_000030.pt",
+        "sha256": "55583f893e83418834669e169310a2991d8a823cd8aa13a81af1ed4580275cdd"
+      },
+      "checkpoint_index": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_plain_gn_20261001T020335735420Z/checkpoint_index.json",
+        "sha256": "3050c830d0ced9f6102e21810137c9eb1f3b25786fb944c38e90533e337cb3e3"
+      },
+      "history": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_plain_gn_20261001T020335735420Z/history.jsonl",
+        "sha256": "36bf89e69577bd7c819bcb0b6ee90d29481b0cb88905e83d9881a0bc6bd7f07e"
+      },
+      "source_sha": "bc4ecb2192e687273926e1d1f0ce5e7df4b78542",
+      "stage": "v9_plain_gn",
+      "supervised": false,
+      "phase": false
+    },
+    "phase_gn": {
+      "checkpoint": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_phase_gn_20261001T044907511599Z/frozen_checkpoint.npz",
+        "sha256": "b1aeef1e5cf28a9b4435b490147d4767d2f5ea9539e9707c66cdffe61432aef4"
+      },
+      "durable_final": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_phase_gn_20261001T044907511599Z/durable_checkpoints/committed_000055.pt",
+        "sha256": "8f590ed900323368d13afab86b03c141a5a672951087371f3f25616a9d487062"
+      },
+      "checkpoint_index": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_phase_gn_20261001T044907511599Z/checkpoint_index.json",
+        "sha256": "c96e0376bc6f1f9c606baadcc5da9daf7bbb2f3396a2e966ae5c438a2e48dffe"
+      },
+      "history": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_phase_gn_20261001T044907511599Z/history.jsonl",
+        "sha256": "2e07a01d17bee4a730b81c8ef10e1d43e341d63a903206507998c50417c5ec2a"
+      },
+      "source_sha": "ebff76949c78560187d836830483172faf0cfc9a",
+      "stage": "v9_phase_gn",
+      "supervised": false,
+      "phase": true
+    },
+    "plain_fit_gn": {
+      "checkpoint": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_plain_fit_gn_20261001T073341508373Z/frozen_checkpoint.npz",
+        "sha256": "b26cda19c6a7594e25ca477aec89a04770e1aad950b77e948864460001ab9f52"
+      },
+      "durable_final": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_plain_fit_gn_20261001T073341508373Z/durable_checkpoints/committed_000007.pt",
+        "sha256": "97c3a8761bf2cbd416bde36b85d51a8cfb473eb073fc8f0bf5e0ed58c481dfcc"
+      },
+      "checkpoint_index": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_plain_fit_gn_20261001T073341508373Z/checkpoint_index.json",
+        "sha256": "0240d5397957601aa5bf9a9dec9710124d69164990f790036c3b275b0ce3e5e1"
+      },
+      "history": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_plain_fit_gn_20261001T073341508373Z/history.jsonl",
+        "sha256": "93c68abe6cc8aa8358c226101b68b21abd92ee295be4e76070f1607f5a4f6440"
+      },
+      "source_sha": "556cb3e608db21c5a2fd44cb97cc553ae5d70e5f",
+      "stage": "v9_plain_fit_gn",
+      "supervised": true,
+      "phase": false
+    },
+    "phase_fit_gn": {
+      "checkpoint": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_phase_fit_gn_20261001T081542267092Z/frozen_checkpoint.npz",
+        "sha256": "794a8e38be3e4805653ef7d4136eb16164936c5de4f499ad89c3cff8f616201e"
+      },
+      "durable_final": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_phase_fit_gn_20261001T081542267092Z/durable_checkpoints/committed_000005.pt",
+        "sha256": "44e53c6096130b8e3910bad53a4d327a6c206b8be5a57ed33883dbf19774955b"
+      },
+      "checkpoint_index": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_phase_fit_gn_20261001T081542267092Z/checkpoint_index.json",
+        "sha256": "5534f053cbb10b67c8a36f47b242e053c244f7f18e7c2eff0ec7c2945592947d"
+      },
+      "history": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_phase_fit_gn_20261001T081542267092Z/history.jsonl",
+        "sha256": "32607cee2b5261bc1b2f33c0018ee69c6bcb812c21be774f34da83bef824b9ab"
+      },
+      "source_sha": "556cb3e608db21c5a2fd44cb97cc553ae5d70e5f",
+      "stage": "v9_phase_fit_gn",
+      "supervised": true,
+      "phase": true
+    }
+  },
+  "cache": {
+    "max_resident_bytes": 2147483648,
+    "batch": 8,
+    "dtype": "float64/complex128",
+    "seed": 4211001,
+    "performance_ratio_min": 1.3,
+    "remove_only_exact_oriented_zeros": true
+  },
+  "no_new_reference": true,
+  "no_new_physics": true,
+  "PC_lifetime_limits": {
+    "C": 2,
+    "D": 1
+  },
+  "C_new_limits": {
+    "seconds": 10800,
+    "accepted": 120,
+    "K": 4000,
+    "JVP_VJP": 8000,
+    "trial": 512
+  },
+  "D_new_limits": {
+    "seconds": 3600,
+    "accepted": 60,
+    "K": 1000,
+    "JVP_VJP": 2500,
+    "trial": 256
+  },
+  "stages": [
+    "v10_state_and_work_audit",
+    "v10_derivative_checks",
+    "v10_derivative_benchmark",
+    "v10_plain_cached_gn",
+    "v10_phase_cached_gn",
+    "v10_gn_reconstruct",
+    "v10_gn_compare",
+    "v10_plain_cached_fit_gn",
+    "v10_phase_cached_fit_gn",
+    "v10_fit_reconstruct",
+    "v10_fit_compare"
+  ]
+}

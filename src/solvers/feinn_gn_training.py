@@ -102,6 +102,7 @@ class GNProblem:
         self.guard = guard
         self.counts = dict(K=0, full_loss_gradient=0, trial_loss=0, G_matvec=0)
         self.costs = dict(K=0.0, gradient=0.0, trial_loss=0.0)
+        self.frontier = None
 
     def value_gradient(self):
         self.guard("gradient")
@@ -126,12 +127,16 @@ class GNProblem:
         loss = self.metric.value(c)[0]
         self.counts["trial_loss"] += 1
         self.costs["trial_loss"] += perf_counter() - start
+        if self.frontier is not None:
+            self.frontier.observe("trial", perf_counter() - start)
         self.last_trial = (parameters(self.model), c.copy(), loss)
         return loss
 
     def K(self, v):
         self.guard("K")
         start = perf_counter()
+        if self.frontier is not None:
+            self.frontier.event("K", "begin", completed=self.counts["K"])
         j = self.jac.jvp(self.model, v)
         if self.supervised:
             dual = self.metric.G @ j / self.metric.denominator
@@ -145,6 +150,9 @@ class GNProblem:
         out = self.jac.vjp(self.model, dual)
         self.counts["K"] += 1
         self.costs["K"] += perf_counter() - start
+        if self.frontier is not None:
+            self.frontier.observe("K", perf_counter() - start)
+            self.frontier.event("K", "end", completed=self.counts["K"])
         return out
 
 
@@ -333,19 +341,38 @@ def run(
     phase,
     supervised,
     reference=None,
+    continuation=None,
 ):
     configure()
-    if checks["result"]["status"] != "GN_INTERFACE_PASS":
+    if continuation is None and checks["result"]["status"] != "GN_INTERFACE_PASS":
         raise ValueError("COMMON_GN_INTERFACE_NOT_QUALIFIED")
-    entry = prefix_entry(phase, supervised)
+    if continuation is not None:
+        key = ("phase" if phase else "plain") + ("_fit_gn" if supervised else "_gn")
+        if not checks["result"]["states"][key]["passed"]:
+            raise ValueError("CORRESPONDING_DERIVATIVE_ACCELERATION_NOT_QUALIFIED")
+        from src.solvers.feinn_derivative_reuse import load_final
+
+        entry = continuation
+    else:
+        entry = prefix_entry(phase, supervised)
     allowed = [native["files"][k]["path"] for k in ("native", "gram")] + [
         qualification["files"]["moments"]["path"],
-        entry["path"],
+        *(
+            [
+                entry[k]["path"]
+                for k in ("checkpoint", "durable_final", "checkpoint_index")
+            ]
+            if continuation is not None
+            else [entry["path"]]
+        ),
     ]
     if supervised:
         allowed.append(reference["files"]["reference"]["path"])
     reads = install_data_guard(allowed, artifact, supervised=supervised)
-    model, old = load_boundary(design, entry, phase=phase, supervised=supervised)
+    if continuation is not None:
+        model, _, old = load_final(design, entry)
+    else:
+        model, old = load_boundary(design, entry, phase=phase, supervised=supervised)
     initial = parameters(model)
     packet = load_native(native["files"]["native"]["path"])
     mapping = CompleteMomentMap(load_moments(qualification["files"]["moments"]["path"]))
@@ -363,7 +390,7 @@ def run(
     cutoff = (
         float(manifest["supervision_budget_origin_monotonic"])
         + float(manifest["supervised_limit_seconds"])
-        - 180
+        - (150 if continuation is not None else 180)
     )
     caps = dict(
         accepted=60 if supervised else 120,
@@ -397,13 +424,21 @@ def run(
     problem = GNProblem(
         model, mapping, packet, metric, supervised=supervised, guard=guard
     )
+    if continuation is not None:
+        from src.solvers.feinn_cached_derivatives import CachedMomentJacobian
+
+        problem.jac = CachedMomentJacobian(mapping)
     anchor_c = mapping.forward(model)
     if paired(anchor_c, old["complete_c"])["relative"] > 1e-10:
-        raise ValueError("OWN_ADAM500_BOUNDARY_RECONSTRUCTION_FAILED")
+        raise ValueError("OWN_COMPLETE_BOUNDARY_RECONSTRUCTION_FAILED")
     initial_loss = metric.value(anchor_c)[0]
     route = ("V9-PHASE" if phase else "V9-PLAIN") + (
         "-FIT-GN-DIAGNOSTIC" if supervised else "-DAMPED-GN"
     )
+    if continuation is not None:
+        route = ("V10-PHASE" if phase else "V10-PLAIN") + (
+            "-CACHED-FIT-GN-CONTINUE" if supervised else "-CACHED-GN-CONTINUE"
+        )
     history_path = artifact / "history.jsonl"
     history = history_path.open("w", buffering=1)
     audits = []
@@ -415,7 +450,7 @@ def run(
             row,
             elapsed_charged_seconds=perf_counter()
             - manifest["supervision_budget_origin_monotonic"],
-            logical_path_seconds=entry["metadata"]["elapsed_charged_seconds"]
+            logical_path_seconds=prefix_seconds
             + perf_counter()
             - manifest["supervision_budget_origin_monotonic"],
             counts=deepcopy(problem.counts),
@@ -426,24 +461,52 @@ def run(
             pc_rows.append(value)
 
     # Scale belongs to this new optimizer and is not recovered from old history.
-    rng = np.random.default_rng(421901)
-    v = rng.normal(size=len(initial))
-    v /= np.linalg.norm(v)
     scale_trace = []
-    for _ in range(6):
-        Kv = problem.K(v)
-        h0 = float(np.linalg.norm(Kv))
-        if not np.isfinite(h0) or h0 <= 0:
-            raise ValueError("INITIAL_GN_SCALE_UNRESOLVED")
-        scale_trace.append(dict(norm=h0, quadratic=float(v @ Kv)))
-        v = Kv / h0
+    if continuation is not None:
+        h0 = old["optimizer"]["h0"]
+    else:
+        rng = np.random.default_rng(421901)
+        v = rng.normal(size=len(initial))
+        v /= np.linalg.norm(v)
+        for _ in range(6):
+            Kv = problem.K(v)
+            h0 = float(np.linalg.norm(Kv))
+            if not np.isfinite(h0) or h0 <= 0:
+                raise ValueError("INITIAL_GN_SCALE_UNRESOLVED")
+            scale_trace.append(dict(norm=h0, quadratic=float(v @ Kv)))
+            v = Kv / h0
     optimizer = DampedGNState(h0, pc_max_builds=1 if supervised else 2)
+    if continuation is not None:
+        restore(model, optimizer, old)
+        denominator_key = "d_ref" if supervised else "d_G"
+        if (
+            abs(metric.denominator - old["metadata"][denominator_key])
+            > 1e-10 * metric.denominator
+        ):
+            raise ValueError("CONTINUATION_ORIGINAL_DENOMINATOR_CHANGED")
     store = CheckpointStore(artifact / "durable_checkpoints")
     flags = policy(supervised)
     frozen_buffers = {
         n: array_hash(b.detach().numpy()) for n, b in model.named_buffers()
     }
-    prefix_seconds = entry["metadata"]["elapsed_charged_seconds"]
+    prefix_seconds = (
+        old["metadata"]["logical_path_seconds"]
+        if continuation is not None
+        else entry["metadata"]["elapsed_charged_seconds"]
+    )
+    inherited_accepted = optimizer.accepted
+    inherited_counts = (
+        deepcopy(old["metadata"]["counts"]) if continuation is not None else {}
+    )
+    inherited_jac_counts = (
+        deepcopy(old["metadata"]["JVP_VJP_counts"]) if continuation is not None else {}
+    )
+    frontier = None
+    if continuation is not None:
+        from src.solvers.feinn_gn_budget import GNWorkBudget
+
+        frontier = GNWorkBudget(problem, cutoff, caps, emit, GNStop)
+        problem.frontier = frontier
 
     def save(tag, c, pin, update=None):
         meta = dict(
@@ -461,7 +524,9 @@ def run(
             initialization_kind="REFERENCE_FIT_ADAM500_PREFIX_REUSE"
             if supervised
             else "PDE_ONLY_ADAM500_PREFIX_REUSE",
-            prefix_sha256=entry["sha256"],
+            prefix_sha256=entry["durable_final"]["sha256"]
+            if continuation is not None
+            else entry["sha256"],
             inherited_prefix_seconds=prefix_seconds,
             elapsed_charged_seconds=perf_counter()
             - manifest["supervision_budget_origin_monotonic"],
@@ -482,6 +547,27 @@ def run(
             limits=caps,
             PC_provenance=optimizer.pc_builds,
             **flags,
+            **(
+                dict(
+                    initialization_kind="V9_FULL_COMMITTED_GN_CONTINUATION",
+                    inherited_counts=inherited_counts,
+                    inherited_JVP_VJP_counts=inherited_jac_counts,
+                    inherited_accepted_outer=inherited_accepted,
+                    new_accepted_outer=optimizer.accepted - inherited_accepted,
+                    cumulative_counts={
+                        k: inherited_counts.get(k, 0) + v
+                        for k, v in problem.counts.items()
+                    },
+                    cumulative_JVP_VJP_counts={
+                        k: inherited_jac_counts.get(k, 0) + v
+                        for k, v in problem.jac.counts.items()
+                    },
+                    derivative_cache=problem.jac.record(),
+                    budget_frontier=frontier.record(),
+                )
+                if continuation is not None
+                else {}
+            ),
             **(update or {}),
         )
         state = capture(model, optimizer, meta)
@@ -513,13 +599,19 @@ def run(
         )
         return value
 
-    record = save("GN_initial_Adam500_boundary", anchor_c, True)
-    initial_audit = audit(anchor_c, "GN_initial_Adam500_boundary", record)
+    initial_tag = (
+        "V10_initial_full_GN_boundary"
+        if continuation is not None
+        else "GN_initial_Adam500_boundary"
+    )
+    record = save(initial_tag, anchor_c, True)
+    initial_audit = audit(anchor_c, initial_tag, record)
+    last_audit_time = perf_counter()
     problem.last_trial = (initial.copy(), anchor_c.copy(), initial_loss)
     failure = None
     stop_reason = "ACCEPTED_OUTER_BUDGET"
     try:
-        while optimizer.accepted < caps["accepted"]:
+        while optimizer.accepted - inherited_accepted < caps["accepted"]:
             guard("gradient")
             committed = capture(model, optimizer, {})
             theta = parameters(model)
@@ -527,13 +619,15 @@ def run(
             try:
                 loss, g, c = problem.value_gradient()
                 proposed, row = optimizer.propose(
-                    theta, loss, g, problem.K, problem.value, emit
+                    theta, loss, g, problem.K, problem.value, emit, budget=frontier
                 )
                 if proposed is None:
-                    stop_reason = "GN_MODEL_STAGNATION"
+                    stop_reason = row.get("stop_reason", "GN_MODEL_STAGNATION")
                     emit(dict(kind="STAGNATION", **row))
                     break
                 assign(model, proposed)
+                if continuation is not None:
+                    problem.jac.invalidate()
                 after = parameters(model)
                 delta = after - theta
                 update = dict(
@@ -543,7 +637,11 @@ def run(
                     ),
                 )
                 c = mapping.forward(model)
+                if frontier is not None:
+                    frontier.event("COMMIT", "begin", accepted_outer=optimizer.accepted)
                 record = save("accepted_outer", c, optimizer.accepted % 5 == 0, update)
+                if frontier is not None:
+                    frontier.event("COMMIT", "end", accepted_outer=optimizer.accepted)
                 published = True
                 accepted_rows.append(
                     dict(
@@ -567,8 +665,12 @@ def run(
                 if not published:
                     restore(model, optimizer, committed)
                 raise
-            if optimizer.accepted % 5 == 0:
+            if optimizer.accepted % 5 == 0 or (
+                continuation is not None and perf_counter() - last_audit_time >= 300
+            ):
                 actual = audit(c, "accepted_outer", record)
+                actual["audit_interval_seconds"] = perf_counter() - last_audit_time
+                last_audit_time = perf_counter()
                 if (supervised and actual["E_G"] <= 1e-3) or (
                     not supervised and actual["strict_pass"]
                 ):
@@ -644,6 +746,10 @@ def run(
         ),
     )
     history.close()
+    cache_record = None
+    if continuation is not None:
+        cache_record = problem.jac.record()
+        problem.jac.invalidate()
     if factor is not None:
         factor.close()
     result = dict(
@@ -703,6 +809,30 @@ def run(
         - manifest["supervision_budget_origin_monotonic"],
         **flags,
     )
+    if continuation is not None:
+        result.update(
+            status="V10_GN_CONTINUATION_FROZEN"
+            if failure is None
+            else "V10_GN_RETAINED_FAILURE",
+            initialization_kind="V9_FULL_COMMITTED_GN_CONTINUATION",
+            inherited_accepted_outer=inherited_accepted,
+            new_accepted_outer=optimizer.accepted - inherited_accepted,
+            cumulative_accepted_outer=optimizer.accepted,
+            inherited_counts=inherited_counts,
+            inherited_JVP_VJP_counts=inherited_jac_counts,
+            cumulative_counts={
+                k: inherited_counts.get(k, 0) + v for k, v in problem.counts.items()
+            },
+            cumulative_JVP_VJP_counts={
+                k: inherited_jac_counts.get(k, 0) + v
+                for k, v in problem.jac.counts.items()
+            },
+            old_optimizer_history_loaded=True,
+            scale_reestimated=False,
+            derivative_cache=cache_record,
+            budget_frontier=frontier.record(),
+            initialization_identity=entry,
+        )
     marker(
         "GN_route_frozen",
         dict(

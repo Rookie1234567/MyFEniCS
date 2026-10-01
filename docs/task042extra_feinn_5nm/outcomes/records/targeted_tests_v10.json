@@ -1,0 +1,63 @@
+{
+  "tests": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_cache_unit_20261001T103922523480Z",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 16.550205425010063,
+      "leader_exit_code": 0,
+      "sampled_process_tree_rss_peak_bytes": 380272640,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_final_contract_20261001T104651122050Z",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 2.115357022965327,
+      "leader_exit_code": 0,
+      "sampled_process_tree_rss_peak_bytes": 43823104,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_final_targeted_20261001T104503271706Z",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 14.366342557012103,
+      "leader_exit_code": 0,
+      "sampled_process_tree_rss_peak_bytes": 442396672,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_qualification_tests_20261001T104403244426Z",
+      "classification": "WORKER_FAILED",
+      "elapsed_seconds": 2.027867241995409,
+      "leader_exit_code": 1,
+      "sampled_process_tree_rss_peak_bytes": 39829504,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_static_20261001T104205699875Z",
+      "classification": "WORKER_FAILED",
+      "elapsed_seconds": 2.096564574050717,
+      "leader_exit_code": 1,
+      "sampled_process_tree_rss_peak_bytes": 43839488,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_static_fix_20261001T104251207621Z",
+      "classification": "WORKER_FAILED",
+      "elapsed_seconds": 2.0628767180023715,
+      "leader_exit_code": 1,
+      "sampled_process_tree_rss_peak_bytes": 43143168,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    }
+  ],
+  "qualified_unit_tests": 19,
+  "final_stage_inventory_count": 11,
+  "full_pytest": false,
+  "CI_claimed": false,
+  "source_state": "preimplementation_commit_dirty_but_hash-bound logs; formal runs use clean SHA"
+}
