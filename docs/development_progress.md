@@ -3258,3 +3258,14 @@ V26 本轮 Full3D p6/h7.5、coarse p4 场已经完成 126 步并通过残差/物
 证据入口：[Response V28](task039_extra_physical_multilevel/response_v28.md)、[V27 outcome](task039_extra_physical_multilevel/outcomes/workingset_p6_setup_v27.md)、[combined pair](task039_extra_physical_multilevel/outcomes/records/workingset_p6_setup_v27_pair.json)、[run index](task039_extra_physical_multilevel/outcomes/records/run_index.json)。D1 实现提交为 `cefb47c6d2039f82f441854e5d1edd8642de0c95`；D2 文档证据在同一 `task39extra` 分支提交，使用已批准的任务专用 hooks。远端 tip 与 clean worktree 由最终 handoff 核实。
 
 ---
+
+
+## 2026-10-01：Task40extra dot 云端独占并行首批
+
+用户目标是 0.7 nm 完整目标模型在约 2 TB 内可用。dot 从 c786e87d03976a52f57d1e7f69a3c63f992afe90 建独占 task40extra_dot_parallel_cloud，仅做有限云端 CPU 组件诊断，未接管父正式 PDE。
+
+参考积分复用保留每个单元精确几何，14 组矩阵/作用对照通过局部门槛、5 组 Schur/恢复受限通过，含准备的本批生成成本约改善 3.67 倍。原 UFL API 测试失败保留，适配副本后通过；缺独立 FFCx、方向/MPC、端口 RHS 和完整 PDE 资格。DtN 真实模式增长与默认自适应积分核对完成，现有 M3 14×14 局部误差约 2.25e-10，不建议由人为低阶负对照改默认。
+
+纯几何派生计数显示假设恢复带缺口尺寸只有 211 raw 材料+metric 类型，不能把逐 cell 独占的 17 TB 假设说成必需内存；实际方向/factor 共享未知。完整性能仍以全域 p4 和每步纠错为主要风险，原 G1 KSP 占 76.5%，即删除全部 setup 也只给约 1.285 倍理论上限。本批无生产资格、无目标容量证明、无 PR/merge。下一步继续有界关键瓶颈研究，避免重复旧负路线。
+
+详细：[Response V1](task40extra_dot_parallel_cloud/response_v1.md)、[结果与负项](task40extra_dot_parallel_cloud/outcomes/summary.md)、[复现](../benchmarks/cases/task40extra_dot_parallel_cloud/README.md)。

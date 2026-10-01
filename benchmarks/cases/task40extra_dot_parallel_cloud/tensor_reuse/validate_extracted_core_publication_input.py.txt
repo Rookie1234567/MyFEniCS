@@ -1,0 +1,26 @@
+"""Validate extracted reusable research core and same-material collision explicitly."""
+import os
+for k in ('OPENBLAS_NUM_THREADS','OMP_NUM_THREADS','MKL_NUM_THREADS'):os.environ[k]='1'
+import json, numpy as np, basix,basix.ufl,ufl
+from types import SimpleNamespace
+from pathlib import Path
+from raw_tensor_compat import Task39ExtraP6RawTensorCandidate
+import sys
+sys.path.insert(0,os.environ.get('TASK40EXTRA_SOURCE_ROOT',str(Path(__file__).resolve().parents[2]/'source')))
+try:
+    from src.solvers.task40extra_reference_metric_component import prepare_reference_templates,combine_reference_templates
+except ModuleNotFoundError:
+    from reference_metric_component import prepare_reference_templates,combine_reference_templates
+P=Path(__file__).resolve().parent
+e=basix.ufl.element('N1curl','hexahedron',6);mesh=ufl.Mesh(basix.ufl.element('P','hexahedron',1,shape=(3,)));space=ufl.FunctionSpace(mesh,e);u,v=ufl.TrialFunction(space),ufl.TestFunction(space)
+n=.99988517036884961+4.3236152269189515e-6j;k=2*np.pi/.7
+cfg=SimpleNamespace(use_pml=False,divergence_penalty=0.,mu_r=1.,k0=k,eps_r=1.,substrate_index=n,grating_index=n,tags=SimpleNamespace(air=1,substrate=2,grating=3))
+f=sum((ufl.inner(ufl.curl(u),ufl.curl(v))-k*k*eps*ufl.inner(u,v))*ufl.dx(tag,domain=mesh) for tag,eps in [(1,1.),(2,n*n),(3,n*n)])
+b=Task39ExtraP6RawTensorCandidate(e.basix_element,cfg,f);T=prepare_reference_templates(b);saved=np.load(P/'templates.npy')
+h0=np.array([.4277777777772,.3240740740741,.5185185185181]);h1=h0.copy();h1[0]+=2e-13
+r={'extracted_templates_bitwise_equal_measured':bool(np.array_equal(T,saved)),'same_material_tag':3,'same_quadrature':True,'same_basis':True,'round12_equal':bool(np.array_equal(np.round(h0,12),np.round(h1,12))),'exact_key_distinct':h0.tobytes()!=h1.tobytes(),'comparisons':[]}
+matrices=[]
+for h in (h0,h1):
+ coords=basix.geometry(basix.CellType.hexahedron)*h;old=b.build(coords,tag=3,dimension=882);new=combine_reference_templates(b,T,coords,3);delta=np.linalg.norm(new-old);r['comparisons'].append({'widths_nm':h.tolist(),'relative':float(delta/np.linalg.norm(old)),'absolute':float(delta)});matrices.append(new)
+r['same_material_delta_relative']=float(np.linalg.norm(matrices[1]-matrices[0])/np.linalg.norm(matrices[0]));r['same_material_delta_absolute']=float(np.linalg.norm(matrices[1]-matrices[0]));r['gates']={'bitwise_templates':r['extracted_templates_bitwise_equal_measured'],'same_tag_each_vs_blocked_1e-11':all(c['relative']<=1e-11 for c in r['comparisons']),'not_collapsed':r['same_material_delta_absolute']>0}
+(P/'extracted_core_validation.json').write_text(json.dumps(r,indent=2));print(json.dumps(r))

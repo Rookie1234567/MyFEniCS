@@ -1,0 +1,28 @@
+import os
+for key in ('OPENBLAS_NUM_THREADS','OMP_NUM_THREADS','MKL_NUM_THREADS'): os.environ[key]='1'
+import sys,json,time,tomllib,resource
+from pathlib import Path
+from types import SimpleNamespace
+import numpy as np
+import scipy.linalg as la
+import basix,basix.ufl,ufl
+from raw_tensor_compat import Task39ExtraP6RawTensorCandidate as Builder
+P=Path(os.environ['TASK40EXTRA_OUTPUT_ROOT']).resolve(); root=P.parents[1]
+source=Path(os.environ.get('TASK40EXTRA_SOURCE_ROOT', str(root/'source'))).resolve()
+data=tomllib.loads((source/'input/task40extra_0p7nm_engineering/nonseparable_g1_p6_q4_review_v1.dat').read_text())
+e=basix.ufl.element('N1curl','hexahedron',6); domain=ufl.Mesh(basix.ufl.element('P','hexahedron',1,shape=(3,))); V=ufl.FunctionSpace(domain,e); u,v=ufl.TrialFunction(V),ufl.TestFunction(V)
+k0=2*np.pi/.7;n=complex(*data['materials']['n_substrate'])
+cfg=SimpleNamespace(use_pml=False,divergence_penalty=0.,mu_r=1.,k0=k0,eps_r=1.,substrate_index=n,grating_index=n,tags=SimpleNamespace(air=1,substrate=2,grating=3))
+form=sum((ufl.inner(ufl.curl(u),ufl.curl(v))-k0*k0*eps*ufl.inner(u,v))*ufl.dx(tag,domain=domain) for tag,eps in [(1,1.),(2,n*n),(3,n*n)])
+builder=Builder(e.basix_element,cfg,form); h=np.array([data['discretization'][f'mesh_axis_{a}_values'][1]-data['discretization'][f'mesh_axis_{a}_values'][0] for a in 'xyz']);coords=basix.geometry(basix.CellType.hexahedron)*h
+B=builder.build(coords,tag=2,dimension=882); templates=np.load(P/'templates.npy'); d=np.prod(h); ck,cm=builder.coefficients_by_tag[2]; A=np.zeros_like(B)
+for w,T in zip(np.r_[ck*h*h/d,cm*d/h**2],templates): A+=w*T
+I=np.array(e.basix_element.entity_dofs[3][0]); T=np.setdiff1d(np.arange(882),I); rng=np.random.default_rng(839182); b=rng.standard_normal(882)+1j*rng.standard_normal(882)
+def reduce(M):
+    now=time.perf_counter(); lu=la.lu_factor(M[np.ix_(I,I)]); X=la.lu_solve(lu,M[np.ix_(I,T)]); z=la.lu_solve(lu,b[I]); ti=M[np.ix_(T,I)]; S=M[np.ix_(T,T)]-ti@X
+    x=np.zeros(882,complex); x[T]=la.solve(S,b[T]-ti@z); x[I]=z-X@x[T];return S,x,time.perf_counter()-now
+SB,xB,tB=reduce(B); SA,xA,tA=reduce(A)
+def rel(a,b):return float(la.norm(a-b)/la.norm(b))
+r={'case':'G1 actual first-cell widths with substrate coefficients','widths_nm':h.tolist(),'matrix_relative':rel(A,B),'schur_relative':rel(SA,SB),'schur_abs':float(la.norm(SA-SB)),'solution_relative':rel(xA,xB),'blocked_recover_true_residual':rel(B@xB,b),'reuse_recover_against_blocked_true_residual':rel(B@xA,b),'reuse_own_true_residual':rel(A@xA,b),'nonzero_internal_rhs_norm':float(la.norm(b[I])),'nonzero_trace_rhs_norm':float(la.norm(b[T])),'blocked_condensation_s':tB,'reuse_condensation_s':tA,'peak_rss_bytes':resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*1024}
+r['gates']={'matrix_1e-11':r['matrix_relative']<=1e-11,'schur_1e-11':r['schur_relative']<=1e-11,'recovery_1e-10':max(r['blocked_recover_true_residual'],r['reuse_recover_against_blocked_true_residual'])<=1e-10}
+(P/'g1_schur_results.json').write_text(json.dumps(r,indent=2));print(json.dumps(r,indent=2))

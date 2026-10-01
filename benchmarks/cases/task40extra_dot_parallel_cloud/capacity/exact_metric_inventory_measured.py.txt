@@ -1,0 +1,47 @@
+"""No FEM: exact rational plane subdivisions, float64 width-key inventory.
+Pinned _subdivide/_to_nm are reused; no target connectivity or dense matrices.
+"""
+import json, math, hashlib
+from fractions import Fraction as F
+from collections import Counter
+from pathlib import Path
+import pinned_task40_nonseparable_plan as plan
+ROOT=Path(__file__).resolve().parent
+PLANFILE=ROOT.parents[1]/'source/docs/task40extra_0p7nm_engineering/outcomes/records/geometry_plan.json'
+planes={'x':[F(0),F(33,2),F(25),F(67,2),F(50)],'y':[F(0),F(25,4),F(75,4),F(25)],'z':[F(-10),F(0),F(40),F(80),F(120),F(130)]}
+def inventory(q,h):
+    ax={}; segments={}; axis_report={}; axes_out={}
+    for name,points in planes.items():
+        exact,counts=plan._subdivide([v*q for v in points],h)
+        coords=plan._to_nm(exact)
+        axes_out[name]=coords
+        widths=[b-a for a,b in zip(coords,coords[1:])]
+        # Boundary-segment index is exact; no material midpoint at a boundary.
+        segids=[j for j,n in enumerate(counts) for _ in range(n)]
+        ax[name]=list(zip(widths,segids))
+        segments[name]=counts
+        axis_report[name]={'intervals':len(widths),'exact_double_width_count':len(set(widths)),'width_hex_histogram':{w.hex():n for w,n in sorted(Counter(widths).items())}}
+    raw=Counter(); tags=Counter(); counts=[len(ax[a]) for a in 'xyz']
+    for dx,ix in ax['x']:
+      for dy,iy in ax['y']:
+       for dz,iz in ax['z']:
+        tag=2 if iz==0 else (3 if ix in (1,2) and iz in (1,2,3) else 1)
+        if tag==3 and ix==2 and iy==1 and iz==2: tag=1
+        raw[(tag,dx,dy,dz)]+=1;tags[tag]+=1
+    C=math.prod(counts); U=len(raw)
+    assert sum(tags.values())==C==sum(raw.values())
+    return {'q':str(q),'h_nm':float(h*plan.SCALE),'box_nm':[float(x*q*plan.SCALE) for x in (50,25,140)],'cell_count':C,'axis_counts':counts,'segment_counts':segments,'axes':axis_report,'material_tag_cells':dict(tags),'exact_raw_material_metric_classes':U,'raw_classes_by_material_tag':dict(Counter(k[0] for k in raw)),'raw_factor_reuse_cells_per_class':C/U,'orientation_classes':None,'orientation_status':'UNKNOWN_NO_DOLFINX_TOPOLOGY','orientation_class_bounds':[U,C],'raw_full_p6_tensor_payload_bytes_if_all_cached':U*16*882**2,'p6_core_if_one_orientation_per_raw_class_bytes_NOT_measured':U*16*(450**2+2*450*432+432**2),'p6_core_if_every_cell_distinct_bytes':C*16*(450**2+2*450*432+432**2),'p6_LU_if_every_cell_distinct_bytes':C*16*450**2,'p6_core_scope':'LU + two recovery/coupling blocks + Schur values only; exclude pivot, identity, metadata, ports, global factor, Krylov, scratch','raw_key_histogram':[{'tag':k[0],'widths_hex':[v.hex() for v in k[1:]],'cell_count':n} for k,n in sorted(raw.items())],'axes_sha256':hashlib.sha256(json.dumps(axes_out,sort_keys=True).encode()).hexdigest()},axes_out
+records=[]
+frozen=json.loads(PLANFILE.read_text())
+for label,q,h in [('G0',F(1),F(10)),('G1_check',F(1),F(15,2)),('E1',F(5,4),F(10)),('E2',F(3,2),F(10)),('hypothetical_parent_notch',F(135,7),F(10))]:
+    r,axes=inventory(q,h);r['label']=label
+    if label in ('G0','G1_check'):
+       key='G0' if label=='G0' else 'G1'
+       assert axes==frozen['meshes'][key]['axis_coordinates_nm']
+       r['frozen_axis_exact_equality']=True
+    r['status']='DERIVED_COUNT_FROM_EXACT_DOCUMENTED_GEOMETRY_NOT_FEM_MEASUREMENT'
+    records.append(r)
+out={'status':'COMPLETED_SMALL_METADATA_EXPERIMENT','source_sha':'c786e87d03976a52f57d1e7f69a3c63f992afe90','subdivision_source':'src/geometry/task40_nonseparable_plan.py::_subdivide/_to_nm','key_source':'src/solvers/hcurl_assembly_time_condensation.py::_canonical_axis_aligned_coordinates','classification_source':'src/geometry/mesh_builder_3d.py::_mark_cells; config_3d.py Tags3D 1 air/2 substrate/3 grating','limits':['No DOLFINx mesh or orientation permutation created; actual oriented count unknown','Exact float64 width subtraction matches key semantics if actual mesh vertices preserve specified axis values','G0/G1 axis lists match pinned geometry_plan bit-for-bit as Python floats','Air and silicon substrate/grating tags remain distinct as source requires','Hypothetical parent geometry has notch, is not 2nm anchor geometry, and is not confirmed user target','Fixed h=0.5185185185nm is a census choice, not accuracy-qualified target mesh','All payloads are shapes, not RSS or simultaneous memory peaks'],'records':records}
+(ROOT/'exact_metric_inventory.json').write_text(json.dumps(out,indent=2)+'\n')
+for r in records:
+ print(r['label'], 'cells',r['cell_count'],'axes',r['axis_counts'],'raw classes',r['exact_raw_material_metric_classes'],'p6rawGB',r['raw_full_p6_tensor_payload_bytes_if_all_cached']/1e9,'core1orientGB',r['p6_core_if_one_orientation_per_raw_class_bytes_NOT_measured']/1e9,'cellworstTB',r['p6_core_if_every_cell_distinct_bytes']/1e12)

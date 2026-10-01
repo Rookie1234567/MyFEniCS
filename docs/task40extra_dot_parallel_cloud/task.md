@@ -36,3 +36,7 @@
 仅 fast-forward 更新本独占分支，不强推、不重写历史。远端 connector 文档提交记录为 connector publication，不假称本地 canonical worktree 已验收。若以后使用本地 clone 推送，须按仓库规则验证 canonical clone/worktree、SHA、upstream 与 ahead/behind；无法验证则报告该 Gate。
 
 每阶段报告完整远端 HEAD、changed files、测试和文档渲染状态。GitHub rendered view 未验证时保留明确缺口；文件提交成功不等于文档或数值 Gate 全通过。最终等待审阅，不操作其他分支。
+
+## 后续协作（2026-10-01 用户补充）
+
+Codex 正式任务进行时，dot 继续本分支有界云端并行工作；本批 V1 组件交付完成不代表目标模型问题结束。每轮 Pro 审查最多提交三次，优先一次完整证据包，只在必要时补充；三次内形成最终审查及执行说明。此处不授权修改其他分支或用户电脑。用户明确许可的指定 ChatGPT/Codex 对话转达由协调方管理，不扩大本分支代码写入范围。

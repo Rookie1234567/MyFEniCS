@@ -1,0 +1,28 @@
+{
+  "status": "DERIVED_CONDITIONAL_SCENARIO_NOT_TARGET_PREDICTION",
+  "assumptions": [
+    "Same physical geometry as 2nm rectangular benchmark, not confirmed user target",
+    "p6/q4 fixed; h/lambda fixed at 0.75",
+    "Asymptotic 3D cell/trace scaling ignores boundary-plane ceil effects",
+    "Mode count quadratic scaling only an area/electrical-size illustration, not enumerated or truncation-qualified",
+    "decimal TB=1e12B; no RAM headroom allocated"
+  ],
+  "cell_multiplier": 23.323615160349856,
+  "cells_approx": 1267218.6588921284,
+  "trace_rows_approx": 251879930.02915454,
+  "modes_area_approx": 31869.38775510204,
+  "p6_lu_bytes_per_unique_class": 3240000,
+  "p6_lu_only_if_every_cell_unique_bytes": 4105788454810.496,
+  "p6_core_retained_numeric_payload_per_unique_oriented_class": 12446784,
+  "p6_core_if_every_cell_unique_bytes": 15772796928000.002,
+  "p4_core_retained_without_schur_bytes_per_unique_oriented_class": 850176,
+  "p4_core_if_every_cell_unique_bytes": 1077358890542.2742,
+  "fgmres32_main_65_vectors_bytes": 261988271393.58603,
+  "one_full_p6_vector_bytes_using_anchor_storage_scaling": 13283186938.77551,
+  "p6_core_classes_exhausting_2TB_before_anything_else": 160684,
+  "p6_lu_classes_exhausting_2TB_before_anything_else": 617283,
+  "p4_used_if_linear_in_cells_bytes_NOT_lower_bound": 21381061224489.797,
+  "G1_KSP_fraction": 0.7652312332023021,
+  "G1_speedup_if_all_setup_eliminated": 1.284643575834718,
+  "anchor_2nm_p6_tensor_fraction_of_setup": 0.0015842881150087574
+}

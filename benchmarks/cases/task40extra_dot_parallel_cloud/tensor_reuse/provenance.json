@@ -1,0 +1,217 @@
+{
+  "source_files": [
+    {
+      "path": "AGENTS.md",
+      "source_commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "expected_git_blob": "652e0992fa27539cfbc3e6d7683763e397610da7",
+      "local_sha256": "27d5be3e135c883e84fbf31d77153edc76a69e4effa050fab591fe1b907055f8",
+      "local_git_blob": "f97f7d1d17785078aa29fb27bdbc4d08f9a954ba",
+      "strip_one_terminal_LF_git_blob": "652e0992fa27539cfbc3e6d7683763e397610da7",
+      "matches_expected_after_exact_one_LF_removal": true
+    },
+    {
+      "path": "docs/repository_work_principles.md",
+      "source_commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "expected_git_blob": "2e40ee689f8df39cbd784b6e04996fb997e32437",
+      "local_sha256": "5374c7d668587515a697c0538052281107ebbb35d7ce0a2e7c4ff01d91cddca1",
+      "local_git_blob": "6e2779a6b13fae816031c0dc1caed1cb3ffe7d88",
+      "strip_one_terminal_LF_git_blob": "2e40ee689f8df39cbd784b6e04996fb997e32437",
+      "matches_expected_after_exact_one_LF_removal": true
+    },
+    {
+      "path": "docs/README.md",
+      "source_commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "expected_git_blob": "a570224251c99bc31ee5d0c94981ab183bec2a29",
+      "local_sha256": "073409c1db2abc1874494dc2b37f7511ed98cb72a0eb8f5fa6c1e95ac3bc2335",
+      "local_git_blob": "805c9accf5bdf31e1fad536fc1714ea1c44ac30f",
+      "strip_one_terminal_LF_git_blob": "a570224251c99bc31ee5d0c94981ab183bec2a29",
+      "matches_expected_after_exact_one_LF_removal": true
+    },
+    {
+      "path": "docs/AGENTS.md",
+      "source_commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "expected_git_blob": "b0706582d86df78c5a14870b0940fbd9c3f45bf3",
+      "local_sha256": "89976a1ec784fe5eeda82ece6d72aa6edfaf677b7275ea0dcf1fb918f7213cb2",
+      "local_git_blob": "ce980300afecb3fa1158da052b02d7342742104e",
+      "strip_one_terminal_LF_git_blob": "b0706582d86df78c5a14870b0940fbd9c3f45bf3",
+      "matches_expected_after_exact_one_LF_removal": true
+    },
+    {
+      "path": "README.md",
+      "source_commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "expected_git_blob": "9795508f4bba9a3913ad1e652b268f1caff3729a",
+      "local_sha256": "4803513c58376ea4c7c1ce3ef46532a0d72bfa5f254125fe25d5469c6850dc6d",
+      "local_git_blob": "ddcb68df3b38a243fa993749274b662c9e65a0e6",
+      "strip_one_terminal_LF_git_blob": "9795508f4bba9a3913ad1e652b268f1caff3729a",
+      "matches_expected_after_exact_one_LF_removal": true
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/README.md",
+      "source_commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "expected_git_blob": "33dcb908280a0c58ebaf0ebfdfb0eaca2612b20e",
+      "local_sha256": "0d28ee440b5e840a72d6b135369e77013b9e3d2ca693559fc6f73f9b1f894dc0",
+      "local_git_blob": "b48d71eacdc009c94dfdbdb66ce7afe33e51f610",
+      "strip_one_terminal_LF_git_blob": "33dcb908280a0c58ebaf0ebfdfb0eaca2612b20e",
+      "matches_expected_after_exact_one_LF_removal": true
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/task.md",
+      "source_commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "expected_git_blob": "13f263cd3c2c6adddcaa81f2d8570d4dd12bc863",
+      "local_sha256": "2ac41f843750e077e43fb7be1c669903f2663da2b38dcdf21c2c09ae34d8e416",
+      "local_git_blob": "2029fdd500fef632cb94b9b1017e71fb7e10bc81",
+      "strip_one_terminal_LF_git_blob": "13f263cd3c2c6adddcaa81f2d8570d4dd12bc863",
+      "matches_expected_after_exact_one_LF_removal": true
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/review_report_v2.md",
+      "source_commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "expected_git_blob": "14dae58ed20b43111d03dcefc8ec6c9d94256f9a",
+      "local_sha256": "dfcccb2134da7641575e706bb7fecd0aa1249ce86fca207446b7914451d5330c",
+      "local_git_blob": "923ca68835081c6b38e42cea5a3d647f2f7e5368",
+      "strip_one_terminal_LF_git_blob": "14dae58ed20b43111d03dcefc8ec6c9d94256f9a",
+      "matches_expected_after_exact_one_LF_removal": true
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/response_v2.md",
+      "source_commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "expected_git_blob": "6d5971e9a2d3db0f9e2c000aeadccab2fdd504af",
+      "local_sha256": "4478195aa57cc0a35c382094d01a3592419264d83c753d8a93f86618e46307f8",
+      "local_git_blob": "09a4903ef8da4d3ea6c1880c3b9da88605559979",
+      "strip_one_terminal_LF_git_blob": "6d5971e9a2d3db0f9e2c000aeadccab2fdd504af",
+      "matches_expected_after_exact_one_LF_removal": true
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/summary.md",
+      "source_commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "expected_git_blob": "babe9f19858d50e7a410acb8d0753931962f4499",
+      "local_sha256": "ecf37208d428277bcbd97151185ce003eae88d76f8b19cfef562bec87f6331a0",
+      "local_git_blob": "2c7b0e2833fd823e208b7029b816fbf0b65e2748",
+      "strip_one_terminal_LF_git_blob": "babe9f19858d50e7a410acb8d0753931962f4499",
+      "matches_expected_after_exact_one_LF_removal": true
+    },
+    {
+      "path": "src/solvers/task39extra_p6_raw_tensor.py",
+      "source_commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "expected_git_blob": "c0c67c4501a26f109ff1755c7628a6026a401e62",
+      "local_sha256": "5598ad4d12dd0b397a482b4b755bff18cdab29b77f5b3615cf1d8b80a8e09e6d",
+      "local_git_blob": "d79ab968c00422cc7572e0e9144443df81016818",
+      "strip_one_terminal_LF_git_blob": "c0c67c4501a26f109ff1755c7628a6026a401e62",
+      "matches_expected_after_exact_one_LF_removal": true
+    },
+    {
+      "path": "src/solvers/hcurl_assembly_time_condensation.py",
+      "source_commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "expected_git_blob": "a0da1e798b29cbc11e6b032719b43951fe0aab8a",
+      "local_sha256": "8e8e78b30c12ca38b6d37225a8c9e464f4d6bba92de6665504bde0031136a6b9",
+      "local_git_blob": "0b53ecb62373a6a7487645b1dd150f94e4a670d8",
+      "strip_one_terminal_LF_git_blob": "a0da1e798b29cbc11e6b032719b43951fe0aab8a",
+      "matches_expected_after_exact_one_LF_removal": true
+    },
+    {
+      "path": "src/common/config_3d.py",
+      "source_commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "expected_git_blob": "de49c098b9df015b7b07efbb3429a443a3b1d9b8",
+      "local_sha256": "d76f124fd52334d697b67b86fbf0b58fd4f249f0b834b24314288730ade1e4f6",
+      "local_git_blob": "de558eed21054f95abff990d51abb2e43c23c73a",
+      "strip_one_terminal_LF_git_blob": "de49c098b9df015b7b07efbb3429a443a3b1d9b8",
+      "matches_expected_after_exact_one_LF_removal": true
+    },
+    {
+      "path": "src/common/modes_3d.py",
+      "source_commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "expected_git_blob": "ab2355dc742bcf628fcb7be6e88a35814fc035d6",
+      "local_sha256": "9bc40d448208fd9484ae002c69b373e48dc3172267ade9c41e68f3edbce2a609",
+      "local_git_blob": "1857540df6e56db41cfbf97540819faf42fd3b02",
+      "strip_one_terminal_LF_git_blob": "ab2355dc742bcf628fcb7be6e88a35814fc035d6",
+      "matches_expected_after_exact_one_LF_removal": true
+    },
+    {
+      "path": "src/common/units.py",
+      "source_commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "expected_git_blob": "67ba8604e50dc14f28da82016313f44b67cc496f",
+      "local_sha256": "52d9ce089519b544b2fa0b286971d0028c11786a25ab7387ce0ac139ed7517ee",
+      "local_git_blob": "55c812c29f2c7cd99342154e04f4b3fe7144de07",
+      "strip_one_terminal_LF_git_blob": "67ba8604e50dc14f28da82016313f44b67cc496f",
+      "matches_expected_after_exact_one_LF_removal": true
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/geometry_plan.json",
+      "source_commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "expected_git_blob": "d6038609524c499989f0e23884f6022a05f8c380",
+      "local_sha256": "48efe9f5ec5675d4cff43f26728b8ac565fed3cdd7805c9358b0f83056c707e2",
+      "local_git_blob": "c8f1d4c05fb5f1a9a3757890398cab7d42310e87",
+      "strip_one_terminal_LF_git_blob": "d6038609524c499989f0e23884f6022a05f8c380",
+      "matches_expected_after_exact_one_LF_removal": true
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/material_identity.json",
+      "source_commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "expected_git_blob": "2d4ee458308d96a3affdbba73423657c3f432677",
+      "local_sha256": "951c789e099d1a08b6584c617f9dad1fa4123844314c1706b17d880682555ba2",
+      "local_git_blob": "03ee3adc63c7fd60b7ff281feadbce9f23ef2993",
+      "strip_one_terminal_LF_git_blob": "2d4ee458308d96a3affdbba73423657c3f432677",
+      "matches_expected_after_exact_one_LF_removal": true
+    },
+    {
+      "path": "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4_review_v1.dat",
+      "source_commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "expected_git_blob": "fe30dcbd56dec104702f7f307a24d0994b88d970",
+      "local_sha256": "50d4f5aa7a83de498a9be8df0f605313c6580b7e3a48e5c5635c745934a35c9f",
+      "local_git_blob": "e99dc904a4acf120f14631d4d26e32ffd6d52040",
+      "strip_one_terminal_LF_git_blob": "fe30dcbd56dec104702f7f307a24d0994b88d970",
+      "matches_expected_after_exact_one_LF_removal": true
+    },
+    {
+      "path": "input/task40extra_0p7nm_engineering/nonseparable_g1_p6_q4_review_v1.dat",
+      "source_commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "expected_git_blob": "56663a2aef2d755990c4e858f5c45ac10dce0b87",
+      "local_sha256": "3007e656125253138bf12f3b0a2500eca6671f9d1bc4c2fc7516cfc95bd1409f",
+      "local_git_blob": "d0fa6a7cf54500ed3af071642f253800235657b0",
+      "strip_one_terminal_LF_git_blob": "56663a2aef2d755990c4e858f5c45ac10dce0b87",
+      "matches_expected_after_exact_one_LF_removal": true
+    },
+    {
+      "path": "src/test/test_task39extra_v29_p6_raw_tensor.py",
+      "source_commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+      "expected_git_blob": "263efb6e2049e8d106af9d0ab494406d84b60db5",
+      "local_sha256": "e39e559d5cd3cf4e6fd8ff8b98bbcc8c1f1aadcb0f6e593e415a5f961386b7b3",
+      "local_git_blob": "e4eee7dce659fe6db5e421037e225a939b1557fc",
+      "strip_one_terminal_LF_git_blob": "263efb6e2049e8d106af9d0ab494406d84b60db5",
+      "matches_expected_after_exact_one_LF_removal": true
+    }
+  ],
+  "source_untouched": true,
+  "compatibility_patch": {
+    "file": "src/solvers/task39extra_p6_raw_tensor.py",
+    "old": "cell_name = cell.cellname()",
+    "new": "cell_name = cell.cellname() if callable(cell.cellname) else cell.cellname",
+    "location": "experiment-only generated raw_tensor_compat.py"
+  },
+  "reproduce": [
+    "UV_CACHE_DIR=task40extra_cloud/.uv-cache uv pip install --python task40extra_cloud/.venv/bin/python fenics-ufl==2026.1.0 fenics-ffcx==0.11.0",
+    "task40extra_cloud/.venv/bin/python task40extra_cloud/experiments/tensor_reuse/run_experiment.py",
+    "task40extra_cloud/.venv/bin/python task40extra_cloud/experiments/tensor_reuse/g1_schur_check.py"
+  ],
+  "files": {
+    "g1_schur_check.py": "f7b31948abf08005b90be1fa7d24ed90911b1c9c537a2b375205888a835f5de9",
+    "run.log": "9104e5e8a9ce6fa32637755df9471a371ad2931eed98a201ba8196f5d7c7c2bf",
+    "validate_extracted_core.py": "b7b5f64fa4ec78e2333281a1fd43da981f5fa6536c5ae92d7525993cf8bb390b",
+    "g1_schur_results.json": "ed4a9972a4dc1f20e3ad96b25753c4740d27b0fe276ce9efc791f6efca177a3f",
+    "run_experiment_measured.py.txt": "c8451e6a2b1877a4bad41a8e012bc5bb0cb58db6efbf86d0ba42adb1c1ada5cf",
+    "templates.npy": "f2b5fa9ab0e42437865f6469e8985e4e33748d2079b0ea4e532d51df48351ec4",
+    "extracted_core_validation.log": "e34032732bb2a644687fe72ecf368fa93d6a823ee9de96d5ee6295f9c1ea474a",
+    "results.json": "a94ccfe8ec0752cdc0033e17af7d48b0fdcaaccf34345bf8c53858a53a8aa0bf",
+    "findings_zh.md": "f0991e46168eb473c102938c8fa759554d141a3b470038fd9928344905e22a6a",
+    "original_test_failure.txt": "3578987957fbd0fd201bd703de236a38ac873a1e58607537caa8dc27c2fd38ad",
+    "run_experiment.py": "bf3fc9d96142b061fabd61b4d23f7fe59c095642cf638fbf3bed299f5adb0b09",
+    "raw_tensor_compat.py": "7eac0ba809c5889fff28b34817248f8367b83b62d0136376e2036353812e84bf",
+    "partial_records.json": "7e0c6be0672c69e65e8d364c08ebe74673d71407f990fac4599891ae7fe1dde2",
+    "extracted_core_validation.json": "9b5c4d9d7225e60e47ee651580d5d4fb29d32b710bbd518e7d59d3f70913b1be",
+    "reference_metric_component.py": "3b931e10cd76eb3c3f45cf4e2ac407f2d2df840d25b79fed6bfc4e315e34970a",
+    "g1_schur.log": "8b19153e83e4c4f741cd423f100a9ef3f002f013eed1534bf0f1f0e389c16a33"
+  },
+  "measured_timing_script": "run_experiment_measured.py.txt",
+  "portable_runner_changes": "same numerical core extracted to research src module; TASK40EXTRA_SOURCE_ROOT env supports repository root; extracted templates checked bitwise equal",
+  "portable_reproduce": "TASK40EXTRA_SOURCE_ROOT=\"$PWD\" python benchmarks/cases/task40extra_dot_parallel_cloud/tensor_reuse/run_experiment.py"
+}

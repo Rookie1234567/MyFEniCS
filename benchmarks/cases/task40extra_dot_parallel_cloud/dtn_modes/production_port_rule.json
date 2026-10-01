@@ -1,0 +1,134 @@
+{
+  "source_commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+  "path": "src/solvers/dtn_port_3d.py",
+  "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/src/solvers/dtn_port_3d.py#L1583-L1600",
+  "git_blob_sha": "1523e8a08daa3cdb14aa3486637139c0861932d1",
+  "local_sha256": "7f74a586930520e62701403c3a6b9efd9219a840df70f53c3a6e19535c0d537a",
+  "exact_git_blob_matches": false,
+  "git_blob_matches_minus_terminal_LF": true,
+  "function_source": "def _dtn_surface_quadrature_degree(\n    cfg: SimulationConfig3D, modes: list[PortMode3D]\n) -> int:\n    \"\"\"Choose a quadrature degree for oscillatory DtN surface projections.\n\n    The port forms contain Fourier factors exp(i alpha x + i gamma y), not just\n    polynomials.  Default UFL quadrature is too low for p=2 EUV cases where the\n    automatically selected propagating orders can change phase rapidly within a\n    single surface cell.  A deterministic moderately high rule keeps the\n    auxiliary DtN block from losing rank in MPI while avoiding a user-facing\n    option explosion at this stage.\n    \"\"\"\n\n    configured = getattr(cfg, \"stage4_dtn_quadrature_degree\", None)\n    if configured is not None:\n        return max(1, int(configured))\n    max_order = max((max(abs(mode.m), abs(mode.n)) for mode in modes), default=0)\n    return int(max(10, 2 * int(cfg.nedelec_degree) + max_order + 6))",
+  "mode_loop_rule_call_line": 2951,
+  "surface_assemblers_rule_pass_lines": [
+    3464,
+    3467,
+    3470,
+    3473
+  ],
+  "form_quadrature_injection_line": 1157,
+  "override_note": "getattr(cfg,stage4_dtn_quadrature_degree,None); production runtime overrides not inspected; case dat contains no override",
+  "basix_version": "0.11.0",
+  "cases": [
+    {
+      "q": 1.0,
+      "case": "M0",
+      "degree": 25,
+      "basix_default_num_points": 169,
+      "points_per_axis": 13
+    },
+    {
+      "q": 1.0,
+      "case": "M1",
+      "degree": 25,
+      "basix_default_num_points": 169,
+      "points_per_axis": 13
+    },
+    {
+      "q": 1.0,
+      "case": "M2",
+      "degree": 26,
+      "basix_default_num_points": 196,
+      "points_per_axis": 14
+    },
+    {
+      "q": 1.0,
+      "case": "M3",
+      "degree": 27,
+      "basix_default_num_points": 196,
+      "points_per_axis": 14
+    },
+    {
+      "q": 1.25,
+      "case": "M0",
+      "degree": 27,
+      "basix_default_num_points": 196,
+      "points_per_axis": 14
+    },
+    {
+      "q": 1.25,
+      "case": "M1",
+      "degree": 27,
+      "basix_default_num_points": 196,
+      "points_per_axis": 14
+    },
+    {
+      "q": 1.25,
+      "case": "M2",
+      "degree": 27,
+      "basix_default_num_points": 196,
+      "points_per_axis": 14
+    },
+    {
+      "q": 1.25,
+      "case": "M3",
+      "degree": 27,
+      "basix_default_num_points": 196,
+      "points_per_axis": 14
+    },
+    {
+      "q": 1.25,
+      "case": "parent_M2",
+      "degree": 28,
+      "basix_default_num_points": 225,
+      "points_per_axis": 15
+    },
+    {
+      "q": 1.25,
+      "case": "parent_M3",
+      "degree": 29,
+      "basix_default_num_points": 225,
+      "points_per_axis": 15
+    },
+    {
+      "q": 1.5,
+      "case": "M0",
+      "degree": 29,
+      "basix_default_num_points": 225,
+      "points_per_axis": 15
+    },
+    {
+      "q": 1.5,
+      "case": "M1",
+      "degree": 29,
+      "basix_default_num_points": 225,
+      "points_per_axis": 15
+    },
+    {
+      "q": 1.5,
+      "case": "M2",
+      "degree": 29,
+      "basix_default_num_points": 225,
+      "points_per_axis": 15
+    },
+    {
+      "q": 1.5,
+      "case": "M3",
+      "degree": 29,
+      "basix_default_num_points": 225,
+      "points_per_axis": 15
+    },
+    {
+      "q": 1.5,
+      "case": "parent_M2",
+      "degree": 30,
+      "basix_default_num_points": 256,
+      "points_per_axis": 16
+    },
+    {
+      "q": 1.5,
+      "case": "parent_M3",
+      "degree": 31,
+      "basix_default_num_points": 256,
+      "points_per_axis": 16
+    }
+  ]
+}

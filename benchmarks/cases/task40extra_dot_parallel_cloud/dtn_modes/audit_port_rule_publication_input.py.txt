@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+"""Execute only the pinned pure rule function, without importing PDE dependencies."""
+import ast,hashlib,json
+from pathlib import Path
+from types import SimpleNamespace
+import basix
+OUT=Path(__file__).resolve().parent
+path=OUT/'dtn_port_3d.pinned.py'; b=path.read_bytes(); tree=ast.parse(b)
+node=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='_dtn_surface_quadrature_degree')
+ns={'SimulationConfig3D':SimpleNamespace,'PortMode3D':SimpleNamespace}
+exec(compile(ast.Module(body=[node],type_ignores=[]),str(path),'exec'),ns)
+raw=json.loads((OUT/'mode_audit.json').read_text()); cases=[]
+for q,v in raw['results'].items():
+ for name,c in {**v['cases'],**v.get('review_growth_cases',{})}.items():
+  modes=[SimpleNamespace(m=k[1],n=k[2]) for k in c['ordered_keys']]
+  degree=ns[node.name](SimpleNamespace(nedelec_degree=6),modes)
+  pts,w=basix.make_quadrature(basix.CellType.quadrilateral,degree)
+  cases.append(dict(q=float(q),case=name,degree=degree,basix_default_num_points=len(w),points_per_axis=len(set(pts[:,0]))))
+expected='1523e8a08daa3cdb14aa3486637139c0861932d1'
+def blob(v):return hashlib.sha1(b'blob '+str(len(v)).encode()+b'\0'+v).hexdigest()
+out=dict(source_commit='c786e87d03976a52f57d1e7f69a3c63f992afe90',path='src/solvers/dtn_port_3d.py',url='https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/src/solvers/dtn_port_3d.py#L1583-L1600',git_blob_sha=expected,local_sha256=hashlib.sha256(b).hexdigest(),exact_git_blob_matches=blob(b)==expected,git_blob_matches_minus_terminal_LF=blob(b[:-1])==expected,function_source=ast.get_source_segment(b.decode(),node),mode_loop_rule_call_line=2951,surface_assemblers_rule_pass_lines=[3464,3467,3470,3473],form_quadrature_injection_line=1157,override_note='getattr(cfg,stage4_dtn_quadrature_degree,None); production runtime overrides not inspected; case dat contains no override',basix_version=basix.__version__,cases=cases)
+assert out['exact_git_blob_matches'] or out['git_blob_matches_minus_terminal_LF']
+(OUT/'production_port_rule.json').write_text(json.dumps(out,indent=2))
+print(cases)

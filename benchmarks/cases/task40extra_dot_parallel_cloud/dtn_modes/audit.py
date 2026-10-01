@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+"""Independent cloud diagnostic; imports pinned production mode generator. No PDE."""
+import os
+for v in ('OPENBLAS_NUM_THREADS','OMP_NUM_THREADS','MKL_NUM_THREADS'): os.environ[v]='1'
+import sys,json,hashlib,platform,time,resource,tomllib
+from pathlib import Path
+import numpy as np
+ROOT=Path(__file__).resolve().parents[2]; SRC=Path(os.environ['TASK40EXTRA_SOURCE_ROOT']).resolve(); OUT=Path(os.environ['TASK40EXTRA_OUTPUT_ROOT']).resolve(); OUT.mkdir(parents=True,exist_ok=True)
+sys.path.insert(0,str(SRC/'src'))
+from common.config_3d import SimulationConfig3D
+from common.modes_3d import outgoing_port_modes_3d
+start=time.monotonic()
+dat_path=SRC/'input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4_review_v1.dat'
+d=tomllib.loads(dat_path.read_text()); g=d['geometry']; mat=d['materials']; inc=d['incidence']
+def cfg(q=1,policy='auto_propagating',m=7,n=1):
+ return SimulationConfig3D(lambda0=inc['wavelength_nm'],period_x=q*g['period_x_nm'],period_y=q*g['period_y_nm'],n_air=complex(*mat['n_air']),n_substrate=complex(*mat['n_substrate']),mu_r=complex(*mat['mu_r']),incident_theta_deg=90-inc['grazing_angle_deg'],incident_phi_deg=inc['azimuth_deg'],polarization_kind=inc['polarization'],stage4_dtn_order_policy=policy,diffraction_order_max_m=m,diffraction_order_max_n=n,nedelec_degree=6)
+def key(m): return [m.side,m.m,m.n,m.polarization]
+def z(v): return [float(complex(v).real),float(complex(v).imag)]
+def envelope(c):
+ nmax=max(abs(c.n_air),abs(c.substrate_index))
+ return [int(np.floor((nmax*c.k0+abs(c.kx))*c.period_x/(2*np.pi)+1e-12)),int(np.floor((nmax*c.k0+abs(c.ky))*c.period_y/(2*np.pi)+1e-12))]
+def audit(c,q):
+ modes=outgoing_port_modes_3d(c); area=c.period_x*c.period_y
+ rows=[]
+ for m in modes:
+  poy=float((.5*np.real(np.cross(m.e_vector,np.conj(m.h_vector))))[2]*m.vertical_sign)
+  disp=(c.k0*m.refractive_index)**2-m.alpha**2-m.gamma**2
+  rows.append(dict(key=key(m),alpha=z(m.alpha),gamma=z(m.gamma),beta=z(m.beta),propagating=m.propagating,rayleigh_warning=m.rayleigh_warning,tangent_norm_sq=m.electric_tangential_norm_sq,E=[z(v) for v in m.e_vector],k=[z(v) for v in m.k_vector],H=[z(v) for v in m.h_vector],k_dot_E_normalized=float(abs(np.dot(m.k_vector,m.e_vector))/(np.linalg.norm(m.k_vector)*np.linalg.norm(m.e_vector))),dispersion_relative_error=float(abs(m.beta*m.beta-disp)/max(abs(disp),1e-30)),unclipped_outgoing_poynting_density=poy,power=m.power_per_unit_amplitude,power_reconstruction_absolute_error=abs(m.power_per_unit_amplitude-max(poy,0)*area)))
+ top_ev=[m for m in modes if m.side=='top' and not m.propagating]
+ weak=min(top_ev,key=lambda m:m.beta.imag) if top_ev else None
+ return dict(q=q,policy=c.stage4_dtn_order_policy,requested_bounds=[c.diffraction_order_max_m,c.diffraction_order_max_n],automatic_envelope=envelope(c),count=len(modes),by_side={s:{'all':sum(m.side==s for m in modes),'propagating':sum(m.side==s and m.propagating for m in modes)} for s in ['top','bottom']},ordered_keys=[key(m) for m in modes],max_k_dot_E_normalized=max(r['k_dot_E_normalized'] for r in rows),max_dispersion_relative_error=max(r['dispersion_relative_error'] for r in rows),min_beta_real=min(m.beta.real for m in modes),min_beta_imag=min(m.beta.imag for m in modes),min_tangent_norm_sq=min(m.electric_tangential_norm_sq for m in modes),min_beta_over_k_medium=min(abs(m.beta)/(c.k0*abs(m.refractive_index)) for m in modes),rayleigh_warning_count=sum(m.rayleigh_warning for m in modes),min_unclipped_outgoing_poynting_density=min(r['unclipped_outgoing_poynting_density'] for r in rows),bottom_nonpropagating_positive_power_count=sum(m.side=='bottom' and not m.propagating and m.power_per_unit_amplitude>0 for m in modes),weakest_top_evanescent=None if weak is None else dict(key=key(weak),beta=z(weak.beta),base_air_buffer_nm=g['z_max_nm']-g['grating_height_nm'],one_way_amplitude_factor_base_buffer=float(np.exp(-weak.beta.imag*(g['z_max_nm']-g['grating_height_nm']))),one_way_amplitude_factor_scaled_buffer=float(np.exp(-weak.beta.imag*q*(g['z_max_nm']-g['grating_height_nm'])))),rows=rows)
+results={}
+for q in [1.,1.25,1.5]:
+ cases={}
+ for name,pol,m,n in [('M0','auto_propagating',7,1),('M1','manual',7,1),('M2','manual',8,2),('M3','manual',9,3)]: cases[name]=audit(cfg(q,pol,m,n),q)
+ nest=[]
+ for a,b in zip(['M0','M1','M2'],['M1','M2','M3']):
+  ka=cases[a]['ordered_keys'];kb=cases[b]['ordered_keys'];sa=set(map(tuple,ka));sb=set(map(tuple,kb))
+  nest.append(dict(pair=[a,b],set_subset=sa<=sb,ordered_subsequence=[k for k in kb if tuple(k) in sa]==ka,prefix=kb[:len(ka)]==ka,added=len(sb-sa)))
+ results[str(q)]=dict(cases=cases,nesting=nest)
+ if q!=1:
+  em,en=envelope(cfg(q))
+  results[str(q)]['review_growth_cases']={f'parent_M{padding+1}':audit(cfg(q,'manual',em+padding,en+padding),q) for padding in [1,2]}
+manifest=json.loads(Path(os.environ['TASK40EXTRA_SOURCE_MANIFEST']).read_text())
+provenance=[]
+for row in manifest:
+ p=SRC/row['path'];raw=p.read_bytes();actual=hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest()
+ provenance.append(dict(**row,local_sha256=hashlib.sha256(raw).hexdigest(),git_blob_matches=actual==row['git_blob_sha'],git_blob_matches_removing_exactly_one_terminal_LF=raw.endswith(b'\n') and hashlib.sha1(b'blob '+str(len(raw)-1).encode()+b'\0'+raw[:-1]).hexdigest()==row['git_blob_sha']))
+assert all(p['git_blob_matches'] or p['git_blob_matches_removing_exactly_one_terminal_LF'] for p in provenance)
+assert [results['1.0']['cases'][k]['count'] for k in ['M0','M1','M2','M3']]==[80,180,340,532]
+assert all(n['set_subset'] and n['ordered_subsequence'] for v in results.values() for n in v['nesting'])
+output=dict(classification='measured_generator_diagnostics_no_PDE_no_truncation_qualification',provenance=provenance,python=sys.version,executable=sys.executable,numpy=np.__version__,threads={v:os.environ[v] for v in ['OPENBLAS_NUM_THREADS','OMP_NUM_THREADS','MKL_NUM_THREADS']},source_design_thresholds={'rayleigh_tol':cfg().diffraction_rayleigh_tol,'skip_tangent_norm_sq':1e-30,'propagating_beta_real_min':1e-12,'P3_field_relative_change':.003,'P3_power_absolute_change':1e-4,'P3_significant_mode_complex_amplitude_relative_change':.01},results=results,elapsed_seconds=time.monotonic()-start,peak_rss_kib=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+(OUT/'mode_audit.json').write_text(json.dumps(output,indent=2))
+for q,v in results.items():
+ print(q,{k:x['count'] for k,x in v['cases'].items()}, {k:x['count'] for k,x in v.get('review_growth_cases',{}).items()})
+ print('M3', {k:v['cases']['M3'][k] for k in ['max_k_dot_E_normalized','min_tangent_norm_sq','min_beta_over_k_medium','weakest_top_evanescent','bottom_nonpropagating_positive_power_count']})

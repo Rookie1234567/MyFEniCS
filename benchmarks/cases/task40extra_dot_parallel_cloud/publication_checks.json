@@ -1,0 +1,49 @@
+{
+  "date_utc": "2026-10-01",
+  "classification": "publication_path_smoke_no_PDE_no_new_performance_claim",
+  "scripts_exit_0": 7,
+  "tensor_gates": {
+    "matrix_1e-11": true,
+    "actions_1e-11": true,
+    "schur_1e-11": true,
+    "recovery_1e-10": true,
+    "mixed_complex_1e-11": true,
+    "adversarial_not_collapsed": true,
+    "memory_3GiB": true
+  },
+  "g1_schur": {
+    "case": "G1 actual first-cell widths with substrate coefficients",
+    "widths_nm": [
+      0.2851851851851852,
+      0.32407407407407407,
+      0.25925925925925924
+    ],
+    "matrix_relative": 3.7424888792369327e-16,
+    "schur_relative": 4.879089069956135e-15,
+    "schur_abs": 1.6969316311166466e-10,
+    "solution_relative": 3.1649207549490836e-12,
+    "blocked_recover_true_residual": 1.2412739585459815e-11,
+    "reuse_recover_against_blocked_true_residual": 1.4650050628622668e-11,
+    "reuse_own_true_residual": 1.2464382266259627e-11,
+    "nonzero_internal_rhs_norm": 31.200332709380007,
+    "nonzero_trace_rhs_norm": 29.48221839097534,
+    "blocked_condensation_s": 0.05395582299979651,
+    "reuse_condensation_s": 0.048691865999899164,
+    "peak_rss_bytes": 198905856,
+    "gates": {
+      "matrix_1e-11": true,
+      "schur_1e-11": true,
+      "recovery_1e-10": true
+    }
+  },
+  "extracted_core_gates": {
+    "bitwise_templates": true,
+    "same_tag_each_vs_blocked_1e-11": true,
+    "not_collapsed": true
+  },
+  "dtn_rule_and_inventory": "all three scripts exit 0; mode counts unchanged; degree25/26/27 confirmed",
+  "capacity_counts": "336/33,880/30,760/156,880/156,1369452/211 cells/raw keys",
+  "compile": "portable scripts and research core syntax checked",
+  "full_pytest_MPI_CI": "not_run",
+  "github_rendered_view": "not_verified"
+}

@@ -1,0 +1,135 @@
+"""Bounded p6 hexahedron reference metric experiment; no PDE qualification."""
+import os
+for v in ('OPENBLAS_NUM_THREADS','OMP_NUM_THREADS','MKL_NUM_THREADS'): os.environ[v]='1'
+import sys, json, time, hashlib, resource, tomllib, itertools, types, traceback
+from pathlib import Path
+from collections import Counter
+import numpy as np
+import scipy, scipy.linalg as la
+import basix, basix.ufl, ufl, ffcx
+ROOT=Path(__file__).resolve().parents[2]; OUT=Path(__file__).resolve().parent; SRC=ROOT/'source'
+sys.path.insert(0,str(SRC))
+start=time.perf_counter()
+rawpath=SRC/'src/solvers/task39extra_p6_raw_tensor.py'
+original=rawpath.read_text()
+adapted=original.replace('cell_name = cell.cellname()', 'cell_name = cell.cellname() if callable(cell.cellname) else cell.cellname')
+(OUT/'raw_tensor_compat.py').write_text(adapted)
+module=types.ModuleType('raw_tensor_compat'); sys.modules[module.__name__]=module
+exec(compile(adapted,str(OUT/'raw_tensor_compat.py'),'exec'), module.__dict__)
+Builder=module.Task39ExtraP6RawTensorCandidate
+
+def timed(fn):
+    t=time.perf_counter(); x=fn(); return x,time.perf_counter()-t
+
+def rel(a,b): return float(la.norm(a-b)/max(la.norm(b),np.finfo(float).tiny))
+def metrics(a,b): return {'relative':rel(a,b),'absolute_frobenius':float(la.norm(a-b)), 'reference_norm':float(la.norm(b))}
+def rss(): return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*1024
+
+# Original test attempted unchanged, with durable negative evidence.
+import importlib.util
+sp=importlib.util.spec_from_file_location('production_test',SRC/'src/test/test_task39extra_v29_p6_raw_tensor.py'); tt=importlib.util.module_from_spec(sp); sp.loader.exec_module(tt)
+try:
+    tt.test_p6_blocked_gram_uses_full_form_analysis_and_is_complex_finite(); original_test='PASS'
+except Exception:
+    original_test='CROSS_VERSION_API_FAIL'; (OUT/'original_test_failure.txt').write_text(traceback.format_exc())
+tt.Task39ExtraP6RawTensorCandidate=Builder
+tt.test_p6_blocked_gram_uses_full_form_analysis_and_is_complex_finite()
+
+inputs={k:tomllib.loads((SRC/f'input/task40extra_0p7nm_engineering/nonseparable_{k}_p6_q4_review_v1.dat').read_text()) for k in ('g0','g1')}
+cfg=types.SimpleNamespace(use_pml=False,divergence_penalty=0.,mu_r=1.,k0=2*np.pi/0.7,eps_r=1.,substrate_index=complex(*inputs['g0']['materials']['n_substrate']),grating_index=complex(*inputs['g0']['materials']['n_grating']),tags=types.SimpleNamespace(air=1,substrate=2,grating=3))
+e=basix.ufl.element('N1curl','hexahedron',6); be=e.basix_element
+mesh=ufl.Mesh(basix.ufl.element('P','hexahedron',1,shape=(3,))); space=ufl.FunctionSpace(mesh,e); u,v=ufl.TrialFunction(space),ufl.TestFunction(space)
+form=sum((1/cfg.mu_r*ufl.inner(ufl.curl(u),ufl.curl(v))-cfg.k0**2*eps*ufl.inner(u,v))*ufl.dx(tag,domain=mesh) for tag,eps in [(1,cfg.eps_r),(2,cfg.substrate_index**2),(3,cfg.grating_index**2)])
+builder,constructor_time=timed(lambda:Builder(be,cfg,form))
+interior=np.array(be.entity_dofs[3][0]); trace=np.setdiff1d(np.arange(be.dim),interior)
+assert (be.dim,len(interior),len(trace))==(882,450,432)
+assert all(r.degree==15 and len(r.points)==512 for r in builder.rules_by_tag_component.values())
+
+# Six reference component matrices, using each component's own exact rule.
+def make_templates():
+    out=[]
+    dx,dy,dz=(basix.index(1,0,0),basix.index(0,1,0),basix.index(0,0,1))
+    for comp in ('curl','mass'):
+        r=builder.rules_by_tag_component[(1,comp)]
+        mats=np.zeros((3,882,882))
+        for q in range(0,len(r.points),32):
+            tab=be.tabulate(1,r.points[q:q+32]); vals=tab[0] if comp=='mass' else np.stack((tab[dy,:,:,2]-tab[dz,:,:,1],tab[dz,:,:,0]-tab[dx,:,:,2],tab[dx,:,:,1]-tab[dy,:,:,0]),axis=2)
+            for a in range(3):
+                f=np.ascontiguousarray(vals[:,:,a]); mats[a]+=f.T@(r.weights[q:q+32,None]*f)
+        out.extend(mats)
+    return np.array(out)
+templates,template_time=timed(make_templates)
+np.save(OUT/'templates.npy',templates)
+
+def combine(coords,tag):
+    J,d=builder._affine_jacobian(coords); h=np.diag(J)
+    assert np.array_equal(J,np.diag(h)) and np.all(h>0)
+    ck,cm=builder.coefficients_by_tag[tag]
+    weights=np.r_[ck*h*h/d,cm*d/(h*h)]
+    out=np.zeros((882,882),dtype=complex)
+    for a in range(6): out+=weights[a]*templates[a]
+    return out
+ref=basix.geometry(basix.CellType.hexahedron)
+inventories={}; reps=[]; exact_by_grid={}
+for name,data in inputs.items():
+    axes=[np.array(data['discretization'][f'mesh_axis_{a}_values']) for a in 'xyz']; unique={}; distribution=Counter(); rounded=Counter()
+    for index in itertools.product(*[range(len(a)-1) for a in axes]):
+        lo=np.array([axes[a][index[a]] for a in range(3)]); hi=np.array([axes[a][index[a]+1] for a in range(3)])
+        coords=np.where(ref==0,lo,hi); h=hi-lo; key=h.tobytes(); unique.setdefault(key,{'name':name,'index':list(index),'coordinates':coords,'h':h})
+        distribution[key.hex()]+=1; rounded[tuple(np.round(h,12))]+=1
+    exact_by_grid[name]=list(unique.values())
+    inventories[name]={'cells':sum(distribution.values()),'exact_width_types':len(unique),'rounded_12_width_types':len(rounded),'exact_type_distribution':dict(distribution)}
+    # Representative across every nominal class plus first/last exact variants.
+    groups={}
+    for entry in unique.values(): groups.setdefault(tuple(np.round(entry['h'],12)),[]).append(entry)
+    for group in groups.values():
+        reps.append(group[0]);
+        if len(group)>1: reps.append(group[-1])
+# Deliberate old-key collision much larger than ulp, still rounds alike.
+base=np.array([.4277777777772,.3240740740741,.5185185185181]); near=base.copy(); near[0]+=2e-13
+assert np.array_equal(np.round(base,12),np.round(near,12))
+for label,h in [('adversarial_a',base),('adversarial_b',near)]: reps.append({'name':label,'index':None,'coordinates':ref*h,'h':h})
+print('inventory',inventories.keys(),'representatives',len(reps),'templates_seconds',template_time,flush=True)
+records=[]; saved_pair={}
+rng=np.random.default_rng(20261001); vectors=rng.standard_normal((882,3))+1j*rng.standard_normal((882,3))
+for n,case in enumerate(reps):
+    tag=1+n%3; coords=case['coordinates']
+    B,tb=timed(lambda:builder.build(coords,tag=tag,dimension=882)); A,ta=timed(lambda:combine(coords,tag))
+    row={'case':case['name'],'cell_index':case['index'],'widths_nm':case['h'].tolist(),'tag':tag,'blocked_s':tb,'combine_s':ta,'matrix':metrics(A,B),'actions':metrics(A@vectors,B@vectors),'rss_process_historical_peak_bytes':rss()}
+    if n<4:
+        b=rng.standard_normal(882)+1j*rng.standard_normal(882)
+        def condense(M):
+            ii=M[np.ix_(interior,interior)]; it=M[np.ix_(interior,trace)]; ti=M[np.ix_(trace,interior)]
+            lu=la.lu_factor(ii); rec=la.lu_solve(lu,it); gi=la.lu_solve(lu,b[interior]); S=M[np.ix_(trace,trace)]-ti@rec
+            bt=b[trace]-ti@gi; xt=la.solve(S,bt); x=np.zeros(882,dtype=complex); x[trace]=xt; x[interior]=gi-rec@xt
+            return S,x
+        (SB,xb),tsb=timed(lambda:condense(B)); (SA,xa),tsa=timed(lambda:condense(A))
+        row['schur']={'matrix':metrics(SA,SB),'solution_difference':metrics(xa,xb),'blocked_recover_true_residual':rel(B@xb,b),'candidate_recover_against_blocked_true_residual':rel(B@xa,b),'candidate_own_true_residual':rel(A@xa,b),'blocked_s':tsb,'candidate_s':tsa,'nonzero_internal_rhs_norm':float(la.norm(b[interior]))}
+    if case['name'].startswith('adversarial'): saved_pair[case['name']]=combine(coords,3)
+    records.append(row); print(json.dumps(row),flush=True)
+    (OUT/'partial_records.json').write_text(json.dumps(records,indent=2))
+# Two extra paired rounds on fixed actual G0 and G1 cells, alternating order.
+paired=[]
+for round_i in range(3):
+    for case in [exact_by_grid['g0'][0],exact_by_grid['g1'][-1]]:
+        coords=case['coordinates']; order=('blocked','reuse') if round_i%2==0 else ('reuse','blocked'); times={}
+        for method in order:
+            mat,t=timed(lambda: builder.build(coords,tag=3,dimension=882) if method=='blocked' else combine(coords,3)); times[method]=t
+        paired.append({'round':round_i,'case':case['name'],'order':order,'seconds':times})
+# Distinct actual double metric growth, one matrix live at a time. No repeated templates.
+growth=[]
+for name,entries in exact_by_grid.items():
+    def batch():
+        checksum=0.
+        for c in entries: checksum+=float(combine(c['coordinates'],3)[0,0].real)
+        return checksum
+    checksum,seconds=timed(batch); growth.append({'case':name,'exact_types':len(entries),'seconds':seconds,'checksum':checksum,'template_bytes':templates.nbytes})
+collision=metrics(saved_pair['adversarial_b'],saved_pair['adversarial_a'])
+# Independent coefficient stress: complex curl AND complex mass, no extra conjugation.
+builder.coefficients_by_tag[1]=(.7+.13j,-80.3-9.1j)
+stresscoords=exact_by_grid['g1'][0]['coordinates']; B=builder.build(stresscoords,tag=1,dimension=882); A=combine(stresscoords,1)
+stress={'curl_coefficient':[.7,.13],'mass_coefficient':[-80.3,-9.1],'matrix':metrics(A,B),'action':metrics(A@vectors,B@vectors),'hermitian_defect':rel(A,A.conj().T)}
+gates={'matrix_1e-11':all(r['matrix']['relative']<=1e-11 for r in records),'actions_1e-11':all(r['actions']['relative']<=1e-11 for r in records),'schur_1e-11':all(r.get('schur',{'matrix':{'relative':0}})['matrix']['relative']<=1e-11 for r in records),'recovery_1e-10':all(max(r['schur']['blocked_recover_true_residual'],r['schur']['candidate_recover_against_blocked_true_residual'])<=1e-10 for r in records if 'schur' in r),'mixed_complex_1e-11':max(stress['matrix']['relative'],stress['action']['relative'])<=1e-11,'adversarial_not_collapsed':collision['absolute_frobenius']>0,'memory_3GiB':rss()<3*1024**3}
+results={'scope':'standalone component cross-version diagnostic; no PDE, no production qualification, no continuum convergence','source_manifest':str(ROOT/'source_manifest.json'),'source_sha256':hashlib.sha256(original.encode()).hexdigest(),'compatibility_change':'cell.cellname callable-or-property only; pinned source unchanged','original_source_unit_test':original_test,'compat_adapted_source_unit_test':'PASS','versions':{'python':sys.version,'numpy':np.__version__,'scipy':scipy.__version__,'basix':basix.__version__,'ufl':ufl.__version__,'ffcx':ffcx.__version__},'dimension':882,'interior':450,'trace':432,'element_repr':str(e),'units':'coordinates nm; k0=2*pi/0.7 nm^-1','constructor_s':constructor_time,'template_prepare_s':template_time,'template_bytes':templates.nbytes,'inventories':inventories,'records':records,'paired_timing':paired,'growth':growth,'adversarial_collision':{'round12_equal':True,'different_exact_key':base.tobytes()!=near.tobytes(),'matrix_delta':collision},'mixed_complex_stress':stress,'gates':gates,'audit':builder.audit(),'unrun':['compiled FFCx tensor oracle','DOLFINx orientation and MPC path','nonzero port RHS closure','global assembly/solve','production ABI qualification'],'peak_rss_bytes':rss(),'peak_rss_scope':'Linux ru_maxrss single process historical high-water mark; not aggregate concurrent workers','wall_seconds':time.perf_counter()-start}
+(OUT/'results.json').write_text(json.dumps(results,indent=2))
+print('FINAL',json.dumps({k:results[k] for k in ['gates','peak_rss_bytes','wall_seconds']}),flush=True)

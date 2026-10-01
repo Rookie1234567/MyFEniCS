@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+"""P6 actual Basix hexahedron traces x production Fourier modes, G0 rectangles.
+Diagnostic Gauss sweep; production default rule independently inspected, not a full port assembly audit.
+"""
+import os
+for v in ('OPENBLAS_NUM_THREADS','OMP_NUM_THREADS','MKL_NUM_THREADS'): os.environ[v]='1'
+import sys,json,time,resource,hashlib
+from pathlib import Path
+import numpy as np
+import basix
+from numpy.polynomial.legendre import leggauss
+OUT=Path(os.environ['TASK40EXTRA_OUTPUT_ROOT']).resolve(); SRC=Path(os.environ['TASK40EXTRA_SOURCE_ROOT']).resolve()
+sys.path.insert(0,str(SRC/'src'))
+from common.config_3d import SimulationConfig3D
+from common.modes_3d import outgoing_port_modes_3d
+start=time.monotonic(); raw=json.loads((OUT/'mode_audit.json').read_text())
+rows=raw['results']['1.0']['cases']['M3']['rows']
+selected=[r for r in rows if r['key'][0]=='top' and (r['key'][1],r['key'][2]) in [(9,3),(8,2),(7,1),(-7,1),(0,0),(-1,0)]]
+el=basix.create_element(basix.ElementFamily.N1E,basix.CellType.hexahedron,6,basix.LagrangeVariant.legendre)
+geo=json.loads((SRC/'docs/task40extra_0p7nm_engineering/outcomes/records/geometry_plan.json').read_text())['meshes']['G0']['axis_coordinates_nm']
+# First narrow and widest actual x intervals; y common size. Include both z ports.
+rects=[(geo['x'][i],geo['x'][i+1],geo['y'][0],geo['y'][1]) for i in [0,2]]
+def values(n,z):
+ t,w=leggauss(n);t=(t+1)/2;w=w/2
+ x,y=np.meshgrid(t,t,indexing='ij');ww=np.outer(w,w).ravel()
+ pts=np.c_[x.ravel(),y.ravel(),np.full(n*n,z)]
+ b=el.tabulate(0,pts)[0,:,:,:2]
+ return pts,ww,b
+refs={z:values(48,z) for z in [0.,1.]}
+checks=[]
+for z in [0.,1.]:
+ pts,ww,b=refs[z]; active=np.flatnonzero(np.max(abs(b),axis=(0,2))>1e-10)
+ assert len(active)==84, len(active)
+ for ri,(x0,x1,y0,y1) in enumerate(rects):
+  hx,hy=x1-x0,y1-y0
+  def integrate(n):
+   pp,w,bb=refs[z] if n==48 else values(n,z)
+   # Covariant Piola tangential pullback: E_x/hx,E_y/hy. Surface measure hx*hy.
+   bb=bb[:,active,:]/np.array([hx,hy])[None,None,:]
+   x=x0+hx*pp[:,0];y=y0+hy*pp[:,1]
+   answer=[]
+   for r in selected:
+    alpha=complex(*r['alpha']);gamma=complex(*r['gamma']);e=np.array([complex(*v) for v in r['E'][:2]])
+    phase=np.exp(1j*(alpha*x+gamma*y))
+    v=np.einsum('q,q,qic,c->i',w,phase,bb,e)*hx*hy
+    answer.append(v)
+   return np.array(answer)
+  ref=integrate(48);cross=integrate(32)
+  denom=np.linalg.norm(ref,axis=1)
+  sweep=[]
+  for n in [4,6,8,10,12,13,14,16,24,32]:
+   a=integrate(n);err=np.linalg.norm(a-ref,axis=1)/denom
+   worst=int(np.argmax(err))
+   sweep.append(dict(gauss_points_per_axis=n,total_points=n*n,max_channel_relative_projection_vector_error=float(max(err)),worst_mode_key=selected[worst]['key'],max_coefficient_absolute_error=float(np.max(abs(a-ref))),relative_errors=err.tolist()))
+  checks.append(dict(z_reference=z,rectangle_nm=[x0,x1,y0,y1],widths_nm=[hx,hy],active_trace_dofs=active.tolist(),reference_projection_norms=denom.tolist(),reference_32_vs48_max_relative=float(max(np.linalg.norm(cross-ref,axis=1)/denom)),sweep=sweep))
+out=dict(classification='measured_local_trace_quadrature_sensitivity_not_production_port_rule_qualification',basix_version=basix.__version__,basis='Basix N1E hexahedron degree6 Legendre; full882 local basis; actual tangential restriction on z=0,1 has84 active functions; affine covariant Piola',production_port_rule='Pinned dtn_port_3d default degree25/26/27 for q1 M0-M1/M2/M3; Basix default13/14/14 points per axis, see production_port_rule.json; not full production assembly qualification',threshold_note='No newly invented acceptance gate: report error sequence. Review P3 observable limits do not apply to this projection-vector diagnostic.',mode_keys=[r['key'] for r in selected],checks=checks,elapsed_seconds=time.monotonic()-start,peak_rss_kib=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+(OUT/'trace_quadrature.json').write_text(json.dumps(out,indent=2))
+for i,c in enumerate(checks): print(i,[(x['gauss_points_per_axis'],x['max_channel_relative_projection_vector_error']) for x in c['sweep']])
+print('peak RSS KiB',out['peak_rss_kib'])

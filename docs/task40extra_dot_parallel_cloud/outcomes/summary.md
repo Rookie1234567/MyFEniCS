@@ -1,25 +1,40 @@
-# dot 云端并行研究：阶段记录
+# dot 云端并行研究：首批结果
 
-## 当前阶段：脚手架建立，实验成绩待单独核验发布
+## 面向 0.7 nm / 2 TB 的结论
 
-| 对象 | 当前状态 | 数据身份与单位 | 基线与证据 |
+局部矩阵生成有正信号，但它只解决装配的一部分工作。完整求解仍受全域 p4 因子、每步纠错成本和实际端口/工作向量库存影响；本批没有目标模型解，也没有 2 TB 或 48 小时达标证明。结构化几何的精确共享比逐单元最坏情形有利，不能把 15–17 TB 假设写成不可避免。
+
+| 实验/分析 | 实际结果 | 数据身份、单位与范围 | 证据 |
 |---|---|---|---|
-| 独占分支/范围 | 已建立 | 文档身份；无数值单位 | [provenance](../branch_provenance.json) |
-| CPU 组件实验 | 本脚手架尚未归档结果 | not_run（指本表未认证任何运行），数值 null | 后续实际 run record；不推断实验通过 |
-| 完整 PDE / official R/T/A | 本支线排除 | not_run；无 official result | [task](../task.md) |
-| 生产/截断/连续极限/2 TB 资格 | 未授予 | not_run / unknown | 不由局部诊断外推 |
+| p6 六参考积分复用 | 14 组矩阵最大相对差 3.5810e-16；作用 4.3008e-16；5 组 Schur 最大差 5.6901e-15；补充 G1 恢复残差 1.4651e-11 | measured；无量纲；局部 882/450/432 维，非完整 PDE | [tensor findings](../../../benchmarks/cases/task40extra_dot_parallel_cloud/tensor_reuse/findings_zh.md) |
+| 同批局部生成成本 | 含共享构造器及模板准备后候选 1.4009 s / 原核 5.1446 s，约 3.67 倍；六实模板 35.61 MiB | measured；6 次配对、云端调度噪声；不是完整求解提速 | 同上 results.json 与 provenance.json |
+| DtN 模式 | 母体 M0/M1/M2/M3 = 80/180/340/532；增长 M2 母体 q1.25/q1.5 = 588/700 | measured generator；通道数；按键是子序列，非前缀 | [DtN findings](../../../benchmarks/cases/task40extra_dot_parallel_cloud/dtn_modes/findings_zh.md) |
+| 实际生产端口默认规则 | M3 degree27 对应 14×14；局部投影对 48×48 相对差最大 2.252e-10 | measured component；未查全局装配/运行时 override；无需据此盲改默认 | 同上 production_port_rule.json、trace_quadrature.json |
+| 原 G1 时间分账 | KSP 占 76.523%；即删除全部 setup，其他不变也最多 1.28464 倍 | derived from parent measured；不是新云端 PDE | [容量与优先级](capacity_assessment_zh.md) |
+| 精确几何计数 | G0/G1/E1/E2 原始材料+metric 类型 33/30/156/156；假设恢复带缺口尺寸有 1,369,452 cells、211 原始类型 | derived metadata；orientation/factor 实际类型 unknown | [compact inventory](records/exact_metric_inventory_compact.json) |
 
-本表是发布时点的结构性占位，不能解读为云端没有任何正在进行的独立工作。后续每项结果以实际运行时间、环境和 hash-bound 证据替换占位，并保留失败和未执行项。
+## 含义与保留边界
 
-## 交付与审查状态
+参考积分复用是把单元基函数积分预先做成六张表，随后用每个单元真实几何组合矩阵，避免重复积分；它不合并近似几何、不共享不同局部 LU，也不减少全域 p4 因子。当前比较共享 Basix 基础，缺独立编译 FFCx oracle、真实方向/Floquet/MPC、非零端口 RHS 和完整原 A6 资格。
 
-| 检查或依赖组 | 当前状态 | 下一步 |
+DtN 实验检查开放边界通道的编号、物理方向和局部投影积分。它没有测量增加通道后的全局场/功率变化，因此不能授予截断资格。8×8 的 1.942% 误差仅是人为低阶负对照，生产已采用更高且自适应的规则。
+
+| 负结果/未执行项 | 实际状态与原因 | 下一步 |
 |---|---|---|
-| Markdown 源码结构 | 简单标题/列表/四列表格，无独立公式 | 远端回读并检查 rendered view |
-| GitHub rendered view | 尚未验证 | 如无法访问，保留缺口，不冒称通过 |
-| pytest / MPI / Ruff / CI | 未运行；本次无数值源码变更 | 后续对应实验按相关范围验证 |
-| compact evidence/docs | 仅范围与身份脚手架 | 接收可复核结果后追加 |
-| production core / reusable runner | 本阶段无改动 | 不升级默认 |
-| research-only / do-not-merge | 全支线保持研究用途；不整体合并 | 等待独立审阅 |
+| 原构造器在新 UFL 测试 | cellname 方法/属性 API 不兼容，原测试真实失败；实验副本一行适配后通过 | 保留错误日志，不改父源码或声称原 ABI 通过 |
+| 完整 PDE、official R/T/A、截断/连续精度 | not_run；本支线是组件诊断 | 正式任务需原环境完整验证 |
+| 目标 2 TB / 48 h | unknown；实际目标几何和全面库存尚不足 | 优先弄清全域 p4 与每步纠错成本，不再只优化装配 |
+| CI / 全库 pytest / MPI | not_run | 只陈述本批实际检查 |
+| GitHub 视觉渲染 | 未验证；源码表格/链接结构检查完成 | 不把提交成功等同渲染 Gate 通过 |
 
-阶段收口将给出完整结果矩阵、实际值/阈值、资源口径、changed files、测试、局限和下一步；没有测量前不预填“提速”或“通过”。
+## 身份、检查与合并边界
+
+基线 c786e87d03976a52f57d1e7f69a3c63f992afe90；云端下载 20 文件各多一个末尾 LF，去掉恰好该 LF 后 blob 匹配，实际字节 SHA256 均保留。新 research 核心位于 src，未接入生产。portable 脚本仅改源/输出路径，保留实际计时版本；发布前在独立云端布局复跑六个 portable 脚本均 exit 0，数值检查通过，未用复跑挑性能样本。详见 [复现入口](../../../benchmarks/cases/task40extra_dot_parallel_cloud/README.md)。
+
+| 依赖组 | 本批变化 | 建议 |
+|---|---|---|
+| production numerical/core | 无生产接线、无默认变化 | 不授予生产资格 |
+| research-only | src/solvers/task40extra_reference_metric_component.py | 保持 opt-in；下一步独立 oracle/方向检查 |
+| checker/benchmark | 两类组件 runner、计数脚本与 compact records | 仅其明示范围 |
+| compact evidence/docs | 本目录、benchmark findings、项目回顾 | 可独立审阅 |
+| do-not-merge | 整体研究分支、raw/模板/cache | 未开 PR、未 merge；仅更新 dot 独占分支 |

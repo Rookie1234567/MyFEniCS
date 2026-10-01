@@ -12,4 +12,4 @@
 - [阶段结果与未运行项](outcomes/summary.md)
 - [父分支 Review V2](../task40extra_0p7nm_engineering/review_report_v2.md)
 
-当前仅建立归档结构，没有在此脚手架中预填实验成绩。已进行或正在进行的云端诊断，须经独立核验、绑定实际源码和脚本 hash 后另行发布。父分支的 G0/G1/direct 成绩不得记为 dot 云端实测。
+首批组件结果已归档：[Response V1](response_v1.md)。包含局部参考积分复用、DtN 模式/端口规则、精确几何类型计数及容量风险判断。完整 0.7 nm / 2 TB 目标尚未解决，云端并行研究继续。父分支的 G0/G1/direct 成绩只作为历史基线，不是 dot 云端实测。

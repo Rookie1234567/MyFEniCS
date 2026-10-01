@@ -1,0 +1,508 @@
+{
+  "status": "COMPLETED_SMALL_METADATA_EXPERIMENT",
+  "source_sha": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+  "subdivision_source": "src/geometry/task40_nonseparable_plan.py::_subdivide/_to_nm",
+  "key_source": "src/solvers/hcurl_assembly_time_condensation.py::_canonical_axis_aligned_coordinates",
+  "classification_source": "src/geometry/mesh_builder_3d.py::_mark_cells; config_3d.py Tags3D 1 air/2 substrate/3 grating",
+  "limits": [
+    "No DOLFINx mesh or orientation permutation created; actual oriented count unknown",
+    "Exact float64 width subtraction matches key semantics if actual mesh vertices preserve specified axis values",
+    "G0/G1 axis lists match pinned geometry_plan bit-for-bit as Python floats",
+    "Air and silicon substrate/grating tags remain distinct as source requires",
+    "Hypothetical parent geometry has notch, is not 2nm anchor geometry, and is not confirmed user target",
+    "Fixed h=0.5185185185nm is a census choice, not accuracy-qualified target mesh",
+    "All payloads are shapes, not RSS or simultaneous memory peaks"
+  ],
+  "records": [
+    {
+      "q": "1",
+      "h_nm": 0.5185185185185185,
+      "box_nm": [
+        2.5925925925925926,
+        1.2962962962962963,
+        7.2592592592592595
+      ],
+      "cell_count": 336,
+      "axis_counts": [
+        6,
+        4,
+        14
+      ],
+      "segment_counts": {
+        "x": [
+          2,
+          1,
+          1,
+          2
+        ],
+        "y": [
+          1,
+          2,
+          1
+        ],
+        "z": [
+          1,
+          4,
+          4,
+          4,
+          1
+        ]
+      },
+      "axes": {
+        "x": {
+          "intervals": 6,
+          "exact_double_width_count": 5,
+          "width_hex_histogram": {
+            "0x1.b60b60b60b608p-2": 1,
+            "0x1.b60b60b60b60bp-2": 2,
+            "0x1.b60b60b60b610p-2": 1,
+            "0x1.c3518a6dfc350p-2": 1,
+            "0x1.c3518a6dfc352p-2": 1
+          }
+        },
+        "y": {
+          "intervals": 4,
+          "exact_double_width_count": 1,
+          "width_hex_histogram": {
+            "0x1.4bda12f684bdap-2": 4
+          }
+        },
+        "z": {
+          "intervals": 14,
+          "exact_double_width_count": 5,
+          "width_hex_histogram": {
+            "0x1.097b425ed0978p-1": 4,
+            "0x1.097b425ed097ap-1": 1,
+            "0x1.097b425ed097bp-1": 3,
+            "0x1.097b425ed097cp-1": 4,
+            "0x1.097b425ed0980p-1": 2
+          }
+        }
+      },
+      "material_tag_cells": {
+        "2": 24,
+        "1": 224,
+        "3": 88
+      },
+      "exact_raw_material_metric_classes": 33,
+      "raw_classes_by_material_tag": {
+        "2": 5,
+        "1": 18,
+        "3": 10
+      },
+      "raw_factor_reuse_cells_per_class": 10.181818181818182,
+      "orientation_classes": null,
+      "orientation_status": "UNKNOWN_NO_DOLFINX_TOPOLOGY",
+      "orientation_class_bounds": [
+        33,
+        336
+      ],
+      "raw_full_p6_tensor_payload_bytes_if_all_cached": 410743872,
+      "p6_core_if_one_orientation_per_raw_class_bytes_NOT_measured": 410743872,
+      "p6_core_if_every_cell_distinct_bytes": 4182119424,
+      "p6_LU_if_every_cell_distinct_bytes": 1088640000,
+      "p6_core_scope": "LU + two recovery/coupling blocks + Schur values only; exclude pivot, identity, metadata, ports, global factor, Krylov, scratch",
+      "axes_sha256": "b7ba550c514d8fe75f4ab9829a55f9a05cc67e28d519878841fdd79008ebcc84",
+      "label": "G0",
+      "frozen_axis_exact_equality": true,
+      "status": "DERIVED_COUNT_FROM_EXACT_DOCUMENTED_GEOMETRY_NOT_FEM_MEASUREMENT"
+    },
+    {
+      "q": "1",
+      "h_nm": 0.3888888888888889,
+      "box_nm": [
+        2.5925925925925926,
+        1.2962962962962963,
+        7.2592592592592595
+      ],
+      "cell_count": 880,
+      "axis_counts": [
+        10,
+        4,
+        22
+      ],
+      "segment_counts": {
+        "x": [
+          3,
+          2,
+          2,
+          3
+        ],
+        "y": [
+          1,
+          2,
+          1
+        ],
+        "z": [
+          2,
+          6,
+          6,
+          6,
+          2
+        ]
+      },
+      "axes": {
+        "x": {
+          "intervals": 10,
+          "exact_double_width_count": 4,
+          "width_hex_histogram": {
+            "0x1.c3518a6dfc350p-3": 3,
+            "0x1.c3518a6dfc354p-3": 1,
+            "0x1.240795ceb2406p-2": 1,
+            "0x1.240795ceb2408p-2": 5
+          }
+        },
+        "y": {
+          "intervals": 4,
+          "exact_double_width_count": 1,
+          "width_hex_histogram": {
+            "0x1.4bda12f684bdap-2": 4
+          }
+        },
+        "z": {
+          "intervals": 22,
+          "exact_double_width_count": 7,
+          "width_hex_histogram": {
+            "0x1.097b425ed0970p-2": 1,
+            "0x1.097b425ed097bp-2": 2,
+            "0x1.097b425ed0980p-2": 1,
+            "0x1.61f9add3c0ca0p-2": 7,
+            "0x1.61f9add3c0ca4p-2": 6,
+            "0x1.61f9add3c0ca8p-2": 3,
+            "0x1.61f9add3c0cb0p-2": 2
+          }
+        }
+      },
+      "material_tag_cells": {
+        "2": 80,
+        "1": 536,
+        "3": 264
+      },
+      "exact_raw_material_metric_classes": 30,
+      "raw_classes_by_material_tag": {
+        "2": 4,
+        "1": 18,
+        "3": 8
+      },
+      "raw_factor_reuse_cells_per_class": 29.333333333333332,
+      "orientation_classes": null,
+      "orientation_status": "UNKNOWN_NO_DOLFINX_TOPOLOGY",
+      "orientation_class_bounds": [
+        30,
+        880
+      ],
+      "raw_full_p6_tensor_payload_bytes_if_all_cached": 373403520,
+      "p6_core_if_one_orientation_per_raw_class_bytes_NOT_measured": 373403520,
+      "p6_core_if_every_cell_distinct_bytes": 10953169920,
+      "p6_LU_if_every_cell_distinct_bytes": 2851200000,
+      "p6_core_scope": "LU + two recovery/coupling blocks + Schur values only; exclude pivot, identity, metadata, ports, global factor, Krylov, scratch",
+      "axes_sha256": "abc188cdec61568ccbe1ad9f441cfc94c12601e28108d32a69d0da0ed3b6da6c",
+      "label": "G1_check",
+      "frozen_axis_exact_equality": true,
+      "status": "DERIVED_COUNT_FROM_EXACT_DOCUMENTED_GEOMETRY_NOT_FEM_MEASUREMENT"
+    },
+    {
+      "q": "5/4",
+      "h_nm": 0.5185185185185185,
+      "box_nm": [
+        3.240740740740741,
+        1.6203703703703705,
+        9.074074074074074
+      ],
+      "cell_count": 760,
+      "axis_counts": [
+        10,
+        4,
+        19
+      ],
+      "segment_counts": {
+        "x": [
+          3,
+          2,
+          2,
+          3
+        ],
+        "y": [
+          1,
+          2,
+          1
+        ],
+        "z": [
+          2,
+          5,
+          5,
+          5,
+          2
+        ]
+      },
+      "axes": {
+        "x": {
+          "intervals": 10,
+          "exact_double_width_count": 6,
+          "width_hex_histogram": {
+            "0x1.1a12f684bda10p-2": 1,
+            "0x1.1a12f684bda14p-2": 3,
+            "0x1.6d097b425ed08p-2": 2,
+            "0x1.6d097b425ed09p-2": 2,
+            "0x1.6d097b425ed0ap-2": 1,
+            "0x1.6d097b425ed10p-2": 1
+          }
+        },
+        "y": {
+          "intervals": 4,
+          "exact_double_width_count": 3,
+          "width_hex_histogram": {
+            "0x1.9ed097b425ecep-2": 1,
+            "0x1.9ed097b425ed1p-2": 2,
+            "0x1.9ed097b425ed4p-2": 1
+          }
+        },
+        "z": {
+          "intervals": 19,
+          "exact_double_width_count": 8,
+          "width_hex_histogram": {
+            "0x1.4bda12f684bd0p-2": 1,
+            "0x1.4bda12f684bdap-2": 2,
+            "0x1.4bda12f684be0p-2": 1,
+            "0x1.097b425ed0978p-1": 5,
+            "0x1.097b425ed097ap-1": 1,
+            "0x1.097b425ed097bp-1": 2,
+            "0x1.097b425ed097cp-1": 4,
+            "0x1.097b425ed0980p-1": 3
+          }
+        }
+      },
+      "material_tag_cells": {
+        "2": 80,
+        "1": 460,
+        "3": 220
+      },
+      "exact_raw_material_metric_classes": 156,
+      "raw_classes_by_material_tag": {
+        "2": 18,
+        "1": 108,
+        "3": 30
+      },
+      "raw_factor_reuse_cells_per_class": 4.871794871794871,
+      "orientation_classes": null,
+      "orientation_status": "UNKNOWN_NO_DOLFINX_TOPOLOGY",
+      "orientation_class_bounds": [
+        156,
+        760
+      ],
+      "raw_full_p6_tensor_payload_bytes_if_all_cached": 1941698304,
+      "p6_core_if_one_orientation_per_raw_class_bytes_NOT_measured": 1941698304,
+      "p6_core_if_every_cell_distinct_bytes": 9459555840,
+      "p6_LU_if_every_cell_distinct_bytes": 2462400000,
+      "p6_core_scope": "LU + two recovery/coupling blocks + Schur values only; exclude pivot, identity, metadata, ports, global factor, Krylov, scratch",
+      "axes_sha256": "a28e4c06ccde55bbf1655fd92e7eb5c058325f32013747d755805ea5fe4c9d57",
+      "label": "E1",
+      "status": "DERIVED_COUNT_FROM_EXACT_DOCUMENTED_GEOMETRY_NOT_FEM_MEASUREMENT"
+    },
+    {
+      "q": "3/2",
+      "h_nm": 0.5185185185185185,
+      "box_nm": [
+        3.888888888888889,
+        1.9444444444444444,
+        10.88888888888889
+      ],
+      "cell_count": 880,
+      "axis_counts": [
+        10,
+        4,
+        22
+      ],
+      "segment_counts": {
+        "x": [
+          3,
+          2,
+          2,
+          3
+        ],
+        "y": [
+          1,
+          2,
+          1
+        ],
+        "z": [
+          2,
+          6,
+          6,
+          6,
+          2
+        ]
+      },
+      "axes": {
+        "x": {
+          "intervals": 10,
+          "exact_double_width_count": 6,
+          "width_hex_histogram": {
+            "0x1.527d27d27d27cp-2": 3,
+            "0x1.527d27d27d280p-2": 1,
+            "0x1.b60b60b60b608p-2": 2,
+            "0x1.b60b60b60b60bp-2": 2,
+            "0x1.b60b60b60b60ep-2": 1,
+            "0x1.b60b60b60b610p-2": 1
+          }
+        },
+        "y": {
+          "intervals": 4,
+          "exact_double_width_count": 3,
+          "width_hex_histogram": {
+            "0x1.f1c71c71c71c6p-2": 1,
+            "0x1.f1c71c71c71c7p-2": 2,
+            "0x1.f1c71c71c71c8p-2": 1
+          }
+        },
+        "z": {
+          "intervals": 22,
+          "exact_double_width_count": 8,
+          "width_hex_histogram": {
+            "0x1.8e38e38e38e20p-2": 1,
+            "0x1.8e38e38e38e39p-2": 2,
+            "0x1.8e38e38e38e40p-2": 1,
+            "0x1.097b425ed0978p-1": 6,
+            "0x1.097b425ed097ap-1": 1,
+            "0x1.097b425ed097bp-1": 2,
+            "0x1.097b425ed097cp-1": 4,
+            "0x1.097b425ed0980p-1": 5
+          }
+        }
+      },
+      "material_tag_cells": {
+        "2": 80,
+        "1": 536,
+        "3": 264
+      },
+      "exact_raw_material_metric_classes": 156,
+      "raw_classes_by_material_tag": {
+        "2": 18,
+        "1": 108,
+        "3": 30
+      },
+      "raw_factor_reuse_cells_per_class": 5.641025641025641,
+      "orientation_classes": null,
+      "orientation_status": "UNKNOWN_NO_DOLFINX_TOPOLOGY",
+      "orientation_class_bounds": [
+        156,
+        880
+      ],
+      "raw_full_p6_tensor_payload_bytes_if_all_cached": 1941698304,
+      "p6_core_if_one_orientation_per_raw_class_bytes_NOT_measured": 1941698304,
+      "p6_core_if_every_cell_distinct_bytes": 10953169920,
+      "p6_LU_if_every_cell_distinct_bytes": 2851200000,
+      "p6_core_scope": "LU + two recovery/coupling blocks + Schur values only; exclude pivot, identity, metadata, ports, global factor, Krylov, scratch",
+      "axes_sha256": "18b346d6f1d1e4bfc36f74bbf93538f42d041b8a43d385ac3e2eac01878b055a",
+      "label": "E2",
+      "status": "DERIVED_COUNT_FROM_EXACT_DOCUMENTED_GEOMETRY_NOT_FEM_MEASUREMENT"
+    },
+    {
+      "q": "135/7",
+      "h_nm": 0.5185185185185185,
+      "box_nm": [
+        50.0,
+        25.0,
+        140.0
+      ],
+      "cell_count": 1369452,
+      "axis_counts": [
+        98,
+        51,
+        274
+      ],
+      "segment_counts": {
+        "x": [
+          32,
+          17,
+          17,
+          32
+        ],
+        "y": [
+          13,
+          25,
+          13
+        ],
+        "z": [
+          20,
+          78,
+          78,
+          78,
+          20
+        ]
+      },
+      "axes": {
+        "x": {
+          "intervals": 98,
+          "exact_double_width_count": 2,
+          "width_hex_histogram": {
+            "0x1.0000000000000p-1": 34,
+            "0x1.0800000000000p-1": 64
+          }
+        },
+        "y": {
+          "intervals": 51,
+          "exact_double_width_count": 8,
+          "width_hex_histogram": {
+            "0x1.ec4ec4ec4ec40p-2": 10,
+            "0x1.ec4ec4ec4ec48p-2": 1,
+            "0x1.ec4ec4ec4ec4cp-2": 1,
+            "0x1.ec4ec4ec4ec4ep-2": 1,
+            "0x1.ec4ec4ec4ec4fp-2": 2,
+            "0x1.ec4ec4ec4ec50p-2": 8,
+            "0x1.ec4ec4ec4ec80p-2": 3,
+            "0x1.0000000000000p-1": 25
+          }
+        },
+        "z": {
+          "intervals": 274,
+          "exact_double_width_count": 12,
+          "width_hex_histogram": {
+            "0x1.0000000000000p-1": 40,
+            "0x1.0690690690680p-1": 157,
+            "0x1.0690690690688p-1": 1,
+            "0x1.069069069068cp-1": 1,
+            "0x1.069069069068ep-1": 1,
+            "0x1.0690690690690p-1": 24,
+            "0x1.0690690690692p-1": 1,
+            "0x1.0690690690694p-1": 1,
+            "0x1.0690690690698p-1": 1,
+            "0x1.06906906906a0p-1": 17,
+            "0x1.06906906906c0p-1": 16,
+            "0x1.0690690690700p-1": 14
+          }
+        }
+      },
+      "material_tag_cells": {
+        "2": 99960,
+        "1": 896886,
+        "3": 372606
+      },
+      "exact_raw_material_metric_classes": 211,
+      "raw_classes_by_material_tag": {
+        "2": 16,
+        "1": 107,
+        "3": 88
+      },
+      "raw_factor_reuse_cells_per_class": 6490.293838862559,
+      "orientation_classes": null,
+      "orientation_status": "UNKNOWN_NO_DOLFINX_TOPOLOGY",
+      "orientation_class_bounds": [
+        211,
+        1369452
+      ],
+      "raw_full_p6_tensor_payload_bytes_if_all_cached": 2626271424,
+      "p6_core_if_one_orientation_per_raw_class_bytes_NOT_measured": 2626271424,
+      "p6_core_if_every_cell_distinct_bytes": 17045273242368,
+      "p6_LU_if_every_cell_distinct_bytes": 4437024480000,
+      "p6_core_scope": "LU + two recovery/coupling blocks + Schur values only; exclude pivot, identity, metadata, ports, global factor, Krylov, scratch",
+      "axes_sha256": "61b745523f64339f786878215414b9487c3f3558292816262a49125636fc139e",
+      "label": "hypothetical_parent_notch",
+      "status": "DERIVED_COUNT_FROM_EXACT_DOCUMENTED_GEOMETRY_NOT_FEM_MEASUREMENT"
+    }
+  ],
+  "raw_file_sha256": "e5e4a5f0dc343a60f92769b9693502200e0fd58dc22e4b9f5ed027b6112c233c",
+  "raw_omitted": "raw_key_histogram; reproduce script regenerates full inventory",
+  "script_original_sha256": "7a8a89a8d2fac6b8cdbd35c79194c9d411617dfd3126936b10b7e50662421a00",
+  "geometry_source_copy_sha256": "8b3c9e676b77f2c6b47afa9e00eb8f9c49f02202066ba111dca72a53ca4a98e0"
+}

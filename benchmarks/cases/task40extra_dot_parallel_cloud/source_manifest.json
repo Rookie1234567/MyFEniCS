@@ -1,0 +1,122 @@
+[
+  {
+    "path": "AGENTS.md",
+    "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+    "git_blob_sha": "652e0992fa27539cfbc3e6d7683763e397610da7",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/AGENTS.md"
+  },
+  {
+    "path": "docs/repository_work_principles.md",
+    "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+    "git_blob_sha": "2e40ee689f8df39cbd784b6e04996fb997e32437",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/repository_work_principles.md"
+  },
+  {
+    "path": "docs/README.md",
+    "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+    "git_blob_sha": "a570224251c99bc31ee5d0c94981ab183bec2a29",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/README.md"
+  },
+  {
+    "path": "docs/AGENTS.md",
+    "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+    "git_blob_sha": "b0706582d86df78c5a14870b0940fbd9c3f45bf3",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/AGENTS.md"
+  },
+  {
+    "path": "README.md",
+    "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+    "git_blob_sha": "9795508f4bba9a3913ad1e652b268f1caff3729a",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/README.md"
+  },
+  {
+    "path": "docs/task40extra_0p7nm_engineering/README.md",
+    "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+    "git_blob_sha": "33dcb908280a0c58ebaf0ebfdfb0eaca2612b20e",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task40extra_0p7nm_engineering/README.md"
+  },
+  {
+    "path": "docs/task40extra_0p7nm_engineering/task.md",
+    "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+    "git_blob_sha": "13f263cd3c2c6adddcaa81f2d8570d4dd12bc863",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task40extra_0p7nm_engineering/task.md"
+  },
+  {
+    "path": "docs/task40extra_0p7nm_engineering/review_report_v2.md",
+    "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+    "git_blob_sha": "14dae58ed20b43111d03dcefc8ec6c9d94256f9a",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task40extra_0p7nm_engineering/review_report_v2.md"
+  },
+  {
+    "path": "docs/task40extra_0p7nm_engineering/response_v2.md",
+    "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+    "git_blob_sha": "6d5971e9a2d3db0f9e2c000aeadccab2fdd504af",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task40extra_0p7nm_engineering/response_v2.md"
+  },
+  {
+    "path": "docs/task40extra_0p7nm_engineering/outcomes/summary.md",
+    "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+    "git_blob_sha": "babe9f19858d50e7a410acb8d0753931962f4499",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task40extra_0p7nm_engineering/outcomes/summary.md"
+  },
+  {
+    "path": "src/solvers/task39extra_p6_raw_tensor.py",
+    "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+    "git_blob_sha": "c0c67c4501a26f109ff1755c7628a6026a401e62",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/src/solvers/task39extra_p6_raw_tensor.py"
+  },
+  {
+    "path": "src/solvers/hcurl_assembly_time_condensation.py",
+    "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+    "git_blob_sha": "a0da1e798b29cbc11e6b032719b43951fe0aab8a",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/src/solvers/hcurl_assembly_time_condensation.py"
+  },
+  {
+    "path": "src/common/config_3d.py",
+    "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+    "git_blob_sha": "de49c098b9df015b7b07efbb3429a443a3b1d9b8",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/src/common/config_3d.py"
+  },
+  {
+    "path": "src/common/modes_3d.py",
+    "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+    "git_blob_sha": "ab2355dc742bcf628fcb7be6e88a35814fc035d6",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/src/common/modes_3d.py"
+  },
+  {
+    "path": "src/common/units.py",
+    "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+    "git_blob_sha": "67ba8604e50dc14f28da82016313f44b67cc496f",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/src/common/units.py"
+  },
+  {
+    "path": "docs/task40extra_0p7nm_engineering/outcomes/records/geometry_plan.json",
+    "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+    "git_blob_sha": "d6038609524c499989f0e23884f6022a05f8c380",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task40extra_0p7nm_engineering/outcomes/records/geometry_plan.json"
+  },
+  {
+    "path": "docs/task40extra_0p7nm_engineering/outcomes/records/material_identity.json",
+    "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+    "git_blob_sha": "2d4ee458308d96a3affdbba73423657c3f432677",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/docs/task40extra_0p7nm_engineering/outcomes/records/material_identity.json"
+  },
+  {
+    "path": "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4_review_v1.dat",
+    "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+    "git_blob_sha": "fe30dcbd56dec104702f7f307a24d0994b88d970",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4_review_v1.dat"
+  },
+  {
+    "path": "input/task40extra_0p7nm_engineering/nonseparable_g1_p6_q4_review_v1.dat",
+    "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+    "git_blob_sha": "56663a2aef2d755990c4e858f5c45ac10dce0b87",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/input/task40extra_0p7nm_engineering/nonseparable_g1_p6_q4_review_v1.dat"
+  },
+  {
+    "path": "src/test/test_task39extra_v29_p6_raw_tensor.py",
+    "commit": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+    "git_blob_sha": "263efb6e2049e8d106af9d0ab494406d84b60db5",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/c786e87d03976a52f57d1e7f69a3c63f992afe90/src/test/test_task39extra_v29_p6_raw_tensor.py"
+  }
+]

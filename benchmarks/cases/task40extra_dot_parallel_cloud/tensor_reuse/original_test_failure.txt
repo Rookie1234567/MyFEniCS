@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "/workspace/scratch/9c465670b46b/task40extra_cloud/experiments/tensor_reuse/run_experiment.py", line 32, in <module>
+    tt.test_p6_blocked_gram_uses_full_form_analysis_and_is_complex_finite(); original_test='PASS'
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/9c465670b46b/task40extra_cloud/source/src/test/test_task39extra_v29_p6_raw_tensor.py", line 38, in test_p6_blocked_gram_uses_full_form_analysis_and_is_complex_finite
+    builder = Task39ExtraP6RawTensorCandidate(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/9c465670b46b/task40extra_cloud/source/src/solvers/task39extra_p6_raw_tensor.py", line 308, in __init__
+    self.rules_by_tag_component, analysis_facts = _analyze_original_form(
+                                                  ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/9c465670b46b/task40extra_cloud/source/src/solvers/task39extra_p6_raw_tensor.py", line 173, in _analyze_original_form
+    cell_name = cell.cellname()
+                ^^^^^^^^^^^^^^^
+TypeError: 'str' object is not callable
