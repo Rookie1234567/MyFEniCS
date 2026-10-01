@@ -68,6 +68,49 @@ def test_fixed_range_ritz_inverse_and_spd_against_explicit_small_inverse():
         range_ritz(lambda v: -v, 9, rank=5)
 
 
+def test_complex_nonlinear_GN_is_Jacobian_curvature_not_full_Hessian():
+    theta = np.array([0.3, -0.2, 0.4])
+    A = np.array([[1 + 0.4j, 0.3 - 0.7j], [-0.5 + 0.1j, 2 - 0.2j]])
+    G = np.array([[2, 0.2 + 0.1j], [0.2 - 0.1j, 1.0]])
+
+    def c(t):
+        return np.array(
+            [np.sin(t[0]) + 1j * t[1] ** 2, t[0] * t[2] + 1j * np.exp(t[2])]
+        )
+
+    J = np.array(
+        [
+            [np.cos(theta[0]), 2j * theta[1], 0],
+            [theta[2], 0, theta[0] + 1j * np.exp(theta[2])],
+        ]
+    )
+    real_B = np.r_[(A @ J).real, (A @ J).imag]
+    complex_metric = np.linalg.inv(G)
+    real_metric = np.block(
+        [
+            [complex_metric.real, -complex_metric.imag],
+            [complex_metric.imag, complex_metric.real],
+        ]
+    )
+    explicit = real_B.T @ real_metric @ real_B
+
+    def action(v):
+        return (J.conj().T @ A.conj().T @ np.linalg.solve(G, A @ (J @ v))).real
+
+    for j in range(3):
+        np.testing.assert_allclose(
+            action(np.eye(3)[:, j]), explicit[:, j], rtol=1e-12, atol=1e-13
+        )
+        h = 1e-5
+        d = np.eye(3)[:, j]
+        np.testing.assert_allclose(
+            (c(theta + h * d) - c(theta - h * d)) / (2 * h),
+            J[:, j],
+            rtol=1e-9,
+            atol=1e-10,
+        )
+
+
 def test_nonlinear_actual_trial_exception_restores_committed_parameter_state():
     live = np.array([0.25])
     start = live.copy()
