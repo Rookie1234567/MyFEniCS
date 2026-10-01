@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "owner": "dot",
+  "repository": "Rookie1234567/MyFEniCS",
+  "execution_branch": "task40extra_dot_parallel_cloud",
+  "parent_branch": "task40extra_0p7nm_engineering",
+  "branch_base_sha": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+  "pinned_experiment_baseline_sha": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+  "parent_tip_verified_before_creation": true,
+  "branch_name_conflict_search": "task40extra; all returned pages inspected; only parent branch existed",
+  "created_on_utc": "2026-10-01",
+  "publication_method": "authorized GitHub connector; exact-SHA branch creation",
+  "canonical_local_worktree_status": "not_used_for_scaffold_publication; not_verified",
+  "scope": "bounded cloud CPU component diagnostics; separate from parent formal PDE campaign",
+  "prohibited_targets": [
+    "all other branches",
+    "user computers and workstations",
+    "other execution conversations"
+  ],
+  "formal_pde_qualification": "not_run",
+  "production_qualification": "not_granted",
+  "merge_authorization": false,
+  "cloud_source_materialization_note": "下载文件可能比原 Git blob 多一个末尾 LF；已报告20个检查文件移除该额外LF后与原blob一致。每项实验须逐文件记录实际bytes SHA256与Git blob身份，不声称未经验证的字节完全相同。"
+}
