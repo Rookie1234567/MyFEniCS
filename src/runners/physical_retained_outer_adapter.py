@@ -23,6 +23,52 @@ def _array_identity(value):
             "sha256": hashlib.sha256(memoryview(array).cast("B") if array.size else b"").hexdigest()}
 
 
+def _scale_x1_pc_count_probe(values, normalization_h_min=None, *, enabled=False):
+    """Optionally scale the disposable X1 setup-PC count probe by sqrt(H_min).
+
+    The X1 operator-recovery vectors and production RHS are not changed.  The
+    setup PC call checks call/solve counts, not a physical solution; its unit
+    port entries can be amplified by the smallest explicit modal denominator
+    H.  A single nonzero scalar preserves the mixed trace/port direction and
+    zero pattern while reducing that deterministic probe's 1/H amplification.
+    The default remains the historical unscaled probe.
+    """
+
+    source = np.ascontiguousarray(values, dtype=np.complex128)
+    if source.ndim != 1 or source.size == 0 or not np.isfinite(source).all():
+        raise ValueError("X1 PC count probe must be a finite nonempty vector")
+    h_min = None
+    if enabled:
+        h_min = float(normalization_h_min)
+        if not np.isfinite(h_min) or h_min <= 0.0:
+            raise ValueError("X1 PC count probe requires a positive finite H_min")
+        scale = min(1.0, float(np.sqrt(h_min)))
+        scale_definition = "min(1, sqrt(live_carrier.normalization_h_min))"
+    else:
+        scale = 1.0
+        scale_definition = "legacy_unscaled"
+    scaled = np.ascontiguousarray(source * scale, dtype=np.complex128)
+    if not np.isfinite(scaled).all():
+        raise ValueError("scaled X1 PC count probe is nonfinite")
+    if not np.array_equal(source != 0.0, scaled != 0.0):
+        raise ValueError("X1 PC probe scaling changed its nonzero support")
+    source_norm = float(np.linalg.norm(source))
+    scaled_norm = float(np.linalg.norm(scaled))
+    return scaled, {
+        "scope": "x1_pc_count_check_only",
+        "enabled": bool(enabled),
+        "scale_definition": scale_definition,
+        "normalization_h_min": h_min,
+        "scale_factor": scale,
+        "nonzero_support_preserved": True,
+        "unscaled_input_identity": _array_identity(source),
+        "scaled_input_identity": _array_identity(scaled),
+        "unscaled_l2_norm": source_norm,
+        "scaled_l2_norm": scaled_norm,
+        "homogeneous_norm_ratio": scaled_norm / source_norm,
+    }
+
+
 def _retained_outer_scratch_workspace_bytes(
     full_rows: int, retained_rows: int
 ) -> int:
@@ -312,6 +358,7 @@ class RetainedOuterAdapter:
         save_complete_field_packet=None,
         p4_count_policy="legacy_one_mat_solve_per_logical",
         first_direction_pair_context=None,
+        scale_x1_pc_count_probe=False,
     ):
         self.runtime, self.common, self.resolved = runtime, common, resolved
         self.full_rhs, self.bal_h = full_rhs, apply_pc
@@ -342,6 +389,7 @@ class RetainedOuterAdapter:
         )
         self.rhs_identity_policy = str(rhs_identity_policy)
         self.p4_count_policy = str(p4_count_policy)
+        self.scale_x1_pc_count_probe = bool(scale_x1_pc_count_probe)
         self.first_direction_pair_context = first_direction_pair_context
         if self.p4_count_policy not in {
             "legacy_one_mat_solve_per_logical",
@@ -690,6 +738,18 @@ class RetainedOuterAdapter:
                     raise ValueError(f"X1 native recovery identity failed for {support}")
             before = dict(self.count)
             pc_before = self.pc_counts()
+            unscaled_probe = np.asarray(inputs.array_r, dtype=np.complex128).copy()
+            normalization_h_min = None
+            if self.scale_x1_pc_count_probe:
+                normalization_h_min = self.common["fine"]["dtn_action"].carrier.audit[
+                    "normalization_h_min"
+                ]
+            scaled_probe, pc_probe_scale = _scale_x1_pc_count_probe(
+                unscaled_probe,
+                normalization_h_min,
+                enabled=self.scale_x1_pc_count_probe,
+            )
+            inputs.array[:] = scaled_probe
             output = self._pc(inputs)
             pc_after = self.pc_counts()
             pc_delta = {}
@@ -704,6 +764,7 @@ class RetainedOuterAdapter:
             self._packet("x1_pc_count_check", {
                 "before": pc_before, "after": pc_after, "delta": pc_delta,
                 "input": inputs.array_r.copy(), "output": output.array_r.copy(),
+                "input_scale_facts": pc_probe_scale,
                 "source_sha": self.runtime.source_sha,
                 "p4_count_policy": self.p4_count_policy,
             })
@@ -760,6 +821,7 @@ class RetainedOuterAdapter:
                            "space_count_gate": dynamic_space_gate,
                            "setup_pc_calls": 1,
                            "setup_pc_input": inputs.array_r.copy(), "setup_pc_output": output.array_r.copy(),
+                           "setup_pc_input_scale_facts": pc_probe_scale,
                            "counts_before_pc": before, "counts_after_pc": dict(self.count),
                            "setup_pc_counts": pc_delta, "setup_pc_cumulative": pc_after,
                            "p4_count_policy": self.p4_count_policy,
