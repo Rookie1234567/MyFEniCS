@@ -33,6 +33,41 @@ def test_explicit_tree_cap_reuses_current_rss_without_double_counting():
     ) == 7 * 1024**3
 
 
+def test_cli_forwards_physical_memory_and_profile_sampling_policies(
+    monkeypatch, tmp_path, capsys
+):
+    import benchmarks.subreaper_watchdog as watchdog
+
+    captured = {}
+
+    def fake_supervise(command, directory, **kwargs):
+        captured.update(command=command, directory=directory, **kwargs)
+        return {'classification': 'COMPLETED'}
+
+    monkeypatch.setattr(watchdog, 'supervise', fake_supervise)
+    monkeypatch.setattr(
+        sys,
+        'argv',
+        [
+            'subreaper_watchdog.py',
+            '--directory', str(tmp_path / 'run'),
+            '--wall-seconds', '43200',
+            '--timebase-guard',
+            '--time-policy', 'observe_only',
+            '--memory-policy', watchdog.PHYSICAL_MEMORY_PRESSURE_POLICY,
+            '--pss-sampling-policy', 'disabled_by_profile',
+            '--', sys.executable, '-c', 'pass',
+        ],
+    )
+
+    assert watchdog.main() == 0
+    assert captured['command'] == [sys.executable, '-c', 'pass']
+    assert captured['time_policy'] == 'observe_only'
+    assert captured['memory_policy'] == watchdog.PHYSICAL_MEMORY_PRESSURE_POLICY
+    assert captured['pss_sampling_policy'] == 'disabled_by_profile'
+    assert json.loads(capsys.readouterr().out)['classification'] == 'COMPLETED'
+
+
 @pytest.mark.parametrize('terminate', [False, True])
 def test_orphan_setsid_child_is_sampled_and_reaped(tmp_path, terminate):
     directory = tmp_path / 'run'

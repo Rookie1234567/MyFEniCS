@@ -679,12 +679,27 @@ def main() -> int:
     parser.add_argument('--grace-seconds', type=float, default=2)
     parser.add_argument('--cache-path', type=Path)
     parser.add_argument('--timebase-guard', action='store_true')
+    parser.add_argument(
+        '--time-policy', choices=(V14_TIME_POLICY_ENFORCE, 'observe_only'),
+        default=V14_TIME_POLICY_ENFORCE,
+    )
+    parser.add_argument(
+        '--memory-policy',
+        choices=(LEGACY_MEMORY_POLICY, PHYSICAL_MEMORY_PRESSURE_POLICY),
+        default=LEGACY_MEMORY_POLICY,
+    )
+    parser.add_argument(
+        '--pss-sampling-policy', choices=('sampled', 'disabled_by_profile'),
+        default='sampled',
+    )
     parser.add_argument('command', nargs=argparse.REMAINDER)
     args = parser.parse_args()
     command = args.command[1:] if args.command[:1] == ['--'] else args.command
     summary = supervise(command, args.directory, wall_seconds=args.wall_seconds,
                         interval=args.interval, grace_seconds=args.grace_seconds,
-                        cache_path=args.cache_path, timebase_guard=args.timebase_guard)
+                        cache_path=args.cache_path, timebase_guard=args.timebase_guard,
+                        time_policy=args.time_policy, memory_policy=args.memory_policy,
+                        pss_sampling_policy=args.pss_sampling_policy)
     print(json.dumps(summary, allow_nan=False), flush=True)
     return 0 if summary['classification'] == 'COMPLETED' else 2
 
