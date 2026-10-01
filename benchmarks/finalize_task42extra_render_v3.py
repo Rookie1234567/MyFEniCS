@@ -11,10 +11,10 @@ from benchmarks.check_task42extra_v2 import ROOT, sha, write
 def main():
     if len(sys.argv) not in (3, 4):
         raise SystemExit(
-            "usage: finalize_task42extra_render_v3.py <raw-directory> <published-SHA> [3|4|5|6|7|8]"
+            "usage: finalize_task42extra_render_v3.py <raw-directory> <published-SHA> [3|4|5|6|7|8|9]"
         )
     version = int(sys.argv[3]) if len(sys.argv) == 4 else 3
-    if version not in (3, 4, 5, 6, 7, 8):
+    if version not in (3, 4, 5, 6, 7, 8, 9):
         raise ValueError("unsupported evidence version")
     review_name = f"review_report_v{version - 1}.md"
     review_commit = {
@@ -24,6 +24,7 @@ def main():
         6: "3ab4a251c76208897729473add43f1e91c9d634a",
         7: "ecabef960cdf1ac194ef293ff83c65b14e8b7ba3",
         8: "cee68ef5e8219858e3a9b733ffe454334683836b",
+        9: "678a1ef5ed5aba9334f05569a6dec04c80e21be4",
     }[version]
     record_name = f"render_check_v{version}.json"
     raw = (ROOT / "tmp/task42extra/render" / sys.argv[1]).resolve()
@@ -50,7 +51,7 @@ def main():
         print(json.dumps(dict(status=out["status"], pages=0)))
         return
     captured = json.loads(source.read_text())
-    if version in (4, 5, 6, 7, 8):
+    if version in (4, 5, 6, 7, 8, 9):
         expected = json.loads((raw / "expected_urls.json").read_text())
         actual = [entry["url"] for entry in captured["records"]]
         if (

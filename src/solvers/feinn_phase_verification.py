@@ -44,7 +44,9 @@ def restore_network(design, entry, durable_entry, *, phase, supervised):
     return model, c, durable
 
 
-def reconstruct(design, qualification, routes, artifact, marker, manifest):
+def reconstruct(
+    design, qualification, routes, artifact, marker, manifest, *, common_routes=None
+):
     configure()
     mapping = CompleteMomentMap(load_moments(qualification["files"]["moments"]["path"]))
     higher = CompleteMomentMap(
@@ -97,6 +99,38 @@ def reconstruct(design, qualification, routes, artifact, marker, manifest):
             if identity["relative"] > 1e-12:
                 raise ValueError("ADAM500_PARAMETERS_DO_NOT_GENERATE_FULL_FE")
             fixed["c_Adam500"] = adam_c
+        common = None
+        if common_routes is not None:
+            from src.solvers.feinn_common_wall import common_wall_pair
+
+            common = common_wall_pair(index, common_routes[stage])
+            for key, field in (("new", "c_common_wall"), ("V8", "c_v8_common_wall")):
+                selected = common[key]
+                if selected["status"] == "NOT_RETAINED":
+                    continue
+                state = load_checkpoint(
+                    **dict(
+                        path=selected["checkpoint"]["path"],
+                        expected_sha256=selected["checkpoint"]["sha256"],
+                    )
+                )
+                if state["parameter_order"] != parameter_order(model):
+                    raise ValueError("COMMON_WALL_PARAMETER_ORDER_CHANGED")
+                for label, value in policy(supervised).items():
+                    if state["metadata"][label] != value:
+                        raise ValueError("COMMON_WALL_LABEL_IDENTITY_CHANGED")
+                for name, buffer in make_model(design, phase).named_buffers():
+                    if not torch.equal(state["model"][name], buffer):
+                        raise ValueError("COMMON_WALL_FIXED_BUFFER_CHANGED")
+                model.load_state_dict(state["model"], strict=True)
+                selected_c = mapping.forward(model)
+                selected["parameter_to_saved_c"] = paired(
+                    selected_c, state["complete_c"]
+                )
+                if selected["parameter_to_saved_c"]["relative"] > 1e-12:
+                    raise ValueError("COMMON_WALL_MODEL_COEFFICIENT_IDENTITY_FAILED")
+                selected["complete_c_sha256"] = array_hash(selected_c)
+                fixed[field] = selected_c
         path = Path(artifact) / (stage + "_reconstructed.npz")
         atomic_write(
             path,
@@ -119,7 +153,8 @@ def reconstruct(design, qualification, routes, artifact, marker, manifest):
             final_parameters_sha256=array_hash(
                 parameters(make_loaded_model(design, durable, phase))
             ),
-            Adam500_retained=bool(fixed),
+            Adam500_retained="c_Adam500" in fixed,
+            common_wall=common,
             **policy(supervised),
         )
         marker(
@@ -128,7 +163,7 @@ def reconstruct(design, qualification, routes, artifact, marker, manifest):
                 stage=stage,
                 saved_relative=reconstruction["relative"],
                 next_q_relative=quadrature["relative"],
-                Adam500_retained=bool(fixed),
+                Adam500_retained="c_Adam500" in fixed,
             ),
         )
     return dict(

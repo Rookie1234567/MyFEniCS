@@ -756,7 +756,24 @@ def dispatch(stage, design, artifact, marker, manifest, load_index):
     if stage.endswith("reconstruct"):
         from src.solvers.feinn_phase_verification import reconstruct
 
-        return reconstruct(design, qualification, routes, artifact, marker, manifest)
+        old_names = (
+            ("v8_plain_reference_fit", "v8_phase_reference_fit")
+            if supervised
+            else ("v8_plain_dual", "v8_phase_dual")
+        )
+        common = {
+            name: load_index(old)
+            for name, old in zip(route_names, old_names, strict=True)
+        }
+        return reconstruct(
+            design,
+            qualification,
+            routes,
+            artifact,
+            marker,
+            manifest,
+            common_routes=common,
+        )
     from src.solvers.feinn_phase_compare import compare
 
     return compare(

@@ -46,7 +46,14 @@ DEPENDENCIES = {
     ],
     "v9_plain_gn": ["e1_fe", "v8_phase_checks", "v9_gn_checks", "v8_plain_dual"],
     "v9_phase_gn": ["e1_fe", "v8_phase_checks", "v9_gn_checks", "v8_phase_dual"],
-    "v9_gn_reconstruct": ["e1_fe", "v8_phase_checks", "v9_plain_gn", "v9_phase_gn"],
+    "v9_gn_reconstruct": [
+        "e1_fe",
+        "v8_phase_checks",
+        "v9_plain_gn",
+        "v9_phase_gn",
+        "v8_plain_dual",
+        "v8_phase_dual",
+    ],
     "v9_gn_compare": [
         "e1_fe",
         "e3_reference",
@@ -76,6 +83,8 @@ DEPENDENCIES = {
         "v8_phase_checks",
         "v9_plain_fit_gn",
         "v9_phase_fit_gn",
+        "v8_plain_reference_fit",
+        "v8_phase_reference_fit",
     ],
     "v9_fit_gn_compare": [
         "e1_fe",
@@ -151,6 +160,26 @@ def dispatch(stage, design, artifact, marker, manifest, load_index):
             artifact,
             marker,
             manifest,
+        )
+    if stage in ("v9_gn_compare", "v9_fit_gn_compare"):
+        from src.solvers.feinn_phase_compare import compare
+
+        supervised = "fit_gn" in stage
+        names = (
+            ("v9_plain_fit_gn", "v9_phase_fit_gn")
+            if supervised
+            else ("v9_plain_gn", "v9_phase_gn")
+        )
+        return compare(
+            design,
+            load_index("e1_fe"),
+            load_index("e3_reference"),
+            {name: load_index(name) for name in names},
+            load_index("v9_fit_gn_reconstruct" if supervised else "v9_gn_reconstruct"),
+            artifact,
+            marker,
+            manifest,
+            supervised=supervised,
         )
     from src.solvers import feinn_gn_training as gn
 

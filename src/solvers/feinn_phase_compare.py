@@ -65,7 +65,7 @@ def compare(
     denominator = gram_energy(G, reference)
     if denominator <= 0:
         raise ValueError("POSITIVE_REFERENCE_GRAM_NORM_REQUIRED")
-    states, data, recon_rows = {}, {}, {}
+    states, data, recon_rows, shared_metadata = {}, {}, {}, {}
     for stage, index in routes.items():
         route = index["result"]["route"]
         with np.load(index["files"]["checkpoint"]["path"], allow_pickle=False) as item:
@@ -80,6 +80,18 @@ def compare(
             actual, next_c = np.array(item["c"]), np.array(item["c_next"])
             if "c_Adam500" in item.files:
                 states[route + "-ADAM500"] = np.array(item["c_Adam500"])
+                shared_metadata[route + "-ADAM500"] = dict(
+                    shared_work_point_closures=500
+                )
+            common = reconstructed["result"]["routes"][stage].get("common_wall")
+            if common is not None:
+                for key, field, suffix in (
+                    ("new", "c_common_wall", "-COMMON-WALL"),
+                    ("V8", "c_v8_common_wall", "-V8-COMMON-WALL"),
+                ):
+                    if field in item.files:
+                        states[route + suffix] = np.array(item[field])
+                        shared_metadata[route + suffix] = common[key]
         identity, quadrature = paired(actual, c), paired(next_c, actual)
         if identity["relative"] > 1e-12:
             raise ValueError("INDEPENDENT_RECONSTRUCTION_IDENTITY_FAILED")
@@ -141,11 +153,23 @@ def compare(
                 raise ValueError("GRAM_PHYSICAL_L2_CURL_IDENTITY_FAILED")
             eg = float(np.sqrt(energy / denominator))
             if route not in data:
+                shared_policy = dict(
+                    reference_used_for_training=supervised,
+                    features_reference_exposed=supervised,
+                    pde_only_solve=not supervised,
+                    benchmark_previously_seen=True,
+                    production_initialization_allowed=False,
+                    pde_only_solver_qualified=False,
+                    official_candidate_results=False,
+                )
+                comp.update(shared_policy, qualified=False)
+                physics["records"][route].update(shared_policy)
                 rows[route] = dict(
-                    shared_work_point_closures=500,
+                    shared_work_point=shared_metadata[route],
                     G_field_error=eg,
                     norm_identity=norm_pair,
                     comparisons=comp,
+                    **shared_policy,
                 )
                 continue
             reconstruction = recon_rows[route]

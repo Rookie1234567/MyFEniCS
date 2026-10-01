@@ -552,9 +552,269 @@
       },
       "pytest": "8 passed in 3.53s",
       "scope": "nonfinite rejection/rollback, damping trial telemetry, FIT-GN durable runner; JVP/K math unchanged"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v9_e_final_checks_20261001T044524311059Z/summary.json",
+      "sha256": "bedd1602044441c451f5eed37f261613f0f51d53266403e2e44608eb0a3582b0",
+      "result": {
+        "workflow_deadline_seconds": 900.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          1011412,
+          1011466
+        ],
+        "sampled_process_tree_rss_peak_bytes": 158941184,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 1657822,
+            "pswpout_pages": 2364290
+          },
+          "end": {
+            "pswpin_pages": 1657822,
+            "pswpout_pages": 2364290
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 994951020544,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 994951020544,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 5,
+        "elapsed_seconds": 2.5789235619595274,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": "development_worktree; not formal PDE provenance"
+      },
+      "worker_log": "All checks passed!\n.....                                                                    [100%]\n5 passed in 0.49s\n"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v9_e_lint_20261001T044448050021Z/summary.json",
+      "sha256": "a4ee924cd7bfd9c1cace9af3b578ff71c6f460314bdabde41be955ab8b6e2ee3",
+      "result": {
+        "workflow_deadline_seconds": 900.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "WORKER_FAILED",
+        "leader_exit_code": 1,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          1011191
+        ],
+        "sampled_process_tree_rss_peak_bytes": 42983424,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 1657822,
+            "pswpout_pages": 2364290
+          },
+          "end": {
+            "pswpin_pages": 1657822,
+            "pswpout_pages": 2364290
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 994974683136,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 994974683136,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 4,
+        "elapsed_seconds": 1.9429350749123842,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": "development_worktree; not formal PDE provenance"
+      },
+      "worker_log": "12 files reformatted, 1 file left unchanged\nF401 [*] `benchmarks.check_task42extra_v2.RECORDS` imported but unused\n  --> benchmarks/check_task42extra_v9.py:14:5\n   |\n12 | from benchmarks.check_task42extra_v2 import (\n13 |     ROOT,\n14 |     RECORDS,\n   |     ^^^^^^^\n15 |     RESULTS,\n16 |     CHECKS,\n   |\nhelp: Remove unused import: `benchmarks.check_task42extra_v2.RECORDS`\n\nF841 Local variable `audit` is assigned to but never used\n   --> benchmarks/check_task42extra_v9.py:379:5\n    |\n377 |     checks = gn_qualification(load(\"v9_gn_checks\")[\"result\"])\n378 |     a = load(\"v9_p5_reference\")[\"result\"]\n379 |     audit = a[\"physics\"][\"records\"][\"REFERENCE\"][\"audit\"]\n    |     ^^^^^\n380 |     from src.solvers.feinn_native import load_native\n    |\nhelp: Remove assignment to unused variable `audit`\n\nFound 2 errors.\n[*] 1 fixable with the `--fix` option (1 hidden fix can be enabled with the `--unsafe-fixes` option).\n"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v9_e_ml_transaction_20261001T044546918126Z/summary.json",
+      "sha256": "fc37f8cb01976acf270b7059de8b3f84801d21112bf3cb2994fe0ba84b9cde36",
+      "result": {
+        "workflow_deadline_seconds": 900.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          1011677
+        ],
+        "sampled_process_tree_rss_peak_bytes": 375545856,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 1657839,
+            "pswpout_pages": 2364290
+          },
+          "end": {
+            "pswpin_pages": 1657839,
+            "pswpout_pages": 2364290
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 994783535104,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 994783535104,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 11,
+        "elapsed_seconds": 6.593929189024493,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": "development_worktree; not formal PDE provenance"
+      },
+      "worker_log": ".                                                                        [100%]\n1 passed in 3.62s\n"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v9_e_targeted_20261001T044342178101Z/summary.json",
+      "sha256": "db0e5972abe623da51d90086901025e68fb4b697dd71b25f6f2b5959794b73b3",
+      "result": {
+        "workflow_deadline_seconds": 900.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          1010895,
+          1010946
+        ],
+        "sampled_process_tree_rss_peak_bytes": 157470720,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 1657822,
+            "pswpout_pages": 2364290
+          },
+          "end": {
+            "pswpin_pages": 1657822,
+            "pswpout_pages": 2364290
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 988527882240,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 988527882240,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 5,
+        "elapsed_seconds": 2.643855532980524,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": "development_worktree; not formal PDE provenance"
+      },
+      "worker_log": ".....                                                                    [100%]\n5 passed in 0.59s\n"
     }
   ],
   "tests": "20 targeted tests passed; native FE complex128/int64 MPI1 ABI passed",
   "full_pytest_run": false,
-  "GN_synthetic_tests": "12 passed, includes nonlinear explicit complex GN curvature and full persisted FIT-GN runner"
+  "GN_synthetic_tests": "12 passed, includes nonlinear explicit complex GN curvature and full persisted FIT-GN runner",
+  "E_training_core_AST_unchanged_from_plain_source": {
+    "source": "bc4ecb2192e687273926e1d1f0ce5e7df4b78542",
+    "nodes": [
+      "GNStop",
+      "prefix_entry",
+      "load_boundary",
+      "GNProblem",
+      "qualify",
+      "run"
+    ],
+    "unchanged": true,
+    "dispatch_only_change": true
+  },
+  "E_final_targeted_scope": "5 FE/metadata/PC checker tests; 1 ML persisted runner fixture; Ruff/compileall passed; failed lint cost retained"
 }

@@ -32,6 +32,42 @@
       "retry": 1,
       "p5_numeric_attempts": 0,
       "cost_retained": true
+    },
+    {
+      "root_cause": "new checker unused names",
+      "failure": "Ruff F401 RECORDS and F841 audit",
+      "failure_path": "tmp/task42extra/checks/v9_e_lint_20261001T044448050021Z",
+      "hypothesis": "unused scaffolding names",
+      "change": "remove two names only",
+      "test": "Ruff/compileall and five E tests passed",
+      "retry": 1,
+      "cost_retained": true,
+      "outcome": "RESOLVED"
+    }
+  ],
+  "preventive_changes": [
+    {
+      "change": "FE compare dispatcher selected before importing GN/Torch",
+      "evidence": "import-denial subprocess tests both V9 FE stages passed",
+      "actual_numeric_failure": false
+    },
+    {
+      "change": "nonfinite trial telemetry remains JSON finite and rejected",
+      "evidence": "previous targeted GN transaction test passed",
+      "actual_numeric_failure": false
+    },
+    {
+      "change": "retained equal-wall independent reconstruction and label separation",
+      "evidence": "metadata fixture plus live core AST equality",
+      "actual_numeric_failure": false
+    }
+  ],
+  "metadata_inspections": [
+    {
+      "failure": "heterogeneous targeted-test rows do not all use path key",
+      "change": "read path or original summary_path",
+      "numerical_replay": false,
+      "resolved": true
     }
   ]
 }

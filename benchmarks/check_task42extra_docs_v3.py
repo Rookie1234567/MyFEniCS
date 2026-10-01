@@ -21,7 +21,22 @@ PAGES = [
 
 def main():
     version = int(sys.argv[1]) if len(sys.argv) > 1 else 3
-    if version == 8:
+    if version == 9:
+        pages = [
+            (TASK / "review_report_v8.md", None),
+            (TASK / "response_v9.md", None),
+            (TASK / "outcomes/p_ladder_v9.md", None),
+            (TASK / "outcomes/damped_gn_v9.md", None),
+            (TASK / "outcomes/summary.md", "Task42extra Review V8 后续：V9"),
+            (TASK / "outcomes/test_summary.md", "Review V8 后续 V9 定向资格"),
+            (TASK / "outcomes/changed_files.md", "Review V8 后续 V9 文件级边界"),
+            (ROOT / "docs/development_progress.md", "2026-10-01 Task42extra V9"),
+            (
+                ROOT / "docs/development_model_registry.md",
+                "3.44.8 Task42extra Review V8 后续",
+            ),
+        ]
+    elif version == 8:
         pages = [
             (TASK / "review_report_v7.md", None),
             (TASK / "response_v8.md", None),

@@ -769,7 +769,7 @@ def power_inventory(records, modes):
         )
 
 
-def write_comparison(name, result, gates, modes):
+def write_comparison(name, result, gates, modes, *, version=8):
     physics = result["physics"]
     ref = physics["records"]["REFERENCE"]
     columns = [
@@ -800,7 +800,7 @@ def write_comparison(name, result, gates, modes):
         "max_channel_power_absolute",
         "pde_only_solver_qualified",
     ]
-    with (RECORDS / (name + "_v8.csv")).open("w", newline="") as stream:
+    with (RECORDS / (name + f"_v{version}.csv")).open("w", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=columns)
         writer.writeheader()
         for route, gate in gates.items():
@@ -847,7 +847,9 @@ def write_comparison(name, result, gates, modes):
                 max_channel_power_absolute=gate["max_channel_power_absolute"],
             )
             writer.writerow(row)
-    with (RECORDS / (name + "_channels_v8.csv")).open("w", newline="") as stream:
+    with (RECORDS / (name + f"_channels_v{version}.csv")).open(
+        "w", newline=""
+    ) as stream:
         fields = [
             "route",
             "kind",
