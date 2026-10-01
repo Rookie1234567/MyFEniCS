@@ -95,9 +95,9 @@
       "classification": "bounded diagnostic; not formal qualification"
     }
   ],
-  "observed_utc": "2026-10-01T06:45:56.967741Z",
+  "observed_utc": "2026-10-01T06:58:07Z",
   "progress": {
-    "phase": "modal_schur_build_begin",
+    "phase": "modal_action_top_started",
     "formal_responses_completed": "not_yet_emitted",
     "expected_formal_responses": 1920,
     "outer_fgmres_iterations": "not_yet_emitted",
@@ -122,7 +122,7 @@
     "two_nm": "not_started"
   },
   "record_type": "task041_review_v8_formal_progress",
-  "record_written_utc": "2026-10-01T06:45:56.967741Z",
+  "record_written_utc": "2026-10-01T06:58:07Z",
   "repository": {
     "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
     "runtime_source_sha": "d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f",
@@ -241,7 +241,7 @@
   },
   "schema": "task041.v8.formal_progress.v1",
   "status": "formal_5nm_a6_consumer_running",
-  "next_progress_update_due_utc": "2026-10-01T07:02:50Z",
+  "next_progress_update_due_utc": "2026-10-01T07:58:07Z",
   "performance": {
     "worker_wall_seconds": 189308.766050059,
     "worker_wall_hours": 52.585768347239,
@@ -939,15 +939,16 @@
     "invocation_id": "b00e1993f6a2429185553092fa3ba7e2",
     "latest_supervision_sample": {
       "phase": "public_command",
-      "elapsed_seconds": 3245.206136880908,
-      "authority_bytes": 43292340224,
-      "process_tree_rss_bytes": 43292340224,
-      "cgroup_memory_current_bytes": 40909225984,
+      "elapsed_seconds": 4007.455512268003,
+      "authority_bytes": 43292356608,
+      "process_tree_rss_bytes": 43292356608,
+      "cgroup_memory_current_bytes": 40926740480,
       "job_swap_bytes": 0,
       "global_swap_used_bytes_delta": 0,
       "global_pswpin_pages_delta": 67,
       "global_pswpout_pages_delta": 0,
-      "worker_process_group_gone": false
+      "worker_process_group_gone": false,
+      "retrieved_utc": "2026-10-01T06:58:07Z"
     },
     "launch_gate_snapshot": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/launch_gate_snapshot.json",
     "main_pid": 1026209,
@@ -958,13 +959,13 @@
     "mpi8_abi_record": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/mpi8_abi_prelaunch_attempt.json",
     "mpi_launcher_pid": 1026232,
     "numa_policy": "fresh MPI8 ABI passed bind node0; each worker /proc/numa_maps showed bind:0",
-    "numerical_setup_marker": "both side factor_ready observed; modal_schur_build_begin emitted; formal response outputs not yet emitted",
+    "numerical_setup_marker": "modal actions: bottom 8/8 completed; top 0/8 began; formal responses not yet emitted",
     "packet_manifest_sha256": "306939dda3b70777204c11fbd65beac2db5dc0637bc9b6803f7794d0d7cbad2f",
     "performance_isolation": "not_isolated; neighbor processes untouched",
     "preparation_path": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z",
     "producer_source_sha": "b01a5932e4dfaf895e81e0424e0dd88c276fb0d3",
     "public_pid": 1026214,
-    "public_runroot": "results/task041_5nm_balh_hybrid_iterative_p6h4_mpi8_cell_condensed/task041_5nm_p6h4_m480_mpi8_cell_condensed__hybrid_iterative__mpi8__M480/20261001T055115.915457Z",
+    "public_runroot": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8_cell_condensed/task041_5nm_p6h4_m480_mpi8_cell_condensed__hybrid_iterative__mpi8__M480/20261001T055115.915457Z",
     "rank_cpu_binding": {
       "0": 1,
       "1": 2,
@@ -991,10 +992,10 @@
     "resource_policy": "task041_v8_swap_observe_continue",
     "runtime_source_sha": "5bfb813870182fda172f658c8f276f58318844a5",
     "sequence": "A6 formal 5nm follow-up",
-    "stage_marker": "modal_schur_build_begin",
+    "stage_marker": "modal_action_top",
     "start_utc": "2026-10-01T05:51:15.915457Z",
     "startup_identity_record": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/startup_identity.json",
-    "status": "running_modal_schur_setup",
+    "status": "running_modal_actions",
     "target_tolerance": 5e-13,
     "threads_per_rank": 1,
     "time_stop_enforced": false,
@@ -1002,11 +1003,11 @@
     "time_target_seconds": 86400,
     "unit": "task041-v8-5nm-cellcond-a6-formal-20261001T053737Z.service",
     "warning_memory_bytes": 47899046707,
-    "worker_root": "results/task041_5nm_balh_hybrid_iterative_p6h4_mpi8_cell_condensed/task041_5nm_p6h4_m480_mpi8_cell_condensed__hybrid_iterative__mpi8__M480/20261001T055115.915457Z/consumer",
+    "worker_root": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8_cell_condensed/task041_5nm_p6h4_m480_mpi8_cell_condensed__hybrid_iterative__mpi8__M480/20261001T055115.915457Z/consumer",
     "startup_identity_sha256": "24464cc880a0db83b9b1bca66c925e3821609c7662c296a4452165c4268f4b85",
     "system_setup_marker_wall_seconds": 763.1582147229929,
     "latest_rank_evidence": {
-      "path": "results/task041_5nm_balh_hybrid_iterative_p6h4_mpi8_cell_condensed/task041_5nm_p6h4_m480_mpi8_cell_condensed__hybrid_iterative__mpi8__M480/20261001T055115.915457Z/consumer/rank_pid_affinity.json",
+      "path": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8_cell_condensed/task041_5nm_p6h4_m480_mpi8_cell_condensed__hybrid_iterative__mpi8__M480/20261001T055115.915457Z/consumer/rank_pid_affinity.json",
       "status": "measured",
       "record_count": 8,
       "source_sha": "5bfb813870182fda172f658c8f276f58318844a5",
@@ -1033,7 +1034,7 @@
     },
     "target_max_corrections_contract": 2,
     "runtime_backend_audit": {
-      "source_path": "results/task041_5nm_balh_hybrid_iterative_p6h4_mpi8_cell_condensed/task041_5nm_p6h4_m480_mpi8_cell_condensed__hybrid_iterative__mpi8__M480/20261001T055115.915457Z/consumer/markers.jsonl (mutable JSONL; line references only)",
+      "source_path": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8_cell_condensed/task041_5nm_p6h4_m480_mpi8_cell_condensed__hybrid_iterative__mpi8__M480/20261001T055115.915457Z/consumer/markers.jsonl (mutable JSONL; line references only)",
       "source_sha": "5bfb813870182fda172f658c8f276f58318844a5",
       "bottom": {
         "line": 37,
@@ -1060,6 +1061,6 @@
         "physical_action_source": "build_side_balanced_inverse"
       }
     },
-    "stage_marker_wall_seconds": 3208.755014044
+    "stage_marker_wall_seconds": 3862.261095635011
   }
 }
