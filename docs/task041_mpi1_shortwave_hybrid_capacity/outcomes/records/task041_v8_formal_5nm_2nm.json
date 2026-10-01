@@ -95,34 +95,19 @@
       "classification": "bounded diagnostic; not formal qualification"
     }
   ],
-  "observed_utc": "2026-10-01T04:50:15Z",
+  "observed_utc": "2026-10-01T06:02:50.954349Z",
   "progress": {
-    "phase": "terminal",
-    "formal_responses_completed": 1920,
+    "phase": "formal_5nm_a6_consumer_running",
+    "formal_responses_completed": "not_yet_emitted",
     "expected_formal_responses": 1920,
-    "outer_fgmres_iterations": 5,
-    "outer_fgmres_converged_reason": 2,
-    "five_true_residuals": {
-      "global": 4.778176984237293e-11,
-      "top": 4.426765008148852e-11,
-      "bottom": 6.221702926229589e-11,
-      "modal": 6.670844795489501e-13,
-      "reported": 4.7779406982531886e-11,
-      "limit": 5e-09,
-      "all_pass": true
-    },
-    "official_R_T_A_A_volume": {
-      "R": 0.7331842733877258,
-      "T": 0.00022009869572838214,
-      "A": 0.2665956279165458,
-      "A_volume": 0.2665962726230213,
-      "closure_abs": 6.447064755388254e-07,
-      "pass": true
-    },
+    "outer_fgmres_iterations": "not_yet_emitted",
+    "outer_fgmres_converged_reason": "not_yet_emitted",
+    "five_true_residuals": "not_yet_emitted",
+    "official_R_T_A_A_volume": "not_yet_emitted",
     "recovery_and_physics_gates_pass": true,
-    "rta_eh_diffraction_completed": true,
+    "rta_eh_diffraction_completed": false,
     "time_target_seconds": 86400,
-    "time_target_met": false,
+    "time_target_met": null,
     "time_stop_enforced": false,
     "two_nm": "not_started"
   },
@@ -137,7 +122,7 @@
     "two_nm": "not_started"
   },
   "record_type": "task041_review_v8_formal_progress",
-  "record_written_utc": "2026-10-01T04:50:15Z",
+  "record_written_utc": "2026-10-01T06:02:50.954349Z",
   "repository": {
     "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
     "runtime_source_sha": "d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f",
@@ -255,8 +240,8 @@
     "finalizer_result_classification": "service_boundary_failure"
   },
   "schema": "task041.v8.formal_progress.v1",
-  "status": "numerical_consumer_pass_public_identity_exit3_time_target_missed",
-  "next_progress_update_due_utc": "2026-09-30T13:52:36Z",
+  "status": "formal_5nm_a6_consumer_running",
+  "next_progress_update_due_utc": "2026-10-01T07:02:50Z",
   "performance": {
     "worker_wall_seconds": 189308.766050059,
     "worker_wall_hours": 52.585768347239,
@@ -919,5 +904,104 @@
         "charge_note": "workflow parent wall once; no rank, response, component or phase interval added"
       }
     }
+  },
+  "previous_status_before_20261001_a6_attempt": "numerical_consumer_pass_public_identity_exit3_time_target_missed",
+  "active_formal_attempt": {
+    "actual_backend": "not_yet_emitted; awaiting worker factor audit",
+    "actual_physical_action_backend": "not_yet_emitted; awaiting worker action audit",
+    "completed_formal_responses": "not_yet_emitted",
+    "config_path": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/task041_v8_5nm_a6_formal_service_config.json",
+    "config_sha256": "319c8b77528f4b132f9a7ed956bd5a158f10f4df647d37cfa58cfd1f90356be5",
+    "control_group": "/user.slice/user-1000.slice/user@1000.service/app.slice/task041-v8-5nm-cellcond-a6-formal-20261001T053737Z.service",
+    "dat": "input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat",
+    "dat_sha256": "a788489e9d3d582d2abbdf21b3edd535a35c9649c6d5cf7dd53952f30594c5dc",
+    "evidence_paths": {
+      "abi": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/mpi8_abi_prelaunch_attempt.json",
+      "launch_result": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/systemd_run_result.json",
+      "prelaunch_snapshot": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/launch_gate_snapshot.json",
+      "preparation_index": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/preparation_index.json",
+      "startup_identity": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/startup_identity.json",
+      "supervision_root": "results/task041_v8_5nm_cellcond_a6_formal_run_20261001T053737Z/memory_stages.jsonl (mutable; retain path and sampled rows only)"
+    },
+    "expected_formal_responses": 1920,
+    "first_supervision_sample": {
+      "authority_bytes": 56639488,
+      "cgroup_memory_current_bytes": 30187520,
+      "elapsed_seconds": 0.0008507029851898551,
+      "global_pswpin_pages_delta": 0,
+      "global_pswpout_pages_delta": 0,
+      "global_swap_used_bytes_delta": 0,
+      "job_swap_bytes": 0,
+      "phase": "public_command",
+      "process_tree_rss_bytes": 56639488
+    },
+    "hard_memory_cap_bytes": 53221163008,
+    "invocation_id": "b00e1993f6a2429185553092fa3ba7e2",
+    "latest_supervision_sample": {
+      "authority_bytes": 22788952064,
+      "cgroup_memory_current_bytes": 21008445440,
+      "elapsed_seconds": 484.99453298794106,
+      "global_pswpin_pages_delta": 49,
+      "global_pswpout_pages_delta": 0,
+      "global_swap_used_bytes_delta": 0,
+      "job_swap_bytes": 0,
+      "phase": "public_command",
+      "process_tree_rss_bytes": 22788952064
+    },
+    "launch_gate_snapshot": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/launch_gate_snapshot.json",
+    "main_pid": 1026209,
+    "main_pid_start_ticks": 75886958,
+    "max_target_corrections": 2,
+    "model_id": "task041_5nm_balh_hybrid_iterative_p6h4_mpi8_cell_condensed",
+    "mpi": 8,
+    "mpi8_abi_record": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/mpi8_abi_prelaunch_attempt.json",
+    "mpi_launcher_pid": 1026232,
+    "numa_policy": "fresh MPI8 ABI passed bind node0; each worker /proc/numa_maps showed bind:0",
+    "numerical_setup_marker": "not_yet_emitted",
+    "packet_manifest_sha256": "306939dda3b70777204c11fbd65beac2db5dc0637bc9b6803f7794d0d7cbad2f",
+    "performance_isolation": "not_isolated; neighbor processes untouched",
+    "preparation_path": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z",
+    "producer_source_sha": "b01a5932e4dfaf895e81e0424e0dd88c276fb0d3",
+    "public_pid": 1026214,
+    "public_runroot": "results/task041_5nm_balh_hybrid_iterative_p6h4_mpi8_cell_condensed/task041_5nm_p6h4_m480_mpi8_cell_condensed__hybrid_iterative__mpi8__M480/20261001T055115.915457Z",
+    "rank_cpu_binding": {
+      "0": 1,
+      "1": 2,
+      "2": 3,
+      "3": 4,
+      "4": 5,
+      "5": 6,
+      "6": 7,
+      "7": 8
+    },
+    "rank_pids": [
+      1026235,
+      1026236,
+      1026237,
+      1026238,
+      1026239,
+      1026240,
+      1026241,
+      1026242
+    ],
+    "requested_backend": "cell_condensed",
+    "requested_physical_action_backend": "task041_opt_in_sum_factorized_physical_volume",
+    "reserve_bytes": 412316860416,
+    "resource_policy": "task041_v8_swap_observe_continue",
+    "runtime_source_sha": "5bfb813870182fda172f658c8f276f58318844a5",
+    "sequence": "A6 formal 5nm follow-up",
+    "stage_marker": "public_command_started; candidate-consumer ranks live",
+    "start_utc": "2026-10-01T05:51:15.915457Z",
+    "startup_identity_record": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/startup_identity.json",
+    "status": "running",
+    "target_tolerance": 5e-13,
+    "threads_per_rank": 1,
+    "time_stop_enforced": false,
+    "time_target_met": null,
+    "time_target_seconds": 86400,
+    "unit": "task041-v8-5nm-cellcond-a6-formal-20261001T053737Z.service",
+    "warning_memory_bytes": 47899046707,
+    "worker_root": "results/task041_5nm_balh_hybrid_iterative_p6h4_mpi8_cell_condensed/task041_5nm_p6h4_m480_mpi8_cell_condensed__hybrid_iterative__mpi8__M480/20261001T055115.915457Z/consumer",
+    "startup_identity_sha256": "24464cc880a0db83b9b1bca66c925e3821609c7662c296a4452165c4268f4b85"
   }
 }
