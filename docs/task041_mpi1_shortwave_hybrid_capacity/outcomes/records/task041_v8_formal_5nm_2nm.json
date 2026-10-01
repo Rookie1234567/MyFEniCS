@@ -89,7 +89,7 @@
       "sha256": "d3eabe7076bb93a9147d214f2474dc1651a07c9a9858ae20698d19ec439ce605"
     }
   ],
-  "observed_utc": "2026-09-30T14:21:04Z",
+  "observed_utc": "2026-10-01T01:25:39Z",
   "progress": {
     "phase": "terminal",
     "formal_responses_completed": 1920,
@@ -131,7 +131,7 @@
     "two_nm": "not_started"
   },
   "record_type": "task041_review_v8_formal_progress",
-  "record_written_utc": "2026-09-30T14:21:04Z",
+  "record_written_utc": "2026-10-01T01:25:39Z",
   "repository": {
     "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
     "runtime_source_sha": "d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f",
@@ -315,5 +315,173 @@
     "public_result_classification": "task041_public_command_nonzero",
     "public_failure_stage": "git_identity",
     "finalizer_result_classification": "service_boundary_failure"
+  },
+  "a6_paired_action_observation": {
+    "observed_utc": "2026-10-01T01:25:39Z",
+    "classification": "bounded_action_equivalence_and_timing_observation",
+    "formal_qualification": "not_applicable",
+    "input": "deterministic synthetic algebraic p6 vector, global size 425472; not a solved RHS",
+    "identity": {
+      "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
+      "runtime_source_sha": "92d70a603856bd866ba469444512dd79acb23ef0",
+      "driver_sha256": "d3a821ebfc0d2db38c28eaf5b30bc58625de41b5afc2fe3c6a8b5f544c96c785",
+      "config_sha256": "8a43c699f4c9e05ccc19c3cbce59f5a4fbeb84253fd3f66d13ce59fbe506bddd",
+      "input_sha256": "a788489e9d3d582d2abbdf21b3edd535a35c9649c6d5cf7dd53952f30594c5dc",
+      "packet_manifest_sha256": "306939dda3b70777204c11fbd65beac2db5dc0637bc9b6803f7794d0d7cbad2f",
+      "packet_producer_source_sha": "b01a5932e4dfaf895e81e0424e0dd88c276fb0d3",
+      "unit": "task041-v8-a6-paired-action-r1-20261001T005620Z.service",
+      "invocation_id": "4d5edf5a63024cac8ae486571663fccd",
+      "main_pid": 973505,
+      "mpi_launcher_pid": 973529,
+      "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/task041-v8-a6-paired-action-r1-20261001T005620Z.service",
+      "run_root": "/home/fenics/Projects/MyFEniCS/results/task041_review_v8_a6_paired_action/run_20261001T005620Z_r1",
+      "rank_binding_summary": "MPI rank 0..7 -> CPU 1..8; all ranks membind node0; complex128/int32"
+    },
+    "initial_numa_failure": {
+      "unit": "task041-v8-a6-paired-action-20261001T002826Z.service",
+      "invocation_id": "cb87afb101a4407196003919cf2ed308",
+      "config_sha256": "39645cd26ef28bc6d58311baa5693aadfd018d7587da17d2eeaa42194c7e82aa",
+      "run_root": "/home/fenics/Projects/MyFEniCS/results/task041_review_v8_a6_paired_action/run_20261001T002826Z",
+      "returncode": 1,
+      "supervised_phase_wall_seconds": 2.39253768697381,
+      "classification": "launch configuration NUMA placement failure before FE/action work; worker reported membind_fields [[\"membind:\",\"0\",\"1\"]]; not a numerical result",
+      "numerical_action_started": false
+    },
+    "r1": {
+      "returncode": 0,
+      "supervised_phase_wall_seconds": 325.6776714519365,
+      "wall_scope": "phase interval; no reliable transient-unit wall was available",
+      "termination": null,
+      "time_stop_enforced": false,
+      "action_calls": {
+        "total": 56,
+        "timed_abba": 48,
+        "warmups_separate": 8,
+        "abba_order": [
+          "original",
+          "fused",
+          "fused",
+          "original"
+        ],
+        "calls_per_block": 3
+      },
+      "sides": [
+        {
+          "side": "bottom",
+          "setup_seconds_max_rank": {
+            "fused_action_setup_seconds_max_rank": 4.74879084690474,
+            "original_action_setup_seconds_max_rank": 5.59800279699266,
+            "side_system_setup_seconds_max_rank": 117.64299671293702
+          },
+          "kernel_payload_rank_local_not_rss": {
+            "batch_size": 2,
+            "batch_workspace_bytes": 412064,
+            "cell_metadata_bytes": 288476,
+            "owned_cells": 78,
+            "reference_bytes": 7470800
+          },
+          "volume_only": {
+            "kind": "volume_only",
+            "original_seconds_per_call_max_rank": 0.9903582074912265,
+            "fused_seconds_per_call_max_rank": 0.39630757316869375,
+            "reduction_percent": 59.98341103542533,
+            "max_relative_difference": 2.0017053185367593e-15,
+            "gate": 1e-10,
+            "pass": true,
+            "input_unchanged": true
+          },
+          "full_with_one_original_dtn": {
+            "kind": "full_with_one_original_dtn",
+            "original_seconds_per_call_max_rank": 1.0007710801631522,
+            "fused_seconds_per_call_max_rank": 0.41772024682722986,
+            "reduction_percent": 58.2601600798526,
+            "max_relative_difference": 2.001705263199004e-15,
+            "gate": 1e-10,
+            "pass": true,
+            "input_unchanged": true
+          }
+        },
+        {
+          "side": "top",
+          "setup_seconds_max_rank": {
+            "fused_action_setup_seconds_max_rank": 5.30506836110726,
+            "original_action_setup_seconds_max_rank": 6.173951168893836,
+            "side_system_setup_seconds_max_rank": 140.6631313029211
+          },
+          "kernel_payload_rank_local_not_rss": {
+            "batch_size": 2,
+            "batch_workspace_bytes": 412064,
+            "cell_metadata_bytes": 288544,
+            "owned_cells": 78,
+            "reference_bytes": 7470800
+          },
+          "volume_only": {
+            "kind": "volume_only",
+            "original_seconds_per_call_max_rank": 0.9965648616780527,
+            "fused_seconds_per_call_max_rank": 0.6263591328364176,
+            "reduction_percent": 37.148182027838004,
+            "max_relative_difference": 7.85128190914592e-15,
+            "gate": 1e-10,
+            "pass": true,
+            "input_unchanged": true
+          },
+          "full_with_one_original_dtn": {
+            "kind": "full_with_one_original_dtn",
+            "original_seconds_per_call_max_rank": 1.0085390773407805,
+            "fused_seconds_per_call_max_rank": 0.6413151010056026,
+            "reduction_percent": 36.411477213499644,
+            "max_relative_difference": 7.85128181554896e-15,
+            "gate": 1e-10,
+            "pass": true,
+            "input_unchanged": true
+          }
+        }
+      ],
+      "resource_peaks": {
+        "authority_process_tree_bytes": 17303310336,
+        "dedicated_cgroup_memory_peak_bytes": 15263993856,
+        "dedicated_cgroup_swap_peak_bytes": 0,
+        "global_swap_delta_peak_bytes": 0,
+        "global_pswpout_delta_peak_pages": 0,
+        "peak_note": "original and fused actions coexisted; not a single-backend peak"
+      },
+      "performance_isolation": "not_isolated"
+    },
+    "ledger": {
+      "path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_load_ledger_20260920.json",
+      "entries_before_after": [
+        59,
+        61
+      ],
+      "new_entry_ids": [
+        "task041_v8_a6_numactl_prefix_failure_20261001",
+        "task041_v8_a6_paired_action_r1_20261001"
+      ],
+      "new_seconds": [
+        2.39253768697381,
+        325.6776714519365
+      ],
+      "added_seconds": 328.0702091389103,
+      "charged_seconds_after": 236114.941209425,
+      "previous_sha256": "26acd6477f688e88a453f8b265f39528f47c16cc6834c4ee07e72e9f467483c4",
+      "preappend_backup_path": "results/task041_review_v8_a6_paired_action/ledger_before_a6_abba_append_20261001T0116Z.json",
+      "preappend_backup_sha256": "26acd6477f688e88a453f8b265f39528f47c16cc6834c4ee07e72e9f467483c4",
+      "sha256_after_append": "8891f1e01e6b45da0b7501b8ac26c35a2004f9a8ebada95df3c7b23baa3ef6ab",
+      "excluded": "ABI, dispatch, nested action timings, duplicated rank walls, and payload"
+    },
+    "evidence": {
+      "terminal_compact_path": "results/task041_review_v8_a6_paired_action/run_20261001T005620Z_r1/r1_terminal_compact.json",
+      "terminal_compact_sha256": "cbecf6983a05e0b584d23d20c5a7d2f3f870768a1a02b0aa509d76cad1e4fe21",
+      "successful_abi_path": "/home/fenics/Projects/MyFEniCS/results/task041_review_v8_a6_paired_action/preparation_20260930T175814Z/r1_20261001T005620Z_mpi8_abi.json",
+      "successful_abi_sha256": "529ca211f47e5573e7e29fd4eaa8402261129378fccdca6786527b9491db0d84",
+      "initial_failure_supervision_summary_path": "results/task041_review_v8_a6_paired_action/run_20261001T002826Z/supervision_summary.json",
+      "initial_failure_supervision_summary_sha256": "7703a8902f71ee0a4499d25f560f776b986e9625379276c71152d436ec789921",
+      "initial_failure_stdout_path": "results/task041_review_v8_a6_paired_action/run_20261001T002826Z/log/a6_paired_action_stdout.txt",
+      "initial_failure_stdout_sha256": "1f3ed38b9c64108c55294ed59fe2503074fab9dfda80955502fb266b9b7e777c",
+      "r1_worker_result_path": "/home/fenics/Projects/MyFEniCS/results/task041_review_v8_a6_paired_action/run_20261001T005620Z_r1/worker_result.json",
+      "r1_worker_result_sha256": "91b7d571c334ce9469df0886519c95cffe972cd3a9b1e5d001f90d93f83aea6f",
+      "r1_supervision_summary_path": "/home/fenics/Projects/MyFEniCS/results/task041_review_v8_a6_paired_action/run_20261001T005620Z_r1/supervision_summary.json",
+      "r1_supervision_summary_sha256": "f624d9c62a4f4a92ffd64454f6fe1c52f49358cb88acba84fccb3f406592daaf"
+    }
   }
 }

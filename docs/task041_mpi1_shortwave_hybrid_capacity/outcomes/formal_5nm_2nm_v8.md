@@ -22,4 +22,23 @@ public runroot：`results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8_cell_
 
 复用旧D1e的W/2 nm、p6/h1.5、M1200物理与QEP packet，沿既有registered入口改用cell-condensed及`5e-13` target；同一生命周期完成early repeat准入后接续4800项响应。p4/KSP需要重建，QEP不重算。node0可用内存须按当时现场满足旧2 nm hard/warning与412,316,860,416 B reserve；swap仅观察。旧D1e repeat失败保留为必须由新early样本重新验证的数值风险。2 nm 尚未启动。
 
+## A6：真实尺寸 action 等价与计时观察（2026-10-01）
+
+A6把当前三维体积方程作用到一个输入场上；融合实现合并了其中的局部计算。本次在5 nm p6布局/MPI8上比较原实现与融合实现，但输入是确定性合成向量，不是由固定RHS求出的响应，因此结果只证明这两种 action 在该输入上的等价与耗时，不构成全场性能资格。
+
+| 侧/动作 | 原实现→融合实现（秒/次，max-rank均值） | 相对节省 | 最大相对差 | 门 |
+|---|---:|---:|---:|---|
+| bottom / 体积项 | 0.990358→0.396308 | 59.98% | 2.002×10⁻¹⁵ | 1×10⁻¹⁰，通过 |
+| bottom / 体积项+一次原DtN | 1.000771→0.417720 | 58.26% | 2.002×10⁻¹⁵ | 1×10⁻¹⁰，通过 |
+| top / 体积项 | 0.996565→0.626359 | 37.15% | 7.851×10⁻¹⁵ | 1×10⁻¹⁰，通过 |
+| top / 体积项+一次原DtN | 1.008539→0.641315 | 36.41% | 7.851×10⁻¹⁵ | 1×10⁻¹⁰，通过 |
+
+计数为56次 action：48次ABBA计时调用（两侧×两种动作×四段、每段3次）和8次单独warmup。每侧先后构造并销毁；bottom/top side-system setup分别117.643/140.663秒，原/融合 action setup分别为5.598/4.749秒及6.174/5.305秒。完整监督phase wall为325.678秒；性能标记`not_isolated`，不能外推为全响应或完整5 nm consumer加速。
+
+运行身份：源码`92d70a603856bd866ba469444512dd79acb23ef0`，unit `task041-v8-a6-paired-action-r1-20261001T005620Z.service`，Invocation `4d5edf5a63024cac8ae486571663fccd`；r1 config SHA-256 `8a43c699f4c9e05ccc19c3cbce59f5a4fbeb84253fd3f66d13ce59fbe506bddd`。r1 public runroot为`results/task041_review_v8_a6_paired_action/run_20261001T005620Z_r1`。首次尝试因MPI rank未落在node0 membind而在FE/action构造前退出（rc1、phase wall 2.393秒）；保留原记录，修正MPI/numactl顺序后的r1所有rank均绑定CPU1–8/node0并正常退出。
+
+r1全程authority/process-tree峰为17,303,310,336 B，专属cgroup `memory.peak`为15,263,993,856 B；同一侧的原/融合action同时驻留，所以该峰值不是任一单独backend的内存峰。kernel payload为rank-local参考数组7,470,800 B、workspace 412,064 B和cell metadata约288,476–288,544 B；这些是payload计数，不是RSS。job/cgroup swap为0，global swap/pswp增量为0；这些资源读数不改变本次非正式性能范围。
+
+紧凑终态compact为`results/task041_review_v8_a6_paired_action/run_20261001T005620Z_r1/r1_terminal_compact.json`（SHA-256 `cbecf6983a05e0b584d23d20c5a7d2f3f870768a1a02b0aa509d76cad1e4fe21`）。V5既有ledger只追加了首次配置失败phase与r1成功phase，各一次，共328.070209秒；ABI、dispatch和内部action计时未重复收费。ledger从59条增至61条，累计236,114.941209秒；完整身份、首次失败和备份哈希见机器记录。
+
 机器记录见[Task041 V8 record](records/task041_v8_formal_5nm_2nm.json)。
