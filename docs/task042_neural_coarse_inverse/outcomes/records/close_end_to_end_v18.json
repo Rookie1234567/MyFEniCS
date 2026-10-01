@@ -1,0 +1,209 @@
+{
+  "libraries": {
+    "GPOLY": {
+      "qualified": true,
+      "audit": {
+        "schur_relative": 0.000490220468867467,
+        "augmented_relative": 0.0001901093516400638,
+        "native_relative": 0.0001901093516400638,
+        "original_total_augmented_relative": 6.59678283643863e-05,
+        "port_absolute": 3.9405348057058653e-17,
+        "port_full_rhs_relative": 1.8483141588630411e-16,
+        "port_operation_relative": 6.793627681290528e-17,
+        "recovery_relative": 4.636854969634494e-13,
+        "schur_original_identity_operation_relative": 5.261117236718547e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.631473861305276,
+        "port_unknown_norm": 0.19744539779035541,
+        "strict_pass": false
+      },
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 0.000490220468867467,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      },
+      "shape": {
+        "trace": 18144,
+        "port": 40,
+        "z": 18184
+      },
+      "initial_state": {
+        "logical_iteration": 6347,
+        "epoch_iteration": 6347,
+        "mode": {
+          "mode": "CONTINUOUS_LEGACY_GK",
+          "epoch": 0,
+          "legacy_persisted_iteration": 256,
+          "legacy_observed_iteration": 816
+        },
+        "source_sha": "59feb6570a74d72aa501853807013711d89279cd",
+        "state": {
+          "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GPOLY/states/task042_v17_gpoly_6656_a0_run25_20260930T204048249415Z/E0_ITER_6347.npz",
+          "sha256": "e4b8495c6cd9fdc1e2f0723b64ecbc0732f911e62cb74c04307f13678e1d8602",
+          "y_sha256": "3a95e3a1761f020947f20b0d2c97ec4e5a77a7548b2d15657d89574a2a77c8d9",
+          "v_sha256": "481a149fec20be6ebea5a308bc4511c56fa7f0cb6a674d5985be74b81428812f",
+          "c_sha256": "d3a4c7fd045b26773bbb6c3c18586e9429d53d706187de944ecc3612d3d752a3",
+          "trace_sha256": "ff447bc2a6aa5fb9051ca33491c41d7e3bf2d8ea445560af29d058c098f5e650",
+          "port_sha256": "cc67bf7069a7c0ab8c8f2dc178ad774f6de04e0a991e8f9d1e4eafd38c9b5c4a",
+          "z_sha256": "d997814774a360fd952172d7d0b29088cfb02cca1c32ea60b4890ba79ba6037e",
+          "residual_sha256": "62960692a9d6d2a1f04f15adb7a08e118443288cf29494ddf1161673652d52a7"
+        },
+        "original_residual_identity_relative": 5.466748556711976e-13,
+        "estimated_residual_norm": 4.053058369082648e-05,
+        "true_projected_residual_norm": 4.0530583690826785e-05,
+        "recurrence_gap": 7.52350036055767e-15,
+        "audit_pending": false,
+        "new_updates_this_run": 203,
+        "Phi": 1.2015805404831957e-07,
+        "action_counts": {
+          "S": 227,
+          "SH": 203,
+          "audit": 4
+        },
+        "audit": {
+          "schur_relative": 0.000490220468867467,
+          "augmented_relative": 0.0001901093516400638,
+          "native_relative": 0.0001901093516400638,
+          "original_total_augmented_relative": 6.59678283643863e-05,
+          "port_absolute": 3.9405348057058653e-17,
+          "port_full_rhs_relative": 1.8483141588630411e-16,
+          "port_operation_relative": 6.793627681290528e-17,
+          "recovery_relative": 4.636854969634494e-13,
+          "schur_original_identity_operation_relative": 5.261117236718547e-13,
+          "slave_storage_max": 0.0,
+          "field_norm": 1.631473861305276,
+          "port_unknown_norm": 0.19744539779035541,
+          "strict_pass": false
+        },
+        "original_equation_gate": {
+          "status": "ORIGINAL_EQUATION_FAILED",
+          "rho": 0.000490220468867467,
+          "thresholds": {
+            "equation": 1e-06,
+            "recovery": 1e-10,
+            "slave_zero": 0,
+            "identity": 1e-10
+          }
+        }
+      },
+      "original_closed_identity_relative": 7.456411985605295e-17,
+      "port_difference_operation_relative": 0.0,
+      "saved_vs_original_residual_full_b_relative": 0.0,
+      "repeated_action_full_b_difference": 0.0
+    },
+    "GNN": {
+      "qualified": true,
+      "audit": {
+        "schur_relative": 0.0005944770816765329,
+        "augmented_relative": 0.00023054046034317802,
+        "native_relative": 0.000230540460343178,
+        "original_total_augmented_relative": 7.999739826397562e-05,
+        "port_absolute": 3.940534276780315e-17,
+        "port_full_rhs_relative": 1.848313910769665e-16,
+        "port_operation_relative": 6.794510672861405e-17,
+        "recovery_relative": 4.6800131549809e-13,
+        "schur_original_identity_operation_relative": 5.302067774624818e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.631267952849584,
+        "port_unknown_norm": 0.19741971176158027,
+        "strict_pass": false
+      },
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 0.0005944770816765329,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      },
+      "shape": {
+        "trace": 18144,
+        "port": 40,
+        "z": 18184
+      },
+      "initial_state": {
+        "logical_iteration": 6119,
+        "epoch_iteration": 6119,
+        "mode": {
+          "mode": "INITIALIZE_ORIGINAL_F",
+          "epoch": 0,
+          "legacy_persisted_iteration": 0,
+          "legacy_observed_iteration": 85
+        },
+        "source_sha": "59feb6570a74d72aa501853807013711d89279cd",
+        "state": {
+          "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GNN/states/task042_v17_gnn_6144_a0_run24_20260930T203007859896Z/E0_ITER_6119.npz",
+          "sha256": "4006c7946e318f86e5fd785ccdc078fb819b70be5b32b3ef97743eeeabcecd32",
+          "y_sha256": "2bbbc9a46481f2316d4d77de8760c381cdf7649f5bda0972810a4546ff136dcd",
+          "v_sha256": "d5199a56c8dc01105f3656ebfd8db8e46965885e0619192c859d7fd25bfa5a08",
+          "c_sha256": "f3b7ef8b453357374901a4f8b958e6be158d8ff6028e0f6ff41c121e9f3f446c",
+          "trace_sha256": "cb42a6f6f860a0b12550bf9cf4e9a9ebd5f6d633ba2441337e531a23adca0586",
+          "port_sha256": "ae9142162743df8402458c26ce5162c58783f8f510b7227bc8fdeb5e982e700c",
+          "z_sha256": "ecb1acbca6207b5383e4916776da49d5d956f802051fc39972b27207c4868f72",
+          "residual_sha256": "f0e40fc7ef6085abf30a5babfaa45e27617d5b777ed882b52864f7a83c48d1a0"
+        },
+        "original_residual_identity_relative": 5.377050309273817e-13,
+        "estimated_residual_norm": 4.9150340798466774e-05,
+        "true_projected_residual_norm": 4.915034079847105e-05,
+        "recurrence_gap": 8.699476439587005e-14,
+        "audit_pending": false,
+        "new_updates_this_run": 487,
+        "Phi": 1.7670150031932354e-07,
+        "action_counts": {
+          "S": 531,
+          "SH": 487,
+          "audit": 8
+        },
+        "audit": {
+          "schur_relative": 0.0005944770816765329,
+          "augmented_relative": 0.00023054046034317802,
+          "native_relative": 0.000230540460343178,
+          "original_total_augmented_relative": 7.999739826397562e-05,
+          "port_absolute": 3.940534276780315e-17,
+          "port_full_rhs_relative": 1.848313910769665e-16,
+          "port_operation_relative": 6.794510672861405e-17,
+          "recovery_relative": 4.6800131549809e-13,
+          "schur_original_identity_operation_relative": 5.302067774624818e-13,
+          "slave_storage_max": 0.0,
+          "field_norm": 1.631267952849584,
+          "port_unknown_norm": 0.19741971176158027,
+          "strict_pass": false
+        },
+        "original_equation_gate": {
+          "status": "ORIGINAL_EQUATION_FAILED",
+          "rho": 0.0005944770816765329,
+          "thresholds": {
+            "equation": 1e-06,
+            "recovery": 1e-10,
+            "slave_zero": 0,
+            "identity": 1e-10
+          }
+        }
+      },
+      "original_closed_identity_relative": 6.673870011005122e-17,
+      "port_difference_operation_relative": 0.0,
+      "saved_vs_original_residual_full_b_relative": 0.0,
+      "repeated_action_full_b_difference": 0.0
+    }
+  },
+  "action_counts": {
+    "S": 10,
+    "SH": 0,
+    "audit": 2
+  },
+  "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+  "raw": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v18/task042_v18_preflight_run0_20261001T011522556420Z/stage_result.json",
+    "sha256": "f6dc3bd66ca0eb138c7495f28389011cd90011e808c514a9c6060d9abccb4078"
+  },
+  "real_preflight_action_cap": 256,
+  "reference_read": false,
+  "repeated_GK_pair_or_old_FD": false
+}

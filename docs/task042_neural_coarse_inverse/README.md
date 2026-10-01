@@ -1,3 +1,9 @@
+# 最新导航：V18 / Review V15 已完成
+
+[Review V15](review_report_v15.md)、[Response V18](response_v18.md)、[完整结果](outcomes/gmres_repair_residual_completion_v18.md)、[独立Gate](outcomes/records/qualification_and_dispatch_v18.json)、[source/run index](outcomes/records/run_index_v18.json)、[费用](outcomes/records/resource_costs_v18.json)。F0/G64/G256/R/VERIFY均已实际执行，8冻结状态0合格；数值队列已退出，等待review，不merge。下方所有旧“当前/待运行”只是历史，不授权继续旧campaign。
+
+以下历史正文逐字保留；旧版本的“当前”仅指其当时阶段。
+
 # 当前导航：V17可恢复全空间续算已完成
 
 最新合同为[Review V14](review_report_v14.md)，执行结果[Response V17](response_v17.md)、[完整证据](outcomes/resumable_full_trace_campaign_v17.md)、[run index](outcomes/records/run_index_v17.json)。旧版本导航仅为历史，不构成继续运行授权；当前清场等待review，不merge。

@@ -1,0 +1,498 @@
+{
+  "review_base": "f86eff1e1ed334e82123c734c60918beaa19dfc1",
+  "changes": [
+    {
+      "path": "docs/development_model_registry.md",
+      "bytes": 226868,
+      "sha256": "e456e73b186d0f44a238e7010b88773812cebf5d1c3c67432b9cfbf527068625",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/development_progress.md",
+      "bytes": 192131,
+      "sha256": "d92b7c2d9066e880db04f618614699d83b6ac5f0737e08d1f667bc2f87168ca8",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "bytes": 13986,
+      "sha256": "8e9fa06f669128e59eeb33f14d4e360ac8879b2e620dc33cf4add3c5c9d6693f",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "bytes": 31087,
+      "sha256": "39d0b26407470495ace243685e80ac1ebe897e9f7cc1da0779a95614b78470a1",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/gmres_repair_residual_completion_v18.md",
+      "bytes": 18110,
+      "sha256": "30fde380a3a51096fed8f034ece04b73a34719135db84e2aa3a7b7052bacde56",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v18.csv",
+      "bytes": 6004,
+      "sha256": "55bfd25cfd8e6eaeb3085c8fbbde73d23f0ec24b6310966ce4795732218dbbaa",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/changed_files_v18.json",
+      "bytes": null,
+      "sha256": null,
+      "self_hash_omitted": true,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/channel_observables_v18.csv",
+      "bytes": 525062,
+      "sha256": "a2a81537b0b0be829aa588bb335d54406929153437abd1932f2097f0a92c7f2e",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/checkpoint_inventory_v18.json",
+      "bytes": 19312,
+      "sha256": "cfe5ada6411e7166d72ff8958be499bb643d88752c04e2d5216ef45aaed6f950",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/close_end_to_end_v18.json",
+      "bytes": 8606,
+      "sha256": "d5679771bcfb5c5cb68bff1609d6712194c332796164d1f14f70065d3e629cb3",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/field_channel_checks_v18.json",
+      "bytes": 216510,
+      "sha256": "afb691e9317a8743e6dbaafbf88a36ba0dd417ffbe0ee60aed023c578626e7fa",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/gmres_cycles_v18.csv",
+      "bytes": 19552,
+      "sha256": "50032ed345dc53bef463d26122392acf34aa54f2da17d6e8c4c559f6847a3916",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/gmres_cycles_v18.json",
+      "bytes": 444999,
+      "sha256": "8eda3042878c7a4e62977e0fd9dbe44e7bb5353b143a9eadcff311bbeef856b4",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/input_lineage_v18.json",
+      "bytes": 192189,
+      "sha256": "ce9879f2b40f6309cfe6aa92950125b527938cc113e169d7e6203981e25f1651",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/iteration_history_v18.csv",
+      "bytes": 115682,
+      "sha256": "4cbfb695cdd63714b7ac35d8a619514fc489a0a4a25dc3f9b80683c2a380bfd3",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/protected_history_v18.json",
+      "bytes": 86337,
+      "sha256": "a0abf1eae9f624ad3e845998e016c9bf8cac6ce73a04261dfb9b7a14f73587d9",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/publication_v18.json",
+      "bytes": 606,
+      "sha256": "7eaec1a3eacfcd5471ed2b25e770dd27f3a9df1c5b6d600a1db25c538a47660d",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v18.json",
+      "bytes": 3680,
+      "sha256": "31fc76ef7aca33740e9b2408f55aade0d956df36e63687af72a0647981b74341",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/quota_dispatch_v18.json",
+      "bytes": 341203,
+      "sha256": "e25e2705407aff5e675d9ba56fa8ef4ec5afa827bb71f062442b4ae280300fec",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/recurrence_gap_v18.csv",
+      "bytes": 11321,
+      "sha256": "98796f65c460c9e1329ae78d498a37e7543bf2511597a3274e2d74449f16f5db",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/repair_journal_v18.json",
+      "bytes": 375,
+      "sha256": "5d8df3d9fd97e10d420f4e86f779bc3720e2c786787b877dbd6973aa24c9ff46",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/residual_field_cause_v18.json",
+      "bytes": 75402,
+      "sha256": "30b5a5cd488ad60f106c0fd7172985d201328d8669b79b4d190172a6c0e02691",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v18.json",
+      "bytes": 102883,
+      "sha256": "8478a2999b406a2344d624b1409b5e5a13f70ce5a9b24ccd8ffaa2f1d37740e1",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_lifecycle_v18.json",
+      "bytes": 1418,
+      "sha256": "4a2e8a3a947b87c84b3086234aa51d3f4af15d61f459821a39662f691d899650",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_reentry_journal_v18.json",
+      "bytes": 100,
+      "sha256": "38f5091cbdaa404871819aaf9e46c8fc873c1a80de9eac1aa44446e381069b35",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v18.json",
+      "bytes": 125067,
+      "sha256": "2ecb53e35226fec7b6ff621085e0819da93bfcac03eba8827e99d2de3bb35317",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/same_work_comparison_v18.json",
+      "bytes": 46929,
+      "sha256": "f70e7d72f0d8070d0a95e2230ce59629b666a70b8927b2f898c9d2f5155da809",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/same_work_curves_v18.csv",
+      "bytes": 63738,
+      "sha256": "90591062d961e538e1e2a5dd714047ac5fab9d632d536c39271561e990d1d0f5",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/selective_merge_manifest_v18.json",
+      "bytes": 2791,
+      "sha256": "229a34cdf1d1856897e8a002c1ae6d87973bc0496c2a79dbb44b95e8fe2fcfaf",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/self_cleanup_v18.json",
+      "bytes": 7359,
+      "sha256": "ab1f5fa0f3b0099a7b5809b4fee525e55fc5c1780cf8068f637ef0b676c3de9d",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v18.json",
+      "bytes": 1740,
+      "sha256": "ddb1d36fb5d7a1b404ddddf2920fcde782c08d2d28deeac71efe23b99e4f1d99",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/test_records_v18.json",
+      "bytes": 25554,
+      "sha256": "75af4add3aa164e3229fd4c5448417c169cdaf031934ac8b0a0ae0b4e3a61816",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "bytes": 61340,
+      "sha256": "493ecc862e9234442f1d088b15dae2227d6f66cdaf5617efb1b332bf4f479b89",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "bytes": 38557,
+      "sha256": "8500f6caf0194b7dc84805546d76cc677d47139d528d1a7f135e3473c350c5c8",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v18.md",
+      "bytes": 4678,
+      "sha256": "7ea6f70d3c81bdea8c90c6344cdbe904cf8950b4d40861a0a3002b93e2c8e8b2",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/gmres_residual_completion_v18.json",
+      "bytes": 28874,
+      "sha256": "a4e093f3146c711fa835cce189989e8c8b32bb99ce642e2d808fe2c8635e8230",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v18_continue_gnn.dat",
+      "bytes": 275,
+      "sha256": "7dacb6b080540154b15405bd0efc80c31a495c265f7abf822f669867783649f3",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v18_continue_gpoly.dat",
+      "bytes": 281,
+      "sha256": "cd1c55c9e32f2a1d6d6c4a0396244131cdd908dad88abce03ca4b144941a08a7",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v18_gmres256_gnn.dat",
+      "bytes": 278,
+      "sha256": "9e45aaedc2ea68b035222037efb56f7d663769eeec11f82f5813c353e42b7b9a",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v18_gmres256_gpoly.dat",
+      "bytes": 284,
+      "sha256": "9bae7c91445bea936289ced0a1b54034653b4f72d29fbb2a26d5f5d2586a95ae",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v18_gmres64_gnn.dat",
+      "bytes": 275,
+      "sha256": "ee1fd902180b57cff952238ea5d9b8f321813607f19fae434dcf6d88b2130139",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v18_gmres64_gpoly.dat",
+      "bytes": 281,
+      "sha256": "964e99c914b054ffd344cdae8589d0e3e6c6faa5cca0d6cd2b4d4395027b4d98",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v18_gmres_preflight.dat",
+      "bytes": 281,
+      "sha256": "6c943139f9dfbf3cf63896f31dd2fc3e0552f573cba0f9d63c340e68bdc015bc",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v18_verify.dat",
+      "bytes": 268,
+      "sha256": "15b082aeab7e7e0aab185b0d9a62530b8505839343ff3a8be605b01a27458707",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "scripts/run_case.py",
+      "bytes": 10425,
+      "sha256": "fc187bfa404d976626950542f8582fb3afe6fa9ecdb82b67f80e8128c5cb0dc4",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "scripts/task042_v17_campaign.py",
+      "bytes": 9046,
+      "sha256": "76807e9161ce38e2ad15a715211d49c5f3341bb0480841fb518c313ab949fc4c",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "scripts/task042_v17_queue_watchdog.py",
+      "bytes": 2225,
+      "sha256": "d481e5ec7971e88b11d5743ab1f32c43581bf96f2ff56f8a323debbb4d18a92e",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "src/io/gmres_residual_completion.py",
+      "bytes": 6196,
+      "sha256": "f67e61000c7a68258c3a957cd17073ecac9271c4380d3c91cc4fd495171ff533",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "src/io/gmres_residual_completion_check.py",
+      "bytes": 8053,
+      "sha256": "e79ad4c9eba69fcd131c3146a5f686cc2fe704d5cfc19db3d2423ece2a4bf975",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "src/io/task042_profile.py",
+      "bytes": 4780,
+      "sha256": "544708214827a3ae302872c585600fad13a47c8288800a7d630615c87cd531f0",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "src/runners/gmres_residual_completion.py",
+      "bytes": 6923,
+      "sha256": "03d28a5f9b4cf771ef0ac310befaadb813dfae1e7e6ba210d2aca058c444f90f",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "src/runners/residual_completion_queue.py",
+      "bytes": 8007,
+      "sha256": "649bcb64546a80b94e108dc373b7c993824abaa58105d5192c918b306a9932b2",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "src/runners/task042_shared.py",
+      "bytes": 39148,
+      "sha256": "eeb28e2a5a7ccefa7a3d32f4623ee4daa98f59424bda5dda85848745b4a45fe2",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "src/solvers/gmres_cycle_commit.py",
+      "bytes": 5854,
+      "sha256": "0c64303448027795147421e3a596923299c3a5b514772a8bcf8a1a1ed2606dd3",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "src/solvers/gmres_residual_completion.py",
+      "bytes": 14334,
+      "sha256": "ca3767b7fd8e17fb186337e3e17506255e3f645fa16e26d0f337cbe632a57163",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "src/solvers/residual_completion_window.py",
+      "bytes": 4884,
+      "sha256": "b01d7a2f35b091b31247987ce97e124e8fa22f208585de15fa2a459c94b144db",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "src/solvers/resumable_trace_gmres.py",
+      "bytes": 2163,
+      "sha256": "83b9a931c96dce686c5cff993bba11005bd54465625687add98e80c9d73266e4",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "src/solvers/resumable_trace_study.py",
+      "bytes": 23102,
+      "sha256": "76d27fec7ce9ac7549b600fa828fe4ce94549fc717cd65b7c92dc357b7adbd69",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "src/solvers/resumable_trace_window.py",
+      "bytes": 5369,
+      "sha256": "fe3bb259b600ab40054eaa01024d9d17bb6e0139b476d0a5adee2b9c286f13d5",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "src/test/test_task042_v18_completion.py",
+      "bytes": 14560,
+      "sha256": "48f37212cba4ee5a54a39b3969747983fb58897462ffc5714310e559fda0b115",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    },
+    {
+      "path": "src/test/test_task042_v18_evidence.py",
+      "bytes": 3374,
+      "sha256": "00cf01871eb6dc213c94e1f4c479ce8dc04993de14048ff3b3bd04de18a049f9",
+      "self_hash_omitted": false,
+      "scope": "Task042 necessary change",
+      "existing_historical_task_review_response_rewritten": false
+    }
+  ],
+  "old_task_review_response_raw_preserved": true,
+  "numerical_run_source": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+  "default_restart64_preserved": true,
+  "explicit_new_profiles_only": true,
+  "merge_approved": false
+}

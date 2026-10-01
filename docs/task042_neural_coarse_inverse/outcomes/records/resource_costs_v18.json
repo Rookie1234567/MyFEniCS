@@ -1,0 +1,3039 @@
+{
+  "formal_runs": [
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_preflight_run0_20261001T011522556420Z",
+      "stage": "PREFLIGHT",
+      "algorithm": "F0",
+      "library": null,
+      "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+      "cpu": 0,
+      "supervised_wall_seconds": 3.927326913108118,
+      "launch_wall_seconds": 5.268763997009955,
+      "worker_wall_seconds": 1.079394034924917,
+      "RSS_peak_bytes": 437211136,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 10,
+      "actions_upper": 10,
+      "Arnoldi_lower": 0,
+      "Arnoldi_upper": 0,
+      "GK_lower": 0,
+      "GK_upper": 0,
+      "action_counts": {
+        "S": 10,
+        "SH": 0,
+        "audit": 2
+      },
+      "action_costs_seconds": {
+        "S": 0.5446921151597053,
+        "SH": 0.0,
+        "audit": 0.41515476792119443
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": null,
+      "projection_triangular_inclusive_seconds": null,
+      "numeric_io": {
+        "started": 0,
+        "completed": 0,
+        "bytes_completed": 0,
+        "wall_completed_seconds": 0.0
+      },
+      "nested_timers_additive": false,
+      "MemAvailable_min_bytes": 993169350656,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 7,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 993671843840,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 993671843840,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_g64_gpoly_8_a0_run1_20261001T011602768477Z",
+      "stage": "G64_GPOLY",
+      "algorithm": "G64",
+      "library": "GPOLY",
+      "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+      "cpu": 0,
+      "supervised_wall_seconds": 36.68680593499448,
+      "launch_wall_seconds": 38.02206890308298,
+      "worker_wall_seconds": 33.77243009302765,
+      "RSS_peak_bytes": 446582784,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 560,
+      "actions_upper": 560,
+      "Arnoldi_lower": 512,
+      "Arnoldi_upper": 512,
+      "GK_lower": 0,
+      "GK_upper": 0,
+      "action_counts": {
+        "S": 560,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 28.548997037578374,
+        "SH": 0.0,
+        "audit": 1.812565125641413
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 28.057066527660936,
+        "SH": 0.0,
+        "port_solve": 0.06031330453697592
+      },
+      "projection_triangular_inclusive_seconds": null,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.18861781992018223
+      },
+      "nested_timers_additive": false,
+      "MemAvailable_min_bytes": 992277254144,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 56,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 993551351808,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 993551351808,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_g64_gnn_8_a0_run2_20261001T011641090800Z",
+      "stage": "G64_GNN",
+      "algorithm": "G64",
+      "library": "GNN",
+      "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+      "cpu": 0,
+      "supervised_wall_seconds": 35.734208827023394,
+      "launch_wall_seconds": 37.06314607500099,
+      "worker_wall_seconds": 33.157325797947124,
+      "RSS_peak_bytes": 442937344,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 560,
+      "actions_upper": 560,
+      "Arnoldi_lower": 512,
+      "Arnoldi_upper": 512,
+      "GK_lower": 0,
+      "GK_upper": 0,
+      "action_counts": {
+        "S": 560,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 28.0925991559634,
+        "SH": 0.0,
+        "audit": 1.7333835271419957
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 27.370896088308655,
+        "SH": 0.0,
+        "port_solve": 0.06921245134435594
+      },
+      "projection_triangular_inclusive_seconds": null,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.19190133770462126
+      },
+      "nested_timers_additive": false,
+      "MemAvailable_min_bytes": 991819583488,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 55,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 992324083712,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 992324083712,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_g64_gpoly_16_a0_run3_20261001T011718460588Z",
+      "stage": "G64_GPOLY",
+      "algorithm": "G64",
+      "library": "GPOLY",
+      "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+      "cpu": 0,
+      "supervised_wall_seconds": 36.049386261962354,
+      "launch_wall_seconds": 37.39346393698361,
+      "worker_wall_seconds": 33.25001820200123,
+      "RSS_peak_bytes": 442867712,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 560,
+      "actions_upper": 560,
+      "Arnoldi_lower": 512,
+      "Arnoldi_upper": 512,
+      "GK_lower": 0,
+      "GK_upper": 0,
+      "action_counts": {
+        "S": 560,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 28.129609563970007,
+        "SH": 0.0,
+        "audit": 1.7787300820928067
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 27.554938096436672,
+        "SH": 0.0,
+        "port_solve": 0.05654860020149499
+      },
+      "projection_triangular_inclusive_seconds": null,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.18624640943016857
+      },
+      "nested_timers_additive": false,
+      "MemAvailable_min_bytes": 992908713984,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 55,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 993351610368,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 993351610368,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_g64_gnn_16_a0_run4_20261001T011756134402Z",
+      "stage": "G64_GNN",
+      "algorithm": "G64",
+      "library": "GNN",
+      "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+      "cpu": 0,
+      "supervised_wall_seconds": 35.85281340708025,
+      "launch_wall_seconds": 37.17143745103385,
+      "worker_wall_seconds": 33.239497150992975,
+      "RSS_peak_bytes": 498663424,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 560,
+      "actions_upper": 560,
+      "Arnoldi_lower": 512,
+      "Arnoldi_upper": 512,
+      "GK_lower": 0,
+      "GK_upper": 0,
+      "action_counts": {
+        "S": 560,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 28.13072947470937,
+        "SH": 0.0,
+        "audit": 1.7202599607408047
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 27.446499694138765,
+        "SH": 0.0,
+        "port_solve": 0.059619339066557586
+      },
+      "projection_triangular_inclusive_seconds": null,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.1923497902462259
+      },
+      "nested_timers_additive": false,
+      "MemAvailable_min_bytes": 992767868928,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 55,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 993250271232,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 993250271232,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_g256_gpoly_4_a0_run5_20261001T011833571793Z",
+      "stage": "G256_GPOLY",
+      "algorithm": "G256",
+      "library": "GPOLY",
+      "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+      "cpu": 0,
+      "supervised_wall_seconds": 68.47724834503606,
+      "launch_wall_seconds": 69.79606944299303,
+      "worker_wall_seconds": 65.72007805202156,
+      "RSS_peak_bytes": 518868992,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 1048,
+      "actions_upper": 1048,
+      "Arnoldi_lower": 1024,
+      "Arnoldi_upper": 1024,
+      "GK_lower": 0,
+      "GK_upper": 0,
+      "action_counts": {
+        "S": 1048,
+        "SH": 0,
+        "audit": 4
+      },
+      "action_costs_seconds": {
+        "S": 53.844838395831175,
+        "SH": 0.0,
+        "audit": 0.8575467379996553
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 54.50964590662625,
+        "SH": 0.0,
+        "port_solve": 0.09931996499653906
+      },
+      "projection_triangular_inclusive_seconds": null,
+      "numeric_io": {
+        "started": 12,
+        "completed": 12,
+        "bytes_completed": 8152816,
+        "wall_completed_seconds": 0.09151694388128817
+      },
+      "nested_timers_additive": false,
+      "MemAvailable_min_bytes": 992522047488,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 104,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 993370542080,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 993370542080,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_g256_gnn_4_a0_run6_20261001T011943670361Z",
+      "stage": "G256_GNN",
+      "algorithm": "G256",
+      "library": "GNN",
+      "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+      "cpu": 0,
+      "supervised_wall_seconds": 68.24549895699602,
+      "launch_wall_seconds": 69.57040785998106,
+      "worker_wall_seconds": 65.19222693808842,
+      "RSS_peak_bytes": 518967296,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 1048,
+      "actions_upper": 1048,
+      "Arnoldi_lower": 1024,
+      "Arnoldi_upper": 1024,
+      "GK_lower": 0,
+      "GK_upper": 0,
+      "action_counts": {
+        "S": 1048,
+        "SH": 0,
+        "audit": 4
+      },
+      "action_costs_seconds": {
+        "S": 53.470287740579806,
+        "SH": 0.0,
+        "audit": 0.8101855950662866
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 54.17282991216052,
+        "SH": 0.0,
+        "port_solve": 0.09215163881890476
+      },
+      "projection_triangular_inclusive_seconds": null,
+      "numeric_io": {
+        "started": 12,
+        "completed": 12,
+        "bytes_completed": 8152816,
+        "wall_completed_seconds": 0.0961495420197025
+      },
+      "nested_timers_additive": false,
+      "MemAvailable_min_bytes": 992934060032,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 104,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 993473224704,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 993473224704,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_g256_gpoly_8_a0_run7_20261001T012053547473Z",
+      "stage": "G256_GPOLY",
+      "algorithm": "G256",
+      "library": "GPOLY",
+      "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+      "cpu": 0,
+      "supervised_wall_seconds": 68.32016768795438,
+      "launch_wall_seconds": 69.64033619698603,
+      "worker_wall_seconds": 65.74922269606031,
+      "RSS_peak_bytes": 518848512,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 1048,
+      "actions_upper": 1048,
+      "Arnoldi_lower": 1024,
+      "Arnoldi_upper": 1024,
+      "GK_lower": 0,
+      "GK_upper": 0,
+      "action_counts": {
+        "S": 1048,
+        "SH": 0,
+        "audit": 4
+      },
+      "action_costs_seconds": {
+        "S": 53.604604168678634,
+        "SH": 0.0,
+        "audit": 0.8212213828228414
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 54.45826595602557,
+        "SH": 0.0,
+        "port_solve": 0.09992241743020713
+      },
+      "projection_triangular_inclusive_seconds": null,
+      "numeric_io": {
+        "started": 12,
+        "completed": 12,
+        "bytes_completed": 8152816,
+        "wall_completed_seconds": 0.09990316804032773
+      },
+      "nested_timers_additive": false,
+      "MemAvailable_min_bytes": 991027339264,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 104,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 993547243520,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 993547243520,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_g256_gnn_8_a0_run8_20261001T012205820656Z",
+      "stage": "G256_GNN",
+      "algorithm": "G256",
+      "library": "GNN",
+      "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+      "cpu": 0,
+      "supervised_wall_seconds": 68.38460011198185,
+      "launch_wall_seconds": 72.03973078005947,
+      "worker_wall_seconds": 65.56994250800926,
+      "RSS_peak_bytes": 519000064,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 1048,
+      "actions_upper": 1048,
+      "Arnoldi_lower": 1024,
+      "Arnoldi_upper": 1024,
+      "GK_lower": 0,
+      "GK_upper": 0,
+      "action_counts": {
+        "S": 1048,
+        "SH": 0,
+        "audit": 4
+      },
+      "action_costs_seconds": {
+        "S": 53.32394531473983,
+        "SH": 0.0,
+        "audit": 0.9022400148678571
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 54.320885541965254,
+        "SH": 0.0,
+        "port_solve": 0.09837538364809006
+      },
+      "projection_triangular_inclusive_seconds": null,
+      "numeric_io": {
+        "started": 12,
+        "completed": 12,
+        "bytes_completed": 8152816,
+        "wall_completed_seconds": 0.10052062990143895
+      },
+      "nested_timers_additive": false,
+      "MemAvailable_min_bytes": 991932989440,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 104,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 992120094720,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 992120094720,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gpoly_7168_a0_run9_20261001T012315836163Z",
+      "stage": "R_GPOLY",
+      "algorithm": "R",
+      "library": "GPOLY",
+      "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+      "cpu": 0,
+      "supervised_wall_seconds": 1034.8605128949275,
+      "launch_wall_seconds": 1036.1967401630245,
+      "worker_wall_seconds": 1032.0298137180507,
+      "RSS_peak_bytes": 2494803968,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 1712,
+      "actions_upper": 1712,
+      "Arnoldi_lower": 0,
+      "Arnoldi_upper": 0,
+      "GK_lower": 821,
+      "GK_upper": 821,
+      "action_counts": {
+        "S": 891,
+        "SH": 821,
+        "audit": 14
+      },
+      "action_costs_seconds": {
+        "S": 45.91175079403911,
+        "SH": 92.27225335175171,
+        "audit": 3.0496306479908526
+      },
+      "loading_seconds": 7.139344351948239,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 44.763450161903165,
+        "SH": 93.16181946347933,
+        "port_solve": 0.17944866803009063
+      },
+      "projection_triangular_inclusive_seconds": {
+        "trace_projection": 432.1622721570311,
+        "residual_projection": 439.1869532963028,
+        "triangular_solve": 2.459612745209597
+      },
+      "numeric_io": {
+        "started": 95,
+        "completed": 95,
+        "bytes_completed": 115350473,
+        "wall_completed_seconds": 1.004435178823769
+      },
+      "nested_timers_additive": false,
+      "MemAvailable_min_bytes": 982593888256,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 1572,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 993001181184,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 993001181184,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gnn_7168_a0_run10_20261001T014032350104Z",
+      "stage": "R_GNN",
+      "algorithm": "R",
+      "library": "GNN",
+      "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+      "cpu": 0,
+      "supervised_wall_seconds": 1322.654116451973,
+      "launch_wall_seconds": 1323.9993995599216,
+      "worker_wall_seconds": 1319.731000314001,
+      "RSS_peak_bytes": 2494930944,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2188,
+      "actions_upper": 2188,
+      "Arnoldi_lower": 0,
+      "Arnoldi_upper": 0,
+      "GK_lower": 1049,
+      "GK_upper": 1049,
+      "action_counts": {
+        "S": 1139,
+        "SH": 1049,
+        "audit": 18
+      },
+      "action_costs_seconds": {
+        "S": 59.04505186784081,
+        "SH": 119.02469697908964,
+        "audit": 3.966256001731381
+      },
+      "loading_seconds": 7.172205625916831,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 57.264802927616984,
+        "SH": 120.10920770594385,
+        "port_solve": 0.22006197308655828
+      },
+      "projection_triangular_inclusive_seconds": {
+        "trace_projection": 553.3108607294271,
+        "residual_projection": 560.9536742009223,
+        "triangular_solve": 3.3244760549860075
+      },
+      "numeric_io": {
+        "started": 121,
+        "completed": 121,
+        "bytes_completed": 146977455,
+        "wall_completed_seconds": 1.2925954849924892
+      },
+      "nested_timers_additive": false,
+      "MemAvailable_min_bytes": 990467964928,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 2002,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 994009874432,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 994009874432,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gpoly_8192_a0_run11_20261001T020236628470Z",
+      "stage": "R_GPOLY",
+      "algorithm": "R",
+      "library": "GPOLY",
+      "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+      "cpu": 0,
+      "supervised_wall_seconds": 1342.156093541067,
+      "launch_wall_seconds": 1343.467861703015,
+      "worker_wall_seconds": 1339.3327429520432,
+      "RSS_peak_bytes": 2495213568,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2133,
+      "actions_upper": 2133,
+      "Arnoldi_lower": 0,
+      "Arnoldi_upper": 0,
+      "GK_lower": 1024,
+      "GK_upper": 1024,
+      "action_counts": {
+        "S": 1109,
+        "SH": 1024,
+        "audit": 17
+      },
+      "action_costs_seconds": {
+        "S": 60.531784161925316,
+        "SH": 122.16490908176638,
+        "audit": 3.9808763093315065
+      },
+      "loading_seconds": 7.048337626969442,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 58.88778694998473,
+        "SH": 123.33760590478778,
+        "port_solve": 0.23846533906180412
+      },
+      "projection_triangular_inclusive_seconds": {
+        "trace_projection": 561.5288672596216,
+        "residual_projection": 567.6769892399898,
+        "triangular_solve": 3.397599650779739
+      },
+      "numeric_io": {
+        "started": 116,
+        "completed": 116,
+        "bytes_completed": 140816723,
+        "wall_completed_seconds": 1.2999954668339342
+      },
+      "nested_timers_additive": false,
+      "MemAvailable_min_bytes": 987138801664,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 2013,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 991757737984,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 991757737984,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gnn_8192_a0_run12_20261001T022500370876Z",
+      "stage": "R_GNN",
+      "algorithm": "R",
+      "library": "GNN",
+      "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+      "cpu": 0,
+      "supervised_wall_seconds": 1343.652571078972,
+      "launch_wall_seconds": 1344.9963180510094,
+      "worker_wall_seconds": 1340.7095337390201,
+      "RSS_peak_bytes": 2495180800,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2133,
+      "actions_upper": 2133,
+      "Arnoldi_lower": 0,
+      "Arnoldi_upper": 0,
+      "GK_lower": 1024,
+      "GK_upper": 1024,
+      "action_counts": {
+        "S": 1109,
+        "SH": 1024,
+        "audit": 17
+      },
+      "action_costs_seconds": {
+        "S": 60.89612008759286,
+        "SH": 122.55182961805258,
+        "audit": 3.9718658990459517
+      },
+      "loading_seconds": 7.122517580981366,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 59.24738561233971,
+        "SH": 123.692174618016,
+        "port_solve": 0.23037570144515485
+      },
+      "projection_triangular_inclusive_seconds": {
+        "trace_projection": 561.6640016057063,
+        "residual_projection": 568.1715766176349,
+        "triangular_solve": 3.249937355518341
+      },
+      "numeric_io": {
+        "started": 116,
+        "completed": 116,
+        "bytes_completed": 140816723,
+        "wall_completed_seconds": 1.338166342698969
+      },
+      "nested_timers_additive": false,
+      "MemAvailable_min_bytes": 987074891776,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 2010,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 992528269312,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 992528269312,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gpoly_9216_a0_run13_20261001T024725682003Z",
+      "stage": "R_GPOLY",
+      "algorithm": "R",
+      "library": "GPOLY",
+      "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+      "cpu": 0,
+      "supervised_wall_seconds": 1355.5882753849728,
+      "launch_wall_seconds": 1356.9344087729696,
+      "worker_wall_seconds": 1352.6597820180468,
+      "RSS_peak_bytes": 2495201280,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2133,
+      "actions_upper": 2133,
+      "Arnoldi_lower": 0,
+      "Arnoldi_upper": 0,
+      "GK_lower": 1024,
+      "GK_upper": 1024,
+      "action_counts": {
+        "S": 1109,
+        "SH": 1024,
+        "audit": 17
+      },
+      "action_costs_seconds": {
+        "S": 61.29620404634625,
+        "SH": 124.53830462729093,
+        "audit": 3.9402234357548878
+      },
+      "loading_seconds": 7.043473735102452,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 59.5607341962168,
+        "SH": 125.68949033517856,
+        "port_solve": 0.23539048351813108
+      },
+      "projection_triangular_inclusive_seconds": {
+        "trace_projection": 567.0471970001236,
+        "residual_projection": 572.4898205457721,
+        "triangular_solve": 3.090205095591955
+      },
+      "numeric_io": {
+        "started": 116,
+        "completed": 116,
+        "bytes_completed": 140816723,
+        "wall_completed_seconds": 1.3056916694622487
+      },
+      "nested_timers_additive": false,
+      "MemAvailable_min_bytes": 986227388416,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 2023,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 993058897920,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 993058897920,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gnn_9216_a0_run14_20261001T031002900719Z",
+      "stage": "R_GNN",
+      "algorithm": "R",
+      "library": "GNN",
+      "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+      "cpu": 0,
+      "supervised_wall_seconds": 2649.9894328519003,
+      "launch_wall_seconds": 2651.3240347329993,
+      "worker_wall_seconds": 2646.762173289899,
+      "RSS_peak_bytes": 2495361024,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2133,
+      "actions_upper": 2133,
+      "Arnoldi_lower": 0,
+      "Arnoldi_upper": 0,
+      "GK_lower": 1024,
+      "GK_upper": 1024,
+      "action_counts": {
+        "S": 1109,
+        "SH": 1024,
+        "audit": 17
+      },
+      "action_costs_seconds": {
+        "S": 115.03032452822663,
+        "SH": 217.1409517955035,
+        "audit": 6.521946275955997
+      },
+      "loading_seconds": 7.097314790007658,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 111.74498877371661,
+        "SH": 218.84148589638062,
+        "port_solve": 0.3570032190764323
+      },
+      "projection_triangular_inclusive_seconds": {
+        "trace_projection": 1124.5545634849695,
+        "residual_projection": 1149.2848919584649,
+        "triangular_solve": 5.622110157972202
+      },
+      "numeric_io": {
+        "started": 116,
+        "completed": 116,
+        "bytes_completed": 140816723,
+        "wall_completed_seconds": 1.5911093371687457
+      },
+      "nested_timers_additive": false,
+      "MemAvailable_min_bytes": 956943896576,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 3749,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 995016216576,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 995016216576,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gpoly_10240_a0_run15_20261001T035414591809Z",
+      "stage": "R_GPOLY",
+      "algorithm": "R",
+      "library": "GPOLY",
+      "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+      "cpu": 0,
+      "supervised_wall_seconds": 1744.7314154839842,
+      "launch_wall_seconds": 1746.106330125942,
+      "worker_wall_seconds": 1741.4048468209803,
+      "RSS_peak_bytes": 2495225856,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2133,
+      "actions_upper": 2133,
+      "Arnoldi_lower": 0,
+      "Arnoldi_upper": 0,
+      "GK_lower": 1024,
+      "GK_upper": 1024,
+      "action_counts": {
+        "S": 1109,
+        "SH": 1024,
+        "audit": 17
+      },
+      "action_costs_seconds": {
+        "S": 76.65461923473049,
+        "SH": 151.87667962745763,
+        "audit": 4.520684351096861
+      },
+      "loading_seconds": 8.567831502994522,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 74.49167251691688,
+        "SH": 153.27071544271894,
+        "port_solve": 0.271627398324199
+      },
+      "projection_triangular_inclusive_seconds": {
+        "trace_projection": 732.5313187297434,
+        "residual_projection": 747.3432867636438,
+        "triangular_solve": 4.020086233154871
+      },
+      "numeric_io": {
+        "started": 116,
+        "completed": 116,
+        "bytes_completed": 140816723,
+        "wall_completed_seconds": 1.361481950734742
+      },
+      "nested_timers_additive": false,
+      "MemAvailable_min_bytes": 953760505856,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 2541,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 964573691904,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 964573691904,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gnn_10240_a0_run16_20261001T042320972248Z",
+      "stage": "R_GNN",
+      "algorithm": "R",
+      "library": "GNN",
+      "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+      "cpu": 0,
+      "supervised_wall_seconds": 1335.0873805829324,
+      "launch_wall_seconds": 1336.4189037618926,
+      "worker_wall_seconds": 1332.4703568599652,
+      "RSS_peak_bytes": 2495766528,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2133,
+      "actions_upper": 2133,
+      "Arnoldi_lower": 0,
+      "Arnoldi_upper": 0,
+      "GK_lower": 1024,
+      "GK_upper": 1024,
+      "action_counts": {
+        "S": 1109,
+        "SH": 1024,
+        "audit": 17
+      },
+      "action_costs_seconds": {
+        "S": 60.156623458256945,
+        "SH": 120.88395091169514,
+        "audit": 3.9047552187694237
+      },
+      "loading_seconds": 7.138826336013153,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 58.73954253678676,
+        "SH": 122.02188733650837,
+        "port_solve": 0.21553259377833456
+      },
+      "projection_triangular_inclusive_seconds": {
+        "trace_projection": 558.4383544346783,
+        "residual_projection": 565.7885425577406,
+        "triangular_solve": 3.0579610327258706
+      },
+      "numeric_io": {
+        "started": 116,
+        "completed": 116,
+        "bytes_completed": 140816723,
+        "wall_completed_seconds": 1.3766434933058918
+      },
+      "nested_timers_additive": false,
+      "MemAvailable_min_bytes": 988184686592,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 2000,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 993056751616,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 993056751616,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gpoly_11264_a0_run17_20261001T044538075169Z",
+      "stage": "R_GPOLY",
+      "algorithm": "R",
+      "library": "GPOLY",
+      "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+      "cpu": 0,
+      "supervised_wall_seconds": 1324.8775584060932,
+      "launch_wall_seconds": 1326.5907117989846,
+      "worker_wall_seconds": 1322.3403542808956,
+      "RSS_peak_bytes": 2495668224,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2133,
+      "actions_upper": 2133,
+      "Arnoldi_lower": 0,
+      "Arnoldi_upper": 0,
+      "GK_lower": 1024,
+      "GK_upper": 1024,
+      "action_counts": {
+        "S": 1109,
+        "SH": 1024,
+        "audit": 17
+      },
+      "action_costs_seconds": {
+        "S": 60.22935119830072,
+        "SH": 120.53193148376886,
+        "audit": 3.6461842781864107
+      },
+      "loading_seconds": 6.953599752043374,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 58.71546302980278,
+        "SH": 121.69395419233479,
+        "port_solve": 0.23990867100656033
+      },
+      "projection_triangular_inclusive_seconds": {
+        "trace_projection": 554.101949121803,
+        "residual_projection": 561.2049421586562,
+        "triangular_solve": 3.0084849923150614
+      },
+      "numeric_io": {
+        "started": 116,
+        "completed": 116,
+        "bytes_completed": 140816723,
+        "wall_completed_seconds": 1.2627456824993715
+      },
+      "nested_timers_additive": false,
+      "MemAvailable_min_bytes": 989382668288,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 1987,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 996343070720,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 996343070720,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gnn_11264_a0_run18_20261001T050744593665Z",
+      "stage": "R_GNN",
+      "algorithm": "R",
+      "library": "GNN",
+      "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+      "cpu": 0,
+      "supervised_wall_seconds": 1338.7109420340275,
+      "launch_wall_seconds": 1340.044701935025,
+      "worker_wall_seconds": 1335.5731734309811,
+      "RSS_peak_bytes": 2496077824,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2133,
+      "actions_upper": 2133,
+      "Arnoldi_lower": 0,
+      "Arnoldi_upper": 0,
+      "GK_lower": 1024,
+      "GK_upper": 1024,
+      "action_counts": {
+        "S": 1109,
+        "SH": 1024,
+        "audit": 17
+      },
+      "action_costs_seconds": {
+        "S": 60.93806864670478,
+        "SH": 123.21306727873161,
+        "audit": 3.731920104357414
+      },
+      "loading_seconds": 7.173588261008263,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 59.47429002309218,
+        "SH": 124.38320601347368,
+        "port_solve": 0.2431725348578766
+      },
+      "projection_triangular_inclusive_seconds": {
+        "trace_projection": 558.3304769039387,
+        "residual_projection": 566.307666372857,
+        "triangular_solve": 2.9584096127655357
+      },
+      "numeric_io": {
+        "started": 116,
+        "completed": 116,
+        "bytes_completed": 140816723,
+        "wall_completed_seconds": 1.349207229213789
+      },
+      "nested_timers_additive": false,
+      "MemAvailable_min_bytes": 986896969728,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 1997,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 990849773568,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 990849773568,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gpoly_12288_a0_run19_20261001T053004942897Z",
+      "stage": "R_GPOLY",
+      "algorithm": "R",
+      "library": "GPOLY",
+      "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+      "cpu": 0,
+      "supervised_wall_seconds": 1340.0132368599297,
+      "launch_wall_seconds": 1341.3389409879455,
+      "worker_wall_seconds": 1336.8476529899053,
+      "RSS_peak_bytes": 2495893504,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2133,
+      "actions_upper": 2133,
+      "Arnoldi_lower": 0,
+      "Arnoldi_upper": 0,
+      "GK_lower": 1024,
+      "GK_upper": 1024,
+      "action_counts": {
+        "S": 1109,
+        "SH": 1024,
+        "audit": 17
+      },
+      "action_costs_seconds": {
+        "S": 60.74584258790128,
+        "SH": 122.00163497589529,
+        "audit": 3.9172846090514213
+      },
+      "loading_seconds": 7.095476320013404,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 59.05819332005922,
+        "SH": 123.12206355598755,
+        "port_solve": 0.24615834769792855
+      },
+      "projection_triangular_inclusive_seconds": {
+        "trace_projection": 559.4678983578924,
+        "residual_projection": 567.1011163647054,
+        "triangular_solve": 3.213917804765515
+      },
+      "numeric_io": {
+        "started": 116,
+        "completed": 116,
+        "bytes_completed": 140816723,
+        "wall_completed_seconds": 1.3834711473900825
+      },
+      "nested_timers_additive": false,
+      "MemAvailable_min_bytes": 991933632512,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 2001,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 996379516928,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 996379516928,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gnn_12288_a0_run20_20261001T055226629225Z",
+      "stage": "R_GNN",
+      "algorithm": "R",
+      "library": "GNN",
+      "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+      "cpu": 0,
+      "supervised_wall_seconds": 1733.0189827970462,
+      "launch_wall_seconds": 1734.3803325810004,
+      "worker_wall_seconds": 1729.911611048039,
+      "RSS_peak_bytes": 2496196608,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 1333,
+      "actions_upper": 1333,
+      "Arnoldi_lower": 0,
+      "Arnoldi_upper": 0,
+      "GK_lower": 639,
+      "GK_upper": 639,
+      "action_counts": {
+        "S": 694,
+        "SH": 639,
+        "audit": 11
+      },
+      "action_costs_seconds": {
+        "S": 73.19305855315179,
+        "SH": 140.03258536814246,
+        "audit": 4.273002925794572
+      },
+      "loading_seconds": 10.473216240061447,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 71.00718939327635,
+        "SH": 141.2449247854529,
+        "port_solve": 0.2534781553549692
+      },
+      "projection_triangular_inclusive_seconds": {
+        "trace_projection": 739.510813995963,
+        "residual_projection": 743.8488919828087,
+        "triangular_solve": 3.8349565870594233
+      },
+      "numeric_io": {
+        "started": 73,
+        "completed": 73,
+        "bytes_completed": 88720214,
+        "wall_completed_seconds": 0.9670411761617288
+      },
+      "nested_timers_additive": false,
+      "MemAvailable_min_bytes": 959125385216,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 2453,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 993424502784,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 993424502784,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gpoly_13312_a0_run21_20261001T062121347619Z",
+      "stage": "R_GPOLY",
+      "algorithm": "R",
+      "library": "GPOLY",
+      "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+      "cpu": 0,
+      "supervised_wall_seconds": 1581.8515872429125,
+      "launch_wall_seconds": 1583.2084020510083,
+      "worker_wall_seconds": 1578.8044773500878,
+      "RSS_peak_bytes": 2496294912,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 1136,
+      "actions_upper": 1136,
+      "Arnoldi_lower": 0,
+      "Arnoldi_upper": 0,
+      "GK_lower": 543,
+      "GK_upper": 543,
+      "action_counts": {
+        "S": 593,
+        "SH": 543,
+        "audit": 10
+      },
+      "action_costs_seconds": {
+        "S": 67.05993137822952,
+        "SH": 128.72282840346452,
+        "audit": 6.0938846110366285
+      },
+      "loading_seconds": 8.485639336053282,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 64.69911076687276,
+        "SH": 129.80379618774168,
+        "port_solve": 0.20255608786828816
+      },
+      "projection_triangular_inclusive_seconds": {
+        "trace_projection": 675.7132592353737,
+        "residual_projection": 676.8936436272925,
+        "triangular_solve": 2.839056423981674
+      },
+      "numeric_io": {
+        "started": 64,
+        "completed": 64,
+        "bytes_completed": 77903446,
+        "wall_completed_seconds": 0.8949389982735738
+      },
+      "nested_timers_additive": false,
+      "MemAvailable_min_bytes": 946886889472,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 2201,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 961689034752,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 961689034752,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_verify_run22_20261001T064837741706Z",
+      "stage": "VERIFY",
+      "algorithm": "V",
+      "library": null,
+      "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+      "cpu": 0,
+      "supervised_wall_seconds": 36.25897206400987,
+      "launch_wall_seconds": 37.63736118900124,
+      "worker_wall_seconds": 32.138021780061536,
+      "RSS_peak_bytes": 667324416,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 9,
+      "actions_upper": 9,
+      "Arnoldi_lower": 0,
+      "Arnoldi_upper": 0,
+      "GK_lower": 0,
+      "GK_upper": 0,
+      "action_counts": {
+        "S": 9,
+        "SH": 0,
+        "audit": 9
+      },
+      "action_costs_seconds": {
+        "S": 1.532250658958219,
+        "SH": 0.0,
+        "audit": 4.704629568033852
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": null,
+      "projection_triangular_inclusive_seconds": null,
+      "numeric_io": {
+        "started": 0,
+        "completed": 0,
+        "bytes_completed": 0,
+        "wall_completed_seconds": 0.0
+      },
+      "nested_timers_additive": false,
+      "MemAvailable_min_bytes": 951827509248,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 51,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 952240898048,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 952240898048,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    }
+  ],
+  "formal_supervised_wall_seconds": 19905.129134120885,
+  "formal_launch_wall_seconds": 19938.60987205687,
+  "old_formal_lower_bound_seconds": 37508.426008819835,
+  "cumulative_formal_lower_bound_seconds": 57413.55514294072,
+  "historical_auxiliary_unknown_preserved": true,
+  "auxiliary": [
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/abi1/summary.json",
+        "sha256": "f10810f7658f2076a97a9d8f0034c29b3ac1136a702b4750c04bf82c15d7fcb9",
+        "bytes": 3505
+      },
+      "wall_seconds": 4.593824993935414,
+      "peak_bytes": 231104512,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/collect1/summary.json",
+        "sha256": "c3bcfd42e3aa90117eb962f59292fa5d384a8c7dcf3a95414bc554d0496de31d",
+        "bytes": 2276
+      },
+      "wall_seconds": 6.948453709017485,
+      "peak_bytes": 78610432,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/collect2/summary.json",
+        "sha256": "4d04615112b390d95c2a284b50fdac414e0e05e26ec75f1bb861f4487cbc2af4",
+        "bytes": 4710
+      },
+      "wall_seconds": 7.565888445009477,
+      "peak_bytes": 78692352,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/reader_actual1/summary.json",
+        "sha256": "8e747e9ce5483fff14841e46ec3a8bb16f05c03e7a72c3809be8ecc75ddf11f2",
+        "bytes": 2566
+      },
+      "wall_seconds": 28.48029186099302,
+      "peak_bytes": 1868034048,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/reader_tests1/summary.json",
+        "sha256": "a52931d6e2419a87d19eabbb1e9ab742e491180acac03b35951c005715612e26",
+        "bytes": 2412
+      },
+      "wall_seconds": 2.872349275974557,
+      "peak_bytes": 69513216,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/targeted1/summary.json",
+        "sha256": "5066be2262b93af4618741ae8161e4f378bfc154cad292df3393372755cdb324",
+        "bytes": 3768
+      },
+      "wall_seconds": 8.26052118896041,
+      "peak_bytes": 147255296,
+      "classification": "WORKER_FAILED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/targeted2/summary.json",
+        "sha256": "3ce98102709d0f2d9ebe563f7736510227d47058599fb6d392d9d00164475c38",
+        "bytes": 3753
+      },
+      "wall_seconds": 7.964237924083136,
+      "peak_bytes": 140595200,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/targeted_final/summary.json",
+        "sha256": "66033ec84a60366edd40a614589135678c8e737772fac6683f5fc430acafdb40",
+        "bytes": 3782
+      },
+      "wall_seconds": 8.268825780949555,
+      "peak_bytes": 241491968,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/validate1/summary.json",
+        "sha256": "86dff75fe0e8ee3bf7381b44a4f5e8b34f9ea3e8a5c07664d772a4a9787723e7",
+        "bytes": 3433
+      },
+      "wall_seconds": 2.8009381720330566,
+      "peak_bytes": 69693440,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    }
+  ],
+  "auxiliary_supervised_wall_seconds": 77.75533135095611,
+  "simultaneous_sampled_tree_peak_bytes": 2576646144,
+  "own_swap_peak_bytes": 0,
+  "own_VRAM_bytes": 0,
+  "cgroup_delegated": false,
+  "scope": "launcher plus all descendants .5s sampling; no continuous kernel cgroup cap",
+  "performance": "shared-workstation; no same-strict-accuracy speedup; neighbor impact INCONCLUSIVE",
+  "uniform_route_budget": {
+    "uniform_route_wall_seconds": 10000,
+    "GMRES_total_ceiling_seconds": 1800,
+    "heavy_remaining_at_freeze_seconds": 21201.742505788803,
+    "formula": "min(10000, floor((heavy_remaining-900)/2))",
+    "immutable": true
+  },
+  "charged_routes": {
+    "GPOLY": {
+      "wall_seconds": 9948.695334082935,
+      "G_wall_seconds": 214.85193848004565,
+      "actions_upper": 16729,
+      "new_updates": 6484,
+      "reentries": 0,
+      "correction_restarts": 0,
+      "status": "READY",
+      "arnoldi_upper": {
+        "G64": 1024,
+        "G256": 2048
+      }
+    },
+    "GNN": {
+      "wall_seconds": 9947.008412787924,
+      "G_wall_seconds": 215.84472216607537,
+      "actions_upper": 15269,
+      "new_updates": 5784,
+      "reentries": 0,
+      "correction_restarts": 0,
+      "status": "READY",
+      "arnoldi_upper": {
+        "G64": 1024,
+        "G256": 2048
+      }
+    }
+  },
+  "outer_queue_supervision": [
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/queue_solve_1/summary.json",
+        "sha256": "4ca84effc739fb890952d8119e5009da712ff303f2a2e4b638ead83b8484e2ac",
+        "bytes": 5047
+      },
+      "summary": {
+        "workflow_deadline_seconds": 21201.916115760803,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 17179869184,
+        "rss_warning_bytes": 12884901888,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "clock_info": {
+          "monotonic": {
+            "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+            "monotonic": true,
+            "adjustable": false,
+            "resolution": 1e-09
+          },
+          "utc": {
+            "implementation": "clock_gettime(CLOCK_REALTIME)",
+            "monotonic": false,
+            "adjustable": true,
+            "resolution": 1e-09
+          },
+          "boottime": {
+            "available": true,
+            "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+            "resolution": 1e-09
+          }
+        },
+        "clock_start": {
+          "monotonic": 742355.978881015,
+          "boottime": 742355.97888431,
+          "utc_ns": 1790817361118018430
+        },
+        "timebase_policy": "strict",
+        "timebase_policy_version": 1,
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          978664,
+          978665,
+          978729,
+          979086,
+          979148,
+          979234,
+          979296,
+          979420,
+          979483,
+          979589,
+          979661,
+          979885,
+          979947,
+          980007,
+          980069,
+          980228,
+          980290,
+          980432,
+          980495,
+          984248,
+          984310,
+          987136,
+          987198,
+          992231,
+          992335,
+          995871,
+          995933,
+          998669,
+          998732,
+          1002191,
+          1002248,
+          1002253,
+          1006414,
+          1006476,
+          1011515,
+          1011577,
+          1017081,
+          1017144,
+          1022285,
+          1022347,
+          1026491,
+          1026553,
+          1032140,
+          1032197,
+          1032202
+        ],
+        "sampled_process_tree_rss_peak_bytes": 2576646144,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 1655988,
+            "pswpout_pages": 2364290
+          },
+          "end": {
+            "pswpin_pages": 1658108,
+            "pswpout_pages": 2364290
+          },
+          "delta": {
+            "pswpin_pages": 2120,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "UNRESOLVED_global_activity_cannot_be_attributed",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 993559789568,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 993559789568,
+          "reserve_bytes": 353748992000,
+          "launch_cap_bytes": 17179869184,
+          "planning_cap_bytes": 17179869184,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 137438953472,
+          "shared_workstation": true
+        },
+        "samples": 34580,
+        "elapsed_seconds": 19904.07720852201,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "batch": "V18",
+          "window": {
+            "schema": "task042.campaign-window.v18",
+            "start_utc": "2026-10-01T00:39:23+00:00",
+            "start_monotonic": 740157.8608808591,
+            "heavy_limit_seconds": 23400,
+            "total_limit_seconds": 25200,
+            "heavy_stop_utc": "2026-10-01T07:09:23+00:00",
+            "deadline_utc": "2026-10-01T07:39:23+00:00",
+            "start_singapore": "2026-10-01T08:39:23+08:00",
+            "heavy_stop_singapore": "2026-10-01T15:09:23+08:00",
+            "deadline_singapore": "2026-10-01T15:39:23+08:00",
+            "start_scope": "first actual inspection included; immutable across compaction, fixes, waits and resumes",
+            "review_expected_commit": "f86eff1e1ed334e82123c734c60918beaa19dfc1",
+            "prior_HEAD": "546236ae26a30cc71d5ba5a966a5e3ec8f525d65",
+            "elapsed_seconds": 2198.08394408226,
+            "heavy_remaining_seconds": 21201.91605591774,
+            "total_remaining_seconds": 23001.91605591774
+          },
+          "mode": "solve",
+          "own_processes_only": true
+        },
+        "clock_end": {
+          "monotonic": 762260.056100522,
+          "boottime": 762260.056102921,
+          "utc_ns": 1790837265195237342
+        },
+        "workflow_clock_interval": {
+          "elapsed_seconds": {
+            "monotonic": 19904.077219507075,
+            "boottime": 19904.077218611026,
+            "utc": 19904.077218912
+          },
+          "budget_seconds": 19904.077219507075,
+          "discrepancy_seconds": 8.960487321019173e-07,
+          "tolerance_seconds": 199.04077219507076,
+          "policy": "strict",
+          "policy_version": 1,
+          "utc_minus_monotonic_seconds": -5.950751074124128e-07,
+          "step": {
+            "elapsed_seconds": {
+              "monotonic": 0.08341124001890421,
+              "boottime": 0.08341148402541876,
+              "utc": 0.083412159
+            },
+            "budget_seconds": 0.08341148402541876,
+            "discrepancy_seconds": 9.18981095790472e-07,
+            "tolerance_seconds": 5.0,
+            "policy": "strict",
+            "policy_version": 1,
+            "utc_minus_monotonic_seconds": 9.18981095790472e-07
+          },
+          "utc_positive_excess_seconds": 0.0020199008472322616
+        }
+      }
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/queue_verify_1/summary.json",
+        "sha256": "8765a765cef8077d7c400a18e9cf0a3209e65c279d7344776e984f890f4cb190",
+        "bytes": 4516
+      },
+      "summary": {
+        "workflow_deadline_seconds": 1247.0210783481598,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 17179869184,
+        "rss_warning_bytes": 12884901888,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "clock_info": {
+          "monotonic": {
+            "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+            "monotonic": true,
+            "adjustable": false,
+            "resolution": 1e-09
+          },
+          "utc": {
+            "implementation": "clock_gettime(CLOCK_REALTIME)",
+            "monotonic": false,
+            "adjustable": true,
+            "resolution": 1e-09
+          },
+          "boottime": {
+            "available": true,
+            "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+            "resolution": 1e-09
+          }
+        },
+        "clock_start": {
+          "monotonic": 762310.876084945,
+          "boottime": 762310.876087969,
+          "utc_ns": 1790837316015222134
+        },
+        "timebase_policy": "strict",
+        "timebase_policy_version": 1,
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          1037426,
+          1037427,
+          1037489,
+          1037492
+        ],
+        "sampled_process_tree_rss_peak_bytes": 759984128,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 1658108,
+            "pswpout_pages": 2364290
+          },
+          "end": {
+            "pswpin_pages": 1658108,
+            "pswpout_pages": 2364290
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 952237027328,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 952237027328,
+          "reserve_bytes": 353748992000,
+          "launch_cap_bytes": 17179869184,
+          "planning_cap_bytes": 17179869184,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 137438953472,
+          "shared_workstation": true
+        },
+        "samples": 70,
+        "elapsed_seconds": 39.89952428301331,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "batch": "V18",
+          "window": {
+            "schema": "task042.campaign-window.v18",
+            "start_utc": "2026-10-01T00:39:23+00:00",
+            "start_monotonic": 740157.8608808591,
+            "heavy_limit_seconds": 23400,
+            "total_limit_seconds": 25200,
+            "heavy_stop_utc": "2026-10-01T07:09:23+00:00",
+            "deadline_utc": "2026-10-01T07:39:23+00:00",
+            "start_singapore": "2026-10-01T08:39:23+08:00",
+            "heavy_stop_singapore": "2026-10-01T15:09:23+08:00",
+            "deadline_singapore": "2026-10-01T15:39:23+08:00",
+            "start_scope": "first actual inspection included; immutable across compaction, fixes, waits and resumes",
+            "review_expected_commit": "f86eff1e1ed334e82123c734c60918beaa19dfc1",
+            "prior_HEAD": "546236ae26a30cc71d5ba5a966a5e3ec8f525d65",
+            "elapsed_seconds": 22152.97896695137,
+            "heavy_remaining_seconds": 1247.0210330486298,
+            "total_remaining_seconds": 3047.0210330486298
+          },
+          "mode": "verify",
+          "own_processes_only": true
+        },
+        "clock_end": {
+          "monotonic": 762350.775611476,
+          "boottime": 762350.775612705,
+          "utc_ns": 1790837355914747284
+        },
+        "workflow_clock_interval": {
+          "elapsed_seconds": {
+            "monotonic": 39.89952653099317,
+            "boottime": 39.899524735985324,
+            "utc": 39.89952515
+          },
+          "budget_seconds": 39.89952653099317,
+          "discrepancy_seconds": 1.795007847249508e-06,
+          "tolerance_seconds": 5.0,
+          "policy": "strict",
+          "policy_version": 1,
+          "utc_minus_monotonic_seconds": -1.3809931687092103e-06,
+          "step": {
+            "elapsed_seconds": {
+              "monotonic": 0.04295743000693619,
+              "boottime": 0.042956733028404415,
+              "utc": 0.042957509
+            },
+            "budget_seconds": 0.04295743000693619,
+            "discrepancy_seconds": 7.759715955832358e-07,
+            "tolerance_seconds": 5.0,
+            "policy": "strict",
+            "policy_version": 1,
+            "utc_minus_monotonic_seconds": 7.899306380537707e-08
+          },
+          "utc_positive_excess_seconds": 2.8580008909970256e-06
+        }
+      }
+    }
+  ],
+  "outer_and_nested_formal_times_additive": false,
+  "nested_action_audit_bar_projection_timers_additive": false,
+  "new_artifact_storage": {
+    "logical_regular_bytes": 408760439,
+    "allocated_unique_regular_bytes": 411131904,
+    "regular_files": 917,
+    "symlinks_not_followed": 0
+  },
+  "total_task042_artifact_storage": {
+    "logical_regular_bytes": 10619202903,
+    "allocated_unique_regular_bytes": 10624626688,
+    "regular_files": 2156,
+    "symlinks_not_followed": 7
+  },
+  "new_persistent_scope_including_results_and_tmp": {
+    "benchmarks_artifacts": {
+      "logical_regular_bytes": 408760439,
+      "allocated_unique_regular_bytes": 411131904,
+      "regular_files": 917,
+      "symlinks_not_followed": 0
+    },
+    "tmp_campaign": {
+      "logical_regular_bytes": 127856274,
+      "allocated_unique_regular_bytes": 128167936,
+      "regular_files": 112,
+      "symlinks_not_followed": 0
+    },
+    "formal_results": {
+      "logical_regular_bytes": 283144871,
+      "allocated_unique_regular_bytes": 284102656,
+      "regular_files": 299
+    }
+  },
+  "new_persistent_logical_regular_bytes": 819761584,
+  "new_persistent_allocated_regular_bytes": 823402496,
+  "window": {
+    "schema": "task042.campaign-window.v18",
+    "start_utc": "2026-10-01T00:39:23+00:00",
+    "start_monotonic": 740157.8608808591,
+    "heavy_limit_seconds": 23400,
+    "total_limit_seconds": 25200,
+    "heavy_stop_utc": "2026-10-01T07:09:23+00:00",
+    "deadline_utc": "2026-10-01T07:39:23+00:00",
+    "start_singapore": "2026-10-01T08:39:23+08:00",
+    "heavy_stop_singapore": "2026-10-01T15:09:23+08:00",
+    "deadline_singapore": "2026-10-01T15:39:23+08:00",
+    "start_scope": "first actual inspection included; immutable across compaction, fixes, waits and resumes",
+    "review_expected_commit": "f86eff1e1ed334e82123c734c60918beaa19dfc1",
+    "prior_HEAD": "546236ae26a30cc71d5ba5a966a5e3ec8f525d65"
+  },
+  "complete_consumption_ledger": {
+    "actions_upper": 32017,
+    "audits_upper": 265,
+    "new_A_columns": 0,
+    "image_QR": 0,
+    "field_states": 8,
+    "runs": [
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_preflight_run0_20261001T011522556420Z",
+        "stage": "PREFLIGHT",
+        "family": null,
+        "algorithm": "F0",
+        "classification": "COMPLETED",
+        "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+        "launch_wall_seconds": 5.268763997009955,
+        "descendants_cleared": true,
+        "rss_peak_bytes": 437211136,
+        "swap_peak_bytes": 0,
+        "exact_counts": true,
+        "numeric_io": {
+          "started": 0,
+          "completed": 0,
+          "bytes_completed": 0,
+          "wall_completed_seconds": 0.0
+        },
+        "actions_lower": 10,
+        "actions_upper": 10,
+        "audits_lower": 2,
+        "audits_upper": 2,
+        "updates_lower": 0,
+        "updates_upper": 0,
+        "arnoldi_lower": 0,
+        "arnoldi_upper": 0
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_g64_gpoly_8_a0_run1_20261001T011602768477Z",
+        "stage": "G64_GPOLY",
+        "family": "GPOLY",
+        "algorithm": "G64",
+        "classification": "COMPLETED",
+        "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+        "launch_wall_seconds": 38.02206890308298,
+        "descendants_cleared": true,
+        "rss_peak_bytes": 446582784,
+        "swap_peak_bytes": 0,
+        "exact_counts": true,
+        "numeric_io": {
+          "started": 24,
+          "completed": 24,
+          "bytes_completed": 16305632,
+          "wall_completed_seconds": 0.18861781992018223
+        },
+        "actions_lower": 560,
+        "actions_upper": 560,
+        "audits_lower": 8,
+        "audits_upper": 8,
+        "updates_lower": 0,
+        "updates_upper": 0,
+        "arnoldi_lower": 512,
+        "arnoldi_upper": 512
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_g64_gnn_8_a0_run2_20261001T011641090800Z",
+        "stage": "G64_GNN",
+        "family": "GNN",
+        "algorithm": "G64",
+        "classification": "COMPLETED",
+        "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+        "launch_wall_seconds": 37.06314607500099,
+        "descendants_cleared": true,
+        "rss_peak_bytes": 442937344,
+        "swap_peak_bytes": 0,
+        "exact_counts": true,
+        "numeric_io": {
+          "started": 24,
+          "completed": 24,
+          "bytes_completed": 16305632,
+          "wall_completed_seconds": 0.19190133770462126
+        },
+        "actions_lower": 560,
+        "actions_upper": 560,
+        "audits_lower": 8,
+        "audits_upper": 8,
+        "updates_lower": 0,
+        "updates_upper": 0,
+        "arnoldi_lower": 512,
+        "arnoldi_upper": 512
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_g64_gpoly_16_a0_run3_20261001T011718460588Z",
+        "stage": "G64_GPOLY",
+        "family": "GPOLY",
+        "algorithm": "G64",
+        "classification": "COMPLETED",
+        "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+        "launch_wall_seconds": 37.39346393698361,
+        "descendants_cleared": true,
+        "rss_peak_bytes": 442867712,
+        "swap_peak_bytes": 0,
+        "exact_counts": true,
+        "numeric_io": {
+          "started": 24,
+          "completed": 24,
+          "bytes_completed": 16305632,
+          "wall_completed_seconds": 0.18624640943016857
+        },
+        "actions_lower": 560,
+        "actions_upper": 560,
+        "audits_lower": 8,
+        "audits_upper": 8,
+        "updates_lower": 0,
+        "updates_upper": 0,
+        "arnoldi_lower": 512,
+        "arnoldi_upper": 512
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_g64_gnn_16_a0_run4_20261001T011756134402Z",
+        "stage": "G64_GNN",
+        "family": "GNN",
+        "algorithm": "G64",
+        "classification": "COMPLETED",
+        "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+        "launch_wall_seconds": 37.17143745103385,
+        "descendants_cleared": true,
+        "rss_peak_bytes": 498663424,
+        "swap_peak_bytes": 0,
+        "exact_counts": true,
+        "numeric_io": {
+          "started": 24,
+          "completed": 24,
+          "bytes_completed": 16305632,
+          "wall_completed_seconds": 0.1923497902462259
+        },
+        "actions_lower": 560,
+        "actions_upper": 560,
+        "audits_lower": 8,
+        "audits_upper": 8,
+        "updates_lower": 0,
+        "updates_upper": 0,
+        "arnoldi_lower": 512,
+        "arnoldi_upper": 512
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_g256_gpoly_4_a0_run5_20261001T011833571793Z",
+        "stage": "G256_GPOLY",
+        "family": "GPOLY",
+        "algorithm": "G256",
+        "classification": "COMPLETED",
+        "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+        "launch_wall_seconds": 69.79606944299303,
+        "descendants_cleared": true,
+        "rss_peak_bytes": 518868992,
+        "swap_peak_bytes": 0,
+        "exact_counts": true,
+        "numeric_io": {
+          "started": 12,
+          "completed": 12,
+          "bytes_completed": 8152816,
+          "wall_completed_seconds": 0.09151694388128817
+        },
+        "actions_lower": 1048,
+        "actions_upper": 1048,
+        "audits_lower": 4,
+        "audits_upper": 4,
+        "updates_lower": 0,
+        "updates_upper": 0,
+        "arnoldi_lower": 1024,
+        "arnoldi_upper": 1024
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_g256_gnn_4_a0_run6_20261001T011943670361Z",
+        "stage": "G256_GNN",
+        "family": "GNN",
+        "algorithm": "G256",
+        "classification": "COMPLETED",
+        "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+        "launch_wall_seconds": 69.57040785998106,
+        "descendants_cleared": true,
+        "rss_peak_bytes": 518967296,
+        "swap_peak_bytes": 0,
+        "exact_counts": true,
+        "numeric_io": {
+          "started": 12,
+          "completed": 12,
+          "bytes_completed": 8152816,
+          "wall_completed_seconds": 0.0961495420197025
+        },
+        "actions_lower": 1048,
+        "actions_upper": 1048,
+        "audits_lower": 4,
+        "audits_upper": 4,
+        "updates_lower": 0,
+        "updates_upper": 0,
+        "arnoldi_lower": 1024,
+        "arnoldi_upper": 1024
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_g256_gpoly_8_a0_run7_20261001T012053547473Z",
+        "stage": "G256_GPOLY",
+        "family": "GPOLY",
+        "algorithm": "G256",
+        "classification": "COMPLETED",
+        "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+        "launch_wall_seconds": 69.64033619698603,
+        "descendants_cleared": true,
+        "rss_peak_bytes": 518848512,
+        "swap_peak_bytes": 0,
+        "exact_counts": true,
+        "numeric_io": {
+          "started": 12,
+          "completed": 12,
+          "bytes_completed": 8152816,
+          "wall_completed_seconds": 0.09990316804032773
+        },
+        "actions_lower": 1048,
+        "actions_upper": 1048,
+        "audits_lower": 4,
+        "audits_upper": 4,
+        "updates_lower": 0,
+        "updates_upper": 0,
+        "arnoldi_lower": 1024,
+        "arnoldi_upper": 1024
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_g256_gnn_8_a0_run8_20261001T012205820656Z",
+        "stage": "G256_GNN",
+        "family": "GNN",
+        "algorithm": "G256",
+        "classification": "COMPLETED",
+        "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+        "launch_wall_seconds": 72.03973078005947,
+        "descendants_cleared": true,
+        "rss_peak_bytes": 519000064,
+        "swap_peak_bytes": 0,
+        "exact_counts": true,
+        "numeric_io": {
+          "started": 12,
+          "completed": 12,
+          "bytes_completed": 8152816,
+          "wall_completed_seconds": 0.10052062990143895
+        },
+        "actions_lower": 1048,
+        "actions_upper": 1048,
+        "audits_lower": 4,
+        "audits_upper": 4,
+        "updates_lower": 0,
+        "updates_upper": 0,
+        "arnoldi_lower": 1024,
+        "arnoldi_upper": 1024
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gpoly_7168_a0_run9_20261001T012315836163Z",
+        "stage": "R_GPOLY",
+        "family": "GPOLY",
+        "algorithm": "R",
+        "classification": "COMPLETED",
+        "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+        "launch_wall_seconds": 1036.1967401630245,
+        "descendants_cleared": true,
+        "rss_peak_bytes": 2494803968,
+        "swap_peak_bytes": 0,
+        "exact_counts": true,
+        "numeric_io": {
+          "started": 95,
+          "completed": 95,
+          "bytes_completed": 115350473,
+          "wall_completed_seconds": 1.004435178823769
+        },
+        "actions_lower": 1712,
+        "actions_upper": 1712,
+        "audits_lower": 14,
+        "audits_upper": 14,
+        "updates_lower": 821,
+        "updates_upper": 821,
+        "arnoldi_lower": 0,
+        "arnoldi_upper": 0
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gnn_7168_a0_run10_20261001T014032350104Z",
+        "stage": "R_GNN",
+        "family": "GNN",
+        "algorithm": "R",
+        "classification": "COMPLETED",
+        "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+        "launch_wall_seconds": 1323.9993995599216,
+        "descendants_cleared": true,
+        "rss_peak_bytes": 2494930944,
+        "swap_peak_bytes": 0,
+        "exact_counts": true,
+        "numeric_io": {
+          "started": 121,
+          "completed": 121,
+          "bytes_completed": 146977455,
+          "wall_completed_seconds": 1.2925954849924892
+        },
+        "actions_lower": 2188,
+        "actions_upper": 2188,
+        "audits_lower": 18,
+        "audits_upper": 18,
+        "updates_lower": 1049,
+        "updates_upper": 1049,
+        "arnoldi_lower": 0,
+        "arnoldi_upper": 0
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gpoly_8192_a0_run11_20261001T020236628470Z",
+        "stage": "R_GPOLY",
+        "family": "GPOLY",
+        "algorithm": "R",
+        "classification": "COMPLETED",
+        "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+        "launch_wall_seconds": 1343.467861703015,
+        "descendants_cleared": true,
+        "rss_peak_bytes": 2495213568,
+        "swap_peak_bytes": 0,
+        "exact_counts": true,
+        "numeric_io": {
+          "started": 116,
+          "completed": 116,
+          "bytes_completed": 140816723,
+          "wall_completed_seconds": 1.2999954668339342
+        },
+        "actions_lower": 2133,
+        "actions_upper": 2133,
+        "audits_lower": 17,
+        "audits_upper": 17,
+        "updates_lower": 1024,
+        "updates_upper": 1024,
+        "arnoldi_lower": 0,
+        "arnoldi_upper": 0
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gnn_8192_a0_run12_20261001T022500370876Z",
+        "stage": "R_GNN",
+        "family": "GNN",
+        "algorithm": "R",
+        "classification": "COMPLETED",
+        "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+        "launch_wall_seconds": 1344.9963180510094,
+        "descendants_cleared": true,
+        "rss_peak_bytes": 2495180800,
+        "swap_peak_bytes": 0,
+        "exact_counts": true,
+        "numeric_io": {
+          "started": 116,
+          "completed": 116,
+          "bytes_completed": 140816723,
+          "wall_completed_seconds": 1.338166342698969
+        },
+        "actions_lower": 2133,
+        "actions_upper": 2133,
+        "audits_lower": 17,
+        "audits_upper": 17,
+        "updates_lower": 1024,
+        "updates_upper": 1024,
+        "arnoldi_lower": 0,
+        "arnoldi_upper": 0
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gpoly_9216_a0_run13_20261001T024725682003Z",
+        "stage": "R_GPOLY",
+        "family": "GPOLY",
+        "algorithm": "R",
+        "classification": "COMPLETED",
+        "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+        "launch_wall_seconds": 1356.9344087729696,
+        "descendants_cleared": true,
+        "rss_peak_bytes": 2495201280,
+        "swap_peak_bytes": 0,
+        "exact_counts": true,
+        "numeric_io": {
+          "started": 116,
+          "completed": 116,
+          "bytes_completed": 140816723,
+          "wall_completed_seconds": 1.3056916694622487
+        },
+        "actions_lower": 2133,
+        "actions_upper": 2133,
+        "audits_lower": 17,
+        "audits_upper": 17,
+        "updates_lower": 1024,
+        "updates_upper": 1024,
+        "arnoldi_lower": 0,
+        "arnoldi_upper": 0
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gnn_9216_a0_run14_20261001T031002900719Z",
+        "stage": "R_GNN",
+        "family": "GNN",
+        "algorithm": "R",
+        "classification": "COMPLETED",
+        "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+        "launch_wall_seconds": 2651.3240347329993,
+        "descendants_cleared": true,
+        "rss_peak_bytes": 2495361024,
+        "swap_peak_bytes": 0,
+        "exact_counts": true,
+        "numeric_io": {
+          "started": 116,
+          "completed": 116,
+          "bytes_completed": 140816723,
+          "wall_completed_seconds": 1.5911093371687457
+        },
+        "actions_lower": 2133,
+        "actions_upper": 2133,
+        "audits_lower": 17,
+        "audits_upper": 17,
+        "updates_lower": 1024,
+        "updates_upper": 1024,
+        "arnoldi_lower": 0,
+        "arnoldi_upper": 0
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gpoly_10240_a0_run15_20261001T035414591809Z",
+        "stage": "R_GPOLY",
+        "family": "GPOLY",
+        "algorithm": "R",
+        "classification": "COMPLETED",
+        "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+        "launch_wall_seconds": 1746.106330125942,
+        "descendants_cleared": true,
+        "rss_peak_bytes": 2495225856,
+        "swap_peak_bytes": 0,
+        "exact_counts": true,
+        "numeric_io": {
+          "started": 116,
+          "completed": 116,
+          "bytes_completed": 140816723,
+          "wall_completed_seconds": 1.361481950734742
+        },
+        "actions_lower": 2133,
+        "actions_upper": 2133,
+        "audits_lower": 17,
+        "audits_upper": 17,
+        "updates_lower": 1024,
+        "updates_upper": 1024,
+        "arnoldi_lower": 0,
+        "arnoldi_upper": 0
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gnn_10240_a0_run16_20261001T042320972248Z",
+        "stage": "R_GNN",
+        "family": "GNN",
+        "algorithm": "R",
+        "classification": "COMPLETED",
+        "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+        "launch_wall_seconds": 1336.4189037618926,
+        "descendants_cleared": true,
+        "rss_peak_bytes": 2495766528,
+        "swap_peak_bytes": 0,
+        "exact_counts": true,
+        "numeric_io": {
+          "started": 116,
+          "completed": 116,
+          "bytes_completed": 140816723,
+          "wall_completed_seconds": 1.3766434933058918
+        },
+        "actions_lower": 2133,
+        "actions_upper": 2133,
+        "audits_lower": 17,
+        "audits_upper": 17,
+        "updates_lower": 1024,
+        "updates_upper": 1024,
+        "arnoldi_lower": 0,
+        "arnoldi_upper": 0
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gpoly_11264_a0_run17_20261001T044538075169Z",
+        "stage": "R_GPOLY",
+        "family": "GPOLY",
+        "algorithm": "R",
+        "classification": "COMPLETED",
+        "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+        "launch_wall_seconds": 1326.5907117989846,
+        "descendants_cleared": true,
+        "rss_peak_bytes": 2495668224,
+        "swap_peak_bytes": 0,
+        "exact_counts": true,
+        "numeric_io": {
+          "started": 116,
+          "completed": 116,
+          "bytes_completed": 140816723,
+          "wall_completed_seconds": 1.2627456824993715
+        },
+        "actions_lower": 2133,
+        "actions_upper": 2133,
+        "audits_lower": 17,
+        "audits_upper": 17,
+        "updates_lower": 1024,
+        "updates_upper": 1024,
+        "arnoldi_lower": 0,
+        "arnoldi_upper": 0
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gnn_11264_a0_run18_20261001T050744593665Z",
+        "stage": "R_GNN",
+        "family": "GNN",
+        "algorithm": "R",
+        "classification": "COMPLETED",
+        "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+        "launch_wall_seconds": 1340.044701935025,
+        "descendants_cleared": true,
+        "rss_peak_bytes": 2496077824,
+        "swap_peak_bytes": 0,
+        "exact_counts": true,
+        "numeric_io": {
+          "started": 116,
+          "completed": 116,
+          "bytes_completed": 140816723,
+          "wall_completed_seconds": 1.349207229213789
+        },
+        "actions_lower": 2133,
+        "actions_upper": 2133,
+        "audits_lower": 17,
+        "audits_upper": 17,
+        "updates_lower": 1024,
+        "updates_upper": 1024,
+        "arnoldi_lower": 0,
+        "arnoldi_upper": 0
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gpoly_12288_a0_run19_20261001T053004942897Z",
+        "stage": "R_GPOLY",
+        "family": "GPOLY",
+        "algorithm": "R",
+        "classification": "COMPLETED",
+        "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+        "launch_wall_seconds": 1341.3389409879455,
+        "descendants_cleared": true,
+        "rss_peak_bytes": 2495893504,
+        "swap_peak_bytes": 0,
+        "exact_counts": true,
+        "numeric_io": {
+          "started": 116,
+          "completed": 116,
+          "bytes_completed": 140816723,
+          "wall_completed_seconds": 1.3834711473900825
+        },
+        "actions_lower": 2133,
+        "actions_upper": 2133,
+        "audits_lower": 17,
+        "audits_upper": 17,
+        "updates_lower": 1024,
+        "updates_upper": 1024,
+        "arnoldi_lower": 0,
+        "arnoldi_upper": 0
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gnn_12288_a0_run20_20261001T055226629225Z",
+        "stage": "R_GNN",
+        "family": "GNN",
+        "algorithm": "R",
+        "classification": "COMPLETED",
+        "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+        "launch_wall_seconds": 1734.3803325810004,
+        "descendants_cleared": true,
+        "rss_peak_bytes": 2496196608,
+        "swap_peak_bytes": 0,
+        "exact_counts": true,
+        "numeric_io": {
+          "started": 73,
+          "completed": 73,
+          "bytes_completed": 88720214,
+          "wall_completed_seconds": 0.9670411761617288
+        },
+        "actions_lower": 1333,
+        "actions_upper": 1333,
+        "audits_lower": 11,
+        "audits_upper": 11,
+        "updates_lower": 639,
+        "updates_upper": 639,
+        "arnoldi_lower": 0,
+        "arnoldi_upper": 0
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gpoly_13312_a0_run21_20261001T062121347619Z",
+        "stage": "R_GPOLY",
+        "family": "GPOLY",
+        "algorithm": "R",
+        "classification": "COMPLETED",
+        "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+        "launch_wall_seconds": 1583.2084020510083,
+        "descendants_cleared": true,
+        "rss_peak_bytes": 2496294912,
+        "swap_peak_bytes": 0,
+        "exact_counts": true,
+        "numeric_io": {
+          "started": 64,
+          "completed": 64,
+          "bytes_completed": 77903446,
+          "wall_completed_seconds": 0.8949389982735738
+        },
+        "actions_lower": 1136,
+        "actions_upper": 1136,
+        "audits_lower": 10,
+        "audits_upper": 10,
+        "updates_lower": 543,
+        "updates_upper": 543,
+        "arnoldi_lower": 0,
+        "arnoldi_upper": 0
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_verify_run22_20261001T064837741706Z",
+        "stage": "VERIFY",
+        "family": null,
+        "algorithm": "V",
+        "classification": "COMPLETED",
+        "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+        "launch_wall_seconds": 37.63736118900124,
+        "descendants_cleared": true,
+        "rss_peak_bytes": 667324416,
+        "swap_peak_bytes": 0,
+        "exact_counts": true,
+        "numeric_io": {
+          "started": 0,
+          "completed": 0,
+          "bytes_completed": 0,
+          "wall_completed_seconds": 0.0
+        },
+        "actions_lower": 9,
+        "actions_upper": 9,
+        "audits_lower": 9,
+        "audits_upper": 9,
+        "updates_lower": 0,
+        "updates_upper": 0,
+        "arnoldi_lower": 0,
+        "arnoldi_upper": 0
+      }
+    ],
+    "cooldown_seconds": 0.0,
+    "reentries": 0,
+    "repairs": [],
+    "closed": true,
+    "routes": {
+      "GPOLY": {
+        "wall_seconds": 9948.695334082935,
+        "G_wall_seconds": 214.85193848004565,
+        "actions_upper": 16729,
+        "new_updates": 6484,
+        "reentries": 0,
+        "correction_restarts": 0,
+        "status": "READY",
+        "arnoldi_upper": {
+          "G64": 1024,
+          "G256": 2048
+        }
+      },
+      "GNN": {
+        "wall_seconds": 9947.008412787924,
+        "G_wall_seconds": 215.84472216607537,
+        "actions_upper": 15269,
+        "new_updates": 5784,
+        "reentries": 0,
+        "correction_restarts": 0,
+        "status": "READY",
+        "arnoldi_upper": {
+          "G64": 1024,
+          "G256": 2048
+        }
+      }
+    }
+  },
+  "auxiliary_record_cutoff": "2026-10-01T07:11Z after collect2; subsequent publication/Git total elapsed in delivery receipt",
+  "new_implementation_publication_Git_elapsed_scope": "included in immutable campaign elapsed; not added to formal supervised total"
+}

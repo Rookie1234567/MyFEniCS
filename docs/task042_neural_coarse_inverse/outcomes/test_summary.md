@@ -1,3 +1,18 @@
+# V18测试与可信边界
+
+| measured检查 | 实际结果 | 证据/限制 |
+|---|---|---|
+| 计划F0纯小回归/既有共享监督/LSQR资格 | 首轮43通过/2夹具失败，最小修复后45通过；最终数值实现45通过 | 真BarAction、40port、dat→Stage、info/callback/zero、故障边界、进程树deadline |
+| 8个dat的真实schema/stage注册、validate-only、定向compileall | PASS | 入口已实现后验证，正式每个slice为独立dat |
+| 后置raw reader反例 | 15 passed | hash、z组成、原残差伪status、非有限/预算 |
+| 原数组独立读取 | EVIDENCE_CONSISTENT；严格0/8 | 不信已存status；无新增S/求解 |
+| 真实F0及冻结后一次FE | 两接口PASS，物理0/8 | 10次预检底层作用，不重复旧长试验 |
+| CI/full repository/MPI2/MPI4/Ruff | not_run | 本批serial1；Ruff不可用，不安装；未声称CI |
+
+[test records](records/test_records_v18.json)、[原始Gate](records/qualification_and_dispatch_v18.json)、[静态/历史保护](records/static_checks_v18.json)。测试后置reader不改变正式数值source；仅文档变化不重复昂贵FE。
+
+以下历史正文逐字保留；旧版本的“当前”仅指其当时阶段。
+
 # V17：恢复、冻结证据与接线的实际检查
 
 | 检查／范围 | 实际结果 | 证据和限制 |

@@ -1,0 +1,95 @@
+{
+  "merge_approval": false,
+  "groups": [
+    {
+      "group": "production numerical/core repair candidate",
+      "changes": [
+        "resumable_trace_study close caller"
+      ],
+      "behavior": "correct public full-z close consumption; no default restart/physics change",
+      "depends": [
+        "augmented_trace_lsqr.BarAction",
+        "gmres_cycle_commit"
+      ],
+      "tests": [
+        "test_genuine_close_full_state_and_duplicate_caller_negative",
+        "test_info_callback_zero_rhs_and_fixed_physical_denominator",
+        "test_return_survives_close_audit_writer_failures_no_arnoldi_replay",
+        "test_atomic_writer_failure_and_nonfinite_hash_rollback",
+        "test_two_cycle_independent_reader",
+        "test_all_actual_dat_schema_registration_and_ref_barrier",
+        "test_real_dat_to_actual_stage_gmres_close_save_audit",
+        "test_explicit_library_kill_accounting_and_budget_never_refresh",
+        "test_compensation_epoch_uses_full_close_not_duplicate_port"
+      ],
+      "fresh_PDE_evidence": "all V18 G64/G256 runs",
+      "order": 1,
+      "qualified_production_default": false
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "changes": [
+        "existing thin v17 driver/watchdog opt-in batch v18",
+        "run_case schema/stage registration"
+      ],
+      "depends": [
+        "residual_completion_window",
+        "shared .5s process-tree supervisor"
+      ],
+      "tests": [
+        "deadline/orphans/siblings",
+        "actual dat-to-stage"
+      ],
+      "order": 2
+    },
+    {
+      "group": "checker/benchmark",
+      "changes": [
+        "gmres_residual_completion_check",
+        "v18 evidence tests"
+      ],
+      "depends": [
+        "original hash-bound raw states",
+        "existing equation/field gate readers"
+      ],
+      "tests": [
+        "15 counterexamples",
+        "actual raw 0/8 reclassification"
+      ],
+      "order": 3
+    },
+    {
+      "group": "compact evidence/docs",
+      "changes": [
+        "response_v18",
+        "outcomes",
+        "compact records",
+        "latest nav and two ledgers"
+      ],
+      "behavior": "preserve historical body/negative results",
+      "depends": [
+        "run source d3e5800",
+        "static/protected-history checks"
+      ],
+      "order": 4
+    },
+    {
+      "group": "research-only",
+      "changes": [
+        "V18 explicit solver/queue/window",
+        "8 dat/json profiles"
+      ],
+      "behavior": "G64/G256 and resumed LSQR research; no physical qualification",
+      "qualified_production_default": false
+    },
+    {
+      "group": "do-not-merge",
+      "changes": [
+        "ignored large arrays/raw/cache/env",
+        "new global factor",
+        "automatic larger-model launch"
+      ],
+      "present_in_commit": false
+    }
+  ]
+}

@@ -1,0 +1,185 @@
+{
+  "utc": "2026-10-01T07:13:00.638153+00:00",
+  "owned_numerical_workers_live": [],
+  "observed_pids_checked": 109,
+  "pid_reuse_not_signaled": [],
+  "dedicated_own_lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+  "own_lock_available": true,
+  "lock_file_retained": true,
+  "queue_closed": true,
+  "active": null,
+  "no_foreign_process_signals": true,
+  "formal_and_auxiliary_sources": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/reader_actual1/summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/abi1/summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/targeted_final/summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/validate1/summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/targeted1/summary.json",
+      "descendants_cleared": true,
+      "classification": "WORKER_FAILED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/collect2/summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/targeted2/summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/reader_tests1/summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/queue_verify_1/summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/queue_solve_1/summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/collect1/summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_preflight_run0_20261001T011522556420Z/run_summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_g64_gpoly_8_a0_run1_20261001T011602768477Z/run_summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_g64_gnn_8_a0_run2_20261001T011641090800Z/run_summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_g64_gpoly_16_a0_run3_20261001T011718460588Z/run_summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_g64_gnn_16_a0_run4_20261001T011756134402Z/run_summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_g256_gpoly_4_a0_run5_20261001T011833571793Z/run_summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_g256_gnn_4_a0_run6_20261001T011943670361Z/run_summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_g256_gpoly_8_a0_run7_20261001T012053547473Z/run_summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_g256_gnn_8_a0_run8_20261001T012205820656Z/run_summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gpoly_7168_a0_run9_20261001T012315836163Z/run_summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gnn_7168_a0_run10_20261001T014032350104Z/run_summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gpoly_8192_a0_run11_20261001T020236628470Z/run_summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gnn_8192_a0_run12_20261001T022500370876Z/run_summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gpoly_9216_a0_run13_20261001T024725682003Z/run_summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gnn_9216_a0_run14_20261001T031002900719Z/run_summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gpoly_10240_a0_run15_20261001T035414591809Z/run_summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gnn_10240_a0_run16_20261001T042320972248Z/run_summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gpoly_11264_a0_run17_20261001T044538075169Z/run_summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gnn_11264_a0_run18_20261001T050744593665Z/run_summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gpoly_12288_a0_run19_20261001T053004942897Z/run_summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gnn_12288_a0_run20_20261001T055226629225Z/run_summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_r_gpoly_13312_a0_run21_20261001T062121347619Z/run_summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v18_verify_run22_20261001T064837741706Z/run_summary.json",
+      "descendants_cleared": true,
+      "classification": "COMPLETED"
+    }
+  ],
+  "all_formal_descendants_cleared": true
+}

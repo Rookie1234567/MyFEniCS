@@ -1,0 +1,7524 @@
+{
+  "plan": {
+    "path": "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/gmres_residual_completion_v18.json",
+    "sha256": "a4e093f3146c711fa835cce189989e8c8b32bb99ce642e2d808fe2c8635e8230",
+    "bytes": 28874
+  },
+  "initial_states": {
+    "GPOLY": {
+      "logical_iteration": 6347,
+      "epoch_iteration": 6347,
+      "mode": {
+        "mode": "CONTINUOUS_LEGACY_GK",
+        "epoch": 0,
+        "legacy_persisted_iteration": 256,
+        "legacy_observed_iteration": 816
+      },
+      "source_sha": "59feb6570a74d72aa501853807013711d89279cd",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GPOLY/states/task042_v17_gpoly_6656_a0_run25_20260930T204048249415Z/E0_ITER_6347.npz",
+        "sha256": "e4b8495c6cd9fdc1e2f0723b64ecbc0732f911e62cb74c04307f13678e1d8602",
+        "y_sha256": "3a95e3a1761f020947f20b0d2c97ec4e5a77a7548b2d15657d89574a2a77c8d9",
+        "v_sha256": "481a149fec20be6ebea5a308bc4511c56fa7f0cb6a674d5985be74b81428812f",
+        "c_sha256": "d3a4c7fd045b26773bbb6c3c18586e9429d53d706187de944ecc3612d3d752a3",
+        "trace_sha256": "ff447bc2a6aa5fb9051ca33491c41d7e3bf2d8ea445560af29d058c098f5e650",
+        "port_sha256": "cc67bf7069a7c0ab8c8f2dc178ad774f6de04e0a991e8f9d1e4eafd38c9b5c4a",
+        "z_sha256": "d997814774a360fd952172d7d0b29088cfb02cca1c32ea60b4890ba79ba6037e",
+        "residual_sha256": "62960692a9d6d2a1f04f15adb7a08e118443288cf29494ddf1161673652d52a7"
+      },
+      "original_residual_identity_relative": 5.466748556711976e-13,
+      "estimated_residual_norm": 4.053058369082648e-05,
+      "true_projected_residual_norm": 4.0530583690826785e-05,
+      "recurrence_gap": 7.52350036055767e-15,
+      "audit_pending": false,
+      "new_updates_this_run": 203,
+      "Phi": 1.2015805404831957e-07,
+      "action_counts": {
+        "S": 227,
+        "SH": 203,
+        "audit": 4
+      },
+      "audit": {
+        "schur_relative": 0.000490220468867467,
+        "augmented_relative": 0.0001901093516400638,
+        "native_relative": 0.0001901093516400638,
+        "original_total_augmented_relative": 6.59678283643863e-05,
+        "port_absolute": 3.9405348057058653e-17,
+        "port_full_rhs_relative": 1.8483141588630411e-16,
+        "port_operation_relative": 6.793627681290528e-17,
+        "recovery_relative": 4.636854969634494e-13,
+        "schur_original_identity_operation_relative": 5.261117236718547e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.631473861305276,
+        "port_unknown_norm": 0.19744539779035541,
+        "strict_pass": false
+      },
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 0.000490220468867467,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      }
+    },
+    "GNN": {
+      "logical_iteration": 6119,
+      "epoch_iteration": 6119,
+      "mode": {
+        "mode": "INITIALIZE_ORIGINAL_F",
+        "epoch": 0,
+        "legacy_persisted_iteration": 0,
+        "legacy_observed_iteration": 85
+      },
+      "source_sha": "59feb6570a74d72aa501853807013711d89279cd",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GNN/states/task042_v17_gnn_6144_a0_run24_20260930T203007859896Z/E0_ITER_6119.npz",
+        "sha256": "4006c7946e318f86e5fd785ccdc078fb819b70be5b32b3ef97743eeeabcecd32",
+        "y_sha256": "2bbbc9a46481f2316d4d77de8760c381cdf7649f5bda0972810a4546ff136dcd",
+        "v_sha256": "d5199a56c8dc01105f3656ebfd8db8e46965885e0619192c859d7fd25bfa5a08",
+        "c_sha256": "f3b7ef8b453357374901a4f8b958e6be158d8ff6028e0f6ff41c121e9f3f446c",
+        "trace_sha256": "cb42a6f6f860a0b12550bf9cf4e9a9ebd5f6d633ba2441337e531a23adca0586",
+        "port_sha256": "ae9142162743df8402458c26ce5162c58783f8f510b7227bc8fdeb5e982e700c",
+        "z_sha256": "ecb1acbca6207b5383e4916776da49d5d956f802051fc39972b27207c4868f72",
+        "residual_sha256": "f0e40fc7ef6085abf30a5babfaa45e27617d5b777ed882b52864f7a83c48d1a0"
+      },
+      "original_residual_identity_relative": 5.377050309273817e-13,
+      "estimated_residual_norm": 4.9150340798466774e-05,
+      "true_projected_residual_norm": 4.915034079847105e-05,
+      "recurrence_gap": 8.699476439587005e-14,
+      "audit_pending": false,
+      "new_updates_this_run": 487,
+      "Phi": 1.7670150031932354e-07,
+      "action_counts": {
+        "S": 531,
+        "SH": 487,
+        "audit": 8
+      },
+      "audit": {
+        "schur_relative": 0.0005944770816765329,
+        "augmented_relative": 0.00023054046034317802,
+        "native_relative": 0.000230540460343178,
+        "original_total_augmented_relative": 7.999739826397562e-05,
+        "port_absolute": 3.940534276780315e-17,
+        "port_full_rhs_relative": 1.848313910769665e-16,
+        "port_operation_relative": 6.794510672861405e-17,
+        "recovery_relative": 4.6800131549809e-13,
+        "schur_original_identity_operation_relative": 5.302067774624818e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.631267952849584,
+        "port_unknown_norm": 0.19741971176158027,
+        "strict_pass": false
+      },
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 0.0005944770816765329,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      }
+    }
+  },
+  "initial_recursions": {
+    "GPOLY": {
+      "directory": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GPOLY/rolling",
+      "identity": {
+        "algorithm": "complex-lsqr-gk-v1",
+        "dtype": "complex128",
+        "family": "GPOLY",
+        "action_sha256": "9196edb807b534217d0c0eb78882125341342784a48ef20ebe2d9421fe636454",
+        "physical_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "master_sha256": "edb31a5bbf505f1e3916d8491865905ab9a41a6254dcedf751e80607b8c38d0a",
+        "rhs_sha256": "b3a366ccb183d1a6ca401a178ff4c4ecee8786d601ea38d865d55f8f6648e56b",
+        "Q": {
+          "G0": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v14/task042_v14_decoder_20260930T062524338233Z/ORIGIN/Q.npy",
+            "sha256": "a60fa21eae281049db72f3b27989f31f2a9d0fdd89820e35a3011c05c23dfc36",
+            "shape": [
+              18144,
+              1560
+            ]
+          },
+          "complement": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v15/task042_v15_union_poly_20260930T094454893111Z/POLY_complement.npy",
+            "sha256": "4f879b18460a4987f8627c7ccedecb86692505274277d56a972f179046960cc7",
+            "shape": [
+              18144,
+              1538
+            ],
+            "take_columns": 1538
+          },
+          "columns": 3098,
+          "canonical_master_sha256": "edb31a5bbf505f1e3916d8491865905ab9a41a6254dcedf751e80607b8c38d0a",
+          "both_contain_random_neural_G0": true
+        },
+        "U_sha256": "ef33a2b7d2d698cb6a70ef4a1c91c4aac6ac7b0461ba61f2484afd491c944ff8",
+        "R_sha256": "e2f1fde3a7dbb17c16bd55fa3a4fa981e023b6157d0039f2895a92d36f5aba9a",
+        "window_sha256": "fcb4e1895db87efa268bb847cf7114b404bc4dd120405f4dc32803b6da9e9a80"
+      },
+      "generation": 607,
+      "arrays_sha256": "17cc75177637638fc5ae3743e359811ff1d0d4e1332785c3748b71ed4a0b1349",
+      "manifest_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GPOLY/rolling/slot1.json",
+      "manifest_sha256": "5b8e6ead76998b2889695e2d9e1c7265e9ca972f042efb515385da5557eb9d41",
+      "old_source": "59feb6570a74d72aa501853807013711d89279cd",
+      "logical_iteration": 6347
+    },
+    "GNN": {
+      "directory": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GNN/rolling",
+      "identity": {
+        "algorithm": "complex-lsqr-gk-v1",
+        "dtype": "complex128",
+        "family": "GNN",
+        "action_sha256": "9196edb807b534217d0c0eb78882125341342784a48ef20ebe2d9421fe636454",
+        "physical_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "master_sha256": "edb31a5bbf505f1e3916d8491865905ab9a41a6254dcedf751e80607b8c38d0a",
+        "rhs_sha256": "b3a366ccb183d1a6ca401a178ff4c4ecee8786d601ea38d865d55f8f6648e56b",
+        "Q": {
+          "G0": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v14/task042_v14_decoder_20260930T062524338233Z/ORIGIN/Q.npy",
+            "sha256": "a60fa21eae281049db72f3b27989f31f2a9d0fdd89820e35a3011c05c23dfc36",
+            "shape": [
+              18144,
+              1560
+            ]
+          },
+          "complement": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v15/task042_v15_union_poly_20260930T094454893111Z/NN_complement.npy",
+            "sha256": "6d853ae086b8b2a33df010c93b3bd09e3ea77aa96f70ff3922f0a4f0e4366c1d",
+            "shape": [
+              18144,
+              1544
+            ],
+            "take_columns": 1538
+          },
+          "columns": 3098,
+          "canonical_master_sha256": "edb31a5bbf505f1e3916d8491865905ab9a41a6254dcedf751e80607b8c38d0a",
+          "both_contain_random_neural_G0": true
+        },
+        "U_sha256": "95f1ac81f83b65707da8b3a303c8ced5cd82eae0275641701884a8d907ff59b5",
+        "R_sha256": "d911910bd9db6b7076706aced7ec5be491145d0d797248bf0b62db3842740213",
+        "window_sha256": "fcb4e1895db87efa268bb847cf7114b404bc4dd120405f4dc32803b6da9e9a80"
+      },
+      "generation": 606,
+      "arrays_sha256": "bc4389eb43b9a6db71199b97aa3e43f9f8fd86afab37198104cf1171cd3de6df",
+      "manifest_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v17/GNN/rolling/slot0.json",
+      "manifest_sha256": "167c407a865e47ee97df1f5f3179900b7126d6769f751cb89c54ffa8e43d9fe0",
+      "old_source": "59feb6570a74d72aa501853807013711d89279cd",
+      "logical_iteration": 6119
+    }
+  },
+  "material": {
+    "status": "MATERIAL_READY_USER_SUPPLIED",
+    "material_table_id": "SI_OPTICAL_CONSTANTS_USER_20260929_V1",
+    "canonical_path": "/home/fenics/Projects/NN-Lab/input/materials/si_optical_constants_v1.json",
+    "material_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+    "query_wavelength_nm": "0.7",
+    "nominal_wavelength_nm": "0.7",
+    "source_wavelength_nm": "0.699999988",
+    "delta": "0.000114859526",
+    "beta": "4.32477054E-06",
+    "n_decimal": [
+      "0.999885140474",
+      "0.00000432477054"
+    ],
+    "epsilon_decimal": [
+      "0.9997702941220070727210241084",
+      "0.00000864854759781143367192"
+    ],
+    "source_kind": "user_supplied/user_authorized",
+    "source": {
+      "review_path": "docs/task042_neural_coarse_inverse/review_report_v4.md",
+      "review_commit": "18084a6213570e26a0a0941e628717f2c63fd00a",
+      "review_blob": "a0e0c106970eab91271d61981810544146c4a32f"
+    },
+    "alias_reason": "Review V4 explicitly authorizes source 0.699999988 for nominal 0.7; no interpolation; solve uses nominal 0.7",
+    "time_convention": "exp(-i omega t)",
+    "external_dataset_version": "not_provided",
+    "n_loaded": [
+      0.999885140474,
+      4.32477054e-06
+    ],
+    "epsilon_loaded": [
+      0.9997702941220071,
+      8.648547597811433e-06
+    ],
+    "air_n": [
+      1.0,
+      0.0
+    ],
+    "mu_r": [
+      1.0,
+      0.0
+    ]
+  },
+  "physical_identity": {
+    "status": "MATERIAL_READY_USER_SUPPLIED",
+    "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+    "full_channel_inventory": [
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 0,
+        "side": "top",
+        "m": -3,
+        "n": -1,
+        "polarization": "s",
+        "alpha": {
+          "real": -4.489356590207668,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": -5.983986006837701,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 4.960422166357995,
+          "imag": 0.0
+        },
+        "k_vector": [
+          {
+            "real": -4.489356590207668,
+            "imag": 0.0
+          },
+          {
+            "real": -5.983986006837701,
+            "imag": 0.0
+          },
+          {
+            "real": 4.960422166357995,
+            "imag": 0.0
+          }
+        ],
+        "e_vector": [
+          {
+            "real": 0.7999122734807461,
+            "imag": -0.0
+          },
+          {
+            "real": -0.6001169508811294,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": 0.33164442810710654,
+            "imag": 0.0
+          },
+          {
+            "real": 0.44205791568604624,
+            "imag": 0.0
+          },
+          {
+            "real": 0.8334247251460797,
+            "imag": -0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "vertical_sign": 1,
+        "electric_tangential_norm_sq": 0.9999999999999998,
+        "power_per_unit_amplitude": 0.4061852515594194,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 1.4699999999999998,
+        "traction_vector": [
+          {
+            "real": 0.0,
+            "imag": 3.9679025725157118
+          },
+          {
+            "real": 0.0,
+            "imag": -2.9768334255579263
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 1,
+        "side": "top",
+        "m": -3,
+        "n": -1,
+        "polarization": "p",
+        "alpha": {
+          "real": -4.489356590207668,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": -5.983986006837701,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 4.960422166357995,
+          "imag": 0.0
+        },
+        "k_vector": [
+          {
+            "real": -4.489356590207668,
+            "imag": 0.0
+          },
+          {
+            "real": -5.983986006837701,
+            "imag": 0.0
+          },
+          {
+            "real": 4.960422166357995,
+            "imag": 0.0
+          }
+        ],
+        "e_vector": [
+          {
+            "real": 0.3316444281071066,
+            "imag": 0.0
+          },
+          {
+            "real": 0.44205791568604635,
+            "imag": 0.0
+          },
+          {
+            "real": 0.8334247251460798,
+            "imag": -0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": -0.7999122734807462,
+            "imag": 0.0
+          },
+          {
+            "real": 0.6001169508811294,
+            "imag": 0.0
+          },
+          {
+            "real": -2.4737647522494018e-17,
+            "imag": 0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "vertical_sign": 1,
+        "electric_tangential_norm_sq": 0.30540322751518145,
+        "power_per_unit_amplitude": 0.4061852515594195,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 0.44894274444731674,
+        "traction_vector": [
+          {
+            "real": 0.0,
+            "imag": 5.38663715480818
+          },
+          {
+            "real": 0.0,
+            "imag": 7.179995776809777
+          },
+          {
+            "real": 0.0,
+            "imag": -0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 2,
+        "side": "top",
+        "m": -3,
+        "n": 0,
+        "polarization": "s",
+        "alpha": {
+          "real": -4.489356590207668,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": 0.0,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 7.772636399480241,
+          "imag": 0.0
+        },
+        "k_vector": [
+          {
+            "real": -4.489356590207668,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 7.772636399480241,
+            "imag": 0.0
+          }
+        ],
+        "e_vector": [
+          {
+            "real": -0.0,
+            "imag": 0.0
+          },
+          {
+            "real": -1.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": 0.8659374526832905,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.5001523048436087,
+            "imag": -0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "vertical_sign": 1,
+        "electric_tangential_norm_sq": 1.0,
+        "power_per_unit_amplitude": 0.6364640277222186,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 1.47,
+        "traction_vector": [
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": -7.772636399480241
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 3,
+        "side": "top",
+        "m": -3,
+        "n": 0,
+        "polarization": "p",
+        "alpha": {
+          "real": -4.489356590207668,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": 0.0,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 7.772636399480241,
+          "imag": 0.0
+        },
+        "k_vector": [
+          {
+            "real": -4.489356590207668,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 7.772636399480241,
+            "imag": 0.0
+          }
+        ],
+        "e_vector": [
+          {
+            "real": 0.8659374526832905,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.5001523048436087,
+            "imag": -0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 1.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "vertical_sign": 1,
+        "electric_tangential_norm_sq": 0.749847671959626,
+        "power_per_unit_amplitude": 0.6364640277222186,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 1.1022760777806502,
+        "traction_vector": [
+          {
+            "real": 0.0,
+            "imag": 8.975979010256552
+          },
+          {
+            "real": -0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 4,
+        "side": "top",
+        "m": -3,
+        "n": 1,
+        "polarization": "s",
+        "alpha": {
+          "real": -4.489356590207668,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": 5.983986006837701,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 4.960422166357995,
+          "imag": 0.0
+        },
+        "k_vector": [
+          {
+            "real": -4.489356590207668,
+            "imag": 0.0
+          },
+          {
+            "real": 5.983986006837701,
+            "imag": 0.0
+          },
+          {
+            "real": 4.960422166357995,
+            "imag": 0.0
+          }
+        ],
+        "e_vector": [
+          {
+            "real": -0.7999122734807461,
+            "imag": 0.0
+          },
+          {
+            "real": -0.6001169508811294,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": 0.33164442810710654,
+            "imag": 0.0
+          },
+          {
+            "real": -0.44205791568604624,
+            "imag": 0.0
+          },
+          {
+            "real": 0.8334247251460797,
+            "imag": -0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "vertical_sign": 1,
+        "electric_tangential_norm_sq": 0.9999999999999998,
+        "power_per_unit_amplitude": 0.4061852515594194,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 1.4699999999999998,
+        "traction_vector": [
+          {
+            "real": 0.0,
+            "imag": -3.9679025725157118
+          },
+          {
+            "real": 0.0,
+            "imag": -2.9768334255579263
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 5,
+        "side": "top",
+        "m": -3,
+        "n": 1,
+        "polarization": "p",
+        "alpha": {
+          "real": -4.489356590207668,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": 5.983986006837701,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 4.960422166357995,
+          "imag": 0.0
+        },
+        "k_vector": [
+          {
+            "real": -4.489356590207668,
+            "imag": 0.0
+          },
+          {
+            "real": 5.983986006837701,
+            "imag": 0.0
+          },
+          {
+            "real": 4.960422166357995,
+            "imag": 0.0
+          }
+        ],
+        "e_vector": [
+          {
+            "real": 0.3316444281071066,
+            "imag": 0.0
+          },
+          {
+            "real": -0.44205791568604635,
+            "imag": 0.0
+          },
+          {
+            "real": 0.8334247251460798,
+            "imag": -0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": 0.7999122734807462,
+            "imag": 0.0
+          },
+          {
+            "real": 0.6001169508811294,
+            "imag": 0.0
+          },
+          {
+            "real": 2.4737647522494018e-17,
+            "imag": -0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "vertical_sign": 1,
+        "electric_tangential_norm_sq": 0.30540322751518145,
+        "power_per_unit_amplitude": 0.4061852515594195,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 0.44894274444731674,
+        "traction_vector": [
+          {
+            "real": 0.0,
+            "imag": 5.38663715480818
+          },
+          {
+            "real": 0.0,
+            "imag": -7.179995776809777
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 6,
+        "side": "top",
+        "m": -2,
+        "n": -1,
+        "polarization": "s",
+        "alpha": {
+          "real": -0.0013670850793925382,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": -5.983986006837701,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 6.690299604174327,
+          "imag": 0.0
+        },
+        "k_vector": [
+          {
+            "real": -0.0013670850793925382,
+            "imag": 0.0
+          },
+          {
+            "real": -5.983986006837701,
+            "imag": 0.0
+          },
+          {
+            "real": 6.690299604174327,
+            "imag": 0.0
+          }
+        ],
+        "e_vector": [
+          {
+            "real": 0.9999999739036398,
+            "imag": -0.0
+          },
+          {
+            "real": -0.00022845725945122052,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": 0.00017028198380708622,
+            "imag": 0.0
+          },
+          {
+            "real": 0.7453559574879883,
+            "imag": 0.0
+          },
+          {
+            "real": 0.6666666840642403,
+            "imag": -0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "vertical_sign": 1,
+        "electric_tangential_norm_sq": 0.9999999999999997,
+        "power_per_unit_amplitude": 0.5478366430502136,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 1.4699999999999995,
+        "traction_vector": [
+          {
+            "real": 0.0,
+            "imag": 6.6902994295818585
+          },
+          {
+            "real": 0.0,
+            "imag": -0.001528447512477252
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 7,
+        "side": "top",
+        "m": -2,
+        "n": -1,
+        "polarization": "p",
+        "alpha": {
+          "real": -0.0013670850793925382,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": -5.983986006837701,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 6.690299604174327,
+          "imag": 0.0
+        },
+        "k_vector": [
+          {
+            "real": -0.0013670850793925382,
+            "imag": 0.0
+          },
+          {
+            "real": -5.983986006837701,
+            "imag": 0.0
+          },
+          {
+            "real": 6.690299604174327,
+            "imag": 0.0
+          }
+        ],
+        "e_vector": [
+          {
+            "real": 0.00017028198380708627,
+            "imag": 0.0
+          },
+          {
+            "real": 0.7453559574879884,
+            "imag": 0.0
+          },
+          {
+            "real": 0.6666666840642405,
+            "imag": -0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": -0.9999999739036399,
+            "imag": 0.0
+          },
+          {
+            "real": 0.00022845725945122054,
+            "imag": 0.0
+          },
+          {
+            "real": 2.4157858908685565e-20,
+            "imag": 0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "vertical_sign": 1,
+        "electric_tangential_norm_sq": 0.5555555323587901,
+        "power_per_unit_amplitude": 0.5478366430502138,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 0.8166666325674213,
+        "traction_vector": [
+          {
+            "real": 0.0,
+            "imag": 0.002050627565574891
+          },
+          {
+            "real": 0.0,
+            "imag": 8.975978776016172
+          },
+          {
+            "real": 0.0,
+            "imag": -0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 8,
+        "side": "top",
+        "m": -2,
+        "n": 0,
+        "polarization": "s",
+        "alpha": {
+          "real": -0.0013670850793925382,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": 0.0,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 8.975978906149711,
+          "imag": 0.0
+        },
+        "k_vector": [
+          {
+            "real": -0.0013670850793925382,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 8.975978906149711,
+            "imag": 0.0
+          }
+        ],
+        "e_vector": [
+          {
+            "real": -0.0,
+            "imag": 0.0
+          },
+          {
+            "real": -1.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": 0.9999999884016172,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.00015230484360874904,
+            "imag": -0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "vertical_sign": 1,
+        "electric_tangential_norm_sq": 1.0,
+        "power_per_unit_amplitude": 0.7349999914751887,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 1.47,
+        "traction_vector": [
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": -8.975978906149711
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 9,
+        "side": "top",
+        "m": -2,
+        "n": 0,
+        "polarization": "p",
+        "alpha": {
+          "real": -0.0013670850793925382,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": 0.0,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 8.975978906149711,
+          "imag": 0.0
+        },
+        "k_vector": [
+          {
+            "real": -0.0013670850793925382,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 8.975978906149711,
+            "imag": 0.0
+          }
+        ],
+        "e_vector": [
+          {
+            "real": 0.9999999884016174,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.00015230484360874907,
+            "imag": -0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 1.0000000000000002,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "vertical_sign": 1,
+        "electric_tangential_norm_sq": 0.9999999768032349,
+        "power_per_unit_amplitude": 0.7349999914751889,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 1.4699999659007554,
+        "traction_vector": [
+          {
+            "real": 0.0,
+            "imag": 8.975979010256554
+          },
+          {
+            "real": -0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 10,
+        "side": "top",
+        "m": -2,
+        "n": 1,
+        "polarization": "s",
+        "alpha": {
+          "real": -0.0013670850793925382,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": 5.983986006837701,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 6.690299604174327,
+          "imag": 0.0
+        },
+        "k_vector": [
+          {
+            "real": -0.0013670850793925382,
+            "imag": 0.0
+          },
+          {
+            "real": 5.983986006837701,
+            "imag": 0.0
+          },
+          {
+            "real": 6.690299604174327,
+            "imag": 0.0
+          }
+        ],
+        "e_vector": [
+          {
+            "real": -0.9999999739036398,
+            "imag": 0.0
+          },
+          {
+            "real": -0.00022845725945122052,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": 0.00017028198380708622,
+            "imag": 0.0
+          },
+          {
+            "real": -0.7453559574879883,
+            "imag": 0.0
+          },
+          {
+            "real": 0.6666666840642403,
+            "imag": -0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "vertical_sign": 1,
+        "electric_tangential_norm_sq": 0.9999999999999997,
+        "power_per_unit_amplitude": 0.5478366430502136,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 1.4699999999999995,
+        "traction_vector": [
+          {
+            "real": 0.0,
+            "imag": -6.6902994295818585
+          },
+          {
+            "real": 0.0,
+            "imag": -0.001528447512477252
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 11,
+        "side": "top",
+        "m": -2,
+        "n": 1,
+        "polarization": "p",
+        "alpha": {
+          "real": -0.0013670850793925382,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": 5.983986006837701,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 6.690299604174327,
+          "imag": 0.0
+        },
+        "k_vector": [
+          {
+            "real": -0.0013670850793925382,
+            "imag": 0.0
+          },
+          {
+            "real": 5.983986006837701,
+            "imag": 0.0
+          },
+          {
+            "real": 6.690299604174327,
+            "imag": 0.0
+          }
+        ],
+        "e_vector": [
+          {
+            "real": 0.00017028198380708627,
+            "imag": 0.0
+          },
+          {
+            "real": -0.7453559574879884,
+            "imag": 0.0
+          },
+          {
+            "real": 0.6666666840642405,
+            "imag": -0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": 0.9999999739036399,
+            "imag": 0.0
+          },
+          {
+            "real": 0.00022845725945122054,
+            "imag": 0.0
+          },
+          {
+            "real": -2.4157858908685565e-20,
+            "imag": 0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "vertical_sign": 1,
+        "electric_tangential_norm_sq": 0.5555555323587901,
+        "power_per_unit_amplitude": 0.5478366430502138,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 0.8166666325674213,
+        "traction_vector": [
+          {
+            "real": 0.0,
+            "imag": 0.002050627565574891
+          },
+          {
+            "real": 0.0,
+            "imag": -8.975978776016172
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 12,
+        "side": "top",
+        "m": -1,
+        "n": -1,
+        "polarization": "s",
+        "alpha": {
+          "real": 4.486622420048883,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": -5.983986006837701,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 4.962895316491319,
+          "imag": 0.0
+        },
+        "k_vector": [
+          {
+            "real": 4.486622420048883,
+            "imag": 0.0
+          },
+          {
+            "real": -5.983986006837701,
+            "imag": 0.0
+          },
+          {
+            "real": 4.962895316491319,
+            "imag": 0.0
+          }
+        ],
+        "e_vector": [
+          {
+            "real": 0.8000877286570669,
+            "imag": -0.0
+          },
+          {
+            "real": 0.5998830106382207,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": -0.33168043068474645,
+            "imag": 0.0
+          },
+          {
+            "real": 0.4423753260560312,
+            "imag": 0.0
+          },
+          {
+            "real": 0.8332419593357027,
+            "imag": 0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "vertical_sign": 1,
+        "electric_tangential_norm_sq": 0.9999999999999999,
+        "power_per_unit_amplitude": 0.4063877659977793,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 1.4699999999999998,
+        "traction_vector": [
+          {
+            "real": 0.0,
+            "imag": 3.9707516413343344
+          },
+          {
+            "real": 0.0,
+            "imag": 2.9771565839391374
+          },
+          {
+            "real": 0.0,
+            "imag": -0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 13,
+        "side": "top",
+        "m": -1,
+        "n": -1,
+        "polarization": "p",
+        "alpha": {
+          "real": 4.486622420048883,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": -5.983986006837701,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 4.962895316491319,
+          "imag": 0.0
+        },
+        "k_vector": [
+          {
+            "real": 4.486622420048883,
+            "imag": 0.0
+          },
+          {
+            "real": -5.983986006837701,
+            "imag": 0.0
+          },
+          {
+            "real": 4.962895316491319,
+            "imag": 0.0
+          }
+        ],
+        "e_vector": [
+          {
+            "real": -0.3316804306847465,
+            "imag": 0.0
+          },
+          {
+            "real": 0.4423753260560313,
+            "imag": 0.0
+          },
+          {
+            "real": 0.833241959335703,
+            "imag": 0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": -0.8000877286570669,
+            "imag": 0.0
+          },
+          {
+            "real": -0.5998830106382207,
+            "imag": 0.0
+          },
+          {
+            "real": -2.4737647522494018e-17,
+            "imag": 0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "vertical_sign": 1,
+        "electric_tangential_norm_sq": 0.3057078372023989,
+        "power_per_unit_amplitude": 0.4063877659977795,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 0.4493905206875264,
+        "traction_vector": [
+          {
+            "real": 0.0,
+            "imag": -5.384537312098177
+          },
+          {
+            "real": 0.0,
+            "imag": 7.181570658789672
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 14,
+        "side": "top",
+        "m": -1,
+        "n": 0,
+        "polarization": "s",
+        "alpha": {
+          "real": 4.486622420048883,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": 0.0,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 7.774214973389975,
+          "imag": 0.0
+        },
+        "k_vector": [
+          {
+            "real": 4.486622420048883,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 7.774214973389975,
+            "imag": 0.0
+          }
+        ],
+        "e_vector": [
+          {
+            "real": -0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 1.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": -0.8661133191718294,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.4998476951563912,
+            "imag": 0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "vertical_sign": 1,
+        "electric_tangential_norm_sq": 1.0,
+        "power_per_unit_amplitude": 0.6365932895912946,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 1.47,
+        "traction_vector": [
+          {
+            "real": -0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 7.774214973389975
+          },
+          {
+            "real": 0.0,
+            "imag": -0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 15,
+        "side": "top",
+        "m": -1,
+        "n": 0,
+        "polarization": "p",
+        "alpha": {
+          "real": 4.486622420048883,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": 0.0,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 7.774214973389975,
+          "imag": 0.0
+        },
+        "k_vector": [
+          {
+            "real": 4.486622420048883,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 7.774214973389975,
+            "imag": 0.0
+          }
+        ],
+        "e_vector": [
+          {
+            "real": -0.8661133191718294,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.4998476951563912,
+            "imag": 0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": -1.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "vertical_sign": 1,
+        "electric_tangential_norm_sq": 0.7501522816468433,
+        "power_per_unit_amplitude": 0.6365932895912946,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 1.1027238540208597,
+        "traction_vector": [
+          {
+            "real": 0.0,
+            "imag": -8.975979010256552
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 16,
+        "side": "top",
+        "m": -1,
+        "n": 1,
+        "polarization": "s",
+        "alpha": {
+          "real": 4.486622420048883,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": 5.983986006837701,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 4.962895316491319,
+          "imag": 0.0
+        },
+        "k_vector": [
+          {
+            "real": 4.486622420048883,
+            "imag": 0.0
+          },
+          {
+            "real": 5.983986006837701,
+            "imag": 0.0
+          },
+          {
+            "real": 4.962895316491319,
+            "imag": 0.0
+          }
+        ],
+        "e_vector": [
+          {
+            "real": -0.8000877286570669,
+            "imag": 0.0
+          },
+          {
+            "real": 0.5998830106382207,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": -0.33168043068474645,
+            "imag": 0.0
+          },
+          {
+            "real": -0.4423753260560312,
+            "imag": 0.0
+          },
+          {
+            "real": 0.8332419593357027,
+            "imag": 0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "vertical_sign": 1,
+        "electric_tangential_norm_sq": 0.9999999999999999,
+        "power_per_unit_amplitude": 0.4063877659977793,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 1.4699999999999998,
+        "traction_vector": [
+          {
+            "real": 0.0,
+            "imag": -3.9707516413343344
+          },
+          {
+            "real": 0.0,
+            "imag": 2.9771565839391374
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 17,
+        "side": "top",
+        "m": -1,
+        "n": 1,
+        "polarization": "p",
+        "alpha": {
+          "real": 4.486622420048883,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": 5.983986006837701,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 4.962895316491319,
+          "imag": 0.0
+        },
+        "k_vector": [
+          {
+            "real": 4.486622420048883,
+            "imag": 0.0
+          },
+          {
+            "real": 5.983986006837701,
+            "imag": 0.0
+          },
+          {
+            "real": 4.962895316491319,
+            "imag": 0.0
+          }
+        ],
+        "e_vector": [
+          {
+            "real": -0.3316804306847465,
+            "imag": 0.0
+          },
+          {
+            "real": -0.4423753260560313,
+            "imag": 0.0
+          },
+          {
+            "real": 0.833241959335703,
+            "imag": 0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": 0.8000877286570669,
+            "imag": 0.0
+          },
+          {
+            "real": -0.5998830106382207,
+            "imag": 0.0
+          },
+          {
+            "real": 2.4737647522494018e-17,
+            "imag": 0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "vertical_sign": 1,
+        "electric_tangential_norm_sq": 0.3057078372023989,
+        "power_per_unit_amplitude": 0.4063877659977795,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 0.4493905206875264,
+        "traction_vector": [
+          {
+            "real": 0.0,
+            "imag": -5.384537312098177
+          },
+          {
+            "real": 0.0,
+            "imag": -7.181570658789672
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 18,
+        "side": "top",
+        "m": 0,
+        "n": 0,
+        "polarization": "s",
+        "alpha": {
+          "real": 8.97461192517716,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": 0.0,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 0.15665243385951635,
+          "imag": 0.0
+        },
+        "k_vector": [
+          {
+            "real": 8.97461192517716,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.15665243385951635,
+            "imag": 0.0
+          }
+        ],
+        "e_vector": [
+          {
+            "real": -0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 1.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": -0.017452406437282755,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.9998476951563912,
+            "imag": 0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "vertical_sign": 1,
+        "electric_tangential_norm_sq": 1.0,
+        "power_per_unit_amplitude": 0.012827518731402825,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 1.47,
+        "traction_vector": [
+          {
+            "real": -0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.15665243385951635
+          },
+          {
+            "real": 0.0,
+            "imag": -0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 19,
+        "side": "top",
+        "m": 0,
+        "n": 0,
+        "polarization": "p",
+        "alpha": {
+          "real": 8.97461192517716,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": 0.0,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 0.15665243385951635,
+          "imag": 0.0
+        },
+        "k_vector": [
+          {
+            "real": 8.97461192517716,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.15665243385951635,
+            "imag": 0.0
+          }
+        ],
+        "e_vector": [
+          {
+            "real": -0.01745240643728276,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.9998476951563914,
+            "imag": 0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": -1.0000000000000002,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "vertical_sign": 1,
+        "electric_tangential_norm_sq": 0.0003045864904521087,
+        "power_per_unit_amplitude": 0.01282751873140283,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 0.0004477421409645998,
+        "traction_vector": [
+          {
+            "real": 0.0,
+            "imag": -8.975979010256554
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 20,
+        "side": "bottom",
+        "m": -3,
+        "n": -1,
+        "polarization": "s",
+        "alpha": {
+          "real": -4.489356590207668,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": -5.983986006837701,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 4.958556350844336,
+          "imag": 7.026217474247436e-05
+        },
+        "k_vector": [
+          {
+            "real": -4.489356590207668,
+            "imag": 0.0
+          },
+          {
+            "real": -5.983986006837701,
+            "imag": 0.0
+          },
+          {
+            "real": -4.958556350844336,
+            "imag": -7.026217474247436e-05
+          }
+        ],
+        "e_vector": [
+          {
+            "real": 0.7999122734807461,
+            "imag": -0.0
+          },
+          {
+            "real": -0.6001169508811294,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": -0.3315196832168072,
+            "imag": -4.697595885702236e-06
+          },
+          {
+            "real": -0.4418916398148882,
+            "imag": -6.261553850976274e-06
+          },
+          {
+            "real": 0.8334247251460797,
+            "imag": -0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 0.999885140474,
+          "imag": 4.32477054e-06
+        },
+        "vertical_sign": -1,
+        "electric_tangential_norm_sq": 0.9999999999999998,
+        "power_per_unit_amplitude": 0.4060324688489237,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 1.4699638505555863,
+        "traction_vector": [
+          {
+            "real": -5.620357593795412e-05,
+            "imag": 3.9664100837862852
+          },
+          {
+            "real": 4.216552206873081e-05,
+            "imag": -2.975713718040963
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 21,
+        "side": "bottom",
+        "m": -3,
+        "n": -1,
+        "polarization": "p",
+        "alpha": {
+          "real": -4.489356590207668,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": -5.983986006837701,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 4.958556350844336,
+          "imag": 7.026217474247436e-05
+        },
+        "k_vector": [
+          {
+            "real": -4.489356590207668,
+            "imag": 0.0
+          },
+          {
+            "real": -5.983986006837701,
+            "imag": 0.0
+          },
+          {
+            "real": -4.958556350844336,
+            "imag": -7.026217474247436e-05
+          }
+        ],
+        "e_vector": [
+          {
+            "real": -0.33155776578462687,
+            "imag": -3.264059536059784e-06
+          },
+          {
+            "real": -0.4419424011095991,
+            "imag": -4.350754099567616e-06
+          },
+          {
+            "real": 0.8335204628602758,
+            "imag": -3.605198833694458e-06
+          }
+        ],
+        "h_vector": [
+          {
+            "real": -0.7998203959021161,
+            "imag": -3.4594370347866507e-06
+          },
+          {
+            "real": 0.6000480217070564,
+            "imag": 2.595368109614824e-06
+          },
+          {
+            "real": 4.9475295044988036e-17,
+            "imag": 0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 0.999885140474,
+          "imag": 4.32477054e-06
+        },
+        "vertical_sign": -1,
+        "electric_tangential_norm_sq": 0.30524363798019444,
+        "power_per_unit_amplitude": 0.4060324688489239,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 0.4486971134429621,
+        "traction_vector": [
+          {
+            "real": 2.3295969675791888e-05,
+            "imag": -5.386018447988506
+          },
+          {
+            "real": 3.105183421154914e-05,
+            "imag": -7.179171085592479
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 22,
+        "side": "bottom",
+        "m": -3,
+        "n": 0,
+        "polarization": "s",
+        "alpha": {
+          "real": -4.489356590207668,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": 0.0,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 7.771445786441615,
+          "imag": 4.483064829471781e-05
+        },
+        "k_vector": [
+          {
+            "real": -4.489356590207668,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": -7.771445786441615,
+            "imag": -4.483064829471781e-05
+          }
+        ],
+        "e_vector": [
+          {
+            "real": -0.0,
+            "imag": 0.0
+          },
+          {
+            "real": -1.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": -0.8658048083180055,
+            "imag": -4.994513494683011e-06
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.5001523048436087,
+            "imag": -0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 0.999885140474,
+          "imag": 4.32477054e-06
+        },
+        "vertical_sign": -1,
+        "electric_tangential_norm_sq": 1.0,
+        "power_per_unit_amplitude": 0.6363665341137341,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 1.469976934812407,
+        "traction_vector": [
+          {
+            "real": -0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 4.483064829471781e-05,
+            "imag": -7.771445786441615
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 23,
+        "side": "bottom",
+        "m": -3,
+        "n": 0,
+        "polarization": "p",
+        "alpha": {
+          "real": -4.489356590207668,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": 0.0,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 7.771445786441615,
+          "imag": 4.483064829471781e-05
+        },
+        "k_vector": [
+          {
+            "real": -4.489356590207668,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": -7.771445786441615,
+            "imag": -4.483064829471781e-05
+          }
+        ],
+        "e_vector": [
+          {
+            "real": -0.8659042656715219,
+            "imag": -1.2498197897239332e-06
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.5002097586869129,
+            "imag": -2.163540931475541e-06
+          }
+        ],
+        "h_vector": [
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.999885140467758,
+            "imag": 4.324770539973001e-06
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 0.999885140474,
+          "imag": 4.32477054e-06
+        },
+        "vertical_sign": -1,
+        "electric_tangential_norm_sq": 0.7497901973096996,
+        "power_per_unit_amplitude": 0.6363665341137341,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 1.1021742959937022,
+        "traction_vector": [
+          {
+            "real": 3.881904959097355e-05,
+            "imag": -8.97494803350602
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 24,
+        "side": "bottom",
+        "m": -3,
+        "n": 1,
+        "polarization": "s",
+        "alpha": {
+          "real": -4.489356590207668,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": 5.983986006837701,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 4.958556350844336,
+          "imag": 7.026217474247436e-05
+        },
+        "k_vector": [
+          {
+            "real": -4.489356590207668,
+            "imag": 0.0
+          },
+          {
+            "real": 5.983986006837701,
+            "imag": 0.0
+          },
+          {
+            "real": -4.958556350844336,
+            "imag": -7.026217474247436e-05
+          }
+        ],
+        "e_vector": [
+          {
+            "real": -0.7999122734807461,
+            "imag": 0.0
+          },
+          {
+            "real": -0.6001169508811294,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": -0.3315196832168072,
+            "imag": -4.697595885702236e-06
+          },
+          {
+            "real": 0.4418916398148882,
+            "imag": 6.261553850976274e-06
+          },
+          {
+            "real": 0.8334247251460797,
+            "imag": -0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 0.999885140474,
+          "imag": 4.32477054e-06
+        },
+        "vertical_sign": -1,
+        "electric_tangential_norm_sq": 0.9999999999999998,
+        "power_per_unit_amplitude": 0.4060324688489237,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 1.4699638505555863,
+        "traction_vector": [
+          {
+            "real": 5.620357593795412e-05,
+            "imag": -3.9664100837862852
+          },
+          {
+            "real": 4.216552206873081e-05,
+            "imag": -2.975713718040963
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 25,
+        "side": "bottom",
+        "m": -3,
+        "n": 1,
+        "polarization": "p",
+        "alpha": {
+          "real": -4.489356590207668,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": 5.983986006837701,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 4.958556350844336,
+          "imag": 7.026217474247436e-05
+        },
+        "k_vector": [
+          {
+            "real": -4.489356590207668,
+            "imag": 0.0
+          },
+          {
+            "real": 5.983986006837701,
+            "imag": 0.0
+          },
+          {
+            "real": -4.958556350844336,
+            "imag": -7.026217474247436e-05
+          }
+        ],
+        "e_vector": [
+          {
+            "real": -0.33155776578462687,
+            "imag": -3.264059536059784e-06
+          },
+          {
+            "real": 0.4419424011095991,
+            "imag": 4.350754099567616e-06
+          },
+          {
+            "real": 0.8335204628602758,
+            "imag": -3.605198833694458e-06
+          }
+        ],
+        "h_vector": [
+          {
+            "real": 0.7998203959021161,
+            "imag": 3.4594370347866507e-06
+          },
+          {
+            "real": 0.6000480217070564,
+            "imag": 2.595368109614824e-06
+          },
+          {
+            "real": -4.9475295044988036e-17,
+            "imag": 0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 0.999885140474,
+          "imag": 4.32477054e-06
+        },
+        "vertical_sign": -1,
+        "electric_tangential_norm_sq": 0.30524363798019444,
+        "power_per_unit_amplitude": 0.4060324688489239,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 0.4486971134429621,
+        "traction_vector": [
+          {
+            "real": 2.3295969675791888e-05,
+            "imag": -5.386018447988506
+          },
+          {
+            "real": -3.105183421154914e-05,
+            "imag": 7.179171085592479
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 26,
+        "side": "bottom",
+        "m": -2,
+        "n": -1,
+        "polarization": "s",
+        "alpha": {
+          "real": -0.0013670850793925382,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": -5.983986006837701,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 6.68891634028968,
+          "imag": 5.2086008415877786e-05
+        },
+        "k_vector": [
+          {
+            "real": -0.0013670850793925382,
+            "imag": 0.0
+          },
+          {
+            "real": -5.983986006837701,
+            "imag": 0.0
+          },
+          {
+            "real": -6.68891634028968,
+            "imag": -5.2086008415877786e-05
+          }
+        ],
+        "e_vector": [
+          {
+            "real": 0.9999999739036398,
+            "imag": -0.0
+          },
+          {
+            "real": -0.00022845725945122052,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": -0.0001702467768758063,
+            "imag": -1.3256968097683348e-09
+          },
+          {
+            "real": -0.7452018501926205,
+            "imag": -5.802821842286574e-06
+          },
+          {
+            "real": 0.6666666840642403,
+            "imag": -0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 0.999885140474,
+          "imag": 4.32477054e-06
+        },
+        "vertical_sign": -1,
+        "electric_tangential_norm_sq": 0.9999999999999997,
+        "power_per_unit_amplitude": 0.5477233741851624,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 1.4699732019929355,
+        "traction_vector": [
+          {
+            "real": -5.208600705662255e-05,
+            "imag": 6.68891616573331
+          },
+          {
+            "real": 1.1899426738444647e-08,
+            "imag": -0.0015281314958010678
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 27,
+        "side": "bottom",
+        "m": -2,
+        "n": -1,
+        "polarization": "p",
+        "alpha": {
+          "real": -0.0013670850793925382,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": -5.983986006837701,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 6.68891634028968,
+          "imag": 5.2086008415877786e-05
+        },
+        "k_vector": [
+          {
+            "real": -0.0013670850793925382,
+            "imag": 0.0
+          },
+          {
+            "real": -5.983986006837701,
+            "imag": 0.0
+          },
+          {
+            "real": -6.68891634028968,
+            "imag": -5.2086008415877786e-05
+          }
+        ],
+        "e_vector": [
+          {
+            "real": -0.0001702663335861758,
+            "imag": -5.894016846993088e-10
+          },
+          {
+            "real": -0.7452874535562701,
+            "imag": -2.5799209477250923e-06
+          },
+          {
+            "real": 0.6667432658572671,
+            "imag": -2.8838428707480877e-06
+          }
+        ],
+        "h_vector": [
+          {
+            "real": -0.999885114365667,
+            "imag": -4.32477042707448e-06
+          },
+          {
+            "real": 0.0002284310189552686,
+            "imag": 9.880252253089822e-10
+          },
+          {
+            "real": 2.4157858908685565e-20,
+            "imag": -4.6077459161158685e-26
+          }
+        ],
+        "refractive_index": {
+          "real": 0.999885140474,
+          "imag": 4.32477054e-06
+        },
+        "vertical_sign": -1,
+        "electric_tangential_norm_sq": 0.5554534174256699,
+        "power_per_unit_amplitude": 0.547723374185163,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 0.8165016385711308,
+        "traction_vector": [
+          {
+            "real": 8.868493683977426e-09,
+            "imag": -0.0020503920314340076
+          },
+          {
+            "real": 3.8819048577598794e-05,
+            "imag": -8.974947799214199
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 28,
+        "side": "bottom",
+        "m": -2,
+        "n": 0,
+        "polarization": "s",
+        "alpha": {
+          "real": -0.0013670850793925382,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": 0.0,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 8.97494792944325,
+          "imag": 3.8819050041557536e-05
+        },
+        "k_vector": [
+          {
+            "real": -0.0013670850793925382,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": -8.97494792944325,
+            "imag": -3.8819050041557536e-05
+          }
+        ],
+        "e_vector": [
+          {
+            "real": -0.0,
+            "imag": 0.0
+          },
+          {
+            "real": -1.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": -0.9998851288742849,
+            "imag": -4.324770590171869e-06
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.00015230484360874904,
+            "imag": -0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 0.999885140474,
+          "imag": 4.32477054e-06
+        },
+        "vertical_sign": -1,
+        "electric_tangential_norm_sq": 1.0,
+        "power_per_unit_amplitude": 0.7349155697225994,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 1.4699800277344321,
+        "traction_vector": [
+          {
+            "real": -0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 3.8819050041557536e-05,
+            "imag": -8.97494792944325
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 29,
+        "side": "bottom",
+        "m": -2,
+        "n": 0,
+        "polarization": "p",
+        "alpha": {
+          "real": -0.0013670850793925382,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": 0.0,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 8.97494792944325,
+          "imag": 3.8819050041557536e-05
+        },
+        "k_vector": [
+          {
+            "real": -0.0013670850793925382,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": -8.97494792944325,
+            "imag": -3.8819050041557536e-05
+          }
+        ],
+        "e_vector": [
+          {
+            "real": -0.9999999883989524,
+            "imag": -1.0035526433266723e-13
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.00015232233927758835,
+            "imag": -6.588348389489128e-10
+          }
+        ],
+        "h_vector": [
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.9998851404740002,
+            "imag": 4.324770539999998e-06
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 0.999885140474,
+          "imag": 4.32477054e-06
+        },
+        "vertical_sign": -1,
+        "electric_tangential_norm_sq": 0.999999976797905,
+        "power_per_unit_amplitude": 0.7349155697225995,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 1.469979993627816,
+        "traction_vector": [
+          {
+            "real": 3.881904959121588e-05,
+            "imag": -8.97494803356205
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 30,
+        "side": "bottom",
+        "m": -2,
+        "n": 1,
+        "polarization": "s",
+        "alpha": {
+          "real": -0.0013670850793925382,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": 5.983986006837701,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 6.68891634028968,
+          "imag": 5.2086008415877786e-05
+        },
+        "k_vector": [
+          {
+            "real": -0.0013670850793925382,
+            "imag": 0.0
+          },
+          {
+            "real": 5.983986006837701,
+            "imag": 0.0
+          },
+          {
+            "real": -6.68891634028968,
+            "imag": -5.2086008415877786e-05
+          }
+        ],
+        "e_vector": [
+          {
+            "real": -0.9999999739036398,
+            "imag": 0.0
+          },
+          {
+            "real": -0.00022845725945122052,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": -0.0001702467768758063,
+            "imag": -1.3256968097683348e-09
+          },
+          {
+            "real": 0.7452018501926205,
+            "imag": 5.802821842286574e-06
+          },
+          {
+            "real": 0.6666666840642403,
+            "imag": -0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 0.999885140474,
+          "imag": 4.32477054e-06
+        },
+        "vertical_sign": -1,
+        "electric_tangential_norm_sq": 0.9999999999999997,
+        "power_per_unit_amplitude": 0.5477233741851624,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 1.4699732019929355,
+        "traction_vector": [
+          {
+            "real": 5.208600705662255e-05,
+            "imag": -6.68891616573331
+          },
+          {
+            "real": 1.1899426738444647e-08,
+            "imag": -0.0015281314958010678
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 31,
+        "side": "bottom",
+        "m": -2,
+        "n": 1,
+        "polarization": "p",
+        "alpha": {
+          "real": -0.0013670850793925382,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": 5.983986006837701,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 6.68891634028968,
+          "imag": 5.2086008415877786e-05
+        },
+        "k_vector": [
+          {
+            "real": -0.0013670850793925382,
+            "imag": 0.0
+          },
+          {
+            "real": 5.983986006837701,
+            "imag": 0.0
+          },
+          {
+            "real": -6.68891634028968,
+            "imag": -5.2086008415877786e-05
+          }
+        ],
+        "e_vector": [
+          {
+            "real": -0.0001702663335861758,
+            "imag": -5.894016846993088e-10
+          },
+          {
+            "real": 0.7452874535562701,
+            "imag": 2.5799209477250923e-06
+          },
+          {
+            "real": 0.6667432658572671,
+            "imag": -2.8838428707480877e-06
+          }
+        ],
+        "h_vector": [
+          {
+            "real": 0.999885114365667,
+            "imag": 4.32477042707448e-06
+          },
+          {
+            "real": 0.0002284310189552686,
+            "imag": 9.880252253089822e-10
+          },
+          {
+            "real": -2.4157858908685565e-20,
+            "imag": 4.6077459161158685e-26
+          }
+        ],
+        "refractive_index": {
+          "real": 0.999885140474,
+          "imag": 4.32477054e-06
+        },
+        "vertical_sign": -1,
+        "electric_tangential_norm_sq": 0.5554534174256699,
+        "power_per_unit_amplitude": 0.547723374185163,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 0.8165016385711308,
+        "traction_vector": [
+          {
+            "real": 8.868493683977426e-09,
+            "imag": -0.0020503920314340076
+          },
+          {
+            "real": -3.8819048577598794e-05,
+            "imag": 8.974947799214199
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 32,
+        "side": "bottom",
+        "m": -1,
+        "n": -1,
+        "polarization": "s",
+        "alpha": {
+          "real": 4.486622420048883,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": -5.983986006837701,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 4.961030431115042,
+          "imag": 7.022713479206063e-05
+        },
+        "k_vector": [
+          {
+            "real": 4.486622420048883,
+            "imag": 0.0
+          },
+          {
+            "real": -5.983986006837701,
+            "imag": 0.0
+          },
+          {
+            "real": -4.961030431115042,
+            "imag": -7.022713479206063e-05
+          }
+        ],
+        "e_vector": [
+          {
+            "real": 0.8000877286570669,
+            "imag": -0.0
+          },
+          {
+            "real": 0.5998830106382207,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": 0.3315557965860328,
+            "imag": 4.693422856650971e-06
+          },
+          {
+            "real": -0.4422090966226506,
+            "imag": -6.259803939121232e-06
+          },
+          {
+            "real": 0.8332419593357027,
+            "imag": 0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 0.999885140474,
+          "imag": 4.32477054e-06
+        },
+        "vertical_sign": -1,
+        "electric_tangential_norm_sq": 0.9999999999999999,
+        "power_per_unit_amplitude": 0.4062350594517862,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 1.469963868583197,
+        "traction_vector": [
+          {
+            "real": -5.6187868765873466e-05,
+            "imag": 3.9692595694294237
+          },
+          {
+            "real": -4.212806504755746e-05,
+            "imag": 2.9760378708851216
+          },
+          {
+            "real": -0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 33,
+        "side": "bottom",
+        "m": -1,
+        "n": -1,
+        "polarization": "p",
+        "alpha": {
+          "real": 4.486622420048883,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": -5.983986006837701,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 4.961030431115042,
+          "imag": 7.022713479206063e-05
+        },
+        "k_vector": [
+          {
+            "real": 4.486622420048883,
+            "imag": 0.0
+          },
+          {
+            "real": -5.983986006837701,
+            "imag": 0.0
+          },
+          {
+            "real": -4.961030431115042,
+            "imag": -7.022713479206063e-05
+          }
+        ],
+        "e_vector": [
+          {
+            "real": 0.3315938833022934,
+            "imag": 3.259729809722286e-06
+          },
+          {
+            "real": -0.4422598943844885,
+            "imag": -4.347630743403933e-06
+          },
+          {
+            "real": 0.8333376760551552,
+            "imag": -3.604408231896424e-06
+          }
+        ],
+        "h_vector": [
+          {
+            "real": -0.7999958309257797,
+            "imag": -3.4601958381644716e-06
+          },
+          {
+            "real": -0.5998141083344596,
+            "imag": -2.594356371744373e-06
+          },
+          {
+            "real": 0.0,
+            "imag": 3.7746654544821195e-22
+          }
+        ],
+        "refractive_index": {
+          "real": 0.999885140474,
+          "imag": 4.32477054e-06
+        },
+        "vertical_sign": -1,
+        "electric_tangential_norm_sq": 0.3055483176540016,
+        "power_per_unit_amplitude": 0.4062350594517864,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 0.4491449870577638,
+        "traction_vector": [
+          {
+            "real": -2.3286888337902835e-05,
+            "imag": 5.383918846465859
+          },
+          {
+            "real": 3.1058645214741376e-05,
+            "imag": -7.180745786682548
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 34,
+        "side": "bottom",
+        "m": -1,
+        "n": 0,
+        "polarization": "s",
+        "alpha": {
+          "real": 4.486622420048883,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": 0.0,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 7.773024602145297,
+          "imag": 4.482154253021086e-05
+        },
+        "k_vector": [
+          {
+            "real": 4.486622420048883,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": -7.773024602145297,
+            "imag": -4.482154253021086e-05
+          }
+        ],
+        "e_vector": [
+          {
+            "real": -0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 1.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": 0.865980701744436,
+            "imag": 4.993499035480673e-06
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.4998476951563912,
+            "imag": 0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 0.999885140474,
+          "imag": 4.32477054e-06
+        },
+        "vertical_sign": -1,
+        "electric_tangential_norm_sq": 1.0,
+        "power_per_unit_amplitude": 0.6364958157821604,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 1.46997693949725,
+        "traction_vector": [
+          {
+            "real": -0.0,
+            "imag": 0.0
+          },
+          {
+            "real": -4.482154253021086e-05,
+            "imag": 7.773024602145297
+          },
+          {
+            "real": -0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 35,
+        "side": "bottom",
+        "m": -1,
+        "n": 0,
+        "polarization": "p",
+        "alpha": {
+          "real": 4.486622420048883,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": 0.0,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 7.773024602145297,
+          "imag": 4.482154253021086e-05
+        },
+        "k_vector": [
+          {
+            "real": 4.486622420048883,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": -7.773024602145297,
+            "imag": -4.482154253021086e-05
+          }
+        ],
+        "e_vector": [
+          {
+            "real": 0.8660801793033087,
+            "imag": 1.2480443405020596e-06
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.4999051140083646,
+            "imag": -2.1622232617976723e-06
+          }
+        ],
+        "h_vector": [
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": -0.9998851404677681,
+            "imag": -4.324770539973044e-06
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 0.999885140474,
+          "imag": 4.32477054e-06
+        },
+        "vertical_sign": -1,
+        "electric_tangential_norm_sq": 0.750094876983609,
+        "power_per_unit_amplitude": 0.6364958157821605,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 1.1026221716009317,
+        "traction_vector": [
+          {
+            "real": -3.881904959097394e-05,
+            "imag": 8.974948033506111
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 36,
+        "side": "bottom",
+        "m": -1,
+        "n": 1,
+        "polarization": "s",
+        "alpha": {
+          "real": 4.486622420048883,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": 5.983986006837701,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 4.961030431115042,
+          "imag": 7.022713479206063e-05
+        },
+        "k_vector": [
+          {
+            "real": 4.486622420048883,
+            "imag": 0.0
+          },
+          {
+            "real": 5.983986006837701,
+            "imag": 0.0
+          },
+          {
+            "real": -4.961030431115042,
+            "imag": -7.022713479206063e-05
+          }
+        ],
+        "e_vector": [
+          {
+            "real": -0.8000877286570669,
+            "imag": 0.0
+          },
+          {
+            "real": 0.5998830106382207,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": 0.3315557965860328,
+            "imag": 4.693422856650971e-06
+          },
+          {
+            "real": 0.4422090966226506,
+            "imag": 6.259803939121232e-06
+          },
+          {
+            "real": 0.8332419593357027,
+            "imag": 0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 0.999885140474,
+          "imag": 4.32477054e-06
+        },
+        "vertical_sign": -1,
+        "electric_tangential_norm_sq": 0.9999999999999999,
+        "power_per_unit_amplitude": 0.4062350594517862,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 1.469963868583197,
+        "traction_vector": [
+          {
+            "real": 5.6187868765873466e-05,
+            "imag": -3.9692595694294237
+          },
+          {
+            "real": -4.212806504755746e-05,
+            "imag": 2.9760378708851216
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 37,
+        "side": "bottom",
+        "m": -1,
+        "n": 1,
+        "polarization": "p",
+        "alpha": {
+          "real": 4.486622420048883,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": 5.983986006837701,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 4.961030431115042,
+          "imag": 7.022713479206063e-05
+        },
+        "k_vector": [
+          {
+            "real": 4.486622420048883,
+            "imag": 0.0
+          },
+          {
+            "real": 5.983986006837701,
+            "imag": 0.0
+          },
+          {
+            "real": -4.961030431115042,
+            "imag": -7.022713479206063e-05
+          }
+        ],
+        "e_vector": [
+          {
+            "real": 0.3315938833022934,
+            "imag": 3.259729809722286e-06
+          },
+          {
+            "real": 0.4422598943844885,
+            "imag": 4.347630743403933e-06
+          },
+          {
+            "real": 0.8333376760551552,
+            "imag": -3.604408231896424e-06
+          }
+        ],
+        "h_vector": [
+          {
+            "real": 0.7999958309257797,
+            "imag": 3.4601958381644716e-06
+          },
+          {
+            "real": -0.5998141083344596,
+            "imag": -2.594356371744373e-06
+          },
+          {
+            "real": 0.0,
+            "imag": -3.7746654544821195e-22
+          }
+        ],
+        "refractive_index": {
+          "real": 0.999885140474,
+          "imag": 4.32477054e-06
+        },
+        "vertical_sign": -1,
+        "electric_tangential_norm_sq": 0.3055483176540016,
+        "power_per_unit_amplitude": 0.4062350594517864,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 0.4491449870577638,
+        "traction_vector": [
+          {
+            "real": -2.3286888337902835e-05,
+            "imag": 5.383918846465859
+          },
+          {
+            "real": -3.1058645214741376e-05,
+            "imag": 7.180745786682548
+          },
+          {
+            "real": -0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 38,
+        "side": "bottom",
+        "m": 0,
+        "n": 0,
+        "polarization": "s",
+        "alpha": {
+          "real": 8.97461192517716,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": 0.0,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 0.07780134385941416,
+          "imag": 0.004478058289365571
+        },
+        "k_vector": [
+          {
+            "real": 8.97461192517716,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": -0.07780134385941416,
+            "imag": -0.004478058289365571
+          }
+        ],
+        "e_vector": [
+          {
+            "real": -0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 1.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "h_vector": [
+          {
+            "real": 0.008667727918092628,
+            "imag": 0.0004988935785443173
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.9998476951563912,
+            "imag": 0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 0.999885140474,
+          "imag": 4.32477054e-06
+        },
+        "vertical_sign": -1,
+        "electric_tangential_norm_sq": 1.0,
+        "power_per_unit_amplitude": 0.006370780019798082,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 1.467697843589745,
+        "traction_vector": [
+          {
+            "real": -0.0,
+            "imag": 0.0
+          },
+          {
+            "real": -0.004478058289365571,
+            "imag": 0.07780134385941416
+          },
+          {
+            "real": -0.0,
+            "imag": 0.0
+          }
+        ]
+      },
+      {
+        "schema": "fullspace-dtn.mode.v1",
+        "mode_index": 39,
+        "side": "bottom",
+        "m": 0,
+        "n": 0,
+        "polarization": "p",
+        "alpha": {
+          "real": 8.97461192517716,
+          "imag": 0.0
+        },
+        "gamma": {
+          "real": 0.0,
+          "imag": 0.0
+        },
+        "beta": {
+          "real": 0.07780134385941416,
+          "imag": 0.004478058289365571
+        },
+        "k_vector": [
+          {
+            "real": 8.97461192517716,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": -0.07780134385941416,
+            "imag": -0.004478058289365571
+          }
+        ],
+        "e_vector": [
+          {
+            "real": 0.00866872360357703,
+            "imag": 0.0004989132690542871
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.9999623014383734,
+            "imag": -4.325104281798984e-06
+          }
+        ],
+        "h_vector": [
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": -0.999884891569405,
+            "imag": -4.324769463421086e-06
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "refractive_index": {
+          "real": 0.999885140474,
+          "imag": 4.32477054e-06
+        },
+        "vertical_sign": -1,
+        "electric_tangential_norm_sq": 7.539568336525196e-05,
+        "power_per_unit_amplitude": 0.0063707800197980845,
+        "propagating": true,
+        "rayleigh_warning": false,
+        "classification": "propagating",
+        "rayleigh_tolerance": 1e-06,
+        "projection_denominator": 0.00011065808189115553,
+        "traction_vector": [
+          {
+            "real": -3.881903992786616e-05,
+            "imag": 8.974945799399627
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      }
+    ],
+    "mode_manifest_sha256": "93795b53d7c5aef69af66b4ff0a56fa46515771f1ec43332ec929970270ea262",
+    "top_channels": 20,
+    "bottom_channels": 20,
+    "total_channels": 40,
+    "material": {
+      "status": "MATERIAL_READY_USER_SUPPLIED",
+      "material_table_id": "SI_OPTICAL_CONSTANTS_USER_20260929_V1",
+      "canonical_path": "/home/fenics/Projects/NN-Lab/input/materials/si_optical_constants_v1.json",
+      "material_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "query_wavelength_nm": "0.7",
+      "nominal_wavelength_nm": "0.7",
+      "source_wavelength_nm": "0.699999988",
+      "delta": "0.000114859526",
+      "beta": "4.32477054E-06",
+      "n_decimal": [
+        "0.999885140474",
+        "0.00000432477054"
+      ],
+      "epsilon_decimal": [
+        "0.9997702941220070727210241084",
+        "0.00000864854759781143367192"
+      ],
+      "source_kind": "user_supplied/user_authorized",
+      "source": {
+        "review_path": "docs/task042_neural_coarse_inverse/review_report_v4.md",
+        "review_commit": "18084a6213570e26a0a0941e628717f2c63fd00a",
+        "review_blob": "a0e0c106970eab91271d61981810544146c4a32f"
+      },
+      "alias_reason": "Review V4 explicitly authorizes source 0.699999988 for nominal 0.7; no interpolation; solve uses nominal 0.7",
+      "time_convention": "exp(-i omega t)",
+      "external_dataset_version": "not_provided",
+      "n_loaded": [
+        0.999885140474,
+        4.32477054e-06
+      ],
+      "epsilon_loaded": [
+        0.9997702941220071,
+        8.648547597811433e-06
+      ],
+      "air_n": [
+        1.0,
+        0.0
+      ],
+      "mu_r": [
+        1.0,
+        0.0
+      ]
+    },
+    "derived_fe_inventory": {
+      "cells": 384,
+      "degree": 3,
+      "cell_dimension": 144,
+      "full_fe_rows": 34050,
+      "full_trace_rows": 20226,
+      "independent_trace_rows": 18144,
+      "interior_rows": 13824,
+      "edges": 1494,
+      "faces": 1312,
+      "periodic_slaves": 2082
+    },
+    "capacity_before_allocation": {
+      "status": "PREALLOCATION_PASS",
+      "scope": "p3 single-degree candidate and independent native cell audit",
+      "full_rows": 34050,
+      "independent_trace_rows": 18144,
+      "ports": 40,
+      "maximum_unique_classes": 384,
+      "local_arrays_upper_bytes": 254803968,
+      "port_arrays_upper_bytes": 132710400,
+      "packet_copies_and_transient_upper_bytes": 1818492928,
+      "libraries_compiler_upper_bytes": 3221225472,
+      "optimizer_activations_upper_bytes": 1073741824,
+      "total_upper_bytes": 6113460224,
+      "warning_bytes": 12884901888,
+      "hard_bytes": 17179869184,
+      "global_FE_matrix": false,
+      "global_p4_factor": false,
+      "private_audit_CSR": false
+    },
+    "recipe": {
+      "geometry": {
+        "bounds_nm": [
+          [
+            -0.7,
+            0.7
+          ],
+          [
+            -0.525,
+            0.525
+          ],
+          [
+            -0.175,
+            1.225
+          ]
+        ],
+        "substrate_z_nm": 0.0,
+        "block_bounds_nm": [
+          [
+            -0.35,
+            0.35
+          ],
+          [
+            -0.525,
+            0.525
+          ],
+          [
+            0.0,
+            1.05
+          ]
+        ],
+        "notch_bounds_nm": [
+          [
+            0.0,
+            0.35
+          ],
+          [
+            -0.175,
+            0.175
+          ],
+          [
+            0.35,
+            0.7
+          ]
+        ],
+        "cells": [
+          8,
+          6,
+          8
+        ],
+        "step_nm": 0.175,
+        "material_tag_labels": {
+          "1": "air",
+          "2": "Si substrate",
+          "3": "Si block"
+        }
+      },
+      "material": {
+        "status": "MATERIAL_READY_USER_SUPPLIED",
+        "material_table_id": "SI_OPTICAL_CONSTANTS_USER_20260929_V1",
+        "canonical_path": "/home/fenics/Projects/NN-Lab/input/materials/si_optical_constants_v1.json",
+        "material_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+        "query_wavelength_nm": "0.7",
+        "nominal_wavelength_nm": "0.7",
+        "source_wavelength_nm": "0.699999988",
+        "delta": "0.000114859526",
+        "beta": "4.32477054E-06",
+        "n_decimal": [
+          "0.999885140474",
+          "0.00000432477054"
+        ],
+        "epsilon_decimal": [
+          "0.9997702941220070727210241084",
+          "0.00000864854759781143367192"
+        ],
+        "source_kind": "user_supplied/user_authorized",
+        "source": {
+          "review_path": "docs/task042_neural_coarse_inverse/review_report_v4.md",
+          "review_commit": "18084a6213570e26a0a0941e628717f2c63fd00a",
+          "review_blob": "a0e0c106970eab91271d61981810544146c4a32f"
+        },
+        "alias_reason": "Review V4 explicitly authorizes source 0.699999988 for nominal 0.7; no interpolation; solve uses nominal 0.7",
+        "time_convention": "exp(-i omega t)",
+        "external_dataset_version": "not_provided",
+        "n_loaded": [
+          0.999885140474,
+          4.32477054e-06
+        ],
+        "epsilon_loaded": [
+          0.9997702941220071,
+          8.648547597811433e-06
+        ],
+        "air_n": [
+          1.0,
+          0.0
+        ],
+        "mu_r": [
+          1.0,
+          0.0
+        ]
+      },
+      "incidence": {
+        "grazing_deg": 1.0,
+        "azimuth_deg": 0.0,
+        "polarization": "s",
+        "amplitude": 1.0,
+        "background": "layered"
+      },
+      "boundary": {
+        "floquet_xy": true,
+        "dtn": "full original auto_propagating for selected air/Si media",
+        "pml": false
+      },
+      "finite_element": {
+        "family": "N1curl",
+        "cell": "hexahedron",
+        "degree": 3,
+        "operator_quadrature_degree": 15,
+        "full_rows_limit": 200000,
+        "trace_rows_limit": 100000
+      },
+      "modes": [
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 0,
+          "side": "top",
+          "m": -3,
+          "n": -1,
+          "polarization": "s",
+          "alpha": {
+            "real": -4.489356590207668,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": -5.983986006837701,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 4.960422166357995,
+            "imag": 0.0
+          },
+          "k_vector": [
+            {
+              "real": -4.489356590207668,
+              "imag": 0.0
+            },
+            {
+              "real": -5.983986006837701,
+              "imag": 0.0
+            },
+            {
+              "real": 4.960422166357995,
+              "imag": 0.0
+            }
+          ],
+          "e_vector": [
+            {
+              "real": 0.7999122734807461,
+              "imag": -0.0
+            },
+            {
+              "real": -0.6001169508811294,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": 0.33164442810710654,
+              "imag": 0.0
+            },
+            {
+              "real": 0.44205791568604624,
+              "imag": 0.0
+            },
+            {
+              "real": 0.8334247251460797,
+              "imag": -0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 1.0,
+            "imag": 0.0
+          },
+          "vertical_sign": 1,
+          "electric_tangential_norm_sq": 0.9999999999999998,
+          "power_per_unit_amplitude": 0.4061852515594194,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 1.4699999999999998,
+          "traction_vector": [
+            {
+              "real": 0.0,
+              "imag": 3.9679025725157118
+            },
+            {
+              "real": 0.0,
+              "imag": -2.9768334255579263
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 1,
+          "side": "top",
+          "m": -3,
+          "n": -1,
+          "polarization": "p",
+          "alpha": {
+            "real": -4.489356590207668,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": -5.983986006837701,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 4.960422166357995,
+            "imag": 0.0
+          },
+          "k_vector": [
+            {
+              "real": -4.489356590207668,
+              "imag": 0.0
+            },
+            {
+              "real": -5.983986006837701,
+              "imag": 0.0
+            },
+            {
+              "real": 4.960422166357995,
+              "imag": 0.0
+            }
+          ],
+          "e_vector": [
+            {
+              "real": 0.3316444281071066,
+              "imag": 0.0
+            },
+            {
+              "real": 0.44205791568604635,
+              "imag": 0.0
+            },
+            {
+              "real": 0.8334247251460798,
+              "imag": -0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": -0.7999122734807462,
+              "imag": 0.0
+            },
+            {
+              "real": 0.6001169508811294,
+              "imag": 0.0
+            },
+            {
+              "real": -2.4737647522494018e-17,
+              "imag": 0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 1.0,
+            "imag": 0.0
+          },
+          "vertical_sign": 1,
+          "electric_tangential_norm_sq": 0.30540322751518145,
+          "power_per_unit_amplitude": 0.4061852515594195,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 0.44894274444731674,
+          "traction_vector": [
+            {
+              "real": 0.0,
+              "imag": 5.38663715480818
+            },
+            {
+              "real": 0.0,
+              "imag": 7.179995776809777
+            },
+            {
+              "real": 0.0,
+              "imag": -0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 2,
+          "side": "top",
+          "m": -3,
+          "n": 0,
+          "polarization": "s",
+          "alpha": {
+            "real": -4.489356590207668,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 7.772636399480241,
+            "imag": 0.0
+          },
+          "k_vector": [
+            {
+              "real": -4.489356590207668,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 7.772636399480241,
+              "imag": 0.0
+            }
+          ],
+          "e_vector": [
+            {
+              "real": -0.0,
+              "imag": 0.0
+            },
+            {
+              "real": -1.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": 0.8659374526832905,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.5001523048436087,
+              "imag": -0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 1.0,
+            "imag": 0.0
+          },
+          "vertical_sign": 1,
+          "electric_tangential_norm_sq": 1.0,
+          "power_per_unit_amplitude": 0.6364640277222186,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 1.47,
+          "traction_vector": [
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": -7.772636399480241
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 3,
+          "side": "top",
+          "m": -3,
+          "n": 0,
+          "polarization": "p",
+          "alpha": {
+            "real": -4.489356590207668,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 7.772636399480241,
+            "imag": 0.0
+          },
+          "k_vector": [
+            {
+              "real": -4.489356590207668,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 7.772636399480241,
+              "imag": 0.0
+            }
+          ],
+          "e_vector": [
+            {
+              "real": 0.8659374526832905,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.5001523048436087,
+              "imag": -0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 1.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 1.0,
+            "imag": 0.0
+          },
+          "vertical_sign": 1,
+          "electric_tangential_norm_sq": 0.749847671959626,
+          "power_per_unit_amplitude": 0.6364640277222186,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 1.1022760777806502,
+          "traction_vector": [
+            {
+              "real": 0.0,
+              "imag": 8.975979010256552
+            },
+            {
+              "real": -0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 4,
+          "side": "top",
+          "m": -3,
+          "n": 1,
+          "polarization": "s",
+          "alpha": {
+            "real": -4.489356590207668,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": 5.983986006837701,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 4.960422166357995,
+            "imag": 0.0
+          },
+          "k_vector": [
+            {
+              "real": -4.489356590207668,
+              "imag": 0.0
+            },
+            {
+              "real": 5.983986006837701,
+              "imag": 0.0
+            },
+            {
+              "real": 4.960422166357995,
+              "imag": 0.0
+            }
+          ],
+          "e_vector": [
+            {
+              "real": -0.7999122734807461,
+              "imag": 0.0
+            },
+            {
+              "real": -0.6001169508811294,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": 0.33164442810710654,
+              "imag": 0.0
+            },
+            {
+              "real": -0.44205791568604624,
+              "imag": 0.0
+            },
+            {
+              "real": 0.8334247251460797,
+              "imag": -0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 1.0,
+            "imag": 0.0
+          },
+          "vertical_sign": 1,
+          "electric_tangential_norm_sq": 0.9999999999999998,
+          "power_per_unit_amplitude": 0.4061852515594194,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 1.4699999999999998,
+          "traction_vector": [
+            {
+              "real": 0.0,
+              "imag": -3.9679025725157118
+            },
+            {
+              "real": 0.0,
+              "imag": -2.9768334255579263
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 5,
+          "side": "top",
+          "m": -3,
+          "n": 1,
+          "polarization": "p",
+          "alpha": {
+            "real": -4.489356590207668,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": 5.983986006837701,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 4.960422166357995,
+            "imag": 0.0
+          },
+          "k_vector": [
+            {
+              "real": -4.489356590207668,
+              "imag": 0.0
+            },
+            {
+              "real": 5.983986006837701,
+              "imag": 0.0
+            },
+            {
+              "real": 4.960422166357995,
+              "imag": 0.0
+            }
+          ],
+          "e_vector": [
+            {
+              "real": 0.3316444281071066,
+              "imag": 0.0
+            },
+            {
+              "real": -0.44205791568604635,
+              "imag": 0.0
+            },
+            {
+              "real": 0.8334247251460798,
+              "imag": -0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": 0.7999122734807462,
+              "imag": 0.0
+            },
+            {
+              "real": 0.6001169508811294,
+              "imag": 0.0
+            },
+            {
+              "real": 2.4737647522494018e-17,
+              "imag": -0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 1.0,
+            "imag": 0.0
+          },
+          "vertical_sign": 1,
+          "electric_tangential_norm_sq": 0.30540322751518145,
+          "power_per_unit_amplitude": 0.4061852515594195,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 0.44894274444731674,
+          "traction_vector": [
+            {
+              "real": 0.0,
+              "imag": 5.38663715480818
+            },
+            {
+              "real": 0.0,
+              "imag": -7.179995776809777
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 6,
+          "side": "top",
+          "m": -2,
+          "n": -1,
+          "polarization": "s",
+          "alpha": {
+            "real": -0.0013670850793925382,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": -5.983986006837701,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 6.690299604174327,
+            "imag": 0.0
+          },
+          "k_vector": [
+            {
+              "real": -0.0013670850793925382,
+              "imag": 0.0
+            },
+            {
+              "real": -5.983986006837701,
+              "imag": 0.0
+            },
+            {
+              "real": 6.690299604174327,
+              "imag": 0.0
+            }
+          ],
+          "e_vector": [
+            {
+              "real": 0.9999999739036398,
+              "imag": -0.0
+            },
+            {
+              "real": -0.00022845725945122052,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": 0.00017028198380708622,
+              "imag": 0.0
+            },
+            {
+              "real": 0.7453559574879883,
+              "imag": 0.0
+            },
+            {
+              "real": 0.6666666840642403,
+              "imag": -0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 1.0,
+            "imag": 0.0
+          },
+          "vertical_sign": 1,
+          "electric_tangential_norm_sq": 0.9999999999999997,
+          "power_per_unit_amplitude": 0.5478366430502136,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 1.4699999999999995,
+          "traction_vector": [
+            {
+              "real": 0.0,
+              "imag": 6.6902994295818585
+            },
+            {
+              "real": 0.0,
+              "imag": -0.001528447512477252
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 7,
+          "side": "top",
+          "m": -2,
+          "n": -1,
+          "polarization": "p",
+          "alpha": {
+            "real": -0.0013670850793925382,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": -5.983986006837701,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 6.690299604174327,
+            "imag": 0.0
+          },
+          "k_vector": [
+            {
+              "real": -0.0013670850793925382,
+              "imag": 0.0
+            },
+            {
+              "real": -5.983986006837701,
+              "imag": 0.0
+            },
+            {
+              "real": 6.690299604174327,
+              "imag": 0.0
+            }
+          ],
+          "e_vector": [
+            {
+              "real": 0.00017028198380708627,
+              "imag": 0.0
+            },
+            {
+              "real": 0.7453559574879884,
+              "imag": 0.0
+            },
+            {
+              "real": 0.6666666840642405,
+              "imag": -0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": -0.9999999739036399,
+              "imag": 0.0
+            },
+            {
+              "real": 0.00022845725945122054,
+              "imag": 0.0
+            },
+            {
+              "real": 2.4157858908685565e-20,
+              "imag": 0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 1.0,
+            "imag": 0.0
+          },
+          "vertical_sign": 1,
+          "electric_tangential_norm_sq": 0.5555555323587901,
+          "power_per_unit_amplitude": 0.5478366430502138,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 0.8166666325674213,
+          "traction_vector": [
+            {
+              "real": 0.0,
+              "imag": 0.002050627565574891
+            },
+            {
+              "real": 0.0,
+              "imag": 8.975978776016172
+            },
+            {
+              "real": 0.0,
+              "imag": -0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 8,
+          "side": "top",
+          "m": -2,
+          "n": 0,
+          "polarization": "s",
+          "alpha": {
+            "real": -0.0013670850793925382,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 8.975978906149711,
+            "imag": 0.0
+          },
+          "k_vector": [
+            {
+              "real": -0.0013670850793925382,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 8.975978906149711,
+              "imag": 0.0
+            }
+          ],
+          "e_vector": [
+            {
+              "real": -0.0,
+              "imag": 0.0
+            },
+            {
+              "real": -1.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": 0.9999999884016172,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.00015230484360874904,
+              "imag": -0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 1.0,
+            "imag": 0.0
+          },
+          "vertical_sign": 1,
+          "electric_tangential_norm_sq": 1.0,
+          "power_per_unit_amplitude": 0.7349999914751887,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 1.47,
+          "traction_vector": [
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": -8.975978906149711
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 9,
+          "side": "top",
+          "m": -2,
+          "n": 0,
+          "polarization": "p",
+          "alpha": {
+            "real": -0.0013670850793925382,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 8.975978906149711,
+            "imag": 0.0
+          },
+          "k_vector": [
+            {
+              "real": -0.0013670850793925382,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 8.975978906149711,
+              "imag": 0.0
+            }
+          ],
+          "e_vector": [
+            {
+              "real": 0.9999999884016174,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.00015230484360874907,
+              "imag": -0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 1.0000000000000002,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 1.0,
+            "imag": 0.0
+          },
+          "vertical_sign": 1,
+          "electric_tangential_norm_sq": 0.9999999768032349,
+          "power_per_unit_amplitude": 0.7349999914751889,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 1.4699999659007554,
+          "traction_vector": [
+            {
+              "real": 0.0,
+              "imag": 8.975979010256554
+            },
+            {
+              "real": -0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 10,
+          "side": "top",
+          "m": -2,
+          "n": 1,
+          "polarization": "s",
+          "alpha": {
+            "real": -0.0013670850793925382,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": 5.983986006837701,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 6.690299604174327,
+            "imag": 0.0
+          },
+          "k_vector": [
+            {
+              "real": -0.0013670850793925382,
+              "imag": 0.0
+            },
+            {
+              "real": 5.983986006837701,
+              "imag": 0.0
+            },
+            {
+              "real": 6.690299604174327,
+              "imag": 0.0
+            }
+          ],
+          "e_vector": [
+            {
+              "real": -0.9999999739036398,
+              "imag": 0.0
+            },
+            {
+              "real": -0.00022845725945122052,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": 0.00017028198380708622,
+              "imag": 0.0
+            },
+            {
+              "real": -0.7453559574879883,
+              "imag": 0.0
+            },
+            {
+              "real": 0.6666666840642403,
+              "imag": -0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 1.0,
+            "imag": 0.0
+          },
+          "vertical_sign": 1,
+          "electric_tangential_norm_sq": 0.9999999999999997,
+          "power_per_unit_amplitude": 0.5478366430502136,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 1.4699999999999995,
+          "traction_vector": [
+            {
+              "real": 0.0,
+              "imag": -6.6902994295818585
+            },
+            {
+              "real": 0.0,
+              "imag": -0.001528447512477252
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 11,
+          "side": "top",
+          "m": -2,
+          "n": 1,
+          "polarization": "p",
+          "alpha": {
+            "real": -0.0013670850793925382,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": 5.983986006837701,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 6.690299604174327,
+            "imag": 0.0
+          },
+          "k_vector": [
+            {
+              "real": -0.0013670850793925382,
+              "imag": 0.0
+            },
+            {
+              "real": 5.983986006837701,
+              "imag": 0.0
+            },
+            {
+              "real": 6.690299604174327,
+              "imag": 0.0
+            }
+          ],
+          "e_vector": [
+            {
+              "real": 0.00017028198380708627,
+              "imag": 0.0
+            },
+            {
+              "real": -0.7453559574879884,
+              "imag": 0.0
+            },
+            {
+              "real": 0.6666666840642405,
+              "imag": -0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": 0.9999999739036399,
+              "imag": 0.0
+            },
+            {
+              "real": 0.00022845725945122054,
+              "imag": 0.0
+            },
+            {
+              "real": -2.4157858908685565e-20,
+              "imag": 0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 1.0,
+            "imag": 0.0
+          },
+          "vertical_sign": 1,
+          "electric_tangential_norm_sq": 0.5555555323587901,
+          "power_per_unit_amplitude": 0.5478366430502138,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 0.8166666325674213,
+          "traction_vector": [
+            {
+              "real": 0.0,
+              "imag": 0.002050627565574891
+            },
+            {
+              "real": 0.0,
+              "imag": -8.975978776016172
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 12,
+          "side": "top",
+          "m": -1,
+          "n": -1,
+          "polarization": "s",
+          "alpha": {
+            "real": 4.486622420048883,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": -5.983986006837701,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 4.962895316491319,
+            "imag": 0.0
+          },
+          "k_vector": [
+            {
+              "real": 4.486622420048883,
+              "imag": 0.0
+            },
+            {
+              "real": -5.983986006837701,
+              "imag": 0.0
+            },
+            {
+              "real": 4.962895316491319,
+              "imag": 0.0
+            }
+          ],
+          "e_vector": [
+            {
+              "real": 0.8000877286570669,
+              "imag": -0.0
+            },
+            {
+              "real": 0.5998830106382207,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": -0.33168043068474645,
+              "imag": 0.0
+            },
+            {
+              "real": 0.4423753260560312,
+              "imag": 0.0
+            },
+            {
+              "real": 0.8332419593357027,
+              "imag": 0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 1.0,
+            "imag": 0.0
+          },
+          "vertical_sign": 1,
+          "electric_tangential_norm_sq": 0.9999999999999999,
+          "power_per_unit_amplitude": 0.4063877659977793,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 1.4699999999999998,
+          "traction_vector": [
+            {
+              "real": 0.0,
+              "imag": 3.9707516413343344
+            },
+            {
+              "real": 0.0,
+              "imag": 2.9771565839391374
+            },
+            {
+              "real": 0.0,
+              "imag": -0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 13,
+          "side": "top",
+          "m": -1,
+          "n": -1,
+          "polarization": "p",
+          "alpha": {
+            "real": 4.486622420048883,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": -5.983986006837701,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 4.962895316491319,
+            "imag": 0.0
+          },
+          "k_vector": [
+            {
+              "real": 4.486622420048883,
+              "imag": 0.0
+            },
+            {
+              "real": -5.983986006837701,
+              "imag": 0.0
+            },
+            {
+              "real": 4.962895316491319,
+              "imag": 0.0
+            }
+          ],
+          "e_vector": [
+            {
+              "real": -0.3316804306847465,
+              "imag": 0.0
+            },
+            {
+              "real": 0.4423753260560313,
+              "imag": 0.0
+            },
+            {
+              "real": 0.833241959335703,
+              "imag": 0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": -0.8000877286570669,
+              "imag": 0.0
+            },
+            {
+              "real": -0.5998830106382207,
+              "imag": 0.0
+            },
+            {
+              "real": -2.4737647522494018e-17,
+              "imag": 0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 1.0,
+            "imag": 0.0
+          },
+          "vertical_sign": 1,
+          "electric_tangential_norm_sq": 0.3057078372023989,
+          "power_per_unit_amplitude": 0.4063877659977795,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 0.4493905206875264,
+          "traction_vector": [
+            {
+              "real": 0.0,
+              "imag": -5.384537312098177
+            },
+            {
+              "real": 0.0,
+              "imag": 7.181570658789672
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 14,
+          "side": "top",
+          "m": -1,
+          "n": 0,
+          "polarization": "s",
+          "alpha": {
+            "real": 4.486622420048883,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 7.774214973389975,
+            "imag": 0.0
+          },
+          "k_vector": [
+            {
+              "real": 4.486622420048883,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 7.774214973389975,
+              "imag": 0.0
+            }
+          ],
+          "e_vector": [
+            {
+              "real": -0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 1.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": -0.8661133191718294,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.4998476951563912,
+              "imag": 0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 1.0,
+            "imag": 0.0
+          },
+          "vertical_sign": 1,
+          "electric_tangential_norm_sq": 1.0,
+          "power_per_unit_amplitude": 0.6365932895912946,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 1.47,
+          "traction_vector": [
+            {
+              "real": -0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 7.774214973389975
+            },
+            {
+              "real": 0.0,
+              "imag": -0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 15,
+          "side": "top",
+          "m": -1,
+          "n": 0,
+          "polarization": "p",
+          "alpha": {
+            "real": 4.486622420048883,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 7.774214973389975,
+            "imag": 0.0
+          },
+          "k_vector": [
+            {
+              "real": 4.486622420048883,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 7.774214973389975,
+              "imag": 0.0
+            }
+          ],
+          "e_vector": [
+            {
+              "real": -0.8661133191718294,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.4998476951563912,
+              "imag": 0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": -1.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 1.0,
+            "imag": 0.0
+          },
+          "vertical_sign": 1,
+          "electric_tangential_norm_sq": 0.7501522816468433,
+          "power_per_unit_amplitude": 0.6365932895912946,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 1.1027238540208597,
+          "traction_vector": [
+            {
+              "real": 0.0,
+              "imag": -8.975979010256552
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 16,
+          "side": "top",
+          "m": -1,
+          "n": 1,
+          "polarization": "s",
+          "alpha": {
+            "real": 4.486622420048883,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": 5.983986006837701,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 4.962895316491319,
+            "imag": 0.0
+          },
+          "k_vector": [
+            {
+              "real": 4.486622420048883,
+              "imag": 0.0
+            },
+            {
+              "real": 5.983986006837701,
+              "imag": 0.0
+            },
+            {
+              "real": 4.962895316491319,
+              "imag": 0.0
+            }
+          ],
+          "e_vector": [
+            {
+              "real": -0.8000877286570669,
+              "imag": 0.0
+            },
+            {
+              "real": 0.5998830106382207,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": -0.33168043068474645,
+              "imag": 0.0
+            },
+            {
+              "real": -0.4423753260560312,
+              "imag": 0.0
+            },
+            {
+              "real": 0.8332419593357027,
+              "imag": 0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 1.0,
+            "imag": 0.0
+          },
+          "vertical_sign": 1,
+          "electric_tangential_norm_sq": 0.9999999999999999,
+          "power_per_unit_amplitude": 0.4063877659977793,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 1.4699999999999998,
+          "traction_vector": [
+            {
+              "real": 0.0,
+              "imag": -3.9707516413343344
+            },
+            {
+              "real": 0.0,
+              "imag": 2.9771565839391374
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 17,
+          "side": "top",
+          "m": -1,
+          "n": 1,
+          "polarization": "p",
+          "alpha": {
+            "real": 4.486622420048883,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": 5.983986006837701,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 4.962895316491319,
+            "imag": 0.0
+          },
+          "k_vector": [
+            {
+              "real": 4.486622420048883,
+              "imag": 0.0
+            },
+            {
+              "real": 5.983986006837701,
+              "imag": 0.0
+            },
+            {
+              "real": 4.962895316491319,
+              "imag": 0.0
+            }
+          ],
+          "e_vector": [
+            {
+              "real": -0.3316804306847465,
+              "imag": 0.0
+            },
+            {
+              "real": -0.4423753260560313,
+              "imag": 0.0
+            },
+            {
+              "real": 0.833241959335703,
+              "imag": 0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": 0.8000877286570669,
+              "imag": 0.0
+            },
+            {
+              "real": -0.5998830106382207,
+              "imag": 0.0
+            },
+            {
+              "real": 2.4737647522494018e-17,
+              "imag": 0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 1.0,
+            "imag": 0.0
+          },
+          "vertical_sign": 1,
+          "electric_tangential_norm_sq": 0.3057078372023989,
+          "power_per_unit_amplitude": 0.4063877659977795,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 0.4493905206875264,
+          "traction_vector": [
+            {
+              "real": 0.0,
+              "imag": -5.384537312098177
+            },
+            {
+              "real": 0.0,
+              "imag": -7.181570658789672
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 18,
+          "side": "top",
+          "m": 0,
+          "n": 0,
+          "polarization": "s",
+          "alpha": {
+            "real": 8.97461192517716,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 0.15665243385951635,
+            "imag": 0.0
+          },
+          "k_vector": [
+            {
+              "real": 8.97461192517716,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.15665243385951635,
+              "imag": 0.0
+            }
+          ],
+          "e_vector": [
+            {
+              "real": -0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 1.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": -0.017452406437282755,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.9998476951563912,
+              "imag": 0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 1.0,
+            "imag": 0.0
+          },
+          "vertical_sign": 1,
+          "electric_tangential_norm_sq": 1.0,
+          "power_per_unit_amplitude": 0.012827518731402825,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 1.47,
+          "traction_vector": [
+            {
+              "real": -0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.15665243385951635
+            },
+            {
+              "real": 0.0,
+              "imag": -0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 19,
+          "side": "top",
+          "m": 0,
+          "n": 0,
+          "polarization": "p",
+          "alpha": {
+            "real": 8.97461192517716,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 0.15665243385951635,
+            "imag": 0.0
+          },
+          "k_vector": [
+            {
+              "real": 8.97461192517716,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.15665243385951635,
+              "imag": 0.0
+            }
+          ],
+          "e_vector": [
+            {
+              "real": -0.01745240643728276,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.9998476951563914,
+              "imag": 0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": -1.0000000000000002,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 1.0,
+            "imag": 0.0
+          },
+          "vertical_sign": 1,
+          "electric_tangential_norm_sq": 0.0003045864904521087,
+          "power_per_unit_amplitude": 0.01282751873140283,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 0.0004477421409645998,
+          "traction_vector": [
+            {
+              "real": 0.0,
+              "imag": -8.975979010256554
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 20,
+          "side": "bottom",
+          "m": -3,
+          "n": -1,
+          "polarization": "s",
+          "alpha": {
+            "real": -4.489356590207668,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": -5.983986006837701,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 4.958556350844336,
+            "imag": 7.026217474247436e-05
+          },
+          "k_vector": [
+            {
+              "real": -4.489356590207668,
+              "imag": 0.0
+            },
+            {
+              "real": -5.983986006837701,
+              "imag": 0.0
+            },
+            {
+              "real": -4.958556350844336,
+              "imag": -7.026217474247436e-05
+            }
+          ],
+          "e_vector": [
+            {
+              "real": 0.7999122734807461,
+              "imag": -0.0
+            },
+            {
+              "real": -0.6001169508811294,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": -0.3315196832168072,
+              "imag": -4.697595885702236e-06
+            },
+            {
+              "real": -0.4418916398148882,
+              "imag": -6.261553850976274e-06
+            },
+            {
+              "real": 0.8334247251460797,
+              "imag": -0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 0.999885140474,
+            "imag": 4.32477054e-06
+          },
+          "vertical_sign": -1,
+          "electric_tangential_norm_sq": 0.9999999999999998,
+          "power_per_unit_amplitude": 0.4060324688489237,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 1.4699638505555863,
+          "traction_vector": [
+            {
+              "real": -5.620357593795412e-05,
+              "imag": 3.9664100837862852
+            },
+            {
+              "real": 4.216552206873081e-05,
+              "imag": -2.975713718040963
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 21,
+          "side": "bottom",
+          "m": -3,
+          "n": -1,
+          "polarization": "p",
+          "alpha": {
+            "real": -4.489356590207668,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": -5.983986006837701,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 4.958556350844336,
+            "imag": 7.026217474247436e-05
+          },
+          "k_vector": [
+            {
+              "real": -4.489356590207668,
+              "imag": 0.0
+            },
+            {
+              "real": -5.983986006837701,
+              "imag": 0.0
+            },
+            {
+              "real": -4.958556350844336,
+              "imag": -7.026217474247436e-05
+            }
+          ],
+          "e_vector": [
+            {
+              "real": -0.33155776578462687,
+              "imag": -3.264059536059784e-06
+            },
+            {
+              "real": -0.4419424011095991,
+              "imag": -4.350754099567616e-06
+            },
+            {
+              "real": 0.8335204628602758,
+              "imag": -3.605198833694458e-06
+            }
+          ],
+          "h_vector": [
+            {
+              "real": -0.7998203959021161,
+              "imag": -3.4594370347866507e-06
+            },
+            {
+              "real": 0.6000480217070564,
+              "imag": 2.595368109614824e-06
+            },
+            {
+              "real": 4.9475295044988036e-17,
+              "imag": 0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 0.999885140474,
+            "imag": 4.32477054e-06
+          },
+          "vertical_sign": -1,
+          "electric_tangential_norm_sq": 0.30524363798019444,
+          "power_per_unit_amplitude": 0.4060324688489239,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 0.4486971134429621,
+          "traction_vector": [
+            {
+              "real": 2.3295969675791888e-05,
+              "imag": -5.386018447988506
+            },
+            {
+              "real": 3.105183421154914e-05,
+              "imag": -7.179171085592479
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 22,
+          "side": "bottom",
+          "m": -3,
+          "n": 0,
+          "polarization": "s",
+          "alpha": {
+            "real": -4.489356590207668,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 7.771445786441615,
+            "imag": 4.483064829471781e-05
+          },
+          "k_vector": [
+            {
+              "real": -4.489356590207668,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": -7.771445786441615,
+              "imag": -4.483064829471781e-05
+            }
+          ],
+          "e_vector": [
+            {
+              "real": -0.0,
+              "imag": 0.0
+            },
+            {
+              "real": -1.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": -0.8658048083180055,
+              "imag": -4.994513494683011e-06
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.5001523048436087,
+              "imag": -0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 0.999885140474,
+            "imag": 4.32477054e-06
+          },
+          "vertical_sign": -1,
+          "electric_tangential_norm_sq": 1.0,
+          "power_per_unit_amplitude": 0.6363665341137341,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 1.469976934812407,
+          "traction_vector": [
+            {
+              "real": -0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 4.483064829471781e-05,
+              "imag": -7.771445786441615
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 23,
+          "side": "bottom",
+          "m": -3,
+          "n": 0,
+          "polarization": "p",
+          "alpha": {
+            "real": -4.489356590207668,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 7.771445786441615,
+            "imag": 4.483064829471781e-05
+          },
+          "k_vector": [
+            {
+              "real": -4.489356590207668,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": -7.771445786441615,
+              "imag": -4.483064829471781e-05
+            }
+          ],
+          "e_vector": [
+            {
+              "real": -0.8659042656715219,
+              "imag": -1.2498197897239332e-06
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.5002097586869129,
+              "imag": -2.163540931475541e-06
+            }
+          ],
+          "h_vector": [
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.999885140467758,
+              "imag": 4.324770539973001e-06
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 0.999885140474,
+            "imag": 4.32477054e-06
+          },
+          "vertical_sign": -1,
+          "electric_tangential_norm_sq": 0.7497901973096996,
+          "power_per_unit_amplitude": 0.6363665341137341,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 1.1021742959937022,
+          "traction_vector": [
+            {
+              "real": 3.881904959097355e-05,
+              "imag": -8.97494803350602
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 24,
+          "side": "bottom",
+          "m": -3,
+          "n": 1,
+          "polarization": "s",
+          "alpha": {
+            "real": -4.489356590207668,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": 5.983986006837701,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 4.958556350844336,
+            "imag": 7.026217474247436e-05
+          },
+          "k_vector": [
+            {
+              "real": -4.489356590207668,
+              "imag": 0.0
+            },
+            {
+              "real": 5.983986006837701,
+              "imag": 0.0
+            },
+            {
+              "real": -4.958556350844336,
+              "imag": -7.026217474247436e-05
+            }
+          ],
+          "e_vector": [
+            {
+              "real": -0.7999122734807461,
+              "imag": 0.0
+            },
+            {
+              "real": -0.6001169508811294,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": -0.3315196832168072,
+              "imag": -4.697595885702236e-06
+            },
+            {
+              "real": 0.4418916398148882,
+              "imag": 6.261553850976274e-06
+            },
+            {
+              "real": 0.8334247251460797,
+              "imag": -0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 0.999885140474,
+            "imag": 4.32477054e-06
+          },
+          "vertical_sign": -1,
+          "electric_tangential_norm_sq": 0.9999999999999998,
+          "power_per_unit_amplitude": 0.4060324688489237,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 1.4699638505555863,
+          "traction_vector": [
+            {
+              "real": 5.620357593795412e-05,
+              "imag": -3.9664100837862852
+            },
+            {
+              "real": 4.216552206873081e-05,
+              "imag": -2.975713718040963
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 25,
+          "side": "bottom",
+          "m": -3,
+          "n": 1,
+          "polarization": "p",
+          "alpha": {
+            "real": -4.489356590207668,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": 5.983986006837701,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 4.958556350844336,
+            "imag": 7.026217474247436e-05
+          },
+          "k_vector": [
+            {
+              "real": -4.489356590207668,
+              "imag": 0.0
+            },
+            {
+              "real": 5.983986006837701,
+              "imag": 0.0
+            },
+            {
+              "real": -4.958556350844336,
+              "imag": -7.026217474247436e-05
+            }
+          ],
+          "e_vector": [
+            {
+              "real": -0.33155776578462687,
+              "imag": -3.264059536059784e-06
+            },
+            {
+              "real": 0.4419424011095991,
+              "imag": 4.350754099567616e-06
+            },
+            {
+              "real": 0.8335204628602758,
+              "imag": -3.605198833694458e-06
+            }
+          ],
+          "h_vector": [
+            {
+              "real": 0.7998203959021161,
+              "imag": 3.4594370347866507e-06
+            },
+            {
+              "real": 0.6000480217070564,
+              "imag": 2.595368109614824e-06
+            },
+            {
+              "real": -4.9475295044988036e-17,
+              "imag": 0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 0.999885140474,
+            "imag": 4.32477054e-06
+          },
+          "vertical_sign": -1,
+          "electric_tangential_norm_sq": 0.30524363798019444,
+          "power_per_unit_amplitude": 0.4060324688489239,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 0.4486971134429621,
+          "traction_vector": [
+            {
+              "real": 2.3295969675791888e-05,
+              "imag": -5.386018447988506
+            },
+            {
+              "real": -3.105183421154914e-05,
+              "imag": 7.179171085592479
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 26,
+          "side": "bottom",
+          "m": -2,
+          "n": -1,
+          "polarization": "s",
+          "alpha": {
+            "real": -0.0013670850793925382,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": -5.983986006837701,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 6.68891634028968,
+            "imag": 5.2086008415877786e-05
+          },
+          "k_vector": [
+            {
+              "real": -0.0013670850793925382,
+              "imag": 0.0
+            },
+            {
+              "real": -5.983986006837701,
+              "imag": 0.0
+            },
+            {
+              "real": -6.68891634028968,
+              "imag": -5.2086008415877786e-05
+            }
+          ],
+          "e_vector": [
+            {
+              "real": 0.9999999739036398,
+              "imag": -0.0
+            },
+            {
+              "real": -0.00022845725945122052,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": -0.0001702467768758063,
+              "imag": -1.3256968097683348e-09
+            },
+            {
+              "real": -0.7452018501926205,
+              "imag": -5.802821842286574e-06
+            },
+            {
+              "real": 0.6666666840642403,
+              "imag": -0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 0.999885140474,
+            "imag": 4.32477054e-06
+          },
+          "vertical_sign": -1,
+          "electric_tangential_norm_sq": 0.9999999999999997,
+          "power_per_unit_amplitude": 0.5477233741851624,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 1.4699732019929355,
+          "traction_vector": [
+            {
+              "real": -5.208600705662255e-05,
+              "imag": 6.68891616573331
+            },
+            {
+              "real": 1.1899426738444647e-08,
+              "imag": -0.0015281314958010678
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 27,
+          "side": "bottom",
+          "m": -2,
+          "n": -1,
+          "polarization": "p",
+          "alpha": {
+            "real": -0.0013670850793925382,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": -5.983986006837701,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 6.68891634028968,
+            "imag": 5.2086008415877786e-05
+          },
+          "k_vector": [
+            {
+              "real": -0.0013670850793925382,
+              "imag": 0.0
+            },
+            {
+              "real": -5.983986006837701,
+              "imag": 0.0
+            },
+            {
+              "real": -6.68891634028968,
+              "imag": -5.2086008415877786e-05
+            }
+          ],
+          "e_vector": [
+            {
+              "real": -0.0001702663335861758,
+              "imag": -5.894016846993088e-10
+            },
+            {
+              "real": -0.7452874535562701,
+              "imag": -2.5799209477250923e-06
+            },
+            {
+              "real": 0.6667432658572671,
+              "imag": -2.8838428707480877e-06
+            }
+          ],
+          "h_vector": [
+            {
+              "real": -0.999885114365667,
+              "imag": -4.32477042707448e-06
+            },
+            {
+              "real": 0.0002284310189552686,
+              "imag": 9.880252253089822e-10
+            },
+            {
+              "real": 2.4157858908685565e-20,
+              "imag": -4.6077459161158685e-26
+            }
+          ],
+          "refractive_index": {
+            "real": 0.999885140474,
+            "imag": 4.32477054e-06
+          },
+          "vertical_sign": -1,
+          "electric_tangential_norm_sq": 0.5554534174256699,
+          "power_per_unit_amplitude": 0.547723374185163,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 0.8165016385711308,
+          "traction_vector": [
+            {
+              "real": 8.868493683977426e-09,
+              "imag": -0.0020503920314340076
+            },
+            {
+              "real": 3.8819048577598794e-05,
+              "imag": -8.974947799214199
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 28,
+          "side": "bottom",
+          "m": -2,
+          "n": 0,
+          "polarization": "s",
+          "alpha": {
+            "real": -0.0013670850793925382,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 8.97494792944325,
+            "imag": 3.8819050041557536e-05
+          },
+          "k_vector": [
+            {
+              "real": -0.0013670850793925382,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": -8.97494792944325,
+              "imag": -3.8819050041557536e-05
+            }
+          ],
+          "e_vector": [
+            {
+              "real": -0.0,
+              "imag": 0.0
+            },
+            {
+              "real": -1.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": -0.9998851288742849,
+              "imag": -4.324770590171869e-06
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.00015230484360874904,
+              "imag": -0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 0.999885140474,
+            "imag": 4.32477054e-06
+          },
+          "vertical_sign": -1,
+          "electric_tangential_norm_sq": 1.0,
+          "power_per_unit_amplitude": 0.7349155697225994,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 1.4699800277344321,
+          "traction_vector": [
+            {
+              "real": -0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 3.8819050041557536e-05,
+              "imag": -8.97494792944325
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 29,
+          "side": "bottom",
+          "m": -2,
+          "n": 0,
+          "polarization": "p",
+          "alpha": {
+            "real": -0.0013670850793925382,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 8.97494792944325,
+            "imag": 3.8819050041557536e-05
+          },
+          "k_vector": [
+            {
+              "real": -0.0013670850793925382,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": -8.97494792944325,
+              "imag": -3.8819050041557536e-05
+            }
+          ],
+          "e_vector": [
+            {
+              "real": -0.9999999883989524,
+              "imag": -1.0035526433266723e-13
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.00015232233927758835,
+              "imag": -6.588348389489128e-10
+            }
+          ],
+          "h_vector": [
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.9998851404740002,
+              "imag": 4.324770539999998e-06
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 0.999885140474,
+            "imag": 4.32477054e-06
+          },
+          "vertical_sign": -1,
+          "electric_tangential_norm_sq": 0.999999976797905,
+          "power_per_unit_amplitude": 0.7349155697225995,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 1.469979993627816,
+          "traction_vector": [
+            {
+              "real": 3.881904959121588e-05,
+              "imag": -8.97494803356205
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 30,
+          "side": "bottom",
+          "m": -2,
+          "n": 1,
+          "polarization": "s",
+          "alpha": {
+            "real": -0.0013670850793925382,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": 5.983986006837701,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 6.68891634028968,
+            "imag": 5.2086008415877786e-05
+          },
+          "k_vector": [
+            {
+              "real": -0.0013670850793925382,
+              "imag": 0.0
+            },
+            {
+              "real": 5.983986006837701,
+              "imag": 0.0
+            },
+            {
+              "real": -6.68891634028968,
+              "imag": -5.2086008415877786e-05
+            }
+          ],
+          "e_vector": [
+            {
+              "real": -0.9999999739036398,
+              "imag": 0.0
+            },
+            {
+              "real": -0.00022845725945122052,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": -0.0001702467768758063,
+              "imag": -1.3256968097683348e-09
+            },
+            {
+              "real": 0.7452018501926205,
+              "imag": 5.802821842286574e-06
+            },
+            {
+              "real": 0.6666666840642403,
+              "imag": -0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 0.999885140474,
+            "imag": 4.32477054e-06
+          },
+          "vertical_sign": -1,
+          "electric_tangential_norm_sq": 0.9999999999999997,
+          "power_per_unit_amplitude": 0.5477233741851624,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 1.4699732019929355,
+          "traction_vector": [
+            {
+              "real": 5.208600705662255e-05,
+              "imag": -6.68891616573331
+            },
+            {
+              "real": 1.1899426738444647e-08,
+              "imag": -0.0015281314958010678
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 31,
+          "side": "bottom",
+          "m": -2,
+          "n": 1,
+          "polarization": "p",
+          "alpha": {
+            "real": -0.0013670850793925382,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": 5.983986006837701,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 6.68891634028968,
+            "imag": 5.2086008415877786e-05
+          },
+          "k_vector": [
+            {
+              "real": -0.0013670850793925382,
+              "imag": 0.0
+            },
+            {
+              "real": 5.983986006837701,
+              "imag": 0.0
+            },
+            {
+              "real": -6.68891634028968,
+              "imag": -5.2086008415877786e-05
+            }
+          ],
+          "e_vector": [
+            {
+              "real": -0.0001702663335861758,
+              "imag": -5.894016846993088e-10
+            },
+            {
+              "real": 0.7452874535562701,
+              "imag": 2.5799209477250923e-06
+            },
+            {
+              "real": 0.6667432658572671,
+              "imag": -2.8838428707480877e-06
+            }
+          ],
+          "h_vector": [
+            {
+              "real": 0.999885114365667,
+              "imag": 4.32477042707448e-06
+            },
+            {
+              "real": 0.0002284310189552686,
+              "imag": 9.880252253089822e-10
+            },
+            {
+              "real": -2.4157858908685565e-20,
+              "imag": 4.6077459161158685e-26
+            }
+          ],
+          "refractive_index": {
+            "real": 0.999885140474,
+            "imag": 4.32477054e-06
+          },
+          "vertical_sign": -1,
+          "electric_tangential_norm_sq": 0.5554534174256699,
+          "power_per_unit_amplitude": 0.547723374185163,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 0.8165016385711308,
+          "traction_vector": [
+            {
+              "real": 8.868493683977426e-09,
+              "imag": -0.0020503920314340076
+            },
+            {
+              "real": -3.8819048577598794e-05,
+              "imag": 8.974947799214199
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 32,
+          "side": "bottom",
+          "m": -1,
+          "n": -1,
+          "polarization": "s",
+          "alpha": {
+            "real": 4.486622420048883,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": -5.983986006837701,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 4.961030431115042,
+            "imag": 7.022713479206063e-05
+          },
+          "k_vector": [
+            {
+              "real": 4.486622420048883,
+              "imag": 0.0
+            },
+            {
+              "real": -5.983986006837701,
+              "imag": 0.0
+            },
+            {
+              "real": -4.961030431115042,
+              "imag": -7.022713479206063e-05
+            }
+          ],
+          "e_vector": [
+            {
+              "real": 0.8000877286570669,
+              "imag": -0.0
+            },
+            {
+              "real": 0.5998830106382207,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": 0.3315557965860328,
+              "imag": 4.693422856650971e-06
+            },
+            {
+              "real": -0.4422090966226506,
+              "imag": -6.259803939121232e-06
+            },
+            {
+              "real": 0.8332419593357027,
+              "imag": 0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 0.999885140474,
+            "imag": 4.32477054e-06
+          },
+          "vertical_sign": -1,
+          "electric_tangential_norm_sq": 0.9999999999999999,
+          "power_per_unit_amplitude": 0.4062350594517862,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 1.469963868583197,
+          "traction_vector": [
+            {
+              "real": -5.6187868765873466e-05,
+              "imag": 3.9692595694294237
+            },
+            {
+              "real": -4.212806504755746e-05,
+              "imag": 2.9760378708851216
+            },
+            {
+              "real": -0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 33,
+          "side": "bottom",
+          "m": -1,
+          "n": -1,
+          "polarization": "p",
+          "alpha": {
+            "real": 4.486622420048883,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": -5.983986006837701,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 4.961030431115042,
+            "imag": 7.022713479206063e-05
+          },
+          "k_vector": [
+            {
+              "real": 4.486622420048883,
+              "imag": 0.0
+            },
+            {
+              "real": -5.983986006837701,
+              "imag": 0.0
+            },
+            {
+              "real": -4.961030431115042,
+              "imag": -7.022713479206063e-05
+            }
+          ],
+          "e_vector": [
+            {
+              "real": 0.3315938833022934,
+              "imag": 3.259729809722286e-06
+            },
+            {
+              "real": -0.4422598943844885,
+              "imag": -4.347630743403933e-06
+            },
+            {
+              "real": 0.8333376760551552,
+              "imag": -3.604408231896424e-06
+            }
+          ],
+          "h_vector": [
+            {
+              "real": -0.7999958309257797,
+              "imag": -3.4601958381644716e-06
+            },
+            {
+              "real": -0.5998141083344596,
+              "imag": -2.594356371744373e-06
+            },
+            {
+              "real": 0.0,
+              "imag": 3.7746654544821195e-22
+            }
+          ],
+          "refractive_index": {
+            "real": 0.999885140474,
+            "imag": 4.32477054e-06
+          },
+          "vertical_sign": -1,
+          "electric_tangential_norm_sq": 0.3055483176540016,
+          "power_per_unit_amplitude": 0.4062350594517864,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 0.4491449870577638,
+          "traction_vector": [
+            {
+              "real": -2.3286888337902835e-05,
+              "imag": 5.383918846465859
+            },
+            {
+              "real": 3.1058645214741376e-05,
+              "imag": -7.180745786682548
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 34,
+          "side": "bottom",
+          "m": -1,
+          "n": 0,
+          "polarization": "s",
+          "alpha": {
+            "real": 4.486622420048883,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 7.773024602145297,
+            "imag": 4.482154253021086e-05
+          },
+          "k_vector": [
+            {
+              "real": 4.486622420048883,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": -7.773024602145297,
+              "imag": -4.482154253021086e-05
+            }
+          ],
+          "e_vector": [
+            {
+              "real": -0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 1.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": 0.865980701744436,
+              "imag": 4.993499035480673e-06
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.4998476951563912,
+              "imag": 0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 0.999885140474,
+            "imag": 4.32477054e-06
+          },
+          "vertical_sign": -1,
+          "electric_tangential_norm_sq": 1.0,
+          "power_per_unit_amplitude": 0.6364958157821604,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 1.46997693949725,
+          "traction_vector": [
+            {
+              "real": -0.0,
+              "imag": 0.0
+            },
+            {
+              "real": -4.482154253021086e-05,
+              "imag": 7.773024602145297
+            },
+            {
+              "real": -0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 35,
+          "side": "bottom",
+          "m": -1,
+          "n": 0,
+          "polarization": "p",
+          "alpha": {
+            "real": 4.486622420048883,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 7.773024602145297,
+            "imag": 4.482154253021086e-05
+          },
+          "k_vector": [
+            {
+              "real": 4.486622420048883,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": -7.773024602145297,
+              "imag": -4.482154253021086e-05
+            }
+          ],
+          "e_vector": [
+            {
+              "real": 0.8660801793033087,
+              "imag": 1.2480443405020596e-06
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.4999051140083646,
+              "imag": -2.1622232617976723e-06
+            }
+          ],
+          "h_vector": [
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": -0.9998851404677681,
+              "imag": -4.324770539973044e-06
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 0.999885140474,
+            "imag": 4.32477054e-06
+          },
+          "vertical_sign": -1,
+          "electric_tangential_norm_sq": 0.750094876983609,
+          "power_per_unit_amplitude": 0.6364958157821605,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 1.1026221716009317,
+          "traction_vector": [
+            {
+              "real": -3.881904959097394e-05,
+              "imag": 8.974948033506111
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 36,
+          "side": "bottom",
+          "m": -1,
+          "n": 1,
+          "polarization": "s",
+          "alpha": {
+            "real": 4.486622420048883,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": 5.983986006837701,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 4.961030431115042,
+            "imag": 7.022713479206063e-05
+          },
+          "k_vector": [
+            {
+              "real": 4.486622420048883,
+              "imag": 0.0
+            },
+            {
+              "real": 5.983986006837701,
+              "imag": 0.0
+            },
+            {
+              "real": -4.961030431115042,
+              "imag": -7.022713479206063e-05
+            }
+          ],
+          "e_vector": [
+            {
+              "real": -0.8000877286570669,
+              "imag": 0.0
+            },
+            {
+              "real": 0.5998830106382207,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": 0.3315557965860328,
+              "imag": 4.693422856650971e-06
+            },
+            {
+              "real": 0.4422090966226506,
+              "imag": 6.259803939121232e-06
+            },
+            {
+              "real": 0.8332419593357027,
+              "imag": 0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 0.999885140474,
+            "imag": 4.32477054e-06
+          },
+          "vertical_sign": -1,
+          "electric_tangential_norm_sq": 0.9999999999999999,
+          "power_per_unit_amplitude": 0.4062350594517862,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 1.469963868583197,
+          "traction_vector": [
+            {
+              "real": 5.6187868765873466e-05,
+              "imag": -3.9692595694294237
+            },
+            {
+              "real": -4.212806504755746e-05,
+              "imag": 2.9760378708851216
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 37,
+          "side": "bottom",
+          "m": -1,
+          "n": 1,
+          "polarization": "p",
+          "alpha": {
+            "real": 4.486622420048883,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": 5.983986006837701,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 4.961030431115042,
+            "imag": 7.022713479206063e-05
+          },
+          "k_vector": [
+            {
+              "real": 4.486622420048883,
+              "imag": 0.0
+            },
+            {
+              "real": 5.983986006837701,
+              "imag": 0.0
+            },
+            {
+              "real": -4.961030431115042,
+              "imag": -7.022713479206063e-05
+            }
+          ],
+          "e_vector": [
+            {
+              "real": 0.3315938833022934,
+              "imag": 3.259729809722286e-06
+            },
+            {
+              "real": 0.4422598943844885,
+              "imag": 4.347630743403933e-06
+            },
+            {
+              "real": 0.8333376760551552,
+              "imag": -3.604408231896424e-06
+            }
+          ],
+          "h_vector": [
+            {
+              "real": 0.7999958309257797,
+              "imag": 3.4601958381644716e-06
+            },
+            {
+              "real": -0.5998141083344596,
+              "imag": -2.594356371744373e-06
+            },
+            {
+              "real": 0.0,
+              "imag": -3.7746654544821195e-22
+            }
+          ],
+          "refractive_index": {
+            "real": 0.999885140474,
+            "imag": 4.32477054e-06
+          },
+          "vertical_sign": -1,
+          "electric_tangential_norm_sq": 0.3055483176540016,
+          "power_per_unit_amplitude": 0.4062350594517864,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 0.4491449870577638,
+          "traction_vector": [
+            {
+              "real": -2.3286888337902835e-05,
+              "imag": 5.383918846465859
+            },
+            {
+              "real": -3.1058645214741376e-05,
+              "imag": 7.180745786682548
+            },
+            {
+              "real": -0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 38,
+          "side": "bottom",
+          "m": 0,
+          "n": 0,
+          "polarization": "s",
+          "alpha": {
+            "real": 8.97461192517716,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 0.07780134385941416,
+            "imag": 0.004478058289365571
+          },
+          "k_vector": [
+            {
+              "real": 8.97461192517716,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": -0.07780134385941416,
+              "imag": -0.004478058289365571
+            }
+          ],
+          "e_vector": [
+            {
+              "real": -0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 1.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "h_vector": [
+            {
+              "real": 0.008667727918092628,
+              "imag": 0.0004988935785443173
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.9998476951563912,
+              "imag": 0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 0.999885140474,
+            "imag": 4.32477054e-06
+          },
+          "vertical_sign": -1,
+          "electric_tangential_norm_sq": 1.0,
+          "power_per_unit_amplitude": 0.006370780019798082,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 1.467697843589745,
+          "traction_vector": [
+            {
+              "real": -0.0,
+              "imag": 0.0
+            },
+            {
+              "real": -0.004478058289365571,
+              "imag": 0.07780134385941416
+            },
+            {
+              "real": -0.0,
+              "imag": 0.0
+            }
+          ]
+        },
+        {
+          "schema": "fullspace-dtn.mode.v1",
+          "mode_index": 39,
+          "side": "bottom",
+          "m": 0,
+          "n": 0,
+          "polarization": "p",
+          "alpha": {
+            "real": 8.97461192517716,
+            "imag": 0.0
+          },
+          "gamma": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "beta": {
+            "real": 0.07780134385941416,
+            "imag": 0.004478058289365571
+          },
+          "k_vector": [
+            {
+              "real": 8.97461192517716,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": -0.07780134385941416,
+              "imag": -0.004478058289365571
+            }
+          ],
+          "e_vector": [
+            {
+              "real": 0.00866872360357703,
+              "imag": 0.0004989132690542871
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.9999623014383734,
+              "imag": -4.325104281798984e-06
+            }
+          ],
+          "h_vector": [
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": -0.999884891569405,
+              "imag": -4.324769463421086e-06
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "refractive_index": {
+            "real": 0.999885140474,
+            "imag": 4.32477054e-06
+          },
+          "vertical_sign": -1,
+          "electric_tangential_norm_sq": 7.539568336525196e-05,
+          "power_per_unit_amplitude": 0.0063707800197980845,
+          "propagating": true,
+          "rayleigh_warning": false,
+          "classification": "propagating",
+          "rayleigh_tolerance": 1e-06,
+          "projection_denominator": 0.00011065808189115553,
+          "traction_vector": [
+            {
+              "real": -3.881903992786616e-05,
+              "imag": 8.974945799399627
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        }
+      ],
+      "mode_manifest_sha256": "93795b53d7c5aef69af66b4ff0a56fa46515771f1ec43332ec929970270ea262",
+      "nominal_wavelength_nm": 0.7
+    }
+  },
+  "operator_packet": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v7/V7-M1-FE/task042_v7_real_fe_interface_20260929T053615881143Z/physical_action_packet.npz",
+    "sha256": "9196edb807b534217d0c0eb78882125341342784a48ef20ebe2d9421fe636454",
+    "file_bytes": 209248356
+  },
+  "known_planned_F0": "full z = bar.close(trace,rhs); port = z[nt:]; old public meaning unchanged",
+  "reference_read_in_solve": false,
+  "new_teacher_or_hidden_training": false,
+  "material_ready": true,
+  "initial_resource_baseline": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/initial_resources.json",
+    "sha256": "c3e26eb5c32be9105a8b3829a50b11882a8c7fe96ecf750354e1b64916b25287",
+    "bytes": 125489
+  }
+}

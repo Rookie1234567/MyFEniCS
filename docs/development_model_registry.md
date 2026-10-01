@@ -1,3 +1,16 @@
+# Task042 V18模型总账／research-only
+
+| 固定模型与路线 | 完成/资格 | 新增工作与成本 |
+|---|---|---|
+| 0.7nm/384hex/p3/q15/40ports; G64/G256 | 两库16/8周期，原方程FAIL | 每库1024+2048 Arnoldi；无Q/U/R加载 |
+| 同模型原V17 GK独立R | GP12831/GN11903；完整0/8 | 新GK6484/5784；wall边界，不是已证实停滞 |
+
+新增正式one-run监督wall **19905.129134s**（5.529203h）；V6起formal下界 **57413.555143s**。旧辅助unknown保持。同时整树采样峰 **2576646144B（2.399689GiB）**，own swap/VRAM **0B**，全部成本为shared-workstation。
+
+无hidden训练、新基、PC、global p4 LU或新参考；两库共同随机神经G0，GPOLY不称纯非神经。实际run source `d3e5800ee379168ca33bc3dae595de1c8aa71063`，无production default/merge/目标48小时资格。[回应](task042_neural_coarse_inverse/response_v18.md)、[结果](task042_neural_coarse_inverse/outcomes/gmres_repair_residual_completion_v18.md)、[费用](task042_neural_coarse_inverse/outcomes/records/resource_costs_v18.json)。
+
+以下历史正文逐字保留；旧版本的“当前”仅指其当时阶段。
+
 # Task042 V17模型登记：冻结基辅助可恢复全空间与GMRES，research-only
 
 | 同一0.7nm micro／固定Q3098 | 最终LSQR逻辑步 | 新GK measured..charged | G周期 | Arnoldi步 | 最终Schur | 最终native | 散射E误差 | 散射curl误差 | LSQR停止／G停止 |

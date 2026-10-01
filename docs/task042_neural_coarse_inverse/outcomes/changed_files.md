@@ -1,3 +1,13 @@
+# V18改动与依赖
+
+仅Task042必要文件。close caller修复与既有restart64默认保留；新G256/R/V18 schema及窗口显式opt-in。新src/solvers/gmres_cycle_commit.py负责GMRES返回即保存/补审；residual_completion_window.py继承不可刷新预算；gmres_residual_completion.py在原数值模块上完成F0/G/R/VERIFY。src/io、src/runners是薄入口/reader/队列，既有runner/watchdog参数化batch，不另复制大型算法。
+
+8个input v18*.dat及冻结json、两套测试、后置raw checker、response/outcomes与compact records。导航/summary/tests/changed_files及两总账只前缀新增，旧body byte exact；旧task/review/response/raw/records不改。
+
+[依赖组](records/selective_merge_manifest_v18.json)、[source/hash](records/run_index_v18.json)、[历史保护](records/protected_history_v18.json)。research-only不改production default；无merge approval。
+
+以下历史正文逐字保留；旧版本的“当前”仅指其当时阶段。
+
 # V17：按依赖组列本批变化（research-only）
 
 | 依赖组 | 实际文件／行为 | 对应证据及建议顺序 |

@@ -1,0 +1,12 @@
+{
+  "planned_F0_outside_unexpected_quota": true,
+  "unexpected_repairs": [],
+  "max_roots": 6,
+  "max_root_wall_seconds": 900,
+  "max_total_wall_seconds": 3600,
+  "durable_journal": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/progress_journal.jsonl",
+    "sha256": "6683f6ee2605bdbdbc63247aab04b54fe04cf6afd9eb38b226142045fb8d30e4",
+    "bytes": 194313
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "status": "EVIDENCE_CONSISTENT",
+  "mismatches": [],
+  "qualified_interfaces": {
+    "GPOLY": true,
+    "GNN": true
+  },
+  "basis_image_checks": {
+    "GPOLY": {
+      "canonical_master_sha256": "edb31a5bbf505f1e3916d8491865905ab9a41a6254dcedf751e80607b8c38d0a",
+      "columns": 3098,
+      "matched_complement_columns": 1538,
+      "new_image_rebuilt": false
+    },
+    "GNN": {
+      "canonical_master_sha256": "edb31a5bbf505f1e3916d8491865905ab9a41a6254dcedf751e80607b8c38d0a",
+      "columns": 3098,
+      "matched_complement_columns": 1538,
+      "new_image_rebuilt": false
+    }
+  },
+  "raw_state_checks": {
+    "V17-GPOLY": {
+      "Schur_raw": 0.000490220468867467,
+      "Phi_raw": 1.201580540483196e-07,
+      "decoded_trace_relative": 5.0721582954715556e-18,
+      "raw_vectors_finite": true,
+      "actual_z_composition": true
+    },
+    "GPOLY-G64-FINAL": {
+      "Schur_raw": 0.00034295782597858004,
+      "Phi_raw": 5.881003519997701e-08,
+      "decoded_trace_relative": null,
+      "raw_vectors_finite": true,
+      "actual_z_composition": true
+    },
+    "GPOLY-G256-FINAL": {
+      "Schur_raw": 0.00011931316856564529,
+      "Phi_raw": 7.117816096587044e-09,
+      "decoded_trace_relative": null,
+      "raw_vectors_finite": true,
+      "actual_z_composition": true
+    },
+    "GPOLY-R-FINAL": {
+      "Schur_raw": 0.000146307718164725,
+      "Phi_raw": 1.0702974197284315e-08,
+      "decoded_trace_relative": 2.308724386406411e-19,
+      "raw_vectors_finite": true,
+      "actual_z_composition": true
+    },
+    "V17-GNN": {
+      "Schur_raw": 0.0005944770816765329,
+      "Phi_raw": 1.7670150031932327e-07,
+      "decoded_trace_relative": 3.1235779763752237e-18,
+      "raw_vectors_finite": true,
+      "actual_z_composition": true
+    },
+    "GNN-G64-FINAL": {
+      "Schur_raw": 0.00041511240819066885,
+      "Phi_raw": 8.615915571692832e-08,
+      "decoded_trace_relative": null,
+      "raw_vectors_finite": true,
+      "actual_z_composition": true
+    },
+    "GNN-G256-FINAL": {
+      "Schur_raw": 0.0001461674115862855,
+      "Phi_raw": 1.0682456104917272e-08,
+      "decoded_trace_relative": null,
+      "raw_vectors_finite": true,
+      "actual_z_composition": true
+    },
+    "GNN-R-FINAL": {
+      "Schur_raw": 0.00019955637469206967,
+      "Phi_raw": 1.9911373340120884e-08,
+      "decoded_trace_relative": 4.021345133814031e-19,
+      "raw_vectors_finite": true,
+      "actual_z_composition": true
+    }
+  },
+  "cycle_checks": {
+    "G64_GPOLY": {
+      "committed_cycles": 16,
+      "actual_Arnoldi": 1024,
+      "saved_original_residual_checked": true
+    },
+    "G256_GPOLY": {
+      "committed_cycles": 8,
+      "actual_Arnoldi": 2048,
+      "saved_original_residual_checked": true
+    },
+    "G64_GNN": {
+      "committed_cycles": 16,
+      "actual_Arnoldi": 1024,
+      "saved_original_residual_checked": true
+    },
+    "G256_GNN": {
+      "committed_cycles": 8,
+      "actual_Arnoldi": 2048,
+      "saved_original_residual_checked": true
+    }
+  },
+  "strict_same_discrete": {
+    "V17-GPOLY": false,
+    "GPOLY-G64-FINAL": false,
+    "GPOLY-G256-FINAL": false,
+    "GPOLY-R-FINAL": false,
+    "V17-GNN": false,
+    "GNN-G64-FINAL": false,
+    "GNN-G256-FINAL": false,
+    "GNN-R-FINAL": false
+  },
+  "strict_qualified_states": 0,
+  "no_saved_status_trusted": true,
+  "new_equation_actions_or_solves_in_checker": 0,
+  "no_hidden_training_claimed": true,
+  "reader_source_sha": "eb97b4214d4d0a4969ea4eb0038300f0ab214efa",
+  "reader_file_sha256": "e79ad4c9eba69fcd131c3146a5f686cc2fe704d5cfc19db3d2423ece2a4bf975",
+  "numeric_run_source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+  "run_source_distinct_from_document_HEAD": true
+}

@@ -1,0 +1,570 @@
+{
+  "planned_F0_first_fixture_failures": 2,
+  "planned_F0_first_passed": 43,
+  "fixture_repair_minimal": true,
+  "after_fixture_fix_passed": 45,
+  "final_numeric_source_passed": 45,
+  "reader_passed": 15,
+  "actual_call_chain_tests": [
+    "test_genuine_close_full_state_and_duplicate_caller_negative",
+    "test_info_callback_zero_rhs_and_fixed_physical_denominator",
+    "test_return_survives_close_audit_writer_failures_no_arnoldi_replay",
+    "test_atomic_writer_failure_and_nonfinite_hash_rollback",
+    "test_two_cycle_independent_reader",
+    "test_all_actual_dat_schema_registration_and_ref_barrier",
+    "test_real_dat_to_actual_stage_gmres_close_save_audit",
+    "test_explicit_library_kill_accounting_and_budget_never_refresh",
+    "test_compensation_epoch_uses_full_close_not_duplicate_port"
+  ],
+  "reader_stdout": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/reader_final.stdout",
+    "sha256": "cea842628b61bdacdee6d97d1d94d86280b2949a61de3960c0b256d522cd79e1"
+  },
+  "test_summaries": [
+    {
+      "name": "targeted1",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/targeted1/summary.json",
+      "sha256": "5066be2262b93af4618741ae8161e4f378bfc154cad292df3393372755cdb324",
+      "summary": {
+        "workflow_deadline_seconds": 240.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1610612736,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "WORKER_FAILED",
+        "leader_exit_code": 1,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          976242,
+          976243,
+          976256,
+          976273,
+          976277,
+          976278,
+          976280,
+          976281,
+          976282,
+          976283,
+          976284,
+          976285,
+          976286,
+          976287
+        ],
+        "sampled_process_tree_rss_peak_bytes": 147255296,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 1655988,
+            "pswpout_pages": 2364290
+          },
+          "end": {
+            "pswpin_pages": 1655988,
+            "pswpout_pages": 2364290
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 993304555520,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 993304555520,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 12000000000,
+          "planning_cap_bytes": 12000000000,
+          "cgroup_limits": []
+        },
+        "samples": 37,
+        "elapsed_seconds": 8.26052118896041,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "f86eff1e1ed334e82123c734c60918beaa19dfc1",
+          "git_status": " M scripts/run_case.py\n M scripts/task042_v17_campaign.py\n M scripts/task042_v17_queue_watchdog.py\n M src/io/task042_profile.py\n M src/runners/task042_shared.py\n M src/solvers/resumable_trace_gmres.py\n M src/solvers/resumable_trace_study.py\n M src/solvers/resumable_trace_window.py\n?? input/task042_neural_coarse_inverse/gmres_residual_completion_v18.json\n?? input/task042_neural_coarse_inverse/v18_continue_gnn.dat\n?? input/task042_neural_coarse_inverse/v18_continue_gpoly.dat\n?? input/task042_neural_coarse_inverse/v18_gmres256_gnn.dat\n?? input/task042_neural_coarse_inverse/v18_gmres256_gpoly.dat\n?? input/task042_neural_coarse_inverse/v18_gmres64_gnn.dat\n?? input/task042_neural_coarse_inverse/v18_gmres64_gpoly.dat\n?? input/task042_neural_coarse_inverse/v18_gmres_preflight.dat\n?? input/task042_neural_coarse_inverse/v18_verify.dat\n?? src/io/gmres_residual_completion.py\n?? src/runners/gmres_residual_completion.py\n?? src/runners/residual_completion_queue.py\n?? src/solvers/gmres_cycle_commit.py\n?? src/solvers/gmres_residual_completion.py\n?? src/solvers/residual_completion_window.py\n?? src/test/test_task042_v18_completion.py\n",
+          "stage": "F0",
+          "formal_pde": false,
+          "command": [
+            "bash",
+            "-c",
+            "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+            "task042-v18",
+            "/home/fenics/Projects/NN-Lab/tmp/task042/v18/targeted1_environment.json",
+            "python",
+            "-m",
+            "pytest",
+            "-q",
+            "src/test/test_task042_v18_completion.py",
+            "src/test/test_task042_v17_resume.py",
+            "src/test/test_task042_v16_augmented.py",
+            "src/test/test_task042_shared_watchdog.py"
+          ],
+          "utc": "2026-10-01T01:11:09.424865+00:00",
+          "affinity": [
+            0
+          ],
+          "environment_mode": "pure",
+          "gpu_visible": false
+        }
+      }
+    },
+    {
+      "name": "targeted2",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/targeted2/summary.json",
+      "sha256": "3ce98102709d0f2d9ebe563f7736510227d47058599fb6d392d9d00164475c38",
+      "summary": {
+        "workflow_deadline_seconds": 240.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1610612736,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          976895,
+          976896,
+          976909,
+          976912,
+          976913,
+          976916,
+          976917,
+          976918,
+          976919,
+          976920,
+          976921,
+          976922,
+          976923
+        ],
+        "sampled_process_tree_rss_peak_bytes": 140595200,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 1655988,
+            "pswpout_pages": 2364290
+          },
+          "end": {
+            "pswpin_pages": 1655988,
+            "pswpout_pages": 2364290
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 993668939776,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 993668939776,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 12000000000,
+          "planning_cap_bytes": 12000000000,
+          "cgroup_limits": []
+        },
+        "samples": 36,
+        "elapsed_seconds": 7.964237924083136,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "f86eff1e1ed334e82123c734c60918beaa19dfc1",
+          "git_status": " M scripts/run_case.py\n M scripts/task042_v17_campaign.py\n M scripts/task042_v17_queue_watchdog.py\n M src/io/task042_profile.py\n M src/runners/task042_shared.py\n M src/solvers/resumable_trace_gmres.py\n M src/solvers/resumable_trace_study.py\n M src/solvers/resumable_trace_window.py\n?? input/task042_neural_coarse_inverse/gmres_residual_completion_v18.json\n?? input/task042_neural_coarse_inverse/v18_continue_gnn.dat\n?? input/task042_neural_coarse_inverse/v18_continue_gpoly.dat\n?? input/task042_neural_coarse_inverse/v18_gmres256_gnn.dat\n?? input/task042_neural_coarse_inverse/v18_gmres256_gpoly.dat\n?? input/task042_neural_coarse_inverse/v18_gmres64_gnn.dat\n?? input/task042_neural_coarse_inverse/v18_gmres64_gpoly.dat\n?? input/task042_neural_coarse_inverse/v18_gmres_preflight.dat\n?? input/task042_neural_coarse_inverse/v18_verify.dat\n?? src/io/gmres_residual_completion.py\n?? src/runners/gmres_residual_completion.py\n?? src/runners/residual_completion_queue.py\n?? src/solvers/gmres_cycle_commit.py\n?? src/solvers/gmres_residual_completion.py\n?? src/solvers/residual_completion_window.py\n?? src/test/test_task042_v18_completion.py\n",
+          "stage": "F0",
+          "formal_pde": false,
+          "command": [
+            "bash",
+            "-c",
+            "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+            "task042-v18",
+            "/home/fenics/Projects/NN-Lab/tmp/task042/v18/targeted2_environment.json",
+            "python",
+            "-m",
+            "pytest",
+            "-q",
+            "src/test/test_task042_v18_completion.py",
+            "src/test/test_task042_v17_resume.py",
+            "src/test/test_task042_v16_augmented.py",
+            "src/test/test_task042_shared_watchdog.py"
+          ],
+          "utc": "2026-10-01T01:12:13.843238+00:00",
+          "affinity": [
+            0
+          ],
+          "environment_mode": "pure",
+          "gpu_visible": false
+        }
+      }
+    },
+    {
+      "name": "targeted_final",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/targeted_final/summary.json",
+      "sha256": "66033ec84a60366edd40a614589135678c8e737772fac6683f5fc430acafdb40",
+      "summary": {
+        "workflow_deadline_seconds": 240.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1610612736,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          978156,
+          978157,
+          978171,
+          978184,
+          978185,
+          978186,
+          978198,
+          978200,
+          978201,
+          978202,
+          978203,
+          978215,
+          978216,
+          978217,
+          978218
+        ],
+        "sampled_process_tree_rss_peak_bytes": 241491968,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 1655988,
+            "pswpout_pages": 2364290
+          },
+          "end": {
+            "pswpin_pages": 1655988,
+            "pswpout_pages": 2364290
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 993646661632,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 993646661632,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 12000000000,
+          "planning_cap_bytes": 12000000000,
+          "cgroup_limits": []
+        },
+        "samples": 37,
+        "elapsed_seconds": 8.268825780949555,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "f86eff1e1ed334e82123c734c60918beaa19dfc1",
+          "git_status": " M scripts/run_case.py\n M scripts/task042_v17_campaign.py\n M scripts/task042_v17_queue_watchdog.py\n M src/io/task042_profile.py\n M src/runners/task042_shared.py\n M src/solvers/resumable_trace_gmres.py\n M src/solvers/resumable_trace_study.py\n M src/solvers/resumable_trace_window.py\n?? input/task042_neural_coarse_inverse/gmres_residual_completion_v18.json\n?? input/task042_neural_coarse_inverse/v18_continue_gnn.dat\n?? input/task042_neural_coarse_inverse/v18_continue_gpoly.dat\n?? input/task042_neural_coarse_inverse/v18_gmres256_gnn.dat\n?? input/task042_neural_coarse_inverse/v18_gmres256_gpoly.dat\n?? input/task042_neural_coarse_inverse/v18_gmres64_gnn.dat\n?? input/task042_neural_coarse_inverse/v18_gmres64_gpoly.dat\n?? input/task042_neural_coarse_inverse/v18_gmres_preflight.dat\n?? input/task042_neural_coarse_inverse/v18_verify.dat\n?? src/io/gmres_residual_completion.py\n?? src/runners/gmres_residual_completion.py\n?? src/runners/residual_completion_queue.py\n?? src/solvers/gmres_cycle_commit.py\n?? src/solvers/gmres_residual_completion.py\n?? src/solvers/residual_completion_window.py\n?? src/test/test_task042_v18_completion.py\n",
+          "stage": "F0",
+          "formal_pde": false,
+          "command": [
+            "bash",
+            "-c",
+            "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+            "task042-v18",
+            "/home/fenics/Projects/NN-Lab/tmp/task042/v18/targeted_final_environment.json",
+            "python",
+            "-m",
+            "pytest",
+            "-q",
+            "src/test/test_task042_v18_completion.py",
+            "src/test/test_task042_v17_resume.py",
+            "src/test/test_task042_v16_augmented.py",
+            "src/test/test_task042_shared_watchdog.py"
+          ],
+          "utc": "2026-10-01T01:14:24.518281+00:00",
+          "affinity": [
+            0
+          ],
+          "environment_mode": "pure",
+          "gpu_visible": false
+        }
+      }
+    },
+    {
+      "name": "validate1",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/validate1/summary.json",
+      "sha256": "86dff75fe0e8ee3bf7381b44a4f5e8b34f9ea3e8a5c07664d772a4a9787723e7",
+      "summary": {
+        "workflow_deadline_seconds": 180.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1610612736,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          977358,
+          977359
+        ],
+        "sampled_process_tree_rss_peak_bytes": 69693440,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 1655988,
+            "pswpout_pages": 2364290
+          },
+          "end": {
+            "pswpin_pages": 1655988,
+            "pswpout_pages": 2364290
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 993685889024,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 993685889024,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 12000000000,
+          "planning_cap_bytes": 12000000000,
+          "cgroup_limits": []
+        },
+        "samples": 14,
+        "elapsed_seconds": 2.8009381720330566,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "f86eff1e1ed334e82123c734c60918beaa19dfc1",
+          "git_status": " M scripts/run_case.py\n M scripts/task042_v17_campaign.py\n M scripts/task042_v17_queue_watchdog.py\n M src/io/task042_profile.py\n M src/runners/task042_shared.py\n M src/solvers/resumable_trace_gmres.py\n M src/solvers/resumable_trace_study.py\n M src/solvers/resumable_trace_window.py\n?? input/task042_neural_coarse_inverse/gmres_residual_completion_v18.json\n?? input/task042_neural_coarse_inverse/v18_continue_gnn.dat\n?? input/task042_neural_coarse_inverse/v18_continue_gpoly.dat\n?? input/task042_neural_coarse_inverse/v18_gmres256_gnn.dat\n?? input/task042_neural_coarse_inverse/v18_gmres256_gpoly.dat\n?? input/task042_neural_coarse_inverse/v18_gmres64_gnn.dat\n?? input/task042_neural_coarse_inverse/v18_gmres64_gpoly.dat\n?? input/task042_neural_coarse_inverse/v18_gmres_preflight.dat\n?? input/task042_neural_coarse_inverse/v18_verify.dat\n?? src/io/gmres_residual_completion.py\n?? src/runners/gmres_residual_completion.py\n?? src/runners/residual_completion_queue.py\n?? src/solvers/gmres_cycle_commit.py\n?? src/solvers/gmres_residual_completion.py\n?? src/solvers/residual_completion_window.py\n?? src/test/test_task042_v18_completion.py\n",
+          "stage": "F0",
+          "formal_pde": false,
+          "command": [
+            "bash",
+            "-c",
+            "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+            "task042-v18",
+            "/home/fenics/Projects/NN-Lab/tmp/task042/v18/validate1_environment.json",
+            "python",
+            "tmp/task042/v18/validate_inputs.py"
+          ],
+          "utc": "2026-10-01T01:13:09.208384+00:00",
+          "affinity": [
+            0
+          ],
+          "environment_mode": "pure",
+          "gpu_visible": false
+        }
+      }
+    },
+    {
+      "name": "reader_tests1",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/reader_tests1/summary.json",
+      "sha256": "a52931d6e2419a87d19eabbb1e9ab742e491180acac03b35951c005715612e26",
+      "summary": {
+        "workflow_deadline_seconds": 180.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1610612736,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          1039272,
+          1039273
+        ],
+        "sampled_process_tree_rss_peak_bytes": 69513216,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 1658108,
+            "pswpout_pages": 2364290
+          },
+          "end": {
+            "pswpin_pages": 1658108,
+            "pswpout_pages": 2364290
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 950631976960,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 950631976960,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 12000000000,
+          "planning_cap_bytes": 12000000000,
+          "cgroup_limits": []
+        },
+        "samples": 12,
+        "elapsed_seconds": 2.872349275974557,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+          "git_status": "?? src/io/gmres_residual_completion_check.py\n?? src/test/test_task042_v18_evidence.py\n",
+          "stage": "F0",
+          "formal_pde": false,
+          "command": [
+            "bash",
+            "-c",
+            "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+            "task042-v18",
+            "/home/fenics/Projects/NN-Lab/tmp/task042/v18/reader_tests1_environment.json",
+            "python",
+            "-m",
+            "pytest",
+            "-q",
+            "src/test/test_task042_v18_evidence.py"
+          ],
+          "utc": "2026-10-01T06:57:58.007590+00:00",
+          "affinity": [
+            0
+          ],
+          "environment_mode": "pure",
+          "gpu_visible": false
+        }
+      }
+    },
+    {
+      "name": "reader_actual1",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v18/reader_actual1/summary.json",
+      "sha256": "8e747e9ce5483fff14841e46ec3a8bb16f05c03e7a72c3809be8ecc75ddf11f2",
+      "summary": {
+        "workflow_deadline_seconds": 180.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1610612736,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          1039629,
+          1039630,
+          1039642,
+          1039720,
+          1039733
+        ],
+        "sampled_process_tree_rss_peak_bytes": 1868034048,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 1658108,
+            "pswpout_pages": 2364290
+          },
+          "end": {
+            "pswpin_pages": 1658108,
+            "pswpout_pages": 2364290
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 950144147456,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 950144147456,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 12000000000,
+          "planning_cap_bytes": 12000000000,
+          "cgroup_limits": []
+        },
+        "samples": 89,
+        "elapsed_seconds": 28.48029186099302,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "eb97b4214d4d0a4969ea4eb0038300f0ab214efa",
+          "git_status": "",
+          "stage": "F0",
+          "formal_pde": false,
+          "command": [
+            "bash",
+            "-c",
+            "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+            "task042-v18",
+            "/home/fenics/Projects/NN-Lab/tmp/task042/v18/reader_actual1_environment.json",
+            "bash",
+            "-c",
+            "set -e; python tmp/task042/v18/run_raw_checker.py > tmp/task042/v18/reader_actual1.stdout; python tmp/task042/v18/compare_work.py >> tmp/task042/v18/reader_actual1.stdout; python -m pytest -q src/test/test_task042_v18_evidence.py > tmp/task042/v18/reader_final.stdout"
+          ],
+          "utc": "2026-10-01T06:59:20.911026+00:00",
+          "affinity": [
+            0
+          ],
+          "environment_mode": "pure",
+          "gpu_visible": false
+        }
+      }
+    }
+  ],
+  "actual_dat_stage_schema_registration_passed": true,
+  "validate_only_all_eight": true,
+  "targeted_compileall_passed": true,
+  "CI_claimed": false,
+  "full_repository_pytest": "not_run",
+  "Ruff": "not_available_not_run",
+  "MPI2_MPI4": "not_run",
+  "expensive_gates_not_replayed_for_publication": true,
+  "numeric_run_source": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+  "checker_source": "eb97b4214d4d0a4969ea4eb0038300f0ab214efa"
+}

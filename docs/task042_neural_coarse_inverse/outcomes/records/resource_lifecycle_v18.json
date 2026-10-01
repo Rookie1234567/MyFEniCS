@@ -1,0 +1,40 @@
+{
+  "actual_run_source": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+  "hash_lineage": "input_lineage_v18.json",
+  "candidate_global_S_or_CSR_constructed": false,
+  "normal_equations_constructed": false,
+  "global_p4_factor_constructed": false,
+  "hidden_fallback": false,
+  "hidden_training": false,
+  "new_teacher_or_reference_LU": false,
+  "G": {
+    "Q_U_R_loaded": false,
+    "objects": "original action packet, Hhat40 factor, trace, SciPy Arnoldi/workspaces",
+    "peak_scope": "whole own sampled tree"
+  },
+  "R": {
+    "Q_U_R_reused": true,
+    "new_image_or_basis": false,
+    "resident_plan_upper_bytes": 7600000000,
+    "objects": "one library Q/U/R, projected action, LSQR recurrence, buffers; full Krylov history absent"
+  },
+  "VERIFY": {
+    "reference_read_only_after_queue_frozen": true,
+    "one_FE_runtime": true,
+    "independent_native_assembly": true,
+    "no_new_LU": true
+  },
+  "simultaneous_peak_bytes": 2576646144,
+  "scope": "launcher plus all descendants .5s sampling; no continuous kernel cgroup cap",
+  "cgroup_delegated": false,
+  "pressure_stop_threshold": "memory full avg10 >=0.1 percent for three 5-second observations; unchanged",
+  "MPI": 1,
+  "math_threads": 1,
+  "Torch_threads": 1,
+  "DataLoader_workers": 0,
+  "GPU": false,
+  "own_swap_bytes": 0,
+  "caches_and_output": "NN-Lab only",
+  "neighbor_settings_changed": false,
+  "performance": "shared-workstation INCONCLUSIVE"
+}
