@@ -75,7 +75,7 @@ def _notch_supported_rhs(space, layout, changed):
 
 def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
                      saved_oracle=None, auxiliary_gauge="raw", save_factor_diagnostic=None,
-                     dtn_phase_gauge="global_z"):
+                     dtn_phase_gauge="global_z", live_component_oracle=False, live_component_record_path=None):
     from mpi4py import MPI
     from petsc4py import PETSc
     from src.geometry.mesh_builder_3d import _mark_cells, _rectangular_air_void_audit
@@ -86,6 +86,7 @@ def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
     )
     from src.solvers.fullspace_physical_action import FullspacePhysicalAction
     centered = dtn_phase_gauge == "boundary_plane"
+    if live_component_oracle and not centered: raise ValueError("live component oracle requires centered p2")
     if dtn_phase_gauge not in ("global_z", "boundary_plane") or (centered and (degree != 2 or auxiliary_gauge != "positive-h")):
         raise ValueError("centered p2 positive-H only; p4 requires separate admission")
 
@@ -135,7 +136,14 @@ def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
                 centered_identity, interior_only_rhs, recovered_field_and_modes, save_mpc_inventory,
                 require_output_packet, fixture_interior_positions,
             )
-            centered_facts = centered_identity(base)
+            if live_component_oracle:
+                from .y_orbit_live_boundary_contract import qualify_live_identity, require_live_carrier_unchanged
+                if live_component_record_path is None: raise ValueError("same-live component record path required")
+                centered_facts = qualify_live_identity(base,record_path=live_component_record_path,
+                                                       allocation_gate=allocation_gate,event=event)
+                qualified_carrier = base["dtn_action"].carrier
+            else:
+                centered_facts = centered_identity(base,event=event)
             save_mpc_inventory(base, layout, save_array)
             save_array("actual_interior_positions",fixture_interior_positions(space,layout))
         action0 = FullOriginalAction(base["physical_action"], layout)
@@ -172,7 +180,8 @@ def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
         matrix_facts = csr_audit(matrix, petsc_index_dtype=PETSc.IntType)
         _save_csr(save_array, "reference_S", matrix)
         if degree == 2:
-            saved_oracle.require_fixture(input_sha, axes, layout, base, generic)
+            (saved_oracle.require_fixture(input_sha, axes, layout, base, generic, live_identity=centered_facts)
+             if live_component_oracle else saved_oracle.require_fixture(input_sha, axes, layout, base, generic))
             volume = assemble_sparse_p2_volume(base, layout, allocation_gate=allocation_gate)
             original_p2_csr = csr_audit(volume, petsc_index_dtype=PETSc.IntType)
             bridge = compare_p2_saved_dense(volume, reference.carrier, layout,
@@ -184,6 +193,8 @@ def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
             event("saved_dense_p2_all_columns_pass", bridge)
         else:
             bridge = original_p2_csr = None
+        if live_component_oracle:
+            require_live_carrier_unchanged(base,centered_facts,event=event,boundary="before_all_q_factors",expected_carrier=qualified_carrier)
         factor = SparseAllQFactor(matrix, coordinates, allocation_gate=allocation_gate,
                                   event=event, save_array=save_array,
                                   save_factor_diagnostic=save_factor_diagnostic)
@@ -315,12 +326,15 @@ def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
         final_recovery_identity = recovery_numeric_identity(reference)
         if recovery_identity != final_recovery_identity:
             raise ValueError("exact original recovery numeric state changed during applies")
+        if live_component_oracle:
+            require_live_carrier_unchanged(base,centered_facts,event=event,boundary="sparse_workflow_exit",expected_carrier=qualified_carrier)
         return {"schema": SCHEMA, "status": "SPARSE_CONDENSED_FULL3D_PROBE_PASS",
                 "degree": degree, "azimuth_deg": 5.0, "cells": 80,
                 "auxiliary_gauge": auxiliary_gauge,
                 "reference_scope": ("fresh boundary-plane FE operator; original cutoffs and all physical contributions audited"
                                     if centered else "same frozen upstream-clipped FE operator; no lost functional restored"),
                 "dtn_phase_gauge": dtn_phase_gauge, "centered_identity": centered_facts,
+                "live_component_oracle": live_component_oracle,
                 "input_sha256": input_sha, "axes_nm": {k: list(v) for k, v in axes.items()},
                 "mode_manifest_sha256": base["mode_sha256"], "mode_keys": coordinates.original_port_keys,
                 "physical_rhs_facts": physical_rhs_facts, "limits": LIMITS,

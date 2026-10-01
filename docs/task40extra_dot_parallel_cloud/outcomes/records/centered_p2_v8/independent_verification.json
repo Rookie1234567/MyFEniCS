@@ -1,0 +1,121 @@
+{
+  "schema": "independent_saved_evidence_review_v1",
+  "record_created_utc": "2026-10-01T18:55:00Z",
+  "review_performed_utc_window": "2026-10-01T18:43:00Z/2026-10-01T18:45:59Z",
+  "record_basis": "Post-verification summary of the completed read-only review originally delivered in collaboration messages. No new scan or numerical rerun was performed to create this record.",
+  "source_commit": "7c4410dbc55bce804d148493760d4de68acd8405",
+  "disposition": "PASS within centered p2 discrete qualification scope; no concrete evidence gap found",
+  "coverage": {
+    "source_files_verified_against_frozen_git_objects": 1247,
+    "artifact_hashes_verified": 712,
+    "dense_artifact_hashes": 424,
+    "sparse_artifact_hashes": 288,
+    "note": "712 is the number of artifact hash entries, not a claim that every entry is an array."
+  },
+  "abi_sha256": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+  "shared_carrier_numeric_sha256": "1fba9886e83adae75f1f0380f035f77d3ee15ed92ce8f57eae29b544869639d0",
+  "binding_checks": [
+    "Report, provenance, artifact manifest, checker, live receipt and watchdog identity bindings match",
+    "Worker source, provenance source, summary source_state and checker source agree; clean source flag true",
+    "Live receipts contain 532 unique ordered keys with indexes 0 through 531",
+    "Before/after numeric carrier digest and canonical raw context hash verified",
+    "Four primary and eight literal compiled Gauss inventories present",
+    "Five output columns present; qualification helper SHA matches worker source",
+    "Each branch has eight regular/notch cases and five quantities, totaling 40 comparisons of all 532 modes; required outputs are representable_global_output",
+    "Live proof precedes factors and exact carrier checks persist through exit"
+  ],
+  "dense": {
+    "artifact_directory": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_p2_phi5_centered_dense_attempt3_live",
+    "checker_passed": 129,
+    "checker_total": 129,
+    "report_sha256": "33415b7a1cde1001c4945cfa88b8517fc351478cf1b022b9ff9770b70dea6859",
+    "checker_sha256": "d2b3a4d28411db477899509ac0bf86deda79c12222029502ec408af05e81e1e7",
+    "live_receipt_sha256": "c6278000bd48259bdd28f445383264495d7e69579797c4ac229e42ed715a9a8c",
+    "worker_peak_sampled_tree_rss_bytes": 633204736,
+    "worker_wall_seconds": 19.187455899,
+    "checker_peak_sampled_tree_rss_bytes": 460742656,
+    "checker_wall_seconds": 3.574450038,
+    "live_pass_elapsed_seconds": 6.5416748,
+    "before_A0_factor_elapsed_seconds": 9.066522,
+    "before_A1_factor_elapsed_seconds": 14.269782,
+    "exit_identity_check_elapsed_seconds": 16.878366
+  },
+  "sparse": {
+    "artifact_directory": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_sparse_p2_phi5_centered_live_attempt1",
+    "checker_passed": 164,
+    "checker_total": 164,
+    "report_sha256": "3db78e3a5aaaa550a96cefee634110b351e8c8526be29509d740f1951730d456",
+    "checker_sha256": "dcc6b737285ac8f51649ac87c6344fbbcbe5c925f0110a4cd2d8c2ee53dd781a",
+    "live_receipt_sha256": "1c5905c434e983c1145765f785ca31148ec9dad89daefca52d4581f353076c4f",
+    "worker_peak_sampled_tree_rss_bytes": 464019456,
+    "worker_wall_seconds": 15.134469583,
+    "checker_peak_sampled_tree_rss_bytes": 327389184,
+    "checker_wall_seconds": 3.286110066,
+    "live_pass_elapsed_seconds": 5.0318117,
+    "before_all_q_factor_elapsed_seconds": 8.395025,
+    "exit_identity_check_elapsed_seconds": 12.500808,
+    "original_columns_compared": 2048,
+    "column_difference": 0,
+    "column_difference_limit": 1e-11,
+    "maximum_panel_columns": 32,
+    "new_global_dense_matrix": false,
+    "notch_loads": [
+      {
+        "load": "generic",
+        "iterations": 4,
+        "original_residual": 1.31919542679e-13,
+        "direct_difference": 5.80739737143e-13
+      },
+      {
+        "load": "interior_only",
+        "iterations": 4,
+        "original_residual": 5.92275914283e-14,
+        "direct_difference": 7.96498384941e-13
+      },
+      {
+        "load": "physical",
+        "iterations": 3,
+        "original_residual": 7.487405057642386e-12,
+        "direct_difference": 5.873278499767127e-11
+      },
+      {
+        "load": "notch_supported",
+        "iterations": 4,
+        "original_residual": 3.14198003278e-13,
+        "direct_difference": 3.85244658355e-13
+      }
+    ]
+  },
+  "resources": {
+    "method": "Recomputed maxima from saved resources.jsonl; no run repeated",
+    "all_summaries": "COMPLETED",
+    "all_exit_codes": 0,
+    "all_swap_bytes": 0,
+    "descendants_cleared": true,
+    "readability_and_identity_complete": true,
+    "admission_rss_gib": 1.5,
+    "admission_wall_seconds": 600,
+    "all_within_admission": true
+  },
+  "preserved_failures": [
+    {
+      "artifact_directory": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_p2_phi5_centered_dense_attempt1",
+      "report_sha256": "7697a515a5d13fcc2bef33cfc9ba749414f35488487cf5772eb6040778f42660",
+      "summary_sha256": "3aa96ccf59cd88746c4416dcd43c36fe6fdd3e655436557f4732d32d5644e32f",
+      "status": "WORKER_FAILED",
+      "reason": "RuntimeError: centered fixture/source/Gauss/MPC or nonempty full port identity changed"
+    },
+    {
+      "artifact_directory": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_p2_phi5_centered_dense_attempt2",
+      "report_sha256": "7909e9544dcb4fb5a6223c89438b0a9c9d4bbd95c2c451d77f69b3052682dac7",
+      "summary_sha256": "788af3799e243e8c2ee9fd460a2cb73cfac9303affdabf5ec7c0a9f4653cba67",
+      "status": "WORKER_FAILED"
+    }
+  ],
+  "limits": [
+    "Read-only verification of saved evidence, not an independent numerical rerun",
+    "Qualifies the stated centered p2 discrete architecture and fixture only",
+    "Does not qualify p4, p6, official R/T/A, continuum accuracy, or full target capacity/time feasibility",
+    "Resource peaks are sampled whole-process-tree RSS, not unsampled absolute maxima"
+  ]
+}

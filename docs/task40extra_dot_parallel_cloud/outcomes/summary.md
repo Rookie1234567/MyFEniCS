@@ -131,3 +131,20 @@ DtN 实验检查开放边界通道的编号、物理方向和局部投影积分�
 | 同快照候选2839e7 | 54定点pass/1真实PDE skipped；新centered p2仍NOT_RUN_PDE_CANDIDATE | 不继承组件资格；p4/p6/原尺寸2TB/48h未资格 |
 
 [Response V7](../response_v7.md)、[完整532 ledger](records/boundary_component_v7/all532_compact_ledger.json)。本轮只文档归档，不改变数值源码。
+
+## V8：新centered原算子的完整p2 dense→sparse资格
+
+先将端口相位参考点移到实际边界，使衰减模式的微小指数系数不再被装配的绝对截断消去；再直接求解完整原有限元系统建立对照。候选把单元内部未知量精确消去、按y单元平移分成四块求逆，最后恢复每个原始三维未知量。全部y通道和532模式仍在，减少的是因子规模；高阶和目标尺寸的实际收益尚未测量。
+
+| 身份/范围 | measured/verified结果 | 限定 |
+|---|---|---|
+| source7c4410；同80cell/p2/phi5/532非空ports | dense129/129、sparse164/164项checker；全部2048原FE列差0 | 新centered authority；完整480interiors与四类载荷 |
+| regular原FE恢复 | 四载荷最大原残差3.1766e−13；q因子残差最大6.2886e−14 | generic/interior_only/physical/notch_supported；全部4q |
+| 真实两cell三维缺口 | 4/4/3/4步；原残差最大7.4874051e−12；相对新direct差最大5.8732785e−11 | physical非零q比例6.2100442e−5；弱扰动，不外推大型收敛 |
+| 逐模式输出 | 每个checker40组×532模式均通过；最差局部运算误差1.5851e−12 | 原场/辅助量/完整MPC绑定；官方R/T/A未资格 |
+| worker资源 | dense633204736B/19.1875s；sparse464019456B/15.1345s | 同时采样树RSS；分别swap0/清场；warm cache |
+| 独立checker资源 | dense460742656B/3.5745s；sparse327389184B/3.2861s | 独立监督；分别swap0/清场；不与worker相加 |
+| 失败/身份 | dense attempt1/2严格raw-C/context停止保留；每次实际live carrier均独立资格 | 创建顺序只是原因候选；不假设未来JIT上下文相同 |
+| not_run | p4/p6、强对比、目标精度/截断、跨ABI/MPI/重启、原尺寸2TB/48h | p4仅计划；尚不能启动目标大运行 |
+
+旧clipped到centered全部原FE矩阵相对Frobenius变化0.0061060864，是算子改变诊断；不同于V7五状态action变化0.0308226，也不是坐标等价误差。详见[Response V8](../response_v8.md)、[compact](records/centered_p2_v8/centered_p2_v8_compact.json)与[独立复核事后记录](records/centered_p2_v8/independent_verification.json)；1247源码文件、712产物hash条目，不称712数组。本次仅归档已完成计算，不重跑PDE。

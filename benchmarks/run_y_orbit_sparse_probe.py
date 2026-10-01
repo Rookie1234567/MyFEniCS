@@ -90,7 +90,7 @@ class SavedDenseP2Authority:
 
 class SavedCenteredDenseP2Authority(SavedDenseP2Authority):
     """Fresh same-source centered authority with exact checker/representation binding."""
-    def __init__(self, path, digest, source, environment):
+    def __init__(self, path, digest, source, environment, *, live_component_oracle=False):
         from src.solvers.y_orbit_centered_evidence import (
             COMPONENT_IDENTITY, SOURCES, digest_json, require_centered_dense_inventory,
         )
@@ -99,6 +99,7 @@ class SavedCenteredDenseP2Authority(SavedDenseP2Authority):
             raise RuntimeError("centered authority report path/hash differs")
         self.directory = path.parent
         self.report = json.loads(path.read_text())
+        self.live_component_oracle = live_component_oracle
         require_centered_dense_inventory(self.report)
         provenance_path = self.directory/"provenance.json"
         checker_path = self.directory/"independent_checker.json"
@@ -115,7 +116,9 @@ class SavedCenteredDenseP2Authority(SavedDenseP2Authority):
                 or checker.get("artifact_manifest_sha256") != digest_json(self.report["artifacts"])
                 or checker.get("source") != source or checker.get("environment") != environment
                 or checker.get("identity") != self.report.get("identity") or checker.get("degree") != 2
-                or any(self.report["identity"].get(k) != v for k,v in COMPONENT_IDENTITY.items())):
+                or self.report.get("live_component_oracle",False) != live_component_oracle
+                or checker.get("live_component_oracle",False) != live_component_oracle
+                or (not live_component_oracle and any(self.report["identity"].get(k) != v for k,v in COMPONENT_IDENTITY.items()))):
             raise RuntimeError("fresh centered authority/checker/source/gauge identity has not passed")
         watched = checker.get("checker_watchdog_receipt", {})
         wp = (self.directory/watched.get("path", "")).resolve()
@@ -129,15 +132,23 @@ class SavedCenteredDenseP2Authority(SavedDenseP2Authority):
                     or receipt.get("process_tree_all_status_readable") is not True
                     or not 0 < receipt["sampled_process_tree_rss_peak_bytes"] < TREE_CAP_BYTES):
                 raise RuntimeError("fresh centered dense/checker whole-tree resource authority fails")
+        if live_component_oracle:
+            from src.solvers.y_orbit_live_boundary_contract import load_bound_live_receipt
+            load_bound_live_receipt(self.directory,self.report["identity"],worker_source=source)
         self.receipt = {"report_path": str(path.relative_to(ROOT)), "report_sha256": digest,
             "provenance_sha256": file_sha256(provenance_path), "checker_sha256": file_sha256(checker_path),
             "artifact_manifest_sha256": digest_json(self.report["artifacts"]), "source_head":source["head"],
-            "identity": self.report["identity"], "dtn_phase_gauge": "boundary_plane", "qualification": "small_p2_only"}
+            "identity": self.report["identity"], "dtn_phase_gauge": "boundary_plane", "qualification": "small_p2_only",
+            "live_component_oracle":live_component_oracle}
 
-    def require_fixture(self, input_sha, axes, layout, base, generic_rhs):
+    def require_fixture(self, input_sha, axes, layout, base, generic_rhs, *, live_identity=None):
         from src.solvers.y_orbit_centered_evidence import centered_identity
         super().require_fixture(input_sha, axes, layout, base, generic_rhs)
-        if centered_identity(base) != self.report["identity"]:
+        if self.live_component_oracle:
+            if (live_identity is None or live_identity["physical_generator_manifest_sha256"] != self.report["identity"]["physical_generator_manifest_sha256"]
+                    or live_identity["shared_discrete_contract"] != self.report["identity"]["shared_discrete_contract"]):
+                raise RuntimeError("fresh dense/sparse fixed physical/discrete contract differs")
+        elif centered_identity(base) != self.report["identity"]:
             raise RuntimeError("centered actual rebuilt discrete/physical context differs from authority")
 
 
@@ -201,8 +212,8 @@ def _worker(args):
     component_reuse = None
     if args.dtn_phase_gauge == "boundary_plane":
         from src.solvers.y_orbit_centered_evidence import verify_component_sources
-        component_reuse = verify_component_sources(ROOT)
-        oracle = SavedCenteredDenseP2Authority(args.dense_authority, args.dense_authority_report_sha256, source, environment)
+        component_reuse = verify_component_sources(ROOT,require_current_bytes=not args.live_component_oracle)
+        oracle = SavedCenteredDenseP2Authority(args.dense_authority, args.dense_authority_report_sha256, source, environment,live_component_oracle=args.live_component_oracle)
     else:
         oracle = SavedDenseP2Authority(environment) if args.degree == 2 else None
     bridge = (_validate_bridge(args.bridge_report, args.bridge_report_sha256, args.expected_head, source)
@@ -278,6 +289,7 @@ def _worker(args):
                   "input_sha256": INPUT_SHA, "degree": args.degree,
                   "auxiliary_gauge": args.auxiliary_gauge,
                   "dtn_phase_gauge": args.dtn_phase_gauge, "component_reuse": component_reuse,
+                  "live_component_oracle":args.live_component_oracle,
                   "saved_dense_p2_authority": oracle.receipt if oracle is not None else None,
                   "sparse_p2_bridge_receipt": bridge,
                   "resource_contract": {"tree_cap_bytes": cap, "wall_seconds": WALL_SECONDS,
@@ -293,6 +305,8 @@ def _worker(args):
                                   allocation_gate=allocation_gate, saved_oracle=oracle,
                                   auxiliary_gauge=args.auxiliary_gauge,
                                   dtn_phase_gauge=args.dtn_phase_gauge,
+                                  live_component_oracle=args.live_component_oracle,
+                                  live_component_record_path=args.run_directory/"live_component_receipt.json",
                                   save_factor_diagnostic=save_factor_diagnostic)
         if source_facts(args.expected_head) != source:
             raise RuntimeError("source identity changed during the sparse probe")
@@ -319,6 +333,7 @@ def main():
     parser.add_argument("--worker", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--degree", type=int, choices=(2, 4), default=2)
     parser.add_argument("--auxiliary-gauge", choices=("raw", "positive-h"), default="raw")
+    parser.add_argument("--live-component-oracle",action="store_true",help="qualify this exact loaded centered carrier before factors")
     parser.add_argument("--dtn-phase-gauge", choices=("global_z", "boundary_plane"), default="global_z")
     parser.add_argument("--dense-authority", type=Path)
     parser.add_argument("--dense-authority-report-sha256")
@@ -337,6 +352,8 @@ def main():
         return 0
     if not args.expected_head or not args.run_directory:
         parser.error("run requires the exact clean integrated commit and a new ignored artifact directory")
+    if args.live_component_oracle and args.dtn_phase_gauge != "boundary_plane":
+        parser.error("live component oracle is explicit centered p2 only")
     if args.dtn_phase_gauge == "boundary_plane" and (args.degree != 2 or args.auxiliary_gauge != "positive-h"
             or not args.dense_authority or not args.dense_authority_report_sha256):
         parser.error("centered extension requires p2 positive-H and a fresh passed dense authority; p4 remains held")
@@ -357,7 +374,7 @@ def main():
         args.bridge_report = args.bridge_report.resolve()
         _validate_bridge(args.bridge_report, args.bridge_report_sha256, args.expected_head, source)
     elif args.dtn_phase_gauge == "boundary_plane":
-        SavedCenteredDenseP2Authority(args.dense_authority,args.dense_authority_report_sha256,source,environment)
+        SavedCenteredDenseP2Authority(args.dense_authority,args.dense_authority_report_sha256,source,environment,live_component_oracle=args.live_component_oracle)
     else:
         SavedDenseP2Authority(environment)
     if args.worker:
@@ -372,6 +389,7 @@ def main():
     if args.dtn_phase_gauge == "boundary_plane":
         command += ["--dense-authority",str(args.dense_authority),
                     "--dense-authority-report-sha256",args.dense_authority_report_sha256]
+    if args.live_component_oracle: command += ["--live-component-oracle"]
     if args.degree == 4:
         command += ["--bridge-report", str(args.bridge_report),
                     "--bridge-report-sha256", args.bridge_report_sha256]

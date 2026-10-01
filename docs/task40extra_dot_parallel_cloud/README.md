@@ -33,3 +33,5 @@ real-ky phi5后续已通过：[完整三维y-wrap/参考逆资格](outcomes/y_or
 同一已裁剪离散算子的正H坐标诊断已通过：[Response V6](response_v6.md)、[完整compact及两类失败](outcomes/records/positive_H_same_discrete_p2_v1.json)。完整原三维/内部RHS/全部q恢复与独立88项核验通过；raw单位辅助载荷失败不改判，上游172/174零C/D仍在。预sparsification物理边界修正与p4保持held。
 
 [V7边界平面组件](response_v7.md)已通过同Gauss/fullMPC全532模式门，保留三次失败；新stored算子与旧clipped不同。后续centered PDE候选2839e7仍NOT_RUN，不授予p4/目标资格。
+
+[V8完整centered p2资格](response_v8.md)已在source7c4410完成：dense129项、sparse164项checker通过，全部2048原FE列差0，完整480内部载荷与真实三维缺口恢复通过，全部532实际端口C/D非空。V7候选的未运行状态保留为历史；两次严格上下文身份门失败也保留。本次仅小规模弱对比离散架构资格，p4/p6、官方R/T/A、连续/截断精度和原尺寸2TB/48h仍未资格。

@@ -144,3 +144,20 @@ def test_swapped_passing_native_packet_cannot_bind_a_different_solver_vector(tar
     else: rhs[2]+=1
     with pytest.raises(ValueError,match="detached"):
         evidence.bind_native_packet(field,rhs,np.asarray([1,3]),np.asarray([4,6]),independent)
+
+
+def test_component_actual_hash_packet_precedes_unchanged_identity_failure():
+    from types import SimpleNamespace
+    entries=[SimpleNamespace(coupling_rows=np.asarray([0]),projection_rows=np.asarray([0])) for _ in range(532)]
+    actual={**evidence.COMPONENT_IDENTITY,"assembly_context_sha256":"different"}
+    carrier=SimpleNamespace(entries=entries,mode_manifest_sha256=actual["assembly_mode_manifest_sha256"],
+         assembly_context_sha256="different",assembly_context={"MPC":{"hash":"actual"},"gauss":{"degree":19},"source_sha256":{}})
+    bundle={**actual,"dtn_phase_gauge":"boundary_plane","mode_sha256":actual["physical_generator_manifest_sha256"],
+      "dtn_action":SimpleNamespace(carrier=carrier),"cfg":SimpleNamespace(as_jsonable=lambda:{"fixture":"actual"})}
+    events=[]
+    with pytest.raises(RuntimeError,match="identity changed"):
+        evidence.centered_identity(bundle,event=lambda name,packet:events.append((name,packet)))
+    assert events[0][0]=="component_identity_before_assert"
+    assert events[0][1]["mismatch_keys"]==["assembly_context_sha256"]
+    assert events[0][1]["actual_discrete_context"]["MPC"]["hash"]=="actual"
+    assert events[0][1]["diagnostic_only_acceptance_unchanged"] is True

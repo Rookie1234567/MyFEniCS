@@ -36,7 +36,7 @@ def _worker(args):
     component_reuse = None
     if args.dtn_phase_gauge == "boundary_plane":
         from src.solvers.y_orbit_centered_evidence import verify_component_sources
-        component_reuse = verify_component_sources(ROOT)
+        component_reuse = verify_component_sources(ROOT,require_current_bytes=not args.live_component_oracle)
     if file_sha256(INPUT) != EXPECTED_INPUT_SHA256:
         raise RuntimeError("reduced-geometry inherited input hash differs")
     events = args.run_directory / "pilot_events.jsonl"
@@ -78,6 +78,7 @@ def _worker(args):
     provenance = {"source": source, "environment": environment, "command": sys.argv,
                   "input_path": str(INPUT.relative_to(ROOT)), "input_sha256": EXPECTED_INPUT_SHA256,
                   "dtn_phase_gauge": args.dtn_phase_gauge, "component_reuse": component_reuse,
+                  "live_component_oracle":args.live_component_oracle,
                   "resource_contract": {"tree_cap_bytes": TREE_CAP_BYTES, "wall_seconds": WALL_SECONDS,
                                         "swap": 0, "mpi": 1, "math_threads": 1,
                                         "budget_is_performance_claim": False}}
@@ -88,7 +89,9 @@ def _worker(args):
             from src.solvers.y_orbit_centered_probe import run_centered_dense_probe
             from benchmarks.run_y_orbit_sparse_probe import SavedDenseP2Authority
             report = run_centered_dense_probe(INPUT, event=event, save_array=save_array,
-                         allocation_gate=allocation_gate, old_oracle=SavedDenseP2Authority(environment))
+                         allocation_gate=allocation_gate, old_oracle=SavedDenseP2Authority(environment),
+                         live_component_oracle=args.live_component_oracle,
+                         live_component_record_path=args.run_directory/"live_component_receipt.json")
             report.update(source=source, environment=environment, component_reuse=component_reuse)
         else:
             report = run_full3d_pilot(INPUT, event=event, save_array=save_array, azimuth_deg=args.azimuth)
@@ -116,6 +119,7 @@ def main():
     parser.add_argument("--expected-head")
     parser.add_argument("--run-directory", type=Path)
     parser.add_argument("--azimuth", type=float, default=0.0)
+    parser.add_argument("--live-component-oracle",action="store_true",help="qualify this exact loaded centered carrier before factors")
     parser.add_argument("--dtn-phase-gauge", choices=("global_z", "boundary_plane"), default="global_z")
     args = parser.parse_args()
     if not args.run:
@@ -130,6 +134,8 @@ def main():
         parser.error("artifacts must remain in the own ignored subtree")
     if args.azimuth not in (0.0, 5.0):
         parser.error("only separately coordinated real-ky phi=0 or phi=5 pilots are supported")
+    if args.live_component_oracle and args.dtn_phase_gauge != "boundary_plane":
+        parser.error("live component oracle belongs only to explicit centered p2")
     if args.dtn_phase_gauge == "boundary_plane" and args.azimuth != 5.0:
         parser.error("fresh centered authority is fixed to the qualified phi5 fixture")
     if args.worker:
@@ -142,6 +148,7 @@ def main():
     command = [sys.executable, "-m", "benchmarks.run_y_orbit_reference_probe", "--run", "--worker",
                "--expected-head", args.expected_head, "--run-directory", str(args.run_directory), "--azimuth", str(args.azimuth),
                "--dtn-phase-gauge", args.dtn_phase_gauge]
+    if args.live_component_oracle: command += ["--live-component-oracle"]
     summary = supervise(command, args.run_directory, wall_seconds=WALL_SECONDS, interval=0.25, grace_seconds=2,
                         source_state=source, phase_path=args.run_directory / "phase.json", tree_cap_bytes=TREE_CAP_BYTES,
                         hard_stop_immediate=True, timebase_guard=True, stop_on_global_swap=True,

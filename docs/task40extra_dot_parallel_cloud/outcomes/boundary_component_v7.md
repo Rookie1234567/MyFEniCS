@@ -4,11 +4,13 @@
 
 | 身份/范围 | 已测量或冻结值 | 证据 |
 |---|---|---|
-| canonical source | `a0546264ae1bcc51e2aeedcac33585f4ffc04025`，run 前后 clean | `source_receipt_a054626.json` |
-| 配置 | 80 cells，p2，λ0.7nm，phi5，固定 manual m±9/n±3，532 个有序身份；随机种子4053202，五个 full-MPC 独立 FE 状态含 interiors | actual test + `oracle_record.json` |
-| 数值表示 | 显式 `dtn_phase_gauge="boundary_plane"`；default `global_z` 不变 | `build_same_mesh_physical_action` |
+| canonical source | [a0546264…4025](records/boundary_component_v7/source_receipt_a054626.json)，run 前后 clean | [源码身份](records/boundary_component_v7/source_receipt_a054626.json) |
+| 配置 | 80 cells，p2，λ0.7nm，phi5，固定 manual m±9/n±3，532 个有序身份；随机种子4053202，五个 full-MPC 独立 FE 状态含 interiors | actual test + oracle记录 |
+| 数值表示 | 显式 boundary_plane；default global_z 不变 | physical action构建函数 |
 | quadrature | degree19，100个quad facet Gauss点；4 primary/8参数化literal oracle编译表、nodes/weights和实际loaded C绑定 | raw oracle compiled identities |
 | generator / assembly / context | physical `4ace13f4…50c951`；assembly `6f3985de…7a820`；context `2ae0fe4a…630714` | 完整hash在receipt |
+
+完整 source SHA：`a0546264ae1bcc51e2aeedcac33585f4ffc04025`。表中源码身份链接指向 `source_receipt_a054626.json`；oracle记录为 `oracle_record.json`。数值表示的完整调用参数为 `dtn_phase_gauge="boundary_plane"`，构建函数为 `build_same_mesh_physical_action`。
 
 ## 测量与算子区分
 

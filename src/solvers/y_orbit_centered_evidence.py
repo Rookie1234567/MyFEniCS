@@ -61,10 +61,10 @@ def require_centered_dense_inventory(report):
     return sorted(required)
 
 
-def verify_component_sources(root):
+def verify_component_sources(root, *, require_current_bytes=True):
     root = Path(root)
     for name, expected in COMPONENT_SOURCE_FILES.items():
-        if hashlib.sha256((root / name).read_bytes()).hexdigest() != expected:
+        if require_current_bytes and hashlib.sha256((root / name).read_bytes()).hexdigest() != expected:
             raise RuntimeError("centered component numerical dependency changed: " + name)
     receipts = {}
     for name, expected in COMPONENT_RECEIPT_FILES.items():
@@ -85,10 +85,13 @@ def verify_component_sources(root):
                 or any(row["new_C_entries"] <= 0 or row["new_D_entries"] <= 0
                        or row["new_stored_relative_operator_bound"] > 1e-10 for row in ledger["per_mode"])):
             raise RuntimeError("actual all-mode component/source/cutoff qualification is incomplete")
-    return {"component_head": COMPONENT_HEAD, "exact_unchanged_files": COMPONENT_SOURCE_FILES,
+    return {"component_head": COMPONENT_HEAD, "exact_unchanged_files": COMPONENT_SOURCE_FILES if require_current_bytes else {},
+            "historical_source_files": COMPONENT_SOURCE_FILES,
+            "current_byte_identity_required": require_current_bytes,
+            "fresh_live_requalification_required": not require_current_bytes,
             "canonical_receipt_directory": COMPONENT_RECEIPT_DIRECTORY,
             "canonical_receipt_hashes": COMPONENT_RECEIPT_FILES,
-            "context_rechecked_live": True, "PDE_qualified_by_component": False}
+            "context_rechecked_live": require_current_bytes, "PDE_qualified_by_component": False}
 
 
 def require_output_packet(packet, *, label, event):
@@ -108,10 +111,34 @@ def bind_native_packet(field, rhs, solution, load, independent):
     return True
 
 
-def centered_identity(bundle):
+def centered_identity(bundle, *, event=None):
     from .fullspace_dtn_action import _jsonable
     carrier = bundle["dtn_action"].carrier
     actual = {key: str(bundle[key]) for key in COMPONENT_IDENTITY}
+    # Diagnostic only. The acceptance expression below is unchanged. Keep
+    # every actual source/config/compiled-Gauss/MPC identity before that gate.
+    checks = {key: actual[key] == expected for key,expected in COMPONENT_IDENTITY.items()}
+    checks.update({
+        "bundle_dtn_phase_gauge": bundle.get("dtn_phase_gauge") == "boundary_plane",
+        "bundle_physical_generator_mode_sha": bundle["mode_sha256"] == actual["physical_generator_manifest_sha256"],
+        "carrier_assembly_manifest": carrier.mode_manifest_sha256 == actual["assembly_mode_manifest_sha256"],
+        "carrier_assembly_context": carrier.assembly_context_sha256 == actual["assembly_context_sha256"],
+        "all_C_D_nonempty": not any(len(e.coupling_rows)==0 or len(e.projection_rows)==0 for e in carrier.entries),
+        "carrier_mode_count": len(carrier.entries) == 532,
+    })
+    diagnostic = {"expected_identity": COMPONENT_IDENTITY,"actual_identity":actual,
+        "mismatch_keys": [key for key,passed in checks.items() if not passed],
+        "all_acceptance_checks": checks,"expected_source_sha256": {Path(k).name:v for k,v in COMPONENT_SOURCE_FILES.items()},
+        "actual_discrete_context": _jsonable(carrier.assembly_context),
+        "actual_config": _jsonable(bundle["cfg"].as_jsonable()),
+        "actual_carrier_mode_manifest_sha256": carrier.mode_manifest_sha256,
+        "actual_carrier_context_sha256": carrier.assembly_context_sha256,
+        "mode_count": len(carrier.entries),
+        "empty_C": sum(len(e.coupling_rows)==0 for e in carrier.entries),
+        "empty_D": sum(len(e.projection_rows)==0 for e in carrier.entries),
+        "diagnostic_only_acceptance_unchanged": True}
+    if event is not None:
+        event("component_identity_before_assert",diagnostic)
     if (bundle.get("dtn_phase_gauge") != "boundary_plane" or actual != COMPONENT_IDENTITY
             or bundle["mode_sha256"] != actual["physical_generator_manifest_sha256"]
             or carrier.mode_manifest_sha256 != actual["assembly_mode_manifest_sha256"]

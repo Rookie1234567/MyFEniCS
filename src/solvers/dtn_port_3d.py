@@ -1175,7 +1175,8 @@ class _ReusableSurfaceComponentAssembler:
         if boundary_reference_z is not None or verify_compiled_gauss:
             from .dtn_boundary_phase_gauge import compiled_surface_quadrature_identity
             self.compiled_gauss_identity = compiled_surface_quadrature_identity(
-                _with_quadrature_degree(form, quadrature_degree), self.form)
+                _with_quadrature_degree(form, quadrature_degree), self.form,
+                semantic_constants={"alpha": self.alpha, "gamma": self.gamma, "kz": self.kz})
 
     def assemble_entries(self, mode: PortMode3D, mpc) -> tuple[np.ndarray, np.ndarray]:
         _set_scalar_constant(self.alpha, mode.alpha)

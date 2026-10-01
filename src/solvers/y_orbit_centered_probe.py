@@ -22,7 +22,8 @@ from .y_orbit_centered_evidence import (
 )
 
 
-def run_centered_dense_probe(input_path, *, event, save_array, allocation_gate, old_oracle):
+def run_centered_dense_probe(input_path, *, event, save_array, allocation_gate, old_oracle,
+                             live_component_oracle=False, live_component_record_path=None):
     from mpi4py import MPI
     from petsc4py import PETSc
     from .fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
@@ -53,7 +54,14 @@ def run_centered_dense_probe(input_path, *, event, save_array, allocation_gate, 
     base = action0 = action1 = notched = None
     try:
         base = build_same_mesh_physical_action(levels, cfg, 2, dtn_phase_gauge="boundary_plane")
-        identity = centered_identity(base)
+        if live_component_oracle:
+            from .y_orbit_live_boundary_contract import qualify_live_identity, require_live_carrier_unchanged
+            if live_component_record_path is None: raise ValueError("same-live qualification receipt path is required")
+            identity = qualify_live_identity(base,record_path=live_component_record_path,
+                                             allocation_gate=allocation_gate,event=event)
+            qualified_carrier = base["dtn_action"].carrier
+        else:
+            identity = centered_identity(base,event=event)
         save_mpc_inventory(base, layout, save_array)
         save_array("actual_interior_positions",fixture_interior_positions(space,layout))
         ports = audit_port_aliases(base["dtn_action"].carrier, layout, cfg, base["modes"])
@@ -119,6 +127,8 @@ def run_centered_dense_probe(input_path, *, event, save_array, allocation_gate, 
             errors.append(_relative(a0@rhs-action0.apply(rhs), a0@rhs))
         if max(errors) > LIMITS["operator"]:
             raise ValueError("fresh centered original FFCx matrix/action disagrees")
+        if live_component_oracle:
+            require_live_carrier_unchanged(base,identity,event=event,boundary="before_full_A0_factor",expected_carrier=qualified_carrier)
         allocation_gate("full_p2_direct_factor", {"matrix_payload_bytes": matrix_bytes,
              "workspace_bytes": 512 << 20, "declared_factor_workspace_not_fill_bound": True})
         lu = lu_factor(np.array(a0, order="F"), overwrite_a=True, check_finite=True)
@@ -168,6 +178,8 @@ def run_centered_dense_probe(input_path, *, event, save_array, allocation_gate, 
         notch_matrix_error = max(_relative(a1@rhs-action1.apply(rhs), a1@rhs) for rhs in sources.values())
         if notch_matrix_error > LIMITS["operator"]:
             raise ValueError("fresh centered notch original FFCx matrix/action disagrees")
+        if live_component_oracle:
+            require_live_carrier_unchanged(base,identity,event=event,boundary="before_full_A1_factor",expected_carrier=qualified_carrier)
         allocation_gate("full_p2_notch_direct_factor", {"matrix_payload_bytes": matrix_bytes,
                         "workspace_bytes": 512 << 20})
         lu = lu_factor(np.array(a1, order="F"), overwrite_a=True, check_finite=True)
@@ -195,8 +207,10 @@ def run_centered_dense_probe(input_path, *, event, save_array, allocation_gate, 
                                                              label="notch_"+name, save=save_array)
             require_output_packet(candidate["outputs"],label="notch_"+name,event=event)
             notch[name] = {"direct": packet, "candidate": candidate}
+        if live_component_oracle:
+            require_live_carrier_unchanged(base,identity,event=event,boundary="dense_workflow_exit",expected_carrier=qualified_carrier)
         return {"schema": "task40extra.centered-dense-p2-authority.v1", "status": "CENTERED_DENSE_AUTHORITY_PASS",
-                "degree": 2, "dtn_phase_gauge": "boundary_plane", "reference_scope": CENTERED_SCOPE,
+                "degree": 2, "dtn_phase_gauge": "boundary_plane", "live_component_oracle": live_component_oracle, "reference_scope": CENTERED_SCOPE,
                 "identity": identity, "input_sha256": input_sha, "axes_nm": {k:list(v) for k,v in axes.items()},
                 "azimuth_deg": 5.0, "seed": SEED, "limits": LIMITS, "source_names": list(SOURCES),
                 "layout": layout.audit, "ports": ports, "physical_rhs_facts": physical_facts,

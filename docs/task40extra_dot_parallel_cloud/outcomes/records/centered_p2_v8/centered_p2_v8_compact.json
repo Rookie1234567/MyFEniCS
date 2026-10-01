@@ -1,0 +1,1162 @@
+{
+  "schema": "task40extra.centered-p2-v8.compact.v1",
+  "source_head": "7c4410dbc55bce804d148493760d4de68acd8405",
+  "scope": "bounded weak-contrast small-scale p2 architecture qualification; not continuum, official RTA, p4/p6, or target 2TB/48h qualification",
+  "runs": {
+    "y_orbit_p2_phi5_centered_dense_attempt1": {
+      "artifact_directory": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_p2_phi5_centered_dense_attempt1",
+      "source": {
+        "head": "924c7bdd619a951e4b10d9f4be5a2aafbe115ffb",
+        "branch": "task40extra_dot_parallel_cloud",
+        "dirty": "",
+        "source_file_count": 1242,
+        "relevant_source_sha256": {
+          "benchmarks/cases/task40extra_dot_parallel_cloud/y_orbit_reference/README.md": "dd53af89a0375681df48a5a7a1cc0082f08130e970bb392d0520d4e79b2fb626",
+          "benchmarks/cases/task40extra_dot_parallel_cloud/y_orbit_reference/plan.json": "357a49f1176e2c601435bd50b680e0f6063eb950e66c67a8a88a9445d698ac5a",
+          "benchmarks/cases/task40extra_dot_parallel_cloud/y_orbit_reference/plan_phi5.json": "e85660735d4632d392a849f9f767fc34ab321e19b32fde0397637cd10c354b7d",
+          "benchmarks/cases/y_orbit_sparse_reference/README.md": "185f588c8575e3b11f8ddc3765a5d97d230b480ce6747e8dca15f402a2b1eb73",
+          "benchmarks/cases/y_orbit_sparse_reference/centered_p2_qualification_plan_v1_zh.md": "8bc0e634010be25d9129f7ef75cdd54daeeb406b4a7c3efac980ba8d0f2ff558",
+          "benchmarks/cases/y_orbit_sparse_reference/condensation_adapter_plan.md": "b9998bc90bfa6d5c5c19239c7c1093690c9482ac31a398118e21d82ac7226e6e",
+          "benchmarks/cases/y_orbit_sparse_reference/positive_H_source_staging_manifest.json": "3a9f479023697319f75b81accfee00cd050a442455008099b186193e3d628ab4",
+          "benchmarks/cases/y_orbit_sparse_reference/reuse_manifest.json": "6bf5dce3da99ad6e93ce7c206c303425a9fd9cfdbeee94353b97e001e1b7e147",
+          "benchmarks/cases/y_orbit_sparse_reference/same_discrete_congruence_plan.md": "802a96506d80c61a19c6d9b3b3363b4dc891f94a7226d6ae996c3799788dd22b",
+          "benchmarks/cases/y_orbit_sparse_reference/staging_source_review_manifest.json": "09b7289cdb48091586a39b50c7dd413817c943f1894a000a0ab17f0912f65a71",
+          "benchmarks/check_y_orbit_reference_probe.py": "f527ddcbebf329c17165938921235c3875b714c0514959da04341743b569d674",
+          "benchmarks/check_y_orbit_saved_physical_witness.py": "6d0cadf27d4f4080ce71e39a1c36660a26a1d5a07070faa94b35a07ace5f4ada",
+          "benchmarks/check_y_orbit_sparse_probe.py": "b5176d59e3e8af699501ebc9fae01f750672bd6a45a3129158af1eb316a1092b",
+          "benchmarks/run_y_orbit_reference_probe.py": "93a0e730b79fd83311999333eaae928879f1dfb7d109859bea4be528b1d524d3",
+          "benchmarks/run_y_orbit_sparse_probe.py": "cb83dbb0e06fca6f1c8aae2f202a0fb668d60428f5d246534167dda97f7fa78f",
+          "src/solvers/dtn_boundary_phase_gauge.py": "bb0259b2b2da5656aef22d85f9fb2226118b95396276f1032d1ebfb6067bd984",
+          "src/solvers/dtn_port_3d.py": "565a58133d2f86dda985ba2931536e7d63fc3c01b4616d2b4a00d4275767b0a5",
+          "src/solvers/fullspace_dtn_action.py": "777d7ea10d598a7f5abba652b0de896f7040782fe7e421522c8b0e41d3f73c55",
+          "src/solvers/task40extra_y_orbit_reference.py": "6a6baecf6a0f9aee76f40aac1dc67f9b68753e89e7bb09cacafc230d272d6749",
+          "src/solvers/y_orbit_centered_evidence.py": "112845973c816a0f481c0d3d0faa94d9aae64094a1c29fe96c71da8f7eca1c4b",
+          "src/solvers/y_orbit_centered_probe.py": "f370662c54fc30b7db572351649327a353520f62c5a697d25b92589c42ea8de7",
+          "src/solvers/y_orbit_condensed_adapter.py": "156a30713eec6618a28db3baacca4fcd1a150f479fefd9b69e892f98c71c9a44",
+          "src/solvers/y_orbit_sparse_probe.py": "85bdaebfb9b0e67d15c5eed52b29aeb3e94519d4bba497f8f49f1697143e5acc",
+          "src/solvers/y_orbit_sparse_reference.py": "863884e978b21facc93e16b4ed19befeee59da23ec187e12b552a3e5193ca86f",
+          "src/test/test_dtn_boundary_phase_gauge.py": "b1ec92d679801580e38ff5abf2ad12ea99eaec71d65100a0434ea7a8af242204",
+          "src/test/test_task40extra_y_orbit_reference.py": "e8822326e48b75c1413771d53cb8e669969094ae77b7233aa7812c2ff28f29c6",
+          "src/test/test_y_orbit_centered_contracts.py": "0ddb703641b0357fe09b216bff91895a8718637c9d9081e42c313d7d05fe3063",
+          "src/test/test_y_orbit_condensed_adapter.py": "1d6084747e84f1731165217dbdf2016487c271fe39dc3788f7c1547e6af7ef89",
+          "src/test/test_y_orbit_sparse_bridge_identity.py": "42d1bafd6291b9eafac8fe6fcf75a2cb5207afd3a0c0a095365b2b13a413e301",
+          "src/test/test_y_orbit_sparse_diagnostic_inventory.py": "5f624b8e9319ec0510c5a52ed05b699b3ac997b0b4f06fb9ed2dc8be94c2cf7c",
+          "src/test/test_y_orbit_sparse_reference.py": "df0e1b2769eb883dd137ea04b8ba66888165221613fd5b33f944555810946df1"
+        }
+      },
+      "resource": {
+        "classification": "WORKER_FAILED",
+        "elapsed_seconds": 4.81261591799921,
+        "sampled_process_tree_rss_peak_bytes": 392130560,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "timebase_policy": "strict",
+        "workflow_clock_interval": {
+          "elapsed_seconds": {
+            "monotonic": 4.812620668999443,
+            "boottime": 4.812619391002954,
+            "utc": 4.81261876
+          },
+          "budget_seconds": 4.812620668999443,
+          "discrepancy_seconds": 1.9089994429677404e-06,
+          "tolerance_seconds": 5.0,
+          "policy": "strict",
+          "policy_version": 1,
+          "utc_minus_monotonic_seconds": -1.9089994429677404e-06,
+          "step": {
+            "elapsed_seconds": {
+              "monotonic": 0.0011056949988415,
+              "boottime": 0.0011040009994758293,
+              "utc": 0.001103969
+            },
+            "budget_seconds": 0.0011056949988415,
+            "discrepancy_seconds": 1.7259988414999091e-06,
+            "tolerance_seconds": 5.0,
+            "policy": "strict",
+            "policy_version": 1,
+            "utc_minus_monotonic_seconds": -1.7259988414999091e-06
+          },
+          "utc_positive_excess_seconds": 7.329989115123503e-07
+        }
+      },
+      "status": "FAILED",
+      "hashes": {
+        "pilot_report.json": {
+          "sha256": "7697a515a5d13fcc2bef33cfc9ba749414f35488487cf5772eb6040778f42660",
+          "bytes": 3514
+        },
+        "provenance.json": {
+          "sha256": "a9bd4e269af90927c906bffb1ca9454c02cce6fb1cc7307ea598b3a6cdc681bd",
+          "bytes": 172544
+        },
+        "summary.json": {
+          "sha256": "3aa96ccf59cd88746c4416dcd43c36fe6fdd3e655436557f4732d32d5644e32f",
+          "bytes": 169328
+        },
+        "resources.jsonl": {
+          "sha256": "312bc97f041ccd24842328d6a61fd2591a490d4edcbfd69947beb07c3450b60d",
+          "bytes": 77697
+        },
+        "worker.log": {
+          "sha256": "64260d0111ffeb7ef0eaff766574d8cb3f6ab86331107301aaf921a09126e8bb",
+          "bytes": 757
+        }
+      },
+      "error": "centered fixture/source/Gauss/MPC or nonempty full port identity changed",
+      "error_type": "RuntimeError",
+      "factorization_reached": false,
+      "command": [
+        "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/run_y_orbit_reference_probe.py",
+        "--run",
+        "--worker",
+        "--expected-head",
+        "924c7bdd619a951e4b10d9f4be5a2aafbe115ffb",
+        "--run-directory",
+        "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_p2_phi5_centered_dense_attempt1",
+        "--azimuth",
+        "5.0",
+        "--dtn-phase-gauge",
+        "boundary_plane"
+      ],
+      "environment": {
+        "python": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/bin/python",
+        "prefix": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx",
+        "modules": {
+          "dolfinx": {
+            "version": "0.10.0",
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/dolfinx/__init__.py"
+          },
+          "dolfinx_mpc": {
+            "version": null,
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/dolfinx_mpc/__init__.py"
+          },
+          "petsc4py": {
+            "version": "3.25.6",
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/petsc4py/__init__.py"
+          },
+          "mpi4py": {
+            "version": "4.1.2",
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/mpi4py/__init__.py"
+          },
+          "basix": {
+            "version": "0.10.0",
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/basix/__init__.py"
+          },
+          "ufl": {
+            "version": "2025.2.1",
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/ufl/__init__.py"
+          },
+          "ffcx": {
+            "version": "0.10.0",
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/ffcx/__init__.py"
+          },
+          "scipy": {
+            "version": "1.18.1",
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/scipy/__init__.py"
+          }
+        },
+        "petsc_scalar_type": "complex128",
+        "petsc_int_type": "int32",
+        "petsc_version": [
+          3,
+          25,
+          6
+        ],
+        "mpi_library": "MPICH Version:      5.0.1\nMPICH Release date: Fri Apr 10 09:45:31 AM CDT 2026\nMPICH ABI:          18:1:6\nMPICH Device:       ch4:ucx ofi\nMPICH configure:    --prefix=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx --disable-doc --disable-dependency-tracking --enable-cxx --enable-fortran --enable-f08 --enable-mpi-abi --with-wrapper-dl-type=none --disable-static --with-device=ch4:ucx,ofi --with-ucx=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx --with-libfabric=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx --with-hwloc=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx --with-yaksa=embedded --with-pm=hydra:gforker\nMPICH CC:           x86_64-conda-linux-gnu-cc -I/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -fno-merge-constants -isystem /workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -fdebug-prefix-map=/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/work=/usr/local/src/conda/mpich-5.0.1 -fdebug-prefix-map=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx=/usr/local/src/conda-prefix   -O2\nMPICH CXX:          x86_64-conda-linux-gnu-c++ -I/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -fvisibility-inlines-hidden -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -fno-merge-constants -isystem /workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -fdebug-prefix-map=/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/work=/usr/local/src/conda/mpich-5.0.1 -fdebug-prefix-map=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx=/usr/local/src/conda-prefix -O2\nMPICH F77:          x86_64-conda-linux-gnu-gfortran -I/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -fno-merge-constants -isystem /workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -I/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/build_env/include -fdebug-prefix-map=/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/work=/usr/local/src/conda/mpich-5.0.1 -fdebug-prefix-map=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx=/usr/local/src/conda-prefix -O2\nMPICH FC:           x86_64-conda-linux-gnu-gfortran -I/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -fno-merge-constants -isystem /workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -I/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/build_env/include -fdebug-prefix-map=/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/work=/usr/local/src/conda/mpich-5.0.1 -fdebug-prefix-map=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx=/usr/local/src/conda-prefix -O2\nMPICH features:     threadcomm\n",
+        "qualification_manifest": "/workspace/scratch/9c465670b46b/task40extra_cloud/complex_env_setup/complex_abi.json",
+        "qualification_manifest_sha256": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+        "qualification_scope": "separate_serial_cloud_ABI_not_historical_WSL_equivalence"
+      },
+      "input_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e"
+    },
+    "y_orbit_p2_phi5_centered_dense_attempt2": {
+      "artifact_directory": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_p2_phi5_centered_dense_attempt2",
+      "source": {
+        "head": "8a3b353cf872affbb21a42979f22e8dd87a30169",
+        "branch": "task40extra_dot_parallel_cloud",
+        "dirty": "",
+        "source_file_count": 1242,
+        "relevant_source_sha256": {
+          "benchmarks/cases/task40extra_dot_parallel_cloud/y_orbit_reference/README.md": "dd53af89a0375681df48a5a7a1cc0082f08130e970bb392d0520d4e79b2fb626",
+          "benchmarks/cases/task40extra_dot_parallel_cloud/y_orbit_reference/plan.json": "357a49f1176e2c601435bd50b680e0f6063eb950e66c67a8a88a9445d698ac5a",
+          "benchmarks/cases/task40extra_dot_parallel_cloud/y_orbit_reference/plan_phi5.json": "e85660735d4632d392a849f9f767fc34ab321e19b32fde0397637cd10c354b7d",
+          "benchmarks/cases/y_orbit_sparse_reference/README.md": "185f588c8575e3b11f8ddc3765a5d97d230b480ce6747e8dca15f402a2b1eb73",
+          "benchmarks/cases/y_orbit_sparse_reference/centered_p2_qualification_plan_v1_zh.md": "8bc0e634010be25d9129f7ef75cdd54daeeb406b4a7c3efac980ba8d0f2ff558",
+          "benchmarks/cases/y_orbit_sparse_reference/condensation_adapter_plan.md": "b9998bc90bfa6d5c5c19239c7c1093690c9482ac31a398118e21d82ac7226e6e",
+          "benchmarks/cases/y_orbit_sparse_reference/positive_H_source_staging_manifest.json": "3a9f479023697319f75b81accfee00cd050a442455008099b186193e3d628ab4",
+          "benchmarks/cases/y_orbit_sparse_reference/reuse_manifest.json": "6bf5dce3da99ad6e93ce7c206c303425a9fd9cfdbeee94353b97e001e1b7e147",
+          "benchmarks/cases/y_orbit_sparse_reference/same_discrete_congruence_plan.md": "802a96506d80c61a19c6d9b3b3363b4dc891f94a7226d6ae996c3799788dd22b",
+          "benchmarks/cases/y_orbit_sparse_reference/staging_source_review_manifest.json": "09b7289cdb48091586a39b50c7dd413817c943f1894a000a0ab17f0912f65a71",
+          "benchmarks/check_y_orbit_reference_probe.py": "f527ddcbebf329c17165938921235c3875b714c0514959da04341743b569d674",
+          "benchmarks/check_y_orbit_saved_physical_witness.py": "6d0cadf27d4f4080ce71e39a1c36660a26a1d5a07070faa94b35a07ace5f4ada",
+          "benchmarks/check_y_orbit_sparse_probe.py": "b5176d59e3e8af699501ebc9fae01f750672bd6a45a3129158af1eb316a1092b",
+          "benchmarks/run_y_orbit_reference_probe.py": "93a0e730b79fd83311999333eaae928879f1dfb7d109859bea4be528b1d524d3",
+          "benchmarks/run_y_orbit_sparse_probe.py": "cb83dbb0e06fca6f1c8aae2f202a0fb668d60428f5d246534167dda97f7fa78f",
+          "src/solvers/dtn_boundary_phase_gauge.py": "bb0259b2b2da5656aef22d85f9fb2226118b95396276f1032d1ebfb6067bd984",
+          "src/solvers/dtn_port_3d.py": "565a58133d2f86dda985ba2931536e7d63fc3c01b4616d2b4a00d4275767b0a5",
+          "src/solvers/fullspace_dtn_action.py": "777d7ea10d598a7f5abba652b0de896f7040782fe7e421522c8b0e41d3f73c55",
+          "src/solvers/task40extra_y_orbit_reference.py": "6a6baecf6a0f9aee76f40aac1dc67f9b68753e89e7bb09cacafc230d272d6749",
+          "src/solvers/y_orbit_centered_evidence.py": "dc465ce8987b523e292ba01905679861a6694dfa569f760490ec21c4be072592",
+          "src/solvers/y_orbit_centered_probe.py": "46bf0c6bab7abc19c455db462eb7e59a5474647efc463b33ba6b087d8b23b5c1",
+          "src/solvers/y_orbit_condensed_adapter.py": "156a30713eec6618a28db3baacca4fcd1a150f479fefd9b69e892f98c71c9a44",
+          "src/solvers/y_orbit_sparse_probe.py": "a8d73f87440fca4388556126cfb338c4b2023023060523b1a1ca14f0285647df",
+          "src/solvers/y_orbit_sparse_reference.py": "863884e978b21facc93e16b4ed19befeee59da23ec187e12b552a3e5193ca86f",
+          "src/test/test_dtn_boundary_phase_gauge.py": "b1ec92d679801580e38ff5abf2ad12ea99eaec71d65100a0434ea7a8af242204",
+          "src/test/test_task40extra_y_orbit_reference.py": "e8822326e48b75c1413771d53cb8e669969094ae77b7233aa7812c2ff28f29c6",
+          "src/test/test_y_orbit_centered_contracts.py": "d405102f999fcfc18b902c2017254158874ee6999f813d6ae32a9141dd10d1ae",
+          "src/test/test_y_orbit_condensed_adapter.py": "1d6084747e84f1731165217dbdf2016487c271fe39dc3788f7c1547e6af7ef89",
+          "src/test/test_y_orbit_sparse_bridge_identity.py": "42d1bafd6291b9eafac8fe6fcf75a2cb5207afd3a0c0a095365b2b13a413e301",
+          "src/test/test_y_orbit_sparse_diagnostic_inventory.py": "5f624b8e9319ec0510c5a52ed05b699b3ac997b0b4f06fb9ed2dc8be94c2cf7c",
+          "src/test/test_y_orbit_sparse_reference.py": "df0e1b2769eb883dd137ea04b8ba66888165221613fd5b33f944555810946df1"
+        }
+      },
+      "resource": {
+        "classification": "WORKER_FAILED",
+        "elapsed_seconds": 3.528792988996429,
+        "sampled_process_tree_rss_peak_bytes": 340881408,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "timebase_policy": "strict",
+        "workflow_clock_interval": {
+          "elapsed_seconds": {
+            "monotonic": 3.528796468002838,
+            "boottime": 3.528795303998777,
+            "utc": 3.528794732
+          },
+          "budget_seconds": 3.528796468002838,
+          "discrepancy_seconds": 1.7360028379265202e-06,
+          "tolerance_seconds": 5.0,
+          "policy": "strict",
+          "policy_version": 1,
+          "utc_minus_monotonic_seconds": -1.7360028379265202e-06,
+          "step": {
+            "elapsed_seconds": {
+              "monotonic": 0.0006733630034432281,
+              "boottime": 0.0006719199991493952,
+              "utc": 0.000671905
+            },
+            "budget_seconds": 0.0006733630034432281,
+            "discrepancy_seconds": 1.458003443228096e-06,
+            "tolerance_seconds": 5.0,
+            "policy": "strict",
+            "policy_version": 1,
+            "utc_minus_monotonic_seconds": -1.458003443228096e-06
+          },
+          "utc_positive_excess_seconds": 1.6699664412422877e-07
+        }
+      },
+      "status": "FAILED",
+      "hashes": {
+        "pilot_report.json": {
+          "sha256": "7909e9544dcb4fb5a6223c89438b0a9c9d4bbd95c2c451d77f69b3052682dac7",
+          "bytes": 3515
+        },
+        "provenance.json": {
+          "sha256": "86f62c8e45d51b6b54494f77d28652e52b3ecc8d11b73ee09343a6e5e70da367",
+          "bytes": 172544
+        },
+        "summary.json": {
+          "sha256": "788af3799e243e8c2ee9fd460a2cb73cfac9303affdabf5ec7c0a9f4653cba67",
+          "bytes": 169269
+        },
+        "resources.jsonl": {
+          "sha256": "aec36c94b77a61ce5a504038f70a903d3a61e1d6d934ab88247e5b60b8217336",
+          "bytes": 54223
+        },
+        "worker.log": {
+          "sha256": "63e64d47f527cf264cb759b6bfe0c3ea975ed7c222b527c5ce5c790a2d132793",
+          "bytes": 14839
+        }
+      },
+      "error": "centered fixture/source/Gauss/MPC or nonempty full port identity changed",
+      "error_type": "RuntimeError",
+      "factorization_reached": false,
+      "command": [
+        "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/run_y_orbit_reference_probe.py",
+        "--run",
+        "--worker",
+        "--expected-head",
+        "8a3b353cf872affbb21a42979f22e8dd87a30169",
+        "--run-directory",
+        "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_p2_phi5_centered_dense_attempt2",
+        "--azimuth",
+        "5.0",
+        "--dtn-phase-gauge",
+        "boundary_plane"
+      ],
+      "environment": {
+        "python": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/bin/python",
+        "prefix": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx",
+        "modules": {
+          "dolfinx": {
+            "version": "0.10.0",
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/dolfinx/__init__.py"
+          },
+          "dolfinx_mpc": {
+            "version": null,
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/dolfinx_mpc/__init__.py"
+          },
+          "petsc4py": {
+            "version": "3.25.6",
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/petsc4py/__init__.py"
+          },
+          "mpi4py": {
+            "version": "4.1.2",
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/mpi4py/__init__.py"
+          },
+          "basix": {
+            "version": "0.10.0",
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/basix/__init__.py"
+          },
+          "ufl": {
+            "version": "2025.2.1",
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/ufl/__init__.py"
+          },
+          "ffcx": {
+            "version": "0.10.0",
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/ffcx/__init__.py"
+          },
+          "scipy": {
+            "version": "1.18.1",
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/scipy/__init__.py"
+          }
+        },
+        "petsc_scalar_type": "complex128",
+        "petsc_int_type": "int32",
+        "petsc_version": [
+          3,
+          25,
+          6
+        ],
+        "mpi_library": "MPICH Version:      5.0.1\nMPICH Release date: Fri Apr 10 09:45:31 AM CDT 2026\nMPICH ABI:          18:1:6\nMPICH Device:       ch4:ucx ofi\nMPICH configure:    --prefix=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx --disable-doc --disable-dependency-tracking --enable-cxx --enable-fortran --enable-f08 --enable-mpi-abi --with-wrapper-dl-type=none --disable-static --with-device=ch4:ucx,ofi --with-ucx=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx --with-libfabric=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx --with-hwloc=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx --with-yaksa=embedded --with-pm=hydra:gforker\nMPICH CC:           x86_64-conda-linux-gnu-cc -I/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -fno-merge-constants -isystem /workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -fdebug-prefix-map=/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/work=/usr/local/src/conda/mpich-5.0.1 -fdebug-prefix-map=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx=/usr/local/src/conda-prefix   -O2\nMPICH CXX:          x86_64-conda-linux-gnu-c++ -I/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -fvisibility-inlines-hidden -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -fno-merge-constants -isystem /workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -fdebug-prefix-map=/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/work=/usr/local/src/conda/mpich-5.0.1 -fdebug-prefix-map=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx=/usr/local/src/conda-prefix -O2\nMPICH F77:          x86_64-conda-linux-gnu-gfortran -I/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -fno-merge-constants -isystem /workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -I/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/build_env/include -fdebug-prefix-map=/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/work=/usr/local/src/conda/mpich-5.0.1 -fdebug-prefix-map=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx=/usr/local/src/conda-prefix -O2\nMPICH FC:           x86_64-conda-linux-gnu-gfortran -I/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -fno-merge-constants -isystem /workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -I/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/build_env/include -fdebug-prefix-map=/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/work=/usr/local/src/conda/mpich-5.0.1 -fdebug-prefix-map=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx=/usr/local/src/conda-prefix -O2\nMPICH features:     threadcomm\n",
+        "qualification_manifest": "/workspace/scratch/9c465670b46b/task40extra_cloud/complex_env_setup/complex_abi.json",
+        "qualification_manifest_sha256": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+        "qualification_scope": "separate_serial_cloud_ABI_not_historical_WSL_equivalence"
+      },
+      "input_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e"
+    },
+    "y_orbit_p2_phi5_centered_dense_attempt3_live": {
+      "artifact_directory": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_p2_phi5_centered_dense_attempt3_live",
+      "source": {
+        "head": "7c4410dbc55bce804d148493760d4de68acd8405",
+        "branch": "task40extra_dot_parallel_cloud",
+        "dirty": "",
+        "source_file_count": 1247,
+        "relevant_source_sha256": {
+          "benchmarks/cases/task40extra_dot_parallel_cloud/y_orbit_reference/README.md": "dd53af89a0375681df48a5a7a1cc0082f08130e970bb392d0520d4e79b2fb626",
+          "benchmarks/cases/task40extra_dot_parallel_cloud/y_orbit_reference/plan.json": "357a49f1176e2c601435bd50b680e0f6063eb950e66c67a8a88a9445d698ac5a",
+          "benchmarks/cases/task40extra_dot_parallel_cloud/y_orbit_reference/plan_phi5.json": "e85660735d4632d392a849f9f767fc34ab321e19b32fde0397637cd10c354b7d",
+          "benchmarks/cases/y_orbit_sparse_reference/README.md": "185f588c8575e3b11f8ddc3765a5d97d230b480ce6747e8dca15f402a2b1eb73",
+          "benchmarks/cases/y_orbit_sparse_reference/centered_p2_qualification_plan_v1_zh.md": "8bc0e634010be25d9129f7ef75cdd54daeeb406b4a7c3efac980ba8d0f2ff558",
+          "benchmarks/cases/y_orbit_sparse_reference/condensation_adapter_plan.md": "b9998bc90bfa6d5c5c19239c7c1093690c9482ac31a398118e21d82ac7226e6e",
+          "benchmarks/cases/y_orbit_sparse_reference/live_oracle_pipeline_plan_v1_zh.md": "0fe18ef607dbb6818f0f094d621f73c9abbf37819a6fdbdd5a8681b6fea0e3e6",
+          "benchmarks/cases/y_orbit_sparse_reference/positive_H_source_staging_manifest.json": "3a9f479023697319f75b81accfee00cd050a442455008099b186193e3d628ab4",
+          "benchmarks/cases/y_orbit_sparse_reference/reuse_manifest.json": "6bf5dce3da99ad6e93ce7c206c303425a9fd9cfdbeee94353b97e001e1b7e147",
+          "benchmarks/cases/y_orbit_sparse_reference/same_discrete_congruence_plan.md": "802a96506d80c61a19c6d9b3b3363b4dc891f94a7226d6ae996c3799788dd22b",
+          "benchmarks/cases/y_orbit_sparse_reference/staging_source_review_manifest.json": "09b7289cdb48091586a39b50c7dd413817c943f1894a000a0ab17f0912f65a71",
+          "benchmarks/check_y_orbit_reference_probe.py": "5839d260fb05a9640724d5ce1094f6ec44db14d3f5f0f34d46dc1f5207a0bd39",
+          "benchmarks/check_y_orbit_saved_physical_witness.py": "6d0cadf27d4f4080ce71e39a1c36660a26a1d5a07070faa94b35a07ace5f4ada",
+          "benchmarks/check_y_orbit_sparse_probe.py": "b148519aa0b176379cb8bce74d358a6e36137b0b322881d5e0cad48459b3dfc5",
+          "benchmarks/run_y_orbit_reference_probe.py": "43b4ca435073dd1ad91e4bd78a47602a0fdfe6e9af914b55c6b14572541e19a9",
+          "benchmarks/run_y_orbit_sparse_probe.py": "80a22550ef9532d42d63e997dc8076af0c886915454f36813d2fce679724a480",
+          "src/solvers/dtn_boundary_phase_gauge.py": "a009e13b83e1a484452deef1b7f35396b38e84c2d9f9fcf98207f7f2d629a343",
+          "src/solvers/dtn_port_3d.py": "fc1992068c8c3fdab770e8ff601b0fdd4a3506384be59bba418daa80e08ec780",
+          "src/solvers/fullspace_dtn_action.py": "777d7ea10d598a7f5abba652b0de896f7040782fe7e421522c8b0e41d3f73c55",
+          "src/solvers/task40extra_y_orbit_reference.py": "6a6baecf6a0f9aee76f40aac1dc67f9b68753e89e7bb09cacafc230d272d6749",
+          "src/solvers/y_orbit_centered_evidence.py": "f15d619e30b16e62fc1ede8621b004b54557719d230d66b123b93e67b74eb3a6",
+          "src/solvers/y_orbit_centered_probe.py": "2e694e76864a8f2572d60c7a545026ffe596347444a79e390b188db21b6ea782",
+          "src/solvers/y_orbit_condensed_adapter.py": "156a30713eec6618a28db3baacca4fcd1a150f479fefd9b69e892f98c71c9a44",
+          "src/solvers/y_orbit_live_boundary_contract.py": "b1576260105ec2dacfbd6cb5902c94ea0c7a1422d7038062dca9be3c6d847af6",
+          "src/solvers/y_orbit_sparse_probe.py": "cf7fe858cff6f2e04a32deda9ca09f12f7191cc0018df6744802e45417bf7898",
+          "src/solvers/y_orbit_sparse_reference.py": "863884e978b21facc93e16b4ed19befeee59da23ec187e12b552a3e5193ca86f",
+          "src/test/test_dtn_boundary_phase_gauge.py": "52141e14c19865277d6371e26318b9dab3fbfff984912eae62181dd6a335f1f3",
+          "src/test/test_task40extra_y_orbit_reference.py": "e8822326e48b75c1413771d53cb8e669969094ae77b7233aa7812c2ff28f29c6",
+          "src/test/test_y_orbit_centered_contracts.py": "d405102f999fcfc18b902c2017254158874ee6999f813d6ae32a9141dd10d1ae",
+          "src/test/test_y_orbit_condensed_adapter.py": "1d6084747e84f1731165217dbdf2016487c271fe39dc3788f7c1547e6af7ef89",
+          "src/test/test_y_orbit_live_boundary_contract.py": "fc202c99a21bf6759404f9f62b8a43301ed84f78b587bf33db9373b8ab5d6136",
+          "src/test/test_y_orbit_sparse_bridge_identity.py": "42d1bafd6291b9eafac8fe6fcf75a2cb5207afd3a0c0a095365b2b13a413e301",
+          "src/test/test_y_orbit_sparse_diagnostic_inventory.py": "5f624b8e9319ec0510c5a52ed05b699b3ac997b0b4f06fb9ed2dc8be94c2cf7c",
+          "src/test/test_y_orbit_sparse_reference.py": "df0e1b2769eb883dd137ea04b8ba66888165221613fd5b33f944555810946df1"
+        }
+      },
+      "resource": {
+        "classification": "COMPLETED",
+        "elapsed_seconds": 19.187455898994813,
+        "sampled_process_tree_rss_peak_bytes": 633204736,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "timebase_policy": "strict",
+        "workflow_clock_interval": {
+          "elapsed_seconds": {
+            "monotonic": 19.18747536400042,
+            "boottime": 19.187474557002133,
+            "utc": 19.187474285
+          },
+          "budget_seconds": 19.18747536400042,
+          "discrepancy_seconds": 1.0790004196792324e-06,
+          "tolerance_seconds": 5.0,
+          "policy": "strict",
+          "policy_version": 1,
+          "utc_minus_monotonic_seconds": -1.0790004196792324e-06,
+          "step": {
+            "elapsed_seconds": {
+              "monotonic": 0.0012381769993226044,
+              "boottime": 0.0012127790032536723,
+              "utc": 0.001212748
+            },
+            "budget_seconds": 0.0012381769993226044,
+            "discrepancy_seconds": 2.542899932260435e-05,
+            "tolerance_seconds": 5.0,
+            "policy": "strict",
+            "policy_version": 1,
+            "utc_minus_monotonic_seconds": -2.542899932260435e-05
+          },
+          "utc_positive_excess_seconds": 1.8859804047921536e-06
+        }
+      },
+      "status": "CENTERED_DENSE_AUTHORITY_PASS",
+      "hashes": {
+        "pilot_report.json": {
+          "sha256": "33415b7a1cde1001c4945cfa88b8517fc351478cf1b022b9ff9770b70dea6859",
+          "bytes": 1194336
+        },
+        "provenance.json": {
+          "sha256": "172be941df7e64a4f9b789149ed251f585297ad67fe3b2b15be2957f164c44a7",
+          "bytes": 173396
+        },
+        "live_component_receipt.json": {
+          "sha256": "c6278000bd48259bdd28f445383264495d7e69579797c4ac229e42ed715a9a8c",
+          "bytes": 1759166
+        },
+        "partial_components.json": {
+          "sha256": "9dc8895f48600a7f33f809d0483c5764c0cde32ccc9717ccd55874f4a10be5e9",
+          "bytes": 1295077
+        },
+        "independent_checker.json": {
+          "sha256": "d2b3a4d28411db477899509ac0bf86deda79c12222029502ec408af05e81e1e7",
+          "bytes": 321770
+        },
+        "summary.json": {
+          "sha256": "c30718d2d954aab3aa6b5f012f66c50147345b62658c3c10d78a260f026f88f4",
+          "bytes": 169988
+        },
+        "resources.jsonl": {
+          "sha256": "c7b74f75cb395d5b0ef1a40414b3a635f46910d37014a896b868894b9e47d820",
+          "bytes": 299466
+        },
+        "worker.log": {
+          "sha256": "8629b897eb6b9f38ca92a7d364de34a4a763d4dc2b1ec0bbb0f4eba79483eadc",
+          "bytes": 479566
+        },
+        "checker_supervision/summary.json": {
+          "sha256": "29c9e846624b5911843d9f2e824bff614ed2a19fe9cad83548f43ba1ba6baf40",
+          "bytes": 169919
+        },
+        "checker_supervision/resources.jsonl": {
+          "sha256": "da7b9ce0d94c8632100ee0fbe0b189e9d794d167a0a2342f29fb45942b9133f2",
+          "bytes": 52938
+        },
+        "checker_supervision/worker.log": {
+          "sha256": "02b7420fe70d49819e87ae7dc1f438a753bde801e061d67662a4f924e70d4fbd",
+          "bytes": 135
+        }
+      },
+      "command": [
+        "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/run_y_orbit_reference_probe.py",
+        "--run",
+        "--worker",
+        "--expected-head",
+        "7c4410dbc55bce804d148493760d4de68acd8405",
+        "--run-directory",
+        "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_p2_phi5_centered_dense_attempt3_live",
+        "--azimuth",
+        "5.0",
+        "--dtn-phase-gauge",
+        "boundary_plane",
+        "--live-component-oracle"
+      ],
+      "environment": {
+        "python": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/bin/python",
+        "prefix": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx",
+        "modules": {
+          "dolfinx": {
+            "version": "0.10.0",
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/dolfinx/__init__.py"
+          },
+          "dolfinx_mpc": {
+            "version": null,
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/dolfinx_mpc/__init__.py"
+          },
+          "petsc4py": {
+            "version": "3.25.6",
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/petsc4py/__init__.py"
+          },
+          "mpi4py": {
+            "version": "4.1.2",
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/mpi4py/__init__.py"
+          },
+          "basix": {
+            "version": "0.10.0",
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/basix/__init__.py"
+          },
+          "ufl": {
+            "version": "2025.2.1",
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/ufl/__init__.py"
+          },
+          "ffcx": {
+            "version": "0.10.0",
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/ffcx/__init__.py"
+          },
+          "scipy": {
+            "version": "1.18.1",
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/scipy/__init__.py"
+          }
+        },
+        "petsc_scalar_type": "complex128",
+        "petsc_int_type": "int32",
+        "petsc_version": [
+          3,
+          25,
+          6
+        ],
+        "mpi_library": "MPICH Version:      5.0.1\nMPICH Release date: Fri Apr 10 09:45:31 AM CDT 2026\nMPICH ABI:          18:1:6\nMPICH Device:       ch4:ucx ofi\nMPICH configure:    --prefix=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx --disable-doc --disable-dependency-tracking --enable-cxx --enable-fortran --enable-f08 --enable-mpi-abi --with-wrapper-dl-type=none --disable-static --with-device=ch4:ucx,ofi --with-ucx=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx --with-libfabric=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx --with-hwloc=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx --with-yaksa=embedded --with-pm=hydra:gforker\nMPICH CC:           x86_64-conda-linux-gnu-cc -I/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -fno-merge-constants -isystem /workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -fdebug-prefix-map=/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/work=/usr/local/src/conda/mpich-5.0.1 -fdebug-prefix-map=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx=/usr/local/src/conda-prefix   -O2\nMPICH CXX:          x86_64-conda-linux-gnu-c++ -I/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -fvisibility-inlines-hidden -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -fno-merge-constants -isystem /workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -fdebug-prefix-map=/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/work=/usr/local/src/conda/mpich-5.0.1 -fdebug-prefix-map=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx=/usr/local/src/conda-prefix -O2\nMPICH F77:          x86_64-conda-linux-gnu-gfortran -I/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -fno-merge-constants -isystem /workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -I/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/build_env/include -fdebug-prefix-map=/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/work=/usr/local/src/conda/mpich-5.0.1 -fdebug-prefix-map=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx=/usr/local/src/conda-prefix -O2\nMPICH FC:           x86_64-conda-linux-gnu-gfortran -I/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -fno-merge-constants -isystem /workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -I/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/build_env/include -fdebug-prefix-map=/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/work=/usr/local/src/conda/mpich-5.0.1 -fdebug-prefix-map=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx=/usr/local/src/conda-prefix -O2\nMPICH features:     threadcomm\n",
+        "qualification_manifest": "/workspace/scratch/9c465670b46b/task40extra_cloud/complex_env_setup/complex_abi.json",
+        "qualification_manifest_sha256": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+        "qualification_scope": "separate_serial_cloud_ABI_not_historical_WSL_equivalence"
+      },
+      "input_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e",
+      "live_component": {
+        "status": "PASS_COMPONENT_ONLY",
+        "assembly_context_sha256": "27fe6c16eb7c95fb9972e80d013735dbc5a16823067a621640462a66adf7de7e",
+        "assembly_mode_manifest_sha256": "e1aede0a84c908bca68f62a39ccc23ea994f9e4d1a2494fbe54700b8b6cf084b",
+        "physical_generator_manifest_sha256": "4ace13f47bc6edf8a08e1a1df24309f6326294b6bf9d5ca4ada07208bd50c951",
+        "qualification_source_sha256": "5be36476ec40c0523097b2b24303cccaf02b3db22d1062f0b1b18ba342ff3bf0",
+        "carrier_digest_before": "1fba9886e83adae75f1f0380f035f77d3ee15ed92ce8f57eae29b544869639d0",
+        "carrier_digest_after": "1fba9886e83adae75f1f0380f035f77d3ee15ed92ce8f57eae29b544869639d0",
+        "mode_count": 532,
+        "degree": 2,
+        "azimuth_deg": 5.0,
+        "quadrature_degree": 19,
+        "completed_gates": [
+          "loaded_kernel_provenance_and_constant_restoration",
+          "compiled_primary_literal_same_gauss",
+          "all532_raw_coefficient_H_equivalence",
+          "every_mode_full_DOF_rank_one_bound",
+          "five_state_actual_action_recovery_output_components",
+          "physical_FE_RHS_literal_oracle",
+          "incident_and_nonzero_port_RHS_transforms",
+          "unchanged_live_carrier_digest"
+        ],
+        "physical_FE_RHS_literal_raw_defect": 4.221407927526637e-15,
+        "raw_vs_centered_action_defect": 1.1872958750469111e-15,
+        "new_stored_vs_raw_action_defect": 3.2698234834320744e-15
+      },
+      "checker": {
+        "schema": "task40extra.centered-dense-checker.v1",
+        "evidence_valid": true,
+        "gate_pass": true,
+        "check_count": 129,
+        "all_checks_pass": true,
+        "source": {
+          "head": "7c4410dbc55bce804d148493760d4de68acd8405",
+          "branch": "task40extra_dot_parallel_cloud",
+          "dirty": "",
+          "source_file_count": 1247,
+          "relevant_source_sha256": {
+            "benchmarks/cases/task40extra_dot_parallel_cloud/y_orbit_reference/README.md": "dd53af89a0375681df48a5a7a1cc0082f08130e970bb392d0520d4e79b2fb626",
+            "benchmarks/cases/task40extra_dot_parallel_cloud/y_orbit_reference/plan.json": "357a49f1176e2c601435bd50b680e0f6063eb950e66c67a8a88a9445d698ac5a",
+            "benchmarks/cases/task40extra_dot_parallel_cloud/y_orbit_reference/plan_phi5.json": "e85660735d4632d392a849f9f767fc34ab321e19b32fde0397637cd10c354b7d",
+            "benchmarks/cases/y_orbit_sparse_reference/README.md": "185f588c8575e3b11f8ddc3765a5d97d230b480ce6747e8dca15f402a2b1eb73",
+            "benchmarks/cases/y_orbit_sparse_reference/centered_p2_qualification_plan_v1_zh.md": "8bc0e634010be25d9129f7ef75cdd54daeeb406b4a7c3efac980ba8d0f2ff558",
+            "benchmarks/cases/y_orbit_sparse_reference/condensation_adapter_plan.md": "b9998bc90bfa6d5c5c19239c7c1093690c9482ac31a398118e21d82ac7226e6e",
+            "benchmarks/cases/y_orbit_sparse_reference/live_oracle_pipeline_plan_v1_zh.md": "0fe18ef607dbb6818f0f094d621f73c9abbf37819a6fdbdd5a8681b6fea0e3e6",
+            "benchmarks/cases/y_orbit_sparse_reference/positive_H_source_staging_manifest.json": "3a9f479023697319f75b81accfee00cd050a442455008099b186193e3d628ab4",
+            "benchmarks/cases/y_orbit_sparse_reference/reuse_manifest.json": "6bf5dce3da99ad6e93ce7c206c303425a9fd9cfdbeee94353b97e001e1b7e147",
+            "benchmarks/cases/y_orbit_sparse_reference/same_discrete_congruence_plan.md": "802a96506d80c61a19c6d9b3b3363b4dc891f94a7226d6ae996c3799788dd22b",
+            "benchmarks/cases/y_orbit_sparse_reference/staging_source_review_manifest.json": "09b7289cdb48091586a39b50c7dd413817c943f1894a000a0ab17f0912f65a71",
+            "benchmarks/check_y_orbit_reference_probe.py": "5839d260fb05a9640724d5ce1094f6ec44db14d3f5f0f34d46dc1f5207a0bd39",
+            "benchmarks/check_y_orbit_saved_physical_witness.py": "6d0cadf27d4f4080ce71e39a1c36660a26a1d5a07070faa94b35a07ace5f4ada",
+            "benchmarks/check_y_orbit_sparse_probe.py": "b148519aa0b176379cb8bce74d358a6e36137b0b322881d5e0cad48459b3dfc5",
+            "benchmarks/run_y_orbit_reference_probe.py": "43b4ca435073dd1ad91e4bd78a47602a0fdfe6e9af914b55c6b14572541e19a9",
+            "benchmarks/run_y_orbit_sparse_probe.py": "80a22550ef9532d42d63e997dc8076af0c886915454f36813d2fce679724a480",
+            "src/solvers/dtn_boundary_phase_gauge.py": "a009e13b83e1a484452deef1b7f35396b38e84c2d9f9fcf98207f7f2d629a343",
+            "src/solvers/dtn_port_3d.py": "fc1992068c8c3fdab770e8ff601b0fdd4a3506384be59bba418daa80e08ec780",
+            "src/solvers/fullspace_dtn_action.py": "777d7ea10d598a7f5abba652b0de896f7040782fe7e421522c8b0e41d3f73c55",
+            "src/solvers/task40extra_y_orbit_reference.py": "6a6baecf6a0f9aee76f40aac1dc67f9b68753e89e7bb09cacafc230d272d6749",
+            "src/solvers/y_orbit_centered_evidence.py": "f15d619e30b16e62fc1ede8621b004b54557719d230d66b123b93e67b74eb3a6",
+            "src/solvers/y_orbit_centered_probe.py": "2e694e76864a8f2572d60c7a545026ffe596347444a79e390b188db21b6ea782",
+            "src/solvers/y_orbit_condensed_adapter.py": "156a30713eec6618a28db3baacca4fcd1a150f479fefd9b69e892f98c71c9a44",
+            "src/solvers/y_orbit_live_boundary_contract.py": "b1576260105ec2dacfbd6cb5902c94ea0c7a1422d7038062dca9be3c6d847af6",
+            "src/solvers/y_orbit_sparse_probe.py": "cf7fe858cff6f2e04a32deda9ca09f12f7191cc0018df6744802e45417bf7898",
+            "src/solvers/y_orbit_sparse_reference.py": "863884e978b21facc93e16b4ed19befeee59da23ec187e12b552a3e5193ca86f",
+            "src/test/test_dtn_boundary_phase_gauge.py": "52141e14c19865277d6371e26318b9dab3fbfff984912eae62181dd6a335f1f3",
+            "src/test/test_task40extra_y_orbit_reference.py": "e8822326e48b75c1413771d53cb8e669969094ae77b7233aa7812c2ff28f29c6",
+            "src/test/test_y_orbit_centered_contracts.py": "d405102f999fcfc18b902c2017254158874ee6999f813d6ae32a9141dd10d1ae",
+            "src/test/test_y_orbit_condensed_adapter.py": "1d6084747e84f1731165217dbdf2016487c271fe39dc3788f7c1547e6af7ef89",
+            "src/test/test_y_orbit_live_boundary_contract.py": "fc202c99a21bf6759404f9f62b8a43301ed84f78b587bf33db9373b8ab5d6136",
+            "src/test/test_y_orbit_sparse_bridge_identity.py": "42d1bafd6291b9eafac8fe6fcf75a2cb5207afd3a0c0a095365b2b13a413e301",
+            "src/test/test_y_orbit_sparse_diagnostic_inventory.py": "5f624b8e9319ec0510c5a52ed05b699b3ac997b0b4f06fb9ed2dc8be94c2cf7c",
+            "src/test/test_y_orbit_sparse_reference.py": "df0e1b2769eb883dd137ea04b8ba66888165221613fd5b33f944555810946df1"
+          }
+        },
+        "mode_output_comparison_count": 40,
+        "mode_output_all_pass": true,
+        "mode_output_worst_local_error": 1.5850129140737153e-12,
+        "worker_dependency_binding": null,
+        "resource": {
+          "classification": "COMPLETED",
+          "elapsed_seconds": 3.5744500379951205,
+          "sampled_process_tree_rss_peak_bytes": 460742656,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "descendants_cleared": true,
+          "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+          "timebase_policy": "strict",
+          "workflow_clock_interval": {
+            "elapsed_seconds": {
+              "monotonic": 3.574454182999034,
+              "boottime": 3.5744530349984416,
+              "utc": 3.574452528
+            },
+            "budget_seconds": 3.574454182999034,
+            "discrepancy_seconds": 1.6549990338177167e-06,
+            "tolerance_seconds": 5.0,
+            "policy": "strict",
+            "policy_version": 1,
+            "utc_minus_monotonic_seconds": -1.6549990338177167e-06,
+            "step": {
+              "elapsed_seconds": {
+                "monotonic": 0.0007459260014002211,
+                "boottime": 0.0007447320022038184,
+                "utc": 0.000744709
+              },
+              "budget_seconds": 0.0007459260014002211,
+              "discrepancy_seconds": 1.217001400221165e-06,
+              "tolerance_seconds": 5.0,
+              "policy": "strict",
+              "policy_version": 1,
+              "utc_minus_monotonic_seconds": -1.217001400221165e-06
+            },
+            "utc_positive_excess_seconds": 5.229998434330696e-07
+          }
+        }
+      },
+      "old_clipped_operator_delta": {
+        "relative_frobenius_to_centered": 0.006106086374356243,
+        "relative_frobenius_to_old_clipped": 0.006106146797708441,
+        "absolute_entry_max": 16.201310447212638,
+        "all_columns": 2048,
+        "not_an_equivalence_gate": true,
+        "physical_RHS_delta_relative": 4.160600309706027e-16
+      }
+    },
+    "y_orbit_sparse_p2_phi5_centered_live_attempt1": {
+      "artifact_directory": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_sparse_p2_phi5_centered_live_attempt1",
+      "source": {
+        "head": "7c4410dbc55bce804d148493760d4de68acd8405",
+        "branch": "task40extra_dot_parallel_cloud",
+        "dirty": "",
+        "source_file_count": 1247,
+        "relevant_source_sha256": {
+          "benchmarks/cases/task40extra_dot_parallel_cloud/y_orbit_reference/README.md": "dd53af89a0375681df48a5a7a1cc0082f08130e970bb392d0520d4e79b2fb626",
+          "benchmarks/cases/task40extra_dot_parallel_cloud/y_orbit_reference/plan.json": "357a49f1176e2c601435bd50b680e0f6063eb950e66c67a8a88a9445d698ac5a",
+          "benchmarks/cases/task40extra_dot_parallel_cloud/y_orbit_reference/plan_phi5.json": "e85660735d4632d392a849f9f767fc34ab321e19b32fde0397637cd10c354b7d",
+          "benchmarks/cases/y_orbit_sparse_reference/README.md": "185f588c8575e3b11f8ddc3765a5d97d230b480ce6747e8dca15f402a2b1eb73",
+          "benchmarks/cases/y_orbit_sparse_reference/centered_p2_qualification_plan_v1_zh.md": "8bc0e634010be25d9129f7ef75cdd54daeeb406b4a7c3efac980ba8d0f2ff558",
+          "benchmarks/cases/y_orbit_sparse_reference/condensation_adapter_plan.md": "b9998bc90bfa6d5c5c19239c7c1093690c9482ac31a398118e21d82ac7226e6e",
+          "benchmarks/cases/y_orbit_sparse_reference/live_oracle_pipeline_plan_v1_zh.md": "0fe18ef607dbb6818f0f094d621f73c9abbf37819a6fdbdd5a8681b6fea0e3e6",
+          "benchmarks/cases/y_orbit_sparse_reference/positive_H_source_staging_manifest.json": "3a9f479023697319f75b81accfee00cd050a442455008099b186193e3d628ab4",
+          "benchmarks/cases/y_orbit_sparse_reference/reuse_manifest.json": "6bf5dce3da99ad6e93ce7c206c303425a9fd9cfdbeee94353b97e001e1b7e147",
+          "benchmarks/cases/y_orbit_sparse_reference/same_discrete_congruence_plan.md": "802a96506d80c61a19c6d9b3b3363b4dc891f94a7226d6ae996c3799788dd22b",
+          "benchmarks/cases/y_orbit_sparse_reference/staging_source_review_manifest.json": "09b7289cdb48091586a39b50c7dd413817c943f1894a000a0ab17f0912f65a71",
+          "benchmarks/check_y_orbit_reference_probe.py": "5839d260fb05a9640724d5ce1094f6ec44db14d3f5f0f34d46dc1f5207a0bd39",
+          "benchmarks/check_y_orbit_saved_physical_witness.py": "6d0cadf27d4f4080ce71e39a1c36660a26a1d5a07070faa94b35a07ace5f4ada",
+          "benchmarks/check_y_orbit_sparse_probe.py": "b148519aa0b176379cb8bce74d358a6e36137b0b322881d5e0cad48459b3dfc5",
+          "benchmarks/run_y_orbit_reference_probe.py": "43b4ca435073dd1ad91e4bd78a47602a0fdfe6e9af914b55c6b14572541e19a9",
+          "benchmarks/run_y_orbit_sparse_probe.py": "80a22550ef9532d42d63e997dc8076af0c886915454f36813d2fce679724a480",
+          "src/solvers/dtn_boundary_phase_gauge.py": "a009e13b83e1a484452deef1b7f35396b38e84c2d9f9fcf98207f7f2d629a343",
+          "src/solvers/dtn_port_3d.py": "fc1992068c8c3fdab770e8ff601b0fdd4a3506384be59bba418daa80e08ec780",
+          "src/solvers/fullspace_dtn_action.py": "777d7ea10d598a7f5abba652b0de896f7040782fe7e421522c8b0e41d3f73c55",
+          "src/solvers/task40extra_y_orbit_reference.py": "6a6baecf6a0f9aee76f40aac1dc67f9b68753e89e7bb09cacafc230d272d6749",
+          "src/solvers/y_orbit_centered_evidence.py": "f15d619e30b16e62fc1ede8621b004b54557719d230d66b123b93e67b74eb3a6",
+          "src/solvers/y_orbit_centered_probe.py": "2e694e76864a8f2572d60c7a545026ffe596347444a79e390b188db21b6ea782",
+          "src/solvers/y_orbit_condensed_adapter.py": "156a30713eec6618a28db3baacca4fcd1a150f479fefd9b69e892f98c71c9a44",
+          "src/solvers/y_orbit_live_boundary_contract.py": "b1576260105ec2dacfbd6cb5902c94ea0c7a1422d7038062dca9be3c6d847af6",
+          "src/solvers/y_orbit_sparse_probe.py": "cf7fe858cff6f2e04a32deda9ca09f12f7191cc0018df6744802e45417bf7898",
+          "src/solvers/y_orbit_sparse_reference.py": "863884e978b21facc93e16b4ed19befeee59da23ec187e12b552a3e5193ca86f",
+          "src/test/test_dtn_boundary_phase_gauge.py": "52141e14c19865277d6371e26318b9dab3fbfff984912eae62181dd6a335f1f3",
+          "src/test/test_task40extra_y_orbit_reference.py": "e8822326e48b75c1413771d53cb8e669969094ae77b7233aa7812c2ff28f29c6",
+          "src/test/test_y_orbit_centered_contracts.py": "d405102f999fcfc18b902c2017254158874ee6999f813d6ae32a9141dd10d1ae",
+          "src/test/test_y_orbit_condensed_adapter.py": "1d6084747e84f1731165217dbdf2016487c271fe39dc3788f7c1547e6af7ef89",
+          "src/test/test_y_orbit_live_boundary_contract.py": "fc202c99a21bf6759404f9f62b8a43301ed84f78b587bf33db9373b8ab5d6136",
+          "src/test/test_y_orbit_sparse_bridge_identity.py": "42d1bafd6291b9eafac8fe6fcf75a2cb5207afd3a0c0a095365b2b13a413e301",
+          "src/test/test_y_orbit_sparse_diagnostic_inventory.py": "5f624b8e9319ec0510c5a52ed05b699b3ac997b0b4f06fb9ed2dc8be94c2cf7c",
+          "src/test/test_y_orbit_sparse_reference.py": "df0e1b2769eb883dd137ea04b8ba66888165221613fd5b33f944555810946df1"
+        }
+      },
+      "resource": {
+        "classification": "COMPLETED",
+        "elapsed_seconds": 15.134469582997554,
+        "sampled_process_tree_rss_peak_bytes": 464019456,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "timebase_policy": "strict",
+        "workflow_clock_interval": {
+          "elapsed_seconds": {
+            "monotonic": 15.13447385100153,
+            "boottime": 15.134473253994656,
+            "utc": 15.134472826
+          },
+          "budget_seconds": 15.13447385100153,
+          "discrepancy_seconds": 1.0250015307633475e-06,
+          "tolerance_seconds": 5.0,
+          "policy": "strict",
+          "policy_version": 1,
+          "utc_minus_monotonic_seconds": -1.0250015307633475e-06,
+          "step": {
+            "elapsed_seconds": {
+              "monotonic": 0.0009719740046421066,
+              "boottime": 0.0009707879944471642,
+              "utc": 0.000970862
+            },
+            "budget_seconds": 0.0009719740046421066,
+            "discrepancy_seconds": 1.1860101949423552e-06,
+            "tolerance_seconds": 5.0,
+            "policy": "strict",
+            "policy_version": 1,
+            "utc_minus_monotonic_seconds": -1.1120046421066307e-06
+          },
+          "utc_positive_excess_seconds": 2.1190143331129008e-06
+        }
+      },
+      "status": "SPARSE_CONDENSED_FULL3D_PROBE_PASS",
+      "hashes": {
+        "probe_report.json": {
+          "sha256": "3db78e3a5aaaa550a96cefee634110b351e8c8526be29509d740f1951730d456",
+          "bytes": 845604
+        },
+        "provenance.json": {
+          "sha256": "d970928d8e6de1ab531190335d89165791b04620b31ddc8fe6a55643461a98db",
+          "bytes": 310564
+        },
+        "live_component_receipt.json": {
+          "sha256": "1c5905c434e983c1145765f785ca31148ec9dad89daefca52d4581f353076c4f",
+          "bytes": 1759166
+        },
+        "partial_components.json": {
+          "sha256": "9dc8895f48600a7f33f809d0483c5764c0cde32ccc9717ccd55874f4a10be5e9",
+          "bytes": 1295077
+        },
+        "independent_checker.json": {
+          "sha256": "dcc6b737285ac8f51649ac87c6344fbbcbe5c925f0110a4cd2d8c2ee53dd781a",
+          "bytes": 367454
+        },
+        "summary.json": {
+          "sha256": "2a19dc53ac32e3e8982f3559ad91a4600488ede39f7dc2e51b1060a01f312ee8",
+          "bytes": 169857
+        },
+        "resources.jsonl": {
+          "sha256": "c889643585d376e4645410efadc35827eba09b291fcfed300133bd5d6895a60f",
+          "bytes": 262679
+        },
+        "worker.log": {
+          "sha256": "9d8292cdde2b39aca686cb9261f3135403abcaa24ad79664389ca8ae930d257c",
+          "bytes": 335868
+        },
+        "checker_supervision/summary.json": {
+          "sha256": "650a48afff5d60a4770f2890048a343c69eb5abce758c60866c650eed1402e21",
+          "bytes": 169855
+        },
+        "checker_supervision/resources.jsonl": {
+          "sha256": "93496cce90f164b76aebc3f88e1e72b64a93eeaff25271384a03a55c165c3724",
+          "bytes": 49125
+        },
+        "checker_supervision/worker.log": {
+          "sha256": "40f3df6331ce4d194c1b70a3ec4233a8fe3eed75f6e30a48cd55167d534886a2",
+          "bytes": 367423
+        }
+      },
+      "command": [
+        "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/run_y_orbit_sparse_probe.py",
+        "--run",
+        "--worker",
+        "--degree",
+        "2",
+        "--expected-head",
+        "7c4410dbc55bce804d148493760d4de68acd8405",
+        "--run-directory",
+        "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_sparse_p2_phi5_centered_live_attempt1",
+        "--auxiliary-gauge",
+        "positive-h",
+        "--dtn-phase-gauge",
+        "boundary_plane",
+        "--dense-authority",
+        "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_p2_phi5_centered_dense_attempt3_live/pilot_report.json",
+        "--dense-authority-report-sha256",
+        "33415b7a1cde1001c4945cfa88b8517fc351478cf1b022b9ff9770b70dea6859",
+        "--live-component-oracle"
+      ],
+      "environment": {
+        "python": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/bin/python",
+        "prefix": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx",
+        "modules": {
+          "dolfinx": {
+            "version": "0.10.0",
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/dolfinx/__init__.py"
+          },
+          "dolfinx_mpc": {
+            "version": null,
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/dolfinx_mpc/__init__.py"
+          },
+          "petsc4py": {
+            "version": "3.25.6",
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/petsc4py/__init__.py"
+          },
+          "mpi4py": {
+            "version": "4.1.2",
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/mpi4py/__init__.py"
+          },
+          "basix": {
+            "version": "0.10.0",
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/basix/__init__.py"
+          },
+          "ufl": {
+            "version": "2025.2.1",
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/ufl/__init__.py"
+          },
+          "ffcx": {
+            "version": "0.10.0",
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/ffcx/__init__.py"
+          },
+          "scipy": {
+            "version": "1.18.1",
+            "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/lib/python3.12/site-packages/scipy/__init__.py"
+          }
+        },
+        "petsc_scalar_type": "complex128",
+        "petsc_int_type": "int32",
+        "petsc_version": [
+          3,
+          25,
+          6
+        ],
+        "mpi_library": "MPICH Version:      5.0.1\nMPICH Release date: Fri Apr 10 09:45:31 AM CDT 2026\nMPICH ABI:          18:1:6\nMPICH Device:       ch4:ucx ofi\nMPICH configure:    --prefix=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx --disable-doc --disable-dependency-tracking --enable-cxx --enable-fortran --enable-f08 --enable-mpi-abi --with-wrapper-dl-type=none --disable-static --with-device=ch4:ucx,ofi --with-ucx=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx --with-libfabric=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx --with-hwloc=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx --with-yaksa=embedded --with-pm=hydra:gforker\nMPICH CC:           x86_64-conda-linux-gnu-cc -I/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -fno-merge-constants -isystem /workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -fdebug-prefix-map=/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/work=/usr/local/src/conda/mpich-5.0.1 -fdebug-prefix-map=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx=/usr/local/src/conda-prefix   -O2\nMPICH CXX:          x86_64-conda-linux-gnu-c++ -I/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -fvisibility-inlines-hidden -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -fno-merge-constants -isystem /workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -fdebug-prefix-map=/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/work=/usr/local/src/conda/mpich-5.0.1 -fdebug-prefix-map=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx=/usr/local/src/conda-prefix -O2\nMPICH F77:          x86_64-conda-linux-gnu-gfortran -I/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -fno-merge-constants -isystem /workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -I/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/build_env/include -fdebug-prefix-map=/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/work=/usr/local/src/conda/mpich-5.0.1 -fdebug-prefix-map=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx=/usr/local/src/conda-prefix -O2\nMPICH FC:           x86_64-conda-linux-gnu-gfortran -I/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -fno-merge-constants -isystem /workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include -I/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/build_env/include -fdebug-prefix-map=/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/work=/usr/local/src/conda/mpich-5.0.1 -fdebug-prefix-map=/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx=/usr/local/src/conda-prefix -O2\nMPICH features:     threadcomm\n",
+        "qualification_manifest": "/workspace/scratch/9c465670b46b/task40extra_cloud/complex_env_setup/complex_abi.json",
+        "qualification_manifest_sha256": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+        "qualification_scope": "separate_serial_cloud_ABI_not_historical_WSL_equivalence"
+      },
+      "input_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e",
+      "live_component": {
+        "status": "PASS_COMPONENT_ONLY",
+        "assembly_context_sha256": "27fe6c16eb7c95fb9972e80d013735dbc5a16823067a621640462a66adf7de7e",
+        "assembly_mode_manifest_sha256": "e1aede0a84c908bca68f62a39ccc23ea994f9e4d1a2494fbe54700b8b6cf084b",
+        "physical_generator_manifest_sha256": "4ace13f47bc6edf8a08e1a1df24309f6326294b6bf9d5ca4ada07208bd50c951",
+        "qualification_source_sha256": "5be36476ec40c0523097b2b24303cccaf02b3db22d1062f0b1b18ba342ff3bf0",
+        "carrier_digest_before": "1fba9886e83adae75f1f0380f035f77d3ee15ed92ce8f57eae29b544869639d0",
+        "carrier_digest_after": "1fba9886e83adae75f1f0380f035f77d3ee15ed92ce8f57eae29b544869639d0",
+        "mode_count": 532,
+        "degree": 2,
+        "azimuth_deg": 5.0,
+        "quadrature_degree": 19,
+        "completed_gates": [
+          "loaded_kernel_provenance_and_constant_restoration",
+          "compiled_primary_literal_same_gauss",
+          "all532_raw_coefficient_H_equivalence",
+          "every_mode_full_DOF_rank_one_bound",
+          "five_state_actual_action_recovery_output_components",
+          "physical_FE_RHS_literal_oracle",
+          "incident_and_nonzero_port_RHS_transforms",
+          "unchanged_live_carrier_digest"
+        ],
+        "physical_FE_RHS_literal_raw_defect": 4.221407927526637e-15,
+        "raw_vs_centered_action_defect": 1.1872958750469111e-15,
+        "new_stored_vs_raw_action_defect": 3.2698234834320744e-15
+      },
+      "checker": {
+        "schema": "task40extra.y-orbit-sparse-checker.v1",
+        "evidence_valid": true,
+        "gate_pass": true,
+        "check_count": 164,
+        "all_checks_pass": true,
+        "source": {
+          "head": "7c4410dbc55bce804d148493760d4de68acd8405",
+          "branch": "task40extra_dot_parallel_cloud",
+          "dirty": "",
+          "source_file_count": 1247,
+          "relevant_source_sha256": {
+            "benchmarks/cases/task40extra_dot_parallel_cloud/y_orbit_reference/README.md": "dd53af89a0375681df48a5a7a1cc0082f08130e970bb392d0520d4e79b2fb626",
+            "benchmarks/cases/task40extra_dot_parallel_cloud/y_orbit_reference/plan.json": "357a49f1176e2c601435bd50b680e0f6063eb950e66c67a8a88a9445d698ac5a",
+            "benchmarks/cases/task40extra_dot_parallel_cloud/y_orbit_reference/plan_phi5.json": "e85660735d4632d392a849f9f767fc34ab321e19b32fde0397637cd10c354b7d",
+            "benchmarks/cases/y_orbit_sparse_reference/README.md": "185f588c8575e3b11f8ddc3765a5d97d230b480ce6747e8dca15f402a2b1eb73",
+            "benchmarks/cases/y_orbit_sparse_reference/centered_p2_qualification_plan_v1_zh.md": "8bc0e634010be25d9129f7ef75cdd54daeeb406b4a7c3efac980ba8d0f2ff558",
+            "benchmarks/cases/y_orbit_sparse_reference/condensation_adapter_plan.md": "b9998bc90bfa6d5c5c19239c7c1093690c9482ac31a398118e21d82ac7226e6e",
+            "benchmarks/cases/y_orbit_sparse_reference/live_oracle_pipeline_plan_v1_zh.md": "0fe18ef607dbb6818f0f094d621f73c9abbf37819a6fdbdd5a8681b6fea0e3e6",
+            "benchmarks/cases/y_orbit_sparse_reference/positive_H_source_staging_manifest.json": "3a9f479023697319f75b81accfee00cd050a442455008099b186193e3d628ab4",
+            "benchmarks/cases/y_orbit_sparse_reference/reuse_manifest.json": "6bf5dce3da99ad6e93ce7c206c303425a9fd9cfdbeee94353b97e001e1b7e147",
+            "benchmarks/cases/y_orbit_sparse_reference/same_discrete_congruence_plan.md": "802a96506d80c61a19c6d9b3b3363b4dc891f94a7226d6ae996c3799788dd22b",
+            "benchmarks/cases/y_orbit_sparse_reference/staging_source_review_manifest.json": "09b7289cdb48091586a39b50c7dd413817c943f1894a000a0ab17f0912f65a71",
+            "benchmarks/check_y_orbit_reference_probe.py": "5839d260fb05a9640724d5ce1094f6ec44db14d3f5f0f34d46dc1f5207a0bd39",
+            "benchmarks/check_y_orbit_saved_physical_witness.py": "6d0cadf27d4f4080ce71e39a1c36660a26a1d5a07070faa94b35a07ace5f4ada",
+            "benchmarks/check_y_orbit_sparse_probe.py": "b148519aa0b176379cb8bce74d358a6e36137b0b322881d5e0cad48459b3dfc5",
+            "benchmarks/run_y_orbit_reference_probe.py": "43b4ca435073dd1ad91e4bd78a47602a0fdfe6e9af914b55c6b14572541e19a9",
+            "benchmarks/run_y_orbit_sparse_probe.py": "80a22550ef9532d42d63e997dc8076af0c886915454f36813d2fce679724a480",
+            "src/solvers/dtn_boundary_phase_gauge.py": "a009e13b83e1a484452deef1b7f35396b38e84c2d9f9fcf98207f7f2d629a343",
+            "src/solvers/dtn_port_3d.py": "fc1992068c8c3fdab770e8ff601b0fdd4a3506384be59bba418daa80e08ec780",
+            "src/solvers/fullspace_dtn_action.py": "777d7ea10d598a7f5abba652b0de896f7040782fe7e421522c8b0e41d3f73c55",
+            "src/solvers/task40extra_y_orbit_reference.py": "6a6baecf6a0f9aee76f40aac1dc67f9b68753e89e7bb09cacafc230d272d6749",
+            "src/solvers/y_orbit_centered_evidence.py": "f15d619e30b16e62fc1ede8621b004b54557719d230d66b123b93e67b74eb3a6",
+            "src/solvers/y_orbit_centered_probe.py": "2e694e76864a8f2572d60c7a545026ffe596347444a79e390b188db21b6ea782",
+            "src/solvers/y_orbit_condensed_adapter.py": "156a30713eec6618a28db3baacca4fcd1a150f479fefd9b69e892f98c71c9a44",
+            "src/solvers/y_orbit_live_boundary_contract.py": "b1576260105ec2dacfbd6cb5902c94ea0c7a1422d7038062dca9be3c6d847af6",
+            "src/solvers/y_orbit_sparse_probe.py": "cf7fe858cff6f2e04a32deda9ca09f12f7191cc0018df6744802e45417bf7898",
+            "src/solvers/y_orbit_sparse_reference.py": "863884e978b21facc93e16b4ed19befeee59da23ec187e12b552a3e5193ca86f",
+            "src/test/test_dtn_boundary_phase_gauge.py": "52141e14c19865277d6371e26318b9dab3fbfff984912eae62181dd6a335f1f3",
+            "src/test/test_task40extra_y_orbit_reference.py": "e8822326e48b75c1413771d53cb8e669969094ae77b7233aa7812c2ff28f29c6",
+            "src/test/test_y_orbit_centered_contracts.py": "d405102f999fcfc18b902c2017254158874ee6999f813d6ae32a9141dd10d1ae",
+            "src/test/test_y_orbit_condensed_adapter.py": "1d6084747e84f1731165217dbdf2016487c271fe39dc3788f7c1547e6af7ef89",
+            "src/test/test_y_orbit_live_boundary_contract.py": "fc202c99a21bf6759404f9f62b8a43301ed84f78b587bf33db9373b8ab5d6136",
+            "src/test/test_y_orbit_sparse_bridge_identity.py": "42d1bafd6291b9eafac8fe6fcf75a2cb5207afd3a0c0a095365b2b13a413e301",
+            "src/test/test_y_orbit_sparse_diagnostic_inventory.py": "5f624b8e9319ec0510c5a52ed05b699b3ac997b0b4f06fb9ed2dc8be94c2cf7c",
+            "src/test/test_y_orbit_sparse_reference.py": "df0e1b2769eb883dd137ea04b8ba66888165221613fd5b33f944555810946df1"
+          }
+        },
+        "mode_output_comparison_count": 40,
+        "mode_output_all_pass": true,
+        "mode_output_worst_local_error": 1.5850302497969709e-12,
+        "worker_dependency_binding": {
+          "worker_head": "7c4410dbc55bce804d148493760d4de68acd8405",
+          "checker_head": "7c4410dbc55bce804d148493760d4de68acd8405",
+          "verified_unchanged_dependency_count": 1245,
+          "reviewed_changed_paths": [],
+          "exception_scope": "only checker serialization/binding code and its own regression test",
+          "all_other_source_config_input_hashes_match": true,
+          "worker_and_checker_ABI_manifest_sha256": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96"
+        },
+        "resource": {
+          "classification": "COMPLETED",
+          "elapsed_seconds": 3.286110066001129,
+          "sampled_process_tree_rss_peak_bytes": 327389184,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "descendants_cleared": true,
+          "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+          "timebase_policy": "strict",
+          "workflow_clock_interval": {
+            "elapsed_seconds": {
+              "monotonic": 3.2861142859983374,
+              "boottime": 3.286113481997745,
+              "utc": 3.286113052
+            },
+            "budget_seconds": 3.2861142859983374,
+            "discrepancy_seconds": 1.2339983372910979e-06,
+            "tolerance_seconds": 5.0,
+            "policy": "strict",
+            "policy_version": 1,
+            "utc_minus_monotonic_seconds": -1.2339983372910979e-06,
+            "step": {
+              "elapsed_seconds": {
+                "monotonic": 0.0007194549980340526,
+                "boottime": 0.0007183339985203929,
+                "utc": 0.000718339
+              },
+              "budget_seconds": 0.0007194549980340526,
+              "discrepancy_seconds": 1.1209995136596262e-06,
+              "tolerance_seconds": 5.0,
+              "policy": "strict",
+              "policy_version": 1,
+              "utc_minus_monotonic_seconds": -1.115998034052529e-06
+            },
+            "utc_positive_excess_seconds": 2.9999910244882244e-07
+          }
+        }
+      }
+    }
+  },
+  "measured": {
+    "source_head": "7c4410dbc55bce804d148493760d4de68acd8405",
+    "regular": {
+      "generic": {
+        "iterations": null,
+        "full_original_true_residual": 2.396787471792382e-13,
+        "augmented_FE_true_residual": 1.0056501166428502e-13,
+        "augmented_port_closure_relative": 1.1755442110459866e-13,
+        "saved_dense_direct_difference": 2.420113205436311e-13,
+        "nonzero_q_primal_relative": null
+      },
+      "interior_only": {
+        "iterations": null,
+        "full_original_true_residual": 1.5993167484769066e-13,
+        "augmented_FE_true_residual": 2.057613764339563e-14,
+        "augmented_port_closure_relative": 6.105143846816461e-14,
+        "saved_dense_direct_difference": 7.093413631655372e-13,
+        "nonzero_q_primal_relative": null
+      },
+      "physical": {
+        "iterations": null,
+        "full_original_true_residual": 1.2711032642078306e-13,
+        "augmented_FE_true_residual": 2.0657755211905704e-14,
+        "augmented_port_closure_relative": 6.777837129898237e-15,
+        "saved_dense_direct_difference": 4.2765878896247e-13,
+        "nonzero_q_primal_relative": null
+      },
+      "notch_supported": {
+        "iterations": null,
+        "full_original_true_residual": 3.176517754891211e-13,
+        "augmented_FE_true_residual": 6.282891738617747e-14,
+        "augmented_port_closure_relative": 1.0054862041288045e-13,
+        "saved_dense_direct_difference": 4.513442719494006e-13,
+        "nonzero_q_primal_relative": null
+      }
+    },
+    "notch": {
+      "generic": {
+        "iterations": 4,
+        "full_original_true_residual": 1.319195426790967e-13,
+        "augmented_FE_true_residual": 1.3191962356150928e-13,
+        "augmented_port_closure_relative": 7.53642290155263e-17,
+        "saved_dense_direct_difference": 5.807397371430823e-13,
+        "nonzero_q_primal_relative": 0.9944720455736519
+      },
+      "interior_only": {
+        "iterations": 4,
+        "full_original_true_residual": 5.922759142834876e-14,
+        "augmented_FE_true_residual": 5.922759670841015e-14,
+        "augmented_port_closure_relative": 5.952583775477017e-17,
+        "saved_dense_direct_difference": 7.964983849413295e-13,
+        "nonzero_q_primal_relative": 0.9871636565937466
+      },
+      "physical": {
+        "iterations": 3,
+        "full_original_true_residual": 7.487405057642386e-12,
+        "augmented_FE_true_residual": 7.487405055223947e-12,
+        "augmented_port_closure_relative": 1.285318839523768e-17,
+        "saved_dense_direct_difference": 5.873278499767127e-11,
+        "nonzero_q_primal_relative": 6.210044248782692e-05
+      },
+      "notch_supported": {
+        "iterations": 4,
+        "full_original_true_residual": 3.1419800327801415e-13,
+        "augmented_FE_true_residual": 3.1419800327801415e-13,
+        "augmented_port_closure_relative": 8.662488574530563e-17,
+        "saved_dense_direct_difference": 3.852446583553163e-13,
+        "nonzero_q_primal_relative": 0.9894092323883082
+      }
+    },
+    "all_columns_bridge": {
+      "all_original_columns_compared": 2048,
+      "matrix_relative_difference": 0.0,
+      "limit": 1e-11,
+      "passed": true,
+      "dense_new_global_matrix_created": false,
+      "maximum_panel_columns": 32
+    },
+    "full_form_covariance": {
+      "full_original_covariance_action_relative_max": 4.367073144282161e-16,
+      "probe_values": [
+        4.1729470047696755e-16,
+        4.367073144282161e-16
+      ],
+      "probe_count": 2,
+      "authority": "full original FE/DtN action, sampled vectors, not a full-matrix norm"
+    },
+    "RHS_covariance": {
+      "complete_RHS_reduction_covariance_relative_max": 1.3232810284005067e-16,
+      "probe_values": [
+        1.3232810284005067e-16,
+        1.2945145509445416e-16
+      ],
+      "all_original_interiors_in_probes": true,
+      "not_a_trace_only_symmetry_test": true
+    },
+    "sampled_right_PC_defect": {
+      "generic": 0.0009038397907635662,
+      "interior_only": 0.00019305657011291542,
+      "physical": 3.4652779400659415e-05,
+      "notch_supported": 0.0007512917802497285
+    },
+    "modal_offblock": 4.12266250542813e-16,
+    "factor_blocks": [
+      {
+        "q": 0,
+        "shape": [
+          468,
+          468
+        ],
+        "nnz": 27594,
+        "block_true_residual_relative_max": 2.704998860417131e-14,
+        "repeated_solve_relative": 0.0,
+        "linearity_relative": 1.1821811196552999e-14
+      },
+      {
+        "q": 1,
+        "shape": [
+          544,
+          544
+        ],
+        "nnz": 32442,
+        "block_true_residual_relative_max": 3.1850328051753695e-14,
+        "repeated_solve_relative": 0.0,
+        "linearity_relative": 2.4132470906796097e-14
+      },
+      {
+        "q": 2,
+        "shape": [
+          544,
+          544
+        ],
+        "nnz": 32264,
+        "block_true_residual_relative_max": 2.5555565951077138e-14,
+        "repeated_solve_relative": 0.0,
+        "linearity_relative": 1.2815484403667933e-14
+      },
+      {
+        "q": 3,
+        "shape": [
+          544,
+          544
+        ],
+        "nnz": 32534,
+        "block_true_residual_relative_max": 6.28855203379349e-14,
+        "repeated_solve_relative": 0.0,
+        "linearity_relative": 8.547737536685064e-15
+      }
+    ],
+    "same_numeric_carrier_digest": true,
+    "raw_context_hashes": {
+      "dense": "27fe6c16eb7c95fb9972e80d013735dbc5a16823067a621640462a66adf7de7e",
+      "sparse": "27fe6c16eb7c95fb9972e80d013735dbc5a16823067a621640462a66adf7de7e"
+    },
+    "same_shared_discrete_contract": true,
+    "hashes": {
+      "probe_report.json": "3db78e3a5aaaa550a96cefee634110b351e8c8526be29509d740f1951730d456",
+      "provenance.json": "d970928d8e6de1ab531190335d89165791b04620b31ddc8fe6a55643461a98db",
+      "live_component_receipt.json": "1c5905c434e983c1145765f785ca31148ec9dad89daefca52d4581f353076c4f",
+      "independent_checker.json": "dcc6b737285ac8f51649ac87c6344fbbcbe5c925f0110a4cd2d8c2ee53dd781a",
+      "summary.json": "2a19dc53ac32e3e8982f3559ad91a4600488ede39f7dc2e51b1060a01f312ee8",
+      "checker_supervision/summary.json": "650a48afff5d60a4770f2890048a343c69eb5abce758c60866c650eed1402e21"
+    },
+    "mode_output_comparisons": {
+      "count": 40,
+      "all_pass": true,
+      "worst_local_operation_error": 1.5850302497969709e-12
+    }
+  },
+  "measured_source_sha256": "cccd40bad630e1f118daba554cc24214846b566e6cbf87388284be7d57b83212",
+  "context_causality": {
+    "creation_order_is_candidate_only": true,
+    "historical_constant_counts_not_saved": true,
+    "matching_current_raw_contexts_do_not_replace_separate_live_qualification": true
+  },
+  "independent_review": {
+    "record_basis": "post-verification record of earlier completed read-only verification; no new scan or numerical rerun",
+    "source_files": 1247,
+    "artifact_hash_entries": 712,
+    "not_all_entries_are_arrays": true,
+    "files": {
+      "independent_verification.json": "a16924aa12ed760e793af55c9ccf72c33b0b155f596028eec14c20465eb9d7ba",
+      "independent_findings_zh.md": "454048cce53d53b53dce339527456faaa5a8845f00aeab817347e421da86b3b4"
+    }
+  }
+}

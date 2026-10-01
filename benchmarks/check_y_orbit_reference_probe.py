@@ -28,10 +28,13 @@ def check_centered(directory, *, source, environment):
             or source != report.get("source") or source != provenance["source"]
             or environment != report.get("environment") or environment != provenance["environment"]
             or summary.get("classification") != "COMPLETED"
-            or any(report["identity"].get(k) != v for k,v in COMPONENT_IDENTITY.items())
+            or (not report.get("live_component_oracle",False) and any(report["identity"].get(k) != v for k,v in COMPONENT_IDENTITY.items()))
             or report.get("source_names") != list(SOURCES)
             or set(report["regular_sources"]) != set(SOURCES) or set(report["notched_sources"]) != set(SOURCES)):
         raise ValueError("fresh centered dense authority/source/config/inventory incomplete")
+    if report.get("live_component_oracle",False):
+        from src.solvers.y_orbit_live_boundary_contract import load_bound_live_receipt
+        load_bound_live_receipt(directory,report["identity"],worker_source=source)
     descriptors = report["artifacts"]
     def load(name):
         d = descriptors[name]
@@ -139,7 +142,7 @@ def check_centered(directory, *, source, environment):
        "report_sha256":hashlib.sha256((directory/"pilot_report.json").read_bytes()).hexdigest(),
        "provenance_sha256":hashlib.sha256((directory/"provenance.json").read_bytes()).hexdigest(),
        "artifact_manifest_sha256":digest_json(descriptors),"source":source,"environment":environment,
-       "degree":2,"identity":report["identity"],"checks":checks,"per_mode_output_checks":mode_checks,
+       "degree":2,"identity":report["identity"],"live_component_oracle":report.get("live_component_oracle",False),"checks":checks,"per_mode_output_checks":mode_checks,
        "generic_all_q_excitation":all_q,"all_480_nonzero_interior_load_entries":all_interior,
        "physical_notch_nonzero_q_relative":nonzero_q,"optional_global_output_statuses":optional_global,
        "global_conversion_representability_is_not_assumed":True,

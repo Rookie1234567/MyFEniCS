@@ -50,7 +50,7 @@ def _array_signature(value):
     return {"shape": tuple(array.shape), "dtype": str(array.dtype), "sha256": digest.hexdigest()}
 
 
-def compiled_surface_quadrature_identity(ufl_form, compiled_form):
+def compiled_surface_quadrature_identity(ufl_form, compiled_form, *, semantic_constants=None):
     """Verify analyzed FFCx rules/nodes/weights against actual compiled C tables.
 
     This is a bounded qualification/provenance action, not a replacement
@@ -100,9 +100,104 @@ def compiled_surface_quadrature_identity(ufl_form, compiled_form):
                                 "compiled_weight_symbol": symbol, "compiled_weight_tables_verified": len(tables)})
     if not records:
         raise ValueError("no compiled exterior-facet Gauss rule was verified")
-    return deep_frozen_identity({"rules": records, "compiled_C_sha256": hashlib.sha256(code.encode()).hexdigest(),
-                                 "verification": "FFCx analyzed nodes/rule plus actual generated C weight table and node-id symbol"})
+    result = {"rules": records, "compiled_C_sha256": hashlib.sha256(code.encode()).hexdigest(),
+              "verification": "FFCx analyzed nodes/rule plus actual generated C weight table and node-id symbol"}
+    if semantic_constants is not None:
+        result["loaded_kernel"] = loaded_surface_kernel_identity(
+            ufl_form, compiled_form, code, semantic_constants)
+    return deep_frozen_identity(result)
 
+
+
+def loaded_surface_kernel_identity(ufl_form, compiled_form, code, semantic_constants):
+    """Record the actual loaded kernel and verify its semantic packed slots.
+
+    The probe packs three distinct representable Constant values without any
+    numerical form assembly. Every original value is restored in finally,
+    with an exact restored-value/packed-buffer check. No UFL counter reset or
+    source/hash normalization is performed.
+    """
+    from dolfinx import fem
+    if tuple(semantic_constants) != ("alpha", "gamma", "kz"):
+        raise ValueError("surface kernel requires the complete alpha/gamma/kz map")
+    constants = tuple(ufl_form.constants())
+    ufcx = compiled_form.ufcx_form
+    module = compiled_form.module
+    if len(constants) != 3 or int(ufcx.num_constants) != 3:
+        raise ValueError("actual surface kernel must have exactly three scalar Constants")
+    roles = []
+    for role, constant in semantic_constants.items():
+        slots = [index for index, value in enumerate(constants) if value is constant]
+        if len(slots) != 1 or tuple(constant.ufl_shape) != ():
+            raise ValueError("semantic Constant is missing, duplicated or nonscalar")
+        roles.append({"role": role, "ufl_count": int(constant.count()), "form_slot": slots[0]})
+    before = fem.pack_constants(compiled_form).copy()
+    saved = [np.asarray(value.value).copy() for value in constants]
+    sentinels = {"alpha": 11+13j, "gamma": 17+19j, "kz": 23+29j}
+    packed = None
+    try:
+        for role, constant in semantic_constants.items():
+            constant.value[...] = sentinels[role]
+        packed = np.asarray(fem.pack_constants(compiled_form)).copy()
+        if packed.shape != (3,) or not np.isfinite(packed).all():
+            raise ValueError("actual packed Constant buffer is incomplete/nonfinite")
+        for item in roles:
+            value = sentinels[item["role"]]
+            slots = np.flatnonzero(packed == value)
+            if len(slots) != 1 or int(slots[0]) != item["form_slot"]:
+                raise ValueError("runtime Constant pack map differs from semantic form map")
+            item["packed_slot"] = int(slots[0])
+            item["sentinel"] = value
+    finally:
+        for constant, original in zip(constants, saved, strict=True):
+            constant.value[...] = original
+        if (not all(_array_signature(np.asarray(value.value)) == _array_signature(original)
+                    for value, original in zip(constants, saved, strict=True))
+                or _array_signature(fem.pack_constants(compiled_form)) != _array_signature(before)):
+            raise ValueError("surface kernel Constant restoration was not exact")
+    module_path = Path(module.__file__).resolve()
+    if not module_path.is_file():
+        raise ValueError("actual loaded kernel binary is unavailable")
+    c_path = module_path.parent/(module.__name__+".c")
+    signature = module.ffi.string(ufcx.signature).decode()
+    if not c_path.is_file():
+        raise ValueError("actual module-bound C source is missing")
+    module_C = c_path.read_text()
+    if signature not in module_C:
+        raise ValueError("actual module-bound C source lacks the loaded form signature")
+    def digest_file(path):
+        digest = hashlib.sha256()
+        with path.open("rb") as stream:
+            for chunk in iter(lambda: stream.read(1 << 20), b""):
+                digest.update(chunk)
+        return digest.hexdigest()
+    offsets = [int(ufcx.form_integral_offsets[index]) for index in range(6)]
+    integral_names = re.findall(r"\bufcx_integral\s+(\w+)\s*=\s*\{", module_C)
+    if len(integral_names) != offsets[-1]:
+        raise ValueError("module-bound integral symbol inventory is incomplete")
+    integrals = []
+    for index in range(offsets[-1]):
+        integral = ufcx.form_integrals[index]
+        integrals.append({"index": index, "tag": int(ufcx.form_integral_ids[index]),
+                          "coordinate_element_hash": int(integral.coordinate_element_hash),
+                          "needs_facet_permutations": bool(integral.needs_facet_permutations)})
+    return deep_frozen_identity({
+        "schema": "task40extra.loaded-surface-kernel.v1",
+        "module_name": module.__name__, "module_path": str(module_path),
+        "binary_sha256": digest_file(module_path), "module_bound_C_path": str(c_path),
+        "module_bound_C_sha256": digest_file(c_path),
+        "UFL_form_signature": ufl_form.signature(),
+        "UFCx_form_signature": signature,
+        "FFCx_form_code_sha256": hashlib.sha256(code.encode()).hexdigest(),
+        "num_constants": int(ufcx.num_constants), "constant_roles": roles,
+        "constant_name_map": [module.ffi.string(ufcx.constant_name_map[index]).decode()
+                              for index in range(3)],
+        "constant_ranks": [int(ufcx.constant_ranks[index]) for index in range(3)],
+        "integral_offsets": offsets, "integrals": integrals, "module_bound_integral_symbols": integral_names,
+        "packed_before_signature": _array_signature(before),
+        "packed_sentinel_signature": _array_signature(packed),
+        "restoration_exact": True, "numerical_assembly_during_probe": False,
+    })
 
 def build_gauge_assembly_context(space, mesh_data, mpc, cfg, qdegree, surface_assemblers):
     """Bind actual discrete inputs/source; initially MPI1 only, no big tables.
@@ -143,6 +238,7 @@ def build_gauge_assembly_context(space, mesh_data, mpc, cfg, qdegree, surface_as
     source_paths = [Path(__file__), Path(__file__).with_name("dtn_port_3d.py"),
                     Path(__file__).with_name("fullspace_dtn_action.py"),
                     Path(__file__).with_name("fullspace_same_mesh_hcurl_pmg_physical.py"),
+                    Path(__file__).with_name("dtn_boundary_plane_qualification.py"),
                     Path(__file__).parent.parent/"common"/"modes_3d.py",
                     Path(__file__).parent.parent/"common"/"config_3d.py"]
     payload = {

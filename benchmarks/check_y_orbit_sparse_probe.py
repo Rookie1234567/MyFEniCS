@@ -88,12 +88,18 @@ def check(directory, *, checker_source, checker_environment):
         from src.solvers.y_orbit_centered_evidence import COMPONENT_IDENTITY, SOURCES
         receipt = provenance["saved_dense_p2_authority"]
         centered_authority = SavedCenteredDenseP2Authority(ROOT/receipt["report_path"],receipt["report_sha256"],
-                                                          report["source"],report["environment"])
+                                                          report["source"],report["environment"],
+                                                          live_component_oracle=report.get("live_component_oracle",False))
         if (report["degree"] != 2 or report["auxiliary_gauge"] != "positive-h"
                 or set(report["regular_sources"]) != set(SOURCES) or set(report["notched_sources"]) != set(SOURCES)
-                or report["centered_identity"] != centered_authority.report["identity"]
-                or any(report["centered_identity"].get(k) != v for k,v in COMPONENT_IDENTITY.items())):
+                or (not report.get("live_component_oracle",False) and (report["centered_identity"] != centered_authority.report["identity"]
+                    or any(report["centered_identity"].get(k) != v for k,v in COMPONENT_IDENTITY.items())))) :
             raise ValueError("centered sparse/authority/source/load representation identity differs")
+        if report.get("live_component_oracle",False):
+            from src.solvers.y_orbit_live_boundary_contract import load_bound_live_receipt
+            load_bound_live_receipt(directory,report["centered_identity"],worker_source=report["source"])
+            if report["centered_identity"]["shared_discrete_contract"] != centered_authority.report["identity"]["shared_discrete_contract"]:
+                raise ValueError("separately qualified dense/sparse fixed contract differs")
     checks = []
     descriptors = report["artifacts"]
     report_sha = hashlib.sha256((directory / "probe_report.json").read_bytes()).hexdigest()
@@ -349,6 +355,7 @@ def check(directory, *, checker_source, checker_environment):
             "centered_per_mode_output_checks": centered_mode_checks,
             "optional_global_output_statuses": optional_global_outputs,
             "centered_fresh_dense_authority_verified": centered_authority is not None,
+            "live_component_oracle":report.get("live_component_oracle",False),
             "original_full_slave_zeros": slave_zero, "nontrivial_real_ky_wrap": nonzero_wrap,
             "original_FFCx_action_is_saved_live_authority": True,
             "full_p4_direct_control": "not_run_not_admitted" if report["degree"] == 4 else "saved_p2",

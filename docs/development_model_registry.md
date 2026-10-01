@@ -1,3 +1,18 @@
+# dot Task40extra V8：centered full3D p2完整原方程资格通过
+
+2026-10-01，source `7c4410dbc55bce804d148493760d4de68acd8405` 在80真实三维cells、p2、phi5、manual532非空ports上完成新centered dense authority及sparse全q参考逆。全部2048原FE列差0，含480个内部自由度的四类载荷完整恢复通过；同mesh两cell真实三维缺口的原残差最大7.4874051e−12，相对新direct差最大5.8732785e−11，迭代4/4/3/4。
+
+| 新模型/状态 | 核验与资源 | 边界 |
+|---|---|---|
+| centered dense p2 / PASS bounded architecture | checker129/129；worker633204736B/19.1875s，checker460742656B/3.5745s | 直接求解完整原FE对照；全部4q/480interiors/532ports |
+| centered sparse p2 / PASS bounded architecture | checker164/164；worker464019456B/15.1345s，checker327389184B/3.2861s | 精确单元消元及全q因子，恢复全部原三维未知量 |
+| dense attempts1/2 / FAILED | 严格raw-C/context身份门停止，未进入因子；证据保留 | 创建顺序仅候选解释；每次新live carrier独立资格 |
+| p4/p6及目标大运行 / not_run | 当前仅小规模弱对比证据 | 无官方R/T/A、连续/截断精度、跨ABI/MPI/重启或2TB/48h资格 |
+
+全部worker/checker独立整树监督、swap0/后代清场；RSS是同时采样值，warm cache，不作为目标峰值或时间外推。新算子与旧clipped不同，旧V5/V6/V7各自历史分类不改。[Response V8](task40extra_dot_parallel_cloud/response_v8.md)、[compact](task40extra_dot_parallel_cloud/outcomes/records/centered_p2_v8/centered_p2_v8_compact.json)、[独立复核事后记录](task40extra_dot_parallel_cloud/outcomes/records/centered_p2_v8/independent_verification.json)。
+
+---
+
 # dot Task40extra V7：centered边界组件与候选身份分开
 
 source a0546264ae1bcc51e2aeedcac33585f4ffc04025 的sameGauss/fullMPC/532mode组件通过，恢复原空C172、空D174，新空均0。raw gauge差约4.13e-14；五状态旧clipped→新stored作用变化0.03082258966421717，所以V6旧算子不能作新centered权威。三次失败及窄reactive零功率分类证书保留；实际532测试树RSS327430144B、10.3655s、swap0，非目标资源承诺。
