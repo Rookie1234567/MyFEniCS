@@ -23,8 +23,15 @@ from src.geometry.task40_nonseparable_plan import (
     TASK40_F1_REFERENCE_METRIC_RUN_ID,
     TASK40_F2_G0_M1_RUN_ID,
     TASK40_F3_G0_M2_RUN_ID,
+    TASK40_F5_G1_M2_RUN_ID,
+    TASK40_E1_RUN_ID,
+    TASK40_E2_RUN_ID,
+    TASK40_REVIEW_V2_GROWTH_RUN_IDS,
+    TASK40_AUTO_PROPAGATING_ENVELOPE_BY_MESH,
     TASK40_GEOMETRY_IDENTITY,
+    TASK40_GEOMETRY_IDENTITY_BY_MESH,
     TASK40_PROFILE,
+    is_task40_geometry_identity,
     task40_mesh_plan,
     validate_task40_input,
 )
@@ -40,6 +47,10 @@ from src.solvers.dtn_port_3d import _stage4_preserve_exact_geometry
 
 ROOT = Path(__file__).resolve().parents[2]
 INPUT_ROOT = ROOT / "input/task40extra_0p7nm_engineering"
+ELECTRICAL_AUTO_MODE_MANIFEST = (
+    ROOT / "docs/task40extra_0p7nm_engineering/outcomes/records/"
+    "electrical_size_auto_mode_envelopes_v1.json"
+)
 G0 = INPUT_ROOT / "nonseparable_g0_p6_q4.dat"
 G1 = INPUT_ROOT / "nonseparable_g1_p6_q4.dat"
 G0_REVIEW_V1 = INPUT_ROOT / "nonseparable_g0_p6_q4_review_v1.dat"
@@ -47,6 +58,9 @@ G1_REVIEW_V1 = INPUT_ROOT / "nonseparable_g1_p6_q4_review_v1.dat"
 F1_REFERENCE_METRIC = INPUT_ROOT / "nonseparable_g1_p6_q4_reference_metric_f1.dat"
 F2_G0_M1_MANUAL = INPUT_ROOT / "nonseparable_g0_p6_q4_manual_m1_f2.dat"
 F3_G0_M2_MANUAL = INPUT_ROOT / "nonseparable_g0_p6_q4_manual_m2_f3.dat"
+F5_G1_M2_MANUAL = INPUT_ROOT / "nonseparable_g1_p6_q4_manual_m2_f5.dat"
+E1_M2 = INPUT_ROOT / "nonseparable_e1_p6_q4_manual_m2_growth.dat"
+E2_M2 = INPUT_ROOT / "nonseparable_e2_p6_q4_manual_m2_growth.dat"
 G0_DIRECT = INPUT_ROOT / "nonseparable_g0_p6_direct_reference.dat"
 
 
@@ -86,9 +100,131 @@ def test_direct_reference_selects_exact_mesh_geometry_without_changing_old_profi
     cfg = simulation_config_3d_from_normalized(specification.as_jsonable())
 
     assert cfg.geometry_identity == TASK40_GEOMETRY_IDENTITY
+    assert is_task40_geometry_identity(TASK40_GEOMETRY_IDENTITY)
+    assert not is_task40_geometry_identity(None)
     assert cfg.stage4_full3d_assembly_backend == ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
     assert _stage4_preserve_exact_geometry(cfg) is True
     assert _stage4_preserve_exact_geometry(replace(cfg, geometry_identity=None)) is False
+    assert all(
+        _stage4_preserve_exact_geometry(
+            replace(cfg, geometry_identity=TASK40_GEOMETRY_IDENTITY_BY_MESH[mesh_id])
+        )
+        for mesh_id in ("E1", "E2")
+    )
+    task40_gates = profile_facts(TASK40_PROFILE)["gates"]
+    assert task40_gates["task40_geometry_identity_by_mesh"] == {
+        mesh_id: TASK40_GEOMETRY_IDENTITY_BY_MESH[mesh_id]
+        for mesh_id in ("G0", "G1", "E1", "E2")
+    }
+
+
+def test_review_v2_f5_and_electrical_inputs_bind_the_frozen_models():
+    cases = (
+        (F5_G1_M2_MANUAL, TASK40_F5_G1_M2_RUN_ID, "G1", 8, 2, 1.0),
+        (E1_M2, TASK40_E1_RUN_ID, "E1", 10, 3, 1.25),
+        (E2_M2, TASK40_E2_RUN_ID, "E2", 12, 3, 1.5),
+    )
+    base = load_and_resolve(G0_REVIEW_V1)
+    for path, run_id, mesh_id, max_m, max_n, scale in cases:
+        specification = load_and_resolve(path)
+        config = specification.as_jsonable()
+        validate_task40_input(config)
+        plan = task40_mesh_plan(mesh_id)
+        assert specification.identity["run_id"] == run_id
+        assert specification.geometry["geometry_identity"] == (
+            TASK40_GEOMETRY_IDENTITY_BY_MESH[mesh_id]
+        )
+        assert specification.incidence["wavelength_nm"] == 0.7
+        assert specification.boundary["dtn_order_policy"] == "manual"
+        assert specification.boundary["dtn_manual_order_max_m"] == max_m
+        assert specification.boundary["dtn_manual_order_max_n"] == max_n
+        assert specification.output["diffraction_order_max_m"] == max_m
+        assert specification.output["diffraction_order_max_n"] == max_n
+        assert specification.discretization["mesh_axis_cell_counts"] == tuple(
+            plan["axis_interval_counts"][axis] for axis in ("x", "y", "z")
+        )
+        assert specification.discretization["mesh_plan_sha256"] == plan[
+            "mesh_plan_sha256"
+        ]
+        assert specification.geometry["period_x_nm"] == pytest.approx(
+            base.geometry["period_x_nm"] * scale
+        )
+        assert specification.geometry["air_void_box_nm"] == pytest.approx(
+            tuple(value * scale for value in base.geometry["air_void_box_nm"])
+        )
+        assert specification.materials["n_substrate"] == base.materials[
+            "n_substrate"
+        ]
+
+
+def test_task40_electrical_auto_modes_match_the_saved_ordered_manifest():
+    from src.common.modes_3d import outgoing_port_modes_3d
+
+    record = json.loads(ELECTRICAL_AUTO_MODE_MANIFEST.read_text(encoding="utf-8"))
+    assert record["schema"] == "task40extra.electrical-size-auto-modes.v1"
+    for mesh_id, path in (("E1", E1_M2), ("E2", E2_M2)):
+        specification = load_and_resolve(path)
+        cfg = simulation_config_3d_from_normalized(specification.as_jsonable())
+        auto_cfg = replace(
+            cfg,
+            stage4_dtn_order_policy="auto_propagating",
+            diffraction_order_max_m=None,
+            diffraction_order_max_n=None,
+        )
+        modes = outgoing_port_modes_3d(auto_cfg)
+        actual_keys = [
+            [mode.side, mode.m, mode.n, mode.polarization]
+            for mode in modes if mode.propagating
+        ]
+        expected = record["cases"][mesh_id]
+        assert actual_keys == expected["ordered_propagating_mode_keys"]
+        assert len(actual_keys) == expected["propagating_mode_count"]
+        input_bytes = path.read_bytes()
+        assert sha256(input_bytes).hexdigest() == expected["input_sha256"]
+        assert specification.physical_model_sha256 == expected[
+            "physical_model_sha256"
+        ]
+        generator_sha256 = sha256(
+            (ROOT / record["mode_generator"]["path"]).read_bytes()
+        ).hexdigest()
+        assert generator_sha256 == record["mode_generator"]["sha256"]
+        digest = sha256(
+            json.dumps(
+                actual_keys, separators=(",", ":"), ensure_ascii=False
+            ).encode("utf-8")
+        ).hexdigest()
+        assert digest == expected["ordered_mode_keys_sha256"]
+        envelope = (
+            max(abs(row[1]) for row in actual_keys),
+            max(abs(row[2]) for row in actual_keys),
+        )
+        assert envelope == tuple(expected["auto_propagating_envelope"])
+        assert envelope == TASK40_AUTO_PROPAGATING_ENVELOPE_BY_MESH[mesh_id]
+        assert tuple(expected["manual_m2_bounds"]) == (
+            envelope[0] + 1,
+            envelope[1] + 1,
+        )
+        assert len(outgoing_port_modes_3d(cfg)) == expected["manual_mode_count"]
+
+
+def test_electrical_mesh_plans_scale_exact_planes_at_fixed_h():
+    expected = {
+        "G0": ((6, 4, 14), 336, 0.5185185185185185),
+        "G1": ((10, 4, 22), 880, 0.3888888888888889),
+        "E1": ((10, 4, 19), 760, 0.5185185185185185),
+        "E2": ((10, 4, 22), 880, 0.5185185185185185),
+    }
+    for mesh_id, (counts, cells, target_h) in expected.items():
+        plan = task40_mesh_plan(mesh_id)
+        assert tuple(plan["axis_interval_counts"][axis] for axis in "xyz") == counts
+        assert plan["expected_hexahedra"] == cells
+        assert plan["target_h_nm"] == pytest.approx(target_h, abs=1e-15)
+    assert task40_mesh_plan("G0")["mesh_plan_sha256"] == (
+        "d621678ed8f144246133a98a71a2805bf55d09104d3aa6ceeb55e3f16fb864f1"
+    )
+    assert task40_mesh_plan("G1")["mesh_plan_sha256"] == (
+        "2e7e0a76c2161bfc0651c89d8c5e6edfa2a1ed37d1e2b5a674e314c6c5f5c27d"
+    )
 
 
 def _task40_tiny_n2_config():
@@ -201,6 +337,8 @@ def test_task40_rejects_a_different_void_even_if_it_remains_inside_the_grating(
     [
         (G0, "G0", (6, 4, 14), {1: 224, 2: 24, 3: 88}, 8),
         (G1, "G1", (10, 4, 22), {1: 536, 2: 80, 3: 264}, 24),
+        (E1_M2, "E1", (10, 4, 19), {1: 460, 2: 80, 3: 220}, 20),
+        (E2_M2, "E2", (10, 4, 22), {1: 536, 2: 80, 3: 264}, 24),
     ],
 )
 def test_actual_mesh_builder_preserves_task40_void_and_material_counts(
@@ -378,7 +516,10 @@ def test_task40_swap_qualification_uses_task_tree_and_keeps_global_delta_diagnos
     assert launcher._task40_swap_qualification(authority)["status"] == "UNRESOLVED"
 
 
-@pytest.mark.parametrize("input_path", (G0_REVIEW_V1, F1_REFERENCE_METRIC))
+@pytest.mark.parametrize(
+    "input_path",
+    (G0_REVIEW_V1, F1_REFERENCE_METRIC, F5_G1_M2_MANUAL, E1_M2, E2_M2),
+)
 def test_task40_launcher_mock_keeps_service_scope_and_task_tree_swap_gate(
     input_path: Path, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ):
@@ -721,6 +862,67 @@ def test_task40_review_v2_p3_batches_share_only_their_own_replay_allowance(
     assert f3_accounting["selected_bug_replay_limit"] == 2
 
 
+def test_task40_review_v2_growth_batch_admits_f5_e1_e2_and_keeps_old_costs(
+    tmp_path: Path,
+):
+    from src.runners.task038_full3d_iterative import _task40_worker_batch_identity
+    from src.runners.workflow_timebase import clock_sample
+
+    legacy_run_id = "task40extra_0p7nm_nonseparable_g0_iterative_v1"
+    legacy_ledger = (
+        tmp_path / "benchmarks/artifacts/task40extra_0p7nm_engineering/"
+        "task40_nonseparable_0p7nm" / legacy_run_id / "shared_workflow_ledger.json"
+    )
+    legacy_ledger.parent.mkdir(parents=True)
+    legacy_ledger.write_text(json.dumps({
+        "schema": "task40extra.nonseparable-0p7nm.shared-workflow-ledger.v1",
+        "batch_identity": legacy_run_id,
+        "unique_bug_replay_count": 4,
+        "elapsed_seconds": 900.0,
+        "conservative_allowance_seconds": 120.0,
+        "fresh_worker_count": 3,
+    }), encoding="utf-8")
+    service_cgroup = Path(
+        "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/"
+        "app.slice/myfenics-case-task40-fixture.service"
+    )
+
+    for index, path in enumerate((F5_G1_M2_MANUAL, E1_M2, E2_M2)):
+        specification = load_and_resolve(path)
+        run_id = str(specification.identity["run_id"])
+        assert _task40_worker_batch_identity(specification.as_jsonable()) == run_id
+        reservation = launcher._reserve_task40_0p7nm_budget(
+            tmp_path,
+            tmp_path / f"growth-{index}",
+            source_sha=chr(ord("a") + index) * 40,
+            stage="Q4_ORIGINAL",
+            stage_budget={"workflow_seconds": 43200.0},
+            workflow_clock_start=clock_sample(),
+            time_policy="observe_only",
+            run_id=run_id,
+            comparison_group=str(specification.identity["comparison_group"]),
+            service_cgroup_path=service_cgroup,
+        )
+        accounting = json.loads(
+            Path(reservation["task40_batch_replay_accounting_path"]).read_text(
+                encoding="utf-8"
+            )
+        )
+        assert reservation["replay"] is False
+        assert accounting["selected_batch"] == "review_v2_growth"
+        assert accounting["review_v2_growth"]["run_ids"] == sorted(
+            TASK40_REVIEW_V2_GROWTH_RUN_IDS
+        )
+        assert accounting["legacy"]["unique_bug_replay_count"] == 4
+        assert accounting["legacy"]["elapsed_seconds"] == 900.0
+        assert accounting["selected_bug_replay_limit"] == (1 if index == 0 else 2)
+        if index == 0:
+            prior_growth_ledger = Path(reservation["path"])
+            ledger = json.loads(prior_growth_ledger.read_text(encoding="utf-8"))
+            ledger["unique_bug_replay_count"] = 1
+            prior_growth_ledger.write_text(json.dumps(ledger), encoding="utf-8")
+
+
 def test_task40_worker_identity_opens_the_reserved_v14_runtime_ledger(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ):
@@ -814,7 +1016,12 @@ def _task40_capacity_carrier(global_rows: int, sides: tuple[str, ...]):
 
 @pytest.mark.parametrize(
     ("input_path", "expected_mesh_id", "raw_classes", "oriented_classes"),
-    ((G0, "G0", 3, 7), (G1, "G1", 5, 11)),
+    (
+        (G0, "G0", 3, 7),
+        (G1, "G1", 5, 11),
+        (E1_M2, "E1", 3, 7),
+        (E2_M2, "E2", 5, 11),
+    ),
 )
 def test_task40_capacity_context_binds_frozen_axes_and_live_class_metadata(
     input_path: Path,
@@ -913,8 +1120,15 @@ def test_task40_capacity_context_binds_frozen_axes_and_live_class_metadata(
     )
     identity = context["identity"]
     assert context["schema"] == "task40extra.nonseparable-0p7nm.capacity-context.v1"
-    assert identity["geometry_identity"] == TASK40_GEOMETRY_IDENTITY
-    assert identity["mesh_plan_id"] == f"task40extra.{expected_mesh_id.lower()}.exact_planes.v1"
+    assert identity["geometry_identity"] == TASK40_GEOMETRY_IDENTITY_BY_MESH[
+        expected_mesh_id
+    ]
+    expected_plan_id = (
+        f"task40extra.{expected_mesh_id.lower()}.exact_planes.v1"
+        if expected_mesh_id in {"G0", "G1"}
+        else f"task40extra.{expected_mesh_id.lower()}.electrical_size_exact_planes.v1"
+    )
+    assert identity["mesh_plan_id"] == expected_plan_id
     assert identity["mesh_plan_sha256"] == cfg.mesh_plan_sha256
     assert identity["mesh_axis_cell_counts"] == list(cfg.mesh_axis_cell_counts_requested)
     assert identity["owned_cell_count"] == int(np.prod(cfg.mesh_axis_cell_counts_requested))

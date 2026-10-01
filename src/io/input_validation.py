@@ -1033,7 +1033,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 if solver.get("stage") != "Q4_ORIGINAL":
                     raise _error(
                         "solver.stage",
-                        "Task40 permits only the G0/G1 Q4_ORIGINAL cases",
+                        "Task40 permits only frozen G0/G1, M*, and E1/E2 Q4_ORIGINAL cases",
                     )
                 if solver.get("coarse_degree") != 4:
                     raise _error("solver.coarse_degree", "Task40 fixes coarse_degree=4")

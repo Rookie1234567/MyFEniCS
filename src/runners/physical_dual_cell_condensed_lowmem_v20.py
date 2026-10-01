@@ -371,20 +371,22 @@ def _task40_capacity_mesh_plan(cfg):
     """Return the exact Task40 mesh plan after checking the live config binding."""
 
     from src.geometry.task40_nonseparable_plan import (
-        TASK40_GEOMETRY_IDENTITY,
+        TASK40_GEOMETRY_IDENTITY_BY_MESH,
         task40_mesh_plan,
     )
 
-    if getattr(cfg, "geometry_identity", None) != TASK40_GEOMETRY_IDENTITY:
-        raise ValueError("Task40 capacity context requires its frozen geometry identity")
     mesh_id_by_plan = {
         "task40extra.g0.exact_planes.v1": "G0",
         "task40extra.g1.exact_planes.v1": "G1",
+        "task40extra.e1.electrical_size_exact_planes.v1": "E1",
+        "task40extra.e2.electrical_size_exact_planes.v1": "E2",
     }
     mesh_plan_id = str(getattr(cfg, "mesh_plan_id", ""))
     mesh_id = mesh_id_by_plan.get(mesh_plan_id)
     if mesh_id is None:
-        raise ValueError("Task40 capacity mesh plan id is not in the frozen G0/G1 allowlist")
+        raise ValueError("Task40 capacity mesh plan id is not in the frozen model allowlist")
+    if getattr(cfg, "geometry_identity", None) != TASK40_GEOMETRY_IDENTITY_BY_MESH[mesh_id]:
+        raise ValueError("Task40 capacity context requires its frozen run geometry identity")
     plan = task40_mesh_plan(mesh_id)
     if getattr(cfg, "mesh_plan_sha256", None) != plan["mesh_plan_sha256"]:
         raise ValueError("Task40 capacity mesh plan SHA differs from the frozen axis plan")

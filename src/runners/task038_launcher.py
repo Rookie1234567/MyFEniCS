@@ -3482,6 +3482,7 @@ def _reserve_task40_0p7nm_budget(
         TASK40_F1_REFERENCE_METRIC_RUN_ID,
         TASK40_F2_G0_M1_RUN_ID,
         TASK40_F3_G0_M2_RUN_ID,
+        TASK40_REVIEW_V2_GROWTH_RUN_IDS,
     )
 
     legacy_run_ids = {
@@ -3494,8 +3495,13 @@ def _reserve_task40_0p7nm_budget(
     }
     review_v2_f1_run_ids = {TASK40_F1_REFERENCE_METRIC_RUN_ID}
     review_v2_p3_run_ids = {TASK40_F2_G0_M1_RUN_ID, TASK40_F3_G0_M2_RUN_ID}
+    review_v2_growth_run_ids = set(TASK40_REVIEW_V2_GROWTH_RUN_IDS)
     allowed_run_ids = (
-        legacy_run_ids | review_v1_run_ids | review_v2_f1_run_ids | review_v2_p3_run_ids
+        legacy_run_ids
+        | review_v1_run_ids
+        | review_v2_f1_run_ids
+        | review_v2_p3_run_ids
+        | review_v2_growth_run_ids
     )
     if run_id not in allowed_run_ids or comparison_group != TASK40_COMPARISON_GROUP:
         raise InputError("Task40 budget requires a run authorized by its review batch")
@@ -3545,6 +3551,16 @@ def _reserve_task40_0p7nm_budget(
             "fresh_worker_count": 0,
             "ledger_sha256": {},
         },
+        "review_v2_growth": {
+            "run_ids": sorted(review_v2_growth_run_ids),
+            "ledger_count": 0,
+            "unique_bug_replay_count": 0,
+            "infrastructure_recovery_count": 0,
+            "elapsed_seconds": 0.0,
+            "conservative_allowance_seconds": 0.0,
+            "fresh_worker_count": 0,
+            "ledger_sha256": {},
+        },
     }
     for prior_run_id in allowed_run_ids:
         ledger_path = (
@@ -3567,6 +3583,8 @@ def _reserve_task40_0p7nm_budget(
             group = "review_v2_f1"
         elif prior_run_id in review_v2_p3_run_ids:
             group = "review_v2_p3"
+        elif prior_run_id in review_v2_growth_run_ids:
+            group = "review_v2_growth"
         else:
             group = "legacy"
         group_facts = replay_accounting[group]
@@ -3595,13 +3613,17 @@ def _reserve_task40_0p7nm_budget(
         selected_batch = "review_v2_f1"
     elif run_id in review_v2_p3_run_ids:
         selected_batch = "review_v2_p3"
+    elif run_id in review_v2_growth_run_ids:
+        selected_batch = "review_v2_growth"
     else:
         selected_batch = "legacy"
     selected_history = replay_accounting[selected_batch]
     used_bug_replays = int(selected_history["unique_bug_replay_count"])
     replay_limit = (
         used_bug_replays + 1
-        if selected_batch in {"review_v2_f1", "review_v2_p3"}
+        if selected_batch in {
+            "review_v2_f1", "review_v2_p3", "review_v2_growth"
+        }
         else (0 if used_bug_replays >= 1 else 1)
     )
     continuation = None

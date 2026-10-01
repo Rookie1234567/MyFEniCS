@@ -35,7 +35,7 @@ from ..common.modes_3d import (
     outgoing_port_modes_3d,
 )
 from ..constraints.floquet_3d import DoubleFloquet3DData
-from ..geometry.task40_nonseparable_plan import TASK40_GEOMETRY_IDENTITY
+from ..geometry.task40_nonseparable_plan import is_task40_geometry_identity
 from .common_3d_solve import (
     DirectSolveFailure,
     _petsc_factor_inventory,
@@ -81,7 +81,7 @@ DTN_PORT_MODAL_REFERENCE = "top=physical_z_max; bottom=physical_z_min; bottom lo
 def _stage4_preserve_exact_geometry(cfg: SimulationConfig3D) -> bool:
     """Keep Task40's local cache geometry identical to its native mesh."""
 
-    return cfg.geometry_identity == TASK40_GEOMETRY_IDENTITY
+    return is_task40_geometry_identity(cfg.geometry_identity)
 
 
 class Stage4VariablePLiveObserverError(RuntimeError):
