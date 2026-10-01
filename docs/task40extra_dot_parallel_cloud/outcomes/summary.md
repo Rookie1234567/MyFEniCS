@@ -104,3 +104,18 @@ DtN 实验检查开放边界通道的编号、物理方向和局部投影积分�
 | diagnostic；端口 | H最小1.072e-194；172零C列/174零D行；q0共同零16项 | 532身份保留不证明未裁剪泛函完整；同离散缩放不能恢复上游裁剪 |
 
 [Response V5](../response_v5.md)、[hash-bound失败检查点](records/sparse_p2_failure_checkpoint_v1.json)。旧phi5原A/direct/Bloch数值保留并限于已生成operator；不外推本机未发布结果。新p4和gauge资格未运行。
+
+## V6：同一已裁剪离散算子的positive-H求逆坐标诊断通过
+
+端口幅度换成均衡单位再恢复原单位，精确保留原S0/原FE operator；没有恢复上游被裁掉的functionals。
+
+| 身份/对象 | 实际结果 | 资格边界 |
+|---|---|---|
+| measured；worker1c83fae、同80cell/p2/phi5 | 原S0 bytehash与raw失败相同；原A0全部2048列差0；原S制造载荷残差≤1.1554e−13 | 全4q、480interiors、532identities；172零C/174零D仍在 |
+| measured；完整原FE reference inverse | generic/physical原残差9.9685e−13/7.9961e−14；保存direct差≤9.4279e−13 | 固定原FE RHS与完整内部恢复，不删y通道 |
+| measured；full3D notch | generic/physical/notch-supported4/3/4步，原残差≤7.1415e−12；physical非零q5.5252e−5 | sampled PC defects仅3.32e−5..9.08e−4，弱扰动，不能外推大型收敛 |
+| measured；资源/独立checker | worker11.1352s/RSS437866496B；checker2.8673s/RSS253747200B，分别swap0/清场；88/88及全局门通过 | warm cache；1.5GiB/600s；512MiB声明余量不是fill保证 |
+| failed；旧raw factor与checker1 | raw单位辅助载荷1.4342e12/NaN仍失败；checker1 NumPy-bool JSON失败保留 | worker1c与checker d095分开，1234依赖hash/ABI不变，无PDE重跑 |
+| not_run | 预sparsification boundary-plane修正、p4、原尺寸accuracy/2TB/48h | p4held；新边界representation须独立p2权威，不把身份数当未裁剪物理贡献 |
+
+[Response V6](../response_v6.md)、[compact及失败/worker-checker身份](records/positive_H_same_discrete_p2_v1.json)。本批补足main Task40extra，ordinary defaults不变。

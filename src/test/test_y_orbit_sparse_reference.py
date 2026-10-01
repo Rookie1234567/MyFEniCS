@@ -7,6 +7,7 @@ from scipy import sparse
 
 from src.solvers.y_orbit_sparse_reference import (
     AugmentedYCoordinates, SparseAllQFactor, _product_bound, csr_audit, integer_admission,
+    positive_h_coordinate_scale,
 )
 
 
@@ -70,7 +71,7 @@ def test_partial_constructor_failure_clears_all_previously_retained_factors(monk
         self.factors.append(object())
         raise RuntimeError("controlled partial setup failure")
     monkeypatch.setattr(SparseAllQFactor, "_setup", fail)
-    coordinates = type("Coordinates", (), {"ny": 4})()
+    coordinates = type("Coordinates", (), {"ny": 4, "audit": {}})()
     with pytest.raises(RuntimeError, match="partial setup"):
         SparseAllQFactor.__init__(instance, None, coordinates,
             allocation_gate=lambda *_: None, event=lambda *_: None, save_array=lambda *_: None)
@@ -95,3 +96,44 @@ def test_weaker_diagonal_block_leakage_cannot_hide_in_global_norm(monkeypatch):
         SparseAllQFactor(matrix, coordinates, allocation_gate=lambda *_: None,
                          event=lambda *_: None, save_array=lambda *_: None)
     assert not calls  # no factor before the complete per-pair gate
+
+
+def test_positive_H_congruence_preserves_eliminated_operator_without_assuming_Hhat_diagonal():
+    h = np.asarray([1e-194, 4, 7e-8])
+    scale, inverse = positive_h_coordinate_scale(h)
+    np.testing.assert_allclose(scale * inverse, 1, atol=1e-14)
+    # Small deterministic coordinate algebra only, not the physical pilot.
+    c0 = np.asarray([[1, 2j, 3], [4j, 5, 6j]], complex)
+    d0 = np.asarray([[2j, 3], [4, 5j], [6j, 7]], complex)
+    c = c0 * np.sqrt(h)[None, :]
+    d = np.sqrt(h)[:, None] * d0
+    physical = (c / h[None, :]) @ d
+    equilibrated = (c * scale[None, :]) @ (scale[:, None] * d)
+    np.testing.assert_allclose(equilibrated, physical, rtol=1e-13, atol=1e-13)
+    # A general condensed Hhat may be complex/dense; no diagonal assertion.
+    hhat = np.diag(h.astype(complex)) + c.T @ c * 1e-3
+    changed = scale[:, None] * hhat * scale[None, :]
+    np.testing.assert_allclose(inverse[:, None] * changed * inverse[None, :], hhat, rtol=1e-13, atol=1e-13)
+
+
+def test_complete_manufactured_dual_is_P_inverse_H_including_auxiliary_scale():
+    r = sparse.diags([2, 3, 5, 7], dtype=np.complex128, format="csr")
+    ri = sparse.diags(1 / r.diagonal(), format="csr")
+    f = sparse.kron(np.asarray([[1, 1], [1, -1]]) / np.sqrt(2), sparse.eye(2), format="csr")
+    h = np.asarray([1e-12, 4, 1e8])
+    scale, _ = positive_h_coordinate_scale(h)
+    coordinates = AugmentedYCoordinates({"ny": 2, "trace_width": 2, "R_t_inverse": ri, "F_t": f},
+        (r @ f).tocsr(), (np.asarray([0]), np.asarray([1, 2])), np.ones(3, complex),
+        (("top", 0, 0, "s"), ("top", 0, 1, "s"), ("top", 0, -1, "s")),
+        3, np.dtype(np.int32), {}, scale)
+    complete = np.arange(1, 8) + 1j * np.arange(8, 15)
+    native = coordinates.manufactured_native_dual(complete)
+    p = sparse.block_diag((r @ f, sparse.diags(scale)), format="csr")
+    np.testing.assert_allclose(p.conj().T @ native, complete, atol=1e-12)
+    assert np.linalg.norm(native[4:] - complete[4:]) > 1
+
+
+@pytest.mark.parametrize("h", [[0, 1], [-1, 1], [np.nan, 1], [np.inf, 1], [1+0j, 2+0j]])
+def test_reject_nonfinite_nonpositive_or_complex_original_H(h):
+    with pytest.raises(ValueError, match="real-positive"):
+        positive_h_coordinate_scale(h)

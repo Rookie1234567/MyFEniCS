@@ -74,7 +74,7 @@ def _notch_supported_rhs(space, layout, changed):
 
 
 def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
-                     saved_oracle=None):
+                     saved_oracle=None, auxiliary_gauge="raw", save_factor_diagnostic=None):
     from mpi4py import MPI
     from petsc4py import PETSc
     from src.geometry.mesh_builder_3d import _mark_cells, _rectangular_air_void_audit
@@ -141,12 +141,15 @@ def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
             save_array("trace_" + name, values)
         coordinates = build_augmented_coordinates(trace, layout, reference.carrier, base["modes"], cfg,
                                                   allocation_gate=allocation_gate,
-                                                  petsc_index_dtype=PETSc.IntType)
+                                                  petsc_index_dtype=PETSc.IntType,
+                                                  auxiliary_gauge=auxiliary_gauge)
         expected_ports = 2 * (2 * cfg.diffraction_order_max_m + 1) * (2 * cfg.diffraction_order_max_n + 1) * 2
         if len(base["modes"]) != expected_ports:
             raise ValueError("fresh actual manual generator differs from complete side/order/polarization count")
         save_array("port_q_labels", np.asarray([key[2] % ny for key in coordinates.original_port_keys]))
         save_array("port_eta", coordinates.eta_ports)
+        save_array("port_original_H", np.asarray([e.normalization_h for e in reference.carrier.entries]))
+        save_array("port_factor_coordinate_scale", coordinates.scale)
         full_covariance = audit_full_form_covariance(action0, layout, (generic, np.conj(generic)))
         reduce_covariance = audit_condensation_covariance(reference, layout, coordinates,
                                                          (generic, np.conj(generic)),
@@ -169,7 +172,8 @@ def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
         else:
             bridge = original_p2_csr = None
         factor = SparseAllQFactor(matrix, coordinates, allocation_gate=allocation_gate,
-                                  event=event, save_array=save_array)
+                                  event=event, save_array=save_array,
+                                  save_factor_diagnostic=save_factor_diagnostic)
         inverse = FullRecoveredReferenceInverse(reference, layout, factor)
         del matrix
         physical_storage, physical_rhs_facts = build_physical_rhs(base)
@@ -274,6 +278,8 @@ def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
             raise ValueError("exact original recovery numeric state changed during applies")
         return {"schema": SCHEMA, "status": "SPARSE_CONDENSED_FULL3D_PROBE_PASS",
                 "degree": degree, "azimuth_deg": 5.0, "cells": 80,
+                "auxiliary_gauge": auxiliary_gauge,
+                "reference_scope": "same frozen upstream-clipped FE operator; no lost functional restored",
                 "input_sha256": input_sha, "axes_nm": {k: list(v) for k, v in axes.items()},
                 "mode_manifest_sha256": base["mode_sha256"], "mode_keys": coordinates.original_port_keys,
                 "physical_rhs_facts": physical_rhs_facts, "limits": LIMITS,

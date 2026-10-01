@@ -1,0 +1,56 @@
+{
+  "status": "REVIEWED_BOUNDED_FIXES_INTEGRATION",
+  "base_HEAD": "e67c9492b1313e567e0f514bcb0108e1a0236aeb",
+  "files": [
+    {
+      "path": "benchmarks/check_y_orbit_sparse_probe.py",
+      "staged_sha256": "4e8934d0b171a91da3118a48f03a23b6ce86cf7b735159aa21c4425d457301c5",
+      "base_sha256": "23d4a5b14a106910f36a1632b642a4dc0bdcac8dd33fa07f4665ded37448e538",
+      "AST": "pass_only",
+      "runtime": "not_run"
+    },
+    {
+      "path": "benchmarks/run_y_orbit_sparse_probe.py",
+      "staged_sha256": "3233eb7c9784d5ad31d71f2e96f18eb94799a254a628605bcd063abf3dad4017",
+      "base_sha256": "a316a334b806f0644aab960cc6f407cb04e568949e9412977b318588931050ee",
+      "AST": "pass_only",
+      "runtime": "not_run"
+    },
+    {
+      "path": "src/solvers/y_orbit_sparse_probe.py",
+      "staged_sha256": "b3259c2a93d2315606930f01e833b4c78a9d28c0ec91117cda59775371672ddf",
+      "base_sha256": "5ac339d8286e33d2148f488cae7d01f3d3885a6437105fd8522fb8ef0932855b",
+      "AST": "pass_only",
+      "runtime": "not_run"
+    },
+    {
+      "path": "src/solvers/y_orbit_sparse_reference.py",
+      "staged_sha256": "863884e978b21facc93e16b4ed19befeee59da23ec187e12b552a3e5193ca86f",
+      "base_sha256": "97c58ae263d225311def0641ae6504e2831dad6f6ab6b75fb2fa3a2eb878aba9",
+      "AST": "pass_only",
+      "runtime": "not_run"
+    },
+    {
+      "path": "src/test/test_y_orbit_sparse_bridge_identity.py",
+      "staged_sha256": "42d1bafd6291b9eafac8fe6fcf75a2cb5207afd3a0c0a095365b2b13a413e301",
+      "base_sha256": "8e5fe1867136f6deb5e03583cfebb8a8f3472a36c62badbed88d540c2935c755",
+      "AST": "pass_only",
+      "runtime": "not_run"
+    },
+    {
+      "path": "src/test/test_y_orbit_sparse_diagnostic_inventory.py",
+      "staged_sha256": "94fece5e596b738325a8aa256f5c88565d41d16142c62f79c6cfafae14f8b449",
+      "base_sha256": null,
+      "AST": "pass_only",
+      "runtime": "not_run"
+    },
+    {
+      "path": "src/test/test_y_orbit_sparse_reference.py",
+      "staged_sha256": "df0e1b2769eb883dd137ea04b8ba66888165221613fd5b33f944555810946df1",
+      "base_sha256": "300989b15abdb0e3fd4c36b65e8d8cf902fd8fff36ea59475c0a5b78aadf05c8",
+      "AST": "pass_only",
+      "runtime": "not_run"
+    }
+  ],
+  "old_numerical_failure_preserved": "f2bd95ba813b3243bdfd052e90c53ccb0cf0e006"
+}

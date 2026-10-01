@@ -18,7 +18,8 @@ def _fixture(tmp_path, monkeypatch):
     source = {"head": "f" * 40, "branch": "task40extra_dot_parallel_cloud", "dirty": "", "files_sha256": {}}
     report = {"status": "SPARSE_CONDENSED_FULL3D_PROBE_PASS", "degree": 2,
               "source_clean_unchanged": True, "source": source,
-              "saved_dense_p2_bridge": {"passed": True}, "artifacts": {}}
+              "saved_dense_p2_bridge": {"passed": True}, "artifacts": {},
+              "auxiliary_gauge": "raw", "reference_scope": runner.EXPECTED_RAW_REFERENCE_SCOPE}
     path = tmp_path / "probe_report.json"
     digest = _write(path, report)
     provenance_hash = _write(tmp_path / "provenance.json", {"source": source})
@@ -30,6 +31,7 @@ def _fixture(tmp_path, monkeypatch):
     checker = {"gate_pass": True, "evidence_valid": True, "report_sha256": digest,
         "provenance_sha256": provenance_hash,
         "artifact_manifest_sha256": hashlib.sha256(b"{}").hexdigest(), "source": source, "degree": 2,
+        "auxiliary_gauge": "raw", "representation": runner.EXPECTED_RAW_REFERENCE_SCOPE,
         "checker_watchdog_receipt": {"path": "checker_supervision/summary.json", "sha256": watcher_hash}}
     _write(tmp_path / "independent_checker.json", checker)
     return path, digest, source, checker
@@ -52,6 +54,17 @@ def test_stale_or_swapped_checker_pass_cannot_unlock_p4(tmp_path, monkeypatch, f
 def test_checker_without_evidence_valid_cannot_unlock_p4(tmp_path, monkeypatch):
     path, digest, source, checker = _fixture(tmp_path, monkeypatch)
     checker["evidence_valid"] = False
+    _write(tmp_path / "independent_checker.json", checker)
+    with pytest.raises(RuntimeError, match="bridge has not passed"):
+        runner._validate_bridge(path, digest, source["head"], source)
+
+
+def test_positive_H_diagnostic_receipt_cannot_unlock_raw_p4(tmp_path, monkeypatch):
+    path, _, source, checker = _fixture(tmp_path, monkeypatch)
+    report = json.loads(path.read_text())
+    report["auxiliary_gauge"] = "positive-h"
+    digest = _write(path, report)
+    checker.update(report_sha256=digest, auxiliary_gauge="positive-h")
     _write(tmp_path / "independent_checker.json", checker)
     with pytest.raises(RuntimeError, match="bridge has not passed"):
         runner._validate_bridge(path, digest, source["head"], source)

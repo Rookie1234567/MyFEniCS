@@ -3323,3 +3323,11 @@ V26 本轮 Full3D p6/h7.5、coarse p4 场已经完成 126 步并通过残差/物
 同一缩放full3D80-cell/p2系统只改变phi=5°，实测y phase0.5285127306+0.8489253758i。native cycle/covariance、Q^H dual/Q primal、全部532 aliases/4完整块/480 interiors通过，原算子notch generic/incident4/3步残差1.2852e-13/7.1414e-12，incident非零q比例5.5252e-5由独立checker重算。source ac1410ca1187352fbe398325c5f7aaa33bf0d0bd；whole-tree RSS701,861,888B、10.108s、swap0、warm JIT，focused4 tests通过。较大的physical direct场差5.5650e-11仍在1e-9门内，明确保留。
 
 仅关闭此scaled p2 real-ky case的具体身份缺口；p4/p6、复杂mesh/ky、物理精度、原尺寸2TB/48h均未资格。用户要求先读远程code/docs/history避免重复，后续实现和数值任务暂停；72小时结果应为用户在工作站自行执行的大型验证方案，保留冻结source/env/config、one-command分级Gate、checkpoint/restart/fail-fast与缺口，不保证收敛。详见[phi5 outcome](task40extra_dot_parallel_cloud/outcomes/y_orbit_phi5_pilot_v1.md)与[compact](task40extra_dot_parallel_cloud/outcomes/records/y_orbit_phi5_pilot_v1.json)。
+
+## 2026-10-01：dot V6 隔离端口坐标病态，边界裁剪仍待修正
+
+在冻结同一已裁剪80-cell/p2/phi5离散算子上，把因子端口坐标精确换成正H归一化单位再换回来，未改变原保存S0/2048-column A0 identity、固定FE载荷或480个内部恢复。全4q/532模式身份的原S制造载荷残差≤1.1554e−13，regular generic/physical原A残差9.9685e−13/7.9961e−14；完整3D notch generic/physical/notch-supported4/3/4步，原残差≤7.1415e−12。采样right-PC defects仅3.32e−5..9.08e−4，Si contrast与电尺寸小，不能预测大型收敛。
+
+worker1c83fae全过程11.1352s/同时树RSS437866496B；独立checker d0959c5为2.8673s/253747200B，分别zero swap/清场，88/88重算及全局门通过。原raw因子1.4342e12/NaN失败不改判；checker首次NumPy-bool JSON失败也保存。仅checker/其own test改动，receipt核验1234份其他source/config/input hashes及ABI不变，没有PDE重跑。新worker31targeted、checker修复5targeted通过；full pytest/MPI多rank/Ruff/CI未运行。
+
+172零C/174零D泛函仍在；532只是完整模式身份，正H缩放不能恢复上游absolute floor删除的有限贡献。p4保持held，下一门为同Gauss/fullMPC的装配前boundary-plane系数新权威。原尺寸accuracy/2TB/48h与工作站完整交付尚未资格；本批补足main/laptop campaign，不接管。见[Response V6](task40extra_dot_parallel_cloud/response_v6.md)及[compact](task40extra_dot_parallel_cloud/outcomes/records/positive_H_same_discrete_p2_v1.json)。

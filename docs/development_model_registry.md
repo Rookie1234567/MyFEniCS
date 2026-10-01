@@ -2013,3 +2013,17 @@ production model。
 | dot_y_orbit_p2_phi5_notch | 同source/mesh，两cell真实3D空气缺口，PC保持regular A0 | generic/incident FGMRES4/3步，原残差1.2852e-13/7.1414e-12；direct场差5.4957e-13/5.5650e-11；incident非零q5.5252e-5 | 独立checker12 residual/direct检查＋all-q/alias/augmented/nonzero-q，focused4 tests通过 | [compact](task40extra_dot_parallel_cloud/outcomes/records/y_orbit_phi5_pilot_v1.json) |
 
 这里只资格化本scaled p2 case的real ky/phi5，没有official R/T/A、一般Bloch/complex ky、p4/p6、目标物理精度或2TB/48h资格。后续审计和工作站方案不自动授权运行用户工作站。
+
+## Task40extra dot V6：同离散positive-H full3D参考逆与保留失败
+
+只改变因子辅助坐标单位，原S0和已消去FE operator byte身份不变；上游裁剪不修复，物理accuracy/截断/official RTA未资格。
+
+| Model ID | source/scope | measured result | resource/status | evidence |
+|---|---|---|---|---|
+| dot_sparse_p2_raw_q0_failed | f2bd95ba813b3243bdfd052e90c53ccb0cf0e006；80cell/p2/phi5、468行q0、单位混合FE/aux载荷 | 原A0全部2048列差0；实际q0 solve residual1.4342e12，linearity NaN；未保存中间解，不断言entry非有限 | FAILED；7.3205s/RSS433651712B/swap0/清场 | [V5负项](task40extra_dot_parallel_cloud/response_v5.md) |
+| dot_sparse_p2_positive_H | worker1c83fae75e46e7e28c84d1e82ec9bb85e94fbc83；同2048FE/480interiors/4q/532identities | 原S bytehash未变；原S制造res≤1.1554e−13；regular generic/physical原A residual9.9685e−13/7.9961e−14 | PASS same-clipped-operator component；11.1352s/RSS437866496B/swap0/清场；warm | [V6](task40extra_dot_parallel_cloud/response_v6.md) |
+| dot_sparse_p2_positive_H_notch | 同worker、2cell真实3D notch，固定原FE RHS | generic/physical/notch-supported4/3/4步；原res≤7.1415e−12；physical direct差5.5652e−11；nonzeroq5.5252e−5 | full3D architecture only；采样PC defect小，非大尺度robustness | 同上 |
+| dot_sparse_p2_checker_attempt1 | 同worker source，artifact-only checker | NumPy bool JSON序列化失败，未记录独立pass | FAILED；1.7679s/RSS196321280B/swap0/清场 | [compact失败与identity](task40extra_dot_parallel_cloud/outcomes/records/positive_H_same_discrete_p2_v1.json) |
+| dot_sparse_p2_checker_attempt2 | checker d0959c5b5ea78363b6428604a12a5281cfee3fd1；1234其他依赖hash/ABI未变 | 88/88重算及完整interior/all-q/alias/slave/原S/native门通过；24raw vectors全finite | PASS；2.8673s/RSS253747200B/swap0/清场；无PDE重跑 | 同上 |
+
+172零C/174零D仍然保留；不把532identity当未裁剪非零贡献。p4与装配前gauge修正held、原尺寸2TB/48h未资格；没有ordinary default/用户机器/其他分支改动。

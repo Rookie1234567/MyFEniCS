@@ -27,6 +27,7 @@ INPUT_SHA = "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e"
 TREE_CAP_BYTES = 3 * 1024**3 // 2
 RESERVE_BYTES = 128 * 1024**2
 WALL_SECONDS = 600
+EXPECTED_RAW_REFERENCE_SCOPE = "same frozen upstream-clipped FE operator; no lost functional restored"
 ORACLE_NAME = "y_orbit_p2_phi5_attempt1"
 ORACLE_HASHES = {
     "pilot_report.json": "24c05218a32cec8000923564f56209a747f13786a3144b96d2bf982953c7d28f",
@@ -107,7 +108,10 @@ def _validate_bridge(path, digest, expected_head, source):
             or checker.get("report_sha256") != digest
             or checker.get("provenance_sha256") != file_sha256(provenance_path)
             or checker.get("artifact_manifest_sha256") != artifact_identity
-            or checker.get("source") != source or checker.get("degree") != 2):
+            or checker.get("source") != source or checker.get("degree") != 2
+            or report.get("auxiliary_gauge") != "raw" or checker.get("auxiliary_gauge") != "raw"
+            or report.get("reference_scope") != EXPECTED_RAW_REFERENCE_SCOPE
+            or checker.get("representation") != report.get("reference_scope")):
         raise RuntimeError("same-source sparse-p2 qualification bridge has not passed")
     watchdog = checker.get("checker_watchdog_receipt")
     if not isinstance(watchdog, dict):
@@ -148,6 +152,7 @@ def _worker(args):
     arrays = args.run_directory / "arrays"
     arrays.mkdir()
     descriptors = {}
+    factor_diagnostics = {}
     started = perf_counter()
 
     def event(name, facts):
@@ -165,6 +170,28 @@ def _worker(args):
         descriptors[name] = {"path": str(path.relative_to(args.run_directory)), "shape": list(values.shape),
                              "dtype": str(values.dtype), "payload_bytes": int(values.nbytes),
                              "file_sha256": file_sha256(path)}
+
+    def save_factor_diagnostic(name, values):
+        """Bounded raw failure evidence, honestly retaining NaN/Inf if present."""
+        values = np.asarray(values, dtype=np.complex128)
+        if (values.ndim != 1 or values.size > 65536
+                or not name.replace("_", "").isalnum()):
+            raise ValueError("factor diagnostic exceeds its reviewed vector/name bound")
+        raw = args.run_directory / "raw_factor_diagnostics"
+        raw.mkdir(exist_ok=True)
+        path = raw / (name + ".npy")
+        np.save(path, values, allow_pickle=False)
+        finite = np.isfinite(values)
+        magnitudes = np.abs(values[finite])
+        finite_magnitudes = magnitudes[np.isfinite(magnitudes)]
+        facts = {"path": str(path.relative_to(args.run_directory)), "shape": list(values.shape),
+                 "dtype": str(values.dtype), "file_sha256": file_sha256(path),
+                 "finite_entries": int(np.count_nonzero(finite)),
+                 "nonfinite_entries": int(values.size - np.count_nonzero(finite)),
+                 "finite_abs_max": float(np.max(finite_magnitudes)) if finite_magnitudes.size else None,
+                 "raw_failure_diagnostic_only": True, "counts_are_not_solver_pass": True}
+        factor_diagnostics[name] = facts
+        event("raw_factor_vector_saved", {"name": name, **facts})
 
     def allocation_gate(name, facts):
         # Admit native CSR dimensions/NNZ before inherited PETSc allocation.
@@ -190,6 +217,7 @@ def _worker(args):
 
     provenance = {"source": source, "environment": environment, "command": sys.argv,
                   "input_sha256": INPUT_SHA, "degree": args.degree,
+                  "auxiliary_gauge": args.auxiliary_gauge,
                   "saved_dense_p2_authority": oracle.receipt if oracle is not None else None,
                   "sparse_p2_bridge_receipt": bridge,
                   "resource_contract": {"tree_cap_bytes": cap, "wall_seconds": WALL_SECONDS,
@@ -202,18 +230,22 @@ def _worker(args):
     report = {"schema": "task40extra.y-orbit-sparse-condensed-reference.v1", "status": "STARTED"}
     try:
         report = run_sparse_probe(INPUT, degree=args.degree, event=event, save_array=save_array,
-                                  allocation_gate=allocation_gate, saved_oracle=oracle)
+                                  allocation_gate=allocation_gate, saved_oracle=oracle,
+                                  auxiliary_gauge=args.auxiliary_gauge,
+                                  save_factor_diagnostic=save_factor_diagnostic)
         if source_facts(args.expected_head) != source:
             raise RuntimeError("source identity changed during the sparse probe")
         report.update(source=source, environment=environment, source_clean_unchanged=True,
                       worker_elapsed_seconds=perf_counter() - started, artifacts=descriptors,
+                      factor_raw_diagnostics=factor_diagnostics,
                       sparse_p2_bridge_receipt=bridge)
         write_json(args.run_directory / "probe_report.json", report)
         event("probe_complete", {"status": report["status"], "degree": args.degree})
         return 0
     except Exception as exc:
         report.update(status="FAILED", degree=args.degree, error_type=type(exc).__name__, error=str(exc),
-                      source=source, artifacts=descriptors, worker_elapsed_seconds=perf_counter() - started)
+                      source=source, artifacts=descriptors, factor_raw_diagnostics=factor_diagnostics,
+                      auxiliary_gauge=args.auxiliary_gauge, worker_elapsed_seconds=perf_counter() - started)
         write_json(args.run_directory / "probe_report.json", report)
         (args.run_directory / "probe_traceback.txt").write_text(traceback.format_exc())
         event("probe_failure", {"error_type": type(exc).__name__, "error": str(exc)})
@@ -225,6 +257,7 @@ def main():
     parser.add_argument("--run", action="store_true")
     parser.add_argument("--worker", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--degree", type=int, choices=(2, 4), default=2)
+    parser.add_argument("--auxiliary-gauge", choices=("raw", "positive-h"), default="raw")
     parser.add_argument("--expected-head")
     parser.add_argument("--run-directory", type=Path)
     parser.add_argument("--bridge-report", type=Path)
@@ -232,6 +265,7 @@ def main():
     args = parser.parse_args()
     if not args.run:
         print(json.dumps({"status": "NOT_RUN_STAGED_PLAN_ONLY", "degree": args.degree,
+                          "auxiliary_gauge": args.auxiliary_gauge,
                           "scope": "same 80-cell full3D exact condensation, all q and physical aliases",
                           "tree_cap_bytes": TREE_CAP_BYTES, "wall_seconds": WALL_SECONDS,
                           "required": ["parent staged-source review", "clean own-branch integration commit",
@@ -247,6 +281,8 @@ def main():
     if file_sha256(INPUT) != INPUT_SHA:
         raise RuntimeError("inherited input hash mismatch")
     if args.degree == 4:
+        if args.auxiliary_gauge == "positive-h":
+            parser.error("same-discrete positive-H diagnostic is p2-only; p4 is held for boundary-gauge review")
         if not args.bridge_report or not args.bridge_report_sha256:
             parser.error("p4 requires a same-source passed sparse-p2 bridge and independent checker")
         args.bridge_report = args.bridge_report.resolve()
@@ -260,7 +296,7 @@ def main():
     from benchmarks.subreaper_watchdog import supervise
     command = [sys.executable, "-m", "benchmarks.run_y_orbit_sparse_probe", "--run", "--worker",
                "--degree", str(args.degree), "--expected-head", args.expected_head,
-               "--run-directory", str(args.run_directory)]
+               "--run-directory", str(args.run_directory), "--auxiliary-gauge", args.auxiliary_gauge]
     if args.degree == 4:
         command += ["--bridge-report", str(args.bridge_report),
                     "--bridge-report-sha256", args.bridge_report_sha256]

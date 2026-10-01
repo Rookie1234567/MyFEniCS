@@ -133,6 +133,26 @@ def _norm_squared(matrix):
     return float(np.vdot(matrix.data, matrix.data).real)
 
 
+def positive_h_coordinate_scale(original_h):
+    """Exact reversible auxiliary coordinate change, not a rebuilt carrier.
+
+    R=diag(I,H_original^-1/2). This uses the carrier's original real-positive
+    diagonal H, not Hhat after cell condensation. It neither deletes aliases
+    nor recreates a functional lost to upstream absolute sparsification.
+    """
+    h = np.asarray(original_h)
+    if (h.ndim != 1 or h.dtype.kind not in "fi" or not np.isfinite(h).all()
+            or np.any(h <= 0)):
+        raise ValueError("original carrier H must be finite real-positive")
+    scale = 1 / np.sqrt(h.astype(np.float64))
+    inverse = 1 / scale
+    if not np.isfinite(scale).all() or not np.isfinite(inverse).all() or np.any(inverse == 0):
+        raise ValueError("positive-H scale and inverse must remain finite/nonzero")
+    if np.max(np.abs(scale * inverse - 1), initial=0) > LIMITS["mapping"]:
+        raise ValueError("positive-H coordinate inverse gate fails")
+    return scale, inverse
+
+
 @dataclass
 class AugmentedYCoordinates:
     trace: dict[str, Any]
@@ -143,6 +163,7 @@ class AugmentedYCoordinates:
     port_count: int
     index_dtype: np.dtype
     audit: dict[str, Any]
+    port_scale: np.ndarray | None = None
 
     @property
     def rows(self):
@@ -155,6 +176,21 @@ class AugmentedYCoordinates:
     @property
     def width(self):
         return int(self.trace["trace_width"])
+
+    @property
+    def scale(self):
+        return np.ones(self.port_count) if self.port_scale is None else self.port_scale
+
+    def manufactured_native_dual(self, complete_modal_load):
+        """b=P^-H f for P=R_aux Q_aug, with ALL modal slots embedded first."""
+        f = np.asarray(complete_modal_load, dtype=np.complex128)
+        nt = self.q_trace.shape[0]
+        if f.shape != (self.rows,) or not np.isfinite(f).all():
+            raise ValueError("manufactured load must include the complete modal inventory")
+        result = np.empty_like(f)
+        result[:nt] = self.trace["R_t_inverse"].conj().T @ (self.trace["F_t"] @ f[:nt])
+        result[nt:] = f[nt:] / self.scale
+        return result
 
     def q_map(self, q_index, *, allocation_gate):
         """Tall sparse primal map for one q and all its physical port aliases."""
@@ -173,7 +209,7 @@ class AugmentedYCoordinates:
         integer_admission(shape, nnz, index_dtype=self.index_dtype)
         _gate(allocation_gate, "one_q_primal_map", nnz * (16 + self.index_dtype.itemsize)
               + (self.rows + 1) * self.index_dtype.itemsize)
-        port_map = sparse.csr_matrix((np.ones(len(ports), complex),
+        port_map = sparse.csr_matrix((self.scale[ports].astype(complex),
                                       (ports, np.arange(len(ports)))),
                                      shape=(self.port_count, len(ports)))
         result = sparse.block_diag((q, port_map), format="csr")
@@ -189,7 +225,7 @@ class AugmentedYCoordinates:
 
 
 def build_augmented_coordinates(trace, full_layout, carrier, modes, cfg, *, allocation_gate,
-                                petsc_index_dtype):
+                                petsc_index_dtype, auxiliary_gauge="raw"):
     """Use existing full-space audit; never assume four ports in harmonic zero."""
     from src.solvers.task40extra_y_orbit_reference import audit_port_aliases
 
@@ -213,12 +249,26 @@ def build_augmented_coordinates(trace, full_layout, carrier, modes, cfg, *, allo
                  for entry in carrier.entries)
     eta = np.asarray([np.exp(1j * (complex(cfg.ky).real * cfg.period_y + 2 * np.pi * key[2])
                              / full_layout.ny) for key in keys])
+    if auxiliary_gauge not in ("raw", "positive-h"):
+        raise ValueError("unreviewed auxiliary coordinate gauge")
+    original_h = np.asarray([entry.normalization_h for entry in carrier.entries])
+    positive_scale, inverse_scale = positive_h_coordinate_scale(original_h)
+    port_scale = positive_scale if auxiliary_gauge == "positive-h" else np.ones(len(keys))
     return AugmentedYCoordinates(trace, q_trace, aliases, eta, keys, len(keys), index_dtype,
         {"all_q": list(range(full_layout.ny)), "trace": trace["audit"], "ports": ports_audit,
-         "augmented_primal_map": "diag(R_t F_t, exact physical-port routing)",
-         "augmented_dual_map": "Q_aug^H, not Q_aug^-1",
+         "augmented_primal_map": "P=R_aux Q_aug; R_aux=diag(I,H_original^-1/2) if positive-h",
+         "augmented_dual_map": "P^H, not P^-1",
          "alias_counts": [len(v) for v in aliases], "port_normalization_changed": False,
-         "all_internal_y_channels_retained": True})
+         "all_internal_y_channels_retained": True,
+         "auxiliary_gauge": auxiliary_gauge, "original_H_min": float(np.min(original_h)),
+         "original_H_max": float(np.max(original_h)),
+         "scale_min": float(np.min(port_scale)), "scale_max": float(np.max(port_scale)),
+         "positive_H_scale_inverse_finite": True, "Hhat_assumed_diagonal": False,
+         "same_frozen_eliminated_FE_operator": True,
+         "upstream_clipped_functionals_restored": False,
+         "original_zero_coupling_functionals": sum(len(e.coupling_rows) == 0 for e in carrier.entries),
+         "original_zero_projection_functionals": sum(len(e.projection_rows) == 0 for e in carrier.entries)},
+        port_scale)
 
 
 class SparseAllQFactor:
@@ -229,7 +279,7 @@ class SparseAllQFactor:
     Off-block roundoff is dropped at that point, with its full measured norm.
     """
     def __init__(self, matrix, coordinates, *, allocation_gate, event, save_array,
-                 factor_allowance_bytes=FACTOR_ALLOWANCE_BYTES):
+                 factor_allowance_bytes=FACTOR_ALLOWANCE_BYTES, save_factor_diagnostic=None):
         self.coordinates = coordinates
         self.gate = allocation_gate
         self.factors = []
@@ -241,16 +291,18 @@ class SparseAllQFactor:
                       "declared_additional_factor_allowance_bytes": int(factor_allowance_bytes),
                       "factor_allowance_is_memory_guarantee": False,
                       "global_dense_FE_or_modal_matrix_created": False,
+                      "independent_load_coordinates": coordinates.audit.get("auxiliary_gauge", "raw"),
                       "factor_passes": "all-cross-q-audit then streamed per-q factors"}
         try:
             self._setup(matrix, coordinates, allocation_gate=allocation_gate, event=event,
-                        save_array=save_array, factor_allowance_bytes=factor_allowance_bytes)
+                        save_array=save_array, factor_allowance_bytes=factor_allowance_bytes,
+                        save_factor_diagnostic=save_factor_diagnostic)
         except BaseException:
             self.destroy()
             raise
 
     def _setup(self, matrix, coordinates, *, allocation_gate, event, save_array,
-               factor_allowance_bytes):
+               factor_allowance_bytes, save_factor_diagnostic):
         started = perf_counter()
         csr_facts = csr_audit(matrix, petsc_index_dtype=coordinates.index_dtype)
         if matrix.shape != (coordinates.rows, coordinates.rows):
@@ -370,6 +422,19 @@ class SparseAllQFactor:
             b = np.sin(.23 * values) + 1j * np.cos(.41 * values)
             xa = factor.solve(a); xa_repeat = factor.solve(a)
             xb = factor.solve(b); xsum = factor.solve(a + b)
+            diagnostic_vectors = {"rhs_a": a, "rhs_b": b, "solution_a": xa,
+                                  "solution_b": xb, "solution_a_repeat": xa_repeat,
+                                  "solution_sum": xsum}
+            finite = {name: bool(np.isfinite(values).all()) for name, values in diagnostic_vectors.items()}
+            # Honest bounded raw diagnostics are distinct from finite-only
+            # successful evidence. Preserve values/counts BEFORE assertions.
+            if callable(save_factor_diagnostic):
+                for name, values in diagnostic_vectors.items():
+                    save_factor_diagnostic(f"q_{q}_{name}", values)
+            event("factor_raw_finiteness_before_gate", {"q": q, "finite": finite,
+                  "coordinate_gauge": coordinates.audit.get("auxiliary_gauge", "raw")})
+            if not all(finite.values()):
+                raise FloatingPointError("q factor produced nonfinite vectors; raw diagnostics preserved")
             repeated = _relative(xa_repeat - xa, xa)
             linearity = _relative(xsum - xa - xb, xsum)
             true_residual = max(_relative(csc @ xa - a, a), _relative(csc @ xb - b, b))
@@ -380,6 +445,29 @@ class SparseAllQFactor:
                     or repeated > LIMITS["operator"] or linearity > LIMITS["operator"]
                     or true_residual > LIMITS["residual"]):
                 raise ValueError(f"actual q-block factor repeated/linear/residual gate fails: {block_facts[q]}")
+            # Embed a one-q manufactured load in the COMPLETE modal inventory
+            # before b=P^-H f. This is not a change to the fixed original FE
+            # generic/physical RHS, and not Q^-H without the auxiliary R.
+            native_residuals = []
+            for label, load, solution in (("a", a, xa), ("b", b, xb)):
+                complete = np.zeros(coordinates.rows, dtype=np.complex128)
+                nt = coordinates.q_trace.shape[0]
+                rows = slice(q * coordinates.width, (q + 1) * coordinates.width)
+                complete[rows] = load[:coordinates.width]
+                complete[nt + coordinates.aliases[q]] = load[coordinates.width:]
+                native_rhs = coordinates.manufactured_native_dual(complete)
+                primal = coordinates.q_map(q, allocation_gate=allocation_gate)
+                native_solution = np.asarray(primal @ solution)
+                original_action = np.asarray(matrix @ native_solution)
+                for name, values in (("complete_modal_load", complete), ("native_rhs", native_rhs),
+                                     ("native_solution", native_solution), ("original_S_action", original_action)):
+                    save_array(f"q_{q}_manufactured_{label}_{name}", values)
+                residual = _relative(original_action - native_rhs, native_rhs)
+                native_residuals.append(residual)
+                del complete, native_rhs, primal, native_solution, original_action
+            block_facts[q]["manufactured_original_S_residuals"] = native_residuals
+            if max(native_residuals) > LIMITS["residual"]:
+                raise ValueError("manufactured equilibrated load failed ORIGINAL S0 residual")
             del a, b, xa, xa_repeat, xb, xsum
             # No access to factor.L/U: those properties materialize copies.
             del csc
@@ -406,10 +494,10 @@ class SparseAllQFactor:
         for q, factor in enumerate(self.factors):
             rows = slice(q * self.coordinates.width, (q + 1) * self.coordinates.width)
             ports = self.coordinates.aliases[q]
-            dual_rhs = np.concatenate((trace_rhs[rows], rhs[nt + ports]))
+            dual_rhs = np.concatenate((trace_rhs[rows], self.coordinates.scale[ports] * rhs[nt + ports]))
             primal = factor.solve(dual_rhs)
             trace_solution[rows] = primal[:self.coordinates.width]
-            result[nt + ports] = primal[self.coordinates.width:]
+            result[nt + ports] = self.coordinates.scale[ports] * primal[self.coordinates.width:]
         result[:nt] = self.coordinates.q_trace @ trace_solution
         if not np.isfinite(result).all():
             raise FloatingPointError("all-q factor returned nonfinite original augmented solution")
