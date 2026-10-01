@@ -842,7 +842,13 @@ def _vec_nonzero_owned_entries(
     *,
     relative_tol: float = 1.0e-13,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Return owned significant entries using one collective cutoff."""
+    """Return owned significant entries using a scale-homogeneous cutoff.
+
+    Port-plane Fourier fields can be uniformly attenuated by ``exp(i beta z)``.
+    A fixed absolute floor would therefore discard valid modes solely because
+    of their reference-plane scale.  A zero vector still yields no entries
+    because the strict comparison is against its zero collective maximum.
+    """
 
     start, end = vec.getOwnershipRange()
     values = np.asarray(vec.getArray(readonly=True), dtype=np.complex128)
@@ -855,7 +861,7 @@ def _vec_nonzero_owned_entries(
             op=MPI.MAX,
         )
     )
-    cutoff = max(1.0e-30, relative_tol * global_maximum)
+    cutoff = relative_tol * global_maximum
     nz = np.flatnonzero(np.abs(values) > cutoff)
     return (_idx(np.arange(start, end, dtype=np.int64)[nz]), values[nz].copy())
 
@@ -869,6 +875,7 @@ def _combine_owned_entries(
     comm: MPI.Intracomm,
     relative_tol: float = 1.0e-13,
 ) -> tuple[np.ndarray, np.ndarray]:
+    """Combine component functionals with a scale-homogeneous cutoff."""
     row_blocks: list[np.ndarray] = []
     value_blocks: list[np.ndarray] = []
     for (rows, values), coefficient in zip(component_entries, coefficients):
@@ -896,7 +903,7 @@ def _combine_owned_entries(
         summed_values = np.asarray([], dtype=np.complex128)
     local_maximum = float(np.max(np.abs(summed_values), initial=0.0))
     global_maximum = float(comm.allreduce(local_maximum, op=MPI.MAX))
-    cutoff = max(1.0e-30, relative_tol * global_maximum)
+    cutoff = relative_tol * global_maximum
     keep = np.abs(summed_values) > cutoff
     return _idx(unique_rows[keep]), summed_values[keep].copy()
 

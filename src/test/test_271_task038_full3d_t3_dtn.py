@@ -124,6 +124,74 @@ def _source_for_carrier(carrier: FullspaceDtnCarrier) -> PETSc.Vec:
     return vector
 
 
+def test_sparse_dtn_entry_filters_are_scale_homogeneous_across_mpi_ranks() -> None:
+    from src.solvers.dtn_port_3d import (
+        _combine_owned_entries,
+        _vec_nonzero_owned_entries,
+    )
+
+    comm = MPI.COMM_WORLD
+    local_size = 4
+    vector = PETSc.Vec().createMPI(
+        (local_size, local_size * comm.size), comm=comm
+    )
+    scaled_vector = vector.duplicate()
+    zero_vector = vector.duplicate()
+    start, end = map(int, vector.getOwnershipRange())
+    rank_scale = 10.0 ** (-comm.rank)
+    base_values = 1.0e-20 * rank_scale * np.asarray(
+        [1.0 + 2.0j, 1.0e-14 - 3.0e-15j, 2.0e-2 + 1.0e-2j, 0.0j],
+        dtype=np.complex128,
+    )
+    complex_scale = 1.0e-50 * (0.6 + 0.8j)
+    vector.array[:] = base_values
+    scaled_vector.array[:] = complex_scale * base_values
+    zero_vector.set(0.0)
+
+    try:
+        rows, values = _vec_nonzero_owned_entries(vector)
+        scaled_rows, scaled_values = _vec_nonzero_owned_entries(scaled_vector)
+        zero_rows, zero_values = _vec_nonzero_owned_entries(zero_vector)
+        expected_rows = np.asarray([start, start + 2], dtype=PETSc.IntType)
+        assert np.array_equal(rows, expected_rows)
+        assert np.array_equal(scaled_rows, rows)
+        np.testing.assert_allclose(
+            scaled_values / complex_scale, values, rtol=1.0e-13, atol=0.0
+        )
+        assert zero_rows.size == 0
+        assert zero_values.size == 0
+
+        row_x = np.asarray([start, start + 1, start + 2], dtype=PETSc.IntType)
+        row_y = np.asarray([start, start + 2], dtype=PETSc.IntType)
+        component_x = base_values[[0, 1, 2]]
+        component_y = base_values[[0, 2]] * np.asarray(
+            [0.3 + 0.1j, -0.5 + 0.25j], dtype=np.complex128
+        )
+        coefficients = (0.8 + 0.3j, -0.2 + 0.7j)
+        combined_rows, combined_values = _combine_owned_entries(
+            ((row_x, component_x), (row_y, component_y)),
+            coefficients,
+            comm=comm,
+        )
+        scaled_rows, scaled_values = _combine_owned_entries(
+            (
+                (row_x, complex_scale * component_x),
+                (row_y, complex_scale * component_y),
+            ),
+            coefficients,
+            comm=comm,
+        )
+        assert np.array_equal(combined_rows, expected_rows)
+        assert np.array_equal(scaled_rows, combined_rows)
+        np.testing.assert_allclose(
+            scaled_values / complex_scale, combined_values, rtol=1.0e-13, atol=0.0
+        )
+    finally:
+        zero_vector.destroy()
+        scaled_vector.destroy()
+        vector.destroy()
+
+
 def _synthetic_modal_sum(
     global_rows: int, mode_count: int, source: PETSc.Vec
 ) -> tuple[PETSc.Vec, np.ndarray]:
