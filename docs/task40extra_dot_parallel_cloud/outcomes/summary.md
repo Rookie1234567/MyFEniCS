@@ -92,3 +92,15 @@ DtN 实验检查开放边界通道的编号、物理方向和局部投影积分�
 | not_run；新高阶/工作站资格 | 当前p2 phi5已过；p4/p6、跨ABI、目标资源/物理与中断恢复仍缺 | 与本机同一大验证；自主读main新push；用户执行工作站大运行 |
 
 [Response V4](../response_v4.md)。本轮仅compact docs/evidence，无新PDE或生产接线；完整语料不入Git。
+
+## V5：sparse-p2 q0因子失败检查点
+
+| 身份/对象 | 实际结果 | 资格边界 |
+|---|---|---|
+| measured；source f2bd95ba、80cell/p2/phi5/manual532 | 原A0全部2048列差0；凝聚covariance9.953e-17、off-block4.116e-16 | 原已截断离散operator与对称性通过 |
+| failed；q0 468行/26264NNZ | 混合FE/aux单位量级cos/sin载荷残差1.434203246972e12；重复0；linearity NaN | 未保存解向量，不能据NaN范数判条目非有限；完整inverse/p4未运行 |
+| measured；watchdog | 7.320493135s；同时树RSS433651712B；swap0；exit2；后代清场 | 非资源Gate停止 |
+| derived；保存场见证 | 凝聚FE6.233e-14、q0FE4.023e-14；内部RHS范数2.678e-15 | 支持近零内部载荷符号/映射，不是任意RHS逆通过 |
+| diagnostic；端口 | H最小1.072e-194；172零C列/174零D行；q0共同零16项 | 532身份保留不证明未裁剪泛函完整；同离散缩放不能恢复上游裁剪 |
+
+[Response V5](../response_v5.md)、[hash-bound失败检查点](records/sparse_p2_failure_checkpoint_v1.json)。旧phi5原A/direct/Bloch数值保留并限于已生成operator；不外推本机未发布结果。新p4和gauge资格未运行。

@@ -1,0 +1,439 @@
+{
+  "schema": "task40extra.sparse-p2.readonly-saved-witness.v1",
+  "purpose": "distinguish_saved_condensed_algebra_from_raw_auxiliary_scaling_failure",
+  "operation_scope": [
+    "artifact_hash_and_dtype_checks",
+    "sparse_and_dense_saved_matrix_products",
+    "diagonal_auxiliary_recovery_of_old_saved_field",
+    "norms_and_support_counts"
+  ],
+  "PDE_assembly_factor_solve_SVD": false,
+  "raw_block_gate_status": "FAILED_PRESERVED",
+  "raw_failure": "actual q-block factor repeated/linear/residual gate fails: {'q': 0, 'shape': [468, 468], 'nnz': 26264, 'CSR_sha256': '1f855469f643b496481d2017f3fb33641d9ed45aca25855822efb6f873f26118', 'CSR': {'actual': {'shape': [468, 468], 'stored_entries_upper': 26264, 'indices_dtype': 'int32', 'indptr_dtype': 'int32', 'indices_bits': 32, 'indptr_bits': 32, 'overflow_rejected_before_conversion': True}, 'qualified_PETSc_IntType': {'shape': [468, 468], 'stored_entries_upper': 26264, 'indices_dtype': 'int32', 'indptr_dtype': 'int32', 'indices_bits': 32, 'indptr_bits': 32, 'overflow_rejected_before_conversion': True}, 'payload_bytes': 527156}, 'repeated_solve_relative': 0.0, 'linearity_relative': nan, 'block_true_residual_relative_max': 1434203246972.1028}",
+  "new_run_source_head": "f2bd95ba813b3243bdfd052e90c53ccb0cf0e006",
+  "prior_source_head": "ac1410ca1187352fbe398325c5f7aaa33bf0d0bd",
+  "input_manifest_hashes": {
+    "current_report": "e7c379ac6b0847e08085e9b4f97e0ebd244e9fe1ae11a053d55ee8e7f0829da5",
+    "current_provenance": "c617a66071322447eb6465d65cc80652a01251ca7063288aa31042f0156b0529",
+    "current_summary": "059a8386a6a18f12c8cad4007533e1f1e501a46159d9c1406bbfb565b2b0b930",
+    "prior_report": "24c05218a32cec8000923564f56209a747f13786a3144b96d2bf982953c7d28f",
+    "prior_provenance": "42dbdc1471161cf785b0a13556c617d98a27386eb58d04a4ed058e9881295911",
+    "prior_checker": "e6374883b3cc16a0f72d7146d2ea1cfa289c51df07612184c07465b0881a08c2"
+  },
+  "read_artifacts": [
+    {
+      "role": "current",
+      "label": "reference_S_data",
+      "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_sparse_p2_phi5_attempt1/arrays/reference_S_data.npy",
+      "sha256": "8800149cd0a5211848b34c2711fdb94b10b4a06185576ede4ad596a199f7c55a",
+      "shape": [
+        244932
+      ],
+      "dtype": "complex128"
+    },
+    {
+      "role": "current",
+      "label": "reference_S_indices",
+      "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_sparse_p2_phi5_attempt1/arrays/reference_S_indices.npy",
+      "sha256": "b29410703467bbb962e3b8782df9c8f1cc5028792bcffb8e5fd4490aab493a70",
+      "shape": [
+        244932
+      ],
+      "dtype": "int32"
+    },
+    {
+      "role": "current",
+      "label": "reference_S_indptr",
+      "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_sparse_p2_phi5_attempt1/arrays/reference_S_indptr.npy",
+      "sha256": "5e923dcee46a6ef96ea6dc463fdb24d0f1e7fad856087707c44522677449bd7a",
+      "shape": [
+        2101
+      ],
+      "dtype": "int32"
+    },
+    {
+      "role": "current",
+      "label": "q_0_S_data",
+      "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_sparse_p2_phi5_attempt1/arrays/q_0_S_data.npy",
+      "sha256": "f6b060e80211285d51d242ac2356c16f2a799102f35eb11484f571ce9182ef01",
+      "shape": [
+        26264
+      ],
+      "dtype": "complex128"
+    },
+    {
+      "role": "current",
+      "label": "q_0_S_indices",
+      "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_sparse_p2_phi5_attempt1/arrays/q_0_S_indices.npy",
+      "sha256": "daa2b9a0db968f00258dc2e19078fc05d56d3025a180e32bd5b9ef6323cacd8e",
+      "shape": [
+        26264
+      ],
+      "dtype": "int32"
+    },
+    {
+      "role": "current",
+      "label": "q_0_S_indptr",
+      "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_sparse_p2_phi5_attempt1/arrays/q_0_S_indptr.npy",
+      "sha256": "01d801fc62d5a5f4c4baeefd1ea2883c79fbccb036d47d5f48bc4ad8ab0bfe8a",
+      "shape": [
+        469
+      ],
+      "dtype": "int32"
+    },
+    {
+      "role": "current",
+      "label": "trace_full_independent_trace_positions",
+      "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_sparse_p2_phi5_attempt1/arrays/trace_full_independent_trace_positions.npy",
+      "sha256": "98df7ef5b96a045bbd23b6c04b65feaa357f1f3a63303174761055bf95f0fc4b",
+      "shape": [
+        1568
+      ],
+      "dtype": "int64"
+    },
+    {
+      "role": "current",
+      "label": "trace_R_t_data",
+      "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_sparse_p2_phi5_attempt1/arrays/trace_R_t_data.npy",
+      "sha256": "4546862a8b581ec043409fee9f67e704f3e4ea17dc144aa7ed12e10847ead296",
+      "shape": [
+        1652
+      ],
+      "dtype": "complex128"
+    },
+    {
+      "role": "current",
+      "label": "trace_R_t_indices",
+      "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_sparse_p2_phi5_attempt1/arrays/trace_R_t_indices.npy",
+      "sha256": "22bfb01928d883debd424b380081b12f852effc73fab0822f8b56a42717552af",
+      "shape": [
+        1652
+      ],
+      "dtype": "int32"
+    },
+    {
+      "role": "current",
+      "label": "trace_R_t_indptr",
+      "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_sparse_p2_phi5_attempt1/arrays/trace_R_t_indptr.npy",
+      "sha256": "acabd3c0f496ce6317dde6f0c26f4956dd7f88973a920d368fb76fbee2645115",
+      "shape": [
+        1569
+      ],
+      "dtype": "int32"
+    },
+    {
+      "role": "current",
+      "label": "trace_R_t_inverse_data",
+      "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_sparse_p2_phi5_attempt1/arrays/trace_R_t_inverse_data.npy",
+      "sha256": "67c1487199db53894dba90d0759c963f412a7eb71dc85268a0fd0d6aa9d02da7",
+      "shape": [
+        1652
+      ],
+      "dtype": "complex128"
+    },
+    {
+      "role": "current",
+      "label": "trace_R_t_inverse_indices",
+      "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_sparse_p2_phi5_attempt1/arrays/trace_R_t_inverse_indices.npy",
+      "sha256": "625f538f8618f270e5c67417349b90d0345a06fc557b6b6275a02c5028afaa4d",
+      "shape": [
+        1652
+      ],
+      "dtype": "int32"
+    },
+    {
+      "role": "current",
+      "label": "trace_R_t_inverse_indptr",
+      "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_sparse_p2_phi5_attempt1/arrays/trace_R_t_inverse_indptr.npy",
+      "sha256": "b6dfde8e5a35aabbfe6f5c8abc22936fef44ddc84ea17133504e983a90767a94",
+      "shape": [
+        1569
+      ],
+      "dtype": "int32"
+    },
+    {
+      "role": "current",
+      "label": "trace_F_t_data",
+      "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_sparse_p2_phi5_attempt1/arrays/trace_F_t_data.npy",
+      "sha256": "7cac35a20f5d38c7e4e725607f59f190bda8b01c96960a0f023d0d02eb890d2a",
+      "shape": [
+        6272
+      ],
+      "dtype": "complex128"
+    },
+    {
+      "role": "current",
+      "label": "trace_F_t_indices",
+      "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_sparse_p2_phi5_attempt1/arrays/trace_F_t_indices.npy",
+      "sha256": "daa95f9e386498dfa66b90bfb666d628a1009f9a528b47cb19a7e4c7f46b4655",
+      "shape": [
+        6272
+      ],
+      "dtype": "int32"
+    },
+    {
+      "role": "current",
+      "label": "trace_F_t_indptr",
+      "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_sparse_p2_phi5_attempt1/arrays/trace_F_t_indptr.npy",
+      "sha256": "48c2aa33e7cc951d365b5bf571e912e7fc902a8fcf8df320b5c1b97ca9b59876",
+      "shape": [
+        1569
+      ],
+      "dtype": "int32"
+    },
+    {
+      "role": "current",
+      "label": "port_q_labels",
+      "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_sparse_p2_phi5_attempt1/arrays/port_q_labels.npy",
+      "sha256": "eac49b940b0bc0447668a9f7129f218a53d713cdc2478f91bbb3f09d5b2e4e65",
+      "shape": [
+        532
+      ],
+      "dtype": "int64"
+    },
+    {
+      "role": "prior",
+      "label": "physical_rhs",
+      "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_p2_phi5_attempt1/arrays/physical_rhs.npy",
+      "sha256": "9fee35fee82a2fbe4ab6e1133e259b2dd5c392cce4759be15fa529fc83037651",
+      "shape": [
+        2048
+      ],
+      "dtype": "complex128"
+    },
+    {
+      "role": "prior",
+      "label": "A0_direct_physical",
+      "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_p2_phi5_attempt1/arrays/A0_direct_physical.npy",
+      "sha256": "cf615c125f0e139a93697294ef3ee8040fa4ccdd4eb228282a4e4b6d086a99d1",
+      "shape": [
+        2048
+      ],
+      "dtype": "complex128"
+    },
+    {
+      "role": "prior",
+      "label": "A0_original",
+      "path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_p2_phi5_attempt1/arrays/A0_original.npy",
+      "sha256": "40290663863154edf628736ff3f1889ce48f9271aea86ba7e8e7f721572c23c3",
+      "shape": [
+        2048,
+        2048
+      ],
+      "dtype": "complex128"
+    }
+  ],
+  "measured": {
+    "full_H_min": 1.0720025473921743e-194,
+    "full_H_max": 3.360768175582991,
+    "q0_H_min": 8.586202140540568e-173,
+    "q0_H_max": 3.36076817558299,
+    "Hhat_offdiagonal_nonzero_entries": 0,
+    "full_zero_C_columns": 172,
+    "full_zero_D_rows": 174,
+    "q0_joint_zero_C_D_modes": [
+      {
+        "index": 160,
+        "side": "top",
+        "m": 2,
+        "n": 0,
+        "polarization": "s",
+        "q0_local_slot": 22,
+        "actual_H": 1.2043158315969388e-61
+      },
+      {
+        "index": 161,
+        "side": "top",
+        "m": 2,
+        "n": 0,
+        "polarization": "p",
+        "q0_local_slot": 23,
+        "actual_H": 4.408962990326809e-62
+      },
+      {
+        "index": 174,
+        "side": "top",
+        "m": 3,
+        "n": 0,
+        "polarization": "s",
+        "q0_local_slot": 24,
+        "actual_H": 2.2748235005997714e-79
+      },
+      {
+        "index": 175,
+        "side": "top",
+        "m": 3,
+        "n": 0,
+        "polarization": "p",
+        "q0_local_slot": 25,
+        "actual_H": 9.320571791230758e-80
+      },
+      {
+        "index": 188,
+        "side": "top",
+        "m": 4,
+        "n": 0,
+        "polarization": "s",
+        "q0_local_slot": 26,
+        "actual_H": 6.372390021050119e-96
+      },
+      {
+        "index": 189,
+        "side": "top",
+        "m": 4,
+        "n": 0,
+        "polarization": "p",
+        "q0_local_slot": 27,
+        "actual_H": 2.7688859400737084e-96
+      },
+      {
+        "index": 202,
+        "side": "top",
+        "m": 5,
+        "n": 0,
+        "polarization": "s",
+        "q0_local_slot": 28,
+        "actual_H": 7.953999408343737e-112
+      },
+      {
+        "index": 203,
+        "side": "top",
+        "m": 5,
+        "n": 0,
+        "polarization": "p",
+        "q0_local_slot": 29,
+        "actual_H": 3.5802132504541684e-112
+      },
+      {
+        "index": 216,
+        "side": "top",
+        "m": 6,
+        "n": 0,
+        "polarization": "s",
+        "q0_local_slot": 30,
+        "actual_H": 2.5235608049498225e-127
+      },
+      {
+        "index": 217,
+        "side": "top",
+        "m": 6,
+        "n": 0,
+        "polarization": "p",
+        "q0_local_slot": 31,
+        "actual_H": 1.1624475541164013e-127
+      },
+      {
+        "index": 230,
+        "side": "top",
+        "m": 7,
+        "n": 0,
+        "polarization": "s",
+        "q0_local_slot": 32,
+        "actual_H": 1.5003526065566805e-142
+      },
+      {
+        "index": 231,
+        "side": "top",
+        "m": 7,
+        "n": 0,
+        "polarization": "p",
+        "q0_local_slot": 33,
+        "actual_H": 7.023141222835611e-143
+      },
+      {
+        "index": 244,
+        "side": "top",
+        "m": 8,
+        "n": 0,
+        "polarization": "s",
+        "q0_local_slot": 34,
+        "actual_H": 1.3929743368656183e-157
+      },
+      {
+        "index": 245,
+        "side": "top",
+        "m": 8,
+        "n": 0,
+        "polarization": "p",
+        "q0_local_slot": 35,
+        "actual_H": 6.597068358063395e-158
+      },
+      {
+        "index": 258,
+        "side": "top",
+        "m": 9,
+        "n": 0,
+        "polarization": "s",
+        "q0_local_slot": 36,
+        "actual_H": 1.7971465339568993e-172
+      },
+      {
+        "index": 259,
+        "side": "top",
+        "m": 9,
+        "n": 0,
+        "polarization": "p",
+        "q0_local_slot": 37,
+        "actual_H": 8.586202140540568e-173
+      }
+    ],
+    "physical_original_interior_RHS_norm": 2.678219876675891e-15,
+    "physical_original_interior_RHS_max": 6.891331933410917e-16,
+    "old_original_true_residual": 4.4818275342046624e-14,
+    "saved_field_condensed_FE_relative": 6.233404787716578e-14,
+    "saved_field_condensed_port_relative": 4.356323273813321e-17,
+    "saved_field_q0_FE_relative": 4.0231282255159886e-14,
+    "saved_field_q0_port_relative": 2.834929270276407e-16,
+    "saved_physical_alpha_norm": 2.1438967046597626e+24,
+    "saved_physical_alpha_finite": true,
+    "complete_port_terms_admission": [
+      {
+        "event": "allocation_admission",
+        "worker_elapsed_seconds": 2.0567840170006093,
+        "boundary": "complete_port_terms",
+        "current_tree_rss_bytes": 347340800,
+        "additional_payload_bytes": 0,
+        "declared_workspace_bytes": 0,
+        "reserve_bytes": 134217728,
+        "projected_tree_bytes": 481558528,
+        "tree_cap_bytes": 1610612736,
+        "facts": {
+          "matrix_payload_bytes": 0,
+          "workspace_bytes": 0,
+          "allocation_semantics": "additional_objects_to_current_resident_RSS"
+        },
+        "admitted": true
+      }
+    ]
+  },
+  "interpretation": {
+    "physical_witness": "roundoff_agreement_supports_condensation_signs_maps_on_near_zero_interior_load",
+    "arbitrary_interior_RHS_qualification": "not_run_still_pending",
+    "raw_auxiliary_random_RHS_qualification": "failed_not_reclassified",
+    "scaling_as_leading_cause": "inference_supported_by_173_decade_H_and_upstream_absolute_floor",
+    "all_modes_physical_truncation_qualification": "not_established_by_inventory_or_old_oracle_match"
+  },
+  "source_citations": [
+    {
+      "path": "src/solvers/dtn_port_3d.py",
+      "sha256": "31696d97a20a84228ff64c260e2a6b9358050610094073187d4f9dc36df24349",
+      "functions": [
+        "_vec_nonzero_owned_entries",
+        "_combine_owned_entries",
+        "_ReusableSurfaceComponentAssembler",
+        "_mode_projection_denominator"
+      ],
+      "finding": "absolute_floor1e-30_before_normalization; phase includes kz*z; H includes abs(boundaryphase)^2"
+    },
+    {
+      "path": "src/solvers/p4_cell_condensed_inverse.py",
+      "sha256": "678eb3103e57505a42c996ee2818c0e9e757189c0a2f871c90f3f911faf210e7",
+      "functions": [
+        "assemble_condensed_ports",
+        "assemble_port_condensed_terms"
+      ],
+      "finding": "original B/-D/H signs retained; no nonzero Bi/Di admission in this run"
+    }
+  ],
+  "diagnostic_script_sha256": "6d0cadf27d4f4080ce71e39a1c36660a26a1d5a07070faa94b35a07ace5f4ada"
+}

@@ -1,3 +1,15 @@
+# dot Task40extra V5：失败模型登记
+
+| 模型/source | 实测状态 | 资源/资格 |
+|---|---|---|
+| sparse80cell/p2/phi5/manual532；f2bd95ba813b3243bdfd052e90c53ccb0cf0e006 | q0 468行/26264NNZ；raw augmented residual1.434203246972e12、linearity NaN；原2048列/对称性通过 | FAILED；7.320493135s、树RSS433651712B、swap0、exit2；无完整inverse/p4/official R/T/A |
+
+模式编号完整不证明未裁剪C/D泛函完整；旧phi5结果只针对旧已生成离散operator。保存物理场的凝聚FE见证6.233e-14仅含近零内部RHS，不能取代任意载荷资格；NaN范数不证明解条目非有限。
+
+证据：[Response V5](task40extra_dot_parallel_cloud/response_v5.md)、[失败与资源hash](task40extra_dot_parallel_cloud/outcomes/records/sparse_p2_failure_checkpoint_v1.json)。下一步先冻结对象与坐标尺度，再讨论获准的小型Gate；本次归档没有新运行，不改变历史失败。
+
+---
+
 # Task40extra 当前模型登记：Review V1 / R5 收口
 
 | 模型 / 阶段 | source / identity | 实测结果与资源 | 当前资格边界 |

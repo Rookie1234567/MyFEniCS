@@ -1,3 +1,11 @@
+# dot Task40extra V5：sparse-p2失败与端口诊断
+
+为扩展已过的小p2背景逆，source f2bd95ba进行了精确凝聚/逐q稀疏构造。原2048列与对称性通过，但首q0混合FE/aux单位量级载荷残差1.434e12、linearity NaN，故保留失败；未保存因子解向量，不能由NaN范数断言条目非有限。7.320s、树RSS433651712B、swap0、后代清场，非资源停止。保存旧场近零内部载荷见证仅支持符号/映射。H极小和C/D零支撑提示表示尺度及上游截断；same-discrete缩放不能恢复裁掉的泛函。当前没有完整稀疏逆/p4/目标资格；仅云端manual532phi5，不推断本机进展。
+
+证据：[Response V5](task40extra_dot_parallel_cloud/response_v5.md)、[失败与资源hash](task40extra_dot_parallel_cloud/outcomes/records/sparse_p2_failure_checkpoint_v1.json)。下一步先冻结对象与坐标尺度，再讨论获准的小型Gate；本次归档没有新运行，不改变历史失败。
+
+---
+
 # dot Task40extra V4：全分支复用审计与工作站准备
 
 2026-10-01：为避免与MyFEniCSx_task37_extra重复工作，完成35个当前分支树索引和4773个去重代码/正文blob自动检索，104291461B全部核验；专题作定点精读/章节读，未宣称全库全文阅读。本轮没有新数值运行。
