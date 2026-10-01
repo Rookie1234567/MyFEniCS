@@ -1026,6 +1026,7 @@ FIELD_SPECS: Final = (
             "physical_p6_trace_workstation_guided_v30",
             "physical_p6_trace_projection_layout_v31",
             "task40extra_0p7nm_p6trace_p4_v1",
+            "task40extra_0p7nm_p6trace_p4_reference_metric_v2",
             "hybrid_block_ldu_ilu0_dtn_woodbury",
         ),
         constraints=("only reviewed iterative identities are public",),

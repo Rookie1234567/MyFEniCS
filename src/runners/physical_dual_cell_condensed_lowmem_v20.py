@@ -25,12 +25,29 @@ from src.io.physical_intermediate_profile import (
     WORKINGSET_SETUP_PROFILE,
     WORKSTATION_GUIDED_LOCAL_V30_PROFILE,
     PROJECTION_LAYOUT_V31_PROFILE,
-    TASK40_0P7NM_PROFILE,
+    TASK40_PROFILES,
+    TASK40_REFERENCE_METRIC_PROFILE,
     FUSED_KERNEL_PROFILES,
     LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE,
     LOWMEM_DUAL_CELL_CONDENSED_PROFILE,
     profile_facts,
 )
+
+
+def _p6_raw_tensor_candidate_type(profile: str):
+    if profile == TASK40_REFERENCE_METRIC_PROFILE:
+        from src.solvers.task40extra_p6_reference_metric import (
+            Task40ExtraP6ReferenceMetricCandidate,
+        )
+
+        return Task40ExtraP6ReferenceMetricCandidate
+    if profile in A4_TENSOR_H6_PROFILES:
+        from src.solvers.task39extra_p6_raw_tensor import (
+            Task39ExtraP6RawTensorCandidate,
+        )
+
+        return Task39ExtraP6RawTensorCandidate
+    return None
 
 
 _V22_BOUND_B_IDENTITY = {
@@ -1725,7 +1742,7 @@ def _run_physical_dual_cell_condensed_lowmem(
                 memory_policy=capacity_policy,
                 native_quota_mb=4687,
                 evidence_prefix=evidence_prefix,
-                task40_profile=(profile_identity == TASK40_0P7NM_PROFILE),
+                task40_profile=(profile_identity in TASK40_PROFILES),
             )
 
         def stack_factory(runtime_, common_, resolved_, *, stage):
@@ -1748,13 +1765,10 @@ def _run_physical_dual_cell_condensed_lowmem(
             )
 
         def outer_factory(runtime_, common_, resolved_, full_rhs, apply_pc, **kwargs):
+            candidate_type = _p6_raw_tensor_candidate_type(profile)
             raw_tensor_evaluator = None
-            if profile in A4_TENSOR_H6_PROFILES:
-                from src.solvers.task39extra_p6_raw_tensor import (
-                    Task39ExtraP6RawTensorCandidate,
-                )
-
-                raw_tensor_evaluator = Task39ExtraP6RawTensorCandidate(
+            if candidate_type is not None:
+                raw_tensor_evaluator = candidate_type(
                     common_["levels"]["spaces"][6].element.basix_element,
                     cfg,
                     common_["fine"]["volume_action"].bilinear_form,
@@ -1770,10 +1784,10 @@ def _run_physical_dual_cell_condensed_lowmem(
                 raw_tensor_evaluator=raw_tensor_evaluator,
                 identity_cache_mode="shared_read_only_per_interior_shape",
                 preserve_exact_geometry=(
-                    profile_identity == TASK40_0P7NM_PROFILE
+                    profile_identity in TASK40_PROFILES
                 ),
                 persist_native_stop_records=(
-                    profile_identity == TASK40_0P7NM_PROFILE
+                    profile_identity in TASK40_PROFILES
                 ),
                 evidence_prefix=evidence_prefix,
                 expected_space_counts=expected_space_counts,
@@ -2057,13 +2071,13 @@ def _run_physical_dual_cell_condensed_lowmem(
                     profile in {
                         WORKSTATION_GUIDED_LOCAL_V30_PROFILE,
                         PROJECTION_LAYOUT_V31_PROFILE,
-                        TASK40_0P7NM_PROFILE,
+                        *TASK40_PROFILES,
                     }
                 ),
                 projection_layout_v31_natural_order_internal=(
                     profile in {
                         PROJECTION_LAYOUT_V31_PROFILE,
-                        TASK40_0P7NM_PROFILE,
+                        *TASK40_PROFILES,
                     }
                 ),
                 formal_release_timing=(

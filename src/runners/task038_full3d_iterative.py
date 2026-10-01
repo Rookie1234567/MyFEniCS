@@ -393,6 +393,7 @@ def run_full3d_iterative(
         "physical_p6_trace_workstation_guided_v30",
         "physical_p6_trace_projection_layout_v31",
         "task40extra_0p7nm_p6trace_p4_v1",
+        "task40extra_0p7nm_p6trace_p4_reference_metric_v2",
     }:
         from .physical_dual_cell_condensed_lowmem_v20 import (
             _run_physical_dual_cell_condensed_lowmem,
@@ -403,14 +404,14 @@ def run_full3d_iterative(
             PHYSICAL_MEMORY_POLICY_V23,
             WORKSTATION_GUIDED_LOCAL_V30_PROFILE,
             PROJECTION_LAYOUT_V31_PROFILE,
-            TASK40_0P7NM_PROFILE,
+            TASK40_PROFILES,
         )
 
         profile = str(resolved_payload["solver"]["preconditioner"])
         v29_profile = profile == A4_TENSOR_H6_PROFILE
         v30_profile = profile == WORKSTATION_GUIDED_LOCAL_V30_PROFILE
         v31_profile = profile == PROJECTION_LAYOUT_V31_PROFILE
-        task40_profile = profile == TASK40_0P7NM_PROFILE
+        task40_profile = profile in TASK40_PROFILES
         stage = str(resolved_payload["solver"]["stage"])
         if stage != "Q4_ORIGINAL":
             raise ValueError(f"{profile} allows only Q4_ORIGINAL")

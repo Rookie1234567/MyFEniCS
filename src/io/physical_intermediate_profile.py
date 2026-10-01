@@ -18,6 +18,7 @@ from .physical_recursive_profile import (
     macro_v11_profile_facts,
     macro_v10_profile_facts,
 )
+from src.geometry.task40_nonseparable_plan import TASK40_REFERENCE_METRIC_PROFILE
 
 SCHUR_PROFILE = "physical_p4_schur_v14"
 P4_BLR_PROFILE = "physical_p4_blr_bal_h_v16"
@@ -44,18 +45,19 @@ WORKSTATION_GUIDED_LOCAL_V30_PROFILE = (
 )
 PROJECTION_LAYOUT_V31_PROFILE = "physical_p6_trace_projection_layout_v31"
 TASK40_0P7NM_PROFILE = "task40extra_0p7nm_p6trace_p4_v1"
+TASK40_PROFILES = (TASK40_0P7NM_PROFILE, TASK40_REFERENCE_METRIC_PROFILE)
 A4_TENSOR_H6_PROFILES = (
     A4_TENSOR_H6_PROFILE,
     WORKSTATION_GUIDED_LOCAL_V30_PROFILE,
     PROJECTION_LAYOUT_V31_PROFILE,
-    TASK40_0P7NM_PROFILE,
+    *TASK40_PROFILES,
 )
 FUSED_KERNEL_PROFILES = (
     FUSED_KERNEL_PROFILE,
     A4_TENSOR_H6_PROFILE,
     WORKSTATION_GUIDED_LOCAL_V30_PROFILE,
     PROJECTION_LAYOUT_V31_PROFILE,
-    TASK40_0P7NM_PROFILE,
+    *TASK40_PROFILES,
 )
 PHYSICAL_MEMORY_POLICY_V23 = "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23"
 V23_QUALIFIED_JIT_CACHE_SOURCE = (
@@ -80,7 +82,7 @@ P4_BLR_TRADEOFF_THRESHOLDS = {
     "T2_BLR_CONTROL": 1.0e-4,
 }
 
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE, LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE, COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE, FUSED_KERNEL_PROFILE, A4_TENSOR_H6_PROFILE, WORKSTATION_GUIDED_LOCAL_V30_PROFILE, PROJECTION_LAYOUT_V31_PROFILE, TASK40_0P7NM_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE, LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE, COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE, FUSED_KERNEL_PROFILE, A4_TENSOR_H6_PROFILE, WORKSTATION_GUIDED_LOCAL_V30_PROFILE, PROJECTION_LAYOUT_V31_PROFILE, *TASK40_PROFILES) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
 
 
 def p4_blr_tradeoff_threshold(stage: str) -> float:
@@ -163,6 +165,31 @@ def profile_facts(identity=PROFILE) -> dict:
             "true affine-cell metrics; exact MPC target cross terms"
         )
         facts["resources"]["pss_sampling_policy"] = "disabled_by_profile"
+        return facts
+    if identity == TASK40_REFERENCE_METRIC_PROFILE:
+        facts = profile_facts(TASK40_0P7NM_PROFILE)
+        facts.update(
+            identity=identity,
+            scope="task40extra_n0_n6_0p7nm_p2_reference_metric_candidate",
+            qualification=(
+                "opt-in Task40 route using shared reference curl/mass integrals "
+                "with each p6 cell's exact affine metric; orientation, full-cell "
+                "condensation, original-A6 checks and zero-swap gates are inherited"
+            ),
+        )
+        facts["route_selection"].update(
+            p6_raw_tensor_candidate=(
+                "task40extra_p6_reference_integrals_exact_metric_v1"
+            ),
+            p6_full_tensor_before_existing_orientation_and_condensation=True,
+        )
+        facts["gates"].update(
+            p6_reference_metric_scope=(
+                "axis-aligned affine hexahedra with cellwise constant isotropic material; "
+                "unsupported geometry uses the original FFCx evaluator"
+            ),
+            p6_reference_metric_candidate_must_pass_original_strict_identity=True,
+        )
         return facts
     if identity == TASK40_0P7NM_PROFILE:
         facts = profile_facts(PROJECTION_LAYOUT_V31_PROFILE)

@@ -600,6 +600,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "physical_p6_trace_workstation_guided_v30",
                 "physical_p6_trace_projection_layout_v31",
                 "task40extra_0p7nm_p6trace_p4_v1",
+                "task40extra_0p7nm_p6trace_p4_reference_metric_v2",
             }:
                 raise _error(
                     "solver.preconditioner",
@@ -1025,7 +1026,10 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     validate_v21_input("Z3_ORIGINAL_H7P5", geometry, discretization)
                 except (OSError, TypeError, ValueError, KeyError) as exc:
                     raise _error("geometry/discretization", str(exc)) from exc
-            elif preconditioner == "task40extra_0p7nm_p6trace_p4_v1":
+            elif preconditioner in {
+                "task40extra_0p7nm_p6trace_p4_v1",
+                "task40extra_0p7nm_p6trace_p4_reference_metric_v2",
+            }:
                 if solver.get("stage") != "Q4_ORIGINAL":
                     raise _error(
                         "solver.stage",
@@ -1390,9 +1394,10 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                         "discretization.mesh_target_nm",
                         "fullspace_pml_double_sweep_v19 fixes mesh_target_nm=10",
                     )
-            task40_0p7nm = (
-                preconditioner == "task40extra_0p7nm_p6trace_p4_v1"
-            )
+            task40_0p7nm = preconditioner in {
+                "task40extra_0p7nm_p6trace_p4_v1",
+                "task40extra_0p7nm_p6trace_p4_reference_metric_v2",
+            }
             if task40_0p7nm:
                 if not isclose(
                     incidence["wavelength_nm"], 0.7, rel_tol=0.0, abs_tol=1.0e-14
