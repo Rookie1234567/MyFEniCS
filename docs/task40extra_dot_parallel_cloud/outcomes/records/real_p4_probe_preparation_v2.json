@@ -1,0 +1,547 @@
+{
+  "schema": "real-p4-probe.preparation-compact.v2",
+  "status": "REAL_3D_G0_P4_ASSEMBLY_EXPORT_COMPLETE_NO_GLOBAL_SOLVE",
+  "branch": "task40extra_dot_parallel_cloud",
+  "source_base_sha": "ce811383d33dc67090efb2f234f4ef77c0a3a513",
+  "qualified_numerical_source_sha": "c619854a371fdb3330d21747a53a440dd1d427ae",
+  "qualified_source_files_sha256": {
+    "benchmarks/cases/task40extra_dot_parallel_cloud/real_p4_probe_plan.json": "3248f67932888c2d8e303640fb9d92c4116fb12a8b080268e9c5610cc033cdf7",
+    "benchmarks/run_real_p4_probe.py": "1da0040574a74ee226dca4ea2d46d86c11a0939ddd06b8304b28719ab47535be",
+    "docs/task40extra_dot_parallel_cloud/phase2_real_p4_probe.md": "de90348b7db04a9295d184479041731fa8555feb83f8963250efd9a972cbac65",
+    "src/solvers/real_p4_probe.py": "fc68b1ccdc36a2b27e4eb1d04b9d2914c73760dbe70acd64fd933d257ceb377e",
+    "src/test/test_real_p4_probe_contract.py": "99f02f04ab2845a7077a9438a9bf34f2d89fdfae31481b5d3a5163f6342c922a",
+    "src/test/test_real_p4_probe_actual_dtn.py": "4cff53e5da5d5f41aa1c77ad9d7a1b9c9e90d1e207b8c34e38168740516ff8b8",
+    "src/test/test_real_p4_probe_cloud_recovery.py": "3a148af99ca8a8fea6992df5dd4c12fbff53acbfb80217e55c29a90eb7ed252e",
+    "benchmarks/cases/task40extra_dot_parallel_cloud/real_p4_mode_reference.json": "8c061fa7e720e24f4377209454cb48c94d2e7a59fc04cad71a44d00ba7d6203d"
+  },
+  "scope": "bounded preparation and actual tiny p2 fixtures; not actual named G0 matrix or factor",
+  "named_G0_assembly": "measured_assembly_export_complete",
+  "global_factor_experiment": "not_run",
+  "original_A4_residual_on_G0": null,
+  "full_p6_construction": "not_run",
+  "official_result": false,
+  "BAL_H_qualification": false,
+  "target_qualification": false,
+  "clarified_target": {
+    "geometry_nm": [
+      50,
+      25,
+      140
+    ],
+    "regular_no_3D_notch": true,
+    "wavelength_nm": 0.7,
+    "physical_memory_TB": 2,
+    "solve_wall_hours": 48,
+    "research_window_hours": 72,
+    "target_status": "unresolved",
+    "notched_G0_status": "authorized_small_3D_operator_diagnostic_completed",
+    "complete_3D_solver_required": true,
+    "twoD_or_two_point_fiveD_delivery_allowed": false,
+    "research_deadline_UTC": "2026-10-04T10:07:14Z"
+  },
+  "pure_contract_tests": {
+    "status": "PASS",
+    "count": 6,
+    "command": "python -m unittest -q src.test.test_real_p4_probe_contract",
+    "scope": "standard-library gate checks, no PDE/factor",
+    "syntax_checks": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "actual_fixture_attempts": [
+    {
+      "attempt": 1,
+      "source_sha": "dc42447243b625e1ed906854351961f3cf8f3d3f",
+      "result": "FAILED_COLLECTION",
+      "tests": [
+        "src/test/test_task39extra_v18_cell_condensed_core.py::test_real_ffcx_system_uses_one_factor_solve_and_recovers_interiors",
+        "src/test/test_task39extra_v18_cell_condensed_ports.py::test_actual_adapter_complex_mpc_nonzero_interior_ports_and_new_rhs",
+        "src/test/test_271_task038_full3d_t3_dtn.py::test_p2_p3_current_surface_functionals_match_modal_sum[2]"
+      ],
+      "test_count": 1,
+      "failed_error_skipped_count": 1,
+      "watchdog_classification": "WORKER_FAILED",
+      "leader_exit_code": 4,
+      "elapsed_seconds": 2.270986622000237,
+      "simultaneous_tree_rss_peak_bytes": 237559808,
+      "process_tree_swap_peak_bytes": 0,
+      "resource_status_readable": true,
+      "resource_identity_complete": true,
+      "descendants_cleared": true,
+      "qualification_sha256": "9ff16a100d62cba55001f9cc82c54b6796cfd7fad7a55f4e075b8cd04a6704b1",
+      "junit_xml_sha256": "ed092419df6a6a5b1b1d163434d777075e0df97283ac68d2190236d318942753",
+      "watchdog_sha256": "96ba484e1be66dcbe35f3b8be4b9120f34540c06f54a740e950878acec1f04de",
+      "raw_path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/p4_source_qualification_attempt1",
+      "worker_output": "ERROR: found no collectors for /workspace/scratch/9c465670b46b/task40extra_cloud/repo/src/test/test_271_task038_full3d_t3_dtn.py::test_p2_p3_current_surface_functionals_match_modal_sum\n\n\n==================================== ERRORS ====================================\n_________ ERROR collecting src/test/test_271_task038_full3d_t3_dtn.py __________\nImportError while importing test module '/workspace/scratch/9c465670b46b/task40extra_cloud/repo/src/test/test_271_task038_full3d_t3_dtn.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\n../.complex-dolfinx/lib/python3.12/importlib/__init__.py:90: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsrc/test/test_271_task038_full3d_t3_dtn.py:25: in <module>\n    from src.test.stage2_test_utils import stage4_block_config\nsrc/test/stage2_test_utils.py:19: in <module>\n    from src.solvers.solve_maxwell_3d_stage_1_airbox import run_stage1_airbox_3d_case\nsrc/solvers/solve_maxwell_3d_stage_1_airbox.py:6: in <module>\n    from .common_3d_case_flow import run_prepared_3d_case_flow\nsrc/solvers/common_3d_case_flow.py:26: in <module>\n    from ..postprocessing.postprocess_3d import save_airbox_3d_fields\nsrc/postprocessing/postprocess_3d.py:6: in <module>\n    import pyvista\nE   ModuleNotFoundError: No module named 'pyvista'\n=========================== short test summary info ============================\nERROR src/test/test_271_task038_full3d_t3_dtn.py\n1 error in 0.85s",
+      "environment_manifest_sha256": "ca9a7804b8a0f9980af6b3e89fde7beb47a17080e6eb0a8bafcfe95e305bdb85",
+      "command": [
+        "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--junitxml=benchmarks/artifacts/task40extra_dot_parallel_cloud/p4_source_qualification_attempt1/pytest.xml",
+        "--basetemp=benchmarks/artifacts/task40extra_dot_parallel_cloud/p4_source_qualification_attempt1/pytest_tmp",
+        "src/test/test_task39extra_v18_cell_condensed_core.py::test_real_ffcx_system_uses_one_factor_solve_and_recovers_interiors",
+        "src/test/test_task39extra_v18_cell_condensed_ports.py::test_actual_adapter_complex_mpc_nonzero_interior_ports_and_new_rhs",
+        "src/test/test_271_task038_full3d_t3_dtn.py::test_p2_p3_current_surface_functionals_match_modal_sum[2]"
+      ]
+    },
+    {
+      "attempt": 2,
+      "source_sha": "247dffe218c3e47eb560de0fb6ae58000d7bd022",
+      "result": "FAILED_COLLECTION",
+      "tests": [
+        "src/test/test_task39extra_v18_cell_condensed_core.py::test_real_ffcx_system_uses_one_factor_solve_and_recovers_interiors",
+        "src/test/test_task39extra_v18_cell_condensed_ports.py::test_actual_adapter_complex_mpc_nonzero_interior_ports_and_new_rhs",
+        "src/test/test_real_p4_probe_actual_dtn.py::test_actual_p2_dtn_surface_matches_independent_modal_sum"
+      ],
+      "test_count": 1,
+      "failed_error_skipped_count": 1,
+      "watchdog_classification": "WORKER_FAILED",
+      "leader_exit_code": 4,
+      "elapsed_seconds": 2.374649024000064,
+      "simultaneous_tree_rss_peak_bytes": 241655808,
+      "process_tree_swap_peak_bytes": 0,
+      "resource_status_readable": true,
+      "resource_identity_complete": true,
+      "descendants_cleared": true,
+      "qualification_sha256": "354c28ea20322758fccb8c6bf10bd2a630337ff959bfb4c4f609e57952de6e87",
+      "junit_xml_sha256": "785d0997e6096745b74edef66f5fea2803b13a43d47c5b412568775effba26a8",
+      "watchdog_sha256": "c3166f7a60e0850df03f2f0f7a4642459322fe841ad3e8bfd45d4bdd13c16204",
+      "raw_path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/p4_source_qualification_attempt2",
+      "worker_output": "ERROR: found no collectors for /workspace/scratch/9c465670b46b/task40extra_cloud/repo/src/test/test_real_p4_probe_actual_dtn.py::test_actual_p2_dtn_surface_matches_independent_modal_sum\n\n\n==================================== ERRORS ====================================\n__________ ERROR collecting src/test/test_real_p4_probe_actual_dtn.py __________\nImportError while importing test module '/workspace/scratch/9c465670b46b/task40extra_cloud/repo/src/test/test_real_p4_probe_actual_dtn.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\n../.complex-dolfinx/lib/python3.12/importlib/__init__.py:90: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsrc/test/test_real_p4_probe_actual_dtn.py:17: in <module>\n    from src.solvers.dtn_port_3d import (\nsrc/solvers/dtn_port_3d.py:51: in <module>\n    from .common_3d_utils import _write_progress_event\nsrc/solvers/common_3d_utils.py:18: in <module>\n    from .solve_vector_maxwell import _json_default\nsrc/solvers/solve_vector_maxwell.py:27: in <module>\n    from ..postprocessing.postprocess import save_fields_and_plots\nsrc/postprocessing/postprocess.py:6: in <module>\n    import pyvista\nE   ModuleNotFoundError: No module named 'pyvista'\n=========================== short test summary info ============================\nERROR src/test/test_real_p4_probe_actual_dtn.py\n1 error in 0.93s",
+      "environment_manifest_sha256": "ca9a7804b8a0f9980af6b3e89fde7beb47a17080e6eb0a8bafcfe95e305bdb85",
+      "command": [
+        "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--junitxml=benchmarks/artifacts/task40extra_dot_parallel_cloud/p4_source_qualification_attempt2/pytest.xml",
+        "--basetemp=benchmarks/artifacts/task40extra_dot_parallel_cloud/p4_source_qualification_attempt2/pytest_tmp",
+        "src/test/test_task39extra_v18_cell_condensed_core.py::test_real_ffcx_system_uses_one_factor_solve_and_recovers_interiors",
+        "src/test/test_task39extra_v18_cell_condensed_ports.py::test_actual_adapter_complex_mpc_nonzero_interior_ports_and_new_rhs",
+        "src/test/test_real_p4_probe_actual_dtn.py::test_actual_p2_dtn_surface_matches_independent_modal_sum"
+      ]
+    },
+    {
+      "attempt": 3,
+      "source_sha": "7c79f33f9fbd43ee575bd031ae824c7ebcd015ef",
+      "result": "PASS",
+      "tests": [
+        "src/test/test_task39extra_v18_cell_condensed_core.py::test_real_ffcx_system_uses_one_factor_solve_and_recovers_interiors",
+        "src/test/test_real_p4_probe_cloud_recovery.py::test_cloud_public_petsc_mpc_nonzero_ports_and_recovery",
+        "src/test/test_real_p4_probe_actual_dtn.py::test_actual_p2_dtn_surface_matches_independent_modal_sum"
+      ],
+      "test_count": 3,
+      "failed_error_skipped_count": 0,
+      "watchdog_classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 15.64809193200017,
+      "simultaneous_tree_rss_peak_bytes": 535728128,
+      "process_tree_swap_peak_bytes": 0,
+      "resource_status_readable": true,
+      "resource_identity_complete": true,
+      "descendants_cleared": true,
+      "qualification_sha256": "dbe81dfdbd3f5785702d44ae9055c7a12ed58c6ba3e5f257c84b9cbf879538f4",
+      "junit_xml_sha256": "42e039c166109214d5127d6a5aa91239814a79fa21153bb2e67b2cf78c9249d1",
+      "watchdog_sha256": "fba416f4d5665a292886fa753664e756a530e047746c8c463c98b2ec35c30e7a",
+      "raw_path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/p4_source_qualification_attempt3",
+      "worker_output": "...                                                                      [100%]\n3 passed in 14.13s",
+      "environment_manifest_sha256": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+      "command": [
+        "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--junitxml=benchmarks/artifacts/task40extra_dot_parallel_cloud/p4_source_qualification_attempt3/pytest.xml",
+        "--basetemp=benchmarks/artifacts/task40extra_dot_parallel_cloud/p4_source_qualification_attempt3/pytest_tmp",
+        "src/test/test_task39extra_v18_cell_condensed_core.py::test_real_ffcx_system_uses_one_factor_solve_and_recovers_interiors",
+        "src/test/test_real_p4_probe_cloud_recovery.py::test_cloud_public_petsc_mpc_nonzero_ports_and_recovery",
+        "src/test/test_real_p4_probe_actual_dtn.py::test_actual_p2_dtn_surface_matches_independent_modal_sum"
+      ]
+    },
+    {
+      "attempt": 4,
+      "source_sha": "c619854a371fdb3330d21747a53a440dd1d427ae",
+      "result": "PASS",
+      "tests": [
+        "src/test/test_task39extra_v18_cell_condensed_core.py::test_real_ffcx_system_uses_one_factor_solve_and_recovers_interiors",
+        "src/test/test_real_p4_probe_cloud_recovery.py::test_cloud_public_petsc_mpc_nonzero_ports_and_recovery",
+        "src/test/test_real_p4_probe_actual_dtn.py::test_actual_p2_dtn_surface_matches_independent_modal_sum"
+      ],
+      "test_count": 3,
+      "failed_error_skipped_count": 0,
+      "watchdog_classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 3.2804289590003464,
+      "simultaneous_tree_rss_peak_bytes": 507879424,
+      "process_tree_swap_peak_bytes": 0,
+      "resource_status_readable": true,
+      "resource_identity_complete": true,
+      "descendants_cleared": true,
+      "qualification_sha256": "943bc9ddeff9cc8b11a3751ff8090f5c24cbf731113553b83c640d9e4f523631",
+      "junit_xml_sha256": "977d9fb3e68b03ffa426d021a1954416049146a5f2d73f6e9745581606919b70",
+      "watchdog_sha256": "3b8e647fb158eafc393d404e3e418f05e44eec5dbba41bf4de95c9de2a503eef",
+      "raw_path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/p4_source_qualification_attempt4",
+      "worker_output": "...                                                                      [100%]\n3 passed in 1.58s",
+      "environment_manifest_sha256": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+      "command": [
+        "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--junitxml=benchmarks/artifacts/task40extra_dot_parallel_cloud/p4_source_qualification_attempt4/pytest.xml",
+        "--basetemp=benchmarks/artifacts/task40extra_dot_parallel_cloud/p4_source_qualification_attempt4/pytest_tmp",
+        "src/test/test_task39extra_v18_cell_condensed_core.py::test_real_ffcx_system_uses_one_factor_solve_and_recovers_interiors",
+        "src/test/test_real_p4_probe_cloud_recovery.py::test_cloud_public_petsc_mpc_nonzero_ports_and_recovery",
+        "src/test/test_real_p4_probe_actual_dtn.py::test_actual_p2_dtn_surface_matches_independent_modal_sum"
+      ],
+      "analytical_G0_mode_gate": {
+        "schema": "real-p4-probe.independent-mode-gate.v1",
+        "passed": true,
+        "full_manifest_sha256": "de0e4b79e8ec0741db4e4b08f2f2ce97e78026d18e1c6795da7d6ddd5f3d9ed8",
+        "historical_PDE_manifest_sha256": "c3ff9c0cf35e2d183f44ed3fb7448d4aa586bb6fdf7f9dc9ba78dc25011c693a",
+        "historical_hash_status": "unverified_raw_unavailable_difference_reason_unknown",
+        "exact_ordered_key_index_and_flags": true,
+        "reference_raw_audit_sha256": "db66609fa75765a5c5089653fe79f54f44b7beb376de5e2b95d1b9c085ec2354",
+        "numeric_scaled_limit": 1.4210854715202004e-14,
+        "max_absolute_deltas": {
+          "alpha": 0.0,
+          "gamma": 0.0,
+          "beta": 0.0,
+          "E": 0.0,
+          "H": 0.0,
+          "k": 0.0,
+          "tangent_norm_sq": 0.0,
+          "power": 0.0
+        },
+        "max_scaled_deltas": {
+          "alpha": 0.0,
+          "gamma": 0.0,
+          "beta": 0.0,
+          "E": 0.0,
+          "H": 0.0,
+          "k": 0.0,
+          "tangent_norm_sq": 0.0,
+          "power": 0.0
+        },
+        "historical_hash_identity_claimed": false
+      }
+    }
+  ],
+  "historical_private_ffi": {
+    "schema": "real-p4-probe.source-ffi-audit.v1",
+    "historical_fixture": "src/test/test_task39extra_v18_cell_condensed_ports.py::test_actual_adapter_complex_mpc_nonzero_interior_ports_and_new_rhs",
+    "status": "NOT_RUN_ABI_INCOMPATIBLE",
+    "source_helper": "src/solvers/fullspace_v17_p3_oracle.py",
+    "source_helper_sha256": "55e0cffde6463f1e736520a2b289ab565e61c8be3a8650142e59eec8aca21bb4",
+    "historical_layout_bytes": 88,
+    "installed_header_layout_bytes_derived": 96,
+    "installed_header": "/workspace/scratch/9c465670b46b/task40extra_cloud/.complex-dolfinx/include/petscmat.h",
+    "installed_header_sha256": "f483e8c7684991052a287cdb210a750860baba22809d433ee5c636ca903ba04c",
+    "added_fields": [
+      "PetscBool factoronhost",
+      "PetscBool solveonhost"
+    ],
+    "layout_size_identity": "derived using LP64 double=8B and PetscBool=int=4B, header order",
+    "loaded_prefix_soname": "libpetsc.so.3.25.6",
+    "historical_sonames": [
+      "libpetsc_complex.so.3.19",
+      "libpetsc_complex.so"
+    ],
+    "no_aliases_created": true,
+    "no_historical_ctypes_factor_executed": true,
+    "replacement_scope": "separate cloud fixture, same tiny mathematical assertions, public petsc4py KSP preonly+LU only"
+  },
+  "watchdog_selftest": {
+    "classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "descendants_cleared": true,
+    "sampled_process_tree_rss_peak_bytes": 29519872,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "process_tree_all_status_readable": true,
+    "process_tree_all_identity_complete": true,
+    "elapsed_seconds": 1.780058686999837
+  },
+  "resource_scope": "sampled simultaneous dedicated subreaper-parent-plus-descendants RSS, excludes other independent cloud activities",
+  "current_entrypoint_gates": {
+    "assembly_only": true,
+    "global_factor_implemented": false,
+    "max_tree_cap_bytes": 6442450944,
+    "actual_cap_policy": "min(existing dynamic legacy reserve envelope,6GiB)",
+    "swap_bytes": 0,
+    "wall_seconds": 900,
+    "source_receipt_and_clean_exact_HEAD_required": true,
+    "future_factor_separate_parent_go_required": true
+  },
+  "repository_original_numerical_files_changed": false,
+  "CI": "not_run",
+  "full_repository_pytest": "not_run",
+  "GitHub_rendered_view": "not_verified",
+  "remote_publication": "pending_parent_audit",
+  "author_identity": "dot (AI assistant) <dot@localhost>",
+  "historical_BLR_scans_repeated": false,
+  "named_assembly_attempts": [
+    {
+      "attempt": 1,
+      "source_sha": "7c79f33f9fbd43ee575bd031ae824c7ebcd015ef",
+      "result": "FAILED",
+      "watchdog_classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 24.559001220000027,
+      "export_worker_elapsed_seconds": 22.62210187399978,
+      "tree_rss_peak_bytes": 699330560,
+      "tree_swap_peak_bytes": 0,
+      "effective_launch_cap_bytes": 3941515264,
+      "all_status_readable": true,
+      "all_identity_complete": true,
+      "descendants_cleared": true,
+      "global_factor_created": false,
+      "original_A4_residual_status": "not_run_no_factor",
+      "manifest_sha256": "e4ae84961d91aec81c577164cba4124dbbc6f4510ef8f7e6bcc72bdb9078b3a3",
+      "watchdog_sha256": "a29e4bc513751c3fb637b9531c922eed8e20bd635ebaa876d676ee6f42183842",
+      "events_sha256": "748464d9db28b7d504d8729a7419b6ad10fb48f827c8b22f146f24a6a4e5a72c",
+      "raw_path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/real_p4_g0_phase2_attempt1",
+      "command": [
+        "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/run_real_p4_probe.py",
+        "--assemble-export",
+        "--worker",
+        "--expected-head",
+        "7c79f33f9fbd43ee575bd031ae824c7ebcd015ef",
+        "--source-receipt",
+        "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/p4_source_qualification_attempt3/qualification.json",
+        "--source-receipt-sha256",
+        "dbe81dfdbd3f5785702d44ae9055c7a12ed58c6ba3e5f257c84b9cbf879538f4",
+        "--run-directory",
+        "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/real_p4_g0_phase2_attempt1"
+      ],
+      "error": {
+        "type": "ValueError",
+        "message": "ordered real DtN mode inventory does not match named G0"
+      },
+      "worker_output": "[1790849614.658895] [0f3aeb80125a:56   :0]       tcp_iface.c:984  UCX  ERROR scandir(/sys/class/net) failed: No such file or directory\np4_mesh_mpc_started\np4_mesh_mpc_complete\nsymbolic_parent_quadrature_complete\nTraceback (most recent call last):\n  File \"<frozen runpy>\", line 198, in _run_module_as_main\n  File \"<frozen runpy>\", line 88, in _run_code\n  File \"/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/run_real_p4_probe.py\", line 180, in <module>\n    raise SystemExit(main())\n                     ^^^^^^\n  File \"/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/run_real_p4_probe.py\", line 158, in main\n    return _worker(args)\n           ^^^^^^^^^^^^^\n  File \"/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/run_real_p4_probe.py\", line 125, in _worker\n    assemble_export_named_g0(INPUT, args.run_directory / \"operator\", provenance=provenance,\n  File \"/workspace/scratch/9c465670b46b/task40extra_cloud/repo/src/solvers/real_p4_probe.py\", line 149, in assemble_export_named_g0\n    raise ValueError(\"ordered real DtN mode inventory does not match named G0\")\nValueError: ordered real DtN mode inventory does not match named G0"
+    },
+    {
+      "attempt": 2,
+      "source_sha": "c619854a371fdb3330d21747a53a440dd1d427ae",
+      "result": "ASSEMBLY_EXPORT_COMPLETE",
+      "watchdog_classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 136.74210849099927,
+      "export_worker_elapsed_seconds": 133.9948218849995,
+      "tree_rss_peak_bytes": 1199104000,
+      "tree_swap_peak_bytes": 0,
+      "effective_launch_cap_bytes": 4020740096,
+      "all_status_readable": true,
+      "all_identity_complete": true,
+      "descendants_cleared": true,
+      "global_factor_created": false,
+      "original_A4_residual_status": "not_run_no_factor",
+      "manifest_sha256": "0694682ff5e3477f50432a022d4fb9db142e58e3d651d3c53ebd3b0e3811b656",
+      "watchdog_sha256": "26d45863f3917a5e68b9d37eb4a9116b00cc08c2e813f0dcd25f702e646b52e7",
+      "events_sha256": "8a011982060a0c1fc6d42bd1003e11aa045f1a40011e6ec873781599ad5f384b",
+      "raw_path": "benchmarks/artifacts/task40extra_dot_parallel_cloud/real_p4_g0_phase2_attempt2",
+      "command": [
+        "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/run_real_p4_probe.py",
+        "--assemble-export",
+        "--worker",
+        "--expected-head",
+        "c619854a371fdb3330d21747a53a440dd1d427ae",
+        "--source-receipt",
+        "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/p4_source_qualification_attempt4/qualification.json",
+        "--source-receipt-sha256",
+        "943bc9ddeff9cc8b11a3751ff8090f5c24cbf731113553b83c640d9e4f523631",
+        "--run-directory",
+        "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/real_p4_g0_phase2_attempt2"
+      ],
+      "error": null,
+      "matrix": {
+        "schema_version": "task039extra.v18.petsc-csr-content-identity.v1",
+        "shape": [
+          29072,
+          29072
+        ],
+        "dtype": "complex128",
+        "value_endianness": "little",
+        "index_dtype": "int64-little-endian-canonical",
+        "nnz": 10912592,
+        "nnz_semantics": "owned-row-getRow-stored-entries",
+        "hash_algorithm": "sha256(header||rank||ownership||owned-row-stream-digests)",
+        "mapping_sha256": "bc723f8677428cb43171dd9053e57e7cfd7de3a4964fb5c4be4b044552b10f8d",
+        "values_sha256": "cda79da66077692abfa98abc52feb60c86da206a870a9505f99761a77fbd3a01",
+        "csr_sha256": "2753cbe26f4e88127a26d03f521d8b67589eee9913b5b67c92d2e18d9066ceea",
+        "dense_gather": false
+      },
+      "cells": 336,
+      "original_A4_storage_rows": 69856,
+      "active_trace_rows": 28992,
+      "modes": 80,
+      "mode_gate": {
+        "schema": "real-p4-probe.independent-mode-gate.v1",
+        "passed": true,
+        "full_manifest_sha256": "de0e4b79e8ec0741db4e4b08f2f2ce97e78026d18e1c6795da7d6ddd5f3d9ed8",
+        "historical_PDE_manifest_sha256": "c3ff9c0cf35e2d183f44ed3fb7448d4aa586bb6fdf7f9dc9ba78dc25011c693a",
+        "historical_hash_status": "unverified_raw_unavailable_difference_reason_unknown",
+        "exact_ordered_key_index_and_flags": true,
+        "reference_raw_audit_sha256": "db66609fa75765a5c5089653fe79f54f44b7beb376de5e2b95d1b9c085ec2354",
+        "numeric_scaled_limit": 1.4210854715202004e-14,
+        "max_absolute_deltas": {
+          "alpha": 0.0,
+          "gamma": 0.0,
+          "beta": 0.0,
+          "E": 0.0,
+          "H": 0.0,
+          "k": 0.0,
+          "tangent_norm_sq": 0.0,
+          "power": 0.0
+        },
+        "max_scaled_deltas": {
+          "alpha": 0.0,
+          "gamma": 0.0,
+          "beta": 0.0,
+          "E": 0.0,
+          "H": 0.0,
+          "k": 0.0,
+          "tangent_norm_sq": 0.0,
+          "power": 0.0
+        },
+        "historical_hash_identity_claimed": false
+      },
+      "dtn_quadrature_degree": 25,
+      "parent_volume_quadrature": [
+        {
+          "quadrature_degree": 15,
+          "quadrature_rule": "default"
+        },
+        {
+          "quadrature_degree": 15,
+          "quadrature_rule": "default"
+        }
+      ],
+      "raw_classes": 33,
+      "oriented_classes": 67,
+      "local_dimensions": [
+        300,
+        108,
+        192
+      ],
+      "retained_cache_bytes": {
+        "lu_bytes": 12532752,
+        "recovery_bytes": 22228992,
+        "rhs_trace_bytes": 22228992,
+        "rhs_projection_bytes": 6251904,
+        "solution_embedding_bytes": 0,
+        "residual_projection_bytes": 0,
+        "retained_schur_bytes": 0,
+        "retained_numeric_cache_bytes": 63242640
+      },
+      "CSR_array_descriptors": {
+        "csr_indptr": {
+          "path": "csr_indptr.npy",
+          "shape": [
+            29073
+          ],
+          "dtype": "int32",
+          "array_bytes": 116292,
+          "file_bytes": 116420,
+          "file_sha256": "a78c4bcbeb7ccfde73df4694f961c8f79a70201be1e536a652a2f99cf4ef0adb"
+        },
+        "csr_indices": {
+          "path": "csr_indices.npy",
+          "shape": [
+            10912592
+          ],
+          "dtype": "int32",
+          "array_bytes": 43650368,
+          "file_bytes": 43650496,
+          "file_sha256": "8be98fadc86628b6abb52ccd0c1111e481342a680b5ca390cfaaab18346e0184"
+        },
+        "csr_data": {
+          "path": "csr_data.npy",
+          "shape": [
+            10912592
+          ],
+          "dtype": "complex128",
+          "array_bytes": 174601472,
+          "file_bytes": 174601600,
+          "file_sha256": "4ecadd67c697ded2e08bb98d111cad2ff0adf263270dc68d0aacca78a1d9186f"
+        }
+      },
+      "rhs_array_descriptors": {
+        "physical_storage_rhs": {
+          "path": "physical_storage_rhs.npy",
+          "shape": [
+            69856
+          ],
+          "dtype": "complex128",
+          "array_bytes": 1117696,
+          "file_bytes": 1117824,
+          "file_sha256": "c064b953f296662988811b49b50ae15be9379d8833860b868d9f766c7d1efeac"
+        },
+        "condensed_augmented_rhs": {
+          "path": "condensed_augmented_rhs.npy",
+          "shape": [
+            29072
+          ],
+          "dtype": "complex128",
+          "array_bytes": 465152,
+          "file_bytes": 465280,
+          "file_sha256": "7ef4bd5a636b8852010f23968380671e7c1181ab0d27e0461cb8be7ba16ed07a"
+        }
+      },
+      "raw_CSR_array_bytes": 218368132,
+      "export_array_bytes_total": 301167184,
+      "export_array_count": 1486,
+      "recovery_classes": 67,
+      "recovery_cell_maps": 336,
+      "rhs_origin": "true_p4_incident_Maxwell_RHS_not_saved_BAL_H_RHS",
+      "geometry_cache_policy": "exact_mesh_widths_not_historical_p4_csr_byte_identity",
+      "environment_manifest_sha256": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+      "matrix_identity_checked_after_export": true,
+      "independent_export_audit": {
+        "schema": "real-p4-probe.independent-export-audit.v1",
+        "status": "PASS",
+        "all_array_file_hashes_verified": 1486,
+        "failed_array_descriptors": [],
+        "row_column_indices_strictly_sorted_unique": true,
+        "all_matrix_values_finite": true,
+        "stored_nnz": 10912592,
+        "exact_nonzero_value_nnz": 10912592,
+        "exact_zero_value_entries": 0,
+        "trace_row_stored_degree_min_max": [
+          216,
+          612
+        ],
+        "port_row_stored_degree_min_max": [
+          97,
+          769
+        ],
+        "physical_rhs_norm": 1.2111002092943228,
+        "condensed_rhs_norm": 1.2111002092943224,
+        "elapsed_seconds": 0.858925595999608,
+        "manifest_sha256": "0694682ff5e3477f50432a022d4fb9db142e58e3d651d3c53ebd3b0e3811b656",
+        "scope": "read-only artifact/hash audit; no PDE/factor/solve; zero-elimination not performed",
+        "factor_run": false
+      },
+      "independent_export_audit_sha256": "12797a7f9c16518a66c5a79dfbc2d131a52976328b9e1160b1d4e011a8b9efaf"
+    }
+  ],
+  "next_reference_screen": {
+    "status": "plan_only_not_run",
+    "required_before_complex64": true,
+    "backend_candidate": "public SciPy SuperLU complex128; no old private ctypes MUMPS",
+    "input": "actual verified assembly attempt2 CSR/RHS/recovery",
+    "exact_zero_elimination": "none; all stored values are nonzero",
+    "original_A4_limit": 1e-10,
+    "nominal_tree_cap_bytes": 6442450944,
+    "effective_cap": "fresh measured min(dynamic legacy envelope,6GiB)",
+    "admission": "current simultaneous tree RSS + declared backend additional budget + future vector/recovery allowance +128MiB evidence reserve <effective cap",
+    "symbolic_estimate": "unavailable for public SciPy splu; no invented estimate",
+    "budget_status": "parent must approve exact backend/memory/time command after measured preflight; no factor permission implied"
+  },
+  "portable_environment_record": {
+    "path": "docs/task40extra_dot_parallel_cloud/outcomes/records/real_p4_cloud_abi_v2.json",
+    "sha256": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+    "scope": "import-only ABI and actual dependency closure, separate from source fixtures/PDE",
+    "prefix_relocation": "absolute build/import paths are provenance, replace prefix when reproducing and rerun ABI/source gates"
+  }
+}

@@ -38,3 +38,13 @@ DtN 实验检查开放边界通道的编号、物理方向和局部投影积分�
 | checker/benchmark | 两类组件 runner、计数脚本与 compact records | 仅其明示范围 |
 | compact evidence/docs | 本目录、benchmark findings、项目回顾 | 可独立审阅 |
 | do-not-merge | 整体研究分支、raw/模板/cache | 未开 PR、未 merge；仅更新 dot 独占分支 |
+
+## V2：真实三维G0 p4算子数据
+
+| 范围 | 实际状态与数据 | 证据 |
+|---|---|---|
+| 小型真实三维p4装配/导出 | measured；336 cells，29,072 rows、10,912,592 NNZ、80端口；complex128/int32 CSR 218,368,132 B | [V2详细结果](real_p4_probe_preparation_v2.md) |
+| 独立内容/资源核验 | 全1,486 arrays核验；同时树RSS峰1,199,104,000 B，136.742秒，swap0；无global factor/solve | [compact记录](records/real_p4_probe_preparation_v2.json) |
+| 失败/ABI边界 | 两次collection失败、一次mode-hash失败保留；危险历史private-FFI未运行；新环境小型资格单独记录 | 同上 |
+| 最终目标 | 完整三维原尺寸50×25×140 nm、无缺口规则基线、0.7 nm、约2 TB/≤48小时；未来三维缺口能力保留；截至2026-10-04 10:07:14 UTC的72小时研究窗口 | 当前目标能力unknown；不以二维/2.5D替代 |
+| 下一步 | 准备公共backend128reference+完整原A4 residual screen；尚未运行；64在其通过后再决定 | [Response V2](../response_v2.md) |

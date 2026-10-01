@@ -1969,3 +1969,14 @@ R0 不改变旧 V16–V18 结果；R1/R2/R3、official E/H、near-field、R/T/A�
 0.7 nm/2 TiB scalable solve 均 not_run。p6 local object file 在最后 timeline 后才落盘，
 因此完整同期 process peak 与 cache closeout 仍是 unknown；不得把该条目登记为已通过的
 production model。
+
+## Task40extra dot V2：真实三维小G0 p4装配与导出
+
+本条是新独占云端分支的实际全域小系统装配记录，不继承父正式解资格。单元凝聚消去局部内部未知量并保留完整恢复，缩小全局共享边界/端口矩阵；本批只生成该矩阵，没有全局factor或solve。
+
+| Model ID | source / scope | measured result | resource / status | evidence |
+|---|---|---|---|---|
+| dot_real_g0_p4_attempt1 | source7c79f33f9fbd43ee575bd031ae824c7ebcd015ef；336-cell三维缺口小G0、0.7 nm、p4、MPI1 | 真mode count80；历史full-manifest SHA Gate未匹配；凝聚矩阵未生成 | WORKER_FAILED；同时树RSS699,330,560 B、24.559秒、swap0；后代清场 | [V2 compact](task40extra_dot_parallel_cloud/outcomes/records/real_p4_probe_preparation_v2.json) |
+| dot_real_g0_p4_attempt2 | sourcec619854a371fdb3330d21747a53a440dd1d427ae；显式新mode identity、独立M0数值/key核验 | 29,072 rows、10,912,592 NNZ、80真实端口；complex128/int32原CSR218,368,132 B；1,486导出array独立核验通过 | ASSEMBLY_EXPORT_COMPLETE；同时树RSS1,199,104,000 B、136.742秒、swap0；有效cap4,020,740,096 B；无global factor/solve | [实际矩阵/边界](task40extra_dot_parallel_cloud/outcomes/real_p4_probe_preparation_v2.md) |
+
+原A4残差、恢复后的全局解、official R/T/A/A_volume均not_run。新mode full-manifest SHA de0e4b79e8ec0741db4e4b08f2f2ce97e78026d18e1c6795da7d6ddd5f3d9ed8，与已有独立M0 keys/flags及E/H/k/alpha/gamma/beta/power最大差0；历史c3ff raw不可用，差异原因unknown，不宣称历史hash同一。危险历史private-FFI在PETSc3.25下未运行，public petsc4py小fixture单独资格。完整三维原尺寸50×25×140 nm、规则无缺口、0.7 nm、约2 TB/≤48小时目标仍unknown；未来三维缺口能力保留，不以二维/2.5D替代。

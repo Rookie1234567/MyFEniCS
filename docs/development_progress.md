@@ -3269,3 +3269,13 @@ V26 本轮 Full3D p6/h7.5、coarse p4 场已经完成 126 步并通过残差/物
 纯几何派生计数显示假设恢复带缺口尺寸只有 211 raw 材料+metric 类型，不能把逐 cell 独占的 17 TB 假设说成必需内存；实际方向/factor 共享未知。完整性能仍以全域 p4 和每步纠错为主要风险，原 G1 KSP 占 76.5%，即删除全部 setup 也只给约 1.285 倍理论上限。本批无生产资格、无目标容量证明、无 PR/merge。下一步继续有界关键瓶颈研究，避免重复旧负路线。
 
 详细：[Response V1](task40extra_dot_parallel_cloud/response_v1.md)、[结果与负项](task40extra_dot_parallel_cloud/outcomes/summary.md)、[复现](../benchmarks/cases/task40extra_dot_parallel_cloud/README.md)。
+
+## 2026-10-01：dot V2 真实三维p4数据入口闭合
+
+第一批局部模板无法回答全域p4因子瓶颈，因此本批在独占云端分支建立显式、有资源Gate的真实小G0装配/导出入口。沿原三维mesh/MPC、FFCx、DtN、RHS与单元恢复路径生成29,072行、10,912,592 NNZ、80真实端口的complex128系统；实际int32 CSR载荷218,368,132 B，1,486数组及所有恢复/端口映射hash独立核验。136.742秒全过程同时树RSS峰1,199,104,000 B、swap0，无global factor/solve或official功率。
+
+两次缺PyVista的collection失败、一次mode-hash Gate失败均保留。正式补充依赖未替换原130个ABI包；发现历史ctypes MatFactorInfo在新PETSc3.25下88 B/96 B不相容，禁止该helper运行，并用公开petsc4py真实LU完成独立MPC/非零内部+端口RHS恢复资格。新完整mode hash显式冻结，独立M0数学值和ordered keys/flags差为0；历史c3ff raw不可得，不能冒称逐字节复现。
+
+最终目标明确为完整三维原尺寸50×25×140 nm、无缺口规则基线、0.7 nm、约2 TB/单次≤48小时；未来三维缺口能力必须保留，不接受二维/2.5D替代，72小时研究窗口截至2026-10-04 10:07:14 UTC。本批只有真实全局算子数据价值，目标能力仍unknown。下一步先准备complex128 reference-factor和恢复后独立原A4残差控制，通过后再决定64；不重复BLR扫描、不改ordinary default或其他分支。
+
+详细：[Response V2](task40extra_dot_parallel_cloud/response_v2.md)、[结果/资源/负项](task40extra_dot_parallel_cloud/outcomes/real_p4_probe_preparation_v2.md)、[compact](task40extra_dot_parallel_cloud/outcomes/records/real_p4_probe_preparation_v2.json)。

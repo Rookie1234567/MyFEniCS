@@ -1,0 +1,21 @@
+{
+  "schema": "real-p4-probe.plan.v1",
+  "status": "not_run",
+  "purpose": "REAL_PHYSICAL_RHS_SCREEN",
+  "input": "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4_review_v1.dat",
+  "input_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e",
+  "source_checkout_branch": "task40extra_dot_parallel_cloud",
+  "assembly_expected": {"cells": 336, "degree": 4, "trace_and_port_rows": 29072, "nnz": 10912592, "real_DtN_modes": 80},
+  "p6_construction": "symbolic_UFL_quadrature_analysis_only_no_DOLFINx_space_action_or_factor",
+  "assembly_command": "python -m benchmarks.run_real_p4_probe --assemble-export --expected-head COMMITTED_HEAD --source-receipt QUALIFICATION_JSON --source-receipt-sha256 RECEIPT_SHA256 --run-directory benchmarks/artifacts/task40extra_dot_parallel_cloud/real_p4_g0_phase2_attempt1",
+  "assembly_resource": {"mpi": 1, "math_threads": 1, "process_tree_cap_bytes": 6442450944, "actual_cap": "min(existing_legacy_dynamic_envelope, explicit_6_GiB)", "swap_bytes": 0, "wall_seconds": 900, "sampling_seconds": 0.25, "minimum_free_disk_bytes": 5368709120},
+  "assembly_launch_requires": ["parent exact-command approval", "clean committed own branch", "separate complex cloud ABI receipt", "source tiny actual FFCx/MPC/port/recovery fixture receipt"],
+  "next_factor_stage": {"implemented": false, "parent_separate_approval_required": true, "run_after": "measured assembly/export matrix identity and watchdog resource evidence", "backend": "SciPy SuperLU", "order": ["complex128 reference_then_release", "complex64 candidate"], "ordering": "COLAMD", "diag_pivot_thresh": 1.0, "equilibration": true, "max_original_A4_residual_corrections": 2, "original_A4_true_residual_limit": 1e-10, "predicted_additional_factor_and_workspace_bytes_policy": 4294967296, "reserve_bytes": 134217728, "symbolic_only_estimate_available": false, "policy_estimate_is_guarantee": false},
+  "RHS_scope": "true_p4_incident_Maxwell_RHS_not_archived_BAL_H_correction",
+  "full_original_A4_available": "public_complex128_p4_form_action_with_saved_exact_recovery_and_DtN_carrier",
+  "production_qualification": false,
+  "BAL_H_qualification": false,
+  "official_RTA": false,
+  "target_2TB_or_48h_claim": false,
+  "BLR_scan": false
+}
