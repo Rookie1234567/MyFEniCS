@@ -194,6 +194,13 @@ def _validate_resolved_configs(runs: dict[str, RunInput]) -> dict[str, Any]:
             "boundary/dtn_manual_order_max_m",
             "boundary/dtn_manual_order_max_n",
             "solver/preconditioner",
+            "derived/physical_intermediate_profile/gates/p6_reference_metric_candidate_must_pass_original_strict_identity",
+            "derived/physical_intermediate_profile/gates/p6_reference_metric_scope",
+            "derived/physical_intermediate_profile/identity",
+            "derived/physical_intermediate_profile/qualification",
+            "derived/physical_intermediate_profile/route_selection/p6_full_tensor_before_existing_orientation_and_condensation",
+            "derived/physical_intermediate_profile/route_selection/p6_raw_tensor_candidate",
+            "derived/physical_intermediate_profile/scope",
             "provenance/expected_output_parent",
             "provenance/input_sha256",
             "provenance/physical_model_sha256",
@@ -224,6 +231,11 @@ def _validate_resolved_configs(runs: dict[str, RunInput]) -> dict[str, Any]:
             "changed_paths": sorted(different),
             "allowed_paths": sorted(expected[pair_name]),
             "unexpected_paths": sorted(unexpected),
+            "interpretation": (
+                "M0-to-M1 also crosses the already-qualified P2 reference-metric candidate/configuration; it is a combined diagnostic comparison. M1-to-M2 isolates the declared mode-order expansion."
+                if pair_name == "M0_to_M1"
+                else "Only the declared manual mode bounds and run provenance differ; geometry, materials, incidence, mesh, method, and solver settings are identical."
+            ),
             "physical_sections_equal": {
                 name: first.get(name) == second.get(name)
                 for name in ("geometry", "materials", "incidence", "dimension", "discretization", "method")
