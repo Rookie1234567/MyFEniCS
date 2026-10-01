@@ -146,10 +146,10 @@ class SimulationConfig3D:
     )
     divergence_penalty: float = 0.0
     diffraction_zero_order_only: bool = True
+    # Internal DtN selection limits populated only from explicit public manual
+    # boundary bounds. Output reporting limits remain separate below.
     diffraction_order_max_m: int | None = None
     diffraction_order_max_n: int | None = None
-    # Reporting-only Task38 bounds; outgoing DtN mode selection keeps reading
-    # diffraction_order_max_m/n above for legacy identity.
     reporting_diffraction_order_max_m: int | None = None
     reporting_diffraction_order_max_n: int | None = None
     diffraction_sample_count_x: int = 24

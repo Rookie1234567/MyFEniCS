@@ -1891,6 +1891,31 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
         raise _error(
             "boundary.dtn_assembly", "3D public DtN assembly must be auxiliary"
         )
+    manual_bounds = ("dtn_manual_order_max_m", "dtn_manual_order_max_n")
+    supplied_manual_bounds = [key for key in manual_bounds if key in boundary]
+    if boundary.get("dtn_order_policy") == "manual":
+        if dimension != 3:
+            raise _error("boundary.dtn_order_policy", "manual DtN is supported only in 3D")
+        for key in manual_bounds:
+            if key not in boundary:
+                raise _error(f"boundary.{key}", "required with dtn_order_policy=manual")
+            if boundary[key] < 0:
+                raise _error(f"boundary.{key}", "must be non-negative")
+        for bound_key, output_key in (
+            ("dtn_manual_order_max_m", "diffraction_order_max_m"),
+            ("dtn_manual_order_max_n", "diffraction_order_max_n"),
+        ):
+            report_max = config["output"].get(output_key)
+            if report_max is not None and report_max < boundary[bound_key]:
+                raise _error(
+                    f"output.{output_key}",
+                    f"must cover boundary.{bound_key} so every selected mode can be reported",
+                )
+    elif supplied_manual_bounds:
+        raise _error(
+            "boundary",
+            "dtn_manual_order_max_m/n are only valid with dtn_order_policy=manual",
+        )
     if dimension == 2 and boundary.get("dtn_assembly") == "explicit":
         if kind != "2d_port" or boundary.get("dtn_order_policy") not in {
             "zero_order",
@@ -2229,10 +2254,10 @@ def simulation_config_3d_from_normalized(
         mesh_refinement_radius=d.get("mesh_refinement_radius_nm"),
         floquet_constraint_mode=d.get("floquet_constraint_mode", "auto"),
         diffraction_zero_order_only=not reporting_requested,
-        # These public requests are reporting bounds only.  DtN mode selection
-        # uses stage4_dtn_order_policy independently below.
-        diffraction_order_max_m=None,
-        diffraction_order_max_n=None,
+        # Output bounds stay reporting-only. Explicit boundary manual limits
+        # feed the existing mode enumerator without changing old input behavior.
+        diffraction_order_max_m=b.get("dtn_manual_order_max_m"),
+        diffraction_order_max_n=b.get("dtn_manual_order_max_n"),
         reporting_diffraction_order_max_m=out.get("diffraction_order_max_m"),
         reporting_diffraction_order_max_n=out.get("diffraction_order_max_n"),
         diffraction_sample_count_x=out["diffraction_sample_count_x"],

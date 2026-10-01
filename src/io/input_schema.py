@@ -796,14 +796,32 @@ FIELD_SPECS: Final = (
         "DtN 阶次选择策略",
         "stage4_dtn_order_policy",
         '"auto_propagating"',
-        allowed=("zero_order", "auto_propagating"),
+        allowed=("zero_order", "auto_propagating", "manual"),
         constraints=(
-            "required only when vertical_boundary is dtn or dtn_port; 2D port maps "
-            "to port_use_diffraction_orders; explicit 2D port accepts zero_order "
-            "or auto_propagating; TE with a 2D dtn boundary currently accepts only "
-            "zero_order; legacy manual order selection is internal because it mixed "
-            "output fields into PDE selection",
+            "required only when vertical_boundary is dtn or dtn_port; public manual "
+            "selection is 3D-only and requires boundary.dtn_manual_order_max_m/n; "
+            "output diffraction_order_max_m/n remain reporting-only",
         ),
+    ),
+    _f(
+        "boundary.dtn_manual_order_max_m",
+        "integer",
+        "order",
+        ("3d",),
+        "manual DtN 的 x 阶最大绝对值",
+        "diffraction_order_max_m for manual DtN selection",
+        "8",
+        constraints=(">= 0; required with dtn_order_policy=manual",),
+    ),
+    _f(
+        "boundary.dtn_manual_order_max_n",
+        "integer",
+        "order",
+        ("3d",),
+        "manual DtN 的 y 阶最大绝对值",
+        "diffraction_order_max_n for manual DtN selection",
+        "2",
+        constraints=(">= 0; required with dtn_order_policy=manual",),
     ),
     _f(
         "boundary.dtn_assembly",

@@ -13,12 +13,16 @@ TASK40_GEOMETRY_IDENTITY = "task40extra_nonseparable_0p7nm_v1"
 TASK40_F1_REFERENCE_METRIC_RUN_ID = (
     "task40extra_0p7nm_nonseparable_g1_reference_metric_f1_v1"
 )
+TASK40_F2_G0_M1_RUN_ID = "task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1"
+TASK40_F3_G0_M2_RUN_ID = "task40extra_0p7nm_nonseparable_g0_manual_m2_f3_v1"
 TASK40_RUNS = {
     "task40extra_0p7nm_nonseparable_g0_iterative_v1": "G0",
     "task40extra_0p7nm_nonseparable_g1_iterative_v1": "G1",
     "task40extra_0p7nm_nonseparable_g0_iterative_review_v1": "G0",
     "task40extra_0p7nm_nonseparable_g1_iterative_review_v1": "G1",
     TASK40_F1_REFERENCE_METRIC_RUN_ID: "G1",
+    TASK40_F2_G0_M1_RUN_ID: "G0",
+    TASK40_F3_G0_M2_RUN_ID: "G0",
     "task40extra_0p7nm_nonseparable_g0_direct_reference_v1": "G0",
 }
 TASK40_SI_N = complex(0.9998851703688496, 4.3236152269189515e-6)

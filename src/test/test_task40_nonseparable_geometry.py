@@ -21,6 +21,8 @@ from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
 from src.geometry.task40_nonseparable_plan import (
     TASK40_COMPARISON_GROUP,
     TASK40_F1_REFERENCE_METRIC_RUN_ID,
+    TASK40_F2_G0_M1_RUN_ID,
+    TASK40_F3_G0_M2_RUN_ID,
     TASK40_GEOMETRY_IDENTITY,
     TASK40_PROFILE,
     task40_mesh_plan,
@@ -43,13 +45,18 @@ G1 = INPUT_ROOT / "nonseparable_g1_p6_q4.dat"
 G0_REVIEW_V1 = INPUT_ROOT / "nonseparable_g0_p6_q4_review_v1.dat"
 G1_REVIEW_V1 = INPUT_ROOT / "nonseparable_g1_p6_q4_review_v1.dat"
 F1_REFERENCE_METRIC = INPUT_ROOT / "nonseparable_g1_p6_q4_reference_metric_f1.dat"
+F2_G0_M1_MANUAL = INPUT_ROOT / "nonseparable_g0_p6_q4_manual_m1_f2.dat"
+F3_G0_M2_MANUAL = INPUT_ROOT / "nonseparable_g0_p6_q4_manual_m2_f3.dat"
 G0_DIRECT = INPUT_ROOT / "nonseparable_g0_p6_direct_reference.dat"
 
 
 def test_all_task40_inputs_resolve_to_the_frozen_physical_identity():
     resolved = [
         load_and_resolve(path)
-        for path in (G0, G1, G0_DIRECT, G0_REVIEW_V1, G1_REVIEW_V1)
+        for path in (
+            G0, G1, G0_DIRECT, G0_REVIEW_V1, G1_REVIEW_V1,
+            F1_REFERENCE_METRIC, F2_G0_M1_MANUAL, F3_G0_M2_MANUAL,
+        )
     ]
     for specification in resolved:
         validate_task40_input(specification.as_jsonable())
@@ -466,6 +473,82 @@ def test_task40_launcher_mock_keeps_service_scope_and_task_tree_swap_gate(
     assert manifest["requested_legacy_resource_fields"]["terminate_memory_gib"] == 10.0
 
 
+def test_task40_p3_manual_inputs_select_exact_m1_m2_mode_sets(tmp_path: Path):
+    from src.common.modes_3d import outgoing_port_modes_3d
+    from src.solvers.fullspace_dtn_action import build_ordered_mode_manifest
+
+    baseline = load_and_resolve(G0_REVIEW_V1)
+    baseline_cfg = simulation_config_3d_from_normalized(baseline.as_jsonable())
+    baseline_modes = outgoing_port_modes_3d(baseline_cfg)
+    _, _, baseline_mode_sha = build_ordered_mode_manifest(baseline_modes, baseline_cfg)
+    propagating = {
+        (mode.side, mode.m, mode.n, mode.polarization)
+        for mode in baseline_modes if mode.propagating
+    }
+    assert len(baseline_modes) == 80
+
+    cases = (
+        (F2_G0_M1_MANUAL, TASK40_F2_G0_M1_RUN_ID, (7, 1), 180),
+        (F3_G0_M2_MANUAL, TASK40_F3_G0_M2_RUN_ID, (8, 2), 340),
+    )
+    prior_manual_mode_sha = None
+    for path, run_id, bounds, expected_count in cases:
+        specification = load_and_resolve(path)
+        validate_task40_input(specification.as_jsonable())
+        assert specification.identity["run_id"] == run_id
+        assert specification.geometry == baseline.geometry
+        assert specification.materials == baseline.materials
+        assert specification.incidence == baseline.incidence
+        assert specification.discretization["mesh_axis_cell_counts"] == (6, 4, 14)
+        cfg = simulation_config_3d_from_normalized(specification.as_jsonable())
+        assert cfg.stage4_dtn_order_policy == "manual"
+        assert (cfg.diffraction_order_max_m, cfg.diffraction_order_max_n) == bounds
+        modes = outgoing_port_modes_3d(cfg)
+        manifest, _, mode_sha = build_ordered_mode_manifest(modes, cfg)
+        keys = {(mode.side, mode.m, mode.n, mode.polarization) for mode in modes}
+        assert len(modes) == expected_count
+        assert len(manifest) == expected_count
+        assert mode_sha != baseline_mode_sha
+        if prior_manual_mode_sha is not None:
+            assert mode_sha != prior_manual_mode_sha
+        prior_manual_mode_sha = mode_sha
+        assert propagating <= keys
+        assert {mode.polarization for mode in modes} <= {"s", "p"}
+        assert min(mode.m for mode in modes) == -bounds[0]
+        assert max(mode.m for mode in modes) == bounds[0]
+        assert min(mode.n for mode in modes) == -bounds[1]
+        assert max(mode.n for mode in modes) == bounds[1]
+        assert specification.solver["preconditioner"] == (
+            "task40extra_0p7nm_p6trace_p4_reference_metric_v2"
+        )
+
+    bad_missing_bound = tmp_path / "manual_missing_n.dat"
+    bad_missing_bound.write_text(
+        F2_G0_M1_MANUAL.read_text(encoding="utf-8").replace(
+            "dtn_manual_order_max_n = 1\n", "", 1
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(InputError, match="required with dtn_order_policy=manual"):
+        load_and_resolve(bad_missing_bound)
+
+    bad_report_bound = tmp_path / "manual_output_bound_too_small.dat"
+    bad_report_bound.write_text(
+        F2_G0_M1_MANUAL.read_text(encoding="utf-8").replace(
+            "diffraction_order_max_m = 7", "diffraction_order_max_m = 6", 1
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(InputError, match="must cover boundary"):
+        load_and_resolve(bad_report_bound)
+
+    m1_cfg = simulation_config_3d_from_normalized(
+        load_and_resolve(F2_G0_M1_MANUAL).as_jsonable()
+    )
+    with pytest.raises(ValueError, match="retain every propagating order"):
+        outgoing_port_modes_3d(replace(m1_cfg, diffraction_order_max_m=6))
+
+
 def test_task40_review_v1_batch_separates_old_cost_and_shares_one_replay(
     tmp_path: Path,
 ):
@@ -565,6 +648,77 @@ def test_task40_review_v1_batch_separates_old_cost_and_shares_one_replay(
         TASK40_F1_REFERENCE_METRIC_RUN_ID
     ]
     assert f1_accounting["selected_bug_replay_limit"] == 1
+
+
+def test_task40_review_v2_p3_batches_share_only_their_own_replay_allowance(
+    tmp_path: Path,
+):
+    from src.runners.task038_full3d_iterative import _task40_worker_batch_identity
+    from src.runners.workflow_timebase import clock_sample
+
+    ledger_root = (
+        tmp_path / "benchmarks/artifacts/task40extra_0p7nm_engineering/"
+        "task40_nonseparable_0p7nm"
+    )
+    def write_history(run_id: str, bug_replays: int, infra_recoveries: int = 0):
+        path = ledger_root / run_id / "shared_workflow_ledger.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({
+            "schema": "task40extra.nonseparable-0p7nm.shared-workflow-ledger.v1",
+            "batch_identity": run_id,
+            "unique_bug_replay_count": bug_replays,
+            "infrastructure_recovery_count": infra_recoveries,
+            "elapsed_seconds": 0.0,
+            "conservative_allowance_seconds": 0.0,
+            "fresh_worker_count": 1,
+        }), encoding="utf-8")
+        return path
+
+    write_history("task40extra_0p7nm_nonseparable_g0_iterative_v1", 4)
+    write_history(TASK40_F1_REFERENCE_METRIC_RUN_ID, 2, 1)
+    service_cgroup = Path(
+        "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/"
+        "app.slice/myfenics-case-task40-fixture.service"
+    )
+    def reserve(path: Path, name: str, source: str):
+        specification = load_and_resolve(path)
+        assert _task40_worker_batch_identity(specification.as_jsonable()) == (
+            specification.identity["run_id"]
+        )
+        return launcher._reserve_task40_0p7nm_budget(
+            tmp_path, tmp_path / name, source_sha=source, stage="Q4_ORIGINAL",
+            stage_budget={"workflow_seconds": 43200.0},
+            workflow_clock_start=clock_sample(), time_policy="observe_only",
+            run_id=str(specification.identity["run_id"]),
+            comparison_group=str(specification.identity["comparison_group"]),
+            service_cgroup_path=service_cgroup,
+        )
+
+    f2_reservation = reserve(F2_G0_M1_MANUAL, "f2-m1", "d" * 40)
+    f2_accounting = json.loads(
+        Path(f2_reservation["task40_batch_replay_accounting_path"]).read_text()
+    )
+    assert f2_accounting["selected_batch"] == "review_v2_p3"
+    assert f2_accounting["review_v2_p3"]["run_ids"] == sorted(
+        [TASK40_F2_G0_M1_RUN_ID, TASK40_F3_G0_M2_RUN_ID]
+    )
+    assert f2_accounting["review_v2_p3"]["unique_bug_replay_count"] == 0
+    assert f2_accounting["review_v2_f1"]["unique_bug_replay_count"] == 2
+    assert f2_accounting["legacy"]["unique_bug_replay_count"] == 4
+    assert f2_accounting["selected_bug_replay_limit"] == 1
+
+    f2_ledger_path = Path(f2_reservation["path"])
+    f2_ledger = json.loads(f2_ledger_path.read_text())
+    f2_ledger["unique_bug_replay_count"] = 1
+    f2_ledger_path.write_text(json.dumps(f2_ledger), encoding="utf-8")
+    f3_reservation = reserve(F3_G0_M2_MANUAL, "f3-m2", "e" * 40)
+    f3_accounting = json.loads(
+        Path(f3_reservation["task40_batch_replay_accounting_path"]).read_text()
+    )
+    assert f3_accounting["selected_batch"] == "review_v2_p3"
+    assert f3_accounting["review_v2_p3"]["unique_bug_replay_count"] == 1
+    assert f3_accounting["review_v2_f1"]["unique_bug_replay_count"] == 2
+    assert f3_accounting["selected_bug_replay_limit"] == 2
 
 
 def test_task40_worker_identity_opens_the_reserved_v14_runtime_ledger(

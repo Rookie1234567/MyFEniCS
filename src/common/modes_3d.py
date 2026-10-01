@@ -212,8 +212,24 @@ def outgoing_port_modes_3d(cfg: SimulationConfig3D) -> list[PortMode3D]:
         auto_max_n = int(
             np.floor((n_max * cfg.k0 + abs(cfg.ky)) * (cfg.y_max - cfg.y_min) / (2.0 * np.pi) + 1.0e-12)
         )
-        max_m = auto_max_m if cfg.diffraction_order_max_m is None else max(int(cfg.diffraction_order_max_m), auto_max_m)
-        max_n = auto_max_n if cfg.diffraction_order_max_n is None else max(int(cfg.diffraction_order_max_n), auto_max_n)
+        if policy == "manual":
+            if cfg.diffraction_order_max_m is None or cfg.diffraction_order_max_n is None:
+                raise ValueError("manual DtN requires explicit x/y order bounds")
+            max_m = int(cfg.diffraction_order_max_m)
+            max_n = int(cfg.diffraction_order_max_n)
+            if max_m < auto_max_m or max_n < auto_max_n:
+                raise ValueError("manual DtN bounds must retain every propagating order")
+        else:
+            max_m = (
+                auto_max_m
+                if cfg.diffraction_order_max_m is None
+                else max(int(cfg.diffraction_order_max_m), auto_max_m)
+            )
+            max_n = (
+                auto_max_n
+                if cfg.diffraction_order_max_n is None
+                else max(int(cfg.diffraction_order_max_n), auto_max_n)
+            )
         orders = enumerate_diffraction_orders_3d(cfg, max_m_override=max_m, max_n_override=max_n)
     else:
         raise ValueError("stage4_dtn_order_policy must be 'auto_propagating', 'zero_order', or 'manual'.")
