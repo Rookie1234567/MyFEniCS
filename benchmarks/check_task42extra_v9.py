@@ -457,7 +457,34 @@ def main():
                 files=read(path)["files"],
             )
     write(
-        "run_index_v9.json", dict(schema="task42extra.run-index.v9", stages=run_index)
+        "run_index_v9.json",
+        dict(
+            schema="task42extra.run-index.v9",
+            stages=run_index,
+            all_closed_attempts=[
+                dict(
+                    run_directory=str(path.parent),
+                    source_sha=read(path.parent / "run_manifest.json")["source_sha"],
+                    stage=read(path.parent / "run_manifest.json")["stage"],
+                    classification=read(path)["classification"],
+                    records={
+                        name: dict(
+                            path=str(path.parent / name), sha256=sha(path.parent / name)
+                        )
+                        for name in (
+                            "input_original.dat",
+                            "resolved_config.json",
+                            "run_manifest.json",
+                            "source_sha.txt",
+                            "input_sha256.txt",
+                            "physical_model_sha256.txt",
+                            "run_summary.json",
+                        )
+                    },
+                )
+                for path in sorted(RESULTS.glob("task42extra_v9_*/run_summary.json"))
+            ],
+        ),
     )
     print(
         json.dumps(
