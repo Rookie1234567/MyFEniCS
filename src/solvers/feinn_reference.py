@@ -90,7 +90,16 @@ def exact_solve(model, packet, artifact, marker, *, audit_options=None):
         + len(packet.a["dv"])
         + packet.np
     )
-    allocation = (audit_options or {}).get("allocation_upper_bytes", nnz_upper * 80 + 512 * 2**20)
+    if reduced is not None:
+        nnz_upper = (
+            packet.nc * len(reduced.t) ** 2
+            + len(packet.a["bv"])
+            + len(packet.a["dv"])
+            + packet.np
+        )
+    allocation = (audit_options or {}).get(
+        "allocation_upper_bytes", nnz_upper * 80 + 512 * 2**20
+    )
     pre = dict(
         kind="derived reference assembly/conversion reserve, not RSS",
         rows=n,
@@ -150,9 +159,13 @@ def exact_solve(model, packet, artifact, marker, *, audit_options=None):
         if audit_options is not None:
             memory_mb = int(info["infog"]["17"])
             if memory_mb <= 0:
-                raise RuntimeError("P4_REFERENCE_RESOURCE_BLOCKED_SYMBOLIC_ESTIMATE_UNAVAILABLE")
+                raise RuntimeError(
+                    "P4_REFERENCE_RESOURCE_BLOCKED_SYMBOLIC_ESTIMATE_UNAVAILABLE"
+                )
             record["symbolic_memory_settings"] = factor.symbolic_memory_settings()
-            record["symbolic_estimate_meaning"] = "MUMPS INFOG(16)/(17): estimated factorization working memory maximum/sum over processes in decimal MB; MPI1; INFOG(17) plus independent conversion/workspace reserve"
+            record["symbolic_estimate_meaning"] = (
+                "MUMPS INFOG(16)/(17): estimated factorization working memory maximum/sum over processes in decimal MB; MPI1; INFOG(17) plus independent conversion/workspace reserve"
+            )
             record["reference_role"] = "REFERENCE_ONLY"
         estimate = (int(info["infog"]["17"]) + 1) * 1_000_000
         conversion_reserve = record["nnz"] * 32 + 128 * n + 256 * 2**20
@@ -170,7 +183,9 @@ def exact_solve(model, packet, artifact, marker, *, audit_options=None):
         )
         if audit_options is not None:
             record["numeric_memory_limit_decimal_MB"] = factor.get_icntl(23)
-            record["symbolic_estimate_source"] = "https://www.mcs.anl.gov/petsc/petsc-3.10/src/mat/impls/aij/mpi/mumps/mumps.c.html"
+            record["symbolic_estimate_source"] = (
+                "https://www.mcs.anl.gov/petsc/petsc-3.10/src/mat/impls/aij/mpi/mumps/mumps.c.html"
+            )
         check_budget("reference numeric")
         t = perf_counter()
         marker("reference_numeric_begin", {})
@@ -181,7 +196,9 @@ def exact_solve(model, packet, artifact, marker, *, audit_options=None):
         marker("reference_numeric", record)
         check_budget("reference solve")
         b = matrix.createVecLeft()
-        b.array[:] = reduced.rhs if reduced is not None else np.r_[packet.a["g"], packet.a["gp"]]
+        b.array[:] = (
+            reduced.rhs if reduced is not None else np.r_[packet.a["g"], packet.a["gp"]]
+        )
         x = matrix.createVecRight()
         t = perf_counter()
         marker("reference_solve_begin", {})
@@ -202,8 +219,12 @@ def exact_solve(model, packet, artifact, marker, *, audit_options=None):
             alpha = x.array[packet.size :].copy()
         else:
             c, alpha = reduced.recover(x.array)
-            record.update(exact_static_condensation=True, recovered_independent_complex_FE=packet.size,
-                          condensed_rows=n, local_interior_factors="exact reference-only; no training use")
+            record.update(
+                exact_static_condensation=True,
+                recovered_independent_complex_FE=packet.size,
+                condensed_rows=n,
+                local_interior_factors="exact reference-only; no training use",
+            )
         recovered = packet.alpha(c)
         record["original_port_recovery_relative"] = float(
             np.linalg.norm(recovered - alpha) / max(np.linalg.norm(alpha), 1e-12)
@@ -211,6 +232,13 @@ def exact_solve(model, packet, artifact, marker, *, audit_options=None):
         if record["original_port_recovery_relative"] > 1e-10:
             raise RuntimeError("REFERENCE_PORT_RECOVERY_FAILED")
         record["original_full_equation_audit"] = packet.audit(c)
+        if reduced is not None:
+            record["condensed_augmented_relative"] = record[
+                "original_augmented_relative"
+            ]
+            record["original_augmented_relative"] = record[
+                "original_full_equation_audit"
+            ]["augmented_relative"]
         if (
             max(
                 record["original_full_equation_audit"][k]
@@ -559,7 +587,9 @@ def field_physics(
             official_candidate_results=policy["official_candidate_results"],
             reference_used_for_training=policy["reference_used_for_training"],
             pde_only_solve=policy["pde_only_solve"],
-            production_initialization_allowed=policy["production_initialization_allowed"],
+            production_initialization_allowed=policy[
+                "production_initialization_allowed"
+            ],
         )
     return dict(
         reference_pass=reference_pass,
@@ -819,7 +849,9 @@ def compare_reference_fit_without_solve(
     from src.runners.feinn_workflow import sha
 
     packet = load_native(native_index["files"]["native"]["path"])
-    reference, label = reference_label(native_index, reference_index, packet, used_for_training=True)
+    reference, label = reference_label(
+        native_index, reference_index, packet, used_for_training=True
+    )
     frozen = fit_index["files"]["checkpoint"]
     rec = reconstruct_index["files"]["reconstructed"]
     for entry in (frozen, rec):
@@ -880,19 +912,26 @@ def compare_reference_fit_without_solve(
             snapshot_category = "PARTIAL_REPRESENTATION_WITNESS"
         else:
             snapshot_category = "REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED"
-        retained_only = (
-            fit_index["result"]["status"]
-            in ("INTERRUPTED_FIT_ADAM500_RETAINED_SNAPSHOT", "INTERRUPTED_REPLAY_RETAINED_BOUNDARY")
+        retained_only = fit_index["result"]["status"] in (
+            "INTERRUPTED_FIT_ADAM500_RETAINED_SNAPSHOT",
+            "INTERRUPTED_REPLAY_RETAINED_BOUNDARY",
         )
         category = (
             "INTERRUPTED_FIT_NO_FINAL_STATE" if retained_only else snapshot_category
         )
-        if comp["numerical_reconstruction_pass"] and snapshot_category != "QUADRATURE_DRIFT":
+        if (
+            comp["numerical_reconstruction_pass"]
+            and snapshot_category != "QUADRATURE_DRIFT"
+        ):
             supervised_reconstruction = "SUPERVISED_DISCRETE_RECONSTRUCTION_PASS"
         else:
             supervised_reconstruction = "NOT_QUALIFIED"
         result = dict(
-            status=("RETAINED_BOUNDARY_COMPARE_ONLY_COMPLETE" if route.endswith("ADAM500-REPLAY") else "RETAINED_ADAM500_COMPARE_ONLY_COMPLETE")
+            status=(
+                "RETAINED_BOUNDARY_COMPARE_ONLY_COMPLETE"
+                if route.endswith("ADAM500-REPLAY")
+                else "RETAINED_ADAM500_COMPARE_ONLY_COMPLETE"
+            )
             if retained_only
             else "REFERENCE_EXPOSED_COMPARE_ONLY_COMPLETE",
             category=category,
@@ -946,11 +985,20 @@ def compare_residual_readout_without_solve(
     from src.runners.feinn_workflow import sha
 
     result, files = compare_reference_fit_without_solve(
-        design, native, reference, candidate, reconstructed, artifact, marker,
+        design,
+        native,
+        reference,
+        candidate,
+        reconstructed,
+        artifact,
+        marker,
         route=ROUTE,
     )
-    entries = [candidate["files"]["checkpoint"], previous["files"]["checkpoint"],
-               reference["files"]["reference"]]
+    entries = [
+        candidate["files"]["checkpoint"],
+        previous["files"]["checkpoint"],
+        reference["files"]["reference"],
+    ]
     vectors = []
     for entry in entries:
         if sha(entry["path"]) != entry["sha256"]:
@@ -960,30 +1008,44 @@ def compare_residual_readout_without_solve(
     cR, cG, cref = vectors
     G = sparse.load_npz(native["files"]["gram"]["path"])
     d = result["d_ref"]
-    energies = [float(np.vdot(v, G @ v).real / d)
-                for v in (cR-cref, cG-cref, cR-cG)]
+    energies = [
+        float(np.vdot(v, G @ v).real / d) for v in (cR - cref, cG - cref, cR - cG)
+    ]
     NE, NC = np.square(result["physics"]["reference_scattered_norms"])
-    curl_weight = (2*np.pi)**2
+    curl_weight = (2 * np.pi) ** 2
     comp = result["comparisons"][ROUTE]
     eL = comp["errors"]["scattered_L2"]["relative"]
     eC = comp["errors"]["scattered_scaled_curl"]["relative"]
-    expected = (NE*eL**2 + curl_weight*NC*eC**2)/(NE+curl_weight*NC)
+    expected = (NE * eL**2 + curl_weight * NC * eC**2) / (NE + curl_weight * NC)
     result.update(
-        norm_identity=dict(reference_L2_energy=float(NE),
-                           reference_scaled_curl_energy=float(NC), ell_nm=5,
-                           k0_per_nm=2*np.pi/5, ell_k0=2*np.pi,
-                           G_reference_energy_from_FE=float(NE+curl_weight*NC),
-                           G_reference_energy_from_CSR=d,
-                           E_G_squared_from_FE=float(expected),
-                           E_G_squared_from_CSR=energies[0],
-                           relative_reference_energy_defect=abs(NE+curl_weight*NC-d)/d,
-                           absolute_error_squared_defect=abs(expected-energies[0])),
-        V5_G_pythagorean=dict(new_error_squared=energies[0], V5_error_squared=energies[1],
-                             distance_to_V5_squared=energies[2],
-                             normalized_absolute_defect=abs(energies[0]-energies[1]-energies[2])),
-        G_action_columns=5, native_action_columns=0, native_adjoint_columns=0,
-        full_native_audits=2, independent_DOLFINx_actions_within_audits=2,
-        Gram_factor_count=0, Gsolve_count=0, Maxwell_factor_count=0, **POLICY,
+        norm_identity=dict(
+            reference_L2_energy=float(NE),
+            reference_scaled_curl_energy=float(NC),
+            ell_nm=5,
+            k0_per_nm=2 * np.pi / 5,
+            ell_k0=2 * np.pi,
+            G_reference_energy_from_FE=float(NE + curl_weight * NC),
+            G_reference_energy_from_CSR=d,
+            E_G_squared_from_FE=float(expected),
+            E_G_squared_from_CSR=energies[0],
+            relative_reference_energy_defect=abs(NE + curl_weight * NC - d) / d,
+            absolute_error_squared_defect=abs(expected - energies[0]),
+        ),
+        V5_G_pythagorean=dict(
+            new_error_squared=energies[0],
+            V5_error_squared=energies[1],
+            distance_to_V5_squared=energies[2],
+            normalized_absolute_defect=abs(energies[0] - energies[1] - energies[2]),
+        ),
+        G_action_columns=5,
+        native_action_columns=0,
+        native_adjoint_columns=0,
+        full_native_audits=2,
+        independent_DOLFINx_actions_within_audits=2,
+        Gram_factor_count=0,
+        Gsolve_count=0,
+        Maxwell_factor_count=0,
+        **POLICY,
     )
     result["physics"]["records"][ROUTE].update(POLICY)
     result["comparisons"][ROUTE].update(POLICY)

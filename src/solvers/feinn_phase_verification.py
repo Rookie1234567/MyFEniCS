@@ -52,8 +52,8 @@ def reconstruct(design, qualification, routes, artifact, marker, manifest):
     )
     rows, files = {}, {}
     for stage, index in routes.items():
-        phase = stage.startswith("v8_phase_")
-        supervised = stage.endswith("reference_fit")
+        phase = bool(index["result"]["phase"])
+        supervised = bool(index["result"]["supervised"])
         model, saved, durable = restore_network(
             design,
             index["files"]["checkpoint"],
@@ -71,7 +71,8 @@ def reconstruct(design, qualification, routes, artifact, marker, manifest):
             (
                 row
                 for row in index["result"]["audits"]
-                if row["tag"] == "committed_outer" and row["complete_closures"] == 500
+                if (row["tag"] == "committed_outer" and row["complete_closures"] == 500)
+                or row["tag"] == "GN_initial_Adam500_boundary"
             ),
             None,
         )
@@ -82,7 +83,13 @@ def reconstruct(design, qualification, routes, artifact, marker, manifest):
                 / checkpoint["name"]
             )
             state = load_checkpoint(path, checkpoint["sha256"])
-            if state["metadata"]["counts"]["Adam_updates"] != 500:
+            if (
+                state["metadata"].get(
+                    "inherited_Adam_updates",
+                    state["metadata"]["counts"].get("Adam_updates"),
+                )
+                != 500
+            ):
                 raise ValueError("ADAM500_SHARED_WORK_POINT_CHANGED")
             model.load_state_dict(state["model"], strict=True)
             adam_c = mapping.forward(model)
@@ -125,7 +132,9 @@ def reconstruct(design, qualification, routes, artifact, marker, manifest):
             ),
         )
     return dict(
-        status="V8_FROZEN_NETWORKS_RECONSTRUCTED",
+        status="V9_FROZEN_NETWORKS_RECONSTRUCTED"
+        if manifest["stage"].startswith("v9_")
+        else "V8_FROZEN_NETWORKS_RECONSTRUCTED",
         routes=rows,
         reference_loaded=False,
         Gsolve_count=0,

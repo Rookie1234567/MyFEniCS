@@ -263,6 +263,9 @@ def compare(
         return value
 
     result = rename(result)
+    result["physics_equivalence_fields"]["physical_parameters"][
+        "physical_configuration_source"
+    ] = "unchanged frozen design; compare p4/p5; right degree=5"
     result.update(
         left_degree=4,
         right_degree=5,

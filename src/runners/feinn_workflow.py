@@ -837,6 +837,33 @@ def launch(spec):
                     network_moments_sha256=q["files"]["moments"]["sha256"],
                     initial_parameters_sha256=q["result"]["initial_parameters_sha256"],
                 )
+                if stage in (
+                    "v9_plain_gn",
+                    "v9_phase_gn",
+                    "v9_plain_fit_gn",
+                    "v9_phase_fit_gn",
+                    "v9_gn_checks",
+                ):
+                    prefixes = json.loads(
+                        (
+                            ROOT
+                            / "docs/task042extra_feinn_5nm/outcomes/records/prefix_identity_v9.json"
+                        ).read_text()
+                    )["checkpoints"]
+                    keys = (
+                        ["plain_dual", "phase_dual"]
+                        if stage == "v9_gn_checks"
+                        else [
+                            ("phase" if stage.startswith("v9_phase") else "plain")
+                            + ("_reference_fit" if "fit_gn" in stage else "_dual")
+                        ]
+                    )
+                    state["Adam500_prefixes_bound_before_worker"] = {}
+                    for key in keys:
+                        prefix = prefixes[key]
+                        if sha(prefix["path"]) != prefix["sha256"]:
+                            raise RuntimeError("PREFIX_BYTES_CHANGED_BEFORE_WORKER")
+                        state["Adam500_prefixes_bound_before_worker"][key] = prefix
         state["qualified_environment_record"] = {
             mode: dict(
                 path=str(ROOT / "tmp/task42extra/setup" / f"{mode}_abi.json"),
@@ -1016,6 +1043,14 @@ def worker(directory):
             result, files = dispatch(
                 stage, design, artifact, marker, manifest, load_index
             )
+            if "native" in files and "identity" in result:
+                manifest.update(
+                    actual_operator_packet_sha256=sha(files["native"]),
+                    physical_model_sha256=sha(files["native"]),
+                    physical_hash_meaning="actual p5 full independent FE packet and fixed affine rhs",
+                    actual_discretization_degree=result["identity"]["degree"],
+                )
+                write_json(directory / "run_manifest.json", manifest)
         elif stage.startswith("v8_"):
             from src.runners.feinn_campaign import dispatch
 

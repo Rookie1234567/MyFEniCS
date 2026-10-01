@@ -220,9 +220,19 @@ def compare(
                     scattered_curl=errors["scattered_scaled_curl"]["relative"],
                 ),
             )
-        phase_name = "V8-PHASE-REFERENCE-FIT" if supervised else "V8-PHASE-DUAL"
+        phase_name = next(
+            index["result"]["route"]
+            for index in routes.values()
+            if index["result"]["phase"]
+        )
         return dict(
-            status="V8_REPRESENTATION_COMPARE_ONLY_COMPLETE"
+            status=(
+                "V9_FIT_GN_COMPARE_ONLY_COMPLETE"
+                if supervised
+                else "V9_PDE_GN_COMPARE_ONLY_COMPLETE"
+            )
+            if manifest["stage"].startswith("v9_")
+            else "V8_REPRESENTATION_COMPARE_ONLY_COMPLETE"
             if supervised
             else "V8_PDE_COMPARE_ONLY_COMPLETE",
             routes=rows,
