@@ -1,0 +1,316 @@
+{
+  "runs": [
+    {
+      "stage": "SETUP",
+      "command": "python scripts/run_case.py input/task042_neural_coarse_inverse/v20_capacity_setup.dat",
+      "actual_input_file": "schema_version = 1\n[task042_v20]\nstage = \"SETUP\"\nrun_id = \"task042_v20_capacity_setup\"\nmaterial_table_id = \"SI_OPTICAL_CONSTANTS_USER_20260929_V1\"\ndecoder_family = \"FIXED_P3_ILU0_PORT_QUALIFICATION\"\n",
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_capacity_setup_20261001T140954677507Z",
+      "files": {
+        "input_original.dat": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_capacity_setup_20261001T140954677507Z/input_original.dat",
+          "sha256": "5460cfbb01ea8d24dafe58d081861e83f46da25dba0a1d945446608a55afeec8",
+          "bytes": 199
+        },
+        "resolved_config.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_capacity_setup_20261001T140954677507Z/resolved_config.json",
+          "sha256": "8330a3cd5fe26bfe96da7ebca7a4490bf786d0f6327af4287813fa7719482862",
+          "bytes": 4013
+        },
+        "run_manifest.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_capacity_setup_20261001T140954677507Z/run_manifest.json",
+          "sha256": "86bfb30fc59ad71ea8110f9a717437a8f016461e57b9abba36793cdaaf380f32",
+          "bytes": 1998
+        },
+        "source_sha.txt": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_capacity_setup_20261001T140954677507Z/source_sha.txt",
+          "sha256": "88a508531cf5ac67294b89bb9a36041d1529ae9e8d19f3920d728b847d9c21ea",
+          "bytes": 41
+        },
+        "run_summary.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_capacity_setup_20261001T140954677507Z/run_summary.json",
+          "sha256": "22c89e0755ad10e40cde4d07593eff2f5567f3389bdbe4eb19127989b303faac",
+          "bytes": 5778
+        },
+        "resource_baseline.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_capacity_setup_20261001T140954677507Z/resource_baseline.json",
+          "sha256": "ced645ba8b699281a84e695384a4b0d19652a3030656329637135d5c78c39905",
+          "bytes": 62108
+        },
+        "shared_health.jsonl": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_capacity_setup_20261001T140954677507Z/shared_health.jsonl",
+          "sha256": "ce4909fb67697e39802a5d261d0850539a4df30ae6384b777952300ab53ba742",
+          "bytes": 27884
+        },
+        "supervision/resources.jsonl": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_capacity_setup_20261001T140954677507Z/supervision/resources.jsonl",
+          "sha256": "9a7a26448ad3013c669d69f22fb08b24a51bfe19c5e7cd689da916ecba4bddc9",
+          "bytes": 241438
+        }
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v20/task042_v20_capacity_setup_20261001T140954677507Z/stage_result.json",
+        "sha256": "db76913e5b33f4a7d0ca4f9fa3003227f52d20c1c86b9d14a2c4ad159dad7ff9",
+        "bytes": 192120
+      },
+      "source_sha": "d41470d17d2babf29fabb0960886b0f60ae2aceb",
+      "cpu": 0,
+      "mpi": 1,
+      "math_threads": 1,
+      "factor_contract": "fixed global p3 ILU(0); no global p4 factor",
+      "original_action_remains_outer": true,
+      "input_sha256": "5460cfbb01ea8d24dafe58d081861e83f46da25dba0a1d945446608a55afeec8",
+      "physical_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+      "clean_source_status": ""
+    },
+    {
+      "stage": "N",
+      "command": "python scripts/run_case.py input/task042_neural_coarse_inverse/v20_control_gpoly.dat",
+      "actual_input_file": "schema_version = 1\n[task042_v20]\nstage = \"N\"\nrun_id = \"task042_v20_control_gpoly\"\nmaterial_table_id = \"SI_OPTICAL_CONSTANTS_USER_20260929_V1\"\ndecoder_family = \"FIXED_P3_ILU0_PORT_QUALIFICATION\"\n",
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_control_gpoly_20261001T141148790748Z",
+      "files": {
+        "input_original.dat": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_control_gpoly_20261001T141148790748Z/input_original.dat",
+          "sha256": "9dfc47deb10df3cea31aa4ac28a673eac3c0b1842e6cf42ae36ca86febfb3023",
+          "bytes": 194
+        },
+        "resolved_config.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_control_gpoly_20261001T141148790748Z/resolved_config.json",
+          "sha256": "3db3b936a2cac84557bead93129e1240cb05a8519b02eaafd2ea9345e8c9705e",
+          "bytes": 4002
+        },
+        "run_manifest.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_control_gpoly_20261001T141148790748Z/run_manifest.json",
+          "sha256": "ca1c77a786b6ae53af33ab83ef7b95633c92e90a8b2987cdb64596a1cb05abeb",
+          "bytes": 1993
+        },
+        "source_sha.txt": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_control_gpoly_20261001T141148790748Z/source_sha.txt",
+          "sha256": "88a508531cf5ac67294b89bb9a36041d1529ae9e8d19f3920d728b847d9c21ea",
+          "bytes": 41
+        },
+        "run_summary.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_control_gpoly_20261001T141148790748Z/run_summary.json",
+          "sha256": "fff0bac3a379dc088ee8027ba649f12c385cb129ebcfd7a09ef1361a11fe6118",
+          "bytes": 5756
+        },
+        "resource_baseline.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_control_gpoly_20261001T141148790748Z/resource_baseline.json",
+          "sha256": "658921bc837451ce1ad9bc55c9358b4520aa1b3656fed80e62a6cca07f37c044",
+          "bytes": 65905
+        },
+        "shared_health.jsonl": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_control_gpoly_20261001T141148790748Z/shared_health.jsonl",
+          "sha256": "daf82fd8c3a0ad1d468786dd0e193a4e4ff627c5833c4c1b4c8e3158359c74a7",
+          "bytes": 264400
+        },
+        "supervision/resources.jsonl": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_control_gpoly_20261001T141148790748Z/supervision/resources.jsonl",
+          "sha256": "37a5749c1e2354d6db7bc52dc91259ea3a964feb25df0c8025d1604296c7a808",
+          "bytes": 2587928
+        }
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v20/task042_v20_control_gpoly_20261001T141148790748Z/stage_result.json",
+        "sha256": "653c6defb0b4e43e7dce4348f958263ef75f7ea265d2ceee577ac6c859602ace",
+        "bytes": 244886
+      },
+      "source_sha": "d41470d17d2babf29fabb0960886b0f60ae2aceb",
+      "cpu": 0,
+      "mpi": 1,
+      "math_threads": 1,
+      "factor_contract": "fixed global p3 ILU(0); no global p4 factor",
+      "original_action_remains_outer": true,
+      "input_sha256": "9dfc47deb10df3cea31aa4ac28a673eac3c0b1842e6cf42ae36ca86febfb3023",
+      "physical_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+      "clean_source_status": ""
+    },
+    {
+      "stage": "P0",
+      "command": "python scripts/run_case.py input/task042_neural_coarse_inverse/v20_ilu0_gpoly.dat",
+      "actual_input_file": "schema_version = 1\n[task042_v20]\nstage = \"P0\"\nrun_id = \"task042_v20_ilu0_gpoly\"\nmaterial_table_id = \"SI_OPTICAL_CONSTANTS_USER_20260929_V1\"\ndecoder_family = \"FIXED_P3_ILU0_PORT_QUALIFICATION\"\n",
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_ilu0_gpoly_20261001T141502762761Z",
+      "files": {
+        "input_original.dat": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_ilu0_gpoly_20261001T141502762761Z/input_original.dat",
+          "sha256": "dabb409be49b12aa20a3209cd276607b3e27bfdf97b34ea22354b44f7f00a535",
+          "bytes": 192
+        },
+        "resolved_config.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_ilu0_gpoly_20261001T141502762761Z/resolved_config.json",
+          "sha256": "64b3a483de1d1a6b5b2bdc952073544572cb0f98538b6f209be02a31382de1a1",
+          "bytes": 3999
+        },
+        "run_manifest.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_ilu0_gpoly_20261001T141502762761Z/run_manifest.json",
+          "sha256": "e17b300f6fd620b772f6645a3f69e40206a01714a8b0cac73b078bdf4edc6fdf",
+          "bytes": 1991
+        },
+        "source_sha.txt": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_ilu0_gpoly_20261001T141502762761Z/source_sha.txt",
+          "sha256": "88a508531cf5ac67294b89bb9a36041d1529ae9e8d19f3920d728b847d9c21ea",
+          "bytes": 41
+        },
+        "run_summary.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_ilu0_gpoly_20261001T141502762761Z/run_summary.json",
+          "sha256": "7a7b3e6237c949693ab0be45f99d3de02d2d6f9207019f3b55e2bbb87c6a64ac",
+          "bytes": 5765
+        },
+        "resource_baseline.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_ilu0_gpoly_20261001T141502762761Z/resource_baseline.json",
+          "sha256": "f01182d4c8826e2a6422a33c7a7bb9dc88811486eacb6031e9f002a87ecd18b9",
+          "bytes": 62187
+        },
+        "shared_health.jsonl": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_ilu0_gpoly_20261001T141502762761Z/shared_health.jsonl",
+          "sha256": "6950e058ce2e2832ae086ea1baab0dc47bcd39f0b9dacdd47e20d7a1834798c0",
+          "bytes": 376542
+        },
+        "supervision/resources.jsonl": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_ilu0_gpoly_20261001T141502762761Z/supervision/resources.jsonl",
+          "sha256": "9ec5f1a1ca972f8b1cb1768093eb874e6e9c60923e5f34198174bc7a628049a6",
+          "bytes": 3809289
+        }
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v20/task042_v20_ilu0_gpoly_20261001T141502762761Z/stage_result.json",
+        "sha256": "957a7bdd3ae05ef16183f701b2bd02781d87d818f03b6d57dcde70af46bdfcc2",
+        "bytes": 247533
+      },
+      "source_sha": "d41470d17d2babf29fabb0960886b0f60ae2aceb",
+      "cpu": 0,
+      "mpi": 1,
+      "math_threads": 1,
+      "factor_contract": "fixed global p3 ILU(0); no global p4 factor",
+      "original_action_remains_outer": true,
+      "input_sha256": "dabb409be49b12aa20a3209cd276607b3e27bfdf97b34ea22354b44f7f00a535",
+      "physical_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+      "clean_source_status": ""
+    },
+    {
+      "stage": "P40",
+      "command": "python scripts/run_case.py input/task042_neural_coarse_inverse/v20_ilu0_port_gpoly.dat",
+      "actual_input_file": "schema_version = 1\n[task042_v20]\nstage = \"P40\"\nrun_id = \"task042_v20_ilu0_port_gpoly\"\nmaterial_table_id = \"SI_OPTICAL_CONSTANTS_USER_20260929_V1\"\ndecoder_family = \"FIXED_P3_ILU0_PORT_QUALIFICATION\"\n",
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_ilu0_port_gpoly_20261001T141944997816Z",
+      "files": {
+        "input_original.dat": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_ilu0_port_gpoly_20261001T141944997816Z/input_original.dat",
+          "sha256": "af833c6886b1a707325343c66309cdd0fc741c1efefebdeb811c427f21ba88f4",
+          "bytes": 198
+        },
+        "resolved_config.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_ilu0_port_gpoly_20261001T141944997816Z/resolved_config.json",
+          "sha256": "493ba3391f9b53bba740209d2de507151f9f3eabf653cdaf3f19566f368c3836",
+          "bytes": 4011
+        },
+        "run_manifest.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_ilu0_port_gpoly_20261001T141944997816Z/run_manifest.json",
+          "sha256": "f0a4eef679bbf3dcaeddb7ead8ee0d177f1211ed71972b2a422eda78e13519aa",
+          "bytes": 1994
+        },
+        "source_sha.txt": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_ilu0_port_gpoly_20261001T141944997816Z/source_sha.txt",
+          "sha256": "88a508531cf5ac67294b89bb9a36041d1529ae9e8d19f3920d728b847d9c21ea",
+          "bytes": 41
+        },
+        "run_summary.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_ilu0_port_gpoly_20261001T141944997816Z/run_summary.json",
+          "sha256": "2641ef4d4d52e76afde8b3fc01289e2e1b5c5dcc33c3b1e45040a629c1dd3ac2",
+          "bytes": 5774
+        },
+        "resource_baseline.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_ilu0_port_gpoly_20261001T141944997816Z/resource_baseline.json",
+          "sha256": "e4697919818bdb6c358fd2cc4d0cadbc8529b9c358bba7ca10e8a2520da279fd",
+          "bytes": 65760
+        },
+        "shared_health.jsonl": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_ilu0_port_gpoly_20261001T141944997816Z/shared_health.jsonl",
+          "sha256": "b4c6085de2cfe0fe9fc5f2a1e1219d82a62a63f4a68556d850d2523c07b62f53",
+          "bytes": 450290
+        },
+        "supervision/resources.jsonl": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_ilu0_port_gpoly_20261001T141944997816Z/supervision/resources.jsonl",
+          "sha256": "31969475b3a9326978af745a525ddc79512896819ccb4b05ba96e0f228823b6e",
+          "bytes": 4516476
+        }
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v20/task042_v20_ilu0_port_gpoly_20261001T141944997816Z/stage_result.json",
+        "sha256": "9308f9461d67102a0410268fb84d7fa9e0d0aeb7077d2407cb59505c2c98a9ae",
+        "bytes": 248133
+      },
+      "source_sha": "d41470d17d2babf29fabb0960886b0f60ae2aceb",
+      "cpu": 0,
+      "mpi": 1,
+      "math_threads": 1,
+      "factor_contract": "fixed global p3 ILU(0); no global p4 factor",
+      "original_action_remains_outer": true,
+      "input_sha256": "af833c6886b1a707325343c66309cdd0fc741c1efefebdeb811c427f21ba88f4",
+      "physical_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+      "clean_source_status": ""
+    },
+    {
+      "stage": "VERIFY",
+      "command": "python scripts/run_case.py input/task042_neural_coarse_inverse/v20_verify.dat",
+      "actual_input_file": "schema_version = 1\n[task042_v20]\nstage = \"VERIFY\"\nrun_id = \"task042_v20_verify\"\nmaterial_table_id = \"SI_OPTICAL_CONSTANTS_USER_20260929_V1\"\ndecoder_family = \"FIXED_P3_ILU0_PORT_QUALIFICATION\"\n",
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_verify_20261001T142704182954Z",
+      "files": {
+        "input_original.dat": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_verify_20261001T142704182954Z/input_original.dat",
+          "sha256": "50f778a9a4252923cbcd429333b1bc116ecc572060d54519d876cbf3b00b608d",
+          "bytes": 192
+        },
+        "resolved_config.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_verify_20261001T142704182954Z/resolved_config.json",
+          "sha256": "2dfc2dd64d0fd30ac60d2b214b51c06f260dcd09eaaef41a56690f2028032fa0",
+          "bytes": 3998
+        },
+        "run_manifest.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_verify_20261001T142704182954Z/run_manifest.json",
+          "sha256": "11d29b1c9f331aef92984a6534cecbace6666741d0e0e5bff2a32b95d42186d2",
+          "bytes": 1997
+        },
+        "source_sha.txt": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_verify_20261001T142704182954Z/source_sha.txt",
+          "sha256": "88a508531cf5ac67294b89bb9a36041d1529ae9e8d19f3920d728b847d9c21ea",
+          "bytes": 41
+        },
+        "run_summary.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_verify_20261001T142704182954Z/run_summary.json",
+          "sha256": "bbc031c6cc95a456e2ee5dd98941e112b880b3602015c6397e0cf3a0f32695d9",
+          "bytes": 6097
+        },
+        "resource_baseline.json": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_verify_20261001T142704182954Z/resource_baseline.json",
+          "sha256": "e291c0834233b272b3c0bb2320e37759a20dd9a60e063051e94deb994556c080",
+          "bytes": 64501
+        },
+        "shared_health.jsonl": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_verify_20261001T142704182954Z/shared_health.jsonl",
+          "sha256": "77147f39ebca3b2d72644acc97eea225bcc84e15062c2622ac381394ac51e2fa",
+          "bytes": 77525
+        },
+        "supervision/resources.jsonl": {
+          "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_verify_20261001T142704182954Z/supervision/resources.jsonl",
+          "sha256": "e7324e815ce4b129a1e372bdc92830f23ab415c35f193c6a50c7cdb68d64da6b",
+          "bytes": 812811
+        }
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v20/task042_v20_verify_20261001T142704182954Z/stage_result.json",
+        "sha256": "6ac68da08804aef943cda5e09ebf62cec2929315e6399a42259409e1a72da98f",
+        "bytes": 327565
+      },
+      "source_sha": "d41470d17d2babf29fabb0960886b0f60ae2aceb",
+      "cpu": 0,
+      "mpi": 1,
+      "math_threads": 1,
+      "factor_contract": "fixed global p3 ILU(0); no global p4 factor",
+      "original_action_remains_outer": true,
+      "input_sha256": "50f778a9a4252923cbcd429333b1bc116ecc572060d54519d876cbf3b00b608d",
+      "physical_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+      "clean_source_status": ""
+    }
+  ],
+  "actual_sources_separate_from_delivery_HEAD": true,
+  "inputs_validated": null
+}

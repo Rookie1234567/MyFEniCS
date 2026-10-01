@@ -1,0 +1,21 @@
+{
+  "raw": {
+    "cond2": 3197257.074775157,
+    "solve_operation_relative": 4.147725664824209e-17,
+    "W_payload_bytes": 11612160,
+    "J_sha256": "444255b3fa83b76eb5ced44ba5f6aa66203daec6ef72db9ee3c7f5760bea46aa",
+    "setup_seconds": 4.8905214129481465,
+    "H_is_Hhat": true,
+    "F_is_C_adjoint_assumed": false
+  },
+  "raw_result": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v20/task042_v20_ilu0_port_gpoly_20261001T141944997816Z/stage_result.json",
+    "sha256": "9308f9461d67102a0410268fb84d7fa9e0d0aeb7077d2407cb59505c2c98a9ae",
+    "bytes": 248133
+  },
+  "same_fixed_body_factor": true,
+  "full_channels": 40,
+  "F_not_assumed_C_adjoint": true,
+  "H_is_Hhat_not_Hp": true,
+  "approximate_inverse_not_original_equation_gate": true
+}

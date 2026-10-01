@@ -1,3 +1,9 @@
+# 最新导航：V20 / Review V17 已收口
+
+[Review V17](review_report_v17.md)、[Response V20](response_v20.md)、[结果](outcomes/fixed_p3_ilu0_port_v20.md)、[原Gate](outcomes/records/qualification_and_dispatch_v20.json)、[source/run](outcomes/records/run_index_v20.json)、[费用](outcomes/records/resource_costs_v20.json)。S0/N/P0/P40/V已实际完成，0/5资格；T/C未准入。正式数值清场于窗口内，总elapsed交付超限单列。等待review，不merge。
+
+以下历史正文保留，旧“当前”仅指其当时阶段。
+
 # 最新导航：V19 / Review V16 已收口
 
 [Review V16](review_report_v16.md)、[Response V19](response_v19.md)、[完整结果](outcomes/post_lsqr_residual_polish_v19.md)、[原Gate](outcomes/records/qualification_and_dispatch_v19.json)、[run/source](outcomes/records/run_index_v19.json)、[费用](outcomes/records/resource_costs_v19.json)。C0/P/L/VERIFY已实际执行，完整0/8资格；数值队列退出，当前仅等待review，不merge。下方“当前/待运行”是历史，不能继续旧campaign。

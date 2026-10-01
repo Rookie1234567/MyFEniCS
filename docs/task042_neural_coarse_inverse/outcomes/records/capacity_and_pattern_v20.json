@@ -1,0 +1,59 @@
+{
+  "planning": {
+    "contribution_nnz_upper": 4497120,
+    "csr_bytes_upper": 108076040,
+    "factor_explicit_payload_upper_bytes": 217022992,
+    "simultaneous_planning_upper_bytes": 3666561640,
+    "index_dtype": "int64",
+    "max_cell_master_width": 108,
+    "local_tensors_from_original_packet": true,
+    "backend_workspace_allowance_bytes": 868091968,
+    "factor_RSS_separately": "unknown; measure whole process tree",
+    "qualified": true
+  },
+  "K": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v20/K.npz",
+    "sha256": "16187ad4d92cb4a490c73d4b2ebb5fb31ddba73c77c24ba23af500b3ae306b1f",
+    "assembly": {
+      "contribution_nnz_upper": 4497120,
+      "csr_bytes_upper": 108076040,
+      "factor_explicit_payload_upper_bytes": 217022992,
+      "simultaneous_planning_upper_bytes": 3666561640,
+      "index_dtype": "int64",
+      "max_cell_master_width": 108,
+      "local_tensors_from_original_packet": true,
+      "backend_workspace_allowance_bytes": 868091968,
+      "factor_RSS_separately": "unknown; measure whole process tree",
+      "qualified": true,
+      "nnz": 3852576,
+      "csr_payload_bytes": 77124100,
+      "data_sha256": "51d4946051613ab66a5bd55f4df0d1c5468aa5fd2bdb48eed459b64190165d69",
+      "indices_sha256": "e07c276529567aca12c2cb6b4d2908800e614f019b5a315bfa9cc5bfff9da6f2",
+      "indptr_sha256": "7a530869137596ab70d86ba01d826e9ecde13c3d982f90ff303c4cec1c39377b",
+      "pattern_seconds": 0.8660972049692646,
+      "numeric_seconds": 1.8574387710541487,
+      "assembly_seconds": 2.7235454049659893,
+      "retained_structural_zeros": true,
+      "duplicate_contributions_merged": true,
+      "outer_action_replaced": false
+    }
+  },
+  "actual_CSR_dtypes": {
+    "data": "complex128",
+    "indices": "int32",
+    "indptr": "int32"
+  },
+  "PETSc_indices": "int64; conversion/copy covered by conservative planning",
+  "preallocation_record": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v20/task042_v20_capacity_setup_20261001T140954677507Z/capacity_before_allocation.json",
+    "sha256": "3e1ce2f045954898daabd56d4fafcc55953ecbe8144815fcd72bb39a3efaf2b5",
+    "bytes": 416
+  },
+  "no_global_dense_or_unit_column_probe": true,
+  "factor_RSS_separately": "unknown",
+  "raw_setup": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v20/task042_v20_capacity_setup_20261001T140954677507Z/stage_result.json",
+    "sha256": "db76913e5b33f4a7d0ca4f9fa3003227f52d20c1c86b9d14a2c4ad159dad7ff9",
+    "bytes": 192120
+  }
+}

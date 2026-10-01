@@ -1884,3 +1884,17 @@ V11不修改原物理/MPC/材料/普通默认，旧p4强逆持续关闭；没有
 接受点R00_s/p/total=0.08496405695/1.28142e-7/0.08496418509；R_total/T_total/A_balance/A_volume=0.084966252/0.798045949/0.116987799/0.004854866，全部仅UNQUALIFIED_DIAGNOSTIC，无official R/T/A。完整40复通道原键/极化/reference plane在[通道CSV](task042_neural_coarse_inverse/outcomes/records/channel_observables_v13.csv)，selected复场与total/scattered E/H及curl另有hash绑定验证；同离散0/3状态合格，最终目标0.7nm/48h仍NOT_QUALIFIED。p/h/Hybrid/M/MPI/波长影响未扫描；没有新p4参考、p6或最大模型。
 
 六次one-run含JSON writer失败及仅已保存记录恢复：wall243.725626s、同时树RSS最大2852761600B、swap0/VRAM0、全部自身后代清场；实际接受source33f7d613…、恢复/D source7615baae…分列，旧历史有载下界加formal为12160.139323s，辅助unknown仍unknown。shared-workstation每run现场CPU0、MPI1/mathTorch1/Loader0、自有锁/cache/16-12GiB采样监督，无cgroup连续限额声明；不改邻任务、无零干扰或无争用加速结论。未构造global p4 LU、全局S/CSR、正规方程或hidden逆，旧p4路线关闭。一次小实LS系数及失败逐作用计时unknown不补造，失败与旧合同/raw不改。[Response V13](task042_neural_coarse_inverse/response_v13.md)、[方法及资格](task042_neural_coarse_inverse/outcomes/tangent_scale_head_compensation_v13.md)、[source/资源](task042_neural_coarse_inverse/outcomes/records/run_index_v13.json)。唯一未实施建议为稳定输出正向坐标的表示调整，需新review，不继续同配置循环、不merge。
+
+
+## Task042 V20：固定p3不完全因子／端口对照收口
+
+| 路线 | 周期 | 原rho起点 | 原rho最终 | 下降% | S+SH | charged wall(s) | 停止原因 |
+|---|---|---|---|---|---|---|---|
+| N | 4 | 9.67833470962e-06 | 9.39226219695e-06 | 2.95580305139 | 1052 | 193.57554083 | FIXED_CYCLE_LIMIT |
+| P0 | 4 | 9.67833470962e-06 | 9.6529428923e-06 | 0.262357296786 | 1056 | 281.796204941 | FIXED_PROGRESS_RULE_STOP |
+| P40 | 4 | 9.67833470962e-06 | 9.63671604509e-06 | 0.430018859409 | 1056 | 330.972634754 | FIXED_PROGRESS_RULE_STOP |
+
+
+S0/N/P0/P40/V已实际执行，完整0/5。natural native ILU0配置固定（level0/shiftNONE），K nnz3852576，GLOBAL_P3_INCOMPLETE_FACTOR_PRESENT；无global p4 factor、hidden训练/Q/image新建。P40约1.0043倍暖残差改善，低于T/C准入，迁移/零trace未运行。原Schur/native和逐通道功率仍失败，低loss/近参考场不替代资格。formal wall874.948403s、同时树峰934690816B/ownswap0/VRAM0；formal累计下界67488.474122s，历史aux unknown保留。成本shared-workstation，邻影响与加速INCONCLUSIVE。
+
+正式source d41470d17d2babf29fabb0960886b0f60ae2aceb，38 focused passed；七dat与实际端到端验证。正式监督在原窗口内结束，总elapsed交付已超4h，延后reader测试因剩余0未启动；不刷新预算。没有新p4/最大模型/merge。见[Response V20](task042_neural_coarse_inverse/response_v20.md)、[结果](task042_neural_coarse_inverse/outcomes/fixed_p3_ilu0_port_v20.md)、[费用/截止](task042_neural_coarse_inverse/outcomes/records/resource_costs_v20.json)。唯一下一建议为申请一个固定几何ordering短对照，未自动实施。

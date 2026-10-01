@@ -1,3 +1,17 @@
+# V20 最小变更与依赖
+
+| 组 | 改变及依赖 | Gate／合入定位 |
+|---|---|---|
+| research-only numerical | src/solvers/fixed_p3_ilu0*：原cell K装配、唯一native ILU0、40端口修正；依赖原packet/BarAction | 小fixture＋formal配对；数值负结果，不晋升production |
+| reusable return protocol | gmres_cycle_commit可选right-PC，旧默认不变 | V18/V19与全部返回/失败/补审回归 |
+| opt-in runner/watchdog/io | V20参数化共享driver、不可刷新计数/监督、7dat/plan | schema与实际one-run；仅Task042研究入口 |
+| compact evidence/docs | 原hash/数组/残差/资源重新判Gate，response/summary/总账 | 无新求解；截止延期如实保留 |
+| do-not-merge | ignored大K/向量/日志/缓存、未执行新reader mutation代码 | 不提交大数组、不启用production或merge |
+
+建议审阅顺序：数值研究核心→return协议→opt-in runner/schema→compact证据。没有production默认修改；全部formal source与文档HEAD分开。旧task/review/response/raw字节保护。[完整source/run](records/run_index_v20.json)。
+
+以下历史正文保留，旧“当前”仅指其当时阶段。
+
 # V19 最小依赖分组与变更
 
 | 依赖组 | 改变行为／目的 | 验证与建议 |

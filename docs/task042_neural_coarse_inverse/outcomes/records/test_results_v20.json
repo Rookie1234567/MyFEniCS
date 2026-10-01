@@ -1,0 +1,28 @@
+{
+  "final_preformal_focused": {
+    "passed": 38,
+    "failed": 0,
+    "source_sha": "d41470d17d2babf29fabb0960886b0f60ae2aceb",
+    "raw_log": {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v20/final_source_tests.txt",
+      "sha256": "5db08a654549c87de98c6306ea8007708375cd23e48008dc884ca3580936b72a"
+    },
+    "precommit_git_HEAD": "65726494f63a3fa80906e93f12b5b09a1d99ae99",
+    "git_status_at_test": " M scripts/run_case.py\n M scripts/task042_v17_campaign.py\n M scripts/task042_v17_queue_watchdog.py\n M src/io/task042_profile.py\n M src/runners/task042_shared.py\n M src/solvers/gmres_cycle_commit.py\n?? input/task042_neural_coarse_inverse/fixed_p3_ilu0_v20.json\n?? input/task042_neural_coarse_inverse/v20_capacity_setup.dat\n?? input/task042_neural_coarse_inverse/v20_control_gpoly.dat\n?? input/task042_neural_coarse_inverse/v20_ilu0_gpoly.dat\n?? input/task042_neural_coarse_inverse/v20_ilu0_port_gpoly.dat\n?? input/task042_neural_coarse_inverse/v20_transfer_gnn.dat\n?? input/task042_neural_coarse_inverse/v20_verify.dat\n?? input/task042_neural_coarse_inverse/v20_zero_start.dat\n?? src/io/fixed_p3_ilu0.py\n?? src/runners/fixed_p3_ilu0.py\n?? src/runners/fixed_p3_ilu0_queue.py\n?? src/solvers/fixed_p3_ilu0.py\n?? src/solvers/fixed_p3_ilu0_study.py\n?? src/solvers/fixed_p3_ilu0_window.py\n?? src/test/test_task042_v20_ilu0.py\n",
+    "source_sha_meaning": "implementation tree tested before commit; numeric runs used committed d414; no production code changes after final preformal test"
+  },
+  "compileall": "PASS preformal same numeric source",
+  "input_validation": "PASS seven registered dat",
+  "raw_evidence": "EVIDENCE_CONSISTENT",
+  "postreader_mutation_pytest": "not_run: immutable remaining0",
+  "postreader_source": "ignored unvalidated delivery-only code; not committed",
+  "full_pytest": "not_run: shared heavy / scope",
+  "MPI2_4": "not_run",
+  "Ruff": "not_run: unavailable; no installation",
+  "CI": "not_run",
+  "failed_fixture_costs_preserved": true,
+  "raw_reader_paths": [
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v20/collect_records.py",
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v20/unvalidated_delivery_code/fixed_p3_ilu0_check.py"
+  ]
+}

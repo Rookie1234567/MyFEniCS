@@ -1,0 +1,347 @@
+{
+  "qualification": {
+    "repeat": {
+      "absolute": 0.0,
+      "operation_relative": 0.0
+    },
+    "complex_linearity": {
+      "absolute": 9.819324742244612e-10,
+      "operation_relative": 5.879253721114988e-14
+    },
+    "approximate_inverse_relative": 40705.5596054827,
+    "effective": {
+      "specification": {
+        "type": "ilu",
+        "levels": 0,
+        "ordering": "natural",
+        "shift": "NONE",
+        "communicator": "COMM_SELF",
+        "matrix": "seqaij",
+        "out_of_place": true,
+        "drop": null,
+        "diagonal_rescue": false
+      },
+      "effective_type": "ilu",
+      "effective_matrix_type": "seqaij",
+      "external_options_applied": false,
+      "scalar": "complex128",
+      "integer": "int64",
+      "petsc_version": [
+        3,
+        19,
+        6
+      ],
+      "options_prefix": "task042_v20_fixed_",
+      "effective_ZeroPivot": 2.220446049250313e-14,
+      "effective_Levels": 0,
+      "effective_ShiftType": 0,
+      "factor_setup_seconds": 1.2137636430561543,
+      "factor_mat_info": {
+        "block_size": 1.0,
+        "nz_allocated": 3852576.0,
+        "nz_used": 3852576.0,
+        "nz_unneeded": 0.0,
+        "memory": 0.0,
+        "assemblies": 0.0,
+        "mallocs": 0.0,
+        "fill_ratio_given": 1.0,
+        "fill_ratio_needed": 1.0,
+        "factor_mallocs": 0.0
+      },
+      "factor_status": "GLOBAL_P3_INCOMPLETE_FACTOR_PRESENT"
+    },
+    "approximate_inverse_is_not_accuracy_gate": true,
+    "fingerprint": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v20/fixed_PC_fingerprint.npz",
+      "sha256": "4e2c86b776bd3a9c85e55804640214663e0e9816b14d403dce2dacc04765b5ff",
+      "answer0_sha256": "129fe601a40eaa41755a4b94044ae1d134dd20cc4ebf5a9357180c7c2ae4bf12",
+      "answer1_sha256": "553963ef272c374b8e43755f09dc9fabe0a37e9ba8ad6d25134c8d21006d54d6"
+    },
+    "qualified": true
+  },
+  "cross_process": {
+    "P0": {
+      "repeat": {
+        "absolute": 0.0,
+        "operation_relative": 0.0
+      },
+      "complex_linearity": {
+        "absolute": 9.819324742244612e-10,
+        "operation_relative": 5.879253721114988e-14
+      },
+      "approximate_inverse_relative": 40705.5596054827,
+      "effective": {
+        "specification": {
+          "type": "ilu",
+          "levels": 0,
+          "ordering": "natural",
+          "shift": "NONE",
+          "communicator": "COMM_SELF",
+          "matrix": "seqaij",
+          "out_of_place": true,
+          "drop": null,
+          "diagonal_rescue": false
+        },
+        "effective_type": "ilu",
+        "effective_matrix_type": "seqaij",
+        "external_options_applied": false,
+        "scalar": "complex128",
+        "integer": "int64",
+        "petsc_version": [
+          3,
+          19,
+          6
+        ],
+        "options_prefix": "task042_v20_fixed_",
+        "effective_ZeroPivot": 2.220446049250313e-14,
+        "effective_Levels": 0,
+        "effective_ShiftType": 0,
+        "factor_setup_seconds": 1.3126302340533584,
+        "factor_mat_info": {
+          "block_size": 1.0,
+          "nz_allocated": 3852576.0,
+          "nz_used": 3852576.0,
+          "nz_unneeded": 0.0,
+          "memory": 0.0,
+          "assemblies": 0.0,
+          "mallocs": 0.0,
+          "fill_ratio_given": 1.0,
+          "fill_ratio_needed": 1.0,
+          "factor_mallocs": 0.0
+        },
+        "factor_status": "GLOBAL_P3_INCOMPLETE_FACTOR_PRESENT"
+      },
+      "approximate_inverse_is_not_accuracy_gate": true,
+      "cross_process_pairs": [
+        {
+          "absolute": 0.0,
+          "operation_relative": 0.0
+        },
+        {
+          "absolute": 0.0,
+          "operation_relative": 0.0
+        }
+      ],
+      "qualified": true
+    },
+    "P40": {
+      "repeat": {
+        "absolute": 0.0,
+        "operation_relative": 0.0
+      },
+      "complex_linearity": {
+        "absolute": 9.819324742244612e-10,
+        "operation_relative": 5.879253721114988e-14
+      },
+      "approximate_inverse_relative": 40705.5596054827,
+      "effective": {
+        "specification": {
+          "type": "ilu",
+          "levels": 0,
+          "ordering": "natural",
+          "shift": "NONE",
+          "communicator": "COMM_SELF",
+          "matrix": "seqaij",
+          "out_of_place": true,
+          "drop": null,
+          "diagonal_rescue": false
+        },
+        "effective_type": "ilu",
+        "effective_matrix_type": "seqaij",
+        "external_options_applied": false,
+        "scalar": "complex128",
+        "integer": "int64",
+        "petsc_version": [
+          3,
+          19,
+          6
+        ],
+        "options_prefix": "task042_v20_fixed_",
+        "effective_ZeroPivot": 2.220446049250313e-14,
+        "effective_Levels": 0,
+        "effective_ShiftType": 0,
+        "factor_setup_seconds": 1.620076418039389,
+        "factor_mat_info": {
+          "block_size": 1.0,
+          "nz_allocated": 3852576.0,
+          "nz_used": 3852576.0,
+          "nz_unneeded": 0.0,
+          "memory": 0.0,
+          "assemblies": 0.0,
+          "mallocs": 0.0,
+          "fill_ratio_given": 1.0,
+          "fill_ratio_needed": 1.0,
+          "factor_mallocs": 0.0
+        },
+        "factor_status": "GLOBAL_P3_INCOMPLETE_FACTOR_PRESENT"
+      },
+      "approximate_inverse_is_not_accuracy_gate": true,
+      "cross_process_pairs": [
+        {
+          "absolute": 0.0,
+          "operation_relative": 0.0
+        },
+        {
+          "absolute": 0.0,
+          "operation_relative": 0.0
+        }
+      ],
+      "qualified": true
+    }
+  },
+  "views": {
+    "SETUP": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v20/task042_v20_capacity_setup_20261001T140954677507Z/effective_pc_view.txt",
+      "sha256": "6dca6463a12c1452b50c0a758e735835e8742cc7ee8edf361e2f3cc518006dbc",
+      "bytes": 843
+    },
+    "P0": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v20/task042_v20_ilu0_gpoly_20261001T141502762761Z/effective_pc_view.txt",
+      "sha256": "6dca6463a12c1452b50c0a758e735835e8742cc7ee8edf361e2f3cc518006dbc",
+      "bytes": 843
+    },
+    "P40": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v20/task042_v20_ilu0_port_gpoly_20261001T141944997816Z/effective_pc_view.txt",
+      "sha256": "6dca6463a12c1452b50c0a758e735835e8742cc7ee8edf361e2f3cc518006dbc",
+      "bytes": 843
+    }
+  },
+  "effective": {
+    "SETUP": {
+      "specification": {
+        "type": "ilu",
+        "levels": 0,
+        "ordering": "natural",
+        "shift": "NONE",
+        "communicator": "COMM_SELF",
+        "matrix": "seqaij",
+        "out_of_place": true,
+        "drop": null,
+        "diagonal_rescue": false
+      },
+      "effective_type": "ilu",
+      "effective_matrix_type": "seqaij",
+      "external_options_applied": false,
+      "scalar": "complex128",
+      "integer": "int64",
+      "petsc_version": [
+        3,
+        19,
+        6
+      ],
+      "options_prefix": "task042_v20_fixed_",
+      "effective_ZeroPivot": 2.220446049250313e-14,
+      "effective_Levels": 0,
+      "effective_ShiftType": 0,
+      "factor_setup_seconds": 1.2137636430561543,
+      "factor_mat_info": {
+        "block_size": 1.0,
+        "nz_allocated": 3852576.0,
+        "nz_used": 3852576.0,
+        "nz_unneeded": 0.0,
+        "memory": 0.0,
+        "assemblies": 0.0,
+        "mallocs": 0.0,
+        "fill_ratio_given": 1.0,
+        "fill_ratio_needed": 1.0,
+        "factor_mallocs": 0.0
+      },
+      "factor_status": "GLOBAL_P3_INCOMPLETE_FACTOR_PRESENT"
+    },
+    "P0": {
+      "specification": {
+        "type": "ilu",
+        "levels": 0,
+        "ordering": "natural",
+        "shift": "NONE",
+        "communicator": "COMM_SELF",
+        "matrix": "seqaij",
+        "out_of_place": true,
+        "drop": null,
+        "diagonal_rescue": false
+      },
+      "effective_type": "ilu",
+      "effective_matrix_type": "seqaij",
+      "external_options_applied": false,
+      "scalar": "complex128",
+      "integer": "int64",
+      "petsc_version": [
+        3,
+        19,
+        6
+      ],
+      "options_prefix": "task042_v20_fixed_",
+      "effective_ZeroPivot": 2.220446049250313e-14,
+      "effective_Levels": 0,
+      "effective_ShiftType": 0,
+      "factor_setup_seconds": 1.3126302340533584,
+      "factor_mat_info": {
+        "block_size": 1.0,
+        "nz_allocated": 3852576.0,
+        "nz_used": 3852576.0,
+        "nz_unneeded": 0.0,
+        "memory": 0.0,
+        "assemblies": 0.0,
+        "mallocs": 0.0,
+        "fill_ratio_given": 1.0,
+        "fill_ratio_needed": 1.0,
+        "factor_mallocs": 0.0
+      },
+      "factor_status": "GLOBAL_P3_INCOMPLETE_FACTOR_PRESENT"
+    },
+    "P40": {
+      "specification": {
+        "type": "ilu",
+        "levels": 0,
+        "ordering": "natural",
+        "shift": "NONE",
+        "communicator": "COMM_SELF",
+        "matrix": "seqaij",
+        "out_of_place": true,
+        "drop": null,
+        "diagonal_rescue": false
+      },
+      "effective_type": "ilu",
+      "effective_matrix_type": "seqaij",
+      "external_options_applied": false,
+      "scalar": "complex128",
+      "integer": "int64",
+      "petsc_version": [
+        3,
+        19,
+        6
+      ],
+      "options_prefix": "task042_v20_fixed_",
+      "effective_ZeroPivot": 2.220446049250313e-14,
+      "effective_Levels": 0,
+      "effective_ShiftType": 0,
+      "factor_setup_seconds": 1.620076418039389,
+      "factor_mat_info": {
+        "block_size": 1.0,
+        "nz_allocated": 3852576.0,
+        "nz_used": 3852576.0,
+        "nz_unneeded": 0.0,
+        "memory": 0.0,
+        "assemblies": 0.0,
+        "mallocs": 0.0,
+        "fill_ratio_given": 1.0,
+        "fill_ratio_needed": 1.0,
+        "factor_mallocs": 0.0
+      },
+      "factor_status": "GLOBAL_P3_INCOMPLETE_FACTOR_PRESENT"
+    }
+  },
+  "factor_status": "GLOBAL_P3_INCOMPLETE_FACTOR_PRESENT",
+  "global_p4_factor_present": false,
+  "actual_individual_pivot_extrema": "unknown; factor destroyed, pivot vector not exported",
+  "default_zero_pivot_tolerance": 2.220446049250313e-14,
+  "setup_zero_pivot_error_observed": false,
+  "backend_memory_field_is_not_factor_RSS": true,
+  "factor_serialized_or_recovered": false,
+  "unique_specification": {
+    "type": "native PETSc ILU",
+    "levels": 0,
+    "ordering": "natural",
+    "shift": "NONE"
+  }
+}

@@ -1,0 +1,203 @@
+{
+  "window": {
+    "schema": "task042.campaign-window.v20",
+    "start_utc": "2026-10-01T13:33:21+00:00",
+    "start_monotonic": 786595.860882159,
+    "heavy_limit_seconds": 12600,
+    "total_limit_seconds": 14400,
+    "heavy_stop_utc": "2026-10-01T17:03:21+00:00",
+    "deadline_utc": "2026-10-01T17:33:21+00:00",
+    "review_expected_commit": "65726494f63a3fa80906e93f12b5b09a1d99ae99",
+    "prior_HEAD": "2b75bf94941a6fab007498657fbc188249d51b5e",
+    "start_scope": "first actual identity inspection; no refresh"
+  },
+  "ledger": {
+    "charged": {
+      "actions": 3193,
+      "audits": 23,
+      "B0": 2124,
+      "F": 1080,
+      "K_assemblies": 1,
+      "factor_setups": 3,
+      "field_states": 5
+    },
+    "runs": [
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_capacity_setup_20261001T140954677507Z",
+        "stage": "SETUP",
+        "source_sha": "d41470d17d2babf29fabb0960886b0f60ae2aceb",
+        "classification": "COMPLETED",
+        "exact_counts": true,
+        "charged": {
+          "actions": 23,
+          "audits": 2,
+          "B0": 4,
+          "F": 4,
+          "K_assemblies": 1,
+          "factor_setups": 1,
+          "field_states": 0
+        },
+        "completed": {
+          "B0": 4,
+          "F": 4,
+          "K_assemblies": 1,
+          "factor_setups": 1,
+          "actions": 23,
+          "audits": 2,
+          "field_states": 0
+        },
+        "launch_wall_seconds": 18.35386411496438,
+        "rss_peak_bytes": 720801792,
+        "swap_peak_bytes": 0,
+        "descendants_cleared": true
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_control_gpoly_20261001T141148790748Z",
+        "stage": "N",
+        "source_sha": "d41470d17d2babf29fabb0960886b0f60ae2aceb",
+        "classification": "COMPLETED",
+        "exact_counts": true,
+        "charged": {
+          "actions": 1052,
+          "audits": 5,
+          "B0": 0,
+          "F": 0,
+          "K_assemblies": 0,
+          "factor_setups": 0,
+          "field_states": 0
+        },
+        "completed": {
+          "B0": 0,
+          "F": 0,
+          "K_assemblies": 0,
+          "factor_setups": 0,
+          "actions": 1052,
+          "audits": 5,
+          "field_states": 0
+        },
+        "launch_wall_seconds": 193.57554083003197,
+        "rss_peak_bytes": 519254016,
+        "swap_peak_bytes": 0,
+        "descendants_cleared": true
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_ilu0_gpoly_20261001T141502762761Z",
+        "stage": "P0",
+        "source_sha": "d41470d17d2babf29fabb0960886b0f60ae2aceb",
+        "classification": "COMPLETED",
+        "exact_counts": true,
+        "charged": {
+          "actions": 1056,
+          "audits": 5,
+          "B0": 1040,
+          "F": 0,
+          "K_assemblies": 0,
+          "factor_setups": 1,
+          "field_states": 0
+        },
+        "completed": {
+          "B0": 1040,
+          "F": 0,
+          "K_assemblies": 0,
+          "factor_setups": 1,
+          "actions": 1056,
+          "audits": 5,
+          "field_states": 0
+        },
+        "launch_wall_seconds": 281.796204940998,
+        "rss_peak_bytes": 844087296,
+        "swap_peak_bytes": 0,
+        "descendants_cleared": true
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_ilu0_port_gpoly_20261001T141944997816Z",
+        "stage": "P40",
+        "source_sha": "d41470d17d2babf29fabb0960886b0f60ae2aceb",
+        "classification": "COMPLETED",
+        "exact_counts": true,
+        "charged": {
+          "actions": 1056,
+          "audits": 5,
+          "B0": 1080,
+          "F": 1076,
+          "K_assemblies": 0,
+          "factor_setups": 1,
+          "field_states": 0
+        },
+        "completed": {
+          "B0": 1080,
+          "F": 1076,
+          "K_assemblies": 0,
+          "factor_setups": 1,
+          "actions": 1056,
+          "audits": 5,
+          "field_states": 0
+        },
+        "launch_wall_seconds": 330.9726347539108,
+        "rss_peak_bytes": 855584768,
+        "swap_peak_bytes": 0,
+        "descendants_cleared": true
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v20_verify_20261001T142704182954Z",
+        "stage": "VERIFY",
+        "source_sha": "d41470d17d2babf29fabb0960886b0f60ae2aceb",
+        "classification": "COMPLETED",
+        "exact_counts": true,
+        "charged": {
+          "actions": 6,
+          "audits": 6,
+          "B0": 0,
+          "F": 0,
+          "K_assemblies": 0,
+          "factor_setups": 0,
+          "field_states": 5
+        },
+        "completed": {
+          "B0": 0,
+          "F": 0,
+          "K_assemblies": 0,
+          "factor_setups": 0,
+          "actions": 6,
+          "audits": 6,
+          "field_states": 5
+        },
+        "launch_wall_seconds": 57.19205968698952,
+        "rss_peak_bytes": 714633216,
+        "swap_peak_bytes": 0,
+        "descendants_cleared": true
+      }
+    ],
+    "closed": true,
+    "reentries": 0,
+    "cooldown_seconds": 0.0,
+    "repairs": [],
+    "routes": {
+      "SETUP": {
+        "wall_seconds": 18.35386411496438
+      },
+      "N": {
+        "wall_seconds": 193.57554083003197
+      },
+      "P0": {
+        "wall_seconds": 281.796204940998
+      },
+      "P40": {
+        "wall_seconds": 330.9726347539108
+      },
+      "VERIFY": {
+        "wall_seconds": 57.19205968698952
+      }
+    },
+    "active": null
+  },
+  "journal": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v20/progress_journal.jsonl",
+    "sha256": "ee43596b9de321cba55d7e3d4fc4c362277119d7231477eef4e9e8ce57ce8a59",
+    "bytes": 20878
+  },
+  "T": "not_run: PC progress gate",
+  "C": "not_run: PC progress gate",
+  "old_p4_route": "CLOSED",
+  "PSI_thresholds_unchanged": true
+}

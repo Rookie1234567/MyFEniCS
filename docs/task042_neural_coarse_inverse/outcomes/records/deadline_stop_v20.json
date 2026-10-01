@@ -1,0 +1,26 @@
+{
+  "event": "deadline_already_expired_at_resumed_delivery",
+  "utc": "2026-10-01T22:47:55.898590+00:00",
+  "batch_elapsed_seconds": 33274.8985786438,
+  "total_limit_seconds": 14400,
+  "total_elapsed_compliant": false,
+  "heavy_runs_ended_before_deadline": true,
+  "last_numeric_end_utc": "2026-10-01T14:28:02.034669+00:00",
+  "additional_test_launched": false,
+  "auxiliary_rejection": "positive monitoring budget required; immutable remaining 0",
+  "new_unvalidated_source_removed_to_ignored_evidence": true,
+  "next": "low-load evidence preservation and delivery only; no new solver/test",
+  "delivery_snapshot": {
+    "utc": "2026-10-01T22:52:36.408529+00:00",
+    "active_Task042_numeric_actors": [],
+    "own_lock_available": true,
+    "supervised_descendants_cleared": true,
+    "neighbor_processes_modified": false,
+    "historical_files_checked": 402,
+    "historical_changed": [],
+    "batch_elapsed_seconds": 33555.40847214905,
+    "batch_elapsed_compliant": false,
+    "no_new_heavy_after_numeric_queue": true,
+    "window_not_refreshed": true
+  }
+}

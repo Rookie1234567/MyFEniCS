@@ -1,0 +1,194 @@
+{
+  "routes": {
+    "N": {
+      "start": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v20/task042_v20_control_gpoly_20261001T141148790748Z/INITIAL.npz",
+        "sha256": "ac34985b776121ede551091f967ff8ac5be1bd44c446476b36f7ab97a5c60f5b",
+        "trace_sha256": "019587f6eda1379ae8198ac628bd785f0d5e0d46453c89d0346a6213de2df8a6",
+        "port_sha256": "24a1fdcf8ad9c69cdc38da5e979f9f0e3fea30bb45557ea74dc0d8d5ea4fade7",
+        "z_sha256": "2e8d46babbc96b67de71e9ae71ae9b72b4081ac52bcd99e80d44f38ac58b953e",
+        "residual_sha256": "df0db243b44696c3c6d5011882ed04b9a586d375b145a183e7b66728510b3b63"
+      },
+      "parent": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/L_GPOLY/cycles/CYCLE_0064/numeric/slot0.npz",
+        "sha256": "4b07fd9cbf313a2688925f77beb4e46205b2e203e98b2c9f7d2dcde2a91c10c2",
+        "x_sha256": "ad504efd8d42b5ce125d9407a8575e7fee187df89b9ef707d66954b2f5126a4b",
+        "trace_sha256": "019587f6eda1379ae8198ac628bd785f0d5e0d46453c89d0346a6213de2df8a6",
+        "outer_directions_sha256": "b0e2feeeafdcee7b87d7ae24763645fa139432eb87de3d69b9d97222308efe2e",
+        "port_sha256": "24a1fdcf8ad9c69cdc38da5e979f9f0e3fea30bb45557ea74dc0d8d5ea4fade7",
+        "z_sha256": "2e8d46babbc96b67de71e9ae71ae9b72b4081ac52bcd99e80d44f38ac58b953e",
+        "residual_sha256": "df0db243b44696c3c6d5011882ed04b9a586d375b145a183e7b66728510b3b63"
+      },
+      "final": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v20/N/cycles/CYCLE_0004/numeric/slot0.npz",
+        "sha256": "57278903e39c88bb57481d297de2c2ecf0d94b3e0932c35d52f4301eecf03c21",
+        "trace_sha256": "aa69e479fbf8f85e2652537e3930c2173bdb8a02e3161faa9fe1f2414694c4f2",
+        "port_sha256": "407906a84b70b527d64df6acc81871c7da8028d2c19e7f9a2fe2e2a4200b8e5b",
+        "z_sha256": "82c7bd933cfee0ab4dd831e382d465887edf3e4154a69699b1aad2fe471d722b",
+        "residual_sha256": "b33e5ec7c511578f29c4e8168aac297852ae5fa16ee6c65953f12ed0bea8d68c"
+      },
+      "cycles": 4,
+      "FIRST_PASS_cycle": null,
+      "status": "FIXED_CYCLE_LIMIT",
+      "each_cycle_returned_boundary_recovered": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "incomplete_Arnoldi_resumable": false
+    },
+    "P0": {
+      "start": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v20/task042_v20_ilu0_gpoly_20261001T141502762761Z/INITIAL.npz",
+        "sha256": "ac34985b776121ede551091f967ff8ac5be1bd44c446476b36f7ab97a5c60f5b",
+        "trace_sha256": "019587f6eda1379ae8198ac628bd785f0d5e0d46453c89d0346a6213de2df8a6",
+        "port_sha256": "24a1fdcf8ad9c69cdc38da5e979f9f0e3fea30bb45557ea74dc0d8d5ea4fade7",
+        "z_sha256": "2e8d46babbc96b67de71e9ae71ae9b72b4081ac52bcd99e80d44f38ac58b953e",
+        "residual_sha256": "df0db243b44696c3c6d5011882ed04b9a586d375b145a183e7b66728510b3b63"
+      },
+      "parent": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/L_GPOLY/cycles/CYCLE_0064/numeric/slot0.npz",
+        "sha256": "4b07fd9cbf313a2688925f77beb4e46205b2e203e98b2c9f7d2dcde2a91c10c2",
+        "x_sha256": "ad504efd8d42b5ce125d9407a8575e7fee187df89b9ef707d66954b2f5126a4b",
+        "trace_sha256": "019587f6eda1379ae8198ac628bd785f0d5e0d46453c89d0346a6213de2df8a6",
+        "outer_directions_sha256": "b0e2feeeafdcee7b87d7ae24763645fa139432eb87de3d69b9d97222308efe2e",
+        "port_sha256": "24a1fdcf8ad9c69cdc38da5e979f9f0e3fea30bb45557ea74dc0d8d5ea4fade7",
+        "z_sha256": "2e8d46babbc96b67de71e9ae71ae9b72b4081ac52bcd99e80d44f38ac58b953e",
+        "residual_sha256": "df0db243b44696c3c6d5011882ed04b9a586d375b145a183e7b66728510b3b63"
+      },
+      "final": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v20/P0/cycles/CYCLE_0004/numeric/slot1.npz",
+        "sha256": "8737631cfb7fb4e91e2a7987c130dc2725ed0800346bc7e3b686b0cd7dbc4f6d",
+        "trace_sha256": "5a7f2ee507535412a5638123f62dc0fb0d416f247fe3b1e63bc474d8f885a3e4",
+        "port_sha256": "9414c46813a363922a210c7a6dff60c3cd709f7b2e38749dca267268640fb44d",
+        "z_sha256": "abc5ee4bf3e46c41a0f0317bcd5f24b624ecc6c4f4f6b203a0a1a67bc33068c2",
+        "residual_sha256": "f96d862b3004cfa3d75429735bb0119d7c62a3b47f68be28cd903f28defec89d",
+        "y_sha256": "8924558a273f7221a584c54ac4dd5e5ef7f393e22abdfa67da3047c40ca46035",
+        "By_sha256": "3353e18d49e18096669d30c73e615c665cf77af23e16c8c5a406a24a80075748"
+      },
+      "cycles": 4,
+      "FIRST_PASS_cycle": null,
+      "status": "FIXED_PROGRESS_RULE_STOP",
+      "each_cycle_returned_boundary_recovered": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "incomplete_Arnoldi_resumable": false
+    },
+    "P40": {
+      "start": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v20/task042_v20_ilu0_port_gpoly_20261001T141944997816Z/INITIAL.npz",
+        "sha256": "ac34985b776121ede551091f967ff8ac5be1bd44c446476b36f7ab97a5c60f5b",
+        "trace_sha256": "019587f6eda1379ae8198ac628bd785f0d5e0d46453c89d0346a6213de2df8a6",
+        "port_sha256": "24a1fdcf8ad9c69cdc38da5e979f9f0e3fea30bb45557ea74dc0d8d5ea4fade7",
+        "z_sha256": "2e8d46babbc96b67de71e9ae71ae9b72b4081ac52bcd99e80d44f38ac58b953e",
+        "residual_sha256": "df0db243b44696c3c6d5011882ed04b9a586d375b145a183e7b66728510b3b63"
+      },
+      "parent": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/L_GPOLY/cycles/CYCLE_0064/numeric/slot0.npz",
+        "sha256": "4b07fd9cbf313a2688925f77beb4e46205b2e203e98b2c9f7d2dcde2a91c10c2",
+        "x_sha256": "ad504efd8d42b5ce125d9407a8575e7fee187df89b9ef707d66954b2f5126a4b",
+        "trace_sha256": "019587f6eda1379ae8198ac628bd785f0d5e0d46453c89d0346a6213de2df8a6",
+        "outer_directions_sha256": "b0e2feeeafdcee7b87d7ae24763645fa139432eb87de3d69b9d97222308efe2e",
+        "port_sha256": "24a1fdcf8ad9c69cdc38da5e979f9f0e3fea30bb45557ea74dc0d8d5ea4fade7",
+        "z_sha256": "2e8d46babbc96b67de71e9ae71ae9b72b4081ac52bcd99e80d44f38ac58b953e",
+        "residual_sha256": "df0db243b44696c3c6d5011882ed04b9a586d375b145a183e7b66728510b3b63"
+      },
+      "final": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v20/P40/cycles/CYCLE_0004/numeric/slot1.npz",
+        "sha256": "3dab962c7332950060d7d7ef27e46b0d424389d7b69c528544fd751d152d5c09",
+        "trace_sha256": "84fe3a8b65b59cab7f9a962d7a370bbc329a1a80d4cd9f83b4d8b1c930e5bd12",
+        "port_sha256": "f9e6f18c0fd0296b0b1c29ce700f83e4466bc13bf130d113a682cd745f867e42",
+        "z_sha256": "440631a0bf9e646c98cd104746eb46df5d570f1141714f3e413e6ab66c28bc4e",
+        "residual_sha256": "cff1e3385dda87642f269e540790a795bd79aee9c911c7219a66112d23953a3d",
+        "y_sha256": "f9a078a13879a9ac9a433b46b1cf96594b544af676bb7f9400bc3787e8bfbb1b",
+        "By_sha256": "ed9134429a0ea8a6650c6241415e06ca34ff9ddfc2843768430227fa78c45b3b"
+      },
+      "cycles": 4,
+      "FIRST_PASS_cycle": null,
+      "status": "FIXED_PROGRESS_RULE_STOP",
+      "each_cycle_returned_boundary_recovered": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "incomplete_Arnoldi_resumable": false
+    }
+  },
+  "frozen": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v20/FROZEN.json",
+    "sha256": "0be0ce342d4aa83ad90bc790d3ca9928ca09e6242a828fbb01a742d0cf5a45d7",
+    "bytes": 39436
+  },
+  "freeze_inventory": [
+    {
+      "name": "V19-L-GPOLY-FINAL",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/L_GPOLY/cycles/CYCLE_0064/numeric/slot0.npz",
+        "sha256": "4b07fd9cbf313a2688925f77beb4e46205b2e203e98b2c9f7d2dcde2a91c10c2",
+        "x_sha256": "ad504efd8d42b5ce125d9407a8575e7fee187df89b9ef707d66954b2f5126a4b",
+        "trace_sha256": "019587f6eda1379ae8198ac628bd785f0d5e0d46453c89d0346a6213de2df8a6",
+        "outer_directions_sha256": "b0e2feeeafdcee7b87d7ae24763645fa139432eb87de3d69b9d97222308efe2e",
+        "port_sha256": "24a1fdcf8ad9c69cdc38da5e979f9f0e3fea30bb45557ea74dc0d8d5ea4fade7",
+        "z_sha256": "2e8d46babbc96b67de71e9ae71ae9b72b4081ac52bcd99e80d44f38ac58b953e",
+        "residual_sha256": "df0db243b44696c3c6d5011882ed04b9a586d375b145a183e7b66728510b3b63"
+      }
+    },
+    {
+      "name": "V19-L-GNN-FINAL",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/L_GNN/cycles/CYCLE_0064/numeric/slot0.npz",
+        "sha256": "f71378e9aa528f6f6f4eddb3a4a1d53c24a54e71c36c932551011ccfffa45450",
+        "x_sha256": "f6cf0b644826cc6f416cb32085607dd0fb21ce85a2ab88995e4f2c865b721030",
+        "trace_sha256": "95b3ab8b157f81296b4757fbdf124620b2e465b6a2493cabb70895e3d7ea3255",
+        "outer_directions_sha256": "cd63c63584f3b94b00404a8dae6758a963506c80618d6ffce9da4e22bb114c05",
+        "port_sha256": "456b4949037938b4f26a40d60ec4975874bf010a0489c465b2a7066b655ac904",
+        "z_sha256": "b891349ff9a718c42c43a897246d633849e7038ce2569f3853e41ec9ddb3ad75",
+        "residual_sha256": "a3dc392c03fc5fefe30655e4b5709e7d1fa9aa5d4964228931a76e7997238428"
+      }
+    },
+    {
+      "name": "N-FINAL",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v20/N/cycles/CYCLE_0004/numeric/slot0.npz",
+        "sha256": "57278903e39c88bb57481d297de2c2ecf0d94b3e0932c35d52f4301eecf03c21",
+        "trace_sha256": "aa69e479fbf8f85e2652537e3930c2173bdb8a02e3161faa9fe1f2414694c4f2",
+        "port_sha256": "407906a84b70b527d64df6acc81871c7da8028d2c19e7f9a2fe2e2a4200b8e5b",
+        "z_sha256": "82c7bd933cfee0ab4dd831e382d465887edf3e4154a69699b1aad2fe471d722b",
+        "residual_sha256": "b33e5ec7c511578f29c4e8168aac297852ae5fa16ee6c65953f12ed0bea8d68c"
+      }
+    },
+    {
+      "name": "P0-FINAL",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v20/P0/cycles/CYCLE_0004/numeric/slot1.npz",
+        "sha256": "8737631cfb7fb4e91e2a7987c130dc2725ed0800346bc7e3b686b0cd7dbc4f6d",
+        "trace_sha256": "5a7f2ee507535412a5638123f62dc0fb0d416f247fe3b1e63bc474d8f885a3e4",
+        "port_sha256": "9414c46813a363922a210c7a6dff60c3cd709f7b2e38749dca267268640fb44d",
+        "z_sha256": "abc5ee4bf3e46c41a0f0317bcd5f24b624ecc6c4f4f6b203a0a1a67bc33068c2",
+        "residual_sha256": "f96d862b3004cfa3d75429735bb0119d7c62a3b47f68be28cd903f28defec89d",
+        "y_sha256": "8924558a273f7221a584c54ac4dd5e5ef7f393e22abdfa67da3047c40ca46035",
+        "By_sha256": "3353e18d49e18096669d30c73e615c665cf77af23e16c8c5a406a24a80075748"
+      }
+    },
+    {
+      "name": "P40-FINAL",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v20/P40/cycles/CYCLE_0004/numeric/slot1.npz",
+        "sha256": "3dab962c7332950060d7d7ef27e46b0d424389d7b69c528544fd751d152d5c09",
+        "trace_sha256": "84fe3a8b65b59cab7f9a962d7a370bbc329a1a80d4cd9f83b4d8b1c930e5bd12",
+        "port_sha256": "f9e6f18c0fd0296b0b1c29ce700f83e4466bc13bf130d113a682cd745f867e42",
+        "z_sha256": "440631a0bf9e646c98cd104746eb46df5d570f1141714f3e413e6ab66c28bc4e",
+        "residual_sha256": "cff1e3385dda87642f269e540790a795bd79aee9c911c7219a66112d23953a3d",
+        "y_sha256": "f9a078a13879a9ac9a433b46b1cf96594b544af676bb7f9400bc3787e8bfbb1b",
+        "By_sha256": "ed9134429a0ea8a6650c6241415e06ca34ff9ddfc2843768430227fa78c45b3b"
+      }
+    }
+  ],
+  "source_sha": "d41470d17d2babf29fabb0960886b0f60ae2aceb",
+  "old_V19_read_only": true
+}

@@ -1,3 +1,13 @@
+# V20 本地验证与截止
+
+正式source d41470d17d2babf29fabb0960886b0f60ae2aceb提交前最终38 passed（test_task042_v20_ilu0＋V18/V19事务回归），compileall及git diff --check通过；七dat注册/schema验证通过。真实native PC小fixture及formal S0配对、N/P0/P40实际端到端均通过接口Gate。两次计划内fixture失败22/1和37/1保留，最终38/0；正式求解/验证重放0、意外修复0。
+
+后置reader由raw hash/数组及现存equation/field规则重算EVIDENCE_CONSISTENT，0/5合格；新增mutation suite因截止未启动，未验证代码只留ignored，不称pytest通过。Ruff不可用；full pytest/MPI2/4/CI not_run。实时总elapsed超限，正式负载已在截止前清场。
+
+Markdown本地结构/链接与GitHub视觉分别记录，视觉NOT_VERIFIED。[测试记录](records/test_results_v20.json)、[deadline](records/deadline_stop_v20.json)、[原始Gate](records/qualification_and_dispatch_v20.json)。
+
+以下历史正文保留，旧“当前”仅指其当时阶段。
+
 # V19 测试：成熟GMRES与方向保留新接口
 
 | 检查 | 真实结果 | 证据／限制 |

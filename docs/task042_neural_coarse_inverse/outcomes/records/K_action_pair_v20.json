@@ -1,0 +1,81 @@
+{
+  "pairs": [
+    {
+      "vector": 0,
+      "K": {
+        "absolute": 2.7361281062645e-13,
+        "operation_relative": 2.246581563912011e-16
+      },
+      "KH": {
+        "absolute": 2.7209774988538655e-13,
+        "operation_relative": 2.2341416933677935e-16
+      },
+      "F": {
+        "absolute": 0.0,
+        "operation_relative": 0.0
+      },
+      "closed_difference_full_b": 3.3095003716559877e-12
+    },
+    {
+      "vector": 1,
+      "K": {
+        "absolute": 2.706448428843376e-13,
+        "operation_relative": 2.2504701019139627e-16
+      },
+      "KH": {
+        "absolute": 2.734212678899319e-13,
+        "operation_relative": 2.2735566721600934e-16
+      },
+      "F": {
+        "absolute": 0.0,
+        "operation_relative": 0.0
+      },
+      "closed_difference_full_b": 3.273526116626434e-12
+    },
+    {
+      "vector": 2,
+      "K": {
+        "absolute": 1.6945688578233516e-14,
+        "operation_relative": 9.058537194667937e-14
+      },
+      "KH": {
+        "absolute": 1.669657052277339e-14,
+        "operation_relative": 8.927259404885452e-14
+      },
+      "F": {
+        "absolute": 0.0,
+        "operation_relative": 0.0
+      },
+      "closed_difference_full_b": 2.0495938163859378e-13
+    },
+    {
+      "vector": 3,
+      "K": {
+        "absolute": 1.5415823166341858e-20,
+        "operation_relative": 6.797033561511641e-16
+      },
+      "KH": {
+        "absolute": 1.6408520156540958e-20,
+        "operation_relative": 7.234726354081305e-16
+      },
+      "F": {
+        "absolute": 0.0,
+        "operation_relative": 0.0
+      },
+      "closed_difference_full_b": 1.864527283578043e-19
+    }
+  ],
+  "C": {
+    "absolute": 0.0,
+    "operation_relative": 0.0
+  },
+  "Hhat": {
+    "absolute": 0.0,
+    "operation_relative": 0.0
+  },
+  "operation_relative_limit": 1e-10,
+  "closed_difference_full_b_limit": 1e-08,
+  "qualified": true,
+  "original_action_remains_outer": true,
+  "source_sha": "d41470d17d2babf29fabb0960886b0f60ae2aceb"
+}

@@ -1,0 +1,64 @@
+{
+  "local_structure": "PASS",
+  "files": [
+    {
+      "path": "docs/development_model_registry.md",
+      "tables": 137,
+      "math_fences": 0
+    },
+    {
+      "path": "docs/development_progress.md",
+      "tables": 57,
+      "math_fences": 5
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "tables": 1,
+      "math_fences": 0
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "tables": 16,
+      "math_fences": 0
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "tables": 35,
+      "math_fences": 0
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "tables": 15,
+      "math_fences": 0
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v20.md",
+      "tables": 2,
+      "math_fences": 0
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/fixed_p3_ilu0_port_v20.md",
+      "tables": 4,
+      "math_fences": 0
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v17.md",
+      "tables": 4,
+      "math_fences": 5
+    }
+  ],
+  "errors": [],
+  "GitHub_visual": "NOT_VERIFIED",
+  "utc": "2026-10-01T22:53:23.932017+00:00",
+  "scope": "low-load delivery inspection; no pytest or FE action",
+  "review_prior": {
+    "review": "docs/task042_neural_coarse_inverse/review_report_v17.md",
+    "sha256": "646b1ce8206bda393d67e634c3cfdea05e8b233993ca4507f9a69a0092af7df3",
+    "local_structure_status": "PASS",
+    "tables": 4,
+    "errors": [],
+    "GitHub_visual_status": "NOT_VERIFIED",
+    "exact_page": "https://github.com/Rookie1234567/MyFEniCS/blob/65726494f63a3fa80906e93f12b5b09a1d99ae99/docs/task042_neural_coarse_inverse/review_report_v17.md",
+    "web_error": "Cache miss; no visual evidence"
+  }
+}

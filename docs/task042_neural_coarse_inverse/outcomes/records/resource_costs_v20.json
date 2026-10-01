@@ -1,0 +1,736 @@
+{
+  "formal_runs": [
+    {
+      "stage": "SETUP",
+      "source_sha": "d41470d17d2babf29fabb0960886b0f60ae2aceb",
+      "supervised_wall_seconds": 16.964336413075216,
+      "launch_wall_seconds": 18.35386411496438,
+      "worker_wall_seconds": 12.9938845760189,
+      "actor_wall_seconds": 14.422256942023523,
+      "RSS_peak_bytes": 720801792,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "action_counts": {
+        "S": 19,
+        "SH": 4,
+        "audit": 2
+      },
+      "original_action_costs_seconds": {
+        "S": 3.180044142412953,
+        "SH": 1.5705128599656746,
+        "audit": 1.6913718269206583
+      },
+      "bar_inclusive_costs_seconds": null,
+      "B0_apply_calls": null,
+      "B0_apply_seconds": null,
+      "port_small_solve_calls": null,
+      "port_small_solve_seconds": null,
+      "auxiliary_F_calls": null,
+      "auxiliary_F_seconds": null,
+      "factor_setup_seconds": null,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 949421064192,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 949421064192,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 948819070976,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 24
+    },
+    {
+      "stage": "N",
+      "source_sha": "d41470d17d2babf29fabb0960886b0f60ae2aceb",
+      "supervised_wall_seconds": 192.17035108001437,
+      "launch_wall_seconds": 193.57554083003197,
+      "worker_wall_seconds": 188.38127169304062,
+      "actor_wall_seconds": 189.9845347868977,
+      "RSS_peak_bytes": 519254016,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "action_counts": {
+        "S": 1052,
+        "SH": 0,
+        "audit": 5
+      },
+      "original_action_costs_seconds": {
+        "S": 155.26658624468837,
+        "SH": 0.0,
+        "audit": 2.5752701840829104
+      },
+      "bar_inclusive_costs_seconds": {
+        "S": 156.1482166131027,
+        "SH": 0.0,
+        "port_solve": 0.22621937631629407
+      },
+      "B0_apply_calls": null,
+      "B0_apply_seconds": null,
+      "port_small_solve_calls": null,
+      "port_small_solve_seconds": null,
+      "auxiliary_F_calls": null,
+      "auxiliary_F_seconds": null,
+      "factor_setup_seconds": null,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 948794286080,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 948794286080,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 948017479680,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 257
+    },
+    {
+      "stage": "P0",
+      "source_sha": "d41470d17d2babf29fabb0960886b0f60ae2aceb",
+      "supervised_wall_seconds": 280.43959399696905,
+      "launch_wall_seconds": 281.796204940998,
+      "worker_wall_seconds": 277.03711331204977,
+      "actor_wall_seconds": 278.41328175901435,
+      "RSS_peak_bytes": 844087296,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "action_counts": {
+        "S": 1056,
+        "SH": 0,
+        "audit": 5
+      },
+      "original_action_costs_seconds": {
+        "S": 160.13688181049656,
+        "SH": 0.0,
+        "audit": 3.8794772470137104
+      },
+      "bar_inclusive_costs_seconds": {
+        "S": 161.02589765901212,
+        "SH": 0.0,
+        "port_solve": 0.23116569442208856
+      },
+      "B0_apply_calls": 1040,
+      "B0_apply_seconds": 79.11616796138696,
+      "port_small_solve_calls": null,
+      "port_small_solve_seconds": null,
+      "auxiliary_F_calls": null,
+      "auxiliary_F_seconds": null,
+      "factor_setup_seconds": 1.3126302340533584,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 949417385984,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 949417385984,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 945482129408,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 372
+    },
+    {
+      "stage": "P40",
+      "source_sha": "d41470d17d2babf29fabb0960886b0f60ae2aceb",
+      "supervised_wall_seconds": 329.57687189697754,
+      "launch_wall_seconds": 330.9726347539108,
+      "worker_wall_seconds": 324.21330109401606,
+      "actor_wall_seconds": 325.5455023969989,
+      "RSS_peak_bytes": 855584768,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "action_counts": {
+        "S": 1056,
+        "SH": 0,
+        "audit": 5
+      },
+      "original_action_costs_seconds": {
+        "S": 165.75842438812833,
+        "SH": 0.0,
+        "audit": 2.415067535941489
+      },
+      "bar_inclusive_costs_seconds": {
+        "S": 166.86901606607717,
+        "SH": 0.0,
+        "port_solve": 0.25060082075651735
+      },
+      "B0_apply_calls": 1080,
+      "B0_apply_seconds": 85.80868923955131,
+      "port_small_solve_calls": 1037,
+      "port_small_solve_seconds": 0.21570749173406512,
+      "auxiliary_F_calls": 1076,
+      "auxiliary_F_seconds": 24.01026235637255,
+      "factor_setup_seconds": 1.620076418039389,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 946748329984,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 946748329984,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 944913854464,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 433
+    },
+    {
+      "stage": "VERIFY",
+      "source_sha": "d41470d17d2babf29fabb0960886b0f60ae2aceb",
+      "supervised_wall_seconds": 55.79725003405474,
+      "launch_wall_seconds": 57.19205968698952,
+      "worker_wall_seconds": 51.922722016926855,
+      "actor_wall_seconds": 53.15179819997866,
+      "RSS_peak_bytes": 714633216,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "action_counts": {
+        "S": 6,
+        "SH": 0,
+        "audit": 6
+      },
+      "original_action_costs_seconds": {
+        "S": 1.2926679849624634,
+        "SH": 0.0,
+        "audit": 5.090029398212209
+      },
+      "bar_inclusive_costs_seconds": null,
+      "B0_apply_calls": null,
+      "B0_apply_seconds": null,
+      "port_small_solve_calls": null,
+      "port_small_solve_seconds": null,
+      "auxiliary_F_calls": null,
+      "auxiliary_F_seconds": null,
+      "factor_setup_seconds": null,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 947316854784,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 947316854784,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 945348194304,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 76
+    }
+  ],
+  "formal_supervised_wall_seconds": 874.9484034210909,
+  "formal_launch_wall_seconds": 881.8903043268947,
+  "old_formal_lower_bound_seconds": 66613.52571858442,
+  "cumulative_formal_lower_bound_seconds": 67488.47412200551,
+  "historical_auxiliary_unknown_preserved": true,
+  "auxiliary": [
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v20/final_source_tests/summary.json",
+        "sha256": "bbea4ab4b65e80a61c4885229fe35c544f3460aee40c618fc2fd98d7a97669ba",
+        "bytes": 3732
+      },
+      "wall_seconds": 14.936607017996721,
+      "RSS_peak_bytes": 231620608,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v20/focused_tests_1/summary.json",
+        "sha256": "bdb1c36b1ce10ee00b2ec7fcec41be149cb9c56832f4f0cdf6772e764c9da9e2",
+        "bytes": 3374
+      },
+      "wall_seconds": 7.5069849758874625,
+      "RSS_peak_bytes": 158203904,
+      "swap_peak_bytes": 0,
+      "classification": "WORKER_FAILED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v20/focused_tests_2/summary.json",
+        "sha256": "e1b66c40f9c1b382687a1b65265cb0ae912d70ac11348a81081df7572e4e1b08",
+        "bytes": 3459
+      },
+      "wall_seconds": 15.16644701093901,
+      "RSS_peak_bytes": 231399424,
+      "swap_peak_bytes": 0,
+      "classification": "WORKER_FAILED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v20/focused_tests_3/summary.json",
+        "sha256": "4139b89ebf1bdb63ca964e557d353228965816344dd1217b29a785c80f5ffc3d",
+        "bytes": 3816
+      },
+      "wall_seconds": 14.456806345027871,
+      "RSS_peak_bytes": 231206912,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v20/petsc_api_probe/summary.json",
+        "sha256": "e1f2a35c23dd04695ad38bbc8d69b4e512b2bfc387e5f0c0acae7bee1a55ff23",
+        "bytes": 2725
+      },
+      "wall_seconds": 9.670229203999043,
+      "RSS_peak_bytes": 242278400,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v20/petsc_fixture/summary.json",
+        "sha256": "f32723c71a6b9611d90405f80372ca26a4c73acf7269d84a8e81689e6a38c674",
+        "bytes": 2975
+      },
+      "wall_seconds": 5.270899915019982,
+      "RSS_peak_bytes": 231141376,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v20/validated_inputs/summary.json",
+        "sha256": "00954257ff1eda6224a8b965cc6d8a725471faabfcb42424fd8c39f638102b6c",
+        "bytes": 2541
+      },
+      "wall_seconds": 8.521067064022645,
+      "RSS_peak_bytes": 231145472,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    }
+  ],
+  "auxiliary_supervised_wall_seconds": 75.52904153289273,
+  "simultaneous_sampled_tree_peak_bytes": 934690816,
+  "own_swap_peak_bytes": 0,
+  "own_VRAM_bytes": 0,
+  "cgroup_delegated": false,
+  "outer_queue_supervision": [
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v20/solve_supervision/summary.json",
+        "sha256": "8922625826e5a89cd14ca7c8132be915bc775d78d0a59ba4ad3fd1ed569e6434",
+        "bytes": 4377
+      },
+      "summary": {
+        "workflow_deadline_seconds": 10294.012171506882,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 17179869184,
+        "rss_warning_bytes": 12884901888,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "clock_info": {
+          "monotonic": {
+            "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+            "monotonic": true,
+            "adjustable": false,
+            "resolution": 1e-09
+          },
+          "utc": {
+            "implementation": "clock_gettime(CLOCK_REALTIME)",
+            "monotonic": false,
+            "adjustable": true,
+            "resolution": 1e-09
+          },
+          "boottime": {
+            "available": true,
+            "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+            "resolution": 1e-09
+          }
+        },
+        "clock_start": {
+          "monotonic": 788901.887394271,
+          "boottime": 788901.887399273,
+          "utc_ns": 1790863907026533622
+        },
+        "timebase_policy": "strict",
+        "timebase_policy_version": 1,
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          1104071,
+          1104072,
+          1104134,
+          1104632,
+          1104694,
+          1104697,
+          1105336,
+          1105398,
+          1105400
+        ],
+        "sampled_process_tree_rss_peak_bytes": 934690816,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 2228740,
+            "pswpout_pages": 3371282
+          },
+          "end": {
+            "pswpin_pages": 2228740,
+            "pswpout_pages": 3371282
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 948805816320,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 948805816320,
+          "reserve_bytes": 353748992000,
+          "launch_cap_bytes": 17179869184,
+          "planning_cap_bytes": 17179869184,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 137438953472,
+          "shared_workstation": true
+        },
+        "samples": 1370,
+        "elapsed_seconds": 809.2858339700615,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "batch": "V20",
+          "window": {
+            "schema": "task042.campaign-window.v20",
+            "start_utc": "2026-10-01T13:33:21+00:00",
+            "start_monotonic": 786595.860882159,
+            "heavy_limit_seconds": 12600,
+            "total_limit_seconds": 14400,
+            "heavy_stop_utc": "2026-10-01T17:03:21+00:00",
+            "deadline_utc": "2026-10-01T17:33:21+00:00",
+            "review_expected_commit": "65726494f63a3fa80906e93f12b5b09a1d99ae99",
+            "prior_HEAD": "2b75bf94941a6fab007498657fbc188249d51b5e",
+            "start_scope": "first actual identity inspection; no refresh",
+            "elapsed_seconds": 2305.987874507904,
+            "heavy_remaining_seconds": 10294.012125492096,
+            "total_remaining_seconds": 12094.012125492096
+          },
+          "mode": "solve",
+          "own_processes_only": true
+        },
+        "clock_end": {
+          "monotonic": 789711.17322825,
+          "boottime": 789711.17322986,
+          "utc_ns": 1790864716312363773
+        },
+        "workflow_clock_interval": {
+          "elapsed_seconds": {
+            "monotonic": 809.2858339790255,
+            "boottime": 809.2858305870323,
+            "utc": 809.285830151
+          },
+          "budget_seconds": 809.2858339790255,
+          "discrepancy_seconds": 3.828025455732131e-06,
+          "tolerance_seconds": 8.092858339790254,
+          "policy": "strict",
+          "policy_version": 1,
+          "utc_minus_monotonic_seconds": -3.828025455732131e-06,
+          "step": {
+            "elapsed_seconds": {
+              "monotonic": 0.04911861405707896,
+              "boottime": 0.0491183859994635,
+              "utc": 0.049118671
+            },
+            "budget_seconds": 0.04911861405707896,
+            "discrepancy_seconds": 2.850005365040431e-07,
+            "tolerance_seconds": 5.0,
+            "policy": "strict",
+            "policy_version": 1,
+            "utc_minus_monotonic_seconds": 5.694292104507781e-08
+          },
+          "utc_positive_excess_seconds": 4.066208910369351e-05
+        }
+      }
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v20/verify_supervision/summary.json",
+        "sha256": "57f27e3c21e5eec623596f751b1a32ec5b0468568257f9b4fb0a690c56401577",
+        "bytes": 4605
+      },
+      "summary": {
+        "workflow_deadline_seconds": 9378.599452018738,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 17179869184,
+        "rss_warning_bytes": 12884901888,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "clock_info": {
+          "monotonic": {
+            "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+            "monotonic": true,
+            "adjustable": false,
+            "resolution": 1e-09
+          },
+          "utc": {
+            "implementation": "clock_gettime(CLOCK_REALTIME)",
+            "monotonic": false,
+            "adjustable": true,
+            "resolution": 1e-09
+          },
+          "boottime": {
+            "available": true,
+            "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+            "resolution": 1e-09
+          }
+        },
+        "clock_start": {
+          "monotonic": 789817.296688555,
+          "boottime": 789817.296691877,
+          "utc_ns": 1790864822435826667
+        },
+        "timebase_policy": "strict",
+        "timebase_policy_version": 1,
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          1106345,
+          1106346,
+          1106408,
+          1106410,
+          1106418,
+          1106419,
+          1106424,
+          1106425,
+          1106426,
+          1106430,
+          1106431,
+          1106439,
+          1106440,
+          1106450,
+          1106451,
+          1106457,
+          1106461,
+          1106462,
+          1106467,
+          1106468,
+          1106490,
+          1106491,
+          1106492,
+          1106496,
+          1106497,
+          1106508,
+          1106509
+        ],
+        "sampled_process_tree_rss_peak_bytes": 793210880,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 2228740,
+            "pswpout_pages": 3371282
+          },
+          "end": {
+            "pswpin_pages": 2228740,
+            "pswpout_pages": 3371282
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 947351789568,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 947351789568,
+          "reserve_bytes": 353748992000,
+          "launch_cap_bytes": 17179869184,
+          "planning_cap_bytes": 17179869184,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 137438953472,
+          "shared_workstation": true
+        },
+        "samples": 102,
+        "elapsed_seconds": 59.59848550101742,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "batch": "V20",
+          "window": {
+            "schema": "task042.campaign-window.v20",
+            "start_utc": "2026-10-01T13:33:21+00:00",
+            "start_monotonic": 786595.860882159,
+            "heavy_limit_seconds": 12600,
+            "total_limit_seconds": 14400,
+            "heavy_stop_utc": "2026-10-01T17:03:21+00:00",
+            "deadline_utc": "2026-10-01T17:33:21+00:00",
+            "review_expected_commit": "65726494f63a3fa80906e93f12b5b09a1d99ae99",
+            "prior_HEAD": "2b75bf94941a6fab007498657fbc188249d51b5e",
+            "start_scope": "first actual identity inspection; no refresh",
+            "elapsed_seconds": 3221.400594472885,
+            "heavy_remaining_seconds": 9378.599405527115,
+            "total_remaining_seconds": 11178.599405527115
+          },
+          "mode": "verify",
+          "own_processes_only": true
+        },
+        "clock_end": {
+          "monotonic": 789876.895173551,
+          "boottime": 789876.895175285,
+          "utc_ns": 1790864882034309150
+        },
+        "workflow_clock_interval": {
+          "elapsed_seconds": {
+            "monotonic": 59.598484996007755,
+            "boottime": 59.598483408102766,
+            "utc": 59.598482483
+          },
+          "budget_seconds": 59.598484996007755,
+          "discrepancy_seconds": 2.5130077574431198e-06,
+          "tolerance_seconds": 5.0,
+          "policy": "strict",
+          "policy_version": 1,
+          "utc_minus_monotonic_seconds": -2.5130077574431198e-06,
+          "step": {
+            "elapsed_seconds": {
+              "monotonic": 0.04294446110725403,
+              "boottime": 0.042945028049871325,
+              "utc": 0.042945125
+            },
+            "budget_seconds": 0.042945028049871325,
+            "discrepancy_seconds": 6.638927459723387e-07,
+            "tolerance_seconds": 5.0,
+            "policy": "strict",
+            "policy_version": 1,
+            "utc_minus_monotonic_seconds": 6.638927459723387e-07
+          },
+          "utc_positive_excess_seconds": 2.7258863146417678e-06
+        }
+      }
+    }
+  ],
+  "outer_and_nested_formal_times_additive": false,
+  "nested_timers_additive": false,
+  "performance": "shared-workstation; same-strict-accuracy speedup and neighbor impact INCONCLUSIVE",
+  "method_lineage_cost": "historical required basis/image/LSQR/polish costs preserved; exact missing shares unknown",
+  "new_persistent_parts": {
+    "artifacts": {
+      "logical_regular_bytes": 114129702,
+      "allocated_unique_regular_bytes": 114515968,
+      "regular_files": 148,
+      "symlinks_not_followed": 0
+    },
+    "tmp": {
+      "logical_regular_bytes": 133516221,
+      "allocated_unique_regular_bytes": 141254656,
+      "regular_files": 3120,
+      "symlinks_not_followed": 72
+    },
+    "results": {
+      "logical_regular_bytes": 13584432,
+      "allocated_unique_regular_bytes": 13774848
+    }
+  },
+  "new_persistent_logical_regular_bytes": 261230355,
+  "new_persistent_allocated_regular_bytes": 269545472,
+  "total_Task042_artifact_storage": {
+    "logical_regular_bytes": 11495575069,
+    "allocated_unique_regular_bytes": 11507007488,
+    "regular_files": 4665,
+    "symlinks_not_followed": 7
+  },
+  "window": {
+    "schema": "task042.campaign-window.v20",
+    "start_utc": "2026-10-01T13:33:21+00:00",
+    "start_monotonic": 786595.860882159,
+    "heavy_limit_seconds": 12600,
+    "total_limit_seconds": 14400,
+    "heavy_stop_utc": "2026-10-01T17:03:21+00:00",
+    "deadline_utc": "2026-10-01T17:33:21+00:00",
+    "review_expected_commit": "65726494f63a3fa80906e93f12b5b09a1d99ae99",
+    "prior_HEAD": "2b75bf94941a6fab007498657fbc188249d51b5e",
+    "start_scope": "first actual identity inspection; no refresh"
+  },
+  "collection_window_snapshot": {
+    "schema": "task042.campaign-window.v20",
+    "start_utc": "2026-10-01T13:33:21+00:00",
+    "start_monotonic": 786595.860882159,
+    "heavy_limit_seconds": 12600,
+    "total_limit_seconds": 14400,
+    "heavy_stop_utc": "2026-10-01T17:03:21+00:00",
+    "deadline_utc": "2026-10-01T17:33:21+00:00",
+    "review_expected_commit": "65726494f63a3fa80906e93f12b5b09a1d99ae99",
+    "prior_HEAD": "2b75bf94941a6fab007498657fbc188249d51b5e",
+    "start_scope": "first actual identity inspection; no refresh",
+    "elapsed_seconds": 33277.132781744,
+    "heavy_remaining_seconds": 0.0,
+    "total_remaining_seconds": 0.0
+  },
+  "auxiliary_profile_scope": "bounded helpers individually sampled; implementation, metadata reads, documentation and Git overhead included in immutable elapsed",
+  "complete_batch_elapsed_is_not_formal_plus_auxiliary_sum": true,
+  "K_assembly_seconds": 2.7235454049659893,
+  "factor_setup_seconds": {
+    "SETUP": 1.2137636430561543,
+    "P0": 1.3126302340533584,
+    "P40": 1.620076418039389
+  },
+  "independent_factor_RSS": "unknown",
+  "actual_individual_pivot_extrema": "unknown; not exported before destruction",
+  "total_elapsed_compliant": false,
+  "delivery_elapsed_seconds": 33555.40847214905,
+  "deadline_stop": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/deadline_stop_v20.json"
+  },
+  "postdeadline_activity": "low-load evidence read/preservation/docs only; no new test/PDE/factor",
+  "postdeadline_auxiliary_attempt": {
+    "test": "evidence_reader_tests",
+    "started": false,
+    "reason": "immutable remaining0; monitoring budget rejected"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "formal_unexpected_repairs": [],
+  "resource_reentries": 0,
+  "cooldown_seconds": 0.0,
+  "formal_cycle_replays": 0,
+  "formal_verification_replays": 0,
+  "planned_test_fixture_failures": [
+    {
+      "run": "focused_tests_1",
+      "passed": 22,
+      "failed": 1,
+      "root": "test-owned state directory boundary"
+    },
+    {
+      "run": "focused_tests_2",
+      "passed": 37,
+      "failed": 1,
+      "root": "watchdog fixture needed dedicated parent rather than MPI-initialized pytest"
+    }
+  ],
+  "planned_fixture_changes_not_ILU_tuning": true,
+  "all_failure_costs_retained": true
+}

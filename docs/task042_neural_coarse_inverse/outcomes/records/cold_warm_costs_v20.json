@@ -1,0 +1,24 @@
+{
+  "warm_shared_SETUP_seconds": 16.964336413075216,
+  "warm_routes": {
+    "N": 192.17035108001437,
+    "P0": 280.43959399696905,
+    "P40": 329.57687189697754
+  },
+  "necessary_upstream_cost_records": [
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v14.json",
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v15.json",
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v16.json",
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v17.json",
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v18.json",
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v19.json"
+  ],
+  "precise_per_solution_upstream_cost": "unknown; separate from aggregate research lower bound",
+  "packet_preparation_cost": "necessary historical dependency; missing exact decomposition remains unknown",
+  "cold": {
+    "status": "not_run",
+    "reason": "neither original equation pass nor tenfold PC rho improvement"
+  },
+  "same_strict_accuracy_speedup": "INCONCLUSIVE; no fully qualified candidate",
+  "neural_training_increment": false
+}

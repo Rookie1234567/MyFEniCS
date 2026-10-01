@@ -1,0 +1,240 @@
+{
+  "status": "EVIDENCE_CONSISTENT",
+  "mismatches": [],
+  "operator_qualified": true,
+  "PC_qualified": true,
+  "raw_state_checks": {
+    "N-1": {
+      "raw_Schur": 9.590271560788613e-06,
+      "arrays_checked": [
+        "trace",
+        "port",
+        "z",
+        "residual"
+      ],
+      "Q_U_R_GK_loaded": false
+    },
+    "N-2": {
+      "raw_Schur": 9.518972679840453e-06,
+      "arrays_checked": [
+        "trace",
+        "port",
+        "z",
+        "residual"
+      ],
+      "Q_U_R_GK_loaded": false
+    },
+    "N-3": {
+      "raw_Schur": 9.454158625547703e-06,
+      "arrays_checked": [
+        "trace",
+        "port",
+        "z",
+        "residual"
+      ],
+      "Q_U_R_GK_loaded": false
+    },
+    "N-4": {
+      "raw_Schur": 9.392262196946749e-06,
+      "arrays_checked": [
+        "trace",
+        "port",
+        "z",
+        "residual"
+      ],
+      "Q_U_R_GK_loaded": false
+    },
+    "P0-1": {
+      "raw_Schur": 9.652946815543831e-06,
+      "arrays_checked": [
+        "trace",
+        "port",
+        "z",
+        "residual"
+      ],
+      "Q_U_R_GK_loaded": false
+    },
+    "P0-2": {
+      "raw_Schur": 9.652942894769749e-06,
+      "arrays_checked": [
+        "trace",
+        "port",
+        "z",
+        "residual"
+      ],
+      "Q_U_R_GK_loaded": false
+    },
+    "P0-3": {
+      "raw_Schur": 9.652942892071089e-06,
+      "arrays_checked": [
+        "trace",
+        "port",
+        "z",
+        "residual"
+      ],
+      "Q_U_R_GK_loaded": false
+    },
+    "P0-4": {
+      "raw_Schur": 9.65294289229908e-06,
+      "arrays_checked": [
+        "trace",
+        "port",
+        "z",
+        "residual"
+      ],
+      "Q_U_R_GK_loaded": false
+    },
+    "P40-1": {
+      "raw_Schur": 9.636718721672306e-06,
+      "arrays_checked": [
+        "trace",
+        "port",
+        "z",
+        "residual"
+      ],
+      "Q_U_R_GK_loaded": false
+    },
+    "P40-2": {
+      "raw_Schur": 9.636716046291375e-06,
+      "arrays_checked": [
+        "trace",
+        "port",
+        "z",
+        "residual"
+      ],
+      "Q_U_R_GK_loaded": false
+    },
+    "P40-3": {
+      "raw_Schur": 9.636716045860465e-06,
+      "arrays_checked": [
+        "trace",
+        "port",
+        "z",
+        "residual"
+      ],
+      "Q_U_R_GK_loaded": false
+    },
+    "P40-4": {
+      "raw_Schur": 9.63671604508902e-06,
+      "arrays_checked": [
+        "trace",
+        "port",
+        "z",
+        "residual"
+      ],
+      "Q_U_R_GK_loaded": false
+    },
+    "V19-L-GPOLY-FINAL": {
+      "raw_Schur": 9.678334709617142e-06,
+      "arrays_checked": [
+        "trace",
+        "port",
+        "z",
+        "residual",
+        "x",
+        "outer_directions"
+      ],
+      "Q_U_R_GK_loaded": false
+    },
+    "V19-L-GNN-FINAL": {
+      "raw_Schur": 1.4439383854599514e-05,
+      "arrays_checked": [
+        "trace",
+        "port",
+        "z",
+        "residual",
+        "x",
+        "outer_directions"
+      ],
+      "Q_U_R_GK_loaded": false
+    },
+    "N-FINAL": {
+      "raw_Schur": 9.392262196946749e-06,
+      "arrays_checked": [
+        "trace",
+        "port",
+        "z",
+        "residual"
+      ],
+      "Q_U_R_GK_loaded": false
+    },
+    "P0-FINAL": {
+      "raw_Schur": 9.65294289229908e-06,
+      "arrays_checked": [
+        "trace",
+        "port",
+        "z",
+        "residual"
+      ],
+      "Q_U_R_GK_loaded": false
+    },
+    "P40-FINAL": {
+      "raw_Schur": 9.63671604508902e-06,
+      "arrays_checked": [
+        "trace",
+        "port",
+        "z",
+        "residual"
+      ],
+      "Q_U_R_GK_loaded": false
+    }
+  },
+  "cycle_checks": {
+    "N": {
+      "cycles": 4,
+      "Arnoldi": 1024
+    },
+    "P0": {
+      "cycles": 4,
+      "Arnoldi": 1024
+    },
+    "P40": {
+      "cycles": 4,
+      "Arnoldi": 1024
+    }
+  },
+  "original_equation": {
+    "V19-L-GPOLY-FINAL": false,
+    "V19-L-GNN-FINAL": false,
+    "N-FINAL": false,
+    "P0-FINAL": false,
+    "P40-FINAL": false
+  },
+  "strict_same_discrete": {
+    "V19-L-GPOLY-FINAL": false,
+    "V19-L-GNN-FINAL": false,
+    "N-FINAL": false,
+    "P0-FINAL": false,
+    "P40-FINAL": false
+  },
+  "strict_qualified_states": 0,
+  "original_actions_factors_or_solves_in_checker": 0,
+  "no_saved_status_trusted": true,
+  "GLOBAL_P3_INCOMPLETE_FACTOR_PRESENT": true,
+  "global_p4_factor_present": false,
+  "hidden_training_increment": false,
+  "selected_PC": {
+    "pc_kind": "B40",
+    "admitted": false,
+    "original_rho_improvement_factor": 1.0043187600769177,
+    "selection_rule": "original equation pass/action count, otherwise rho; never reference",
+    "selected_state": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v20/P40/cycles/CYCLE_0004/numeric/slot1.npz",
+      "sha256": "3dab962c7332950060d7d7ef27e46b0d424389d7b69c528544fd751d152d5c09",
+      "trace_sha256": "84fe3a8b65b59cab7f9a962d7a370bbc329a1a80d4cd9f83b4d8b1c930e5bd12",
+      "port_sha256": "f9e6f18c0fd0296b0b1c29ce700f83e4466bc13bf130d113a682cd745f867e42",
+      "z_sha256": "440631a0bf9e646c98cd104746eb46df5d570f1141714f3e413e6ab66c28bc4e",
+      "residual_sha256": "cff1e3385dda87642f269e540790a795bd79aee9c911c7219a66112d23953a3d",
+      "y_sha256": "f9a078a13879a9ac9a433b46b1cf96594b544af676bb7f9400bc3787e8bfbb1b",
+      "By_sha256": "ed9134429a0ea8a6650c6241415e06ca34ff9ddfc2843768430227fa78c45b3b"
+    }
+  },
+  "T": "NOT_RUN_PC_PROGRESS_GATE",
+  "C": "NOT_RUN_PC_PROGRESS_GATE",
+  "final_0p7nm_48h": "NOT_QUALIFIED",
+  "total_elapsed_gate": false,
+  "total_elapsed_status": "TOTAL_ELAPSED_NOT_COMPLIANT",
+  "heavy_numeric_deadline_gate": true,
+  "elapsed_fact_record": "deadline_stop_v20.json",
+  "research_classification": "FIXED_ILU0_PORT_NO_SIGNIFICANT_BENEFIT_WITH_DELIVERY_OVERRUN"
+}

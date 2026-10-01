@@ -3099,3 +3099,17 @@ Review V9 明确允许不依赖旧头驻点的普通隐藏偏导，旧 V11 M2／
 实际候选source `33f7d613b1341fa585f0324ead6039bf28211fff`；A/B/首次C source `978a59efeae9891a848c5fac581ec32e4fc9a5b8`；一次末尾JSON writer错误最小修复后，已保存记录恢复和D source `7615baae2f0d75fbc47c05be392b35ef2878c431`。没有重做优化或将恢复source冒充候选source；失落的小实LS系数和失败逐作用计时unknown，失败S/SH44次source-derived分账。六正式wall243.725626s，同时采样树RSS最大2852761600B/own swap0/GPU0，全部清场；V6起可核有载下界12160.139323s，历史辅助unknown保留。每run现场CPU0、MPI1/数学Torch1、自有锁/独立cache/16-12GiB树监督，无cgroup连续内核保证。未见持续PSI压力，邻影响与无争用性能INCONCLUSIVE shared-workstation，未改邻任务。
 
 所有R/T/A仅未资格化诊断，无official结果、无global p4因子/全局S/CSR/正规方程/hidden inverse/fallback；一次薄分解P/A rank1560/1560，新P/A构建0。最终25相关pytest与4个CPU ML手动小测试通过，无全仓pytest/MPI2/4/CI声明。最终0.7nm/48h仍NOT_QUALIFIED，p4新参考、最大模型、GPU/网络或rank扫描未运行；旧数据与历史保护。唯一下一建议是改变输出正向坐标避免病态R回写成巨大的相消系数，未实施需新review；此批收口不自动重复同配置诊断。见[Response V13](task042_neural_coarse_inverse/response_v13.md)、[完整结果](task042_neural_coarse_inverse/outcomes/tangent_scale_head_compensation_v13.md)、[raw与资源](task042_neural_coarse_inverse/outcomes/records/run_index_v13.json)。只推送执行分支待review，不merge。
+
+
+## Task042 V20：固定p3不完全因子／端口对照收口
+
+| 路线 | 周期 | 原rho起点 | 原rho最终 | 下降% | S+SH | charged wall(s) | 停止原因 |
+|---|---|---|---|---|---|---|---|
+| N | 4 | 9.67833470962e-06 | 9.39226219695e-06 | 2.95580305139 | 1052 | 193.57554083 | FIXED_CYCLE_LIMIT |
+| P0 | 4 | 9.67833470962e-06 | 9.6529428923e-06 | 0.262357296786 | 1056 | 281.796204941 | FIXED_PROGRESS_RULE_STOP |
+| P40 | 4 | 9.67833470962e-06 | 9.63671604509e-06 | 0.430018859409 | 1056 | 330.972634754 | FIXED_PROGRESS_RULE_STOP |
+
+
+S0/N/P0/P40/V已实际执行，完整0/5。natural native ILU0配置固定（level0/shiftNONE），K nnz3852576，GLOBAL_P3_INCOMPLETE_FACTOR_PRESENT；无global p4 factor、hidden训练/Q/image新建。P40约1.0043倍暖残差改善，低于T/C准入，迁移/零trace未运行。原Schur/native和逐通道功率仍失败，低loss/近参考场不替代资格。formal wall874.948403s、同时树峰934690816B/ownswap0/VRAM0；formal累计下界67488.474122s，历史aux unknown保留。成本shared-workstation，邻影响与加速INCONCLUSIVE。
+
+正式source d41470d17d2babf29fabb0960886b0f60ae2aceb，38 focused passed；七dat与实际端到端验证。正式监督在原窗口内结束，总elapsed交付已超4h，延后reader测试因剩余0未启动；不刷新预算。没有新p4/最大模型/merge。见[Response V20](task042_neural_coarse_inverse/response_v20.md)、[结果](task042_neural_coarse_inverse/outcomes/fixed_p3_ilu0_port_v20.md)、[费用/截止](task042_neural_coarse_inverse/outcomes/records/resource_costs_v20.json)。唯一下一建议为申请一个固定几何ordering短对照，未自动实施。
