@@ -1,0 +1,107 @@
+{
+  "schema": "task42extra.visual-inspection.v9",
+  "published_document_commit": "05619c373bd7310622601d9501c68e403cba1183",
+  "status": "SAMPLED_ACTUAL_GITHUB_SCREENSHOTS_VISUALLY_INSPECTED",
+  "inspection_scope": "new Review V8 and eight new V9 documents/sections; no historical batch visual claim",
+  "pages": 9,
+  "images": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v9_05619c3_render/00_math-renderer_00.png",
+      "sha256": "7a811a6aab78c283437923891fb0060b3bd3b362a998594ab8b9f50d33021113",
+      "scope": "Review V8 GN formulas",
+      "observation": "formula or table text rendered, corresponding new scope visible; horizontal-scroll views paired where required"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v9_05619c3_render/00_math-renderer_04.png",
+      "sha256": "c299afe09e38170b899308cb758961417613bb8b21e323f3693cfff91f8c1a8c",
+      "scope": "Review V8 supervised FIT formulas",
+      "observation": "formula or table text rendered, corresponding new scope visible; horizontal-scroll views paired where required"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v9_05619c3_render/01_table_02.png",
+      "sha256": "68d9682fd2f274d3df853fb2f9b75cebc07a0b5775161a34abdffbc796c192bc",
+      "scope": "Response V9 strict result table",
+      "observation": "formula or table text rendered, corresponding new scope visible; horizontal-scroll views paired where required"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v9_05619c3_render/01_table_03_right.png",
+      "sha256": "417d4435fce80271bcd28e026374627fba95725a9234878dc57b750953b92b46",
+      "scope": "Response V9 power R00 and denominator/common-time tables",
+      "observation": "formula or table text rendered, corresponding new scope visible; horizontal-scroll views paired where required"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v9_05619c3_render/02_table_03.png",
+      "sha256": "46bf8342f57d44998482295752d1d9e818fe91e92b055fda2f654e981c037a3a",
+      "scope": "p4/p5 field and curl comparison",
+      "observation": "formula or table text rendered, corresponding new scope visible; horizontal-scroll views paired where required"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v9_05619c3_render/03_math-renderer_01.png",
+      "sha256": "e4f36b8ae64259865570bfd8bedc05c33ea14fd6a367b69113e14c0819565bda",
+      "scope": "GN/FIT formula and original prefix identities",
+      "observation": "formula or table text rendered, corresponding new scope visible; horizontal-scroll views paired where required"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v9_05619c3_render/03_table_08_right.png",
+      "sha256": "73496f93a7c3187579fab8b045917d752548757570f995ffe5f88fe6507cfb43",
+      "scope": "actual retained common-wall comparison; wide table",
+      "observation": "formula or table text rendered, corresponding new scope visible; horizontal-scroll views paired where required"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v9_05619c3_render/03_table_09_right.png",
+      "sha256": "61e4ae30ea6eb208eb111cdb6895219ed9a0c7d491128bace0b4188539e2a993",
+      "scope": "GN work counters and Gram cost; wide table",
+      "observation": "formula or table text rendered, corresponding new scope visible; horizontal-scroll views paired where required"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v9_05619c3_render/04_table_00.png",
+      "sha256": "7f132e0519015905383bb19907b668c235838f85483fce4e8a4212cdb7ae63dd",
+      "scope": "V9 latest summary navigation",
+      "observation": "formula or table text rendered, corresponding new scope visible; horizontal-scroll views paired where required"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v9_05619c3_render/05_table_00.png",
+      "sha256": "6475f97086fefccc0fbdf7c573bcc21cddb7191337aedb742235e541a42c3267",
+      "scope": "V9 targeted tests section",
+      "observation": "formula or table text rendered, corresponding new scope visible; horizontal-scroll views paired where required"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v9_05619c3_changed_scroll_retry/00_top.png",
+      "sha256": "50187b65906f8029d080b9a360f7a30769e8c5afeffefa6e260c1bea35897846",
+      "scope": "V9 changed_files heading and dependency groups",
+      "observation": "formula or table text rendered, corresponding new scope visible; horizontal-scroll views paired where required"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v9_05619c3_changed_scroll_retry/00_table_00.png",
+      "sha256": "50187b65906f8029d080b9a360f7a30769e8c5afeffefa6e260c1bea35897846",
+      "scope": "V9 changed_files full six-row dependency table",
+      "observation": "formula or table text rendered, corresponding new scope visible; horizontal-scroll views paired where required"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v9_05619c3_render/07_top.png",
+      "sha256": "e2ed3efcae4b865494634965a1c97ef1227d52f6856d5c2ef645cc7b68d7c2b4",
+      "scope": "V9 progress section",
+      "observation": "formula or table text rendered, corresponding new scope visible; horizontal-scroll views paired where required"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v9_05619c3_render/08_top.png",
+      "sha256": "cf3b0292515c09a6ec6585c219b8113082e372ce7ca33a2091ffc5021a2fc5a9",
+      "scope": "V9 registry section3.44.8",
+      "observation": "formula or table text rendered, corresponding new scope visible; horizontal-scroll views paired where required"
+    }
+  ],
+  "repair": {
+    "failure": "changed_files V9 DOM matched requested heading but document.scrollingElement did not move the inner GitHub content viewport; original screenshots showed old table",
+    "hypothesis": "GitHub nested scroll host",
+    "change": "single-page task-local copy uses scrollIntoView with scrollMarginTop for all ancestors; tracked capture script and published Markdown untouched",
+    "test": "exactly two bounded substitutions asserted; py_compile passes",
+    "original_capture_source_sha256": "98d02ccf32b0b57c55e650c01e92fcfbd2b6f90ea06da52b28eb224aa906161e",
+    "capture_source_sha256": "eef8acafcc44571a84af3a973f458639e5367b109d549550daeb5be722bcc51e",
+    "scope": "only V9 added changed_files section; no historical rerender"
+  },
+  "retry_summary": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v9_e_render_scroll_retry_20261001T094023530719Z/summary.json",
+    "sha256": "86d94da48c28164d0b42e6da3d20b7a616bb8264c970dbbe0a785276271307f0"
+  },
+  "limitations": "sampled viewport inspection, not every pixel of every page; original wrong-position images retained but not passed"
+}

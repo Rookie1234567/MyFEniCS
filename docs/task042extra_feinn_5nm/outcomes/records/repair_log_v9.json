@@ -43,6 +43,21 @@
       "retry": 1,
       "cost_retained": true,
       "outcome": "RESOLVED"
+    },
+    {
+      "failure": "changed_files V9 DOM matched requested heading but document.scrollingElement did not move the inner GitHub content viewport; original screenshots showed old table",
+      "hypothesis": "GitHub nested scroll host",
+      "change": "single-page task-local copy uses scrollIntoView with scrollMarginTop for all ancestors; tracked capture script and published Markdown untouched",
+      "test": "bounded two-substitution/compile checks; actual browser DOM matching V9 heading and image inspection of all six dependency rows",
+      "original_capture_source_sha256": "98d02ccf32b0b57c55e650c01e92fcfbd2b6f90ea06da52b28eb224aa906161e",
+      "capture_source_sha256": "eef8acafcc44571a84af3a973f458639e5367b109d549550daeb5be722bcc51e",
+      "scope": "only V9 added changed_files section; no historical rerender",
+      "root_cause": "GitHub nested viewport screenshot scope positioning",
+      "retry": 1,
+      "numerical_replay": false,
+      "cost_retained": true,
+      "outcome": "NEW_V9_SECTION_VISIBLE_AND_SAMPLED_VISUAL_PASS",
+      "retry_run": "v9_e_render_scroll_retry_20261001T094023530719Z"
     }
   ],
   "preventive_changes": [
@@ -75,6 +90,14 @@
       "numerical_candidate_failure": false,
       "numerical_replay": false,
       "resolved": true
+    },
+    {
+      "failure": "final lightweight clearance collector initially inspected results root instead of results/task42extra; existing run_index and raw checker already covered formal attempts",
+      "change": "use canonical task results directory and assert14 formal summaries separately from20 light summaries",
+      "numerical_candidate_failure": false,
+      "numerical_replay": false,
+      "resolved": true,
+      "cost_in_direct_tail": true
     }
   ]
 }
