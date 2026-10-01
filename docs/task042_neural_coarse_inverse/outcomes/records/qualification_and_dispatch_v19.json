@@ -1,0 +1,131 @@
+{
+  "status": "EVIDENCE_CONSISTENT",
+  "mismatches": [],
+  "interfaces": {
+    "GPOLY": true,
+    "GNN": true
+  },
+  "cycle_checks": {
+    "P_GPOLY": {
+      "cycles": 64,
+      "actual_cycle_S_SH": 16768,
+      "internal_Arnoldi": 16384
+    },
+    "P_GNN": {
+      "cycles": 64,
+      "actual_cycle_S_SH": 16768,
+      "internal_Arnoldi": 16384
+    },
+    "L_GPOLY": {
+      "cycles": 64,
+      "actual_cycle_S_SH": 16954,
+      "internal_Arnoldi": "unknown"
+    },
+    "L_GNN": {
+      "cycles": 64,
+      "actual_cycle_S_SH": 16954,
+      "internal_Arnoldi": "unknown"
+    }
+  },
+  "raw_state_checks": {
+    "V18-R-GPOLY": {
+      "raw_Schur": 0.000146307718164725,
+      "arrays_checked": [
+        "trace",
+        "port",
+        "z",
+        "residual"
+      ],
+      "Q_U_R_GK_loaded": false
+    },
+    "P_GPOLY-FINAL": {
+      "raw_Schur": 2.2335849952054656e-05,
+      "arrays_checked": [
+        "trace",
+        "port",
+        "z",
+        "residual"
+      ],
+      "Q_U_R_GK_loaded": false
+    },
+    "L_GPOLY-FINAL": {
+      "raw_Schur": 9.678334709617142e-06,
+      "arrays_checked": [
+        "trace",
+        "port",
+        "z",
+        "residual",
+        "x",
+        "outer_directions"
+      ],
+      "Q_U_R_GK_loaded": false
+    },
+    "P_GPOLY-CYCLE8": {
+      "raw_Schur": 6.808059059107221e-05,
+      "arrays_checked": [
+        "trace",
+        "port",
+        "z",
+        "residual"
+      ],
+      "Q_U_R_GK_loaded": false
+    },
+    "V18-R-GNN": {
+      "raw_Schur": 0.00019955637469206967,
+      "arrays_checked": [
+        "trace",
+        "port",
+        "z",
+        "residual"
+      ],
+      "Q_U_R_GK_loaded": false
+    },
+    "P_GNN-FINAL": {
+      "raw_Schur": 3.248817977741566e-05,
+      "arrays_checked": [
+        "trace",
+        "port",
+        "z",
+        "residual"
+      ],
+      "Q_U_R_GK_loaded": false
+    },
+    "L_GNN-FINAL": {
+      "raw_Schur": 1.4439383854599514e-05,
+      "arrays_checked": [
+        "trace",
+        "port",
+        "z",
+        "residual",
+        "x",
+        "outer_directions"
+      ],
+      "Q_U_R_GK_loaded": false
+    },
+    "P_GNN-CYCLE8": {
+      "raw_Schur": 9.113070004287076e-05,
+      "arrays_checked": [
+        "trace",
+        "port",
+        "z",
+        "residual"
+      ],
+      "Q_U_R_GK_loaded": false
+    }
+  },
+  "strict_same_discrete": {
+    "V18-R-GPOLY": false,
+    "P_GPOLY-FINAL": false,
+    "L_GPOLY-FINAL": false,
+    "P_GPOLY-CYCLE8": false,
+    "V18-R-GNN": false,
+    "P_GNN-FINAL": false,
+    "L_GNN-FINAL": false,
+    "P_GNN-CYCLE8": false
+  },
+  "strict_qualified_states": 0,
+  "original_action_or_solve_in_checker": 0,
+  "Q_U_R_GK_loaded": false,
+  "no_saved_status_trusted": true,
+  "no_neural_training_increment": true
+}

@@ -1,0 +1,65 @@
+{
+  "status": "PASS",
+  "issues": [],
+  "new_content": {
+    "docs/task042_neural_coarse_inverse/README.md": {
+      "issues": [],
+      "tables": 0,
+      "math_blocks": 0,
+      "local_links": 6
+    },
+    "docs/task042_neural_coarse_inverse/outcomes/summary.md": {
+      "issues": [],
+      "tables": 2,
+      "math_blocks": 0,
+      "local_links": 5
+    },
+    "docs/task042_neural_coarse_inverse/outcomes/test_summary.md": {
+      "issues": [],
+      "tables": 1,
+      "math_blocks": 0,
+      "local_links": 4
+    },
+    "docs/task042_neural_coarse_inverse/outcomes/changed_files.md": {
+      "issues": [],
+      "tables": 1,
+      "math_blocks": 0,
+      "local_links": 1
+    },
+    "docs/development_progress.md": {
+      "issues": [],
+      "tables": 2,
+      "math_blocks": 0,
+      "local_links": 5
+    },
+    "docs/development_model_registry.md": {
+      "issues": [],
+      "tables": 1,
+      "math_blocks": 0,
+      "local_links": 3
+    },
+    "docs/task042_neural_coarse_inverse/response_v19.md": {
+      "issues": [],
+      "tables": 2,
+      "math_blocks": 0,
+      "local_links": 6
+    },
+    "docs/task042_neural_coarse_inverse/outcomes/post_lsqr_residual_polish_v19.md": {
+      "issues": [],
+      "tables": 6,
+      "math_blocks": 0,
+      "local_links": 9
+    }
+  },
+  "review_source_checks": {
+    "issues": [],
+    "tables": 4,
+    "math_blocks": 3,
+    "local_links": 7
+  },
+  "review_sha256": "78929a11792005f5cadf44a924bc64b1652d1bcbcfba3b620d803f33aa006d69",
+  "protected_old_files": 401,
+  "prefix_historical_bodies_preserved": true,
+  "GitHub_visual_status": "NOT_VERIFIED: web.open exact-review page Cache miss; no observed browser pixels",
+  "local_lexical_checks_are_not_visual_rendering": true
+}

@@ -1,0 +1,36 @@
+{
+  "rows": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/channel_observables_v19.csv",
+      "parsed_data_unchanged": true,
+      "rows": 321,
+      "sha256": "c3d36a69239dec520118c5e95220744a98984bd7dd5ad743a1a770be03d75e41"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/same_work_curves_v19.csv",
+      "parsed_data_unchanged": true,
+      "rows": 257,
+      "sha256": "ed608c116f0d37a134ba359d81c0c6c693b580dcf1a6b6e7d877d3f474382f90"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/paired_same_work_v19.csv",
+      "parsed_data_unchanged": true,
+      "rows": 33,
+      "sha256": "fb4e766b6f96cce137865b0b829ab3d4c02e40a10dbe5d1ca5f531bed9988095"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/polish_cycles_v19.csv",
+      "parsed_data_unchanged": true,
+      "rows": 257,
+      "sha256": "9fe70d8fc7062ca967b8804b113fdb540c96708843e61ac483eaf537f737c22d"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v19.csv",
+      "parsed_data_unchanged": true,
+      "rows": 9,
+      "sha256": "9e7315a111ab3abf0ca0daa49123163345f7feeacc12ae6482063646bf72147c"
+    }
+  ],
+  "status": "LF_AND_PARSED_DATA_UNCHANGED",
+  "raw_arrays_unchanged": true
+}

@@ -1,0 +1,8 @@
+{
+  "source_sha": "e13a7adab7ac8d5da17b688af6e0db27c6c27fa9",
+  "targeted_files": 9,
+  "supervisor": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/final_compile_01/summary.json",
+  "supervisor_sha256": "22f70ce4bf595bc545193bbb7a10ea5373aa4db84c5a78f577ecd187bf20f362",
+  "log_sha256": "0900bc6d9c4ecd09674a8f0408131cb065e17f453028122b23b95afcbd8f00e2",
+  "status": "PASS"
+}

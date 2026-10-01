@@ -1,0 +1,268 @@
+{
+  "source_sha": "e13a7adab7ac8d5da17b688af6e0db27c6c27fa9",
+  "numeric_source": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+  "actual_cases": [
+    {
+      "name": "test_multiboundary_nonhermitian_forty_port_no_mutation_or_double_base",
+      "module": "src.test.test_task042_v19_polish",
+      "seconds": 0.151,
+      "passed": true
+    },
+    {
+      "name": "test_return_saved_before_close_audit_and_no_replay[after_proposed]",
+      "module": "src.test.test_task042_v19_polish",
+      "seconds": 0.027,
+      "passed": true
+    },
+    {
+      "name": "test_return_saved_before_close_audit_and_no_replay[before_close]",
+      "module": "src.test.test_task042_v19_polish",
+      "seconds": 0.026,
+      "passed": true
+    },
+    {
+      "name": "test_return_saved_before_close_audit_and_no_replay[after_closed]",
+      "module": "src.test.test_task042_v19_polish",
+      "seconds": 0.029,
+      "passed": true
+    },
+    {
+      "name": "test_return_saved_before_close_audit_and_no_replay[before_audit]",
+      "module": "src.test.test_task042_v19_polish",
+      "seconds": 0.035,
+      "passed": true
+    },
+    {
+      "name": "test_return_saved_before_close_audit_and_no_replay[after_audit]",
+      "module": "src.test.test_task042_v19_polish",
+      "seconds": 0.031,
+      "passed": true
+    },
+    {
+      "name": "test_mutating_failure_zero_rhs_no_update_and_nonfinite",
+      "module": "src.test.test_task042_v19_polish",
+      "seconds": 0.003,
+      "passed": true
+    },
+    {
+      "name": "test_independent_reader_next_boundary_and_wrong_library_operator_parent",
+      "module": "src.test.test_task042_v19_polish",
+      "seconds": 0.737,
+      "passed": true
+    },
+    {
+      "name": "test_atomic_half_write_kill_hash_and_rollback",
+      "module": "src.test.test_task042_v19_polish",
+      "seconds": 0.265,
+      "passed": true
+    },
+    {
+      "name": "test_six_real_dat_schema_stage_budget_and_reference_barrier",
+      "module": "src.test.test_task042_v19_polish",
+      "seconds": 0.068,
+      "passed": true
+    },
+    {
+      "name": "test_actual_dat_stage_algorithm_full_save_original_audit[P]",
+      "module": "src.test.test_task042_v19_polish",
+      "seconds": 0.113,
+      "passed": true
+    },
+    {
+      "name": "test_actual_dat_stage_algorithm_full_save_original_audit[L]",
+      "module": "src.test.test_task042_v19_polish",
+      "seconds": 0.099,
+      "passed": true
+    },
+    {
+      "name": "test_per_method_library_kill_conservative_action_accounting",
+      "module": "src.test.test_task042_v19_polish",
+      "seconds": 0.007,
+      "passed": true
+    },
+    {
+      "name": "test_genuine_close_full_state_and_duplicate_caller_negative",
+      "module": "src.test.test_task042_v18_completion",
+      "seconds": 0.005,
+      "passed": true
+    },
+    {
+      "name": "test_info_callback_zero_rhs_and_fixed_physical_denominator",
+      "module": "src.test.test_task042_v18_completion",
+      "seconds": 0.005,
+      "passed": true
+    },
+    {
+      "name": "test_return_survives_close_audit_writer_failures_no_arnoldi_replay[after_proposed]",
+      "module": "src.test.test_task042_v18_completion",
+      "seconds": 0.044,
+      "passed": true
+    },
+    {
+      "name": "test_return_survives_close_audit_writer_failures_no_arnoldi_replay[before_close]",
+      "module": "src.test.test_task042_v18_completion",
+      "seconds": 0.033,
+      "passed": true
+    },
+    {
+      "name": "test_return_survives_close_audit_writer_failures_no_arnoldi_replay[after_closed]",
+      "module": "src.test.test_task042_v18_completion",
+      "seconds": 0.036,
+      "passed": true
+    },
+    {
+      "name": "test_return_survives_close_audit_writer_failures_no_arnoldi_replay[before_audit]",
+      "module": "src.test.test_task042_v18_completion",
+      "seconds": 0.045,
+      "passed": true
+    },
+    {
+      "name": "test_return_survives_close_audit_writer_failures_no_arnoldi_replay[after_audit]",
+      "module": "src.test.test_task042_v18_completion",
+      "seconds": 0.034,
+      "passed": true
+    },
+    {
+      "name": "test_atomic_writer_failure_and_nonfinite_hash_rollback",
+      "module": "src.test.test_task042_v18_completion",
+      "seconds": 0.058,
+      "passed": true
+    },
+    {
+      "name": "test_two_cycle_independent_reader",
+      "module": "src.test.test_task042_v18_completion",
+      "seconds": 0.907,
+      "passed": true
+    },
+    {
+      "name": "test_all_actual_dat_schema_registration_and_ref_barrier",
+      "module": "src.test.test_task042_v18_completion",
+      "seconds": 0.107,
+      "passed": true
+    },
+    {
+      "name": "test_real_dat_to_actual_stage_gmres_close_save_audit",
+      "module": "src.test.test_task042_v18_completion",
+      "seconds": 0.099,
+      "passed": true
+    },
+    {
+      "name": "test_explicit_library_kill_accounting_and_budget_never_refresh",
+      "module": "src.test.test_task042_v18_completion",
+      "seconds": 0.006,
+      "passed": true
+    },
+    {
+      "name": "test_compensation_epoch_uses_full_close_not_duplicate_port",
+      "module": "src.test.test_task042_v18_completion",
+      "seconds": 0.006,
+      "passed": true
+    },
+    {
+      "name": "test_deadline_clears_own_detached_child_and_preserves_sibling",
+      "module": "src.test.test_task042_shared_watchdog",
+      "seconds": 1.887,
+      "passed": true
+    },
+    {
+      "name": "test_opt_in_tree_limit_clears_orphan_without_signalling_sibling",
+      "module": "src.test.test_task042_shared_watchdog",
+      "seconds": 1.671,
+      "passed": true
+    },
+    {
+      "name": "test_batch_cap_and_closed_status[actions_upper-80001]",
+      "module": "src.test.test_task042_v19_evidence",
+      "seconds": 0.001,
+      "passed": true
+    },
+    {
+      "name": "test_batch_cap_and_closed_status[audits_upper-301]",
+      "module": "src.test.test_task042_v19_evidence",
+      "seconds": 0.0,
+      "passed": true
+    },
+    {
+      "name": "test_batch_cap_and_closed_status[new_A_columns-1]",
+      "module": "src.test.test_task042_v19_evidence",
+      "seconds": 0.0,
+      "passed": true
+    },
+    {
+      "name": "test_batch_cap_and_closed_status[image_QR-1]",
+      "module": "src.test.test_task042_v19_evidence",
+      "seconds": 0.0,
+      "passed": true
+    },
+    {
+      "name": "test_batch_cap_and_closed_status[field_states-13]",
+      "module": "src.test.test_task042_v19_evidence",
+      "seconds": 0.0,
+      "passed": true
+    },
+    {
+      "name": "test_batch_cap_and_closed_status[reentries-4]",
+      "module": "src.test.test_task042_v19_evidence",
+      "seconds": 0.0,
+      "passed": true
+    },
+    {
+      "name": "test_batch_cap_and_closed_status[cooldown_seconds-nan]",
+      "module": "src.test.test_task042_v19_evidence",
+      "seconds": 0.0,
+      "passed": true
+    },
+    {
+      "name": "test_batch_cap_and_closed_status[closed-False]",
+      "module": "src.test.test_task042_v19_evidence",
+      "seconds": 0.0,
+      "passed": true
+    },
+    {
+      "name": "test_batch_cap_and_closed_status[active-value8]",
+      "module": "src.test.test_task042_v19_evidence",
+      "seconds": 0.0,
+      "passed": true
+    },
+    {
+      "name": "test_method_library_budget[wall_seconds-2383.0]",
+      "module": "src.test.test_task042_v19_evidence",
+      "seconds": 0.0,
+      "passed": true
+    },
+    {
+      "name": "test_method_library_budget[wall_seconds-nan]",
+      "module": "src.test.test_task042_v19_evidence",
+      "seconds": 0.0,
+      "passed": true
+    },
+    {
+      "name": "test_method_library_budget[actions_upper-19501]",
+      "module": "src.test.test_task042_v19_evidence",
+      "seconds": 0.0,
+      "passed": true
+    },
+    {
+      "name": "test_method_library_budget[new_updates-65]",
+      "module": "src.test.test_task042_v19_evidence",
+      "seconds": 0.0,
+      "passed": true
+    },
+    {
+      "name": "test_method_library_budget[new_updates--1]",
+      "module": "src.test.test_task042_v19_evidence",
+      "seconds": 0.0,
+      "passed": true
+    },
+    {
+      "name": "test_physical_saved_vector_not_callback_or_fake_status",
+      "module": "src.test.test_task042_v19_evidence",
+      "seconds": 0.034,
+      "passed": true
+    }
+  ],
+  "JUnit_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/final_tests_02_report.xml",
+  "JUnit_sha256": "46ee4375f314372d90a24088f9209c4a56126429a4d766064882632faf636943",
+  "independent_process_continue_and_transaction_evidence": true,
+  "actual_formal_Arnoldi_replayed": 0
+}

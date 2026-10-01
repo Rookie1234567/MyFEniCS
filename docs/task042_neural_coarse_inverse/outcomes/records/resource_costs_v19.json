@@ -1,0 +1,3449 @@
+{
+  "formal_runs": [
+    {
+      "stage": "PREFLIGHT",
+      "algorithm": "C0",
+      "library": null,
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 4.6235157860210165,
+      "launch_wall_seconds": 5.687920878990553,
+      "worker_wall_seconds": 1.6384198690066114,
+      "RSS_peak_bytes": 442429440,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 10,
+      "actions_upper": 10,
+      "action_counts": {
+        "S": 10,
+        "SH": 0,
+        "audit": 2
+      },
+      "action_costs_seconds": {
+        "S": 0.8456926390063018,
+        "SH": 0.0,
+        "audit": 0.624710897100158
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": null,
+      "numeric_io": {
+        "started": 0,
+        "completed": 0,
+        "bytes_completed": 0,
+        "wall_completed_seconds": 0.0
+      },
+      "internal_Arnoldi_iterations": 0,
+      "actual_complete_updates": 0,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 950667419648,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 950667419648,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 950182584320,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 10
+    },
+    {
+      "stage": "P_GPOLY",
+      "algorithm": "P",
+      "library": "GPOLY",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 266.8892761319876,
+      "launch_wall_seconds": 267.94942119310144,
+      "worker_wall_seconds": 263.74697664391715,
+      "RSS_peak_bytes": 518463488,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "action_counts": {
+        "S": 2096,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 216.94250549864955,
+        "SH": 0.0,
+        "audit": 4.6183197451755404
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 218.31603169697337,
+        "SH": 0.0,
+        "port_solve": 0.3895603424170986
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.2552107584197074
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 950878461952,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 950878461952,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 950161514496,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 523
+    },
+    {
+      "stage": "P_GNN",
+      "algorithm": "P",
+      "library": "GNN",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 264.86162587895524,
+      "launch_wall_seconds": 265.9281572669279,
+      "worker_wall_seconds": 261.7115797260776,
+      "RSS_peak_bytes": 518250496,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "action_counts": {
+        "S": 2096,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 216.35788189829327,
+        "SH": 0.0,
+        "audit": 3.9941877683158964
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 218.04660353518557,
+        "SH": 0.0,
+        "port_solve": 0.3455995505210012
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.24556211603339761
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 950386008064,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 950386008064,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 948509437952,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 519
+    },
+    {
+      "stage": "L_GPOLY",
+      "algorithm": "L",
+      "library": "GPOLY",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 264.4785797339864,
+      "launch_wall_seconds": 265.54107385803945,
+      "worker_wall_seconds": 261.78839722205885,
+      "RSS_peak_bytes": 574410752,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2115,
+      "actions_upper": 2115,
+      "action_counts": {
+        "S": 2115,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 213.59783505473752,
+        "SH": 0.0,
+        "audit": 3.111500332946889
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 215.21709456364624,
+        "SH": 0.0,
+        "port_solve": 0.3771411676425487
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 41574032,
+        "wall_completed_seconds": 0.3480999016901478
+      },
+      "internal_Arnoldi_iterations": null,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 950071345152,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 950071345152,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 948234788864,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 518
+    },
+    {
+      "stage": "L_GNN",
+      "algorithm": "L",
+      "library": "GNN",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 267.3252556459047,
+      "launch_wall_seconds": 268.3897504109191,
+      "worker_wall_seconds": 263.89542034303304,
+      "RSS_peak_bytes": 575086592,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2115,
+      "actions_upper": 2115,
+      "action_counts": {
+        "S": 2115,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 214.77560676715802,
+        "SH": 0.0,
+        "audit": 3.6044733236776665
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 215.95001966773998,
+        "SH": 0.0,
+        "port_solve": 0.3622160948580131
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 41574032,
+        "wall_completed_seconds": 0.37219788681250066
+      },
+      "internal_Arnoldi_iterations": null,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 948674473984,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 948674473984,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 947374710784,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 523
+    },
+    {
+      "stage": "P_GPOLY",
+      "algorithm": "P",
+      "library": "GPOLY",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 253.98002622497734,
+      "launch_wall_seconds": 255.0479450019775,
+      "worker_wall_seconds": 251.0255260419799,
+      "RSS_peak_bytes": 518316032,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "action_counts": {
+        "S": 2096,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 207.89576941775158,
+        "SH": 0.0,
+        "audit": 3.107489694026299
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 210.03590206697118,
+        "SH": 0.0,
+        "port_solve": 0.35438619437627494
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.24048879090696573
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 947727417344,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 947727417344,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 947170861056,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 497
+    },
+    {
+      "stage": "P_GNN",
+      "algorithm": "P",
+      "library": "GNN",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 254.52753306389786,
+      "launch_wall_seconds": 255.59514230699278,
+      "worker_wall_seconds": 251.21444078499917,
+      "RSS_peak_bytes": 518512640,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "action_counts": {
+        "S": 2096,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 207.96829694963526,
+        "SH": 0.0,
+        "audit": 3.0665662098908797
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 209.99866941105574,
+        "SH": 0.0,
+        "port_solve": 0.35298290313221514
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.23161633184645325
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 947622547456,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 947622547456,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 945853513728,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 498
+    },
+    {
+      "stage": "L_GPOLY",
+      "algorithm": "L",
+      "library": "GPOLY",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 265.63205296790693,
+      "launch_wall_seconds": 266.6933696150081,
+      "worker_wall_seconds": 262.87076675496064,
+      "RSS_peak_bytes": 576729088,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2121,
+      "actions_upper": 2121,
+      "action_counts": {
+        "S": 2121,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 213.55284215474967,
+        "SH": 0.0,
+        "audit": 4.276022396865301
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 214.42302791553084,
+        "SH": 0.0,
+        "port_solve": 0.37518706708215177
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 44186768,
+        "wall_completed_seconds": 0.38129979092627764
+      },
+      "internal_Arnoldi_iterations": null,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 950943461376,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 950943461376,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 950141845504,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 519
+    },
+    {
+      "stage": "L_GNN",
+      "algorithm": "L",
+      "library": "GNN",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 261.593467675033,
+      "launch_wall_seconds": 262.6573845311068,
+      "worker_wall_seconds": 258.79232534894254,
+      "RSS_peak_bytes": 579964928,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2121,
+      "actions_upper": 2121,
+      "action_counts": {
+        "S": 2121,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 211.51152633712627,
+        "SH": 0.0,
+        "audit": 4.113188659073785
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 212.32815779186785,
+        "SH": 0.0,
+        "port_solve": 0.3592697981512174
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 44186768,
+        "wall_completed_seconds": 0.35651891282759607
+      },
+      "internal_Arnoldi_iterations": null,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 950860353536,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 950860353536,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 950137430016,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 511
+    },
+    {
+      "stage": "P_GPOLY",
+      "algorithm": "P",
+      "library": "GPOLY",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 264.649711816106,
+      "launch_wall_seconds": 265.7220955459634,
+      "worker_wall_seconds": 262.1553187100217,
+      "RSS_peak_bytes": 518549504,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "action_counts": {
+        "S": 2096,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 217.25451570085716,
+        "SH": 0.0,
+        "audit": 2.5778877938864753
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 219.61930247489363,
+        "SH": 0.0,
+        "port_solve": 0.3926356995943934
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.2288771664025262
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 950857953280,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 950857953280,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 950004174848,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 516
+    },
+    {
+      "stage": "P_GNN",
+      "algorithm": "P",
+      "library": "GNN",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 264.1770387319848,
+      "launch_wall_seconds": 265.2347970850533,
+      "worker_wall_seconds": 261.1296478189761,
+      "RSS_peak_bytes": 518823936,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "action_counts": {
+        "S": 2096,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 216.51052214228548,
+        "SH": 0.0,
+        "audit": 2.4418948370730504
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 218.92892106832005,
+        "SH": 0.0,
+        "port_solve": 0.38336281187366694
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.21824293700046837
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 950806605824,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 950806605824,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 948538974208,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 514
+    },
+    {
+      "stage": "L_GPOLY",
+      "algorithm": "L",
+      "library": "GPOLY",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 273.2077758429805,
+      "launch_wall_seconds": 274.2773461029865,
+      "worker_wall_seconds": 270.0432903240435,
+      "RSS_peak_bytes": 577634304,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2121,
+      "actions_upper": 2121,
+      "action_counts": {
+        "S": 2121,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 220.3556310617132,
+        "SH": 0.0,
+        "audit": 2.77924446715042
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 222.39191403321456,
+        "SH": 0.0,
+        "port_solve": 0.35968873964156955
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 44186768,
+        "wall_completed_seconds": 0.325209831004031
+      },
+      "internal_Arnoldi_iterations": null,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 949615706112,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 949615706112,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 947274792960,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 532
+    },
+    {
+      "stage": "L_GNN",
+      "algorithm": "L",
+      "library": "GNN",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 283.3221148450393,
+      "launch_wall_seconds": 284.3901769029908,
+      "worker_wall_seconds": 280.28779722598847,
+      "RSS_peak_bytes": 578658304,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2121,
+      "actions_upper": 2121,
+      "action_counts": {
+        "S": 2121,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 227.4820116617484,
+        "SH": 0.0,
+        "audit": 4.891018686117604
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 227.96212784468662,
+        "SH": 0.0,
+        "port_solve": 0.3895968731958419
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 44186768,
+        "wall_completed_seconds": 0.3427839759970084
+      },
+      "internal_Arnoldi_iterations": null,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 948228104192,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 948228104192,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 947305631744,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 550
+    },
+    {
+      "stage": "P_GPOLY",
+      "algorithm": "P",
+      "library": "GPOLY",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 262.8814955999842,
+      "launch_wall_seconds": 263.9889668880496,
+      "worker_wall_seconds": 257.2681441779714,
+      "RSS_peak_bytes": 518909952,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "action_counts": {
+        "S": 2096,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 212.92777955916245,
+        "SH": 0.0,
+        "audit": 2.727303042076528
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 215.62703949422576,
+        "SH": 0.0,
+        "port_solve": 0.36631912423763424
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.22740946023259312
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 947895402496,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 947895402496,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 945925595136,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 511
+    },
+    {
+      "stage": "P_GNN",
+      "algorithm": "P",
+      "library": "GNN",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 258.1025827979902,
+      "launch_wall_seconds": 259.1651421969291,
+      "worker_wall_seconds": 255.12735407205764,
+      "RSS_peak_bytes": 518983680,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "action_counts": {
+        "S": 2096,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 210.20620488224085,
+        "SH": 0.0,
+        "audit": 4.685572294751182
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 211.96078747545835,
+        "SH": 0.0,
+        "port_solve": 0.3408969477750361
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.2488328489707783
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 953528381440,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 953528381440,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 952794083328,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 502
+    },
+    {
+      "stage": "L_GPOLY",
+      "algorithm": "L",
+      "library": "GPOLY",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 262.67084804398473,
+      "launch_wall_seconds": 263.73579259891994,
+      "worker_wall_seconds": 259.4486322939629,
+      "RSS_peak_bytes": 578433024,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2121,
+      "actions_upper": 2121,
+      "action_counts": {
+        "S": 2121,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 211.53470786951948,
+        "SH": 0.0,
+        "audit": 3.5299861719831824
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 212.5466924541397,
+        "SH": 0.0,
+        "port_solve": 0.35532639012672007
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 44186768,
+        "wall_completed_seconds": 0.37844262132421136
+      },
+      "internal_Arnoldi_iterations": null,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 954247200768,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 954247200768,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 953518092288,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 511
+    },
+    {
+      "stage": "L_GNN",
+      "algorithm": "L",
+      "library": "GNN",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 262.2824251810089,
+      "launch_wall_seconds": 263.34161704801954,
+      "worker_wall_seconds": 259.2338804070605,
+      "RSS_peak_bytes": 575221760,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2121,
+      "actions_upper": 2121,
+      "action_counts": {
+        "S": 2121,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 210.8959795127157,
+        "SH": 0.0,
+        "audit": 3.806717542698607
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 211.4310292963637,
+        "SH": 0.0,
+        "port_solve": 0.3615479253930971
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 44186768,
+        "wall_completed_seconds": 0.34684912592638284
+      },
+      "internal_Arnoldi_iterations": null,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 954313306112,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 954313306112,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 953491607552,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 510
+    },
+    {
+      "stage": "P_GPOLY",
+      "algorithm": "P",
+      "library": "GPOLY",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 262.4068972649984,
+      "launch_wall_seconds": 263.4768994350452,
+      "worker_wall_seconds": 259.3094427069882,
+      "RSS_peak_bytes": 518926336,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "action_counts": {
+        "S": 2096,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 214.75104818155523,
+        "SH": 0.0,
+        "audit": 3.3355178022757173
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 216.73598756361753,
+        "SH": 0.0,
+        "port_solve": 0.39139765698928386
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.2432506182231009
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 953979392000,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 953979392000,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 953114759168,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 510
+    },
+    {
+      "stage": "P_GNN",
+      "algorithm": "P",
+      "library": "GNN",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 264.8335306249792,
+      "launch_wall_seconds": 265.8964353890624,
+      "worker_wall_seconds": 261.8522184169851,
+      "RSS_peak_bytes": 518889472,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "action_counts": {
+        "S": 2096,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 215.5704949592473,
+        "SH": 0.0,
+        "audit": 3.813404329121113
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 217.58304001926444,
+        "SH": 0.0,
+        "port_solve": 0.3839344310108572
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.24775311932899058
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 953572560896,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 953572560896,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 953025748992,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 514
+    },
+    {
+      "stage": "L_GPOLY",
+      "algorithm": "L",
+      "library": "GPOLY",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 276.3264528339496,
+      "launch_wall_seconds": 277.39197464694735,
+      "worker_wall_seconds": 273.44082927901763,
+      "RSS_peak_bytes": 579059712,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2121,
+      "actions_upper": 2121,
+      "action_counts": {
+        "S": 2121,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 222.45669532800093,
+        "SH": 0.0,
+        "audit": 4.224530851235613
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 223.34764405840542,
+        "SH": 0.0,
+        "port_solve": 0.3861241245176643
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 44186768,
+        "wall_completed_seconds": 0.3943029477959499
+      },
+      "internal_Arnoldi_iterations": null,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 953789059072,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 953789059072,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 950256590848,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 536
+    },
+    {
+      "stage": "L_GNN",
+      "algorithm": "L",
+      "library": "GNN",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 282.7119952830253,
+      "launch_wall_seconds": 283.77891081303824,
+      "worker_wall_seconds": 279.01474832498934,
+      "RSS_peak_bytes": 576507904,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2121,
+      "actions_upper": 2121,
+      "action_counts": {
+        "S": 2121,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 227.54341322067194,
+        "SH": 0.0,
+        "audit": 3.662833303096704
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 228.9037065532757,
+        "SH": 0.0,
+        "port_solve": 0.3855437453603372
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 44186768,
+        "wall_completed_seconds": 0.350480878027156
+      },
+      "internal_Arnoldi_iterations": null,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 950942916608,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 950942916608,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 948891717632,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 548
+    },
+    {
+      "stage": "P_GPOLY",
+      "algorithm": "P",
+      "library": "GPOLY",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 330.0907284169225,
+      "launch_wall_seconds": 331.15430036804173,
+      "worker_wall_seconds": 327.40807058510836,
+      "RSS_peak_bytes": 518975488,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "action_counts": {
+        "S": 2096,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 270.93735589063726,
+        "SH": 0.0,
+        "audit": 4.472367246635258
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 272.703038464766,
+        "SH": 0.0,
+        "port_solve": 0.46093036653473973
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.2526490392629057
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 949455716352,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 949455716352,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 947444854784,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 637
+    },
+    {
+      "stage": "P_GNN",
+      "algorithm": "P",
+      "library": "GNN",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 321.21501107607037,
+      "launch_wall_seconds": 322.28066744399257,
+      "worker_wall_seconds": 317.8444650970632,
+      "RSS_peak_bytes": 519151616,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "action_counts": {
+        "S": 2096,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 262.664983688388,
+        "SH": 0.0,
+        "audit": 3.6498760990798473
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 264.99161673360504,
+        "SH": 0.0,
+        "port_solve": 0.44783744297455996
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.23647066403646022
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 948129124352,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 948129124352,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 945283502080,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 620
+    },
+    {
+      "stage": "L_GPOLY",
+      "algorithm": "L",
+      "library": "GPOLY",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 328.4116414299933,
+      "launch_wall_seconds": 329.47649289900437,
+      "worker_wall_seconds": 322.7891025720164,
+      "RSS_peak_bytes": 579809280,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2121,
+      "actions_upper": 2121,
+      "action_counts": {
+        "S": 2121,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 265.3530984761892,
+        "SH": 0.0,
+        "audit": 3.545305186067708
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 267.136774560553,
+        "SH": 0.0,
+        "port_solve": 0.4319348892895505
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 44186768,
+        "wall_completed_seconds": 0.34574055403936654
+      },
+      "internal_Arnoldi_iterations": null,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 947256299520,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 947256299520,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 945524015104,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 634
+    },
+    {
+      "stage": "L_GNN",
+      "algorithm": "L",
+      "library": "GNN",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 345.56496154295746,
+      "launch_wall_seconds": 346.6388090889668,
+      "worker_wall_seconds": 342.0625758910319,
+      "RSS_peak_bytes": 574238720,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2121,
+      "actions_upper": 2121,
+      "action_counts": {
+        "S": 2121,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 281.750021371874,
+        "SH": 0.0,
+        "audit": 3.323681124835275
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 283.72254928725306,
+        "SH": 0.0,
+        "port_solve": 0.46690826886333525
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 44186768,
+        "wall_completed_seconds": 0.40199859789572656
+      },
+      "internal_Arnoldi_iterations": null,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 945883746304,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 945883746304,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 945042563072,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 665
+    },
+    {
+      "stage": "P_GPOLY",
+      "algorithm": "P",
+      "library": "GPOLY",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 325.59994955710135,
+      "launch_wall_seconds": 326.66655169799924,
+      "worker_wall_seconds": 322.2979749320075,
+      "RSS_peak_bytes": 519249920,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "action_counts": {
+        "S": 2096,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 266.59726513095666,
+        "SH": 0.0,
+        "audit": 3.6902057777624577
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 269.3028390840627,
+        "SH": 0.0,
+        "port_solve": 0.4435670782113448
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.24909463012591004
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 945481043968,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 945481043968,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 943443288064,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 628
+    },
+    {
+      "stage": "P_GNN",
+      "algorithm": "P",
+      "library": "GNN",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 313.8630379139213,
+      "launch_wall_seconds": 314.92875171499327,
+      "worker_wall_seconds": 310.5023191840155,
+      "RSS_peak_bytes": 519229440,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "action_counts": {
+        "S": 2096,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 256.2892021549633,
+        "SH": 0.0,
+        "audit": 3.973088560742326
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 258.5979008228751,
+        "SH": 0.0,
+        "port_solve": 0.4837236297316849
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.2424003566848114
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 951427256320,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 951427256320,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 949631897600,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 606
+    },
+    {
+      "stage": "L_GPOLY",
+      "algorithm": "L",
+      "library": "GPOLY",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 311.8574268689845,
+      "launch_wall_seconds": 312.92943556199316,
+      "worker_wall_seconds": 308.5273588389391,
+      "RSS_peak_bytes": 580308992,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2121,
+      "actions_upper": 2121,
+      "action_counts": {
+        "S": 2121,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 251.9859521088656,
+        "SH": 0.0,
+        "audit": 4.8933606470236555
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 253.02566585945897,
+        "SH": 0.0,
+        "port_solve": 0.3905054683564231
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 44186768,
+        "wall_completed_seconds": 0.4142965410137549
+      },
+      "internal_Arnoldi_iterations": null,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 951020724224,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 951020724224,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 948212355072,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 602
+    },
+    {
+      "stage": "L_GNN",
+      "algorithm": "L",
+      "library": "GNN",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 312.1636339109391,
+      "launch_wall_seconds": 313.23621738899965,
+      "worker_wall_seconds": 309.4039761669701,
+      "RSS_peak_bytes": 579506176,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2121,
+      "actions_upper": 2121,
+      "action_counts": {
+        "S": 2121,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 253.3296384807909,
+        "SH": 0.0,
+        "audit": 4.528313537710346
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 255.0006687225541,
+        "SH": 0.0,
+        "port_solve": 0.3690257502021268
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 44186768,
+        "wall_completed_seconds": 0.37160092033445835
+      },
+      "internal_Arnoldi_iterations": null,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 948710584320,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 948710584320,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 947751211008,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 602
+    },
+    {
+      "stage": "P_GPOLY",
+      "algorithm": "P",
+      "library": "GPOLY",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 304.8609523780178,
+      "launch_wall_seconds": 305.930452818051,
+      "worker_wall_seconds": 302.0441784900613,
+      "RSS_peak_bytes": 519520256,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "action_counts": {
+        "S": 2096,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 248.75462679634802,
+        "SH": 0.0,
+        "audit": 4.085763838258572
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 250.8608370210277,
+        "SH": 0.0,
+        "port_solve": 0.4140434416476637
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.2536020240513608
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 949722079232,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 949722079232,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 946759708672,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 588
+    },
+    {
+      "stage": "P_GNN",
+      "algorithm": "P",
+      "library": "GNN",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 311.44933994009625,
+      "launch_wall_seconds": 312.5142159940442,
+      "worker_wall_seconds": 308.0907321679406,
+      "RSS_peak_bytes": 519524352,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "action_counts": {
+        "S": 2096,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 254.81164793740027,
+        "SH": 0.0,
+        "audit": 4.574052194133401
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 256.00602149870247,
+        "SH": 0.0,
+        "port_solve": 0.38642434834036976
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.25520335719920695
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 947977252864,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 947977252864,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 946630660096,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 600
+    },
+    {
+      "stage": "L_GPOLY",
+      "algorithm": "L",
+      "library": "GPOLY",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 307.1452072740067,
+      "launch_wall_seconds": 308.2094070019666,
+      "worker_wall_seconds": 304.34269201604184,
+      "RSS_peak_bytes": 570458112,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2121,
+      "actions_upper": 2121,
+      "action_counts": {
+        "S": 2121,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 250.2031200635247,
+        "SH": 0.0,
+        "audit": 3.355404405738227
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 250.91721535578836,
+        "SH": 0.0,
+        "port_solve": 0.355589555692859
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 44186768,
+        "wall_completed_seconds": 0.37346362485550344
+      },
+      "internal_Arnoldi_iterations": null,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 947375812608,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 947375812608,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 944625647616,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 591
+    },
+    {
+      "stage": "L_GNN",
+      "algorithm": "L",
+      "library": "GNN",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 303.8293290740112,
+      "launch_wall_seconds": 304.8972242650343,
+      "worker_wall_seconds": 300.8022855829913,
+      "RSS_peak_bytes": 575062016,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 2121,
+      "actions_upper": 2121,
+      "action_counts": {
+        "S": 2121,
+        "SH": 0,
+        "audit": 8
+      },
+      "action_costs_seconds": {
+        "S": 247.50121529772878,
+        "SH": 0.0,
+        "audit": 3.779416517005302
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": {
+        "S": 248.27483000606298,
+        "SH": 0.0,
+        "port_solve": 0.3482580650597811
+      },
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 44186768,
+        "wall_completed_seconds": 0.34900260902941227
+      },
+      "internal_Arnoldi_iterations": null,
+      "actual_complete_updates": 8,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 951907766272,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 951907766272,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 949218742272,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 585
+    },
+    {
+      "stage": "VERIFY",
+      "algorithm": "V",
+      "library": null,
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 3.186662341002375,
+      "launch_wall_seconds": 4.250770077109337,
+      "worker_wall_seconds": null,
+      "RSS_peak_bytes": 347516928,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 0,
+      "actions_upper": 64,
+      "action_counts": null,
+      "action_costs_seconds": null,
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": null,
+      "numeric_io": {},
+      "internal_Arnoldi_iterations": 0,
+      "actual_complete_updates": 0,
+      "threads": null,
+      "classification": "WORKER_FAILED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 949799370752,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 949799370752,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 949359321088,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 7
+    },
+    {
+      "stage": "VERIFY",
+      "algorithm": "V",
+      "library": null,
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "cpu": 0,
+      "supervised_wall_seconds": 59.248491944978014,
+      "launch_wall_seconds": 60.60793990199454,
+      "worker_wall_seconds": 55.24082227807958,
+      "RSS_peak_bytes": 716443648,
+      "own_swap_peak_bytes": 0,
+      "actions_lower": 9,
+      "actions_upper": 9,
+      "action_counts": {
+        "S": 9,
+        "SH": 0,
+        "audit": 9
+      },
+      "action_costs_seconds": {
+        "S": 1.7142610381124541,
+        "SH": 0.0,
+        "audit": 5.513369130669162
+      },
+      "loading_seconds": null,
+      "bar_action_costs_inclusive_seconds": null,
+      "numeric_io": {
+        "started": 0,
+        "completed": 0,
+        "bytes_completed": 0,
+        "wall_completed_seconds": 0.0
+      },
+      "internal_Arnoldi_iterations": 0,
+      "actual_complete_updates": 0,
+      "threads": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 953135517696,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 953135517696,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "MemAvailable_min_bytes": 952521572352,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 83
+    }
+  ],
+  "formal_supervised_wall_seconds": 9199.970575643703,
+  "formal_launch_wall_seconds": 9237.61155593826,
+  "old_formal_lower_bound_seconds": 57413.55514294072,
+  "cumulative_formal_lower_bound_seconds": 66613.52571858442,
+  "historical_auxiliary_unknown_preserved": true,
+  "auxiliary": [
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/adapter_tests_01/summary.json",
+        "sha256": "f735e1dbd4b535f2726389487f71dbcdb13dabb188862a396d72bdd0a18753fb",
+        "bytes": 3585
+      },
+      "wall_seconds": 12.729402020922862,
+      "RSS_peak_bytes": 353320960,
+      "swap_peak_bytes": 0,
+      "classification": "WORKER_FAILED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/adapter_tests_02/summary.json",
+        "sha256": "de20067789179c14ba15afc6539480b0969cb731749c8bdb23f3922bbf06d2b0",
+        "bytes": 3625
+      },
+      "wall_seconds": 11.792763803969137,
+      "RSS_peak_bytes": 348549120,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/collect_01/summary.json",
+        "sha256": "a7d69f4b015fbe80a097207afba52476285115cae7905fe8fd93f116cfc36ede",
+        "bytes": 2269
+      },
+      "wall_seconds": 7.926749028963968,
+      "RSS_peak_bytes": 303718400,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/collect_02/summary.json",
+        "sha256": "fb549346109ba3ff00a5e4066a96fa1940209b7fd6809bd949c0f7cf8202ef15",
+        "bytes": 2340
+      },
+      "wall_seconds": 8.204288632026874,
+      "RSS_peak_bytes": 303841280,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/collect_03/summary.json",
+        "sha256": "e04ca61581bb1046e0171dca02da090406f480191790a2efd976f57eea835ee8",
+        "bytes": 4177
+      },
+      "wall_seconds": 7.945687687955797,
+      "RSS_peak_bytes": 303816704,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/delivery_cleanup_01/summary.json",
+        "sha256": "e9c78bc2820a7008e3c313fef050f1d54dbbffd0f2d0a7daa324df9c2cf9808f",
+        "bytes": 4431
+      },
+      "wall_seconds": 3.7707500780234113,
+      "RSS_peak_bytes": 71987200,
+      "swap_peak_bytes": 0,
+      "classification": "WORKER_FAILED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/delivery_text_01/summary.json",
+        "sha256": "9d43ec5078c2e72c09e41f28a290108b3a90bb1ddb798da6594cf87047f86b3a",
+        "bytes": 3569
+      },
+      "wall_seconds": 1.923720897990279,
+      "RSS_peak_bytes": 61485056,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/delivery_text_02/summary.json",
+        "sha256": "f6cd805e2b52cbfd707411301a91aa394dc2b9b65f1742a36c778f4782660509",
+        "bytes": 4257
+      },
+      "wall_seconds": 1.6770066920435056,
+      "RSS_peak_bytes": 61583360,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/draft_syntax_01/summary.json",
+        "sha256": "28c2b3971587cbec93ed0522f5f625b018125fba2cc8ae3d5de25473b057d157",
+        "bytes": 2640
+      },
+      "wall_seconds": 1.50681266002357,
+      "RSS_peak_bytes": 61337600,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/final_compile_01/summary.json",
+        "sha256": "22f70ce4bf595bc545193bbb7a10ea5373aa4db84c5a78f577ecd187bf20f362",
+        "bytes": 4555
+      },
+      "wall_seconds": 1.3521184750134125,
+      "RSS_peak_bytes": 48160768,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/final_static_01/summary.json",
+        "sha256": "1e3554d1786ffac23ba3e6f5b64d686f55b2740ec71481b5a5783fdbd336c608",
+        "bytes": 3375
+      },
+      "wall_seconds": 3.6569913930725306,
+      "RSS_peak_bytes": 76161024,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/final_tests_01/summary.json",
+        "sha256": "e124f7d07e175b8b2ca753e7edf3541b026e141c72b4d7ef59f974fe3900e33e",
+        "bytes": 2614
+      },
+      "wall_seconds": 8.584112416021526,
+      "RSS_peak_bytes": 287875072,
+      "swap_peak_bytes": 0,
+      "classification": "WORKER_FAILED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/final_tests_02/summary.json",
+        "sha256": "c2c199a65e5741f76072c3dec0fab36e909aab16eb53ec6545bbae750e413441",
+        "bytes": 2618
+      },
+      "wall_seconds": 8.668670610990375,
+      "RSS_peak_bytes": 323731456,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/native_abi_01/summary.json",
+        "sha256": "88f9166fa6966c27c5e4d0f07d2aabe12d8abd9d78c6b99458874338f8880722",
+        "bytes": 3418
+      },
+      "wall_seconds": 11.041320609976538,
+      "RSS_peak_bytes": 242225152,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/plot_01/summary.json",
+        "sha256": "b3c6f76f5ab6a6e1da136fbd03ea0a1f42198d0ff96386e64aeadb5910d96780",
+        "bytes": 3490
+      },
+      "wall_seconds": 5.176339115016162,
+      "RSS_peak_bytes": 122998784,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/publication_01/summary.json",
+        "sha256": "d722d8ce901f22e3b8033f9712ebf1be42c5a161cfaaae59683eaf6bfdfc35d7",
+        "bytes": 4101
+      },
+      "wall_seconds": 2.731149108032696,
+      "RSS_peak_bytes": 60301312,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/signature_resource/summary.json",
+        "sha256": "4212f83c19915884917d2e3176e07a25f3e6af21c9fc430587ab45fcb0e9ef25",
+        "bytes": 2521
+      },
+      "wall_seconds": 2.0438115190481767,
+      "RSS_peak_bytes": 52936704,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/tests_record_01/summary.json",
+        "sha256": "6b1536ce73bce6b2adf7299c84e329214471c77066133720e7d30b0f001e6d2d",
+        "bytes": 2268
+      },
+      "wall_seconds": 1.47446569299791,
+      "RSS_peak_bytes": 52232192,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    }
+  ],
+  "auxiliary_supervised_wall_seconds": 102.20616044208873,
+  "simultaneous_sampled_tree_peak_bytes": 796585984,
+  "own_swap_peak_bytes": 0,
+  "own_VRAM_bytes": 0,
+  "cgroup_delegated": false,
+  "outer_queue_supervision": [
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/queue_solve_01/summary.json",
+        "sha256": "c0d13b2b1f4d1e8edde13d47e9aa991bb35b94f3ecbf472826f5becffb9abcde",
+        "bytes": 5058
+      },
+      "summary": {
+        "workflow_deadline_seconds": 10431.584068104159,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 17179869184,
+        "rss_warning_bytes": 12884901888,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "clock_info": {
+          "monotonic": {
+            "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+            "monotonic": true,
+            "adjustable": false,
+            "resolution": 1e-09
+          },
+          "utc": {
+            "implementation": "clock_gettime(CLOCK_REALTIME)",
+            "monotonic": false,
+            "adjustable": true,
+            "resolution": 1e-09
+          },
+          "boottime": {
+            "available": true,
+            "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+            "resolution": 1e-09
+          }
+        },
+        "clock_start": {
+          "monotonic": 771564.277746808,
+          "boottime": 771564.277748351,
+          "utc_ns": 1790846569416882209
+        },
+        "timebase_policy": "strict",
+        "timebase_policy_version": 1,
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          49,
+          50,
+          112,
+          114,
+          140,
+          176,
+          178,
+          240,
+          242,
+          304,
+          306,
+          368,
+          370,
+          432,
+          434,
+          496,
+          498,
+          560,
+          562,
+          624,
+          626,
+          688,
+          690,
+          752,
+          754,
+          784,
+          816,
+          818,
+          880,
+          882,
+          888,
+          944,
+          946,
+          1008,
+          1010,
+          1072,
+          1074,
+          1136,
+          1138,
+          1200,
+          1202,
+          1264,
+          1266,
+          1328,
+          1330,
+          1392,
+          1394,
+          1456,
+          1458,
+          1520,
+          1522,
+          1584,
+          1586,
+          1648,
+          1650,
+          1712,
+          1714,
+          1776,
+          1778,
+          1840,
+          1842,
+          1904,
+          1906,
+          1968,
+          1970,
+          2032,
+          2034,
+          2096
+        ],
+        "sampled_process_tree_rss_peak_bytes": 660369408,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 1658174,
+            "pswpout_pages": 2364338
+          },
+          "end": {
+            "pswpin_pages": 1935462,
+            "pswpout_pages": 2644133
+          },
+          "delta": {
+            "pswpin_pages": 277288,
+            "pswpout_pages": 279795
+          }
+        },
+        "job_swap_activity": "UNRESOLVED_global_activity_cannot_be_attributed",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 950873997312,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 950873997312,
+          "reserve_bytes": 353748992000,
+          "launch_cap_bytes": 17179869184,
+          "planning_cap_bytes": 17179869184,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 137438953472,
+          "shared_workstation": true
+        },
+        "samples": 18127,
+        "elapsed_seconds": 9181.330219708034,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "batch": "V19",
+          "window": {
+            "schema": "task042.campaign-window.v19",
+            "start_utc": "2026-10-01T08:46:41+00:00",
+            "start_monotonic": 769395.8608700142,
+            "heavy_limit_seconds": 12600,
+            "total_limit_seconds": 14400,
+            "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+            "deadline_utc": "2026-10-01T12:46:41+00:00",
+            "start_singapore": "2026-10-01T16:46:41+08:00",
+            "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+            "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+            "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+            "elapsed_seconds": 2168.415970802307,
+            "heavy_remaining_seconds": 10431.584029197693,
+            "total_remaining_seconds": 12231.584029197693
+          },
+          "mode": "solve",
+          "own_processes_only": true
+        },
+        "clock_end": {
+          "monotonic": 780745.607977082,
+          "boottime": 780745.607979112,
+          "utc_ns": 1790855750747113144
+        },
+        "workflow_clock_interval": {
+          "elapsed_seconds": {
+            "monotonic": 9181.330230274005,
+            "boottime": 9181.33023076097,
+            "utc": 9181.330230935
+          },
+          "budget_seconds": 9181.33023076097,
+          "discrepancy_seconds": 6.609952833969146e-07,
+          "tolerance_seconds": 91.81330230935001,
+          "policy": "strict",
+          "policy_version": 1,
+          "utc_minus_monotonic_seconds": 6.609952833969146e-07,
+          "step": {
+            "elapsed_seconds": {
+              "monotonic": 0.0024054740788415074,
+              "boottime": 0.0024048039922490716,
+              "utc": 0.002404753
+            },
+            "budget_seconds": 0.0024054740788415074,
+            "discrepancy_seconds": 7.210788415075095e-07,
+            "tolerance_seconds": 5.0,
+            "policy": "strict",
+            "policy_version": 1,
+            "utc_minus_monotonic_seconds": -7.210788415075095e-07
+          },
+          "utc_positive_excess_seconds": 0.0010033674773168855
+        }
+      }
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/queue_verify_01/summary.json",
+        "sha256": "a0a436c0505cc4dcd4d74111f8c70f808f73cdb8b4ef6c0fc2eab92370368a4c",
+        "bytes": 4412
+      },
+      "summary": {
+        "workflow_deadline_seconds": 1150.123117987183,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 17179869184,
+        "rss_warning_bytes": 12884901888,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "clock_info": {
+          "monotonic": {
+            "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+            "monotonic": true,
+            "adjustable": false,
+            "resolution": 1e-09
+          },
+          "utc": {
+            "implementation": "clock_gettime(CLOCK_REALTIME)",
+            "monotonic": false,
+            "adjustable": true,
+            "resolution": 1e-09
+          },
+          "boottime": {
+            "available": true,
+            "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+            "resolution": 1e-09
+          }
+        },
+        "clock_start": {
+          "monotonic": 780845.738765334,
+          "boottime": 780845.738767089,
+          "utc_ns": 1790855850877901050
+        },
+        "timebase_policy": "strict",
+        "timebase_policy_version": 1,
+        "cache_metadata_stable": true,
+        "classification": "WORKER_FAILED",
+        "leader_exit_code": 1,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          48,
+          49,
+          111,
+          113
+        ],
+        "sampled_process_tree_rss_peak_bytes": 457764864,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 1935462,
+            "pswpout_pages": 2644133
+          },
+          "end": {
+            "pswpin_pages": 1935462,
+            "pswpout_pages": 2644133
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 949823123456,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 949823123456,
+          "reserve_bytes": 353748992000,
+          "launch_cap_bytes": 17179869184,
+          "planning_cap_bytes": 17179869184,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 137438953472,
+          "shared_workstation": true
+        },
+        "samples": 13,
+        "elapsed_seconds": 6.058305837097578,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "batch": "V19",
+          "window": {
+            "schema": "task042.campaign-window.v19",
+            "start_utc": "2026-10-01T08:46:41+00:00",
+            "start_monotonic": 769395.8608700142,
+            "heavy_limit_seconds": 12600,
+            "total_limit_seconds": 14400,
+            "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+            "deadline_utc": "2026-10-01T12:46:41+00:00",
+            "start_singapore": "2026-10-01T16:46:41+08:00",
+            "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+            "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+            "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+            "elapsed_seconds": 11449.876922607422,
+            "heavy_remaining_seconds": 1150.1230773925781,
+            "total_remaining_seconds": 2950.123077392578
+          },
+          "mode": "verify",
+          "own_processes_only": true
+        },
+        "clock_end": {
+          "monotonic": 780851.797082148,
+          "boottime": 780851.797084113,
+          "utc_ns": 1790855856936218261
+        },
+        "workflow_clock_interval": {
+          "elapsed_seconds": {
+            "monotonic": 6.058316814014688,
+            "boottime": 6.058317024027929,
+            "utc": 6.058317211
+          },
+          "budget_seconds": 6.058317024027929,
+          "discrepancy_seconds": 3.969853121787992e-07,
+          "tolerance_seconds": 5.0,
+          "policy": "strict",
+          "policy_version": 1,
+          "utc_minus_monotonic_seconds": 3.969853121787992e-07,
+          "step": {
+            "elapsed_seconds": {
+              "monotonic": 0.002327258000150323,
+              "boottime": 0.0023265270283445716,
+              "utc": 0.002326584
+            },
+            "budget_seconds": 0.002327258000150323,
+            "discrepancy_seconds": 7.309718057513237e-07,
+            "tolerance_seconds": 5.0,
+            "policy": "strict",
+            "policy_version": 1,
+            "utc_minus_monotonic_seconds": -6.740001503228836e-07
+          },
+          "utc_positive_excess_seconds": 2.449376272917192e-07
+        }
+      }
+    },
+    {
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/queue_verify_02/summary.json",
+        "sha256": "54be4f5dc6932a736baf64e14cf605d8caf969bd422b444923f9e6d7b5d3efe1",
+        "bytes": 4807
+      },
+      "summary": {
+        "workflow_deadline_seconds": 1017.8719580931356,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 17179869184,
+        "rss_warning_bytes": 12884901888,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "clock_info": {
+          "monotonic": {
+            "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+            "monotonic": true,
+            "adjustable": false,
+            "resolution": 1e-09
+          },
+          "utc": {
+            "implementation": "clock_gettime(CLOCK_REALTIME)",
+            "monotonic": false,
+            "adjustable": true,
+            "resolution": 1e-09
+          },
+          "boottime": {
+            "available": true,
+            "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+            "resolution": 1e-09
+          }
+        },
+        "clock_start": {
+          "monotonic": 780978.021816883,
+          "boottime": 780978.021818621,
+          "utc_ns": 1790855983160952843
+        },
+        "timebase_policy": "strict",
+        "timebase_policy_version": 1,
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          1085583,
+          1085584,
+          1085646,
+          1085648,
+          1085654,
+          1085655,
+          1085660,
+          1085661,
+          1085666,
+          1085667,
+          1085672,
+          1085673,
+          1085675,
+          1085676,
+          1085677,
+          1085679,
+          1085680,
+          1085682,
+          1085683,
+          1085687,
+          1085688,
+          1085692,
+          1085696,
+          1085697,
+          1085702,
+          1085703,
+          1085704,
+          1085710,
+          1085711,
+          1085722,
+          1085723,
+          1085734,
+          1085735
+        ],
+        "sampled_process_tree_rss_peak_bytes": 796585984,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 1935462,
+            "pswpout_pages": 2644133
+          },
+          "end": {
+            "pswpin_pages": 1935462,
+            "pswpout_pages": 2644133
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 953129226240,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 953129226240,
+          "reserve_bytes": 353748992000,
+          "launch_cap_bytes": 17179869184,
+          "planning_cap_bytes": 17179869184,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 137438953472,
+          "shared_workstation": true
+        },
+        "samples": 109,
+        "elapsed_seconds": 62.764517478994094,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "batch": "V19",
+          "window": {
+            "schema": "task042.campaign-window.v19",
+            "start_utc": "2026-10-01T08:46:41+00:00",
+            "start_monotonic": 769395.8608700142,
+            "heavy_limit_seconds": 12600,
+            "total_limit_seconds": 14400,
+            "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+            "deadline_utc": "2026-10-01T12:46:41+00:00",
+            "start_singapore": "2026-10-01T16:46:41+08:00",
+            "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+            "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+            "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+            "elapsed_seconds": 11582.12808227539,
+            "heavy_remaining_seconds": 1017.8719177246094,
+            "total_remaining_seconds": 2817.8719177246094
+          },
+          "mode": "verify",
+          "own_processes_only": true
+        },
+        "clock_end": {
+          "monotonic": 781040.786339478,
+          "boottime": 781040.786341598,
+          "utc_ns": 1790856045925475540
+        },
+        "workflow_clock_interval": {
+          "elapsed_seconds": {
+            "monotonic": 62.76452259498183,
+            "boottime": 62.76452297705691,
+            "utc": 62.764522697
+          },
+          "budget_seconds": 62.76452297705691,
+          "discrepancy_seconds": 3.8207508623600006e-07,
+          "tolerance_seconds": 5.0,
+          "policy": "strict",
+          "policy_version": 1,
+          "utc_minus_monotonic_seconds": 1.0201816991184387e-07,
+          "step": {
+            "elapsed_seconds": {
+              "monotonic": 0.04521941393613815,
+              "boottime": 0.045220199041068554,
+              "utc": 0.045220263
+            },
+            "budget_seconds": 0.045220199041068554,
+            "discrepancy_seconds": 8.490638618435797e-07,
+            "tolerance_seconds": 5.0,
+            "policy": "strict",
+            "policy_version": 1,
+            "utc_minus_monotonic_seconds": 8.490638618435797e-07
+          },
+          "utc_positive_excess_seconds": 6.3161749481316365e-06
+        }
+      }
+    }
+  ],
+  "outer_and_nested_formal_times_additive": false,
+  "nested_timers_additive": false,
+  "global_swap_diagnostic": [
+    {
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/queue_solve_01/summary.json",
+        "sha256": "c0d13b2b1f4d1e8edde13d47e9aa991bb35b94f3ecbf472826f5becffb9abcde",
+        "bytes": 5058
+      },
+      "activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 1658174,
+          "pswpout_pages": 2364338
+        },
+        "end": {
+          "pswpin_pages": 1935462,
+          "pswpout_pages": 2644133
+        },
+        "delta": {
+          "pswpin_pages": 277288,
+          "pswpout_pages": 279795
+        }
+      },
+      "attribution": "system-wide activity cannot be attributed to Task042; own VmSwap separately sampled zero"
+    },
+    {
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/queue_verify_01/summary.json",
+        "sha256": "a0a436c0505cc4dcd4d74111f8c70f808f73cdb8b4ef6c0fc2eab92370368a4c",
+        "bytes": 4412
+      },
+      "activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 1935462,
+          "pswpout_pages": 2644133
+        },
+        "end": {
+          "pswpin_pages": 1935462,
+          "pswpout_pages": 2644133
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "attribution": "system-wide activity cannot be attributed to Task042; own VmSwap separately sampled zero"
+    },
+    {
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/queue_verify_02/summary.json",
+        "sha256": "54be4f5dc6932a736baf64e14cf605d8caf969bd422b444923f9e6d7b5d3efe1",
+        "bytes": 4807
+      },
+      "activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 1935462,
+          "pswpout_pages": 2644133
+        },
+        "end": {
+          "pswpin_pages": 1935462,
+          "pswpout_pages": 2644133
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "attribution": "system-wide activity cannot be attributed to Task042; own VmSwap separately sampled zero"
+    }
+  ],
+  "performance": "shared-workstation; INCONCLUSIVE same-strict-accuracy speedup and neighbor impact",
+  "uniform_route_budget": {
+    "uniform_route_wall_seconds": 2382,
+    "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+    "formula": "min(2700, floor((heavy_remaining-900)/4))",
+    "immutable": true
+  },
+  "charged_routes": {
+    "P_GPOLY": {
+      "wall_seconds": 2279.936632948229,
+      "actions_upper": 16768,
+      "new_updates": 64,
+      "status": "READY"
+    },
+    "P_GNN": {
+      "wall_seconds": 2261.5433093979955,
+      "actions_upper": 16768,
+      "new_updates": 64,
+      "status": "READY"
+    },
+    "L_GPOLY": {
+      "wall_seconds": 2298.2548922848655,
+      "actions_upper": 16962,
+      "new_updates": 64,
+      "status": "READY"
+    },
+    "L_GNN": {
+      "wall_seconds": 2327.330090449075,
+      "actions_upper": 16962,
+      "new_updates": 64,
+      "status": "READY"
+    },
+    "GPOLY": {
+      "reentries": 0,
+      "status": "READY"
+    },
+    "GNN": {
+      "reentries": 0,
+      "status": "READY"
+    }
+  },
+  "new_A_image_QR_GK": 0,
+  "method_lineage_cost": "upstream necessary basis/image/LSQR included by links; precise missing components unknown, research lower bound is not a single solve time",
+  "new_persistent_parts": {
+    "artifacts": {
+      "logical_regular_bytes": 762242464,
+      "allocated_unique_regular_bytes": 767864832,
+      "regular_files": 2361,
+      "symlinks_not_followed": 0
+    },
+    "tmp": {
+      "logical_regular_bytes": 198350729,
+      "allocated_unique_regular_bytes": 205234176,
+      "regular_files": 2833,
+      "symlinks_not_followed": 51
+    },
+    "results": {
+      "logical_regular_bytes": 59766243,
+      "allocated_unique_regular_bytes": 61333504
+    }
+  },
+  "new_persistent_logical_regular_bytes": 1020359436,
+  "new_persistent_allocated_regular_bytes": 1034432512,
+  "total_Task042_artifact_storage": {
+    "logical_regular_bytes": 11381445367,
+    "allocated_unique_regular_bytes": 11392491520,
+    "regular_files": 4517,
+    "symlinks_not_followed": 7
+  },
+  "window": {
+    "schema": "task042.campaign-window.v19",
+    "start_utc": "2026-10-01T08:46:41+00:00",
+    "start_monotonic": 769395.8608700142,
+    "heavy_limit_seconds": 12600,
+    "total_limit_seconds": 14400,
+    "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+    "deadline_utc": "2026-10-01T12:46:41+00:00",
+    "start_singapore": "2026-10-01T16:46:41+08:00",
+    "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+    "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+    "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4"
+  },
+  "collection_window_snapshot": {
+    "schema": "task042.campaign-window.v19",
+    "start_utc": "2026-10-01T08:46:41+00:00",
+    "start_monotonic": 769395.8608700142,
+    "heavy_limit_seconds": 12600,
+    "total_limit_seconds": 14400,
+    "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+    "deadline_utc": "2026-10-01T12:46:41+00:00",
+    "start_singapore": "2026-10-01T16:46:41+08:00",
+    "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+    "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+    "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+    "elapsed_seconds": 13803.708497949876,
+    "heavy_remaining_seconds": 0.0,
+    "total_remaining_seconds": 596.2915020501241
+  },
+  "auxiliary_profile_scope": "bounded auxiliary supervisors captured separately; implementation, shell reads, docs and commit overhead are in immutable batch elapsed but not individually profiled",
+  "complete_batch_elapsed_is_not_formal_plus_auxiliary_sum": true,
+  "auxiliary_capture_utc": "2026-10-01T12:36:44.708444+00:00",
+  "final_delivery_after_snapshot_in_elapsed_not_individually_profiled": true,
+  "delivery_resource_audit": "nested final audit did not confirm spare physical core; no numerical workload started; retained failed helper cost"
+}

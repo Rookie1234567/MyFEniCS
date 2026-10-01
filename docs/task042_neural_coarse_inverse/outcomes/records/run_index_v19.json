@@ -1,0 +1,3947 @@
+{
+  "runs": [
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_preflight_run0_20261001T092211380806Z",
+      "stage": "PREFLIGHT",
+      "family": null,
+      "algorithm": "C0",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 5.687920878990553,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 442429440,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 0,
+        "completed": 0,
+        "bytes_completed": 0,
+        "wall_completed_seconds": 0.0
+      },
+      "internal_Arnoldi_iterations": 0,
+      "actions_lower": 10,
+      "actions_upper": 10,
+      "audits_lower": 2,
+      "audits_upper": 2,
+      "updates_lower": 0,
+      "updates_upper": 0,
+      "arnoldi_lower": 0,
+      "arnoldi_upper": 0,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-PREFLIGHT",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "c968458ac0c6c150439bcb74eef11a4e34ba74a4dea7eda4ea668aaeb5aa8558",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 2130.3930875777733,
+          "heavy_remaining_seconds": 10469.606912422227,
+          "total_remaining_seconds": 12269.606912422227
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": null,
+        "algorithm": "C0",
+        "library": null,
+        "target_cycles": 0
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_preflight_run0_20261001T092211380806Z/run_manifest.json",
+        "sha256": "69828070251ff49cadc1dd9b66ff9d2c7e00ecc51cc4fd280d70c556b3d3bb21",
+        "bytes": 2209
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_preflight_run0_20261001T092211380806Z/input_original.dat",
+        "sha256": "c968458ac0c6c150439bcb74eef11a4e34ba74a4dea7eda4ea668aaeb5aa8558",
+        "bytes": 269
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_preflight_run0_20261001T092211380806Z/resolved_config.json",
+        "sha256": "d9b72bccbc971dca794793c145f9fb220ba8a5651fa5625971797ed91656a893",
+        "bytes": 4104
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_preflight_run0_20261001T092211380806Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_preflight_run0_20261001T092211380806Z/run_summary.json",
+        "sha256": "49db06d6b3ef8583e23d47b81058e4a7f53e554e7f2b4fd351fcffae36c80740",
+        "bytes": 5992
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_preflight_run0_20261001T092211380806Z/resource_baseline.json",
+        "sha256": "e4d10e534a0c1d0cba9e68a2f36b611b1864ba84ed1ef26fe8229cc579692237",
+        "bytes": 8565
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_preflight_run0_20261001T092211380806Z/stage_result.json",
+        "sha256": "aceb48bf51b1ce7481b113f9399d2e59b911880730140a8ac544a37ce87e6cd2"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_8_a0_run1_20261001T092250816993Z",
+      "stage": "P_GPOLY",
+      "family": "GPOLY",
+      "algorithm": "P",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 267.94942119310144,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 518463488,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.2552107584197074
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 2048,
+      "arnoldi_upper": 2048,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-P_GPOLY",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "057e3ca604fb7e543623db07ae08fdc2011419e8ee687b5907f699542da05c62",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 2169.8284751328174,
+          "heavy_remaining_seconds": 10430.171524867183,
+          "total_remaining_seconds": 12230.171524867183
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "P",
+        "library": "GPOLY",
+        "target_cycles": 8
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_8_a0_run1_20261001T092250816993Z/run_manifest.json",
+        "sha256": "f57330aa5caea9b215cda25a5d64284958ef966300f40d5aca8bc416cadaaba3",
+        "bytes": 2393
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_8_a0_run1_20261001T092250816993Z/input_original.dat",
+        "sha256": "057e3ca604fb7e543623db07ae08fdc2011419e8ee687b5907f699542da05c62",
+        "bytes": 270
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_8_a0_run1_20261001T092250816993Z/resolved_config.json",
+        "sha256": "1d6bdb27b850c4dee0979c909275efd8df8fb279010c437c6514bc2f899bc404",
+        "bytes": 4305
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_8_a0_run1_20261001T092250816993Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_8_a0_run1_20261001T092250816993Z/run_summary.json",
+        "sha256": "2c51b462829bd688e8470569ac8c08478aa9da282118f707a37926c21b5b9cb4",
+        "bytes": 6193
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_8_a0_run1_20261001T092250816993Z/resource_baseline.json",
+        "sha256": "1f1d014b3fe3df060615aaa3d2eb039565d0c3c3b04508fe37f6961370db88ac",
+        "bytes": 8581
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_p_gpoly_8_a0_run1_20261001T092250816993Z/stage_result.json",
+        "sha256": "d1ab55f47cef2f8bf13343945e7cf503e241af45eb72416e15736f93b5c29591"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_8_a0_run2_20261001T092719103505Z",
+      "stage": "P_GNN",
+      "family": "GNN",
+      "algorithm": "P",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 265.9281572669279,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 518250496,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.24556211603339761
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 2048,
+      "arnoldi_upper": 2048,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-P_GNN",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "ea298cb70da3a3037e5d7407df3f563cba67a492675f4b87d130b3b0e060bb89",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 2438.1151056447998,
+          "heavy_remaining_seconds": 10161.8848943552,
+          "total_remaining_seconds": 11961.8848943552
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "P",
+        "library": "GNN",
+        "target_cycles": 8
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_8_a0_run2_20261001T092719103505Z/run_manifest.json",
+        "sha256": "3ab6c3c698b7020b13934077bc2e76c00f10bb373aa26eeacfd0cab2d0188b39",
+        "bytes": 2385
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_8_a0_run2_20261001T092719103505Z/input_original.dat",
+        "sha256": "ea298cb70da3a3037e5d7407df3f563cba67a492675f4b87d130b3b0e060bb89",
+        "bytes": 264
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_8_a0_run2_20261001T092719103505Z/resolved_config.json",
+        "sha256": "9ea3ab0d84bf8b2e2acf20a24d6672d6083752dd570f4ea5fe3921dbb858804f",
+        "bytes": 4295
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_8_a0_run2_20261001T092719103505Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_8_a0_run2_20261001T092719103505Z/run_summary.json",
+        "sha256": "0bf481489817ee9313f96fc1fc540c42353e830d02f7e75d21461e249a672aec",
+        "bytes": 6171
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_8_a0_run2_20261001T092719103505Z/resource_baseline.json",
+        "sha256": "d08b30197f8e759c4a969cf0046987114d5d5519c1a86b10e8fb73e4da560cd6",
+        "bytes": 8529
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_p_gnn_8_a0_run2_20261001T092719103505Z/stage_result.json",
+        "sha256": "781a25d5fe1b46e1d2bc382c6d9a13717d4a822d0ee2b78aa84e75d2fbe683c1"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_8_a0_run3_20261001T093145372111Z",
+      "stage": "L_GPOLY",
+      "family": "GPOLY",
+      "algorithm": "L",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 265.54107385803945,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 574410752,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 41574032,
+        "wall_completed_seconds": 0.3480999016901478
+      },
+      "internal_Arnoldi_iterations": null,
+      "actions_lower": 2115,
+      "actions_upper": 2115,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 0,
+      "arnoldi_upper": 0,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-L_GPOLY",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "f7a0da384fd32c93a39d1bb61be15eb6db7e17bad5552654e17e1869f4aa09cb",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 2704.381160428864,
+          "heavy_remaining_seconds": 9895.618839571136,
+          "total_remaining_seconds": 11695.618839571136
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "L",
+        "library": "GPOLY",
+        "target_cycles": 8
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_8_a0_run3_20261001T093145372111Z/run_manifest.json",
+        "sha256": "01d1aa465cfe5de35b5dd79fb8649df19ee178fbd6df13c4cd4ca9697d7a4f97",
+        "bytes": 2391
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_8_a0_run3_20261001T093145372111Z/input_original.dat",
+        "sha256": "f7a0da384fd32c93a39d1bb61be15eb6db7e17bad5552654e17e1869f4aa09cb",
+        "bytes": 270
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_8_a0_run3_20261001T093145372111Z/resolved_config.json",
+        "sha256": "6e048e2f283f7bc3644c2ac40e7d490af1c3f6288735a8e9f9f26e6ab3971e45",
+        "bytes": 4305
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_8_a0_run3_20261001T093145372111Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_8_a0_run3_20261001T093145372111Z/run_summary.json",
+        "sha256": "6e99d35f6f9de2b0fc2979573bf0c11e5cb586a29b9e210b3246bddba9a73d98",
+        "bytes": 6191
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_8_a0_run3_20261001T093145372111Z/resource_baseline.json",
+        "sha256": "a7ea2274b8d3cbdb8235dd13e8079fe136e8452b9e7a769581228eede349c13d",
+        "bytes": 8523
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_l_gpoly_8_a0_run3_20261001T093145372111Z/stage_result.json",
+        "sha256": "8f26cbbc172411be1b488074430f0978d7085a80fbad168aed21bb0e19a2f2b1"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_8_a0_run4_20261001T093611275660Z",
+      "stage": "L_GNN",
+      "family": "GNN",
+      "algorithm": "L",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 268.3897504109191,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 575086592,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 41574032,
+        "wall_completed_seconds": 0.37219788681250066
+      },
+      "internal_Arnoldi_iterations": null,
+      "actions_lower": 2115,
+      "actions_upper": 2115,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 0,
+      "arnoldi_upper": 0,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-L_GNN",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "8b8aab2e3ef3c13f74ba64699cb18046cf2b5b9ef5402e2a76642510041dcf5c",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 2970.2884071328444,
+          "heavy_remaining_seconds": 9629.711592867156,
+          "total_remaining_seconds": 11429.711592867156
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "L",
+        "library": "GNN",
+        "target_cycles": 8
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_8_a0_run4_20261001T093611275660Z/run_manifest.json",
+        "sha256": "b71f65276f457cbf44f69db2824a2e0a6a870c85ade8444b6e11fbd55e02950c",
+        "bytes": 2388
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_8_a0_run4_20261001T093611275660Z/input_original.dat",
+        "sha256": "8b8aab2e3ef3c13f74ba64699cb18046cf2b5b9ef5402e2a76642510041dcf5c",
+        "bytes": 264
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_8_a0_run4_20261001T093611275660Z/resolved_config.json",
+        "sha256": "2d1869029a3d9ebc5c6e4bd859bca4529af0e1e74f8d65e092fcb6b41ff38a64",
+        "bytes": 4295
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_8_a0_run4_20261001T093611275660Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_8_a0_run4_20261001T093611275660Z/run_summary.json",
+        "sha256": "b8d11e61969519b2239fdd47aa520603897fba3d04a41f79409da6f1f39ffa61",
+        "bytes": 6175
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_8_a0_run4_20261001T093611275660Z/resource_baseline.json",
+        "sha256": "e0f3dfb3549a5c58ce5a75ad4144ce29ae7a5f273ed33bb611153a8d1f44c119",
+        "bytes": 8548
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_l_gnn_8_a0_run4_20261001T093611275660Z/stage_result.json",
+        "sha256": "c6ef8e8c2ece04adb038154eb8ac6adedeb5379dc7a40ca00180686072b9999d"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_16_a0_run5_20261001T094040056168Z",
+      "stage": "P_GPOLY",
+      "family": "GPOLY",
+      "algorithm": "P",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 255.0479450019775,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 518316032,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.24048879090696573
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 2048,
+      "arnoldi_upper": 2048,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-P_GPOLY",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "e98d5a4618b9da3454b0cbede23e857065a6a2502241b46ee411955113c502d2",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 3239.066764354822,
+          "heavy_remaining_seconds": 9360.933235645178,
+          "total_remaining_seconds": 11160.933235645178
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "P",
+        "library": "GPOLY",
+        "target_cycles": 16
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_16_a0_run5_20261001T094040056168Z/run_manifest.json",
+        "sha256": "b10ff78b588b5c98cde1496c9f1c2bed83e8f5ec505871da95a177f034186093",
+        "bytes": 2392
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_16_a0_run5_20261001T094040056168Z/input_original.dat",
+        "sha256": "e98d5a4618b9da3454b0cbede23e857065a6a2502241b46ee411955113c502d2",
+        "bytes": 272
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_16_a0_run5_20261001T094040056168Z/resolved_config.json",
+        "sha256": "06ce74bfbb6034eaa04ee8d3a398732ce19d49ec30bc36ddbac688dc028fc5e8",
+        "bytes": 4320
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_16_a0_run5_20261001T094040056168Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_16_a0_run5_20261001T094040056168Z/run_summary.json",
+        "sha256": "34cd8b9fafd4544fedff8c3c4d80a17ea9c615beb14b66f1e50c38cf2ea3de1c",
+        "bytes": 6205
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_16_a0_run5_20261001T094040056168Z/resource_baseline.json",
+        "sha256": "49d09b4b866c1850ec64bef7c3eee2ee1ed10b7f4d7eae3371d5092f5a1f54bc",
+        "bytes": 8563
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_p_gpoly_16_a0_run5_20261001T094040056168Z/stage_result.json",
+        "sha256": "e6a88b8dac90d8c4248638a849f70e4d37e6d2d7be6e4209c05b87bfc8212657"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_16_a0_run6_20261001T094455503873Z",
+      "stage": "P_GNN",
+      "family": "GNN",
+      "algorithm": "P",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 255.59514230699278,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 518512640,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.23161633184645325
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 2048,
+      "arnoldi_upper": 2048,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-P_GNN",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "b829c4b3d9a5a12b1aa44e5a7472b2235455adacd8eb6df76bc5eac780b5aee6",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 3494.5168869008776,
+          "heavy_remaining_seconds": 9105.483113099122,
+          "total_remaining_seconds": 10905.483113099122
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "P",
+        "library": "GNN",
+        "target_cycles": 16
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_16_a0_run6_20261001T094455503873Z/run_manifest.json",
+        "sha256": "095de6effa54aa9604b22fb839e8931bbedcd9c86f85f12b2215b8b7d06cc628",
+        "bytes": 2389
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_16_a0_run6_20261001T094455503873Z/input_original.dat",
+        "sha256": "b829c4b3d9a5a12b1aa44e5a7472b2235455adacd8eb6df76bc5eac780b5aee6",
+        "bytes": 266
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_16_a0_run6_20261001T094455503873Z/resolved_config.json",
+        "sha256": "3bb0341fb0989490a781591e890927994e9a739201f71e353679407b17471be1",
+        "bytes": 4309
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_16_a0_run6_20261001T094455503873Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_16_a0_run6_20261001T094455503873Z/run_summary.json",
+        "sha256": "faa6aa315db102d4acb8f196364e64918ec625100bea469320547e222e7181df",
+        "bytes": 6212
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_16_a0_run6_20261001T094455503873Z/resource_baseline.json",
+        "sha256": "4115b0efc51b90d8ca70d09fb8b6df54080723e20576983b0fc617e69c532e68",
+        "bytes": 8516
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_p_gnn_16_a0_run6_20261001T094455503873Z/stage_result.json",
+        "sha256": "94d1dd40b205ee36d9e7c38ba11b0f46ac4f1d602b466198b498ba87e7fbc770"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_16_a0_run7_20261001T094911467837Z",
+      "stage": "L_GPOLY",
+      "family": "GPOLY",
+      "algorithm": "L",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 266.6933696150081,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 576729088,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 44186768,
+        "wall_completed_seconds": 0.38129979092627764
+      },
+      "internal_Arnoldi_iterations": null,
+      "actions_lower": 2121,
+      "actions_upper": 2121,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 0,
+      "arnoldi_upper": 0,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-L_GPOLY",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "67123f5458397a3a915b85fa15aa538991cf7187ba14a1022e38969c56b96820",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 3750.4768704398302,
+          "heavy_remaining_seconds": 8849.52312956017,
+          "total_remaining_seconds": 10649.52312956017
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "L",
+        "library": "GPOLY",
+        "target_cycles": 16
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_16_a0_run7_20261001T094911467837Z/run_manifest.json",
+        "sha256": "c8c33396d753777489d5b71d4ec0ec9325b166ba7b9ab04970f4233adacd3cbb",
+        "bytes": 2391
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_16_a0_run7_20261001T094911467837Z/input_original.dat",
+        "sha256": "67123f5458397a3a915b85fa15aa538991cf7187ba14a1022e38969c56b96820",
+        "bytes": 272
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_16_a0_run7_20261001T094911467837Z/resolved_config.json",
+        "sha256": "7f3ec7a5009e682ddf8eede175466ba402c8b77e1ac1992545f9c1a64c2a47aa",
+        "bytes": 4320
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_16_a0_run7_20261001T094911467837Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_16_a0_run7_20261001T094911467837Z/run_summary.json",
+        "sha256": "cddabc3483a66461222d43681ba86c86249f767ccd58a7ca08ab116fb612fb78",
+        "bytes": 6210
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_16_a0_run7_20261001T094911467837Z/resource_baseline.json",
+        "sha256": "b32c98af8f7df367a68c296469e26d9088e49ed3f3a59fa1be3c7ed41ca745c4",
+        "bytes": 8592
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_l_gpoly_16_a0_run7_20261001T094911467837Z/stage_result.json",
+        "sha256": "2027a84f42d28f3ae030e2f2f10990af8d06f581b54ad8fb9d192bd2a1650bf0"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_16_a0_run8_20261001T095338504412Z",
+      "stage": "L_GNN",
+      "family": "GNN",
+      "algorithm": "L",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 262.6573845311068,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 579964928,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 44186768,
+        "wall_completed_seconds": 0.35651891282759607
+      },
+      "internal_Arnoldi_iterations": null,
+      "actions_lower": 2121,
+      "actions_upper": 2121,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 0,
+      "arnoldi_upper": 0,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-L_GNN",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "830d35793890d9663ce608905646c0befb22b80022758561b1daf2b1a4f15aa9",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 4017.513578464859,
+          "heavy_remaining_seconds": 8582.48642153514,
+          "total_remaining_seconds": 10382.48642153514
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "L",
+        "library": "GNN",
+        "target_cycles": 16
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_16_a0_run8_20261001T095338504412Z/run_manifest.json",
+        "sha256": "4683183b3642067f3c9d0e485d9a1844464c2b227428493b13fda6145ffd3a0e",
+        "bytes": 2386
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_16_a0_run8_20261001T095338504412Z/input_original.dat",
+        "sha256": "830d35793890d9663ce608905646c0befb22b80022758561b1daf2b1a4f15aa9",
+        "bytes": 266
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_16_a0_run8_20261001T095338504412Z/resolved_config.json",
+        "sha256": "50e9c3c4cadd6a72a9555e2d6c66cc81b43638f636f43a0e12605832331e4118",
+        "bytes": 4309
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_16_a0_run8_20261001T095338504412Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_16_a0_run8_20261001T095338504412Z/run_summary.json",
+        "sha256": "bedf458c72aace6b532520f5d7050052dcbd45fccc890b31ae0be918436f8bd2",
+        "bytes": 6185
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_16_a0_run8_20261001T095338504412Z/resource_baseline.json",
+        "sha256": "faa8492826762963d492e5a959e47ce2d0588e14550cfb557afd9c17cf2f566b",
+        "bytes": 8489
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_l_gnn_16_a0_run8_20261001T095338504412Z/stage_result.json",
+        "sha256": "3d548d6f660fe4f5132e8d54559cf79070a6ca7fd4f3f60477d87f3274238128"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_24_a0_run9_20261001T095801684698Z",
+      "stage": "P_GPOLY",
+      "family": "GPOLY",
+      "algorithm": "P",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 265.7220955459634,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 518549504,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.2288771664025262
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 2048,
+      "arnoldi_upper": 2048,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-P_GPOLY",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "73454a9541ba39dc18e46ac65419390f67f583f1fef35f087a3ea006212f9f89",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 4280.696970378864,
+          "heavy_remaining_seconds": 8319.303029621136,
+          "total_remaining_seconds": 10119.303029621136
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "P",
+        "library": "GPOLY",
+        "target_cycles": 24
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_24_a0_run9_20261001T095801684698Z/run_manifest.json",
+        "sha256": "6993e1ec35c12f27abab0cd36e0f1007fc1835497698b972b26e7a652fc2640a",
+        "bytes": 2392
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_24_a0_run9_20261001T095801684698Z/input_original.dat",
+        "sha256": "73454a9541ba39dc18e46ac65419390f67f583f1fef35f087a3ea006212f9f89",
+        "bytes": 272
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_24_a0_run9_20261001T095801684698Z/resolved_config.json",
+        "sha256": "d1c6e9b5edcca832582701abcb37ffe920b9d68f592c7d9249bbc13c03492a68",
+        "bytes": 4319
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_24_a0_run9_20261001T095801684698Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_24_a0_run9_20261001T095801684698Z/run_summary.json",
+        "sha256": "0641da6ffb92de2025e16799b6b96790d8d86bb7dc6a99bf4c99a3c67b778309",
+        "bytes": 6200
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_24_a0_run9_20261001T095801684698Z/resource_baseline.json",
+        "sha256": "51b8461e912346454e369ba31d339bd3e6d606005618e86f3d0724e3e04a236a",
+        "bytes": 8546
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_p_gpoly_24_a0_run9_20261001T095801684698Z/stage_result.json",
+        "sha256": "fc0f19a04f8807c6a61de0e7970c836b9281943cca99399947fbed45170eb287"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_24_a0_run10_20261001T100227730428Z",
+      "stage": "P_GNN",
+      "family": "GNN",
+      "algorithm": "P",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 265.2347970850533,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 518823936,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.21824293700046837
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 2048,
+      "arnoldi_upper": 2048,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-P_GNN",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "308aea28503a9ae42be485d87464ae7405ad9701383f5da6a160c1cd38ae9e37",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 4546.739786196849,
+          "heavy_remaining_seconds": 8053.260213803151,
+          "total_remaining_seconds": 9853.26021380315
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "P",
+        "library": "GNN",
+        "target_cycles": 24
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_24_a0_run10_20261001T100227730428Z/run_manifest.json",
+        "sha256": "78b2cc8bb9dc052c18b01a412e9562be54c0797a3e487bd091650622ce7f55e3",
+        "bytes": 2386
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_24_a0_run10_20261001T100227730428Z/input_original.dat",
+        "sha256": "308aea28503a9ae42be485d87464ae7405ad9701383f5da6a160c1cd38ae9e37",
+        "bytes": 267
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_24_a0_run10_20261001T100227730428Z/resolved_config.json",
+        "sha256": "f866ad82ce576fd72752861f5be21540ee2e2131067cf7c696a15077ecd3a155",
+        "bytes": 4312
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_24_a0_run10_20261001T100227730428Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_24_a0_run10_20261001T100227730428Z/run_summary.json",
+        "sha256": "ed60e10a603fac3894a298754b860284e8342bb1ba66c40f704622df99999ff4",
+        "bytes": 6207
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_24_a0_run10_20261001T100227730428Z/resource_baseline.json",
+        "sha256": "403bc7ff2230d25a303d98bbe5d52cc335507c504f775079bdf641ac35ab1000",
+        "bytes": 8531
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_p_gnn_24_a0_run10_20261001T100227730428Z/stage_result.json",
+        "sha256": "c85360993ed48af387c1ebe766fa004daa51d99fb6a8b25d600e2d48444388a7"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_24_a0_run11_20261001T100653411773Z",
+      "stage": "L_GPOLY",
+      "family": "GPOLY",
+      "algorithm": "L",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 274.2773461029865,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 577634304,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 44186768,
+        "wall_completed_seconds": 0.325209831004031
+      },
+      "internal_Arnoldi_iterations": null,
+      "actions_lower": 2121,
+      "actions_upper": 2121,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 0,
+      "arnoldi_upper": 0,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-L_GPOLY",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "7e1e8fa60054e41b13342b77b669e0bb99fe66267b7af3f254016f359dca2094",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 4812.424728377839,
+          "heavy_remaining_seconds": 7787.575271622161,
+          "total_remaining_seconds": 9587.575271622161
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "L",
+        "library": "GPOLY",
+        "target_cycles": 24
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_24_a0_run11_20261001T100653411773Z/run_manifest.json",
+        "sha256": "51c1c1cf18dce66f9ded781bb2c038e48a4ba366d9f2b0c54ab2399144b5764e",
+        "bytes": 2391
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_24_a0_run11_20261001T100653411773Z/input_original.dat",
+        "sha256": "7e1e8fa60054e41b13342b77b669e0bb99fe66267b7af3f254016f359dca2094",
+        "bytes": 273
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_24_a0_run11_20261001T100653411773Z/resolved_config.json",
+        "sha256": "5bd907d79f541d60e810455a0d62fa92c8204b39086b3d9e7c1799b4aabe60b2",
+        "bytes": 4322
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_24_a0_run11_20261001T100653411773Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_24_a0_run11_20261001T100653411773Z/run_summary.json",
+        "sha256": "a4aad50ae397ef1ba331baa50c2936f1393d589ee9fa6b2c5dc141db58f65ec5",
+        "bytes": 6202
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_24_a0_run11_20261001T100653411773Z/resource_baseline.json",
+        "sha256": "ed5883c38b48bd98fbc165d2fceb2dce5d509dc21cff24af615a6452892454bf",
+        "bytes": 8524
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_l_gpoly_24_a0_run11_20261001T100653411773Z/stage_result.json",
+        "sha256": "0700023bbf124ce16911873ea3d464d556790cb14477b5578470114057149e32"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_24_a0_run12_20261001T101128089682Z",
+      "stage": "L_GNN",
+      "family": "GNN",
+      "algorithm": "L",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 284.3901769029908,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 578658304,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 44186768,
+        "wall_completed_seconds": 0.3427839759970084
+      },
+      "internal_Arnoldi_iterations": null,
+      "actions_lower": 2121,
+      "actions_upper": 2121,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 0,
+      "arnoldi_upper": 0,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-L_GNN",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "0d1fa46e1b6a29ef32deac71c34f282f371ce1989160245dde926615bf2a56bc",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 5087.101704983856,
+          "heavy_remaining_seconds": 7512.898295016144,
+          "total_remaining_seconds": 9312.898295016144
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "L",
+        "library": "GNN",
+        "target_cycles": 24
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_24_a0_run12_20261001T101128089682Z/run_manifest.json",
+        "sha256": "043672d9860fcc6f840a3f6aa49022857cc50b3088565d78a51872e86d60e0d3",
+        "bytes": 2387
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_24_a0_run12_20261001T101128089682Z/input_original.dat",
+        "sha256": "0d1fa46e1b6a29ef32deac71c34f282f371ce1989160245dde926615bf2a56bc",
+        "bytes": 267
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_24_a0_run12_20261001T101128089682Z/resolved_config.json",
+        "sha256": "92ed8d9e3e254723afe0ae5a6555a0228599234b926bcc17cd467be299526aa0",
+        "bytes": 4312
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_24_a0_run12_20261001T101128089682Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_24_a0_run12_20261001T101128089682Z/run_summary.json",
+        "sha256": "80ac32c2a78bc46c6a4f8af7a46970e0fe53f7e29533c9b9d3dc975b2520fde0",
+        "bytes": 6206
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_24_a0_run12_20261001T101128089682Z/resource_baseline.json",
+        "sha256": "149f5ef9686156c8622fe11e2447d8af2fb3d85d5d359309543bfe2e2d72d87a",
+        "bytes": 8539
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_l_gnn_24_a0_run12_20261001T101128089682Z/stage_result.json",
+        "sha256": "db3ac3aae2bd0e83b06516f878fa8a133705e32e3f9128c2cb498138c3f5039c"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_32_a0_run13_20261001T101612830669Z",
+      "stage": "P_GPOLY",
+      "family": "GPOLY",
+      "algorithm": "P",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 263.9889668880496,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 518909952,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.22740946023259312
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 2048,
+      "arnoldi_upper": 2048,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-P_GPOLY",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "3543169d348cc182af462e8d4b8dcb83319a9c244414054271b0e839ac631e3a",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 5371.85213593184,
+          "heavy_remaining_seconds": 7228.14786406816,
+          "total_remaining_seconds": 9028.14786406816
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "P",
+        "library": "GPOLY",
+        "target_cycles": 32
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_32_a0_run13_20261001T101612830669Z/run_manifest.json",
+        "sha256": "6985e3d5586147399f00d3ee37d92b551b8acd5dc0a636d415dcea15e3682215",
+        "bytes": 2388
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_32_a0_run13_20261001T101612830669Z/input_original.dat",
+        "sha256": "3543169d348cc182af462e8d4b8dcb83319a9c244414054271b0e839ac631e3a",
+        "bytes": 273
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_32_a0_run13_20261001T101612830669Z/resolved_config.json",
+        "sha256": "21ca8a87a9193b2e2703c00af2e0303577f3564264dfedc4fa73a94e0fe72ad6",
+        "bytes": 4322
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_32_a0_run13_20261001T101612830669Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_32_a0_run13_20261001T101612830669Z/run_summary.json",
+        "sha256": "ad6083cbc6189d447ada337c0488a57c955f018d18d2a88a374ad5060cdbb6b6",
+        "bytes": 6206
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_32_a0_run13_20261001T101612830669Z/resource_baseline.json",
+        "sha256": "e9df28c17c7a75e3c2b31f1e60ce459d03c8268e9cb14154001f2d7e9d12ecba",
+        "bytes": 8564
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_p_gpoly_32_a0_run13_20261001T101612830669Z/stage_result.json",
+        "sha256": "59a0a487be175017e2e2c1a315010fdb82c85fbcadb2a3da2c7a9f8de976480b"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_32_a0_run14_20261001T102037175314Z",
+      "stage": "P_GNN",
+      "family": "GNN",
+      "algorithm": "P",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 259.1651421969291,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 518983680,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.2488328489707783
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 2048,
+      "arnoldi_upper": 2048,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-P_GNN",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "f691c0c68700451bed0445b1075e5ad49666e754713ce6e40330ad431d3b853d",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 5636.188351173769,
+          "heavy_remaining_seconds": 6963.811648826231,
+          "total_remaining_seconds": 8763.811648826231
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "P",
+        "library": "GNN",
+        "target_cycles": 32
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_32_a0_run14_20261001T102037175314Z/run_manifest.json",
+        "sha256": "2f808e5327e8a6cc9bc5ee0c3e6f3f030dad18fb55559ed29a910843a666ba48",
+        "bytes": 2387
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_32_a0_run14_20261001T102037175314Z/input_original.dat",
+        "sha256": "f691c0c68700451bed0445b1075e5ad49666e754713ce6e40330ad431d3b853d",
+        "bytes": 267
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_32_a0_run14_20261001T102037175314Z/resolved_config.json",
+        "sha256": "32e543368205a985d4ac4aeda080c6eb43c5585647516f92029c70e5a62cc7aa",
+        "bytes": 4311
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_32_a0_run14_20261001T102037175314Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_32_a0_run14_20261001T102037175314Z/run_summary.json",
+        "sha256": "4a85ba5fc9fbf4aa95b87b46312447f5a06be9b5c96a2c4f227a6bad72bea95c",
+        "bytes": 6206
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_32_a0_run14_20261001T102037175314Z/resource_baseline.json",
+        "sha256": "798d403523d466729170a23d53f0463b3b3168a45ed8ad1209df4ee1e6c00b49",
+        "bytes": 8514
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_p_gnn_32_a0_run14_20261001T102037175314Z/stage_result.json",
+        "sha256": "d5a7445cf9a6bec5bc3dcb234079be962a725572eb0082b56413d774b43150c4"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_32_a0_run15_20261001T102456689129Z",
+      "stage": "L_GPOLY",
+      "family": "GPOLY",
+      "algorithm": "L",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 263.73579259891994,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 578433024,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 44186768,
+        "wall_completed_seconds": 0.37844262132421136
+      },
+      "internal_Arnoldi_iterations": null,
+      "actions_lower": 2121,
+      "actions_upper": 2121,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 0,
+      "arnoldi_upper": 0,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-L_GPOLY",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "42a8ed2139c6d9d5fdd3f2657929f044f4f25667a0f3f2469412e27d43e0b8eb",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 5895.69840901182,
+          "heavy_remaining_seconds": 6704.30159098818,
+          "total_remaining_seconds": 8504.30159098818
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "L",
+        "library": "GPOLY",
+        "target_cycles": 32
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_32_a0_run15_20261001T102456689129Z/run_manifest.json",
+        "sha256": "63eee698acead7b81e7ee43aa79cb5fc7ea51a04145edeac49896c89f9b1e1a1",
+        "bytes": 2388
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_32_a0_run15_20261001T102456689129Z/input_original.dat",
+        "sha256": "42a8ed2139c6d9d5fdd3f2657929f044f4f25667a0f3f2469412e27d43e0b8eb",
+        "bytes": 273
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_32_a0_run15_20261001T102456689129Z/resolved_config.json",
+        "sha256": "4ef56fa0dec139dc54587613f42e58e4246fcbb9e2c2edbfcbbcdcabfe77b5ea",
+        "bytes": 4321
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_32_a0_run15_20261001T102456689129Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_32_a0_run15_20261001T102456689129Z/run_summary.json",
+        "sha256": "1ccf48cebbb0c0fd7ab502cd7de5c53c0fa624fb327c720964c502fff9acf129",
+        "bytes": 6192
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_32_a0_run15_20261001T102456689129Z/resource_baseline.json",
+        "sha256": "64253f310a3791e01a19bb75eee110bbf4287b40fae65159b8ac4594c8d203bf",
+        "bytes": 8524
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_l_gpoly_32_a0_run15_20261001T102456689129Z/stage_result.json",
+        "sha256": "899cba37914172b55478c62319a96d3f39d5730e1eda8ca8cb0fa82eb2a53cef"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_32_a0_run16_20261001T102920742992Z",
+      "stage": "L_GNN",
+      "family": "GNN",
+      "algorithm": "L",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 263.34161704801954,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 575221760,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 44186768,
+        "wall_completed_seconds": 0.34684912592638284
+      },
+      "internal_Arnoldi_iterations": null,
+      "actions_lower": 2121,
+      "actions_upper": 2121,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 0,
+      "arnoldi_upper": 0,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-L_GNN",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "9463f1a096b3a3d9b05a81babc8ca3f6c68fbd51939d0553f21b6fb5e1e66218",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 6159.751515079872,
+          "heavy_remaining_seconds": 6440.248484920128,
+          "total_remaining_seconds": 8240.248484920128
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "L",
+        "library": "GNN",
+        "target_cycles": 32
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_32_a0_run16_20261001T102920742992Z/run_manifest.json",
+        "sha256": "9b2680bd34437d2e95fb31f9f9233479cf93590b668e73770b76f627591f8e8f",
+        "bytes": 2387
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_32_a0_run16_20261001T102920742992Z/input_original.dat",
+        "sha256": "9463f1a096b3a3d9b05a81babc8ca3f6c68fbd51939d0553f21b6fb5e1e66218",
+        "bytes": 267
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_32_a0_run16_20261001T102920742992Z/resolved_config.json",
+        "sha256": "0403a5f50704233438457657ef03ad26b3d52657515233a65c4c1bc78a03f8b9",
+        "bytes": 4312
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_32_a0_run16_20261001T102920742992Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_32_a0_run16_20261001T102920742992Z/run_summary.json",
+        "sha256": "4f2bd5430ccf13bbbfb076fa4087d693df1160fbc5e83fe9540fa20d373f3a90",
+        "bytes": 6202
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_32_a0_run16_20261001T102920742992Z/resource_baseline.json",
+        "sha256": "13d6311cd90c10ca098ac3ef7a20965c8b9972423cb261b67d00ee95910ad1ed",
+        "bytes": 8517
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_l_gnn_32_a0_run16_20261001T102920742992Z/stage_result.json",
+        "sha256": "a762413cb7d8e119e47c69487f8a599490a514734e80e1497b87e7da939e9af5"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_40_a0_run17_20261001T103344523531Z",
+      "stage": "P_GPOLY",
+      "family": "GPOLY",
+      "algorithm": "P",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 263.4768994350452,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 518926336,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.2432506182231009
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 2048,
+      "arnoldi_upper": 2048,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-P_GPOLY",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "5f8252e1dc92cb3a22c94999e9b775ae6cdd404bbeeab99e48074a872d16f79c",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 6423.537414278835,
+          "heavy_remaining_seconds": 6176.462585721165,
+          "total_remaining_seconds": 7976.462585721165
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "P",
+        "library": "GPOLY",
+        "target_cycles": 40
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_40_a0_run17_20261001T103344523531Z/run_manifest.json",
+        "sha256": "e2e6fdcb5fc0522ab2e9513bf7993fd24a6dcc6c8a3c87f9002468cfb4cedb7a",
+        "bytes": 2391
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_40_a0_run17_20261001T103344523531Z/input_original.dat",
+        "sha256": "5f8252e1dc92cb3a22c94999e9b775ae6cdd404bbeeab99e48074a872d16f79c",
+        "bytes": 273
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_40_a0_run17_20261001T103344523531Z/resolved_config.json",
+        "sha256": "2b90817b90cec2f22f682782730b6fcf01479b5f5a7512a2724027c529058680",
+        "bytes": 4321
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_40_a0_run17_20261001T103344523531Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_40_a0_run17_20261001T103344523531Z/run_summary.json",
+        "sha256": "709892673334bb58e5210a3562662f66116af53b64cdfabd476e7439c2adeb0b",
+        "bytes": 6211
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_40_a0_run17_20261001T103344523531Z/resource_baseline.json",
+        "sha256": "c42a337c8a9bda630af5bbe2a419ce615ed65f2701e2ffd8daedb396f8df98c1",
+        "bytes": 8508
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_p_gpoly_40_a0_run17_20261001T103344523531Z/stage_result.json",
+        "sha256": "49a232678d6f2033eb1c1cc7d26b2af39093876fdc84bd0e9f166b2b0f0396ed"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_40_a0_run18_20261001T103808401094Z",
+      "stage": "P_GNN",
+      "family": "GNN",
+      "algorithm": "P",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 265.8964353890624,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 518889472,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.24775311932899058
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 2048,
+      "arnoldi_upper": 2048,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-P_GNN",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "eacf1e2797d08ac9c55ecf2fb1fc4c142f4c56be7b665080812a52e7f613addf",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 6687.411010306794,
+          "heavy_remaining_seconds": 5912.588989693206,
+          "total_remaining_seconds": 7712.588989693206
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "P",
+        "library": "GNN",
+        "target_cycles": 40
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_40_a0_run18_20261001T103808401094Z/run_manifest.json",
+        "sha256": "8d7c6bf7b9d98c28fd8dde40e3b449ab6f42ec2ba51777c0851a81859c0fe3d3",
+        "bytes": 2387
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_40_a0_run18_20261001T103808401094Z/input_original.dat",
+        "sha256": "eacf1e2797d08ac9c55ecf2fb1fc4c142f4c56be7b665080812a52e7f613addf",
+        "bytes": 267
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_40_a0_run18_20261001T103808401094Z/resolved_config.json",
+        "sha256": "cdfa1cd6d039222103b87f76ca9cb7dd9c0268e5e9d307f1ecc8290870375e22",
+        "bytes": 4311
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_40_a0_run18_20261001T103808401094Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_40_a0_run18_20261001T103808401094Z/run_summary.json",
+        "sha256": "4ea51d0cd6259b30a94d08a808d86cb3b2833adf449d2c2af28d493409c73d8c",
+        "bytes": 6202
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_40_a0_run18_20261001T103808401094Z/resource_baseline.json",
+        "sha256": "7d92af9a4d85e90ef4719499ce5b5c40a742bcdb961597e39586f7c195784dc9",
+        "bytes": 8574
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_p_gnn_40_a0_run18_20261001T103808401094Z/stage_result.json",
+        "sha256": "d7aa702e5c6c1cce25148f90c88b1ee5ee6fe1e693b7e8932a00aa57ee90cfa3"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_40_a0_run19_20261001T104234668753Z",
+      "stage": "L_GPOLY",
+      "family": "GPOLY",
+      "algorithm": "L",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 277.39197464694735,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 579059712,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 44186768,
+        "wall_completed_seconds": 0.3943029477959499
+      },
+      "internal_Arnoldi_iterations": null,
+      "actions_lower": 2121,
+      "actions_upper": 2121,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 0,
+      "arnoldi_upper": 0,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-L_GPOLY",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "b0a25dc576f82adcb162881ccd633abe730643f9884c2032bbfc870fcff5edad",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 6953.680013222853,
+          "heavy_remaining_seconds": 5646.319986777147,
+          "total_remaining_seconds": 7446.319986777147
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "L",
+        "library": "GPOLY",
+        "target_cycles": 40
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_40_a0_run19_20261001T104234668753Z/run_manifest.json",
+        "sha256": "85cad2a9e45d020eec64a9e6800b89758bbd77b74dd7d766a7a888205f703548",
+        "bytes": 2391
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_40_a0_run19_20261001T104234668753Z/input_original.dat",
+        "sha256": "b0a25dc576f82adcb162881ccd633abe730643f9884c2032bbfc870fcff5edad",
+        "bytes": 273
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_40_a0_run19_20261001T104234668753Z/resolved_config.json",
+        "sha256": "2055c74ea7f176511c092f50da87fce04158544d64034097a740afee5f63047a",
+        "bytes": 4321
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_40_a0_run19_20261001T104234668753Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_40_a0_run19_20261001T104234668753Z/run_summary.json",
+        "sha256": "3ec49e7af0f54b3a81ddf0352cafffbd5f4a99ef3ae0e47025d956089dc89725",
+        "bytes": 6212
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_40_a0_run19_20261001T104234668753Z/resource_baseline.json",
+        "sha256": "9d069f91f1067f4e92c870b208f3a10ce4851a9e186f25aabe423a371401e643",
+        "bytes": 8598
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_l_gpoly_40_a0_run19_20261001T104234668753Z/stage_result.json",
+        "sha256": "edcbc9988e2935a04960171fa699458ac718b1c2c4c3ef24f512c1b97c3663e1"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_40_a0_run20_20261001T104712435425Z",
+      "stage": "L_GNN",
+      "family": "GNN",
+      "algorithm": "L",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 283.77891081303824,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 576507904,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 44186768,
+        "wall_completed_seconds": 0.350480878027156
+      },
+      "internal_Arnoldi_iterations": null,
+      "actions_lower": 2121,
+      "actions_upper": 2121,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 0,
+      "arnoldi_upper": 0,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-L_GNN",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "31c8df886b1353c7aab30302430f5f83deacd0eed3bf575949db595963f5fe73",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 7231.447944927844,
+          "heavy_remaining_seconds": 5368.552055072156,
+          "total_remaining_seconds": 7168.552055072156
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "L",
+        "library": "GNN",
+        "target_cycles": 40
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_40_a0_run20_20261001T104712435425Z/run_manifest.json",
+        "sha256": "8bbe045633794ef053a769546554149f94bf717ba89aa0f9c44649729f5855c3",
+        "bytes": 2387
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_40_a0_run20_20261001T104712435425Z/input_original.dat",
+        "sha256": "31c8df886b1353c7aab30302430f5f83deacd0eed3bf575949db595963f5fe73",
+        "bytes": 267
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_40_a0_run20_20261001T104712435425Z/resolved_config.json",
+        "sha256": "d9b0e3554ff2711c145b24590b54b2481923a01e1441855a135d2566dac00fdf",
+        "bytes": 4312
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_40_a0_run20_20261001T104712435425Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_40_a0_run20_20261001T104712435425Z/run_summary.json",
+        "sha256": "394759d3382e29950d449d54753f9912aafd4e9bedae21bd8bc581508299071a",
+        "bytes": 6194
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_40_a0_run20_20261001T104712435425Z/resource_baseline.json",
+        "sha256": "caacff23901f3d70e47542f829dc18f5bd5f144c30e85e94cff0aa97366eb926",
+        "bytes": 8539
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_l_gnn_40_a0_run20_20261001T104712435425Z/stage_result.json",
+        "sha256": "cb45934637ae71d6da0400af995ffe9cb0f0d1c452044d5e3d03ff655cbed124"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_48_a0_run21_20261001T105156739784Z",
+      "stage": "P_GPOLY",
+      "family": "GPOLY",
+      "algorithm": "P",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 331.15430036804173,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 518975488,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.2526490392629057
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 2048,
+      "arnoldi_upper": 2048,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-P_GPOLY",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "78fd290cbbfaf10d5f66e7069fbce12fafacf7e137a5bfcea87bfc4d9b965ff9",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 7515.751955774846,
+          "heavy_remaining_seconds": 5084.248044225154,
+          "total_remaining_seconds": 6884.248044225154
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "P",
+        "library": "GPOLY",
+        "target_cycles": 48
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_48_a0_run21_20261001T105156739784Z/run_manifest.json",
+        "sha256": "06e941daf7012401146cd7307f7185911f078b8d0fd49d1393377f95ecf98cc0",
+        "bytes": 2391
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_48_a0_run21_20261001T105156739784Z/input_original.dat",
+        "sha256": "78fd290cbbfaf10d5f66e7069fbce12fafacf7e137a5bfcea87bfc4d9b965ff9",
+        "bytes": 273
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_48_a0_run21_20261001T105156739784Z/resolved_config.json",
+        "sha256": "43c3a5130e0897f67389101279e1cff8cf844166fe7904ce918a19e4f7e5f137",
+        "bytes": 4322
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_48_a0_run21_20261001T105156739784Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_48_a0_run21_20261001T105156739784Z/run_summary.json",
+        "sha256": "da1e02b0e26f8437f767834d4b7665dcc173bb9cff67e348bdd826efde3e2438",
+        "bytes": 6204
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_48_a0_run21_20261001T105156739784Z/resource_baseline.json",
+        "sha256": "177cff8701a4faa0c1472029d8daaabfbff81966f791d550f531228ffe0352a3",
+        "bytes": 8641
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_p_gpoly_48_a0_run21_20261001T105156739784Z/stage_result.json",
+        "sha256": "1d3d0a80c4a52f706f48218040911c27a4e69593e286024aad973fa4926f5e41"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_48_a0_run22_20261001T105728310831Z",
+      "stage": "P_GNN",
+      "family": "GNN",
+      "algorithm": "P",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 322.28066744399257,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 519151616,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.23647066403646022
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 2048,
+      "arnoldi_upper": 2048,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-P_GNN",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "72fbffe6433c090b240df8dc647f3cba7e5e4e48a7aac01b567d72f9a83e812b",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 7847.322002261877,
+          "heavy_remaining_seconds": 4752.677997738123,
+          "total_remaining_seconds": 6552.677997738123
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "P",
+        "library": "GNN",
+        "target_cycles": 48
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_48_a0_run22_20261001T105728310831Z/run_manifest.json",
+        "sha256": "e71492d2debd3ce19073e848a37556ea27b5318ede85a36739e934d47983e239",
+        "bytes": 2387
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_48_a0_run22_20261001T105728310831Z/input_original.dat",
+        "sha256": "72fbffe6433c090b240df8dc647f3cba7e5e4e48a7aac01b567d72f9a83e812b",
+        "bytes": 267
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_48_a0_run22_20261001T105728310831Z/resolved_config.json",
+        "sha256": "64435fcd7a4fc282c204c4f2b26d286a46c3b6c546c503783c4d4c69e77ac1a8",
+        "bytes": 4312
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_48_a0_run22_20261001T105728310831Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_48_a0_run22_20261001T105728310831Z/run_summary.json",
+        "sha256": "f64d9e7854199a13765ac61b406e9944dcb56751397141a1e51fe8eae042ae4a",
+        "bytes": 6199
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_48_a0_run22_20261001T105728310831Z/resource_baseline.json",
+        "sha256": "6001dfe2ad3dcb9e067288e5b0488f0e0148e625e4b79ff1990fc02ecff767c2",
+        "bytes": 8540
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_p_gnn_48_a0_run22_20261001T105728310831Z/stage_result.json",
+        "sha256": "73e8b4ba4c7b8643a3fb7d211f79e2e508dcacec5b36322e8b579788e0a02189"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_48_a0_run23_20261001T110251048173Z",
+      "stage": "L_GPOLY",
+      "family": "GPOLY",
+      "algorithm": "L",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 329.47649289900437,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 579809280,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 44186768,
+        "wall_completed_seconds": 0.34574055403936654
+      },
+      "internal_Arnoldi_iterations": null,
+      "actions_lower": 2121,
+      "actions_upper": 2121,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 0,
+      "arnoldi_upper": 0,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-L_GPOLY",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "eb0313f79906998688b6cb1547e060cb2ce2a0d92718774edabc595d3bb0867a",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 8170.05930431583,
+          "heavy_remaining_seconds": 4429.94069568417,
+          "total_remaining_seconds": 6229.94069568417
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "L",
+        "library": "GPOLY",
+        "target_cycles": 48
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_48_a0_run23_20261001T110251048173Z/run_manifest.json",
+        "sha256": "e2ec26e93d788281bb261b5c7bbfee7716f1cd6cf02394257f62d446903d57a9",
+        "bytes": 2388
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_48_a0_run23_20261001T110251048173Z/input_original.dat",
+        "sha256": "eb0313f79906998688b6cb1547e060cb2ce2a0d92718774edabc595d3bb0867a",
+        "bytes": 273
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_48_a0_run23_20261001T110251048173Z/resolved_config.json",
+        "sha256": "96d674c9ffd807f2b77727c9e1f81096d9b460fcdeb5f6f64186e1b6dd4c405d",
+        "bytes": 4322
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_48_a0_run23_20261001T110251048173Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_48_a0_run23_20261001T110251048173Z/run_summary.json",
+        "sha256": "7d7f546efc111eae974796380e677b2786b30b18c2b505b092dfe542c9001ff3",
+        "bytes": 6207
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_48_a0_run23_20261001T110251048173Z/resource_baseline.json",
+        "sha256": "e6e2950949e89c11a92d44fb4b89e1863f8202313d4f9ed58c9335542e65cbee",
+        "bytes": 8533
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_l_gpoly_48_a0_run23_20261001T110251048173Z/stage_result.json",
+        "sha256": "1a2a03e82f4a7b667fc9a23ddf06abd32f995345fbabea96fe7c4405f76dc099"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_48_a0_run24_20261001T110820985088Z",
+      "stage": "L_GNN",
+      "family": "GNN",
+      "algorithm": "L",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 346.6388090889668,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 574238720,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 44186768,
+        "wall_completed_seconds": 0.40199859789572656
+      },
+      "internal_Arnoldi_iterations": null,
+      "actions_lower": 2121,
+      "actions_upper": 2121,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 0,
+      "arnoldi_upper": 0,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-L_GNN",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "e426e681caac698b33f6e2bf8c85128abaa026126025f0805903eb8f36653f57",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 8499.999533611815,
+          "heavy_remaining_seconds": 4100.000466388185,
+          "total_remaining_seconds": 5900.000466388185
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "L",
+        "library": "GNN",
+        "target_cycles": 48
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_48_a0_run24_20261001T110820985088Z/run_manifest.json",
+        "sha256": "a3296ef2429f1b2dd707f55e2d20e4c80396485a46602be1c329084b1cadc9e5",
+        "bytes": 2387
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_48_a0_run24_20261001T110820985088Z/input_original.dat",
+        "sha256": "e426e681caac698b33f6e2bf8c85128abaa026126025f0805903eb8f36653f57",
+        "bytes": 267
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_48_a0_run24_20261001T110820985088Z/resolved_config.json",
+        "sha256": "f0f6256d3b1ea1d5b989a81bbcc1ac9118a02d81c0abe63a9aabbdc0ece2b86b",
+        "bytes": 4312
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_48_a0_run24_20261001T110820985088Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_48_a0_run24_20261001T110820985088Z/run_summary.json",
+        "sha256": "38f04e2a1e19e2fdb0bb5013e2d0ac1c86eb5e4b3276518424da41a663600c5b",
+        "bytes": 6195
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_48_a0_run24_20261001T110820985088Z/resource_baseline.json",
+        "sha256": "e02816327bc6235a03848563c8376656cd4fb5beececa7296993456f273adf27",
+        "bytes": 8499
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_l_gnn_48_a0_run24_20261001T110820985088Z/stage_result.json",
+        "sha256": "7c4cf7612982bf2b5ae739a605993e637cb570abccd8f6b72474ae85352ed9d2"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_56_a0_run25_20261001T111408026945Z",
+      "stage": "P_GPOLY",
+      "family": "GPOLY",
+      "algorithm": "P",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 326.66655169799924,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 519249920,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.24909463012591004
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 2048,
+      "arnoldi_upper": 2048,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-P_GPOLY",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "aa5ec6ee838deb8b26a157b742795fb176148e2e095beb5a3c3019e97e0bbf7c",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 8847.041030335822,
+          "heavy_remaining_seconds": 3752.958969664178,
+          "total_remaining_seconds": 5552.958969664178
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "P",
+        "library": "GPOLY",
+        "target_cycles": 56
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_56_a0_run25_20261001T111408026945Z/run_manifest.json",
+        "sha256": "b4db40d81a1cd4d07958790b7afd8eae5607d98d696268f2013037c79b44998e",
+        "bytes": 2391
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_56_a0_run25_20261001T111408026945Z/input_original.dat",
+        "sha256": "aa5ec6ee838deb8b26a157b742795fb176148e2e095beb5a3c3019e97e0bbf7c",
+        "bytes": 273
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_56_a0_run25_20261001T111408026945Z/resolved_config.json",
+        "sha256": "69a2512390e656c6c827838e0cfcf1986ca34582ed3afbf93b22bbefeebef956",
+        "bytes": 4321
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_56_a0_run25_20261001T111408026945Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_56_a0_run25_20261001T111408026945Z/run_summary.json",
+        "sha256": "831872328870ad188b0f6644e5e47d2e68f796a5a66a951f89532a920e29a862",
+        "bytes": 6221
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_56_a0_run25_20261001T111408026945Z/resource_baseline.json",
+        "sha256": "20d28f34daef3ac422b0517de266bd3cc7b96c70cbd160d4c827d2d2c03b4320",
+        "bytes": 8516
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_p_gpoly_56_a0_run25_20261001T111408026945Z/stage_result.json",
+        "sha256": "066dc06583c2f3aebc3f0973eeda699f9a89e0652e44f20bed6c38cf76346e52"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_56_a0_run26_20261001T111935147854Z",
+      "stage": "P_GNN",
+      "family": "GNN",
+      "algorithm": "P",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 314.92875171499327,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 519229440,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.2424003566848114
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 2048,
+      "arnoldi_upper": 2048,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-P_GNN",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "b5899a853ac3b2c80745c976170fe58e2b1b252f54763ed5e0ca1020a3662309",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 9174.159266358824,
+          "heavy_remaining_seconds": 3425.8407336411765,
+          "total_remaining_seconds": 5225.8407336411765
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "P",
+        "library": "GNN",
+        "target_cycles": 56
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_56_a0_run26_20261001T111935147854Z/run_manifest.json",
+        "sha256": "31aeb6b3d8552d88b2508ee8d7344b4849c8f98a6a6ef0e68c88a96955e7bac6",
+        "bytes": 2389
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_56_a0_run26_20261001T111935147854Z/input_original.dat",
+        "sha256": "b5899a853ac3b2c80745c976170fe58e2b1b252f54763ed5e0ca1020a3662309",
+        "bytes": 267
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_56_a0_run26_20261001T111935147854Z/resolved_config.json",
+        "sha256": "0f8565f083a233fc4d6a5d953f1dd416d3d3cee30ec98cababdf48fc0ed2fd1e",
+        "bytes": 4310
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_56_a0_run26_20261001T111935147854Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_56_a0_run26_20261001T111935147854Z/run_summary.json",
+        "sha256": "5ba75480e790a3fbf8d71a839ce416ab8c8efbb8c8fc7c5f5e62b87c0f89f558",
+        "bytes": 6202
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_56_a0_run26_20261001T111935147854Z/resource_baseline.json",
+        "sha256": "3f76905de124e0f3946be106b3628471f4220de6698d0414df34f161bc0777f8",
+        "bytes": 8514
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_p_gnn_56_a0_run26_20261001T111935147854Z/stage_result.json",
+        "sha256": "03e9cac562173263f96fd02dc31c9a2a2cde9797a3fb4f39c61a8ae7841fd215"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_56_a0_run27_20261001T112450496776Z",
+      "stage": "L_GPOLY",
+      "family": "GPOLY",
+      "algorithm": "L",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 312.92943556199316,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 580308992,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 44186768,
+        "wall_completed_seconds": 0.4142965410137549
+      },
+      "internal_Arnoldi_iterations": null,
+      "actions_lower": 2121,
+      "actions_upper": 2121,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 0,
+      "arnoldi_upper": 0,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-L_GPOLY",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "68b69148e6fd00ed5f76bee376432bda674f7ab6b2f979156e3928e25347efe6",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 9489.510000565788,
+          "heavy_remaining_seconds": 3110.489999434212,
+          "total_remaining_seconds": 4910.489999434212
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "L",
+        "library": "GPOLY",
+        "target_cycles": 56
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_56_a0_run27_20261001T112450496776Z/run_manifest.json",
+        "sha256": "8dde751800ad583930fc0e01402f16aa62b0133bcad9a47e5944be7f819c2f44",
+        "bytes": 2391
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_56_a0_run27_20261001T112450496776Z/input_original.dat",
+        "sha256": "68b69148e6fd00ed5f76bee376432bda674f7ab6b2f979156e3928e25347efe6",
+        "bytes": 273
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_56_a0_run27_20261001T112450496776Z/resolved_config.json",
+        "sha256": "0603a85989c8a258da801c68bfc54b095e69b9121bbfbce22e824688871f6a2d",
+        "bytes": 4321
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_56_a0_run27_20261001T112450496776Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_56_a0_run27_20261001T112450496776Z/run_summary.json",
+        "sha256": "c72c9a2c340cbc0c65a599fdb513f15af41b506c755293665b783f9aa95f7613",
+        "bytes": 6202
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_56_a0_run27_20261001T112450496776Z/resource_baseline.json",
+        "sha256": "03e8347c95a15649922c4c9186f2b004e6ad5d4db46f0275c584ad903c39ed47",
+        "bytes": 8508
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_l_gpoly_56_a0_run27_20261001T112450496776Z/stage_result.json",
+        "sha256": "39ed507412e26900f54565ba149b708bd1feab060ebdb378cb16259d1accbbd6"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_56_a0_run28_20261001T113003989626Z",
+      "stage": "L_GNN",
+      "family": "GNN",
+      "algorithm": "L",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 313.23621738899965,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 579506176,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 44186768,
+        "wall_completed_seconds": 0.37160092033445835
+      },
+      "internal_Arnoldi_iterations": null,
+      "actions_lower": 2121,
+      "actions_upper": 2121,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 0,
+      "arnoldi_upper": 0,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-L_GNN",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "a27633516fac141292da36fd2c2501cbb6037015335aac33b05c925ee544d2fe",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 9803.001464532805,
+          "heavy_remaining_seconds": 2796.9985354671953,
+          "total_remaining_seconds": 4596.998535467195
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "L",
+        "library": "GNN",
+        "target_cycles": 56
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_56_a0_run28_20261001T113003989626Z/run_manifest.json",
+        "sha256": "cb86dbc83dd301c7ba4703b6efc4cbeb76ee131e94a543b1738de0be21078259",
+        "bytes": 2388
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_56_a0_run28_20261001T113003989626Z/input_original.dat",
+        "sha256": "a27633516fac141292da36fd2c2501cbb6037015335aac33b05c925ee544d2fe",
+        "bytes": 267
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_56_a0_run28_20261001T113003989626Z/resolved_config.json",
+        "sha256": "1d8334e678a969780bab1eaeac58335f56615c17ec529383cb5f31c963813208",
+        "bytes": 4311
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_56_a0_run28_20261001T113003989626Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_56_a0_run28_20261001T113003989626Z/run_summary.json",
+        "sha256": "776021ef4b0cd5bc7aa6a4a46f5047824592816332b00e4795b5e1f461343252",
+        "bytes": 6212
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_56_a0_run28_20261001T113003989626Z/resource_baseline.json",
+        "sha256": "b85b1ef432b5546816e55e51d46691cb97197ad4289520504f8cb078b31c107f",
+        "bytes": 8746
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_l_gnn_56_a0_run28_20261001T113003989626Z/stage_result.json",
+        "sha256": "fdbc98d69c59ceada2f3a40e097ebe7e12d07ce5a23bdd16de34a63c5f37f13f"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_64_a0_run29_20261001T113517571023Z",
+      "stage": "P_GPOLY",
+      "family": "GPOLY",
+      "algorithm": "P",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 305.930452818051,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 519520256,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.2536020240513608
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 2048,
+      "arnoldi_upper": 2048,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-P_GPOLY",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "c490b2189cd6c067b08b4fcebca982a9a3d0cb9dd0d27ae830239fcb49159fe5",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 10116.583458402776,
+          "heavy_remaining_seconds": 2483.416541597224,
+          "total_remaining_seconds": 4283.416541597224
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "P",
+        "library": "GPOLY",
+        "target_cycles": 64
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_64_a0_run29_20261001T113517571023Z/run_manifest.json",
+        "sha256": "01396445f168c13811a43e2716c9698af34087c3f2c2317af743e28457b0068f",
+        "bytes": 2392
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_64_a0_run29_20261001T113517571023Z/input_original.dat",
+        "sha256": "c490b2189cd6c067b08b4fcebca982a9a3d0cb9dd0d27ae830239fcb49159fe5",
+        "bytes": 273
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_64_a0_run29_20261001T113517571023Z/resolved_config.json",
+        "sha256": "3246e9f2454017dc727a89bb872580e8ac741ff454b9762965f3cb48ab1391b1",
+        "bytes": 4321
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_64_a0_run29_20261001T113517571023Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_64_a0_run29_20261001T113517571023Z/run_summary.json",
+        "sha256": "6a15f732f267fe134f5d9a84977c392190c891a796c1b998e1a373c94b8f8822",
+        "bytes": 6200
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gpoly_64_a0_run29_20261001T113517571023Z/resource_baseline.json",
+        "sha256": "fc1a54fd2305d17d8b73a66ee1150a100fbcb3ee697336a031c8ef37896556d0",
+        "bytes": 8523
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_p_gpoly_64_a0_run29_20261001T113517571023Z/stage_result.json",
+        "sha256": "e31ad9dc03e28c65d3c0066d1650a96c2240fd75b2a7c0c3b996a4d0a072d98d"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_64_a0_run30_20261001T114023866993Z",
+      "stage": "P_GNN",
+      "family": "GNN",
+      "algorithm": "P",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 312.5142159940442,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 519524352,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 16305632,
+        "wall_completed_seconds": 0.25520335719920695
+      },
+      "internal_Arnoldi_iterations": 2048,
+      "actions_lower": 2096,
+      "actions_upper": 2096,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 2048,
+      "arnoldi_upper": 2048,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-P_GNN",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "b3b76cad07d0cb236b82d2677159fd25e813b1ee2f95a39e53c3f355adc122b0",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 10422.879016974824,
+          "heavy_remaining_seconds": 2177.1209830251755,
+          "total_remaining_seconds": 3977.1209830251755
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "P",
+        "library": "GNN",
+        "target_cycles": 64
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_64_a0_run30_20261001T114023866993Z/run_manifest.json",
+        "sha256": "f0cadb0dbe85943fd2bbd47c5ebbd3b414c83253fb988f3d77e8e043a14b96a8",
+        "bytes": 2390
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_64_a0_run30_20261001T114023866993Z/input_original.dat",
+        "sha256": "b3b76cad07d0cb236b82d2677159fd25e813b1ee2f95a39e53c3f355adc122b0",
+        "bytes": 267
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_64_a0_run30_20261001T114023866993Z/resolved_config.json",
+        "sha256": "4220dc7212638f5cbd75bf915a1142b4b513f35c68527ddc02aac903b435fb94",
+        "bytes": 4312
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_64_a0_run30_20261001T114023866993Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_64_a0_run30_20261001T114023866993Z/run_summary.json",
+        "sha256": "d3eff59c4a717efa64b3d7274c29c1dedbab6f5655549ab564cb322645d89571",
+        "bytes": 6196
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_p_gnn_64_a0_run30_20261001T114023866993Z/resource_baseline.json",
+        "sha256": "afde83c0ed7f9ff8d1fb00e19118c43dc1679459fa5d08a5ca6073bb13878b81",
+        "bytes": 8508
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_p_gnn_64_a0_run30_20261001T114023866993Z/stage_result.json",
+        "sha256": "ea865d7759d63b854cbef1520cbcf490326fd38b7922b8182de9a5b53e448777"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_64_a0_run31_20261001T114536793256Z",
+      "stage": "L_GPOLY",
+      "family": "GPOLY",
+      "algorithm": "L",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 308.2094070019666,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 570458112,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 44186768,
+        "wall_completed_seconds": 0.37346362485550344
+      },
+      "internal_Arnoldi_iterations": null,
+      "actions_lower": 2121,
+      "actions_upper": 2121,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 0,
+      "arnoldi_upper": 0,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-L_GPOLY",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "a739f2128cc99fc2d01e195dcf148d26677c7186fe4b86c7476379927ad1616c",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 10735.804135998827,
+          "heavy_remaining_seconds": 1864.1958640011726,
+          "total_remaining_seconds": 3664.1958640011726
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "L",
+        "library": "GPOLY",
+        "target_cycles": 64
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_64_a0_run31_20261001T114536793256Z/run_manifest.json",
+        "sha256": "9cef2b4e2d98ac60cf0f0061a0b2c061828a6325a5902cfb9b0084d5507168d8",
+        "bytes": 2394
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_64_a0_run31_20261001T114536793256Z/input_original.dat",
+        "sha256": "a739f2128cc99fc2d01e195dcf148d26677c7186fe4b86c7476379927ad1616c",
+        "bytes": 273
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_64_a0_run31_20261001T114536793256Z/resolved_config.json",
+        "sha256": "146fe9be0806ac3f39472528d2b420a06ab4f1d7c5de764df9a60c7f5a63ff58",
+        "bytes": 4321
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_64_a0_run31_20261001T114536793256Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_64_a0_run31_20261001T114536793256Z/run_summary.json",
+        "sha256": "0b4d2f090a159e388252da400ffc0beca077405bbaf74628c007e50c0950be8a",
+        "bytes": 6199
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gpoly_64_a0_run31_20261001T114536793256Z/resource_baseline.json",
+        "sha256": "56554c1ea2386a455a5c12b540414f353db618f21513d7a29a9b80b9f69141a0",
+        "bytes": 8598
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_l_gpoly_64_a0_run31_20261001T114536793256Z/stage_result.json",
+        "sha256": "f1d5ee2cdb68996d971bd4e751a589dd4bb40687a9631b0d6db06ab3011be4a5"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_64_a0_run32_20261001T115045334470Z",
+      "stage": "L_GNN",
+      "family": "GNN",
+      "algorithm": "L",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 304.8972242650343,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 575062016,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 24,
+        "completed": 24,
+        "bytes_completed": 44186768,
+        "wall_completed_seconds": 0.34900260902941227
+      },
+      "internal_Arnoldi_iterations": null,
+      "actions_lower": 2121,
+      "actions_upper": 2121,
+      "audits_lower": 8,
+      "audits_upper": 8,
+      "updates_lower": 8,
+      "updates_upper": 8,
+      "arnoldi_lower": 0,
+      "arnoldi_upper": 0,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-L_GNN",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "8ee01f95482fc124727e071bce3e0457460bc2c5fe40344ae82d9aff179875c2",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 11044.345173755777,
+          "heavy_remaining_seconds": 1555.654826244223,
+          "total_remaining_seconds": 3355.654826244223
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "L",
+        "library": "GNN",
+        "target_cycles": 64
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_64_a0_run32_20261001T115045334470Z/run_manifest.json",
+        "sha256": "10aecec0f58c84992525de640bb72715c46b25ea7fb3c2bed025859700a795cf",
+        "bytes": 2388
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_64_a0_run32_20261001T115045334470Z/input_original.dat",
+        "sha256": "8ee01f95482fc124727e071bce3e0457460bc2c5fe40344ae82d9aff179875c2",
+        "bytes": 267
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_64_a0_run32_20261001T115045334470Z/resolved_config.json",
+        "sha256": "a22676bf4e6c14702b89cc3c308476cd5e1b8934aa230e0fa20dfab044679cf0",
+        "bytes": 4311
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_64_a0_run32_20261001T115045334470Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_64_a0_run32_20261001T115045334470Z/run_summary.json",
+        "sha256": "eac1e7c58e102c3b0e25943925f07b23662bdb070c86b0c52c5274b5a25762f7",
+        "bytes": 6202
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_l_gnn_64_a0_run32_20261001T115045334470Z/resource_baseline.json",
+        "sha256": "31657d7177a27ae038a26ae4a329a036693ee526ff7bf33956c67dc130ccf687",
+        "bytes": 8606
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_l_gnn_64_a0_run32_20261001T115045334470Z/stage_result.json",
+        "sha256": "dbaecaa6fa0c1b5afa4296f0413d3323b432a180627b4c7ab17d7eea92095bd0"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_verify_run33_20261001T115732322093Z",
+      "stage": "VERIFY",
+      "family": null,
+      "algorithm": "V",
+      "classification": "WORKER_FAILED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 4.250770077109337,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 347516928,
+      "swap_peak_bytes": 0,
+      "exact_counts": false,
+      "numeric_io": {},
+      "internal_Arnoldi_iterations": 0,
+      "actions_lower": 0,
+      "actions_upper": 64,
+      "audits_lower": 0,
+      "audits_upper": 2,
+      "updates_lower": 0,
+      "updates_upper": 0,
+      "arnoldi_lower": 0,
+      "arnoldi_upper": 0,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-VERIFY",
+        "formal_pde": false,
+        "formal_fe_stage": true,
+        "input_sha256": "408b2a4b127ca2b25aea18c4a3470f46f9a99455dab010daf62161fec346458e",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 11451.334295928827,
+          "heavy_remaining_seconds": 1148.6657040711725,
+          "total_remaining_seconds": 2948.6657040711725
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "V",
+        "library": null,
+        "target_cycles": 0
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_verify_run33_20261001T115732322093Z/run_manifest.json",
+        "sha256": "c58e47bcdd01dc02085cbe93c685367bc87e762b4f76f1f039a2304b63b0151b",
+        "bytes": 2388
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_verify_run33_20261001T115732322093Z/input_original.dat",
+        "sha256": "408b2a4b127ca2b25aea18c4a3470f46f9a99455dab010daf62161fec346458e",
+        "bytes": 263
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_verify_run33_20261001T115732322093Z/resolved_config.json",
+        "sha256": "11b49615d0f3ade6b192a40ec943951e3c80ec9498376ae96ea20c2436850283",
+        "bytes": 4285
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_verify_run33_20261001T115732322093Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_verify_run33_20261001T115732322093Z/run_summary.json",
+        "sha256": "fe89cb4c99e59accef9412af8410043b24d36724f8be52d6fb6ece5d083efdcf",
+        "bytes": 6174
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_verify_run33_20261001T115732322093Z/resource_baseline.json",
+        "sha256": "de13e7703b3de00121d4a959c028977ea8ef00dd33017a01bf897d9032e3d891",
+        "bytes": 8570
+      },
+      "raw_result": null
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_verify_run34_20261001T115944830780Z",
+      "stage": "VERIFY",
+      "family": null,
+      "algorithm": "V",
+      "classification": "COMPLETED",
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+      "launch_wall_seconds": 60.60793990199454,
+      "descendants_cleared": true,
+      "rss_peak_bytes": 716443648,
+      "swap_peak_bytes": 0,
+      "exact_counts": true,
+      "numeric_io": {
+        "started": 0,
+        "completed": 0,
+        "bytes_completed": 0,
+        "wall_completed_seconds": 0.0
+      },
+      "internal_Arnoldi_iterations": 0,
+      "actions_lower": 9,
+      "actions_upper": 9,
+      "audits_lower": 9,
+      "audits_upper": 9,
+      "updates_lower": 0,
+      "updates_upper": 0,
+      "arnoldi_lower": 0,
+      "arnoldi_upper": 0,
+      "manifest": {
+        "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+        "git_status": "",
+        "stage": "V19-VERIFY",
+        "formal_pde": false,
+        "formal_fe_stage": true,
+        "input_sha256": "73830df3f8dca4f139cf2f2e5a1988d27d520f6805564cc6ffdc45936558483f",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 0,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "unchanged original S/b; V18 R-FINAL fixed starts; independent P/L; REF7 only after freeze",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "d7545ff2e76b668903f1748a391d9ca97a1c09b1bc2b18c971b79953c2ad6073",
+        "batch_window": {
+          "schema": "task042.campaign-window.v19",
+          "start_utc": "2026-10-01T08:46:41+00:00",
+          "start_monotonic": 769395.8608700142,
+          "heavy_limit_seconds": 12600,
+          "total_limit_seconds": 14400,
+          "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+          "deadline_utc": "2026-10-01T12:46:41+00:00",
+          "start_singapore": "2026-10-01T16:46:41+08:00",
+          "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+          "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+          "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+          "elapsed_seconds": 11583.84924018383,
+          "heavy_remaining_seconds": 1016.1507598161697,
+          "total_remaining_seconds": 2816.1507598161697
+        },
+        "window_sha256": "70e1dc96f25b9edbe2b2150bdbf59467f0669b7a63d9336e1cd6a5cba71a33ce",
+        "review_authorization": "Review V16 5b489b7264b75a9461577303ff0f6bc8907c19dd; immutable 14400s window",
+        "decoder_family": "POST_LSQR_RESIDUAL_POLISH",
+        "global_p4_factor_constructed": false,
+        "route_budget": {
+          "uniform_route_wall_seconds": 2382,
+          "heavy_remaining_at_freeze_seconds": 10431.446380677167,
+          "formula": "min(2700, floor((heavy_remaining-900)/4))",
+          "immutable": true
+        },
+        "algorithm": "V",
+        "library": null,
+        "target_cycles": 0
+      },
+      "run_manifest": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_verify_run34_20261001T115944830780Z/run_manifest.json",
+        "sha256": "b44a050a3870ee0e53d818097dc50579df58995efe3c607372b2f3bdc9bae22c",
+        "bytes": 2387
+      },
+      "original_input": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_verify_run34_20261001T115944830780Z/input_original.dat",
+        "sha256": "73830df3f8dca4f139cf2f2e5a1988d27d520f6805564cc6ffdc45936558483f",
+        "bytes": 263
+      },
+      "resolved": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_verify_run34_20261001T115944830780Z/resolved_config.json",
+        "sha256": "07b949b629af184b6ea17c09f52ccf8b4352cf2bc5357ab858bfc5de268c8ac9",
+        "bytes": 4285
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_verify_run34_20261001T115944830780Z/source_sha.txt",
+        "sha256": "b98bf4edab6e7661182d4ea22344c8613ae6a2e8474342da6fb3794d12674dbf",
+        "bytes": 41
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_verify_run34_20261001T115944830780Z/run_summary.json",
+        "sha256": "9a258cd88b1bebcf8bf8c7689973c9275eb812cdac63b44467f181438f6d5c2d",
+        "bytes": 6509
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v19_verify_run34_20261001T115944830780Z/resource_baseline.json",
+        "sha256": "8f785202c00c3b477369d2dc5643ff39da3441e6d778d02d032c2b3bc6663088",
+        "bytes": 58431
+      },
+      "raw_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_verify_run34_20261001T115944830780Z/stage_result.json",
+        "sha256": "7efe5cba98bbdd622ba1eb55a684c7c77364c38df1f7f8cfb547a3d3c18da9fd"
+      }
+    }
+  ],
+  "actual_sources_separate_from_delivery_HEAD": true
+}

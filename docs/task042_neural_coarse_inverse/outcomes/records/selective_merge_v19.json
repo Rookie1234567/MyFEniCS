@@ -1,0 +1,201 @@
+{
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "numerical_behavior_changed": false,
+      "files": [],
+      "qualification": "not promoted; no production default change",
+      "merge": "NOT_APPROVED"
+    },
+    {
+      "group": "research-only numerical adapters",
+      "numerical_behavior_changed": true,
+      "files": [
+        "src/solvers/lgmres_boundary.py",
+        "src/solvers/post_lsqr_polish.py",
+        "src/solvers/post_lsqr_window.py",
+        "src/io/post_lsqr_polish.py",
+        "src/runners/post_lsqr_polish.py",
+        "src/runners/post_lsqr_queue.py"
+      ],
+      "dependencies": [
+        "original ActionPacket",
+        "PortBlocks/BarAction",
+        "SciPy1.11.4",
+        "gmres_cycle_commit",
+        "RollingCheckpoint"
+      ],
+      "tests": [
+        "test_task042_v19_polish.py",
+        "test_task042_v18_completion.py"
+      ],
+      "fresh_evidence": "C0/P/L/V19 one-run index; all selected field gates separately recorded",
+      "merge": "research opt-in only; do not promote to default or merge without review"
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "numerical_behavior_changed": false,
+      "files": [
+        "scripts/activate_task042.sh",
+        "scripts/task042_v17_campaign.py",
+        "scripts/task042_v17_queue_watchdog.py",
+        "scripts/run_case.py",
+        "src/runners/task042_shared.py",
+        "src/io/task042_profile.py",
+        "src/runners/gmres_residual_completion.py",
+        "src/solvers/gmres_residual_completion.py"
+      ],
+      "dependencies": [
+        "explicit V19 selection; old defaults unchanged",
+        "deadline/subreaper/whole-tree resource gate"
+      ],
+      "tests": [
+        "V19/V18/shared regression",
+        "6dat validation",
+        "deadline/descendant cleanup"
+      ],
+      "merge": "later selective review after numerical/io dependencies; NOT_APPROVED"
+    },
+    {
+      "group": "checker/benchmark",
+      "numerical_behavior_changed": false,
+      "files": [
+        "src/io/post_lsqr_polish_check.py",
+        "src/test/test_task042_v19_evidence.py",
+        "src/test/test_task042_v19_polish.py",
+        "src/test/test_task042_v18_completion.py"
+      ],
+      "dependencies": [
+        "stored physical vectors/hashes/counters; no original action"
+      ],
+      "tests": [
+        "15 reader tests",
+        "28 adapter/shared tests"
+      ],
+      "merge": "eligible for separate review, not automatic merge"
+    },
+    {
+      "group": "compact evidence/docs",
+      "numerical_behavior_changed": false,
+      "files": [
+        "docs/development_model_registry.md",
+        "docs/development_progress.md",
+        "docs/task042_neural_coarse_inverse/README.md",
+        "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+        "docs/task042_neural_coarse_inverse/outcomes/post_lsqr_residual_polish_v19.md",
+        "docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v19.csv",
+        "docs/task042_neural_coarse_inverse/outcomes/records/channel_observables_v19.csv",
+        "docs/task042_neural_coarse_inverse/outcomes/records/checkpoint_inventory_v19.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/close_end_to_end_v19.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/compile_v19.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/csv_publication_v19.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/delivery_cleanup_v19.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/direction_fault_tests_v19.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/field_channel_checks_v19.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/input_lineage_v19.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/paired_same_work_v19.csv",
+        "docs/task042_neural_coarse_inverse/outcomes/records/plot_v19.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/polish_cycles_v19.csv",
+        "docs/task042_neural_coarse_inverse/outcomes/records/protected_history_v19.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v19.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/quota_dispatch_v19.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/repair_reentry_v19.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v19.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v19.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/same_work_curves_v19.csv",
+        "docs/task042_neural_coarse_inverse/outcomes/records/selective_merge_v19.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v19.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/tests_v19.json",
+        "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+        "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+        "docs/task042_neural_coarse_inverse/response_v19.md",
+        "input/task042_neural_coarse_inverse/post_lsqr_polish_v19.json",
+        "input/task042_neural_coarse_inverse/v19_post_lsqr_g256_gnn.dat",
+        "input/task042_neural_coarse_inverse/v19_post_lsqr_g256_gpoly.dat",
+        "input/task042_neural_coarse_inverse/v19_post_lsqr_lgmres_gnn.dat",
+        "input/task042_neural_coarse_inverse/v19_post_lsqr_lgmres_gpoly.dat",
+        "input/task042_neural_coarse_inverse/v19_post_lsqr_preflight.dat",
+        "input/task042_neural_coarse_inverse/v19_post_lsqr_verify.dat"
+      ],
+      "dependencies": [
+        "raw source/hash bound run and resource records"
+      ],
+      "merge": "preserve negative evidence; NOT_APPROVED"
+    },
+    {
+      "group": "do-not-merge",
+      "numerical_behavior_changed": false,
+      "files": [
+        "ignored NPZ/directions/logs/cache/plot",
+        "local Python/FE environments"
+      ],
+      "merge": "keep ignored; no raw-array or environment copy to production"
+    }
+  ],
+  "recommended_dependency_order": [
+    "numerical/io research opt-in",
+    "reusable runner/watchdog registration",
+    "checker/tests",
+    "compact evidence/docs"
+  ],
+  "master_merge_approved": false,
+  "all_changed_paths": [
+    "docs/development_model_registry.md",
+    "docs/development_progress.md",
+    "docs/task042_neural_coarse_inverse/README.md",
+    "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+    "docs/task042_neural_coarse_inverse/outcomes/post_lsqr_residual_polish_v19.md",
+    "docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v19.csv",
+    "docs/task042_neural_coarse_inverse/outcomes/records/channel_observables_v19.csv",
+    "docs/task042_neural_coarse_inverse/outcomes/records/checkpoint_inventory_v19.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/close_end_to_end_v19.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/compile_v19.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/csv_publication_v19.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/delivery_cleanup_v19.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/direction_fault_tests_v19.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/field_channel_checks_v19.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/input_lineage_v19.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/paired_same_work_v19.csv",
+    "docs/task042_neural_coarse_inverse/outcomes/records/plot_v19.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/polish_cycles_v19.csv",
+    "docs/task042_neural_coarse_inverse/outcomes/records/protected_history_v19.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v19.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/quota_dispatch_v19.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/repair_reentry_v19.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v19.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v19.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/same_work_curves_v19.csv",
+    "docs/task042_neural_coarse_inverse/outcomes/records/selective_merge_v19.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v19.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/tests_v19.json",
+    "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+    "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+    "docs/task042_neural_coarse_inverse/response_v19.md",
+    "input/task042_neural_coarse_inverse/post_lsqr_polish_v19.json",
+    "input/task042_neural_coarse_inverse/v19_post_lsqr_g256_gnn.dat",
+    "input/task042_neural_coarse_inverse/v19_post_lsqr_g256_gpoly.dat",
+    "input/task042_neural_coarse_inverse/v19_post_lsqr_lgmres_gnn.dat",
+    "input/task042_neural_coarse_inverse/v19_post_lsqr_lgmres_gpoly.dat",
+    "input/task042_neural_coarse_inverse/v19_post_lsqr_preflight.dat",
+    "input/task042_neural_coarse_inverse/v19_post_lsqr_verify.dat",
+    "scripts/activate_task042.sh",
+    "scripts/run_case.py",
+    "scripts/task042_v17_campaign.py",
+    "scripts/task042_v17_queue_watchdog.py",
+    "src/io/post_lsqr_polish.py",
+    "src/io/post_lsqr_polish_check.py",
+    "src/io/task042_profile.py",
+    "src/runners/gmres_residual_completion.py",
+    "src/runners/post_lsqr_polish.py",
+    "src/runners/post_lsqr_queue.py",
+    "src/runners/task042_shared.py",
+    "src/solvers/gmres_residual_completion.py",
+    "src/solvers/lgmres_boundary.py",
+    "src/solvers/post_lsqr_polish.py",
+    "src/solvers/post_lsqr_window.py",
+    "src/test/test_task042_v18_completion.py",
+    "src/test/test_task042_v19_evidence.py",
+    "src/test/test_task042_v19_polish.py"
+  ],
+  "old_results_preserved": true
+}

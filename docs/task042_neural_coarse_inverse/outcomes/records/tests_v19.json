@@ -1,0 +1,124 @@
+{
+  "final_targeted": {
+    "passed": 43,
+    "failed": 0,
+    "skipped": 0,
+    "source_sha": "e13a7adab7ac8d5da17b688af6e0db27c6c27fa9",
+    "Junit": {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/final_tests_02_report.xml",
+      "sha256": "46ee4375f314372d90a24088f9209c4a56126429a4d766064882632faf636943",
+      "bytes": 6133
+    },
+    "supervisor": {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/final_tests_02/summary.json",
+      "sha256": "c2c199a65e5741f76072c3dec0fab36e909aab16eb53ec6545bbae750e413441",
+      "bytes": 2618
+    },
+    "log": {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/final_tests_02/worker.log",
+      "sha256": "826f12309cbfea9d47fcfca67c90a7e99211303f484bb67dc6617647f46ddaf2",
+      "bytes": 331
+    },
+    "environment": {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/final_tests_02_environment.json",
+      "sha256": "14fe89f2405917671820595bc867d3a8c2bc2d1d86c5a83c794d4ca70d19b687",
+      "bytes": 3050
+    },
+    "test_files": [
+      {
+        "path": "/home/fenics/Projects/NN-Lab/src/test/test_task042_v19_polish.py",
+        "sha256": "7f82796d84e9d063b86ec121d6396a744a38ce84b5d5fa9f532b34fa61531005",
+        "bytes": 12651
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/src/test/test_task042_v18_completion.py",
+        "sha256": "d7dccde01d46e701d749abfb674232130b6560f47725fca2a411e75bde66acab",
+        "bytes": 14726
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/src/test/test_task042_shared_watchdog.py",
+        "sha256": "bdf6efb3de8d52814455395d439440025da57bcd15def4b611cb0094312ea0c7",
+        "bytes": 3840
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/src/test/test_task042_v19_evidence.py",
+        "sha256": "c3d791e2cd2d3ddede9a9cb7f8a8a0548a7e7e5d21ea1b5ab26df19920b709f9",
+        "bytes": 2364
+      }
+    ]
+  },
+  "reader": {
+    "passed": 15,
+    "source_sha": "e13a7adab7ac8d5da17b688af6e0db27c6c27fa9",
+    "new_equation_actions": 0,
+    "new_solves": 0
+  },
+  "initial": {
+    "passed": 25,
+    "failed": 3,
+    "raw_supervisor": {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/adapter_tests_01/summary.json",
+      "sha256": "f735e1dbd4b535f2726389487f71dbcdb13dabb188862a396d72bdd0a18753fb",
+      "bytes": 3585
+    }
+  },
+  "preformal_repaired": {
+    "passed": 28,
+    "failed": 0,
+    "raw_supervisor": {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/adapter_tests_02/summary.json",
+      "sha256": "de20067789179c14ba15afc6539480b0969cb731749c8bdb23f3922bbf06d2b0",
+      "bytes": 3625
+    }
+  },
+  "postformal_first": {
+    "passed": 41,
+    "failed": 2,
+    "source_sha": "53dfbb6da24b10f362a2af96b470e6dfb5eee24f",
+    "raw_supervisor": {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/final_tests_01/summary.json",
+      "sha256": "e124f7d07e175b8b2ca753e7edf3541b026e141c72b4d7ef59f974fe3900e33e",
+      "bytes": 2614
+    },
+    "Junit": {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/final_tests_01_report.xml",
+      "sha256": "2c3870be4ddb6a1b9fccfb045f89417f10470f697695682c31184cc384e37cc0",
+      "bytes": 17877
+    },
+    "cause": "V19 fixture consulted real FROZEN before isolation; production barrier correctly rejected; one-line test-only fix"
+  },
+  "dat_validation": {
+    "count": 6,
+    "stage_schema_registered": true,
+    "all_created_and_actual_validate_only": true,
+    "source": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+    "validation_log": {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/final_static_01/worker.log",
+      "sha256": "2c37a5f5c584f632c69cf8d3c42c420f97df6c68445b984377a305dd9256607f",
+      "bytes": 1719
+    },
+    "supervisor": {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/final_static_01/summary.json",
+      "sha256": "1e3554d1786ffac23ba3e6f5b64d686f55b2740ec71481b5a5783fdbd336c608",
+      "bytes": 3375
+    }
+  },
+  "drafts_AST": {
+    "numeric_actions": 0,
+    "supervisor": {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/draft_syntax_01/summary.json",
+      "sha256": "28c2b3971587cbec93ed0522f5f625b018125fba2cc8ae3d5de25473b057d157",
+      "bytes": 2640
+    }
+  },
+  "FE_ABI": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/native_fe_abi.json",
+    "sha256": "676a18fae193b535c5efe17c56ac8142d40794f60c57e55ad37dfe16dbcbd6ec",
+    "bytes": 8219
+  },
+  "CI": false,
+  "full_repository_pytest": false,
+  "MPI2_MPI4": false,
+  "Ruff": "not available; not installed",
+  "no_qualified_expensive_gate_replayed_for_metadata": true
+}

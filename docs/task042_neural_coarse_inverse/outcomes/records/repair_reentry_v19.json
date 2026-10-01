@@ -1,0 +1,50 @@
+{
+  "formal_unexpected_repairs": [
+    {
+      "id": "E01",
+      "root": "sandbox_MPI_local_socket_EPERM",
+      "source_changed": false,
+      "ABI_changed": false,
+      "start_utc": "2026-10-01T11:57:32.335501+00:00",
+      "end_utc": "2026-10-01T12:00:45+00:00",
+      "elapsed_seconds_upper": 200,
+      "planned_action": "only replay frozen VERIFY with authorized host socket access",
+      "replays": 1,
+      "solver_periods_replayed": 0,
+      "failed_costs_and_conservative_counts_preserved": true
+    }
+  ],
+  "reentries": 0,
+  "cooldown_seconds": 0.0,
+  "limits": {
+    "repair_roots": 4,
+    "repair_seconds": 2400,
+    "reentries": 3,
+    "cooldown": 1800
+  },
+  "C0_test_failures": "first targeted run 25 passed / 3 failed; counts keyword collision and frozen historical fixture isolated; final preformal 28 passed; solver cycles replayed 0",
+  "preformal_debug_root_count": 2,
+  "individual_preformal_debug_time": "unknown; not separately sampled",
+  "preformal_debug_combined_inclusive_wall_upper_seconds": 103.0,
+  "preformal_debug_clock_evidence": "first failed test ABI timestamp 2026-10-01T09:09:44.154272Z; final test ABI timestamp 2026-10-01T09:11:13.566455Z plus 11.792763803969s final supervisor; inclusive envelope <103s",
+  "postformal_fixture_repair": {
+    "id": "D03",
+    "root": "V19_test_fixture_before_frozen_queue_admission",
+    "minimal_change": "isolate ARTIFACT_ROOT before input parsing; no production barrier/source changes",
+    "failed_suite": {
+      "passed": 41,
+      "failed": 2
+    },
+    "final_suite": {
+      "passed": 43,
+      "failed": 0
+    },
+    "inclusive_wall_upper_seconds": 180,
+    "solver_replay": false
+  },
+  "conservative_all_root_count": 4,
+  "conservative_all_repair_wall_upper_seconds": 483,
+  "all_costs_in_immutable_elapsed": true,
+  "solver_periods_replayed": 0,
+  "verification_stages_replayed": 1
+}

@@ -1,0 +1,53 @@
+{
+  "utc": "2026-10-01T12:36:44.768726+00:00",
+  "window": {
+    "schema": "task042.campaign-window.v19",
+    "start_utc": "2026-10-01T08:46:41+00:00",
+    "start_monotonic": 769395.8608700142,
+    "heavy_limit_seconds": 12600,
+    "total_limit_seconds": 14400,
+    "heavy_stop_utc": "2026-10-01T12:16:41+00:00",
+    "deadline_utc": "2026-10-01T12:46:41+00:00",
+    "start_singapore": "2026-10-01T16:46:41+08:00",
+    "start_scope": "first actual identity inspection at 08:46:41 UTC; monotonic aligned on first local clock sample; no budget refresh",
+    "review_expected_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+    "prior_HEAD": "a88326967ffabe7f088dfdd289dc8b66550a7ba4",
+    "elapsed_seconds": 13803.768793691765,
+    "heavy_remaining_seconds": 0.0,
+    "total_remaining_seconds": 596.2312063082354
+  },
+  "numerical_actors_live": [],
+  "all_formal_descendants_cleared": true,
+  "outer_supervisors": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/queue_solve_01/summary.json",
+      "sha256": "c0d13b2b1f4d1e8edde13d47e9aa991bb35b94f3ecbf472826f5becffb9abcde",
+      "cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/queue_verify_02/summary.json",
+      "sha256": "54be4f5dc6932a736baf64e14cf605d8caf969bd422b444923f9e6d7b5d3efe1",
+      "cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/queue_verify_01/summary.json",
+      "sha256": "a0a436c0505cc4dcd4d74111f8c70f808f73cdb8b4ef6c0fc2eab92370368a4c",
+      "cleared": true
+    }
+  ],
+  "own_auxiliary_cleared": true,
+  "own_shared_lock_available": true,
+  "source_numeric": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0",
+  "source_checker_test": "e13a7adab7ac8d5da17b688af6e0db27c6c27fa9",
+  "resource_recheck_status": "NO_NEW_LOAD_ADMITTED_SPARE_CORE_NOT_CONFIRMED",
+  "failed_delivery_helper": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v19/delivery_cleanup_01/summary.json",
+    "sha256": "e9c78bc2820a7008e3c313fef050f1d54dbbffd0f2d0a7daa324df9c2cf9808f",
+    "cost_preserved": true
+  },
+  "no_neighbor_actions": true,
+  "solver_periods_replayed": 0,
+  "VERIFY_replayed": 1,
+  "deadline_not_refreshed": true,
+  "final_document_HEAD_in_postpush_receipt": true
+}

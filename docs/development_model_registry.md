@@ -1,3 +1,22 @@
+# Task042 V19模型总账／research-only
+
+P在每个周期重新搜索256个方向，只留下当前解；L额外保留本路线最近至多3个修正方向，用于减少下个周期重复搜索。两者都继续解完整原方程，保留40端口和单元内部的原恢复。这里改变的是重启之间保存的信息，没有训练网络、改变材料或缩减物理未知量。
+
+| 方法／库 | 实际调用 | 原rho起点→最终 | 本路线S+SH | charged wall(s) | 停止原因 |
+|---|---|---|---|---|---|
+| P_GPOLY | 64 | 0.000146307718165 → 2.23358499521e-05 | 16768 | 2279.93663295 | FIXED_64_CYCLE_LIMIT |
+| P_GNN | 64 | 0.000199556374692 → 3.24881797774e-05 | 16768 | 2261.5433094 | FIXED_64_CYCLE_LIMIT |
+| L_GPOLY | 64 | 0.000146307718165 → 9.67833470962e-06 | 16962 | 2298.25489228 | FIXED_64_CYCLE_LIMIT |
+| L_GNN | 64 | 0.000199556374692 → 1.44393838546e-05 | 16962 | 2327.33009045 | FIXED_64_CYCLE_LIMIT |
+
+
+新增正式one-run监督wall **9199.970576s**；本批辅助监督wall **102.206160s**（截至费用快照，含失败小测试；后续交付开销计入总elapsed）。V6起formal累计下界 **66613.525719s**，旧辅助unknown保持。同时整树采样峰 **796585984B（0.741879GiB）**，own swap/VRAM **0B**。父队列和子one-run计时嵌套，不重复相加；全部成本标shared-workstation。
+
+完整资格0/8，FIELD_AND_EQUATION_PROGRESS_NOT_QUALIFIED。原micro/用户材料/40ports不变，实际run source `b58919a4a0dcd677b915eb7d9bbd314520aef0e0`。两库共同随机神经G0，GPOLY不称完全无神经；无hidden训练、new基、p4逆或参考LU。上游建基/LSQR不可省略、精确缺项unknown；未改production default/未merge/目标48小时NOT_QUALIFIED。
+[Response](task042_neural_coarse_inverse/response_v19.md)、[结果](task042_neural_coarse_inverse/outcomes/post_lsqr_residual_polish_v19.md)、[费用](task042_neural_coarse_inverse/outcomes/records/resource_costs_v19.json)。
+
+以下历史正文逐字保留；旧版本的“当前”仅指其当时阶段。
+
 # Task042 V18模型总账／research-only
 
 | 固定模型与路线 | 完成/资格 | 新增工作与成本 |

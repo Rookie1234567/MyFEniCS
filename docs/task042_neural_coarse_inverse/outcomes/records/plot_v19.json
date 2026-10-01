@@ -1,0 +1,10 @@
+{
+  "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/plots/original_residuals.png",
+  "sha256": "0c09f9727e8752727f20df5a641c0a31e1e1f3410665cca9f5c9516e2246a757",
+  "data_sha256": "ed608c116f0d37a134ba359d81c0c6c693b580dcf1a6b6e7d877d3f474382f90",
+  "original_audit_points_only": true,
+  "interpolation": false,
+  "setup_costs_separate": true,
+  "performance": "shared-workstation INCONCLUSIVE",
+  "CSV_line_endings": "LF; parsed numeric/string cells unchanged"
+}

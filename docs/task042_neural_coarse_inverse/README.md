@@ -1,3 +1,9 @@
+# 最新导航：V19 / Review V16 已收口
+
+[Review V16](review_report_v16.md)、[Response V19](response_v19.md)、[完整结果](outcomes/post_lsqr_residual_polish_v19.md)、[原Gate](outcomes/records/qualification_and_dispatch_v19.json)、[run/source](outcomes/records/run_index_v19.json)、[费用](outcomes/records/resource_costs_v19.json)。C0/P/L/VERIFY已实际执行，完整0/8资格；数值队列退出，当前仅等待review，不merge。下方“当前/待运行”是历史，不能继续旧campaign。
+
+以下历史正文逐字保留；旧版本的“当前”仅指其当时阶段。
+
 # 最新导航：V18 / Review V15 已完成
 
 [Review V15](review_report_v15.md)、[Response V18](response_v18.md)、[完整结果](outcomes/gmres_repair_residual_completion_v18.md)、[独立Gate](outcomes/records/qualification_and_dispatch_v18.json)、[source/run index](outcomes/records/run_index_v18.json)、[费用](outcomes/records/resource_costs_v18.json)。F0/G64/G256/R/VERIFY均已实际执行，8冻结状态0合格；数值队列已退出，等待review，不merge。下方所有旧“当前/待运行”只是历史，不授权继续旧campaign。

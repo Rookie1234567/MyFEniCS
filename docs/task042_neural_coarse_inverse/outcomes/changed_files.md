@@ -1,3 +1,77 @@
+# V19 最小依赖分组与变更
+
+| 依赖组 | 改变行为／目的 | 验证与建议 |
+|---|---|---|
+| research-only numerical | 固定R原点的P/L；新增独立事务类型；不改旧close/schema | C0真实审核+物理队列+事务小测试；不得晋升普通默认 |
+| runner/watchdog/io | 显式V19入口/预算/缓存；成熟driver参数化 | 6dat实际注册/validation、原V18回归、whole-tree超时清场 |
+| checker/tests | 只读原数组与数字重新判Gate | reader反例与原artifact hash；不重实现求解器 |
+| compact evidence/docs | 真实source、逐周期、方向、资源、字段和未运行项 | 原历史正文逐字保留；最终HEAD不同于run source |
+| do-not-merge | NPZ/方向/大日志/缓存/环境 | 继续ignored，无raw复制或production merge授权 |
+
+
+数值核心进入src/solvers，成熟runner只显式选择V19。没有更改原task/review/response/raw、材料、方程、MPC或普通默认；不会将研究负结果称为production资格。依赖顺序和完整清单见[selective manifest](records/selective_merge_v19.json)。当前不merge master或其他任务分支。
+
+本批相关文件（后置publication记录另按Git清单）：
+
+- `docs/development_model_registry.md`
+- `docs/development_progress.md`
+- `docs/task042_neural_coarse_inverse/README.md`
+- `docs/task042_neural_coarse_inverse/outcomes/changed_files.md`
+- `docs/task042_neural_coarse_inverse/outcomes/post_lsqr_residual_polish_v19.md`
+- `docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v19.csv`
+- `docs/task042_neural_coarse_inverse/outcomes/records/channel_observables_v19.csv`
+- `docs/task042_neural_coarse_inverse/outcomes/records/checkpoint_inventory_v19.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/close_end_to_end_v19.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/compile_v19.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/csv_publication_v19.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/delivery_cleanup_v19.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/direction_fault_tests_v19.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/field_channel_checks_v19.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/input_lineage_v19.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/paired_same_work_v19.csv`
+- `docs/task042_neural_coarse_inverse/outcomes/records/plot_v19.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/polish_cycles_v19.csv`
+- `docs/task042_neural_coarse_inverse/outcomes/records/protected_history_v19.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v19.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/quota_dispatch_v19.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/repair_reentry_v19.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v19.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/run_index_v19.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/same_work_curves_v19.csv`
+- `docs/task042_neural_coarse_inverse/outcomes/records/selective_merge_v19.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v19.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/tests_v19.json`
+- `docs/task042_neural_coarse_inverse/outcomes/summary.md`
+- `docs/task042_neural_coarse_inverse/outcomes/test_summary.md`
+- `docs/task042_neural_coarse_inverse/response_v19.md`
+- `input/task042_neural_coarse_inverse/post_lsqr_polish_v19.json`
+- `input/task042_neural_coarse_inverse/v19_post_lsqr_g256_gnn.dat`
+- `input/task042_neural_coarse_inverse/v19_post_lsqr_g256_gpoly.dat`
+- `input/task042_neural_coarse_inverse/v19_post_lsqr_lgmres_gnn.dat`
+- `input/task042_neural_coarse_inverse/v19_post_lsqr_lgmres_gpoly.dat`
+- `input/task042_neural_coarse_inverse/v19_post_lsqr_preflight.dat`
+- `input/task042_neural_coarse_inverse/v19_post_lsqr_verify.dat`
+- `scripts/activate_task042.sh`
+- `scripts/run_case.py`
+- `scripts/task042_v17_campaign.py`
+- `scripts/task042_v17_queue_watchdog.py`
+- `src/io/post_lsqr_polish.py`
+- `src/io/post_lsqr_polish_check.py`
+- `src/io/task042_profile.py`
+- `src/runners/gmres_residual_completion.py`
+- `src/runners/post_lsqr_polish.py`
+- `src/runners/post_lsqr_queue.py`
+- `src/runners/task042_shared.py`
+- `src/solvers/gmres_residual_completion.py`
+- `src/solvers/lgmres_boundary.py`
+- `src/solvers/post_lsqr_polish.py`
+- `src/solvers/post_lsqr_window.py`
+- `src/test/test_task042_v18_completion.py`
+- `src/test/test_task042_v19_evidence.py`
+- `src/test/test_task042_v19_polish.py`
+
+以下历史正文逐字保留；旧版本的“当前”仅指其当时阶段。
+
 # V18改动与依赖
 
 仅Task042必要文件。close caller修复与既有restart64默认保留；新G256/R/V18 schema及窗口显式opt-in。新src/solvers/gmres_cycle_commit.py负责GMRES返回即保存/补审；residual_completion_window.py继承不可刷新预算；gmres_residual_completion.py在原数值模块上完成F0/G/R/VERIFY。src/io、src/runners是薄入口/reader/队列，既有runner/watchdog参数化batch，不另复制大型算法。

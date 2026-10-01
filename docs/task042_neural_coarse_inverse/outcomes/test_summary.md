@@ -1,3 +1,22 @@
+# V19 测试：成熟GMRES与方向保留新接口
+
+| 检查 | 真实结果 | 证据／限制 |
+|---|---|---|
+| 接口与成熟driver targeted | 首次25 passed / 3 failed → 修复后28 passed | 真实40port BarAction；跨周期、独立读回、事务故障；无旧campaign重跑 |
+| 后置raw reader | 15 passed | hash/预算/伪造status反例；无原action或solve |
+| 最终同源targeted | 43 passed | 先41 passed/2 fixture failed；提前隔离测试目录后完整重测，费用保留 |
+| 6个实际新dat | schema/stage + validate PASS | C0/P_GP/P_GN/L_GP/L_GN/V；条件队列不是盲跑 |
+| compileall | PASS | V19相关数值、io、runner、tests文件；不重复大FE |
+| native FE ABI | complex128 / int64 / MPI1 PASS | 独立qualified activation，当前src及同一只读ABI前缀 |
+| 独立raw Gate | EVIDENCE_CONSISTENT | 0完整合格；负结果仍保留 |
+| Markdown | 本地结构检查另列 | 精确GitHub页面未见视觉证据NOT_VERIFIED |
+| CI / full pytest / MPI2/4 / Ruff | not_run | 共享窗口按合同只跑targeted；Ruff不可用，未安装 |
+
+
+实际数值source `b58919a4a0dcd677b915eb7d9bbd314520aef0e0`，reader/test source `e13a7adab7ac8d5da17b688af6e0db27c6c27fa9`；两preformal根因、一个后置fixture修复及失败费用保留；solver周期重放0，VERIFY因sandbox本地MPI socket拒绝而同源授权重放1次。详见[测试记录](records/tests_v19.json)、[修复](records/repair_reentry_v19.json)、[独立Gate](records/qualification_and_dispatch_v19.json)、[run index](records/run_index_v19.json)。后置文档变化不重跑已hash绑定的昂贵FE。
+
+以下历史正文逐字保留；旧版本的“当前”仅指其当时阶段。
+
 # V18测试与可信边界
 
 | measured检查 | 实际结果 | 证据/限制 |

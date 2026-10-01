@@ -1,0 +1,2010 @@
+{
+  "errors": [],
+  "files": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/accuracy_performance_memory.md",
+      "old_blob": "549f00269ae3069ffdb7fa94a62d95b04a4cf37d",
+      "current_blob": "549f00269ae3069ffdb7fa94a62d95b04a4cf37d"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/actual_loss_block_descent_v12.md",
+      "old_blob": "7d6fba8c0a8ddd2028b8e2dfb0f8ce8f6b844bdc",
+      "current_blob": "7d6fba8c0a8ddd2028b8e2dfb0f8ce8f6b844bdc"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/architecture_and_oracle.md",
+      "old_blob": "b1f1cf143922e1713fa83e22464c760513da8a19",
+      "current_blob": "b1f1cf143922e1713fa83e22464c760513da8a19"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/augmented_full_trace_lsqr_v16.md",
+      "old_blob": "05c4980930e173093e42e6ea09f7ae4489447f87",
+      "current_blob": "05c4980930e173093e42e6ea09f7ae4489447f87"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/autonomous_neural_head_v10.md",
+      "old_blob": "a669a51a195e0c2ca224f654f2d5e788a3112962",
+      "current_blob": "a669a51a195e0c2ca224f654f2d5e788a3112962"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/bounded_diagnostic_design_v3.md",
+      "old_blob": "0117578273f60218b4a061ce0f4b7bde35fb9618",
+      "current_blob": "0117578273f60218b4a061ce0f4b7bde35fb9618"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/dataset_and_model_provenance.md",
+      "old_blob": "f51449fdf9a168c52ab5b0f4e6d22f81923e847f",
+      "current_blob": "f51449fdf9a168c52ab5b0f4e6d22f81923e847f"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/environment_and_isolation.md",
+      "old_blob": "c5e404be40bed9f03761751d243aa9a111e398fd",
+      "current_blob": "c5e404be40bed9f03761751d243aa9a111e398fd"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/failure_localization_v5.md",
+      "old_blob": "6611d0e6c0568ecc092077930ea4280c427abbdf",
+      "current_blob": "6611d0e6c0568ecc092077930ea4280c427abbdf"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/frozen_error_localization_v9.md",
+      "old_blob": "2dd10811f0da5c2d2bcd37d0b090b8986762e51c",
+      "current_blob": "2dd10811f0da5c2d2bcd37d0b090b8986762e51c"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/gmres_repair_residual_completion_v18.md",
+      "old_blob": "601372268c24b098c819248a1d24a07a983d5063",
+      "current_blob": "601372268c24b098c819248a1d24a07a983d5063"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/local_trace_representation_v15.md",
+      "old_blob": "1858b1cfe696b705b15ae7b753ff74c3c45f4ea4",
+      "current_blob": "1858b1cfe696b705b15ae7b753ff74c3c45f4ea4"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/neural_fe_single_solve_v6.md",
+      "old_blob": "418ecebeff412631c6bcb34630ecd9d33441ac8d",
+      "current_blob": "418ecebeff412631c6bcb34630ecd9d33441ac8d"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/neural_fe_single_solve_v7.md",
+      "old_blob": "54e0de5fe2f782b1269eb52f86c2e7d8eec61634",
+      "current_blob": "54e0de5fe2f782b1269eb52f86c2e7d8eec61634"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/orthonormal_trace_reprofile_v14.md",
+      "old_blob": "3bcb3ecd765fbf39fcc8b460c914b4bfb8ed9bfd",
+      "current_blob": "3bcb3ecd765fbf39fcc8b460c914b4bfb8ed9bfd"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/README.md",
+      "old_blob": "a10fde2a7cc9f0cda5bf42dead62a067730b44ab",
+      "current_blob": "a10fde2a7cc9f0cda5bf42dead62a067730b44ab"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/action_details_v5.json",
+      "old_blob": "c9410aa45289cfe05f2ef85fe006b2b1a834ab03",
+      "current_blob": "c9410aa45289cfe05f2ef85fe006b2b1a834ab03"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/adjoint_gradient_checks_v6.json",
+      "old_blob": "9d3b5f43794bd5d6592d98917aa862874f3e9b2a",
+      "current_blob": "9d3b5f43794bd5d6592d98917aa862874f3e9b2a"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/adjoint_gradient_checks_v7.json",
+      "old_blob": "d37ca1bb53b08557626d1da40898088dc52f7634",
+      "current_blob": "d37ca1bb53b08557626d1da40898088dc52f7634"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/admission_repair_v3.json",
+      "old_blob": "af78e89903d201637716b0c68d71292ef25b8a0b",
+      "current_blob": "af78e89903d201637716b0c68d71292ef25b8a0b"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/append_only_navigation_v15.json",
+      "old_blob": "a9d9aa8ab3cf5230e575aba8f5b4c4e894123811",
+      "current_blob": "a9d9aa8ab3cf5230e575aba8f5b4c4e894123811"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/auxiliary_costs_v2.json",
+      "old_blob": "cde4277466c6e534a1a2c664f62d9d8cd892533d",
+      "current_blob": "cde4277466c6e534a1a2c664f62d9d8cd892533d"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/auxiliary_costs_v3.json",
+      "old_blob": "d938d9b3aab1c067f563c278f81834c139c1b71e",
+      "current_blob": "d938d9b3aab1c067f563c278f81834c139c1b71e"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/auxiliary_costs_v6.json",
+      "old_blob": "7831ec01ea3ba198e3c310fa7929715750080442",
+      "current_blob": "7831ec01ea3ba198e3c310fa7929715750080442"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/basis_identity_v16.json",
+      "old_blob": "259a1c8d4ffbf6a24796e6f9d765a6d430b77619",
+      "current_blob": "259a1c8d4ffbf6a24796e6f9d765a6d430b77619"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/basis_inventory_v15.json",
+      "old_blob": "c8c5a9e7984902182cefe9955943901a95f7aac6",
+      "current_blob": "c8c5a9e7984902182cefe9955943901a95f7aac6"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/basis_sensitivity_v14.json",
+      "old_blob": "92244d9367842df2909acb91b93c70fc4771260a",
+      "current_blob": "92244d9367842df2909acb91b93c70fc4771260a"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/batch_costs_v8.csv",
+      "old_blob": "619abc9d252e3bb6438d962e3de12790dc427f0c",
+      "current_blob": "619abc9d252e3bb6438d962e3de12790dc427f0c"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/batch_equivalence_v8.json",
+      "old_blob": "5edb6d698f00f45b124f388247d81c99d8b9144a",
+      "current_blob": "5edb6d698f00f45b124f388247d81c99d8b9144a"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/block_descent_progress_v12.jsonl",
+      "old_blob": "c1fe9c14c59adb13a2fb803abbbb85760f084425",
+      "current_blob": "c1fe9c14c59adb13a2fb803abbbb85760f084425"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/bounded_f0_runs.json",
+      "old_blob": "62ed37e64b92366975c7618292f2438f67d4bec9",
+      "current_blob": "62ed37e64b92366975c7618292f2438f67d4bec9"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/branch_plan_v10.json",
+      "old_blob": "af68577867475539a29e20da09623577f5f27132",
+      "current_blob": "af68577867475539a29e20da09623577f5f27132"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/campaign_close_v17.json",
+      "old_blob": "b39dc7e16e5800f2f1266084af4ebe5f782102ab",
+      "current_blob": "b39dc7e16e5800f2f1266084af4ebe5f782102ab"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v10.csv",
+      "old_blob": "16845d921b15152eb2a5c0a569cf0cf270d23421",
+      "current_blob": "16845d921b15152eb2a5c0a569cf0cf270d23421"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v11.csv",
+      "old_blob": "f6ce1ae0ae8c940d2e1b0533115282302117e283",
+      "current_blob": "f6ce1ae0ae8c940d2e1b0533115282302117e283"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v12.csv",
+      "old_blob": "c9f33988aa6f89f9b52d35f85c2c2ebea654254a",
+      "current_blob": "c9f33988aa6f89f9b52d35f85c2c2ebea654254a"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v13.csv",
+      "old_blob": "f9f5951cbaceb13b7919cdcf82186a50450f8db7",
+      "current_blob": "f9f5951cbaceb13b7919cdcf82186a50450f8db7"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v14.csv",
+      "old_blob": "8b53516487b3999be739ce1f62d2d4f77f5bb86c",
+      "current_blob": "8b53516487b3999be739ce1f62d2d4f77f5bb86c"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v16.csv",
+      "old_blob": "bfea46d931ec802b38b387137d9c2d72e97b6b2e",
+      "current_blob": "bfea46d931ec802b38b387137d9c2d72e97b6b2e"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v17.csv",
+      "old_blob": "3379983e792af9b3a60f6e5c910ab3766e536e4b",
+      "current_blob": "3379983e792af9b3a60f6e5c910ab3766e536e4b"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v18.csv",
+      "old_blob": "6c3b915d00cad18973c39f430643dd6d8771f3f7",
+      "current_blob": "6c3b915d00cad18973c39f430643dd6d8771f3f7"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/centered_fix_static_v6.json",
+      "old_blob": "ac781e094541ba3d0c08c2a54bcb31727006b4f6",
+      "current_blob": "ac781e094541ba3d0c08c2a54bcb31727006b4f6"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/centered_geometry_fix_v6.json",
+      "old_blob": "6e521879614c8606e945f24f0f51191658595ad6",
+      "current_blob": "6e521879614c8606e945f24f0f51191658595ad6"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/cffi_build_repair_v2.json",
+      "old_blob": "80b6bdb87b66a7ef791b9a5acaf1df9177924198",
+      "current_blob": "80b6bdb87b66a7ef791b9a5acaf1df9177924198"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/changed_files_v18.json",
+      "old_blob": "018214ceae84f26146cd51103094174e21ade494",
+      "current_blob": "018214ceae84f26146cd51103094174e21ade494"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/changed_manifest_v17.json",
+      "old_blob": "5ba06644a46b21596d4fcf5d8a19e5110fed0411",
+      "current_blob": "5ba06644a46b21596d4fcf5d8a19e5110fed0411"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/channel_inventory_v7.csv",
+      "old_blob": "f78e9e4d61bb0844a7b4e2d4cbf18974830d56a1",
+      "current_blob": "f78e9e4d61bb0844a7b4e2d4cbf18974830d56a1"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/channel_observables_v10.csv",
+      "old_blob": "68fd25bf3941c3cbeb03538283a61d963449d30f",
+      "current_blob": "68fd25bf3941c3cbeb03538283a61d963449d30f"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/channel_observables_v11.csv",
+      "old_blob": "0ea9474c894a7cad5d7e8c92cc03c627ab8a147c",
+      "current_blob": "0ea9474c894a7cad5d7e8c92cc03c627ab8a147c"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/channel_observables_v12.csv",
+      "old_blob": "82cfe641809bf856bb445d6c1e23dc731e292aeb",
+      "current_blob": "82cfe641809bf856bb445d6c1e23dc731e292aeb"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/channel_observables_v13.csv",
+      "old_blob": "a907ead6b9ac7655523be90a9ee759e67b7a9107",
+      "current_blob": "a907ead6b9ac7655523be90a9ee759e67b7a9107"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/channel_observables_v14.csv",
+      "old_blob": "5bfcf705c4dfd4a8e021725588ba44de455e66ac",
+      "current_blob": "5bfcf705c4dfd4a8e021725588ba44de455e66ac"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/channel_observables_v15.csv",
+      "old_blob": "eb16d74237c5dedda0dc840a8f1a8495334b2a3b",
+      "current_blob": "eb16d74237c5dedda0dc840a8f1a8495334b2a3b"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/channel_observables_v17.csv",
+      "old_blob": "ec09d0d75dd1c23d47e907e1dac54f3313c7e568",
+      "current_blob": "ec09d0d75dd1c23d47e907e1dac54f3313c7e568"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/channel_observables_v18.csv",
+      "old_blob": "10dcfe9fad5827bd1315a6fbe94a30d6b9e62dbc",
+      "current_blob": "10dcfe9fad5827bd1315a6fbe94a30d6b9e62dbc"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/channel_observables_v7.csv",
+      "old_blob": "336be4d1f69e0339e7742122a1b898cb52f51d92",
+      "current_blob": "336be4d1f69e0339e7742122a1b898cb52f51d92"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/checkpoint_inventory_v17.json",
+      "old_blob": "a9a8f16ae5d5e0bb0152b7d77bb345da645d9e50",
+      "current_blob": "a9a8f16ae5d5e0bb0152b7d77bb345da645d9e50"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/checkpoint_inventory_v18.json",
+      "old_blob": "54c226c409b3317faa45e66854ce2fad81b295fa",
+      "current_blob": "54c226c409b3317faa45e66854ce2fad81b295fa"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/close_end_to_end_v18.json",
+      "old_blob": "0536dc0e1adfd493ef7ead7fc585178a0725e4a6",
+      "current_blob": "0536dc0e1adfd493ef7ead7fc585178a0725e4a6"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/closure_and_git_v16.json",
+      "old_blob": "ad1135d012fc42f6ae8a3d0eed5159f7ff2e02f3",
+      "current_blob": "ad1135d012fc42f6ae8a3d0eed5159f7ff2e02f3"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/coarse_space_algebra_v4.json",
+      "old_blob": "ce239440ce0492dd53c17ce796279177663b4877",
+      "current_blob": "ce239440ce0492dd53c17ce796279177663b4877"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/column_scaling_v8.json",
+      "old_blob": "a40bacf1cc4446090adabdfa39d15e47d6954fab",
+      "current_blob": "a40bacf1cc4446090adabdfa39d15e47d6954fab"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/common_state_manifest_v5.json",
+      "old_blob": "06e2ebbd6b136dbfe2c1c2f7b3cd45a5d4b57563",
+      "current_blob": "06e2ebbd6b136dbfe2c1c2f7b3cd45a5d4b57563"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/complement_probes_v5.json",
+      "old_blob": "37d5251404d51fca441c9bc022009d3b0c73d2f1",
+      "current_blob": "37d5251404d51fca441c9bc022009d3b0c73d2f1"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/component_metrics.csv",
+      "old_blob": "781df225da4dd2ca0aff83f2e507ee912b655fd0",
+      "current_blob": "781df225da4dd2ca0aff83f2e507ee912b655fd0"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/component_metrics_v2.csv",
+      "old_blob": "60323149e70d44ed5c910bea66a1c0f78b1f1a32",
+      "current_blob": "60323149e70d44ed5c910bea66a1c0f78b1f1a32"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/continuation_checks_v10.json",
+      "old_blob": "dd6f8c27c6e6bb8e2665611cd6eccbb5fdd802e7",
+      "current_blob": "dd6f8c27c6e6bb8e2665611cd6eccbb5fdd802e7"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/controlled_stop_snapshot_v16.json",
+      "old_blob": "4ee34bb143775443cc70f276fb02f862de0bd31e",
+      "current_blob": "4ee34bb143775443cc70f276fb02f862de0bd31e"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/convergence_checkpoints_v7.csv",
+      "old_blob": "4cff161107d0b8ffe324c7b721ff31d1d24aba26",
+      "current_blob": "4cff161107d0b8ffe324c7b721ff31d1d24aba26"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/convergence_checkpoints_v8.csv",
+      "old_blob": "4fc5b15f254414387b10bb024d9ec4cbccc4aed9",
+      "current_blob": "4fc5b15f254414387b10bb024d9ec4cbccc4aed9"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/coupled_step_history_v13.jsonl",
+      "old_blob": "9898bad5c79038688cced981d2062d4e6ed0490d",
+      "current_blob": "9898bad5c79038688cced981d2062d4e6ed0490d"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/coverage_v5.csv",
+      "old_blob": "cb42a83e3a3d995291556a2f10a9b76576d654f7",
+      "current_blob": "cb42a83e3a3d995291556a2f10a9b76576d654f7"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/cpu_provenance_v3.json",
+      "old_blob": "90d9b27979436948077492aeb57a83a0f2abdb8c",
+      "current_blob": "90d9b27979436948077492aeb57a83a0f2abdb8c"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/csv_line_endings_attempt1.json",
+      "old_blob": "d5a9ba47d9b108c1af381e3beee9d47cde18fba9",
+      "current_blob": "d5a9ba47d9b108c1af381e3beee9d47cde18fba9"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/csv_line_endings_v6.json",
+      "old_blob": "e951b8b90e8730228e9fde660387af8107e93109",
+      "current_blob": "e951b8b90e8730228e9fde660387af8107e93109"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/csv_newline_check_v4.json",
+      "old_blob": "0c1f7550743e710c209b10abcfe7cac2364457e5",
+      "current_blob": "0c1f7550743e710c209b10abcfe7cac2364457e5"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/csv_publication_v17.json",
+      "old_blob": "ec55acafa7485104ba462700358e5500f9e7b808",
+      "current_blob": "ec55acafa7485104ba462700358e5500f9e7b808"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/data_source_provenance_v10.json",
+      "old_blob": "b62e85139cda3f4bca403f08eec7f2dba4594949",
+      "current_blob": "b62e85139cda3f4bca403f08eec7f2dba4594949"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/dataset_model_manifest.json",
+      "old_blob": "307bf3c89a04525f4bb0e22ac804b97cd4a2d6cf",
+      "current_blob": "307bf3c89a04525f4bb0e22ac804b97cd4a2d6cf"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/dataset_model_manifest_v2.json",
+      "old_blob": "0907a66878c4346800ed9c1bb13ccc5ca3946dca",
+      "current_blob": "0907a66878c4346800ed9c1bb13ccc5ca3946dca"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/dataset_model_provenance_v7.json",
+      "old_blob": "ac6bb06be54399b9133d92bc6e94f895393ca6d9",
+      "current_blob": "ac6bb06be54399b9133d92bc6e94f895393ca6d9"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/decoder_checks_v14.json",
+      "old_blob": "bb7c14ad5aca24598c61d1046ff17d0c961ffea5",
+      "current_blob": "bb7c14ad5aca24598c61d1046ff17d0c961ffea5"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/delivery_checks_v6.json",
+      "old_blob": "23c912531d558d594f6d98b95df1a37aa1af1567",
+      "current_blob": "23c912531d558d594f6d98b95df1a37aa1af1567"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/delivery_completion_v13.json",
+      "old_blob": "30b0fb6c6a2697e33358c15b6f6c19f30d9c48df",
+      "current_blob": "30b0fb6c6a2697e33358c15b6f6c19f30d9c48df"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/delivery_receipt_v18.json",
+      "old_blob": "1d177543953dcf9064535e6d7213c234bdf7c9d3",
+      "current_blob": "1d177543953dcf9064535e6d7213c234bdf7c9d3"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/directional_scale_v13.csv",
+      "old_blob": "607c16feb82a42486b6426295d53d9ccda98a532",
+      "current_blob": "607c16feb82a42486b6426295d53d9ccda98a532"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/documentation_cpu_audit_v2.json",
+      "old_blob": "c3403365bfe851e82f04f0b971c025d45dc784d0",
+      "current_blob": "c3403365bfe851e82f04f0b971c025d45dc784d0"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/environment_fe.json",
+      "old_blob": "60bc68444f94d38acc97e889e2358b4220188afa",
+      "current_blob": "60bc68444f94d38acc97e889e2358b4220188afa"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/environment_fe_v13.json",
+      "old_blob": "58fa4f591b02f5a23be48f974d2ee32768f2c0a9",
+      "current_blob": "58fa4f591b02f5a23be48f974d2ee32768f2c0a9"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/environment_ml.json",
+      "old_blob": "9a3a872ac3a93edfa8a5c0098c99750b8d38fde7",
+      "current_blob": "9a3a872ac3a93edfa8a5c0098c99750b8d38fde7"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/environment_ml_v13.json",
+      "old_blob": "50afbf91039acbc13a2ff7696ee5c70fa02a1183",
+      "current_blob": "50afbf91039acbc13a2ff7696ee5c70fa02a1183"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/environment_pure.json",
+      "old_blob": "5427f2b86cc32da02138664824c1adee3a80ee4f",
+      "current_blob": "5427f2b86cc32da02138664824c1adee3a80ee4f"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/environment_pure_v13.json",
+      "old_blob": "97e975ed098bda256b5dbe92f6ef43e0eae653a0",
+      "current_blob": "97e975ed098bda256b5dbe92f6ef43e0eae653a0"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/environment_v9.json",
+      "old_blob": "de59d581ba2f873b4c32bd24d57a03c0270a816b",
+      "current_blob": "de59d581ba2f873b4c32bd24d57a03c0270a816b"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/equation_components_v9.csv",
+      "old_blob": "103f908ad35db28c323cfaa20151b209ccc24294",
+      "current_blob": "103f908ad35db28c323cfaa20151b209ccc24294"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/error_identity_checks_v9.json",
+      "old_blob": "e39c99e780f68c24735ffbeaea48dba94ab13441",
+      "current_blob": "e39c99e780f68c24735ffbeaea48dba94ab13441"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/evidence_hygiene_v7.json",
+      "old_blob": "52762080a79cf4ee44fccc0625ddb12870a2f2f8",
+      "current_blob": "52762080a79cf4ee44fccc0625ddb12870a2f2f8"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/execution_integrity_v10.json",
+      "old_blob": "a2badfb3ea96d64866262da865cc121494ac3199",
+      "current_blob": "a2badfb3ea96d64866262da865cc121494ac3199"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/f1_real_components_v2.json",
+      "old_blob": "afa97507ce1d478c31bd7a57ddfe415d77f32f41",
+      "current_blob": "afa97507ce1d478c31bd7a57ddfe415d77f32f41"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/f4_b0_complete_v2.json",
+      "old_blob": "3e364d4bf124b172b0547feb08842299cbc69fbf",
+      "current_blob": "3e364d4bf124b172b0547feb08842299cbc69fbf"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/f4_lin_complete_v2.json",
+      "old_blob": "4369b3a7b97e8f1d8ce1c9ab5bcdb2978d432b81",
+      "current_blob": "4369b3a7b97e8f1d8ce1c9ab5bcdb2978d432b81"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/f4_nn_complete_v2.json",
+      "old_blob": "fee45b04bfe59ca0527d8dce1c0143a2cda277fc",
+      "current_blob": "fee45b04bfe59ca0527d8dce1c0143a2cda277fc"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/field_channel_checks_v16.csv",
+      "old_blob": "7935e09b8442172f7edd92f9721d17d573c580c2",
+      "current_blob": "7935e09b8442172f7edd92f9721d17d573c580c2"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/field_channel_checks_v16.json",
+      "old_blob": "a6d4f10b9473159832c7345cf2bbf919ca402d5b",
+      "current_blob": "a6d4f10b9473159832c7345cf2bbf919ca402d5b"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/field_channel_checks_v17.json",
+      "old_blob": "3d837a60e7f1fdbf4678f1d617f2768ea04a32c9",
+      "current_blob": "3d837a60e7f1fdbf4678f1d617f2768ea04a32c9"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/field_channel_checks_v18.json",
+      "old_blob": "aeefb704bdc0a2308435813dfc32334ae10d62f3",
+      "current_blob": "aeefb704bdc0a2308435813dfc32334ae10d62f3"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/field_error_components_v9.csv",
+      "old_blob": "6a2f83d5c34a22bbc78104daa4880a4fb0acf163",
+      "current_blob": "6a2f83d5c34a22bbc78104daa4880a4fb0acf163"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/final_checks_v13.json",
+      "old_blob": "7745275737de7ab612c2289bb065547f9e03a33e",
+      "current_blob": "7745275737de7ab612c2289bb065547f9e03a33e"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/final_checks_v14.json",
+      "old_blob": "b51c2e2981809647de1ad035db4050b45366bbde",
+      "current_blob": "b51c2e2981809647de1ad035db4050b45366bbde"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/final_checks_v15.json",
+      "old_blob": "4f5ee3bce9be4e80ecc538aef055373285486d30",
+      "current_blob": "4f5ee3bce9be4e80ecc538aef055373285486d30"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/final_checks_v16.json",
+      "old_blob": "bcfc1775fc4bcad8e51bca94dc0389daac37d7bd",
+      "current_blob": "bcfc1775fc4bcad8e51bca94dc0389daac37d7bd"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/final_checks_v17.json",
+      "old_blob": "52473fc8c2749e43c54d550eae3b017ea95c2696",
+      "current_blob": "52473fc8c2749e43c54d550eae3b017ea95c2696"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/final_checks_v2.json",
+      "old_blob": "49ebaa44662a9a8ef8c5e4afe0ac59567bce0c41",
+      "current_blob": "49ebaa44662a9a8ef8c5e4afe0ac59567bce0c41"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/final_delivery_v15.json",
+      "old_blob": "498fc1e817a83712dd3e779b9421773a778c906f",
+      "current_blob": "498fc1e817a83712dd3e779b9421773a778c906f"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/final_document_checks_v6.json",
+      "old_blob": "4568a21ad9ece54bcb5af9549d22b0d411b23e49",
+      "current_blob": "4568a21ad9ece54bcb5af9549d22b0d411b23e49"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/final_ml_mapping_v10.json",
+      "old_blob": "a3126d8b24a285f1d96686a7ae08be09ed9fd7aa",
+      "current_blob": "a3126d8b24a285f1d96686a7ae08be09ed9fd7aa"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/first_fe_import_repair_v2.json",
+      "old_blob": "a608dee1d545fc30e95c74f5c1273fbf705c9773",
+      "current_blob": "a608dee1d545fc30e95c74f5c1273fbf705c9773"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/fixed_head_gradient_checks_v12.json",
+      "old_blob": "2b6b223fc24f4b0dcb7f0475272a02835f2b1d87",
+      "current_blob": "2b6b223fc24f4b0dcb7f0475272a02835f2b1d87"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/fresh_qualification_v4.json",
+      "old_blob": "64c2a0635d5887f1a6dff00b6082c68b77e072d3",
+      "current_blob": "64c2a0635d5887f1a6dff00b6082c68b77e072d3"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/frozen_state_inventory_v9.json",
+      "old_blob": "6f269cc739c4a6510ab8f0c7210b8f39f0074260",
+      "current_blob": "6f269cc739c4a6510ab8f0c7210b8f39f0074260"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/full_p6_comparison.csv",
+      "old_blob": "db310dc2cb53256a1cfe4280c5b70fb9eb680e51",
+      "current_blob": "db310dc2cb53256a1cfe4280c5b70fb9eb680e51"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/full_p6_comparison_v2.csv",
+      "old_blob": "cb9b20eff804beba3d719a63346fc5465c286630",
+      "current_blob": "cb9b20eff804beba3d719a63346fc5465c286630"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/full_residual_history_v3.csv",
+      "old_blob": "379297d220e37c63dc218b8d39846cebc6865140",
+      "current_blob": "379297d220e37c63dc218b8d39846cebc6865140"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions.json",
+      "old_blob": "29a39dedb28a48bcf0a0970755d1dae901921390",
+      "current_blob": "29a39dedb28a48bcf0a0970755d1dae901921390"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v2.json",
+      "old_blob": "c1f96db59f595926b4181f58dbdf40000bb289e4",
+      "current_blob": "c1f96db59f595926b4181f58dbdf40000bb289e4"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v3.json",
+      "old_blob": "ebb330b9e18c73ec3a70d107b9b0e5f0a2759885",
+      "current_blob": "ebb330b9e18c73ec3a70d107b9b0e5f0a2759885"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v4.json",
+      "old_blob": "7f276586f9d1c55da1fcdebef6fbae6f8d36a510",
+      "current_blob": "7f276586f9d1c55da1fcdebef6fbae6f8d36a510"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v8.json",
+      "old_blob": "a73e35b1c6b43905588f33bc9a71d5883c0a100d",
+      "current_blob": "a73e35b1c6b43905588f33bc9a71d5883c0a100d"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/gate_decisions_v9.json",
+      "old_blob": "ab410e787af22b24b7c8c86f67706284582ce5f8",
+      "current_blob": "ab410e787af22b24b7c8c86f67706284582ce5f8"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/git_isolation_v13.json",
+      "old_blob": "6f9a2f2bea2a7f2dc966b368ef6538537e6ca09d",
+      "current_blob": "6f9a2f2bea2a7f2dc966b368ef6538537e6ca09d"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/git_pre_delivery_v6.json",
+      "old_blob": "ca8c15c20b90a44e1269556bb1fd2d4d8ad59462",
+      "current_blob": "ca8c15c20b90a44e1269556bb1fd2d4d8ad59462"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/git_pre_delivery_v7.json",
+      "old_blob": "7e439bfe9ae8f5322441444875fb1d3a19efe2eb",
+      "current_blob": "7e439bfe9ae8f5322441444875fb1d3a19efe2eb"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/git_pre_delivery_v8.json",
+      "old_blob": "a96f5560bdbac2ceb2519d01b315c82590ee0433",
+      "current_blob": "a96f5560bdbac2ceb2519d01b315c82590ee0433"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/git_preparation.json",
+      "old_blob": "6829c7c664cfda6103a3572f8a7a0eb93df5f263",
+      "current_blob": "6829c7c664cfda6103a3572f8a7a0eb93df5f263"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/git_preparation_v2.json",
+      "old_blob": "2cb3d53302ad168c38ecf07f58a699976307b17b",
+      "current_blob": "2cb3d53302ad168c38ecf07f58a699976307b17b"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/gmres_cycles_v17.json",
+      "old_blob": "8c79d4ef1311550a83f51ec2f8de64238aadf80a",
+      "current_blob": "8c79d4ef1311550a83f51ec2f8de64238aadf80a"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/gmres_cycles_v18.csv",
+      "old_blob": "deac8bebf63ada60057f6b20c25c412d42ff7705",
+      "current_blob": "deac8bebf63ada60057f6b20c25c412d42ff7705"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/gmres_cycles_v18.json",
+      "old_blob": "cef360222cd0d1daa7fdab4c1f158acc6384241f",
+      "current_blob": "cef360222cd0d1daa7fdab4c1f158acc6384241f"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/gmres_interface_stop_v17.json",
+      "old_blob": "97ef718b77ca45244310d87fb84ab441a241c5d3",
+      "current_blob": "97ef718b77ca45244310d87fb84ab441a241c5d3"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/head_mapping_and_rank_v10.json",
+      "old_blob": "c9176dcc09baf137f8369e5d019977e827322f84",
+      "current_blob": "c9176dcc09baf137f8369e5d019977e827322f84"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/head_proposals_v12.json",
+      "old_blob": "d2025ef65a56859985e809e9ed2514af403ffc0f",
+      "current_blob": "d2025ef65a56859985e809e9ed2514af403ffc0f"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/historical_material_lookup_v6.json",
+      "old_blob": "d85b825cbd1c49558e8c75468e33f7121be21bd0",
+      "current_blob": "d85b825cbd1c49558e8c75468e33f7121be21bd0"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/independent_blind_validation_v7.json",
+      "old_blob": "61241ec2cfb9c2dc3025cc27955f243145613f5e",
+      "current_blob": "61241ec2cfb9c2dc3025cc27955f243145613f5e"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/independent_calibration_gates_v8.json",
+      "old_blob": "4556778a847fe6ccfbf1ccb61053244d2ae21695",
+      "current_blob": "4556778a847fe6ccfbf1ccb61053244d2ae21695"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/independent_checks_v5.json",
+      "old_blob": "e389320f647d67e0ef73d095e9c0bf4c5dc208a7",
+      "current_blob": "e389320f647d67e0ef73d095e9c0bf4c5dc208a7"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/independent_evidence_checks_v6.json",
+      "old_blob": "0d59641e5a4c62492b81d890444e35b8bd15352b",
+      "current_blob": "0d59641e5a4c62492b81d890444e35b8bd15352b"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/input_lineage_v18.json",
+      "old_blob": "d9f275dceaacde09afd83c925ea0bdc78981fcc4",
+      "current_blob": "d9f275dceaacde09afd83c925ea0bdc78981fcc4"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/iteration_history_v16.csv",
+      "old_blob": "86befc26d12566a8fb319b40de21a32c49392804",
+      "current_blob": "86befc26d12566a8fb319b40de21a32c49392804"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/iteration_history_v16.json",
+      "old_blob": "c445d0d4451dd8871db69ef29c822c521b1e4726",
+      "current_blob": "c445d0d4451dd8871db69ef29c822c521b1e4726"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/iteration_history_v17.csv",
+      "old_blob": "16b3da97209123586c39597ba9e7a988a9fe16a1",
+      "current_blob": "16b3da97209123586c39597ba9e7a988a9fe16a1"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/iteration_history_v17.json",
+      "old_blob": "d8d1c298be15361dcc5cf5298495cac06de7220f",
+      "current_blob": "d8d1c298be15361dcc5cf5298495cac06de7220f"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/iteration_history_v18.csv",
+      "old_blob": "05d2c1fcee96ed373a28af28c5f8900cee99bbf4",
+      "current_blob": "05d2c1fcee96ed373a28af28c5f8900cee99bbf4"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/journal_identity_v15.json",
+      "old_blob": "0b9290f8f3db8d9cc59536c0d3a6e35d3cf4e231",
+      "current_blob": "0b9290f8f3db8d9cc59536c0d3a6e35d3cf4e231"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/journal_identity_v16.json",
+      "old_blob": "d59481d2aaf4a3cc345ff26af94d51136d9181de",
+      "current_blob": "d59481d2aaf4a3cc345ff26af94d51136d9181de"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/legacy_body_preservation_v14.json",
+      "old_blob": "ed90ddfda9e7963ca627a8afa60473620573ff78",
+      "current_blob": "ed90ddfda9e7963ca627a8afa60473620573ff78"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/local_basis_checks_v15.json",
+      "old_blob": "db13b739a9b8447aab5bfe324820c2ac9d7dda25",
+      "current_blob": "db13b739a9b8447aab5bfe324820c2ac9d7dda25"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/local_candidate_comparison_v15.csv",
+      "old_blob": "a19300e4406fbee5a95753353fcac6c7e57cbd4b",
+      "current_blob": "a19300e4406fbee5a95753353fcac6c7e57cbd4b"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/local_entity_map_v15.json",
+      "old_blob": "1c197c1bb920d52cc692679cca7f1d59d94d53d3",
+      "current_blob": "1c197c1bb920d52cc692679cca7f1d59d94d53d3"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/localization_decisions_v5.json",
+      "old_blob": "1ccf0c368926be150ea9510f95649a8466dc3b97",
+      "current_blob": "1ccf0c368926be150ea9510f95649a8466dc3b97"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/localization_design_v5.json",
+      "old_blob": "49d7d59705d1b7d4fa3a60222607aa677c29974c",
+      "current_blob": "49d7d59705d1b7d4fa3a60222607aa677c29974c"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/manufactured_recovery_v11.json",
+      "old_blob": "dc3c13b3a8c925897d33be2f4f780fffafe8d9c5",
+      "current_blob": "dc3c13b3a8c925897d33be2f4f780fffafe8d9c5"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/matched_capacity_v15.json",
+      "old_blob": "539807a0043396fb7cf672eb11534eead7c9f033",
+      "current_blob": "539807a0043396fb7cf672eb11534eead7c9f033"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/matched_work_comparison_v16.csv",
+      "old_blob": "fdc859c9c399798f358686e823e278251c8ba073",
+      "current_blob": "fdc859c9c399798f358686e823e278251c8ba073"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/matched_work_comparison_v16.json",
+      "old_blob": "bfcf203c3bacc09821c198ff24d750dcee9bbea0",
+      "current_blob": "bfcf203c3bacc09821c198ff24d750dcee9bbea0"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/material_geometry_identity_v6.json",
+      "old_blob": "de8e1bb66d1096f261e4da8d2cbfcf2352577de5",
+      "current_blob": "de8e1bb66d1096f261e4da8d2cbfcf2352577de5"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/material_geometry_identity_v7.json",
+      "old_blob": "956dbb5630a09751e60936a71b172246da4b00f3",
+      "current_blob": "956dbb5630a09751e60936a71b172246da4b00f3"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/material_loaded_v7.json",
+      "old_blob": "805b175be9eac5c87330d4661cae3916bf75c77b",
+      "current_blob": "805b175be9eac5c87330d4661cae3916bf75c77b"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/material_source_audit_v6.json",
+      "old_blob": "e328ccf6fdab25247dd41f5d035865bc3cc798cb",
+      "current_blob": "e328ccf6fdab25247dd41f5d035865bc3cc798cb"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/mode_metadata_repair_v2.json",
+      "old_blob": "a41382dd25ab7abda77bf0b9fbf4de44931eee6a",
+      "current_blob": "a41382dd25ab7abda77bf0b9fbf4de44931eee6a"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/neural_fe_comparison_v6.csv",
+      "old_blob": "5ff3de66b04520c53ce985d8df549d1b63babafa",
+      "current_blob": "5ff3de66b04520c53ce985d8df549d1b63babafa"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/neural_fe_comparison_v7.csv",
+      "old_blob": "5e1980db899a5a853470799581747faaf6d21f84",
+      "current_blob": "5e1980db899a5a853470799581747faaf6d21f84"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/neural_fe_design_v6.json",
+      "old_blob": "7b4d521c979ff81de3a8332ab62d579cb2b088ff",
+      "current_blob": "7b4d521c979ff81de3a8332ab62d579cb2b088ff"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/neural_fe_gate_decisions_v6.json",
+      "old_blob": "e7efef2bfc31ed084c85793fb68193411b06fefb",
+      "current_blob": "e7efef2bfc31ed084c85793fb68193411b06fefb"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/neural_fe_gate_decisions_v7.json",
+      "old_blob": "83b78544807c28a0fc7627c2acb4f8c733b66b70",
+      "current_blob": "83b78544807c28a0fc7627c2acb4f8c733b66b70"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/neural_reference_audit.json",
+      "old_blob": "b972b0669c71175d1b32f1e06652e36038606569",
+      "current_blob": "b972b0669c71175d1b32f1e06652e36038606569"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/optimizer_stop_semantics_v8.json",
+      "old_blob": "a1aaa70a4cf2211e48fff0af25dea44aed636c90",
+      "current_blob": "a1aaa70a4cf2211e48fff0af25dea44aed636c90"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/oracle_complete_v2.json",
+      "old_blob": "76bb75544b8b833b577165a48059553a2be3e112",
+      "current_blob": "76bb75544b8b833b577165a48059553a2be3e112"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/p4_privacy_repair_v4.json",
+      "old_blob": "e9d692829135eaf47a63b8c9c2ce2c54ad2c8b07",
+      "current_blob": "e9d692829135eaf47a63b8c9c2ce2c54ad2c8b07"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/p4_witness_adapter_repair_v2.json",
+      "old_blob": "17592581ea97fbe2ad03f6c2032daf383551501c",
+      "current_blob": "17592581ea97fbe2ad03f6c2032daf383551501c"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/paired_workload_v17.json",
+      "old_blob": "adf17c48563f570d8353c506bde23d5107ba3961",
+      "current_blob": "adf17c48563f570d8353c506bde23d5107ba3961"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/pc_probes_v3.csv",
+      "old_blob": "bcddf2a495dcd539ec8e524c58048b0e26f3fd6f",
+      "current_blob": "bcddf2a495dcd539ec8e524c58048b0e26f3fd6f"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/plan_and_input_identity_v11.json",
+      "old_blob": "6083ceba6129d688ebc04ddca7ebc5bf383324cc",
+      "current_blob": "6083ceba6129d688ebc04ddca7ebc5bf383324cc"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/plan_and_input_identity_v12.json",
+      "old_blob": "79d32c9e472efef40dd89b4062ba092d5d35939b",
+      "current_blob": "79d32c9e472efef40dd89b4062ba092d5d35939b"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/plan_and_input_identity_v13.json",
+      "old_blob": "83a4c9ffe6df29d6502d7c02da1502cf94d3bc52",
+      "current_blob": "83a4c9ffe6df29d6502d7c02da1502cf94d3bc52"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/plan_and_input_identity_v14.json",
+      "old_blob": "0337c613b92ef210b8f06453faa000f03e737e6b",
+      "current_blob": "0337c613b92ef210b8f06453faa000f03e737e6b"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/plan_and_input_identity_v15.json",
+      "old_blob": "8f5a3eb16bc825125175685511c83ff94b63fbd0",
+      "current_blob": "8f5a3eb16bc825125175685511c83ff94b63fbd0"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/port_closure_checks_v10.json",
+      "old_blob": "f46c208728ae335a7cb04b3449b960e6266af5f1",
+      "current_blob": "f46c208728ae335a7cb04b3449b960e6266af5f1"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/port_error_components_v9.csv",
+      "old_blob": "8a78e776e4d34a1c46307feac3b72cc7da2c1120",
+      "current_blob": "8a78e776e4d34a1c46307feac3b72cc7da2c1120"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/post_checks_v4.json",
+      "old_blob": "9796ef6f1f366fc44b82fa979b870a312d573834",
+      "current_blob": "9796ef6f1f366fc44b82fa979b870a312d573834"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/post_checks_v5.json",
+      "old_blob": "c60a64692b1c59ffa2f3f211e9667692e4ac84c9",
+      "current_blob": "c60a64692b1c59ffa2f3f211e9667692e4ac84c9"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/post_checks_v6.json",
+      "old_blob": "70970333ab1c7128520297bca0a66ec914e3edb1",
+      "current_blob": "70970333ab1c7128520297bca0a66ec914e3edb1"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/post_thread_probe_v10.json",
+      "old_blob": "156aeac8031217b00cfe23584c24c325feeaef44",
+      "current_blob": "156aeac8031217b00cfe23584c24c325feeaef44"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/pre_run_checks_v4.json",
+      "old_blob": "f234ec022531b09ac96807008c7f6e1b54d2c84b",
+      "current_blob": "f234ec022531b09ac96807008c7f6e1b54d2c84b"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/pre_run_checks_v5.json",
+      "old_blob": "9684cca7cd412c9bd04b14792f7a97130bda0e86",
+      "current_blob": "9684cca7cd412c9bd04b14792f7a97130bda0e86"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/pre_run_checks_v6.json",
+      "old_blob": "00b62fd15a2b352123692aba486532f0afc86ff3",
+      "current_blob": "00b62fd15a2b352123692aba486532f0afc86ff3"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/precommit_static_v6.json",
+      "old_blob": "0821c40ef7e737142de1f6a35fda391798663288",
+      "current_blob": "0821c40ef7e737142de1f6a35fda391798663288"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/profile_points_v14.json",
+      "old_blob": "c9380df401feece2337b481d4f3d1fe52e086eb2",
+      "current_blob": "c9380df401feece2337b481d4f3d1fe52e086eb2"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/progress_journal_v10.jsonl",
+      "old_blob": "7a2848107d0e181a48d094487b51df9f32ce6402",
+      "current_blob": "7a2848107d0e181a48d094487b51df9f32ce6402"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/progress_journal_v13.jsonl",
+      "old_blob": "41d22201484dee48dc1ed5c23e9ceb5af5e0eb93",
+      "current_blob": "41d22201484dee48dc1ed5c23e9ceb5af5e0eb93"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/progress_journal_v14.jsonl",
+      "old_blob": "b3d4126d7784e60cfa87593a9ae589f423299a80",
+      "current_blob": "b3d4126d7784e60cfa87593a9ae589f423299a80"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/progress_journal_v15.jsonl",
+      "old_blob": "e9b4cdc56b5a381c1df85bea5d7cf4b30b013529",
+      "current_blob": "e9b4cdc56b5a381c1df85bea5d7cf4b30b013529"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/progress_journal_v16.jsonl",
+      "old_blob": "dcbecd35ff7d14e6d55e5fa44d4da745056abce1",
+      "current_blob": "dcbecd35ff7d14e6d55e5fa44d4da745056abce1"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/projected_operator_checks_v16.json",
+      "old_blob": "c8571b6bbac1c8de5b588f82a29b44d6a899046d",
+      "current_blob": "c8571b6bbac1c8de5b588f82a29b44d6a899046d"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/projected_operator_checks_v17.json",
+      "old_blob": "104d3f1bd887024b9195fd3c5ef98d3c3a8cb70c",
+      "current_blob": "104d3f1bd887024b9195fd3c5ef98d3c3a8cb70c"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/protected_history_v13.json",
+      "old_blob": "2f649cf388c8de1318dbbc3f0231217eb6c4edc7",
+      "current_blob": "2f649cf388c8de1318dbbc3f0231217eb6c4edc7"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/protected_history_v14.json",
+      "old_blob": "d4a2fbdcefd91b77d0fe06efe2e4bcecba33b7cb",
+      "current_blob": "d4a2fbdcefd91b77d0fe06efe2e4bcecba33b7cb"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/protected_history_v15.json",
+      "old_blob": "c8268708ff52919c904921d58e3127775852c04c",
+      "current_blob": "c8268708ff52919c904921d58e3127775852c04c"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/protected_history_v17.json",
+      "old_blob": "48ec560b7cb8b0db44a501b96fb1627bc4830d57",
+      "current_blob": "48ec560b7cb8b0db44a501b96fb1627bc4830d57"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/protected_history_v18.json",
+      "old_blob": "aff0dd450019d40a5b219c1865ae4ab0cbff22bb",
+      "current_blob": "aff0dd450019d40a5b219c1865ae4ab0cbff22bb"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/protected_history_v6.json",
+      "old_blob": "cc3168ac21d12611f21f516b5736800900420587",
+      "current_blob": "cc3168ac21d12611f21f516b5736800900420587"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/publication_attempt1.json",
+      "old_blob": "548106d3fd67f2f4004331a0965c6122d37326e8",
+      "current_blob": "548106d3fd67f2f4004331a0965c6122d37326e8"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/publication_checks.json",
+      "old_blob": "5d24c4ac940e9320da71642a2662ad7ce0f7e62f",
+      "current_blob": "5d24c4ac940e9320da71642a2662ad7ce0f7e62f"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v10.json",
+      "old_blob": "b440643681bd2b7d09d0db844420c4beb0985ae9",
+      "current_blob": "b440643681bd2b7d09d0db844420c4beb0985ae9"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v11.json",
+      "old_blob": "676ba723cbff21697b0f871b35b909f18f141667",
+      "current_blob": "676ba723cbff21697b0f871b35b909f18f141667"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v13.json",
+      "old_blob": "0e55fecfb66a881c8ba29ddf5a377133b656ac6e",
+      "current_blob": "0e55fecfb66a881c8ba29ddf5a377133b656ac6e"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v14.json",
+      "old_blob": "b3a54d7a17ab021e079ea667ea0e8f5a482805ba",
+      "current_blob": "b3a54d7a17ab021e079ea667ea0e8f5a482805ba"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v15.json",
+      "old_blob": "fcff1f4d38ad421784e0128ef5deba4fab8f5d29",
+      "current_blob": "fcff1f4d38ad421784e0128ef5deba4fab8f5d29"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v16.json",
+      "old_blob": "be422f5fe447ddbc174c26bec1caabc7cab996a3",
+      "current_blob": "be422f5fe447ddbc174c26bec1caabc7cab996a3"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v17.json",
+      "old_blob": "f784917a41a5f429dac5e04ef5e5f1c795930ca9",
+      "current_blob": "f784917a41a5f429dac5e04ef5e5f1c795930ca9"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v2.json",
+      "old_blob": "d44b384a8ef64a2e1a4d75babb464ac94d5046d2",
+      "current_blob": "d44b384a8ef64a2e1a4d75babb464ac94d5046d2"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v3.json",
+      "old_blob": "c2e884299ac12888b40c1e99733e53d67cf34f10",
+      "current_blob": "c2e884299ac12888b40c1e99733e53d67cf34f10"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v4.json",
+      "old_blob": "0eade117533c9c77c2a2772999c580843d1ac808",
+      "current_blob": "0eade117533c9c77c2a2772999c580843d1ac808"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v5.json",
+      "old_blob": "b703a6017e33943271dd21289091a6f64c0c68d9",
+      "current_blob": "b703a6017e33943271dd21289091a6f64c0c68d9"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v6.json",
+      "old_blob": "d67cb5c5c4d43627a1a927ed0129443eb90d5014",
+      "current_blob": "d67cb5c5c4d43627a1a927ed0129443eb90d5014"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v7.json",
+      "old_blob": "e0bfcbf0d423d8fcd16f1f75174cf7ae6f62cacd",
+      "current_blob": "e0bfcbf0d423d8fcd16f1f75174cf7ae6f62cacd"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v8.json",
+      "old_blob": "5c8893e8b1f8c5797b2234a54f1879b66897359e",
+      "current_blob": "5c8893e8b1f8c5797b2234a54f1879b66897359e"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/publication_checks_v9.json",
+      "old_blob": "3215e5ec754bab655cbcf611eb7c081e62e4f074",
+      "current_blob": "3215e5ec754bab655cbcf611eb7c081e62e4f074"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/publication_v18.json",
+      "old_blob": "19784bc6c5fcbbae899167b5d38d0f86f13e6c57",
+      "current_blob": "19784bc6c5fcbbae899167b5d38d0f86f13e6c57"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/pure_component_audit.json",
+      "old_blob": "e73132b9b7c72aa1a7ee9b4484e6dc164d6b959f",
+      "current_blob": "e73132b9b7c72aa1a7ee9b4484e6dc164d6b959f"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v10.json",
+      "old_blob": "434c23d4e5d42354c5d8764db115c80368cd58c8",
+      "current_blob": "434c23d4e5d42354c5d8764db115c80368cd58c8"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v11.json",
+      "old_blob": "80bf5c9d300ea2b29aa526c5e0df60f7a12cc064",
+      "current_blob": "80bf5c9d300ea2b29aa526c5e0df60f7a12cc064"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v12.json",
+      "old_blob": "95da6cf27767dbd7fb87c6ff483dc79125d54628",
+      "current_blob": "95da6cf27767dbd7fb87c6ff483dc79125d54628"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v13.json",
+      "old_blob": "3752f374a5485c2da94830186506122a1c6c9c28",
+      "current_blob": "3752f374a5485c2da94830186506122a1c6c9c28"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v14.json",
+      "old_blob": "e8250106825e9694f487b42c69f0daed0340f1a0",
+      "current_blob": "e8250106825e9694f487b42c69f0daed0340f1a0"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v15.json",
+      "old_blob": "03230ebe64027d32a66aea107d230a43de2b0097",
+      "current_blob": "03230ebe64027d32a66aea107d230a43de2b0097"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v16.json",
+      "old_blob": "feb6cac23f6768ac9594c74f8eba15c0bee13173",
+      "current_blob": "feb6cac23f6768ac9594c74f8eba15c0bee13173"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v17.json",
+      "old_blob": "8c1177eafbfec29621b442e2e25c40a2e5d1a805",
+      "current_blob": "8c1177eafbfec29621b442e2e25c40a2e5d1a805"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v18.json",
+      "old_blob": "84b0c3155f596e9ff1e077d515176bb2e8f38c70",
+      "current_blob": "84b0c3155f596e9ff1e077d515176bb2e8f38c70"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/quota_dispatch_v18.json",
+      "old_blob": "03093b4f1156921d725f1485f6505ae10d487f3a",
+      "current_blob": "03093b4f1156921d725f1485f6505ae10d487f3a"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/recurrence_gap_v17.csv",
+      "old_blob": "9a86ad08a9e1a535828a14a83f69fa574866e537",
+      "current_blob": "9a86ad08a9e1a535828a14a83f69fa574866e537"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/recurrence_gap_v18.csv",
+      "old_blob": "c80192c34d487f828ab42d1ec7653b22e7848fd6",
+      "current_blob": "c80192c34d487f828ab42d1ec7653b22e7848fd6"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/reference_audit_v15.json",
+      "old_blob": "2bf39ec508072d72e7b0b67999aa593c9c64c61b",
+      "current_blob": "2bf39ec508072d72e7b0b67999aa593c9c64c61b"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/reference_audit_v16.json",
+      "old_blob": "4a5c1fa507045335d36391c8efcb06622bd0543d",
+      "current_blob": "4a5c1fa507045335d36391c8efcb06622bd0543d"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/region_error_integrals_v9.csv",
+      "old_blob": "e6bc33ccd746153e728605a2cad5dded9be47ccc",
+      "current_blob": "e6bc33ccd746153e728605a2cad5dded9be47ccc"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/registry_contract_baseline_v2.json",
+      "old_blob": "efd81b7a6fe880ed0f7172e6f0fb27bd6a8bd5da",
+      "current_blob": "efd81b7a6fe880ed0f7172e6f0fb27bd6a8bd5da"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/registry_contract_baseline_v3.json",
+      "old_blob": "4073f8f4b2fb9424f53af26813fb25f580a94931",
+      "current_blob": "4073f8f4b2fb9424f53af26813fb25f580a94931"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/registry_contract_baseline_v4.json",
+      "old_blob": "5eab31771cab9dd0a6b8e3b0237bec6db6363fb6",
+      "current_blob": "5eab31771cab9dd0a6b8e3b0237bec6db6363fb6"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/registry_contract_baseline_v5.json",
+      "old_blob": "081d86846bcda028f5b81a627ad08bc3ba398fc0",
+      "current_blob": "081d86846bcda028f5b81a627ad08bc3ba398fc0"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/registry_contract_baseline_v6.json",
+      "old_blob": "0f8ea4231ba0a234c967b3b2473e410a190ea891",
+      "current_blob": "0f8ea4231ba0a234c967b3b2473e410a190ea891"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/repair_journal_v17.json",
+      "old_blob": "7b8cdd4f99ae973cb61fc0bcb4cd75b42ada3e8b",
+      "current_blob": "7b8cdd4f99ae973cb61fc0bcb4cd75b42ada3e8b"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/repair_journal_v18.json",
+      "old_blob": "f91a6e9dff6d148bd6920294f6002819a43a9215",
+      "current_blob": "f91a6e9dff6d148bd6920294f6002819a43a9215"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/representation_diagnostic_v10.json",
+      "old_blob": "f04578407da41420b5b2a96ef56d5008cd480a78",
+      "current_blob": "f04578407da41420b5b2a96ef56d5008cd480a78"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/representation_projection_diagnostic_v15.json",
+      "old_blob": "2705ccc0f3d279be67383d28366c3e060fc760bc",
+      "current_blob": "2705ccc0f3d279be67383d28366c3e060fc760bc"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/residual_field_cause_v18.json",
+      "old_blob": "60cf84224349e9cc77765efd3f0eb99d36cedf8b",
+      "current_blob": "60cf84224349e9cc77765efd3f0eb99d36cedf8b"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v10.json",
+      "old_blob": "a97b870a537cff789072e775eb2f27c2a6155ce5",
+      "current_blob": "a97b870a537cff789072e775eb2f27c2a6155ce5"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v11.json",
+      "old_blob": "e1c4c618accc648b60f1fb06f92918a67cd88d50",
+      "current_blob": "e1c4c618accc648b60f1fb06f92918a67cd88d50"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v12.json",
+      "old_blob": "2a10b012fa92b9ebee5e988b7c9413f81ec41d72",
+      "current_blob": "2a10b012fa92b9ebee5e988b7c9413f81ec41d72"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v13.json",
+      "old_blob": "d04523550c2b0557ba88198a7d8ad45c2200ad26",
+      "current_blob": "d04523550c2b0557ba88198a7d8ad45c2200ad26"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v14.json",
+      "old_blob": "7cdb7a8f97716f195435e9bbd24f57c2bd4a47e1",
+      "current_blob": "7cdb7a8f97716f195435e9bbd24f57c2bd4a47e1"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v15.json",
+      "old_blob": "f5fcd8729f544aeb8144ad1bde55a00155b52d6e",
+      "current_blob": "f5fcd8729f544aeb8144ad1bde55a00155b52d6e"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v16.json",
+      "old_blob": "a3d2cbf39f4f3c8049ce74e49da1c52890c86800",
+      "current_blob": "a3d2cbf39f4f3c8049ce74e49da1c52890c86800"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v17.json",
+      "old_blob": "039d778ff1c3a6c539278188ba58e6a6cdb6e164",
+      "current_blob": "039d778ff1c3a6c539278188ba58e6a6cdb6e164"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v18.json",
+      "old_blob": "5b19c863bf5be424a88f7b1771b3f1f611870b58",
+      "current_blob": "5b19c863bf5be424a88f7b1771b3f1f611870b58"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v7.json",
+      "old_blob": "85bf8305e26762c7fbcf4988786baf48ad6aceb2",
+      "current_blob": "85bf8305e26762c7fbcf4988786baf48ad6aceb2"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v8.json",
+      "old_blob": "94e1d0e9d72c5ed7d5ab9971aa78e283abbbc130",
+      "current_blob": "94e1d0e9d72c5ed7d5ab9971aa78e283abbbc130"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v9.json",
+      "old_blob": "1c53460e3a77e94eeec095868ccb6c6fefd71937",
+      "current_blob": "1c53460e3a77e94eeec095868ccb6c6fefd71937"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_lifecycle_v18.json",
+      "old_blob": "285c0a285334a7f9158358108c39cab6f17cfcaf",
+      "current_blob": "285c0a285334a7f9158358108c39cab6f17cfcaf"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_observations_v10.json",
+      "old_blob": "a0e1042b2c25c07ff7ee1c3d79d1c77cc3ba6ce4",
+      "current_blob": "a0e1042b2c25c07ff7ee1c3d79d1c77cc3ba6ce4"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_observations_v7.json",
+      "old_blob": "7b5f0864780a0b86d0f6a95bb6d9043348a2842d",
+      "current_blob": "7b5f0864780a0b86d0f6a95bb6d9043348a2842d"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_reentry_journal_v17.json",
+      "old_blob": "190e46e2b79eb4d1e91dd05e0ecb7580e48c9844",
+      "current_blob": "190e46e2b79eb4d1e91dd05e0ecb7580e48c9844"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_reentry_journal_v18.json",
+      "old_blob": "a9edefd4e3ae2702b9340b4bf35fcd5c51af0bce",
+      "current_blob": "a9edefd4e3ae2702b9340b4bf35fcd5c51af0bce"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resume_qualification_v17.json",
+      "old_blob": "6c1fe86c054bd4f8a2bf68ffcc783ba1ee604375",
+      "current_blob": "6c1fe86c054bd4f8a2bf68ffcc783ba1ee604375"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/reused_diagnostics_v3.json",
+      "old_blob": "211f394b4caa8bf9f30295b5fa17130d27fdd89c",
+      "current_blob": "211f394b4caa8bf9f30295b5fa17130d27fdd89c"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/review_render_check_v10.json",
+      "old_blob": "3f2d84d40b770398c8b55b16915046744d195706",
+      "current_blob": "3f2d84d40b770398c8b55b16915046744d195706"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/review_render_check_v11.json",
+      "old_blob": "a306bdd78edccd3cffb7ccbbaff919756e0b74e7",
+      "current_blob": "a306bdd78edccd3cffb7ccbbaff919756e0b74e7"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/review_render_check_v12.json",
+      "old_blob": "92581186e83159a18a3188c063dc05a22e6bb8dd",
+      "current_blob": "92581186e83159a18a3188c063dc05a22e6bb8dd"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/review_render_check_v13.json",
+      "old_blob": "5486bfd147bc7c938adbbe689e78702a03efc9ee",
+      "current_blob": "5486bfd147bc7c938adbbe689e78702a03efc9ee"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/review_render_check_v4.json",
+      "old_blob": "5763e166019022537105d462a398dc2e00beb4f1",
+      "current_blob": "5763e166019022537105d462a398dc2e00beb4f1"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/review_render_check_v5.json",
+      "old_blob": "39bf5796e997f8bcb58170b2e857c45a9776a2de",
+      "current_blob": "39bf5796e997f8bcb58170b2e857c45a9776a2de"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/review_render_check_v6.json",
+      "old_blob": "1ad96a1cdae1036eab0b48563b8da53ca371f301",
+      "current_blob": "1ad96a1cdae1036eab0b48563b8da53ca371f301"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/review_render_check_v7.json",
+      "old_blob": "20b0bb3c72aef424f735caecf4b6196fe68fb092",
+      "current_blob": "20b0bb3c72aef424f735caecf4b6196fe68fb092"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/review_render_check_v8.json",
+      "old_blob": "debc321dcaa3bb23462728b0b919b1f300a33249",
+      "current_blob": "debc321dcaa3bb23462728b0b919b1f300a33249"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/review_render_check_v9.json",
+      "old_blob": "0d93350eb4d00b1b13c478e472ef924ec111f12a",
+      "current_blob": "0d93350eb4d00b1b13c478e472ef924ec111f12a"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/roundoff_decomposition_v12.json",
+      "old_blob": "56428b627696b9f634ea3f9d5367ac228173171e",
+      "current_blob": "56428b627696b9f634ea3f9d5367ac228173171e"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/run_index.json",
+      "old_blob": "49eea7e2baf7a13d1ea1e708af367679c637b409",
+      "current_blob": "49eea7e2baf7a13d1ea1e708af367679c637b409"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v10.json",
+      "old_blob": "bab3e3a50a41195e8eb4ad5b40687a90885c110b",
+      "current_blob": "bab3e3a50a41195e8eb4ad5b40687a90885c110b"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v11.json",
+      "old_blob": "09177a93487f3ec7ebfa51906e80fa11c82e958d",
+      "current_blob": "09177a93487f3ec7ebfa51906e80fa11c82e958d"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v12.json",
+      "old_blob": "a874e4ba52d4b7a7e2599b73459a9e7841b39261",
+      "current_blob": "a874e4ba52d4b7a7e2599b73459a9e7841b39261"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v13.json",
+      "old_blob": "31c3aab499527f76bf40207070f6cfe5e4da4ffe",
+      "current_blob": "31c3aab499527f76bf40207070f6cfe5e4da4ffe"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v14.json",
+      "old_blob": "857918bc3bd6205a04d43062298a1a47b7727b72",
+      "current_blob": "857918bc3bd6205a04d43062298a1a47b7727b72"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v15.json",
+      "old_blob": "d844eab15c0c8f6f7b64233659a0fdcbc5a0e843",
+      "current_blob": "d844eab15c0c8f6f7b64233659a0fdcbc5a0e843"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v16.json",
+      "old_blob": "6076aac043acf6929bba85cab823d4b315e83162",
+      "current_blob": "6076aac043acf6929bba85cab823d4b315e83162"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v17.json",
+      "old_blob": "ee645563de6a32b47a8847c8d2d55dcdc8b8f8d6",
+      "current_blob": "ee645563de6a32b47a8847c8d2d55dcdc8b8f8d6"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v18.json",
+      "old_blob": "f6a34d3f1febd6f6bc73b7bb016a149a4f7b9f0d",
+      "current_blob": "f6a34d3f1febd6f6bc73b7bb016a149a4f7b9f0d"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v2.json",
+      "old_blob": "4ae769606b36b264446ed364f7f42a047e2fcbe1",
+      "current_blob": "4ae769606b36b264446ed364f7f42a047e2fcbe1"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v3.json",
+      "old_blob": "80263bec17701a5853c987e12dac107c8bd654e9",
+      "current_blob": "80263bec17701a5853c987e12dac107c8bd654e9"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v4.json",
+      "old_blob": "a10aa0f47a14645cb509c30f629f726bd634387f",
+      "current_blob": "a10aa0f47a14645cb509c30f629f726bd634387f"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v5.json",
+      "old_blob": "4d566ebbbc394243533c756a1d5cb9e0e42407d3",
+      "current_blob": "4d566ebbbc394243533c756a1d5cb9e0e42407d3"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v6.json",
+      "old_blob": "6ae2988c3a4b450a078cd6e0ba1a3ed4e70af999",
+      "current_blob": "6ae2988c3a4b450a078cd6e0ba1a3ed4e70af999"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v7.json",
+      "old_blob": "231621e758341b514ca7c22a05ebc87af3c17d24",
+      "current_blob": "231621e758341b514ca7c22a05ebc87af3c17d24"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v8.json",
+      "old_blob": "2877ae8573b4d42fde7f9dce343bed062b646d16",
+      "current_blob": "2877ae8573b4d42fde7f9dce343bed062b646d16"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v9.json",
+      "old_blob": "af21178b5ee8d96e1831fee52a7e0e6f70b0f919",
+      "current_blob": "af21178b5ee8d96e1831fee52a7e0e6f70b0f919"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/same_residual_actions_v5.csv",
+      "old_blob": "2f182bf187b1d262098f72354de4fbcb74208da9",
+      "current_blob": "2f182bf187b1d262098f72354de4fbcb74208da9"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/same_work_comparison_v18.json",
+      "old_blob": "114f05d9113739c3e61f95317747a47511f4c4c4",
+      "current_blob": "114f05d9113739c3e61f95317747a47511f4c4c4"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/same_work_curves_v18.csv",
+      "old_blob": "2adcc7e9bbe013d03f00f36fd5e37e67a68d1bf8",
+      "current_blob": "2adcc7e9bbe013d03f00f36fd5e37e67a68d1bf8"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/scaled_blind_validation_v8.json",
+      "old_blob": "c24f9456a92b6cd3d0dbc4240ed1980270cd86fe",
+      "current_blob": "c24f9456a92b6cd3d0dbc4240ed1980270cd86fe"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/scaled_lsqr_comparison_v8.csv",
+      "old_blob": "35efbcfb98ff8c3fb034eb7705548df834d158b2",
+      "current_blob": "35efbcfb98ff8c3fb034eb7705548df834d158b2"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/schema_lint_baseline_v3.json",
+      "old_blob": "60c3d00114c25820c7750886b37f0a307c58e72a",
+      "current_blob": "60c3d00114c25820c7750886b37f0a307c58e72a"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/selected_fields_v13.json",
+      "old_blob": "3f07352ce85f92d5317fdfc1f888794604e080ed",
+      "current_blob": "3f07352ce85f92d5317fdfc1f888794604e080ed"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/selected_fields_v14.json",
+      "old_blob": "006804764fb99f67e3e7d3193973d3813236392e",
+      "current_blob": "006804764fb99f67e3e7d3193973d3813236392e"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/selected_fields_v15.json",
+      "old_blob": "3ebaffe03424ef0a9007bc67d055070bff3383e4",
+      "current_blob": "3ebaffe03424ef0a9007bc67d055070bff3383e4"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/selective_merge_manifest_v18.json",
+      "old_blob": "a220a14a262f1953bab317f945179a546514a840",
+      "current_blob": "a220a14a262f1953bab317f945179a546514a840"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/self_cleanup_v18.json",
+      "old_blob": "9ad9cd3ab1504ac2add3305377b61f222a89f909",
+      "current_blob": "9ad9cd3ab1504ac2add3305377b61f222a89f909"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/shared_preimplementation_checks_v2.json",
+      "old_blob": "ce18dcc223c8f1d1dc9b3c74d95d364451eae401",
+      "current_blob": "ce18dcc223c8f1d1dc9b3c74d95d364451eae401"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/shared_workstation_snapshot.json",
+      "old_blob": "3d794cfe2e0a2f32d409c05313e54e5b763fafa4",
+      "current_blob": "3d794cfe2e0a2f32d409c05313e54e5b763fafa4"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/shared_workstation_snapshot_v2.json",
+      "old_blob": "a97941caaeee7b6781b17864e778f6ec58051247",
+      "current_blob": "a97941caaeee7b6781b17864e778f6ec58051247"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/space_floor_v16.json",
+      "old_blob": "eaa566dbb6cab8a0b2a6266825c871debc530f5f",
+      "current_blob": "eaa566dbb6cab8a0b2a6266825c871debc530f5f"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/stable_head_checks_v11.json",
+      "old_blob": "0c7798834277331bfb508cf7625f73c52466a09f",
+      "current_blob": "0c7798834277331bfb508cf7625f73c52466a09f"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/static_checks.json",
+      "old_blob": "33ecab0ee6a16e5f47de364b57131f9e804a7d8c",
+      "current_blob": "33ecab0ee6a16e5f47de364b57131f9e804a7d8c"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_attempt1.json",
+      "old_blob": "a4c45b3e979babfd92405b97b1c19cb25b54da44",
+      "current_blob": "a4c45b3e979babfd92405b97b1c19cb25b54da44"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v10.json",
+      "old_blob": "4602df06426f472dd9b82563876334d83d2533c9",
+      "current_blob": "4602df06426f472dd9b82563876334d83d2533c9"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v11.json",
+      "old_blob": "fe5c22b691a9914c10087e0767082463c6205e94",
+      "current_blob": "fe5c22b691a9914c10087e0767082463c6205e94"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v12.json",
+      "old_blob": "05d736477dd08c1fac63364be5793e08a46b2b60",
+      "current_blob": "05d736477dd08c1fac63364be5793e08a46b2b60"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v13.json",
+      "old_blob": "e7ef42b4d1516f9294978a312be2b2abcf4d3869",
+      "current_blob": "e7ef42b4d1516f9294978a312be2b2abcf4d3869"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v14.json",
+      "old_blob": "8182cc155bc4f45dda57df74448ca866b4853511",
+      "current_blob": "8182cc155bc4f45dda57df74448ca866b4853511"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v15.json",
+      "old_blob": "95c8cc088fa5e557249c0b5cac2549c90f6f0cdc",
+      "current_blob": "95c8cc088fa5e557249c0b5cac2549c90f6f0cdc"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v16.json",
+      "old_blob": "e842e3349d1658294e40897d13467b632ba7b3ef",
+      "current_blob": "e842e3349d1658294e40897d13467b632ba7b3ef"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v17.json",
+      "old_blob": "3e9a0cf4ff8aa240dbaec92c296d21372845ea35",
+      "current_blob": "3e9a0cf4ff8aa240dbaec92c296d21372845ea35"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v17_initial.json",
+      "old_blob": "850f5b4206e23f67b9a565d5094b701b52933004",
+      "current_blob": "850f5b4206e23f67b9a565d5094b701b52933004"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v18.json",
+      "old_blob": "81475f92f6801472da3f06c74d08c931924d099d",
+      "current_blob": "81475f92f6801472da3f06c74d08c931924d099d"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v2.json",
+      "old_blob": "f9a38b44544b4583c0e206bafc77ffe389d42c88",
+      "current_blob": "f9a38b44544b4583c0e206bafc77ffe389d42c88"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v3.json",
+      "old_blob": "751c2a003b07551ed856d75769935aa087a15891",
+      "current_blob": "751c2a003b07551ed856d75769935aa087a15891"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v4.json",
+      "old_blob": "8249924bda595e33c8bcdaf1ff91250ad1dc3f63",
+      "current_blob": "8249924bda595e33c8bcdaf1ff91250ad1dc3f63"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v5.json",
+      "old_blob": "e5cdd0186044f3116c28febc7c49244deff3bb9f",
+      "current_blob": "e5cdd0186044f3116c28febc7c49244deff3bb9f"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v6.json",
+      "old_blob": "405081ebb57100002548b43f04de3bde068c6449",
+      "current_blob": "405081ebb57100002548b43f04de3bde068c6449"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v7.json",
+      "old_blob": "4ef9644ac91d880f9c9418b82c4b25a3e242a837",
+      "current_blob": "4ef9644ac91d880f9c9418b82c4b25a3e242a837"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v8.json",
+      "old_blob": "5dba8d29b1a0c880730e6b0fe2011f18d4e9596c",
+      "current_blob": "5dba8d29b1a0c880730e6b0fe2011f18d4e9596c"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v9.json",
+      "old_blob": "55e3e02a05380e4225cac7c95291a50383b1529f",
+      "current_blob": "55e3e02a05380e4225cac7c95291a50383b1529f"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv",
+      "old_blob": "dd301bb4aa2f2b3e39ede18c1d7a884661c20fa6",
+      "current_blob": "dd301bb4aa2f2b3e39ede18c1d7a884661c20fa6"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/structure_complete_v3.json",
+      "old_blob": "aa587fd88a1f0c85234402df01c1c9e29879e248",
+      "current_blob": "aa587fd88a1f0c85234402df01c1c9e29879e248"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/tangent_identity_checks_v13.json",
+      "old_blob": "ade063668f8b49bc0b9ac51374d02a056106896e",
+      "current_blob": "ade063668f8b49bc0b9ac51374d02a056106896e"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/target_48h_budget_v6.json",
+      "old_blob": "a614a50d6405746394c200b45af345a5bfd230ad",
+      "current_blob": "a614a50d6405746394c200b45af345a5bfd230ad"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/target_48h_budget_v7.json",
+      "old_blob": "89bb81103c55f6e1e10a99880b8e29cb05672548",
+      "current_blob": "89bb81103c55f6e1e10a99880b8e29cb05672548"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/teacher_complete_v2.json",
+      "old_blob": "7a0965167b80e657a86be1cb1dcaf9ee6f6bb9e3",
+      "current_blob": "7a0965167b80e657a86be1cb1dcaf9ee6f6bb9e3"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/teacher_exception_v5.json",
+      "old_blob": "da7fb0150350ee6f8e8f2b26a249e2e645d3e19b",
+      "current_blob": "da7fb0150350ee6f8e8f2b26a249e2e645d3e19b"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/test_records_v18.json",
+      "old_blob": "42359123dadc85f4850de2b67c49e7a2ca18b106",
+      "current_blob": "42359123dadc85f4850de2b67c49e7a2ca18b106"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/training_complete_v2.json",
+      "old_blob": "5616ac9dd49e351f4f0c118a7ade35e0ce30b0bf",
+      "current_blob": "5616ac9dd49e351f4f0c118a7ade35e0ce30b0bf"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/training_snapshot_manifest_v4.json",
+      "old_blob": "26b1e706125587828636ae93c5c33548e3030d78",
+      "current_blob": "26b1e706125587828636ae93c5c33548e3030d78"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/two_level_comparison_v4.csv",
+      "old_blob": "a7fe96cde1614294cdcc3370cdf8af7e4fbaffae",
+      "current_blob": "a7fe96cde1614294cdcc3370cdf8af7e4fbaffae"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/two_level_design_v4.json",
+      "old_blob": "dbc1f5a4e572782d89439b3b922d7987d9000096",
+      "current_blob": "dbc1f5a4e572782d89439b3b922d7987d9000096"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/two_level_history_v4.csv",
+      "old_blob": "0cc5edce220d085e5ff7be0d2231dfe7643d956b",
+      "current_blob": "0cc5edce220d085e5ff7be0d2231dfe7643d956b"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/unconsumed_test_plan_v3.json",
+      "old_blob": "d151b03526bf389e39917709e3a635c6be6bfcb1",
+      "current_blob": "d151b03526bf389e39917709e3a635c6be6bfcb1"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/union_checks_v15.json",
+      "old_blob": "1e560407defd237eeb2edafaf03fbaf53b2c1272",
+      "current_blob": "1e560407defd237eeb2edafaf03fbaf53b2c1272"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/varpro_gradient_checks_v11.json",
+      "old_blob": "2015b17ce559ef428183a04af2068ca2c770a5b9",
+      "current_blob": "2015b17ce559ef428183a04af2068ca2c770a5b9"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/varpro_progress_v11.jsonl",
+      "old_blob": "aef2b645b3e040eabeab5c7f5fbc6c60d6d31d7b",
+      "current_blob": "aef2b645b3e040eabeab5c7f5fbc6c60d6d31d7b"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/volume_balance_diagnostic_v10.json",
+      "old_blob": "f88a38bdac033cd9c1a005b36e030cd7e042b850",
+      "current_blob": "f88a38bdac033cd9c1a005b36e030cd7e042b850"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/watchdog_test_evidence_v3.json",
+      "old_blob": "d93460c6e626c74d4d173b5c9f39ad63eb0178d5",
+      "current_blob": "d93460c6e626c74d4d173b5c9f39ad63eb0178d5"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/residual_diagnosis_v3.md",
+      "old_blob": "613454aca4fe0da5bad98131a0001e7df8875a13",
+      "current_blob": "613454aca4fe0da5bad98131a0001e7df8875a13"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/resumable_full_trace_campaign_v17.md",
+      "old_blob": "cb0595cffa9e08b9e5677498fce5302f652237d3",
+      "current_blob": "cb0595cffa9e08b9e5677498fce5302f652237d3"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/scaling_and_execution_v8.md",
+      "old_blob": "3f2dc1311e0836a303d4fe62cd7b3b0ce5ff5357",
+      "current_blob": "3f2dc1311e0836a303d4fe62cd7b3b0ce5ff5357"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/shared_authorization_v2.md",
+      "old_blob": "110fe5b74c43f844f2f53c939d7ec58a21c52c54",
+      "current_blob": "110fe5b74c43f844f2f53c939d7ec58a21c52c54"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/shared_numerical_design_v2.md",
+      "old_blob": "c71428ed58a57006e106fb66a955ed3b57e781d4",
+      "current_blob": "c71428ed58a57006e106fb66a955ed3b57e781d4"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/stable_head_varpro_v11.md",
+      "old_blob": "8fc4007e58f84fbeccc8a996d74154a23e9b7e58",
+      "current_blob": "8fc4007e58f84fbeccc8a996d74154a23e9b7e58"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/tangent_scale_head_compensation_v13.md",
+      "old_blob": "88467214ce905c90e82e46116e94e4c96bbda6df",
+      "current_blob": "88467214ce905c90e82e46116e94e4c96bbda6df"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/two_level_global_error_v4.md",
+      "old_blob": "52dcdd9c14ebcc761dcd5ef9aa209a99f7b6cf1d",
+      "current_blob": "52dcdd9c14ebcc761dcd5ef9aa209a99f7b6cf1d"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/v6_preregistration.md",
+      "old_blob": "5065ccf86d577c0bee23e6aae6b257fc40354a6c",
+      "current_blob": "5065ccf86d577c0bee23e6aae6b257fc40354a6c"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v1.md",
+      "old_blob": "5467f5a01dfb36655a1c7aecd1fe7c8642567978",
+      "current_blob": "5467f5a01dfb36655a1c7aecd1fe7c8642567978"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v10.md",
+      "old_blob": "0c922f656cddf29b0411fae6b1e8116a5876c4b3",
+      "current_blob": "0c922f656cddf29b0411fae6b1e8116a5876c4b3"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v11.md",
+      "old_blob": "55273dcdb4e612099b79e56af16c562bb3d284a1",
+      "current_blob": "55273dcdb4e612099b79e56af16c562bb3d284a1"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v12.md",
+      "old_blob": "595b854cde0cd66396c023cf7b1a6470c293f72f",
+      "current_blob": "595b854cde0cd66396c023cf7b1a6470c293f72f"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v13.md",
+      "old_blob": "049f927ba544736aab025e2a407daa42e7d6bfb6",
+      "current_blob": "049f927ba544736aab025e2a407daa42e7d6bfb6"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v14.md",
+      "old_blob": "df63b8d73e8c14467ec183a6dbbf11eefcda0fae",
+      "current_blob": "df63b8d73e8c14467ec183a6dbbf11eefcda0fae"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v15.md",
+      "old_blob": "9219bc5f13b740f0b0002dd4412b321d9cf5da91",
+      "current_blob": "9219bc5f13b740f0b0002dd4412b321d9cf5da91"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v16.md",
+      "old_blob": "2e78b09c7f21fa1e4830c9677855e8a076b005a6",
+      "current_blob": "2e78b09c7f21fa1e4830c9677855e8a076b005a6"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v17.md",
+      "old_blob": "8d06f524b26c75b2594ef166d58fdc5e327c6569",
+      "current_blob": "8d06f524b26c75b2594ef166d58fdc5e327c6569"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v18.md",
+      "old_blob": "6ace057c39fb06d6266300220d13e0a96713e9a7",
+      "current_blob": "6ace057c39fb06d6266300220d13e0a96713e9a7"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v2.md",
+      "old_blob": "81397e5bf0334a4b36981dca59043bc05e5be926",
+      "current_blob": "81397e5bf0334a4b36981dca59043bc05e5be926"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v3.md",
+      "old_blob": "e52b5bb602e1054a74ea492cdc200ce0245b3868",
+      "current_blob": "e52b5bb602e1054a74ea492cdc200ce0245b3868"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v4.md",
+      "old_blob": "32e8eae555de0a1842da5777ba7af841f05507ea",
+      "current_blob": "32e8eae555de0a1842da5777ba7af841f05507ea"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v5.md",
+      "old_blob": "f6dedcf9109e461050c4865b632a65e979bba897",
+      "current_blob": "f6dedcf9109e461050c4865b632a65e979bba897"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v6.md",
+      "old_blob": "860994b019581ab5b059f9ac0048f3a752941194",
+      "current_blob": "860994b019581ab5b059f9ac0048f3a752941194"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v7.md",
+      "old_blob": "2ccd0105b8c6e059365ac2dba669e501f68d46da",
+      "current_blob": "2ccd0105b8c6e059365ac2dba669e501f68d46da"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v8.md",
+      "old_blob": "8dcc42f3e90c004d163aa0bfc9529e5c8aa99015",
+      "current_blob": "8dcc42f3e90c004d163aa0bfc9529e5c8aa99015"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v9.md",
+      "old_blob": "08bca218b885d8d588027636ef3eeb654d5976ec",
+      "current_blob": "08bca218b885d8d588027636ef3eeb654d5976ec"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v1.md",
+      "old_blob": "784978ac7f313a7e99bb049d489391fbd02d5bf7",
+      "current_blob": "784978ac7f313a7e99bb049d489391fbd02d5bf7"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v10.md",
+      "old_blob": "ef482e3d238e1963d0921e0b662f72191be48a2e",
+      "current_blob": "ef482e3d238e1963d0921e0b662f72191be48a2e"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v11.md",
+      "old_blob": "9ebff13f89f75b06906acc32b2298200e64add5a",
+      "current_blob": "9ebff13f89f75b06906acc32b2298200e64add5a"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v12.md",
+      "old_blob": "5a311e8eb6f79f26cd304f055ddbcd669e251d85",
+      "current_blob": "5a311e8eb6f79f26cd304f055ddbcd669e251d85"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v13.md",
+      "old_blob": "52e5c4d5fd16fa3cce873e3a801831a543d5ef6c",
+      "current_blob": "52e5c4d5fd16fa3cce873e3a801831a543d5ef6c"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v14.md",
+      "old_blob": "f1039d2aae1a98545ac156db5557ed200d86b2a7",
+      "current_blob": "f1039d2aae1a98545ac156db5557ed200d86b2a7"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v15.md",
+      "old_blob": "805a6d98deac4d123019c42ad60395365d29ce68",
+      "current_blob": "805a6d98deac4d123019c42ad60395365d29ce68"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v16.md",
+      "old_blob": "64c5d188a73e8bca2f32d353bf5f5c26272d7912",
+      "current_blob": "64c5d188a73e8bca2f32d353bf5f5c26272d7912"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v2.md",
+      "old_blob": "0b06cd36ed962c5473d79d7deb478fa57b95ac5f",
+      "current_blob": "0b06cd36ed962c5473d79d7deb478fa57b95ac5f"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v3.md",
+      "old_blob": "3ef2cfdae3dad55104349a166b273dc0f263b02f",
+      "current_blob": "3ef2cfdae3dad55104349a166b273dc0f263b02f"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v4.md",
+      "old_blob": "a0e0c106970eab91271d61981810544146c4a32f",
+      "current_blob": "a0e0c106970eab91271d61981810544146c4a32f"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v5.md",
+      "old_blob": "93a74d94bf42470bde241a3fc48d3f119a7f0325",
+      "current_blob": "93a74d94bf42470bde241a3fc48d3f119a7f0325"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v6.md",
+      "old_blob": "f0276897e08a6e533985f0b08b93411e749ce41a",
+      "current_blob": "f0276897e08a6e533985f0b08b93411e749ce41a"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v7.md",
+      "old_blob": "b6747df82257705fdf2d41c55f8d5d78d381af14",
+      "current_blob": "b6747df82257705fdf2d41c55f8d5d78d381af14"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v8.md",
+      "old_blob": "9dd4a7225d60aa17084ce193c3463b4edc7be386",
+      "current_blob": "9dd4a7225d60aa17084ce193c3463b4edc7be386"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v9.md",
+      "old_blob": "d459345875505596f13b3c45fdaffcfb3a9beb6c",
+      "current_blob": "d459345875505596f13b3c45fdaffcfb3a9beb6c"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/task.md",
+      "old_blob": "05e1dae1feb15ec64c7e5f94fd524bfffd3a33b6",
+      "current_blob": "05e1dae1feb15ec64c7e5f94fd524bfffd3a33b6"
+    }
+  ]
+}

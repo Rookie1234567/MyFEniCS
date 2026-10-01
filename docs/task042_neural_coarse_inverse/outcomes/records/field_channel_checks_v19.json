@@ -1,0 +1,595 @@
+{
+  "rows": {
+    "V18-R-GPOLY": {
+      "audit": {
+        "schur_relative": 0.000146307718164725,
+        "augmented_relative": 5.673868637958896e-05,
+        "native_relative": 5.673868637958899e-05,
+        "original_total_augmented_relative": 1.968828935476335e-05,
+        "port_absolute": 2.860980902949506e-17,
+        "port_full_rhs_relative": 1.3419476725599193e-16,
+        "port_operation_relative": 4.932492530554438e-17,
+        "recovery_relative": 4.677870385359784e-13,
+        "schur_original_identity_operation_relative": 5.279632240089611e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.631455874862165,
+        "port_unknown_norm": 0.1974431682966652,
+        "strict_pass": false,
+        "independent_DOLFINx_total_native_relative": 1.9688289359536446e-05
+      },
+      "fields": {
+        "full_FE_L2_relative": 8.455291441893044e-06,
+        "full_FE_scaled_curl_relative": 8.35283082958234e-06,
+        "scattered_FE_L2_relative": 8.079990121933472e-05,
+        "scattered_scaled_curl_relative": 7.981925902176258e-05,
+        "selected_E_relative": 9.403609812820516e-06,
+        "selected_H_relative": 7.165863106870159e-06
+      },
+      "comparison": {
+        "status": "NOT_QUALIFIED",
+        "equation_audit": {
+          "schur_relative": 0.000146307718164725,
+          "augmented_relative": 5.673868637958896e-05,
+          "native_relative": 5.673868637958899e-05,
+          "original_total_augmented_relative": 1.968828935476335e-05,
+          "port_absolute": 2.860980902949506e-17,
+          "port_full_rhs_relative": 1.3419476725599193e-16,
+          "port_operation_relative": 4.932492530554438e-17,
+          "recovery_relative": 4.677870385359784e-13,
+          "schur_original_identity_operation_relative": 5.279632240089611e-13,
+          "slave_storage_max": 0.0,
+          "field_norm": 1.631455874862165,
+          "port_unknown_norm": 0.1974431682966652,
+          "strict_pass": false,
+          "independent_DOLFINx_total_native_relative": 1.9688289359536446e-05
+        },
+        "full_FE_L2_relative": 8.455291441893044e-06,
+        "full_FE_scaled_curl_relative": 8.35283082958234e-06,
+        "selected_E_relative": 9.403609812820516e-06,
+        "selected_H_relative": 7.165863106870159e-06,
+        "scattered_FE_L2_relative": 8.079990121933472e-05,
+        "ordered_complex_ports_relative": 3.897427200456573e-06,
+        "power_absolute_differences": {
+          "R_total": 4.108156644033745e-08,
+          "T_total": 1.5883839297181623e-06,
+          "A_balance": 1.6294654962001331e-06,
+          "A_volume": 8.124296012844423e-09
+        },
+        "max_channel_power_difference": 1.5880640292786907e-06,
+        "energy_closure_absolute": 1.6375926985556788e-06
+      },
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 0.000146307718164725,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      },
+      "status": "NOT_QUALIFIED"
+    },
+    "P_GPOLY-FINAL": {
+      "audit": {
+        "schur_relative": 2.2335849952054656e-05,
+        "augmented_relative": 8.66192707661394e-06,
+        "native_relative": 8.661927076613655e-06,
+        "original_total_augmented_relative": 3.0056833396537647e-06,
+        "port_absolute": 2.7755580142756326e-17,
+        "port_full_rhs_relative": 1.3018799298773068e-16,
+        "port_operation_relative": 4.7852093275305147e-17,
+        "recovery_relative": 4.689027698481717e-13,
+        "schur_original_identity_operation_relative": 5.317151199482589e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.6314584645679677,
+        "port_unknown_norm": 0.19744355276031125,
+        "strict_pass": false,
+        "independent_DOLFINx_total_native_relative": 3.005683381501992e-06
+      },
+      "fields": {
+        "full_FE_L2_relative": 8.36213825579861e-06,
+        "full_FE_scaled_curl_relative": 8.360640295530609e-06,
+        "scattered_FE_L2_relative": 7.990971685532759e-05,
+        "scattered_scaled_curl_relative": 7.989388591150381e-05,
+        "selected_E_relative": 9.428824902938032e-06,
+        "selected_H_relative": 7.065990974430011e-06
+      },
+      "comparison": {
+        "status": "NOT_QUALIFIED",
+        "equation_audit": {
+          "schur_relative": 2.2335849952054656e-05,
+          "augmented_relative": 8.66192707661394e-06,
+          "native_relative": 8.661927076613655e-06,
+          "original_total_augmented_relative": 3.0056833396537647e-06,
+          "port_absolute": 2.7755580142756326e-17,
+          "port_full_rhs_relative": 1.3018799298773068e-16,
+          "port_operation_relative": 4.7852093275305147e-17,
+          "recovery_relative": 4.689027698481717e-13,
+          "schur_original_identity_operation_relative": 5.317151199482589e-13,
+          "slave_storage_max": 0.0,
+          "field_norm": 1.6314584645679677,
+          "port_unknown_norm": 0.19744355276031125,
+          "strict_pass": false,
+          "independent_DOLFINx_total_native_relative": 3.005683381501992e-06
+        },
+        "full_FE_L2_relative": 8.36213825579861e-06,
+        "full_FE_scaled_curl_relative": 8.360640295530609e-06,
+        "selected_E_relative": 9.428824902938032e-06,
+        "selected_H_relative": 7.065990974430011e-06,
+        "scattered_FE_L2_relative": 7.990971685532759e-05,
+        "ordered_complex_ports_relative": 3.723683578308405e-06,
+        "power_absolute_differences": {
+          "R_total": 1.7211455528853836e-07,
+          "T_total": 1.656272340055942e-06,
+          "A_balance": 1.828386895441625e-06,
+          "A_volume": 8.920373422566241e-09
+        },
+        "max_channel_power_difference": 1.656411227624055e-06,
+        "energy_closure_absolute": 1.83731017511235e-06
+      },
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 2.2335849952054656e-05,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      },
+      "status": "NOT_QUALIFIED"
+    },
+    "L_GPOLY-FINAL": {
+      "audit": {
+        "schur_relative": 9.678334709617142e-06,
+        "augmented_relative": 3.7532948000733737e-06,
+        "native_relative": 3.7532948000736033e-06,
+        "original_total_augmented_relative": 1.3023908733910555e-06,
+        "port_absolute": 2.8819394302757675e-17,
+        "port_full_rhs_relative": 1.3517783033539817e-16,
+        "port_operation_relative": 4.968614322288396e-17,
+        "recovery_relative": 4.727871753891869e-13,
+        "schur_original_identity_operation_relative": 5.359799157603172e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.6314602477901916,
+        "port_unknown_norm": 0.19744364058635402,
+        "strict_pass": false,
+        "independent_DOLFINx_total_native_relative": 1.3023909872546512e-06
+      },
+      "fields": {
+        "full_FE_L2_relative": 8.319297150553959e-06,
+        "full_FE_scaled_curl_relative": 8.320485326415517e-06,
+        "scattered_FE_L2_relative": 7.950032149673071e-05,
+        "scattered_scaled_curl_relative": 7.951016691297495e-05,
+        "selected_E_relative": 9.390058176345738e-06,
+        "selected_H_relative": 7.130679157948339e-06
+      },
+      "comparison": {
+        "status": "NOT_QUALIFIED",
+        "equation_audit": {
+          "schur_relative": 9.678334709617142e-06,
+          "augmented_relative": 3.7532948000733737e-06,
+          "native_relative": 3.7532948000736033e-06,
+          "original_total_augmented_relative": 1.3023908733910555e-06,
+          "port_absolute": 2.8819394302757675e-17,
+          "port_full_rhs_relative": 1.3517783033539817e-16,
+          "port_operation_relative": 4.968614322288396e-17,
+          "recovery_relative": 4.727871753891869e-13,
+          "schur_original_identity_operation_relative": 5.359799157603172e-13,
+          "slave_storage_max": 0.0,
+          "field_norm": 1.6314602477901916,
+          "port_unknown_norm": 0.19744364058635402,
+          "strict_pass": false,
+          "independent_DOLFINx_total_native_relative": 1.3023909872546512e-06
+        },
+        "full_FE_L2_relative": 8.319297150553959e-06,
+        "full_FE_scaled_curl_relative": 8.320485326415517e-06,
+        "selected_E_relative": 9.390058176345738e-06,
+        "selected_H_relative": 7.130679157948339e-06,
+        "scattered_FE_L2_relative": 7.950032149673071e-05,
+        "ordered_complex_ports_relative": 3.6776160179897086e-06,
+        "power_absolute_differences": {
+          "R_total": 1.6538071574700997e-07,
+          "T_total": 1.7855637326480434e-06,
+          "A_balance": 1.9509444484366867e-06,
+          "A_volume": 9.384325275196836e-09
+        },
+        "max_channel_power_difference": 1.7855346416961737e-06,
+        "energy_closure_absolute": 1.9603316800953507e-06
+      },
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 9.678334709617142e-06,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      },
+      "status": "NOT_QUALIFIED"
+    },
+    "P_GPOLY-CYCLE8": {
+      "audit": {
+        "schur_relative": 6.808059059107221e-05,
+        "augmented_relative": 2.6401910484553796e-05,
+        "native_relative": 2.6401910484553803e-05,
+        "original_total_augmented_relative": 9.1614467373009e-06,
+        "port_absolute": 3.469475955673518e-18,
+        "port_full_rhs_relative": 1.6273632511558402e-17,
+        "port_operation_relative": 5.981571947808408e-18,
+        "recovery_relative": 4.675799556174275e-13,
+        "schur_original_identity_operation_relative": 5.294224988827894e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.6314562280076872,
+        "port_unknown_norm": 0.19744318128577917,
+        "strict_pass": false,
+        "independent_DOLFINx_total_native_relative": 9.161446737898201e-06
+      },
+      "fields": {
+        "full_FE_L2_relative": 8.386548826462169e-06,
+        "full_FE_scaled_curl_relative": 8.360457705349814e-06,
+        "scattered_FE_L2_relative": 8.01429875488191e-05,
+        "scattered_scaled_curl_relative": 7.989214108831356e-05,
+        "selected_E_relative": 9.408928503013796e-06,
+        "selected_H_relative": 7.1468794207555725e-06
+      },
+      "comparison": {
+        "status": "NOT_QUALIFIED",
+        "equation_audit": {
+          "schur_relative": 6.808059059107221e-05,
+          "augmented_relative": 2.6401910484553796e-05,
+          "native_relative": 2.6401910484553803e-05,
+          "original_total_augmented_relative": 9.1614467373009e-06,
+          "port_absolute": 3.469475955673518e-18,
+          "port_full_rhs_relative": 1.6273632511558402e-17,
+          "port_operation_relative": 5.981571947808408e-18,
+          "recovery_relative": 4.675799556174275e-13,
+          "schur_original_identity_operation_relative": 5.294224988827894e-13,
+          "slave_storage_max": 0.0,
+          "field_norm": 1.6314562280076872,
+          "port_unknown_norm": 0.19744318128577917,
+          "strict_pass": false,
+          "independent_DOLFINx_total_native_relative": 9.161446737898201e-06
+        },
+        "full_FE_L2_relative": 8.386548826462169e-06,
+        "full_FE_scaled_curl_relative": 8.360457705349814e-06,
+        "selected_E_relative": 9.408928503013796e-06,
+        "selected_H_relative": 7.1468794207555725e-06,
+        "scattered_FE_L2_relative": 8.01429875488191e-05,
+        "ordered_complex_ports_relative": 3.893561096124819e-06,
+        "power_absolute_differences": {
+          "R_total": 3.788288685524499e-08,
+          "T_total": 1.573124632781031e-06,
+          "A_balance": 1.6110075197195428e-06,
+          "A_volume": 8.277850274164555e-09
+        },
+        "max_channel_power_difference": 1.5730221447629589e-06,
+        "energy_closure_absolute": 1.6192882763554906e-06
+      },
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 6.808059059107221e-05,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      },
+      "status": "NOT_QUALIFIED"
+    },
+    "V18-R-GNN": {
+      "audit": {
+        "schur_relative": 0.00019955637469206967,
+        "augmented_relative": 7.73887167460322e-05,
+        "native_relative": 7.738871674603223e-05,
+        "original_total_augmented_relative": 2.685383720629198e-05,
+        "port_absolute": 3.9405345469311104e-17,
+        "port_full_rhs_relative": 1.8483140374843279e-16,
+        "port_operation_relative": 6.793820746702951e-17,
+        "recovery_relative": 4.733780202606706e-13,
+        "schur_original_identity_operation_relative": 5.369088535972549e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.6314291334336888,
+        "port_unknown_norm": 0.19743977345756009,
+        "strict_pass": false,
+        "independent_DOLFINx_total_native_relative": 2.6853837224668006e-05
+      },
+      "fields": {
+        "full_FE_L2_relative": 1.0485320410508398e-05,
+        "full_FE_scaled_curl_relative": 1.033383479490218e-05,
+        "scattered_FE_L2_relative": 0.00010019913083356374,
+        "scattered_scaled_curl_relative": 9.874963985397075e-05,
+        "selected_E_relative": 1.1771721889612296e-05,
+        "selected_H_relative": 8.779711204036466e-06
+      },
+      "comparison": {
+        "status": "NOT_QUALIFIED",
+        "equation_audit": {
+          "schur_relative": 0.00019955637469206967,
+          "augmented_relative": 7.73887167460322e-05,
+          "native_relative": 7.738871674603223e-05,
+          "original_total_augmented_relative": 2.685383720629198e-05,
+          "port_absolute": 3.9405345469311104e-17,
+          "port_full_rhs_relative": 1.8483140374843279e-16,
+          "port_operation_relative": 6.793820746702951e-17,
+          "recovery_relative": 4.733780202606706e-13,
+          "schur_original_identity_operation_relative": 5.369088535972549e-13,
+          "slave_storage_max": 0.0,
+          "field_norm": 1.6314291334336888,
+          "port_unknown_norm": 0.19743977345756009,
+          "strict_pass": false,
+          "independent_DOLFINx_total_native_relative": 2.6853837224668006e-05
+        },
+        "full_FE_L2_relative": 1.0485320410508398e-05,
+        "full_FE_scaled_curl_relative": 1.033383479490218e-05,
+        "selected_E_relative": 1.1771721889612296e-05,
+        "selected_H_relative": 8.779711204036466e-06,
+        "scattered_FE_L2_relative": 0.00010019913083356374,
+        "ordered_complex_ports_relative": 6.571958530123855e-06,
+        "power_absolute_differences": {
+          "R_total": 4.461226139521046e-06,
+          "T_total": 6.306319351501166e-06,
+          "A_balance": 1.0767545491008335e-05,
+          "A_volume": 4.184773645232037e-08
+        },
+        "max_channel_power_difference": 6.3061222969063024e-06,
+        "energy_closure_absolute": 1.0809390321164791e-05
+      },
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 0.00019955637469206967,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      },
+      "status": "NOT_QUALIFIED"
+    },
+    "P_GNN-FINAL": {
+      "audit": {
+        "schur_relative": 3.248817977741566e-05,
+        "augmented_relative": 1.2599038975139987e-05,
+        "native_relative": 1.2599038975140012e-05,
+        "original_total_augmented_relative": 4.371858736211971e-06,
+        "port_absolute": 3.9252314227293394e-17,
+        "port_full_rhs_relative": 1.8411360825793195e-16,
+        "port_operation_relative": 6.767439880914802e-17,
+        "recovery_relative": 4.725696814808756e-13,
+        "schur_original_identity_operation_relative": 5.363331315761978e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.6314305158181426,
+        "port_unknown_norm": 0.1974396850219961,
+        "strict_pass": false,
+        "independent_DOLFINx_total_native_relative": 4.371858788718896e-06
+      },
+      "fields": {
+        "full_FE_L2_relative": 1.0217412728309253e-05,
+        "full_FE_scaled_curl_relative": 1.0213940504635537e-05,
+        "scattered_FE_L2_relative": 9.763896902171431e-05,
+        "scattered_scaled_curl_relative": 9.760393564838204e-05,
+        "selected_E_relative": 1.1474264919084908e-05,
+        "selected_H_relative": 8.813441091912375e-06
+      },
+      "comparison": {
+        "status": "NOT_QUALIFIED",
+        "equation_audit": {
+          "schur_relative": 3.248817977741566e-05,
+          "augmented_relative": 1.2599038975139987e-05,
+          "native_relative": 1.2599038975140012e-05,
+          "original_total_augmented_relative": 4.371858736211971e-06,
+          "port_absolute": 3.9252314227293394e-17,
+          "port_full_rhs_relative": 1.8411360825793195e-16,
+          "port_operation_relative": 6.767439880914802e-17,
+          "recovery_relative": 4.725696814808756e-13,
+          "schur_original_identity_operation_relative": 5.363331315761978e-13,
+          "slave_storage_max": 0.0,
+          "field_norm": 1.6314305158181426,
+          "port_unknown_norm": 0.1974396850219961,
+          "strict_pass": false,
+          "independent_DOLFINx_total_native_relative": 4.371858788718896e-06
+        },
+        "full_FE_L2_relative": 1.0217412728309253e-05,
+        "full_FE_scaled_curl_relative": 1.0213940504635537e-05,
+        "selected_E_relative": 1.1474264919084908e-05,
+        "selected_H_relative": 8.813441091912375e-06,
+        "scattered_FE_L2_relative": 9.763896902171431e-05,
+        "ordered_complex_ports_relative": 6.620077852334767e-06,
+        "power_absolute_differences": {
+          "R_total": 4.469184688937755e-06,
+          "T_total": 6.379195617522981e-06,
+          "A_balance": 1.0848380306405225e-05,
+          "A_volume": 3.8628879222950274e-08
+        },
+        "max_channel_power_difference": 6.379231971886945e-06,
+        "energy_closure_absolute": 1.0887006279269862e-05
+      },
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 3.248817977741566e-05,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      },
+      "status": "NOT_QUALIFIED"
+    },
+    "L_GNN-FINAL": {
+      "audit": {
+        "schur_relative": 1.4439383854599514e-05,
+        "augmented_relative": 5.599647662707267e-06,
+        "native_relative": 5.599647662707319e-06,
+        "original_total_augmented_relative": 1.943074204098899e-06,
+        "port_absolute": 3.469452018836172e-18,
+        "port_full_rhs_relative": 1.6273520235439634e-17,
+        "port_operation_relative": 5.981616897382256e-18,
+        "recovery_relative": 4.740980683181288e-13,
+        "schur_original_identity_operation_relative": 5.38008481698698e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.631431798848037,
+        "port_unknown_norm": 0.19744033548826947,
+        "strict_pass": false,
+        "independent_DOLFINx_total_native_relative": 1.9430742958404914e-06
+      },
+      "fields": {
+        "full_FE_L2_relative": 1.0158846759586746e-05,
+        "full_FE_scaled_curl_relative": 1.0159427287580637e-05,
+        "scattered_FE_L2_relative": 9.707930475465579e-05,
+        "scattered_scaled_curl_relative": 9.708300990703882e-05,
+        "selected_E_relative": 1.143095579319901e-05,
+        "selected_H_relative": 8.655837609687172e-06
+      },
+      "comparison": {
+        "status": "NOT_QUALIFIED",
+        "equation_audit": {
+          "schur_relative": 1.4439383854599514e-05,
+          "augmented_relative": 5.599647662707267e-06,
+          "native_relative": 5.599647662707319e-06,
+          "original_total_augmented_relative": 1.943074204098899e-06,
+          "port_absolute": 3.469452018836172e-18,
+          "port_full_rhs_relative": 1.6273520235439634e-17,
+          "port_operation_relative": 5.981616897382256e-18,
+          "recovery_relative": 4.740980683181288e-13,
+          "schur_original_identity_operation_relative": 5.38008481698698e-13,
+          "slave_storage_max": 0.0,
+          "field_norm": 1.631431798848037,
+          "port_unknown_norm": 0.19744033548826947,
+          "strict_pass": false,
+          "independent_DOLFINx_total_native_relative": 1.9430742958404914e-06
+        },
+        "full_FE_L2_relative": 1.0158846759586746e-05,
+        "full_FE_scaled_curl_relative": 1.0159427287580637e-05,
+        "selected_E_relative": 1.143095579319901e-05,
+        "selected_H_relative": 8.655837609687172e-06,
+        "scattered_FE_L2_relative": 9.707930475465579e-05,
+        "ordered_complex_ports_relative": 6.091123584506253e-06,
+        "power_absolute_differences": {
+          "R_total": 3.971827666857108e-06,
+          "T_total": 5.647042760847931e-06,
+          "A_balance": 9.618870427718917e-06,
+          "A_volume": 3.7146271593402336e-08
+        },
+        "max_channel_power_difference": 5.647060646318813e-06,
+        "energy_closure_absolute": 9.65601379288028e-06
+      },
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 1.4439383854599514e-05,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      },
+      "status": "NOT_QUALIFIED"
+    },
+    "P_GNN-CYCLE8": {
+      "audit": {
+        "schur_relative": 9.113070004287076e-05,
+        "augmented_relative": 3.534083009590736e-05,
+        "native_relative": 3.5340830095907536e-05,
+        "original_total_augmented_relative": 1.2263246341261201e-05,
+        "port_absolute": 2.881939278716456e-17,
+        "port_full_rhs_relative": 1.351778232264844e-16,
+        "port_operation_relative": 4.968708386997564e-17,
+        "recovery_relative": 4.673954814882882e-13,
+        "schur_original_identity_operation_relative": 5.3044591246727e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.6314287830206988,
+        "port_unknown_norm": 0.19743989258377126,
+        "strict_pass": false,
+        "independent_DOLFINx_total_native_relative": 1.2263246357128653e-05
+      },
+      "fields": {
+        "full_FE_L2_relative": 1.0382297815535703e-05,
+        "full_FE_scaled_curl_relative": 1.0343854365939589e-05,
+        "scattered_FE_L2_relative": 9.921463307208982e-05,
+        "scattered_scaled_curl_relative": 9.884538640412108e-05,
+        "selected_E_relative": 1.1719090654835368e-05,
+        "selected_H_relative": 8.77644611851916e-06
+      },
+      "comparison": {
+        "status": "NOT_QUALIFIED",
+        "equation_audit": {
+          "schur_relative": 9.113070004287076e-05,
+          "augmented_relative": 3.534083009590736e-05,
+          "native_relative": 3.5340830095907536e-05,
+          "original_total_augmented_relative": 1.2263246341261201e-05,
+          "port_absolute": 2.881939278716456e-17,
+          "port_full_rhs_relative": 1.351778232264844e-16,
+          "port_operation_relative": 4.968708386997564e-17,
+          "recovery_relative": 4.673954814882882e-13,
+          "schur_original_identity_operation_relative": 5.3044591246727e-13,
+          "slave_storage_max": 0.0,
+          "field_norm": 1.6314287830206988,
+          "port_unknown_norm": 0.19743989258377126,
+          "strict_pass": false,
+          "independent_DOLFINx_total_native_relative": 1.2263246357128653e-05
+        },
+        "full_FE_L2_relative": 1.0382297815535703e-05,
+        "full_FE_scaled_curl_relative": 1.0343854365939589e-05,
+        "selected_E_relative": 1.1719090654835368e-05,
+        "selected_H_relative": 8.77644611851916e-06,
+        "scattered_FE_L2_relative": 9.921463307208982e-05,
+        "ordered_complex_ports_relative": 6.477103290544446e-06,
+        "power_absolute_differences": {
+          "R_total": 4.397158368377174e-06,
+          "T_total": 6.1439447778255385e-06,
+          "A_balance": 1.0541103146133324e-05,
+          "A_volume": 4.139429166973019e-08
+        },
+        "max_channel_power_difference": 6.143516685486183e-06,
+        "energy_closure_absolute": 1.0582494531452546e-05
+      },
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 9.113070004287076e-05,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      },
+      "status": "NOT_QUALIFIED"
+    }
+  },
+  "full_power_and_recovery_records_by_raw_hash": true,
+  "reference_audit": {
+    "schur_relative": 6.4241465032853714e-12,
+    "augmented_relative": 2.5438195219817865e-12,
+    "native_relative": 3.0179630439596658e-12,
+    "original_total_augmented_relative": 5.603871795512029e-12,
+    "port_absolute": 8.723611222112326e-15,
+    "port_full_rhs_relative": 4.09182380901682e-14,
+    "port_operation_relative": 1.5039466315151165e-14,
+    "recovery_relative": 4.728274022027856e-13,
+    "schur_original_identity_operation_relative": 5.352280622536047e-13,
+    "slave_storage_max": 0.0,
+    "field_norm": 1.631513757018415,
+    "port_unknown_norm": 0.1974501489758752,
+    "strict_pass": true,
+    "independent_DOLFINx_total_native_relative": 1.4374448661883937e-12
+  },
+  "reference_native_pass": true,
+  "reference_identity": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v7/V7-M3-REFERENCE/task042_v7_same_mesh_p3_reference_20260929T081232010551Z/accurate_reference_state.npz",
+    "sha256": "a0610a5a55e7508196b17277e706595c33e4398ace82b245f70b656e6b9ed355",
+    "z_sha256": "4a681a75950ac8087ee8265f34e10363fef99b523c8eecf434f30fafecc09936"
+  },
+  "states_read": 8,
+  "missing": [],
+  "raw_verification": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/task042_v19_verify_run34_20261001T115944830780Z/stage_result.json",
+    "sha256": "7efe5cba98bbdd622ba1eb55a684c7c77364c38df1f7f8cfb547a3d3c18da9fd"
+  },
+  "reference_feedback_to_solver": false,
+  "no_new_LU": true
+}
