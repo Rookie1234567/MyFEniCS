@@ -45,7 +45,7 @@ class _NativeB6:
         self.destroyed = True
 
 
-def _adapter(monkeypatch, *, unequal=False):
+def _adapter(monkeypatch, *, unequal=False, task40_hp_metric=False):
     runtime = _Runtime()
     adapter = RetainedOuterAdapter.__new__(RetainedOuterAdapter)
     adapter.runtime = runtime
@@ -61,6 +61,7 @@ def _adapter(monkeypatch, *, unequal=False):
     }
     adapter.role_timings = {"setup": 0.0, "iteration": 0.0, "check": 0.0}
     adapter.identity = {}
+    adapter.task40_first_direction_hp_metric = bool(task40_hp_metric)
     adapter.bridge = object()
     adapter._packet = lambda name, _facts: name
 
@@ -151,6 +152,28 @@ def _adapter(monkeypatch, *, unequal=False):
             },
         },
     }
+    if task40_hp_metric:
+        mode_sha = "d" * 64
+        entries = tuple(
+            SimpleNamespace(
+                normalization_h=h,
+                mode_identity={
+                    "mode_index": index,
+                    "projection_denominator": h,
+                },
+            )
+            for index, h in enumerate((0.5, 2.0))
+        )
+        adapter.common["fine"] = {
+            "dtn_action": SimpleNamespace(
+                carrier=SimpleNamespace(
+                    entries=entries,
+                    mode_manifest_sha256=mode_sha,
+                )
+            )
+        }
+        adapter.identity["ordered_mode_sha256"] = mode_sha
+        adapter.condensed = SimpleNamespace(active_rows=2)
     monkeypatch.setattr(
         "src.solvers.fullspace_mpc_action.FullspaceMpcFormAction", _NativeB6
     )
@@ -178,6 +201,7 @@ def test_first_direction_pair_reuses_callbacks_and_releases_temporary_b6(monkeyp
         assert result["passed"]
         assert result["input_norm"] == pytest.approx(1.0)
         assert result["pair"]["passed"]
+        assert "comparison_policy" not in result["pair"]
         assert len(result["pair"]["variants"]) == 4
         assert result["pair"]["same_input"]
         assert (
@@ -197,13 +221,46 @@ def test_first_direction_pair_reuses_callbacks_and_releases_temporary_b6(monkeyp
         adapter.rhs.destroy()
 
 
+def test_task40_first_direction_pair_uses_hp_metric_only_when_opted_in(monkeypatch):
+    adapter, _runtime, shell, candidate_b6, pc, saved_a, saved_ledger_a, saved_s = _adapter(
+        monkeypatch, task40_hp_metric=True
+    )
+    try:
+        result = adapter.actual_first_arnoldi_check()
+        pair = result["pair"]
+        assert result["passed"]
+        assert pair["comparison_policy"] == (
+            "task40_fixed_basis_trace_coeff_and_port_modal_gram"
+        )
+        assert all(
+            comparison["pass_metric"]
+            == "task40_fixed_basis_trace_coeff_and_port_modal_gram"
+            and comparison["task40_hp_comparison"]["passed"]
+            and comparison["raw_passed"]
+            and comparison["raw_limit"] == 1.0e-10
+            for comparison in pair["comparisons_to_candidate_combination"].values()
+        )
+        assert shell.action is candidate_b6
+        assert pc.balanced.A is saved_a
+        assert pc.ledger.A is saved_ledger_a
+        assert pc.balanced.S is saved_s
+    finally:
+        adapter.rhs.destroy()
+
+
 def test_first_direction_pair_rejects_non_equivalent_combination(monkeypatch):
     adapter, _runtime, shell, candidate_b6, pc, saved_a, saved_ledger_a, saved_s = _adapter(
         monkeypatch, unequal=True
     )
     try:
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as exc_info:
             adapter.actual_first_arnoldi_check()
+        message = str(exc_info.value)
+        assert "native_a6_native_h6" in message
+        assert "policy=legacy_unweighted_euclidean" in message
+        assert "limit=1e-10" in message
+        assert "packet=x1_actual_first_arnoldi_right_preconditioner.json" in message
+        assert len(message) < 400
         assert shell.action is candidate_b6
         assert pc.balanced.A is saved_a
         assert pc.ledger.A is saved_ledger_a

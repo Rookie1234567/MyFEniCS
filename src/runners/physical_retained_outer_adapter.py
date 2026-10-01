@@ -23,6 +23,116 @@ def _array_identity(value):
             "sha256": hashlib.sha256(memoryview(array).cast("B") if array.size else b"").hexdigest()}
 
 
+def _first_direction_pair_hp_comparison(
+    reference,
+    candidate,
+    *,
+    active_rows,
+    carrier,
+    expected_mode_manifest_sha256,
+):
+    """Compare FE trace and appended port coefficients in their physical norms.
+
+    ``normalization_h`` is the squared surface L2 norm of each original
+    tangential mode. The diagonal modal Gram is valid for the full-period
+    Floquet orders and orthogonal same-order polarizations used by this carrier;
+    opposite ports have disjoint support. The FE metric is only the fixed-basis
+    trace-coefficient norm. The raw unweighted port error remains diagnostic.
+    """
+
+    reference_values = np.asarray(reference, dtype=np.complex128)
+    candidate_values = np.asarray(candidate, dtype=np.complex128)
+    if (
+        reference_values.ndim != 1
+        or candidate_values.shape != reference_values.shape
+        or not np.isfinite(reference_values).all()
+        or not np.isfinite(candidate_values).all()
+    ):
+        raise ValueError("first-direction vectors must be matching finite 1-D arrays")
+    active_rows = int(active_rows)
+    entries = tuple(getattr(carrier, "entries", ()))
+    if active_rows <= 0 or not entries or active_rows + len(entries) != reference_values.size:
+        raise ValueError("first-direction FE/port partition does not match the live carrier")
+    expected_mode_manifest_sha256 = str(expected_mode_manifest_sha256)
+    carrier_mode_manifest_sha256 = str(
+        getattr(carrier, "mode_manifest_sha256", "")
+    )
+    if (
+        not expected_mode_manifest_sha256
+        or carrier_mode_manifest_sha256 != expected_mode_manifest_sha256
+    ):
+        raise ValueError("first-direction port metric mode manifest identity mismatch")
+
+    normalization_h = np.empty(len(entries), dtype=np.float64)
+    for index, entry in enumerate(entries):
+        mode_identity = dict(getattr(entry, "mode_identity", {}))
+        if mode_identity.get("mode_index") != index:
+            raise ValueError("first-direction port metric mode order identity mismatch")
+        h = float(getattr(entry, "normalization_h", np.nan))
+        identity_h = float(mode_identity.get("projection_denominator", np.nan))
+        if not np.isfinite(h) or h <= 0.0 or h != identity_h:
+            raise ValueError("first-direction port H does not match its mode identity")
+        normalization_h[index] = h
+
+    difference = candidate_values - reference_values
+    fe_difference = difference[:active_rows]
+    port_difference = difference[active_rows:]
+    fe_reference = reference_values[:active_rows]
+    port_reference = reference_values[active_rows:]
+    weighted_difference = np.sqrt(normalization_h) * port_difference
+    weighted_reference = np.sqrt(normalization_h) * port_reference
+    tiny = np.finfo(float).tiny
+
+    def _relative(numerator, denominator):
+        return float(np.linalg.norm(numerator)) / max(
+            float(np.linalg.norm(denominator)), tiny
+        )
+
+    limit = 1.0e-10
+    fe_relative = _relative(fe_difference, fe_reference)
+    port_modal_gram_relative = _relative(weighted_difference, weighted_reference)
+    port_unweighted_relative = _relative(port_difference, port_reference)
+    joint_numerator = np.hypot(
+        float(np.linalg.norm(fe_difference)),
+        float(np.linalg.norm(weighted_difference)),
+    )
+    joint_denominator = np.hypot(
+        float(np.linalg.norm(fe_reference)),
+        float(np.linalg.norm(weighted_reference)),
+    )
+    joint_relative = joint_numerator / max(joint_denominator, tiny)
+    h_bytes = np.ascontiguousarray(normalization_h, dtype="<f8").tobytes()
+    passed = bool(
+        np.isfinite(fe_relative)
+        and np.isfinite(port_modal_gram_relative)
+        and fe_relative <= limit
+        and port_modal_gram_relative <= limit
+    )
+    return {
+        "policy": "task40_fixed_basis_trace_coeff_and_port_modal_gram",
+        "limit": limit,
+        "active_rows": active_rows,
+        "appended_rows": len(entries),
+        "ordered_mode_sha256": carrier_mode_manifest_sha256,
+        "normalization_h_sha256": hashlib.sha256(h_bytes).hexdigest(),
+        "fixed_basis_trace_coefficient_relative": fe_relative,
+        "fixed_basis_trace_coefficient_abs_norm": float(
+            np.linalg.norm(fe_difference)
+        ),
+        "port_modal_gram_relative": port_modal_gram_relative,
+        "port_modal_gram_abs_norm": float(np.linalg.norm(weighted_difference)),
+        "port_unweighted_relative_diagnostic": port_unweighted_relative,
+        "port_unweighted_abs_norm_diagnostic": float(
+            np.linalg.norm(port_difference)
+        ),
+        "port_unweighted_max_abs_diagnostic": (
+            float(np.max(np.abs(port_difference))) if port_difference.size else 0.0
+        ),
+        "joint_mixed_metric_relative_diagnostic": joint_relative,
+        "passed": passed,
+    }
+
+
 def _scale_x1_pc_count_probe(values, normalization_h_min=None, *, enabled=False):
     """Optionally scale the disposable X1 setup-PC count probe by sqrt(H_min).
 
@@ -359,6 +469,7 @@ class RetainedOuterAdapter:
         p4_count_policy="legacy_one_mat_solve_per_logical",
         first_direction_pair_context=None,
         scale_x1_pc_count_probe=False,
+        task40_first_direction_hp_metric=False,
     ):
         self.runtime, self.common, self.resolved = runtime, common, resolved
         self.full_rhs, self.bal_h = full_rhs, apply_pc
@@ -390,6 +501,9 @@ class RetainedOuterAdapter:
         self.rhs_identity_policy = str(rhs_identity_policy)
         self.p4_count_policy = str(p4_count_policy)
         self.scale_x1_pc_count_probe = bool(scale_x1_pc_count_probe)
+        self.task40_first_direction_hp_metric = bool(
+            task40_first_direction_hp_metric
+        )
         self.first_direction_pair_context = first_direction_pair_context
         if self.p4_count_policy not in {
             "legacy_one_mat_solve_per_logical",
@@ -1007,25 +1121,62 @@ class RetainedOuterAdapter:
             combination_norm = max(
                 float(np.linalg.norm(combination)), np.finfo(float).tiny
             )
+            task40_carrier = None
+            expected_mode_manifest_sha256 = None
+            if self.task40_first_direction_hp_metric:
+                fine_dtn_action = self.common.get("fine", {}).get("dtn_action")
+                task40_carrier = getattr(fine_dtn_action, "carrier", None)
+                expected_mode_manifest_sha256 = self.identity.get(
+                    "ordered_mode_sha256"
+                )
+                if task40_carrier is None:
+                    raise ValueError(
+                        "Task40 first-direction comparison requires the live mode carrier"
+                    )
             comparisons = {}
             all_equivalent = True
             for name, values in outputs.items():
                 difference = values - combination
                 relative = float(np.linalg.norm(difference)) / combination_norm
                 maximum = float(np.max(np.abs(difference))) if difference.size else 0.0
+                hp_comparison = None
+                if self.task40_first_direction_hp_metric:
+                    hp_comparison = _first_direction_pair_hp_comparison(
+                        combination,
+                        values,
+                        active_rows=self.condensed.active_rows,
+                        carrier=task40_carrier,
+                        expected_mode_manifest_sha256=(
+                            expected_mode_manifest_sha256
+                        ),
+                    )
                 passed = bool(
                     np.isfinite(values).all()
                     and records[name]["input_unchanged"]
-                    and np.isfinite(relative)
-                    and relative <= 1.0e-10
+                    and (
+                        hp_comparison["passed"]
+                        if hp_comparison is not None
+                        else np.isfinite(relative) and relative <= 1.0e-10
+                    )
                 )
                 all_equivalent = all_equivalent and passed
-                comparisons[name] = {
+                comparison_record = {
                     "relative_to_combination": relative,
                     "max_abs_difference": maximum,
                     "limit": 1.0e-10,
                     "passed": passed,
                 }
+                if hp_comparison is not None:
+                    comparison_record["pass_metric"] = (
+                        "task40_fixed_basis_trace_coeff_and_port_modal_gram"
+                    )
+                    comparison_record["task40_hp_comparison"] = hp_comparison
+                    comparison_record["raw_passed"] = bool(
+                        np.isfinite(relative) and relative <= 1.0e-10
+                    )
+                    comparison_record["raw_relative_to_combination"] = relative
+                    comparison_record["raw_limit"] = 1.0e-10
+                comparisons[name] = comparison_record
             light_facts = dict(positive.get("light_facts", {}))
             same_input = bool(
                 all(
@@ -1069,6 +1220,14 @@ class RetainedOuterAdapter:
                     "inventory_label": pair_inventory_label,
                 },
             }
+            if self.task40_first_direction_hp_metric:
+                summary["comparison_policy"] = (
+                    "task40_fixed_basis_trace_coeff_and_port_modal_gram"
+                )
+                summary["raw_euclidean_all_passed"] = all(
+                    comparison["raw_passed"]
+                    for comparison in comparisons.values()
+                )
             return {
                 "summary": summary,
                 "input": source_values,
@@ -1189,9 +1348,49 @@ class RetainedOuterAdapter:
                 "elapsed_seconds": perf_counter() - started,
             }
             if not passed:
+                failed_checks = []
+                if not input_matches_rhs:
+                    failed_checks.append("input_rhs_identity")
+                if not finite_output:
+                    failed_checks.append("finite_output")
+                if not size_ok:
+                    failed_checks.append("vector_size")
+                if delta != expected_delta:
+                    failed_checks.append("call_counts")
+                pair_summary = None if pair is None else pair["summary"]
+                policy = (
+                    pair_summary.get(
+                        "comparison_policy", "legacy_unweighted_euclidean"
+                    )
+                    if pair_summary is not None
+                    else "single_bridge"
+                )
+                failed_comparisons = []
+                raw_failed_comparisons = []
+                if pair_summary is not None:
+                    for name, comparison in pair_summary.get(
+                        "comparisons_to_candidate_combination", {}
+                    ).items():
+                        if not comparison.get("passed", False):
+                            failed_comparisons.append(name)
+                        if comparison.get("raw_passed") is False:
+                            raw_failed_comparisons.append(name)
+                    if not pair_summary.get("passed", False) and not failed_comparisons:
+                        failed_checks.append("pair_identity_or_callback_restore")
+                packet_directory = getattr(self.runtime, "directory", None)
+                packet_path = (
+                    Path(packet_directory)
+                    / "x1_actual_first_arnoldi_right_preconditioner.json"
+                    if packet_directory is not None
+                    else Path("x1_actual_first_arnoldi_right_preconditioner.json")
+                )
                 raise RuntimeError(
                     "actual first Arnoldi retained bridge check failed: "
-                    f"{self.actual_first_arnoldi}"
+                    f"policy={policy}; failed_checks={failed_checks}; "
+                    f"failed_comparisons={failed_comparisons}; "
+                    f"raw_failed_comparisons={raw_failed_comparisons}; "
+                    "limit=1e-10; "
+                    f"packet={packet_path}"
                 )
             return dict(self.actual_first_arnoldi)
         finally:

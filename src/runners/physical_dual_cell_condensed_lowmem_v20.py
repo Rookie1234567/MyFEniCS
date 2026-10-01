@@ -1792,6 +1792,9 @@ def _run_physical_dual_cell_condensed_lowmem(
                 scale_x1_pc_count_probe=(
                     profile_identity in TASK40_PROFILES
                 ),
+                task40_first_direction_hp_metric=(
+                    profile_identity in TASK40_PROFILES
+                ),
                 evidence_prefix=evidence_prefix,
                 expected_space_counts=expected_space_counts,
                 expected_space_facts=expected_space_facts,
