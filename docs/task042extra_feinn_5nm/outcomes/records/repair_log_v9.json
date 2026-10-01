@@ -21,6 +21,17 @@
       "p5_numeric_attempts": 0,
       "cost_retained": true,
       "outcome": "QUALIFIED_FOR_RETRY"
+    },
+    {
+      "root_cause": "M5 nonseparable-geometry Gate used for eight-cell qualification",
+      "failure_run": "task42extra_v9_p5_checks_20261001T011334514608Z",
+      "failure": "NONSEPARABLE_GEOMETRY_FAILED",
+      "hypothesis": "coarse synthetic mesh does not resolve the physical M5 notch; algebra test is not an authority model",
+      "change": "explicit <=8-cell qualification_geometry flag; default M5 Gate retained",
+      "test": "p5 eight-cell setup and default geometry rejection verified",
+      "retry": 1,
+      "p5_numeric_attempts": 0,
+      "cost_retained": true
     }
   ]
 }

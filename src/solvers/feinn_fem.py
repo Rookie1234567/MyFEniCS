@@ -33,7 +33,14 @@ def physical_config(design, degree=3):
     ), material
 
 
-def build_model(design, degree=3, marker=lambda *_: None, *, dtn_quadrature_degree=None):
+def build_model(
+    design,
+    degree=3,
+    marker=lambda *_: None,
+    *,
+    dtn_quadrature_degree=None,
+    qualification_geometry=False,
+):
     from mpi4py import MPI
     from petsc4py import PETSc
     from src.constraints.floquet_3d import build_double_floquet_mpc
@@ -98,7 +105,13 @@ def build_model(design, degree=3, marker=lambda *_: None, *, dtn_quadrature_degr
         dtn_quadrature_degree=bundle["dtn_quadrature_degree"],
         full_fe_setup_seconds=perf_counter() - start,
     )
-    if not record["nonseparable_y_z_witness"]:
+    if qualification_geometry:
+        if len(centers) > 8:
+            raise ValueError("SYNTHETIC_QUALIFICATION_GEOMETRY_MUST_BE_SMALL")
+        record["geometry_role"] = (
+            "synthetic small algebra/transfer qualification; not M5 authority"
+        )
+    if not record["nonseparable_y_z_witness"] and not qualification_geometry:
         raise ValueError("NONSEPARABLE_GEOMETRY_FAILED")
     marker("physical_model", record)
     return dict(

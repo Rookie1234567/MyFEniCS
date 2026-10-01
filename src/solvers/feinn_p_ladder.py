@@ -51,7 +51,13 @@ def checks(design, native, reference, artifact, marker, manifest):
     del data, s4, s5, f4, f5
     gc.collect()
     tick("small exact condensation")
-    sm = build_model(small, degree=5, marker=marker, dtn_quadrature_degree=15)
+    sm = build_model(
+        small,
+        degree=5,
+        marker=marker,
+        dtn_quadrature_degree=15,
+        qualification_geometry=True,
+    )
     try:
         p, _ = export_native(sm, marker)
         reduced = ExactInteriorCondensation(
