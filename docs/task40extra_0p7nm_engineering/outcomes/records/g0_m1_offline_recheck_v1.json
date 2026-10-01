@@ -1,0 +1,5271 @@
+{
+  "schema": "task40extra.g0-m1-offline-recheck.v1",
+  "offline_recheck_status": "CHECKER_BUG_RECOVERED_OFFLINE",
+  "official_result": "not_reissued_offline",
+  "run_identity": {
+    "run_id": "task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1",
+    "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1__full3d_iterative__mpi1__Mna/20261001T135923.003185Z",
+    "run_source_sha": "37635226002787beb26a24baba3a8da333027239",
+    "checker_source_sha": "9f1e7bc2e2953dacb3371d20895b4efad147ebcd",
+    "checker_sha256": "6aa557e3993c74634f13eee95e8788b5b4797a0800c39b49d0dec98bff942218",
+    "input_sha256": "d9a53689fbeee530ad7d72954d4665498a3994c3717535a11cd2fc335920322b",
+    "physical_model_sha256": "98b38bfca9f2af50b75682320fc20ec8560ee6401e1b6e7dfa5ffbc201060b4b"
+  },
+  "original_worker_record_unchanged": {
+    "status": "Q4_ORIGINAL_CONSISTENCY_GATE_FAIL",
+    "classification": "AUTHORITY_LIMITED_CONSISTENCY_GATE_FAIL",
+    "official_result": false,
+    "output_role": "diagnostic_only",
+    "run_summary_status": "finished",
+    "run_summary_classification": "WORKER_FAILED",
+    "run_summary_exit_status": 4,
+    "physical_checks_false": [
+      "channel_amplitudes_finite",
+      "channel_files",
+      "channel_powers_finite"
+    ],
+    "old_expected_channel_count": 80,
+    "old_checked_channel_count": 180
+  },
+  "offline_findings": {
+    "bug_signature_matches_fixed_count_gate": true,
+    "manifest_identity_matches_frozen_run": true,
+    "mode_count": 180,
+    "mode_keys_unique": true,
+    "mode_file_counts_match_manifest": true,
+    "authority_limited_checks": {
+      "solver_gate": true,
+      "post_release_residual": true,
+      "identity": true,
+      "power_finite": true,
+      "field_finite": true,
+      "energy_closure": true,
+      "absorption_consistency": true,
+      "modal_power_closure": true,
+      "channel_files": true,
+      "channel_mode_key_order": true,
+      "channel_amplitudes_finite": true,
+      "channel_powers_finite": true,
+      "channel_modal_sums": true,
+      "channel_normalization": true,
+      "channel_passivity": true
+    },
+    "authority_limited_facts": {
+      "power": {
+        "R": 0.07565188084569026,
+        "T": 0.9062068016471507,
+        "A": 0.01814131750715897,
+        "A_volume": 0.018141266883419625
+      },
+      "closure": {
+        "A_minus_A_volume": 5.0623739346333796e-08,
+        "R_plus_T_plus_A_volume_minus_one": 5.0623739311639326e-08,
+        "R_plus_T_minus_modal": 0.0
+      },
+      "identity_values": {
+        "port_closure_relative": 5.754294776020826e-16,
+        "internal_residual_relative": 6.243298684076393e-18,
+        "native_identity_relative": 1.5720468702446946e-11,
+        "schur_port_identity_relative": 9.581974195843187e-30
+      },
+      "identity_limits": {
+        "port_closure_relative": 1e-08,
+        "internal_residual_relative": 1e-10,
+        "native_identity_relative": 1e-10,
+        "schur_port_identity_relative": 1e-10
+      },
+      "finite": {
+        "power": true,
+        "electric": true,
+        "auxiliary": true,
+        "magnetic": true,
+        "curl": true
+      },
+      "channel_checks": {
+        "files": true,
+        "mode_key_order": true,
+        "amplitudes_finite": true,
+        "powers_finite": true,
+        "modal_sums": true,
+        "normalization": true,
+        "passivity": true
+      },
+      "channel_facts": {
+        "status": "CHECKED",
+        "expected_count": 180,
+        "checked_count": 180,
+        "order_keys": [
+          [
+            "top",
+            -7,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            -7,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            -7,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            -7,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            -7,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            -7,
+            1,
+            "p"
+          ],
+          [
+            "top",
+            -6,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            -6,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            -6,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            -6,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            -6,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            -6,
+            1,
+            "p"
+          ],
+          [
+            "top",
+            -5,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            -5,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            -5,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            -5,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            -5,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            -5,
+            1,
+            "p"
+          ],
+          [
+            "top",
+            -4,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            -4,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            -4,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            -4,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            -4,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            -4,
+            1,
+            "p"
+          ],
+          [
+            "top",
+            -3,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            -3,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            -3,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            -3,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            -3,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            -3,
+            1,
+            "p"
+          ],
+          [
+            "top",
+            -2,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            -2,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            -2,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            -2,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            -2,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            -2,
+            1,
+            "p"
+          ],
+          [
+            "top",
+            -1,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            -1,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            -1,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            -1,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            -1,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            -1,
+            1,
+            "p"
+          ],
+          [
+            "top",
+            0,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            0,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            0,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            0,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            0,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            0,
+            1,
+            "p"
+          ],
+          [
+            "top",
+            1,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            1,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            1,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            1,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            1,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            1,
+            1,
+            "p"
+          ],
+          [
+            "top",
+            2,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            2,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            2,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            2,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            2,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            2,
+            1,
+            "p"
+          ],
+          [
+            "top",
+            3,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            3,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            3,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            3,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            3,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            3,
+            1,
+            "p"
+          ],
+          [
+            "top",
+            4,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            4,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            4,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            4,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            4,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            4,
+            1,
+            "p"
+          ],
+          [
+            "top",
+            5,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            5,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            5,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            5,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            5,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            5,
+            1,
+            "p"
+          ],
+          [
+            "top",
+            6,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            6,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            6,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            6,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            6,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            6,
+            1,
+            "p"
+          ],
+          [
+            "top",
+            7,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            7,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            7,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            7,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            7,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            7,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            -7,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            -7,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            -7,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            -7,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            -7,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            -7,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            -6,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            -6,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            -6,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            -6,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            -6,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            -6,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            -5,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            -5,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            -5,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            -5,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            -5,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            -5,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            -4,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            -4,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            -4,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            -4,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            -4,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            -4,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            -3,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            -3,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            -3,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            -3,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            -3,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            -3,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            -2,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            -2,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            -2,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            -2,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            -2,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            -2,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            -1,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            -1,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            -1,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            -1,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            -1,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            -1,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            0,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            0,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            0,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            0,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            0,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            0,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            1,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            1,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            1,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            1,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            1,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            1,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            2,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            2,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            2,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            2,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            2,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            2,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            3,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            3,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            3,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            3,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            3,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            3,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            4,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            4,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            4,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            4,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            4,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            4,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            5,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            5,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            5,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            5,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            5,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            5,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            6,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            6,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            6,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            6,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            6,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            6,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            7,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            7,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            7,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            7,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            7,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            7,
+            1,
+            "p"
+          ]
+        ],
+        "amplitude_keys": [
+          [
+            "top",
+            -7,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            -7,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            -7,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            -7,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            -7,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            -7,
+            1,
+            "p"
+          ],
+          [
+            "top",
+            -6,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            -6,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            -6,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            -6,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            -6,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            -6,
+            1,
+            "p"
+          ],
+          [
+            "top",
+            -5,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            -5,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            -5,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            -5,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            -5,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            -5,
+            1,
+            "p"
+          ],
+          [
+            "top",
+            -4,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            -4,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            -4,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            -4,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            -4,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            -4,
+            1,
+            "p"
+          ],
+          [
+            "top",
+            -3,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            -3,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            -3,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            -3,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            -3,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            -3,
+            1,
+            "p"
+          ],
+          [
+            "top",
+            -2,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            -2,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            -2,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            -2,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            -2,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            -2,
+            1,
+            "p"
+          ],
+          [
+            "top",
+            -1,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            -1,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            -1,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            -1,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            -1,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            -1,
+            1,
+            "p"
+          ],
+          [
+            "top",
+            0,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            0,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            0,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            0,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            0,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            0,
+            1,
+            "p"
+          ],
+          [
+            "top",
+            1,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            1,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            1,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            1,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            1,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            1,
+            1,
+            "p"
+          ],
+          [
+            "top",
+            2,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            2,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            2,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            2,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            2,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            2,
+            1,
+            "p"
+          ],
+          [
+            "top",
+            3,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            3,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            3,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            3,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            3,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            3,
+            1,
+            "p"
+          ],
+          [
+            "top",
+            4,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            4,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            4,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            4,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            4,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            4,
+            1,
+            "p"
+          ],
+          [
+            "top",
+            5,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            5,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            5,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            5,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            5,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            5,
+            1,
+            "p"
+          ],
+          [
+            "top",
+            6,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            6,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            6,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            6,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            6,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            6,
+            1,
+            "p"
+          ],
+          [
+            "top",
+            7,
+            -1,
+            "s"
+          ],
+          [
+            "top",
+            7,
+            -1,
+            "p"
+          ],
+          [
+            "top",
+            7,
+            0,
+            "s"
+          ],
+          [
+            "top",
+            7,
+            0,
+            "p"
+          ],
+          [
+            "top",
+            7,
+            1,
+            "s"
+          ],
+          [
+            "top",
+            7,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            -7,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            -7,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            -7,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            -7,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            -7,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            -7,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            -6,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            -6,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            -6,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            -6,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            -6,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            -6,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            -5,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            -5,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            -5,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            -5,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            -5,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            -5,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            -4,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            -4,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            -4,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            -4,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            -4,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            -4,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            -3,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            -3,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            -3,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            -3,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            -3,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            -3,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            -2,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            -2,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            -2,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            -2,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            -2,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            -2,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            -1,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            -1,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            -1,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            -1,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            -1,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            -1,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            0,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            0,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            0,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            0,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            0,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            0,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            1,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            1,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            1,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            1,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            1,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            1,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            2,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            2,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            2,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            2,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            2,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            2,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            3,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            3,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            3,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            3,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            3,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            3,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            4,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            4,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            4,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            4,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            4,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            4,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            5,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            5,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            5,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            5,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            5,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            5,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            6,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            6,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            6,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            6,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            6,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            6,
+            1,
+            "p"
+          ],
+          [
+            "bottom",
+            7,
+            -1,
+            "s"
+          ],
+          [
+            "bottom",
+            7,
+            -1,
+            "p"
+          ],
+          [
+            "bottom",
+            7,
+            0,
+            "s"
+          ],
+          [
+            "bottom",
+            7,
+            0,
+            "p"
+          ],
+          [
+            "bottom",
+            7,
+            1,
+            "s"
+          ],
+          [
+            "bottom",
+            7,
+            1,
+            "p"
+          ]
+        ],
+        "failure_keys": [],
+        "modal_R": 0.07565188084569026,
+        "modal_T": 0.9062068016471507,
+        "incident_power_code_units": 0.029326746070880844,
+        "per_channel": [
+          {
+            "key": [
+              "top",
+              -7,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 6.732592219935514e-33,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -7,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 0.0,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -7,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 3.588468257720251e-08,
+            "R": 3.588468257720251e-08,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -7,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 4.908438876125946e-25,
+            "R": 4.908438876125946e-25,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -7,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 0.0,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -7,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 4.68023499788324e-34,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -6,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.0438527538203884e-11,
+            "R": 1.0438527538203884e-11,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -6,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 2.5970149803966912e-12,
+            "R": 2.5970149803966912e-12,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -6,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 6.731953294914452e-11,
+            "R": 6.731953294914452e-11,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -6,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 3.4206272662094704e-25,
+            "R": 3.4206272662094704e-25,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -6,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.0438527884949843e-11,
+            "R": 1.0438527884949843e-11,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -6,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 2.597014890079181e-12,
+            "R": 2.597014890079181e-12,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -5,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.7451818432902075e-10,
+            "R": 1.7451818432902075e-10,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -5,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 2.4330371044623324e-10,
+            "R": 2.4330371044623324e-10,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -5,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 9.320421422019433e-09,
+            "R": 9.320421422019433e-09,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -5,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.3867902546931518e-25,
+            "R": 1.3867902546931518e-25,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -5,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.7451818308092825e-10,
+            "R": 1.7451818308092825e-10,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -5,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 2.4330371298669665e-10,
+            "R": 2.4330371298669665e-10,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -4,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 8.167683960815327e-11,
+            "R": 8.167683960815327e-11,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -4,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 2.597652342851431e-09,
+            "R": 2.597652342851431e-09,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -4,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 7.35702208337114e-10,
+            "R": 7.35702208337114e-10,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -4,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.270081146344492e-26,
+            "R": 1.270081146344492e-26,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -4,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 8.167683808954478e-11,
+            "R": 8.167683808954478e-11,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -4,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 2.5976523598361887e-09,
+            "R": 2.5976523598361887e-09,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -3,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.0882640241302433e-09,
+            "R": 1.0882640241302433e-09,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -3,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 5.928816799198365e-09,
+            "R": 5.928816799198365e-09,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -3,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 6.115566280661598e-10,
+            "R": 6.115566280661598e-10,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -3,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.1525577226278715e-25,
+            "R": 1.1525577226278715e-25,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -3,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.0882640181520298e-09,
+            "R": 1.0882640181520298e-09,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -3,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 5.928816838490626e-09,
+            "R": 5.928816838490626e-09,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -2,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.4850433602720082e-09,
+            "R": 1.4850433602720082e-09,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -2,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.0174129946634141e-09,
+            "R": 1.0174129946634141e-09,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -2,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 4.142709622154831e-08,
+            "R": 4.142709622154831e-08,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -2,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 7.615016716774365e-26,
+            "R": 7.615016716774365e-26,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -2,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.4850433599887081e-09,
+            "R": 1.4850433599887081e-09,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -2,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.0174129984331893e-09,
+            "R": 1.0174129984331893e-09,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -1,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 6.264057328777732e-08,
+            "R": 6.264057328777732e-08,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -1,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 6.024890993887363e-09,
+            "R": 6.024890993887363e-09,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -1,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 2.2344287815666513e-07,
+            "R": 2.2344287815666513e-07,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -1,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 3.29246757777521e-25,
+            "R": 3.29246757777521e-25,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -1,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 6.264057331609201e-08,
+            "R": 6.264057331609201e-08,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              -1,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 6.024891090582695e-09,
+            "R": 6.024891090582695e-09,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              0,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 4.6410632453102214e-35,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              0,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.7137108938882162e-35,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              0,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 0.07565140676565715,
+            "R": 0.07565140676565715,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              0,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 2.0048467438900223e-17,
+            "R": 2.0048467438900223e-17,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              0,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 0.0,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              0,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.6533949826139306e-35,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              1,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 5.026283580713401e-37,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              1,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 0.0,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              1,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 0.0,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              1,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 0.0,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              1,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 2.1139045879141393e-36,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              1,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 0.0,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              2,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 2.8429593214913607e-38,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              2,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 2.2330880435035023e-37,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              2,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 0.0,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              2,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 0.0,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              2,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 3.1135917753046357e-38,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              2,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 0.0,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              3,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 3.5481472252014765e-37,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              3,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 0.0,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              3,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 2.6340974209918014e-29,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              3,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 0.0,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              3,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 0.0,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              3,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 3.9329841759023056e-37,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              4,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 2.0715695630557808e-36,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              4,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 0.0,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              4,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 2.5607383021217997e-27,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              4,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 0.0,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              4,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 0.0,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              4,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 3.7977259513054435e-37,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              5,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 3.0976261532008287e-34,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              5,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 0.0,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              5,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 0.0,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              5,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 3.170865994705509e-41,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              5,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.133166018964112e-34,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              5,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 0.0,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              6,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 0.0,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              6,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.9023865450836212e-34,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              6,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.5240327219282314e-23,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              6,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.8003953335527782e-38,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              6,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.5246366673718677e-36,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              6,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 9.304415813734304e-35,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              7,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.165874566290414e-36,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              7,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 0.0,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              7,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 3.0567747457827976e-26,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              7,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 0.0,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              7,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 0.0,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "top",
+              7,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 9.748789792697255e-33,
+            "R": 0.0,
+            "T": 0.0,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -7,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.8372064365151166e-19,
+            "R": 0.0,
+            "T": 1.8372064365151166e-19,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -7,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 6.629266873640326e-21,
+            "R": 0.0,
+            "T": 6.629266873640326e-21,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -7,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 6.752870848960317e-09,
+            "R": 0.0,
+            "T": 6.752870848960317e-09,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -7,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 8.16987777840628e-26,
+            "R": 0.0,
+            "T": 8.16987777840628e-26,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -7,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.8372047065044378e-19,
+            "R": 0.0,
+            "T": 1.8372047065044378e-19,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -7,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 6.6292321433616454e-21,
+            "R": 0.0,
+            "T": 6.6292321433616454e-21,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -6,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.4078919385353659e-11,
+            "R": 0.0,
+            "T": 1.4078919385353659e-11,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -6,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 3.494580698715919e-12,
+            "R": 0.0,
+            "T": 3.494580698715919e-12,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -6,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.621554698408347e-11,
+            "R": 0.0,
+            "T": 1.621554698408347e-11,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -6,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 3.327681207822594e-24,
+            "R": 0.0,
+            "T": 3.327681207822594e-24,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -6,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.407891893029972e-11,
+            "R": 0.0,
+            "T": 1.407891893029972e-11,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -6,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 3.4945814031584553e-12,
+            "R": 0.0,
+            "T": 3.4945814031584553e-12,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -5,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.3308344586969807e-10,
+            "R": 0.0,
+            "T": 1.3308344586969807e-10,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -5,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.8552854202640674e-10,
+            "R": 0.0,
+            "T": 1.8552854202640674e-10,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -5,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 3.990180663909984e-09,
+            "R": 0.0,
+            "T": 3.990180663909984e-09,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -5,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 6.890992060106922e-26,
+            "R": 0.0,
+            "T": 6.890992060106922e-26,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -5,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.3308344666448564e-10,
+            "R": 0.0,
+            "T": 1.3308344666448564e-10,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -5,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.855285434152745e-10,
+            "R": 0.0,
+            "T": 1.855285434152745e-10,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -4,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 8.389566266115649e-11,
+            "R": 0.0,
+            "T": 8.389566266115649e-11,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -4,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 2.667605114802186e-09,
+            "R": 0.0,
+            "T": 2.667605114802186e-09,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -4,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 9.12201088964431e-09,
+            "R": 0.0,
+            "T": 9.12201088964431e-09,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -4,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.0579088654896073e-26,
+            "R": 0.0,
+            "T": 1.0579088654896073e-26,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -4,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 8.389566363086164e-11,
+            "R": 0.0,
+            "T": 8.389566363086164e-11,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -4,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 2.6676051048992577e-09,
+            "R": 0.0,
+            "T": 2.6676051048992577e-09,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -3,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.0525470986636566e-09,
+            "R": 0.0,
+            "T": 1.0525470986636566e-09,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -3,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 5.733210459104559e-09,
+            "R": 0.0,
+            "T": 5.733210459104559e-09,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -3,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 2.214137697571999e-09,
+            "R": 0.0,
+            "T": 2.214137697571999e-09,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -3,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 6.67473391312279e-26,
+            "R": 0.0,
+            "T": 6.67473391312279e-26,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -3,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.0525471021155373e-09,
+            "R": 0.0,
+            "T": 1.0525471021155373e-09,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -3,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 5.733210437419463e-09,
+            "R": 0.0,
+            "T": 5.733210437419463e-09,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -2,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 4.341328216386535e-10,
+            "R": 0.0,
+            "T": 4.341328216386535e-10,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -2,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 2.973885615416039e-10,
+            "R": 0.0,
+            "T": 2.973885615416039e-10,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -2,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 9.805556992867141e-08,
+            "R": 0.0,
+            "T": 9.805556992867141e-08,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -2,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 7.181567200437071e-26,
+            "R": 0.0,
+            "T": 7.181567200437071e-26,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -2,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 4.3413281798603956e-10,
+            "R": 0.0,
+            "T": 4.3413281798603956e-10,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -2,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 2.9738855746604633e-10,
+            "R": 0.0,
+            "T": 2.9738855746604633e-10,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -1,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 4.695100413762968e-08,
+            "R": 0.0,
+            "T": 4.695100413762968e-08,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -1,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 4.514890030248622e-09,
+            "R": 0.0,
+            "T": 4.514890030248622e-09,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -1,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.2065311673634974e-08,
+            "R": 0.0,
+            "T": 1.2065311673634974e-08,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -1,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 5.077538782355002e-25,
+            "R": 0.0,
+            "T": 5.077538782355002e-25,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -1,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 4.695100415467461e-08,
+            "R": 0.0,
+            "T": 4.695100415467461e-08,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              -1,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 4.514889933810616e-09,
+            "R": 0.0,
+            "T": 4.514889933810616e-09,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              0,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 7.647772346648564e-23,
+            "R": 0.0,
+            "T": 7.647772346648564e-23,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              0,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.1399684416795283e-23,
+            "R": 0.0,
+            "T": 1.1399684416795283e-23,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              0,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 0.9062065452885957,
+            "R": 0.0,
+            "T": 0.9062065452885957,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              0,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.0613584638987996e-17,
+            "R": 0.0,
+            "T": 1.0613584638987996e-17,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              0,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 7.648113207027789e-23,
+            "R": 0.0,
+            "T": 7.648113207027789e-23,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              0,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.1399425206373081e-23,
+            "R": 0.0,
+            "T": 1.1399425206373081e-23,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              1,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.9300952208293664e-25,
+            "R": 0.0,
+            "T": 1.9300952208293664e-25,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              1,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.1917621673883033e-24,
+            "R": 0.0,
+            "T": 1.1917621673883033e-24,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              1,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 2.367969923182793e-15,
+            "R": 0.0,
+            "T": 2.367969923182793e-15,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              1,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 3.1695080071216113e-29,
+            "R": 0.0,
+            "T": 3.1695080071216113e-29,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              1,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.930978570828113e-25,
+            "R": 0.0,
+            "T": 1.930978570828113e-25,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              1,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.191828942235055e-24,
+            "R": 0.0,
+            "T": 1.191828942235055e-24,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              2,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.9690089132303586e-27,
+            "R": 0.0,
+            "T": 1.9690089132303586e-27,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              2,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.3895390234187713e-25,
+            "R": 0.0,
+            "T": 1.3895390234187713e-25,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              2,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.5078150993679065e-16,
+            "R": 0.0,
+            "T": 1.5078150993679065e-16,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              2,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 5.5540545261507456e-30,
+            "R": 0.0,
+            "T": 5.5540545261507456e-30,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              2,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.9655727310467702e-27,
+            "R": 0.0,
+            "T": 1.9655727310467702e-27,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              2,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.3896437999082847e-25,
+            "R": 0.0,
+            "T": 1.3896437999082847e-25,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              3,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 8.713018753335884e-27,
+            "R": 0.0,
+            "T": 8.713018753335884e-27,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              3,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 8.464258153417932e-26,
+            "R": 0.0,
+            "T": 8.464258153417932e-26,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              3,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.1910722255476583e-18,
+            "R": 0.0,
+            "T": 1.1910722255476583e-18,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              3,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 2.6110757529150612e-31,
+            "R": 0.0,
+            "T": 2.6110757529150612e-31,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              3,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 8.709069744735958e-27,
+            "R": 0.0,
+            "T": 8.709069744735958e-27,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              3,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 8.467469605321578e-26,
+            "R": 0.0,
+            "T": 8.467469605321578e-26,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              4,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 6.170062715227613e-26,
+            "R": 0.0,
+            "T": 6.170062715227613e-26,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              4,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 4.7358140807173857e-26,
+            "R": 0.0,
+            "T": 4.7358140807173857e-26,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              4,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 8.364693605886113e-16,
+            "R": 0.0,
+            "T": 8.364693605886113e-16,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              4,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 6.875476472674483e-30,
+            "R": 0.0,
+            "T": 6.875476472674483e-30,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              4,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 6.171195942141608e-26,
+            "R": 0.0,
+            "T": 6.171195942141608e-26,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              4,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 4.728736781098618e-26,
+            "R": 0.0,
+            "T": 4.728736781098618e-26,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              5,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 5.65026889147718e-24,
+            "R": 0.0,
+            "T": 5.65026889147718e-24,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              5,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.2170439381734917e-23,
+            "R": 0.0,
+            "T": 1.2170439381734917e-23,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              5,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 6.106112984609999e-15,
+            "R": 0.0,
+            "T": 6.106112984609999e-15,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              5,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 2.0053424824820968e-29,
+            "R": 0.0,
+            "T": 2.0053424824820968e-29,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              5,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 5.650262093958636e-24,
+            "R": 0.0,
+            "T": 5.650262093958636e-24,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              5,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.2170117415629102e-23,
+            "R": 0.0,
+            "T": 1.2170117415629102e-23,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              6,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.9285345140236435e-26,
+            "R": 0.0,
+            "T": 1.9285345140236435e-26,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              6,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.5832350947598225e-23,
+            "R": 0.0,
+            "T": 1.5832350947598225e-23,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              6,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 5.283380562143352e-13,
+            "R": 0.0,
+            "T": 5.283380562143352e-13,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              6,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.3363858487561549e-27,
+            "R": 0.0,
+            "T": 1.3363858487561549e-27,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              6,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.9285450983187603e-26,
+            "R": 0.0,
+            "T": 1.9285450983187603e-26,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              6,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.583231416078417e-23,
+            "R": 0.0,
+            "T": 1.583231416078417e-23,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              7,
+              -1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 3.62131104968995e-26,
+            "R": 0.0,
+            "T": 3.62131104968995e-26,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              7,
+              -1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 3.3217245195245804e-22,
+            "R": 0.0,
+            "T": 3.3217245195245804e-22,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              7,
+              0,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 1.3547991746439845e-15,
+            "R": 0.0,
+            "T": 1.3547991746439845e-15,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              7,
+              0,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 2.424128310892102e-30,
+            "R": 0.0,
+            "T": 2.424128310892102e-30,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              7,
+              1,
+              "s"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 3.6215756839006674e-26,
+            "R": 0.0,
+            "T": 3.6215756839006674e-26,
+            "outgoing_fields_match": true,
+            "passive": true
+          },
+          {
+            "key": [
+              "bottom",
+              7,
+              1,
+              "p"
+            ],
+            "finite_amplitude": true,
+            "finite_power": true,
+            "power_ratio": 3.3217448311246623e-22,
+            "R": 0.0,
+            "T": 3.3217448311246623e-22,
+            "outgoing_fields_match": true,
+            "passive": true
+          }
+        ],
+        "files": {
+          "orders": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1__full3d_iterative__mpi1__Mna/20261001T135923.003185Z/numerical_output/dtn_port_diffraction_orders_3d.json",
+          "amplitudes": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1__full3d_iterative__mpi1__Mna/20261001T135923.003185Z/numerical_output/dtn_auxiliary_amplitudes_3d.json"
+        }
+      },
+      "reference_comparison": "NOT_ATTEMPTED_REFERENCE_UNAVAILABLE",
+      "saved_output_finite_oracle": {
+        "sample_E_H_finite": true,
+        "complete_field_descriptor_matches": true
+      }
+    },
+    "field_packet": {
+      "complete_field_saved": true,
+      "full_solution_shape": [
+        229680
+      ],
+      "full_solution_dtype": "complex128",
+      "complete_field_descriptor_matches": true,
+      "sample_E_H_finite": true,
+      "archive_sha256": "2533c3916b23dd781f76ba0206569fe0ec7a9c0b9a8ed6eb4bead3c303efaa59"
+    },
+    "residual_packets": {
+      "final": {
+        "finite_rhs_applied_residual": true,
+        "shapes_match": true,
+        "rhs_norm": 1.5304071041133256,
+        "recomputed_norm_b_minus_Ax_over_b": 9.572475880327403e-07,
+        "stored_residual_vector_norm_over_b": 9.572475880327403e-07,
+        "packet_explicit_relative_residual": 9.572475880327875e-07,
+        "relative_residual_vector_disagreement": 0.0,
+        "residual_vector_consistent": true,
+        "recomputed_matches_packet": true,
+        "residual_gate": true,
+        "limit": 1e-06,
+        "packet_sha256": "dcfaf112950120621b23e90785f0bd32f131d531b33d932140a0eda586a1c0ad",
+        "archive_sha256": "ffb0027cb92e449c3d2ef420f628ea8249c9d849e21e87527b309831e18fd8f0",
+        "archive_sha256_matches_packet": true,
+        "archive_arrays_finite": true,
+        "packet_descriptors_match": true
+      },
+      "post_release": {
+        "finite_rhs_applied_residual": true,
+        "shapes_match": true,
+        "rhs_norm": 1.5304071041133256,
+        "recomputed_norm_b_minus_Ax_over_b": 9.572475880327403e-07,
+        "stored_residual_vector_norm_over_b": 9.572475880327403e-07,
+        "packet_explicit_relative_residual": 9.572475880327875e-07,
+        "relative_residual_vector_disagreement": 0.0,
+        "residual_vector_consistent": true,
+        "recomputed_matches_packet": true,
+        "residual_gate": true,
+        "limit": 1e-06,
+        "packet_sha256": "4b4df9f1b59f9b4986d69266e7d7a8cab79c85e24eb73611d68d92a6a75c5f10",
+        "archive_sha256": "ffb0027cb92e449c3d2ef420f628ea8249c9d849e21e87527b309831e18fd8f0",
+        "archive_sha256_matches_packet": true,
+        "archive_arrays_finite": true,
+        "packet_descriptors_match": true
+      }
+    },
+    "released_state": {
+      "status": "RELEASED",
+      "p6_status": "RELEASED",
+      "owner_refs_cleared": true,
+      "released_after_final_residual": true
+    },
+    "strict_identity_preserved_as_measured": {
+      "source_packet": "x2_retained_final.json",
+      "source_packet_sha256": "cb130dbf3ad5105fb5c8bf703f733db44ea9041507222fbd058aa31169639062",
+      "source_archive_sha256": "2533c3916b23dd781f76ba0206569fe0ec7a9c0b9a8ed6eb4bead3c303efaa59",
+      "values": {
+        "native_identity_relative": 1.5720468702446946e-11,
+        "internal_residual_relative": 6.243298684076393e-18,
+        "schur_port_identity_relative": 9.581974195843187e-30,
+        "port_closure_relative": 5.754294776020826e-16
+      },
+      "limits": {
+        "internal_residual_relative": 1e-10,
+        "native_identity_relative": 1e-10,
+        "port_closure_relative": 1e-08,
+        "schur_port_identity_relative": 1e-10
+      },
+      "recomputed_by_checker": false
+    },
+    "resources": {
+      "watchdog_classification": "WORKER_FAILED",
+      "leader_exit_code": 4,
+      "elapsed_seconds": 1123.4511613079812,
+      "sampled_process_tree_rss_peak_bytes": 3867545600,
+      "sampled_process_tree_pss_peak_bytes": null,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": []
+    },
+    "all_required_offline_checks_pass": true,
+    "resource_cleanup_pass": true
+  },
+  "evidence_files": {
+    "worker_summary": {
+      "path": "task40extra_nonseparable_0p7nm_p6q4_summary.json",
+      "bytes": 7647381,
+      "sha256": "d161e0a119acec30152071c489a197e11760a3429ade1a78685c2b576c99a519"
+    },
+    "run_manifest": {
+      "path": "run_manifest.json",
+      "bytes": 4146,
+      "sha256": "798e9909f8b163da76e282b078193f05d1ccb687ec558200b0ff07e9861d8559"
+    },
+    "run_summary": {
+      "path": "run_summary.json",
+      "bytes": 7796,
+      "sha256": "a33e58693bddfb664493124adb5b075b8c198b8b0198705e1088f866d139d2b4"
+    },
+    "mode_manifest": {
+      "path": "task40q4_ordered_mode_manifest.json",
+      "bytes": 195929,
+      "sha256": "2624335d0004e6634f60e9003d9c66837cf571cd454c5d2ca36c6b5cdaef2675"
+    },
+    "input_original.dat": {
+      "path": "input_original.dat",
+      "bytes": 3685,
+      "sha256": "d9a53689fbeee530ad7d72954d4665498a3994c3717535a11cd2fc335920322b"
+    },
+    "numerical_output/dtn_port_diffraction_orders_3d.json": {
+      "path": "numerical_output/dtn_port_diffraction_orders_3d.json",
+      "bytes": 248881,
+      "sha256": "485048fc1f1d3c08de9a6e7fd2d7383d5441dd82466ea2228d6483e1cf607088"
+    },
+    "numerical_output/dtn_auxiliary_amplitudes_3d.json": {
+      "path": "numerical_output/dtn_auxiliary_amplitudes_3d.json",
+      "bytes": 144517,
+      "sha256": "aae5d9f3762359b192b2d65a876644138ab45f7fcdb4c04a00b908baff87d3e8"
+    },
+    "numerical_output/dtn_port_power_metrics_3d.json": {
+      "path": "numerical_output/dtn_port_power_metrics_3d.json",
+      "bytes": 2277,
+      "sha256": "74b35eb79aa2e6b6d481e688fa1a51cbf331b05739ea3d7d4e3e5419042a363a"
+    },
+    "numerical_output/port_power.json": {
+      "path": "numerical_output/port_power.json",
+      "bytes": 248155,
+      "sha256": "bf73de92663e62543cedbda1d446fc6f0e90cc04c0a9d5f918c4790919ddd09e"
+    },
+    "numerical_output/volume_absorption.json": {
+      "path": "numerical_output/volume_absorption.json",
+      "bytes": 2384,
+      "sha256": "8f0110fba4fde98f0fa3f3bf78506260c470282d2d9db6f2b781d333947b80a9"
+    },
+    "numerical_output/full3d_reference_samples.json": {
+      "path": "numerical_output/full3d_reference_samples.json",
+      "bytes": 2034,
+      "sha256": "9c989f90445f3bf2d7a45a7f45403f9aaabfb9759e3d6169912639659f54c6f8"
+    },
+    "numerical_output/full3d_reference_samples.npz": {
+      "path": "numerical_output/full3d_reference_samples.npz",
+      "bytes": 437019,
+      "sha256": "3f1d6c3c40454aa2563164390dae55c6973083a60082585ed67cd55b4ea33d26"
+    },
+    "x2_retained_final.json": {
+      "path": "x2_retained_final.json",
+      "bytes": 116481,
+      "sha256": "cb130dbf3ad5105fb5c8bf703f733db44ea9041507222fbd058aa31169639062"
+    },
+    "x2_retained_final.npz": {
+      "path": "x2_retained_final.npz",
+      "bytes": 41427346,
+      "sha256": "2533c3916b23dd781f76ba0206569fe0ec7a9c0b9a8ed6eb4bead3c303efaa59",
+      "declared_sha256": "2533c3916b23dd781f76ba0206569fe0ec7a9c0b9a8ed6eb4bead3c303efaa59",
+      "sha256_matches_packet": true,
+      "array_count": 22,
+      "arrays_finite": true,
+      "packet_descriptors_match": true,
+      "array_shapes": {
+        "array_0": [
+          68436
+        ],
+        "array_1": [
+          229680
+        ],
+        "array_2": [
+          229680
+        ],
+        "array_3": [
+          229680
+        ],
+        "array_4": [
+          229680
+        ],
+        "array_5": [
+          229680
+        ],
+        "array_6": [
+          180
+        ],
+        "array_7": [
+          151200
+        ],
+        "array_8": [
+          68436
+        ],
+        "array_9": [
+          229680
+        ],
+        "array_10": [
+          180
+        ],
+        "array_11": [
+          180
+        ],
+        "array_12": [
+          180
+        ],
+        "array_13": [
+          229680
+        ],
+        "array_14": [
+          229680
+        ],
+        "array_15": [
+          180
+        ],
+        "array_16": [
+          180
+        ],
+        "array_17": [
+          180
+        ],
+        "array_18": [
+          180
+        ],
+        "array_19": [
+          229680
+        ],
+        "array_20": [
+          229680
+        ],
+        "array_21": [
+          10224
+        ]
+      }
+    },
+    "final_residual/q4_final.json": {
+      "path": "final_residual/q4_final.json",
+      "bytes": 109758,
+      "sha256": "dcfaf112950120621b23e90785f0bd32f131d531b33d932140a0eda586a1c0ad"
+    },
+    "final_residual/q4_final.npz": {
+      "path": "final_residual/q4_final.npz",
+      "bytes": 14700526,
+      "sha256": "ffb0027cb92e449c3d2ef420f628ea8249c9d849e21e87527b309831e18fd8f0",
+      "declared_sha256": "ffb0027cb92e449c3d2ef420f628ea8249c9d849e21e87527b309831e18fd8f0",
+      "sha256_matches_packet": true,
+      "array_count": 4,
+      "arrays_finite": true,
+      "packet_descriptors_match": true,
+      "array_shapes": {
+        "array_0": [
+          229680
+        ],
+        "array_1": [
+          229680
+        ],
+        "array_2": [
+          229680
+        ],
+        "array_3": [
+          229680
+        ]
+      }
+    },
+    "post_release_final_residual/q4_post_release_final.json": {
+      "path": "post_release_final_residual/q4_post_release_final.json",
+      "bytes": 111030,
+      "sha256": "4b4df9f1b59f9b4986d69266e7d7a8cab79c85e24eb73611d68d92a6a75c5f10"
+    },
+    "post_release_final_residual/q4_post_release_final.npz": {
+      "path": "post_release_final_residual/q4_post_release_final.npz",
+      "bytes": 14700526,
+      "sha256": "ffb0027cb92e449c3d2ef420f628ea8249c9d849e21e87527b309831e18fd8f0",
+      "declared_sha256": "ffb0027cb92e449c3d2ef420f628ea8249c9d849e21e87527b309831e18fd8f0",
+      "sha256_matches_packet": true,
+      "array_count": 4,
+      "arrays_finite": true,
+      "packet_descriptors_match": true,
+      "array_shapes": {
+        "array_0": [
+          229680
+        ],
+        "array_1": [
+          229680
+        ],
+        "array_2": [
+          229680
+        ],
+        "array_3": [
+          229680
+        ]
+      }
+    },
+    "watchdog/summary.json": {
+      "path": "watchdog/summary.json",
+      "bytes": 6601,
+      "sha256": "0d20a94e5f31af6273a2211a4d0d8bed9f4e5107a99c6c0bcc047eab52b423e4"
+    }
+  }
+}
