@@ -5,10 +5,10 @@
   "new_batch_limit_seconds": 43200,
   "group_limits_seconds": {
     "A": 150,
-    "B": 10650,
-    "C": 21600,
+    "B": 15650,
+    "C": 18600,
     "D": 7200,
-    "E": 3600
+    "E": 1600
   },
   "E_reserved_seconds": 1200,
   "frozen_states": {
@@ -140,7 +140,9 @@
     "v10_plain_cached_fit_gn",
     "v10_phase_cached_fit_gn",
     "v10_fit_reconstruct",
-    "v10_fit_compare"
+    "v10_fit_compare",
+    "v10_derivative_checks_repair",
+    "v10_derivative_checks_tangent_repair"
   ],
   "original_group_limits_seconds": {
     "A": 1800,
@@ -155,13 +157,29 @@
       "to_group": "B",
       "seconds": 1650,
       "reason": "A qualified at 16.1195113s; reserved150s remains. One evidence-based equivalent arithmetic-order repair after derivatives<=3.82e-15 but full proposals above1e-8. No C/D per-route limits increase, E3600s reserved."
+    },
+    {
+      "from_group": "E",
+      "to_group": "B",
+      "seconds": 2000,
+      "reason": "Preregistered before tangent repair/benchmark: incremental benchmark preserves complete samples and remaining independent E has1600s, including at least1200s reserve."
+    },
+    {
+      "from_group": "C",
+      "to_group": "B",
+      "seconds": 3000,
+      "reason": "Preregistered existing derivative engineering repair; current both C full-proposal gates failed. C pool18600s; per-route maximum10800s unchanged, actual phase allocation must respect remaining pool. No additional experiment or enlarged network/physics."
     }
   ],
   "derivative_candidate2": {
-    "change": "canonical Torch fused primal linear and complete mapping operation order; matching analytic tangent/real adjoint; no physics/loss/CG-acceptance/hyperparameter change",
-    "qualification_stage": "v10_derivative_checks_repair",
+    "change": "canonical Torch fused primal linear and complete mapping operation order; matching analytic tangent/real adjoint; no physics/loss/CG-acceptance/hyperparameter change; native bias-first tangent and phase-left primal and independently measured phase-right AD tangent",
+    "qualification_stage": "v10_derivative_checks_tangent_repair",
     "first_failed_qualification_preserved": "index_v10_derivative_checks.json",
     "hypothesis": "Floating operation-order differences are tiny in derivatives but may amplify in finite CG; not yet a proven unique cause",
-    "retry_limit_this_repair": 1
+    "retry_limit_this_repair": 3,
+    "arithmetical_repair_number": 2,
+    "evidence": "linear_jvp_order_probe_v10.json: five independent Torch linear JVP shapes, native bias-first formula bitwise; prior canonical c/VJP/gradient bitwise, JVP/K rounding retained; mlp_layer_order_probe_v10.json all layer pairs0; phase_jvp_order_probe_v10.json determines tangent operand order",
+    "implementation_family_count": 3,
+    "implementation_family_meaning": "old AD baseline, initial detached cached chain, same canonical cached chain with bounded arithmetic-order repair; no new mathematical optimizer"
   }
 }

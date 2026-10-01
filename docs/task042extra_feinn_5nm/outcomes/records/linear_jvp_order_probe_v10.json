@@ -1,0 +1,222 @@
+[
+  {
+    "shape": [
+      13,
+      3,
+      64
+    ],
+    "pairs": {
+      "cached_current": {
+        "bitwise": false,
+        "absolute": 6.464214273975349e-15,
+        "maximum": 1.7763568394002505e-15
+      },
+      "bias_first_linear": {
+        "bitwise": true,
+        "absolute": 0.0,
+        "maximum": 0.0
+      },
+      "bias_first_sum": {
+        "bitwise": true,
+        "absolute": 0.0,
+        "maximum": 0.0
+      },
+      "bias_last": {
+        "bitwise": false,
+        "absolute": 6.9420448015932665e-15,
+        "maximum": 1.7763568394002505e-15
+      },
+      "second_plus_bias": {
+        "bitwise": false,
+        "absolute": 6.464214273975349e-15,
+        "maximum": 1.7763568394002505e-15
+      },
+      "two_addmm": {
+        "bitwise": true,
+        "absolute": 0.0,
+        "maximum": 0.0
+      },
+      "sum_addmm": {
+        "bitwise": false,
+        "absolute": 6.9420448015932665e-15,
+        "maximum": 1.7763568394002505e-15
+      }
+    }
+  },
+  {
+    "shape": [
+      17,
+      64,
+      64
+    ],
+    "pairs": {
+      "cached_current": {
+        "bitwise": false,
+        "absolute": 2.8450751210936817e-14,
+        "maximum": 7.105427357601002e-15
+      },
+      "bias_first_linear": {
+        "bitwise": true,
+        "absolute": 0.0,
+        "maximum": 0.0
+      },
+      "bias_first_sum": {
+        "bitwise": true,
+        "absolute": 0.0,
+        "maximum": 0.0
+      },
+      "bias_last": {
+        "bitwise": false,
+        "absolute": 3.270032361393059e-14,
+        "maximum": 7.105427357601002e-15
+      },
+      "second_plus_bias": {
+        "bitwise": false,
+        "absolute": 2.8450751210936817e-14,
+        "maximum": 7.105427357601002e-15
+      },
+      "two_addmm": {
+        "bitwise": true,
+        "absolute": 0.0,
+        "maximum": 0.0
+      },
+      "sum_addmm": {
+        "bitwise": false,
+        "absolute": 3.270032361393059e-14,
+        "maximum": 7.105427357601002e-15
+      }
+    }
+  },
+  {
+    "shape": [
+      17,
+      64,
+      6
+    ],
+    "pairs": {
+      "cached_current": {
+        "bitwise": false,
+        "absolute": 9.063799849278554e-15,
+        "maximum": 3.552713678800501e-15
+      },
+      "bias_first_linear": {
+        "bitwise": true,
+        "absolute": 0.0,
+        "maximum": 0.0
+      },
+      "bias_first_sum": {
+        "bitwise": true,
+        "absolute": 0.0,
+        "maximum": 0.0
+      },
+      "bias_last": {
+        "bitwise": false,
+        "absolute": 1.3354326316304654e-14,
+        "maximum": 7.105427357601002e-15
+      },
+      "second_plus_bias": {
+        "bitwise": false,
+        "absolute": 9.063799849278554e-15,
+        "maximum": 3.552713678800501e-15
+      },
+      "two_addmm": {
+        "bitwise": true,
+        "absolute": 0.0,
+        "maximum": 0.0
+      },
+      "sum_addmm": {
+        "bitwise": false,
+        "absolute": 1.3354326316304654e-14,
+        "maximum": 7.105427357601002e-15
+      }
+    }
+  },
+  {
+    "shape": [
+      992,
+      64,
+      64
+    ],
+    "pairs": {
+      "cached_current": {
+        "bitwise": false,
+        "absolute": 2.021327281914704e-13,
+        "maximum": 7.105427357601002e-15
+      },
+      "bias_first_linear": {
+        "bitwise": true,
+        "absolute": 0.0,
+        "maximum": 0.0
+      },
+      "bias_first_sum": {
+        "bitwise": true,
+        "absolute": 0.0,
+        "maximum": 0.0
+      },
+      "bias_last": {
+        "bitwise": false,
+        "absolute": 2.4561101194988125e-13,
+        "maximum": 7.105427357601002e-15
+      },
+      "second_plus_bias": {
+        "bitwise": false,
+        "absolute": 2.021327281914704e-13,
+        "maximum": 7.105427357601002e-15
+      },
+      "two_addmm": {
+        "bitwise": true,
+        "absolute": 0.0,
+        "maximum": 0.0
+      },
+      "sum_addmm": {
+        "bitwise": false,
+        "absolute": 2.4561101194988125e-13,
+        "maximum": 7.105427357601002e-15
+      }
+    }
+  },
+  {
+    "shape": [
+      7936,
+      64,
+      64
+    ],
+    "pairs": {
+      "cached_current": {
+        "bitwise": false,
+        "absolute": 5.860178111127192e-13,
+        "maximum": 7.105427357601002e-15
+      },
+      "bias_first_linear": {
+        "bitwise": true,
+        "absolute": 0.0,
+        "maximum": 0.0
+      },
+      "bias_first_sum": {
+        "bitwise": true,
+        "absolute": 0.0,
+        "maximum": 0.0
+      },
+      "bias_last": {
+        "bitwise": false,
+        "absolute": 7.126246057828736e-13,
+        "maximum": 7.105427357601002e-15
+      },
+      "second_plus_bias": {
+        "bitwise": false,
+        "absolute": 5.860178111127192e-13,
+        "maximum": 7.105427357601002e-15
+      },
+      "two_addmm": {
+        "bitwise": true,
+        "absolute": 0.0,
+        "maximum": 0.0
+      },
+      "sum_addmm": {
+        "bitwise": false,
+        "absolute": 7.126246057828736e-13,
+        "maximum": 7.105427357601002e-15
+      }
+    }
+  }
+]

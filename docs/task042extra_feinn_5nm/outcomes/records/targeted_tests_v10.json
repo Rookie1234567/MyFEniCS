@@ -80,12 +80,69 @@
       "sampled_process_tree_rss_peak_bytes": 125423616,
       "sampled_process_tree_swap_peak_bytes": 0,
       "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_final_tangent_contract_20261001T145855818913Z",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 2.7478727949783206,
+      "leader_exit_code": 0,
+      "sampled_process_tree_rss_peak_bytes": 81309696,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_linear_order_probe_20261001T144210672721Z",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 6.203966627945192,
+      "leader_exit_code": 0,
+      "sampled_process_tree_rss_peak_bytes": 340762624,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_mlp_order_probe_20261001T145323285096Z",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 4.812873899936676,
+      "leader_exit_code": 0,
+      "sampled_process_tree_rss_peak_bytes": 307425280,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_phase_jvp_order_probe_20261001T145522110940Z",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 7.678882138920017,
+      "leader_exit_code": 0,
+      "sampled_process_tree_rss_peak_bytes": 373727232,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_tangent_repair_fixed_20261001T145628679514Z",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 11.780894864001311,
+      "leader_exit_code": 0,
+      "sampled_process_tree_rss_peak_bytes": 379056128,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_tangent_repair_targeted_20261001T144814216960Z",
+      "classification": "WORKER_FAILED",
+      "elapsed_seconds": 11.83406061003916,
+      "leader_exit_code": 1,
+      "sampled_process_tree_rss_peak_bytes": 379584512,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
     }
   ],
-  "qualified_unit_tests": 19,
-  "final_stage_inventory_count": 12,
+  "qualified_unit_tests": 20,
+  "final_stage_inventory_count": 13,
   "full_pytest": false,
   "CI_claimed": false,
   "source_state": "preimplementation_commit_dirty_but_hash-bound logs; formal runs use clean SHA",
-  "candidate2_test_composition": "18 ML cache/GN/frontier/campaign tests plus 1 pure FE-dispatch Torch-import guard"
+  "candidate2_test_composition": "18 ML cache/GN/frontier/campaign tests plus 1 pure FE-dispatch Torch-import guard",
+  "final_test_composition": "19 ML plus 1 pure FE-dispatch; 13 inputs/environment/budget/label dependency contracts",
+  "full_pytest_run": false,
+  "CI_pass_claim": false
 }

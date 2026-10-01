@@ -40,7 +40,8 @@ class CachedMomentJacobian:
         self.builds = 0
         self.implementation = (
             "candidate2: detached FP64 analytic tangent/real adjoint; "
-            "canonical Torch linear/Piola/interpolation/orientation order"
+            "canonical Torch linear/Piola/interpolation/orientation order; "
+            "native bias-first tangent, primal phase-left and AD tangent phase-right"
         )
         h = hashlib.sha256()
         for name in sorted(mapping.packet):
@@ -180,7 +181,7 @@ class CachedMomentJacobian:
                 value = torch.nn.functional.linear(xs[-1], w, b).reshape(-1, 3, 2)
                 value = torch.complex(value[..., 0], value[..., 1])
                 if phase is not None:
-                    value *= phase[:, None]
+                    value = phase[:, None] * value
                 self.store(
                     out,
                     self.moments(
@@ -206,16 +207,18 @@ class CachedMomentJacobian:
                 for k, index in enumerate((0, 2, 4, 6)):
                     prefix = f"envelopes.{index}."
                     dx = torch.nn.functional.linear(
-                        dx, self.weights[k][0], None
+                        dx, self.weights[k][0], direction[prefix + "bias"]
                     ) + torch.nn.functional.linear(
-                        xs[k], direction[prefix + "weight"], direction[prefix + "bias"]
+                        xs[k], direction[prefix + "weight"], None
                     )
                     if k != 3:
                         dx = torch.ops.aten.tanh_backward(dx, xs[k + 1])
                 dx = dx.reshape(-1, 3, 2)
                 value = torch.complex(dx[..., 0], dx[..., 1])
                 if phase is not None:
-                    value *= phase[:, None]
+                    # The independent Torch JVP multiplies the tangent on the
+                    # left, although the primal forward has phase on the left.
+                    value = value * phase[:, None]
                 self.store(
                     out,
                     self.moments(

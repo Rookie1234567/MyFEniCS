@@ -1,0 +1,62 @@
+[
+  {
+    "layer": 0,
+    "stage": "linear",
+    "absolute": 0.0,
+    "maximum": 0.0
+  },
+  {
+    "layer": 0,
+    "stage": "primal_hidden",
+    "absolute": 0.0,
+    "maximum": 0.0
+  },
+  {
+    "layer": 0,
+    "stage": "tanh",
+    "absolute": 0.0,
+    "maximum": 0.0
+  },
+  {
+    "layer": 2,
+    "stage": "linear",
+    "absolute": 0.0,
+    "maximum": 0.0
+  },
+  {
+    "layer": 2,
+    "stage": "primal_hidden",
+    "absolute": 0.0,
+    "maximum": 0.0
+  },
+  {
+    "layer": 2,
+    "stage": "tanh",
+    "absolute": 0.0,
+    "maximum": 0.0
+  },
+  {
+    "layer": 4,
+    "stage": "linear",
+    "absolute": 0.0,
+    "maximum": 0.0
+  },
+  {
+    "layer": 4,
+    "stage": "primal_hidden",
+    "absolute": 0.0,
+    "maximum": 0.0
+  },
+  {
+    "layer": 4,
+    "stage": "tanh",
+    "absolute": 0.0,
+    "maximum": 0.0
+  },
+  {
+    "layer": 6,
+    "stage": "linear",
+    "absolute": 0.0,
+    "maximum": 0.0
+  }
+]

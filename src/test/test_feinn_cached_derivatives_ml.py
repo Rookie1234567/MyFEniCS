@@ -19,7 +19,7 @@ from src.solvers.optimization_checkpoint import (
     CheckpointStore,
     load_checkpoint,
 )
-from src.solvers.feinn_gn_training import GNProblem
+from src.solvers.feinn_gn_training import GNProblem, restore_committed_with_spent_pc
 
 torch.set_num_threads(1)
 if torch.get_num_interop_threads() != 1:
@@ -69,6 +69,7 @@ def test_complex_complete_chain_real_adjoint_batch_and_invalidation(tmp_path):
             v[:-390] = 0
         w = 1j * rng.normal(size=mapping.size)
         j, g = cached.jvp(m, v), cached.vjp(m, w)
+        assert np.array_equal(j, old.jvp(m, v))
         np.testing.assert_allclose(j, old.jvp(m, v), rtol=1e-11, atol=1e-11)
         np.testing.assert_allclose(g, old.vjp(m, w), rtol=1e-11, atol=1e-11)
         np.testing.assert_allclose(j, cached.jvp(m, v, 1), rtol=1e-12, atol=1e-12)
@@ -104,6 +105,29 @@ def test_complex_complete_chain_real_adjoint_batch_and_invalidation(tmp_path):
     tiny = CachedMomentJacobian(mapping, cache_limit=cached.static_bytes + 1)
     with pytest.raises(ValueError, match="BEFORE_ALLOCATION"):
         tiny.ensure(m)
+
+
+def test_completed_pc_quota_survives_uncommitted_proposal_rollback():
+    m = model()
+    opt = DampedGNState(2, pc_max_builds=2)
+    opt.pc_builds = [dict(source_accepted_outer=3)]
+    opt.V = np.eye(8966, 1)
+    opt.lam = np.array([2.0])
+    committed = capture(m, opt, {})
+    base = parameters(m)
+    opt.pc_builds.append(dict(source_accepted_outer=5))
+    opt.V = np.eye(8966, 2)
+    opt.lam = np.array([4.0, 8.0])
+    opt.mu *= 10
+    assign(m, base + 0.01)
+    assert restore_committed_with_spent_pc(m, opt, committed) == 1
+    assert np.array_equal(parameters(m), base)
+    assert opt.mu == committed["optimizer"]["mu"]
+    assert np.array_equal(opt.V, committed["optimizer"]["V"])
+    assert np.array_equal(opt.lam, committed["optimizer"]["lam"])
+    assert len(opt.pc_builds) == opt.pc_max_builds == 2
+    assert opt.pc_builds[-1]["uncommitted_proposal_rolled_back"]
+    assert not opt.pc_builds[-1]["new_basis_retained"]
 
 
 def test_nonhermitian_gn_curvature_gradient_three_updates_and_rejections():

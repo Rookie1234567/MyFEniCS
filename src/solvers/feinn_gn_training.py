@@ -329,6 +329,19 @@ def qualify(design, native, qualification, artifact, marker, manifest):
     ), {}
 
 
+def restore_committed_with_spent_pc(model, optimizer, committed):
+    """Rollback the field/GN/RNG, while completed optional work consumes quota."""
+    completed = deepcopy(optimizer.pc_builds)
+    retained_count = len(committed["optimizer"]["pc_builds"])
+    restore(model, optimizer, committed)
+    extra = completed[retained_count:]
+    for record in extra:
+        record["uncommitted_proposal_rolled_back"] = True
+        record["new_basis_retained"] = False
+    optimizer.pc_builds.extend(extra)
+    return len(extra)
+
+
 def run(
     design,
     native,
@@ -667,7 +680,19 @@ def run(
                 # Restore matching theta/optimizer/RNG; spent action counters are
                 # external and remain charged, including interrupted proposals.
                 if not published:
-                    restore(model, optimizer, committed)
+                    if continuation is None:
+                        restore(model, optimizer, committed)
+                    else:
+                        spent = restore_committed_with_spent_pc(
+                            model, optimizer, committed
+                        )
+                        if spent:
+                            emit(
+                                dict(
+                                    kind="PC_COMPLETED_QUOTA_PRESERVED_AFTER_ROLLBACK",
+                                    constructions=spent,
+                                )
+                            )
                 raise
             if optimizer.accepted % 5 == 0 or (
                 continuation is not None and perf_counter() - last_audit_time >= 300

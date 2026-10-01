@@ -1,0 +1,74 @@
+[
+  {
+    "layer": 0,
+    "stage": "linear",
+    "absolute": 0.0,
+    "maximum": 0.0
+  },
+  {
+    "layer": 0,
+    "stage": "primal_hidden",
+    "absolute": 0.0,
+    "maximum": 0.0
+  },
+  {
+    "layer": 0,
+    "stage": "tanh",
+    "absolute": 0.0,
+    "maximum": 0.0
+  },
+  {
+    "layer": 2,
+    "stage": "linear",
+    "absolute": 0.0,
+    "maximum": 0.0
+  },
+  {
+    "layer": 2,
+    "stage": "primal_hidden",
+    "absolute": 0.0,
+    "maximum": 0.0
+  },
+  {
+    "layer": 2,
+    "stage": "tanh",
+    "absolute": 0.0,
+    "maximum": 0.0
+  },
+  {
+    "layer": 4,
+    "stage": "linear",
+    "absolute": 0.0,
+    "maximum": 0.0
+  },
+  {
+    "layer": 4,
+    "stage": "primal_hidden",
+    "absolute": 0.0,
+    "maximum": 0.0
+  },
+  {
+    "layer": 4,
+    "stage": "tanh",
+    "absolute": 0.0,
+    "maximum": 0.0
+  },
+  {
+    "layer": 6,
+    "stage": "linear",
+    "absolute": 0.0,
+    "maximum": 0.0
+  },
+  {
+    "stage": "phase_left",
+    "absolute": 5.344613511298198e-16,
+    "maximum": 2.220446049250313e-16,
+    "bitwise": false
+  },
+  {
+    "stage": "phase_right",
+    "absolute": 0.0,
+    "maximum": 0.0,
+    "bitwise": true
+  }
+]

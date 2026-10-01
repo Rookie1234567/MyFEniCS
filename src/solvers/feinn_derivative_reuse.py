@@ -7,6 +7,7 @@ Full trajectories remain private artifacts; this module returns compact facts.
 import csv
 import gc
 import json
+from io import StringIO
 from pathlib import Path
 from time import perf_counter
 
@@ -24,7 +25,12 @@ from src.solvers.feinn_native import load_native, ResidualMetric
 from src.solvers.feinn_reference_fit import FitMetric
 from src.solvers.feinn_riesz import SparseRiesz
 from src.solvers.neural_fe_action_packet import array_hash
-from src.solvers.optimization_checkpoint import atomic_json, digest, restore
+from src.solvers.optimization_checkpoint import (
+    atomic_json,
+    atomic_write,
+    digest,
+    restore,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 DESIGN_RECORD = (
@@ -474,6 +480,20 @@ def checks(design, native, qualification, reference, artifact, marker, manifest)
     ), dict(checks=path)
 
 
+def persist_benchmark_samples(artifact, records, gates):
+    """Each complete measurement survives a later stop; no partial row qualifies."""
+    if records:
+        stream = StringIO()
+        writer = csv.DictWriter(stream, fieldnames=list(records[0]))
+        writer.writeheader()
+        writer.writerows(records)
+        data = stream.getvalue().encode()
+        atomic_write(artifact / "derivative_benchmark.csv", lambda out: out.write(data))
+    atomic_json(
+        artifact / "partial_benchmark.json", dict(samples=records, states=gates)
+    )
+
+
 def benchmark(
     design, native, qualification, reference, checks_index, artifact, marker, manifest
 ):
@@ -484,6 +504,12 @@ def benchmark(
     vectors = rng.normal(size=(16, 8966))
     vectors /= np.linalg.norm(vectors, axis=1)[:, None]
     records, gates = [], {}
+    cutoff = (
+        manifest["supervision_budget_origin_monotonic"]
+        + manifest["supervised_limit_seconds"]
+        - 150
+    )
+    stopped = False
     fit = None
     try:
         for name, entry in frozen_entries().items():
@@ -499,6 +525,14 @@ def benchmark(
             for repeat in (-1, 0, 1, 2):
                 order = (False, True) if repeat % 2 == 0 else (True, False)
                 for cached in order:
+                    previous = [
+                        r["total_seconds"]
+                        for r in records
+                        if r["implementation"] == ("cached" if cached else "old_AD")
+                    ]
+                    if perf_counter() + 1.5 * max(previous[-3:] or [120]) >= cutoff:
+                        stopped = True
+                        break
                     start = perf_counter()
                     problem = make_problem(
                         model, mapping, packet, metric, entry["supervised"], cached
@@ -535,7 +569,14 @@ def benchmark(
                         K_count=16,
                     )
                     records.append(row)
+                    persist_benchmark_samples(artifact, records, gates)
                     marker("derivative_benchmark_sample", row)
+                if stopped:
+                    break
+            if stopped:
+                del model
+                gc.collect()
+                break
             old_times = [
                 r["total_seconds"]
                 for r in records
@@ -573,17 +614,30 @@ def benchmark(
                 shared_A_G_setup_excluded_equally=True,
                 candidate_fresh_G_setup_required=True,
             )
+            persist_benchmark_samples(artifact, records, gates)
             del model
             gc.collect()
     finally:
         factor.close()
+    for name in frozen_entries():
+        if name not in gates:
+            gates[name] = dict(
+                passed=False,
+                status="PERFORMANCE_BUDGET_FRONTIER",
+                retained_complete_samples=sum(r["state"] == name for r in records),
+                speedup_including_build_release=None,
+                reason="No complete warmup and three alternating pairs before save reserve",
+            )
+    persist_benchmark_samples(artifact, records, gates)
     path = artifact / "derivative_benchmark.csv"
-    with path.open("w") as stream:
-        writer = csv.DictWriter(stream, fieldnames=list(records[0]))
-        writer.writeheader()
-        writer.writerows(records)
+    if not path.exists():
+        atomic_write(
+            path, lambda stream: stream.write(b"state,implementation,repeat\n")
+        )
     return dict(
-        status="DERIVATIVE_BENCHMARK_COMPLETE",
+        status="PERFORMANCE_BUDGET_FRONTIER"
+        if stopped
+        else "DERIVATIVE_BENCHMARK_COMPLETE",
         states=gates,
         samples=records,
         Gram_factor=factor.record,

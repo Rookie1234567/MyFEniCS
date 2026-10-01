@@ -4,12 +4,13 @@ from pathlib import Path
 
 REVIEW_SHA = "47317bb648d5e2237657f8b6c75c239ab5bf55c5"
 OLD_SECONDS = 99864.4864455976
-LIMITS = dict(A=150, B=10650, C=21600, D=7200, E=3600)
+LIMITS = dict(A=150, B=15650, C=18600, D=7200, E=1600)
 AUTHORITY = set()
 STAGES = {
     "v10_state_and_work_audit": ("ml", 1800, "A"),
     "v10_derivative_checks": ("ml", 6000, "B"),
     "v10_derivative_checks_repair": ("ml", 6000, "B"),
+    "v10_derivative_checks_tangent_repair": ("ml", 6000, "B"),
     "v10_derivative_benchmark": ("ml", 9000, "B"),
     "v10_plain_cached_gn": ("ml", 10800, "C"),
     "v10_phase_cached_gn": ("ml", 10800, "C"),
@@ -31,11 +32,14 @@ DEPENDENCIES["v10_derivative_checks"] += OLD + [
 ]
 DEPENDENCIES["v10_derivative_benchmark"] += OLD + [
     "e3_reference",
-    "v10_derivative_checks_repair",
+    "v10_derivative_checks_tangent_repair",
 ]
 DEPENDENCIES["v10_derivative_checks_repair"] = DEPENDENCIES["v10_derivative_checks"] + [
     "v10_derivative_checks"
 ]
+DEPENDENCIES["v10_derivative_checks_tangent_repair"] = DEPENDENCIES[
+    "v10_derivative_checks_repair"
+] + ["v10_derivative_checks_repair"]
 for name in (
     "v10_plain_cached_gn",
     "v10_phase_cached_gn",
@@ -156,7 +160,11 @@ def dispatch(stage, design, artifact, marker, manifest, load_index):
             manifest,
             load_index,
         )
-    if stage in ("v10_derivative_checks", "v10_derivative_checks_repair"):
+    if stage in (
+        "v10_derivative_checks",
+        "v10_derivative_checks_repair",
+        "v10_derivative_checks_tangent_repair",
+    ):
         return reuse.checks(
             design,
             load_index("e1_fe"),
@@ -172,7 +180,7 @@ def dispatch(stage, design, artifact, marker, manifest, load_index):
             load_index("e1_fe"),
             load_index("v8_phase_checks"),
             load_index("e3_reference"),
-            load_index("v10_derivative_checks_repair"),
+            load_index("v10_derivative_checks_tangent_repair"),
             artifact,
             marker,
             manifest,
