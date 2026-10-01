@@ -95,9 +95,9 @@
       "classification": "bounded diagnostic; not formal qualification"
     }
   ],
-  "observed_utc": "2026-10-01T06:26:05.520117Z",
+  "observed_utc": "2026-10-01T06:32:40.383001Z",
   "progress": {
-    "phase": "system_setup_stage_bottom_p4_trace_ready",
+    "phase": "both_sides_factor_ready",
     "formal_responses_completed": "not_yet_emitted",
     "expected_formal_responses": 1920,
     "outer_fgmres_iterations": "not_yet_emitted",
@@ -122,7 +122,7 @@
     "two_nm": "not_started"
   },
   "record_type": "task041_review_v8_formal_progress",
-  "record_written_utc": "2026-10-01T06:26:05.520117Z",
+  "record_written_utc": "2026-10-01T06:32:40.383001Z",
   "repository": {
     "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
     "runtime_source_sha": "d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f",
@@ -907,8 +907,8 @@
   },
   "previous_status_before_20261001_a6_attempt": "numerical_consumer_pass_public_identity_exit3_time_target_missed",
   "active_formal_attempt": {
-    "actual_backend": "bottom condensed trace observed; both-side/factor audit pending",
-    "actual_physical_action_backend": "not_yet_emitted; awaiting worker action audit",
+    "actual_backend": "cell_condensed",
+    "actual_physical_action_backend": "task041_opt_in_sum_factorized_physical_volume",
     "completed_formal_responses": "not_yet_emitted",
     "config_path": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/task041_v8_5nm_a6_formal_service_config.json",
     "config_sha256": "319c8b77528f4b132f9a7ed956bd5a158f10f4df647d37cfa58cfd1f90356be5",
@@ -939,10 +939,10 @@
     "invocation_id": "b00e1993f6a2429185553092fa3ba7e2",
     "latest_supervision_sample": {
       "phase": "public_command",
-      "elapsed_seconds": 1935.1215052229818,
-      "authority_bytes": 30355935232,
-      "process_tree_rss_bytes": 30355935232,
-      "cgroup_memory_current_bytes": 28429524992,
+      "elapsed_seconds": 2398.2638886600034,
+      "authority_bytes": 43035529216,
+      "process_tree_rss_bytes": 43035529216,
+      "cgroup_memory_current_bytes": 40670924800,
       "job_swap_bytes": 0,
       "global_swap_used_bytes_delta": 0,
       "global_pswpin_pages_delta": 49,
@@ -958,7 +958,7 @@
     "mpi8_abi_record": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/mpi8_abi_prelaunch_attempt.json",
     "mpi_launcher_pid": 1026232,
     "numa_policy": "fresh MPI8 ABI passed bind node0; each worker /proc/numa_maps showed bind:0",
-    "numerical_setup_marker": "system_setup_stage emitted; physical-action/factor audit not yet emitted",
+    "numerical_setup_marker": "both bottom_factor_ready and top_factor_ready observed; formal solve outputs not yet emitted",
     "packet_manifest_sha256": "306939dda3b70777204c11fbd65beac2db5dc0637bc9b6803f7794d0d7cbad2f",
     "performance_isolation": "not_isolated; neighbor processes untouched",
     "preparation_path": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z",
@@ -991,10 +991,10 @@
     "resource_policy": "task041_v8_swap_observe_continue",
     "runtime_source_sha": "5bfb813870182fda172f658c8f276f58318844a5",
     "sequence": "A6 formal 5nm follow-up",
-    "stage_marker": "system_setup_stage; bottom p4_condensed_trace_ready",
+    "stage_marker": "bottom_factor_ready and top_factor_ready",
     "start_utc": "2026-10-01T05:51:15.915457Z",
     "startup_identity_record": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/startup_identity.json",
-    "status": "running_bottom_side_setup",
+    "status": "running_both_sides_factor_ready",
     "target_tolerance": 5e-13,
     "threads_per_rank": 1,
     "time_stop_enforced": false,
@@ -1026,6 +1026,39 @@
       "owned_cell_count_global": 630,
       "physical_action_backend": "not_yet_emitted"
     },
-    "top_side_observation": "not_yet_emitted"
+    "top_side_observation": "not_yet_emitted",
+    "actual_target_tolerance_by_side": {
+      "bottom": 5e-13,
+      "top": 5e-13
+    },
+    "target_max_corrections_contract": 2,
+    "runtime_backend_audit": {
+      "source_path": "results/task041_5nm_balh_hybrid_iterative_p6h4_mpi8_cell_condensed/task041_5nm_p6h4_m480_mpi8_cell_condensed__hybrid_iterative__mpi8__M480/20261001T055115.915457Z/consumer/markers.jsonl (mutable JSONL; line references only)",
+      "source_sha": "5bfb813870182fda172f658c8f276f58318844a5",
+      "bottom": {
+        "line": 37,
+        "stage": "bottom_factor_ready",
+        "worker_wall_seconds": 2063.9890183659736,
+        "physical_action_backend": "task041_opt_in_sum_factorized_physical_volume",
+        "p4_inverse_backend": "cell_condensed",
+        "p4_refinement_target_tolerance": 5e-13,
+        "p4_factor_creation_count": 1,
+        "p4_factor_solve_count_at_ready": 0,
+        "p6_factor_count": 0,
+        "physical_action_source": "build_side_balanced_inverse"
+      },
+      "top": {
+        "line": 56,
+        "stage": "top_factor_ready",
+        "worker_wall_seconds": 2294.8163939199876,
+        "physical_action_backend": "task041_opt_in_sum_factorized_physical_volume",
+        "p4_inverse_backend": "cell_condensed",
+        "p4_refinement_target_tolerance": 5e-13,
+        "p4_factor_creation_count": 1,
+        "p4_factor_solve_count_at_ready": 0,
+        "p6_factor_count": 0,
+        "physical_action_source": "build_side_balanced_inverse"
+      }
+    }
   }
 }
