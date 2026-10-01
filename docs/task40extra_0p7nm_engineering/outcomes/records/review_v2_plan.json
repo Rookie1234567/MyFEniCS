@@ -1,0 +1,65 @@
+{
+  "schema": "task40extra.review-v2-campaign-plan.v1",
+  "review_sha": "c786e87d03976a52f57d1e7f69a3c63f992afe90",
+  "review_base_sha": "6bef3fdb8d7d70ac70db444086a2efd15c7cd80d",
+  "branch": "task40extra_0p7nm_engineering",
+  "baseline_source_sha_g0_g1": "b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672",
+  "baseline_source_sha_direct": "393e5c0dddb933848945ab2e18edb73cf69cc224",
+  "baseline_runs": {
+    "G0_M0": {
+      "run_id": "task40extra_0p7nm_nonseparable_g0_iterative_review_v1",
+      "input_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e",
+      "physical_model_sha256": "51854af3fb60c7ffebb166e1f06ff0a89e2e184dcbd9ba06ab4beb321b920661",
+      "ordered_mode_sha256": "c3ff9c0cf35e2d183f44ed3fb7448d4aa586bb6fdf7f9dc9ba78dc25011c693a",
+      "reuse": true
+    },
+    "G1_M0": {
+      "run_id": "task40extra_0p7nm_nonseparable_g1_iterative_review_v1",
+      "input_sha256": "989a351fb27fe5320942ca2392d0e7e872909f0354509e5d59c8c25e43061c86",
+      "physical_model_sha256": "8fcb53abe4123e75599eed0ffae278e93fb0549f38b1f5235d0eac2f4cfc73fb",
+      "ordered_mode_sha256": "c3ff9c0cf35e2d183f44ed3fb7448d4aa586bb6fdf7f9dc9ba78dc25011c693a",
+      "reuse": true
+    },
+    "G0_M0_direct": {
+      "run_id": "task40extra_0p7nm_nonseparable_g0_direct_reference_review_v1",
+      "source_sha": "393e5c0dddb933848945ab2e18edb73cf69cc224",
+      "input_sha256": "c80c921834cb268a9251459795fbda5acf4e9f25347d16ee24dec3b9d85c6c56",
+      "status": "MATCHED_REFERENCE_PASS",
+      "reuse": true
+    }
+  },
+  "p0": {
+    "status": "complete",
+    "worktree_clean": true,
+    "active_task40_heavy_or_user_service": false,
+    "historical_failed_user_service_units": "present but inactive; retain as history",
+    "abi": "qualified complex128/int32, MPI=1, math_threads=1",
+    "formal_launch_entry": "scripts/run_case_in_user_service.sh -> systemd --user -> scripts/run_case.py -> independent subreaper/watchdog; verify final child relationship before first PDE",
+    "source_vs_head": "Review V2 is documentation-only above prior accepted source; every new attempt will bind its actual clean HEAD"
+  },
+  "p1": {
+    "status": "planned_offline_only",
+    "common_volume_partition": "union of both meshes' axis split points, separately within each frozen material region",
+    "integrands": ["total E/H", "scattered E/H", "curl(E) evaluated directly from FE derivatives"],
+    "constraints": ["stream bounded quadrature", "no third solve mesh/factor", "keep sampled and volume evidence separate", "no phase fit"]
+  },
+  "p2": {
+    "status": "planned_component_qualification",
+    "candidate": "share six real reference curl/mass tensors; compose each exact cell metric; retain complex128 physical tensors and existing condensation/recovery",
+    "qualification": "FFCx matrix/action, Schur and nonzero-RHS recovery; exact identity; bounded true G0/G1 cell-type inventory; count init/composition/orientation/scratch and unique backing bytes",
+    "adoption_rule": "adopt only reproducible end-to-end benefit with acceptable resident/transient memory; otherwise record negative and use original exact path"
+  },
+  "conditional_formal_stages": {
+    "F1": "G1 M0 only if P2 is adopted",
+    "F2_F3": "G0 manual M1=180 then M2=340; actual ordered channel inventory is authoritative",
+    "F4": "G0 manual M3=532 only if M1/M2 remain unstable and safe",
+    "F5": "G1 using the selected M*",
+    "F6_F7": "E1 q=1.25, then E2 q=1.5 only if safe; fixed 0.7 nm and new-period mode envelope"
+  },
+  "comparison_gates_frozen_before_modes": {
+    "adjacent_field_and_independent_curl_relative": 0.003,
+    "total_R_T_A_A_volume_absolute": 0.0001,
+    "significant_common_propagating_mode_amplitude_relative": 0.01
+  },
+  "nonnegotiable": ["p6/q4 double condensation", "MUMPS and BAL_H unchanged", "full A6 <= 1e-6", "strict identity <= 1e-10", "full A4 checks and at most two same-factor refinements", "MPI1/math_threads1", "all formal runs via user-service plus independent watchdog", "zero task swap", "PSS disabled recorded null", "workstation untouched", "no master merge"]
+}
