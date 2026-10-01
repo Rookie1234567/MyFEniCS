@@ -88,13 +88,31 @@ def review(artifact_path: Path, output_path: Path, expected_sha256: str) -> dict
 
     local_rechecks: list[dict[str, Any]] = []
     reviewed_rounds: dict[int, bool] = {1: True, 2: True, 3: True}
+    rows = raw.get("classes_completed", [])
+    class_keys = [
+        (int(row["material_tag"]), *map(float, row["cell_widths"]))
+        for row in rows
+    ]
+    records_complete = bool(
+        len(rows) == int(raw.get("raw_class_count", -1))
+        and len(class_keys) == len(set(class_keys))
+    )
+    selection_keys = {
+        (int(item["material_tag"]), *map(float, item["cell_widths"]))
+        for item in raw.get("ffcx_sample_selection", [])
+    }
+    observed_sample_keys: set[tuple[Any, ...]] = set()
     seed_bases = {
         "blocked_vs_reference_metric": 95000,
         "ffcx_vs_blocked": 96000,
         "ffcx_vs_reference_metric": 97000,
     }
-    for class_index, row in enumerate(raw["classes_completed"], start=1):
-        for round_row in row["rounds"]:
+    for class_index, row in enumerate(rows, start=1):
+        round_rows = row.get("rounds", [])
+        round_numbers = [int(item["round"]) for item in round_rows]
+        if sorted(round_numbers) != [1, 2, 3] or len(set(round_numbers)) != 3:
+            records_complete = False
+        for round_row in round_rows:
             round_index = int(round_row["round"])
             round_pass = (
                 round_row["raw_matrix_action"]["matrix_frobenius_relative"] <= 1.0e-10
@@ -104,6 +122,13 @@ def review(artifact_path: Path, output_path: Path, expected_sha256: str) -> dict
             )
             sample = round_row.get("ffcx_sample")
             if sample is not None:
+                sample_key = (int(row["material_tag"]), *map(float, row["cell_widths"]))
+                observed_sample_keys.add(sample_key)
+                if round_index != 1:
+                    records_complete = False
+                if set(sample.get("oriented_local_checks", {})) != set(seed_bases):
+                    records_complete = False
+                sample_gate = True
                 for role, checks in sample["oriented_local_checks"].items():
                     seed = seed_bases[role] + class_index
                     rhs_norm = _rhs_norm(seed, full_dimension, interior_dimension)
@@ -119,6 +144,7 @@ def review(artifact_path: Path, output_path: Path, expected_sha256: str) -> dict
                     }
                     local_pass = _local_gate(checks, closures)
                     round_pass = round_pass and local_pass
+                    sample_gate = sample_gate and local_pass
                     local_rechecks.append(
                         {
                             "round": round_index,
@@ -144,44 +170,49 @@ def review(artifact_path: Path, output_path: Path, expected_sha256: str) -> dict
                             "local_gate_passed": local_pass,
                         }
                     )
-                if not _local_gate(
-                    sample["oriented_local_checks"]["ffcx_vs_blocked"],
-                    {
-                        "native": local_rechecks[-2]["native_closure_recomputed"],
-                        "candidate": local_rechecks[-2]["candidate_closure_recomputed"],
-                    },
-                ):
-                    round_pass = False
-                if not _local_gate(
-                    sample["oriented_local_checks"]["ffcx_vs_reference_metric"],
-                    {
-                        "native": local_rechecks[-1]["native_closure_recomputed"],
-                        "candidate": local_rechecks[-1]["candidate_closure_recomputed"],
-                    },
-                ):
-                    round_pass = False
-                if not _local_gate(
-                    sample["oriented_local_checks"]["blocked_vs_reference_metric"],
-                    {
-                        "native": local_rechecks[-3]["native_closure_recomputed"],
-                        "candidate": local_rechecks[-3]["candidate_closure_recomputed"],
-                    },
-                ):
-                    round_pass = False
                 for name in ("ffcx_vs_blocked_raw", "ffcx_vs_reference_metric_raw"):
                     facts = sample[name]
-                    round_pass = round_pass and bool(
+                    raw_gate = bool(
                         facts["matrix_frobenius_relative"] <= 1.0e-10
                         and facts["action_relative"] <= 1.0e-11
                     )
-            reviewed_rounds[round_index] = reviewed_rounds[round_index] and round_pass
+                    round_pass = round_pass and raw_gate
+                    sample_gate = sample_gate and raw_gate
+                round_pass = round_pass and sample_gate
+            if round_index in reviewed_rounds:
+                reviewed_rounds[round_index] = reviewed_rounds[round_index] and round_pass
+            else:
+                records_complete = False
 
-    ratios = [
-        float(item["candidate_over_blocked_ratio"])
-        for item in raw["paired_rounds"]
-    ]
-    numerics_pass = bool(local_rechecks and all(reviewed_rounds.values()))
-    repeatable_gain = bool(ratios and all(ratio < 1.0 for ratio in ratios))
+    ffcx_selection_complete = bool(
+        len(selection_keys) == len(raw.get("ffcx_sample_selection", []))
+        and selection_keys == observed_sample_keys
+    )
+    records_complete = records_complete and ffcx_selection_complete
+    paired_rounds = raw.get("paired_rounds", [])
+    round_ratios = []
+    if [int(item["round"]) for item in paired_rounds] != [1, 2, 3]:
+        records_complete = False
+    for item in paired_rounds:
+        blocked = float(
+            item["blocked_total_including_initialization_and_orientation_seconds"]
+        )
+        candidate = float(
+            item["reference_total_including_initialization_and_orientation_seconds"]
+        )
+        ratio = candidate / max(blocked, np.finfo(float).tiny)
+        if not np.isclose(
+            ratio,
+            float(item["candidate_over_blocked_ratio"]),
+            rtol=1.0e-12,
+            atol=1.0e-15,
+        ):
+            records_complete = False
+        round_ratios.append(ratio)
+    numerics_pass = bool(
+        records_complete and local_rechecks and all(reviewed_rounds.values())
+    )
+    repeatable_gain = bool(round_ratios and all(ratio < 1.0 for ratio in round_ratios))
     result = {
         "schema": "task40extra.p2.saved-closure-reaudit.v1",
         "status": "COMPONENT_QUALIFIED_FOR_G1_M0_WATCHDOG_TRIAL"
@@ -206,10 +237,19 @@ def review(artifact_path: Path, output_path: Path, expected_sha256: str) -> dict
         },
         "residual_definition": "norm(Aii*x_i + Ait*g_t - b_i) / norm(b_i)",
         "round_gates_recomputed": {str(key): value for key, value in reviewed_rounds.items()},
+        "records_complete": records_complete,
+        "record_completeness": {
+            "raw_class_count_expected": int(raw.get("raw_class_count", -1)),
+            "raw_class_count_rechecked": len(rows),
+            "all_three_rounds_per_class": records_complete,
+            "ffcx_selection_expected": len(selection_keys),
+            "ffcx_samples_rechecked": len(observed_sample_keys),
+            "paired_round_count": len(paired_rounds),
+        },
         "matrix_relative_limit": 1.0e-10,
         "action_relative_limit": 1.0e-11,
         "local_rhs_closure_limit": 1.0e-10,
-        "repeatable_candidate_over_blocked_ratios_reused": ratios,
+        "repeatable_candidate_over_blocked_ratios_recomputed_from_component_seconds": round_ratios,
         "numerics_gate_passed": numerics_pass,
         "repeatable_gain_vs_blocked_gram": repeatable_gain,
         "memory_gate_status": "pending G1 M0 user-service/independent-watchdog run",
