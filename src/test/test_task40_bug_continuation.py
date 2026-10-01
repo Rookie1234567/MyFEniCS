@@ -171,9 +171,7 @@ def test_task40_review_v2_f1_allows_next_hash_bound_bug_repair_after_one_use(
 
 
 
-def test_task40_f1_outer_timebase_recovery_is_one_hash_bound_repeat(
-    tmp_path, monkeypatch
-):
+def test_task40_f1_outer_timebase_recovery_is_one_hash_bound_repeat(tmp_path):
     import hashlib
 
     from src.runners.task038_launcher import (
@@ -235,7 +233,15 @@ def test_task40_f1_outer_timebase_recovery_is_one_hash_bound_repeat(
     ledger = {
         "schema": "task40extra.nonseparable-0p7nm.shared-workflow-ledger.v1",
         "batch_identity": run_id,
+        "total_budget_seconds": 43200.0,
+        "elapsed_seconds": outer["elapsed_seconds"],
+        "conservative_allowance_seconds": 0.0,
+        "policy_debits": [],
+        "fresh_worker_count": 1,
+        "source_attempts": [],
         "unique_bug_replay_count": 0,
+        "allowed_stages": ["Q4_ORIGINAL"],
+        "cross_case_recycling": False,
         "authorized_performance_repeats": [],
         "stages": {
             "Q4_ORIGINAL": {
@@ -281,13 +287,13 @@ def test_task40_f1_outer_timebase_recovery_is_one_hash_bound_repeat(
     record_path = recovery_root / "f1_recovery_authorization.json"
     record_path.write_text(json.dumps(record), encoding="utf-8")
 
-    captured = {}
-
-    def fake_reserve(*_args, **kwargs):
-        captured.update(kwargs)
-        return {"replay": False, "reserved_seconds": 43200.0}
-
-    monkeypatch.setattr(launcher, "_reserve_a4_tensor_h6_budget", fake_reserve)
+    with pytest.raises(InputError, match="evidence or identity changed"):
+        _task40_f1_outer_timebase_recovery_repeat(
+            tmp_path,
+            run_id=run_id,
+            comparison_group=TASK40_COMPARISON_GROUP,
+            source_sha="f" * 40,
+        )
     result = launcher._reserve_task40_0p7nm_budget(
         tmp_path,
         tmp_path / "f1-attempt2",
@@ -303,12 +309,15 @@ def test_task40_f1_outer_timebase_recovery_is_one_hash_bound_repeat(
             "app.slice/myfenics-case-task40-recovery.service"
         ),
     )
-    repeat = captured["authorized_performance_repeat"]
+    repeat = result["authorized_performance_repeat"]
+    assert result["replay"] is False
     assert repeat["authorization_id"] == record["authorization_id"]
     assert repeat["kind"] == "STARTUP_INFRASTRUCTURE_REPAIR"
     assert repeat["scope"] == "single_f1_startup_repair_after_outer_timebase_stop"
     assert repeat["outer_watchdog_summary_sha256"] == outer_sha
-    assert captured["bug_replay_limit"] == 1
+    assert result["reserved_seconds"] == 43200.0
+    assert json.loads(ledger_path.read_text())["infrastructure_recovery_count"] == 1
+    assert json.loads(ledger_path.read_text())["unique_bug_replay_count"] == 0
     accounting = json.loads(
         Path(result["task40_batch_replay_accounting_path"]).read_text()
     )
@@ -316,20 +325,12 @@ def test_task40_f1_outer_timebase_recovery_is_one_hash_bound_repeat(
     assert accounting["one_off_infrastructure_recovery"][
         "settled_ledger_sha256"
     ] == record["settled_ledger_sha256"]
-    with pytest.raises(InputError, match="recovery evidence or identity changed"):
-        _task40_f1_outer_timebase_recovery_repeat(
-            tmp_path,
-            run_id=run_id,
-            comparison_group=TASK40_COMPARISON_GROUP,
-            source_sha="f" * 40,
-        )
 
     # Once the one infrastructure repair is consumed, it is excluded from the
     # bug-attempt length gate while a genuine hash-bound implementation repair
     # still follows the normal replay checks and increments only the bug count.
     consumed_ledger = json.loads(ledger_path.read_bytes())
-    recovery_run = tmp_path / "recovery-worker"
-    recovery_run.mkdir()
+    recovery_run = Path(result["task40_batch_replay_accounting_path"]).parent
     failed_summary = {
         "status": "FAILED",
         "result_classification": "WORKER_FAILED",
@@ -347,41 +348,29 @@ def test_task40_f1_outer_timebase_recovery_is_one_hash_bound_repeat(
         }),
         encoding="utf-8",
     )
-    consumed_attempt = {
-        "source_sha": source_after,
-        "run_directory": str(recovery_run),
+    attempt_index = result["attempt_index"]
+    consumed_attempt = consumed_ledger["stages"]["Q4_ORIGINAL"]["attempts"][attempt_index]
+    consumed_attempt.update({
         "status": "WORKER_FAILED",
         "watchdog_classification": "WORKER_FAILED",
         "replay": False,
-        "authorized_performance_repeat": repeat,
-    }
-    consumed_ledger["stages"]["Q4_ORIGINAL"]["attempts"].append(consumed_attempt)
-    consumed_ledger["stages"]["Q4_ORIGINAL"]["active_attempt"] = None
-    consumed_ledger["authorized_performance_repeats"] = [{
-        **repeat,
-        "stage": "Q4_ORIGINAL",
-        "attempt": 2,
-        "run_directory": str(recovery_run),
-    }]
-    consumed_ledger["infrastructure_recovery_count"] = 1
-    consumed_ledger.update({
-        "total_budget_seconds": 43200.0,
-        "elapsed_seconds": 62.372320763999596,
-        "conservative_allowance_seconds": 0.0,
-        "policy_debits": [],
-        "fresh_worker_count": 2,
-        "source_attempts": [],
-        "allowed_stages": ["Q4_ORIGINAL"],
-        "cross_case_recycling": False,
     })
-    ledger_path.write_text(json.dumps(consumed_ledger, sort_keys=True), encoding="utf-8")
+    launcher._settle_v14_shared_budget(
+        result,
+        status="WORKER_FAILED",
+        authority=None,
+        parent_interval={"budget_seconds": 45.0},
+        parent_clock_end=CLOCK,
+    )
+    consumed_ledger = json.loads(ledger_path.read_bytes())
+    assert consumed_ledger["infrastructure_recovery_count"] == 1
+    assert consumed_ledger["unique_bug_replay_count"] == 0
     assert _task40_f1_outer_timebase_recovery_repeat(
         tmp_path,
         run_id=run_id,
         comparison_group=TASK40_COMPARISON_GROUP,
         source_sha="f" * 40,
     ) is None
-    monkeypatch.undo()
     next_attempt = reserve(
         tmp_path,
         "review-v2-f1-after-infrastructure-recovery",

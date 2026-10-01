@@ -3035,17 +3035,62 @@ def _reserve_a4_tensor_h6_budget(
         if authorized_performance_repeat is not None
         else None
     )
-    if authorized_repeat is not None and (
-        error_prefix != "V31"
-        or authorized_repeat.get("authorization_id")
-        != "user_authorized_v31_completion_rerun_20260929"
-        or authorized_repeat.get("classification")
-        != "USER_AUTHORIZED_COMPLETION_RERUN"
-        or authorized_repeat.get("run_id") != V31_AUTHORIZED_COMPLETION_RUN_ID
-        or authorized_repeat.get("reserved_workflow_seconds") != V31_WORKFLOW_BUDGET_SECONDS
-        or authorized_repeat.get("budget_extension_seconds") != 0.0
-    ):
-        raise InputError(f"{error_prefix} completion rerun reservation authorization is invalid")
+    if authorized_repeat is not None:
+        if error_prefix == "V31":
+            if (
+                authorized_repeat.get("authorization_id")
+                != "user_authorized_v31_completion_rerun_20260929"
+                or authorized_repeat.get("classification")
+                != "USER_AUTHORIZED_COMPLETION_RERUN"
+                or authorized_repeat.get("run_id") != V31_AUTHORIZED_COMPLETION_RUN_ID
+                or authorized_repeat.get("reserved_workflow_seconds")
+                != V31_WORKFLOW_BUDGET_SECONDS
+                or authorized_repeat.get("budget_extension_seconds") != 0.0
+            ):
+                raise InputError(
+                    f"{error_prefix} completion rerun reservation authorization is invalid"
+                )
+        elif error_prefix == "Task40":
+            from src.geometry.task40_nonseparable_plan import (
+                TASK40_COMPARISON_GROUP,
+                TASK40_F1_REFERENCE_METRIC_RUN_ID,
+            )
+
+            hashes_valid = all(
+                isinstance(authorized_repeat.get(key), str)
+                and len(authorized_repeat[key]) == 64
+                and all(char in "0123456789abcdef" for char in authorized_repeat[key])
+                for key in (
+                    "input_sha256",
+                    "settled_ledger_sha256",
+                    "outer_watchdog_summary_sha256",
+                )
+            )
+            source_before = authorized_repeat.get("source_sha_before")
+            task40_f1_recovery_valid = (
+                stage == "Q4_ORIGINAL"
+                and authorized_repeat.get("authorization_id")
+                == "task40extra_f1_outer_timebase_stop_recovery_20261001"
+                and authorized_repeat.get("classification")
+                == "CONTROLLED_RECOVERY_AFTER_OUTER_TIMEBASE_STOP"
+                and authorized_repeat.get("kind") == "STARTUP_INFRASTRUCTURE_REPAIR"
+                and authorized_repeat.get("scope")
+                == "single_f1_startup_repair_after_outer_timebase_stop"
+                and authorized_repeat.get("allowed_repeat_count") == 1
+                and authorized_repeat.get("run_id")
+                == TASK40_F1_REFERENCE_METRIC_RUN_ID
+                and authorized_repeat.get("comparison_group") == TASK40_COMPARISON_GROUP
+                and authorized_repeat.get("source_sha_after") == source_sha
+                and isinstance(source_before, str)
+                and len(source_before) == 40
+                and all(char in "0123456789abcdef" for char in source_before)
+                and hashes_valid
+                and Path(str(authorized_repeat.get("prior_run_directory", ""))).is_absolute()
+            )
+            if not task40_f1_recovery_valid:
+                raise InputError("Task40 F1 infrastructure recovery authorization is invalid")
+        else:
+            raise InputError(f"{error_prefix} completion rerun reservation authorization is invalid")
     repo_root = Path(repo_root).resolve()
     path = (
         repo_root / "benchmarks" / "artifacts" / ledger_task_directory
@@ -3411,6 +3456,7 @@ def _task40_f1_outer_timebase_recovery_repeat(
         "classification": record["classification"],
         "kind": recovery_kind,
         "scope": recovery_scope,
+        "allowed_repeat_count": record["allowed_repeat_count"],
         "run_id": run_id,
         "comparison_group": comparison_group,
         "input_sha256": input_sha256,
