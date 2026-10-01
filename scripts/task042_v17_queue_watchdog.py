@@ -12,9 +12,11 @@ from src.solvers.resumable_trace_window import snapshot,journal
 
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('mode',choices=('solve','verify'));parser.add_argument('--directory',type=Path,required=True)
-    parser.add_argument('--batch',choices=('v17','v18'),default='v17')
+    parser.add_argument('--batch',choices=('v17','v18','v19'),default='v17')
     args=parser.parse_args();directory=args.directory.resolve()
-    if args.batch=='v18':
+    if args.batch=='v19':
+        from src.solvers.post_lsqr_window import snapshot as selected_snapshot,journal as selected_journal
+    elif args.batch=='v18':
         from src.solvers.residual_completion_window import snapshot as selected_snapshot,journal as selected_journal
     else:selected_snapshot,selected_journal=snapshot,journal
     if not directory.is_relative_to(ROOT/'tmp/task042'/args.batch) or directory.exists():raise ValueError('fresh own queue supervision directory required')

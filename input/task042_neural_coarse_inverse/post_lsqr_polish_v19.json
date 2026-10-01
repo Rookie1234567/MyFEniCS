@@ -1,0 +1,147 @@
+{
+  "action_sha256": "9196edb807b534217d0c0eb78882125341342784a48ef20ebe2d9421fe636454",
+  "physical_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+  "reference_sha256": "a0610a5a55e7508196b17277e706595c33e4398ace82b245f70b656e6b9ed355",
+  "schema": "task042.post-lsqr-plan.v19",
+  "batch": "V19_POST_LSQR_RESIDUAL_POLISH",
+  "initial_states": {
+    "GPOLY": {
+      "logical_iteration": 12831,
+      "epoch_iteration": 12831,
+      "mode": {
+        "mode": "CONTINUOUS_V17_GK",
+        "epoch": 0,
+        "legacy_persisted_iteration": 6347,
+        "legacy_observed_iteration": 6347,
+        "V17_mode": {
+          "mode": "CONTINUOUS_LEGACY_GK",
+          "epoch": 0,
+          "legacy_persisted_iteration": 256,
+          "legacy_observed_iteration": 816
+        }
+      },
+      "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v18/GPOLY/states/task042_v18_r_gpoly_13312_a0_run21_20261001T062121347619Z/E0_ITER_12831.npz",
+        "sha256": "6bdf82217834cd773540971df152fa2b9a6b97c08817ec8e81eeddea0ad33a85",
+        "y_sha256": "0e30b7608018198a3ed3917ab18583beeeb5cc305b86c7b0400685eac470773b",
+        "v_sha256": "b28e2cf8bc5cb52ee677e76c46294f036de3b24d189ddcc727ec9ba4419e2d62",
+        "c_sha256": "6b379adeef365f1d7dc43e3bcb064a12a05d157fbd6c09d855aa03ec85d287e2",
+        "trace_sha256": "927f0682bc94018381eae2133279693082282de57a2ea5d3d293fa92a70f6fb4",
+        "port_sha256": "bedc93ce9f2a6075c5aff8ea1e3b6edc55c913720edba4857206d1372bd0eb00",
+        "z_sha256": "d77bc614005350e532d406140b265e0e8e360c3aa72e29a97dfaa0f389525f20",
+        "residual_sha256": "4d09e6a2bcdf93e53e89d239621a53f85093e7db1641883e39a7db0373c02a22"
+      },
+      "original_residual_identity_relative": 5.71800777177839e-13,
+      "estimated_residual_norm": 1.2096470042122879e-05,
+      "true_projected_residual_norm": 1.2096470042122952e-05,
+      "recurrence_gap": 6.021990978376815e-15,
+      "audit_pending": false,
+      "new_updates_this_run": 543,
+      "Phi": 1.07029741972843e-08,
+      "action_counts": {
+        "S": 592,
+        "SH": 543,
+        "audit": 9
+      },
+      "audit": {
+        "schur_relative": 0.000146307718164725,
+        "augmented_relative": 5.673868637958896e-05,
+        "native_relative": 5.673868637958899e-05,
+        "original_total_augmented_relative": 1.968828935476335e-05,
+        "port_absolute": 2.860980902949506e-17,
+        "port_full_rhs_relative": 1.3419476725599193e-16,
+        "port_operation_relative": 4.932492530554438e-17,
+        "recovery_relative": 4.677870385359784e-13,
+        "schur_original_identity_operation_relative": 5.279632240089611e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.631455874862165,
+        "port_unknown_norm": 0.1974431682966652,
+        "strict_pass": false
+      },
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 0.000146307718164725,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      },
+      "name": "GPOLY-R-FINAL",
+      "legacy": false
+    },
+    "GNN": {
+      "logical_iteration": 11903,
+      "epoch_iteration": 11903,
+      "mode": {
+        "mode": "CONTINUOUS_V17_GK",
+        "epoch": 0,
+        "legacy_persisted_iteration": 6119,
+        "legacy_observed_iteration": 6119,
+        "V17_mode": {
+          "mode": "INITIALIZE_ORIGINAL_F",
+          "epoch": 0,
+          "legacy_persisted_iteration": 0,
+          "legacy_observed_iteration": 85
+        }
+      },
+      "source_sha": "d3e5800ee379168ca33bc3dae595de1c8aa71063",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v18/GNN/states/task042_v18_r_gnn_12288_a0_run20_20261001T055226629225Z/E0_ITER_11903.npz",
+        "sha256": "873619eb26aeb00c2d8eba333c9b0562456babf7994f0ce5b852ffcaae3867ef",
+        "y_sha256": "8a9ad9068ba3a242bde206dcecd5304d945fe346dd844aced361ca6eb5bba6d2",
+        "v_sha256": "d08d00ec05fb408a6d1bbde3cca4b291f3f2086cd747cfe7544baa7b7d00066f",
+        "c_sha256": "644ebceb2b1371897eed7142c2c8c6f3c27d165e2e52a591f4c72a84ab9f15c4",
+        "trace_sha256": "09a723de3a20ad466abaa8587073c6c6f107296278cad804d3c72363d0758c34",
+        "port_sha256": "98900d42f5824ba77f4d3507c01b9bc5d0eca37251df5dc492b38cf5762044c7",
+        "z_sha256": "0dc2043d80be215be412f883a9f405201c69bb676f0bf8ca6adb33bb5807a749",
+        "residual_sha256": "adfed89e1b8af1a2938ca6674246b3aa175f13fcb68615843b05bea831c381df"
+      },
+      "original_residual_identity_relative": 5.575675270882955e-13,
+      "estimated_residual_norm": 1.6498977213606022e-05,
+      "true_projected_residual_norm": 1.6498977213611148e-05,
+      "recurrence_gap": 3.1070067740647784e-13,
+      "audit_pending": false,
+      "new_updates_this_run": 639,
+      "Phi": 1.9911373340120854e-08,
+      "action_counts": {
+        "S": 693,
+        "SH": 639,
+        "audit": 10
+      },
+      "audit": {
+        "schur_relative": 0.00019955637469206967,
+        "augmented_relative": 7.73887167460322e-05,
+        "native_relative": 7.738871674603223e-05,
+        "original_total_augmented_relative": 2.685383720629198e-05,
+        "port_absolute": 3.9405345469311104e-17,
+        "port_full_rhs_relative": 1.8483140374843279e-16,
+        "port_operation_relative": 6.793820746702951e-17,
+        "recovery_relative": 4.733780202606706e-13,
+        "schur_original_identity_operation_relative": 5.369088535972549e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.6314291334336888,
+        "port_unknown_norm": 0.19743977345756009,
+        "strict_pass": false
+      },
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 0.00019955637469206967,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      },
+      "name": "GNN-R-FINAL",
+      "legacy": false
+    }
+  },
+  "resident_upper_bytes": 2147483648,
+  "review_commit": "5b489b7264b75a9461577303ff0f6bc8907c19dd",
+  "old_v18_frozen_sha256": "fbc737cfa9d8c71229d520a3485c51e643b0f3886f9e96af7bd90ae31e4dcde2",
+  "upstream_basis_and_lsqr_costs": "retained lineage, not loaded in V19"
+}

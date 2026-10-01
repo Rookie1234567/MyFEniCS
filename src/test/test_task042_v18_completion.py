@@ -174,6 +174,8 @@ def test_real_dat_to_actual_stage_gmres_close_save_audit(tmp_path,monkeypatch):
     from src.runners.gmres_residual_completion import CompletionStage,execute_stage
     from src.solvers import gmres_residual_completion as core
     w=isolate_window(tmp_path,monkeypatch)
+    # The historical campaign is now frozen; the regression owns its fixture.
+    monkeypatch.setattr(io,'ARTIFACT_ROOT',tmp_path/'benchmarks/artifacts/task042/v18')
     spec=io.load_residual_completion('input/task042_neural_coarse_inverse/v18_gmres64_gpoly.dat')
     packet,bar,_=small_problem();t=np.ones(packet.nt,complex)*(1+.3j)
     arrays,_=close_point(bar,t,packet.a['b']);old=tmp_path/'benchmarks/artifacts/task042/v17';old.mkdir(parents=True)

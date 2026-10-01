@@ -15,21 +15,24 @@ LIMITS=dict(new_A_columns=6196,image_QR=2,original_audits=512,field_states=12)
 
 
 class CompletionStage(Stage):
-    def __init__(self,specification,directory):
-        self.run_started=time.monotonic();name=specification.derived['stage'].removeprefix('V18-')
+    def __init__(self,specification,directory,*,io_module=None,window_module=None,batch='V18'):
+        io=io_module or globals()['io'];window=window_module or globals()['window']
+        self.batch=batch;self.selected_io=io;self.selected_window=window
+        self.run_started=time.monotonic();name=specification.derived['stage'].removeprefix(batch+'-')
         self.algorithm_name,self.family_name=io.stage_route(name)
         if (self.algorithm_name,self.family_name)!=(specification.derived['algorithm'],specification.derived['library']):
             raise ValueError('V18 stage/algorithm/library registration differs')
         self.base=window.ledger()
         if self.base.get('active') is not None:raise ValueError('another owned V18 worker still active')
-        self.restart={'G64':64,'G256':256}.get(self.algorithm_name,0)
-        self.reservation=self.restart+16 if self.restart else 64
+        self.restart={'G64':64,'G256':256,'P':256,'L':256}.get(self.algorithm_name,0)
+        self.route_key=io.route_key(self.algorithm_name,self.family_name) if hasattr(io,'route_key') else self.family_name
+        self.reservation=getattr(io,'CYCLE_RESERVE',self.restart+16) if self.restart else 64
         self.base['active']=dict(directory=str(directory),stage=name,algorithm=self.algorithm_name,family=self.family_name,
             actions_lower=0,actions_upper=self.reservation,audits_lower=0,audits_upper=2,
             updates_lower=0,updates_upper=16 if self.algorithm_name=='R' else 0,
             arnoldi_lower=0,arnoldi_upper=self.restart,source_sha=(directory/'source_sha.txt').read_text().strip())
         write_json(window.LEDGER_PATH,self.base)
-        super().__init__(specification,directory,io_module=io,window_module=window,limits=LIMITS,action_limit=66000,family=io.FAMILY)
+        super().__init__(specification,directory,io_module=io,window_module=window,limits=getattr(io,'LIMITS',LIMITS),action_limit=getattr(io,'ACTION_LIMIT',66000),family=io.FAMILY)
         self.carry_actions=self.base['actions_upper']
         self.counts=dict(new_A_columns=self.base['new_A_columns'],image_QR=self.base['image_QR'],original_audits=self.base['audits_upper'],field_states=self.base['field_states'])
         self.started=dict(S=0,SH=0);self.new_updates=0;self.arnoldi_run=0;self.gmres_pending=False;self.last_written=0
@@ -42,33 +45,35 @@ class CompletionStage(Stage):
         self.packet.apply=apply
 
     def guard(self,*,extra_actions=0,large=False):
+        window=self.selected_window
         super().guard(extra_actions=extra_actions,large=large)
         total=self.packet.counts['S']+self.packet.counts['SH']
         if self.family_name:
-            prior=self.base['routes'][self.family_name];budget=json.loads(window.BUDGET_PATH.read_text())
-            if prior['actions_upper']+total+extra_actions>28000:raise RuntimeError('V18 per-library original action cap')
+            prior=self.base['routes'][self.route_key];budget=json.loads(window.BUDGET_PATH.read_text())
+            if prior['actions_upper']+total+extra_actions>getattr(self.selected_io,'ROUTE_ACTION_LIMIT',28000):raise RuntimeError('V18 per-library original action cap')
             elapsed=time.monotonic()-self.run_started
             if prior['wall_seconds']+elapsed>budget['uniform_route_wall_seconds']-10:raise RuntimeError('V18 library wall boundary')
-            if self.restart and prior['G_wall_seconds']+elapsed>budget['GMRES_total_ceiling_seconds']-10:raise RuntimeError('V18 G64/G256 total wall boundary')
-        elif self.algorithm_name=='F0' and (total+extra_actions>256 or time.monotonic()-self.run_started>590):
+            if self.restart and 'GMRES_total_ceiling_seconds' in budget and prior['G_wall_seconds']+elapsed>budget['GMRES_total_ceiling_seconds']-10:raise RuntimeError('V18 G64/G256 total wall boundary')
+        elif self.algorithm_name in ('F0','C0') and (total+extra_actions>256 or time.monotonic()-self.run_started>590):
             raise RuntimeError('V18 F0 action/wall boundary')
 
     def durable_counts(self,*,reserve=None):
+        window=self.selected_window
         reserve=self.reservation if reserve is None else reserve
         row=window.ledger();total=self.packet.counts['S']+self.packet.counts['SH']
         row['active'].update(actions_lower=total,actions_upper=total+reserve,
             audits_lower=self.counts['original_audits']-self.base['audits_upper'],
             audits_upper=self.counts['original_audits']-self.base['audits_upper']+(2 if reserve else 0),
             updates_lower=self.new_updates,updates_upper=self.new_updates+(16 if reserve and self.algorithm_name=='R' else 0),
-            arnoldi_lower=self.arnoldi_run,arnoldi_upper=self.arnoldi_run+(self.restart if reserve and self.gmres_pending else 0),
+            arnoldi_lower=self.arnoldi_run,arnoldi_upper=self.arnoldi_run+(self.restart if reserve and self.gmres_pending and self.algorithm_name!='L' else 0),
             started=self.started.copy(),completed=self.packet.counts.copy(),numeric_io=self.numeric_io.copy(),
             new_A_columns=self.counts['new_A_columns']-self.base['new_A_columns'],image_QR=self.counts['image_QR']-self.base['image_QR'],
             field_states=self.counts['field_states']-self.base['field_states'],
-            correction_restarts=self.base['routes'][self.family_name]['correction_restarts'] if self.family_name else 0)
+            correction_restarts=self.base['routes'][self.route_key].get('correction_restarts',0) if self.family_name else 0)
         write_json(window.LEDGER_PATH,row);self.last_written=total
 
     def gmres_returned(self,inner):
-        self.arnoldi_run+=inner['inner_iterations'];self.gmres_pending=False;self.durable_counts(reserve=16)
+        self.arnoldi_run+=inner.get('inner_iterations',0);self.gmres_pending=False;self.durable_counts(reserve=16)
 
     def begin_numeric_io(self):
         self.numeric_io['started']+=1;self.durable_counts();return time.perf_counter()
@@ -79,7 +84,7 @@ class CompletionStage(Stage):
 
     def finish(self,result):
         result['numeric_io']=dict(self.numeric_io,scope='this worker; inclusive atomic-save/hash wall, not additive to worker total')
-        result.update(algorithm=self.algorithm_name,library=self.family_name,new_Arnoldi_iterations=self.arnoldi_run)
+        result.update(algorithm=self.algorithm_name,library=self.family_name,new_Arnoldi_iterations=None if self.algorithm_name=='L' else self.arnoldi_run)
         self.durable_counts(reserve=self.reservation if result.get('status')=='FAILED' else 0)
         super().finish(result)
 

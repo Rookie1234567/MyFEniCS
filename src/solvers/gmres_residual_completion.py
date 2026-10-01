@@ -34,11 +34,12 @@ def load_state(stage,item,*,legacy=False):
     return arrays
 
 
-def preflight(stage):
+def preflight(stage,*,state_loader=None):
+    state_loader=state_loader or load_state
     bar=BarAction(ports_for(stage));rows={}
     for family in ('GPOLY','GNN'):
         try:
-            item=stage.own_plan['initial_states'][family];arrays=load_state(stage,item,legacy=True)
+            item=stage.own_plan['initial_states'][family];arrays=state_loader(stage,item,legacy=True)
             closed,relative=close_point(bar,arrays['trace'],stage.packet.a['b'])
             port_difference=float(np.linalg.norm(closed['port']-arrays['port'])/max(np.linalg.norm(closed['port'])+np.linalg.norm(arrays['port']),1e-300))
             residual_difference=float(np.linalg.norm(closed['residual']-arrays['residual'])/stage.packet.bnorm)
@@ -162,7 +163,8 @@ def continue_route(stage):
     return result
 
 
-def verify(stage):
+def verify(stage,*,state_loader=None):
+    state_loader=state_loader or load_state
     from src.io.neural_fe_continuation import read_index,V7_ROOT
     from src.runners.autonomous_neural_head import owned
     from src.solvers.neural_fe_blind_reference import independent_physics
@@ -171,7 +173,7 @@ def verify(stage):
     if not (root/'FROZEN.json').exists():raise ValueError('V18 queue must freeze before reference')
     freeze=json.loads((root/'FROZEN.json').read_text());items=freeze['validation_inventory'];candidates={};sources={};seen=set();missing=[]
     for item in items:
-        try:arrays=load_state(stage,item,legacy=item.get('legacy',False))
+        try:arrays=state_loader(stage,item,legacy=item.get('legacy',False))
         except (OSError,ValueError) as error:missing.append(dict(name=item['name'],error=str(error)));continue
         sha=array_hash(arrays['z'])
         if sha in seen:continue

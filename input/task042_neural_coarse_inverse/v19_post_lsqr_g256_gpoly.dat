@@ -1,0 +1,10 @@
+schema_version = 1
+[task042_v19]
+stage = "P_GPOLY"
+algorithm = "P"
+library = "GPOLY"
+run_id = "task042_v19_g256_gpoly"
+material_table_id = "SI_OPTICAL_CONSTANTS_USER_20260929_V1"
+decoder_family = "POST_LSQR_RESIDUAL_POLISH"
+target_iteration = 0
+target_cycles = 8

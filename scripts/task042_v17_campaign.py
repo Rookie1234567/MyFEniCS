@@ -17,6 +17,9 @@ CURRENT_BATCH='v17'
 def dat(stage,target,label):
     directory=TMP_ROOT/'inputs';directory.mkdir(exist_ok=True)
     path=directory/(label+'.dat')
+    if CURRENT_BATCH=='v19':
+        from src.io.post_lsqr_polish import write_input
+        return write_input(path,stage,target,'task042_v19_'+label)
     if CURRENT_BATCH=='v18':
         from src.io.gmres_residual_completion import write_input
         return write_input(path,stage,target,'task042_v18_'+label)
@@ -37,7 +40,8 @@ def run(stage,target,label):
     path=dat(stage,target,label);mode='fe' if stage=='VERIFY' else 'pure'
     journal('one_run_dispatch',stage=stage,target=target,input_path=str(path))
     before=len(ledger()['runs'])
-    p=subprocess.run(['bash','-c',f'set -e;source scripts/activate_task042.sh {mode};exec python scripts/run_case.py "$1"','task042-v17',str(path)])
+    cache=f'export TASK042_CACHE_NAMESPACE=v19/{mode};' if CURRENT_BATCH=='v19' else ''
+    p=subprocess.run(['bash','-c',f'set -e;{cache}source scripts/activate_task042.sh {mode};exec python scripts/run_case.py "$1"','task042-v17',str(path)])
     latest=ledger()['runs'][-1] if ledger()['runs'] else {}
     if len(ledger()['runs'])<=before or latest.get('stage')!=stage:
         return dict(status='ADMISSION_BLOCKED',exit_code=p.returncode)
@@ -142,8 +146,12 @@ def solve_queue():
 
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--preflight',action='store_true');parser.add_argument('--solve',action='store_true');parser.add_argument('--verify',action='store_true')
-    parser.add_argument('--batch',choices=('v17','v18'),default='v17')
+    parser.add_argument('--batch',choices=('v17','v18','v19'),default='v17')
     args=parser.parse_args()
+    if args.batch=='v19':
+        from src.runners.post_lsqr_queue import configure,main_queue
+        configure(sys.modules[__name__])
+        return main_queue(sys.modules[__name__],args)
     if args.batch=='v18':
         from src.runners.residual_completion_queue import configure,main_queue
         configure(sys.modules[__name__])

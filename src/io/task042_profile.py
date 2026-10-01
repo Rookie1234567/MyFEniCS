@@ -6,6 +6,8 @@ import tomllib
 
 ROOT = Path(__file__).resolve().parents[2]
 TASK042_PROFILES = {
+    **{"task042_v19_"+name.lower(): "V19-"+name
+       for name in ("PREFLIGHT", "P_GPOLY", "P_GNN", "L_GPOLY", "L_GNN", "VERIFY")},
     **{"task042_v18_"+name.lower(): "V18-"+name
        for name in ("PREFLIGHT", "G64_GPOLY", "G64_GNN", "G256_GPOLY", "G256_GNN", "R_GPOLY", "R_GNN", "VERIFY")},
     **{"task042_v17_"+name.lower(): "V17-"+name
