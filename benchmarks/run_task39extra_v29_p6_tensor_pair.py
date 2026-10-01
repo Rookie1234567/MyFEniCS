@@ -160,7 +160,8 @@ def _local_checks(
             check_finite=False,
         )
         residual = Aii @ recovered + Ait @ trace - internal_rhs
-        closure = _relative_error(residual, internal_rhs)
+        rhs_norm = max(float(np.linalg.norm(internal_rhs)), np.finfo(float).tiny)
+        closure = float(np.linalg.norm(residual) / rhs_norm)
         return schur, interior_from_trace, recovered, closure, residual
 
     (
@@ -178,6 +179,11 @@ def _local_checks(
         candidate_rhs_residual,
     ) = schur_and_recovery(candidate)
     return {
+        "random_seed": int(seed),
+        "full_dimension": int(dimension),
+        "interior_dimension": int(len(interior_positions)),
+        "trace_dimension": int(len(trace_positions)),
+        "internal_rhs_norm": float(np.linalg.norm(internal_rhs)),
         "matrix_frobenius_relative": matrix_relative,
         "matrix_frobenius_absolute": float(np.linalg.norm(candidate - native)),
         "action_relative": action_relative,

@@ -13,6 +13,7 @@ from src.solvers.task40extra_p6_reference_metric import (
     Task40ExtraP6ReferenceMetricCandidate,
 )
 from benchmarks.run_task39extra_v29_p6_tensor_pair import (
+    _local_checks,
     _task40_ffcx_representatives,
     _task40_local_gate,
 )
@@ -170,3 +171,24 @@ def test_task40_local_gate_applies_strict_internal_rhs_closure_limit():
     assert not _task40_local_gate(checks)
     checks["native_nonzero_rhs_recovery_closure"] = 1.0e-11
     assert _task40_local_gate(checks)
+
+
+def test_local_nonzero_rhs_closure_uses_residual_norm_over_rhs_norm():
+    matrix = np.asarray(
+        [[4.0 + 1.0j, 0.3 - 0.1j], [0.2j, 3.0 - 0.4j]],
+        dtype=np.complex128,
+    )
+    checks = _local_checks(
+        matrix,
+        matrix,
+        np.asarray([0], dtype=np.int32),
+        np.asarray([1], dtype=np.int32),
+        seed=31415,
+    )
+    assert checks["internal_rhs_norm"] > 0.0
+    assert checks["native_nonzero_rhs_recovery_closure"] < 1.0e-14
+    assert checks["candidate_nonzero_rhs_recovery_closure"] < 1.0e-14
+    assert checks["random_seed"] == 31415
+    assert checks["full_dimension"] == 2
+    assert checks["interior_dimension"] == 1
+    assert checks["trace_dimension"] == 1
