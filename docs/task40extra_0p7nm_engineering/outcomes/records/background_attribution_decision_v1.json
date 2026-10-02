@@ -1,0 +1,52 @@
+{
+  "schema": "task40extra.review-v3-background-attribution-decision.v1",
+  "status": "A_complete_B_preregistered_before_run",
+  "analysis_source_sha": "c465d88f2c4b666118ba477abb347764dbdc2b7c",
+  "analysis_record": "docs/task40extra_0p7nm_engineering/outcomes/records/background_attribution_v1.json",
+  "analysis_record_sha256": "22fd3df128fd05261f09087821cfc3ce0c86fd4707f2fe0803e63010505604f3",
+  "A_decision": {
+    "current_postprocessing_bug_found": false,
+    "continue_B": true,
+    "basis": [
+      "For both saved M0 and M2 pairs, both named backgrounds use the same sampled saved E/curl values, the same 4000 ordered coordinates, and the same common-volume cells and weights.",
+      "M2 absolute physical-domain differences are background-invariant: E 0.0234144603123 V/m·nm^(3/2), H 6.54404378501e-5 A/m·nm^(3/2), scaled curl(E) 0.0246533966778 V/m·nm^(3/2). The common incident-normalized differences are 0.474044% for E and 0.499127% for H/scaled curl.",
+      "Using the official layered Fresnel background, M2 relative-to-G1 differences remain E 2.611883%, H 2.750374%, and scaled curl(E) 2.750374%; the existing 1% engineering field gate therefore remains failed.",
+      "The exact p6 N1curl moment interpolants, followed by each run's finalized Floquet MPC homogenize/backsubstitution, have zero measured constraint residual and relative slave-value adjustment below 6e-15. No fitted coefficient or phase was applied.",
+      "For M2 volume E, d has norm 0.0234144603, while d_b is 0.0013608091 for incident-plane-wave and 0.0016374608 for Fresnel; the corresponding ||d-d_b|| values are 0.0233577985 and 0.0233532180. For raw curl(E), d has norm 0.2212883711, d_b is 0.0562505851 / 0.0676860748, and ||d-d_b|| is 0.2104596698 / 0.2099384920. The squared-norm identity relative closures are below 9.1e-16.",
+      "Regional M2 E-difference squared contributions are 62.64% exterior air, 2.48% void-box air, 8.05% substrate, and 26.83% grating silicon; the measured difference is not concentrated in the void-box region."
+    ],
+    "legacy_R5": {
+      "generator_status": "generator_unknown",
+      "reproduced_from_saved_M0_pair": {
+        "E_total_relative_l2": 0.003739525358964883,
+        "E_difference_over_incident_l2": 0.004741794146059013,
+        "H_total_relative_l2": 0.003927184832218389,
+        "H_difference_over_incident_l2": 0.004979279962698063
+      },
+      "archived_scattered_relative_values": {
+        "E": 0.002914454665686697,
+        "H": 0.003060610720391174
+      },
+      "classification": "The archived scattered-relative denominators cannot be reproduced from the bounded source search. They are retained as historical values, are not evidence that the current Fresnel result passed, and do not establish a current P1/P4 implementation bug."
+    },
+    "reason_for_B": "The prescribed same-pair comparison confirms the common numerator and explains the current P1/P4 relative change as a background-dependent G1 denominator, while p6 representation attribution is too small to remove the cross-grid discrepancy. No correctable current postprocessing error was found; perform the review-authorized two-case x/z cross to separate the mixed-axis change."
+  },
+  "B_preregistration": {
+    "status": "predictions_fixed_before_either_new_solve",
+    "frozen_physics_and_solver": "Task40 0.7 nm nonseparable model; p6, accurate p4 reference-metric/M2, 340 ordered modes, MPI1/threads1, same materials, notch, incidence, and integration rules as F3/F5.",
+    "four_corners": {
+      "G00": {"source": "existing F3/G0", "axis_cells_xyz": [6, 4, 14], "cells": 336},
+      "G10": {"label": "Gx560", "x_axis": "G1", "y_axis": "G0", "z_axis": "G0", "axis_cells_xyz": [10, 4, 14], "cells": 560},
+      "G01": {"label": "Gz528", "x_axis": "G0", "y_axis": "G0", "z_axis": "G1", "axis_cells_xyz": [6, 4, 22], "cells": 528},
+      "G11": {"source": "existing F5/G1", "axis_cells_xyz": [10, 4, 22], "cells": 880}
+    },
+    "primary_directional_prediction": "Because the 1-degree grazing incidence varies phase mainly along x, x-only refinement Gx is predicted to move closer to existing G1 than z-only refinement Gz for official-Fresnel physical-domain scattered-E error, scaled-curl(E) error, and the complex top(0,0,s) amplitude difference. The top-mode phase change is the primary modal observable; bottom(-1,0,s) remains a required secondary failure channel with absolute difference reported.",
+    "falsification_rule": "For each of the three primary observables, compare Gx-to-G1 and Gz-to-G1 on one common four-grid volume or the same ordered mode. If Gx is not closer than Gz for any primary observable beyond numerical integration/roundoff, the x-dominant prediction is not confirmed. A similar or conflicting response is reported as unresolved; no third or fourth mesh is added.",
+    "locked_comparison_rules": [
+      "Use one common four-corner physical volume and the existing G1 norm as denominator for volume differences; report all absolute norms and incident-normalized values too.",
+      "For all modes, preserve the original first-amplitude denominator and additionally report G1-normalized values for directional attribution; retain all 340 keys and the frozen 11 significant modes.",
+      "Report x and z increments and the interaction E11-E10-E01+E00 for E, H, and curl(E), including both frozen failed channels.",
+      "No fitted global or per-mode phase, no mode reselection, and no alteration of the original 1% field/curl or 1e-3 power gates."
+    ]
+  }
+}
