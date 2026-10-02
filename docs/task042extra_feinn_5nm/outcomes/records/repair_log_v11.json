@@ -26,6 +26,15 @@
       "test": "targeted small tests before clean repair commit",
       "retry": 1,
       "costs_retained": true
+    },
+    {
+      "root_cause": "central finite-difference stable interval not bracketed",
+      "failure": "h1e-8 rel1.190758976e-5; fresh G/gradient pair unchanged, h1e-7 was2.5875e-7",
+      "hypothesis": "smaller h amplifies solve/FP64 cancellation noise; h1e-6 was truncation dominated",
+      "change": "one h3e-7 sample between already measured truncation limit and validated h1e-7; no additional K or training; if unstable stop B",
+      "test": "targeted small transaction/tests rerun",
+      "retry": 2,
+      "costs_retained": true
     }
   ],
   "normal_stagnation_is_bug": false,

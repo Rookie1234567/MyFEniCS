@@ -525,7 +525,16 @@ def qualify(design, native, qualification, diagnostic, artifact, marker, manifes
 
 
 def qualify_fd_tail(
-    design, native, qualification, diagnostic, previous, artifact, marker, manifest
+    design,
+    native,
+    qualification,
+    diagnostic,
+    previous,
+    artifact,
+    marker,
+    manifest,
+    *,
+    epsilon=1e-8,
 ):
     """One extra small-step witness; retain qualified chains, do not replay K."""
     old = previous["result"]
@@ -571,7 +580,9 @@ def qualify_fd_tail(
             prior_expected = row["finite_difference"][-1]["expected"]
             if abs(expected - prior_expected) > 1e-10 * max(abs(expected), 1e-12):
                 raise ValueError("FD_WITNESS_GRADIENT_BASE_CHANGED")
-            eps = 1e-8
+            if epsilon not in (1e-8, 3e-7):
+                raise ValueError("ONLY_TWO_EVIDENCED_FD_WITNESS_STEPS")
+            eps = epsilon
             try:
                 plus, minus = (
                     p.value(theta0 + eps * metric.S * v),
@@ -613,7 +624,7 @@ def qualify_fd_tail(
             inherited_qualification_result=previous["files"]["result"],
             inherited_qualification_counts=old["counts"],
             new_witnesses=witnesses,
-            change="add only h=1e-8 witness where larger-step truncation prevented two stable FD samples; no optimizer/metric/math change",
+            change=f"add only h={epsilon} witness within measured truncation/roundoff bracket; no optimizer/metric/math change",
             **finish(p, factor, proof),
         ), {}
     finally:
