@@ -926,7 +926,7 @@ def run(
             current=record,
             checkpoints=store.index(),
             optimizer_state_saved=True,
-            fault_resume_limit=2,
+            fault_resume_limit=1 if metric_pilot is not None else 2,
             guarantee="last successfully fsynced complete boundary; no SIGKILL finally promise",
         ),
     )

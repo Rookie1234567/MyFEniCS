@@ -125,6 +125,9 @@ def test_metric_fork_keeps_original_state_and_saves_matching_optimizer(
         continuation=entry,
         metric_pilot=pilot,
     )
+    import json
+
+    assert json.loads(files["checkpoint_index"].read_text())["fault_resume_limit"] == 1
     assert result["failure"] is None and result["new_accepted_outer"] == 1
     assert result["inherited_accepted_outer"] == 75 and result["common_mu0"] == 8.3
     assert result["inherited_prefix_seconds"] == 17 and not result["PC_builds"]
